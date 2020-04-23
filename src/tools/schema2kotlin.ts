@@ -30,7 +30,7 @@ const keywords = [
   'init', 'param', 'property', 'receiver', 'set', 'setparam', 'where', 'actual', 'abstract', 'annotation', 'companion',
   'const', 'crossinline', 'data', 'enum', 'expect', 'external', 'final', 'infix', 'inline', 'inner', 'internal',
   'lateinit', 'noinline', 'open', 'operator', 'out', 'override', 'private', 'protected', 'public', 'reified', 'sealed',
-  'suspend', 'tailrec', 'vararg', 'it', 'entityId'
+  'suspend', 'tailrec', 'vararg', 'it', 'entityId', 'creationTimestamp', 'expirationTimestamp'
 ];
 
 export interface KotlinTypeInfo {
@@ -462,19 +462,19 @@ ${lines}
     class ${name}(`;
     const baseClass = this.opts.wasm
         ? 'WasmEntity'
-        : ktUtils.applyFun('EntityBase', [quote(name), 'SCHEMA', 'entityId', 'expirationTimestamp', 'creationTimestamp']);
+        : ktUtils.applyFun('EntityBase', [quote(name), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp']);
     const classInterface = `) : ${baseClass} {`;
 
     const constructorFields = this.fields.concat(this.opts.wasm ? [] : [
       'entityId: String? = null',
-      'expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP',
       'creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP',
+      'expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP',
     ]);
 
     const fieldsForMutate = this.fieldsForCopy.concat(this.opts.wasm ? [] : [
       'entityId = entityId',
-      'expirationTimestamp = expirationTimestamp',
-      'creationTimestamp = creationTimestamp'
+      'creationTimestamp = creationTimestamp',
+      'expirationTimestamp = expirationTimestamp'
     ]);
 
     const constructorArguments =

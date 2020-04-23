@@ -478,7 +478,12 @@ open class HandleManagerTestBase {
 
         val modified = entity.mutate(text = "Changed")
         assertThat(modified).isNotEqualTo(entity)
-        handle.remove(modified)
+
+        // Entity internals should not change.
+        assertThat(modified.entityId).isEqualTo(entity.entityId)
+        assertThat(modified.creationTimestamp).isEqualTo(entity.creationTimestamp)
+        assertThat(modified.expirationTimestamp).isEqualTo(entity.expirationTimestamp)
+
         handle.store(modified)
         assertThat(handle.fetchAll()).containsExactly(modified)
     }

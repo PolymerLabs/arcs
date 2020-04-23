@@ -31,9 +31,9 @@ abstract class AbstractGold : BaseParticle() {
     class GoldInternal1(
         val_: String = "",
         entityId: String? = null,
-        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("GoldInternal1", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("GoldInternal1", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
 
         var val_: String
             get() = super.getSingletonValue("val") as String? ?: ""
@@ -54,8 +54,8 @@ abstract class AbstractGold : BaseParticle() {
         fun mutate(val_: String = this.val_) = GoldInternal1(
             val_ = val_,
             entityId = entityId,
-            expirationTimestamp = expirationTimestamp,
-            creationTimestamp = creationTimestamp
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
         )
 
         companion object : EntitySpec<GoldInternal1> {
@@ -89,9 +89,9 @@ abstract class AbstractGold : BaseParticle() {
         birthDayMonth: Double = 0.0,
         birthDayDOM: Double = 0.0,
         entityId: String? = null,
-        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Gold_AllPeople", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("Gold_AllPeople", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
 
         var name: String
             get() = super.getSingletonValue("name") as String? ?: ""
@@ -166,8 +166,8 @@ abstract class AbstractGold : BaseParticle() {
             birthDayMonth = birthDayMonth,
             birthDayDOM = birthDayDOM,
             entityId = entityId,
-            expirationTimestamp = expirationTimestamp,
-            creationTimestamp = creationTimestamp
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
         )
 
         companion object : EntitySpec<Gold_AllPeople> {
@@ -203,9 +203,9 @@ abstract class AbstractGold : BaseParticle() {
     class Gold_Collection(
         num: Double = 0.0,
         entityId: String? = null,
-        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Gold_Collection", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("Gold_Collection", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
 
         var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
@@ -226,8 +226,8 @@ abstract class AbstractGold : BaseParticle() {
         fun mutate(num: Double = this.num) = Gold_Collection(
             num = num,
             entityId = entityId,
-            expirationTimestamp = expirationTimestamp,
-            creationTimestamp = creationTimestamp
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
         )
 
         companion object : EntitySpec<Gold_Collection> {
@@ -261,9 +261,9 @@ abstract class AbstractGold : BaseParticle() {
         birthDayMonth: Double = 0.0,
         birthDayDOM: Double = 0.0,
         entityId: String? = null,
-        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Gold_QCollection", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("Gold_QCollection", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
 
         var name: String
             get() = super.getSingletonValue("name") as String? ?: ""
@@ -338,8 +338,8 @@ abstract class AbstractGold : BaseParticle() {
             birthDayMonth = birthDayMonth,
             birthDayDOM = birthDayDOM,
             entityId = entityId,
-            expirationTimestamp = expirationTimestamp,
-            creationTimestamp = creationTimestamp
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
         )
 
         companion object : EntitySpec<Gold_QCollection> {
@@ -384,9 +384,9 @@ abstract class AbstractGold : BaseParticle() {
         flg: Boolean = false,
         ref: Reference<GoldInternal1>? = null,
         entityId: String? = null,
-        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Gold_Data", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("Gold_Data", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
 
         var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
@@ -439,8 +439,8 @@ abstract class AbstractGold : BaseParticle() {
             flg = flg,
             ref = ref,
             entityId = entityId,
-            expirationTimestamp = expirationTimestamp,
-            creationTimestamp = creationTimestamp
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
         )
 
         companion object : EntitySpec<Gold_Data> {
