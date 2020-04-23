@@ -1,0 +1,17 @@
+meta
+  namespace: arcs.core.data.testdata.gen
+
+import './Schemas.arcs'
+
+external particle Writer
+  data: writes Thing
+
+external particle Reader
+  data: reads Thing
+
+recipe PassThrough
+  thing: create
+  Writer
+    data: writes thing
+  Reader
+    data: reads thing

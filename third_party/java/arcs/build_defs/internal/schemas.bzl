@@ -7,6 +7,7 @@ load("//devtools/build_cleaner/skylark:build_defs.bzl", "register_extension_info
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
 load("//third_party/java/arcs/build_defs/internal:util.bzl", "replace_arcs_suffix")
 load(":kotlin.bzl", "ARCS_SDK_DEPS", "arcs_kt_library", "arcs_kt_plan")
+load(":manifest.bzl", "arcs_manifest")
 
 def _run_schema2wasm(
         name,
@@ -180,12 +181,23 @@ def arcs_kt_gen(
       test_harness: whether to generate a test harness target
       visibility: visibility of the generated arcs_kt_library
     """
+
+    manifest_name = name + "_manifest"
     schema_name = name + "_schema"
     plan_name = name + "_plan"
+
+    arcs_manifest(
+        name = manifest_name,
+        srcs = srcs,
+        deps = [d for d in deps if d.endswith(".arcs")],
+    )
+
+    deps = [d for d in deps if not d.endswith(".arcs")]
+
     schema = arcs_kt_schema(
         name = schema_name,
         srcs = srcs,
-        deps = deps,
+        deps = deps + [":" + manifest_name],
         platforms = platforms,
         test_harness = test_harness,
         visibility = visibility,

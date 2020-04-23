@@ -2,6 +2,7 @@ load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_android_library",
     "arcs_kt_gen",
+    "arcs_manifest_parse_test",
 )
 load("//tools/build_defs/android:rules.bzl", "android_binary")
 
@@ -12,6 +13,12 @@ package(default_visibility = ["//visibility:public"])
 arcs_kt_gen(
     name = "manifest",
     srcs = ["person.arcs"],
+)
+
+arcs_manifest_parse_test(
+    name = "manifest_test",
+    srcs = ["person.arcs"],
+    deps = glob(["*.kt"]),
 )
 
 arcs_kt_android_library(

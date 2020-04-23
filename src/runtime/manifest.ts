@@ -47,6 +47,7 @@ import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
 import {Refinement} from './refiner.js';
 import {Capabilities} from './capabilities.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
+import {LoaderBase} from '../platform/loader-base.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -116,7 +117,7 @@ type ManifestFinderGenerator<a> = ((manifest: Manifest) => IterableIterator<a>) 
 
 export interface ManifestParseOptions {
   fileName?: string;
-  loader?: Loader;
+  loader?: LoaderBase;
   registry?: Dictionary<Promise<Manifest>>;
   memoryProvider?: VolatileMemoryProvider;
   context?: Manifest;
@@ -366,7 +367,7 @@ export class Manifest {
     return this.idGenerator.newChildId(this.id, subcomponent);
   }
 
-  static async load(fileName: string, loader: Loader, options: ManifestLoadOptions = {}): Promise<Manifest> {
+  static async load(fileName: string, loader: LoaderBase, options: ManifestLoadOptions = {}): Promise<Manifest> {
     let {registry, memoryProvider} = options;
     registry = registry || {};
     if (registry && registry[fileName]) {
@@ -709,7 +710,7 @@ ${e.message}
     manifest._resources[schemaItem.name] = schemaItem.data;
   }
 
-  private static _processParticle(manifest: Manifest, particleItem, loader?: Loader) {
+  private static _processParticle(manifest: Manifest, particleItem, loader?: LoaderBase) {
     // TODO: we should be producing a new particleSpec, not mutating
     //       particleItem directly.
     // TODO: we should require both of these and update failing tests...
@@ -726,7 +727,9 @@ ${e.message}
 
     // TODO: loader should not be optional.
     if (particleItem.implFile && loader) {
-      particleItem.implFile = loader.join(manifest.fileName, particleItem.implFile);
+      if (!loader.isJvmClasspath(particleItem.implFile)) {
+        particleItem.implFile = loader.join(manifest.fileName, particleItem.implFile);
+      }
     }
 
     const processArgTypes = args => {
@@ -1228,7 +1231,7 @@ ${e.message}
     return new RamDiskStorageKey(this.generateID('local-data').toString());
   }
 
-  private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: Loader, memoryProvider?: VolatileMemoryProvider) {
+  private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: LoaderBase, memoryProvider?: VolatileMemoryProvider) {
     const name = item.name;
     let id = item.id;
     const originalId = item.originalId;

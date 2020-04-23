@@ -1,10 +1,6 @@
 """Arcs manifest bundling rules."""
 
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
-load(
-    "//third_party/java/arcs/build_defs/internal:tools.oss.bzl",
-    "arcs_manifest_parse_test",
-)
 load(":util.bzl", "replace_arcs_suffix")
 
 def arcs_manifest(name, srcs, deps = [], visibility = None):
@@ -29,12 +25,6 @@ def arcs_manifest(name, srcs, deps = [], visibility = None):
         name = name,
         srcs = all_files,
         visibility = visibility,
-    )
-
-    arcs_manifest_parse_test(
-        name = name + "_parse_test",
-        srcs = srcs,
-        deps = deps,
     )
 
 def arcs_manifest_json(name, srcs = [], deps = [], out = None, visibility = None):
