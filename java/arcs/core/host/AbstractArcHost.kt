@@ -37,7 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 
-typealias ParticleConstructor = suspend (Plan.Particle) -> Particle
+typealias ParticleConstructor = suspend (Plan.Particle?) -> Particle
 typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
 
 /** Maximum number of times a particle may fail to be started before giving up. */
@@ -542,7 +542,7 @@ abstract class AbstractArcHost(
      */
     open suspend fun instantiateParticle(
         identifier: ParticleIdentifier,
-        spec: Plan.Particle
+        spec: Plan.Particle? = null
     ): Particle {
         return particleConstructors[identifier]?.invoke(spec)
                ?: throw IllegalArgumentException("Particle $identifier not found.")

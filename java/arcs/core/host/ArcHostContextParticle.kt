@@ -35,7 +35,7 @@ import kotlinx.coroutines.joinAll
  */
 class ArcHostContextParticle(
     private val hostId: String,
-    private val instantiateParticle: suspend (ParticleIdentifier) -> Particle,
+    private val instantiateParticle: suspend (ParticleIdentifier, Plan.Particle?) -> Particle,
     private val instantiatedParticles: MutableMap<String, Particle> = mutableMapOf()
 ) : AbstractArcHostContextParticle() {
     /**
@@ -133,7 +133,7 @@ class ArcHostContextParticle(
         particleName: String,
         location: String
     ): Particle = instantiatedParticles.getOrPut(particleName) {
-        instantiateParticle(ParticleIdentifier.from(location))
+        instantiateParticle(ParticleIdentifier.from(location), null)
     }
 
     private suspend inline fun <T> onHandlesReady(block: () -> T): T {
