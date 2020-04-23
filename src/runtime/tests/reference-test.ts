@@ -500,6 +500,8 @@ describe('references', () => {
 });
 
 describe('reference mode store tests', () => {
+  //TODO: alicej
+  // write test that checks a particle can construct a collection of references of entities defined in inline schemas.
   it('can construct references of entities stored in reference mode store', async () => {
     const storageKeyPrefix = (arcId: ArcId) => new ReferenceModeStorageKey(new VolatileStorageKey(arcId, 'a'), new VolatileStorageKey(arcId, 'b'));
     const loader = new Loader(null, {
