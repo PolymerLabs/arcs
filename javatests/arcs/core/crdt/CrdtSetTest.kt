@@ -59,12 +59,12 @@ class CrdtSetTest {
     }
 
     @Test
-    fun supportsAddingSameValueAgain_keepsFirst() {
+    fun supportsAddingSameValueAgain_keepsNewValue() {
         val alice: CrdtSet<ReferenceWithValue> = CrdtSet()
         alice.applyOperation(CrdtSet.Operation.Add("alice", VersionMap("alice" to 1), ReferenceWithValue("one", 1)))
         alice.applyOperation(CrdtSet.Operation.Add("alice", VersionMap("alice" to 2), ReferenceWithValue("one", 2)))
 
-        assertThat(alice.consumerView).containsExactly(ReferenceWithValue("one", 1))
+        assertThat(alice.consumerView).containsExactly(ReferenceWithValue("one", 2))
     }
 
     @Test
