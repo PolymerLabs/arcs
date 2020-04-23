@@ -59,7 +59,18 @@ class FakeDatabaseManager : DatabaseManager {
         mutex.withLock { cache.mapValues { it.value.snapshotStatistics() } }
 
     override suspend fun removeExpiredEntities(): Job {
-        throw UnsupportedOperationException("Fake databases cannot remove expired entities.")
+        throw UnsupportedOperationException("Fake database manager cannot remove entities.")
+    }
+
+    override suspend fun removeAllEntities(): Job {
+        throw UnsupportedOperationException("Fake database manager cannot remove entities.")
+    }
+
+    override suspend fun removeEntitiesCreatedBetween(
+        startTimeMillis: Long,
+        endTimeMillis: Long
+    ): Job {
+        throw UnsupportedOperationException("Fake database manager cannot remove entities.")
     }
 }
 
@@ -138,6 +149,14 @@ open class FakeDatabase : Database {
 
     override suspend fun removeExpiredEntities() {
         throw UnsupportedOperationException("Fake database cannot remove expired entities.")
+    }
+
+    override suspend fun removeAllEntities() {
+        dataMutex.withLock { data.clear() }
+    }
+
+    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
+        throw UnsupportedOperationException("Fake db cannot remove entities by creation time.")
     }
 }
 

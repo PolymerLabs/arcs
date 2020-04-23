@@ -1098,6 +1098,184 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun removeAllEntities() = runBlockingTest {
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf("text" to FieldType.Text), 
+                collections = mapOf("nums" to FieldType.Number)
+            )
+        )
+        val collectionKey = DummyStorageKey("collection")
+        val backingKey = DummyStorageKey("backing")
+        val entity1Key = DummyStorageKey("backing/entity1")
+        val entity2Key = DummyStorageKey("backing/entity2")
+
+        val entity1 = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf("text" to "abc".toReferencable()), 
+                mapOf("nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())),
+                1L,
+                12L
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        val entity2 = DatabaseData.Entity(
+            RawEntity(
+                "entity2", 
+                mapOf("text" to "def".toReferencable()), 
+                mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable())),
+                3L,
+                12L
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        val collection = DatabaseData.Collection(
+            values = setOf(
+                Reference("entity1", backingKey, VersionMap("ref1" to 1)),
+                Reference("entity2", backingKey, VersionMap("ref2" to 2))
+            ),
+            schema = schema,
+            databaseVersion = FIRST_VERSION_NUMBER,
+            versionMap = VERSION_MAP
+        )
+
+        database.insertOrUpdate(entity1Key, entity1)
+        database.insertOrUpdate(entity2Key, entity2)
+        database.insertOrUpdate(collectionKey, collection)
+
+        database.removeAllEntities()
+
+        assertThat(database.getEntity(entity1Key, schema))
+            .isEqualTo(DatabaseData.Entity(
+                RawEntity(
+                    "entity1", 
+                    mapOf("text" to null), 
+                    mapOf("nums" to emptySet()),
+                    1L,
+                    12L
+                ),
+                schema,
+                FIRST_VERSION_NUMBER,
+                VERSION_MAP
+            ))
+        assertThat(database.getEntity(entity2Key, schema))
+            .isEqualTo(DatabaseData.Entity(
+                RawEntity(
+                    "entity2", 
+                    mapOf("text" to null), 
+                    mapOf("nums" to emptySet()),
+                    3L,
+                    12L
+                ),
+                schema,
+                FIRST_VERSION_NUMBER,
+                VERSION_MAP
+            ))
+        assertThat(database.getCollection(collectionKey, schema))
+            .isEqualTo(collection.copy(values = setOf()))
+    }
+
+    @Test
+    fun removeEntitiesCreatedBetween() = runBlockingTest {
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf("text" to FieldType.Text), 
+                collections = mapOf("nums" to FieldType.Number)
+            )
+        )
+        val collectionKey = DummyStorageKey("collection")
+        val backingKey = DummyStorageKey("backing")
+        val entity1Key = DummyStorageKey("backing/entity1")
+        val entity2Key = DummyStorageKey("backing/entity2")
+        val entity3Key = DummyStorageKey("backing/entity3")
+
+        val entity1 = DatabaseData.Entity(
+            RawEntity(
+                "entity1",
+                mapOf("text" to "abc".toReferencable()), 
+                mapOf("nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())),
+                1L, //Creation time
+                12L
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        val entity2 = DatabaseData.Entity(
+            RawEntity(
+                "entity2", 
+                mapOf("text" to "def".toReferencable()), 
+                mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable())),
+                3L, //Creation time
+                12L
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        val entity3 = DatabaseData.Entity(
+            RawEntity(
+                "entity3", 
+                mapOf("text" to "ghi".toReferencable()), 
+                mapOf("nums" to setOf(111.0.toReferencable(), 789.0.toReferencable())),
+                5L, //Creation time
+                12L
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        val collection = DatabaseData.Collection(
+            values = setOf(
+                Reference("entity1", backingKey, VersionMap("ref1" to 1)),
+                Reference("entity2", backingKey, VersionMap("ref2" to 2)),
+                Reference("entity3", backingKey, VersionMap("ref3" to 3))
+            ),
+            schema = schema,
+            databaseVersion = FIRST_VERSION_NUMBER,
+            versionMap = VERSION_MAP
+        )
+
+        database.insertOrUpdate(entity1Key, entity1)
+        database.insertOrUpdate(entity2Key, entity2)
+        database.insertOrUpdate(entity3Key, entity3)
+        database.insertOrUpdate(collectionKey, collection)
+
+        database.removeEntitiesCreatedBetween(2, 4)
+
+        // Entity2 should be the only one cleared.
+        assertThat(database.getEntity(entity2Key, schema))
+            .isEqualTo(DatabaseData.Entity(
+                RawEntity(
+                    "entity2", 
+                    mapOf("text" to null), 
+                    mapOf("nums" to emptySet()),
+                    3L,
+                    12L
+                ),
+                schema,
+                FIRST_VERSION_NUMBER,
+                VERSION_MAP
+            ))
+        assertThat(database.getEntity(entity1Key, schema)).isEqualTo(entity1)
+        assertThat(database.getEntity(entity3Key, schema)).isEqualTo(entity3)
+
+        val newValues = setOf(
+            Reference("entity1", backingKey, VersionMap("ref1" to 1)),
+            Reference("entity3", backingKey, VersionMap("ref3" to 3))
+        )
+        assertThat(database.getCollection(collectionKey, schema))
+            .isEqualTo(collection.copy(values = newValues))
+    }
+
+    @Test
     fun removeExpiredEntities_entityIsCleared() = runBlockingTest {
         val schema = newSchema(
             "hash",

@@ -719,22 +719,50 @@ class DatabaseImpl(
         }
     }
 
+    override suspend fun removeAllEntities() {
+        return clearEntities("""
+            SELECT storage_key_id, storage_key 
+            FROM entities 
+            LEFT JOIN storage_keys
+                ON entities.storage_key_id = storage_keys.id        
+            """)
+    }
+
+    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
+        return clearEntities("""
+            SELECT storage_key_id, storage_key 
+            FROM entities 
+            LEFT JOIN storage_keys
+                ON entities.storage_key_id = storage_keys.id
+            WHERE creation_timestamp >= $startTimeMillis
+            AND creation_timestamp <= $endTimeMillis
+            """)
+    }
+
     override suspend fun removeExpiredEntities() {
-        // Fix the time before starting the transaction.
         val nowMillis = JvmTime.currentTimeMillis
+        val query = """
+            SELECT storage_key_id, storage_key 
+            FROM entities 
+            LEFT JOIN storage_keys
+                ON entities.storage_key_id = storage_keys.id
+            WHERE expiration_timestamp < $nowMillis
+        """
+        clearEntities(query)
+    }
+
+    /*
+     * Clear entities obtained by the qiven query. The query should return pairs of
+     * (storage_key_id, storage_key) from the storage_keys table. This method will delete all fields
+     * for those entities and remove references pointing to them. It also notifies client listening
+     * for any updated storage key.
+     */
+    private suspend fun clearEntities(query: String) {
         writableDatabase.transaction {
             val db = this
             // Find all expired entities.
-            val storageKeyIdsPairs = rawQuery(
-                """
-                    SELECT storage_key_id, storage_key 
-                    FROM entities 
-                    LEFT JOIN storage_keys
-                        ON entities.storage_key_id = storage_keys.id
-                    WHERE expiration_timestamp < ?
-                """.trimIndent(),
-                arrayOf(nowMillis.toString())
-            ).map { it.getLong(0) to it.getString(1) }.toSet()
+            val storageKeyIdsPairs = rawQuery(query.trimIndent(), arrayOf())
+                .map { it.getLong(0) to it.getString(1) }.toSet()
             val storageKeyIds = storageKeyIdsPairs.map { it.first.toString() }.toTypedArray()
             val storageKeys = storageKeyIdsPairs.map { it.second }.toTypedArray()
             // List of question marks of the same length, to be used in queries.
