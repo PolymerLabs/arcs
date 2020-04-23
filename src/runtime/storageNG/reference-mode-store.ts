@@ -501,14 +501,14 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
     const data = entityCRDT.getParticleView();
     for (const [key, value] of Object.entries(data.singletons)) {
       // For primitives, only the value property of the Referenceable should be included in rawData
-      if (value !== null && value['value'] !== undefined) {
+      if (value != null && value['value'] !== undefined) {
         entity.rawData[key] = value['value'];
       } else {
         entity.rawData[key] = value;
       }
     }
     for (const [key, value] of Object.entries(data.collections)) {
-      if (value !== null && value['value'] !== undefined) {
+      if (value != null && value['value'] !== undefined) {
         entity.rawData[key] = value['value'];
       } else {
         entity.rawData[key] = value;
