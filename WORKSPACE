@@ -97,12 +97,14 @@ maven_install(
         "org.robolectric:shadowapi:" + ROBOLECTRIC_VERSION,
         "org.robolectric:shadows-framework:" + ROBOLECTRIC_VERSION,
         "com.squareup:kotlinpoet:" + KOTLINPOET_VERSION,
+        "com.github.h0tk3y.betterParse:better-parse-jvm:0.4.0-alpha-3",
     ],
     fetch_sources = True,
     repositories = [
         "https://jcenter.bintray.com/",
         "https://maven.google.com",
         "https://repo1.maven.org/maven2",
+        "https://dl.bintray.com/hotkeytlt/maven/",
     ],
 )
 
