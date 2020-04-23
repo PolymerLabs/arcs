@@ -37,6 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 
+// TODO(b/154855909)
 typealias ParticleConstructor = suspend (Plan.Particle?) -> Particle
 typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
 
