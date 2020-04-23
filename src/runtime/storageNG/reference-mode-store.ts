@@ -442,7 +442,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
 
   private addFieldToValueList(list: Dictionary<{}>, value: {}, version: Dictionary<number>) {
     // construct id for primitive fields
-    if (value['id'] == undefined) {
+    if (value['id'] === undefined) {
       value = {id: value.toString(), value};
     }
     list[value['id']] = {value, version};
@@ -501,14 +501,14 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
     const data = entityCRDT.getParticleView();
     for (const [key, value] of Object.entries(data.singletons)) {
       // For primitives, only the value property of the Referenceable should be included in rawData
-      if (value != undefined && value['value'] != undefined) {
+      if (value !== undefined && value['value'] !== undefined) {
         entity.rawData[key] = value['value'];
       } else {
         entity.rawData[key] = value;
       }
     }
     for (const [key, value] of Object.entries(data.collections)) {
-      if (value != undefined && value['value'] != undefined) {
+      if (value !== undefined && value['value'] !== undefined) {
         entity.rawData[key] = value['value'];
       } else {
         entity.rawData[key] = value;
