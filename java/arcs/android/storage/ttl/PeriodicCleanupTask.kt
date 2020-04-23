@@ -33,7 +33,7 @@ class PeriodicCleanupTask(
 
     override fun doWork(): Result = runBlocking(Dispatchers.IO) {
         log.debug { "Running." }
-        databaseManager.removeExpiredEntities()
+        databaseManager.removeExpiredEntities().join()
         log.debug { "Success." }
         // Indicate whether the task finished successfully with the Result
         Result.success()
