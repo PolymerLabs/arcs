@@ -186,10 +186,12 @@ def arcs_kt_gen(
     schema_name = name + "_schema"
     plan_name = name + "_plan"
 
+    manifest_deps = [d for d in deps if d.endswith(".arcs")]
+
     arcs_manifest(
         name = manifest_name,
         srcs = srcs,
-        deps = [d for d in deps if d.endswith(".arcs")],
+        deps = manifest_deps,
     )
 
     deps = [d for d in deps if not d.endswith(".arcs")]
@@ -205,14 +207,10 @@ def arcs_kt_gen(
     plan = arcs_kt_plan(
         name = plan_name,
         srcs = srcs,
-        deps = deps + [schema_name],
+        deps = deps + [":" + schema_name] + manifest_deps,
         platforms = platforms,
         visibility = visibility,
     )
-
-    # The following `arcs_kt_library` call will be generating the schema symbols,
-    # so remove this from the plan deps.
-    plan["deps"].remove(schema_name)
 
     # generates combined library. This allows developers to more easily see what is generated.
     arcs_kt_library(

@@ -453,6 +453,8 @@ def arcs_kt_plan(name, srcs = [], deps = [], platforms = ["jvm"], visibility = N
             deps = deps,
         )
 
+    deps = [d for d in deps if not d.endswith(".arcs")]
+
     arcs_kt_library(
         name = name,
         srcs = outs,
@@ -460,7 +462,7 @@ def arcs_kt_plan(name, srcs = [], deps = [], platforms = ["jvm"], visibility = N
         visibility = visibility,
         deps = ARCS_SDK_DEPS + deps,
     )
-    return {"outs": outs, "deps": ARCS_SDK_DEPS + deps}
+    return {"outs": outs, "deps": ARCS_SDK_DEPS}
 
 def arcs_kt_jvm_test_suite(
         name,
