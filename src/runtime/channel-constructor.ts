@@ -19,7 +19,7 @@ import {PropagatedException} from './arc-exceptions.js';
  * that allows new storage stacks to be established.
  */
 export interface ChannelConstructor {
-  getStorageProxy(storageKey: string | StorageKey, type: Type);
+  getBackingStorageProxy(storageKey: string | StorageKey, type: Type);
   idGenerator: IdGenerator;
   generateID: Producer<string>;
   reportExceptionInHost(exception: PropagatedException);

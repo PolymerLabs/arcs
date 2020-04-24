@@ -28,12 +28,12 @@ export class BackingStorageProxy<T extends CRDTTypeRecord> {
 
   constructor(storeProvider: StorageCommunicationEndpointProvider<T>, type: Type, storageKey: string) {
     this.storageEndpoint = storeProvider.getStorageEndpoint(this);
-    this.storageEndpoint.setCallback(this.onMessage.bind(this));
     this.storageKey = storageKey;
     this.type = type;
   }
 
   getStorageProxy(muxId: string): StorageProxy<T> {
+    this.storageEndpoint.setCallback(this.onMessage.bind(this));
     if (!this.storageProxies.hasL(muxId)) {
       const storageCommunicationEndpointProvider = this.createStorageCommunicationEndpointProvider(muxId, this.storageEndpoint, this);
       this.storageProxies.set(muxId, new StorageProxy(muxId, storageCommunicationEndpointProvider, this.type.getContainedType(), this.storageKey));
