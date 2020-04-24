@@ -217,20 +217,23 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     }
 
     /**
-     * Apply a CRDT operation to the [CrdtModel] that this [StorageProxy] manages, notifies read
-     * handles, and forwards the write to the [Store].
+     * Forward the CRDT operation to the [Store] that manages consistent data view, then applies
+     * the operation to the [CrdtModel] that this [StorageProxy] manages and notifies read handles
+     * as soon as the operation was applied successfully at the [Store].
      */
     suspend fun applyOp(op: Op): Boolean {
         checkNotClosed()
-        log.debug { "Applying operation: $op" }
-        val value = syncMutex.withLock {
-            if (!crdt.applyOperation(op)) return false
-            crdt.consumerView
+        if (store.onProxyMessage(ProxyMessage.Operations(listOf(op), null))) {
+            log.debug { "Applying operation: $op" }
+            val value = syncMutex.withLock {
+                if (!crdt.applyOperation(op)) return false
+                crdt.consumerView
+            }
+            notifyUpdate(value)
+            return true
         }
-
-        store.onProxyMessage(ProxyMessage.Operations(listOf(op), null))
-        notifyUpdate(value)
-        return true
+        log.debug { "Failed to apply operation: $op" }
+        return false
     }
 
     /**

@@ -16,6 +16,7 @@ import arcs.android.crdt.toParcelable
 import arcs.android.storage.ParcelableProxyMessage
 import arcs.android.storage.toParcelable
 import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyCallback
@@ -112,13 +113,16 @@ class BindingContext(
     ) {
         bindingContextStatisticsSink.traceTransaction("sendProxyMessage") {
             bindingContextStatisticsSink.measure(coroutineContext) {
-                resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
-
                 val activeStore = store.activate() as ActiveStore<CrdtData, CrdtOperation, Any?>
                 val actualMessage = message.actual as ProxyMessage<CrdtData, CrdtOperation, Any?>
 
                 if (activeStore.onProxyMessage(actualMessage)) {
+                    resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
                     onProxyMessage(store.storageKey, actualMessage)
+                } else {
+                    resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(
+                        CrdtException("oops on sendProxyMessage()").toParcelable()
+                    )
                 }
             }
         }

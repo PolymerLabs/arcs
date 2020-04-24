@@ -319,11 +319,17 @@ class StorageProxyTest {
     fun applyOpFails() = runBlockingTest {
         val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         val (onReady, onUpdate, onDesync, onResync) = addAllActions(proxy)
-        whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(false)
 
-        fakeStoreEndpoint.clearProxyMessages()
+        // Failed to apply an operation the Store.
+        val onProxyMessageReturn = fakeStoreEndpoint.onProxyMessageReturn
+        fakeStoreEndpoint.onProxyMessageReturn = false
         assertThat(proxy.applyOp(mockCrdtOperation)).isFalse()
-        assertThat(fakeStoreEndpoint.getProxyMessages()).isEmpty()
+        fakeStoreEndpoint.onProxyMessageReturn = onProxyMessageReturn
+
+        // Failed to apply an operation to the local model.
+        whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(false)
+        assertThat(proxy.applyOp(mockCrdtOperation)).isFalse()
+
         verifyNoMoreInteractions(onReady, onUpdate, onDesync, onResync)
     }
 
