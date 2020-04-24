@@ -31,7 +31,7 @@ load(
 )
 load(":kotlin_serviceloader_registry.bzl", "kotlin_serviceloader_registry")
 load(":kotlin_wasm_annotations.bzl", "kotlin_wasm_annotations")
-load(":util.bzl", "merge_lists", "replace_arcs_suffix")
+load(":util.bzl", "merge_lists", "replace_arcs_suffix", "manifest_only")
 
 ARCS_SDK_DEPS = ["//third_party/java/arcs"]
 
@@ -453,7 +453,7 @@ def arcs_kt_plan(name, srcs = [], deps = [], platforms = ["jvm"], visibility = N
             deps = deps,
         )
 
-    deps = [d for d in deps if not d.endswith(".arcs")]
+    deps = manifest_only(deps, inverse = True)
 
     arcs_kt_library(
         name = name,

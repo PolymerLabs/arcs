@@ -5,7 +5,7 @@ Rules are re-exported in build_defs.bzl -- use those instead.
 
 load("//devtools/build_cleaner/skylark:build_defs.bzl", "register_extension_info")
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
-load("//third_party/java/arcs/build_defs/internal:util.bzl", "replace_arcs_suffix")
+load("//third_party/java/arcs/build_defs/internal:util.bzl", "replace_arcs_suffix", "manifest_only")
 load(":kotlin.bzl", "ARCS_SDK_DEPS", "arcs_kt_library", "arcs_kt_plan")
 load(":manifest.bzl", "arcs_manifest")
 
@@ -186,15 +186,11 @@ def arcs_kt_gen(
     schema_name = name + "_schema"
     plan_name = name + "_plan"
 
-    manifest_deps = [d for d in deps if d.endswith(".arcs")]
-
     arcs_manifest(
         name = manifest_name,
         srcs = srcs,
-        deps = manifest_deps,
+        deps = manifest_only(deps),
     )
-
-    deps = [d for d in deps if not d.endswith(".arcs")]
 
     schema = arcs_kt_schema(
         name = schema_name,
@@ -207,7 +203,7 @@ def arcs_kt_gen(
     plan = arcs_kt_plan(
         name = plan_name,
         srcs = srcs,
-        deps = deps + [":" + schema_name] + manifest_deps,
+        deps = deps + [":" + schema_name],
         platforms = platforms,
         visibility = visibility,
     )
