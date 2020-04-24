@@ -116,7 +116,7 @@ kt_wasm_library = rule(
     attrs = {
         "srcs": attr.label_list(
             allow_files = True,
-            allow_empty = True,
+            allow_empty = False,
         ),
         "deps": attr.label_list(providers = [KtNativeInfo]),
         "kotlinc_wrapper": attr.label(
