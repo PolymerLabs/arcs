@@ -2,15 +2,7 @@
 # Script to run the Kotlin Native Compiler.
 # Expects a comma-delimited list of dependency files as a first argument.
 # The rest of the arguments are passed in to the `kotlinc` compiler.
-
-
-# Create directory if it doesn't exist
-soft_mkdir() {
-  if [ ! -d "$1" ]; then
-   mkdir $1
-  fi
-}
-
+set -e
 
 # Create file if it doesn't exist
 soft_touch() {
@@ -62,9 +54,9 @@ print(os.path.abspath(sys.argv[1]))' "$konan_deps")
 # Space for setting up required environment variables
 
 
-soft_mkdir "$deps/dependencies"
+mkdir -p "$deps/dependencies"
 soft_touch "$deps/dependencies/.extracted"
-soft_mkdir "$deps/cache"
+mkdir -p "$deps/cache"
 soft_touch "$deps/cache/.lock"
 export KONAN_DATA_DIR="$deps"
 

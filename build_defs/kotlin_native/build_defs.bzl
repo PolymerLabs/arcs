@@ -23,7 +23,7 @@ def _common_args(ctx, klibs):
         # Enable optimizations in the compilation
         "-opt",
         # Don't link the libraries from the dist/klib automatically
-        "-nodefaultlibs",
+        "-no-default-libs",
     ])
 
     args.add_all(klibs, before_each = "-l")
