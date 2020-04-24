@@ -5,7 +5,7 @@ Rules are re-exported in build_defs.bzl -- use those instead.
 
 load("//devtools/build_cleaner/skylark:build_defs.bzl", "register_extension_info")
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
-load("//third_party/java/arcs/build_defs/internal:util.bzl", "replace_arcs_suffix", "manifest_only")
+load("//third_party/java/arcs/build_defs/internal:util.bzl", "manifest_only", "replace_arcs_suffix")
 load(":kotlin.bzl", "ARCS_SDK_DEPS", "arcs_kt_library", "arcs_kt_plan")
 load(":manifest.bzl", "arcs_manifest")
 
