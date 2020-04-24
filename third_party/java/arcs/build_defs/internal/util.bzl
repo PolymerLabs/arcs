@@ -22,3 +22,9 @@ def merge_lists(*lists):
         for elem in x:
             result[elem] = 1
     return result.keys()
+
+def manifest_only(deps = [], inverse = False):
+    """Returns only .arcs files"""
+    if inverse:
+        return [d for d in deps if not d.endswith(".arcs")]
+    return [d for d in deps if d.endswith(".arcs")]
