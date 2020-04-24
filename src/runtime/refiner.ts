@@ -731,7 +731,7 @@ export class BuiltIn extends RefinementExpression {
     if (this.value === 'now()') {
       return this.value;
     }
-    // TODO: Implement SQL getter for 'currentTime'
+    // TODO: Implement SQL getter for 'creationTimeStamp'
     throw new Error(`Unhandled BuiltInNode '${this.value}' in toSQLExpression`);
   }
 
@@ -741,7 +741,7 @@ export class BuiltIn extends RefinementExpression {
       return `System.currentTimeMillis()`;
     }
 
-    // TODO: Implement KT getter for 'currentTime'
+    // TODO: Implement KT getter for 'creationTimeStamp'
     throw new Error(`Unhandled BuiltInNode '${this.value}' in toKTExpression`);
   }
 
@@ -750,7 +750,7 @@ export class BuiltIn extends RefinementExpression {
       return new Date().getTime(); // milliseconds since epoch;
     }
 
-    // TODO: Implement TS getter for 'currentTime'
+    // TODO: Implement TS getter for 'creationTimeStamp'
     throw new Error(`Unhandled BuiltInNode '${this.value}' in applyOperator`);
   }
 
