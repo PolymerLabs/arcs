@@ -87,6 +87,10 @@ class ManifestVisitor {
     }
     assert(ast.location, 'expected manifest node to have `location`');
     assert(ast.kind, 'expected manifest node to have `kind`');
+    if (ast.kind === 'entity-inline') {
+      // This node holds an inline entity and will be handled by _processStore().
+      return;
+    }
     let childrenVisited = false;
     const visitChildren = () => {
       if (childrenVisited) {
@@ -240,7 +244,7 @@ export class Manifest {
       description?: string,
       version?: string,
       source?: string,
-      origin?: 'file' | 'resource' | 'storage',
+      origin?: 'file' | 'resource' | 'storage' | 'inline',
       referenceMode?: boolean,
       model?: {}[],
   }) {
@@ -1264,6 +1268,10 @@ ${e.message}
         version: item.version,
         origin: item.origin,
       });
+    }
+
+    if (item.origin === 'inline') {
+      throw new ManifestError(item.location, 'TODO: support inline data stores');
     }
 
     let json: string;
