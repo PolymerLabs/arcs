@@ -5,15 +5,16 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import androidx.lifecycle.Lifecycle
-import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
+import arcs.android.sdk.host.androidArcHostConfiguration
+import arcs.core.host.AbstractArcHost
 import arcs.core.host.ArcHost
+import arcs.core.host.BaseArcHost
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Handle
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -28,11 +29,13 @@ class DemoService : ArcHostService() {
     private lateinit var notificationManager: NotificationManager
 
     override val arcHost = MyArcHost(
-        this,
-        this.lifecycle,
-        JvmSchedulerProvider(coroutineContext),
-        ::ReadPerson.toRegistration(),
-        ::WritePerson.toRegistration()
+        context = this,
+        lifecycle = this.lifecycle,
+        coroutineContext = coroutineContext,
+        initialParticles = *arrayOf(
+            ::ReadPerson.toRegistration(),
+            ::WritePerson.toRegistration()
+        )
     )
 
     override val arcHosts: List<ArcHost> by lazy { listOf(arcHost) }
@@ -54,11 +57,16 @@ class DemoService : ArcHostService() {
     inner class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,
-        schedulerProvider: SchedulerProvider,
+        coroutineContext: CoroutineContext,
         vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
-        override val platformTime = JvmTime
-    }
+    ) : BaseArcHost(
+        androidArcHostConfiguration(
+            context = context,
+            lifecycle = lifecycle,
+            parentCoroutineContext = coroutineContext
+        ),
+        *initialParticles
+    )
 
     inner class ReadPerson : AbstractReadPerson() {
         override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {

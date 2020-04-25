@@ -14,18 +14,16 @@ package arcs.android.e2e.testapp
 import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.Lifecycle
-import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
+import arcs.android.sdk.host.androidArcHostConfiguration
+import arcs.core.host.BaseArcHost
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.sdk.Handle
-import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Service wrapping an ArcHost which hosts a particle writing data to a handle.
@@ -37,7 +35,7 @@ class WriteAnimalHostService : ArcHostService() {
     override val arcHost: MyArcHost = MyArcHost(
         this,
         this.lifecycle,
-        JvmSchedulerProvider(coroutineContext),
+        coroutineContext,
         ::WriteAnimal.toRegistration()
     )
 
@@ -60,12 +58,16 @@ class WriteAnimalHostService : ArcHostService() {
     class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,
-        schedulerProvider: SchedulerProvider,
+        parentCoroutineContext: CoroutineContext,
         vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
-        @ExperimentalCoroutinesApi
-        override val activationFactory = ServiceStoreFactory(context, lifecycle)
-
+    ) : BaseArcHost(
+        androidArcHostConfiguration(
+            context,
+            lifecycle,
+            parentCoroutineContext
+        ),
+        *initialParticles
+    ) {
         fun arcHostContext(arcId: String) = getArcHostContext(arcId)
     }
 

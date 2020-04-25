@@ -32,7 +32,7 @@ class ReflectiveParticleConstructionTest {
     val log = LogRule()
 
     class JvmProdHost(
-        schedulerProvider: SchedulerProvider,
+        schedulerProvider: JvmSchedulerProvider,
         vararg particles: ParticleRegistration
     ) : JvmHost(schedulerProvider, *particles), ProdHost
 

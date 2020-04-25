@@ -7,9 +7,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import arcs.android.sdk.host.AndroidHost
+import arcs.android.sdk.host.androidArcHostConfiguration
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.allocator.Allocator
 import arcs.core.common.toArcId
+import arcs.core.host.BaseArcHost
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
@@ -23,6 +25,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 
@@ -33,19 +36,15 @@ class Arcs(
     // In production, leave this parameter as null. Arcs will provide a default implementation.
     connectionFactory: ConnectionFactory? = null
 ) {
-    val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
-
-
     private val fakeLifecycleOwner = object : LifecycleOwner {
         private val lifecycle = LifecycleRegistry(this)
         override fun getLifecycle() = lifecycle
     }
 
-
     val arcHost = ArcHost(
         context,
         fakeLifecycleOwner.lifecycle,
-        schedulerProvider,
+        EmptyCoroutineContext,
         connectionFactory
     )
 
@@ -60,6 +59,8 @@ class Arcs(
         val hostRegistry = ExplicitHostRegistry().apply {
             registerHost(arcHost)
         }
+
+        val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
 
         allocator = Allocator.create(
             hostRegistry,
@@ -139,12 +140,15 @@ class Arcs(
 class ArcHost(
     context: Context,
     lifecycle: Lifecycle,
-    schedulerProvider: SchedulerProvider,
+    parentCoroutineContext: CoroutineContext,
     connectionFactory: ConnectionFactory? = null
-) : AndroidHost(
-    context,
-    lifecycle,
-    schedulerProvider,
+) : BaseArcHost(
+    androidArcHostConfiguration(
+        context,
+        lifecycle,
+        parentCoroutineContext,
+        connectionFactory
+    ),
     ::Reader0.toRegistration(),
     ::Writer0.toRegistration(),
     ::Reader1.toRegistration(),
@@ -152,13 +156,6 @@ class ArcHost(
     ::Reader2.toRegistration(),
     ::Writer2.toRegistration()
 ) {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override val activationFactory = ServiceStoreFactory(
-        context,
-        lifecycle,
-        connectionFactory = connectionFactory
-    )
-
     @Suppress("UNCHECKED_CAST")
     private fun <T> getParticle(name: String) =
         getArcHostContext("!:testArc")!!.particles[name]!!.particle as T

@@ -13,14 +13,16 @@ package arcs.android.host.prod
 import android.content.Context
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.Lifecycle
-import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
+import arcs.android.sdk.host.androidArcHostConfiguration
+import arcs.core.host.AbstractArcHost
 import arcs.core.host.ArcHost
+import arcs.core.host.BaseArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
-import arcs.core.host.SchedulerProvider
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.host.scanForParticles
+import arcs.jvm.util.JvmTime
+import kotlin.coroutines.CoroutineContext
 
 /**
  * An isolatable (can run in another process) [Service] that has a [ProdHost] inside. [Particle]
@@ -32,9 +34,16 @@ open class ProdArcHostService : ArcHostService() {
     class ProdAndroidHost(
         context: Context,
         lifecycle: Lifecycle,
-        schedulerProvider: SchedulerProvider,
+        parentCoroutineContext: CoroutineContext,
         vararg particles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, schedulerProvider, *particles), ProdHost
+    ) : BaseArcHost(
+        androidArcHostConfiguration(
+            context,
+            lifecycle,
+            parentCoroutineContext
+        ),
+        *particles
+    ), ProdHost
 
     /**
      * This is open for tests to override, but normally isn't necessary.
@@ -43,7 +52,7 @@ open class ProdArcHostService : ArcHostService() {
         ProdAndroidHost(
             this,
             this.lifecycle,
-            JvmSchedulerProvider(scope.coroutineContext),
+            scope.coroutineContext,
             *scanForParticles()
         )
     }

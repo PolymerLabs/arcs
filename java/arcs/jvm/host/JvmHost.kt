@@ -17,6 +17,7 @@ import arcs.core.host.SchedulerProvider
 import arcs.core.util.Time
 import arcs.jvm.util.JvmTime
 
+@Deprecated("Instantiate a BaseArcHost with a JvmConfiguration")
 /**
  * An [ArcHost] that runs on Java VM platforms.
  */

@@ -14,19 +14,16 @@ package arcs.android.e2e.testapp
 import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.Lifecycle
-import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
+import arcs.android.sdk.host.androidArcHostConfiguration
 import arcs.core.data.Plan
+import arcs.core.host.BaseArcHost
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
-import arcs.jvm.host.JvmSchedulerProvider
-import arcs.jvm.util.JvmTime
 import arcs.sdk.Handle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Service which wraps an ArcHost containing person.arcs related particles.
@@ -36,11 +33,13 @@ class PersonHostService : ArcHostService() {
     private val coroutineContext = Job() + Dispatchers.Main
 
     override val arcHost = MyArcHost(
-        this,
-        this.lifecycle,
-        JvmSchedulerProvider(coroutineContext),
-        ::ReadPerson.toRegistration(),
-        ::WritePerson.toRegistration()
+        context = this,
+        lifecycle = this.lifecycle,
+        parentCoroutineContext = coroutineContext,
+        initialParticles = *arrayOf(
+            ::ReadPerson.toRegistration(),
+            ::WritePerson.toRegistration()
+        )
     )
 
     override val arcHosts = listOf(arcHost)
@@ -48,11 +47,15 @@ class PersonHostService : ArcHostService() {
     inner class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,
-        schedulerProvider: SchedulerProvider,
+        parentCoroutineContext: CoroutineContext,
         vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
-        override val platformTime = JvmTime
-
+    ) : BaseArcHost(
+        androidArcHostConfiguration(
+            context = context,
+            lifecycle = lifecycle,
+            parentCoroutineContext = parentCoroutineContext
+        ),
+        *initialParticles) {
         override suspend fun stopArc(partition: Plan.Partition) {
             super.stopArc(partition)
             if (isArcHostIdle) {

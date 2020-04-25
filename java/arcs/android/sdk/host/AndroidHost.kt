@@ -8,6 +8,8 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+@file:Suppress("DEPRECATION")
+
 package arcs.android.sdk.host
 
 import android.content.Context
@@ -19,10 +21,12 @@ import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.storage.StoreManager
 import arcs.jvm.host.JvmHost
+import arcs.jvm.util.JvmTime
 import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
+@Deprecated("Create or extend a BaseArcHost with an AndroidConfiguration")
 /**
  * An [ArcHost] that runs on Android inside of a [Service], uses [StorageService] for storage, and
  * can be resurrected via [ResurrectorService] if the [ArcHost] is embedded in its own service.
@@ -33,6 +37,9 @@ abstract class AndroidHost(
     schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
 ) : JvmHost(schedulerProvider, *particles), ResurrectableHost {
+
+    @Deprecated("Create or extend a BaseArcHost with an AndroidConfiguration")
+    override val platformTime = JvmTime
 
     override val resurrectionHelper: ResurrectionHelper = ResurrectionHelper(context,
         ::onResurrected)

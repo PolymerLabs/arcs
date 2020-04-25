@@ -12,6 +12,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/data:data-kt",
         "//java/arcs/core/host",
         "//java/arcs/core/host/api",
+        "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/util",
         "//java/arcs/jvm/util",

@@ -1,3 +1,4 @@
+@file:Suppress("DEPRECATION")
 /*
  * Copyright 2020 Google LLC.
  *
@@ -48,18 +49,55 @@ const val MAX_CONSECUTIVE_FAILURES = 5
 /**
  * Base helper class for [ArcHost] implementations.
  *
- * Subclasses of [AbstractArcHost] may provide  platform dependent functionality such as for
- * (JS, Android, WASM). Another type of [ArcHost] are those specialized for different
- * [Particle] execution environments within a platform such as isolatable [ArcHosts] (dev-mode
- * and prod-mode), ArcHosts embedded into Android Services, and remote ArcHosts which run on
- * other devices.
+ * To provide platform dependent functionality such as for (JS, Android, WASM), provide the
+ * appropriate [Configuration] item to the consturctor.
  *
- * @property initialParticles The initial set of [Particle]s that this host contains.
+ * This class may be subclassed to be specialized for different [Particle] execution environments
+ * within a platform such as isolatable [ArcHosts] (dev-mode and prod-mode), ArcHosts embedded into
+ * Android Services, and remote ArcHosts which run on other devices.
+ *
+ * @property configuration The platform-specific configuration items for this [ArcHost].
+ * @param initialParticles The initial set of [Particle]s that this host contains.
  */
 abstract class AbstractArcHost(
-    private val schedulerProvider: SchedulerProvider,
+    // nullable configuration is temporary, during API transition
+    private val configuration: Configuration? = null,
     vararg initialParticles: ParticleRegistration
 ) : ArcHost {
+    @Deprecated("This will be removed when client migrate to primary constructor")
+    private var schedulerProvider: SchedulerProvider? = null
+
+    @Deprecated("Use primary constructor with Configuration")
+    constructor(
+        schedulerProvider: SchedulerProvider,
+        vararg initialParticles: ParticleRegistration
+    ) : this(null, *initialParticles) {
+        this.schedulerProvider = schedulerProvider
+    }
+
+    /**
+     * This is a container for platform-specific configuration objects for an [AbstractArcHost].
+     *
+     * Right now, it only contains a [HandleManagerProvider], but will eventually grow to
+     * include other configuration items.
+     */
+    data class Configuration(
+        val handleManagerProvider: HandleManagerProvider
+    ) {
+        /**
+         * Instances of this can create new [EntityHandleManager] instances by invoking the
+         * instance as a function, or calling [invoke] explicitly.
+         */
+        interface HandleManagerProvider {
+            /**
+             * Calling this method (or invoking the [HandleManagerProvider] instance directly)
+             * should return a newly-created [EntityHandleManager] instance associated with an
+             * Arc for the provided [arcId] and [hostId].
+             */
+            operator fun invoke(arcId: String, hostId: String): EntityHandleManager
+        }
+    }
+
     private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
@@ -558,6 +596,7 @@ abstract class AbstractArcHost(
         cleanupHandles(context)
     }
 
+    @Deprecated("Provide a Configuration with a HandleManagerProvider")
     /**
      * Until Kotlin Multiplatform adds a common API for retrieving time, each platform that
      * implements an [ArcHost] needs to supply an implementation of the [Time] interface.
@@ -580,24 +619,37 @@ abstract class AbstractArcHost(
     override suspend fun isHostForParticle(particle: Plan.Particle) =
         registeredParticles().contains(ParticleIdentifier.from(particle.location))
 
+    @Suppress("DEPRECATION")
+    @Deprecated("Provide a Configuration with a HandleManagerProvider")
     /**
      * Return an instance of [EntityHandleManager] to be used to create [Handle]s.
      */
-    open fun entityHandleManager(arcId: String) = EntityHandleManager(
-        arcId,
-        hostId,
-        platformTime,
-        schedulerProvider(arcId),
-        stores,
-        activationFactory
-    )
+    open fun entityHandleManager(arcId: String): EntityHandleManager {
+        // When clients are migrated, we will always use the configuration value directly.
+        configuration?.let {
+            return it.handleManagerProvider(arcId, hostId)
+        }
+        val scheduler = requireNotNull(schedulerProvider) {
+            "schedulerProvider should not be null for this AbstractArcHost"
+        }.invoke(arcId)
+        return EntityHandleManager(
+            arcId,
+            hostId,
+            platformTime,
+            scheduler,
+            stores,
+            activationFactory
+        )
+    }
 
+    @Deprecated("Provide a Configuration with a HandleManagerProvider")
     /**
      * The map of [Store] objects that this [ArcHost] will use. By default, it uses a shared
      * singleton defined statically by this package.
      */
     open val stores = singletonStores
 
+    @Deprecated("Provide a Configuration with a HandleManagerProvider")
     /**
      * The [ActivationFactory] to use when activating stores. By default this is `null`,
      * indicating that the default [ActivationFactory] will be used.
@@ -627,5 +679,18 @@ abstract class AbstractArcHost(
          * a new instance each time.
          */
         val singletonStores = StoreManager()
+    }
+}
+
+open class BaseArcHost(
+    configuration: Configuration,
+    vararg particles: ParticleRegistration
+) : AbstractArcHost(configuration, *particles) {
+    // Stub time that won't be used
+    override val platformTime = object : Time() {
+        override val nanoTime: Long
+            get() = throw IllegalStateException("Should not be used")
+        override val currentTimeMillis: Long
+            get() = throw IllegalStateException("Should not be used")
     }
 }
