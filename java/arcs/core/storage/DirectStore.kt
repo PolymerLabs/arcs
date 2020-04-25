@@ -23,6 +23,7 @@ import arcs.core.storage.DirectStore.State.Name.Idle
 import arcs.core.storage.util.RandomProxyCallbackManager
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
+import java.util.concurrent.Executors
 import kotlin.coroutines.coroutineContext
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
@@ -41,7 +42,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     val localModel: CrdtModel<Data, Op, T>,
     /* internal */
     val driver: Driver<Data>
-) : ActiveStore<Data, Op, T>(options) {
+) : ActiveStore<Data, Op, T>(options),
+    WriteBack by StoreWriteBack(driver.storageKey.protocol, writeBackThreads)
+{
     override val versionToken: String?
         get() = driver.token
 
@@ -146,11 +149,11 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         if (modelChange.isEmpty() && otherChange?.isEmpty() == true) return
 
         deliverCallbacks(modelChange, source = channel)
-        updateStateAndAct(
-            noDriverSideChanges(modelChange, otherChange, false),
-            version,
-            messageFromDriver = false
-        )
+
+        // As the localModel has already be applied with new operations and/or merged with
+        // new model updates, leave the flush job with write-back threads.
+        val noDriverSideChanges = noDriverSideChanges(modelChange, otherChange, false)
+        asyncFlush { updateStateAndAct(noDriverSideChanges, version, messageFromDriver = false) }
     }
 
     /* internal */ suspend fun onReceive(data: Data, version: Int) {
@@ -195,7 +198,10 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 throw e
             }
         }
-        updateStateAndAct(noDriverSideChanges, theVersion, messageFromDriver = true)
+
+        // As the localModel has already be merged with the pending model changes,
+        // leave the flush job with write-back threads.
+        asyncFlush { updateStateAndAct(noDriverSideChanges, theVersion, messageFromDriver = true) }
     }
 
     /**
@@ -406,6 +412,11 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     }
 
     companion object {
+        /** The write-back thread pool is shared among all [DirectStore]s. */
+        private val writeBackThreads = Executors.newCachedThreadPool {
+            Thread(it).apply { name = "WriteBack #$id" }
+        }
+
         /**
          * To avoid an infinite loop OMG situation, set a maximum number of update spins for the
          * state machine to something large, but not *infinite*.
