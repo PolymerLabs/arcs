@@ -232,7 +232,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
             notifyUpdate(value)
             return true
         }
-        log.debug { "Failed to apply operation: $op" }
+        log.error { "Failed to apply operation: $op" }
         return false
     }
 
