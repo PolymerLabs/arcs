@@ -25,6 +25,7 @@ import arcs.core.host.api.Particle
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
+import arcs.core.util.Analytics
 import arcs.core.util.LruCacheMap
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
@@ -207,6 +208,11 @@ abstract class AbstractArcHost(
         maybeRequestResurrection(context)
 
         updateArcHostContext(partition.arcId, context)
+
+        Analytics.logger.logArcHostEvent(
+            Analytics.Event.StartArc,
+            hostId,
+            partition.arcId)
     }
 
     /**
@@ -434,6 +440,11 @@ abstract class AbstractArcHost(
                 ArcState.Error -> stopArcError(context, "Arc $arcId encounted an error.")
             }
         }
+
+        Analytics.logger.logArcHostEvent(
+            Analytics.Event.StopArc,
+            hostId,
+            partition.arcId)
     }
 
     /**

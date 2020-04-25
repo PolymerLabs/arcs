@@ -53,7 +53,7 @@ interface Id {
         fun getSessionId(): String = currentSessionId
 
         /** Creates a new [ArcId] as a child of the current session. */
-        fun newArcId(name: String): ArcId = ArcId(currentSessionId, listOf(name))
+        fun newArcId(name: String): ArcId = ArcId(currentSessionId, listOf(name), name)
 
         /**
          * Creates a new [Id], as a child of the given [parentId].
@@ -96,12 +96,13 @@ interface Id {
 }
 
 /** Convenience to parse a [String] into an [ArcId]. */
-fun String.toArcId(): ArcId = toId().let { ArcId(it.root, it.idTree) }
+fun String.toArcId(): ArcId = toId().let { ArcId(it.root, it.idTree, this) }
 
 /** [Id] for an Arc. */
 data class ArcId /* internal */ constructor(
     override val root: String,
-    override val idTree: List<String>
+    override val idTree: List<String>,
+    val name: String
 ) : Id {
     override fun toString() = idToString(this)
 

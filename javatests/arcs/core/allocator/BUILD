@@ -48,8 +48,10 @@ arcs_kt_jvm_library(
         "//javatests/arcs/core/host:schemas",
         "//javatests/arcs/core/host:testhost",
         "//third_party/java/junit:junit-android",
+        "//third_party/java/mockito:mockito-android",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
+        "//third_party/kotlin/mockito_kotlin:mockito_kotlin-android",
     ],
 )

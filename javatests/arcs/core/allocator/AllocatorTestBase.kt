@@ -6,7 +6,20 @@ import arcs.core.data.Capabilities
 import arcs.core.data.CreateableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
-import arcs.core.host.*
+import arcs.core.host.ArcHost
+import arcs.core.host.ArcHostNotFoundException
+import arcs.core.host.ArcState
+import arcs.core.host.EntityHandleManager
+import arcs.core.host.HostRegistry
+import arcs.core.host.ParticleNotFoundException
+import arcs.core.host.ParticleState
+import arcs.core.host.PersonPlan
+import arcs.core.host.ReadPerson
+import arcs.core.host.ReadPerson_Person
+import arcs.core.host.TestingHost
+import arcs.core.host.TestingJvmProdHost
+import arcs.core.host.WritePerson
+import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -14,6 +27,7 @@ import arcs.core.storage.driver.VolatileDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.util.Analytics
 import arcs.core.util.Scheduler
 import arcs.core.util.plus
 import arcs.core.util.testutil.LogRule
@@ -22,8 +36,13 @@ import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.atMost
+import com.nhaarman.mockitokotlin2.eq
+import com.nhaarman.mockitokotlin2.times
+import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
@@ -32,6 +51,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import org.mockito.Mock
+import org.mockito.MockitoAnnotations
 import java.util.concurrent.Executors
 import java.lang.IllegalArgumentException
 import kotlin.coroutines.CoroutineContext
@@ -44,6 +65,8 @@ open class AllocatorTestBase {
     val log = LogRule()
 
     private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+
+    @Mock private lateinit var mockLogger: Analytics.Logger
 
     /**
      * Recipe hand translated from 'person.arcs'
@@ -94,40 +117,46 @@ open class AllocatorTestBase {
     }
 
     @Before
-    open fun setUp() = runBlocking {
-        RamDisk.clear()
-        RamDiskStorageKey.registerKeyCreator()
-        RamDiskDriverProvider()
+    open fun setUp() {
+        MockitoAnnotations.initMocks(this)
+        Analytics.logger = mockLogger
 
-        VolatileStorageKey.registerKeyCreator()
+        runBlocking {
+            RamDisk.clear()
+            RamDiskStorageKey.registerKeyCreator()
+            RamDiskDriverProvider()
 
-        readingExternalHost = readingHost()
-        writingExternalHost = writingHost()
-        pureHost = pureHost()
+            VolatileStorageKey.registerKeyCreator()
 
-        hostRegistry = hostRegistry()
-        allocator = Allocator.create(
-            hostRegistry,
-            EntityHandleManager(
-                time = FakeTime(),
-                scheduler = schedulerProvider("allocator")
+            readingExternalHost = readingHost()
+            writingExternalHost = writingHost()
+            pureHost = pureHost()
+
+            hostRegistry = hostRegistry()
+            allocator = Allocator.create(
+                hostRegistry,
+                EntityHandleManager(
+                    time = FakeTime(),
+                    scheduler = schedulerProvider("allocator")
+                )
             )
-        )
 
-        readPersonParticle =
-            requireNotNull(PersonPlan.particles.find { it.particleName == "ReadPerson" }) {
-                "No ReadPerson particle in PersonPlan"
-            }
+            readPersonParticle =
+                requireNotNull(PersonPlan.particles.find { it.particleName == "ReadPerson" }) {
+                    "No ReadPerson particle in PersonPlan"
+                }
 
-        writePersonParticle =
-            requireNotNull(PersonPlan.particles.find { it.particleName == "WritePerson" }) {
-                "No WritePerson particle in PersonPlan"
-            }
+            writePersonParticle =
+                requireNotNull(PersonPlan.particles.find { it.particleName == "WritePerson" }) {
+                    "No WritePerson particle in PersonPlan"
+                }
 
-        readingExternalHost.setup()
-        pureHost.setup()
-        writingExternalHost.setup()
-        WritePerson.throws = false
+            readingExternalHost.setup()
+            pureHost.setup()
+            writingExternalHost.setup()
+            WritePerson.throws = false
+        }
+
     }
 
     private suspend fun assertAllStatus(
@@ -537,5 +566,91 @@ open class AllocatorTestBase {
         assertThat(writingExternalHost.arcHostContext(arcId.toString())?.arcState).isEqualTo(
             ArcState.Error
         )
+    }
+
+    @Test
+    fun allocator_logArcStartAndStopToAnalytics() = runAllocatorTest {
+        val arcId = allocator.startArcForPlan(
+            "readWriteParticle",
+            PersonPlan
+        )
+
+        // Verify logs are recorded.
+        verify(mockLogger, times(1)).logAllocatorEvent(
+            eq(Analytics.Event.StartArc), eq("readWriteParticle"), any())
+        verify(mockLogger, times(1)).logArcHostEvent(
+            eq(Analytics.Event.StartArc), eq("arcs.core.host.TestingJvmProdHost"), any())
+        verify(mockLogger, times(1)).logArcHostEvent(
+            eq(Analytics.Event.StartArc), eq("arcs.core.allocator.AllocatorTestBase.ReadingHost"), any())
+        verify(mockLogger, times(1)).logArcHostEvent(
+            eq(Analytics.Event.StartArc), eq("arcs.core.allocator.AllocatorTestBase.WritingHost"), any())
+
+        allocator.stopArc(arcId)
+        // Verify logs are recorded.
+        verify(mockLogger, times(1)).logAllocatorEvent(
+            eq(Analytics.Event.StopArc), eq("readWriteParticle"), any())
+        verify(mockLogger, times(1)).logArcHostEvent(
+            eq(Analytics.Event.StopArc), eq("arcs.core.host.TestingJvmProdHost"), any())
+        verify(mockLogger, times(1)).logArcHostEvent(
+            eq(Analytics.Event.StopArc), eq("arcs.core.allocator.AllocatorTestBase.ReadingHost"), any())
+        verify(mockLogger, times(1)).logArcHostEvent(
+            eq(Analytics.Event.StopArc), eq("arcs.core.allocator.AllocatorTestBase.WritingHost"), any())
+
+        // Verify no more log is recorded.
+        verifyNoMoreInteractions(mockLogger)
+    }
+
+    @Test
+    fun allocator_logParticleNotFoundExceptionToAnalytics() = runAllocatorTest {
+        hostRegistry.unregisterHost(readingExternalHost)
+
+        try {
+            allocator.startArcForPlan(
+                "readWriteParticle",
+                PersonPlan
+            )
+        } catch (e: ParticleNotFoundException) {
+            // expected
+        }
+
+        // Verify logs are recorded.
+        verify(mockLogger, times(1)).logAllocatorEvent(
+            eq(Analytics.Event.StartArc), eq("readWriteParticle"), any())
+        verify(mockLogger, times(1)).logParticleNotFoundException(any())
+
+        // Verify no more log is recorded.
+        verifyNoMoreInteractions(mockLogger)
+    }
+
+    @Test
+    fun allocator_logArcHostNotFoundExceptionToAnalytics() = runAllocatorTest {
+        val arcId = allocator.startArcForPlan(
+            "readWriteParticle",
+            PersonPlan
+        )
+        hostRegistry.unregisterHost(readingExternalHost)
+        try {
+            allocator.stopArc(arcId)
+        } catch (e: ArcHostNotFoundException) {
+            // expected
+        }
+
+        // Verify logs are recorded.
+        verify(mockLogger, times(1)).logAllocatorEvent(
+            eq(Analytics.Event.StartArc), eq("readWriteParticle"), any())
+        verify(mockLogger, times(1)).logArcHostEvent(
+            eq(Analytics.Event.StartArc), eq("arcs.core.host.TestingJvmProdHost"), any())
+        verify(mockLogger, times(1)).logArcHostEvent(
+            eq(Analytics.Event.StartArc), eq("arcs.core.allocator.AllocatorTestBase.ReadingHost"), any())
+        verify(mockLogger, times(1)).logArcHostEvent(
+            eq(Analytics.Event.StartArc), eq("arcs.core.allocator.AllocatorTestBase.WritingHost"), any())
+
+        // Should call logArcHostEvent() at most twice before reaching the unregistered host.
+        verify(mockLogger, atMost(2)).logArcHostEvent(
+            eq(Analytics.Event.StopArc), any(), any())
+        verify(mockLogger).logArcHostNotFoundException(any())
+
+        // Verify no more log is recorded.
+        verifyNoMoreInteractions(mockLogger)
     }
 }
