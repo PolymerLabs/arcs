@@ -61,11 +61,10 @@ export class Reference implements Storable {
     this.creationTimestamp = toDate(data.creationTimestamp);
     this.expirationTimestamp = toDate(data.expirationTimestamp);
     this.entityStorageKey = data.entityStorageKey;
-    // abstract out the backing storage key from the entityStorageKey
     if (this.entityStorageKey == null) {
       throw Error('entity storage key must be defined');
     }
-    this.backingKey = Reference.abstractOutBackingKey(this.entityStorageKey);
+    this.backingKey = Reference.extractBackingKey(this.entityStorageKey);
     this.context = context;
     this.type = type;
     this[SYMBOL_INTERNALS] = {
@@ -108,7 +107,7 @@ export class Reference implements Storable {
     };
   }
 
-  static abstractOutBackingKey(storageKey: string): string {
+  static extractBackingKey(storageKey: string): string {
     const key = StorageKeyParser.parse(storageKey);
     if (key instanceof ReferenceModeStorageKey) {
       return key.backingKey.toString();
@@ -119,7 +118,7 @@ export class Reference implements Storable {
 
   // Called by WasmParticle to retrieve the entity for a reference held in a wasm module.
   static async retrieve(pec: ChannelConstructor, id: string, storageKey: string, entityType: EntityType, particleId: string) {
-    const backingProxy = await pec.getBackingStorageProxy(this.abstractOutBackingKey(storageKey), entityType) as BackingStorageProxy<CRDTEntityTypeRecord<Identified, Identified>>;
+    const backingProxy = await pec.getBackingStorageProxy(this.extractBackingKey(storageKey), entityType) as BackingStorageProxy<CRDTEntityTypeRecord<Identified, Identified>>;
     const proxy = backingProxy.getStorageProxy(id);
     const handle = new EntityHandle<Entity>(particleId, proxy, pec.idGenerator, null, true, true, id);
     return await handle.fetch();
