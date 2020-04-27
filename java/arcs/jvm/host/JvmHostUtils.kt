@@ -27,7 +27,7 @@ fun scanForParticles(host: KClass<out ProdHost> = ProdHost::class): Array<Partic
     ServiceLoader.load(Particle::class.java).iterator().asSequence().filter { particle ->
         isParticleForHost(host, particle::class.java)
     }.map { particle: Particle ->
-        val construct: suspend (Plan.Particle) -> Particle =
+        val construct: suspend (Plan.Particle?) -> Particle =
             { particle.javaClass.getDeclaredConstructor().newInstance(it) }
         particle.javaClass.kotlin.toParticleIdentifier() to construct
     }.toList().toTypedArray()
