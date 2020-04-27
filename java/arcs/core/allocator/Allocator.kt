@@ -37,6 +37,7 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
+import arcs.core.util.Analytics
 import arcs.core.util.plus
 import arcs.core.util.traverse
 
@@ -62,11 +63,20 @@ class Allocator private constructor(
     suspend fun startArcForPlan(arcName: String, plan: Plan): ArcId {
         if (plan.arcId !== null) {
             if (readPartitions(plan.arcId!!.toArcId()).isNotEmpty()) {
-                return plan.arcId!!.toArcId()
+                val arcId = plan.arcId!!.toArcId()
+                Analytics.logger.logAllocatorEvent(
+                    Analytics.Event.StartArc, arcId.name, arcId.toString())
+                return arcId
             }
         }
+
+
         val idGenerator = Id.Generator.newSession()
         val arcId = plan.arcId?.toArcId() ?: idGenerator.newArcId(arcName)
+
+        Analytics.logger.logAllocatorEvent(
+            Analytics.Event.StartArc, arcId.name, arcId.toString())
+
         // Any unresolved handles ('create' fate) need storage keys
         val newPlan = createStorageKeysIfNecessary(arcId, idGenerator, plan)
         val partitions = computePartitions(arcId, newPlan)
@@ -87,6 +97,9 @@ class Allocator private constructor(
     suspend fun stopArc(arcId: ArcId) {
         val partitions = readAndClearPartitions(arcId)
         stopPlanPartitionsOnHosts(partitions)
+
+        Analytics.logger.logAllocatorEvent(
+            Analytics.Event.StopArc, arcId.name, arcId.toString())
     }
 
     // VisibleForTesting
@@ -108,9 +121,12 @@ class Allocator private constructor(
 
     // VisibleForTesting
     suspend fun lookupArcHost(arcHost: String) =
-        hostRegistry.availableArcHosts().filter { it ->
+        hostRegistry.availableArcHosts().firstOrNull {
             it.hostId == arcHost
-        }.firstOrNull() ?: throw ArcHostNotFoundException(arcHost)
+        } ?: run {
+            Analytics.logger.logArcHostNotFoundException(arcHost)
+            throw ArcHostNotFoundException(arcHost)
+        }
 
     /** Persists [ArcId] and associated [PlanPartition]s */
     private suspend fun writePartitionMap(arcId: ArcId, partitions: List<Plan.Partition>) {
@@ -230,7 +246,10 @@ class Allocator private constructor(
     private suspend fun findArcHostByParticle(particle: Plan.Particle): ArcHost =
         hostRegistry.availableArcHosts()
             .firstOrNull { host -> host.isHostForParticle(particle) }
-            ?: throw ParticleNotFoundException(particle)
+        ?: run {
+            Analytics.logger.logParticleNotFoundException(particle.particleName)
+            throw ParticleNotFoundException(particle)
+        }
 
     companion object {
         /** Schema for persistent storage of [PlanPartition] information */
