@@ -2020,7 +2020,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       u: ['site'],
       f: [true, false],
       b: [new Uint8Array([0x17, 0xb0]), new Uint8Array()],
-      r: [{id: 'i1', entityStorageKey: 'reference-mode://{volatile://!3:test/backing2@}{volatile://!4:test/container2@}', creationTimestamp: null, expirationTimestamp: null}],
+      r: [{id: 'i1', entityStorageKey: 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}', creationTimestamp: null, expirationTimestamp: null}],
     });
     DriverFactory.clearRegistrationsForTesting();
   });
