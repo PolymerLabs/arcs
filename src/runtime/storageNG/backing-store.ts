@@ -81,8 +81,7 @@ export class BackingStore<T extends CRDTTypeRecord> implements StorageCommunicat
       storeRecord = await storeRecord.promise;
     }
     const {store, id} = storeRecord;
-    message.id = id;
-    await store.onProxyMessage(message);
+    await store.onProxyMessage({...message, id});
   }
 
   static async construct<T extends CRDTTypeRecord>(options: StoreConstructorOptions<T>) {
@@ -128,7 +127,7 @@ export class BackingStore<T extends CRDTTypeRecord> implements StorageCommunicat
             throw new Error('unimplemented, should not be called');
           },
           idGenerator: null,
-          getStorageProxy() {
+          getBackingStorageProxy() {
             throw new Error('unimplemented, should not be called');
           },
           reportExceptionInHost(exception: PropagatedException): void {

@@ -38,7 +38,8 @@ async function setup() {
 describe('wasm', () => {
   it('entity packaging supports primitive field types and references', async () => {
     const {fooClass, barType, encoder, decoder, typeMap} = await setup();
-    const ref = new Reference({id: 'i', entityStorageKey: 'k'}, new ReferenceType(barType), null);
+    const storageKey = 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}';
+    const ref = new Reference({id: 'i', entityStorageKey: storageKey}, new ReferenceType(barType), null);
     const foo = new fooClass({txt: 'abc', lnk: 'http://def', num: 37, flg: true, ref});
     Entity.identify(foo, 'test', null);
 
@@ -86,7 +87,8 @@ describe('wasm', () => {
       Entity.identify(foo, id, null);
       return foo;
     };
-    const ref = new Reference({id: 'r1', entityStorageKey: 'k1'}, new ReferenceType(barType), null);
+    const storageKey = 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}';
+    const ref = new Reference({id: 'r1', entityStorageKey: storageKey}, new ReferenceType(barType), null);
     const f1 = make('id1', {txt: 'abc', lnk: 'http://def', num: 9.2, flg: true, ref});
     const f2 = make('id2|two', {});
     const f3 = make('!id:3!', {txt: 'def', num: -7});
@@ -97,7 +99,7 @@ describe('wasm', () => {
     // Decoding of collections hasn't been implemented (yet?).
     assert.strictEqual(new TextDecoder().decode(encoded.view()),
       '3:' +
-      '110:3:id1|txt:T3:abc|lnk:U10:http://def|num:N9.2:|flg:B1|ref:R2:r1|2:k1|' + hash + ':|' +
+      '186:3:id1|txt:T3:abc|lnk:U10:http://def|num:N9.2:|flg:B1|ref:R2:r1|77:' + storageKey + '|' + hash + ':|' +
       '10:7:id2|two|' +
       '29:6:!id:3!|txt:T3:def|num:N-7:|');
   });

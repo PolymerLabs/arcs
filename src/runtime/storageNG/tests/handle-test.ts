@@ -454,7 +454,8 @@ describe('EntityHandle', async () => {
     const barId = 'barId';
     const barEntity = new barEntityClass({value: 'Text'});
     Entity.identify(barEntity, barId, null);
-    const barReference = new Reference({id: barId, entityStorageKey: null}, new ReferenceType(barType), null);
+    const storageKey = 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}';
+    const barReference = new Reference({id: barId, entityStorageKey: storageKey}, new ReferenceType(barType), null);
 
     const fooSchema = manifest.schemas.Foo;
     const fooEntityClass = Entity.createEntityClass(fooSchema, null);
@@ -496,7 +497,8 @@ describe('EntityHandle', async () => {
     const barId = 'barId';
     const barEntity = new barEntityClass({value: 'Text'});
     Entity.identify(barEntity, barId, null);
-    const barReference = new Reference({id: barId, entityStorageKey: null}, new ReferenceType(barType), null);
+    const storageKey = 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}';
+    const barReference = new Reference({id: barId, entityStorageKey: storageKey}, new ReferenceType(barType), null);
 
     const fooSchema = manifest.schemas.Foo;
     const fooEntityClass = Entity.createEntityClass(fooSchema, null);

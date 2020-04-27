@@ -1966,8 +1966,8 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
   it('loads inline entities with primitive and reference fields', async () => {
     const manifest = await parseManifest(`
       store X of [{n: Number, t: Text, u: URL, f: Boolean, b: Bytes, r: &{z: Text}}] with {
-        {n: 0, t: '', u: '', f: false, b: ||, r: <'i1', 'k1'>},
-        {n: 4.5, t: 'abc', u: 'site', f: true, b: |5a, 7, d|, r: <'i2', 'k2'>},
+        {n: 0, t: '', u: '', f: false, b: ||, r: <'i1', 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}'>},
+        {n: 4.5, t: 'abc', u: 'site', f: true, b: |5a, 7, d|, r: <'i2', 'reference-mode://{volatile://!3:test/backing2@}{volatile://!4:test/container2@}'>},
       }
     `, {fileName: 'the.manifest', memoryProvider});
     const store = (await manifest.findStoreByName('X').activate()) as ActiveCollectionEntityStore;
@@ -1979,11 +1979,11 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     assert.isTrue(e1.id.length && e2.id.length && e1.id !== e2.id);
     assert.deepStrictEqual(e1.rawData, {
       n: 0, t: '', u: '', f: false, b: new Uint8Array(),
-      r: {id: 'i1', entityStorageKey: 'k1', creationTimestamp: null, expirationTimestamp: null}
+      r: {id: 'i1', entityStorageKey: 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}', creationTimestamp: null, expirationTimestamp: null}
     });
     assert.deepStrictEqual(e2.rawData, {
       n: 4.5, t: 'abc', u: 'site', f: true, b: new Uint8Array([0x5a, 0x07, 0x0d]),
-      r: {id: 'i2', entityStorageKey: 'k2', creationTimestamp: null, expirationTimestamp: null}
+      r: {id: 'i2', entityStorageKey: 'reference-mode://{volatile://!3:test/backing2@}{volatile://!4:test/container2@}', creationTimestamp: null, expirationTimestamp: null}
     });
     DriverFactory.clearRegistrationsForTesting();
   });
@@ -2000,7 +2000,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
             u: ['site'],
             f: [true, false, true],
             b: [|17, b0|, ||],
-            r: [<'i1', 'k1'>],
+            r: [<'i1', 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}'>],
         }
       }
     `, {fileName: 'the.manifest', memoryProvider});
@@ -2020,7 +2020,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       u: ['site'],
       f: [true, false],
       b: [new Uint8Array([0x17, 0xb0]), new Uint8Array()],
-      r: [{id: 'i1', entityStorageKey: 'k1', creationTimestamp: null, expirationTimestamp: null}],
+      r: [{id: 'i1', entityStorageKey: 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}', creationTimestamp: null, expirationTimestamp: null}],
     });
     DriverFactory.clearRegistrationsForTesting();
   });
