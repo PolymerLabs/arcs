@@ -62,7 +62,6 @@ abstract class AbstractArcHost(
     private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
-
     /** In memory cache of [ArcHostContext] state. */
     private val contextCache: MutableMap<String, ArcHostContext> = LruCacheMap()
 
@@ -74,7 +73,6 @@ abstract class AbstractArcHost(
 
     // TODO: refactor to allow clients to supply this
     private val coroutineContext = Dispatchers.Unconfined + CoroutineName("AbstractArcHost")
-
     // TODO: add lifecycle API for ArcHosts shutting down to cancel running coroutines
     private val scope = CoroutineScope(coroutineContext)
 
