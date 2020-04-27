@@ -112,7 +112,7 @@ export class Reference implements Storable {
     if (key instanceof ReferenceModeStorageKey) {
       return key.backingKey.toString();
     } else {
-      throw Error('References must refrence an entity in ReferenceModeStore');
+      throw Error('References must reference an entity in ReferenceModeStore');
     }
   }
 

@@ -204,13 +204,14 @@ describe('Entity', () => {
   it('dataClone supports all field types and performs deep copies', async () => {
     const creationTimestamp = new Date();
     const expirationTimestamp = new Date(creationTimestamp.getTime() + 1000);
+    const storageKey = 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}';
     const e1 = new entityClass({
       txt: 'abc',
       lnk: 'site',
       num: 45.8,
       flg: true,
       buf: new Uint8Array([25, 73]),
-      ref: {id: 'i1', entityStorageKey: 'k1', creationTimestamp, expirationTimestamp},
+      ref: {id: 'i1', entityStorageKey: storageKey, creationTimestamp, expirationTimestamp},
       tuple: ['def', 'link', -12, true, new Uint8Array([5, 7])],
       union: new Uint8Array([80]),
     });
