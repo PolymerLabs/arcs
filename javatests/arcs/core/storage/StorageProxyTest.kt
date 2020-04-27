@@ -320,7 +320,7 @@ class StorageProxyTest {
         val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
         val (onReady, onUpdate, onDesync, onResync) = addAllActions(proxy)
 
-        // Failed to apply an operation the Store.
+        // Failed to process an operation in the Store.
         val onProxyMessageReturn = fakeStoreEndpoint.onProxyMessageReturn
         fakeStoreEndpoint.onProxyMessageReturn = false
         assertThat(proxy.applyOp(mockCrdtOperation)).isFalse()
