@@ -6,20 +6,7 @@ import arcs.core.data.Capabilities
 import arcs.core.data.CreateableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
-import arcs.core.host.ArcHost
-import arcs.core.host.ArcHostNotFoundException
-import arcs.core.host.ArcState
-import arcs.core.host.EntityHandleManager
-import arcs.core.host.HostRegistry
-import arcs.core.host.ParticleNotFoundException
-import arcs.core.host.ParticleState
-import arcs.core.host.PersonPlan
-import arcs.core.host.ReadPerson
-import arcs.core.host.ReadPerson_Person
-import arcs.core.host.TestingHost
-import arcs.core.host.TestingJvmProdHost
-import arcs.core.host.WritePerson
-import arcs.core.host.toRegistration
+import arcs.core.host.*
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -51,6 +38,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import org.mockito.ArgumentMatchers.contains
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import java.util.concurrent.Executors
@@ -579,22 +567,22 @@ open class AllocatorTestBase {
         verify(mockLogger, times(1)).logAllocatorEvent(
             eq(Analytics.Event.StartArc), eq("readWriteParticle"), any())
         verify(mockLogger, times(1)).logArcHostEvent(
-            eq(Analytics.Event.StartArc), eq("arcs.core.host.TestingJvmProdHost"), any())
+            eq(Analytics.Event.StartArc), contains("arcs.core.host.TestingJvmProdHost"), any())
         verify(mockLogger, times(1)).logArcHostEvent(
-            eq(Analytics.Event.StartArc), eq("arcs.core.allocator.AllocatorTestBase.ReadingHost"), any())
+            eq(Analytics.Event.StartArc), contains("arcs.core.allocator.AllocatorTestBase.ReadingHost"), any())
         verify(mockLogger, times(1)).logArcHostEvent(
-            eq(Analytics.Event.StartArc), eq("arcs.core.allocator.AllocatorTestBase.WritingHost"), any())
+            eq(Analytics.Event.StartArc), contains("arcs.core.allocator.AllocatorTestBase.WritingHost"), any())
 
         allocator.stopArc(arcId)
         // Verify logs are recorded.
         verify(mockLogger, times(1)).logAllocatorEvent(
             eq(Analytics.Event.StopArc), eq("readWriteParticle"), any())
         verify(mockLogger, times(1)).logArcHostEvent(
-            eq(Analytics.Event.StopArc), eq("arcs.core.host.TestingJvmProdHost"), any())
+            eq(Analytics.Event.StopArc), contains("arcs.core.host.TestingJvmProdHost"), any())
         verify(mockLogger, times(1)).logArcHostEvent(
-            eq(Analytics.Event.StopArc), eq("arcs.core.allocator.AllocatorTestBase.ReadingHost"), any())
+            eq(Analytics.Event.StopArc), contains("arcs.core.allocator.AllocatorTestBase.ReadingHost"), any())
         verify(mockLogger, times(1)).logArcHostEvent(
-            eq(Analytics.Event.StopArc), eq("arcs.core.allocator.AllocatorTestBase.WritingHost"), any())
+            eq(Analytics.Event.StopArc), contains("arcs.core.allocator.AllocatorTestBase.WritingHost"), any())
 
         // Verify no more log is recorded.
         verifyNoMoreInteractions(mockLogger)
@@ -639,11 +627,11 @@ open class AllocatorTestBase {
         verify(mockLogger, times(1)).logAllocatorEvent(
             eq(Analytics.Event.StartArc), eq("readWriteParticle"), any())
         verify(mockLogger, times(1)).logArcHostEvent(
-            eq(Analytics.Event.StartArc), eq("arcs.core.host.TestingJvmProdHost"), any())
+            eq(Analytics.Event.StartArc), contains("arcs.core.host.TestingJvmProdHost"), any())
         verify(mockLogger, times(1)).logArcHostEvent(
-            eq(Analytics.Event.StartArc), eq("arcs.core.allocator.AllocatorTestBase.ReadingHost"), any())
+            eq(Analytics.Event.StartArc), contains("arcs.core.allocator.AllocatorTestBase.ReadingHost"), any())
         verify(mockLogger, times(1)).logArcHostEvent(
-            eq(Analytics.Event.StartArc), eq("arcs.core.allocator.AllocatorTestBase.WritingHost"), any())
+            eq(Analytics.Event.StartArc), contains("arcs.core.allocator.AllocatorTestBase.WritingHost"), any())
 
         // Should call logArcHostEvent() at most twice before reaching the unregistered host.
         verify(mockLogger, atMost(2)).logArcHostEvent(

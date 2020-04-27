@@ -14,14 +14,14 @@ import arcs.core.util.Log.formatter
 import arcs.core.util.Log.writer
 
 /**
- * Analytics helper for Arcs.
+ * Analytics entrance for Arcs.
  *
- * Allows for pluggable log-output sinks (see [writer]) and message [formatter]s.
+ * Allows for pluggable output sinks (see [logger]).
  */
 object Analytics {
 
     enum class Event {
-        StartArc, StopArc, Resurrent
+        StartArc, StopArc
     }
 
     interface Logger {
@@ -56,8 +56,7 @@ private val DEFAULT_LOGGER = object : Analytics.Logger {
         Log.info { "Analytics: logParticleNotFoundException: $particleName" }
     }
 
-    override fun logArcHostEvent(
-        event: Analytics.Event, hostId: String, arcId: String) {
+    override fun logArcHostEvent(event: Analytics.Event, hostId: String, arcId: String) {
         Log.info { "Analytics: logArcHostEvent: $event, $hostId, $arcId" }
     }
 }
