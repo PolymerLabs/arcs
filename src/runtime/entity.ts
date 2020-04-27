@@ -213,23 +213,33 @@ class EntityInternals {
 
   dataClone(): EntityRawData {
     const clone = {};
-    const fieldTypes = this.schema.fields;
-    for (const name of Object.keys(fieldTypes)) {
-      if (this.entity[name] !== undefined) {
-        if (fieldTypes[name] && fieldTypes[name].kind === 'schema-reference') {
-          if (this.entity[name]) {
-            clone[name] = this.entity[name].dataClone();
+    for (const [name, desc] of Object.entries(this.schema.fields)) {
+      const value = this.entity[name];
+      if (value !== undefined) {
+        if (desc && desc.kind === 'schema-reference') {
+          if (value) {
+            clone[name] = value.dataClone();
           }
-        } else if (fieldTypes[name] && fieldTypes[name].kind === 'schema-collection') {
-          if (this.entity[name]) {
-            clone[name] = [...this.entity[name]].map(a => ['Text', 'URL', 'Boolean', 'Number'].includes(fieldTypes[name].schema.type) ? a : a.dataClone());
+        } else if (desc && ['schema-collection', 'schema-tuple'].includes(desc.kind)) {
+          if (value) {
+            clone[name] = [...value].map(a => this.cloneValue(a));
           }
         } else {
-          clone[name] = this.entity[name];
+          clone[name] = this.cloneValue(value);
         }
       }
     }
     return clone;
+  }
+
+  private cloneValue(value) {
+    if (value == null || ['string', 'boolean', 'number'].includes(typeof(value))) {
+      return value;
+    }
+    if (value.constructor.name === 'Uint8Array') {
+      return Uint8Array.from(value);
+    }
+    return value.dataClone();
   }
 
   serialize(): SerializedEntity {

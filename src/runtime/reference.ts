@@ -28,13 +28,23 @@ export type SerializedReference = {
   expirationTimestamp?: number;
 };
 
+function toDate(timestamp?: Date|number): Date|null {
+  if (timestamp == undefined) {
+    return null;
+  }
+  if (typeof(timestamp) === 'number') {
+    return new Date(timestamp);
+  }
+  return timestamp;
+}
+
 export class Reference implements Storable {
   public entity: Entity|null = null;
   public type: ReferenceType<EntityType>;
 
   public readonly id: string;
-  private readonly creationTimestamp: Date;
-  private readonly expirationTimestamp: Date;
+  private readonly creationTimestamp: Date|null;
+  private readonly expirationTimestamp: Date|null;
   private entityStorageKey: string;
   private readonly context: ChannelConstructor;
   private storageProxy: StorageProxy<CRDTEntityCollection> = null;
@@ -42,10 +52,10 @@ export class Reference implements Storable {
 
   [SYMBOL_INTERNALS]: {serialize: () => SerializedEntity};
 
-  constructor(data: {id: string, creationTimestamp?: Date | null, expirationTimestamp?: Date | null, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor) {
+  constructor(data: {id: string, creationTimestamp?: Date|number, expirationTimestamp?: Date|number, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor) {
     this.id = data.id;
-    this.creationTimestamp = data.creationTimestamp;
-    this.expirationTimestamp = data.expirationTimestamp;
+    this.creationTimestamp = toDate(data.creationTimestamp);
+    this.expirationTimestamp = toDate(data.expirationTimestamp);
     this.entityStorageKey = data.entityStorageKey;
     this.context = context;
     this.type = type;

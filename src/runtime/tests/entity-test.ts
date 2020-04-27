@@ -25,10 +25,15 @@ describe('Entity', () => {
     const manifest = await Manifest.parse(`
       schema Foo
         txt: Text
+        lnk: URL
         num: Number
         flg: Boolean
+        buf: Bytes
+        ref: &{z: Text}
+        tuple: (Text, URL, Number, Boolean, Bytes)
+        union: (Text or URL or Number or Boolean or Bytes)
     `);
-    schema = manifest.schemas.Foo;
+    schema = manifest.findSchemaByName('Foo');
     entityClass = Entity.createEntityClass(schema, null);
   });
 
@@ -122,25 +127,14 @@ describe('Entity', () => {
   });
 
   it(`Entity.debugLog doesn't affect the original entity`, async () => {
-    const manifest = await Manifest.parse(`
-      schema EntityDebugLog
-        txt: Text
-        lnk: URL
-        num: Number
-        flg: Boolean
-        buf: Bytes
-        union: (Text or Number)
-        tuple: (Text, Number)
-    `);
-    const entityClass = Entity.createEntityClass(manifest.schemas.EntityDebugLog, null);
     const e = new entityClass({
       txt: 'abc',
       lnk: 'http://wut',
       num: 3.7,
       flg: true,
       buf: new Uint8Array([2]),
-      union: 'def',
-      tuple: ['ghi', 12]
+      tuple: ['def', '404', 0, true, new Uint8Array()],
+      union: 'str',
     });
     Entity.identify(e, '!test:uid:u0', null);
     const fields = JSON.stringify(e);
@@ -205,6 +199,40 @@ describe('Entity', () => {
 
     assert.strictEqual(e.txt, 'abc');
     assert.strictEqual(e.num, 56);
+  });
+
+  it('dataClone supports all field types and performs deep copies', async () => {
+    const creationTimestamp = new Date();
+    const expirationTimestamp = new Date(creationTimestamp.getTime() + 1000);
+    const e1 = new entityClass({
+      txt: 'abc',
+      lnk: 'site',
+      num: 45.8,
+      flg: true,
+      buf: new Uint8Array([25, 73]),
+      ref: {id: 'i1', entityStorageKey: 'k1', creationTimestamp, expirationTimestamp},
+      tuple: ['def', 'link', -12, true, new Uint8Array([5, 7])],
+      union: new Uint8Array([80]),
+    });
+
+    const e2 = new entityClass(Entity.dataClone(e1));
+    assert.deepStrictEqual(e1, e2);
+
+    // Object-based fields should *not* refer to the same instances.
+    assert.isFalse(e1.buf === e2.buf);
+    assert.isFalse(e1.ref === e2.ref);
+    assert.isFalse(e1.tuple === e2.tuple);
+    assert.isFalse(e1.union === e2.union);
+
+    // Modify all non-reference object fields on e1 and confirm e2 is not affected.
+    e1.buf.fill(9);
+    e1.tuple[2] = 20;
+    e1.tuple[4].fill(2);
+    e1.union.fill(0);
+
+    assert.deepStrictEqual(e2.buf, new Uint8Array([25, 73]));
+    assert.deepStrictEqual(e2.tuple, ['def', 'link', -12, true, new Uint8Array([5, 7])]);
+    assert.deepStrictEqual(e2.union, new Uint8Array([80]));
   });
 
   // TODO(mmandlis): add tests with TTLs
