@@ -75,8 +75,6 @@ data class Schema(
     }
 }
 
-
-
 /** Defines a [Type] that's capable of providing a schema for its entities. */
 interface EntitySchemaProviderType : Type {
     /** [Schema] for the entity/entities managed by this [Type]. */
