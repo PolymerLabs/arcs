@@ -133,6 +133,7 @@ class ArcHostContextParticle(
         particleName: String,
         location: String
     ): Particle = instantiatedParticles.getOrPut(particleName) {
+        // TODO(b/154855909) Address null Plan.Particle argument
         instantiateParticle(ParticleIdentifier.from(location), null)
     }
 
