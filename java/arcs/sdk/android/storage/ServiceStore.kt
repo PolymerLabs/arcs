@@ -17,12 +17,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import arcs.android.crdt.ParcelableCrdtType
-import arcs.android.storage.ParcelableProxyMessage
+import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.service.DeferredProxyCallback
 import arcs.android.storage.service.DeferredResult
 import arcs.android.storage.service.IStorageService
 import arcs.android.storage.service.IStorageServiceCallback
-import arcs.android.storage.toParcelable
+import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
@@ -109,7 +109,8 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         return DeferredProxyCallback().let {
             service.getLocalData(it)
             val message = it.await()
-            val modelUpdate = message.actual as? ProxyMessage.ModelUpdate<Data, Op, ConsumerData>
+            val modelUpdate = message.decodeProxyMessage()
+                as? ProxyMessage.ModelUpdate<Data, Op, ConsumerData>
             if (modelUpdate == null) throw CrdtException("Wrong message type received $modelUpdate")
             modelUpdate.model
         }
@@ -118,13 +119,12 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     override fun on(callback: ProxyCallback<Data, Op, ConsumerData>): Int {
         val service = checkNotNull(storageService)
         return service.registerCallback(object : IStorageServiceCallback.Stub() {
-            override fun onProxyMessage(
-                message: ParcelableProxyMessage
-            ) {
-                @Suppress("UNCHECKED_CAST")
+            override fun onProxyMessage(proxyMessage: ByteArray) {
                 scope.launch {
-                    val actualMessage = message.actual as ProxyMessage<Data, Op, ConsumerData>
-                    callback.invoke(actualMessage)
+                    @Suppress("UNCHECKED_CAST")
+                    callback.invoke(
+                        proxyMessage.decodeProxyMessage() as ProxyMessage<Data, Op, ConsumerData>
+                    )
                 }
             }
         })
@@ -143,7 +143,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         val service = checkNotNull(storageService)
         val result = DeferredResult(coroutineContext)
         sendQueue.enqueue {
-            service.sendProxyMessage(message.toParcelable(), result)
+            service.sendProxyMessage(message.toProto().toByteArray(), result)
         }
         // Just return false if the message couldn't be applied.
         return try { result.await() } catch (e: CrdtException) { false }

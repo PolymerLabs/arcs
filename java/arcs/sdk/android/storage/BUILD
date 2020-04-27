@@ -12,6 +12,7 @@ arcs_kt_android_library(
         "//java/arcs/android/common/resurrection",
         "//java/arcs/android/crdt",
         "//java/arcs/android/storage",
+        "//java/arcs/android/storage:proxy_message_android_proto",
         "//java/arcs/android/storage/database",
         "//java/arcs/android/storage/service",
         "//java/arcs/android/storage/service:aidl",
@@ -25,6 +26,5 @@ arcs_kt_android_library(
         "//third_party/java/androidx/annotation",
         "//third_party/java/androidx/lifecycle",
         "//third_party/kotlin/kotlinx_coroutines",
-        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_android",
     ],
 )

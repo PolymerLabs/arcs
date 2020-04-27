@@ -11,7 +11,6 @@
 
 package arcs.android.storage.service;
 
-import arcs.android.storage.ParcelableProxyMessage;
 import arcs.android.storage.service.IResultCallback;
 import arcs.android.storage.service.IStorageServiceCallback;
 
@@ -25,7 +24,7 @@ interface IStorageService {
      * Issues a one-shot request for the current state of the binding context's {@code CrdtData}.
      *
      * <p>Will respond by calling the {@code callback} with a
-     * {@code ParcelableProxyMessage.ModelUpdate} containing the requested data.
+     * {@code ProxyMessageProto.ModelUpdate} containing the requested data.
      */
     oneway void getLocalData(IStorageServiceCallback callback);
 
@@ -38,6 +37,12 @@ interface IStorageService {
     /** Unregisters the callback associated with the given {@param token}. */
     void unregisterCallback(int token);
 
-    /** Sends a proxy message to the StorageService. */
-    oneway void sendProxyMessage(in ParcelableProxyMessage message, IResultCallback resultCallback);
+    /**
+     * Sends a proxy message to the StorageService.
+     *
+     * @param proxyMessage {@link arcs.android.storage.ProxyMessageProto},
+     *     serialized to bytes.
+     */
+    oneway void sendProxyMessage(
+        in byte[] proxyMessage, IResultCallback resultCallback);
 }
