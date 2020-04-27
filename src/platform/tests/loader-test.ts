@@ -52,4 +52,27 @@ describe('PlatformLoader', () => {
     assert.equal(loader.resolve('https://$macro/Feature.arcs'),
         '../../over/here/Feature.arcs');
   });
+  it('recognizes JVM classpaths', () => {
+    const loader = new Loader();
+
+    assert.isTrue(loader.isJvmClasspath('com.package.Class'));
+    assert.isTrue(loader.isJvmClasspath('com.package.Class.InnerClass'));
+    assert.isTrue(loader.isJvmClasspath('com.package_.Class_.InnerClass'));
+    assert.isTrue(loader.isJvmClasspath('com.package.cloud9.MyClass'));
+
+    assert.isFalse(loader.isJvmClasspath('com'));
+    assert.isFalse(loader.isJvmClasspath('com.package'));
+    assert.isFalse(loader.isJvmClasspath('com.package.test'));
+    assert.isFalse(loader.isJvmClasspath('.'));
+    assert.isFalse(loader.isJvmClasspath('com.invalid.'));
+    assert.isFalse(loader.isJvmClasspath('com.invalid..ff'));
+    assert.isFalse(loader.isJvmClasspath(''));
+    assert.isFalse(loader.isJvmClasspath('com.package..Class.InnerClass'));
+    assert.isFalse(loader.isJvmClasspath('com.package.Class.InnerClass.class'));
+    assert.isFalse(loader.isJvmClasspath('.com.google.com.Class'));
+    assert.isFalse(loader.isJvmClasspath('Com.pkg.Class'));
+    assert.isFalse(loader.isJvmClasspath('0om.pkg.class'));
+    assert.isFalse(loader.isJvmClasspath('a.js'));
+    assert.isFalse(loader.isJvmClasspath('path/to/MyClass.kt'));
+  });
 });

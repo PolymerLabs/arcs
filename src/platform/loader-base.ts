@@ -83,9 +83,36 @@ export abstract class LoaderBase {
     }
     return this.loadFile(path);
   }
-  /** https://regex101.com/r/0qpxfW/2 */
+
+  /**
+   * Test to determine if string matches JVM package / class naming convention:
+   * https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html
+   */
   isJvmClasspath(candidate: string): boolean {
-    return /^(?:[a-z]\w*|[a-z]\w*\.)+(?:[A-Z]\w*|[A-Z]\w*\.)+$/.test(candidate);
+    if (!candidate) return false;
+
+    const isCapitalized = (s: string) => s[0] === s[0].toUpperCase();
+    const startsWithLetter = (s: string) => /[a-zA-Z]/.test(s[0]);
+
+    let capitalGate = false;
+    for (const it of candidate.split('.')) {
+      if (!it) return false;
+      if (!/\w+/.test(it)) return false;
+      if (!startsWithLetter(it)) return false;
+
+      // Switch from lower to upper
+      if (isCapitalized(it) && !capitalGate) {
+        capitalGate = true;
+      }
+
+      // Reject invalid capitalization -- switch from upper to lower case
+      if (!isCapitalized(it) && capitalGate) {
+        return false
+      }
+    }
+
+    // Should end with capitals
+    return capitalGate;
   }
   jvmClassExists(classPath: string): boolean {
     return false;
