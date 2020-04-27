@@ -22,6 +22,7 @@ import {Reference} from '../../runtime/reference.js';
 import {Arc} from '../../runtime/arc.js';
 import {SingletonEntityStore, CollectionEntityStore, SingletonReferenceStore, CollectionReferenceStore, newStore, handleForStore} from '../../runtime/storageNG/storage-ng.js';
 import {isSingletonEntityStore} from '../../runtime/storageNG/abstract-store.js';
+import {ReferenceModeStorageKey} from '../../runtime/storageNG/reference-mode-storage-key.js';
 
 // Import some service definition files for their side-effects (the services get
 // registered automatically).
@@ -53,17 +54,28 @@ const testMap = {
 };
 
 async function createBackingEntity(arc: Arc, referenceType: ReferenceType<EntityType>, id: string, entityData: {}): Promise<[string, Reference]> {
-  const backingStorageKey = new VolatileStorageKey(arc.id, '', id);
+  const referenceModeStorageKey = new ReferenceModeStorageKey(new VolatileStorageKey(arc.id, id+'a'), new VolatileStorageKey(arc.id, id+'b'));
   const baseType = referenceType.getContainedType();
-  const backingStore = newStore(new SingletonType(baseType), {
-    id: 'backing1',
-    storageKey: backingStorageKey,
+  const referenceModeStore = newStore(new SingletonType(baseType), {
+    id: 'refmode1',
+    storageKey: referenceModeStorageKey,
     exists: Exists.MayExist,
   });
-  const backingHandle1 = await handleForStore(backingStore, arc);
+  newStore(referenceType, {
+    id: 'container1',
+    storageKey: referenceModeStorageKey.storageKey,
+    exists: Exists.MayExist
+  });
+  newStore(new CollectionType(baseType), {
+    id: 'backing1',
+    storageKey: referenceModeStorageKey.backingKey,
+    exists: Exists.MayExist,
+  });
+
+  const backingHandle1 = await handleForStore(referenceModeStore, arc);
   const entity = await backingHandle1.setFromData(entityData);
   const entityId = Entity.id(entity);
-  const reference = new Reference({id: entityId, entityStorageKey: backingStorageKey.toString()}, referenceType, null);
+  const reference = new Reference({id: entityId, entityStorageKey: referenceModeStorageKey.toString()}, referenceType, null);
   return [entityId, reference];
 }
 
