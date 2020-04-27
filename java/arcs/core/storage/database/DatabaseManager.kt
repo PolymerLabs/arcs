@@ -44,10 +44,10 @@ interface DatabaseManager {
     suspend fun removeExpiredEntities(): Job
 
     /** Clears all entities, in all known databases.  */
-    suspend fun removeAllEntities(): Job
+    suspend fun removeAllEntities()
 
     /** Clears all entities created in the given time range, in all known databases.  */
-    suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long): Job
+    suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long)
 }
 
 /** Identifier for an individual [Database] instance. */

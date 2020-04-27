@@ -11,6 +11,7 @@
 
 package arcs.android.storage.service
 
+import arcs.core.storage.DriverFactory
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -30,7 +31,7 @@ class StorageServiceManager(
 
     override fun clearAll(resultCallback: IResultCallback) {
         CoroutineScope(coroutineContext).launch {
-            // TODO: clear data for all storage keys.
+            DriverFactory.removeAllEntities().join()
         }
         resultCallback.onResult(null)
     }
@@ -41,7 +42,7 @@ class StorageServiceManager(
         resultCallback: IResultCallback
     ) {
         CoroutineScope(coroutineContext).launch {
-            // TODO: clear data for all storage keys.
+            DriverFactory.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis).join()
         }
         resultCallback.onResult(null)
     }
