@@ -6,8 +6,8 @@ import arcs.core.entity.EntityBaseSpec
 import arcs.sdk.BaseParticle
 import arcs.sdk.HandleHolderBase
 
-class TestPlannedParticle(val spec: Plan.Particle) : BaseParticle() {
-    val schema = spec.handles.getValue("data").type.toSchema()
+class TestPlannedParticle(val spec: Plan.Particle?) : BaseParticle() {
+    val schema = spec?.handles?.getValue("data")?.type?.toSchema() ?: Schema.EMPTY
     override val handles = Handles(schema)
 
     class Handles(val schema: Schema) : HandleHolderBase(
