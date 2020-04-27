@@ -119,19 +119,31 @@ open class EntityBase(
         collections[field] = values
     }
 
-    /** Returns the [FieldType] for the given singleton field. Throws if it does not exist. */
-    private fun getSingletonType(field: String) = getOptionalSingletonType(field)
-        ?: throw InvalidFieldNameException(entityClassName, field, isCollection = false)
+    /**
+     * Returns the [FieldType] for the given singleton field.
+     *
+     * @throws InvalidFieldNameException if the field does not exist
+     */
+    private fun getSingletonType(field: String): FieldType {
+        return getSingletonTypeOrNull(field)
+            ?: throw InvalidFieldNameException(entityClassName, field, isCollection = false)
+    }
 
     /** Returns the [FieldType] for the given singleton field, or null if it does not exist. */
-    private fun getOptionalSingletonType(field: String) = schema.fields.singletons[field]
+    private fun getSingletonTypeOrNull(field: String) = schema.fields.singletons[field]
 
-    /** Returns the [FieldType] for the given collection field. Throws if it does not exist. */
-    private fun getCollectionType(field: String) = getOptionalCollectionType(field)
-        ?: throw InvalidFieldNameException(entityClassName, field, isCollection = true)
+    /**
+     * Returns the [FieldType] for the given collection field.
+     *
+     * @throws InvalidFieldNameException if the field does not exist
+     */
+    private fun getCollectionType(field: String): FieldType {
+        return getCollectionTypeOrNull(field)
+            ?: throw InvalidFieldNameException(entityClassName, field, isCollection = true)
+    }
 
     /** Returns the [FieldType] for the given collection field, or null if it does not exist. */
-    private fun getOptionalCollectionType(field: String) = schema.fields.collections[field]
+    private fun getCollectionTypeOrNull(field: String) = schema.fields.collections[field]
 
     /** Checks that the given value is of the expected type. */
     private fun checkType(field: String, value: Any?, type: FieldType) {
@@ -198,12 +210,12 @@ open class EntityBase(
     fun deserialize(rawEntity: RawEntity) {
         entityId = if (rawEntity.id == NO_REFERENCE_ID) null else rawEntity.id
         rawEntity.singletons.forEach { (field, value) ->
-            getOptionalSingletonType(field)?.let { type ->
+            getSingletonTypeOrNull(field)?.let { type ->
                 setSingletonValue(field, value?.let { fromReferencable(it, type) })
             }
         }
         rawEntity.collections.forEach { (field, values) ->
-            getOptionalCollectionType(field)?.let { type ->
+            getCollectionTypeOrNull(field)?.let { type ->
                 setCollectionValue(field, values.map { fromReferencable(it, type) }.toSet())
             }
         }
