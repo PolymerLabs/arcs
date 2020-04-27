@@ -13,9 +13,11 @@ package arcs.core.entity
 
 import arcs.core.common.Id
 import arcs.core.crdt.VersionMap
+import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.Ttl
+import arcs.core.data.util.toReferencable
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.testutil.assertThrows
@@ -217,6 +219,29 @@ class EntityBaseTest {
 
         assertThat(deserialized).isEqualTo(entity)
         assertThat(deserialized.serialize()).isEqualTo(rawEntity)
+    }
+
+    @Test
+    fun deserialize_typeSlicing() {
+        val rawEntity = RawEntity(
+            singletons = mapOf(
+                "text" to "abc".toReferencable(),
+                "some-other-singleton-field" to "def".toReferencable()
+            ),
+            collections = mapOf(
+                "nums" to setOf(11.0.toReferencable(), 22.0.toReferencable()),
+                "some-other-collection-field" to setOf(33.0.toReferencable(), 44.0.toReferencable())
+            )
+        )
+        val deserialized = DummyEntity()
+
+        deserialized.deserializeForTest(rawEntity)
+
+        val expected = DummyEntity().apply {
+            text = "abc"
+            nums = setOf(11.0, 22.0)
+        }
+        assertThat(deserialized).isEqualTo(expected)
     }
 
     @Test
