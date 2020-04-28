@@ -230,7 +230,7 @@ particle_specs {
       }
     }
   }
-  location: "java/arcs/core/data/testdata/Writer"
+  location: "Writer"
 }
 particle_specs {
   name: "Reader"
@@ -299,5 +299,5 @@ particle_specs {
       }
     }
   }
-  location: "java/arcs/core/data/testdata/Reader"
+  location: "Reader"
 }
