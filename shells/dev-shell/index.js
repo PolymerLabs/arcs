@@ -63,23 +63,9 @@ function init() {
     const exampleManifest = `\
 import 'https://$particles/Tutorial/Javascript/1_HelloWorld/HelloWorld.arcs'
 
-// TODO: provide a better way to bootstrap entities in stores
-resource DataResource
-  start
-  {
-    "root": {
-      "values": {
-        "eid": {
-          "value": {"id": "eid", "creationTimestamp": "1", "rawData": {"num": 73, "txt": "abc"}},
-          "version": {"u": 1}
-        }
-      },
-      "version": {"u": 1}
-    },
-    "locations": {}
-  }
-
-store DataStore of Data {num: Number, txt: Text} in DataResource
+store DataStore of Data {num: Number, txt: Text} with {
+  {num: 73, txt: 'abc'}
+}
 
 particle P in 'a.js'
   root: consumes Slot
