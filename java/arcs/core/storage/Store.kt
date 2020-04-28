@@ -81,6 +81,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         return activeStore
     }
 
+    @Suppress("UNCHECKED_CAST")
     companion object {
         /**
          * This is a helper method to reduce the space of UNCHECKED_CAST suppression when accessing
