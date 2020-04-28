@@ -15,6 +15,8 @@ import arcs.core.entity.SchemaRegistry
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StoreWriteBack
+import arcs.core.storage.WriteBackForTesting
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -55,7 +57,7 @@ class TtlHandleTest {
     )
     private lateinit var databaseManager: AndroidSqliteDatabaseManager
     private lateinit var fakeTime: FakeTime
-    
+
     private lateinit var scheduler: Scheduler
     private val handleManager: EntityHandleManager
         // Create a new handle manager on each call, to check different storage proxies.
