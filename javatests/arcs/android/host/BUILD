@@ -11,6 +11,7 @@ package(default_visibility = ["//visibility:public"])
 
 arcs_kt_android_test_suite(
     name = "host",
+    size = "medium",
     srcs = glob(["*Test.kt"]),
     manifest = "AndroidManifest.xml",
     package = "arcs.android.host",

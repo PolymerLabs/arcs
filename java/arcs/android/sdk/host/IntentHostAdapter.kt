@@ -77,7 +77,7 @@ abstract class IntentHostAdapter(
     protected suspend fun <T> sendIntentToHostServiceForResult(
         intent: Intent,
         transformer: (Any?) -> T?
-    ): T? = withTimeout(ARCHOST_INTENT_TIMEOUT) {
+    ): T? = withTimeout(ARCHOST_INTENT_TIMEOUT_MS) {
         suspendCancellableCoroutine { continuation: CancellableContinuation<T?> ->
             ArcHostHelper.setResultReceiver(
                 intent,
@@ -100,6 +100,6 @@ abstract class IntentHostAdapter(
          * The maximum amount of time to wait for an [ArcHost] to process an [Intent]-base RPC call.
          * This timeout ensures requests don't wait forever.
          */
-        const val ARCHOST_INTENT_TIMEOUT = 2000L
+        const val ARCHOST_INTENT_TIMEOUT_MS = 5000L
     }
 }
