@@ -23,7 +23,7 @@ type StoreRecord<T extends CRDTTypeRecord> = {type: 'record', store: DirectStore
 /**
  * A store that allows multiple CRDT models to be stored as sub-keys of a single storageKey location.
  */
-export class BackingStore<T extends CRDTTypeRecord> implements StorageCommunicationEndpointProvider<T> {
+export class DirectStoreMuxer<T extends CRDTTypeRecord> implements StorageCommunicationEndpointProvider<T> {
 
   storageKey: StorageKey;
 
@@ -85,7 +85,7 @@ export class BackingStore<T extends CRDTTypeRecord> implements StorageCommunicat
   }
 
   static async construct<T extends CRDTTypeRecord>(options: StoreConstructorOptions<T>) {
-    return new BackingStore<T>(options);
+    return new DirectStoreMuxer<T>(options);
   }
 
   async idle() {
@@ -108,18 +108,18 @@ export class BackingStore<T extends CRDTTypeRecord> implements StorageCommunicat
   }
 
   getStorageEndpoint() {
-    const backingStore = this;
+    const directStoreMuxer = this;
     let id: number;
     return {
       async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
         message.id = id!;
-        noAwait(backingStore.onProxyMessage(message));
+        noAwait(directStoreMuxer.onProxyMessage(message));
       },
       setCallback(callback: ProxyCallback<T>) {
-        id = backingStore.on(callback);
+        id = directStoreMuxer.on(callback);
       },
       reportExceptionInHost(exception: PropagatedException): void {
-        backingStore.reportExceptionInHost(exception);
+        directStoreMuxer.reportExceptionInHost(exception);
       },
       getChannelConstructor(): ChannelConstructor {
         return {
@@ -127,7 +127,7 @@ export class BackingStore<T extends CRDTTypeRecord> implements StorageCommunicat
             throw new Error('unimplemented, should not be called');
           },
           idGenerator: null,
-          getBackingStorageProxy() {
+          getStorageProxyMuxer() {
             throw new Error('unimplemented, should not be called');
           },
           reportExceptionInHost(exception: PropagatedException): void {

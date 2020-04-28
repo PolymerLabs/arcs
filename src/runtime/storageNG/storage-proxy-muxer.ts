@@ -19,7 +19,7 @@ import {assert} from '../../platform/assert-web.js';
 import {BiMap} from '../bimap.js';
 import {noAwait} from '../util.js';
 
-export class BackingStorageProxy<T extends CRDTTypeRecord> {
+export class StorageProxyMuxer<T extends CRDTTypeRecord> {
   private readonly storageProxies = new BiMap<string, StorageProxy<T>>();
   private readonly callbacks: Dictionary<ProxyCallback<T>> = {};
   private readonly storageEndpoint: StorageCommunicationEndpoint<T>;
@@ -41,7 +41,7 @@ export class BackingStorageProxy<T extends CRDTTypeRecord> {
     return this.storageProxies.getL(muxId);
   }
 
-  createStorageCommunicationEndpointProvider(muxId: string, storageEndpoint: StorageCommunicationEndpoint<T>, backingStorageProxy: BackingStorageProxy<T>): StorageCommunicationEndpointProvider<T> {
+  createStorageCommunicationEndpointProvider(muxId: string, storageEndpoint: StorageCommunicationEndpoint<T>, storageProxyMuxer: StorageProxyMuxer<T>): StorageCommunicationEndpointProvider<T> {
     return {
       getStorageEndpoint(): StorageCommunicationEndpoint<T> {
         return {
@@ -50,7 +50,7 @@ export class BackingStorageProxy<T extends CRDTTypeRecord> {
             await storageEndpoint.onProxyMessage(message);
           },
           setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
-            backingStorageProxy.callbacks[muxId] = callback;
+            storageProxyMuxer.callbacks[muxId] = callback;
           },
           reportExceptionInHost(exception: PropagatedException): void {
             storageEndpoint.reportExceptionInHost(exception);

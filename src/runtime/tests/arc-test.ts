@@ -25,7 +25,7 @@ import {VolatileStorageKey, VolatileDriver} from '../storageNG/drivers/volatile.
 import {StorageKey} from '../storageNG/storage-key.js';
 import {Store} from '../storageNG/store.js';
 import {ReferenceModeStore} from '../storageNG/reference-mode-store.js';
-import {BackingStore} from '../storageNG/backing-store.js';
+import {DirectStoreMuxer} from '../storageNG/direct-store-muxer.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {DirectStore} from '../storageNG/direct-store.js';
 import {ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
@@ -1027,7 +1027,7 @@ describe('Arc storage migration', () => {
     assert.instanceOf(fooStore, Store);
     const activeStore = await fooStore.activate();
     assert.instanceOf(activeStore, ReferenceModeStore);
-    assert.instanceOf(activeStore['backingStore'], BackingStore);
+    assert.instanceOf(activeStore['backingStore'], DirectStoreMuxer);
     const backingStore = activeStore['containerStore'] as DirectStore<CRDTTypeRecord>;
     assert.instanceOf(backingStore.driver, VolatileDriver);
     assert.instanceOf(activeStore['containerStore'], DirectStore);

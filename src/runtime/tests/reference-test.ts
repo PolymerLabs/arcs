@@ -9,7 +9,6 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Arc} from '../arc.js';
 import {Manifest} from '../manifest.js';
 import {Loader} from '../../platform/loader.js';
 import {EntityType, ReferenceType, CollectionType, SingletonType} from '../type.js';
@@ -22,7 +21,7 @@ import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provid
 import {Runtime} from '../runtime.js';
 import {storeType, handleForStore} from '../storageNG/storage-ng.js';
 
-describe('reference mode store tests', () => {
+describe('reference', () => {
   it('can parse & validate a recipe containing references', async () => {
     const manifest = await Manifest.parse(`
         schema Result

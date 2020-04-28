@@ -27,7 +27,7 @@ export interface TypeLiteral extends Literal {
 }
 
 export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Tuple' |
-  'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle' | 'Count' | 'Singleton' | 'Backing';
+  'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle' | 'Count' | 'Singleton' | 'Mux';
 
 type TypeFromLiteral = (literal: TypeLiteral) => Type;
 
@@ -126,8 +126,8 @@ export abstract class Type {
     return this instanceof ReferenceType;
   }
 
-  isBackingType(): this is BackingType<Type> {
-    return this instanceof BackingType;
+  isMuxType(): this is MuxType<Type> {
+    return this instanceof MuxType;
   }
 
   isTupleType(): this is TupleType {
@@ -171,7 +171,7 @@ export abstract class Type {
     return false;
   }
 
-  get isBacking(): boolean {
+  get isMux(): boolean {
     return false;
   }
 
@@ -211,8 +211,8 @@ export abstract class Type {
     return new ReferenceType(this);
   }
 
-  backingOf() {
-    return new BackingType(this);
+  muxTypeOf() {
+    return new MuxType(this);
   }
 
   resolvedType(): Type {
@@ -1029,74 +1029,74 @@ export class ReferenceType<T extends Type> extends Type {
   }
 }
 
-export class BackingType<T extends Type> extends Type {
-  readonly backedType: T;
+export class MuxType<T extends Type> extends Type {
+  readonly innerType: T;
 
-  constructor(backing: T) {
-    super('Backing');
-    if (backing == null) {
-      throw new Error('invalid type! Backing tpyes must include a backing type declaration');
+  constructor(type: T) {
+    super('Mux');
+    if (type == null) {
+      throw new Error('invalid type! Mux types must include an inner type declaration');
     }
-    this.backedType = backing;
+    this.innerType = type;
   }
 
-  get isBacking(): boolean {
+  get isMux(): boolean {
     return true;
   }
 
   getContainedType(): T {
-    return this.backedType;
+    return this.innerType;
   }
 
   resolvedType() {
-    const backedType = this.backedType;
-    const resolvedBackedType = backedType.resolvedType();
-    return (backedType !== resolvedBackedType) ? new BackingType(resolvedBackedType) : this;
+    const innerType = this.innerType;
+    const resolvedInnerType = innerType.resolvedType();
+    return (innerType !== resolvedInnerType) ? new MuxType(resolvedInnerType) : this;
   }
 
   _canEnsureResolved(): boolean {
-    return this.backedType.canEnsureResolved();
+    return this.innerType.canEnsureResolved();
   }
 
   maybeEnsureResolved(): boolean {
-    return this.backedType.maybeEnsureResolved();
+    return this.innerType.maybeEnsureResolved();
   }
 
   get canWriteSuperset() {
-    return this.backedType.canWriteSuperset;
+    return this.innerType.canWriteSuperset;
   }
 
   get canReadSubset() {
-    return this.backedType.canReadSubset;
+    return this.innerType.canReadSubset;
   }
 
   _clone(variableMap: Map<string, Type>) {
-    const data = this.backedType.clone(variableMap).toLiteral();
+    const data = this.innerType.clone(variableMap).toLiteral();
     return Type.fromLiteral({tag: this.tag, data});
   }
 
-  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): BackingType<T> {
-    return new BackingType<T>(this.backedType._cloneWithResolutions(variableMap) as T);
+  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): MuxType<T> {
+    return new MuxType<T>(this.innerType._cloneWithResolutions(variableMap) as T);
   }
 
   toLiteral(): TypeLiteral {
-    return {tag: this.tag, data: this.backedType.toLiteral()};
+    return {tag: this.tag, data: this.innerType.toLiteral()};
   }
 
   toString(options = undefined): string {
-    return '#' + this.backedType.toString();
+    return '#' + this.innerType.toString();
   }
 
   toPrettyString(): string {
-    return 'Backing Type to ' + this.backedType.toPrettyString();
+    return 'Mux Type of ' + this.innerType.toPrettyString();
   }
 
   getEntitySchema(): Schema {
-    return this.backedType.getEntitySchema();
+    return this.innerType.getEntitySchema();
   }
 
   crdtInstanceConstructor<T extends CRDTTypeRecord>(): new () => CRDTModel<T> {
-    return this.backedType.crdtInstanceConstructor();
+    return this.innerType.crdtInstanceConstructor();
   }
 }
 

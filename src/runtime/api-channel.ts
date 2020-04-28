@@ -28,8 +28,8 @@ import {NoTraceWithReason, SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
 import {Ttl} from './recipe/ttl.js';
 import {Handle} from './storageNG/handle.js';
-import {BackingStore} from './storageNG/backing-store.js';
-import {BackingStorageProxy} from './storageNG/backing-storage-proxy.js';
+import {DirectStoreMuxer} from './storageNG/direct-store-muxer.js';
+import {StorageProxyMuxer} from './storageNG/storage-proxy-muxer.js';
 
 type StorageProxy = StorageProxyNG<CRDTTypeRecord>;
 
@@ -540,14 +540,14 @@ export abstract class PECOuterPort extends APIPort {
   AwaitIdle(@Direct version: number) {}
 
   abstract onRegister(handle: Store<CRDTTypeRecord>, messagesCallback: number, idCallback: number);
-  abstract onBackingRegister(handle: BackingStore<CRDTTypeRecord>, messagesCallback: number, idCallback: number);
+  abstract onDirectStoreMuxerRegister(handle: DirectStoreMuxer<CRDTTypeRecord>, messagesCallback: number, idCallback: number);
   abstract onProxyMessage(handle: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
-  abstract onBackingProxyMessage(handle: BackingStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
+  abstract onStorageProxyMuxerMessage(handle: DirectStoreMuxer<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
 
   abstract onIdle(version: number, relevance: Map<recipeParticle.Particle, number[]>);
 
-  abstract onGetBackingStore(callback: number, storageKey: string, type: Type);
-  GetBackingStoreCallback(@Initializer store: BackingStore<CRDTTypeRecord>, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string, @Direct storageKey: string) {}
+  abstract onGetDirectStoreMuxer(callback: number, storageKey: string, type: Type);
+  GetDirectStoreMuxerCallback(@Initializer store: DirectStoreMuxer<CRDTTypeRecord>, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string, @Direct storageKey: string) {}
 
   abstract onConstructInnerArc(callback: number, particle: recipeParticle.Particle);
   ConstructArcCallback(@RemoteMapped callback: number, @LocalMapped arc: {}) {}
@@ -602,17 +602,17 @@ export abstract class PECInnerPort extends APIPort {
     @Mapped handle: StorageProxy,
     @LocalMapped messagesCallback: ProxyCallback<CRDTTypeRecord>,
     @LocalMapped idCallback: Consumer<number>): void {}
-  BackingRegister(
-    @Mapped handle: BackingStorageProxy<CRDTTypeRecord>,
+  DirectStoreMuxerRegister(
+    @Mapped handle: StorageProxyMuxer<CRDTTypeRecord>,
     @LocalMapped messagesCallback: ProxyCallback<CRDTTypeRecord>,
     @LocalMapped idCallback: Consumer<number>): void {}
   ProxyMessage(@Mapped handle: StorageProxy, @Direct message: ProxyMessage<CRDTTypeRecord>): void {}
-  BackingProxyMessage(@Mapped handle: BackingStorageProxy<CRDTTypeRecord>, @Direct message: ProxyMessage<CRDTTypeRecord>): void {}
+  StorageProxyMuxerMessage(@Mapped handle: StorageProxyMuxer<CRDTTypeRecord>, @Direct message: ProxyMessage<CRDTTypeRecord>): void {}
 
   Idle(@Direct version: number, @ObjectMap(MappingType.Mapped, MappingType.Direct) relevance: Map<Particle, number[]>) {}
 
-  GetBackingStore(@LocalMapped callback: (proxy: BackingStorageProxy<CRDTTypeRecord>, key: string) => void, @Direct storageKey: string, @ByLiteral(Type) type: Type) {}
-  abstract onGetBackingStoreCallback(callback: (proxy: BackingStorageProxy<CRDTTypeRecord>, key: string) => void, type: Type, name: string, id: string, storageKey: string);
+  GetDirectStoreMuxer(@LocalMapped callback: (proxy: StorageProxyMuxer<CRDTTypeRecord>, key: string) => void, @Direct storageKey: string, @ByLiteral(Type) type: Type) {}
+  abstract onGetDirectStoreMuxerCallback(callback: (proxy: StorageProxyMuxer<CRDTTypeRecord>, key: string) => void, type: Type, name: string, id: string, storageKey: string);
 
   ConstructInnerArc(@LocalMapped callback: Consumer<string>, @Mapped particle: Particle) {}
   abstract onConstructArcCallback(callback: Consumer<string>, arc: string);
