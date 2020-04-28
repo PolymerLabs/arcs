@@ -40,9 +40,11 @@ class RecipeGraph(recipe: Recipe) {
         handleConnections.forEach { connection ->
             val handleNode = requireNotNull(handleNodesMap[connection.handle.name])
             when (connection.spec.direction) {
-                HandleMode.Read -> handleNode.addSuccessor(particleNode, connection.spec)
-                HandleMode.Write -> particleNode.addSuccessor(handleNode, connection.spec)
-                HandleMode.ReadWrite -> {
+                HandleMode.Read, HandleMode.ReadQuery, HandleMode.Query ->
+                    handleNode.addSuccessor(particleNode, connection.spec)
+                HandleMode.Write, HandleMode.WriteQuery ->
+                    particleNode.addSuccessor(handleNode, connection.spec)
+                HandleMode.ReadWrite, HandleMode.ReadWriteQuery -> {
                     handleNode.addSuccessor(particleNode, connection.spec)
                     particleNode.addSuccessor(handleNode, connection.spec)
                 }
