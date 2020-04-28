@@ -39,6 +39,11 @@ import kotlin.coroutines.coroutineContext
 @RunWith(AndroidJUnit4::class)
 class StorageServiceManagerTest {
     private suspend fun buildManager() = StorageServiceManager(coroutineContext)
+    var time = FakeTime()
+    private val entityHandleManager = EntityHandleManager(
+        time = time,
+        scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
+    )
 
     @Before
     fun setUp() {
@@ -69,7 +74,6 @@ class StorageServiceManagerTest {
         val entity2 = DummyEntity().apply { num = 2.0 }
         val entity3 = DummyEntity().apply { num = 3.0 }
 
-        var time = FakeTime()
         val handle = createCollectionHandle(time)
         time.millis = 1L
         handle.store(entity1)
@@ -87,10 +91,7 @@ class StorageServiceManagerTest {
     }
 
     private suspend fun createSingletonHandle() =
-        EntityHandleManager(
-            time = FakeTime(),
-            scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
-        ).createHandle(
+        entityHandleManager.createHandle(
             HandleSpec(
                 "name",
                 HandleMode.ReadWrite,
@@ -104,10 +105,7 @@ class StorageServiceManagerTest {
         ) as ReadWriteSingletonHandle<DummyEntity>
 
     private suspend fun createCollectionHandle(time: Time) =
-        EntityHandleManager(
-            time = time,
-            scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
-        ).createHandle(
+        entityHandleManager.createHandle(
             HandleSpec(
                 "name",
                 HandleMode.ReadWrite,

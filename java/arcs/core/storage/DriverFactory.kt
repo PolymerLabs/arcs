@@ -56,6 +56,7 @@ object DriverFactory {
             providers.value.forEach { it.removeAllEntities() }
         }
     }
+
     suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long): Job =
         coroutineScope {
             launch {
@@ -88,7 +89,7 @@ interface DriverProvider {
     ): Driver<Data>
 
     // TODO: once all DriverProviders implement this, we can remove these defaults.
-    suspend fun removeAllEntities() {}
+    suspend fun removeAllEntities() = Unit
 
-    suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {}
+    suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) = Unit
 }
