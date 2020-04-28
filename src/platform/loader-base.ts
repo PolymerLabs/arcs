@@ -107,7 +107,7 @@ export abstract class LoaderBase {
 
       // Reject invalid capitalization -- switch from upper to lower case
       if (!isCapitalized(it) && capitalGate) {
-        return false
+        return false;
       }
     }
 
