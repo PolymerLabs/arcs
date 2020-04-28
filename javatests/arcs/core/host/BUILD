@@ -95,9 +95,9 @@ arcs_kt_jvm_library(
     testonly = 1,
     srcs = [
         "ReadPerson.kt",
-        "TestPlannedParticle.kt",
         "TestHost.kt",
         "TestHostParticle.kt",
+        "TestPlannedParticle.kt",
         "TestProdParticle.kt",
         "WritePerson.kt",
     ],
