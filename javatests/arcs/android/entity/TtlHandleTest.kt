@@ -194,6 +194,7 @@ class TtlHandleTest {
         assertThat(handle2.fetch()).isEqualTo(entity2)
     }
 
+    @Suppress("UNCHECKED_CAST")
     private suspend fun createCollectionHandle(
             ttl: Ttl = Ttl.Hours(1),
             key: StorageKey = collectionKey
@@ -215,6 +216,7 @@ class TtlHandleTest {
             ttl
         ) as ReadWriteCollectionHandle<DummyEntity>
 
+    @Suppress("UNCHECKED_CAST")
     private suspend fun createSingletonHandle() =
         EntityHandleManager(
             time = fakeTime,

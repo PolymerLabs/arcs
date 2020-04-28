@@ -25,6 +25,8 @@ class TestProdArcHostService : ProdArcHostService() {
         schedulerProvider: SchedulerProvider,
         vararg particles: ParticleRegistration
     ) : TestingJvmProdHost(schedulerProvider, *particles) {
+
+        @kotlinx.coroutines.ExperimentalCoroutinesApi
         override val activationFactory = ServiceStoreFactory(
             context,
             lifecycle,

@@ -58,6 +58,7 @@ abstract class TestExternalArcHostService : Service() {
         override val resurrectionHelper: ResurrectionHelper =
             ResurrectionHelper(context, ::onResurrected)
 
+        @kotlinx.coroutines.ExperimentalCoroutinesApi
         override val activationFactory =  ServiceStoreFactory(
                 context,
                 FakeLifecycle(),

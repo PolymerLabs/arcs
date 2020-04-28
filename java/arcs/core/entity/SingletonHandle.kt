@@ -53,12 +53,12 @@ class SingletonHandle<T : Storable, R : Referencable>(
     // endregion
 
     // region implement WriteSingletonHandle<T>
-    override suspend fun store(entity: T) = checkPreconditions<Unit> {
+    override suspend fun store(element: T) = checkPreconditions<Unit> {
         storageProxy.applyOp(
             CrdtSingleton.Operation.Update(
                 name,
                 storageProxy.getVersionMap().increment(name),
-                storageAdapter.storableToReferencable(entity)
+                storageAdapter.storableToReferencable(element)
             )
         )
     }

@@ -22,6 +22,7 @@ import java.lang.IllegalStateException
 import kotlin.coroutines.EmptyCoroutineContext
 
 @RunWith(JUnit4::class)
+@kotlinx.coroutines.ExperimentalCoroutinesApi
 class HandleManagerCloseTest {
 
     val scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
@@ -117,6 +118,7 @@ class HandleManagerCloseTest {
         ).forEach { assertSuspendingThrows(IllegalStateException::class) { it() } }
     }
 
+    @Suppress("UNCHECKED_CAST")
     private suspend fun EntityHandleManager.createSingletonHandle(
         storageKey: StorageKey = singletonKey,
         name: String = "singletonHandle",
@@ -132,6 +134,7 @@ class HandleManagerCloseTest {
         ttl
     ) as ReadWriteSingletonHandle<Person>
 
+    @Suppress("UNCHECKED_CAST")
     private suspend fun EntityHandleManager.createCollectionHandle(
         storageKey: StorageKey = collectionKey,
         name: String = "collecitonKey",

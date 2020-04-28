@@ -33,12 +33,14 @@ import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlin.coroutines.EmptyCoroutineContext
 
 /** Entry UI to launch Arcs Test. */
+@ExperimentalCoroutinesApi
 class TestActivity : AppCompatActivity() {
 
     private lateinit var resultView1: TextView
@@ -119,9 +121,9 @@ class TestActivity : AppCompatActivity() {
         super.onNewIntent(intent)
 
         intent?.run {
-            if (intent.hasExtra(RESULT_NAME)) {
+            if (this@run.hasExtra(RESULT_NAME)) {
                 scope.launch {
-                    appendResultText(intent.getStringExtra(RESULT_NAME))
+                    appendResultText(this@run.getStringExtra(RESULT_NAME))
                 }
             }
         }
@@ -235,6 +237,7 @@ class TestActivity : AppCompatActivity() {
             )
         )
         if (isCollection) {
+            @Suppress("UNCHECKED_CAST")
             collectionHandle = handleManager.createHandle(
                 HandleSpec(
                     "collectionHandle",
@@ -273,6 +276,7 @@ class TestActivity : AppCompatActivity() {
                 }
             }
         } else {
+            @Suppress("UNCHECKED_CAST")
             singletonHandle = handleManager.createHandle(
                 HandleSpec(
                     "singletonHandle",
