@@ -22,3 +22,4 @@ set -x
 ./tools/sigh testShells
 ./tools/sigh lint
 ./tools/sigh test --all
+./tools/run-android-e2e-tests-on-firebase
