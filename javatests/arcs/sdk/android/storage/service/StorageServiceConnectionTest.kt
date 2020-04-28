@@ -13,7 +13,6 @@ package arcs.sdk.android.storage.service
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.ParcelableCrdtType
-import arcs.android.storage.ParcelableProxyMessage
 import arcs.android.storage.service.IResultCallback
 import arcs.android.storage.service.IStorageService
 import arcs.android.storage.service.IStorageServiceCallback
@@ -53,7 +52,7 @@ class StorageServiceConnectionTest {
             override fun registerCallback(callback: IStorageServiceCallback?): Int = 1
 
             override fun sendProxyMessage(
-                message: ParcelableProxyMessage?,
+                message: ByteArray,
                 resultCallback: IResultCallback?
             ) = Unit
 

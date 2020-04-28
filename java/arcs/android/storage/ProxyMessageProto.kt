@@ -3,13 +3,14 @@ package arcs.android.storage
 import arcs.android.crdt.toData
 import arcs.android.crdt.toOperation
 import arcs.android.crdt.toProto
+import arcs.android.util.decodeProto
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
 import com.google.protobuf.Int32Value
 
 /** Constructs a [ProxyMessage] from the given [ProxyMessageProto]. */
-fun ProxyMessageProto.toProxyMessage(): ProxyMessage<CrdtData, CrdtOperation, Any> {
+fun ProxyMessageProto.toProxyMessage(): ProxyMessage<CrdtData, CrdtOperation, Any?> {
     // Convert Int32Value to nullable Int.
     val id = if (hasId()) id.value else null
     return when (messageCase) {
@@ -52,4 +53,9 @@ fun ProxyMessage<*, *, *>.toProto(): ProxyMessageProto {
         else -> throw UnsupportedOperationException("Unknown ProxyMessage type: $this.")
     }
     return proto.build()
+}
+
+/** Decodes a [ProxyMessage] from the [ByteArray]. */
+fun ByteArray.decodeProxyMessage(): ProxyMessage<CrdtData, CrdtOperation, Any?> {
+    return decodeProto(this, ProxyMessageProto.getDefaultInstance()).toProxyMessage()
 }

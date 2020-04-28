@@ -11,7 +11,6 @@
 
 package arcs.android.storage.service;
 
-import arcs.android.storage.ParcelableProxyMessage;
 import arcs.android.storage.service.IResultCallback;
 import arcs.android.storage.service.IStorageServiceCallback;
 

@@ -20,6 +20,7 @@ import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.storage.service.BindingContext
 import arcs.android.storage.service.DeferredResult
 import arcs.android.storage.toParcelable
+import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
 import arcs.core.storage.ProxyMessage
@@ -88,7 +89,7 @@ class StorageServiceTest {
             )
             val deferredResult = DeferredResult(this.coroutineContext)
             context.sendProxyMessage(
-                proxyMessage.toParcelable(),
+                proxyMessage.toProto().toByteArray(),
                 deferredResult
             )
 
