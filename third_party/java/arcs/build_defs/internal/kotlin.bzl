@@ -148,16 +148,6 @@ def arcs_kt_native_library(**kwargs):
     kwargs["kotlincopts"] = merge_lists(kotlincopts, COMMON_KOTLINC_OPTS)
     kt_native_library(**kwargs)
 
-def arcs_kt_native_binary(**kwargs):
-    """Wrapper around kt_native_library for Arcs.
-
-    Args:
-      **kwargs: Set of args to forward to kt_native_library
-    """
-    kotlincopts = kwargs.pop("kotlincopts", [])
-    kwargs["kotlincopts"] = merge_lists(kotlincopts, COMMON_KOTLINC_OPTS)
-    kt_native_library(**kwargs)
-
 def arcs_kt_js_library(**kwargs):
     """Wrapper around kt_js_library for Arcs.
 
@@ -339,16 +329,23 @@ def arcs_kt_particles(
             )
             wasm_srcs.extend([src, wasm_annotations_file])
 
+        # Create a wasm library containing code for all the particles.
+        wasm_particle_lib = name + "-lib" + _WASM_SUFFIX
+        arcs_kt_native_library(
+            name = wasm_particle_lib,
+            srcs = wasm_srcs,
+            deps = wasm_deps,
+        )
+
         # Create a kt_native_binary that groups everything together.
         native_binary_name = name + _WASM_SUFFIX
         kt_native_binary(
             name = native_binary_name,
             entry_point = "arcs.sdk.main",
-            srcs = wasm_srcs,
             # Don't build this manually. Build the wasm_kt_binary rule below
             # instead; otherwise this rule will build a non-wasm binary.
             tags = ["manual", "notap"],
-            deps = wasm_deps,
+            deps = [wasm_particle_lib],
         )
 
         # Create a wasm binary from the native binary.

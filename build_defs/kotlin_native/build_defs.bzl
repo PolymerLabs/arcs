@@ -23,7 +23,7 @@ def _common_args(ctx, klibs):
         # Enable optimizations in the compilation
         "-opt",
         # Don't link the libraries from the dist/klib automatically
-        "-no-default-libs",
+        "-nodefaultlibs",
     ])
 
     args.add_all(klibs, before_each = "-l")
@@ -116,7 +116,7 @@ kt_wasm_library = rule(
     attrs = {
         "srcs": attr.label_list(
             allow_files = True,
-            allow_empty = False,
+            allow_empty = True,
         ),
         "deps": attr.label_list(providers = [KtNativeInfo]),
         "kotlinc_wrapper": attr.label(
