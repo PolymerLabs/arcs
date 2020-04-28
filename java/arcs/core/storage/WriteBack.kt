@@ -48,7 +48,8 @@ interface WriteBackFactory {
     fun create(
         protocol: String = "",
         /**
-         * Provide a dedicated write-back thread pool, otherwise just use kotlin I/O dispatchers.
+         * Provide a dedicated write-back thread pool or leave it to implementations to decide
+         * what threads to be designated as the write-backers.
          */
         writebackThreads: ExecutorService? = null,
         /**
