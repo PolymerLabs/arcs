@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  *
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
@@ -11,16 +11,15 @@
 
 package arcs.core.storage
 
+import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 /**
  * A layer to decouple local data updates and underlying storage layers write-back.
@@ -39,19 +38,31 @@ interface WriteBack {
      * flush all data updates to the next storage layer.
      */
     suspend fun asyncFlush(job: suspend () -> Unit)
+
+    /** Await completion of all active flush jobs. */
+    suspend fun awaitIdle()
+}
+
+/** The factory interfaces of [WriteBack] implementations. */
+interface WriteBackFactory {
+    fun create(
+        protocol: String = "",
+        /**
+         * Provide a dedicated write-back thread pool, otherwise just use kotlin I/O dispatchers.
+         */
+        writebackThreads: ExecutorService? = null,
+        /**
+         * The maximum queue size above which new incoming flush jobs will be suspended.
+         */
+        queueSize: Int = 10
+    ) : WriteBack
 }
 
 /** Write-back implementation for Arcs Stores.*/
-class StoreWriteBack(
-    private val protocol: String = "",
-    /**
-     * Provide a dedicated write-back thread pool, otherwise just use kotlin I/O dispatchers.
-     */
-    private val writebackThreads: ExecutorService? = null,
-    /**
-     * The maximum queue size above which new incoming flush jobs will be suspended.
-     */
-    private val queueSize: Int = 10
+class StoreWriteBack private constructor(
+    protocol: String,
+    writebackThreads: ExecutorService?,
+    queueSize: Int
 ) : WriteBack,
     Channel<suspend () -> Unit> by Channel(queueSize),
     CoroutineScope by CoroutineScope(
@@ -62,23 +73,64 @@ class StoreWriteBack(
     // Only apply write-back to physical storage medias.
     private val passThrough = protocol != "db"
 
+    // The number of active flush jobs.
+    private var activeJobs = 0
+
+    // The signal to block/release who are waiting for completion of active flush jobs.
+    private val awaitSignal = Mutex()
+
     init {
         // One of write-back thread(s) will wake up and execute flush jobs in FIFO order
         // when there are pending flush jobs in queue. Powerful features like batching,
         // merging, filtering, etc can be implemented at this call-site in the future.
         if (!passThrough) {
-            launch { consumeEach { it() } }
+            launch {
+                try {
+                    while (true) {
+                        exitFlushSection { receive()() }
+                    }
+                } finally {
+                    if (awaitSignal.isLocked) {
+                        awaitSignal.unlock()
+                    }
+                }
+            }
         }
     }
 
-    override suspend fun flush(job: suspend () -> Unit) {
-        if (!passThrough) withLock { job() }
-        else job()
-    }
+    override suspend fun flush(job: suspend () -> Unit) = flushSection { job() }
 
     override suspend fun asyncFlush(job: suspend () -> Unit) {
-        // Queue up a flush task can run 3x-5x faster than launching it.
-        if (!passThrough) send(job)
-        else job()
+        // Queue up a flush task can run average 3x-5x faster than launching it.
+        if (!passThrough) enterFlushSection { send(job) }
+        else flushSection { job() }
+    }
+
+    override suspend fun awaitIdle() = awaitSignal.withLock {}
+
+    private suspend inline fun flushSection(job: () -> Unit) {
+        enterFlushSection()
+        job()
+        exitFlushSection()
+    }
+
+    private suspend inline fun enterFlushSection(job: () -> Unit = {}) {
+        withLock { if (++activeJobs == 1) awaitSignal.lock() }
+        job()
+    }
+
+    private suspend inline fun exitFlushSection(job: () -> Unit = {}) {
+        job()
+        withLock { if (--activeJobs == 0) awaitSignal.unlock() }
+    }
+
+    companion object : WriteBackFactory {
+        @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+        var writeBackFactoryOverride: WriteBackFactory? = null
+
+        /** The factory of creating [StoreWriteBack] instances. */
+        override fun create(protocol: String, writebackThreads: ExecutorService?, queueSize: Int) =
+            writeBackFactoryOverride?.create(protocol, writebackThreads, queueSize)
+                ?: StoreWriteBack(protocol, writebackThreads, queueSize)
     }
 }
