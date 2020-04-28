@@ -158,7 +158,6 @@ def arcs_kt_native_binary(**kwargs):
     kwargs["kotlincopts"] = merge_lists(kotlincopts, COMMON_KOTLINC_OPTS)
     kt_native_library(**kwargs)
 
-
 def arcs_kt_js_library(**kwargs):
     """Wrapper around kt_js_library for Arcs.
 
