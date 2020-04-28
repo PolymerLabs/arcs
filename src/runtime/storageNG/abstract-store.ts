@@ -153,7 +153,7 @@ export type StoreInfo = {
   name?: string;  // TODO: Find a way to make this readonly.
   readonly originalId?: string;
   readonly source?: string;
-  readonly origin?: 'file' | 'resource' | 'storage';
+  readonly origin?: 'file' | 'resource' | 'storage' | 'inline';
   readonly description?: string;
 
   /** Trust tags claimed by this data store. */

@@ -14,4 +14,4 @@ package arcs.core.host
  * Tagging interface to identity [ArcHost] which runs isolatable particles that are expected to have
  * no platform dependencies directly on Android APIs.
  */
-interface ProdHost
+interface ProdHost : ArcHost

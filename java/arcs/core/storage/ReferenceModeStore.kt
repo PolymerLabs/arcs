@@ -142,7 +142,6 @@ class ReferenceModeStore private constructor(
                         PreEnqueuedFromBackingStore(message.toReferenceModeMessage(), muxId)
                     )
                 }
-                true
             }
         }
     )
@@ -157,7 +156,6 @@ class ReferenceModeStore private constructor(
             CoroutineScope(coroutineContext).launch {
                 receiveQueue.enqueue(Message.PreEnqueuedFromContainer(it.toReferenceModeMessage()))
             }
-            true
         })
     }
 
@@ -614,7 +612,7 @@ class ReferenceModeStore private constructor(
                     /* ktlint-enable max-line-length */
                 ) { "ReferenceMode stores only manage singletons/collections of Entities." }
 
-            val (type, containedTypeClass) = requireNotNull(
+            val (type, _) = requireNotNull(
                 options.type as? Type.TypeContainer<*>
             ) { "Type ${options.type} does not implement TypeContainer" }.let {
                 /* ktlint-disable max-line-length */

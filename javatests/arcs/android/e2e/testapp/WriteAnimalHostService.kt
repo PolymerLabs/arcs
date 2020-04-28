@@ -23,6 +23,7 @@ import arcs.jvm.host.JvmSchedulerProvider
 import arcs.sdk.Handle
 import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -62,6 +63,7 @@ class WriteAnimalHostService : ArcHostService() {
         schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
     ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
+        @ExperimentalCoroutinesApi
         override val activationFactory = ServiceStoreFactory(context, lifecycle)
 
         fun arcHostContext(arcId: String) = getArcHostContext(arcId)

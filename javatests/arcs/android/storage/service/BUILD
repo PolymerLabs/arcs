@@ -14,6 +14,7 @@ arcs_kt_android_test_suite(
     deps = [
         "//java/arcs/android/crdt",
         "//java/arcs/android/storage",
+        "//java/arcs/android/storage:proxy_message_android_proto",
         "//java/arcs/android/storage/service",
         "//java/arcs/android/storage/service:aidl",
         "//java/arcs/core/crdt",

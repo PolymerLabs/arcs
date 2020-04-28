@@ -12,9 +12,8 @@
 package arcs.android.storage.service
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.android.crdt.ParcelableCrdtType
-import arcs.android.storage.ParcelableProxyMessage
-import arcs.android.storage.toParcelable
+import arcs.android.storage.decodeProxyMessage
+import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtCount
 import arcs.core.crdt.VersionMap
 import arcs.core.data.CountType
@@ -26,19 +25,13 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.yield
 import org.junit.Before
 import org.junit.Test
@@ -52,7 +45,7 @@ class BindingContextTest {
     private lateinit var storageKey: StorageKey
 
     @Before
-    fun setup() {
+    fun setUp() {
         RamDiskDriverProvider()
         RamDisk.clear()
         storageKey = RamDiskStorageKey("myCount")
@@ -79,7 +72,7 @@ class BindingContextTest {
         val callback = DeferredProxyCallback()
         bindingContext.getLocalData(callback)
 
-        var modelUpdate = checkNotNull(callback.await().actual as? ProxyMessage.ModelUpdate)
+        var modelUpdate = callback.await().decodeProxyMessage() as ProxyMessage.ModelUpdate
         var model = checkNotNull(modelUpdate.model as? CrdtCount.Data)
 
         // Should be empty to start.
@@ -96,7 +89,7 @@ class BindingContextTest {
         val callback2 = DeferredProxyCallback()
         bindingContext.getLocalData(callback2)
 
-        modelUpdate = checkNotNull(callback2.await().actual as? ProxyMessage.ModelUpdate)
+        modelUpdate = callback2.await().decodeProxyMessage() as ProxyMessage.ModelUpdate
         model = checkNotNull(modelUpdate.model as? CrdtCount.Data)
 
         // Should contain a single entry.
@@ -111,7 +104,7 @@ class BindingContextTest {
             listOf(CrdtCount.Operation.MultiIncrement("alice", 0 to 10, 10)),
             id = 1
         )
-        bindingContext.sendProxyMessage(message.toParcelable(), deferredResult)
+        bindingContext.sendProxyMessage(message.toProto().toByteArray(), deferredResult)
 
         assertThat(deferredResult.await()).isTrue()
 
@@ -142,7 +135,7 @@ class BindingContextTest {
             store.activate().onProxyMessage(message)
         }
 
-        val operations = callback.await().actual as ProxyMessage.Operations
+        val operations = callback.await().decodeProxyMessage() as ProxyMessage.Operations
         assertThat(operations.operations).isEqualTo(message.operations)
     }
 
@@ -184,7 +177,7 @@ class BindingContextTest {
             listOf(CrdtCount.Operation.MultiIncrement("alice", 0 to 10, 10)),
             id = 1
         )
-        bindingContext.sendProxyMessage(message.toParcelable(), deferredResult)
+        bindingContext.sendProxyMessage(message.toProto().toByteArray(), deferredResult)
 
         assertThat(deferredResult.await()).isTrue()
 

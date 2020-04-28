@@ -119,13 +119,31 @@ open class EntityBase(
         collections[field] = values
     }
 
-    /** Returns the [FieldType] for the given singleton field. */
-    private fun getSingletonType(field: String) = schema.fields.singletons[field]
-        ?: throw InvalidFieldNameException(entityClassName, field, isCollection = false)
+    /**
+     * Returns the [FieldType] for the given singleton field.
+     *
+     * @throws InvalidFieldNameException if the field does not exist
+     */
+    private fun getSingletonType(field: String): FieldType {
+        return getSingletonTypeOrNull(field)
+            ?: throw InvalidFieldNameException(entityClassName, field, isCollection = false)
+    }
 
-    /** Returns the [FieldType] for the given collection field. */
-    private fun getCollectionType(field: String) = schema.fields.collections[field]
-        ?: throw InvalidFieldNameException(entityClassName, field, isCollection = true)
+    /** Returns the [FieldType] for the given singleton field, or null if it does not exist. */
+    private fun getSingletonTypeOrNull(field: String) = schema.fields.singletons[field]
+
+    /**
+     * Returns the [FieldType] for the given collection field.
+     *
+     * @throws InvalidFieldNameException if the field does not exist
+     */
+    private fun getCollectionType(field: String): FieldType {
+        return getCollectionTypeOrNull(field)
+            ?: throw InvalidFieldNameException(entityClassName, field, isCollection = true)
+    }
+
+    /** Returns the [FieldType] for the given collection field, or null if it does not exist. */
+    private fun getCollectionTypeOrNull(field: String) = schema.fields.collections[field]
 
     /** Checks that the given value is of the expected type. */
     private fun checkType(field: String, value: Any?, type: FieldType) {
@@ -185,15 +203,21 @@ open class EntityBase(
     /**
      * Populates the entity from the given [RawEntity] serialization. Must only be called on a
      * fresh, empty instance.
+     *
+     * Supports type slicing: fields that are not present in the [Schema] for this [Entity] will be
+     * silently ignored.
      */
     fun deserialize(rawEntity: RawEntity) {
         entityId = if (rawEntity.id == NO_REFERENCE_ID) null else rawEntity.id
         rawEntity.singletons.forEach { (field, value) ->
-            setSingletonValue(field, value?.let { fromReferencable(it, getSingletonType(field)) })
+            getSingletonTypeOrNull(field)?.let { type ->
+                setSingletonValue(field, value?.let { fromReferencable(it, type) })
+            }
         }
         rawEntity.collections.forEach { (field, values) ->
-            val type = getCollectionType(field)
-            setCollectionValue(field, values.map { fromReferencable(it, type) }.toSet())
+            getCollectionTypeOrNull(field)?.let { type ->
+                setCollectionValue(field, values.map { fromReferencable(it, type) }.toSet())
+            }
         }
         creationTimestamp = rawEntity.creationTimestamp
         expirationTimestamp = rawEntity.expirationTimestamp

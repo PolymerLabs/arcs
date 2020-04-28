@@ -14,6 +14,7 @@ import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -23,6 +24,7 @@ class StorageAccessService : LifecycleService() {
     private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
     private val scope: CoroutineScope = CoroutineScope(coroutineContext)
 
+    @ExperimentalCoroutinesApi
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
@@ -45,6 +47,7 @@ class StorageAccessService : LifecycleService() {
                     lifecycle
                 )
             )
+            @Suppress("UNCHECKED_CAST")
             val singletonHandle = handleManager.createHandle(
                 HandleSpec(
                     "singletonHandle",

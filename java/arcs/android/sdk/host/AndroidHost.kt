@@ -21,6 +21,7 @@ import arcs.core.storage.StoreManager
 import arcs.jvm.host.JvmHost
 import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.ServiceStoreFactory
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
  * An [ArcHost] that runs on Android inside of a [Service], uses [StorageService] for storage, and
@@ -36,6 +37,7 @@ abstract class AndroidHost(
     override val resurrectionHelper: ResurrectionHelper = ResurrectionHelper(context,
         ::onResurrected)
 
+    @ExperimentalCoroutinesApi
     override val activationFactory = ServiceStoreFactory(context, lifecycle)
 
     override fun maybeRequestResurrection(context: ArcHostContext) {

@@ -87,6 +87,10 @@ class ManifestVisitor {
     }
     assert(ast.location, 'expected manifest node to have `location`');
     assert(ast.kind, 'expected manifest node to have `kind`');
+    if (ast.kind === 'entity-inline') {
+      // This node holds an inline entity and will be handled by _processStore().
+      return;
+    }
     let childrenVisited = false;
     const visitChildren = () => {
       if (childrenVisited) {
@@ -240,7 +244,7 @@ export class Manifest {
       description?: string,
       version?: string,
       source?: string,
-      origin?: 'file' | 'resource' | 'storage',
+      origin?: 'file' | 'resource' | 'storage' | 'inline',
       referenceMode?: boolean,
       model?: {}[],
   }) {
@@ -1232,9 +1236,8 @@ ${e.message}
   }
 
   private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: LoaderBase, memoryProvider?: VolatileMemoryProvider) {
-    const name = item.name;
+    const {name, originalId, description, version, origin} = item;
     let id = item.id;
-    const originalId = item.originalId;
     let type = item.type['model'];  // Model added in _augmentAstWithTypes.
     if (id == null) {
       id = `${manifest._id}store${manifest._stores.length}`;
@@ -1253,41 +1256,28 @@ ${e.message}
     // we generate storage stubs that contain the relevant information.
     if (item.origin === 'storage') {
       return manifest.newStore({
-        type,
-        name,
-        id,
-        storageKey: item.source,
-        tags,
-        originalId,
-        claims,
-        description: item.description,
-        version: item.version,
-        origin: item.origin,
+        type, name, id, storageKey: item.source, tags,
+        originalId, claims, description, version, origin
       });
     }
 
     let json: string;
-    let source;
+    let entities;
     if (item.origin === 'file') {
       if (!loader) {
         throw new ManifestError(item.location, 'No loader available for file');
       }
       item.source = loader.join(manifest.fileName, item.source);
-      // TODO: json5?
       json = await loader.loadResource(item.source);
+      entities = this.parseJson(json, item);
     } else if (item.origin === 'resource') {
-      source = item.source;
-      json = manifest.resources[source];
+      json = manifest.resources[item.source];
       if (json == undefined) {
-        throw new ManifestError(item.location, `Resource '${source}' referenced by store '${id}' is not defined in this manifest`);
+        throw new ManifestError(item.location, `Resource '${item.source}' referenced by store '${id}' is not defined in this manifest`);
       }
-    }
-
-    let entities;
-    try {
-      entities = JSON.parse(json);
-    } catch (e) {
-      throw new ManifestError(item.location, `Error parsing JSON from '${source}' (${e.message})'`);
+      entities = this.parseJson(json, item);
+    } else if (item.origin === 'inline') {
+      entities = this.inlineEntitiesToSerialisedFormat(manifest, item);
     }
 
     const storageKey = item['storageKey'] || manifest.createLocalDataStorageKey();
@@ -1300,15 +1290,41 @@ ${e.message}
     // Note that we used to use a singleton entity ID (if present) instead of the hash. It seems
     // cleaner not to rely on that.
     if (!item.id) {
-      const entityHash = await digest(json);
+      const entityHash = await digest(json || JSON.stringify(entities));
       id = `${id}:${entityHash}`;
     }
     if (!type.isSingleton && !type.isCollectionType()) {
       type = new SingletonType(type);
     }
-    return manifest.newStore({type, name, id, storageKey, tags, originalId, claims,
-      description: item.description, version: item.version || null, source: item.source,
-      origin: item.origin, referenceMode: false, model: entities});
+    return manifest.newStore({
+      type, name, id, storageKey, tags, originalId, claims, description, version,
+      source: item.source, origin, referenceMode: false, model: entities
+    });
+  }
+
+  private static parseJson(json, item) {
+    try {
+      return JSON.parse(json);
+    } catch (e) {
+      throw new ManifestError(item.location, `Error parsing JSON from '${item.source}' (${e.message})'`);
+    }
+  }
+
+  private static inlineEntitiesToSerialisedFormat(manifest: Manifest, item: AstNode.ManifestStorage) {
+    const values = {};
+    const version = {inline: 1};
+    for (const entityAst of item.entities) {
+      const rawData = {};
+      for (const [name, descriptor] of Object.entries(entityAst.fields)) {
+        rawData[name] = descriptor.value;
+      }
+      const id = manifest.generateID('inline').toString();
+      values[id] = {
+        value: {id, creationTimestamp: 0, rawData},
+        version
+      };
+    }
+    return {root: {values, version}, locations: {}};
   }
 
   private _newRecipe(name: string): Recipe {

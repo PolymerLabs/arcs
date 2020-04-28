@@ -25,7 +25,7 @@ import {Services} from './services.js';
 import {floatingPromiseToAudit, noAwait} from './util.js';
 import {Arc} from './arc.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
-import {ProxyMessage, Store} from './storageNG/store.js';
+import {ProxyMessage, Store, StorageMode} from './storageNG/store.js';
 import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {NoTrace, SystemTrace} from '../tracelib/systrace.js';
 import {Client, getClientClass} from '../tracelib/systrace-clients.js';
@@ -217,10 +217,15 @@ class PECOuterPortImpl extends PECOuterPort {
       throw new Error(`Don't know how to invent new storage keys for new storage stack when we only have type information`);
     }
     const key = StorageKeyParser.parse(storageKey);
-    // TODO(shanestephens): We could probably register the active store here, but at the moment onRegister and onProxyMessage both
-    // expect to be able to do activation
-    const storeBase = new Store(type, {id: storageKey, exists: Exists.MayExist, storageKey: key});
-    this.GetBackingStoreCallback(storeBase, callback, type, type.toString(), storageKey, storageKey);
+    const backingStore = await BackingStore.construct({
+      storageKey: key,
+      type: type.getContainedType(),
+      mode: StorageMode.Backing,
+      exists: Exists.MayExist,
+      baseStore: null,
+      versionToken: null
+    });
+    this.GetBackingStoreCallback(backingStore, callback, type, type.toString(), storageKey, storageKey);
   }
 
   onConstructInnerArc(callback: number, particle: Particle) {

@@ -14,9 +14,12 @@ import {ReferenceType, EntityType} from './type.js';
 import {Entity, SerializedEntity} from './entity.js';
 import {StorageProxy} from './storageNG/storage-proxy.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
-import {CollectionHandle, Handle} from './storageNG/handle.js';
 import {ChannelConstructor} from './channel-constructor.js';
-import {CRDTEntityCollection} from './storageNG/storage-ng.js';
+import {CRDTEntityTypeRecord, Identified} from './crdt/crdt-entity.js';
+import {EntityHandle, Handle} from './storageNG/handle.js';
+import {BackingStorageProxy} from './storageNG/backing-storage-proxy.js';
+import {StorageKeyParser} from './storageNG/storage-key-parser.js';
+import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 
 enum ReferenceMode {Unstored, Stored}
 
@@ -28,25 +31,40 @@ export type SerializedReference = {
   expirationTimestamp?: number;
 };
 
+function toDate(timestamp?: Date|number): Date|null {
+  if (timestamp == undefined) {
+    return null;
+  }
+  if (typeof(timestamp) === 'number') {
+    return new Date(timestamp);
+  }
+  return timestamp;
+}
+
 export class Reference implements Storable {
   public entity: Entity|null = null;
   public type: ReferenceType<EntityType>;
 
   public readonly id: string;
-  private readonly creationTimestamp: Date;
-  private readonly expirationTimestamp: Date;
+  private readonly creationTimestamp: Date|null;
+  private readonly expirationTimestamp: Date|null;
   private entityStorageKey: string;
+  private backingKey: string;
   private readonly context: ChannelConstructor;
-  private storageProxy: StorageProxy<CRDTEntityCollection> = null;
-  protected handle: CollectionHandle<Entity>|null = null;
+  private storageProxy: StorageProxy<CRDTEntityTypeRecord<Identified, Identified>> = null;
+  protected handle: EntityHandle<Entity>|null = null;
 
   [SYMBOL_INTERNALS]: {serialize: () => SerializedEntity};
 
-  constructor(data: {id: string, creationTimestamp?: Date | null, expirationTimestamp?: Date | null, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor) {
+  constructor(data: {id: string, creationTimestamp?: Date|number, expirationTimestamp?: Date|number, entityStorageKey: string | null}, type: ReferenceType<EntityType>, context: ChannelConstructor) {
     this.id = data.id;
-    this.creationTimestamp = data.creationTimestamp;
-    this.expirationTimestamp = data.expirationTimestamp;
+    this.creationTimestamp = toDate(data.creationTimestamp);
+    this.expirationTimestamp = toDate(data.expirationTimestamp);
     this.entityStorageKey = data.entityStorageKey;
+    if (this.entityStorageKey == null) {
+      throw Error('entity storage key must be defined');
+    }
+    this.backingKey = Reference.extractBackingKey(this.entityStorageKey);
     this.context = context;
     this.type = type;
     this[SYMBOL_INTERNALS] = {
@@ -59,15 +77,11 @@ export class Reference implements Storable {
     };
   }
 
-  protected async ensureStorageProxy(): Promise<void> {
+  protected async ensureBackingStorageProxy(): Promise<void> {
     if (this.storageProxy == null) {
-      this.storageProxy = await this.context.getStorageProxy(this.entityStorageKey, this.type.referredType) as StorageProxy<CRDTEntityCollection>;
-      this.handle = new CollectionHandle(this.context.generateID(), this.storageProxy, this.context.idGenerator, null, true, true);
-      if (this.entityStorageKey) {
-        assert(this.entityStorageKey === this.storageProxy.storageKey, `reference's storageKey differs from the storageKey of established channel.`);
-      } else {
-        this.entityStorageKey = this.storageProxy.storageKey;
-      }
+      const backingStorageProxy = await this.context.getBackingStorageProxy(this.backingKey, this.type.referredType);
+      this.storageProxy = backingStorageProxy.getStorageProxy(this.id);
+      this.handle = new EntityHandle(this.context.generateID(), this.storageProxy, this.context.idGenerator, null, true, true, this.id);
     }
   }
 
@@ -78,9 +92,9 @@ export class Reference implements Storable {
       return this.entity;
     }
 
-    await this.ensureStorageProxy();
+    await this.ensureBackingStorageProxy();
 
-    this.entity = await this.handle.fetch(this.id);
+    this.entity = await this.handle.fetch();
     return this.entity;
   }
 
@@ -93,11 +107,21 @@ export class Reference implements Storable {
     };
   }
 
+  static extractBackingKey(storageKey: string): string {
+    const key = StorageKeyParser.parse(storageKey);
+    if (key instanceof ReferenceModeStorageKey) {
+      return key.backingKey.toString();
+    } else {
+      throw Error('References must reference an entity in ReferenceModeStore');
+    }
+  }
+
   // Called by WasmParticle to retrieve the entity for a reference held in a wasm module.
   static async retrieve(pec: ChannelConstructor, id: string, storageKey: string, entityType: EntityType, particleId: string) {
-    const proxy = await pec.getStorageProxy(storageKey, entityType) as StorageProxy<CRDTEntityCollection>;
-    const handle = new CollectionHandle<Entity>(particleId, proxy, pec.idGenerator, null, true, true);
-    return await handle.fetch(id);
+    const backingProxy = await pec.getBackingStorageProxy(this.extractBackingKey(storageKey), entityType) as BackingStorageProxy<CRDTEntityTypeRecord<Identified, Identified>>;
+    const proxy = backingProxy.getStorageProxy(id);
+    const handle = new EntityHandle<Entity>(particleId, proxy, pec.idGenerator, null, true, true, id);
+    return await handle.fetch();
   }
 }
 
@@ -129,7 +153,7 @@ export abstract class ClientReference extends Reference {
     if (this.mode === ReferenceMode.Unstored) {
       return null;
     }
-    await this.ensureStorageProxy();
+    await this.ensureBackingStorageProxy();
     return super.dereference();
   }
 

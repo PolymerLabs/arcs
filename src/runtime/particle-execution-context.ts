@@ -20,7 +20,7 @@ import {StorageProxy} from './storageNG/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storageNG/store.js';
 import {PropagatedException} from './arc-exceptions.js';
-import {Type, CollectionType} from './type.js';
+import {Type, BackingType} from './type.js';
 import {MessagePort} from './message-channel.js';
 import {WasmContainer, WasmParticle} from './wasm.js';
 import {Dictionary} from './hot.js';
@@ -65,6 +65,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   private readonly loader: Loader;
   private readonly pendingLoads = <Promise<void>[]>[];
   private readonly keyedProxies: Dictionary<StorageProxy<CRDTTypeRecord> | Promise<StorageProxy<CRDTTypeRecord>>> = {};
+  private readonly keyedBackingProxies: Dictionary<BackingStorageProxy<CRDTTypeRecord> | Promise<BackingStorageProxy<CRDTTypeRecord>>> = {};
   private readonly wasmContainers: Dictionary<WasmContainer> = {};
 
   readonly idGenerator: IdGenerator;
@@ -79,13 +80,13 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       }
 
       onGetBackingStoreCallback(
-          callback: (proxy: StorageProxy<CRDTTypeRecord>, key: string) => void,
+          callback: (backingProxy: BackingStorageProxy<CRDTTypeRecord>, key: string) => void,
           type: Type,
           name: string,
           id: string,
           storageKey: string) {
-        const proxy = new StorageProxy(id, pec, type, storageKey);
-        return [proxy, () => callback(proxy, storageKey)];
+        const backingProxy = new BackingStorageProxy(pec, type, storageKey);
+        return [backingProxy, () => callback(backingProxy, storageKey)];
       }
 
       onCreateHandleCallback(
@@ -271,22 +272,22 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   }
 
   /**
-   * Establishes a storage proxy that's connected to the provided storage key.
+   * Establishes a backing storage proxy that's connected to the provided backing storage key.
    */
-  async getStorageProxy(storageKey: string, type: Type): Promise<StorageProxy<CRDTTypeRecord>> {
-    type = new CollectionType(type);
-    if (!this.keyedProxies[storageKey]) {
-      this.keyedProxies[storageKey] = new Promise((resolve, reject) => {
-        this.apiPort.GetBackingStore((proxy, newStorageKey) => {
+  async getBackingStorageProxy(storageKey: string, type: Type): Promise<BackingStorageProxy<CRDTTypeRecord>> {
+    type = new BackingType(type);
+    if (!this.keyedBackingProxies[storageKey]) {
+      this.keyedBackingProxies[storageKey] = new Promise((resolve, reject) => {
+        this.apiPort.GetBackingStore((backingProxy, newStorageKey) => {
           if (storageKey !== newStorageKey) {
             throw new Error('returned storage key should always match provided storage key for new storage stack');
           }
-          this.keyedProxies[newStorageKey] = proxy;
-          resolve(proxy);
+          this.keyedBackingProxies[newStorageKey] = backingProxy;
+          resolve(backingProxy);
         }, storageKey, type);
       });
     }
-    return this.keyedProxies[storageKey];
+    return this.keyedBackingProxies[storageKey];
   }
 
   capabilities(hasInnerArcs: boolean): Capabilities {

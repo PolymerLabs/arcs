@@ -22,6 +22,7 @@ import arcs.android.storage.service.BindingContext
 import arcs.android.storage.service.BindingContextStatsImpl
 import arcs.android.storage.service.DeferredResult
 import arcs.android.storage.toParcelable
+import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
 import arcs.core.storage.ProxyMessage
@@ -83,7 +84,7 @@ class ServiceStoreTest {
             ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
                 listOf(CrdtCount.Operation.Increment("alice", 0 to 1)),
                 null
-            ).toParcelable(),
+            ).toProto().toByteArray(),
             deferredResult
         )
 

@@ -12,9 +12,8 @@
 package arcs.android.storage.service
 
 import androidx.annotation.VisibleForTesting
-import arcs.android.crdt.toParcelable
-import arcs.android.storage.ParcelableProxyMessage
-import arcs.android.storage.toParcelable
+import arcs.android.storage.decodeProxyMessage
+import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
@@ -69,7 +68,7 @@ class BindingContext(
                         ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>(
                             model = activeStore.getLocalData(),
                             id = null
-                        ).toParcelable()
+                        ).toProto().toByteArray()
                     )
                 }
             }
@@ -85,7 +84,7 @@ class BindingContext(
                 // so that we catch any exceptions thrown within and re-throw on the same coroutine
                 // as the callback-caller.
                 supervisorScope {
-                    callback.onProxyMessage(message.toParcelable())
+                    callback.onProxyMessage(message.toProto().toByteArray())
                 }
             }
 
@@ -107,7 +106,7 @@ class BindingContext(
 
     @Suppress("UNCHECKED_CAST")
     override fun sendProxyMessage(
-        message: ParcelableProxyMessage,
+        proxyMessage: ByteArray,
         resultCallback: IResultCallback
     ) {
         bindingContextStatisticsSink.traceTransaction("sendProxyMessage") {
@@ -115,7 +114,7 @@ class BindingContext(
                 resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
 
                 val activeStore = store.activate() as ActiveStore<CrdtData, CrdtOperation, Any?>
-                val actualMessage = message.actual as ProxyMessage<CrdtData, CrdtOperation, Any?>
+                val actualMessage = proxyMessage.decodeProxyMessage()
 
                 if (activeStore.onProxyMessage(actualMessage)) {
                     onProxyMessage(store.storageKey, actualMessage)

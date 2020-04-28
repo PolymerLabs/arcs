@@ -10,6 +10,7 @@
  */
 package arcs.jvm.host
 
+import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
 import arcs.core.host.api.Particle
@@ -22,7 +23,7 @@ import kotlin.reflect.KClass
  *
  * @property host which [TargetHost] to filter for.
  */
-fun scanForParticles(host: KClass<out ProdHost> = ProdHost::class): Array<ParticleRegistration> =
+fun scanForParticles(host: KClass<out ArcHost> = ProdHost::class): Array<ParticleRegistration> =
     ServiceLoader.load(Particle::class.java).iterator().asSequence().filter { particle ->
             isParticleForHost(host, particle::class.java)
         }.map { particle ->
@@ -31,5 +32,5 @@ fun scanForParticles(host: KClass<out ProdHost> = ProdHost::class): Array<Partic
             }
         }.toList().toTypedArray()
 
-private fun isParticleForHost(host: KClass<out ProdHost>, particle: Class<out Particle>) =
+private fun isParticleForHost(host: KClass<out ArcHost>, particle: Class<out Particle>) =
     host == (particle.getAnnotation(TargetHost::class.java)?.value ?: ProdHost::class)

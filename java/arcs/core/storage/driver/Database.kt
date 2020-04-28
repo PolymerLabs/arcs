@@ -283,6 +283,7 @@ class DatabaseDriver<Data : Any>(
         token = Random.nextInt().toString()
     }
 
+    @Suppress("UNCHECKED_CAST")
     private suspend fun getDatabaseData(): Pair<Data?, Int?> {
         var dataAndVersion: Pair<Data?, Int?> = null to null
         database.get(

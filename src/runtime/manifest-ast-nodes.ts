@@ -138,10 +138,11 @@ export interface ManifestStorage extends BaseNode {
   version: string|null;
   tags: TagList;
   source: string;
-  origin: 'file' | 'resource' | 'storage';
+  origin: 'file' | 'resource' | 'storage' | 'inline';
   description: string|null;
   claim: ManifestStorageClaim;
-  storageKey?: string;
+  storageKey: string|null;
+  entities: ManifestStorageInlineEntity[]|null;
 }
 
 export type ManifestStorageType = SchemaInline | CollectionType | BigCollectionType | TypeName;
@@ -168,6 +169,23 @@ export interface ManifestStorageResourceSource extends ManifestStorageSource {
 
 export interface ManifestStorageStorageSource extends ManifestStorageSource {
   origin: 'storage';
+}
+
+export interface ManifestStorageInlineSource extends ManifestStorageSource {
+  origin: 'inline';
+  entities: ManifestStorageInlineEntity[];
+}
+
+export type ManifestStorageInlineData =
+  string | number | boolean | Uint8Array | {id: string, entityStorageKey: string};
+
+export interface ManifestStorageInlineEntity extends BaseNode {
+  kind: 'entity-inline';
+  fields: {[key: string]:
+    {kind: 'entity-value', value: ManifestStorageInlineData} |
+    {kind: 'entity-collection', value: ManifestStorageInlineData[]} |
+    {kind: 'entity-tuple', value: ManifestStorageInlineData[]}
+  };
 }
 
 export interface Meta extends BaseNode {

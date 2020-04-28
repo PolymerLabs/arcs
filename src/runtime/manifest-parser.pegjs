@@ -27,6 +27,7 @@
   function extractIndented(items) {
     return items[1].map(item => item[1]);
   }
+
   function optional<S, R>(result: S, extract: (source: S) => R, defaultValue: R): R {
     if (result !== null) {
       const value = extract(result);
@@ -36,6 +37,7 @@
     }
     return defaultValue === null ? null : defaultValue;
   }
+
   function checkNormal(result, path: string = '') {
     if (['string', 'number', 'boolean'].includes(typeof result) || result === null) {
       return;
@@ -54,11 +56,15 @@
     if (result.model) {
       internalError(`Unexpected 'model' in ${JSON.stringify(result)} at ${path}`);
     }
+
     if (!result.location) {
       internalError(`No 'location' in ${JSON.stringify(result)} at ${path}`);
     }
     if (!result.kind) {
       internalError(`No 'kind' in ${JSON.stringify(result)} at ${path}`);
+    }
+    if (result.kind === 'entity-inline') {
+      return;
     }
     for (const key of Object.keys(result)) {
       if (['location', 'kind'].includes(key)) {
@@ -108,6 +114,16 @@
       type,
       name: name || '*',
     });
+  }
+
+  // Expected usage to parse a list of bracket-enclosed Things:
+  // '[' multiLineSpace parts:(Thing whiteSpace? ',' multiLineSpace)* end:Thing? multiLineSpace ']'
+  function combineMultiLine<T>(parts: [T, ...any[]][], end: T | null): T[] {
+    const res = parts.map(p => p[0]);
+    if (end != null) {
+      res.push(end);
+    }
+    return res;
   }
 
   function internalError(message: string) {
@@ -184,7 +200,6 @@ ResourceBody = lines:(SameOrMoreIndent ResourceLine)+ {
 
 ResourceLine = [^\n]* eol { return text(); }
 
-// TODO: Entity syntax.
 ManifestStorage
   = 'store' whiteSpace name:upperIdent whiteSpace 'of' whiteSpace type:ManifestStorageType id:(whiteSpace id)? originalId:('!!' id)?
     version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace source:ManifestStorageSource eolWhiteSpace
@@ -220,7 +235,8 @@ ManifestStorage
       tags: optional(tags, tags => tags[1], null),
       source: source.source,
       origin: source.origin,
-      storageKey: source['storageKey'] || null,
+      storageKey: source.storageKey || null,
+      entities: source.entities || null,
       description,
       claim,
     });
@@ -230,7 +246,7 @@ ManifestStorageType
   = SchemaInline / SingletonType / CollectionType / BigCollectionType / TypeName
 
 ManifestStorageSource
-  = ManifestStorageFileSource / ManifestStorageResourceSource / ManifestStorageStorageSource
+  = ManifestStorageFileSource / ManifestStorageResourceSource / ManifestStorageStorageSource / ManifestStorageInlineSource
 
 ManifestStorageFileSource
   = 'in' whiteSpace source:id { return toAstNode<AstNode.ManifestStorageFileSource>({kind: 'manifest-storage-source', origin: 'file', source }); }
@@ -248,6 +264,91 @@ ManifestStorageResourceSource
 
 ManifestStorageStorageSource
   = 'at' whiteSpace source:id { return toAstNode<AstNode.ManifestStorageStorageSource>({kind: 'manifest-storage-source', origin: 'storage', source }); }
+
+// TODO: allow a single entity to be declared without the outermost enclosing braces: store ... with {n: 3, t: 'a'}
+ManifestStorageInlineSource
+  = 'with' multiLineSpace '{' multiLineSpace parts:(ManifestStorageInlineEntity whiteSpace? ',' multiLineSpace)*
+    end:ManifestStorageInlineEntity? multiLineSpace '}'
+  {
+    return toAstNode<AstNode.ManifestStorageInlineSource>({
+      kind: 'manifest-storage-source',
+      origin: 'inline',
+      source: 'inline',
+      entities: combineMultiLine(parts, end)
+    });
+  }
+
+ManifestStorageInlineEntity
+  = '{' multiLineSpace parts:(ManifestStorageInlineEntityField whiteSpace? ',' multiLineSpace)*
+    end:ManifestStorageInlineEntityField? multiLineSpace '}'
+  {
+    return toAstNode<AstNode.ManifestStorageInlineEntity>({
+      kind: 'entity-inline',
+      fields: Object.assign({}, ...combineMultiLine(parts, end))
+    });
+  }
+
+ManifestStorageInlineEntityField
+  = name:fieldName whiteSpace? ':' multiLineSpace
+    value:(ManifestStorageInlineValue / ManifestStorageInlineCollection / ManifestStorageInlineTuple)
+  {
+    return {[name]: value};
+  }
+
+ManifestStorageInlineValue
+  = value:ManifestStorageInlineData
+  {
+    return {kind: 'entity-value', value};
+  }
+
+ManifestStorageInlineCollection
+  = '[' multiLineSpace parts:(ManifestStorageInlineData whiteSpace? ',' multiLineSpace)*
+    end:ManifestStorageInlineData? multiLineSpace ']'
+  {
+    const value = combineMultiLine(parts, end);
+    if (value.length > 1) {
+      const typeFor = v => v.constructor.name === 'Uint8Array' ? 'bytes' : typeof(v);
+      const firstType = typeFor(value[0]);
+      if (value.some(item => typeFor(item) !== firstType)) {
+        error('Collection fields for inline entities must have a consistent value type');
+      }
+    }
+    return {kind: 'entity-collection', value};
+  }
+
+ManifestStorageInlineTuple
+  = '(' multiLineSpace parts:(ManifestStorageInlineData whiteSpace? ',' multiLineSpace)*
+    end:ManifestStorageInlineData? multiLineSpace ')'
+  {
+    return {kind: 'entity-tuple', value: combineMultiLine(parts, end)};
+  }
+
+ManifestStorageInlineData
+  = QuotedString
+  / '-'? [0-9]+ ('.' [0-9]+)?
+  {
+    return Number(text());
+  }
+  / bool:('true'i / 'false'i)
+  {
+    return bool.toLowerCase() === 'true';
+  }
+  / '|' multiLineSpace parts:(HexByte whiteSpace? ',' multiLineSpace)* end:HexByte? multiLineSpace '|'
+  {
+    return new Uint8Array(combineMultiLine(parts, end));
+  }
+  / '<' multiLineSpace id:QuotedString whiteSpace? ',' multiLineSpace entityStorageKey:QuotedString multiLineSpace '>'
+  {
+    if (id.length === 0 || entityStorageKey.length === 0) {
+      error('Reference fields for inline entities must have both an id and a storage key');
+    }
+    return {id, entityStorageKey};
+  }
+
+HexByte = [0-9a-f]i[0-9a-f]i?
+  {
+    return Number('0x' + text());
+  }
 
 ManifestStorageItem
   = ManifestStorageDescription
@@ -580,7 +681,7 @@ ParticleHandleConnectionType
   / ReferenceType
   / SlotType
   / TupleType
-  / type: SchemaInline whiteSpace? refinement:Refinement? 
+  / type: SchemaInline whiteSpace? refinement:Refinement?
   {
     type.refinement = refinement;
     return type;
@@ -631,7 +732,7 @@ ReferenceType
   }
 
 TupleType  "a tuple of types (e.g. (A, &B, [C]))"
-  = '(' eolPlusWhiteSpace? first:ParticleHandleConnectionType rest:(eolPlusWhiteSpace? ',' eolPlusWhiteSpace? ParticleHandleConnectionType)* eolPlusWhiteSpace? ',' ? eolPlusWhiteSpace? ')'
+  = '(' multiLineSpace first:ParticleHandleConnectionType rest:(multiLineSpace ',' multiLineSpace ParticleHandleConnectionType)* multiLineSpace ',' ? multiLineSpace ')'
   {
     return toAstNode<AstNode.TupleType>({
       kind: 'tuple-type',
@@ -689,7 +790,7 @@ TypeName
   }
 
 TypeVariableList
-  = head:TypeVariable tail:(',' eolPlusWhiteSpace? TypeVariable)*
+  = head:TypeVariable tail:(',' multiLineSpace TypeVariable)*
   {
     return [head, ...tail.map(a => a[2])];
   }
@@ -1230,7 +1331,7 @@ RecipeSlot
   }
 
 SchemaInline
-  = names:((upperIdent / '*') whiteSpace?)* '{' eolPlusWhiteSpace? fields:(SchemaInlineField (',' eolPlusWhiteSpace? SchemaInlineField)*)? ','? eolPlusWhiteSpace? '}'
+  = names:((upperIdent / '*') whiteSpace?)* '{' multiLineSpace fields:(SchemaInlineField (',' multiLineSpace SchemaInlineField)*)? ','? multiLineSpace '}'
   {
     return toAstNode<AstNode.SchemaInline>({
       kind: 'schema-inline',
@@ -1564,6 +1665,19 @@ ReservedWord
   expected(`identifier`);
 }
 
+QuotedString "a 'quoted string'"
+  = "'" parts:( [^\\']* "\\" . )* end:[^']* "'"
+  {
+    parts = parts.map(([text, slash, char]) => {
+      switch (char) {
+        case 't': char = '\t'; break;
+        case 'n': char = '\n'; break;
+      }
+      return text.join('') + char;
+    });
+    return parts.join('') + end.join('');
+ }
+
 backquotedString "a `backquoted string`"
   = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 id "an identifier (e.g. 'id')"
@@ -1589,7 +1703,7 @@ eolWhiteSpace "a group of new lines (and optionally comments)"
   = spaceChar* !.
   / spaceChar* '//' [^\n]* eolWhiteSpace
   / spaceChar* eol eolWhiteSpace?
-eolPlusWhiteSpace "eol plus trailing whitespace"
+multiLineSpace "optional whitespace including newlines and comments"
   = eolWhiteSpace? whiteSpace?
 eol "a new line"
   = "\r"? "\n" "\r"?

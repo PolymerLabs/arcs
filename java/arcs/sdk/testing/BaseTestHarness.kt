@@ -129,7 +129,7 @@ open class BaseTestHarness<P : Particle>(
         particle.onCreate()
 
         val readySoFar = atomic(0)
-        val readyJobs = handles.map { (name, handle) ->
+        val readyJobs = handles.map { (_, handle) ->
             launch {
                 // TODO: switch to this version when onReady is non-suspending:
                 // suspendCoroutine<Unit> { cont ->
