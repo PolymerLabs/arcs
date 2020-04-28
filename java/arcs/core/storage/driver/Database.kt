@@ -92,6 +92,14 @@ object DatabaseDriverProvider : DriverProvider {
         ).register()
     }
 
+    override suspend fun removeAllEntities() {
+        manager.removeAllEntities()
+    }
+
+    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
+        manager.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
+    }
+
     /**
      * Configures the [DatabaseDriverProvider] with the given [schemaLookup] and registers it
      * with the [DriverFactory].
@@ -296,6 +304,7 @@ class DatabaseDriver<Data : Any>(
             },
             schema
         )?.also {
+            @Suppress("UNCHECKED_CAST")
             dataAndVersion = when (it) {
                 is DatabaseData.Entity ->
                     it.rawEntity.toCrdtEntityData(it.versionMap) { refable ->

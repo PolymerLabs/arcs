@@ -15,6 +15,9 @@ import arcs.core.type.Type
 import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 /** Factory with which to register and retrieve [Driver]s. */
 object DriverFactory {
@@ -48,6 +51,21 @@ object DriverFactory {
             ?.getDriver(storageKey, dataClass, type)
     }
 
+    suspend fun removeAllEntities(): Job = coroutineScope {
+        launch {
+            providers.value.forEach { it.removeAllEntities() }
+        }
+    }
+
+    suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long): Job =
+        coroutineScope {
+            launch {
+                providers.value.forEach {
+                    it.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
+                }
+            }
+        }
+
     /** Registers a new [DriverProvider]. */
     fun register(driverProvider: DriverProvider) = providers.update { it + setOf(driverProvider) }
 
@@ -69,4 +87,9 @@ interface DriverProvider {
         dataClass: KClass<Data>,
         type: Type
     ): Driver<Data>
+
+    // TODO: once all DriverProviders implement this, we can remove these defaults.
+    suspend fun removeAllEntities() = Unit
+
+    suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) = Unit
 }

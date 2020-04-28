@@ -62,14 +62,11 @@ class FakeDatabaseManager : DatabaseManager {
         throw UnsupportedOperationException("Fake database manager cannot remove entities.")
     }
 
-    override suspend fun removeAllEntities(): Job {
+    override suspend fun removeAllEntities() {
         throw UnsupportedOperationException("Fake database manager cannot remove entities.")
     }
 
-    override suspend fun removeEntitiesCreatedBetween(
-        startTimeMillis: Long,
-        endTimeMillis: Long
-    ): Job {
+    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
         throw UnsupportedOperationException("Fake database manager cannot remove entities.")
     }
 }
