@@ -97,15 +97,20 @@ class StoreWriteBack private constructor(
         }
     }
 
-    override suspend fun flush(job: suspend () -> Unit) = flushSection { job() }
+    override suspend fun flush(job: suspend () -> Unit) {
+        if (!passThrough) flushSection { job() }
+        else job()
+    }
 
     override suspend fun asyncFlush(job: suspend () -> Unit) {
         // Queue up a flush task can run average 3x-5x faster than launching it.
         if (!passThrough) enterFlushSection { send(job) }
-        else flushSection { job() }
+        else job()
     }
 
-    override suspend fun awaitIdle() = awaitSignal.withLock {}
+    override suspend fun awaitIdle() {
+        if (!passThrough) awaitSignal.withLock {}
+    }
 
     private suspend inline fun flushSection(job: () -> Unit) {
         enterFlushSection()

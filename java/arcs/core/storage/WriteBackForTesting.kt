@@ -54,14 +54,14 @@ class WriteBackForTesting private constructor(
         }
     }
 
-    override suspend fun flush(job: suspend () -> Unit) = flushSection { job() }
+    override suspend fun flush(job: suspend () -> Unit) {
+        if (!passThrough) flushSection { job() }
+        else job()
+    }
 
     override suspend fun asyncFlush(job: suspend () -> Unit) {
-        if (!passThrough && writeBackScope != null) {
-            enterFlushSection { send(job) }
-        } else {
-            flush(job)
-        }
+        if (!passThrough && writeBackScope != null) enterFlushSection { send(job) }
+        else job()
     }
 
     override suspend fun awaitIdle() = awaitSignal.withLock {}
