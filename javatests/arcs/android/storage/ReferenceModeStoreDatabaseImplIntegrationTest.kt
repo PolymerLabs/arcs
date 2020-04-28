@@ -34,6 +34,8 @@ import arcs.core.storage.Reference
 import arcs.core.storage.ReferenceModeStore
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StoreOptions
+import arcs.core.storage.StoreWriteBack
+import arcs.core.storage.WriteBackForTesting
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.DatabaseDriver
 import arcs.core.storage.driver.DatabaseDriverProvider
@@ -48,6 +50,8 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestCoroutineDispatcher
+import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
@@ -75,17 +79,21 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         ),
         hash
     )
+    private val testScope = TestCoroutineScope(TestCoroutineDispatcher())
     private lateinit var databaseFactory: AndroidSqliteDatabaseManager
 
     @Before
     fun setUp() = runBlockingTest {
         DriverFactory.clearRegistrations()
         databaseFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
+        WriteBackForTesting.writeBackScope = testScope
+        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         DatabaseDriverProvider.configure(databaseFactory) { schema }
     }
 
     @After
     fun tearDown() = runBlockingTest {
+        WriteBackForTesting.clear()
         CapabilitiesResolver.reset()
         databaseFactory.resetAll()
     }
@@ -308,7 +316,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         assertThat(storedBob.toRawEntity()).isEqualTo(bob)
         assertThat(storedBob.toRawEntity().creationTimestamp).isEqualTo(10)
         assertThat(storedBob.toRawEntity().expirationTimestamp).isEqualTo(20)
-        
+
         // Check Bob in the database.
         val backingKey = activeStore.backingStore.storageKey as DatabaseStorageKey
         val database = databaseFactory.getDatabase(backingKey.dbName, true)
