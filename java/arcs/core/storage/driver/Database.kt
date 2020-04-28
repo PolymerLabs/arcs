@@ -92,8 +92,8 @@ object DatabaseDriverProvider : DriverProvider {
         ).register()
     }
 
-    override suspend fun removeAllEntities() { 
-        manager.removeAllEntities() 
+    override suspend fun removeAllEntities() {
+        manager.removeAllEntities()
     }
 
     override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
