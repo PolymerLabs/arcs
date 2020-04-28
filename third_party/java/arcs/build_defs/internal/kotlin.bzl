@@ -340,14 +340,6 @@ def arcs_kt_particles(
             )
             wasm_srcs.extend([src, wasm_annotations_file])
 
-        # Create a wasm library containing code for all the particles.
-        wasm_particle_lib = name + "-lib" + _WASM_SUFFIX
-        arcs_kt_native_library(
-            name = wasm_particle_lib,
-            srcs = wasm_srcs,
-            deps = wasm_deps,
-        )
-
         # Create a kt_native_binary that groups everything together.
         native_binary_name = name + _WASM_SUFFIX
         kt_native_binary(
@@ -357,7 +349,7 @@ def arcs_kt_particles(
             # Don't build this manually. Build the wasm_kt_binary rule below
             # instead; otherwise this rule will build a non-wasm binary.
             tags = ["manual", "notap"],
-            deps = [wasm_particle_lib],
+            deps = wasm_deps,
         )
 
         # Create a wasm binary from the native binary.
