@@ -21,7 +21,13 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-/** A [WriteBack] implementation for tests. */
+/**
+ * A special [WriteBack] implementation for unit tests.
+ *
+ * Specifically it accepts scope/dispatcher being overwritten which is required
+ * at unit tests that are run by runBlockingTest. Furthermore, cross-stores idle
+ * awaiting and logging are supported.
+ */
 class WriteBackForTesting private constructor(
     protocol: String
 ) : WriteBack,
@@ -84,7 +90,7 @@ class WriteBackForTesting private constructor(
 
     companion object : WriteBackFactory {
         /**
-         * To get around the runBlockingTest bug:
+         * To get around the known runBlockingTest issue:
          * java.lang.IllegalStateException: This job has not completed yet
          * the scope should be overwritten by test classes' [TestCoroutineScope]
          * instances.
@@ -105,7 +111,7 @@ class WriteBackForTesting private constructor(
             instances.clear()
         }
 
-        /** Await completion of the flush jobs of all created write-back instances. */
+        /** Await completion of the flush jobs of all created [WriteBack] instances. */
         fun awaitAllIdle() = runBlocking {
             for (instance in instances) instance.awaitIdle()
             log.debug { "passed awaitAllIdle()" }
