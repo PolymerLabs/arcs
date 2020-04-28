@@ -544,7 +544,7 @@ abstract class AbstractArcHost(
         spec: Plan.Particle? = null
     ): Particle {
         return particleConstructors[identifier]?.invoke(spec)
-               ?: throw IllegalArgumentException("Particle $identifier not found.")
+            ?: throw IllegalArgumentException("Particle $identifier not found.")
     }
 
     companion object {

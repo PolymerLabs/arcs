@@ -31,7 +31,7 @@ fun scanForParticles(host: KClass<out ArcHost> = ProdHost::class): Array<Particl
         val construct: suspend (Plan.Particle?) -> Particle = {
             val ctor =
                 particle.javaClass.getDeclaredConstructor()
-            when(ctor.parameters.size) {
+            when (ctor.parameters.size) {
                 0 -> ctor.newInstance()
                 else -> ctor.newInstance(it)
             }
