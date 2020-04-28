@@ -12,21 +12,21 @@
 package arcs.core.storage
 
 import arcs.core.util.TaggedLog
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ExecutorService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
 
 /** A [WriteBack] implementation for tests. */
-class WriteBackForTesting private constructor(protocol: String):
-    WriteBack,
+class WriteBackForTesting private constructor(
+    protocol: String
+) : WriteBack,
     Channel<suspend () -> Unit> by Channel(10),
-    Mutex by Mutex()
-{
+    Mutex by Mutex() {
     private val passThrough = protocol != "db"
     private var activeJobs = 0
     private val awaitSignal = Mutex()

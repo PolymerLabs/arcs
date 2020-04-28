@@ -12,6 +12,7 @@
 package arcs.core.storage
 
 import androidx.annotation.VisibleForTesting
+import java.util.concurrent.ExecutorService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -19,7 +20,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.util.concurrent.ExecutorService
 
 /**
  * A layer to decouple local data updates and underlying storage layers write-back.
@@ -55,7 +55,7 @@ interface WriteBackFactory {
          * The maximum queue size above which new incoming flush jobs will be suspended.
          */
         queueSize: Int = 10
-    ) : WriteBack
+    ): WriteBack
 }
 
 /** Write-back implementation for Arcs Stores.*/
@@ -68,8 +68,7 @@ class StoreWriteBack private constructor(
     CoroutineScope by CoroutineScope(
         writebackThreads?.asCoroutineDispatcher() ?: Dispatchers.IO
     ),
-    Mutex by Mutex()
-{
+    Mutex by Mutex() {
     // Only apply write-back to physical storage medias.
     private val passThrough = protocol != "db"
 

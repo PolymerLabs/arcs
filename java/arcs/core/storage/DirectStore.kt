@@ -43,8 +43,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     /* internal */
     val driver: Driver<Data>
 ) : ActiveStore<Data, Op, T>(options),
-    WriteBack by StoreWriteBack.create(driver.storageKey.protocol, writeBackThreads)
-{
+    WriteBack by StoreWriteBack.create(driver.storageKey.protocol, writeBackThreads) {
     override val versionToken: String?
         get() = driver.token
 
