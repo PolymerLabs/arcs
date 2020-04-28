@@ -14,6 +14,7 @@ import arcs.core.storage.driver.VolatileDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.util.Log
 import arcs.core.util.Scheduler
 import arcs.core.util.plus
 import arcs.core.util.testutil.LogRule
@@ -41,7 +42,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 @OptIn(ExperimentalCoroutinesApi::class)
 open class AllocatorTestBase {
     @get:Rule
-    val log = LogRule()
+    val log = LogRule(Log.Level.Warning)
 
     private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
 
