@@ -4,11 +4,8 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.content.Intent
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleService
 import arcs.android.sdk.host.AndroidHost
-import arcs.android.sdk.host.ArcHostHelper
 import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
@@ -17,10 +14,8 @@ import arcs.core.host.toRegistration
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Handle
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
