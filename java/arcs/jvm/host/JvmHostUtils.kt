@@ -29,8 +29,7 @@ fun scanForParticles(host: KClass<out ArcHost> = ProdHost::class): Array<Particl
         isParticleForHost(host, particle::class.java)
     }.map { particle: Particle ->
         val construct: suspend (Plan.Particle?) -> Particle = {
-            val ctor =
-                particle.javaClass.getDeclaredConstructor()
+            val ctor = particle.javaClass.getDeclaredConstructor()
             if (ctor.parameters.isEmpty()) {
                 ctor.newInstance()
             } else {
