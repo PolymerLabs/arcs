@@ -34,7 +34,7 @@ export class StorageKeyRecipeResolverError extends Error {
 export class StorageKeyRecipeResolver {
   private readonly runtime: Runtime;
 
-  constructor(context: Manifest, private dependencies: Manifest[])  {
+  constructor(context: Manifest) {
     const loader = new Loader();
     this.runtime = new Runtime({loader, context});
     DatabaseStorageKey.register();
@@ -128,26 +128,25 @@ export class StorageKeyRecipeResolver {
    * @param recipe long-running or ephemeral recipe
    */
   validateHandles(recipe: Recipe) {
-    for (const handle of recipe.handles.filter(h => h.fate === 'map' || h.fate === 'copy')) {
-      const matches = [];
+    recipe.handles
+      .filter(h => h.fate === 'map' || h.fate === 'copy')
+      .forEach(handle => {
+        const matches = this.runtime.context.findHandlesById(handle.id)
+          .filter(h => h.fate === 'create');
 
-      for (const man of [this.runtime.context, ...this.dependencies]) {
-        matches.push(...man.findHandlesById(handle.id).filter(h => h.fate === 'create'))
-      }
+        if (matches.length === 0) {
+          throw new StorageKeyRecipeResolverError(`No matching handles found for ${handle.localName}.`);
+        } else if (matches.length > 1) {
+          throw new StorageKeyRecipeResolverError(`More than one handle found for ${handle.localName}.`);
+        }
 
-      if (matches.length === 0) {
-        throw new StorageKeyRecipeResolverError(`No matching handles found for ${handle.localName}.`);
-      } else if (matches.length > 1) {
-        throw new StorageKeyRecipeResolverError(`More than one handle found for ${handle.localName}.`);
-      }
-
-      const match = matches[0];
-      if (!isLongRunning(match.recipe)) {
-        throw new StorageKeyRecipeResolverError(
-          `Handle ${handle.localName} mapped to ephemeral handle '${match.id}'.`
-        );
-      }
-    }
+        const match = matches[0];
+        if (!isLongRunning(match.recipe)) {
+          throw new StorageKeyRecipeResolverError(
+            `Handle ${handle.localName} mapped to ephemeral handle '${match.id}'.`
+          );
+        }
+      });
   }
 }
 

@@ -17,23 +17,16 @@ import {assert} from '../platform/assert-node.js';
 /**
  * Generates Kotlin Plans from recipes in an arcs manifest.
  *
- * @param paths path/to/manifest.arcs
+ * @param path path/to/manifest.arcs
  * @return Generated Kotlin code.
  */
-export async function recipe2plan(paths: string[]): Promise<string> {
+export async function recipe2plan(path: string): Promise<string> {
   return await Flags.withDefaultReferenceMode(async () => {
-    const [path, ...rest] = paths;
-
     const manifest = await Runtime.parseFile(path);
-
-    const dependencies = [];
-    for (const dep of rest) {
-      dependencies.push(await Runtime.parseFile(dep));
-    }
 
     assert(manifest.meta.namespace, `Namespace is required in '${path}' for code generation.`);
 
-    const recipes = await (new StorageKeyRecipeResolver(manifest, dependencies)).resolve();
+    const recipes = await (new StorageKeyRecipeResolver(manifest)).resolve();
 
     const generator = new PlanGenerator(recipes, manifest.meta.namespace);
 

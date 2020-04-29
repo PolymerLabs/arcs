@@ -45,7 +45,7 @@ describe('recipe2plan', () => {
           recipe Four
       `));
       assert.lengthOf(manifest.recipes, 5);
-      const resolver = new StorageKeyRecipeResolver(manifest, []);
+      const resolver = new StorageKeyRecipeResolver(manifest);
       assert.isFalse(isLongRunning(manifest.recipes[0]));
       assert.isNull(findLongRunningArcId(manifest.recipes[0]));
 
@@ -84,7 +84,7 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, []);
+      const resolver = new StorageKeyRecipeResolver(manifest);
       for (const it of (await resolver.resolve())) {
         assert.isTrue(it.isResolved());
       }
@@ -107,7 +107,7 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, []);
+      const resolver = new StorageKeyRecipeResolver(manifest);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
         StorageKeyRecipeResolverError,
@@ -135,7 +135,7 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, []);
+      const resolver = new StorageKeyRecipeResolver(manifest);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
         StorageKeyRecipeResolverError,
@@ -163,7 +163,7 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, []);
+      const resolver = new StorageKeyRecipeResolver(manifest);
       const recipes = await resolver.resolve();
       for (const it of recipes) {
         assert.isTrue(it.isResolved());
@@ -193,7 +193,7 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, []);
+      const resolver = new StorageKeyRecipeResolver(manifest);
       // TODO: specify the correct error to be thrown
       await assertThrowsAsync(resolver.resolve);
     }));
@@ -217,7 +217,7 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, []);
+      const resolver = new StorageKeyRecipeResolver(manifest);
       for (const it of (await resolver.resolve())) {
         assert.isTrue(it.isResolved());
       }
@@ -245,7 +245,7 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, []);
+      const resolver = new StorageKeyRecipeResolver(manifest);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
         StorageKeyRecipeResolverError,
@@ -275,7 +275,7 @@ describe('recipe2plan', () => {
       data: map 'my-handle-id'
       Reader
         data: reads data`);
-      const resolver = new StorageKeyRecipeResolver(manifest, []);
+      const resolver = new StorageKeyRecipeResolver(manifest);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
         StorageKeyRecipeResolverError,
@@ -314,7 +314,7 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, []);
+      const resolver = new StorageKeyRecipeResolver(manifest);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
         StorageKeyRecipeResolverError,
@@ -337,7 +337,7 @@ describe('recipe2plan', () => {
       Writer
         data: writes thing2`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, []);
+      const resolver = new StorageKeyRecipeResolver(manifest);
       await resolver.resolve();
       assert.deepStrictEqual(manifest.stores.map(s => s.id), ['my-handle-id']);
     });
@@ -354,7 +354,7 @@ describe('recipe2plan', () => {
       Writer
         data: writes thing`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, []);
+      const resolver = new StorageKeyRecipeResolver(manifest);
       for (const it of (await resolver.resolve())) {
         assert.isTrue(it.isResolved());
       }
@@ -372,7 +372,7 @@ describe('recipe2plan', () => {
       Writer
         data: thing`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, []);
+      const resolver = new StorageKeyRecipeResolver(manifest);
       for (const it of (await resolver.resolve())) {
         assert.isTrue(it.isResolved());
       }
@@ -386,7 +386,7 @@ describe('recipe2plan', () => {
         data: map 'my-handle-id'
         Reader
           data: reads data`);
-        const resolver = new StorageKeyRecipeResolver(manifest, []);
+        const resolver = new StorageKeyRecipeResolver(manifest);
         await assertThrowsAsync(
           async () => await resolver.resolve(),
           StorageKeyRecipeResolverError,
