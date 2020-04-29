@@ -31,6 +31,19 @@ class AndroidSqliteDatabaseRegistry(
 ) : MutableDatabaseRegistry, SQLiteOpenHelper(context, MANIFEST_NAME, null, VERSION) {
     private val nonPersistentEntries = mutableMapOf<String, DatabaseRegistration>()
 
+    override fun onConfigure(db: SQLiteDatabase?) {
+        super.onConfigure(db)
+
+        // Use WAL to expedite database registrations and subsequent updates on the last_accessed
+        // column. Like other Android sqlite wrappers i.e. RoomDatabase, WAL mode is used by default:
+        // https://developer.android.com/reference/androidx/room/RoomDatabase.JournalMode#AUTOMATIC
+        //
+        // Without using WAL, every getDatabase() which is invoked at multiple paths i.e. updating
+        // Backing store upon data writes would suffer from a long I/O blocking time on fsync/fdatasync
+        // just in order to update the last_accessed column. (b/154765922)
+        db?.enableWriteAheadLogging()
+    }
+
     override fun register(databaseName: String, isPersistent: Boolean): DatabaseRegistration {
         val nowMillis = time.currentTimeMillis
         if (!isPersistent) {
@@ -104,8 +117,8 @@ class AndroidSqliteDatabaseRegistry(
     override fun fetchAllCreatedIn(timeRange: LongRange): List<DatabaseRegistration> {
         val persistentEntries = readableDatabase.rawQuery(
             """
-                SELECT name, created, last_accessed 
-                FROM arcs_databases 
+                SELECT name, created, last_accessed
+                FROM arcs_databases
                 WHERE created >= ? AND created <= ?
             """,
             arrayOf(timeRange.first.toString(), timeRange.last.toString())
@@ -123,8 +136,8 @@ class AndroidSqliteDatabaseRegistry(
     override fun fetchAllAccessedIn(timeRange: LongRange): List<DatabaseRegistration> {
         val persistentEntries = readableDatabase.rawQuery(
             """
-                SELECT name, created, last_accessed 
-                FROM arcs_databases 
+                SELECT name, created, last_accessed
+                FROM arcs_databases
                 WHERE last_accessed >= ? AND last_accessed <= ?
             """,
             arrayOf(timeRange.first.toString(), timeRange.last.toString())
