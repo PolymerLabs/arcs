@@ -124,7 +124,7 @@ export class DirectStoreMuxer<T extends CRDTTypeRecord> implements StorageCommun
       getChannelConstructor(): ChannelConstructor {
         return {
           generateID() {
-            throw new Error('unimplemented, should not be called');
+            return null;
           },
           idGenerator: null,
           getStorageProxyMuxer() {
