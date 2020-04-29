@@ -4,52 +4,39 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.content.Intent
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleService
 import arcs.android.sdk.host.AndroidHost
-import arcs.android.sdk.host.ArcHostHelper
+import arcs.android.sdk.host.ArcHostService
+import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Handle
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
  * Service which wraps an ArcHost.
  */
-class DemoService : LifecycleService() {
+class DemoService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
-    private val scope = CoroutineScope(coroutineContext)
 
     private lateinit var notificationManager: NotificationManager
 
-    private val myHelper: ArcHostHelper by lazy {
-        val host = MyArcHost(
-            this,
-            this.lifecycle,
-            JvmSchedulerProvider(coroutineContext),
-            ::ReadPerson.toRegistration(),
-            ::WritePerson.toRegistration()
-        )
-        ArcHostHelper(this, host)
-    }
+    override val arcHost = MyArcHost(
+        this,
+        this.lifecycle,
+        JvmSchedulerProvider(coroutineContext),
+        ::ReadPerson.toRegistration(),
+        ::WritePerson.toRegistration()
+    )
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        super.onStartCommand(intent, flags, startId)
-
-        myHelper.onStartCommand(intent)
-
-        return START_NOT_STICKY
-    }
+    override val arcHosts: List<ArcHost> by lazy { listOf(arcHost) }
 
     override fun onCreate() {
         super.onCreate()
@@ -65,12 +52,7 @@ class DemoService : LifecycleService() {
         )
     }
 
-    override fun onDestroy() {
-        coroutineContext.cancelChildren()
-        super.onDestroy()
-    }
-
-    class MyArcHost(
+    inner class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,
         schedulerProvider: SchedulerProvider,

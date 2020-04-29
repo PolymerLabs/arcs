@@ -17,6 +17,7 @@ import arcs.android.util.initLogForAndroid
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Log
 
 /** Application class for Arcs Demo. */
@@ -34,6 +35,8 @@ class DemoApplication : Application(), Configuration.Provider {
         RamDiskDriverProvider()
 
         DriverAndKeyConfigurator.configureKeyParsers()
+
+        ReferenceModeStorageKey.registerParser()
 
         initLogForAndroid(Log.Level.Debug)
     }
