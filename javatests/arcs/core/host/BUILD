@@ -99,7 +99,7 @@ arcs_kt_jvm_library(
         "ReadPerson.kt",
         "TestHost.kt",
         "TestHostParticle.kt",
-        "TestPlannedParticle.kt",
+        "TestReflectiveParticle.kt",
         "TestProdParticle.kt",
         "WritePerson.kt",
     ],

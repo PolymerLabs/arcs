@@ -28,7 +28,7 @@ class ParticleRegistrationTest {
 
         hostRegistry.registerHost(JvmProdHost(schedulerProvider,
                                               ::TestProdParticle.toRegistration(),
-                                              ::TestPlannedParticle.toRegistration())
+                                              ::TestReflectiveParticle.toRegistration())
         )
 
         hostRegistry.registerHost(TestHost(schedulerProvider("foo"),
@@ -41,7 +41,7 @@ class ParticleRegistrationTest {
                         TestProdParticle::class.toParticleIdentifier()
                     )
                     assertThat(host.registeredParticles()).contains(
-                        TestPlannedParticle::class.toParticleIdentifier()
+                        TestReflectiveParticle::class.toParticleIdentifier()
                     )
                     foundProdHost = true
                 }

@@ -29,7 +29,7 @@ class ReflectiveParticleConstructionTest {
         vararg particles: ParticleRegistration
     ) : JvmHost(schedulerProvider, *particles), ProdHost
 
-    class AssertingPlannedParticle(spec: Plan.Particle?) : TestPlannedParticle(spec) {
+    class AssertingReflectiveParticle(spec: Plan.Particle?) : TestReflectiveParticle(spec) {
         override suspend fun onCreate() = runBlocking {
             assertThat(schema.name?.name).isEqualTo("Thing")
             assertThat(schema.fields.singletons).containsExactly("name", FieldType.Text)
@@ -54,8 +54,8 @@ class ReflectiveParticleConstructionTest {
         val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
 
         val fakeRegistration = Pair(
-            TestPlannedParticle::class.toParticleIdentifier(),
-            ::AssertingPlannedParticle.toRegistration().second
+            TestReflectiveParticle::class.toParticleIdentifier(),
+            ::AssertingReflectiveParticle.toRegistration().second
         )
 
         hostRegistry.registerHost(JvmProdHost(schedulerProvider,
@@ -74,6 +74,6 @@ class ReflectiveParticleConstructionTest {
 
         val arcId = allocator.startArcForPlan("testArc", TestRecipePlan)
         allocator.stopArc(arcId)
-        assertThat(AssertingPlannedParticle.started).isTrue()
+        assertThat(AssertingReflectiveParticle.started).isTrue()
     }
 }
