@@ -34,6 +34,11 @@ class ReflectiveParticleConstructionTest {
             assertThat(schema.name?.name).isEqualTo("Thing")
             assertThat(schema.fields.singletons).containsExactly("name", FieldType.Text)
             assertThat(schema.fields.collections).isEmpty()
+            started = true
+        }
+
+        companion object {
+            var started = false
         }
     }
 
@@ -69,5 +74,6 @@ class ReflectiveParticleConstructionTest {
 
         val arcId = allocator.startArcForPlan("testArc", TestRecipePlan)
         allocator.stopArc(arcId)
+        assertThat(AssertingPlannedParticle.started).isTrue()
     }
 }
