@@ -15,6 +15,7 @@ import arcs.core.crdt.CrdtSingleton
 import arcs.core.data.RawEntity
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StoreOptions
+import kotlinx.coroutines.Job
 
 typealias SingletonProxy<T> = StorageProxy<SingletonData<T>, SingletonOp<T>, T?>
 typealias SingletonData<T> = CrdtSingleton.Data<T>
@@ -47,13 +48,13 @@ class SingletonHandle<T : Storable, R : Referencable>(
     }
 
     // region implement ReadSingletonHandle<T>
-    override suspend fun fetch() = checkPreconditions {
-        adaptValue(storageProxy.getParticleView())
+    override fun fetch() = checkPreconditions {
+        adaptValue(storageProxy.getParticleViewUnsafe())
     }
     // endregion
 
     // region implement WriteSingletonHandle<T>
-    override suspend fun store(element: T) = checkPreconditions<Unit> {
+    override fun store(element: T): Job = checkPreconditions {
         storageProxy.applyOp(
             CrdtSingleton.Operation.Update(
                 name,
@@ -63,7 +64,7 @@ class SingletonHandle<T : Storable, R : Referencable>(
         )
     }
 
-    override suspend fun clear() = checkPreconditions<Unit> {
+    override fun clear(): Job = checkPreconditions {
         storageProxy.applyOp(
             CrdtSingleton.Operation.Clear(
                 name,
@@ -74,20 +75,20 @@ class SingletonHandle<T : Storable, R : Referencable>(
     // endregion
 
     // region implement ReadableHandle<T>
-    override suspend fun onUpdate(action: suspend (T?) -> Unit) =
-        storageProxy.addOnUpdate(name) {
-            action(adaptValue(it))
-        }
+    override fun onUpdate(action: (T?) -> Unit) =
+        storageProxy.addOnUpdate(callbackIdentifier) { action(adaptValue(it)) }
 
-    override suspend fun onDesync(action: () -> Unit) = storageProxy.addOnDesync(name, action)
+    override fun onDesync(action: () -> Unit) =
+        storageProxy.addOnDesync(callbackIdentifier, action)
 
-    override suspend fun onResync(action: () -> Unit) = storageProxy.addOnResync(name, action)
+    override fun onResync(action: () -> Unit) =
+        storageProxy.addOnResync(callbackIdentifier, action)
 
     override suspend fun <E : Entity> createReference(entity: E): Reference<E> {
         val entityId = requireNotNull(entity.entityId) {
             "Entity must have an ID before it can be referenced."
         }
-        fetch().let {
+        adaptValue(storageProxy.getParticleView()).let {
             require(it is Entity && it.entityId == entityId) {
                 "Entity is not stored in the Singleton."
             }

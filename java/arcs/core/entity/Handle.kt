@@ -12,16 +12,34 @@
 package arcs.core.entity
 
 import arcs.core.data.HandleMode
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
 
 /** Base interface for all handle classes. */
 interface Handle {
     val name: String
 
+    /**
+     * If you need to access or mutate the [Handle]'s data from outside of a particle or handle
+     * lifecycle callback, you must use this dispatcher (or the handleDispatcher from your particle)
+     * to run your operations.
+     *
+     * TODO(b/155229971): Add handleDispatcher to particle interface.
+     */
+    val dispatcher: CoroutineDispatcher
+
     /** Assign a callback when the handle is synced for the first time. */
-    suspend fun onReady(action: () -> Unit)
+    fun onReady(action: () -> Unit)
 
     /** Release resources needed by this, unregister all callbacks. */
-    suspend fun close()
+    fun close()
+}
+
+/** Suspends until the [Handle] has synced with the store. */
+suspend fun <T : Handle> T.awaitReady(): T = suspendCoroutine<T> { cont ->
+    this.onReady { cont.resume(this@awaitReady) }
 }
 
 /** Base interface for types that can be stored in a [Handle] (see [Entity] and [Reference]). */
@@ -52,13 +70,13 @@ enum class HandleDataType {
 
 interface ReadableHandle<UpdateType> : Handle {
     /** Assign a callback when the handle's data changes. */
-    suspend fun onUpdate(action: suspend (UpdateType) -> Unit)
+    fun onUpdate(action: (UpdateType) -> Unit)
 
     /** Assign a callback when the handle is desynced. */
-    suspend fun onDesync(action: () -> Unit)
+    fun onDesync(action: () -> Unit)
 
     /** Assign a callback when the handle is re-synced after being desynced. */
-    suspend fun onResync(action: () -> Unit)
+    fun onResync(action: () -> Unit)
 
     /**
      * Creates and returns a [Reference] to the given entity.
@@ -74,16 +92,16 @@ interface ReadableHandle<UpdateType> : Handle {
 /** A singleton handle with read access. */
 interface ReadSingletonHandle<T : Storable> : ReadableHandle<T?> {
     /** Returns the value of the singleton. */
-    suspend fun fetch(): T?
+    fun fetch(): T?
 }
 
 /** A singleton handle with write access. */
 interface WriteSingletonHandle<T : Storable> : Handle {
     /** Sets the value of the singleton. */
-    suspend fun store(element: T)
+    fun store(element: T): Job
 
     /** Clears the value of the singleton. */
-    suspend fun clear()
+    fun clear(): Job
 }
 
 /** A singleton handle with read and write access. */
@@ -92,25 +110,25 @@ interface ReadWriteSingletonHandle<T : Storable> : ReadSingletonHandle<T>, Write
 /** A collection handle with read access. */
 interface ReadCollectionHandle<T : Storable> : ReadableHandle<Set<T>> {
     /** The number of elements in the collection. */
-    suspend fun size(): Int
+    fun size(): Int
 
     /** Returns true if the collection is empty. */
-    suspend fun isEmpty(): Boolean
+    fun isEmpty(): Boolean
 
     /** Returns a set with all the entities in the collection. */
-    suspend fun fetchAll(): Set<T>
+    fun fetchAll(): Set<T>
 }
 
 /** A collection handle with write access. */
 interface WriteCollectionHandle<T : Storable> : Handle {
     /** Adds the given [element] to the collection. */
-    suspend fun store(element: T)
+    fun store(element: T): Job
 
     /** Removes everything from the collection. */
-    suspend fun clear()
+    fun clear(): Job
 
     /** Removes the given [element] from the collection. */
-    suspend fun remove(element: T)
+    fun remove(element: T): Job
 }
 
 /** A collection handle with query access. */

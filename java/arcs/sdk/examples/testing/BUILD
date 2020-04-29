@@ -18,6 +18,7 @@ arcs_kt_jvm_library(
     srcs = ["ComputePeopleStats.kt"],
     deps = [
         ":codegen",
+        "//java/arcs/core/util",
         "//java/arcs/sdk",
         "//third_party/kotlin/kotlinx_coroutines",
     ],

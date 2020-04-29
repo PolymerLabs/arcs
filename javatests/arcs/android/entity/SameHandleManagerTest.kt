@@ -17,6 +17,8 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
+import org.junit.Test
 import org.junit.runner.RunWith
 
 @Suppress("EXPERIMENTAL_API_USAGE")
@@ -59,4 +61,34 @@ class SameHandleManagerTest : HandleManagerTestBase() {
 
     @After
     override fun tearDown() = super.tearDown()
+
+    @Ignore("b/154947352 - Deflake")
+    @Test
+    override fun collection_referenceLiveness() {
+        super.collection_referenceLiveness()
+    }
+
+    @Ignore("b/154947352 - Deflake")
+    @Test
+    override fun singleton_referenceLiveness() {
+        super.singleton_referenceLiveness()
+    }
+
+    @Ignore("b/154947352 - Deflake")
+    @Test
+    override fun collection_entityDereference() {
+        super.collection_entityDereference()
+    }
+
+    @Ignore("b/154947352 - Deflake")
+    @Test
+    override fun singleton_dereferenceEntity() {
+        super.singleton_dereferenceEntity()
+    }
+
+    @Ignore("b/154947352 - Deflake")
+    @Test
+    override fun singleton_dereferenceEntity_nestedReference() {
+        super.singleton_dereferenceEntity_nestedReference()
+    }
 }

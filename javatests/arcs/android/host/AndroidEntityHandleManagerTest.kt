@@ -12,7 +12,6 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.HandleMode
-import arcs.core.entity.Handle
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
 import arcs.core.data.RawEntity
@@ -24,6 +23,7 @@ import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.toPrimitiveValue
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
+import arcs.core.entity.awaitReady
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.host.EntityHandleManager
@@ -40,8 +40,6 @@ import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
@@ -375,8 +373,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             handleHolder.getEntitySpec(handleName)
         ),
         singletonKey
-    ).also {
-        it.awaitReady()
+    ).awaitReady().also {
         handleHolder.setHandle(handleName, it)
     }
 
@@ -392,14 +389,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             handleHolder.getEntitySpec(handleName)
         ),
         collectionKey
-    ).also {
-        it.awaitReady()
+    ).awaitReady().also {
         handleHolder.setHandle(handleName, it)
-    }
-
-    private suspend fun Handle.awaitReady() = coroutineScope {
-        val readyJob = Job()
-        onReady { readyJob.complete() }
-        readyJob.join()
     }
 }

@@ -2,7 +2,7 @@ package arcs.core.entity
 
 import arcs.core.data.HandleMode
 import arcs.core.data.Ttl
-import arcs.core.entity.HandleManagerTestBase.Hat
+import arcs.core.entity.HandleManagerTestBase.Hat.Companion
 import arcs.core.entity.HandleManagerTestBase.Person
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageKey
@@ -13,7 +13,10 @@ import arcs.core.testutil.assertSuspendingThrows
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -21,6 +24,7 @@ import org.junit.runners.JUnit4
 import java.lang.IllegalStateException
 import kotlin.coroutines.EmptyCoroutineContext
 
+@Suppress("UNCHECKED_CAST")
 @RunWith(JUnit4::class)
 @kotlinx.coroutines.ExperimentalCoroutinesApi
 class HandleManagerCloseTest {
@@ -44,13 +48,13 @@ class HandleManagerCloseTest {
     fun setup() {
         DriverAndKeyConfigurator.configure(null)
         SchemaRegistry.register(Person)
-        SchemaRegistry.register(Hat)
+        SchemaRegistry.register(HandleManagerTestBase.Hat)
     }
 
     fun createHandleManager() = EntityHandleManager("testArc", "", FakeTime(), scheduler)
 
     @Test
-    fun closehandleManagerStopUpdates() = runBlockingTest {
+    fun closehandleManagerStopUpdates() = runBlocking {
         val handleManagerA = createHandleManager()
         val handleManagerB = createHandleManager()
 
@@ -58,21 +62,30 @@ class HandleManagerCloseTest {
 
         val handleB = handleManagerB.createSingletonHandle()
         var updates = 0
+        var updateCalled = Job()
         handleB.onUpdate {
             updates++
+            updateCalled.complete()
         }
 
-        handleA.store(Person("e1", "p1", 1.0, true))
+        handleA.store(Person("e1", "p1", 1.0, true)).join()
+        updateCalled.join()
         assertThat(updates).isEqualTo(1)
 
         handleManagerB.close()
 
-        handleA.store(Person("e2", "p2", 2.0, true))
+        updateCalled = Job()
+        handleA.store(Person("e2", "p2", 2.0, true)).join()
+        assertSuspendingThrows(TimeoutCancellationException::class) {
+            withTimeout(100) {
+                updateCalled.join()
+            }
+        }
         assertThat(updates).isEqualTo(1)
     }
 
     @Test
-    fun singleton_closeHandleManagerThrowsExceptionOnOperations() = runBlockingTest {
+    fun singleton_closeHandleManagerThrowsExceptionOnOperations() = runBlocking {
         val handleManager = createHandleManager()
 
         val handle = handleManager.createSingletonHandle()
@@ -94,7 +107,7 @@ class HandleManagerCloseTest {
     }
 
     @Test
-    fun collection_closeHandleManagerThrowsExceptionOnOperations() = runBlockingTest {
+    fun collection_closeHandleManagerThrowsExceptionOnOperations() = runBlocking {
         val handleManager = createHandleManager()
 
         val handle = handleManager.createCollectionHandle()

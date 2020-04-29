@@ -55,23 +55,17 @@ class ReadAnimalHostService : ArcHostService() {
     }
 
     inner class ReadAnimal: AbstractReadAnimal() {
-
         override suspend fun onCreate() {
             super.onCreate()
             handles.animal.onUpdate {
-                scope.launch {
+                val name = handles.animal.fetch()?.name ?: ""
 
-                    val name = withContext(Dispatchers.IO) {
-                        handles.animal.fetch()?.name ?: ""
+                val intent = Intent(this@ReadAnimalHostService, TestActivity::class.java)
+                    .apply {
+                        putExtra(TestActivity.RESULT_NAME, name)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
                     }
-
-                    val intent = Intent(this@ReadAnimalHostService, TestActivity::class.java)
-                        .apply {
-                            putExtra(TestActivity.RESULT_NAME, name)
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                        }
-                    startActivity(intent)
-                }
+                startActivity(intent)
             }
         }
     }

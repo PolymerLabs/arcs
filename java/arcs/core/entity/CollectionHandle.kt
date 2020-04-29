@@ -15,6 +15,8 @@ import arcs.core.crdt.CrdtSet
 import arcs.core.data.RawEntity
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StoreOptions
+import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.Job
 
 typealias CollectionData<T> = CrdtSet.Data<T>
 typealias CollectionOp<T> = CrdtSet.IOperation<T>
@@ -50,12 +52,12 @@ class CollectionHandle<T : Storable, R : Referencable>(
     }
 
     // region implement ReadCollectionHandle<T>
-    override suspend fun size() = fetchAll().size
+    override fun size() = fetchAll().size
 
-    override suspend fun isEmpty() = fetchAll().isEmpty()
+    override fun isEmpty() = fetchAll().isEmpty()
 
-    override suspend fun fetchAll() = checkPreconditions {
-        adaptValues(storageProxy.getParticleView())
+    override fun fetchAll() = checkPreconditions {
+        adaptValues(storageProxy.getParticleViewUnsafe())
     }
     // endregion
 
@@ -63,15 +65,17 @@ class CollectionHandle<T : Storable, R : Referencable>(
     override suspend fun query(args: Any): Set<T> = checkPreconditions {
         (spec.entitySpec.SCHEMA.query?.let { query ->
             storageProxy.getParticleView().filter {
-                check(it is RawEntity) { "Queries only work with Entity-typed Handles." }
-                query(it, args)
+                val entity = checkNotNull(it as? RawEntity) {
+                    "Queries only work with Entity-typed Handles."
+                }
+                query(entity, args)
             }.toSet()
         } ?: emptySet()).let { adaptValues(it) }
     }
     // endregion
 
     // region implement WriteCollectionHandle<T>
-    override suspend fun store(element: T) = checkPreconditions<Unit> {
+    override fun store(element: T): Job = checkPreconditions {
         storageProxy.applyOp(
             CrdtSet.Operation.Add(
                 name,
@@ -81,8 +85,8 @@ class CollectionHandle<T : Storable, R : Referencable>(
         )
     }
 
-    override suspend fun clear() = checkPreconditions<Unit> {
-        storageProxy.getParticleView().forEach {
+    override fun clear(): Job = checkPreconditions {
+        val individualJobs = storageProxy.getParticleViewUnsafe().map {
             storageProxy.applyOp(
                 CrdtSet.Operation.Remove(
                     name,
@@ -91,9 +95,23 @@ class CollectionHandle<T : Storable, R : Referencable>(
                 )
             )
         }
+
+        val masterJob = Job()
+        val jobsRemaining = atomic(individualJobs.size)
+
+        individualJobs.forEach {
+            it.invokeOnCompletion { error ->
+                if (error != null) masterJob.completeExceptionally(error)
+                else if (jobsRemaining.decrementAndGet() == 0) {
+                    masterJob.complete()
+                }
+            }
+        }
+
+        masterJob
     }
 
-    override suspend fun remove(element: T) = checkPreconditions<Unit> {
+    override fun remove(element: T): Job = checkPreconditions {
         storageProxy.applyOp(
             CrdtSet.Operation.Remove(
                 name,
@@ -105,20 +123,21 @@ class CollectionHandle<T : Storable, R : Referencable>(
     // endregion
 
     // region implement ReadableHandle<T>
-    override suspend fun onUpdate(action: suspend (Set<T>) -> Unit) =
-        storageProxy.addOnUpdate(name) {
-            action(adaptValues(it))
-        }
+    override fun onUpdate(action: (Set<T>) -> Unit) =
+        storageProxy.addOnUpdate(callbackIdentifier) { action(adaptValues(it)) }
 
-    override suspend fun onDesync(action: () -> Unit) = storageProxy.addOnDesync(name, action)
+    override fun onDesync(action: () -> Unit) =
+        storageProxy.addOnDesync(callbackIdentifier, action)
 
-    override suspend fun onResync(action: () -> Unit) = storageProxy.addOnResync(name, action)
+    override fun onResync(action: () -> Unit) =
+        storageProxy.addOnResync(callbackIdentifier, action)
 
     override suspend fun <E : Entity> createReference(entity: E): Reference<E> {
         val entityId = requireNotNull(entity.entityId) {
             "Entity must have an ID before it can be referenced."
         }
-        fetchAll().let { data ->
+
+        adaptValues(storageProxy.getParticleView()).let { data ->
             data.firstOrNull()?.let {
                 require(it is Entity) {
                     "Handle must contain Entity-typed elements in order to create references."

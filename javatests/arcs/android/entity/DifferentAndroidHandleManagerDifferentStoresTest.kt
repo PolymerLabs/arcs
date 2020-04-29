@@ -16,6 +16,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
+import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -74,4 +76,22 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
     // TODO - fix these?
     override fun collection_referenceLiveness() {}
     override fun singleton_referenceLiveness() {}
+
+    @Ignore("b/154947352 - Deflake")
+    @Test
+    override fun collection_entityDereference() {
+        super.collection_entityDereference()
+    }
+
+    @Ignore("b/154947352 - Deflake")
+    @Test
+    override fun singleton_dereferenceEntity() {
+        super.singleton_dereferenceEntity()
+    }
+
+    @Ignore("b/154947352 - Deflake")
+    @Test
+    override fun singleton_dereferenceEntity_nestedReference() {
+        super.singleton_dereferenceEntity_nestedReference()
+    }
 }

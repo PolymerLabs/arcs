@@ -25,8 +25,8 @@ import arcs.jvm.util.JvmTime
 import arcs.sdk.Handle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * Service which wraps an ArcHost containing person.arcs related particles.
@@ -62,18 +62,21 @@ class PersonHostService : ArcHostService() {
     }
 
     inner class ReadPerson : AbstractReadPerson() {
-
-        override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
-            scope.launch {
-                val name = withContext(Dispatchers.IO) { handles.person.fetch()?.name ?: "" }
-                sendResult(name)
+        override suspend fun onHandleSync(handle: arcs.core.entity.Handle, allSynced: Boolean) {
+            super.onHandleSync(handle, allSynced)
+            sendResult(handles.person.fetch()?.name ?: "")
+            handles.person.onUpdate { person ->
+                person?.name?.let { sendResult(it) }
             }
         }
     }
 
     inner class WritePerson : AbstractWritePerson() {
-
         override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
+            // Always clear and re-write John Wick.
+            handles.person.clear()
+
+            // Write John Wick
             handles.person.store(WritePerson_Person("John Wick"))
         }
     }

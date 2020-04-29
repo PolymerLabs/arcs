@@ -21,6 +21,7 @@ import arcs.core.util.testutil.LogRule
 import arcs.core.util.traverse
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmSchedulerProvider
+import arcs.jvm.util.JvmTime
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
@@ -258,7 +259,7 @@ open class AllocatorTestBase {
     }!!
 
     @Test
-    fun allocator_verifyStorageKeysNotOverwritten() = runAllocatorTest {
+    open fun allocator_verifyStorageKeysNotOverwritten() = runAllocatorTest {
         val idGenerator = Id.Generator.newSession()
         val testArcId = idGenerator.newArcId("Test")
         VolatileDriverProvider(testArcId)
@@ -466,7 +467,7 @@ open class AllocatorTestBase {
     }
 
     @Test
-    fun allocator_startFromOneAllocatorAndStopInAnother() = runAllocatorTest {
+    open fun allocator_startFromOneAllocatorAndStopInAnother() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle",
             PersonPlan
@@ -485,10 +486,7 @@ open class AllocatorTestBase {
             hostRegistry,
             EntityHandleManager(
                 time = FakeTime(),
-                scheduler = Scheduler(
-                    FakeTime(),
-                    Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-                )
+                scheduler = schedulerProvider("allocator2")
             )
         )
 
@@ -499,7 +497,7 @@ open class AllocatorTestBase {
     }
 
     @Test
-    fun allocator_doesntCreateArcsOnDuplicateStartArc() = runAllocatorTest {
+    open fun allocator_doesntCreateArcsOnDuplicateStartArc() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle",
             PersonPlan
