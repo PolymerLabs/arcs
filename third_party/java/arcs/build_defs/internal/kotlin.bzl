@@ -445,13 +445,14 @@ def arcs_kt_plan(name, srcs = [], data = [], deps = [], platforms = ["jvm"], vis
         genrule_name = replace_arcs_suffix(src, "_GeneratedPlan")
         out = replace_arcs_suffix(src, "_GeneratedPlan.kt")
         outs.append(out)
+        rest = [s for s in srcs if s != src]
         sigh_command(
             name = genrule_name,
             srcs = [src],
             outs = [out],
             progress_message = "Generating Kotlin Plans",
             sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
-            deps = deps + data,
+            deps = deps + data + rest,
         )
 
     deps = manifest_only(deps, inverse = True)

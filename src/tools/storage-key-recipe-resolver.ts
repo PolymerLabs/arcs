@@ -11,7 +11,6 @@ import {assert} from '../platform/assert-web.js';
 import {Id} from '../runtime/id.js';
 import {Runtime} from '../runtime/runtime.js';
 import {Manifest} from '../runtime/manifest.js';
-import {Loader} from '../platform/loader-web.js';
 import {IsValidOptions, Recipe, RecipeComponent} from '../runtime/recipe/recipe.js';
 import {volatileStorageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {Arc} from '../runtime/arc.js';
@@ -20,6 +19,7 @@ import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {Store} from '../runtime/storageNG/store.js';
 import {Exists} from '../runtime/storageNG/drivers/driver.js';
 import {DatabaseStorageKey} from '../runtime/storageNG/database-storage-key.js';
+import {Handle} from '../runtime/recipe/handle.js';
 
 export class StorageKeyRecipeResolverError extends Error {
   constructor(message: string) {
@@ -35,8 +35,7 @@ export class StorageKeyRecipeResolver {
   private readonly runtime: Runtime;
 
   constructor(context: Manifest) {
-    const loader = new Loader();
-    this.runtime = new Runtime({loader, context});
+    this.runtime = new Runtime({context});
     DatabaseStorageKey.register();
   }
 
@@ -128,25 +127,24 @@ export class StorageKeyRecipeResolver {
    * @param recipe long-running or ephemeral recipe
    */
   validateHandles(recipe: Recipe) {
-    recipe.handles
-      .filter(h => h.fate === 'map' || h.fate === 'copy')
-      .forEach(handle => {
-        const matches = this.runtime.context.findHandlesById(handle.id)
-          .filter(h => h.fate === 'create');
+    const isMapOrCopyFate = (handle: Handle) => handle.fate === 'map' || handle.fate === 'copy';
+    for (const handle of recipe.handles.filter(isMapOrCopyFate)) {
+      const matches = this.runtime.context.findHandlesById(handle.id)
+        .filter(h => h.fate === 'create');
 
-        if (matches.length === 0) {
-          throw new StorageKeyRecipeResolverError(`No matching handles found for ${handle.localName}.`);
-        } else if (matches.length > 1) {
-          throw new StorageKeyRecipeResolverError(`More than one handle found for ${handle.localName}.`);
-        }
+      if (matches.length === 0) {
+        throw new StorageKeyRecipeResolverError(`No matching handles found for ${handle.localName}.`);
+      } else if (matches.length > 1) {
+        throw new StorageKeyRecipeResolverError(`More than one handle found for ${handle.localName}.`);
+      }
 
-        const match = matches[0];
-        if (!isLongRunning(match.recipe)) {
-          throw new StorageKeyRecipeResolverError(
-            `Handle ${handle.localName} mapped to ephemeral handle '${match.id}'.`
-          );
-        }
-      });
+      const match = matches[0];
+      if (!isLongRunning(match.recipe)) {
+        throw new StorageKeyRecipeResolverError(
+          `Handle ${handle.localName} mapped to ephemeral handle '${match.id}'.`
+        );
+      }
+    }
   }
 }
 
