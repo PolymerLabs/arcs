@@ -31,7 +31,8 @@ data class ReferencablePrimitive<T>(
     val valueRepr: String = value.toString()
 ) : Referencable {
     // TODO: consider other 'serialization' mechanisms.
-    override val id: ReferenceId = "Primitive<$klass>($valueRepr)"
+    override val id: ReferenceId =
+        "Primitive<${primitiveKClassMap.getOrElse(klass, klass::toString)}>($valueRepr)"
 
     override fun toString(): String = "Primitive($valueRepr)"
 
@@ -43,6 +44,21 @@ data class ReferencablePrimitive<T>(
     }
 
     companion object {
+        // Do not use KClass::toString() as its implementation relies on extremely slow reflection.
+        private const val primitiveKotlinInt = "kotlin.Int"
+        private const val primitiveKotlinFloat = "kotlin.Float"
+        private const val primitiveKotlinDouble = "kotlin.Double"
+        private const val primitiveKotlinString = "kotlin.String"
+        private const val primitiveKotlinBoolean = "kotlin.Boolean"
+        private const val primitiveKotlinByteArray = "kotlin.ByteArray"
+        private val primitiveKClassMap = mapOf<KClass<*>, String>(
+            Int::class to primitiveKotlinInt,
+            Float::class to primitiveKotlinFloat,
+            Double::class to primitiveKotlinDouble,
+            String::class to primitiveKotlinString,
+            Boolean::class to primitiveKotlinBoolean,
+            ByteArray::class to primitiveKotlinByteArray
+        )
         private val pattern = "Primitive<([^>]+)>\\((.*)\\)$".toRegex()
 
         /** Returns whether or not the given type is a supported type for [ReferencablePrimitive]. */
@@ -64,21 +80,21 @@ data class ReferencablePrimitive<T>(
             val value = match.groups[2]?.value ?: return null
 
             return when {
-                className == Int::class.toString() ||
+                className == primitiveKotlinInt ||
                 className.contains("java.lang.Int") ->
                     ReferencablePrimitive(Double::class, value.toDouble())
-                className == Float::class.toString() ||
+                className == primitiveKotlinFloat ||
                 className.contains("java.lang.Float") ->
                     ReferencablePrimitive(Double::class, value.toDouble())
-                className == Double::class.toString() ||
+                className == primitiveKotlinDouble ||
                 className.contains("java.lang.Double") ->
                     ReferencablePrimitive(Double::class, value.toDouble())
-                className == String::class.toString() ->
+                className == primitiveKotlinString ->
                     ReferencablePrimitive(String::class, value)
-                className == Boolean::class.toString() ||
+                className == primitiveKotlinBoolean ||
                 className.contains("java.lang.Boolean") ->
                     ReferencablePrimitive(Boolean::class, value.toBoolean())
-                className == ByteArray::class.toString() ->
+                className == primitiveKotlinByteArray ->
                     ReferencablePrimitive(ByteArray::class, value.toBase64Bytes(), value)
                 else -> null
             }
