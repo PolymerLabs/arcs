@@ -18,17 +18,17 @@ import arcs.android.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
-import arcs.core.util.Scheduler
+import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.android.storage.ServiceStoreFactory
-import java.util.concurrent.Executors
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /** Entry UI to launch Arcs demo. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -36,6 +36,7 @@ class DemoActivity : AppCompatActivity() {
 
     private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
     private val scope: CoroutineScope = CoroutineScope(coroutineContext)
+    private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
 
     /**
      * Recipe hand translated from 'person.arcs'
@@ -54,14 +55,10 @@ class DemoActivity : AppCompatActivity() {
                 hostRegistry,
                 EntityHandleManager(
                     time = JvmTime,
-                    scheduler = Scheduler(
-                        JvmTime,
-                        coroutineContext +
-                            Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-                    ),
+                    scheduler = schedulerProvider("personArc"),
                     activationFactory = ServiceStoreFactory(
                         context = this@DemoActivity,
-                        lifecycle = this@DemoActivity.getLifecycle()
+                        lifecycle = this@DemoActivity.lifecycle
                     )
                 )
             )
@@ -71,6 +68,12 @@ class DemoActivity : AppCompatActivity() {
             }
         }
     }
+
+    override fun onDestroy() {
+        scope.cancel()
+        super.onDestroy()
+    }
+
 
     private fun testPersonRecipe() {
         scope.launch {
