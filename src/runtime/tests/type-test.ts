@@ -11,7 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
 import {BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
-        ReferenceType, TupleType, SlotType, Type, TypeVariable, TypeVariableInfo, BackingType} from '../type.js';
+        ReferenceType, TupleType, SlotType, Type, TypeVariable, TypeVariableInfo, MuxType} from '../type.js';
 import {Entity} from '../entity.js';
 import {Refinement} from '../refiner.js';
 import {UnaryExpressionNode, FieldNode, Op} from '../manifest-ast-nodes.js';
@@ -25,7 +25,7 @@ import {UnaryExpressionNode, FieldNode, Op} from '../manifest-ast-nodes.js';
 //   InterfaceType     : InterfaceInfo
 //   SlotType          : SlotInfo
 //   ReferenceType     : Type
-//   BackingType       : Type
+//   MuxType           : Type
 //   ArcType           : none
 //   HandleType        : none
 
@@ -266,32 +266,32 @@ describe('types', () => {
       deepEqual(ref3, ref3.clone(new Map()));
     });
 
-    it('Backing', async () => {
-      // BackingType of an entity
+    it('Mux', async () => {
+      // MuxType of an entity
       const entity = EntityType.make(['Foo'], {value: 'Text'});
-      const backing1 = new BackingType(entity);
-      deepEqual(backing1.toLiteral(), {tag: 'Backing', data: entity.toLiteral()});
-      deepEqual(backing1, Type.fromLiteral(backing1.toLiteral()));
-      deepEqual(backing1, backing1.clone(new Map()));
+      const mux1 = new MuxType(entity);
+      deepEqual(mux1.toLiteral(), {tag: 'Mux', data: entity.toLiteral()});
+      deepEqual(mux1, Type.fromLiteral(mux1.toLiteral()));
+      deepEqual(mux1, mux1.clone(new Map()));
 
-      // BackingType of a reference variable
+      // MuxType of a reference variable
       const variable = TypeVariable.make('a');
       const inner = new ReferenceType(variable);
-      const backing2 = new BackingType(inner);
-      deepEqual(backing2.toLiteral(), {
-        tag: 'Backing',
+      const mux2 = new MuxType(inner);
+      deepEqual(mux2.toLiteral(), {
+        tag: 'Mux',
         data: {tag: 'Reference', data: variable.toLiteral()}
       });
-      deepEqual(backing2, Type.fromLiteral(backing2.toLiteral()));
-      deepEqual(backing2, backing2.clone(new Map()));
+      deepEqual(mux2, Type.fromLiteral(mux2.toLiteral()));
+      deepEqual(mux2, mux2.clone(new Map()));
 
-      // BackingType of a collection of slots
+      // MuxType of a collection of slots
       const slot = SlotType.make('f', 'h');
       const col = new CollectionType(slot);
-      const backing3 = new BackingType(col);
-      deepEqual(backing3.toLiteral(), {tag: 'Backing', data: col.toLiteral()});
-      deepEqual(backing3, Type.fromLiteral(backing3.toLiteral()));
-      deepEqual(backing3, backing3.clone(new Map()));
+      const mux3 = new MuxType(col);
+      deepEqual(mux3.toLiteral(), {tag: 'Mux', data: col.toLiteral()});
+      deepEqual(mux3, Type.fromLiteral(mux3.toLiteral()));
+      deepEqual(mux3, mux3.clone(new Map()));
     });
 
     it('HandleInfo', async () => {
@@ -305,7 +305,7 @@ describe('types', () => {
       const slot       = SlotType.make('f', 'h');
       const bigCol     = new BigCollectionType(slot);
       const reference  = new ReferenceType(bigCol);
-      const backedType = new BackingType(reference);
+      const muxType = new MuxType(reference);
 
       const entity     = EntityType.make(['Foo'], {value: 'Text'});
       const variable   = TypeVariable.make('a');
@@ -313,7 +313,7 @@ describe('types', () => {
 
       const handleInfo = new HandleType();
 
-      const tuple   = new TupleType([backedType, iface, handleInfo]);
+      const tuple   = new TupleType([muxType, iface, handleInfo]);
       const collection = new CollectionType(tuple);
 
       deepEqual(collection, Type.fromLiteral(collection.toLiteral()));

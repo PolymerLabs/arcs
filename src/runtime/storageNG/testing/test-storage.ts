@@ -20,7 +20,7 @@ import {StorageKey} from '../storage-key.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ActiveStore, ProxyCallback, ProxyMessage, StorageMode, ProxyMessageType} from '../store.js';
 import {CountType} from '../../type.js';
-import {BackingStore} from '../backing-store.js';
+import {DirectStoreMuxer} from '../direct-store-muxer.js';
 
 
 /**
@@ -92,7 +92,7 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   }
 }
 
-export class MockBackingStore<T extends CRDTTypeRecord> extends BackingStore<T> {
+export class MockDirectStoreMuxer<T extends CRDTTypeRecord> extends DirectStoreMuxer<T> {
   lastCapturedMessage: ProxyMessage<T> = null;
   lastCapturedException: PropagatedException = null;
   callback: ProxyCallback<T> = null;

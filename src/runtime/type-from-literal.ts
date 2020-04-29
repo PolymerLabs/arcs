@@ -10,7 +10,7 @@
 
 import {TypeLiteral, Type, EntityType, TypeVariable, CollectionType,
         BigCollectionType, TupleType, InterfaceType, SlotType, ReferenceType,
-        HandleType, SingletonType, TypeVariableInfo, InterfaceInfo, BackingType} from './type.js';
+        HandleType, SingletonType, TypeVariableInfo, InterfaceInfo, MuxType} from './type.js';
 import {Schema} from './schema.js';
 import {SlotInfo} from './slot-info.js';
 
@@ -32,8 +32,8 @@ function fromLiteral(literal: TypeLiteral) : Type {
       return new SlotType(SlotInfo.fromLiteral(literal.data));
     case 'Reference':
       return new ReferenceType(Type.fromLiteral(literal.data));
-    case 'Backing':
-      return new BackingType(Type.fromLiteral(literal.data));
+    case 'Mux':
+      return new MuxType(Type.fromLiteral(literal.data));
     case 'Handle':
       return new HandleType();
     case 'Singleton':

@@ -17,7 +17,7 @@ import {SYMBOL_INTERNALS} from './symbols.js';
 import {ChannelConstructor} from './channel-constructor.js';
 import {CRDTEntityTypeRecord, Identified} from './crdt/crdt-entity.js';
 import {EntityHandle, Handle} from './storageNG/handle.js';
-import {BackingStorageProxy} from './storageNG/backing-storage-proxy.js';
+import {StorageProxyMuxer} from './storageNG/storage-proxy-muxer.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 
@@ -77,10 +77,10 @@ export class Reference implements Storable {
     };
   }
 
-  protected async ensureBackingStorageProxy(): Promise<void> {
+  protected async ensureStorageProxyMuxer(): Promise<void> {
     if (this.storageProxy == null) {
-      const backingStorageProxy = await this.context.getBackingStorageProxy(this.backingKey, this.type.referredType);
-      this.storageProxy = backingStorageProxy.getStorageProxy(this.id);
+      const storageProxyMuxer = await this.context.getStorageProxyMuxer(this.backingKey, this.type.referredType);
+      this.storageProxy = storageProxyMuxer.getStorageProxy(this.id);
       this.handle = new EntityHandle(this.context.generateID(), this.storageProxy, this.context.idGenerator, null, true, true, this.id);
     }
   }
@@ -92,7 +92,7 @@ export class Reference implements Storable {
       return this.entity;
     }
 
-    await this.ensureBackingStorageProxy();
+    await this.ensureStorageProxyMuxer();
 
     this.entity = await this.handle.fetch();
     return this.entity;
@@ -118,8 +118,8 @@ export class Reference implements Storable {
 
   // Called by WasmParticle to retrieve the entity for a reference held in a wasm module.
   static async retrieve(pec: ChannelConstructor, id: string, storageKey: string, entityType: EntityType, particleId: string) {
-    const backingProxy = await pec.getBackingStorageProxy(this.extractBackingKey(storageKey), entityType) as BackingStorageProxy<CRDTEntityTypeRecord<Identified, Identified>>;
-    const proxy = backingProxy.getStorageProxy(id);
+    const storageProxyMuxer = await pec.getStorageProxyMuxer(this.extractBackingKey(storageKey), entityType) as StorageProxyMuxer<CRDTEntityTypeRecord<Identified, Identified>>;
+    const proxy = storageProxyMuxer.getStorageProxy(id);
     const handle = new EntityHandle<Entity>(particleId, proxy, pec.idGenerator, null, true, true, id);
     return await handle.fetch();
   }
@@ -153,7 +153,7 @@ export abstract class ClientReference extends Reference {
     if (this.mode === ReferenceMode.Unstored) {
       return null;
     }
-    await this.ensureBackingStorageProxy();
+    await this.ensureStorageProxyMuxer();
     return super.dereference();
   }
 

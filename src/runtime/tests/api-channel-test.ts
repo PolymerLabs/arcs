@@ -72,9 +72,9 @@ describe('API channel', function() {
       onArcCreateHandle() {}
       onArcCreateSlot() {}
       onArcMapHandle() {}
-      onBackingProxyMessage() {}
+      onStorageProxyMuxerMessage() {}
       onConstructInnerArc() {}
-      onGetBackingStore() {}
+      onGetDirectStoreMuxer() {}
       onHandleClear() {}
       onHandleGet() {}
       onHandleRemove() {}
@@ -92,7 +92,7 @@ describe('API channel', function() {
       onSynchronizeProxy() {}
       onInitializeProxy() {}
       onRegister() {}
-      onBackingRegister() {}
+      onDirectStoreMuxerRegister() {}
       onProxyMessage() {}
       onSystemTraceBegin() {}
       onSystemTraceEnd() {}
@@ -106,7 +106,7 @@ describe('API channel', function() {
       onCreateHandleCallback() {}
       onCreateSlotCallback() {}
       onDefineHandle() {}
-      onGetBackingStoreCallback() {}
+      onGetDirectStoreMuxerCallback() {}
       onInnerArcRender() {}
       onInstantiateParticle() {}
       onReinstantiateParticle() {}

@@ -20,7 +20,7 @@ import {StorageProxy} from './storageNG/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storageNG/store.js';
 import {PropagatedException} from './arc-exceptions.js';
-import {Type, BackingType} from './type.js';
+import {Type, MuxType} from './type.js';
 import {MessagePort} from './message-channel.js';
 import {WasmContainer, WasmParticle} from './wasm.js';
 import {Dictionary} from './hot.js';
@@ -30,7 +30,7 @@ import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';
 import {ChannelConstructor} from './channel-constructor.js';
 import {Ttl} from './recipe/ttl.js';
 import {Handle} from './storageNG/handle.js';
-import {BackingStorageProxy} from './storageNG/backing-storage-proxy.js';
+import {StorageProxyMuxer} from './storageNG/storage-proxy-muxer.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 
@@ -65,7 +65,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   private readonly loader: Loader;
   private readonly pendingLoads = <Promise<void>[]>[];
   private readonly keyedProxies: Dictionary<StorageProxy<CRDTTypeRecord> | Promise<StorageProxy<CRDTTypeRecord>>> = {};
-  private readonly keyedBackingProxies: Dictionary<BackingStorageProxy<CRDTTypeRecord> | Promise<BackingStorageProxy<CRDTTypeRecord>>> = {};
+  private readonly keyedProxyMuxers: Dictionary<StorageProxyMuxer<CRDTTypeRecord> | Promise<StorageProxyMuxer<CRDTTypeRecord>>> = {};
   private readonly wasmContainers: Dictionary<WasmContainer> = {};
 
   readonly idGenerator: IdGenerator;
@@ -79,14 +79,14 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         return new StorageProxy(identifier, pec, type, storageKey, ttl);
       }
 
-      onGetBackingStoreCallback(
-          callback: (backingProxy: BackingStorageProxy<CRDTTypeRecord>, key: string) => void,
+      onGetDirectStoreMuxerCallback(
+          callback: (storageProxyMuxer: StorageProxyMuxer<CRDTTypeRecord>, key: string) => void,
           type: Type,
           name: string,
           id: string,
           storageKey: string) {
-        const backingProxy = new BackingStorageProxy(pec, type, storageKey);
-        return [backingProxy, () => callback(backingProxy, storageKey)];
+        const storageProxyMuxer = new StorageProxyMuxer(pec, type, storageKey);
+        return [storageProxyMuxer, () => callback(storageProxyMuxer, storageKey)];
       }
 
       onCreateHandleCallback(
@@ -171,7 +171,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     return this.idGenerator.newChildId(this.pecId).toString();
   }
 
-  getStorageEndpoint(storageProxy: StorageProxy<CRDTTypeRecord> | BackingStorageProxy<CRDTTypeRecord>): StorageCommunicationEndpoint<CRDTTypeRecord> {
+  getStorageEndpoint(storageProxy: StorageProxy<CRDTTypeRecord> | StorageProxyMuxer<CRDTTypeRecord>): StorageCommunicationEndpoint<CRDTTypeRecord> {
     const pec = this;
     let idPromise: Promise<number> = null;
     if (storageProxy instanceof StorageProxy) {
@@ -198,7 +198,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
           return pec;
         }
       };
-    } else if (storageProxy instanceof BackingStorageProxy) {
+    } else if (storageProxy instanceof StorageProxyMuxer) {
       return {
         async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<void> {
           if (idPromise == null) {
@@ -209,12 +209,12 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
             throw new Error('undefined id received .. somehow');
           }
 
-          // Proxy messages sent to Backing stores require a muxId in order to redirect the message to the correct store.
+          // Proxy messages sent to Direct Store Muxers require a muxId in order to redirect the message to the correct store.
           assert(message.muxId != null);
-          pec.apiPort.BackingProxyMessage(storageProxy, message);
+          pec.apiPort.StorageProxyMuxerMessage(storageProxy, message);
         },
         setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
-          idPromise = new Promise<number>(resolve => pec.apiPort.BackingRegister(storageProxy, callback, resolve));
+          idPromise = new Promise<number>(resolve => pec.apiPort.DirectStoreMuxerRegister(storageProxy, callback, resolve));
         },
         reportExceptionInHost(exception: PropagatedException): void {
           pec.apiPort.ReportExceptionInHost(exception);
@@ -274,20 +274,20 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   /**
    * Establishes a backing storage proxy that's connected to the provided backing storage key.
    */
-  async getBackingStorageProxy(storageKey: string, type: Type): Promise<BackingStorageProxy<CRDTTypeRecord>> {
-    type = new BackingType(type);
-    if (!this.keyedBackingProxies[storageKey]) {
-      this.keyedBackingProxies[storageKey] = new Promise((resolve, reject) => {
-        this.apiPort.GetBackingStore((backingProxy, newStorageKey) => {
+  async getStorageProxyMuxer(storageKey: string, type: Type): Promise<StorageProxyMuxer<CRDTTypeRecord>> {
+    type = new MuxType(type);
+    if (!this.keyedProxyMuxers[storageKey]) {
+      this.keyedProxyMuxers[storageKey] = new Promise((resolve, reject) => {
+        this.apiPort.GetDirectStoreMuxer((storageProxyMuxer, newStorageKey) => {
           if (storageKey !== newStorageKey) {
             throw new Error('returned storage key should always match provided storage key for new storage stack');
           }
-          this.keyedBackingProxies[newStorageKey] = backingProxy;
-          resolve(backingProxy);
+          this.keyedProxyMuxers[newStorageKey] = storageProxyMuxer;
+          resolve(storageProxyMuxer);
         }, storageKey, type);
       });
     }
-    return this.keyedBackingProxies[storageKey];
+    return this.keyedProxyMuxers[storageKey];
   }
 
   capabilities(hasInnerArcs: boolean): Capabilities {

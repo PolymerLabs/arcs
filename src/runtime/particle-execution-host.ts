@@ -31,7 +31,7 @@ import {NoTrace, SystemTrace} from '../tracelib/systrace.js';
 import {Client, getClientClass} from '../tracelib/systrace-clients.js';
 import {Exists} from './storageNG/drivers/driver.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
-import {BackingStore} from './storageNG/backing-store.js';
+import {DirectStoreMuxer} from './storageNG/direct-store-muxer.js';
 
 export type ParticleExecutionHostOptions = Readonly<{
   slotComposer: SlotComposer;
@@ -182,7 +182,7 @@ class PECOuterPortImpl extends PECOuterPort {
     this.SimpleCallback(idCallback, id);
   }
 
-  async onBackingRegister(store: BackingStore<CRDTTypeRecord>, messagesCallback: number, idCallback: number) {
+  async onDirectStoreMuxerRegister(store: DirectStoreMuxer<CRDTTypeRecord>, messagesCallback: number, idCallback: number) {
     const id = store.on(async data => {
       this.SimpleCallback(messagesCallback, data);
     });
@@ -199,9 +199,9 @@ class PECOuterPortImpl extends PECOuterPort {
     noAwait((await store.activate()).onProxyMessage(message));
   }
 
-  async onBackingProxyMessage(store: BackingStore<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>) {
-    if (!(store instanceof BackingStore)) {
-      this.onReportExceptionInHost(new SystemException(new Error('expected BackingStore for onBackingProxyMessage'), 'onBackingProxyMessage', ''));
+  async onStorageProxyMuxerMessage(store: DirectStoreMuxer<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>) {
+    if (!(store instanceof DirectStoreMuxer)) {
+      this.onReportExceptionInHost(new SystemException(new Error('expected DirectStoreMuxer for onStorageProxyMuxerMessage'), 'onStorageProxyMuxerMessage', ''));
       return;
     }
     noAwait(store.onProxyMessage(message));
@@ -211,13 +211,13 @@ class PECOuterPortImpl extends PECOuterPort {
     this.arc.peh.resolveIfIdle(version, relevance);
   }
 
-  async onGetBackingStore(callback: number, storageKey: string, type: Type) {
+  async onGetDirectStoreMuxer(callback: number, storageKey: string, type: Type) {
     if (!storageKey) {
       // TODO(shanestephens): What should we do here?!
       throw new Error(`Don't know how to invent new storage keys for new storage stack when we only have type information`);
     }
     const key = StorageKeyParser.parse(storageKey);
-    const backingStore = await BackingStore.construct({
+    const directStoreMuxer = await DirectStoreMuxer.construct({
       storageKey: key,
       type: type.getContainedType(),
       mode: StorageMode.Backing,
@@ -225,7 +225,7 @@ class PECOuterPortImpl extends PECOuterPort {
       baseStore: null,
       versionToken: null
     });
-    this.GetBackingStoreCallback(backingStore, callback, type, type.toString(), storageKey, storageKey);
+    this.GetDirectStoreMuxerCallback(directStoreMuxer, callback, type, type.toString(), storageKey, storageKey);
   }
 
   onConstructInnerArc(callback: number, particle: Particle) {

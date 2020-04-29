@@ -11,7 +11,7 @@
 import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, CRDTSingleton, SingletonOperationSet, SingletonOperationClear} from '../crdt/crdt-singleton.js';
 import {CRDTCollectionTypeRecord, Referenceable, CollectionOpTypes, CollectionOperation, CRDTCollection, CollectionOperationAdd, CollectionOperationRemove} from '../crdt/crdt-collection.js';
 import {ActiveStore, ProxyCallback, ProxyMessage, ProxyMessageType, StorageMode, StoreConstructorOptions} from './store-interface.js';
-import {BackingStore} from './backing-store.js';
+import {DirectStoreMuxer} from './direct-store-muxer.js';
 import {CRDTEntityTypeRecord, CRDTEntity, EntityData, EntityOperation, EntityOpTypes} from '../crdt/crdt-entity.js';
 import {DirectStore} from './direct-store.js';
 import {StorageKey} from './storage-key.js';
@@ -65,7 +65,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
   /*
    * The underlying backing store and container store that this reference view is built from
    */
-  backingStore: BackingStore<CRDTEntityTypeRecord<S, C>>;
+  backingStore: DirectStoreMuxer<CRDTEntityTypeRecord<S, C>>;
   containerStore: DirectStore<ReferenceContainer>;
 
   /*
@@ -118,7 +118,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
       options: StoreConstructorOptions<Container> & {storageKey: ReferenceModeStorageKey}) {
     const result = new ReferenceModeStore<Entity, S, C, ReferenceContainer, Container>(options);
     const {storageKey, type} = options;
-    result.backingStore = await BackingStore.construct({
+    result.backingStore = await DirectStoreMuxer.construct({
       storageKey: storageKey.backingKey,
       type: type.getContainedType(),
       mode: StorageMode.Backing,

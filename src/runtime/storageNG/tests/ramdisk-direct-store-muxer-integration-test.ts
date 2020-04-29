@@ -15,7 +15,7 @@ import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdis
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
 import {Runtime} from '../../runtime.js';
-import {BackingStore} from '../backing-store.js';
+import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {CountType} from '../../type.js';
 
 function assertHasModel(message: ProxyMessage<CRDTCountTypeRecord>, model: CRDTCount) {
@@ -26,7 +26,7 @@ function assertHasModel(message: ProxyMessage<CRDTCountTypeRecord>, model: CRDTC
   }
 }
 
-describe('RamDisk + Backing Store Integration', async () => {
+describe('RamDisk + Direct Store Muxer Integration', async () => {
   afterEach(() => {
     DriverFactory.clearRegistrationsForTesting();
   });
@@ -36,7 +36,7 @@ describe('RamDisk + Backing Store Integration', async () => {
     RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new RamDiskStorageKey('unique');
     const baseStore = new Store<CRDTCountTypeRecord>(new CountType(), {storageKey, exists: Exists.ShouldCreate, id: 'base-store-id'});
-    const store = await BackingStore.construct<CRDTCountTypeRecord>({
+    const store = await DirectStoreMuxer.construct<CRDTCountTypeRecord>({
       storageKey,
       exists: Exists.ShouldCreate,
       type: new CountType(),

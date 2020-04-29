@@ -18,7 +18,7 @@ import {StorageProxy} from './storage-proxy.js';
 import {Store} from './store.js';
 import {Producer} from '../hot.js';
 import {ChannelConstructor} from '../channel-constructor.js';
-import {BackingStorageProxy} from './backing-storage-proxy.js';
+import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {noAwait} from '../util.js';
 
 /**
@@ -67,7 +67,7 @@ export interface StorageCommunicationEndpoint<T extends CRDTTypeRecord> {
 }
 
 export interface StorageCommunicationEndpointProvider<T extends CRDTTypeRecord> {
-  getStorageEndpoint(storageProxy: StorageProxy<T> | BackingStorageProxy<T>): StorageCommunicationEndpoint<T>;
+  getStorageEndpoint(storageProxy: StorageProxy<T> | StorageProxyMuxer<T>): StorageCommunicationEndpoint<T>;
 }
 
 // A representation of an active store. Subclasses of this class provide specific
@@ -141,7 +141,7 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
             throw new Error('References not yet supported outside of the PEC');
           },
           idGenerator: null,
-          getBackingStorageProxy() {
+          getStorageProxyMuxer() {
             throw new Error('References not yet supported outside of the PEC');
           },
           reportExceptionInHost(exception: PropagatedException): void {
