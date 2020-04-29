@@ -36,8 +36,10 @@ fun KClass<*>.className(): String {
 }
 
 /** Returns a pair mapping [ParticleIdentifier] to [ParticleConstructor] */
-inline fun <reified T : Particle> (() -> T).toRegistration(): ParticleRegistration =
-    T::class.toParticleIdentifier() to { _ -> this.invoke() }
+inline fun <reified T : Particle> (() -> T).toRegistration(): ParticleRegistration {
+    val construct: suspend (Plan.Particle?) -> T = { _ -> this.invoke() }
+    T::class.toParticleIdentifier() to construct
+}
 
 /** Returns a pair mapping [ParticleIdentifier] to [ParticleConstructor] */
 inline fun <reified T : Particle> ((Plan.Particle?) -> T).toRegistration(): ParticleRegistration {

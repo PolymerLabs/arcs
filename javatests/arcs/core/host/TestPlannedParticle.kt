@@ -13,7 +13,7 @@ open class TestPlannedParticle(val spec: Plan.Particle?) : BaseParticle() {
     override val handles = Handles(schema)
 
     class Handles(schema: Schema) : HandleHolderBase(
-        "TestConstructedParticle",
+        "TestPlannedParticle",
         mapOf(
             "data" to EntityBaseSpec(schema)
         )
