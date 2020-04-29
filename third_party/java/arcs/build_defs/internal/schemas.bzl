@@ -62,6 +62,7 @@ def arcs_cc_schema(name, src, deps = [], out = None):
 def arcs_kt_schema(
         name,
         srcs,
+        data = [],
         deps = [],
         platforms = ["jvm"],
         test_harness = True,
@@ -88,6 +89,7 @@ def arcs_kt_schema(
     Args:
       name: name of the target to create
       srcs: list of Arcs manifest files to include
+      data: list of Arcs manifests needed at runtime
       deps: list of imported manifests
       platforms: list of target platforms (currently, `jvm` and `wasm` supported).
       test_harness: whether to generate a test harness target
@@ -118,7 +120,7 @@ def arcs_kt_schema(
                 name = genrule_name,
                 src = src,
                 out = out,
-                deps = deps,
+                deps = deps + data,
                 wasm = wasm,
                 language_flag = "--kotlin",
                 language_name = "Kotlin",

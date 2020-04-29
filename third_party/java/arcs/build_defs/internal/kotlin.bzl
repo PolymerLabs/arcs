@@ -400,7 +400,7 @@ def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], 
             deps = android_local_test_deps,
         )
 
-def arcs_kt_plan(name, srcs = [], deps = [], platforms = ["jvm"], visibility = None):
+def arcs_kt_plan(name, srcs = [], data = [], deps = [], platforms = ["jvm"], visibility = None):
     """Converts recipes from manifests into Kotlin plans.
 
     Example:
@@ -429,7 +429,8 @@ def arcs_kt_plan(name, srcs = [], deps = [], platforms = ["jvm"], visibility = N
     Args:
       name: the name of the target to create
       srcs: list of Arcs manifest files
-      deps: list of dependencies (other manifests)
+      data: list of Arcs manifests needed at runtime
+      deps: list of dependencies (jars)
       platforms: list of target platforms (currently, `jvm` and `wasm` supported).
       visibility: visibility of the generated arcs_kt_library
 
@@ -452,7 +453,7 @@ def arcs_kt_plan(name, srcs = [], deps = [], platforms = ["jvm"], visibility = N
             outs = [out],
             progress_message = "Generating Kotlin Plans",
             sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRCS}",
-            deps = deps,
+            deps = deps + data,
         )
 
     deps = manifest_only(deps, inverse = True)

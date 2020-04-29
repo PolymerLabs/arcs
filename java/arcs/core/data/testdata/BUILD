@@ -46,34 +46,8 @@ arcs_kt_schema(
         "Analyze.arcs",
         "Request.arcs",
     ],
-    deps = ["Schemas.arcs"]
+    data = [":shared_schemas"]
 )
-
-#arcs_kt_plan(
-#    name = "ingest_plan",
-#    srcs = ["Ingest.arcs"],
-#    deps = [
-#        ":multimanifest_schemas",
-#    ],
-#)
-#
-#arcs_kt_plan(
-#    name = "analyze_plan",
-#    srcs = ["Analyze.arcs"],
-#    deps = [
-#        ":multimanifest_schemas",
-#        ":ingest_plan",
-#    ],
-#)
-#
-#arcs_kt_plan(
-#    name = "request_plan",
-#    srcs = ["Request.arcs"],
-#    deps = [
-#        ":multimanifest_schemas",
-#        ":analyze_plan",
-#    ],
-#)
 
 arcs_kt_plan(
     name = "etl_plan",
@@ -82,18 +56,6 @@ arcs_kt_plan(
         "Ingest.arcs",
         "Request.arcs",
     ],
-    deps = [
-        ":multimanifest_schemas",
-        "Schemas.arcs",
-    ],
+    data = [":shared_schemas"],
+    deps = [":multimanifest_schemas"],
 )
-
-#arcs_kt_gen(
-#    name = "split_recipe_pathway_gen",
-#    srcs = [
-#        "Ingest.arcs",
-#        "Analyze.arcs",
-#        "Request.arcs",
-#    ],
-#    deps = ["Schemas.arcs"]
-#)
