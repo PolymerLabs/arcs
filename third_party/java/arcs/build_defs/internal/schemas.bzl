@@ -167,6 +167,7 @@ def arcs_kt_schema(
 def arcs_kt_gen(
         name,
         srcs,
+        data = [],
         deps = [],
         platforms = ["jvm"],
         test_harness = True,
@@ -178,6 +179,7 @@ def arcs_kt_gen(
     Args:
       name: name of the target to create
       srcs: list of Arcs manifest files to include
+      data: list of Arcs manifests needed at runtime
       deps: list of dependent arcs targets, such as an arcs_kt_gen target in a different package
       platforms: list of target platforms (currently, `jvm` and `wasm` supported).
       test_harness: whether to generate a test harness target
@@ -191,7 +193,7 @@ def arcs_kt_gen(
     arcs_manifest(
         name = manifest_name,
         srcs = srcs,
-        deps = manifest_only(deps),
+        deps = manifest_only(deps) + data,
     )
 
     schema = arcs_kt_schema(
@@ -205,6 +207,7 @@ def arcs_kt_gen(
     plan = arcs_kt_plan(
         name = plan_name,
         srcs = srcs,
+        data = [":" + manifest_name],
         deps = deps + [":" + schema_name],
         platforms = platforms,
         visibility = visibility,

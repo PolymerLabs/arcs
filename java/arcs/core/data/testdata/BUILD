@@ -39,23 +39,12 @@ arcs_manifest(
     srcs = ["Schemas.arcs"],
 )
 
-arcs_kt_schema(
-    name = "multimanifest_schemas",
+arcs_kt_gen(
+    name = "etl_gen",
     srcs = [
         "Analyze.arcs",
         "Ingest.arcs",
         "Request.arcs",
     ],
     data = [":shared_schemas"],
-)
-
-arcs_kt_plan(
-    name = "etl_plan",
-    srcs = [
-        "Analyze.arcs",
-        "Ingest.arcs",
-        "Request.arcs",
-    ],
-    data = [":shared_schemas"],
-    deps = [":multimanifest_schemas"],
 )
