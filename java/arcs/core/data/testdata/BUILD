@@ -78,8 +78,8 @@ arcs_kt_schema(
 arcs_kt_plan(
     name = "etl_plan",
     srcs = [
-        "Ingest.arcs",
         "Analyze.arcs",
+        "Ingest.arcs",
         "Request.arcs",
     ],
     deps = [
