@@ -4,16 +4,20 @@ import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.entity.EntityBaseSpec
 import arcs.sdk.BaseParticle
+import arcs.sdk.EntityBase
 import arcs.sdk.HandleHolderBase
+import arcs.sdk.ReadCollectionHandle
 
-class TestPlannedParticle(val spec: Plan.Particle?) : BaseParticle() {
+open class TestPlannedParticle(val spec: Plan.Particle?) : BaseParticle() {
     val schema = spec?.handles?.getValue("data")?.type?.toSchema() ?: Schema.EMPTY
     override val handles = Handles(schema)
 
-    class Handles(val schema: Schema) : HandleHolderBase(
+    class Handles(schema: Schema) : HandleHolderBase(
         "TestConstructedParticle",
         mapOf(
-            (schema.name?.name ?: "anonymousSchema") to EntityBaseSpec(schema)
+            "data" to EntityBaseSpec(schema)
         )
-    )
+    ) {
+        val data: ReadCollectionHandle<EntityBase> by handles
+    }
 }

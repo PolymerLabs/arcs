@@ -5,7 +5,7 @@ particle TestProdParticle in 'arcs.core.host.TestProdParticle'
 
 particle TestHostParticle in 'arcs.core.host.TestHostParticle'
 
-particle TestConstructedParticle in 'arcs.core.host.TestConstructedParticle'
+particle TestConstructedParticle in 'arcs.core.host.TestPlannedParticle'
   data: reads [Thing {name: Text}]
 
 recipe TestRecipe
