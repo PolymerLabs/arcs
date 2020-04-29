@@ -29,6 +29,8 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineDispatcher
+import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.After
@@ -55,9 +57,9 @@ class TtlHandleTest {
         backingKey = backingKey,
         storageKey = DatabaseStorageKey.Persistent("singleton", DummyEntity.SCHEMA_HASH)
     )
+    private val testScope = TestCoroutineScope(TestCoroutineDispatcher())
     private lateinit var databaseManager: AndroidSqliteDatabaseManager
     private lateinit var fakeTime: FakeTime
-
     private lateinit var scheduler: Scheduler
     private val handleManager: EntityHandleManager
         // Create a new handle manager on each call, to check different storage proxies.
@@ -71,12 +73,15 @@ class TtlHandleTest {
         fakeTime = FakeTime()
         scheduler = schedulerProvider("myArc")
         databaseManager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
+        WriteBackForTesting.writeBackScope = testScope
+        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         DriverAndKeyConfigurator.configure(databaseManager)
         SchemaRegistry.register(DummyEntity)
     }
 
     @After
     fun tearDown() {
+        WriteBackForTesting.clear()
         scheduler.cancel()
     }
 
