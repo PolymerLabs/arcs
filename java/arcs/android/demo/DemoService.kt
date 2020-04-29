@@ -10,6 +10,7 @@ import androidx.lifecycle.LifecycleService
 import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostHelper
 import arcs.android.sdk.host.ArcHostService
+import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
@@ -39,6 +40,8 @@ class DemoService : ArcHostService() {
         ::ReadPerson.toRegistration(),
         ::WritePerson.toRegistration()
     )
+
+    override val arcHosts: List<ArcHost> by lazy { listOf(arcHost) }
 
     override fun onCreate() {
         super.onCreate()
