@@ -36,6 +36,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 typealias ParticleConstructor = suspend () -> Particle
 typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
@@ -503,7 +504,9 @@ abstract class AbstractArcHost(
      * Unregisters [Handle]s from [StorageProxy]s, and clears references to them from [Particle]s.
      */
     private suspend fun cleanupHandles(context: ParticleContext) {
-        context.particle.handles.reset()
+        withContext(context.particle.handles.dispatcher) {
+            context.particle.handles.reset()
+        }
     }
 
     override suspend fun isHostForParticle(particle: Plan.Particle) =

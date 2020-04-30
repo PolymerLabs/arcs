@@ -1,7 +1,5 @@
 package arcs.sdk
 
-import kotlinx.coroutines.runBlocking
-
 class ReadSdkPerson : AbstractReadSdkPerson() {
     var name = ""
     var createCalled = false
@@ -11,9 +9,7 @@ class ReadSdkPerson : AbstractReadSdkPerson() {
         createCalled = true
         name = ""
         handles.person.onUpdate {
-            runBlocking {
-                name = handles.person.fetch()?.name ?: ""
-            }
+            name = handles.person.fetch()?.name ?: ""
         }
     }
 

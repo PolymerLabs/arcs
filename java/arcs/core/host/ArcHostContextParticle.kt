@@ -25,8 +25,10 @@ import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.util.plus
 import arcs.core.util.traverse
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.withContext
 
 /**
  * An implicit [Particle] that lives within the [ArcHost] and used as a utility class to
@@ -105,7 +107,8 @@ class ArcHostContextParticle(
 
         try {
             // TODO(cromwellian): replace with .query(arcId, hostId) when queryHandles are efficient
-            val arcStateEntity = handles.arcHostContext.fetch() ?: return@onHandlesReady null
+            val arcStateEntity = handles.arcHostContext.fetch()
+                ?: return@onHandlesReady null
             val particles = arcStateEntity.particles.map {
                 requireNotNull(it.dereference()) {
                     "Invalid particle reference when deserialising arc $arcId for host $hostId"
@@ -142,7 +145,10 @@ class ArcHostContextParticle(
         instantiateParticle(ParticleIdentifier.from(location))
     }
 
-    private suspend inline fun <T> onHandlesReady(block: () -> T): T {
+    private suspend inline fun <T> onHandlesReady(
+        coroutineContext: CoroutineContext = handles.dispatcher,
+        crossinline block: suspend () -> T
+    ): T {
         val onReadyJobs = mapOf(
             "particles" to Job(),
             "arcHostContext" to Job(),
@@ -152,7 +158,7 @@ class ArcHostContextParticle(
         handles.arcHostContext.onReady { onReadyJobs["arcHostContext"]?.complete() }
         handles.handleConnections.onReady { onReadyJobs["handleConnections"]?.complete() }
         onReadyJobs.values.joinAll()
-        return block()
+        return withContext(coroutineContext) { block() }
     }
 
     private suspend fun createHandlesMap(

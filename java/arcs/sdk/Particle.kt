@@ -12,6 +12,7 @@
 package arcs.sdk
 
 import arcs.core.host.api.Particle
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -37,6 +38,14 @@ open class HandleHolderBase(
             "Handle $handleName has not been initialized in $particleName yet."
         )
     }
+
+    override val dispatcher: CoroutineDispatcher
+        get() {
+            val handle = checkNotNull(handles.values.firstOrNull()) {
+                "No dispatcher available for a HandleHolder with no handles."
+            }
+            return handle.dispatcher
+        }
 
     override fun getEntitySpec(handleName: String): EntitySpec<out Entity> {
         checkHandleIsValid(handleName)
