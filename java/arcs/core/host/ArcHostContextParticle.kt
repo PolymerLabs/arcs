@@ -48,7 +48,10 @@ class ArcHostContextParticle(
      * types, and write them to the appropriate handles. See `ArcHostContext.arcs` for schema
      * definitions.
      */
-    suspend fun writeArcHostContext(arcId: String, context: arcs.core.host.ArcHostContext) = onHandlesReady {
+    suspend fun writeArcHostContext(
+        arcId: String,
+        context: arcs.core.host.ArcHostContext
+    ) = onHandlesReady {
         try {
             val connections = context.particles.flatMap {
                 it.value.planParticle.handles.map { handle ->
