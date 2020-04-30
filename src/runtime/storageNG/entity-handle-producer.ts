@@ -14,11 +14,8 @@ import {Entity} from '../entity.js';
 import {Identified, CRDTEntityTypeRecord} from '../crdt/crdt-entity.js';
 
 export class EntityHandleProducer<T extends CRDTEntityTypeRecord<Identified, Identified>> {
-  storageProxyMuxer: StorageProxyMuxer<T>;
 
-  constructor(storageProxyMuxer: StorageProxyMuxer<T>) {
-    this.storageProxyMuxer = storageProxyMuxer;
-  }
+  constructor(readonly storageProxyMuxer: StorageProxyMuxer<T>) {}
 
   getHandle(muxId: string): EntityHandle<Entity> {
     const storageProxy = this.storageProxyMuxer.getStorageProxy(muxId);
