@@ -24,11 +24,13 @@ import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -38,6 +40,8 @@ import java.util.concurrent.Executors
 import java.lang.IllegalArgumentException
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 @RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -158,10 +162,7 @@ open class AllocatorTestBase {
      */
     @Test
     open fun allocator_computePartitions() = runAllocatorTest {
-        val arcId = allocator.startArcForPlan(
-            "readWritePerson",
-            PersonPlan
-        )
+        val arcId = allocator.startArcForPlan(PersonPlan).waitForStart().arcId
         val planPartitions = allocator.getPartitionsFor(arcId)!!
 
         val readingHost = requireNotNull(
@@ -227,7 +228,8 @@ open class AllocatorTestBase {
             }
         }
         log("Plan handles are using correct storage keys")
-        val arcId = allocator.startArcForPlan("readWritePerson", PersonPlan)
+        val arcId = allocator.startArcForPlan(PersonPlan).waitForStart().arcId
+
         log("Arc started.")
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         planPartitions.flatMap { it.particles }.forEach { particle ->
@@ -273,10 +275,8 @@ open class AllocatorTestBase {
 
         val testPlan = allStorageKeyLens.mod(PersonPlan) { testKey!! }
 
-        val arcId = allocator.startArcForPlan(
-            "readWritePerson",
-            testPlan
-        )
+        val arcId = allocator.startArcForPlan(testPlan).waitForStart().arcId
+
         val planPartitions = allocator.getPartitionsFor(arcId)!!
         planPartitions.flatMap { it.particles }.forEach {
             particle -> particle.handles.forEach { (_, connection) ->
@@ -287,10 +287,8 @@ open class AllocatorTestBase {
 
     @Test
     open fun allocator_verifyArcHostStartCalled() = runAllocatorTest {
-        val arcId = allocator.startArcForPlan(
-            "readWritePerson",
-            PersonPlan
-        )
+        val arcId = allocator.startArcForPlan(PersonPlan).waitForStart().arcId
+
         val planPartitions = allocator.getPartitionsFor(arcId)!!
 
         val readingHost = requireNotNull(
@@ -332,15 +330,16 @@ open class AllocatorTestBase {
             )
         }
         assertSuspendingThrows(ParticleNotFoundException::class) {
-            allocator.startArcForPlan("unknown", plan)
+            allocator.startArcForPlan(plan).waitForStart()
         }
     }
 
     @Test
     open fun allocator_canStartArcInTwoExternalHosts() = runAllocatorTest {
-        val arcId = allocator.startArcForPlan(
-            "readWriteParticle", PersonPlan
-        )
+        val arc = allocator.startArcForPlan(PersonPlan)
+        val arcId = arc.arcId
+
+        arc.waitForStart()
 
         assertThat(readingExternalHost.started.size).isEqualTo(1)
         assertThat(writingExternalHost.started.size).isEqualTo(1)
@@ -389,10 +388,10 @@ open class AllocatorTestBase {
 
     @Test
     open fun allocator_canStopArcInTwoExternalHosts() = runAllocatorTest {
-        val arcId = allocator.startArcForPlan(
-            "readWriteParticle",
-            PersonPlan
-        )
+        val arc = allocator.startArcForPlan(PersonPlan)
+        val arcId = arc.arcId
+
+        arc.waitForStart()
 
         val readingContext = requireNotNull(
             readingExternalHost.arcHostContext(arcId.toString())
@@ -403,7 +402,9 @@ open class AllocatorTestBase {
 
         assertAllStatus(arcId, ArcState.Running)
 
-        allocator.stopArc(arcId)
+        arc.stop()
+        arc.waitForStop()
+
         assertAllStatus(arcId, ArcState.Stopped)
 
         val readPersonContext = requireNotNull(
@@ -426,20 +427,18 @@ open class AllocatorTestBase {
 
     @Test
     open fun allocator_restartArcInTwoExternalHosts() = runAllocatorTest {
-        val arcId = allocator.startArcForPlan(
-            "readWriteParticle",
-            PersonPlan
-        )
+        val arc = allocator.startArcForPlan(PersonPlan)
+        val arcId = arc.waitForStart().arcId
 
         assertAllStatus(arcId, ArcState.Running)
 
-        allocator.stopArc(arcId)
+        arc.stop()
+        arc.waitForStop()
+
         assertAllStatus(arcId, ArcState.Stopped)
 
-        allocator.startArcForPlan(
-            "readWriteParticle",
-            Plan(PersonPlan.particles, arcId.toString())
-        )
+        val arc2 = allocator.startArcForPlan(Plan(PersonPlan.particles, arcId.toString()))
+        arc2.waitForStart()
 
         val readingContextAfter = requireNotNull(
             readingExternalHost.arcHostContext(arcId.toString())
@@ -468,10 +467,8 @@ open class AllocatorTestBase {
 
     @Test
     open fun allocator_startFromOneAllocatorAndStopInAnother() = runAllocatorTest {
-        val arcId = allocator.startArcForPlan(
-            "readWriteParticle",
-            PersonPlan
-        )
+        val arc = allocator.startArcForPlan(PersonPlan).waitForStart()
+        val arcId = arc.arcId
 
         val readingContext = requireNotNull(
             readingExternalHost.arcHostContext(arcId.toString())
@@ -491,6 +488,7 @@ open class AllocatorTestBase {
         )
 
         allocator2.stopArc(arcId)
+        arc.waitForStop()
 
         assertThat(readingContext.arcState).isEqualTo(ArcState.Stopped)
         assertThat(writingContext.arcState).isEqualTo(ArcState.Stopped)
@@ -498,10 +496,8 @@ open class AllocatorTestBase {
 
     @Test
     open fun allocator_doesntCreateArcsOnDuplicateStartArc() = runAllocatorTest {
-        val arcId = allocator.startArcForPlan(
-            "readWriteParticle",
-            PersonPlan
-        )
+        val arc = allocator.startArcForPlan(PersonPlan)
+        val arcId = arc.waitForStart().arcId
 
         assertAllStatus(arcId, ArcState.Running)
 
@@ -509,6 +505,7 @@ open class AllocatorTestBase {
         pureHost.stopArc(pureHost.started.first())
         writingExternalHost.stopArc(writingExternalHost.started.first())
 
+        arc.waitForStop()
         assertAllStatus(arcId, ArcState.Stopped)
 
         // This erases the internally held-in-memory-cache ArcHost state simulating a crash
@@ -516,24 +513,20 @@ open class AllocatorTestBase {
         pureHost.setup()
         writingExternalHost.setup()
 
-        allocator.startArcForPlan(
-            "readWriteParticle",
-            Plan(PersonPlan.particles, arcId.toString())
-        )
+        val arc2 = allocator.startArcForPlan(Plan(PersonPlan.particles, arcId.toString()))
 
-        assertThat(readingExternalHost.arcHostContext(arcId.toString())).isNull()
-        assertThat(writingExternalHost.arcHostContext(arcId.toString())).isNull()
+        arc2.waitForStop()
+        assertThat(arc.arcState).isEqualTo(ArcState.Stopped)
     }
 
     @Test
     open fun allocator_startArc_particleException_isErrorState() = runAllocatorTest {
         WritePerson.throws = true
-        val arcId = allocator.startArcForPlan(
-            "readWriteParticle",
-            PersonPlan
-        )
-
-        assertThat(writingExternalHost.arcHostContext(arcId.toString())?.arcState).isEqualTo(
+        val deferred = CompletableDeferred<Boolean>()
+        val arc = allocator.startArcForPlan(PersonPlan)
+        arc.onError { deferred.complete(true) }
+        deferred.await()
+        assertThat(writingExternalHost.arcHostContext(arc.arcId.toString())?.arcState).isEqualTo(
             ArcState.Error
         )
     }

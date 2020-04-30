@@ -10,6 +10,7 @@
  */
 package arcs.core.host
 
+import arcs.core.common.ArcId
 import arcs.core.data.Plan
 import arcs.core.entity.Handle
 import arcs.core.host.api.Particle
@@ -40,7 +41,8 @@ data class ArcHostContext(
     var arcId: String,
     var particles: MutableMap<String, ParticleContext> = mutableMapOf(),
     var arcState: ArcState = ArcState.NeverStarted,
-    var entityHandleManager: EntityHandleManager
+    var entityHandleManager: EntityHandleManager,
+    var onArcStateChangeCallback: MutableList<(ArcId, ArcState) -> Unit> = mutableListOf()
 ) {
     /**
      * Traverse every handle and return a distinct collection of all [StorageKey]s

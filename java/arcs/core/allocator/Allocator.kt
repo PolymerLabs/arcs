@@ -65,14 +65,29 @@ class Allocator private constructor(
     /**
      * Start a new Arc given a [Plan] and return the generated [ArcId].
      */
-    suspend fun startArcForPlan(arcName: String, plan: Plan): ArcId {
+    @Deprecated(
+        "Use startArcForPlan(plan) to retrieve the ArcId via Arc.arcId",
+        replaceWith = ReplaceWith("startArcForPlan(plan).arcId", "arcs.core.allocator.Arc")
+    )
+    suspend fun startArcForPlan(arcName: String, plan: Plan) =
+        startArcForPlan(plan, arcName).waitForStart().arcId
+
+    /**
+     * Start a new Arc given a [Plan] and return an [Arc].
+     */
+    suspend fun startArcForPlan(plan: Plan): Arc = startArcForPlan(plan, "arc")
+
+    /**
+     * Start a new Arc given a [Plan] and return an [Arc].
+     */
+    private suspend fun startArcForPlan(plan: Plan, nameForTesting: String): Arc {
         if (plan.arcId !== null) {
             if (readPartitions(plan.arcId!!.toArcId()).isNotEmpty()) {
-                return plan.arcId!!.toArcId()
+                return Arc(plan.arcId!!.toArcId(), this)
             }
         }
         val idGenerator = Id.Generator.newSession()
-        val arcId = plan.arcId?.toArcId() ?: idGenerator.newArcId(arcName)
+        val arcId = plan.arcId?.toArcId() ?: idGenerator.newArcId(nameForTesting)
         // Any unresolved handles ('create' fate) need storage keys
         val newPlan = createStorageKeysIfNecessary(arcId, idGenerator, plan)
         log.debug { "Created storage keys" }
@@ -82,7 +97,7 @@ class Allocator private constructor(
         writePartitionMap(arcId, partitions)
         try {
             startPlanPartitionsOnHosts(partitions)
-            return arcId
+            return Arc(arcId, this)
         } catch (e: ArcHostException) {
             stopArc(arcId)
             throw e

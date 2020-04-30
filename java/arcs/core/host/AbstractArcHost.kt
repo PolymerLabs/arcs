@@ -10,6 +10,8 @@
  */
 package arcs.core.host
 
+import arcs.core.common.ArcId
+import arcs.core.common.toArcId
 import arcs.core.data.Capabilities
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
@@ -162,6 +164,23 @@ abstract class AbstractArcHost(
         entityHandleManager = entityHandleManager(arcId)
     )
 
+    override suspend fun setOnArcStateChange(arcId: ArcId, block: (ArcId, ArcState) -> Unit) {
+        lookupOrCreateArcHostContext(arcId.toString()).onArcStateChangeCallback.add(block)
+    }
+
+    private fun setArcState(context: ArcHostContext, state: ArcState) {
+        context.arcState = state
+        context.onArcStateChangeCallback.forEach {
+            try {
+                it(context.arcId.toArcId(), state)
+            } catch (e: Exception) {
+                log.debug(e) {
+                    "Exception in onArcStateChangeCallback for ${context.arcId}"
+                }
+            }
+        }
+    }
+
     /**
      * Called to persist [ArcHostContext] after [context] for [arcId] has been modified.
      */
@@ -179,16 +198,27 @@ abstract class AbstractArcHost(
      * Creates a specialized [ArcHostContextParticle] used for serializing [ArcHostContext] state
      * to storage.
      */
-    private suspend fun createArcHostContextParticle(arcHostContext: ArcHostContext) =
-        ArcHostContextParticle(hostId, this::instantiateParticle).apply {
+    private suspend fun createArcHostContextParticle(
+        arcHostContext: ArcHostContext
+    ): ArcHostContextParticle {
+        val handleManager = entityHandleManager("$hostId-${arcHostContext.arcId}")
+
+        return ArcHostContextParticle(hostId, handleManager, this::instantiateParticle).apply {
             val partition = createArcHostContextPersistencePlan(
                 arcHostContextCapability,
                 arcHostContext.arcId
             )
             partition.particles[0].handles.forEach { handleSpec ->
-                createHandle(arcHostContext, handleSpec.key, handleSpec.value, handles)
+                createHandle(
+                    handleManager,
+                    handleSpec.key,
+                    handleSpec.value,
+                    handles,
+                    this.toString()
+                )
             }
         }
+    }
 
     /**
      * Deserializes [ArcHostContext] from [Entity] types read from storage by
@@ -281,7 +311,7 @@ abstract class AbstractArcHost(
 
         spec.handles.forEach { handleSpec ->
             particleContext.handles[handleSpec.key] = createHandle(
-                context,
+                context.entityHandleManager,
                 handleSpec.key,
                 handleSpec.value,
                 particle.handles,
@@ -314,13 +344,13 @@ abstract class AbstractArcHost(
         context.particles.values.forEach { particleContext ->
             performParticleLifecycle(particleContext)
             if (particleContext.particleState.failed) {
-                context.arcState = ArcState.Error
+                setArcState(context, ArcState.Error)
                 return@forEach
             }
         }
 
         if (context.arcState != ArcState.Error) {
-            context.arcState = ArcState.Running
+            setArcState(context, ArcState.Running)
         }
     }
 
@@ -449,7 +479,7 @@ abstract class AbstractArcHost(
      * triggered according to the rules of the [Scheduler].
      */
     private suspend fun createHandle(
-        arcHostContext: ArcHostContext,
+        handleManager: EntityHandleManager,
         handleName: String,
         connectionSpec: Plan.HandleConnection,
         holder: HandleHolder,
@@ -466,7 +496,7 @@ abstract class AbstractArcHost(
             containerType,
             holder.getEntitySpec(handleName)
         )
-        return arcHostContext.entityHandleManager.createHandle(
+        return handleManager.createHandle(
             handleSpec,
             connectionSpec.storageKey,
             connectionSpec.ttl ?: Ttl.Infinite,
@@ -478,7 +508,7 @@ abstract class AbstractArcHost(
         val arcId = partition.arcId
         contextCache[partition.arcId]?.let { context ->
             when (context.arcState) {
-                ArcState.Running -> stopArcInternal(arcId, context)
+                ArcState.Running, ArcState.Indeterminate -> stopArcInternal(arcId, context)
                 ArcState.NeverStarted -> stopArcError(context, "Arc $arcId was never started")
                 ArcState.Stopped -> stopArcError(context, "Arc $arcId already stopped")
                 ArcState.Deleted -> stopArcError(context, "Arc $arcId is deleted.")
@@ -505,7 +535,7 @@ abstract class AbstractArcHost(
             stopParticle(particleContext)
         }
         maybeCancelResurrection(context)
-        context.arcState = ArcState.Stopped
+        setArcState(context, ArcState.Stopped)
         updateArcHostContext(arcId, context)
         context.entityHandleManager.close()
     }

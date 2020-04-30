@@ -11,6 +11,7 @@
 
 package arcs.core.host
 
+import arcs.core.common.ArcId
 import arcs.core.data.Plan
 
 /**
@@ -37,7 +38,6 @@ interface ArcHost {
      * resurrection, and notifying particles they are at the end of their lifecycle.
      */
     suspend fun stopArc(partition: Plan.Partition)
-    // TODO: HandleMessage
 
     /** Returns [ArcState] for a given [Plan.Partition]. */
     suspend fun lookupArcHostStatus(partition: Plan.Partition): ArcState
@@ -60,4 +60,10 @@ interface ArcHost {
      * any pending arc, and will be able to respond to new startArc calls.
      */
     suspend fun unpause()
+
+    /**
+     * Registers a callback to monitor [ArcState] changes for [arcId].
+     * Callbacks are not guaranteed to persist across [ArcHost] restarts.
+     **/
+    suspend fun setOnArcStateChange(arcId: ArcId, block: (ArcId, ArcState) -> Unit) = Unit
 }

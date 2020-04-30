@@ -24,6 +24,8 @@ import arcs.android.host.parcelables.ActualParcelable
 import arcs.android.host.parcelables.ParcelableParticleIdentifier
 import arcs.android.host.parcelables.ParcelablePlanPartition
 import arcs.android.host.parcelables.toParcelable
+import arcs.core.common.ArcId
+import arcs.core.common.toArcId
 import arcs.core.data.Plan
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostException
@@ -143,7 +145,35 @@ class ArcHostHelper(
                     intent,
                     arcHost::unpause
             )
+            Operation.OnArcStateChange -> runWithResult(intent) {
+                val receiver = requireNotNull(
+                    intent.getParcelableExtra<ResultReceiver>(EXTRA_OPERATION_ARG)
+                ) {
+                    "Missing ResultReceiver for OnArcStateChange"
+                }
+
+                val arcId = requireNotNull(intent.getStringExtra(EXTRA_ARCSTATE_CHANGED_ARCID)) {
+                    "Missing ArcId for OnArcStateChange"
+                }
+
+                setOnArcStateChange(arcHost, arcId.toArcId(), receiver)
+            }
             else -> Unit
+        }
+    }
+
+    private suspend fun setOnArcStateChange(
+        arcHost: ArcHost,
+        arcId: ArcId,
+        receiver: ResultReceiver
+    ) {
+        arcHost.setOnArcStateChange(arcId) { _, arcState ->
+            val bundle = Bundle().apply {
+                putString(EXTRA_ARCHOST_HOSTID, arcHost.hostId)
+                putString(EXTRA_ARCSTATE_CHANGED_ARCID, arcId.toString())
+                putString(EXTRA_ARCSTATE_CHANGED_ARCSTATE, arcState.toString())
+            }
+            receiver.send(0, bundle)
         }
     }
 
@@ -191,10 +221,15 @@ class ArcHostHelper(
             is Operation ->
                 bundle.putInt(EXTRA_OPERATION_RESULT, result.ordinal)
             is Exception -> {
-                bundle.putString(EXTRA_OPERATION_EXCEPTION, result.message)
                 bundle.putString(
-                    EXTRA_OPERATION_EXCEPTION_STACKTRACE,
-                    result.stackTrace.joinToString("\n")
+                    EXTRA_OPERATION_EXCEPTION,
+                    "${result.message} Caused By ${result.cause?.message ?: ""}"
+                )
+                bundle.putString(
+                    EXTRA_OPERATION_EXCEPTION_STACKTRACE, result.stackTrace.joinToString("\n") +
+                        result.cause?.stackTrace?.let {
+                            "Caused By: ${it.joinToString("\n")}"
+                        }
                 )
             }
             else -> Unit
@@ -216,11 +251,14 @@ class ArcHostHelper(
         LookupArcStatus,
         Pause,
         Unpause,
+        OnArcStateChange
     }
 
     companion object {
         const val ACTION_HOST_INTENT = "arcs.android.host.ARC_HOST"
         private const val EXTRA_ARCHOST_HOSTID = "HOST_ID"
+        const val EXTRA_ARCSTATE_CHANGED_ARCID = "ARCSTATE_CHANGED_ARCID"
+        const val EXTRA_ARCSTATE_CHANGED_ARCSTATE = "ARCSTATE_CHANGED_ARCSTATE"
         private const val EXTRA_OPERATION = "OPERATION"
         private const val EXTRA_OPERATION_ARG = "EXTRA_OPERATION_ARG"
         private const val EXTRA_OPERATION_RECEIVER = "EXTRA_OPERATION_RECEIVER"
@@ -360,3 +398,20 @@ fun Plan.Partition.createStopArcHostIntent(service: ComponentName, hostId: Strin
         hostId,
         this.toParcelable()
     )
+
+/**
+ * Creates an [Intent] to invoke [ArcHost.setOnArcStateChange] on a [Service]'s internal [ArcHost].
+ */
+fun ComponentName.createOnArcStateChangeIntent(
+    hostId: String,
+    arcId: ArcId,
+    receiver: ResultReceiver
+): Intent =
+    ArcHostHelper.createArcHostIntent(
+        ArcHostHelper.Operation.OnArcStateChange,
+        this,
+        hostId,
+        receiver
+    ).also {
+        it.putExtra(ArcHostHelper.EXTRA_ARCSTATE_CHANGED_ARCID, arcId.toString())
+    }

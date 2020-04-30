@@ -100,68 +100,56 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
         super.setUp()
     }
 
-    @Ignore("b/154947390 - Deflake")
     @Test
     fun allocator_startArc_throwsException() = runAllocatorTest {
         writingHost().throws = true
 
         assertSuspendingThrows(ArcHostException::class) {
-            allocator.startArcForPlan(
-                "readWriteParticle",
-                PersonPlan
-            )
+            allocator.startArcForPlan(PersonPlan).waitForStart()
         }
     }
 
-    @Ignore("b/154947390 - Deflake")
+    @Ignore("b/155502365 - Broken by inability to dereference nested arc->particle->handle entity")
     @Test
     override fun allocator_doesntCreateArcsOnDuplicateStartArc() {
         super.allocator_doesntCreateArcsOnDuplicateStartArc()
     }
 
-    @Ignore("b/154947390 - Deflake")
     @Test
     override fun allocator_startFromOneAllocatorAndStopInAnother() {
         super.allocator_startFromOneAllocatorAndStopInAnother()
     }
 
-    @Ignore("b/154947390 - Deflake")
     @Test
     override fun allocator_verifyStorageKeysNotOverwritten() {
         super.allocator_verifyStorageKeysNotOverwritten()
     }
 
-    @Ignore("b/154947390 - Deflake")
     @Test
     override fun allocator_verifyArcHostStartCalled() {
         super.allocator_verifyArcHostStartCalled()
     }
 
-    @Ignore("b/154947390 - Deflake")
     @Test
     override fun allocator_restartArcInTwoExternalHosts() {
         super.allocator_restartArcInTwoExternalHosts()
     }
 
-    @Ignore("b/154947390 - Deflake")
     @Test
     override fun allocator_canStartArcInTwoExternalHosts() {
         super.allocator_canStartArcInTwoExternalHosts()
     }
 
-    @Ignore("b/154947390 - Deflake")
     @Test
     override fun allocator_computePartitions() {
         super.allocator_computePartitions()
     }
 
-    @Ignore("b/154947390 - Deflake")
     @Test
     override fun allocator_verifyStorageKeysCreated() {
         super.allocator_verifyStorageKeysCreated()
     }
 
-    @Ignore("b/154947390 - Deflake")
     @Test
     override fun allocator_startArc_particleException_isErrorState() {
         super.allocator_startArc_particleException_isErrorState()
