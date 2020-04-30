@@ -337,7 +337,7 @@ open class AllocatorTestBase {
     }
 
     @Test
-    fun allocator_canStartArcInTwoExternalHosts() = runAllocatorTest {
+    open fun allocator_canStartArcInTwoExternalHosts() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle", PersonPlan
         )
