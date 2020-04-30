@@ -18,6 +18,7 @@ arcs_kt_jvm_test_suite(
     package = "arcs.core.host",
     deps = [
         ":particle",  # buildcleaner: keep
+        ":plans",
         ":schemas",
         "//java/arcs/core/common",
         "//java/arcs/core/data",
