@@ -34,19 +34,19 @@ import java.util.concurrent.Executors
  * The initialization overhead typically comes from instantiating default instance
  * and parsing/building proto schema.
  *
- * Recommend executing ArcsProtoPrefetcher() as early as possible i.e.
- * the entry of Application lifecycle: onCreate()
+ * Recommend executing [ProtoPrefetcher.prefetch] as early as possible i.e.
+ * the entry of Application lifecycle: `onCreate()`
  */
 object ProtoPrefetcher {
     /** Identify [ProtoPrefetcher] in thread lists and system traces. */
     private const val name = "ProtoPrefetcher"
 
     /**
-     * Single-threaded prefetcher.
+     * Single-threaded executor.
      *
      * TODO(ianchang): tune background priority if needed.
      */
-    private val prefecher = Executors.newFixedThreadPool(1) {
+    private val executor = Executors.newFixedThreadPool(1) {
         Thread(it).apply { name = this@ProtoPrefetcher.name }
     }
 
@@ -133,7 +133,7 @@ object ProtoPrefetcher {
     /**
      * Execute [procedures] to warm up Arcs protos ahead-of-time.
      */
-    operator fun invoke() = prefecher.execute {
+    fun prefetch() = executor.execute {
         Trace.beginSection(name)
         procedures.forEach { it() }
         Trace.endSection()
