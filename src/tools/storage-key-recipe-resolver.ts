@@ -59,7 +59,7 @@ export class StorageKeyRecipeResolver {
     // Second pass: resolve recipes
     const recipes = [];
     for (const recipe of this.runtime.context.allRecipes) {
-      let resolved = await this.tryResolve(recipe);
+      const resolved = await this.tryResolve(recipe);
 
       // Only include recipes from primary (non-imported) manifest
       if (this.runtime.context.recipes.map(r => r.name).includes(recipe.name)) {
