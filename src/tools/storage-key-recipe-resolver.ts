@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../platform/assert-web.js';
-import {Id} from '../runtime/id.js';
+import {ArcId, Id} from '../runtime/id.js';
 import {Runtime} from '../runtime/runtime.js';
 import {Manifest} from '../runtime/manifest.js';
 import {IsValidOptions, Recipe, RecipeComponent} from '../runtime/recipe/recipe.js';
@@ -45,19 +45,25 @@ export class StorageKeyRecipeResolver {
    * @returns Resolved recipes (with Storage Keys).
    */
   async resolve(): Promise<Recipe[]> {
+    // First pass: create stores
+    for (const recipe of this.runtime.context.allRecipes) {
+      const normed = recipe.clone();
+      normed.normalize();
+      if (isLongRunning(recipe)) {
+        const arcId = Id.fromString(findLongRunningArcId(recipe));
+        await this.createStoresForCreateHandles(normed, arcId);
+      }
+    }
+
+    // Second pass: resolve recipes
     const recipes = [];
-    for (const recipe of this.runtime.context.allRecipes.reverse()) {
+    for (const recipe of this.runtime.context.allRecipes) {
       this.validateHandles(recipe);
       const arcId = findLongRunningArcId(recipe);
       const arc = this.runtime.newArc(
-          arcId, volatileStorageKeyPrefixForTest(), arcId ? {id: Id.fromString(arcId)} : undefined);
+        arcId, volatileStorageKeyPrefixForTest(), arcId ? {id: Id.fromString(arcId)} : undefined);
       const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
       let resolved = await this.tryResolve(recipe, arc, opts);
-
-      if (isLongRunning(recipe)) {
-        resolved = await this.createStoresForCreateHandles(resolved, arc);
-        assert(resolved.isResolved());
-      }
 
       if (this.runtime.context.recipes.map(r => r.name).includes(recipe.name)) {
         recipes.push(resolved);
@@ -76,7 +82,7 @@ export class StorageKeyRecipeResolver {
   async tryResolve(recipe: Recipe, arc: Arc, opts?: IsValidOptions): Promise<Recipe | null> {
     if (!recipe.normalize(opts)) {
       throw new StorageKeyRecipeResolverError(
-          `Recipe ${recipe.name} failed to normalize:\n${[...opts.errors.values()].join('\n')}`);
+        `Recipe ${recipe.name} failed to normalize:\n${[...opts.errors.values()].join('\n')}`);
     }
     if (recipe.isResolved()) return recipe;
 
@@ -95,8 +101,8 @@ export class StorageKeyRecipeResolver {
    * @param recipe should be long running.
    * @param arc Arc is associated with current recipe.
    */
-  async createStoresForCreateHandles(recipe: Recipe, arc: Arc): Promise<Recipe> {
-    const resolver = new CapabilitiesResolver({arcId: arc.id});
+  async createStoresForCreateHandles(recipe: Recipe, arcId: ArcId): Promise<Recipe> {
+    const resolver = new CapabilitiesResolver({arcId});
     const cloneRecipe = recipe.clone();
     for (const createHandle of cloneRecipe.handles.filter(h => h.fate === 'create' && !!h.id)) {
       if (createHandle.type.hasVariable && !createHandle.type.isResolved()) {
@@ -109,12 +115,15 @@ export class StorageKeyRecipeResolver {
       }
 
       const storageKey = await resolver.createStorageKey(
-          createHandle.capabilities, createHandle.type, createHandle.id);
-      const store = new Store(createHandle.type, {storageKey, exists: Exists.MayExist, id: createHandle.id});
-      arc.context.registerStore(store, createHandle.tags);
+        createHandle.capabilities, createHandle.type, createHandle.id);
+      const store = new Store(createHandle.type, {
+        storageKey,
+        exists: Exists.MayExist,
+        id: createHandle.id
+      });
+      this.runtime.context.registerStore(store, createHandle.tags);
       createHandle.storageKey = storageKey;
     }
-    assert(cloneRecipe.normalize() && cloneRecipe.isResolved());
     return cloneRecipe;
   }
 
