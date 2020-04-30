@@ -13,7 +13,7 @@ import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {Entity} from '../entity.js';
 import {Identified, CRDTEntityTypeRecord} from '../crdt/crdt-entity.js';
 
-export class EntityHandleProducer<T extends CRDTEntityTypeRecord<Identified, Identified>> {
+export class EntityHandleFactory<T extends CRDTEntityTypeRecord<Identified, Identified>> {
 
   constructor(readonly storageProxyMuxer: StorageProxyMuxer<T>) {}
 

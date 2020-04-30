@@ -14,13 +14,13 @@ import {MockDirectStoreMuxer} from '../testing/test-storage.js';
 import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes} from '../../crdt/crdt-entity.js';
 import {StorageProxyMuxer} from '../storage-proxy-muxer.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
-import {EntityHandleProducer} from '../entity-handle-producer.js';
+import {EntityHandleFactory} from '../entity-handle-factory.js';
 import {ProxyMessageType} from '../store.js';
 import {assert} from '../../../platform/chai-web.js';
 import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
 import {Entity} from '../../entity.js';
 
-describe('entity handle producer', () => {
+describe('entity handle factory', () => {
   it('can produce entity handles upon request', async () => {
     const manifest = await Manifest.parse(`
     schema Foo
@@ -46,7 +46,7 @@ describe('entity handle producer', () => {
 
     const mockDirectStoreMuxer = new MockDirectStoreMuxer<CRDTEntityTypeRecord<Identified, Identified>>();
     const storageProxyMuxer = new StorageProxyMuxer(mockDirectStoreMuxer as DirectStoreMuxer<CRDTEntityTypeRecord<Identified, Identified>>, new MuxType(fooEntityType), mockDirectStoreMuxer.storageKey.toString());
-    const entityHandleProducer = new EntityHandleProducer(storageProxyMuxer);
+    const entityHandleProducer = new EntityHandleFactory(storageProxyMuxer);
 
     const entityHandle1 = entityHandleProducer.getHandle(fooMuxId1);
 
