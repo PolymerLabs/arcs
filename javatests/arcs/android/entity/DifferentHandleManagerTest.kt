@@ -1,8 +1,7 @@
 package arcs.android.entity
 
 import android.app.Application
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
@@ -22,12 +21,6 @@ import org.junit.runner.RunWith
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
 class DifferentHandleManagerTest : HandleManagerTestBase() {
-
-    val fakeLifecycleOwner = object : LifecycleOwner {
-        private val lifecycle = LifecycleRegistry(this)
-        override fun getLifecycle() = lifecycle
-    }
-
     lateinit var app: Application
 
     override var testRunner = { block: suspend CoroutineScope.() -> Unit ->
@@ -49,7 +42,7 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
             stores = stores,
             activationFactory = ServiceStoreFactory(
                 app,
-                fakeLifecycleOwner.lifecycle,
+                ProcessLifecycleOwner.get().lifecycle,
                 connectionFactory = testConnectionFactory
             )
         )
@@ -61,7 +54,7 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
             stores = stores,
             activationFactory = ServiceStoreFactory(
                 app,
-                fakeLifecycleOwner.lifecycle,
+                ProcessLifecycleOwner.get().lifecycle,
                 connectionFactory = testConnectionFactory
             )
         )

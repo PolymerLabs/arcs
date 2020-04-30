@@ -1,9 +1,7 @@
 package arcs.android.host
 
 import android.app.Application
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
@@ -62,13 +60,11 @@ fun Person.withQuery(): PersonWithQuery {
 
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 @RunWith(AndroidJUnit4::class)
-class AndroidEntityHandleManagerTest : LifecycleOwner {
+class AndroidEntityHandleManagerTest {
     @get:Rule
     val log = LogRule()
 
     private lateinit var app: Application
-    private lateinit var lifecycle: LifecycleRegistry
-    override fun getLifecycle() = lifecycle
 
     val entity1 = Person("Jason", 21.0, false)
     val entity2 = Person("Jason", 22.0, true)
@@ -108,11 +104,6 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         RamDisk.clear()
         DriverAndKeyConfigurator.configure(null)
         app = ApplicationProvider.getApplicationContext()
-        lifecycle = LifecycleRegistry(this@AndroidEntityHandleManagerTest).apply {
-            setCurrentState(Lifecycle.State.CREATED)
-            setCurrentState(Lifecycle.State.STARTED)
-            setCurrentState(Lifecycle.State.RESUMED)
-        }
 
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
@@ -127,7 +118,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             StoreManager(),
             ServiceStoreFactory(
                 context = app,
-                lifecycle = lifecycle,
+                lifecycle = ProcessLifecycleOwner.get().lifecycle,
                 connectionFactory = TestConnectionFactory(app)
             )
         )

@@ -29,6 +29,7 @@ arcs_kt_android_test_suite(
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/androidx/lifecycle",
+        "//third_party/java/androidx/lifecycle/process",
         "//third_party/java/androidx/work:testing",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
