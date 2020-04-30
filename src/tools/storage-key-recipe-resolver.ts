@@ -47,7 +47,7 @@ export class StorageKeyRecipeResolver {
    */
   async resolve(): Promise<Recipe[]> {
     const recipes = [];
-    for (const recipe of this.runtime.context.recipes) {
+    for (const recipe of this.runtime.context.allRecipes) {
       this.validateHandles(recipe);
       const arcId = findLongRunningArcId(recipe);
       const arc = this.runtime.newArc(

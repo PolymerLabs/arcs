@@ -22,14 +22,14 @@ import {assert} from '../platform/assert-node.js';
  */
 export async function recipe2plan(path: string): Promise<string> {
   return await Flags.withDefaultReferenceMode(async () => {
-    const manifest = await Runtime.parse(`import '${path}'`);
+    const manifest = await Runtime.parseFile(path);
 
-    const namespace = manifest.imports[0].meta.namespace;
-    assert(namespace, `Namespace is required in '${path}' for code generation.`);
+    console.log(manifest.imports.map(i => i.fileName));
+    assert(manifest.meta.namespace, `Namespace is required in '${path}' for code generation.`);
 
     const recipes = await (new StorageKeyRecipeResolver(manifest)).resolve();
 
-    const generator = new PlanGenerator(recipes, namespace);
+    const generator = new PlanGenerator(recipes, manifest.meta.namespace);
 
     return generator.generate();
   })();

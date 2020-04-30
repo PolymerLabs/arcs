@@ -72,6 +72,7 @@ export class ResolveWalker extends RecipeWalker {
       }
     } else if (!handle.storageKey) {
       // Handle specified by the ID, but not yet mapped to storage.
+      console.log(arc.context.allStores.map(s => s.id || s.name));
       let storeById;
       switch (handle.fate) {
         case 'use':
