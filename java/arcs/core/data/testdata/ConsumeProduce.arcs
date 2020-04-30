@@ -1,0 +1,23 @@
+meta
+  namespace: arcs.core.data.testdata.gen
+
+import './Schemas.arcs'
+import './Produce.arcs'
+
+particle SummarizeSentiment
+  events: reads [Event {type, value}]
+  result: writes OverallSentiment {
+    overallSentiment: Number,
+    sentimentCohortBreakdown: [Number],
+    summary: Text
+  }
+
+@trigger
+  launch startup
+  arcId transform
+recipe Transform
+  events: map 'raw-events'
+  summary: create persistent 'processed-events'
+  SummarizeSentiment
+    events: reads events
+    result: writes summary

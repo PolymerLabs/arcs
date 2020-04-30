@@ -38,11 +38,11 @@ arcs_manifest(
 )
 
 arcs_kt_gen(
-    name = "etl_gen",
+    name = "consumer_producer_gen",
     srcs = [
-        "Analyze.arcs",
-        "Ingest.arcs",
-        "Request.arcs",
+        "Consume.arcs",
+        "ConsumeProduce.arcs",
+        "Produce.arcs",
     ],
     data = [":shared_schemas"],
 )

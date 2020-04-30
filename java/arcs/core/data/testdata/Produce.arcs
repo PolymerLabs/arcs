@@ -6,12 +6,10 @@ import './Schemas.arcs'
 particle Ingestion
   events: writes [Event {type, timestamp, value}]
 
-// Example: Long running arc ingesting events into a collection.
 @trigger
   launch startup
   arcId eventIngestion
 recipe EventsIngestion
-  // Example: Handle created with id, capabilities and TTL.
-  events: create persistent 'raw-events' @ttl(1d)
+  events: create persistent 'raw-events'
   Ingestion
     events: events
