@@ -129,4 +129,22 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
     override fun allocator_verifyStorageKeysNotOverwritten() {
         super.allocator_verifyStorageKeysNotOverwritten()
     }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_verifyArcHostStartCalled() {
+        super.allocator_verifyArcHostStartCalled()
+    }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_restartArcInTwoExternalHosts() {
+        super.allocator_restartArcInTwoExternalHosts()
+    }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_canStartArcInTwoExternalHosts() {
+        super.allocator_canStartArcInTwoExternalHosts()
+    }
 }
