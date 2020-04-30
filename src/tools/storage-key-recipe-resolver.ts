@@ -127,8 +127,7 @@ export class StorageKeyRecipeResolver {
    * @param recipe long-running or ephemeral recipe
    */
   validateHandles(recipe: Recipe) {
-    const mapOrCopyHandles = recipe.handles.filter(handle => handle.fate === 'map' || handle.fate === 'copy');
-    for (const handle of mapOrCopyHandles) {
+    for (const handle of recipe.handles.filter(handle => handle.fate === 'map' || handle.fate === 'copy')) {
       const matches = this.runtime.context.findHandlesById(handle.id)
         .filter(h => h.fate === 'create');
 
