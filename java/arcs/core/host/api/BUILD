@@ -9,5 +9,6 @@ arcs_kt_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/core/entity",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
