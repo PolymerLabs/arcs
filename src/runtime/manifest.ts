@@ -303,7 +303,7 @@ export class Manifest {
     return this._find(manifest => manifest._stores.find(store => store.name === name));
   }
   findStoreById(id: string) {
-    return this.allStores.find(store => store.id === id);
+    return this._find(manifest => manifest._stores.find(store => store.id === id));
   }
   findStoreTags(store: AbstractStore) : Set<string> {
     return new Set(this._find(manifest => manifest.storeTags.get(store)));

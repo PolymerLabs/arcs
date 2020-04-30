@@ -19,7 +19,6 @@ import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {Store} from '../runtime/storageNG/store.js';
 import {Exists} from '../runtime/storageNG/drivers/driver.js';
 import {DatabaseStorageKey} from '../runtime/storageNG/database-storage-key.js';
-import {Handle} from '../runtime/recipe/handle.js';
 
 export class StorageKeyRecipeResolverError extends Error {
   constructor(message: string) {
@@ -47,7 +46,7 @@ export class StorageKeyRecipeResolver {
    */
   async resolve(): Promise<Recipe[]> {
     const recipes = [];
-    for (const recipe of this.runtime.context.allRecipes) {
+    for (const recipe of this.runtime.context.allRecipes.reverse()) {
       this.validateHandles(recipe);
       const arcId = findLongRunningArcId(recipe);
       const arc = this.runtime.newArc(
@@ -60,7 +59,9 @@ export class StorageKeyRecipeResolver {
         assert(resolved.isResolved());
       }
 
-      recipes.push(resolved);
+      if (this.runtime.context.recipes.map(r => r.name).includes(recipe.name)) {
+        recipes.push(resolved);
+      }
     }
     return recipes;
   }
@@ -95,7 +96,6 @@ export class StorageKeyRecipeResolver {
    * @param arc Arc is associated with current recipe.
    */
   async createStoresForCreateHandles(recipe: Recipe, arc: Arc): Promise<Recipe> {
-    DatabaseStorageKey.register();
     const resolver = new CapabilitiesResolver({arcId: arc.id});
     const cloneRecipe = recipe.clone();
     for (const createHandle of cloneRecipe.handles.filter(h => h.fate === 'create' && !!h.id)) {
