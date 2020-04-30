@@ -70,6 +70,8 @@ data class Schema(
         fun fromLiteral(@Suppress("UNUSED_PARAMETER") literal: arcs.core.common.Literal): Schema {
             TODO("Implement me.")
         }
+
+        val EMPTY = Schema(emptySet(), SchemaFields(emptyMap(), emptyMap()), "")
     }
 }
 

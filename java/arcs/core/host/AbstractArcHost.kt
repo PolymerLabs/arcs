@@ -38,7 +38,8 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-typealias ParticleConstructor = suspend () -> Particle
+// TODO(b/154855909)
+typealias ParticleConstructor = suspend (Plan.Particle?) -> Particle
 typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
 
 /** Maximum number of times a particle may fail to be started before giving up. */
@@ -223,7 +224,7 @@ abstract class AbstractArcHost(
         spec: Plan.Particle,
         context: ArcHostContext
     ): ParticleContext {
-        val particle = instantiateParticle(ParticleIdentifier.from(spec.location))
+        val particle = instantiateParticle(ParticleIdentifier.from(spec.location), spec)
 
         val particleContext = lookupParticleContextOrCreate(
             context,
@@ -541,10 +542,12 @@ abstract class AbstractArcHost(
      *
      * @property identifier a [ParticleIdentifier] from a [Plan.Particle] spec
      */
-    open suspend fun instantiateParticle(identifier: ParticleIdentifier): Particle {
-        return particleConstructors[identifier]?.invoke() ?: throw IllegalArgumentException(
-            "Particle $identifier not found."
-        )
+    open suspend fun instantiateParticle(
+        identifier: ParticleIdentifier,
+        spec: Plan.Particle? = null
+    ): Particle {
+        return particleConstructors[identifier]?.invoke(spec)
+            ?: throw IllegalArgumentException("Particle $identifier not found.")
     }
 
     companion object {
