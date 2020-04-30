@@ -4,6 +4,7 @@ meta
   namespace: arcs.core.data.testdata.gen
 
 import './Schemas.arcs'
+import './Analyze.arcs'
 
 particle RequestProvider
   request: writes SentimentRequest {cohortId: Number}

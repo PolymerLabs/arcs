@@ -2,6 +2,7 @@ meta
   namespace: arcs.core.data.testdata.gen
 
 import './Schemas.arcs'
+import './Ingest.arcs'
 
 particle AnalyzeSentiment
   events: reads [Event {type, value}]
