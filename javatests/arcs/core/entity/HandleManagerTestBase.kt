@@ -182,7 +182,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun singleton_clearOnAClearDataWrittenByB() = testRunner {
+    open fun singleton_clearOnAClearDataWrittenByB() = testRunner {
         val handleA = writeHandleManager.createSingletonHandle()
         val handleB = readHandleManager.createSingletonHandle()
         val handleBUpdated = handleB.onUpdateDeferred()
@@ -593,7 +593,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_dereferenceEntity_nestedReference() = testRunner {
+    open fun collection_dereferenceEntity_nestedReference() = testRunner {
         // Create a stylish new hat, and create a reference to it.
         val hatCollection = writeHandleManager.createHandle(
             HandleSpec(
