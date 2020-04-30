@@ -11,8 +11,6 @@
 
 package arcs.android.storage.service;
 
-import arcs.android.storage.service.IResultCallback;
-
 /** Variant of ProxyCallback intended for StorageService communications. */
 interface IStorageServiceCallback {
     /**

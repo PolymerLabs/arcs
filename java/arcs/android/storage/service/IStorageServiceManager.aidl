@@ -12,7 +12,6 @@
 package arcs.android.storage.service;
 
 import arcs.android.storage.service.IResultCallback;
-import arcs.android.storage.service.IStorageServiceCallback;
 
 /**
  * Exposed API to manage storage via the StorageService.

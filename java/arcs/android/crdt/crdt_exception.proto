@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package arcs.android.crdt;
+
+option java_package = "arcs.android.crdt";
+option java_multiple_files = true;
+
+message CrdtExceptionProto {
+  string message = 1;
+  repeated string stack_trace = 2;
+}
