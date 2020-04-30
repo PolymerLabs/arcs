@@ -22,6 +22,8 @@ import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.SchemaRegistry
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.StoreWriteBack
+import arcs.core.storage.WriteBackForTesting
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Time
@@ -32,6 +34,8 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineDispatcher
+import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.withContext
 import org.junit.Before
@@ -50,9 +54,12 @@ class StorageServiceManagerTest {
         time = time,
         scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
     )
+    private val testScope = TestCoroutineScope(TestCoroutineDispatcher())
 
     @Before
     fun setUp() {
+        WriteBackForTesting.writeBackScope = testScope
+        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         AndroidDriverAndKeyConfigurator.configure(ApplicationProvider.getApplicationContext())
         SchemaRegistry.register(DummyEntity)
     }
