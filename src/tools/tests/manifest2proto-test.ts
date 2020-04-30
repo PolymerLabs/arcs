@@ -15,7 +15,7 @@ import {Capabilities} from '../../runtime/capabilities.js';
 import {fs} from '../../platform/fs-web.js';
 import protobuf from 'protobufjs';
 
-const rootNamespace = protobuf.loadSync('./java/arcs/core/data/proto/recipe.proto');
+const rootNamespace = protobuf.loadSync('./java/arcs/core/data/proto/manifest.proto');
 const manifestProto = rootNamespace.lookupType('arcs.ManifestProto');
 const typeProto = rootNamespace.lookupType('arcs.TypeProto');
 const CAPABILITY_ENUM = rootNamespace.lookupEnum('arcs.Capability');

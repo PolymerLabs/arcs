@@ -19,7 +19,7 @@ arcs_kt_library(
         ["*.kt"],
     ),
     deps = [
-        ":recipe_java_proto_lite",
+        ":manifest_java_proto_lite",
         "//java/arcs/core/data",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
@@ -37,7 +37,7 @@ arcs_kt_library(
     ),
     add_android_constraints = False,
     deps = [
-        ":recipe_java_proto",
+        ":manifest_java_proto",
         "//java/arcs/core/data",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
@@ -46,16 +46,16 @@ arcs_kt_library(
 )
 
 proto_library(
-    name = "recipe_proto",
-    srcs = ["recipe.proto"],
+    name = "manifest_proto",
+    srcs = ["manifest.proto"],
 )
 
 android_proto_library(
-    name = "recipe_java_proto_lite",
-    deps = [":recipe_proto"],
+    name = "manifest_java_proto_lite",
+    deps = [":manifest_proto"],
 )
 
 java_proto_library(
-    name = "recipe_java_proto",
-    deps = [":recipe_proto"],
+    name = "manifest_java_proto",
+    deps = [":manifest_proto"],
 )

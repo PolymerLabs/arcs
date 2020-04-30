@@ -12,18 +12,15 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.TypeVariable
 import arcs.core.testutil.assertThrows
-import arcs.repoutils.runfilesDir
 import com.google.common.truth.Truth.assertThat
-import com.google.protobuf.TextFormat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.io.File
 
 @RunWith(JUnit4::class)
 class RecipeProtoDecoderTest {
     // The test environment.
-    var ramdiskStorageKey = "ramdisk://thing"
+    val ramdiskStorageKey = "ramdisk://thing"
     val thingHandleProto = HandleProto.newBuilder()
         .setName("thing")
         .setFate(HandleProto.Fate.CREATE)

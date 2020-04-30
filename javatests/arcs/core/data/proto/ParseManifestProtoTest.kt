@@ -30,6 +30,6 @@ class ParseManifestProtoTest {
     @Test
     fun decodesQueryExampleInTextFormat() {
         val path = runfilesDir() + "java/arcs/core/data/testdata/query.textproto"
-        TextFormat.getParser().merge(File(path).readText(), RecipeEnvelopeProto.newBuilder())
+        TextFormat.getParser().merge(File(path).readText(), ManifestProto.newBuilder())
     }
 }

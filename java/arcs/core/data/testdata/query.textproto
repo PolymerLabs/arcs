@@ -11,7 +11,7 @@
 #   Egress
 #     data: reads query
 
-recipe {
+recipes {
   handles {
     name: "shown"
     fate: MAP
