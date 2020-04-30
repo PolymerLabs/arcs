@@ -17,9 +17,7 @@ object IngestionPlan : Plan(
             "arcs.core.data.testdata.Reader",
             mapOf(
                 "data" to HandleConnection(
-                    StorageKeyParser.parse(
-                        "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"
-                    ),
+                    CreateableStorageKey("my-handle-id", Capabilities.Persistent),
                     HandleMode.Read,
                     SingletonType(EntityType(Reader_Data.SCHEMA)),
                     Ttl.Days(20)
@@ -31,9 +29,7 @@ object IngestionPlan : Plan(
             "arcs.core.data.testdata.Writer",
             mapOf(
                 "data" to HandleConnection(
-                    StorageKeyParser.parse(
-                        "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"
-                    ),
+                    CreateableStorageKey("my-handle-id", Capabilities.Persistent),
                     HandleMode.Write,
                     SingletonType(EntityType(Writer_Data.SCHEMA)),
                     Ttl.Days(20)
@@ -103,17 +99,13 @@ object ReferencesRecipePlan : Plan(
             "",
             mapOf(
                 "inThingRefs" to HandleConnection(
-                    StorageKeyParser.parse(
-                        "db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:referencesArcId/handle/my-refs-id"
-                    ),
+                    CreateableStorageKey("my-refs-id", Capabilities.Persistent),
                     HandleMode.Read,
                     CollectionType(ReferenceType(EntityType(ReadWriteReferences_OutThingRef.SCHEMA))),
                     Ttl.Infinite
                 ),
                 "outThingRef" to HandleConnection(
-                    StorageKeyParser.parse(
-                        "db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:referencesArcId/handle/my-ref-id"
-                    ),
+                    CreateableStorageKey("my-ref-id", Capabilities.Persistent),
                     HandleMode.Write,
                     SingletonType(ReferenceType(EntityType(ReadWriteReferences_OutThingRef.SCHEMA))),
                     Ttl.Infinite

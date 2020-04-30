@@ -8,12 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../platform/assert-web.js';
-import {ArcId, Id} from '../runtime/id.js';
+import {Id} from '../runtime/id.js';
 import {Runtime} from '../runtime/runtime.js';
 import {Manifest} from '../runtime/manifest.js';
-import {IsValidOptions, Recipe, RecipeComponent} from '../runtime/recipe/recipe.js';
+import {Recipe, RecipeComponent} from '../runtime/recipe/recipe.js';
 import {volatileStorageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
-import {Arc} from '../runtime/arc.js';
 import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
 import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {Store} from '../runtime/storageNG/store.js';
@@ -45,26 +44,24 @@ export class StorageKeyRecipeResolver {
    * @returns Resolved recipes (with Storage Keys).
    */
   async resolve(): Promise<Recipe[]> {
-    // First pass: create stores
+    // First pass: validate recipes and create stores
     for (const recipe of this.runtime.context.allRecipes) {
+      this.validateHandles(recipe);
+
       const normed = recipe.clone();
       normed.normalize();
+
       if (isLongRunning(recipe)) {
-        const arcId = Id.fromString(findLongRunningArcId(recipe));
-        await this.createStoresForCreateHandles(normed, arcId);
+        await this.createStoresForCreateHandles(normed);
       }
     }
 
     // Second pass: resolve recipes
     const recipes = [];
     for (const recipe of this.runtime.context.allRecipes) {
-      this.validateHandles(recipe);
-      const arcId = findLongRunningArcId(recipe);
-      const arc = this.runtime.newArc(
-        arcId, volatileStorageKeyPrefixForTest(), arcId ? {id: Id.fromString(arcId)} : undefined);
-      const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
-      let resolved = await this.tryResolve(recipe, arc, opts);
+      let resolved = await this.tryResolve(recipe);
 
+      // Only include recipes from primary (non-imported) manifest
       if (this.runtime.context.recipes.map(r => r.name).includes(recipe.name)) {
         recipes.push(resolved);
       }
@@ -76,15 +73,19 @@ export class StorageKeyRecipeResolver {
    * Resolves unresolved recipe or normalizes resolved recipe.
    *
    * @param recipe long-running or ephemeral recipe
-   * @param arc Arc is associated with input recipe
-   * @param opts contains `errors` map for reporting.
    */
-  async tryResolve(recipe: Recipe, arc: Arc, opts?: IsValidOptions): Promise<Recipe | null> {
+  async tryResolve(recipe: Recipe): Promise<Recipe | null> {
+    const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
+
     if (!recipe.normalize(opts)) {
       throw new StorageKeyRecipeResolverError(
         `Recipe ${recipe.name} failed to normalize:\n${[...opts.errors.values()].join('\n')}`);
     }
     if (recipe.isResolved()) return recipe;
+
+    const arcId = findLongRunningArcId(recipe);
+    const arc = this.runtime.newArc(
+      arcId, volatileStorageKeyPrefixForTest(), arcId ? {id: Id.fromString(arcId)} : undefined);
 
     const resolvedRecipe = await (new RecipeResolver(arc).resolve(recipe, opts));
     if (!resolvedRecipe) {
@@ -99,9 +100,9 @@ export class StorageKeyRecipeResolver {
    * Create stores with keys for all create handles with ids.
    *
    * @param recipe should be long running.
-   * @param arc Arc is associated with current recipe.
    */
-  async createStoresForCreateHandles(recipe: Recipe, arcId: ArcId): Promise<Recipe> {
+  async createStoresForCreateHandles(recipe: Recipe): Promise<Recipe> {
+    const arcId = Id.fromString(findLongRunningArcId(recipe));
     const resolver = new CapabilitiesResolver({arcId});
     const cloneRecipe = recipe.clone();
     for (const createHandle of cloneRecipe.handles.filter(h => h.fate === 'create' && !!h.id)) {
