@@ -58,12 +58,16 @@ class ArcHostContextParticle(
             handles.handleConnections.clear()
             connections.forEach { handles.handleConnections.store(it) }
 
+            // TODO(b/155320932): remove. Workaround for createReference precondition
+            val storedConnections = handles.handleConnections.fetchAll()
+
             val particles = context.particles.map {
                 ArcHostContextParticle_Particles(
-                    particleName = it.key, location = it.value.planParticle.location,
+                    particleName = it.key,
+                    location = it.value.planParticle.location,
                     particleState = it.value.particleState.name,
                     consecutiveFailures = it.value.consecutiveFailureCount.toDouble(),
-                    handles = connections.map {
+                    handles = storedConnections.map {
                         handles.handleConnections.createReference(it)
                     }.toSet()
                 )
@@ -72,10 +76,12 @@ class ArcHostContextParticle(
             // Write Plan.Particle + ParticleContext
             handles.particles.clear()
             particles.forEach { handles.particles.store(it) }
+            // TODO(b/155320932): remove. Workaround for createReference precondition
+            val storedParticles = handles.particles.fetchAll()
 
             val arcState = ArcHostContextParticle_ArcHostContext(
                 arcId = arcId, hostId = hostId, arcState = context.arcState.name,
-                particles = particles.map { handles.particles.createReference(it) }.toSet()
+                particles = storedParticles.map { handles.particles.createReference(it) }.toSet()
             )
 
             handles.arcHostContext.clear()
