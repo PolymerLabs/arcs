@@ -20,7 +20,8 @@ class AbstractSet<S>(
     override val isBottom = value.isBottom
     override val isTop = value.isTop
 
-    val set: Set<S>? get() = value.value
+    val set: Set<S>?
+        get() = value.value
 
     constructor(s: Set<S>): this(BoundedAbstractElement.makeValue(s))
 
@@ -87,34 +88,34 @@ class TestAnalyzer(
 class RecipeGraphFixpointIteratorTest {
     private val thing = Recipe.Handle("thing", Recipe.Handle.Fate.CREATE, TypeVariable("thing"))
     private val name = Recipe.Handle("name", Recipe.Handle.Fate.CREATE, TypeVariable("name"))
-    private val readCnxn = HandleConnectionSpec("r", HandleMode.Read, TypeVariable("r"))
-    private val writeCnxn = HandleConnectionSpec("w", HandleMode.Write, TypeVariable("w"))
+    private val readConnection = HandleConnectionSpec("r", HandleMode.Read, TypeVariable("r"))
+    private val writeConnection = HandleConnectionSpec("w", HandleMode.Write, TypeVariable("w"))
     private val readerSpec = ParticleSpec(
         "Reader",
-        listOf(readCnxn).associateBy { it.name },
+        listOf(readConnection).associateBy { it.name },
         "ReaderLocation"
     )
     private val writerSpec = ParticleSpec(
         "Writer",
-        listOf(writeCnxn).associateBy { it.name },
+        listOf(writeConnection).associateBy { it.name },
         "WriterLocation"
     )
     private val anotherWriterSpec = ParticleSpec(
         "AnotherWriter",
-        listOf(writeCnxn).associateBy { it.name },
+        listOf(writeConnection).associateBy { it.name },
         "WriterLocation"
     )
     private val readerParticle = Recipe.Particle(
         readerSpec,
-        listOf(Recipe.Particle.HandleConnection(readCnxn, thing))
+        listOf(Recipe.Particle.HandleConnection(readConnection, thing))
     )
     private val writerParticle = Recipe.Particle(
         writerSpec,
-        listOf(Recipe.Particle.HandleConnection(writeCnxn, thing))
+        listOf(Recipe.Particle.HandleConnection(writeConnection, thing))
     )
     private val anotherWriterParticle = Recipe.Particle(
         anotherWriterSpec,
-        listOf(Recipe.Particle.HandleConnection(writeCnxn, thing))
+        listOf(Recipe.Particle.HandleConnection(writeConnection, thing))
     )
 
     @Test
@@ -128,7 +129,9 @@ class RecipeGraphFixpointIteratorTest {
         )
         val graph = RecipeGraph(recipe)
         val analyzer = TestAnalyzer(setOf("p:${writerParticle.spec.name}"))
+
         analyzer.computeFixpoint(graph)
+
         assertThat(analyzer.getValue(writerParticle)?.set).isEmpty()
         assertThat(analyzer.getValue(thing)?.set)
             .containsExactly("p:Writer", "p:Writer -> h:thing")
@@ -152,6 +155,7 @@ class RecipeGraphFixpointIteratorTest {
         )
 
         analyzer.computeFixpoint(graph)
+
         assertThat(analyzer.getValue(writerParticle)?.set).isEmpty()
         assertThat(analyzer.getValue(anotherWriterParticle)?.set).isEmpty()
         assertThat(analyzer.getValue(thing)?.set)
@@ -184,7 +188,9 @@ class RecipeGraphFixpointIteratorTest {
         )
         val graph = RecipeGraph(recipe)
         val analyzer = TestAnalyzer(setOf("p:${writerParticle.spec.name}"))
+
         analyzer.computeFixpoint(graph)
+
         assertThat(analyzer.getValue(writerParticle)?.set).isEmpty()
         // AnotherWriter is unreachable as we don't mark it as a start node.
         // Therefore, this should be bottom.
@@ -211,26 +217,26 @@ class RecipeGraphFixpointIteratorTest {
         //                ^-------------------------------------------+
         val recognizerSpec = ParticleSpec(
             "Recognizer",
-            listOf(writeCnxn, readCnxn).associateBy { it.name },
+            listOf(writeConnection, readConnection).associateBy { it.name },
             "RecognizerLocation"
         )
         val recognizerParticle = Recipe.Particle(
             recognizerSpec,
             listOf(
-                Recipe.Particle.HandleConnection(writeCnxn, name),
-                Recipe.Particle.HandleConnection(readCnxn, thing)
+                Recipe.Particle.HandleConnection(writeConnection, name),
+                Recipe.Particle.HandleConnection(readConnection, thing)
             )
         )
         val taggerSpec = ParticleSpec(
             "Tagger",
-            listOf(writeCnxn, readCnxn).associateBy { it.name },
+            listOf(writeConnection, readConnection).associateBy { it.name },
             "TaggerLocation"
         )
         val taggerParticle = Recipe.Particle(
             taggerSpec,
             listOf(
-                Recipe.Particle.HandleConnection(writeCnxn, thing),
-                Recipe.Particle.HandleConnection(readCnxn, name)
+                Recipe.Particle.HandleConnection(writeConnection, thing),
+                Recipe.Particle.HandleConnection(readConnection, name)
             )
         )
         val recipe = Recipe(
@@ -242,7 +248,9 @@ class RecipeGraphFixpointIteratorTest {
 
         val graph = RecipeGraph(recipe)
         val analyzer = TestAnalyzer(setOf("p:${writerParticle.spec.name}"))
+
         analyzer.computeFixpoint(graph)
+
         assertThat(analyzer.getValue(writerParticle)?.set).isEmpty()
         // The values for the nodes in the loop are all the same.
         val expectedLoopValue = setOf(
