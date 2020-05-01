@@ -13,6 +13,7 @@ package arcs.core.storage.testutil
 
 import arcs.core.storage.WriteBack
 import arcs.core.storage.WriteBackFactory
+import arcs.core.storage.keys.Protocols
 import arcs.core.util.TaggedLog
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutorService
@@ -47,7 +48,7 @@ class WriteBackForTesting private constructor(
 ) : WriteBack,
     Channel<suspend () -> Unit> by Channel(10),
     Mutex by Mutex() {
-    private val passThrough = protocol != "db"
+    private val passThrough = protocol != Protocols.DATABASE_DRIVER
     private var activeJobs = 0
     private val awaitSignal = Mutex()
 

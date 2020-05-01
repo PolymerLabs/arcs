@@ -11,6 +11,7 @@ arcs_kt_jvm_library(
     deps = [
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage:writeback",
+        "//java/arcs/core/storage/keys:protocols",
         "//java/arcs/core/util",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],

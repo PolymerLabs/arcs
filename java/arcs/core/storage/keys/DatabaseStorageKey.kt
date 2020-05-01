@@ -17,10 +17,10 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
 
 /** Protocol to be used with the database driver for persistent databases. */
-const val DATABASE_DRIVER_PROTOCOL = "db"
+const val DATABASE_DRIVER_PROTOCOL = Protocols.DATABASE_DRIVER
 
 /** Protocol to be used with the database driver for in-memory databases. */
-const val MEMORY_DATABASE_DRIVER_PROTOCOL = "memdb"
+const val MEMORY_DATABASE_DRIVER_PROTOCOL = Protocols.MEMORY_DATABASE_DRIVER
 
 /**
  * Default database name for DatabaseDriver usage, and referencing using [DatabaseStorageKey]s.

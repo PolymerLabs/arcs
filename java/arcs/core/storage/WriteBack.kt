@@ -12,6 +12,7 @@
 package arcs.core.storage
 
 import androidx.annotation.VisibleForTesting
+import arcs.core.storage.keys.Protocols
 import java.util.concurrent.ExecutorService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -71,7 +72,7 @@ class StoreWriteBack private constructor(
     ),
     Mutex by Mutex() {
     // Only apply write-back to physical storage medias.
-    private val passThrough = protocol != "db"
+    private val passThrough = protocol != Protocols.DATABASE_DRIVER
 
     // The number of active flush jobs.
     private var activeJobs = 0

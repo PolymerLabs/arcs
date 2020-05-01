@@ -85,6 +85,7 @@ arcs_kt_library(
     name = "writeback",
     srcs = WRITEBACK_SRCS,
     deps = [
+        "//java/arcs/core/storage/keys:protocols",
         "//third_party/java/androidx/annotation",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
