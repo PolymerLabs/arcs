@@ -11,7 +11,8 @@
 
 package arcs.android.storage.service
 
-import arcs.android.crdt.ParcelableCrdtException
+import arcs.android.crdt.CrdtExceptionProto
+import arcs.android.util.decodeProto
 import arcs.core.crdt.CrdtException
 import arcs.core.util.Log
 import kotlin.coroutines.CoroutineContext
@@ -26,11 +27,12 @@ import kotlinx.coroutines.Job
 class DeferredResult(context: CoroutineContext) :
     IResultCallback.Stub(), CompletableDeferred<Boolean> by CompletableDeferred(context[Job.Key]) {
 
-    override fun onResult(exception: ParcelableCrdtException?) {
+    override fun onResult(exception: ByteArray?) {
         if (exception == null) {
             complete(true)
         } else {
-            Log.warning(CrdtException(exception.message ?: "Unknown error")) {
+            val exceptionProto = decodeProto(exception, CrdtExceptionProto.getDefaultInstance())
+            Log.warning(CrdtException(exceptionProto.message ?: "Unknown error")) {
                 "Result was unsuccessful"
             }
             complete(false)

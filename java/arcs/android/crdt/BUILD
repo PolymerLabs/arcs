@@ -18,6 +18,7 @@ arcs_kt_android_library(
         ":crdt_android_proto",
         ":crdt_count_android_proto",
         ":crdt_entity_android_proto",
+        ":crdt_exception_android_proto",
         ":crdt_set_android_proto",
         ":crdt_singleton_android_proto",
         ":referencable_android_proto",
@@ -29,7 +30,6 @@ arcs_kt_android_library(
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",
-        "//third_party/java/jsr305_annotations",
     ],
 )
 
@@ -74,6 +74,16 @@ proto_library(
 android_proto_library(
     name = "crdt_entity_android_proto",
     deps = [":crdt_entity_proto"],
+)
+
+proto_library(
+    name = "crdt_exception_proto",
+    srcs = ["crdt_exception.proto"],
+)
+
+android_proto_library(
+    name = "crdt_exception_android_proto",
+    deps = [":crdt_exception_proto"],
 )
 
 proto_library(

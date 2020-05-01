@@ -11,7 +11,6 @@
 
 package arcs.android.crdt
 
-import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.crdt.CrdtException
 import com.google.common.truth.Truth.assertThat
@@ -20,9 +19,9 @@ import org.junit.runner.RunWith
 
 /** Tests for [ParcelableCrdtException]. */
 @RunWith(AndroidJUnit4::class)
-class ParcelableCrdtExceptionTest {
+class CrdtExceptionProtoTest {
     @Test
-    fun parcelableRoundTrip_works() {
+    fun encode() {
         val exception: CrdtException
         try {
             throw CrdtException("Uh oh")
@@ -30,18 +29,10 @@ class ParcelableCrdtExceptionTest {
             exception = e
         }
 
-        val marshalled = with(Parcel.obtain()) {
-            writeParcelable(exception.toParcelable(), 0)
-            marshall()
-        }
+        val proto = exception.toProto()
 
-        val unmarshalled = with(Parcel.obtain()) {
-            unmarshall(marshalled, 0, marshalled.size)
-            setDataPosition(0)
-            readParcelable<ParcelableCrdtException>(ParcelableCrdtException::class.java.classLoader)
-        }
-
-        assertThat(unmarshalled?.message).isEqualTo("Uh oh")
-        assertThat(unmarshalled?.stackTrace).isEqualTo(exception.stackTrace.toStrings())
+        assertThat(proto.message).isEqualTo("Uh oh")
+        // Just check the stack trace isn't empty. It's hard to know what is in it exactly.
+        assertThat(proto.stackTraceList).isNotEmpty()
     }
 }

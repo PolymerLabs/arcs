@@ -10,7 +10,6 @@ android_library(
     idl_import_root = ".",
     idl_srcs = glob(["*.aidl"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
-    deps = ["//java/arcs/android/crdt"],
 )
 
 arcs_kt_android_library(
@@ -19,9 +18,10 @@ arcs_kt_android_library(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
         ":aidl",
-        "//java/arcs/android/crdt",
+        "//java/arcs/android/crdt:crdt_exception_android_proto",
         "//java/arcs/android/storage",
         "//java/arcs/android/storage:proxy_message_android_proto",
+        "//java/arcs/android/util",
         "//java/arcs/core/crdt",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/util",
