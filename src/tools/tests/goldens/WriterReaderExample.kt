@@ -17,7 +17,9 @@ object IngestionPlan : Plan(
             "arcs.core.data.testdata.Reader",
             mapOf(
                 "data" to HandleConnection(
-                    CreateableStorageKey("my-handle-id", Capabilities.Persistent),
+                    StorageKeyParser.parse(
+                        "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"
+                    ),
                     HandleMode.Read,
                     SingletonType(EntityType(Reader_Data.SCHEMA)),
                     Ttl.Days(20)
@@ -29,7 +31,9 @@ object IngestionPlan : Plan(
             "arcs.core.data.testdata.Writer",
             mapOf(
                 "data" to HandleConnection(
-                    CreateableStorageKey("my-handle-id", Capabilities.Persistent),
+                    StorageKeyParser.parse(
+                        "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"
+                    ),
                     HandleMode.Write,
                     SingletonType(EntityType(Writer_Data.SCHEMA)),
                     Ttl.Days(20)
@@ -99,13 +103,17 @@ object ReferencesRecipePlan : Plan(
             "",
             mapOf(
                 "inThingRefs" to HandleConnection(
-                    CreateableStorageKey("my-refs-id", Capabilities.Persistent),
+                    StorageKeyParser.parse(
+                        "db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:referencesArcId/handle/my-refs-id"
+                    ),
                     HandleMode.Read,
                     CollectionType(ReferenceType(EntityType(ReadWriteReferences_OutThingRef.SCHEMA))),
                     Ttl.Infinite
                 ),
                 "outThingRef" to HandleConnection(
-                    CreateableStorageKey("my-ref-id", Capabilities.Persistent),
+                    StorageKeyParser.parse(
+                        "db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:referencesArcId/handle/my-ref-id"
+                    ),
                     HandleMode.Write,
                     SingletonType(ReferenceType(EntityType(ReadWriteReferences_OutThingRef.SCHEMA))),
                     Ttl.Infinite

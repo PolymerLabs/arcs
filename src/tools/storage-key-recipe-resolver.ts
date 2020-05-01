@@ -11,7 +11,7 @@ import {assert} from '../platform/assert-web.js';
 import {Id} from '../runtime/id.js';
 import {Runtime} from '../runtime/runtime.js';
 import {Manifest} from '../runtime/manifest.js';
-import {Recipe, RecipeComponent} from '../runtime/recipe/recipe.js';
+import {IsValidOptions, Recipe, RecipeComponent} from '../runtime/recipe/recipe.js';
 import {volatileStorageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
 import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
@@ -44,22 +44,30 @@ export class StorageKeyRecipeResolver {
    * @returns Resolved recipes (with Storage Keys).
    */
   async resolve(): Promise<Recipe[]> {
+    const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
+
     // First pass: validate recipes and create stores
+    const firstPass = [];
     for (const recipe of this.runtime.context.allRecipes) {
       this.validateHandles(recipe);
 
-      const normed = recipe.clone();
-      normed.normalize();
-
-      if (isLongRunning(recipe)) {
-        await this.createStoresForCreateHandles(normed);
+      if (!recipe.normalize(opts)) {
+        throw new StorageKeyRecipeResolverError(
+          `Recipe ${recipe.name} failed to normalize:\n${[...opts.errors.values()].join('\n')}`);
       }
+
+      let withStores = recipe;
+      if (isLongRunning(recipe)) {
+        withStores = await this.createStoresForCreateHandles(recipe);
+      }
+
+      firstPass.push(withStores);
     }
 
     // Second pass: resolve recipes
     const recipes = [];
-    for (const recipe of this.runtime.context.allRecipes) {
-      const resolved = await this.tryResolve(recipe);
+    for (const recipe of firstPass) {
+      const resolved = await this.tryResolve(recipe, opts);
 
       // Only include recipes from primary (non-imported) manifest
       if (this.runtime.context.recipes.map(r => r.name).includes(recipe.name)) {
@@ -74,13 +82,8 @@ export class StorageKeyRecipeResolver {
    *
    * @param recipe long-running or ephemeral recipe
    */
-  async tryResolve(recipe: Recipe): Promise<Recipe | null> {
-    const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
+  async tryResolve(recipe: Recipe, opts: IsValidOptions): Promise<Recipe | null> {
 
-    if (!recipe.normalize(opts)) {
-      throw new StorageKeyRecipeResolverError(
-        `Recipe ${recipe.name} failed to normalize:\n${[...opts.errors.values()].join('\n')}`);
-    }
     if (recipe.isResolved()) return recipe;
 
     const arcId = findLongRunningArcId(recipe);
@@ -125,6 +128,7 @@ export class StorageKeyRecipeResolver {
       this.runtime.context.registerStore(store, createHandle.tags);
       createHandle.storageKey = storageKey;
     }
+    assert(cloneRecipe.normalize());
     return cloneRecipe;
   }
 
