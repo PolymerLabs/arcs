@@ -23,20 +23,22 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * A layer to decouple local data updates and underlying storage layers write-back.
+ * A layer to decouple local data updates and underlying storage layers flushes.
  *
- * The modern storage stacks including VFS page dirty write-back, underlying flash drivers
- * batched-write/flush, etc are all implemented in an efficient way where no data/metadata is
- * written through to the storage media for every single write operation unless being requested.
+ * The modern storage stacks including VFS page dirty write-back, io-scheduler
+ * merging and re-ordering, flash device turbo-write and/or buffer flush, etc
+ * are all implemented in an efficient way where no data/metadata is written
+ * through to storage media for every single write operation unless explicitly
+ * being requested.
  */
 interface WriteBack {
     /**
-     * Write-through: block current thread to flush all data updates to the next storage layer.
+     * Write-through: flush directly all data updates to the next storage layer.
      */
     suspend fun flush(job: suspend () -> Unit)
     /**
-     * Write-back: queue up data updates and let write-back threads decide how and when to
-     * flush all data updates to the next storage layer.
+     * Write-back: queue up data updates and let write-back threads decide how and
+     * when to flush all data updates to the next storage layer.
      */
     suspend fun asyncFlush(job: suspend () -> Unit)
 
@@ -49,8 +51,8 @@ interface WriteBackFactory {
     fun create(
         protocol: String = "",
         /**
-         * Provide a dedicated write-back thread pool or leave it to implementations to decide
-         * what threads to be designated as the write-backers.
+         * Provide a dedicated write-back thread pool or leave it to implementations
+         * to decide what threads to be designated as the write-backers.
          */
         writebackThreads: ExecutorService? = null,
         /**
@@ -71,7 +73,7 @@ class StoreWriteBack private constructor(
         writebackThreads?.asCoroutineDispatcher() ?: Dispatchers.IO
     ),
     Mutex by Mutex() {
-    // Only apply write-back to physical storage medias.
+    // Only apply write-back to physical storage media(s).
     private val passThrough = protocol != Protocols.DATABASE_DRIVER
 
     // The number of active flush jobs.
@@ -131,10 +133,11 @@ class StoreWriteBack private constructor(
     }
 
     companion object : WriteBackFactory {
+        /** Override [WriteBack] injection to Arcs Stores. */
         @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
         var writeBackFactoryOverride: WriteBackFactory? = null
 
-        /** The factory of creating [StoreWriteBack] instances. */
+        /** The factory of creating [WriteBack] instances. */
         override fun create(protocol: String, writebackThreads: ExecutorService?, queueSize: Int) =
             writeBackFactoryOverride?.create(protocol, writebackThreads, queueSize)
                 ?: StoreWriteBack(protocol, writebackThreads, queueSize)
