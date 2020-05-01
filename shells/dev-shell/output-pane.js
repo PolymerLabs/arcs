@@ -156,11 +156,7 @@ const arcTemplate = `
     <br>
     <span id="stores-collapse-all" class="control">⮝⮝</span>
   </span>
-  <div id="stores" class="control-panel">
-    <div style="font-size: 15px; font-style: italic; color: grey; margin-bottom: 10px">
-      Modifying entities is temporarily disabled while the dev shell is migrated to the new storage stack
-    </div>
-  </div>
+  <div id="stores" class="control-panel"></div>
   <div id="serial" class="control-panel">
     <pre></pre>
   </div>`;
@@ -244,8 +240,7 @@ class ArcPanel extends HTMLElement {
       action = 'show';
     }
     for (const store of this.stores.children) {
-      // TODO: remove 'if' when saving entities works
-      if (store.collapse) store.collapse(action);
+      store.collapse(action);
     }
   }
 
