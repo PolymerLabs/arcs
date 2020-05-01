@@ -122,16 +122,27 @@ class RecipeGraphFixpointIteratorTest {
         listOf(Recipe.Particle.HandleConnection(writeConnection, thing))
     )
 
+    private fun createGraph(
+        name: String,
+        handles: List<Recipe.Handle>,
+        particles: List<Recipe.Particle>
+    ) = RecipeGraph(
+        Recipe(
+            "StraightLine",
+            handles.associateBy { it.name },
+            particles,
+            "arcId"
+        )
+    )
+
     @Test
     fun straightLineFlow() {
         // [Writer] -> (thing) -> [Reader]
-        val recipe = Recipe(
-            "StraightLine",
-            listOf(thing).associateBy { it.name },
-            listOf(readerParticle, writerParticle),
-            "arcId"
+        val graph = createGraph(
+            name = "StraightLine",
+            handles = listOf(thing),
+            particles = listOf(readerParticle, writerParticle)
         )
-        val graph = RecipeGraph(recipe)
         val analyzer = TestAnalyzer(setOf("p:${writerParticle.spec.name}"))
 
         val result = analyzer.computeFixpoint(graph)
@@ -154,13 +165,11 @@ class RecipeGraphFixpointIteratorTest {
     fun joinsFlow() {
         // [Writer] ---------> (thing) -> [Reader]
         // [AnotherWriter] ------^
-        val recipe = Recipe(
-            "Join",
-            listOf(thing).associateBy { it.name },
-            listOf(readerParticle, writerParticle, anotherWriterParticle),
-            "arcId"
+        val graph = createGraph(
+            name = "Join",
+            handles = listOf(thing),
+            particles = listOf(readerParticle, writerParticle, anotherWriterParticle)
         )
-        val graph = RecipeGraph(recipe)
         val analyzer = TestAnalyzer(
             setOf("p:${writerParticle.spec.name}", "p:${anotherWriterParticle.spec.name}")
         )
@@ -193,13 +202,11 @@ class RecipeGraphFixpointIteratorTest {
     fun unreachable() {
         // [Writer] ----------> (thing) -> [Reader]
         // [AnotherWriter] -------^
-        val recipe = Recipe(
-            "Join",
-            listOf(thing).associateBy { it.name },
-            listOf(readerParticle, writerParticle, anotherWriterParticle),
-            "arcId"
+        val graph = createGraph(
+            name = "Join",
+            handles = listOf(thing),
+            particles = listOf(readerParticle, writerParticle, anotherWriterParticle)
         )
-        val graph = RecipeGraph(recipe)
         val analyzer = TestAnalyzer(setOf("p:${writerParticle.spec.name}"))
 
         val result = analyzer.computeFixpoint(graph)
@@ -254,14 +261,11 @@ class RecipeGraphFixpointIteratorTest {
                 Recipe.Particle.HandleConnection(readConnection, name)
             )
         )
-        val recipe = Recipe(
-            "Loop",
-            listOf(thing, name).associateBy { it.name },
-            listOf(readerParticle, writerParticle, recognizerParticle, taggerParticle),
-            "arcId"
+        val graph = createGraph(
+            name = "Loop",
+            handles = listOf(thing, name),
+            particles = listOf(readerParticle, writerParticle, recognizerParticle, taggerParticle)
         )
-
-        val graph = RecipeGraph(recipe)
         val analyzer = TestAnalyzer(setOf("p:${writerParticle.spec.name}"))
 
         val result = analyzer.computeFixpoint(graph)
