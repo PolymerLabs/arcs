@@ -59,13 +59,13 @@ class TestAnalyzer(
         AbstractSet<String>(setOf())
     }
 
-    override fun transform(handle: Recipe.Handle, input: AbstractSet<String>) =
+    override fun nodeTransfer(handle: Recipe.Handle, input: AbstractSet<String>) =
         input.set?.let { AbstractSet<String>(it + "h:${handle.name}") } ?: input
 
-    override fun transform(particle: Recipe.Particle, input: AbstractSet<String>) =
+    override fun nodeTransfer(particle: Recipe.Particle, input: AbstractSet<String>) =
         input.set?.let { AbstractSet<String>(it + "p:${particle.spec.name}") } ?: input
 
-    override fun transform(
+    override fun edgeTransfer(
         handle: Recipe.Handle,
         particle: Recipe.Particle,
         spec: HandleConnectionSpec,
@@ -74,7 +74,7 @@ class TestAnalyzer(
         AbstractSet<String>(it + "h:${handle.name} -> p:${particle.spec.name}")
     } ?: input
 
-    override fun transform(
+    override fun edgeTransfer(
         particle: Recipe.Particle,
         handle: Recipe.Handle,
         spec: HandleConnectionSpec,

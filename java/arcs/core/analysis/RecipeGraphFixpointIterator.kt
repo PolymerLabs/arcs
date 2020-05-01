@@ -23,22 +23,22 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>> {
      */
     private var nodeValues = mutableMapOf<RecipeGraph.Node, V>()
 
-    /** State transformer for a [Recipe.Handle] node. */
-    open fun transform(handle: Recipe.Handle, input: V): V = input
+    /** State transfer function for a [Recipe.Handle] node. */
+    open fun nodeTransfer(handle: Recipe.Handle, input: V): V = input
 
-    /** State transformer for a [Recipe.Particle] node. */
-    open fun transform(particle: Recipe.Particle, input: V): V = input
+    /** State transfer function for a [Recipe.Particle] node. */
+    open fun nodeTransfer(particle: Recipe.Particle, input: V): V = input
 
-    /** State transformer for a [Recipe.Handle] -> [Recipe.Particle] edge. */
-    open fun transform(
+    /** State transfer function for a [Recipe.Handle] -> [Recipe.Particle] edge. */
+    open fun edgeTransfer(
         handle: Recipe.Handle,
         particle: Recipe.Particle,
         spec: HandleConnectionSpec,
         input: V
     ): V = input
 
-    /** State transformer for a [Recipe.Particle] -> [Recipe.Handle] edge. */
-    open fun transform(
+    /** State transfer function for a [Recipe.Particle] -> [Recipe.Handle] edge. */
+    open fun edgeTransfer(
         particle: Recipe.Particle,
         handle: Recipe.Handle,
         spec: HandleConnectionSpec,
@@ -50,7 +50,7 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>> {
      *
      * The nodes in the returned map are used to initialize the worklist for the fixpoint iteration.
      */
-    abstract fun getInitialValues(graph: RecipeGraph): Map<RecipeGraph.Node, V>
+    protected abstract fun getInitialValues(graph: RecipeGraph): Map<RecipeGraph.Node, V>
 
     /** Returns the value for the given particle. Returns null if the value is BOTTOM. */
     fun getValue(particle: Recipe.Particle): V? = nodeValues[RecipeGraph.Node.Particle(particle)]
@@ -70,9 +70,9 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>> {
             val input = nodeValues[current]
             // Treating as BOTTOM now. See `successors.forEach` below as well.
             if (input == null) continue
-            val output = transform(current, input)
+            val output = nodeTransfer(current, input)
             current.successors.forEach { (succ, spec) ->
-                val edgeValue = transform(current, succ, spec, output)
+                val edgeValue = edgeTransfer(current, succ, spec, output)
                 val oldValue = nodeValues[succ]
                 val newValue = oldValue?.join(edgeValue) ?: edgeValue
                 val changed = oldValue?.isEquivalentTo(newValue)?.not() ?: true
@@ -84,12 +84,12 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>> {
         }
     }
 
-    private fun transform(node: RecipeGraph.Node, input: V) = when (node) {
-        is RecipeGraph.Node.Particle -> transform(node.particle, input)
-        is RecipeGraph.Node.Handle -> transform(node.handle, input)
+    private fun nodeTransfer(node: RecipeGraph.Node, input: V) = when (node) {
+        is RecipeGraph.Node.Particle -> nodeTransfer(node.particle, input)
+        is RecipeGraph.Node.Handle -> nodeTransfer(node.handle, input)
     }
 
-    private fun transform(
+    private fun edgeTransfer(
         src: RecipeGraph.Node,
         tgt: RecipeGraph.Node,
         spec: HandleConnectionSpec,
@@ -97,11 +97,11 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>> {
     ) = when (src) {
         is RecipeGraph.Node.Particle -> {
             require(tgt is RecipeGraph.Node.Handle)
-            transform(src.particle, tgt.handle, spec, input)
+            edgeTransfer(src.particle, tgt.handle, spec, input)
         }
         is RecipeGraph.Node.Handle -> {
             require(tgt is RecipeGraph.Node.Particle)
-            transform(src.handle, tgt.particle, spec, input)
+            edgeTransfer(src.handle, tgt.particle, spec, input)
         }
     }
 }
