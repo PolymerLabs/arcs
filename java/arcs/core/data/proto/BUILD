@@ -14,6 +14,12 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
+# This target is needed in Google internal repo when running TypeScript with Bazel.
+filegroup(
+    name = "proto_files",
+    srcs = ["manifest.proto"],
+)
+
 arcs_kt_library(
     name = "proto",
     srcs = glob(

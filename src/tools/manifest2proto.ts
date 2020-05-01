@@ -20,26 +20,38 @@ import {Manifest} from '../runtime/manifest.js';
 import {Capabilities} from '../runtime/capabilities.js';
 import {ManifestProto, FateEnum, CapabilityEnum, DirectionEnum, PrimitiveTypeEnum} from './manifest-proto.js';
 
-export async function serialize2proto(path: string): Promise<Uint8Array> {
+export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path);
 
   if (manifest.imports.length) {
     throw Error('Only single-file manifests are currently supported');
   }
-
-  const json = await manifestToProtoPayload(manifest);
-
-  const error = ManifestProto.verify(json);
-  if (error) throw Error(error);
-
-  return ManifestProto.encode(ManifestProto.create(json)).finish();
+  return encodePayload(await manifestToProtoPayload(manifest));
 }
 
 export async function manifestToProtoPayload(manifest: Manifest) {
+  return makeManifestProtoPayload(manifest.particles, manifest.recipes);
+}
+
+export async function encodePlansToProto(plans: Recipe[]) {
+  const specMap = new Map<string, ParticleSpec>();
+  for (const spec of [].concat(...plans.map(r => r.particles)).map(p => p.spec)) {
+    specMap.set(spec.name, spec);
+  }
+  return encodePayload(await makeManifestProtoPayload([...specMap.values()], plans));
+}
+
+async function makeManifestProtoPayload(particles: ParticleSpec[], recipes: Recipe[]) {
   return {
-    particleSpecs: await Promise.all(manifest.particles.map(p => particleSpecToProtoPayload(p))),
-    recipes: await Promise.all(manifest.recipes.map(r => recipeToProtoPayload(r))),
+    particleSpecs: await Promise.all(particles.map(p => particleSpecToProtoPayload(p))),
+    recipes: await Promise.all(recipes.map(r => recipeToProtoPayload(r))),
   };
+}
+
+function encodePayload(payload: {}): Uint8Array {
+  const error = ManifestProto.verify(payload);
+  if (error) throw Error(error);
+  return ManifestProto.encode(ManifestProto.create(payload)).finish();
 }
 
 async function particleSpecToProtoPayload(spec: ParticleSpec) {
@@ -61,7 +73,7 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
 }
 
 async function recipeToProtoPayload(recipe: Recipe) {
-  assert(recipe.normalize());
+  recipe.normalize();
 
   const handleToProtoPayload = new Map<Handle, {name: string}>();
   for (const h of recipe.handles) {
