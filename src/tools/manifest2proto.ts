@@ -21,7 +21,7 @@ import {Manifest} from '../runtime/manifest.js';
 import {Capabilities} from '../runtime/capabilities.js';
 
 // Import Proto declaration.
-const rootNamespace = protobuf.loadSync('./java/arcs/core/data/proto/recipe.proto');
+const rootNamespace = protobuf.loadSync('./java/arcs/core/data/proto/manifest.proto');
 const manifestProto = rootNamespace.lookupType('arcs.ManifestProto');
 const FATE_ENUM = rootNamespace.lookupEnum('arcs.Fate');
 const CAPABILITY_ENUM = rootNamespace.lookupEnum('arcs.Capability');
