@@ -68,16 +68,15 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>>(val bottom: V) 
             // Pick and remove an element from the worklist.
             val current = worklist.first()
             worklist.remove(current)
-            val input = nodeValues[current]
-            // Treating as BOTTOM now. See `successors.forEach` below as well.
-            if (input == null) continue
+            val input = nodeValues[current] ?: bottom
+            if (input.isBottom) continue
             val output = nodeTransfer(current, input)
             current.successors.forEach { (succ, spec) ->
                 val edgeValue = edgeTransfer(current, succ, spec, output)
-                val oldValue = nodeValues[succ]
-                val newValue = oldValue?.join(edgeValue) ?: edgeValue
-                val changed = oldValue?.isEquivalentTo(newValue)?.not() ?: true
-                if (changed) {
+                val oldValue = nodeValues[succ] ?: bottom
+                val newValue = oldValue.join(edgeValue)
+                // Add successor to worklist if value changed.
+                if (!oldValue.isEquivalentTo(newValue)) {
                     worklist.add(succ)
                     nodeValues[succ] = newValue
                 }
