@@ -505,8 +505,10 @@ abstract class AbstractArcHost(
      * Unregisters [Handle]s from [StorageProxy]s, and clears references to them from [Particle]s.
      */
     private suspend fun cleanupHandles(context: ParticleContext) {
-        withContext(context.particle.handles.dispatcher) {
-            context.particle.handles.reset()
+        if (!context.particle.handles.isEmpty()) {
+            withContext(context.particle.handles.dispatcher) {
+                context.particle.handles.reset()
+            }
         }
     }
 
