@@ -6,15 +6,17 @@ import arcs.core.entity.awaitReady
 import arcs.jvm.host.TargetHost
 import arcs.sdk.Entity
 import arcs.sdk.ReadWriteCollectionHandle
+import arcs.sdk.ReadWriteSingletonHandle
 import arcs.sdk.Reference
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
-fun <T : Entity> T.toReference(handle: ReadWriteCollectionHandle<T>): Reference<T> = runBlocking {
+suspend fun <T : Entity> T.toReference(handle: ReadWriteSingletonHandle<T>): Reference<T> {
     if (this@toReference.entityId == null) {
         handle.store(this@toReference)
     }
-    handle.createReference(this@toReference)
+    return handle.createReference(this@toReference)
 }
 
 @TargetHost(ArcHost::class)
@@ -38,7 +40,7 @@ class Writer1 : AbstractWriter1() {
     }
     private fun Level0.toArcs() = Writer1_Level1_Children(name)
 
-    private fun Level1.toArcs() = Writer1_Level1(
+    private suspend fun Level1.toArcs() = Writer1_Level1(
         name = name,
         children = children.map { it.toArcs().toReference(handles.level0) }.toSet()
     )
@@ -57,12 +59,12 @@ class Writer2 : AbstractWriter2() {
     }
     private fun Level0.toArcs() = Writer2_Level2_Children_Children(name)
 
-    private fun Level1.toArcs() = Writer2_Level2_Children(
+    private suspend fun Level1.toArcs() = Writer2_Level2_Children(
         name = name,
         children = children.map { it.toArcs().toReference(handles.level0) }.toSet()
     )
 
-    private fun Level2.toArcs() = Writer2_Level2(
+    private suspend fun Level2.toArcs() = Writer2_Level2(
         name = name,
         children = children.map { it.toArcs().toReference(handles.level1) }.toSet()
     )

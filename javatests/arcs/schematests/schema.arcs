@@ -23,15 +23,15 @@ particle Reader0 in 'arcs.schematests.Reader0'
   level0: reads [Level0]
 
 particle Writer1 in 'arcs.schematests.Writer1'
-  level0: reads writes [Level0]
+  level0: reads writes Level0
   level1: writes [Level1]
 
 particle Reader1 in 'arcs.schematests.Reader1'
   level1: reads [Level1]
 
 particle Writer2 in 'arcs.schematests.Writer2'
-  level0: reads writes [Level0]
-  level1: reads writes [Level1]
+  level0: reads writes Level0
+  level1: reads writes Level1
   level2: writes [Level2]
 
 particle Reader2 in 'arcs.schematests.Reader2'
@@ -45,6 +45,9 @@ recipe WriteRecipe
   level1: create persistent 'level1'
   level2: create persistent 'level2'
 
+  level0s: create persistent 'level0s'
+  level1s: create persistent 'level1s'
+
   Writer0
     level0: level0
 
@@ -52,15 +55,15 @@ recipe WriteRecipe
     level0: level0
 
   Writer1
-    level0: level0
+    level0: level0s
     level1: level1
 
   Reader1
     level1: level1
 
   Writer2
-    level0: level0
-    level1: level1
+    level0: level0s
+    level1: level1s
     level2: level2
 
   Reader2
