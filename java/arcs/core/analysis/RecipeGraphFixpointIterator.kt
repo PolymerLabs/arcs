@@ -17,10 +17,10 @@ import arcs.core.data.Recipe
 /** An abstract class that implements dataflow analysis over abstract values of type [V]. */
 abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>>(val bottom: V) {
     /** Results of the fixpoint computation. */
-    class FixpointResult<V: AbstractValue<V>>(
+    class FixpointResult<V : AbstractValue<V>>(
         private val bottom: V,
         private val nodeValues: Map<RecipeGraph.Node, V>
-    )  {
+    ) {
         /** Returns the value for the given particle.  */
         fun getValue(particle: Recipe.Particle): V =
             nodeValues[RecipeGraph.Node.Particle(particle)] ?: bottom
