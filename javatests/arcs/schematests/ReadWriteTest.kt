@@ -54,6 +54,7 @@ class ReadWriteTest {
     }
 
     @Test
+    @Ignore("b/155502365")
     fun writeAndReadBack2() {
         arcs.put2(l2)
         assertThat(arcs.all2()).containsExactly(l2)

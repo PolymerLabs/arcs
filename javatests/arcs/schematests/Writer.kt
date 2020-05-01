@@ -19,19 +19,20 @@ fun <T : Entity> T.toReference(handle: ReadWriteCollectionHandle<T>): Reference<
 
 @TargetHost(ArcHost::class)
 class Writer0 : AbstractWriter0() {
-    suspend fun initialize() = this.apply {
+    private suspend fun initialize() = this.apply {
         handles.level0.awaitReady()
     }
     private fun Level0.toArcs() = Writer0_Level0(name)
 
     suspend fun write(item: Level0) = withContext(handles.level0.dispatcher) {
+        initialize()
         handles.level0.store(item.toArcs())
     }
 }
 
 @TargetHost(ArcHost::class)
 class Writer1 : AbstractWriter1() {
-    suspend fun initialize() = this.apply {
+    private suspend fun initialize() = this.apply {
         handles.level0.awaitReady()
         handles.level1.awaitReady()
     }
@@ -42,13 +43,14 @@ class Writer1 : AbstractWriter1() {
         children = children.map { it.toArcs().toReference(handles.level0) }.toSet()
     )
     suspend fun write(item: Level1) = withContext(handles.level1.dispatcher) {
+        initialize()
         handles.level1.store(item.toArcs())
     }
 }
 
 @TargetHost(ArcHost::class)
 class Writer2 : AbstractWriter2() {
-    suspend fun initialize() = this.apply {
+    private suspend fun initialize() = this.apply {
         handles.level0.awaitReady()
         handles.level1.awaitReady()
         handles.level2.awaitReady()
@@ -66,6 +68,7 @@ class Writer2 : AbstractWriter2() {
     )
 
     suspend fun write(item: Level2) = withContext(handles.level2.dispatcher) {
+        initialize()
         handles.level2.store(item.toArcs())
     }
 }

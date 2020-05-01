@@ -9,19 +9,20 @@ import kotlinx.coroutines.withContext
 
 @TargetHost(ArcHost::class)
 class Reader0 : AbstractReader0() {
-    suspend fun initialize() = this.apply {
+    private suspend fun initialize() = this.apply {
         handles.level0.awaitReady()
     }
     private fun Reader0_Level0.fromArcs() = Level0(name)
 
     suspend fun read(): List<Level0> = withContext(handles.level0.dispatcher) {
+        initialize()
         handles.level0.fetchAll().map { it.fromArcs() }
     }
 }
 
 @TargetHost(ArcHost::class)
 class Reader1 : AbstractReader1() {
-    suspend fun initialize() = this.apply {
+    private suspend fun initialize() = this.apply {
         handles.level1.awaitReady()
     }
     // Due to note1 below, we now work with a different particle's type.
@@ -40,13 +41,14 @@ class Reader1 : AbstractReader1() {
     )
 
     suspend fun read(): List<Level1> = withContext(handles.level1.dispatcher) {
+        initialize()
         handles.level1.fetchAll().map { it.fromArcs() }
     }
 }
 
 @TargetHost(ArcHost::class)
 class Reader2 : AbstractReader2() {
-    suspend fun initialize() = this.apply {
+    private suspend fun initialize() = this.apply {
         handles.level2.awaitReady()
     }
     // Due to note1 above, we now work with a different particle's type.
@@ -65,6 +67,7 @@ class Reader2 : AbstractReader2() {
     )
 
     suspend fun read(): List<Level2> = withContext(handles.level2.dispatcher) {
+        initialize()
         handles.level2.fetchAll().map { it.fromArcs() }
     }
 }

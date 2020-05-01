@@ -91,42 +91,42 @@ class Arcs(
     fun all0(): List<Level0> {
         return runBlocking {
             startIfNot()
-            arcHost.reader0.initialize().read()
+            arcHost.reader0.read()
         }
     }
 
     fun put0(item: Level0) {
         runBlocking {
             startIfNot()
-            arcHost.writer0.initialize().write(item)
+            arcHost.writer0.write(item)
         }
     }
 
     fun all1(): List<Level1> {
         return runBlocking {
             startIfNot()
-            arcHost.reader1.initialize().read()
+            arcHost.reader1.read()
         }
     }
 
     fun put1(item: Level1) {
         runBlocking {
             startIfNot()
-            arcHost.writer1.initialize().write(item)
+            arcHost.writer1.write(item)
         }
     }
 
     fun all2(): List<Level2> {
         return runBlocking {
             startIfNot()
-            arcHost.reader2.initialize().read()
+            arcHost.reader2.read()
         }
     }
 
     fun put2(item: Level2) {
         runBlocking {
             startIfNot()
-            arcHost.writer2.initialize().write(item)
+            arcHost.writer2.write(item)
         }
     }
 }
