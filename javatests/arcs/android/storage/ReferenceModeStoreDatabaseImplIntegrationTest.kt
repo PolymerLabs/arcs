@@ -35,7 +35,6 @@ import arcs.core.storage.ReferenceModeStore
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.StoreWriteBack
-import arcs.core.storage.WriteBackForTesting
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.DatabaseDriver
 import arcs.core.storage.driver.DatabaseDriverProvider
@@ -44,14 +43,13 @@ import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.WriteBackForTesting
 import arcs.core.storage.toReference
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.TestCoroutineDispatcher
-import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
@@ -79,14 +77,12 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         ),
         hash
     )
-    private val testScope = TestCoroutineScope(TestCoroutineDispatcher())
     private lateinit var databaseFactory: AndroidSqliteDatabaseManager
 
     @Before
     fun setUp() = runBlockingTest {
         DriverFactory.clearRegistrations()
         databaseFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-        WriteBackForTesting.writeBackScope = testScope
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         DatabaseDriverProvider.configure(databaseFactory) { schema }
     }

@@ -9,8 +9,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.core.storage
+package arcs.core.storage.testutil
 
+import arcs.core.storage.WriteBack
+import arcs.core.storage.WriteBackFactory
 import arcs.core.util.TaggedLog
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutorService
@@ -20,14 +22,26 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.test.TestCoroutineDispatcher
+import kotlinx.coroutines.test.TestCoroutineScope
 
 /**
- * A special [WriteBack] implementation for unit tests.
+ * A [WriteBack] implementation for unit tests.
  *
- * Specifically it accepts scope/dispatcher being overwritten which is required
- * at unit tests that are run by runBlockingTest. Furthermore, cross-stores idle
- * awaiting and logging are supported.
+ * Specifically it implements the identical logics as [StoreWriteBack]s' but
+ * allows scope/dispatcher being designated which is required for unit tests
+ * which are annotated by @Test since no addtional coroutine Jobs are allowed
+ * alive which is checked post each test, the check blocks the test itself for
+ * good till a timeout.
+ *
+ * An example of runBlockingTest exception:
+ * java.lang.IllegalStateException: This job has not completed yet
+ * The workaround is configuring coroutine scope to [TestCoroutineScope]
+ *
+ * Reference:
+ * https://medium.com/@eyalg/testing-androidx-room-kotlin-coroutines-2d1faa3e674f
  */
+@kotlinx.coroutines.ExperimentalCoroutinesApi
 class WriteBackForTesting private constructor(
     protocol: String
 ) : WriteBack,
@@ -89,16 +103,9 @@ class WriteBackForTesting private constructor(
     }
 
     companion object : WriteBackFactory {
-        /**
-         * To get around the known runBlockingTest issue:
-         * java.lang.IllegalStateException: This job has not completed yet
-         * the scope should be overwritten by test classes' [TestCoroutineScope]
-         * instances.
-         *
-         * Reference:
-         * https://medium.com/@eyalg/testing-androidx-room-kotlin-coroutines-2d1faa3e674f
-         */
-        var writeBackScope: CoroutineScope? = null
+        /** Set to null for write-through mode. */
+        var writeBackScope: CoroutineScope? =
+            TestCoroutineScope(TestCoroutineDispatcher())
 
         private var instances = CopyOnWriteArrayList<WriteBackForTesting>()
         private val log = TaggedLog(::toString)

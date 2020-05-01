@@ -16,10 +16,10 @@ import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreWriteBack
-import arcs.core.storage.WriteBackForTesting
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.WriteBackForTesting
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
@@ -57,7 +57,6 @@ class TtlHandleTest {
         backingKey = backingKey,
         storageKey = DatabaseStorageKey.Persistent("singleton", DummyEntity.SCHEMA_HASH)
     )
-    private val testScope = TestCoroutineScope(TestCoroutineDispatcher())
     private lateinit var databaseManager: AndroidSqliteDatabaseManager
     private lateinit var fakeTime: FakeTime
     private lateinit var scheduler: Scheduler
@@ -73,7 +72,6 @@ class TtlHandleTest {
         fakeTime = FakeTime()
         scheduler = schedulerProvider("myArc")
         databaseManager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-        WriteBackForTesting.writeBackScope = testScope
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         DriverAndKeyConfigurator.configure(databaseManager)
         SchemaRegistry.register(DummyEntity)

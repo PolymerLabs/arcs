@@ -23,9 +23,9 @@ import arcs.core.entity.SchemaRegistry
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreWriteBack
-import arcs.core.storage.WriteBackForTesting
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.WriteBackForTesting
 import arcs.core.util.Time
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
@@ -54,11 +54,9 @@ class StorageServiceManagerTest {
         time = time,
         scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
     )
-    private val testScope = TestCoroutineScope(TestCoroutineDispatcher())
 
     @Before
     fun setUp() {
-        WriteBackForTesting.writeBackScope = testScope
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         AndroidDriverAndKeyConfigurator.configure(ApplicationProvider.getApplicationContext())
         SchemaRegistry.register(DummyEntity)
