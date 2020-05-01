@@ -15,13 +15,20 @@ import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.Recipe
 
 /** An abstract class that implements dataflow analysis over abstract values of type [V]. */
-abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>> {
-    /**
-     * Abstract state at the node, i.e., the join of the abstract values along the input edges.
-     *
-     * Absence of an entry for a node denotes BOTTOM.
-     */
-    private var nodeValues = mutableMapOf<RecipeGraph.Node, V>()
+abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>>(val bottom: V) {
+    /** Results of the fixpoint computation. */
+    class FixpointResult<V: AbstractValue<V>>(
+        private val bottom: V,
+        private val nodeValues: Map<RecipeGraph.Node, V>
+    )  {
+        /** Returns the value for the given particle.  */
+        fun getValue(particle: Recipe.Particle): V =
+            nodeValues[RecipeGraph.Node.Particle(particle)] ?: bottom
+
+        /** Returns the value for the given handle. Returns null if the value is BOTTOM. */
+        fun getValue(handle: Recipe.Handle): V =
+            nodeValues[RecipeGraph.Node.Handle(handle)] ?: bottom
+    }
 
     /** State transfer function for a [Recipe.Handle] node. */
     open fun nodeTransfer(handle: Recipe.Handle, input: V): V = input
@@ -52,16 +59,10 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>> {
      */
     protected abstract fun getInitialValues(graph: RecipeGraph): Map<RecipeGraph.Node, V>
 
-    /** Returns the value for the given particle. Returns null if the value is BOTTOM. */
-    fun getValue(particle: Recipe.Particle): V? = nodeValues[RecipeGraph.Node.Particle(particle)]
-
-    /** Returns the value for the given handle. Returns null if the value is BOTTOM. */
-    fun getValue(handle: Recipe.Handle): V? = nodeValues[RecipeGraph.Node.Handle(handle)]
-
-    fun computeFixpoint(graph: RecipeGraph) {
+    fun computeFixpoint(graph: RecipeGraph): FixpointResult<V> {
         // TODO(bgogul): If there are identical particles in the recipe, the results will be messed
         // up. Need to fix the issue.
-        nodeValues = getInitialValues(graph).toMutableMap()
+        val nodeValues = getInitialValues(graph).toMutableMap()
         val worklist = nodeValues.keys.toMutableSet()
         while (worklist.isNotEmpty()) {
             // Pick and remove an element from the worklist.
@@ -82,6 +83,7 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>> {
                 }
             }
         }
+        return FixpointResult(bottom, nodeValues.filterNot { (node, value) -> value.isBottom })
     }
 
     private fun nodeTransfer(node: RecipeGraph.Node, input: V) = when (node) {

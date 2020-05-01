@@ -41,6 +41,10 @@ class AbstractSet<S>(
         value.isBottom -> "BOTTOM"
         else -> "${set}"
     }
+
+    companion object {
+        fun <S> getBottom() = AbstractSet<S>(BoundedAbstractElement.getBottom<Set<S>>())
+    }
 }
 
 /** Returns the name of the underlying handle or particle. */
@@ -52,7 +56,7 @@ fun RecipeGraph.Node.getName() = when (this) {
 /** A simple Fixpoint iterator for the purposes of testing. */
 class TestAnalyzer(
     val startNames: Set<String>
-) : RecipeGraphFixpointIterator<AbstractSet<String>>() {
+) : RecipeGraphFixpointIterator<AbstractSet<String>>(AbstractSet.getBottom<String>()) {
     override fun getInitialValues(graph: RecipeGraph) = graph.nodes.filter {
         startNames.contains(it.getName())
     }.associateWith {
@@ -130,13 +134,20 @@ class RecipeGraphFixpointIteratorTest {
         val graph = RecipeGraph(recipe)
         val analyzer = TestAnalyzer(setOf("p:${writerParticle.spec.name}"))
 
-        analyzer.computeFixpoint(graph)
+        val result = analyzer.computeFixpoint(graph)
 
-        assertThat(analyzer.getValue(writerParticle)?.set).isEmpty()
-        assertThat(analyzer.getValue(thing)?.set)
-            .containsExactly("p:Writer", "p:Writer -> h:thing")
-        assertThat(analyzer.getValue(readerParticle)?.set)
-            .containsExactly("p:Writer", "p:Writer -> h:thing", "h:thing", "h:thing -> p:Reader")
+        with(result) {
+            assertThat(getValue(writerParticle).set).isEmpty()
+            assertThat(getValue(thing).set)
+                .containsExactly("p:Writer", "p:Writer -> h:thing")
+            assertThat(getValue(readerParticle).set)
+                .containsExactly(
+                    "p:Writer",
+                    "p:Writer -> h:thing",
+                    "h:thing",
+                    "h:thing -> p:Reader"
+                )
+        }
     }
 
     @Test
@@ -154,26 +165,28 @@ class RecipeGraphFixpointIteratorTest {
             setOf("p:${writerParticle.spec.name}", "p:${anotherWriterParticle.spec.name}")
         )
 
-        analyzer.computeFixpoint(graph)
+        val result = analyzer.computeFixpoint(graph)
 
-        assertThat(analyzer.getValue(writerParticle)?.set).isEmpty()
-        assertThat(analyzer.getValue(anotherWriterParticle)?.set).isEmpty()
-        assertThat(analyzer.getValue(thing)?.set)
-            .containsExactly(
-                "p:Writer",
-                "p:AnotherWriter",
-                "p:Writer -> h:thing",
-                "p:AnotherWriter -> h:thing"
-            )
-        assertThat(analyzer.getValue(readerParticle)?.set)
-            .containsExactly(
-                "p:Writer",
-                "p:AnotherWriter",
-                "p:Writer -> h:thing",
-                "p:AnotherWriter -> h:thing",
-                "h:thing",
-                "h:thing -> p:Reader"
-            )
+        with(result) {
+            assertThat(getValue(writerParticle)?.set).isEmpty()
+            assertThat(getValue(anotherWriterParticle)?.set).isEmpty()
+            assertThat(getValue(thing)?.set)
+                .containsExactly(
+                    "p:Writer",
+                    "p:AnotherWriter",
+                    "p:Writer -> h:thing",
+                    "p:AnotherWriter -> h:thing"
+                )
+            assertThat(getValue(readerParticle)?.set)
+                .containsExactly(
+                    "p:Writer",
+                    "p:AnotherWriter",
+                    "p:Writer -> h:thing",
+                    "p:AnotherWriter -> h:thing",
+                    "h:thing",
+                    "h:thing -> p:Reader"
+                )
+        }
     }
 
     @Test
@@ -189,25 +202,27 @@ class RecipeGraphFixpointIteratorTest {
         val graph = RecipeGraph(recipe)
         val analyzer = TestAnalyzer(setOf("p:${writerParticle.spec.name}"))
 
-        analyzer.computeFixpoint(graph)
+        val result = analyzer.computeFixpoint(graph)
 
-        assertThat(analyzer.getValue(writerParticle)?.set).isEmpty()
-        // AnotherWriter is unreachable as we don't mark it as a start node.
-        // Therefore, this should be bottom.
-        assertThat(analyzer.getValue(anotherWriterParticle)?.set).isNull()
-        // AnotherWriter should not be in the following sets.
-        assertThat(analyzer.getValue(thing)?.set)
-            .containsExactly(
-                "p:Writer",
-                "p:Writer -> h:thing"
-            )
-        assertThat(analyzer.getValue(readerParticle)?.set)
-            .containsExactly(
-                "p:Writer",
-                "p:Writer -> h:thing",
-                "h:thing",
-                "h:thing -> p:Reader"
-            )
+        with(result) {
+            assertThat(getValue(writerParticle).set).isEmpty()
+            // AnotherWriter is unreachable as we don't mark it as a start node.
+            // Therefore, this should be bottom.
+            assertThat(getValue(anotherWriterParticle).isBottom).isTrue()
+            // AnotherWriter should not be in the following sets.
+            assertThat(getValue(thing)?.set)
+                .containsExactly(
+                    "p:Writer",
+                    "p:Writer -> h:thing"
+                )
+            assertThat(getValue(readerParticle)?.set)
+                .containsExactly(
+                    "p:Writer",
+                    "p:Writer -> h:thing",
+                    "h:thing",
+                    "h:thing -> p:Reader"
+                )
+        }
     }
 
     @Test
@@ -249,27 +264,29 @@ class RecipeGraphFixpointIteratorTest {
         val graph = RecipeGraph(recipe)
         val analyzer = TestAnalyzer(setOf("p:${writerParticle.spec.name}"))
 
-        analyzer.computeFixpoint(graph)
+        val result = analyzer.computeFixpoint(graph)
 
-        assertThat(analyzer.getValue(writerParticle)?.set).isEmpty()
-        // The values for the nodes in the loop are all the same.
-        val expectedLoopValue = setOf(
-            "p:Writer",
-            "p:Recognizer",
-            "p:Tagger",
-            "h:thing",
-            "h:name",
-            "p:Writer -> h:thing",
-            "h:thing -> p:Recognizer",
-            "p:Recognizer -> h:name",
-            "h:name -> p:Tagger",
-            "p:Tagger -> h:thing"
-        )
-        assertThat(analyzer.getValue(thing)?.set).isEqualTo(expectedLoopValue)
-        assertThat(analyzer.getValue(recognizerParticle)?.set).isEqualTo(expectedLoopValue)
-        assertThat(analyzer.getValue(name)?.set).isEqualTo(expectedLoopValue)
-        assertThat(analyzer.getValue(taggerParticle)?.set).isEqualTo(expectedLoopValue)
-        assertThat(analyzer.getValue(readerParticle)?.set)
-            .isEqualTo(expectedLoopValue + "h:thing -> p:Reader")
+        with(result) {
+            assertThat(getValue(writerParticle).set).isEmpty()
+            // The values for the nodes in the loop are all the same.
+            val expectedLoopValue = setOf(
+                "p:Writer",
+                "p:Recognizer",
+                "p:Tagger",
+                "h:thing",
+                "h:name",
+                "p:Writer -> h:thing",
+                "h:thing -> p:Recognizer",
+                "p:Recognizer -> h:name",
+                "h:name -> p:Tagger",
+                "p:Tagger -> h:thing"
+            )
+            assertThat(getValue(thing).set).isEqualTo(expectedLoopValue)
+            assertThat(getValue(recognizerParticle).set).isEqualTo(expectedLoopValue)
+            assertThat(getValue(name).set).isEqualTo(expectedLoopValue)
+            assertThat(getValue(taggerParticle).set).isEqualTo(expectedLoopValue)
+            assertThat(getValue(readerParticle).set)
+                .isEqualTo(expectedLoopValue + "h:thing -> p:Reader")
+        }
     }
 }
