@@ -91,18 +91,18 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>>(val bottom: V) 
     }
 
     private fun edgeTransfer(
-        src: RecipeGraph.Node,
-        tgt: RecipeGraph.Node,
+        source: RecipeGraph.Node,
+        target: RecipeGraph.Node,
         spec: HandleConnectionSpec,
         input: V
-    ) = when (src) {
+    ) = when (source) {
         is RecipeGraph.Node.Particle -> {
-            require(tgt is RecipeGraph.Node.Handle)
-            edgeTransfer(src.particle, tgt.handle, spec, input)
+            require(target is RecipeGraph.Node.Handle)
+            edgeTransfer(source.particle, target.handle, spec, input)
         }
         is RecipeGraph.Node.Handle -> {
-            require(tgt is RecipeGraph.Node.Particle)
-            edgeTransfer(src.handle, tgt.particle, spec, input)
+            require(target is RecipeGraph.Node.Particle)
+            edgeTransfer(source.handle, target.particle, spec, input)
         }
     }
 }
