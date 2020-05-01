@@ -1,8 +1,6 @@
 package arcs.core.host
 
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 
 class ReadPerson : AbstractReadPerson() {
     var name = ""
@@ -15,12 +13,10 @@ class ReadPerson : AbstractReadPerson() {
         createCalled = true
         name = ""
         handles.person.onUpdate {
-            GlobalScope.async {
-                name = handles.person.fetch()?.name ?: ""
-                if (name != "") {
-                    if (!deferred.isCompleted) {
-                        deferred.complete(true)
-                    }
+            name = handles.person.fetch()?.name ?: ""
+            if (name != "") {
+                if (!deferred.isCompleted) {
+                    deferred.complete(true)
                 }
             }
         }

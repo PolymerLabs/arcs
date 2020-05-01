@@ -17,7 +17,6 @@ import arcs.sdk.Handle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * Service which wraps an ArcHost.
@@ -63,16 +62,16 @@ class DemoService : ArcHostService() {
 
     inner class ReadPerson : AbstractReadPerson() {
         override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
-            scope.launch {
-                val name = withContext(Dispatchers.IO) { handles.person.fetch()?.name ?: "" }
-                val notification =
-                    Notification.Builder(this@DemoService, "arcs-demo-service")
-                        .setSmallIcon(R.drawable.notification_template_icon_bg)
-                        .setContentTitle("onHandleSync")
-                        .setContentText(name)
-                        .setAutoCancel(true)
-                        .build()
+            val name = handles.person.fetch()?.name ?: ""
+            val notification =
+                Notification.Builder(this@DemoService, "arcs-demo-service")
+                    .setSmallIcon(R.drawable.notification_template_icon_bg)
+                    .setContentTitle("onHandleSync")
+                    .setContentText(name)
+                    .setAutoCancel(true)
+                    .build()
 
+            scope.launch {
                 notificationManager.notify(handle.hashCode(), notification)
             }
         }

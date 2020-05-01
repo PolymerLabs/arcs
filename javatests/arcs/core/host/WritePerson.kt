@@ -1,8 +1,6 @@
 package arcs.core.host
 
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import java.lang.IllegalArgumentException
 
 class WritePerson : AbstractWritePerson() {
@@ -20,12 +18,10 @@ class WritePerson : AbstractWritePerson() {
         }
 
         handles.person.onReady {
-            GlobalScope.async {
-                handles.person.store(WritePerson_Person("John Wick"))
-                wrote = true
-                if (!deferred.isCompleted) {
-                    deferred.complete(true)
-                }
+            handles.person.store(WritePerson_Person("John Wick"))
+            wrote = true
+            if (!deferred.isCompleted) {
+                deferred.complete(true)
             }
         }
     }

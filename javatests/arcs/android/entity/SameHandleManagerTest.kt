@@ -91,4 +91,10 @@ class SameHandleManagerTest : HandleManagerTestBase() {
     override fun singleton_dereferenceEntity_nestedReference() {
         super.singleton_dereferenceEntity_nestedReference()
     }
+
+    @Ignore("b/154947352 - Deflake")
+    @Test
+    override fun singleton_clearOnAClearDataWrittenByB() {
+        super.singleton_clearOnAClearDataWrittenByB()
+    }
 }
