@@ -30,11 +30,11 @@ import kotlinx.coroutines.test.TestCoroutineScope
  *
  * Specifically it implements the identical logics as [StoreWriteBack]s' but
  * allows scope/dispatcher being designated which is required for unit tests
- * which are annotated by @Test since no addtional coroutine Jobs are allowed
- * alive which is checked post each test, the check blocks the test itself for
+ * who are annotated by `@Test` since no addtional coroutine Jobs are allowed
+ * alive and checked after each test iteration, the check blocks the test for
  * good till a timeout.
  *
- * An example of runBlockingTest exception:
+ * E.g., runBlockingTest exception:
  * java.lang.IllegalStateException: This job has not completed yet
  * The workaround is configuring coroutine scope to [TestCoroutineScope]
  *
