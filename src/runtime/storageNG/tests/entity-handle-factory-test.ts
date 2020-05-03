@@ -66,4 +66,29 @@ describe('entity handle factory', () => {
     const entity2 = await entityHandle2.fetch();
     assert.deepEqual(entity2, fooEntity2);
   });
+  it('can parse muxType handle in manifest', async () => {
+    const manifest = await Manifest.parse(`
+      schema Result
+        value: Text
+      
+      particle Dereferencer in 'dereferencer.js'
+        inResult: reads &Result
+        inResultData: reads #Result
+      
+      recipe
+        handle0: create 'input:1'
+        handle1: create 'input:2'
+        Dereferencer
+          inResult: reads handle0
+          inResultData: reads handle1
+    `);
+    const recipe = manifest.recipes[0];
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+    assert.strictEqual(recipe.handles[0].id, 'input:1');
+    assert.strictEqual(recipe.handles[1].id, 'input:2');
+    recipe.handles[1].type.maybeEnsureResolved();
+    assert.instanceOf(recipe.handles[1].type, MuxType);
+    assert.strictEqual((recipe.handles[1].type.resolvedType() as MuxType<EntityType>).innerType.entitySchema.name, 'Result');
+  });
 });

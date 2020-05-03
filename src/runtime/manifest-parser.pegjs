@@ -679,6 +679,7 @@ ParticleHandleConnectionType
   / CollectionType
   / BigCollectionType
   / ReferenceType
+  / MuxType
   / SlotType
   / TupleType
   / type: SchemaInline whiteSpace? refinement:Refinement?
@@ -730,7 +731,14 @@ ReferenceType
       type,
     });
   }
-
+MuxType 
+  = '#' type:ParticleHandleConnectionType
+  {
+    return toAstNode<AstNode.MuxType>({
+      kind: 'mux-type',
+      type,
+    });
+  }
 TupleType  "a tuple of types (e.g. (A, &B, [C]))"
   = '(' multiLineSpace first:ParticleHandleConnectionType rest:(multiLineSpace ',' multiLineSpace ParticleHandleConnectionType)* multiLineSpace ',' ? multiLineSpace ')'
   {
