@@ -261,7 +261,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
             return@coroutineScope
         }
 
-        log.debug { "onMessage: $message, scheduling handle"}
+        log.debug { "onMessage: $message, scheduling handle" }
         scheduler.schedule(
             MessageFromStoreTask {
                 when (message) {

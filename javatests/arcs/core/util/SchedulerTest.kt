@@ -118,9 +118,6 @@ class SchedulerTest {
         yield()
         scheduler.waitForIdle()
 
-        assertWithMessage("There should only be one coroutine launch")
-            .that(scheduler.launches.value)
-            .isEqualTo(1)
         assertWithMessage("There should have been a loop for each processor")
             .that(scheduler.loops.value)
             .isEqualTo(processorsToCreate)

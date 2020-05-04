@@ -24,7 +24,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.yield
 
 /**
  * The [Scheduler] is responsible for scheduling the execution of a batch of [Task]s (known as an
@@ -76,7 +75,9 @@ class Scheduler(
     }
 
     /** Wait for the [Scheduler] to become idle. */
+    /* internal */
     suspend fun waitForIdle() {
+        delay(100)
         processingJob?.join()
     }
 
