@@ -490,7 +490,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_removingFromA_isRemovedFromB() = testRunner {
+    open fun collection_removingFromA_isRemovedFromB() = testRunner {
         val handleA = readHandleManager.createCollectionHandle()
         val gotUpdateAtA = handleA.onUpdateDeferred {
 

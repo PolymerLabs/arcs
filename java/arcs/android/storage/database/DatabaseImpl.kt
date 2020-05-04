@@ -141,7 +141,11 @@ class DatabaseImpl(
         }
     }
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = db.transaction {
+        ((oldVersion + 1)..newVersion).forEach {
+            nextVersion -> MIGRATION_STEPS[nextVersion]?.forEach(db::execSQL)
+        }
+    }
 
     override suspend fun addClient(client: DatabaseClient): Int = clientMutex.withLock {
         clients[nextClientId] = client
@@ -1384,7 +1388,7 @@ class DatabaseImpl(
     )
 
     companion object {
-        private const val DB_VERSION = 1
+        private const val DB_VERSION = 2
 
         private const val TABLE_STORAGE_KEYS = "storage_keys"
         private const val TABLE_COLLECTION_ENTRIES = "collection_entries"
@@ -1429,7 +1433,10 @@ class DatabaseImpl(
                     -- Serialized VersionMapProto for the entity.
                     version_map TEXT NOT NULL,
                     -- Monotonically increasing version number for the entity.
-                    version_number INTEGER NOT NULL
+                    version_number INTEGER NOT NULL,
+                    -- Whether the entity was found to have any reference to it during the last
+                    -- garbage collection cycle (if orphan=1, then it did not have references).
+                    orphan INTEGER
                 );
 
                 -- Stores references to entities.
@@ -1523,5 +1530,9 @@ class DatabaseImpl(
 
                 CREATE INDEX number_primitive_value_index ON number_primitive_values (value);
             """.trimIndent().split("\n\n")
+
+        private val VERSION_2_MIGRATION = arrayOf("ALTER TABLE entities ADD COLUMN orphan INTEGER;")
+
+        private val MIGRATION_STEPS = mapOf(2 to VERSION_2_MIGRATION)
     }
 }

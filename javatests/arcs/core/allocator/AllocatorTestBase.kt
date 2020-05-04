@@ -157,7 +157,7 @@ open class AllocatorTestBase {
      * [WritePerson] with associated handles and connections.
      */
     @Test
-    fun allocator_computePartitions() = runAllocatorTest {
+    open fun allocator_computePartitions() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWritePerson",
             PersonPlan
@@ -220,7 +220,7 @@ open class AllocatorTestBase {
     }
 
     @Test
-    fun allocator_verifyStorageKeysCreated() = runAllocatorTest {
+    open fun allocator_verifyStorageKeysCreated() = runAllocatorTest {
         PersonPlan.particles.forEach {
             it.handles.forEach { (_, connection) ->
                 assertThat(connection.storageKey).isInstanceOf(CreateableStorageKey::class.java)
