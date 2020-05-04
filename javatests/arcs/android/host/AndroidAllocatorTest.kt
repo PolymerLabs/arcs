@@ -100,6 +100,7 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
         super.setUp()
     }
 
+    @Ignore("b/154947390 - Deflake")
     @Test
     fun allocator_startArc_throwsException() = runAllocatorTest {
         writingHost().throws = true
@@ -146,5 +147,17 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
     @Test
     override fun allocator_canStartArcInTwoExternalHosts() {
         super.allocator_canStartArcInTwoExternalHosts()
+    }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_computePartitions() {
+        super.allocator_computePartitions()
+    }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_verifyStorageKeysCreated() {
+        super.allocator_verifyStorageKeysCreated()
     }
 }
