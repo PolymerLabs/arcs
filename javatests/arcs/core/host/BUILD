@@ -44,8 +44,8 @@ arcs_kt_schema(
     name = "schemas",
     srcs = [
         "person.arcs",
-        "test.arcs",
         "reflective.arcs",
+        "test.arcs",
     ],
 )
 

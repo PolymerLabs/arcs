@@ -32,4 +32,4 @@ android_proto_library = _android_proto_library
 # but in internal Google repo we do. Instead of adding real python dependencies
 # we use this blank rule. In the internal repo we use real definition.
 def py_proto_library(name, api_version, deps):
-  pass
+    pass
