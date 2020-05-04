@@ -6,6 +6,7 @@ load(
     "//third_party/java/arcs/build_defs:native.oss.bzl",
     "android_proto_library",
     "java_proto_library",
+    "py_proto_library",
     "proto_library",
 )
 
@@ -57,5 +58,11 @@ android_proto_library(
 
 java_proto_library(
     name = "manifest_java_proto",
+    deps = [":manifest_proto"],
+)
+
+py_proto_library(
+    name = "manifest_py_proto",
+    api_version = 2,
     deps = [":manifest_proto"],
 )
