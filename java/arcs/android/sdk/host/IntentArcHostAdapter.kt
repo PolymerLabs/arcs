@@ -54,6 +54,13 @@ class IntentArcHostAdapter(
         )
     }
 
+    override suspend fun pause() {
+        sendIntentToHostServiceForResult(hostComponentName.createPauseArcHostIntent(hostId))
+    }
+    override suspend fun unpause() {
+        sendIntentToHostServiceForResult(hostComponentName.createUnpauseArcHostIntent(hostId))
+    }
+
     override suspend fun lookupArcHostStatus(partition: Plan.Partition): ArcState {
         return sendIntentToHostServiceForResult(
             partition.createLookupArcStatusIntent(hostComponentName, hostId)
