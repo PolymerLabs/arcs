@@ -49,7 +49,6 @@ import arcs.core.storage.util.RandomProxyCallbackManager
 import arcs.core.storage.util.SendQueue
 import arcs.core.type.Type
 import arcs.core.util.Random
-import arcs.core.util.Result
 import arcs.core.util.TaggedLog
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
@@ -223,15 +222,6 @@ class ReferenceModeStore private constructor(
     @Suppress("UNCHECKED_CAST")
     private val handleProxyMessage: suspend (EnqueuedFromStorageProxy) -> Boolean = fn@{ message ->
         log.debug { "handleProxyMessage: $message" }
-        suspend fun itemVersionGetter(item: RawEntity): VersionMap {
-            val localBackingVersion = backingStore.getLocalData(item.id).versionMap
-            if (localBackingVersion.isNotEmpty()) return localBackingVersion
-
-            updateBackingStore(item)
-
-            return requireNotNull(backingStore.getLocalData(item.id)).versionMap
-        }
-
         return@fn when (val proxyMessage = message.message) {
             is ProxyMessage.Operations -> {
                 proxyMessage.operations.toBridgingOps(backingStore.storageKey)
@@ -251,29 +241,18 @@ class ReferenceModeStore private constructor(
                     }
             }
             is ProxyMessage.ModelUpdate -> {
-                val newModelsResult = proxyMessage.model.toBridgingData(
-                    backingStore.storageKey,
-                    ::itemVersionGetter
-                )
-                when (newModelsResult) {
-                    is Result.Ok -> {
-                        val allBackingUpdatesSuccessful =
-                            newModelsResult.value.backingModels.all { updateBackingStore(it) }
-                        if (allBackingUpdatesSuccessful) {
-                            containerStore.onProxyMessage(
-                                ProxyMessage.ModelUpdate(
-                                    newModelsResult.value.collectionModel.data,
-                                    id = 1
-                                )
-                            )
-                            sendQueue.enqueue {
-                                callbacks.send(proxyMessage, proxyMessage.id)
-                            }
-                            true
-                        } else throw CrdtException("Could not update one or more backing models")
+                val newModelsResult = proxyMessage.model.toBridgingData(backingStore.storageKey)
+                val allBackingUpdatesSuccessful =
+                    newModelsResult.backingModels.all { updateBackingStore(it) }
+                if (allBackingUpdatesSuccessful) {
+                    containerStore.onProxyMessage(
+                        ProxyMessage.ModelUpdate(newModelsResult.collectionModel.data, id = 1)
+                    )
+                    sendQueue.enqueue {
+                        callbacks.send(proxyMessage, proxyMessage.id)
                     }
-                    else -> false
-                }
+                    true
+                } else throw CrdtException("Could not update one or more backing models")
             }
             is ProxyMessage.SyncRequest -> {
                 val (pendingIds, model) =
@@ -412,15 +391,13 @@ class ReferenceModeStore private constructor(
         crdtType.createCrdtModel()
 
     /** Write the provided entity to the backing store. */
-    private suspend fun updateBackingStore(referencable: Referencable): Boolean {
-        if (referencable !is RawEntity) return true
+    private suspend fun updateBackingStore(referencable: RawEntity): Boolean {
         val model = entityToModel(referencable)
         return backingStore.onProxyMessage(ProxyMessage.ModelUpdate(model, id = 1), referencable.id)
     }
 
     /** Clear the provided entity in the backing store. */
-    private suspend fun clearEntityInBackingStore(referencable: Referencable): Boolean {
-        if (referencable !is RawEntity) return true
+    private suspend fun clearEntityInBackingStore(referencable: RawEntity): Boolean {
         val model = entityToModel(referencable)
         val op = listOf(CrdtEntity.Operation.ClearAll(crdtKey, model.versionMap))
         return backingStore.onProxyMessage(ProxyMessage.Operations(op, id = null), referencable.id)
