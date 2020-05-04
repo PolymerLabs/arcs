@@ -107,9 +107,11 @@ class ArcHostHelperTest {
                 throw IllegalArgumentException("Boom!")
             }
         }
+
         override suspend fun pause() {
             paused = true
         }
+
         override suspend fun unpause() {
             paused = false
         }

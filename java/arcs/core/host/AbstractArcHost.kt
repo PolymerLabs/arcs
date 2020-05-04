@@ -100,15 +100,25 @@ abstract class AbstractArcHost(
     override suspend fun pause() {
         paused = true
         runningArcs.forEach { (arcId, context) ->
-            val partition = contextToPartition(arcId, context)
-            stopArc(partition)
-            pausedArcs.add(partition)
+            try {
+                val partition = contextToPartition(arcId, context)
+                stopArc(partition)
+                pausedArcs.add(partition)
+            } catch (e: Exception) {
+                log.error(e) { "Failure stopping arc." }
+            }
         }
     }
 
     override suspend fun unpause() {
         paused = false
-        pausedArcs.forEach { startArc(it) }
+        pausedArcs.forEach {
+            try {
+                startArc(it)
+            } catch (e: Exception) {
+                log.error(e) { "Failure starting arc." }
+            }
+        }
         pausedArcs.clear()
     }
 
@@ -417,10 +427,6 @@ abstract class AbstractArcHost(
             }
             val context = lookupOrCreateArcHostContext(arcId)
             val partition = contextToPartition(arcId, context)
-            if (paused) {
-                pausedArcs.add(partition)
-                return@launch
-            }
             startArc(partition)
             // TODO: should invoke onHandleUpdate for readable affectedKeys?
         }

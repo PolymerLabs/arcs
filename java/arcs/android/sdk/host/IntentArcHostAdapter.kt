@@ -57,6 +57,7 @@ class IntentArcHostAdapter(
     override suspend fun pause() {
         sendIntentToHostServiceForResult(hostComponentName.createPauseArcHostIntent(hostId))
     }
+
     override suspend fun unpause() {
         sendIntentToHostServiceForResult(hostComponentName.createUnpauseArcHostIntent(hostId))
     }
