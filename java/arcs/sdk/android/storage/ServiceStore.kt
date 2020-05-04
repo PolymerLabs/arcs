@@ -47,9 +47,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -104,12 +103,11 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private val scope = CoroutineScope(coroutineContext)
     private var storageService: IStorageService? = null
     private var serviceConnection: StorageServiceConnection? = null
-    private var channel = BroadcastChannel<suspend () -> Unit>(100)
+    private var channel = Channel<suspend () -> Unit>(Channel.UNLIMITED)
 
     init {
         lifecycle.addObserver(this)
-        channel.asFlow()
-            .buffer()
+        channel.consumeAsFlow()
             .onEach { it() }
             .launchIn(scope)
     }
