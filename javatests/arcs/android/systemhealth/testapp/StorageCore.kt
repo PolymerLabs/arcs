@@ -122,9 +122,9 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         ) {
             val msg =
                 """
-        Previous run was neither finished nor shut down successfully!
-        Please kill all relative processes to restart with a clean environment.
-        """.trimIndent()
+                Previous run was neither finished nor shut down successfully!
+                Please kill all relative processes to restart with a clean environment.
+                """.trimIndent()
             log.error { msg }
             notify { msg }
         }
@@ -290,8 +290,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                         TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
                         else -> TestEntity.singletonInMemoryStorageKey
                     }
-                ).awaitReady() as? ReadWriteSingletonHandle<TestEntity>
-                                )?.apply {
+                ).awaitReady() as? ReadWriteSingletonHandle<TestEntity>)?.apply {
                     onUpdate {
                         entity ->
                         if (settings.function == Function.LATENCY_BACKPRESSURE_TEST &&
@@ -323,8 +322,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                         TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
                         else -> TestEntity.collectionInMemoryStorageKey
                     }
-                ).awaitReady() as? ReadWriteCollectionHandle<TestEntity>
-                                )?.apply {
+                ).awaitReady() as? ReadWriteCollectionHandle<TestEntity>)?.apply {
                     onUpdate {
                         entity ->
                         if (settings.function == Function.LATENCY_BACKPRESSURE_TEST &&
@@ -390,7 +388,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
             tasksEvents[taskController.taskId]?.writer?.withLock {
                 tasksEvents[taskController.taskId]?.queue?.add(
-                    TaskEvent(TaskEventId.HANDLE_STORE_BEGIN, System.currentTimeMillis(), entity.number)
+                    TaskEvent(
+                        TaskEventId.HANDLE_STORE_BEGIN, System.currentTimeMillis(), entity.number)
                 )
             }
         }
@@ -419,7 +418,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                     log.error { msg }
                     exception.printStackTrace()
                     taskManagerEvents.writer.withLock {
-                        taskManagerEvents.queue.add(TaskEvent(TaskEventId.EXCEPTION, timestamp, desc = msg))
+                        taskManagerEvents.queue.add(
+                            TaskEvent(TaskEventId.EXCEPTION, timestamp, desc = msg))
                     }
 
                     // Cancel all pending tasks and forbid new tasks.
@@ -433,7 +433,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
 
         fun monitor() = tasks.takeIf { it.isNotEmpty() }.run {
             // All tasks should run fairly under CFS kernel policy.
-            val awaitTimeMs = (settings.iterationIntervalMs + systemHzTickMs) * settings.timesOfIterations
+            val awaitTimeMs =
+                (settings.iterationIntervalMs + systemHzTickMs) * settings.timesOfIterations
             val progressUpdateTimes = ceil(awaitTimeMs / progressUpdateIntervalMs)
             for (progress in 0 until progressUpdateTimes.toInt()) {
                 notify { "Progress: %.2f%%".format(progress * 100 / progressUpdateTimes) }
@@ -507,7 +508,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             tasksEvents.forEach { _, events ->
                 events.reader.withLock {
                     calculator.addAll(
-                        events.queue.filter { it.eventId == TaskEventId.HANDLE_FETCH_LATENCY }.map { it.timeMs }
+                        events.queue.filter {
+                            it.eventId == TaskEventId.HANDLE_FETCH_LATENCY }.map { it.timeMs }
                     )
                 }
             }
@@ -515,10 +517,10 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             calculator.takeIf { it.count() > 0 }?.let {
                 bulletin +=
                     """
-          [fetch() latency]
-          ${calculator.snapshot()}
-          ${platformNewline.repeat(1)}
-          """.trimIndent()
+                    [fetch() latency]
+                    ${calculator.snapshot()}
+                    ${platformNewline.repeat(1)}
+                    """.trimIndent()
             }
         }
 
@@ -564,10 +566,10 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             calculator.takeIf { it.count() > 0 }?.let {
                 bulletin +=
                     """
-          [store() latency]
-          ${calculator.snapshot()}
-          ${platformNewline.repeat(1)}
-          """.trimIndent()
+                    [store() latency]
+                    ${calculator.snapshot()}
+                    ${platformNewline.repeat(1)}
+                    """.trimIndent()
             }
         }
 
@@ -578,10 +580,10 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 }?.let {
                     bulletin +=
                         """
-            |[Anomaly Stats]
-            ${it.joinToString(separator = platformNewline, prefix = "|")}
-            ${platformNewline.repeat(1)}
-            """.trimMargin("|")
+                        |[Anomaly Stats]
+                        ${it.joinToString(separator = platformNewline, prefix = "|")}
+                        ${platformNewline.repeat(1)}
+                        """.trimMargin("|")
                 }
             }
         }
@@ -593,10 +595,10 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 }.takeIf { it.isNotEmpty() }?.let {
                     bulletin +=
                         """
-            |[Exception Stats]
-            ${it.joinToString(separator = platformNewline, prefix = "|")}
-            ${platformNewline.repeat(1)}
-            """.trimMargin("|")
+                        |[Exception Stats]
+                        ${it.joinToString(separator = platformNewline, prefix = "|")}
+                        ${platformNewline.repeat(1)}
+                        """.trimMargin("|")
                 }
             }
         }
@@ -627,12 +629,12 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 val memAfterGc = MemoryStats.appJvmHeapKbytes
                 bulletin +=
                     """
-          |[Memory Stats]
-          |Private-dirty dalvik heap (before GC): ${formatter.format(memBeforeGc - it)} KB
-          |Private-dirty dalvik heap (after GC): ${formatter.format(memAfterGc - it)} KB
-          |Heap dump: $hprofFilePath
-          ${platformNewline.repeat(1)}
-          """.trimMargin("|")
+                    |[Memory Stats]
+                    |Private-dirty dalvik heap (before GC): ${formatter.format(memBeforeGc - it)} KB
+                    |Private-dirty dalvik heap (after GC): ${formatter.format(memAfterGc - it)} KB
+                    |Heap dump: $hprofFilePath
+                    ${platformNewline.repeat(1)}
+                    """.trimMargin("|")
 
                 Debug.dumpHprofData(hprofFilePath)
             }
