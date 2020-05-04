@@ -45,6 +45,7 @@ arcs_kt_android_library(
 
 android_binary(
     name = "testapp",
+    testonly = 1,
     incremental_dexing = 0,
     manifest = ":AndroidManifest.xml",
     multidex = "native",
