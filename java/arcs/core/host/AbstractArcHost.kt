@@ -38,7 +38,6 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-// TODO(b/154855909)
 typealias ParticleConstructor = suspend (Plan.Particle?) -> Particle
 typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
 
@@ -546,7 +545,7 @@ abstract class AbstractArcHost(
      */
     open suspend fun instantiateParticle(
         identifier: ParticleIdentifier,
-        spec: Plan.Particle? = null
+        spec: Plan.Particle?
     ): Particle {
         return particleConstructors[identifier]?.invoke(spec)
             ?: throw IllegalArgumentException("Particle $identifier not found.")

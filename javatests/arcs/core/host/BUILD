@@ -45,6 +45,7 @@ arcs_kt_schema(
     srcs = [
         "person.arcs",
         "test.arcs",
+        "reflective.arcs",
     ],
 )
 
@@ -52,7 +53,7 @@ arcs_kt_plan(
     name = "plans",
     srcs = [
         "person.arcs",
-        "test.arcs",
+        "reflective.arcs",
     ],
     deps = [
         ":schemas",

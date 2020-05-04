@@ -3,6 +3,7 @@ package arcs.core.host
 import arcs.core.allocator.Allocator
 import arcs.core.data.FieldType
 import arcs.core.data.Plan
+import arcs.core.entity.Handle
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -58,11 +59,7 @@ class ReflectiveParticleConstructionTest {
             ::AssertingReflectiveParticle.toRegistration().second
         )
 
-        hostRegistry.registerHost(JvmProdHost(schedulerProvider,
-                                              ::TestProdParticle.toRegistration(),
-                                              ::TestHostParticle.toRegistration(),
-                                              fakeRegistration)
-        )
+        hostRegistry.registerHost(JvmProdHost(schedulerProvider, fakeRegistration))
 
         val allocator = Allocator.create(
             hostRegistry,
@@ -72,7 +69,7 @@ class ReflectiveParticleConstructionTest {
             )
         )
 
-        val arcId = allocator.startArcForPlan("testArc", TestRecipePlan)
+        val arcId = allocator.startArcForPlan("testArc", TestReflectiveRecipePlan)
         allocator.stopArc(arcId)
         assertThat(AssertingReflectiveParticle.started).isTrue()
     }

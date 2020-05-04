@@ -9,7 +9,7 @@ import arcs.sdk.HandleHolderBase
 import arcs.sdk.ReadCollectionHandle
 
 open class TestReflectiveParticle(val spec: Plan.Particle?) : BaseParticle() {
-    val schema = spec?.handles?.getValue("data")?.type?.toSchema() ?: Schema.EMPTY
+    val schema = spec!!.handles.getValue("data").type.toSchema()
     override val handles = Handles(schema)
 
     class Handles(schema: Schema) : HandleHolderBase(
