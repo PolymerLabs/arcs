@@ -18,7 +18,9 @@ arcs_kt_jvm_test_suite(
     package = "arcs.core.host",
     deps = [
         ":particle",  # buildcleaner: keep
+        ":plans",
         ":schemas",
+        "//java/arcs/core/allocator",  # buildcleaner: keep
         "//java/arcs/core/common",
         "//java/arcs/core/data",
         "//java/arcs/core/entity",
@@ -42,6 +44,7 @@ arcs_kt_schema(
     name = "schemas",
     srcs = [
         "person.arcs",
+        "reflective.arcs",
         "test.arcs",
     ],
 )
@@ -50,6 +53,7 @@ arcs_kt_plan(
     name = "plans",
     srcs = [
         "person.arcs",
+        "reflective.arcs",
     ],
     deps = [
         ":schemas",
@@ -98,6 +102,7 @@ arcs_kt_jvm_library(
         "TestHost.kt",
         "TestHostParticle.kt",
         "TestProdParticle.kt",
+        "TestReflectiveParticle.kt",
         "WritePerson.kt",
     ],
     deps = [

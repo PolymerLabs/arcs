@@ -24,7 +24,7 @@ open class Plan(
     val arcId: String? = null
 ) {
     /**
-     * A [Particle] consists of the information neccessary to instantiate a particle
+     * A [Particle] consists of the information necessary to instantiate a particle
      * when starting an arc.
      * @property particleName is human readable name of the Particle in the recipe.
      * @property location is either a fully qualified Java class name, or a filesystem path.

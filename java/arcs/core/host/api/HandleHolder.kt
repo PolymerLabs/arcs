@@ -41,4 +41,7 @@ interface HandleHolder {
 
     /** Erase and release all handle references from the [HandleHolder]. */
     fun reset()
+
+    /** Check if there are no [Handle]s in the [HandleHolder]. */
+    fun isEmpty(): Boolean
 }

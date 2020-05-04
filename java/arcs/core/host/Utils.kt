@@ -12,6 +12,7 @@ package arcs.core.host
 
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
+import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SingletonType
 import arcs.core.host.api.Particle
@@ -35,9 +36,16 @@ fun KClass<*>.className(): String {
 }
 
 /** Returns a pair mapping [ParticleIdentifier] to [ParticleConstructor] */
-inline fun <reified T : Particle> (() -> T).toRegistration(): ParticleRegistration =
-    T::class.toParticleIdentifier() to suspend { this.invoke() }
+inline fun <reified T : Particle> (() -> T).toRegistration(): ParticleRegistration {
+    val construct: suspend (Plan.Particle?) -> T = { _ -> this.invoke() }
+    return T::class.toParticleIdentifier() to construct
+}
 
+/** Returns a pair mapping [ParticleIdentifier] to [ParticleConstructor] */
+inline fun <reified T : Particle> ((Plan.Particle?) -> T).toRegistration(): ParticleRegistration {
+    val construct: suspend (Plan.Particle?) -> T = { this.invoke(it) }
+    return T::class.toParticleIdentifier() to construct
+}
 /**
  * If this Type represents a [SingletonType], [CollectionType], or [EntityType], return the
  * [Schema] used by the underlying [Entity] that this type represents.
