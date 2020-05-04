@@ -16,7 +16,9 @@ describe('recipe2plan', () => {
   it('generates plans from recipes in a manifest', Flags.withDefaultReferenceMode(async () => {
     assert.deepStrictEqual(
       await recipe2plan('java/arcs/core/data/testdata/WriterReaderExample.arcs'),
-      fs.readFileSync('src/tools/tests/goldens/WriterReaderExample.kt', 'utf8')
+      fs.readFileSync('src/tools/tests/goldens/WriterReaderExample.kt', 'utf8'),
+      `Golden is out of date! Make sure the new script is correct. If it is, consider updating the golden with: 
+$ tools/sigh recipe2plan --outfile src/tools/tests/goldens/WriterReaderExample.kt java/arcs/core/data/testdata/WriterReaderExample.arcs \n\n`
     );
   }));
 });
