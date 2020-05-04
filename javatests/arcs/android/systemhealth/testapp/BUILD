@@ -12,8 +12,9 @@ arcs_kt_android_library(
     name = "test_app_lib",
     testonly = 1,
     srcs = glob(["*.kt"]),
+    exports_manifest = 1,
     manifest = ":AndroidManifest.xml",
-    resource_files = glob(["res/**/*"]),
+    resource_files = glob(["res/**"]),
     deps = [
         "//java/arcs/android/storage/database",
         "//java/arcs/android/util",
@@ -38,6 +39,7 @@ arcs_kt_android_library(
         "//third_party/java/androidx/appcompat",
         "//third_party/java/androidx/lifecycle",
         "//third_party/java/androidx/work",
+        "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_android",
     ],
