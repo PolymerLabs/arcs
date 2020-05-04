@@ -24,6 +24,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.yield
 
 /**
  * The [Scheduler] is responsible for scheduling the execution of a batch of [Task]s (known as an
@@ -43,21 +44,23 @@ class Scheduler(
     /* internal */
     val loops = atomic(0)
     val scope = CoroutineScope(context)
+
+    private val isActive: Boolean
+        get() = processingJob?.isActive == true
     private var processingJob: Job? = null
-    private val isIdle = atomic(true)
     private val isPaused = atomic(false)
     private val agenda = atomic(Agenda())
 
     /** Schedule a single [Task] to be run as part of the next agenda. */
     fun schedule(task: Task) {
         agenda.update { it.addTask(task) }
-        if (isIdle.value) scope.startProcessingJob()
+        scope.startProcessingJob()
     }
 
     /** Schedule some [Task]s to be run as part of the next agenda. */
     fun schedule(tasks: Iterable<Task>) {
         agenda.update { it.addTasks(tasks) }
-        if (isIdle.value) scope.startProcessingJob()
+        scope.startProcessingJob()
     }
 
     /** Pause evaluation of the agenda. */
@@ -83,7 +86,8 @@ class Scheduler(
     }
 
     private fun CoroutineScope.startProcessingJob() {
-        isIdle.value = false
+        log.debug { "Starting processing job" }
+        if (isActive) return
         processingJob = launch {
             launches.incrementAndGet()
 
@@ -102,7 +106,7 @@ class Scheduler(
                     if (delayLength > 0) delay(delayLength)
                 }
             }
-        }.also { it.invokeOnCompletion { isIdle.value = true } }
+        }
     }
 
     /**

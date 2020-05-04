@@ -18,6 +18,7 @@ import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
 import arcs.core.storage.StorageProxy.ProxyState
 import arcs.core.util.Scheduler
+import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
@@ -31,6 +32,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -41,6 +43,9 @@ import org.mockito.MockitoAnnotations
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class StorageProxyTest {
+    @get:Rule
+    val log = LogRule()
+
     private lateinit var fakeStoreEndpoint: StoreEndpointFake<CrdtData, CrdtOperationAtTime, String>
 
     @Mock private lateinit var mockStorageEndpointProvider:
@@ -111,10 +116,8 @@ class StorageProxyTest {
         val callbackId = StorageProxy.CallbackIdentifier("test")
         proxy.addOnResync(callbackId) {}
 
-        delay(100)
-
-        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
-            ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
+        fakeStoreEndpoint.waitFor(
+            ProxyMessage.SyncRequest(null)
         )
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.AWAITING_SYNC)
     }
@@ -127,6 +130,9 @@ class StorageProxyTest {
         proxy.addOnUpdate(callbackId) {}
         proxy.addOnDesync(callbackId) {}
         proxy.addOnResync(callbackId) {}
+        fakeStoreEndpoint.waitFor(
+            ProxyMessage.SyncRequest(null)
+        )
         scheduler.waitForIdle()
         assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
             ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
@@ -244,12 +250,12 @@ class StorageProxyTest {
         // Failure to apply ops should trigger onDesync and send a sync request.
         fakeStoreEndpoint.clearProxyMessages()
         proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
-        scheduler.waitForIdle()
 
-        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
-            ProxyMessage.SyncRequest<CrdtData, CrdtOperation, String>(null)
+        fakeStoreEndpoint.waitFor(
+            ProxyMessage.SyncRequest(null)
         )
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.DESYNC)
+        scheduler.waitForIdle()
         verify(onDesync).invoke()
 
         // Ops should be ignored when desynced.
@@ -288,7 +294,6 @@ class StorageProxyTest {
         fakeStoreEndpoint.clearProxyMessages()
         val threeOps = listOf(mockCrdtOperation, mockCrdtOperation, mockCrdtOperation)
         proxy.onMessage(ProxyMessage.Operations(threeOps,null))
-        scheduler.waitForIdle()
 
         delay(100)
 
@@ -312,8 +317,8 @@ class StorageProxyTest {
         fakeStoreEndpoint.clearProxyMessages()
 
         proxy.onMessage(ProxyMessage.SyncRequest(null))
-        assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
-            ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, String>(mockCrdtData, null)
+        fakeStoreEndpoint.waitFor(
+            ProxyMessage.ModelUpdate(mockCrdtData, null)
         )
         verifyNoMoreInteractions(onReady, onUpdate, onDesync, onResync)
     }
