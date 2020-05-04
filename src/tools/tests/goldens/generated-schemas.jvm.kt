@@ -276,9 +276,9 @@ abstract class AbstractGold : BaseParticle() {
     class Foo(
         txt: String = "",
         entityId: String? = null,
-        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Foo", SCHEMA, entityId, expirationTimestamp, creationTimestamp) {
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("Foo", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
 
         var txt: String
             get() = super.getSingletonValue("txt") as String? ?: ""
@@ -299,8 +299,8 @@ abstract class AbstractGold : BaseParticle() {
         fun mutate(txt: String = this.txt) = Foo(
             txt = txt,
             entityId = entityId,
-            expirationTimestamp = expirationTimestamp,
-            creationTimestamp = creationTimestamp
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
         )
 
         companion object : EntitySpec<Foo> {
