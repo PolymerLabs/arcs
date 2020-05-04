@@ -148,6 +148,48 @@ class ReferenceModeStoreDatabaseIntegrationTest {
     }
 
     @Test
+    fun databaseRoundtrip() = runBlockingTest {
+        val activeStore = createReferenceModeStore()
+
+        val e1 = createPersonEntity("e1", "e1", 1)
+        val e2 = createPersonEntity("e2", "e2", 2)
+        activeStore.onProxyMessage(
+            ProxyMessage.Operations(
+                listOf(RefModeStoreOp.SetAdd("me", VersionMap("me" to 1), e1)),
+                id = 1
+            )
+        )
+        activeStore.onProxyMessage(
+            ProxyMessage.Operations(
+                listOf(RefModeStoreOp.SetAdd("me", VersionMap("me" to 2), e2)),
+                id = 1
+            )
+        )
+
+        // Read data (using a new store ensures we read from the db instead of using cached values).
+        val activeStore2 = createReferenceModeStore()
+        val e1Ref = CrdtSet.DataValue(
+            VersionMap("me" to 1),
+            Reference("e1", activeStore2.backingStore.storageKey, VersionMap("me" to 1))
+        )
+        val e2Ref = CrdtSet.DataValue(
+            VersionMap("me" to 2),
+            Reference("e2", activeStore2.backingStore.storageKey, VersionMap("me" to 2))
+        )                
+        assertThat(activeStore2.containerStore.getLocalData()).isEqualTo(CrdtSet.DataImpl(
+            VersionMap("me" to 2),
+            mutableMapOf(
+                "e1" to e1Ref,
+                "e2" to e2Ref
+            )
+        ))
+        assertThat((activeStore2.backingStore.getLocalData("e1") as CrdtEntity.Data).toRawEntity())
+            .isEqualTo(e1)
+        assertThat((activeStore2.backingStore.getLocalData("e2") as CrdtEntity.Data).toRawEntity())
+            .isEqualTo(e2)
+    }
+
+    @Test
     fun appliesAndPropagatesOperationUpdate_fromProxies_toDrivers() = runBlockingTest {
         val activeStore = createReferenceModeStore()
         val actor = activeStore.crdtKey
