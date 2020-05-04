@@ -546,7 +546,7 @@ abstract class AbstractArcHost(
      */
     open suspend fun instantiateParticle(
         identifier: ParticleIdentifier,
-        spec: Plan.Particle? = null
+        spec: Plan.Particle?
     ): Particle {
         return particleConstructors[identifier]?.invoke(spec)
             ?: throw IllegalArgumentException("Particle $identifier not found.")

@@ -31,6 +31,7 @@ class ReflectiveParticleConstructionTest {
 
     class AssertingReflectiveParticle(spec: Plan.Particle?) : TestReflectiveParticle(spec) {
         override suspend fun onCreate() = runBlocking {
+            handles.data
             assertThat(schema.name?.name).isEqualTo("Thing")
             assertThat(schema.fields.singletons).containsExactly("name", FieldType.Text)
             assertThat(schema.fields.collections).isEmpty()
