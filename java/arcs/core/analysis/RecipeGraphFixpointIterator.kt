@@ -14,18 +14,22 @@ package arcs.core.analysis
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.Recipe
 
-/** An abstract class that implements dataflow analysis over abstract values of type [V]. */
+/**
+ * An abstract class that implements dataflow analysis over abstract values of type [V].
+ *
+ * @param bottom the bottom (i.e., the smallest) value in a the lattice for [V].
+ */
 abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>>(val bottom: V) {
     /** Results of the fixpoint computation. */
     class FixpointResult<V : AbstractValue<V>>(
         private val bottom: V,
         private val nodeValues: Map<RecipeGraph.Node, V>
     ) {
-        /** Returns the value for the given particle.  */
+        /** Returns the value for the given particle. */
         fun getValue(particle: Recipe.Particle): V =
             nodeValues[RecipeGraph.Node.Particle(particle)] ?: bottom
 
-        /** Returns the value for the given handle. Returns null if the value is BOTTOM. */
+        /** Returns the value for the given handle. */
         fun getValue(handle: Recipe.Handle): V =
             nodeValues[RecipeGraph.Node.Handle(handle)] ?: bottom
     }
@@ -38,16 +42,16 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>>(val bottom: V) 
 
     /** State transfer function for a [Recipe.Handle] -> [Recipe.Particle] edge. */
     open fun edgeTransfer(
-        handle: Recipe.Handle,
-        particle: Recipe.Particle,
+        fromHandle: Recipe.Handle,
+        toParticle: Recipe.Particle,
         spec: HandleConnectionSpec,
         input: V
     ): V = input
 
     /** State transfer function for a [Recipe.Particle] -> [Recipe.Handle] edge. */
     open fun edgeTransfer(
-        particle: Recipe.Particle,
-        handle: Recipe.Handle,
+        fromParticle: Recipe.Particle,
+        toHandle: Recipe.Handle,
         spec: HandleConnectionSpec,
         input: V
     ): V = input
@@ -82,7 +86,7 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>>(val bottom: V) 
                 }
             }
         }
-        return FixpointResult(bottom, nodeValues.filterNot { (node, value) -> value.isBottom })
+        return FixpointResult(bottom, nodeValues.filterNot { (_, value) -> value.isBottom })
     }
 
     private fun nodeTransfer(node: RecipeGraph.Node, input: V) = when (node) {

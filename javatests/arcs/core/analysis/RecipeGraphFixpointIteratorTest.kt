@@ -70,21 +70,21 @@ class TestAnalyzer(
         input.set?.let { AbstractSet<String>(it + "p:${particle.spec.name}") } ?: input
 
     override fun edgeTransfer(
-        handle: Recipe.Handle,
-        particle: Recipe.Particle,
+        fromHandle: Recipe.Handle,
+        toParticle: Recipe.Particle,
         spec: HandleConnectionSpec,
         input: AbstractSet<String>
     ) = input.set?.let {
-        AbstractSet<String>(it + "h:${handle.name} -> p:${particle.spec.name}")
+        AbstractSet<String>(it + "h:${fromHandle.name} -> p:${toParticle.spec.name}")
     } ?: input
 
     override fun edgeTransfer(
-        particle: Recipe.Particle,
-        handle: Recipe.Handle,
+        fromParticle: Recipe.Particle,
+        toHandle: Recipe.Handle,
         spec: HandleConnectionSpec,
         input: AbstractSet<String>
     ) = input.set?.let {
-        AbstractSet<String>(it + "p:${particle.spec.name} -> h:${handle.name}")
+        AbstractSet<String>(it + "p:${fromParticle.spec.name} -> h:${toHandle.name}")
     } ?: input
 }
 
@@ -126,14 +126,16 @@ class RecipeGraphFixpointIteratorTest {
         name: String,
         handles: List<Recipe.Handle>,
         particles: List<Recipe.Particle>
-    ) = RecipeGraph(
-        Recipe(
-            "StraightLine",
-            handles.associateBy { it.name },
-            particles,
-            "arcId"
+    ): RecipeGraph {
+        return RecipeGraph(
+            Recipe(
+                name,
+                handles.associateBy { it.name },
+                particles,
+                "arcId"
+            )
         )
-    )
+    }
 
     @Test
     fun straightLineFlow() {
