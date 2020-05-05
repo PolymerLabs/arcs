@@ -8,10 +8,13 @@ import kotlinx.atomicfu.atomic
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -36,10 +39,13 @@ class ComputePeopleStatsTest {
     @Test
     fun onePersonInput() = runBlocking {
         harness.start()
-        var updates = 0
-        var job = launch { harness.stats.awaitOnUpdate { ++updates == 1 } }
-        harness.people.store(Person(42.0))
-        job.join()
+        var job = launch(start = CoroutineStart.UNDISPATCHED) {
+            harness.stats.awaitOnUpdate { true }
+        }
+        withContext(harness.people.dispatcher) {
+            harness.people.store(Person(42.0))
+        }
+        withTimeout(1500) { job.join() }
         assertThat(harness.stats.fetch()?.medianAge).isEqualTo(42.0)
     }
 
@@ -47,10 +53,14 @@ class ComputePeopleStatsTest {
     fun twoPersonInput() = runBlocking {
         harness.start()
         var updates = atomic(0)
-        var job = launch { harness.stats.awaitOnUpdate { updates.incrementAndGet() == 2 } }
-        harness.people.store(Person(10.0))
-        harness.people.store(Person(30.0))
-        job.join()
+        var job = launch(start = CoroutineStart.UNDISPATCHED) {
+            harness.stats.awaitOnUpdate { updates.incrementAndGet() == 2 }
+        }
+        withContext(harness.people.dispatcher) {
+            harness.people.store(Person(10.0))
+            harness.people.store(Person(30.0))
+        }
+        withTimeout(1500) { job.join() }
 
         assertWithMessage("Median of two integers should be their mean")
             .that(harness.stats.fetch()?.medianAge).isEqualTo(20.0)
@@ -60,11 +70,18 @@ class ComputePeopleStatsTest {
     fun threePersonInput() = runBlocking {
         harness.start()
         var updates = atomic(0)
-        var job = launch { harness.stats.awaitOnUpdate { updates.incrementAndGet() == 3 } }
-        harness.people.store(Person(10.0))
-        harness.people.store(Person(30.0))
-        harness.people.store(Person(11.0))
-        job.join()
+        var job = launch(start = CoroutineStart.UNDISPATCHED) {
+            harness.stats.awaitOnUpdate {
+                log("Called stats.onUpdate")
+                updates.incrementAndGet() == 3
+            }
+        }
+        withContext(harness.people.dispatcher) {
+            harness.people.store(Person(10.0))
+            harness.people.store(Person(30.0))
+            harness.people.store(Person(11.0))
+        }
+        withTimeout(1500) { job.join() }
         assertThat(harness.stats.fetch()?.medianAge).isEqualTo(11)
     }
 

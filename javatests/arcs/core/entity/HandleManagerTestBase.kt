@@ -2,6 +2,7 @@ package arcs.core.entity
 
 import arcs.core.common.Id.Generator
 import arcs.core.common.ReferenceId
+import arcs.core.crdt.CrdtData
 import arcs.core.data.FieldType
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
@@ -15,6 +16,7 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
+import arcs.core.storage.driver.testutil.waitUntilSet
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
@@ -25,11 +27,15 @@ import arcs.jvm.host.JvmSchedulerProvider
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.Rule
 import org.junit.Test
@@ -216,11 +222,13 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun singleton_dereferenceEntity() = testRunner {
+    fun singleton_dereferenceEntity() = testRunner {
         val writeHandle = writeHandleManager.createSingletonHandle()
         val readHandle = readHandleManager.createSingletonHandle()
         val readHandleUpdated = readHandle.onUpdateDeferred()
-        writeHandle.store(entity1)
+        writeHandle.store(entity1).join()
+        withTimeout(1500) { readHandleUpdated.await() }
+        log("Wrote entity1 to writeHandle")
 
         // Create a second handle for the second entity, so we can store it.
         val storageKey = ReferenceModeStorageKey(backingKey, RamDiskStorageKey("entity2"))
@@ -235,17 +243,25 @@ open class HandleManagerTestBase {
         val refReadHandleUpdated = refReadHandle.onUpdateDeferred()
 
         refWriteHandle.store(entity2)
-        withTimeout(1500) { refReadHandleUpdated.await() }
+        val ramDiskKnows = async(Dispatchers.IO) {
+            val ref = refWriteHandle.createReference(entity2)
+            val refKey = ref.toReferencable().referencedStorageKey()
+            RamDisk.waitUntilSet(refKey)
+        }
+        withTimeout(1500) {
+            refReadHandleUpdated.await()
+            ramDiskKnows.await()
+        }
 
         // Now read back entity1, and dereference its best_friend.
-        withTimeout(1500) { readHandleUpdated.await() }
-        val dereferencedRawEntity2 =
+        val dereferencedRawEntity2 = withContext(readHandle.dispatcher) {
             (readHandle.fetch()!!.bestFriend)!!
                 .also {
                     // Check that it's alive
                     assertThat(it.isAlive(coroutineContext)).isTrue()
                 }
                 .dereference(coroutineContext)!!
+        }
         val dereferencedEntity2 = Person.deserialize(dereferencedRawEntity2)
         assertThat(dereferencedEntity2).isEqualTo(entity2)
 
@@ -518,7 +534,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_clearingElementsFromA_clearsThemFromB() = testRunner {
+    open fun collection_clearingElementsFromA_clearsThemFromB() = testRunner {
         val handleA = readHandleManager.createCollectionHandle()
             as ReadWriteCollectionHandle<Person>
         val handleB = writeHandleManager.createCollectionHandle()

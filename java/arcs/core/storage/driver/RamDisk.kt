@@ -59,6 +59,12 @@ class RamDiskDriverProvider : DriverProvider {
 object RamDisk {
     /* internal */ val memory = VolatileMemory()
 
+    /* internal */ fun addListener(listener: (StorageKey, Any?) -> Unit) =
+        memory.addListener(listener)
+
+    /* internal */ fun removeListener(listener: (StorageKey, Any?) -> Unit) =
+        memory.removeListener(listener)
+
     /** Clears every piece of data from the [RamDisk] memory. */
     fun clear() = memory.clear()
 }
