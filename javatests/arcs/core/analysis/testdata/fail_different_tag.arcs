@@ -1,0 +1,12 @@
+// Fails when different tag is claimed.
+particle P1
+  foo: writes Foo {}
+  claim foo is notTrusted
+particle P2
+  bar: reads Foo {}
+  check bar is trusted
+recipe R
+  P1
+    foo: writes h
+  P2
+    bar: reads h

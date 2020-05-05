@@ -1,0 +1,18 @@
+// claim propagates through a chain of particles
+particle P1
+  foo: writes Foo {}
+  claim foo is trusted
+particle P2
+  bar: reads Foo {}
+  foo: writes Foo {}
+particle P3
+  bar: reads Foo {}
+  check bar is trusted
+recipe R
+  P1
+    foo: writes h1
+  P2
+    bar: reads h1
+    foo: writes h2
+  P3
+    bar: reads h2

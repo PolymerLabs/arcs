@@ -1,0 +1,12 @@
+// DFA succeeds when a check is satisfied directly
+particle P1
+  foo: writes Foo {}
+  claim foo is trusted
+particle P2
+  bar: reads Foo {}
+  check bar is trusted
+recipe R
+  P1
+    foo: writes h
+  P2
+    bar: reads h

@@ -1,0 +1,19 @@
+// fails when a "not tag" cancels a tag
+particle P1
+  foo: writes Foo {}
+  claim foo is trusted
+particle P2
+  bar: reads Foo {}
+  baz: writes Foo {}
+  claim baz is not trusted
+particle P3
+  bye: reads Foo {}
+  check bye is trusted
+recipe R
+  P1
+    foo: writes h
+  P2
+    bar: reads h
+    baz: writes h1
+  P3
+    bye: reads h1
