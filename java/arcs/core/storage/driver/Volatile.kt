@@ -193,10 +193,8 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
         val newEntry = updater(currentEntry)
         val isChanged = currentEntry != newEntry
         if (isChanged) {
-            println("Changed!")
             entries[key] = newEntry
             token = Random.nextInt().toString()
-            println("Calling ${listeners.size} listeners")
             listeners.forEach {
                 it(key, newEntry.data)
             }
@@ -208,12 +206,10 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
     fun clear() = entries.clear()
 
     /* internal */ fun addListener(listener: (StorageKey, Any?) -> Unit) = synchronized(lock) {
-        println("Adding listener")
         listeners.add(listener)
     }
 
     /* internal */ fun removeListener(listener: (StorageKey, Any?) -> Unit) = synchronized(lock) {
-        println("Removing listener")
         listeners.remove(listener)
     }
 }

@@ -84,11 +84,6 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
         super.collection_entityDereference()
     }
 
-    @Test
-    override fun singleton_dereferenceEntity() {
-        super.singleton_dereferenceEntity()
-    }
-
     @Ignore("b/154947352 - Deflake")
     @Test
     override fun collection_dereferenceEntity_nestedReference() {

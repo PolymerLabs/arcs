@@ -222,7 +222,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun singleton_dereferenceEntity() = testRunner {
+    fun singleton_dereferenceEntity() = testRunner {
         val writeHandle = writeHandleManager.createSingletonHandle()
         val readHandle = readHandleManager.createSingletonHandle()
         val readHandleUpdated = readHandle.onUpdateDeferred()
