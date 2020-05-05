@@ -56,6 +56,7 @@ arcs_kt_jvm_library(
     deps = [
         ":test_arcs_gen",
         "//java/arcs/core/common",
+        "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity",
