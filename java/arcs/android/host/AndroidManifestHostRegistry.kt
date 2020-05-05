@@ -47,7 +47,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 class AndroidManifestHostRegistry private constructor(
     private val context: Context,
     private val sender: (Intent) -> Unit
-) : HostRegistry {
+) : HostRegistry() {
 
     private val serviceHosts = mutableListOf<IntentRegistryAdapter>()
     private val arcHosts = mutableListOf<ArcHost>()
