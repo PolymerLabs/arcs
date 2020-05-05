@@ -7,7 +7,6 @@ package(default_visibility = ["//visibility:public"])
 
 android_library(
     name = "aidl",
-    idl_import_root = ".",
     idl_srcs = glob(["*.aidl"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
 )
