@@ -11,7 +11,7 @@ import minimist from 'minimist';
 import fs from 'fs';
 import path from 'path';
 import {Runtime} from '../runtime/runtime.js';
-import {serialize2proto} from './manifest2proto.js';
+import {encodeManifestToProto} from './manifest2proto.js';
 
 const opts = minimist(process.argv.slice(2), {
   string: ['outdir', 'outfile'],
@@ -56,7 +56,7 @@ async function main() {
     Runtime.init('../..');
     fs.mkdirSync(opts.outdir, {recursive: true});
 
-    const buffer = await serialize2proto(opts._[0]);
+    const buffer = await encodeManifestToProto(opts._[0]);
 
     const outPath = path.join(opts.outdir, opts.outfile);
     console.log(outPath);
