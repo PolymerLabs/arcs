@@ -135,6 +135,14 @@ class ArcHostHelper(
                     ParcelablePlanPartition::class,
                     arcHost::lookupArcHostStatus
                 )
+            Operation.Pause -> runWithResult(
+                    intent,
+                    arcHost::pause
+            )
+            Operation.Unpause -> runWithResult(
+                    intent,
+                    arcHost::unpause
+            )
             else -> Unit
         }
     }
@@ -205,7 +213,9 @@ class ArcHostHelper(
         StopArc,
         GetRegisteredParticles,
         AvailableHosts,
-        LookupArcStatus
+        LookupArcStatus,
+        Pause,
+        Unpause,
     }
 
     companion object {
@@ -279,6 +289,28 @@ fun ServiceInfo.toRegistryHost(sender: (Intent) -> Unit) =
 fun ComponentName.createGetRegisteredParticlesIntent(hostId: String): Intent =
     ArcHostHelper.createArcHostIntent(
         ArcHostHelper.Operation.GetRegisteredParticles,
+        this,
+        hostId,
+        null
+    )
+
+/**
+ * Creates an [Intent] to invoke [ArcHost.pause] on a [Service]'s internal [ArcHost].
+ */
+fun ComponentName.createPauseArcHostIntent(hostId: String): Intent =
+    ArcHostHelper.createArcHostIntent(
+        ArcHostHelper.Operation.Pause,
+        this,
+        hostId,
+        null
+    )
+
+/**
+ * Creates an [Intent] to invoke [ArcHost.unpause] on a [Service]'s internal [ArcHost].
+ */
+fun ComponentName.createUnpauseArcHostIntent(hostId: String): Intent =
+    ArcHostHelper.createArcHostIntent(
+        ArcHostHelper.Operation.Unpause,
         this,
         hostId,
         null

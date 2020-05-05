@@ -68,6 +68,10 @@ abstract class AbstractArcHost(
     /** Arcs currently running in memory. */
     private val runningArcs: MutableMap<String, ArcHostContext> = mutableMapOf()
 
+    private var paused = false
+    /** Arcs to be started after unpausing. */
+    private val pausedArcs: MutableList<Plan.Partition> = mutableListOf()
+
     // There can be more then one instance of a host, hashCode is used to disambiguate them
     override val hostId = "${this::class.className()}@${this.hashCode()}"
 
@@ -92,6 +96,31 @@ abstract class AbstractArcHost(
      **/
     override suspend fun lookupArcHostStatus(partition: Plan.Partition) =
         lookupOrCreateArcHostContext(partition.arcId).arcState
+
+    override suspend fun pause() {
+        paused = true
+        runningArcs.forEach { (arcId, context) ->
+            try {
+                val partition = contextToPartition(arcId, context)
+                stopArc(partition)
+                pausedArcs.add(partition)
+            } catch (e: Exception) {
+                log.error(e) { "Failure stopping arc." }
+            }
+        }
+    }
+
+    override suspend fun unpause() {
+        paused = false
+        pausedArcs.forEach {
+            try {
+                startArc(it)
+            } catch (e: Exception) {
+                log.error(e) { "Failure starting arc." }
+            }
+        }
+        pausedArcs.clear()
+    }
 
     /**
      * This property is true if this [ArcHost] has no running, memory resident arcs, e.g.
@@ -190,6 +219,11 @@ abstract class AbstractArcHost(
 
     override suspend fun startArc(partition: Plan.Partition) {
         val context = lookupOrCreateArcHostContext(partition.arcId)
+
+        if (paused) {
+            pausedArcs.add(partition)
+            return
+        }
 
         // Arc is already currently running, don't restart it
         if (isRunning(partition.arcId)) {
@@ -391,20 +425,21 @@ abstract class AbstractArcHost(
             if (isRunning(arcId)) {
                 return@launch
             }
-
             val context = lookupOrCreateArcHostContext(arcId)
-            startArc(
-                Plan.Partition(
-                    arcId,
-                    hostId,
-                    context.particles.map { (_, particleContext) ->
-                        particleContext.planParticle
-                    }
-                )
-            )
+            val partition = contextToPartition(arcId, context)
+            startArc(partition)
             // TODO: should invoke onHandleUpdate for readable affectedKeys?
         }
     }
+
+    private fun contextToPartition(arcId: String, context: ArcHostContext) =
+        Plan.Partition(
+            arcId,
+            hostId,
+            context.particles.map { (_, particleContext) ->
+                particleContext.planParticle
+            }
+        )
 
     /**
      * Given a handle name, a [Plan.HandleConnection], and a [HandleHolder] construct an Entity
