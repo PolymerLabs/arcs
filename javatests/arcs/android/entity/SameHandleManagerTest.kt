@@ -80,7 +80,6 @@ class SameHandleManagerTest : HandleManagerTestBase() {
         super.collection_entityDereference()
     }
 
-    @Ignore("b/154947352 - Deflake")
     @Test
     override fun singleton_dereferenceEntity() {
         super.singleton_dereferenceEntity()
