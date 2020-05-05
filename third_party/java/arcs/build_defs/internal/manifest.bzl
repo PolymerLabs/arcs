@@ -73,6 +73,44 @@ def arcs_manifest_proto(name, src, deps = [], out = None, visibility = None):
         sigh_cmd = "manifest2proto --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
     )
 
+def arcs_proto_plan(name, src, recipe = None, deps = []):
+    """Converts recipes from a manifest into plans encoded as a protobuf.
+
+    Example:
+
+      ```
+          arcs_proto_plan(
+            name = "foo_proto_plan",
+            src = "Foo.arcs",
+            recipe = "MyRecipe", # Optional
+            deps = [
+              "Other.arcs",
+              "Imported.arcs",
+              "Stuff.arcs",
+            ]
+          )
+      ```
+
+    Args:
+      name: the name of the target to create
+      src: an Arcs manifest file to source recipes from
+      recipe: an optional name of the recipe to filter output plans by name
+      deps: list of dependencies - other manifests that are imported by src manifest
+    """
+
+    sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) --format proto {SRC}"
+    if recipe:
+        sigh_cmd += " --recipe %s" % (recipe)
+
+    sigh_command(
+        name = name,
+        srcs = [src],
+        outs = [name + ".pb.bin"],
+        progress_message = "Generating Plan Proto",
+        sigh_cmd = sigh_cmd,
+        deps = deps,
+    )
+
 def _generate_root_manifest_content(label, input_files):
     """Generates the contents for a root manifest for a manifest bundle.
 
