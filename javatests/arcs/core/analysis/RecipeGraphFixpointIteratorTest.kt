@@ -179,16 +179,16 @@ class RecipeGraphFixpointIteratorTest {
         val result = analyzer.computeFixpoint(graph)
 
         with(result) {
-            assertThat(getValue(writerParticle)?.set).isEmpty()
-            assertThat(getValue(anotherWriterParticle)?.set).isEmpty()
-            assertThat(getValue(thing)?.set)
+            assertThat(getValue(writerParticle).set).isEmpty()
+            assertThat(getValue(anotherWriterParticle).set).isEmpty()
+            assertThat(getValue(thing).set)
                 .containsExactly(
                     "p:Writer",
                     "p:AnotherWriter",
                     "p:Writer -> h:thing",
                     "p:AnotherWriter -> h:thing"
                 )
-            assertThat(getValue(readerParticle)?.set)
+            assertThat(getValue(readerParticle).set)
                 .containsExactly(
                     "p:Writer",
                     "p:AnotherWriter",
@@ -219,12 +219,12 @@ class RecipeGraphFixpointIteratorTest {
             // Therefore, this should be bottom.
             assertThat(getValue(anotherWriterParticle).isBottom).isTrue()
             // AnotherWriter should not be in the following sets.
-            assertThat(getValue(thing)?.set)
+            assertThat(getValue(thing).set)
                 .containsExactly(
                     "p:Writer",
                     "p:Writer -> h:thing"
                 )
-            assertThat(getValue(readerParticle)?.set)
+            assertThat(getValue(readerParticle).set)
                 .containsExactly(
                     "p:Writer",
                     "p:Writer -> h:thing",
