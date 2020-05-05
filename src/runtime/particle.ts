@@ -54,20 +54,20 @@ export class Particle {
     this.created = false;
   }
 
-  callOnCreate(): void {
+  callOnFirstStart(): void {
     if (this.created) return;
     this.created = true;
-    this.onCreate();
+    this.onFirstStart();
   }
 
   /**
    * Called after handles are writable, only on first initialization of particle.
    */
-  protected onCreate(): void {}
+  protected onFirstStart(): void {}
 
   callOnReady(): void {
     if (!this.created) {
-      this.callOnCreate();
+      this.callOnFirstStart();
     }
     this.onReady();
   }
@@ -78,7 +78,7 @@ export class Particle {
 
   /**
    * Called after handles are synced the first time, override to provide initial processing.
-   * This will be called after onCreate, but will not wait for onCreate to finish.
+   * This will be called after onFirstStart, but will not wait for onFirstStart to finish.
    */
   protected onReady(): void {}
 

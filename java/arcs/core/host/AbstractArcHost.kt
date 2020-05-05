@@ -293,16 +293,16 @@ abstract class AbstractArcHost(
     /**
      * Invokes necessary [Particle] lifecycle methods given the current
      * [ParticleContext.particleState], and changes that state if necessary. For example by
-     * insuring that [Particle.onCreate()], [Particle.onShutdown()] are properly called.
+     * insuring that [Particle.onFirstStart()], [Particle.onShutdown()] are properly called.
      */
     private suspend fun performParticleLifecycle(particleContext: ParticleContext) {
         if (particleContext.particleState == ParticleState.Instantiated) {
             try {
-                // onCreate() must succeed, else we consider the particle startup failed
-                particleContext.particle.onCreate()
+                // onFirstStart() must succeed, else we consider the particle startup failed
+                particleContext.particle.onFirstStart()
                 particleContext.particleState = ParticleState.Created
             } catch (e: Exception) {
-                log.error(e) { "Failure in particle during onCreate." }
+                log.error(e) { "Failure in particle during onFirstStart." }
                 markParticleAsFailed(particleContext)
                 return
             }
@@ -348,7 +348,7 @@ abstract class AbstractArcHost(
 
     /**
      * Move to [ParticleState.Failed] if this particle had previously successfully invoked
-     * [Particle.onCreate()], else move to [ParticleState.Failed_NeverStarted]. Increments
+     * [Particle.onFirstStart()], else move to [ParticleState.Failed_NeverStarted]. Increments
      * consecutive failure count, and if it reaches maximum, transitions to
      * [ParticleState.MaxFailed].
      */

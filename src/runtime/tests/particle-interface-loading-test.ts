@@ -239,7 +239,7 @@ describe('particle interface loading', () => {
     assert.deepStrictEqual(await fooHandle.fetch() as {}, {value: 'hello world!!!'});
   });
 
-  it('onCreate only runs for initialization and not reinstantiation', async () => {
+  it('onFirstStart only runs for initialization and not reinstantiation', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
         value: Text
@@ -258,7 +258,7 @@ describe('particle interface loading', () => {
         defineParticle(({Particle}) => {
           var created = false;
           return class extends Particle {
-            onCreate() {
+            onFirstStart() {
               this.innerFooHandle = this.handles.get('innerFoo');
               this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Created!"}));
               created = true;
@@ -297,7 +297,7 @@ describe('particle interface loading', () => {
     assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({value: 'Not created!'}));
   });
 
-  it('onReady sees overriden values in onCreate', async () => {
+  it('onReady sees overriden values in onFirstStart', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
         value: Text
@@ -317,20 +317,20 @@ describe('particle interface loading', () => {
         defineParticle(({Particle}) => {
           var handlesSynced = 0;
           return class extends Particle {
-            onCreate() {
+            onFirstStart() {
               this.barHandle = this.handles.get('bar');
               this.barHandle.set(new this.barHandle.entityClass({value: "Created!"}));
             }
-            
+
             async onReady() {
               this.barHandle = this.handles.get('bar');
               this.bar = await this.barHandle.fetch();
-          
+
               if(this.bar.value == "Created!") {
                 await this.barHandle.set(new this.barHandle.entityClass({value: "Ready!"}))
               } else {
-                await this.barHandle.set(new this.barHandle.entityClass({value: "Handle not overriden by onCreate!"}))
-              }  
+                await this.barHandle.set(new this.barHandle.entityClass({value: "Handle not overriden by onFirstStart!"}))
+              }
             }
           };
         });
@@ -373,7 +373,7 @@ describe('particle interface loading', () => {
         defineParticle(({Particle}) => {
           var handlesSynced = 0;
           return class extends Particle {
-            onCreate() {
+            onFirstStart() {
               this.innerFooHandle = this.handles.get('innerFoo');
               this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Created!"}));
             }
@@ -389,16 +389,16 @@ describe('particle interface loading', () => {
 
               var s = "Ready!";
               if(this.foo.value != "Created!") {
-                s = s + " onCreate was not called before onReady.";
-              } 
+                s = s + " onFirstStart was not called before onReady.";
+              }
               if (this.bar.value != "Set!") {
                 s = s + " Read only handles not initialised in onReady";
-              } 
+              }
               if (handlesSynced != 2) {
                 s = s + " Not all handles were synced before onReady was called.";
-              } 
-              
-              this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: s}))    
+              }
+
+              this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: s}))
             }
           };
         });
@@ -439,7 +439,7 @@ describe('particle interface loading', () => {
         defineParticle(({Particle}) => {
           var created = false;
           return class extends Particle {
-            onCreate() {
+            onFirstStart() {
               created = true;
             }
             onReady(handle, model) {

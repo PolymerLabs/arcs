@@ -5,13 +5,13 @@ import java.lang.IllegalArgumentException
 
 class WritePerson : AbstractWritePerson() {
     var wrote = false
-    var createCalled = false
+    var firstStartCalled = false
     var shutdownCalled = false
 
     var deferred = CompletableDeferred<Boolean>()
 
-    override suspend fun onCreate() {
-        createCalled = true
+    override suspend fun onFirstStart() {
+        firstStartCalled = true
         wrote = false
         if (throws) {
             throw IllegalArgumentException("Boom!")
