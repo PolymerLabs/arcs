@@ -4,13 +4,13 @@ import kotlinx.coroutines.CompletableDeferred
 
 class ReadPerson : AbstractReadPerson() {
     var name = ""
-    var createCalled = false
+    var firstStartCalled = false
     var shutdownCalled = false
 
     var deferred = CompletableDeferred<Boolean>()
 
-    override suspend fun onCreate() {
-        createCalled = true
+    override suspend fun onFirstStart() {
+        firstStartCalled = true
         name = ""
         handles.person.onUpdate {
             name = handles.person.fetch()?.name ?: ""

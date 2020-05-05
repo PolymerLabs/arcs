@@ -1,6 +1,6 @@
 meta
   namespace: arcs
-  
+
 particle HandleSyncUpdateTest in '$module.wasm'
   sng: reads {num: Number, txt: Text, lnk: URL, flg: Boolean, ref: &Foo {val: Text}}
   col: reads [{num: Number, txt: Text, lnk: URL, flg: Boolean, ref: &Foo {val: Text}}]
@@ -206,13 +206,13 @@ recipe EntitySlicingTest
 schema FooHandle
   txt: Text
 
-particle OnCreateTest in '$module.wasm'
+particle OnFirstStartTest in '$module.wasm'
   root: consumes Slot
   fooHandle: reads writes FooHandle
 
-recipe OnCreateTest
+recipe OnFirstStartTest
   s1: slot 'rootslotid-root'
-  OnCreateTest
+  OnFirstStartTest
     root: consumes s1
     fooHandle: reads writes h3
 

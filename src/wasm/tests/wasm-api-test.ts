@@ -536,13 +536,13 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
       ]);
     });
 
-    it('onCreate() Wasm', async function() {
+    it('onFirstStart() Wasm', async function() {
       // TODO(heimlich, 4798) implement in C++
       if (isCpp) {
         this.skip();
       }
 
-      const {arc, stores} = await setup('OnCreateTest');
+      const {arc, stores} = await setup('OnFirstStartTest');
       const fooHandle = await handleForStore(stores.get('fooHandle') as SingletonEntityStore, arc);
 
       assert.deepStrictEqual(await fooHandle.fetch() as {}, {txt: 'Created!'});

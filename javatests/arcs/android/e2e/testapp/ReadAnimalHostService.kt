@@ -55,8 +55,8 @@ class ReadAnimalHostService : ArcHostService() {
     }
 
     inner class ReadAnimal: AbstractReadAnimal() {
-        override suspend fun onCreate() {
-            super.onCreate()
+        override suspend fun onFirstStart() {
+            super.onFirstStart()
             handles.animal.onUpdate {
                 val name = handles.animal.fetch()?.name ?: ""
 

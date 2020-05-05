@@ -103,7 +103,7 @@ expect open class DomParticleBase<Props, State> constructor(
     /**
      * Called when the particle is first created. This will not be called for subsequent reinstantiations.
      */
-    open fun onCreate()
+    open fun onFirstStart()
 }
 
 /**

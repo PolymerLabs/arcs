@@ -160,4 +160,10 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
     override fun allocator_verifyStorageKeysCreated() {
         super.allocator_verifyStorageKeysCreated()
     }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_startArc_particleException_isErrorState() {
+        super.allocator_startArc_particleException_isErrorState()
+    }
 }
