@@ -534,7 +534,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_clearingElementsFromA_clearsThemFromB() = testRunner {
+    open fun collection_clearingElementsFromA_clearsThemFromB() = testRunner {
         val handleA = readHandleManager.createCollectionHandle()
             as ReadWriteCollectionHandle<Person>
         val handleB = writeHandleManager.createCollectionHandle()

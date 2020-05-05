@@ -91,4 +91,10 @@ class SameHandleManagerTest : HandleManagerTestBase() {
     override fun singleton_clearOnAClearDataWrittenByB() {
         super.singleton_clearOnAClearDataWrittenByB()
     }
+
+    @Ignore("b/154947352 - Deflake")
+    @Test
+    override fun collection_clearingElementsFromA_clearsThemFromB() {
+        super.collection_clearingElementsFromA_clearsThemFromB()
+    }
 }
