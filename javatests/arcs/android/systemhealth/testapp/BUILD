@@ -8,6 +8,10 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
+exports_files(
+    ["AndroidManifest.xml"]
+)
+
 arcs_kt_android_library(
     name = "test_app_lib",
     testonly = 1,
@@ -36,6 +40,7 @@ arcs_kt_android_library(
         "//java/arcs/sdk/android/storage",
         "//java/arcs/sdk/android/storage/service",
         "//java/arcs/sdk/storage",
+        "//java/arcs/sdk:sdk-kt",
         "//third_party/java/androidx/appcompat",
         "//third_party/java/androidx/lifecycle",
         "//third_party/java/androidx/work",
