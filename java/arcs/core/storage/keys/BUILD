@@ -7,20 +7,20 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-PROTOCL_SRCS = [
+PROTOCOL_SRCS = [
     "Protocols.kt",
 ]
 
 arcs_kt_library(
     name = "protocols",
-    srcs = PROTOCL_SRCS,
+    srcs = PROTOCOL_SRCS,
 )
 
 arcs_kt_library(
     name = "keys",
     srcs = glob(
         ["*.kt"],
-        exclude = PROTOCL_SRCS,
+        exclude = PROTOCOL_SRCS,
     ),
     deps = [
         ":protocols",
