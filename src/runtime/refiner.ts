@@ -702,7 +702,7 @@ export class QueryArgumentPrimitive extends RefinementExpression {
 
   toProtoExpression(): object {
     return {
-      query_argument: this.value,
+      queryArgument: this.value,
     }
   }
 

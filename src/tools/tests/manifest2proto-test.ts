@@ -258,6 +258,48 @@ describe('manifest2proto', () => {
     });
   });
 
+  it('encodes entity type with query', async () => {
+    const manifestAst = parse(`
+        particle Foo
+            input: reads Something {num: Number} [num == ?]
+    `);
+    const refinement = Refinement.fromAst(manifestAst[0].args[0].type.refinement, {'num': 'Number'});
+    const entity = EntityType.make(
+      ['Something'],
+      {
+        num: {
+          kind: 'schema-primitive',
+          type: 'Number',
+        }
+      },
+      {refinement}
+    );
+
+    assert.deepStrictEqual(await toProtoAndBackType(entity), {
+      entity: {
+        schema: {
+          names: ['Something'],
+          fields: {
+            num: {
+              primitive: 'NUMBER'
+            }
+          },
+          hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
+        },
+      },
+      refinement: {
+        binary: {
+          leftExpr: {
+            field: 'num'
+          },
+          operator: 'EQUALS',
+          rightExpr: {
+            queryArgument: '?'
+          },
+        }
+      }
+    });
+  });
   it('encodes collection type', async () => {
     const collection = EntityType.make(['Foo'], {value: 'Text'}).collectionOf();
     assert.deepStrictEqual(await toProtoAndBackType(collection), {
