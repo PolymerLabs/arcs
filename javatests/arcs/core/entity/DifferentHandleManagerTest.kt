@@ -40,11 +40,4 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
 
     @After
     override fun tearDown() = super.tearDown()
-
-    // TODO(b/152436411): Fix these.
-    @Test
-    @Ignore("b/152436411 - deflake")
-    override fun collection_referenceLiveness() {
-        super.collection_referenceLiveness()
-    }
 }
