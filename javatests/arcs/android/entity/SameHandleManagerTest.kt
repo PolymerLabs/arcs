@@ -68,11 +68,6 @@ class SameHandleManagerTest : HandleManagerTestBase() {
         super.collection_referenceLiveness()
     }
 
-    @Test
-    override fun singleton_referenceLiveness() {
-        super.singleton_referenceLiveness()
-    }
-
     @Ignore("b/154947352 - Deflake")
     @Test
     override fun collection_entityDereference() {
