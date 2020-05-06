@@ -16,6 +16,7 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
+import arcs.core.storage.driver.testutil.asyncWaitForUpdate
 import arcs.core.storage.driver.testutil.waitUntilSet
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -361,18 +362,24 @@ open class HandleManagerTestBase {
         // Create and store an entity.
         val writeEntityHandle = writeHandleManager.createCollectionHandle()
         val readEntityHandle = readHandleManager.createCollectionHandle()
-        writeEntityHandle.store(entity1).join()
+        withContext(writeEntityHandle.dispatcher) { writeEntityHandle.store(entity1) }
         log("Created and stored an entity")
 
         // Create and store a reference to the entity.
         val entity1Ref = writeEntityHandle.createReference(entity1)
         val writeRefHandle = writeHandleManager.createReferenceSingletonHandle()
-        writeRefHandle.store(entity1Ref).join()
+        val readRefHandle = readHandleManager.createReferenceSingletonHandle()
+        val refHeard = readRefHandle.onUpdateDeferred()
+        withContext(writeRefHandle.dispatcher) { writeRefHandle.store(entity1Ref) }
         log("Created and stored a reference")
 
+        withTimeout(1500) {
+            RamDisk.waitUntilSet(entity1Ref.toReferencable().referencedStorageKey())
+            refHeard.await()
+        }
+
         // Now read back the reference from a different handle.
-        val readRefHandle = readHandleManager.createReferenceSingletonHandle()
-        var reference = readRefHandle.fetch()!!
+        var reference = withContext(readRefHandle.dispatcher) { readRefHandle.fetch()!! }
         assertThat(reference).isEqualTo(entity1Ref)
 
         // Reference should be alive.
@@ -382,31 +389,40 @@ open class HandleManagerTestBase {
         assertThat(storageReference.isDead(coroutineContext)).isFalse()
 
         // Modify the entity.
+        var ramDiskKnows =
+            RamDisk.asyncWaitForUpdate(reference.toReferencable().referencedStorageKey())
         val modEntity1 = entity1.copy(name = "Ben")
         val entityModified = readEntityHandle.onUpdateDeferred()
-        writeEntityHandle.store(modEntity1)
+        withContext(writeEntityHandle.dispatcher) { writeEntityHandle.store(modEntity1) }
         withTimeout(1500) {
             entityModified.await()
+            ramDiskKnows.await()
         }
 
         // Reference should still be alive.
         reference = readRefHandle.fetch()!!
-        // Make sure the storage stack created to dereference is going to be pointing to the latest
-        // stuff.
-        delay(200)
-        assertThat(reference.dereference()).isEqualTo(modEntity1)
+        val dereferenced = reference.dereference()
+        log("Dereferenced: $dereferenced")
+        assertThat(dereferenced).isEqualTo(modEntity1)
         storageReference = reference.toReferencable()
         assertThat(storageReference.isAlive(coroutineContext)).isTrue()
         assertThat(storageReference.isDead(coroutineContext)).isFalse()
 
+        ramDiskKnows = RamDisk.asyncWaitForUpdate(storageReference.referencedStorageKey())
         // Remove the entity from the collection.
+        val heardTheDelete = readEntityHandle.onUpdateDeferred { it.isEmpty() }
         writeEntityHandle.remove(entity1).join()
-
-        delay(200) // Let the delete trickle down to the store.
+        withTimeout(1500) {
+            ramDiskKnows.await()
+            heardTheDelete.await()
+        }
 
         // Reference should be dead. (Removed entities currently aren't actually deleted, but
         // instead are "nulled out".)
-        assertThat(storageReference.dereference()).isEqualTo(createNulledOutPerson("entity1"))
+        withContext(readRefHandle.dispatcher) {
+            assertThat(storageReference.dereference())
+                .isEqualTo(createNulledOutPerson("entity1"))
+        }
     }
 
     @Test
@@ -690,7 +706,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_addingToA_showsUpInQueryOnB() = testRunner {
+    open fun collection_addingToA_showsUpInQueryOnB() = testRunner {
         val writeHandle = writeHandleManager.createCollectionHandle()
         val readHandle = readHandleManager.createCollectionHandle()
 

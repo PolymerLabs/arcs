@@ -11,6 +11,7 @@
 
 package arcs.core.storage.driver
 
+import androidx.annotation.VisibleForTesting
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
@@ -31,10 +32,7 @@ import arcs.core.storage.referencemode.toCrdtSingletonData
 import arcs.core.type.Type
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
-import arcs.core.util.guardedBy
 import kotlin.reflect.KClass
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 /** [DriverProvider] which provides a [DatabaseDriver]. */
 object DatabaseDriverProvider : DriverProvider {
@@ -124,9 +122,7 @@ class DatabaseDriver<Data : Any>(
 ) : Driver<Data>, DatabaseClient {
     /* internal */ var receiver: (suspend (data: Data, version: Int) -> Unit)? = null
     /* internal */ var clientId: Int = -1
-    private val localDataMutex = Mutex()
-    private var localData: Data? by guardedBy<Data?>(localDataMutex, null)
-    private var localVersion: Int? by guardedBy<Int?>(localDataMutex, null)
+
     private val schema: Schema
         get() = checkNotNull(schemaLookup(storageKey.entitySchemaHash)) {
             "Schema not found for hash: ${storageKey.entitySchemaHash}"
@@ -148,16 +144,7 @@ class DatabaseDriver<Data : Any>(
         receiver: suspend (data: Data, version: Int) -> Unit
     ) {
         this.receiver = receiver
-        val (pendingReceiverData, pendingReceiverVersion) = localDataMutex.withLock {
-            var dataAndVersion = localData?.takeIf { this.token != token } to localVersion
-
-            // If we didn't have any data, try and fetch it from the database.
-            if (dataAndVersion.first == null || dataAndVersion.second == null) {
-                log.debug { "registerReceiver($token) - no local data, fetching from database" }
-                dataAndVersion = getDatabaseData()
-            }
-            dataAndVersion
-        }
+        val (pendingReceiverData, pendingReceiverVersion) = getDatabaseData()
 
         if (pendingReceiverData == null || pendingReceiverVersion == null) return
 
@@ -219,13 +206,7 @@ class DatabaseDriver<Data : Any>(
         }
 
         // Store the prepped data.
-        return database.insertOrUpdate(storageKey, databaseData, clientId).also {
-            // If the update was successful, update our local data/version.
-            if (it) localDataMutex.withLock {
-                localData = data
-                localVersion = version
-            }
-        }
+        return database.insertOrUpdate(storageKey, databaseData, clientId)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -234,6 +215,8 @@ class DatabaseDriver<Data : Any>(
         version: Int,
         originatingClientId: Int?
     ) {
+        if (originatingClientId == clientId) return
+
         // Convert the raw DatabaseData into the appropriate CRDT data model
         val actualData = when (data) {
             is DatabaseData.Singleton -> data.reference.toCrdtSingletonData(data.versionMap)
@@ -243,14 +226,6 @@ class DatabaseDriver<Data : Any>(
                 else CrdtEntity.Reference.buildReference(it)
             }
         } as Data
-
-        // Stash it locally.
-        localDataMutex.withLock {
-            localData = actualData
-            localVersion = version
-        }
-
-        if (originatingClientId == clientId) return
 
         log.debug {
             """
@@ -268,13 +243,9 @@ class DatabaseDriver<Data : Any>(
     }
 
     override suspend fun onDatabaseDelete(originatingClientId: Int?) {
-        val (dbData, dbVersion) = getDatabaseData()
-        localDataMutex.withLock {
-            localData = dbData
-            localVersion = dbVersion
-        }
-
         if (originatingClientId == clientId) return
+
+        val (dbData, dbVersion) = getDatabaseData()
 
         log.debug { "onDatabaseDelete(originatingClientId: $originatingClientId)" }
         bumpToken()
@@ -283,14 +254,13 @@ class DatabaseDriver<Data : Any>(
 
     override fun toString(): String = "DatabaseDriver($storageKey, $clientId)"
 
-    /* internal */ suspend fun getLocalData(): Data? = localDataMutex.withLock { localData }
-
     private fun bumpToken() {
         token = Random.nextInt().toString()
     }
 
     @Suppress("UNCHECKED_CAST")
-    private suspend fun getDatabaseData(): Pair<Data?, Int?> {
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    suspend fun getDatabaseData(): Pair<Data?, Int?> {
         var dataAndVersion: Pair<Data?, Int?> = null to null
         database.get(
             storageKey,

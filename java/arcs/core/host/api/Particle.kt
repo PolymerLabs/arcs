@@ -29,9 +29,6 @@ interface Particle {
      */
     suspend fun onFirstStart() = Unit
 
-    @Deprecated("Renamed to onFirstStart", replaceWith = ReplaceWith("this.onFirstStart()"))
-    suspend fun onCreate() = onFirstStart()
-
     /**
      * React to handle updates.
      *

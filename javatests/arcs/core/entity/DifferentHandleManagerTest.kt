@@ -6,6 +6,8 @@ import arcs.jvm.host.JvmSchedulerProvider
 import kotlin.coroutines.EmptyCoroutineContext
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
@@ -40,6 +42,9 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     override fun tearDown() = super.tearDown()
 
     // TODO(b/152436411): Fix these.
-    override fun collection_referenceLiveness() {}
-    override fun singleton_referenceLiveness() {}
+    @Test
+    @Ignore("b/152436411 - deflake")
+    override fun collection_referenceLiveness() {
+        super.collection_referenceLiveness()
+    }
 }

@@ -72,6 +72,11 @@ export interface ReferenceType extends BaseNode {
   type: ParticleHandleConnectionType;
 }
 
+export interface MuxType extends BaseNode {
+  kind: 'mux-type';
+  type: ParticleHandleConnectionType;
+}
+
 export interface TupleType extends BaseNode {
   kind: 'tuple-type';
   types: ParticleHandleConnectionType[];
@@ -792,7 +797,7 @@ export type SlotDirection = 'provides' | 'consumes';
 export type Fate = 'use' | 'create' | 'map' | 'copy' | 'join' | '?' | '`slot';
 
 export type ParticleHandleConnectionType = TypeVariable|CollectionType|
-    BigCollectionType|ReferenceType|SlotType|SchemaInline|TypeName;
+    BigCollectionType|ReferenceType|MuxType|SlotType|SchemaInline|TypeName;
 
 // Note that ManifestStorage* are not here, as they do not have 'kind'
 export type All = Import|Meta|MetaName|MetaStorageKey|MetaNamespace|Particle|ParticleHandleConnection|

@@ -58,6 +58,7 @@ class RawEntityDereferencer(
             ProxyCallback { message ->
                 when (message) {
                     is ProxyMessage.ModelUpdate<*, *, *> -> {
+                        log.debug { "modelUpdate Model: ${message.model}" }
                         val model = (message.model as CrdtEntity.Data)
                             .takeIf { it.versionMap.isNotEmpty() }
                         deferred.complete(model?.toRawEntity())

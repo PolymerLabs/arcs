@@ -679,6 +679,7 @@ ParticleHandleConnectionType
   / CollectionType
   / BigCollectionType
   / ReferenceType
+  / MuxType
   / SlotType
   / TupleType
   / type: SchemaInline whiteSpace? refinement:Refinement?
@@ -727,6 +728,15 @@ ReferenceType
   {
     return toAstNode<AstNode.ReferenceType>({
       kind: 'reference-type',
+      type,
+    });
+  }
+
+MuxType 
+  = '#' type:ParticleHandleConnectionType
+  {
+    return toAstNode<AstNode.MuxType>({
+      kind: 'mux-type',
       type,
     });
   }
