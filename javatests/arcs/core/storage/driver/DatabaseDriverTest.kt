@@ -338,11 +338,11 @@ class DatabaseDriverTest {
 
         driver.send(entity, 1)
 
-        assertThat(driver.getLocalData()).isNotNull()
+        assertThat(driver.getDatabaseData().first).isNotNull()
 
         database.delete(driver.storageKey)
 
-        assertThat(driver.getLocalData()).isNull()
+        assertThat(driver.getDatabaseData().first).isNull()
     }
 
     class DriverBuilder<Data : Any>(

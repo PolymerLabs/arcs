@@ -24,6 +24,7 @@ arcs_kt_library(
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
+        "//third_party/java/androidx/annotation",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
     ],

@@ -473,11 +473,11 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         )
         val t1Ref = CrdtSet.DataValue(
             VersionMap("me" to 1, "them" to 1),
-            Reference("t1", activeStore.backingStore.storageKey, VersionMap())
+            Reference("t1", activeStore.backingStore.storageKey, VersionMap("me" to 1, "them" to 1))
         )
         val t2Ref = CrdtSet.DataValue(
             VersionMap("me" to 1, "them" to 2),
-            Reference("t2", activeStore.backingStore.storageKey, VersionMap())
+            Reference("t2", activeStore.backingStore.storageKey, VersionMap("me" to 1, "them" to 2))
         )
 
         driver.receiver!!(
@@ -505,7 +505,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         activeStore.idle()
 
         assertThat(activeStore.containerStore.getLocalData())
-            .isEqualTo(driver.getLocalData())
+           .isEqualTo(driver.getDatabaseData().first)
     }
 
     @Test
