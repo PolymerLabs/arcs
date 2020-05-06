@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable, TupleType} from '../type.js';
+import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable, TupleType, MuxType} from '../type.js';
 import {Direction} from '../manifest-ast-nodes.js';
 
 export interface TypeListInfo {
@@ -36,6 +36,10 @@ export class TypeChecker {
     if (candidate.isReferenceType()) {
       const resolution = TypeChecker.getResolution(candidate.referredType, options);
       return (resolution !== null) ? resolution.referenceTo() : null;
+    }
+    if (candidate.isMuxType()) {
+      const resolution = TypeChecker.getResolution(candidate.innerType, options);
+      return (resolution != null) ? resolution.muxTypeOf() : null;
     }
     if (candidate.isTupleType()) {
       const resolutions = candidate.innerTypes.map(t => TypeChecker.getResolution(t, options));
@@ -188,6 +192,8 @@ export class TypeChecker {
           primitiveHandleType.variable.resolution = new BigCollectionType(TypeVariable.make('a'));
         } else if (primitiveConnectionType instanceof ReferenceType) {
           primitiveHandleType.variable.resolution = new ReferenceType(TypeVariable.make('a'));
+        } else if (primitiveConnectionType instanceof MuxType) {
+          primitiveHandleType.variable.resolution = new MuxType(TypeVariable.make('a'));
         } else if (primitiveConnectionType instanceof TupleType) {
           primitiveHandleType.variable.resolution = new TupleType(
             primitiveConnectionType.innerTypes.map((_, idx) => TypeVariable.make(`a${idx}`)));

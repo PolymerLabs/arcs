@@ -1048,6 +1048,10 @@ export class MuxType<T extends Type> extends Type {
     return this.innerType;
   }
 
+  isTypeContainer(): boolean {
+    return true;
+  }
+
   resolvedType() {
     const innerType = this.innerType;
     const resolvedInnerType = innerType.resolvedType();
