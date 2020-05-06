@@ -196,10 +196,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 throw e
             }
         }
-
-        // As the localModel has already be merged with the pending model changes,
-        // leave the flush job with write-back threads.
-        asyncFlush { updateStateAndAct(noDriverSideChanges, theVersion, messageFromDriver = true) }
+        updateStateAndAct(noDriverSideChanges, theVersion, messageFromDriver = true)
     }
 
     /**

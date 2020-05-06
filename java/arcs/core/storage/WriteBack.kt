@@ -54,8 +54,12 @@ interface WriteBackFactory {
     fun create(
         /** One of supported storage [Protocols]. */
         protocol: String = "",
-        /** The maximum queue size above which new incoming flush jobs will be suspended. */
-        queueSize: Int = Channel.UNLIMITED
+        /**
+         * The maximum queue size above which new incoming flush jobs will be suspended.
+         * By default we take two-steps-ahead policy for the balance between efficiency
+         * and reliability.
+         */
+        queueSize: Int = 1
     ): WriteBack
 }
 

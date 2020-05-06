@@ -46,6 +46,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
@@ -60,7 +61,7 @@ class StorageService : ResurrectorService() {
     private val writeBackScope = CoroutineScope(
         Executors.newCachedThreadPool {
             Thread(it).apply { name = "WriteBack #$id" }
-        }.asCoroutineDispatcher()
+        }.asCoroutineDispatcher() + SupervisorJob()
     )
     private val stores = ConcurrentHashMap<StorageKey, Store<*, *, *>>()
     private var startTime: Long? = null
