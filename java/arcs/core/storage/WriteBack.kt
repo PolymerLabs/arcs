@@ -64,7 +64,7 @@ interface WriteBackFactory {
  * It implements [Mutex] that provides the capability of temporary lock-down and resume.
  */
 @ExperimentalCoroutinesApi
-class StoreWriteBack private constructor(
+open class StoreWriteBack /* internal */ constructor(
     protocol: String,
     queueSize: Int,
     val scope: CoroutineScope?
@@ -146,7 +146,7 @@ class StoreWriteBack private constructor(
         var writeBackFactoryOverride: WriteBackFactory? = null
 
         /** The factory of creating [WriteBack] instances. */
-        override fun create(protocol: String, queueSize: Int) =
+        override fun create(protocol: String, queueSize: Int): WriteBack =
             writeBackFactoryOverride?.create(protocol, queueSize)
                 ?: StoreWriteBack(protocol, queueSize, writeBackScope)
 

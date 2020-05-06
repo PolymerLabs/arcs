@@ -11,28 +11,23 @@
 
 package arcs.core.storage.testutil
 
+import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.WriteBack
 import arcs.core.storage.WriteBackFactory
-import arcs.core.storage.keys.Protocols
-import arcs.core.util.TaggedLog
 import java.util.concurrent.CopyOnWriteArrayList
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.TestCoroutineDispatcher
 import kotlinx.coroutines.test.TestCoroutineScope
 
 /**
  * A [WriteBack] implementation for unit tests.
  *
- * Specifically it implements the identical logics as [StoreWriteBack]s' but
- * allows scope/dispatcher being designated which is required for unit tests
- * who are annotated by `@Test` since no addtional coroutine Jobs are allowed
- * active and checked after each test iteration, such a check blocks the test
- * till a timeout.
+ * Specifically it possesses the identical logic as [StoreWriteBack]s' but
+ * adopts a special coroutine scope [TestCoroutineScope] which is required
+ * for unit tests where no additional coroutine [Job]s are allowed active
+ * after each [Test]. This is checked after each [Test] iteration and would
+ * block the test itself till a timeout when there are pending/active [Job]s.
  *
  * E.g., runBlockingTest exception:
  * java.lang.IllegalStateException: This job has not completed yet
@@ -41,92 +36,29 @@ import kotlinx.coroutines.test.TestCoroutineScope
  * Reference:
  * https://medium.com/@eyalg/testing-androidx-room-kotlin-coroutines-2d1faa3e674f
  */
-@kotlinx.coroutines.ExperimentalCoroutinesApi
+@ExperimentalCoroutinesApi
 class WriteBackForTesting private constructor(
-    protocol: String
-) : WriteBack,
-    Channel<suspend () -> Unit> by Channel(10),
-    Mutex by Mutex() {
-    private val passThrough = protocol != Protocols.DATABASE_DRIVER
-    private var activeJobs = 0
-    private val awaitSignal = Mutex()
+    protocol: String,
+    queueSize: Int
+) : StoreWriteBack(protocol, queueSize, TestCoroutineScope(TestCoroutineDispatcher())) {
 
-    init {
-        track(this)
-        if (!passThrough) {
-            writeBackScope?.launch {
-                try {
-                    while (true) {
-                        exitFlushSection { receive()() }
-                    }
-                } finally {
-                    if (awaitSignal.isLocked) {
-                        awaitSignal.unlock()
-                    }
-                }
-            }
-        }
-    }
-
-    override suspend fun flush(job: suspend () -> Unit) {
-        if (!passThrough) flushSection { job() }
-        else job()
-    }
-
-    override suspend fun asyncFlush(job: suspend () -> Unit) {
-        if (!passThrough && writeBackScope != null) enterFlushSection { send(job) }
-        else job()
-    }
-
-    override suspend fun awaitIdle() = awaitSignal.withLock {}
-
-    private suspend inline fun flushSection(job: () -> Unit) {
-        enterFlushSection()
-        job()
-        exitFlushSection()
-    }
-
-    private suspend inline fun enterFlushSection(job: () -> Unit = {}) {
-        withLock {
-            if (++activeJobs == 1) awaitSignal.lock()
-            log.debug { "activeJobs: $activeJobs, isLocked: ${awaitSignal.isLocked}" }
-        }
-        job()
-    }
-
-    private suspend inline fun exitFlushSection(job: () -> Unit = {}) {
-        job()
-        withLock {
-            if (--activeJobs == 0) awaitSignal.unlock()
-            log.debug { "activeJobs: $activeJobs, isLocked: ${awaitSignal.isLocked}" }
-        }
-    }
+    init { track(this) }
 
     companion object : WriteBackFactory {
-        /** Set to null for write-through mode. */
-        var writeBackScope: CoroutineScope? =
-            TestCoroutineScope(TestCoroutineDispatcher())
-
         private var instances = CopyOnWriteArrayList<WriteBackForTesting>()
-        private val log = TaggedLog(::toString)
 
         /** Track [WriteBack] instances. */
         private fun track(instance: WriteBackForTesting) = instances.add(instance)
 
         /** Clear all created write-back instances after test iteration(s). */
-        fun clear() {
-            instances.clear()
-        }
+        fun clear() = instances.clear()
 
         /** Await completion of the flush jobs of all created [WriteBack] instances. */
         fun awaitAllIdle() = runBlocking {
             for (instance in instances) instance.awaitIdle()
-            log.debug { "passed awaitAllIdle()" }
         }
 
-        override fun create(
-            protocol: String,
-            queueSize: Int
-        ) = WriteBackForTesting(protocol)
+        override fun create(protocol: String, queueSize: Int): WriteBack =
+            WriteBackForTesting(protocol, queueSize)
     }
 }
