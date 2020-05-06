@@ -14,7 +14,7 @@ package arcs.core.host
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 
-/** 
+/**
  * ArcHostManager mantains a set of HostRegistries to perform operations on all Hosts.
  * Registries are expected to register with the manager at creation.
  */
