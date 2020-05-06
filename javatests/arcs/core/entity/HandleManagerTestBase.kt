@@ -603,25 +603,33 @@ open class HandleManagerTestBase {
     open fun collection_entityDereference() = testRunner {
         val writeHandle = writeHandleManager.createCollectionHandle()
         val readHandle = readHandleManager.createCollectionHandle()
-
         val readUpdated = readHandle.onUpdateDeferred { it.size == 2 }
 
-        writeHandle.store(entity1)
-        writeHandle.store(entity2)
-        readUpdated.await()
+        withContext(writeHandle.dispatcher) {
+            writeHandle.store(entity1)
+            writeHandle.store(entity2)
+        }
+        log("wrote entity1 and entity2 to writeHandle")
 
-        // Just give a little more time for the references to be populated in the RamDisk for
-        // dereferencing.
-        delay(100)
+        withTimeout(2000) {
+            RamDisk.waitUntilSet(entity1.bestFriend!!.referencedStorageKey())
+            log("RamDisk heard of entity1's best friend (entity2)")
+            RamDisk.waitUntilSet(entity2.bestFriend!!.referencedStorageKey())
+            log("RamDisk heard of entity2's best friend (entity1)")
+            readUpdated.await()
+        }
+        log("readHandle and the ramDisk have heard of the update")
 
-        readHandle.fetchAll()
-            .also { assertThat(it).hasSize(2) }
-            .forEach { entity ->
-                val expectedBestFriend = if (entity.entityId == "entity1") entity2 else entity1
-                val actualRawBestFriend = entity.bestFriend!!.dereference(coroutineContext)!!
-                val actualBestFriend = Person.deserialize(actualRawBestFriend)
-                assertThat(actualBestFriend).isEqualTo(expectedBestFriend)
-            }
+        withContext(readHandle.dispatcher) {
+            readHandle.fetchAll()
+                .also { assertThat(it).hasSize(2) }
+                .forEach { entity ->
+                    val expectedBestFriend = if (entity.entityId == "entity1") entity2 else entity1
+                    val actualRawBestFriend = entity.bestFriend!!.dereference(coroutineContext)!!
+                    val actualBestFriend = Person.deserialize(actualRawBestFriend)
+                    assertThat(actualBestFriend).isEqualTo(expectedBestFriend)
+                }
+        }
     }
 
     @Test

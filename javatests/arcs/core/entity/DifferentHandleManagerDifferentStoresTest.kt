@@ -6,7 +6,6 @@ import arcs.jvm.host.JvmSchedulerProvider
 import kotlin.coroutines.EmptyCoroutineContext
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -36,8 +35,4 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
 
     @After
     override fun tearDown() = super.tearDown()
-
-    // We don't expect these to pass, since Operations won't make it through the driver level
-    override fun singleton_writeAndOnUpdate() {}
-    override fun collection_writeAndOnUpdate() {}
 }
