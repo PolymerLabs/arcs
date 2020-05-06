@@ -8,12 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../platform/chai-web.js';
-import {encodeManifestToProto, typeToProtoPayload, manifestToProtoPayload, capabilitiesToProtoOrdinals} from '../manifest2proto.js';
+import {capabilitiesToProtoOrdinals, encodeManifestToProto, manifestToProtoPayload, typeToProtoPayload} from '../manifest2proto.js';
 import {EntityType, Type} from '../../runtime/type.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Capabilities} from '../../runtime/capabilities.js';
 import {fs} from '../../platform/fs-web.js';
 import protobuf from 'protobufjs';
+import {Refinement} from '../../runtime/refiner';
+import {parse} from '../../gen/runtime/manifest-parser.js';
 
 const rootNamespace = protobuf.loadSync('./java/arcs/core/data/proto/manifest.proto');
 const manifestProto = rootNamespace.lookupType('arcs.ManifestProto');
@@ -154,6 +156,103 @@ describe('manifest2proto', () => {
             }
           },
           hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
+        }
+      }
+    });
+  });
+
+  it('encodes entity type with simple refinement', async () => {
+    const location = {
+      start: {offset: 0, line: 0, column: 0},
+      end: {offset: 0, line: 0, column: 0}
+    };
+    const refinement = Refinement.fromAst(
+      {
+        kind: 'refinement',
+        expression: {
+          kind: 'boolean-node',
+          value: true,
+          location,
+        },
+        location,
+      }, {});
+    const entity = EntityType.make(
+      ['Foo'],
+      {value: 'Text'},
+      {refinement}
+    );
+    assert.deepStrictEqual(await toProtoAndBackType(entity), {
+      entity: {
+        schema: {
+          names: ['Foo'],
+          fields: {
+            value: {
+              primitive: 'TEXT'
+            }
+          },
+          hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
+        },
+      },
+      refinement: {
+        boolean: true
+      },
+    });
+  });
+
+  it('encodes entity type with nested refinement', async () => {
+    const manifestAst = parse(`
+        particle Foo
+            input: reads Something {num: Number} [num / 2 < 6 and num  > -1]
+    `);
+    const refinement = Refinement.fromAst(manifestAst[0].args[0].type.refinement, {'num': 'Number'});
+    const entity = EntityType.make(
+      ['Something'],
+      {
+        num: {
+          kind: 'schema-primitive',
+          type: 'Number',
+        }
+      },
+      {refinement}
+    );
+
+    assert.deepStrictEqual(await toProtoAndBackType(entity), {
+      entity: {
+        schema: {
+          names: ['Something'],
+          fields: {
+            num: {
+              primitive: 'NUMBER'
+            }
+          },
+          hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
+        },
+      },
+      refinement: {
+        binary: {
+          leftExpr: {
+            binary: {
+              leftExpr: {
+                field: 'num',
+              },
+              operator: 'LESS_THAN',
+              rightExpr: {
+                number: 12
+              }
+            }
+          },
+          operator: 'AND',
+          rightExpr: {
+            binary: {
+              leftExpr: {
+                field: 'num'
+              },
+              operator: 'GREATER_THAN',
+              rightExpr: {
+                number: -1
+              }
+            }
+          },
         }
       }
     });

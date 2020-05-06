@@ -11,14 +11,14 @@ import {Runtime} from '../runtime/runtime.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {Type, CollectionType, ReferenceType} from '../runtime/type.js';
+import {CollectionType, ReferenceType, Type} from '../runtime/type.js';
 import {Schema} from '../runtime/schema.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {assert} from '../platform/assert-web.js';
 import {findLongRunningArcId} from './storage-key-recipe-resolver.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Capabilities} from '../runtime/capabilities.js';
-import {ManifestProto, FateEnum, CapabilityEnum, DirectionEnum, PrimitiveTypeEnum} from './manifest-proto.js';
+import {CapabilityEnum, DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
 
 export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path);
@@ -136,17 +136,15 @@ export async function typeToProtoPayload(type: Type) {
   type = type.resolvedType();
   switch (type.tag) {
     case 'Entity':
-      // TODO Question for the reviewer: Move refinement to schema?
-      const payload = {
+      const entity = {
         entity: {
           schema: await schemaToProtoPayload(type.getEntitySchema()),
         }
       };
       if (type.getEntitySchema().refinement) {
-        const refinement = type.getEntitySchema().refinement.toProto();
-        payload['refinement'] = refinement;
+        entity['refinement'] = type.getEntitySchema().refinement.toProto();
       }
-      return payload;
+      return entity;
     case 'Collection': return {
       collection: {
         collectionType: await typeToProtoPayload((type as CollectionType<Type>).collectionType)

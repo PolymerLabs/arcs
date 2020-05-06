@@ -342,9 +342,11 @@ export class BinaryExpression extends RefinementExpression {
 
   toProtoExpression(): object {
     return {
-      left_expr: this.leftExpr.toProtoExpression(),
-      right_expr: this.rightExpr.toProtoExpression(),
-      operator: this.operator.toProtoOp()
+      binary: {
+        leftExpr: this.leftExpr.toProtoExpression(),
+        rightExpr: this.rightExpr.toProtoExpression(),
+        operator: this.operator.toProtoOp()
+      }
     };
   }
 
@@ -536,8 +538,10 @@ export class UnaryExpression extends RefinementExpression {
 
   toProtoExpression(): object {
     return {
-      expr: this.expr.toProtoExpression(),
-      operator: this.operator.toProtoOp(),
+      unary: {
+        expr: this.expr.toProtoExpression(),
+        operator: this.operator.toProtoOp(),
+      }
     };
   }
 
@@ -1296,13 +1300,17 @@ export class RefinementOperator {
   }
 
   toProtoOp(): number {
-    return [
+    const op = [
       Op.AND, Op.OR,
       Op.LT, Op.GT, Op.LTE, Op.GTE,
       Op.ADD, Op.SUB, Op.MUL, Op.DIV,
       Op.NOT, Op.NEG,
       Op.EQ, Op.NEQ,
     ].indexOf(this.op);
+
+    if (op === -1) throw Error(`Op type '${this.op}' is not supported.`);
+
+    return op;
   }
 
   updateOp(operator: Op) {
