@@ -79,9 +79,13 @@ class RecipeGraph(recipe: Recipe) {
         data class Neighbor(val node: Node, val spec: HandleConnectionSpec)
 
         /** A node representing a particle. */
-        data class Particle(val particle: Recipe.Particle) : Node()
+        data class Particle(val particle: Recipe.Particle) : Node() {
+            override fun toString() = "[p:${particle.spec.name}]"
+        }
 
         /** A node representing a handle. */
-        data class Handle(val handle: Recipe.Handle) : Node()
+        data class Handle(val handle: Recipe.Handle) : Node() {
+            override fun toString() = "[h:${handle.name}]"
+        }
     }
 }

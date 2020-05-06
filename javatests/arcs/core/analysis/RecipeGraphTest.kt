@@ -102,6 +102,17 @@ class RecipeGraphTest {
         }
     }
 
+    @Test
+    fun prettyPrintNodes() {
+        with (TestRecipe()) {
+            val particleNode = RecipeGraph.Node.Particle(readerParticle)
+            val handleNode = RecipeGraph.Node.Handle(thingHandle)
+
+            assertThat("$particleNode").isEqualTo("[p:Reader]")
+            assertThat("$handleNode").isEqualTo("[h:thing]")
+        }
+    }
+
     private fun testAllConnections(testRecipe: TestRecipe) {
         with (testRecipe) {
             val graph = RecipeGraph(recipe)
