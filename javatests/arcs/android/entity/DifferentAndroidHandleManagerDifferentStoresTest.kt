@@ -97,4 +97,10 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
     override fun collection_removingFromA_isRemovedFromB() {
         super.collection_removingFromA_isRemovedFromB()
     }
+
+    @Ignore("b/154947352 - Deflake")
+    @Test
+    override fun collection_addingToA_showsUpInQueryOnB() {
+        super.collection_addingToA_showsUpInQueryOnB()
+    }
 }

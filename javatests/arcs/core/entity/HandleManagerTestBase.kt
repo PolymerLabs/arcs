@@ -706,7 +706,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_addingToA_showsUpInQueryOnB() = testRunner {
+    open fun collection_addingToA_showsUpInQueryOnB() = testRunner {
         val writeHandle = writeHandleManager.createCollectionHandle()
         val readHandle = readHandleManager.createCollectionHandle()
 
