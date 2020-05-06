@@ -16,6 +16,8 @@ package arcs.core.storage.driver.testutil
 import arcs.core.crdt.CrdtData
 import arcs.core.storage.StorageKey
 import arcs.core.storage.driver.RamDisk
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 /** Suspends until the [RamDisk] contains a value for the provided [storageKey]. */
@@ -36,4 +38,19 @@ suspend fun RamDisk.waitUntilSet(storageKey: StorageKey) = suspendCancellableCor
         it.resume(Unit) { e -> throw e }
         removeListener(listener)
     }
+}
+
+/** Asynchronously waits for the [RamDisk] value at [storageKey] to be changed. */
+fun RamDisk.asyncWaitForUpdate(storageKey: StorageKey): Deferred<CrdtData> {
+    val result = CompletableDeferred<CrdtData>()
+    var listener: ((StorageKey, Any?) -> Unit)? = null
+    listener = listener@{ changedKey, data ->
+        if (changedKey != storageKey || data == null) {
+            return@listener
+        }
+        removeListener(listener!!)
+        result.complete(data as CrdtData)
+    }
+    addListener(listener)
+    return result
 }

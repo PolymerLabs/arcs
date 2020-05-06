@@ -74,8 +74,16 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
     override fun tearDown() = super.tearDown()
 
     // TODO - fix these?
-    override fun collection_referenceLiveness() {}
-    override fun singleton_referenceLiveness() {}
+    @Ignore("b/152436411 - deflake")
+    @Test
+    override fun collection_referenceLiveness() {
+        super.collection_referenceLiveness()
+    }
+
+    @Test
+    override fun singleton_referenceLiveness() {
+        super.singleton_referenceLiveness()
+    }
 
     @Ignore("b/154947352 - Deflake")
     @Test
