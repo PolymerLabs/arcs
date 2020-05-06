@@ -221,15 +221,10 @@ class ArcHostHelper(
             is Operation ->
                 bundle.putInt(EXTRA_OPERATION_RESULT, result.ordinal)
             is Exception -> {
+                bundle.putString(EXTRA_OPERATION_EXCEPTION, result.message)
                 bundle.putString(
-                    EXTRA_OPERATION_EXCEPTION,
-                    "${result.message} Caused By ${result.cause?.message ?: ""}"
-                )
-                bundle.putString(
-                    EXTRA_OPERATION_EXCEPTION_STACKTRACE, result.stackTrace.joinToString("\n") +
-                        result.cause?.stackTrace?.let {
-                            "Caused By: ${it.joinToString("\n")}"
-                        }
+                    EXTRA_OPERATION_EXCEPTION_STACKTRACE,
+                    result.stackTrace.joinToString("\n")
                 )
             }
             else -> Unit

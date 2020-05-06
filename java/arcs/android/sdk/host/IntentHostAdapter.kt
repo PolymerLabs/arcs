@@ -17,9 +17,9 @@ import android.os.Handler
 import android.os.ResultReceiver
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostException
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 
 /**
@@ -42,32 +42,26 @@ abstract class IntentHostAdapter(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     class ResultReceiverContinuation<T>(
-        val continuation: Continuation<T?>,
+        val continuation: CancellableContinuation<T?>,
         val block: (Any?) -> T?
     ) : ResultReceiver(Handler()) {
         override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
             val exception = resultData?.getString(ArcHostHelper.EXTRA_OPERATION_EXCEPTION)
             exception?.let {
-                continuation.resumeWith(
-                    Result.failure(
-                        ArcHostException(
-                            exception,
-                            resultData.getString(
-                                ArcHostHelper.EXTRA_OPERATION_EXCEPTION_STACKTRACE,
-                                ""
-                            )
-                        )
+                continuation.cancel(
+                    ArcHostException(
+                        exception,
+                        resultData.getString(ArcHostHelper.EXTRA_OPERATION_EXCEPTION_STACKTRACE, "")
                     )
                 )
             } ?: run {
-                continuation.resumeWith(
-                    Result.success(
-                        block(
-                            resultData?.get(
-                                ArcHostHelper.EXTRA_OPERATION_RESULT
-                            )
+                continuation.resume(
+                    block(
+                        resultData?.get(
+                            ArcHostHelper.EXTRA_OPERATION_RESULT
                         )
-                    )
+                    ),
+                    onCancellation = {}
                 )
             }
         }
@@ -84,13 +78,13 @@ abstract class IntentHostAdapter(
         intent: Intent,
         transformer: (Any?) -> T?
     ): T? = withTimeout(ARCHOST_INTENT_TIMEOUT_MS) {
-            suspendCoroutine { continuation: Continuation<T?> ->
-                ArcHostHelper.setResultReceiver(
-                    intent,
-                    ResultReceiverContinuation(continuation, transformer)
-                )
-                sendIntentToHostService(intent)
-            }
+        suspendCancellableCoroutine { continuation: CancellableContinuation<T?> ->
+            ArcHostHelper.setResultReceiver(
+                intent,
+                ResultReceiverContinuation(continuation, transformer)
+            )
+            sendIntentToHostService(intent)
+        }
     }
 
     /**
