@@ -731,6 +731,7 @@ ReferenceType
       type,
     });
   }
+
 MuxType 
   = '#' type:ParticleHandleConnectionType
   {
@@ -739,6 +740,7 @@ MuxType
       type,
     });
   }
+
 TupleType  "a tuple of types (e.g. (A, &B, [C]))"
   = '(' multiLineSpace first:ParticleHandleConnectionType rest:(multiLineSpace ',' multiLineSpace ParticleHandleConnectionType)* multiLineSpace ',' ? multiLineSpace ')'
   {
