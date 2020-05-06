@@ -127,7 +127,6 @@ class WriteBackForTesting private constructor(
 
         override fun create(
             protocol: String,
-            writebackThreads: ExecutorService?,
             queueSize: Int
         ) = WriteBackForTesting(protocol)
     }

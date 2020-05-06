@@ -11,14 +11,17 @@
 
 package arcs.core.storage
 
-import androidx.annotation.VisibleForTesting
 import arcs.core.storage.keys.Protocols
-import java.util.concurrent.ExecutorService
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -49,32 +52,28 @@ interface WriteBack {
 /** The factory interfaces of [WriteBack] implementations. */
 interface WriteBackFactory {
     fun create(
+        /** One of supported storage [Protocols]. */
         protocol: String = "",
-        /**
-         * Provide a dedicated write-back thread pool or leave it to implementations
-         * to decide what threads to be designated as the write-backers.
-         */
-        writebackThreads: ExecutorService? = null,
-        /**
-         * The maximum queue size above which new incoming flush jobs will be suspended.
-         */
-        queueSize: Int = 10
+        /** The maximum queue size above which new incoming flush jobs will be suspended. */
+        queueSize: Int = Channel.UNLIMITED
     ): WriteBack
 }
 
-/** Write-back implementation for Arcs Stores.*/
+/**
+ * Write-back implementation for Arcs Stores.
+ * It implements [Mutex] that provides the capability of temporary lock-down and resume.
+ */
+@ExperimentalCoroutinesApi
 class StoreWriteBack private constructor(
     protocol: String,
-    writebackThreads: ExecutorService?,
-    queueSize: Int
+    queueSize: Int,
+    val scope: CoroutineScope?
 ) : WriteBack,
-    Channel<suspend () -> Unit> by Channel(queueSize),
-    CoroutineScope by CoroutineScope(
-        writebackThreads?.asCoroutineDispatcher() ?: Dispatchers.IO
-    ),
     Mutex by Mutex() {
     // Only apply write-back to physical storage media(s).
-    private val passThrough = protocol != Protocols.DATABASE_DRIVER
+    private val passThrough = atomic(
+        scope == null || protocol != Protocols.DATABASE_DRIVER
+    )
 
     // The number of active flush jobs.
     private var activeJobs = 0
@@ -82,39 +81,47 @@ class StoreWriteBack private constructor(
     // The signal to block/release who are waiting for completion of active flush jobs.
     private val awaitSignal = Mutex()
 
+    // Internal asynchronous write-back channel for scheduling flush jobs.
+    private val channel: Channel<suspend () -> Unit> = Channel(queueSize)
+
     init {
         // One of write-back thread(s) will wake up and execute flush jobs in FIFO order
         // when there are pending flush jobs in queue. Powerful features like batching,
         // merging, filtering, etc can be implemented at this call-site in the future.
-        if (!passThrough) {
-            launch {
-                try {
-                    while (true) {
-                        exitFlushSection { receive()() }
-                    }
-                } finally {
-                    if (awaitSignal.isLocked) {
-                        awaitSignal.unlock()
-                    }
+        if (!passThrough.value && scope != null) {
+            channel.consumeAsFlow()
+                .onEach {
+                    // Neither black out pending flush jobs in this channel nor propagate
+                    // the exception within the scope to affect flush jobs at other stores.
+                    try { it() } catch (_: Exception) {}
                 }
-            }
+                .onCompletion {
+                    // Upon cancellation of the write-back scope, change to write-through mode,
+                    // consume all pending flush jobs then release all awaitings.
+                    passThrough.update { true }
+                    channel.consumeEach { exitFlushSection {
+                        try { it() } catch (_: Exception) {}
+                    }}
+                    if (awaitSignal.isLocked) awaitSignal.unlock()
+                }
+                .launchIn(scope)
         }
     }
 
     override suspend fun flush(job: suspend () -> Unit) {
-        if (!passThrough) flushSection { job() }
+        if (!passThrough.value) flushSection { job() }
         else job()
     }
 
     override suspend fun asyncFlush(job: suspend () -> Unit) {
-        // Queue up a flush task can run average 3x-5x faster than launching it.
-        if (!passThrough) enterFlushSection { send(job) }
-        else job()
+        if (!passThrough.value) enterFlushSection {
+            // Queue up a flush task can run average 3x-5x faster than launching it.
+            // Fall back to write-through when the write-back channel is cancelled or closed.
+            try { channel.send(job) } catch (_: Exception) { exitFlushSection { job() } }
+        } else job()
     }
 
-    override suspend fun awaitIdle() {
-        if (!passThrough) awaitSignal.withLock {}
-    }
+    override suspend fun awaitIdle() = awaitSignal.withLock {}
 
     private suspend inline fun flushSection(job: () -> Unit) {
         enterFlushSection()
@@ -133,13 +140,21 @@ class StoreWriteBack private constructor(
     }
 
     companion object : WriteBackFactory {
+        private var writeBackScope: CoroutineScope? = null
+
         /** Override [WriteBack] injection to Arcs Stores. */
-        @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
         var writeBackFactoryOverride: WriteBackFactory? = null
 
         /** The factory of creating [WriteBack] instances. */
-        override fun create(protocol: String, writebackThreads: ExecutorService?, queueSize: Int) =
-            writeBackFactoryOverride?.create(protocol, writebackThreads, queueSize)
-                ?: StoreWriteBack(protocol, writebackThreads, queueSize)
+        override fun create(protocol: String, queueSize: Int) =
+            writeBackFactoryOverride?.create(protocol, queueSize)
+                ?: StoreWriteBack(protocol, queueSize, writeBackScope)
+
+        /**
+         * Initialize write-back coroutine scope.
+         * The caller is responsible for managing lifecycle of the [scope].
+         * The cancellation of the [scope] will switch the write-back to write-through.
+         */
+        fun init(scope: CoroutineScope) { writeBackScope = scope }
     }
 }

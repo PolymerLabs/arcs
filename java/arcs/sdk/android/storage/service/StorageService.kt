@@ -29,6 +29,7 @@ import arcs.android.util.AndroidBinderStats
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.Store
+import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.database.name
 import arcs.core.storage.database.persistent
 import arcs.core.storage.driver.DatabaseDriverProvider
@@ -43,8 +44,11 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
+import java.util.concurrent.Executors
 
 /**
  * Implementation of a [Service] which manages [Store]s and exposes the ability to access them via
@@ -53,15 +57,23 @@ import kotlinx.coroutines.runBlocking
 class StorageService : ResurrectorService() {
     private val coroutineContext = Dispatchers.IO + CoroutineName("StorageService")
     private val scope = CoroutineScope(coroutineContext)
+    private val writeBackScope = CoroutineScope(
+        Executors.newCachedThreadPool {
+            Thread(it).apply { name = "WriteBack #$id" }
+        }.asCoroutineDispatcher()
+    )
     private val stores = ConcurrentHashMap<StorageKey, Store<*, *, *>>()
     private var startTime: Long? = null
     private val stats = BindingContextStatsImpl()
     private val log = TaggedLog { "StorageService" }
 
+    @ExperimentalCoroutinesApi
     override fun onCreate() {
         super.onCreate()
         log.debug { "onCreate" }
         startTime = startTime ?: System.currentTimeMillis()
+
+        StoreWriteBack.init(writeBackScope)
 
         val periodicCleanupTask =
             PeriodicWorkRequest.Builder(PeriodicCleanupTask::class.java, 1, TimeUnit.HOURS)
@@ -102,6 +114,7 @@ class StorageService : ResurrectorService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        writeBackScope.cancel()
         scope.cancel()
     }
 
