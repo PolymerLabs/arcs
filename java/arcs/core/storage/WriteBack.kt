@@ -99,9 +99,9 @@ class StoreWriteBack private constructor(
                     // Upon cancellation of the write-back scope, change to write-through mode,
                     // consume all pending flush jobs then release all awaitings.
                     passThrough.update { true }
-                    channel.consumeEach { exitFlushSection {
-                        try { it() } catch (_: Exception) {}
-                    }}
+                    channel.consumeEach {
+                        exitFlushSection { try { it() } catch (_: Exception) {} }
+                    }
                     if (awaitSignal.isLocked) awaitSignal.unlock()
                 }
                 .launchIn(scope)

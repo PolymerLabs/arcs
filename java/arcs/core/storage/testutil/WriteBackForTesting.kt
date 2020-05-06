@@ -16,7 +16,6 @@ import arcs.core.storage.WriteBackFactory
 import arcs.core.storage.keys.Protocols
 import arcs.core.util.TaggedLog
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
