@@ -135,9 +135,13 @@ export async function typeToProtoPayload(type: Type) {
   }
   type = type.resolvedType();
   switch (type.tag) {
-    case 'Entity': return {
+    case 'Entity':
+      // TODO Question for the reviewer: Move refinement to schema?
+      const refinement = type.getEntitySchema().refinement.toProto();
+      return {
       entity: {
-        schema: await schemaToProtoPayload(type.getEntitySchema())
+        schema: await schemaToProtoPayload(type.getEntitySchema()),
+        refinement
       }
     };
     case 'Collection': return {
