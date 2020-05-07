@@ -19,7 +19,7 @@ import arcs.core.host.api.Particle
  * explicitly registered [ArcHost]s and [Particle]s invoked by [HostRegistry.registerHost] and
  * [ExplicitHostRegistry.registerParticles].
  */
-class ExplicitHostRegistry : HostRegistry {
+class ExplicitHostRegistry : HostRegistry() {
     private val arcHosts = mutableListOf<ArcHost>()
 
     override suspend fun availableArcHosts() = arcHosts
