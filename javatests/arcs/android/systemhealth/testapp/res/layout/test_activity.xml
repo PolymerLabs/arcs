@@ -16,6 +16,7 @@
   <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_margin="8dp"
     android:orientation="vertical">
 
     <TextView
@@ -28,173 +29,254 @@
       android:layout_width="match_parent"
       android:layout_height="wrap_content"/>
 
-    <TextView
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:text="@string/handle_type"/>
-
-    <RadioGroup
+    <LinearLayout
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:orientation="horizontal">
-
-      <RadioButton
-        android:id="@+id/singleton"
-        android:layout_width="100dp"
+      <TextView
         android:layout_height="wrap_content"
-        android:checked="true"
-        android:text="@string/singleton" />
-      <RadioButton
-        android:id="@+id/collection"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:text="@string/handle_type"/>
+
+      <RadioGroup
         android:layout_height="wrap_content"
-        android:text="@string/collection"/>
-    </RadioGroup>
+        android:layout_width="0dp"
+        android:layout_weight="2"
+        android:orientation="horizontal">
 
-    <TextView
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:text="@string/storage_type"/>
-
-    <RadioGroup
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:orientation="horizontal">
-
-      <RadioButton
-        android:id="@+id/in_memory"
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
-        android:checked="true"
-        android:text="@string/in_memory" />
-      <RadioButton
-        android:id="@+id/persistent"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/persistent"/>
-
-    </RadioGroup>
-
-    <TextView
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:text="@string/service_type" />
-
-    <RadioGroup
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:orientation="horizontal">
-
-      <RadioButton
-        android:id="@+id/syshealth_service_local"
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
-        android:checked="true"
-        android:text="@string/syshealth_service_local" />
-
-      <RadioButton
-        android:id="@+id/syshealth_service_remote"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/syshealth_service_remote" />
-    </RadioGroup>
+        <RadioButton
+          android:id="@+id/singleton"
+          android:layout_width="100dp"
+          android:layout_height="wrap_content"
+          android:checked="true"
+          android:text="@string/singleton" />
+        <RadioButton
+          android:id="@+id/collection"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/collection"/>
+      </RadioGroup>
+    </LinearLayout>
 
     <LinearLayout
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:orientation="vertical">
+      android:orientation="horizontal">
+      <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_alignParentStart="true"
+        android:text="@string/storage_type"/>
+
+      <RadioGroup
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="2"
+        android:orientation="horizontal">
+
+        <RadioButton
+          android:id="@+id/in_memory"
+          android:layout_width="100dp"
+          android:layout_height="wrap_content"
+          android:checked="true"
+          android:text="@string/in_memory" />
+        <RadioButton
+          android:id="@+id/persistent"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/persistent"/>
+      </RadioGroup>
+    </LinearLayout>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
+      <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:text="@string/service_type" />
+
+      <RadioGroup
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="2"
+        android:orientation="horizontal">
+
+        <RadioButton
+          android:id="@+id/syshealth_service_local"
+          android:layout_width="100dp"
+          android:layout_height="wrap_content"
+          android:checked="true"
+          android:text="@string/syshealth_service_local" />
+
+        <RadioButton
+          android:id="@+id/syshealth_service_remote"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/syshealth_service_remote" />
+      </RadioGroup>
+    </LinearLayout>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
 
       <TextView
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:text="@string/listener_threads" />
 
       <EditText
         android:id="@+id/listeners"
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:ems="10"
         android:hint="@string/listener_threads_hint"
         android:importantForAutofill="no"
         android:inputType="numberDecimal"
         android:textSize="14sp" />
+    </LinearLayout>
 
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
       <TextView
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:text="@string/writer_threads" />
 
       <EditText
         android:id="@+id/writers"
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:ems="10"
         android:hint="@string/writer_threads_hint"
         android:importantForAutofill="no"
         android:inputType="numberDecimal"
         android:textSize="14sp" />
+    </LinearLayout>
 
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
       <TextView
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:text="@string/test_iterations" />
 
       <EditText
         android:id="@+id/iterations"
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:ems="10"
         android:hint="@string/test_iterations_hint"
         android:importantForAutofill="no"
         android:inputType="numberDecimal"
         android:textSize="14sp" />
+    </LinearLayout>
 
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
       <TextView
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:text="@string/iteration_interval_ms" />
 
       <EditText
         android:id="@+id/interval"
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:ems="10"
         android:hint="@string/iteration_interval_ms_hint"
         android:importantForAutofill="no"
         android:inputType="numberDecimal"
         android:textSize="14sp" />
+    </LinearLayout>
 
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
       <TextView
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:text="@string/data_size" />
 
       <EditText
         android:id="@+id/data_size_bytes"
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:ems="10"
         android:hint="@string/data_size_hint"
         android:importantForAutofill="no"
         android:inputType="numberDecimal"
         android:textSize="14sp" />
+    </LinearLayout>
 
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
       <TextView
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:text="@string/delayed_start_ms" />
 
       <EditText
         android:id="@+id/delayed_start_ms"
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:ems="10"
         android:hint="@string/delayed_start_ms_hint"
         android:importantForAutofill="no"
         android:inputType="numberDecimal"
         android:textSize="14sp" />
-
     </LinearLayout>
+
+    <TextView
+      android:id="@+id/service_crash_rate_label"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content" />
+
+    <SeekBar
+      android:id="@+id/service_crash_rate"
+      android:max="100"
+      android:progress="10"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"/>
+
+    <TextView
+      android:id="@+id/client_crash_rate_label"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content" />
+
+    <SeekBar
+      android:id="@+id/client_crash_rate"
+      android:max="100"
+      android:progress="10"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"/>
 
     <LinearLayout
       style="?android:attr/buttonBarStyle"

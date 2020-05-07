@@ -56,7 +56,7 @@ import kotlinx.coroutines.runBlocking
  * Implementation of a [Service] which manages [Store]s and exposes the ability to access them via
  * the [IStorageService] interface when bound-to by a client.
  */
-class StorageService : ResurrectorService() {
+open class StorageService : ResurrectorService() {
     private val coroutineContext = Dispatchers.IO + CoroutineName("StorageService")
     private val scope = CoroutineScope(coroutineContext)
     private val writeBackScope = CoroutineScope(
@@ -249,7 +249,7 @@ class StorageService : ResurrectorService() {
     }
 
     companion object {
-        private const val EXTRA_OPTIONS = "storeOptions"
+        const val EXTRA_OPTIONS = "storeOptions"
         private const val MANAGER_ACTION = "arcs.sdk.android.storage.service.MANAGER"
 
         init {
