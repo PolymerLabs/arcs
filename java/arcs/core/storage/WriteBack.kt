@@ -39,6 +39,7 @@ interface WriteBack {
      * Write-through: flush directly all data updates to the next storage layer.
      */
     suspend fun flush(job: suspend () -> Unit)
+
     /**
      * Write-back: queue up data updates and let write-back threads decide how and
      * when to flush all data updates to the next storage layer.

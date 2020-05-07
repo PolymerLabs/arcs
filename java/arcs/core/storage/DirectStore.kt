@@ -148,7 +148,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
         deliverCallbacks(modelChange, source = channel)
 
-        // As the localModel has already be applied with new operations and/or merged with
+        // As the localModel has already been applied with new operations and/or merged with
         // new model updates, leave the flush job with write-back threads.
         val noDriverSideChanges = noDriverSideChanges(modelChange, otherChange, false)
         asyncFlush { updateStateAndAct(noDriverSideChanges, version, messageFromDriver = false) }
