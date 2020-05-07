@@ -401,8 +401,8 @@ fun ComponentName.createOnArcStateChangeIntent(
     hostId: String,
     arcId: ArcId,
     receiver: ResultReceiver
-): Intent =
-    ArcHostHelper.createArcHostIntent(
+): Intent {
+    return ArcHostHelper.createArcHostIntent(
         ArcHostHelper.Operation.OnArcStateChange,
         this,
         hostId,
@@ -410,3 +410,4 @@ fun ComponentName.createOnArcStateChangeIntent(
     ).also {
         it.putExtra(ArcHostHelper.EXTRA_ARCSTATE_CHANGED_ARCID, arcId.toString())
     }
+}

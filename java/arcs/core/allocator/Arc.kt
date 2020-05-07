@@ -114,10 +114,10 @@ data class Arc internal constructor(
         fetchCurrentStates()
 
         // Register event listeners
-        partitionsFor?.forEach {
-            val arcHost = allocator.lookupArcHost(it.arcHost)
+        partitionsFor?.forEach { partition ->
+            val arcHost = allocator.lookupArcHost(partition.arcHost)
             arcHost.setOnArcStateChange(arcId) { _, state ->
-                arcStatesByHostId[it.arcHost] = state
+                arcStatesByHostId[partition.arcHost] = state
                 recomputeArcState()
             }
         }
