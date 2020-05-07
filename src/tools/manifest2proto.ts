@@ -134,13 +134,13 @@ export async function typeToProtoPayload(type: Type) {
     assert(type.isResolved());
   }
   type = type.resolvedType();
+  const entity = {
+    entity: {
+      schema: await schemaToProtoPayload(type.getEntitySchema()),
+    }
+  };
   switch (type.tag) {
     case 'Entity':
-      const entity = {
-        entity: {
-          schema: await schemaToProtoPayload(type.getEntitySchema()),
-        }
-      };
       if (type.getEntitySchema().refinement) {
         entity['refinement'] = type.getEntitySchema().refinement.toProto();
       }

@@ -14,7 +14,7 @@ import {Manifest} from '../../runtime/manifest.js';
 import {Capabilities} from '../../runtime/capabilities.js';
 import {fs} from '../../platform/fs-web.js';
 import protobuf from 'protobufjs';
-import {Refinement} from '../../runtime/refiner';
+import {Refinement} from '../../runtime/refiner.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 
 const rootNamespace = protobuf.loadSync('./java/arcs/core/data/proto/manifest.proto');

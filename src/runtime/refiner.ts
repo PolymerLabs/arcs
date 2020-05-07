@@ -642,7 +642,7 @@ export class FieldNamePrimitive extends RefinementExpression {
   toProtoExpression(): object {
     return {
       field: this.value
-    }
+    };
   }
 
   toKTExpression(codeGenerator: CodeGenerator): string {
@@ -703,7 +703,7 @@ export class QueryArgumentPrimitive extends RefinementExpression {
   toProtoExpression(): object {
     return {
       queryArgument: this.value,
-    }
+    };
   }
 
   applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
@@ -814,7 +814,7 @@ class BooleanPrimitive extends RefinementExpression {
   toProtoExpression(): object {
     return {
       boolean: this.value,
-    }
+    };
   }
 
   applyOperator(): ExpressionPrimitives {
@@ -864,7 +864,7 @@ class TextPrimitive extends RefinementExpression {
   toProtoExpression(): object {
     return {
       text: this.value,
-    }
+    };
   }
 
   applyOperator(): ExpressionPrimitives {
