@@ -57,6 +57,9 @@ interface Database {
      */
     suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long)
 
+    /** Garbage collection run: will remove unused entities. */
+    suspend fun runGarbageCollection()
+
     /** Takes a snapshot of the current [DatabasePerformanceStatistics] for the database. */
     suspend fun snapshotStatistics(): DatabasePerformanceStatistics.Snapshot
 

@@ -54,6 +54,7 @@ import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
 import arcs.jvm.util.JvmTime
 import com.google.protobuf.InvalidProtocolBufferException
+import java.time.Duration
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
@@ -701,6 +702,59 @@ class DatabaseImpl(
                 )
             } else {
                 deleteFields(arrayOf(storageKeyId.toString()), db)
+            }
+        }
+    }
+
+    override suspend fun runGarbageCollection() {
+        val twoDaysAgo = JvmTime.currentTimeMillis - Duration.ofDays(2).toMillis()
+        writableDatabase.transaction {
+            val db = this
+            rawQuery(
+                """
+                    SELECT storage_key_id, storage_key, orphan,
+                        (SELECT COUNT(1)=0
+                         FROM entity_refs
+                         WHERE entity_storage_key = storage_keys.storage_key) as noRef
+                    FROM entities
+                    LEFT JOIN storage_keys ON entities.storage_key_id = storage_keys.id
+                    WHERE creation_timestamp < $twoDaysAgo
+                    AND (orphan OR noRef)
+                """.trimIndent(),
+                arrayOf())
+            .forEach {
+                val storageKeyId = it.getLong(0)
+                val storageKey = StorageKeyParser.parse(it.getString(1))
+                val orphan = it.getNullableBoolean(2) ?: false
+                val noRef = it.getBoolean(3)
+                if (orphan && noRef) {
+                    // Already marked as orphan, still not referenced, safe to delete.
+                    delete(storageKey = storageKey, db = db)
+                    notifyClients(storageKey) { it.onDatabaseDelete(null) }
+                }
+                if (!orphan && noRef) {
+                    // Is not referenced, but not marked as orphan: mark as orphan, will be deleted
+                    // on the next round.
+                    update(
+                        TABLE_ENTITIES,
+                        ContentValues().apply {
+                            put("orphan", true)
+                        },
+                        "storage_key_id = ?",
+                        arrayOf(storageKeyId.toString())
+                    )
+                }
+                if (orphan && !noRef) {
+                    // Was marked orphan, but now has a reference, mark as not orphan.
+                    update(
+                        TABLE_ENTITIES,
+                        ContentValues().apply {
+                            put("orphan", false)
+                        },
+                        "storage_key_id = ?",
+                        arrayOf(storageKeyId.toString())
+                    )
+                }
             }
         }
     }

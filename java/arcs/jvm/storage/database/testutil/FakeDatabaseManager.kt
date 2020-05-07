@@ -155,6 +155,10 @@ open class FakeDatabase : Database {
     override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
         throw UnsupportedOperationException("Fake db cannot remove entities by creation time.")
     }
+
+    override suspend fun runGarbageCollection() {
+        throw UnsupportedOperationException("Fake database does not gargbage collect.")
+    }
 }
 
 class FakeDatabaseRegistry : MutableDatabaseRegistry {
