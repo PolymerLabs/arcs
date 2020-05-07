@@ -13,40 +13,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/** An abstract domain of set, where the elements are ordered by inclusion. */
-class AbstractSet<S>(
-    val value: BoundedAbstractElement<Set<S>>
-) : AbstractValue<AbstractSet<S>> {
-    override val isBottom = value.isBottom
-    override val isTop = value.isTop
-
-    val set: Set<S>?
-        get() = value.value
-
-    constructor(s: Set<S>): this(BoundedAbstractElement.makeValue(s))
-
-    override infix fun isEquivalentTo(other: AbstractSet<S>) =
-        value.isEquivalentTo(other.value) { a, b -> a == b }
-
-    override infix fun join(other: AbstractSet<S>) = AbstractSet(
-        value.join(other.value) { a, b -> a union b }
-    )
-
-    override infix fun meet(other: AbstractSet<S>) = AbstractSet(
-        value.meet(other.value) { a, b -> a intersect b }
-    )
-
-    override fun toString() = when {
-        value.isTop -> "TOP"
-        value.isBottom -> "BOTTOM"
-        else -> "${set}"
-    }
-
-    companion object {
-        fun <S> getBottom() = AbstractSet<S>(BoundedAbstractElement.getBottom<Set<S>>())
-    }
-}
-
 /** Returns the name of the underlying handle or particle. */
 fun RecipeGraph.Node.getName() = when (this) {
     is RecipeGraph.Node.Particle -> "p:${particle.spec.name}"

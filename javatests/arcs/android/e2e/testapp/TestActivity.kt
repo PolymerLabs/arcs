@@ -24,6 +24,7 @@ import arcs.core.common.ArcId
 import arcs.core.data.HandleMode
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
@@ -37,6 +38,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 /** Entry UI to launch Arcs Test. */
@@ -223,8 +226,12 @@ class TestActivity : AppCompatActivity() {
     }
 
     private suspend fun createHandle() {
-        singletonHandle?.close()
-        collectionHandle?.close()
+        singletonHandle?.dispatcher?.let {
+            withContext(it) { singletonHandle?.close() }
+        }
+        collectionHandle?.dispatcher?.let {
+            withContext(it) { collectionHandle?.close() }
+        }
 
         appendResultText(getString(R.string.waiting_for_result))
 
@@ -249,30 +256,33 @@ class TestActivity : AppCompatActivity() {
                     TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
                     else -> TestEntity.collectionInMemoryStorageKey
                 }
-            ) as ReadWriteCollectionHandle<TestEntity>
+            ).awaitReady() as ReadWriteCollectionHandle<TestEntity>
 
+            collectionHandle?.dispatcher?.let {
+                withContext(it) {
+                    collectionHandle?.onReady {
+                        scope.launch {
+                            fetchAndUpdateResult("onReady")
+                        }
+                    }
 
-            collectionHandle?.onReady {
-                scope.launch {
-                    fetchAndUpdateResult("onReady")
-                }
-            }
+                    collectionHandle?.onUpdate {
+                        scope.launch {
+                            fetchAndUpdateResult("onUpdate")
+                        }
+                    }
 
-            collectionHandle?.onUpdate {
-                scope.launch {
-                    fetchAndUpdateResult("onUpdate")
-                }
-            }
+                    collectionHandle?.onDesync {
+                        scope.launch {
+                            fetchAndUpdateResult("onDesync")
+                        }
+                    }
 
-            collectionHandle?.onDesync {
-                scope.launch {
-                    fetchAndUpdateResult("onDesync")
-                }
-            }
-
-            collectionHandle?.onResync {
-                scope.launch {
-                    fetchAndUpdateResult("onResync")
+                    collectionHandle?.onResync {
+                        scope.launch {
+                            fetchAndUpdateResult("onResync")
+                        }
+                    }
                 }
             }
         } else {
@@ -288,29 +298,33 @@ class TestActivity : AppCompatActivity() {
                     TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
                     else -> TestEntity.singletonInMemoryStorageKey
                 }
-            ) as ReadWriteSingletonHandle<TestEntity>
+            ).awaitReady() as ReadWriteSingletonHandle<TestEntity>
 
-            singletonHandle?.onReady {
-                scope.launch {
-                    fetchAndUpdateResult("onReady")
-                }
-            }
+            singletonHandle?.dispatcher?.let {
+                withContext(it) {
+                    singletonHandle?.onReady {
+                        scope.launch {
+                            fetchAndUpdateResult("onReady")
+                        }
+                    }
 
-            singletonHandle?.onUpdate {
-                scope.launch {
-                    fetchAndUpdateResult("onUpdate")
-                }
-            }
+                    singletonHandle?.onUpdate {
+                        scope.launch {
+                            fetchAndUpdateResult("onUpdate")
+                        }
+                    }
 
-            singletonHandle?.onResync{
-                scope.launch {
-                    fetchAndUpdateResult("onResync")
-                }
-            }
+                    singletonHandle?.onDesync {
+                        scope.launch {
+                            fetchAndUpdateResult("onDesync")
+                        }
+                    }
 
-            singletonHandle?.onDesync {
-                scope.launch {
-                    fetchAndUpdateResult("onDesync")
+                    singletonHandle?.onResync {
+                        scope.launch {
+                            fetchAndUpdateResult("onResync")
+                        }
+                    }
                 }
             }
         }
@@ -338,22 +352,30 @@ class TestActivity : AppCompatActivity() {
         } else {
             if (isCollection) {
                 for (i in 0 until 2) {
-                    collectionHandle?.store(
-                        TestEntity(
-                            text = TestEntity.text,
-                            number = i.toDouble(),
-                            boolean = TestEntity.boolean
-                        )
-                    )?.join()
+                    collectionHandle?.dispatcher?.let {
+                        withContext(it) {
+                            collectionHandle?.store(
+                                TestEntity(
+                                    text = TestEntity.text,
+                                    number = i.toDouble(),
+                                    boolean = TestEntity.boolean
+                                )
+                            )?.join()
+                        }
+                    }
                 }
             } else {
-                singletonHandle?.store(
-                    TestEntity(
-                        text = TestEntity.text,
-                        number = TestEntity.number,
-                        boolean = TestEntity.boolean
-                    )
-                )?.join()
+                singletonHandle?.dispatcher?.let {
+                    withContext(it) {
+                        singletonHandle?.store(
+                            TestEntity(
+                                text = TestEntity.text,
+                                number = TestEntity.number,
+                                boolean = TestEntity.boolean
+                            )
+                        )?.join()
+                    }
+                }
             }
         }
     }
@@ -374,24 +396,32 @@ class TestActivity : AppCompatActivity() {
             )
             startService(intent)
         } else {
-            singletonHandle?.clear()?.join()
-            collectionHandle?.clear()?.join()
+            singletonHandle?.dispatcher?.let {
+                withContext(it) { singletonHandle?.clear()?.join() }
+            }
+            collectionHandle?.dispatcher?.let {
+                withContext(it) { collectionHandle?.clear()?.join() }
+            }
         }
     }
 
     private fun fetchAndUpdateResult(prefix: String) {
         var result: String? = "null"
         if (isCollection) {
-            val testEntities = collectionHandle?.fetchAll()
-            if (!testEntities.isNullOrEmpty()) {
-                result = testEntities
-                    .sortedBy { it.number }
-                    .joinToString(separator = ";") { "${it.text},${it.number},${it.boolean}" }
+            collectionHandle?.dispatcher?.let {
+                val testEntities = runBlocking(it) { collectionHandle?.fetchAll() }
+                if (testEntities != null && !testEntities.isNullOrEmpty()) {
+                    result = testEntities
+                        .sortedBy { it.number }
+                        .joinToString(separator = ";") { "${it.text},${it.number},${it.boolean}" }
+                }
             }
         } else {
-            val testEntity = singletonHandle?.fetch()
-            result = testEntity?.let {
-                "${it.text},${it.number},${it.boolean}"
+            singletonHandle?.dispatcher?.let {
+                val testEntity = runBlocking(it) { singletonHandle?.fetch() }
+                result = testEntity?.let {
+                    "${it.text},${it.number},${it.boolean}"
+                }
             }
         }
         appendResultText("$prefix:$result")

@@ -64,24 +64,6 @@ class SameHandleManagerTest : HandleManagerTestBase() {
 
     @Ignore("b/154947352 - Deflake")
     @Test
-    override fun collection_referenceLiveness() {
-        super.collection_referenceLiveness()
-    }
-
-    @Ignore("b/154947352 - Deflake")
-    @Test
-    override fun collection_entityDereference() {
-        super.collection_entityDereference()
-    }
-
-    @Ignore("b/154947352 - Deflake")
-    @Test
-    override fun singleton_dereferenceEntity_nestedReference() {
-        super.singleton_dereferenceEntity_nestedReference()
-    }
-
-    @Ignore("b/154947352 - Deflake")
-    @Test
     override fun singleton_clearOnAClearDataWrittenByB() {
         super.singleton_clearOnAClearDataWrittenByB()
     }
