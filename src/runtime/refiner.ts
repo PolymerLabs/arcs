@@ -184,11 +184,6 @@ export class Refinement {
     return this.expression.toSQLExpression(codeGenerator);
   }
 
-  toProto(): object {
-    this.normalize();
-    return this.expression.toProtoExpression();
-  }
-
   validateData(data: Dictionary<ExpressionPrimitives>): boolean {
     const res = this.expression.applyOperator(data);
     if (res === null && this.expression.getQueryParams().has('?')) {
@@ -201,7 +196,13 @@ export class Refinement {
   }
 }
 
-type RefinementExpressionNodeType = 'BinaryExpressionNode' | 'UnaryExpressionNode' | 'FieldNamePrimitiveNode' | 'QueryArgumentPrimitiveNode' | 'NumberPrimitiveNode' | 'BooleanPrimitiveNode' | 'TextPrimitiveNode';
+export interface RefinementExpressionLiteral {
+  kind: RefinementExpressionNodeType;
+  // tslint:disable:no-any
+  [propName: string]: any;
+}
+
+export type RefinementExpressionNodeType = 'BinaryExpressionNode' | 'UnaryExpressionNode' | 'FieldNamePrimitiveNode' | 'QueryArgumentPrimitiveNode' | 'NumberPrimitiveNode' | 'BooleanPrimitiveNode' | 'TextPrimitiveNode';
 
 abstract class RefinementExpression {
   evalType: Primitive;
@@ -225,7 +226,7 @@ abstract class RefinementExpression {
     }
   }
 
-  abstract toLiteral();
+  abstract toLiteral(): RefinementExpressionLiteral;
 
   static fromLiteral(expr: {kind: RefinementExpressionNodeType}): RefinementExpression {
     switch (expr.kind) {
@@ -259,8 +260,6 @@ abstract class RefinementExpression {
   abstract toSQLExpression(codeGenerator: CodeGenerator): string;
 
   abstract toKTExpression(codeGenerator: CodeGenerator): string;
-
-  abstract toProtoExpression(): object;
 
   abstract applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives;
 
@@ -304,7 +303,7 @@ export class BinaryExpression extends RefinementExpression {
             new RefinementOperator(expression.operator as Op));
   }
 
-  toLiteral() {
+  toLiteral(): RefinementExpressionLiteral {
     return {
       kind: this.kind,
       leftExpr: this.leftExpr.toLiteral(),
@@ -338,16 +337,6 @@ export class BinaryExpression extends RefinementExpression {
 
   toKTExpression(codeGenerator: CodeGenerator): string {
     return `(${this.leftExpr.toKTExpression(codeGenerator)} ${this.operator.toKTOp()} ${this.rightExpr.toKTExpression(codeGenerator)})`;
-  }
-
-  toProtoExpression(): object {
-    return {
-      binary: {
-        leftExpr: this.leftExpr.toProtoExpression(),
-        rightExpr: this.rightExpr.toProtoExpression(),
-        operator: this.operator.toProtoOp()
-      }
-    };
   }
 
   applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
@@ -536,15 +525,6 @@ export class UnaryExpression extends RefinementExpression {
     return `(${this.operator.toKTOp()}${this.expr.toKTExpression(codeGenerator)})`;
   }
 
-  toProtoExpression(): object {
-    return {
-      unary: {
-        expr: this.expr.toProtoExpression(),
-        operator: this.operator.toProtoOp(),
-      }
-    };
-  }
-
   applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
     const expression = this.expr.applyOperator(data);
     if (expression === null) {
@@ -639,12 +619,6 @@ export class FieldNamePrimitive extends RefinementExpression {
     return fixed;
   }
 
-  toProtoExpression(): object {
-    return {
-      field: this.value
-    };
-  }
-
   toKTExpression(codeGenerator: CodeGenerator): string {
     return codeGenerator.escapeIdentifier(this.value.toString());
   }
@@ -698,12 +672,6 @@ export class QueryArgumentPrimitive extends RefinementExpression {
   toKTExpression(codeGenerator: CodeGenerator): string {
     // TODO(cypher1): Handle multiple query arguments.
     return KOTLIN_QUERY_ARGUMENT_NAME;
-  }
-
-  toProtoExpression(): object {
-    return {
-      queryArgument: this.value,
-    };
   }
 
   applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
@@ -763,12 +731,6 @@ export class NumberPrimitive extends RefinementExpression {
     return this.value.toString();
   }
 
-  toProtoExpression(): object {
-    return {
-      number: this.value,
-    };
-  }
-
   applyOperator(): ExpressionPrimitives {
     return this.value;
   }
@@ -809,12 +771,6 @@ class BooleanPrimitive extends RefinementExpression {
 
   toKTExpression(codeGenerator: CodeGenerator): string {
     return `${this.value}`;
-  }
-
-  toProtoExpression(): object {
-    return {
-      boolean: this.value,
-    };
   }
 
   applyOperator(): ExpressionPrimitives {
@@ -859,12 +815,6 @@ class TextPrimitive extends RefinementExpression {
   toKTExpression(codeGenerator: CodeGenerator): string {
     // TODO(cypher1): Consider escaping this for Kotlin code generation.
     return `"${this.value}"`;
-  }
-
-  toProtoExpression(): object {
-    return {
-      text: this.value,
-    };
   }
 
   applyOperator(): ExpressionPrimitives {
@@ -1297,20 +1247,6 @@ export class RefinementOperator {
 
   toKTOp(): string {
     return this.opInfo.ktOp;
-  }
-
-  toProtoOp(): number {
-    const op = [
-      Op.AND, Op.OR,
-      Op.LT, Op.GT, Op.LTE, Op.GTE,
-      Op.ADD, Op.SUB, Op.MUL, Op.DIV,
-      Op.NOT, Op.NEG,
-      Op.EQ, Op.NEQ,
-    ].indexOf(this.op);
-
-    if (op === -1) throw Error(`Op type '${this.op}' is not supported.`);
-
-    return op;
   }
 
   updateOp(operator: Op) {
