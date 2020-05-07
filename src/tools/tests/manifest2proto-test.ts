@@ -162,35 +162,20 @@ describe('manifest2proto', () => {
   });
 
   it('encodes entity type with simple refinement', async () => {
-    const location = {
-      start: {offset: 0, line: 0, column: 0},
-      end: {offset: 0, line: 0, column: 0}
-    };
-    const refinement = Refinement.fromAst(
-      {
-        kind: 'refinement',
-        expression: {
-          kind: 'boolean-node',
-          value: true,
-          location,
-        },
-        location,
-      }, {});
-    const entity = EntityType.make(
-      ['Foo'],
-      {value: 'Text'},
-      {refinement}
-    );
-    assert.deepStrictEqual(await toProtoAndBackType(entity), {
+    const manifest = await Manifest.parse(`
+        particle Foo
+            input: reads Something {num: Number} [true]
+    `);
+    assert.deepStrictEqual(await toProtoAndBackType(manifest.particles[0].connections[0].type), {
       entity: {
         schema: {
-          names: ['Foo'],
+          names: ['Something'],
           fields: {
-            value: {
-              primitive: 'TEXT'
+            num: {
+              primitive: 'NUMBER'
             }
           },
-          hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
+          hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
         },
       },
       refinement: {
@@ -200,22 +185,11 @@ describe('manifest2proto', () => {
   });
 
   it('encodes entity type with nested refinement', async () => {
-    const manifestAst = parse(`
+    const manifest = await Manifest.parse(`
         particle Foo
             input: reads Something {num: Number} [num / 2 < 6 and num  > -1]
     `);
-    const refinement = Refinement.fromAst(manifestAst[0].args[0].type.refinement, {'num': 'Number'});
-    const entity = EntityType.make(
-      ['Something'],
-      {
-        num: {
-          kind: 'schema-primitive',
-          type: 'Number',
-        }
-      },
-      {refinement}
-    );
-
+    const entity = manifest.particles[0].connections[0].type;
     assert.deepStrictEqual(await toProtoAndBackType(entity), {
       entity: {
         schema: {
@@ -259,22 +233,11 @@ describe('manifest2proto', () => {
   });
 
   it('encodes entity type with query', async () => {
-    const manifestAst = parse(`
+    const manifest = await Manifest.parse(`
         particle Foo
             input: reads Something {num: Number} [num == ?]
     `);
-    const refinement = Refinement.fromAst(manifestAst[0].args[0].type.refinement, {'num': 'Number'});
-    const entity = EntityType.make(
-      ['Something'],
-      {
-        num: {
-          kind: 'schema-primitive',
-          type: 'Number',
-        }
-      },
-      {refinement}
-    );
-
+    const entity = manifest.particles[0].connections[0].type;
     assert.deepStrictEqual(await toProtoAndBackType(entity), {
       entity: {
         schema: {
