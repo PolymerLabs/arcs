@@ -287,7 +287,7 @@ open class HandleManagerTestBase {
         ) as ReadWriteCollectionHandle<Hat>
 
         val fez = Hat(entityId = "fez-id", style = "fez")
-        hatCollection.store(fez)
+        withContext(hatCollection.dispatcher) { hatCollection.store(fez) }
         val fezRef = hatCollection.createReference(fez)
         val fezStorageRef = fezRef.toReferencable()
 
@@ -304,16 +304,22 @@ open class HandleManagerTestBase {
         val readHandle = readHandleManager.createSingletonHandle()
         val readOnUpdate = readHandle.onUpdateDeferred()
 
-        writeHandle.store(personWithHat)
-        readOnUpdate.await()
+        withContext(writeHandle.dispatcher) { writeHandle.store(personWithHat) }
+
+        withTimeout(2000) {
+            RamDisk.waitUntilSet(fezStorageRef.referencedStorageKey())
+            readOnUpdate.await()
+        }
 
         // Read out the entity, and fetch its hat.
-        val entityOut = readHandle.fetch()!!
-        val hatRef = entityOut.hat!!
-        assertThat(hatRef).isEqualTo(fezStorageRef)
-        val rawHat = hatRef.dereference(coroutineContext)!!
-        val hat = Hat.deserialize(rawHat)
-        assertThat(hat).isEqualTo(fez)
+        withContext(readHandle.dispatcher) {
+            val entityOut = readHandle.fetch()!!
+            val hatRef = entityOut.hat!!
+            assertThat(hatRef).isEqualTo(fezStorageRef)
+            val rawHat = hatRef.dereference(coroutineContext)!!
+            val hat = Hat.deserialize(rawHat)
+            assertThat(hat).isEqualTo(fez)
+        }
     }
 
     @Test

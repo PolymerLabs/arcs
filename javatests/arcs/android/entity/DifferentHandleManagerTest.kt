@@ -82,12 +82,6 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
 
     @Ignore("b/154947352 - Deflake")
     @Test
-    override fun singleton_dereferenceEntity_nestedReference() {
-        super.singleton_dereferenceEntity_nestedReference()
-    }
-
-    @Ignore("b/154947352 - Deflake")
-    @Test
     override fun collection_clearingElementsFromA_clearsThemFromB() {
         super.collection_clearingElementsFromA_clearsThemFromB()
     }
