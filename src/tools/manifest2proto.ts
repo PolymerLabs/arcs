@@ -161,7 +161,7 @@ export async function typeToProtoPayload(type: Type) {
       }
     };
     case 'Count': return {
-      count: true
+      count: {}
     };
     // TODO(b/154733929)
     // case 'TypeVariable': return {
@@ -169,7 +169,7 @@ export async function typeToProtoPayload(type: Type) {
     //     name: (type as TypeVariable).variable.name,
     //   }
     // };
-    default: throw Error(`Type ${type.tag} is not supported.`);
+    default: throw Error(`Type '${type.tag}' is not supported.`);
   }
 }
 

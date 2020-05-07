@@ -102,7 +102,7 @@ message TypeProto {
     TupleTypeProto tuple = 5;
     TypeVariableProto variable = 6;
     SingletonTypeProto singleton = 7;
-    bool count = 8;
+    CountTypeProto count = 8;
   }
   bool optional = 10;
   RefinementExpressionProto refinement = 11;
@@ -126,6 +126,8 @@ message SingletonTypeProto {
   TypeProto singleton_type = 1;
 }
 
+message CountTypeProto {}
+
 message TupleTypeProto {
   repeated TypeProto elements = 1;
 }
@@ -146,8 +148,6 @@ message SchemaProto {
   map<string, TypeProto> fields = 2;
   string hash = 3;
 }
-
-message CountTypeProto {}
 
 enum OPERATOR {
   AND = 0;

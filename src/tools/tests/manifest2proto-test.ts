@@ -265,7 +265,7 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(await toProtoAndBackType(singletonOfCount), {
       singleton: {
         singletonType: {
-          count: true
+          count: {}
         }
       }
     });
