@@ -102,6 +102,7 @@ maven_install(
         "org.robolectric:shadowapi:" + ROBOLECTRIC_VERSION,
         "org.robolectric:shadows-framework:" + ROBOLECTRIC_VERSION,
         "com.squareup:kotlinpoet:" + KOTLINPOET_VERSION,
+        "org.nanohttpd:nanohttpd:2.3.0",
     ],
     fetch_sources = True,
     maven_install_json = "//:maven_install.json",
