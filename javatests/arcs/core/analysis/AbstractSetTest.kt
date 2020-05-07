@@ -5,11 +5,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-
-/** Tests for BoundedAbstractValue. */
 @RunWith(JUnit4::class)
 class AbstractSetTest {
-
     private val bottom = AbstractSet.getBottom<Int>()
     private val top = AbstractSet.getTop<Int>()
     private val odds = AbstractSet<Int>(setOf(1, 3, 5, 7, 9))
@@ -46,19 +43,27 @@ class AbstractSetTest {
     }
 
     @Test
-    fun isEquivalentTo() {
+    fun isEquivalentTo_bottom() {
         with(bottom) {
             assertThat(isEquivalentTo(bottom)).isTrue()
             assertThat(isEquivalentTo(top)).isFalse()
             assertThat(isEquivalentTo(odds)).isFalse()
             assertThat(isEquivalentTo(evens)).isFalse()
         }
+    }
+
+    @Test
+    fun isEquivalentTo_top() {
         with(top) {
             assertThat(isEquivalentTo(bottom)).isFalse()
             assertThat(isEquivalentTo(top)).isTrue()
             assertThat(isEquivalentTo(odds)).isFalse()
             assertThat(isEquivalentTo(evens)).isFalse()
         }
+    }
+
+    @Test
+    fun isEquivalentTo_odds() {
         with(odds) {
             assertThat(isEquivalentTo(bottom)).isFalse()
             assertThat(isEquivalentTo(top)).isFalse()
@@ -68,17 +73,25 @@ class AbstractSetTest {
     }
 
     @Test
-    fun meet() {
+    fun meet_bottom() {
         // bottom |`| something
         assertThat(bottom meet bottom).isEqualTo(bottom)
         assertThat(bottom meet top).isEqualTo(bottom)
         assertThat(bottom meet odds).isEqualTo(bottom)
         assertThat(bottom meet evens).isEqualTo(bottom)
+    }
+
+    @Test
+    fun meet_top() {
         // top |`| something
         assertThat(top meet bottom).isEqualTo(bottom)
         assertThat(top meet top).isEqualTo(top)
         assertThat(top meet odds).isEqualTo(odds)
         assertThat(top meet evens).isEqualTo(evens)
+    }
+
+    @Test
+    fun meet_odds() {
         // odds |`| something
         assertThat(odds meet bottom).isEqualTo(bottom)
         assertThat(odds meet top).isEqualTo(odds)
@@ -88,17 +101,25 @@ class AbstractSetTest {
     }
 
     @Test
-    fun join() {
+    fun join_bottom() {
         // bottom |_| something
         assertThat(bottom join bottom).isEqualTo(bottom)
         assertThat(bottom join top).isEqualTo(top)
         assertThat(bottom join odds).isEqualTo(odds)
         assertThat(bottom join evens).isEqualTo(evens)
+    }
+
+    @Test
+    fun join_top() {
         // top |_| something
         assertThat(top join bottom).isEqualTo(top)
         assertThat(top join top).isEqualTo(top)
         assertThat(top join odds).isEqualTo(top)
         assertThat(top join evens).isEqualTo(top)
+    }
+
+    @Test
+    fun join_odds() {
         // odds |_| something
         assertThat(odds join bottom).isEqualTo(odds)
         assertThat(odds join top).isEqualTo(top)
