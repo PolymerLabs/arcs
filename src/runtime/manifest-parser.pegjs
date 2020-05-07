@@ -155,9 +155,18 @@ ManifestItem
   / Interface
   / Meta
   / Resource
+  / AnnotationNode
 
-Annotation = triggerSet:(SameIndent Trigger eolWhiteSpace)* simpleAnnotation:(SameIndent SimpleAnnotation eolWhiteSpace)?
+AnnotationItem
+  = ParameterizedAnnotation
+  / SimpleAnnotation
+
+// This is the full "@trigger\n foo bar" annotation combo OR simple annotation.
+Annotation = triggerSet:(SameIndent Trigger eolWhiteSpace)* simpleAnnotation:(SameIndent AnnotationItem eolWhiteSpace)? annotationRefs:(SameIndent AnnotationRef eolWhiteSpace)*
   {
+    if (!!simpleAnnotation || annotationRefs.length > 0) {
+      //debugger;
+    }
     return toAstNode<AstNode.Annotation>({
       kind: 'annotation',
       triggerSet: triggerSet.map(trigger => trigger[1]),
@@ -165,6 +174,7 @@ Annotation = triggerSet:(SameIndent Trigger eolWhiteSpace)* simpleAnnotation:(Sa
     });
   }
 
+// TODO(mmandlis): deprecate
 Trigger "a trigger for a recipe"
   = '@trigger' eolWhiteSpace Indent pairs:(eolWhiteSpace? SameIndent simpleName whiteSpace dottedName)+ {
   return pairs.map(pair => {
@@ -940,6 +950,76 @@ ParticleHandleDescription
     });
   }
 
+AnnotationNode
+  = 'annotation' whiteSpace name:lowerIdent params:('(' whiteSpace? first:AnnotationParam rest:(whiteSpace? ',' whiteSpace? AnnotationParam)* whiteSpace? ')')? eolWhiteSpace items:(Indent (SameIndent AnnotationNodeItem)*)?
+  {
+    const targets = optional(items, extractIndented, []).find(item => item.kind === 'annotation-targets');
+    return toAstNode<AstNode.AnnotationNode>({
+        kind: 'annotation-node',
+        name,
+        params: optional(params, params => [params[2], ...(params[3].map(item => item[3]))], []),
+        targets: targets ? targets.targets : [],
+        retention: optional(items, extractIndented, []).find(item => item.kind === 'annotation-retention').retention,
+        doc: optional(optional(items, extractIndented, []).find(item => item.kind === 'annotation-doc'), d => d.doc, '')
+    });
+  }
+
+// TODO: reuse SchemaInlineField? allow more types?
+AnnotationParam = name:fieldName ':' whiteSpace? type:SchemaPrimitiveType {
+  return toAstNode<AstNode.AnnotationParam>({
+    kind: 'annotation-param',
+    name,
+    type: type.type
+  });
+}
+
+AnnotationNodeItem
+  = AnnotationTargets
+  / AnnotationRetention
+  / AnnotationDoc
+
+AnnotationTargetValue = 'Recipe' / 'Particle' / 'HandleConnection' / 'Store' / 'Handle' / 'SchemaField' / 'Schema'
+
+AnnotationTargets = 'targets:'  whiteSpace '[' whiteSpace? targets:(AnnotationTargetValue (',' whiteSpace? AnnotationTargetValue)*) whiteSpace? ']' eolWhiteSpace? {
+  return toAstNode<AstNode.AnnotationTargets>({
+    kind: 'annotation-targets',
+    targets: optional(targets, t => [t[0], ...t[1].map(tail => tail[2])], [])
+  });
+}
+
+AnnotationRetentionValue = 'Source' / 'Runtime'
+
+AnnotationRetention = 'retention:' whiteSpace retention:AnnotationRetentionValue eolWhiteSpace? {
+  return toAstNode<AstNode.AnnotationRetention>({
+    kind: 'annotation-retention',
+    retention
+  });
+}
+
+AnnotationDoc = 'doc:' whiteSpace doc:QuotedString eolWhiteSpace? {
+  return toAstNode<AstNode.AnnotationDoc>({
+    kind: 'annotation-doc',
+    doc
+  });
+}
+
+// Reference to an annotation (for example: `@foo(bar='hello', baz=5)`)
+AnnotationRef = '@' name:lowerIdent params:('('whiteSpace? AnnotationRefParam (whiteSpace? ',' whiteSpace? AnnotationRefParam)* ')')? {
+  return toAstNode<AstNode.AnnotationRef>({
+    kind: 'annotation-ref',
+    name,
+    params: optional(params, p => [p[2], ...p[3].map(tail => tail[3])], [])
+  });
+}
+
+AnnotationRefParam = name:lowerIdent whiteSpace? ':' whiteSpace? value:ManifestStorageInlineData {
+  return toAstNode<AstNode.AnnotationRefParam>({
+    kind: 'annotation-ref-param',
+    name,
+    value
+  });
+}
+
 RecipeNode
   = 'recipe' name:(whiteSpace upperIdent)? verbs:(whiteSpace VerbList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
   {
@@ -1189,7 +1269,7 @@ RecipeHandleCapability
  / 'tied-to-arc'
 
 RecipeHandle
-  = name:NameWithColon? fate:RecipeHandleFate capabilities:(whiteSpace RecipeHandleCapability)* ref:(whiteSpace HandleRef)? annotation:(whiteSpace ParameterizedAnnotation)? eolWhiteSpace
+  = name:NameWithColon? fate:RecipeHandleFate capabilities:(whiteSpace RecipeHandleCapability)* ref:(whiteSpace HandleRef)? annotation:(whiteSpace AnnotationItem)? eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeHandle>({
       kind: 'handle',

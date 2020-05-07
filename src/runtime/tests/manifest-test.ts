@@ -3715,3 +3715,64 @@ resource NobIdJson
     assert.sameMembers(schema.names, ['NobIdStore']);
   });
 });
+describe('annotations', async () => {
+  it('parses annotations', async () => {
+    const annotationsStr = `
+annotation noParam
+  targets: [Particle]
+  retention: Source
+  doc: 'this is doc'
+annotation oneParam(bar: Text)
+  targets: [Recipe, Particle]
+  retention: Source
+  doc: 'this is doc'
+annotation multiParam(foo: Text, bar: Number, baz: Boolean)
+  targets: [Store, Handle, HandleConnection, Schema, SchemaField]
+  retention: Runtime
+  doc: 'this is doc'
+annotation goodForAll
+  retention: Runtime
+  doc: 'this is doc'
+`;
+    const manifestStr = `
+${annotationsStr}
+@oneParam(bar: 'hello world')
+recipe One
+@multiParam(foo: 'hello', bar: 5)
+@noParam
+recipe Two
+@goodForAll
+recipe Three
+    `;
+    const manifest = await Manifest.parse(manifestStr);
+    assert.equal(Object.keys(manifest.annotations).length, 4);
+    assert.sameMembers(Object.keys(manifest.annotations), ['noParam', 'oneParam', 'multiParam', 'goodForAll']);
+    const noParam = manifest.annotations['noParam'];
+    assert.isEmpty(noParam.params);
+    assert.deepEqual(noParam.targets, ['Particle']);
+    assert.equal(noParam.retention, 'Source');
+    assert.equal(noParam.doc, 'this is doc');
+
+    const oneParam = manifest.annotations['oneParam'];
+    assert.lengthOf(Object.keys(oneParam.params), 1);
+    assert.equal(oneParam.params['bar'], 'Text');
+    assert.deepEqual(oneParam.targets, ['Recipe', 'Particle']);
+    assert.equal(oneParam.retention, 'Source');
+
+    const multiParam = manifest.annotations['multiParam'];
+    assert.lengthOf(Object.keys(multiParam.params), 3);
+    assert.equal(multiParam.params['foo'], 'Text');
+    assert.equal(multiParam.params['bar'], 'Number');
+    assert.equal(multiParam.params['baz'], 'Boolean');
+    assert.deepEqual(multiParam.targets, ['Store', 'Handle', 'HandleConnection', 'Schema', 'SchemaField']);
+    assert.equal(multiParam.retention, 'Runtime');
+
+    const goodForAll = manifest.annotations['goodForAll'];
+    assert.isEmpty(goodForAll.params);
+    assert.isEmpty(goodForAll.targets);
+    assert.equal(goodForAll.retention, 'Runtime');
+
+    // TODO: store and serialize manifest items' annotations
+    // assert.equal(manifest.toString(), manifestStr);
+  });
+});
