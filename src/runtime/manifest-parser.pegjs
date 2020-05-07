@@ -139,6 +139,7 @@ Manifest
       const manifestItem = item[2];
       manifestItem.triggers = annotations.triggerSet;
       manifestItem.annotation = annotations.simpleAnnotation;
+      manifestItem.annotationRefs = annotations.annotationRefs;
       return manifestItem;
     });
     checkNormal(result);
@@ -168,6 +169,7 @@ Annotation = triggerSet:(SameIndent Trigger eolWhiteSpace)* simpleAnnotation:(Sa
       kind: 'annotation',
       triggerSet: triggerSet.map(trigger => trigger[1]),
       simpleAnnotation: optional(simpleAnnotation, s => s[1], null),
+      annotationRefs: annotationRefs.map(aRef => aRef[1]),
     });
   }
 
@@ -1001,11 +1003,12 @@ AnnotationDoc = 'doc:' whiteSpace doc:QuotedString eolWhiteSpace? {
 }
 
 // Reference to an annotation (for example: `@foo(bar='hello', baz=5)`)
-AnnotationRef = '@' name:lowerIdent params:('('whiteSpace? AnnotationRefParam (whiteSpace? ',' whiteSpace? AnnotationRefParam)* ')')? {
+AnnotationRef = '@' name:lowerIdent params:('('whiteSpace? AnnotationRefParam? (whiteSpace? ',' whiteSpace? AnnotationRefParam)* ')')? {
   return toAstNode<AstNode.AnnotationRef>({
     kind: 'annotation-ref',
     name,
-    params: optional(params, p => [p[2], ...p[3].map(tail => tail[3])], [])
+    // TODO(#5291): once simple-annotation is deprecated, make first param nonoptional.
+    params: optional(params, p => p[2] ? [p[2], ...p[3].map(tail => tail[3])] : p[3].map(tail => tail[3]), [])
   });
 }
 
