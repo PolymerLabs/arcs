@@ -11,7 +11,7 @@ import {Runtime} from '../runtime/runtime.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {Type, CollectionType, ReferenceType} from '../runtime/type.js';
+import {Type, CollectionType, ReferenceType, SingletonType, TypeVariable} from '../runtime/type.js';
 import {Schema} from '../runtime/schema.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {assert} from '../platform/assert-web.js';
@@ -150,6 +150,20 @@ export async function typeToProtoPayload(type: Type) {
         referredType: await typeToProtoPayload((type as ReferenceType<Type>).referredType)
       }
     };
+    case 'Singleton': return {
+      singleton: {
+        singletonType: await typeToProtoPayload((type as SingletonType<Type>).getContainedType())
+      }
+    };
+    case 'Count': return {
+      count: true
+    };
+    // TODO(b/155944755)
+    // case 'TypeVariable': return {
+    //   variable: {
+    //     name: (type as TypeVariable).variable.name,
+    //   }
+    // };
     default: throw Error(`Type ${type.tag} is not supported.`);
   }
 }
