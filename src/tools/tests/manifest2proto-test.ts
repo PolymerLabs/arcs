@@ -9,7 +9,7 @@
  */
 import {assert} from '../../platform/chai-web.js';
 import {encodeManifestToProto, typeToProtoPayload, manifestToProtoPayload, capabilitiesToProtoOrdinals} from '../manifest2proto.js';
-import {CountType, EntityType, SingletonType, Type, TypeVariable} from '../../runtime/type.js';
+import {CountType, EntityType, SingletonType, TupleType, Type, TypeVariable} from '../../runtime/type.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Capabilities} from '../../runtime/capabilities.js';
 import {fs} from '../../platform/fs-web.js';
@@ -218,6 +218,44 @@ describe('manifest2proto', () => {
             }
           }
         }
+      }
+    });
+  });
+
+  it('encodes tuple types', async () => {
+    const first = EntityType.make(['Foo'], {value: 'Text'});
+    const second = EntityType.make(['Bar'], {value: 'Number'});
+    const tuple = new TupleType([first, second]);
+    assert.deepStrictEqual(await toProtoAndBackType(tuple), {
+      tuple: {
+        elements: [
+          {
+            entity: {
+              schema: {
+                names: ['Foo'],
+                fields: {
+                  value: {
+                    primitive: 'TEXT'
+                  }
+                },
+                hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+              }
+            }
+          },
+          {
+            entity: {
+              schema: {
+                names: ['Bar'],
+                fields: {
+                  value: {
+                    primitive: 'NUMBER'
+                  }
+                },
+                hash: 'f0b9f39c14d12e1445ac70bbd28b65c0b9d30022'
+              }
+            }
+          }
+        ]
       }
     });
   });
