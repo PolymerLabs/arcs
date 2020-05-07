@@ -16,15 +16,12 @@ import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -59,10 +56,8 @@ interface WriteBackFactory {
         protocol: String = "",
         /**
          * The maximum queue size above which new incoming flush jobs will be suspended.
-         * By default we take the [RendezvousChannel] to implement one-step-ahead policy
-         * for balancing efficiency and reliability.
          */
-        queueSize: Int = 0
+        queueSize: Int = Channel.UNLIMITED
     ): WriteBack
 }
 
@@ -98,12 +93,9 @@ open class StoreWriteBack /* internal */ constructor(
         if (!passThrough.value && scope != null) {
             channel.consumeAsFlow()
                 .onEach {
-                    // Ensure the current flush job can actually run till completion even
-                    // if the shared write-back scope was cancelled at `StorageService.onDestroy`
-                    CoroutineScope(scope.coroutineContext + Job()).run {
-                        launch { it() }.join()
-                        cancel()
-                    }
+                    // Neither black out pending flush jobs in this channel nor propagate
+                    // the exception within the scope to affect flush jobs at other stores.
+                    exitFlushSection { try { it() } catch (_: Exception) {} }
                 }
                 .onCompletion {
                     // Upon cancellation of the write-back scope, change to write-through mode,
