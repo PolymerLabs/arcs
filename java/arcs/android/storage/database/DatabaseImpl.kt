@@ -712,23 +712,23 @@ class DatabaseImpl(
             val db = this
             rawQuery(
                 """
-                    SELECT storage_key_id, storage_key, orphan,
-                        (SELECT COUNT(1)=0
-                         FROM entity_refs
-                         WHERE entity_storage_key = storage_keys.storage_key) as noRef
+                    SELECT storage_key_id, storage_key, orphan, MAX(entity_refs.id) IS NULL AS noRef
                     FROM entities
                     LEFT JOIN storage_keys ON entities.storage_key_id = storage_keys.id
-                    WHERE creation_timestamp < $twoDaysAgo
+                    LEFT JOIN entity_refs ON entity_storage_key = storage_keys.storage_key
+                    GROUP BY storage_key_id, storage_key, orphan
+                    HAVING entities.creation_timestamp < $twoDaysAgo
                     AND (orphan OR noRef)
                 """.trimIndent(),
-                arrayOf())
-            .forEach {
+                arrayOf()
+            ).forEach {
                 val storageKeyId = it.getLong(0)
                 val storageKey = StorageKeyParser.parse(it.getString(1))
                 val orphan = it.getNullableBoolean(2) ?: false
                 val noRef = it.getBoolean(3)
                 if (orphan && noRef) {
                     // Already marked as orphan, still not referenced, safe to delete.
+                    // TODO(#4889): Don't do this one-by-one, do a single delete query.
                     delete(storageKey = storageKey, db = db)
                     notifyClients(storageKey) { it.onDatabaseDelete(null) }
                 }

@@ -1305,14 +1305,14 @@ class DatabaseImplTest {
             database.insertOrUpdate(DummyStorageKey("collection"), collection)
         }
 
-        val entityInCollectionKey = DummyStorageKey("backing/entity1")
-        val entityInCollection = entity("entity1", 10)
-        val orphanEntityKey = DummyStorageKey("backing/entity2")
-        val orphanEntity = entity("entity2", 10)
-        val recentEntityKey = DummyStorageKey("backing/entity3")
-        val recentEntity = entity("entity3", 1)
-        val lateRefdEntityKey = DummyStorageKey("backing/entity4")
-        val lateRefdEntity = entity("entity4", 10)
+        val entityInCollectionKey = DummyStorageKey("backing/entityInCollection")
+        val entityInCollection = entity("entityInCollection", 10)
+        val orphanEntityKey = DummyStorageKey("backing/orphan")
+        val orphanEntity = entity("orphan", 10)
+        val recentEntityKey = DummyStorageKey("backing/recent")
+        val recentEntity = entity("recent", 1)
+        val lateRefdEntityKey = DummyStorageKey("backing/lateRefd")
+        val lateRefdEntity = entity("lateRefd", 10)
         database.insertOrUpdate(entityInCollectionKey, entityInCollection)
         database.insertOrUpdate(orphanEntityKey, orphanEntity)
         database.insertOrUpdate(recentEntityKey, recentEntity)
@@ -1962,8 +1962,8 @@ class DatabaseImplTest {
                 LEFT JOIN storage_keys ON entities.storage_key_id = storage_keys.id
                 WHERE storage_key = ?
             """.trimIndent(),
-            arrayOf(entityStorageKey.toString()))
-        .forSingleResult { it.getNullableBoolean(0) } ?: false
+            arrayOf(entityStorageKey.toString())
+        ).forSingleResult { it.getNullableBoolean(0) } ?: false
 
     private fun assertTableIsEmpty(tableName: String) {
         assertTableIsSize(tableName, 0)
