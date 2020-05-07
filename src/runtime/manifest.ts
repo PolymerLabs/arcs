@@ -793,6 +793,7 @@ ${e.message}
         }
         arg.type = arg.type.model;
         processArgTypes(arg.dependentConnections);
+        arg.annotations = Manifest._buildAnnotationRefs(manifest, arg.annotations);
       }
     };
     processArgTypes(particleItem.args);

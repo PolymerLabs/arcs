@@ -336,6 +336,7 @@ export interface ParticleHandleConnection extends BaseNode {
   dependentConnections: ParticleHandleConnection[];
   name: string;
   tags: TagList;
+  annotations: AnnotationRef[];
 }
 
 export type ParticleItem = ParticleModality | ParticleSlotConnection | Description | ParticleHandleConnection;

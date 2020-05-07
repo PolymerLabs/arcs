@@ -657,7 +657,7 @@ NameWithColon
   }
 
 ParticleHandleConnectionBody
-  = name:NameWithColon? direction:(Direction '?'?)? whiteSpace type:ParticleHandleConnectionType maybeTags:SpaceTagList?
+  = name:NameWithColon? direction:(Direction '?'?)? whiteSpace type:ParticleHandleConnectionType annotations:SpaceAnnotationRefList? maybeTags:SpaceTagList?
   {
     return toAstNode<AstNode.ParticleHandleConnection>({
       kind: 'particle-argument',
@@ -666,7 +666,8 @@ ParticleHandleConnectionBody
       isOptional: optional(direction, d => !!d[1], false),
       dependentConnections: [],
       name: name || (maybeTags && maybeTags[0]) || expected(`either a name or tags to be supplied ${name} ${maybeTags}`),
-      tags: maybeTags || []
+      tags: maybeTags || [],
+      annotations: annotations || [],
     });
   }
 
@@ -1019,6 +1020,14 @@ AnnotationRefParam = name:lowerIdent whiteSpace? ':' whiteSpace? value:ManifestS
     value
   });
 }
+
+AnnotationRefList
+  = head:AnnotationRef tail:(whiteSpace AnnotationRefList)?
+  { return [head, ...(tail && tail[1] || [])]; }
+
+SpaceAnnotationRefList
+  = whiteSpace tags:AnnotationRefList
+  { return tags; }
 
 RecipeNode
   = 'recipe' name:(whiteSpace upperIdent)? verbs:(whiteSpace VerbList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
