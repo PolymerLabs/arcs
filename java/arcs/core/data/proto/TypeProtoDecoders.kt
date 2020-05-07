@@ -12,9 +12,12 @@
 package arcs.core.data.proto
 
 import arcs.core.data.CollectionType
+import arcs.core.data.CountType
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
+import arcs.core.data.ReferenceType
+import arcs.core.data.SingletonType
 import arcs.core.type.Type
 
 /** Converts a [PrimitiveTypeProto] protobuf instance into a Kotlin [PrimitiveType] instance. */
@@ -48,15 +51,30 @@ fun TypeProto.decodeAsFieldType() = when (dataCase) {
 /** Converts a [EntityTypeProto] protobuf instance into a Kotlin [EntityType] instance. */
 fun EntityTypeProto.decode() = EntityType(schema.decode())
 
+/** Converts a [SingletonTypeProto] protobuf instance into a Kotlin [SingletonType] instance. */
+fun SingletonTypeProto.decode() = SingletonType(singletonType.decode())
+
 /** Converts a [CollectionTypeProto] protobuf instance into a Kotlin [CollectionType] instance. */
 fun CollectionTypeProto.decode() = CollectionType(collectionType.decode())
 
+/** Converts a [ReferenceTypeProto] protobuf instance into a Kotlin [ReferenceType] instance. */
+fun ReferenceTypeProto.decode() = ReferenceType(referredType.decode())
+
+/** Converts a [CountTypeProto] protobuf instance into a Kotlin [CountType] instance. */
+fun CountTypeProto.decode() = CountType()
+
 /** Converts a [TypeProto] protobuf instance into a Kotlin [Type] instance. */
-// TODO: optional, RefinementExpression.
+// TODO(b/155812915): RefinementExpression.
 fun TypeProto.decode(): Type = when (dataCase) {
     TypeProto.DataCase.ENTITY -> entity.decode()
+    TypeProto.DataCase.SINGLETON -> singleton.decode()
     TypeProto.DataCase.COLLECTION -> collection.decode()
-    TypeProto.DataCase.REFERENCE, TypeProto.DataCase.TUPLE, TypeProto.DataCase.VARIABLE ->
+    TypeProto.DataCase.REFERENCE -> reference.decode()
+    TypeProto.DataCase.COUNT -> count.decode()
+    // TODO(b/156003617) Support Kotlin Tuples
+    TypeProto.DataCase.TUPLE,
+    // TODO(b/154733929) Support Kotlin TypeVariables
+    TypeProto.DataCase.VARIABLE ->
         throw NotImplementedError(
             "Decoding of a ${dataCase.name} type to a [Type] is not implemented.")
     TypeProto.DataCase.DATA_NOT_SET ->

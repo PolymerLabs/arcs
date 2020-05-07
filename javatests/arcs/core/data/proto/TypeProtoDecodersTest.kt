@@ -3,12 +3,8 @@ package arcs.core.data.proto
 import arcs.core.data.*
 import arcs.core.testutil.assertThrows
 import arcs.core.testutil.fail
-import arcs.repoutils.runfilesDir
 import com.google.common.truth.Truth.assertThat
-import com.google.protobuf.Message.Builder
-import com.google.protobuf.Message
 import com.google.protobuf.TextFormat
-import java.io.File
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -87,6 +83,36 @@ class TypeProtoDecodersTest {
     }
 
     @Test
+    fun decodesSingletonTypeProtoAsSingletonType() {
+        val singletonTypeProto = """
+        singleton {
+          singleton_type {
+            entity {
+              schema {
+                names: "Foo"
+                fields: {
+                  key: "value"
+                  value: { primitive: TEXT }
+                }
+              }
+            }
+          }
+        }
+        """.trimIndent()
+        val singletonType = parseTypeProtoText(singletonTypeProto).decode()
+        val expectedSchema = Schema(
+            names = setOf(SchemaName("Foo")),
+            fields = SchemaFields(singletons=mapOf("value" to FieldType.Text), collections=mapOf()),
+            hash = ""
+        )
+        when (singletonType) {
+            is SingletonType<*> -> assertThat(singletonType.containedType).isEqualTo(
+                EntityType(expectedSchema))
+            else -> fail("TypeProto should have been decoded to [SingletonType].")
+        }
+    }
+
+    @Test
     fun decodesCollectionTypeProtoAsCollectionType() {
         val collectionTypeProto = """
         collection {
@@ -115,5 +141,43 @@ class TypeProtoDecodersTest {
             )
             else -> fail("TypeProto should have been decoded to [EntityType].")
         }
+    }
+
+    @Test
+    fun decodesReferenceTypeProtoAsReferenceType() {
+        val referenceTypeProto = """
+        reference {
+          referred_type {
+            entity {
+              schema {
+                names: "Person"
+                fields: {
+                  key: "name"
+                  value: { primitive: TEXT }
+                }
+              }
+            }
+          }
+        }
+        """.trimIndent()
+        val referenceType = parseTypeProtoText(referenceTypeProto).decode()
+        val expectedSchema = Schema(
+            names = setOf(SchemaName("Person")),
+            fields = SchemaFields(singletons=mapOf("name" to FieldType.Text), collections=mapOf()),
+            hash = ""
+        )
+        when (referenceType) {
+            is ReferenceType<*> -> assertThat(referenceType.containedType).isEqualTo(
+                EntityType(expectedSchema)
+            )
+            else -> fail("TypeProto should have been decoded to [ReferenceType].")
+        }
+    }
+
+    @Test
+    fun decodesCountTypeProtoAsCountType() {
+        val countTypeProto = "count {}"
+        val countType = parseTypeProtoText(countTypeProto).decode()
+        assertThat(countType).isInstanceOf(CountType::class.java)
     }
 }
