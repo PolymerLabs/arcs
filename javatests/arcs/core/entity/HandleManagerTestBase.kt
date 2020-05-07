@@ -193,17 +193,20 @@ open class HandleManagerTestBase {
         val handleA = writeHandleManager.createSingletonHandle()
         val handleB = readHandleManager.createSingletonHandle()
         val handleBUpdated = handleB.onUpdateDeferred()
-        handleA.store(entity1)
+        withContext(handleA.dispatcher) { handleA.store(entity1) }
         withTimeout(1500) { handleBUpdated.await() }
 
         // Now read back from a different handle
-        val updateADeferred = handleA.onUpdateDeferred()
-        handleB.clear()
+        val updateADeferred = handleA.onUpdateDeferred { it == null }
+        withContext(handleB.dispatcher) {
+            handleB.clear()
+            assertThat(handleB.fetch()).isNull()
+        }
 
-        assertThat(handleB.fetch()).isNull()
-
-        updateADeferred.await()
-        assertThat(handleA.fetch()).isNull()
+        withTimeout(1500) { updateADeferred.await() }
+        withContext(handleA.dispatcher) {
+            assertThat(handleA.fetch()).isNull()
+        }
     }
 
     @Test
