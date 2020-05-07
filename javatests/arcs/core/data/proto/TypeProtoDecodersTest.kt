@@ -139,7 +139,7 @@ class TypeProtoDecodersTest {
             is CollectionType<*> -> assertThat(collectionType.collectionType).isEqualTo(
                 EntityType(expectedSchema)
             )
-            else -> fail("TypeProto should have been decoded to [EntityType].")
+            else -> fail("TypeProto should have been decoded to [CollectionType].")
         }
     }
 
