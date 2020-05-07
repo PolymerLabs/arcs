@@ -52,6 +52,20 @@ describe('PlatformLoader', () => {
     assert.equal(loader.resolve('https://$macro/Feature.arcs'),
         '../../over/here/Feature.arcs');
   });
+  it('can joins paths', async () => {
+    const loader = new Loader({});
+
+    assert.equal(loader.join('', 'foo.arcs'), 'foo.arcs');
+    assert.equal(loader.join('/', 'a.arcs'), '/a.arcs');
+    assert.equal(loader.join('a/b/c/', 'x.arcs'), 'a/b/c/x.arcs');
+    assert.equal(loader.join('a/b/c/', ''), 'a/b/c/');
+    assert.equal(loader.join('a/b/c/', 'd/e/f'), 'a/b/c/d/e/f');
+    assert.equal(loader.join('a/b/c/', './d/e/f'), 'a/b/c/d/e/f');
+    assert.equal(loader.join('a/b/c/', '/d/e/f'), '/d/e/f');
+    assert.equal(loader.join('a/b/c/', '../../d/e/f'), 'a/d/e/f');
+    assert.equal(loader.join('a/b/c/', '../../../d/e/f'), 'd/e/f');
+    assert.equal(loader.join('/a/b/c/', '../../../d/e/f'), '/d/e/f');
+  });
   it('recognizes JVM classpaths', () => {
     const loader = new Loader();
 
