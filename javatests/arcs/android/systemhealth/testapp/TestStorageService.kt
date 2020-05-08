@@ -9,6 +9,7 @@ import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
@@ -31,6 +32,8 @@ class TestStorageService : StorageService() {
         }
         return super.onStartCommand(intent, flags, startId)
     }
+
+    override fun onDestroy() = scope.cancel()
 
     companion object {
         const val EXTRA_CRASH = "crash"
