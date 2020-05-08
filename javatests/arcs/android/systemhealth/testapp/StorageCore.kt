@@ -143,7 +143,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
 
         if (settings.function != Function.STOP && settings.timesOfIterations > 0) {
             tasks = Array(settings.numOfListenerThreads + settings.numOfWriterThreads) { id ->
-                object : ScheduledThreadPoolExecutor(2) {
+                object : ScheduledThreadPoolExecutor(
+                    if (settings.function == Function.STABILITY_TEST) 2 else 1) {
                     override fun terminated() {
                         super.terminated()
 
@@ -515,7 +516,6 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 controllers.getOrNull(taskId)?.future?.cancel(false)
 
                 earlyExit = true
-                // Ignore the exception as it's reported.
             }
 
             // Cancel this thread.

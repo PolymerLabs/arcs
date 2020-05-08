@@ -20,8 +20,8 @@ arcs_kt_android_library(
     manifest = ":AndroidManifest.xml",
     resource_files = glob(["res/**"]),
     deps = [
+        "//java/arcs/android/storage",
         "//java/arcs/android/storage/database",
-        "//java/arcs/android/storage:storage",
         "//java/arcs/android/util",
         "//java/arcs/core/common",
         "//java/arcs/core/data",
