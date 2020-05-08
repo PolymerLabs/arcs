@@ -125,11 +125,11 @@ describe('manifest2proto', () => {
       handles: [{
         fate: 'JOIN',
         name: 'handle0',
-        associatedHandles: ["handle1", "handle2"]
+        associatedHandles: ['handle1', 'handle2']
       }, {
         fate: 'USE',
         name: 'handle1',
-        id: "folks",
+        id: 'folks',
         tags: ['tag1'],
       }, {
         fate: 'MAP',
