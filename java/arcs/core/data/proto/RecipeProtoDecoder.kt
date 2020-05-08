@@ -23,6 +23,10 @@ fun RecipeProto.decode(particleSpecs: Map<String, ParticleSpec>): Recipe {
             "Duplicate handle '${it.name}' when decoding recipe '$name'."
         }
     }
+    // Support joins: Associate handles with each other
+    recipeHandles.values.forEach {
+        it.associatedHandleNames.forEach { name -> it.associatedHandles.add(recipeHandles[name]!!) }
+    }
     val context = DecodingContext(particleSpecs, recipeHandles)
     val particles = particlesList.map { it.decode(context) }
     return Recipe(name.ifBlank { null }, recipeHandles, particles, arcId.ifBlank { null })

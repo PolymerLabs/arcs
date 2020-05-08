@@ -53,5 +53,5 @@ fun HandleProto.decode() = Handle(
     storageKey = storageKey,
     type = if (hasType()) type.decode() else TypeVariable("$name"),
     capabilities = capabilitiesList.decode(),
-    associatedHandles = getAssociatedHandlesList()
+    associatedHandleNames = associatedHandlesList
 )
