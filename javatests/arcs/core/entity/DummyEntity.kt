@@ -21,6 +21,8 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
     var texts: Set<String> by CollectionProperty()
     var refs: Set<Reference<DummyEntity>> by CollectionProperty()
 
+    private val nestedEntitySpecs = mapOf(SCHEMA_HASH to DummyEntity)
+
     fun getSingletonValueForTest(field: String) = super.getSingletonValue(field)
 
     fun getCollectionValueForTest(field: String) = super.getCollectionValue(field)
@@ -31,7 +33,7 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
     fun setCollectionValueForTest(field: String, values: Set<Any>) =
         super.setCollectionValue(field, values)
 
-    fun deserializeForTest(rawEntity: RawEntity) = super.deserialize(rawEntity)
+    fun deserializeForTest(rawEntity: RawEntity) = super.deserialize(rawEntity, nestedEntitySpecs)
 
     companion object : EntitySpec<DummyEntity> {
         override fun deserialize(data: RawEntity) = DummyEntity().apply { deserialize(data) }

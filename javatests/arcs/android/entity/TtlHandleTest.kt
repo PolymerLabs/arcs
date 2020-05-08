@@ -73,7 +73,7 @@ class TtlHandleTest {
         databaseManager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         DriverAndKeyConfigurator.configure(databaseManager)
-        SchemaRegistry.register(DummyEntity)
+        SchemaRegistry.register(DummyEntity.SCHEMA)
     }
 
     @After

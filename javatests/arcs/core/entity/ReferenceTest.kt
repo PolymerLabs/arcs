@@ -50,7 +50,7 @@ class ReferenceTest {
     @Before
     fun setUp() = runBlocking {
         DriverAndKeyConfigurator.configure(null)
-        SchemaRegistry.register(DummyEntity)
+        SchemaRegistry.register(DummyEntity.SCHEMA)
 
         handle = entityHandleManager.createHandle(
             HandleSpec(
@@ -108,43 +108,6 @@ class ReferenceTest {
                 get() = DummyEntity.SCHEMA
         }
         assertThat(reference).isNotEqualTo(createReference("id", "key", someOtherSpec))
-    }
-
-    @Test
-    fun fromReferencable_roundTrip() {
-        val storageReference = StorageReference("id", RamDiskStorageKey("key"), version = null)
-        val reference = Reference.fromReferencable(storageReference, DummyEntity.SCHEMA_HASH)
-
-        val referencable = reference.toReferencable()
-        assertThat(referencable).isEqualTo(storageReference)
-
-        val reference2 = Reference.fromReferencable(referencable, DummyEntity.SCHEMA_HASH)
-        assertThat(reference2).isEqualTo(reference)
-    }
-
-    @Test
-    fun fromReferencable_wrongType() {
-        val e = assertThrows(IllegalArgumentException::class) {
-            Reference.fromReferencable("abc".toReferencable(), DummyEntity.SCHEMA_HASH)
-        }
-        assertThat(e).hasMessageThat().isEqualTo(
-            "Expected Reference but was Primitive(abc)."
-        )
-    }
-
-    @Test
-    fun fromReferencable_unknownHash() {
-        SchemaRegistry.clearForTest()
-
-        val e = assertThrows(IllegalArgumentException::class) {
-            Reference.fromReferencable(
-                StorageReference("id", RamDiskStorageKey("key"), version = null),
-                DummyEntity.SCHEMA_HASH
-            )
-        }
-        assertThat(e).hasMessageThat().isEqualTo(
-            "Unknown schema with hash ${DummyEntity.SCHEMA_HASH}."
-        )
     }
 
     private fun createReference(

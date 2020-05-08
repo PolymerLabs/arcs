@@ -44,20 +44,4 @@ class Reference<T : Entity>(
         result = 31 * result + storageReference.hashCode()
         return result
     }
-
-    companion object {
-        /** Converts the given [Referencable] into a [Reference]. */
-        /* internal */ fun fromReferencable(
-            referencable: Referencable,
-            schemaHash: String
-        ): Reference<out Entity> {
-            require(referencable is StorageReference) {
-                "Expected Reference but was $referencable."
-            }
-            val entitySpec = requireNotNull(SchemaRegistry.getEntitySpec(schemaHash)) {
-                "Unknown schema with hash $schemaHash."
-            }
-            return Reference(entitySpec, referencable)
-        }
-    }
 }

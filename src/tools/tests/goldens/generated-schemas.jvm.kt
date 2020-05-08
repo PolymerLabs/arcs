@@ -71,11 +71,16 @@ abstract class AbstractGold : BaseParticle() {
                 query = null
             )
 
+            private val nestedEntitySpecs: Map<SchemaHash, EntitySpec<out Entity>> =
+                emptyMap()
+
             init {
-                SchemaRegistry.register(this)
+                SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = GoldInternal1().apply { deserialize(data) }
+            override fun deserialize(data: RawEntity) = GoldInternal1().apply {
+                deserialize(data, nestedEntitySpecs)
+            }
         }
     }
 
@@ -191,11 +196,16 @@ abstract class AbstractGold : BaseParticle() {
                 query = null
             )
 
+            private val nestedEntitySpecs: Map<SchemaHash, EntitySpec<out Entity>> =
+                emptyMap()
+
             init {
-                SchemaRegistry.register(this)
+                SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = Gold_AllPeople().apply { deserialize(data) }
+            override fun deserialize(data: RawEntity) = Gold_AllPeople().apply {
+                deserialize(data, nestedEntitySpecs)
+            }
         }
     }
 
@@ -243,11 +253,16 @@ abstract class AbstractGold : BaseParticle() {
                 query = null
             )
 
+            private val nestedEntitySpecs: Map<SchemaHash, EntitySpec<out Entity>> =
+                emptyMap()
+
             init {
-                SchemaRegistry.register(this)
+                SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = Gold_Collection().apply { deserialize(data) }
+            override fun deserialize(data: RawEntity) = Gold_Collection().apply {
+                deserialize(data, nestedEntitySpecs)
+            }
         }
     }
 
@@ -368,11 +383,16 @@ abstract class AbstractGold : BaseParticle() {
                 }
             )
 
+            private val nestedEntitySpecs: Map<SchemaHash, EntitySpec<out Entity>> =
+                emptyMap()
+
             init {
-                SchemaRegistry.register(this)
+                SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = Gold_QCollection().apply { deserialize(data) }
+            override fun deserialize(data: RawEntity) = Gold_QCollection().apply {
+                deserialize(data, nestedEntitySpecs)
+            }
         }
     }
 
@@ -462,11 +482,16 @@ abstract class AbstractGold : BaseParticle() {
                 query = null
             )
 
+            private val nestedEntitySpecs: Map<SchemaHash, EntitySpec<out Entity>> =
+                mapOf("485712110d89359a3e539dac987329cd2649d889" to GoldInternal1)
+
             init {
-                SchemaRegistry.register(this)
+                SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = Gold_Data().apply { deserialize(data) }
+            override fun deserialize(data: RawEntity) = Gold_Data().apply {
+                deserialize(data, nestedEntitySpecs)
+            }
         }
     }
 

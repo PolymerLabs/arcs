@@ -27,7 +27,7 @@ class StorageAdapterTest {
 
     @Before
     fun setUp() {
-        SchemaRegistry.register(DummyEntity)
+        SchemaRegistry.register(DummyEntity.SCHEMA)
     }
 
     @Test
