@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 /**
  * Arcs system-health-test storage service. Supports crashing itself when needed.
@@ -24,7 +25,7 @@ class TestStorageService : StorageService() {
             intent.hasExtra(EXTRA_CRASH) &&
             intent.getBooleanExtra (EXTRA_CRASH, false)) {
             scope.launch {
-                delay(1000)
+                delay(Random.nextLong(10, 1000))
                 android.os.Process.killProcess(android.os.Process.myPid());
             }
         }

@@ -73,6 +73,8 @@ import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -141,7 +143,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
 
         if (settings.function != Function.STOP && settings.timesOfIterations > 0) {
             tasks = Array(settings.numOfListenerThreads + settings.numOfWriterThreads) { id ->
-                object : ScheduledThreadPoolExecutor(1) {
+                object : ScheduledThreadPoolExecutor(2) {
                     override fun terminated() {
                         super.terminated()
 
@@ -282,16 +284,22 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                         if (it < 0) return@task
                     }
 
-                    if (ctrl.shouldCrash && ctrl.crashAtCountDown == thisCountDown) {
-                        // Randomly crash StorageService if we are testing stability.
-                        throw StorageClientException()
-                    }
-
                     val taskHandle = handles[ctrl.taskId]
-                    GlobalScope.launch(taskHandle.coroutineContext) {
+                    val job = GlobalScope.launch(taskHandle.coroutineContext) {
                         when (ctrl.taskType) {
                             TaskType.LISTENER -> listenerTask(taskHandle, ctrl, settings)
                             else -> writerTask(taskHandle, ctrl, settings)
+                        }
+                    }
+
+                    if (ctrl.shouldCrash && ctrl.crashAtCountDown == thisCountDown) {
+                        // Trouble-maker
+                        GlobalScope.launch(taskHandle.coroutineContext) {
+                            // random crash in several ms
+                            delay(Random.nextLong(0, storageClientCrashDelayMs))
+                            // Randomly crash StorageService if we are testing stability.
+                            job.cancel("causing troubles on a client",
+                                       StorageClientCrashException())
                         }
                     }
                 },
@@ -494,7 +502,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
     private fun stabilityExceptionHandler(taskId: Int) =
         CoroutineExceptionHandler { _, exception ->
 
-            if (exception !is StorageClientException) {
+            if (exception !is StorageClientCrashException) {
                 val timestamp = System.currentTimeMillis()
                 val taskType = controllers.getOrNull(taskId)?.taskType?.name ?: ""
                 val msg = "$taskType #$taskId: $exception"
@@ -509,6 +517,9 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 earlyExit = true
                 // Ignore the exception as it's reported.
             }
+
+            // Cancel this thread.
+            throw InterruptedException()
         }
 
     private inner class Watchdog(val settings: Settings) {
@@ -882,6 +893,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         private const val GcWaitTimeMs = 2000L
         private const val progressUpdateIntervalMs = 1000f
         private const val hprofFile = "arcs.hprof"
+        private const val storageClientCrashDelayMs = 5L
         private val _statsBulletin = atomic("")
     }
 }
@@ -960,4 +972,4 @@ class SystemHealthData {
     )
 }
 
-class StorageClientException: IllegalStateException()
+private class StorageClientCrashException: IllegalStateException()
