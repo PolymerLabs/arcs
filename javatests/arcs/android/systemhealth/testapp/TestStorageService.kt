@@ -33,7 +33,10 @@ class TestStorageService : StorageService() {
         return super.onStartCommand(intent, flags, startId)
     }
 
-    override fun onDestroy() = scope.cancel()
+    override fun onDestroy() {
+        scope.cancel()
+        super.onDestroy()
+    }
 
     companion object {
         const val EXTRA_CRASH = "crash"
