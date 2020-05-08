@@ -233,16 +233,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 tasksEvents[id] = TaskEventQueue(ReentrantReadWriteLock(), mutableListOf())
                 controllers[id] = TaskController(id, settings.timesOfIterations, taskType)
                 runBlocking {
-                    val elapsedTime = measureTimeMillis {
-                        setUpHandle(this@apply, id, taskType, settings)
-                    }
-                    if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
-                        taskManagerEvents.writer.withLock {
-                            taskManagerEvents.queue.add(
-                                TaskEvent(TaskEventId.HANDLE_FIRST_SETUP_TIME, elapsedTime)
-                            )
-                        }
-                    }
+                    setUpHandle(this@apply, id, taskType, settings)
                 }
             }
         }.toTypedArray()
@@ -300,7 +291,15 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                         TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
                         else -> TestEntity.singletonInMemoryStorageKey
                     }
-                ).awaitReady() as? ReadWriteSingletonHandle<TestEntity>)?.apply {
+                ) as? ReadWriteSingletonHandle<TestEntity>)?.apply {
+                    val elapsedTime = measureTimeMillis { awaitReady() }
+                    if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
+                        taskManagerEvents.writer.withLock {
+                            taskManagerEvents.queue.add(
+                                TaskEvent(TaskEventId.HANDLE_AWAIT_READY_TIME, elapsedTime))
+                        }
+                    }
+
                     onUpdate {
                         entity ->
                         if (settings.function == Function.LATENCY_BACKPRESSURE_TEST &&
@@ -332,7 +331,15 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                         TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
                         else -> TestEntity.collectionInMemoryStorageKey
                     }
-                ).awaitReady() as? ReadWriteCollectionHandle<TestEntity>)?.apply {
+                ) as? ReadWriteCollectionHandle<TestEntity>)?.apply {
+                    val elapsedTime = measureTimeMillis { awaitReady() }
+                    if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
+                        taskManagerEvents.writer.withLock {
+                            taskManagerEvents.queue.add(
+                                TaskEvent(TaskEventId.HANDLE_AWAIT_READY_TIME, elapsedTime))
+                        }
+                    }
+
                     onUpdate {
                         entity ->
                         if (settings.function == Function.LATENCY_BACKPRESSURE_TEST &&
@@ -483,7 +490,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         val stats = Stats()
             .generateHandleFetchLatencyStats()
             .generateHandleStoreLatencyStats()
-            .generateHandleSetupTimeStats()
+            .generateHandleAwaitReadyTimeStats()
             .generateAnomalyReport()
             .generateExceptionReport()
 
@@ -585,13 +592,13 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         }
 
         @Suppress("UnstableApiUsage")
-        fun generateHandleSetupTimeStats(): Stats = also {
+        fun generateHandleAwaitReadyTimeStats(): Stats = also {
             val calculator = StatsAccumulator()
 
             taskManagerEvents.reader.withLock {
                 calculator.addAll(
                     taskManagerEvents.queue.filter {
-                        it.eventId == TaskEventId.HANDLE_FIRST_SETUP_TIME
+                        it.eventId == TaskEventId.HANDLE_AWAIT_READY_TIME
                     }.map { it.timeMs }
                 )
             }
@@ -599,7 +606,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             calculator.takeIf { it.count() > 0 }?.let {
                 bulletin +=
                     """
-                    [setup() time]
+                    [awaitReady() time]
                     ${calculator.snapshot()}
                     ${platformNewline.repeat(1)}
                     """.trimIndent()
@@ -777,7 +784,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         HANDLE_STORE_BEGIN,
         HANDLE_STORE_END,
         HANDLE_FETCH_LATENCY,
-        HANDLE_FIRST_SETUP_TIME,
+        HANDLE_AWAIT_READY_TIME,
         MEMORY_STATS,
         EXCEPTION,
         TIMEOUT,
