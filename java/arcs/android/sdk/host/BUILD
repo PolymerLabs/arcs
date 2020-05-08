@@ -11,6 +11,7 @@ arcs_kt_android_library(
     deps = [
         "//java/arcs/android/host/parcelables",
         "//java/arcs/android/type",
+        "//java/arcs/android/util",
         "//java/arcs/core/data",
         "//java/arcs/core/host",
         "//java/arcs/core/storage",

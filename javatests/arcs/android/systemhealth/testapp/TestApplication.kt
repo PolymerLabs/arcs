@@ -14,6 +14,7 @@ package arcs.android.systemhealth.testapp
 import android.app.Application
 import androidx.work.Configuration
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
+import arcs.android.util.ProtoPrefetcher
 import arcs.android.util.initLogForAndroid
 import arcs.core.entity.SchemaRegistry
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -29,6 +30,8 @@ class TestApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+
+        ProtoPrefetcher.prefetch()
 
         RamDisk.clear()
         SchemaRegistry.register(TestEntity)
