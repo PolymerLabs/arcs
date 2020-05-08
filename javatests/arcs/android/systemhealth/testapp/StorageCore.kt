@@ -63,6 +63,7 @@ import kotlin.math.ceil
 import kotlin.random.Random
 import kotlin.require
 import kotlin.run
+import kotlin.system.measureTimeMillis
 import kotlin.takeIf
 import kotlin.toString
 import kotlinx.atomicfu.atomic
@@ -232,7 +233,16 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 tasksEvents[id] = TaskEventQueue(ReentrantReadWriteLock(), mutableListOf())
                 controllers[id] = TaskController(id, settings.timesOfIterations, taskType)
                 runBlocking {
-                    setUpHandle(this@apply, id, taskType, settings)
+                    val elapsedTime = measureTimeMillis {
+                        setUpHandle(this@apply, id, taskType, settings)
+                    }
+                    if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
+                        taskManagerEvents.writer.withLock {
+                            taskManagerEvents.queue.add(
+                                TaskEvent(TaskEventId.HANDLE_FIRST_SETUP_TIME, elapsedTime)
+                            )
+                        }
+                    }
                 }
             }
         }.toTypedArray()
@@ -473,6 +483,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         val stats = Stats()
             .generateHandleFetchLatencyStats()
             .generateHandleStoreLatencyStats()
+            .generateHandleSetupTimeStats()
             .generateAnomalyReport()
             .generateExceptionReport()
 
@@ -567,6 +578,28 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 bulletin +=
                     """
                     [store() latency]
+                    ${calculator.snapshot()}
+                    ${platformNewline.repeat(1)}
+                    """.trimIndent()
+            }
+        }
+
+        @Suppress("UnstableApiUsage")
+        fun generateHandleSetupTimeStats(): Stats = also {
+            val calculator = StatsAccumulator()
+
+            taskManagerEvents.reader.withLock {
+                calculator.addAll(
+                    taskManagerEvents.queue.filter {
+                        it.eventId == TaskEventId.HANDLE_FIRST_SETUP_TIME
+                    }.map { it.timeMs }
+                )
+            }
+
+            calculator.takeIf { it.count() > 0 }?.let {
+                bulletin +=
+                    """
+                    [setup() time]
                     ${calculator.snapshot()}
                     ${platformNewline.repeat(1)}
                     """.trimIndent()
@@ -744,6 +777,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         HANDLE_STORE_BEGIN,
         HANDLE_STORE_END,
         HANDLE_FETCH_LATENCY,
+        HANDLE_FIRST_SETUP_TIME,
         MEMORY_STATS,
         EXCEPTION,
         TIMEOUT,
