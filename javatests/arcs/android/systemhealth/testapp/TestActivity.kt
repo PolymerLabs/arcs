@@ -44,6 +44,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 /** Test app for Arcs System Health. */
 class TestActivity : AppCompatActivity() {
@@ -116,11 +117,19 @@ class TestActivity : AppCompatActivity() {
                 when (handleType) {
                     SystemHealthEnums.HandleType.SINGLETON ->
                         withHandle<ReadWriteSingletonHandle<TestEntity>> {
-                            it?.store(SystemHealthTestEntity())?.join()
+                            it?.let { handle ->
+                                withContext(handle.dispatcher) {
+                                    handle.store(SystemHealthTestEntity())
+                                }.join()
+                            }
                         }
                     else ->
                         withHandle<ReadWriteCollectionHandle<TestEntity>> {
-                            it?.store(SystemHealthTestEntity())?.join()
+                            it?.let { handle ->
+                                withContext(handle.dispatcher) {
+                                    handle.store(SystemHealthTestEntity())
+                                }.join()
+                            }
                         }
                 }
             }
@@ -130,11 +139,15 @@ class TestActivity : AppCompatActivity() {
                 when (handleType) {
                     SystemHealthEnums.HandleType.SINGLETON ->
                         withHandle<ReadWriteSingletonHandle<TestEntity>> {
-                            it?.clear()
+                            it?.let { handle ->
+                                withContext(handle.dispatcher) { handle.clear() }.join()
+                            }
                         }
                     else ->
                         withHandle<ReadWriteCollectionHandle<TestEntity>> {
-                            it?.clear()
+                            it?.let { handle ->
+                                withContext(handle.dispatcher) { handle.clear() }.join()
+                            }
                         }
                 }
             }
@@ -144,12 +157,16 @@ class TestActivity : AppCompatActivity() {
                 runBlocking(coroutineContext) {
                     when (handleType) {
                         SystemHealthEnums.HandleType.SINGLETON -> {
-                            singletonHandle?.close()
-                            singletonHandle = null
+                            singletonHandle?.let {
+                                withContext(it.dispatcher) { it.close() }
+                                singletonHandle = null
+                            }
                         }
                         else -> {
-                            collectionHandle?.close()
-                            collectionHandle = null
+                            collectionHandle?.let {
+                                withContext(it.dispatcher) { it.close() }
+                                collectionHandle = null
+                            }
                         }
                     }
                 }
@@ -362,8 +379,10 @@ class TestActivity : AppCompatActivity() {
         handle: ReadSingletonHandle<TestEntity>?,
         prefix: String = "?"
     ) {
-        val result = handle?.fetch()?.let {
-            "${it.text},${it.number},${it.boolean}"
+        val result = handle?.let {
+            withContext(handle.dispatcher) { handle.fetch() }?.let {
+                "${it.text},${it.number},${it.boolean}"
+            }
         } ?: "null"
 
         // Update UI components at the Main/UI Thread.
@@ -377,10 +396,12 @@ class TestActivity : AppCompatActivity() {
         handle: ReadCollectionHandle<TestEntity>?,
         prefix: String = "?"
     ) {
-        val result = handle?.fetchAll()?.takeIf {
-            it.isNotEmpty()
-        }?.joinToString(separator = System.getProperty("line.separator") ?: "\r\n") {
-            "${it.text},${it.number},${it.boolean}"
+        val result = handle?.let {
+            withContext(handle.dispatcher) { handle.fetchAll() }.takeIf {
+                it.isNotEmpty()
+            }?.joinToString(separator = System.getProperty("line.separator") ?: "\r\n") {
+                "${it.text},${it.number},${it.boolean}"
+            }
         } ?: "empty"
 
         // Update UI components at the Main/UI Thread.
