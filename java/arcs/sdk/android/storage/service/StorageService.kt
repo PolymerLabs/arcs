@@ -26,6 +26,7 @@ import arcs.android.storage.service.BindingContextStatsImpl
 import arcs.android.storage.service.StorageServiceManager
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
+import arcs.android.util.ProtoPrefetcher
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.Store
@@ -55,7 +56,7 @@ import kotlinx.coroutines.runBlocking
  * Implementation of a [Service] which manages [Store]s and exposes the ability to access them via
  * the [IStorageService] interface when bound-to by a client.
  */
-class StorageService : ResurrectorService() {
+open class StorageService : ResurrectorService() {
     private val coroutineContext = Dispatchers.IO + CoroutineName("StorageService")
     private val scope = CoroutineScope(coroutineContext)
     private val writeBackScope = CoroutineScope(
@@ -74,6 +75,7 @@ class StorageService : ResurrectorService() {
         log.debug { "onCreate" }
         startTime = startTime ?: System.currentTimeMillis()
 
+        ProtoPrefetcher.prefetch()
         StoreWriteBack.init(writeBackScope)
 
         val periodicCleanupTask =
@@ -247,7 +249,7 @@ class StorageService : ResurrectorService() {
     }
 
     companion object {
-        private const val EXTRA_OPTIONS = "storeOptions"
+        const val EXTRA_OPTIONS = "storeOptions"
         private const val MANAGER_ACTION = "arcs.sdk.android.storage.service.MANAGER"
 
         init {

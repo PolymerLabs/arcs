@@ -85,6 +85,20 @@ class LocalService : LifecycleService() {
                         defaultSettings.delayedStartMs
                     ),
                     0
+                ),
+                minOf(
+                    it.getIntExtra(
+                        intentExtras.storageServiceCrashRate,
+                        defaultSettings.storageServiceCrashRate
+                    ),
+                    100
+                ),
+                minOf(
+                    it.getIntExtra(
+                        intentExtras.storageClientCrashRate,
+                        defaultSettings.storageClientCrashRate
+                    ),
+                    100
                 )
             )
         } ?: defaultSettings
