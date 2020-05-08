@@ -41,6 +41,8 @@
   <string name="data_size_hint" translatable="false">The size of data (bytes) to write</string>
   <string name="delayed_start_ms" translatable="false">Delayed Start (ms)</string>
   <string name="delayed_start_ms_hint" translatable="false">Delay (ms) before starting test</string>
+  <string name="storage_service_crash_rate" translatable="false">Storage service crash rate: %1$d%%</string>
+  <string name="storage_client_crash_rate" translatable="false">Storage client crash rate: %1$d%%</string>
   <string name="performance_eval" translatable="false">Performance</string>
   <string name="stability_eval" translatable="false">Stability</string>
 </resources>

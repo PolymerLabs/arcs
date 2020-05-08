@@ -21,6 +21,7 @@ import android.text.TextWatcher
 import android.view.View
 import android.widget.Button
 import android.widget.RadioButton
+import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import arcs.core.data.HandleMode
@@ -67,6 +68,8 @@ class TestActivity : AppCompatActivity() {
     private var timesOfIterations: Int
     private var dataSizeInBytes: Int
     private var delayedStartMs: Int
+    private var storageServiceCrashRate: Int
+    private var storageClientCrashRate: Int
     private var intentReceiver: BroadcastReceiver? = null
 
     init {
@@ -78,6 +81,8 @@ class TestActivity : AppCompatActivity() {
             timesOfIterations = it.timesOfIterations
             dataSizeInBytes = it.dataSizeInBytes
             delayedStartMs = it.delayedStartMs
+            storageServiceCrashRate = it.storageServiceCrashRate
+            storageClientCrashRate = it.storageClientCrashRate
         }
     }
 
@@ -228,6 +233,52 @@ class TestActivity : AppCompatActivity() {
             }
         )
 
+        val serviceProbabilityLabel =
+            findViewById<TextView>(R.id.service_crash_rate_label)
+        findViewById<SeekBar>(R.id.service_crash_rate).also {
+            serviceProbabilityLabel.text =
+                getString(R.string.storage_service_crash_rate, it.progress)
+        }.also {
+            it.setOnSeekBarChangeListener(
+                object : SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(seekBar: SeekBar?,
+                                                   progress: Int,
+                                                   fromUser: Boolean) {
+                        storageServiceCrashRate = progress
+                        serviceProbabilityLabel.text = getString(
+                            R.string.storage_service_crash_rate, progress)
+                    }
+
+                    override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+
+                    override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+                }
+            )
+        }
+
+        val clientProbabilityLabel =
+            findViewById<TextView>(R.id.client_crash_rate_label)
+        findViewById<SeekBar>(R.id.client_crash_rate).also {
+            clientProbabilityLabel.text = String.format(
+                getString(R.string.storage_client_crash_rate), it.progress)
+        }.also {
+            it.setOnSeekBarChangeListener(
+                object : SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(seekBar: SeekBar?,
+                                                   progress: Int,
+                                                   fromUser: Boolean) {
+                        storageClientCrashRate = progress
+                        clientProbabilityLabel.text = getString(
+                            R.string.storage_client_crash_rate, progress)
+                    }
+
+                    override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+
+                    override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+                }
+            )
+        }
+
         // Listen to the broadcasts sent from remote/local system-health service
         // so as to display the enclosing messages on UI.
         intentReceiver = object : BroadcastReceiver() {
@@ -263,6 +314,33 @@ class TestActivity : AppCompatActivity() {
                 intent.putExtra(it.timesOfIterations, timesOfIterations)
                 intent.putExtra(it.dataSizeInBytes, dataSizeInBytes)
                 intent.putExtra(it.delayedStartMs, delayedStartMs)
+                intent.putExtra(it.storageServiceCrashRate, storageServiceCrashRate)
+                intent.putExtra(it.storageClientCrashRate, storageClientCrashRate)
+
+                startService(intent)
+            }
+        }
+
+        findViewById<Button>(R.id.stability_eval).setOnClickListener {
+            SystemHealthData.IntentExtras().let {
+                val intent = Intent(
+                    this@TestActivity,
+                    when (serviceType) {
+                        SystemHealthEnums.ServiceType.REMOTE -> RemoteService::class.java
+                        else -> LocalService::class.java
+                    }
+                )
+                intent.putExtra(it.function, SystemHealthEnums.Function.STABILITY_TEST.name)
+                intent.putExtra(it.handleType, handleType.name)
+                intent.putExtra(it.storage_mode, storageMode.name)
+                intent.putExtra(it.numOfListenerThreads, numOfListenerThreads)
+                intent.putExtra(it.numOfWriterThreads, numOfWriterThreads)
+                intent.putExtra(it.iterationIntervalMs, iterationIntervalMs)
+                intent.putExtra(it.timesOfIterations, timesOfIterations)
+                intent.putExtra(it.dataSizeInBytes, dataSizeInBytes)
+                intent.putExtra(it.delayedStartMs, delayedStartMs)
+                intent.putExtra(it.storageServiceCrashRate, storageServiceCrashRate)
+                intent.putExtra(it.storageClientCrashRate, storageClientCrashRate)
 
                 startService(intent)
             }
