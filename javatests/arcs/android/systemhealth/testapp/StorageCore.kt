@@ -63,6 +63,7 @@ import kotlin.math.ceil
 import kotlin.random.Random
 import kotlin.require
 import kotlin.run
+import kotlin.system.measureTimeMillis
 import kotlin.takeIf
 import kotlin.toString
 import kotlinx.atomicfu.atomic
@@ -72,6 +73,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 private typealias HandleType = SystemHealthEnums.HandleType
 private typealias Function = SystemHealthEnums.Function
@@ -278,73 +280,93 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         settings: Settings
     ) = when (settings.handleType) {
         HandleType.SINGLETON -> {
-            taskHandle.handle = (
-                taskHandle.handleManager.createHandle(
-                    HandleSpec(
-                        "singletonHandle$taskId",
-                        HandleMode.ReadWrite,
-                        HandleContainerType.Singleton,
-                        TestEntity.Companion
-                    ),
-                    when (settings.storageMode) {
-                        TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
-                        else -> TestEntity.singletonInMemoryStorageKey
+            val handle = taskHandle.handleManager.createHandle(
+                HandleSpec(
+                    "singletonHandle$taskId",
+                    HandleMode.ReadWrite,
+                    HandleContainerType.Singleton,
+                    TestEntity.Companion
+                ),
+                when (settings.storageMode) {
+                    TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
+                    else -> TestEntity.singletonInMemoryStorageKey
+                }
+            ) as ReadWriteSingletonHandle<TestEntity>
+
+            taskHandle.handle = withContext(handle.dispatcher) {
+                val elapsedTime = measureTimeMillis { handle.awaitReady() }
+                if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
+                    taskManagerEvents.writer.withLock {
+                        taskManagerEvents.queue.add(
+                            TaskEvent(TaskEventId.HANDLE_AWAIT_READY_TIME, elapsedTime))
                     }
-                ).awaitReady() as? ReadWriteSingletonHandle<TestEntity>)?.apply {
-                    onUpdate {
-                        entity ->
-                        if (settings.function == Function.LATENCY_BACKPRESSURE_TEST &&
-                            taskType == TaskType.WRITER
-                        ) {
-                            tasksEvents[taskId]?.writer?.withLock {
-                                tasksEvents[taskId]?.queue?.add(
-                                    TaskEvent(
-                                        TaskEventId.HANDLE_STORE_END,
-                                        System.currentTimeMillis(),
-                                        entity?.number
-                                    )
+                }
+
+                handle.onUpdate {
+                    entity ->
+                    if (settings.function == Function.LATENCY_BACKPRESSURE_TEST &&
+                        taskType == TaskType.WRITER
+                    ) {
+                        tasksEvents[taskId]?.writer?.withLock {
+                            tasksEvents[taskId]?.queue?.add(
+                                TaskEvent(
+                                    TaskEventId.HANDLE_STORE_END,
+                                    System.currentTimeMillis(),
+                                    entity?.number
                                 )
-                            }
+                            )
                         }
                     }
                 }
+                handle
+            }
         }
         HandleType.COLLECTION -> {
-            taskHandle.handle = (
-                taskHandle.handleManager.createHandle(
-                    HandleSpec(
-                        "collectionHandle$taskId",
-                        HandleMode.ReadWrite,
-                        HandleContainerType.Collection,
-                        TestEntity.Companion
-                    ),
-                    when (settings.storageMode) {
-                        TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
-                        else -> TestEntity.collectionInMemoryStorageKey
+            val handle = taskHandle.handleManager.createHandle(
+                HandleSpec(
+                    "collectionHandle$taskId",
+                    HandleMode.ReadWrite,
+                    HandleContainerType.Collection,
+                    TestEntity.Companion
+                ),
+                when (settings.storageMode) {
+                    TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
+                    else -> TestEntity.collectionInMemoryStorageKey
+                }
+            ) as ReadWriteCollectionHandle<TestEntity>
+
+            taskHandle.handle = withContext(handle.dispatcher) {
+                val elapsedTime = measureTimeMillis { handle.awaitReady() }
+                if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
+                    taskManagerEvents.writer.withLock {
+                        taskManagerEvents.queue.add(
+                            TaskEvent(TaskEventId.HANDLE_AWAIT_READY_TIME, elapsedTime))
                     }
-                ).awaitReady() as? ReadWriteCollectionHandle<TestEntity>)?.apply {
-                    onUpdate {
-                        entity ->
-                        if (settings.function == Function.LATENCY_BACKPRESSURE_TEST &&
-                            taskType == TaskType.WRITER
-                        ) {
-                            tasksEvents[taskId]?.writer?.withLock {
-                                tasksEvents[taskId]?.queue?.add(
-                                    TaskEvent(
-                                        TaskEventId.HANDLE_STORE_END,
-                                        System.currentTimeMillis(),
-                                        entity.map { it.number }.toSet()
-                                    )
+                }
+
+                handle.onUpdate {
+                    entity ->
+                    if (settings.function == Function.LATENCY_BACKPRESSURE_TEST &&
+                        taskType == TaskType.WRITER
+                    ) {
+                        tasksEvents[taskId]?.writer?.withLock {
+                            tasksEvents[taskId]?.queue?.add(
+                                TaskEvent(
+                                    TaskEventId.HANDLE_STORE_END,
+                                    System.currentTimeMillis(),
+                                    entity.map { it.number }.toSet()
                                 )
-                            }
+                            )
                         }
                     }
                 }
+                handle
+            }
         }
     }
 
     private suspend inline fun <T> closeHandleSuspend(handle: T?) {
-        if (handle is Handle) handle.close()
+        if (handle is Handle) withContext(handle.dispatcher) { handle.close() }
     }
 
     private fun <T> closeHandle(
@@ -365,8 +387,12 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
     ) {
         val timestampStart = System.currentTimeMillis()
         when (val handle = taskHandle.handle) {
-            is ReadWriteSingletonHandle<*> -> handle.fetch()
-            is ReadWriteCollectionHandle<*> -> handle.fetchAll()
+            is ReadWriteSingletonHandle<*> -> withContext(handle.dispatcher) {
+                handle.fetch()
+            }
+            is ReadWriteCollectionHandle<*> -> withContext(handle.dispatcher) {
+                handle.fetchAll()
+            }
         }
         val timeElapsed = System.currentTimeMillis() - timestampStart
         if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
@@ -397,10 +423,14 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         when (val handle = taskHandle.handle) {
             is ReadWriteSingletonHandle<*> -> (
                 handle as? ReadWriteSingletonHandle<TestEntity>
-                                              )?.store(entity)?.join()
+                )?.let {
+                    withContext(it.dispatcher) { it.store(entity).join() }
+                }
             is ReadWriteCollectionHandle<*> -> (
                 handle as? ReadWriteCollectionHandle<TestEntity>
-                                               )?.store(entity)?.join()
+                )?.let {
+                    withContext(it.dispatcher) { it.store(entity).join() }
+                }
             else -> Unit
         }
     }
@@ -473,6 +503,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         val stats = Stats()
             .generateHandleFetchLatencyStats()
             .generateHandleStoreLatencyStats()
+            .generateHandleAwaitReadyTimeStats()
             .generateAnomalyReport()
             .generateExceptionReport()
 
@@ -567,6 +598,28 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 bulletin +=
                     """
                     [store() latency]
+                    ${calculator.snapshot()}
+                    ${platformNewline.repeat(1)}
+                    """.trimIndent()
+            }
+        }
+
+        @Suppress("UnstableApiUsage")
+        fun generateHandleAwaitReadyTimeStats(): Stats = also {
+            val calculator = StatsAccumulator()
+
+            taskManagerEvents.reader.withLock {
+                calculator.addAll(
+                    taskManagerEvents.queue.filter {
+                        it.eventId == TaskEventId.HANDLE_AWAIT_READY_TIME
+                    }.map { it.timeMs }
+                )
+            }
+
+            calculator.takeIf { it.count() > 0 }?.let {
+                bulletin +=
+                    """
+                    [awaitReady() time]
                     ${calculator.snapshot()}
                     ${platformNewline.repeat(1)}
                     """.trimIndent()
@@ -744,6 +797,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         HANDLE_STORE_BEGIN,
         HANDLE_STORE_END,
         HANDLE_FETCH_LATENCY,
+        HANDLE_AWAIT_READY_TIME,
         MEMORY_STATS,
         EXCEPTION,
         TIMEOUT,
