@@ -34,6 +34,7 @@ import arcs.core.storage.Reference
 import arcs.core.storage.ReferenceModeStore
 import arcs.core.storage.StorageMode
 import arcs.core.storage.StoreOptions
+import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.DatabaseDriver
 import arcs.core.storage.driver.DatabaseDriverProvider
@@ -42,6 +43,7 @@ import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.WriteBackForTesting
 import arcs.core.storage.toReference
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
@@ -81,11 +83,13 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     fun setUp() = runBlockingTest {
         DriverFactory.clearRegistrations()
         databaseFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
+        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         DatabaseDriverProvider.configure(databaseFactory) { schema }
     }
 
     @After
     fun tearDown() = runBlockingTest {
+        WriteBackForTesting.clear()
         CapabilitiesResolver.reset()
         databaseFactory.resetAll()
     }
@@ -308,7 +312,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         assertThat(storedBob.toRawEntity()).isEqualTo(bob)
         assertThat(storedBob.toRawEntity().creationTimestamp).isEqualTo(10)
         assertThat(storedBob.toRawEntity().expirationTimestamp).isEqualTo(20)
-        
+
         // Check Bob in the database.
         val backingKey = activeStore.backingStore.storageKey as DatabaseStorageKey
         val database = databaseFactory.getDatabase(backingKey.dbName, true)

@@ -20,19 +20,19 @@ arcs_kt_android_library(
     manifest = ":AndroidManifest.xml",
     resource_files = glob(["res/**"]),
     deps = [
+        "//java/arcs/android/storage",
         "//java/arcs/android/storage/database",
         "//java/arcs/android/util",
         "//java/arcs/core/common",
-        "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
         "//java/arcs/core/storage",
+        "//java/arcs/core/storage:storage-kt",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/driver",
-        "//java/arcs/core/storage/driver/testutil",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/type",
@@ -52,10 +52,11 @@ arcs_kt_android_library(
     ],
 )
 
+# Don't use bazel mobile-install on this target.
+# Use bazel build ... && adb install ...
 android_binary(
     name = "testapp",
     testonly = 1,
-    incremental_dexing = 0,
     manifest = ":AndroidManifest.xml",
     multidex = "native",
     deps = [":test_app_lib"],

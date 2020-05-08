@@ -9,13 +9,11 @@
  */
 import {assert} from '../../platform/chai-web.js';
 import {capabilitiesToProtoOrdinals, encodeManifestToProto, manifestToProtoPayload, typeToProtoPayload} from '../manifest2proto.js';
-import {EntityType, Type} from '../../runtime/type.js';
+import {CountType, EntityType, SingletonType, TupleType, Type} from '../../runtime/type.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Capabilities} from '../../runtime/capabilities.js';
 import {fs} from '../../platform/fs-web.js';
 import protobuf from 'protobufjs';
-import {Refinement} from '../../runtime/refiner.js';
-import {parse} from '../../gen/runtime/manifest-parser.js';
 
 const rootNamespace = protobuf.loadSync('./java/arcs/core/data/proto/manifest.proto');
 const manifestProto = rootNamespace.lookupType('arcs.ManifestProto');
@@ -300,6 +298,76 @@ describe('manifest2proto', () => {
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
             }
           }
+        }
+      }
+    });
+  });
+
+  it('encodes singleton type', async () => {
+    const singleton = EntityType.make(['Foo'], {value: 'Text'}).singletonOf();
+    assert.deepStrictEqual(await toProtoAndBackType(singleton), {
+      singleton: {
+        singletonType: {
+          entity: {
+            schema: {
+              names: ['Foo'],
+              fields: {
+                value: {
+                  primitive: 'TEXT'
+                }
+              },
+              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
+            }
+          }
+        }
+      }
+    });
+  });
+
+  it('encodes tuple types', async () => {
+    const first = EntityType.make(['Foo'], {value: 'Text'});
+    const second = EntityType.make(['Bar'], {value: 'Number'});
+    const tuple = new TupleType([first, second]);
+    assert.deepStrictEqual(await toProtoAndBackType(tuple), {
+      tuple: {
+        elements: [
+          {
+            entity: {
+              schema: {
+                names: ['Foo'],
+                fields: {
+                  value: {
+                    primitive: 'TEXT'
+                  }
+                },
+                hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+              }
+            }
+          },
+          {
+            entity: {
+              schema: {
+                names: ['Bar'],
+                fields: {
+                  value: {
+                    primitive: 'NUMBER'
+                  }
+                },
+                hash: 'f0b9f39c14d12e1445ac70bbd28b65c0b9d30022'
+              }
+            }
+          }
+        ]
+      }
+    });
+  });
+
+  it('encodes count type', async () => {
+    const singletonOfCount = new SingletonType(new CountType());
+    assert.deepStrictEqual(await toProtoAndBackType(singletonOfCount), {
+      singleton: {
+        singletonType: {
+          count: {}
         }
       }
     });

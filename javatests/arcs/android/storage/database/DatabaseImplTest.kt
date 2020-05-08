@@ -15,6 +15,8 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.common.forSingleResult
+import arcs.android.common.getNullableBoolean
 import arcs.android.common.map
 import arcs.core.common.Referencable
 import arcs.core.crdt.VersionMap
@@ -37,6 +39,7 @@ import arcs.core.util.guardedBy
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import java.time.Duration
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -1276,6 +1279,76 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun garbageCollection() = runBlockingTest {
+        val schema = newSchema("hash")
+        val backingKey = DummyStorageKey("backing")
+        var version = 1
+        fun entity(id: String, creationDaysAgo: Long) = DatabaseData.Entity(
+            RawEntity(
+                id,
+                singletons = mapOf(),
+                collections = mapOf(),
+                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(creationDaysAgo).toMillis()
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        suspend fun updateCollection(vararg entities: DatabaseData.Entity) {
+            val values = entities.map { Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)) }
+            val collection = DatabaseData.Collection(
+                values = values.toSet(),
+                schema = schema,
+                databaseVersion = version++,
+                versionMap = VERSION_MAP
+            )
+            database.insertOrUpdate(DummyStorageKey("collection"), collection)
+        }
+
+        val entityInCollectionKey = DummyStorageKey("backing/entityInCollection")
+        val entityInCollection = entity("entityInCollection", 10)
+        val orphanEntityKey = DummyStorageKey("backing/orphan")
+        val orphanEntity = entity("orphan", 10)
+        val recentEntityKey = DummyStorageKey("backing/recent")
+        val recentEntity = entity("recent", 1)
+        val lateRefdEntityKey = DummyStorageKey("backing/lateRefd")
+        val lateRefdEntity = entity("lateRefd", 10)
+        database.insertOrUpdate(entityInCollectionKey, entityInCollection)
+        database.insertOrUpdate(orphanEntityKey, orphanEntity)
+        database.insertOrUpdate(recentEntityKey, recentEntity)
+        database.insertOrUpdate(lateRefdEntityKey, lateRefdEntity)
+        updateCollection(entityInCollection)
+
+        database.runGarbageCollection()
+
+        assertThat(database.getEntity(recentEntityKey, schema)).isEqualTo(recentEntity)
+        assertThat(database.getEntity(entityInCollectionKey, schema)).isEqualTo(entityInCollection)
+        // After first round both orphanEntity and lateRefdEntityKey should be marked as
+        // orphan, but not deleted yet.
+        assertThat(database.getEntity(orphanEntityKey, schema)).isEqualTo(orphanEntity)
+        assertThat(database.getEntity(lateRefdEntityKey, schema)).isEqualTo(lateRefdEntity)
+        assertThat(readOrphanField(orphanEntityKey)).isTrue()
+        assertThat(readOrphanField(lateRefdEntityKey)).isTrue()
+        assertThat(readOrphanField(recentEntityKey)).isFalse()
+        assertThat(readOrphanField(entityInCollectionKey)).isFalse()
+
+        // Now add lateRefdEntity to the collection (in between GC runs).
+        updateCollection(entityInCollection, lateRefdEntity)
+
+        database.runGarbageCollection()
+
+        assertThat(database.getEntity(recentEntityKey, schema)).isEqualTo(recentEntity)
+        assertThat(database.getEntity(entityInCollectionKey, schema)).isEqualTo(entityInCollection)
+        assertThat(database.getEntity(lateRefdEntityKey, schema)).isEqualTo(lateRefdEntity)
+        // orphanEntity should have been deleted (orphan on two consecutive runs)
+        assertThat(database.getEntity(orphanEntityKey, schema)).isEqualTo(null)
+        // lateRefdEntity is no longer orphan.
+        assertThat(readOrphanField(lateRefdEntityKey)).isFalse()
+        assertThat(readOrphanField(recentEntityKey)).isFalse()
+        assertThat(readOrphanField(entityInCollectionKey)).isFalse()
+    }
+
+    @Test
     fun removeExpiredEntities_entityIsCleared() = runBlockingTest {
         val schema = newSchema(
             "hash",
@@ -1880,6 +1953,17 @@ class DatabaseImplTest {
                 .isEqualTo(size)
         }
     }
+
+    private fun readOrphanField(entityStorageKey: StorageKey): Boolean =
+        database.readableDatabase.rawQuery(
+            """
+                SELECT orphan
+                FROM entities
+                LEFT JOIN storage_keys ON entities.storage_key_id = storage_keys.id
+                WHERE storage_key = ?
+            """.trimIndent(),
+            arrayOf(entityStorageKey.toString())
+        ).forSingleResult { it.getNullableBoolean(0) } ?: false
 
     private fun assertTableIsEmpty(tableName: String) {
         assertTableIsSize(tableName, 0)

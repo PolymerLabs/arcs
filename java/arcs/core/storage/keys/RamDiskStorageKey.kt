@@ -17,7 +17,7 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
 
 /** Protocol to be used with the ramdisk driver. */
-const val RAMDISK_DRIVER_PROTOCOL = "ramdisk"
+const val RAMDISK_DRIVER_PROTOCOL = Protocols.RAMDISK_DRIVER
 
 /** Storage key for a piece of data managed by the ramdisk driver. */
 data class RamDiskStorageKey(private val unique: String) : StorageKey(RAMDISK_DRIVER_PROTOCOL) {

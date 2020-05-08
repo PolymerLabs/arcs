@@ -30,6 +30,8 @@ import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
 import arcs.sdk.android.storage.ServiceStoreFactory
+import arcs.sdk.android.storage.service.DefaultConnectionFactory
+import arcs.sdk.android.storage.service.DefaultStorageServiceBindingDelegate
 import com.google.common.math.StatsAccumulator
 import java.text.DateFormat
 import java.text.DecimalFormat
@@ -63,6 +65,7 @@ import kotlin.math.ceil
 import kotlin.random.Random
 import kotlin.require
 import kotlin.run
+import kotlin.system.measureTimeMillis
 import kotlin.takeIf
 import kotlin.toString
 import kotlinx.atomicfu.atomic
@@ -70,8 +73,11 @@ import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 private typealias HandleType = SystemHealthEnums.HandleType
 private typealias Function = SystemHealthEnums.Function
@@ -101,6 +107,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
     private var tasksEvents: MutableMap<Int, TaskEventQueue<TaskEvent>> = mutableMapOf()
     private var controllers: Array<TaskController?> = emptyArray()
     private var handles: Array<TaskHandle> = emptyArray()
+
+    private var earlyExit = false
 
     private val log = TaggedLog(::toString)
 
@@ -135,7 +143,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
 
         if (settings.function != Function.STOP && settings.timesOfIterations > 0) {
             tasks = Array(settings.numOfListenerThreads + settings.numOfWriterThreads) { id ->
-                object : ScheduledThreadPoolExecutor(1) {
+                object : ScheduledThreadPoolExecutor(
+                    if (settings.function == Function.STABILITY_TEST) 2 else 1) {
                     override fun terminated() {
                         super.terminated()
 
@@ -204,6 +213,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
     }
 
     private fun execute(settings: Settings) {
+        earlyExit = false
         val numOfTasks = settings.numOfListenerThreads + settings.numOfWriterThreads
         val watchdog = Watchdog(settings)
 
@@ -211,14 +221,30 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         controllers = arrayOfNulls(numOfTasks)
         handles = tasks.mapIndexed { id, task ->
             // Per-task single-threaded execution context with Watchdog monitoring instabilities
-            val taskCoroutineContext = watchdog.exceptionHandler(id) + task.asCoroutineDispatcher()
+            val taskCoroutineContext =
+                task.asCoroutineDispatcher() +
+                if (settings.function == Function.STABILITY_TEST) {
+                    stabilityExceptionHandler(id)
+                } else {
+                    performanceExceptionHandler(id)
+                }
+
             TaskHandle(
                 EntityHandleManager(
                     time = JvmTime,
                     activationFactory = ServiceStoreFactory(
                         context,
                         lifecycle,
-                        taskCoroutineContext
+                        taskCoroutineContext,
+                        DefaultConnectionFactory(
+                            context,
+                            if (settings.function == Function.STABILITY_TEST) {
+                                TestStorageServiceBindingDelegate(context)
+                            } else {
+                                DefaultStorageServiceBindingDelegate(context)
+                            },
+                            taskCoroutineContext
+                        )
                     ),
                     // Per-task single-threaded Scheduler being cascaded with Watchdog capabilities
                     scheduler = JvmSchedulerProvider(taskCoroutineContext)("sysHealthStorageCore")
@@ -230,7 +256,14 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                     else -> TaskType.WRITER
                 }
                 tasksEvents[id] = TaskEventQueue(ReentrantReadWriteLock(), mutableListOf())
-                controllers[id] = TaskController(id, settings.timesOfIterations, taskType)
+                controllers[id] = TaskController(
+                    id,
+                    taskType,
+                    settings.function == Function.STABILITY_TEST &&
+                    Random.nextInt(0, 100) < settings.storageClientCrashRate,
+                    Random.nextInt(0, settings.timesOfIterations),
+                    settings.timesOfIterations
+                )
                 runBlocking {
                     setUpHandle(this@apply, id, taskType, settings)
                 }
@@ -253,10 +286,21 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                     }
 
                     val taskHandle = handles[ctrl.taskId]
-                    GlobalScope.launch(taskHandle.coroutineContext) {
+                    val job = GlobalScope.launch(taskHandle.coroutineContext) {
                         when (ctrl.taskType) {
                             TaskType.LISTENER -> listenerTask(taskHandle, ctrl, settings)
                             else -> writerTask(taskHandle, ctrl, settings)
+                        }
+                    }
+
+                    if (ctrl.shouldCrash && ctrl.crashAtCountDown == thisCountDown) {
+                        // Trouble-maker
+                        GlobalScope.launch(taskHandle.coroutineContext) {
+                            // random crash in several ms
+                            delay(Random.nextLong(0, storageClientCrashDelayMs))
+                            // Randomly crash StorageService if we are testing stability.
+                            job.cancel("causing troubles on a client",
+                                       StorageClientCrashException())
                         }
                     }
                 },
@@ -278,73 +322,91 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         settings: Settings
     ) = when (settings.handleType) {
         HandleType.SINGLETON -> {
-            taskHandle.handle = (
-                taskHandle.handleManager.createHandle(
-                    HandleSpec(
-                        "singletonHandle$taskId",
-                        HandleMode.ReadWrite,
-                        HandleContainerType.Singleton,
-                        TestEntity.Companion
-                    ),
-                    when (settings.storageMode) {
-                        TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
-                        else -> TestEntity.singletonInMemoryStorageKey
-                    }
-                ).awaitReady() as? ReadWriteSingletonHandle<TestEntity>)?.apply {
-                    onUpdate {
-                        entity ->
-                        if (settings.function == Function.LATENCY_BACKPRESSURE_TEST &&
-                            taskType == TaskType.WRITER
-                        ) {
-                            tasksEvents[taskId]?.writer?.withLock {
-                                tasksEvents[taskId]?.queue?.add(
-                                    TaskEvent(
-                                        TaskEventId.HANDLE_STORE_END,
-                                        System.currentTimeMillis(),
-                                        entity?.number
-                                    )
-                                )
-                            }
-                        }
+            val handle = taskHandle.handleManager.createHandle(
+                HandleSpec(
+                    "singletonHandle$taskId",
+                    HandleMode.ReadWrite,
+                    HandleContainerType.Singleton,
+                    TestEntity.Companion
+                ),
+                when (settings.storageMode) {
+                    TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
+                    else -> TestEntity.singletonInMemoryStorageKey
+                }
+            ) as ReadWriteSingletonHandle<TestEntity>
+
+            val elapsedTime = measureTimeMillis { handle.awaitReady() }
+            if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
+                taskManagerEvents.writer.withLock {
+                    taskManagerEvents.queue.add(
+                        TaskEvent(TaskEventId.HANDLE_AWAIT_READY_TIME, elapsedTime))
+                }
+            }
+
+            handle.onUpdate {
+                entity ->
+                if (settings.function == Function.LATENCY_BACKPRESSURE_TEST &&
+                    taskType == TaskType.WRITER
+                ) {
+                    tasksEvents[taskId]?.writer?.withLock {
+                        tasksEvents[taskId]?.queue?.add(
+                            TaskEvent(
+                                TaskEventId.HANDLE_STORE_END,
+                                System.currentTimeMillis(),
+                                entity?.number
+                            )
+                        )
                     }
                 }
+            }
+
+            taskHandle.handle = handle
         }
         HandleType.COLLECTION -> {
-            taskHandle.handle = (
-                taskHandle.handleManager.createHandle(
-                    HandleSpec(
-                        "collectionHandle$taskId",
-                        HandleMode.ReadWrite,
-                        HandleContainerType.Collection,
-                        TestEntity.Companion
-                    ),
-                    when (settings.storageMode) {
-                        TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
-                        else -> TestEntity.collectionInMemoryStorageKey
-                    }
-                ).awaitReady() as? ReadWriteCollectionHandle<TestEntity>)?.apply {
-                    onUpdate {
-                        entity ->
-                        if (settings.function == Function.LATENCY_BACKPRESSURE_TEST &&
-                            taskType == TaskType.WRITER
-                        ) {
-                            tasksEvents[taskId]?.writer?.withLock {
-                                tasksEvents[taskId]?.queue?.add(
-                                    TaskEvent(
-                                        TaskEventId.HANDLE_STORE_END,
-                                        System.currentTimeMillis(),
-                                        entity.map { it.number }.toSet()
-                                    )
-                                )
-                            }
-                        }
+            val handle = taskHandle.handleManager.createHandle(
+                HandleSpec(
+                    "collectionHandle$taskId",
+                    HandleMode.ReadWrite,
+                    HandleContainerType.Collection,
+                    TestEntity.Companion
+                ),
+                when (settings.storageMode) {
+                    TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
+                    else -> TestEntity.collectionInMemoryStorageKey
+                }
+            ) as ReadWriteCollectionHandle<TestEntity>
+
+            val elapsedTime = measureTimeMillis { handle.awaitReady() }
+            if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
+                taskManagerEvents.writer.withLock {
+                    taskManagerEvents.queue.add(
+                        TaskEvent(TaskEventId.HANDLE_AWAIT_READY_TIME, elapsedTime))
+                }
+            }
+
+            handle.onUpdate {
+                entity ->
+                if (settings.function == Function.LATENCY_BACKPRESSURE_TEST &&
+                    taskType == TaskType.WRITER
+                ) {
+                    tasksEvents[taskId]?.writer?.withLock {
+                        tasksEvents[taskId]?.queue?.add(
+                            TaskEvent(
+                                TaskEventId.HANDLE_STORE_END,
+                                System.currentTimeMillis(),
+                                entity.map { it.number }.toSet()
+                            )
+                        )
                     }
                 }
+            }
+
+            taskHandle.handle = handle
         }
     }
 
     private suspend inline fun <T> closeHandleSuspend(handle: T?) {
-        if (handle is Handle) handle.close()
+        if (handle is Handle) withContext(handle.dispatcher) { handle.close() }
     }
 
     private fun <T> closeHandle(
@@ -365,8 +427,12 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
     ) {
         val timestampStart = System.currentTimeMillis()
         when (val handle = taskHandle.handle) {
-            is ReadWriteSingletonHandle<*> -> handle.fetch()
-            is ReadWriteCollectionHandle<*> -> handle.fetchAll()
+            is ReadWriteSingletonHandle<*> -> withContext(handle.dispatcher) {
+                handle.fetch()
+            }
+            is ReadWriteCollectionHandle<*> -> withContext(handle.dispatcher) {
+                handle.fetchAll()
+            }
         }
         val timeElapsed = System.currentTimeMillis() - timestampStart
         if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
@@ -397,39 +463,66 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         when (val handle = taskHandle.handle) {
             is ReadWriteSingletonHandle<*> -> (
                 handle as? ReadWriteSingletonHandle<TestEntity>
-                                              )?.store(entity)?.join()
+                )?.let {
+                    withContext(it.dispatcher) { it.store(entity) }.join()
+                }
             is ReadWriteCollectionHandle<*> -> (
                 handle as? ReadWriteCollectionHandle<TestEntity>
-                                               )?.store(entity)?.join()
+                )?.let {
+                    withContext(it.dispatcher) { it.store(entity) }.join()
+                }
             else -> Unit
         }
     }
 
-    private inner class Watchdog(val settings: Settings) {
-        fun exceptionHandler(taskId: Int) =
-            CoroutineExceptionHandler { _, exception ->
-                // This is the innermost thread-wise exception handler monitoring all exceptions
-                // that happened in coroutine context against the outermost one which is installed
-                // at ScheduledThreadPoolExecutor.
-                if (exception !is InterruptedException) {
-                    val timestamp = System.currentTimeMillis()
-                    val taskType = controllers.getOrNull(taskId)?.taskType?.name ?: ""
-                    val msg = "$taskType #$taskId: $exception"
-                    log.error { msg }
-                    exception.printStackTrace()
-                    taskManagerEvents.writer.withLock {
-                        taskManagerEvents.queue.add(
-                            TaskEvent(TaskEventId.EXCEPTION, timestamp, desc = msg))
-                    }
-
-                    // Cancel all pending tasks and forbid new tasks.
-                    controllers.getOrNull(taskId)?.future?.cancel(false)
+    private fun performanceExceptionHandler(taskId: Int) =
+        CoroutineExceptionHandler { _, exception ->
+            // This is the innermost thread-wise exception handler monitoring all exceptions
+            // that happened in coroutine context against the outermost one which is installed
+            // at ScheduledThreadPoolExecutor.
+            if (exception !is InterruptedException) {
+                val timestamp = System.currentTimeMillis()
+                val taskType = controllers.getOrNull(taskId)?.taskType?.name ?: ""
+                val msg = "$taskType #$taskId: $exception"
+                log.error { msg }
+                exception.printStackTrace()
+                taskManagerEvents.writer.withLock {
+                    taskManagerEvents.queue.add(
+                        TaskEvent(TaskEventId.EXCEPTION, timestamp, desc = msg))
                 }
 
-                // Don't ignore the exception being received.
-                // The single task thread will be terminated upon the unhandled exception.
-                throw exception
+                // Cancel all pending tasks and forbid new tasks.
+                controllers.getOrNull(taskId)?.future?.cancel(false)
             }
+
+            // Don't ignore the exception being received.
+            // The single task thread will be terminated upon the unhandled exception.
+            throw exception
+        }
+
+    private fun stabilityExceptionHandler(taskId: Int) =
+        CoroutineExceptionHandler { _, exception ->
+
+            if (exception !is StorageClientCrashException) {
+                val timestamp = System.currentTimeMillis()
+                val taskType = controllers.getOrNull(taskId)?.taskType?.name ?: ""
+                val msg = "$taskType #$taskId: $exception"
+                taskManagerEvents.writer.withLock {
+                    taskManagerEvents.queue.add(
+                        TaskEvent(TaskEventId.EXCEPTION, timestamp, desc = msg))
+                }
+
+                // Cancel all pending tasks and forbid new tasks.
+                controllers.getOrNull(taskId)?.future?.cancel(false)
+
+                earlyExit = true
+            }
+
+            // Cancel this thread.
+            throw InterruptedException()
+        }
+
+    private inner class Watchdog(val settings: Settings) {
 
         fun monitor() = tasks.takeIf { it.isNotEmpty() }.run {
             // All tasks should run fairly under CFS kernel policy.
@@ -437,10 +530,20 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 (settings.iterationIntervalMs + systemHzTickMs) * settings.timesOfIterations
             val progressUpdateTimes = ceil(awaitTimeMs / progressUpdateIntervalMs)
             for (progress in 0 until progressUpdateTimes.toInt()) {
+
                 notify { "Progress: %.2f%%".format(progress * 100 / progressUpdateTimes) }
                 tasks[Random.nextInt(0, tasks.size)].awaitTermination(
                     progressUpdateIntervalMs.toLong(), MILLISECONDS
                 )
+
+                if (settings.function == Function.STABILITY_TEST) {
+                    // If we already caught any crash, exit.
+                    if (earlyExit) {
+                        break
+                    }
+                    // Randomly crash StorageService if we are testing stability.
+                    maybeCrashStorageService(settings.storageServiceCrashRate)
+                }
             }
 
             // Yield an extra time for tasks completing their final round trips i.e. until onXxx().
@@ -469,10 +572,17 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         }
     }
 
+    private fun maybeCrashStorageService(rate: Int) {
+        if (Random.nextInt(0, 100) < rate) {
+            context.startService(TestStorageService.createCrashIntent(context))
+        }
+    }
+
     private fun populateStatsBulletin() {
         val stats = Stats()
             .generateHandleFetchLatencyStats()
             .generateHandleStoreLatencyStats()
+            .generateHandleAwaitReadyTimeStats()
             .generateAnomalyReport()
             .generateExceptionReport()
 
@@ -567,6 +677,28 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 bulletin +=
                     """
                     [store() latency]
+                    ${calculator.snapshot()}
+                    ${platformNewline.repeat(1)}
+                    """.trimIndent()
+            }
+        }
+
+        @Suppress("UnstableApiUsage")
+        fun generateHandleAwaitReadyTimeStats(): Stats = also {
+            val calculator = StatsAccumulator()
+
+            taskManagerEvents.reader.withLock {
+                calculator.addAll(
+                    taskManagerEvents.queue.filter {
+                        it.eventId == TaskEventId.HANDLE_AWAIT_READY_TIME
+                    }.map { it.timeMs }
+                )
+            }
+
+            calculator.takeIf { it.count() > 0 }?.let {
+                bulletin +=
+                    """
+                    [awaitReady() time]
                     ${calculator.snapshot()}
                     ${platformNewline.repeat(1)}
                     """.trimIndent()
@@ -719,8 +851,10 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
 
     private data class TaskController(
         val taskId: Int,
+        val taskType: TaskType,
+        val shouldCrash: Boolean,
+        val crashAtCountDown: Int,
         var countDown: Int,
-        var taskType: TaskType? = null,
         var future: ScheduledFuture<*>? = null
     )
     private data class TaskHandle(
@@ -744,6 +878,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         HANDLE_STORE_BEGIN,
         HANDLE_STORE_END,
         HANDLE_FETCH_LATENCY,
+        HANDLE_AWAIT_READY_TIME,
         MEMORY_STATS,
         EXCEPTION,
         TIMEOUT,
@@ -758,6 +893,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         private const val GcWaitTimeMs = 2000L
         private const val progressUpdateIntervalMs = 1000f
         private const val hprofFile = "arcs.hprof"
+        private const val storageClientCrashDelayMs = 5L
         private val _statsBulletin = atomic("")
     }
 }
@@ -788,6 +924,7 @@ class SystemHealthEnums {
     enum class Function(val intent: String = "") {
         STOP,
         LATENCY_BACKPRESSURE_TEST,
+        STABILITY_TEST,
         SHOW_RESULTS("arcs.testapps.syshealth.SHOW_RESULTS"),
     }
 
@@ -814,6 +951,8 @@ class SystemHealthData {
         val iterationIntervalMs: String = "iteration_interval_ms",
         val dataSizeInBytes: String = "data_size_bytes",
         val delayedStartMs: String = "delayed_start_ms",
+        val storageServiceCrashRate: String = "storage_service_crash_rate",
+        val storageClientCrashRate: String = "storage_client_crash_rate",
         val useRandomStorageKey: String = "random_storage_key"
     )
 
@@ -827,6 +966,10 @@ class SystemHealthData {
         val iterationIntervalMs: Int = 1000,
         val dataSizeInBytes: Int = 64,
         val delayedStartMs: Int = 0,
+        val storageServiceCrashRate: Int = 10,
+        val storageClientCrashRate: Int = 10,
         val useRandomStorageKey: Boolean = false
     )
 }
+
+private class StorageClientCrashException: IllegalStateException()

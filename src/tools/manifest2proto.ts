@@ -11,7 +11,7 @@ import {Runtime} from '../runtime/runtime.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {CollectionType, ReferenceType, Type} from '../runtime/type.js';
+import {Type, CollectionType, ReferenceType, SingletonType, TupleType} from '../runtime/type.js';
 import {Schema} from '../runtime/schema.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {assert} from '../platform/assert-web.js';
@@ -136,17 +136,18 @@ export async function typeToProtoPayload(type: Type) {
     assert(type.isResolved());
   }
   type = type.resolvedType();
-  const entity = {
-    entity: {
-      schema: await schemaToProtoPayload(type.getEntitySchema()),
-    }
-  };
   switch (type.tag) {
-    case 'Entity':
+    case 'Entity': {
+      const entity = {
+        entity: {
+          schema: await schemaToProtoPayload(type.getEntitySchema()),
+        }
+      };
       if (type.getEntitySchema().refinement) {
         entity['refinement'] = refinementToProtoPayload(type.getEntitySchema().refinement);
       }
       return entity;
+    }
     case 'Collection': return {
       collection: {
         collectionType: await typeToProtoPayload((type as CollectionType<Type>).collectionType)
@@ -157,7 +158,26 @@ export async function typeToProtoPayload(type: Type) {
         referredType: await typeToProtoPayload((type as ReferenceType<Type>).referredType)
       }
     };
-    default: throw Error(`Type ${type.tag} is not supported.`);
+    case 'Tuple': return {
+      tuple: {
+        elements: await Promise.all((type as TupleType).innerTypes.map(typeToProtoPayload))
+      }
+    };
+    case 'Singleton': return {
+      singleton: {
+        singletonType: await typeToProtoPayload((type as SingletonType<Type>).getContainedType())
+      }
+    };
+    case 'Count': return {
+      count: {}
+    };
+    // TODO(b/154733929)
+    // case 'TypeVariable': return {
+    //   variable: {
+    //     name: (type as TypeVariable).variable.name,
+    //   }
+    // };
+    default: throw Error(`Type '${type.tag}' is not supported.`);
   }
 }
 

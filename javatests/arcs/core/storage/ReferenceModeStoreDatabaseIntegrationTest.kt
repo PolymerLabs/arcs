@@ -23,6 +23,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.DatabaseDriver
 import arcs.core.storage.driver.DatabaseDriverProvider
@@ -31,6 +32,7 @@ import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.WriteBackForTesting
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
@@ -71,11 +73,15 @@ class ReferenceModeStoreDatabaseIntegrationTest {
     fun setUp() = runBlockingTest {
         DriverFactory.clearRegistrations()
         databaseFactory = FakeDatabaseManager()
+        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         DatabaseDriverProvider.configure(databaseFactory) { schema }
     }
 
     @After
-    fun tearDown() = CapabilitiesResolver.reset()
+    fun tearDown() {
+        WriteBackForTesting.clear()
+        CapabilitiesResolver.reset()
+    }
 
     @Test
     fun propagatesModelUpdates_fromProxies_toDrivers() = runBlockingTest {

@@ -21,6 +21,7 @@ import android.text.TextWatcher
 import android.view.View
 import android.widget.Button
 import android.widget.RadioButton
+import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import arcs.core.data.HandleMode
@@ -44,6 +45,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 /** Test app for Arcs System Health. */
 class TestActivity : AppCompatActivity() {
@@ -66,6 +68,8 @@ class TestActivity : AppCompatActivity() {
     private var timesOfIterations: Int
     private var dataSizeInBytes: Int
     private var delayedStartMs: Int
+    private var storageServiceCrashRate: Int
+    private var storageClientCrashRate: Int
     private var intentReceiver: BroadcastReceiver? = null
 
     init {
@@ -77,6 +81,8 @@ class TestActivity : AppCompatActivity() {
             timesOfIterations = it.timesOfIterations
             dataSizeInBytes = it.dataSizeInBytes
             delayedStartMs = it.delayedStartMs
+            storageServiceCrashRate = it.storageServiceCrashRate
+            storageClientCrashRate = it.storageClientCrashRate
         }
     }
 
@@ -116,11 +122,19 @@ class TestActivity : AppCompatActivity() {
                 when (handleType) {
                     SystemHealthEnums.HandleType.SINGLETON ->
                         withHandle<ReadWriteSingletonHandle<TestEntity>> {
-                            it?.store(SystemHealthTestEntity())?.join()
+                            it?.let { handle ->
+                                withContext(handle.dispatcher) {
+                                    handle.store(SystemHealthTestEntity())
+                                }.join()
+                            }
                         }
                     else ->
                         withHandle<ReadWriteCollectionHandle<TestEntity>> {
-                            it?.store(SystemHealthTestEntity())?.join()
+                            it?.let { handle ->
+                                withContext(handle.dispatcher) {
+                                    handle.store(SystemHealthTestEntity())
+                                }.join()
+                            }
                         }
                 }
             }
@@ -130,11 +144,15 @@ class TestActivity : AppCompatActivity() {
                 when (handleType) {
                     SystemHealthEnums.HandleType.SINGLETON ->
                         withHandle<ReadWriteSingletonHandle<TestEntity>> {
-                            it?.clear()
+                            it?.let { handle ->
+                                withContext(handle.dispatcher) { handle.clear() }.join()
+                            }
                         }
                     else ->
                         withHandle<ReadWriteCollectionHandle<TestEntity>> {
-                            it?.clear()
+                            it?.let { handle ->
+                                withContext(handle.dispatcher) { handle.clear() }.join()
+                            }
                         }
                 }
             }
@@ -144,12 +162,16 @@ class TestActivity : AppCompatActivity() {
                 runBlocking(coroutineContext) {
                     when (handleType) {
                         SystemHealthEnums.HandleType.SINGLETON -> {
-                            singletonHandle?.close()
-                            singletonHandle = null
+                            singletonHandle?.let {
+                                withContext(it.dispatcher) { it.close() }
+                                singletonHandle = null
+                            }
                         }
                         else -> {
-                            collectionHandle?.close()
-                            collectionHandle = null
+                            collectionHandle?.let {
+                                withContext(it.dispatcher) { it.close() }
+                                collectionHandle = null
+                            }
                         }
                     }
                 }
@@ -211,6 +233,52 @@ class TestActivity : AppCompatActivity() {
             }
         )
 
+        val serviceProbabilityLabel =
+            findViewById<TextView>(R.id.service_crash_rate_label)
+        findViewById<SeekBar>(R.id.service_crash_rate).also {
+            serviceProbabilityLabel.text =
+                getString(R.string.storage_service_crash_rate, it.progress)
+        }.also {
+            it.setOnSeekBarChangeListener(
+                object : SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(seekBar: SeekBar?,
+                                                   progress: Int,
+                                                   fromUser: Boolean) {
+                        storageServiceCrashRate = progress
+                        serviceProbabilityLabel.text = getString(
+                            R.string.storage_service_crash_rate, progress)
+                    }
+
+                    override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+
+                    override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+                }
+            )
+        }
+
+        val clientProbabilityLabel =
+            findViewById<TextView>(R.id.client_crash_rate_label)
+        findViewById<SeekBar>(R.id.client_crash_rate).also {
+            clientProbabilityLabel.text = String.format(
+                getString(R.string.storage_client_crash_rate), it.progress)
+        }.also {
+            it.setOnSeekBarChangeListener(
+                object : SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(seekBar: SeekBar?,
+                                                   progress: Int,
+                                                   fromUser: Boolean) {
+                        storageClientCrashRate = progress
+                        clientProbabilityLabel.text = getString(
+                            R.string.storage_client_crash_rate, progress)
+                    }
+
+                    override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+
+                    override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+                }
+            )
+        }
+
         // Listen to the broadcasts sent from remote/local system-health service
         // so as to display the enclosing messages on UI.
         intentReceiver = object : BroadcastReceiver() {
@@ -246,6 +314,33 @@ class TestActivity : AppCompatActivity() {
                 intent.putExtra(it.timesOfIterations, timesOfIterations)
                 intent.putExtra(it.dataSizeInBytes, dataSizeInBytes)
                 intent.putExtra(it.delayedStartMs, delayedStartMs)
+                intent.putExtra(it.storageServiceCrashRate, storageServiceCrashRate)
+                intent.putExtra(it.storageClientCrashRate, storageClientCrashRate)
+
+                startService(intent)
+            }
+        }
+
+        findViewById<Button>(R.id.stability_eval).setOnClickListener {
+            SystemHealthData.IntentExtras().let {
+                val intent = Intent(
+                    this@TestActivity,
+                    when (serviceType) {
+                        SystemHealthEnums.ServiceType.REMOTE -> RemoteService::class.java
+                        else -> LocalService::class.java
+                    }
+                )
+                intent.putExtra(it.function, SystemHealthEnums.Function.STABILITY_TEST.name)
+                intent.putExtra(it.handleType, handleType.name)
+                intent.putExtra(it.storage_mode, storageMode.name)
+                intent.putExtra(it.numOfListenerThreads, numOfListenerThreads)
+                intent.putExtra(it.numOfWriterThreads, numOfWriterThreads)
+                intent.putExtra(it.iterationIntervalMs, iterationIntervalMs)
+                intent.putExtra(it.timesOfIterations, timesOfIterations)
+                intent.putExtra(it.dataSizeInBytes, dataSizeInBytes)
+                intent.putExtra(it.delayedStartMs, delayedStartMs)
+                intent.putExtra(it.storageServiceCrashRate, storageServiceCrashRate)
+                intent.putExtra(it.storageClientCrashRate, storageClientCrashRate)
 
                 startService(intent)
             }
@@ -362,8 +457,10 @@ class TestActivity : AppCompatActivity() {
         handle: ReadSingletonHandle<TestEntity>?,
         prefix: String = "?"
     ) {
-        val result = handle?.fetch()?.let {
-            "${it.text},${it.number},${it.boolean}"
+        val result = handle?.let {
+            withContext(handle.dispatcher) { handle.fetch() }?.let {
+                "${it.text},${it.number},${it.boolean}"
+            }
         } ?: "null"
 
         // Update UI components at the Main/UI Thread.
@@ -377,10 +474,12 @@ class TestActivity : AppCompatActivity() {
         handle: ReadCollectionHandle<TestEntity>?,
         prefix: String = "?"
     ) {
-        val result = handle?.fetchAll()?.takeIf {
-            it.isNotEmpty()
-        }?.joinToString(separator = System.getProperty("line.separator") ?: "\r\n") {
-            "${it.text},${it.number},${it.boolean}"
+        val result = handle?.let {
+            withContext(handle.dispatcher) { handle.fetchAll() }.takeIf {
+                it.isNotEmpty()
+            }?.joinToString(separator = System.getProperty("line.separator") ?: "\r\n") {
+                "${it.text},${it.number},${it.boolean}"
+            }
         } ?: "empty"
 
         // Update UI components at the Main/UI Thread.

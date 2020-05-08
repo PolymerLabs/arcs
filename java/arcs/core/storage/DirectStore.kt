@@ -41,7 +41,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     val localModel: CrdtModel<Data, Op, T>,
     /* internal */
     val driver: Driver<Data>
-) : ActiveStore<Data, Op, T>(options) {
+) : ActiveStore<Data, Op, T>(options),
+    WriteBack by StoreWriteBack.create(driver.storageKey.protocol) {
     override val versionToken: String?
         get() = driver.token
 
@@ -146,11 +147,11 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         if (modelChange.isEmpty() && otherChange?.isEmpty() == true) return
 
         deliverCallbacks(modelChange, source = channel)
-        updateStateAndAct(
-            noDriverSideChanges(modelChange, otherChange, false),
-            version,
-            messageFromDriver = false
-        )
+
+        // As the localModel has already been applied with new operations and/or merged with
+        // new model updates, leave the flush job with write-back threads.
+        val noDriverSideChanges = noDriverSideChanges(modelChange, otherChange, false)
+        asyncFlush { updateStateAndAct(noDriverSideChanges, version, messageFromDriver = false) }
     }
 
     /* internal */ suspend fun onReceive(data: Data, version: Int) {
