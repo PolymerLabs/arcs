@@ -187,6 +187,10 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                             Thread.sleep(settings.delayedStartMs.toLong())
                         }
 
+                        // For more accurate memory counting, enforcing GC before commencing.
+                        Runtime.getRuntime().gc()
+                        Thread.sleep(GcWaitTimeMs)
+
                         taskManagerEvents.queue.add(
                             TaskEvent(TaskEventId.MEMORY_STATS, 0, MemoryStats.appJvmHeapKbytes)
                         )
@@ -303,14 +307,16 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
 
             handle.onUpdate {
                 entity ->
-                if (settings.function == Function.LATENCY_BACKPRESSURE_TEST &&
-                    taskType == TaskType.WRITER
-                ) {
+                if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
+                    val time = System.currentTimeMillis()
                     tasksEvents[taskId]?.writer?.withLock {
                         tasksEvents[taskId]?.queue?.add(
                             TaskEvent(
-                                TaskEventId.HANDLE_STORE_END,
-                                System.currentTimeMillis(),
+                                if (taskType == TaskType.WRITER)
+                                    TaskEventId.HANDLE_STORE_WRITER_END
+                                else
+                                    TaskEventId.HANDLE_STORE_READER_END,
+                                time,
                                 entity?.number
                             )
                         )
@@ -344,14 +350,16 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
 
             handle.onUpdate {
                 entity ->
-                if (settings.function == Function.LATENCY_BACKPRESSURE_TEST &&
-                    taskType == TaskType.WRITER
-                ) {
+                if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
+                    val time = System.currentTimeMillis()
                     tasksEvents[taskId]?.writer?.withLock {
                         tasksEvents[taskId]?.queue?.add(
                             TaskEvent(
-                                TaskEventId.HANDLE_STORE_END,
-                                System.currentTimeMillis(),
+                                if (taskType == TaskType.WRITER)
+                                    TaskEventId.HANDLE_STORE_WRITER_END
+                                else
+                                    TaskEventId.HANDLE_STORE_READER_END,
+                                time,
                                 entity.map { it.number }.toSet()
                             )
                         )
@@ -501,6 +509,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         val stats = Stats()
             .generateHandleFetchLatencyStats()
             .generateHandleStoreLatencyStats()
+            .generateWriteToReadTripLatencyStats()
             .generateHandleAwaitReadyTimeStats()
             .generateAnomalyReport()
             .generateExceptionReport()
@@ -561,7 +570,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 val (s, e) = events.reader.withLock {
                     Pair(
                         events.queue.filter { it.eventId == TaskEventId.HANDLE_STORE_BEGIN }.toMutableList(),
-                        events.queue.filter { it.eventId == TaskEventId.HANDLE_STORE_END }
+                        events.queue.filter { it.eventId == TaskEventId.HANDLE_STORE_WRITER_END }
                     )
                 }
 
@@ -596,6 +605,47 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 bulletin +=
                     """
                     [store() latency]
+                    ${calculator.snapshot()}
+                    ${platformNewline.repeat(1)}
+                    """.trimIndent()
+            }
+        }
+
+        @Suppress("UnstableApiUsage")
+        fun generateWriteToReadTripLatencyStats(): Stats = also {
+            val calculator = StatsAccumulator()
+            val historyMap = mutableMapOf<Double, Pair<MutableList<Long>, MutableList<Long>>>()
+
+            // TODO(ianchang): Support Collection handles
+            tasksEvents.forEach { _, events ->
+                events.reader.withLock {
+                    events.queue.filter {
+                        it.eventId == TaskEventId.HANDLE_STORE_BEGIN && it.instance is Double
+                    }.forEach {
+                        historyMap.getOrPut(it.instance as Double) {
+                            Pair(mutableListOf(), mutableListOf())
+                        }.first.add(it.timeMs)
+                    }
+
+                    events.queue.filter {
+                        it.eventId == TaskEventId.HANDLE_STORE_READER_END && it.instance is Double
+                    }.forEach {
+                        historyMap.getOrPut(it.instance as Double) {
+                            Pair(mutableListOf(), mutableListOf())
+                        }.second.add(it.timeMs)
+                    }
+                }
+            }
+
+            historyMap.filterValues { (writers, _) -> writers.size == 1
+            }.forEach { _, (writers, readers) ->
+                calculator.addAll(readers.map { it - writers[0] })
+            }
+
+            calculator.takeIf { it.count() > 0 }?.let {
+                bulletin +=
+                    """
+                    [writer-to-reader latency]
                     ${calculator.snapshot()}
                     ${platformNewline.repeat(1)}
                     """.trimIndent()
@@ -793,7 +843,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
 
     private enum class TaskEventId {
         HANDLE_STORE_BEGIN,
-        HANDLE_STORE_END,
+        HANDLE_STORE_WRITER_END,
+        HANDLE_STORE_READER_END,
         HANDLE_FETCH_LATENCY,
         HANDLE_AWAIT_READY_TIME,
         MEMORY_STATS,
@@ -806,8 +857,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         private const val waitForPrevTaskShutdownMs = 500L
         private const val waitForDataSyncUpMs = 1000L
         private const val systemHzTickMs = 10L
-        private const val watchdogExtraWaitTimeMs = 2000L
-        private const val GcWaitTimeMs = 2000L
+        private const val watchdogExtraWaitTimeMs = 1000L
+        private const val GcWaitTimeMs = 1500L
         private const val progressUpdateIntervalMs = 1000f
         private const val hprofFile = "arcs.hprof"
         private val _statsBulletin = atomic("")
