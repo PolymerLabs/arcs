@@ -59,9 +59,7 @@ data class AccessPath(val root: Root, val selectors: List<Selector> = emptyList(
     }
 
     override fun toString(): String {
-        return selectors.joinToString(
-            separator = ".",
-            prefix = if (selectors.isEmpty()) "$root" else "$root."
-        )
+        if (selectors.isEmpty()) return "$root"
+        return selectors.joinToString(separator = ".", prefix = "$root.")
     }
 }
