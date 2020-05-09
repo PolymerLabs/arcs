@@ -19,7 +19,13 @@ class EntityDereferencerFactory(
     private val dereferencers = mutableMapOf<Schema, RawEntityDereferencer>()
 
     override fun create(schema: Schema) = dereferencers.getOrPut(schema) {
-        RawEntityDereferencer(schema, stores, scheduler, entityActivationFactory)
+        RawEntityDereferencer(
+            schema,
+            stores,
+            scheduler,
+            entityActivationFactory,
+            ::injectDereferencers
+        )
     }
 
     /**
