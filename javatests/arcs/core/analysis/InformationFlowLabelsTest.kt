@@ -13,12 +13,12 @@ class InformationFlowLabelsTest {
     private val bottom = InformationFlowLabels.getBottom()
     private val top = InformationFlowLabels.getTop()
     private val setAB = BitSet(labels.size).apply {
-            set(Labels.A.ordinal)
-            set(Labels.B.ordinal)
+        set(Labels.A.ordinal)
+        set(Labels.B.ordinal)
     }
     private val setAC = BitSet(labels.size).apply {
-            set(Labels.A.ordinal)
-            set(Labels.C.ordinal)
+        set(Labels.A.ordinal)
+        set(Labels.C.ordinal)
     }
     val setOfAB = InformationFlowLabels(setOf(setAB))
     val setOfAC = InformationFlowLabels(setOf(setAC))
@@ -28,21 +28,21 @@ class InformationFlowLabelsTest {
     fun bottomConstruction() {
         assertThat(bottom.isBottom).isTrue()
         assertThat(bottom.isTop).isFalse()
-        assertThat(bottom.setOfLabelSets).isNull()
+        assertThat(bottom.labelSets).isNull()
     }
 
     @Test
     fun topConstruction() {
         assertThat(top.isBottom).isFalse()
         assertThat(top.isTop).isTrue()
-        assertThat(top.setOfLabelSets).isNull()
+        assertThat(top.labelSets).isNull()
     }
 
     @Test
     fun valueConstruction() {
         assertThat(setOfABandAC.isBottom).isFalse()
         assertThat(setOfABandAC.isTop).isFalse()
-        assertThat(requireNotNull(setOfABandAC.setOfLabelSets)).containsExactly(setAB, setAC)
+        assertThat(requireNotNull(setOfABandAC.labelSets)).containsExactly(setAB, setAC)
     }
 
     @Test

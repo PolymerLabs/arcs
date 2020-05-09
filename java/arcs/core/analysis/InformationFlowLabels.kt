@@ -16,46 +16,44 @@ import java.util.BitSet
 /**
  * An abstract value that is capable of representing a set of set of labels.
  *
- * Suppose that we have an universe of labels {A, B, C}. This class may be used to represents sets
- * of sets of labels like {{A,B}, {A,C}}, {{A}, {B}, {C}}.
+ * Suppose that we have an universe of labels `{A, B, C}`. This class may be used to represents sets
+ * of sets of labels like `{{A, B}, {A, C}}, {{A}, {B}, {C}}`.
  *
  * Currently, we use a set of bitsets for the underlying representation, where each bitset
  * represents a set of labels. Later, we can switch to more efficient representations like
  * Binary Decision Diagrams (BDD) without changing the interface.
  */
 data class InformationFlowLabels(
-    private val abstractSetOfLabelSets: AbstractSet<BitSet>
+    private val abstractLabelSets: AbstractSet<BitSet>
 ) : AbstractValue<InformationFlowLabels> {
 
-    override val isBottom = abstractSetOfLabelSets.isBottom
-    override val isTop = abstractSetOfLabelSets.isTop
+    override val isBottom = abstractLabelSets.isBottom
+    override val isTop = abstractLabelSets.isTop
 
     /** Returns the underlying set of set of labels if this is not `Top` or `Bottom`. */
-    val setOfLabelSets: Set<BitSet>?
-        get() = abstractSetOfLabelSets.set
+    val labelSets: Set<BitSet>?
+        get() = abstractLabelSets.set
 
-    constructor(s: Set<BitSet>) : this(AbstractSet<BitSet>(s))
+    constructor(labelSets: Set<BitSet>) : this(AbstractSet<BitSet>(labelSets))
 
     override infix fun isEquivalentTo(other: InformationFlowLabels) =
-        abstractSetOfLabelSets.isEquivalentTo(other.abstractSetOfLabelSets)
+        abstractLabelSets.isEquivalentTo(other.abstractLabelSets)
 
     override infix fun join(other: InformationFlowLabels) = InformationFlowLabels(
-        abstractSetOfLabelSets.join(other.abstractSetOfLabelSets)
+        abstractLabelSets.join(other.abstractLabelSets)
     )
 
     override infix fun meet(other: InformationFlowLabels) = InformationFlowLabels(
-        abstractSetOfLabelSets.meet(other.abstractSetOfLabelSets)
+        abstractLabelSets.meet(other.abstractLabelSets)
     )
 
     override fun toString() = toString(transform = null)
 
-    fun toString(transform: ((Int) -> String)?): String {
-        return when {
-            abstractSetOfLabelSets.isTop -> "TOP"
-            abstractSetOfLabelSets.isBottom -> "BOTTOM"
-            else -> requireNotNull(setOfLabelSets).joinToString(prefix = "{", postfix = "}") {
-                it.toString(transform)
-            }
+    fun toString(transform: ((Int) -> String)?) = when {
+        abstractLabelSets.isTop -> "TOP"
+        abstractLabelSets.isBottom -> "BOTTOM"
+        else -> requireNotNull(labelSets).joinToString(prefix = "{", postfix = "}") {
+            it.toString(transform)
         }
     }
 
