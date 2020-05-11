@@ -25,6 +25,7 @@ import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CompletableDeferred
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.joinAll
@@ -101,44 +102,35 @@ class TtlHandleTest {
 
             // Set a time in the past. So that this entity is already expired.
             fakeTime.millis = 1L
-
             storeEntity1 = handle.store(entity1)
-
-            log("moving time forward")
-            fakeTime.millis = System.currentTimeMillis()
-
-            assertThat(handle.fetch()).isEqualTo(null)
-
             log("completing ready job")
             readyJob.complete()
         }
         readyJob.join()
         log("awaiting completiion of store job")
         storeEntity1!!.join()
+        log("moving time forward")
+        fakeTime.millis = System.currentTimeMillis()
+        assertThat(handle.fetch()).isEqualTo(null)
 
         val updateJob = Job()
         handle.onUpdate {
-            try {
-                log("received update from databaseManager.removeExpiredEntities()")
-                assertThat(handle.fetch()).isEqualTo(null)
-                log("Got data")
-                updateJob.complete()
-                log("completed")
-            } catch (e: Throwable) {
-                updateJob.completeExceptionally(e)
-            }
+            log("received update from databaseManager.removeExpiredEntities()")
+            updateJob.complete()
+            log("completed")            
         }
 
         // Simulate periodic job triggering.
         log("Removing Expired Entities")
         databaseManager.removeExpiredEntities().join()
         updateJob.join()
+        assertThat(handle.fetch()).isEqualTo(null)
 
         // Create a new handle manager with a new storage proxy to confirm entity1 is gone and the
         // singleton is still in a good state.
         log("creating handle2")
         val handle2 = createSingletonHandle()
-        readyJob = Job()
+        val readyDeferred = CompletableDeferred<Unit>()
         val modifications = mutableListOf<Job>()
         handle2.onReady {
             try {
@@ -152,12 +144,12 @@ class TtlHandleTest {
                 log("Clearing handle 2")
                 modifications.add(handle2.clear())
                 assertThat(handle2.fetch()).isNull()
-                readyJob.complete()
+                readyDeferred.complete(Unit)
             } catch (e: Throwable) {
-                readyJob.completeExceptionally(e)
+                readyDeferred.completeExceptionally(e)
             }
         }
-        readyJob.join()
+        readyDeferred.await()
         modifications.joinAll()
         log("all done")
     }
@@ -182,7 +174,7 @@ class TtlHandleTest {
             texts = setOf("4", "four")
         }
 
-        var readyJob = Job()
+        var deferred = CompletableDeferred<Unit>()
         val activeWrites = mutableListOf<Job>()
         handle.onReady {
             log("handle.onReady called.")
@@ -197,20 +189,18 @@ class TtlHandleTest {
             activeWrites.add(handle.store(entity2))
 
             try {
-                // TODO(b/152361041): after expired entities are filtered out on read, this should
-                //  only contain entity2.
-                log("handle should contain entity1 and entity 2 for now")
-                assertThat(handle.fetchAll()).containsExactly(entity1, entity2)
-                readyJob.complete()
+                log("handle should contain only entity 2")
+                assertThat(handle.fetchAll()).containsExactly(entity2)
+                deferred.complete(Unit)
             } catch (e: Throwable) {
-                readyJob.completeExceptionally(e)
+                deferred.completeExceptionally(e)
             }
         }
         log(
             "OnReady listener set up, waiting for it to get called, as well as for the " +
                 "completion of the writes it triggers."
         )
-        readyJob.join()
+        deferred.await()
         log("OnReady finished.")
         activeWrites.joinAll()
         log("Writes finished.")
@@ -218,7 +208,7 @@ class TtlHandleTest {
 
         log("Initial writes completed, now we're going to to remove expired entities.")
 
-        val updateJob = Job()
+        deferred = CompletableDeferred<Unit>()
         handle.onUpdate {
             try {
                 assertThat(handle.fetchAll()).containsExactly(entity2)
@@ -226,35 +216,35 @@ class TtlHandleTest {
                 activeWrites.add(handle.store(entity3))
                 assertThat(handle.fetchAll()).containsExactly(entity2, entity3)
 
-                updateJob.complete()
+                deferred.complete(Unit)
             } catch (e: Throwable) {
-                updateJob.completeExceptionally(e)
+                deferred.completeExceptionally(e)
             }
         }
 
         // Simulate periodic job triggering.
         log("removing expired entities")
         databaseManager.removeExpiredEntities().join()
-        updateJob.join()
+        deferred.await()
         activeWrites.joinAll()
         activeWrites.clear()
 
         // Create a new handle manager with a new storage proxy to confirm entity1 is gone and the
         // collection is still in a good state.
         val handle2 = createCollectionHandle()
-        readyJob = Job()
+        deferred = CompletableDeferred<Unit>()
         handle2.onReady {
             try {
                 assertThat(handle2.fetchAll()).containsExactly(entity2, entity3)
 
                 activeWrites.add(handle2.store(entity4))
                 assertThat(handle2.fetchAll()).containsExactly(entity2, entity3, entity4)
-                readyJob.complete()
+                deferred.complete(Unit)
             } catch (e: Throwable) {
-                readyJob.completeExceptionally(e)
+                deferred.completeExceptionally(e)
             }
         }
-        readyJob.join()
+        deferred.join()
         activeWrites.joinAll()
     }
 
@@ -308,33 +298,33 @@ class TtlHandleTest {
 
         scheduler.waitForIdle()
 
-        val onUpdateJob1 = Job()
+        val deferred1 = CompletableDeferred<Unit>()
         handle1.onUpdate {
             try {
                 // Entity4 is present because it was first stored through handle2.
                 assertThat(handle1.fetchAll()).containsExactly(entity4)
-                onUpdateJob1.complete()
+                deferred1.complete(Unit)
             } catch (e: Throwable) {
-                onUpdateJob1.completeExceptionally(e)
+                deferred1.completeExceptionally(e)
             }
         }
 
-        val onUpdateJob2 = Job()
+        val deferred2 = CompletableDeferred<Unit>()
         handle2.onUpdate {
             try {
                 // Entity1 is gone because it was first stored through handle1.
                 assertThat(handle2.fetchAll()).containsExactly(entity3, entity4)
-                onUpdateJob2.complete()
+                deferred2.complete(Unit)
             } catch (e: Throwable) {
-                onUpdateJob2.completeExceptionally(e)
+                deferred2.completeExceptionally(e)
             }
         }
 
         // Simulate periodic job triggering.
         databaseManager.removeExpiredEntities().join()
 
-        onUpdateJob1.join()
-        onUpdateJob2.join()
+        deferred1.await()
+        deferred2.await()
     }
 
     @Test
