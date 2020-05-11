@@ -132,7 +132,7 @@ open class AllocatorTestBase {
     }
 
     @After
-    fun tearDown() {
+    open fun tearDown() {
         schedulerProvider.cancelAll()
         Thread.sleep(1000)
     }

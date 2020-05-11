@@ -44,7 +44,8 @@ class AndroidAllocatorWithSqliteTest : AndroidAllocatorTest() {
     }
 
     @After
-    fun tearDown() {
+    override fun tearDown() {
+        super.tearDown()
         // Workaround for this needing to be setup each time between tests.
         CapabilitiesResolver.reset()
         // TODO: this leaks to mutex/lock issues
