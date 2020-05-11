@@ -10,9 +10,12 @@
  */
 package arcs.core.host
 
+import arcs.core.common.ArcId
+import arcs.core.common.toArcId
 import arcs.core.data.Plan
 import arcs.core.entity.Handle
 import arcs.core.host.api.Particle
+import arcs.core.util.TaggedLog
 
 /**
  * Holds per-[Particle] context state needed by [ArcHost] to implement [Particle] lifecycle.
@@ -39,9 +42,63 @@ data class ParticleContext(
 data class ArcHostContext(
     var arcId: String,
     var particles: MutableMap<String, ParticleContext> = mutableMapOf(),
-    var arcState: ArcState = ArcState.NeverStarted,
     var entityHandleManager: EntityHandleManager
 ) {
+    private val stateChangeCallbacks: MutableMap<ArcStateChangeRegistration,
+        ArcStateChangeCallback> = mutableMapOf()
+
+    init {
+        try {
+            throw IllegalStateException("Foo")
+        } catch (e: Exception) {
+            log.debug(e) { "New ArcHostContextMade" }
+        }
+    }
+
+    private var _arcState = ArcState.NeverStarted
+
+    var arcState: ArcState
+        get() = _arcState
+        set(state) {
+            if (_arcState != state) {
+                _arcState = state
+                fireArcStateChanged()
+            }
+        }
+
+    constructor(
+        arcId: String,
+        particles: MutableMap<String, ParticleContext> = mutableMapOf(),
+        arcState: ArcState = ArcState.NeverStarted,
+        entityHandleManager: EntityHandleManager
+    ) : this(arcId, particles, entityHandleManager) {
+        _arcState = arcState
+    }
+
+    internal fun addOnArcStateChange(
+        registration: ArcStateChangeRegistration,
+        block: ArcStateChangeCallback
+    ): ArcStateChangeRegistration {
+        stateChangeCallbacks[registration] = block
+        return registration
+    }
+
+    internal fun remoteOnArcStateChange(registration: ArcStateChangeRegistration) {
+        stateChangeCallbacks.remove(registration)
+    }
+
+    private fun fireArcStateChanged() {
+        stateChangeCallbacks.values.forEach { callback ->
+            try {
+                callback(arcId.toArcId(), _arcState)
+            } catch (e: Exception) {
+                log.debug(e) {
+                    "Exception in onArcStateChangeCallback for $arcId"
+                }
+            }
+        }
+    }
+
     /**
      * Traverse every handle and return a distinct collection of all [StorageKey]s
      * that are readable by this arc.
@@ -51,4 +108,8 @@ data class ArcHostContext(
             it.value.mode.canRead
         }.map { it.value.storageKey }
     }.distinct()
+
+    companion object {
+        private val log = TaggedLog { "ArcHostContext" }
+    }
 }

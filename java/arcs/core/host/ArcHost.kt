@@ -11,7 +11,20 @@
 
 package arcs.core.host
 
+import arcs.core.common.ArcId
 import arcs.core.data.Plan
+
+/**
+ * Represents a registered callback listenenr and the [ArcId] it's registered to compactly.
+ * Primarily used to remove callbacks.
+ */
+inline class ArcStateChangeRegistration(private val callbackId: String) {
+    constructor(arcId: ArcId, block: Any) : this("$arcId:${block.hashCode()}")
+
+    fun arcId() = callbackId.substringBefore(":", "").also { check(it.isNotEmpty()) }
+}
+
+typealias ArcStateChangeCallback = (ArcId, ArcState) -> Unit
 
 /**
  * An [ArcHost] manages the instantiation and execution of particles participating in an Arc by
@@ -37,7 +50,6 @@ interface ArcHost {
      * resurrection, and notifying particles they are at the end of their lifecycle.
      */
     suspend fun stopArc(partition: Plan.Partition)
-    // TODO: HandleMessage
 
     /** Returns [ArcState] for a given [Plan.Partition]. */
     suspend fun lookupArcHostStatus(partition: Plan.Partition): ArcState
@@ -60,4 +72,19 @@ interface ArcHost {
      * any pending arc, and will be able to respond to new startArc calls.
      */
     suspend fun unpause()
+
+    /**
+     * Registers a callback to monitor [ArcState] changes for [arcId].
+     * Callbacks are not guaranteed to persist across [ArcHost] restarts.
+     **/
+    suspend fun addOnArcStateChange(
+        arcId: ArcId,
+        block: ArcStateChangeCallback
+    ): ArcStateChangeRegistration
+
+    /**
+     * Remove a callback used to monitor [ArcState] changes for [arcId].
+     * Callbacks are not guaranteed to persist across [ArcHost] restarts.
+     **/
+    suspend fun removeOnArcStateChange(registration: ArcStateChangeRegistration) = Unit
 }

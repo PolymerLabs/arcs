@@ -106,10 +106,7 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
         writingHost().throws = true
 
         assertSuspendingThrows(ArcHostException::class) {
-            allocator.startArcForPlan(
-                "readWriteParticle",
-                PersonPlan
-            )
+            allocator.startArcForPlan(PersonPlan).waitForStart()
         }
     }
 

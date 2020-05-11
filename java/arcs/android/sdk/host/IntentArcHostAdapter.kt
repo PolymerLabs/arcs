@@ -12,10 +12,17 @@ package arcs.android.sdk.host
 
 import android.content.ComponentName
 import android.content.Intent
+import android.os.Bundle
+import android.os.Handler
+import android.os.ResultReceiver
 import arcs.android.host.parcelables.ParcelableParticleIdentifier
+import arcs.core.common.ArcId
+import arcs.core.common.toArcId
 import arcs.core.data.Plan
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcState
+import arcs.core.host.ArcStateChangeCallback
+import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.host.ParticleIdentifier
 
 /**
@@ -49,7 +56,7 @@ class IntentArcHostAdapter(
     }
 
     override suspend fun stopArc(partition: Plan.Partition) {
-        sendIntentToHostServiceForResult(
+        sendIntentToHostService(
             partition.createStopArcHostIntent(hostComponentName, hostId)
         )
     }
@@ -76,6 +83,43 @@ class IntentArcHostAdapter(
 
     override suspend fun isHostForParticle(particle: Plan.Particle) =
         registeredParticles().contains(ParticleIdentifier.from(particle.location))
+
+    private class ResultReceiverStateChangeHandler(
+        val block: (ArcId, ArcState) -> Unit
+    ) : ResultReceiver(Handler()) {
+        override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
+            val arcId = requireNotNull(
+                resultData?.getString(ArcHostHelper.EXTRA_ARCSTATE_CHANGED_ARCID)
+            ) {
+                "Missing arcId in Intent for onArcStateChangeHandler callback."
+            }.toArcId()
+            val arcState = requireNotNull(
+                resultData?.getString(ArcHostHelper.EXTRA_ARCSTATE_CHANGED_ARCSTATE)
+            ) {
+                "Missing state in Intent for onArcStateChangeHandler callback."
+            }.let {
+                ArcState.valueOf(it)
+            }
+            block(arcId, arcState)
+        }
+    }
+
+    override suspend fun addOnArcStateChange(
+        arcId: ArcId,
+        block: ArcStateChangeCallback
+    ): ArcStateChangeRegistration {
+        return sendIntentToHostServiceForResult(
+            hostComponentName.createAddOnArcStateChangeIntent(
+                hostId,
+                arcId,
+                ResultReceiverStateChangeHandler(block)
+            )
+        ) {
+            ArcStateChangeRegistration(requireNotNull(it) {
+                "No callbackId supplied from addOnStateChangeCallback"
+            }.toString())
+        } ?: throw IllegalArgumentException("Unable to register state change listener")
+    }
 
     override fun hashCode(): Int = hostId.hashCode()
 

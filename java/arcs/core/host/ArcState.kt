@@ -13,12 +13,14 @@ package arcs.core.host
 /**
  * The current state of an [Arc] for a given [ArcHost]. An [Arc] may be in a different state
  * on each [ArcHost] at various times.
+ *
  */
 enum class ArcState {
     /**
-     * This particular [ArcHost] has never started an [Arc] for this [Plan.Partition] yet.
+     * The [Arc] is inbetween [Stopped] and [Running] states, with some [ArcHost]s or
+     * [Particle]s started, and others not.
      */
-    NeverStarted,
+    Indeterminate,
 
     /**
      * The [Plan.Partition] is running on this particular [ArcHost]. An [Arc] is considered
@@ -35,16 +37,21 @@ enum class ArcState {
     Stopped,
 
     /**
-     * [Deleted] implies [Stopped], but further more, subsequent attempts to restart this
-     * [Arc] will fail, and potentially any data used by the [Arc] may be reclaimed.
+     * This particular [ArcHost] has never started an [Arc] for this [Plan.Partition] yet.
      */
-    Deleted,
+    NeverStarted,
 
     /**
      * The [Arc] could not be started for some reason, usually due to the failure of one of its
      * [Particle]s to be instantiated properly.
      */
     Error,
+
+    /**
+     * [Deleted] implies [Stopped], but furthermore, subsequent attempts to restart this
+     * [Arc] will fail, and potentially any data used by the [Arc] may be reclaimed.
+     */
+    Deleted
 }
 
 /**
@@ -53,9 +60,9 @@ enum class ArcState {
  * needed state the next time the [Arc] is restarted.
  */
 enum class ParticleState {
-    /** Instantiated, but onFirstStart() not called */
+    /** Instantiated, but onCreate() not called */
     Instantiated,
-    /** onFirstStart() has been successfully called. */
+    /** onCreate() has been successfully called. */
     Created,
     /** onStart() has been successfully called. */
     Started,
@@ -63,7 +70,7 @@ enum class ParticleState {
     Stopped,
     /**
      * Previous attempt to start this particle failed, but it has previously started. In particular,
-     * we can transition from this state to [Started], but not [Created] since the [onFirstStart]
+     * we can transition from this state to [Started], but not [Created] since the [onCreate]
      * lifecycle has already executed.
      */
     Failed,

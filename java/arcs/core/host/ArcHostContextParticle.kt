@@ -37,6 +37,7 @@ import kotlinx.coroutines.withContext
  */
 class ArcHostContextParticle(
     private val hostId: String,
+    private val handleManager: EntityHandleManager,
     private val instantiateParticle: suspend (ParticleIdentifier, Plan.Particle?) -> Particle,
     private val instantiatedParticles: MutableMap<String, Particle> = mutableMapOf()
 ) : AbstractArcHostContextParticle() {
@@ -159,7 +160,7 @@ class ArcHostContextParticle(
         handles.arcHostContext.onReady { onReadyJobs["arcHostContext"]?.complete() }
         handles.handleConnections.onReady { onReadyJobs["handleConnections"]?.complete() }
         onReadyJobs.values.joinAll()
-        return withContext(coroutineContext) { block() }
+        return withContext(coroutineContext) { block() }.also { handleManager.close() }
     }
 
     private suspend fun createHandlesMap(
