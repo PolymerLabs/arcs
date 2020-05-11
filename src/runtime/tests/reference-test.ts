@@ -404,7 +404,7 @@ describe('reference', () => {
     await arc.idle;
 
     const outHandle = await handleForStore(outStore, arc);
-    assert.strictEqual(outHandle.type.getContainedType().getEntitySchema().name, 'Result');
+    assert.deepEqual(outHandle.type.getContainedType().getEntitySchema().names, ['Result']);
     const out = await outHandle.fetch();
     assert.equal(out.value, 'what a result!');
   });
@@ -761,7 +761,7 @@ describe('reference', () => {
     await arc.idle;
 
     const outputHandle = await handleForStore(resultOutputStore, arc);
-    assert.strictEqual((outputHandle.type.getContainedType() as EntityType).entitySchema.name, 'Result');
+    assert.deepEqual((outputHandle.type.getContainedType() as EntityType).entitySchema.names, ['Result']);
     const values = await outputHandle.toList();
     assert.strictEqual(values.length, 2);
     assert.strictEqual(values[0].value, 'what a result!');

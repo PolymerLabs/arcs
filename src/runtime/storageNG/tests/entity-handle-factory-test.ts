@@ -98,7 +98,7 @@ describe('entity handle factory', () => {
     assert.strictEqual(recipe.handles[1].id, 'input:2');
     recipe.handles[1].type.maybeEnsureResolved();
     assert.instanceOf(recipe.handles[1].type, MuxType);
-    assert.strictEqual((recipe.handles[1].type.resolvedType() as MuxType<EntityType>).innerType.entitySchema.name, 'Result');
+    assert.deepEqual((recipe.handles[1].type.resolvedType() as MuxType<EntityType>).innerType.entitySchema.names, ['Result']);
   });
   it('generated entity handle can fetch entity', async () => {
     const storageKeyPrefix = (arcId: ArcId) => new ReferenceModeStorageKey(new VolatileStorageKey(arcId, 'a'), new VolatileStorageKey(arcId, 'b'));
