@@ -231,7 +231,7 @@ describe('interface', () => {
       assert.isTrue(resolved.canEnsureResolved());
       const canWriteSuperset = resolved.canWriteSuperset as EntityType;
       assert.isTrue(canWriteSuperset instanceof EntityType);
-      assert.strictEqual(canWriteSuperset.entitySchema.name, 'Burrito');
+      assert.deepStrictEqual(canWriteSuperset.entitySchema.names, ['Burrito']);
     }
   });
 

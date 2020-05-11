@@ -667,7 +667,10 @@ export class Arc implements ArcInterface {
         return `list:${key}`;
       }
     } else if (type instanceof EntityType) {
-      return type.entitySchema.name;
+      // Note: This used to use 'name' a getter that returned names[0].
+      // This was a source of correctness bugs elsewhere (e.g. Schema.equals) and was considered
+      // incorrect. This is a patch to make unique keys for types using all their type names.
+      return type.entitySchema.names.sort().join('&');
     } else if (type instanceof InterfaceType) {
       // TODO we need to fix this too, otherwise all handles of interface type will
       // be of the 'same type' when searching by type.

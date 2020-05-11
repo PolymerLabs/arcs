@@ -15,7 +15,7 @@ import {Schema} from './schema.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {ChannelConstructor} from './channel-constructor.js';
 
-function convertToJsType(primitiveType, schemaName: string) {
+function convertToJsType(primitiveType, schema: Schema) {
   switch (primitiveType.type) {
     case 'Text':
       return 'string';
@@ -28,7 +28,7 @@ function convertToJsType(primitiveType, schemaName: string) {
     case 'Bytes':
       return 'Uint8Array';
     default:
-      throw new Error(`Unknown field type ${primitiveType.type} in schema ${schemaName}`);
+      throw new Error(`Unknown field type ${primitiveType.type} in schema ${schema.names.join(' ')}`);
   }
 }
 
@@ -40,7 +40,7 @@ function valueType(value) {
 function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldType?: any) {
   fieldType = fieldType || schema.fields[name];
   if (fieldType === undefined) {
-    throw new Error(`Can't set field ${name}; not in schema ${schema.name}`);
+    throw new Error(`Can't set field ${name}; not in schema ${schema.names.join(' ')}`);
   }
   if (value === undefined || value === null) {
     return;
@@ -48,7 +48,7 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
 
   switch (fieldType.kind) {
     case 'schema-primitive': {
-      if (valueType(value) !== convertToJsType(fieldType, schema.name)) {
+      if (valueType(value) !== convertToJsType(fieldType, schema)) {
         throw new TypeError(`Type mismatch setting field ${name} (type ${fieldType.type}); ` +
                             `value '${value}' is type ${valueType(value)}`);
       }
@@ -60,7 +60,7 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
     case 'schema-union':
       // Value must be a primitive that matches one of the union types.
       for (const innerType of fieldType.types) {
-        if (valueType(value) === convertToJsType(innerType, schema.name)) {
+        if (valueType(value) === convertToJsType(innerType, schema)) {
           return;
         }
       }
@@ -77,7 +77,7 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
                             `[${fieldType.types.map(d => d.type)}] with value '${value}'`);
       }
       fieldType.types.map((innerType, i) => {
-        if (value[i] != null && valueType(value[i]) !== convertToJsType(innerType, schema.name)) {
+        if (value[i] != null && valueType(value[i]) !== convertToJsType(innerType, schema)) {
           throw new TypeError(`Type mismatch setting field ${name} (tuple [${fieldType.types.map(d => d.type)}]); ` +
                               `value '${value}' has type ${valueType(value[i])} at index ${i}`);
         }
@@ -111,7 +111,7 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
       }
       break;
     default:
-      throw new Error(`Unknown kind '${fieldType.kind}' for field ${name} in schema ${schema.name}`);
+      throw new Error(`Unknown kind '${fieldType.kind}' for field ${name} in schema ${schema.names.join(' ')}`);
   }
 }
 

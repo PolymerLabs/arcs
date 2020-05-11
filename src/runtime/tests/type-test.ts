@@ -468,11 +468,11 @@ describe('types', () => {
       assert(recipe.normalize());
       assert(recipe.isResolved());
       assert.strictEqual(recipe.handles.length, 1);
-      assert.strictEqual((recipe.handles[0].type.getContainedType().canReadSubset as EntityType).entitySchema.name, 'Lego');
-      assert.strictEqual((recipe.handles[0].type.getContainedType().canWriteSuperset as EntityType).entitySchema.name, 'Product');
+      assert.deepStrictEqual((recipe.handles[0].type.getContainedType().canReadSubset as EntityType).entitySchema.names, ['Lego', 'Product']);
+      assert.deepStrictEqual((recipe.handles[0].type.getContainedType().canWriteSuperset as EntityType).entitySchema.names, ['Product']);
     });
 
-    it('a subtype matches to a supertype that wants to be read when a handle exists', async () => {
+    it('a subtype matches to a supertype that wants to be read when a handle exists (1)', async () => {
       const manifest = await Manifest.parse(manifestText);
       const recipe = manifest.recipes[1];
       recipe.handles[0].mapToStorage({
@@ -482,10 +482,10 @@ describe('types', () => {
       assert(recipe.normalize());
       assert(recipe.isResolved());
       assert.lengthOf(recipe.handles, 1);
-      assert.strictEqual((recipe.handles[0].type.getContainedType() as EntityType).entitySchema.name, 'Product');
+      assert.deepStrictEqual((recipe.handles[0].type.getContainedType() as EntityType).entitySchema.names, ['Product']);
     });
 
-    it('a subtype matches to a supertype that wants to be read when a handle exists', async () => {
+    it('a subtype matches to a supertype that wants to be read when a handle exists (2)', async () => {
       const manifest = await Manifest.parse(manifestText);
       const recipe = manifest.recipes[1];
       recipe.handles[0].mapToStorage({
@@ -495,7 +495,7 @@ describe('types', () => {
       assert(recipe.normalize());
       assert(recipe.isResolved());
       assert.lengthOf(recipe.handles, 1);
-      assert.strictEqual((recipe.handles[0].type.getContainedType() as EntityType).entitySchema.name, 'Lego');
+      assert.deepStrictEqual((recipe.handles[0].type.getContainedType() as EntityType).entitySchema.names, ['Lego', 'Product']);
     });
   });
 });

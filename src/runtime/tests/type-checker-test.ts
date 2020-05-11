@@ -23,10 +23,10 @@ describe('TypeChecker', () => {
     const canWriteSuperset = a.resolvedType().collectionType.canWriteSuperset as EntityType;
 
     assert.instanceOf(canWriteSuperset, EntityType);
-    assert.strictEqual(canWriteSuperset.entitySchema.name, 'Product');
-    assert.strictEqual((result.resolvedType() as CollectionType<EntityType>).collectionType.canWriteSuperset.entitySchema.name, 'Product');
+    assert.sameDeepMembers(canWriteSuperset.entitySchema.names, ['Product']);
+    assert.sameDeepMembers((result.resolvedType() as CollectionType<EntityType>).collectionType.canWriteSuperset.entitySchema.names, ['Product']);
     if (result.isCollectionType() && result.collectionType.canWriteSuperset instanceof EntityType) {
-      assert.strictEqual(result.collectionType.canWriteSuperset.entitySchema.name, 'Product');
+      assert.sameDeepMembers(result.collectionType.canWriteSuperset.entitySchema.names, ['Product']);
     }
     else {
       assert.fail('result should be a collection of a typeVariable with an entity constraint');
@@ -48,14 +48,14 @@ describe('TypeChecker', () => {
 
     let canWriteSuperset = a.resolvedType().bigCollectionType.canWriteSuperset as EntityType;
     assert.instanceOf(canWriteSuperset, EntityType);
-    assert.strictEqual(canWriteSuperset.entitySchema.name, 'Product');
+    assert.sameDeepMembers(canWriteSuperset.entitySchema.names, ['Product']);
 
     canWriteSuperset = (result.resolvedType() as BigCollectionType<EntityType>).bigCollectionType.canWriteSuperset as EntityType;
     assert.instanceOf(canWriteSuperset, EntityType);
-    assert.strictEqual(canWriteSuperset.entitySchema.name, 'Product');
+    assert.sameDeepMembers(canWriteSuperset.entitySchema.names, ['Product']);
 
     if (result.isBigCollectionType() && result.bigCollectionType.canWriteSuperset instanceof EntityType) {
-      assert.strictEqual(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Product');
+      assert.sameDeepMembers(result.bigCollectionType.canWriteSuperset.entitySchema.names, ['Product']);
     } else {
       assert.fail('result should be a bigCollection of a typeVariable with an entity constraint');
     }
@@ -67,8 +67,8 @@ describe('TypeChecker', () => {
     const c = EntityType.make(['Product', 'Thing'], {}).collectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'reads'}, {type: b, direction: 'reads'}, {type: c, direction: 'writes'}]);
     if (result.isCollectionType() && result.collectionType.canReadSubset instanceof EntityType && result.collectionType.canWriteSuperset instanceof EntityType) {
-      assert.strictEqual(result.collectionType.canReadSubset.entitySchema.name, 'Product');
-      assert.strictEqual(result.collectionType.canWriteSuperset.entitySchema.name, 'Thing');
+      assert.sameDeepMembers(result.collectionType.canReadSubset.entitySchema.names, ['Product', 'Thing']);
+      assert.sameDeepMembers(result.collectionType.canWriteSuperset.entitySchema.names, ['Thing']);
     } else {
       assert.fail('result should be a collection of a typeVariable with an entity constraint');
     }
@@ -80,8 +80,8 @@ describe('TypeChecker', () => {
     const c = EntityType.make(['Product', 'Thing'], {}).bigCollectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'reads'}, {type: b, direction: 'reads'}, {type: c, direction: 'writes'}]);
     if (result.isBigCollectionType() && result.bigCollectionType.canReadSubset instanceof EntityType && result.bigCollectionType.canWriteSuperset instanceof EntityType) {
-      assert.strictEqual(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
-      assert.strictEqual(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
+      assert.sameDeepMembers(result.bigCollectionType.canReadSubset.entitySchema.names, ['Product', 'Thing']);
+      assert.sameDeepMembers(result.bigCollectionType.canWriteSuperset.entitySchema.names, ['Thing']);
     } else {
       assert.fail('result should be a bigCollection of a typeVariable with an entity constraint');
     }
@@ -93,8 +93,8 @@ describe('TypeChecker', () => {
     const c = EntityType.make(['Product', 'Thing'], {}).collectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: c, direction: 'writes'}, {type: a, direction: 'reads'}, {type: b, direction: 'reads'}]);
     if (result.isCollectionType() && result.collectionType.canReadSubset instanceof EntityType && result.collectionType.canWriteSuperset instanceof EntityType) {
-      assert.strictEqual(result.collectionType.canReadSubset.entitySchema.name, 'Product');
-      assert.strictEqual(result.collectionType.canWriteSuperset.entitySchema.name, 'Thing');
+      assert.sameDeepMembers(result.collectionType.canReadSubset.entitySchema.names, ['Product', 'Thing']);
+      assert.sameDeepMembers(result.collectionType.canWriteSuperset.entitySchema.names, ['Thing']);
     } else {
       assert.fail('result should be a collection of a typeVariable with an entity constraint');
     }
@@ -106,8 +106,8 @@ describe('TypeChecker', () => {
     const c = EntityType.make(['Product', 'Thing'], {}).bigCollectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: c, direction: 'writes'}, {type: a, direction: 'reads'}, {type: b, direction: 'reads'}]);
     if (result.isBigCollectionType() && result.bigCollectionType.canReadSubset instanceof EntityType && result.bigCollectionType.canWriteSuperset instanceof EntityType) {
-      assert.strictEqual(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
-      assert.strictEqual(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
+      assert.sameDeepMembers(result.bigCollectionType.canReadSubset.entitySchema.names, ['Product', 'Thing']);
+      assert.sameDeepMembers(result.bigCollectionType.canWriteSuperset.entitySchema.names, ['Thing']);
     } else {
       assert.fail('result should be a bigCollection of a typeVariable with an entity constraint');
     }
@@ -122,8 +122,8 @@ describe('TypeChecker', () => {
     const c = EntityType.make(['Product', 'Thing'], {}).collectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'reads'}, {type: b, direction: 'reads'}, {type: c, direction: 'writes'}]);
     if (result.isCollectionType() && result.collectionType.canReadSubset instanceof EntityType && result.collectionType.canWriteSuperset instanceof EntityType) {
-      assert.strictEqual(result.collectionType.canReadSubset.entitySchema.name, 'Product');
-      assert.strictEqual(result.collectionType.canWriteSuperset.entitySchema.name, 'Thing');
+      assert.sameDeepMembers(result.collectionType.canReadSubset.entitySchema.names, ['Product', 'Thing']);
+      assert.sameDeepMembers(result.collectionType.canWriteSuperset.entitySchema.names, ['Thing']);
     } else {
       assert.fail('result should be a collection of a typeVariable with an entity constraint');
     }
@@ -138,8 +138,8 @@ describe('TypeChecker', () => {
     const c = EntityType.make(['Product', 'Thing'], {}).bigCollectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'reads'}, {type: b, direction: 'reads'}, {type: c, direction: 'writes'}]);
     if (result.isBigCollectionType() && result.bigCollectionType.canReadSubset instanceof EntityType && result.bigCollectionType.canWriteSuperset instanceof EntityType) {
-      assert.strictEqual(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
-      assert.strictEqual(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
+      assert.sameDeepMembers(result.bigCollectionType.canReadSubset.entitySchema.names, ['Product', 'Thing']);
+      assert.sameDeepMembers(result.bigCollectionType.canWriteSuperset.entitySchema.names, ['Thing']);
     } else {
       assert.fail('result should be a bigCollection of a typeVariable with an entity constraint');
     }
@@ -151,9 +151,9 @@ describe('TypeChecker', () => {
     const c = EntityType.make(['Product', 'Thing'], {}).collectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'reads'}, {type: c, direction: 'writes'}]);
     if (result.isCollectionType() && result.collectionType.canReadSubset instanceof EntityType && result.collectionType.canWriteSuperset instanceof EntityType) {
-      assert.strictEqual(result.collectionType.canReadSubset.entitySchema.name, 'Product');
+      assert.sameDeepMembers(result.collectionType.canReadSubset.entitySchema.names, ['Product', 'Thing']);
       assert.include(result.collectionType.canReadSubset.entitySchema.names, 'Thing');
-      assert.strictEqual(result.collectionType.canWriteSuperset.entitySchema.name, 'Thing');
+      assert.sameDeepMembers(result.collectionType.canWriteSuperset.entitySchema.names, ['Thing']);
     } else {
       assert.fail('result should be a collection of a typeVariable with an entity constraint');
     }
@@ -165,9 +165,9 @@ describe('TypeChecker', () => {
     const c = EntityType.make(['Product', 'Thing'], {}).bigCollectionOf();
     const result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'reads'}, {type: c, direction: 'writes'}]);
     if (result.isBigCollectionType() && result.bigCollectionType.canReadSubset instanceof EntityType && result.bigCollectionType.canWriteSuperset instanceof EntityType) {
-      assert.strictEqual(result.bigCollectionType.canReadSubset.entitySchema.name, 'Product');
+      assert.sameDeepMembers(result.bigCollectionType.canReadSubset.entitySchema.names, ['Product', 'Thing']);
       assert.include(result.bigCollectionType.canReadSubset.entitySchema.names, 'Thing');
-      assert.strictEqual(result.bigCollectionType.canWriteSuperset.entitySchema.name, 'Thing');
+      assert.sameDeepMembers(result.bigCollectionType.canWriteSuperset.entitySchema.names, ['Thing']);
     } else {
       assert.fail('result should be a bigCollection of a typeVariable with an entity constraint');
     }
@@ -239,19 +239,19 @@ describe('TypeChecker', () => {
     let a = TypeVariable.make('a');
     const b = EntityType.make(['Product', 'Thing'], {});
     const c = EntityType.make(['Thing'], {});
-    let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'reads'}, {type: b, direction: 'writes'}, {type: c, direction: 'reads'}]);
+    TypeChecker.processTypeList(undefined, [{type: a, direction: 'reads'}, {type: b, direction: 'writes'}, {type: c, direction: 'reads'}]);
     if (a.variable.canReadSubset instanceof EntityType && a.variable.canWriteSuperset instanceof EntityType) {
-      assert.strictEqual(a.variable.canReadSubset.entitySchema.name, 'Product');
-      assert.strictEqual(a.variable.canWriteSuperset.entitySchema.name, 'Thing');
+      assert.sameDeepMembers(a.variable.canReadSubset.entitySchema.names, ['Product', 'Thing']);
+      assert.sameDeepMembers(a.variable.canWriteSuperset.entitySchema.names, ['Thing']);
     } else {
       assert.fail('a should be a type variable with EntityType constraints');
     }
 
     a = TypeVariable.make('a');
-    result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'reads'}, {type: c, direction: 'reads'}, {type: b, direction: 'writes'}]);
+    TypeChecker.processTypeList(undefined, [{type: a, direction: 'reads'}, {type: c, direction: 'reads'}, {type: b, direction: 'writes'}]);
     if (a.variable.canReadSubset instanceof EntityType && a.variable.canWriteSuperset instanceof EntityType) {
-      assert.strictEqual(a.variable.canReadSubset.entitySchema.name, 'Product');
-      assert.strictEqual(a.variable.canWriteSuperset.entitySchema.name, 'Thing');
+      assert.sameDeepMembers(a.variable.canReadSubset.entitySchema.names, ['Product', 'Thing']);
+      assert.sameDeepMembers(a.variable.canWriteSuperset.entitySchema.names, ['Thing']);
     } else {
       assert.fail('a should be a type variable with EntityType constraints');
     }
@@ -282,7 +282,7 @@ describe('TypeChecker', () => {
     assert.strictEqual(true, type.canEnsureResolved());
     assert.strictEqual(true, type.maybeEnsureResolved());
     assert.strictEqual(true, type.isResolved());
-    assert.strictEqual('Product', (type.resolvedType() as CollectionType<EntityType>).collectionType.entitySchema.names[0]);
+    assert.sameDeepMembers((type.resolvedType() as CollectionType<EntityType>).collectionType.entitySchema.names, ['Product']);
 
     recipe.normalize();
     assert.strictEqual(true, recipe.isResolved());

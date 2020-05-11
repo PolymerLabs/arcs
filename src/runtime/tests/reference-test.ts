@@ -52,7 +52,7 @@ describe('reference', () => {
     assert.strictEqual(recipe.handles[0].id, 'reference:1');
     recipe.handles[0].type.maybeEnsureResolved();
     assert.instanceOf(recipe.handles[0].type, ReferenceType);
-    assert.strictEqual((recipe.handles[0].type.resolvedType() as ReferenceType<EntityType>).referredType.entitySchema.name, 'Result');
+    assert.deepStrictEqual((recipe.handles[0].type.resolvedType() as ReferenceType<EntityType>).referredType.entitySchema.names, ['Result']);
   });
 
   it('exposes a dereference API to particles for singleton handles', async () => {
@@ -655,14 +655,14 @@ describe('reference', () => {
     await arc.instantiate(recipe);
 
     const handle = await handleForStore(inputStore, arc);
-    assert.strictEqual((handle.type.getContainedType() as EntityType).entitySchema.name, 'Result');
     const now = new Date().getTime();
+    assert.deepStrictEqual((handle.type.getContainedType() as EntityType).entitySchema.names, ['Result']);
     await handle.add(Entity.identify(new handle.entityClass({value: 'what a result!'}), 'id:1', null, now));
     await handle.add(Entity.identify(new handle.entityClass({value: 'what another result!'}), 'id:2', null, now));
 
     await arc.idle;
     const outputHandle = await handleForStore(refStore, arc);
-    assert.strictEqual(outputHandle.type.getContainedType().getEntitySchema().name, 'Foo');
+    assert.deepStrictEqual(outputHandle.type.getContainedType().getEntitySchema().names, ['Foo']);
     const outputRefs = await outputHandle.fetch();
     const ids = [...outputRefs.result].map(ref => ref.id);
     assert.sameMembers(ids, ['id:1', 'id:2']);

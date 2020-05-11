@@ -363,7 +363,9 @@ export abstract class Entity implements Storable {
     };
 
     // Override the name property to use the name of the entity given in the schema.
-    Object.defineProperty(clazz, 'name', {value: schema.name});
+    // TODO(cypher1): This is likely unsafe.
+    // There may be multiple schemas with the same name and names can be inherited.
+    Object.defineProperty(clazz, 'name', {value: schema.names[0]});
     return clazz;
   }
 

@@ -66,7 +66,7 @@ describe('schema', () => {
   it('schemas load recursively', async () => {
     const manifest = await Manifest.load('./Product.schema', loader);
     const schema = manifest.findSchemaByName('Product');
-    assert.strictEqual(schema.name, 'Product');
+    assert.sameDeepMembers(schema.names, ['Product', 'Thing']);
     assert.include(schema.names, 'Thing');
 
     const kind = 'schema-primitive';

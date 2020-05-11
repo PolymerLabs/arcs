@@ -770,6 +770,8 @@ ${e.message}
       names.push(...result.names);
     }
     names = [...new Set(names)];
+    // TODO(cypher1): This is likely unsafe.
+    // There may be multiple schemas with the same name and names can be inherited.
     const name = schemaItem.alias || names[0];
     if (!name) {
       throw new ManifestError(

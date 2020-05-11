@@ -421,8 +421,9 @@ export class EntityType extends Type {
     }
 
     // Spit MyTypeFOO to My Type FOO
-    if (this.entitySchema.name) {
-      return this.entitySchema.name.replace(/([^A-Z])([A-Z])/g, '$1 $2')
+    if (this.entitySchema.names) {
+      return this.entitySchema.names.join(' ')
+                                   .replace(/([^A-Z])([A-Z])/g, '$1 $2')
                                    .replace(/([A-Z][^A-Z])/g, ' $1')
                                    .replace(/[\s]+/g, ' ')
                                    .trim();

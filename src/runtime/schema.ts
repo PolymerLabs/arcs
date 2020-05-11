@@ -96,11 +96,6 @@ export class Schema {
     };
   }
 
-  // TODO(cypher1): This should only be an ident used in manifest parsing.
-  get name() {
-    return this.names[0];
-  }
-
   get annotations(): AnnotationRef[] { return this._annotations; }
   set annotations(annotations: AnnotationRef[]) {
     annotations.every(a => assert(a.isValidForTarget('Schema'),
@@ -228,7 +223,8 @@ export class Schema {
   }
 
   // Returns true if there are fields in this.refinement, that are not in fields
-  refinementHasFieldsNotIn(fields): boolean {
+  // tslint:disable-next-line: no-any
+  refinementHasFieldsNotIn(fields: Dictionary<any>): boolean {
     const amb = Object.keys(this.fields).filter(k => !(k in fields));
     for (const field of amb) {
       if (this.refinement && this.refinement.containsField(field)) {

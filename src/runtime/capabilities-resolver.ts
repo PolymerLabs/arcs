@@ -22,14 +22,14 @@ export abstract class StorageKeyOptions {
   constructor(
       public readonly arcId: ArcId,
       public readonly schemaHash: string,
-      protected readonly schemaName: string = null) {}
+      protected readonly schemaNames: string[] = []) {}
   abstract location(): string;
   abstract unique(): string;
 }
 
 class ContainerStorageKeyOptions extends StorageKeyOptions {
-  constructor(arcId: ArcId, schemaHash: string, schemaName?: string) {
-    super(arcId, schemaHash, schemaName);
+  constructor(arcId: ArcId, schemaHash: string, schemaNames?: string[]) {
+    super(arcId, schemaHash, schemaNames);
   }
 
   unique(): string { return ''; }
@@ -37,12 +37,11 @@ class ContainerStorageKeyOptions extends StorageKeyOptions {
 }
 
 class BackingStorageKeyOptions extends StorageKeyOptions {
-  constructor(arcId: ArcId, schemaHash: string, schemaName?: string) {
-    super(arcId, schemaHash, schemaName);
+  constructor(arcId: ArcId, schemaHash: string, schemaNames?: string[]) {
+    super(arcId, schemaHash, schemaNames);
   }
   unique(): string {
-    return this.schemaName && this.schemaName.length > 0
-        ? this.schemaName : this.schemaHash;
+    return this.schemaNames.length > 0 ? this.schemaNames.sort().join('&') : this.schemaHash;
   }
   location(): string {
     return this.unique();
@@ -110,7 +109,7 @@ export class CapabilitiesResolver {
     const creator = this.creators.find(({protocol}) => protocol === [...protocols][0]);
     const schemaHash = await type.getEntitySchema().hash();
     const containerKey = creator.create(new ContainerStorageKeyOptions(
-        this.options.arcId, schemaHash, type.getEntitySchema().name));
+        this.options.arcId, schemaHash, type.getEntitySchema().names));
     const containerChildKey = containerKey.childKeyForHandle(handleId);
     if (!Flags.defaultReferenceMode) {
       return containerChildKey;
@@ -120,7 +119,7 @@ export class CapabilitiesResolver {
       return containerChildKey;
     }
     const backingKey = creator.create(new BackingStorageKeyOptions(
-        this.options.arcId, schemaHash, type.getEntitySchema().name));
+        this.options.arcId, schemaHash, type.getEntitySchema().names));
     return new ReferenceModeStorageKey(backingKey, containerChildKey);
   }
 
