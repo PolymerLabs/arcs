@@ -45,6 +45,12 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
         ) { "This provider does not support storageKey: $storageKey" }
         return VolatileDriver(storageKey, type, arcMemory)
     }
+
+    override suspend fun removeAllEntities() = arcMemory.clear()
+
+    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
+        // Volatile storage is opaque, so remove all entities.
+        removeAllEntities()
 }
 
 /** [Driver] implementation for an in-memory store of data. */
