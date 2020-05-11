@@ -11,16 +11,12 @@
 
 package arcs.core.util
 
-import arcs.core.testutil.assertSuspendingThrows
-import arcs.core.testutil.assertThrows
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.yield
 import org.junit.Rule
 import org.junit.Test

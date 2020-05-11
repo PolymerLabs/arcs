@@ -94,17 +94,10 @@ class Scheduler(
 
             var shallContinue = true
             while (shallContinue) {
-                val startTime = time.currentTimeMillis
                 shallContinue = withTimeout(agendaProcessingTimeoutMs) { executeAgenda() }
-                val elapsed = time.currentTimeMillis - startTime
 
                 if (shallContinue) {
                     loops.incrementAndGet()
-
-                    // If the operation was super fast, let's delay a little bit to allow the
-                    // thread to chill out.
-                    val delayLength = scheduleRateHz.hzToMillisPerIteration() - elapsed
-                    if (delayLength > 0) delay(delayLength)
                 }
             }
         }
@@ -143,8 +136,6 @@ class Scheduler(
 
         return true
     }
-
-    private fun Int.hzToMillisPerIteration(): Long = ((1.0 / toDouble()) * 1000L).toLong()
 
     sealed class Task(private val block: () -> Unit) {
         /**
