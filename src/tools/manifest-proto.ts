@@ -19,3 +19,4 @@ export const FateEnum = RootNamespace.lookupEnum('arcs.Fate');
 export const CapabilityEnum = RootNamespace.lookupEnum('arcs.Capability');
 export const DirectionEnum = RootNamespace.lookupEnum('arcs.Direction');
 export const PrimitiveTypeEnum = RootNamespace.lookupEnum('arcs.PrimitiveTypeProto');
+export const OperatorEnum = RootNamespace.lookupEnum('arcs.OPERATOR');

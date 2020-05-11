@@ -196,7 +196,13 @@ export class Refinement {
   }
 }
 
-type RefinementExpressionNodeType = 'BinaryExpressionNode' | 'UnaryExpressionNode' | 'FieldNamePrimitiveNode' | 'QueryArgumentPrimitiveNode' | 'NumberPrimitiveNode' | 'BooleanPrimitiveNode' | 'TextPrimitiveNode';
+export interface RefinementExpressionLiteral {
+  kind: RefinementExpressionNodeType;
+  // tslint:disable:no-any
+  [propName: string]: any;
+}
+
+export type RefinementExpressionNodeType = 'BinaryExpressionNode' | 'UnaryExpressionNode' | 'FieldNamePrimitiveNode' | 'QueryArgumentPrimitiveNode' | 'NumberPrimitiveNode' | 'BooleanPrimitiveNode' | 'TextPrimitiveNode';
 
 abstract class RefinementExpression {
   evalType: Primitive;
@@ -220,7 +226,7 @@ abstract class RefinementExpression {
     }
   }
 
-  abstract toLiteral();
+  abstract toLiteral(): RefinementExpressionLiteral;
 
   static fromLiteral(expr: {kind: RefinementExpressionNodeType}): RefinementExpression {
     switch (expr.kind) {
@@ -297,7 +303,7 @@ export class BinaryExpression extends RefinementExpression {
             new RefinementOperator(expression.operator as Op));
   }
 
-  toLiteral() {
+  toLiteral(): RefinementExpressionLiteral {
     return {
       kind: this.kind,
       leftExpr: this.leftExpr.toLiteral(),

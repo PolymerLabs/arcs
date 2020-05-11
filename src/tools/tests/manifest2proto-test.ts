@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../platform/chai-web.js';
-import {encodeManifestToProto, typeToProtoPayload, manifestToProtoPayload, capabilitiesToProtoOrdinals} from '../manifest2proto.js';
-import {CountType, EntityType, SingletonType, TupleType, Type, TypeVariable} from '../../runtime/type.js';
+import {capabilitiesToProtoOrdinals, encodeManifestToProto, manifestToProtoPayload, typeToProtoPayload} from '../manifest2proto.js';
+import {CountType, EntityType, SingletonType, TupleType, Type} from '../../runtime/type.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Capabilities} from '../../runtime/capabilities.js';
 import {fs} from '../../platform/fs-web.js';
@@ -159,6 +159,108 @@ describe('manifest2proto', () => {
     });
   });
 
+  it('encodes entity type with simple refinement', async () => {
+    const manifest = await Manifest.parse(`
+        particle Foo
+            input: reads Something {num: Number} [true]
+    `);
+    assert.deepStrictEqual(await toProtoAndBackType(manifest.particles[0].connections[0].type), {
+      entity: {
+        schema: {
+          names: ['Something'],
+          fields: {
+            num: {
+              primitive: 'NUMBER'
+            }
+          },
+          hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
+        },
+      },
+      refinement: {
+        boolean: true
+      },
+    });
+  });
+
+  it('encodes entity type with nested refinement', async () => {
+    const manifest = await Manifest.parse(`
+        particle Foo
+            input: reads Something {num: Number} [num / 2 < 6 and num  > -1]
+    `);
+    const entity = manifest.particles[0].connections[0].type;
+    assert.deepStrictEqual(await toProtoAndBackType(entity), {
+      entity: {
+        schema: {
+          names: ['Something'],
+          fields: {
+            num: {
+              primitive: 'NUMBER'
+            }
+          },
+          hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
+        },
+      },
+      refinement: {
+        binary: {
+          leftExpr: {
+            binary: {
+              leftExpr: {
+                field: 'num',
+              },
+              operator: 'LESS_THAN',
+              rightExpr: {
+                number: 12
+              }
+            }
+          },
+          operator: 'AND',
+          rightExpr: {
+            binary: {
+              leftExpr: {
+                field: 'num'
+              },
+              operator: 'GREATER_THAN',
+              rightExpr: {
+                number: -1
+              }
+            }
+          },
+        }
+      }
+    });
+  });
+
+  it('encodes entity type with query', async () => {
+    const manifest = await Manifest.parse(`
+        particle Foo
+            input: reads Something {num: Number} [num == ?]
+    `);
+    const entity = manifest.particles[0].connections[0].type;
+    assert.deepStrictEqual(await toProtoAndBackType(entity), {
+      entity: {
+        schema: {
+          names: ['Something'],
+          fields: {
+            num: {
+              primitive: 'NUMBER'
+            }
+          },
+          hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
+        },
+      },
+      refinement: {
+        binary: {
+          leftExpr: {
+            field: 'num'
+          },
+          operator: 'EQUALS',
+          rightExpr: {
+            queryArgument: '?'
+          },
+        }
+      }
+    });
+  });
   it('encodes collection type', async () => {
     const collection = EntityType.make(['Foo'], {value: 'Text'}).collectionOf();
     assert.deepStrictEqual(await toProtoAndBackType(collection), {

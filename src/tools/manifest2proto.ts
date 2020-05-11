@@ -11,14 +11,16 @@ import {Runtime} from '../runtime/runtime.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {Type, CollectionType, ReferenceType, SingletonType, TypeVariable, TupleType} from '../runtime/type.js';
+import {Type, CollectionType, ReferenceType, SingletonType, TupleType} from '../runtime/type.js';
 import {Schema} from '../runtime/schema.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {assert} from '../platform/assert-web.js';
 import {findLongRunningArcId} from './storage-key-recipe-resolver.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Capabilities} from '../runtime/capabilities.js';
-import {ManifestProto, FateEnum, CapabilityEnum, DirectionEnum, PrimitiveTypeEnum} from './manifest-proto.js';
+import {CapabilityEnum, DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
+import {Refinement, RefinementExpressionLiteral} from '../runtime/refiner.js';
+import {Op} from '../runtime/manifest-ast-nodes.js';
 
 export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path);
@@ -135,11 +137,17 @@ export async function typeToProtoPayload(type: Type) {
   }
   type = type.resolvedType();
   switch (type.tag) {
-    case 'Entity': return {
-      entity: {
-        schema: await schemaToProtoPayload(type.getEntitySchema())
+    case 'Entity': {
+      const entity = {
+        entity: {
+          schema: await schemaToProtoPayload(type.getEntitySchema()),
+        }
+      };
+      if (type.getEntitySchema().refinement) {
+        entity['refinement'] = refinementToProtoPayload(type.getEntitySchema().refinement);
       }
-    };
+      return entity;
+    }
     case 'Collection': return {
       collection: {
         collectionType: await typeToProtoPayload((type as CollectionType<Type>).collectionType)
@@ -217,6 +225,61 @@ async function schemaFieldToProtoPayload(fieldType: SchemaField) {
       return typeToProtoPayload(fieldType.model);
     }
     default: throw Error(`Schema field kind ${fieldType.kind} is not supported.`);
+  }
+}
+
+function refinementToProtoPayload(refinement: Refinement): object {
+  refinement.normalize();
+  const literal = refinement.toLiteral();
+  return refinementExpressionLiteralToProtoPayload(literal.expression);
+}
+
+function toOpProto(op: Op): number {
+  const opEnum = [
+    Op.AND, Op.OR,
+    Op.LT, Op.GT, Op.LTE, Op.GTE,
+    Op.ADD, Op.SUB, Op.MUL, Op.DIV,
+    Op.NOT, Op.NEG,
+    Op.EQ, Op.NEQ,
+  ].indexOf(op);
+
+  if (opEnum === -1) throw Error(`Op type '${op}' is not supported.`);
+
+  return opEnum;
+}
+
+function refinementExpressionLiteralToProtoPayload(expr: RefinementExpressionLiteral): object {
+  switch (expr.kind) {
+    case 'BinaryExpressionNode': return {
+      binary: {
+        leftExpr: refinementExpressionLiteralToProtoPayload(expr.leftExpr),
+        rightExpr: refinementExpressionLiteralToProtoPayload(expr.rightExpr),
+        operator: toOpProto(expr.operator)
+      }
+    };
+    case 'UnaryExpressionNode': return {
+      unary: {
+        expr: refinementExpressionLiteralToProtoPayload(expr.expr),
+        operator: toOpProto(expr.operator),
+      }
+    };
+    case 'FieldNamePrimitiveNode': return {
+      field: expr.value
+    };
+    case 'QueryArgumentPrimitiveNode': return {
+      queryArgument: expr.value
+    };
+    case 'NumberPrimitiveNode': return {
+      number: expr.value
+    };
+    case 'BooleanPrimitiveNode': return {
+      boolean: expr.value
+    };
+    case 'TextPrimitiveNode': return {
+      text: expr.value
+    };
+    default:
+      throw new Error(`Unknown node type ${expr['kind']}`);
   }
 }
 
