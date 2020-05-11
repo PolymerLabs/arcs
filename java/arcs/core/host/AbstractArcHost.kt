@@ -364,7 +364,9 @@ abstract class AbstractArcHost(
         if (particleContext.particleState == ParticleState.Instantiated) {
             try {
                 // onFirstStart() must succeed, else we consider the particle startup failed
-                particleContext.particle.onFirstStart()
+                withContext(particleContext.particle.handles.dispatcher) {
+                    particleContext.particle.onFirstStart()
+                }
                 particleContext.particleState = ParticleState.Created
             } catch (e: Exception) {
                 log.error(e) { "Failure in particle during onFirstStart." }

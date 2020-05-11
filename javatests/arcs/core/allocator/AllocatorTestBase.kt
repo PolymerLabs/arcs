@@ -26,7 +26,9 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,9 +41,9 @@ import kotlin.coroutines.EmptyCoroutineContext
 @OptIn(ExperimentalCoroutinesApi::class)
 open class AllocatorTestBase {
     @get:Rule
-    val log = LogRule(Log.Level.Warning)
+    val log = LogRule(Log.Level.Debug)
 
-    private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+    private lateinit var schedulerProvider: JvmSchedulerProvider
 
     /**
      * Recipe hand translated from 'person.arcs'
@@ -57,21 +59,21 @@ open class AllocatorTestBase {
     private lateinit var writingExternalHost: TestingHost
     private lateinit var pureHost: TestingJvmProdHost
 
-    private class WritingHost : TestingHost(
-        JvmSchedulerProvider(EmptyCoroutineContext),
+    private class WritingHost(provider: SchedulerProvider) : TestingHost(
+        provider,
         ::WritePerson.toRegistration()
     )
 
-    private class ReadingHost : TestingHost(
-        JvmSchedulerProvider(EmptyCoroutineContext),
+    private class ReadingHost(provider: SchedulerProvider) : TestingHost(
+        provider,
         ::ReadPerson.toRegistration()
     )
 
     /** Return the [ArcHost] that contains [ReadPerson]. */
-    open fun readingHost(): TestingHost = ReadingHost()
+    open fun readingHost(): TestingHost = ReadingHost(schedulerProvider)
 
     /** Return the [ArcHost] that contains [WritePerson]. */
-    open fun writingHost(): TestingHost = WritingHost()
+    open fun writingHost(): TestingHost = WritingHost(schedulerProvider)
 
     /** Return the [ArcHost] that contains all isolatable [Particle]s. */
     open fun pureHost() = TestingJvmProdHost(schedulerProvider)
@@ -99,6 +101,7 @@ open class AllocatorTestBase {
 
         VolatileStorageKey.registerKeyCreator()
 
+        schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
         readingExternalHost = readingHost()
         writingExternalHost = writingHost()
         pureHost = pureHost()
@@ -126,6 +129,12 @@ open class AllocatorTestBase {
         pureHost.setup()
         writingExternalHost.setup()
         WritePerson.throws = false
+    }
+
+    @After
+    fun tearDown() {
+        schedulerProvider.cancelAll()
+        Thread.sleep(1000)
     }
 
     private suspend fun assertAllStatus(
@@ -236,6 +245,10 @@ open class AllocatorTestBase {
         val purePartition = findPartitionFor(planPartitions, "PurePerson")
         val writePartition = findPartitionFor(planPartitions, "WritePerson")
 
+        assertThat(purePartition.particles[0].handles["outputPerson"]?.storageKey).isNotEqualTo(
+            purePartition.particles[0].handles["inputPerson"]?.storageKey
+        )
+
         assertThat(readPartition.particles[0].handles["person"]?.storageKey).isEqualTo(
             purePartition.particles[0].handles["outputPerson"]?.storageKey
         )
@@ -256,6 +269,7 @@ open class AllocatorTestBase {
         partition.particles.any { it.particleName == particleName }
     }!!
 
+    @Ignore("b/156292015")
     @Test
     open fun allocator_verifyStorageKeysNotOverwritten() = runAllocatorTest {
         val idGenerator = Id.Generator.newSession()

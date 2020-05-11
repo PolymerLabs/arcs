@@ -11,6 +11,7 @@ package(default_visibility = ["//visibility:public"])
 arcs_kt_jvm_test_suite(
     name = "allocator",
     srcs = glob(["*Test.kt"]),
+    flaky = True,
     package = "arcs.core.allocator",
     deps = [
         ":allocator-test-util",

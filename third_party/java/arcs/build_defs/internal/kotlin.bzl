@@ -473,7 +473,8 @@ def arcs_kt_jvm_test_suite(
         tags = [],
         deps = [],
         data = [],
-        constraints = []):
+        constraints = [],
+        flaky = False):
     """Defines Kotlin JVM test targets for a directory.
 
     Defines a Kotlin JVM library (kt_jvm_library) for all of the sources
@@ -489,6 +490,7 @@ def arcs_kt_jvm_test_suite(
       deps: list of dependencies for the kt_jvm_library
       data: list of files available to the test at runtime
       constraints: list of constraints, e.g android
+      flaky: boolean, whether or not the test is considered flaky.
     """
     if not srcs:
         srcs = native.glob(["*.kt"])
@@ -509,6 +511,7 @@ def arcs_kt_jvm_test_suite(
             size = "small",
             data = data,
             tags = tags,
+            flaky = flaky,
             test_class = "%s.%s" % (package, class_name),
             runtime_deps = [":%s" % name],
         )
