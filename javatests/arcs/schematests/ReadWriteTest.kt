@@ -50,6 +50,7 @@ class ReadWriteTest {
     @Test
     fun writeAndReadBack1() {
         arcs.put1(l1)
+        Thread.sleep(1000)
         assertThat(arcs.all1()).containsExactly(l1)
     }
 
