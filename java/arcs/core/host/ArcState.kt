@@ -48,7 +48,7 @@ enum class ArcState {
     Error,
 
     /**
-     * [Deleted] implies [Stopped], but further more, subsequent attempts to restart this
+     * [Deleted] implies [Stopped], but furthermore, subsequent attempts to restart this
      * [Arc] will fail, and potentially any data used by the [Arc] may be reclaimed.
      */
     Deleted

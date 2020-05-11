@@ -45,7 +45,7 @@ class Scheduler(
     val scope = CoroutineScope(context)
 
     private val isActive: Boolean
-        get() = processingJob?.isActive == true
+        get() = !(processingJob?.isCompleted ?: true)
     private var processingJob: Job? = null
     private val isPaused = atomic(false)
     private val agenda = atomic(Agenda())
@@ -86,9 +86,9 @@ class Scheduler(
         scope.cancel()
     }
 
-    private fun CoroutineScope.startProcessingJob() {
-        log.debug { "Starting processing job" }
+    private fun CoroutineScope.startProcessingJob() = synchronized(this) {
         if (isActive) return
+        log.debug { "Starting processing job" }
         processingJob = launch {
             launches.incrementAndGet()
 

@@ -21,6 +21,8 @@ import arcs.core.common.toArcId
 import arcs.core.data.Plan
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcState
+import arcs.core.host.ArcStateChangeCallback
+import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.host.ParticleIdentifier
 
 /**
@@ -102,14 +104,21 @@ class IntentArcHostAdapter(
         }
     }
 
-    override suspend fun setOnArcStateChange(arcId: ArcId, block: (ArcId, ArcState) -> Unit) {
-        sendIntentToHostServiceForResult(
-            hostComponentName.createOnArcStateChangeIntent(
+    override suspend fun addOnArcStateChange(
+        arcId: ArcId,
+        block: ArcStateChangeCallback
+    ): ArcStateChangeRegistration {
+        return sendIntentToHostServiceForResult(
+            hostComponentName.createAddOnArcStateChangeIntent(
                 hostId,
                 arcId,
                 ResultReceiverStateChangeHandler(block)
             )
-        )
+        ) {
+            ArcStateChangeRegistration(requireNotNull(it) {
+                "No callbackId supplied from addOnStateChangeCallback"
+            }.toString())
+        } ?: throw IllegalArgumentException("Unable to register state change listener")
     }
 
     override fun hashCode(): Int = hostId.hashCode()

@@ -30,6 +30,7 @@ import arcs.core.data.Plan
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostException
 import arcs.core.host.ArcState
+import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.host.ParticleIdentifier
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineName
@@ -145,29 +146,43 @@ class ArcHostHelper(
                     intent,
                     arcHost::unpause
             )
-            Operation.OnArcStateChange -> runWithResult(intent) {
+            Operation.AddOnArcStateChange -> runWithResult(intent) {
                 val receiver = requireNotNull(
                     intent.getParcelableExtra<ResultReceiver>(EXTRA_OPERATION_ARG)
                 ) {
-                    "Missing ResultReceiver for OnArcStateChange"
+                    "Missing ResultReceiver for AddOnArcStateChange"
                 }
 
                 val arcId = requireNotNull(intent.getStringExtra(EXTRA_ARCSTATE_CHANGED_ARCID)) {
-                    "Missing ArcId for OnArcStateChange"
+                    "Missing ArcId for AddOnArcStateChange"
                 }
 
-                setOnArcStateChange(arcHost, arcId.toArcId(), receiver)
+                addOnArcStateChange(arcHost, arcId.toArcId(), receiver)
+            }
+            Operation.RemoveOnArcStateChange -> runWithResult(intent) {
+                val receiver = requireNotNull(
+                    intent.getParcelableExtra<ResultReceiver>(EXTRA_OPERATION_ARG)
+                ) {
+                    "Missing ResultReceiver for RemoveOnArcStateChange"
+                }
+
+                val callbackId = requireNotNull(
+                    intent.getStringExtra(EXTRA_ARCSTATE_CHANGED_CALLBACKID)
+                ) {
+                    "Missing ArcId for RemoveOnArcStateChange"
+                }
+                removeOnArcStateChange(arcHost, callbackId, receiver)
             }
             else -> Unit
         }
     }
 
-    private suspend fun setOnArcStateChange(
+    private suspend fun addOnArcStateChange(
         arcHost: ArcHost,
         arcId: ArcId,
         receiver: ResultReceiver
-    ) {
-        arcHost.setOnArcStateChange(arcId) { _, arcState ->
+    ): ArcStateChangeRegistration {
+        return arcHost.addOnArcStateChange(arcId) { _, arcState ->
             val bundle = Bundle().apply {
                 putString(EXTRA_ARCHOST_HOSTID, arcHost.hostId)
                 putString(EXTRA_ARCSTATE_CHANGED_ARCID, arcId.toString())
@@ -175,6 +190,18 @@ class ArcHostHelper(
             }
             receiver.send(0, bundle)
         }
+    }
+
+    private suspend fun removeOnArcStateChange(
+        arcHost: ArcHost,
+        callbackId: String,
+        receiver: ResultReceiver
+    ) {
+        arcHost.removeOnArcStateChange(ArcStateChangeRegistration(callbackId))
+        val bundle = Bundle().apply {
+                putString(EXTRA_ARCHOST_HOSTID, arcHost.hostId)
+        }
+        receiver.send(0, bundle)
     }
 
     @Suppress("UNUSED_PARAMETER")
@@ -214,6 +241,8 @@ class ArcHostHelper(
                     arrayList
                 )
             }
+            is ArcStateChangeRegistration ->
+                bundle.putString(EXTRA_OPERATION_RESULT, result.toString())
             is ArcState ->
                 bundle.putString(EXTRA_OPERATION_RESULT, result.toString())
             is Parcelable ->
@@ -246,13 +275,15 @@ class ArcHostHelper(
         LookupArcStatus,
         Pause,
         Unpause,
-        OnArcStateChange
+        AddOnArcStateChange,
+        RemoveOnArcStateChange
     }
 
     companion object {
         const val ACTION_HOST_INTENT = "arcs.android.host.ARC_HOST"
         private const val EXTRA_ARCHOST_HOSTID = "HOST_ID"
         const val EXTRA_ARCSTATE_CHANGED_ARCID = "ARCSTATE_CHANGED_ARCID"
+        const val EXTRA_ARCSTATE_CHANGED_CALLBACKID = "ARCSTATE_CHANGED_CALLBACKID"
         const val EXTRA_ARCSTATE_CHANGED_ARCSTATE = "ARCSTATE_CHANGED_ARCSTATE"
         private const val EXTRA_OPERATION = "OPERATION"
         private const val EXTRA_OPERATION_ARG = "EXTRA_OPERATION_ARG"
@@ -395,19 +426,38 @@ fun Plan.Partition.createStopArcHostIntent(service: ComponentName, hostId: Strin
     )
 
 /**
- * Creates an [Intent] to invoke [ArcHost.setOnArcStateChange] on a [Service]'s internal [ArcHost].
+ * Creates an [Intent] to invoke [ArcHost.addOnArcStateChange] on a [Service]'s internal [ArcHost].
  */
-fun ComponentName.createOnArcStateChangeIntent(
+fun ComponentName.createAddOnArcStateChangeIntent(
     hostId: String,
     arcId: ArcId,
     receiver: ResultReceiver
 ): Intent {
     return ArcHostHelper.createArcHostIntent(
-        ArcHostHelper.Operation.OnArcStateChange,
+        ArcHostHelper.Operation.AddOnArcStateChange,
         this,
         hostId,
         receiver
     ).also {
         it.putExtra(ArcHostHelper.EXTRA_ARCSTATE_CHANGED_ARCID, arcId.toString())
+    }
+}
+
+/**
+ * Creates an [Intent] to invoke [ArcHost.removeOnArcStateChange] on a [Service]'s internal
+ * [ArcHost].
+ */
+fun ComponentName.createRemoveOnArcStateChangeIntent(
+    hostId: String,
+    registration: ArcStateChangeRegistration,
+    receiver: ResultReceiver
+): Intent {
+    return ArcHostHelper.createArcHostIntent(
+        ArcHostHelper.Operation.AddOnArcStateChange,
+        this,
+        hostId,
+        receiver
+    ).also {
+        it.putExtra(ArcHostHelper.EXTRA_ARCSTATE_CHANGED_CALLBACKID, registration.toString())
     }
 }

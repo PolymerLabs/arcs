@@ -11,7 +11,6 @@
 package arcs.core.host
 
 import arcs.core.common.ArcId
-import arcs.core.common.toArcId
 import arcs.core.data.Capabilities
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
@@ -164,21 +163,23 @@ abstract class AbstractArcHost(
         entityHandleManager = entityHandleManager(arcId)
     )
 
-    override suspend fun setOnArcStateChange(arcId: ArcId, block: (ArcId, ArcState) -> Unit) {
-        lookupOrCreateArcHostContext(arcId.toString()).onArcStateChangeCallback.add(block)
+    override suspend fun addOnArcStateChange(
+        arcId: ArcId,
+        block: ArcStateChangeCallback
+    ): ArcStateChangeRegistration {
+        val registration = ArcStateChangeRegistration(arcId, block)
+        return lookupOrCreateArcHostContext(arcId.toString()).addOnArcStateChange(
+            registration,
+            block
+        )
+    }
+
+    override suspend fun removeOnArcStateChange(registration: ArcStateChangeRegistration) {
+        lookupOrCreateArcHostContext(registration.arcId()).remoteOnArcStateChange(registration)
     }
 
     private fun setArcState(context: ArcHostContext, state: ArcState) {
         context.arcState = state
-        context.onArcStateChangeCallback.forEach {
-            try {
-                it(context.arcId.toArcId(), state)
-            } catch (e: Exception) {
-                log.debug(e) {
-                    "Exception in onArcStateChangeCallback for ${context.arcId}"
-                }
-            }
-        }
     }
 
     /**

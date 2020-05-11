@@ -3,7 +3,6 @@ package arcs.core.host
 import arcs.core.allocator.Allocator
 import arcs.core.data.FieldType
 import arcs.core.data.Plan
-import arcs.core.entity.Handle
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -81,7 +80,7 @@ class ReflectiveParticleConstructionTest {
             )
         )
 
-        val arcId = allocator.startArcForPlan("testArc", TestReflectiveRecipePlan)
+        val arcId = allocator.startArcForPlan(TestReflectiveRecipePlan).waitForStart().id
         // Ensure that it's at least started up.
         withTimeout(1500) { AssertingReflectiveParticle.started.join() }
         allocator.stopArc(arcId)

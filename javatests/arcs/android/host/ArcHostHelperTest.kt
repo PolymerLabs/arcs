@@ -37,6 +37,8 @@ import arcs.core.host.ArcHost
 import arcs.core.data.HandleMode
 import arcs.core.host.ArcHostException
 import arcs.core.host.ArcState
+import arcs.core.host.ArcStateChangeCallback
+import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.host.ParticleIdentifier
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.util.guardedBy
@@ -114,6 +116,12 @@ class ArcHostHelperTest {
 
         override suspend fun unpause() {
             paused = false
+        }
+
+        override suspend fun addOnArcStateChange(
+            arcId: ArcId, block: ArcStateChangeCallback
+        ): ArcStateChangeRegistration {
+            TODO("Not yet implemented")
         }
 
         override suspend fun stopArc(partition: Plan.Partition): Unit = hostMutex.withLock {
