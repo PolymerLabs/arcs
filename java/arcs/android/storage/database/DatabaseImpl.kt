@@ -54,6 +54,7 @@ import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
 import arcs.jvm.util.JvmTime
 import com.google.protobuf.InvalidProtocolBufferException
+import java.time.Duration
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope
@@ -141,7 +142,11 @@ class DatabaseImpl(
         }
     }
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = db.transaction {
+        ((oldVersion + 1)..newVersion).forEach {
+            nextVersion -> MIGRATION_STEPS[nextVersion]?.forEach(db::execSQL)
+        }
+    }
 
     override suspend fun addClient(client: DatabaseClient): Int = clientMutex.withLock {
         clients[nextClientId] = client
@@ -697,6 +702,59 @@ class DatabaseImpl(
                 )
             } else {
                 deleteFields(arrayOf(storageKeyId.toString()), db)
+            }
+        }
+    }
+
+    override suspend fun runGarbageCollection() {
+        val twoDaysAgo = JvmTime.currentTimeMillis - Duration.ofDays(2).toMillis()
+        writableDatabase.transaction {
+            val db = this
+            rawQuery(
+                """
+                    SELECT storage_key_id, storage_key, orphan, MAX(entity_refs.id) IS NULL AS noRef
+                    FROM entities
+                    LEFT JOIN storage_keys ON entities.storage_key_id = storage_keys.id
+                    LEFT JOIN entity_refs ON entity_storage_key = storage_keys.storage_key
+                    GROUP BY storage_key_id, storage_key, orphan
+                    HAVING entities.creation_timestamp < $twoDaysAgo
+                    AND (orphan OR noRef)
+                """.trimIndent(),
+                arrayOf()
+            ).forEach {
+                val storageKeyId = it.getLong(0)
+                val storageKey = StorageKeyParser.parse(it.getString(1))
+                val orphan = it.getNullableBoolean(2) ?: false
+                val noRef = it.getBoolean(3)
+                if (orphan && noRef) {
+                    // Already marked as orphan, still not referenced, safe to delete.
+                    // TODO(#4889): Don't do this one-by-one, do a single delete query.
+                    delete(storageKey = storageKey, db = db)
+                    notifyClients(storageKey) { it.onDatabaseDelete(null) }
+                }
+                if (!orphan && noRef) {
+                    // Is not referenced, but not marked as orphan: mark as orphan, will be deleted
+                    // on the next round.
+                    update(
+                        TABLE_ENTITIES,
+                        ContentValues().apply {
+                            put("orphan", true)
+                        },
+                        "storage_key_id = ?",
+                        arrayOf(storageKeyId.toString())
+                    )
+                }
+                if (orphan && !noRef) {
+                    // Was marked orphan, but now has a reference, mark as not orphan.
+                    update(
+                        TABLE_ENTITIES,
+                        ContentValues().apply {
+                            put("orphan", false)
+                        },
+                        "storage_key_id = ?",
+                        arrayOf(storageKeyId.toString())
+                    )
+                }
             }
         }
     }
@@ -1384,7 +1442,7 @@ class DatabaseImpl(
     )
 
     companion object {
-        private const val DB_VERSION = 1
+        private const val DB_VERSION = 2
 
         private const val TABLE_STORAGE_KEYS = "storage_keys"
         private const val TABLE_COLLECTION_ENTRIES = "collection_entries"
@@ -1429,7 +1487,10 @@ class DatabaseImpl(
                     -- Serialized VersionMapProto for the entity.
                     version_map TEXT NOT NULL,
                     -- Monotonically increasing version number for the entity.
-                    version_number INTEGER NOT NULL
+                    version_number INTEGER NOT NULL,
+                    -- Whether the entity was found to have any reference to it during the last
+                    -- garbage collection cycle (if orphan=1, then it did not have references).
+                    orphan INTEGER
                 );
 
                 -- Stores references to entities.
@@ -1523,5 +1584,9 @@ class DatabaseImpl(
 
                 CREATE INDEX number_primitive_value_index ON number_primitive_values (value);
             """.trimIndent().split("\n\n")
+
+        private val VERSION_2_MIGRATION = arrayOf("ALTER TABLE entities ADD COLUMN orphan INTEGER;")
+
+        private val MIGRATION_STEPS = mapOf(2 to VERSION_2_MIGRATION)
     }
 }

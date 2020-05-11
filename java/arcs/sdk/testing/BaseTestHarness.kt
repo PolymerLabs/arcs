@@ -127,7 +127,7 @@ open class BaseTestHarness<P : Particle>(
         particle = factory(scope)
         handles.forEach { (name, handle) -> particle.handles.setHandle(name, handle) }
 
-        particle.onCreate()
+        particle.onFirstStart()
 
         val readySoFar = atomic(0)
         val readyJobs = handles.map { (_, handle) ->

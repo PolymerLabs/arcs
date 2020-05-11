@@ -72,6 +72,8 @@ open class HandleHolderBase(
         handles.clear()
     }
 
+    override fun isEmpty() = handles.isEmpty()
+
     private fun checkHandleIsValid(handleName: String) {
         // entitySpecs is passed in the constructor with the full set of specs, so it can be
         // considered an authoritative list of which handles are valid and which aren't.

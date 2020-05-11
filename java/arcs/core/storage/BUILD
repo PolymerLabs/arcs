@@ -20,21 +20,27 @@ REFERENCE_SRCS = [
     "Reference.kt",
 ]
 
+WRITEBACK_SRCS = [
+    "WriteBack.kt",
+]
+
 arcs_kt_library(
     name = "storage",
     srcs = glob(
         ["*.kt"],
-        exclude = PROXY_SRCS + STORAGE_KEY_SRCS + REFERENCE_SRCS,
+        exclude = PROXY_SRCS + STORAGE_KEY_SRCS + REFERENCE_SRCS + WRITEBACK_SRCS,
     ),
     exports = [
         ":proxy",
         ":reference",
         ":storage_key",
+        ":writeback",
     ],
     deps = [
         ":proxy",
         ":reference",
         ":storage_key",
+        ":writeback",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
@@ -72,5 +78,17 @@ arcs_kt_library(
     deps = [
         ":storage_key",
         "//java/arcs/core/crdt",
+    ],
+)
+
+arcs_kt_library(
+    name = "writeback",
+    srcs = WRITEBACK_SRCS,
+    deps = [
+        "//java/arcs/core/storage/keys:protocols",
+        "//java/arcs/core/util",
+        "//third_party/java/androidx/annotation",
+        "//third_party/kotlin/kotlinx_atomicfu",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

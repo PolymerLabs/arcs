@@ -1,0 +1,15 @@
+meta
+  namespace: arcs.core.data.testdata.gen
+
+import './Schemas.arcs'
+
+particle Ingestion
+  events: writes [Event {type, timestamp, value}]
+
+@trigger
+  launch startup
+  arcId eventIngestion
+recipe EventsIngestion
+  events: create persistent 'raw-events'
+  Ingestion
+    events: events

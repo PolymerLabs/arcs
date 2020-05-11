@@ -7,11 +7,18 @@ load(
     "android_proto_library",
     "java_proto_library",
     "proto_library",
+    "py_proto_library",
 )
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
+
+# This target is needed in Google internal repo when running TypeScript with Bazel.
+filegroup(
+    name = "proto_files",
+    srcs = ["manifest.proto"],
+)
 
 arcs_kt_library(
     name = "proto",
@@ -19,7 +26,7 @@ arcs_kt_library(
         ["*.kt"],
     ),
     deps = [
-        ":recipe_java_proto_lite",
+        ":manifest_java_proto_lite",
         "//java/arcs/core/data",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
@@ -37,7 +44,7 @@ arcs_kt_library(
     ),
     add_android_constraints = False,
     deps = [
-        ":recipe_java_proto",
+        ":manifest_java_proto",
         "//java/arcs/core/data",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
@@ -46,16 +53,22 @@ arcs_kt_library(
 )
 
 proto_library(
-    name = "recipe_proto",
-    srcs = ["recipe.proto"],
+    name = "manifest_proto",
+    srcs = ["manifest.proto"],
 )
 
 android_proto_library(
-    name = "recipe_java_proto_lite",
-    deps = [":recipe_proto"],
+    name = "manifest_java_proto_lite",
+    deps = [":manifest_proto"],
 )
 
 java_proto_library(
-    name = "recipe_java_proto",
-    deps = [":recipe_proto"],
+    name = "manifest_java_proto",
+    deps = [":manifest_proto"],
+)
+
+py_proto_library(
+    name = "manifest_py_proto",
+    api_version = 2,
+    deps = [":manifest_proto"],
 )

@@ -37,7 +37,7 @@ import kotlinx.coroutines.withContext
  */
 class ArcHostContextParticle(
     private val hostId: String,
-    private val instantiateParticle: suspend (ParticleIdentifier) -> Particle,
+    private val instantiateParticle: suspend (ParticleIdentifier, Plan.Particle?) -> Particle,
     private val instantiatedParticles: MutableMap<String, Particle> = mutableMapOf()
 ) : AbstractArcHostContextParticle() {
     /**
@@ -142,7 +142,8 @@ class ArcHostContextParticle(
         particleName: String,
         location: String
     ): Particle = instantiatedParticles.getOrPut(particleName) {
-        instantiateParticle(ParticleIdentifier.from(location))
+        // TODO(b/154855909) Address null Plan.Particle argument
+        instantiateParticle(ParticleIdentifier.from(location), null)
     }
 
     private suspend inline fun <T> onHandlesReady(
@@ -178,7 +179,7 @@ class ArcHostContextParticle(
     }.toSet().associateBy({ it.first }, { it.second })
 
     /**
-     * Using instantiated particle to obtain [Schema] objects throught their
+     * Using instantiated particle to obtain [Schema] objects through their
      * associated [EntitySpec], reconstruct an associated [Type] object.
      */
     fun fromTag(arcId: String, particle: Particle, tag: String, handleName: String): Type {

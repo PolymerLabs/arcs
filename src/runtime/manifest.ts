@@ -13,7 +13,7 @@ import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
 
 import {Id, IdGenerator} from './id.js';
-import {HandleConnection as InterfaceInfoHandleConnection} from './type.js';
+import {HandleConnection as InterfaceInfoHandleConnection, MuxType} from './type.js';
 import {Slot as InterfaceInfoSlot} from './type.js';
 import {Runnable} from './hot.js';
 import {Loader} from '../platform/loader.js';
@@ -633,6 +633,9 @@ ${e.message}
             return;
           case 'reference-type':
             node.model = new ReferenceType(node.type.model);
+            return;
+          case 'mux-type':
+            node.model = new MuxType(node.type.model);
             return;
           case 'singleton-type':
             node.model = new SingletonType(node.type.model);

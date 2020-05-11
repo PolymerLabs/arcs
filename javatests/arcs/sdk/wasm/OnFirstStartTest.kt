@@ -11,18 +11,18 @@
 
 package arcs.sdk.wasm
 
-class OnCreateTest : AbstractOnCreateTest() {
-    var created = false
+class OnFirstStartTest : AbstractOnFirstStartTest() {
+    var firstStartCalled = false
 
-    override fun onCreate() {
-        handles.fooHandle.store(OnCreateTest_FooHandle("Created!"))
-        created = true
+    override fun onFirstStart() {
+        handles.fooHandle.store(OnFirstStartTest_FooHandle("Created!"))
+        firstStartCalled = true
     }
 
     override fun onHandleSync(handle: WasmHandle, allSynced: Boolean) {
-        if (!created) {
+        if (!firstStartCalled) {
             handles.fooHandle.fetch()
-            handles.fooHandle.store(OnCreateTest_FooHandle("Not created!"))
+            handles.fooHandle.store(OnFirstStartTest_FooHandle("Not created!"))
         }
     }
 }

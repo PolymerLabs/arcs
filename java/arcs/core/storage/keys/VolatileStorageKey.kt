@@ -18,7 +18,7 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
 
 /** Protocol to be used with the volatile driver. */
-const val VOLATILE_DRIVER_PROTOCOL = "volatile"
+const val VOLATILE_DRIVER_PROTOCOL = Protocols.VOLATILE_DRIVER
 
 /** Storage key for a piece of data kept in the volatile driver. */
 data class VolatileStorageKey(

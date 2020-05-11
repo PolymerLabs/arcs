@@ -46,4 +46,18 @@ interface ArcHost {
      * Returns true if the provided [Plan.Particle] can be loaded by this [ArcHost].
      */
     suspend fun isHostForParticle(particle: Plan.Particle): Boolean
+
+    /*
+     * Pauses the Host: the host will stop every running arc, and stop starting new arcs until
+     * unpause() is called. Requests to start arc received while in pause will be started once
+     * unpause is called. This may be an expensive and disruptive operation, should be used with
+     * care.
+     */
+    suspend fun pause()
+
+    /*
+     * Unpause the Host: should only be called after pause(). After unpausing, the host will start
+     * any pending arc, and will be able to respond to new startArc calls.
+     */
+    suspend fun unpause()
 }

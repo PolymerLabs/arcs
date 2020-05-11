@@ -38,7 +38,7 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-typealias ParticleConstructor = suspend () -> Particle
+typealias ParticleConstructor = suspend (Plan.Particle?) -> Particle
 typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
 
 /** Maximum number of times a particle may fail to be started before giving up. */
@@ -68,6 +68,10 @@ abstract class AbstractArcHost(
     /** Arcs currently running in memory. */
     private val runningArcs: MutableMap<String, ArcHostContext> = mutableMapOf()
 
+    private var paused = false
+    /** Arcs to be started after unpausing. */
+    private val pausedArcs: MutableList<Plan.Partition> = mutableListOf()
+
     // There can be more then one instance of a host, hashCode is used to disambiguate them
     override val hostId = "${this::class.className()}@${this.hashCode()}"
 
@@ -92,6 +96,31 @@ abstract class AbstractArcHost(
      **/
     override suspend fun lookupArcHostStatus(partition: Plan.Partition) =
         lookupOrCreateArcHostContext(partition.arcId).arcState
+
+    override suspend fun pause() {
+        paused = true
+        runningArcs.forEach { (arcId, context) ->
+            try {
+                val partition = contextToPartition(arcId, context)
+                stopArc(partition)
+                pausedArcs.add(partition)
+            } catch (e: Exception) {
+                log.error(e) { "Failure stopping arc." }
+            }
+        }
+    }
+
+    override suspend fun unpause() {
+        paused = false
+        pausedArcs.forEach {
+            try {
+                startArc(it)
+            } catch (e: Exception) {
+                log.error(e) { "Failure starting arc." }
+            }
+        }
+        pausedArcs.clear()
+    }
 
     /**
      * This property is true if this [ArcHost] has no running, memory resident arcs, e.g.
@@ -191,6 +220,11 @@ abstract class AbstractArcHost(
     override suspend fun startArc(partition: Plan.Partition) {
         val context = lookupOrCreateArcHostContext(partition.arcId)
 
+        if (paused) {
+            pausedArcs.add(partition)
+            return
+        }
+
         // Arc is already currently running, don't restart it
         if (isRunning(partition.arcId)) {
             return
@@ -223,7 +257,7 @@ abstract class AbstractArcHost(
         spec: Plan.Particle,
         context: ArcHostContext
     ): ParticleContext {
-        val particle = instantiateParticle(ParticleIdentifier.from(spec.location))
+        val particle = instantiateParticle(ParticleIdentifier.from(spec.location), spec)
 
         val particleContext = lookupParticleContextOrCreate(
             context,
@@ -293,16 +327,16 @@ abstract class AbstractArcHost(
     /**
      * Invokes necessary [Particle] lifecycle methods given the current
      * [ParticleContext.particleState], and changes that state if necessary. For example by
-     * insuring that [Particle.onCreate()], [Particle.onShutdown()] are properly called.
+     * insuring that [Particle.onFirstStart()], [Particle.onShutdown()] are properly called.
      */
     private suspend fun performParticleLifecycle(particleContext: ParticleContext) {
         if (particleContext.particleState == ParticleState.Instantiated) {
             try {
-                // onCreate() must succeed, else we consider the particle startup failed
-                particleContext.particle.onCreate()
+                // onFirstStart() must succeed, else we consider the particle startup failed
+                particleContext.particle.onFirstStart()
                 particleContext.particleState = ParticleState.Created
             } catch (e: Exception) {
-                log.error(e) { "Failure in particle during onCreate." }
+                log.error(e) { "Failure in particle during onFirstStart." }
                 markParticleAsFailed(particleContext)
                 return
             }
@@ -348,7 +382,7 @@ abstract class AbstractArcHost(
 
     /**
      * Move to [ParticleState.Failed] if this particle had previously successfully invoked
-     * [Particle.onCreate()], else move to [ParticleState.Failed_NeverStarted]. Increments
+     * [Particle.onFirstStart()], else move to [ParticleState.Failed_NeverStarted]. Increments
      * consecutive failure count, and if it reaches maximum, transitions to
      * [ParticleState.MaxFailed].
      */
@@ -391,20 +425,21 @@ abstract class AbstractArcHost(
             if (isRunning(arcId)) {
                 return@launch
             }
-
             val context = lookupOrCreateArcHostContext(arcId)
-            startArc(
-                Plan.Partition(
-                    arcId,
-                    hostId,
-                    context.particles.map { (_, particleContext) ->
-                        particleContext.planParticle
-                    }
-                )
-            )
+            val partition = contextToPartition(arcId, context)
+            startArc(partition)
             // TODO: should invoke onHandleUpdate for readable affectedKeys?
         }
     }
+
+    private fun contextToPartition(arcId: String, context: ArcHostContext) =
+        Plan.Partition(
+            arcId,
+            hostId,
+            context.particles.map { (_, particleContext) ->
+                particleContext.planParticle
+            }
+        )
 
     /**
      * Given a handle name, a [Plan.HandleConnection], and a [HandleHolder] construct an Entity
@@ -504,6 +539,8 @@ abstract class AbstractArcHost(
      * Unregisters [Handle]s from [StorageProxy]s, and clears references to them from [Particle]s.
      */
     private suspend fun cleanupHandles(context: ParticleContext) {
+        if (context.particle.handles.isEmpty()) return
+
         withContext(context.particle.handles.dispatcher) {
             context.particle.handles.reset()
         }
@@ -541,10 +578,12 @@ abstract class AbstractArcHost(
      *
      * @property identifier a [ParticleIdentifier] from a [Plan.Particle] spec
      */
-    open suspend fun instantiateParticle(identifier: ParticleIdentifier): Particle {
-        return particleConstructors[identifier]?.invoke() ?: throw IllegalArgumentException(
-            "Particle $identifier not found."
-        )
+    open suspend fun instantiateParticle(
+        identifier: ParticleIdentifier,
+        spec: Plan.Particle?
+    ): Particle {
+        return particleConstructors[identifier]?.invoke(spec)
+            ?: throw IllegalArgumentException("Particle $identifier not found.")
     }
 
     companion object {

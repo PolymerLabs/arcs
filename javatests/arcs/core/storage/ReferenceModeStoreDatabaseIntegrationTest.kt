@@ -23,6 +23,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.DatabaseDriver
 import arcs.core.storage.driver.DatabaseDriverProvider
@@ -31,6 +32,7 @@ import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
 import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.WriteBackForTesting
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
@@ -71,11 +73,15 @@ class ReferenceModeStoreDatabaseIntegrationTest {
     fun setUp() = runBlockingTest {
         DriverFactory.clearRegistrations()
         databaseFactory = FakeDatabaseManager()
+        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         DatabaseDriverProvider.configure(databaseFactory) { schema }
     }
 
     @After
-    fun tearDown() = CapabilitiesResolver.reset()
+    fun tearDown() {
+        WriteBackForTesting.clear()
+        CapabilitiesResolver.reset()
+    }
 
     @Test
     fun propagatesModelUpdates_fromProxies_toDrivers() = runBlockingTest {
@@ -145,6 +151,48 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
         assertThat(activeStore2.getLocalData()).isEqualTo(activeStore.getLocalData())
         assertThat(activeStore2.getLocalData()).isNotSameInstanceAs(activeStore.getLocalData())
+    }
+
+    @Test
+    fun databaseRoundtrip() = runBlockingTest {
+        val activeStore = createReferenceModeStore()
+
+        val e1 = createPersonEntity("e1", "e1", 1)
+        val e2 = createPersonEntity("e2", "e2", 2)
+        activeStore.onProxyMessage(
+            ProxyMessage.Operations(
+                listOf(RefModeStoreOp.SetAdd("me", VersionMap("me" to 1), e1)),
+                id = 1
+            )
+        )
+        activeStore.onProxyMessage(
+            ProxyMessage.Operations(
+                listOf(RefModeStoreOp.SetAdd("me", VersionMap("me" to 2), e2)),
+                id = 1
+            )
+        )
+
+        // Read data (using a new store ensures we read from the db instead of using cached values).
+        val activeStore2 = createReferenceModeStore()
+        val e1Ref = CrdtSet.DataValue(
+            VersionMap("me" to 1),
+            Reference("e1", activeStore2.backingStore.storageKey, VersionMap("me" to 1))
+        )
+        val e2Ref = CrdtSet.DataValue(
+            VersionMap("me" to 2),
+            Reference("e2", activeStore2.backingStore.storageKey, VersionMap("me" to 2))
+        )                
+        assertThat(activeStore2.containerStore.getLocalData()).isEqualTo(CrdtSet.DataImpl(
+            VersionMap("me" to 2),
+            mutableMapOf(
+                "e1" to e1Ref,
+                "e2" to e2Ref
+            )
+        ))
+        assertThat((activeStore2.backingStore.getLocalData("e1") as CrdtEntity.Data).toRawEntity())
+            .isEqualTo(e1)
+        assertThat((activeStore2.backingStore.getLocalData("e2") as CrdtEntity.Data).toRawEntity())
+            .isEqualTo(e2)
     }
 
     @Test
@@ -413,11 +461,11 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         )
         val t1Ref = CrdtSet.DataValue(
             VersionMap("me" to 1, "them" to 1),
-            Reference("t1", activeStore.backingStore.storageKey, VersionMap())
+            Reference("t1", activeStore.backingStore.storageKey, VersionMap("me" to 1, "them" to 1))
         )
         val t2Ref = CrdtSet.DataValue(
             VersionMap("me" to 1, "them" to 2),
-            Reference("t2", activeStore.backingStore.storageKey, VersionMap())
+            Reference("t2", activeStore.backingStore.storageKey, VersionMap("me" to 1, "them" to 2))
         )
 
         driver.receiver!!(
@@ -445,7 +493,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         activeStore.idle()
 
         assertThat(activeStore.containerStore.getLocalData())
-            .isEqualTo(driver.getLocalData())
+           .isEqualTo(driver.getDatabaseData().first)
     }
 
     @Test

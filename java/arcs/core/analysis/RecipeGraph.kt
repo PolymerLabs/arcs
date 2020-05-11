@@ -40,9 +40,11 @@ class RecipeGraph(recipe: Recipe) {
         handleConnections.forEach { connection ->
             val handleNode = requireNotNull(handleNodesMap[connection.handle.name])
             when (connection.spec.direction) {
-                HandleMode.Read -> handleNode.addSuccessor(particleNode, connection.spec)
-                HandleMode.Write -> particleNode.addSuccessor(handleNode, connection.spec)
-                HandleMode.ReadWrite -> {
+                HandleMode.Read, HandleMode.ReadQuery, HandleMode.Query ->
+                    handleNode.addSuccessor(particleNode, connection.spec)
+                HandleMode.Write, HandleMode.WriteQuery ->
+                    particleNode.addSuccessor(handleNode, connection.spec)
+                HandleMode.ReadWrite, HandleMode.ReadWriteQuery -> {
                     handleNode.addSuccessor(particleNode, connection.spec)
                     particleNode.addSuccessor(handleNode, connection.spec)
                 }
@@ -77,9 +79,13 @@ class RecipeGraph(recipe: Recipe) {
         data class Neighbor(val node: Node, val spec: HandleConnectionSpec)
 
         /** A node representing a particle. */
-        data class Particle(val particle: Recipe.Particle) : Node()
+        data class Particle(val particle: Recipe.Particle) : Node() {
+            override fun toString() = "[p:${particle.spec.name}]"
+        }
 
         /** A node representing a handle. */
-        data class Handle(val handle: Recipe.Handle) : Node()
+        data class Handle(val handle: Recipe.Handle) : Node() {
+            override fun toString() = "[h:${handle.name}]"
+        }
     }
 }

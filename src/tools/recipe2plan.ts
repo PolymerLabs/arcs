@@ -12,7 +12,9 @@ import {StorageKeyRecipeResolver} from './storage-key-recipe-resolver.js';
 import {PlanGenerator} from './plan-generator.js';
 import {Flags} from '../runtime/flags.js';
 import {assert} from '../platform/assert-node.js';
+import {encodePlansToProto} from './manifest2proto.js';
 
+export enum OutputFormat { Kotlin, Proto }
 
 /**
  * Generates Kotlin Plans from recipes in an arcs manifest.
@@ -20,16 +22,26 @@ import {assert} from '../platform/assert-node.js';
  * @param path path/to/manifest.arcs
  * @return Generated Kotlin code.
  */
-export async function recipe2plan(path: string): Promise<string> {
+export async function recipe2plan(
+    path: string,
+    format: OutputFormat,
+    recipeFilter?: string): Promise<string | Uint8Array> {
   return await Flags.withDefaultReferenceMode(async () => {
     const manifest = await Runtime.parseFile(path);
+    let plans = await (new StorageKeyRecipeResolver(manifest)).resolve();
 
-    assert(manifest.meta.namespace, `Namespace is required in '${path}' for code generation.`);
+    if (recipeFilter) {
+      plans = plans.filter(p => p.name === recipeFilter);
+      if (plans.length === 0) throw Error(`Recipe '${recipeFilter}' not found.`);
+    }
 
-    const recipes = await (new StorageKeyRecipeResolver(manifest)).resolve();
-
-    const generator = new PlanGenerator(recipes, manifest.meta.namespace);
-
-    return generator.generate();
+    switch (format) {
+      case OutputFormat.Kotlin:
+        assert(manifest.meta.namespace, `Namespace is required in '${manifest.fileName}' for Kotlin code generation.`);
+        return new PlanGenerator(plans, manifest.meta.namespace).generate();
+      case OutputFormat.Proto:
+        return Buffer.from(await encodePlansToProto(plans));
+      default: throw new Error('Output Format should be Kotlin or Proto');
+    }
   })();
 }

@@ -8,14 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../platform/chai-web.js';
-import {serialize2proto, typeToProtoPayload, manifestToProtoPayload, capabilitiesToProtoOrdinals} from '../manifest2proto.js';
-import {EntityType, Type} from '../../runtime/type.js';
+import {encodeManifestToProto, typeToProtoPayload, manifestToProtoPayload, capabilitiesToProtoOrdinals} from '../manifest2proto.js';
+import {CountType, EntityType, SingletonType, TupleType, Type, TypeVariable} from '../../runtime/type.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Capabilities} from '../../runtime/capabilities.js';
 import {fs} from '../../platform/fs-web.js';
 import protobuf from 'protobufjs';
 
-const rootNamespace = protobuf.loadSync('./java/arcs/core/data/proto/recipe.proto');
+const rootNamespace = protobuf.loadSync('./java/arcs/core/data/proto/manifest.proto');
 const manifestProto = rootNamespace.lookupType('arcs.ManifestProto');
 const typeProto = rootNamespace.lookupType('arcs.TypeProto');
 const CAPABILITY_ENUM = rootNamespace.lookupEnum('arcs.Capability');
@@ -201,6 +201,76 @@ describe('manifest2proto', () => {
     });
   });
 
+  it('encodes singleton type', async () => {
+    const singleton = EntityType.make(['Foo'], {value: 'Text'}).singletonOf();
+    assert.deepStrictEqual(await toProtoAndBackType(singleton), {
+      singleton: {
+        singletonType: {
+          entity: {
+            schema: {
+              names: ['Foo'],
+              fields: {
+                value: {
+                  primitive: 'TEXT'
+                }
+              },
+              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
+            }
+          }
+        }
+      }
+    });
+  });
+
+  it('encodes tuple types', async () => {
+    const first = EntityType.make(['Foo'], {value: 'Text'});
+    const second = EntityType.make(['Bar'], {value: 'Number'});
+    const tuple = new TupleType([first, second]);
+    assert.deepStrictEqual(await toProtoAndBackType(tuple), {
+      tuple: {
+        elements: [
+          {
+            entity: {
+              schema: {
+                names: ['Foo'],
+                fields: {
+                  value: {
+                    primitive: 'TEXT'
+                  }
+                },
+                hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+              }
+            }
+          },
+          {
+            entity: {
+              schema: {
+                names: ['Bar'],
+                fields: {
+                  value: {
+                    primitive: 'NUMBER'
+                  }
+                },
+                hash: 'f0b9f39c14d12e1445ac70bbd28b65c0b9d30022'
+              }
+            }
+          }
+        ]
+      }
+    });
+  });
+
+  it('encodes count type', async () => {
+    const singletonOfCount = new SingletonType(new CountType());
+    assert.deepStrictEqual(await toProtoAndBackType(singletonOfCount), {
+      singleton: {
+        singletonType: {
+          count: {}
+        }
+      }
+    });
+  });
+
   it('encodes schemas with primitives and collections of primitives', async () => {
     const manifest = await Manifest.parse(`
       particle Abc in 'a/b/c.js'
@@ -258,7 +328,7 @@ describe('manifest2proto', () => {
   // and deserialized in Kotlin to the extent that they are present in the .textproto file.
   it('encodes the Manifest2ProtoTest manifest', async () => {
     assert.deepStrictEqual(
-      await serialize2proto('java/arcs/core/data/testdata/Manifest2ProtoTest.arcs'),
+      await encodeManifestToProto('java/arcs/core/data/testdata/Manifest2ProtoTest.arcs'),
       fs.readFileSync('java/arcs/core/data/testdata/Manifest2ProtoTest.pb.bin'),
       `The output of manifest2proto for Manifest2ProtoTest.arcs does not match the expectation.\n
 If you want to update the expected output please run:\n

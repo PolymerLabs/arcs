@@ -176,13 +176,13 @@ recipe UnicodeTest
 schema FooHandle
   txt: Text
 
-particle OnCreateTest in '$module.wasm'
+particle OnFirstStartTest in '$module.wasm'
   root: consumes Slot
   fooHandle: reads writes FooHandle
 
-recipe OnCreateTest
+recipe OnFirstStartTest
   s1: slot 'rootslotid-root'
-  OnCreateTest
+  OnFirstStartTest
     root: consumes s1
     fooHandle: reads writes h3
 

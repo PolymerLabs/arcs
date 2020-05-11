@@ -124,8 +124,7 @@ export class StorePanel extends HTMLElement {
     this.collapseBtn.addEventListener('click', () => this.collapse('toggle'));
     this.header.addEventListener('animationend', () => this.header.classList.remove('flash'));
     this.contents.addEventListener('animationend', () => this.contents.classList.remove('flash'));
-    // TODO: fix modifying store data from the dev shell UI
-    // this.contents.addEventListener('input', () => this.saveBtn.classList.add('enabled'));
+    this.contents.addEventListener('input', () => this.saveBtn.classList.add('enabled'));
     this.contents.addEventListener('keypress', this.interceptCtrlEnter.bind(this));
   }
 
@@ -212,7 +211,6 @@ export class StorePanel extends HTMLElement {
     }
   }
 
-  // TODO: update to new storage stack
   async writeToStore(value) {
     if (this.handle instanceof CollectionHandle) {
       // Collections; we need to manually determine the update ops
@@ -221,13 +219,24 @@ export class StorePanel extends HTMLElement {
         return false;
       }
       const curIds = new Set([...Object.keys(this.data)]);
-      for (const [id, rawData] of Object.entries(json)) {
-        if (!curIds.delete(id) || JSON.stringify(this.data[id]) !== JSON.stringify(rawData)) {
-          await this.handle.add({id, rawData}, [String(Math.random()).slice(2)]);
+      for (const [id, data] of Object.entries(json)) {
+        let entity = null;
+        if (curIds.delete(id)) {
+          if (JSON.stringify(this.data[id]) !== JSON.stringify(data)) {
+            // Existing entity data has been changed.
+            entity = this.makeEntity(id, data);
+            await this.handle.remove(entity);
+          }
+        } else {
+          // A new entity has been added.
+          entity = this.makeEntity(id, data);
+        }
+        if (entity) {
+          await this.handle.add(entity, [String(Math.random()).slice(2)]);
         }
       }
       for (const id of curIds.values()) {
-        await this.handle.remove(id);
+        await this.handle.remove(this.makeEntity(id, {}));
       }
     } else {
       // Singletons
@@ -238,11 +247,18 @@ export class StorePanel extends HTMLElement {
         if (json === null) {
           return false;
         }
-        const [id, rawData] = Object.entries(json)[0];
-        await this.handle.set({id, rawData});
+        const [id, data] = Object.entries(json)[0];
+        await this.handle.set(this.makeEntity(id, data));
       }
     }
     return true;
+  }
+
+  // TODO: use entity mutation when implemented
+  makeEntity(id, data) {
+    const entity = new this.handle.entityClass(data);
+    Entity.identify(entity, id, null);
+    return entity;
   }
 
   parse(value) {

@@ -53,9 +53,9 @@ enum class ArcState {
  * needed state the next time the [Arc] is restarted.
  */
 enum class ParticleState {
-    /** Instantiated, but onCreate() not called */
+    /** Instantiated, but onFirstStart() not called */
     Instantiated,
-    /** onCreate() has been successfully called. */
+    /** onFirstStart() has been successfully called. */
     Created,
     /** onStart() has been successfully called. */
     Started,
@@ -63,7 +63,7 @@ enum class ParticleState {
     Stopped,
     /**
      * Previous attempt to start this particle failed, but it has previously started. In particular,
-     * we can transition from this state to [Started], but not [Created] since the [onCreate]
+     * we can transition from this state to [Started], but not [Created] since the [onFirstStart]
      * lifecycle has already executed.
      */
     Failed,

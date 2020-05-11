@@ -15,9 +15,11 @@ import arcs.core.entity.SchemaRegistry
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.WriteBackForTesting
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
@@ -55,7 +57,6 @@ class TtlHandleTest {
     )
     private lateinit var databaseManager: AndroidSqliteDatabaseManager
     private lateinit var fakeTime: FakeTime
-    
     private lateinit var scheduler: Scheduler
     private val handleManager: EntityHandleManager
         // Create a new handle manager on each call, to check different storage proxies.
@@ -69,12 +70,14 @@ class TtlHandleTest {
         fakeTime = FakeTime()
         scheduler = schedulerProvider("myArc")
         databaseManager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
+        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         DriverAndKeyConfigurator.configure(databaseManager)
         SchemaRegistry.register(DummyEntity)
     }
 
     @After
     fun tearDown() {
+        WriteBackForTesting.clear()
         scheduler.cancel()
     }
 

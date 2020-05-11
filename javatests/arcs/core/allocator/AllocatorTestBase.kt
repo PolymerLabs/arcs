@@ -157,7 +157,7 @@ open class AllocatorTestBase {
      * [WritePerson] with associated handles and connections.
      */
     @Test
-    fun allocator_computePartitions() = runAllocatorTest {
+    open fun allocator_computePartitions() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWritePerson",
             PersonPlan
@@ -220,7 +220,7 @@ open class AllocatorTestBase {
     }
 
     @Test
-    fun allocator_verifyStorageKeysCreated() = runAllocatorTest {
+    open fun allocator_verifyStorageKeysCreated() = runAllocatorTest {
         PersonPlan.particles.forEach {
             it.handles.forEach { (_, connection) ->
                 assertThat(connection.storageKey).isInstanceOf(CreateableStorageKey::class.java)
@@ -375,20 +375,20 @@ open class AllocatorTestBase {
         writePersonContext.particle.let { particle ->
             particle as WritePerson
             particle.await()
-            assertThat(particle.createCalled).isTrue()
+            assertThat(particle.firstStartCalled).isTrue()
             assertThat(particle.wrote).isTrue()
         }
 
         readPersonContext.particle.let { particle ->
             particle as ReadPerson
             particle.await()
-            assertThat(particle.createCalled).isTrue()
+            assertThat(particle.firstStartCalled).isTrue()
             assertThat(particle.name).isEqualTo("Hello John Wick")
         }
     }
 
     @Test
-    fun allocator_canStopArcInTwoExternalHosts() = runAllocatorTest {
+    open fun allocator_canStopArcInTwoExternalHosts() = runAllocatorTest {
         val arcId = allocator.startArcForPlan(
             "readWriteParticle",
             PersonPlan
@@ -461,9 +461,9 @@ open class AllocatorTestBase {
         assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Started)
         assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Started)
 
-        // onCreate() not called a second time
-        assertThat((writePersonContext.particle as WritePerson).createCalled).isFalse()
-        assertThat((readPersonContext.particle as ReadPerson).createCalled).isFalse()
+        // onFirstStart() not called a second time
+        assertThat((writePersonContext.particle as WritePerson).firstStartCalled).isFalse()
+        assertThat((readPersonContext.particle as ReadPerson).firstStartCalled).isFalse()
     }
 
     @Test
@@ -526,7 +526,7 @@ open class AllocatorTestBase {
     }
 
     @Test
-    fun allocator_startArc_particleException_isErrorState() = runAllocatorTest {
+    open fun allocator_startArc_particleException_isErrorState() = runAllocatorTest {
         WritePerson.throws = true
         val arcId = allocator.startArcForPlan(
             "readWriteParticle",

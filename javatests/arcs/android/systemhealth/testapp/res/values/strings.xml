@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2020 Google LLC.
+  ~
+  ~ This code may only be used under the BSD style license found at
+  ~ http://polymer.github.io/LICENSE.txt
+  ~
+  ~ Code distributed by Google as part of this project is also subject to an additional IP rights
+  ~ grant found at
+  ~ http://polymer.github.io/PATENTS.txt
+  -->
+
+<resources>
+  <string name="app_name">Arcs System Health</string>
+  <string name="system_health_test_activity_name" translatable="false">Arcs System Health Test</string>
+  <string name="result_output" translatable="false">Result Output</string>
+  <string name="fetch" translatable="false">Fetch</string>
+  <string name="set" translatable="false">Set</string>
+  <string name="clear" translatable="false">Clear</string>
+  <string name="close" translatable="false">Close</string>
+  <string name="handle_type" translatable="false">Handle Type</string>
+  <string name="singleton" translatable="false">Singleton</string>
+  <string name="collection" translatable="false">Collection</string>
+  <string name="storage_type" translatable="false">Storage Type</string>
+  <string name="in_memory" translatable="false">In Memory</string>
+  <string name="persistent" translatable="false">Persistent</string>
+  <string name="service_type" translatable="false">Service Type</string>
+  <string name="syshealth_service_local" translatable="false">Local</string>
+  <string name="syshealth_service_remote" translatable="false">Remote</string>
+  <string name="local_activity" translatable="false">Local Activity</string>
+  <string name="remote_service" translatable="false">Remote Service</string>
+  <string name="listener_threads" translatable="false">Listener Threads</string>
+  <string name="listener_threads_hint" translatable="false">The number of Handle/Particle listener threads</string>
+  <string name="writer_threads" translatable="false">Writer Threads</string>
+  <string name="writer_threads_hint" translatable="false">The number of Handle/Particle writer threads</string>
+  <string name="test_iterations" translatable="false">Test Iterations</string>
+  <string name="test_iterations_hint" translatable="false">The times of test runs</string>
+  <string name="iteration_interval_ms" translatable="false">Iteration Interval (ms)</string>
+  <string name="iteration_interval_ms_hint" translatable="false">The waiting time (ms) between test runs</string>
+  <string name="data_size" translatable="false">Data Size (bytes)</string>
+  <string name="data_size_hint" translatable="false">The size of data (bytes) to write</string>
+  <string name="delayed_start_ms" translatable="false">Delayed Start (ms)</string>
+  <string name="delayed_start_ms_hint" translatable="false">Delay (ms) before starting test</string>
+  <string name="storage_service_crash_rate" translatable="false">Storage service crash rate: %1$d%%</string>
+  <string name="storage_client_crash_rate" translatable="false">Storage client crash rate: %1$d%%</string>
+  <string name="performance_eval" translatable="false">Performance</string>
+  <string name="stability_eval" translatable="false">Stability</string>
+</resources>

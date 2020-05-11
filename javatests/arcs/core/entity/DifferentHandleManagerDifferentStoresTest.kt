@@ -2,10 +2,13 @@ package arcs.core.entity
 
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
+import arcs.core.storage.StoreWriteBack
+import arcs.core.storage.testutil.WriteBackForTesting
 import arcs.jvm.host.JvmSchedulerProvider
 import kotlin.coroutines.EmptyCoroutineContext
 import org.junit.After
 import org.junit.Before
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
@@ -15,6 +18,7 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
     @Before
     override fun setUp() {
         super.setUp()
+        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
         readHandleManager = EntityHandleManager(
             arcId = "testArcId",
@@ -34,12 +38,4 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
 
     @After
     override fun tearDown() = super.tearDown()
-
-    // TODO(b/152436411): Fix these.
-    override fun collection_referenceLiveness() {}
-    override fun singleton_referenceLiveness() {}
-
-    // We don't expect these to pass, since Operations won't make it through the driver level
-    override fun singleton_writeAndOnUpdate() {}
-    override fun collection_writeAndOnUpdate() {}
 }

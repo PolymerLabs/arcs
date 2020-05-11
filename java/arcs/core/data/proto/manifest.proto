@@ -11,12 +11,6 @@ message ManifestProto {
   repeated ParticleSpecProto particle_specs = 2;
 }
 
-// Holds a single plan and particle specs used by it.
-message RecipeEnvelopeProto {
-  RecipeProto recipe = 1;
-  repeated ParticleSpecProto particle_specs = 2;
-}
-
 // Plan: A resolved recipe that can be instantiated.
 message RecipeProto {
   // Optional recipe name.
@@ -107,6 +101,8 @@ message TypeProto {
     ReferenceTypeProto reference = 4;
     TupleTypeProto tuple = 5;
     TypeVariableProto variable = 6;
+    SingletonTypeProto singleton = 7;
+    CountTypeProto count = 8;
   }
   bool optional = 10;
   RefinementExpressionProto refinement = 11;
@@ -126,6 +122,12 @@ message CollectionTypeProto {
   TypeProto collection_type = 1;
 }
 
+message SingletonTypeProto {
+  TypeProto singleton_type = 1;
+}
+
+message CountTypeProto {}
+
 message TupleTypeProto {
   repeated TypeProto elements = 1;
 }
@@ -134,6 +136,7 @@ message ReferenceTypeProto {
   TypeProto referred_type = 1;
 }
 
+// TODO(b/155944755) more fields pending.
 message TypeVariableProto {
   // Identifies a type variable in a recipe or a particle spec.
   // Type variables with the same name are linked together.
@@ -144,6 +147,7 @@ message SchemaProto {
   repeated string names = 1;
   map<string, TypeProto> fields = 2;
   string hash = 3;
+  RefinementExpressionProto query = 4;
 }
 
 enum OPERATOR {

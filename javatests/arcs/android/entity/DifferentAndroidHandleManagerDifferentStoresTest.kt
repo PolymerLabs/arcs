@@ -73,25 +73,21 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
     @After
     override fun tearDown() = super.tearDown()
 
-    // TODO - fix these?
-    override fun collection_referenceLiveness() {}
-    override fun singleton_referenceLiveness() {}
-
     @Ignore("b/154947352 - Deflake")
     @Test
-    override fun collection_entityDereference() {
-        super.collection_entityDereference()
+    override fun collection_removingFromA_isRemovedFromB() {
+        super.collection_removingFromA_isRemovedFromB()
     }
 
     @Ignore("b/154947352 - Deflake")
     @Test
-    override fun singleton_dereferenceEntity() {
-        super.singleton_dereferenceEntity()
+    override fun collection_addingToA_showsUpInQueryOnB() {
+        super.collection_addingToA_showsUpInQueryOnB()
     }
 
     @Ignore("b/154947352 - Deflake")
     @Test
-    override fun singleton_dereferenceEntity_nestedReference() {
-        super.singleton_dereferenceEntity_nestedReference()
+    override fun collection_clearingElementsFromA_clearsThemFromB() {
+        super.collection_clearingElementsFromA_clearsThemFromB()
     }
 }

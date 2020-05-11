@@ -1,0 +1,12 @@
+meta
+  namespace: arcs.core.host
+
+particle TestReflectiveParticle in 'arcs.core.host.TestReflectiveParticle'
+  data: reads [Thing {name: Text}]
+
+
+recipe TestReflectiveRecipe
+  testHandle: create
+
+  TestReflectiveParticle
+    data: reads testHandle

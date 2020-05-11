@@ -7,47 +7,51 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import protobuf from 'protobufjs';
 import {Runtime} from '../runtime/runtime.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {Type, CollectionType, ReferenceType} from '../runtime/type.js';
+import {Type, CollectionType, ReferenceType, SingletonType, TypeVariable, TupleType} from '../runtime/type.js';
 import {Schema} from '../runtime/schema.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {assert} from '../platform/assert-web.js';
 import {findLongRunningArcId} from './storage-key-recipe-resolver.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Capabilities} from '../runtime/capabilities.js';
+import {ManifestProto, FateEnum, CapabilityEnum, DirectionEnum, PrimitiveTypeEnum} from './manifest-proto.js';
 
-// Import Proto declaration.
-const rootNamespace = protobuf.loadSync('./java/arcs/core/data/proto/recipe.proto');
-const manifestProto = rootNamespace.lookupType('arcs.ManifestProto');
-const FATE_ENUM = rootNamespace.lookupEnum('arcs.Fate');
-const CAPABILITY_ENUM = rootNamespace.lookupEnum('arcs.Capability');
-const DIRECTION_ENUM = rootNamespace.lookupEnum('arcs.Direction');
-const PRIMITIVE_TYPE_ENUM = rootNamespace.lookupEnum('arcs.PrimitiveTypeProto');
-
-export async function serialize2proto(path: string): Promise<Uint8Array> {
+export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path);
 
   if (manifest.imports.length) {
     throw Error('Only single-file manifests are currently supported');
   }
-
-  const json = await manifestToProtoPayload(manifest);
-
-  const error = manifestProto.verify(json);
-  if (error) throw Error(error);
-
-  return manifestProto.encode(manifestProto.create(json)).finish();
+  return encodePayload(await manifestToProtoPayload(manifest));
 }
 
 export async function manifestToProtoPayload(manifest: Manifest) {
+  return makeManifestProtoPayload(manifest.particles, manifest.recipes);
+}
+
+export async function encodePlansToProto(plans: Recipe[]) {
+  const specMap = new Map<string, ParticleSpec>();
+  for (const spec of [].concat(...plans.map(r => r.particles)).map(p => p.spec)) {
+    specMap.set(spec.name, spec);
+  }
+  return encodePayload(await makeManifestProtoPayload([...specMap.values()], plans));
+}
+
+async function makeManifestProtoPayload(particles: ParticleSpec[], recipes: Recipe[]) {
   return {
-    particleSpecs: await Promise.all(manifest.particles.map(p => particleSpecToProtoPayload(p))),
-    recipes: await Promise.all(manifest.recipes.map(r => recipeToProtoPayload(r))),
+    particleSpecs: await Promise.all(particles.map(p => particleSpecToProtoPayload(p))),
+    recipes: await Promise.all(recipes.map(r => recipeToProtoPayload(r))),
   };
+}
+
+function encodePayload(payload: {}): Uint8Array {
+  const error = ManifestProto.verify(payload);
+  if (error) throw Error(error);
+  return ManifestProto.encode(ManifestProto.create(payload)).finish();
 }
 
 async function particleSpecToProtoPayload(spec: ParticleSpec) {
@@ -55,7 +59,7 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
     name: spec.name,
     location: spec.implFile,
     connections: await Promise.all(spec.connections.map(async cs => {
-      const directionOrdinal = DIRECTION_ENUM.values[cs.direction.replace(/ /g, '_').toUpperCase()];
+      const directionOrdinal = DirectionEnum.values[cs.direction.replace(/ /g, '_').toUpperCase()];
       if (directionOrdinal === undefined) {
         throw Error(`Handle connection direction ${cs.direction} is not supported`);
       }
@@ -69,7 +73,7 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
 }
 
 async function recipeToProtoPayload(recipe: Recipe) {
-  assert(recipe.normalize());
+  recipe.normalize();
 
   const handleToProtoPayload = new Map<Handle, {name: string}>();
   for (const h of recipe.handles) {
@@ -94,7 +98,7 @@ function recipeParticleToProtoPayload(particle: Particle, handleMap: Map<Handle,
 }
 
 async function recipeHandleToProtoPayload(handle: Handle) {
-  const fateOrdinal = FATE_ENUM.values[handle.fate.toUpperCase()];
+  const fateOrdinal = FateEnum.values[handle.fate.toUpperCase()];
   if (fateOrdinal === undefined) {
     throw Error(`Handle fate ${handle.fate} is not supported`);
   }
@@ -116,7 +120,7 @@ export function capabilitiesToProtoOrdinals(capabilities: Capabilities) {
   // Tests will continue to ensure we access the right field.
   // tslint:disable-next-line: no-any
   return [...(capabilities as any).capabilities].map(c => {
-    const ordinal = CAPABILITY_ENUM.values[c.replace(/-/g, '_').toUpperCase()];
+    const ordinal = CapabilityEnum.values[c.replace(/-/g, '_').toUpperCase()];
     if (ordinal === undefined) {
       throw Error(`Capability ${c} is not supported`);
     }
@@ -146,7 +150,26 @@ export async function typeToProtoPayload(type: Type) {
         referredType: await typeToProtoPayload((type as ReferenceType<Type>).referredType)
       }
     };
-    default: throw Error(`Type ${type.tag} is not supported.`);
+    case 'Tuple': return {
+      tuple: {
+        elements: await Promise.all((type as TupleType).innerTypes.map(typeToProtoPayload))
+      }
+    };
+    case 'Singleton': return {
+      singleton: {
+        singletonType: await typeToProtoPayload((type as SingletonType<Type>).getContainedType())
+      }
+    };
+    case 'Count': return {
+      count: {}
+    };
+    // TODO(b/154733929)
+    // case 'TypeVariable': return {
+    //   variable: {
+    //     name: (type as TypeVariable).variable.name,
+    //   }
+    // };
+    default: throw Error(`Type '${type.tag}' is not supported.`);
   }
 }
 
@@ -170,7 +193,7 @@ type SchemaField = {
 async function schemaFieldToProtoPayload(fieldType: SchemaField) {
   switch (fieldType.kind) {
     case 'schema-primitive': {
-      const primitive = PRIMITIVE_TYPE_ENUM.values[fieldType.type.toUpperCase()];
+      const primitive = PrimitiveTypeEnum.values[fieldType.type.toUpperCase()];
       if (primitive === undefined) {
         throw Error(`Primitive field type ${fieldType.type} is not supported.`);
       }

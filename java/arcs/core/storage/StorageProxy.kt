@@ -27,6 +27,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * [StorageProxy] is an intermediary between a [Handle] and [Store]. It provides up-to-date CRDT
@@ -126,6 +127,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                 needsSync = true
                 it.setState(ProxyState.AWAITING_SYNC)
             } else {
+                needsSync = false
                 it
             }
         }.state
@@ -171,7 +173,9 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         // Let the store know about the op.
         val result = CompletableDeferred<Boolean>()
         scheduler.scope.launch {
+            log.debug { "Sending operations to store" }
             store.onProxyMessage(ProxyMessage.Operations(listOf(op), null))
+            log.debug { "Operations sent to store" }
             result.complete(true)
         }
 
@@ -227,15 +231,12 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         if (priorState.state == ProxyState.INIT) requestSynchronization()
 
         // If this was called while already synced, resolve the future with the current value.
-        //
-        // TODO(b/153564224): Put this on a scheduler task? Maybe this whole method should be
-        //  unusable without already being on the scheduler's thread? Maybe it should check the
-        //  current thread and if it's not on the scheduler's thread - it adds a scheduler task to
-        //  resolve the deferred, and if it is - it resolves immediately.
         if (priorState.state == ProxyState.SYNC) {
-            val result = crdt.consumerView
-            log.debug { "Already synchronized, returning $result" }
-            future.complete(result)
+            scheduler.scope.launch {
+                val result = crdt.consumerView
+                log.debug { "Already synchronized, returning $result" }
+                future.complete(result)
+            }
         }
 
         return future
@@ -253,13 +254,14 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
         if (message is ProxyMessage.SyncRequest) {
             // Storage wants our latest state.
-            val data = crdt.data
             launch {
+                val data = withContext(this@StorageProxy.dispatcher) { crdt.data }
                 store.onProxyMessage(ProxyMessage.ModelUpdate<Data, Op, T>(data, null))
             }
             return@coroutineScope
         }
 
+        log.debug { "onMessage: $message, scheduling handle" }
         scheduler.schedule(
             MessageFromStoreTask {
                 when (message) {
@@ -276,14 +278,15 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         crdt.merge(model)
 
         val value = crdt.consumerView
-        var toResolve = emptyList<CompletableDeferred<T>>()
+        val toResolve = mutableSetOf<CompletableDeferred<T>>()
         val oldState = stateHolder.getAndUpdate {
-            toResolve = it.waitingSyncs
+            toResolve.addAll(it.waitingSyncs)
 
             it.clearWaitingSyncs()
                 .setState(ProxyState.SYNC)
         }
 
+        log.debug { "Completing ${toResolve.size} waiting syncs" }
         toResolve.forEach { it.complete(value) }
 
         when (oldState.state) {
@@ -305,6 +308,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         if (!couldApplyAllOps) {
             stateHolder.update { it.setState(ProxyState.DESYNC) }
 
+            log.warning { "Could not apply ops, notifying onDesync listeners and requesting Sync." }
             notifyDesync()
             requestSynchronization()
         } else {
@@ -317,6 +321,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
             val newConsumerView = crdt.consumerView
             futuresToResolve.forEach { it.complete(newConsumerView) }
 
+            log.debug { "Notifying onUpdate listeners" }
+
             notifyUpdate(newConsumerView)
         }
     }
@@ -325,11 +331,19 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         store.onProxyMessage(ProxyMessage.SyncRequest(null))
     }
 
-    private fun notifyReady() = scheduleCallbackTasks(handleCallbacks.value.onReady) { it() }
-    private fun notifyUpdate(data: T) =
+    private fun notifyReady() {
+        log.debug { "notifying ready" }
+        scheduleCallbackTasks(handleCallbacks.value.onReady) { it() }
+    }
+    private fun notifyUpdate(data: T) {
+        log.debug { "notifying update" }
         scheduleCallbackTasks(handleCallbacks.value.onUpdate) { it(data) }
+    }
     private fun notifyDesync() = scheduleCallbackTasks(handleCallbacks.value.onDesync) { it() }
-    private fun notifyResync() = scheduleCallbackTasks(handleCallbacks.value.onResync) { it() }
+    private fun notifyResync() {
+        log.debug { "notifying resync" }
+        scheduleCallbackTasks(handleCallbacks.value.onResync) { it() }
+    }
 
     /** Schedule [HandleCallbackTask]s for all given [callbacks] with the [Scheduler]. */
     private fun <FT : Function<Unit>> scheduleCallbackTasks(

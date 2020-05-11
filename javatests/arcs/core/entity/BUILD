@@ -29,6 +29,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/driver",
+        "//java/arcs/core/storage/driver/testutil",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/testutil",
@@ -55,6 +56,7 @@ arcs_kt_jvm_library(
     deps = [
         ":test_arcs_gen",
         "//java/arcs/core/common",
+        "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity",
@@ -62,6 +64,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/driver",
+        "//java/arcs/core/storage/driver/testutil",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/testutil",

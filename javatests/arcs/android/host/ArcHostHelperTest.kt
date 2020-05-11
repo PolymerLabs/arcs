@@ -21,8 +21,10 @@ import androidx.test.platform.app.InstrumentationRegistry
 import arcs.android.sdk.host.ArcHostHelper
 import arcs.android.sdk.host.createGetRegisteredParticlesIntent
 import arcs.android.sdk.host.createLookupArcStatusIntent
+import arcs.android.sdk.host.createPauseArcHostIntent
 import arcs.android.sdk.host.createStartArcHostIntent
 import arcs.android.sdk.host.createStopArcHostIntent
+import arcs.android.sdk.host.createUnpauseArcHostIntent
 import arcs.android.sdk.host.toComponentName
 import arcs.core.common.ArcId
 import arcs.core.data.EntityType
@@ -87,6 +89,7 @@ class ArcHostHelperTest {
         var registeredParticles: MutableList<ParticleIdentifier> by guardedBy(
             hostMutex, mutableListOf()
         )
+        var paused = false
 
         suspend fun startCalls() = hostMutex.withLock { startArcCalls }
         suspend fun stopCalls() = hostMutex.withLock { stopArcCalls }
@@ -103,6 +106,14 @@ class ArcHostHelperTest {
             if (throws) {
                 throw IllegalArgumentException("Boom!")
             }
+        }
+
+        override suspend fun pause() {
+            paused = true
+        }
+
+        override suspend fun unpause() {
+            paused = false
         }
 
         override suspend fun stopArc(partition: Plan.Partition): Unit = hostMutex.withLock {
@@ -235,5 +246,18 @@ class ArcHostHelperTest {
         }
 
         assertThat(particles).containsExactly(particleIdentifier, particleIdentifier2)
+    }
+
+    @Test
+    fun onPauseUnpause() = runBlockingTest {
+        val pauseIntent = TestAndroidArcHostService::class.toComponentName(context)
+            .createPauseArcHostIntent(arcHost.hostId)
+        val unpauseIntent = TestAndroidArcHostService::class.toComponentName(context)
+            .createUnpauseArcHostIntent(arcHost.hostId)
+        helper.onStartCommandSuspendable(pauseIntent)
+        assertThat(arcHost.paused).isTrue()
+
+        helper.onStartCommandSuspendable(unpauseIntent)
+        assertThat(arcHost.paused).isFalse()
     }
 }

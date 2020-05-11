@@ -74,22 +74,6 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     @After
     override fun tearDown() = super.tearDown()
 
-    // TODO(b/152436411): Fix these.
-    override fun collection_referenceLiveness() {}
-    override fun singleton_referenceLiveness() {}
-
-    @Ignore("b/154947352 - Deflake")
-    @Test
-    override fun collection_entityDereference() {
-        super.collection_entityDereference()
-    }
-
-    @Ignore("b/154947352 - Deflake")
-    @Test
-    override fun singleton_dereferenceEntity() {
-        super.singleton_dereferenceEntity()
-    }
-
     @Ignore("b/154947352 - Deflake")
     @Test
     override fun collection_dereferenceEntity_nestedReference() {
@@ -98,7 +82,7 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
 
     @Ignore("b/154947352 - Deflake")
     @Test
-    override fun singleton_dereferenceEntity_nestedReference() {
-        super.singleton_dereferenceEntity_nestedReference()
+    override fun collection_clearingElementsFromA_clearsThemFromB() {
+        super.collection_clearingElementsFromA_clearsThemFromB()
     }
 }

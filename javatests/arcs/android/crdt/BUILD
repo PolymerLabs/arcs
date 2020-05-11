@@ -13,6 +13,7 @@ arcs_kt_android_test_suite(
     package = "arcs.android.crdt",
     deps = [
         "//java/arcs/android/crdt",  # buildcleaner: keep
+        "//java/arcs/android/crdt:crdt_exception_android_proto",
         "//java/arcs/android/util",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",

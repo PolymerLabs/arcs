@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2020 Google LLC.
+  ~
+  ~ This code may only be used under the BSD style license found at
+  ~ http://polymer.github.io/LICENSE.txt
+  ~
+  ~ Code distributed by Google as part of this project is also subject to an additional IP rights
+  ~ grant found at
+  ~ http://polymer.github.io/PATENTS.txt
+  -->
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent">
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    android:orientation="vertical">
+
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="@string/result_output"/>
+
+    <TextView
+      android:id="@+id/result"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"/>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
+      <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:text="@string/handle_type"/>
+
+      <RadioGroup
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="2"
+        android:orientation="horizontal">
+
+        <RadioButton
+          android:id="@+id/singleton"
+          android:layout_width="100dp"
+          android:layout_height="wrap_content"
+          android:checked="true"
+          android:text="@string/singleton" />
+        <RadioButton
+          android:id="@+id/collection"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/collection"/>
+      </RadioGroup>
+    </LinearLayout>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
+      <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_alignParentStart="true"
+        android:text="@string/storage_type"/>
+
+      <RadioGroup
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="2"
+        android:orientation="horizontal">
+
+        <RadioButton
+          android:id="@+id/in_memory"
+          android:layout_width="100dp"
+          android:layout_height="wrap_content"
+          android:checked="true"
+          android:text="@string/in_memory" />
+        <RadioButton
+          android:id="@+id/persistent"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/persistent"/>
+      </RadioGroup>
+    </LinearLayout>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
+      <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:text="@string/service_type" />
+
+      <RadioGroup
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="2"
+        android:orientation="horizontal">
+
+        <RadioButton
+          android:id="@+id/syshealth_service_local"
+          android:layout_width="100dp"
+          android:layout_height="wrap_content"
+          android:checked="true"
+          android:text="@string/syshealth_service_local" />
+
+        <RadioButton
+          android:id="@+id/syshealth_service_remote"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/syshealth_service_remote" />
+      </RadioGroup>
+    </LinearLayout>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
+
+      <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:text="@string/listener_threads" />
+
+      <EditText
+        android:id="@+id/listeners"
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:ems="10"
+        android:hint="@string/listener_threads_hint"
+        android:importantForAutofill="no"
+        android:inputType="numberDecimal"
+        android:textSize="14sp" />
+    </LinearLayout>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
+      <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:text="@string/writer_threads" />
+
+      <EditText
+        android:id="@+id/writers"
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:ems="10"
+        android:hint="@string/writer_threads_hint"
+        android:importantForAutofill="no"
+        android:inputType="numberDecimal"
+        android:textSize="14sp" />
+    </LinearLayout>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
+      <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:text="@string/test_iterations" />
+
+      <EditText
+        android:id="@+id/iterations"
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:ems="10"
+        android:hint="@string/test_iterations_hint"
+        android:importantForAutofill="no"
+        android:inputType="numberDecimal"
+        android:textSize="14sp" />
+    </LinearLayout>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
+      <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:text="@string/iteration_interval_ms" />
+
+      <EditText
+        android:id="@+id/interval"
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:ems="10"
+        android:hint="@string/iteration_interval_ms_hint"
+        android:importantForAutofill="no"
+        android:inputType="numberDecimal"
+        android:textSize="14sp" />
+    </LinearLayout>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
+      <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:text="@string/data_size" />
+
+      <EditText
+        android:id="@+id/data_size_bytes"
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:ems="10"
+        android:hint="@string/data_size_hint"
+        android:importantForAutofill="no"
+        android:inputType="numberDecimal"
+        android:textSize="14sp" />
+    </LinearLayout>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
+      <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:text="@string/delayed_start_ms" />
+
+      <EditText
+        android:id="@+id/delayed_start_ms"
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:ems="10"
+        android:hint="@string/delayed_start_ms_hint"
+        android:importantForAutofill="no"
+        android:inputType="numberDecimal"
+        android:textSize="14sp" />
+    </LinearLayout>
+
+    <TextView
+      android:id="@+id/service_crash_rate_label"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content" />
+
+    <SeekBar
+      android:id="@+id/service_crash_rate"
+      android:max="100"
+      android:progress="10"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"/>
+
+    <TextView
+      android:id="@+id/client_crash_rate_label"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content" />
+
+    <SeekBar
+      android:id="@+id/client_crash_rate"
+      android:max="100"
+      android:progress="10"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"/>
+
+    <LinearLayout
+      style="?android:attr/buttonBarStyle"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
+
+      <Button
+        android:id="@+id/fetch"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/fetch"
+        android:textAllCaps="false" />
+
+      <Button
+        android:id="@+id/set"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/set"
+        android:textAllCaps="false" />
+
+      <Button
+        android:id="@+id/clear"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/clear"
+        android:textAllCaps="false" />
+
+      <Button
+        android:id="@+id/close"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/close"
+        android:textAllCaps="false" />
+
+    </LinearLayout>
+
+    <View
+      android:id="@+id/divider"
+      android:layout_width="match_parent"
+      android:layout_height="1dp"
+      android:background="?android:attr/listDivider" />
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="58dp"
+      android:orientation="horizontal">
+
+      <Button
+        android:id="@+id/performance_eval"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/performance_eval" />
+
+      <Button
+        android:id="@+id/stability_eval"
+        style="?android:attr/buttonBarButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/stability_eval" />
+    </LinearLayout>
+  </LinearLayout>
+</ScrollView>

@@ -25,14 +25,23 @@ class ParticleRegistrationTest {
 
         val hostRegistry = ExplicitHostRegistry()
         val schedulerProvider = JvmSchedulerProvider(coroutineContext)
-        hostRegistry.registerHost(JvmProdHost(schedulerProvider, ::TestProdParticle.toRegistration()))
-        hostRegistry.registerHost(TestHost(schedulerProvider("foo"), ::TestHostParticle.toRegistration()))
+
+        hostRegistry.registerHost(JvmProdHost(schedulerProvider,
+                                              ::TestProdParticle.toRegistration(),
+                                              ::TestReflectiveParticle.toRegistration())
+        )
+
+        hostRegistry.registerHost(TestHost(schedulerProvider("foo"),
+                                           ::TestHostParticle.toRegistration()))
 
         hostRegistry.availableArcHosts().forEach { host: ArcHost ->
             when (host) {
                 is ProdHost -> {
                     assertThat(host.registeredParticles()).contains(
                         TestProdParticle::class.toParticleIdentifier()
+                    )
+                    assertThat(host.registeredParticles()).contains(
+                        TestReflectiveParticle::class.toParticleIdentifier()
                     )
                     foundProdHost = true
                 }
