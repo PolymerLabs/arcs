@@ -243,6 +243,10 @@ open class AllocatorTestBase {
         assertThat(writePartition.particles[0].handles["person"]?.storageKey).isEqualTo(
             purePartition.particles[0].handles["inputPerson"]?.storageKey
         )
+
+        assertThat(purePartition.particles[0].handles["inputPerson"]?.storageKey).isNotEqualTo(
+            purePartition.particles[0].handles["outputPerson"]?.storageKey
+        )
     }
 
     private fun findPartitionFor(
@@ -257,22 +261,37 @@ open class AllocatorTestBase {
         val idGenerator = Id.Generator.newSession()
         val testArcId = idGenerator.newArcId("Test")
         VolatileDriverProvider(testArcId)
-        val testKey = CapabilitiesResolver(
+
+        val inputPerson = CapabilitiesResolver(
             CapabilitiesResolver.CapabilitiesResolverOptions(testArcId)
-        ).createStorageKey(Capabilities.TiedToArc, EntityType(personSchema), "readWritePerson")
+        ).createStorageKey(Capabilities.TiedToArc, EntityType(personSchema), "inputPerson")
+
+        val outputPerson = CapabilitiesResolver(
+            CapabilitiesResolver.CapabilitiesResolverOptions(testArcId)
+        ).createStorageKey(Capabilities.TiedToArc, EntityType(personSchema), "outputPerson")
 
         val allStorageKeyLens =
             Plan.particleLens.traverse() + Plan.Particle.handlesLens.traverse() +
                 Plan.HandleConnection.storageKeyLens
 
-        val testPlan = allStorageKeyLens.mod(PersonPlan) { testKey!! }
+        val testPlan = allStorageKeyLens.mod(PersonPlan) { storageKey ->
+            storageKey as CreateableStorageKey
+            when (storageKey.nameFromManifest) {
+                "inputPerson" -> inputPerson!!
+                "outputPerson" -> outputPerson!!
+                else -> storageKey
+            }
+        }
 
         val arcId = allocator.startArcForPlan(testPlan).waitForStart().id
 
         val planPartitions = allocator.getPartitionsFor(arcId)!!
+
+        val testKeys = listOf(inputPerson, outputPerson)
+
         planPartitions.flatMap { it.particles }.forEach {
             particle -> particle.handles.forEach { (_, connection) ->
-               assertThat(connection.storageKey).isEqualTo(testKey)
+               assertThat(connection.storageKey).isIn(testKeys)
             }
         }
     }
