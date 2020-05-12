@@ -10,6 +10,7 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -25,6 +26,7 @@ open class ArcHostManagerTest {
         RamDiskDriverProvider()
     }
 
+    @Ignore("b/156404564 - Deflake")
     @Test
     fun pauseAll_UnpauseAll() = runBlocking {
         val schedulerProvider = JvmSchedulerProvider(coroutineContext)
