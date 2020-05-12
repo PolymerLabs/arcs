@@ -43,4 +43,10 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
 
     @After
     override fun tearDown() = super.tearDown()
+
+    @Test
+    @Ignore("b/154947352 - Deflake")
+    override fun singleton_withTTL() {
+        super.singleton_withTTL()
+    }
 }

@@ -336,7 +336,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun singleton_withTTL() = testRunner {
+    open fun singleton_withTTL() = testRunner {
         fakeTime.millis = 0
         val handle = writeHandleManager.createSingletonHandle(ttl = Ttl.Days(2))
         val handleB = readHandleManager.createSingletonHandle()
