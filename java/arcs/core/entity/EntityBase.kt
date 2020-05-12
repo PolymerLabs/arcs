@@ -19,7 +19,6 @@ import arcs.core.data.RawEntity
 import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.Schema
-import arcs.core.data.SchemaName
 import arcs.core.data.Ttl
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
@@ -209,7 +208,7 @@ open class EntityBase(
      * Supports type slicing: fields that are not present in the [Schema] for this [Entity] will be
      * silently ignored.
      *
-     * @param nestedEntitySpecs mapping from [SchemaName] to [EntitySpec], used when dereferencing
+     * @param nestedEntitySpecs mapping from [SchemaHash] to [EntitySpec], used when dereferencing
      *     [Reference] fields inside the entity
      */
     fun deserialize(
