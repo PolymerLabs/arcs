@@ -36,4 +36,3 @@ fun RecipeProto.decode(particleSpecs: Map<String, ParticleSpec>): Recipe {
     val particles = particlesList.map { it.decode(context) }
     return Recipe(name.ifBlank { null }, recipeHandles, particles, arcId.ifBlank { null })
 }
-
