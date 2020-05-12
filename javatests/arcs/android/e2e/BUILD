@@ -23,7 +23,10 @@ arcs_kt_android_library(
 
 android_binary(
     name = "e2e",
-    dexopts = ["--min-sdk-version=29"],
+    dexopts = [
+        "--min-sdk-version=29",
+        "--force-jumbo",
+    ],
     incremental_dexing = 0,
     instruments = "//javatests/arcs/android/e2e/testapp",
     manifest = "AndroidManifest.xml",

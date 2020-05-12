@@ -57,6 +57,7 @@ arcs_kt_android_library(
 android_binary(
     name = "testapp",
     testonly = 1,
+    dexopts = ["--force-jumbo"],
     manifest = ":AndroidManifest.xml",
     multidex = "native",
     deps = [":test_app_lib"],
