@@ -164,9 +164,6 @@ AnnotationItem
 // This is the full "@trigger\n foo bar" annotation combo OR simple annotation.
 Annotation = triggerSet:(SameIndent Trigger eolWhiteSpace)* simpleAnnotation:(SameIndent AnnotationItem eolWhiteSpace)? annotationRefs:(SameIndent AnnotationRef eolWhiteSpace)*
   {
-    if (!!simpleAnnotation || annotationRefs.length > 0) {
-      //debugger;
-    }
     return toAstNode<AstNode.Annotation>({
       kind: 'annotation',
       triggerSet: triggerSet.map(trigger => trigger[1]),
@@ -174,7 +171,7 @@ Annotation = triggerSet:(SameIndent Trigger eolWhiteSpace)* simpleAnnotation:(Sa
     });
   }
 
-// TODO(mmandlis): deprecate
+// TODO(#5291): deprecate
 Trigger "a trigger for a recipe"
   = '@trigger' eolWhiteSpace Indent pairs:(eolWhiteSpace? SameIndent simpleName whiteSpace dottedName)+ {
   return pairs.map(pair => {

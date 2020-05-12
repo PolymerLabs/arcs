@@ -21,7 +21,7 @@ export class Annotation implements Comparable<Annotation> {
               public readonly doc: string) {}
 
   _compareTo(other: Annotation): number {
-    // TODO: implement
+    // TODO(#5291): implement
     return 0;
   }
 
