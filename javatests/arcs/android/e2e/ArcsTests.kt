@@ -152,6 +152,7 @@ class ArcsTest {
     }
 
     @Test
+    @Ignore("Flaky: b/154268012")
     fun testCollection_persistentLocalActivity() {
         // Configure handle options.
         clickOnTextIfPresent(COLLECTION_BTN_TEXT)

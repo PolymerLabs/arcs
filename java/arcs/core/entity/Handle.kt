@@ -13,9 +13,9 @@ package arcs.core.entity
 
 import arcs.core.data.HandleMode
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 /** Base interface for all handle classes. */
 interface Handle {
@@ -38,8 +38,10 @@ interface Handle {
 }
 
 /** Suspends until the [Handle] has synced with the store. */
-suspend fun <T : Handle> T.awaitReady(): T = suspendCoroutine<T> { cont ->
-    this.onReady { cont.resume(this@awaitReady) }
+suspend fun <T : Handle> T.awaitReady(): T = suspendCancellableCoroutine<T> { cont ->
+    this.onReady {
+        if (cont.isActive) cont.resume(this@awaitReady)
+    }
 }
 
 /** Base interface for types that can be stored in a [Handle] (see [Entity] and [Reference]). */
