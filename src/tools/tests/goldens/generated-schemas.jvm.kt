@@ -71,7 +71,7 @@ abstract class AbstractGold : BaseParticle() {
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<SchemaHash, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
                 emptyMap()
 
             init {
@@ -196,7 +196,7 @@ abstract class AbstractGold : BaseParticle() {
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<SchemaHash, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
                 emptyMap()
 
             init {
@@ -253,7 +253,7 @@ abstract class AbstractGold : BaseParticle() {
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<SchemaHash, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
                 emptyMap()
 
             init {
@@ -383,7 +383,7 @@ abstract class AbstractGold : BaseParticle() {
                 }
             )
 
-            private val nestedEntitySpecs: Map<SchemaHash, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
                 emptyMap()
 
             init {
@@ -482,7 +482,7 @@ abstract class AbstractGold : BaseParticle() {
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<SchemaHash, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
                 mapOf("485712110d89359a3e539dac987329cd2649d889" to GoldInternal1)
 
             init {
