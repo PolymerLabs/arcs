@@ -498,13 +498,36 @@ ${e.message}
         }
       }));
 
+      // The items to process may refer to items defined later on. We should do a pass over all
+      // definitions first, and then resolve all the references to external definitions, but that
+      // would require serious refactoring. As a short term fix we're doing multiple passes over
+      // the list as long as we see progress.
+      // TODO(b/156427820): Improve this with 2 pass schema resolution and support cycles.
       const processItems = async (kind: string, f: Function) => {
-        for (const item of items) {
-          if (item.kind === kind) {
-            Manifest._augmentAstWithTypes(manifest, item);
-            await f(item);  // TODO(cypher1): Use Promise.all here.
+        let firstError: boolean;
+        let itemsToProcess = [...items.filter(i => i.kind === kind)];
+        let thisRound = [];
+
+        do {
+          thisRound = itemsToProcess;
+          itemsToProcess = [];
+          firstError = null;
+          for (const item of thisRound) {
+            try {
+              Manifest._augmentAstWithTypes(manifest, item);
+              await f(item);
+            } catch (err) {
+              if (!firstError) firstError = err;
+              itemsToProcess.push(item);
+              continue;
+            }
           }
-        }
+          // As long as we're making progress we're trying again.
+        } while (itemsToProcess.length < thisRound.length);
+
+        // If we didn't make any progress and still have items to process,
+        // rethrow the first error we saw in this round.
+        if (itemsToProcess.length > 0) throw firstError;
       };
       // processing meta sections should come first as this contains identifying
       // information that might need to be used in other sections. For example,
