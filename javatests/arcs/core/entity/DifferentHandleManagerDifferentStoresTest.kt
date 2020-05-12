@@ -45,4 +45,10 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
     override fun collection_removingFromA_isRemovedFromB() {
         super.collection_removingFromA_isRemovedFromB()
     }
+
+    @Ignore("b/154947352 - Deflake")
+    @Test
+    override fun singleton_clearOnAClearDataWrittenByB() {
+        super.singleton_clearOnAClearDataWrittenByB()
+    }
 }
