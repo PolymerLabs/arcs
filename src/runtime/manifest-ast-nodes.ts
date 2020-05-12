@@ -378,6 +378,52 @@ export interface ParticleRef extends BaseNode {
   tags: TagList;
 }
 
+export interface AnnotationNode extends BaseNode {
+  kind: 'annotation-node';
+  name: string;
+  params: AnnotationParam[];
+  targets: AnnotationTargetValue[];
+  retention: AnnotationRetentionValue;
+  doc: string;
+}
+
+export interface AnnotationParam extends BaseNode {
+  kind: 'annotation-param';
+  name: string;
+  type: SchemaPrimitiveTypeValue;
+}
+
+export type AnnotationTargetValue = 'Recipe' | 'Particle' | 'Store' | 'Handle' | 'HandleConnection' | 'Schema' | 'SchemaField';
+
+export interface AnnotationTargets extends BaseNode {
+  kind: 'annotation-targets';
+  targets: AnnotationTargetValue[];
+}
+
+export type AnnotationRetentionValue = 'Source' | 'Runtime';
+
+export interface AnnotationRetention extends BaseNode {
+  kind: 'annotation-retention';
+  retention: AnnotationRetentionValue;
+}
+
+export interface AnnotationDoc extends BaseNode {
+  kind: 'annotation-doc';
+  doc: string;
+}
+
+export interface AnnotationRef extends BaseNode {
+  kind: 'annotation-ref';
+  name: string;
+  params: AnnotationRefParam[];
+}
+
+export interface AnnotationRefParam extends BaseNode {
+  kind: 'annotation-ref-param';
+  name: string;
+  value: ManifestStorageInlineData;
+}
+
 export interface RecipeNode extends BaseNode {
   kind: 'recipe';
   name: string;
@@ -546,9 +592,11 @@ export interface SchemaField extends BaseNode {
 export type SchemaType = SchemaReferenceType|SchemaCollectionType|
     SchemaPrimitiveType|SchemaUnionType|SchemaTupleType;
 
+export type SchemaPrimitiveTypeValue = 'Text'|'URL'|'Number'|'Boolean'|'Bytes'|'Object';
+
 export interface SchemaPrimitiveType extends BaseNodeWithRefinement {
   kind: 'schema-primitive';
-  type: 'Text'|'URL'|'Number'|'Boolean'|'Bytes'|'Object';
+  type: SchemaPrimitiveTypeValue;
 }
 
 export interface SchemaCollectionType extends BaseNodeWithRefinement {

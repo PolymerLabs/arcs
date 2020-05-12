@@ -48,6 +48,8 @@ import {Refinement} from './refiner.js';
 import {Capabilities} from './capabilities.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 import {LoaderBase} from '../platform/loader-base.js';
+import {Annotation} from './recipe/annotation.js';
+import {SchemaPrimitiveTypeValue} from './manifest-ast-nodes.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -150,6 +152,7 @@ export class Manifest {
   private _resources = {};
   private storeManifestUrls: Map<string, string> = new Map();
   readonly errors: ManifestError[] = [];
+  private _annotations: Dictionary<Annotation> = {};
   // readonly warnings: ManifestError[] = [];
 
   constructor({id}: {id: Id | string}) {
@@ -220,6 +223,9 @@ export class Manifest {
   }
   get resources() {
     return this._resources;
+  }
+  get annotations() {
+    return this._annotations;
   }
   applyMeta(section: {name: string} & {key: string, value: string}[]) {
     this._meta.apply(section);
@@ -513,6 +519,7 @@ ${e.message}
       await processItems('meta', meta => manifest.applyMeta(meta.items));
       // similarly, resources may be referenced from other parts of the manifest.
       await processItems('resource', item => Manifest._processResource(manifest, item));
+      await processItems('annotation-node', item => Manifest._processAnnotation(manifest, item));
       await processItems('schema', item => Manifest._processSchema(manifest, item));
       await processItems('interface', item => Manifest._processInterface(manifest, item));
       await processItems('particle', item => Manifest._processParticle(manifest, item, loader));
@@ -715,6 +722,15 @@ ${e.message}
 
   private static _processResource(manifest: Manifest, schemaItem: AstNode.Resource) {
     manifest._resources[schemaItem.name] = schemaItem.data;
+  }
+
+  private static _processAnnotation(manifest: Manifest, schemaItem: AstNode.AnnotationNode) {
+    const params: Dictionary<SchemaPrimitiveTypeValue> = {};
+    for (const param of schemaItem.params) {
+      params[param.name] = param.type;
+    }
+    manifest._annotations[schemaItem.name] = new Annotation(
+        schemaItem.name, params, schemaItem.targets, schemaItem.retention, schemaItem.doc);
   }
 
   private static _processParticle(manifest: Manifest, particleItem, loader?: LoaderBase) {
@@ -1368,6 +1384,10 @@ ${e.message}
       } else {
         results.push(`import '${i.fileName}'`);
       }
+    });
+
+    Object.values(this._annotations).forEach(a => {
+      results.push(a.toString());
     });
 
     Object.values(this._schemas).forEach(s => {
