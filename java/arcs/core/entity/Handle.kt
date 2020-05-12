@@ -13,7 +13,6 @@ package arcs.core.entity
 
 import arcs.core.data.HandleMode
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.suspendCancellableCoroutine
