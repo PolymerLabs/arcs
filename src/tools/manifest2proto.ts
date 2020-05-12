@@ -116,7 +116,7 @@ async function recipeHandleToProtoPayload(handle: Handle) {
     handleData['storageKey'] = handle.storageKey.toString();
   }
 
-  if (handle.fate.toUpperCase() === 'JOIN' && handle.joinedHandles) {
+  if (handle.fate === 'join' && handle.joinedHandles) {
     handleData['associatedHandles'] = handle.joinedHandles.map(toName);
   }
 
