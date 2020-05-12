@@ -61,6 +61,7 @@ arcs_kt_android_library(
 # bazel mobile-install java/arcs/android/demo
 android_binary(
     name = "demo",
+    dexopts = ["--force-jumbo"],
     incremental_dexing = 0,
     manifest = ":AndroidManifest.xml",
     multidex = "native",
