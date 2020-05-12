@@ -85,4 +85,10 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     override fun collection_clearingElementsFromA_clearsThemFromB() {
         super.collection_clearingElementsFromA_clearsThemFromB()
     }
+
+    @Ignore("b/154947352 - Deflake")
+    @Test
+    override fun collection_addingToA_showsUpInQueryOnB() {
+        super.collection_addingToA_showsUpInQueryOnB()
+    }
 }

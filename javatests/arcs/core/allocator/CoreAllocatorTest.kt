@@ -17,4 +17,10 @@ open class CoreAllocatorTest : AllocatorTestBase() {
     override fun allocator_restartArcInTwoExternalHosts() {
         super.allocator_restartArcInTwoExternalHosts()
     }
+
+    @Test
+    @Ignore("b/156408864 - Deflake")
+    override fun allocator_canStopArcInTwoExternalHosts() {
+        super.allocator_canStopArcInTwoExternalHosts()
+    }
 }
