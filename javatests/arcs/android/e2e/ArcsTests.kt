@@ -151,6 +151,7 @@ class ArcsTest {
         waitForTextToAppear(2, ON_UPDATE_NULL)
     }
 
+    @Ignore("Flaky: b/154268012")
     @Test
     @Ignore("Flaky: b/154268012")
     fun testCollection_persistentLocalActivity() {
