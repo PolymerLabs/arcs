@@ -40,8 +40,7 @@ data class Recipe(
         val type: Type,
         val storageKey: String? = null,
         val capabilities: Capabilities? = null,
-        val associatedHandleNames: List<String> = emptyList(),
-        val associatedHandles: MutableList<Handle> = mutableListOf<Handle>()
+        val associatedHandles: List<Handle> = emptyList()
     ) {
         enum class Fate {
             CREATE, USE, MAP, COPY, JOIN

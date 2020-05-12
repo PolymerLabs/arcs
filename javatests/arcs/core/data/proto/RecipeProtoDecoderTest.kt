@@ -64,7 +64,6 @@ class RecipeProtoDecoderTest {
         TypeVariable("pairs"),
         ramdiskStorageKey + "pairs",
         Capabilities.Empty,
-        associatedHandleNames = listOf("thing", "thang"),
         associatedHandles = mutableListOf(thingHandle, thangHandle)
     )
     val readConnectionSpec = HandleConnectionSpec("data", HandleMode.Read, thingEntity)
