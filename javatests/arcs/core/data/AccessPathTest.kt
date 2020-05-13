@@ -29,6 +29,8 @@ class AccessPathTest {
         assertThat("${AccessPath.Root.Handle(handle)}").isEqualTo("h:thing")
         assertThat("${AccessPath.Root.HandleConnection(particle, connection)}")
             .isEqualTo("hc:Reader.data")
+        assertThat("${AccessPath.Root.HandleConnectionSpec("Reader", connectionSpec)}")
+            .isEqualTo("hcs:Reader.data")
     }
 
     @Test
@@ -55,5 +57,9 @@ class AccessPathTest {
             .isEqualTo("hc:Reader.data.bar")
         assertThat("${AccessPath(particle, connection, multipleSelectors)}")
             .isEqualTo("hc:Reader.data.foo.bar")
+        assertThat("${AccessPath("Reader", connectionSpec, oneSelector)}")
+            .isEqualTo("hcs:Reader.data.bar")
+        assertThat("${AccessPath("Reader", connectionSpec, multipleSelectors)}")
+            .isEqualTo("hcs:Reader.data.foo.bar")
     }
 }
