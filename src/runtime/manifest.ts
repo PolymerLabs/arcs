@@ -728,13 +728,13 @@ ${e.message}
     manifest._resources[schemaItem.name] = schemaItem.data;
   }
 
-  private static _processAnnotation(manifest: Manifest, schemaItem: AstNode.AnnotationNode) {
+  private static _processAnnotation(manifest: Manifest, annotationItem: AstNode.AnnotationNode) {
     const params: Dictionary<SchemaPrimitiveTypeValue> = {};
-    for (const param of schemaItem.params) {
+    for (const param of annotationItem.params) {
       params[param.name] = param.type;
     }
-    manifest._annotations[schemaItem.name] = new Annotation(
-        schemaItem.name, params, schemaItem.targets, schemaItem.retention, schemaItem.doc);
+    manifest._annotations[annotationItem.name] = new Annotation(
+      annotationItem.name, params, annotationItem.targets, annotationItem.retention, annotationItem.doc);
   }
 
   private static _processParticle(manifest: Manifest, particleItem, loader?: LoaderBase) {
