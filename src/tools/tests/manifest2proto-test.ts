@@ -424,6 +424,105 @@ describe('manifest2proto', () => {
     });
   });
 
+  it('encodes particle spec with semanticTag claims', async () => {
+    const manifest = await Manifest.parse(`
+      particle Test in 'a/b/c.js'
+        private: writes {name: Text}
+        public: writes {name: Text}
+        claim private is private_tag
+        claim public is not private_tag
+     `);
+    const spec = await toProtoAndBack(manifest);
+    assert.deepStrictEqual(spec.particleSpecs[0].claims, [
+      {
+        assume: {
+          accessPath: {
+            handleConnection: 'private'
+          },
+          predicate: {
+            label: {
+              semanticTag: 'private_tag'
+            }
+          }
+        }
+      },
+      {
+        assume: {
+          accessPath: {
+            handleConnection: 'public'
+          },
+          predicate: {
+            not: {
+              predicate: {
+                label: {
+                  semanticTag: 'private_tag'
+                }
+              }
+            }
+          }
+        }
+      }]);
+
+  });
+
+  it('encodes particle spec with derivesFrom claims', async () => {
+    const manifest = await Manifest.parse(`
+      particle Test in 'a/b/c.js'
+        input: reads {name: Text}
+        output: writes {name: Text}
+        dontcare: writes {name: Text}
+        claim output derives from input
+     `);
+    const spec = await toProtoAndBack(manifest);
+    assert.deepStrictEqual(spec.particleSpecs[0].claims, [
+      {
+        derivesFrom: {
+          source: {
+            handleConnection: 'input'
+          },
+          target: {
+            handleConnection: 'output'
+          }
+        }
+      }
+    ]);
+  });
+
+  it('encodes particle spec with derivesFrom and hasTag claims', async () => {
+    const manifest = await Manifest.parse(`
+      particle Test in 'a/b/c.js'
+        input: reads {name: Text}
+        output: writes {name: Text}
+        dontcare: writes {name: Text}
+        claim output derives from input and is public
+     `);
+    const spec = await toProtoAndBack(manifest);
+    assert.deepStrictEqual(spec.particleSpecs[0].claims, [
+      {
+        derivesFrom: {
+          source: {
+            handleConnection: 'input'
+          },
+          target: {
+            handleConnection: 'output'
+          }
+        }
+      },
+      {
+        assume: {
+          accessPath: {
+            handleConnection: 'output'
+          },
+          predicate: {
+            label: {
+              semanticTag: 'public'
+            }
+          }
+        }
+      },
+    ]);
+  });
+
   // On the TypeScript side we serialize .arcs file and validate it equals the .pb.bin file.
   // On the Kotlin side we deserialize .pb.bin and validate it equals deserialized .textproto file.
   // This ensures that at least all the constructs used in the .arcs file can be serialized in TS
