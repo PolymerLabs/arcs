@@ -39,6 +39,5 @@ fun SchemaProto.decodeFields(): SchemaFields {
     return SchemaFields(singletons, collections)
 }
 
-// TODO(b/155812915) decode refinement.
 /** Converts a [SchemaProto] proto instance into a Kotlin [Schema] instance. */
 fun SchemaProto.decode() = Schema(names = decodeNames(), fields = decodeFields(), hash = hash)

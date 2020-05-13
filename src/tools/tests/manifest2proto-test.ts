@@ -219,9 +219,6 @@ describe('manifest2proto', () => {
             }
           },
           hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
-          query: {
-            "boolean": true
-          }
         },
       },
       refinement: {
@@ -246,33 +243,6 @@ describe('manifest2proto', () => {
             }
           },
           hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
-          query: {
-            binary: {
-              leftExpr: {
-                binary: {
-                  leftExpr: {
-                    field: 'num',
-                  },
-                  operator: 'LESS_THAN',
-                  rightExpr: {
-                    number: 12
-                  }
-                }
-              },
-              operator: 'AND',
-              rightExpr: {
-                binary: {
-                  leftExpr: {
-                    field: 'num'
-                  },
-                  operator: 'GREATER_THAN',
-                  rightExpr: {
-                    number: -1
-                  }
-                }
-              },
-            }
-          }
         },
       },
       refinement: {
@@ -321,17 +291,6 @@ describe('manifest2proto', () => {
             }
           },
           hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
-          query: {
-            binary: {
-              leftExpr: {
-                field: 'num'
-              },
-              operator: 'EQUALS',
-              rightExpr: {
-                queryArgument: '?'
-              },
-            }
-          }
         },
       },
       refinement: {

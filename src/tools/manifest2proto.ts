@@ -238,18 +238,12 @@ export async function typeToProtoPayload(type: Type) {
 }
 
 export async function schemaToProtoPayload(schema: Schema) {
-  const schemaPayload = {
+  return {
     names: schema.names,
     fields: objectFromEntries(await Promise.all(Object.entries(schema.fields).map(
       async ([key, value]) => [key, await schemaFieldToProtoPayload(value)]))),
     hash: await schema.hash(),
   };
-
-  if (schema.refinement) {
-    schemaPayload['query'] = refinementToProtoPayload(schema.refinement);
-  }
-
-  return schemaPayload;
 }
 
 type SchemaField = {
