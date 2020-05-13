@@ -18,9 +18,9 @@ node_repositories(
 
 # Java deps from Maven. This has to be declare before rules_kotlin
 
-RULES_JVM_EXTERNAL_TAG = "3.0"
+RULES_JVM_EXTERNAL_TAG = "3.2"
 
-RULES_JVM_EXTERNAL_SHA = "62133c125bf4109dfd9d2af64830208356ce4ef8b165a6ef15bbff7460b35c3a"
+RULES_JVM_EXTERNAL_SHA = "82262ff4223c5fda6fb7ff8bd63db8131b51b413d26eb49e3131037e79e324af"
 
 http_archive(
     name = "rules_jvm_external",
