@@ -46,7 +46,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.coroutineScope
@@ -215,7 +216,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         serviceConnection?.disconnect()
         storageService = null
         channel = null
-        scope.cancel()
+        scope.coroutineContext[Job.Key]?.cancelChildren()
     }
 
     companion object {
