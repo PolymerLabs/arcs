@@ -167,7 +167,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun singleton_clearOnAClearDataWrittenByA() = testRunner {
+    open fun singleton_clearOnAClearDataWrittenByA() = testRunner {
         val handleA = writeHandleManager.createSingletonHandle()
         val handleB = readHandleManager.createSingletonHandle()
 
