@@ -311,7 +311,7 @@ export class Schema {
   normalizeForHash(): string {
     let str = this.names.slice().sort().join(' ') + '/';
     for (const field of Object.keys(this.fields).sort()) {
-      const {kind, type, schema} = this.fields[field];
+      const {kind, type, schema, types} = this.fields[field];
       str += field + ':';
       if (kind === 'schema-primitive') {
         str += type + '|';
@@ -321,6 +321,8 @@ export class Schema {
         str += '[&(' + schema.schema.model.entitySchema.normalizeForHash() + ')]';
       } else if (kind === 'schema-collection' && schema.kind === 'schema-primitive') {
         str += '[' + schema.type + ']';
+      } else if (kind === 'schema-tuple') {
+        str += `(${types.map(t => t.type).join('|')})`
       } else {
         throw new Error('Schema hash: unsupported field type');
       }
