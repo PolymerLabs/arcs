@@ -12,10 +12,8 @@
 package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperationAtTime
-import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
 import arcs.core.util.Scheduler
 import arcs.core.util.SchedulerDispatcher
