@@ -3538,6 +3538,24 @@ resource SomeName
         assert.isDefined(result[3].fields.e);
         assert.isDefined(result[3].fields.f);
       });
+      it('handles out of order schemas declarations', async () => {
+        const manifest = await parseManifest(`
+          schema Baz
+            t: Text
+          schema Foo
+            bar: &Bar
+            baz: &Baz
+          schema Bar
+            n: Number
+        `);
+        const foo = manifest.schemas['Foo'];
+
+        const barReference = foo.fields['bar'].schema.model.entitySchema;
+        assert.equal(barReference.fields['n'].type, 'Number');
+
+        const bazReference = foo.fields['baz'].schema.model.entitySchema;
+        assert.equal(bazReference.fields['t'].type, 'Text');
+      });
     });
     describe('handles manifests with external stores of defined schemas', () => {
       it('handles a simple external store of a schema', async () => {
