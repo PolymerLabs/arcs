@@ -13,7 +13,7 @@ import {Handle} from '../runtime/recipe/handle.js';
 import {Particle} from '../runtime/recipe/particle.js';
 import {Type, CollectionType, ReferenceType, SingletonType, TupleType} from '../runtime/type.js';
 import {Schema} from '../runtime/schema.js';
-import {ParticleSpec} from '../runtime/particle-spec.js';
+import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 import {assert} from '../platform/assert-web.js';
 import {findLongRunningArcId} from './storage-key-recipe-resolver.js';
 import {Manifest} from '../runtime/manifest.js';
@@ -21,6 +21,7 @@ import {Capabilities} from '../runtime/capabilities.js';
 import {CapabilityEnum, DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
 import {Refinement, RefinementExpressionLiteral} from '../runtime/refiner.js';
 import {Op} from '../runtime/manifest-ast-nodes.js';
+import {Claim, ClaimType} from '../runtime/particle-claim.js';
 
 export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path);
@@ -57,21 +58,67 @@ function encodePayload(payload: {}): Uint8Array {
 }
 
 async function particleSpecToProtoPayload(spec: ParticleSpec) {
+  let claims = [];
+  const connections = await Promise.all(spec.connections.map(async cs => {
+    const directionOrdinal = DirectionEnum.values[cs.direction.replace(/ /g, '_').toUpperCase()];
+    if (directionOrdinal === undefined) {
+      throw Error(`Handle connection direction ${cs.direction} is not supported`);
+    }
+    const proto = {
+      name: cs.name,
+      direction: directionOrdinal,
+      type: await typeToProtoPayload(cs.type)
+    };
+    const claimsProto = claimsToProtoPayload(cs, proto);
+    if (claimsProto != null) {
+      claims = claims.concat(claimsProto);
+    }
+    return proto;
+  }));
   return {
     name: spec.name,
     location: spec.implFile,
-    connections: await Promise.all(spec.connections.map(async cs => {
-      const directionOrdinal = DirectionEnum.values[cs.direction.replace(/ /g, '_').toUpperCase()];
-      if (directionOrdinal === undefined) {
-        throw Error(`Handle connection direction ${cs.direction} is not supported`);
-      }
-      return {
-        name: cs.name,
-        direction: directionOrdinal,
-        type: await typeToProtoPayload(cs.type)
-      };
-    }))
+    connections,
+    claims
   };
+}
+
+// Converts the claims in HandleConnectionSpec.
+function claimsToProtoPayload(cs: HandleConnectionSpec, proto: {}) {
+  return cs.claims?.map(claim => {
+    const accessPath = {handleConnection: cs.name};
+    switch (claim.type) {
+      case ClaimType.IsTag: {
+        const tag = {semanticTag: claim.tag};
+        let predicate;
+        if (claim.isNot) {
+          predicate = {
+            not: {
+              predicate: {
+                literal: {label: tag}
+              }
+            }
+          };
+        } else {
+          predicate = {
+            literal: {label: tag}
+          };
+        }
+        return {
+          assume: {accessPath, predicate}
+        };
+      }
+      case ClaimType.DerivesFrom: {
+        return {
+          derivesFrom: {
+            target: accessPath,
+            source: {handleConnection: claim.parentHandle.name}
+          }
+        };
+      }
+      default: return null;
+    }
+  }).filter(x => x != null);
 }
 
 async function recipeToProtoPayload(recipe: Recipe) {

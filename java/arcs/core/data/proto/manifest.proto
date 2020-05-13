@@ -76,6 +76,10 @@ message ParticleSpecProto {
   repeated HandleConnectionSpecProto connections = 2;
   // Location of the implementation.
   string location = 3;
+  // Conjunction of all claims.
+  repeated ClaimProto claims = 4;
+  // Conjunction of all checks.
+  repeated CheckProto checks = 5;
 }
 
 // Defines a single connection of a particle spec.
@@ -196,4 +200,67 @@ message BinaryExpressionProto {
 message UnaryExpressionProto {
   RefinementExpressionProto expr = 1;
   OPERATOR operator = 2;
+}
+
+message AccessPathProto {
+  message Selector {
+    oneof selector {
+      string field = 1;
+      // TODO(bgogul): Other selectors like dereferencing, index, etc.
+    }
+  }
+  string handle_connection = 1;
+  repeated Selector selectors = 2;
+}
+
+message InformationFlowLabelProto {
+  message Predicate {
+    message Literal {
+      InformationFlowLabelProto label = 1;
+    }
+    message And {
+      Predicate conjunct0 = 1;
+      Predicate conjunct1 = 2;
+    }
+    message Or {
+      Predicate disjunct0 = 1;
+      Predicate disjunct1 = 2;
+    }
+    message Not {
+      Predicate predicate = 1;
+    }
+    oneof predicate {
+      Literal literal = 1;
+      And and = 2;
+      Or or = 3;
+      Not not = 4;
+    }
+  }
+
+  oneof label {
+    string semantic_tag = 1;
+    // TODO(bgogul): Other kinds of labels: stores, handles, etc.
+  }
+};
+
+message ClaimProto {
+  message DerivesFrom {
+    AccessPathProto target = 1;
+    AccessPathProto source = 2;
+  }
+
+  message Assume {
+    AccessPathProto access_path = 1;
+    InformationFlowLabelProto.Predicate predicate = 2;
+  }
+
+  oneof claim {
+    DerivesFrom derives_from = 1;
+    Assume assume = 2;
+  }
+}
+
+message CheckProto {
+  AccessPathProto access_path = 1;
+  InformationFlowLabelProto.Predicate predicate = 2;
 }
