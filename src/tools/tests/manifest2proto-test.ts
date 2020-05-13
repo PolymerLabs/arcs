@@ -219,6 +219,9 @@ describe('manifest2proto', () => {
             }
           },
           hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
+          query: {
+            "boolean": true
+          }
         },
       },
       refinement: {
@@ -243,6 +246,33 @@ describe('manifest2proto', () => {
             }
           },
           hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
+          query: {
+            binary: {
+              leftExpr: {
+                binary: {
+                  leftExpr: {
+                    field: 'num',
+                  },
+                  operator: 'LESS_THAN',
+                  rightExpr: {
+                    number: 12
+                  }
+                }
+              },
+              operator: 'AND',
+              rightExpr: {
+                binary: {
+                  leftExpr: {
+                    field: 'num'
+                  },
+                  operator: 'GREATER_THAN',
+                  rightExpr: {
+                    number: -1
+                  }
+                }
+              },
+            }
+          }
         },
       },
       refinement: {
@@ -291,6 +321,17 @@ describe('manifest2proto', () => {
             }
           },
           hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
+          query: {
+            binary: {
+              leftExpr: {
+                field: 'num'
+              },
+              operator: 'EQUALS',
+              rightExpr: {
+                queryArgument: '?'
+              },
+            }
+          }
         },
       },
       refinement: {
@@ -466,6 +507,21 @@ describe('manifest2proto', () => {
         },
         hash: '2d3317e5ef54fbdf3fbc02ed481c2472ebe9ba66'
       }}}}}}},
+    });
+  });
+
+  it('encodes schemas with tuple fields', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        t: (Text, Number)
+      particle Abc in 'a/b/c.js'
+        input: reads Foo 
+    `);
+    const schema = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type.entity.schema;
+
+    assert.deepStrictEqual(schema.names, ['Foo']);
+    assert.deepStrictEqual(schema.fields, {
+      t: {tuple: {elements: [{primitive: 'TEXT'}, {primitive: 'NUMBER'}]}}
     });
   });
 

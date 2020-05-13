@@ -276,6 +276,13 @@ async function schemaFieldToProtoPayload(fieldType: SchemaField) {
         }
       };
     }
+    case 'schema-tuple': {
+      return {
+        tuple: {
+          elements: await Promise.all(fieldType.types.map(schemaFieldToProtoPayload))
+        }
+      };
+    }
     case 'schema-reference': {
       return {
         reference: {
@@ -286,6 +293,8 @@ async function schemaFieldToProtoPayload(fieldType: SchemaField) {
     case 'schema-inline': {
       return typeToProtoPayload(fieldType.model);
     }
+    // TODO(b/154947220) support schema-unions
+    case 'schema-union':
     default: throw Error(`Schema field kind ${fieldType.kind} is not supported.`);
   }
 }
