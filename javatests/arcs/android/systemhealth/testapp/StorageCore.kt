@@ -576,6 +576,14 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             }
 
             notify { "Progress 100%: populating stats and report" }
+            // Close all Handles and EntityHandleManagers
+            handles.forEach {
+                runBlocking {
+                    (it.handle as Handle).close()
+                    it.handleManager.close()
+                }
+            }
+            handles = emptyArray()
             populateStatsBulletin()
         }
     }
