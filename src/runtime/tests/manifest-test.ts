@@ -3780,11 +3780,13 @@ recipe Three`;
       assert.equal(cloneRecipe.toString(), recipe.toString());
     }
   });
-  it('verifies referencing annotations', async () => {
+  it('throws when annotation not defined', async () => {
     await assertThrowsAsync(async () => await Manifest.parse(`
         @nonexistent()
         recipe
     `), `annotation not found: 'nonexistent'`);
+  });
+  it('throws when wrong annotation target', async () => {
     await assertThrowsAsync(async () => await Manifest.parse(`
         annotation noParam
           retention: Source
@@ -3793,16 +3795,30 @@ recipe Three`;
         @noParam()
         recipe
     `), `Annotation 'noParam' is invalid for Recipe`);
-    const oneParamAnnotation = `
-      annotation oneParam(foo: Text)
-        retention: Source
-        targets: [Recipe, Particle]
-        doc: 'doc'`;
+  });
+  const oneParamAnnotation = `
+        annotation oneParam(foo: Text)
+          retention: Source
+          targets: [Recipe, Particle]
+          doc: 'doc'`;
+  it('throws when wrong annotation param', async () => {
+    console.log(`
+        ${oneParamAnnotation}
+        @oneParam(wrong: 'hello')
+        recipe
+    `);
     await assertThrowsAsync(async () => await Manifest.parse(`
         ${oneParamAnnotation}
         @oneParam(wrong: 'hello')
         recipe
     `), `unexpected annotation param: 'wrong'`);
+    await assertThrowsAsync(async () => await Manifest.parse(`
+        ${oneParamAnnotation}
+        @oneParam(foo: 'hello', wrong: 'world')
+        recipe
+    `), `unexpected annotation param: 'wrong'`);
+  });
+  it('throws when annotation param value of incorrect type', async () => {
     await assertThrowsAsync(async () => await Manifest.parse(`
         ${oneParamAnnotation}
         @oneParam(foo: 5)
@@ -3813,13 +3829,8 @@ recipe Three`;
         @oneParam(foo: false)
         recipe
     `), `expected 'Text' for param 'foo', instead got false`);
-    await assertThrowsAsync(async () => await Manifest.parse(`
-        ${oneParamAnnotation}
-        @oneParam(foo: 'hello', wrong: 'world')
-        recipe
-    `), `unexpected annotation param: 'wrong'`);
-
-    // Successfull parsing.
+  });
+  it('parses recipe annotation with text param', async () => {
     const recipe1 = (await Manifest.parse(`
         ${oneParamAnnotation}
         @oneParam(foo: 'hello')
@@ -3829,6 +3840,8 @@ recipe Three`;
     assert.equal(recipe1.annotations[0].params['foo'], 'hello');
     assert.isTrue(recipe1.annotations[0].isValidForTarget('Recipe'));
     assert.isFalse(recipe1.annotations[0].isValidForTarget('Schema'));
+  });
+  it('parses recipe annotation with no param', async () => {
     const recipe2 = (await Manifest.parse(`
         ${oneParamAnnotation}
         @oneParam()
