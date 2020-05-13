@@ -12,6 +12,7 @@
 package arcs.core.entity
 
 import arcs.core.data.HandleMode
+import kotlinx.coroutines.CompletableDeferred
 import kotlin.coroutines.resume
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -38,10 +39,10 @@ interface Handle {
 }
 
 /** Suspends until the [Handle] has synced with the store. */
-suspend fun <T : Handle> T.awaitReady(): T = suspendCancellableCoroutine<T> { cont ->
-    this.onReady {
-        if (cont.isActive) cont.resume(this@awaitReady)
-    }
+suspend fun <T : Handle> T.awaitReady(): T {
+    val deferred = CompletableDeferred<T>()
+    this.onReady { deferred.complete(this@awaitReady) }
+    return deferred.await()
 }
 
 /** Base interface for types that can be stored in a [Handle] (see [Entity] and [Reference]). */

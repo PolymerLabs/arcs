@@ -454,7 +454,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_addingToA_showsUpInB() = testRunner {
+    open fun collection_addingToA_showsUpInB() = testRunner {
         val handleA = writeHandleManager.createCollectionHandle()
             as ReadWriteCollectionHandle<Person>
         val handleB = readHandleManager.createCollectionHandle()
