@@ -46,12 +46,13 @@ fun List<HandleProto.Capability>.decode() = Capabilities(
  * Converts [HandleProto] into [Handle].
  *
  * If a type is not set in the [HandleProto], it is initialized to a newly created TypeVariable.
+ * @param knownHandles is a map of [Handle]s used the the recipe level to decode associatedHandles.
  */
-fun HandleProto.decode() = Handle(
+fun HandleProto.decode(knownHandles: Map<String, Handle> = emptyMap()) = Handle(
     name = name,
     fate = fate.decode(),
     storageKey = storageKey,
     type = if (hasType()) type.decode() else TypeVariable("$name"),
     capabilities = capabilitiesList.decode(),
-    associatedHandles = getAssociatedHandlesList()
+    associatedHandles = associatedHandlesList.map { requireNotNull(knownHandles[it]) }
 )

@@ -151,16 +151,25 @@ async function recipeHandleToProtoPayload(handle: Handle) {
   if (fateOrdinal === undefined) {
     throw Error(`Handle fate ${handle.fate} is not supported`);
   }
-
-  return ({
-    name: handle.localName || `handle${handle.recipe.handles.indexOf(handle)}`,
+  const toName = handle => handle.localName || `handle${handle.recipe.handles.indexOf(handle)}`;
+  const handleData = {
+    name: toName(handle),
     id: handle.id,
     tags: handle.tags,
     fate: fateOrdinal,
     capabilities: capabilitiesToProtoOrdinals(handle.capabilities),
-    storageKey: handle.storageKey && handle.storageKey.toString(),
     type: await typeToProtoPayload(handle.type || handle.mappedType)
-  });
+  };
+
+  if (handle.storageKey) {
+    handleData['storageKey'] = handle.storageKey.toString();
+  }
+
+  if (handle.fate === 'join' && handle.joinedHandles) {
+    handleData['associatedHandles'] = handle.joinedHandles.map(toName);
+  }
+
+  return handleData;
 }
 
 export function capabilitiesToProtoOrdinals(capabilities: Capabilities) {

@@ -66,12 +66,16 @@ class HandleProtoDecoderTest {
         val handleText = buildHandleProtoText(
             "notype_thing", "CREATE", "", storageKey, "handle_c", listOf("TIED_TO_ARC")
         )
+        val handles = mapOf(
+            "handle_c" to Handle("handle_c", Handle.Fate.MAP, TypeVariable("handle_c")),
+            "handle1" to Handle("handle1", Handle.Fate.MAP, TypeVariable("handle1"))
+        )
         val handleProto = parseHandleProtoText(handleText)
-        with(handleProto.decode()) {
+        with(handleProto.decode(handles)) {
             assertThat(name).isEqualTo("notype_thing")
             assertThat(fate).isEqualTo(Handle.Fate.CREATE)
             assertThat(storageKey).isEqualTo("ramdisk://a")
-            assertThat(associatedHandles).containsExactly("handle1", "handle_c")
+            assertThat(associatedHandles).containsExactly(handles["handle1"], handles["handle_c"])
             assertThat(type).isEqualTo(TypeVariable("notype_thing"))
             assertThat(capabilities).isEqualTo(Capabilities.TiedToArc)
         }
@@ -102,11 +106,16 @@ class HandleProtoDecoderTest {
             listOf("PERSISTENT", "QUERYABLE")
         )
         val handleProto = parseHandleProtoText(handleText)
-        with(handleProto.decode()) {
+
+        val handles = mapOf(
+            "handle1" to Handle("handle1", Handle.Fate.MAP, TypeVariable("handle1")),
+            "handle_join" to Handle("handle_join", Handle.Fate.JOIN, TypeVariable("handle_join"))
+        )
+        with(handleProto.decode(handles)) {
             assertThat(name).isEqualTo("thing")
             assertThat(fate).isEqualTo(Handle.Fate.JOIN)
             assertThat(storageKey).isEqualTo("ramdisk://b")
-            assertThat(associatedHandles).isEqualTo(listOf("handle1", "handle_join"))
+            assertThat(associatedHandles).isEqualTo(listOf(handles["handle1"], handles["handle_join"]))
             assertThat(type).isEqualTo(entityType)
             assertThat(capabilities).isEqualTo(Capabilities.PersistentQueryable)
         }

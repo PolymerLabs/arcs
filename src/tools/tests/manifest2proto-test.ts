@@ -101,6 +101,51 @@ describe('manifest2proto', () => {
     assert.deepEqual(capabilitiesToStrings(Capabilities.persistentQueryable), ['PERSISTENT', 'QUERYABLE']);
   });
 
+  it('encodes handle joins', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        data: reads [(
+          &Person {name: Text},
+          &Place {address: Text},
+        )]
+      recipe
+        people: use 'folks' #tag1
+        pairs: join (people, places)
+        places: map 'locations'
+        Foo
+          data: reads pairs
+    `);
+    const recipe = (await toProtoAndBack(manifest)).recipes[0];
+
+    // Clear the type so that the test is more readable. Tests for types encoding below.
+    for (const handle of recipe.handles) {
+      delete handle.type;
+    }
+    assert.deepStrictEqual(recipe, {
+      handles: [{
+        fate: 'JOIN',
+        name: 'handle0',
+        associatedHandles: ['handle1', 'handle2']
+      }, {
+        fate: 'USE',
+        name: 'handle1',
+        id: 'folks',
+        tags: ['tag1'],
+      }, {
+        fate: 'MAP',
+        name: 'handle2',
+        id: 'locations'
+      }],
+      particles: [{
+        specName: 'Foo',
+        connections: [{
+          handle: 'handle0',
+          name: 'data'
+        }]
+      }]
+    });
+  });
+
   it('encodes particle spec', async () => {
     const manifest = await Manifest.parse(`
       particle Abc in 'a/b/c.js'
