@@ -51,7 +51,7 @@
   }
 
   function checkNormal(result, path: string = '') {
-    if (['string', 'number', 'boolean'].includes(typeof result) || result === null) {
+    if (['string', 'number', 'bigint', 'boolean'].includes(typeof result) || result === null) {
       return;
     }
     if (result === undefined) {
@@ -1863,7 +1863,11 @@ UnitName
 NumberType
   = whole:[0-9]+ fractional:('.' [0-9]+)?
   {
-    return Number(text());
+    const txt = text();
+    if (txt.match(/\./)) {
+      return Number(text());
+    }
+    return BigInt(text());
   }
 
 Version "a version number (e.g. @012)"
