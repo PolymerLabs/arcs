@@ -3799,32 +3799,13 @@ recipe Three`;
       assert.equal(cloneRecipe.toString(), recipe.toString());
     }
   });
-  // TODO
-<<<<<<< HEAD
-
-  // remove this
-<<<<<<< HEAD
   it('throws when annotation not defined', async () => {
-=======
-  it('verifies referencing annotations', async () => {
->>>>>>> add annotation ref parsing for recipe and particle spec
-=======
-  it('throws when annotation not defined', async () => {
->>>>>>>  address comments: split tests
     await assertThrowsAsync(async () => await Manifest.parse(`
         @nonexistent()
         recipe
     `), `annotation not found: 'nonexistent'`);
-<<<<<<< HEAD
-<<<<<<< HEAD
   });
   it('throws when wrong annotation target', async () => {
-=======
->>>>>>> add annotation ref parsing for recipe and particle spec
-=======
-  });
-  it('throws when wrong annotation target', async () => {
->>>>>>>  address comments: split tests
     await assertThrowsAsync(async () => await Manifest.parse(`
         annotation noParam
           retention: Source
@@ -3833,10 +3814,6 @@ recipe Three`;
         @noParam()
         recipe
     `), `Annotation 'noParam' is invalid for Recipe`);
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>>  address comments: split tests
   });
   const oneParamAnnotation = `
         annotation oneParam(foo: Text)
@@ -3849,16 +3826,6 @@ recipe Three`;
         @oneParam(wrong: 'hello')
         recipe
     `);
-<<<<<<< HEAD
-=======
-    const oneParamAnnotation = `
-      annotation oneParam(foo: Text)
-        retention: Source
-        targets: [Recipe, Particle]
-        doc: 'doc'`;
->>>>>>> add annotation ref parsing for recipe and particle spec
-=======
->>>>>>>  address comments: split tests
     await assertThrowsAsync(async () => await Manifest.parse(`
         ${oneParamAnnotation}
         @oneParam(wrong: 'hello')
@@ -3866,10 +3833,6 @@ recipe Three`;
     `), `unexpected annotation param: 'wrong'`);
     await assertThrowsAsync(async () => await Manifest.parse(`
         ${oneParamAnnotation}
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>>  address comments: split tests
         @oneParam(foo: 'hello', wrong: 'world')
         recipe
     `), `unexpected annotation param: 'wrong'`);
@@ -3877,11 +3840,6 @@ recipe Three`;
   it('throws when annotation param value of incorrect type', async () => {
     await assertThrowsAsync(async () => await Manifest.parse(`
         ${oneParamAnnotation}
-<<<<<<< HEAD
-=======
->>>>>>> add annotation ref parsing for recipe and particle spec
-=======
->>>>>>>  address comments: split tests
         @oneParam(foo: 5)
         recipe
     `), `expected 'Text' for param 'foo', instead got 5`);
@@ -3890,23 +3848,15 @@ recipe Three`;
         @oneParam(foo: false)
         recipe
     `), `expected 'Text' for param 'foo', instead got false`);
-<<<<<<< HEAD
-<<<<<<< HEAD
   });
   it('parses recipe annotation with text param', async () => {
-=======
     await assertThrowsAsync(async () => await Manifest.parse(`
         ${oneParamAnnotation}
         @oneParam(foo: 'hello', wrong: 'world')
         recipe
     `), `unexpected annotation param: 'wrong'`);
-
-    // Successfull parsing.
->>>>>>> add annotation ref parsing for recipe and particle spec
-=======
   });
   it('parses recipe annotation with text param', async () => {
->>>>>>>  address comments: split tests
     const recipe1 = (await Manifest.parse(`
         ${oneParamAnnotation}
         @oneParam(foo: 'hello')
@@ -3916,16 +3866,8 @@ recipe Three`;
     assert.equal(recipe1.annotations[0].params['foo'], 'hello');
     assert.isTrue(recipe1.annotations[0].isValidForTarget('Recipe'));
     assert.isFalse(recipe1.annotations[0].isValidForTarget('Schema'));
-<<<<<<< HEAD
-<<<<<<< HEAD
   });
   it('parses recipe annotation with no param', async () => {
-=======
->>>>>>> add annotation ref parsing for recipe and particle spec
-=======
-  });
-  it('parses recipe annotation with no param', async () => {
->>>>>>>  address comments: split tests
     const recipe2 = (await Manifest.parse(`
         ${oneParamAnnotation}
         @oneParam()
@@ -3940,20 +3882,50 @@ recipe Three`;
         retention: Source
         targets: [Handle, HandleConnection]
         doc: 'a'
+      annotation foo1(qux: Boolean)
+        retention: Source
+        targets: [Handle, HandleConnection]
+        doc: 'a'
       schema Foo
         value: Text
       particle Fooer
         foos1: reads [Foo {value}] @foo(bar: 'hello', baz: 5)
-        foos2: reads writes [Foo {value}] @foo(baz: 5)
+        foos2: reads writes [Foo {value}] @foo(baz: 5) @foo1(qux: true)
         foos3: reads writes [Foo {value}] @foo()
         foos4: writes [Foo {value}]`)).particles[0];
     assert.lengthOf(particle.handleConnections, 4);
     assert.lengthOf(particle.getConnectionByName('foos1').annotations, 1);
     assert.equal(particle.getConnectionByName('foos1').annotations[0].params['bar'], 'hello');
     assert.equal(particle.getConnectionByName('foos1').annotations[0].params['baz'], 5);
-    assert.lengthOf(particle.getConnectionByName('foos2').annotations, 1);
+    assert.lengthOf(particle.getConnectionByName('foos2').annotations, 2);
     assert.equal(particle.getConnectionByName('foos2').annotations[0].params['baz'], 5);
+    assert.isTrue(particle.getConnectionByName('foos2').annotations[1].params['qux']);
     assert.lengthOf(particle.getConnectionByName('foos3').annotations, 1);
     assert.isEmpty(particle.getConnectionByName('foos4').annotations);
+  });
+  it('fails schema annotations with wrong target', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+      annotation foo(bar: Text)
+        retention: Source
+        targets: [Handle, HandleConnection]
+        doc: 'a'
+      @foo()
+      schema Foo
+        value: Text
+    `), `Annotation 'foo' is invalid for Schema`);
+  });
+  it('parses schema annotations', async () => {
+    const schema = (await Manifest.parse(`
+      annotation foo(bar: Text, baz: Number)
+        retention: Source
+        targets: [Schema, SchemaField]
+        doc: 'a'
+      @foo(baz: 1000)
+      schema Foo
+        value: Text
+    `)).schemas['Foo'];
+    assert.lengthOf(schema.annotations, 1);
+    assert.isUndefined(schema.annotations[0].params['bar']);
+    assert.equal(schema.annotations[0].params['baz'], 1000);
   });
 });
