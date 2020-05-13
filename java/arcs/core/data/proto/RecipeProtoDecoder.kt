@@ -17,10 +17,10 @@ import arcs.core.data.Recipe
 /** Converts a [RecipeProto] into [Recipe]. */
 fun RecipeProto.decode(particleSpecs: Map<String, ParticleSpec>): Recipe {
     val recipeHandles = mutableMapOf<String, Recipe.Handle>()
-    val decodeAndUpdate = { it: HandleProto ->
-        val oldValue = recipeHandles.put(it.name, it.decode(recipeHandles))
+    val decodeAndUpdate = { handleProto: HandleProto ->
+        val oldValue = recipeHandles.put(handleProto.name, handleProto.decode(recipeHandles))
         require(oldValue == null) {
-            "Duplicate handle '${it.name}' when decoding recipe '$name'."
+            "Duplicate handle '${handleProto.name}' when decoding recipe '$name'."
         }
     }
 

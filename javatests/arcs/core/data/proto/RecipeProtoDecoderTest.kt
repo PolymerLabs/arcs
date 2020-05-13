@@ -114,7 +114,6 @@ class RecipeProtoDecoderTest {
         .addHandles(joinHandleProto)
         .build()
 
-
     @Test
     fun decodesRecipe() {
         with(recipeProto.decode(context.particleSpecs)) {
@@ -160,11 +159,13 @@ class RecipeProtoDecoderTest {
         with(recipeWithJoin.decode(context.particleSpecs)) {
             assertThat(name).isEqualTo("WithJoin")
             assertThat(arcId).isEqualTo("arc-with-join")
-            assertThat(handles).isEqualTo(mapOf(
-                "thing" to thingHandle,
-                "thang" to thangHandle,
-                "pairs" to joinHandle
-            ))
+            assertThat(handles).isEqualTo(
+                mapOf(
+                    "thing" to thingHandle,
+                    "thang" to thangHandle,
+                    "pairs" to joinHandle
+                )
+            )
         }
     }
 }

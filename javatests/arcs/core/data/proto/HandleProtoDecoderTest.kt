@@ -75,7 +75,7 @@ class HandleProtoDecoderTest {
             assertThat(name).isEqualTo("notype_thing")
             assertThat(fate).isEqualTo(Handle.Fate.CREATE)
             assertThat(storageKey).isEqualTo("ramdisk://a")
-            assertThat(associatedHandles.map { it.name }).containsExactly("handle1", "handle_c")
+            assertThat(associatedHandles).containsExactly(handles["handle1"], handles["handle_c"])
             assertThat(type).isEqualTo(TypeVariable("notype_thing"))
             assertThat(capabilities).isEqualTo(Capabilities.TiedToArc)
         }
@@ -115,7 +115,7 @@ class HandleProtoDecoderTest {
             assertThat(name).isEqualTo("thing")
             assertThat(fate).isEqualTo(Handle.Fate.JOIN)
             assertThat(storageKey).isEqualTo("ramdisk://b")
-            assertThat(associatedHandles.map { it.name }).isEqualTo(listOf("handle1", "handle_join"))
+            assertThat(associatedHandles).isEqualTo(listOf(handles["handle1"], handles["handle_join"]))
             assertThat(type).isEqualTo(entityType)
             assertThat(capabilities).isEqualTo(Capabilities.PersistentQueryable)
         }
