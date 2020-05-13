@@ -440,10 +440,8 @@ describe('manifest2proto', () => {
             handleConnection: 'private'
           },
           predicate: {
-            literal: {
-              label: {
-                semanticTag: 'private_tag'
-              }
+            label: {
+              semanticTag: 'private_tag'
             }
           }
         }
@@ -456,10 +454,8 @@ describe('manifest2proto', () => {
           predicate: {
             not: {
               predicate: {
-                literal: {
-                  label: {
-                    semanticTag: 'private_tag'
-                  }
+                label: {
+                  semanticTag: 'private_tag'
                 }
               }
             }
@@ -518,10 +514,8 @@ describe('manifest2proto', () => {
             handleConnection: 'output'
           },
           predicate: {
-            literal: {
-              label: {
-                semanticTag: 'public'
-              }
+            label: {
+              semanticTag: 'public'
             }
           }
         }

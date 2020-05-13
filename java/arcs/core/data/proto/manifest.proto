@@ -215,9 +215,6 @@ message AccessPathProto {
 
 message InformationFlowLabelProto {
   message Predicate {
-    message Literal {
-      InformationFlowLabelProto label = 1;
-    }
     message And {
       Predicate conjunct0 = 1;
       Predicate conjunct1 = 2;
@@ -230,7 +227,7 @@ message InformationFlowLabelProto {
       Predicate predicate = 1;
     }
     oneof predicate {
-      Literal literal = 1;
+      InformationFlowLabelProto label = 1;
       And and = 2;
       Or or = 3;
       Not not = 4;

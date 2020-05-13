@@ -95,13 +95,13 @@ function claimsToProtoPayload(cs: HandleConnectionSpec, proto: {}) {
           predicate = {
             not: {
               predicate: {
-                literal: {label: tag}
+                label: tag
               }
             }
           };
         } else {
           predicate = {
-            literal: {label: tag}
+            label: tag
           };
         }
         return {
