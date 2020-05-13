@@ -23,13 +23,16 @@ object ArcHostManager {
 
     fun register(registry: HostRegistry) = registries.update { it + setOf(registry) }
 
-    // Pause all known Hosts.
-    suspend fun pauseAllHosts() {
-        registries.value.flatMap { it.availableArcHosts() }.forEach { it.pause() }
-    }
-
-    // Unpause all known Hosts.
-    suspend fun unPauseAllHosts() {
-        registries.value.flatMap { it.availableArcHosts() }.forEach { it.unpause() }
+    /**
+     * Pauses all known hosts, runs the [block], then unpauses the hosts.
+     */
+    suspend fun pauseAllHostsFor(block: suspend () -> Unit) {
+        val hosts = registries.value.flatMap { it.availableArcHosts() }
+        hosts.forEach { it.pause() }
+        try {
+            block()
+        } finally {
+            hosts.forEach { it.unpause() }
+        }
     }
 }

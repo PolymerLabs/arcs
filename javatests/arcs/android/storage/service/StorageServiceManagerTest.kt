@@ -25,6 +25,7 @@ import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreWriteBack
+import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
@@ -35,6 +36,8 @@ import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -69,11 +72,41 @@ class StorageServiceManagerTest {
         SchemaRegistry.register(DummyEntity)
     }
 
+    @After
+    fun tearDown() {
+        WriteBackForTesting.clear()
+        scheduler.cancel()
+        RamDisk.clear()
+    }
+
     @Test
-    fun clearAll() = runBlocking {
+    fun databaseClearAll() = runBlocking {
         testClearAllForKey(databaseKey)
+    }
+
+    @Test
+    fun ramdiskClearAll() = runBlocking {
         testClearAllForKey(ramdiskKey)
+    }
+
+    @Test
+    fun volatileClearAll() = runBlocking {
         testClearAllForKey(volatileKey)
+    }
+
+    @Test
+    fun databaseClearDataBetween() = runBlocking {
+        testClearDataBetweenForKey(databaseKey, allRemoved = false)
+    }
+
+    @Test
+    fun ramdiskClearDataBetween() = runBlocking {
+        testClearDataBetweenForKey(ramdiskKey, allRemoved = true)
+    }
+
+    @Test
+    fun volatileClearDataBetween() = runBlocking {
+        testClearDataBetweenForKey(volatileKey, allRemoved = true)
     }
 
     private suspend fun testClearAllForKey(storageKey: StorageKey) {
@@ -91,16 +124,12 @@ class StorageServiceManagerTest {
         assertThat(deferredResult.await()).isTrue()
 
         // Create a new handle (with new Entity manager) to confirm data is gone from storage.
-        assertThat(createSingletonHandle(storageKey).fetch()).isNull()
+        val newHandle = createSingletonHandle(storageKey)
+        withContext(newHandle.dispatcher) {
+            assertThat(newHandle.fetch()).isNull()
+        }
     }
 
-    @Test
-    fun clearDataBetween() = runBlocking {
-        testClearDataBetweenForKey(databaseKey, allRemoved = false)
-        testClearDataBetweenForKey(ramdiskKey, allRemoved = true)
-        testClearDataBetweenForKey(volatileKey, allRemoved = true)
-    }
-    
     private suspend fun testClearDataBetweenForKey(storageKey: StorageKey, allRemoved: Boolean) {
         val entity1 = DummyEntity().apply { num = 1.0 }
         val entity2 = DummyEntity().apply { num = 2.0 }
@@ -122,11 +151,13 @@ class StorageServiceManagerTest {
         assertThat(deferredResult.await()).isTrue()
 
         // Create a new handle (with new Entity manager) to confirm data is gone from storage.
-        if(allRemoved) {
-            assertThat(createCollectionHandle(storageKey).fetchAll()).isEmpty()
-        } else {
-            assertThat(createCollectionHandle(storageKey).fetchAll())
-                .containsExactly(entity1, entity3)
+        val newHandle = createCollectionHandle(storageKey)
+        withContext(newHandle.dispatcher) {
+            if(allRemoved) {
+                assertThat(newHandle.fetchAll()).isEmpty()
+            } else {
+                assertThat(newHandle.fetchAll()).containsExactly(entity1, entity3)
+            }
         }
     }
 

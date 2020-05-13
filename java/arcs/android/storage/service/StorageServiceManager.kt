@@ -31,9 +31,9 @@ class StorageServiceManager(
 
     override fun clearAll(resultCallback: IResultCallback) {
         runBlocking(coroutineContext) {
-            ArcHostManager.pauseAllHosts()
-            DriverFactory.removeAllEntities().join()
-            ArcHostManager.unPauseAllHosts()
+            ArcHostManager.pauseAllHostsFor {
+                DriverFactory.removeAllEntities().join()
+            }
         }
         resultCallback.onResult(null)
     }
@@ -44,9 +44,9 @@ class StorageServiceManager(
         resultCallback: IResultCallback
     ) {
         runBlocking(coroutineContext) {
-            ArcHostManager.pauseAllHosts()
-            DriverFactory.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis).join()
-            ArcHostManager.unPauseAllHosts()
+            ArcHostManager.pauseAllHostsFor {
+                DriverFactory.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis).join()
+            }
         }
         resultCallback.onResult(null)
     }
