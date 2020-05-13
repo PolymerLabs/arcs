@@ -12,8 +12,10 @@
 package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
 import arcs.core.util.Scheduler
 import arcs.core.util.SchedulerDispatcher
@@ -39,9 +41,17 @@ import kotlinx.coroutines.withContext
  */
 class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     storeEndpointProvider: StorageCommunicationEndpointProvider<Data, Op, T>,
-    private val crdt: CrdtModel<Data, Op, T>,
+    crdt: CrdtModel<Data, Op, T>,
     private val scheduler: Scheduler
 ) {
+    // Nullable internally, we don't allow constructor to pass null model
+    private var _crdt: CrdtModel<Data, Op, T>? = crdt
+
+    private val crdt: CrdtModel<Data, Op, T>
+        get() = requireNotNull(_crdt) {
+            "crdt field is null, StorageProxy closed?"
+        }
+
     /**
      * If you need to interact with the data managed by this [StorageProxy], and you're not a
      * [Store], you must either be performing your interactions within a handle callback or on this
@@ -154,6 +164,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      * being thrown.
      */
     fun close() {
+        _crdt = null
         store.close()
         stateHolder.update { it.setState(ProxyState.CLOSED) }
     }
