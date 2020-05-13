@@ -40,5 +40,4 @@ fun SchemaProto.decodeFields(): SchemaFields {
 }
 
 /** Converts a [SchemaProto] proto instance into a Kotlin [Schema] instance. */
-fun SchemaProto.decode() = Schema(names = decodeNames(), fields = decodeFields(), hash = "")
-// TODO: hash
+fun SchemaProto.decode() = Schema(names = decodeNames(), fields = decodeFields(), hash = hash)
