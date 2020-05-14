@@ -23,11 +23,9 @@ fun decodeSchemaProtoText(protoText: String): Schema {
 @RunWith(JUnit4::class)
 class SchemaProtoDecoderTest {
 
-    /**
-     * schema Thing, Object
-     */
     @Test
     fun decodesNamesInSchemaProto() {
+        // schema Thing, Object
         val schemaProtoText = """
         names:  "Thing"
         names:  "Object"
@@ -36,13 +34,11 @@ class SchemaProtoDecoderTest {
         assertThat(schema.names).containsExactly(SchemaName("Thing"), SchemaName("Object"))
     }
 
-    /**
-     * schema
-     *  text: Text
-     *  bool: Boolean
-     */
     @Test
     fun decodesSingletonsInSchemaProto() {
+        // schema
+        //   text: Text
+        //   bool: Boolean
         val schemaProtoText = """
         fields {
           key: "text"
@@ -62,13 +58,11 @@ class SchemaProtoDecoderTest {
             mapOf("text" to FieldType.Text, "bool" to FieldType.Boolean))
     }
 
-    /**
-     * schema
-     *  text: [ Text ]
-     *  bool: [ Boolean ]
-     */
     @Test
     fun decodesCollectionsInSchemaProto() {
+        // schema
+        //   text: [ Text ]
+        //   bool: [ Boolean ]
         val schemaProtoText = """
         fields {
           key: "text"
@@ -96,13 +90,11 @@ class SchemaProtoDecoderTest {
             mapOf("text" to FieldType.Text, "bool" to FieldType.Boolean))
     }
 
-    /**
-     * schema
-     *  text: [&Product {name: Text}]
-     *  num: [&Review {rating: Number}]
-     */
     @Test
     fun decodesCollectionsOfReferencesInSchemaProto() {
+        // schema
+        //   text: [&Product {name: Text}]
+        //   num: [&Review {rating: Number}]
         val schemaProtoText = """
         fields {
           key: "text"
@@ -164,12 +156,10 @@ class SchemaProtoDecoderTest {
         )
     }
 
-    /**
-     * schema
-     *  tuple: (Text, Number)
-     */
     @Test
     fun decodesSingletonsOfTuplesInSchemaProto() {
+        // schema
+        //   tuple: (Text, Number)
         val schemaProtoText = """
         fields {
           key: "tuple"
@@ -193,12 +183,10 @@ class SchemaProtoDecoderTest {
         )
     }
 
-    /**
-     * schema
-     *  tuples: [(Text, Number)]
-     */
     @Test
     fun decodesCollectionsOfTuplesInSchemaProto() {
+        // schema
+        //   tuples: [(Text, Number)]
         val schemaProtoText = """
         fields {
           key: "tuples"
