@@ -471,10 +471,8 @@ describe('manifest2proto', () => {
 
   it('encodes schemas with tuple fields', async () => {
     const manifest = await Manifest.parse(`
-      schema Foo
-        t: (Text, Number)
       particle Abc in 'a/b/c.js'
-        input: reads Foo 
+        input: reads Foo {t: (Text, Number)}
     `);
     const schema = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type.entity.schema;
 
