@@ -1338,6 +1338,9 @@ class DatabaseImpl(
         is FieldType.EntityRef -> requireNotNull(schemaTypeMap[fieldType.schemaHash]) {
             "Unknown type ID for schema with hash ${fieldType.schemaHash}"
         }
+        // TODO(b/156003617)
+        is FieldType.Tuple ->
+            throw NotImplementedError("[FieldType.Tuple]s not currently supported.")
     }
 
     /** Test-only version of [getTypeId]. */
