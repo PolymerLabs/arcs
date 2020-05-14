@@ -341,9 +341,8 @@ private fun fromReferencable(
             }
             Reference(entitySpec, referencable)
         }
+        // TODO(b/155025255)
+        is FieldType.Tuple ->
+            throw NotImplementedError("References cannot be converted [FieldType.Tuple]s.")
     }
-    is FieldType.EntityRef -> Reference.fromReferencable(referencable, type.schemaHash)
-    // TODO(b/155025255)
-    is FieldType.Tuple ->
-        throw NotImplementedError("References cannot be converted [FieldType.Tuple]s.")
 }
