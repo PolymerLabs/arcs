@@ -3958,11 +3958,26 @@ annotation baz(qux: Number)
 store Store0 of [Thing {blah: Text}] 'my-things' in 'Things.json'
     `;
     const manifest = await Manifest.parse(manifestStr, {loader, memoryProvider});
-    const annotations = manifest.storeAnnotations.get(manifest.stores[0]);
+    const annotations = manifest.stores[0].storeInfo.annotations;
     assert.lengthOf(annotations, 2);
-    assert.equal(annotations.find(a => a.name == 'foo').params['bar'], 'hello');
-    assert.equal(annotations.find(a => a.name == 'baz').params['qux'], 123);
+    assert.equal(annotations.find(a => a.name === 'foo').params['bar'], 'hello');
+    assert.equal(annotations.find(a => a.name === 'baz').params['qux'], 123);
     assert.equal(manifest.toString(), manifestStr.trim());
   });
-  // TODO: support just param, in single param annotation foo('hello')?
+  it('parses recipe handle annotations', async () => {
+    const manifest = await Manifest.parse(`
+annotation hello(world: Text)
+  targets: [Handle, Store]
+  retention: Source
+  doc: 'a'
+recipe
+  foo: create
+  bar: ?
+  baz: create persistent
+  qux: create persistent @ttl(2d)
+  quw: create persistent 'my-id' @ttl(10m) @hello(world: 'woohoo')
+    `);
+    const quwHandle = manifest.recipes[0].findHandleByID('my-id');
+    assert.lengthOf(quwHandle.annotations, 1);
+  });
 });

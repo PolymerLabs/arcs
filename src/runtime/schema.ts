@@ -311,7 +311,7 @@ export class Schema {
         }
       }
     }
-    return results.join('\n');
+    return results.filter(result => !!result).join('\n');
   }
 
   async hash(): Promise<string> {

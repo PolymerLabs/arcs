@@ -144,7 +144,6 @@ export class Manifest {
   private _stores: AbstractStore[] = [];
   private _interfaces = <InterfaceInfo[]>[];
   storeTags: Map<AbstractStore, string[]> = new Map();
-  storeAnnotations: Map<AbstractStore, AnnotationRef[]> = new Map();
   private _fileName: string|null = null;
   private readonly _id: Id;
   // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
@@ -234,10 +233,9 @@ export class Manifest {
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
 
-  _addStore(store: AbstractStore, tags: string[], annotations: AnnotationRef[]) {
+  _addStore(store: AbstractStore, tags: string[]) {
     this._stores.push(store);
     this.storeTags.set(store, tags ? tags : []);
-    this.storeAnnotations.set(store, annotations);
     return store;
   }
 
@@ -266,7 +264,7 @@ export class Manifest {
       storageKey = StorageKeyParser.parse(storageKey);
     }
     const store = new Store(opts.type, {...opts, storageKey, exists: Exists.MayExist});
-    return this._addStore(store, opts.tags, opts.annotations || []);
+    return this._addStore(store, opts.tags);
   }
 
   _find<a>(manifestFinder: ManifestFinder<a>): a {
@@ -904,6 +902,9 @@ ${e.message}
             item.annotation.parameter.count,
             Ttl.ttlUnitsFromString(item.annotation.parameter.units));
       }
+      if (item.kind === 'handle' && item.annotations) {
+        handle.annotations = Manifest._buildAnnotationRefs(manifest, item.annotations);
+      }
       items.byHandle.set(handle, item);
     }
 
@@ -1418,11 +1419,11 @@ ${e.message}
   }
 
   // TODO: This is a temporary method to allow sharing stores with other Arcs.
-  registerStore(store: AbstractStore, tags: string[], annotations: AnnotationRef[] = []): void {
+  registerStore(store: AbstractStore, tags: string[]): void {
     // Only register stores that have non-volatile storage key and don't have a
     // #volatile tag.
     if (!this.findStoreById(store.id) && !this.isVolatileStore(store, tags)) {
-      this._addStore(store, tags, annotations);
+      this._addStore(store, tags);
     }
   }
 
@@ -1469,10 +1470,7 @@ ${e.message}
 
     const stores = [...this.stores].sort(compareComparables);
     stores.forEach(store => {
-      results.push(store.toManifestString({
-        handleTags: this.storeTags.get(store),
-        annotations: this.storeAnnotations.get(store)
-      }));
+      results.push(store.toManifestString({handleTags: this.storeTags.get(store)}));
     });
 
     return results.join('\n');

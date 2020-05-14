@@ -488,6 +488,7 @@ export interface RecipeHandle extends BaseNode {
   fate: Fate;
   capabilities: RecipeHandleCapability[];
   annotation: ParameterizedAnnotation|null;
+  annotations: AnnotationRef[];
 }
 
 export interface RecipeSyntheticHandle extends BaseNode {

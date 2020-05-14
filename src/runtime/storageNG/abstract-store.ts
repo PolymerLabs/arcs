@@ -103,12 +103,12 @@ export abstract class AbstractStore implements Comparable<AbstractStore> {
   }
 
   // TODO: Make these tags live inside StoreInfo.
-  toManifestString(opts?: {handleTags?: string[], overrides?: Partial<StoreInfo>, annotations?: AnnotationRef[]}): string {
+  toManifestString(opts?: {handleTags?: string[], overrides?: Partial<StoreInfo>}): string {
     opts = opts || {};
     const info = {...this.storeInfo, ...opts.overrides};
     const results: string[] = [];
-    if (opts.annotations && opts.annotations.length) {
-      results.push(`${opts.annotations.map(a => a.toString()).join('\n')}`);
+    if ((this.storeInfo.annotations || []).length > 0) {
+      results.push(`${this.storeInfo.annotations.map(a => a.toString()).join('\n')}`);
     }
     const handleStr: string[] = [];
     handleStr.push(`store`);
@@ -162,6 +162,7 @@ export type StoreInfo = {
 
   /** Trust tags claimed by this data store. */
   readonly claims?: ClaimIsTag[];
+  readonly annotations?: AnnotationRef[];
 
   readonly versionToken?: string;
   readonly model?: {};
