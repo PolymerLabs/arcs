@@ -375,6 +375,24 @@ describe('manifest parser', () => {
         productReviews: reads Product {review: [&Review {reviewText: Text}]}
     `);
   });
+  it('parses a schema with kotlin types', () => {
+    parse(`
+      schema KotlinThings
+        aByte: Byte
+        aShort: Short
+        anInt: Int
+        aLong: Long
+        aChar: Char
+        aFloat: Float
+        aDouble: Double
+    `);
+  });
+  it('parses an inline schema with kotlin types', () => {
+    parse(`
+      particle Foo
+        kotlinThings: reads KotlinThings {aByte: Byte, aShort: Short, anInt: Int, aLong: Long, aChar: Char, aFloat: Float, aDouble: Double}
+    `);
+  });
   it('parses typenames with reserved type names as a prefix (Boolean)', () => {
     parse(`
       particle Foo
