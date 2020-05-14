@@ -740,7 +740,8 @@ ${e.message}
         schemaItem.location,
         `Schema defined without name or alias`);
     }
-    const schema = new Schema(names, fields, {description});
+    const annotations: AnnotationRef[] = Manifest._buildAnnotationRefs(manifest, schemaItem.annotationRefs);
+    const schema = new Schema(names, fields, {description, annotations});
     if (schemaItem.alias) {
       schema.isAlias = true;
     }
@@ -793,6 +794,7 @@ ${e.message}
         }
         arg.type = arg.type.model;
         processArgTypes(arg.dependentConnections);
+        arg.annotations = Manifest._buildAnnotationRefs(manifest, arg.annotations);
       }
     };
     processArgTypes(particleItem.args);

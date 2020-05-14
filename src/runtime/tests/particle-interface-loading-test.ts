@@ -86,9 +86,9 @@ describe('particle interface loading', () => {
       verbs: [],
       implFile: 'outer-particle.js',
       args: [
-        {direction: 'hosts', relaxed: false, type: ifaceType, name: 'particle0', dependentConnections: [], isOptional: false},
-        {direction: 'reads', relaxed: false, type: fooType, name: 'input', dependentConnections: [], isOptional: false},
-        {direction: 'writes', relaxed: false, type: barType, name: 'output', dependentConnections: [], isOptional: false}
+        {direction: 'hosts', relaxed: false, type: ifaceType, name: 'particle0', dependentConnections: [], isOptional: false, annotations: []},
+        {direction: 'reads', relaxed: false, type: fooType, name: 'input', dependentConnections: [], isOptional: false, annotations: []},
+        {direction: 'writes', relaxed: false, type: barType, name: 'output', dependentConnections: [], isOptional: false, annotations: []}
       ],
     });
 

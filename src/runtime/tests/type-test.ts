@@ -40,7 +40,7 @@ describe('types', () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
       deepEqual(entity.toLiteral(), {
         tag: 'Entity',
-        data: {names: ['Foo'], fields: {value: {kind: 'schema-primitive', refinement: null, type: 'Text'}}, refinement: null, description: {}}
+        data: {names: ['Foo'], fields: {value: {kind: 'schema-primitive', refinement: null, type: 'Text'}}, refinement: null, annotations: [], description: {}}
       });
       deepEqual(entity, Type.fromLiteral(entity.toLiteral()));
       deepEqual(entity, entity.clone(new Map()));
@@ -128,6 +128,7 @@ describe('types', () => {
               type: 'Text'
             }
           },
+          annotations: [],
           description: {}
         }
       });

@@ -67,6 +67,7 @@ describe('ArcStoresFetcher', () => {
           innerType: {
             tag: 'Entity',
             entitySchema: {
+              _annotations: [],
               description: {},
               fields: {
                 value: {

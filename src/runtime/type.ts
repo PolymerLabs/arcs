@@ -19,6 +19,7 @@ import {Schema} from './schema.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Refinement} from './refiner.js';
+import {AnnotationRef} from './recipe/annotation.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -371,7 +372,7 @@ export class EntityType extends Type {
   static make(
     names: string[],
     fields: {},
-    options: {description?, refinement?: Refinement} = {}
+    options: {description?, refinement?: Refinement, annotations?: AnnotationRef[]} = {}
   ): EntityType {
     return new EntityType(new Schema(names, fields, options));
   }
