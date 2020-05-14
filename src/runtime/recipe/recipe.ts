@@ -27,6 +27,7 @@ import {Slot} from './slot.js';
 import {compareComparables} from './comparable.js';
 import {Cloneable} from './walker.js';
 import {Dictionary} from '../hot.js';
+import {AnnotationRef} from './annotation.js';
 
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;
 export type CloneMap = Map<RecipeComponent, RecipeComponent>;
@@ -45,6 +46,8 @@ export class Recipe implements Cloneable<Recipe> {
   private _localName: string | undefined = undefined;
   private _cloneMap: CloneMap;
 
+  private _annotations: AnnotationRef[] = [];
+  // TODO(#5291): deprecate `annotation` and `triggers`; use `annotations` instead.
   annotation: string | undefined = undefined;
   triggers: [string, string][][] = [];
 
@@ -310,6 +313,13 @@ export class Recipe implements Cloneable<Recipe> {
     return handleConnections;
   }
 
+  get annotations(): AnnotationRef[] { return this._annotations; }
+  set annotations(annotations: AnnotationRef[]) {
+    annotations.every(a => assert(a.isValidForTarget('Recipe'),
+        `Annotation '${a.name}' is invalid for Recipe`));
+    this._annotations = annotations;
+  }
+
   isEmpty(): boolean {
     return this.particles.length === 0 &&
            this.handles.length === 0 &&
@@ -543,6 +553,8 @@ export class Recipe implements Cloneable<Recipe> {
 
     recipe._name = this.name;
     recipe.triggers = this.triggers;
+    recipe.annotations = this.annotations;
+
     recipe._verbs = recipe._verbs.concat(...this._verbs);
 
     // Clone regular handles first, then synthetic ones, as synthetic depend on regular.
@@ -609,6 +621,9 @@ export class Recipe implements Cloneable<Recipe> {
   toString(options?: ToStringOptions): string {
     const nameMap = this._makeLocalNameMap();
     const result: string[] = [];
+    for (const annotation of this.annotations) {
+      result.push(annotation.toString());
+    }
     const verbs = this.verbs.length > 0 ? ` ${this.verbs.map(verb => `&${verb}`).join(' ')}` : '';
     result.push(`recipe${this.name ? ` ${this.name}` : ''}${verbs}`);
     if (options && options.showUnresolved) {

@@ -431,6 +431,7 @@ export interface RecipeNode extends BaseNode {
   items: RecipeItem[];
   annotation?: string; // simpleAnnotation
   triggers?: Triggers;
+  annotationRefs?: AnnotationRef[];
 }
 
 export interface RecipeParticle extends BaseNode {
@@ -768,6 +769,7 @@ export interface Annotation extends BaseNode {
   kind: 'annotation';
   triggerSet: Triggers;
   simpleAnnotation?: string;
+  annotationRefs: AnnotationRef[];
 }
 
 export interface ParameterizedAnnotation extends BaseNode {

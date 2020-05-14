@@ -3745,23 +3745,24 @@ annotation oneParam(bar: Text)
   retention: Source
   doc: 'this is doc'
 annotation multiParam(foo: Text, bar: Number, baz: Boolean)
-  targets: [Store, Handle, HandleConnection, Schema, SchemaField]
+  targets: [Store, Handle, HandleConnection, Schema, SchemaField, Recipe]
   retention: Runtime
   doc: 'this is doc'
 annotation goodForAll
   retention: Runtime
   doc: 'this is doc'
 `;
-    const manifestStr = `
-${annotationsStr}
+    const manifestStr = `${annotationsStr.trim()}
+@oneParam(bar: 'bar')
+particle Foo
+  modality dom
 @oneParam(bar: 'hello world')
 recipe One
-@multiParam(foo: 'hello', bar: 5)
-@noParam
+@multiParam(foo: 'hello', bar: 5, baz: false)
+@noParam()
 recipe Two
-@goodForAll
-recipe Three
-    `;
+@goodForAll()
+recipe Three`;
     const manifest = await Manifest.parse(manifestStr);
     assert.equal(Object.keys(manifest.annotations).length, 4);
     assert.sameMembers(Object.keys(manifest.annotations), ['noParam', 'oneParam', 'multiParam', 'goodForAll']);
@@ -3782,7 +3783,7 @@ recipe Three
     assert.equal(multiParam.params['foo'], 'Text');
     assert.equal(multiParam.params['bar'], 'Number');
     assert.equal(multiParam.params['baz'], 'Boolean');
-    assert.deepEqual(multiParam.targets, ['Store', 'Handle', 'HandleConnection', 'Schema', 'SchemaField']);
+    assert.deepEqual(multiParam.targets, ['Store', 'Handle', 'HandleConnection', 'Schema', 'SchemaField', 'Recipe']);
     assert.equal(multiParam.retention, 'Runtime');
 
     const goodForAll = manifest.annotations['goodForAll'];
@@ -3790,7 +3791,81 @@ recipe Three
     assert.isEmpty(goodForAll.targets);
     assert.equal(goodForAll.retention, 'Runtime');
 
-    // TODO: store and serialize manifest items' annotations
-    // assert.equal(manifest.toString(), manifestStr);
+    assert.equal(manifest.toString(), manifestStr);
+
+    for (const recipe of manifest.recipes) {
+      const cloneRecipe = recipe.clone();
+      assert.equal(cloneRecipe.toString(), recipe.toString());
+    }
+  });
+  it('throws when annotation not defined', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+        @nonexistent()
+        recipe
+    `), `annotation not found: 'nonexistent'`);
+  });
+  it('throws when wrong annotation target', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+        annotation noParam
+          retention: Source
+          targets: [Particle]
+          doc: 'doc'
+        @noParam()
+        recipe
+    `), `Annotation 'noParam' is invalid for Recipe`);
+  });
+  const oneParamAnnotation = `
+        annotation oneParam(foo: Text)
+          retention: Source
+          targets: [Recipe, Particle]
+          doc: 'doc'`;
+  it('throws when wrong annotation param', async () => {
+    console.log(`
+        ${oneParamAnnotation}
+        @oneParam(wrong: 'hello')
+        recipe
+    `);
+    await assertThrowsAsync(async () => await Manifest.parse(`
+        ${oneParamAnnotation}
+        @oneParam(wrong: 'hello')
+        recipe
+    `), `unexpected annotation param: 'wrong'`);
+    await assertThrowsAsync(async () => await Manifest.parse(`
+        ${oneParamAnnotation}
+        @oneParam(foo: 'hello', wrong: 'world')
+        recipe
+    `), `unexpected annotation param: 'wrong'`);
+  });
+  it('throws when annotation param value of incorrect type', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+        ${oneParamAnnotation}
+        @oneParam(foo: 5)
+        recipe
+    `), `expected 'Text' for param 'foo', instead got 5`);
+    await assertThrowsAsync(async () => await Manifest.parse(`
+        ${oneParamAnnotation}
+        @oneParam(foo: false)
+        recipe
+    `), `expected 'Text' for param 'foo', instead got false`);
+  });
+  it('parses recipe annotation with text param', async () => {
+    const recipe1 = (await Manifest.parse(`
+        ${oneParamAnnotation}
+        @oneParam(foo: 'hello')
+        recipe`)).recipes[0];
+    assert.lengthOf(recipe1.annotations, 1);
+    assert.equal(recipe1.annotations[0].name, 'oneParam');
+    assert.equal(recipe1.annotations[0].params['foo'], 'hello');
+    assert.isTrue(recipe1.annotations[0].isValidForTarget('Recipe'));
+    assert.isFalse(recipe1.annotations[0].isValidForTarget('Schema'));
+  });
+  it('parses recipe annotation with no param', async () => {
+    const recipe2 = (await Manifest.parse(`
+        ${oneParamAnnotation}
+        @oneParam()
+        recipe`)).recipes[0];
+    assert.lengthOf(recipe2.annotations, 1);
+    assert.equal(recipe2.annotations[0].name, 'oneParam');
+    assert.isUndefined(recipe2.annotations[0].params['foo']);
   });
 });
