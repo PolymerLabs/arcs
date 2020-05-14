@@ -30,7 +30,15 @@ fun PrimitiveTypeProto.decode() = when (this) {
 }
 
 /** Converts a [PrimitiveTypeProto] protobuf instance into a Kotlin [FieldType] instance. */
-fun PrimitiveTypeProto.decodeAsFieldType(): FieldType.Primitive = FieldType.Primitive(decode())
+fun PrimitiveTypeProto.decodeAsFieldType() = FieldType.Primitive(decode())
+
+/** Converts a [ReferenceTypeProto] protobuf instance into a Kotlin [FieldType] instance. */
+fun ReferenceTypeProto.decodeAsFieldType() = FieldType.EntityRef(decode().entitySchema!!.hash)
+
+/** Converts a [TupleTypeProto] protobuf instance into a Kotlin [FieldType] instance. */
+fun TupleTypeProto.decodeAsFieldType(): FieldType.Tuple = FieldType.Tuple(
+    elementsList.map { it.decodeAsFieldType() }
+)
 
 /**
  * Converts a [TypeProto] protobuf instance into a Kotlin [FieldType] instance.
@@ -39,8 +47,10 @@ fun PrimitiveTypeProto.decodeAsFieldType(): FieldType.Primitive = FieldType.Prim
  */
 fun TypeProto.decodeAsFieldType() = when (dataCase) {
     TypeProto.DataCase.PRIMITIVE -> primitive.decodeAsFieldType()
-    // TODO: Handle FieldType.EntityRef. It is not clear how it is
-    // represented in the proto.
+    TypeProto.DataCase.REFERENCE -> reference.decodeAsFieldType()
+    TypeProto.DataCase.TUPLE -> tuple.decodeAsFieldType()
+    TypeProto.DataCase.COLLECTION ->
+        throw IllegalArgumentException("Cannot have nested collections in a Schema")
     TypeProto.DataCase.DATA_NOT_SET ->
         throw IllegalArgumentException("Unknown data field in TypeProto.")
     else ->

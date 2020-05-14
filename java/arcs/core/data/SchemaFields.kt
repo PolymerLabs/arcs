@@ -21,9 +21,13 @@ sealed class FieldType(
     /** A reference to an entity. */
     data class EntityRef(val schemaHash: String) : FieldType(Tag.EntityRef)
 
+    /** A tuple of [FieldType]s */
+    data class Tuple(val types: List<FieldType>) : FieldType(Tag.Tuple)
+
     enum class Tag {
         Primitive,
-        EntityRef
+        EntityRef,
+        Tuple
     }
 
     // Convenient aliases for all of the primitive field types.

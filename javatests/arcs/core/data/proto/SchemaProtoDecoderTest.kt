@@ -52,4 +52,150 @@ class SchemaProtoDecoderTest {
         assertThat(schema.fields.singletons).isEqualTo(
             mapOf("text" to FieldType.Text, "bool" to FieldType.Boolean))
     }
+
+    @Test
+    fun decodesCollectionsInSchemaProto() {
+        val schemaProtoText = """
+        fields {
+          key: "text"
+          value: {
+            collection {
+              collection_type: {
+                primitive: TEXT  
+              } 
+            }
+          }
+        }
+        fields {
+          key: "bool"
+          value: {
+            collection {
+              collection_type: {
+                primitive: BOOLEAN
+              } 
+            }
+          }
+        }
+        """.trimIndent()
+        val schema = decodeSchemaProtoText(schemaProtoText)
+        assertThat(schema.fields.collections).isEqualTo(
+            mapOf("text" to FieldType.Text, "bool" to FieldType.Boolean))
+    }
+
+    @Test
+    fun decodesCollectionsOfReferencesInSchemaProto() {
+        val schemaProtoText = """
+        fields {
+          key: "text"
+          value: {
+            collection {
+              collection_type: {
+                reference {
+                  referred_type {
+                    entity: {
+                      schema: {
+                        names: "Product"
+                        fields: {
+                          key: "name"
+                          value: { 
+                           primitive: TEXT
+                          } 
+                        }
+                        hash: "a76bdd3a638fc17a5b3e023edb542c1e891c4c89"
+                      }
+                    }
+                  }
+                }
+              } 
+            }
+          }
+        }
+        fields {
+          key: "num"
+          value: {
+            collection {
+              collection_type: {
+                reference {
+                  referred_type {
+                    entity: {
+                      schema: {
+                        names: "Review"
+                        fields: {
+                          key: "rating"
+                          value: { 
+                           primitive: NUMBER
+                          } 
+                        }
+                        hash: "2d3317e5ef54fbdf3fbc02ed481c2472ebe9ba66"
+                      }
+                    }
+                  }
+                }
+              } 
+            }
+          }
+        }
+        """.trimIndent()
+        val schema = decodeSchemaProtoText(schemaProtoText)
+        assertThat(schema.fields.collections).isEqualTo(
+            mapOf(
+                "text" to FieldType.EntityRef("a76bdd3a638fc17a5b3e023edb542c1e891c4c89"),
+                "num" to FieldType.EntityRef("2d3317e5ef54fbdf3fbc02ed481c2472ebe9ba66")
+            )
+        )
+    }
+
+    @Test
+    fun decodesSingletonsOfTuplesInSchemaProto() {
+        val schemaProtoText = """
+        fields {
+          key: "tuple"
+          value: {
+            tuple: {
+              elements: {
+                primitive: TEXT 
+              }
+              elements: {
+                primitive: NUMBER 
+              }
+            }
+          }
+        }
+        """.trimIndent()
+        val schema = decodeSchemaProtoText(schemaProtoText)
+        assertThat(schema.fields.singletons).isEqualTo(
+            mapOf(
+                "tuple" to FieldType.Tuple(listOf(FieldType.Text, FieldType.Number))
+            )
+        )
+    }
+
+    @Test
+    fun decodesCollectionsOfTuplesInSchemaProto() {
+        val schemaProtoText = """
+        fields {
+          key: "tuple"
+          value: {
+            collection: {
+              collection_type: {
+                tuple: {
+                  elements: {
+                    primitive: TEXT 
+                  }
+                  elements: {
+                    primitive: NUMBER 
+                  }
+                }
+              }
+            }
+          }
+        }
+        """.trimIndent()
+        val schema = decodeSchemaProtoText(schemaProtoText)
+        assertThat(schema.fields.collections).isEqualTo(
+            mapOf(
+                "tuple" to FieldType.Tuple(listOf(FieldType.Text, FieldType.Number))
+            )
+        )
+    }
 }
