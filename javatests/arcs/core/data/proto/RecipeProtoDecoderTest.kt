@@ -28,7 +28,9 @@ class RecipeProtoDecoderTest {
         .build()
     val thingHandle = Handle(
         "thing",
+        "",
         Handle.Fate.CREATE,
+        emptyList(),
         TypeVariable("thing"),
         ramdiskStorageKey + "thing",
         Capabilities.Empty
@@ -46,7 +48,9 @@ class RecipeProtoDecoderTest {
         .build()
     val thangHandle = Handle(
         "thang",
+        "",
         Handle.Fate.MAP,
+        emptyList(),
         TypeVariable("thang"),
         ramdiskStorageKey + "thang",
         Capabilities.Empty
@@ -60,7 +64,9 @@ class RecipeProtoDecoderTest {
         .build()
     val joinHandle = Handle(
         "pairs",
+        "",
         Handle.Fate.JOIN,
+        emptyList(),
         TypeVariable("pairs"),
         ramdiskStorageKey + "pairs",
         Capabilities.Empty,

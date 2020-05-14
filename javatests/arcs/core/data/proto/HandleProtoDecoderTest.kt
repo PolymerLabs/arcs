@@ -67,8 +67,20 @@ class HandleProtoDecoderTest {
             "notype_thing", "CREATE", "", storageKey, "handle_c", listOf("TIED_TO_ARC")
         )
         val handles = mapOf(
-            "handle_c" to Handle("handle_c", Handle.Fate.MAP, TypeVariable("handle_c")),
-            "handle1" to Handle("handle1", Handle.Fate.MAP, TypeVariable("handle1"))
+            "handle_c" to Handle(
+                "handle_c",
+                "",
+                Handle.Fate.MAP,
+                emptyList(),
+                TypeVariable("handle_c")
+            ),
+            "handle1" to Handle(
+                "handle1",
+                "",
+                Handle.Fate.MAP,
+                emptyList(),
+                TypeVariable("handle1")
+            )
         )
         val handleProto = parseHandleProtoText(handleText)
         with(handleProto.decode(handles)) {
@@ -108,8 +120,20 @@ class HandleProtoDecoderTest {
         val handleProto = parseHandleProtoText(handleText)
 
         val handles = mapOf(
-            "handle1" to Handle("handle1", Handle.Fate.MAP, TypeVariable("handle1")),
-            "handle_join" to Handle("handle_join", Handle.Fate.JOIN, TypeVariable("handle_join"))
+            "handle1" to Handle(
+                "handle1",
+                "",
+                Handle.Fate.MAP,
+                emptyList(),
+                TypeVariable("handle1")
+            ),
+            "handle_join" to Handle(
+                "handle_join",
+                "",
+                Handle.Fate.JOIN,
+                emptyList(),
+                TypeVariable("handle_join")
+            )
         )
         with(handleProto.decode(handles)) {
             assertThat(name).isEqualTo("thing")
