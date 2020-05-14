@@ -85,6 +85,7 @@ class HandleProtoDecoderTest {
         val handleProto = parseHandleProtoText(handleText)
         with(handleProto.decode(handles)) {
             assertThat(name).isEqualTo("notype_thing")
+            assertThat(id).isEqualTo("")
             assertThat(fate).isEqualTo(Handle.Fate.CREATE)
             assertThat(storageKey).isEqualTo("ramdisk://a")
             assertThat(associatedHandles).containsExactly(handles["handle1"], handles["handle_c"])
@@ -138,6 +139,7 @@ class HandleProtoDecoderTest {
         )
         with(handleProto.decode(handles)) {
             assertThat(name).isEqualTo("thing")
+            assertThat(id).isEqualTo("")
             assertThat(fate).isEqualTo(Handle.Fate.JOIN)
             assertThat(storageKey).isEqualTo("ramdisk://b")
             assertThat(associatedHandles).isEqualTo(listOf(handles["handle1"], handles["handle_join"]))
@@ -192,6 +194,7 @@ class HandleProtoDecoderTest {
         )
         with(handleProto.decode(handles)) {
             assertThat(name).isEqualTo("thing")
+            assertThat(id).isEqualTo("")
             assertThat(fate).isEqualTo(Handle.Fate.JOIN)
             assertThat(storageKey).isEqualTo("ramdisk://b")
             assertThat(associatedHandles).isEqualTo(listOf(handles["handle1"], handles["handle_join"]))
@@ -200,6 +203,49 @@ class HandleProtoDecoderTest {
             assertThat(capabilities).isEqualTo(Capabilities.PersistentQueryable)
         }
     }
+
+    @Test
+    fun decodesHandleProtoWithId() {
+        val storageKey = "ramdisk://a"
+        val handleText = buildHandleProtoText(
+            "notype_thing",
+            "CREATE",
+            "",
+            storageKey,
+            "handle_c",
+            listOf("TIED_TO_ARC"),
+            emptyList(),
+            "veryofficialid_2342"
+        )
+        val handles = mapOf(
+            "handle_c" to Handle(
+                "handle_c",
+                "",
+                Handle.Fate.MAP,
+                emptyList(),
+                TypeVariable("handle_c")
+            ),
+            "handle1" to Handle(
+                "handle1",
+                "",
+                Handle.Fate.MAP,
+                emptyList(),
+                TypeVariable("handle1")
+            )
+        )
+        val handleProto = parseHandleProtoText(handleText)
+        with(handleProto.decode(handles)) {
+            assertThat(name).isEqualTo("notype_thing")
+            assertThat(id).isEqualTo("veryofficialid_2342")
+            assertThat(fate).isEqualTo(Handle.Fate.CREATE)
+            assertThat(storageKey).isEqualTo("ramdisk://a")
+            assertThat(associatedHandles).containsExactly(handles["handle1"], handles["handle_c"])
+            assertThat(type).isEqualTo(TypeVariable("notype_thing"))
+            assertThat(tags).isEmpty()
+            assertThat(capabilities).isEqualTo(Capabilities.TiedToArc)
+        }
+    }
+
     /** A helper function to build a handle proto in text format. */
     fun buildHandleProtoText(
         name: String,
@@ -208,10 +254,12 @@ class HandleProtoDecoderTest {
         storageKey: String,
         associatedHandle: String,
         capabilities: List<String>,
-        tags: List<String> = emptyList()
+        tags: List<String> = emptyList(),
+        id: String = ""
     ) =
         """
           name: "${name}"
+          id: "${id}"
           fate: ${fate}
           storage_key: "$storageKey"
           associated_handles: "handle1"
