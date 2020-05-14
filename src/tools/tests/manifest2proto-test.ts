@@ -482,6 +482,7 @@ describe('manifest2proto', () => {
       {
         assume: {
           accessPath: {
+            particleSpec: 'Test',
             handleConnection: 'private'
           },
           predicate: {
@@ -494,6 +495,7 @@ describe('manifest2proto', () => {
       {
         assume: {
           accessPath: {
+            particleSpec: 'Test',
             handleConnection: 'public'
           },
           predicate: {
@@ -523,9 +525,11 @@ describe('manifest2proto', () => {
       {
         derivesFrom: {
           source: {
+            particleSpec: 'Test',
             handleConnection: 'input'
           },
           target: {
+            particleSpec: 'Test',
             handleConnection: 'output'
           }
         }
@@ -546,9 +550,11 @@ describe('manifest2proto', () => {
       {
         derivesFrom: {
           source: {
+            particleSpec: 'Test',
             handleConnection: 'input'
           },
           target: {
+            particleSpec: 'Test',
             handleConnection: 'output'
           }
         }
@@ -556,6 +562,7 @@ describe('manifest2proto', () => {
       {
         assume: {
           accessPath: {
+            particleSpec: 'Test',
             handleConnection: 'output'
           },
           predicate: {
