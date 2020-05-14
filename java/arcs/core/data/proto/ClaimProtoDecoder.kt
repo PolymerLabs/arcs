@@ -16,18 +16,19 @@ import arcs.core.data.HandleConnectionSpec
 
 /** Decodes an [ClaimProto] into [Claim]. */
 fun ClaimProto.decode(
-    particleSpecName: String,
     connectionSpecs: Map<String, HandleConnectionSpec>
-) = when (claimCase) {
-    ClaimProto.ClaimCase.DERIVES_FROM -> Claim.DerivesFrom(
-        target = derivesFrom.target.decode(particleSpecName, connectionSpecs),
-        source = derivesFrom.source.decode(particleSpecName, connectionSpecs)
-    )
-    ClaimProto.ClaimCase.ASSUME -> Claim.Assume(
-        assume.accessPath.decode(particleSpecName, connectionSpecs),
-        assume.predicate.decode()
-    )
-    ClaimProto.ClaimCase.CLAIM_NOT_SET ->
-        throw IllegalArgumentException("ClaimProto has unknown value.")
-    else -> throw IllegalArgumentException("Cannot decode a [ClaimProto].")
+): Claim {
+    return when (claimCase) {
+        ClaimProto.ClaimCase.DERIVES_FROM -> Claim.DerivesFrom(
+            target = derivesFrom.target.decode(connectionSpecs),
+            source = derivesFrom.source.decode(connectionSpecs)
+        )
+        ClaimProto.ClaimCase.ASSUME -> Claim.Assume(
+            assume.accessPath.decode(connectionSpecs),
+            assume.predicate.decode()
+        )
+        ClaimProto.ClaimCase.CLAIM_NOT_SET ->
+            throw IllegalArgumentException("ClaimProto has unknown value.")
+        else -> throw IllegalArgumentException("Cannot decode a [ClaimProto].")
+    }
 }

@@ -37,9 +37,9 @@ class PredicateProtoDecoderTest {
     @Test
     fun decodesLabelPredicate() {
         val protoText = """
-        label {
+          label {
             semantic_tag: "public"
-        }
+          }
         """.trimIndent()
         val predicate = parsePredicateProto(protoText).decode()
         val labelPredicate = requireNotNull(predicate as? Predicate.Label)
@@ -50,13 +50,13 @@ class PredicateProtoDecoderTest {
     @Test
     fun decodesNotPredicate() {
         val protoText = """
-        not {
+          not {
             predicate {
-                label {
-                    semantic_tag: "public"
-                }
+              label {
+                semantic_tag: "public"
+              }
             }
-        }
+          }
         """.trimIndent()
         val predicate = parsePredicateProto(protoText).decode()
         val notPredicate = requireNotNull(predicate as? Predicate.Not)

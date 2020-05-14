@@ -69,7 +69,7 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
       direction: directionOrdinal,
       type: await typeToProtoPayload(cs.type)
     };
-    const claimsProto = claimsToProtoPayload(cs, proto);
+    const claimsProto = claimsToProtoPayload(spec, cs, proto);
     if (claimsProto != null) {
       claims = claims.concat(claimsProto);
     }
@@ -84,9 +84,13 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
 }
 
 // Converts the claims in HandleConnectionSpec.
-function claimsToProtoPayload(cs: HandleConnectionSpec, proto: {}) {
+function claimsToProtoPayload(
+  spec: ParticleSpec,
+  cs: HandleConnectionSpec,
+  proto: {}
+) {
   return cs.claims?.map(claim => {
-    const accessPath = {handleConnection: cs.name};
+    const accessPath = {particleSpec: spec.name, handleConnection: cs.name};
     switch (claim.type) {
       case ClaimType.IsTag: {
         const tag = {semanticTag: claim.tag};
@@ -112,7 +116,10 @@ function claimsToProtoPayload(cs: HandleConnectionSpec, proto: {}) {
         return {
           derivesFrom: {
             target: accessPath,
-            source: {handleConnection: claim.parentHandle.name}
+            source: {
+              particleSpec: spec.name,
+              handleConnection: claim.parentHandle.name
+            }
           }
         };
       }

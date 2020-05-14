@@ -16,7 +16,6 @@ import arcs.core.data.HandleConnectionSpec
 
 /** Decodes an [AccessPathProto] into [AccesssPath]. */
 fun AccessPathProto.decode(
-    particleSpecName: String,
     connectionSpecs: Map<String, HandleConnectionSpec>
 ): AccessPath {
     val connectionSpec = connectionSpecs[handleConnection]
@@ -24,5 +23,5 @@ fun AccessPathProto.decode(
         "Connection '$handleConnection' not found in connection specs!"
     }
     // TODO(bgogul): Selectors
-    return AccessPath(particleSpecName, connectionSpec)
+    return AccessPath(particleSpec, connectionSpec)
 }

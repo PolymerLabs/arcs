@@ -24,7 +24,8 @@ class AccessPathProtoDecoderTest {
     @Test
     fun decodesAccessPathNoSelectors() {
         val protoText = """
-        handle_connection: "input"
+            particle_spec: "TestSpec"
+            handle_connection: "input"
         """.trimIndent()
         val handleConnectionSpec = HandleConnectionSpec(
             "input",
@@ -32,7 +33,7 @@ class AccessPathProtoDecoderTest {
             TypeVariable("input")
         )
         val connectionSpecs = listOf(handleConnectionSpec).associateBy { it.name }
-        val accessPath = parseAccessPathProto(protoText).decode("TestSpec", connectionSpecs)
+        val accessPath = parseAccessPathProto(protoText).decode(connectionSpecs)
         val root = accessPath.root as AccessPath.Root.HandleConnectionSpec
         assertThat(root.particleSpecName).isEqualTo("TestSpec")
         assertThat(root.connectionSpec).isEqualTo(handleConnectionSpec)
@@ -44,7 +45,7 @@ class AccessPathProtoDecoderTest {
         handle_connection: "input"
         """.trimIndent()
         val exception = assertThrows(IllegalArgumentException::class) {
-            parseAccessPathProto(protoText).decode("TestSpec", emptyMap())
+            parseAccessPathProto(protoText).decode(emptyMap())
         }
         assertThat(exception)
             .hasMessageThat()

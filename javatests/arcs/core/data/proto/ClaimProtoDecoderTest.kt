@@ -27,16 +27,17 @@ class ClaimProtoDecoderTest {
     @Test
     fun decodesAssumeClaim() {
         val protoText = """
-        assume {
+          assume {
             access_path {
-                handle_connection: "output"
+              particle_spec: "TestSpec"
+              handle_connection: "output"
             }
             predicate {
-                label {
-                    semantic_tag: "public"
-                }
+              label {
+                semantic_tag: "public"
+              }
             }
-        }
+          }
         """.trimIndent()
         val handleConnectionSpec = HandleConnectionSpec(
             "output",
@@ -44,7 +45,7 @@ class ClaimProtoDecoderTest {
             TypeVariable("output")
         )
         val connectionSpecs = listOf(handleConnectionSpec).associateBy { it.name }
-        val claim = parseClaimProto(protoText).decode("TestSpec", connectionSpecs)
+        val claim = parseClaimProto(protoText).decode(connectionSpecs)
         val assume = requireNotNull(claim as Claim.Assume)
         assertThat(assume).isEqualTo(
             Claim.Assume(
@@ -59,14 +60,16 @@ class ClaimProtoDecoderTest {
     @Test
     fun decodesDerivesFromClaim() {
         val protoText = """
-        derives_from {
+          derives_from {
             target {
-                handle_connection: "output"
+              particle_spec: "TestSpec"
+              handle_connection: "output"
             }
             source {
-                handle_connection: "input"
+              particle_spec: "TestSpec"
+              handle_connection: "input"
             }
-        }
+          }
         """.trimIndent()
         val outputSpec = HandleConnectionSpec(
             "output",
@@ -79,7 +82,7 @@ class ClaimProtoDecoderTest {
             TypeVariable("output")
         )
         val connectionSpecs = listOf(inputSpec, outputSpec).associateBy { it.name }
-        val claim = parseClaimProto(protoText).decode("TestSpec", connectionSpecs)
+        val claim = parseClaimProto(protoText).decode(connectionSpecs)
         val derivesFrom = requireNotNull(claim as Claim.DerivesFrom)
         assertThat(derivesFrom).isEqualTo(
             Claim.DerivesFrom(
