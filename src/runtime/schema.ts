@@ -297,6 +297,7 @@ export class Schema {
 
   toManifestString(): string {
     const results:string[] = [];
+    results.push(this.annotations.map(a => a.toString()).join('\n'));
     results.push(`schema ${this.names.join(' ')}`);
     results.push(...Object.entries(this.fields).map(f => `  ${Schema.fieldToString(f)}`));
     if (this.refinement) {

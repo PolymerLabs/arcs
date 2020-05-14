@@ -144,6 +144,7 @@ export class Manifest {
   private _stores: AbstractStore[] = [];
   private _interfaces = <InterfaceInfo[]>[];
   storeTags: Map<AbstractStore, string[]> = new Map();
+  storeAnnotations: Map<AbstractStore, AnnotationRef[]> = new Map();
   private _fileName: string|null = null;
   private readonly _id: Id;
   // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
@@ -233,9 +234,10 @@ export class Manifest {
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
 
-  _addStore(store: AbstractStore, tags: string[]) {
+  _addStore(store: AbstractStore, tags: string[], annotations: AnnotationRef[]) {
     this._stores.push(store);
     this.storeTags.set(store, tags ? tags : []);
+    this.storeAnnotations.set(store, annotations);
     return store;
   }
 
@@ -253,6 +255,7 @@ export class Manifest {
       origin?: 'file' | 'resource' | 'storage' | 'inline',
       referenceMode?: boolean,
       model?: {}[],
+      annotations?: AnnotationRef[]
   }) {
     if (opts.source) {
       this.storeManifestUrls.set(opts.id, this.fileName);
@@ -263,7 +266,7 @@ export class Manifest {
       storageKey = StorageKeyParser.parse(storageKey);
     }
     const store = new Store(opts.type, {...opts, storageKey, exists: Exists.MayExist});
-    return this._addStore(store, opts.tags);
+    return this._addStore(store, opts.tags, opts.annotations || []);
   }
 
   _find<a>(manifestFinder: ManifestFinder<a>): a {
@@ -1378,7 +1381,8 @@ ${e.message}
     }
     return manifest.newStore({
       type, name, id, storageKey, tags, originalId, claims, description, version,
-      source: item.source, origin, referenceMode: false, model: entities
+      source: item.source, origin, referenceMode: false, model: entities,
+      annotations: Manifest._buildAnnotationRefs(manifest, item.annotationRefs)
     });
   }
 
@@ -1414,11 +1418,11 @@ ${e.message}
   }
 
   // TODO: This is a temporary method to allow sharing stores with other Arcs.
-  registerStore(store: AbstractStore, tags: string[]): void {
+  registerStore(store: AbstractStore, tags: string[], annotations: AnnotationRef[] = []): void {
     // Only register stores that have non-volatile storage key and don't have a
     // #volatile tag.
     if (!this.findStoreById(store.id) && !this.isVolatileStore(store, tags)) {
-      this._addStore(store, tags);
+      this._addStore(store, tags, annotations);
     }
   }
 
@@ -1465,7 +1469,10 @@ ${e.message}
 
     const stores = [...this.stores].sort(compareComparables);
     stores.forEach(store => {
-      results.push(store.toManifestString({handleTags: this.storeTags.get(store)}));
+      results.push(store.toManifestString({
+        handleTags: this.storeTags.get(store),
+        annotations: this.storeAnnotations.get(store)
+      }));
     });
 
     return results.join('\n');

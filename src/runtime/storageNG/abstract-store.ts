@@ -16,6 +16,7 @@ import {ClaimIsTag} from '../particle-claim.js';
 import {SingletonInterfaceStore, SingletonEntityStore, SingletonReferenceStore, CollectionEntityStore, CollectionReferenceStore} from './storage-ng.js';
 import {ActiveStore} from './store-interface.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
+import {AnnotationRef} from '../recipe/annotation.js';
 
 export function isSingletonInterfaceStore(store: AbstractStore): store is SingletonInterfaceStore {
   return (store.type.isSingleton && store.type.getContainedType().isInterface);
@@ -102,10 +103,13 @@ export abstract class AbstractStore implements Comparable<AbstractStore> {
   }
 
   // TODO: Make these tags live inside StoreInfo.
-  toManifestString(opts?: {handleTags?: string[], overrides?: Partial<StoreInfo>}): string {
+  toManifestString(opts?: {handleTags?: string[], overrides?: Partial<StoreInfo>, annotations?: AnnotationRef[]}): string {
     opts = opts || {};
     const info = {...this.storeInfo, ...opts.overrides};
     const results: string[] = [];
+    if (opts.annotations && opts.annotations.length) {
+      results.push(`${opts.annotations.map(a => a.toString()).join('\n')}`);
+    }
     const handleStr: string[] = [];
     handleStr.push(`store`);
     if (info.name) {
