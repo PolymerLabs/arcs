@@ -120,10 +120,11 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     // Channel has an internal queue which can retain work if stopped
     // So we need to create fresh instances when off() invoked
     private fun initChannel() {
-        channel?.let { it.cancel() }
-        channel = Channel<suspend () -> Unit>(Channel.UNLIMITED)
-        flow = channel!!.consumeAsFlow().onEach { it() }
-        flow!!.launchIn(scope)
+        synchronized(this) {
+            channel?.let { it.cancel() }
+            channel = Channel(Channel.UNLIMITED)
+            channel!!.consumeAsFlow().onEach { it() }.launchIn(scope)
+        }
     }
 
     override suspend fun idle() = coroutineScope<Unit> {
@@ -168,14 +169,21 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     override fun off(callbackToken: Int) {
         val service = checkNotNull(storageService)
         runBlocking {
-            send { service.unregisterCallback(callbackToken) }
+            send {
+                service.unregisterCallback(callbackToken)
+                initChannel()
+            }
         }
-        initChannel()
     }
 
     private suspend fun send(block: suspend () -> Unit) = requireNotNull(channel) {
         "Channel is not initialized"
-    }.send(block)
+    }.apply {
+        require(!isClosedForSend) {
+            "Channel is closed"
+        }
+        send(block)
+    }
 
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean {
         val service = checkNotNull(storageService)
@@ -215,6 +223,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     fun onLifecycleDestroyed() {
         serviceConnection?.disconnect()
         storageService = null
+        channel?.let { it.cancel() }
         channel = null
         scope.coroutineContext[Job.Key]?.cancelChildren()
     }
