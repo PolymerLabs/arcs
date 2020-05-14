@@ -1,6 +1,15 @@
 package arcs.core.data.proto
 
-import arcs.core.data.*
+import arcs.core.data.CollectionType
+import arcs.core.data.CountType
+import arcs.core.data.EntityType
+import arcs.core.data.FieldType
+import arcs.core.data.PrimitiveType
+import arcs.core.data.ReferenceType
+import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
+import arcs.core.data.SingletonType
 import arcs.core.testutil.assertThrows
 import arcs.core.testutil.fail
 import com.google.common.truth.Truth.assertThat
@@ -19,11 +28,11 @@ fun parseTypeProtoText(protoText: String): TypeProto {
 @RunWith(JUnit4::class)
 class TypeProtoDecodersTest {
     @Test
-    fun decodesPrimitiveTypes() {        
+    fun decodesPrimitiveTypes() {
         assertThat(PrimitiveTypeProto.TEXT.decode()).isEqualTo(PrimitiveType.Text)
         assertThat(PrimitiveTypeProto.BOOLEAN.decode()).isEqualTo(PrimitiveType.Boolean)
         assertThat(PrimitiveTypeProto.NUMBER.decode()).isEqualTo(PrimitiveType.Number)
-        assertThrows(IllegalArgumentException::class) { 
+        assertThrows(IllegalArgumentException::class) {
             PrimitiveTypeProto.UNRECOGNIZED.decode()
         }
     }
