@@ -36,7 +36,7 @@ class EntityBaseTest {
 
     @Before
     fun setUp() {
-        SchemaRegistry.register(DummyEntity)
+        SchemaRegistry.register(DummyEntity.SCHEMA)
         entity = DummyEntity()
     }
 
@@ -242,6 +242,41 @@ class EntityBaseTest {
             nums = setOf(11.0, 22.0)
         }
         assertThat(deserialized).isEqualTo(expected)
+    }
+
+    @Test
+    fun deserialize_wrongType() {
+        val rawEntity = RawEntity(
+            singletons = mapOf(
+                "ref" to "def".toReferencable()
+            ),
+            collections = mapOf()
+        )
+
+        val e = assertThrows(IllegalArgumentException::class) {
+            DummyEntity().deserializeForTest(rawEntity)
+        }
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Expected Reference but was Primitive(def)."
+        )
+    }
+
+    @Test
+    fun deserialize_unknownHash() {
+        val rawEntity = RawEntity(
+            singletons = mapOf(
+                "ref" to StorageReference("id", DummyStorageKey("key"), version = null)
+            ),
+            collections = mapOf()
+        )
+
+        val e = assertThrows(IllegalArgumentException::class) {
+            // Call deserialize super method, and don't give the right nestedEntitySpecs map.
+            DummyEntity().deserialize(rawEntity, nestedEntitySpecs = emptyMap())
+        }
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Unknown schema with hash abcdef."
+        )
     }
 
     @Test

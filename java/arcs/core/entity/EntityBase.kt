@@ -22,6 +22,7 @@ import arcs.core.data.Schema
 import arcs.core.data.Ttl
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.Reference as StorageReference
 import arcs.core.util.Time
 import kotlin.reflect.KProperty
 
@@ -206,17 +207,29 @@ open class EntityBase(
      *
      * Supports type slicing: fields that are not present in the [Schema] for this [Entity] will be
      * silently ignored.
+     *
+     * @param nestedEntitySpecs mapping from [SchemaHash] to [EntitySpec], used when dereferencing
+     *     [Reference] fields inside the entity
      */
-    fun deserialize(rawEntity: RawEntity) {
+    fun deserialize(
+        rawEntity: RawEntity,
+        nestedEntitySpecs: Map<SchemaHash, EntitySpec<out Entity>> = mapOf()
+    ) {
         entityId = if (rawEntity.id == NO_REFERENCE_ID) null else rawEntity.id
         rawEntity.singletons.forEach { (field, value) ->
             getSingletonTypeOrNull(field)?.let { type ->
-                setSingletonValue(field, value?.let { fromReferencable(it, type) })
+                setSingletonValue(
+                    field,
+                    value?.let { fromReferencable(it, type, nestedEntitySpecs) }
+                )
             }
         }
         rawEntity.collections.forEach { (field, values) ->
             getCollectionTypeOrNull(field)?.let { type ->
-                setCollectionValue(field, values.map { fromReferencable(it, type) }.toSet())
+                setCollectionValue(
+                    field,
+                    values.map { fromReferencable(it, type, nestedEntitySpecs) }.toSet()
+                )
             }
         }
         creationTimestamp = rawEntity.creationTimestamp
@@ -275,7 +288,7 @@ open class EntityBase(
 class EntityBaseSpec(
     override val SCHEMA: Schema
 ) : EntitySpec<EntityBase> {
-    init { SchemaRegistry.register(this) }
+    init { SchemaRegistry.register(SCHEMA) }
     override fun deserialize(data: RawEntity): EntityBase =
         EntityBase("EntityBase", SCHEMA).apply { deserialize(data) }
 }
@@ -298,14 +311,28 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
     is FieldType.EntityRef -> (value as Reference<*>).toReferencable()
 }
 
-private fun fromReferencable(referencable: Referencable, type: FieldType): Any = when (type) {
-    is FieldType.Primitive -> {
-        require(referencable is ReferencablePrimitive<*>) {
-            "Expected ReferencablePrimitive but was $referencable."
+private fun fromReferencable(
+    referencable: Referencable,
+    type: FieldType,
+    nestedEntitySpecs: Map<SchemaHash, EntitySpec<out Entity>>
+): Any {
+    return when (type) {
+        is FieldType.Primitive -> {
+            require(referencable is ReferencablePrimitive<*>) {
+                "Expected ReferencablePrimitive but was $referencable."
+            }
+            requireNotNull(referencable.value) {
+                "ReferencablePrimitive encoded an unexpected null value."
+            }
         }
-        requireNotNull(referencable.value) {
-            "ReferencablePrimitive encoded an unexpected null value."
+        is FieldType.EntityRef -> {
+            require(referencable is StorageReference) {
+                "Expected Reference but was $referencable."
+            }
+            val entitySpec = requireNotNull(nestedEntitySpecs[type.schemaHash]) {
+                "Unknown schema with hash ${type.schemaHash}."
+            }
+            Reference(entitySpec, referencable)
         }
     }
-    is FieldType.EntityRef -> Reference.fromReferencable(referencable, type.schemaHash)
 }

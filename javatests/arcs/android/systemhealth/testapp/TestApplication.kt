@@ -34,7 +34,7 @@ class TestApplication : Application(), Configuration.Provider {
         ProtoPrefetcher.prefetch()
 
         RamDisk.clear()
-        SchemaRegistry.register(TestEntity)
+        SchemaRegistry.register(TestEntity.SCHEMA)
         DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(this))
 
         initLogForAndroid()

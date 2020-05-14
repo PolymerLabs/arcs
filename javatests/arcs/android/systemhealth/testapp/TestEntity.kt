@@ -59,7 +59,7 @@ class TestEntity(
         )
 
         init {
-            SchemaRegistry.register(this)
+            SchemaRegistry.register(SCHEMA)
         }
 
         override fun deserialize(data: RawEntity) = TestEntity().apply { deserialize(data) }

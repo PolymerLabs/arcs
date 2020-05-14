@@ -50,8 +50,8 @@ open class HandleManagerTestBase {
     val log = LogRule()
 
     init {
-        SchemaRegistry.register(Person)
-        SchemaRegistry.register(Hat)
+        SchemaRegistry.register(Person.SCHEMA)
+        SchemaRegistry.register(Hat.SCHEMA)
     }
 
     private val backingKey = RamDiskStorageKey("entities")
