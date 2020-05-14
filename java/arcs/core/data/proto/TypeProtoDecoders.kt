@@ -33,7 +33,12 @@ fun PrimitiveTypeProto.decode() = when (this) {
 fun PrimitiveTypeProto.decodeAsFieldType() = FieldType.Primitive(decode())
 
 /** Converts a [ReferenceTypeProto] protobuf instance into a Kotlin [FieldType] instance. */
-fun ReferenceTypeProto.decodeAsFieldType() = FieldType.EntityRef(decode().entitySchema!!.hash)
+fun ReferenceTypeProto.decodeAsFieldType(): FieldType.EntityRef {
+    val entitySchema = requireNotNull(decode().entitySchema) {
+        "Field that is a reference to an non-entity type is not possible."
+    }
+    return FieldType.EntityRef(entitySchema.hash)
+}
 
 /** Converts a [TupleTypeProto] protobuf instance into a Kotlin [FieldType] instance. */
 fun TupleTypeProto.decodeAsFieldType(): FieldType.Tuple = FieldType.Tuple(

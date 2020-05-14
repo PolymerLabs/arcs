@@ -22,6 +22,10 @@ fun decodeSchemaProtoText(protoText: String): Schema {
 
 @RunWith(JUnit4::class)
 class SchemaProtoDecoderTest {
+
+    /**
+     * schema Thing, Object
+     */
     @Test
     fun decodesNamesInSchemaProto() {
         val schemaProtoText = """
@@ -32,6 +36,11 @@ class SchemaProtoDecoderTest {
         assertThat(schema.names).containsExactly(SchemaName("Thing"), SchemaName("Object"))
     }
 
+    /**
+     * schema
+     *  text: Text
+     *  bool: Boolean
+     */
     @Test
     fun decodesSingletonsInSchemaProto() {
         val schemaProtoText = """
@@ -53,6 +62,11 @@ class SchemaProtoDecoderTest {
             mapOf("text" to FieldType.Text, "bool" to FieldType.Boolean))
     }
 
+    /**
+     * schema
+     *  text: [ Text ]
+     *  bool: [ Boolean ]
+     */
     @Test
     fun decodesCollectionsInSchemaProto() {
         val schemaProtoText = """
@@ -82,6 +96,11 @@ class SchemaProtoDecoderTest {
             mapOf("text" to FieldType.Text, "bool" to FieldType.Boolean))
     }
 
+    /**
+     * schema
+     *  text: [&Product {name: Text}]
+     *  num: [&Review {rating: Number}]
+     */
     @Test
     fun decodesCollectionsOfReferencesInSchemaProto() {
         val schemaProtoText = """
@@ -145,6 +164,10 @@ class SchemaProtoDecoderTest {
         )
     }
 
+    /**
+     * schema
+     *  tuple: (Text, Number)
+     */
     @Test
     fun decodesSingletonsOfTuplesInSchemaProto() {
         val schemaProtoText = """
@@ -170,11 +193,15 @@ class SchemaProtoDecoderTest {
         )
     }
 
+    /**
+     * schema
+     *  tuples: [(Text, Number)]
+     */
     @Test
     fun decodesCollectionsOfTuplesInSchemaProto() {
         val schemaProtoText = """
         fields {
-          key: "tuple"
+          key: "tuples"
           value: {
             collection: {
               collection_type: {
@@ -194,7 +221,7 @@ class SchemaProtoDecoderTest {
         val schema = decodeSchemaProtoText(schemaProtoText)
         assertThat(schema.fields.collections).isEqualTo(
             mapOf(
-                "tuple" to FieldType.Tuple(listOf(FieldType.Text, FieldType.Number))
+                "tuples" to FieldType.Tuple(listOf(FieldType.Text, FieldType.Number))
             )
         )
     }

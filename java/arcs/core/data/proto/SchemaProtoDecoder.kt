@@ -26,8 +26,8 @@ fun SchemaProto.decodeFields(): SchemaFields {
     val collections = mutableMapOf<FieldName, FieldType>()
     for ((name, type) in fieldsMap) {
         when (type.dataCase) {
-            TypeProto.DataCase.PRIMITIVE -> singletons[name] = type.decodeAsFieldType()
-            TypeProto.DataCase.REFERENCE -> singletons[name] = type.decodeAsFieldType()
+            TypeProto.DataCase.PRIMITIVE,
+            TypeProto.DataCase.REFERENCE,
             TypeProto.DataCase.TUPLE -> singletons[name] = type.decodeAsFieldType()
             TypeProto.DataCase.COLLECTION -> collections[name] =
                 type.collection.collectionType.decodeAsFieldType()
