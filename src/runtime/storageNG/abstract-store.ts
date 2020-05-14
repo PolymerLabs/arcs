@@ -13,8 +13,8 @@ import {Type} from '../type.js';
 import {StorageKey} from './storage-key.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {ClaimIsTag} from '../particle-claim.js';
-import {SingletonInterfaceStore, SingletonEntityStore, SingletonReferenceStore, CollectionEntityStore, CollectionReferenceStore} from './storage-ng.js';
-import {ActiveStore} from './store-interface.js';
+import {SingletonInterfaceStore, SingletonEntityStore, SingletonReferenceStore, CollectionEntityStore, CollectionReferenceStore, MuxEntityStore} from './storage-ng.js';
+import {AbstractActiveStore} from './store-interface.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {AnnotationRef} from '../recipe/annotation.js';
 
@@ -36,6 +36,10 @@ export function isSingletonReferenceStore(store: AbstractStore): store is Single
 
 export function isCollectionReferenceStore(store: AbstractStore): store is CollectionReferenceStore {
   return (store.type.isCollection && store.type.getContainedType().isReference);
+}
+
+export function isMuxEntityStore(store: AbstractStore): store is MuxEntityStore {
+  return (store.type.isMuxType());
 }
 
 export function entityHasName(name: string) {
@@ -81,7 +85,7 @@ export abstract class AbstractStore implements Comparable<AbstractStore> {
   get description() { return this.storeInfo.description; }
   get claims() { return this.storeInfo.claims; }
 
-  abstract activate(): Promise<ActiveStore<CRDTTypeRecord>>;
+  abstract activate(): Promise<AbstractActiveStore<CRDTTypeRecord>>;
 
   // TODO: Delete this method when the old-style storage is deleted.
   reportExceptionInHost(exception: PropagatedException): void {

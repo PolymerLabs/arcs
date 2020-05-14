@@ -127,8 +127,8 @@ export abstract class Type {
     return this instanceof ReferenceType;
   }
 
-  isMuxType(): this is MuxType<Type> {
-    return this instanceof MuxType;
+  isMuxType(): this is MuxType<EntityType> {
+    return this instanceof MuxType && this.innerType instanceof  EntityType;
   }
 
   isTupleType(): this is TupleType {
@@ -440,7 +440,6 @@ export class EntityType extends Type {
     throw new Error(`Entity handle not yet implemented - you probably want to use a SingletonType`);
   }
 }
-
 
 export class TypeVariable extends Type {
   readonly variable: TypeVariableInfo;
@@ -1032,6 +1031,7 @@ export class ReferenceType<T extends Type> extends Type {
 
 export class MuxType<T extends Type> extends Type {
   readonly innerType: T;
+  static handleClass = null;
 
   constructor(type: T) {
     super('Mux');
@@ -1102,6 +1102,10 @@ export class MuxType<T extends Type> extends Type {
 
   crdtInstanceConstructor<T extends CRDTTypeRecord>(): new () => CRDTModel<T> {
     return this.innerType.crdtInstanceConstructor();
+  }
+
+  handleConstructor<T>() {
+    return MuxType.handleClass;
   }
 }
 

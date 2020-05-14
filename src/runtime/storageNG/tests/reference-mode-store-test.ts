@@ -70,7 +70,7 @@ describe('Reference Mode Store', async () => {
 
   beforeEach(() => {
     testKey = new ReferenceModeStorageKey(new MockHierarchicalStorageKey(), new MockHierarchicalStorageKey());
-    baseStore = new Store(new SingletonType(new CountType()), {storageKey: testKey, exists: Exists.ShouldCreate, id: 'base-store-id'});
+    baseStore = new Store(collectionType, {storageKey: testKey, exists: Exists.ShouldCreate, id: 'base-store-id'});
     DriverFactory.clearRegistrationsForTesting();
   });
 

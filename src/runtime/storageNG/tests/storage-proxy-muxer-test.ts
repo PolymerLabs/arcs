@@ -16,8 +16,9 @@ import {MuxType, EntityType} from '../../type.js';
 import {assert} from '../../../platform/chai-web.js';
 import {ProxyMessageType} from '../store.js';
 import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
+import {CRDTMuxEntity} from '../storage-ng.js';
 
-function getStorageProxyMuxer(store: DirectStoreMuxer<CRDTEntityTypeRecord<Identified, Identified>>, entityType: EntityType): StorageProxyMuxer<CRDTEntityTypeRecord<Identified, Identified>> {
+function getStorageProxyMuxer(store: DirectStoreMuxer<Identified, Identified, CRDTMuxEntity>, entityType: EntityType): StorageProxyMuxer<CRDTMuxEntity> {
   return new StorageProxyMuxer(store, new MuxType(entityType), store.storageKey.toString());
 }
 

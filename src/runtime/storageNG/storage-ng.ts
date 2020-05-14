@@ -9,21 +9,25 @@
  */
 
 import {StorageProxy} from './storage-proxy.js';
-import {Type, CollectionType, EntityType, ReferenceType, SingletonType, InterfaceType} from '../type.js';
+import {Type, CollectionType, EntityType, ReferenceType, SingletonType, InterfaceType, MuxType, CountType} from '../type.js';
 import {Ttl} from '../recipe/ttl.js';
 import {SingletonHandle, CollectionHandle, Handle} from './handle.js';
 import {Particle} from '../particle.js';
 import {CRDTSingletonTypeRecord} from '../crdt/crdt-singleton.js';
-import {ActiveStore, Store} from './store.js';
+import {ActiveStore, Store, StoreMuxer} from './store.js';
 import {Entity, SerializedEntity} from '../entity.js';
 import {Id, IdGenerator} from '../id.js';
 import {ParticleSpec, StorableSerializedParticleSpec} from '../particle-spec.js';
 import {CRDTCollectionTypeRecord} from '../crdt/crdt-collection.js';
 import {SerializedReference, Reference} from '../reference.js';
-import {StoreInfo} from './abstract-store.js';
+import {StoreInfo, AbstractStore} from './abstract-store.js';
 import {StorageKey} from './storage-key.js';
 import {Exists} from './drivers/driver.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
+import {CRDTEntityTypeRecord, Identified} from '../crdt/crdt-entity.js';
+import {ActiveMuxer, AbstractActiveStore, isActiveMuxer, isActiveStore} from './store-interface.js';
+import {EntityHandleFactory} from './entity-handle-factory.js';
+import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 
 type HandleOptions = {
   type?: Type;
@@ -69,6 +73,11 @@ export type SingletonInterfaceStore = Store<CRDTInterfaceSingleton>;
 export type ActiveSingletonInterfaceStore = ActiveStore<CRDTInterfaceSingleton>;
 export type SingletonInterfaceHandle = SingletonHandle<ParticleSpec>;
 
+export type MuxEntityType = MuxType<EntityType>;
+export type CRDTMuxEntity = CRDTEntityTypeRecord<Identified, Identified>;
+export type MuxEntityStore = StoreMuxer<CRDTMuxEntity>;
+export type ActiveMuxEntityStore = ActiveMuxer<CRDTMuxEntity>;
+export type MuxEntityHandle = EntityHandleFactory<CRDTMuxEntity>;
 
 export type ToStore<T extends Type>
   = T extends CollectionEntityType ? CollectionEntityStore :
@@ -76,7 +85,8 @@ export type ToStore<T extends Type>
    (T extends SingletonEntityType ? SingletonEntityStore :
    (T extends SingletonReferenceType ? SingletonReferenceStore :
    (T extends SingletonInterfaceType ? SingletonInterfaceStore :
-    Store<CRDTTypeRecord>))));
+   (T extends MuxEntityType ? MuxEntityStore :
+    AbstractStore)))));
 
 export type ToActive<T extends Store<CRDTTypeRecord>>
   = T extends CollectionEntityStore ? ActiveCollectionEntityStore :
@@ -102,15 +112,38 @@ export type HandleToType<T extends Handle<CRDTTypeRecord>>
   (T extends SingletonInterfaceHandle ? SingletonInterfaceType :
    Type))));
 
-export type ToHandle<T extends ActiveStore<CRDTTypeRecord>>
-  = T extends ActiveCollectionEntityStore ? CollectionEntityHandle :
-   (T extends ActiveCollectionReferenceStore ? CollectionReferenceHandle :
-   (T extends ActiveSingletonEntityStore ? SingletonEntityHandle :
-   (T extends ActiveSingletonReferenceStore ? SingletonReferenceHandle :
-   (T extends ActiveSingletonInterfaceStore ? SingletonInterfaceHandle :
-    never))));
+export type TypeToCRDTTypeRecord<T extends Type>
+  = T extends SingletonEntityType ? CRDTEntitySingleton :
+  (T extends CollectionEntityType ? CRDTEntityCollection :
+  (T extends SingletonReferenceType ? CRDTReferenceSingleton :
+  (T extends CollectionReferenceType ? CRDTReferenceCollection :
+  (T extends SingletonInterfaceType ? CRDTInterfaceSingleton :
+  (T extends MuxEntityType ? CRDTMuxEntity :
+  CRDTTypeRecord)))));
+
+export type CRDTTypeRecordToType<T extends CRDTTypeRecord>
+  = T extends CRDTEntitySingleton ? SingletonEntityType :
+  (T extends CRDTEntityCollection ? CollectionEntityType :
+  (T extends CRDTReferenceSingleton ? SingletonReferenceType :
+  (T extends CRDTReferenceCollection ? CollectionReferenceType :
+  (T extends CRDTInterfaceSingleton ? SingletonInterfaceType :
+  // tslint:disable-next-line: no-any
+  (T extends CRDTEntityTypeRecord<any, any> ? MuxEntityType :
+  Type)))));
+
+export type ToHandle<T extends CRDTTypeRecord>
+  = T extends CRDTEntityCollection ? CollectionEntityHandle :
+  (T extends CRDTReferenceCollection ? CollectionReferenceHandle :
+  (T extends CRDTEntitySingleton ? SingletonEntityHandle :
+  (T extends CRDTReferenceSingleton ? SingletonReferenceHandle :
+  (T extends CRDTInterfaceSingleton ? SingletonInterfaceHandle :
+  (T extends CRDTMuxEntity ? MuxEntityHandle :
+   Handle<T>|EntityHandleFactory<CRDTMuxEntity>)))));
 
 export function newStore<T extends Type>(type: T, opts: StoreInfo & {storageKey: StorageKey, exists: Exists}): ToStore<T> {
+  if (type.isMuxType()) {
+    return new StoreMuxer(type, opts) as ToStore<T>;
+  }
   return new Store(type, opts) as ToStore<T>;
 }
 
@@ -122,36 +155,37 @@ export function handleType<T extends Handle<CRDTTypeRecord>>(handle: T) {
   return handle.type as HandleToType<T>;
 }
 
-export async function newHandle<T extends Type>(type: T, storageKey: StorageKey, arc: ArcLike, options: StoreInfo & HandleOptions): Promise<ToHandle<ToActive<ToStore<T>>>> {
-  options['storageKey'] = storageKey;
-  options['exists'] = Exists.MayExist;
-  const store = newStore(type, options as StoreInfo & {storageKey: StorageKey, exists: Exists});
-  return handleForStore(store, arc, options);
-}
-
 export function handleForActiveStore<T extends CRDTTypeRecord>(
-  store: ActiveStore<T>,
+  store: AbstractActiveStore<T>,
   arc: ArcLike,
   options: HandleOptions = {}
-): ToHandle<ActiveStore<T>> {
+): ToHandle<T> {
   const type = options.type || store.baseStore.type;
   const storageKey = store.baseStore.storageKey.toString();
-  const proxy = new StorageProxy<T>(store.baseStore.id, store, type, storageKey, options.ttl);
+
   const idGenerator = arc.idGenerator;
   const particle = options.particle || null;
   const canRead = (options.canRead != undefined) ? options.canRead : true;
   const canWrite = (options.canWrite != undefined) ? options.canWrite : true;
   const name = options.name || null;
   const generateID = arc.generateID ? () => arc.generateID().toString() : () => '';
-  if (type instanceof SingletonType) {
-    // tslint:disable-next-line: no-any
-    return new SingletonHandle(generateID(), proxy as any, idGenerator, particle, canRead, canWrite, name) as ToHandle<ActiveStore<T>>;
+  if (isActiveMuxer(store)) {
+    const proxyMuxer = new StorageProxyMuxer<CRDTMuxEntity>(store, type, storageKey);
+    return new EntityHandleFactory(proxyMuxer) as ToHandle<T>;
+  } else if (isActiveStore(store)) {
+    const proxy = new StorageProxy<T>(store.baseStore.id, store, type, storageKey, options.ttl);
+    if (type instanceof SingletonType) {
+      // tslint:disable-next-line: no-any
+      return new SingletonHandle(generateID(), proxy as any, idGenerator, particle, canRead, canWrite, name) as ToHandle<T>;
+    } else {
+      // tslint:disable-next-line: no-any
+      return new CollectionHandle(generateID(), proxy as any, idGenerator, particle, canRead, canWrite, name) as ToHandle<T>;
+    }
   } else {
-    // tslint:disable-next-line: no-any
-    return new CollectionHandle(generateID(), proxy as any, idGenerator, particle, canRead, canWrite, name) as ToHandle<ActiveStore<T>>;
+    throw Error('Invalid active store');
   }
 }
 
-export async function handleForStore<T extends CRDTTypeRecord>(store: Store<T>, arc: ArcLike, options?: HandleOptions): Promise<ToHandle<ActiveStore<T>>> {
+export async function handleForStore<T extends CRDTTypeRecord>(store: Store<T>, arc: ArcLike, options?: HandleOptions): Promise<ToHandle<T>> {
   return handleForActiveStore(await store.activate(), arc, options);
 }

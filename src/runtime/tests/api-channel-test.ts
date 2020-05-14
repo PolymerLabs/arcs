@@ -106,6 +106,7 @@ describe('API channel', function() {
       onCreateHandleCallback() {}
       onCreateSlotCallback() {}
       onDefineHandle() {}
+      onDefineHandleFactory() {}
       onGetDirectStoreMuxerCallback() {}
       onInnerArcRender() {}
       onInstantiateParticle() {}

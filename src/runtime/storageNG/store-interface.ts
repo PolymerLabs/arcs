@@ -10,16 +10,17 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {PropagatedException} from '../arc-exceptions.js';
-import {CRDTTypeRecord} from '../crdt/crdt.js';
-import {Type} from '../type.js';
+import {CRDTTypeRecord, CRDTModel} from '../crdt/crdt.js';
 import {Exists} from './drivers/driver.js';
 import {StorageKey} from './storage-key.js';
 import {StorageProxy} from './storage-proxy.js';
-import {Store} from './store.js';
-import {Producer} from '../hot.js';
+import {Producer, Dictionary} from '../hot.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {noAwait} from '../util.js';
+import {AbstractStore} from './abstract-store.js';
+import {CRDTTypeRecordToType, CRDTMuxEntity} from './storage-ng.js';
+import {StoreRecord} from './direct-store-muxer.js';
 
 /**
  * This file exists to break a circular dependency between Store and the ActiveStore implementations.
@@ -41,21 +42,21 @@ export type ProxyCallback<T extends CRDTTypeRecord> = (message: ProxyMessage<T>)
 export type StoreInterface<T extends CRDTTypeRecord> = {
   readonly storageKey: StorageKey;
   exists: Exists;
-  readonly type: Type;
+  readonly type: CRDTTypeRecordToType<T>;
   readonly mode: StorageMode;
 };
 
 export type StoreConstructorOptions<T extends CRDTTypeRecord> = {
   storageKey: StorageKey,
   exists: Exists,
-  type: Type,
+  type: CRDTTypeRecordToType<T>,
   mode: StorageMode,
-  baseStore: Store<T>,
+  baseStore: AbstractStore,
   versionToken: string
 };
 
 export type StoreConstructor = {
-  construct<T extends CRDTTypeRecord>(options: StoreConstructorOptions<T>): Promise<ActiveStore<T>>;
+  construct<T extends CRDTTypeRecord>(options: StoreConstructorOptions<T>): Promise<AbstractActiveStore<T>>;
 };
 
 // Interface common to an ActiveStore and the PEC, used by the StorageProxy.
@@ -70,15 +71,33 @@ export interface StorageCommunicationEndpointProvider<T extends CRDTTypeRecord> 
   getStorageEndpoint(storageProxy: StorageProxy<T> | StorageProxyMuxer<T>): StorageCommunicationEndpoint<T>;
 }
 
+export interface AbstractActiveStore<T extends CRDTTypeRecord> {
+  versionToken: string;
+  baseStore: AbstractStore;
+  on(callback: ProxyCallback<T>): number;
+  off(callback: number): void;
+  onProxyMessage(message: ProxyMessage<T>): Promise<void>;
+  reportExceptionInHost(exception: PropagatedException): void;
+  cloneFrom(store: AbstractActiveStore<T>): Promise<void>;
+}
+
+export function isActiveStore(abstractActiveStore: AbstractActiveStore<CRDTTypeRecord>): abstractActiveStore is ActiveStore<CRDTTypeRecord> {
+  return (!abstractActiveStore.baseStore.type.isMux);
+}
+
+export function isActiveMuxer(abstractActiveStore: AbstractActiveStore<CRDTTypeRecord>): abstractActiveStore is ActiveMuxer<CRDTMuxEntity> {
+  return (abstractActiveStore.baseStore.type.isMux);
+}
+
 // A representation of an active store. Subclasses of this class provide specific
 // behaviour as controlled by the provided StorageMode.
 export abstract class ActiveStore<T extends CRDTTypeRecord>
-    implements StoreInterface<T>, StorageCommunicationEndpointProvider<T> {
+    implements StoreInterface<T>, StorageCommunicationEndpointProvider<T>, AbstractActiveStore<T> {
   readonly storageKey: StorageKey;
   exists: Exists;
-  readonly type: Type;
+  readonly type: CRDTTypeRecordToType<T>;
   readonly mode: StorageMode;
-  readonly baseStore: Store<T>;
+  readonly baseStore: AbstractStore;
   readonly versionToken: string;
 
   // TODO: Lots of these params can be pulled from baseStore.
@@ -146,6 +165,65 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
           },
           reportExceptionInHost(exception: PropagatedException): void {
             store.reportExceptionInHost(exception);
+          }
+        };
+      }
+    };
+  }
+}
+export abstract class ActiveMuxer<T extends CRDTTypeRecord> implements StorageCommunicationEndpointProvider<T>, AbstractActiveStore<T> {
+  abstract versionToken: string;
+  readonly baseStore: AbstractStore;
+  abstract readonly stores: Dictionary<StoreRecord<T>>;
+
+  // TODO: Lots of these params can be pulled from baseStore.
+  constructor(options: StoreConstructorOptions<T>) {
+    this.baseStore = options.baseStore;
+  }
+
+  abstract on(callback: ProxyCallback<T>): number;
+  abstract off(callback: number): void;
+  abstract async onProxyMessage(message: ProxyMessage<T>): Promise<void>;
+  abstract reportExceptionInHost(exception: PropagatedException): void;
+
+  abstract getLocalModel(muxId: string): CRDTModel<T>;
+
+  async cloneFrom(store: ActiveMuxer<T>): Promise<void> {
+    assert(store instanceof ActiveMuxer);
+    const activeMuxer : ActiveMuxer<T> = store as ActiveMuxer<T>;
+    for (const muxId of Object.keys(activeMuxer.stores)) {
+      await this.onProxyMessage({
+        type: ProxyMessageType.ModelUpdate,
+        model: activeMuxer.getLocalModel(muxId).getData(),
+        id: 0
+      });
+    }
+  }
+
+  getStorageEndpoint() {
+    const directStoreMuxer = this;
+    let id: number;
+    return {
+      async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
+        message.id = id!;
+        noAwait(directStoreMuxer.onProxyMessage(message));
+      },
+      setCallback(callback: ProxyCallback<T>) {
+        id = directStoreMuxer.on(callback);
+      },
+      reportExceptionInHost(exception: PropagatedException): void {
+        directStoreMuxer.reportExceptionInHost(exception);
+      },
+      getChannelConstructor(): ChannelConstructor {
+        return {
+          generateID() {
+            return null;
+          },
+          idGenerator: null,
+          getStorageProxyMuxer() {
+            throw new Error('unimplemented, should not be called');
+          },
+          reportExceptionInHost(exception: PropagatedException): void {
           }
         };
       }
