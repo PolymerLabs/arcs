@@ -36,13 +36,13 @@ data class Recipe(
     /** Definition of a handle in a recipe. */
     data class Handle(
         val name: String,
-        val id: String,
         val fate: Fate,
-        val tags: List<String>,
         val type: Type,
         val storageKey: String? = null,
         val capabilities: Capabilities? = null,
-        val associatedHandles: List<Handle> = emptyList()
+        val associatedHandles: List<Handle> = emptyList(),
+        val id: String = "",
+        val tags: List<String> = emptyList()
     ) {
         enum class Fate {
             CREATE, USE, MAP, COPY, JOIN

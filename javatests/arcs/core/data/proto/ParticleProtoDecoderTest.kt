@@ -26,9 +26,7 @@ class ParticleProtoDecoderTest {
     var ramdiskStorageKey = "ramdisk://something"
     val thingHandle = Handle(
         "thing",
-        "",
         Handle.Fate.CREATE,
-        emptyList(),
         TypeVariable("thing"),
         ramdiskStorageKey
     )
