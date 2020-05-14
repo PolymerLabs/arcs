@@ -47,8 +47,8 @@ class HandleManagerCloseTest {
     @Before
     fun setup() {
         DriverAndKeyConfigurator.configure(null)
-        SchemaRegistry.register(Person)
-        SchemaRegistry.register(HandleManagerTestBase.Hat)
+        SchemaRegistry.register(Person.SCHEMA)
+        SchemaRegistry.register(HandleManagerTestBase.Hat.SCHEMA)
     }
 
     fun createHandleManager() = EntityHandleManager("testArc", "", FakeTime(), scheduler)

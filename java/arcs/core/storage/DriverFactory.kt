@@ -51,12 +51,22 @@ object DriverFactory {
             ?.getDriver(storageKey, dataClass, type)
     }
 
+    /**
+     * Clears all entities. Note that not all drivers will update the corresponding Stores (volatile
+     * memory ones don't), so after calling this method one should create new Store/StorageProxy
+     * instances. Therefore using this method requires shutting down all arcs, and should be use
+     * only in rare circumstances.
+     */
     suspend fun removeAllEntities(): Job = coroutineScope {
         launch {
             providers.value.forEach { it.removeAllEntities() }
         }
     }
 
+    /**
+     * Clears all entities created in the given time range. See comments on [removeAllEntities] re
+     * the need to recreate stores after calling this method.
+     */
     suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long): Job =
         coroutineScope {
             launch {

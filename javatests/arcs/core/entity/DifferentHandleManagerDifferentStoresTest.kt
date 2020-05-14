@@ -45,4 +45,10 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
     override fun collection_removingFromA_isRemovedFromB() {
         super.collection_removingFromA_isRemovedFromB()
     }
+
+    @Ignore("b/156433279 - Deflake")
+    @Test
+    override fun singleton_referenceLiveness() {
+        super.singleton_referenceLiveness()
+    }
 }

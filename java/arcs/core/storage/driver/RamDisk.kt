@@ -53,6 +53,12 @@ class RamDiskDriverProvider : DriverProvider {
 
     override fun equals(other: Any?): Boolean = other is RamDiskDriverProvider
     override fun hashCode(): Int = this::class.hashCode()
+
+    override suspend fun removeAllEntities() = RamDisk.clear()
+
+    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
+        // RamDisk storage is opaque, so remove all entities.
+        removeAllEntities()
 }
 
 /** Singleton, for maintaining a single [VolatileMemory] reference to be shared across all arcs. */

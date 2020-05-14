@@ -336,6 +336,7 @@ export class KotlinGenerator implements ClassGenerator {
   fieldsForToString: string[] = [];
   singletonSchemaFields: string[] = [];
   collectionSchemaFields: string[] = [];
+  nestedEntitySpecs: string[] = [];
 
   refinement = `{ _ -> true }`;
   query = 'null'; // TODO(cypher1): Support multiple queries.
@@ -400,6 +401,10 @@ export class KotlinGenerator implements ClassGenerator {
       this.collectionSchemaFields.push(`"${field}" to ${schemaType}`);
     } else {
       this.singletonSchemaFields.push(`"${field}" to ${schemaType}`);
+    }
+
+    if (typeName === 'Reference') {
+      this.nestedEntitySpecs.push(`"${refSchemaHash}" to ${refClassName}`);
     }
   }
 
@@ -490,11 +495,11 @@ ${lines}
             ${this.fieldInitializers.join('\n            ')}
         }`)}
         ${this.opts.wasm ? `` : `/**
-         * Use this method to create a new, distinctly identified copy of the entity. 
+         * Use this method to create a new, distinctly identified copy of the entity.
          * Storing the copy will result in a new copy of the data being stored.
          */`}
         fun copy(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${name}(${ktUtils.joinWithIndents(this.fieldsForCopy, 8+name.length, 3)})
-        ${this.opts.wasm ? `` : `/** 
+        ${this.opts.wasm ? `` : `/**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
          */
@@ -518,11 +523,16 @@ ${lines}
             ${this.opts.wasm ? '' : `
             override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 12, true)}
 
+            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+                ${ktUtils.mapOf(this.nestedEntitySpecs, 16)}
+
             init {
-                SchemaRegistry.register(this)
+                SchemaRegistry.register(SCHEMA)
             }`}
             ${!this.opts.wasm ? `
-            override fun deserialize(data: RawEntity) = ${name}().apply { deserialize(data) }` : `
+            override fun deserialize(data: RawEntity) = ${name}().apply {
+                deserialize(data, nestedEntitySpecs)
+            }` : `
             override fun decode(encoded: ByteArray): ${name}? {
                 if (encoded.isEmpty()) return null
 

@@ -50,8 +50,8 @@ open class HandleManagerTestBase {
     val log = LogRule()
 
     init {
-        SchemaRegistry.register(Person)
-        SchemaRegistry.register(Hat)
+        SchemaRegistry.register(Person.SCHEMA)
+        SchemaRegistry.register(Hat.SCHEMA)
     }
 
     private val backingKey = RamDiskStorageKey("entities")
@@ -167,7 +167,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun singleton_clearOnAClearDataWrittenByA() = testRunner {
+    open fun singleton_clearOnAClearDataWrittenByA() = testRunner {
         val handleA = writeHandleManager.createSingletonHandle()
         val handleB = readHandleManager.createSingletonHandle()
 

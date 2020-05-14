@@ -24,6 +24,13 @@ data class AccessPath(val root: Root, val selectors: List<Selector> = emptyList(
         selectors: List<Selector> = emptyList()
     ) : this(Root.HandleConnection(particle, connection), selectors)
 
+    /** Constructs an [AccessPath] representing a [ParticleSpec.HandleConnectionSpec]. */
+    constructor(
+        particleSpecName: String,
+        connectionSpec: HandleConnectionSpec,
+        selectors: List<Selector> = emptyList()
+    ) : this(Root.HandleConnectionSpec(particleSpecName, connectionSpec), selectors)
+
     /** Constructs an [AccessPath] representing a [Recipe.Handle]. */
     constructor(
         handle: Recipe.Handle,
@@ -41,11 +48,19 @@ data class AccessPath(val root: Root, val selectors: List<Selector> = emptyList(
         data class Handle(val handle: Recipe.Handle) : Root() {
             override fun toString() = "h:${handle.name}"
         }
+
         data class HandleConnection(
             val particle: Recipe.Particle,
             val connection: Recipe.Particle.HandleConnection
         ) : Root() {
             override fun toString() = "hc:${particle.spec.name}.${connection.spec.name}"
+        }
+
+        data class HandleConnectionSpec(
+            val particleSpecName: String,
+            val connectionSpec: arcs.core.data.HandleConnectionSpec
+        ) : Root() {
+            override fun toString() = "hcs:$particleSpecName.${connectionSpec.name}"
         }
         // TODO(bgogul): Store, etc.
     }

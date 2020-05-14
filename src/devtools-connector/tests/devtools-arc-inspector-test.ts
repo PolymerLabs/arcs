@@ -78,7 +78,9 @@ describe('DevtoolsArcInspector', () => {
         verbs: [],
         trustClaims: [],
         trustChecks: [],
+        annotations: [],
         args: [{
+          annotations: [],
           dependentConnections: [],
           direction: 'reads writes',
           isOptional: false,

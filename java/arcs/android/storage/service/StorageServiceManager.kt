@@ -11,11 +11,11 @@
 
 package arcs.android.storage.service
 
+import arcs.core.host.ArcHostManager
 import arcs.core.storage.DriverFactory
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 /**
  * A [StorageServiceManager] is used by a client of the [StorageService] to manage
@@ -30,8 +30,10 @@ class StorageServiceManager(
     private val coroutineContext = parentCoroutineContext + CoroutineName("StorageServiceManager")
 
     override fun clearAll(resultCallback: IResultCallback) {
-        CoroutineScope(coroutineContext).launch {
-            DriverFactory.removeAllEntities().join()
+        runBlocking(coroutineContext) {
+            ArcHostManager.pauseAllHostsFor {
+                DriverFactory.removeAllEntities().join()
+            }
         }
         resultCallback.onResult(null)
     }
@@ -41,8 +43,10 @@ class StorageServiceManager(
         endTimeMillis: Long,
         resultCallback: IResultCallback
     ) {
-        CoroutineScope(coroutineContext).launch {
-            DriverFactory.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis).join()
+        runBlocking(coroutineContext) {
+            ArcHostManager.pauseAllHostsFor {
+                DriverFactory.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis).join()
+            }
         }
         resultCallback.onResult(null)
     }

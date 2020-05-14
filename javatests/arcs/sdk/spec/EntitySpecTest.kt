@@ -206,7 +206,6 @@ class EntitySpecTest {
     fun schemaRegistry() {
         // The entity class should have registered itself statically.
         val hash = Foo.SCHEMA.hash
-        assertThat(SchemaRegistry.getEntitySpec(hash)).isEqualTo(Foo)
         assertThat(SchemaRegistry.getSchema(hash)).isEqualTo(Foo.SCHEMA)
     }
 

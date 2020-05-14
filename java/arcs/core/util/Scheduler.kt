@@ -264,7 +264,7 @@ class Scheduler(
          * The default maximum rate at which iterations of agenda processing are allowed to operate
          * per second.
          */
-        const val DEFAULT_SCHEDULE_RATE_HZ = 60
+        const val DEFAULT_SCHEDULE_RATE_HZ = 120
     }
 }
 

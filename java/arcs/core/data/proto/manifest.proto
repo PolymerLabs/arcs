@@ -201,6 +201,9 @@ message UnaryExpressionProto {
   OPERATOR operator = 2;
 }
 
+// Note that this proto only allows encoding access paths where the root is
+// a `HandleConnectionSpec`. This should be sufficient as the root of an access
+// path in a claim or check can only refer to a `HandleConnectionSpec`.
 message AccessPathProto {
   message Selector {
     oneof selector {
@@ -208,8 +211,10 @@ message AccessPathProto {
       // TODO(bgogul): Other selectors like dereferencing, index, etc.
     }
   }
-  string handle_connection = 1;
-  repeated Selector selectors = 2;
+  // (particle_spec, handle_connection) identifies a `HandleConnectionSpec`.
+  string particle_spec = 1;
+  string handle_connection = 2;
+  repeated Selector selectors = 3;
 }
 
 message InformationFlowLabelProto {

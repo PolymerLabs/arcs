@@ -48,7 +48,7 @@ import {Refinement} from './refiner.js';
 import {Capabilities} from './capabilities.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 import {LoaderBase} from '../platform/loader-base.js';
-import {Annotation} from './recipe/annotation.js';
+import {Annotation, AnnotationRef} from './recipe/annotation.js';
 import {SchemaPrimitiveTypeValue} from './manifest-ast-nodes.js';
 
 export enum ErrorSeverity {
@@ -371,6 +371,10 @@ export class Manifest {
     }
 
     return TypeChecker.compareTypes({type: candidate.type}, {type});
+  }
+
+  findAnnotationByName(name: string) : Annotation|null {
+    return this._find(manifest => manifest._annotations[name]);
   }
 
   generateID(subcomponent?: string): Id {
@@ -736,7 +740,8 @@ ${e.message}
         schemaItem.location,
         `Schema defined without name or alias`);
     }
-    const schema = new Schema(names, fields, {description});
+    const annotations: AnnotationRef[] = Manifest._buildAnnotationRefs(manifest, schemaItem.annotationRefs);
+    const schema = new Schema(names, fields, {description, annotations});
     if (schemaItem.alias) {
       schema.isAlias = true;
     }
@@ -747,13 +752,13 @@ ${e.message}
     manifest._resources[schemaItem.name] = schemaItem.data;
   }
 
-  private static _processAnnotation(manifest: Manifest, schemaItem: AstNode.AnnotationNode) {
+  private static _processAnnotation(manifest: Manifest, annotationItem: AstNode.AnnotationNode) {
     const params: Dictionary<SchemaPrimitiveTypeValue> = {};
-    for (const param of schemaItem.params) {
+    for (const param of annotationItem.params) {
       params[param.name] = param.type;
     }
-    manifest._annotations[schemaItem.name] = new Annotation(
-        schemaItem.name, params, schemaItem.targets, schemaItem.retention, schemaItem.doc);
+    manifest._annotations[annotationItem.name] = new Annotation(
+      annotationItem.name, params, annotationItem.targets, annotationItem.retention, annotationItem.doc);
   }
 
   private static _processParticle(manifest: Manifest, particleItem, loader?: LoaderBase) {
@@ -789,10 +794,11 @@ ${e.message}
         }
         arg.type = arg.type.model;
         processArgTypes(arg.dependentConnections);
+        arg.annotations = Manifest._buildAnnotationRefs(manifest, arg.annotations);
       }
     };
     processArgTypes(particleItem.args);
-
+    particleItem.annotations = Manifest._buildAnnotationRefs(manifest, particleItem.annotationRefs);
     manifest._particles[particleItem.name] = new ParticleSpec(particleItem);
   }
 
@@ -832,6 +838,8 @@ ${e.message}
     if (recipeItem.triggers) {
       recipe.triggers = recipeItem.triggers;
     }
+    recipe.annotations = Manifest._buildAnnotationRefs(manifest, recipeItem.annotationRefs);
+
     if (recipeItem.verbs) {
       recipe.verbs = recipeItem.verbs;
     }
@@ -1275,6 +1283,36 @@ ${e.message}
    */
   private createLocalDataStorageKey(): RamDiskStorageKey {
     return new RamDiskStorageKey(this.generateID('local-data').toString());
+  }
+
+  private static _buildAnnotationRefs(manifest: Manifest, annotationRefItems: AstNode.AnnotationRef[]): AnnotationRef[] {
+    const annotationRefs: AnnotationRef[] = [];
+    for (const aRefItem of annotationRefItems) {
+      if (annotationRefs.some(a => a.name === aRefItem.name)) {
+        throw new ManifestError(
+            aRefItem.location, `annotation '${aRefItem.name}' already exists.`);
+      }
+      const annotation = manifest.findAnnotationByName(aRefItem.name);
+      if (!annotation) {
+        throw new ManifestError(
+            aRefItem.location, `annotation not found: '${aRefItem.name}'`);
+      }
+      const params: Dictionary<string|number|boolean|{}> = {};
+      for (const param of aRefItem.params) {
+        if (params[param.name]) {
+          throw new ManifestError(
+              aRefItem.location, `annotation '${annotation.name}' already has param '${param.name}'`);
+        }
+        const aParam = annotation.params[param.name];
+        if (!aParam) {
+          throw new ManifestError(
+              aRefItem.location, `unexpected annotation param: '${param.name}'`);
+        }
+        params[param.name] = param.value;
+      }
+      annotationRefs.push(new AnnotationRef(annotation, params));
+    }
+    return annotationRefs;
   }
 
   private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: LoaderBase, memoryProvider?: VolatileMemoryProvider) {

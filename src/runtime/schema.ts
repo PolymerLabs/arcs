@@ -8,6 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
 import {Dictionary} from './hot.js';
 import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/crdt-entity.js';
@@ -17,6 +18,7 @@ import {Flags} from './flags.js';
 import {SchemaType} from './manifest-ast-nodes.js';
 import {Refinement, AtLeastAsSpecific} from './refiner.js';
 import {Reference} from './reference.js';
+import {AnnotationRef} from './recipe/annotation.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
@@ -30,6 +32,7 @@ export class Schema {
   description: Dictionary<string> = {};
   isAlias: boolean;
   hashStr: string = null;
+  _annotations: AnnotationRef[];
   // The implementation of fromLiteral creates a cyclic dependency, so it is
   // separated out. This variable serves the purpose of an abstract static.
   static fromLiteral: SchemaMethod = null;
@@ -38,7 +41,7 @@ export class Schema {
   // in `fields`; the constructor will convert these to the correct schema form.
   // tslint:disable-next-line: no-any
   constructor(names: string[], fields: Dictionary<any>,
-      options: {description?, refinement?: Refinement} = {}
+      options: {description?, refinement?: Refinement, annotations?: AnnotationRef[]} = {}
     ) {
     this.names = names;
     this.fields = {};
@@ -60,6 +63,7 @@ export class Schema {
     if (options.description) {
       options.description.description.forEach(desc => this.description[desc.name] = desc.pattern || desc.patterns[0]);
     }
+    this.annotations = options.annotations || [];
   }
 
   toLiteral() {
@@ -86,13 +90,21 @@ export class Schema {
       names: this.names,
       fields,
       description: this.description,
-      refinement: this.refinement && this.refinement.toLiteral()
+      refinement: this.refinement && this.refinement.toLiteral(),
+      annotations: this.annotations
     };
   }
 
   // TODO(cypher1): This should only be an ident used in manifest parsing.
   get name() {
     return this.names[0];
+  }
+
+  get annotations(): AnnotationRef[] { return this._annotations; }
+  set annotations(annotations: AnnotationRef[]) {
+    annotations.every(a => assert(a.isValidForTarget('Schema'),
+        `Annotation '${a.name}' is invalid for Schema`));
+    this._annotations = annotations;
   }
 
   static typesEqual(fieldType1, fieldType2): boolean {
