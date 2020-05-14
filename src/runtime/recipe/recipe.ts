@@ -327,15 +327,6 @@ export class Recipe implements Cloneable<Recipe> {
            this._connectionConstraints.length === 0;
   }
 
-  findHandle(id: string): Handle {
-    for (const handle of this.handles) {
-      if (handle.id === id) {
-        return handle;
-      }
-    }
-    return null;
-  }
-
   findSlot(id: string): Slot {
     for (const slot of this.slots) {
       if (slot.id === id) {

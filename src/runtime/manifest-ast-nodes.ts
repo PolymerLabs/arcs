@@ -148,6 +148,7 @@ export interface ManifestStorage extends BaseNode {
   claim: ManifestStorageClaim;
   storageKey: string|null;
   entities: ManifestStorageInlineEntity[]|null;
+  annotationRefs?: AnnotationRef[];
 }
 
 export type ManifestStorageType = SchemaInline | CollectionType | BigCollectionType | TypeName;
@@ -487,6 +488,7 @@ export interface RecipeHandle extends BaseNode {
   fate: Fate;
   capabilities: RecipeHandleCapability[];
   annotation: ParameterizedAnnotation|null;
+  annotations: AnnotationRef[];
 }
 
 export interface RecipeSyntheticHandle extends BaseNode {

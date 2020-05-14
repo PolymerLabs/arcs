@@ -23,6 +23,7 @@ import {Fate, Direction} from '../manifest-ast-nodes.js';
 import {ClaimIsTag, Claim} from '../particle-claim.js';
 import {StorageKey} from '../storageNG/storage-key.js';
 import {Capabilities} from '../capabilities.js';
+import {AnnotationRef} from './annotation.js';
 
 export class Handle implements Comparable<Handle> {
   private readonly _recipe: Recipe;
@@ -51,6 +52,7 @@ export class Handle implements Comparable<Handle> {
   private _immediateValue: ParticleSpec | undefined = undefined;
   claims: Claim[] | undefined = undefined;
   private _ttl = Ttl.infinite;
+  private _annotations: AnnotationRef[];
 
   constructor(recipe: Recipe) {
     assert(recipe);
@@ -88,7 +90,7 @@ export class Handle implements Comparable<Handle> {
   _copyInto(recipe: Recipe, cloneMap: CloneMap, variableMap: VariableMap) {
     let handle: Handle = undefined;
     if (this._id !== null && ['map', 'use', 'copy'].includes(this.fate)) {
-      handle = recipe.findHandle(this._id);
+      handle = recipe.findHandleByID(this._id);
     }
 
     if (handle == undefined) {
@@ -227,6 +229,13 @@ export class Handle implements Comparable<Handle> {
   set ttl(ttl: Ttl) { this._ttl = ttl; }
   get isSynthetic() { return this.fate === 'join'; } // Join handles are the first type of synthetic handles, other may come.
   get joinedHandles() { return this._joinedHandles; }
+
+  get annotations(): AnnotationRef[] { return this._annotations; }
+  set annotations(annotations: AnnotationRef[]) {
+    annotations.every(a => assert(a.isValidForTarget('Handle'),
+        `Annotation '${a.name}' is invalid for Handle`));
+    this._annotations = annotations;
+  }
 
   static effectiveType(handleType: Type, connections: {type?: Type, direction?: Direction, relaxed?: boolean}[]) {
     const variableMap = new Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>();

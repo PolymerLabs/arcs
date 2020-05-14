@@ -253,6 +253,7 @@ export class Manifest {
       origin?: 'file' | 'resource' | 'storage' | 'inline',
       referenceMode?: boolean,
       model?: {}[],
+      annotations?: AnnotationRef[]
   }) {
     if (opts.source) {
       this.storeManifestUrls.set(opts.id, this.fileName);
@@ -901,6 +902,9 @@ ${e.message}
             item.annotation.parameter.count,
             Ttl.ttlUnitsFromString(item.annotation.parameter.units));
       }
+      if (item.kind === 'handle' && item.annotations) {
+        handle.annotations = Manifest._buildAnnotationRefs(manifest, item.annotations);
+      }
       items.byHandle.set(handle, item);
     }
 
@@ -1378,7 +1382,8 @@ ${e.message}
     }
     return manifest.newStore({
       type, name, id, storageKey, tags, originalId, claims, description, version,
-      source: item.source, origin, referenceMode: false, model: entities
+      source: item.source, origin, referenceMode: false, model: entities,
+      annotations: Manifest._buildAnnotationRefs(manifest, item.annotationRefs)
     });
   }
 

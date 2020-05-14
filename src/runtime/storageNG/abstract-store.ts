@@ -16,6 +16,7 @@ import {ClaimIsTag} from '../particle-claim.js';
 import {SingletonInterfaceStore, SingletonEntityStore, SingletonReferenceStore, CollectionEntityStore, CollectionReferenceStore} from './storage-ng.js';
 import {ActiveStore} from './store-interface.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
+import {AnnotationRef} from '../recipe/annotation.js';
 
 export function isSingletonInterfaceStore(store: AbstractStore): store is SingletonInterfaceStore {
   return (store.type.isSingleton && store.type.getContainedType().isInterface);
@@ -106,6 +107,9 @@ export abstract class AbstractStore implements Comparable<AbstractStore> {
     opts = opts || {};
     const info = {...this.storeInfo, ...opts.overrides};
     const results: string[] = [];
+    if ((this.storeInfo.annotations || []).length > 0) {
+      results.push(`${this.storeInfo.annotations.map(a => a.toString()).join('\n')}`);
+    }
     const handleStr: string[] = [];
     handleStr.push(`store`);
     if (info.name) {
@@ -158,6 +162,7 @@ export type StoreInfo = {
 
   /** Trust tags claimed by this data store. */
   readonly claims?: ClaimIsTag[];
+  readonly annotations?: AnnotationRef[];
 
   readonly versionToken?: string;
   readonly model?: {};

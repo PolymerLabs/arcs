@@ -1277,8 +1277,9 @@ RecipeHandleCapability
  / 'tied-to-runtime'
  / 'tied-to-arc'
 
+// TODO(#5291): deprecate `capabilities` and `annotation` for `annotations`.
 RecipeHandle
-  = name:NameWithColon? fate:RecipeHandleFate capabilities:(whiteSpace RecipeHandleCapability)* ref:(whiteSpace HandleRef)? annotation:(whiteSpace AnnotationItem)? eolWhiteSpace
+  = name:NameWithColon? fate:RecipeHandleFate capabilities:(whiteSpace RecipeHandleCapability)* ref:(whiteSpace HandleRef)? annotation:(whiteSpace AnnotationItem)? annotations:SpaceAnnotationRefList? eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeHandle>({
       kind: 'handle',
@@ -1287,6 +1288,7 @@ RecipeHandle
       fate,
       capabilities: capabilities.map(c => c[1]),
       annotation: optional(annotation, s => s[1], null),
+      annotations: annotations || [],
     });
   }
 
