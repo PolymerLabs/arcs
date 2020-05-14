@@ -48,7 +48,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -105,7 +104,6 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private var storageService: IStorageService? = null
     private var serviceConnection: StorageServiceConnection? = null
     private var channel: Channel<suspend () -> Unit>? = null
-    private var flow: Flow<suspend () -> Unit>? = null
 
     init {
         lifecycle.addObserver(this)
@@ -115,10 +113,11 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     // Channel has an internal queue which can retain work if stopped
     // So we need to create fresh instances when off() invoked
     private fun initChannel() {
-        channel?.let { it.cancel() }
-        channel = Channel<suspend () -> Unit>(Channel.UNLIMITED)
-        flow = channel!!.consumeAsFlow().onEach { it() }
-        flow!!.launchIn(scope)
+        synchronized(this) {
+            channel?.let { it.cancel() }
+            channel = Channel(Channel.UNLIMITED)
+            channel!!.consumeAsFlow().onEach { it() }.launchIn(scope)
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -151,14 +150,21 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     override fun off(callbackToken: Int) {
         val service = checkNotNull(storageService)
         runBlocking {
-            send { service.unregisterCallback(callbackToken) }
+            send {
+                service.unregisterCallback(callbackToken)
+                initChannel()
+            }
         }
-        initChannel()
     }
 
     private suspend fun send(block: suspend () -> Unit) = requireNotNull(channel) {
         "Channel is not initialized"
-    }.send(block)
+    }.apply {
+        require(!isClosedForSend) {
+            "Channel is closed"
+        }
+        send(block)
+    }
 
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean {
         val service = checkNotNull(storageService)
@@ -190,6 +196,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     fun onLifecycleDestroyed() {
         serviceConnection?.disconnect()
         storageService = null
+        channel?.let { it.cancel() }
         channel = null
         scope.coroutineContext[Job.Key]?.cancelChildren()
     }

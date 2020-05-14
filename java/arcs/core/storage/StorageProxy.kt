@@ -161,7 +161,9 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      * being thrown.
      */
     fun close() {
-        _crdt = null
+        scheduler.scope.launch(dispatcher) {
+            _crdt = null
+        }
         store.close()
         stateHolder.update { it.setState(ProxyState.CLOSED) }
     }
