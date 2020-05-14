@@ -29,7 +29,8 @@ fun SchemaProto.decodeFields(): SchemaFields {
             TypeProto.DataCase.PRIMITIVE -> singletons[name] = type.decodeAsFieldType()
             TypeProto.DataCase.REFERENCE -> singletons[name] = type.decodeAsFieldType()
             TypeProto.DataCase.TUPLE -> singletons[name] = type.decodeAsFieldType()
-            TypeProto.DataCase.COLLECTION -> collections[name] = type.collection.collectionType.decodeAsFieldType()
+            TypeProto.DataCase.COLLECTION -> collections[name] =
+                type.collection.collectionType.decodeAsFieldType()
             TypeProto.DataCase.DATA_NOT_SET ->
                 throw IllegalArgumentException("Unknown data field in TypeProto.")
             else ->

@@ -322,7 +322,7 @@ export class Schema {
       } else if (kind === 'schema-collection' && schema.kind === 'schema-primitive') {
         str += '[' + schema.type + ']';
       } else if (kind === 'schema-tuple') {
-        str += `(${types.map(t => t.type).join('|')})`
+        str += `(${types.map(t => t.type).join('|')})`;
       } else {
         throw new Error('Schema hash: unsupported field type');
       }
