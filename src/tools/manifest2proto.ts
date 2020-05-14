@@ -86,11 +86,14 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
 // Converts the claims in HandleConnectionSpec.
 function claimsToProtoPayload(
   spec: ParticleSpec,
-  cs: HandleConnectionSpec,
+  connectionSpec: HandleConnectionSpec,
   proto: {}
 ) {
-  return cs.claims?.map(claim => {
-    const accessPath = {particleSpec: spec.name, handleConnection: cs.name};
+  return connectionSpec.claims?.map(claim => {
+    const accessPath = {
+      particleSpec: spec.name,
+      handleConnection: connectionSpec.name
+    };
     switch (claim.type) {
       case ClaimType.IsTag: {
         const tag = {semanticTag: claim.tag};
