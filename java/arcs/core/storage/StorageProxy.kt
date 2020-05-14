@@ -45,9 +45,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private var _crdt: CrdtModel<Data, Op, T>? = crdt
 
     private val crdt: CrdtModel<Data, Op, T>
-        get() = requireNotNull(_crdt) {
-            "crdt field is null, StorageProxy closed?"
-        }
+        get() = _crdt?.let { it } ?: throw IllegalStateException("StorageProxy closed")
 
     /**
      * If you need to interact with the data managed by this [StorageProxy], and you're not a
