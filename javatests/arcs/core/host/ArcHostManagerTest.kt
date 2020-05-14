@@ -26,7 +26,7 @@ open class ArcHostManagerTest {
     }
 
     @Test
-    fun pauseAll_UnpauseAll() = runBlocking {
+    fun pauseAllHostsFor() = runBlocking {
         val schedulerProvider = JvmSchedulerProvider(coroutineContext)
         val host  = TestHost(schedulerProvider("arcId"))
         val hostRegistry = ExplicitHostRegistry()
@@ -35,11 +35,13 @@ open class ArcHostManagerTest {
         val partition = Plan.Partition("arcId", "arcHost", listOf())
         host.startArc(partition)
         assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Running)
-        
-        ArcHostManager.pauseAllHosts()
-        assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Stopped)
 
-        ArcHostManager.unPauseAllHosts()
+        var stateDuringPause: ArcState? = null
+        ArcHostManager.pauseAllHostsFor {
+            stateDuringPause = host.lookupArcHostStatus(partition)
+        }
+        assertThat(stateDuringPause).isEqualTo(ArcState.Stopped)
+
         assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Running)
 
         schedulerProvider.cancelAll()
