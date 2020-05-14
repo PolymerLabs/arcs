@@ -66,4 +66,31 @@ class ParcelableSchemaFieldsTest {
 
         assertThat(unmarshalled).isEqualTo(fields)
     }
+
+    @Test
+    fun parcelableRoundtrip_works_tuples() {
+        val fields = SchemaFields(
+            singletons = mapOf(
+                "foo" to FieldType.Text,
+                "tup" to FieldType.Tuple(listOf(FieldType.Boolean, FieldType.Number))
+            ),
+            collections = mapOf(
+                "fooCollection" to FieldType.Text,
+                "tupCollection" to FieldType.Tuple(listOf(FieldType.Boolean, FieldType.Number))
+            )
+        )
+
+        val marshalled = with(Parcel.obtain()) {
+            writeSchemaFields(fields, 0)
+            marshall()
+        }
+
+        val unmarshalled = with(Parcel.obtain()) {
+            unmarshall(marshalled, 0, marshalled.size)
+            setDataPosition(0)
+            readSchemaFields()
+        }
+
+        assertThat(unmarshalled).isEqualTo(fields)
+    }
 }
