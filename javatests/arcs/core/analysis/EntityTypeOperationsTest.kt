@@ -13,23 +13,25 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class EntityTypeUnionTest {
-    // TODO(bgogul): hash for all Schema instances.
+class EntityTypeOperationsTest {
+    // TODO(b/154235149): hash for all Schema instances.
 
     @Test
-    fun schemaUnionMergesNames() {
+    fun schemaUnion_mergesNames() {
         val emptySchemaFields = SchemaFields(emptyMap(), emptyMap())
         val thingSchema = Schema(
             setOf(SchemaName("Thing"), SchemaName("Another")),
             emptySchemaFields,
-            ""
+            hash = ""
         )
         val objectSchema = Schema(
             setOf(SchemaName("Object"), SchemaName("Thing")),
             emptySchemaFields,
-            ""
+            hash = ""
         )
+
         val thingObjectSchema = requireNotNull((thingSchema union objectSchema).getOrNull())
+
         assertThat(thingObjectSchema.names).containsExactly(
             SchemaName("Thing"),
             SchemaName("Object"),
@@ -38,7 +40,7 @@ class EntityTypeUnionTest {
     }
 
     @Test
-    fun schemaUnionMergesSingletons() {
+    fun schemaUnion_mergesSingletons() {
         val textField = SchemaFields(
             mapOf("text" to FieldType.Text),
             emptyMap()
@@ -47,19 +49,40 @@ class EntityTypeUnionTest {
             mapOf("number" to FieldType.Number),
             emptyMap()
         )
-        val textSchema = Schema(setOf(SchemaName("Example")), textField, "")
-        val numberSchema = Schema(setOf(SchemaName("Example")), numberField, "")
+        val textSchema = Schema(names = emptySet(), fields = textField, hash = "")
+        val numberSchema = Schema(names = emptySet(), fields = numberField, hash = "")
+
         val result = requireNotNull((textSchema union numberSchema).getOrNull())
-        with(result) {
-            assertThat(names).containsExactly(SchemaName("Example"))
-            assertThat(fields.singletons).isEqualTo(
-                mapOf("text" to FieldType.Text, "number" to FieldType.Number)
-            )
-        }
+
+        assertThat(result.fields.singletons).containsExactly(
+            "text", FieldType.Text,
+            "number", FieldType.Number
+        )
     }
 
     @Test
-    fun schemaUnionDetectsIncompatibleFieldTypes() {
+    fun schemaUnion_mergesCollections() {
+        val textsField = SchemaFields(
+            emptyMap(),
+            mapOf("texts" to FieldType.Text)
+        )
+        val numbersField = SchemaFields(
+            emptyMap(),
+            mapOf("numbers" to FieldType.Number)
+        )
+        val textSchema = Schema(names = emptySet(), fields = textsField, hash = "")
+        val numberSchema = Schema(names = emptySet(), fields = numbersField, hash = "")
+
+        val result = requireNotNull((textSchema union numberSchema).getOrNull())
+
+        assertThat(result.fields.collections).containsExactly(
+            "texts", FieldType.Text,
+            "numbers", FieldType.Number
+        )
+    }
+
+    @Test
+    fun schemaUnion_rejectsIncompatibleFieldTypes() {
         val textField = SchemaFields(
             mapOf("num_text" to FieldType.Text),
             emptyMap()
@@ -76,7 +99,7 @@ class EntityTypeUnionTest {
     }
 
     @Test
-    fun entityTypeUnionComputesUnionOfSchemas() {
+    fun entityTypeUnion_computesUnionOfSchemas() {
         val textField = SchemaFields(
             mapOf("text" to FieldType.Text),
             emptyMap()
@@ -89,9 +112,11 @@ class EntityTypeUnionTest {
         val numberSchema = Schema(setOf(SchemaName("Example")), numberField, "")
         val textEntity = EntityType(textSchema)
         val numberEntity = EntityType(numberSchema)
+
         val result = requireNotNull((textEntity union numberEntity).getOrNull())
+
         assertThat(result.entitySchema).isEqualTo(
-            (numberSchema union textSchema).getOrNull()
+            (numberSchema union textSchema).getOrNull()!!
         )
     }
 }
