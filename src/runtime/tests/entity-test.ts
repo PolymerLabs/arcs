@@ -32,6 +32,7 @@ describe('Entity', () => {
         ref: &{z: Text}
         tuple: (Text, URL, Number, Boolean, Bytes)
         union: (Text or URL or Number or Boolean or Bytes)
+        kt: Long
     `);
     schema = manifest.findSchemaByName('Foo');
     entityClass = Entity.createEntityClass(schema, null);
@@ -177,6 +178,15 @@ describe('Entity', () => {
     Entity.mutate(e, {num: 35});
     assert.strictEqual(e.txt, 'abc');
     assert.strictEqual(e.num, 35);
+  });
+
+  it('prevents mutations of Kotlin types', () => {
+    const e = new entityClass({txt: 'abc', num: 56});
+    assert.throws(() => Entity.mutate(e, {kt: 300}), `Kotlin primitive values can't yet be used`);
+  });
+
+  it('prevents construction that sets Kotlin types', () => {
+    assert.throws(() => new entityClass({txt: 'abc', num: 56, kt: 42}), `Kotlin primitive values can't yet be used`);
   });
 
   it('forbids mutations via setters', () => {

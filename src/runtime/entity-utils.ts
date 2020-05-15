@@ -54,6 +54,9 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
       }
       break;
     }
+    case 'kotlin-primitive': {
+      throw new Error(`Kotlin primitive values can't yet be used in TS`);
+    }
     case 'schema-union':
       // Value must be a primitive that matches one of the union types.
       for (const innerType of fieldType.types) {
