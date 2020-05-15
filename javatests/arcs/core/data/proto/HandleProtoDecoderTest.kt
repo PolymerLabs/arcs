@@ -73,10 +73,12 @@ class HandleProtoDecoderTest {
         val handleProto = parseHandleProtoText(handleText)
         with(handleProto.decode(handles)) {
             assertThat(name).isEqualTo("notype_thing")
+            assertThat(id).isEqualTo("")
             assertThat(fate).isEqualTo(Handle.Fate.CREATE)
             assertThat(storageKey).isEqualTo("ramdisk://a")
             assertThat(associatedHandles).containsExactly(handles["handle1"], handles["handle_c"])
             assertThat(type).isEqualTo(TypeVariable("notype_thing"))
+            assertThat(tags).isEmpty()
             assertThat(capabilities).isEqualTo(Capabilities.TiedToArc)
         }
     }
@@ -98,12 +100,12 @@ class HandleProtoDecoderTest {
         val storageKey = "ramdisk://b"
         val entityType = parseTypeProtoText(entityTypeProto).decode()
         val handleText = buildHandleProtoText(
-            "thing",
-            "JOIN",
-            "type { ${entityTypeProto} }",
-            storageKey,
-            "handle_join",
-            listOf("PERSISTENT", "QUERYABLE")
+            name = "thing",
+            fate = "JOIN",
+            type = "type { ${entityTypeProto} }",
+            storageKey = storageKey,
+            associatedHandle = "handle_join",
+            capabilities = listOf("PERSISTENT", "QUERYABLE")
         )
         val handleProto = parseHandleProtoText(handleText)
 
@@ -113,11 +115,104 @@ class HandleProtoDecoderTest {
         )
         with(handleProto.decode(handles)) {
             assertThat(name).isEqualTo("thing")
+            assertThat(id).isEqualTo("")
             assertThat(fate).isEqualTo(Handle.Fate.JOIN)
             assertThat(storageKey).isEqualTo("ramdisk://b")
             assertThat(associatedHandles).isEqualTo(listOf(handles["handle1"], handles["handle_join"]))
             assertThat(type).isEqualTo(entityType)
+            assertThat(tags).isEmpty()
             assertThat(capabilities).isEqualTo(Capabilities.PersistentQueryable)
+        }
+    }
+
+    @Test
+    fun decodesHandleProtoWithTypeAndTags() {
+        val entityTypeProto =
+            """
+              entity {
+                schema {
+                  names: "Thing"
+                  fields {
+                    key: "name"
+                    value: { primitive: TEXT }
+                  }
+                }
+              }
+            """.trimIndent()
+        val storageKey = "ramdisk://b"
+        val entityType = parseTypeProtoText(entityTypeProto).decode()
+        val handleText = buildHandleProtoText(
+            name = "thing",
+            fate = "JOIN",
+            type = "type { ${entityTypeProto} }",
+            storageKey = storageKey,
+            associatedHandle = "handle_join",
+            capabilities = listOf("PERSISTENT", "QUERYABLE"),
+            tags = listOf("foo", "bar", "baz")
+        )
+        val handleProto = parseHandleProtoText(handleText)
+
+        val handles = mapOf(
+            "handle1" to Handle(
+                "handle1",
+                Handle.Fate.MAP,
+                TypeVariable("handle1"),
+                tags = listOf("foo", "bar", "baz")
+            ),
+            "handle_join" to Handle(
+                "handle_join",
+                Handle.Fate.JOIN,
+                TypeVariable("handle_join"),
+                tags = listOf("foo", "bar", "baz")
+            )
+        )
+        with(handleProto.decode(handles)) {
+            assertThat(name).isEqualTo("thing")
+            assertThat(id).isEqualTo("")
+            assertThat(fate).isEqualTo(Handle.Fate.JOIN)
+            assertThat(storageKey).isEqualTo("ramdisk://b")
+            assertThat(associatedHandles).isEqualTo(listOf(handles["handle1"], handles["handle_join"]))
+            assertThat(type).isEqualTo(entityType)
+            assertThat(tags).containsExactly("foo", "bar", "baz")
+            assertThat(capabilities).isEqualTo(Capabilities.PersistentQueryable)
+        }
+    }
+
+    @Test
+    fun decodesHandleProtoWithId() {
+        val storageKey = "ramdisk://a"
+        val handleText = buildHandleProtoText(
+            name = "notype_thing",
+            fate = "CREATE",
+            type = "",
+            storageKey = storageKey,
+            associatedHandle = "handle_c",
+            capabilities = listOf("TIED_TO_ARC"),
+            tags = emptyList(),
+            id = "veryofficialid_2342"
+        )
+        val handles = mapOf(
+            "handle_c" to Handle(
+                "handle_c",
+                Handle.Fate.MAP,
+                TypeVariable("handle_c")
+            ),
+            "handle1" to Handle(
+                "handle1",
+                Handle.Fate.MAP,
+                TypeVariable("handle1")
+            )
+        )
+        val handleProto = parseHandleProtoText(handleText)
+        with(handleProto.decode(handles)) {
+            assertThat(name).isEqualTo("notype_thing")
+            assertThat(id).isEqualTo("veryofficialid_2342")
+            assertThat(fate).isEqualTo(Handle.Fate.CREATE)
+            assertThat(storageKey).isEqualTo("ramdisk://a")
+            assertThat(associatedHandles).containsExactly(handles["handle1"], handles["handle_c"])
+            assertThat(type).isEqualTo(TypeVariable("notype_thing"))
+            assertThat(tags).isEmpty()
+            assertThat(capabilities).isEqualTo(Capabilities.TiedToArc)
         }
     }
 
@@ -128,15 +223,19 @@ class HandleProtoDecoderTest {
         type: String,
         storageKey: String,
         associatedHandle: String,
-        capabilities: List<String>
+        capabilities: List<String>,
+        tags: List<String> = emptyList(),
+        id: String = ""
     ) =
         """
           name: "${name}"
+          id: "${id}"
           fate: ${fate}
           storage_key: "$storageKey"
           associated_handles: "handle1"
           associated_handles: "${associatedHandle}"
           ${type}
           ${capabilities.joinToString { "capabilities: $it" }}
+          ${tags.joinToString { """tags: "$it"""" }}
         """.trimIndent()
 }

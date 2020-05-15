@@ -50,7 +50,9 @@ fun List<HandleProto.Capability>.decode() = Capabilities(
  */
 fun HandleProto.decode(knownHandles: Map<String, Handle> = emptyMap()) = Handle(
     name = name,
+    id = id,
     fate = fate.decode(),
+    tags = tagsList,
     storageKey = storageKey,
     type = if (hasType()) type.decode() else TypeVariable("$name"),
     capabilities = capabilitiesList.decode(),
