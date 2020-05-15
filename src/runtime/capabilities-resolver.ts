@@ -127,10 +127,17 @@ export class CapabilitiesResolver {
   findStorageKeyProtocols(inCapabilities: Capabilities): Set<string> {
     const protocols: Set<string> = new Set();
     for (const {protocol, capabilities} of this.creators) {
-      if (capabilities.contains(inCapabilities)) {
+      if (capabilities.isSame(inCapabilities)) {
           protocols.add(protocol);
       }
     }
+    if (protocols.size === 0) {
+      for (const {protocol, capabilities} of this.creators) {
+        if (capabilities.contains(inCapabilities)) {
+            protocols.add(protocol);
+        }
+      }
+      }
     return protocols;
   }
 }
