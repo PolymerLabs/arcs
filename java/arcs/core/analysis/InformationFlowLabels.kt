@@ -57,18 +57,6 @@ data class InformationFlowLabels(
         }
     }
 
-    private fun BitSet.toString(transform: ((Int) -> String)?): String {
-        if (transform == null) return "$this"
-        var labels = mutableListOf<String>()
-        var nextBit = nextSetBit(0)
-        while (nextBit != -1) {
-            labels.add(transform(nextBit))
-            if (nextBit == Int.MAX_VALUE) break
-            nextBit = nextSetBit(nextBit + 1)
-        }
-        return labels.joinToString(prefix = "{", postfix = "}")
-    }
-
     companion object {
         fun getBottom() = InformationFlowLabels(AbstractSet.getBottom<BitSet>())
         fun getTop() = InformationFlowLabels(AbstractSet.getTop<BitSet>())
