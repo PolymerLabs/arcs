@@ -12,7 +12,6 @@
 package arcs.core.util
 
 import arcs.core.testutil.assertSuspendingThrows
-import arcs.core.testutil.assertThrows
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat

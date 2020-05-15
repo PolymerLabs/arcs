@@ -30,7 +30,6 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.testutil.assertThrows
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
@@ -39,6 +38,7 @@ import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -132,7 +132,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
     }
 
     private fun expectHandleException(handleName: String, block: () -> Unit) {
-        val e = assertThrows(NoSuchElementException::class, block)
+        val e = assertFailsWith<NoSuchElementException>(block = block)
         assertThat(e).hasMessageThat().isEqualTo(
             "Handle $handleName has not been initialized in TestParticle yet."
         )

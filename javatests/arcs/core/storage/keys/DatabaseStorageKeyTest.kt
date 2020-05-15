@@ -12,9 +12,9 @@
 package arcs.core.storage.keys
 
 import arcs.core.storage.StorageKeyParser
-import arcs.core.testutil.assertThrows
 import arcs.core.testutil.fail
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -62,10 +62,10 @@ class DatabaseStorageKeyTest {
 
         val illegalStarters = "0123456789_-"
         illegalStarters.forEach {
-            assertThrows(IllegalArgumentException::class) {
+            assertFailsWith<IllegalArgumentException> {
                 DatabaseStorageKey.Persistent("foo", "1234a", "${it}ThenLegal")
             }
-            assertThrows(IllegalArgumentException::class) {
+            assertFailsWith<IllegalArgumentException> {
                 DatabaseStorageKey.Memory("foo", "1234a", "${it}ThenLegal")
             }
         }
@@ -73,62 +73,62 @@ class DatabaseStorageKeyTest {
 
     @Test
     fun requires_dbName_toHaveNoWeirdCharacters() {
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Persistent("foo", "1234a", "no spaces")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Persistent("foo", "1234a", "no:colons")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Persistent("foo", "1234a", "slashes/arent/cool")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Persistent("foo", "1234a", "periods.shouldnt.be.allowed")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Memory("foo", "1234a", "no spaces")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Memory("foo", "1234a", "no:colons")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Memory("foo", "1234a", "slashes/arent/cool")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Memory("foo", "1234a", "periods.shouldnt.be.allowed")
         }
     }
 
     @Test
     fun requires_entitySchemaHash_toBeValidHexString() {
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Persistent("foo", "", "myDb")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Persistent("foo", "g", "myDb")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Persistent("foo", "1234a_", "myDb")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Memory("foo", "", "myDb")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Memory("foo", "g", "myDb")
         }
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DatabaseStorageKey.Memory("foo", "1234a_", "myDb")
         }
     }

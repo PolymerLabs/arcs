@@ -11,8 +11,8 @@
 
 package arcs.core.util.performance
 
-import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -58,7 +58,7 @@ class CountersTest {
     fun increment_throws_whenCounterNotRegistered() {
         val counters = Counters("foo")
 
-        val e = assertThrows(IllegalArgumentException::class) {
+        val e = assertFailsWith<IllegalArgumentException> {
             counters.increment("bar")
         }
         assertThat(e).hasMessageThat().contains("Counter with name \"bar\" not registered")
@@ -94,7 +94,7 @@ class CountersTest {
     fun get_throws_whenCounterNotRegistered() {
         val counters = Counters("foo")
 
-        val e = assertThrows(IllegalArgumentException::class) {
+        val e = assertFailsWith<IllegalArgumentException> {
             counters["bar"]
         }
         assertThat(e).hasMessageThat().contains("Counter with name \"bar\" not registered")

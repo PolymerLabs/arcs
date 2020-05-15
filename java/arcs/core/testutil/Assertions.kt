@@ -15,21 +15,6 @@ import kotlin.AssertionError
 import kotlin.reflect.KClass
 import org.junit.Assert.fail
 
-/** Utility to assert that a lambda throws a specific exception type. */
-@Suppress("UNCHECKED_CAST")
-fun <T : Exception> assertThrows(expected: KClass<T>, thrower: () -> Unit): T {
-    try {
-        thrower()
-    } catch (e: Exception) {
-        assert(expected.java.isInstance(e)) {
-            "Expected exception of type $expected, but was ${e.javaClass}"
-        }
-        return e as T
-    }
-    fail("Expected exception of type $expected, but none was thrown.")
-    return AssertionError("Impossible") as T
-}
-
 /** Utility to assert that a suspending lambda throws a specific exception type. */
 @Suppress("UNCHECKED_CAST")
 suspend fun <T : Exception> assertSuspendingThrows(

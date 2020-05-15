@@ -4,10 +4,10 @@ import arcs.core.data.AccessPath
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.TypeVariable
-import arcs.core.testutil.assertThrows
 import arcs.core.testutil.fail
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -44,7 +44,7 @@ class AccessPathProtoDecoderTest {
         val protoText = """
         handle_connection: "input"
         """.trimIndent()
-        val exception = assertThrows(IllegalArgumentException::class) {
+        val exception = assertFailsWith<IllegalArgumentException> {
             parseAccessPathProto(protoText).decode(emptyMap())
         }
         assertThat(exception)
