@@ -469,6 +469,19 @@ describe('manifest2proto', () => {
     });
   });
 
+  it('encodes schemas with tuple fields', async () => {
+    const manifest = await Manifest.parse(`
+      particle Abc in 'a/b/c.js'
+        input: reads Foo {t: (Text, Number)}
+    `);
+    const schema = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type.entity.schema;
+
+    assert.deepStrictEqual(schema.names, ['Foo']);
+    assert.deepStrictEqual(schema.fields, {
+      t: {tuple: {elements: [{primitive: 'TEXT'}, {primitive: 'NUMBER'}]}}
+    });
+  });
+
   it('encodes particle spec with semanticTag claims', async () => {
     const manifest = await Manifest.parse(`
       particle Test in 'a/b/c.js'

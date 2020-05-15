@@ -24,21 +24,22 @@ fun SchemaProto.decodeNames() = getNamesList().map { SchemaName(it) }.toSet()
 fun SchemaProto.decodeFields(): SchemaFields {
     val singletons = mutableMapOf<FieldName, FieldType>()
     val collections = mutableMapOf<FieldName, FieldType>()
-    for ((name, type) in getFieldsMap()) {
-        when (type.getDataCase()) {
-            TypeProto.DataCase.PRIMITIVE -> singletons[name] = type.decodeAsFieldType()
-            // TODO: TypeProto.DataCase.COLLECTIONS
-            // TODO: TypeProto.DataCase.REFERENCE
+    for ((name, type) in fieldsMap) {
+        when (type.dataCase) {
+            TypeProto.DataCase.PRIMITIVE,
+            TypeProto.DataCase.REFERENCE,
+            TypeProto.DataCase.TUPLE -> singletons[name] = type.decodeAsFieldType()
+            TypeProto.DataCase.COLLECTION -> collections[name] =
+                type.collection.collectionType.decodeAsFieldType()
             TypeProto.DataCase.DATA_NOT_SET ->
                 throw IllegalArgumentException("Unknown data field in TypeProto.")
             else ->
                 throw NotImplementedError(
-                    "decodeFields for ${type.getDataCase().name} is not implemented.")
+                    "decodeFields for ${type.dataCase.name} is not implemented.")
         }
     }
     return SchemaFields(singletons, collections)
 }
 
 /** Converts a [SchemaProto] proto instance into a Kotlin [Schema] instance. */
-fun SchemaProto.decode() = Schema(names = decodeNames(), fields = decodeFields(), hash = "")
-// TODO: hash
+fun SchemaProto.decode() = Schema(names = decodeNames(), fields = decodeFields(), hash = hash)

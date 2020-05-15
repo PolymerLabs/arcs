@@ -174,6 +174,10 @@ open class EntityBase(
                         "schema hash ${value.schemaHash}."
                 }
             }
+            is FieldType.Tuple -> {
+                // TODO(b/156003617)
+                throw NotImplementedError("[FieldType.Tuple]s are not supported.")
+            }
         }
     }
 
@@ -309,6 +313,9 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
         PrimitiveType.Text -> (value as String).toReferencable()
     }
     is FieldType.EntityRef -> (value as Reference<*>).toReferencable()
+    // TODO(b/155025255)
+    is FieldType.Tuple ->
+        throw NotImplementedError("[FieldType.Tuple]s cannot be converted to references.")
 }
 
 private fun fromReferencable(
@@ -334,5 +341,8 @@ private fun fromReferencable(
             }
             Reference(entitySpec, referencable)
         }
+        // TODO(b/155025255)
+        is FieldType.Tuple ->
+            throw NotImplementedError("References cannot be converted [FieldType.Tuple]s.")
     }
 }

@@ -17,6 +17,7 @@ import arcs.core.data.FieldName
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.SchemaFields
+import kotlin.IllegalStateException
 
 data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -53,6 +54,26 @@ data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
             when (FieldType.Tag.values()[readInt()]) {
                 FieldType.Tag.Primitive -> FieldType.Primitive(PrimitiveType.values()[readInt()])
                 FieldType.Tag.EntityRef -> FieldType.EntityRef(requireNotNull(readString()))
+                FieldType.Tag.Tuple -> {
+                    val collector = mutableListOf<FieldType>()
+                    while (readByte() != ')'.toByte()) {
+                        when (FieldType.Tag.values()[readInt()]) {
+                            FieldType.Tag.Primitive ->
+                                collector.add(
+                                    FieldType.Primitive(PrimitiveType.values()[readInt()])
+                                )
+                            FieldType.Tag.EntityRef ->
+                                collector.add(
+                                    FieldType.EntityRef(requireNotNull(readString()))
+                                )
+                            FieldType.Tag.Tuple ->
+                                throw IllegalStateException(
+                                    "Nested [FieldType.Tuple]s are not allowed."
+                                )
+                        }
+                    }
+                    FieldType.Tuple(collector.toList())
+                }
             }
     }
 
@@ -62,6 +83,16 @@ data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
         return when (type) {
             is FieldType.Primitive -> writeInt(type.primitiveType.ordinal)
             is FieldType.EntityRef -> writeString(type.schemaHash)
+            is FieldType.Tuple -> {
+                writeByte('('.toByte())
+                type.types.forEachIndexed { idx, elem ->
+                    writeFieldType(elem)
+                    if (idx != type.types.size - 1) {
+                        writeByte('|'.toByte())
+                    }
+                }
+                writeByte(')'.toByte())
+            }
         }
     }
 }
