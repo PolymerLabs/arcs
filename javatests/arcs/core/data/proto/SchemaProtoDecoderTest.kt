@@ -42,15 +42,11 @@ class SchemaProtoDecoderTest {
         val schemaProtoText = """
         fields {
           key: "text"
-          value: {
-            primitive: TEXT
-          }
+          value: { primitive: TEXT }
         }
         fields {
           key: "bool"
-          value: {
-            primitive: BOOLEAN
-          }
+          value: { primitive: BOOLEAN }
         }
         """.trimIndent()
         val schema = decodeSchemaProtoText(schemaProtoText)
@@ -67,21 +63,13 @@ class SchemaProtoDecoderTest {
         fields {
           key: "text"
           value: {
-            collection {
-              collection_type: {
-                primitive: TEXT  
-              } 
-            }
+            collection { collection_type: { primitive: TEXT } }
           }
         }
         fields {
           key: "bool"
           value: {
-            collection {
-              collection_type: {
-                primitive: BOOLEAN
-              } 
-            }
+            collection { collection_type: { primitive: BOOLEAN } }
           }
         }
         """.trimIndent()
@@ -99,51 +87,35 @@ class SchemaProtoDecoderTest {
         fields {
           key: "text"
           value: {
-            collection {
-              collection_type: {
-                reference {
-                  referred_type {
-                    entity: {
-                      schema: {
-                        names: "Product"
-                        fields: {
-                          key: "name"
-                          value: { 
-                           primitive: TEXT
-                          } 
-                        }
-                        hash: "a76bdd3a638fc17a5b3e023edb542c1e891c4c89"
-                      }
-                    }
+            collection { collection_type: { reference { referred_type {
+              entity: {
+                schema: {
+                  names: "Product"
+                  fields: {
+                    key: "name"
+                    value: { primitive: TEXT } 
                   }
+                  hash: "a76bdd3a638fc17a5b3e023edb542c1e891c4c89"
                 }
-              } 
-            }
+              }
+            } } } }
           }
         }
         fields {
           key: "num"
           value: {
-            collection {
-              collection_type: {
-                reference {
-                  referred_type {
-                    entity: {
-                      schema: {
-                        names: "Review"
-                        fields: {
-                          key: "rating"
-                          value: { 
-                           primitive: NUMBER
-                          } 
-                        }
-                        hash: "2d3317e5ef54fbdf3fbc02ed481c2472ebe9ba66"
-                      }
-                    }
+            collection { collection_type: { reference { referred_type {
+              entity: {
+                schema: {
+                  names: "Review"
+                  fields: {
+                    key: "rating"
+                    value: { primitive: NUMBER } 
                   }
+                  hash: "2d3317e5ef54fbdf3fbc02ed481c2472ebe9ba66"
                 }
-              } 
-            }
+              }
+            } } } }
           }
         }
         """.trimIndent()
@@ -165,12 +137,8 @@ class SchemaProtoDecoderTest {
           key: "tuple"
           value: {
             tuple: {
-              elements: {
-                primitive: TEXT 
-              }
-              elements: {
-                primitive: NUMBER 
-              }
+              elements: { primitive: TEXT }
+              elements: { primitive: NUMBER }
             }
           }
         }
@@ -194,12 +162,8 @@ class SchemaProtoDecoderTest {
             collection: {
               collection_type: {
                 tuple: {
-                  elements: {
-                    primitive: TEXT 
-                  }
-                  elements: {
-                    primitive: NUMBER 
-                  }
+                  elements: { primitive: TEXT }
+                  elements: { primitive: NUMBER }
                 }
               }
             }
