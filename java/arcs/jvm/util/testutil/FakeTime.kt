@@ -15,8 +15,16 @@ import arcs.core.util.Time
 
 class FakeTime(var millis: Long = 999_999) : Time() {
     override val nanoTime: Long
-        get() = millis * 1_000_000
+        get() {
+            millis += autoincrement
+            return millis * 1_000_000
+        }
 
     override val currentTimeMillis: Long
-        get() = millis
+        get() {
+            millis += autoincrement
+            return millis
+        }
+
+    var autoincrement = 0
 }

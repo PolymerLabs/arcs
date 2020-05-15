@@ -86,8 +86,8 @@ class CrdtEntity(
             if (_data.creationTimestamp == RawEntity.UNINITIALIZED_TIMESTAMP) {
                 _data.creationTimestamp = other.creationTimestamp
             } else if (other.creationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP) {
-                // Two different values, this should be impossible.
-                throw CrdtException("Cannot merge different values for creationTimestamp.")
+                // Two different values, take minimum.
+                _data.creationTimestamp = minOf(_data.creationTimestamp, other.creationTimestamp)
             }
         }
         if (_data.expirationTimestamp != other.expirationTimestamp) {
@@ -95,8 +95,9 @@ class CrdtEntity(
             if (_data.expirationTimestamp == RawEntity.UNINITIALIZED_TIMESTAMP) {
                 _data.expirationTimestamp = other.expirationTimestamp
             } else if (other.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP) {
-                // Two different values, this should be impossible.
-                throw CrdtException("Cannot merge different values for expirationTimestamp.")
+                // Two different values, take minimum.
+                _data.expirationTimestamp =
+                    minOf(_data.expirationTimestamp, other.expirationTimestamp)
             }
         }
         if (_data.id != other.id) {
