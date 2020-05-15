@@ -6,6 +6,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -30,9 +31,9 @@ class EntityTypeOperationsTest {
             hash = ""
         )
 
-        val thingObjectSchema = requireNotNull((thingSchema union objectSchema).getOrNull())
+        val result = thingSchema union objectSchema
 
-        assertThat(thingObjectSchema.names).containsExactly(
+        assertThat(result.names).containsExactly(
             SchemaName("Thing"),
             SchemaName("Object"),
             SchemaName("Another")
@@ -52,7 +53,7 @@ class EntityTypeOperationsTest {
         val textSchema = Schema(names = emptySet(), fields = textField, hash = "")
         val numberSchema = Schema(names = emptySet(), fields = numberField, hash = "")
 
-        val result = requireNotNull((textSchema union numberSchema).getOrNull())
+        val result = textSchema union numberSchema
 
         assertThat(result.fields.singletons).containsExactly(
             "text", FieldType.Text,
@@ -73,7 +74,7 @@ class EntityTypeOperationsTest {
         val textSchema = Schema(names = emptySet(), fields = textsField, hash = "")
         val numberSchema = Schema(names = emptySet(), fields = numbersField, hash = "")
 
-        val result = requireNotNull((textSchema union numberSchema).getOrNull())
+        val result = textSchema union numberSchema
 
         assertThat(result.fields.collections).containsExactly(
             "texts", FieldType.Text,
@@ -94,9 +95,8 @@ class EntityTypeOperationsTest {
         val textSchema = Schema(setOf(SchemaName("Example")), textField, "")
         val numberSchema = Schema(setOf(SchemaName("Example")), numberField, "")
 
-        val result = textSchema union numberSchema
-
-        assertThat(result.getFailureReason()).contains("Incompatible types for field 'num_text'")
+        val e = assertFailsWith<TypeCheckException> { textSchema union numberSchema }
+        assertThat(e).hasMessageThat().contains("Incompatible types for field 'num_text'")
     }
 
     @Test
@@ -114,7 +114,7 @@ class EntityTypeOperationsTest {
         val textEntity = EntityType(textSchema)
         val numberEntity = EntityType(numberSchema)
 
-        val result = requireNotNull((textEntity union numberEntity).getOrNull())
+        val result = textEntity union numberEntity
 
         val expected = Schema(
             setOf(SchemaName("Example")),
