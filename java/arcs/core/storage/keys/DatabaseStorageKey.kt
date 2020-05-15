@@ -102,6 +102,15 @@ sealed class DatabaseStorageKey(
                     storageKeyOptions.entitySchema.hash
                 )
             }
+            CapabilitiesResolver.registerKeyCreator(
+                MEMORY_DATABASE_DRIVER_PROTOCOL,
+                Capabilities.Queryable
+            ) { storageKeyOptions ->
+                DatabaseStorageKey.Memory(
+                    storageKeyOptions.location,
+                    storageKeyOptions.entitySchema.hash
+                )
+            }
         }
         /* internal */
         fun persistentFromString(rawKeyString: String): Persistent = fromString(rawKeyString)

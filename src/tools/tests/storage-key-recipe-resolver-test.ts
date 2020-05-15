@@ -21,9 +21,6 @@ import {DatabaseStorageKey} from '../../runtime/storageNG/database-storage-key.j
 import {CapabilitiesResolver} from '../../runtime/capabilities-resolver.js';
 import {Flags} from '../../runtime/flags.js';
 
-// TODO: START HERE: validate sqlite in-memory keys!!!
-// TODO: Implement in KT!
-
 describe('recipe2plan', () => {
   describe('storage-key-recipe-resolver', () => {
     beforeEach(() => DatabaseStorageKey.register());

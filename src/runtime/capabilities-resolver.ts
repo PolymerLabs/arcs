@@ -137,7 +137,7 @@ export class CapabilitiesResolver {
             protocols.add(protocol);
         }
       }
-      }
+    }
     return protocols;
   }
 }

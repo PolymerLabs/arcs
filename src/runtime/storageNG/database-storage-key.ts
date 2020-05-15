@@ -48,7 +48,7 @@ export abstract class DatabaseStorageKey extends StorageKey {
         (options: StorageKeyOptions) =>
             new PersistentDatabaseStorageKey(options.location(), options.schemaHash));
 
-    // TODO(mmandlis): registering all possible in-memory capabilities with `queryable`.
+    // Registering all possible in-memory capabilities with `queryable`.
     for (const capabilities of [Capabilities.queryable, Capabilities.tiedToArcQueryable, Capabilities.tiedToRuntimeQueryable]) {
       CapabilitiesResolver.registerKeyCreator(
           MemoryDatabaseStorageKey.protocol,
