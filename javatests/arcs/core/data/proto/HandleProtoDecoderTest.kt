@@ -100,12 +100,12 @@ class HandleProtoDecoderTest {
         val storageKey = "ramdisk://b"
         val entityType = parseTypeProtoText(entityTypeProto).decode()
         val handleText = buildHandleProtoText(
-            "thing",
-            "JOIN",
-            "type { ${entityTypeProto} }",
-            storageKey,
-            "handle_join",
-            listOf("PERSISTENT", "QUERYABLE")
+            name = "thing",
+            fate = "JOIN",
+            type = "type { ${entityTypeProto} }",
+            storageKey = storageKey,
+            associatedHandle = "handle_join",
+            capabilities = listOf("PERSISTENT", "QUERYABLE")
         )
         val handleProto = parseHandleProtoText(handleText)
 
@@ -142,13 +142,13 @@ class HandleProtoDecoderTest {
         val storageKey = "ramdisk://b"
         val entityType = parseTypeProtoText(entityTypeProto).decode()
         val handleText = buildHandleProtoText(
-            "thing",
-            "JOIN",
-            "type { ${entityTypeProto} }",
-            storageKey,
-            "handle_join",
-            listOf("PERSISTENT", "QUERYABLE"),
-            listOf("foo", "bar", "baz")
+            name = "thing",
+            fate = "JOIN",
+            type = "type { ${entityTypeProto} }",
+            storageKey = storageKey,
+            associatedHandle = "handle_join",
+            capabilities = listOf("PERSISTENT", "QUERYABLE"),
+            tags = listOf("foo", "bar", "baz")
         )
         val handleProto = parseHandleProtoText(handleText)
 
@@ -182,14 +182,14 @@ class HandleProtoDecoderTest {
     fun decodesHandleProtoWithId() {
         val storageKey = "ramdisk://a"
         val handleText = buildHandleProtoText(
-            "notype_thing",
-            "CREATE",
-            "",
-            storageKey,
-            "handle_c",
-            listOf("TIED_TO_ARC"),
-            emptyList(),
-            "veryofficialid_2342"
+            name = "notype_thing",
+            fate = "CREATE",
+            type = "",
+            storageKey = storageKey,
+            associatedHandle = "handle_c",
+            capabilities = listOf("TIED_TO_ARC"),
+            tags = emptyList(),
+            id = "veryofficialid_2342"
         )
         val handles = mapOf(
             "handle_c" to Handle(
