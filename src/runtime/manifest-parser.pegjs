@@ -1017,15 +1017,15 @@ AnnotationRefParam
   = AnnotationRefNamedParam
   / AnnotationRefSimpleParam
 
-AnnotationRefNamedParam = name:lowerIdent whiteSpace? ':' whiteSpace? value:ManifestStorageInlineData {
+AnnotationRefNamedParam = name:lowerIdent whiteSpace? ':' whiteSpace? value:AnnotationRefSimpleParam {
   return toAstNode<AstNode.AnnotationRefNamedParam>({
     kind: 'annotation-named-param',
     name,
-    value
+    value: value.value
   });
 }
 
-AnnotationRefSimpleParam = value:(ManifestStorageInlineData / NumberedUnits) {
+AnnotationRefSimpleParam = value:ManifestStorageInlineData {
   return toAstNode<AstNode.AnnotationRefSimpleParam>({
     kind: 'annotation-simple-param',
     value

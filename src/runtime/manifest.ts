@@ -136,8 +136,21 @@ interface ManifestLoadOptions {
 }
 
 export class Manifest {
+  public static readonly canonical = `
+annotation arcId(id: Text)
+  targets: [Recipe]
+  retention: Source
+  doc: 'predefined ID of a long running arc'
+annotation ttl(value: Text)
+  // Atm TTL is only supported for recipes handles.
+  targets: [Handle]
+  retention: Runtime
+  doc: 'data time-to-live'
+  `;
+
   private _recipes: Recipe[] = [];
   private _imports: Manifest[] = [];
+  private _canonicalImports: Manifest[] = [];
   // TODO: These should be lists, possibly with a separate flattened map.
   private _particles: Dictionary<ParticleSpec> = {};
   private _schemas: Dictionary<Schema> = {};
@@ -198,6 +211,9 @@ export class Manifest {
   get imports() {
     return this._imports;
   }
+  get canonicalImports(): Manifest[] {
+    return this._canonicalImports;
+  }
   get schemas(): Dictionary<Schema> {
     return this._schemas;
   }
@@ -227,6 +243,14 @@ export class Manifest {
   get annotations() {
     return this._annotations;
   }
+  get allAnnotations() {
+    return [...new Set(this._findAll(manifest => Object.values(manifest.annotations)))];
+  }
+  findAnnotationByName(name: string) : Annotation|null {
+    return this.allAnnotations.find(a => a.name === name);
+  }
+
+
   applyMeta(section: {name: string} & {key: string, value: string}[]) {
     this._meta.apply(section);
   }
@@ -281,7 +305,7 @@ export class Manifest {
   }
   * _findAll<a>(manifestFinder: ManifestFinderGenerator<a>): IterableIterator<a> {
     yield* manifestFinder(this);
-    for (const importedManifest of this._imports) {
+    for (const importedManifest of [...this._imports, ...this._canonicalImports]) {
       yield* importedManifest._findAll(manifestFinder);
     }
   }
@@ -372,10 +396,6 @@ export class Manifest {
     }
 
     return TypeChecker.compareTypes({type: candidate.type}, {type});
-  }
-
-  findAnnotationByName(name: string) : Annotation|null {
-    return this._find(manifest => manifest._annotations[name]);
   }
 
   generateID(subcomponent?: string): Id {
@@ -490,6 +510,14 @@ ${e.message}
     }
 
     try {
+      if (content !== Manifest.canonical) {
+        try {
+          manifest._canonicalImports.push(await Manifest.parse(Manifest.canonical, options));
+        } catch (e) {
+          manifest.errors.push(e);
+        }
+      }
+
       // Loading of imported manifests is triggered in parallel to avoid a serial loading
       // of resources over the network.
       await Promise.all(items.map(async (item: AstNode.All) => {

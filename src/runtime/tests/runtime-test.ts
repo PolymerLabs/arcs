@@ -29,6 +29,12 @@ function assertManifestsEqual(actual: Manifest, expected: Manifest) {
   // for each Manifest instantiation.
   unsafe(expected).idGenerator = null;
   unsafe(actual).idGenerator = null;
+  for (const canonicalManfiest of unsafe(expected).canonicalImports) {
+    canonicalManfiest.idGenerator = null;
+  }
+  for (const canonicalManfiest of unsafe(actual).canonicalImports) {
+    canonicalManfiest.idGenerator = null;
+  }
 
   assert.deepEqual(expected, actual);
 }

@@ -4021,4 +4021,19 @@ recipe
       particle Foo
         foo: reads [* {bar: Text}] @hello(5)`), `expected 'Text' for param 'txt', instead got 5`);
   });
+  it('parses canonical annotations', async () => {
+    const manifest = (await Manifest.parse(`
+      @arcId('myFavoriteArc')
+      recipe
+        foo: create persistent @ttl(2d) @ttl('2d')
+    `));
+    const recipeAnnotations = manifest.recipes[0].annotations;
+    assert.lengthOf(recipeAnnotations, 1);
+    assert.equal(recipeAnnotations[0].name, 'arcId');
+    assert.equal(recipeAnnotations[0].params['id'], 'myFavoriteArc');
+    const handleAnnotations = manifest.recipes[0].handles[0].annotations;
+    assert.lengthOf(handleAnnotations, 1);
+    assert.equal(handleAnnotations[0].name, 'ttl');
+    assert.equal(handleAnnotations[0].params['value'], '2d');
+  });
 });
