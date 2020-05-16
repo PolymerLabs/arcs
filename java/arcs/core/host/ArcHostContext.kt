@@ -47,14 +47,6 @@ data class ArcHostContext(
     private val stateChangeCallbacks: MutableMap<ArcStateChangeRegistration,
         ArcStateChangeCallback> = mutableMapOf()
 
-    init {
-        try {
-            throw IllegalStateException("Foo")
-        } catch (e: Exception) {
-            log.debug(e) { "New ArcHostContextMade" }
-        }
-    }
-
     private var _arcState = ArcState.NeverStarted
 
     var arcState: ArcState
