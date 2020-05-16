@@ -3980,4 +3980,38 @@ recipe
     const quwHandle = manifest.recipes[0].findHandleByID('my-id');
     assert.lengthOf(quwHandle.annotations, 1);
   });
+  it('parses annotation with single param and simple value', async () => {
+    const annotations = (await Manifest.parse(`
+      annotation hello(txt: Text)
+        targets: [Handle, HandleConnection]
+        retention: Source
+        doc: 'a'
+      annotation world(txt: Text)
+        targets: [HandleConnection]
+        retention: Source
+        doc: 'a'
+      particle Foo
+        foo: reads [* {bar: Text}] @hello(txt: 'hi') @world('bye')`)).particles[0].connections[0].annotations;
+    assert.lengthOf(annotations, 2);
+    assert.equal(annotations.find(a => a.name === 'hello').params['txt'], 'hi');
+    assert.equal(annotations.find(a => a.name === 'world').params['txt'], 'bye');
+  });
+  it('fails parsing annotation simple value when multiple params', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+      annotation hello(txt1: Text, txt2: Text)
+        targets: [Handle, HandleConnection]
+        retention: Source
+        doc: 'a'
+      particle Foo
+        foo: reads [* {bar: Text}] @hello('hi')`), `annotation 'hello' has unexpected unnamed param 'hi'`);
+  });
+  it('fails parsing annotation simple value when wrong type', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+      annotation hello(txt: Text)
+        targets: [Handle, HandleConnection]
+        retention: Source
+        doc: 'a'
+      particle Foo
+        foo: reads [* {bar: Text}] @hello(5)`), `expected 'Text' for param 'txt', instead got 5`);
+  });
 });
