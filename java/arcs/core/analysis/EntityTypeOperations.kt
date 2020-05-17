@@ -39,10 +39,7 @@ infix fun Schema.union(other: Schema): Outcome<Schema> {
     return Schema(names = newNames, fields = newFields, hash = "").toSuccess()
 }
 
-/**
- * Computes the intersection of the two [Schema] instances. Returns [Outcome.Failure] if the union
- * is not possible as the inputs are incompatible.
- */
+/** Computes the intersection of the two [Schema] instances. */
 infix fun Schema.intersect(other: Schema): Schema {
     // TODO(b/154235149): hash, refinement, query
     return Schema(
