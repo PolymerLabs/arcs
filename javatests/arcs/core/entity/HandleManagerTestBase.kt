@@ -565,7 +565,8 @@ open class HandleManagerTestBase {
             val entity2 = TestParticle_Entities(text = "New Hello", number = 1.1, entityId = id)
             handle.store(entity2)
             assertThat(handle.fetchAll()).containsExactly(entity2)
-            assertThat(entity2.creationTimestamp).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+            // Timestamps also get updated.
+            assertThat(entity2.creationTimestamp).isEqualTo(2)
 
             // An entity with a different ID.
             val entity3 = TestParticle_Entities(text = "Bye", number = 2.0, entityId = "OtherId")
