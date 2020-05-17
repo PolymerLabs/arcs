@@ -115,8 +115,14 @@ class EntityTypeOperationsTest {
 
         val result = requireNotNull((textEntity union numberEntity).getOrNull())
 
-        assertThat(result.entitySchema).isEqualTo(
-            (numberSchema union textSchema).getOrNull()!!
+        val expected = Schema(
+            setOf(SchemaName("Example")),
+            SchemaFields(
+                mapOf("text" to FieldType.Text, "number" to FieldType.Number),
+                emptyMap()
+            ),
+            hash = ""
         )
+        assertThat(result.entitySchema).isEqualTo(expected)
     }
 }
