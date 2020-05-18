@@ -594,13 +594,20 @@ export interface SchemaField extends BaseNode {
 }
 
 export type SchemaType = SchemaReferenceType|SchemaCollectionType|
-    SchemaPrimitiveType|SchemaUnionType|SchemaTupleType;
+    SchemaPrimitiveType|KotlinPrimitiveType|SchemaUnionType|SchemaTupleType;
 
 export type SchemaPrimitiveTypeValue = 'Text'|'URL'|'Number'|'Boolean'|'Bytes'|'Object';
 
 export interface SchemaPrimitiveType extends BaseNodeWithRefinement {
   kind: 'schema-primitive';
   type: SchemaPrimitiveTypeValue;
+}
+
+export type KotlinPrimitiveTypeValue = 'Byte'|'Short'|'Int'|'Long'|'Char'|'Float'|'Double';
+
+export interface KotlinPrimitiveType extends BaseNodeWithRefinement {
+  kind: 'kotlin-primitive';
+  type: KotlinPrimitiveTypeValue;
 }
 
 export interface SchemaCollectionType extends BaseNodeWithRefinement {

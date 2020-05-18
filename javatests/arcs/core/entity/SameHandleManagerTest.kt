@@ -8,6 +8,8 @@ import arcs.jvm.host.JvmSchedulerProvider
 import kotlin.coroutines.EmptyCoroutineContext
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
@@ -31,4 +33,10 @@ class SameHandleManagerTest : HandleManagerTestBase() {
 
     @After
     override fun tearDown() = super.tearDown()
+
+    @Ignore("b/156865977 - Deflake")
+    @Test
+    override fun collection_noTTL() {
+        super.collection_noTTL()
+    }
 }

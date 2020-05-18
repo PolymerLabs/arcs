@@ -1509,6 +1509,7 @@ SchemaType
   = type:(SchemaReferenceType
   / SchemaCollectionType
   / SchemaPrimitiveType
+  / KotlinPrimitiveType
   / SchemaUnionType
   / SchemaTupleType
   / [^\n\]}]* { expected('a schema type'); }
@@ -1551,6 +1552,16 @@ SchemaPrimitiveType
   {
     return toAstNode<AstNode.SchemaPrimitiveType>({
       kind: 'schema-primitive',
+      type,
+      refinement: null
+    });
+  }
+
+KotlinPrimitiveType
+  = type:('Byte' / 'Short' / 'Int' / 'Long' / 'Char' / 'Float' / 'Double')
+  {
+    return toAstNode<AstNode.KotlinPrimitiveType>({
+      kind: 'kotlin-primitive',
       type,
       refinement: null
     });
