@@ -127,7 +127,7 @@ class CapabilitiesResolver(
 
     /** Returns list of creator info corresponding to the given [Capabilities]. */
     /* internal */ fun findCreators(capabilities: Capabilities): List<StorageKeyCreatorInfo> {
-        var result = creators.filter { creator -> creator.capabilities.equals(capabilities) }
+        var result = creators.filter { creator -> creator.capabilities == capabilities }
         if (result.isNotEmpty()) return result
         return creators.filter { creator -> capabilities in creator.capabilities }
     }
