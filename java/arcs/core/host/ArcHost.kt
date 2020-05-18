@@ -59,7 +59,7 @@ interface ArcHost {
      */
     suspend fun isHostForParticle(particle: Plan.Particle): Boolean
 
-    /*
+    /**
      * Pauses the Host: the host will stop every running arc, and stop starting new arcs until
      * unpause() is called. Requests to start arc received while in pause will be started once
      * unpause is called. This may be an expensive and disruptive operation, should be used with
@@ -67,11 +67,18 @@ interface ArcHost {
      */
     suspend fun pause()
 
-    /*
+    /**
      * Unpause the Host: should only be called after pause(). After unpausing, the host will start
      * any pending arc, and will be able to respond to new startArc calls.
      */
     suspend fun unpause()
+
+    /**
+     * Shutdown the [ArcHost]. Implies [pause()] but goes further, releasing all resources held
+     * by the [ArcHost]. This may be called, for example, by Android lifecycle methods in low
+     * memory situations, user initiated shutdown, page navigation on the Web, or cloud DevOps.
+     */
+    suspend fun shutdown() = Unit
 
     /**
      * Registers a callback to monitor [ArcState] changes for [arcId].
