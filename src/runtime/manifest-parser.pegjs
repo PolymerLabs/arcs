@@ -1033,8 +1033,8 @@ AnnotationRefSimpleParam = value:(ManifestStorageInlineData / NumberedUnits) {
 }
 
 AnnotationRefList
-  = head:AnnotationRef tail:(whiteSpace AnnotationRefList)?
-  { return [head, ...(tail && tail[1] || [])]; }
+  = head:AnnotationRef tail:SpaceAnnotationRefList?
+  { return [head, ...(tail || [])]; }
 
 SpaceAnnotationRefList
   = whiteSpace tags:AnnotationRefList
