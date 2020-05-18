@@ -717,7 +717,8 @@ describe('manifest2proto', () => {
           b: Number,
           c: Boolean,
           d: [Text],
-          e: [Number]
+          e: [Number],
+          f: BigInteger,
         }
     `);
     const schema = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type.entity.schema;
@@ -728,7 +729,8 @@ describe('manifest2proto', () => {
       b: {primitive: 'NUMBER'},
       c: {primitive: 'BOOLEAN'},
       d: {collection: {collectionType: {primitive: 'TEXT'}}},
-      e: {collection: {collectionType: {primitive: 'NUMBER'}}}
+      e: {collection: {collectionType: {primitive: 'NUMBER'}}},
+      f: {primitive: 'NUMBER'}
     });
   });
 

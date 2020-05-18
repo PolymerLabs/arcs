@@ -1599,7 +1599,7 @@ SchemaReferenceType = 'Reference<' whiteSpace? schema:(SchemaInline / TypeName) 
   }
 
 SchemaPrimitiveType
-  = type:('Text' / 'URL' / 'Number' / 'Boolean' / 'Bytes')
+  = type:('Text' / 'URL' / 'Number' / 'BigInteger' / 'Boolean' / 'Bytes')
   {
     return toAstNode<AstNode.SchemaPrimitiveType>({
       kind: 'schema-primitive',

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Range, Segment, Refinement, BinaryExpression, Multinomial, Fraction, Term} from '../refiner.js';
+import {Primitive, Range, Segment, Refinement, BinaryExpression, Multinomial, Fraction, Term} from '../refiner.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
@@ -532,9 +532,9 @@ describe('Range', () => {
         assert.isTrue(range1.equals(new Range([Segment.openOpen(5, 10)])));
     });
     it('tests if a range is a subset of another', () => {
-        let range1 = Range.infiniteRange();
+        let range1 = Range.universal<number>(Primitive.NUMBER);
         // range1 = (-inf, +inf)
-        const range2 = new Range([Segment.closedClosed(0, 10), Segment.closedClosed(20, 30)]);
+        const range2 = new Range<number>([Segment.closedClosed(0, 10), Segment.closedClosed(20, 30)]);
         // range2 = [0, 10] U [20,30];
         assert.isTrue(range2.isSubsetOf(range1));
         range1 = new Range([Segment.closedClosed(0, 10), Segment.closedClosed(20, 30)]);
@@ -551,7 +551,7 @@ describe('Range', () => {
         assert.isTrue(range1.isSubsetOf(range2));
     });
     it('tests the difference of ranges', () => {
-        let range1 = Range.infiniteRange();
+        let range1 = Range.universal<number>(Primitive.NUMBER);
         // range1 = (-inf, +inf)
         let range2 = new Range();
         range2 = new Range([Segment.closedClosed(0, 10), Segment.closedClosed(20, 30)]);
@@ -573,11 +573,11 @@ describe('Range', () => {
       let complement = Range.complementOf(range);
       // complement = (-inf, 0) U (10, inf)
       assert.isTrue(complement.equals(new Range([Segment.openOpen(Number.NEGATIVE_INFINITY, 0), Segment.openOpen(10, Number.POSITIVE_INFINITY)])));
-      range = Range.booleanRange(0);
+      range = Range.unit(0, Primitive.BOOLEAN);
       // range = [0,0]
       complement = Range.complementOf(range);
       // complement = [1,1]
-      assert.isTrue(complement.equals(Range.booleanRange(1)));
+      assert.isTrue(complement.equals(Range.unit(1, Primitive.BOOLEAN)));
     });
 });
 

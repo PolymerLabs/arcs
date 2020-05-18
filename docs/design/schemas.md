@@ -6,10 +6,10 @@ A schema is defined by a set of names, a set of referenced parent schemas to ext
 schema Thing
 
 schema Car extends Thing
-  Number doors
+  doors: Number
 
 schema Tesla extends Car
-  Boolean bioweaponDefenceMode
+  bioweaponDefenceMode: Boolean
 ```
 
 ## Normalization
@@ -18,8 +18,8 @@ A normalized schema is a set of names, paired with a set of named field types:
 
 ```
 schema Tesla Car Thing
-  Boolean bioweaponDefenceMode
-  Number doors
+  bioweaponDefenceMode: Boolean
+  doors: Number
 ```
 
 In the type system, we say that `schema Tesla Car Thing` is more specific than `schema Car Thing`. However `schema Tesla Car Thing` and `schema Car Tesla Thing` have the same normalization and are treated as equivalents.
@@ -30,24 +30,24 @@ The following schemas are all valid and (depending on the scenario) can interope
 
 ```
 schema Tesla
-  Boolean bioweaponDefenceMode
+  bioweaponDefenceMode: Boolean
 
 schema Car
-  Boolean bioweaponDefenceMode
+  bioweaponDefenceMode: Boolean
 
 schema Tesla Car Thing as MostSpecific
-  Boolean bioweaponDefenceMode
-  Number doors
+  bioweaponDefenceMode: Boolean
+  doors: Number
 ```
 
 The following are not interoperable:
 
 ```
 schema Tesla
-  Boolean doors
+  doors: Boolean
 
 schema Car
-  Number doors
+  doors: Number
 ```
 
 ## Aliasing
@@ -56,7 +56,7 @@ To reduce the amount of redundant declarations amongst manifests that define les
 
 ```
 alias schema Car as CarDoors
-  Number doors
+  doors: Number
 ```
 
 ## Inline Schemas
@@ -127,6 +127,7 @@ Primitive Types
 * Boolean
 * URL
 * Number
+* BigInteger
 * Object (an object that can be serialized as JSON)
 
 Structured Types

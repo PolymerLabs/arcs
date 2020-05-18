@@ -115,6 +115,7 @@ enum PrimitiveTypeProto {
   TEXT = 0;
   NUMBER = 1;
   BOOLEAN = 2;
+  BIGINTEGER = 3;
 }
 
 message EntityTypeProto {
