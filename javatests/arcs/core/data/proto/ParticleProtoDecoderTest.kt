@@ -6,7 +6,6 @@ import arcs.core.data.Recipe.Handle
 import arcs.core.data.Recipe.Particle
 import arcs.core.data.ParticleSpec
 import arcs.core.data.TypeVariable
-import arcs.core.testutil.assertThrows
 import arcs.core.testutil.fail
 import arcs.core.util.Result
 import arcs.repoutils.runfilesDir
@@ -15,6 +14,7 @@ import com.google.protobuf.Message.Builder
 import com.google.protobuf.Message
 import com.google.protobuf.TextFormat
 import java.io.File
+import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -71,7 +71,7 @@ class ParticleProtoDecoderTest {
             .setName("unknown")
             .setHandle("thing")
             .build()
-        val exception = assertThrows(IllegalArgumentException::class) {
+        val exception = assertFailsWith<IllegalArgumentException> {
             proto.decode(readerSpec, context)
         }
         assertThat(exception)
@@ -86,7 +86,7 @@ class ParticleProtoDecoderTest {
             .setName("data")
             .setHandle("unknown")
             .build()
-        val exception = assertThrows(IllegalArgumentException::class) {
+        val exception = assertFailsWith<IllegalArgumentException> {
             proto.decode(writerSpec, context)
         }
         assertThat(exception)
@@ -162,7 +162,7 @@ class ParticleProtoDecoderTest {
             .newBuilder()
             .setSpecName("NonExistent")
             .build()
-        val exception = assertThrows(IllegalArgumentException::class) {
+        val exception = assertFailsWith<IllegalArgumentException> {
             particleProto.decode(context)
         }
         assertThat(exception).hasMessageThat().contains("ParticleSpec 'NonExistent' not found")

@@ -11,8 +11,8 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.TypeVariable
-import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -146,7 +146,7 @@ class RecipeProtoDecoderTest {
             .addHandles(thingHandleProto)
             .addHandles(thingHandleProto)
             .build()
-        val exception = assertThrows(IllegalArgumentException::class) {
+        val exception = assertFailsWith<IllegalArgumentException> {
             duplicateHandlesRecipeProto.decode(context.particleSpecs)
         }
         assertThat(exception).hasMessageThat().contains(

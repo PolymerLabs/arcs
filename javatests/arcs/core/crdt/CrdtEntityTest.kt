@@ -17,8 +17,8 @@ import arcs.core.crdt.CrdtEntity.Operation.RemoveFromSet
 import arcs.core.crdt.CrdtEntity.Operation.SetSingleton
 import arcs.core.crdt.CrdtEntity.ReferenceImpl as Reference
 import arcs.core.data.RawEntity
-import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -204,22 +204,22 @@ class CrdtEntityTest {
     fun failsWhen_anInvalidFieldName_isProvided() {
         val entity = CrdtEntity(VersionMap(), RawEntity("", emptySet(), emptySet()))
 
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.applyOperation(
                 SetSingleton("me", VersionMap("me" to 1), "invalid", Reference("foo"))
             )
         }
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.applyOperation(
                 ClearSingleton("me", VersionMap("me" to 1), "invalid")
             )
         }
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.applyOperation(
                 AddToSet("me", VersionMap("me" to 1), "invalid", Reference("foo"))
             )
         }
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.applyOperation(
                 RemoveFromSet("me", VersionMap("me" to 1), "invalid", Reference("foo"))
             )
@@ -233,12 +233,12 @@ class CrdtEntityTest {
             collectionFields = setOf("things"))
         )
 
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.applyOperation(
                 SetSingleton("me", VersionMap("me" to 1), "things", Reference("foo"))
             )
         }
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.applyOperation(
                 ClearSingleton("me", VersionMap("me" to 1), "things")
             )
@@ -249,18 +249,18 @@ class CrdtEntityTest {
     fun failsWhen_collectionOperations_areProvidedTo_singletonFields() {
         val entity = CrdtEntity(VersionMap(), RawEntity(singletonFields = setOf("thing")))
 
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.applyOperation(AddToSet("me", VersionMap("me" to 1), "thing", Reference("foo")))
         }
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.applyOperation(
                 RemoveFromSet("me", VersionMap("me" to 1), "thing", Reference("foo"))
             )
         }
     }
 
-    fun entity(creation: Long = RawEntity.UNINITIALIZED_TIMESTAMP, 
-        expiration: Long = RawEntity.UNINITIALIZED_TIMESTAMP) = 
+    fun entity(creation: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        expiration: Long = RawEntity.UNINITIALIZED_TIMESTAMP) =
             CrdtEntity(VersionMap(), RawEntity(
                 id = "an-id",
                 singletons = mapOf(),
@@ -275,7 +275,7 @@ class CrdtEntityTest {
         var entity2 = entity()
         entity.merge(entity2.data)
         assertThat(entity.data.creationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
-        
+
         entity = entity(creation=5)
         entity2 = entity()
         entity.merge(entity2.data)
@@ -290,10 +290,10 @@ class CrdtEntityTest {
         entity2 = entity(creation=5)
         entity.merge(entity2.data)
         assertThat(entity.data.creationTimestamp).isEqualTo(5)
-        
+
         entity = entity(creation=5)
         entity2 = entity(creation=1)
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.merge(entity2.data)
         }
     }
@@ -319,10 +319,10 @@ class CrdtEntityTest {
         entity2 = entity(expiration=5)
         entity.merge(entity2.data)
         assertThat(entity.data.expirationTimestamp).isEqualTo(5)
-        
+
         entity = entity(expiration=5)
         entity2 = entity(expiration=1)
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.merge(entity2.data)
         }
     }
@@ -347,10 +347,10 @@ class CrdtEntityTest {
         entity = CrdtEntity(VersionMap(), RawEntity(id="id"))
         entity2 = CrdtEntity(VersionMap(), RawEntity(id="id"))
         assertThat(entity.data.id).isEqualTo("id")
-        
+
         entity = CrdtEntity(VersionMap(), RawEntity(id="id"))
         entity2 = CrdtEntity(VersionMap(), RawEntity(id="id2"))
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.merge(entity2.data)
         }
     }

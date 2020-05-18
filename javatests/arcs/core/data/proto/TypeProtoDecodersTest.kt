@@ -10,10 +10,10 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
-import arcs.core.testutil.assertThrows
 import arcs.core.testutil.fail
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -32,7 +32,7 @@ class TypeProtoDecodersTest {
         assertThat(PrimitiveTypeProto.TEXT.decode()).isEqualTo(PrimitiveType.Text)
         assertThat(PrimitiveTypeProto.BOOLEAN.decode()).isEqualTo(PrimitiveType.Boolean)
         assertThat(PrimitiveTypeProto.NUMBER.decode()).isEqualTo(PrimitiveType.Number)
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             PrimitiveTypeProto.UNRECOGNIZED.decode()
         }
     }
@@ -61,7 +61,7 @@ class TypeProtoDecodersTest {
         checkPrimitive("primitive: TEXT", PrimitiveType.Text)
         checkPrimitive("primitive: BOOLEAN", PrimitiveType.Boolean)
         checkPrimitive("primitive: NUMBER", PrimitiveType.Number)
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             checkPrimitive("""variable: { name: "Blah"}""", PrimitiveType.Text)
         }
     }

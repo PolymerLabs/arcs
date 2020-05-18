@@ -26,8 +26,8 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VOLATILE_DRIVER_PROTOCOL
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -86,19 +86,19 @@ class CapabilitiesResolverTest {
         )
         assertThat(resolver.createStorageKey(Capabilities.Empty, thingReferenceType, handleId))
             .isInstanceOf(VolatileStorageKey::class.java)
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(Capabilities.TiedToRuntime, thingEntityType, handleId)
         }
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(Capabilities.TiedToRuntime, thingReferenceType, handleId)
         }
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(Capabilities.Persistent, thingEntityType, handleId)
         }
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(Capabilities.Persistent, thingReferenceType, handleId)
         }
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(
                 Capabilities(setOf(
                     Capabilities.Capability.TiedToArc,
@@ -108,7 +108,7 @@ class CapabilitiesResolverTest {
                 handleId
             )
         }
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(
                 Capabilities(setOf(
                     Capabilities.Capability.TiedToArc,
@@ -131,16 +131,16 @@ class CapabilitiesResolverTest {
                 { storageKeyOptions -> RamDiskStorageKey(storageKeyOptions.arcId.toString()) }
             ))
         )
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(Capabilities.TiedToArc, thingEntityType, handleId)
         }
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(Capabilities.TiedToArc, thingReferenceType, handleId)
         }
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(Capabilities.Empty, thingEntityType, handleId)
         }
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(Capabilities.Empty, thingReferenceType, handleId)
         }
         verifyStorageKey(
@@ -235,10 +235,10 @@ class CapabilitiesResolverTest {
         assertThat(volatileRefKey).isEqualTo(
             resolver2.createStorageKey(Capabilities.TiedToArc, thingReferenceType, handleId)
         )
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             resolver2.createStorageKey(Capabilities.TiedToRuntime, thingEntityType, handleId)
         }
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             resolver2.createStorageKey(Capabilities.TiedToRuntime, thingReferenceType, handleId)
         }
     }

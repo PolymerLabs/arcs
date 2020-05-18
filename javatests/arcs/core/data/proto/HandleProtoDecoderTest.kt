@@ -3,9 +3,9 @@ package arcs.core.data.proto
 import arcs.core.data.Capabilities
 import arcs.core.data.Recipe.Handle
 import arcs.core.data.TypeVariable
-import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -21,7 +21,7 @@ fun parseHandleProtoText(protoText: String): HandleProto {
 class HandleProtoDecoderTest {
     @Test
     fun decodesHandleProtoFate() {
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             HandleProto.Fate.UNSPECIFIED.decode()
         }
         assertThat(HandleProto.Fate.CREATE.decode()).isEqualTo(Handle.Fate.CREATE)
@@ -29,7 +29,7 @@ class HandleProtoDecoderTest {
         assertThat(HandleProto.Fate.MAP.decode()).isEqualTo(Handle.Fate.MAP)
         assertThat(HandleProto.Fate.COPY.decode()).isEqualTo(Handle.Fate.COPY)
         assertThat(HandleProto.Fate.JOIN.decode()).isEqualTo(Handle.Fate.JOIN)
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             HandleProto.Fate.UNRECOGNIZED.decode()
         }
     }
@@ -55,7 +55,7 @@ class HandleProtoDecoderTest {
             ).decode()
         ).isEqualTo(Capabilities.PersistentQueryable)
 
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             listOf(HandleProto.Capability.UNRECOGNIZED).decode()
         }
     }

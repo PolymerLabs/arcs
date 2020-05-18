@@ -20,9 +20,9 @@ import arcs.core.data.Ttl
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.Reference as StorageReference
-import arcs.core.testutil.assertThrows
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -51,7 +51,7 @@ class EntityBaseTest {
         entity.bool = true
         assertThat(entity.bool).isTrue()
 
-        val e = assertThrows(IllegalArgumentException::class) {
+        val e = assertFailsWith<IllegalArgumentException> {
             entity.setSingletonValueForTest("bool", 1.0)
         }
         assertThat(e).hasMessageThat().isEqualTo(
@@ -65,7 +65,7 @@ class EntityBaseTest {
         entity.num = 12.0
         assertThat(entity.num).isEqualTo(12.0)
 
-        val e = assertThrows(IllegalArgumentException::class) {
+        val e = assertFailsWith<IllegalArgumentException> {
             entity.setSingletonValueForTest("num", "abc")
         }
         assertThat(e).hasMessageThat().isEqualTo(
@@ -79,7 +79,7 @@ class EntityBaseTest {
         entity.text = "abc"
         assertThat(entity.text).isEqualTo("abc")
 
-        val e = assertThrows(IllegalArgumentException::class) {
+        val e = assertFailsWith<IllegalArgumentException> {
             entity.setSingletonValueForTest("text", true)
         }
         assertThat(e).hasMessageThat().isEqualTo(
@@ -94,7 +94,7 @@ class EntityBaseTest {
         entity.ref = ref
         assertThat(entity.ref).isEqualTo(ref)
 
-        val e = assertThrows(IllegalArgumentException::class) {
+        val e = assertFailsWith<IllegalArgumentException> {
             entity.setSingletonValueForTest("ref", true)
         }
         assertThat(e).hasMessageThat().isEqualTo(
@@ -104,7 +104,7 @@ class EntityBaseTest {
 
     @Test
     fun singletonFields_getInvalidFieldName() {
-        val e = assertThrows(InvalidFieldNameException::class) {
+        val e = assertFailsWith<InvalidFieldNameException> {
             entity.getSingletonValueForTest("not_a_real_field")
         }
         assertThat(e).hasMessageThat().isEqualTo(
@@ -114,7 +114,7 @@ class EntityBaseTest {
 
     @Test
     fun singletonFields_setInvalidFieldName() {
-        val e = assertThrows(InvalidFieldNameException::class) {
+        val e = assertFailsWith<InvalidFieldNameException> {
             entity.setSingletonValueForTest("not_a_real_field", "x")
         }
         assertThat(e).hasMessageThat().isEqualTo(
@@ -128,7 +128,7 @@ class EntityBaseTest {
         entity.bools = setOf(true)
         assertThat(entity.bools).containsExactly(true)
 
-        val e = assertThrows(IllegalArgumentException::class) {
+        val e = assertFailsWith<IllegalArgumentException> {
             entity.setCollectionValueForTest("bools", setOf(true, 1.0))
         }
         assertThat(e).hasMessageThat().isEqualTo(
@@ -142,7 +142,7 @@ class EntityBaseTest {
         entity.nums = setOf(1.0, 2.0)
         assertThat(entity.nums).containsExactly(1.0, 2.0)
 
-        val e = assertThrows(IllegalArgumentException::class) {
+        val e = assertFailsWith<IllegalArgumentException> {
             entity.setCollectionValueForTest("nums", setOf(1.0, "abc"))
         }
         assertThat(e).hasMessageThat().isEqualTo(
@@ -156,7 +156,7 @@ class EntityBaseTest {
         entity.texts = setOf("a", "b")
         assertThat(entity.texts).containsExactly("a", "b")
 
-        val e = assertThrows(IllegalArgumentException::class) {
+        val e = assertFailsWith<IllegalArgumentException> {
             entity.setCollectionValueForTest("texts", setOf("a", true))
         }
         assertThat(e).hasMessageThat().isEqualTo(
@@ -172,7 +172,7 @@ class EntityBaseTest {
         entity.refs = setOf(ref1, ref2)
         assertThat(entity.refs).containsExactly(ref1, ref2)
 
-        val e = assertThrows(IllegalArgumentException::class) {
+        val e = assertFailsWith<IllegalArgumentException> {
             entity.setCollectionValueForTest("refs", setOf(ref1, "a"))
         }
         assertThat(e).hasMessageThat().isEqualTo(
@@ -182,7 +182,7 @@ class EntityBaseTest {
 
     @Test
     fun collectionFields_getInvalidFieldName() {
-        val e = assertThrows(InvalidFieldNameException::class) {
+        val e = assertFailsWith<InvalidFieldNameException> {
             entity.getCollectionValueForTest("not_a_real_field")
         }
         assertThat(e).hasMessageThat().isEqualTo(
@@ -192,7 +192,7 @@ class EntityBaseTest {
 
     @Test
     fun collectionFields_setInvalidFieldName() {
-        val e = assertThrows(InvalidFieldNameException::class) {
+        val e = assertFailsWith<InvalidFieldNameException> {
             entity.setCollectionValueForTest("not_a_real_field", setOf("x"))
         }
         assertThat(e).hasMessageThat().isEqualTo(
@@ -253,7 +253,7 @@ class EntityBaseTest {
             collections = mapOf()
         )
 
-        val e = assertThrows(IllegalArgumentException::class) {
+        val e = assertFailsWith<IllegalArgumentException> {
             DummyEntity().deserializeForTest(rawEntity)
         }
         assertThat(e).hasMessageThat().isEqualTo(
@@ -270,7 +270,7 @@ class EntityBaseTest {
             collections = mapOf()
         )
 
-        val e = assertThrows(IllegalArgumentException::class) {
+        val e = assertFailsWith<IllegalArgumentException> {
             // Call deserialize super method, and don't give the right nestedEntitySpecs map.
             DummyEntity().deserialize(rawEntity, nestedEntitySpecs = emptyMap())
         }

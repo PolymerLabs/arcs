@@ -9,10 +9,10 @@ import arcs.core.data.ParticleSpec
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.testutil.assertThrows
 import arcs.core.util.Result
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -43,13 +43,13 @@ fun decodeParticleSpecProto(protoText: String): ParticleSpec {
 class ParticleSpecProtoDecoderTest {
     @Test
     fun decodesDirectionProto() {
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DirectionProto.UNSPECIFIED.decode()
         }
         assertThat(DirectionProto.READS.decode()).isEqualTo(HandleMode.Read)
         assertThat(DirectionProto.WRITES.decode()).isEqualTo(HandleMode.Write)
         assertThat(DirectionProto.READS_WRITES.decode()).isEqualTo(HandleMode.ReadWrite)
-        assertThrows(IllegalArgumentException::class) {
+        assertFailsWith<IllegalArgumentException> {
             DirectionProto.UNRECOGNIZED.decode()
         }
     }
@@ -127,7 +127,7 @@ class ParticleSpecProtoDecoderTest {
           connections { ${readConnectionSpecProto} }
           location: "Everywhere"
         """.trimIndent()
-        val exception = assertThrows(IllegalArgumentException::class) {
+        val exception = assertFailsWith<IllegalArgumentException> {
             decodeParticleSpecProto(readerSpecProto)
         }
         assertThat(exception).hasMessageThat().contains("Duplicate connection 'read'")

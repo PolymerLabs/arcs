@@ -1,7 +1,7 @@
 package arcs.core.util
 
-import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -89,7 +89,7 @@ class GuardTest {
     fun accessingGuardedValue_outsideOfLock_throws() {
         val obj = RequiresLocking()
 
-        assertThrows(IllegalStateException::class) { println(obj.value) }
+        assertFailsWith<IllegalStateException> { println(obj.value) }
     }
 
     @Test
@@ -105,7 +105,7 @@ class GuardTest {
     fun mutatingGuardedValue_outsideOfLock_throws() {
         val obj = RequiresLocking()
 
-        assertThrows(IllegalStateException::class) { obj.value = 25 }
+        assertFailsWith<IllegalStateException> { obj.value = 25 }
     }
 
     @Test
