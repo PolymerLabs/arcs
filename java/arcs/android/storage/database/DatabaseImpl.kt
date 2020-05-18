@@ -297,11 +297,11 @@ class DatabaseImpl(
                     null
                 } else {
                     Reference(
-                        it.getString(6),
-                        StorageKeyParser.parse(it.getString(7)),
-                        it.getVersionMap(8),
-                        it.getLong(9),
-                        it.getLong(10)
+                        id = it.getString(6),
+                        storageKey = StorageKeyParser.parse(it.getString(7)),
+                        version = it.getVersionMap(8),
+                        _creationTimestamp = it.getLong(9),
+                        _expirationTimestamp = it.getLong(10)
                     )
                 }
             }
@@ -1237,11 +1237,11 @@ class DatabaseImpl(
         arrayOf(collectionId.toString())
     ).map {
         Reference(
-            it.getString(0),
-            StorageKeyParser.parse(it.getString(3)),
-            it.getVersionMap(4),
-            it.getString(1).toLong(),
-            it.getString(2).toLong()
+            id = it.getString(0),
+            storageKey = StorageKeyParser.parse(it.getString(3)),
+            version = it.getVersionMap(4),
+            _creationTimestamp = it.getString(1).toLong(),
+            _expirationTimestamp = it.getString(2).toLong()
         )
     }.toSet()
 

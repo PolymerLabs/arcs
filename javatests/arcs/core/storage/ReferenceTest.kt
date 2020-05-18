@@ -121,17 +121,17 @@ class ReferenceTest {
     }
 
     @Test
-    fun ensureTimestamps() {
+    fun ensureTimestampsAreSet() {
         val ref = Reference("reference_id", backingKey, null)
         assertThat(ref.creationTimestamp).isEqualTo(UNINITIALIZED_TIMESTAMP)
         assertThat(ref.expirationTimestamp).isEqualTo(UNINITIALIZED_TIMESTAMP)
 
-        ref.ensureTimestamps(FakeTime(10), Ttl.Minutes(1))
+        ref.ensureTimestampsAreSet(FakeTime(10), Ttl.Minutes(1))
         assertThat(ref.creationTimestamp).isEqualTo(10)
         assertThat(ref.expirationTimestamp).isEqualTo(60010)
 
         // Calling again doesn't change the value.
-        ref.ensureTimestamps(FakeTime(20), Ttl.Minutes(2))
+        ref.ensureTimestampsAreSet(FakeTime(20), Ttl.Minutes(2))
         assertThat(ref.creationTimestamp).isEqualTo(10)
         assertThat(ref.expirationTimestamp).isEqualTo(60010)
     }

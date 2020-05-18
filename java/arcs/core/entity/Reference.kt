@@ -27,8 +27,10 @@ class Reference<T : Entity>(
     /** The entity ID for the referenced entity. */
     val entityId = storageReference.id
 
-    val creationTimestamp get() = storageReference.creationTimestamp
-    val expirationTimestamp get() = storageReference.expirationTimestamp
+    val creationTimestamp
+        get() = storageReference.creationTimestamp
+    val expirationTimestamp
+        get() = storageReference.expirationTimestamp
 
     /** Returns the [Entity] pointed to by this reference. */
     suspend fun dereference() = storageReference.dereference()?.let { entitySpec.deserialize(it) }
@@ -36,7 +38,8 @@ class Reference<T : Entity>(
     /** Returns a [Referencable] for this reference. */
     /* internal */ fun toReferencable(): StorageReference = storageReference
 
-    fun ensureTimestamps(time: Time, ttl: Ttl) = storageReference.ensureTimestamps(time, ttl)
+    fun ensureTimestampsAreSet(time: Time, ttl: Ttl) =
+        storageReference.ensureTimestampsAreSet(time, ttl)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

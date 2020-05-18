@@ -35,8 +35,8 @@ class EntityStorageAdapter<T : Entity>(
     val handleName: String,
     val idGenerator: Id.Generator,
     val entitySpec: EntitySpec<T>,
-    val ttl: Ttl,
-    val time: Time,
+    private val ttl: Ttl,
+    private val time: Time,
     private val dereferencerFactory: EntityDereferencerFactory
 ) : StorageAdapter<T, RawEntity>() {
     override fun storableToReferencable(value: T): RawEntity {
@@ -65,11 +65,11 @@ class EntityStorageAdapter<T : Entity>(
 class ReferenceStorageAdapter<E : Entity>(
     private val entitySpec: EntitySpec<E>,
     private val dereferencerFactory: EntityDereferencerFactory,
-    val ttl: Ttl,
-    val time: Time
+    private val ttl: Ttl,
+    private val time: Time
 ) : StorageAdapter<Reference<E>, StorageReference>() {
     override fun storableToReferencable(value: Reference<E>): StorageReference {
-        value.ensureTimestamps(time, ttl)
+        value.ensureTimestampsAreSet(time, ttl)
         return value.toReferencable()
     }
 

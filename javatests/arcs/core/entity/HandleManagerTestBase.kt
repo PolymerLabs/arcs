@@ -364,7 +364,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun referenceSingleton_withTTL() = testRunner {
+    fun referenceSingleton_withTtl() = testRunner {
         fakeTime.millis = 0
         // Create and store an entity with no TTL.
         val entityHandle = writeHandleManager.createSingletonHandle()
@@ -742,7 +742,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun referenceCollection_withTTL() = testRunner {
+    fun referenceCollection_withTtl() = testRunner {
         fakeTime.millis = 0
         // Create and store an entity with no TTL.
         val entityHandle = writeHandleManager.createCollectionHandle()

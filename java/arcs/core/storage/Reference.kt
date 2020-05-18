@@ -34,21 +34,21 @@ data class Reference(
     val storageKey: StorageKey,
     val version: VersionMap?,
     /** Reference creation time (in milliseconds). */
-    private var creationTimestamp_: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+    private var _creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
     /** Reference expiration time (in milliseconds). */
-    private var expirationTimestamp_: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    private var _expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
 ) : Referencable, arcs.core.data.Reference<RawEntity> {
     /* internal */
     var dereferencer: Dereferencer<RawEntity>? = null
 
-    override val creationTimestamp: Long get() = creationTimestamp_
-    override val expirationTimestamp: Long get() = expirationTimestamp_
+    override val creationTimestamp: Long get() = _creationTimestamp
+    override val expirationTimestamp: Long get() = _expirationTimestamp
 
-    fun ensureTimestamps(time: Time, ttl: Ttl) {
-        if (creationTimestamp_ == UNINITIALIZED_TIMESTAMP) {
-            creationTimestamp_ = time.currentTimeMillis
+    fun ensureTimestampsAreSet(time: Time, ttl: Ttl) {
+        if (_creationTimestamp == UNINITIALIZED_TIMESTAMP) {
+            _creationTimestamp = time.currentTimeMillis
             if (ttl != Ttl.Infinite) {
-                expirationTimestamp_ = ttl.calculateExpiration(time)
+                _expirationTimestamp = ttl.calculateExpiration(time)
             }
         }
     }
