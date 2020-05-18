@@ -326,7 +326,7 @@ export class Schema {
     for (const field of Object.keys(this.fields).sort()) {
       const {kind, type, schema, types} = this.fields[field];
       str += field + ':';
-      if (kind === 'schema-primitive') {
+      if (kind === 'schema-primitive' || kind === 'kotlin-primitive') {
         str += type + '|';
       } else if (kind === 'schema-reference') {
         str += '&(' + schema.model.entitySchema.normalizeForHash() + ')';

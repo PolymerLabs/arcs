@@ -58,7 +58,7 @@ class StringDecoder(private var bytes: ByteArray) {
 
     fun decodeBool(): Boolean = chomp(1).toUtf8String() == "1"
 
-    fun decodeNotImplemented(): Any = throw NotImplementedError("No JS to Kotlin encoding exists for this type")
+    fun decodeLong(): Long = throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Longs")
 
     companion object {
         fun decodeDictionary(bytes: ByteArray): Map<String, String> {

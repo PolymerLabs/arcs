@@ -164,6 +164,9 @@ open class EntityBase(
                 PrimitiveType.Text -> require(value is String) {
                     "Expected String for $entityClassName.$field, but received $value."
                 }
+                PrimitiveType.Long -> require(value is Long) {
+                    "Expected Long for $entityClassName.$field, but received $value."
+                }
             }
             is FieldType.EntityRef -> {
                 require(value is Reference<*>) {
@@ -311,6 +314,7 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
         PrimitiveType.Boolean -> (value as Boolean).toReferencable()
         PrimitiveType.Number -> (value as Double).toReferencable()
         PrimitiveType.Text -> (value as String).toReferencable()
+        PrimitiveType.Long -> (value as Long).toReferencable()
     }
     is FieldType.EntityRef -> (value as Reference<*>).toReferencable()
     // TODO(b/155025255)

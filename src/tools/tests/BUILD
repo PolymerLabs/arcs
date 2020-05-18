@@ -31,6 +31,13 @@ arcs_kt_schema(
     platforms = ["wasm"],
 )
 
+arcs_kt_schema(
+    name = "kt_only_schemas",
+    srcs = ["golden_kt.arcs"],
+    platforms = ["wasm"],
+)
+
+
 arcs_ts_test(
     name = "schema-generator-test",
     src = "schema-generator-test.ts",
