@@ -350,7 +350,7 @@ class CrdtEntityTest {
 
         entity = CrdtEntity(VersionMap(), RawEntity(id = "id"))
         entity2 = CrdtEntity(VersionMap(), RawEntity(id = "id2"))
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.merge(entity2.data)
         }
     }
