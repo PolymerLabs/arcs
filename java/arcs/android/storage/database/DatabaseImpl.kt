@@ -804,7 +804,7 @@ class DatabaseImpl(
             FROM entities 
             LEFT JOIN storage_keys
                 ON entities.storage_key_id = storage_keys.id
-            WHERE expiration_timestamp < $nowMillis
+            WHERE expiration_timestamp > -1 AND expiration_timestamp < $nowMillis
         """
         clearEntities(query)
     }
