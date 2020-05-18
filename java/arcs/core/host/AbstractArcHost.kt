@@ -35,6 +35,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -57,7 +58,7 @@ const val MAX_CONSECUTIVE_FAILURES = 5
  * @property initialParticles The initial set of [Particle]s that this host contains.
  */
 abstract class AbstractArcHost(
-    private val schedulerProvider: SchedulerProvider,
+    protected val schedulerProvider: SchedulerProvider,
     vararg initialParticles: ParticleRegistration
 ) : ArcHost {
     private val log = TaggedLog { "AbstractArcHost" }
@@ -121,6 +122,14 @@ abstract class AbstractArcHost(
             }
         }
         pausedArcs.clear()
+    }
+
+    override suspend fun shutdown() {
+        pause()
+        runningArcs.clear()
+        contextCache.clear()
+        pausedArcs.clear()
+        scope.cancel()
     }
 
     /**
