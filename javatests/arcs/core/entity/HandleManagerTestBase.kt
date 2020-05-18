@@ -681,7 +681,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_noTTL() = testRunner {
+    open fun collection_noTTL() = testRunner {
         val handle = writeHandleManager.createCollectionHandle()
         val handleB = readHandleManager.createCollectionHandle()
         val handleBChanged = handleB.onUpdateDeferred()
