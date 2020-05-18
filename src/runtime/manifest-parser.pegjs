@@ -1013,17 +1013,28 @@ AnnotationRef = '@' name:lowerIdent params:('('whiteSpace? AnnotationRefParam? (
   });
 }
 
-AnnotationRefParam = name:lowerIdent whiteSpace? ':' whiteSpace? value:ManifestStorageInlineData {
-  return toAstNode<AstNode.AnnotationRefParam>({
-    kind: 'annotation-ref-param',
+AnnotationRefParam
+  = AnnotationRefNamedParam
+  / AnnotationRefSimpleParam
+
+AnnotationRefNamedParam = name:lowerIdent whiteSpace? ':' whiteSpace? value:ManifestStorageInlineData {
+  return toAstNode<AstNode.AnnotationRefNamedParam>({
+    kind: 'annotation-named-param',
     name,
     value
   });
 }
 
+AnnotationRefSimpleParam = value:(ManifestStorageInlineData / NumberedUnits) {
+  return toAstNode<AstNode.AnnotationRefSimpleParam>({
+    kind: 'annotation-simple-param',
+    value
+  });
+}
+
 AnnotationRefList
-  = head:AnnotationRef tail:(whiteSpace AnnotationRefList)?
-  { return [head, ...(tail && tail[1] || [])]; }
+  = head:AnnotationRef tail:SpaceAnnotationRefList?
+  { return [head, ...(tail || [])]; }
 
 SpaceAnnotationRefList
   = whiteSpace tags:AnnotationRefList

@@ -420,10 +420,18 @@ export interface AnnotationRef extends BaseNode {
   params: AnnotationRefParam[];
 }
 
-export interface AnnotationRefParam extends BaseNode {
-  kind: 'annotation-ref-param';
+export type AnnotationRefParam = AnnotationRefNamedParam | AnnotationRefSimpleParam;
+export type AnnotationSimpleParamValue = ManifestStorageInlineData | NumberedUnits;
+
+export interface AnnotationRefNamedParam extends BaseNode {
+  kind: 'annotation-named-param';
   name: string;
   value: ManifestStorageInlineData;
+}
+
+export interface AnnotationRefSimpleParam extends BaseNode {
+  kind: 'annotation-simple-param';
+  value: AnnotationSimpleParamValue;
 }
 
 export interface RecipeNode extends BaseNode {

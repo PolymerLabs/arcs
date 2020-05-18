@@ -1305,16 +1305,24 @@ ${e.message}
       }
       const params: Dictionary<string|number|boolean|{}> = {};
       for (const param of aRefItem.params) {
-        if (params[param.name]) {
-          throw new ManifestError(
-              aRefItem.location, `annotation '${annotation.name}' already has param '${param.name}'`);
+        if (param.kind === 'annotation-named-param') {
+          if (params[param.name]) {
+            throw new ManifestError(
+                aRefItem.location, `annotation '${annotation.name}' can only have one value for: '${param.name}'`);
+          }
+          const aParam = annotation.params[param.name];
+          if (!aParam) {
+            throw new ManifestError(
+                aRefItem.location, `unexpected annotation param: '${param.name}'`);
+          }
+          params[param.name] = param.value;
+        } else {
+          if (Object.keys(annotation.params).length !== 1) {
+            throw new ManifestError(
+              aRefItem.location, `annotation '${annotation.name}' has unexpected unnamed param '${param.value}'`);
+          }
+          params[Object.keys(annotation.params)[0]] = param.value;
         }
-        const aParam = annotation.params[param.name];
-        if (!aParam) {
-          throw new ManifestError(
-              aRefItem.location, `unexpected annotation param: '${param.name}'`);
-        }
-        params[param.name] = param.value;
       }
       annotationRefs.push(new AnnotationRef(annotation, params));
     }
