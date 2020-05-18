@@ -24,8 +24,7 @@ import arcs.jvm.host.JvmHost
 import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 /**
  * An [ArcHost] that runs on Android inside of a [Service], uses [StorageService] for storage, and
@@ -67,9 +66,7 @@ abstract class AndroidHost(
     override val stores: StoreManager get() = StoreManager()
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-    fun onLifecycleDestroyed() {
-        GlobalScope.launch {
+    fun onLifecycleDestroyed() = runBlocking {
             shutdown()
-        }
     }
 }
