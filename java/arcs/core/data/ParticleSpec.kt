@@ -21,5 +21,6 @@ package arcs.core.data
 data class ParticleSpec(
     val name: String,
     val connections: Map<String, HandleConnectionSpec>,
-    val location: String
+    val location: String,
+    val claims: List<Claim> = emptyList()
 )
