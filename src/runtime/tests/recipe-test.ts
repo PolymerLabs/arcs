@@ -802,10 +802,10 @@ describe('recipe', () => {
         h0: create persistent
         h1: create tied-to-runtime 'my-id'
         h2: create persistent tied-to-arc #myTag
-        h4: create persistent
-        h5: create persistent @ttl(20d)
-        h6: create @ttl(20d)
-        h7: create #otherTag`)).recipes[0];
+        h3: create persistent
+        h4: create persistent @ttl(20d)
+        h5: create @ttl(20d)
+        h6: create #otherTag`)).recipes[0];
     const verifyRecipeHandleCapabilities = (recipe) => {
       assert.lengthOf(recipe.handles, 7);
       assert.isTrue(
