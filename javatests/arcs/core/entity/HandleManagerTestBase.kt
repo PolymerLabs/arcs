@@ -364,6 +364,28 @@ open class HandleManagerTestBase {
     }
 
     @Test
+    fun referenceSingleton_withTtl() = testRunner {
+        fakeTime.millis = 0
+        // Create and store an entity with no TTL.
+        val entityHandle = writeHandleManager.createSingletonHandle()
+        var updated = entityHandle.onUpdateDeferred()
+        entityHandle.store(entity1).join()
+        updated.await()
+
+        // Create and store a reference with TTL.
+        val entity1Ref = entityHandle.createReference(entity1)
+        val refHandle = writeHandleManager.createReferenceSingletonHandle(ttl = Ttl.Minutes(2))
+        withContext(refHandle.dispatcher) { refHandle.store(entity1Ref) }
+        val readBack = refHandle.fetch()!!
+        assertThat(readBack.creationTimestamp).isEqualTo(0)
+        assertThat(readBack.expirationTimestamp).isEqualTo(2 * 60 * 1000)
+
+        // Fast forward time to 5 minutes later, so the reference expires.
+        fakeTime.millis += 5 * 60 * 1000
+        assertThat(refHandle.fetch()).isNull()
+    }
+
+    @Test
     open fun singleton_referenceLiveness() = runBlocking {
         // Create and store an entity.
         val writeEntityHandle = writeHandleManager.createCollectionHandle()
@@ -717,6 +739,28 @@ open class HandleManagerTestBase {
         // Fast forward time to 5 minutes later, so entity2 expires, entity1 doesn't.
         fakeTime.millis += 5*60*1000
         assertThat(handleB.fetchAll()).containsExactly(entity1)
+    }
+
+    @Test
+    fun referenceCollection_withTtl() = testRunner {
+        fakeTime.millis = 0
+        // Create and store an entity with no TTL.
+        val entityHandle = writeHandleManager.createCollectionHandle()
+        var updated = entityHandle.onUpdateDeferred()
+        entityHandle.store(entity1).join()
+        updated.await()
+
+        // Create and store a reference with TTL.
+        val entity1Ref = entityHandle.createReference(entity1)
+        val refHandle = writeHandleManager.createReferenceCollectionHandle(ttl = Ttl.Minutes(2))
+        withContext(refHandle.dispatcher) { refHandle.store(entity1Ref) }
+        val readBack = refHandle.fetchAll().first()
+        assertThat(readBack.creationTimestamp).isEqualTo(0)
+        assertThat(readBack.expirationTimestamp).isEqualTo(2 * 60 * 1000)
+
+        // Fast forward time to 5 minutes later, so the reference expires.
+        fakeTime.millis += 5 * 60 * 1000
+        assertThat(refHandle.fetchAll()).isEmpty()
     }
 
     @Test

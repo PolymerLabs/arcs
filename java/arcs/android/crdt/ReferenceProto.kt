@@ -10,8 +10,8 @@ fun ReferenceProto.toReference() = Reference(
     id = id,
     storageKey = StorageKeyParser.parse(storageKey),
     version = if (hasVersionMap()) fromProto(versionMap) else null,
-    creationTimestamp = creationTimestampMs,
-    expirationTimestamp = expirationTimestampMs
+    _creationTimestamp = creationTimestampMs,
+    _expirationTimestamp = expirationTimestampMs
 )
 
 /** Serializes a [Reference] to its proto form. */

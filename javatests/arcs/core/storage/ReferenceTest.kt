@@ -17,9 +17,11 @@ import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
+import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
+import arcs.core.data.Ttl
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -28,12 +30,11 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.JvmTime
+import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -50,12 +51,9 @@ class ReferenceTest {
         Person.SCHEMA,
         scheduler = Scheduler(JvmTime, EmptyCoroutineContext)
     )
-    /* ktlint-disable: max-line-length */
-    private lateinit var directCollection: ActiveStore<CrdtSet.Data<Reference>, CrdtSet.Operation<Reference>, Set<Reference>>
-    /* ktlint-enable: max-line-length */
 
-    @Before
-    fun setUp() = runBlocking {
+    @Test
+    fun dereference() = runBlocking {
         RamDiskDriverProvider()
         val refModeKey = ReferenceModeStorageKey(backingKey, collectionKey)
         val options =
@@ -92,7 +90,7 @@ class ReferenceTest {
                 type = CollectionType(ReferenceType(EntityType(Person.SCHEMA))),
                 mode = StorageMode.Direct
             )
-        directCollection = Store(collectionOptions).activate()
+        val directCollection = Store(collectionOptions).activate()
         val job = Job()
         val me = directCollection.on(ProxyCallback {
             if (it is ProxyMessage.ModelUpdate<*, *, *>) job.complete()
@@ -101,10 +99,7 @@ class ReferenceTest {
             .isTrue()
         directCollection.idle()
         job.join()
-    }
 
-    @Test
-    fun dereference() = runBlockingTest {
         val collectionItems = directCollection.getLocalData()
         assertThat(collectionItems.values).hasSize(3)
 
@@ -123,6 +118,22 @@ class ReferenceTest {
 
             assertThat(actualPerson).isEqualTo(expectedPerson)
         }
+    }
+
+    @Test
+    fun ensureTimestampsAreSet() {
+        val ref = Reference("reference_id", backingKey, null)
+        assertThat(ref.creationTimestamp).isEqualTo(UNINITIALIZED_TIMESTAMP)
+        assertThat(ref.expirationTimestamp).isEqualTo(UNINITIALIZED_TIMESTAMP)
+
+        ref.ensureTimestampsAreSet(FakeTime(10), Ttl.Minutes(1))
+        assertThat(ref.creationTimestamp).isEqualTo(10)
+        assertThat(ref.expirationTimestamp).isEqualTo(60010)
+
+        // Calling again doesn't change the value.
+        ref.ensureTimestampsAreSet(FakeTime(20), Ttl.Minutes(2))
+        assertThat(ref.creationTimestamp).isEqualTo(10)
+        assertThat(ref.expirationTimestamp).isEqualTo(60010)
     }
 
     private data class Person(

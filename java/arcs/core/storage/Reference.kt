@@ -15,7 +15,10 @@ import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
+import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.Schema
+import arcs.core.data.Ttl
+import arcs.core.util.Time
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Dispatchers
 
@@ -31,12 +34,24 @@ data class Reference(
     val storageKey: StorageKey,
     val version: VersionMap?,
     /** Reference creation time (in milliseconds). */
-    override val creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+    private var _creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
     /** Reference expiration time (in milliseconds). */
-    override val expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    private var _expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
 ) : Referencable, arcs.core.data.Reference<RawEntity> {
     /* internal */
     var dereferencer: Dereferencer<RawEntity>? = null
+
+    override val creationTimestamp: Long get() = _creationTimestamp
+    override val expirationTimestamp: Long get() = _expirationTimestamp
+
+    fun ensureTimestampsAreSet(time: Time, ttl: Ttl) {
+        if (_creationTimestamp == UNINITIALIZED_TIMESTAMP) {
+            _creationTimestamp = time.currentTimeMillis
+            if (ttl != Ttl.Infinite) {
+                _expirationTimestamp = ttl.calculateExpiration(time)
+            }
+        }
+    }
 
     override suspend fun dereference(coroutineContext: CoroutineContext): RawEntity? =
         requireNotNull(dereferencer) {
@@ -53,6 +68,8 @@ data class Reference(
 
         if (id != other.id) return false
         if (storageKey != other.storageKey) return false
+        if (creationTimestamp != other.creationTimestamp) return false
+        if (expirationTimestamp != other.expirationTimestamp) return false
 
         return true
     }

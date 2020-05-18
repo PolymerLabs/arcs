@@ -35,8 +35,8 @@ class EntityStorageAdapter<T : Entity>(
     val handleName: String,
     val idGenerator: Id.Generator,
     val entitySpec: EntitySpec<T>,
-    val ttl: Ttl,
-    val time: Time,
+    private val ttl: Ttl,
+    private val time: Time,
     private val dereferencerFactory: EntityDereferencerFactory
 ) : StorageAdapter<T, RawEntity>() {
     override fun storableToReferencable(value: T): RawEntity {
@@ -64,16 +64,22 @@ class EntityStorageAdapter<T : Entity>(
 /** [StorageAdapter] for converting [Reference] to/from [StorageReference]. */
 class ReferenceStorageAdapter<E : Entity>(
     private val entitySpec: EntitySpec<E>,
-    private val dereferencerFactory: EntityDereferencerFactory
+    private val dereferencerFactory: EntityDereferencerFactory,
+    private val ttl: Ttl,
+    private val time: Time
 ) : StorageAdapter<Reference<E>, StorageReference>() {
-    override fun storableToReferencable(value: Reference<E>) = value.toReferencable()
+    override fun storableToReferencable(value: Reference<E>): StorageReference {
+        value.ensureTimestampsAreSet(time, ttl)
+        return value.toReferencable()
+    }
 
     override fun referencableToStorable(referencable: StorageReference): Reference<E> {
         dereferencerFactory.injectDereferencers(entitySpec.SCHEMA, referencable)
         return Reference(entitySpec, referencable)
     }
 
-    // Reference handle expiration is not supported yet.
-    // TODO: add TTL to reference handles, in the same way as entities.
-    override fun isExpired(value: Reference<E>): Boolean = false
+    override fun isExpired(value: Reference<E>): Boolean {
+        return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
+            value.expirationTimestamp < time.currentTimeMillis
+    }
 }

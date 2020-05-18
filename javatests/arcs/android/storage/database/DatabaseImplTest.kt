@@ -950,18 +950,26 @@ class DatabaseImplTest {
         )
         database.insertOrUpdateSingleton(singletonKey, inputSingleton1)
 
-        // Test can change reference.
+        // Test can change timestamps.
         val inputSingleton2 = inputSingleton1.copy(
-            reference = Reference("new-ref", backingKey, VersionMap("new-ref" to 2)),
+            reference = Reference("ref", backingKey, VersionMap("ref" to 1), 1, 2),
             databaseVersion = 2
         )
         database.insertOrUpdateSingleton(singletonKey, inputSingleton2)
         assertThat(database.getSingleton(singletonKey, schema)).isEqualTo(inputSingleton2)
 
-        // Test can clear value.
-        val inputSingleton3 = inputSingleton2.copy(reference = null, databaseVersion = 3)
+        // Test can change reference.
+        val inputSingleton3 = inputSingleton1.copy(
+            reference = Reference("new-ref", backingKey, VersionMap("new-ref" to 2)),
+            databaseVersion = 3
+        )
         database.insertOrUpdateSingleton(singletonKey, inputSingleton3)
         assertThat(database.getSingleton(singletonKey, schema)).isEqualTo(inputSingleton3)
+
+        // Test can clear value.
+        val inputSingleton4 = inputSingleton3.copy(reference = null, databaseVersion = 4)
+        database.insertOrUpdateSingleton(singletonKey, inputSingleton4)
+        assertThat(database.getSingleton(singletonKey, schema)).isEqualTo(inputSingleton4)
     }
 
     @Test

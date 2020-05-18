@@ -267,6 +267,8 @@ open class EntityBase(
         if (entityId != other.entityId) return false
         if (singletons != other.singletons) return false
         if (collections != other.collections) return false
+        if (creationTimestamp != other.creationTimestamp) return false
+        if (expirationTimestamp != other.expirationTimestamp) return false
         return true
     }
 
