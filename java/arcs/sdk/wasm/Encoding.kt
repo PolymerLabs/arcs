@@ -133,6 +133,10 @@ class StringEncoder(
         addStr("$prefix${if (flag) "1" else "0"}|")
     }
 
+    fun encode(prefix: String, lng: Long) {
+        throw NotImplementedError("No Kotlin to JS encoding exists for Kotlin Longs")
+    }
+
     private fun addStr(str: String) {
         str.toUtf8ByteArray().also {
             buffers.add(it)

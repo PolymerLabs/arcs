@@ -116,6 +116,10 @@ fun Float.toReferencable(): ReferencablePrimitive<Double> =
 fun Double.toReferencable(): ReferencablePrimitive<Double> =
     ReferencablePrimitive(Double::class, this)
 
+/** Makes a [Long]-based [ReferencablePrimitive] from the receiving [Long]. */
+fun Long.toReferencable(): ReferencablePrimitive<Long> =
+    ReferencablePrimitive(Long::class, this)
+
 /** Makes a [String]-based [ReferencablePrimitive] from the receiving [String]. */
 fun String.toReferencable(): ReferencablePrimitive<String> =
     ReferencablePrimitive(String::class, this)

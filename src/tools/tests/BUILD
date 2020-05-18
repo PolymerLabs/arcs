@@ -15,6 +15,7 @@ filegroup(
     srcs = [
         ":golden.h",
         ":golden_GeneratedSchemas.jvm.kt",
+        ":golden-kt_GeneratedSchemas.jvm.kt",
         ":golden_GeneratedSchemas.wasm.kt",
         ":golden_TestHarness.kt",
     ],
