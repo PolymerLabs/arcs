@@ -112,11 +112,11 @@ object ReferencesRecipePlan : Plan(
                 ),
                 "outThingRef" to HandleConnection(
                     StorageKeyParser.parse(
-                        "db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:referencesArcId/handle/my-ref-id"
+                        "memdb://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:referencesArcId/handle/my-ref-id"
                     ),
                     HandleMode.Write,
                     SingletonType(ReferenceType(EntityType(ReadWriteReferences_OutThingRef.SCHEMA))),
-                    Ttl.Infinite
+                    Ttl.Days(1)
                 )
             )
         )

@@ -44,7 +44,7 @@ particle ReadWriteReferences
   arcId referencesArcId
 recipe ReferencesRecipe
   things: create persistent 'my-refs-id'
-  thing: create persistent 'my-ref-id'
+  thing: create 'my-ref-id' @ttl(1d)
   ReadWriteReferences
     inThingRefs: things
     outThingRef: thing

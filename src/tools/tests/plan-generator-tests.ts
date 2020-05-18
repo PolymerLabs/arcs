@@ -177,6 +177,36 @@ describe('recipe2plan', () => {
         actuals.push(newActual);
       }
     });
+    it('creates a createable storage key with correct capabilities', async () => {
+      const manifest = await Manifest.parse(`\
+     particle A
+       data: writes Thing {num: Number}
+       
+     recipe R
+       h0: create
+       h1: create @ttl(12h)
+       h2: create persistent
+       h3: create persistent @ttl(24h)
+       A
+         data: writes h0
+       A
+         data: writes h1
+       A
+         data: writes h2
+       A
+         data: writes h3`);
+      const recipeResolver = new StorageKeyRecipeResolver(manifest);
+      const recipe = (await recipeResolver.resolve())[0];
+      const generator = new PlanGenerator([recipe], '');
+      const h0Key = await generator.createStorageKey(recipe.handles[0]);
+      assert.isFalse(h0Key.includes('Capabilities'));
+      const h1Key = await generator.createStorageKey(recipe.handles[1]);
+      assert.match(h1Key, /CreateableStorageKey\("handle\/[\d]+", Capabilities.Queryable\)/);
+      const h2Key = await generator.createStorageKey(recipe.handles[2]);
+      assert.match(h2Key, /CreateableStorageKey\("handle\/[\d]+", Capabilities.Persistent\)/);
+      const h3Key = await generator.createStorageKey(recipe.handles[3]);
+      assert.isTrue(h3Key.includes('Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.Queryable))'));
+    });
     it('uses the same identifier for all HandleConnections connected to the same handle', async () => {
       const manifest = await Manifest.parse(`\
      particle A

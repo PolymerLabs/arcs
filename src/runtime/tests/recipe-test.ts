@@ -802,16 +802,25 @@ describe('recipe', () => {
         h0: create persistent
         h1: create tied-to-runtime 'my-id'
         h2: create persistent tied-to-arc #myTag
-        h3: create #otherTag`)).recipes[0];
+        h3: create persistent
+        h4: create persistent @ttl(20d)
+        h5: create @ttl(20d)
+        h6: create #otherTag`)).recipes[0];
     const verifyRecipeHandleCapabilities = (recipe) => {
-      assert.lengthOf(recipe.handles, 4);
+      assert.lengthOf(recipe.handles, 7);
       assert.isTrue(
           recipe.handles[0].capabilities.isSame(new Capabilities(['persistent'])));
       assert.isTrue(
           recipe.handles[1].capabilities.isSame(new Capabilities(['tied-to-runtime'])));
       assert.isTrue(
           recipe.handles[2].capabilities.isSame(new Capabilities(['persistent', 'tied-to-arc'])));
-      assert.isTrue(recipe.handles[3].capabilities.isEmpty());
+      assert.isTrue(
+          recipe.handles[3].capabilities.isSame(new Capabilities(['persistent'])));
+      assert.isTrue(
+          recipe.handles[4].capabilities.isSame(new Capabilities(['persistent', 'queryable'])));
+      assert.isTrue(
+          recipe.handles[5].capabilities.isSame(new Capabilities(['queryable'])));
+      assert.isTrue(recipe.handles[6].capabilities.isEmpty());
     };
     verifyRecipeHandleCapabilities(recipe);
     verifyRecipeHandleCapabilities((await Manifest.parse(recipe.toString())).recipes[0]);

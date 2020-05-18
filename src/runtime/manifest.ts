@@ -892,18 +892,20 @@ ${e.message}
         items.byName.set(item.name, {item, handle});
       }
       handle.fate = item.kind === 'handle' && item.fate ? item.fate : null;
-      if (item.kind === 'handle' && item.capabilities) {
-        handle.capabilities = new Capabilities(item.capabilities);
-      }
-      if (item.kind === 'handle' && item.annotation) {
-        assert(item.annotation.simpleAnnotation === 'ttl',
-               `unsupported recipe handle annotation ${item.annotation.simpleAnnotation}`);
-        handle.ttl = new Ttl(
-            item.annotation.parameter.count,
-            Ttl.ttlUnitsFromString(item.annotation.parameter.units));
-      }
-      if (item.kind === 'handle' && item.annotations) {
-        handle.annotations = Manifest._buildAnnotationRefs(manifest, item.annotations);
+      if (item.kind === 'handle') {
+        if (item.annotation) {
+          assert(item.annotation.simpleAnnotation === 'ttl',
+                `unsupported recipe handle annotation ${item.annotation.simpleAnnotation}`);
+          handle.ttl = new Ttl(
+              item.annotation.parameter.count,
+              Ttl.ttlUnitsFromString(item.annotation.parameter.units));
+        }
+        if (item.capabilities) {
+          handle.capabilities = new Capabilities(handle.ttl.isInfinite ? item.capabilities : [...item.capabilities, 'queryable']);
+        }
+        if (item.annotations) {
+          handle.annotations = Manifest._buildAnnotationRefs(manifest, item.annotations);
+        }
       }
       items.byHandle.set(handle, item);
     }

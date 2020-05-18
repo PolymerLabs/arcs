@@ -21,6 +21,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.storage.keys.DATABASE_DRIVER_PROTOCOL
 import arcs.core.storage.keys.DatabaseStorageKey
+import arcs.core.storage.keys.MEMORY_DATABASE_DRIVER_PROTOCOL
 import arcs.core.storage.keys.RAMDISK_DRIVER_PROTOCOL
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VOLATILE_DRIVER_PROTOCOL
@@ -167,6 +168,11 @@ class CapabilitiesResolverTest {
             .containsExactly(RAMDISK_DRIVER_PROTOCOL)
         assertThat(resolver1.findStorageKeyProtocols(Capabilities.Persistent))
             .containsExactly(DATABASE_DRIVER_PROTOCOL)
+        assertThat(resolver1.findStorageKeyProtocols(Capabilities.PersistentQueryable))
+            .containsExactly(DATABASE_DRIVER_PROTOCOL)
+        assertThat(resolver1.findStorageKeyProtocols(Capabilities.Queryable))
+            .containsExactly(MEMORY_DATABASE_DRIVER_PROTOCOL)
+
         verifyStorageKey(
             resolver1.createStorageKey(Capabilities.TiedToArc, thingEntityType, handleId),
             VolatileStorageKey::class.java

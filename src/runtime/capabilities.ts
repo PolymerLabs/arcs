@@ -50,5 +50,7 @@ export class Capabilities {
   static readonly tiedToRuntime = new Capabilities(['tied-to-runtime']);
   static readonly persistent = new Capabilities(['persistent']);
   static readonly queryable = new Capabilities(['queryable']);
+  static readonly tiedToArcQueryable = new Capabilities(['tied-to-arc', 'queryable']);
+  static readonly tiedToRuntimeQueryable = new Capabilities(['tied-to-runtime', 'queryable']);
   static readonly persistentQueryable = new Capabilities(['persistent', 'queryable']);
 }
