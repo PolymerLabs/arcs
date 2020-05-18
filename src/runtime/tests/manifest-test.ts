@@ -3855,6 +3855,13 @@ recipe
   it('parses recipe annotation with text param', async () => {
     await assertThrowsAsync(async () => await Manifest.parse(`
 ${oneParamAnnotation}
+@oneParam(foo: 'hello', foo: 'world')
+recipe
+    `), `annotation 'oneParam' can only have one value for: 'foo'`);
+  });
+  it('parses recipe annotation with text param', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+${oneParamAnnotation}
 @oneParam(foo: 'hello', wrong: 'world')
 recipe
     `), `unexpected annotation param: 'wrong'`);

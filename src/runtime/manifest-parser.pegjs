@@ -1029,7 +1029,7 @@ AnnotationRefSimpleParam = value:(ManifestStorageInlineData / NumberedUnits) {
   return toAstNode<AstNode.AnnotationRefSimpleParam>({
     kind: 'annotation-simple-param',
     value
-  })
+  });
 }
 
 AnnotationRefList

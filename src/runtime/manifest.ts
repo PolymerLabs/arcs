@@ -1308,7 +1308,7 @@ ${e.message}
         if (param.kind === 'annotation-named-param') {
           if (params[param.name]) {
             throw new ManifestError(
-                aRefItem.location, `annotation '${annotation.name}' already has param '${param.name}'`);
+                aRefItem.location, `annotation '${annotation.name}' can only have one value for: '${param.name}'`);
           }
           const aParam = annotation.params[param.name];
           if (!aParam) {
@@ -1317,7 +1317,7 @@ ${e.message}
           }
           params[param.name] = param.value;
         } else {
-          if (Object.keys(annotation.params).length != 1) {
+          if (Object.keys(annotation.params).length !== 1) {
             throw new ManifestError(
               aRefItem.location, `annotation '${annotation.name}' has unexpected unnamed param '${param.value}'`);
           }
