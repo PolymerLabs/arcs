@@ -119,7 +119,9 @@ class EntityHandleManager(
                 }
                 ReferenceStorageAdapter(
                     spec.entitySpec,
-                    dereferencerFactory
+                    dereferencerFactory,
+                    ttl,
+                    time
                 )
             }
         }

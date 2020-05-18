@@ -12,7 +12,9 @@
 package arcs.core.entity
 
 import arcs.core.common.Referencable
+import arcs.core.data.Ttl
 import arcs.core.storage.Reference as StorageReference
+import arcs.core.util.Time
 
 /** A reference to an [Entity]. */
 class Reference<T : Entity>(
@@ -25,11 +27,16 @@ class Reference<T : Entity>(
     /** The entity ID for the referenced entity. */
     val entityId = storageReference.id
 
+    val creationTimestamp get() = storageReference.creationTimestamp
+    val expirationTimestamp get() = storageReference.expirationTimestamp
+
     /** Returns the [Entity] pointed to by this reference. */
     suspend fun dereference() = storageReference.dereference()?.let { entitySpec.deserialize(it) }
 
     /** Returns a [Referencable] for this reference. */
     /* internal */ fun toReferencable(): StorageReference = storageReference
+
+    fun ensureTimestamps(time: Time, ttl: Ttl) = storageReference.ensureTimestamps(time, ttl)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -297,11 +297,11 @@ class DatabaseImpl(
                     null
                 } else {
                     Reference(
-                        id = it.getString(6),
-                        storageKey = StorageKeyParser.parse(it.getString(7)),
-                        version = it.getVersionMap(8),
-                        creationTimestamp = it.getLong(9),
-                        expirationTimestamp = it.getLong(10)
+                        it.getString(6),
+                        StorageKeyParser.parse(it.getString(7)),
+                        it.getVersionMap(8),
+                        it.getLong(9),
+                        it.getLong(10)
                     )
                 }
             }
@@ -1091,19 +1091,25 @@ class DatabaseImpl(
                 SELECT id
                 FROM entity_refs
                 WHERE entity_id = ? AND backing_storage_key = ?
+                    AND creation_timestamp = ? AND expiration_timestamp = ?
             """.trimIndent() to arrayOf(
                 reference.id,
-                reference.storageKey.toString()
+                reference.storageKey.toString(),
+                reference.creationTimestamp.toString(),
+                reference.expirationTimestamp.toString()
             )
         val withVersionMap =
             """
                 SELECT id
                 FROM entity_refs
                 WHERE entity_id = ? AND backing_storage_key = ? AND version_map = ?
+                    AND creation_timestamp = ? AND expiration_timestamp = ?
             """.trimIndent() to arrayOf(
                 reference.id,
                 reference.storageKey.toString(),
-                reference.version?.toProtoLiteral()
+                reference.version?.toProtoLiteral(),
+                reference.creationTimestamp.toString(),
+                reference.expirationTimestamp.toString()
             )
 
         val refId = (reference.version?.let { withVersionMap } ?: withoutVersionMap)
@@ -1231,11 +1237,11 @@ class DatabaseImpl(
         arrayOf(collectionId.toString())
     ).map {
         Reference(
-            id = it.getString(0),
-            storageKey = StorageKeyParser.parse(it.getString(3)),
-            version = it.getVersionMap(4),
-            creationTimestamp = it.getString(1).toLong(),
-            expirationTimestamp = it.getString(2).toLong()
+            it.getString(0),
+            StorageKeyParser.parse(it.getString(3)),
+            it.getVersionMap(4),
+            it.getString(1).toLong(),
+            it.getString(2).toLong()
         )
     }.toSet()
 
