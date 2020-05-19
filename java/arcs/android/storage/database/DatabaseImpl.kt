@@ -18,6 +18,9 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Base64
 import androidx.annotation.VisibleForTesting
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.OnLifecycleEvent
 import arcs.android.common.bindBoolean
 import arcs.android.common.forEach
 import arcs.android.common.forSingleResult
@@ -98,7 +101,7 @@ class DatabaseImpl(
     if (persistent) databaseName else null,
     /* cursorFactory = */ null,
     DB_VERSION
-) {
+), LifecycleObserver {
     private val log = TaggedLog { this.toString() }
 
     // TODO: handle rehydrating from a snapshot.
@@ -123,6 +126,14 @@ class DatabaseImpl(
             // Make a copy of the values to prevent ConcurrentModificationExceptions.
             clients.values.toList()
         }.forEach { emit(it) }
+    }
+
+    init {
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+    fun onLifecycleDestroyed() {
+        close()
     }
 
     override fun onCreate(db: SQLiteDatabase) = db.transaction {

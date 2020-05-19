@@ -12,14 +12,21 @@
 package arcs.android.storage.database
 
 import android.content.Context
+import android.content.ContextWrapper
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.OnLifecycleEvent
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseIdentifier
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.database.DatabasePerformanceStatistics.Snapshot
+import arcs.core.util.Log
 import arcs.core.util.guardedBy
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -27,11 +34,44 @@ import kotlinx.coroutines.sync.withLock
  * [DatabaseManager] implementation which constructs [DatabaseImpl] instances for use on Android
  * with SQLite.
  */
-class AndroidSqliteDatabaseManager(context: Context) : DatabaseManager {
+class AndroidSqliteDatabaseManager(
+    context: Context,
+    lifecycle: Lifecycle? = null
+) : DatabaseManager, LifecycleObserver {
     private val context = context.applicationContext
+    private val lifecycle = lifecycle?.let { lifecycle } ?: getLifecycleOwner()
     private val mutex = Mutex()
     private val dbCache by guardedBy(mutex, mutableMapOf<DatabaseIdentifier, DatabaseImpl>())
     override val registry = AndroidSqliteDatabaseRegistry(context)
+
+    init {
+        lifecycle?.addObserver(this) ?: Log.debug {
+            "No lifecycle available for AndroidSqliteDatabaseManager with context $context"
+        }
+    }
+
+    /*
+     * Temporary hack workaround to avoid breaking G3 with a refactor. Followup will add
+     * explicit lifecycle parameter to ctor.
+     */
+    private fun getLifecycleOwner(): LifecycleOwner? {
+        var lifecycle = context
+        while (lifecycle !is LifecycleOwner) {
+            lifecycle = (lifecycle as ContextWrapper).getBaseContext()
+        }
+        return lifecycle
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+    fun onLifecycleDestroyed() = close()
+
+    fun close() = runBlocking {
+        mutex.withLock {
+            dbCache.values.forEach { it.close() }
+        }
+
+        registry.close()
+    }
 
     override suspend fun getDatabase(name: String, persistent: Boolean): Database {
         val entry = registry.register(name, persistent)

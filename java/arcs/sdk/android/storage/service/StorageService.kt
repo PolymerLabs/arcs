@@ -117,6 +117,7 @@ open class StorageService : ResurrectorService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        WorkManager.getInstance(this).cancelUniqueWork(PeriodicCleanupTask.WORKER_TAG)
         writeBackScope.cancel()
         scope.cancel()
     }

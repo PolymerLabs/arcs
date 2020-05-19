@@ -68,6 +68,7 @@ abstract class ResurrectorService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        dbHelper.close()
         job.cancelChildren()
     }
 
