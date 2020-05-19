@@ -63,3 +63,14 @@ filegroup(
     ],
     visibility = ["//visibility:public"],
 )
+
+exports_files(["tsconfig.json"], visibility = ["//visibility:public"])
+
+# Create a tsc_wrapped compiler rule to use in the ts_library
+# compiler attribute when using self-managed dependencies
+nodejs_binary(
+    name = "@bazel/typescript/tsc_wrapped",
+    entry_point = "@bazel/typescript/internal/tsc_wrapped/tsc_wrapped.js",
+    # Point bazel to your node_modules to find the entry point
+    node_modules = ["//:node_modules"],
+)

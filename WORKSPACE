@@ -8,13 +8,27 @@ http_archive(
     urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/0.38.1/rules_nodejs-0.38.1.tar.gz"],
 )
 
-load("@build_bazel_rules_nodejs//:index.bzl", "node_repositories")
+load("@build_bazel_rules_nodejs//:index.bzl", "node_repositories", "yarn_install")
 
 node_repositories(
     node_version = "10.16.0",
     package_json = ["//:package.json"],
     yarn_version = "1.13.0",
 )
+
+yarn_install(
+    name = "npm",
+    package_json = "//:package-bazel.json",
+    yarn_lock = "//:yarn.lock",
+)
+
+load("@npm//:install_bazel_dependencies.bzl", "install_bazel_dependencies")
+
+install_bazel_dependencies()
+
+load("@npm//@bazel/typescript:index.bzl", "ts_setup_workspace")
+
+ts_setup_workspace()
 
 # Java deps from Maven. This has to be declare before rules_kotlin
 
