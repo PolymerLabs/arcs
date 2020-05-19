@@ -9,7 +9,7 @@
  */
 
 import {Node, Edge, FlowModifier, FlowCheck} from './graph-internals.js';
-import {ClaimType} from '../../runtime/particle-claim.js';
+import {ClaimType, Claim} from '../../runtime/particle-claim.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {assert} from '../../platform/assert-web.js';
 import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
@@ -106,7 +106,9 @@ export class ParticleOutput implements Edge {
     this.connectionSpec = connection.spec;
     this.label = `${particleNode.name}.${this.connectionName}`;
 
-    this.modifier = FlowModifier.fromClaims(this, connection.spec.claims);
+    // TODO(b/153354605): Support field-level claims.
+    const claims = getClaimsList(connection.spec);
+    this.modifier = FlowModifier.fromClaims(this, claims);
     this.derivesFrom = [];
   }
 
@@ -118,7 +120,8 @@ export class ParticleOutput implements Edge {
     assert(this.derivesFrom.length === 0, '"Derived from" edges have already been computed.');
 
     if (this.connectionSpec.claims) {
-      for (const claim of this.connectionSpec.claims) {
+      const claims = getClaimsList(this.connectionSpec);
+      for (const claim of claims) {
         if (claim.type === ClaimType.DerivesFrom) {
           const derivedFromEdge = this.start.inEdgesByName.get(claim.parentHandle.name);
           assert(derivedFromEdge, `Handle '${claim.parentHandle.name}' is not an in-edge.`);
@@ -239,4 +242,16 @@ function isSchemaFieldCompatibleWithReference(field: any, target: ReferenceType<
     default:
       throw new Error(`Unsupported field: ${field}`);
   }
+}
+
+function getClaimsList(spec: HandleConnectionSpec): Claim[] {
+  if (!spec.claims || spec.claims.size === 0) {
+    return [];
+  }
+  // TODO(b/153354605): Add support for field-level claims, then delete this
+  // function.
+  assert(
+      spec.claims.size === 1 && spec.claims.keys().next().value === spec.name,
+      'Field-level claims yet not supported by DFA yet.');
+  return spec.claims.values().next().value;
 }

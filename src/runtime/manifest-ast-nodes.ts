@@ -243,6 +243,7 @@ export interface Particle extends BaseNode {
 export interface ParticleClaimStatement extends BaseNode {
   kind: 'particle-trust-claim';
   handle: string;
+  fieldPath: string[];
   expression: ParticleClaimExpression;
 }
 
