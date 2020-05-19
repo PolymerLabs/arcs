@@ -56,8 +56,9 @@ class AndroidSqliteDatabaseManager(
      */
     private fun getLifecycle(): Lifecycle? {
         var lifecycleOwner = context
-        while (lifecycleOwner != null && lifecycleOwner !is LifecycleOwner) {
-            lifecycleOwner = (lifecycleOwner as ContextWrapper).baseContext
+        while (lifecycleOwner != null && lifecycleOwner !is LifecycleOwner
+            && lifecycleOwner is ContextWrapper) {
+            lifecycleOwner = lifecycleOwner.baseContext
         }
 
         return if (lifecycleOwner is LifecycleOwner) {
