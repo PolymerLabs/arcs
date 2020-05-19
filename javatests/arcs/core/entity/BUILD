@@ -53,7 +53,7 @@ arcs_kt_jvm_library(
         ["*.kt"],
         exclude = TEST_SRCS,
     ),
-    visibility = ["//javatests/arcs/android:__subpackages__"],
+    visibility = ["//javatests/arcs:__subpackages__"],
     deps = [
         ":test_arcs_gen",
         "//java/arcs/core/common",
