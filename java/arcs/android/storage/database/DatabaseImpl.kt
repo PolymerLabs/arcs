@@ -799,6 +799,17 @@ class DatabaseImpl(
 
     override suspend fun removeExpiredEntities() {
         val nowMillis = JvmTime.currentTimeMillis
+
+        // Find expired references. Run this before cleaning expired entities as the clearEntities
+        // method will notify containers with missing refs.
+        writableDatabase.transaction {
+            delete(
+                TABLE_ENTITY_REFS,
+                "expiration_timestamp > -1 AND expiration_timestamp < ?",
+                arrayOf(nowMillis.toString())
+            )
+        }
+
         val query = """
             SELECT storage_key_id, storage_key 
             FROM entities 

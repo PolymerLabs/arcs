@@ -1718,6 +1718,80 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun removeExpiredReference() = runBlockingTest {
+        val schema = newSchema(
+            "hash",
+            SchemaFields(singletons = mapOf("text" to FieldType.Text), collections = mapOf())
+        )
+        val collectionKey = DummyStorageKey("collection")
+        val backingKey = DummyStorageKey("backing")
+        val entityKey = DummyStorageKey("backing/entity")
+        val entity2Key = DummyStorageKey("backing/entity2")
+
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity",
+                mapOf("text" to "abc".toReferencable()),
+                mapOf(),
+                11L,
+                JvmTime.currentTimeMillis + 10000 // expirationTimestamp, in the future.
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        val entity2 = DatabaseData.Entity(
+            RawEntity(
+                "entity2",
+                mapOf("text" to "abc".toReferencable()),
+                mapOf(),
+                11L,
+                JvmTime.currentTimeMillis + 10000 // expirationTimestamp, in the future.
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        val timeInPast = JvmTime.currentTimeMillis - 10000
+        val expiredRef = Reference("entity", backingKey, VersionMap("ref" to 1), 11L, timeInPast)
+        val okRef = Reference("entity2", backingKey, VersionMap("ref" to 1), 12L) // no expiration
+        val collection = DatabaseData.Collection(
+            values = setOf(expiredRef, okRef),
+            schema = schema,
+            databaseVersion = FIRST_VERSION_NUMBER,
+            versionMap = VERSION_MAP
+        )
+        database.insertOrUpdate(entityKey, entity)
+        database.insertOrUpdate(entity2Key, entity2)
+        database.insertOrUpdate(collectionKey, collection)
+
+        // Add client to verify updates.
+        val collectionClient = FakeDatabaseClient(collectionKey)
+        database.addClient(collectionClient)
+
+        database.removeExpiredEntities()
+
+        // Check the entity itself has not been modified.
+        assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
+        assertThat(database.getEntity(entity2Key, schema)).isEqualTo(entity2)
+
+        // Check the collection only contain the non-expired reference.
+        assertThat(database.getCollection(collectionKey, schema))
+            .isEqualTo(collection.copy(values = setOf(okRef)))
+
+        // Check the expired entity ref is gone.
+        assertThat(readEntityRefsEntityId()).containsExactly("entity2")
+
+        // Check the corresponding collection entry is gone.
+        assertTableIsSize("collection_entries", 1)
+
+        // Check the client was notified.
+        collectionClient.eventMutex.withLock {
+            assertThat(collectionClient.deletes).containsExactly(null)
+        }
+    }
+
+    @Test
     fun delete_entity_getsRemoved() = runBlockingTest {
         val entityKey = DummyStorageKey("entity")
         database.insertOrUpdateEntity(entityKey, EMPTY_ENTITY)
