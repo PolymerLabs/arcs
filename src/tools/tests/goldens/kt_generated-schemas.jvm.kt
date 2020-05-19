@@ -403,7 +403,13 @@ abstract class AbstractGold : BaseParticle() {
         lnk: String = "",
         flg: Boolean = false,
         ref: Reference<GoldInternal1>? = null,
+        bt: Byte = 0.toByte(),
+        shrt: Short = 0.toShort(),
+        nt: Int = 0,
         lng: Long = 0L,
+        chr: Char = ' ',
+        flt: Float = 0.0f,
+        dbl: Double = 0.0,
         entityId: String? = null,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP
@@ -424,9 +430,27 @@ abstract class AbstractGold : BaseParticle() {
         var ref: Reference<GoldInternal1>?
             get() = super.getSingletonValue("ref") as Reference<GoldInternal1>?
             private set(_value) = super.setSingletonValue("ref", _value)
+        var bt: Byte
+            get() = super.getSingletonValue("bt") as Byte? ?: 0.toByte()
+            private set(_value) = super.setSingletonValue("bt", _value)
+        var shrt: Short
+            get() = super.getSingletonValue("shrt") as Short? ?: 0.toShort()
+            private set(_value) = super.setSingletonValue("shrt", _value)
+        var nt: Int
+            get() = super.getSingletonValue("nt") as Int? ?: 0
+            private set(_value) = super.setSingletonValue("nt", _value)
         var lng: Long
             get() = super.getSingletonValue("lng") as Long? ?: 0L
             private set(_value) = super.setSingletonValue("lng", _value)
+        var chr: Char
+            get() = super.getSingletonValue("chr") as Char? ?: ' '
+            private set(_value) = super.setSingletonValue("chr", _value)
+        var flt: Float
+            get() = super.getSingletonValue("flt") as Float? ?: 0.0f
+            private set(_value) = super.setSingletonValue("flt", _value)
+        var dbl: Double
+            get() = super.getSingletonValue("dbl") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("dbl", _value)
 
         init {
             this.num = num
@@ -434,7 +458,13 @@ abstract class AbstractGold : BaseParticle() {
             this.lnk = lnk
             this.flg = flg
             this.ref = ref
+            this.bt = bt
+            this.shrt = shrt
+            this.nt = nt
             this.lng = lng
+            this.chr = chr
+            this.flt = flt
+            this.dbl = dbl
         }
         /**
          * Use this method to create a new, distinctly identified copy of the entity.
@@ -446,8 +476,27 @@ abstract class AbstractGold : BaseParticle() {
             lnk: String = this.lnk,
             flg: Boolean = this.flg,
             ref: Reference<GoldInternal1>? = this.ref,
-            lng: Long = this.lng
-        ) = Gold_Data(num = num, txt = txt, lnk = lnk, flg = flg, ref = ref, lng = lng)
+            bt: Byte = this.bt,
+            shrt: Short = this.shrt,
+            nt: Int = this.nt,
+            lng: Long = this.lng,
+            chr: Char = this.chr,
+            flt: Float = this.flt,
+            dbl: Double = this.dbl
+        ) = Gold_Data(
+            num = num,
+            txt = txt,
+            lnk = lnk,
+            flg = flg,
+            ref = ref,
+            bt = bt,
+            shrt = shrt,
+            nt = nt,
+            lng = lng,
+            chr = chr,
+            flt = flt,
+            dbl = dbl
+        )
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -458,14 +507,26 @@ abstract class AbstractGold : BaseParticle() {
             lnk: String = this.lnk,
             flg: Boolean = this.flg,
             ref: Reference<GoldInternal1>? = this.ref,
-            lng: Long = this.lng
+            bt: Byte = this.bt,
+            shrt: Short = this.shrt,
+            nt: Int = this.nt,
+            lng: Long = this.lng,
+            chr: Char = this.chr,
+            flt: Float = this.flt,
+            dbl: Double = this.dbl
         ) = Gold_Data(
             num = num,
             txt = txt,
             lnk = lnk,
             flg = flg,
             ref = ref,
+            bt = bt,
+            shrt = shrt,
+            nt = nt,
             lng = lng,
+            chr = chr,
+            flt = flt,
+            dbl = dbl,
             entityId = entityId,
             creationTimestamp = creationTimestamp,
             expirationTimestamp = expirationTimestamp
@@ -482,11 +543,17 @@ abstract class AbstractGold : BaseParticle() {
                         "lnk" to FieldType.Text,
                         "flg" to FieldType.Boolean,
                         "ref" to FieldType.EntityRef("485712110d89359a3e539dac987329cd2649d889"),
-                        "lng" to FieldType.Long
+                        "bt" to FieldType.Byte,
+                        "shrt" to FieldType.Short,
+                        "nt" to FieldType.Int,
+                        "lng" to FieldType.Long,
+                        "chr" to FieldType.Char,
+                        "flt" to FieldType.Float,
+                        "dbl" to FieldType.Double
                     ),
                     collections = emptyMap()
                 ),
-                "d42d1ed66be0ded286f1f260a42eaa079679a05c",
+                "61f24d18077a4170179ff84731a1757ac2e622c1",
                 refinement = { _ -> true },
                 query = null
             )

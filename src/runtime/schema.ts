@@ -332,7 +332,7 @@ export class Schema {
         str += '&(' + schema.model.entitySchema.normalizeForHash() + ')';
       } else if (kind === 'schema-collection' && schema.kind === 'schema-reference') {
         str += '[&(' + schema.schema.model.entitySchema.normalizeForHash() + ')]';
-      } else if (kind === 'schema-collection' && schema.kind === 'schema-primitive') {
+      } else if (kind === 'schema-collection' && (schema.kind === 'schema-primitive' || schema.kind === 'kotlin-primitive')) {
         str += '[' + schema.type + ']';
       } else if (kind === 'schema-tuple') {
         str += `(${types.map(t => t.type).join('|')})`;

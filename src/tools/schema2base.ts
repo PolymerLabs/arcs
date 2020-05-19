@@ -122,7 +122,7 @@ export abstract class Schema2Base {
             });
           } else if (descriptor.kind === 'schema-collection') {
             const schema = descriptor.schema;
-            if (!['Text', 'URL', 'Number', 'Boolean'].includes(schema.type)) {
+             if (!((schema.kind === 'kotlin-primitive') || ['Text', 'URL', 'Number', 'Boolean'].includes(schema.type))) {
               throw new Error(`Schema type '${schema.type}' for field '${field}' is not supported`);
             }
             generator.addField({field, typeName: schema.type, isCollection: true});

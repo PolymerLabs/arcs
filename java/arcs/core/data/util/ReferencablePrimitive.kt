@@ -104,21 +104,33 @@ data class ReferencablePrimitive<T>(
 
 /* Extension functions to make conversion easy. */
 
-/** Makes a [Double]-based [ReferencablePrimitive] from the receiving [Int]. */
-fun Int.toReferencable(): ReferencablePrimitive<Double> =
-    ReferencablePrimitive(Double::class, this.toDouble())
+/** Makes a [Byte]-based [ReferencablePrimitive] from the receiving [Byte]. */
+fun Byte.toReferencable(): ReferencablePrimitive<Byte> =
+    ReferencablePrimitive(Byte::class, this)
 
-/** Makes a [Double]-based [ReferencablePrimitive] from the receiving [Float]. */
-fun Float.toReferencable(): ReferencablePrimitive<Double> =
-    ReferencablePrimitive(Double::class, this.toDouble())
+/** Makes a [Short]-based [ReferencablePrimitive] from the receiving [Short]. */
+fun Short.toReferencable(): ReferencablePrimitive<Short> =
+    ReferencablePrimitive(Short::class, this)
 
-/** Makes a [Double]-based [ReferencablePrimitive] from the receiving [Double]. */
-fun Double.toReferencable(): ReferencablePrimitive<Double> =
-    ReferencablePrimitive(Double::class, this)
+/** Makes an [Int]-based [ReferencablePrimitive] from the receiving [Int]. */
+fun Int.toReferencable(): ReferencablePrimitive<Int> =
+    ReferencablePrimitive(Int::class, this)
 
 /** Makes a [Long]-based [ReferencablePrimitive] from the receiving [Long]. */
 fun Long.toReferencable(): ReferencablePrimitive<Long> =
     ReferencablePrimitive(Long::class, this)
+
+/** Makes a [Char]-based [ReferencablePrimitive] from the receiving [Char]. */
+fun Char.toReferencable(): ReferencablePrimitive<Char> =
+    ReferencablePrimitive(Char::class, this)
+
+/** Makes a [Float]-based [ReferencablePrimitive] from the receiving [Float]. */
+fun Float.toReferencable(): ReferencablePrimitive<Float> =
+    ReferencablePrimitive(Float::class, this)
+
+/** Makes a [Double]-based [ReferencablePrimitive] from the receiving [Double]. */
+fun Double.toReferencable(): ReferencablePrimitive<Double> =
+    ReferencablePrimitive(Double::class, this)
 
 /** Makes a [String]-based [ReferencablePrimitive] from the receiving [String]. */
 fun String.toReferencable(): ReferencablePrimitive<String> =

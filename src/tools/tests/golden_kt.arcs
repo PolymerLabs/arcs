@@ -4,7 +4,7 @@ meta
   namespace: arcs.golden
 
 particle Gold
-  data: reads {num: Number, txt: Text, lnk: URL, flg: Boolean, ref: &{val: Text}, lng: Long}
+  data: reads {num: Number, txt: Text, lnk: URL, flg: Boolean, ref: &{val: Text}, bt: Byte, shrt: Short, nt: Int, lng: Long, chr: Char, flt: Float, dbl: Double}
 
   // Same as qCollection but without refinement + query (to ensure that types with refinements generated properly using their base class.
   allPeople: reads [People {name: Text, age: Number, lastCall: Number, address: Text, favoriteColor: Text, birthDayMonth: Number, birthDayDOM: Number}]
