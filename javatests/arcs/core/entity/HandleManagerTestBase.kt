@@ -547,6 +547,32 @@ open class HandleManagerTestBase {
 
         handle.store(modified)
         assertThat(handle.fetchAll()).containsExactly(modified)
+    }   
+
+    @Test
+    open fun clientCanSetEntityId() = testRunner {
+        fakeTime.millis = 0
+        // Ask faketime to increment to test with changing timestamps.
+        fakeTime.autoincrement = 1
+        val id = "MyId"
+        val entity = TestParticle_Entities(text = "Hello", number = 1.0, entityId = id)
+        val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+        withContext(handle.dispatcher) {
+            handle.store(entity)
+            assertThat(handle.fetchAll()).containsExactly(entity)
+
+            // A different entity, with the same ID, should replace the first.
+            val entity2 = TestParticle_Entities(text = "New Hello", number = 1.1, entityId = id)
+            handle.store(entity2)
+            assertThat(handle.fetchAll()).containsExactly(entity2)
+            // Timestamps also get updated.
+            assertThat(entity2.creationTimestamp).isEqualTo(2)
+
+            // An entity with a different ID.
+            val entity3 = TestParticle_Entities(text = "Bye", number = 2.0, entityId = "OtherId")
+            handle.store(entity3)
+            assertThat(handle.fetchAll()).containsExactly(entity3, entity2)
+        }
     }
 
     @Test

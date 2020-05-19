@@ -252,6 +252,8 @@ open class EntityBase(
                 idGenerator.newArcId("dummy-arc"),
                 handleName
             ).toString()
+        }
+        if (creationTimestamp == UNINITIALIZED_TIMESTAMP) {
             creationTimestamp = time.currentTimeMillis
             if (ttl != Ttl.Infinite) {
                 expirationTimestamp = ttl.calculateExpiration(time)

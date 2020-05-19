@@ -259,8 +259,10 @@ class CrdtEntityTest {
         }
     }
 
-    fun entity(creation: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expiration: Long = RawEntity.UNINITIALIZED_TIMESTAMP) =
+    fun entity(
+        creation: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        expiration: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) =
             CrdtEntity(VersionMap(), RawEntity(
                 id = "an-id",
                 singletons = mapOf(),
@@ -276,26 +278,25 @@ class CrdtEntityTest {
         entity.merge(entity2.data)
         assertThat(entity.data.creationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
 
-        entity = entity(creation=5)
+        entity = entity(creation = 5)
         entity2 = entity()
         entity.merge(entity2.data)
         assertThat(entity.data.creationTimestamp).isEqualTo(5)
 
         entity = entity()
-        entity2 = entity(creation=5)
+        entity2 = entity(creation = 5)
         entity.merge(entity2.data)
         assertThat(entity.data.creationTimestamp).isEqualTo(5)
 
-        entity = entity(creation=5)
-        entity2 = entity(creation=5)
+        entity = entity(creation = 5)
+        entity2 = entity(creation = 5)
         entity.merge(entity2.data)
         assertThat(entity.data.creationTimestamp).isEqualTo(5)
 
-        entity = entity(creation=5)
-        entity2 = entity(creation=1)
-        assertFailsWith<CrdtException> {
-            entity.merge(entity2.data)
-        }
+        entity = entity(creation = 5)
+        entity2 = entity(creation = 1)
+        entity.merge(entity2.data)
+        assertThat(entity.data.creationTimestamp).isEqualTo(1)
     }
 
     @Test
@@ -305,26 +306,25 @@ class CrdtEntityTest {
         entity.merge(entity2.data)
         assertThat(entity.data.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
 
-        entity = entity(expiration=5)
+        entity = entity(expiration = 5)
         entity2 = entity()
         entity.merge(entity2.data)
         assertThat(entity.data.expirationTimestamp).isEqualTo(5)
 
         entity = entity()
-        entity2 = entity(expiration=5)
+        entity2 = entity(expiration = 5)
         entity.merge(entity2.data)
         assertThat(entity.data.expirationTimestamp).isEqualTo(5)
 
-        entity = entity(expiration=5)
-        entity2 = entity(expiration=5)
+        entity = entity(expiration = 5)
+        entity2 = entity(expiration = 5)
         entity.merge(entity2.data)
         assertThat(entity.data.expirationTimestamp).isEqualTo(5)
 
-        entity = entity(expiration=5)
-        entity2 = entity(expiration=1)
-        assertFailsWith<CrdtException> {
-            entity.merge(entity2.data)
-        }
+        entity = entity(expiration = 5)
+        entity2 = entity(expiration = 1)
+        entity.merge(entity2.data)
+        assertThat(entity.data.expirationTimestamp).isEqualTo(1)
     }
 
     @Test
@@ -334,25 +334,24 @@ class CrdtEntityTest {
         entity.merge(entity2.data)
         assertThat(entity.data.id).isEqualTo(RawEntity.NO_REFERENCE_ID)
 
-        entity = CrdtEntity(VersionMap(), RawEntity(id="id"))
+        entity = CrdtEntity(VersionMap(), RawEntity(id = "id"))
         entity2 = CrdtEntity(VersionMap(), RawEntity())
         entity.merge(entity2.data)
         assertThat(entity.data.id).isEqualTo("id")
 
         entity = CrdtEntity(VersionMap(), RawEntity())
-        entity2 = CrdtEntity(VersionMap(), RawEntity(id="id"))
+        entity2 = CrdtEntity(VersionMap(), RawEntity(id = "id"))
         entity.merge(entity2.data)
         assertThat(entity.data.id).isEqualTo("id")
 
-        entity = CrdtEntity(VersionMap(), RawEntity(id="id"))
-        entity2 = CrdtEntity(VersionMap(), RawEntity(id="id"))
+        entity = CrdtEntity(VersionMap(), RawEntity(id = "id"))
+        entity2 = CrdtEntity(VersionMap(), RawEntity(id = "id"))
         assertThat(entity.data.id).isEqualTo("id")
 
-        entity = CrdtEntity(VersionMap(), RawEntity(id="id"))
-        entity2 = CrdtEntity(VersionMap(), RawEntity(id="id2"))
+        entity = CrdtEntity(VersionMap(), RawEntity(id = "id"))
+        entity2 = CrdtEntity(VersionMap(), RawEntity(id = "id2"))
         assertFailsWith<CrdtException> {
             entity.merge(entity2.data)
         }
     }
-
 }
