@@ -50,6 +50,7 @@ import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js
 import {LoaderBase} from '../platform/loader-base.js';
 import {Annotation, AnnotationRef} from './recipe/annotation.js';
 import {SchemaPrimitiveTypeValue} from './manifest-ast-nodes.js';
+import {canonicalManifest} from './canonical-manifest.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -136,18 +137,6 @@ interface ManifestLoadOptions {
 }
 
 export class Manifest {
-  public static readonly canonical = `
-annotation arcId(id: Text)
-  targets: [Recipe]
-  retention: Source
-  doc: 'predefined ID of a long running arc'
-annotation ttl(value: Text)
-  // Atm TTL is only supported for recipes handles.
-  targets: [Handle]
-  retention: Runtime
-  doc: 'data time-to-live'
-  `;
-
   private _recipes: Recipe[] = [];
   private _imports: Manifest[] = [];
   private _canonicalImports: Manifest[] = [];
@@ -510,9 +499,9 @@ ${e.message}
     }
 
     try {
-      if (content !== Manifest.canonical) {
+      if (content !== canonicalManifest) {
         try {
-          manifest._canonicalImports.push(await Manifest.parse(Manifest.canonical, options));
+          manifest._canonicalImports.push(await Manifest.parse(canonicalManifest, options));
         } catch (e) {
           manifest.errors.push(e);
         }
