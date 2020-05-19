@@ -85,4 +85,10 @@ class SameHandleManagerTest : HandleManagerTestBase() {
     override fun singleton_referenceLiveness() {
         super.singleton_referenceLiveness()
     }
+
+    @Ignore("b/156994024 - Deflake")
+    @Test
+    override fun singleton_withTTL() {
+        super.singleton_withTTL()
+    }
 }

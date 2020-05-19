@@ -21,7 +21,7 @@ class ReadWriteTest {
     private lateinit var arcs: Arcs
 
     @Before
-    fun setup() {
+    fun setUp() {
         val app = ApplicationProvider.getApplicationContext<Application>()
         DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(app))
 
@@ -33,7 +33,7 @@ class ReadWriteTest {
     }
 
     @After
-    fun teardown() {
+    fun tearDown() {
         runBlocking { arcs.stop() }
     }
 
@@ -41,12 +41,14 @@ class ReadWriteTest {
     private val l1 = Level1("l1-1", setOf(l0))
     private val l2 = Level2("l2-1", setOf(l1))
 
+    @Ignore("b/156993103 - Deflake")
     @Test
     fun writeAndReadBack0() {
         arcs.put0(l0)
         assertThat(arcs.all0()).containsExactly(l0)
     }
 
+    @Ignore("b/157088298 - Deflake")
     @Test
     fun writeAndReadBack1() {
         arcs.put1(l1)
