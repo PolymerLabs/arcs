@@ -36,10 +36,10 @@ import kotlinx.coroutines.sync.withLock
  */
 class AndroidSqliteDatabaseManager(
     context: Context,
-    lifecycle: Lifecycle? = null
+    lifecycleParam: Lifecycle? = null
 ) : DatabaseManager, LifecycleObserver {
     private val context = context.applicationContext
-    private val lifecycle = lifecycle?.let { lifecycle } ?: getLifecycleOwner()
+    private val lifecycle = lifecycleParam?.let { it } ?: getLifecycle()
     private val mutex = Mutex()
     private val dbCache by guardedBy(mutex, mutableMapOf<DatabaseIdentifier, DatabaseImpl>())
     override val registry = AndroidSqliteDatabaseRegistry(context)
@@ -54,12 +54,17 @@ class AndroidSqliteDatabaseManager(
      * Temporary hack workaround to avoid breaking G3 with a refactor. Followup will add
      * explicit lifecycle parameter to ctor.
      */
-    private fun getLifecycleOwner(): LifecycleOwner? {
-        var lifecycle = context
-        while (lifecycle !is LifecycleOwner) {
-            lifecycle = (lifecycle as ContextWrapper).getBaseContext()
+    private fun getLifecycle(): Lifecycle? {
+        var lifecycleOwner = context
+        while (lifecycleOwner != null && lifecycleOwner !is LifecycleOwner) {
+            lifecycleOwner = (lifecycleOwner as ContextWrapper).baseContext
         }
-        return lifecycle
+
+        return if (lifecycleOwner is LifecycleOwner) {
+            lifecycleOwner.lifecycle
+        } else {
+            null
+        }
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
