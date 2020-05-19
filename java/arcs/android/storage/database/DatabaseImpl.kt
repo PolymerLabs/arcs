@@ -101,7 +101,7 @@ class DatabaseImpl(
     if (persistent) databaseName else null,
     /* cursorFactory = */ null,
     DB_VERSION
-), LifecycleObserver {
+) {
     private val log = TaggedLog { this.toString() }
 
     // TODO: handle rehydrating from a snapshot.
