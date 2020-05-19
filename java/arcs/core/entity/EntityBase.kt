@@ -185,7 +185,6 @@ open class EntityBase(
                 PrimitiveType.Double -> require(value is Double) {
                     "Expected Double for $entityClassName.$field, but received $value."
                 }
-
             }
             is FieldType.EntityRef -> {
                 require(value is Reference<*>) {

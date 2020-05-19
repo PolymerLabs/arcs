@@ -128,7 +128,7 @@ export abstract class Schema2Base {
             generator.addField({field, typeName: schema.type, isCollection: true});
           } else if (descriptor.kind === 'kotlin-primitive') {
             generator.addField({field, typeName: descriptor.type});
-          } 
+          }
           else {
             throw new Error(`Schema kind '${descriptor.kind}' for field '${field}' is not supported`);
           }

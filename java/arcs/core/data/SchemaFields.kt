@@ -57,7 +57,6 @@ enum class PrimitiveType {
     Char,
     Float,
     Double
-
 }
 
 val LARGEST_PRIMITIVE_TYPE_ID = PrimitiveType.values().size - 1

@@ -58,20 +58,27 @@ class StringDecoder(private var bytes: ByteArray) {
 
     fun decodeBool(): Boolean = chomp(1).toUtf8String() == "1"
 
-    fun decodeByte(): Byte = throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Bytes")
-    
-    fun decodeShort(): Short = throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Shorts")
-    
-    fun decodeInt(): Int = throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Ints")
-    
-    fun decodeLong(): Long = throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Longs")
+    fun decodeByte(): Byte =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Bytes")
 
-    fun decodeChar(): Char = throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Chars")
+    fun decodeShort(): Short =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Shorts")
 
-    fun decodeFloat(): Float = throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Floats")
+    fun decodeInt(): Int =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Ints")
 
-    fun decodeDouble(): Double = throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Doubles")    
-    
+    fun decodeLong(): Long =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Longs")
+
+    fun decodeChar(): Char =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Chars")
+
+    fun decodeFloat(): Float =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Floats")
+
+    fun decodeDouble(): Double =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Doubles")
+
     companion object {
         fun decodeDictionary(bytes: ByteArray): Map<String, String> {
             val decoder = StringDecoder(bytes)
