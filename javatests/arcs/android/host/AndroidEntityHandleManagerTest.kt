@@ -44,6 +44,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -245,6 +246,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         assertThat(updatedEntity).isEqualTo(entity2)
     }
 
+    @Ignore("b/156993444 - Deflake")
     @Test
     fun collectionHandle_writeFollowedByReadWithOnUpdate() = runBlocking<Unit> {
         val writeCollectionHandle = createCollectionHandle(
