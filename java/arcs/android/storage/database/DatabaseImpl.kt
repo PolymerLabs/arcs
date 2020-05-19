@@ -128,14 +128,6 @@ class DatabaseImpl(
         }.forEach { emit(it) }
     }
 
-    init {
-    }
-
-    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-    fun onLifecycleDestroyed() {
-        close()
-    }
-
     override fun onCreate(db: SQLiteDatabase) = db.transaction {
         CREATE.forEach(db::execSQL)
 
