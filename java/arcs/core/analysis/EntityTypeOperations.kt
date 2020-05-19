@@ -96,5 +96,7 @@ private infix fun Map<FieldName, FieldType>.union(
 private infix fun Map<FieldName, FieldType>.intersect(
     other: Map<FieldName, FieldType>
 ): Map<FieldName, FieldType> {
+    // TODO(b/156983624): Reference fields should not be compared with equality. Instead we should
+    // descend into the nested schema and recursively intersect those too.
     return filter { (name, type) -> other[name] == type }
 }
