@@ -1599,7 +1599,7 @@ SchemaReferenceType = 'Reference<' whiteSpace? schema:(SchemaInline / TypeName) 
   }
 
 SchemaPrimitiveType
-  = type:('Text' / 'URL' / 'Number' / 'BigInteger' / 'Boolean' / 'Bytes')
+  = type:('Text' / 'URL' / 'Number' / 'BigInt' / 'Boolean' / 'Bytes')
   {
     return toAstNode<AstNode.SchemaPrimitiveType>({
       kind: 'schema-primitive',
@@ -1867,7 +1867,7 @@ NumberType
     if (txt.match(/\./)) {
       return Number(text());
     }
-    return BigInt(text());
+    return text();
   }
 
 Version "a version number (e.g. @012)"

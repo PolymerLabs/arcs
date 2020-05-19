@@ -27,6 +27,7 @@ fun PrimitiveTypeProto.decode() = when (this) {
     PrimitiveTypeProto.TEXT -> PrimitiveType.Text
     PrimitiveTypeProto.NUMBER -> PrimitiveType.Number
     PrimitiveTypeProto.BOOLEAN -> PrimitiveType.Boolean
+    PrimitiveTypeProto.BIGINT -> PrimitiveType.BigInt
     PrimitiveTypeProto.UNRECOGNIZED ->
         throw IllegalArgumentException("Unknown PrimitiveTypeProto value.")
 }

@@ -730,7 +730,7 @@ export interface BuiltInNode extends BaseNode {
 
 export interface NumberNode extends BaseNode {
   kind: 'number-node';
-  value: number;
+  value: string;
   units?: string[];
 }
 

@@ -17,6 +17,7 @@ import arcs.core.util.Base64
 import arcs.core.util.toBase64Bytes
 import java.math.BigInteger
 import kotlin.reflect.KClass
+import java.math.BigInteger
 
 /**
  * Represents a primitive which can be referenced - and thus used by Crdts.
@@ -54,9 +55,9 @@ data class ReferencablePrimitive<T>(
         private const val primitiveKotlinChar = "kotlin.Char"
         private const val primitiveKotlinFloat = "kotlin.Float"
         private const val primitiveKotlinDouble = "kotlin.Double"
+        private const val primitiveKotlinBigInt = "java.math.BigInteger"
         private const val primitiveKotlinString = "kotlin.String"
         private const val primitiveKotlinBoolean = "kotlin.Boolean"
-        private const val primitiveKotlinByteArray = "kotlin.ByteArray"
         private const val primitiveJavaBigInteger = "java.math.BigInteger"
         private val primitiveKClassMap = mapOf<KClass<*>, String>(
             Byte::class to primitiveKotlinByte,
@@ -109,6 +110,9 @@ data class ReferencablePrimitive<T>(
                 className == primitiveKotlinLong ||
                 className.contains("java.lang.Long") ->
                     ReferencablePrimitive(Long::class, value.toLong())
+                className == primitiveKotlinBigInt ||
+                className.contains("java.math.BigInteger") ->
+                    ReferencablePrimitive(BigInteger::class, value.toBigInteger())
                 className == primitiveKotlinChar ||
                 className.contains("java.lang.Char") ->
                     ReferencablePrimitive(Char::class, value.single())
@@ -170,6 +174,10 @@ fun String.toReferencable(): ReferencablePrimitive<String> =
 /** Makes a [Boolean]-based [ReferencablePrimitive] from the receiving [Boolean]. */
 fun Boolean.toReferencable(): ReferencablePrimitive<Boolean> =
     ReferencablePrimitive(Boolean::class, this)
+
+/** Makes a [BigInteger]-based [ReferencablePrimitive] from the receiving [BigInteger]. */
+fun BigInteger.toReferencable(): ReferencablePrimitive<BigInteger> =
+    ReferencablePrimitive(BigInteger::class, this)
 
 /**
  * Makes a [ByteArray]-based [ReferencablePrimitive] from the receiving [ByteArray], with the

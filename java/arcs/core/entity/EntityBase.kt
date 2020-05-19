@@ -29,6 +29,7 @@ import arcs.core.storage.Reference as StorageReference
 import arcs.core.util.Time
 import java.math.BigInteger
 import kotlin.reflect.KProperty
+import java.math.BigInteger // For BigInt.
 
 open class EntityBase(
     private val entityClassName: String,
@@ -197,6 +198,9 @@ open class EntityBase(
                 }
                 PrimitiveType.BigInt -> require(value is BigInteger) {
                     "Expected BigInt for $context$entityClassName.$field, but received $value."
+                }
+                PrimitiveType.BigInt -> require(value is BigInteger) {
+                    "Expected BigInteger for $entityClassName.$field, but received $value."
                 }
             }
             is FieldType.EntityRef -> {

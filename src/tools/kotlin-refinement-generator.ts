@@ -57,6 +57,10 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
     // TODO: Implement KT getter for 'creationTimeStamp'
     throw new Error(`Unhandled BuiltInNode '${expr.value}' in toKTExpression`);
   }
+  visitBigIntPrimitive(expr: BigIntPrimitive): string {
+    // This assumes that the associated Kotlin type will be `Java.math.BigInteger`.
+    return expr.value.toString();
+  }
   visitNumberPrimitive(expr: NumberPrimitive): string {
     // This assumes that the associated Kotlin type will be `double`.
     if (expr.value === Infinity) {
