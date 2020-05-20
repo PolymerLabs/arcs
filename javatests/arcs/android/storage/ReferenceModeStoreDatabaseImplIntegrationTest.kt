@@ -112,6 +112,8 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
             )
         ).isTrue()
 
+        activeStore.idle()
+
         logRule("ModelUpdate sent")
 
         val actor = activeStore.crdtKey
@@ -307,6 +309,8 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         assertThat(
             activeStore.onProxyMessage(ProxyMessage.Operations(listOf(addOp), id = 1))
         ).isTrue()
+        activeStore.idle()
+
         // Check Bob from backing store.
         val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
         assertThat(storedBob.toRawEntity()).isEqualTo(bob)

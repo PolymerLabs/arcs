@@ -17,6 +17,7 @@ arcs_kt_android_library(
         "//java/arcs/core/data",
         "//java/arcs/core/data:rawentity",
         "//java/arcs/core/data/util:data-util",
+        "//java/arcs/core/entity",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/database",
