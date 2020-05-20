@@ -18,10 +18,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 
 /** Returns the union of two [EntityType] instances. */
-infix fun EntityType.union(other: EntityType): Outcome<EntityType> {
-    val newSchema = (entitySchema union other.entitySchema).getOrElse { return Outcome.Failure(it) }
-    return EntityType(newSchema).toSuccess()
-}
+infix fun EntityType.union(other: EntityType) = EntityType(entitySchema union other.entitySchema)
 
 /** Returns the intersection of two [EntityType] instances. */
 infix fun EntityType.intersect(other: EntityType): EntityType {
@@ -32,11 +29,13 @@ infix fun EntityType.intersect(other: EntityType): EntityType {
  * Computes the union of the two [Schema] instances. Returns [Outcome.Failure] if the union
  * is not possible as the inputs are incompatible.
  */
-infix fun Schema.union(other: Schema): Outcome<Schema> {
-    val newNames = names union other.names
-    val newFields = (fields union other.fields).getOrElse { return Outcome.Failure(it) }
+infix fun Schema.union(other: Schema): Schema {
     // TODO(b/154235149): hash, refinement, query
-    return Schema(names = newNames, fields = newFields, hash = "").toSuccess()
+    return Schema(
+        names = names union other.names,
+        fields = fields union other.fields,
+        hash = ""
+    )
 }
 
 /** Computes the intersection of the two [Schema] instances. */
@@ -53,12 +52,11 @@ infix fun Schema.intersect(other: Schema): Schema {
  * Computes the union of [SchemaFields] instances. Returns [Outcome.Failure] if the union
  * results in any incompatibility. e.g., incompatible [FieldType] with the same name.
  */
-private infix fun SchemaFields.union(other: SchemaFields): Outcome<SchemaFields> {
-    val newSingletons = (singletons union other.singletons).getOrElse { return Outcome.Failure(it) }
-    val newCollections = (collections union other.collections).getOrElse {
-        return Outcome.Failure(it)
-    }
-    return SchemaFields(singletons = newSingletons, collections = newCollections).toSuccess()
+private infix fun SchemaFields.union(other: SchemaFields): SchemaFields {
+    return SchemaFields(
+        singletons = singletons union other.singletons,
+        collections = collections union other.collections
+    )
 }
 
 /** Computes the intersection of [SchemaFields] instances. */
@@ -77,19 +75,19 @@ private infix fun SchemaFields.intersect(other: SchemaFields): SchemaFields {
  */
 private infix fun Map<FieldName, FieldType>.union(
     other: Map<FieldName, FieldType>
-): Outcome<Map<FieldName, FieldType>> {
+): Map<FieldName, FieldType> {
     val result = mutableMapOf<FieldName, FieldType>()
     result.putAll(this)
     other.forEach { (name, type) ->
         val existing = this[name]
         if (existing != null && type != existing) {
-            return Outcome.Failure(
+            throw TypeCheckException(
                 "Incompatible types for field '$name': $type vs. $existing."
             )
         }
         result[name] = type
     }
-    return result.toSuccess()
+    return result
 }
 
 /** Returns the intersection of two field maps. */
