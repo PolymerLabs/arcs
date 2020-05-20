@@ -1,4 +1,4 @@
-package arcs.schematests
+package arcs.schematests.references
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
