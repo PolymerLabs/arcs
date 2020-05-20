@@ -27,6 +27,7 @@ arcs_kt_android_library(
         "//java/arcs/jvm/util",
         "//third_party/java/androidx/annotation",
         "//third_party/java/arcs/deps:protobuf_javalite",
+        "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
