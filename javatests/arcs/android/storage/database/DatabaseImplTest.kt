@@ -1971,7 +1971,7 @@ class DatabaseImplTest {
 
     companion object {
         /** The first free Type ID after all primitive types have been assigned. */
-        private const val FIRST_ENTITY_TYPE_ID = 3
+        private const val FIRST_ENTITY_TYPE_ID = 10
 
         private const val FIRST_VERSION_NUMBER = 1
         private val VERSION_MAP = VersionMap("first" to 1, "second" to 2)
