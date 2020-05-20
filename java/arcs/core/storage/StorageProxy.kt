@@ -38,9 +38,15 @@ import kotlinx.coroutines.withContext
  */
 class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     storeEndpointProvider: StorageCommunicationEndpointProvider<Data, Op, T>,
-    private val crdt: CrdtModel<Data, Op, T>,
+    crdt: CrdtModel<Data, Op, T>,
     private val scheduler: Scheduler
 ) {
+    // Nullable internally, we don't allow constructor to pass null model
+    private var _crdt: CrdtModel<Data, Op, T>? = crdt
+
+    private val crdt: CrdtModel<Data, Op, T>
+        get() = _crdt?.let { it } ?: throw IllegalStateException("StorageProxy closed")
+
     /**
      * If you need to interact with the data managed by this [StorageProxy], and you're not a
      * [Store], you must either be performing your interactions within a handle callback or on this
@@ -153,6 +159,9 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      * being thrown.
      */
     fun close() {
+        scheduler.scope.launch {
+            _crdt = null
+        }
         store.close()
         stateHolder.update { it.setState(ProxyState.CLOSED) }
     }
