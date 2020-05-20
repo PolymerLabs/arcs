@@ -15,6 +15,7 @@ import android.app.Application
 import androidx.work.Configuration
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.android.util.ProtoPrefetcher
+import arcs.android.util.connectMemoryStatsPipe
 import arcs.android.util.initLogForAndroid
 import arcs.core.entity.SchemaRegistry
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -38,5 +39,6 @@ class TestApplication : Application(), Configuration.Provider {
         DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(this))
 
         initLogForAndroid()
+        connectMemoryStatsPipe()
     }
 }
