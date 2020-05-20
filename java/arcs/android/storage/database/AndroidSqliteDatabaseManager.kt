@@ -39,7 +39,7 @@ class AndroidSqliteDatabaseManager(
     lifecycleParam: Lifecycle? = null
 ) : DatabaseManager, LifecycleObserver {
     private val context = context.applicationContext
-    private val lifecycle = lifecycleParam?.let { it } ?: getLifecycle()
+    private val lifecycle = lifecycleParam ?: getLifecycle()
     private val mutex = Mutex()
     private val dbCache by guardedBy(mutex, mutableMapOf<DatabaseIdentifier, DatabaseImpl>())
     override val registry = AndroidSqliteDatabaseRegistry(context)
@@ -61,11 +61,7 @@ class AndroidSqliteDatabaseManager(
             lifecycleOwner = lifecycleOwner.baseContext
         }
 
-        return if (lifecycleOwner is LifecycleOwner) {
-            lifecycleOwner.lifecycle
-        } else {
-            null
-        }
+        return (lifecycleOwner as? LifecycleOwner)?.lifecycle
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
