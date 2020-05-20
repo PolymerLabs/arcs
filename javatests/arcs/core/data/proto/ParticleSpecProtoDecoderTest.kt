@@ -1,6 +1,7 @@
 package arcs.core.data.proto
 
 import arcs.core.data.AccessPath
+import arcs.core.data.Check
 import arcs.core.data.Claim
 import arcs.core.data.EntityType
 import arcs.core.data.FieldName
@@ -168,6 +169,50 @@ class ParticleSpecProtoDecoderTest {
             Claim.DerivesFrom(
                 target = AccessPath("ReaderWriter", writeConnectionSpec),
                 source = AccessPath("ReaderWriter", readConnectionSpec)
+            )
+        )
+    }
+
+    @Test
+    fun decodesParticleSpecProtoWithChecks() {
+        val readConnectionSpecProto = getHandleConnectionSpecProto("read", "READS", "Thing")
+        val readerWriterSpecProto = """
+          name: "ReaderWriter"
+          connections { ${readConnectionSpecProto} }
+          location: "Nowhere"
+          checks {
+            access_path {
+              particle_spec: "ReaderWriter"
+              handle_connection: "read"
+            }
+            predicate {
+              label {
+                semantic_tag: "public"
+              }
+            }
+          }
+          checks {
+            access_path {
+              particle_spec: "ReaderWriter"
+              handle_connection: "read"
+            }
+            predicate {
+              label {
+                semantic_tag: "valid"
+              }
+            }
+          }
+       """.trimIndent()
+        val readerWriterSpec = decodeParticleSpecProto(readerWriterSpecProto)
+        val readConnectionSpec = decodeHandleConnectionSpecProto(readConnectionSpecProto)
+        assertThat(readerWriterSpec.checks).containsExactly(
+            Check.Assert(
+                AccessPath("ReaderWriter", readConnectionSpec),
+                Predicate.Label(InformationFlowLabel.SemanticTag("public"))
+            ),
+            Check.Assert(
+                AccessPath("ReaderWriter", readConnectionSpec),
+                Predicate.Label(InformationFlowLabel.SemanticTag("valid"))
             )
         )
     }
