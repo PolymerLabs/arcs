@@ -216,7 +216,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
                     actor,
                     VersionMap(actor to 1),
                     "age",
-                    CrdtEntity.ReferenceImpl(42.toReferencable().id)
+                    CrdtEntity.ReferenceImpl(42.0.toReferencable().id)
                 )
             )
         ).isTrue()
@@ -296,7 +296,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
             id = "an-id",
             singletons = mapOf(
                 "name" to "bob".toReferencable(),
-                "age" to 42.toReferencable()
+                "age" to 42.0.toReferencable()
             ),
             creationTimestamp = 10,
             expirationTimestamp = 20
@@ -417,7 +417,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
                 actor,
                 VersionMap(actor to 1),
                 "age",
-                CrdtEntity.Reference.buildReference(42.toReferencable())
+                CrdtEntity.Reference.buildReference(42.0.toReferencable())
             )
         )
 
@@ -594,7 +594,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         id = id,
         singletons = mapOf(
             "name" to name.toReferencable(),
-            "age" to age.toReferencable()
+            "age" to age.toDouble().toReferencable()
         )
     )
 
