@@ -105,6 +105,7 @@ maven_install(
         "https://maven.google.com",
         "https://repo1.maven.org/maven2",
     ],
+    maven_install_json = "//:maven_install.json",
 )
 
 # @rules_proto is used by KotlincWorker and must be declared before rules_kotlin
