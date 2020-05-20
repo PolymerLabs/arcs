@@ -67,9 +67,9 @@ describe('manifest parser', () => {
   it('parses recipe handles with capabilities', () => {
     parse(`
       recipe Thing
-        h0: create persistent
-        h1: create tied-to-runtime 'my-id'
-        h2: create tied-to-arc #mytag`);
+        h0: create @persistent
+        h1: create 'my-id' @tiedToRuntime
+        h2: create #mytag @tiedToArc`);
   });
   it('parses recipes with particles', () => {
     parse(`

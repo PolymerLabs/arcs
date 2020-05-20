@@ -36,7 +36,7 @@ particle Reader in 'Reader'
 
 @arcId('writingArcId')
 recipe Ingestion
-  products: create persistent 'products'
+  products: create 'products' @persistent
   Writer
     products: products
 

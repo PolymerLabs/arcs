@@ -387,13 +387,13 @@ export class Handle implements Comparable<Handle> {
     if (this.fate === 'join') {
       result.push(`(${this.joinedHandles.map(h => getName(h)).join(', ')})`);
     }
-    if (!this.capabilities.isEmpty()) {
-      result.push(this.capabilities.toString());
-    }
     if (this.id) {
       result.push(`'${this.id}'`);
     }
     result.push(...this.tags.map(a => `#${a}`));
+    if (this.annotations && this.annotations.length > 0) {
+      result.push(this.annotations.map(a => a.toString()).join(' '));
+    }
 
     // Debug information etc.
     if (this.type) {

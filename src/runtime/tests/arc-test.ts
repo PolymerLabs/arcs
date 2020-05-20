@@ -170,7 +170,7 @@ describe('Arc new storage', () => {
       particle MyParticle in 'MyParticle.js'
         thing: writes Thing
       recipe
-        handle0: create tied-to-arc
+        handle0: create @tiedToArc
         MyParticle
           thing: handle0
       `, {loader, memoryProvider, fileName: process.cwd() + '/input.manifest'});
