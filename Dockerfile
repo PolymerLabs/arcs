@@ -62,6 +62,20 @@ COPY config config
 COPY devtools devtools
 RUN npm install
 
+# Fetch external Bazel artifacts.
+# Copy over the WORKSPACE file, everything it imports, and bazelisk.
+COPY tools/bazelisk* tools/
+COPY build_defs/emscripten build_defs/emscripten
+COPY build_defs/kotlin_native build_defs/kotlin_native
+COPY emscripten_cache emscripten_cache
+COPY .bazelignore \
+     .bazelversion \
+     WORKSPACE \
+     BUILD.bazel \
+     maven_install.json \
+     ./
+RUN ./tools/bazelisk fetch @maven//...
+
 # Copy the contents of the working dir. After this the image should be ready for
 # use.
 COPY . .

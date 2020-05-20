@@ -53,6 +53,9 @@ CLIKT_VERSION = "2.2.0"
 
 UI_AUTOMATOR_VERSION = "2.2.0"
 
+# NOTE: Artifacts are being pinned.  Whenever `maven_install` is changed, the
+# `maven_install.json` file should be updated. See the following page:
+# https://github.com/bazelbuild/rules_jvm_external#updating-maven_installjson
 maven_install(
     artifacts = [
         "androidx.appcompat:appcompat:1.1.0",
@@ -105,7 +108,11 @@ maven_install(
         "https://maven.google.com",
         "https://repo1.maven.org/maven2",
     ],
+    maven_install_json = "//:maven_install.json",
 )
+
+load("@maven//:defs.bzl", "pinned_maven_install")
+pinned_maven_install()
 
 # @rules_proto is used by KotlincWorker and must be declared before rules_kotlin
 
