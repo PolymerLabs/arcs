@@ -966,7 +966,7 @@ class DatabaseImpl(
         counters: Counters? = null
     ): TypeId = db.transaction {
         var cacheHit = false
-        val result = schemaTypeMap.updateAndGet { currentMap ->
+        val schemaTypeId = schemaTypeMap.updateAndGet { currentMap ->
             currentMap[schema.hash]?.let {
                 cacheHit = true
                 return@updateAndGet currentMap
@@ -976,23 +976,22 @@ class DatabaseImpl(
                 put("name", schema.hash)
                 put("is_primitive", false)
             }
-            val id = insertWithOnConflict(
+            insertWithOnConflict(
                 TABLE_TYPES,
                 null,
                 content,
                 SQLiteDatabase.CONFLICT_IGNORE
             )
-            if (id >= 0) {
-                currentMap + (schema.hash to id)
-            } else {
-                cacheHit = true
-                currentMap
-            }
-        }.getOrDefault(schema.hash, 3)
+            val id = rawQuery("SELECT id FROM types WHERE name = ?", arrayOf(schema.hash))
+                .forSingleResult { it.getLong(0) }!!
+            currentMap + (schema.hash to id)
+        }.get(schema.hash) ?: throw IllegalStateException(
+            "Unable to find or create a type ID for schema with hash: ${schema.hash}"
+        )
 
         if (cacheHit) {
             counters?.increment(DatabaseCounters.ENTITY_SCHEMA_CACHE_HIT)
-            return@transaction result
+            return@transaction schemaTypeId
         } else {
             counters?.increment(DatabaseCounters.ENTITY_SCHEMA_CACHE_MISS)
             counters?.increment(DatabaseCounters.INSERT_ENTITY_TYPE_ID)
@@ -1013,7 +1012,7 @@ class DatabaseImpl(
             counters?.increment(DatabaseCounters.INSERT_ENTITY_FIELD)
             insertFieldStatement.apply {
                 bindLong(1, getTypeId(fieldType, db))
-                bindLong(2, result)
+                bindLong(2, schemaTypeId)
                 bindString(3, fieldName)
                 bindBoolean(4, isCollection)
                 executeInsert()
@@ -1025,7 +1024,7 @@ class DatabaseImpl(
         schema.fields.collections.forEach { (fieldName, fieldType) ->
             insertFieldBlock(fieldName, fieldType, isCollection = true)
         }
-        result
+        schemaTypeId
     }
 
     /**

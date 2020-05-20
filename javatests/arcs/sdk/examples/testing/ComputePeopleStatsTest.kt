@@ -1,7 +1,6 @@
 package arcs.sdk.examples.testing
 
 import arcs.core.entity.ReadableHandle
-import arcs.core.storage.driver.RamDisk
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -16,7 +15,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import org.junit.After
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
