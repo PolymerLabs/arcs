@@ -831,13 +831,13 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                     |Private-dirty dalvik heap (after GC): ${
                         formatter.format(appJvmHeapAfterGc - it[0]) } KB
                     |Private-dirty native heap (before GC): ${
-                    formatter.format(appNativeHeapBeforeGc - it[1]) } KB
+                        formatter.format(appNativeHeapBeforeGc - it[1]) } KB
                     |Private-dirty native heap (after GC): ${
-                    formatter.format(appNativeHeapAfterGc - it[1]) } KB
+                        formatter.format(appNativeHeapAfterGc - it[1]) } KB
                     |All(dalvik+native) heaps (before GC): ${
-                    formatter.format(allHeapsBeforeGc - it[2]) } KB
+                        formatter.format(allHeapsBeforeGc - it[2]) } KB
                     |All(dalvik+native) heaps (after GC): ${
-                    formatter.format(allHeapsAfterGc - it[2]) } KB
+                        formatter.format(allHeapsAfterGc - it[2]) } KB
                     |Heap dump: $hprofFilePath
                     ${platformNewline.repeat(1)}
                     """.trimMargin("|")
