@@ -41,7 +41,8 @@
 
     <service
       android:name="arcs.sdk.android.storage.service.StorageService"
-      android:exported="false"/>
+      android:exported="false"
+      tools:remove="android:process"/>
 
     <service
       android:name=".TestStorageService"
