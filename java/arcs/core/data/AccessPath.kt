@@ -80,4 +80,16 @@ data class AccessPath(val root: Root, val selectors: List<Selector> = emptyList(
         if (selectors.isEmpty()) return "$root"
         return selectors.joinToString(separator = ".", prefix = "$root.")
     }
+
+    /**
+     * Converts an [AccessPath] with [Root.HandleConnectionSpec] as root into a
+     * [AccessPath] with the corresponding [Root.HandleConnection] as root.
+     */
+    fun instantiateFor(particle: Recipe.Particle): AccessPath {
+        if (root !is Root.HandleConnectionSpec) return this
+        require (particle.spec.name == root.particleSpecName) {
+            "Instantiating an access path for an incompatible particle!"
+        }
+        return AccessPath(Root.HandleConnection(particle, root.connectionSpec), selectors)
+    }
 }

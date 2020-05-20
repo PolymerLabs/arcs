@@ -17,4 +17,10 @@ import arcs.core.data.InformationFlowLabel.Predicate
 sealed class Check {
     /** A check to specify that the labels on [accessPath] satisfy [predicate]. */
     data class Assert(val accessPath: AccessPath, val predicate: Predicate) : Check()
+
+    /** Returns a new check with [AccessPath] in the claim instantiated for the given [particle]. */
+    fun instantiateFor(particle: Recipe.Particle): Check {
+        this as Assert
+        return Assert(accessPath.instantiateFor(particle), predicate)
+    }
 }
