@@ -49,4 +49,10 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     override fun collection_referenceLiveness() {
         super.collection_referenceLiveness()
     }
+
+    @Ignore("b/157165566 - Deflake")
+    @Test
+    override fun singleton_dereferenceEntity_nestedReference() {
+        super.collection_dereferenceEntity_nestedReference()
+    }
 }
