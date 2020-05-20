@@ -13,6 +13,7 @@ package arcs.android.systemhealth.testapp
 
 import android.os.Debug
 import arcs.core.util.performance.MemoryIdentifier
+import arcs.core.util.performance.MemoryStats as MemoryStatsUtil
 
 /** Utility of generating statistics of memory footprint. */
 object MemoryStats {
@@ -33,13 +34,13 @@ object MemoryStats {
      * App-specific native heap usage.
      */
     val appNativeHeapKbytes: Long
-        get() = arcs.core.util.performance.MemoryStats.stat(MemoryIdentifier.NATIVE_HEAP)[0]
+        get() = MemoryStatsUtil.stat(MemoryIdentifier.NATIVE_HEAP)[0]
 
     /**
      * Typically is [appJvmHeapKbytes] + [appNativeHeapKbytes] + pss of boot images.
      */
     val allHeapsKbytes: Long
-        get() = arcs.core.util.performance.MemoryStats.stat(
+        get() = MemoryStatsUtil.stat(
             MemoryIdentifier.JAVA_HEAP, MemoryIdentifier.NATIVE_HEAP
         ).sum()
 }

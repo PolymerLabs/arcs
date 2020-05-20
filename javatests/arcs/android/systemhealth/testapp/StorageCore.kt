@@ -206,7 +206,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                                     MemoryStats.appJvmHeapKbytes,
                                     MemoryStats.appNativeHeapKbytes,
                                     MemoryStats.allHeapsKbytes
-                                ))
+                                )
+                            )
                         )
                         this@StorageCore.execute(settings)
                     } catch (e: Exception) {
