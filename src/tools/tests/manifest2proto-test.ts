@@ -690,7 +690,6 @@ describe('manifest2proto', () => {
         check private is private_tag and is secret and is something
         check public is public_tag or (is secret and is something)
      `);
-    //        check public is public_tag or is something
     const spec = await toProtoAndBack(manifest);
     assert.deepStrictEqual(spec.particleSpecs[0].checks, [
       {
