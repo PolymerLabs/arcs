@@ -22,6 +22,7 @@ import {CapabilityEnum, DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnu
 import {Refinement, RefinementExpressionLiteral} from '../runtime/refiner.js';
 import {Op} from '../runtime/manifest-ast-nodes.js';
 import {Claim, ClaimType} from '../runtime/particle-claim.js';
+import {Check, CheckCondition, CheckExpression, CheckType} from '../runtime/particle-check.js';
 
 export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path);
@@ -60,11 +61,13 @@ function encodePayload(payload: {}): Uint8Array {
 async function particleSpecToProtoPayload(spec: ParticleSpec) {
   const connections = await Promise.all(spec.connections.map(async connectionSpec => handleConnectionSpecToProtoPayload(connectionSpec)));
   const claims = [].concat(...spec.connections.map(connectionSpec => claimsToProtoPayload(spec, connectionSpec)));
+  const checks = spec.connections.map(connectionSpec => checkToProtoPayload(connectionSpec.check, spec, connectionSpec)).filter(x => x != null);
   return {
     name: spec.name,
     location: spec.implFile,
     connections,
-    claims
+    claims,
+    checks
   };
 }
 
@@ -134,6 +137,81 @@ function claimsToProtoPayload(
       default: return null;
     }
   }).filter(x => x != null);
+}
+
+// Converts the check in HandleConnectionSpec.
+function checkToProtoPayload(
+  check: Check,
+  spec: ParticleSpec,
+  connectionSpec: HandleConnectionSpec,
+) {
+  if (check == null) return null;
+  const predicate = checkExpressionToProtoPayload(check.expression);
+  if (predicate == null) return null;
+  const accessPath = {
+    particleSpec: spec.name,
+    handleConnection: connectionSpec.name
+  };
+  return {accessPath, predicate};
+}
+
+function checkExpressionToProtoPayload(
+  expression: CheckExpression
+) {
+  switch (expression.type) {
+    case 'and': {
+      const children = expression.children.map(child => {
+        return checkExpressionToProtoPayload(child);
+      });
+      return children.reduce((acc, cur) => {
+        return (acc == null)
+          ? cur
+          : {
+            and: {
+              conjunct0: acc,
+              conjunct1: cur
+            }
+          };
+      }, null);
+    }
+    case 'or': {
+      const children = expression.children.map(child => {
+        return checkExpressionToProtoPayload(child);
+      });
+      return children.reduce((acc, cur) => {
+        return (acc == null)
+          ? cur
+          : {
+            or: {
+              disjunct0: acc,
+              disjunct1: cur
+            }
+          };
+      }, null);
+    }
+    default: {
+      const condition = expression as CheckCondition;
+      switch (condition.type) {
+        case CheckType.HasTag: {
+          const tag = {semanticTag: condition.tag};
+          if (condition.isNot) {
+            return {
+              not: {predicate: {label: tag}}
+            };
+          } else {
+            return {label: tag};
+          }
+        }
+        case CheckType.IsFromHandle:
+        case CheckType.IsFromOutput:
+        case CheckType.IsFromStore:
+          // TODO(bgogul):
+          return null;
+        default:
+          throw new Error('Unknown CheckType');
+      }
+    }
+  }
 }
 
 async function recipeToProtoPayload(recipe: Recipe) {
