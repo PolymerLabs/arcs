@@ -96,4 +96,10 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
     override fun collection_clearingElementsFromA_clearsThemFromB() {
         super.collection_clearingElementsFromA_clearsThemFromB()
     }
+
+    @Ignore("b/157169321 - Deflake")
+    @Test
+    override fun singleton_dereferenceEntity_nestedReference() {
+        super.singleton_dereferenceEntity_nestedReference()
+    }
 }
