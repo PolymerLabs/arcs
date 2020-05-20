@@ -47,5 +47,6 @@ fun ParticleSpecProto.decode(): Result<ParticleSpec> = resultOf {
             "Duplicate connection '${it.name}' when decoding ParticleSpecProto '$name'"
         }
     }
-    ParticleSpec(name, connections, location)
+    val claims = claimsList.map { it.decode(connections) }
+    ParticleSpec(name, connections, location, claims)
 }
