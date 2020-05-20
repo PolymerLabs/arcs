@@ -55,6 +55,8 @@ import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
 import arcs.jvm.util.JvmTime
 import com.google.protobuf.InvalidProtocolBufferException
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.updateAndGet
 import java.time.Duration
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
@@ -112,9 +114,8 @@ class DatabaseImpl(
         delete = PerformanceStatistics(Timer(JvmTime), *DatabaseCounters.DELETE_COUNTERS)
     )
 
-    private val schemaMutex = Mutex()
     /** Maps from schema hash to type ID (local copy of the 'types' table). */
-    private val schemaTypeMap by guardedBy(schemaMutex, ::loadTypes)
+    private val schemaTypeMap by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { atomic(loadTypes()) }
 
     private val clientMutex = Mutex()
     private var nextClientId by guardedBy(clientMutex, 1)
@@ -964,20 +965,37 @@ class DatabaseImpl(
         db: SQLiteDatabase,
         counters: Counters? = null
     ): TypeId = db.transaction {
-        val result = schemaMutex.withLock {
-            schemaTypeMap[schema.hash]?.let {
-                counters?.increment(DatabaseCounters.ENTITY_SCHEMA_CACHE_HIT)
-                return@withLock it
+        var cacheHit = false
+        val result = schemaTypeMap.updateAndGet { currentMap ->
+            currentMap[schema.hash]?.let {
+                cacheHit = true
+                return@updateAndGet currentMap
             }
-            counters?.increment(DatabaseCounters.ENTITY_SCHEMA_CACHE_MISS)
-            counters?.increment(DatabaseCounters.INSERT_ENTITY_TYPE_ID)
+            cacheHit = false
             val content = ContentValues().apply {
                 put("name", schema.hash)
                 put("is_primitive", false)
             }
-            insertOrThrow(TABLE_TYPES, null, content).also {
-                schemaTypeMap[schema.hash] = it
+            val id = insertWithOnConflict(
+                TABLE_TYPES,
+                null,
+                content,
+                SQLiteDatabase.CONFLICT_IGNORE
+            )
+            if (id >= 0) {
+                currentMap + (schema.hash to id)
+            } else {
+                cacheHit = true
+                currentMap
             }
+        }.getOrDefault(schema.hash, 3)
+
+        if (cacheHit) {
+            counters?.increment(DatabaseCounters.ENTITY_SCHEMA_CACHE_HIT)
+            return@transaction result
+        } else {
+            counters?.increment(DatabaseCounters.ENTITY_SCHEMA_CACHE_MISS)
+            counters?.increment(DatabaseCounters.INSERT_ENTITY_TYPE_ID)
         }
 
         val insertFieldStatement = compileStatement(
@@ -1371,7 +1389,7 @@ class DatabaseImpl(
         getTypeId(fieldType, writableDatabase)
 
     /** Loads all schema type IDs from the 'types' table into memory. */
-    private fun loadTypes(): MutableMap<String, TypeId> {
+    private fun loadTypes(): Map<String, TypeId> {
         val typeMap = mutableMapOf<String, TypeId>()
         readableDatabase.rawQuery(
             "SELECT name, id FROM types WHERE is_primitive = 0",
