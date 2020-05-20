@@ -73,6 +73,12 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
     @After
     override fun tearDown() = super.tearDown()
 
+    @Ignore("b/157166918 - Deflake")
+    @Test
+    override fun collection_referenceLiveness() {
+        super.collection_referenceLiveness()
+    }
+
     @Ignore("b/154947352 - Deflake")
     @Test
     override fun collection_removingFromA_isRemovedFromB() {
