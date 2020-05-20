@@ -17,12 +17,15 @@ package arcs.core.data
  * Examples of access paths are `input.app.packageName`, `store.rawText`, store.entites[i], etc.
  */
 data class AccessPath(val root: Root, val selectors: List<Selector> = emptyList()) {
-    /** Constructs an [AccessPath] representing a [Recipe.Particle.HandleConnection]. */
+    /**
+     * Constructs an [AccessPath] starting at a connection in [particle] identified
+     * by [connectionSpec] followed by [selectors].
+     */
     constructor(
         particle: Recipe.Particle,
-        connection: Recipe.Particle.HandleConnection,
+        connectionSpec: HandleConnectionSpec,
         selectors: List<Selector> = emptyList()
-    ) : this(Root.HandleConnection(particle, connection), selectors)
+    ) : this(Root.HandleConnection(particle, connectionSpec), selectors)
 
     /** Constructs an [AccessPath] representing a [ParticleSpec.HandleConnectionSpec]. */
     constructor(
@@ -51,9 +54,9 @@ data class AccessPath(val root: Root, val selectors: List<Selector> = emptyList(
 
         data class HandleConnection(
             val particle: Recipe.Particle,
-            val connection: Recipe.Particle.HandleConnection
+            val connectionSpec: arcs.core.data.HandleConnectionSpec
         ) : Root() {
-            override fun toString() = "hc:${particle.spec.name}.${connection.spec.name}"
+            override fun toString() = "hc:${particle.spec.name}.${connectionSpec.name}"
         }
 
         data class HandleConnectionSpec(
