@@ -3039,6 +3039,45 @@ resource SomeName
       assert.strictEqual((claim2.claims[0] as ClaimIsTag).tag, 'property2');
     });
 
+    it('supports field-level claim statements', async () => {
+      const manifest = await parseManifest(`
+        particle A
+          output1: writes T {aaa: Text, bbb: Number}
+          output2: writes T {ccc: Text, ddd: &Foo {eee: Number}}
+          claim output1.aaa is property1
+          claim output1.bbb is property2
+          claim output2.ccc is property3
+          claim output2.ddd is property4
+          claim output2.ddd.eee is property5
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustChecks);
+
+      const trustClaims = particle.trustClaims;
+      assert.lengthOf(trustClaims, 5);
+
+      assert.strictEqual(trustClaims[0].handle.name, 'output1');
+      assert.deepStrictEqual(trustClaims[0].fieldPath, ['aaa']);
+      assert.strictEqual((trustClaims[0].claims[0] as ClaimIsTag).tag, 'property1');
+
+      assert.strictEqual(trustClaims[1].handle.name, 'output1');
+      assert.deepStrictEqual(trustClaims[1].fieldPath, ['bbb']);
+      assert.strictEqual((trustClaims[1].claims[0] as ClaimIsTag).tag, 'property2');
+
+      assert.strictEqual(trustClaims[2].handle.name, 'output2');
+      assert.deepStrictEqual(trustClaims[2].fieldPath, ['ccc']);
+      assert.strictEqual((trustClaims[2].claims[0] as ClaimIsTag).tag, 'property3');
+
+      assert.strictEqual(trustClaims[3].handle.name, 'output2');
+      assert.deepStrictEqual(trustClaims[3].fieldPath, ['ddd']);
+      assert.strictEqual((trustClaims[3].claims[0] as ClaimIsTag).tag, 'property4');
+
+      assert.strictEqual(trustClaims[4].handle.name, 'output2');
+      assert.deepStrictEqual(trustClaims[4].fieldPath, ['ddd', 'eee']);
+      assert.strictEqual((trustClaims[4].claims[0] as ClaimIsTag).tag, 'property5');
+    });
+
     it('supports claim statement with multiple tags', async () => {
       const manifest = await parseManifest(`
         particle A
@@ -3315,11 +3354,15 @@ resource SomeName
   output1: writes T {}
   output2: writes T {}
   output3: writes T {}
+  output4: writes T {foo: Text}
+  output5: writes T {foo: &Foo {bar: Text}}
   parentSlot: \`consumes Slot
     childSlot: \`provides Slot
   claim output1 is trusted
   claim output2 derives from input2 and derives from input2
   claim output3 is not dangerous
+  claim output4.foo is nested
+  claim output5.foo.bar is veryNested
   check input1 is trusted or is from handle input2
   check input2 is not extraTrusted
   check input3 is from store MyStore
@@ -3339,9 +3382,13 @@ resource SomeName
   output1: writes T {}
   output2: writes T {}
   output3: writes T {}
+  output4: writes T {foo: Text}
+  output5: writes T {foo: &Foo {bar: Text}}
   claim output1 is trusted
   claim output2 derives from input2 and derives from input2
   claim output3 is not dangerous
+  claim output4.foo is nested
+  claim output5.foo.bar is veryNested
   check input1 is trusted or is from handle input2
   check input2 is not extraTrusted
   check input3 is from store MyStore
@@ -3385,13 +3432,22 @@ resource SomeName
       `), `Can't make a check on handle foo with direction writes (not an input handle)`);
     });
 
-    it(`doesn't allow multiple different claims for the same output`, async () => {
+    it(`doesn't allow multiple different claims for the same handle`, async () => {
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
           foo: writes T {}
           claim foo is trusted
           claim foo is trusted
-      `), `Can't make multiple claims on the same output (foo)`);
+      `), `Can't make multiple claims on the same target (foo)`);
+    });
+
+    it(`doesn't allow multiple different claims for the same field`, async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          foo: writes T { bar: Text }
+          claim foo.bar is trusted
+          claim foo.bar is trusted
+      `), `Can't make multiple claims on the same target (foo.bar)`);
     });
 
     it(`doesn't allow multiple different checks for the same input`, async () => {

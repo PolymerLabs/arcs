@@ -50,6 +50,7 @@ export class Handle implements Comparable<Handle> {
   // Value assigned in the immediate mode, E.g. hostedParticle = ShowProduct
   // Currently only supports ParticleSpec.
   private _immediateValue: ParticleSpec | undefined = undefined;
+  // TODO(b/156983427): Support field-level claims on stores.
   claims: Claim[] | undefined = undefined;
   private _ttl = Ttl.infinite;
   private _annotations: AnnotationRef[];

@@ -58,23 +58,8 @@ function encodePayload(payload: {}): Uint8Array {
 }
 
 async function particleSpecToProtoPayload(spec: ParticleSpec) {
-  let claims = [];
-  const connections = await Promise.all(spec.connections.map(async cs => {
-    const directionOrdinal = DirectionEnum.values[cs.direction.replace(/ /g, '_').toUpperCase()];
-    if (directionOrdinal === undefined) {
-      throw Error(`Handle connection direction ${cs.direction} is not supported`);
-    }
-    const proto = {
-      name: cs.name,
-      direction: directionOrdinal,
-      type: await typeToProtoPayload(cs.type)
-    };
-    const claimsProto = claimsToProtoPayload(spec, cs, proto);
-    if (claimsProto != null) {
-      claims = claims.concat(claimsProto);
-    }
-    return proto;
-  }));
+  const connections = await Promise.all(spec.connections.map(async connectionSpec => handleConnectionSpecToProtoPayload(connectionSpec)));
+  const claims = [].concat(...spec.connections.map(connectionSpec => claimsToProtoPayload(spec, connectionSpec)));
   return {
     name: spec.name,
     location: spec.implFile,
@@ -83,13 +68,33 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
   };
 }
 
+async function handleConnectionSpecToProtoPayload(spec: HandleConnectionSpec) {
+  const directionOrdinal = DirectionEnum.values[spec.direction.replace(/ /g, '_').toUpperCase()];
+  if (directionOrdinal === undefined) {
+    throw Error(`Handle connection direction ${spec.direction} is not supported`);
+  }
+  return {
+    name: spec.name,
+    direction: directionOrdinal,
+    type: await typeToProtoPayload(spec.type)
+  };
+}
+
 // Converts the claims in HandleConnectionSpec.
 function claimsToProtoPayload(
   spec: ParticleSpec,
-  connectionSpec: HandleConnectionSpec,
-  proto: {}
+  connectionSpec: HandleConnectionSpec
 ) {
-  return connectionSpec.claims?.map(claim => {
+  // TODO(b/156983427): Support field-level claims in proto output.
+  if (!connectionSpec.claims || connectionSpec.claims.size === 0) {
+    return [];
+  }
+  assert(
+      connectionSpec.claims.size === 1 && connectionSpec.claims.keys().next().value === connectionSpec.name,
+      'Field-level claims not supported by manifest2proto yet');
+  const claims = connectionSpec.claims.values().next().value;
+
+  return claims?.map(claim => {
     const accessPath = {
       particleSpec: spec.name,
       handleConnection: connectionSpec.name
