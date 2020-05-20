@@ -1,4 +1,4 @@
-package arcs.schematests
+package arcs.schematests.references
 
 data class Level0(
     val name: String

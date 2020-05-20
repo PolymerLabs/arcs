@@ -1,15 +1,12 @@
 @file:Suppress("EXPERIMENTAL_FEATURE_WARNING")
 
-package arcs.schematests
+package arcs.schematests.references
 
 import arcs.core.entity.awaitReady
 import arcs.jvm.host.TargetHost
 import arcs.sdk.Entity
-import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
 import arcs.sdk.Reference
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 suspend fun <T : Entity> T.toReference(handle: ReadWriteSingletonHandle<T>): Reference<T> {

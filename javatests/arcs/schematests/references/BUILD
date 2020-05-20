@@ -45,7 +45,7 @@ arcs_kt_android_test_suite(
     name = "tests",
     srcs = glob(["*Test.kt"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
-    package = "arcs.schematests",
+    package = "arcs.schematests.references",
     deps = [
         ":particles",
         "//java/arcs/android/storage/database",

@@ -1,19 +1,17 @@
 @file:Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
 
-package arcs.schematests
+package arcs.schematests.references
 
 import android.content.Context
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import arcs.android.sdk.host.AndroidHost
-import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.allocator.Allocator
 import arcs.core.common.toArcId
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
-import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
@@ -71,7 +69,7 @@ class Arcs(
             )
         )
 
-        allocator.startArcForPlan("", WriteRecipePlan)
+        allocator.startArcForPlan(WriteRecipePlan)
     }
 
     suspend fun stop() {
