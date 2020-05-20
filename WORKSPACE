@@ -103,15 +103,16 @@ maven_install(
         "com.squareup:kotlinpoet:" + KOTLINPOET_VERSION,
     ],
     fetch_sources = True,
+    maven_install_json = "//:maven_install.json",
     repositories = [
         "https://jcenter.bintray.com/",
         "https://maven.google.com",
         "https://repo1.maven.org/maven2",
     ],
-    maven_install_json = "//:maven_install.json",
 )
 
 load("@maven//:defs.bzl", "pinned_maven_install")
+
 pinned_maven_install()
 
 # @rules_proto is used by KotlincWorker and must be declared before rules_kotlin
