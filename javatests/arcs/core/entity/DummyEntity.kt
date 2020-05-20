@@ -59,6 +59,6 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
                 )
             ),
             hash = SCHEMA_HASH
-        ).also { SchemaRegistry.register(it) }
+        )
     }
 }

@@ -55,11 +55,11 @@ import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
 import arcs.jvm.util.JvmTime
 import com.google.protobuf.InvalidProtocolBufferException
-import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.updateAndGet
 import java.time.Duration
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.updateAndGet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -1000,9 +1000,9 @@ class DatabaseImpl(
 
         val insertFieldStatement = compileStatement(
             """
-            INSERT INTO fields (type_id, parent_type_id, name, is_collection)
-            VALUES (?, ?, ?, ?)
-        """.trimIndent()
+                INSERT INTO fields (type_id, parent_type_id, name, is_collection)
+                VALUES (?, ?, ?, ?)
+            """.trimIndent()
         )
 
         suspend fun insertFieldBlock(
