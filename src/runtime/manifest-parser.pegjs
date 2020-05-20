@@ -158,12 +158,8 @@ ManifestItem
   / Resource
   / AnnotationNode
 
-AnnotationItem
-  = ParameterizedAnnotation
-  / SimpleAnnotation
-
 // This is the full "@trigger\n foo bar" annotation combo OR simple annotation.
-Annotation = triggerSet:(SameIndent Trigger eolWhiteSpace)* simpleAnnotation:(SameIndent AnnotationItem eolWhiteSpace)? annotationRefs:(SameIndent AnnotationRef eolWhiteSpace)*
+Annotation = triggerSet:(SameIndent Trigger eolWhiteSpace)* simpleAnnotation:(SameIndent SimpleAnnotation eolWhiteSpace)? annotationRefs:(SameIndent AnnotationRef eolWhiteSpace)*
   {
     return toAstNode<AstNode.Annotation>({
       kind: 'annotation',
@@ -178,15 +174,6 @@ Trigger "a trigger for a recipe"
   = '@trigger' eolWhiteSpace Indent pairs:(eolWhiteSpace? SameIndent simpleName whiteSpace dottedName)+ {
   return pairs.map(pair => {
     return [pair[2], pair[4]];
-  });
-}
-
-ParameterizedAnnotation "a parameterized annotation (e.g. @foo(bar))"
-  = simpleAnnotation:SimpleAnnotation whiteSpace? '(' whiteSpace? parameter:NumberedUnits whiteSpace? ')' {
-  return toAstNode<AstNode.ParameterizedAnnotation>({
-    kind: 'param-annotation',
-    simpleAnnotation,
-    parameter,
   });
 }
 
@@ -1026,12 +1013,12 @@ AnnotationDoc = 'doc:' whiteSpace doc:QuotedString eolWhiteSpace? {
 }
 
 // Reference to an annotation (for example: `@foo(bar='hello', baz=5)`)
-AnnotationRef = '@' name:lowerIdent params:('('whiteSpace? AnnotationRefParam? (whiteSpace? ',' whiteSpace? AnnotationRefParam)* ')')? {
+AnnotationRef = '@' name:lowerIdent params:(whiteSpace?'('whiteSpace? AnnotationRefParam? whiteSpace? (whiteSpace? ',' whiteSpace? AnnotationRefParam)* ')')? {
   return toAstNode<AstNode.AnnotationRef>({
     kind: 'annotation-ref',
     name,
     // TODO(#5291): once simple-annotation is deprecated, make first param nonoptional.
-    params: optional(params, p => p[2] ? [p[2], ...p[3].map(tail => tail[3])] : p[3].map(tail => tail[3]), [])
+    params: optional(params, p => p[3] ? [p[3], ...p[5].map(tail => tail[3])] : p[5].map(tail => tail[3]), [])
   });
 }
 
@@ -1310,9 +1297,9 @@ RecipeHandleCapability
  / 'tied-to-runtime'
  / 'tied-to-arc'
 
-// TODO(#5291): deprecate `capabilities` and `annotation` for `annotations`.
+// TODO(#5291): deprecate `capabilities` for `annotations`.
 RecipeHandle
-  = name:NameWithColon? fate:RecipeHandleFate capabilities:(whiteSpace RecipeHandleCapability)* ref:(whiteSpace HandleRef)? annotation:(whiteSpace AnnotationItem)? annotations:SpaceAnnotationRefList? eolWhiteSpace
+  = name:NameWithColon? fate:RecipeHandleFate capabilities:(whiteSpace RecipeHandleCapability)* ref:(whiteSpace HandleRef)? annotations:SpaceAnnotationRefList? eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeHandle>({
       kind: 'handle',
@@ -1320,7 +1307,6 @@ RecipeHandle
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
       fate,
       capabilities: capabilities.map(c => c[1]),
-      annotation: optional(annotation, s => s[1], null),
       annotations: annotations || [],
     });
   }

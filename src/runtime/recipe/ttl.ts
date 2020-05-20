@@ -23,10 +23,6 @@ export class Ttl {
       public readonly count: number,
       public readonly units: TtlUnits) {}
 
-  public toString(): string {
-    return this.isInfinite ? `` : `${this.count}${this.units}`;
-  }
-
   public static fromString(ttlStr: string): Ttl {
     if (!ttlStr) {
       return Ttl.infinite;

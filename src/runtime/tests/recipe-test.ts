@@ -785,8 +785,8 @@ describe('recipe', () => {
   it('parses recipe handle ttls', async () => {
     const recipe = (await Manifest.parse(`
       recipe
-        h0: create @ttl(20d)
-        h1: create @ttl(5m)
+        h0: create @ttl('20d')
+        h1: create @ttl('5m')
         h2: create
     `)).recipes[0];
     assert.lengthOf(recipe.handles, 3);
@@ -803,8 +803,8 @@ describe('recipe', () => {
         h1: create tied-to-runtime 'my-id'
         h2: create persistent tied-to-arc #myTag
         h3: create persistent
-        h4: create persistent @ttl(20d)
-        h5: create @ttl(20d)
+        h4: create persistent @ttl('20d')
+        h5: create @ttl('20d')
         h6: create #otherTag`)).recipes[0];
     const verifyRecipeHandleCapabilities = (recipe) => {
       assert.lengthOf(recipe.handles, 7);

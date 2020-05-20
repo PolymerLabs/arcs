@@ -505,7 +505,6 @@ export interface RecipeHandle extends BaseNode {
   ref: HandleRef;
   fate: Fate;
   capabilities: RecipeHandleCapability[];
-  annotation: ParameterizedAnnotation|null;
   annotations: AnnotationRef[];
 }
 
@@ -803,12 +802,6 @@ export interface Annotation extends BaseNode {
   triggerSet: Triggers;
   simpleAnnotation?: string;
   annotationRefs: AnnotationRef[];
-}
-
-export interface ParameterizedAnnotation extends BaseNode {
-  kind: 'param-annotation';
-  simpleAnnotation: string;
-  parameter: NumberedUnits;
 }
 
 export interface NumberedUnits extends BaseNode {

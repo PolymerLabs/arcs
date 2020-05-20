@@ -34,6 +34,7 @@ import {mockFirebaseStorageKeyOptions} from '../storageNG/testing/mock-firebase.
 import {Flags} from '../flags.js';
 import {TupleType, CollectionType, EntityType} from '../type.js';
 import {ActiveCollectionEntityStore, handleForActiveStore} from '../storageNG/storage-ng.js';
+import {TtlUnits} from '../recipe/ttl.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -4290,11 +4291,10 @@ recipe
   foo: create
   bar: ?
   baz: create persistent
-  qux: create persistent @ttl(2d)
-  quw: create persistent 'my-id' @ttl(10m) @hello(world: 'woohoo')
+  quz: create persistent 'my-id' @ttl('10m') @hello(world: 'woohoo')
     `);
-    const quwHandle = manifest.recipes[0].findHandleByID('my-id');
-    assert.lengthOf(quwHandle.annotations, 1);
+    const quzHandle = manifest.recipes[0].findHandleByID('my-id');
+    assert.lengthOf(quzHandle.annotations, 2);
   });
   it('parses annotation with single param and simple value', async () => {
     const annotations = (await Manifest.parse(`
@@ -4342,7 +4342,8 @@ recipe
       @egress()
       particle EgressingParticle
     `));
-    const recipeAnnotations = manifest.recipes[0].annotations;
+    const recipe = manifest.recipes[0];
+    const recipeAnnotations = recipe.annotations;
     assert.lengthOf(recipeAnnotations, 1);
     assert.equal(recipeAnnotations[0].name, 'arcId');
     assert.equal(recipeAnnotations[0].params['id'], 'myFavoriteArc');

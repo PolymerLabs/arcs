@@ -1076,9 +1076,9 @@ describe('Arc storage migration', () => {
           things1: reads writes [Thing]
           things2: reads writes Thing
         recipe
-          h0: create @ttl(3m)
-          h1: create @ttl(23h)
-          h2: create @ttl(2d)
+          h0: create @ttl('3m')
+          h1: create @ttl('23h')
+          h2: create @ttl('2d')
           ThingAdder
             things0: h0
             things1: h1

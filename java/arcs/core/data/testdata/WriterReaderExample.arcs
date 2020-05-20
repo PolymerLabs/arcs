@@ -11,7 +11,7 @@ particle Writer in 'arcs.core.data.testdata.Writer'
   launch startup
   arcId writingArcId
 recipe Ingestion
-  thing: create persistent 'my-handle-id' @ttl(20d)
+  thing: create persistent 'my-handle-id' @ttl('20d')
   Writer
     data: writes thing
   Reader
@@ -44,7 +44,7 @@ particle ReadWriteReferences
   arcId referencesArcId
 recipe ReferencesRecipe
   things: create persistent 'my-refs-id'
-  thing: create 'my-ref-id' @ttl(1d)
+  thing: create 'my-ref-id' @ttl('1d')
   ReadWriteReferences
     inThingRefs: things
     outThingRef: thing

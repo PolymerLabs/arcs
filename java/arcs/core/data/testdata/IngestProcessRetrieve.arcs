@@ -17,7 +17,7 @@ particle Ingestion
   arcId eventIngestion
 recipe EventsIngestion
   // Example: Handle created with id, capabilities and TTL.
-  events: create persistent 'raw-events' @ttl(1d)
+  events: create persistent 'raw-events' @ttl('1d')
   Ingestion
     events: events
 
@@ -47,7 +47,7 @@ recipe SentimentAnalyzer
   events: map 'raw-events'
   // Example: Handle created without capabilities in a long running arc.
   processed: create
-  summary: create persistent 'events-summary' @ttl(15d)
+  summary: create persistent 'events-summary' @ttl('15d')
   AnalyzeSentiment
     events: reads events
     processed: writes processed
