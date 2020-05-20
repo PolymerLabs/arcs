@@ -102,4 +102,10 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
     override fun singleton_dereferenceEntity_nestedReference() {
         super.singleton_dereferenceEntity_nestedReference()
     }
+
+    @Ignore("b/157171348 - Deflake")
+    @Test
+    override fun collection_entityDereference() {
+        super.collection_entityDereference()
+    }
 }
