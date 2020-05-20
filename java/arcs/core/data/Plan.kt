@@ -21,7 +21,8 @@ import arcs.core.util.lens
 open class Plan(
     // TODO(cromwellian): add more fields as needed (e.g. RecipeName, etc for debugging)
     val particles: List<Particle>,
-    val arcId: String? = null
+    val arcId: String? = null,
+    val name: String = "name"
 ) {
     /**
      * A [Particle] consists of the information necessary to instantiate a particle
