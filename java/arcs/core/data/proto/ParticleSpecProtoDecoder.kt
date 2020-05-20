@@ -11,6 +11,7 @@
 
 package arcs.core.data.proto
 
+import arcs.core.data.Check
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.ParticleSpec
@@ -48,5 +49,8 @@ fun ParticleSpecProto.decode(): Result<ParticleSpec> = resultOf {
         }
     }
     val claims = claimsList.map { it.decode(connections) }
-    ParticleSpec(name, connections, location, claims)
+    val checks = checksList.map {
+        Check.Assert(it.accessPath.decode(connections), it.predicate.decode())
+    }
+    ParticleSpec(name, connections, location, claims, checks)
 }
