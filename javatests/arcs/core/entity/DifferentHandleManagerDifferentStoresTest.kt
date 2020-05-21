@@ -51,4 +51,10 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
     override fun singleton_referenceLiveness() {
         super.singleton_referenceLiveness()
     }
+
+    @Ignore("b/157185966 - Deflake")
+    @Test
+    override fun collection_referenceLiveness() {
+        super.collection_referenceLiveness()
+    }
 }

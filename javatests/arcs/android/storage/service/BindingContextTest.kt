@@ -117,7 +117,7 @@ class BindingContextTest {
     }
 
     @Test
-    fun sendProxyMessage_propagatesToTheStore() = runBlocking {
+    fun sendProxyMessage_propagatesToTheStore() = runBlocking<Unit> {
         val bindingContext = buildContext()
         val deferredResult = DeferredResult(coroutineContext)
         val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
@@ -163,7 +163,7 @@ class BindingContextTest {
     }
 
     @Test
-    fun unregisterCallback_unregistersCallbackFromStore() = runBlocking<Unit> {
+    fun unregisterCallback_unregistersCallbackFromStore() = runBlocking {
         val bindingContext = buildContext()
         val callback = DeferredProxyCallback()
         val token = bindingContext.registerCallback(callback)
