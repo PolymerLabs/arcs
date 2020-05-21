@@ -49,7 +49,14 @@ PLATFORMS = {
 }
 
 def to_platform(os_name):
-    """Convert an os-name string into a Kotlin-Native platform."""
+    """Convert an os-name string into a Kotlin-Native platform.
+
+    Args:
+      os_name: name of the host OS from the repository ctx.
+
+    Returns:
+      Option from PLATFORMS.
+    """
     os_name = os_name.lower().replace(" ", "")
     if os_name.startswith("macos"):
         return "macos"
