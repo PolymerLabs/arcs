@@ -36,6 +36,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -171,7 +172,7 @@ class BindingContextTest {
         bindingContext.unregisterCallback(token)
 
         // Yield to let the unregister go through.
-        yield()
+        delay(200)
 
         // Now send a message directly to the store, and ensure we didn't hear of it with our
         // callback.
