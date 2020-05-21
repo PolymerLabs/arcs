@@ -798,7 +798,6 @@ export interface NameAndTagList extends BaseNode {
 
 export interface Annotation extends BaseNode {
   kind: 'annotation';
-  simpleAnnotation?: string;
   annotationRefs: AnnotationRef[];
 }
 

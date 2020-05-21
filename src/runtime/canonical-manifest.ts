@@ -9,6 +9,10 @@
  */
 
 export const canonicalManifest = `
+annotation active
+  targets: [Recipe]
+  retention: Source
+  doc: 'active recipe in arc'
 annotation arcId(id: Text)
   targets: [Recipe]
   retention: Source

@@ -168,6 +168,6 @@ export function isLongRunning(recipe: Recipe): boolean {
 
 /** Returns arcId for long-running arcs, null otherwise. */
 export function findLongRunningArcId(recipe: Recipe): string | null {
-  const arcIdAnnotation = recipe.annotations.find(a => a.name === 'arcId');
+  const arcIdAnnotation = recipe.getAnnotation('arcId');
   return arcIdAnnotation ? Object.values(arcIdAnnotation.params)[0].toString() : null;
 }

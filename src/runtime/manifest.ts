@@ -189,7 +189,7 @@ export class Manifest {
     return this.allRecipes.reduce((acc, x) => acc.concat(x.handles), []);
   }
   get activeRecipe() {
-    return this._recipes.find(recipe => recipe.annotation === 'active');
+    return this._recipes.find(recipe => recipe.getAnnotation('active'));
   }
   get particles() {
     return Object.values(this._particles);
@@ -850,9 +850,6 @@ ${e.message}
   private static _processRecipe(manifest: Manifest, recipeItem: AstNode.RecipeNode) {
     const recipe = manifest._newRecipe(recipeItem.name);
 
-    if (recipeItem.annotation) {
-      recipe.annotation = recipeItem.annotation;
-    }
     recipe.annotations = Manifest._buildAnnotationRefs(manifest, recipeItem.annotationRefs);
 
     if (recipeItem.verbs) {
@@ -909,7 +906,7 @@ ${e.message}
       if (item.kind === 'handle') {
         if (item.annotations) {
           handle.annotations = Manifest._buildAnnotationRefs(manifest, item.annotations);
-          const ttlAnnotation = handle.annotations.find(a => a.name === 'ttl');
+          const ttlAnnotation = handle.getAnnotation('ttl');
           if (ttlAnnotation) {
             handle.ttl = Ttl.fromString(ttlAnnotation.params['value'].toString());
           }

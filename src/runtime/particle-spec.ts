@@ -150,6 +150,9 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
         `Annotation '${a.name}' is invalid for HandleConnection`));
     this._annotations = annotations;
   }
+  getAnnotation(name: string): AnnotationRef | null {
+    return this.annotations.find(a => a.name === name);
+  }
 }
 
 type SerializedSlotConnectionSpec = {
@@ -356,6 +359,9 @@ export class ParticleSpec {
     annotations.every(a => assert(a.isValidForTarget('Particle'),
         `Annotation '${a.name}' is invalid for Particle`));
     this._annotations = annotations;
+  }
+  getAnnotation(name: string): AnnotationRef | null {
+    return this.annotations.find(a => a.name === name);
   }
 
   /**

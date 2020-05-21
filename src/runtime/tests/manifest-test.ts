@@ -4073,14 +4073,14 @@ annotation goodForAll
     const manifestStr = `${annotationsStr.trim()}
 @oneParam(bar: 'bar')
 particle Foo
-  myFoo: reads [* {bar: Text}] @goodForAll()
+  myFoo: reads [* {bar: Text}] @goodForAll
   modality dom
 @oneParam(bar: 'hello world')
 recipe One
 @multiParam(foo: 'hello', bar: 5, baz: false)
-@noParam()
+@noParam
 recipe Two
-@goodForAll()
+@goodForAll
 recipe Three`;
     const manifest = await Manifest.parse(manifestStr);
     assert.equal(Object.keys(manifest.annotations).length, 4);
@@ -4119,7 +4119,7 @@ recipe Three`;
   });
   it('throws when annotation not defined', async () => {
     await assertThrowsAsync(async () => await Manifest.parse(`
-        @nonexistent()
+        @nonexistent
         recipe
     `), `annotation not found: 'nonexistent'`);
   });
@@ -4129,7 +4129,7 @@ recipe Three`;
           retention: Source
           targets: [Particle]
           doc: 'doc'
-        @noParam()
+        @noParam
         recipe
     `), `Annotation 'noParam' is invalid for Recipe`);
   });
@@ -4193,7 +4193,7 @@ recipe`;
   it('parses recipe annotation with no param', async () => {
     const manifestStr = `
 ${oneParamAnnotation}
-@oneParam()
+@oneParam
 recipe`;
     const manifest = await Manifest.parse(manifestStr);
     const recipe = manifest.recipes[0];
@@ -4215,7 +4215,7 @@ annotation foo1(qux: Boolean)
 particle Fooer
   foos1: reads [Foo {value: Text}] @foo(bar: 'hello', baz: 5)
   foos2: reads writes [Foo {value: Text}] @foo(baz: 5) @foo1(qux: true)
-  foos3: reads writes [Foo {value: Text}] @foo()
+  foos3: reads writes [Foo {value: Text}] @foo
   foos4: writes [Foo {value: Text}]
   modality dom
 `;
@@ -4238,7 +4238,7 @@ particle Fooer
         targets: [Handle, HandleConnection]
         retention: Source
         doc: 'a'
-      @foo()
+      @foo
       schema Foo
         value: Text
     `), `Annotation 'foo' is invalid for Schema`);
@@ -4297,7 +4297,7 @@ recipe
     assert.lengthOf(quzHandle.annotations, 2);
   });
   it('parses annotation with single param and simple value', async () => {
-    const annotations = (await Manifest.parse(`
+    const connection = (await Manifest.parse(`
       annotation hello(txt: Text)
         targets: [Handle, HandleConnection]
         retention: Source
@@ -4307,10 +4307,10 @@ recipe
         retention: Source
         doc: 'a'
       particle Foo
-        foo: reads [* {bar: Text}] @hello(txt: 'hi') @world('bye')`)).particles[0].connections[0].annotations;
-    assert.lengthOf(annotations, 2);
-    assert.equal(annotations.find(a => a.name === 'hello').params['txt'], 'hi');
-    assert.equal(annotations.find(a => a.name === 'world').params['txt'], 'bye');
+        foo: reads [* {bar: Text}] @hello(txt: 'hi') @world('bye')`)).particles[0].connections[0];
+    assert.lengthOf(connection.annotations, 2);
+    assert.equal(connection.getAnnotation('hello').params['txt'], 'hi');
+    assert.equal(connection.getAnnotation('world').params['txt'], 'bye');
   });
   it('fails parsing annotation simple value when multiple params', async () => {
     await assertThrowsAsync(async () => await Manifest.parse(`

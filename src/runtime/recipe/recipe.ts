@@ -47,8 +47,6 @@ export class Recipe implements Cloneable<Recipe> {
   private _cloneMap: CloneMap;
 
   private _annotations: AnnotationRef[] = [];
-  // TODO(#5291): deprecate `annotation`; use `annotations` instead.
-  annotation: string | undefined = undefined;
 
   // TODO: Recipes should be collections of records that are tagged
   // with a type. Strategies should register the record types they
@@ -317,6 +315,9 @@ export class Recipe implements Cloneable<Recipe> {
     annotations.every(a => assert(a.isValidForTarget('Recipe'),
         `Annotation '${a.name}' is invalid for Recipe`));
     this._annotations = annotations;
+  }
+  getAnnotation(name: string): AnnotationRef | null {
+    return this.annotations.find(a => a.name === name);
   }
 
   isEmpty(): boolean {

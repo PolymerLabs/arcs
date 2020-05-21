@@ -137,7 +137,6 @@ Manifest
     const result: AstNode.ManifestItem[] = items.map(item => {
       const annotations = item[0];
       const manifestItem = item[2];
-      manifestItem.annotation = annotations.simpleAnnotation;
       manifestItem.annotationRefs = annotations.annotationRefs;
       return manifestItem;
     });
@@ -157,18 +156,13 @@ ManifestItem
   / Resource
   / AnnotationNode
 
-// This is a simple annotation (deprecated) or annotation references.
-Annotation = simpleAnnotation:(SameIndent SimpleAnnotation eolWhiteSpace)? annotationRefs:(SameIndent AnnotationRef eolWhiteSpace)*
+Annotation = annotationRefs:(SameIndent AnnotationRef eolWhiteSpace)*
   {
     return toAstNode<AstNode.Annotation>({
       kind: 'annotation',
-      simpleAnnotation: optional(simpleAnnotation, s => s[1], null),
       annotationRefs: annotationRefs.map(aRef => aRef[1]),
     });
   }
-
-SimpleAnnotation "an annotation (e.g. @foo)"
-  = '@' annotation:lowerIdent { return annotation; }
 
 Resource = 'resource' whiteSpace name:upperIdent eolWhiteSpace Indent SameIndent ResourceStart body:ResourceBody eolWhiteSpace? {
   return toAstNode<AstNode.Resource>({
@@ -1003,12 +997,11 @@ AnnotationDoc = 'doc:' whiteSpace doc:QuotedString eolWhiteSpace? {
 }
 
 // Reference to an annotation (for example: `@foo(bar='hello', baz=5)`)
-AnnotationRef = '@' name:lowerIdent params:(whiteSpace?'('whiteSpace? AnnotationRefParam? whiteSpace? (whiteSpace? ',' whiteSpace? AnnotationRefParam)* ')')? {
+AnnotationRef = '@' name:lowerIdent params:(whiteSpace?'('whiteSpace? AnnotationRefParam whiteSpace? (whiteSpace? ',' whiteSpace? AnnotationRefParam)* ')')? {
   return toAstNode<AstNode.AnnotationRef>({
     kind: 'annotation-ref',
     name,
-    // TODO(#5291): once simple-annotation is deprecated, make first param nonoptional.
-    params: optional(params, p => p[3] ? [p[3], ...p[5].map(tail => tail[3])] : p[5].map(tail => tail[3]), [])
+    params: optional(params, p => [p[3], ...p[5].map(tail => tail[3])], [])
   });
 }
 
