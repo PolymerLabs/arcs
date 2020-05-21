@@ -4330,6 +4330,20 @@ recipe
       particle Foo
         foo: reads [* {bar: Text}] @hello(5)`), `expected 'Text' for param 'txt', instead got 5`);
   });
+  it('fails parsing invalid canonical annotation ttl', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+      recipe
+        foo: create persistent @ttl('300')
+    `), `Invalid ttl: 300`);
+    await assertThrowsAsync(async () => await Manifest.parse(`
+      recipe
+        foo: create persistent @ttl(300)
+    `), `expected 'Text' for param 'value', instead got 300`);
+    await assertThrowsAsync(async () => await Manifest.parse(`
+      recipe
+        foo: create persistent @ttl('day')
+    `), `Invalid ttl: day`);
+  });
   it('parses canonical annotations', async () => {
     const manifest = (await Manifest.parse(`
       @arcId('myFavoriteArc')

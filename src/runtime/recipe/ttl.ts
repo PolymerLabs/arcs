@@ -28,7 +28,7 @@ export class Ttl {
       return Ttl.infinite;
     }
     const ttlTokens = ttlStr.match(/([0-9]+)([d|h|m])/);
-    assert(ttlTokens.length === 3, `Invalid ttl: ${ttlStr}`);
+    assert(ttlTokens && ttlTokens.length === 3, `Invalid ttl: ${ttlStr}`);
     return new Ttl(Number(ttlTokens[1]), Ttl.ttlUnitsFromString(ttlTokens[2]));
   }
 
