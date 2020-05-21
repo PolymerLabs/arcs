@@ -49,6 +49,10 @@ class StorageServiceConnectionTest {
             on { bindStorageService(any(), any(), any()) }.doReturn(true)
         }
         serviceMock = object : IStorageService.Stub() {
+            override fun idle(timeoutMillis: Long, resultCallback: IResultCallback) {
+                resultCallback.onResult(null)
+            }
+
             override fun registerCallback(callback: IStorageServiceCallback?): Int = 1
 
             override fun sendProxyMessage(
