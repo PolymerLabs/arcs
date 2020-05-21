@@ -109,4 +109,47 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     override fun collection_writeAndReadBack() {
         super.collection_writeAndReadBack()
     }
+
+    @Ignore("b/157265849 - Deflake")
+    @Test
+    override fun singleton_referenceLiveness() {
+        super.singleton_referenceLiveness()
+    }
+
+    @Ignore("b/157266157 - Deflake")
+    @Test
+    override fun collection_entityDereference() {
+        super.collection_entityDereference()
+    }
+
+    @Ignore("b/157265691 - Deflake")
+    @Test
+    override fun singleton_clearOnAClearDataWrittenByB() {
+        super.singleton_clearOnAClearDataWrittenByB()
+    }
+
+    @Ignore("b/157266178 - Deflake")
+    @Test
+    override fun singleton_dereferenceEntity() {
+        super.singleton_dereferenceEntity()
+    }
+
+
+    @Ignore("b/157266221 - Deflake")
+    @Test
+    override fun singleton_dereferenceEntity_nestedReference() {
+        super.singleton_dereferenceEntity_nestedReference()
+    }
+
+    @Ignore("b/157266123 - Deflake")
+    @Test
+    override fun collection_removingFromA_isRemovedFromB() {
+        super.collection_removingFromA_isRemovedFromB()
+    }
+
+    @Ignore("b/157266376 - Deflake")
+    @Test
+    override fun collection_withTTL() {
+        super.collection_withTTL()
+    }
 }
