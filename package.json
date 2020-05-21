@@ -9,7 +9,6 @@
   "module": "dist/webmain.js",
   "main": "dist/index.es.js",
   "scripts": {
-    "prepare": "cross-env tools/sigh check && cd devtools && npm i && cd ../concrete-storage && npm i",
     "test-extension": "mocha-chrome extension/tests/index.test.html",
     "test:licenses": "jsgl --local . && npm --prefix devtools run test:licenses && npm --prefix cloud run test:licenses",
     "build:rollup": "rollup -c --sourcemap",
@@ -28,6 +27,7 @@
     "watch": "concurrently npm:watch:*"
   },
   "devDependencies": {
+    "@bazel/typescript": "^1.6.1",
     "@types/chai": "4.2.4",
     "@types/diff": "4.0.2",
     "@types/express": "4.17.1",
@@ -86,6 +86,8 @@
   },
   "dependencies": {
     "@bazel/buildifier": "0.29.0",
+    "@bazel/hide-bazel-files": "^1.6.1",
+    "@tensorflow/tfjs": "^1.7.4",
     "assert": "1.5.0",
     "circular-dependency-plugin": "5.2.0",
     "esm": "3.2.25",

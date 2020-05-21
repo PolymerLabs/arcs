@@ -1,4 +1,4 @@
-load("@npm/@bazel/typescript//:index.bzl", "ts_library")
+load("@npm_bazel_typescript//:index.bzl", "ts_library")
 
 ts_library(
     name = "runtime",
@@ -48,10 +48,7 @@ ts_library(
             # Exclude until import is fixed by copybara (unused?)
             "platform/protobuf*",
         ],
-    ) + [":gen/runtime/manifest-parser.ts"],
+    ),  # + [":gen/runtime/manifest-parser.ts"],
     runtime = "nodejs",
-    strict_checks = False,
-    deps = [
-        "//src/platform",
-    ],
+    tsconfig = "//:tsconfig"
 )
