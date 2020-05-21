@@ -588,6 +588,170 @@ describe('manifest2proto', () => {
     ]);
   });
 
+  it('encodes particle spec with checkHasTag checks', async () => {
+    const manifest = await Manifest.parse(`
+      particle Test in 'a/b/c.js'
+        private: reads {name: Text}
+        public: reads {name: Text}
+        check private is private_tag
+        check public is not private_tag
+     `);
+    const spec = await toProtoAndBack(manifest);
+    assert.deepStrictEqual(spec.particleSpecs[0].checks, [
+      {
+        accessPath: {
+          particleSpec: 'Test',
+          handleConnection: 'private'
+        },
+        predicate: {
+          label: {
+            semanticTag: 'private_tag'
+          }
+        }
+      },
+      {
+        accessPath: {
+          particleSpec: 'Test',
+          handleConnection: 'public'
+        },
+        predicate: {
+          not: {
+            predicate: {
+              label: {
+                semanticTag: 'private_tag'
+              }
+            }
+          }
+        }
+      }]);
+  });
+
+  it('encodes particle spec with compound checks', async () => {
+    const manifest = await Manifest.parse(`
+      particle Test in 'a/b/c.js'
+        private: reads {name: Text}
+        public: reads {name: Text}
+        check private is private_tag and is secret
+        check public is public_tag or is not secret
+     `);
+    const spec = await toProtoAndBack(manifest);
+    assert.deepStrictEqual(spec.particleSpecs[0].checks, [
+      {
+        accessPath: {
+          particleSpec: 'Test',
+          handleConnection: 'private'
+        },
+        predicate: {
+          and: {
+            conjunct0: {
+              label: {
+                semanticTag: 'private_tag'
+              }
+            },
+            conjunct1: {
+              label: {
+                semanticTag: 'secret'
+              }
+            }
+          }
+        }
+      },
+      {
+        accessPath: {
+          particleSpec: 'Test',
+          handleConnection: 'public'
+        },
+        predicate: {
+          or: {
+            disjunct0: {
+              label: {
+                semanticTag: 'public_tag'
+              }
+            },
+            disjunct1: {
+              not: {
+                predicate: {
+                  label: {
+                    semanticTag: 'secret'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }]);
+  });
+
+  it('encodes particle spec with compound checks (>2 children)', async () => {
+    const manifest = await Manifest.parse(`
+      particle Test in 'a/b/c.js'
+        private: reads {name: Text}
+        public: reads {name: Text}
+        check private is private_tag and is secret and is something
+        check public is public_tag or (is secret and is something)
+     `);
+    const spec = await toProtoAndBack(manifest);
+    assert.deepStrictEqual(spec.particleSpecs[0].checks, [
+      {
+        accessPath: {
+          particleSpec: 'Test',
+          handleConnection: 'private'
+        },
+        predicate: {
+          and: {
+            conjunct0: {
+              and: {
+                conjunct0: {
+                  label: {
+                    semanticTag: 'private_tag'
+                  }
+                },
+                conjunct1: {
+                  label: {
+                    semanticTag: 'secret'
+                  }
+                }
+              }
+            },
+            conjunct1: {
+              label: {
+                semanticTag: 'something'
+              }
+            }
+          }
+        }
+      },
+      {
+        accessPath: {
+          particleSpec: 'Test',
+          handleConnection: 'public'
+        },
+        predicate: {
+          or: {
+            disjunct0: {
+              label: {
+                semanticTag: 'public_tag'
+              }
+            },
+            disjunct1: {
+              and: {
+                conjunct0: {
+                  label: {
+                    semanticTag: 'secret'
+                  }
+                },
+                conjunct1: {
+                  label: {
+                    semanticTag: 'something'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }]);
+  });
+
   // On the TypeScript side we serialize .arcs file and validate it equals the .pb.bin file.
   // On the Kotlin side we deserialize .pb.bin and validate it equals deserialized .textproto file.
   // This ensures that at least all the constructs used in the .arcs file can be serialized in TS

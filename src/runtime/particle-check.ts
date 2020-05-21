@@ -34,7 +34,7 @@ export interface HandleConnectionSpecInterface {
   dependentConnections: HandleConnectionSpecInterface[];
   pattern?: string;
   parentConnection: HandleConnectionSpecInterface | null;
-  claims?: Claim[];
+  claims?: Map<string, Claim[]>;
   check?: Check;
   isInput: boolean;
   isOutput: boolean;

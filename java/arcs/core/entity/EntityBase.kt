@@ -164,6 +164,27 @@ open class EntityBase(
                 PrimitiveType.Text -> require(value is String) {
                     "Expected String for $entityClassName.$field, but received $value."
                 }
+                PrimitiveType.Byte -> require(value is Byte) {
+                    "Expected Byte for $entityClassName.$field, but received $value."
+                }
+                PrimitiveType.Short -> require(value is Short) {
+                    "Expected Short for $entityClassName.$field, but received $value."
+                }
+                PrimitiveType.Int -> require(value is Int) {
+                    "Expected Int for $entityClassName.$field, but received $value."
+                }
+                PrimitiveType.Long -> require(value is Long) {
+                    "Expected Long for $entityClassName.$field, but received $value."
+                }
+                PrimitiveType.Char -> require(value is Char) {
+                    "Expected Char for $entityClassName.$field, but received $value."
+                }
+                PrimitiveType.Float -> require(value is Float) {
+                    "Expected Float for $entityClassName.$field, but received $value."
+                }
+                PrimitiveType.Double -> require(value is Double) {
+                    "Expected Double for $entityClassName.$field, but received $value."
+                }
             }
             is FieldType.EntityRef -> {
                 require(value is Reference<*>) {
@@ -315,6 +336,13 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
         PrimitiveType.Boolean -> (value as Boolean).toReferencable()
         PrimitiveType.Number -> (value as Double).toReferencable()
         PrimitiveType.Text -> (value as String).toReferencable()
+        PrimitiveType.Byte -> (value as Byte).toReferencable()
+        PrimitiveType.Short -> (value as Short).toReferencable()
+        PrimitiveType.Int -> (value as Int).toReferencable()
+        PrimitiveType.Long -> (value as Long).toReferencable()
+        PrimitiveType.Char -> (value as Char).toReferencable()
+        PrimitiveType.Float -> (value as Float).toReferencable()
+        PrimitiveType.Double -> (value as Double).toReferencable()
     }
     is FieldType.EntityRef -> (value as Reference<*>).toReferencable()
     // TODO(b/155025255)

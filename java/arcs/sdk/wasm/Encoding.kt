@@ -58,6 +58,27 @@ class StringDecoder(private var bytes: ByteArray) {
 
     fun decodeBool(): Boolean = chomp(1).toUtf8String() == "1"
 
+    fun decodeByte(): Byte =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Bytes")
+
+    fun decodeShort(): Short =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Shorts")
+
+    fun decodeInt(): Int =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Ints")
+
+    fun decodeLong(): Long =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Longs")
+
+    fun decodeChar(): Char =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Chars")
+
+    fun decodeFloat(): Float =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Floats")
+
+    fun decodeDouble(): Double =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Doubles")
+
     companion object {
         fun decodeDictionary(bytes: ByteArray): Map<String, String> {
             val decoder = StringDecoder(bytes)
@@ -129,6 +150,30 @@ class StringEncoder(
 
     fun encode(prefix: String, flag: Boolean) {
         addStr("$prefix${if (flag) "1" else "0"}|")
+    }
+
+    fun encode(prefix: String, bt: Byte) {
+        throw NotImplementedError("No Kotlin to JS encoding exists for Kotlin Bytes")
+    }
+
+    fun encode(prefix: String, shrt: Short) {
+        throw NotImplementedError("No Kotlin to JS encoding exists for Kotlin Shorts")
+    }
+
+    fun encode(prefix: String, nt: Int) {
+        throw NotImplementedError("No Kotlin to JS encoding exists for Kotlin Ints")
+    }
+
+    fun encode(prefix: String, lng: Long) {
+        throw NotImplementedError("No Kotlin to JS encoding exists for Kotlin Longs")
+    }
+
+    fun encode(prefix: String, chr: Char) {
+        throw NotImplementedError("No Kotlin to JS encoding exists for Kotlin Chars")
+    }
+
+    fun encode(prefix: String, flt: Float) {
+        throw NotImplementedError("No Kotlin to JS encoding exists for Kotlin Floats")
     }
 
     private fun addStr(str: String) {

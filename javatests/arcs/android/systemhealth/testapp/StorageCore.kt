@@ -199,7 +199,15 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                         Thread.sleep(GcWaitTimeMs)
 
                         taskManagerEvents.queue.add(
-                            TaskEvent(TaskEventId.MEMORY_STATS, 0, MemoryStats.appJvmHeapKbytes)
+                            TaskEvent(
+                                TaskEventId.MEMORY_STATS,
+                                0,
+                                listOf(
+                                    MemoryStats.appJvmHeapKbytes,
+                                    MemoryStats.appNativeHeapKbytes,
+                                    MemoryStats.allHeapsKbytes
+                                )
+                            )
                         )
                         this@StorageCore.execute(settings)
                     } catch (e: Exception) {
@@ -786,11 +794,14 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         }
 
         fun clearAndGenerateMemoryUsageReport(): Stats = also {
-            var memInitial: Long? = null
+            var memInitial: List<Long>? = null
             taskManagerEvents.reader.withLock {
-                memInitial = taskManagerEvents.queue.filter {
+                // [0]: appJvmHeapKbytes
+                // [1]: appNativeHeapKbytes
+                // [2]: allHeapsKbytes
+                memInitial = (taskManagerEvents.queue.filter {
                     it.eventId == TaskEventId.MEMORY_STATS
-                }.first().instance as? Long
+                }.first().instance as? List<*>)?.filterIsInstance<Long>()?.takeIf { it.size == 3 }
             }
 
             tasksEvents.forEach { _, taskEvents ->
@@ -801,19 +812,33 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             memInitial?.let {
                 val formatter = DecimalFormat("+#;-#")
                 val hprofFilePath = context.applicationInfo.dataDir + "/" + hprofFile
-                val memBeforeGc = MemoryStats.appJvmHeapKbytes
+                val appJvmHeapBeforeGc = MemoryStats.appJvmHeapKbytes
+                val appNativeHeapBeforeGc = MemoryStats.appNativeHeapKbytes
+                val allHeapsBeforeGc = MemoryStats.allHeapsKbytes
 
                 // Whether gc or not is not guaranteed, synchronous or asynchronous gc is also
                 // JVM implementation-dependent.
                 Runtime.getRuntime().gc()
                 Thread.sleep(GcWaitTimeMs)
 
-                val memAfterGc = MemoryStats.appJvmHeapKbytes
+                val appJvmHeapAfterGc = MemoryStats.appJvmHeapKbytes
+                val appNativeHeapAfterGc = MemoryStats.appNativeHeapKbytes
+                val allHeapsAfterGc = MemoryStats.allHeapsKbytes
                 bulletin +=
                     """
                     |[Memory Stats]
-                    |Private-dirty dalvik heap (before GC): ${formatter.format(memBeforeGc - it)} KB
-                    |Private-dirty dalvik heap (after GC): ${formatter.format(memAfterGc - it)} KB
+                    |Private-dirty dalvik heap (before GC): ${
+                        formatter.format(appJvmHeapBeforeGc - it[0]) } KB
+                    |Private-dirty dalvik heap (after GC): ${
+                        formatter.format(appJvmHeapAfterGc - it[0]) } KB
+                    |Private-dirty native heap (before GC): ${
+                        formatter.format(appNativeHeapBeforeGc - it[1]) } KB
+                    |Private-dirty native heap (after GC): ${
+                        formatter.format(appNativeHeapAfterGc - it[1]) } KB
+                    |All(dalvik+native) heaps (before GC): ${
+                        formatter.format(allHeapsBeforeGc - it[2]) } KB
+                    |All(dalvik+native) heaps (after GC): ${
+                        formatter.format(allHeapsAfterGc - it[2]) } KB
                     |Heap dump: $hprofFilePath
                     ${platformNewline.repeat(1)}
                     """.trimMargin("|")

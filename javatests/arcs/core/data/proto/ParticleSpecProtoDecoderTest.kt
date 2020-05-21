@@ -1,10 +1,14 @@
 package arcs.core.data.proto
 
+import arcs.core.data.AccessPath
+import arcs.core.data.Claim
 import arcs.core.data.EntityType
 import arcs.core.data.FieldName
 import arcs.core.data.FieldType
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
+import arcs.core.data.InformationFlowLabel
+import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.ParticleSpec
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
@@ -116,6 +120,56 @@ class ParticleSpecProtoDecoderTest {
         assertThat(readerWriterSpec.location).isEqualTo("Nowhere")
         assertThat(readerWriterSpec.connections).isEqualTo(
             mapOf("read" to readConnectionSpec, "write" to writeConnectionSpec))
+    }
+
+    @Test
+    fun decodesParticleSpecProtoWithClaims() {
+        val readConnectionSpecProto = getHandleConnectionSpecProto("read", "READS", "Thing")
+        val writeConnectionSpecProto = getHandleConnectionSpecProto("write", "WRITES", "Thing")
+        val readerWriterSpecProto = """
+          name: "ReaderWriter"
+          connections { ${readConnectionSpecProto} }
+          connections { ${writeConnectionSpecProto} }
+          location: "Nowhere"
+          claims {
+            assume {
+              access_path {
+                particle_spec: "ReaderWriter"
+                handle_connection: "write"
+              }
+              predicate {
+                label {
+                  semantic_tag: "public"
+                }
+              }
+            }
+          }
+          claims {
+            derives_from {
+              target {
+                particle_spec: "ReaderWriter"
+                handle_connection: "write"
+              }
+              source {
+                particle_spec: "ReaderWriter"
+                handle_connection: "read"
+              }
+            }
+          }
+       """.trimIndent()
+        val readerWriterSpec = decodeParticleSpecProto(readerWriterSpecProto)
+        val readConnectionSpec = decodeHandleConnectionSpecProto(readConnectionSpecProto)
+        val writeConnectionSpec = decodeHandleConnectionSpecProto(writeConnectionSpecProto)
+        assertThat(readerWriterSpec.claims).containsExactly(
+            Claim.Assume(
+                AccessPath("ReaderWriter", writeConnectionSpec),
+                Predicate.Label(InformationFlowLabel.SemanticTag("public"))
+            ),
+            Claim.DerivesFrom(
+                target = AccessPath("ReaderWriter", writeConnectionSpec),
+                source = AccessPath("ReaderWriter", readConnectionSpec)
+            )
+        )
     }
 
     @Test

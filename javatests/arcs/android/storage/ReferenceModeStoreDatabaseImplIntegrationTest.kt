@@ -112,6 +112,8 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
             )
         ).isTrue()
 
+        activeStore.idle()
+
         logRule("ModelUpdate sent")
 
         val actor = activeStore.crdtKey
@@ -216,7 +218,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
                     actor,
                     VersionMap(actor to 1),
                     "age",
-                    CrdtEntity.ReferenceImpl(42.toReferencable().id)
+                    CrdtEntity.ReferenceImpl(42.0.toReferencable().id)
                 )
             )
         ).isTrue()
@@ -296,7 +298,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
             id = "an-id",
             singletons = mapOf(
                 "name" to "bob".toReferencable(),
-                "age" to 42.toReferencable()
+                "age" to 42.0.toReferencable()
             ),
             creationTimestamp = 10,
             expirationTimestamp = 20
@@ -307,6 +309,8 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         assertThat(
             activeStore.onProxyMessage(ProxyMessage.Operations(listOf(addOp), id = 1))
         ).isTrue()
+        activeStore.idle()
+
         // Check Bob from backing store.
         val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
         assertThat(storedBob.toRawEntity()).isEqualTo(bob)
@@ -417,7 +421,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
                 actor,
                 VersionMap(actor to 1),
                 "age",
-                CrdtEntity.Reference.buildReference(42.toReferencable())
+                CrdtEntity.Reference.buildReference(42.0.toReferencable())
             )
         )
 
@@ -594,7 +598,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         id = id,
         singletons = mapOf(
             "name" to name.toReferencable(),
-            "age" to age.toReferencable()
+            "age" to age.toDouble().toReferencable()
         )
     )
 

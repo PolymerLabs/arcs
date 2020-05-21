@@ -1,8 +1,8 @@
 @file:Suppress("EXPERIMENTAL_FEATURE_WARNING")
 
-package arcs.schematests
+package arcs.schematests.references
 
-import arcs.core.entity.awaitReady
+import arcs.core.entity.awaitReady;
 import arcs.jvm.host.TargetHost
 import kotlinx.coroutines.withContext
 

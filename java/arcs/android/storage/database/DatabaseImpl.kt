@@ -40,6 +40,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
+import arcs.core.entity.SchemaRegistry
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
@@ -57,6 +58,8 @@ import com.google.protobuf.InvalidProtocolBufferException
 import java.time.Duration
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.updateAndGet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -111,9 +114,8 @@ class DatabaseImpl(
         delete = PerformanceStatistics(Timer(JvmTime), *DatabaseCounters.DELETE_COUNTERS)
     )
 
-    private val schemaMutex = Mutex()
     /** Maps from schema hash to type ID (local copy of the 'types' table). */
-    private val schemaTypeMap by guardedBy(schemaMutex, ::loadTypes)
+    private val schemaTypeMap by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { atomic(loadTypes()) }
 
     private val clientMutex = Mutex()
     private var nextClientId by guardedBy(clientMutex, 1)
@@ -219,12 +221,21 @@ class DatabaseImpl(
                 "No VersionMap available for Entity at $storageKey"
             }
             val versionNumber = it.getInt(6)
-            val (singletons, collections) = getEntityFields(storageKeyId, counters, db)
+            val rawSingletons =
+                schema.fields.singletons.mapValues<FieldName, FieldType, Referencable?> { null }
+                    .toMutableMap()
+            val rawCollections =
+                schema.fields.collections.mapValues { emptySet<Referencable>() }
+                    .toMutableMap()
+            val (dbSingletons, dbCollections) = getEntityFields(storageKeyId, counters, db)
+            dbSingletons.forEach { (fieldName, value) -> rawSingletons[fieldName] = value }
+            dbCollections.forEach { (fieldName, value) -> rawCollections[fieldName] = value }
+
             return DatabaseData.Entity(
                 RawEntity(
                     id = entityId,
-                    singletons = singletons,
-                    collections = collections,
+                    singletons = rawSingletons,
+                    collections = rawCollections,
                     creationTimestamp = creationTimestamp,
                     expirationTimestamp = expirationTimestamp
                 ),
@@ -262,14 +273,8 @@ class DatabaseImpl(
                     entity_refs.version_map,
                     entity_refs.creation_timestamp,
                     entity_refs.expiration_timestamp
-                FROM storage_keys
-                LEFT JOIN entities
-                    ON entities.storage_key_id = storage_keys.id
-                LEFT JOIN fields
-                    ON fields.parent_type_id = storage_keys.value_id
-                LEFT JOIN field_values
-                    ON field_values.entity_storage_key_id = storage_keys.id
-                    AND field_values.field_id = fields.id
+                FROM field_values
+                JOIN fields ON field_values.field_id = fields.id
                 LEFT JOIN collection_entries
                     ON fields.is_collection = 1
                     AND collection_entries.collection_id = field_values.value_id
@@ -279,7 +284,7 @@ class DatabaseImpl(
                     ON fields.type_id = 2 AND text_primitive_values.id = field_value_id
                 LEFT JOIN entity_refs
                     ON fields.type_id > 2 AND entity_refs.id = field_value_id
-                WHERE storage_keys.id = ?
+                WHERE field_values.entity_storage_key_id = ?
             """.trimIndent(),
             arrayOf(storageKeyId.toString())
         ).forEach {
@@ -959,53 +964,67 @@ class DatabaseImpl(
         schema: Schema,
         db: SQLiteDatabase,
         counters: Counters? = null
-    ): TypeId = schemaMutex.withLock {
-        schemaTypeMap[schema.hash]?.let {
-            counters?.increment(DatabaseCounters.ENTITY_SCHEMA_CACHE_HIT)
-            return@withLock it
-        }
-        counters?.increment(DatabaseCounters.ENTITY_SCHEMA_CACHE_MISS)
-
-        return db.transaction {
-            counters?.increment(DatabaseCounters.INSERT_ENTITY_TYPE_ID)
+    ): TypeId = db.transaction {
+        var cacheHit = false
+        val schemaTypeId = schemaTypeMap.updateAndGet { currentMap ->
+            currentMap[schema.hash]?.let {
+                cacheHit = true
+                return@updateAndGet currentMap
+            }
+            cacheHit = false
             val content = ContentValues().apply {
                 put("name", schema.hash)
                 put("is_primitive", false)
             }
-            val schemaTypeId = insertOrThrow(TABLE_TYPES, null, content)
-
-            // TODO: If the transaction fails (elsewhere), we need to roll this back...
-            schemaTypeMap[schema.hash] = schemaTypeId
-
-            val insertFieldStatement = compileStatement(
-                """
-                    INSERT INTO fields (type_id, parent_type_id, name, is_collection)
-                    VALUES (?, ?, ?, ?)
-                """.trimIndent()
+            insertWithOnConflict(
+                TABLE_TYPES,
+                null,
+                content,
+                SQLiteDatabase.CONFLICT_IGNORE
             )
+            val id = rawQuery("SELECT id FROM types WHERE name = ?", arrayOf(schema.hash))
+                .forSingleResult { it.getLong(0) }!!
+            currentMap + (schema.hash to id)
+        }.get(schema.hash) ?: throw IllegalStateException(
+            "Unable to find or create a type ID for schema with hash: ${schema.hash}"
+        )
 
-            fun insertFieldBlock(
-                fieldName: String,
-                fieldType: FieldType,
-                isCollection: Boolean
-            ) {
-                counters?.increment(DatabaseCounters.INSERT_ENTITY_FIELD)
-                insertFieldStatement.apply {
-                    bindLong(1, getTypeId(fieldType, schemaTypeMap))
-                    bindLong(2, schemaTypeId)
-                    bindString(3, fieldName)
-                    bindBoolean(4, isCollection)
-                    executeInsert()
-                }
-            }
-            schema.fields.singletons.forEach { (fieldName, fieldType) ->
-                insertFieldBlock(fieldName, fieldType, isCollection = false)
-            }
-            schema.fields.collections.forEach { (fieldName, fieldType) ->
-                insertFieldBlock(fieldName, fieldType, isCollection = true)
-            }
-            schemaTypeId
+        if (cacheHit) {
+            counters?.increment(DatabaseCounters.ENTITY_SCHEMA_CACHE_HIT)
+            return@transaction schemaTypeId
+        } else {
+            counters?.increment(DatabaseCounters.ENTITY_SCHEMA_CACHE_MISS)
+            counters?.increment(DatabaseCounters.INSERT_ENTITY_TYPE_ID)
         }
+
+        val insertFieldStatement = compileStatement(
+            """
+                INSERT INTO fields (type_id, parent_type_id, name, is_collection)
+                VALUES (?, ?, ?, ?)
+            """.trimIndent()
+        )
+
+        suspend fun insertFieldBlock(
+            fieldName: String,
+            fieldType: FieldType,
+            isCollection: Boolean
+        ) {
+            counters?.increment(DatabaseCounters.INSERT_ENTITY_FIELD)
+            insertFieldStatement.apply {
+                bindLong(1, getTypeId(fieldType, db))
+                bindLong(2, schemaTypeId)
+                bindString(3, fieldName)
+                bindBoolean(4, isCollection)
+                executeInsert()
+            }
+        }
+        schema.fields.singletons.forEach { (fieldName, fieldType) ->
+            insertFieldBlock(fieldName, fieldType, isCollection = false)
+        }
+        schema.fields.collections.forEach { (fieldName, fieldType) ->
+            insertFieldBlock(fieldName, fieldType, isCollection = true)
+        }
+        schemaTypeId
     }
 
     /**
@@ -1347,13 +1366,16 @@ class DatabaseImpl(
     }
 
     /** Returns the type ID for the given [fieldType] if known, otherwise throws. */
-    private fun getTypeId(
+    private suspend fun getTypeId(
         fieldType: FieldType,
-        schemaTypeMap: Map<String, Long>
+        database: SQLiteDatabase
     ): TypeId = when (fieldType) {
         is FieldType.Primitive -> fieldType.primitiveType.ordinal.toLong()
-        is FieldType.EntityRef -> requireNotNull(schemaTypeMap[fieldType.schemaHash]) {
-            "Unknown type ID for schema with hash ${fieldType.schemaHash}"
+        is FieldType.EntityRef -> {
+            val schema = requireNotNull(SchemaRegistry.getSchema(fieldType.schemaHash)) {
+                "Unknown Schema with hash: ${fieldType.schemaHash} in SchemaRegistry"
+            }
+            getSchemaTypeId(schema, database)
         }
         // TODO(b/156003617)
         is FieldType.Tuple ->
@@ -1362,12 +1384,11 @@ class DatabaseImpl(
 
     /** Test-only version of [getTypeId]. */
     @VisibleForTesting
-    suspend fun getTypeIdForTest(fieldType: FieldType) = schemaMutex.withLock {
-        getTypeId(fieldType, schemaTypeMap)
-    }
+    suspend fun getTypeIdForTest(fieldType: FieldType) =
+        getTypeId(fieldType, writableDatabase)
 
     /** Loads all schema type IDs from the 'types' table into memory. */
-    private fun loadTypes(): MutableMap<String, TypeId> {
+    private fun loadTypes(): Map<String, TypeId> {
         val typeMap = mutableMapOf<String, TypeId>()
         readableDatabase.rawQuery(
             "SELECT name, id FROM types WHERE is_primitive = 0",

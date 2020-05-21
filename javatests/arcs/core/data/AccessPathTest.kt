@@ -27,7 +27,7 @@ class AccessPathTest {
     @Test
     fun prettyPrintAccessPathRoot() {
         assertThat("${AccessPath.Root.Handle(handle)}").isEqualTo("h:thing")
-        assertThat("${AccessPath.Root.HandleConnection(particle, connection)}")
+        assertThat("${AccessPath.Root.HandleConnection(particle, connectionSpec)}")
             .isEqualTo("hc:Reader.data")
         assertThat("${AccessPath.Root.HandleConnectionSpec("Reader", connectionSpec)}")
             .isEqualTo("hcs:Reader.data")
@@ -41,7 +41,7 @@ class AccessPathTest {
     @Test
     fun prettyPrintAccessPathNoSelectors() {
         assertThat("${AccessPath(handle)}").isEqualTo("h:thing")
-        assertThat("${AccessPath(particle, connection)}").isEqualTo("hc:Reader.data")
+        assertThat("${AccessPath(particle, connectionSpec)}").isEqualTo("hc:Reader.data")
     }
 
     @Test
@@ -53,9 +53,9 @@ class AccessPathTest {
         )
         assertThat("${AccessPath(handle, oneSelector)}").isEqualTo("h:thing.bar")
         assertThat("${AccessPath(handle, multipleSelectors)}").isEqualTo("h:thing.foo.bar")
-        assertThat("${AccessPath(particle, connection, oneSelector)}")
+        assertThat("${AccessPath(particle, connectionSpec, oneSelector)}")
             .isEqualTo("hc:Reader.data.bar")
-        assertThat("${AccessPath(particle, connection, multipleSelectors)}")
+        assertThat("${AccessPath(particle, connectionSpec, multipleSelectors)}")
             .isEqualTo("hc:Reader.data.foo.bar")
         assertThat("${AccessPath("Reader", connectionSpec, oneSelector)}")
             .isEqualTo("hcs:Reader.data.bar")

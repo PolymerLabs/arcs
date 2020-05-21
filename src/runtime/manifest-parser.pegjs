@@ -505,11 +505,15 @@ ParticleItem "a particle item"
   / ParticleCheckStatement
 
 ParticleClaimStatement
-  = 'claim' whiteSpace handle:lowerIdent whiteSpace expression:ParticleClaimExpression eolWhiteSpace
+  = 'claim' whiteSpace target:dottedFields whiteSpace expression:ParticleClaimExpression eolWhiteSpace
   {
+    const targetParts = target.split('.');
+    const handle = targetParts[0];
+    const fieldPath = targetParts.slice(1);
     return toAstNode<AstNode.ParticleClaimStatement>({
       kind: 'particle-trust-claim',
       handle,
+      fieldPath,
       expression,
     });
   }
@@ -742,7 +746,7 @@ ReferenceType
     });
   }
 
-MuxType 
+MuxType
   = '#' type:ParticleHandleConnectionType
   {
     return toAstNode<AstNode.MuxType>({
@@ -1533,7 +1537,7 @@ SchemaType
       return type;
   }
 
-SchemaCollectionType = '[' whiteSpace? schema:(SchemaReferenceType / SchemaPrimitiveType) whiteSpace? ']'
+SchemaCollectionType = '[' whiteSpace? schema:(SchemaReferenceType / SchemaPrimitiveType / KotlinPrimitiveType) whiteSpace? ']'
   {
     return toAstNode<AstNode.SchemaCollectionType>({
       kind: 'schema-collection',
@@ -1814,10 +1818,12 @@ unsafeLowerIdent "a lowercase identifier or keyword"
   { return text(); }
 fieldName "a field name (e.g. foo9)" // Current handle, formFactor or any entity field.
   = [a-z][a-z0-9_]i* { return text(); }
+dottedFields "a sequence of field names, descending into subfields (e.g. someField.someRef.someOtherField)."
+  = $ (fieldName ("." fieldName)*) // Note that a single fieldName matches too
 dottedName "a name conforming to the rules of an android app name, per https://developer.android.com/guide/topics/manifest/manifest-element.html#package"
   = $ (simpleName ("." simpleName)*) // Note that a single simpleName matches too
 simpleName "a name starting with a letter and containing letters, digits and underscores"
-  = [a-zA-Z][a-zA-Z0-9_]* {return text();}
+  = [a-zA-Z][a-zA-Z0-9_]* { return text(); }
 whiteSpace "one or more whitespace characters"
   = spaceChar+
 spaceChar "a 'plain' space (use whiteSpace instead)"

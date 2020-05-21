@@ -31,23 +31,31 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
 /** Tests for [StorageServiceManager]. */
-@Suppress("UNCHECKED_CAST")
+@Suppress("UNCHECKED_CAST", "EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
 class StorageServiceManagerTest {
+    @get:Rule
+    val log = LogRule()
+
     private suspend fun buildManager() = StorageServiceManager(coroutineContext)
     private val time = FakeTime()
     private val scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
@@ -115,13 +123,17 @@ class StorageServiceManagerTest {
             num = 1.0
             texts = setOf("1", "one")
         }
-        handle.store(entity).join()
+        withContext(handle.dispatcher) { handle.store(entity) }.join()
+        log("Wrote entity")
 
         val manager = buildManager()
         val deferredResult = DeferredResult(coroutineContext)
+        log("Clearing databases")
         manager.clearAll(deferredResult)
 
-        assertThat(deferredResult.await()).isTrue()
+        withTimeout(2000) {
+            assertThat(deferredResult.await()).isTrue()
+        }
 
         // Create a new handle (with new Entity manager) to confirm data is gone from storage.
         val newHandle = createSingletonHandle(storageKey)
@@ -136,19 +148,30 @@ class StorageServiceManagerTest {
         val entity3 = DummyEntity().apply { num = 3.0 }
 
         val handle = createCollectionHandle(storageKey)
-        time.millis = 1L
-        handle.store(entity1).join()
-        time.millis = 2L
-        handle.store(entity2).join()
-        time.millis = 3L
-        handle.store(entity3).join()
+        withTimeout(5000) {
+            time.millis = 1L
+            withContext(handle.dispatcher) {
+                handle.store(entity1)
+            }.join()
+            time.millis = 2L
+            withContext(handle.dispatcher) {
+                handle.store(entity2)
+            }.join()
+            time.millis = 3L
+            withContext(handle.dispatcher) {
+                handle.store(entity3)
+            }.join()
+        }
+        log("Wrote entities")
 
         val manager = buildManager()
         val deferredResult = DeferredResult(coroutineContext)
 
+        log("Clearing data created at t=2")
         manager.clearDataBetween(2,2, deferredResult)
 
-        assertThat(deferredResult.await()).isTrue()
+        withTimeout(2000) { assertThat(deferredResult.await()).isTrue() }
+        log("Clear complete, asserting")
 
         // Create a new handle (with new Entity manager) to confirm data is gone from storage.
         val newHandle = createCollectionHandle(storageKey)

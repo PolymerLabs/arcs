@@ -77,7 +77,8 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
   dependentConnections: HandleConnectionSpec[];
   pattern?: string;
   parentConnection: HandleConnectionSpec | null = null;
-  claims?: Claim[];
+  /** Maps from field path (including handle name, e.g. myHandle.someRef.someField) to list of claims. */
+  claims?: Map<string, Claim[]>;
   check?: Check;
   _annotations: AnnotationRef[];
 
@@ -515,6 +516,8 @@ export class ParticleSpec {
     const results: ParticleClaim[] = [];
     if (statements) {
       statements.forEach(statement => {
+        // TODO(b/156983427): Check that fieldPath is valid for the handle type.
+        const target = [statement.handle, ...statement.fieldPath].join('.');
         const handle = this.handleConnectionMap.get(statement.handle);
         if (!handle) {
           throw new Error(`Can't make a claim on unknown handle ${statement.handle}.`);
@@ -522,11 +525,13 @@ export class ParticleSpec {
         if (!handle.isOutput) {
           throw new Error(`Can't make a claim on handle ${statement.handle} (not an output handle).`);
         }
-        if (handle.claims) {
-          throw new Error(`Can't make multiple claims on the same output (${statement.handle}).`);
+        if (!handle.claims) {
+          handle.claims = new Map();
+        } else if (handle.claims.has(target)) {
+          throw new Error(`Can't make multiple claims on the same target (${target}).`);
         }
         const particleClaim = createParticleClaim(handle, statement, this.handleConnectionMap);
-        handle.claims = particleClaim.claims;
+        handle.claims.set(target, particleClaim.claims);
         results.push(particleClaim);
       });
     }

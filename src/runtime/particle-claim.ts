@@ -17,13 +17,20 @@ export enum ClaimType {
   DerivesFrom = 'derives-from',
 }
 
-/** A list of claims made by a particle on a specific handle. */
+/**
+ * A list of claims made by a particle on a specific handle (or on a field
+ * inside a handle).
+ */
 export class ParticleClaim {
-  constructor(readonly handle: HandleConnectionSpec, readonly claims: Claim[]) {}
+  constructor(
+      readonly handle: HandleConnectionSpec,
+      readonly fieldPath: string[],
+      readonly claims: Claim[]) {}
 
   toManifestString() {
     const manifestStrings = this.claims.map(claim => claim.toManifestString());
-    return `claim ${this.handle.name} ${manifestStrings.join(' and ')}`;
+    const target = [this.handle.name, ...this.fieldPath].join('.');
+    return `claim ${target} ${manifestStrings.join(' and ')}`;
   }
 }
 
@@ -81,5 +88,5 @@ export function createParticleClaim(
         throw new Error('Unknown claim type.');
     }
   });
-  return new ParticleClaim(handle, claims);
+  return new ParticleClaim(handle, astNode.fieldPath, claims);
 }
