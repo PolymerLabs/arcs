@@ -12,7 +12,7 @@ import path from 'path';
 import minimist from 'minimist';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
-import {SchemaGraph, SchemaNode} from './schema2graph.js';
+import {SchemaGraph, SchemaNode, SchemaSource} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 
 export type AddFieldOptions = Readonly<{
@@ -32,9 +32,9 @@ export interface ClassGenerator {
 }
 
 export class NodeAndGenerator {
+  node: SchemaNode;
   generator: ClassGenerator;
   hash: string;
-  fieldLength: number;
 }
 
 export abstract class Schema2Base {
@@ -91,19 +91,12 @@ export abstract class Schema2Base {
     // TODO: consider an option to generate one file per particle
     const classes: string[] = [];
     for (const particle of manifest.particles) {
-      if (this.opts.test_harness) {
-        classes.push(this.generateTestHarness(particle));
-        continue;
-      }
-
-      const graph = new SchemaGraph(particle, this.generateEntityClassName, this.generateAliasNames);
+      const graph = new SchemaGraph(particle);
       const nodes: NodeAndGenerator[] = [];
       // Generate one class definition per node in the graph.
       for (const node of graph.walk()) {
         const generator = this.getClassGenerator(node);
-        const fields = Object.entries(node.schema.fields);
-
-        for (const [field, descriptor] of fields) {
+        for (const [field, descriptor] of Object.entries(node.schema.fields)) {
           if (descriptor.kind === 'schema-primitive') {
             if (['Text', 'URL', 'Number', 'Boolean'].includes(descriptor.type)) {
               generator.addField({field, typeName: descriptor.type});
@@ -137,9 +130,13 @@ export abstract class Schema2Base {
           generator.generatePredicates();
         }
         const hash = await node.schema.hash();
-        const fieldLength = fields.length;
-        classes.push(generator.generate(hash, fieldLength));
-        nodes.push({generator, hash, fieldLength});
+        classes.push(generator.generate(hash, Object.entries(node.schema.fields).length));
+        nodes.push({node, generator, hash});
+      }
+
+      if (this.opts.test_harness) {
+        classes.push(this.generateTestHarness(particle, nodes.map(n => n.node)));
+        continue;
       }
 
       classes.push(this.generateParticleClass(particle, nodes));
@@ -161,19 +158,5 @@ export abstract class Schema2Base {
 
   abstract generateParticleClass(particle: ParticleSpec, nodes: NodeAndGenerator[]): string;
 
-  abstract generateTestHarness(particle: ParticleSpec): string;
-
-  generateEntityClassName(node: SchemaNode, i: number = null) {
-    if (i === null) {
-      return `${node.particleName}_${node.connections[0]}`;
-    }
-    return `${node.particleName}Internal${i}`;
-  }
-
-  generateAliasNames(node: SchemaNode): string[] {
-    if (node.connections.length === 1) {
-      return [];
-    }
-    return node.connections.map((s: string) => `${node.particleName}_${s}`);
-  }
+  abstract generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): string;
 }

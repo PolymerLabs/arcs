@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Schema2Base, ClassGenerator, AddFieldOptions, NodeAndGenerator} from './schema2base.js';
-import {SchemaNode} from './schema2graph.js';
+import {SchemaNode, SchemaSource} from './schema2graph.js';
 import {ParticleSpec, HandleConnectionSpec} from '../runtime/particle-spec.js';
 import {EntityType, CollectionType, Type} from '../runtime/type.js';
 import {KTExtracter} from '../runtime/refiner.js';
@@ -38,10 +38,6 @@ export interface KotlinTypeInfo {
   decodeFn: string;
   defaultVal: string;
   schemaType: string;
-}
-
-function entityTypeName(particle: string, connection: string) {
-  return `${particle}_${connection[0].toUpperCase() + connection.slice(1)}`;
 }
 
 function getTypeInfo(opts: {name: string, isCollection?: boolean, refClassName?: string, refSchemaHash?: string}): KotlinTypeInfo {
@@ -143,17 +139,6 @@ ${imports.join('\n')}
     return new KotlinGenerator(node, this.opts);
   }
 
-  generateEntityClassName(node: SchemaNode, i: number = null) {
-    if (i === null) {
-      return entityTypeName(node.particleName, node.connections[0]);
-    }
-    return `${node.particleName}Internal${i}`;
-  }
-
-  generateAliasNames(node: SchemaNode): string[] {
-    return node.connections.map((s: string) => `${node.particleName}_${s}`);
-  }
-
   /** Returns the container type of the handle, e.g. Singleton or Collection. */
   private handleContainerType(type: Type): string {
     return type.isCollectionType() ? 'Collection' : 'Singleton';
@@ -238,13 +223,14 @@ ${imports.join('\n')}
 
     nodeGenerators.forEach(nodeGenerator => {
       const kotlinGenerator = <KotlinGenerator>nodeGenerator.generator;
-      classes.push(kotlinGenerator.generateClasses(nodeGenerator.hash, nodeGenerator.fieldLength));
+      classes.push(kotlinGenerator.generateClasses(nodeGenerator.hash));
       typeAliases.push(kotlinGenerator.generateAliases(particleName));
     });
 
+    const nodes = nodeGenerators.map(ng => ng.node);
     for (const connection of particle.connections) {
       const handleName = connection.name;
-      const entityType = entityTypeName(particle.name, connection.name);
+      const entityType = SchemaNode.entityTypeForConnection(connection, nodes);
       const handleInterfaceType = this.handleInterfaceType(connection, entityType);
       if (this.opts.wasm) {
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityType})`);
@@ -268,7 +254,7 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
 `;
   }
 
-  generateTestHarness(particle: ParticleSpec): string {
+  generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): string {
     const particleName = particle.name;
     const handleDecls: string[] = [];
     const handleSpecs: string[] = [];
@@ -276,7 +262,7 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
     for (const connection of particle.connections) {
       connection.direction = 'reads writes';
       const handleName = connection.name;
-      const entityType = entityTypeName(particle.name, connection.name);
+      const entityType = SchemaNode.entityTypeForConnection(connection, nodes);
       const interfaceType = this.handleInterfaceType(connection, entityType);
       handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
       handleSpecs.push(this.handleSpec(handleName, entityType, connection));
@@ -323,10 +309,6 @@ class ${particleName}TestHarness<P : Abstract${particleName}>(
         mapOf(${ktUtils.joinWithIndents(entitySpecs, 4, 3)})
     )`;
     }
-  }
-
-  private prefixTypeForRuntime(type: string): string {
-    return this.opts.wasm ? `Wasm${type}` : type;
   }
 }
 
@@ -454,20 +436,19 @@ ${lines}
     }
   }
 
-  generate(schemaHash: string, fieldCount: number): string { return ''; }
+  generate(schemaHash: string): string { return ''; }
 
   generateAliases(particleName: string): string {
     const name = this.node.name;
-    const aliases = this.node.aliases;
-    const typeDecls = aliases.map(alias => `typealias ${alias} = Abstract${particleName}.${name}`);
+    const typeDecls = this.node.sources.map(s => `typealias ${s.fullName} = Abstract${particleName}.${name}`);
     return `${typeDecls.length ? typeDecls.join('\n') : ''}`;
   }
 
-  generateClasses(schemaHash: string, fieldCount: number): string {
+  generateClasses(schemaHash: string): string {
     const name = this.node.name;
 
+    const fieldCount = Object.keys(this.node.schema.fields).length;
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
-    const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';
 
     const classDef = `\
 @Suppress("UNCHECKED_CAST")
