@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -66,6 +67,7 @@ class ComputePeopleStatsTest {
             .that(harness.stats.fetch()?.medianAge).isEqualTo(20.0)
     }
 
+    @Ignore("b/157167236 - Deflake")
     @Test
     fun threePersonInput() = runBlocking {
         harness.start()

@@ -91,4 +91,10 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     override fun singleton_clearOnAClearDataWrittenByA(){
         super.singleton_clearOnAClearDataWrittenByA()
     }
+
+    @Ignore("b/157169542 - Deflake")
+    @Test
+    override fun collection_referenceLiveness() {
+        super.collection_referenceLiveness()
+    }
 }

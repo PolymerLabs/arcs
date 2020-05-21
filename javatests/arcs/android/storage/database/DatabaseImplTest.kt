@@ -28,6 +28,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
+import arcs.core.entity.SchemaRegistry
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
@@ -84,11 +85,11 @@ class DatabaseImplTest {
     @Test
     fun getTypeId_entity_throwsWhenMissing() = runBlockingTest {
         val exception = assertSuspendingThrows(IllegalArgumentException::class) {
-            database.getTypeIdForTest(FieldType.EntityRef("abc"))
+            database.getTypeIdForTest(FieldType.EntityRef("shouldnotexistanywhere"))
         }
         assertThat(exception)
             .hasMessageThat()
-            .isEqualTo("Unknown type ID for schema with hash abc")
+            .contains("Unknown Schema with hash:")
     }
 
     @Test
@@ -2106,7 +2107,7 @@ private fun newSchema(
     names = emptySet(),
     fields = fields,
     hash = hash
-)
+).also { SchemaRegistry.register(it) }
 
 /** Helper class for reading results from the fields table. */
 private data class FieldRow(
