@@ -216,7 +216,7 @@ ManifestStorage
   {
     items = optional(items, extractIndented, []);
     let description: string | null = null;
-    let claim: AstNode.ManifestStorageClaim | null = null;
+    const claims: AstNode.ManifestStorageClaim[] = [];
 
     for (const item of items) {
       if (item[0] === 'description') {
@@ -225,10 +225,7 @@ ManifestStorage
         }
         description = item[2];
       } else if (item['kind'] === 'manifest-storage-claim') {
-        if (claim) {
-          error('You cannot provide more than one claim.');
-        }
-        claim = item;
+        claims.push(item);
       } else {
         error(`Unknown ManifestStorageItem: ${item}`);
       }
@@ -247,7 +244,7 @@ ManifestStorage
       storageKey: source.storageKey || null,
       entities: source.entities || null,
       description,
-      claim,
+      claims,
     });
   }
 
@@ -367,10 +364,12 @@ ManifestStorageDescription
   = 'description' whiteSpace backquotedString eolWhiteSpace
 
 ManifestStorageClaim
-  = 'claim' whiteSpace 'is' whiteSpace tag:lowerIdent rest:(whiteSpace 'and' whiteSpace 'is' whiteSpace lowerIdent)* eolWhiteSpace
+  = 'claim' whiteSpace field:('field' whiteSpace dottedFields whiteSpace)? 'is' whiteSpace tag:lowerIdent rest:(whiteSpace 'and' whiteSpace 'is' whiteSpace lowerIdent)* eolWhiteSpace
   {
+    const fieldPath = field ? field[2].split('.') : [];
     return toAstNode<AstNode.ManifestStorageClaim>({
       kind: 'manifest-storage-claim',
+      fieldPath,
       tags: [tag, ...rest.map(item => item[5])],
     });
   }

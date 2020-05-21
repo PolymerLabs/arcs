@@ -3330,11 +3330,41 @@ resource SomeName
       `);
       assert.lengthOf(manifest.stores, 1);
       const store = manifest.stores[0];
-      assert.lengthOf(store.claims, 2);
-      assert.strictEqual(store.claims[0].tag, 'property1');
-      assert.strictEqual(store.claims[1].tag, 'property2');
+      assert.hasAllKeys(store.claims, ['']);
+      const claims = store.claims.get('');
+      assert.lengthOf(claims, 2);
+      assert.strictEqual(claims[0].tag, 'property1');
+      assert.strictEqual(claims[1].tag, 'property2');
 
       assert.include(manifest.toString(), '  claim is property1 and is property2');
+    });
+
+    it('data stores can make field-level claims', async () => {
+      const data = '{"root": {}, "locations": {}}';
+
+      const manifest = await parseManifest(`
+        store NobId of NobIdStore {nobId: Text, someRef: &Foo {foo: Text}} in NobIdJson
+          claim field nobId is property1 and is property2
+          claim field someRef.foo is property3
+        resource NobIdJson
+          start
+          ${data}
+      `);
+      assert.lengthOf(manifest.stores, 1);
+      const store = manifest.stores[0];
+      assert.hasAllKeys(store.claims, ['nobId', 'someRef.foo']);
+
+      const claims1 = store.claims.get('nobId');
+      assert.lengthOf(claims1, 2);
+      assert.strictEqual(claims1[0].tag, 'property1');
+      assert.strictEqual(claims1[1].tag, 'property2');
+
+      const claims2 = store.claims.get('someRef.foo');
+      assert.lengthOf(claims2, 1);
+      assert.strictEqual(claims2[0].tag, 'property3');
+
+      assert.include(manifest.toString(), '  claim field nobId is property1 and is property2');
+      assert.include(manifest.toString(), '  claim field someRef.foo is property3');
     });
 
     it(`doesn't allow mixing 'and' and 'or' operations without nesting`, async () => {

@@ -16,6 +16,7 @@ import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
 import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
 import {Type, ReferenceType} from '../../runtime/type.js';
 import {TypeChecker} from '../../runtime/recipe/type-checker.js';
+import {Handle} from '../../runtime/recipe/handle.js';
 
 export class ParticleNode extends Node {
   readonly inEdgesByName: Map<string, ParticleInput> = new Map();
@@ -79,7 +80,7 @@ export class ParticleInput implements Edge {
     this.connectionName = connection.name;
     this.label = `${particleNode.name}.${this.connectionName}`;
     this.connectionSpec = connection.spec;
-    this.modifier = FlowModifier.fromClaims(this, connection.handle.claims);
+    this.modifier = FlowModifier.fromClaims(this, getClaimsFromStore(connection.handle));
   }
 
   get type(): Type {
@@ -107,7 +108,7 @@ export class ParticleOutput implements Edge {
     this.label = `${particleNode.name}.${this.connectionName}`;
 
     // TODO(b/153354605): Support field-level claims.
-    const claims = getClaimsList(connection.spec);
+    const claims = getClaimsFromHandleConnection(connection.spec);
     this.modifier = FlowModifier.fromClaims(this, claims);
     this.derivesFrom = [];
   }
@@ -120,7 +121,7 @@ export class ParticleOutput implements Edge {
     assert(this.derivesFrom.length === 0, '"Derived from" edges have already been computed.');
 
     if (this.connectionSpec.claims) {
-      const claims = getClaimsList(this.connectionSpec);
+      const claims = getClaimsFromHandleConnection(this.connectionSpec);
       for (const claim of claims) {
         if (claim.type === ClaimType.DerivesFrom) {
           const derivedFromEdge = this.start.inEdgesByName.get(claim.parentHandle.name);
@@ -244,14 +245,25 @@ function isSchemaFieldCompatibleWithReference(field: any, target: ReferenceType<
   }
 }
 
-function getClaimsList(spec: HandleConnectionSpec): Claim[] {
+function getClaimsFromHandleConnection(spec: HandleConnectionSpec): Claim[] {
   if (!spec.claims || spec.claims.size === 0) {
     return [];
   }
+  return getClaimsList(spec.claims, spec.name);
+}
+
+function getClaimsFromStore(handle: Handle): Claim[] {
+  if (!handle.claims || handle.claims.size === 0) {
+    return [];
+  }
+  return getClaimsList(handle.claims, '');
+}
+
+function getClaimsList(claims: Map<string, Claim[]>, expectedTarget: string): Claim[] {
   // TODO(b/153354605): Add support for field-level claims, then delete this
   // function.
   assert(
-      spec.claims.size === 1 && spec.claims.keys().next().value === spec.name,
-      'Field-level claims yet not supported by DFA yet.');
-  return spec.claims.values().next().value;
+    claims.size === 1 && claims.keys().next().value === expectedTarget,
+    'Field-level claims yet not supported by DFA yet.');
+  return claims.values().next().value;
 }
