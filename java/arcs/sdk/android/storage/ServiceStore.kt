@@ -174,6 +174,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         return try {
             result.await()
         } catch (e: CrdtException) {
+            log.debug(e) { "CrdtException occurred in onProxyMessage" }
             false
         } finally {
             outgoingMessages.decrementAndGet()
