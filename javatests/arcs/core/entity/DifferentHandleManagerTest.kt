@@ -49,4 +49,10 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     override fun collection_referenceLiveness() {
         super.collection_referenceLiveness()
     }
+
+    @Ignore("b/157189120 - Deflake")
+    @Test
+    override fun collection_clearingElementsFromA_clearsThemFromB() {
+        super.collection_clearingElementsFromA_clearsThemFromB()
+    }
 }
