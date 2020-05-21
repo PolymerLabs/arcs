@@ -14,7 +14,6 @@ import android.content.Context
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
-import arcs.core.storage.database.DatabaseManager
 import arcs.core.util.TaggedLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -23,17 +22,18 @@ import kotlinx.coroutines.runBlocking
  * Implementation of a [Worker] which performs periodic scan of storage and deletes expired data.
  */
 class PeriodicCleanupTask(
-    appContext: Context,
+    val appContext: Context,
     workerParams: WorkerParameters
 ) : Worker(appContext, workerParams) {
 
     private val log = TaggedLog { WORKER_TAG }
-    private val databaseManager: DatabaseManager = AndroidSqliteDatabaseManager(appContext)
     init { log.debug { "Created." } }
 
     override fun doWork(): Result = runBlocking(Dispatchers.IO) {
         log.debug { "Running." }
+        val databaseManager = AndroidSqliteDatabaseManager(appContext)
         databaseManager.removeExpiredEntities().join()
+        databaseManager.close()
         log.debug { "Success." }
         // Indicate whether the task finished successfully with the Result
         Result.success()
