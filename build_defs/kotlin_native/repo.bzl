@@ -84,26 +84,26 @@ def _impl(repository_ctx):
     repository_ctx.execute(["mkdir", "-p", "{0}/dependencies".format(src_path)])
     repository_ctx.execute(["mkdir", "-p", "{0}/cache".format(src_path)])
 
-    plat = PLATFORMS[os_name]
+    platform = PLATFORMS[os_name]
 
     repository_ctx.download_and_extract(
-        url = _repo_tmpl.format(**plat),
+        url = _repo_tmpl.format(**platform),
         output = repository_ctx.path(
             "{0}/kotlin-native-{1}".format(
                 src_path,
                 KOTLIN_NATIVE_VERSION,
             ),
         ),
-        type = plat["ext"],
-        sha256 = plat["sha"],
+        type = platform["ext"],
+        sha256 = platform["sha"],
     )
 
     deps_names = []
-    for key, (dep, sha) in plat["deps"].items():
+    for key, (dep, sha) in platform["deps"].items():
         repository_ctx.download_and_extract(
             output = src_path,
-            url = "https://bintray.com/jetbrains/kotlin-native-dependencies/download_file?file_path={0}.{ext}".format(dep, **plat),
-            type = plat["ext"],
+            url = "https://bintray.com/jetbrains/kotlin-native-dependencies/download_file?file_path={0}.{ext}".format(dep, **platform),
+            type = platform["ext"],
             sha256 = sha,
         )
         deps_names.append(dep)

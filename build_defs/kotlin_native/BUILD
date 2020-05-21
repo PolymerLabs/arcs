@@ -3,6 +3,6 @@
 sh_binary(
     name = "kotlinc_wrapper",
     srcs = ["kotlinc_wrapper.sh"],
-    data = ["@kotlin_native_local//:all_artifacts"],
+    data = ["@kotlin_native_compiler//:all_artifacts"],
     visibility = ["//visibility:public"],
 )
