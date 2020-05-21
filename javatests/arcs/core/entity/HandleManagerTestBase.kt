@@ -745,7 +745,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_withTTL() = testRunner {
+    open fun collection_withTTL() = testRunner {
         fakeTime.millis = 0
         val handle = writeHandleManager.createCollectionHandle(ttl = Ttl.Days(2))
         val handleB = readHandleManager.createCollectionHandle()

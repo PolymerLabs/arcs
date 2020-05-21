@@ -114,4 +114,34 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
     override fun collection_entityDereference() {
         super.collection_entityDereference()
     }
+
+    @Ignore("b/157261807 - Deflake")
+    @Test
+    override fun singleton_clearOnAClearDataWrittenByB() {
+        super.singleton_clearOnAClearDataWrittenByB()
+    }
+
+    @Ignore("b/157261828 - Deflake")
+    @Test
+    override fun collection_dereferenceEntity_nestedReference() {
+        super.collection_dereferenceEntity_nestedReference()
+    }
+
+    @Ignore("b/157262951 - Deflake")
+    @Test
+    override fun collection_withTTL() {
+        super.collection_withTTL()
+    }
+
+    @Ignore("b/157263799 - Deflake")
+    @Test
+    override fun singleton_referenceLiveness() {
+        super.singleton_referenceLiveness()
+    }
+
+    @Ignore("b/157262953 - Deflake")
+    @Test
+    override fun singleton_dereferenceEntity() {
+        super.singleton_dereferenceEntity()
+    }
 }
