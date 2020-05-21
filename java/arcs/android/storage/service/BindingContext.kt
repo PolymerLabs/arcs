@@ -12,9 +12,11 @@
 package arcs.android.storage.service
 
 import androidx.annotation.VisibleForTesting
+import arcs.android.crdt.toProto
 import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyCallback
@@ -26,9 +28,12 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withTimeout
 
 /**
  * A [BindingContext] is used by a client of the [StorageService] to facilitate communication with a
@@ -57,7 +62,27 @@ class BindingContext(
     private val sendQueue = SendQueue()
 
     /** The local [CoroutineContext]. */
-    private val coroutineContext = parentCoroutineContext + CoroutineName("BindingContext-$id")
+    private val job = Job(parentCoroutineContext[Job])
+    private val coroutineContext =
+        parentCoroutineContext + job + CoroutineName("BindingContext-$id")
+
+    override fun idle(timeoutMillis: Long, resultCallback: IResultCallback) {
+        bindingContextStatisticsSink.traceTransaction("idle") {
+            bindingContextStatisticsSink.measure(coroutineContext + Dispatchers.IO) {
+                val activeStore = store.activate()
+                try {
+                    withTimeout(timeoutMillis) {
+                        activeStore.idle()
+                    }
+                    resultCallback.onResult(null)
+                } catch (e: Throwable) {
+                    resultCallback.onResult(
+                        CrdtException("Timeout exceeded for idle", e).toProto().toByteArray()
+                    )
+                }
+            }
+        }
+    }
 
     override fun getLocalData(callback: IStorageServiceCallback) {
         bindingContextStatisticsSink.traceTransaction("getLocalData") {

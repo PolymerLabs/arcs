@@ -65,7 +65,11 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         Random
     )
 
-    override suspend fun idle() = state.value.idle()
+    override suspend fun idle() {
+        state.value.idle()
+        // Wait for the WriteBack to become idle as well.
+        awaitIdle()
+    }
 
     override suspend fun getLocalData(): Data = synchronized(this) { localModel.data }
 

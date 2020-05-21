@@ -58,6 +58,8 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     ) = object : StorageCommunicationEndpoint<Data, Op, ConsumerData> {
         val id = on(callback)
 
+        override suspend fun idle() = this@ActiveStore.idle()
+
         override suspend fun onProxyMessage(
             message: ProxyMessage<Data, Op, ConsumerData>
         ) = this@ActiveStore.onProxyMessage(message.withId(id))

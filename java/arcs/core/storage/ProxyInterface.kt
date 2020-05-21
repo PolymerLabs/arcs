@@ -93,6 +93,15 @@ fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> ProxyCallback(
 
 /** Interface common to an [ActiveStore] and the PEC, used by the Storage Proxy. */
 interface StorageCommunicationEndpoint<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
+    /**
+     * Suspends until the endpoint has become idle (typically: when it is finished flushing data to
+     * storage media.
+     */
+    suspend fun idle()
+
+    /**
+     * Sends the storage layer a message from a [StorageProxy].
+     */
     suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean
 
     /** Signal to the endpoint provider that the client is finished using this endpoint. */

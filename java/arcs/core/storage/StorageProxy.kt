@@ -25,6 +25,7 @@ import kotlinx.atomicfu.updateAndGet
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -176,6 +177,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
             log.debug { "Sending operations to store" }
             store.onProxyMessage(ProxyMessage.Operations(listOf(op), null))
             log.debug { "Operations sent to store" }
+            withContext(Dispatchers.Default) { store.idle() }
+            log.debug { "Store became idle" }
             result.complete(true)
         }
 
