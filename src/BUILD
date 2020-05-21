@@ -1,7 +1,12 @@
 load("@npm_bazel_typescript//:index.bzl", "ts_library")
+load("@npm_bazel_rollup//:index.bzl", "rollup_bundle")
+
+
+package(default_visibility = ["//visibility:public"])
+
 
 ts_library(
-    name = "runtime",
+    name = "runtime_lib",
     srcs = glob(
         ["**/*.ts"],
         exclude = [
@@ -21,6 +26,7 @@ ts_library(
             # Exclude test code
             "**/storageNG/testing/**",
             "**/tests/**",
+            "**/time/tests/**",
             "**/manual_tests/**",
             "**/test/**",
             "**/keymgmt/testing/**",
@@ -38,7 +44,6 @@ ts_library(
             # Exclude tools
             "**/tools/**",
             "**/cli/**",
-            "tools/**",
 
             # Exclude server code
             "**/keymgmt/webcrypto.ts",
@@ -50,5 +55,19 @@ ts_library(
         ],
     ),  # + [":gen/runtime/manifest-parser.ts"],
     runtime = "nodejs",
-    tsconfig = "//:tsconfig"
+    tsconfig = "//:tsconfig",
+    deps = [
+        "@npm//chai"
+    ]
+)
+
+
+rollup_bundle(
+    name = "runtime",
+    srcs = glob(["platform/*.js"]) + [
+        "modalities/dom/components/xen/xen-state.js",
+        "modalities/dom/components/xen/xen-template.js",
+    ],
+    deps = [":runtime_lib"],
+    entry_point = ":runtime/runtime.ts",
 )

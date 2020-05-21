@@ -1,12 +1,12 @@
+load("@npm_bazel_typescript//:index.bzl", "ts_config")
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-filegroup(
+ts_config(
     name = "tsconfig",
-    srcs = [
-        "tsconfig.json",
-    ],
+    src = "tsconfig.json",
+    deps = ["config/tsconfig.base.json"]
 )
 
 filegroup(
@@ -56,7 +56,6 @@ filegroup(
         "concrete-storage/platform/*",
         "config/*",
     ]) + [
-        "//src/tools:all_srcs",
         "//tools:tools_srcs",
         ".eslintrc.json",
     ],

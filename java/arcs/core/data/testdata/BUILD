@@ -1,6 +1,7 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_gen",
+    "arcs_kt_schema",
     "arcs_manifest",
 )
 
@@ -16,16 +17,21 @@ filegroup(
     ),
 )
 
+arcs_kt_schema(
+    name = "schema_gen_test",
+    srcs = ["WriterReaderExample.arcs"],
+)
+
 arcs_kt_gen(
     name = "import_example_gen",
     srcs = ["ImportExample.arcs"],
     deps = ["Schemas.arcs"],
 )
 
-arcs_kt_gen(
-    name = "example_gen",
-    srcs = ["WriterReaderExample.arcs"],
-)
+#arcs_kt_gen(
+#    name = "example_gen",
+#    srcs = ["WriterReaderExample.arcs"],
+#)
 
 arcs_kt_gen(
     name = "ingest_process_retrieve_gen",

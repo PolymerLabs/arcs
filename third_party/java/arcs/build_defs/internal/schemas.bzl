@@ -116,19 +116,24 @@ def arcs_kt_schema(
             genrule_name = replace_arcs_suffix(src, "_genrule_" + ext)
             out = replace_arcs_suffix(src, "_GeneratedSchemas.%s.kt" % ext)
             outs.append(out)
-            _run_schema2wasm(
+            schema2pkg(
                 name = genrule_name,
-                src = src,
-                out = out,
-                deps = deps + data,
-                wasm = wasm,
-                language_flag = "--kotlin",
-                language_name = "Kotlin",
+                srcs = [src],
+                platform = ext,
             )
+#            _run_schema2wasm(
+#                name = genrule_name,
+#                src = src,
+#                out = out,
+#                deps = deps + data,
+#                wasm = wasm,
+#                language_flag = "--kotlin",
+#                language_name = "Kotlin",
+#            )
 
     arcs_kt_library(
         name = name,
-        srcs = outs,
+        srcs = [":" + genrule_name],
         platforms = platforms,
         deps = ARCS_SDK_DEPS,
         visibility = visibility,
@@ -141,15 +146,21 @@ def arcs_kt_schema(
             out = replace_arcs_suffix(src, "_TestHarness.kt")
             test_harness_outs.append(out)
 
-            _run_schema2wasm(
+#            _run_schema2wasm(
+#                name = replace_arcs_suffix(src, "_genrule_test_harness"),
+#                src = src,
+#                out = out,
+#                deps = deps,
+#                wasm = False,
+#                test_harness = True,
+#                language_flag = "--kotlin",
+#                language_name = "Kotlin",
+#            )
+            schema2pkg(
                 name = replace_arcs_suffix(src, "_genrule_test_harness"),
-                src = src,
-                out = out,
+                srcs = [src],
                 deps = deps,
-                wasm = False,
                 test_harness = True,
-                language_flag = "--kotlin",
-                language_name = "Kotlin",
             )
 
         arcs_kt_library(
@@ -164,6 +175,70 @@ def arcs_kt_schema(
         )
     return {"outs": outs, "deps": outdeps}
 
+
+def _schema2pkg_impl(ctx):
+
+    output_name = ctx.label.name + "_GeneratedSchemas.%s.kt" % ctx.attr.platform
+    out = ctx.actions.declare_file(output_name)
+
+    args = ctx.actions.args()
+
+    if ctx.attr.platform == "cpp":
+        args.add("--cpp")
+        if ctx.attr.platform != "wasm":
+            fail("'wasm' platform is only supported with 'kotlin' language.")
+        if ctx.attr.test_harness:
+            fail("'test_harness' is only supported with 'kotlin' language.")
+    else:
+        args.add("--kotlin")
+
+    if ctx.attr.platform == "wasm":
+        args.add("--wasm")
+
+    if ctx.attr.test_harness:
+        args.add("--test_harness")
+
+    args.add_all("--outdir", [out.dirname])
+    args.add_all("--outfile", [output_name])
+    args.add_all([src.path for src in ctx.files.srcs])
+
+    ctx.actions.run(
+        inputs = ctx.files.srcs,
+        outputs = [out],
+        arguments = [args],
+        executable = ctx.executable._compiler
+    )
+
+    return [DefaultInfo(files = depset([out]))]
+
+
+schema2pkg = rule(
+    implementation = _schema2pkg_impl,
+    attrs = {
+        "srcs": attr.label_list(allow_files = [".arcs"]),
+        "deps": attr.label_list(),
+        "platform": attr.string(
+            values = ["jvm", "wasm"],
+            default = "jvm",
+        ),
+        "lang": attr.string(
+            values = ["kotlin", "cpp"],
+            default = "kotlin",
+        ),
+        "test_harness": attr.bool(
+            default = False,
+            doc = """whether to output a particle test harness only (requires lang=kotlin)"""
+        ),
+        "_compiler": attr.label(
+            cfg = "host",
+            default = Label("//src/tools:schema2pkg"),
+            allow_files = True,
+            executable = True,
+        )
+    },
+    doc = """Stand-alone schema2* tool."""
+)
+
 def arcs_kt_gen(
         name,
         srcs,
@@ -173,6 +248,8 @@ def arcs_kt_gen(
         test_harness = True,
         visibility = None):
     """Generates Kotlin files for the given .arcs files.
+
+    TODO(alxr): Move to manifest.bzl file
 
     This is a convenience wrapper that combines all code generation targets based on arcs files.
 
