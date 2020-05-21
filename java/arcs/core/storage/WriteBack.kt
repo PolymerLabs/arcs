@@ -17,7 +17,10 @@ import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onCompletion
@@ -35,6 +38,9 @@ import kotlinx.coroutines.sync.withLock
  * being requested.
  */
 interface WriteBack {
+    /** A flow which can be collected to observe idle->busy->idle transitions. */
+    val writebackIdlenessFlow: Flow<Boolean>
+
     /**
      * Write-through: flush directly all data updates to the next storage layer.
      */
@@ -66,6 +72,7 @@ interface WriteBackFactory {
  * Write-back implementation for Arcs Stores.
  * It implements [Mutex] that provides the capability of temporary lock-down and resume.
  */
+@Suppress("EXPERIMENTAL_API_USAGE")
 @ExperimentalCoroutinesApi
 open class StoreWriteBack /* internal */ constructor(
     protocol: String,
@@ -86,6 +93,9 @@ open class StoreWriteBack /* internal */ constructor(
 
     // Internal asynchronous write-back channel for scheduling flush jobs.
     private val channel: Channel<suspend () -> Unit> = Channel(queueSize)
+    private val idlenessChannel = ConflatedBroadcastChannel(true)
+
+    override val writebackIdlenessFlow: Flow<Boolean> = idlenessChannel.asFlow()
 
     init {
         // One of write-back thread(s) will wake up and execute flush jobs in FIFO order
@@ -135,13 +145,23 @@ open class StoreWriteBack /* internal */ constructor(
     }
 
     private suspend inline fun enterFlushSection(job: () -> Unit = {}) {
-        withLock { if (++activeJobs == 1) awaitSignal.lock() }
+        withLock {
+            if (++activeJobs == 1) {
+                idlenessChannel.send(false)
+                awaitSignal.lock()
+            }
+        }
         job()
     }
 
     private suspend inline fun exitFlushSection(job: () -> Unit = {}) {
         job()
-        withLock { if (--activeJobs == 0) awaitSignal.unlock() }
+        withLock {
+            if (--activeJobs == 0) {
+                awaitSignal.unlock()
+                idlenessChannel.send(true)
+            }
+        }
     }
 
     companion object : WriteBackFactory {

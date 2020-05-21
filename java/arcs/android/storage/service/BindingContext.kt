@@ -77,7 +77,8 @@ class BindingContext(
                     resultCallback.onResult(null)
                 } catch (e: Throwable) {
                     resultCallback.onResult(
-                        CrdtException("Timeout exceeded for idle", e).toProto().toByteArray()
+                        CrdtException("Exception occurred while awaiting idle", e).toProto()
+                            .toByteArray()
                     )
                 }
             }
