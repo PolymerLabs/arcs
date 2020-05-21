@@ -37,6 +37,7 @@ arcs_kt_android_library(
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
+        "//java/arcs/core/util/performance",
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util",
         "//java/arcs/sdk:sdk-kt",
