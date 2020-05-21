@@ -1,5 +1,3 @@
-load("//build_defs/kotlin_native:repo.bzl", "get_dependencies")
-
 KtNativeInfo = provider(
     doc = "The minimum info about a Kotlin/Native dependency",
     fields = dict(
@@ -9,12 +7,6 @@ KtNativeInfo = provider(
 
 def _common_args(ctx, klibs):
     args = ctx.actions.args()
-
-    # Pass dependencies for all platforms to wrapper script
-    args.add("|".join([
-        ",".join([name for name, _ in get_dependencies(target)])
-        for target in ["windows", "macos", "linux"]
-    ]))
 
     # Arguments for kotlinc
     args.add_all([

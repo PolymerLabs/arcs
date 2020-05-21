@@ -135,7 +135,7 @@ emsdk_repo()
 
 load("//build_defs/kotlin_native:repo.bzl", "kotlin_native_repo")
 
-kotlin_native_repo()
+kotlin_native_repo(name = "kotlin_native_local")
 
 # Android SDK
 
