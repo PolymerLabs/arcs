@@ -37,9 +37,9 @@ class ReadWriteTest {
         runBlocking { arcs.stop() }
     }
 
-    private val l0 = Level0("l0-1")
-    private val l1 = Level1("l1-1", setOf(l0))
-    private val l2 = Level2("l2-1", setOf(l1))
+    private val l0 = MyLevel0("l0-1")
+    private val l1 = MyLevel1("l1-1", setOf(l0))
+    private val l2 = MyLevel2("l2-1", setOf(l1))
 
     @Ignore("b/156993103 - Deflake")
     @Test
