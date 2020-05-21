@@ -22,7 +22,7 @@ open class Plan(
     // TODO(cromwellian): add more fields as needed (e.g. RecipeName, etc for debugging)
     val particles: List<Particle>,
     val arcId: String? = null,
-    val name: String = "name"
+    val nameForLogging: String? = null
 ) {
     /**
      * A [Particle] consists of the information necessary to instantiate a particle
@@ -61,7 +61,8 @@ open class Plan(
     data class Partition(
         val arcId: String,
         val arcHost: String,
-        val particles: List<Particle>
+        val particles: List<Particle>,
+        val nameForLogging: String? = null
     ) {
         companion object {
             val particlesLens = lens(Partition::particles) { t, f -> t.copy(particles = f) }
