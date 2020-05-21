@@ -10,13 +10,28 @@ schema Foo
   bool: Boolean
   ref: &Bar
 
+  bt: Byte
+  shrt: Short
+  nt: Int
+  lng: Long
+  chr: Char
+  flt: Float
+  dbl: Double
+
   texts: [Text]
   nums: [Number]
   bools: [Boolean]
   refs: [&Bar]
+  bts: [Byte]
+  shrts: [Short]
+  nts: [Int]
+  lngs: [Long]
+  chrs: [Char]
+  flts: [Float]
+  dbls: [Double]
 
 particle EntitySpecParticle
-  foo: writes Foo {text, num, bool, ref, texts, nums, bools, refs}
+  foo: writes Foo {text, num, bool, ref, bt, shrt, nt, lng, chr, flt, dbl, texts, nums, bools, refs, bts, shrts, nts, lngs, chrs, flts, dbls}
 
   // Used to obtain references to Bar entities.
   bars: reads writes [Bar {value}]

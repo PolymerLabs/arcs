@@ -1537,7 +1537,7 @@ SchemaType
       return type;
   }
 
-SchemaCollectionType = '[' whiteSpace? schema:(SchemaReferenceType / SchemaPrimitiveType) whiteSpace? ']'
+SchemaCollectionType = '[' whiteSpace? schema:(SchemaReferenceType / SchemaPrimitiveType / KotlinPrimitiveType) whiteSpace? ']'
   {
     return toAstNode<AstNode.SchemaCollectionType>({
       kind: 'schema-collection',

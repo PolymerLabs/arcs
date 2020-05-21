@@ -126,7 +126,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
         assertThat(capturedBob.rawEntity.singletons).containsExactly(
             "name", "bob".toReferencable(),
-            "age", 42.0.toReferencable()
+            "age", 42.toReferencable()
         )
         assertThat(capturedBob.rawEntity.collections).isEmpty()
     }

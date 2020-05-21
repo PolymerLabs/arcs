@@ -50,6 +50,13 @@ function getTypeInfo(opts: {name: string, isCollection?: boolean, refClassName?:
     'URL': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
     'Number': {type: 'Double',  decodeFn: 'decodeNum()',  defaultVal: '0.0', schemaType: 'FieldType.Number'},
     'Boolean': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false', schemaType: 'FieldType.Boolean'},
+    'Byte': {type: 'Byte', decodeFn: 'decodeByte()', defaultVal: '0.toByte()', schemaType: 'FieldType.Byte'},
+    'Short': {type: 'Short', decodeFn: 'decodeShort()', defaultVal: '0.toShort()', schemaType: 'FieldType.Short'},
+    'Int': {type: 'Int', decodeFn: 'decodeInt()', defaultVal: '0', schemaType: 'FieldType.Int'},
+    'Long': {type: 'Long', decodeFn: 'decodeLong()', defaultVal: '0L', schemaType: 'FieldType.Long'},
+    'Char': {type: 'Char', decodeFn: 'decodeChar()', defaultVal: `'\u0000'`, schemaType: 'FieldType.Char'},
+    'Float': {type: 'Float', decodeFn: 'decodeFloat()', defaultVal: '0.0f', schemaType: 'FieldType.Float'},
+    'Double': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0', schemaType: 'FieldType.Double'},
     'Reference': {
       type: `Reference<${opts.refClassName}>`,
       decodeFn: null,
