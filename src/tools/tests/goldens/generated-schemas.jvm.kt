@@ -316,11 +316,16 @@ abstract class AbstractGold : BaseParticle() {
                 query = null
             )
 
+            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+                emptyMap()
+
             init {
-                SchemaRegistry.register(this)
+                SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = Foo().apply { deserialize(data) }
+            override fun deserialize(data: RawEntity) = Foo().apply {
+                deserialize(data, nestedEntitySpecs)
+            }
         }
     }
 
