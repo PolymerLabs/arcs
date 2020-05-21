@@ -71,7 +71,7 @@ filegroup(
 def _impl(repository_ctx):
     os_name = to_platform(repository_ctx.os.name)
 
-    src_path = repository_ctx.path()
+    src_path = repository_ctx.path(repository_ctx.attr.path)
 
     repository_ctx.execute(["mkdir", "-p", src_path])
     repository_ctx.execute(["mkdir", "-p", "{0}/dependencies".format(src_path)])
@@ -110,6 +110,9 @@ def _impl(repository_ctx):
 
 kotlin_native_repo = repository_rule(
     implementation = _impl,
+    attrs = {
+        "path": attr.string(default = ""),
+    },
     doc = """Downloads the kotlin-native release and "installs" the kotlinc compiler.
 
     Kotlin-Native is used to compile Kotlin into Wasm. This rule downloads the latest
