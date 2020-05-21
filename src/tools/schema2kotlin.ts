@@ -144,9 +144,6 @@ ${imports.join('\n')}
   }
 
   generateEntityClassName(node: SchemaNode, i: number = null) {
-    if (node.uniqueSchemaName && node.schema.name) {
-      return node.schema.name;
-    }
     if (i === null) {
       return entityTypeName(node.particleName, node.connections[0]);
     }
@@ -247,16 +244,7 @@ ${imports.join('\n')}
 
     for (const connection of particle.connections) {
       const handleName = connection.name;
-      const capitalHandleName = connection.name[0].toUpperCase() + connection.name.slice(1);
-      const nodeGenerator = nodeGenerators.find(generator => {
-        const kotlinGenerator = <KotlinGenerator>generator.generator;
-        return kotlinGenerator.node.connections.includes(capitalHandleName);
-      });
-      let entityType = entityTypeName(particle.name, connection.name);
-      if (nodeGenerator) {
-        const kotlinGenerator = <KotlinGenerator>nodeGenerator.generator;
-        entityType = kotlinGenerator.node.name;
-      }
+      const entityType = entityTypeName(particle.name, connection.name);
       const handleInterfaceType = this.handleInterfaceType(connection, entityType);
       if (this.opts.wasm) {
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityType})`);

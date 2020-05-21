@@ -27,7 +27,6 @@ export class SchemaNode {
   aliases: string[] = [];
   particleName: string;
   connections: string[] = [];
-  uniqueSchemaName: boolean;
 
   // All schemas that can be sliced to this one.
   descendants = new Set<SchemaNode>();
@@ -45,7 +44,6 @@ export class SchemaNode {
     this.schema = schema;
     this.connections.push(connectionName);
     this.particleName = particleName;
-    this.uniqueSchemaName = true;
   }
 }
 
@@ -107,11 +105,6 @@ export class SchemaGraph {
         }
       }
 
-      const sameSchema = this.nodes.find(n => schema.name === n.schema.name);
-      if (sameSchema) {
-        node.uniqueSchemaName = false;
-        sameSchema.uniqueSchemaName = false;
-      }
       this.nodes.push(node);
     }
 
