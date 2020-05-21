@@ -28,16 +28,19 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.testutil.WriteBackForTesting
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -50,11 +53,13 @@ class BindingContextTest {
     @get:Rule
     val log = LogRule()
 
+    private lateinit var bindingContextScope: CoroutineScope
     private lateinit var store: Store<CrdtCount.Data, CrdtCount.Operation, Int>
     private lateinit var storageKey: StorageKey
 
     @Before
     fun setUp() {
+        bindingContextScope = CoroutineScope(Dispatchers.Default + Job())
         RamDiskDriverProvider()
         RamDisk.clear()
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
@@ -67,17 +72,22 @@ class BindingContextTest {
         )
     }
 
-    private suspend fun buildContext(
+    @After
+    fun tearDown() {
+        bindingContextScope.cancel()
+    }
+
+    private fun buildContext(
         callback: suspend (StorageKey, ProxyMessage<*, *, *>) -> Unit = { _, _ -> }
     ) = BindingContext(
         store,
-        coroutineContext,
+        bindingContextScope.coroutineContext,
         BindingContextStatsImpl(),
         callback
     )
 
     @Test
-    fun getLocalData_fetchesLocalData() = runBlocking<Unit> {
+    fun getLocalData_fetchesLocalData() = runBlocking {
         val bindingContext = buildContext()
         val callback = DeferredProxyCallback()
         bindingContext.getLocalData(callback)
@@ -104,7 +114,6 @@ class BindingContextTest {
 
         // Should contain a single entry.
         assertThat(model.values).containsExactly("alice", 1).inOrder()
-        coroutineContext[Job.Key]?.cancelChildren()
     }
 
     @Test
@@ -122,13 +131,10 @@ class BindingContextTest {
         val data = store.activate().getLocalData()
         assertThat(data.versionMap).isEqualTo(VersionMap("alice" to 10))
         assertThat(data.values).containsExactly("alice", 10)
-
-        coroutineContext[Job.Key]?.cancelChildren()
-        Unit
     }
 
     @Test
-    fun registerCallback_registersCallbackWithStore() = runBlocking<Unit> {
+    fun registerCallback_registersCallbackWithStore() = runBlocking {
         val bindingContext = buildContext()
         val callback = DeferredProxyCallback()
         bindingContext.registerCallback(callback)
@@ -154,8 +160,6 @@ class BindingContextTest {
         }
         log("callback heard")
         assertThat(operations.operations).isEqualTo(message.operations)
-
-        coroutineContext[Job.Key]?.cancelChildren()
     }
 
     @Test
@@ -181,7 +185,6 @@ class BindingContextTest {
         assertThat(store.activate().onProxyMessage(message)).isTrue()
 
         assertThat(callback.isCompleted).isEqualTo(false)
-        coroutineContext[Job.Key]?.cancelChildren()
     }
 
     @Test
@@ -203,8 +206,5 @@ class BindingContextTest {
 
         assertThat(receivedKey).isEqualTo(storageKey)
         assertThat(receivedMessage).isEqualTo(message)
-
-        coroutineContext[Job.Key]?.cancelChildren()
-        Unit
     }
 }
