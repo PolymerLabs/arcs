@@ -137,7 +137,6 @@ Manifest
     const result: AstNode.ManifestItem[] = items.map(item => {
       const annotations = item[0];
       const manifestItem = item[2];
-      manifestItem.triggers = annotations.triggerSet;
       manifestItem.annotation = annotations.simpleAnnotation;
       manifestItem.annotationRefs = annotations.annotationRefs;
       return manifestItem;
@@ -158,24 +157,15 @@ ManifestItem
   / Resource
   / AnnotationNode
 
-// This is the full "@trigger\n foo bar" annotation combo OR simple annotation.
-Annotation = triggerSet:(SameIndent Trigger eolWhiteSpace)* simpleAnnotation:(SameIndent SimpleAnnotation eolWhiteSpace)? annotationRefs:(SameIndent AnnotationRef eolWhiteSpace)*
+// This is a simple annotation (deprecated) or annotation references.
+Annotation = simpleAnnotation:(SameIndent SimpleAnnotation eolWhiteSpace)? annotationRefs:(SameIndent AnnotationRef eolWhiteSpace)*
   {
     return toAstNode<AstNode.Annotation>({
       kind: 'annotation',
-      triggerSet: triggerSet.map(trigger => trigger[1]),
       simpleAnnotation: optional(simpleAnnotation, s => s[1], null),
       annotationRefs: annotationRefs.map(aRef => aRef[1]),
     });
   }
-
-// TODO(#5291): deprecate
-Trigger "a trigger for a recipe"
-  = '@trigger' eolWhiteSpace Indent pairs:(eolWhiteSpace? SameIndent simpleName whiteSpace dottedName)+ {
-  return pairs.map(pair => {
-    return [pair[2], pair[4]];
-  });
-}
 
 SimpleAnnotation "an annotation (e.g. @foo)"
   = '@' annotation:lowerIdent { return annotation; }

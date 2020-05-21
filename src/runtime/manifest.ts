@@ -853,9 +853,6 @@ ${e.message}
     if (recipeItem.annotation) {
       recipe.annotation = recipeItem.annotation;
     }
-    if (recipeItem.triggers) {
-      recipe.triggers = recipeItem.triggers;
-    }
     recipe.annotations = Manifest._buildAnnotationRefs(manifest, recipeItem.annotationRefs);
 
     if (recipeItem.verbs) {

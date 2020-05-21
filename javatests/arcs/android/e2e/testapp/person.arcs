@@ -10,9 +10,7 @@ particle ReadPerson in 'arcs.android.e2e.testapp.PersonHostService.ReadPerson'
 particle WritePerson in 'arcs.android.e2e.testapp.PersonHostService.WritePerson'
   person: writes Person {name}
 
-@trigger
-  launch startup
-  arcId personArc
+@arcId('personArc')
 recipe PersonRecipe
   recipePerson: create
 
@@ -22,9 +20,7 @@ recipe PersonRecipe
   ReadPerson
     person: reads recipePerson
 
-@trigger
-  launch startup
-  arcId persistentPersonArc
+@arcId('persistentPersonArc')
 recipe PersistentPersonRecipe
   persistentRecipePerson: create persistent 'person'
 
