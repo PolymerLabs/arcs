@@ -55,4 +55,28 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     override fun collection_clearingElementsFromA_clearsThemFromB() {
         super.collection_clearingElementsFromA_clearsThemFromB()
     }
+
+    @Ignore("b/157266634 - Deflake")
+    @Test
+    override fun collection_noTTL() {
+        super.collection_noTTL()
+    }
+
+    @Ignore("b/157266865 - Deflake")
+    @Test
+    override fun singleton_referenceLiveness() {
+        super.singleton_referenceLiveness()
+    }
+
+    @Ignore("b/157266455 - Deflake")
+    @Test
+    override fun singleton_clearOnAClearDataWrittenByB() {
+        super.singleton_clearOnAClearDataWrittenByB()
+    }
+
+    @Ignore("b/157266985 - Deflake")
+    @Test
+    override fun singleton_dereferenceEntity() {
+        super.singleton_dereferenceEntity()
+    }
 }
