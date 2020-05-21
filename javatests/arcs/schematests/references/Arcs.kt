@@ -86,42 +86,42 @@ class Arcs(
         }
     }
 
-    fun all0(): List<Level0> {
+    fun all0(): List<MyLevel0> {
         return runBlocking {
             startIfNot()
             arcHost.reader0.read()
         }
     }
 
-    fun put0(item: Level0) {
+    fun put0(item: MyLevel0) {
         runBlocking {
             startIfNot()
             arcHost.writer0.write(item)
         }
     }
 
-    fun all1(): List<Level1> {
+    fun all1(): List<MyLevel1> {
         return runBlocking {
             startIfNot()
             arcHost.reader1.read()
         }
     }
 
-    fun put1(item: Level1) {
+    fun put1(item: MyLevel1) {
         runBlocking {
             startIfNot()
             arcHost.writer1.write(item)
         }
     }
 
-    fun all2(): List<Level2> {
+    fun all2(): List<MyLevel2> {
         return runBlocking {
             startIfNot()
             arcHost.reader2.read()
         }
     }
 
-    fun put2(item: Level2) {
+    fun put2(item: MyLevel2) {
         runBlocking {
             startIfNot()
             arcHost.writer2.write(item)
