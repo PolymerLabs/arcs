@@ -79,4 +79,10 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     override fun singleton_dereferenceEntity() {
         super.singleton_dereferenceEntity()
     }
+
+    @Ignore("b/157269790 - Deflake")
+    @Test
+    override fun collection_addingToA_showsUpInB() {
+        super.collection_addingToA_showsUpInB()
+    }
 }
