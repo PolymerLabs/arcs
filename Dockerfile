@@ -67,7 +67,6 @@ RUN npm install
 COPY tools/bazelisk* tools/
 COPY build_defs/emscripten build_defs/emscripten
 COPY build_defs/kotlin_native build_defs/kotlin_native
-COPY emscripten_cache emscripten_cache
 COPY .bazelignore \
      .bazelversion \
      WORKSPACE \
