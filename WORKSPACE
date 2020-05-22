@@ -54,8 +54,9 @@ CLIKT_VERSION = "2.2.0"
 UI_AUTOMATOR_VERSION = "2.2.0"
 
 # NOTE: Artifacts are being pinned.  Whenever `maven_install` is changed, the
-# `maven_install.json` file should be updated. See the following page:
-# https://github.com/bazelbuild/rules_jvm_external#updating-maven_installjson
+# `maven_install.json` file should be updated by running the following cmd:
+#    $ bazel run @unpinned_maven//:pin.
+# (https://github.com/bazelbuild/rules_jvm_external#updating-maven_installjson)
 maven_install(
     artifacts = [
         "androidx.appcompat:appcompat:1.1.0",
