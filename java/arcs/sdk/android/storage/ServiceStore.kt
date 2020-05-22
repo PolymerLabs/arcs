@@ -51,6 +51,7 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -107,14 +108,23 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private val scope = CoroutineScope(coroutineContext)
     private var storageService: IStorageService? = null
     private var serviceConnection: StorageServiceConnection? = null
-    private var channel = Channel<suspend () -> Unit>(Channel.UNLIMITED)
+    private var channel: Channel<suspend () -> Unit>? = null
+    private var flow: Flow<suspend () -> Unit>? = null
     private val outgoingMessages = atomic(0)
 
     init {
         lifecycle.addObserver(this)
-        channel.consumeAsFlow()
-            .onEach { it() }
-            .launchIn(scope)
+        initChannel()
+    }
+
+    // Channel has an internal queue which can retain work if stopped
+    // So we need to create fresh instances when off() invoked
+    private fun initChannel() {
+        synchronized(this) {
+            channel?.let { it.cancel() }
+            channel = Channel(Channel.UNLIMITED)
+            channel!!.consumeAsFlow().onEach { it() }.launchIn(scope)
+        }
     }
 
     override suspend fun idle() = coroutineScope<Unit> {
@@ -159,15 +169,27 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     override fun off(callbackToken: Int) {
         val service = checkNotNull(storageService)
         runBlocking {
-            channel.send { service.unregisterCallback(callbackToken) }
+            send {
+                service.unregisterCallback(callbackToken)
+                initChannel()
+            }
         }
+    }
+
+    private suspend fun send(block: suspend () -> Unit) = requireNotNull(channel) {
+        "Channel is not initialized"
+    }.apply {
+        require(!isClosedForSend) {
+            "Channel is closed"
+        }
+        send(block)
     }
 
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean {
         val service = checkNotNull(storageService)
         val result = DeferredResult(coroutineContext)
         outgoingMessages.incrementAndGet()
-        channel.send {
+        send {
             service.sendProxyMessage(message.toProto().toByteArray(), result)
         }
         // Just return false if the message couldn't be applied.
@@ -201,6 +223,8 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     fun onLifecycleDestroyed() {
         serviceConnection?.disconnect()
         storageService = null
+        channel?.let { it.cancel() }
+        channel = null
         scope.coroutineContext[Job.Key]?.cancelChildren()
     }
 

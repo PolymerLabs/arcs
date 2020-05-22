@@ -118,6 +118,9 @@ open class HandleManagerTestBase {
         //  test process cancellable/stoppable, even when we cross scopes into a BindingContext or
         //  over to other RamDisk listeners.
         delay(100) // Let things calm down.
+        readHandleManager.close()
+        writeHandleManager.close()
+        delay(100)
     }
 
     @Test
