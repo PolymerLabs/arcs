@@ -152,4 +152,10 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     override fun collection_withTTL() {
         super.collection_withTTL()
     }
+
+    @Ignore("b/157297299 - Deflake")
+    @Test
+    override fun collection_noTTL() {
+        super.collection_noTTL()
+    }
 }
