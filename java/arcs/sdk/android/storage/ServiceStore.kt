@@ -40,6 +40,7 @@ import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.StorageServiceConnection
 import kotlin.coroutines.CoroutineContext
+import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -189,9 +190,13 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean {
         val service = checkNotNull(storageService)
         val result = DeferredResult(coroutineContext)
+        // Trick: make an indirect access to the message to keep kotlin flow
+        // from holding the entire message that might encapsulate a large size data.
+        val messageRef: AtomicRef<ProxyMessage<Data, Op, ConsumerData>?> = atomic(message)
         outgoingMessages.incrementAndGet()
         send {
-            service.sendProxyMessage(message.toProto().toByteArray(), result)
+            service.sendProxyMessage(messageRef.value!!.toProto().toByteArray(), result)
+            messageRef.value = null
         }
         // Just return false if the message couldn't be applied.
         return try {
