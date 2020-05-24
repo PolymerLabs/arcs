@@ -145,7 +145,7 @@ export interface ManifestStorage extends BaseNode {
   source: string;
   origin: 'file' | 'resource' | 'storage' | 'inline';
   description: string|null;
-  claim: ManifestStorageClaim;
+  claims: ManifestStorageClaim[];
   storageKey: string|null;
   entities: ManifestStorageInlineEntity[]|null;
   annotationRefs?: AnnotationRef[];
@@ -155,6 +155,7 @@ export type ManifestStorageType = SchemaInline | CollectionType | BigCollectionT
 
 export interface ManifestStorageClaim extends BaseNode {
   kind: 'manifest-storage-claim';
+  fieldPath: string[];
   tags: string[];
 }
 
