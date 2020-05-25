@@ -103,4 +103,10 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     override fun singleton_writeAndOnUpdate() {
         super.singleton_writeAndOnUpdate()
     }
+
+    @Ignore("b/157392315 - Deflake")
+    @Test
+    override fun collection_writeAndReadBack() {
+        super.collection_writeAndReadBack()
+    }
 }

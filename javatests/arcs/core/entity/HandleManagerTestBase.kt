@@ -500,7 +500,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_writeAndReadBack() = testRunner {
+    open fun collection_writeAndReadBack() = testRunner {
         val writeHandle = writeHandleManager.createCollectionHandle()
         val readHandle = readHandleManager.createCollectionHandle()
         val allHeard = Job()
