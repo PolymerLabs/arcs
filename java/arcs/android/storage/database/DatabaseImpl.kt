@@ -261,9 +261,11 @@ class DatabaseImpl(
         val singletons = mutableMapOf<FieldName, Referencable?>()
         val collections = mutableMapOf<FieldName, MutableSet<Referencable>>()
 
-        val numeric_types = "(${PrimitiveType.Number.ordinal}, " +
-            "${PrimitiveType.Float.ordinal}, " +
-            "${PrimitiveType.Double.ordinal})"
+        val numeric_types = listOf(
+            PrimitiveType.Number.ordinal,
+            PrimitiveType.Float.ordinal,
+            PrimitiveType.Double.ordinal
+        ).joinToString(prefix = "(", postfix = ")")
 
         db.rawQuery(
             """
@@ -311,6 +313,7 @@ class DatabaseImpl(
                 PrimitiveType.Short.ordinal -> it.getNullableShort(3)?.toReferencable()
                 PrimitiveType.Int.ordinal -> it.getNullableInt(3)?.toReferencable()
                 PrimitiveType.Long.ordinal -> it.getNullableLong(3)?.toReferencable()
+                PrimitiveType.Char.ordinal -> it.getNullableInt(3)?.toChar()?.toReferencable()
                 PrimitiveType.Float.ordinal -> it.getNullableFloat(5)?.toReferencable()
                 PrimitiveType.Double.ordinal -> it.getNullableDouble(5)?.toReferencable()
                 else -> if (it.isNull(6)) {
@@ -862,7 +865,7 @@ class DatabaseImpl(
             // Clean up unused values as they can contain sensitive data.
             // This query will return all field value ids being referenced by collection or 
             // singleton fields.
-            val usedFieldIdsQuery =
+            fun usedFieldIdsQuery(typeIds: List<Int>) =
                 """
                     SELECT
                         CASE
@@ -875,18 +878,24 @@ class DatabaseImpl(
                     LEFT JOIN collection_entries
                         ON fields.is_collection = 1
                         AND collection_entries.collection_id = field_values.value_id
-                    WHERE fields.type_id = ?
+                    WHERE fields.type_id in (${typeIds.map { it.toString() }.joinToString()})
                 """.trimIndent()
 
             delete(
                 TABLE_NUMBER_PRIMITIVES,
-                "id NOT IN ($usedFieldIdsQuery)",
-                arrayOf(PrimitiveType.Number.ordinal.toString())
+                "id NOT IN (${usedFieldIdsQuery(
+                    listOf(
+                        PrimitiveType.Number.ordinal,
+                        PrimitiveType.Float.ordinal,
+                        PrimitiveType.Double.ordinal
+                    )
+                )})",
+                arrayOf()
             )
             delete(
                 TABLE_TEXT_PRIMITIVES,
-                "id NOT IN ($usedFieldIdsQuery)",
-                arrayOf(PrimitiveType.Text.ordinal.toString())
+                "id NOT IN (${usedFieldIdsQuery(listOf(PrimitiveType.Text.ordinal))})",
+                arrayOf()
             )
 
             // Remove all references to these entities.
@@ -1362,8 +1371,13 @@ class DatabaseImpl(
         }
         if (typeId.toInt() == PrimitiveType.Long.ordinal) {
             counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
-            require(value is Long) { "Expected value to be a Float." }
+            require(value is Long) { "Expected value to be a Long." }
             return value
+        }
+        if (typeId.toInt() == PrimitiveType.Char.ordinal) {
+            counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
+            require(value is Char) { "Expected value to be a Char." }
+            return value.toLong()
         }
         return db.transaction {
             val (tableName, valueStr) = when (typeId.toInt()) {
