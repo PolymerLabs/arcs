@@ -60,15 +60,15 @@ object DatabaseCounters {
     const val INSERT_SINGLETON_ENTRY = "insert_singleton_entry"
 
     /* Primitive Counters */
-    const val GET_BOOLEAN_VALUE_ID = "get_boolean_value_id"
+    const val GET_INLINE_VALUE_ID = "get_inline_value_id"
     const val GET_TEXT_VALUE_ID = "get_text_value_id"
     const val GET_NUMBER_VALUE_ID = "get_number_value_id"
     const val INSERT_TEXT_VALUE = "insert_text_value"
     const val INSERT_NUMBER_VALUE = "insert_number_value"
-    const val GET_PRIMITIVE_VALUE_BOOLEAN = "get_primitive_value_boolean"
+    const val GET_PRIMITIVE_VALUE_INLINE = "get_primitive_value_inline"
     const val GET_PRIMITIVE_VALUE_TEXT = "get_primitive_value_text"
     const val GET_PRIMITIVE_VALUE_NUMBER = "get_primitive_value_number"
-    const val GET_PRIMITIVE_COLLECTION_BOOLEAN = "get_primitive_collection_boolean"
+    const val GET_PRIMITIVE_COLLECTION_INLINE = "get_primitive_collection_inline"
     const val GET_PRIMITIVE_COLLECTION_NUMBER = "get_primitive_collection_number"
     const val GET_PRIMITIVE_COLLECTION_TEXT = "get_primitive_collection_text"
 
@@ -86,7 +86,7 @@ object DatabaseCounters {
         INSERT_ENTITY_RECORD,
         GET_ENTITY_FIELDS,
         UPDATE_ENTITY_FIELD_VALUE,
-        GET_BOOLEAN_VALUE_ID,
+        GET_INLINE_VALUE_ID,
         GET_TEXT_VALUE_ID,
         GET_NUMBER_VALUE_ID,
         INSERT_TEXT_VALUE,
@@ -112,10 +112,10 @@ object DatabaseCounters {
         GET_SINGLETON,
         GET_ENTITY_TYPE_BY_STORAGEKEY,
         GET_ENTITY_FIELDS,
-        GET_PRIMITIVE_COLLECTION_BOOLEAN,
+        GET_PRIMITIVE_COLLECTION_INLINE,
         GET_PRIMITIVE_COLLECTION_NUMBER,
         GET_PRIMITIVE_COLLECTION_TEXT,
-        GET_PRIMITIVE_VALUE_BOOLEAN,
+        GET_PRIMITIVE_VALUE_INLINE,
         GET_PRIMITIVE_VALUE_TEXT,
         GET_PRIMITIVE_VALUE_NUMBER,
         GET_COLLECTION_ID,

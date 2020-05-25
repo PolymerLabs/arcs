@@ -90,11 +90,23 @@ fun Cursor.getBoolean(i: Int) = getLong(i).toBoolean()
 /** Returns a nullable [String] from the requested column. */
 fun Cursor.getNullableString(i: Int) = if (isNull(i)) null else getString(i)
 
-/** Returns a nullable [Double] from the requested column. */
-fun Cursor.getNullableDouble(i: Int) = if (isNull(i)) null else getDouble(i)
+/** Returns a nullable [Byte] from the requested column. */
+fun Cursor.getNullableByte(i: Int) = if (isNull(i)) null else getShort(i).toByte()
+
+/** Returns a nullable [Short] from the requested column. */
+fun Cursor.getNullableShort(i: Int) = if (isNull(i)) null else getShort(i)
+
+/** Returns a nullable [Int] from the requested column. */
+fun Cursor.getNullableInt(i: Int) = if (isNull(i)) null else getInt(i)
 
 /** Returns a nullable [Long] from the requested column. */
 fun Cursor.getNullableLong(i: Int) = if (isNull(i)) null else getLong(i)
+
+/** Returns a nullable [Float] from the requested column. */
+fun Cursor.getNullableFloat(i: Int) = if (isNull(i)) null else getFloat(i)
+
+/** Returns a nullable [Double] from the requested column. */
+fun Cursor.getNullableDouble(i: Int) = if (isNull(i)) null else getDouble(i)
 
 /** Returns a nullable [Boolean] from the requested column. */
 fun Cursor.getNullableBoolean(i: Int) = if (isNull(i)) null else getBoolean(i)

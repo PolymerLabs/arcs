@@ -408,13 +408,23 @@ class DatabaseImplTest {
                     "text" to FieldType.Text,
                     "bool" to FieldType.Boolean,
                     "num" to FieldType.Number,
-                    "long" to FieldType.Long
+                    "byte" to FieldType.Byte,
+                    "short" to FieldType.Short,
+                    "int" to FieldType.Int,
+                    "long" to FieldType.Long,
+                    "float" to FieldType.Float,
+                    "double" to FieldType.Double
                 ),
                 collections = mapOf(
                     "texts" to FieldType.Text,
                     "bools" to FieldType.Boolean,
                     "nums" to FieldType.Number,
-                    "longs" to FieldType.Long
+                    "bytes" to FieldType.Byte,
+                    "shorts" to FieldType.Short,
+                    "ints" to FieldType.Int,
+                    "longs" to FieldType.Long,
+                    "floats" to FieldType.Float,
+                    "doubles" to FieldType.Double
                 )
             )
         )
@@ -425,13 +435,24 @@ class DatabaseImplTest {
                     "text" to "abc".toReferencable(),
                     "bool" to true.toReferencable(),
                     "num" to 123.0.toReferencable(),
-                    "long" to  1000000000000000001L.toReferencable() // This number is not representable as a double
+                    "byte" to 42.toByte().toReferencable(),
+                    "short" to 382.toShort().toReferencable(),
+                    "int" to 1000000000.toReferencable(),
+                    "long" to  1000000000000000001L.toReferencable(), // This number is not representable as a double
+                    "float" to 34.567f.toReferencable(),
+                    "double" to 4e100.toReferencable()
+
                 ),
                 mapOf(
                     "texts" to setOf("abc".toReferencable(), "def".toReferencable()),
                     "bools" to setOf(true.toReferencable(), false.toReferencable()),
                     "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable()),
-                    "longs" to setOf(1000000000000000002L.toReferencable(), 1000000000000000003L.toReferencable())
+                    "bytes" to setOf(100.toByte().toReferencable(), 27.toByte().toReferencable()),
+                    "shorts" to setOf(129.toShort().toReferencable(), 30000.toShort().toReferencable()),
+                    "ints" to setOf(1000000000.toReferencable(), 28.toReferencable()),
+                    "longs" to setOf(1000000000000000002L.toReferencable(), 1000000000000000003L.toReferencable()),
+                    "floats" to setOf(1.1f.toReferencable(), 100.101f.toReferencable()),
+                    "doubles" to setOf(1.0.toReferencable(), 2e80.toReferencable())
                 )
             ),
             schema,
@@ -440,7 +461,6 @@ class DatabaseImplTest {
         )
 
         database.insertOrUpdateEntity(key, entity)
-        database.dumpTables("entities", "fields", "field_values", "types", "number_primitive_values")
         val entityOut = database.getEntity(key, schema)
 
         assertThat(entityOut).isEqualTo(entity)

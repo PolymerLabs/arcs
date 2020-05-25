@@ -23,8 +23,12 @@ import arcs.android.common.forEach
 import arcs.android.common.forSingleResult
 import arcs.android.common.getBoolean
 import arcs.android.common.getNullableBoolean
+import arcs.android.common.getNullableByte
 import arcs.android.common.getNullableDouble
+import arcs.android.common.getNullableFloat
+import arcs.android.common.getNullableInt
 import arcs.android.common.getNullableLong
+import arcs.android.common.getNullableShort
 import arcs.android.common.getNullableString
 import arcs.android.common.map
 import arcs.android.common.transaction
@@ -257,6 +261,10 @@ class DatabaseImpl(
         val singletons = mutableMapOf<FieldName, Referencable?>()
         val collections = mutableMapOf<FieldName, MutableSet<Referencable>>()
 
+        val numeric_types = "(${PrimitiveType.Number.ordinal}, " +
+            "${PrimitiveType.Float.ordinal}, " +
+            "${PrimitiveType.Double.ordinal})"
+
         db.rawQuery(
             """
                 SELECT
@@ -280,7 +288,7 @@ class DatabaseImpl(
                     ON fields.is_collection = 1
                     AND collection_entries.collection_id = field_values.value_id
                 LEFT JOIN number_primitive_values
-                    ON (fields.type_id = 1 OR fields.type_id = 6) AND number_primitive_values.id = field_value_id
+                    ON fields.type_id IN $numeric_types AND number_primitive_values.id = field_value_id
                 LEFT JOIN text_primitive_values
                     ON fields.type_id = 2 AND text_primitive_values.id = field_value_id
                 LEFT JOIN entity_refs
@@ -299,7 +307,12 @@ class DatabaseImpl(
                 PrimitiveType.Boolean.ordinal -> it.getNullableBoolean(3)?.toReferencable()
                 PrimitiveType.Text.ordinal -> it.getNullableString(4)?.toReferencable()
                 PrimitiveType.Number.ordinal -> it.getNullableDouble(5)?.toReferencable()
-                PrimitiveType.Long.ordinal -> it.getNullableLong(5)?.toReferencable()
+                PrimitiveType.Byte.ordinal -> it.getNullableByte(3)?.toReferencable()
+                PrimitiveType.Short.ordinal -> it.getNullableShort(3)?.toReferencable()
+                PrimitiveType.Int.ordinal -> it.getNullableInt(3)?.toReferencable()
+                PrimitiveType.Long.ordinal -> it.getNullableLong(3)?.toReferencable()
+                PrimitiveType.Float.ordinal -> it.getNullableFloat(5)?.toReferencable()
+                PrimitiveType.Double.ordinal -> it.getNullableDouble(5)?.toReferencable()
                 else -> if (it.isNull(6)) {
                     null
                 } else {
@@ -1219,7 +1232,7 @@ class DatabaseImpl(
     ): Set<*> {
         // Booleans are easy, just fetch the values from the collection_entries table directly.
         if (typeId.toInt() == PrimitiveType.Boolean.ordinal) {
-            counters?.increment(DatabaseCounters.GET_PRIMITIVE_COLLECTION_BOOLEAN)
+            counters?.increment(DatabaseCounters.GET_PRIMITIVE_COLLECTION_INLINE)
             return db.rawQuery(
                 "SELECT value_id FROM collection_entries WHERE collection_id = ?",
                 arrayOf(collectionId.toString())
@@ -1325,12 +1338,32 @@ class DatabaseImpl(
         val value = primitiveValue.value
         // TODO(#4889): Cache the most frequent values somehow.
         if (typeId.toInt() == PrimitiveType.Boolean.ordinal) {
-            counters?.increment(DatabaseCounters.GET_BOOLEAN_VALUE_ID)
+            counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
             return when (value) {
                 true -> 1
                 false -> 0
                 else -> throw IllegalArgumentException("Expected value to be a Boolean.")
             }
+        }
+        if (typeId.toInt() == PrimitiveType.Byte.ordinal) {
+            counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
+            require(value is Byte) { "Expected value to be a Byte." }
+            return value.toLong()
+        }
+        if (typeId.toInt() == PrimitiveType.Short.ordinal) {
+            counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
+            require(value is Short) { "Expected value to be a Short." }
+            return value.toLong()
+        }
+        if (typeId.toInt() == PrimitiveType.Int.ordinal) {
+            counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
+            require(value is Int) { "Expected value to be an Int." }
+            return value.toLong()
+        }
+        if (typeId.toInt() == PrimitiveType.Long.ordinal) {
+            counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
+            require(value is Long) { "Expected value to be a Float." }
+            return value
         }
         return db.transaction {
             val (tableName, valueStr) = when (typeId.toInt()) {
@@ -1344,9 +1377,13 @@ class DatabaseImpl(
                     counters?.increment(DatabaseCounters.GET_NUMBER_VALUE_ID)
                     TABLE_NUMBER_PRIMITIVES to value.toString()
                 }
-                PrimitiveType.Long.ordinal -> {
-                    require(value is Long) { "Expected value to be a Long." }
-                    println(value.toString())
+                PrimitiveType.Float.ordinal -> {
+                    require(value is Float) { "Expected value to be a Float." }
+                    counters?.increment(DatabaseCounters.GET_NUMBER_VALUE_ID)
+                    TABLE_NUMBER_PRIMITIVES to value.toString()
+                }
+                PrimitiveType.Double.ordinal -> {
+                    require(value is Double) { "Expected value to be a Double." }
                     counters?.increment(DatabaseCounters.GET_NUMBER_VALUE_ID)
                     TABLE_NUMBER_PRIMITIVES to value.toString()
                 }
@@ -1628,7 +1665,7 @@ class DatabaseImpl(
 
                 CREATE TABLE number_primitive_values (
                     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    value NUMERIC NOT NULL UNIQUE
+                    value REAL NOT NULL UNIQUE
                 );
 
                 CREATE INDEX number_primitive_value_index ON number_primitive_values (value);
