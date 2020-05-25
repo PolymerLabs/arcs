@@ -24,6 +24,7 @@ import arcs.android.common.forSingleResult
 import arcs.android.common.getBoolean
 import arcs.android.common.getNullableBoolean
 import arcs.android.common.getNullableDouble
+import arcs.android.common.getNullableLong
 import arcs.android.common.getNullableString
 import arcs.android.common.map
 import arcs.android.common.transaction
@@ -279,7 +280,7 @@ class DatabaseImpl(
                     ON fields.is_collection = 1
                     AND collection_entries.collection_id = field_values.value_id
                 LEFT JOIN number_primitive_values
-                    ON fields.type_id = 1 AND number_primitive_values.id = field_value_id
+                    ON (fields.type_id = 1 OR fields.type_id = 6) AND number_primitive_values.id = field_value_id
                 LEFT JOIN text_primitive_values
                     ON fields.type_id = 2 AND text_primitive_values.id = field_value_id
                 LEFT JOIN entity_refs
@@ -298,6 +299,7 @@ class DatabaseImpl(
                 PrimitiveType.Boolean.ordinal -> it.getNullableBoolean(3)?.toReferencable()
                 PrimitiveType.Text.ordinal -> it.getNullableString(4)?.toReferencable()
                 PrimitiveType.Number.ordinal -> it.getNullableDouble(5)?.toReferencable()
+                PrimitiveType.Long.ordinal -> it.getNullableLong(5)?.toReferencable()
                 else -> if (it.isNull(6)) {
                     null
                 } else {
@@ -1342,6 +1344,12 @@ class DatabaseImpl(
                     counters?.increment(DatabaseCounters.GET_NUMBER_VALUE_ID)
                     TABLE_NUMBER_PRIMITIVES to value.toString()
                 }
+                PrimitiveType.Long.ordinal -> {
+                    require(value is Long) { "Expected value to be a Long." }
+                    println(value.toString())
+                    counters?.increment(DatabaseCounters.GET_NUMBER_VALUE_ID)
+                    TABLE_NUMBER_PRIMITIVES to value.toString()
+                }
                 else -> throw IllegalArgumentException("Not a primitive type ID: $typeId")
             }
             val fieldValueId = rawQuery(
@@ -1620,7 +1628,7 @@ class DatabaseImpl(
 
                 CREATE TABLE number_primitive_values (
                     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    value REAL NOT NULL UNIQUE
+                    value NUMERIC NOT NULL UNIQUE
                 );
 
                 CREATE INDEX number_primitive_value_index ON number_primitive_values (value);

@@ -407,12 +407,14 @@ class DatabaseImplTest {
                 singletons = mapOf(
                     "text" to FieldType.Text,
                     "bool" to FieldType.Boolean,
-                    "num" to FieldType.Number
+                    "num" to FieldType.Number,
+                    "long" to FieldType.Long
                 ),
                 collections = mapOf(
                     "texts" to FieldType.Text,
                     "bools" to FieldType.Boolean,
-                    "nums" to FieldType.Number
+                    "nums" to FieldType.Number,
+                    "longs" to FieldType.Long
                 )
             )
         )
@@ -422,12 +424,14 @@ class DatabaseImplTest {
                 mapOf(
                     "text" to "abc".toReferencable(),
                     "bool" to true.toReferencable(),
-                    "num" to 123.0.toReferencable()
+                    "num" to 123.0.toReferencable(),
+                    "long" to  1000000000000000001L.toReferencable() // This number is not representable as a double
                 ),
                 mapOf(
                     "texts" to setOf("abc".toReferencable(), "def".toReferencable()),
                     "bools" to setOf(true.toReferencable(), false.toReferencable()),
-                    "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())
+                    "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable()),
+                    "longs" to setOf(1000000000000000002L.toReferencable(), 1000000000000000003L.toReferencable())
                 )
             ),
             schema,
@@ -436,6 +440,7 @@ class DatabaseImplTest {
         )
 
         database.insertOrUpdateEntity(key, entity)
+        database.dumpTables("entities", "fields", "field_values", "types", "number_primitive_values")
         val entityOut = database.getEntity(key, schema)
 
         assertThat(entityOut).isEqualTo(entity)

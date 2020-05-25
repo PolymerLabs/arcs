@@ -93,6 +93,9 @@ fun Cursor.getNullableString(i: Int) = if (isNull(i)) null else getString(i)
 /** Returns a nullable [Double] from the requested column. */
 fun Cursor.getNullableDouble(i: Int) = if (isNull(i)) null else getDouble(i)
 
+/** Returns a nullable [Long] from the requested column. */
+fun Cursor.getNullableLong(i: Int) = if (isNull(i)) null else getLong(i)
+
 /** Returns a nullable [Boolean] from the requested column. */
 fun Cursor.getNullableBoolean(i: Int) = if (isNull(i)) null else getBoolean(i)
 
