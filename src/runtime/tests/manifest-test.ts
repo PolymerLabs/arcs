@@ -3078,6 +3078,60 @@ resource SomeName
       assert.strictEqual((trustClaims[4].claims[0] as ClaimIsTag).tag, 'property5');
     });
 
+    it('supports field-level claim statements involving collections', async () => {
+      const manifest = await parseManifest(`
+        particle A
+          output1: writes [T {aaa: Text, bbb: [Number]}]
+          output2: writes [T {ccc: [&Foo {ddd: [Number]}]}]
+          claim output1.aaa is property1
+          claim output1.bbb is property2
+          claim output2.ccc is property3
+          claim output2.ccc.ddd is property4
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustChecks);
+
+      const trustClaims = particle.trustClaims;
+      assert.lengthOf(trustClaims, 4);
+
+      assert.strictEqual(trustClaims[0].handle.name, 'output1');
+      assert.deepStrictEqual(trustClaims[0].fieldPath, ['aaa']);
+      assert.strictEqual((trustClaims[0].claims[0] as ClaimIsTag).tag, 'property1');
+
+      assert.strictEqual(trustClaims[1].handle.name, 'output1');
+      assert.deepStrictEqual(trustClaims[1].fieldPath, ['bbb']);
+      assert.strictEqual((trustClaims[1].claims[0] as ClaimIsTag).tag, 'property2');
+
+      assert.strictEqual(trustClaims[2].handle.name, 'output2');
+      assert.deepStrictEqual(trustClaims[2].fieldPath, ['ccc']);
+      assert.strictEqual((trustClaims[2].claims[0] as ClaimIsTag).tag, 'property3');
+
+      assert.strictEqual(trustClaims[3].handle.name, 'output2');
+      assert.deepStrictEqual(trustClaims[3].fieldPath, ['ccc', 'ddd']);
+      assert.strictEqual((trustClaims[3].claims[0] as ClaimIsTag).tag, 'property4');
+    });
+
+    it('rejects invalid fields in field-level claims', async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          output: writes T {foo: Text}
+          claim output.bar is something
+      `), 'Field bar does not exist');
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          output: writes T {foo: &Bar {bar: Number}}
+          claim output.foo.baz is something
+      `), 'Field foo.baz does not exist');
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          output: writes [T {foo: [&Bar {bar: Number}]}]
+          claim output.foo.bar.baz is something
+      `), 'Field foo.bar.baz does not exist');
+    });
+
     it('supports claim statement with multiple tags', async () => {
       const manifest = await parseManifest(`
         particle A
@@ -3400,7 +3454,7 @@ resource SomeName
       const data = '{"root": {}, "locations": {}}';
 
       const manifest = await parseManifest(`
-        store NobId of NobIdStore {nobId: Text, someRef: &Foo {foo: Text}} in NobIdJson
+        store NobId of NobIdStore {nobId: Text, someRef: [&Foo {foo: [Text]}]} in NobIdJson
           claim field nobId is property1 and is property2
           claim field someRef.foo is property3
         resource NobIdJson
@@ -3422,6 +3476,26 @@ resource SomeName
 
       assert.include(manifest.toString(), '  claim field nobId is property1 and is property2');
       assert.include(manifest.toString(), '  claim field someRef.foo is property3');
+    });
+
+    it('rejects invalid fields in field-level claims on stores', async () => {
+      const data = '{"root": {}, "locations": {}}';
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        store NobId of NobIdStore {nobId: Text} in NobIdJson
+          claim field foo is property1 and is property2
+        resource NobIdJson
+          start
+          ${data}
+      `), 'Field foo does not exist in');
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        store NobId of NobIdStore {nobId: Text, someRef: [&Foo {foo: [Text]}]} in NobIdJson
+          claim field someRef.bar is property1 and is property2
+        resource NobIdJson
+          start
+          ${data}
+      `), 'Field someRef.bar does not exist in');
     });
 
     it(`doesn't allow mixing 'and' and 'or' operations without nesting`, async () => {
