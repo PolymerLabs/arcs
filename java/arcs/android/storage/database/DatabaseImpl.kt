@@ -711,10 +711,51 @@ class DatabaseImpl(
         }
     }
 
+    /*
+     * Removes all refs (in entity_refs table) that are not being used.
+     */
+    private fun removeUnusedRefs(db: SQLiteDatabase) {
+        db.transaction {
+            // Find all refs used in singleton fields.
+            val singletonFieldRefs = rawQuery(
+                """
+                    SELECT field_values.value_id
+                    FROM field_values
+                    LEFT JOIN fields ON field_values.field_id = fields.id
+                    WHERE fields.is_collection = 0
+                    AND fields.type_id > ?
+                """.trimIndent(),
+                arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only references.
+            ).map { it.getLong(0).toString() }.toSet()
+
+            // Find all refs used in top level collections/singletons or collection fields.
+            val collectionRefs = rawQuery(
+                """
+                    SELECT entity_refs.id
+                    FROM entity_refs
+                    LEFT JOIN collection_entries ON entity_refs.id = collection_entries.value_id
+                    LEFT JOIN collections ON collection_entries.collection_id = collections.id
+                    WHERE collections.type_id > ?
+                """.trimIndent(),
+                arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only entity collections.
+            ).map { it.getLong(0).toString() }.toSet()
+
+            val usedRefs = (collectionRefs union singletonFieldRefs).toTypedArray()
+            // Remove from all unused references.
+            delete(
+                TABLE_ENTITY_REFS,
+                "id NOT IN (${questionMarks(usedRefs)})",
+                usedRefs
+            )
+        }
+    }
+
     override suspend fun runGarbageCollection() {
         val twoDaysAgo = JvmTime.currentTimeMillis - Duration.ofDays(2).toMillis()
         writableDatabase.transaction {
             val db = this
+            // First, remove unused refs (leftovers from removed entities/fields).
+            removeUnusedRefs(db)
             rawQuery(
                 """
                     SELECT storage_key_id, storage_key, orphan, MAX(entity_refs.id) IS NULL AS noRef
