@@ -90,55 +90,49 @@ function claimsToProtoPayload(
   spec: ParticleSpec,
   connectionSpec: HandleConnectionSpec
 ) {
-  // TODO(b/156983427): Support field-level claims in proto output.
-  if (!connectionSpec.claims || connectionSpec.claims.size === 0) {
+  if (!connectionSpec.claims || connectionSpec.claims.length === 0) {
     return [];
   }
-  assert(
-      connectionSpec.claims.size === 1 && connectionSpec.claims.keys().next().value === connectionSpec.name,
-      'Field-level claims not supported by manifest2proto yet');
-  const claims = connectionSpec.claims.values().next().value;
-
-  return claims?.map(claim => {
-    const accessPath = {
+  const protos: {}[] = [];
+  for (const particleClaim of connectionSpec.claims) {
+    let accessPath: {} = {
       particleSpec: spec.name,
-      handleConnection: connectionSpec.name
+      handleConnection: connectionSpec.name,
     };
-    switch (claim.type) {
-      case ClaimType.IsTag: {
-        const tag = {semanticTag: claim.tag};
-        let predicate;
-        if (claim.isNot) {
-          predicate = {
-            not: {
-              predicate: {
-                label: tag
+    if (particleClaim.fieldPath.length) {
+      const selectors = particleClaim.fieldPath.map(field => ({field}));
+      accessPath = {...accessPath, selectors};
+    }
+    for (const claim of particleClaim.claims) {
+      switch (claim.type) {
+        case ClaimType.IsTag: {
+          let predicate: {} = {label: {semanticTag: claim.tag}};
+          if (claim.isNot) {
+            predicate = {not: {predicate}};
+          }
+          protos.push({
+            assume: {accessPath, predicate}
+          });
+          break;
+        }
+        case ClaimType.DerivesFrom: {
+          protos.push({
+            derivesFrom: {
+              target: accessPath,
+              source: {
+                particleSpec: spec.name,
+                handleConnection: claim.parentHandle.name
               }
             }
-          };
-        } else {
-          predicate = {
-            label: tag
-          };
+          });
+          break;
         }
-        return {
-          assume: {accessPath, predicate}
-        };
+        default:
+          throw new Error(`Unknown ClaimType for claim: ${JSON.stringify(claim)}.`);
       }
-      case ClaimType.DerivesFrom: {
-        return {
-          derivesFrom: {
-            target: accessPath,
-            source: {
-              particleSpec: spec.name,
-              handleConnection: claim.parentHandle.name
-            }
-          }
-        };
-      }
-      default: return null;
     }
-  }).filter(x => x != null);
+  }
+  return protos;
 }
 
 // Converts the checks in HandleConnectionSpec.

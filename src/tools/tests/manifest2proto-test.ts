@@ -522,7 +522,6 @@ describe('manifest2proto', () => {
           }
         }
       }]);
-
   });
 
   it('encodes particle spec with derivesFrom claims', async () => {
@@ -586,6 +585,48 @@ describe('manifest2proto', () => {
         }
       },
     ]);
+  });
+
+  it('encodes particle spec with field-level claims', async () => {
+    const manifest = await Manifest.parse(`
+      particle Test in 'a/b/c.js'
+        private: writes {name: Text, ref: &Foo {foo: Text}}
+        claim private is private_tag
+        claim private.ref.foo is not private_tag
+     `);
+    const spec = await toProtoAndBack(manifest);
+    assert.deepStrictEqual(spec.particleSpecs[0].claims, [
+      {
+        assume: {
+          accessPath: {
+            particleSpec: 'Test',
+            handleConnection: 'private',
+          },
+          predicate: {
+            label: {
+              semanticTag: 'private_tag'
+            }
+          }
+        }
+      },
+      {
+        assume: {
+          accessPath: {
+            particleSpec: 'Test',
+            handleConnection: 'private',
+            selectors: [{field: 'ref'}, {field: 'foo'}],
+          },
+          predicate: {
+            not: {
+              predicate: {
+                label: {
+                  semanticTag: 'private_tag'
+                }
+              }
+            }
+          }
+        }
+      }]);
   });
 
   it('encodes particle spec with checkHasTag checks', async () => {

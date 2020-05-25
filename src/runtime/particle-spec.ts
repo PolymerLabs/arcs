@@ -16,7 +16,7 @@ import {Schema} from './schema.js';
 import {InterfaceType, SlotType, Type, TypeLiteral, TypeVariableInfo} from './type.js';
 import {Literal} from './hot.js';
 import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './particle-check.js';
-import {ParticleClaim, Claim, createParticleClaim, validateFieldPath} from './particle-claim.js';
+import {ParticleClaim, createParticleClaim, validateFieldPath} from './particle-claim.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {AnnotationRef} from './recipe/annotation.js';
 
@@ -77,8 +77,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
   dependentConnections: HandleConnectionSpec[];
   pattern?: string;
   parentConnection: HandleConnectionSpec | null = null;
-  /** Maps from field path (including handle name, e.g. myHandle.someRef.someField) to list of claims. */
-  claims?: Map<string, Claim[]>;
+  claims?: ParticleClaim[];
   checks?: Check[];
   _annotations: AnnotationRef[];
 
@@ -526,12 +525,12 @@ export class ParticleSpec {
         }
         validateFieldPath(statement.fieldPath, handle.type);
         if (!handle.claims) {
-          handle.claims = new Map();
-        } else if (handle.claims.has(target)) {
+          handle.claims = [];
+        } else if (handle.claims.some(claim => claim.target === target)) {
           throw new Error(`Can't make multiple claims on the same target (${target}).`);
         }
         const particleClaim = createParticleClaim(handle, statement, this.handleConnectionMap);
-        handle.claims.set(target, particleClaim.claims);
+        handle.claims.push(particleClaim);
         results.push(particleClaim);
       });
     }

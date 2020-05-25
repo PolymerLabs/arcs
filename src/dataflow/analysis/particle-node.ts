@@ -246,24 +246,25 @@ function isSchemaFieldCompatibleWithReference(field: any, target: ReferenceType<
 }
 
 function getClaimsFromHandleConnection(spec: HandleConnectionSpec): Claim[] {
-  if (!spec.claims || spec.claims.size === 0) {
+  if (!spec.claims || spec.claims.length === 0) {
     return [];
   }
-  return getClaimsList(spec.claims, spec.name);
+  // TODO(b/153354605): Add support for field-level claims, then delete this
+  // function.
+  assert(
+    spec.claims.length === 1 && spec.claims[0].target === spec.name,
+    'Field-level claims yet not supported by DFA yet.');
+  return spec.claims[0].claims;
 }
 
 function getClaimsFromStore(handle: Handle): Claim[] {
   if (!handle.claims || handle.claims.size === 0) {
     return [];
   }
-  return getClaimsList(handle.claims, '');
-}
-
-function getClaimsList(claims: Map<string, Claim[]>, expectedTarget: string): Claim[] {
   // TODO(b/153354605): Add support for field-level claims, then delete this
   // function.
   assert(
-    claims.size === 1 && claims.keys().next().value === expectedTarget,
+    handle.claims.size === 1 && handle.claims.keys().next().value === '',
     'Field-level claims yet not supported by DFA yet.');
-  return claims.values().next().value;
+  return handle.claims.values().next().value;
 }
