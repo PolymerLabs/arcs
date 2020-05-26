@@ -202,6 +202,13 @@ function checkExpressionToProtoPayload(
             return {label: tag};
           }
         }
+        case CheckType.Implication:
+          return {
+            implies: {
+              antecedent: checkExpressionToProtoPayload(condition.antecedent),
+              consequent: checkExpressionToProtoPayload(condition.consequent),
+            },
+          };
         case CheckType.IsFromHandle:
         case CheckType.IsFromOutput:
         case CheckType.IsFromStore:

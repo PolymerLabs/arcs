@@ -752,6 +752,67 @@ describe('manifest2proto', () => {
       }]);
   });
 
+  it('encodes particle spec with implication checks', async () => {
+    const manifest = await Manifest.parse(`
+      particle Test in 'a/b/c.js'
+        input1: reads {name: Text}
+        input2: reads {name: Text}
+        input3: reads {name: Text}
+        check input1 (is private => is trusted)
+        check input2 (is private => (is trusted => is bespoke))
+        check input3 ((is private => is trusted) => is bespoke)
+     `);
+    const spec = await toProtoAndBack(manifest);
+    assert.deepStrictEqual(spec.particleSpecs[0].checks, [
+      {
+        accessPath: {
+          particleSpec: 'Test',
+          handleConnection: 'input1'
+        },
+        predicate: {
+          implies: {
+            antecedent: {label: {semanticTag: 'private'}},
+            consequent: {label: {semanticTag: 'trusted'}},
+          },
+        },
+      },
+      {
+        accessPath: {
+          particleSpec: 'Test',
+          handleConnection: 'input2'
+        },
+        predicate: {
+          implies: {
+            antecedent: {label: {semanticTag: 'private'}},
+            consequent: {
+              implies: {
+                antecedent: {label: {semanticTag: 'trusted'}},
+                consequent: {label: {semanticTag: 'bespoke'}},
+              },
+            },
+          },
+        },
+      },
+      {
+        accessPath: {
+          particleSpec: 'Test',
+          handleConnection: 'input3'
+        },
+        predicate: {
+          implies: {
+            antecedent: {
+              implies: {
+                antecedent: {label: {semanticTag: 'private'}},
+                consequent: {label: {semanticTag: 'trusted'}},
+              },
+            },
+            consequent: {label: {semanticTag: 'bespoke'}},
+          },
+        },
+      },
+    ]);
+  });
+
   // On the TypeScript side we serialize .arcs file and validate it equals the .pb.bin file.
   // On the Kotlin side we deserialize .pb.bin and validate it equals deserialized .textproto file.
   // This ensures that at least all the constructs used in the .arcs file can be serialized in TS
