@@ -32,6 +32,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -68,6 +69,7 @@ class StorageProxyTest {
         whenever(mockCrdtOperation.clock).thenReturn(VersionMap())
     }
 
+    @Ignore("b/157267211 - Deflake")
     @Test
     fun addOnReadyTriggersSyncRequest() = runBlocking {
         val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
@@ -274,6 +276,7 @@ class StorageProxyTest {
         verifyNoMoreInteractions(onReady, onUpdate, onDesync)
     }
 
+    @Ignore("b/157267383 - Deflake")
     @Test
     fun listOfModelOperationsWithOneFailing() = runBlocking {
         val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
@@ -378,6 +381,7 @@ class StorageProxyTest {
         verifyNoMoreInteractions(onReady4, onUpdate4, onDesync4, onResync4)
     }
 
+    @Ignore("b/157168120 - Deflake")
     @Test
     fun applyOpSucceeds() = runBlocking {
         val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
@@ -427,6 +431,7 @@ class StorageProxyTest {
         assertThat(fakeStoreEndpoint.getProxyMessages()).isEmpty()
     }
 
+    @Ignore("b/157266813 - Deflake")
     @Test
     fun getParticleViewWhenInInitialStateQueuesAndRequestsSync() = runBlocking {
         val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
@@ -457,6 +462,7 @@ class StorageProxyTest {
         assertThat(future2.await()).isEqualTo("data")
     }
 
+    @Ignore("b/157266894 - Deflake")
     @Test
     fun getParticleViewWhenAwaitingSyncQueues() = runBlocking {
         val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)

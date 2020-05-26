@@ -69,4 +69,10 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
     override fun collection_entityDereference() {
         super.collection_entityDereference()
     }
+
+    @Ignore("b/157266863 - Deflake")
+    @Test
+    override fun singleton_clearOnAClearDataWrittenByB() {
+        super.singleton_clearOnAClearDataWrittenByB()
+    }
 }

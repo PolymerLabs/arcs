@@ -479,7 +479,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_addingToA_showsUpInB() = testRunner {
+    open fun collection_addingToA_showsUpInB() = testRunner {
         val handleA = writeHandleManager.createCollectionHandle()
             as ReadWriteCollectionHandle<Person>
         val handleB = readHandleManager.createCollectionHandle()
@@ -745,7 +745,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_withTTL() = testRunner {
+    open fun collection_withTTL() = testRunner {
         fakeTime.millis = 0
         val handle = writeHandleManager.createCollectionHandle(ttl = Ttl.Days(2))
         val handleB = readHandleManager.createCollectionHandle()
