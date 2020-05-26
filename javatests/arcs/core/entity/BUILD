@@ -17,6 +17,7 @@ arcs_kt_schema(
 arcs_kt_jvm_test_suite(
     name = "entity",
     srcs = TEST_SRCS,
+    flaky = True,
     package = "arcs.core.entity",
     deps = [
         ":lib",

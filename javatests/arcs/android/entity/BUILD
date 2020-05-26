@@ -8,6 +8,7 @@ licenses(["notice"])
 arcs_kt_android_test_suite(
     name = "entity",
     size = "medium",
+    flaky = True,
     manifest = "AndroidManifest.xml",
     package = "arcs.android.entity",
     deps = [

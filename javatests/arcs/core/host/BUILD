@@ -15,6 +15,7 @@ arcs_kt_jvm_test_suite(
     name = "host",
     srcs = glob(["*Test.kt"]),
     constraints = ["android"],
+    flaky = True,
     package = "arcs.core.host",
     deps = [
         ":particle",  # buildcleaner: keep
