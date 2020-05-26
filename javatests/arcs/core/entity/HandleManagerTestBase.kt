@@ -21,6 +21,7 @@ import arcs.core.storage.driver.testutil.waitUntilSet
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.util.Log
 import arcs.core.util.Time
 import arcs.jvm.util.testutil.FakeTime
 import arcs.core.util.testutil.LogRule
@@ -389,7 +390,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun singleton_referenceLiveness() = runBlocking {
+    open fun singleton_referenceLiveness() = testRunner {
         // Create and store an entity.
         val writeEntityHandle = writeHandleManager.createCollectionHandle()
         val readEntityHandle = readHandleManager.createCollectionHandle()
@@ -397,7 +398,10 @@ open class HandleManagerTestBase {
         log("Created and stored an entity")
 
         // Create and store a reference to the entity.
-        val entity1Ref = writeEntityHandle.createReference(entity1)
+        val entity1Ref = withContext(writeEntityHandle.dispatcher) {
+            writeEntityHandle.createReference(entity1)
+        }
+
         val writeRefHandle = writeHandleManager.createReferenceSingletonHandle()
         val readRefHandle = readHandleManager.createReferenceSingletonHandle()
         val refHeard = readRefHandle.onUpdateDeferred()
@@ -406,7 +410,13 @@ open class HandleManagerTestBase {
 
         withTimeout(1500) {
             RamDisk.waitUntilSet(entity1Ref.toReferencable().referencedStorageKey())
+            Log.debug {
+                "WaitUntilSet finished"
+            }
             refHeard.await()
+            Log.debug {
+                "refHeard.await() finished"
+            }
         }
 
         // Now read back the reference from a different handle.
@@ -414,10 +424,19 @@ open class HandleManagerTestBase {
         assertThat(reference).isEqualTo(entity1Ref)
 
         // Reference should be alive.
-        assertThat(reference.dereference()).isEqualTo(entity1)
+        Log.debug {
+            "About to dereference entity1"
+        }
+        assertThat(withContext(readRefHandle.dispatcher) { reference.dereference() }).isEqualTo(entity1)
         var storageReference = reference.toReferencable()
-        assertThat(storageReference.isAlive(coroutineContext)).isTrue()
-        assertThat(storageReference.isDead(coroutineContext)).isFalse()
+        Log.debug {
+            "About to dereference isAlive"
+        }
+        assertThat(storageReference.isAlive(readRefHandle.dispatcher)).isTrue()
+        Log.debug {
+            "About to dereference isDead"
+        }
+        assertThat(storageReference.isDead(readRefHandle.dispatcher)).isFalse()
 
         // Modify the entity.
         var ramDiskKnows =
@@ -431,18 +450,18 @@ open class HandleManagerTestBase {
         }
 
         // Reference should still be alive.
-        reference = readRefHandle.fetch()!!
-        val dereferenced = reference.dereference()
+        reference = withContext(readRefHandle.dispatcher) { readRefHandle.fetch()!! }
+        val dereferenced = withContext(readRefHandle.dispatcher) { reference.dereference() }
         log("Dereferenced: $dereferenced")
         assertThat(dereferenced).isEqualTo(modEntity1)
         storageReference = reference.toReferencable()
-        assertThat(storageReference.isAlive(coroutineContext)).isTrue()
-        assertThat(storageReference.isDead(coroutineContext)).isFalse()
+        assertThat(storageReference.isAlive(readRefHandle.dispatcher)).isTrue()
+        assertThat(storageReference.isDead(readRefHandle.dispatcher)).isFalse()
 
         ramDiskKnows = RamDisk.asyncWaitForUpdate(storageReference.referencedStorageKey())
         // Remove the entity from the collection.
         val heardTheDelete = readEntityHandle.onUpdateDeferred { it.isEmpty() }
-        writeEntityHandle.remove(entity1).join()
+        withContext(writeEntityHandle.dispatcher) { writeEntityHandle.remove(entity1).join() }
         withTimeout(1500) {
             ramDiskKnows.await()
             heardTheDelete.await()
