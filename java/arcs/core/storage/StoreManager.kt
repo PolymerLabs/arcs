@@ -38,4 +38,5 @@ class StoreManager {
             stores.values.forEach { it.waitForActiveIdle() }
         }
     }
+    suspend fun reset() = storesMutex.withLock { stores.clear() }
 }

@@ -14,6 +14,7 @@ import android.content.Context
 import android.content.ServiceConnection
 import arcs.android.storage.ParcelableStoreOptions
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
+import arcs.sdk.android.storage.service.ManagerConnectionFactory
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,6 +27,11 @@ import org.robolectric.Robolectric
 @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
 @OptIn(ExperimentalCoroutinesApi::class)
 fun TestConnectionFactory(ctx: Context) = DefaultConnectionFactory(ctx, TestBindingDelegate(ctx))
+
+@Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
+@OptIn(ExperimentalCoroutinesApi::class)
+fun TestManagerConnectionFactory(ctx: Context) =
+    ManagerConnectionFactory(ctx, TestManagerBindingDelegate(ctx))
 
 /**
  * This TestBindingDelegate can be used in tests with [DefaultConnectionFactory] in order to
@@ -50,4 +56,23 @@ class TestBindingDelegate(private val context: Context) : StorageServiceBindingD
     override fun unbindStorageService(conn: ServiceConnection) {
         serviceController.destroy()
     }
+}
+
+class TestManagerBindingDelegate(private val context: Context) : StorageServiceBindingDelegate {
+    private val serviceController by lazy {
+        Robolectric.buildService(StorageService::class.java)
+    }
+
+    override fun bindStorageService(
+        conn: ServiceConnection,
+        flags: Int,
+        options: ParcelableStoreOptions?
+    ): Boolean {
+        val intent = StorageService.createStorageManagerBindIntent(context)
+        val binder = serviceController.get().onBind(intent)
+        conn.onServiceConnected(null, binder)
+        return true
+    }
+
+    override fun unbindStorageService(conn: ServiceConnection) = Unit
 }
