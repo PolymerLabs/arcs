@@ -175,6 +175,33 @@ def arcs_kt_schema(
         )
     return {"outs": outs, "deps": outdeps}
 
+def _arcs_ts_preproc_impl(ctx):
+
+    outputs = [ctx.actions.declare_file(x.basename, sibling=x)
+               for x in ctx.files.srcs]
+
+    ctx.actions.run_shell(
+        inputs = ctx.files.srcs,
+        outputs = outputs,
+        arguments = [src.path for src in ctx.files.srcs],
+        command = """
+        set -x
+        for i in "$@"; do
+          out="$(pwd)/bazel-out/host/bin/$i"
+          sed -e 's/-web.js/-node.js/g' $i > "$out"
+        done
+        """
+    )
+
+    return DefaultInfo(files=depset(outputs))
+
+arcs_ts_preprocessing = rule(
+    implementation = _arcs_ts_preproc_impl,
+    attrs = {
+        "srcs": attr.label_list(allow_files = [".ts", ".d.ts"]),
+    },
+    doc = """Converts to node platforms for the arcs ts runtime."""
+)
 
 def _schema2pkg_impl(ctx):
 
@@ -201,6 +228,7 @@ def _schema2pkg_impl(ctx):
     args.add_all("--outdir", [out.dirname])
     args.add_all("--outfile", [output_name])
     args.add_all([src.path for src in ctx.files.srcs])
+
 
     ctx.actions.run(
         inputs = ctx.files.srcs,

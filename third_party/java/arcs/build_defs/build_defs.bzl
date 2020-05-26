@@ -28,6 +28,7 @@ load(
     _arcs_cc_schema = "arcs_cc_schema",
     _arcs_kt_gen = "arcs_kt_gen",
     _arcs_kt_schema = "arcs_kt_schema",
+    _arcs_ts_preprocessing = "arcs_ts_preprocessing",
 )
 load(
     "//third_party/java/arcs/build_defs/internal:tools.oss.bzl",
@@ -70,6 +71,8 @@ arcs_manifest_parse_test = _arcs_manifest_parse_test
 arcs_manifest_proto = _arcs_manifest_proto
 
 arcs_proto_plan = _arcs_proto_plan
+
+arcs_ts_preprocessing = _arcs_ts_preprocessing
 
 kt_js_library = _kt_js_library
 

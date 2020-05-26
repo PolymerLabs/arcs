@@ -17,17 +17,14 @@ ts_library(
 
 ts_library(
     name = "schema2pkg_lib",
-    srcs = [":schema2pkg_srcs"],
-    deps = [
-        "//src:runtime_lib",
-        ":kt-generation-utils",
-    ],
+    srcs = [":schema2pkg_srcs", "kotlin-generation-utils.ts"],
+    deps = ["//src:runtime_lib"],
     tsconfig = "//:tsconfig",
 )
 
 nodejs_binary(
     name = "schema2pkg",
-    data = [":schema2pkg_lib", "//src:runtime"],
+    data = [":schema2pkg_lib"],
     entry_point = ":schema2wasm.ts"
 )
 

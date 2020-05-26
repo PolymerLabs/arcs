@@ -1,17 +1,15 @@
 load("@npm_bazel_typescript//:index.bzl", "ts_library")
 load("@npm_bazel_rollup//:index.bzl", "rollup_bundle")
+load( "//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_ts_preprocessing")
 
 
 package(default_visibility = ["//visibility:public"])
 
-
-ts_library(
-    name = "runtime_lib",
+arcs_ts_preprocessing(
+    name = "runtime_files",
     srcs = glob(
         ["**/*.ts"],
         exclude = [
-            # Breaks due to node openssl dependency
-            "platform/crypto-node.ts",
             # Broken from lack of DTS files
             "platform/devtools-*",
             "**/devtools/**",
@@ -22,6 +20,8 @@ ts_library(
 
             # Broken because no targets in google3
             "platform/pouch*",
+
+            "platform/image-node.ts",
 
             # Exclude test code
             "**/storageNG/testing/**",
@@ -54,20 +54,20 @@ ts_library(
             "platform/protobuf*",
         ],
     ),  # + [":gen/runtime/manifest-parser.ts"],
+)
+
+
+ts_library(
+    name = "runtime_lib",
+    srcs = [":runtime_files"],
     runtime = "nodejs",
     tsconfig = "//:tsconfig",
     deps = [
-        "@npm//chai"
+        "@npm//chai",
+        "@npm//@types/node",
+        "@npm//node-fetch",
+        "@npm//node-webcrypto-ossl",
+        "@npm//mocha"
     ]
 )
 
-
-rollup_bundle(
-    name = "runtime",
-    srcs = glob(["platform/*.js"]) + [
-        "modalities/dom/components/xen/xen-state.js",
-        "modalities/dom/components/xen/xen-template.js",
-    ],
-    deps = [":runtime_lib"],
-    entry_point = ":runtime/runtime.ts",
-)
