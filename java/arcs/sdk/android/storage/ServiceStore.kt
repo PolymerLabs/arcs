@@ -181,7 +181,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private suspend fun send(block: suspend () -> Unit) = requireNotNull(channel) {
         "Channel is not initialized"
     }.apply {
-        if(isClosedForSend) {
+        if (isClosedForSend) {
             log.debug { "Channel is closed" }
         } else {
             send(block)
