@@ -79,7 +79,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
   parentConnection: HandleConnectionSpec | null = null;
   /** Maps from field path (including handle name, e.g. myHandle.someRef.someField) to list of claims. */
   claims?: Map<string, Claim[]>;
-  check?: Check;
+  checks?: Check[];
   _annotations: AnnotationRef[];
 
   constructor(rawData: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
@@ -553,18 +553,20 @@ export class ParticleSpec {
             if (handle.direction === '`consumes' || handle.direction === '`provides') {
               // Do slandles versions of slots checks and claims.
               if (handle.direction === '`consumes') {
-                  throw new Error(`Can't make a check on handle ${handleName}. Can only make checks on input and provided handles.`);
-
+                throw new Error(`Can't make a check on handle ${handleName}. Can only make checks on input and provided handles.`);
               }
             } else if (!handle.isInput) {
               throw new Error(`Can't make a check on handle ${handleName} with direction ${handle.direction} (not an input handle).`);
             }
-            if (handle.check) {
-              throw new Error(`Can't make multiple checks on the same input (${handleName}).`);
+            // TODO(b/156983427): Check that fieldPath is valid for the handle type.
+            const checkObject = createCheck(handle, check, this.handleConnectionMap);
+            if (!handle.checks) {
+              handle.checks = [];
+            } else if (handle.checks.some(c => c.targetString === checkObject.targetString)) {
+              throw new Error(`Can't make multiple checks on the same target (${checkObject.targetString}).`);
             }
-
-            handle.check = createCheck(handle, check, this.handleConnectionMap);
-            results.push(handle.check);
+            handle.checks.push(checkObject);
+            results.push(checkObject);
             break;
           }
           case 'slot': {

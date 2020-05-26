@@ -23,6 +23,7 @@ import {Refinement, RefinementExpressionLiteral} from '../runtime/refiner.js';
 import {Op} from '../runtime/manifest-ast-nodes.js';
 import {Claim, ClaimType} from '../runtime/particle-claim.js';
 import {Check, CheckCondition, CheckExpression, CheckType} from '../runtime/particle-check.js';
+import {flatMap} from '../runtime/util.js';
 
 export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path);
@@ -39,7 +40,7 @@ export async function manifestToProtoPayload(manifest: Manifest) {
 
 export async function encodePlansToProto(plans: Recipe[]) {
   const specMap = new Map<string, ParticleSpec>();
-  for (const spec of [].concat(...plans.map(r => r.particles)).map(p => p.spec)) {
+  for (const spec of flatMap(plans, r => r.particles).map(p => p.spec)) {
     specMap.set(spec.name, spec);
   }
   return encodePayload(await makeManifestProtoPayload([...specMap.values()], plans));
@@ -60,8 +61,9 @@ function encodePayload(payload: {}): Uint8Array {
 
 async function particleSpecToProtoPayload(spec: ParticleSpec) {
   const connections = await Promise.all(spec.connections.map(async connectionSpec => handleConnectionSpecToProtoPayload(connectionSpec)));
-  const claims = [].concat(...spec.connections.map(connectionSpec => claimsToProtoPayload(spec, connectionSpec)));
-  const checks = spec.connections.map(connectionSpec => checkToProtoPayload(connectionSpec.check, spec, connectionSpec)).filter(x => x != null);
+  const claims = flatMap(spec.connections, connectionSpec => claimsToProtoPayload(spec, connectionSpec));
+  const checks = flatMap(spec.connections, connectionSpec => checksToProtoPayload(spec, connectionSpec));
+
   return {
     name: spec.name,
     location: spec.implFile,
@@ -139,20 +141,19 @@ function claimsToProtoPayload(
   }).filter(x => x != null);
 }
 
-// Converts the check in HandleConnectionSpec.
-function checkToProtoPayload(
-  check: Check,
+// Converts the checks in HandleConnectionSpec.
+function checksToProtoPayload(
   spec: ParticleSpec,
   connectionSpec: HandleConnectionSpec,
 ) {
-  if (check == null) return null;
-  const predicate = checkExpressionToProtoPayload(check.expression);
-  if (predicate == null) return null;
-  const accessPath = {
-    particleSpec: spec.name,
-    handleConnection: connectionSpec.name
-  };
-  return {accessPath, predicate};
+  if (!connectionSpec.checks) {
+    return [];
+  }
+  return connectionSpec.checks.map(check => {
+    const accessPath = accessPathProtoPayload(spec, connectionSpec, check.fieldPath);
+    const predicate = checkExpressionToProtoPayload(check.expression);
+    return {accessPath, predicate};
+  });
 }
 
 function checkExpressionToProtoPayload(
@@ -212,13 +213,28 @@ function checkExpressionToProtoPayload(
         case CheckType.IsFromHandle:
         case CheckType.IsFromOutput:
         case CheckType.IsFromStore:
-          // TODO(bgogul):
-          return null;
+          throw new Error(`Unsupported CheckType for check: ${JSON.stringify(condition)}.`);
         default:
-          throw new Error('Unknown CheckType');
+          throw new Error(`Unknown CheckType for check: ${JSON.stringify(condition)}.`);
       }
     }
   }
+}
+
+/** Constructs an AccessPathProto payload. */
+function accessPathProtoPayload(
+    spec: ParticleSpec,
+    connectionSpec: HandleConnectionSpec,
+    fieldPath: string[]
+) {
+  const accessPath: {particleSpec: string, handleConnection: string, selectors?: {field: string}[]} = {
+    particleSpec: spec.name,
+    handleConnection: connectionSpec.name
+  };
+  if (fieldPath.length) {
+    accessPath.selectors = fieldPath.map(field => ({field}));
+  }
+  return accessPath;
 }
 
 async function recipeToProtoPayload(recipe: Recipe) {

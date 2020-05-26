@@ -626,6 +626,58 @@ describe('manifest2proto', () => {
       }]);
   });
 
+  it('encodes particle spec with field-level checks', async () => {
+    const manifest = await Manifest.parse(`
+      particle Test in 'a/b/c.js'
+        private: reads {name: Text, ref: &Foo {foo: Text}}
+        public: reads {name: Text, ref: &Foo {foo: Text}}
+        check private is private_tag
+        check private.ref.foo is not private_tag
+        check public.ref is public_tag
+     `);
+    const spec = await toProtoAndBack(manifest);
+    assert.deepStrictEqual(spec.particleSpecs[0].checks, [
+      {
+        accessPath: {
+          particleSpec: 'Test',
+          handleConnection: 'private'
+        },
+        predicate: {
+          label: {
+            semanticTag: 'private_tag'
+          }
+        }
+      },
+      {
+        accessPath: {
+          particleSpec: 'Test',
+          handleConnection: 'private',
+          selectors: [{field: 'ref'}, {field: 'foo'}],
+        },
+        predicate: {
+          not: {
+            predicate: {
+              label: {
+                semanticTag: 'private_tag'
+              }
+            }
+          }
+        }
+      },
+      {
+        accessPath: {
+          particleSpec: 'Test',
+          handleConnection: 'public',
+          selectors: [{field: 'ref'}],
+        },
+        predicate: {
+          label: {
+            semanticTag: 'public_tag'
+          }
+        }
+      }]);
+  });
+
   it('encodes particle spec with compound checks', async () => {
     const manifest = await Manifest.parse(`
       particle Test in 'a/b/c.js'
