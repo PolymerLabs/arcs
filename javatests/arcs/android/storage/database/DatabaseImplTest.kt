@@ -1540,7 +1540,7 @@ class DatabaseImplTest {
         // one for the membership of the entity).
         assertTableIsSize("collection_entries", 16)
 
-        // Check the collection for nums in expiredEntity is gone (5 collections left are nums for
+        // Check the collections for chars/nums in expiredEntity is gone (5 collections left are nums for
         // the two entities, chars for the two entities, and the entity collection).
         assertTableIsSize("collections", 5)
 

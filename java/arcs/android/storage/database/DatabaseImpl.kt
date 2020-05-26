@@ -261,11 +261,7 @@ class DatabaseImpl(
         val singletons = mutableMapOf<FieldName, Referencable?>()
         val collections = mutableMapOf<FieldName, MutableSet<Referencable>>()
 
-        val numeric_types = listOf(
-            PrimitiveType.Number.ordinal,
-            PrimitiveType.Float.ordinal,
-            PrimitiveType.Double.ordinal
-        ).joinToString(prefix = "(", postfix = ")")
+        val numeric_types = TYPES_IN_NUMBER_TABLE.joinToString(prefix = "(", postfix = ")")
 
         db.rawQuery(
             """
@@ -883,13 +879,7 @@ class DatabaseImpl(
 
             delete(
                 TABLE_NUMBER_PRIMITIVES,
-                "id NOT IN (${usedFieldIdsQuery(
-                    listOf(
-                        PrimitiveType.Number.ordinal,
-                        PrimitiveType.Float.ordinal,
-                        PrimitiveType.Double.ordinal
-                    )
-                )})",
+                "id NOT IN (${usedFieldIdsQuery(TYPES_IN_NUMBER_TABLE)})",
                 arrayOf()
             )
             delete(
@@ -1346,38 +1336,40 @@ class DatabaseImpl(
         }
         val value = primitiveValue.value
         // TODO(#4889): Cache the most frequent values somehow.
-        if (typeId.toInt() == PrimitiveType.Boolean.ordinal) {
-            counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
-            return when (value) {
-                true -> 1
-                false -> 0
-                else -> throw IllegalArgumentException("Expected value to be a Boolean.")
+        when (typeId.toInt()) {
+            PrimitiveType.Boolean.ordinal -> {
+                counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
+                return when (value) {
+                    true -> 1
+                    false -> 0
+                    else -> throw IllegalArgumentException("Expected value to be a Boolean.")
+                }
             }
-        }
-        if (typeId.toInt() == PrimitiveType.Byte.ordinal) {
-            counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
-            require(value is Byte) { "Expected value to be a Byte." }
-            return value.toLong()
-        }
-        if (typeId.toInt() == PrimitiveType.Short.ordinal) {
-            counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
-            require(value is Short) { "Expected value to be a Short." }
-            return value.toLong()
-        }
-        if (typeId.toInt() == PrimitiveType.Int.ordinal) {
-            counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
-            require(value is Int) { "Expected value to be an Int." }
-            return value.toLong()
-        }
-        if (typeId.toInt() == PrimitiveType.Long.ordinal) {
-            counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
-            require(value is Long) { "Expected value to be a Long." }
-            return value
-        }
-        if (typeId.toInt() == PrimitiveType.Char.ordinal) {
-            counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
-            require(value is Char) { "Expected value to be a Char." }
-            return value.toLong()
+            PrimitiveType.Byte.ordinal -> {
+                counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
+                require(value is Byte) { "Expected value to be a Byte." }
+                return value.toLong()
+            }
+            PrimitiveType.Short.ordinal -> {
+                counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
+                require(value is Short) { "Expected value to be a Short." }
+                return value.toLong()
+            }
+            PrimitiveType.Int.ordinal -> {
+                counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
+                require(value is Int) { "Expected value to be an Int." }
+                return value.toLong()
+            }
+            PrimitiveType.Long.ordinal -> {
+                counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
+                require(value is Long) { "Expected value to be a Long." }
+                return value
+            }
+            PrimitiveType.Char.ordinal -> {
+                counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
+                require(value is Char) { "Expected value to be a Char." }
+                return value.toLong()
+            }
         }
         return db.transaction {
             val (tableName, valueStr) = when (typeId.toInt()) {
@@ -1688,5 +1680,12 @@ class DatabaseImpl(
         private val VERSION_2_MIGRATION = arrayOf("ALTER TABLE entities ADD COLUMN orphan INTEGER;")
 
         private val MIGRATION_STEPS = mapOf(2 to VERSION_2_MIGRATION)
+
+        /** The primitive types that are stored in TABLE_NUMBER_PRIMITIVES */
+        private val TYPES_IN_NUMBER_TABLE = listOf(
+            PrimitiveType.Number.ordinal,
+            PrimitiveType.Float.ordinal,
+            PrimitiveType.Double.ordinal
+        )
     }
 }
