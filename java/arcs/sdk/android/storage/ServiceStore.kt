@@ -171,6 +171,8 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         runBlocking {
             send {
                 service.unregisterCallback(callbackToken)
+                serviceConnection?.disconnect()
+                serviceConnection = null
                 initChannel()
             }
         }

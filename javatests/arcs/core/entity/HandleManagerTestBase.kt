@@ -21,6 +21,7 @@ import arcs.core.storage.driver.testutil.waitUntilSet
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.util.Log
 import arcs.core.util.Time
 import arcs.jvm.util.testutil.FakeTime
 import arcs.core.util.testutil.LogRule
@@ -406,7 +407,13 @@ open class HandleManagerTestBase {
 
         withTimeout(1500) {
             RamDisk.waitUntilSet(entity1Ref.toReferencable().referencedStorageKey())
+            Log.debug {
+                "WaitUntilSet finished"
+            }
             refHeard.await()
+            Log.debug {
+                "refHeard.await() finished"
+            }
         }
 
         // Now read back the reference from a different handle.
