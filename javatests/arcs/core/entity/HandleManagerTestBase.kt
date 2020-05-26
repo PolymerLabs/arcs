@@ -131,7 +131,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun singleton_writeAndReadBackAndClear() = testRunner {
+    open fun singleton_writeAndReadBackAndClear() = testRunner {
         val writeHandle = writeHandleManager.createSingletonHandle()
         val readHandle = readHandleManager.createSingletonHandle()
 
@@ -500,7 +500,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_writeAndReadBack() = testRunner {
+    open fun collection_writeAndReadBack() = testRunner {
         val writeHandle = writeHandleManager.createCollectionHandle()
         val readHandle = readHandleManager.createCollectionHandle()
         val allHeard = Job()

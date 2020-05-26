@@ -39,6 +39,7 @@ import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.withContext
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -258,6 +259,7 @@ class HandleAdapterTest {
         assertThat(x).isEqualTo(1)
     }
 
+    @Ignore("b/157390221 - Deflake")
     @Test
     fun collectionHandleAdapter_createReference() = runBlocking {
         val handle = manager.createHandle(
