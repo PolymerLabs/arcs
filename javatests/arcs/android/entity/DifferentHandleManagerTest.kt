@@ -70,6 +70,8 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
         )
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
+        (fakeLifecycleOwner.lifecycle as LifecycleRegistry).markState(Lifecycle.State.STARTED)
+
     }
 
     @After
