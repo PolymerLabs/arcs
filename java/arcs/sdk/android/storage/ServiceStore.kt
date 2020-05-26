@@ -179,10 +179,11 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private suspend fun send(block: suspend () -> Unit) = requireNotNull(channel) {
         "Channel is not initialized"
     }.apply {
-        require(!isClosedForSend) {
-            "Channel is closed"
+        if (isClosedForSend) {
+            log.debug { "Channel is closed, ignoring" }
+        } else {
+            send(block)
         }
-        send(block)
     }
 
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean {
