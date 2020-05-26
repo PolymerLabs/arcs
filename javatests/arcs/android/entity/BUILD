@@ -8,6 +8,7 @@ licenses(["notice"])
 arcs_kt_android_test_suite(
     name = "entity",
     size = "medium",
+    # TODO(b/157513765): Deflake this test suite.
     flaky = True,
     manifest = "AndroidManifest.xml",
     package = "arcs.android.entity",
