@@ -176,14 +176,28 @@ export class FlowGraph {
   /** Converts a particle Check object into a FlowCheck object (the internal representation used by FlowGraph). */
   createFlowCheck(originalCheck: Check, expression?: CheckExpression): FlowCheck {
     expression = expression || originalCheck.expression;
-    if (expression.type === 'and' || expression.type === 'or') {
-      return {
-        originalCheck,
-        operator: expression.type,
-        children: expression.children.map(child => this.createFlowCheck(originalCheck, child)),
-      };
-    } else {
-      return {...this.createFlowCondition(expression as CheckCondition), originalCheck};
+    switch (expression.type) {
+      case 'and':
+      case 'or':
+        return {
+          originalCheck,
+          operator: expression.type,
+          children: expression.children.map(child => this.createFlowCheck(originalCheck, child)),
+        };
+      case CheckType.Implication:
+        // Implications represented as a FlowExpression with 2 children in the
+        // order [antecedent, consequent].
+        return {
+          originalCheck,
+          operator: 'implies',
+          children: [
+            this.createFlowCheck(originalCheck, expression.antecedent),
+            this.createFlowCheck(originalCheck, expression.consequent),
+          ],
+        };
+      default:
+        // All other CheckTypes get converted to a FlowCondition.
+        return {...this.createFlowCondition(expression as CheckCondition), originalCheck};
     }
   }
 

@@ -20,6 +20,7 @@ export enum CheckType {
   IsFromHandle = 'is-from-handle',
   IsFromOutput = 'is-from-output',
   IsFromStore = 'is-from-store',
+  Implication = 'implication',
 }
 
 export type CheckTarget = HandleConnectionSpecInterface | ProvideSlotConnectionSpecInterface;
@@ -97,7 +98,7 @@ export class CheckBooleanExpression {
 export type CheckExpression = CheckBooleanExpression | CheckCondition;
 
 /** A single check condition inside a trust check. */
-export type CheckCondition = CheckHasTag | CheckIsFromHandle | CheckIsFromOutput | CheckIsFromStore;
+export type CheckCondition = CheckHasTag | CheckIsFromHandle | CheckIsFromOutput | CheckIsFromStore | CheckImplication;
 
 /** A check condition of the form 'check x is <tag>'. */
 export class CheckHasTag {
@@ -178,6 +179,24 @@ export class CheckIsFromStore {
   }
 }
 
+/** A check condition of the form 'check x (A => B)'. */
+export class CheckImplication {
+  readonly type: CheckType.Implication = CheckType.Implication;
+  readonly isNot = false;
+
+  constructor(readonly antecedent: CheckExpression, readonly consequent: CheckExpression) {}
+
+  static fromASTNode(astNode: AstNode.ParticleCheckImplication, handleConnectionMap: Map<string, HandleConnectionSpecInterface>) {
+    const antecedent = createCheckExpression(astNode.antecedent, handleConnectionMap);
+    const consequent = createCheckExpression(astNode.consequent, handleConnectionMap);
+    return new CheckImplication(antecedent, consequent);
+  }
+
+  toManifestString() {
+    return `(${this.antecedent.toManifestString(/* requireParens= */ true)} => ${this.consequent.toManifestString(/* requireParens= */ true)})`;
+  }
+}
+
 /** Converts the given AST node into a CheckCondition object. */
 function createCheckCondition(astNode: AstNode.ParticleCheckCondition, handleConnectionMap: Map<string, HandleConnectionSpecInterface>): CheckCondition {
   switch (astNode.checkType) {
@@ -189,8 +208,10 @@ function createCheckCondition(astNode: AstNode.ParticleCheckCondition, handleCon
       return CheckIsFromStore.fromASTNode(astNode);
     case CheckType.IsFromOutput:
       return CheckIsFromOutput.fromASTNode(astNode, handleConnectionMap);
+    case CheckType.Implication:
+      return CheckImplication.fromASTNode(astNode, handleConnectionMap);
     default:
-      throw new Error('Unknown check type.');
+      throw new Error(`Unknown check type: ${JSON.stringify(astNode)}`);
   }
 }
 

@@ -18,7 +18,7 @@ import {Loader} from '../../platform/loader.js';
 import {Dictionary} from '../hot.js';
 import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../particle-claim.js';
-import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore} from '../particle-check.js';
+import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore, CheckImplication} from '../particle-check.js';
 import {ProvideSlotConnectionSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
 import {Store} from '../storageNG/store.js';
@@ -3316,6 +3316,63 @@ resource SomeName
             new CheckHasTag('property3', /* isNot= */ true),
           ]),
         ]));
+    });
+
+    it(`supports checks with the implication operator`, async () => {
+      const manifest = await parseManifest(`
+        particle A
+          input: reads T {}
+          check input (is property1 => is property2)
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustClaims);
+      assert.lengthOf(particle.trustChecks, 1);
+
+      const check = particle.trustChecks[0];
+      assert.strictEqual(check.toManifestString(), 'check input (is property1 => is property2)');
+      assert.strictEqual(check.target.name, 'input');
+      assert.deepEqual(
+        check.expression,
+        new CheckImplication(
+          new CheckHasTag('property1', /* isNot= */ false),
+          new CheckHasTag('property2', /* isNot= */ false),
+        ));
+    });
+
+    it(`supports checks with complex nesting of implications`, async () => {
+      const manifest = await parseManifest(`
+        particle A
+          input: reads T {}
+          check input ((is property1 and is not property2) => (is property3 => (is not property4 or is property5))) or is property6
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustClaims);
+      assert.lengthOf(particle.trustChecks, 1);
+
+      const check = particle.trustChecks[0];
+      assert.strictEqual(check.toManifestString(), 'check input ((is property1 and is not property2) => (is property3 => (is not property4 or is property5))) or is property6');
+      assert.strictEqual(check.target.name, 'input');
+      assert.deepEqual(
+        check.expression,
+        new CheckBooleanExpression('or', [
+          new CheckImplication(
+            new CheckBooleanExpression('and', [
+              new CheckHasTag('property1', /* isNot= */ false),
+              new CheckHasTag('property2', /* isNot= */ true),
+            ]),
+            new CheckImplication(
+              new CheckHasTag('property3', /* isNot= */ false),
+              new CheckBooleanExpression('or', [
+                new CheckHasTag('property4', /* isNot= */ true),
+                new CheckHasTag('property5', /* isNot= */ false),
+              ]),
+            ),
+          ),
+          new CheckHasTag('property6', /* isNot= */ false),
+        ]),
+      );
     });
 
     it('data stores can make claims', async () => {

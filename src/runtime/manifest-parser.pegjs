@@ -593,10 +593,22 @@ ParticleCheckExpression
   / '(' whiteSpace? condition:ParticleCheckExpressionBody whiteSpace? ')' { return condition; }
 
 ParticleCheckCondition
-  = ParticleCheckIsFromHandle
+  = ParticleCheckImplication
+  / ParticleCheckIsFromHandle
   / ParticleCheckIsFromStore
   / ParticleCheckIsFromOutput
   / ParticleCheckHasTag
+
+ParticleCheckImplication
+  = '(' whiteSpace? antecedent:ParticleCheckExpression whiteSpace? '=>' whiteSpace? consequent:ParticleCheckExpression whiteSpace? ')'
+  {
+    return toAstNode<AstNode.ParticleCheckImplication>({
+      kind: 'particle-trust-check-implication',
+      checkType: CheckType.Implication,
+      antecedent,
+      consequent,
+    });
+  }
 
 ParticleCheckHasTag
   = 'is' isNot:(whiteSpace 'not')? whiteSpace tag:lowerIdent

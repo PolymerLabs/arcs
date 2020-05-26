@@ -290,7 +290,7 @@ export interface ParticleCheckBooleanExpression extends BaseNode {
 
 export type ParticleCheckExpression = ParticleCheckBooleanExpression | ParticleCheckCondition;
 
-export type ParticleCheckCondition = ParticleCheckHasTag | ParticleCheckIsFromHandle | ParticleCheckIsFromOutput | ParticleCheckIsFromStore;
+export type ParticleCheckCondition = ParticleCheckHasTag | ParticleCheckIsFromHandle | ParticleCheckIsFromOutput | ParticleCheckIsFromStore | ParticleCheckImplication;
 
 export interface ParticleCheckHasTag extends BaseNode {
   kind: 'particle-trust-check-has-tag';
@@ -318,6 +318,13 @@ export interface ParticleCheckIsFromStore extends BaseNode {
   checkType: CheckType.IsFromStore;
   isNot: boolean;
   storeRef: StoreReference;
+}
+
+export interface ParticleCheckImplication extends BaseNode {
+  kind: 'particle-trust-check-implication';
+  checkType: CheckType.Implication;
+  antecedent: ParticleCheckCondition;
+  consequent: ParticleCheckCondition;
 }
 
 export interface StoreReference extends BaseNode {
