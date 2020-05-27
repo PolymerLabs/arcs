@@ -1,7 +1,6 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_gen",
-    "arcs_kt_schema",
     "arcs_manifest",
 )
 
