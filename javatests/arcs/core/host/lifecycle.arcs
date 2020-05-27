@@ -1,0 +1,46 @@
+meta
+  namespace: arcs.core.host
+
+// -----------------------------------------------------------------------------
+
+particle SingleReadHandleParticle in 'arcs.core.host.SingleReadHandleParticle'
+  data: reads Data {num: Number}
+
+recipe SingleReadHandleTest
+  SingleReadHandleParticle
+    data: reads h1
+
+// -----------------------------------------------------------------------------
+
+particle SingleWriteHandleParticle in 'arcs.core.host.SingleWriteHandleParticle'
+  data: writes Data {num: Number}
+
+recipe SingleWriteHandleTest
+  SingleWriteHandleParticle
+    data: writes h1
+
+// -----------------------------------------------------------------------------
+
+particle MultiHandleParticle in 'arcs.core.host.MultiHandleParticle'
+  data: reads Data {num: Number}
+  list: reads writes [List {txt: Text}]
+  result: writes [Result {idx: Number}]
+  config: reads Config {flg: Boolean}
+
+recipe MultiHandleTest
+  MultiHandleParticle
+    data: reads h1
+    list: reads writes h2
+    result: writes h3
+    config: reads h4
+
+// -----------------------------------------------------------------------------
+
+particle PausingParticle in 'arcs.core.host.PausingParticle'
+  data: reads Data {num: Number}
+  list: reads [List {txt: Text}]
+
+recipe PausingTest
+  PausingParticle
+    data: reads h1
+    list: reads h2

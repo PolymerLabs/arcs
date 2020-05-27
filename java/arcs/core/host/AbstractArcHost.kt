@@ -27,16 +27,13 @@ import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.util.LruCacheMap
+import arcs.core.util.SchedulerDispatcher
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
-import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -282,6 +279,11 @@ abstract class AbstractArcHost(
         // Call lifecycle methods given current state.
         performLifecycleForContext(context)
 
+        // All particles have now received their onStart events. Trigger any proxy sync
+        // requests so that the ensuing onReady events will fire after this point.
+        context.entityHandleManager.initiateProxySync()
+        context.particles.values.forEach { it.notifyWriteOnlyParticles() }
+
         // If the platform supports resurrection, request it for this Arc's StorageKeys
         maybeRequestResurrection(context)
 
@@ -310,23 +312,36 @@ abstract class AbstractArcHost(
             return particleContext
         }
 
-        // Instantiation succeeded. Move to either Created or Instantiated state based on past
+        // Instantiation succeeded. Move to either FirstStart or Instantiated state based on past
         // particle state.
         particleContext.particleState =
-            if (particleContext.particleState.hasBeenCreated) {
-                ParticleState.Created
+            if (particleContext.particleState.hasBeenStarted) {
+                ParticleState.FirstStart
             } else {
                 ParticleState.Instantiated
             }
 
-        spec.handles.forEach { handleSpec ->
-            particleContext.handles[handleSpec.key] = createHandle(
+        spec.handles.forEach { (handleName, handleConnection) ->
+            val handle = createHandle(
                 context.entityHandleManager,
-                handleSpec.key,
-                handleSpec.value,
+                handleName,
+                handleConnection,
                 particle.handles,
-                particle.toString()
+                particle.toString(),
+                immediateSync = false
             )
+            particleContext.handles[handleName] = handle
+            if (handleConnection.mode.canRead) {
+                // Particles with readable handles need to be notified for storage events against
+                // those handles, but a direct connection is difficult in the current architecture.
+                // Instead, we'll use the [ParticleContext] instance to manage the particle
+                // lifecycle APIs and thread events from the StorageProxy up via a callback.
+                handle.registerForStorageEvents { particleContext.notify(it, handle) }
+
+                // Once all of the readable handles for this particle have received their
+                // [StorageEvent.READY] notification, we need to call [Particle.onReady].
+                particleContext.expectReady(handle)
+            }
         }
 
         return particleContext
@@ -352,7 +367,7 @@ abstract class AbstractArcHost(
      */
     private suspend fun performLifecycleForContext(context: ArcHostContext) {
         context.particles.values.forEach { particleContext ->
-            performParticleLifecycle(particleContext)
+            performParticleLifecycle(context.arcId, particleContext)
             if (particleContext.particleState.failed) {
                 setArcState(context, ArcState.Error)
                 return@forEach
@@ -365,16 +380,17 @@ abstract class AbstractArcHost(
     }
 
     /**
-     * Invokes necessary [Particle] lifecycle methods given the current
-     * [ParticleContext.particleState], and changes that state if necessary. For example by
-     * insuring that [Particle.onFirstStart()], [Particle.onShutdown()] are properly called.
+     * Invokes necessary [Particle] startup lifecycle methods given the current
+     * [ParticleContext.particleState], and changes that state as necessary.
      */
-    private suspend fun performParticleLifecycle(particleContext: ParticleContext) {
+    private suspend fun performParticleLifecycle(arcId: String, particleContext: ParticleContext) {
+        val dispatcher = SchedulerDispatcher(schedulerProvider(arcId))
         if (particleContext.particleState == ParticleState.Instantiated) {
             try {
-                // onFirstStart() must succeed, else we consider the particle startup failed
-                particleContext.particle.onFirstStart()
-                particleContext.particleState = ParticleState.Created
+                withContext(dispatcher) {
+                    particleContext.particle.onFirstStart()
+                }
+                particleContext.particleState = ParticleState.FirstStart
             } catch (e: Exception) {
                 log.error(e) { "Failure in particle during onFirstStart." }
                 markParticleAsFailed(particleContext)
@@ -382,49 +398,26 @@ abstract class AbstractArcHost(
             }
         }
 
-        // Should only happen if host crashes, restarts, and last persisted state was Running
-        if (particleContext.particleState == ParticleState.Started) {
-            particleContext.particleState = ParticleState.Stopped
-        }
-
-        // If we reach here, particle is being restarted
-        if (particleContext.particleState == ParticleState.Stopped) {
-            particleContext.particleState = ParticleState.Created
-        }
-
-        // This is temporary until the BaseParticle PR lands and onStartup() API lands.
-        // We force sync() calls in lieu of onStartup() API for demos
-        if (particleContext.particleState == ParticleState.Created) {
-            try {
-                val completions = atomic(0)
-                val expectedCompletions = particleContext.handles.size
-
-                particleContext.handles.values.map { handle ->
-                    scope.launch(handle.dispatcher) {
-                        val soFar = suspendCoroutine<Int> {
-                            handle.onReady { it.resume(completions.incrementAndGet()) }
-                        }
-
-                        particleContext.particle.onHandleSync(
-                            handle,
-                            soFar == expectedCompletions
-                        )
-                        // TODO: call particle.onReady() when soFar == expectedCompletions
-                    }
-                }.joinAll()
-            } catch (e: Exception) {
-                log.error(e) { "Failure in particle during onHandleSync." }
-                markParticleAsFailed(particleContext)
+        // particleContext will take over the state handling after this.
+        try {
+            withContext(dispatcher) {
+                particleContext.particle.onStart()
             }
-            particleContext.particleState = ParticleState.Started
+            particleContext.particleState = ParticleState.Waiting
+        } catch (e: Exception) {
+            log.error(e) { "Failure in particle during onStart." }
+            markParticleAsFailed(particleContext)
+            return
         }
     }
 
     /**
      * Move to [ParticleState.Failed] if this particle had previously successfully invoked
-     * [Particle.onFirstStart()], else move to [ParticleState.Failed_NeverStarted]. Increments
+     * [Particle.onFirstStart], else move to [ParticleState.Failed_NeverStarted]. Increments
      * consecutive failure count, and if it reaches maximum, transitions to
      * [ParticleState.MaxFailed].
+     *
+     * TODO: move into ParticleContext?
      */
     private fun markParticleAsFailed(particleContext: ParticleContext) {
         particleContext.run {
@@ -432,7 +425,7 @@ abstract class AbstractArcHost(
                 return
             }
 
-            particleState = if (particleState.hasBeenCreated) {
+            particleState = if (particleState.hasBeenStarted) {
                 ParticleState.Failed
             } else {
                 ParticleState.Failed_NeverStarted
@@ -488,12 +481,13 @@ abstract class AbstractArcHost(
      * [particleId] is meant to be a namespace for the handle, wherein handle callbacks will be
      * triggered according to the rules of the [Scheduler].
      */
-    private suspend fun createHandle(
+    protected suspend fun createHandle(
         handleManager: EntityHandleManager,
         handleName: String,
         connectionSpec: Plan.HandleConnection,
         holder: HandleHolder,
-        particleId: String = ""
+        particleId: String = "",
+        immediateSync: Boolean = true
     ): Handle {
         val containerType = when (connectionSpec.type) {
             is SingletonType<*>, is EntityType -> HandleContainerType.Singleton
@@ -510,7 +504,8 @@ abstract class AbstractArcHost(
             handleSpec,
             connectionSpec.storageKey,
             connectionSpec.ttl ?: Ttl.Infinite,
-            particleId
+            particleId,
+            immediateSync
         ).also { holder.setHandle(handleName, it) }
     }
 

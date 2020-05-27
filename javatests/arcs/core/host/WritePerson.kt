@@ -12,17 +12,16 @@ class WritePerson : AbstractWritePerson() {
 
     override suspend fun onFirstStart() {
         firstStartCalled = true
-        wrote = false
         if (throws) {
             throw IllegalArgumentException("Boom!")
         }
+    }
 
-        handles.person.onReady {
-            handles.person.store(WritePerson_Person("John Wick"))
-            wrote = true
-            if (!deferred.isCompleted) {
-                deferred.complete(true)
-            }
+    override fun onReady() {
+        handles.person.store(WritePerson_Person("John Wick"))
+        wrote = true
+        if (!deferred.isCompleted) {
+            deferred.complete(true)
         }
     }
 

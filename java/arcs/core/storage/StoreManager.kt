@@ -32,4 +32,10 @@ class StoreManager {
             Store(storeOptions)
         } as Store<Data, Op, T>
     }
+
+    suspend fun waitForIdle() {
+        storesMutex.withLock {
+            stores.values.forEach { it.waitForActiveIdle() }
+        }
+    }
 }
