@@ -10,7 +10,7 @@
 
 import * as AstNode from './manifest-ast-nodes.js';
 import {Direction} from './manifest-ast-nodes.js';
-import {Claim, ParticleClaim} from './particle-claim.js';
+import {Claim} from './particle-claim.js';
 import {Type} from './type.js';
 import {assert} from '../platform/assert-web.js';
 
@@ -35,8 +35,8 @@ export interface HandleConnectionSpecInterface {
   dependentConnections: HandleConnectionSpecInterface[];
   pattern?: string;
   parentConnection: HandleConnectionSpecInterface | null;
-  claims?: ParticleClaim[];
-  checks?: Check[];
+  claims?: Map<string, Claim[]>;
+  check?: Check;
   isInput: boolean;
   isOutput: boolean;
 
@@ -66,27 +66,16 @@ export interface ProvideSlotConnectionSpecInterface extends ConsumeSlotConnectio
 }
 
 export class Check {
-  constructor(
-      readonly target: CheckTarget,
-      readonly fieldPath: string[],
-      readonly expression: CheckExpression) {}
+  constructor(readonly target: CheckTarget, readonly expression: CheckExpression) {}
 
   toManifestString() {
-    let targetString = this.targetString;
-    if (this.target.discriminator === 'CSCS') {
-      // CSCS => slot. For slots we have to add the "data" keyword after the
-      // slot name.
-      targetString += ' data';
+    let targetString: string;
+    if (this.target.discriminator === 'HCS') {
+      targetString = this.target.name;
+    } else {
+      targetString = `${this.target.name} data`;
     }
     return `check ${targetString} ${this.expression.toManifestString()}`;
-  }
-
-  get targetString(): string {
-    if (this.target.discriminator === 'HCS') {
-      return [this.target.name, ...this.fieldPath].join('.');
-    } else {
-      return this.target.name;
-    }
   }
 }
 
@@ -242,5 +231,5 @@ export function createCheck(
     astNode: AstNode.ParticleCheckStatement,
     handleConnectionMap: Map<string, HandleConnectionSpecInterface>): Check {
   const expression = createCheckExpression(astNode.expression, handleConnectionMap);
-  return new Check(checkTarget, astNode.target.fieldPath, expression);
+  return new Check(checkTarget, expression);
 }

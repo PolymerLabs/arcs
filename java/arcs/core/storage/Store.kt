@@ -81,10 +81,6 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         return activeStore
     }
 
-    suspend fun waitForActiveIdle() {
-        activeStore?.idle()
-    }
-
     @Suppress("UNCHECKED_CAST")
     companion object {
         /**

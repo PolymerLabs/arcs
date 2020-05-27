@@ -85,14 +85,3 @@ export function floatingPromiseToAudit<T>(promise: Promise<T>) {}
  *   }
  */
 export function noAwait(result: {then: Function}) {}
-
-/**
- * Flat map. Maps every element of the given array using the mapping function
- * provided, then joins all elements together into a single list.
- *
- * Polyfill, replace with native Array.flatMap() once we upgrade to a sufficient
- * version of Nodejs.
- */
-export function flatMap<T, U>(array: T[], mapper: (element: T) => U) {
-  return [].concat(...array.map(mapper));
-}

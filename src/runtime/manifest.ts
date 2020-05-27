@@ -36,7 +36,7 @@ import {Schema} from './schema.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
         ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType} from './type.js';
 import {Dictionary} from './hot.js';
-import {ClaimIsTag, validateFieldPath} from './particle-claim.js';
+import {ClaimIsTag} from './particle-claim.js';
 import {AbstractStore, StoreClaims} from './storageNG/abstract-store.js';
 import {Store} from './storageNG/store.js';
 import {StorageKey} from './storageNG/storage-key.js';
@@ -1360,7 +1360,7 @@ ${e.message}
 
     const claims: Map<string, ClaimIsTag[]> = new Map();
     item.claims.forEach(claim => {
-      validateFieldPath(claim.fieldPath, type);
+      // TODO(b/156983427): Check target is valid.
       const target = claim.fieldPath.join('.');
       if (claims.has(target)) {
         throw new ManifestError(claim.location, `A claim for target ${target} already exists in store ${name}`);

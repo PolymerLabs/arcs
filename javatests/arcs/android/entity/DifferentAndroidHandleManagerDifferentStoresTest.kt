@@ -1,7 +1,6 @@
 package arcs.android.entity
 
 import android.app.Application
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -69,14 +68,10 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
         )
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
-        (fakeLifecycleOwner.lifecycle as LifecycleRegistry).currentState = Lifecycle.State.STARTED
     }
 
     @After
-    override fun tearDown() {
-        super.tearDown()
-        (fakeLifecycleOwner.lifecycle as LifecycleRegistry).currentState = Lifecycle.State.DESTROYED
-    }
+    override fun tearDown() = super.tearDown()
 
     @Ignore("b/157166918 - Deflake")
     @Test

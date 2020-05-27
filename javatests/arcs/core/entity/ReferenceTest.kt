@@ -64,9 +64,7 @@ class ReferenceTest {
     }
 
     @After
-    fun tearDown() = runBlocking {
-        scheduler.waitForIdle()
-        entityHandleManager.close()
+    fun tearDown() {
         SchemaRegistry.clearForTest()
         DriverFactory.clearRegistrations()
     }
@@ -78,7 +76,6 @@ class ReferenceTest {
             num = 6.0
         }
         handle.store(entity)
-        scheduler.waitForIdle()
 
         val reference = handle.createReference(entity)
         val entityOut = reference.dereference()

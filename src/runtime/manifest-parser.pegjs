@@ -559,19 +559,12 @@ ParticleCheckStatement
   }
 
 ParticleCheckTarget
-  = target:dottedFields isSlot:(whiteSpace 'data')?
+  = name:lowerIdent isSlot:(whiteSpace 'data')?
   {
-    const targetParts = target.split('.');
-    const name = targetParts[0];
-    const fieldPath = targetParts.slice(1);
-    if (isSlot && fieldPath.length) {
-      error('Checks on slots cannot specify a field');
-    }
     return toAstNode<AstNode.ParticleCheckTarget>({
       kind: 'particle-check-target',
       targetType: isSlot ? 'slot' : 'handle',
       name,
-      fieldPath,
     });
   }
 

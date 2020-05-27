@@ -23,7 +23,6 @@ import {Refinement, RefinementExpressionLiteral} from '../runtime/refiner.js';
 import {Op} from '../runtime/manifest-ast-nodes.js';
 import {Claim, ClaimType} from '../runtime/particle-claim.js';
 import {Check, CheckCondition, CheckExpression, CheckType} from '../runtime/particle-check.js';
-import {flatMap} from '../runtime/util.js';
 
 export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path);
@@ -40,7 +39,7 @@ export async function manifestToProtoPayload(manifest: Manifest) {
 
 export async function encodePlansToProto(plans: Recipe[]) {
   const specMap = new Map<string, ParticleSpec>();
-  for (const spec of flatMap(plans, r => r.particles).map(p => p.spec)) {
+  for (const spec of [].concat(...plans.map(r => r.particles)).map(p => p.spec)) {
     specMap.set(spec.name, spec);
   }
   return encodePayload(await makeManifestProtoPayload([...specMap.values()], plans));
@@ -61,9 +60,8 @@ function encodePayload(payload: {}): Uint8Array {
 
 async function particleSpecToProtoPayload(spec: ParticleSpec) {
   const connections = await Promise.all(spec.connections.map(async connectionSpec => handleConnectionSpecToProtoPayload(connectionSpec)));
-  const claims = flatMap(spec.connections, connectionSpec => claimsToProtoPayload(spec, connectionSpec));
-  const checks = flatMap(spec.connections, connectionSpec => checksToProtoPayload(spec, connectionSpec));
-
+  const claims = [].concat(...spec.connections.map(connectionSpec => claimsToProtoPayload(spec, connectionSpec)));
+  const checks = spec.connections.map(connectionSpec => checkToProtoPayload(connectionSpec.check, spec, connectionSpec)).filter(x => x != null);
   return {
     name: spec.name,
     location: spec.implFile,
@@ -90,57 +88,71 @@ function claimsToProtoPayload(
   spec: ParticleSpec,
   connectionSpec: HandleConnectionSpec
 ) {
-  if (!connectionSpec.claims) {
+  // TODO(b/156983427): Support field-level claims in proto output.
+  if (!connectionSpec.claims || connectionSpec.claims.size === 0) {
     return [];
   }
-  const protos: {}[] = [];
-  for (const particleClaim of connectionSpec.claims) {
-    const accessPath = accessPathProtoPayload(spec, connectionSpec, particleClaim.fieldPath);
-    for (const claim of particleClaim.claims) {
-      switch (claim.type) {
-        case ClaimType.IsTag: {
-          let predicate: {} = {label: {semanticTag: claim.tag}};
-          if (claim.isNot) {
-            predicate = {not: {predicate}};
-          }
-          protos.push({
-            assume: {accessPath, predicate}
-          });
-          break;
-        }
-        case ClaimType.DerivesFrom: {
-          protos.push({
-            derivesFrom: {
-              target: accessPath,
-              source: {
-                particleSpec: spec.name,
-                handleConnection: claim.parentHandle.name
+  assert(
+      connectionSpec.claims.size === 1 && connectionSpec.claims.keys().next().value === connectionSpec.name,
+      'Field-level claims not supported by manifest2proto yet');
+  const claims = connectionSpec.claims.values().next().value;
+
+  return claims?.map(claim => {
+    const accessPath = {
+      particleSpec: spec.name,
+      handleConnection: connectionSpec.name
+    };
+    switch (claim.type) {
+      case ClaimType.IsTag: {
+        const tag = {semanticTag: claim.tag};
+        let predicate;
+        if (claim.isNot) {
+          predicate = {
+            not: {
+              predicate: {
+                label: tag
               }
             }
-          });
-          break;
+          };
+        } else {
+          predicate = {
+            label: tag
+          };
         }
-        default:
-          throw new Error(`Unknown ClaimType for claim: ${JSON.stringify(claim)}.`);
+        return {
+          assume: {accessPath, predicate}
+        };
       }
+      case ClaimType.DerivesFrom: {
+        return {
+          derivesFrom: {
+            target: accessPath,
+            source: {
+              particleSpec: spec.name,
+              handleConnection: claim.parentHandle.name
+            }
+          }
+        };
+      }
+      default: return null;
     }
-  }
-  return protos;
+  }).filter(x => x != null);
 }
 
-// Converts the checks in HandleConnectionSpec.
-function checksToProtoPayload(
+// Converts the check in HandleConnectionSpec.
+function checkToProtoPayload(
+  check: Check,
   spec: ParticleSpec,
   connectionSpec: HandleConnectionSpec,
 ) {
-  if (!connectionSpec.checks) {
-    return [];
-  }
-  return connectionSpec.checks.map(check => {
-    const accessPath = accessPathProtoPayload(spec, connectionSpec, check.fieldPath);
-    const predicate = checkExpressionToProtoPayload(check.expression);
-    return {accessPath, predicate};
-  });
+  if (check == null) return null;
+  const predicate = checkExpressionToProtoPayload(check.expression);
+  if (predicate == null) return null;
+  const accessPath = {
+    particleSpec: spec.name,
+    handleConnection: connectionSpec.name
+  };
+  return {accessPath, predicate};
 }
 
 function checkExpressionToProtoPayload(
@@ -200,28 +212,13 @@ function checkExpressionToProtoPayload(
         case CheckType.IsFromHandle:
         case CheckType.IsFromOutput:
         case CheckType.IsFromStore:
-          throw new Error(`Unsupported CheckType for check: ${JSON.stringify(condition)}.`);
+          // TODO(bgogul):
+          return null;
         default:
-          throw new Error(`Unknown CheckType for check: ${JSON.stringify(condition)}.`);
+          throw new Error('Unknown CheckType');
       }
     }
   }
-}
-
-/** Constructs an AccessPathProto payload. */
-function accessPathProtoPayload(
-    spec: ParticleSpec,
-    connectionSpec: HandleConnectionSpec,
-    fieldPath: string[]
-) {
-  const accessPath: {particleSpec: string, handleConnection: string, selectors?: {field: string}[]} = {
-    particleSpec: spec.name,
-    handleConnection: connectionSpec.name
-  };
-  if (fieldPath.length) {
-    accessPath.selectors = fieldPath.map(field => ({field}));
-  }
-  return accessPath;
 }
 
 async function recipeToProtoPayload(recipe: Recipe) {

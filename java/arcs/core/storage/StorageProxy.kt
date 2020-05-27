@@ -21,6 +21,7 @@ import arcs.core.util.TaggedLog
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.getAndUpdate
 import kotlinx.atomicfu.update
+import kotlinx.atomicfu.updateAndGet
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Deferred
@@ -59,7 +60,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
     private val log = TaggedLog { "StorageProxy" }
     private val handleCallbacks = atomic(HandleCallbacks<T>())
-    private val stateHolder = atomic(StateHolder<T>(ProxyState.NO_SYNC))
+    private val stateHolder = atomic(StateHolder<T>(ProxyState.INIT))
     private val store: StorageCommunicationEndpoint<Data, Op, T> =
         storeEndpointProvider.getStorageEndpoint(ProxyCallback(::onMessage))
 
@@ -67,103 +68,79 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     fun getStateForTesting(): ProxyState = stateHolder.value.state
 
     /**
-     * If the [StorageProxy] is associated with any readable handles, it will need to operate
-     * in synchronized mode. This is done via a two-step process:
-     *   1) When constructed, all readable handles call this method to move the proxy from its
-     *      initial state of [NO_SYNC] to [READY_TO_SYNC].
-     *   2) [EntityHandleManager] then triggers the actual sync request after the arc has been
-     *      set up and all particles have received their onStart events.
+     * Add a [Handle] `onReady` action, associated with a [Handle] name.
+     *
+     * If the [StorageProxy] is synchronized when the action is added, it will be called
+     * on the next iteration of the [Scheduler].
+     *
+     * If the [StorageProxy] is in its initial state, the first call to any of the action methods
+     * will trigger a request for synchronization.
      */
-    fun prepareForSync() {
-        checkNotClosed()
-        stateHolder.update {
-            if (it.state == ProxyState.NO_SYNC) {
-                it.setState(ProxyState.READY_TO_SYNC)
-            } else {
-                it
-            }
+    fun addOnReady(id: CallbackIdentifier, action: () -> Unit) {
+        val currentState = addAction { handleCallbacks.update { it.addOnReady(id, action) } }
+        if (currentState == ProxyState.SYNC) {
+            scheduler.schedule(HandleCallbackTask(id, action))
         }
     }
 
     /**
-     * If the [StorageProxy] has previously been set up for synchronized mode, send a sync request
-     * to the backing store and move to [AWAITING_SYNC].
+     * Add a [Handle] `onUpdate` action, associated with a [Handle] name.
+     *
+     * If the [StorageProxy] is in its initial state, the first call to any of the action methods
+     * will trigger a request for synchronization.
      */
-    fun maybeInitiateSync() {
+    fun addOnUpdate(id: CallbackIdentifier, action: (value: T) -> Unit) {
+        addAction { handleCallbacks.update { it.addOnUpdate(id, action) } }
+    }
+
+    /**
+     * Add a [Handle] `onDesync` action, associated with a [Handle] name.
+     *
+     * If the [StorageProxy] is desynchronized when the action is added, it will be called
+     * on the next iteration of the [Scheduler].
+     *
+     * If the [StorageProxy] is in its initial state, the first call to any of the action methods
+     * will trigger a request for synchronization.
+     */
+    fun addOnDesync(id: CallbackIdentifier, action: () -> Unit) {
+        val currentState = addAction { handleCallbacks.update { it.addOnDesync(id, action) } }
+        if (currentState == ProxyState.DESYNC) {
+            scheduler.schedule(HandleCallbackTask(id, action))
+        }
+    }
+
+    /**
+     * Add a [Handle] `onResync` action, associated with a [Handle] name.
+     *
+     * If the [StorageProxy] is in its initial state, the first call to any of the action methods
+     * will trigger a request for synchronization.
+     */
+    fun addOnResync(id: CallbackIdentifier, action: () -> Unit) {
+        addAction { handleCallbacks.update { it.addOnResync(id, action) } }
+    }
+
+    /**
+     * Run the `add` function to add a storage event action method.
+     *
+     * If the [StorageProxy] is in the INIT state, send a sync request and move to AWAITING_SYNC.
+     */
+    private fun addAction(add: () -> Unit): ProxyState {
         checkNotClosed()
+        add()
+
         var needsSync = false
-        stateHolder.update {
-            // TODO(b/157188866): remove reliance on ready signal for write-only handles in tests
-            // If there are no readable handles observing this proxy, it will be in the NO_SYNC
-            // state and will never deliver any onReady notifications, which breaks tests that
-            // call awaitReady on write-only handles.
-            if (it.state == ProxyState.READY_TO_SYNC || it.state == ProxyState.NO_SYNC) {
+        val currentState = stateHolder.updateAndGet {
+            if (it.state == ProxyState.INIT) {
                 needsSync = true
                 it.setState(ProxyState.AWAITING_SYNC)
             } else {
                 needsSync = false
                 it
             }
-        }
-        // TODO: add timeout for stores that fail to sync
+        }.state
+
         if (needsSync) requestSynchronization()
-    }
-
-    /**
-     * [AbstractArcHost] calls this (via [Handle]) to thread storage events back
-     * to the [ParticleContext], which manages the [Particle] lifecycle API.
-     */
-    fun registerForStorageEvents(id: CallbackIdentifier, notify: (StorageEvent) -> Unit) {
-        checkNotClosed()
-        handleCallbacks.update { it.addNotify(id, notify) }
-    }
-
-    /**
-     * Add a [Handle] `onReady` action associated with a [Handle] name.
-     *
-     * If the [StorageProxy] is synchronized when the action is added, it will be called
-     * on the next iteration of the [Scheduler].
-     */
-    fun addOnReady(id: CallbackIdentifier, action: () -> Unit) {
-        checkNotClosed()
-        checkWillSync()
-        handleCallbacks.update { it.addOnReady(id, action) }
-        if (stateHolder.value.state == ProxyState.SYNC) {
-            scheduler.schedule(HandleCallbackTask(id, action))
-        }
-    }
-
-    /**
-     * Add a [Handle] `onUpdate` action associated with a [Handle] name.
-     */
-    fun addOnUpdate(id: CallbackIdentifier, action: (value: T) -> Unit) {
-        checkNotClosed()
-        checkWillSync()
-        handleCallbacks.update { it.addOnUpdate(id, action) }
-    }
-
-    /**
-     * Add a [Handle] `onDesync` action associated with a [Handle] name.
-     *
-     * If the [StorageProxy] is desynchronized when the action is added, it will be called
-     * on the next iteration of the [Scheduler].
-     */
-    fun addOnDesync(id: CallbackIdentifier, action: () -> Unit) {
-        checkNotClosed()
-        checkWillSync()
-        handleCallbacks.update { it.addOnDesync(id, action) }
-        if (stateHolder.value.state == ProxyState.DESYNC) {
-            scheduler.schedule(HandleCallbackTask(id, action))
-        }
-    }
-
-    /**
-     * Add a [Handle] `onResync` action associated with a [Handle] name.
-     */
-    fun addOnResync(id: CallbackIdentifier, action: () -> Unit) {
-        checkNotClosed()
-        checkWillSync()
-        handleCallbacks.update { it.addOnResync(id, action) }
+        return currentState
     }
 
     /**
@@ -239,10 +216,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         checkNotClosed()
         log.debug { "Getting particle view (lifecycle)" }
 
-        // TODO: handle desync state?
         check(stateHolder.value.state == ProxyState.SYNC) {
-            "Cannot get particle view directly while the storage proxy is unsynced; " +
-            "current state is ${stateHolder.value.state}"
+            "Cannot get particle view directly while the storage proxy is unsynced"
         }
 
         return crdt.consumerView
@@ -250,10 +225,6 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
     fun getParticleViewAsync(): Deferred<T> {
         checkNotClosed()
-        check(stateHolder.value.state != ProxyState.NO_SYNC) {
-            "getParticleView not valid on non-readable StorageProxy"
-        }
-
         log.debug { "Getting particle view" }
         val future = CompletableDeferred<T>()
 
@@ -262,17 +233,17 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                 // Already synced, exit early to avoid adding a waiting sync.
                 ProxyState.SYNC -> return@getAndUpdate it
                 // Time to sync.
-                ProxyState.READY_TO_SYNC -> it.setState(ProxyState.AWAITING_SYNC)
+                ProxyState.INIT -> it.setState(ProxyState.AWAITING_SYNC)
                 // Either already awaiting first sync, or a re-sync at this point.
                 else -> it
             }.addWaitingSync(future)
-        }.state
+        }
 
         // If this was our first state transition - it means we need to request sync.
-        if (priorState == ProxyState.READY_TO_SYNC) requestSynchronization()
+        if (priorState.state == ProxyState.INIT) requestSynchronization()
 
         // If this was called while already synced, resolve the future with the current value.
-        if (priorState == ProxyState.SYNC) {
+        if (priorState.state == ProxyState.SYNC) {
             scheduler.scope.launch {
                 val result = crdt.consumerView
                 log.debug { "Already synchronized, returning $result" }
@@ -297,7 +268,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
             // Storage wants our latest state.
             launch {
                 val data = withContext(this@StorageProxy.dispatcher) { crdt.data }
-                store.onProxyMessage(ProxyMessage.ModelUpdate(data, null))
+                store.onProxyMessage(ProxyMessage.ModelUpdate<Data, Op, T>(data, null))
             }
             return@coroutineScope
         }
@@ -320,25 +291,23 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
         val value = crdt.consumerView
         val toResolve = mutableSetOf<CompletableDeferred<T>>()
-        val priorState = stateHolder.getAndUpdate {
+        val oldState = stateHolder.getAndUpdate {
             toResolve.addAll(it.waitingSyncs)
 
             it.clearWaitingSyncs()
                 .setState(ProxyState.SYNC)
-        }.state
+        }
 
         log.debug { "Completing ${toResolve.size} waiting syncs" }
         toResolve.forEach { it.complete(value) }
 
-        when (priorState) {
+        when (oldState.state) {
+            ProxyState.INIT,
             ProxyState.AWAITING_SYNC -> notifyReady()
             ProxyState.SYNC -> notifyUpdate(value)
             ProxyState.DESYNC -> notifyResync()
-            ProxyState.NO_SYNC,
-            ProxyState.READY_TO_SYNC,
-            ProxyState.CLOSED -> throw IllegalStateException(
-                "received ModelUpdate on StorageProxy in state $priorState"
-            )
+            ProxyState.CLOSED ->
+                throw IllegalStateException("processModelUpdate on closed StorageProxy")
         }
     }
 
@@ -377,25 +346,15 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private fun notifyReady() {
         log.debug { "notifying ready" }
         scheduleCallbackTasks(handleCallbacks.value.onReady) { it() }
-        scheduleCallbackTasks(handleCallbacks.value.notify) { it(StorageEvent.READY) }
     }
-
     private fun notifyUpdate(data: T) {
         log.debug { "notifying update" }
         scheduleCallbackTasks(handleCallbacks.value.onUpdate) { it(data) }
-        scheduleCallbackTasks(handleCallbacks.value.notify) { it(StorageEvent.UPDATE) }
     }
-
-    private fun notifyDesync() {
-        log.debug { "notifying desync" }
-        scheduleCallbackTasks(handleCallbacks.value.onDesync) { it() }
-        scheduleCallbackTasks(handleCallbacks.value.notify) { it(StorageEvent.DESYNC) }
-    }
-
+    private fun notifyDesync() = scheduleCallbackTasks(handleCallbacks.value.onDesync) { it() }
     private fun notifyResync() {
         log.debug { "notifying resync" }
         scheduleCallbackTasks(handleCallbacks.value.onResync) { it() }
-        scheduleCallbackTasks(handleCallbacks.value.notify) { it(StorageEvent.RESYNC) }
     }
 
     /** Schedule [HandleCallbackTask]s for all given [callbacks] with the [Scheduler]. */
@@ -419,11 +378,6 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         "Unexpected operation on closed StorageProxy"
     }
 
-    private fun checkWillSync() = check(stateHolder.value.state != ProxyState.NO_SYNC) {
-        "Action handlers are not valid on a StorageProxy that has not been set up to sync " +
-        "(i.e. there are no readable handles observing this proxy)"
-    }
-
     /**
      * Two-dimensional identifier for handle callbacks. Typically this will be the handle's name,
      * as well as its particle's ID.
@@ -445,8 +399,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         val onReady: Map<CallbackIdentifier, List<() -> Unit>> = emptyMap(),
         val onUpdate: Map<CallbackIdentifier, List<(T) -> Unit>> = emptyMap(),
         val onDesync: Map<CallbackIdentifier, List<() -> Unit>> = emptyMap(),
-        val onResync: Map<CallbackIdentifier, List<() -> Unit>> = emptyMap(),
-        val notify: Map<CallbackIdentifier, List<(StorageEvent) -> Unit>> = emptyMap()
+        val onResync: Map<CallbackIdentifier, List<() -> Unit>> = emptyMap()
     ) {
         fun addOnReady(id: CallbackIdentifier, block: () -> Unit) =
             copy(onReady = onReady + (id to ((onReady[id] ?: emptyList()) + block)))
@@ -460,16 +413,12 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         fun addOnResync(id: CallbackIdentifier, block: () -> Unit) =
             copy(onResync = onResync + (id to ((onResync[id] ?: emptyList()) + block)))
 
-        fun addNotify(id: CallbackIdentifier, block: (StorageEvent) -> Unit) =
-            copy(notify = notify + (id to ((notify[id] ?: emptyList()) + block)))
-
         fun removeCallbacks(id: CallbackIdentifier) =
             copy(
                 onReady = onReady - id,
                 onUpdate = onUpdate - id,
                 onDesync = onDesync - id,
-                onResync = onResync - id,
-                notify = notify - id
+                onResync = onResync - id
             )
     }
 
@@ -485,34 +434,17 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         fun clearWaitingSyncs() = copy(waitingSyncs = emptyList())
     }
 
-    /**
-     * Event types used for notifying the [ParticleContext] to drive the [Particle]'s
-     * storage events API.
-     */
-    enum class StorageEvent {
-        READY,
-        UPDATE,
-        DESYNC,
-        RESYNC
-    }
-
     // Visible for testing
     enum class ProxyState {
         /**
-         * [prepareForSync] has not been called. Proxies that are only associated with
-         * write-only handles will remain in this state.
+         * The [StorageProxy] has not received any actions to invoke on storage events. A call to
+         * `onReady`, `onUpdate`, `onDesync` or `onResync` will change the state to [AWAITING_SYNC].
          */
-        NO_SYNC,
+        INIT,
 
         /**
-         * [prepareForSync] has been called to indicate that this proxy will be moving to
-         * synchronized mode when [maybeInitiateSync] is called.
-         */
-        READY_TO_SYNC,
-
-        /**
-         * [maybeInitiateSync] has been called. A sync request has been sent to storage,
-         * but the response has not been received yet.
+         * The [StorageProxy] has received at least one action for storage events. A sync request
+         * has been sent to storage, but the response has not been received yet.
          */
         AWAITING_SYNC,
 

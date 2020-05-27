@@ -104,13 +104,8 @@ export class FlowGraph {
       // Attach check objects to particle in-edges. Must be done in a separate
       // pass after all edges have been created, since checks can reference
       // other nodes/edges.
-      if (edge instanceof ParticleInput && edge.connectionSpec.checks && edge.connectionSpec.checks.length) {
-        // TODO(b/153354605): Add support for field-level checks.
-        assert(
-          edge.connectionSpec.checks.length === 1 && edge.connectionSpec.checks[0].fieldPath.length === 0,
-          'Field-level checks yet not supported by DFA yet.');
-
-        edge.check = this.createFlowCheck(edge.connectionSpec.checks[0]);
+      if (edge instanceof ParticleInput && edge.connectionSpec.check) {
+        edge.check = this.createFlowCheck(edge.connectionSpec.check);
       }
 
       // Compute the list of 'derived from' edges for all out-edges. This must

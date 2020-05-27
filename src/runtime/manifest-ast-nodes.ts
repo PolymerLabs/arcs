@@ -280,7 +280,6 @@ export interface ParticleCheckTarget extends BaseNode {
   kind: 'particle-check-target';
   targetType: 'handle' | 'slot';
   name: string;
-  fieldPath: string[];
 }
 
 export interface ParticleCheckBooleanExpression extends BaseNode {
