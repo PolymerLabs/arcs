@@ -75,15 +75,15 @@ export class SchemaNode {
     const source = SchemaNode.getSourceForConnection(connection, nodes);
     const node = nodes.find(n => n.sources.includes(source));
     if (node.sources.length === 1) {
-      return node.entityClassName
+      return node.entityClassName;
     } else {
-      return source.fullName
+      return source.fullName;
     }
   }
 
   static getSourceForConnection(connection: HandleConnectionSpec, nodes: SchemaNode[]) : SchemaSource {
     const allSources = nodes.map(n => n.sources).reduce((curr, acc) => [...acc, ...curr], []);
-    return allSources.find(s => s.connection === connection && s.path.length === 0)
+    return allSources.find(s => s.connection === connection && s.path.length === 0);
   }
 }
 
