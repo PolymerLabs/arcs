@@ -90,19 +90,12 @@ function claimsToProtoPayload(
   spec: ParticleSpec,
   connectionSpec: HandleConnectionSpec
 ) {
-  if (!connectionSpec.claims || connectionSpec.claims.length === 0) {
+  if (!connectionSpec.claims) {
     return [];
   }
   const protos: {}[] = [];
   for (const particleClaim of connectionSpec.claims) {
-    let accessPath: {} = {
-      particleSpec: spec.name,
-      handleConnection: connectionSpec.name,
-    };
-    if (particleClaim.fieldPath.length) {
-      const selectors = particleClaim.fieldPath.map(field => ({field}));
-      accessPath = {...accessPath, selectors};
-    }
+    const accessPath = accessPathProtoPayload(spec, connectionSpec, particleClaim.fieldPath);
     for (const claim of particleClaim.claims) {
       switch (claim.type) {
         case ClaimType.IsTag: {
