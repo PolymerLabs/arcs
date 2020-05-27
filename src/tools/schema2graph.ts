@@ -70,8 +70,26 @@ export class SchemaNode {
   // This currently assumes a top-level schema can be found for every connection.
   // Note: This will change once we enable handle connections with tuples.
   static entityTypeForConnection(connection: HandleConnectionSpec, nodes: SchemaNode[]): string {
+    return SchemaNode.getSourceForConnection(connection, nodes).fullName;
+  }
+
+  // This will return the most "developer friendly" name for the entity type. If the name is of the form
+  // Internal$N, we will use the full name from the source. Otherwise, we will use the name of the node.
+  // Note: Right now this will always return sournce.fullName, but it is a stepping stone towards renaming
+  // the entities.
+  static devFriendlyEntityTypeForConnection(connection: HandleConnectionSpec, nodes: SchemaNode[]): string {
+    const source = SchemaNode.getSourceForConnection(connection, nodes);
+    const node = nodes.find(n => n.sources.includes(source));
+    if (node.sources.length === 1) {
+      return node.name
+    } else {
+      return source.fullName
+    }
+  }
+
+  static getSourceForConnection(connection: HandleConnectionSpec, nodes: SchemaNode[]) : SchemaSource {
     const allSources = nodes.map(n => n.sources).reduce((curr, acc) => [...acc, ...curr], []);
-    return allSources.find(s => s.connection === connection && s.path.length === 0).fullName;
+    return allSources.find(s => s.connection === connection && s.path.length === 0)
   }
 }
 

@@ -246,7 +246,8 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     for (const connection of particle.connections) {
       const handleName = connection.name;
       const entityType = SchemaNode.entityTypeForConnection(connection, nodes);
-      const handleInterfaceType = this.handleInterfaceType(connection, entityType);
+      const devFriendlyName = SchemaNode.devFriendlyEntityTypeForConnection(connection, nodes);
+      const handleInterfaceType = this.handleInterfaceType(connection, devFriendlyName);
       if (this.opts.wasm) {
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityType})`);
       } else {
