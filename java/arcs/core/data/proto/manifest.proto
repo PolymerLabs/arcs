@@ -230,16 +230,11 @@ message InformationFlowLabelProto {
     message Not {
       Predicate predicate = 1;
     }
-    message Implies {
-      Predicate antecedent = 1;
-      Predicate consequent = 2;
-    }
     oneof predicate {
       InformationFlowLabelProto label = 1;
       And and = 2;
       Or or = 3;
       Not not = 4;
-      Implies implies = 5;
     }
   }
 

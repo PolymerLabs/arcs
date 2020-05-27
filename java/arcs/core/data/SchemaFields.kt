@@ -35,13 +35,6 @@ sealed class FieldType(
         val Boolean = Primitive(PrimitiveType.Boolean)
         val Number = Primitive(PrimitiveType.Number)
         val Text = Primitive(PrimitiveType.Text)
-        val Byte = Primitive(PrimitiveType.Byte)
-        val Short = Primitive(PrimitiveType.Short)
-        val Int = Primitive(PrimitiveType.Int)
-        val Long = Primitive(PrimitiveType.Long)
-        val Char = Primitive(PrimitiveType.Char)
-        val Float = Primitive(PrimitiveType.Float)
-        val Double = Primitive(PrimitiveType.Double)
     }
 }
 
@@ -50,13 +43,6 @@ enum class PrimitiveType {
     Boolean,
     Number,
     Text,
-    Byte,
-    Short,
-    Int,
-    Long,
-    Char,
-    Float,
-    Double
 }
 
 val LARGEST_PRIMITIVE_TYPE_ID = PrimitiveType.values().size - 1

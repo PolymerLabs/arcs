@@ -45,22 +45,14 @@ data class ReferencablePrimitive<T>(
 
     companion object {
         // Do not use KClass::toString() as its implementation relies on extremely slow reflection.
-        private const val primitiveKotlinByte = "kotlin.Byte"
-        private const val primitiveKotlinShort = "kotlin.Short"
         private const val primitiveKotlinInt = "kotlin.Int"
-        private const val primitiveKotlinLong = "kotlin.Long"
-        private const val primitiveKotlinChar = "kotlin.Char"
         private const val primitiveKotlinFloat = "kotlin.Float"
         private const val primitiveKotlinDouble = "kotlin.Double"
         private const val primitiveKotlinString = "kotlin.String"
         private const val primitiveKotlinBoolean = "kotlin.Boolean"
         private const val primitiveKotlinByteArray = "kotlin.ByteArray"
         private val primitiveKClassMap = mapOf<KClass<*>, String>(
-            Byte::class to primitiveKotlinChar,
-            Short::class to primitiveKotlinShort,
             Int::class to primitiveKotlinInt,
-            Long::class to primitiveKotlinLong,
-            Char::class to primitiveKotlinChar,
             Float::class to primitiveKotlinFloat,
             Double::class to primitiveKotlinDouble,
             String::class to primitiveKotlinString,
@@ -71,12 +63,8 @@ data class ReferencablePrimitive<T>(
 
         /** Returns whether or not the given type is a supported type for [ReferencablePrimitive]. */
         fun isSupportedPrimitive(klass: KClass<*>): Boolean =
-            klass == Byte::class ||
-                klass == Short::class ||
-                klass == Int::class ||
-                klass == Long::class ||
+            klass == Int::class ||
                 klass == Float::class ||
-                klass == Char::class ||
                 klass == Double::class ||
                 klass == String::class ||
                 klass == Boolean::class ||
@@ -92,24 +80,12 @@ data class ReferencablePrimitive<T>(
             val value = match.groups[2]?.value ?: return null
 
             return when {
-                className == primitiveKotlinByte ||
-                className.contains("java.lang.Byte") ->
-                    ReferencablePrimitive(Byte::class, value.toByte())
-                className == primitiveKotlinShort ||
-                className.contains("java.lang.Short") ->
-                    ReferencablePrimitive(Short::class, value.toShort())
                 className == primitiveKotlinInt ||
                 className.contains("java.lang.Int") ->
-                    ReferencablePrimitive(Int::class, value.toInt())
-                className == primitiveKotlinLong ||
-                className.contains("java.lang.Long") ->
-                    ReferencablePrimitive(Long::class, value.toLong())
-                className == primitiveKotlinChar ||
-                className.contains("java.lang.Char") ->
-                    ReferencablePrimitive(Char::class, value.single())
+                    ReferencablePrimitive(Double::class, value.toDouble())
                 className == primitiveKotlinFloat ||
                 className.contains("java.lang.Float") ->
-                    ReferencablePrimitive(Float::class, value.toFloat())
+                    ReferencablePrimitive(Double::class, value.toDouble())
                 className == primitiveKotlinDouble ||
                 className.contains("java.lang.Double") ->
                     ReferencablePrimitive(Double::class, value.toDouble())
@@ -128,29 +104,13 @@ data class ReferencablePrimitive<T>(
 
 /* Extension functions to make conversion easy. */
 
-/** Makes a [Byte]-based [ReferencablePrimitive] from the receiving [Byte]. */
-fun Byte.toReferencable(): ReferencablePrimitive<Byte> =
-    ReferencablePrimitive(Byte::class, this)
+/** Makes a [Double]-based [ReferencablePrimitive] from the receiving [Int]. */
+fun Int.toReferencable(): ReferencablePrimitive<Double> =
+    ReferencablePrimitive(Double::class, this.toDouble())
 
-/** Makes a [Short]-based [ReferencablePrimitive] from the receiving [Short]. */
-fun Short.toReferencable(): ReferencablePrimitive<Short> =
-    ReferencablePrimitive(Short::class, this)
-
-/** Makes an [Int]-based [ReferencablePrimitive] from the receiving [Int]. */
-fun Int.toReferencable(): ReferencablePrimitive<Int> =
-    ReferencablePrimitive(Int::class, this)
-
-/** Makes a [Long]-based [ReferencablePrimitive] from the receiving [Long]. */
-fun Long.toReferencable(): ReferencablePrimitive<Long> =
-    ReferencablePrimitive(Long::class, this)
-
-/** Makes a [Char]-based [ReferencablePrimitive] from the receiving [Char]. */
-fun Char.toReferencable(): ReferencablePrimitive<Char> =
-    ReferencablePrimitive(Char::class, this)
-
-/** Makes a [Float]-based [ReferencablePrimitive] from the receiving [Float]. */
-fun Float.toReferencable(): ReferencablePrimitive<Float> =
-    ReferencablePrimitive(Float::class, this)
+/** Makes a [Double]-based [ReferencablePrimitive] from the receiving [Float]. */
+fun Float.toReferencable(): ReferencablePrimitive<Double> =
+    ReferencablePrimitive(Double::class, this.toDouble())
 
 /** Makes a [Double]-based [ReferencablePrimitive] from the receiving [Double]. */
 fun Double.toReferencable(): ReferencablePrimitive<Double> =

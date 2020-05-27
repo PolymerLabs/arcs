@@ -14,7 +14,6 @@ filegroup(
 arcs_ts_test(
     name = "wasm-api-test",
     src = "wasm-api-test.ts",
-    # TODO(b/157514127): Deflake this test.
     flaky = True,
     deps = [
         ":manifest_srcs",

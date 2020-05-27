@@ -12,7 +12,7 @@ import path from 'path';
 import minimist from 'minimist';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
-import {SchemaGraph, SchemaNode, SchemaSource} from './schema2graph.js';
+import {SchemaGraph, SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 
 export type AddFieldOptions = Readonly<{
@@ -32,9 +32,9 @@ export interface ClassGenerator {
 }
 
 export class NodeAndGenerator {
-  node: SchemaNode;
   generator: ClassGenerator;
   hash: string;
+  fieldLength: number;
 }
 
 export abstract class Schema2Base {
@@ -91,64 +91,57 @@ export abstract class Schema2Base {
     // TODO: consider an option to generate one file per particle
     const classes: string[] = [];
     for (const particle of manifest.particles) {
-      const nodes = await this.calculateNodeAndGenerators(particle);
-
-      classes.push(...nodes.map(({generator, node, hash}) =>
-          generator.generate(hash, Object.entries(node.schema.fields).length)));
-
       if (this.opts.test_harness) {
-        classes.push(this.generateTestHarness(particle, nodes.map(n => n.node)));
+        classes.push(this.generateTestHarness(particle));
         continue;
+      }
+
+      const graph = new SchemaGraph(particle, this.generateEntityClassName, this.generateAliasNames);
+      const nodes: NodeAndGenerator[] = [];
+      // Generate one class definition per node in the graph.
+      for (const node of graph.walk()) {
+        const generator = this.getClassGenerator(node);
+        const fields = Object.entries(node.schema.fields);
+
+        for (const [field, descriptor] of fields) {
+          if (descriptor.kind === 'schema-primitive') {
+            if (['Text', 'URL', 'Number', 'Boolean'].includes(descriptor.type)) {
+              generator.addField({field, typeName: descriptor.type});
+            } else {
+              throw new Error(`Schema type '${descriptor.type}' for field '${field}' is not supported`);
+            }
+          } else if (descriptor.kind === 'schema-reference' || (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference')) {
+            const isCollection = descriptor.kind === 'schema-collection';
+            const schemaNode = node.refs.get(field);
+            generator.addField({
+              field,
+              typeName: 'Reference',
+              isCollection,
+              refClassName: schemaNode.name,
+              refSchemaHash: await schemaNode.schema.hash(),
+            });
+          } else if (descriptor.kind === 'schema-collection') {
+            const schema = descriptor.schema;
+            if (!['Text', 'URL', 'Number', 'Boolean'].includes(schema.type)) {
+              throw new Error(`Schema type '${schema.type}' for field '${field}' is not supported`);
+            }
+            generator.addField({field, typeName: schema.type, isCollection: true});
+          } else {
+            throw new Error(`Schema kind '${descriptor.kind}' for field '${field}' is not supported`);
+          }
+        }
+        if (node.schema.refinement) {
+          generator.generatePredicates();
+        }
+        const hash = await node.schema.hash();
+        const fieldLength = fields.length;
+        classes.push(generator.generate(hash, fieldLength));
+        nodes.push({generator, hash, fieldLength});
       }
 
       classes.push(this.generateParticleClass(particle, nodes));
     }
     return classes;
-  }
-
-  async calculateNodeAndGenerators(particle: ParticleSpec): Promise<NodeAndGenerator[]> {
-    const graph = new SchemaGraph(particle);
-    const nodes: NodeAndGenerator[] = [];
-    for (const node of graph.walk()) {
-      const generator = this.getClassGenerator(node);
-      for (const [field, descriptor] of Object.entries(node.schema.fields)) {
-        if (descriptor.kind === 'schema-primitive') {
-          if (['Text', 'URL', 'Number', 'Boolean'].includes(descriptor.type)) {
-            generator.addField({field, typeName: descriptor.type});
-          } else {
-            throw new Error(`Schema type '${descriptor.type}' for field '${field}' is not supported`);
-          }
-        } else if (descriptor.kind === 'schema-reference' || (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference')) {
-          const isCollection = descriptor.kind === 'schema-collection';
-          const schemaNode = node.refs.get(field);
-          generator.addField({
-            field,
-            typeName: 'Reference',
-            isCollection,
-            refClassName: schemaNode.name,
-            refSchemaHash: await schemaNode.schema.hash(),
-          });
-        } else if (descriptor.kind === 'schema-collection') {
-          const schema = descriptor.schema;
-           if (!((schema.kind === 'kotlin-primitive') || ['Text', 'URL', 'Number', 'Boolean'].includes(schema.type))) {
-            throw new Error(`Schema type '${schema.type}' for field '${field}' is not supported`);
-          }
-          generator.addField({field, typeName: schema.type, isCollection: true});
-        } else if (descriptor.kind === 'kotlin-primitive') {
-          generator.addField({field, typeName: descriptor.type});
-        }
-        else {
-          throw new Error(`Schema kind '${descriptor.kind}' for field '${field}' is not supported`);
-        }
-      }
-      if (node.schema.refinement) {
-        generator.generatePredicates();
-      }
-      const hash = await node.schema.hash();
-      nodes.push({node, generator, hash});
-    }
-
-    return nodes;
   }
 
   upperFirst(s: string): string {
@@ -165,5 +158,19 @@ export abstract class Schema2Base {
 
   abstract generateParticleClass(particle: ParticleSpec, nodes: NodeAndGenerator[]): string;
 
-  abstract generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): string;
+  abstract generateTestHarness(particle: ParticleSpec): string;
+
+  generateEntityClassName(node: SchemaNode, i: number = null) {
+    if (i === null) {
+      return `${node.particleName}_${node.connections[0]}`;
+    }
+    return `${node.particleName}Internal${i}`;
+  }
+
+  generateAliasNames(node: SchemaNode): string[] {
+    if (node.connections.length === 1) {
+      return [];
+    }
+    return node.connections.map((s: string) => `${node.particleName}_${s}`);
+  }
 }

@@ -71,7 +71,6 @@ import kotlin.toString
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
@@ -154,9 +153,6 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                             try {
                                 closeHandle(it.handle, it.coroutineContext)
                                 it.handle = null
-                                launchIfContext(it.coroutineContext) {
-                                    it.handleManager.close()
-                                }
                             } catch (e: Exception) {
                                 log.error { "#$id: failed to close handle, reason: $e" }
                                 e.printStackTrace()
@@ -429,21 +425,16 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         if (handle is Handle) withContext(handle.dispatcher) { handle.close() }
     }
 
-    private fun launchIfContext(
-        coroutineContext: CoroutineContext?,
-        block: suspend CoroutineScope.() -> Unit
-    ) {
-        if (coroutineContext == null) {
-            runBlocking { block() }
-        } else {
-            GlobalScope.launch(coroutineContext) { block() }
-        }
-    }
-
     private fun <T> closeHandle(
         handle: T?,
         coroutineContext: CoroutineContext? = null
-    ) = launchIfContext(coroutineContext) { closeHandleSuspend(handle) }
+    ) {
+        if (coroutineContext == null) {
+            runBlocking { closeHandleSuspend(handle) }
+        } else {
+            GlobalScope.launch(coroutineContext) { closeHandleSuspend(handle) }
+        }
+    }
 
     private suspend fun listenerTask(
         taskHandle: TaskHandle,
@@ -593,14 +584,6 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             }
 
             notify { "Progress 100%: populating stats and report" }
-            // Close all Handles and EntityHandleManagers
-            // TODO: remove this when terminated() works to clean up?
-            handles.forEach {
-                runBlocking {
-                    it.handleManager.close()
-                }
-            }
-            handles = emptyArray()
             populateStatsBulletin()
         }
     }

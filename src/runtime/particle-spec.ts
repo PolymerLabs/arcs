@@ -16,7 +16,7 @@ import {Schema} from './schema.js';
 import {InterfaceType, SlotType, Type, TypeLiteral, TypeVariableInfo} from './type.js';
 import {Literal} from './hot.js';
 import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './particle-check.js';
-import {ParticleClaim, createParticleClaim, validateFieldPath} from './particle-claim.js';
+import {ParticleClaim, Claim, createParticleClaim} from './particle-claim.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {AnnotationRef} from './recipe/annotation.js';
 
@@ -77,8 +77,9 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
   dependentConnections: HandleConnectionSpec[];
   pattern?: string;
   parentConnection: HandleConnectionSpec | null = null;
-  claims?: ParticleClaim[];
-  checks?: Check[];
+  /** Maps from field path (including handle name, e.g. myHandle.someRef.someField) to list of claims. */
+  claims?: Map<string, Claim[]>;
+  check?: Check;
   _annotations: AnnotationRef[];
 
   constructor(rawData: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
@@ -515,6 +516,7 @@ export class ParticleSpec {
     const results: ParticleClaim[] = [];
     if (statements) {
       statements.forEach(statement => {
+        // TODO(b/156983427): Check that fieldPath is valid for the handle type.
         const target = [statement.handle, ...statement.fieldPath].join('.');
         const handle = this.handleConnectionMap.get(statement.handle);
         if (!handle) {
@@ -523,14 +525,13 @@ export class ParticleSpec {
         if (!handle.isOutput) {
           throw new Error(`Can't make a claim on handle ${statement.handle} (not an output handle).`);
         }
-        validateFieldPath(statement.fieldPath, handle.type);
         if (!handle.claims) {
-          handle.claims = [];
-        } else if (handle.claims.some(claim => claim.target === target)) {
+          handle.claims = new Map();
+        } else if (handle.claims.has(target)) {
           throw new Error(`Can't make multiple claims on the same target (${target}).`);
         }
         const particleClaim = createParticleClaim(handle, statement, this.handleConnectionMap);
-        handle.claims.push(particleClaim);
+        handle.claims.set(target, particleClaim.claims);
         results.push(particleClaim);
       });
     }
@@ -552,20 +553,18 @@ export class ParticleSpec {
             if (handle.direction === '`consumes' || handle.direction === '`provides') {
               // Do slandles versions of slots checks and claims.
               if (handle.direction === '`consumes') {
-                throw new Error(`Can't make a check on handle ${handleName}. Can only make checks on input and provided handles.`);
+                  throw new Error(`Can't make a check on handle ${handleName}. Can only make checks on input and provided handles.`);
+
               }
             } else if (!handle.isInput) {
               throw new Error(`Can't make a check on handle ${handleName} with direction ${handle.direction} (not an input handle).`);
             }
-            validateFieldPath(check.target.fieldPath, handle.type);
-            const checkObject = createCheck(handle, check, this.handleConnectionMap);
-            if (!handle.checks) {
-              handle.checks = [];
-            } else if (handle.checks.some(c => c.targetString === checkObject.targetString)) {
-              throw new Error(`Can't make multiple checks on the same target (${checkObject.targetString}).`);
+            if (handle.check) {
+              throw new Error(`Can't make multiple checks on the same input (${handleName}).`);
             }
-            handle.checks.push(checkObject);
-            results.push(checkObject);
+
+            handle.check = createCheck(handle, check, this.handleConnectionMap);
+            results.push(handle.check);
             break;
           }
           case 'slot': {

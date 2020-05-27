@@ -22,7 +22,6 @@ import {Claim, ClaimType} from '../../runtime/particle-claim.js';
 import {Check} from '../../runtime/particle-check.js';
 import {DeepSet} from './deep-set.js';
 import {OrderedSet} from './ordered-set.js';
-import {assert} from '../../platform/assert-web.js';
 
 /**
  * Represents the set of implicit and explicit claims that flow along a path in
@@ -60,22 +59,12 @@ export class Flow {
   /** Evaluates the given FlowCheck against the current Flow. */
   evaluateCheck(check: FlowCheck): boolean {
     if ('operator' in check) {
-      switch (check.operator) {
-        case 'or':
-          // Only one child expression needs to pass.
-          return check.children.some(childExpr => this.evaluateCheck(childExpr));
-        case 'and':
-          // 'and' operator. Every child expression needs to pass.
-          return check.children.every(childExpr => this.evaluateCheck(childExpr));
-        case 'implies': {
-          assert(check.children.length === 2, 'Implications must have exactly 2 children.');
-          const [antecedent, consequent] = check.children;
-          // If the antecendent is true then we need to check the consequent.
-          // If it's not then the entire check passes.
-          return this.evaluateCheck(antecedent) ? this.evaluateCheck(consequent) : true;
-        }
-        default:
-          throw new Error(`Unknown FlowCheck operator: ${check.operator}`);
+      if (check.operator === 'or') {
+        // Only one child expression needs to pass.
+        return check.children.some(childExpr => this.evaluateCheck(childExpr));
+      } else {
+        // 'and' operator. Every child expression needs to pass.
+        return check.children.every(childExpr => this.evaluateCheck(childExpr));
       }
     } else {
       return this.checkCondition(check);
@@ -261,7 +250,7 @@ export type FlowCondition = {
 
 /** An equivalent of a particle Check statement, used internally by FlowGraph. Either a FlowCondition, or a boolean expression. */
 export type FlowCheck =
-    (FlowCondition | {operator: 'or' | 'and' | 'implies', children: readonly FlowCheck[]})
+    (FlowCondition | {operator: 'or' | 'and', children: readonly FlowCheck[]})
     /** Optional Check object from which this FlowCheck was constructed. */
     & {originalCheck?: Check};
 

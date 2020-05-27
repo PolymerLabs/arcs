@@ -91,10 +91,4 @@ class SameHandleManagerTest : HandleManagerTestBase() {
     override fun singleton_withTTL() {
         super.singleton_withTTL()
     }
-
-    @Ignore("b/157390220 - Deflake")
-    @Test
-    override fun singleton_writeAndReadBackAndClear() {
-        super.singleton_writeAndReadBackAndClear()
-    }
 }

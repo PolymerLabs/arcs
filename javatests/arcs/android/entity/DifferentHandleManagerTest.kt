@@ -1,7 +1,6 @@
 package arcs.android.entity
 
 import android.app.Application
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.test.core.app.ApplicationProvider
@@ -70,14 +69,10 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
         )
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
-        (fakeLifecycleOwner.lifecycle as LifecycleRegistry).currentState = Lifecycle.State.STARTED
     }
 
     @After
-    override fun tearDown() {
-        super.tearDown()
-        (fakeLifecycleOwner.lifecycle as LifecycleRegistry).currentState = Lifecycle.State.DESTROYED
-    }
+    override fun tearDown() = super.tearDown()
 
     @Ignore("b/154947352 - Deflake")
     @Test
@@ -101,66 +96,5 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
     @Test
     override fun collection_referenceLiveness() {
         super.collection_referenceLiveness()
-    }
-
-    @Ignore("b/157194439 - Deflake")
-    @Test
-    override fun singleton_writeAndOnUpdate() {
-        super.singleton_writeAndOnUpdate()
-    }
-
-    @Ignore("b/157392315 - Deflake")
-    @Test
-    override fun collection_writeAndReadBack() {
-        super.collection_writeAndReadBack()
-    }
-
-    @Ignore("b/157265849 - Deflake")
-    @Test
-    override fun singleton_referenceLiveness() {
-        super.singleton_referenceLiveness()
-    }
-
-    @Ignore("b/157266157 - Deflake")
-    @Test
-    override fun collection_entityDereference() {
-        super.collection_entityDereference()
-    }
-
-    @Ignore("b/157265691 - Deflake")
-    @Test
-    override fun singleton_clearOnAClearDataWrittenByB() {
-        super.singleton_clearOnAClearDataWrittenByB()
-    }
-
-    @Ignore("b/157266178 - Deflake")
-    @Test
-    override fun singleton_dereferenceEntity() {
-        super.singleton_dereferenceEntity()
-    }
-
-
-    @Ignore("b/157266221 - Deflake")
-    @Test
-    override fun singleton_dereferenceEntity_nestedReference() {
-        super.singleton_dereferenceEntity_nestedReference()
-    }
-
-    @Ignore("b/157266123 - Deflake")
-    @Test
-    override fun collection_removingFromA_isRemovedFromB() {
-        super.collection_removingFromA_isRemovedFromB()
-    }
-
-    @Ignore("b/157266376 - Deflake")
-    @Test
-    override fun collection_withTTL() {
-        super.collection_withTTL()
-    }
-
-    @Ignore("b/157297299 - Deflake")
-    @Test
-    override fun collection_noTTL() {
-        super.collection_noTTL()
     }
 }

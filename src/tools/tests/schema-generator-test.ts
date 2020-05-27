@@ -32,11 +32,6 @@ const testData = [
     generated: 'src/tools/tests/golden_TestHarness.kt',
     golden: 'src/tools/tests/goldens/generated-test-harness.kt',
   },
-  {
-    label: 'Kotlin (Kotlin-specific features)',
-    generated: 'src/tools/tests/golden-kt_GeneratedSchemas.jvm.kt',
-    golden: 'src/tools/tests/goldens/kt_generated-schemas.jvm.kt',
-  }
 ];
 
 testData.forEach(data => {

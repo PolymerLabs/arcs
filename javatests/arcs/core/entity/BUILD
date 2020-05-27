@@ -17,8 +17,6 @@ arcs_kt_schema(
 arcs_kt_jvm_test_suite(
     name = "entity",
     srcs = TEST_SRCS,
-    # TODO(b/157513559): Deflake this test suite.
-    flaky = True,
     package = "arcs.core.entity",
     deps = [
         ":lib",

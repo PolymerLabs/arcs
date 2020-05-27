@@ -522,6 +522,7 @@ describe('manifest2proto', () => {
           }
         }
       }]);
+
   });
 
   it('encodes particle spec with derivesFrom claims', async () => {
@@ -587,48 +588,6 @@ describe('manifest2proto', () => {
     ]);
   });
 
-  it('encodes particle spec with field-level claims', async () => {
-    const manifest = await Manifest.parse(`
-      particle Test in 'a/b/c.js'
-        private: writes {name: Text, ref: &Foo {foo: Text}}
-        claim private is private_tag
-        claim private.ref.foo is not private_tag
-     `);
-    const spec = await toProtoAndBack(manifest);
-    assert.deepStrictEqual(spec.particleSpecs[0].claims, [
-      {
-        assume: {
-          accessPath: {
-            particleSpec: 'Test',
-            handleConnection: 'private',
-          },
-          predicate: {
-            label: {
-              semanticTag: 'private_tag'
-            }
-          }
-        }
-      },
-      {
-        assume: {
-          accessPath: {
-            particleSpec: 'Test',
-            handleConnection: 'private',
-            selectors: [{field: 'ref'}, {field: 'foo'}],
-          },
-          predicate: {
-            not: {
-              predicate: {
-                label: {
-                  semanticTag: 'private_tag'
-                }
-              }
-            }
-          }
-        }
-      }]);
-  });
-
   it('encodes particle spec with checkHasTag checks', async () => {
     const manifest = await Manifest.parse(`
       particle Test in 'a/b/c.js'
@@ -662,58 +621,6 @@ describe('manifest2proto', () => {
                 semanticTag: 'private_tag'
               }
             }
-          }
-        }
-      }]);
-  });
-
-  it('encodes particle spec with field-level checks', async () => {
-    const manifest = await Manifest.parse(`
-      particle Test in 'a/b/c.js'
-        private: reads {name: Text, ref: &Foo {foo: Text}}
-        public: reads {name: Text, ref: &Foo {foo: Text}}
-        check private is private_tag
-        check private.ref.foo is not private_tag
-        check public.ref is public_tag
-     `);
-    const spec = await toProtoAndBack(manifest);
-    assert.deepStrictEqual(spec.particleSpecs[0].checks, [
-      {
-        accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'private'
-        },
-        predicate: {
-          label: {
-            semanticTag: 'private_tag'
-          }
-        }
-      },
-      {
-        accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'private',
-          selectors: [{field: 'ref'}, {field: 'foo'}],
-        },
-        predicate: {
-          not: {
-            predicate: {
-              label: {
-                semanticTag: 'private_tag'
-              }
-            }
-          }
-        }
-      },
-      {
-        accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'public',
-          selectors: [{field: 'ref'}],
-        },
-        predicate: {
-          label: {
-            semanticTag: 'public_tag'
           }
         }
       }]);
@@ -843,67 +750,6 @@ describe('manifest2proto', () => {
           }
         }
       }]);
-  });
-
-  it('encodes particle spec with implication checks', async () => {
-    const manifest = await Manifest.parse(`
-      particle Test in 'a/b/c.js'
-        input1: reads {name: Text}
-        input2: reads {name: Text}
-        input3: reads {name: Text}
-        check input1 (is private => is trusted)
-        check input2 (is private => (is trusted => is bespoke))
-        check input3 ((is private => is trusted) => is bespoke)
-     `);
-    const spec = await toProtoAndBack(manifest);
-    assert.deepStrictEqual(spec.particleSpecs[0].checks, [
-      {
-        accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'input1'
-        },
-        predicate: {
-          implies: {
-            antecedent: {label: {semanticTag: 'private'}},
-            consequent: {label: {semanticTag: 'trusted'}},
-          },
-        },
-      },
-      {
-        accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'input2'
-        },
-        predicate: {
-          implies: {
-            antecedent: {label: {semanticTag: 'private'}},
-            consequent: {
-              implies: {
-                antecedent: {label: {semanticTag: 'trusted'}},
-                consequent: {label: {semanticTag: 'bespoke'}},
-              },
-            },
-          },
-        },
-      },
-      {
-        accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'input3'
-        },
-        predicate: {
-          implies: {
-            antecedent: {
-              implies: {
-                antecedent: {label: {semanticTag: 'private'}},
-                consequent: {label: {semanticTag: 'trusted'}},
-              },
-            },
-            consequent: {label: {semanticTag: 'bespoke'}},
-          },
-        },
-      },
-    ]);
   });
 
   // On the TypeScript side we serialize .arcs file and validate it equals the .pb.bin file.

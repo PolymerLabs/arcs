@@ -862,9 +862,9 @@ describe('manifest parser', () => {
         origin: 'inline',
         storageKey: null,
         description: null,
-        claims: [],
+        claim: null,
       });
-      delete manifestAst[1].claims[0].location;
+      delete manifestAst[1].claim.location;
       assert.deepInclude(manifestAst[1], {
         kind: 'store',
         name: 'S1',
@@ -876,7 +876,7 @@ describe('manifest parser', () => {
         origin: 'inline',
         storageKey: null,
         description: 'inline store',
-        claims: [{kind: 'manifest-storage-claim', tags: ['foo'], fieldPath: []}],
+        claim: {kind: 'manifest-storage-claim', tags: ['foo']},
       });
     });
     it('parses complex schemas with variable spacing and comments', () => {

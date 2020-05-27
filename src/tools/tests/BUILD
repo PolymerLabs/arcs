@@ -14,7 +14,6 @@ filegroup(
     name = "generated",
     srcs = [
         ":golden.h",
-        ":golden-kt_GeneratedSchemas.jvm.kt",
         ":golden_GeneratedSchemas.jvm.kt",
         ":golden_GeneratedSchemas.wasm.kt",
         ":golden_TestHarness.kt",
@@ -24,12 +23,6 @@ filegroup(
 arcs_cc_schema(
     name = "cc_schemas",
     src = "golden.arcs",
-)
-
-arcs_kt_schema(
-    name = "kt_only_schemas",
-    srcs = ["golden_kt.arcs"],
-    platforms = ["wasm"],
 )
 
 arcs_kt_schema(

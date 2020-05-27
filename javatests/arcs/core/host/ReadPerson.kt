@@ -11,9 +11,7 @@ class ReadPerson : AbstractReadPerson() {
 
     override suspend fun onFirstStart() {
         firstStartCalled = true
-    }
-
-    override fun onStart() {
+        name = ""
         handles.person.onUpdate {
             name = handles.person.fetch()?.name ?: ""
             if (name != "") {

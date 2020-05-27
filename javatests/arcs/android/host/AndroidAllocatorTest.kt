@@ -163,10 +163,4 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
     override fun allocator_startArc_particleException_isErrorState() {
         super.allocator_startArc_particleException_isErrorState()
     }
-
-    @Ignore("b/157266444 - Deflake")
-    @Test
-    override fun allocator_canStopArcInTwoExternalHosts() {
-        super.allocator_canStopArcInTwoExternalHosts()
-    }
 }

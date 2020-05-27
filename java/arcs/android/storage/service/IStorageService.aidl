@@ -21,12 +21,6 @@ import arcs.android.storage.service.IStorageServiceCallback;
  */
 interface IStorageService {
     /**
-     * Waits until the store residing within the storage service becomes idle, and triggers the
-     * provided callback.
-     */
-    oneway void idle(long timeoutMillis, IResultCallback resultCallback);
-
-    /**
      * Issues a one-shot request for the current state of the binding context's {@code CrdtData}.
      *
      * <p>Will respond by calling the {@code callback} with a

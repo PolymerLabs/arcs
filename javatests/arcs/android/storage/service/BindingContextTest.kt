@@ -21,29 +21,19 @@ import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
-import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
-import arcs.core.storage.testutil.WriteBackForTesting
-import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
-import org.junit.After
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -51,19 +41,13 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class BindingContextTest {
-    @get:Rule
-    val log = LogRule()
-
-    private lateinit var bindingContextScope: CoroutineScope
     private lateinit var store: Store<CrdtCount.Data, CrdtCount.Operation, Int>
     private lateinit var storageKey: StorageKey
 
     @Before
     fun setUp() {
-        bindingContextScope = CoroutineScope(Dispatchers.Default + Job())
         RamDiskDriverProvider()
         RamDisk.clear()
-        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         storageKey = RamDiskStorageKey("myCount")
         store = Store(
             StoreOptions(
@@ -73,16 +57,11 @@ class BindingContextTest {
         )
     }
 
-    @After
-    fun tearDown() {
-        bindingContextScope.cancel()
-    }
-
-    private fun buildContext(
+    private suspend fun buildContext(
         callback: suspend (StorageKey, ProxyMessage<*, *, *>) -> Unit = { _, _ -> }
     ) = BindingContext(
         store,
-        bindingContextScope.coroutineContext,
+        coroutineContext,
         BindingContextStatsImpl(),
         callback
     )
@@ -118,7 +97,7 @@ class BindingContextTest {
     }
 
     @Test
-    fun sendProxyMessage_propagatesToTheStore() = runBlocking<Unit> {
+    fun sendProxyMessage_propagatesToTheStore() = runBlocking {
         val bindingContext = buildContext()
         val deferredResult = DeferredResult(coroutineContext)
         val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
@@ -132,6 +111,9 @@ class BindingContextTest {
         val data = store.activate().getLocalData()
         assertThat(data.versionMap).isEqualTo(VersionMap("alice" to 10))
         assertThat(data.values).containsExactly("alice", 10)
+
+        coroutineContext[Job.Key]?.cancelChildren()
+        Unit
     }
 
     @Test
@@ -149,17 +131,11 @@ class BindingContextTest {
             id = null
         )
 
-        val messageSend = launch(Dispatchers.IO) { store.activate().onProxyMessage(message) }
-
-        log("waiting for message-send to finish")
-        withTimeout(5000) { messageSend.join() }
-        log("message-send finished")
-
-        log("waiting for callback")
-        val operations = withTimeout(5000) {
-            callback.await().decodeProxyMessage() as ProxyMessage.Operations
+        launch {
+            store.activate().onProxyMessage(message)
         }
-        log("callback heard")
+
+        val operations = callback.await().decodeProxyMessage() as ProxyMessage.Operations
         assertThat(operations.operations).isEqualTo(message.operations)
     }
 
@@ -172,7 +148,7 @@ class BindingContextTest {
         bindingContext.unregisterCallback(token)
 
         // Yield to let the unregister go through.
-        delay(200)
+        yield()
 
         // Now send a message directly to the store, and ensure we didn't hear of it with our
         // callback.
@@ -207,5 +183,8 @@ class BindingContextTest {
 
         assertThat(receivedKey).isEqualTo(storageKey)
         assertThat(receivedMessage).isEqualTo(message)
+
+        coroutineContext[Job.Key]?.cancelChildren()
+        Unit
     }
 }

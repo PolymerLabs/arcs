@@ -141,11 +141,8 @@ export abstract class AbstractStore implements Comparable<AbstractStore> {
       handleStr.push(`at '${this.storageKey}'`);
     }
     results.push(handleStr.join(' '));
-    if (info.claims && info.claims.size > 0) {
-      for (const [target, claims] of info.claims) {
-        const claimClause = target.length ? `claim field ${target}` : 'claim';
-        results.push(`  ${claimClause} is ${claims.map(claim => claim.tag).join(' and is ')}`);
-      }
+    if (info.claims && info.claims.length > 0) {
+      results.push(`  claim is ${info.claims.map(claim => claim.tag).join(' and is ')}`);
     }
     if (info.description) {
       results.push(`  description \`${info.description}\``);
@@ -164,7 +161,7 @@ export type StoreInfo = {
   readonly description?: string;
 
   /** Trust tags claimed by this data store. */
-  readonly claims?: StoreClaims;
+  readonly claims?: ClaimIsTag[];
   readonly annotations?: AnnotationRef[];
 
   readonly versionToken?: string;
@@ -177,11 +174,3 @@ export type StoreInfo = {
    */
   readonly includeKey?: string;
 };
-
-/**
- * Dataflow claims defined on a store. Maps from target field to a list of tags
- * claimed on the field. Target can be an empty string, meaning it applies to
- * the entire schema for the store, or a dotted string pointing to a field
- * inside it (e.g. someField.myRef.foo).
- */
-export type StoreClaims = Map<string, ClaimIsTag[]>;

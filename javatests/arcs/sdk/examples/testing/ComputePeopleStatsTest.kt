@@ -37,7 +37,6 @@ class ComputePeopleStatsTest {
             .that(harness.stats.fetch()).isNull()
     }
 
-    @Ignore("b/157272039 - Deflake")
     @Test
     fun onePersonInput() = runBlocking {
         harness.start()

@@ -53,10 +53,6 @@ CLIKT_VERSION = "2.2.0"
 
 UI_AUTOMATOR_VERSION = "2.2.0"
 
-# NOTE: Artifacts are being pinned.  Whenever `maven_install` is changed, the
-# `maven_install.json` file should be updated by running the following cmd:
-#    $ bazel run @unpinned_maven//:pin.
-# (https://github.com/bazelbuild/rules_jvm_external#updating-maven_installjson)
 maven_install(
     artifacts = [
         "androidx.appcompat:appcompat:1.1.0",
@@ -104,17 +100,12 @@ maven_install(
         "com.squareup:kotlinpoet:" + KOTLINPOET_VERSION,
     ],
     fetch_sources = True,
-    maven_install_json = "//:maven_install.json",
     repositories = [
         "https://jcenter.bintray.com/",
         "https://maven.google.com",
         "https://repo1.maven.org/maven2",
     ],
 )
-
-load("@maven//:defs.bzl", "pinned_maven_install")
-
-pinned_maven_install()
 
 # @rules_proto is used by KotlincWorker and must be declared before rules_kotlin
 
@@ -144,7 +135,7 @@ emsdk_repo()
 
 load("//build_defs/kotlin_native:repo.bzl", "kotlin_native_repo")
 
-kotlin_native_repo(name = "kotlin_native_compiler")
+kotlin_native_repo()
 
 # Android SDK
 

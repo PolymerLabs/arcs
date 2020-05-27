@@ -355,16 +355,7 @@ def arcs_kt_particles(
             visibility = visibility,
         )
 
-def arcs_kt_android_test_suite(
-        name,
-        manifest,
-        package,
-        srcs = None,
-        tags = [],
-        deps = [],
-        data = [],
-        size = "small",
-        flaky = False):
+def arcs_kt_android_test_suite(name, manifest, package, srcs = None, tags = [], deps = [], data = [], size = "small"):
     """Defines Kotlin Android test targets for a directory.
 
     Defines a Kotlin Android library (kt_android_library) for all of the sources
@@ -380,10 +371,7 @@ def arcs_kt_android_test_suite(
       tags: optional list of tags for the test targets
       deps: list of dependencies for the kt_android_library
       data: list of files available to the test at runtime
-      size: the size of the test, defaults to "small". Options are: "small",
-        "medium", "large".
-      flaky: boolean indicating whether the test is flaky and should be re-run
-        on failure.
+      size: the size of the test, defaults to "small". Options are: "small", "medium", "large", etc.
     """
     if not srcs:
         srcs = native.glob(["*.kt"])
@@ -405,7 +393,6 @@ def arcs_kt_android_test_suite(
         android_local_test(
             name = class_name,
             size = size,
-            flaky = flaky,
             data = data,
             manifest = manifest,
             tags = tags,
@@ -486,9 +473,7 @@ def arcs_kt_jvm_test_suite(
         tags = [],
         deps = [],
         data = [],
-        constraints = [],
-        size = "small",
-        flaky = False):
+        constraints = []):
     """Defines Kotlin JVM test targets for a directory.
 
     Defines a Kotlin JVM library (kt_jvm_library) for all of the sources
@@ -504,10 +489,6 @@ def arcs_kt_jvm_test_suite(
       deps: list of dependencies for the kt_jvm_library
       data: list of files available to the test at runtime
       constraints: list of constraints, e.g android
-      size: the size of the test, defaults to "small". Options are: "small",
-        "medium", "large".
-      flaky: boolean indicating whether the test is flaky and should be re-run
-        on failure.
     """
     if not srcs:
         srcs = native.glob(["*.kt"])
@@ -526,7 +507,6 @@ def arcs_kt_jvm_test_suite(
         java_test(
             name = class_name,
             size = "small",
-            flaky = flaky,
             data = data,
             tags = tags,
             test_class = "%s.%s" % (package, class_name),

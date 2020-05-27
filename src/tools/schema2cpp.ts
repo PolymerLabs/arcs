@@ -109,7 +109,7 @@ protected:
 `;
   }
 
-  generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): string {
+  generateTestHarness(particle: ParticleSpec): string {
     throw new Error('Test Harness generation is not available for CPP');
   }
 }
@@ -212,8 +212,8 @@ class CppGenerator implements ClassGenerator {
   }
 
   generate(schemaHash: string, fieldCount: number): string {
-    const name = this.node.name;
-    const aliases = this.node.sources.map(s => s.fullName);
+    const {name, aliases} = this.node;
+
     // Template constructor allows implicit type slicing from appropriately matching entities.
     let templateCtor = '';
     if (this.ctor.length) {
@@ -228,7 +228,7 @@ class CppGenerator implements ClassGenerator {
     // 'using' declarations for equivalent entity types.
     let aliasComment = '';
     let usingDecls = '';
-    if (aliases.length > 1) {
+    if (aliases.length) {
       aliasComment = `\n// Aliased as ${aliases.join(', ')}`;
       usingDecls = '\n' + aliases.map(a => `using ${a} = ${name};`).join('\n') + '\n';
     }

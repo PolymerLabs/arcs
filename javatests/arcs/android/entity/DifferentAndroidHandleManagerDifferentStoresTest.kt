@@ -1,7 +1,6 @@
 package arcs.android.entity
 
 import android.app.Application
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -69,14 +68,10 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
         )
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
-        (fakeLifecycleOwner.lifecycle as LifecycleRegistry).currentState = Lifecycle.State.STARTED
     }
 
     @After
-    override fun tearDown() {
-        super.tearDown()
-        (fakeLifecycleOwner.lifecycle as LifecycleRegistry).currentState = Lifecycle.State.DESTROYED
-    }
+    override fun tearDown() = super.tearDown()
 
     @Ignore("b/157166918 - Deflake")
     @Test
@@ -112,35 +107,5 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
     @Test
     override fun collection_entityDereference() {
         super.collection_entityDereference()
-    }
-
-    @Ignore("b/157261807 - Deflake")
-    @Test
-    override fun singleton_clearOnAClearDataWrittenByB() {
-        super.singleton_clearOnAClearDataWrittenByB()
-    }
-
-    @Ignore("b/157261828 - Deflake")
-    @Test
-    override fun collection_dereferenceEntity_nestedReference() {
-        super.collection_dereferenceEntity_nestedReference()
-    }
-
-    @Ignore("b/157262951 - Deflake")
-    @Test
-    override fun collection_withTTL() {
-        super.collection_withTTL()
-    }
-
-    @Ignore("b/157263799 - Deflake")
-    @Test
-    override fun singleton_referenceLiveness() {
-        super.singleton_referenceLiveness()
-    }
-
-    @Ignore("b/157262953 - Deflake")
-    @Test
-    override fun singleton_dereferenceEntity() {
-        super.singleton_dereferenceEntity()
     }
 }
