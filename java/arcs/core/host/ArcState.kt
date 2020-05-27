@@ -60,23 +60,28 @@ enum class ArcState {
  * needed state the next time the [Arc] is restarted.
  */
 enum class ParticleState {
-    /** Instantiated, but onCreate() not called */
+    /** Instantiated, but onFirstStart() has not been called. */
     Instantiated,
-    /** onCreate() has been successfully called. */
-    Created,
-    /** onStart() has been successfully called. */
+    /** onFirstStart() has been called, possibly in a previous execution session. */
+    FirstStart,
+    /** onStart() has been called; the particle is awaiting handle synchronization. */
+    Waiting,
+    /** onReady() has been called; the particle is ready for execution. */
+    // TODO: rename to Running (needs to be co-ordinated with google code)
     Started,
-    /** onStop() has been successfully called. */
+    /** onDesync() has been called; one or more handles have desynchronized from their storage. */
+    Desynced,
+    /** onStop() has been called; the arc is no longer executing. */
     Stopped,
     /**
      * Previous attempt to start this particle failed, but it has previously started. In particular,
-     * we can transition from this state to [Started], but not [Created] since the [onCreate]
+     * we can transition from this state to [Waiting], but not [FirstStart] since the [onFirstStart]
      * lifecycle has already executed.
      */
     Failed,
     /**
      * This particle has failed, but it has never succeeded yet. It is safe to transition to
-     * [Created] from this state.
+     * [FirstStart] from this state.
      */
     Failed_NeverStarted,
     /** [Particle] has failed to start too many times and won't be started in this [Arc] anymore. */
@@ -86,12 +91,12 @@ enum class ParticleState {
      * Indicates whether a particle in this state has ever been created before (i.e. startup
      * succeeded at least once).
      */
-    val hasBeenCreated: Boolean
-        get() = this == Created || this == Started || this == Stopped || this == Failed
+    val hasBeenStarted: Boolean
+        get() = listOf(FirstStart, Waiting, Started, Desynced, Stopped, Failed).contains(this)
 
     /**
      * Indicates whether the particle has failed during its lifecycle.
      */
     val failed: Boolean
-        get() = this == Failed || this == Failed_NeverStarted || this == MaxFailed
+        get() = listOf(Failed, Failed_NeverStarted, MaxFailed).contains(this)
 }

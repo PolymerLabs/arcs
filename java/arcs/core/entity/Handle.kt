@@ -12,6 +12,7 @@
 package arcs.core.entity
 
 import arcs.core.data.HandleMode
+import arcs.core.storage.StorageProxy.StorageEvent
 import kotlin.coroutines.resume
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -30,11 +31,16 @@ interface Handle {
      */
     val dispatcher: CoroutineDispatcher
 
+    // TODO(b/157188866): move this to ReadableHandle (write-only handles should not receive this)
+    // TODO: pass the Handle to the action callbacks: handles.foo.onReady { it.fetch() }
     /** Assign a callback when the handle is synced for the first time. */
     fun onReady(action: () -> Unit)
 
     /** Release resources needed by this, unregister all callbacks. */
     fun close()
+
+    /** Internal method used to connect [StorageProxy] events to the [ParticleContext]. */
+    fun registerForStorageEvents(notify: (StorageEvent) -> Unit)
 }
 
 /** Suspends until the [Handle] has synced with the store. */

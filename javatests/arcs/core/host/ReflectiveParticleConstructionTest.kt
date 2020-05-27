@@ -39,9 +39,8 @@ class ReflectiveParticleConstructionTest {
     class AssertingReflectiveParticle(spec: Plan.Particle?) : TestReflectiveParticle(spec) {
         private val log = TaggedLog { "AssertingReflectiveParticle" }
 
-        override suspend fun onFirstStart() {
-            super.onFirstStart()
-            log.info { "onFirstStart()" }
+        override fun onStart() {
+            log.info { "onStart()" }
             handles.data
             assertThat(schema.name?.name).isEqualTo("Thing")
             assertThat(schema.fields.singletons).containsExactly("name", FieldType.Text)

@@ -25,8 +25,6 @@ import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * Service wrapping an ArcHost which hosts a particle writing data to a handle.
@@ -55,8 +53,7 @@ class ReadAnimalHostService : ArcHostService() {
     }
 
     inner class ReadAnimal: AbstractReadAnimal() {
-        override suspend fun onFirstStart() {
-            super.onFirstStart()
+        override fun onStart() {
             handles.animal.onUpdate {
                 val name = handles.animal.fetch()?.name ?: ""
 
