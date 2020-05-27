@@ -14,7 +14,7 @@ package arcs.core.analysis
 import arcs.core.data.AccessPath
 
 /**
- * An abstract value that keeps track of [InformationFlowLabels] for different [AccessPath] values.
+ * An [AbstractValue] that keeps track of [InformationFlowLabels] for different [AccessPath] values.
  *
  * This abstract value uses a map from [AccessPath] to [InformationFlowLabels] to keep track of the
  * labels for each access path. We use a reduced bottom construction, i.e., whenever a value for an
@@ -29,22 +29,23 @@ data class AccessPathLabels private constructor(
     val accessPathLabels: Map<AccessPath, InformationFlowLabels>?
         get() = _accessPathLabels.value
 
-    override infix fun isEquivalentTo(other: AccessPathLabels) =
-        _accessPathLabels.isEquivalentTo(other._accessPathLabels) { a, b ->
-            if (a.size == b.size) a.all { (accessPath, aLabels) ->
+    override infix fun isEquivalentTo(other: AccessPathLabels): Boolean {
+        return _accessPathLabels.isEquivalentTo(other._accessPathLabels) { a, b ->
+            a.size == b.size && a.all { (accessPath, aLabels) ->
                 b[accessPath]?.isEquivalentTo(aLabels) ?: false
-            } else false
+            }
         }
+    }
 
     override infix fun join(other: AccessPathLabels): AccessPathLabels {
         return AccessPathLabels(
-            _accessPathLabels.join(other._accessPathLabels) mapjoin@{ thisMap, otherMap ->
+            _accessPathLabels.join(other._accessPathLabels) { thisMap, otherMap ->
                 val result = thisMap.toMutableMap()
                 otherMap.forEach { (accessPath, otherLabels) ->
                     val thisLabels = thisMap[accessPath]
                     result.put(accessPath, thisLabels?.join(otherLabels) ?: otherLabels)
                 }
-                return@mapjoin result
+                result
             }
         )
     }

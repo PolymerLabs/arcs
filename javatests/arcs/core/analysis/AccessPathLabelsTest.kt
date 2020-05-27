@@ -115,7 +115,7 @@ class AccessPathLabelsTest {
     }
 
     @Test
-    fun valueConstruction_DetectsBottom() {
+    fun valueConstruction_detectsBottom() {
         assertThat(
             AccessPathLabels.makeValue(
                 mapOf(
