@@ -41,7 +41,7 @@ class PredicateUtilsTest {
     }
 
     @Test
-    fun LabelPredicate() {
+    fun labelPredicate() {
         assertThat(Labels.A.asPredicate.asStringList())
             .containsExactly("{A}")
         assertThat(Labels.B.asPredicate.asStringList())
@@ -49,7 +49,7 @@ class PredicateUtilsTest {
     }
 
     @Test
-    fun SimpleAndPredicate() {
+    fun simpleAndPredicate() {
         val predicateAandB = Labels.A.asPredicate and Labels.B.asPredicate
         assertThat(predicateAandB.asStringList()).containsExactly("{A, B}")
         val predicateAandBandC =
@@ -58,7 +58,7 @@ class PredicateUtilsTest {
     }
 
     @Test
-    fun SimpleOrPredicate() {
+    fun simpleOrPredicate() {
         val predicateAorB = Labels.A.asPredicate or Labels.B.asPredicate
         assertThat((predicateAorB).asStringList()).containsExactly("{A}", "{B}")
         val predicateAorBorC =
@@ -67,13 +67,13 @@ class PredicateUtilsTest {
     }
 
     @Test
-    fun SimpleNotPredicate() {
+    fun simpleNotPredicate() {
         val notA = Predicate.Not(Labels.A.asPredicate)
         assertThat(notA.asStringList()).containsExactly("{B}", "{C}", "{D}")
     }
 
     @Test
-    fun AndOrPredicate() {
+    fun andOrPredicate() {
         // (A \/ B) /\ C
         val predicate_AorB_and_C = Labels.A.asPredicate
             .or(Labels.B.asPredicate)
@@ -89,7 +89,7 @@ class PredicateUtilsTest {
     }
 
     @Test
-    fun OrAndPredicate() {
+    fun orAndPredicate() {
         // (A /\ B) \/ C
         val predicate_AandB_or_C = Labels.A.asPredicate
             .and(Labels.B.asPredicate)
@@ -105,7 +105,7 @@ class PredicateUtilsTest {
     }
 
     @Test
-    fun NotOverAnd_throwsError() {
+    fun notOverAnd_throwsError() {
         val e = assertFailsWith<IllegalArgumentException> {
             // !(A /\ B)
             Labels.A.asPredicate
@@ -119,7 +119,7 @@ class PredicateUtilsTest {
     }
 
     @Test
-    fun NotOverOr_throwsError() {
+    fun notOverOr_throwsError() {
         val e = assertFailsWith<IllegalArgumentException> {
             // !(A \/ B)
             Labels.A.asPredicate
