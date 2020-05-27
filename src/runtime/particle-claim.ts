@@ -102,6 +102,9 @@ export function createParticleClaim(
  * field path is invalid.
  */
 export function validateFieldPath(fieldPath: string[], type: Type) {
+  if (fieldPath.length === 0) {
+    return;
+  }
   const schema = type.getEntitySchema();
   if (!schema) {
     throw new Error(`Expected type to contain an entity schema: ${type}.`);

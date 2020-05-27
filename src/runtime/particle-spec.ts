@@ -557,7 +557,7 @@ export class ParticleSpec {
             } else if (!handle.isInput) {
               throw new Error(`Can't make a check on handle ${handleName} with direction ${handle.direction} (not an input handle).`);
             }
-            // TODO(b/156983427): Check that fieldPath is valid for the handle type.
+            validateFieldPath(check.target.fieldPath, handle.type);
             const checkObject = createCheck(handle, check, this.handleConnectionMap);
             if (!handle.checks) {
               handle.checks = [];

@@ -3279,6 +3279,26 @@ resource SomeName
       assert.deepEqual(trustChecks[4].expression, new CheckHasTag('property5', /* isNot= */ true));
     });
 
+    it('rejects invalid fields in field-level checks', async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: reads T {foo: Text}
+          check input.bar is something
+      `), 'Field bar does not exist');
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: reads T {foo: &Bar {bar: Number}}
+          check input.foo.baz is something
+      `), 'Field foo.baz does not exist');
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: reads [T {foo: [&Bar {bar: Number}]}]
+          check input.foo.bar.baz is something
+      `), 'Field foo.bar.baz does not exist');
+    });
+
     it(`supports 'is from store' checks`, async () => {
       const manifest = await parseManifest(`
         particle A
