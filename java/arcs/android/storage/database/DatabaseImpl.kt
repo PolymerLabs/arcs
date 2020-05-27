@@ -740,7 +740,8 @@ class DatabaseImpl(
                 arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only entity collections.
             ).map { it.getLong(0).toString() }.toSet()
 
-            val usedRefs = (collectionRefs union singletonFieldRefs).joinToString()
+            val usedRefs = (collectionRefs union singletonFieldRefs)
+                .joinToString(separator = ", ", prefix = "", postfix = "")
             // Remove from all unused references.
             delete(
                 TABLE_ENTITY_REFS,
