@@ -74,6 +74,8 @@ export class Check {
   toManifestString() {
     let targetString = this.targetString;
     if (this.target.discriminator === 'CSCS') {
+      // CSCS => slot. For slots we have to add the "data" keyword after the
+      // slot name.
       targetString += ' data';
     }
     return `check ${targetString} ${this.expression.toManifestString()}`;
