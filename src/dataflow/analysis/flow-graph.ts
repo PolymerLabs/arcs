@@ -108,7 +108,7 @@ export class FlowGraph {
         // TODO(b/153354605): Add support for field-level checks.
         assert(
           edge.connectionSpec.checks.length === 1 && edge.connectionSpec.checks[0].fieldPath.length === 0,
-          'Field-level claims yet not supported by DFA yet.');
+          'Field-level checks yet not supported by DFA yet.');
 
         edge.check = this.createFlowCheck(edge.connectionSpec.checks[0]);
       }
