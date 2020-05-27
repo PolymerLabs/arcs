@@ -36,7 +36,7 @@ export interface HandleConnectionSpecInterface {
   pattern?: string;
   parentConnection: HandleConnectionSpecInterface | null;
   claims?: Map<string, Claim[]>;
-  check?: Check;
+  checks?: Check[];
   isInput: boolean;
   isOutput: boolean;
 
@@ -66,16 +66,27 @@ export interface ProvideSlotConnectionSpecInterface extends ConsumeSlotConnectio
 }
 
 export class Check {
-  constructor(readonly target: CheckTarget, readonly expression: CheckExpression) {}
+  constructor(
+      readonly target: CheckTarget,
+      readonly fieldPath: string[],
+      readonly expression: CheckExpression) {}
 
   toManifestString() {
-    let targetString: string;
-    if (this.target.discriminator === 'HCS') {
-      targetString = this.target.name;
-    } else {
-      targetString = `${this.target.name} data`;
+    let targetString = this.targetString;
+    if (this.target.discriminator === 'CSCS') {
+      // CSCS => slot. For slots we have to add the "data" keyword after the
+      // slot name.
+      targetString += ' data';
     }
     return `check ${targetString} ${this.expression.toManifestString()}`;
+  }
+
+  get targetString(): string {
+    if (this.target.discriminator === 'HCS') {
+      return [this.target.name, ...this.fieldPath].join('.');
+    } else {
+      return this.target.name;
+    }
   }
 }
 
@@ -231,5 +242,5 @@ export function createCheck(
     astNode: AstNode.ParticleCheckStatement,
     handleConnectionMap: Map<string, HandleConnectionSpecInterface>): Check {
   const expression = createCheckExpression(astNode.expression, handleConnectionMap);
-  return new Check(checkTarget, expression);
+  return new Check(checkTarget, astNode.target.fieldPath, expression);
 }
