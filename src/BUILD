@@ -1,7 +1,5 @@
 load("@npm_bazel_typescript//:index.bzl", "ts_library")
-load("@npm_bazel_rollup//:index.bzl", "rollup_bundle")
-load( "//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_ts_preprocessing")
-
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_ts_preprocessing")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -57,18 +55,16 @@ arcs_ts_preprocessing(
     ),  # + [":gen/runtime/manifest-parser.ts"],
 )
 
-
 ts_library(
     name = "runtime_lib",
     srcs = [":runtime_files"],
     runtime = "nodejs",
     tsconfig = "//:tsconfig",
     deps = [
-        "@npm//chai",
         "@npm//@types/node",
+        "@npm//chai",
+        "@npm//mocha",
         "@npm//node-fetch",
         "@npm//node-webcrypto-ossl",
-        "@npm//mocha"
-    ]
+    ],
 )
-

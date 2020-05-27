@@ -1,5 +1,5 @@
-load("@npm_bazel_typescript//:index.bzl", "ts_library")
 load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_binary")
+load("@npm_bazel_typescript//:index.bzl", "ts_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -7,7 +7,6 @@ filegroup(
     name = "schema2pkg_srcs",
     srcs = glob(["schema2*.ts"]),
 )
-
 
 ts_library(
     name = "kt-generation-utils",
@@ -20,10 +19,10 @@ ts_library(
     srcs = [":schema2pkg_srcs"],
     tsconfig = "//:tsconfig",
     deps = [
-      "@npm//minimist",
-      "@npm//@types/node",
-      ":kt-generation-utils",
-      "//src:runtime_lib",
+        ":kt-generation-utils",
+        "//src:runtime_lib",
+        "@npm//@types/node",
+        "@npm//minimist",
     ],
 )
 
@@ -32,4 +31,3 @@ nodejs_binary(
     data = [":schema2pkg_lib"],
     entry_point = ":schema2wasm.ts",
 )
-

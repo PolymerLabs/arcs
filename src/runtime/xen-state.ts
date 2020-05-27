@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Runnable} from './hot';
+// tslint:disable:no-any
 
 const nob = () => Object.create(null);
 
@@ -21,7 +21,8 @@ const debounce = (key, action, delay) => {
   }
 };
 
-const XenStateMixin = Base => class extends Base {
+// tslint:disable:variable-name
+const XenStateMixin = baseClass => class extends baseClass {
   _pendingProps = nob();
   _props: any;
   _lastProps: any;
@@ -80,6 +81,7 @@ const XenStateMixin = Base => class extends Base {
   _setState(object): any {
     let dirty = false;
     const state = this._state;
+    // tslint:disable:forin
     for (const property in object) {
       const value = object[property];
       if (this._wouldChangeState(property, value)) {

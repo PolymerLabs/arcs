@@ -121,15 +121,16 @@ def arcs_kt_schema(
                 platform = ext,
                 data = data,
             )
-#            _run_schema2wasm(
-#                name = genrule_name,
-#                src = src,
-#                out = out,
-#                deps = deps + data,
-#                wasm = wasm,
-#                language_flag = "--kotlin",
-#                language_name = "Kotlin",
-#            )
+
+    #            _run_schema2wasm(
+    #                name = genrule_name,
+    #                src = src,
+    #                out = out,
+    #                deps = deps + data,
+    #                wasm = wasm,
+    #                language_flag = "--kotlin",
+    #                language_name = "Kotlin",
+    #            )
 
     arcs_kt_library(
         name = name,
@@ -146,16 +147,16 @@ def arcs_kt_schema(
             out = replace_arcs_suffix(src, "_TestHarness.kt")
             test_harness_outs.append(out)
 
-#            _run_schema2wasm(
-#                name = replace_arcs_suffix(src, "_genrule_test_harness"),
-#                src = src,
-#                out = out,
-#                deps = deps,
-#                wasm = False,
-#                test_harness = True,
-#                language_flag = "--kotlin",
-#                language_name = "Kotlin",
-#            )
+            #            _run_schema2wasm(
+            #                name = replace_arcs_suffix(src, "_genrule_test_harness"),
+            #                src = src,
+            #                out = out,
+            #                deps = deps,
+            #                wasm = False,
+            #                test_harness = True,
+            #                language_flag = "--kotlin",
+            #                language_name = "Kotlin",
+            #            )
             schema2pkg(
                 name = replace_arcs_suffix(src, "_genrule_test_harness"),
                 srcs = [src],
@@ -177,9 +178,10 @@ def arcs_kt_schema(
     return {"outs": outs, "deps": outdeps}
 
 def _arcs_ts_preproc_impl(ctx):
-
-    outputs = [ctx.actions.declare_file(x.basename, sibling=x)
-               for x in ctx.files.srcs]
+    outputs = [
+        ctx.actions.declare_file(x.basename, sibling = x)
+        for x in ctx.files.srcs
+    ]
 
     ctx.actions.run_shell(
         inputs = ctx.files.srcs,
@@ -190,21 +192,20 @@ def _arcs_ts_preproc_impl(ctx):
           out="$(pwd)/bazel-out/host/bin/$i"
           sed -e 's/-web.js/-node.js/g' $i > "$out"
         done
-        """
+        """,
     )
 
-    return DefaultInfo(files=depset(outputs))
+    return DefaultInfo(files = depset(outputs))
 
 arcs_ts_preprocessing = rule(
     implementation = _arcs_ts_preproc_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = [".ts", ".d.ts"]),
     },
-    doc = """Converts to node platforms for the arcs ts runtime."""
+    doc = """Converts to node platforms for the arcs ts runtime.""",
 )
 
 def _schema2pkg_impl(ctx):
-
     output_name = ctx.label.name + "_GeneratedSchemas.%s.kt" % ctx.attr.platform
     out = ctx.actions.declare_file(output_name)
 
@@ -234,11 +235,10 @@ def _schema2pkg_impl(ctx):
         outputs = [out],
         arguments = [args],
         tools = ctx.files.data,
-        executable = ctx.executable._compiler
+        executable = ctx.executable._compiler,
     )
 
     return [DefaultInfo(files = depset([out]))]
-
 
 schema2pkg = rule(
     implementation = _schema2pkg_impl,
@@ -256,17 +256,16 @@ schema2pkg = rule(
         ),
         "test_harness": attr.bool(
             default = False,
-            doc = """whether to output a particle test harness only (requires lang=kotlin)"""
+            doc = """whether to output a particle test harness only (requires lang=kotlin)""",
         ),
         "_compiler": attr.label(
             cfg = "host",
             default = Label("//src/tools:schema2pkg"),
-
             allow_files = True,
             executable = True,
-        )
+        ),
     },
-    doc = """Stand-alone schema2* tool."""
+    doc = """Stand-alone schema2* tool.""",
 )
 
 def arcs_kt_gen(

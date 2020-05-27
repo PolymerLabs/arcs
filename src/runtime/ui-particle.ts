@@ -88,6 +88,7 @@ export class UiParticle extends XenStateMixin(UiParticleBase) {
     }
   }
 
+  // tslint:disable:no-any
   _async(fn): any {
     // asynchrony in Particle code must be bookended with start/doneBusy
     this.startBusy();
