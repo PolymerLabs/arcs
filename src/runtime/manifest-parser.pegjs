@@ -1541,6 +1541,7 @@ SchemaField
 SchemaType
   = type:(SchemaReferenceType
   / SchemaCollectionType
+  / SchemaOrderedListType
   / SchemaPrimitiveType
   / KotlinPrimitiveType
   / SchemaUnionType
@@ -1561,6 +1562,14 @@ SchemaCollectionType = '[' whiteSpace? schema:(SchemaReferenceType / SchemaPrimi
       kind: 'schema-collection',
       schema,
       refinement: null
+    });
+  }
+
+SchemaOrderedListType = 'List<' whiteSpace? schema:(SchemaType) whiteSpace? '>'
+  {
+    return toAstNode<AstNode.SchemaOrderedListType>({
+      kind: 'schema-ordered-list',
+      schema
     });
   }
 
