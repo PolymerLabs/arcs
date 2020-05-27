@@ -106,9 +106,9 @@ describe('schema2kotlin', () => {
          h1: reads Person {name: Text}`,
       `class Handles : HandleHolderBase(
         "P",
-        mapOf("h1" to P_H1)
+        mapOf("h1" to Person)
     ) {
-        val h1: ReadSingletonHandle<P_H1> by handles
+        val h1: ReadSingletonHandle<Person> by handles
     }`
     ));
     it('Read, Write and Query Handles', async () => await assertHandleClassDeclaration(
@@ -126,7 +126,7 @@ describe('schema2kotlin', () => {
         val h3: ReadQueryCollectionHandle<P_H3, String> by handles
     }`
     ));
-    it('Handle with references', async () => await assertHandleClassDeclaration(
+    it.only('Handle with references', async () => await assertHandleClassDeclaration(
       `particle P
         h1: reads Person {
           name: Text,
@@ -141,9 +141,9 @@ describe('schema2kotlin', () => {
       `,
       `class Handles : HandleHolderBase(
         "P",
-        mapOf("h1" to P_H1)
+        mapOf("h1" to Person)
     ) {
-        val h1: ReadSingletonHandle<P_H1> by handles
+        val h1: ReadSingletonHandle<Person> by handles
     }`
     ));
     // Below test shows the shortcoming of our handle declaration, which allows
@@ -174,7 +174,7 @@ describe('schema2kotlin', () => {
       `particle P
         h1: reads Person {name: Text}
       `, [
-        'typealias P_H1 = AbstractP.P_H1'
+        'typealias P_H1 = AbstractP.Person'
       ]
     ));
     it('Multiple Connections with the same Schema', async () => await assertSchemaAliases(

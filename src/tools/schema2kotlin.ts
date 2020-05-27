@@ -286,6 +286,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
 
     const nodes = nodeGenerators.map(ng => ng.node);
     //nodes.forEach((n) => console.log(n.schema))
+    debugger;
     for (const connection of particle.connections) {
       const handleName = connection.name;
       const handleInterfaceType = this.handleInterfaceType(connection, nodes);
@@ -305,11 +306,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
 
       const handleInterfaceType = this.handleInterfaceType(connection, entityType);
 
-      const node = nodes.find(n => n.sources.find(s => s.connection == connection))
-      if (node && node.uniqueSchemaName) {
-        console.log(`schema: ${node.schema.name}`)
-        entityType = node.schema.name
-      }
+      
 
       if (this.opts.wasm) {
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityType})`);
