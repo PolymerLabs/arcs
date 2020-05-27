@@ -4335,14 +4335,71 @@ recipe
       @arcId('myFavoriteArc')
       recipe
         foo: create persistent @ttl(2d) @ttl('2d')
+
+      @isolated()
+      particle IsolatedParticle
+
+      @egress()
+      particle EgressingParticle
     `));
     const recipeAnnotations = manifest.recipes[0].annotations;
     assert.lengthOf(recipeAnnotations, 1);
     assert.equal(recipeAnnotations[0].name, 'arcId');
     assert.equal(recipeAnnotations[0].params['id'], 'myFavoriteArc');
+
     const handleAnnotations = manifest.recipes[0].handles[0].annotations;
     assert.lengthOf(handleAnnotations, 1);
     assert.equal(handleAnnotations[0].name, 'ttl');
     assert.equal(handleAnnotations[0].params['value'], '2d');
+
+    const isolatedParticleAnnotations = manifest.findParticleByName('IsolatedParticle').annotations;
+    console.error(manifest.findParticleByName('IsolatedParticle'));
+    assert.lengthOf(isolatedParticleAnnotations, 1);
+    assert.equal(isolatedParticleAnnotations[0].name, 'isolated');
+    assert.lengthOf(Object.entries(isolatedParticleAnnotations[0].params), 0);
+
+    const egressParticleAnnotations = manifest.findParticleByName('EgressingParticle').annotations;
+    assert.lengthOf(egressParticleAnnotations, 1);
+    assert.equal(egressParticleAnnotations[0].name, 'egress');
+    assert.lengthOf(Object.entries(egressParticleAnnotations[0].params), 0);
+  });
+
+  describe('isolated and egress particles', () => {
+    it('particles are egress by default', async () => {
+      const manifest = await Manifest.parse(`
+        particle P
+      `);
+      assert.isTrue(manifest.particles[0].egress);
+      assert.isFalse(manifest.particles[0].isolated);
+    });
+
+    it('egress annotation works', async () => {
+      const manifest = await Manifest.parse(`
+        @egress()
+        particle P
+      `);
+      assert.isTrue(manifest.particles[0].egress);
+      assert.isFalse(manifest.particles[0].isolated);
+    });
+
+    it('isolated annotation works', async () => {
+      const manifest = await Manifest.parse(`
+        @isolated()
+        particle P
+      `);
+      assert.isFalse(manifest.particles[0].egress);
+      assert.isTrue(manifest.particles[0].isolated);
+    });
+
+    it('throws if both isolated and egress annotations are applied', async () => {
+      const manifest = await Manifest.parse(`
+        @egress()
+        @isolated()
+        particle P
+      `);
+      assert.throws(
+        () => manifest.particles[0].isolated,
+        `Particle cannot be tagged with both @isolated and @egress.`);
+    });
   });
 });
