@@ -711,7 +711,7 @@ class DatabaseImpl(
         }
     }
 
-    /*
+    /**
      * Removes all refs (in entity_refs table) that are not being used.
      */
     private fun removeUnusedRefs(db: SQLiteDatabase) {
@@ -721,7 +721,7 @@ class DatabaseImpl(
                 """
                     SELECT field_values.value_id
                     FROM field_values
-                    LEFT JOIN fields ON field_values.field_id = fields.id
+                    INNER JOIN fields ON field_values.field_id = fields.id
                     WHERE fields.is_collection = 0
                     AND fields.type_id > ?
                 """.trimIndent(),
@@ -740,12 +740,12 @@ class DatabaseImpl(
                 arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only entity collections.
             ).map { it.getLong(0).toString() }.toSet()
 
-            val usedRefs = (collectionRefs union singletonFieldRefs).toTypedArray()
+            val usedRefs = (collectionRefs union singletonFieldRefs).joinToString()
             // Remove from all unused references.
             delete(
                 TABLE_ENTITY_REFS,
-                "id NOT IN (${questionMarks(usedRefs)})",
-                usedRefs
+                "id NOT IN ($usedRefs)",
+                arrayOf()
             )
         }
     }
