@@ -49,10 +49,12 @@ fun InformationFlowLabel.Predicate.asSetOfBitSets(
                 "Not is only supported for label predicates when converting to bitsets!"
             }
             val labelIndex = requireNotNull(indices[labelPredicate.label])
-            // Not(A) = B \/ C ...
-            return (0..(indices.size - 1)).mapNotNull { index ->
-                if (index == labelIndex) null else BitSet(indices.size).apply { set(index) }
-            }.toSet()
+            // Not(A) = empty \/ B \/ C ...
+            return (0..(indices.size - 1))
+                .filter { it != labelIndex }
+                .map { index -> BitSet(indices.size).apply { set(index) } }
+                .plus(BitSet(indices.size))
+                .toSet()
         }
         is Predicate.Or -> {
             val lhsBitSets = lhs.asSetOfBitSets(indices)

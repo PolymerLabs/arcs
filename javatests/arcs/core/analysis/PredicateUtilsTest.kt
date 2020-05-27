@@ -69,7 +69,7 @@ class PredicateUtilsTest {
     @Test
     fun simpleNotPredicate() {
         val notA = Predicate.Not(Labels.A.asPredicate)
-        assertThat(notA.asStringList()).containsExactly("{B}", "{C}", "{D}")
+        assertThat(notA.asStringList()).containsExactly("{}", "{B}", "{C}", "{D}")
     }
 
     @Test
