@@ -64,15 +64,19 @@ class AccessPathTest {
     }
 
     @Test
-    fun instantiateForParticle() {
+    fun instantiateForParticle_oneSelector() {
         val oneSelector = listOf(AccessPath.Selector.Field("bar"))
+        val readerConnectionSpec = AccessPath("Reader", connectionSpec, oneSelector)
+        val readerConnection = readerConnectionSpec.instantiateFor(particle)
+        assertThat("$readerConnection").isEqualTo("hc:Reader.data.bar")
+    }
+
+    @Test
+    fun instantiateForParticle_multipleSelectors() {
         val multipleSelectors = listOf(
             AccessPath.Selector.Field("foo"),
             AccessPath.Selector.Field("bar")
         )
-        val readerConnectionSpec = AccessPath("Reader", connectionSpec, oneSelector)
-        val readerConnection = readerConnectionSpec.instantiateFor(particle)
-        assertThat("$readerConnection").isEqualTo("hc:Reader.data.bar")
         val readerConnectionSpecMultiple = AccessPath("Reader", connectionSpec, multipleSelectors)
         val readerConnectionMultiple = readerConnectionSpecMultiple.instantiateFor(particle)
         assertThat("$readerConnectionMultiple").isEqualTo("hc:Reader.data.foo.bar")

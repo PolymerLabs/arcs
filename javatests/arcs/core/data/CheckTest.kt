@@ -11,7 +11,6 @@
 
 package arcs.core.data
 
-
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.InformationFlowLabel.SemanticTag
 import com.google.common.truth.Truth.assertThat
