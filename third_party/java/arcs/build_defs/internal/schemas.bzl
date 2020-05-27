@@ -108,13 +108,12 @@ def arcs_kt_schema(
 
     outs = []
     outdeps = []
-    names = []
     for src in srcs:
         for ext in platforms:
             if ext not in supported:
                 fail("Platform %s not allowed; only %s supported.".format(ext, supported.join(",")))
             genrule_name = replace_arcs_suffix(src, "_genrule_" + ext)
-            names.append(genrule_name)
+            outs.append(genrule_name)
             schema2pkg(
                 name = genrule_name,
                 srcs = [src],
@@ -122,53 +121,32 @@ def arcs_kt_schema(
                 data = data,
             )
 
-    #            _run_schema2wasm(
-    #                name = genrule_name,
-    #                src = src,
-    #                out = out,
-    #                deps = deps + data,
-    #                wasm = wasm,
-    #                language_flag = "--kotlin",
-    #                language_name = "Kotlin",
-    #            )
-
     arcs_kt_library(
         name = name,
-        srcs = [":" + name for name in names],
+        srcs = [":" + name for name in outs],
         platforms = platforms,
         deps = ARCS_SDK_DEPS + deps,
         visibility = visibility,
     )
     outdeps = outdeps + ARCS_SDK_DEPS
 
-    if (test_harness):
+    if test_harness:
         test_harness_outs = []
         for src in srcs:
-            out = replace_arcs_suffix(src, "_TestHarness.kt")
+            out = replace_arcs_suffix(src, "_genrule_test_harness")
             test_harness_outs.append(out)
 
-            #            _run_schema2wasm(
-            #                name = replace_arcs_suffix(src, "_genrule_test_harness"),
-            #                src = src,
-            #                out = out,
-            #                deps = deps,
-            #                wasm = False,
-            #                test_harness = True,
-            #                language_flag = "--kotlin",
-            #                language_name = "Kotlin",
-            #            )
             schema2pkg(
-                name = replace_arcs_suffix(src, "_genrule_test_harness"),
+                name = out,
                 srcs = [src],
                 data = data,
-                deps = deps,
                 test_harness = True,
             )
 
         arcs_kt_library(
             name = name + "_test_harness",
             testonly = 1,
-            srcs = test_harness_outs,
+            srcs = [":" + out for out in test_harness_outs],
             deps = ARCS_SDK_DEPS + [
                 ":" + name,
                 "//third_party/java/arcs:testing",

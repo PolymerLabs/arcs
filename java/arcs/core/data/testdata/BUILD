@@ -17,21 +17,16 @@ filegroup(
     ),
 )
 
-arcs_kt_schema(
-    name = "schema_gen_test",
-    srcs = ["WriterReaderExample.arcs"],
-)
-
 arcs_kt_gen(
     name = "import_example_gen",
     srcs = ["ImportExample.arcs"],
     data = ["Schemas.arcs"],
 )
 
-#arcs_kt_gen(
-#    name = "example_gen",
-#    srcs = ["WriterReaderExample.arcs"],
-#)
+arcs_kt_gen(
+    name = "example_gen",
+    srcs = ["WriterReaderExample.arcs"],
+)
 
 arcs_kt_gen(
     name = "ingest_process_retrieve_gen",
