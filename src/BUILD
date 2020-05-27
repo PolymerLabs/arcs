@@ -21,6 +21,7 @@ arcs_ts_preprocessing(
             # Broken because no targets in google3
             "platform/pouch*",
 
+            # This is actually browser based
             "platform/image-node.ts",
 
             # Exclude test code

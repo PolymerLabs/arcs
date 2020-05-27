@@ -74,7 +74,7 @@ async function main() {
     console.log(outPath);
 
     const outFile = fs.openSync(outPath, 'w');
-    fs.writeSync(outFile, plans);
+    fs.writeSync(outFile, plans as string);
     fs.closeSync(outFile);
   } catch (e) {
     console.error(e);

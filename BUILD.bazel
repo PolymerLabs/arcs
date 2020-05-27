@@ -5,7 +5,7 @@ package(default_visibility = ["//visibility:public"])
 
 ts_config(
     name = "tsconfig",
-    src = "tsconfig.json",
+    src = "tsconfig-bazel.json",
     deps = ["config/tsconfig.base.json"]
 )
 

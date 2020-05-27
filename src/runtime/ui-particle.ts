@@ -8,10 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
+import {XenStateMixin} from './xen-state.js';
 import {UiParticleBase} from './ui-particle-base.js';
 import {Handle} from './storageNG/handle.js';
-import {Runnable} from './hot.js';
+import {Producer, Runnable} from './hot.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 
 export interface UiStatefulParticle extends UiParticleBase {
@@ -88,7 +88,7 @@ export class UiParticle extends XenStateMixin(UiParticleBase) {
     }
   }
 
-  _async(fn) {
+  _async(fn): any {
     // asynchrony in Particle code must be bookended with start/doneBusy
     this.startBusy();
     const done = () => {

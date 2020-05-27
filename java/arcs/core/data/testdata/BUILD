@@ -25,7 +25,7 @@ arcs_kt_schema(
 arcs_kt_gen(
     name = "import_example_gen",
     srcs = ["ImportExample.arcs"],
-    deps = ["Schemas.arcs"],
+    data = ["Schemas.arcs"],
 )
 
 #arcs_kt_gen(

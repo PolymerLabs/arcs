@@ -108,18 +108,18 @@ def arcs_kt_schema(
 
     outs = []
     outdeps = []
+    names = []
     for src in srcs:
         for ext in platforms:
             if ext not in supported:
                 fail("Platform %s not allowed; only %s supported.".format(ext, supported.join(",")))
-            wasm = ext == "wasm"
             genrule_name = replace_arcs_suffix(src, "_genrule_" + ext)
-            out = replace_arcs_suffix(src, "_GeneratedSchemas.%s.kt" % ext)
-            outs.append(out)
+            names.append(genrule_name)
             schema2pkg(
                 name = genrule_name,
                 srcs = [src],
                 platform = ext,
+                data = data,
             )
 #            _run_schema2wasm(
 #                name = genrule_name,
@@ -133,9 +133,9 @@ def arcs_kt_schema(
 
     arcs_kt_library(
         name = name,
-        srcs = [":" + genrule_name],
+        srcs = [":" + name for name in names],
         platforms = platforms,
-        deps = ARCS_SDK_DEPS,
+        deps = ARCS_SDK_DEPS + deps,
         visibility = visibility,
     )
     outdeps = outdeps + ARCS_SDK_DEPS
@@ -159,6 +159,7 @@ def arcs_kt_schema(
             schema2pkg(
                 name = replace_arcs_suffix(src, "_genrule_test_harness"),
                 srcs = [src],
+                data = data,
                 deps = deps,
                 test_harness = True,
             )
@@ -185,7 +186,6 @@ def _arcs_ts_preproc_impl(ctx):
         outputs = outputs,
         arguments = [src.path for src in ctx.files.srcs],
         command = """
-        set -x
         for i in "$@"; do
           out="$(pwd)/bazel-out/host/bin/$i"
           sed -e 's/-web.js/-node.js/g' $i > "$out"
@@ -229,11 +229,11 @@ def _schema2pkg_impl(ctx):
     args.add_all("--outfile", [output_name])
     args.add_all([src.path for src in ctx.files.srcs])
 
-
     ctx.actions.run(
         inputs = ctx.files.srcs,
         outputs = [out],
         arguments = [args],
+        tools = ctx.files.data,
         executable = ctx.executable._compiler
     )
 
@@ -245,6 +245,7 @@ schema2pkg = rule(
     attrs = {
         "srcs": attr.label_list(allow_files = [".arcs"]),
         "deps": attr.label_list(),
+        "data": attr.label_list(allow_files = True),
         "platform": attr.string(
             values = ["jvm", "wasm"],
             default = "jvm",
@@ -260,6 +261,7 @@ schema2pkg = rule(
         "_compiler": attr.label(
             cfg = "host",
             default = Label("//src/tools:schema2pkg"),
+
             allow_files = True,
             executable = True,
         )
@@ -304,7 +306,8 @@ def arcs_kt_gen(
     schema = arcs_kt_schema(
         name = schema_name,
         srcs = srcs,
-        deps = deps + [":" + manifest_name],
+        data = [":" + manifest_name],
+        deps = deps,
         platforms = platforms,
         test_harness = test_harness,
         visibility = visibility,
