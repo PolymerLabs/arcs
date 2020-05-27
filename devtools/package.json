@@ -23,7 +23,6 @@
     "js-green-licenses": "1.1.0"
   },
   "scripts": {
-    "postinstall": "cross-env empathy install -a deps && cross-env tools/css-module-wrap ./node_modules/vis/dist/vis-timeline-graph2d.min.css ./node_modules/golden-layout/src/css/goldenlayout-base.css ./node_modules/golden-layout/src/css/goldenlayout-light-theme.css",
     "test:licenses": "jsgl --local ."
   },
   "repository": {

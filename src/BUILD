@@ -52,7 +52,7 @@ arcs_ts_preprocessing(
             # Exclude until import is fixed by copybara (unused?)
             "platform/protobuf*",
         ],
-    ),  # + [":gen/runtime/manifest-parser.ts"],
+    ),
 )
 
 ts_library(

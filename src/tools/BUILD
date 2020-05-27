@@ -3,11 +3,6 @@ load("@npm_bazel_typescript//:index.bzl", "ts_library")
 
 package(default_visibility = ["//visibility:public"])
 
-filegroup(
-    name = "schema2pkg_srcs",
-    srcs = glob(["schema2*.ts"]),
-)
-
 ts_library(
     name = "kt-generation-utils",
     srcs = ["kotlin-generation-utils.ts"],
@@ -16,7 +11,7 @@ ts_library(
 
 ts_library(
     name = "schema2pkg_lib",
-    srcs = [":schema2pkg_srcs"],
+    srcs = glob(["schema2*.ts"]),
     tsconfig = "//:tsconfig",
     deps = [
         ":kt-generation-utils",

@@ -16,6 +16,8 @@ Ensure you have all the node packages installed:
 npm install
 ```
 
+TODO(#5379) Fix Post-install script for full setup.
+
 ## Using with local WebShell as a Chrome Extension
 
 Open up the Chrome and navigate to `chrome://extensions/`.

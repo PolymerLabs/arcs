@@ -112,7 +112,7 @@ def arcs_kt_schema(
         for ext in platforms:
             if ext not in supported:
                 fail("Platform %s not allowed; only %s supported.".format(ext, supported.join(",")))
-            genrule_name = replace_arcs_suffix(src, "_genrule_" + ext)
+            genrule_name = replace_arcs_suffix(src, "_genrule")
             outs.append(genrule_name)
             schema2pkg(
                 name = genrule_name,
@@ -123,7 +123,7 @@ def arcs_kt_schema(
 
     arcs_kt_library(
         name = name,
-        srcs = [":" + name for name in outs],
+        srcs = [":" + out for out in outs],
         platforms = platforms,
         deps = ARCS_SDK_DEPS + deps,
         visibility = visibility,

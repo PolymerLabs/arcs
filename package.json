@@ -9,6 +9,7 @@
   "module": "dist/webmain.js",
   "main": "dist/index.es.js",
   "scripts": {
+    "prepare": "cross-env tools/sigh check && cd devtools && npm i && cd ../concrete-storage && npm i",
     "test-extension": "mocha-chrome extension/tests/index.test.html",
     "test:licenses": "jsgl --local . && npm --prefix devtools run test:licenses && npm --prefix cloud run test:licenses",
     "build:rollup": "rollup -c --sourcemap",
@@ -27,7 +28,6 @@
     "watch": "concurrently npm:watch:*"
   },
   "devDependencies": {
-    "@bazel/rollup": "^1.6.1",
     "@bazel/typescript": "^1.6.1",
     "@types/chai": "4.2.4",
     "@types/diff": "4.0.2",
@@ -36,7 +36,7 @@
     "@types/minimist": "1.2.0",
     "@types/mocha": "5.2.7",
     "@types/morgan": "1.7.37",
-    "@types/node": "^14.0.5",
+    "@types/node": "10.17.3",
     "@types/ws": "6.0.3",
     "@typescript-eslint/eslint-plugin": "2.6.1",
     "@typescript-eslint/parser": "2.6.1",
