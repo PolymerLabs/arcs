@@ -70,13 +70,13 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
         )
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
-        (fakeLifecycleOwner as LifecycleRegistry).currentState = Lifecycle.State.STARTED
+        (fakeLifecycleOwner.lifecycle as LifecycleRegistry).currentState = Lifecycle.State.STARTED
     }
 
     @After
     override fun tearDown() {
         super.tearDown()
-        (fakeLifecycleOwner as LifecycleRegistry).currentState = Lifecycle.State.DESTROYED
+        (fakeLifecycleOwner.lifecycle as LifecycleRegistry).currentState = Lifecycle.State.DESTROYED
     }
 
     @Ignore("b/154947352 - Deflake")
