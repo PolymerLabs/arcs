@@ -32,8 +32,11 @@ export class ParticleClaim {
 
   toManifestString() {
     const manifestStrings = this.claims.map(claim => claim.toManifestString());
-    const target = [this.handle.name, ...this.fieldPath].join('.');
-    return `claim ${target} ${manifestStrings.join(' and ')}`;
+    return `claim ${this.target} ${manifestStrings.join(' and ')}`;
+  }
+
+  get target(): string {
+    return [this.handle.name, ...this.fieldPath].join('.');
   }
 }
 
