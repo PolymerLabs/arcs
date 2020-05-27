@@ -125,7 +125,7 @@ export abstract class Schema2Base {
             field,
             typeName: 'Reference',
             isCollection,
-            refClassName: schemaNode.name,
+            refClassName: schemaNode.entityClassName,
             refSchemaHash: await schemaNode.schema.hash(),
           });
         } else if (descriptor.kind === 'schema-collection') {

@@ -57,7 +57,7 @@ export class SchemaNode {
   // ensure that nested schemas are generated before the references that rely on them.
   refs = new Map<string, SchemaNode>();
 
-  get name() {
+  get entityClassName() {
     if (this.sources.length === 1) {
       // If there is just one occurence, use its full name.
       return this.sources[0].fullName;
@@ -67,21 +67,15 @@ export class SchemaNode {
     return `${this.particleSpec.name}Internal${index}`;
   }
 
-  // This currently assumes a top-level schema can be found for every connection.
-  // Note: This will change once we enable handle connections with tuples.
-  static entityTypeForConnection(connection: HandleConnectionSpec, nodes: SchemaNode[]): string {
-    return SchemaNode.getSourceForConnection(connection, nodes).fullName;
-  }
-
   // This will return the most "developer friendly" name for the entity type. If the name is of the form
   // Internal$N, we will use the full name from the source. Otherwise, we will use the name of the node.
   // Note: Right now this will always return sournce.fullName, but it is a stepping stone towards renaming
-  // the entities.
+  // the entities. This will change once we enable handle connections with tuples.
   static devFriendlyEntityTypeForConnection(connection: HandleConnectionSpec, nodes: SchemaNode[]): string {
     const source = SchemaNode.getSourceForConnection(connection, nodes);
     const node = nodes.find(n => n.sources.includes(source));
     if (node.sources.length === 1) {
-      return node.name
+      return node.entityClassName
     } else {
       return source.fullName
     }

@@ -245,9 +245,8 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     const nodes = nodeGenerators.map(ng => ng.node);
     for (const connection of particle.connections) {
       const handleName = connection.name;
-      const entityType = SchemaNode.entityTypeForConnection(connection, nodes);
-      const devFriendlyName = SchemaNode.devFriendlyEntityTypeForConnection(connection, nodes);
-      const handleInterfaceType = this.handleInterfaceType(connection, devFriendlyName);
+      const entityType = SchemaNode.devFriendlyEntityTypeForConnection(connection, nodes);
+      const handleInterfaceType = this.handleInterfaceType(connection, entityType);
       if (this.opts.wasm) {
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityType})`);
       } else {
@@ -284,7 +283,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     for (const connection of particle.connections) {
       connection.direction = 'reads writes';
       const handleName = connection.name;
-      const entityType = SchemaNode.entityTypeForConnection(connection, nodes);
+      const entityType = SchemaNode.devFriendlyEntityTypeForConnection(connection, nodes);
       const interfaceType = this.handleInterfaceType(connection, entityType);
       handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
       handleSpecs.push(this.handleSpec(handleName, entityType, connection));
@@ -448,12 +447,12 @@ ${lines}
   generate(schemaHash: string): string { return ''; }
 
   generateAliases(particleName: string): string[] {
-    const name = this.node.name;
+    const name = this.node.entityClassName;
     return this.node.sources.map(s => `typealias ${s.fullName} = Abstract${particleName}.${name}`);
   }
 
   generateClasses(schemaHash: string): string {
-    const name = this.node.name;
+    const name = this.node.entityClassName;
 
     const fieldCount = Object.keys(this.node.schema.fields).length;
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;

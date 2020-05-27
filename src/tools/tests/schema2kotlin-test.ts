@@ -83,7 +83,7 @@ describe('schema2kotlin', () => {
       const [connection] = particle.connections;
 
       const graph = new SchemaGraph(particle);
-      const entityType = SchemaNode.entityTypeForConnection(connection, graph.nodes);
+      const entityType = SchemaNode.devFriendlyEntityTypeForConnection(connection, graph.nodes);
       const schema2kotlin = new Schema2Kotlin({_: []});
 
       assert.equal(
