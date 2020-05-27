@@ -49,21 +49,7 @@ export class SchemaNode {
   ) {}
 
   readonly sources: SchemaSource[] = [];
-  schema: Schema;
-
-  // The name and aliases are determined by callbacks provided by the kotlin
-  // and C++ implementations. This is done as we transition Kotlin to
-  // improved naming conventions. If this schema is only found once,
-  // name is of the form 'Particle_Handle'. Otherwise, name is of the form
-  // 'ParticleInternal#' In C++ aliases will be empty if there is only
-  // one instance of the schema. If there are multiple instances of the schema
-  // in C++ (or all cases in kotlin), aliases lists the 'Particle_Handle'
-  // names that need to be type aliased to it.
-  name: string;
-  aliases: string[] = [];
-  particleName: string;
-  connections: string[] = [];
-  uniqueSchemaName: boolean;
+  uniqueSchemaName: boolean = true;
 
   // All schemas that can be sliced to this one.
   descendants = new Set<SchemaNode>();
@@ -220,6 +206,7 @@ export class SchemaGraph {
         node.uniqueSchemaName = false;
         sameSchema.uniqueSchemaName = false;
       }
+
       this.nodes.push(node);
     }
 

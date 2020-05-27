@@ -161,20 +161,6 @@ ${imports.join('\n')}
     return new KotlinGenerator(node, this.opts);
   }
 
-  generateEntityClassName(node: SchemaNode, i: number = null) {
-    if (node.uniqueSchemaName && node.schema.name) {
-      return node.schema.name;
-    }
-    if (i === null) {
-      return entityTypeName(node.particleName, node.connections[0]);
-    }
-    return `${node.particleName}Internal${i}`;
-  }
-
-  generateAliasNames(node: SchemaNode): string[] {
-    return node.connections.map((s: string) => `${node.particleName}_${s}`);
-  }
-
   /** Returns the container type of the handle, e.g. Singleton or Collection. */
   private handleContainerType(type: Type): string {
     return type.isCollectionType() ? 'Collection' : 'Singleton';
@@ -299,6 +285,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     });
 
     const nodes = nodeGenerators.map(ng => ng.node);
+    //nodes.forEach((n) => console.log(n.schema))
     for (const connection of particle.connections) {
       const handleName = connection.name;
       const handleInterfaceType = this.handleInterfaceType(connection, nodes);
@@ -315,7 +302,15 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
         const kotlinGenerator = <KotlinGenerator>nodeGenerator.generator;
         entityType = kotlinGenerator.node.name;
       }
+
       const handleInterfaceType = this.handleInterfaceType(connection, entityType);
+
+      const node = nodes.find(n => n.sources.find(s => s.connection == connection))
+      if (node && node.uniqueSchemaName) {
+        console.log(`schema: ${node.schema.name}`)
+        entityType = node.schema.name
+      }
+
       if (this.opts.wasm) {
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityType})`);
       } else {
@@ -323,7 +318,6 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} by handles`);
       }
     }
-
     const handleClassDecl = this.getHandlesClassDecl(particleName, specDecls, handleDecls);
 
     return {typeAliases, classes, handleClassDecl};
