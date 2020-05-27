@@ -11,6 +11,7 @@
 package arcs.core.entity
 
 import arcs.core.storage.StorageProxy
+import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import kotlinx.coroutines.CoroutineDispatcher
 
@@ -29,6 +30,18 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
 
     private val storageProxy = config.storageProxy
     private val dereferencerFactory = config.dereferencerFactory
+
+    init {
+        // If this is a readable handle, tell the underlying proxy that it will need to
+        // be synchronized. This does not cause the proxy to send a sync request; that's
+        // controlled by [EntityHandleManager.initiateProxySync].
+        if (spec.mode.canRead) {
+            storageProxy.prepareForSync()
+        }
+    }
+
+    override fun registerForStorageEvents(notify: (StorageEvent) -> Unit) =
+        storageProxy.registerForStorageEvents(callbackIdentifier, notify)
 
     override fun onReady(action: () -> Unit) =
         storageProxy.addOnReady(callbackIdentifier, action)

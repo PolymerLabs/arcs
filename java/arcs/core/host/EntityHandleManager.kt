@@ -90,12 +90,23 @@ class EntityHandleManager(
     private val dereferencerFactory =
         EntityDereferencerFactory(stores, scheduler, activationFactory)
 
-    @Suppress("UNCHECKED_CAST")
+    /**
+     * Any readable handles created by the [EntityHandleManager] will have prepared their underlying
+     * [StorageProxy]'s to be synchronized. This method actually triggers their sync requests.
+     */
+    suspend fun initiateProxySync() {
+        proxyMutex.withLock {
+            singletonStorageProxies.values.forEach { it.maybeInitiateSync() }
+            collectionStorageProxies.values.forEach { it.maybeInitiateSync() }
+        }
+    }
+
     suspend fun createHandle(
         spec: HandleSpec<out Entity>,
         storageKey: StorageKey,
         ttl: Ttl = Ttl.Infinite,
-        particleId: String = ""
+        particleId: String = "",
+        immediateSync: Boolean = true
     ): Handle {
         val handleName = idGenerator.newChildId(
             idGenerator.newChildId(arcId.toArcId(), hostId),
@@ -131,7 +142,8 @@ class EntityHandleManager(
             spec,
             storageKey,
             storageAdapter,
-            particleId
+            particleId,
+            immediateSync
         )
         return createHandle(config)
     }
@@ -159,7 +171,8 @@ class EntityHandleManager(
         val spec: HandleSpec<out Entity>,
         val storageKey: StorageKey,
         val storageAdapter: StorageAdapter<T, R>,
-        val particleId: String = ""
+        val particleId: String = "",
+        val immediateSync: Boolean = true
     )
 
     private suspend fun <T : Storable, R : Referencable> createSingletonHandle(
@@ -179,6 +192,9 @@ class EntityHandleManager(
         )
 
         val singletonHandle = SingletonHandle(singletonConfig)
+        if (config.immediateSync) {
+            singletonConfig.proxy.maybeInitiateSync()
+        }
         return when (config.spec.mode) {
             HandleMode.Read -> object : ReadSingletonHandle<T> by singletonHandle {}
             HandleMode.Write -> object : WriteSingletonHandle<T> by singletonHandle {}
@@ -203,6 +219,9 @@ class EntityHandleManager(
             particleId = config.particleId
         )
         val collectionHandle = CollectionHandle(collectionConfig)
+        if (config.immediateSync) {
+            collectionConfig.proxy.maybeInitiateSync()
+        }
         return when (config.spec.mode) {
             HandleMode.Read -> object : ReadCollectionHandle<T> by collectionHandle {}
             HandleMode.Write -> object : WriteCollectionHandle<T> by collectionHandle {}

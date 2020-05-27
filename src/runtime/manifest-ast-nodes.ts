@@ -145,7 +145,7 @@ export interface ManifestStorage extends BaseNode {
   source: string;
   origin: 'file' | 'resource' | 'storage' | 'inline';
   description: string|null;
-  claim: ManifestStorageClaim;
+  claims: ManifestStorageClaim[];
   storageKey: string|null;
   entities: ManifestStorageInlineEntity[]|null;
   annotationRefs?: AnnotationRef[];
@@ -155,6 +155,7 @@ export type ManifestStorageType = SchemaInline | CollectionType | BigCollectionT
 
 export interface ManifestStorageClaim extends BaseNode {
   kind: 'manifest-storage-claim';
+  fieldPath: string[];
   tags: string[];
 }
 
@@ -279,6 +280,7 @@ export interface ParticleCheckTarget extends BaseNode {
   kind: 'particle-check-target';
   targetType: 'handle' | 'slot';
   name: string;
+  fieldPath: string[];
 }
 
 export interface ParticleCheckBooleanExpression extends BaseNode {
@@ -289,7 +291,7 @@ export interface ParticleCheckBooleanExpression extends BaseNode {
 
 export type ParticleCheckExpression = ParticleCheckBooleanExpression | ParticleCheckCondition;
 
-export type ParticleCheckCondition = ParticleCheckHasTag | ParticleCheckIsFromHandle | ParticleCheckIsFromOutput | ParticleCheckIsFromStore;
+export type ParticleCheckCondition = ParticleCheckHasTag | ParticleCheckIsFromHandle | ParticleCheckIsFromOutput | ParticleCheckIsFromStore | ParticleCheckImplication;
 
 export interface ParticleCheckHasTag extends BaseNode {
   kind: 'particle-trust-check-has-tag';
@@ -317,6 +319,13 @@ export interface ParticleCheckIsFromStore extends BaseNode {
   checkType: CheckType.IsFromStore;
   isNot: boolean;
   storeRef: StoreReference;
+}
+
+export interface ParticleCheckImplication extends BaseNode {
+  kind: 'particle-trust-check-implication';
+  checkType: CheckType.Implication;
+  antecedent: ParticleCheckCondition;
+  consequent: ParticleCheckCondition;
 }
 
 export interface StoreReference extends BaseNode {

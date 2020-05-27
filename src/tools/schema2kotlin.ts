@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Schema2Base, ClassGenerator, AddFieldOptions, NodeAndGenerator} from './schema2base.js';
-import {SchemaNode} from './schema2graph.js';
+import {SchemaNode, SchemaSource} from './schema2graph.js';
 import {ParticleSpec, HandleConnectionSpec} from '../runtime/particle-spec.js';
 import {EntityType, CollectionType, Type} from '../runtime/type.js';
 import {KTExtracter} from '../runtime/refiner.js';
@@ -38,10 +38,6 @@ export interface KotlinTypeInfo {
   decodeFn: string;
   defaultVal: string;
   schemaType: string;
-}
-
-function entityTypeName(particle: string, connection: string) {
-  return `${particle}_${connection[0].toUpperCase() + connection.slice(1)}`;
 }
 
 function getTypeInfo(opts: {name: string, isCollection?: boolean, refClassName?: string, refSchemaHash?: string}): KotlinTypeInfo {
@@ -143,17 +139,6 @@ ${imports.join('\n')}
     return new KotlinGenerator(node, this.opts);
   }
 
-  generateEntityClassName(node: SchemaNode, i: number = null) {
-    if (i === null) {
-      return entityTypeName(node.particleName, node.connections[0]);
-    }
-    return `${node.particleName}Internal${i}`;
-  }
-
-  generateAliasNames(node: SchemaNode): string[] {
-    return node.connections.map((s: string) => `${node.particleName}_${s}`);
-  }
-
   /** Returns the container type of the handle, e.g. Singleton or Collection. */
   private handleContainerType(type: Type): string {
     return type.isCollectionType() ? 'Collection' : 'Singleton';
@@ -203,7 +188,7 @@ ${imports.join('\n')}
    * Returns the handle interface type, e.g. WriteSingletonHandle,
    * ReadWriteCollectionHandle. Includes generic arguments.
    */
-  private handleInterfaceType(connection: HandleConnectionSpec, entityType: string): string {
+  handleInterfaceType(connection: HandleConnectionSpec, entityType: string): string {
     const containerType = this.handleContainerType(connection.type);
     if (this.opts.wasm) {
       return `Wasm${containerType}Impl<${entityType}>`;
@@ -230,6 +215,21 @@ ${imports.join('\n')}
   }
 
   generateParticleClass(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]): string {
+    const {typeAliases, classes, handleClassDecl} = this.generateParticleClassComponents(particle, nodeGenerators);
+    return `
+${typeAliases.join(`\n`)}
+
+abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
+    ${this.opts.wasm ? '' : 'override '}val handles: Handles = Handles(${this.opts.wasm ? 'this' : ''})
+
+    ${classes.join(`\n    `)}
+
+    ${handleClassDecl}
+}
+`;
+  }
+
+  generateParticleClassComponents(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]) {
     const particleName = particle.name;
     const handleDecls: string[] = [];
     const specDecls: string[] = [];
@@ -238,13 +238,14 @@ ${imports.join('\n')}
 
     nodeGenerators.forEach(nodeGenerator => {
       const kotlinGenerator = <KotlinGenerator>nodeGenerator.generator;
-      classes.push(kotlinGenerator.generateClasses(nodeGenerator.hash, nodeGenerator.fieldLength));
-      typeAliases.push(kotlinGenerator.generateAliases(particleName));
+      classes.push(kotlinGenerator.generateClasses(nodeGenerator.hash));
+      typeAliases.push(...kotlinGenerator.generateAliases(particleName));
     });
 
+    const nodes = nodeGenerators.map(ng => ng.node);
     for (const connection of particle.connections) {
       const handleName = connection.name;
-      const entityType = entityTypeName(particle.name, connection.name);
+      const entityType = SchemaNode.devFriendlyEntityTypeForConnection(connection, nodes);
       const handleInterfaceType = this.handleInterfaceType(connection, entityType);
       if (this.opts.wasm) {
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityType})`);
@@ -253,22 +254,28 @@ ${imports.join('\n')}
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} by handles`);
       }
     }
-    return `
-${typeAliases.join(`\n`)}
 
-abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
-    ${this.opts.wasm ? '' : 'override '}val handles: Handles = Handles(${this.opts.wasm ? 'this' : ''})
+    const handleClassDecl = this.getHandlesClassDecl(particleName, specDecls, handleDecls);
 
-    ${classes.join(`\n    `)}
-
-    ${this.getHandlesClassDecl(particleName, specDecls)} {
-        ${handleDecls.join('\n        ')}
-    }
-}
-`;
+    return {typeAliases, classes, handleClassDecl};
   }
 
-  generateTestHarness(particle: ParticleSpec): string {
+  private getHandlesClassDecl(particleName: string, entitySpecs: string[], handleDecls: string[]): string {
+    const header = this.opts.wasm
+      ? `class Handles(
+        particle: WasmParticleImpl
+    )`
+      : `class Handles : HandleHolderBase(
+        "${particleName}",
+        mapOf(${ktUtils.joinWithIndents(entitySpecs, 4, 3)})
+    )`;
+
+    return `${header} {
+        ${handleDecls.join('\n        ')}
+    }`;
+  }
+
+  generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): string {
     const particleName = particle.name;
     const handleDecls: string[] = [];
     const handleSpecs: string[] = [];
@@ -276,7 +283,7 @@ abstract class Abstract${particleName} : ${this.opts.wasm ? 'WasmParticleImpl' :
     for (const connection of particle.connections) {
       connection.direction = 'reads writes';
       const handleName = connection.name;
-      const entityType = entityTypeName(particle.name, connection.name);
+      const entityType = SchemaNode.devFriendlyEntityTypeForConnection(connection, nodes);
       const interfaceType = this.handleInterfaceType(connection, entityType);
       handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
       handleSpecs.push(this.handleSpec(handleName, entityType, connection));
@@ -310,23 +317,6 @@ class ${particleName}TestHarness<P : Abstract${particleName}>(
       return null;
     }
     return getTypeInfo({name: type}).type;
-  }
-
-  private getHandlesClassDecl(particleName: string, entitySpecs: string[]): string {
-    if (this.opts.wasm) {
-      return `class Handles(
-        particle: WasmParticleImpl
-    )`;
-    } else {
-      return `class Handles : HandleHolderBase(
-        "${particleName}",
-        mapOf(${ktUtils.joinWithIndents(entitySpecs, 4, 3)})
-    )`;
-    }
-  }
-
-  private prefixTypeForRuntime(type: string): string {
-    return this.opts.wasm ? `Wasm${type}` : type;
   }
 }
 
@@ -454,20 +444,18 @@ ${lines}
     }
   }
 
-  generate(schemaHash: string, fieldCount: number): string { return ''; }
+  generate(schemaHash: string): string { return ''; }
 
-  generateAliases(particleName: string): string {
-    const name = this.node.name;
-    const aliases = this.node.aliases;
-    const typeDecls = aliases.map(alias => `typealias ${alias} = Abstract${particleName}.${name}`);
-    return `${typeDecls.length ? typeDecls.join('\n') : ''}`;
+  generateAliases(particleName: string): string[] {
+    const name = this.node.entityClassName;
+    return this.node.sources.map(s => `typealias ${s.fullName} = Abstract${particleName}.${name}`);
   }
 
-  generateClasses(schemaHash: string, fieldCount: number): string {
-    const name = this.node.name;
+  generateClasses(schemaHash: string): string {
+    const name = this.node.entityClassName;
 
+    const fieldCount = Object.keys(this.node.schema.fields).length;
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
-    const withoutFields = (populate: string) => fieldCount === 0 ? populate : '';
 
     const classDef = `\
 @Suppress("UNCHECKED_CAST")

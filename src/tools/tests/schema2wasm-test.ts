@@ -29,7 +29,7 @@ class Schema2Mock extends Schema2Base {
 
   getClassGenerator(node: SchemaNode): ClassGenerator {
     const collector = {count: 0, adds: []};
-    this.res[node.name] = collector;
+    this.res[node.entityClassName] = collector;
     return {
       escapeIdentifier(name: string): string {
         return name;
@@ -54,7 +54,7 @@ class Schema2Mock extends Schema2Base {
     return '';
   }
 
-  generateTestHarness(particle: ParticleSpec): string {
+  generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): string {
     return '';
   }
 }

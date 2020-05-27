@@ -21,6 +21,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.yield
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -61,6 +62,7 @@ class SchedulerTest {
             .inOrder()
     }
 
+    @Ignore("b/157268079 - Deflake")
     @Test
     fun schedulingWhileProcessing_triggersAnotherLoop_notAnotherLaunch() = runBlocking {
         val scheduler = Scheduler(JvmTime, coroutineContext + singleThreadDispatcher)

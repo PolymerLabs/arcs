@@ -10,7 +10,7 @@
 
 import * as AstNode from './manifest-ast-nodes.js';
 import {Direction} from './manifest-ast-nodes.js';
-import {Claim} from './particle-claim.js';
+import {Claim, ParticleClaim} from './particle-claim.js';
 import {Type} from './type.js';
 import {assert} from '../platform/assert-web.js';
 
@@ -20,6 +20,7 @@ export enum CheckType {
   IsFromHandle = 'is-from-handle',
   IsFromOutput = 'is-from-output',
   IsFromStore = 'is-from-store',
+  Implication = 'implication',
 }
 
 export type CheckTarget = HandleConnectionSpecInterface | ProvideSlotConnectionSpecInterface;
@@ -34,8 +35,8 @@ export interface HandleConnectionSpecInterface {
   dependentConnections: HandleConnectionSpecInterface[];
   pattern?: string;
   parentConnection: HandleConnectionSpecInterface | null;
-  claims?: Map<string, Claim[]>;
-  check?: Check;
+  claims?: ParticleClaim[];
+  checks?: Check[];
   isInput: boolean;
   isOutput: boolean;
 
@@ -65,16 +66,27 @@ export interface ProvideSlotConnectionSpecInterface extends ConsumeSlotConnectio
 }
 
 export class Check {
-  constructor(readonly target: CheckTarget, readonly expression: CheckExpression) {}
+  constructor(
+      readonly target: CheckTarget,
+      readonly fieldPath: string[],
+      readonly expression: CheckExpression) {}
 
   toManifestString() {
-    let targetString: string;
-    if (this.target.discriminator === 'HCS') {
-      targetString = this.target.name;
-    } else {
-      targetString = `${this.target.name} data`;
+    let targetString = this.targetString;
+    if (this.target.discriminator === 'CSCS') {
+      // CSCS => slot. For slots we have to add the "data" keyword after the
+      // slot name.
+      targetString += ' data';
     }
     return `check ${targetString} ${this.expression.toManifestString()}`;
+  }
+
+  get targetString(): string {
+    if (this.target.discriminator === 'HCS') {
+      return [this.target.name, ...this.fieldPath].join('.');
+    } else {
+      return this.target.name;
+    }
   }
 }
 
@@ -97,7 +109,7 @@ export class CheckBooleanExpression {
 export type CheckExpression = CheckBooleanExpression | CheckCondition;
 
 /** A single check condition inside a trust check. */
-export type CheckCondition = CheckHasTag | CheckIsFromHandle | CheckIsFromOutput | CheckIsFromStore;
+export type CheckCondition = CheckHasTag | CheckIsFromHandle | CheckIsFromOutput | CheckIsFromStore | CheckImplication;
 
 /** A check condition of the form 'check x is <tag>'. */
 export class CheckHasTag {
@@ -178,6 +190,24 @@ export class CheckIsFromStore {
   }
 }
 
+/** A check condition of the form 'check x (A => B)'. */
+export class CheckImplication {
+  readonly type: CheckType.Implication = CheckType.Implication;
+  readonly isNot = false;
+
+  constructor(readonly antecedent: CheckExpression, readonly consequent: CheckExpression) {}
+
+  static fromASTNode(astNode: AstNode.ParticleCheckImplication, handleConnectionMap: Map<string, HandleConnectionSpecInterface>) {
+    const antecedent = createCheckExpression(astNode.antecedent, handleConnectionMap);
+    const consequent = createCheckExpression(astNode.consequent, handleConnectionMap);
+    return new CheckImplication(antecedent, consequent);
+  }
+
+  toManifestString() {
+    return `(${this.antecedent.toManifestString(/* requireParens= */ true)} => ${this.consequent.toManifestString(/* requireParens= */ true)})`;
+  }
+}
+
 /** Converts the given AST node into a CheckCondition object. */
 function createCheckCondition(astNode: AstNode.ParticleCheckCondition, handleConnectionMap: Map<string, HandleConnectionSpecInterface>): CheckCondition {
   switch (astNode.checkType) {
@@ -189,8 +219,10 @@ function createCheckCondition(astNode: AstNode.ParticleCheckCondition, handleCon
       return CheckIsFromStore.fromASTNode(astNode);
     case CheckType.IsFromOutput:
       return CheckIsFromOutput.fromASTNode(astNode, handleConnectionMap);
+    case CheckType.Implication:
+      return CheckImplication.fromASTNode(astNode, handleConnectionMap);
     default:
-      throw new Error('Unknown check type.');
+      throw new Error(`Unknown check type: ${JSON.stringify(astNode)}`);
   }
 }
 
@@ -210,5 +242,5 @@ export function createCheck(
     astNode: AstNode.ParticleCheckStatement,
     handleConnectionMap: Map<string, HandleConnectionSpecInterface>): Check {
   const expression = createCheckExpression(astNode.expression, handleConnectionMap);
-  return new Check(checkTarget, expression);
+  return new Check(checkTarget, astNode.target.fieldPath, expression);
 }

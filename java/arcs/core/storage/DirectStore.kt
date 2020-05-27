@@ -29,12 +29,19 @@ import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.getAndUpdate
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 
 /**
  * An [ActiveStore] capable of communicating directly with a [Driver].
  *
  * This is what *directly* manages a [CrdtSingleton], [CrdtSet], or [CrdtCount].
  */
+@Suppress("EXPERIMENTAL_API_USAGE")
 class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constructor(
     options: StoreOptions<Data, Op, T>,
     /* internal */
@@ -60,12 +67,23 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     private var pendingDriverModels = atomic(listOf<PendingDriverModel<Data>>())
     private var version = atomic(0)
     private var state: AtomicRef<State<Data>> = atomic(State.Idle(idleDeferred, driver))
+    private val stateChannel =
+        ConflatedBroadcastChannel<State<Data>>(State.Idle(idleDeferred, driver))
+    private val stateFlow = stateChannel.asFlow()
     private val proxyManager = RandomProxyCallbackManager<Data, Op, T>(
         "direct",
         Random
     )
 
-    override suspend fun idle() = state.value.idle()
+    private val storeIdlenessFlow =
+        combine(stateFlow, writebackIdlenessFlow) { state, writebackIsIdle ->
+            state is State.Idle<*> && writebackIsIdle
+        }
+
+    override suspend fun idle() {
+        // TODO: tune the debounce window
+        storeIdlenessFlow.debounce(50).filter { it }.first()
+    }
 
     override suspend fun getLocalData(): Data = synchronized(this) { localModel.data }
 
@@ -250,7 +268,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     ) {
         if (noDriverSideChanges) {
             // TODO: use a single lock here, rather than two separate atomics.
-            this.state.value = State.Idle(idleDeferred, driver)
+            this.state.value = State.Idle(idleDeferred, driver).also { stateChannel.send(it) }
             this.version.value = version
             return
         }
@@ -270,7 +288,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             val (newVersion, newState) =
                 currentState.update(currentVersion, messageFromDriver, localModel)
             // TODO: use a lock instead here, rather than two separate atomics.
-            this.state.value = newState
+            this.state.value = newState.also { stateChannel.send(it) }
             this.version.value = currentVersion
             currentState = newState
             currentVersion = newVersion

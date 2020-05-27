@@ -216,7 +216,7 @@ ManifestStorage
   {
     items = optional(items, extractIndented, []);
     let description: string | null = null;
-    let claim: AstNode.ManifestStorageClaim | null = null;
+    const claims: AstNode.ManifestStorageClaim[] = [];
 
     for (const item of items) {
       if (item[0] === 'description') {
@@ -225,10 +225,7 @@ ManifestStorage
         }
         description = item[2];
       } else if (item['kind'] === 'manifest-storage-claim') {
-        if (claim) {
-          error('You cannot provide more than one claim.');
-        }
-        claim = item;
+        claims.push(item);
       } else {
         error(`Unknown ManifestStorageItem: ${item}`);
       }
@@ -247,7 +244,7 @@ ManifestStorage
       storageKey: source.storageKey || null,
       entities: source.entities || null,
       description,
-      claim,
+      claims,
     });
   }
 
@@ -367,10 +364,12 @@ ManifestStorageDescription
   = 'description' whiteSpace backquotedString eolWhiteSpace
 
 ManifestStorageClaim
-  = 'claim' whiteSpace 'is' whiteSpace tag:lowerIdent rest:(whiteSpace 'and' whiteSpace 'is' whiteSpace lowerIdent)* eolWhiteSpace
+  = 'claim' whiteSpace field:('field' whiteSpace dottedFields whiteSpace)? 'is' whiteSpace tag:lowerIdent rest:(whiteSpace 'and' whiteSpace 'is' whiteSpace lowerIdent)* eolWhiteSpace
   {
+    const fieldPath = field ? field[2].split('.') : [];
     return toAstNode<AstNode.ManifestStorageClaim>({
       kind: 'manifest-storage-claim',
+      fieldPath,
       tags: [tag, ...rest.map(item => item[5])],
     });
   }
@@ -560,12 +559,19 @@ ParticleCheckStatement
   }
 
 ParticleCheckTarget
-  = name:lowerIdent isSlot:(whiteSpace 'data')?
+  = target:dottedFields isSlot:(whiteSpace 'data')?
   {
+    const targetParts = target.split('.');
+    const name = targetParts[0];
+    const fieldPath = targetParts.slice(1);
+    if (isSlot && fieldPath.length) {
+      error('Checks on slots cannot specify a field');
+    }
     return toAstNode<AstNode.ParticleCheckTarget>({
       kind: 'particle-check-target',
       targetType: isSlot ? 'slot' : 'handle',
       name,
+      fieldPath,
     });
   }
 
@@ -594,10 +600,22 @@ ParticleCheckExpression
   / '(' whiteSpace? condition:ParticleCheckExpressionBody whiteSpace? ')' { return condition; }
 
 ParticleCheckCondition
-  = ParticleCheckIsFromHandle
+  = ParticleCheckImplication
+  / ParticleCheckIsFromHandle
   / ParticleCheckIsFromStore
   / ParticleCheckIsFromOutput
   / ParticleCheckHasTag
+
+ParticleCheckImplication
+  = '(' whiteSpace? antecedent:ParticleCheckExpression whiteSpace? '=>' whiteSpace? consequent:ParticleCheckExpression whiteSpace? ')'
+  {
+    return toAstNode<AstNode.ParticleCheckImplication>({
+      kind: 'particle-trust-check-implication',
+      checkType: CheckType.Implication,
+      antecedent,
+      consequent,
+    });
+  }
 
 ParticleCheckHasTag
   = 'is' isNot:(whiteSpace 'not')? whiteSpace tag:lowerIdent

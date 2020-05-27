@@ -118,6 +118,9 @@ open class HandleManagerTestBase {
         //  test process cancellable/stoppable, even when we cross scopes into a BindingContext or
         //  over to other RamDisk listeners.
         delay(100) // Let things calm down.
+        readHandleManager.close()
+        writeHandleManager.close()
+        delay(100)
     }
 
     @Test
@@ -128,7 +131,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun singleton_writeAndReadBackAndClear() = testRunner {
+    open fun singleton_writeAndReadBackAndClear() = testRunner {
         val writeHandle = writeHandleManager.createSingletonHandle()
         val readHandle = readHandleManager.createSingletonHandle()
 
@@ -223,7 +226,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun singleton_dereferenceEntity() = testRunner {
+    open fun singleton_dereferenceEntity() = testRunner {
         val writeHandle = writeHandleManager.createSingletonHandle()
         val readHandle = readHandleManager.createSingletonHandle()
         val readHandleUpdated = readHandle.onUpdateDeferred()
@@ -476,7 +479,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_addingToA_showsUpInB() = testRunner {
+    open fun collection_addingToA_showsUpInB() = testRunner {
         val handleA = writeHandleManager.createCollectionHandle()
             as ReadWriteCollectionHandle<Person>
         val handleB = readHandleManager.createCollectionHandle()
@@ -497,7 +500,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_writeAndReadBack() = testRunner {
+    open fun collection_writeAndReadBack() = testRunner {
         val writeHandle = writeHandleManager.createCollectionHandle()
         val readHandle = readHandleManager.createCollectionHandle()
         val allHeard = Job()
@@ -742,7 +745,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_withTTL() = testRunner {
+    open fun collection_withTTL() = testRunner {
         fakeTime.millis = 0
         val handle = writeHandleManager.createCollectionHandle(ttl = Ttl.Days(2))
         val handleB = readHandleManager.createCollectionHandle()

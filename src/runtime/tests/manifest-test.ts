@@ -18,7 +18,7 @@ import {Loader} from '../../platform/loader.js';
 import {Dictionary} from '../hot.js';
 import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../particle-claim.js';
-import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore} from '../particle-check.js';
+import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore, CheckImplication} from '../particle-check.js';
 import {ProvideSlotConnectionSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
 import {Store} from '../storageNG/store.js';
@@ -3078,6 +3078,60 @@ resource SomeName
       assert.strictEqual((trustClaims[4].claims[0] as ClaimIsTag).tag, 'property5');
     });
 
+    it('supports field-level claim statements involving collections', async () => {
+      const manifest = await parseManifest(`
+        particle A
+          output1: writes [T {aaa: Text, bbb: [Number]}]
+          output2: writes [T {ccc: [&Foo {ddd: [Number]}]}]
+          claim output1.aaa is property1
+          claim output1.bbb is property2
+          claim output2.ccc is property3
+          claim output2.ccc.ddd is property4
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustChecks);
+
+      const trustClaims = particle.trustClaims;
+      assert.lengthOf(trustClaims, 4);
+
+      assert.strictEqual(trustClaims[0].handle.name, 'output1');
+      assert.deepStrictEqual(trustClaims[0].fieldPath, ['aaa']);
+      assert.strictEqual((trustClaims[0].claims[0] as ClaimIsTag).tag, 'property1');
+
+      assert.strictEqual(trustClaims[1].handle.name, 'output1');
+      assert.deepStrictEqual(trustClaims[1].fieldPath, ['bbb']);
+      assert.strictEqual((trustClaims[1].claims[0] as ClaimIsTag).tag, 'property2');
+
+      assert.strictEqual(trustClaims[2].handle.name, 'output2');
+      assert.deepStrictEqual(trustClaims[2].fieldPath, ['ccc']);
+      assert.strictEqual((trustClaims[2].claims[0] as ClaimIsTag).tag, 'property3');
+
+      assert.strictEqual(trustClaims[3].handle.name, 'output2');
+      assert.deepStrictEqual(trustClaims[3].fieldPath, ['ccc', 'ddd']);
+      assert.strictEqual((trustClaims[3].claims[0] as ClaimIsTag).tag, 'property4');
+    });
+
+    it('rejects invalid fields in field-level claims', async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          output: writes T {foo: Text}
+          claim output.bar is something
+      `), 'Field bar does not exist');
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          output: writes T {foo: &Bar {bar: Number}}
+          claim output.foo.baz is something
+      `), 'Field foo.baz does not exist');
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          output: writes [T {foo: [&Bar {bar: Number}]}]
+          claim output.foo.bar.baz is something
+      `), 'Field foo.bar.baz does not exist');
+    });
+
     it('supports claim statement with multiple tags', async () => {
       const manifest = await parseManifest(`
         particle A
@@ -3172,12 +3226,77 @@ resource SomeName
       const check1 = checkDefined(particle.trustChecks[0]);
       assert.strictEqual(check1.toManifestString(), 'check input1 is property1');
       assert.strictEqual(check1.target.name, 'input1');
+      assert.isEmpty(check1.fieldPath);
       assert.deepEqual(check1.expression, new CheckHasTag('property1', /* isNot= */ false));
 
       const check2 = checkDefined(particle.trustChecks[1]);
       assert.strictEqual(check2.toManifestString(), 'check input2 is not property2');
       assert.strictEqual(check2.target.name, 'input2');
+      assert.isEmpty(check2.fieldPath);
       assert.deepEqual(check2.expression, new CheckHasTag('property2', /* isNot= */ true));
+    });
+
+    it('supports field-level check statements', async () => {
+      const manifest = await parseManifest(`
+        particle A
+          input1: reads T {aaa: Text, bbb: Number}
+          input2: reads T {ccc: Text, ddd: &Foo {eee: Number}}
+          check input1.aaa is property1
+          check input1.bbb is property2
+          check input2.ccc is property3
+          check input2.ddd is property4
+          check input2.ddd.eee is not property5
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustClaims);
+      const trustChecks = particle.trustChecks;
+      assert.lengthOf(trustChecks, 5);
+
+      assert.strictEqual(trustChecks[0].toManifestString(), 'check input1.aaa is property1');
+      assert.strictEqual(trustChecks[0].target.name, 'input1');
+      assert.deepStrictEqual(trustChecks[0].fieldPath, ['aaa']);
+      assert.deepEqual(trustChecks[0].expression, new CheckHasTag('property1', /* isNot= */ false));
+
+      assert.strictEqual(trustChecks[1].toManifestString(), 'check input1.bbb is property2');
+      assert.strictEqual(trustChecks[1].target.name, 'input1');
+      assert.deepStrictEqual(trustChecks[1].fieldPath, ['bbb']);
+      assert.deepEqual(trustChecks[1].expression, new CheckHasTag('property2', /* isNot= */ false));
+
+      assert.strictEqual(trustChecks[2].toManifestString(), 'check input2.ccc is property3');
+      assert.strictEqual(trustChecks[2].target.name, 'input2');
+      assert.deepStrictEqual(trustChecks[2].fieldPath, ['ccc']);
+      assert.deepEqual(trustChecks[2].expression, new CheckHasTag('property3', /* isNot= */ false));
+
+      assert.strictEqual(trustChecks[3].toManifestString(), 'check input2.ddd is property4');
+      assert.strictEqual(trustChecks[3].target.name, 'input2');
+      assert.deepStrictEqual(trustChecks[3].fieldPath, ['ddd']);
+      assert.deepEqual(trustChecks[3].expression, new CheckHasTag('property4', /* isNot= */ false));
+
+      assert.strictEqual(trustChecks[4].toManifestString(), 'check input2.ddd.eee is not property5');
+      assert.strictEqual(trustChecks[4].target.name, 'input2');
+      assert.deepStrictEqual(trustChecks[4].fieldPath, ['ddd', 'eee']);
+      assert.deepEqual(trustChecks[4].expression, new CheckHasTag('property5', /* isNot= */ true));
+    });
+
+    it('rejects invalid fields in field-level checks', async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: reads T {foo: Text}
+          check input.bar is something
+      `), 'Field bar does not exist');
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: reads T {foo: &Bar {bar: Number}}
+          check input.foo.baz is something
+      `), 'Field foo.baz does not exist');
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: reads [T {foo: [&Bar {bar: Number}]}]
+          check input.foo.bar.baz is something
+      `), 'Field foo.bar.baz does not exist');
     });
 
     it(`supports 'is from store' checks`, async () => {
@@ -3245,6 +3364,7 @@ resource SomeName
       assert.strictEqual(check.toManifestString(), 'check mySlot data is trusted');
       assert.isTrue(check.target instanceof ProvideSlotConnectionSpec);
       assert.strictEqual(check.target.name, 'mySlot');
+      assert.isEmpty(check.fieldPath);
       assert.deepEqual(check.expression, new CheckHasTag('trusted', /* isNot= */ false));
     });
 
@@ -3318,6 +3438,63 @@ resource SomeName
         ]));
     });
 
+    it(`supports checks with the implication operator`, async () => {
+      const manifest = await parseManifest(`
+        particle A
+          input: reads T {}
+          check input (is property1 => is property2)
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustClaims);
+      assert.lengthOf(particle.trustChecks, 1);
+
+      const check = particle.trustChecks[0];
+      assert.strictEqual(check.toManifestString(), 'check input (is property1 => is property2)');
+      assert.strictEqual(check.target.name, 'input');
+      assert.deepEqual(
+        check.expression,
+        new CheckImplication(
+          new CheckHasTag('property1', /* isNot= */ false),
+          new CheckHasTag('property2', /* isNot= */ false),
+        ));
+    });
+
+    it(`supports checks with complex nesting of implications`, async () => {
+      const manifest = await parseManifest(`
+        particle A
+          input: reads T {}
+          check input ((is property1 and is not property2) => (is property3 => (is not property4 or is property5))) or is property6
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustClaims);
+      assert.lengthOf(particle.trustChecks, 1);
+
+      const check = particle.trustChecks[0];
+      assert.strictEqual(check.toManifestString(), 'check input ((is property1 and is not property2) => (is property3 => (is not property4 or is property5))) or is property6');
+      assert.strictEqual(check.target.name, 'input');
+      assert.deepEqual(
+        check.expression,
+        new CheckBooleanExpression('or', [
+          new CheckImplication(
+            new CheckBooleanExpression('and', [
+              new CheckHasTag('property1', /* isNot= */ false),
+              new CheckHasTag('property2', /* isNot= */ true),
+            ]),
+            new CheckImplication(
+              new CheckHasTag('property3', /* isNot= */ false),
+              new CheckBooleanExpression('or', [
+                new CheckHasTag('property4', /* isNot= */ true),
+                new CheckHasTag('property5', /* isNot= */ false),
+              ]),
+            ),
+          ),
+          new CheckHasTag('property6', /* isNot= */ false),
+        ]),
+      );
+    });
+
     it('data stores can make claims', async () => {
       const data = '{"root": {}, "locations": {}}';
 
@@ -3330,11 +3507,61 @@ resource SomeName
       `);
       assert.lengthOf(manifest.stores, 1);
       const store = manifest.stores[0];
-      assert.lengthOf(store.claims, 2);
-      assert.strictEqual(store.claims[0].tag, 'property1');
-      assert.strictEqual(store.claims[1].tag, 'property2');
+      assert.hasAllKeys(store.claims, ['']);
+      const claims = store.claims.get('');
+      assert.lengthOf(claims, 2);
+      assert.strictEqual(claims[0].tag, 'property1');
+      assert.strictEqual(claims[1].tag, 'property2');
 
       assert.include(manifest.toString(), '  claim is property1 and is property2');
+    });
+
+    it('data stores can make field-level claims', async () => {
+      const data = '{"root": {}, "locations": {}}';
+
+      const manifest = await parseManifest(`
+        store NobId of NobIdStore {nobId: Text, someRef: [&Foo {foo: [Text]}]} in NobIdJson
+          claim field nobId is property1 and is property2
+          claim field someRef.foo is property3
+        resource NobIdJson
+          start
+          ${data}
+      `);
+      assert.lengthOf(manifest.stores, 1);
+      const store = manifest.stores[0];
+      assert.hasAllKeys(store.claims, ['nobId', 'someRef.foo']);
+
+      const claims1 = store.claims.get('nobId');
+      assert.lengthOf(claims1, 2);
+      assert.strictEqual(claims1[0].tag, 'property1');
+      assert.strictEqual(claims1[1].tag, 'property2');
+
+      const claims2 = store.claims.get('someRef.foo');
+      assert.lengthOf(claims2, 1);
+      assert.strictEqual(claims2[0].tag, 'property3');
+
+      assert.include(manifest.toString(), '  claim field nobId is property1 and is property2');
+      assert.include(manifest.toString(), '  claim field someRef.foo is property3');
+    });
+
+    it('rejects invalid fields in field-level claims on stores', async () => {
+      const data = '{"root": {}, "locations": {}}';
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        store NobId of NobIdStore {nobId: Text} in NobIdJson
+          claim field foo is property1 and is property2
+        resource NobIdJson
+          start
+          ${data}
+      `), 'Field foo does not exist in');
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        store NobId of NobIdStore {nobId: Text, someRef: [&Foo {foo: [Text]}]} in NobIdJson
+          claim field someRef.bar is property1 and is property2
+        resource NobIdJson
+          start
+          ${data}
+      `), 'Field someRef.bar does not exist in');
     });
 
     it(`doesn't allow mixing 'and' and 'or' operations without nesting`, async () => {
@@ -3351,6 +3578,8 @@ resource SomeName
   input2: reads T {}
   input3: reads T {}
   input4: reads T {}
+  input5: reads T {foo: Text}
+  input6: reads T {foo: &Foo {bar: Text}}
   output1: writes T {}
   output2: writes T {}
   output3: writes T {}
@@ -3367,6 +3596,8 @@ resource SomeName
   check input2 is not extraTrusted
   check input3 is from store MyStore
   check input4 is not from store 'my-store-id'
+  check input5.foo is nested
+  check input6.foo.bar is veryNested
   check childSlot is not somewhatTrusted
   modality dom`;
 
@@ -3379,6 +3610,8 @@ resource SomeName
   input2: reads T {}
   input3: reads T {}
   input4: reads T {}
+  input5: reads T {foo: Text}
+  input6: reads T {foo: &Foo {bar: Text}}
   output1: writes T {}
   output2: writes T {}
   output3: writes T {}
@@ -3393,6 +3626,8 @@ resource SomeName
   check input2 is not extraTrusted
   check input3 is from store MyStore
   check input4 is not from store 'my-store-id'
+  check input5.foo is nested
+  check input6.foo.bar is veryNested
   check childSlot data is not somewhatTrusted
   modality dom
   parentSlot: consumes Slot
@@ -3444,19 +3679,28 @@ resource SomeName
     it(`doesn't allow multiple different claims for the same field`, async () => {
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
-          foo: writes T { bar: Text }
+          foo: writes T {bar: Text}
           claim foo.bar is trusted
           claim foo.bar is trusted
       `), `Can't make multiple claims on the same target (foo.bar)`);
     });
 
-    it(`doesn't allow multiple different checks for the same input`, async () => {
+    it(`doesn't allow multiple different checks for the same handle`, async () => {
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
           foo: reads T {}
           check foo is trusted
           check foo is trusted
-      `), `Can't make multiple checks on the same input (foo)`);
+      `), `Can't make multiple checks on the same target (foo)`);
+    });
+
+    it(`doesn't allow multiple different checks for the same field`, async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          foo: reads T {bar: Text}
+          check foo.bar is trusted
+          check foo.bar is trusted
+      `), `Can't make multiple checks on the same target (foo.bar)`);
     });
 
     it(`doesn't allow checks on consumed slots`, async () => {
@@ -3485,6 +3729,15 @@ resource SomeName
           secondSlot: consumes
             mySlot: provides
       `), `Another slot with name 'mySlot' has already been provided by this particle`);
+    });
+
+    it(`doesn't allow checks on fields in slots`, async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          someOtherSlot: consumes
+            mySlot: provides
+          check mySlot.foo data is trusted
+      `), `Checks on slots cannot specify a field`);
     });
   });
 

@@ -41,7 +41,6 @@ arcs_kt_android_test_suite(
         "//java/arcs/sdk/android/storage/service",
         "//java/arcs/sdk/android/storage/service/testutil",
         "//javatests/arcs/core/allocator:allocator-test-util",
-        "//javatests/arcs/core/host",
         "//javatests/arcs/core/host:particle",
         "//javatests/arcs/core/host:plans",
         "//javatests/arcs/core/host:testhost",

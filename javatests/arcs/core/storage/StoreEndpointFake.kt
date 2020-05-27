@@ -22,6 +22,8 @@ class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> :
     // Tests can change this field to alter the value returned by `onProxyMessage`.
     var onProxyMessageReturn = true
 
+    override suspend fun idle() = Unit
+
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, T>): Boolean {
         val found = mutex.withLock {
             proxyMessages.add(message)

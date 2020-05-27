@@ -40,6 +40,7 @@ import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.StorageServiceConnection
 import kotlin.coroutines.CoroutineContext
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,11 +49,15 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 
 /**
  * Factory which can be supplied to [Store.activate] to force store creation to use the
@@ -103,21 +108,43 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private val scope = CoroutineScope(coroutineContext)
     private var storageService: IStorageService? = null
     private var serviceConnection: StorageServiceConnection? = null
-    private var channel = Channel<suspend () -> Unit>(Channel.UNLIMITED)
+    private var channel: Channel<suspend () -> Unit>? = null
+    private var flow: Flow<suspend () -> Unit>? = null
+    private val outgoingMessages = atomic(0)
 
     init {
         lifecycle.addObserver(this)
-        channel.consumeAsFlow()
-            .onEach { it() }
-            .launchIn(scope)
+        initChannel()
+    }
+
+    // Channel has an internal queue which can retain work if stopped
+    // So we need to create fresh instances when off() invoked
+    private fun initChannel() {
+        synchronized(this) {
+            channel?.let { it.cancel() }
+            channel = Channel(Channel.UNLIMITED)
+            channel!!.consumeAsFlow().onEach { it() }.launchIn(scope)
+        }
+    }
+
+    override suspend fun idle() = coroutineScope<Unit> {
+        log.debug { "Waiting for service store to be idle" }
+        while (outgoingMessages.value > 0) delay(10)
+        val service = checkNotNull(storageService)
+        val callback = DeferredResult(this@coroutineScope.coroutineContext)
+        service.idle(TIMEOUT_IDLE_WAIT_MILLIS, callback)
+        withTimeout(TIMEOUT_IDLE_WAIT_MILLIS) { callback.await() }
+        log.debug { "ServiceStore is idle" }
     }
 
     @Suppress("UNCHECKED_CAST")
     override suspend fun getLocalData(): Data {
         val service = checkNotNull(storageService)
         return DeferredProxyCallback().let {
+            outgoingMessages.incrementAndGet()
             service.getLocalData(it)
             val message = it.await()
+            outgoingMessages.decrementAndGet()
             val modelUpdate = message.decodeProxyMessage()
                 as? ProxyMessage.ModelUpdate<Data, Op, ConsumerData>
             if (modelUpdate == null) throw CrdtException("Wrong message type received $modelUpdate")
@@ -142,18 +169,39 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     override fun off(callbackToken: Int) {
         val service = checkNotNull(storageService)
         runBlocking {
-            channel.send { service.unregisterCallback(callbackToken) }
+            send {
+                service.unregisterCallback(callbackToken)
+                initChannel()
+            }
+        }
+    }
+
+    private suspend fun send(block: suspend () -> Unit) = requireNotNull(channel) {
+        "Channel is not initialized"
+    }.apply {
+        if (isClosedForSend) {
+            log.debug { "Channel is closed, ignoring" }
+        } else {
+            send(block)
         }
     }
 
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean {
         val service = checkNotNull(storageService)
         val result = DeferredResult(coroutineContext)
-        channel.send {
+        outgoingMessages.incrementAndGet()
+        send {
             service.sendProxyMessage(message.toProto().toByteArray(), result)
         }
         // Just return false if the message couldn't be applied.
-        return try { result.await() } catch (e: CrdtException) { false }
+        return try {
+            result.await()
+        } catch (e: CrdtException) {
+            log.debug(e) { "CrdtException occurred in onProxyMessage" }
+            false
+        } finally {
+            outgoingMessages.decrementAndGet()
+        }
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
@@ -176,6 +224,12 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     fun onLifecycleDestroyed() {
         serviceConnection?.disconnect()
         storageService = null
+        channel?.let { it.cancel() }
+        channel = null
         scope.coroutineContext[Job.Key]?.cancelChildren()
+    }
+
+    companion object {
+        private const val TIMEOUT_IDLE_WAIT_MILLIS = 10000L
     }
 }

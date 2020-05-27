@@ -24,6 +24,7 @@ import {ClaimIsTag, Claim} from '../particle-claim.js';
 import {StorageKey} from '../storageNG/storage-key.js';
 import {Capabilities} from '../capabilities.js';
 import {AnnotationRef} from './annotation.js';
+import {StoreClaims} from '../storageNG/abstract-store.js';
 
 export class Handle implements Comparable<Handle> {
   private readonly _recipe: Recipe;
@@ -50,8 +51,7 @@ export class Handle implements Comparable<Handle> {
   // Value assigned in the immediate mode, E.g. hostedParticle = ShowProduct
   // Currently only supports ParticleSpec.
   private _immediateValue: ParticleSpec | undefined = undefined;
-  // TODO(b/156983427): Support field-level claims on stores.
-  claims: Claim[] | undefined = undefined;
+  claims: StoreClaims | undefined = undefined;
   private _ttl = Ttl.infinite;
   private _annotations: AnnotationRef[];
 
@@ -199,7 +199,7 @@ export class Handle implements Comparable<Handle> {
     }
     this._id = id;
   }
-  mapToStorage(storage: {id: string, type: Type, originalId?: string, storageKey?: StorageKey, claims?: ClaimIsTag[]}) {
+  mapToStorage(storage: {id: string, type: Type, originalId?: string, storageKey?: StorageKey, claims?: StoreClaims}) {
     if (!storage) {
       throw new Error(`Cannot map to undefined storage`);
     }

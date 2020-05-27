@@ -36,8 +36,8 @@ import {Schema} from './schema.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
         ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType} from './type.js';
 import {Dictionary} from './hot.js';
-import {ClaimIsTag} from './particle-claim.js';
-import {AbstractStore} from './storageNG/abstract-store.js';
+import {ClaimIsTag, validateFieldPath} from './particle-claim.js';
+import {AbstractStore, StoreClaims} from './storageNG/abstract-store.js';
 import {Store} from './storageNG/store.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Exists} from './storageNG/drivers/driver.js';
@@ -258,7 +258,7 @@ export class Manifest {
       id: string,
       storageKey: string | StorageKey,
       tags: string[],
-      claims?: ClaimIsTag[],
+      claims?: StoreClaims,
       originalId?: string,
       description?: string,
       version?: string,
@@ -1358,10 +1358,16 @@ ${e.message}
       tags = [];
     }
 
-    const claims: ClaimIsTag[] = [];
-    if (item.claim) {
-      item.claim.tags.forEach(tag => claims.push(new ClaimIsTag(/* isNot= */ false, tag)));
-    }
+    const claims: Map<string, ClaimIsTag[]> = new Map();
+    item.claims.forEach(claim => {
+      validateFieldPath(claim.fieldPath, type);
+      const target = claim.fieldPath.join('.');
+      if (claims.has(target)) {
+        throw new ManifestError(claim.location, `A claim for target ${target} already exists in store ${name}`);
+      }
+      const tags = claim.tags.map(tag => new ClaimIsTag(/* isNot= */ false, tag));
+      claims.set(target, tags);
+    });
 
     // Instead of creating links to remote firebase during manifest parsing,
     // we generate storage stubs that contain the relevant information.
