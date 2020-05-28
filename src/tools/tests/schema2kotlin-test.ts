@@ -84,6 +84,11 @@ describe('schema2kotlin', () => {
          h: writes [(&Foo {name: Text}, &Bar {age: Number}, &Baz {isThisIt: Boolean})]`,
       'WriteCollectionHandle<Tuple3<Reference<P_H_0>, Reference<P_H_1>, Reference<P_H_2>>>'
     ));
+    it('Read Singleton TypeVariable Entity', async () => await assertHandleInterface(
+      `particle P
+         h: reads ~a with {name: Text}`,
+      'ReadSingletonHandle<P_H>'
+    ));
     async function assertHandleInterface(manifestString: string, expectedHandleInterface: string) {
       const manifest = await Manifest.parse(manifestString);
       assert.lengthOf(manifest.particles, 1);
