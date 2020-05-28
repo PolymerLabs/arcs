@@ -493,9 +493,11 @@ ${lines}
     const fieldCount = Object.keys(this.node.schema.fields).length;
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
 
+    const constructor = this.node.fromVariable ? ' private constructor(' : '(' ;
+
     const classDef = `\
 @Suppress("UNCHECKED_CAST")
-    class ${name}(`;
+    class ${name}${constructor}`;
     const baseClass = this.opts.wasm
         ? 'WasmEntity'
         : ktUtils.applyFun('EntityBase', [quote(name), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp']);
@@ -515,6 +517,8 @@ ${lines}
 
     const constructorArguments =
       ktUtils.joinWithIndents(constructorFields, classDef.length+classInterface.length, 2);
+
+
 
     return `\
 

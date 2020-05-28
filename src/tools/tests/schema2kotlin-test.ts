@@ -228,6 +228,11 @@ describe('schema2kotlin', () => {
       await assertComponent(manifest, ({typeAliases}) => typeAliases.sort(), expectedAliases);
     }
   });
+  describe('Class Generator', () => {
+    it('makes TypeVariable-based entities have private constructors', async () => {
+
+    });
+  });
 
   // Asserts that a certain generated component, i.e. one of the results of the
   // generateParticleClassComponents equals the expected value.

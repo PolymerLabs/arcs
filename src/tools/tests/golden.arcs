@@ -17,6 +17,6 @@ particle Gold
 
   collection: reads [{num: Number}]
 
-  typeVarIn: reads ~a with {num: Number}
+  typeVarIn: reads ~a with {amt: Number}
   typeVarOut: writes ~a
 

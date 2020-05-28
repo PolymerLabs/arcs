@@ -9,7 +9,7 @@
  */
 import {Schema} from '../runtime/schema.js';
 import {Type} from '../runtime/type.js';
-import {ParticleSpec, HandleConnectionSpec} from '../runtime/particle-spec.js';
+import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 import {upperFirst} from './kotlin-generation-utils.js';
 import {AtLeastAsSpecific} from '../runtime/refiner.js';
 
@@ -42,7 +42,8 @@ export class SchemaNode {
   constructor(
     readonly schema: Schema,
     readonly particleSpec: ParticleSpec,
-    readonly allSchemaNodes: SchemaNode[]
+    readonly allSchemaNodes: SchemaNode[],
+    readonly fromVariable: boolean = false
   ) {}
 
   readonly sources: SchemaSource[] = [];
@@ -107,7 +108,7 @@ export class SchemaNode {
 }
 
 function* topLevelSchemas(type: Type, path: string[] = []):
-    IterableIterator<{schema: Schema, path: string[]}> {
+    IterableIterator<{schema: Schema, path: string[], fromVariable: boolean}> {
   if (type.getContainedType()) {
     yield* topLevelSchemas(type.getContainedType(), path);
   } else if (type.getContainedTypes()) {
@@ -116,9 +117,9 @@ function* topLevelSchemas(type: Type, path: string[] = []):
       yield* topLevelSchemas(inner[i], [...path, `${i}`]);
     }
   } else if (type.getEntitySchema()) {
-    yield {schema: type.getEntitySchema(), path};
+    yield {schema: type.getEntitySchema(), path, fromVariable: false};
   } else if (type.canWriteSuperset.getEntitySchema()) {
-    yield {schema: type.canWriteSuperset.getEntitySchema(), path};
+    yield {schema: type.canWriteSuperset.getEntitySchema(), path, fromVariable: true};
   }
 }
 
@@ -137,8 +138,13 @@ export class SchemaGraph {
   constructor(readonly particleSpec: ParticleSpec) {
     // First pass to establish a node for each unique schema, with the descendants field populated.
     for (const connection of this.particleSpec.connections) {
-      for (const {schema, path} of topLevelSchemas(connection.type)) {
-        this.createNodes(schema, this.particleSpec, new SchemaSource(this.particleSpec, connection, path));
+      for (const {schema, path, fromVariable} of topLevelSchemas(connection.type)) {
+        this.createNodes(
+          schema,
+          this.particleSpec,
+          new SchemaSource(this.particleSpec, connection, path),
+          fromVariable
+        );
       }
     }
 
@@ -152,14 +158,15 @@ export class SchemaGraph {
     }
   }
 
-  private createNodes(schema: Schema, particleSpec: ParticleSpec, source: SchemaSource) {
+  private createNodes(schema: Schema, particleSpec: ParticleSpec, source: SchemaSource,
+                      fromVariable: boolean) {
     let node = this.nodes.find(n => schema.equals(n.schema));
     if (node) {
       node.sources.push(source);
     } else {
       // This is a new schema. Check for slicability against all previous schemas
       // (in both directions) to establish the descendancy mappings.
-      node = new SchemaNode(schema, particleSpec, this.nodes);
+      node = new SchemaNode(schema, particleSpec, this.nodes, fromVariable);
       node.sources.push(source);
       for (const previous of this.nodes) {
         for (const [a, b] of [[node, previous], [previous, node]]) {
@@ -188,7 +195,7 @@ export class SchemaGraph {
       if (nestedSchema) {
         // We have a reference field. Generate a node for its nested schema and connect it into the
         // refs map to indicate that this node requires nestedNode's class to be generated first.
-        const nestedNode = this.createNodes(nestedSchema, particleSpec, source.child(field));
+        const nestedNode = this.createNodes(nestedSchema, particleSpec, source.child(field), fromVariable);
         node.refs.set(field, nestedNode);
       }
     }
