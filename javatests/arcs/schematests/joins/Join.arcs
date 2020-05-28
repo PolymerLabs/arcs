@@ -1,0 +1,19 @@
+meta
+  namespace: arcs.schematests.joins
+
+recipe ReadJoin
+  products: map 'products'
+  reviews: map 'reviews'
+  manufacturers: map 'manufacturers'
+
+  triples: join (products, reviews, manufacturers)
+
+  Reader
+    data: triples
+
+particle Reader in 'arcs.schematests.joins.Reader'
+  data: reads [(
+    &Product {name: Text, photo: URL},
+    &Review {author: Text, content: Text, rating: Number},
+    &Manufacturer {name: Text, address: Text}
+  )]
