@@ -75,8 +75,9 @@ COPY .bazelignore \
      ./
 RUN ./tools/bazelisk fetch @maven//...
 
-RUN bazel sync
+RUN ./tools/bazelisk fetch @kotlin_native_compiler//...
 
+RUN ./tools/bazelisk fetch @emsdk//...
 # Copy the contents of the working dir. After this the image should be ready for
 # use.
 COPY . .
