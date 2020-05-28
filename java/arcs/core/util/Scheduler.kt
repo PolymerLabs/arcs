@@ -11,74 +11,108 @@
 
 package arcs.core.util
 
+import arcs.core.util.Scheduler.Companion.DEFAULT_AGENDA_PROCESSING_TIMEOUT_MS
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 
+@Suppress("UNUSED_PARAMETER")
+@Deprecated("Time is no longer of the essence", ReplaceWith("Scheduler(context, agendaProcessingTimeoutMs)"))
+fun Scheduler(
+    time: Time,
+    context: CoroutineContext,
+    agendaProcessingTimeoutMs: Long = DEFAULT_AGENDA_PROCESSING_TIMEOUT_MS
+): Scheduler = Scheduler(context, agendaProcessingTimeoutMs)
+
 /**
  * The [Scheduler] is responsible for scheduling the execution of a batch of [Task]s (known as an
- * [Agenda]), at a defined maximum [scheduleRateHz], where each agenda is limited to running within
- * the specified [agendaProcessingTimeoutMs] window.
+ * [Agenda]).  Groups of [Task]s sent to [schedule] are guaranteed to be run in the order in which
+ * they were received, while the group's order itself is defined by a natural ordering of
+ * [Processor]s followed by grouped [Listener]s.
  */
-@Suppress("EXPERIMENTAL_API_USAGE")
+@Suppress("EXPERIMENTAL_API_USAGE", "MemberVisibilityCanBePrivate")
 class Scheduler(
-    private val time: Time,
     context: CoroutineContext,
-    private val agendaProcessingTimeoutMs: Long = DEFAULT_AGENDA_PROCESSING_TIMEOUT_MS,
-    private val scheduleRateHz: Int = DEFAULT_SCHEDULE_RATE_HZ
+    private val agendaProcessingTimeoutMs: Long = DEFAULT_AGENDA_PROCESSING_TIMEOUT_MS
 ) {
     private val log = TaggedLog { "Scheduler(${hashCode()})" }
     /* internal */
     val launches = atomic(0)
-    /* internal */
-    val loops = atomic(0)
     val scope = CoroutineScope(context)
 
-    private val isActive: Boolean
-        get() = !(processingJob?.isCompleted ?: true)
-    private var processingJob: Job? = null
-    private val isPaused = atomic(false)
-    private val agenda = atomic(Agenda())
+    private val agendaChannel = Channel<Agenda>(Channel.UNLIMITED)
+    private val pausedChannel = ConflatedBroadcastChannel(false)
+    private val idlenessChannel = ConflatedBroadcastChannel(true)
+
+    /**
+     * Flow of booleans indicating when the Scheduler has entered (`true`) or exited (`false`) and
+     * idle state.
+     */
+    val idlenessFlow: Flow<Boolean> = idlenessChannel.asFlow()
+
+    init {
+        // Consume the agenda channel:
+        // 1. Wait until the latest pause-value is false,
+        // 2. Notify the idleness channel that we're busy,
+        // 3. Do the work
+        // 4. Notify the idleness channel that we're not busy.
+        agendaChannel.consumeAsFlow()
+            .onEach { agenda ->
+                pausedChannel.asFlow().filter { !it }.first()
+                launches.incrementAndGet()
+
+                idlenessChannel.send(false)
+                try {
+                    withTimeout(agendaProcessingTimeoutMs) { executeAgenda(agenda) }
+                } catch (e: Throwable) {
+                    throw e
+                } finally {
+                    idlenessChannel.send(true)
+                }
+            }
+            .launchIn(scope)
+    }
 
     /** Schedule a single [Task] to be run as part of the next agenda. */
     fun schedule(task: Task) {
-        agenda.update { it.addTask(task) }
-        scope.startProcessingJob()
+        agendaChannel.offer(Agenda().addTask(task))
     }
 
     /** Schedule some [Task]s to be run as part of the next agenda. */
     fun schedule(tasks: Iterable<Task>) {
-        agenda.update { it.addTasks(tasks) }
-        scope.startProcessingJob()
+        agendaChannel.offer(Agenda().addTasks(tasks))
     }
 
     /** Pause evaluation of the agenda. */
     fun pause() {
-        isPaused.value = true
+        pausedChannel.offer(true)
     }
 
     /** Resume evaluation of scheduled [Task]s in the agenda. */
     fun resume() {
-        if (!isPaused.compareAndSet(expect = true, update = false)) return
-        // If we were paused, we can re-start.
-        scope.startProcessingJob()
+        pausedChannel.offer(false)
     }
 
     /** Wait for the [Scheduler] to become idle. */
     /* internal */
     suspend fun waitForIdle() {
-        delay(100)
-        processingJob?.join()
+        idlenessFlow.debounce(50).filter { it }.first()
     }
 
     /** Cancel the [CoroutineScope] belonging to this Scheduler. */
@@ -86,53 +120,14 @@ class Scheduler(
         scope.cancel()
     }
 
-    private fun CoroutineScope.startProcessingJob() = synchronized(this) {
-        if (isActive) return
-        log.debug { "Starting processing job" }
-        processingJob = launch {
-            launches.incrementAndGet()
-
-            var shallContinue = true
-            while (shallContinue) {
-                val startTime = time.currentTimeMillis
-                shallContinue = withTimeout(agendaProcessingTimeoutMs) { executeAgenda() }
-                val elapsed = time.currentTimeMillis - startTime
-
-                if (shallContinue) {
-                    loops.incrementAndGet()
-
-                    // If the operation was super fast, let's delay a little bit to allow the
-                    // thread to chill out.
-                    val delayLength = scheduleRateHz.hzToMillisPerIteration() - elapsed
-                    if (delayLength > 0) delay(delayLength)
-                }
-            }
-        }
-    }
-
-    /**
-     * If the [Scheduler] isn't paused, executes the current [Agenda] and returns whether or not
-     * another execution iteration is worth trying when complete.
-     */
-    private suspend fun executeAgenda(): Boolean {
+    private suspend fun executeAgenda(agenda: Agenda) {
         val timeoutHandler = { throwable: Throwable ->
             if (throwable is TimeoutCancellationException) {
                 log.error(throwable) { "Scheduled tasks timed out." }
             }
         }
-
-        // We're paused, so no need to do anything - and we should return false so the processing
-        // job finishes without looping.
-        if (isPaused.value) return false
-
-        val agenda = agenda.getAndSet(Agenda())
-
-        // There's nothing to do - return false so the processing job finishes without looping.
-        if (agenda.isEmpty()) return false
-
         log.debug { "Processing agenda: $agenda" }
 
-        // Process agenda
         agenda.forEach { task ->
             suspendCancellableCoroutine<Unit> {
                 log.debug { "Starting $task" }
@@ -140,11 +135,7 @@ class Scheduler(
                 log.debug { "Finished $task" }
             }
         }
-
-        return true
     }
-
-    private fun Int.hzToMillisPerIteration(): Long = ((1.0 / toDouble()) * 1000L).toLong()
 
     sealed class Task(private val block: () -> Unit) {
         /**
@@ -215,9 +206,6 @@ class Scheduler(
         fun addListener(listener: Task.Listener): Agenda =
             copy(listenersByNamespace = listenersByNamespace.addListener(listener))
 
-        fun isEmpty(): Boolean =
-            processors.isEmpty() && listenersByNamespace.isEmpty()
-
         override fun iterator(): Iterator<Task> = (processors + listenersByNamespace).iterator()
     }
 
@@ -233,8 +221,6 @@ class Scheduler(
 
             return copy(listeners = this.listeners + (listener.namespace to listeners))
         }
-
-        fun isEmpty(): Boolean = listeners.isEmpty()
 
         override fun iterator(): Iterator<Task> = listeners.values.flatten().iterator()
     }
@@ -259,12 +245,6 @@ class Scheduler(
          * execution is allowed to take.
          */
         const val DEFAULT_AGENDA_PROCESSING_TIMEOUT_MS = 5000L
-
-        /**
-         * The default maximum rate at which iterations of agenda processing are allowed to operate
-         * per second.
-         */
-        const val DEFAULT_SCHEDULE_RATE_HZ = 120
     }
 }
 

@@ -14,7 +14,6 @@ package arcs.jvm.host
 import arcs.core.host.SchedulerProvider
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
-import arcs.jvm.util.JvmTime
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
@@ -85,12 +84,13 @@ class JvmSchedulerProvider(
             CoroutineName("ArcId::$arcId") +
             dispatcher
 
-        return Scheduler(JvmTime, schedulerContext).also { schedulersByArcId[arcId] = it }
+        return Scheduler(schedulerContext).also { schedulersByArcId[arcId] = it }
     }
 
     @Synchronized
     fun cancelAll() {
         schedulersByArcId.values.toList().forEach { it.cancel() }
+        threads.forEach { it?.interrupt() }
     }
 
     companion object {
