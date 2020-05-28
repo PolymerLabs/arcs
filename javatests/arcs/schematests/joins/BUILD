@@ -17,5 +17,8 @@ arcs_kt_jvm_library(
     name = "particles",
     testonly = 1,
     srcs = ["TupleReader.kt"],
-    deps = [":join_schema_gen"],
+    deps = [
+        ":join_schema_gen",
+        "//java/arcs/core/entity",
+    ],
 )
