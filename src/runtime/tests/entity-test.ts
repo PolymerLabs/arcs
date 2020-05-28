@@ -33,13 +33,14 @@ describe('Entity', () => {
         tuple: (Text, URL, Number, Boolean, Bytes)
         union: (Text or URL or Number or Boolean or Bytes)
         kt: Long
+        lst: List<Number>
     `);
     schema = manifest.findSchemaByName('Foo');
     entityClass = Entity.createEntityClass(schema, null);
   });
 
   it('behaves like a regular object except writing to any field fails', () => {
-    const e = new entityClass({txt: 'abc', num: 56});
+    const e = new entityClass({txt: 'abc', num: 56, lst: [1,2,5,4,3]});
 
     assert.strictEqual(e.txt, 'abc');
     assert.strictEqual(e.num, 56);
