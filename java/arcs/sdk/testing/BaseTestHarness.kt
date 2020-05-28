@@ -4,7 +4,6 @@ import arcs.core.entity.Entity
 import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
-import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -88,13 +87,11 @@ open class BaseTestHarness<P : Particle>(
 
                 val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
                 val scheduler = schedulerProvider(description.methodName)
-                val stores = StoreManager()
                 val handleManager = EntityHandleManager(
                     arcId = "testHarness",
                     hostId = "testHarnessHost",
                     time = JvmTime,
-                    scheduler = scheduler,
-                    stores = stores
+                    scheduler = scheduler
                 )
                 runBlocking {
                     specs.forEach { spec ->
@@ -116,7 +113,6 @@ open class BaseTestHarness<P : Particle>(
                 statement.evaluate()
                 runBlocking {
                     withTimeout(1500) { scheduler.waitForIdle() }
-                    withTimeout(1500) { stores.close() }
                     withTimeout(1500) { handleManager.close() }
                     schedulerProvider.cancelAll()
                 }
