@@ -92,7 +92,14 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
             }
             .buffer()
             .onEach {
-                withTimeoutOrNull(1000) { store.idle() }
+                // TODO(jasonwyatt): Make the deferred lazy, so that we only idle when the client
+                //  requests it.
+                val success = withTimeoutOrNull(5000) { store.idle() }
+                if (success == null) {
+                    log.warning {
+                        "Timeout exceeded (5 seconds) while waiting for store to become idle."
+                    }
+                }
                 it.complete(true)
             }
             .flowOn(Dispatchers.Default)

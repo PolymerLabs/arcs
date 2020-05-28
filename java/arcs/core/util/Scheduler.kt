@@ -77,14 +77,15 @@ class Scheduler(
         // 4. Notify the idleness channel that we're not busy.
         agendaChannel.consumeAsFlow()
             .onEach { agenda ->
+                // TODO(jasonwyatt): This waiting until not-paused thing would be cleaner with
+                //  something along the lines of atomicBoolean.waitUntilTrue() (would need to be
+                //  created).
                 pausedChannel.asFlow().filter { !it }.first()
                 launches.incrementAndGet()
 
                 idlenessChannel.send(false)
                 try {
                     withTimeout(agendaProcessingTimeoutMs) { executeAgenda(agenda) }
-                } catch (e: Throwable) {
-                    throw e
                 } finally {
                     idlenessChannel.send(true)
                 }
