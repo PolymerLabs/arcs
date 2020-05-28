@@ -3,7 +3,7 @@
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
 load(":util.bzl", "replace_arcs_suffix")
 
-def arcs_manifest(name, srcs, deps = [], visibility = None):
+def arcs_manifest(name, srcs, deps = [], testonly = False, visibility = None):
     """Bundles .arcs manifest files with their particle implementations.
 
     Generates a filegroup that can be included in e.g. an Android assets folder.
@@ -12,6 +12,7 @@ def arcs_manifest(name, srcs, deps = [], visibility = None):
       name: the name of the target to create
       srcs: list of Arcs manifest files to include
       deps: list of dependencies (other arcs_manifest targets)
+      testonly: Marks bundle to be for tests only.
       visibility: list of visibilities
     """
     for src in srcs:
@@ -25,6 +26,7 @@ def arcs_manifest(name, srcs, deps = [], visibility = None):
         name = name,
         srcs = all_files,
         visibility = visibility,
+        testonly = testonly,
     )
 
 def arcs_manifest_json(name, srcs = [], deps = [], out = None, visibility = None):

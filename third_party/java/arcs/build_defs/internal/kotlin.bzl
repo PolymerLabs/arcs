@@ -193,7 +193,7 @@ def arcs_kt_library(
             name = name,
             testonly = testonly,
             # Exclude any wasm-specific srcs.
-            srcs = [src for src in srcs if not src.endswith(".wasm.kt")],
+            srcs = [src for src in srcs if src.find("_genrule_wasm") == -1],
             add_android_constraints = add_android_constraints,
             visibility = visibility,
             exports = exports,
@@ -206,7 +206,7 @@ def arcs_kt_library(
             testonly = testonly,
             # Exclude any wasm-specific srcs.
             # TODO: jvm srcs will be included here. That is not what we want.
-            srcs = [src for src in srcs if not src.endswith(".wasm.kt")],
+            srcs = [src for src in srcs if src.find("_genrule_wasm") == -1],
             visibility = visibility,
             deps = [_to_js_dep(dep) for dep in deps],
         )
@@ -216,7 +216,7 @@ def arcs_kt_library(
             name = name + _WASM_SUFFIX,
             testonly = testonly,
             # Exclude any jvm-specific srcs.
-            srcs = [src for src in srcs if not src.endswith(".jvm.kt")],
+            srcs = [src for src in srcs if src.find("_genrule_jvm") == -1],
             visibility = visibility,
             deps = [_to_wasm_dep(dep) for dep in deps],
         )
@@ -413,7 +413,13 @@ def arcs_kt_android_test_suite(
             deps = android_local_test_deps,
         )
 
-def arcs_kt_plan(name, srcs = [], data = [], deps = [], platforms = ["jvm"], visibility = None):
+def arcs_kt_plan(name,
+                 srcs = [],
+                 data = [],
+                 deps = [],
+                 platforms = ["jvm"],
+                 testonly = False,
+                 visibility = None):
     """Converts recipes from manifests into Kotlin plans.
 
     Example:
@@ -445,6 +451,7 @@ def arcs_kt_plan(name, srcs = [], data = [], deps = [], platforms = ["jvm"], vis
       data: list of Arcs manifests needed at runtime
       deps: list of dependencies (jars)
       platforms: list of target platforms (currently, `jvm` and `wasm` supported).
+      testonly: Generates testonly targets.
       visibility: visibility of the generated arcs_kt_library
 
     Returns:
@@ -475,6 +482,7 @@ def arcs_kt_plan(name, srcs = [], data = [], deps = [], platforms = ["jvm"], vis
         srcs = outs,
         platforms = platforms,
         visibility = visibility,
+        testonly=testonly,
         deps = ARCS_SDK_DEPS + deps,
     )
     return {"outs": outs, "deps": ARCS_SDK_DEPS}

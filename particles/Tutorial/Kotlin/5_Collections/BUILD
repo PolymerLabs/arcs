@@ -16,7 +16,7 @@ arcs_kt_schema(
     name = "collections_schemas",
     srcs = ["Collections.arcs"],
     platforms = ["wasm"],
-    deps = [":shared_people_schemas"],
+    data = [":shared_people_schemas"],
 )
 
 arcs_kt_particles(

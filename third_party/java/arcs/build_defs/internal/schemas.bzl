@@ -66,6 +66,7 @@ def arcs_kt_schema(
         deps = [],
         platforms = ["jvm"],
         test_harness = True,
+        testonly=False,
         visibility = None):
     """Generates a Kotlin schemas, entities, specs, handle holders, and base particles for input .arcs manifest files.
 
@@ -93,6 +94,7 @@ def arcs_kt_schema(
       deps: list of imported manifests
       platforms: list of target platforms (currently, `jvm` and `wasm` supported).
       test_harness: whether to generate a test harness target
+      testonly: If True, only testonly targets (such as tests) can depend on this target.
       visibility: visibility of the generated arcs_kt_library
 
     Returns:
@@ -112,13 +114,14 @@ def arcs_kt_schema(
         for ext in platforms:
             if ext not in supported:
                 fail("Platform %s not allowed; only %s supported.".format(ext, supported.join(",")))
-            genrule_name = replace_arcs_suffix(src, "_genrule")
+            genrule_name = replace_arcs_suffix(src, "_genrule_" + ext)
             outs.append(genrule_name)
             schema2pkg(
                 name = genrule_name,
                 srcs = [src],
                 platform = ext,
                 data = data,
+                testonly=testonly,
             )
 
     arcs_kt_library(
@@ -127,6 +130,7 @@ def arcs_kt_schema(
         platforms = platforms,
         deps = ARCS_SDK_DEPS + deps,
         visibility = visibility,
+        testonly=testonly
     )
     outdeps = outdeps + ARCS_SDK_DEPS
 
@@ -253,6 +257,7 @@ def arcs_kt_gen(
         deps = [],
         platforms = ["jvm"],
         test_harness = True,
+        testonly=False,
         visibility = None):
     """Generates Kotlin files for the given .arcs files.
 
@@ -267,6 +272,7 @@ def arcs_kt_gen(
       deps: list of dependent arcs targets, such as an arcs_kt_gen target in a different package
       platforms: list of target platforms (currently, `jvm` and `wasm` supported).
       test_harness: whether to generate a test harness target
+      testonly: If True, only testonly targets (such as tests) can depend on this target.
       visibility: visibility of the generated arcs_kt_library
     """
 
@@ -278,6 +284,7 @@ def arcs_kt_gen(
         name = manifest_name,
         srcs = srcs,
         deps = manifest_only(deps) + data,
+        testonly = testonly,
     )
 
     schema = arcs_kt_schema(
@@ -287,6 +294,7 @@ def arcs_kt_gen(
         deps = deps,
         platforms = platforms,
         test_harness = test_harness,
+        testonly=testonly,
         visibility = visibility,
     )
     plan = arcs_kt_plan(
@@ -294,6 +302,7 @@ def arcs_kt_gen(
         srcs = srcs,
         data = [":" + manifest_name],
         deps = deps + [":" + schema_name],
+        testonly=testonly,
         platforms = platforms,
         visibility = visibility,
     )
@@ -304,6 +313,7 @@ def arcs_kt_gen(
         srcs = depset(schema["outs"] + plan["outs"]).to_list(),
         platforms = platforms,
         deps = depset(schema["deps"] + plan["deps"]).to_list(),
+        testonly=testonly,
         visibility = visibility,
     )
 

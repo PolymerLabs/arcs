@@ -1,3 +1,6 @@
+meta
+  namespace: arcs.tutorials
+
 // Define a schema that allows us to store a person's name
 schema Person
   name: Text

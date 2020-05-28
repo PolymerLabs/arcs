@@ -10,13 +10,14 @@ licenses(["notice"])
 arcs_manifest(
     name = "shared_people_schemas",
     srcs = ["PeopleSchemas.arcs"],
+    deps = ["data.json"],
 )
 
 arcs_kt_schema(
     name = "store_schemas",
     srcs = ["JsonStore.arcs"],
     platforms = ["wasm"],
-    deps = [":shared_people_schemas"],
+    data = [":shared_people_schemas"],
 )
 
 arcs_kt_particles(
