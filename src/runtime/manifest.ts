@@ -189,7 +189,7 @@ export class Manifest {
     return this.allRecipes.reduce((acc, x) => acc.concat(x.handles), []);
   }
   get activeRecipe() {
-    return this._recipes.find(recipe => recipe.annotation === 'active');
+    return this._recipes.find(recipe => recipe.getAnnotation('active'));
   }
   get particles() {
     return Object.values(this._particles);
@@ -850,12 +850,6 @@ ${e.message}
   private static _processRecipe(manifest: Manifest, recipeItem: AstNode.RecipeNode) {
     const recipe = manifest._newRecipe(recipeItem.name);
 
-    if (recipeItem.annotation) {
-      recipe.annotation = recipeItem.annotation;
-    }
-    if (recipeItem.triggers) {
-      recipe.triggers = recipeItem.triggers;
-    }
     recipe.annotations = Manifest._buildAnnotationRefs(manifest, recipeItem.annotationRefs);
 
     if (recipeItem.verbs) {
@@ -910,18 +904,15 @@ ${e.message}
       }
       handle.fate = item.kind === 'handle' && item.fate ? item.fate : null;
       if (item.kind === 'handle') {
-        if (item.annotation) {
-          assert(item.annotation.simpleAnnotation === 'ttl',
-                `unsupported recipe handle annotation ${item.annotation.simpleAnnotation}`);
-          handle.ttl = new Ttl(
-              item.annotation.parameter.count,
-              Ttl.ttlUnitsFromString(item.annotation.parameter.units));
-        }
-        if (item.capabilities) {
-          handle.capabilities = new Capabilities(handle.ttl.isInfinite ? item.capabilities : [...item.capabilities, 'queryable']);
-        }
         if (item.annotations) {
           handle.annotations = Manifest._buildAnnotationRefs(manifest, item.annotations);
+          const ttlAnnotation = handle.getAnnotation('ttl');
+          if (ttlAnnotation) {
+            handle.ttl = Ttl.fromString(ttlAnnotation.params['value'].toString());
+          }
+          if (item.capabilities) {
+            handle.capabilities = new Capabilities(handle.ttl.isInfinite ? item.capabilities : [...item.capabilities, 'queryable']);
+          }
         }
       }
       items.byHandle.set(handle, item);

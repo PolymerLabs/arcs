@@ -106,6 +106,9 @@ export class Schema {
         `Annotation '${a.name}' is invalid for Schema`));
     this._annotations = annotations;
   }
+  getAnnotation(name: string): AnnotationRef | null {
+    return this.annotations.find(a => a.name === name);
+  }
 
   static typesEqual(fieldType1, fieldType2): boolean {
     // TODO(cypher1): structural check instead of stringification.

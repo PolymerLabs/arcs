@@ -34,6 +34,7 @@ import {mockFirebaseStorageKeyOptions} from '../storageNG/testing/mock-firebase.
 import {Flags} from '../flags.js';
 import {TupleType, CollectionType, EntityType} from '../type.js';
 import {ActiveCollectionEntityStore, handleForActiveStore} from '../storageNG/storage-ng.js';
+import {TtlUnits} from '../recipe/ttl.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -4072,14 +4073,14 @@ annotation goodForAll
     const manifestStr = `${annotationsStr.trim()}
 @oneParam(bar: 'bar')
 particle Foo
-  myFoo: reads [* {bar: Text}] @goodForAll()
+  myFoo: reads [* {bar: Text}] @goodForAll
   modality dom
 @oneParam(bar: 'hello world')
 recipe One
 @multiParam(foo: 'hello', bar: 5, baz: false)
-@noParam()
+@noParam
 recipe Two
-@goodForAll()
+@goodForAll
 recipe Three`;
     const manifest = await Manifest.parse(manifestStr);
     assert.equal(Object.keys(manifest.annotations).length, 4);
@@ -4118,7 +4119,7 @@ recipe Three`;
   });
   it('throws when annotation not defined', async () => {
     await assertThrowsAsync(async () => await Manifest.parse(`
-        @nonexistent()
+        @nonexistent
         recipe
     `), `annotation not found: 'nonexistent'`);
   });
@@ -4128,7 +4129,7 @@ recipe Three`;
           retention: Source
           targets: [Particle]
           doc: 'doc'
-        @noParam()
+        @noParam
         recipe
     `), `Annotation 'noParam' is invalid for Recipe`);
   });
@@ -4192,7 +4193,7 @@ recipe`;
   it('parses recipe annotation with no param', async () => {
     const manifestStr = `
 ${oneParamAnnotation}
-@oneParam()
+@oneParam
 recipe`;
     const manifest = await Manifest.parse(manifestStr);
     const recipe = manifest.recipes[0];
@@ -4214,7 +4215,7 @@ annotation foo1(qux: Boolean)
 particle Fooer
   foos1: reads [Foo {value: Text}] @foo(bar: 'hello', baz: 5)
   foos2: reads writes [Foo {value: Text}] @foo(baz: 5) @foo1(qux: true)
-  foos3: reads writes [Foo {value: Text}] @foo()
+  foos3: reads writes [Foo {value: Text}] @foo
   foos4: writes [Foo {value: Text}]
   modality dom
 `;
@@ -4237,7 +4238,7 @@ particle Fooer
         targets: [Handle, HandleConnection]
         retention: Source
         doc: 'a'
-      @foo()
+      @foo
       schema Foo
         value: Text
     `), `Annotation 'foo' is invalid for Schema`);
@@ -4290,14 +4291,13 @@ recipe
   foo: create
   bar: ?
   baz: create persistent
-  qux: create persistent @ttl(2d)
-  quw: create persistent 'my-id' @ttl(10m) @hello(world: 'woohoo')
+  quz: create persistent 'my-id' @ttl('10m') @hello(world: 'woohoo')
     `);
-    const quwHandle = manifest.recipes[0].findHandleByID('my-id');
-    assert.lengthOf(quwHandle.annotations, 1);
+    const quzHandle = manifest.recipes[0].findHandleByID('my-id');
+    assert.lengthOf(quzHandle.annotations, 2);
   });
   it('parses annotation with single param and simple value', async () => {
-    const annotations = (await Manifest.parse(`
+    const connection = (await Manifest.parse(`
       annotation hello(txt: Text)
         targets: [Handle, HandleConnection]
         retention: Source
@@ -4307,10 +4307,10 @@ recipe
         retention: Source
         doc: 'a'
       particle Foo
-        foo: reads [* {bar: Text}] @hello(txt: 'hi') @world('bye')`)).particles[0].connections[0].annotations;
-    assert.lengthOf(annotations, 2);
-    assert.equal(annotations.find(a => a.name === 'hello').params['txt'], 'hi');
-    assert.equal(annotations.find(a => a.name === 'world').params['txt'], 'bye');
+        foo: reads [* {bar: Text}] @hello(txt: 'hi') @world('bye')`)).particles[0].connections[0];
+    assert.lengthOf(connection.annotations, 2);
+    assert.equal(connection.getAnnotation('hello').params['txt'], 'hi');
+    assert.equal(connection.getAnnotation('world').params['txt'], 'bye');
   });
   it('fails parsing annotation simple value when multiple params', async () => {
     await assertThrowsAsync(async () => await Manifest.parse(`
@@ -4330,27 +4330,45 @@ recipe
       particle Foo
         foo: reads [* {bar: Text}] @hello(5)`), `expected 'Text' for param 'txt', instead got 5`);
   });
+  it('fails parsing invalid canonical annotation ttl', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+      recipe
+        foo: create persistent @ttl('300')
+    `), `Invalid ttl: 300`);
+    await assertThrowsAsync(async () => await Manifest.parse(`
+      recipe
+        foo: create persistent @ttl(300)
+    `), `expected 'Text' for param 'value', instead got 300`);
+    await assertThrowsAsync(async () => await Manifest.parse(`
+      recipe
+        foo: create persistent @ttl('day')
+    `), `Invalid ttl: day`);
+  });
   it('parses canonical annotations', async () => {
     const manifest = (await Manifest.parse(`
       @arcId('myFavoriteArc')
       recipe
-        foo: create persistent @ttl(2d) @ttl('2d')
+        foo: create persistent @ttl('3d')
 
-      @isolated()
+      @isolated
       particle IsolatedParticle
 
-      @egress()
+      @egress
       particle EgressingParticle
     `));
-    const recipeAnnotations = manifest.recipes[0].annotations;
+    const recipe = manifest.recipes[0];
+    const recipeAnnotations = recipe.annotations;
     assert.lengthOf(recipeAnnotations, 1);
     assert.equal(recipeAnnotations[0].name, 'arcId');
     assert.equal(recipeAnnotations[0].params['id'], 'myFavoriteArc');
 
-    const handleAnnotations = manifest.recipes[0].handles[0].annotations;
+    const handleAnnotations = recipe.handles[0].annotations;
     assert.lengthOf(handleAnnotations, 1);
     assert.equal(handleAnnotations[0].name, 'ttl');
-    assert.equal(handleAnnotations[0].params['value'], '2d');
+    assert.equal(handleAnnotations[0].params['value'], '3d');
+    assert.equal(recipe.handles[0].ttl.count, 3);
+    assert.equal(recipe.handles[0].ttl.units, TtlUnits.Day);
+    assert.equal(recipe.handles[0].annotations.toString(), `@ttl(value: '3d')`);
 
     const isolatedParticleAnnotations = manifest.findParticleByName('IsolatedParticle').annotations;
     console.error(manifest.findParticleByName('IsolatedParticle'));
@@ -4375,7 +4393,7 @@ recipe
 
     it('egress annotation works', async () => {
       const manifest = await Manifest.parse(`
-        @egress()
+        @egress
         particle P
       `);
       assert.isTrue(manifest.particles[0].egress);
@@ -4384,7 +4402,7 @@ recipe
 
     it('isolated annotation works', async () => {
       const manifest = await Manifest.parse(`
-        @isolated()
+        @isolated
         particle P
       `);
       assert.isFalse(manifest.particles[0].egress);
@@ -4393,8 +4411,8 @@ recipe
 
     it('throws if both isolated and egress annotations are applied', async () => {
       const manifest = await Manifest.parse(`
-        @egress()
-        @isolated()
+        @egress
+        @isolated
         particle P
       `);
       assert.throws(

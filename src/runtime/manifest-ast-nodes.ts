@@ -450,7 +450,6 @@ export interface RecipeNode extends BaseNode {
   verbs: VerbList;
   items: RecipeItem[];
   annotation?: string; // simpleAnnotation
-  triggers?: Triggers;
   annotationRefs?: AnnotationRef[];
 }
 
@@ -505,7 +504,6 @@ export interface RecipeHandle extends BaseNode {
   ref: HandleRef;
   fate: Fate;
   capabilities: RecipeHandleCapability[];
-  annotation: ParameterizedAnnotation|null;
   annotations: AnnotationRef[];
 }
 
@@ -800,15 +798,7 @@ export interface NameAndTagList extends BaseNode {
 
 export interface Annotation extends BaseNode {
   kind: 'annotation';
-  triggerSet: Triggers;
-  simpleAnnotation?: string;
   annotationRefs: AnnotationRef[];
-}
-
-export interface ParameterizedAnnotation extends BaseNode {
-  kind: 'param-annotation';
-  simpleAnnotation: string;
-  parameter: NumberedUnits;
 }
 
 export interface NumberedUnits extends BaseNode {

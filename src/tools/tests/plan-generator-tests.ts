@@ -184,9 +184,9 @@ describe('recipe2plan', () => {
        
      recipe R
        h0: create
-       h1: create @ttl(12h)
+       h1: create @ttl('12h')
        h2: create persistent
-       h3: create persistent @ttl(24h)
+       h3: create persistent @ttl('24h')
        A
          data: writes h0
        A
