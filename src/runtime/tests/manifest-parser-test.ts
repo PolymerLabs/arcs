@@ -393,6 +393,22 @@ describe('manifest parser', () => {
         kotlinThings: reads KotlinThings {aByte: Byte, aShort: Short, anInt: Int, aLong: Long, aChar: Char, aFloat: Float, aDouble: Double}
     `);
   });
+  it('parses a schema with ordered list types', () => {
+    parse(`
+      schema OrderedLists
+        someNums: List<Number>
+        someLongs: List<Long>
+        someStrings: List<Text>
+        someReferences: List<&{}>
+        someUnions: List<(Number or Text)>
+    `);
+  });
+  it('parses an inline schema with ordered list types', () => {
+    parse(`
+      particle Foo
+        orderedThings: reads OrderedLists {someNums: List<Number>, someLongs: List<Long>, someStrings: List<Text>, someReferences: List<&{}>, someUnions: List<(Number or Text)>}
+    `);
+  });
   it('parses typenames with reserved type names as a prefix (Boolean)', () => {
     parse(`
       particle Foo

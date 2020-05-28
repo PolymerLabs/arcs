@@ -633,6 +633,11 @@ export interface SchemaCollectionType extends BaseNodeWithRefinement {
   schema: SchemaType;
 }
 
+export interface SchemaOrderedListType extends BaseNodeWithRefinement {
+  kind: 'schema-ordered-list';
+  schema: SchemaType;
+}
+
 export interface SchemaReferenceType extends BaseNodeWithRefinement {
   kind: 'schema-reference';
   schema: SchemaType;
