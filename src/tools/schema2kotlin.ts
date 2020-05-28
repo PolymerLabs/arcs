@@ -184,6 +184,8 @@ ${imports.join('\n')}
       } else if (type.isTuple) {
         const innerTypes = type.getContainedTypes();
         return `Tuple${innerTypes.length}<${innerTypes.map(t => generateInnerType(t)).join(', ')}>`;
+      } else if (type.isVariable) {
+        return generateInnerType(type.canWriteSuperset);
       } else {
         throw new Error(`Type '${type.tag}' not supported on code generated particle handle connections.`);
       }

@@ -117,6 +117,8 @@ function* topLevelSchemas(type: Type, path: string[] = []):
     }
   } else if (type.getEntitySchema()) {
     yield {schema: type.getEntitySchema(), path};
+  } else if (type.canWriteSuperset.getEntitySchema()) {
+    yield {schema: type.canWriteSuperset.getEntitySchema(), path};
   }
 }
 

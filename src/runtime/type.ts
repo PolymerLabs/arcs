@@ -135,6 +135,10 @@ export abstract class Type {
     return this instanceof TupleType;
   }
 
+  isVariableType(): this is TypeVariable {
+    return this instanceof TypeVariable;
+  }
+
   isResolved(): boolean {
     // TODO: one of these should not exist.
     return !this.hasUnresolvedVariable;
@@ -193,6 +197,10 @@ export abstract class Type {
   }
 
   get isTuple(): boolean {
+    return false;
+  }
+
+  get isVariable(): boolean {
     return false;
   }
 
