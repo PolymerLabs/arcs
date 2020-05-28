@@ -721,6 +721,9 @@ ${e.message}
           if (fields[field.name].refinement) {
             fields[field.name].refinement = Refinement.fromAst(fields[field.name].refinement, {[field.name]: field.type.type});
           }
+          if (fields[field.name].annotations) {
+            fields[field.name].annotations = Manifest._buildAnnotationRefs(manifest, fields[field.name].annotations);
+          }
           break;
         }
         case 'description': {
@@ -811,6 +814,12 @@ ${e.message}
           manifest.errors.push(warning);
         }
         arg.type = arg.type.model;
+        if (arg.type.getEntitySchema()) {
+          const fields = arg.type.getEntitySchema().fields;
+          for (const name of Object.keys(fields)) {
+            fields[name].annotations = Manifest._buildAnnotationRefs(manifest, fields[name].annotations);
+          }
+        }
         processArgTypes(arg.dependentConnections);
         arg.annotations = Manifest._buildAnnotationRefs(manifest, arg.annotations);
       }

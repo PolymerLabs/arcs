@@ -997,7 +997,7 @@ AnnotationDoc = 'doc:' whiteSpace doc:QuotedString eolWhiteSpace? {
 }
 
 // Reference to an annotation (for example: `@foo(bar='hello', baz=5)`)
-AnnotationRef = '@' name:lowerIdent params:(whiteSpace?'('whiteSpace? AnnotationRefParam whiteSpace? (whiteSpace? ',' whiteSpace? AnnotationRefParam)* ')')? {
+AnnotationRef = '@' name:lowerIdent params:(whiteSpace?'(' whiteSpace? AnnotationRefParam whiteSpace? (whiteSpace? ',' whiteSpace? AnnotationRefParam)* ')')? {
   return toAstNode<AstNode.AnnotationRef>({
     kind: 'annotation-ref',
     name,
@@ -1516,13 +1516,14 @@ SchemaType
   / SchemaUnionType
   / SchemaTupleType
   / [^\n\]}]* { expected('a schema type'); }
-  ) whiteSpace? refinement:Refinement?
+  ) whiteSpace? refinement:Refinement? whiteSpace? annotations:AnnotationRefList?
   {
     if (!Flags.fieldRefinementsAllowed && refinement) {
       error('field refinements are unsupported');
     }
-      type.refinement = refinement;
-      return type;
+    type.refinement = refinement;
+    type.annotations = annotations || [];
+    return type;
   }
 
 SchemaCollectionType = '[' whiteSpace? schema:(SchemaReferenceType / SchemaPrimitiveType / KotlinPrimitiveType) whiteSpace? ']'
@@ -1564,7 +1565,8 @@ SchemaPrimitiveType
     return toAstNode<AstNode.SchemaPrimitiveType>({
       kind: 'schema-primitive',
       type,
-      refinement: null
+      refinement: null,
+      annotations: [],
     });
   }
 
@@ -1585,7 +1587,7 @@ SchemaUnionType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return toAstNode<AstNode.SchemaUnionType>({kind: 'schema-union', types, refinement: null});
+    return toAstNode<AstNode.SchemaUnionType>({kind: 'schema-union', types, refinement: null, annotations: []});
   }
 
 SchemaTupleType
@@ -1595,7 +1597,7 @@ SchemaTupleType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return toAstNode<AstNode.SchemaTupleType>({kind: 'schema-tuple', types, refinement: null});
+    return toAstNode<AstNode.SchemaTupleType>({kind: 'schema-tuple', types, refinement: null, annotations: []});
   }
 
 Refinement
