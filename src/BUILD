@@ -1,7 +1,16 @@
 load("@npm_bazel_typescript//:index.bzl", "ts_library")
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_ts_preprocessing")
+load(
+  "//third_party/java/arcs/build_defs:build_defs.bzl",
+  "arcs_ts_preprocessing",
+  "arcs_peg_generator",
+)
 
 package(default_visibility = ["//visibility:public"])
+
+
+arcs_peg_generator(
+    name = "manifest_parser"
+)
 
 arcs_ts_preprocessing(
     name = "runtime_files",
@@ -52,7 +61,7 @@ arcs_ts_preprocessing(
             # Exclude until import is fixed by copybara (unused?)
             "platform/protobuf*",
         ],
-    ),
+    ) + [":manifest_parser"],
 )
 
 ts_library(
