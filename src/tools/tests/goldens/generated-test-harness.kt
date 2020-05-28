@@ -8,6 +8,11 @@ package arcs.golden
 //
 // Current implementation doesn't support optional field detection
 
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
+import arcs.core.data.ReferenceType
+import arcs.core.data.SingletonType
+import arcs.core.data.TupleType
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleMode
@@ -24,11 +29,36 @@ import kotlinx.coroutines.CoroutineScope
 class GoldTestHarness<P : AbstractGold>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
-    HandleSpec("data", HandleMode.ReadWrite, HandleContainerType.Singleton, Gold_Data, HandleDataType.Entity),
-    HandleSpec("allPeople", HandleMode.ReadWrite, HandleContainerType.Collection, Gold_AllPeople, HandleDataType.Entity),
-    HandleSpec("qCollection", HandleMode.ReadWriteQuery, HandleContainerType.Collection, Gold_QCollection, HandleDataType.Entity),
-    HandleSpec("alias", HandleMode.ReadWrite, HandleContainerType.Singleton, Gold_Alias, HandleDataType.Entity),
-    HandleSpec("collection", HandleMode.ReadWrite, HandleContainerType.Collection, Gold_Collection, HandleDataType.Entity)
+    HandleSpec(
+        "data",
+        HandleMode.ReadWrite,
+        SingletonType(EntityType(Gold_Data.SCHEMA)),
+        setOf(Gold_Data)
+    ),
+    HandleSpec(
+        "allPeople",
+        HandleMode.ReadWrite,
+        CollectionType(EntityType(Gold_AllPeople.SCHEMA)),
+        setOf(Gold_AllPeople)
+    ),
+    HandleSpec(
+        "qCollection",
+        HandleMode.ReadWriteQuery,
+        CollectionType(EntityType(Gold_QCollection.SCHEMA)),
+        setOf(Gold_QCollection)
+    ),
+    HandleSpec(
+        "alias",
+        HandleMode.ReadWrite,
+        SingletonType(EntityType(Gold_Alias.SCHEMA)),
+        setOf(Gold_Alias)
+    ),
+    HandleSpec(
+        "collection",
+        HandleMode.ReadWrite,
+        CollectionType(EntityType(Gold_Collection.SCHEMA)),
+        setOf(Gold_Collection)
+    )
 )) {
     val data: ReadWriteSingletonHandle<Gold_Data> by handleMap
     val allPeople: ReadWriteCollectionHandle<Gold_AllPeople> by handleMap

@@ -60,7 +60,7 @@ import org.junit.runners.model.Statement
  */
 open class BaseTestHarness<P : Particle>(
     private val factory: (CoroutineScope) -> P,
-    private val specs: List<HandleSpec<out Entity>>
+    private val specs: List<HandleSpec>
 ) : TestRule {
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)

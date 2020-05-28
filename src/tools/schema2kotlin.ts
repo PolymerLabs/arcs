@@ -8,7 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Schema2Base, ClassGenerator, AddFieldOptions, NodeAndGenerator} from './schema2base.js';
-import {SchemaNode, SchemaSource} from './schema2graph.js';
+import {SchemaNode} from './schema2graph.js';
+import {generateConnectionSpecType} from './kotlin-codegen-shared.js';
 import {ParticleSpec, HandleConnectionSpec} from '../runtime/particle-spec.js';
 import {EntityType, CollectionType, Type} from '../runtime/type.js';
 import {KTExtracter} from '../runtime/refiner.js';
@@ -108,6 +109,11 @@ export class Schema2Kotlin extends Schema2Base {
 
     if (this.opts.test_harness) {
       imports.push(
+        'import arcs.core.data.EntityType',
+        'import arcs.core.data.CollectionType',
+        'import arcs.core.data.ReferenceType',
+        'import arcs.core.data.SingletonType',
+        'import arcs.core.data.TupleType',
         'import arcs.core.entity.HandleContainerType',
         'import arcs.core.entity.HandleDataType',
         'import arcs.core.entity.HandleMode',
@@ -166,34 +172,24 @@ ${imports.join('\n')}
     return type.isCollectionType() ? 'Collection' : 'Singleton';
   }
 
-  /** Returns whether this handle contains either Entity or Reference. */
-  private handleDataType(type: Type): string {
-    if (type.isReference) {
-      return 'Reference';
-    } else if (type.isCollection) {
-      return this.handleDataType(type.getContainedType());
-    } else {
-      return 'Entity';
-    }
-  }
-
   /**
    * Returns the type of the thing stored in the handle, e.g. MyEntity,
    * Reference<MyEntity>, Tuple2<Reference<Entity1>, Reference<Entity2>>.
+   *
+   * @param particleScope whether the generated declaration will be used inside the particle or outside it.
    */
-  private handleInnerType(connection: HandleConnectionSpec, nodes: SchemaNode[], forTest: boolean): string {
+  private handleInnerType(connection: HandleConnectionSpec, nodes: SchemaNode[], particleScope: boolean): string {
     let type = connection.type;
     if (type.isCollection || type.isSingleton) {
       // The top level collection / singleton distinction is handled by the flavour of a handle.
       type = type.getContainedType();
     }
 
-    function generateInnerType(type: Type) {
+    function generateInnerType(type: Type): string {
       if (type.isEntity) {
         const node = nodes.find(n => n.schema.equals(type.getEntitySchema()));
-        // Test harness needs the full name, as it does not extend the particle base,
-        // and the humnan name may only be available inside the particle.
-        return forTest ? node.fullName(connection) : node.humanName(connection);
+        // Only the full name is available outside the particle scope.
+        return particleScope ? node.humanName(connection) : node.fullName(connection);
       } else if (type.isReference) {
         return `Reference<${generateInnerType(type.getContainedType())}>`;
       } else if (type.isTuple) {
@@ -230,20 +226,24 @@ ${imports.join('\n')}
   /**
    * Returns the handle interface type, e.g. WriteSingletonHandle,
    * ReadWriteCollectionHandle. Includes generic arguments.
+   *
+   * @param particleScope whether the generated declaration will be used inside the particle or outside it.
    */
-  handleInterfaceType(connection: HandleConnectionSpec, nodes: SchemaNode[], forTest: boolean = false) {
+  handleInterfaceType(connection: HandleConnectionSpec, nodes: SchemaNode[], particleScope: boolean) {
     if (connection.direction !== 'reads' && connection.direction !== 'writes' && connection.direction !== 'reads writes') {
       throw new Error(`Unsupported handle direction: ${connection.direction}`);
     }
 
     const containerType = this.handleContainerType(connection.type);
     if (this.opts.wasm) {
-      const entityType = SchemaNode.singleSchemaHumanName(connection, nodes);
+      const topLevelNodes = SchemaNode.topLevelNodes(connection, nodes);
+      if (topLevelNodes.length !== 1) throw new Error('Wasm does not support handles of tuples');
+      const entityType = topLevelNodes[0].humanName(connection);
       return `Wasm${containerType}Impl<${entityType}>`;
     }
 
     const handleMode = this.handleMode(connection);
-    const innerType = this.handleInnerType(connection, nodes, forTest);
+    const innerType = this.handleInnerType(connection, nodes, particleScope);
     const typeArguments: string[] = [innerType];
     const queryType = this.getQueryType(connection);
     if (queryType) {
@@ -252,11 +252,16 @@ ${imports.join('\n')}
     return `${handleMode}${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, {startIndent: 4})}>`;
   }
 
-  private handleSpec(handleName: string, entityType: string, connection: HandleConnectionSpec): string {
+  private handleSpec(handleName: string, connection: HandleConnectionSpec, nodes: SchemaNode[]): string {
     const mode = this.handleMode(connection);
-    const containerType = this.handleContainerType(connection.type);
-    const dataType = this.handleDataType(connection.type);
-    return `HandleSpec("${handleName}", HandleMode.${mode}, HandleContainerType.${containerType}, ${entityType}, HandleDataType.${dataType})`;
+    const type = generateConnectionSpecType(connection, nodes);
+    // Using full names of entities, as these are aliases available outside the particle scope.
+    const entityNames = SchemaNode.topLevelNodes(connection, nodes).map(node => node.fullName(connection));
+    return ktUtils.applyFun(
+        'HandleSpec',
+        [`"${handleName}"`, `HandleMode.${mode}`, type, ktUtils.setOf(entityNames)],
+        {numberOfIndents: 1}
+    );
   }
 
   generateParticleClass(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]): string {
@@ -290,14 +295,13 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     const nodes = nodeGenerators.map(ng => ng.node);
     for (const connection of particle.connections) {
       const handleName = connection.name;
-      const handleInterfaceType = this.handleInterfaceType(connection, nodes);
-      // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
-      //                    allowing multiple EntitySpecs for handles of tuples.
-      const entityType = SchemaNode.singleSchemaHumanName(connection, nodes);
+      const handleInterfaceType = this.handleInterfaceType(connection, nodes, /* particleScope= */ true);
+      const entityNames = SchemaNode.topLevelNodes(connection, nodes).map(node => node.humanName(connection));
       if (this.opts.wasm) {
-        handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityType})`);
+        if (entityNames.length !== 1) throw new Error('Wasm does not support handles of tuples');
+        handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityNames[0]})`);
       } else {
-        specDecls.push(`"${handleName}" to ${entityType}`);
+        specDecls.push(`"${handleName}" to ${ktUtils.setOf(entityNames)}`);
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} by handles`);
       }
     }
@@ -330,12 +334,9 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     for (const connection of particle.connections) {
       connection.direction = 'reads writes';
       const handleName = connection.name;
-      // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
-      //                    allowing multiple EntitySpecs for handles of tuples.
-      const entityType = SchemaNode.singleSchemaFullName(connection, nodes);
-      handleSpecs.push(this.handleSpec(handleName, entityType, connection));
-      const interfaceType = this.handleInterfaceType(connection, nodes, true);
+      const interfaceType = this.handleInterfaceType(connection, nodes, /* particleScope= */ false);
       handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
+      handleSpecs.push(this.handleSpec(handleName, connection, nodes));
     }
 
     return `
