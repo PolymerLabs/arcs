@@ -1389,6 +1389,150 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun garbageCollectionEntityWithNestedEntityRemovedFromCollection() = runBlockingTest {
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                collections = mapOf("refs" to FieldType.EntityRef("hash")),
+                singletons = mapOf("text" to FieldType.Text)
+            )
+        )
+        val backingKey = DummyStorageKey("backing")
+        val entityKey = DummyStorageKey("backing/entity")
+        val nestedKey = DummyStorageKey("backing/nested")
+        var version = 1
+        val nested = DatabaseData.Entity(
+            RawEntity(
+                "nested",
+                singletons = mapOf("text" to "abc".toReferencable()),
+                collections = mapOf("refs" to setOf()),
+                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(10).toMillis()
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity",
+                singletons = mapOf("text" to "def".toReferencable()),
+                collections = mapOf("refs" to setOf(Reference("nested", backingKey, VERSION_MAP))),
+                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(10).toMillis()
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        suspend fun updateCollection(vararg entities: DatabaseData.Entity) {
+            val values = entities.map { Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)) }
+            val collection = DatabaseData.Collection(
+                values = values.toSet(),
+                schema = schema,
+                databaseVersion = version++,
+                versionMap = VERSION_MAP
+            )
+            database.insertOrUpdate(DummyStorageKey("collection"), collection)
+        }
+
+        database.insertOrUpdate(nestedKey, nested)
+        database.insertOrUpdate(entityKey, entity)
+        // Insert in collection.
+        updateCollection(entity)
+        // Remove from collection.
+        updateCollection()
+
+        // First run, entity is detected as orphan.
+        database.runGarbageCollection()
+        assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
+        assertThat(readOrphanField(entityKey)).isTrue()
+
+        // Second run, entity is removed, nested entity is still in the db.
+        database.runGarbageCollection()
+        assertThat(database.getEntity(entityKey, schema)).isEqualTo(null)
+        assertThat(database.getEntity(nestedKey, schema)).isEqualTo(nested)
+
+        // Next run, nested is marked as orphan.
+        database.runGarbageCollection()
+        assertThat(readOrphanField(nestedKey)).isTrue()
+
+        // Finally, nested gets removed.
+        database.runGarbageCollection()
+        assertThat(database.getEntity(nestedKey, schema)).isEqualTo(null)
+    }
+
+    @Test
+    fun garbageCollectionEntityWithNestedEntityRemovedFromSingleton() = runBlockingTest {
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                collections = mapOf("texts" to FieldType.Text),
+                singletons = mapOf("ref" to FieldType.EntityRef("hash"))
+            )
+        )
+        val backingKey = DummyStorageKey("backing")
+        val entityKey = DummyStorageKey("backing/entity")
+        val nestedKey = DummyStorageKey("backing/nested")
+        var version = 1
+        val nested = DatabaseData.Entity(
+            RawEntity(
+                "nested",
+                singletons = mapOf("ref" to null),
+                collections = mapOf("texts" to setOf("abc".toReferencable())),
+                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(10).toMillis()
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity",
+                singletons = mapOf("ref" to Reference("nested", backingKey, VERSION_MAP)),
+                collections = mapOf("texts" to setOf("def".toReferencable())),
+                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(10).toMillis()
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+        suspend fun updateSingleton(entity: DatabaseData.Entity?) {
+            val ref = entity?.let{Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1))}
+            val singleton = DatabaseData.Singleton(
+                reference = ref,
+                schema = schema,
+                databaseVersion = version++,
+                versionMap = VERSION_MAP
+            )
+            database.insertOrUpdate(DummyStorageKey("singleton"), singleton)
+        }
+
+        database.insertOrUpdate(nestedKey, nested)
+        database.insertOrUpdate(entityKey, entity)
+        // Insert in singleton.
+        updateSingleton(entity)
+        // Remove from singleton.
+        updateSingleton(null)
+
+        // First run, entity is detected as orphan.
+        database.runGarbageCollection()
+        assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
+        assertThat(readOrphanField(entityKey)).isTrue()
+
+        // Second run, entity is removed, nested entity is still in the db.
+        database.runGarbageCollection()
+        assertThat(database.getEntity(entityKey, schema)).isEqualTo(null)
+        assertThat(database.getEntity(nestedKey, schema)).isEqualTo(nested)
+
+        // Next run, nested is marked as orphan.
+        database.runGarbageCollection()
+        assertThat(readOrphanField(nestedKey)).isTrue()
+
+        // Finally, nested gets removed.
+        database.runGarbageCollection()
+        assertThat(database.getEntity(nestedKey, schema)).isEqualTo(null)
+    }
+
+    @Test
     fun removeExpiredEntities_entityIsCleared() = runBlockingTest {
         val schema = newSchema(
             "hash",
