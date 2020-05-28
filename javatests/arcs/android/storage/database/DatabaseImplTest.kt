@@ -407,12 +407,26 @@ class DatabaseImplTest {
                 singletons = mapOf(
                     "text" to FieldType.Text,
                     "bool" to FieldType.Boolean,
-                    "num" to FieldType.Number
+                    "num" to FieldType.Number,
+                    "byte" to FieldType.Byte,
+                    "short" to FieldType.Short,
+                    "int" to FieldType.Int,
+                    "long" to FieldType.Long,
+                    "char" to FieldType.Char,
+                    "float" to FieldType.Float,
+                    "double" to FieldType.Double
                 ),
                 collections = mapOf(
                     "texts" to FieldType.Text,
                     "bools" to FieldType.Boolean,
-                    "nums" to FieldType.Number
+                    "nums" to FieldType.Number,
+                    "bytes" to FieldType.Byte,
+                    "shorts" to FieldType.Short,
+                    "ints" to FieldType.Int,
+                    "longs" to FieldType.Long,
+                    "chars" to FieldType.Char,
+                    "floats" to FieldType.Float,
+                    "doubles" to FieldType.Double
                 )
             )
         )
@@ -422,12 +436,28 @@ class DatabaseImplTest {
                 mapOf(
                     "text" to "abc".toReferencable(),
                     "bool" to true.toReferencable(),
-                    "num" to 123.0.toReferencable()
+                    "num" to 123.0.toReferencable(),
+                    "byte" to 42.toByte().toReferencable(),
+                    "short" to 382.toShort().toReferencable(),
+                    "int" to 1000000000.toReferencable(),
+                    // This number is not representable as a double
+                    "long" to  1000000000000000001L.toReferencable(),
+                    "char" to 'A'.toReferencable(),
+                    "float" to 34.567f.toReferencable(),
+                    "double" to 4e100.toReferencable()
+
                 ),
                 mapOf(
                     "texts" to setOf("abc".toReferencable(), "def".toReferencable()),
                     "bools" to setOf(true.toReferencable(), false.toReferencable()),
-                    "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())
+                    "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable()),
+                    "bytes" to setOf(100.toByte().toReferencable(), 27.toByte().toReferencable()),
+                    "shorts" to setOf(129.toShort().toReferencable(), 30000.toShort().toReferencable()),
+                    "ints" to setOf(1000000000.toReferencable(), 28.toReferencable()),
+                    "longs" to setOf(1000000000000000002L.toReferencable(), 1000000000000000003L.toReferencable()),
+                    "chars" to listOf('a', 'r', 'c', 's').map { it.toReferencable() }.toSet(),
+                    "floats" to setOf(1.1f.toReferencable(), 100.101f.toReferencable()),
+                    "doubles" to setOf(1.0.toReferencable(), 2e80.toReferencable())
                 )
             ),
             schema,
@@ -1363,8 +1393,15 @@ class DatabaseImplTest {
         val schema = newSchema(
             "hash",
             SchemaFields(
-                singletons = mapOf("text" to FieldType.Text),
-                collections = mapOf("nums" to FieldType.Number)
+                singletons = mapOf(
+                    "text" to FieldType.Text,
+                    "long" to FieldType.Long,
+                    "float" to FieldType.Float
+                ),
+                collections = mapOf(
+                    "nums" to FieldType.Number,
+                    "chars" to FieldType.Char
+                )
             )
         )
         val collectionKey = DummyStorageKey("collection")
@@ -1378,8 +1415,15 @@ class DatabaseImplTest {
         val expiredEntity = DatabaseData.Entity(
             RawEntity(
                 "expiredEntity",
-                mapOf("text" to "abc".toReferencable()),
-                mapOf("nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())),
+                mapOf(
+                    "text" to "abc".toReferencable(),
+                    "long" to 1000000000000000001L.toReferencable(),
+                    "float" to 3.412f.toReferencable()
+                ),
+                mapOf(
+                    "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable()),
+                    "chars" to listOf('A', 'R', 'C', 'S', '!').map { it.toReferencable() }.toSet()
+                ),
                 11L,
                 timeInPast // expirationTimestamp, in the past.
             ),
@@ -1391,8 +1435,15 @@ class DatabaseImplTest {
         val entity = DatabaseData.Entity(
             RawEntity(
                 "entity",
-                mapOf("text" to "def".toReferencable()),
-                mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable())),
+                mapOf(
+                    "text" to "def".toReferencable(),
+                    "long" to 1L.toReferencable(),
+                    "float" to 42.0f.toReferencable()
+                ),
+                mapOf(
+                    "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
+                    "chars" to listOf('R', 'O', 'C', 'K', 'S').map { it.toReferencable() }.toSet()
+                ),
                 11L,
                 JvmTime.currentTimeMillis + 10000 // expirationTimestamp, in the future.
             ),
@@ -1404,8 +1455,15 @@ class DatabaseImplTest {
         val entity2 = DatabaseData.Entity(
             RawEntity(
                 "entity2",
-                mapOf("text" to "def".toReferencable()),
-                mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable())),
+                mapOf(
+                    "text" to "def".toReferencable(),
+                    "long" to 10L.toReferencable(),
+                    "float" to 37.5f.toReferencable()
+                ),
+                mapOf(
+                    "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
+                    "chars" to listOf('H', 'e', 'l', 'L', 'o').map { it.toReferencable() }.toSet()
+                ),
                 11L,
                 UNINITIALIZED_TIMESTAMP // no expirationTimestamp
             ),
@@ -1447,8 +1505,12 @@ class DatabaseImplTest {
             .isEqualTo(DatabaseData.Entity(
                 RawEntity(
                     "expiredEntity",
-                    mapOf("text" to null),
-                    mapOf("nums" to emptySet()),
+                    mapOf(
+                        "text" to null,
+                        "long" to null,
+                        "float" to null
+                    ),
+                    mapOf("nums" to emptySet(), "chars" to emptySet()),
                     11L,
                     timeInPast
                 ),
@@ -1470,23 +1532,24 @@ class DatabaseImplTest {
             .isEqualTo(collection.copy(values = newValues))
 
         // Check unused values have been deleted from the global table as well, it should contain
-        // only values referenced from the two entity (two values each).
-        assertTableIsSize("field_values", 4)
+        // only values referenced from the two entity (five values each).
+        assertTableIsSize("field_values", 10)
 
-        // Check collection entries have been cleared. For each reamining entity there should only
-        // be three values (two for the nums collection, one for the membership of the entity).
-        assertTableIsSize("collection_entries", 6)
+        // Check collection entries have been cleared. For each remaining entity there should only
+        // be eight values (two for the nums collection, five for the chars collection, 
+        // one for the membership of the entity).
+        assertTableIsSize("collection_entries", 16)
 
-        // Check the collection for nums in expiredEntity is gone (3 collections left are nums for
-        // the two entities and the entity collection).
-        assertTableIsSize("collections", 3)
+        // Check the collections for chars/nums in expiredEntity is gone (5 collections left are nums for
+        // the two entities, chars for the two entities, and the entity collection).
+        assertTableIsSize("collections", 5)
 
         // Check the expired entity ref is gone.
         assertThat(readEntityRefsEntityId()).containsExactly("entity", "entity2")
 
         // Check unused primitive values have been removed.
         assertThat(readTextPrimitiveValues()).containsExactly("def")
-        assertThat(readNumberPrimitiveValues()).containsExactly(123L, 789L)
+        assertThat(readNumberPrimitiveValues()).containsExactly(123.0, 789.0, 42.0, 37.5)
 
         // Check the corrent clients were notified.
         collectionClient.eventMutex.withLock {
@@ -2041,9 +2104,9 @@ class DatabaseImplTest {
             .map { it.getString(0) }
             .toSet()
 
-    private fun readNumberPrimitiveValues(): Set<Long> =
+    private fun readNumberPrimitiveValues(): Set<Double> =
         database.readableDatabase.rawQuery("SELECT value FROM number_primitive_values", emptyArray())
-            .map { it.getLong(0) }
+            .map { it.getDouble(0) }
             .toSet()
 
     private fun readEntityRefsEntityId(): Set<String> =
