@@ -16,3 +16,7 @@ particle Gold
   alias: writes {val: Text}
 
   collection: reads [{num: Number}]
+
+  typeVarIn: reads ~a with {num: Number}
+  typeVarOut: writes ~a
+
