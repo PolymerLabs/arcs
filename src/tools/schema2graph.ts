@@ -65,6 +65,9 @@ export class SchemaNode {
 
   // A name of the code generated class representing this schema.
   get entityClassName() {
+    if (this.uniqueSchemaName && this.sources[0].path.length === 0 && this.schema.name) {
+      return this.schema.name
+    }
     if (this.sources.length === 1) {
       // If there is just one source, use its full name.
       return this.sources[0].fullName;
@@ -123,7 +126,7 @@ function* topLevelSchemas(type: Type, path: string[] = []):
     yield {schema: type.getEntitySchema(), path, variableName: null};
   } else if (type.hasVariable) {
     const schema = (type.canWriteSuperset && type.canWriteSuperset.getEntitySchema())
-      || (type.canReadSubset && type.canReadSubset.getEntitySchema());
+    (type.canReadSubset && type.canReadSubset.getEntitySchema());
     yield {schema, path, variableName: (type as TypeVariable).variable.name};
   }
 }

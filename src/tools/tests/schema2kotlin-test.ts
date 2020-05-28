@@ -17,62 +17,62 @@ describe('schema2kotlin', () => {
     it('Read Singleton Entity', async () => await assertHandleInterface(
       `particle P
          h: reads Thing {name: Text}`,
-      'ReadSingletonHandle<P_H>'
+      'ReadSingletonHandle<Thing>'
     ));
     it('Write Singleton Entity', async () => await assertHandleInterface(
       `particle P
          h: writes Thing {name: Text}`,
-      'WriteSingletonHandle<P_H>'
+      'WriteSingletonHandle<Thing>'
     ));
     it('Read Write Singleton Entity', async () => await assertHandleInterface(
       `particle P
          h: reads writes Thing {name: Text}`,
-      'ReadWriteSingletonHandle<P_H>'
+      'ReadWriteSingletonHandle<Thing>'
     ));
     it('Read Collection of Entities', async () => await assertHandleInterface(
       `particle P
          h: reads [Thing {name: Text}]`,
-      'ReadCollectionHandle<P_H>'
+      'ReadCollectionHandle<Thing>'
     ));
     it('Write Collection of Entities', async () => await assertHandleInterface(
       `particle P
          h: writes [Thing {name: Text}]`,
-      'WriteCollectionHandle<P_H>'
+      'WriteCollectionHandle<Thing>'
     ));
     it('Read Write Collection of Entities', async () => await assertHandleInterface(
       `particle P
          h: reads writes [Thing {name: Text}]`,
-      'ReadWriteCollectionHandle<P_H>'
+      'ReadWriteCollectionHandle<Thing>'
     ));
     it('Read Collection of Entities and Query by String', async () => await assertHandleInterface(
       `particle P
          h: reads [Thing {name: Text} [name == ?]]`,
-      'ReadQueryCollectionHandle<P_H, String>'
+      'ReadQueryCollectionHandle<Thing, String>'
     ));
     it('Read Write Collection of Entities and Query by Number', async () => await assertHandleInterface(
       `particle P
          h: reads writes [Thing {age: Number} [age > ?]]`,
-      'ReadWriteQueryCollectionHandle<P_H, Double>'
+      'ReadWriteQueryCollectionHandle<Thing, Double>'
     ));
     it('Read Reference Singleton', async () => await assertHandleInterface(
       `particle P
          h: reads &Thing {name: Text}`,
-      'ReadSingletonHandle<Reference<P_H>>'
+      'ReadSingletonHandle<Reference<Thing>>'
     ));
     it('Write Reference Singleton', async () => await assertHandleInterface(
       `particle P
          h: writes &Thing {name: Text}`,
-      'WriteSingletonHandle<Reference<P_H>>'
+      'WriteSingletonHandle<Reference<Thing>>'
     ));
     it('Read Collection of References', async () => await assertHandleInterface(
       `particle P
          h: reads [&Thing {name: Text}]`,
-      'ReadCollectionHandle<Reference<P_H>>'
+      'ReadCollectionHandle<Reference<Thing>>'
     ));
     it('Write Collection of References', async () => await assertHandleInterface(
       `particle P
          h: writes [&Thing {name: Text}]`,
-      'WriteCollectionHandle<Reference<P_H>>'
+      'WriteCollectionHandle<Reference<Thing>>'
     ));
     it('Read Tuple of 2 References', async () => await assertHandleInterface(
       `particle P
@@ -119,14 +119,14 @@ describe('schema2kotlin', () => {
       `,
       `class Handles : HandleHolderBase(
         "P",
-        mapOf("h1" to P_H1, "h2" to P_H2, "h3" to P_H3)
+        mapOf("h1" to PInternal1, "h2" to PInternal1, "h3" to P_H3)
     ) {
         val h1: ReadSingletonHandle<P_H1> by handles
         val h2: WriteSingletonHandle<P_H2> by handles
         val h3: ReadQueryCollectionHandle<P_H3, String> by handles
     }`
     ));
-    it.only('Handle with references', async () => await assertHandleClassDeclaration(
+    it('Handle with references', async () => await assertHandleClassDeclaration(
       `particle P
         h1: reads Person {
           name: Text,
@@ -183,9 +183,9 @@ describe('schema2kotlin', () => {
          h2: reads [Person {name: Text}]
          h3: reads [&Person {name: Text}]
       `, [
-        'typealias P_H1 = AbstractP.PInternal1',
-        'typealias P_H2 = AbstractP.PInternal1',
-        'typealias P_H3 = AbstractP.PInternal1',
+        'typealias P_H1 = AbstractP.Person',
+        'typealias P_H2 = AbstractP.Person',
+        'typealias P_H3 = AbstractP.Person',
       ]
     ));
     it('Handle with references', async () => await assertSchemaAliases(
@@ -201,7 +201,7 @@ describe('schema2kotlin', () => {
           }
         }
       `, [
-        'typealias P_H1 = AbstractP.P_H1',
+        'typealias P_H1 = AbstractP.Person',
         'typealias P_H1_Home = AbstractP.P_H1_Home',
         'typealias P_H1_Home_Address = AbstractP.P_H1_Home_Address',
       ]

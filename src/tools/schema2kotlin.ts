@@ -283,30 +283,14 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
       classes.push(kotlinGenerator.generateClasses(nodeGenerator.hash));
       typeAliases.push(...kotlinGenerator.generateAliases(particleName));
     });
-
     const nodes = nodeGenerators.map(ng => ng.node);
     //nodes.forEach((n) => console.log(n.schema))
     debugger;
     for (const connection of particle.connections) {
       const handleName = connection.name;
-      const handleInterfaceType = this.handleInterfaceType(connection, nodes);
-      // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
-      //                    allowing multiple EntitySpecs for handles of tuples.
-      const entityType = SchemaNode.devFriendlyEntityTypeForConnection(connection, nodes);
-      const capitalHandleName = connection.name[0].toUpperCase() + connection.name.slice(1);
-      const nodeGenerator = nodeGenerators.find(generator => {
-        const kotlinGenerator = <KotlinGenerator>generator.generator;
-        return kotlinGenerator.node.connections.includes(capitalHandleName);
-      });
-      let entityType = entityTypeName(particle.name, connection.name);
-      if (nodeGenerator) {
-        const kotlinGenerator = <KotlinGenerator>nodeGenerator.generator;
-        entityType = kotlinGenerator.node.name;
-      }
-
-      const handleInterfaceType = this.handleInterfaceType(connection, entityType);
-
-      
+      const entityType = SchemaNode.getNodeForConnection(connection, nodes).entityClassName;
+      const devFriendlyEntityType = SchemaNode.devFriendlyEntityTypeForConnection(connection, nodes);
+      const handleInterfaceType = this.handleInterfaceType(connection, devFriendlyEntityType);
 
       if (this.opts.wasm) {
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityType})`);
@@ -343,10 +327,17 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     for (const connection of particle.connections) {
       connection.direction = 'reads writes';
       const handleName = connection.name;
+<<<<<<< HEAD
       const interfaceType = this.handleInterfaceType(connection, nodes);
       // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
       //                    allowing multiple EntitySpecs for handles of tuples.
       const entityType = SchemaNode.singleSchemaHumanName(connection, nodes);
+=======
+      //const entityType = nodes.find(n => n.sources.includes(SchemaNode.getSourceForConnection(connection, nodes))).entityClassName;
+      const entityType = SchemaNode.devFriendlyEntityTypeForConnection(connection, nodes);
+      console.log('booooooooooooooooooooooooooooooyaaaaaaaaaaaaaaaa')
+      const interfaceType = this.handleInterfaceType(connection, entityType);
+>>>>>>> Making progress
       handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
       handleSpecs.push(this.handleSpec(handleName, entityType, connection));
     }
