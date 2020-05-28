@@ -18,6 +18,7 @@ import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HandleMode
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StoreManager
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -49,6 +50,7 @@ class HandleUtilsTest {
     val log = LogRule()
 
     private lateinit var scheduler: Scheduler
+    private lateinit var stores: StoreManager
     private lateinit var manager: EntityHandleManager
 
     @Before
@@ -56,18 +58,21 @@ class HandleUtilsTest {
         RamDisk.clear()
         RamDiskDriverProvider()
         ReferenceModeStorageKey.registerParser()
+        stores = StoreManager()
         scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher() + Job())
         manager = EntityHandleManager(
             "testArc",
             "testHost",
             FakeTime(),
-            scheduler
+            scheduler,
+            stores = stores
         )
     }
 
     @After
     fun tearDown() = runBlocking {
         scheduler.waitForIdle()
+        stores.waitForIdle()
         manager.close()
         scheduler.cancel()
     }
