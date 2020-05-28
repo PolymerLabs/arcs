@@ -54,7 +54,7 @@ class StorageProxyTest {
     @Mock private lateinit var mockCrdtModel: CrdtModel<CrdtData, CrdtOperationAtTime, String>
     @Mock private lateinit var mockCrdtData: CrdtData
 
-    private val scheduler = Scheduler(JvmTime, EmptyCoroutineContext)
+    private val scheduler = Scheduler(EmptyCoroutineContext)
     private val callbackId = StorageProxy.CallbackIdentifier("test")
 
     @Before

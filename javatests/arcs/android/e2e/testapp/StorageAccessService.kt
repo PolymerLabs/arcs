@@ -38,10 +38,7 @@ class StorageAccessService : LifecycleService() {
         scope.launch {
             val handleManager = EntityHandleManager(
                 time = JvmTime,
-                scheduler = Scheduler(
-                    JvmTime,
-                    coroutineContext
-                ),
+                scheduler = Scheduler(coroutineContext),
                 activationFactory = ServiceStoreFactory(
                     this@StorageAccessService,
                     lifecycle

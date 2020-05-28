@@ -16,15 +16,16 @@ import arcs.sdk.Particle
 import com.google.common.truth.Truth.assertWithMessage
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -44,12 +45,11 @@ import org.junit.runners.model.Statement
  *
  * @Test
  * fun works() = runBlockingTest {
+ *   // Instantiate and boot the particle.
+ *   harness.start()
  *
  *   // Set up initial state, e.g. handles.
  *   harness.handleName.store(YourEntity(...))
- *
- *   // Instantiate and boot the particle.
- *   harness.start()
  *
  *   // Continue with the test.
  *   assertThat(harness.otherHandle.fetch()).isEqualTo(...)
@@ -68,7 +68,6 @@ open class BaseTestHarness<P : Particle>(
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private val scope = TestCoroutineScope()
     private val handles = mutableMapOf<String, Handle>()
-    private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
 
     // Exposes handles to subclasses in a read only fashion.
     protected val handleMap: Map<String, Handle>
@@ -86,6 +85,7 @@ open class BaseTestHarness<P : Particle>(
                 RamDiskDriverProvider()
                 DriverAndKeyConfigurator.configureKeyParsers()
 
+                val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
                 val scheduler = schedulerProvider(description.methodName)
                 val handleManager = EntityHandleManager(
                     arcId = "testHarness",
@@ -111,7 +111,11 @@ open class BaseTestHarness<P : Particle>(
                     }
                 }
                 statement.evaluate()
-                scheduler.cancel()
+                runBlocking {
+                    withTimeout(1500) { scheduler.waitForIdle() }
+                    withTimeout(1500) { handleManager.close() }
+                    schedulerProvider.cancelAll()
+                }
             }
         }
     }
@@ -127,13 +131,15 @@ open class BaseTestHarness<P : Particle>(
         particle = factory(scope)
         handles.forEach { (name, handle) -> particle.handles.setHandle(name, handle) }
 
-        particle.onFirstStart()
+        withContext(particle.handles.dispatcher) {
+            particle.onFirstStart()
+        }
 
         val readySoFar = atomic(0)
         val readyJobs = handles.map { (_, handle) ->
             launch {
-                suspendCoroutine<Unit> { cont ->
-                    handle.onReady { cont.resume(Unit) }
+                suspendCancellableCoroutine<Unit> { cont ->
+                    handle.onReady { if (cont.isActive) cont.resume(Unit) }
                 }
                 withContext(handle.dispatcher) {
                     val ready = readySoFar.incrementAndGet()
@@ -143,5 +149,9 @@ open class BaseTestHarness<P : Particle>(
         }
 
         readyJobs.joinAll()
+
+        withContext(particle.handles.dispatcher) {
+            particle.onReady()
+        }
     }
 }
