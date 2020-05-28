@@ -82,7 +82,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
     override suspend fun idle() {
         // TODO: tune the debounce window
-        storeIdlenessFlow.debounce(50).filter { it }.first()
+        // storeIdlenessFlow.debounce(50).filter { it }.first()
     }
 
     override suspend fun getLocalData(): Data = synchronized(this) { localModel.data }
