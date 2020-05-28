@@ -4348,12 +4348,12 @@ recipe
     const manifest = (await Manifest.parse(`
       @arcId('myFavoriteArc')
       recipe
-        foo: create persistent @ttl(2d) @ttl('2d')
+        foo: create persistent @ttl('3d')
 
-      @isolated()
+      @isolated
       particle IsolatedParticle
 
-      @egress()
+      @egress
       particle EgressingParticle
     `));
     const recipe = manifest.recipes[0];
@@ -4362,10 +4362,13 @@ recipe
     assert.equal(recipeAnnotations[0].name, 'arcId');
     assert.equal(recipeAnnotations[0].params['id'], 'myFavoriteArc');
 
-    const handleAnnotations = manifest.recipes[0].handles[0].annotations;
+    const handleAnnotations = recipe.handles[0].annotations;
     assert.lengthOf(handleAnnotations, 1);
     assert.equal(handleAnnotations[0].name, 'ttl');
-    assert.equal(handleAnnotations[0].params['value'], '2d');
+    assert.equal(handleAnnotations[0].params['value'], '3d');
+    assert.equal(recipe.handles[0].ttl.count, 3);
+    assert.equal(recipe.handles[0].ttl.units, TtlUnits.Day);
+    assert.equal(recipe.handles[0].annotations.toString(), `@ttl(value: '3d')`);
 
     const isolatedParticleAnnotations = manifest.findParticleByName('IsolatedParticle').annotations;
     console.error(manifest.findParticleByName('IsolatedParticle'));
@@ -4390,7 +4393,7 @@ recipe
 
     it('egress annotation works', async () => {
       const manifest = await Manifest.parse(`
-        @egress()
+        @egress
         particle P
       `);
       assert.isTrue(manifest.particles[0].egress);
@@ -4399,7 +4402,7 @@ recipe
 
     it('isolated annotation works', async () => {
       const manifest = await Manifest.parse(`
-        @isolated()
+        @isolated
         particle P
       `);
       assert.isFalse(manifest.particles[0].egress);
@@ -4408,8 +4411,8 @@ recipe
 
     it('throws if both isolated and egress annotations are applied', async () => {
       const manifest = await Manifest.parse(`
-        @egress()
-        @isolated()
+        @egress
+        @isolated
         particle P
       `);
       assert.throws(
