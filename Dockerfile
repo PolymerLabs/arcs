@@ -57,6 +57,7 @@ RUN tools/install-android-sdk ${ANDROID_HOME}
 COPY concrete-storage/package.json concrete-storage/package.json
 RUN (cd concrete-storage && npm install)
 COPY package.json package.json
+COPY yarn.lock yarn.lock
 COPY tools tools
 COPY config config
 COPY devtools devtools
