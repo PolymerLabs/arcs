@@ -19,6 +19,6 @@ arcs_kt_jvm_library(
     srcs = ["TupleReader.kt"],
     deps = [
         ":join_schema_gen",
-        "//java/arcs/core/entity"
+        "//java/arcs/core/entity",
     ],
 )
