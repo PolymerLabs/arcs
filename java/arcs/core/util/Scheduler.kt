@@ -33,7 +33,10 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 
 @Suppress("UNUSED_PARAMETER")
-@Deprecated("Time is no longer of the essence", ReplaceWith("Scheduler(context, agendaProcessingTimeoutMs)"))
+@Deprecated(
+    "Time is no longer of the essence",
+    ReplaceWith("Scheduler(context, agendaProcessingTimeoutMs)")
+)
 fun Scheduler(
     time: Time,
     context: CoroutineContext,
