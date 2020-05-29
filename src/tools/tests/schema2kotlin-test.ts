@@ -12,7 +12,7 @@ import {Manifest} from '../../runtime/manifest.js';
 import {Schema2Kotlin} from '../schema2kotlin.js';
 import {SchemaGraph} from '../schema2graph.js';
 
-describe('schema2kotlin', () => {
+describe.only('schema2kotlin', () => {
   describe('Handle Interface Type', () => {
     it('Read Singleton Entity', async () => await assertHandleInterface(
       `particle P
@@ -119,7 +119,7 @@ describe('schema2kotlin', () => {
       `,
       `class Handles : HandleHolderBase(
         "P",
-        mapOf("h1" to PInternal1, "h2" to PInternal1, "h3" to P_H3)
+        mapOf("h1" to P_H1, "h2" to P_H2, "h3" to P_H3)
     ) {
         val h1: ReadSingletonHandle<P_H1> by handles
         val h2: WriteSingletonHandle<P_H2> by handles
@@ -160,9 +160,9 @@ describe('schema2kotlin', () => {
       `,
       `class Handles : HandleHolderBase(
         "P",
-        mapOf("h1" to P_H1_0)
+        mapOf("h1" to Accommodation)
     ) {
-        val h1: ReadSingletonHandle<Tuple3<Reference<P_H1_0>, Reference<P_H1_1>, Reference<P_H1_2>>> by handles
+        val h1: ReadSingletonHandle<Tuple3<Reference<Person>, Reference<Accommodation>, Reference<Address>>> by handles
     }`
     ));
     async function assertHandleClassDeclaration(manifest: string, expectedHandleClass: string) {
@@ -202,8 +202,8 @@ describe('schema2kotlin', () => {
         }
       `, [
         'typealias P_H1 = AbstractP.Person',
-        'typealias P_H1_Home = AbstractP.P_H1_Home',
-        'typealias P_H1_Home_Address = AbstractP.P_H1_Home_Address',
+        'typealias P_H1_Home = AbstractP.Accommodation',
+        'typealias P_H1_Home_Address = AbstractP.Address',
       ]
     ));
     it('Handle with a tuple', async () => await assertSchemaAliases(
@@ -214,9 +214,9 @@ describe('schema2kotlin', () => {
           &Address {streetAddress: Text, postCode: Text}
         )
       `, [
-        'typealias P_H1_0 = AbstractP.P_H1_0',
-        'typealias P_H1_1 = AbstractP.P_H1_1',
-        'typealias P_H1_2 = AbstractP.P_H1_2',
+        'typealias P_H1_0 = AbstractP.Person',
+        'typealias P_H1_1 = AbstractP.Accommodation',
+        'typealias P_H1_2 = AbstractP.Address',
       ]
     ));
     async function assertSchemaAliases(manifest: string, expectedAliases: string[]) {
