@@ -3,42 +3,39 @@ package arcs.core.entity
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
-import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.RawEntityDereferencer
+import arcs.core.storage.StoreManager
+import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.testutil.runTest
 import arcs.core.util.Scheduler
+import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import kotlin.test.assertFailsWith
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.util.concurrent.Executors
 
 @RunWith(JUnit4::class)
-@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 @Suppress("UNCHECKED_CAST")
 class ReferenceTest {
-    private val scheduler = Scheduler(
-        Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-    )
-    private val dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA, scheduler = scheduler)
-    private val entityHandleManager = EntityHandleManager(
-        "testArc",
-        "",
-        FakeTime(),
-        scheduler = scheduler
-    )
+    @get:Rule
+    val log = LogRule()
 
+    private lateinit var scheduler: Scheduler
+    private lateinit var dereferencer: RawEntityDereferencer
+    private lateinit var entityHandleManager: EntityHandleManager
+    private lateinit var stores: StoreManager
     private lateinit var handle: ReadWriteCollectionHandle<DummyEntity>
 
     private val STORAGE_KEY = ReferenceModeStorageKey(
@@ -47,9 +44,25 @@ class ReferenceTest {
     )
 
     @Before
-    fun setUp() = runBlocking {
+    fun setUp() = runTest {
+        RamDisk.clear()
         DriverAndKeyConfigurator.configure(null)
         SchemaRegistry.register(DummyEntity.SCHEMA)
+
+        scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher())
+        stores = StoreManager()
+        dereferencer = RawEntityDereferencer(
+            DummyEntity.SCHEMA,
+            scheduler = scheduler,
+            storeManager = stores
+        )
+        entityHandleManager = EntityHandleManager(
+            "testArc",
+            "",
+            FakeTime(),
+            scheduler = scheduler,
+            stores = stores
+        )
 
         handle = entityHandleManager.createHandle(
             HandleSpec(
@@ -63,21 +76,23 @@ class ReferenceTest {
     }
 
     @After
-    fun tearDown() = runBlocking {
+    fun tearDown() = runTest {
         scheduler.waitForIdle()
+        stores.waitForIdle()
         entityHandleManager.close()
+        scheduler.cancel()
+
         SchemaRegistry.clearForTest()
         DriverFactory.clearRegistrations()
     }
 
     @Test
-    fun dereference() = runBlocking {
+    fun dereference() = runTest(handle.dispatcher) {
         val entity = DummyEntity().apply {
             text = "Watson"
             num = 6.0
         }
-        handle.store(entity)
-        scheduler.waitForIdle()
+        handle.store(entity).join()
 
         val reference = handle.createReference(entity)
         val entityOut = reference.dereference()
@@ -86,7 +101,7 @@ class ReferenceTest {
     }
 
     @Test
-    fun missingEntity_returnsNull() = runBlocking {
+    fun missingEntity_returnsNull() = runTest {
         val reference = createReference("id", "key", DummyEntity)
         assertThat(reference.dereference()).isNull()
     }
