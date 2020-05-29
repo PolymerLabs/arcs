@@ -26,14 +26,15 @@ export class Capabilities {
   }
 
   static fromAnnotations(annotations: AnnotationRef[]) {
-    const capSet = new Set<Capability>();
-    for (const ann of annotations) {
-      const capability = Object.keys(Capability).find(capability => Capability[capability] === ann.name);
+    const capabilitiesSet = new Set<Capability>();
+    for (const annotation of annotations) {
+      const capability = Object.keys(Capability).find(
+          capability => Capability[capability] === annotation.name);
       if (capability) {
-        capSet.add(Capability[capability]);
+        capabilitiesSet.add(Capability[capability]);
       }
     }
-    return new Capabilities([...capSet]);
+    return new Capabilities([...capabilitiesSet]);
   }
 
   merge(other: Capabilities) {
