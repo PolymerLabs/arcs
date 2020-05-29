@@ -145,7 +145,7 @@ export class Schema {
           return null;
         }
         fields[field].refinement = Refinement.intersectionOf(fields[field].refinement, type.refinement);
-        fields[field].annotations = [...fields[field].annotations, ...type.annotations];
+        fields[field].annotations = [...(fields[field].annotations || []), ...(type.annotations || [])];
       } else {
         fields[field] = {...type};
       }
@@ -162,7 +162,7 @@ export class Schema {
       if (otherType && Schema.typesEqual(type, otherType)) {
         fields[field] = {...type};
         fields[field].refinement = Refinement.unionOf(type.refinement, otherType.refinement);
-        fields[field].annotations = type.annotations.filter(a => otherType.annotations.includes(a));
+        fields[field].annotations = (type.annotations || []).filter(a => (otherType.annotations || []).includes(a));
       }
     }
     // if schema level refinement contains fields not present in the intersection, discard it

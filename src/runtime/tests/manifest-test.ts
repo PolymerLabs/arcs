@@ -4472,5 +4472,25 @@ particle WriteFoo
       assert.equal(annotations3.find(a => a.name === 'ttl').params['value'], '3m');
       assert.equal(manifest.toString(), manifestStr.trim());
     });
+    it('validates recipe with schema intersecting', async () => {
+      const manifestStr = `
+schema Foo
+  f: Text
+schema Bar
+  foos: [&Foo]
+particle Particle1
+  bars: writes [Bar {foos}]
+particle Particle2
+  bars: writes [Bar {foos}]
+recipe
+  bars: create
+  Particle1
+    bars: bars
+  Particle2
+    bars: bars
+      `;
+      const manifest = await Manifest.parse(manifestStr);
+      assert.isTrue(manifest.recipes[0].normalize());
+    });
   });
 });
