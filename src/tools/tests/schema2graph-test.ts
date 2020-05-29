@@ -597,8 +597,40 @@ describe('schema2graph', () => {
   it('constrained variables are distinct from conventional schemas', async () => {
     const manifest = await Manifest.parse(`
       particle T
-        h1: reads * {a: Text}                     // 1  2
-        h2: reads ~a with {a: Text}
+        h1: reads * {a: Text}                     // 1 
+        h2: reads ~a with {a: Text}               // 2
+    `);
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'T_H1', parents: '', children: ''},
+      {name: 'T_H2', parents: '', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'T_H1': ['T_H1'],
+      'T_H2': ['T_H2'],
+    });
+  });
+
+  it('variables with no constraints are not empty', async () => {
+    const manifest = await Manifest.parse(`
+      particle T
+        h1: reads ~a                               // 1 
+        h2: reads ~a 
+    `);
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'T_H1', parents: '', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'T_H1': ['T_H1', 'T_H2'],
+    });
+  });
+
+  it('distinct variables with the same constraint should be distinct', async () => {
+    const manifest = await Manifest.parse(`
+      particle T
+        h1: reads ~a with {foo: Text}               // 1 
+        h2: reads ~b with {foo: Text}               // 2 
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
@@ -614,25 +646,71 @@ describe('schema2graph', () => {
   it('variables are aliased correctly within a scope', async () => {
     // Type variables with the same name in a particle scope should be treated
     // as the same type, even with constraints applied.
+    // Variables with different names but the same constraints should be distinct.
     const manifest = await Manifest.parse(`
       particle T
-        h1: reads ~a with {a: Text}                     // 1 
-        h2: reads ~b                                    // 2
-        h3: reads ~c                                    // 3
-        h4: writes ~a
-        h5: writes ~b with {b: Number}
-        h6: writes ~c 
+        h1: reads ~a with {a: Text}                 // 1 
+        h2: reads ~b                                // 2
+        h3: reads ~c                                // 3
+        h4: reads ~d with {a: Text}                 // 4
+        h5: writes ~a                               // 1
+        h6: writes ~b with {b: Number}              // 2
+        h7: writes ~c                               // 3 
+        h8: writes ~d                               // 4
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
       {name: 'T_H1', parents: '', children: ''},
       {name: 'T_H2', parents: '', children: ''},
       {name: 'T_H3', parents: '', children: ''},
+      {name: 'T_H4', parents: '', children: ''},
     ]);
     assert.deepStrictEqual(res.aliases, {
-      'T_H1': ['T_H1', 'T_H4'],
-      'T_H2': ['T_H2', 'T_H5'],
-      'T_H3': ['T_H3', 'T_H6'],
+      'T_H1': ['T_H1', 'T_H5'],
+      'T_H2': ['T_H2', 'T_H6'],
+      'T_H3': ['T_H3', 'T_H7'],
+      'T_H4': ['T_H4', 'T_H8'],
+    });
+  });
+
+  it('type variables aggregate all constraints', async () => {
+    const manifest = await Manifest.parse(`
+      particle T
+        h1: reads ~a with {a: Text}                     // [x] 1 -> 2 -> 3
+        h2: reads ~a with {a: Text, b: Text}            // [√] 1
+        h3: reads ~a with {a: Text, b: Text, c: Text}
+    `);
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'T_H1', parents: '', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'T_H1': ['T_H1', 'T_H2', 'T_H3'],
+    });
+  });
+
+  it('variables can be nested', async () => {
+    const manifest = await Manifest.parse(`
+      particle T
+        h1: reads ~a with {foo: Text}
+        h2: writes [~a]
+        h3: reads ~b with {bar: Number}
+        h4: writes &~b
+        h5: reads (&~b, &~c with {baz: URL})
+        h6: writes [(&~d with {foobar: Boolean}, &~c)] 
+    `);
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'T_H1', parents: '', children: ''},
+      {name: 'T_H3', parents: '', children: ''},
+      {name: 'T_H5_1', parents: '', children: ''},
+      {name: 'T_H6_0', parents: '', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'T_H1': ['T_H1', 'T_H2'],
+      'T_H3': ['T_H3', 'T_H4', 'T_H5_0'],
+      'T_H5_1': ['T_H5_1', 'T_H6_1'],
+      'T_H6_0': ['T_H6_0'],
     });
   });
 });
