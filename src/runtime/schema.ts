@@ -274,7 +274,12 @@ export class Schema {
         case 'schema-reference': {
           singletons[field] = new CRDTSingleton<Reference>();
           break;
-        } default: {
+        }
+        case 'schema-ordered-list': {
+          singletons[field] = new CRDTSingleton<{id: string}>();
+          break;
+        }
+        default: {
           throw new Error(`Big Scary Exception: entity field ${field} of type ${schema.type} doesn't yet have a CRDT mapping implemented`);
         }
       }
