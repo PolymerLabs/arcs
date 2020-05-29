@@ -694,15 +694,15 @@ describe('schema2graph', () => {
       particle T
         h1: reads ~a with {foo: Text}
         h2: writes [~a]
-        h3: reads ~b with {bar: Number}
+        h3: reads [~b with {bar: Number}]
         h4: writes &~b
         h5: reads (&~b, &~c with {baz: URL})
         h6: writes [(&~d with {foobar: Boolean}, &~c)] 
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
-      {name: 'T_H1', parents: '', children: ''},
-      {name: 'T_H3', parents: '', children: ''},
+      {name: 'T_H1',   parents: '', children: ''},
+      {name: 'T_H3',   parents: '', children: ''},
       {name: 'T_H5_1', parents: '', children: ''},
       {name: 'T_H6_0', parents: '', children: ''},
     ]);
