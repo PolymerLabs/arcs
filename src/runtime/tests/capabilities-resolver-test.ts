@@ -10,7 +10,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {ArcId} from '../id.js';
 import {Flags} from '../flags.js';
-import {CapabilitiesResolver, StorageKeyOptions} from '../capabilities-resolver.js';
+import {CapabilitiesResolver} from '../capabilities-resolver.js';
 import {Capabilities, Capability} from '../capabilities.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {Schema} from '../schema.js';
@@ -24,6 +24,7 @@ import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
 import {Runtime} from '../runtime.js';
 import {MockFirebaseStorageDriverProvider} from '../storageNG/testing/mock-firebase.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
+import {StorageKeyOptions} from '../storage-key-factory.js';
 
 describe('Capabilities Resolver', () => {
   type StorageKeyType = typeof VolatileStorageKey|typeof RamDiskStorageKey|typeof DatabaseStorageKey;
@@ -37,7 +38,7 @@ describe('Capabilities Resolver', () => {
   const referenceType = new ReferenceType(entityType);
   const handleId = 'h0';
 
-  it('creates storage keys', Flags.withDefaultReferenceMode(async () => {
+    it('creates storage keys with', Flags.withDefaultReferenceMode(async () => {
     const resolver1 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
     const key = await resolver1.createStorageKey(Capabilities.tiedToArc, entityType, handleId);
     verifyReferenceModeStorageKey(key, VolatileStorageKey);
@@ -102,6 +103,7 @@ describe('Capabilities Resolver', () => {
     await assertThrowsAsync(async () => await resolver6.createStorageKey(
         Capabilities.tiedToRuntime, referenceType, handleId));
   }));
+// });
 
   it('registers and creates database key', Flags.withDefaultReferenceMode(async () => {
     const resolver1 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});

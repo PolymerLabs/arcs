@@ -293,4 +293,22 @@ describe('Capabilities', () => {
     assert.isFalse(capabilities0.setLeastRestrictive(capabilities3));
     assert.isFalse(capabilities0.setMostRestrictive(capabilities3));
   });
+  it('sets most restrictive on none and unrestricted', () => {
+    const capabilities0 = Capabilities.none();
+    capabilities0.setMostRestrictive(Capabilities.unrestricted());
+    assert.isTrue(capabilities0.isEquivalent(Capabilities.none()));
+
+    const capabilities1 = Capabilities.unrestricted();
+    capabilities1.setMostRestrictive(Capabilities.none());
+    assert.isTrue(capabilities1.isEquivalent(Capabilities.none()));
+  });
+  it('sets least restrictive on none and unrestricted', () => {
+    const capabilities0 = Capabilities.none();
+    capabilities0.setLeastRestrictive(Capabilities.unrestricted());
+    assert.isTrue(capabilities0.isEquivalent(Capabilities.unrestricted()));
+
+    const capabilities1 = Capabilities.unrestricted();
+    capabilities1.setLeastRestrictive(Capabilities.none());
+    assert.isTrue(capabilities1.isEquivalent(Capabilities.unrestricted()));
+  });
 });

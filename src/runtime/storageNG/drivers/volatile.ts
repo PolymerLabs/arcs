@@ -10,15 +10,18 @@
 
 import {StorageDriverProvider, DriverFactory} from './driver-factory.js';
 import {Driver, ReceiveMethod, Exists} from './driver.js';
-import {StorageKey} from '../storage-key.js';
+import {StorageKey/*, StorageKeyFactory*/} from '../storage-key.js';
 import {Arc} from '../../arc.js';
 import {ArcId} from '../../id.js';
 import {RamDiskStorageKey} from './ramdisk.js';
 import {Dictionary} from '../../hot.js';
 import {assert} from '../../../platform/assert-web.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
+import {Capabilities as CapabilitiesNew, Persistence, Encryption, Ttl, Queryable} from '../../capabilities-new.js';
+import {CapabilitiesResolver as CapabilitiesResolverNew} from '../../capabilities-resolver-new.js';
 import {Capabilities} from '../../capabilities.js';
-import {CapabilitiesResolver, StorageKeyOptions} from '../../capabilities-resolver.js';
+import {CapabilitiesResolver/*, StorageKeyOptions*/} from '../../capabilities-resolver.js';
+import {StorageKeyFactory, StorageKeyOptions} from '../../storage-key-factory.js';
 
 type VolatileEntry<Data> = {data: Data, version: number, drivers: VolatileDriver<Data>[]};
 type VolatileEntryCollection<Data> = {root: VolatileEntry<Data>, locations: Dictionary<VolatileEntry<Data>>};
@@ -57,6 +60,22 @@ export class VolatileStorageKey extends StorageKey {
     const [_, arcId, unique, path] = match;
     return new VolatileStorageKey(ArcId.fromString(arcId), unique, path);
   }
+
+  static register() {
+    CapabilitiesResolverNew.registerStorageKeyFactory(new VolatileStorageKeyFactory());
+  }
+}
+
+export class VolatileStorageKeyFactory extends StorageKeyFactory {
+    get protocol() { return VolatileStorageKey.protocol; }
+
+    minCapabilities(): CapabilitiesNew {
+      return CapabilitiesNew.unrestricted().restrict(Persistence.inMemory());
+    }
+
+    create(options: StorageKeyOptions): StorageKey {
+      return new VolatileStorageKey(options.arcId, options.unique(), '');
+    }
 }
 
 export class VolatileMemory {

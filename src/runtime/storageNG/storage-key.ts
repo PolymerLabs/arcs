@@ -8,6 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {Capabilities} from '../capabilities-new.js';
+// TODO: move options here!
+// import {StorageKeyOptions} from '../capabilities-resolver.js';
+
 export abstract class StorageKey {
   readonly protocol: string;
 
@@ -47,3 +51,27 @@ export abstract class StorageKey {
     return this.subKeyWithComponent(`search/${id}`);
   }
 }
+
+// export abstract class StorageKeyFactory {
+//   abstract get protocol();
+
+//   abstract create(options: StorageKeyOptions): StorageKey;
+
+//   // Returns the lower bound set of Capabilities that can be supported.
+//   // Each storage key subclass may override this method with appropriate capabilities.
+//   minCapabilities(): Capabilities {
+//     return Capabilities.none();
+//   }
+//   // Returns the upper bound set of Capabilities that can be supported.
+//   // Each storage key subclass may override this method with appropriate capabilities.
+//   maxCapabilities(): Capabilities {
+//     return this.minCapabilities();
+//   }
+
+//   // Returns true, if the current storage key class can support the given set
+//   // of Capabilities.
+//   supports(capabilities: Capabilities): boolean {
+//     return this.minCapabilities().isSameOrLessStrict(capabilities)
+//         && this.maxCapabilities().isSameOrStricter(capabilities);
+//   }
+// }

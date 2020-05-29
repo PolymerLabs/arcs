@@ -17,7 +17,8 @@ import {assert} from '../../../platform/assert-web.js';
 import {firebase} from '../../../../concrete-storage/firebase.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
 import {Capabilities} from '../../capabilities.js';
-import {CapabilitiesResolver, StorageKeyOptions} from '../../capabilities-resolver.js';
+import {CapabilitiesResolver} from '../../capabilities-resolver.js';
+import {StorageKeyOptions} from '../../storage-key-factory.js';
 
 export {firebase};
 

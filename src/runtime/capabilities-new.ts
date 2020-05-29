@@ -43,9 +43,12 @@ export abstract class Capability {
   abstract setMostRestrictive(other: Capability): boolean;
   abstract setLeastRestrictive(other: Capability): boolean;
 
-  static fromAnnotations(annotations: AnnotationRef[]): Capability {
+  static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
     throw new Error('not implemented');
   }
+  // toString() {
+  // TODO: implement!
+  // }
 }
 
 // The persistence types in order from most to least restrictive.
@@ -61,7 +64,7 @@ export class Persistence extends Capability {
     this.type = type;
   }
 
-  static fromAnnotations(annotations: AnnotationRef[]): Capability {
+  static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
     const types = new Set<PersistenceType>();
     for (const annotation of annotations) {
       if (['persistent', 'onDisk'].includes(annotation.name)) {
@@ -194,7 +197,7 @@ export class Ttl extends Capability {
     return true;
   }
 
-  static fromAnnotations(annotations: AnnotationRef[]): Capability {
+  static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
     const ttlAnnotations = annotations.filter(annotation => annotation.name === 'ttl');
     assert(ttlAnnotations.length <= 1, `Containing multiple TTL annotations`);
     if (ttlAnnotations.length === 0) {
@@ -228,6 +231,7 @@ export class Ttl extends Capability {
   static minutes(count: number): Ttl { return new Ttl(count, TtlUnits.Minutes); }
   static hours(count: number): Ttl { return new Ttl(count, TtlUnits.Hours); }
   static days(count: number): Ttl { return new Ttl(count, TtlUnits.Days); }
+  static none(): Ttl { return new Ttl(0, TtlUnits.Millis); }
 }
 
 export abstract class BooleanCapability extends Capability {
@@ -265,7 +269,7 @@ export abstract class BooleanCapability extends Capability {
 export class Queryable extends BooleanCapability {
   constructor(isQueryable: boolean) { super(isQueryable); }
 
-  static fromAnnotations(annotations: AnnotationRef[]): Capability {
+  static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
     const queryableAnnotations =
         annotations.filter(annotation => annotation.name === 'queryable');
     assert(queryableAnnotations.length <= 1, `Containing multiple queryable annotations`);
@@ -276,7 +280,7 @@ export class Queryable extends BooleanCapability {
 export class Encryption extends BooleanCapability {
   constructor(isEncrypted: boolean) { super(isEncrypted); }
 
-  static fromAnnotations(annotations: AnnotationRef[]): Capability {
+  static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
     const encryptedAnnotations =
         annotations.filter(annotation => annotation.name === 'encrypted');
     assert(encryptedAnnotations.length <= 1, `Containing multiple encrypted annotations`);
@@ -287,12 +291,14 @@ export class Encryption extends BooleanCapability {
 // Capabilities are a grouping of individual capabilities.
 export class Capabilities extends Capability {
   readonly list: Capability[];
-  constructor(list: Capability[] = []) {
+  private constructor(list: Capability[] = []) {
     super();
+    assert(list.length === Capabilities.all.length, `Missing capabilities in ctor.`);
+    // TODO(b/157761106): autocomplete the missing capabilities?
     this.list = list;
   }
 
-  static fromAnnotations(annotations: AnnotationRef[]): Capabilities {
+  static fromAnnotations(annotations: AnnotationRef[] = []): Capabilities {
     const list: Capability[] = [];
     for (const capabilityType of Capabilities.all) {
       list.push(capabilityType.fromAnnotations(annotations));
@@ -377,6 +383,51 @@ export class Capabilities extends Capability {
       this.list[index].setLeastRestrictive(otherCapabilities.list[index]);
     }
     return true;
+  }
+
+  static create(capabilities: {persistence?: Persistence,
+      encryption?: Encryption, ttl?: Ttl, queryable?: Queryable} = {}) {
+      return new Capabilities([
+        capabilities.persistence || Persistence.none(),
+        capabilities.encryption || new Encryption(true),
+        capabilities.ttl || Ttl.none(),
+        capabilities.queryable || new Queryable(true),
+      ]);
+  }
+
+  restrictAll(capabilities: Capability[]): Capabilities {
+    for (const capability of capabilities) {
+      for (const thisCapability of this.list) {
+        if (capability.constructor.name === thisCapability.constructor.name) {
+          if (thisCapability.isSameOrLessStrict(capability)) {
+            thisCapability.setMostRestrictive(capability);
+          } else {
+            throw new Error(`Cannot restrict to given capabilities!`);
+          }
+          continue;
+        }
+      }
+    }
+    return this;
+  }
+
+  restrict(capability: Capability): Capabilities {
+    return this.restrictAll([capability]);
+  }
+
+  // Returns Capabilities object with no restrictions whatsoever.
+  static unrestricted(): Capabilities {
+    return Capabilities.create({
+      persistence: Persistence.unrestricted(),
+      encryption: new Encryption(false),
+      ttl: Ttl.infinite(),
+      queryable: new Queryable(false)
+    });
+  }
+
+  // Returns Capabilities object with the most strict capabilities possible (nothing is allowed).
+  static none(): Capabilities {
+    return Capabilities.create();
   }
 
   // List of individual Capabilities in the order of enforcement.

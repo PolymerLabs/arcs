@@ -10,8 +10,11 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {StorageKey} from './storage-key.js';
-import {CapabilitiesResolver, StorageKeyOptions} from '../capabilities-resolver.js';
+import {CapabilitiesResolver} from '../capabilities-resolver.js';
 import {Capabilities} from '../capabilities.js';
+import {Capabilities as CapabilitiesNew, Persistence, Encryption, Queryable, Ttl} from '../capabilities-new.js';
+import {CapabilitiesResolver as CapabilitiesResolverNew} from '../capabilities-resolver-new.js';
+import {StorageKeyFactory, StorageKeyOptions} from '../storage-key-factory.js';
 
 export abstract class DatabaseStorageKey extends StorageKey {
   protected static readonly dbNameDefault = 'arcs';
@@ -55,7 +58,44 @@ export abstract class DatabaseStorageKey extends StorageKey {
           capabilities,
           (options: StorageKeyOptions) =>
               new MemoryDatabaseStorageKey(options.location(), options.schemaHash));
-      }
+    }
+
+    CapabilitiesResolverNew.registerStorageKeyFactory(new PersistentDatabaseStorageKeyFactory());
+    CapabilitiesResolverNew.registerStorageKeyFactory(new MemoryDatabaseStorageKeyFactory());
+  }
+}
+
+export class PersistentDatabaseStorageKeyFactory extends StorageKeyFactory {
+  get protocol() { return PersistentDatabaseStorageKey.protocol; }
+
+  minCapabilities(): CapabilitiesNew {
+    return CapabilitiesNew.unrestricted().restrictAll([
+      Persistence.onDisk(), Ttl.infinite(), new Queryable(false)]);
+  }
+  maxCapabilities(): CapabilitiesNew {
+    return CapabilitiesNew.unrestricted().restrictAll([
+      Persistence.onDisk(), Ttl.none(), new Queryable(true)]);
+  }
+
+  create(options: StorageKeyOptions): StorageKey {
+    return new PersistentDatabaseStorageKey(options.location(), options.schemaHash);
+  }
+}
+
+export class MemoryDatabaseStorageKeyFactory extends StorageKeyFactory {
+  get protocol() { return MemoryDatabaseStorageKey.protocol; }
+
+  minCapabilities(): CapabilitiesNew {
+    return CapabilitiesNew.unrestricted().restrictAll([
+      Persistence.inMemory(), Ttl.infinite(), new Queryable(false)]);
+  }
+  maxCapabilities(): CapabilitiesNew {
+    return CapabilitiesNew.unrestricted().restrictAll([
+      Persistence.inMemory(), Ttl.none(), new Queryable(true)]);
+  }
+
+  create(options: StorageKeyOptions): StorageKey {
+    return new  MemoryDatabaseStorageKey(options.location(), options.schemaHash);
   }
 }
 

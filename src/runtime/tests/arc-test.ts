@@ -35,8 +35,9 @@ import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.j
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {SingletonEntityStore, CollectionEntityStore, handleForStore} from '../storageNG/storage-ng.js';
 import {Capabilities} from '../capabilities.js';
-import {CapabilitiesResolver, StorageKeyOptions} from '../capabilities-resolver.js';
+import {CapabilitiesResolver} from '../capabilities-resolver.js';
 import {isActiveStore} from '../storageNG/store-interface.js';
+import {StorageKeyOptions} from '../storage-key-factory.js';
 
 async function setup(storageKeyPrefix:  (arcId: ArcId) => StorageKey) {
   const loader = new Loader();
