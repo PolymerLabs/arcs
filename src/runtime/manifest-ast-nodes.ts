@@ -807,6 +807,32 @@ export interface NumberedUnits extends BaseNode {
   units: string;
 }
 
+export interface Policy extends BaseNode {
+  kind: 'policy';
+  name: string;
+  targets: PolicyTarget[];
+  configs: PolicyConfig[];
+  annotationRefs?: AnnotationRef[];
+}
+
+export interface PolicyTarget extends BaseNode {
+  kind: 'policy-target';
+  storeId: string;
+  fields: PolicyField[];
+}
+
+export interface PolicyField extends BaseNode {
+  kind: 'policy-field';
+  name: string;
+  subfields: PolicyField[];
+}
+
+export interface PolicyConfig extends BaseNode {
+  kind: 'policy-config';
+  name: string;
+  metadata: Map<string, string>;
+}
+
 // Aliases to simplify ts-pegjs returnTypes requirement in sigh.
 export type Triggers = [string, string][][];
 export type Indent = number;

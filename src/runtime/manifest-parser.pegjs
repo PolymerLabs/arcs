@@ -28,6 +28,18 @@
     return items[1].map(item => item[1]);
   }
 
+  /**
+   * Utility for extracting values out of comma-separated lists, of the form:
+   * `items:(X (commaOrNewline X)*)?`.
+   */
+  function extractCommaSeparated(items) {
+    if (items == null || items.length === 0) {
+      return [];
+    }
+    const [first, rest] = items;
+    return [first, ...rest.map(item => item[1])];
+  }
+
   function optional<S, R>(result: S, extract: (source: S) => R, defaultValue: R): R {
     if (result !== null) {
       const value = extract(result);
@@ -50,6 +62,12 @@
       for (const item of result) {
         checkNormal(item, `${path}/${i}`);
         i++;
+      }
+      return;
+    }
+    if (result instanceof Map) {
+      for (const [key, value] of result) {
+        checkNormal(value, `${path}/${key}`);
       }
       return;
     }
@@ -155,6 +173,7 @@ ManifestItem
   / Meta
   / Resource
   / AnnotationNode
+  / Policy
 
 Annotation = annotationRefs:(SameIndent AnnotationRef eolWhiteSpace)*
   {
@@ -1728,6 +1747,87 @@ NumberedUnits
     });
   }
 
+// TODO(b/157605585): Annotations on policies.
+Policy
+  = 'policy' whiteSpace name:upperIdent openBrace items:(PolicyItem (commaOrNewline PolicyItem)*)? closeBrace
+  {
+    const targets: AstNode.PolicyTarget[] = [];
+    const configs: AstNode.PolicyConfig[] = [];
+    for (const item of extractCommaSeparated(items)) {
+      switch (item.kind) {
+        case 'policy-target':
+          targets.push(item);
+          break;
+        case 'policy-config':
+          configs.push(item);
+          break;
+        default:
+          error(`Unknown PolicyItem: ${item}`);
+      }
+    }
+    return toAstNode<AstNode.Policy>({
+      kind: 'policy',
+      name,
+      targets,
+      configs,
+    });
+  }
+
+PolicyItem
+  = PolicyTarget
+  / PolicyConfig
+
+// TODO(b/157605585): Annotations on policy targets.
+PolicyTarget
+  = 'from' whiteSpace storeId:id whiteSpace 'access' fields:PolicyFieldSet
+  {
+    return toAstNode<AstNode.PolicyTarget>({
+      kind: 'policy-target',
+      storeId,
+      fields,
+    });
+  }
+
+PolicyFieldSet 'Set of policy fields enclosed in curly braces'
+  = openBrace fields:(PolicyField (commaOrNewline PolicyField)*)? closeBrace
+  {
+    return extractCommaSeparated(fields);
+  }
+
+// TODO(b/157605585): Nested fields, annotations.
+PolicyField
+  = name:fieldName subfields:PolicyFieldSet?
+  {
+    return toAstNode<AstNode.PolicyField>({
+      kind: 'policy-field',
+      name,
+      subfields: subfields || [],
+    });
+  }
+
+PolicyConfig
+  = 'config' whiteSpace name:simpleName openBrace items:(PolicyConfigKeyValuePair (commaOrNewline PolicyConfigKeyValuePair)*)? closeBrace
+  {
+    const metadata: Map<string, string> = new Map();
+    for (const [key, value] of extractCommaSeparated(items)) {
+      if (metadata.has(key)) {
+        error(`Duplicate key in policy config: ${key}.`);
+      }
+      metadata.set(key, value);
+    }
+    return toAstNode<AstNode.PolicyConfig>({
+      kind: 'policy-config',
+      name,
+      metadata,
+    });
+  }
+
+PolicyConfigKeyValuePair
+  = key:simpleName whiteSpace? ':' whiteSpace? value:QuotedString
+  {
+    return [key, value];
+  }
+
 Indent "indentation" = &(i:" "+ &{
   i = i.join('');
   if (i.length > indent.length) {
@@ -1800,6 +1900,18 @@ QuotedString "a 'quoted string'"
     });
     return parts.join('') + end.join('');
  }
+
+// Helpers for creating curly brace blocks with comma or newline separated
+// items, optional whitespace, and optional trailing commas.
+//
+// Example: openBrace X (commaOrNewline X)* closeBrace
+commaOrNewline
+  = multiLineSpace ',' multiLineSpace
+  / eolWhiteSpace multiLineSpace
+openBrace
+  = multiLineSpace '{' multiLineSpace
+closeBrace
+  = commaOrNewline? multiLineSpace '}'
 
 backquotedString "a `backquoted string`"
   = '`' pattern:([^`]+) '`' { return pattern.join(''); }
