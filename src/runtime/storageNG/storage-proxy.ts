@@ -120,7 +120,6 @@ export class StorageProxy<T extends CRDTTypeRecord> {
       }
 
 
-
       // If a handle configured for sync notifications registers after we've received the full
       // model, notify it immediately.
       if (handle.options.notifySync && isSynchronized) {
@@ -202,26 +201,28 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   async onMessage(message: ProxyMessage<T>): Promise<void> {
     switch (message.type) {
       case ProxyMessageType.ModelUpdate:
+      {
         const {modelChange} = this.crdt.merge(message.model);
         if (this.synchronized) {
           // if the particle is already synchronized, try to interpret this update
           // as a sequence of operations. If that's impossible (because merge returned)
           // a model rather than operations) then clear synchronization so that
           // the particle knows to expect a resync message with the new model
-          if (modelChange.changeType == ChangeType.Operations) {
+          if (modelChange.changeType === ChangeType.Operations) {
             modelChange.operations.forEach(
               op => this.notifyUpdate(
                   op, options => !options.keepSynced && options.notifyUpdate));
             break;
           }
-          
+
           this.clearSynchronized();
         }
         this.setSynchronized();
         // NOTE: this.modelHasSynced used to run after this.synchronized
         // was set to true but before notifySync() was called. Is that a problem?
-        this.modelHasSynced();  
+        this.modelHasSynced();
         break;
+      }
       case ProxyMessageType.Operations: {
         // Immediately notify any handles that are not configured with keepSynced but do want updates.
         message.operations.forEach(
