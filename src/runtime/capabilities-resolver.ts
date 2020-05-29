@@ -13,41 +13,11 @@ import {Flags} from './flags.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Type} from './type.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
+import {StorageKeyOptions, ContainerStorageKeyOptions, BackingStorageKeyOptions} from './storage-key-factory.js';
 
 export type CapabilitiesResolverOptions = Readonly<{
   arcId: ArcId;
 }>;
-
-export abstract class StorageKeyOptions {
-  constructor(
-      public readonly arcId: ArcId,
-      public readonly schemaHash: string,
-      protected readonly schemaName: string = null) {}
-  abstract location(): string;
-  abstract unique(): string;
-}
-
-class ContainerStorageKeyOptions extends StorageKeyOptions {
-  constructor(arcId: ArcId, schemaHash: string, schemaName?: string) {
-    super(arcId, schemaHash, schemaName);
-  }
-
-  unique(): string { return ''; }
-  location(): string { return this.arcId.toString(); }
-}
-
-class BackingStorageKeyOptions extends StorageKeyOptions {
-  constructor(arcId: ArcId, schemaHash: string, schemaName?: string) {
-    super(arcId, schemaHash, schemaName);
-  }
-  unique(): string {
-    return this.schemaName && this.schemaName.length > 0
-        ? this.schemaName : this.schemaHash;
-  }
-  location(): string {
-    return this.unique();
-  }
-}
 
 export type StorageKeyCreator = (options: StorageKeyOptions) => StorageKey;
 export type StorageKeyCreatorInfo =

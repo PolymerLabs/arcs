@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC.
+ * Copyright 2020 Google LLC.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../platform/chai-web.js';
-import {Persistence, PersistenceType, Ttl, TtlUnits, Capabilities} from '../capabilities-new.js';
+import {Persistence, PersistenceType, Ttl, TtlUnits, Capabilities, Encryption, Queryable, CapabilityRange} from '../capabilities-new.js';
 import {Manifest} from '../manifest.js';
 
 describe('Persistence Capability', () => {
@@ -88,7 +88,7 @@ describe('Persistence Capability', () => {
 
     const handle2 = recipe.handles[2];
     const persisence2 = Persistence.fromAnnotations(handle2.annotations);
-    assert.isTrue(persisence2.isEquivalent(unrestricted));
+    assert.isNull(persisence2);
   });
 
   it('fails initializing from multiple conflicting', async () => {
@@ -149,7 +149,7 @@ describe('Ttl Capability', () => {
     const ttl1 = Ttl.fromAnnotations(recipe.handles[1].annotations);
     assert.isTrue(ttl1.isEquivalent(Ttl.hours(2)));
     const ttl2 = Ttl.fromAnnotations(recipe.handles[2].annotations);
-    assert.isTrue(ttl2.isEquivalent(Ttl.infinite()));
+    assert.isNull(ttl2);
   });
   it('roundtrips ttl', () => {
     const ttl3m = Ttl.fromString('3m');
@@ -187,6 +187,66 @@ describe('Ttl Capability', () => {
   });
 });
 
+describe('CapabilityRange', () => {
+  it('fails creating range with incompatible min and max', () => {
+    // different types
+    assert.throws(() => new CapabilityRange(Persistence.inMemory(), Ttl.infinite()));
+    assert.throws(() => new CapabilityRange(new Encryption(true), Ttl.infinite()));
+    // min > max
+    assert.throws(() => new CapabilityRange(new Encryption(true), new Encryption(false)));
+    assert.throws(() => new CapabilityRange(Ttl.days(1), Ttl.infinite()));
+    assert.throws(() => new CapabilityRange(Ttl.hours(1), Ttl.days(1)));
+    assert.throws(() => new CapabilityRange(Persistence.inMemory(), Persistence.onDisk()));
+  });
+
+  it('compares boolean ranges', () => {
+    assert.isTrue(Queryable.any().isEquivalent(Queryable.any()));
+    assert.isFalse(Queryable.any().isEquivalent(new Queryable(true)));
+    assert.isTrue(Queryable.any().contains(Queryable.any()));
+    assert.isTrue(Queryable.any().contains(new Queryable(false)));
+    assert.isTrue(Queryable.any().contains(new Queryable(false).toRange()));
+    assert.isTrue(Queryable.any().contains(new Queryable(true)));
+    assert.isTrue(Queryable.any().contains(new Queryable(true).toRange()));
+  });
+
+  it('compares ttl ranges', () => {
+    assert.isTrue(Ttl.any().isEquivalent(Ttl.any()));
+    assert.isFalse(Ttl.any().isEquivalent(Ttl.infinite()));
+    assert.isTrue(Ttl.infinite().toRange().isEquivalent(Ttl.infinite()));
+    assert.isTrue(new CapabilityRange(Ttl.hours(10), Ttl.hours(3)).contains(
+                  new CapabilityRange(Ttl.hours(10), Ttl.hours(3))));
+    assert.isTrue(new CapabilityRange(Ttl.hours(10), Ttl.hours(3)).contains(
+                  new CapabilityRange(Ttl.hours(8), Ttl.hours(6))));
+    assert.isFalse(new CapabilityRange(Ttl.hours(10), Ttl.hours(3)).contains(
+                   new CapabilityRange(Ttl.hours(8), Ttl.hours(2))));
+    assert.isTrue(new CapabilityRange(Ttl.infinite(), Ttl.hours(3)).contains(
+                  new CapabilityRange(Ttl.hours(8), Ttl.hours(3))));
+    assert.isTrue(Ttl.any().contains(Ttl.infinite()));
+    assert.isTrue(Ttl.any().contains(new CapabilityRange(Ttl.infinite(), Ttl.hours(3))));
+    assert.isTrue(Ttl.any().contains(new CapabilityRange(Ttl.hours(3), Ttl.zero())));
+  });
+
+  it('compares persistence ranges', () => {
+    assert.isTrue(Persistence.any().isEquivalent(Persistence.any()));
+    assert.isFalse(Persistence.any().isEquivalent(Persistence.unrestricted()));
+    assert.isTrue(Persistence.unrestricted().toRange().isEquivalent(Persistence.unrestricted()));
+    assert.isTrue(Persistence.onDisk().toRange().isEquivalent(Persistence.onDisk().toRange()));
+
+    assert.isTrue(Persistence.onDisk().toRange().contains(Persistence.onDisk().toRange()));
+    assert.isTrue(new CapabilityRange(Persistence.onDisk(), Persistence.inMemory()).contains(
+                  Persistence.onDisk()));
+    assert.isTrue(new CapabilityRange(Persistence.onDisk(), Persistence.inMemory()).contains(
+                  Persistence.inMemory().toRange()));
+    assert.isFalse(new CapabilityRange(Persistence.onDisk(), Persistence.inMemory()).contains(
+                   Persistence.unrestricted()));
+    assert.isFalse(new CapabilityRange(Persistence.onDisk(), Persistence.inMemory()).contains(
+                   Persistence.any()));
+    assert.isTrue(Persistence.any().contains(Persistence.onDisk()));
+    assert.isTrue(Persistence.any().contains(Persistence.onDisk().toRange()));
+    assert.isTrue(Persistence.any().contains(new CapabilityRange(Persistence.onDisk(), Persistence.inMemory())));
+  });
+});
+
 describe('Capabilities', () => {
   it('initializes from annotations', async () => {
     const manifestStr = `
@@ -201,39 +261,39 @@ describe('Capabilities', () => {
     `;
     const recipe = (await Manifest.parse(manifestStr)).recipes[0];
     const capabilities0 = Capabilities.fromAnnotations(recipe.handles[0].annotations);
-    assert.isTrue(capabilities0.getPersistence().isEquivalent(Persistence.unrestricted()));
-    assert.isTrue(capabilities0.getTtl().isEquivalent(Ttl.infinite()));
-    assert.isFalse(capabilities0.isEncrypted());
-    assert.isFalse(capabilities0.isQueryable());
+    assert.isUndefined(capabilities0.getPersistence());
+    assert.isUndefined(capabilities0.getTtl());
+    assert.isUndefined(capabilities0.isEncrypted());
+    assert.isUndefined(capabilities0.isQueryable());
 
     const capabilities1 = Capabilities.fromAnnotations(recipe.handles[1].annotations);
-    assert.isTrue(capabilities1.getPersistence().isEquivalent(Persistence.unrestricted()));
+    assert.isUndefined(capabilities1.getPersistence());
     assert.isTrue(capabilities1.getTtl().isEquivalent(Ttl.hours(2)));
-    assert.isFalse(capabilities1.isEncrypted());
-    assert.isFalse(capabilities1.isQueryable());
+    assert.isUndefined(capabilities1.isEncrypted());
+    assert.isUndefined(capabilities1.isQueryable());
 
     const capabilities2 = Capabilities.fromAnnotations(recipe.handles[2].annotations);
     assert.isTrue(capabilities2.getPersistence().isEquivalent(Persistence.onDisk()));
-    assert.isTrue(capabilities2.getTtl().isEquivalent(Ttl.infinite()));
-    assert.isFalse(capabilities2.isEncrypted());
-    assert.isFalse(capabilities2.isQueryable());
+    assert.isUndefined(capabilities2.getTtl());
+    assert.isUndefined(capabilities2.isEncrypted());
+    assert.isUndefined(capabilities2.isQueryable());
 
     const capabilities3 = Capabilities.fromAnnotations(recipe.handles[3].annotations);
     assert.isTrue(capabilities3.getPersistence().isEquivalent(Persistence.onDisk()));
     assert.isTrue(capabilities3.getTtl().isEquivalent(Ttl.minutes(30)));
-    assert.isFalse(capabilities3.isEncrypted());
-    assert.isFalse(capabilities3.isQueryable());
+    assert.isUndefined(capabilities3.isEncrypted());
+    assert.isUndefined(capabilities3.isQueryable());
 
     const capabilities4 = Capabilities.fromAnnotations(recipe.handles[4].annotations);
     assert.isTrue(capabilities4.getPersistence().isEquivalent(Persistence.onDisk()));
     assert.isTrue(capabilities4.getTtl().isEquivalent(Ttl.minutes(30)));
     assert.isTrue(capabilities4.isEncrypted());
-    assert.isFalse(capabilities4.isQueryable());
+    assert.isUndefined(capabilities4.isQueryable());
 
     const capabilities5 = Capabilities.fromAnnotations(recipe.handles[5].annotations);
-    assert.isTrue(capabilities5.getPersistence().isEquivalent(Persistence.unrestricted()));
+    assert.isUndefined(capabilities5.getPersistence());
     assert.isTrue(capabilities5.getTtl().isEquivalent(Ttl.minutes(30)));
-    assert.isFalse(capabilities5.isEncrypted());
+    assert.isUndefined(capabilities5.isEncrypted());
     assert.isTrue(capabilities5.isQueryable());
 
     const capabilities6 = Capabilities.fromAnnotations(recipe.handles[6].annotations);
@@ -241,56 +301,5 @@ describe('Capabilities', () => {
     assert.isTrue(capabilities6.getTtl().isEquivalent(Ttl.minutes(30)));
     assert.isTrue(capabilities6.isEncrypted());
     assert.isTrue(capabilities6.isQueryable());
-  });
-
-  async function init() {
-    const handles = (await Manifest.parse(`
-        recipe
-          h0: create @persistent @ttl('1h')
-          h1: create @ttl('2h')
-          h2: create
-          h3: create @ttl('10m')`)).recipes[0].handles;
-    return  {
-      capabilities0: Capabilities.fromAnnotations(handles[0].annotations),
-      capabilities1: Capabilities.fromAnnotations(handles[1].annotations),
-      capabilities2: Capabilities.fromAnnotations(handles[2].annotations),
-      capabilities3: Capabilities.fromAnnotations(handles[3].annotations)
-    };
-  }
-
-  it('sets most restrictive', async () => {
-    const {capabilities0, capabilities1} = await init();
-    // capabilites0 is more restrictive, so remains unchanged.
-    assert.isTrue(capabilities0.setMostRestrictive(capabilities1));
-    assert.isTrue(capabilities0.getPersistence().isEquivalent(Persistence.onDisk()));
-    assert.isTrue(capabilities0.getTtl().isEquivalent(Ttl.hours(1)));
-  });
-
-  it('sets least restrictive', async () => {
-    const {capabilities0, capabilities1} = await init();
-    // capabilites0 is more restrictive, so it is updated to capabilities1
-    assert.isTrue(capabilities0.setLeastRestrictive(capabilities1));
-    assert.isTrue(capabilities0.getPersistence().isEquivalent(Persistence.unrestricted()));
-    assert.isTrue(capabilities0.getTtl().isEquivalent(Ttl.hours(2)));
-  });
-  it('sets most restrictive with unrestricted capabilities', async () => {
-    const {capabilities0, capabilities2} = await init();
-    // capabilities2 are unrestricted for anything, capabilities0 remains unchanged
-    assert.isTrue(capabilities0.setMostRestrictive(capabilities2));
-    assert.isTrue(capabilities0.getPersistence().isEquivalent(Persistence.onDisk()));
-    assert.isTrue(capabilities0.getTtl().isEquivalent(Ttl.hours(1)));
-  });
-  it('sets least restrictive with unrestricted capabilities', async () => {
-    const {capabilities0, capabilities2} = await init();
-    // capabilities2 are unrestricted, capabilities0 is updated.
-    assert.isTrue(capabilities0.setLeastRestrictive(capabilities2));
-    assert.isTrue(capabilities0.getPersistence().isEquivalent(Persistence.unrestricted()));
-    assert.isTrue(capabilities0.getTtl().isEquivalent(Ttl.infinite()));
-  });
-  it('fails setting most or least restrictive with incompatible capabilities', async () => {
-    const {capabilities0, capabilities3} = await init();
-    // capabilities0 is disk, 2hours and capabilities3 is in-memory, 10minutes.
-    assert.isFalse(capabilities0.setLeastRestrictive(capabilities3));
-    assert.isFalse(capabilities0.setMostRestrictive(capabilities3));
   });
 });

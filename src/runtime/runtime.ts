@@ -13,13 +13,14 @@ import {Description} from './description.js';
 import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
 import {CapabilitiesResolver, StorageKeyCreatorInfo} from './capabilities-resolver.js';
+import {CapabilitiesResolver as CapabilitiesResolverNew} from './capabilities-resolver-new.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId, Id} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
 import {SlotComposer} from './slot-composer.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
 import {RamDiskStorageDriverProvider} from './storageNG/drivers/ramdisk.js';
-import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
+import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey, VolatileStorageKeyFactory} from './storageNG/drivers/volatile.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Recipe} from './recipe/recipe.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
@@ -29,6 +30,7 @@ import {logsFactory} from '../platform/logs-factory.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
 import {Modality} from './modality.js';
+import {StorageKeyFactory} from './storage-key-factory.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
@@ -49,6 +51,7 @@ export type RuntimeArcOptions = Readonly<{
   listenerClasses?: ArcInspectorFactory[];
   inspectorFactory?: ArcInspectorFactory;
   storageKeyCreators?: StorageKeyCreatorInfo[];
+  storargeKeyFactories?: StorageKeyFactory[];
   modality?: Modality;
 }>;
 
@@ -121,6 +124,7 @@ export class Runtime {
       memoryProvider
     });
     RamDiskStorageDriverProvider.register(memoryProvider);
+    VolatileStorageKey.register();
     return runtime;
   }
 
@@ -185,7 +189,9 @@ export class Runtime {
     } else {
       storageKey = storageKeyPrefix(id);
     }
-    return new Arc({id, storageKey, capabilitiesResolver, loader, slotComposer, context, ...options});
+    const factories = (options && options.storargeKeyFactories) || [new VolatileStorageKeyFactory()];
+    const capabilitiesResolverNew = new CapabilitiesResolverNew({arcId: id, factories});
+    return new Arc({id, storageKey, capabilitiesResolver, capabilitiesResolverNew, loader, slotComposer, context, ...options});
   }
 
   // Stuff the shell needs

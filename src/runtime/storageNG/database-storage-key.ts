@@ -10,8 +10,11 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {StorageKey} from './storage-key.js';
-import {CapabilitiesResolver, StorageKeyOptions} from '../capabilities-resolver.js';
+import {CapabilitiesResolver} from '../capabilities-resolver.js';
 import {Capabilities} from '../capabilities.js';
+import {Capabilities as CapabilitiesNew, Persistence, Encryption, Queryable, Ttl, Shareable} from '../capabilities-new.js';
+import {CapabilitiesResolver as CapabilitiesResolverNew} from '../capabilities-resolver-new.js';
+import {StorageKeyFactory, StorageKeyOptions} from '../storage-key-factory.js';
 
 export abstract class DatabaseStorageKey extends StorageKey {
   protected static readonly dbNameDefault = 'arcs';
@@ -55,7 +58,34 @@ export abstract class DatabaseStorageKey extends StorageKey {
           capabilities,
           (options: StorageKeyOptions) =>
               new MemoryDatabaseStorageKey(options.location(), options.schemaHash));
-      }
+    }
+
+    CapabilitiesResolverNew.registerStorageKeyFactory(new PersistentDatabaseStorageKeyFactory());
+    CapabilitiesResolverNew.registerStorageKeyFactory(new MemoryDatabaseStorageKeyFactory());
+  }
+}
+
+export class PersistentDatabaseStorageKeyFactory extends StorageKeyFactory {
+  get protocol() { return PersistentDatabaseStorageKey.protocol; }
+
+  capabilities(): CapabilitiesNew {
+    return CapabilitiesNew.create([Persistence.onDisk(), Ttl.any(), Queryable.any(), Shareable.any()]);
+  }
+
+  create(options: StorageKeyOptions): StorageKey {
+    return new PersistentDatabaseStorageKey(options.location(), options.schemaHash);
+  }
+}
+
+export class MemoryDatabaseStorageKeyFactory extends StorageKeyFactory {
+  get protocol() { return MemoryDatabaseStorageKey.protocol; }
+
+  capabilities(): CapabilitiesNew {
+    return CapabilitiesNew.create([Persistence.inMemory(), Ttl.any(), Queryable.any(), Shareable.any()]);
+  }
+
+  create(options: StorageKeyOptions): StorageKey {
+    return new MemoryDatabaseStorageKey(options.location(), options.schemaHash);
   }
 }
 
