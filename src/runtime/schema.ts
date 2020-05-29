@@ -55,7 +55,7 @@ export class Schema {
     }
     for (const [name, field] of Object.entries(fields)) {
       if (typeof(field) === 'string') {
-        this.fields[name] = {kind: 'schema-primitive', refinement: null, type: field};
+        this.fields[name] = {kind: 'schema-primitive', refinement: null, type: field, annotations: []};
       } else {
         this.fields[name] = field;
       }
@@ -145,6 +145,7 @@ export class Schema {
           return null;
         }
         fields[field].refinement = Refinement.intersectionOf(fields[field].refinement, type.refinement);
+        fields[field].annotations = [...(fields[field].annotations || []), ...(type.annotations || [])];
       } else {
         fields[field] = {...type};
       }
@@ -161,6 +162,7 @@ export class Schema {
       if (otherType && Schema.typesEqual(type, otherType)) {
         fields[field] = {...type};
         fields[field].refinement = Refinement.unionOf(type.refinement, otherType.refinement);
+        fields[field].annotations = (type.annotations || []).filter(a => (otherType.annotations || []).includes(a));
       }
     }
     // if schema level refinement contains fields not present in the intersection, discard it
@@ -289,7 +291,8 @@ export class Schema {
   static fieldToString([name, type]: [string, SchemaType]) {
     const typeStr = Schema._typeString(type);
     const refExpr = type.refinement ? type.refinement.toString() : '';
-    return `${name}: ${typeStr}${refExpr}`;
+    const annotationsStr = (type.annotations || []).map(ann => ` ${ann.toString()}`).join('');
+    return `${name}: ${typeStr}${refExpr}${annotationsStr}`;
   }
 
   toInlineSchemaString(options?: {hideFields?: boolean}): string {

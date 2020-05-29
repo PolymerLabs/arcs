@@ -45,6 +45,7 @@ export class BaseNode {
 
 export class BaseNodeWithRefinement extends BaseNode {
     refinement?: RefinementNode;
+    annotations?: AnnotationRef[];
 }
 
 //  PARTICLE TYPES
