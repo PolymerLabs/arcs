@@ -59,6 +59,7 @@ class Scheduler(
     val launches = atomic(0)
     val scope = CoroutineScope(context)
 
+    private val agendasInFlight = atomic(0)
     private val agendaChannel = Channel<Agenda>(Channel.UNLIMITED)
     private val pausedChannel = ConflatedBroadcastChannel(false)
     private val idlenessChannel = ConflatedBroadcastChannel(true)
@@ -83,11 +84,13 @@ class Scheduler(
                 pausedChannel.asFlow().filter { !it }.first()
                 launches.incrementAndGet()
 
-                idlenessChannel.send(false)
                 try {
                     withTimeout(agendaProcessingTimeoutMs) { executeAgenda(agenda) }
                 } finally {
-                    idlenessChannel.send(true)
+                    val agendasLeft = agendasInFlight.getAndDecrement()
+                    if (agendasLeft == 1) {
+                        idlenessChannel.send(true)
+                    }
                 }
             }
             .launchIn(scope)
@@ -95,11 +98,19 @@ class Scheduler(
 
     /** Schedule a single [Task] to be run as part of the next agenda. */
     fun schedule(task: Task) {
+        val agendasInFlight = agendasInFlight.getAndIncrement()
+        if (agendasInFlight == 0) {
+            idlenessChannel.offer(false)
+        }
         agendaChannel.offer(Agenda().addTask(task))
     }
 
     /** Schedule some [Task]s to be run as part of the next agenda. */
     fun schedule(tasks: Iterable<Task>) {
+        val agendasInFlight = agendasInFlight.getAndIncrement()
+        if (agendasInFlight == 0) {
+            idlenessChannel.offer(false)
+        }
         agendaChannel.offer(Agenda().addTasks(tasks))
     }
 

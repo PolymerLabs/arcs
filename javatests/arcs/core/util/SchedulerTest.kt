@@ -14,11 +14,12 @@ package arcs.core.util
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.junit.After
 import org.junit.Before
@@ -48,7 +49,7 @@ class SchedulerTest {
     }
 
     @Test
-    fun simpleTest() = runBlocking {
+    fun simpleTest() = runTest {
         val scheduler = Scheduler(schedulerContext)
         val stateHolder = StateHolder()
 
@@ -78,7 +79,7 @@ class SchedulerTest {
     }
 
     @Test
-    fun tasks_schedulingOtherTasks_dontDeadlock() = runBlocking {
+    fun tasks_schedulingOtherTasks_dontDeadlock() = runTest {
         val scheduler = Scheduler(schedulerContext)
         val stateHolder = StateHolder()
 
@@ -106,7 +107,7 @@ class SchedulerTest {
     }
 
     @Test
-    fun tasks_canTimeout() = runBlocking {
+    fun tasks_canTimeout() = runTest {
         val scheduler = Scheduler(
             schedulerContext,
             agendaProcessingTimeoutMs = 100
@@ -119,10 +120,13 @@ class SchedulerTest {
             listOf(
                 TestProcessor {
                     firstProcRan = true
-                    Thread.sleep(200)
+                    log("First Proc Sleeping")
+                    Thread.sleep(2000)
+                    log("First Proc Woke Up")
                 },
                 TestProcessor {
                     secondProcRan = true
+                    log("Second Proc ran")
                 }
             )
         )
@@ -139,15 +143,15 @@ class SchedulerTest {
     }
 
     @Test
-    fun pause_pausesExecution_resume_resumesExecution() = runBlocking {
+    fun pause_pausesExecution_resume_resumesExecution() = runTest {
         val scheduler = Scheduler(schedulerContext)
 
-        var firstCalled = false
+        val firstCalled = Job()
         var secondCalled = false
 
         val first = TestProcessor {
-            firstCalled = true
             scheduler.pause()
+            firstCalled.complete()
         }
         val second = TestProcessor {
             secondCalled = true
@@ -155,16 +159,10 @@ class SchedulerTest {
 
         log("scheduling first")
         scheduler.schedule(first)
-        delay(50) // Just to ensure that we launched the agenda-processing coroutine
-        // At this point, the scheduler should be paused, so `second` shouldn't get run.
+        firstCalled.join()
         log("scheduling second")
         scheduler.schedule(second)
-        log("waiting for idle")
-        scheduler.waitForIdle()
-        log("idleness achieved")
 
-        assertWithMessage("First should've been called")
-            .that(firstCalled).isTrue()
         assertWithMessage("Second shouldn't have been called")
             .that(secondCalled).isFalse()
 
@@ -179,7 +177,7 @@ class SchedulerTest {
     }
 
     @Test
-    fun executesListenersByNamespaceAndName() = runBlocking {
+    fun executesListenersByNamespaceAndName() = runTest {
         val scheduler = Scheduler(schedulerContext)
         val stateHolder = StateHolder()
 
@@ -223,6 +221,10 @@ class SchedulerTest {
         stateHolder: StateHolder
     ): Scheduler.Task = TestListener(namespace, name) {
         stateHolder.calls.add(index to "Listener($namespace, $name)")
+    }
+
+    private fun runTest(block: suspend CoroutineScope.() -> Unit) = runBlocking {
+        withTimeout(5000) { this.block() }
     }
 
     private class StateHolder(
