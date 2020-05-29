@@ -15,7 +15,7 @@ particle SummarizeSentiment
 @arcId('transform')
 recipe Transform
   events: map 'raw-events'
-  summary: create persistent 'processed-events'
+  summary: create 'processed-events' @persistent
   SummarizeSentiment
     events: reads events
     result: writes summary
