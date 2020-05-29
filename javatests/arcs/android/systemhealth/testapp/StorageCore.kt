@@ -379,6 +379,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 }
             }
 
+            // The very first SingletonHandle is responsible for writing an entity
+            // to storage then creating its reference.
             if (taskId == 0) {
                 withContext(handle.dispatcher) {
                     handle.store(SystemHealthTestEntity.referencedEntity)
@@ -431,6 +433,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 }
             }
 
+            // The very first CollectionHandle is responsible for writing an entity
+            // to storage then creating its reference.
             if (taskId == 0) {
                 withContext(handle.dispatcher) {
                     handle.store(SystemHealthTestEntity.referencedEntity)
