@@ -37,6 +37,11 @@ annotation queryable
   retention: Runtime
   doc: 'storage capability: queryable'
 
+annotation encrypted
+  targets: [Handle, Store, HandleConnection]
+  retention: Runtime
+  doc: 'storage capability: encrypted'
+
 annotation tiedToArc
   targets: [Handle]
   retention: Runtime
