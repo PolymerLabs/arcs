@@ -249,8 +249,7 @@ public:
   ${name}() = default;
   ${name}(${name}&&) = default;
   ${name}& operator=(${name}&&) = default;
-
-${templateCtor}
+${this.node.fromVariable ? '' : templateCtor}
   ${this.api.join('\n  ')}
   // Equality ops compare internal ids and all data fields.
   // Use arcs::fields_equal() to compare only the data fields.
@@ -267,6 +266,7 @@ ${templateCtor}
   }
 
 protected:
+${this.node.fromVariable ? templateCtor : ''}
   // Allow private copying for use in Handles.
   ${name}(const ${name}&) = default;
   ${name}& operator=(const ${name}&) = default;
