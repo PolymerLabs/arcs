@@ -615,7 +615,7 @@ describe('schema2graph', () => {
     const manifest = await Manifest.parse(`
       particle T
         h1: reads ~a                               // 1 
-        h2: reads ~a 
+        h2: reads ~a                               // 1
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
@@ -689,13 +689,18 @@ describe('schema2graph', () => {
     });
   });
 
-  it('variables can be nested', async () => {
+  it('variables can be nested in collections, tuples, or references', async () => {
     const manifest = await Manifest.parse(`
       particle T
+        // Singleton constraint definition, usage in collection
         h1: reads ~a with {foo: Text}
         h2: writes [~a]
+        
+        // Collection constraint definition, usage in reference
         h3: reads [~b with {bar: Number}]
         h4: writes &~b
+        
+        // Usage in tuple, tuple constraint definition
         h5: reads (&~b, &~c with {baz: URL})
         h6: writes [(&~d with {foobar: Boolean}, &~c)] 
     `);
