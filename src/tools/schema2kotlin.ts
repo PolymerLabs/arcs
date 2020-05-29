@@ -493,7 +493,7 @@ ${lines}
     const fieldCount = Object.keys(this.node.schema.fields).length;
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
 
-    const constructor = this.node.fromVariable ? ' private constructor(' : '(' ;
+    const constructor = this.node.fromVariable ? ' private constructor(' : '(';
 
     const classDef = `\
 @Suppress("UNCHECKED_CAST")
@@ -517,8 +517,6 @@ ${lines}
 
     const constructorArguments =
       ktUtils.joinWithIndents(constructorFields, classDef.length+classInterface.length, 2);
-
-
 
     return `\
 
