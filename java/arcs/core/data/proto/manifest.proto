@@ -5,10 +5,13 @@ package arcs;
 option java_package = "arcs.core.data.proto";
 option java_multiple_files = true;
 
+import "java/arcs/core/data/proto/policy.proto";
+
 // A manifest containing multiple recipes and particle specs.
 message ManifestProto {
   repeated RecipeProto recipes = 1;
   repeated ParticleSpecProto particle_specs = 2;
+  repeated PolicyProto policies = 3;
 }
 
 // Plan: A resolved recipe that can be instantiated.
