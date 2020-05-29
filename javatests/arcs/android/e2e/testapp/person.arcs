@@ -22,7 +22,7 @@ recipe PersonRecipe
 
 @arcId('persistentPersonArc')
 recipe PersistentPersonRecipe
-  persistentRecipePerson: create persistent 'person'
+  persistentRecipePerson: create 'person' @persistent
 
   WritePerson
     person: writes persistentRecipePerson

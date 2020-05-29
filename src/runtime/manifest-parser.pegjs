@@ -1274,22 +1274,14 @@ RecipeHandleFate
   / 'copy'
   / '`slot'
 
-RecipeHandleCapability
- = 'persistent'
- / 'queryable'
- / 'tied-to-runtime'
- / 'tied-to-arc'
-
-// TODO(#5291): deprecate `capabilities` for `annotations`.
 RecipeHandle
-  = name:NameWithColon? fate:RecipeHandleFate capabilities:(whiteSpace RecipeHandleCapability)* ref:(whiteSpace HandleRef)? annotations:SpaceAnnotationRefList? eolWhiteSpace
+  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? annotations:SpaceAnnotationRefList? eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeHandle>({
       kind: 'handle',
       name,
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
       fate,
-      capabilities: capabilities.map(c => c[1]),
       annotations: annotations || [],
     });
   }

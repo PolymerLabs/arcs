@@ -371,8 +371,8 @@ export class ParticleSpec {
    * `@isolated` annotation to be considered isolated.
    */
   get isolated(): boolean {
-    const isolated = this.annotations.some(annotation => annotation.name === 'isolated');
-    const egress = this.annotations.some(annotation => annotation.name === 'egress');
+    const isolated = !!this.getAnnotation('isolated');
+    const egress = !!this.getAnnotation('egress');
     assert(!(isolated && egress), 'Particle cannot be tagged with both @isolated and @egress.');
     return isolated;
   }

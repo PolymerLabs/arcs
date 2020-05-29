@@ -919,8 +919,9 @@ ${e.message}
           if (ttlAnnotation) {
             handle.ttl = Ttl.fromString(ttlAnnotation.params['value'].toString());
           }
-          if (item.capabilities) {
-            handle.capabilities = new Capabilities(handle.ttl.isInfinite ? item.capabilities : [...item.capabilities, 'queryable']);
+          handle.capabilities = Capabilities.fromAnnotations(handle.annotations);
+          if (!handle.ttl.isInfinite) {
+            handle.capabilities.merge(Capabilities.queryable);
           }
         }
       }

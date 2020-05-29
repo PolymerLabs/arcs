@@ -4290,11 +4290,11 @@ annotation hello(world: Text)
 recipe
   foo: create
   bar: ?
-  baz: create persistent
-  quz: create persistent 'my-id' @ttl('10m') @hello(world: 'woohoo')
+  baz: create @persistent
+  quz: create 'my-id' @persistent  @ttl('10m') @hello(world: 'woohoo')
     `);
     const quzHandle = manifest.recipes[0].findHandleByID('my-id');
-    assert.lengthOf(quzHandle.annotations, 2);
+    assert.lengthOf(quzHandle.annotations, 3);
   });
   it('parses annotation with single param and simple value', async () => {
     const connection = (await Manifest.parse(`
@@ -4333,22 +4333,22 @@ recipe
   it('fails parsing invalid canonical annotation ttl', async () => {
     await assertThrowsAsync(async () => await Manifest.parse(`
       recipe
-        foo: create persistent @ttl('300')
+        foo: create @persistent @ttl('300')
     `), `Invalid ttl: 300`);
     await assertThrowsAsync(async () => await Manifest.parse(`
       recipe
-        foo: create persistent @ttl(300)
+        foo: create @persistent @ttl(300)
     `), `expected 'Text' for param 'value', instead got 300`);
     await assertThrowsAsync(async () => await Manifest.parse(`
       recipe
-        foo: create persistent @ttl('day')
+        foo: create @persistent @ttl('day')
     `), `Invalid ttl: day`);
   });
   it('parses canonical annotations', async () => {
     const manifest = (await Manifest.parse(`
       @arcId('myFavoriteArc')
       recipe
-        foo: create persistent @ttl('3d')
+        foo: create @persistent @ttl('3d')
 
       @isolated
       particle IsolatedParticle
@@ -4362,13 +4362,13 @@ recipe
     assert.equal(recipeAnnotations[0].name, 'arcId');
     assert.equal(recipeAnnotations[0].params['id'], 'myFavoriteArc');
 
-    const handleAnnotations = recipe.handles[0].annotations;
-    assert.lengthOf(handleAnnotations, 1);
-    assert.equal(handleAnnotations[0].name, 'ttl');
-    assert.equal(handleAnnotations[0].params['value'], '3d');
-    assert.equal(recipe.handles[0].ttl.count, 3);
-    assert.equal(recipe.handles[0].ttl.units, TtlUnits.Day);
-    assert.equal(recipe.handles[0].annotations.toString(), `@ttl(value: '3d')`);
+    const handle = recipe.handles[0];
+    assert.lengthOf(handle.annotations, 2);
+    assert.isNotNull(handle.getAnnotation('persistent'));
+    assert.equal(handle.getAnnotation('ttl').params['value'], '3d');
+    assert.equal(handle.ttl.count, 3);
+    assert.equal(handle.ttl.units, TtlUnits.Day);
+    assert.equal(handle.toString(), `foo: create @persistent @ttl(value: '3d')`);
 
     const isolatedParticleAnnotations = manifest.findParticleByName('IsolatedParticle').annotations;
     console.error(manifest.findParticleByName('IsolatedParticle'));
@@ -4492,5 +4492,56 @@ recipe
       const manifest = await Manifest.parse(manifestStr);
       assert.isTrue(manifest.recipes[0].normalize());
     });
+  });
+  it('parses schema field annotations', async () => {
+    const manifestStr = `
+annotation hello(txt: Text)
+  targets: [SchemaField]
+  retention: Source
+  doc: 'hello world'
+schema Foo
+  field1: Text @hello @ttl(value: '3d')
+    `;
+    const manifest = await Manifest.parse(manifestStr);
+    const fooSchema = manifest.findSchemaByName('Foo');
+    assert.lengthOf(Object.keys(fooSchema.fields), 1);
+    const annotations = fooSchema.fields['field1'].annotations;
+    assert.lengthOf(annotations, 2);
+    assert.isNotNull(annotations.find(a => a.name === 'hello'));
+    assert.equal(annotations.find(a => a.name === 'ttl').params['value'], '3d');
+    assert.equal(manifest.toString(), manifestStr.trim());
+  });
+  it('parses inline schema field annotations', async () => {
+    const manifestStr = `
+annotation hello(txt: Text)
+  targets: [SchemaField]
+  retention: Source
+  doc: 'hello world'
+particle WriteFoo
+  field1: writes Foo {f1: Text @ttl(value: '1m')}
+  field2: writes [Foo {f1: Text @ttl(value: '2m') @hello}]
+  field3: writes [&Foo {f1: Text @ttl(value: '3m')}]
+  modality dom
+    `;
+    const manifest = await Manifest.parse(manifestStr);
+    const particle = manifest.findParticleByName('WriteFoo');
+
+    const field1 = particle.getConnectionByName('field1');
+    const annotations1 = field1.type.getEntitySchema().fields['f1'].annotations;
+    assert.lengthOf(annotations1, 1);
+    assert.equal(annotations1.find(a => a.name === 'ttl').params['value'], '1m');
+    assert.isNotNull(annotations1.find(a => a.name === 'hello'));
+
+    const field2 = particle.getConnectionByName('field2');
+    const annotations2 = field2.type.getEntitySchema().fields['f1'].annotations;
+    assert.lengthOf(annotations2, 2);
+    assert.equal(annotations2.find(a => a.name === 'ttl').params['value'], '2m');
+    assert.isNotNull(annotations2.find(a => a.name === 'hello'));
+
+    const field3 = particle.getConnectionByName('field3');
+    const annotations3 = field3.type.getEntitySchema().fields['f1'].annotations;
+    assert.lengthOf(annotations3, 1);
+    assert.equal(annotations3.find(a => a.name === 'ttl').params['value'], '3m');
+    assert.equal(manifest.toString(), manifestStr.trim());
   });
 });

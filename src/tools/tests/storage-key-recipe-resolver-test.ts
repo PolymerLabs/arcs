@@ -47,7 +47,7 @@ describe('recipe2plan', () => {
 
     @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
 
@@ -71,7 +71,7 @@ describe('recipe2plan', () => {
        data: writes Thing {name: Text}
     
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
 
@@ -96,7 +96,7 @@ describe('recipe2plan', () => {
        data: writes Thing {name: Text}
     
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
 
@@ -123,7 +123,7 @@ describe('recipe2plan', () => {
     
     @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
 
@@ -148,7 +148,7 @@ describe('recipe2plan', () => {
     
     @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
 
@@ -171,7 +171,7 @@ describe('recipe2plan', () => {
 
     @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
 
@@ -194,7 +194,7 @@ describe('recipe2plan', () => {
        data: writes Thing {name: Text}
     
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
 
@@ -221,7 +221,7 @@ describe('recipe2plan', () => {
     
     @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent
+      thing: create @persistent
       Writer
         data: writes thing
 
@@ -247,13 +247,13 @@ describe('recipe2plan', () => {
     
     @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
         
     @arcId('writeArcId2')
     recipe WritingRecipe2
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
 
@@ -277,8 +277,8 @@ describe('recipe2plan', () => {
     
     @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
-      thing2: create persistent
+      thing: create 'my-handle-id' @persistent
+      thing2: create @persistent
       Writer
         data: writes thing
       Writer
@@ -295,7 +295,7 @@ describe('recipe2plan', () => {
     
     @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent queryable 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent @queryable
       Writer
         data: writes thing`);
 
@@ -311,7 +311,7 @@ describe('recipe2plan', () => {
     
     @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: thing`);
 

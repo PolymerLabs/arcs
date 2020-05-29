@@ -8,6 +8,6 @@ particle Ingestion
 
 @arcId('eventIngestion')
 recipe EventsIngestion
-  events: create persistent 'raw-events'
+  events: create 'raw-events' @persistent
   Ingestion
     events: events
