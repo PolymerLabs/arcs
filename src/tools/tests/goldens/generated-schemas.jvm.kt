@@ -25,6 +25,8 @@ typealias Gold_Data_Ref = AbstractGold.GoldInternal1
 typealias Gold_Alias = AbstractGold.GoldInternal1
 typealias Gold_AllPeople = AbstractGold.Gold_AllPeople
 typealias Gold_Collection = AbstractGold.Gold_Collection
+typealias Gold_TypeVarIn = AbstractGold.GoldInternal2
+typealias Gold_TypeVarOut = AbstractGold.GoldInternal2
 typealias Gold_QCollection = AbstractGold.Gold_QCollection
 typealias Gold_Data = AbstractGold.Gold_Data
 
@@ -272,6 +274,63 @@ abstract class AbstractGold : BaseParticle() {
     }
 
     @Suppress("UNCHECKED_CAST")
+    class GoldInternal2 private constructor(
+        amt: Double = 0.0,
+        entityId: String? = null,
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("GoldInternal2", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
+
+        var amt: Double
+            get() = super.getSingletonValue("amt") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("amt", _value)
+
+        init {
+            this.amt = amt
+        }
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
+        fun copy(amt: Double = this.amt) = GoldInternal2(amt = amt)
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(amt: Double = this.amt) = GoldInternal2(
+            amt = amt,
+            entityId = entityId,
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
+        )
+
+        companion object : EntitySpec<GoldInternal2> {
+
+            override val SCHEMA = Schema(
+                setOf(),
+                SchemaFields(
+                    singletons = mapOf("amt" to FieldType.Number),
+                    collections = emptyMap()
+                ),
+                "96ac6e3c32cf8b7f37c5b9dd69b9796ace59b288",
+                refinement = { _ -> true },
+                query = null
+            )
+
+            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+                emptyMap()
+
+            init {
+                SchemaRegistry.register(SCHEMA)
+            }
+
+            override fun deserialize(data: RawEntity) = GoldInternal2().apply {
+                deserialize(data, nestedEntitySpecs)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
     class Gold_QCollection(
         name: String = "",
         age: Double = 0.0,
@@ -507,7 +566,9 @@ abstract class AbstractGold : BaseParticle() {
             "allPeople" to Gold_AllPeople,
             "qCollection" to Gold_QCollection,
             "alias" to Gold_Alias,
-            "collection" to Gold_Collection
+            "collection" to Gold_Collection,
+            "typeVarIn" to Gold_TypeVarIn,
+            "typeVarOut" to Gold_TypeVarOut
         )
     ) {
         val data: ReadSingletonHandle<Gold_Data> by handles
@@ -515,5 +576,7 @@ abstract class AbstractGold : BaseParticle() {
         val qCollection: ReadQueryCollectionHandle<Gold_QCollection, String> by handles
         val alias: WriteSingletonHandle<Gold_Alias> by handles
         val collection: ReadCollectionHandle<Gold_Collection> by handles
+        val typeVarIn: ReadSingletonHandle<Gold_TypeVarIn> by handles
+        val typeVarOut: WriteSingletonHandle<Gold_TypeVarOut> by handles
     }
 }
