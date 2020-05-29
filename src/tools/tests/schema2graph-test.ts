@@ -101,9 +101,9 @@ describe('schema2graph', () => {
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
-      {name: 'A_H1',       parents: '',                 children: 'A_H2, A_H3'},
-      {name: 'A_H2', parents: 'A_H1',             children: 'A_H4'},
-      {name: 'A_H3',       parents: 'A_H1',             children: 'A_H4'},
+      {name: 'A_H1', parents: '',           children: 'A_H2, A_H3'},
+      {name: 'A_H2', parents: 'A_H1',       children: 'A_H4'},
+      {name: 'A_H3', parents: 'A_H1',       children: 'A_H4'},
       {name: 'A_H4', parents: 'A_H2, A_H3', children: ''},
     ]);
     assert.deepStrictEqual(res.aliases, {
@@ -591,6 +591,48 @@ describe('schema2graph', () => {
       'R_Tuple_0': ['R_Tuple_0'],
       'R_Tuple_1': ['R_Ref_Review', 'R_Tuple_1'],
       'R_Tuple_1_Author': ['R_Ref_Review_Author', 'R_Tuple_1_Author'],
+    });
+  });
+
+  it('constrained variables are distinct from conventional schemas', async () => {
+    const manifest = await Manifest.parse(`
+      particle T
+        h1: reads * {a: Text}                     // 1  2
+        h2: reads ~a with {a: Text}
+    `);
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'T_H1', parents: '', children: ''},
+      {name: 'T_H2', parents: '', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'T_H1': ['T_H1'],
+      'T_H2': ['T_H2'],
+    });
+  });
+
+  it('variables are aliased correctly within a scope', async () => {
+    // Type variables with the same name in a particle scope should be treated
+    // as the same type, even with constraints applied.
+    const manifest = await Manifest.parse(`
+      particle T
+        h1: reads ~a with {a: Text}                     // 1 
+        h2: reads ~b                                    // 2
+        h3: reads ~c                                    // 3
+        h4: writes ~a
+        h5: writes ~b with {b: Number}
+        h6: writes ~c 
+    `);
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'T_H1', parents: '', children: ''},
+      {name: 'T_H2', parents: '', children: ''},
+      {name: 'T_H3', parents: '', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'T_H1': ['T_H1', 'T_H4'],
+      'T_H2': ['T_H2', 'T_H5'],
+      'T_H3': ['T_H3', 'T_H6'],
     });
   });
 });
