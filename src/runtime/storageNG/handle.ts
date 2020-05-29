@@ -145,7 +145,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   }
 
   protected reportUserExceptionInHost(exception: Error, particle: Particle, method: string) {
-    this.storageProxy.reportExceptionInHost(new UserException(exception, method, this.key, particle.spec.name));
+    this.storageProxy.reportExceptionInHost(new UserException(exception, method, this.key, particle.spec ? particle.spec.name : ''));
   }
 
   abstract onUpdate(update: StorageType['operation']): void;
