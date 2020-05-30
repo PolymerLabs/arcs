@@ -192,7 +192,8 @@ def arcs_peg_generator(name):
        name = name,
        srcs = [],
        outs = ["gen/runtime/manifest-parser.ts"],
-       sigh_cmd = "peg"
+       sigh_cmd = "pegOnly -f",
+       quiet = False,
     )
 
 def _schema2pkg_impl(ctx):

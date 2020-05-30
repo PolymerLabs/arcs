@@ -32,6 +32,8 @@ let globalOptions = {
   quiet: false,
   /** If true, runs tests flagged as bazel tests. */
   bazel: false,
+  /** If true, runs command without checking file stats */
+  force: false,
 };
 
 const sources = {
@@ -67,6 +69,7 @@ const webpackLS = webpackPkg('webpack-languageserver');
 
 const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]} = {
   peg: [peg, railroad],
+  pegOnly: [peg],
   test: [peg, build, runTestsOrHealthOnCron],
   testShells: [peg, build, webpack, webpackStorage, devServerAsync, testWdioShells],
   testWdioShells: [testWdioShells],
@@ -215,6 +218,9 @@ function fixPathForWindows(path: string): string {
 }
 
 function targetIsUpToDate(relativeTarget: string, relativeDeps: string[]): boolean {
+  if (globalOptions.force) {
+    return false;
+  }
   const target = path.resolve(projectRoot, relativeTarget);
   if (!fs.existsSync(target)) {
     return false;
@@ -1109,7 +1115,8 @@ async function runSteps(command: string, args: string[]): Promise<boolean> {
 
   // Keep globalOptions defaults, and override with any args from command line.
   globalOptions = {...globalOptions, ...minimist(args, {
-    boolean: ['install'],
+    boolean: ['install', 'force'],
+    alias: {'f': 'force'},
   })};
   for (const key in globalOptions) {
     // This converts command line arguments that should be interpreted as booleans.

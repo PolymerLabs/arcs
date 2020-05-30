@@ -56,13 +56,15 @@ def _write_shell_script(ctx, run_script):
             execution_requirements = EXECUTION_REQUIREMENTS_DICT,
         )
 
-    return script_file
+    return script_file, output_files
 
 def _run_in_repo(ctx):
-    _write_shell_script(ctx = ctx, run_script = True)
+    _, outputs = _write_shell_script(ctx = ctx, run_script = True)
+
+    return [DefaultInfo(files = depset(outputs))]
 
 def _run_in_repo_test(ctx):
-    script_file = _write_shell_script(ctx = ctx, run_script = False)
+    script_file, outputs = _write_shell_script(ctx = ctx, run_script = False)
     return [DefaultInfo(
         executable = script_file,
         runfiles = ctx.runfiles(files = ctx.files.srcs + ctx.files.deps),
