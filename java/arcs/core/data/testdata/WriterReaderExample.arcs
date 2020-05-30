@@ -7,19 +7,15 @@ particle Reader in 'arcs.core.data.testdata.Reader'
 particle Writer in 'arcs.core.data.testdata.Writer'
    data: writes Thing {name: Text}
 
-@trigger
-  launch startup
-  arcId writingArcId
+@arcId('writingArcId')
 recipe Ingestion
-  thing: create persistent 'my-handle-id' @ttl(20d)
+  thing: create 'my-handle-id' @persistent @ttl('20d')
   Writer
     data: writes thing
   Reader
     data: reads thing
 
-@trigger
-  launch startup
-  arcId readingArcId
+@arcId('readingArcId')
 recipe Consumption
   data: map 'my-handle-id'
   Reader
@@ -39,12 +35,10 @@ particle ReadWriteReferences
   inThingRefs: reads [&Thing {name: Text}]
   outThingRef: writes &Thing {name: Text}
 
-@trigger
-  launch startup
-  arcId referencesArcId
+@arcId('referencesArcId')
 recipe ReferencesRecipe
-  things: create persistent 'my-refs-id'
-  thing: create 'my-ref-id' @ttl(1d)
+  things: create 'my-refs-id' @persistent
+  thing: create 'my-ref-id' @ttl('1d')
   ReadWriteReferences
     inThingRefs: things
     outThingRef: thing

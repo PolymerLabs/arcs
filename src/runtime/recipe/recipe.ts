@@ -47,9 +47,6 @@ export class Recipe implements Cloneable<Recipe> {
   private _cloneMap: CloneMap;
 
   private _annotations: AnnotationRef[] = [];
-  // TODO(#5291): deprecate `annotation` and `triggers`; use `annotations` instead.
-  annotation: string | undefined = undefined;
-  triggers: [string, string][][] = [];
 
   // TODO: Recipes should be collections of records that are tagged
   // with a type. Strategies should register the record types they
@@ -319,6 +316,9 @@ export class Recipe implements Cloneable<Recipe> {
         `Annotation '${a.name}' is invalid for Recipe`));
     this._annotations = annotations;
   }
+  getAnnotation(name: string): AnnotationRef | null {
+    return this.annotations.find(a => a.name === name);
+  }
 
   isEmpty(): boolean {
     return this.particles.length === 0 &&
@@ -543,7 +543,6 @@ export class Recipe implements Cloneable<Recipe> {
     };
 
     recipe._name = this.name;
-    recipe.triggers = this.triggers;
     recipe.annotations = this.annotations;
 
     recipe._verbs = recipe._verbs.concat(...this._verbs);

@@ -150,6 +150,9 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
         `Annotation '${a.name}' is invalid for HandleConnection`));
     this._annotations = annotations;
   }
+  getAnnotation(name: string): AnnotationRef | null {
+    return this.annotations.find(a => a.name === name);
+  }
 }
 
 type SerializedSlotConnectionSpec = {
@@ -357,6 +360,9 @@ export class ParticleSpec {
         `Annotation '${a.name}' is invalid for Particle`));
     this._annotations = annotations;
   }
+  getAnnotation(name: string): AnnotationRef | null {
+    return this.annotations.find(a => a.name === name);
+  }
 
   /**
    * Indicates whether the particle is an isolated (non-egress) particle.
@@ -365,8 +371,8 @@ export class ParticleSpec {
    * `@isolated` annotation to be considered isolated.
    */
   get isolated(): boolean {
-    const isolated = this.annotations.some(annotation => annotation.name === 'isolated');
-    const egress = this.annotations.some(annotation => annotation.name === 'egress');
+    const isolated = !!this.getAnnotation('isolated');
+    const egress = !!this.getAnnotation('egress');
     assert(!(isolated && egress), 'Particle cannot be tagged with both @isolated and @egress.');
     return isolated;
   }

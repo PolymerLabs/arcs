@@ -12,7 +12,7 @@ particle ResponseCalculator
 
 recipe RequestHandler
   request: map 'processed-events'
-  response: create tied-to-arc
+  response: create @tiedToArc
   ResponseCalculator
     request: reads request
     response: writes response
