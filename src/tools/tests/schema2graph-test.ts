@@ -676,9 +676,9 @@ describe('schema2graph', () => {
   it('type variables aggregate all constraints', async () => {
     const manifest = await Manifest.parse(`
       particle T
-        h1: reads ~a with {a: Text}                     // [x] 1 -> 2 -> 3
-        h2: reads ~a with {a: Text, b: Text}            // [√] 1
-        h3: reads ~a with {a: Text, b: Text, c: Text}
+        h1: reads ~a with {a: Text}                     // 1
+        h2: reads ~a with {b: Number}                   // 1
+        h3: writes ~a with {c: Text}                    // 1
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
@@ -716,6 +716,34 @@ describe('schema2graph', () => {
       'T_H3': ['T_H3', 'T_H4', 'T_H5_0'],
       'T_H5_1': ['T_H5_1', 'T_H6_1'],
       'T_H6_0': ['T_H6_0'],
+    });
+  });
+
+  it('constrained variables should create distinct nested types, even when concrete', async () => {
+    // Should foo->Friend be it's own type? Or it it a part of ~a?
+    const manifest = await Manifest.parse(`
+      particle P
+        foo: reads ~a with Person {
+          name: Text,
+          friends: [&Friend {
+            name: Text,
+            friendshipEstablished: Timestamp
+          }]
+        }
+        bar: writes ~a
+        baz: reads Friend {
+          name: Text,
+          friendshipEstablished: Timestamp
+        }
+    `);
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'T_FOO', parents: '', children: ''},
+      {name: 'T_BAZ', parents: '', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'T_FOO': ['T_FOO', 'T_BAR'],
+      'T_BAZ': ['T_BAZ']
     });
   });
 });
