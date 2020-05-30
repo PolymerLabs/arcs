@@ -25,7 +25,6 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.util.Scheduler
-import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.runBlocking
@@ -54,7 +53,7 @@ class RawEntityDereferencerTest {
     private lateinit var aliceDriver: Driver<CrdtEntity.Data>
     private lateinit var bobDriver: Driver<CrdtEntity.Data>
     // TODO: Test with an activation factory in android-specific tests.
-    private val scheduler = Scheduler(JvmTime, EmptyCoroutineContext)
+    private val scheduler = Scheduler(EmptyCoroutineContext)
     private val dereferencer = RawEntityDereferencer(
         schema,
         entityActivationFactory = null,

@@ -34,11 +34,9 @@ particle Reader in 'Reader'
     name: Text
   }]
 
-@trigger
-  launch startup
-  arcId writingArcId
+@arcId('writingArcId')
 recipe Ingestion
-  products: create persistent 'products'
+  products: create 'products' @persistent
   Writer
     products: products
 

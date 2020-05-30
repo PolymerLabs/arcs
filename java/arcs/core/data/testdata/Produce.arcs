@@ -6,10 +6,8 @@ import './Schemas.arcs'
 particle Ingestion
   events: writes [Event {type, timestamp, value}]
 
-@trigger
-  launch startup
-  arcId eventIngestion
+@arcId('eventIngestion')
 recipe EventsIngestion
-  events: create persistent 'raw-events'
+  events: create 'raw-events' @persistent
   Ingestion
     events: events

@@ -28,38 +28,15 @@ describe('recipe2plan', () => {
     it('detects long running arc', async () => {
       const manifest = (await Manifest.parse(`
           recipe Zero
-          @trigger
-            key value
+          @arcId('myLongRunningArc')
           recipe One
-          @trigger
-            launch startup
-            foo bar
-          recipe Two
-          @trigger
-            arcId notLongRunningArc
-            foo bar
-          recipe Three
-          @trigger
-            launch startup
-            arcId myLongRunningArc
-          recipe Four
       `));
-      assert.lengthOf(manifest.recipes, 5);
+      assert.lengthOf(manifest.recipes, 2);
       const resolver = new StorageKeyRecipeResolver(manifest);
       assert.isFalse(isLongRunning(manifest.recipes[0]));
       assert.isNull(findLongRunningArcId(manifest.recipes[0]));
-
-      assert.isNull(findLongRunningArcId(manifest.recipes[1]));
-      assert.isFalse(isLongRunning(manifest.recipes[1]));
-
-      assert.isNull(findLongRunningArcId(manifest.recipes[2]));
-      assert.isFalse(isLongRunning(manifest.recipes[2]));
-
-      assert.isNull(findLongRunningArcId(manifest.recipes[3]));
-      assert.isFalse(isLongRunning(manifest.recipes[3]));
-
-      assert.equal(findLongRunningArcId(manifest.recipes[4]), 'myLongRunningArc');
-      assert.isTrue(isLongRunning(manifest.recipes[4]));
+      assert.equal(findLongRunningArcId(manifest.recipes[1]), 'myLongRunningArc');
+      assert.isTrue(isLongRunning(manifest.recipes[1]));
     });
     it('resolves mapping a handle from a long running arc into another long running arc', Flags.withDefaultReferenceMode(async () => {
       const manifest = await Manifest.parse(`\
@@ -68,17 +45,13 @@ describe('recipe2plan', () => {
     particle Writer
       data: writes Thing {name: Text}
 
-    @trigger
-      launch startup
-      arcId writeArcId
+    @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
 
-    @trigger
-      launch startup
-      arcId readArcId
+    @arcId('readArcId')
     recipe ReadingRecipe
       data: map 'my-handle-id'
       Reader
@@ -98,7 +71,7 @@ describe('recipe2plan', () => {
        data: writes Thing {name: Text}
     
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
 
@@ -123,13 +96,11 @@ describe('recipe2plan', () => {
        data: writes Thing {name: Text}
     
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
 
-    @trigger
-      launch startup
-      arcId readArcId
+    @arcId('readArcId')
     recipe ReadingRecipe
       data: map 'my-handle-id'
       Reader
@@ -150,11 +121,9 @@ describe('recipe2plan', () => {
     particle Writer
        data: writes Thing {name: Text}
     
-    @trigger
-      launch startup
-      arcId writeArcId
+    @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
 
@@ -177,17 +146,13 @@ describe('recipe2plan', () => {
     particle Writer
        data: writes Thing {name: Text}
     
-    @trigger
-      launch startup
-      arcId writeArcId
+    @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
 
-    @trigger
-      launch startup
-      arcId readArcId
+    @arcId('readArcId')
     recipe ReadingRecipe
       data: map 'my-handle-id'
       Reader
@@ -204,11 +169,9 @@ describe('recipe2plan', () => {
     particle Reader
       data: reads Thing {name: Text}
 
-    @trigger
-      launch startup
-      arcId writeArcId
+    @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
 
@@ -230,16 +193,12 @@ describe('recipe2plan', () => {
     particle Writer
        data: writes Thing {name: Text}
     
-    @trigger
-      launch startup
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
 
-    @trigger
-      launch startup
-      arcId readArcId
+    @arcId('readArcId')
     recipe ReadingRecipe
       data: map 'my-handle-id'
       Reader
@@ -260,17 +219,13 @@ describe('recipe2plan', () => {
     particle Writer
        data: writes Thing {name: Text}
     
-    @trigger
-      launch startup
-      arcId writeArcId
+    @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent
+      thing: create @persistent
       Writer
         data: writes thing
 
-    @trigger
-      launch startup
-      arcId readArcId
+    @arcId('readArcId')
     recipe ReadingRecipe
       data: map 'my-handle-id'
       Reader
@@ -290,25 +245,19 @@ describe('recipe2plan', () => {
     particle Writer
        data: writes Thing {name: Text}
     
-    @trigger
-      launch startup
-      arcId writeArcId
+    @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
         
-    @trigger
-      launch startup
-      arcId writeArcId2
+    @arcId('writeArcId2')
     recipe WritingRecipe2
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: writes thing
 
-    @trigger
-      launch startup
-      arcId readArcId
+    @arcId('readArcId')
     recipe ReadingRecipe
       data: map 'my-handle-id'
       Reader
@@ -326,12 +275,10 @@ describe('recipe2plan', () => {
     particle Writer
        data: writes Thing {name: Text}
     
-    @trigger
-      launch startup
-      arcId writeArcId
+    @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
-      thing2: create persistent
+      thing: create 'my-handle-id' @persistent
+      thing2: create @persistent
       Writer
         data: writes thing
       Writer
@@ -346,11 +293,9 @@ describe('recipe2plan', () => {
     particle Writer
        data: writes Thing {name: Text}
     
-    @trigger
-      launch startup
-      arcId writeArcId
+    @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent queryable 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent @queryable
       Writer
         data: writes thing`);
 
@@ -364,11 +309,9 @@ describe('recipe2plan', () => {
     particle Writer
        data: writes [Thing {name: Text}]
     
-    @trigger
-      launch startup
-      arcId writeArcId
+    @arcId('writeArcId')
     recipe WritingRecipe
-      thing: create persistent 'my-handle-id' 
+      thing: create 'my-handle-id' @persistent
       Writer
         data: thing`);
 
@@ -401,9 +344,7 @@ describe('recipe2plan', () => {
     particle Writer
        data: writes Thing {name: Text}
     
-    @trigger
-      launch startup
-      arcId writeArcId
+    @arcId('writeArcId')
     recipe WritingRecipe
       thing: create 'my-handle-id' 
       Writer

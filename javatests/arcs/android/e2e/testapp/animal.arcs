@@ -10,9 +10,7 @@ particle ReadAnimal in 'arcs.android.e2e.testapp.ReadAnimalHostService.ReadAnima
 particle WriteAnimal in 'arcs.android.e2e.testapp.WriteAnimalHostService.WriteAnimal'
   animal: writes Animal {name}
 
-@trigger
-  launch startup
-  arcId animalArc
+@arcId('animalArc')
 recipe AnimalRecipe
   recipeAnimal: create
 

@@ -32,9 +32,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
+// import kotlinx.coroutines.flow.debounce
+// import kotlinx.coroutines.flow.filter
+// import kotlinx.coroutines.flow.first
 
 /**
  * An [ActiveStore] capable of communicating directly with a [Driver].
@@ -82,7 +82,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
     override suspend fun idle() {
         // TODO: tune the debounce window
-        storeIdlenessFlow.debounce(50).filter { it }.first()
+        // storeIdlenessFlow.debounce(50).filter { it }.first()
     }
 
     override suspend fun getLocalData(): Data = synchronized(this) { localModel.data }

@@ -445,23 +445,6 @@ describe('FlowGraph validation', () => {
     assertGraphFailures(graph, [`'check bar is trusted' failed: no data ingress.`]);
   });
 
-  it('fails when the edge has no ingress', async () => {
-    const graph = await buildFlowGraph(`
-      particle P1
-        foo: writes Foo {}
-        claim foo is trusted
-      particle P2
-        bar: reads Foo {}
-        check bar is trusted
-      recipe R
-        P1
-          foo: writes h
-        P2
-          bar: reads h
-    `);
-    assertGraphFailures(graph, [`'check bar is trusted' failed: no data ingress.`]);
-  });
-
   it('fails when a different tag is claimed', async () => {
     const graph = await buildFlowGraph(`
       particle P1

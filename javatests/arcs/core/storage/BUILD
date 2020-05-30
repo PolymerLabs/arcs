@@ -55,6 +55,7 @@ arcs_kt_jvm_library(
     deps = [
         "//java/arcs/core/crdt",
         "//java/arcs/core/storage",
+        "//java/arcs/core/util",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

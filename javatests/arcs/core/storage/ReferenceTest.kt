@@ -29,7 +29,6 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
-import arcs.jvm.util.JvmTime
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
@@ -49,7 +48,7 @@ class ReferenceTest {
     private val backingKey = RamDiskStorageKey("people")
     private val dereferencer = RawEntityDereferencer(
         Person.SCHEMA,
-        scheduler = Scheduler(JvmTime, EmptyCoroutineContext)
+        scheduler = Scheduler(EmptyCoroutineContext)
     )
 
     @Test

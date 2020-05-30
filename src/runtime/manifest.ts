@@ -189,7 +189,7 @@ export class Manifest {
     return this.allRecipes.reduce((acc, x) => acc.concat(x.handles), []);
   }
   get activeRecipe() {
-    return this._recipes.find(recipe => recipe.annotation === 'active');
+    return this._recipes.find(recipe => recipe.getAnnotation('active'));
   }
   get particles() {
     return Object.values(this._particles);
@@ -721,6 +721,9 @@ ${e.message}
           if (fields[field.name].refinement) {
             fields[field.name].refinement = Refinement.fromAst(fields[field.name].refinement, {[field.name]: field.type.type});
           }
+          if (fields[field.name].annotations) {
+            fields[field.name].annotations = Manifest._buildAnnotationRefs(manifest, fields[field.name].annotations);
+          }
           break;
         }
         case 'description': {
@@ -811,6 +814,12 @@ ${e.message}
           manifest.errors.push(warning);
         }
         arg.type = arg.type.model;
+        if (arg.type.getEntitySchema()) {
+          const fields = arg.type.getEntitySchema().fields;
+          for (const name of Object.keys(fields)) {
+            fields[name].annotations = Manifest._buildAnnotationRefs(manifest, fields[name].annotations);
+          }
+        }
         processArgTypes(arg.dependentConnections);
         arg.annotations = Manifest._buildAnnotationRefs(manifest, arg.annotations);
       }
@@ -850,12 +859,6 @@ ${e.message}
   private static _processRecipe(manifest: Manifest, recipeItem: AstNode.RecipeNode) {
     const recipe = manifest._newRecipe(recipeItem.name);
 
-    if (recipeItem.annotation) {
-      recipe.annotation = recipeItem.annotation;
-    }
-    if (recipeItem.triggers) {
-      recipe.triggers = recipeItem.triggers;
-    }
     recipe.annotations = Manifest._buildAnnotationRefs(manifest, recipeItem.annotationRefs);
 
     if (recipeItem.verbs) {
@@ -910,18 +913,16 @@ ${e.message}
       }
       handle.fate = item.kind === 'handle' && item.fate ? item.fate : null;
       if (item.kind === 'handle') {
-        if (item.annotation) {
-          assert(item.annotation.simpleAnnotation === 'ttl',
-                `unsupported recipe handle annotation ${item.annotation.simpleAnnotation}`);
-          handle.ttl = new Ttl(
-              item.annotation.parameter.count,
-              Ttl.ttlUnitsFromString(item.annotation.parameter.units));
-        }
-        if (item.capabilities) {
-          handle.capabilities = new Capabilities(handle.ttl.isInfinite ? item.capabilities : [...item.capabilities, 'queryable']);
-        }
         if (item.annotations) {
           handle.annotations = Manifest._buildAnnotationRefs(manifest, item.annotations);
+          const ttlAnnotation = handle.getAnnotation('ttl');
+          if (ttlAnnotation) {
+            handle.ttl = Ttl.fromString(ttlAnnotation.params['value'].toString());
+          }
+          handle.capabilities = Capabilities.fromAnnotations(handle.annotations);
+          if (!handle.ttl.isInfinite) {
+            handle.capabilities.merge(Capabilities.queryable);
+          }
         }
       }
       items.byHandle.set(handle, item);

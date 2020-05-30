@@ -31,8 +31,9 @@ data class ReferencablePrimitive<T>(
     val valueRepr: String = value.toString()
 ) : Referencable {
     // TODO: consider other 'serialization' mechanisms.
-    override val id: ReferenceId =
-        "Primitive<${primitiveKClassMap.getOrElse(klass, klass::toString)}>($valueRepr)"
+    private val klassRepr = "Primitive<${primitiveKClassMap.getOrElse(klass, klass::toString)}>"
+    override val id: ReferenceId
+        get() = "$klassRepr($valueRepr)"
 
     override fun toString(): String = "Primitive($valueRepr)"
 

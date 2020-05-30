@@ -100,7 +100,7 @@ describe('Runtime', () => {
         recipe
           t1: create
           t2: create *
-          t3: create tied-to-runtime #things
+          t3: create #things @tiedToRuntime
           MyParticle
             t1: writes t1
             t2: writes t2
