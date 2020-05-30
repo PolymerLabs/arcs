@@ -20,7 +20,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/common",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
-        "//java/arcs/core/storage:storage_key",
+        "//java/arcs/core/storage",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",

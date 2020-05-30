@@ -170,7 +170,7 @@ describe('Arc new storage', () => {
       particle MyParticle in 'MyParticle.js'
         thing: writes Thing
       recipe
-        handle0: create tied-to-arc
+        handle0: create @tiedToArc
         MyParticle
           thing: handle0
       `, {loader, memoryProvider, fileName: process.cwd() + '/input.manifest'});
@@ -715,7 +715,7 @@ describe('Arc', () => {
     const newArc = await Arc.deserialize({serialization, loader, slotComposer, context, fileName: 'foo.manifest'});
     await newArc.idle;
     assert.strictEqual(newArc._stores.length, 0);
-    assert.strictEqual(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
+    assert.strictEqual(newArc.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');
     newArc.dispose();
   });
@@ -959,7 +959,7 @@ describe('Arc', () => {
 
     const newArc = await Arc.deserialize({serialization, loader, slotComposer, context: manifest, fileName: 'foo.manifest'});
     assert.strictEqual(newArc._stores.length, 1);
-    assert.strictEqual(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
+    assert.strictEqual(newArc.activeRecipe.toString(), `@active\n${arc.activeRecipe.toString()}`);
     assert.strictEqual(newArc.id.idTreeAsString(), 'test');
   });
 
@@ -1076,9 +1076,9 @@ describe('Arc storage migration', () => {
           things1: reads writes [Thing]
           things2: reads writes Thing
         recipe
-          h0: create @ttl(3m)
-          h1: create @ttl(23h)
-          h2: create @ttl(2d)
+          h0: create @ttl('3m')
+          h1: create @ttl('23h')
+          h2: create @ttl('2d')
           ThingAdder
             things0: h0
             things1: h1

@@ -237,6 +237,9 @@ export class Handle implements Comparable<Handle> {
         `Annotation '${a.name}' is invalid for Handle`));
     this._annotations = annotations;
   }
+  getAnnotation(name: string): AnnotationRef | null {
+    return this.annotations.find(a => a.name === name);
+  }
 
   static effectiveType(handleType: Type, connections: {type?: Type, direction?: Direction, relaxed?: boolean}[]) {
     const variableMap = new Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>();
@@ -384,13 +387,13 @@ export class Handle implements Comparable<Handle> {
     if (this.fate === 'join') {
       result.push(`(${this.joinedHandles.map(h => getName(h)).join(', ')})`);
     }
-    if (!this.capabilities.isEmpty()) {
-      result.push(this.capabilities.toString());
-    }
     if (this.id) {
       result.push(`'${this.id}'`);
     }
     result.push(...this.tags.map(a => `#${a}`));
+    if (this.annotations && this.annotations.length > 0) {
+      result.push(this.annotations.map(a => a.toString()).join(' '));
+    }
 
     // Debug information etc.
     if (this.type) {

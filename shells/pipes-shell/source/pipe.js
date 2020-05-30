@@ -51,7 +51,7 @@ const requireContext = async manifest => {
 };
 
 const contextReady = async (bus, context) => {
-  const recipes = context.allRecipes.map(r => ({name: r.name, triggers: r.triggers}));
+  const recipes = context.allRecipes.map(r => ({name: r.name}));
   bus.send({message: 'context', recipes});
 };
 

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../platform/chai-web.js';
-import {Capabilities} from '../capabilities.js';
+import {Capabilities, Capability} from '../capabilities.js';
 
 describe('Capabilities', () => {
   it('verifies same capabilities', () => {
@@ -27,13 +27,13 @@ describe('Capabilities', () => {
     assert.isFalse(Capabilities.queryable.isSame(Capabilities.persistentQueryable));
 
     assert.isTrue(new Capabilities([]).isSame(new Capabilities([])));
-    assert.isTrue(new Capabilities(['persistent', 'tied-to-arc']).isSame(
-        new Capabilities(['persistent', 'tied-to-arc'])));
-    assert.isTrue(new Capabilities(['persistent', 'queryable']).isSame(
+    assert.isTrue(new Capabilities([Capability.Persistent, Capability.TiedToArc]).isSame(
+        new Capabilities([Capability.Persistent, Capability.TiedToArc])));
+    assert.isTrue(new Capabilities([Capability.Persistent, Capability.Queryable]).isSame(
           Capabilities.persistentQueryable));
-    assert.isFalse(new Capabilities(['persistent', 'tied-to-arc']).isSame(Capabilities.persistent));
+    assert.isFalse(new Capabilities([Capability.Persistent, Capability.TiedToArc]).isSame(Capabilities.persistent));
     assert.isFalse(Capabilities.persistent.isSame(
-      new Capabilities(['persistent', 'tied-to-arc'])));
+      new Capabilities([Capability.Persistent, Capability.TiedToArc])));
   });
 
   it('verifies contained capabilities', () => {
@@ -55,10 +55,10 @@ describe('Capabilities', () => {
     assert.isFalse(Capabilities.queryable.contains(Capabilities.persistentQueryable));
     assert.isFalse(Capabilities.queryable.contains(Capabilities.persistent));
 
-    assert.isTrue(new Capabilities(['persistent', 'tied-to-arc']).contains(
-        new Capabilities(['persistent', 'tied-to-arc'])));
-    assert.isTrue(new Capabilities(['persistent', 'tied-to-arc']).contains(Capabilities.persistent));
+    assert.isTrue(new Capabilities([Capability.Persistent, Capability.TiedToArc]).contains(
+        new Capabilities([Capability.Persistent, Capability.TiedToArc])));
+    assert.isTrue(new Capabilities([Capability.Persistent, Capability.TiedToArc]).contains(Capabilities.persistent));
     assert.isFalse(Capabilities.persistent.isSame(
-      new Capabilities(['persistent', 'tied-to-arc'])));
+      new Capabilities([Capability.Persistent, Capability.TiedToArc])));
   });
 });

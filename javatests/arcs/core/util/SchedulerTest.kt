@@ -11,22 +11,24 @@
 
 package arcs.core.util
 
-import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.testutil.LogRule
-import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
-import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
-import org.junit.Ignore
+import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.util.concurrent.Executors
+import kotlin.coroutines.CoroutineContext
 
 @RunWith(JUnit4::class)
 class SchedulerTest {
@@ -34,10 +36,21 @@ class SchedulerTest {
     val log = LogRule()
 
     private val singleThreadDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    private lateinit var schedulerContext: CoroutineContext
+
+    @Before
+    fun setUp() {
+        schedulerContext = singleThreadDispatcher + Job()
+    }
+
+    @After
+    fun tearDown() {
+        schedulerContext.cancel()
+    }
 
     @Test
-    fun simpleTest() = runBlocking {
-        val scheduler = Scheduler(JvmTime, coroutineContext + singleThreadDispatcher)
+    fun simpleTest() = runTest {
+        val scheduler = Scheduler(schedulerContext)
         val stateHolder = StateHolder()
 
         val processors = (0 until 100).map {
@@ -48,10 +61,11 @@ class SchedulerTest {
         }
 
         scheduler.schedule(processors + listeners)
+        log("Waiting for idle")
         scheduler.waitForIdle()
+        log("Idleness achieved")
 
         assertThat(scheduler.launches.value).isEqualTo(1)
-        assertThat(scheduler.loops.value).isEqualTo(1)
 
         assertWithMessage("Agenda runs Processors then Listeners, where each batch is in-order.")
             .that(stateHolder.calls)
@@ -60,46 +74,13 @@ class SchedulerTest {
                     (0 until 100).map { it to "Listener(foo, FooListener)" }
             )
             .inOrder()
-    }
 
-    @Ignore("b/157268079 - Deflake")
-    @Test
-    fun schedulingWhileProcessing_triggersAnotherLoop_notAnotherLaunch() = runBlocking {
-        val scheduler = Scheduler(JvmTime, coroutineContext + singleThreadDispatcher)
-        val stateHolder = StateHolder()
-
-        val longProcessor = TestProcessor {
-            Thread.sleep(300)
-            stateHolder.calls += 0 to "LongSleep"
-        }
-
-        val followupProcessor = TestProcessor {
-            stateHolder.calls += 1 to "Followup"
-        }
-
-        scheduler.schedule(longProcessor)
-        Thread.sleep(100) // let the first one start.
-        scheduler.schedule(followupProcessor)
-
-        scheduler.waitForIdle()
-
-        assertWithMessage("There should be only one coroutine launch")
-            .that(scheduler.launches.value)
-            .isEqualTo(1)
-        assertWithMessage("The coroutine launch should've looped twice")
-            .that(scheduler.loops.value)
-            .isEqualTo(2)
-        assertThat(stateHolder.calls)
-            .containsExactly(
-                0 to "LongSleep",
-                1 to "Followup"
-            )
-            .inOrder()
+        scheduler.cancel()
     }
 
     @Test
-    fun tasks_schedulingOtherTasks_dontDeadlock() = runBlocking {
-        val scheduler = Scheduler(JvmTime, coroutineContext + singleThreadDispatcher)
+    fun tasks_schedulingOtherTasks_dontDeadlock() = runTest {
+        val scheduler = Scheduler(schedulerContext)
         val stateHolder = StateHolder()
 
         val processorsToCreate = 10
@@ -119,18 +100,16 @@ class SchedulerTest {
         yield()
         scheduler.waitForIdle()
 
-        assertWithMessage("There should have been a loop for each processor")
-            .that(scheduler.loops.value)
-            .isEqualTo(processorsToCreate)
         assertThat(processorsLeftToCreate).isEqualTo(0)
         assertThat(stateHolder.calls).hasSize(processorsToCreate)
+
+        scheduler.cancel()
     }
 
     @Test
-    fun tasks_canTimeout() = runBlocking<Unit> {
+    fun tasks_canTimeout() = runTest {
         val scheduler = Scheduler(
-            JvmTime,
-            coroutineContext + singleThreadDispatcher,
+            schedulerContext,
             agendaProcessingTimeoutMs = 100
         )
 
@@ -141,10 +120,13 @@ class SchedulerTest {
             listOf(
                 TestProcessor {
                     firstProcRan = true
-                    Thread.sleep(200)
+                    log("First Proc Sleeping")
+                    Thread.sleep(2000)
+                    log("First Proc Woke Up")
                 },
                 TestProcessor {
                     secondProcRan = true
+                    log("Second Proc ran")
                 }
             )
         )
@@ -156,31 +138,31 @@ class SchedulerTest {
             .that(firstProcRan).isTrue()
         assertWithMessage("Second proc should've been skipped, because of timeout")
             .that(secondProcRan).isFalse()
+
+        scheduler.cancel()
     }
 
     @Test
-    fun pause_pausesExecution_resume_resumesExecution() = runBlocking {
-        val scheduler = Scheduler(JvmTime, coroutineContext + singleThreadDispatcher)
+    fun pause_pausesExecution_resume_resumesExecution() = runTest {
+        val scheduler = Scheduler(schedulerContext)
 
-        var firstCalled = false
+        val firstCalled = Job()
         var secondCalled = false
 
         val first = TestProcessor {
-            firstCalled = true
             scheduler.pause()
+            firstCalled.complete()
         }
         val second = TestProcessor {
             secondCalled = true
         }
 
+        log("scheduling first")
         scheduler.schedule(first)
-        Thread.sleep(50) // Just to ensure that we launched the agenda-processing coroutine
-        // At this point, the scheduler should be paused, so `second` shouldn't get run.
+        firstCalled.join()
+        log("scheduling second")
         scheduler.schedule(second)
-        scheduler.waitForIdle()
 
-        assertWithMessage("First should've been called")
-            .that(firstCalled).isTrue()
         assertWithMessage("Second shouldn't have been called")
             .that(secondCalled).isFalse()
 
@@ -190,11 +172,13 @@ class SchedulerTest {
 
         assertWithMessage("Second should have been called after resume")
             .that(secondCalled).isTrue()
+
+        scheduler.cancel()
     }
 
     @Test
-    fun executesListenersByNamespaceAndName() = runBlocking {
-        val scheduler = Scheduler(JvmTime, coroutineContext + singleThreadDispatcher)
+    fun executesListenersByNamespaceAndName() = runTest {
+        val scheduler = Scheduler(schedulerContext)
         val stateHolder = StateHolder()
 
         val firstNamespace = listOf(
@@ -223,6 +207,8 @@ class SchedulerTest {
                 2 to "Listener(b, C)"
             )
             .inOrder()
+
+        scheduler.cancel()
     }
 
     private fun createProcess(index: Int, stateHolder: StateHolder): Scheduler.Task =
@@ -235,6 +221,10 @@ class SchedulerTest {
         stateHolder: StateHolder
     ): Scheduler.Task = TestListener(namespace, name) {
         stateHolder.calls.add(index to "Listener($namespace, $name)")
+    }
+
+    private fun runTest(block: suspend CoroutineScope.() -> Unit) = runBlocking {
+        withTimeout(5000) { this.block() }
     }
 
     private class StateHolder(

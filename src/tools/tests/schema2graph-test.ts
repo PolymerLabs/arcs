@@ -539,4 +539,58 @@ describe('schema2graph', () => {
       'R_H4': ['R_H4']
     });
   });
+
+  it('schemas in singletons and collections of tuples', async () => {
+    const manifest = await Manifest.parse(`
+      particle R
+        s: reads (&Product {name: Text}, &Review {author: Text, content: Text})
+        c: reads [(&Product {name: Text, price: Number}, &Review {author: Text})]
+    `);
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'R_S_0', parents: '', children: 'R_C_0'},
+      {name: 'R_C_1', parents: '', children: 'R_S_1'},
+      {name: 'R_C_0', parents: 'R_S_0', children: ''},
+      {name: 'R_S_1', parents: 'R_C_1', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'R_C_0': ['R_C_0'],
+      'R_C_1': ['R_C_1'],
+      'R_S_0': ['R_S_0'],
+      'R_S_1': ['R_S_1'],
+    });
+  });
+
+  it('schemas in tuples and references are analyzed', async () => {
+    const manifest = await Manifest.parse(`
+      particle R
+        tuple: reads [(
+          &Product {name: Text, price: Number},
+          &Review {content: Text, author: &Person {name: Text}}
+        )]
+        ref: reads [Product {
+          name: Text,
+          price: Number,
+          review: &Review {
+            content: Text,
+            author: &Person {
+              name: Text
+            }
+          }
+        }]
+    `);
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'R_Tuple_0', parents: '', children: 'R_Ref'},
+      {name: 'R_Tuple_1_Author', parents: '', children: ''},
+      {name: 'R_Tuple_1', parents: '', children: ''},
+      {name: 'R_Ref', parents: 'R_Tuple_0', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'R_Ref': ['R_Ref'],
+      'R_Tuple_0': ['R_Tuple_0'],
+      'R_Tuple_1': ['R_Ref_Review', 'R_Tuple_1'],
+      'R_Tuple_1_Author': ['R_Ref_Review_Author', 'R_Tuple_1_Author'],
+    });
+  });
 });

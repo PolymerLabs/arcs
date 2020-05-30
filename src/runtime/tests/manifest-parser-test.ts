@@ -53,9 +53,9 @@ describe('manifest parser', () => {
   it('parses recipes that creates handles with ttls', () => {
     parse(`
       recipe Thing
-        h0: create #myTag @ttl(20d)
-        h1: create 'my-id' #anotherTag @ttl(1h)
-        h2: create @ttl ( 30m )`);
+        h0: create #myTag @ttl('20d')
+        h1: create 'my-id' #anotherTag @ttl('1h')
+        h2: create @ttl (  '30m'  )`);
   });
   it('parses recipes with a synthetic join handles', () => {
     parse(`
@@ -67,9 +67,9 @@ describe('manifest parser', () => {
   it('parses recipe handles with capabilities', () => {
     parse(`
       recipe Thing
-        h0: create persistent
-        h1: create tied-to-runtime 'my-id'
-        h2: create tied-to-arc #mytag`);
+        h0: create @persistent
+        h1: create 'my-id' @tiedToRuntime
+        h2: create #mytag @tiedToArc`);
   });
   it('parses recipes with particles', () => {
     parse(`
@@ -391,6 +391,22 @@ describe('manifest parser', () => {
     parse(`
       particle Foo
         kotlinThings: reads KotlinThings {aByte: Byte, aShort: Short, anInt: Int, aLong: Long, aChar: Char, aFloat: Float, aDouble: Double}
+    `);
+  });
+  it('parses a schema with ordered list types', () => {
+    parse(`
+      schema OrderedLists
+        someNums: List<Number>
+        someLongs: List<Long>
+        someStrings: List<Text>
+        someReferences: List<&{}>
+        someUnions: List<(Number or Text)>
+    `);
+  });
+  it('parses an inline schema with ordered list types', () => {
+    parse(`
+      particle Foo
+        orderedThings: reads OrderedLists {someNums: List<Number>, someLongs: List<Long>, someStrings: List<Text>, someReferences: List<&{}>, someUnions: List<(Number or Text)>}
     `);
   });
   it('parses typenames with reserved type names as a prefix (Boolean)', () => {

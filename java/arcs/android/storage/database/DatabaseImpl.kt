@@ -23,7 +23,12 @@ import arcs.android.common.forEach
 import arcs.android.common.forSingleResult
 import arcs.android.common.getBoolean
 import arcs.android.common.getNullableBoolean
+import arcs.android.common.getNullableByte
 import arcs.android.common.getNullableDouble
+import arcs.android.common.getNullableFloat
+import arcs.android.common.getNullableInt
+import arcs.android.common.getNullableLong
+import arcs.android.common.getNullableShort
 import arcs.android.common.getNullableString
 import arcs.android.common.map
 import arcs.android.common.transaction
@@ -256,6 +261,8 @@ class DatabaseImpl(
         val singletons = mutableMapOf<FieldName, Referencable?>()
         val collections = mutableMapOf<FieldName, MutableSet<Referencable>>()
 
+        val numeric_types = TYPES_IN_NUMBER_TABLE.joinToString(prefix = "(", postfix = ")")
+
         db.rawQuery(
             """
                 SELECT
@@ -279,7 +286,7 @@ class DatabaseImpl(
                     ON fields.is_collection = 1
                     AND collection_entries.collection_id = field_values.value_id
                 LEFT JOIN number_primitive_values
-                    ON fields.type_id = 1 AND number_primitive_values.id = field_value_id
+                    ON fields.type_id IN $numeric_types AND number_primitive_values.id = field_value_id
                 LEFT JOIN text_primitive_values
                     ON fields.type_id = 2 AND text_primitive_values.id = field_value_id
                 LEFT JOIN entity_refs
@@ -298,6 +305,13 @@ class DatabaseImpl(
                 PrimitiveType.Boolean.ordinal -> it.getNullableBoolean(3)?.toReferencable()
                 PrimitiveType.Text.ordinal -> it.getNullableString(4)?.toReferencable()
                 PrimitiveType.Number.ordinal -> it.getNullableDouble(5)?.toReferencable()
+                PrimitiveType.Byte.ordinal -> it.getNullableByte(3)?.toReferencable()
+                PrimitiveType.Short.ordinal -> it.getNullableShort(3)?.toReferencable()
+                PrimitiveType.Int.ordinal -> it.getNullableInt(3)?.toReferencable()
+                PrimitiveType.Long.ordinal -> it.getNullableLong(3)?.toReferencable()
+                PrimitiveType.Char.ordinal -> it.getNullableInt(3)?.toChar()?.toReferencable()
+                PrimitiveType.Float.ordinal -> it.getNullableFloat(5)?.toReferencable()
+                PrimitiveType.Double.ordinal -> it.getNullableDouble(5)?.toReferencable()
                 else -> if (it.isNull(6)) {
                     null
                 } else {
@@ -711,10 +725,52 @@ class DatabaseImpl(
         }
     }
 
+    /**
+     * Removes all refs (in entity_refs table) that are not being used.
+     */
+    private fun removeUnusedRefs(db: SQLiteDatabase) {
+        db.transaction {
+            // Find all refs used in singleton fields.
+            val singletonFieldRefs = rawQuery(
+                """
+                    SELECT field_values.value_id
+                    FROM field_values
+                    INNER JOIN fields ON field_values.field_id = fields.id
+                    WHERE fields.is_collection = 0
+                    AND fields.type_id > ?
+                """.trimIndent(),
+                arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only references.
+            ).map { it.getLong(0).toString() }.toSet()
+
+            // Find all refs used in top level collections/singletons or collection fields.
+            val collectionRefs = rawQuery(
+                """
+                    SELECT entity_refs.id
+                    FROM entity_refs
+                    LEFT JOIN collection_entries ON entity_refs.id = collection_entries.value_id
+                    LEFT JOIN collections ON collection_entries.collection_id = collections.id
+                    WHERE collections.type_id > ?
+                """.trimIndent(),
+                arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only entity collections.
+            ).map { it.getLong(0).toString() }.toSet()
+
+            val usedRefs = (collectionRefs union singletonFieldRefs)
+                .joinToString(separator = ", ", prefix = "", postfix = "")
+            // Remove from all unused references.
+            delete(
+                TABLE_ENTITY_REFS,
+                "id NOT IN ($usedRefs)",
+                arrayOf()
+            )
+        }
+    }
+
     override suspend fun runGarbageCollection() {
         val twoDaysAgo = JvmTime.currentTimeMillis - Duration.ofDays(2).toMillis()
         writableDatabase.transaction {
             val db = this
+            // First, remove unused refs (leftovers from removed entities/fields).
+            removeUnusedRefs(db)
             rawQuery(
                 """
                     SELECT storage_key_id, storage_key, orphan, MAX(entity_refs.id) IS NULL AS noRef
@@ -847,7 +903,7 @@ class DatabaseImpl(
             // Clean up unused values as they can contain sensitive data.
             // This query will return all field value ids being referenced by collection or 
             // singleton fields.
-            val usedFieldIdsQuery =
+            fun usedFieldIdsQuery(typeIds: List<Int>) =
                 """
                     SELECT
                         CASE
@@ -860,18 +916,18 @@ class DatabaseImpl(
                     LEFT JOIN collection_entries
                         ON fields.is_collection = 1
                         AND collection_entries.collection_id = field_values.value_id
-                    WHERE fields.type_id = ?
+                    WHERE fields.type_id in (${typeIds.map { it.toString() }.joinToString()})
                 """.trimIndent()
 
             delete(
                 TABLE_NUMBER_PRIMITIVES,
-                "id NOT IN ($usedFieldIdsQuery)",
-                arrayOf(PrimitiveType.Number.ordinal.toString())
+                "id NOT IN (${usedFieldIdsQuery(TYPES_IN_NUMBER_TABLE)})",
+                arrayOf()
             )
             delete(
                 TABLE_TEXT_PRIMITIVES,
-                "id NOT IN ($usedFieldIdsQuery)",
-                arrayOf(PrimitiveType.Text.ordinal.toString())
+                "id NOT IN (${usedFieldIdsQuery(listOf(PrimitiveType.Text.ordinal))})",
+                arrayOf()
             )
 
             // Remove all references to these entities.
@@ -1217,7 +1273,7 @@ class DatabaseImpl(
     ): Set<*> {
         // Booleans are easy, just fetch the values from the collection_entries table directly.
         if (typeId.toInt() == PrimitiveType.Boolean.ordinal) {
-            counters?.increment(DatabaseCounters.GET_PRIMITIVE_COLLECTION_BOOLEAN)
+            counters?.increment(DatabaseCounters.GET_PRIMITIVE_COLLECTION_INLINE)
             return db.rawQuery(
                 "SELECT value_id FROM collection_entries WHERE collection_id = ?",
                 arrayOf(collectionId.toString())
@@ -1322,12 +1378,39 @@ class DatabaseImpl(
         }
         val value = primitiveValue.value
         // TODO(#4889): Cache the most frequent values somehow.
-        if (typeId.toInt() == PrimitiveType.Boolean.ordinal) {
-            counters?.increment(DatabaseCounters.GET_BOOLEAN_VALUE_ID)
-            return when (value) {
-                true -> 1
-                false -> 0
-                else -> throw IllegalArgumentException("Expected value to be a Boolean.")
+        when (typeId.toInt()) {
+            PrimitiveType.Boolean.ordinal -> {
+                counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
+                return when (value) {
+                    true -> 1
+                    false -> 0
+                    else -> throw IllegalArgumentException("Expected value to be a Boolean.")
+                }
+            }
+            PrimitiveType.Byte.ordinal -> {
+                counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
+                require(value is Byte) { "Expected value to be a Byte." }
+                return value.toLong()
+            }
+            PrimitiveType.Short.ordinal -> {
+                counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
+                require(value is Short) { "Expected value to be a Short." }
+                return value.toLong()
+            }
+            PrimitiveType.Int.ordinal -> {
+                counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
+                require(value is Int) { "Expected value to be an Int." }
+                return value.toLong()
+            }
+            PrimitiveType.Long.ordinal -> {
+                counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
+                require(value is Long) { "Expected value to be a Long." }
+                return value
+            }
+            PrimitiveType.Char.ordinal -> {
+                counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
+                require(value is Char) { "Expected value to be a Char." }
+                return value.toLong()
             }
         }
         return db.transaction {
@@ -1338,6 +1421,16 @@ class DatabaseImpl(
                     TABLE_TEXT_PRIMITIVES to value
                 }
                 PrimitiveType.Number.ordinal -> {
+                    require(value is Double) { "Expected value to be a Double." }
+                    counters?.increment(DatabaseCounters.GET_NUMBER_VALUE_ID)
+                    TABLE_NUMBER_PRIMITIVES to value.toString()
+                }
+                PrimitiveType.Float.ordinal -> {
+                    require(value is Float) { "Expected value to be a Float." }
+                    counters?.increment(DatabaseCounters.GET_NUMBER_VALUE_ID)
+                    TABLE_NUMBER_PRIMITIVES to value.toString()
+                }
+                PrimitiveType.Double.ordinal -> {
                     require(value is Double) { "Expected value to be a Double." }
                     counters?.increment(DatabaseCounters.GET_NUMBER_VALUE_ID)
                     TABLE_NUMBER_PRIMITIVES to value.toString()
@@ -1629,5 +1722,12 @@ class DatabaseImpl(
         private val VERSION_2_MIGRATION = arrayOf("ALTER TABLE entities ADD COLUMN orphan INTEGER;")
 
         private val MIGRATION_STEPS = mapOf(2 to VERSION_2_MIGRATION)
+
+        /** The primitive types that are stored in TABLE_NUMBER_PRIMITIVES */
+        private val TYPES_IN_NUMBER_TABLE = listOf(
+            PrimitiveType.Number.ordinal,
+            PrimitiveType.Float.ordinal,
+            PrimitiveType.Double.ordinal
+        )
     }
 }
