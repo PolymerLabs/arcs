@@ -26,9 +26,6 @@ message PolicyProto {
   }
   // Egress type permitted by the policy.
   EgressType egress_type = 5;
-
-  // Whether user consent is required before using the policy.
-  bool user_consent_required = 6;
 }
 
 message PolicyTargetProto {
