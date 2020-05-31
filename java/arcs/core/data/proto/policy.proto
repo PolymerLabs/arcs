@@ -22,32 +22,28 @@ message PolicyProto {
   enum EgressType {
     EGRESS_TYPE_UNSPECIFIED = 0;
     LOGGING = 1;
-    FEDERATED_ANALYTICS = 2;
+    FEDERATED_AGGREGATION = 2;
   }
   // Egress type permitted by the policy.
   EgressType egress_type = 5;
 
   // Whether user consent is required before using the policy.
   bool user_consent_required = 6;
-
-  enum ApprovalCondition {
-    APPROVAL_CONDITION_UNSPECIFIED = 0;
-    PRE_APPROVED = 1;
-    APPROVAL_REQUIRED = 2;
-  }
-  // Approval condition for the policy.
-  ApprovalCondition approval_condition = 7;
 }
 
 message PolicyTargetProto {
-  // ID of the store targeted by the policy.
-  string store_id = 1;
+  // Schema type of the store targeted by the policy.
+  string schema_type = 1;
+
+  // The maximum age of the data that can be used, as a duration (not timestamp)
+  // in milliseconds.
+  int64 max_age_ms = 2;
 
   // Valid retention options for storing the target data.
-  repeated PolicyRetentionProto retentions = 2;
+  repeated PolicyRetentionProto retentions = 3;
 
   // Allowed usages for all fields in this target type.
-  repeated PolicyFieldProto fields = 3;
+  repeated PolicyFieldProto fields = 4;
 }
 
 message PolicyFieldProto {
@@ -64,18 +60,18 @@ message PolicyFieldProto {
     JOIN = 3;
   }
 
-  message AllowedUsages {
-    // Indicates all types of usages that are permitted. An empty list indicates
-    // no usages are permitted.
-    repeated UsageType usages = 1;
+  message AllowedUsage {
+    // The type of usage that is permitted.
+    UsageType usage = 1;
+
+    // An redaction label that must be applied before the data can be used for
+    // this usage type. Optional: an empty string means no redaction is
+    // required.
+    string redaction_label = 2;
   }
 
   // Specifies the allowed usages of raw data.
-  AllowedUsages raw_usages = 2;
-
-  // Specifies the allowed usages given that certain redactions have been
-  // performed first. Maps from redaction label to AllowedUsages.
-  map<string, AllowedUsages> redacted_usages = 3;
+  repeated AllowedUsage usages = 2;
 
   // Specified usages for subfields nested inside this field.
   repeated PolicyFieldProto subfields = 4;
