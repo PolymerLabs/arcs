@@ -55,6 +55,7 @@ export class Schema {
     }
     for (const [name, field] of Object.entries(fields)) {
       if (typeof(field) === 'string') {
+        assert(['Text', 'URL', 'Number', 'Boolean', 'Bytes'].includes(field), `non-primitive schema type ${field} need to be defined as a parser production`);
         this.fields[name] = {kind: 'schema-primitive', refinement: null, type: field, annotations: []};
       } else {
         this.fields[name] = field;
