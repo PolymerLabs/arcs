@@ -55,7 +55,7 @@ data class ParticleContext(
      */
     fun notifyWriteOnlyParticles() {
         if (awaitingReady.isEmpty()) {
-            particleState = ParticleState.Started
+            particleState = ParticleState.Running
             particle.onReady()
         }
     }
@@ -70,7 +70,7 @@ data class ParticleContext(
         when (event) {
             StorageEvent.READY -> {
                 if (awaitingReady.remove(handle) && awaitingReady.isEmpty()) {
-                    particleState = ParticleState.Started
+                    particleState = ParticleState.Running
                     particle.onReady()
                 }
             }
@@ -85,7 +85,7 @@ data class ParticleContext(
             StorageEvent.RESYNC -> {
                 desyncedHandles.remove(handle)
                 if (desyncedHandles.isEmpty()) {
-                    particleState = ParticleState.Started
+                    particleState = ParticleState.Running
                     particle.onResync()
                 }
             }

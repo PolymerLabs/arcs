@@ -461,7 +461,6 @@ abstract class AbstractArcHost(
             val context = lookupOrCreateArcHostContext(arcId)
             val partition = contextToPartition(arcId, context)
             startArc(partition)
-            // TODO: should invoke onHandleUpdate for readable affectedKeys?
         }
     }
 

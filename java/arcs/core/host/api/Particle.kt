@@ -26,9 +26,8 @@ interface Particle {
      *
      * This should be used to initialize writeable handles to their starting state prior to the
      * arc starting. Readable handles cannot be read in this method.
-     * TODO: remove suspend when internal code no longer uses it
      */
-    suspend fun onFirstStart() = Unit
+    fun onFirstStart() = Unit
 
     /**
      * Called whenever this [Particle] is instantiated, both initially and when an arc is
@@ -69,28 +68,6 @@ interface Particle {
      * want resync-specific behaviour. When overriding, do not call super.onResync.
      */
     fun onResync() = Unit
-
-    /**
-     * React to handle updates.
-     *
-     * Called for handles when change events are received from the backing store.
-     *
-     * @param handle Singleton or Collection handle
-     */
-    @Deprecated("Use Handle.onUpdate")
-    suspend fun onHandleUpdate(handle: Handle) = Unit
-
-    /**
-     * React to handle synchronization.
-     *
-     * Called for handles that are marked for synchronization at connection, when they are updated with the full model
-     * of their data. This will occur once after setHandles() and any time thereafter if the handle is resynchronized.
-     *
-     * @param handle Singleton or Collection handle
-     * @param allSynced flag indicating if all handles are synchronized
-     */
-    @Deprecated("Use Handle.onReady and/or Handle.onResync")
-    suspend fun onHandleSync(handle: Handle, allSynced: Boolean) = Unit
 
     /**
      *  Called when an [Arc] is shutdown.

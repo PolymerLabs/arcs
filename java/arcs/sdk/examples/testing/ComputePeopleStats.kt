@@ -1,7 +1,6 @@
 package arcs.sdk.examples.testing
 
 import arcs.core.util.TaggedLog
-import arcs.sdk.Handle
 
 typealias Person = ComputePeopleStats_People
 typealias Stats = ComputePeopleStats_Stats
@@ -12,13 +11,15 @@ typealias Stats = ComputePeopleStats_Stats
 class ComputePeopleStats : AbstractComputePeopleStats() {
     private val log = TaggedLog { "ComputePeopleStats" }
 
-    override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
-        if (!allSynced) return
-        calculateMedian(handles.people.fetchAll())
+    override fun onStart() {
         handles.people.onUpdate {
             log.info { "onUpdate: ${it.map(Person::age)}" }
             calculateMedian(it)
         }
+    }
+
+    override fun onReady() {
+        calculateMedian(handles.people.fetchAll())
     }
 
     fun calculateMedian(people: Set<Person>) = when {

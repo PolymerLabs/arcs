@@ -16,7 +16,6 @@ import arcs.sdk.Particle
 import com.google.common.truth.Truth.assertWithMessage
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.resume
-import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
@@ -67,6 +66,7 @@ open class BaseTestHarness<P : Particle>(
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private val scope = TestCoroutineScope()
     private val handles = mutableMapOf<String, Handle>()
+    private lateinit var handleManager: EntityHandleManager
 
     // Exposes handles to subclasses in a read only fashion.
     protected val handleMap: Map<String, Handle>
@@ -86,7 +86,7 @@ open class BaseTestHarness<P : Particle>(
 
                 val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
                 val scheduler = schedulerProvider(description.methodName)
-                val handleManager = EntityHandleManager(
+                handleManager = EntityHandleManager(
                     arcId = "testHarness",
                     hostId = "testHarnessHost",
                     time = JvmTime,
@@ -103,12 +103,7 @@ open class BaseTestHarness<P : Particle>(
                                 HandleDataType.Reference ->
                                     RamDiskStorageKey("ref_${spec.baseName}")
                             }
-                            try {
-                                val handle = handleManager.createHandle(spec, storageKey)
-                                handles[spec.baseName] = handle
-                            } catch (e: Exception) {
-                                throw e
-                            }
+                            handles[spec.baseName] = handleManager.createHandle(spec, storageKey)
                         }
                     }
                     statement.evaluate()
@@ -136,21 +131,17 @@ open class BaseTestHarness<P : Particle>(
 
         withContext(particle.handles.dispatcher) {
             particle.onFirstStart()
+            particle.onStart()
         }
+        handleManager.initiateProxySync()
 
-        val readySoFar = atomic(0)
         val readyJobs = handles.map { (_, handle) ->
             launch {
                 suspendCancellableCoroutine<Unit> { cont ->
                     handle.onReady { if (cont.isActive) cont.resume(Unit) }
                 }
-                withContext(handle.dispatcher) {
-                    val ready = readySoFar.incrementAndGet()
-                    particle.onHandleSync(handle, ready == handles.size)
-                }
             }
         }
-
         readyJobs.joinAll()
 
         withContext(particle.handles.dispatcher) {

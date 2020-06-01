@@ -67,8 +67,7 @@ enum class ParticleState {
     /** onStart() has been called; the particle is awaiting handle synchronization. */
     Waiting,
     /** onReady() has been called; the particle is ready for execution. */
-    // TODO: rename to Running (needs to be co-ordinated with google code)
-    Started,
+    Running,
     /** onDesync() has been called; one or more handles have desynchronized from their storage. */
     Desynced,
     /** onStop() has been called; the arc is no longer executing. */
@@ -92,7 +91,7 @@ enum class ParticleState {
      * succeeded at least once).
      */
     val hasBeenStarted: Boolean
-        get() = listOf(FirstStart, Waiting, Started, Desynced, Stopped, Failed).contains(this)
+        get() = listOf(FirstStart, Waiting, Running, Desynced, Stopped, Failed).contains(this)
 
     /**
      * Indicates whether the particle has failed during its lifecycle.
