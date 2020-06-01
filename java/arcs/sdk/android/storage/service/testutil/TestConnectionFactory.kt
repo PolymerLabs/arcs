@@ -31,7 +31,12 @@ fun TestConnectionFactory(ctx: Context) = DefaultConnectionFactory(ctx, TestBind
 @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
 @OptIn(ExperimentalCoroutinesApi::class)
 fun TestManagerConnectionFactory(ctx: Context) =
-    ManagerConnectionFactory(ctx, TestManagerBindingDelegate(ctx))
+    ManagerConnectionFactory(ctx, TestBindingDelegateSingleService(ctx, manager = true))
+
+@Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
+@OptIn(ExperimentalCoroutinesApi::class)
+fun TestConnectionFactorySingleService(ctx: Context) =
+    DefaultConnectionFactory(ctx, TestBindingDelegateSingleService(ctx, manager = false))
 
 /**
  * This TestBindingDelegate can be used in tests with [DefaultConnectionFactory] in order to
@@ -58,21 +63,28 @@ class TestBindingDelegate(private val context: Context) : StorageServiceBindingD
     }
 }
 
-class TestManagerBindingDelegate(private val context: Context) : StorageServiceBindingDelegate {
-    private val serviceController by lazy {
-        Robolectric.buildService(StorageService::class.java)
-    }
+class TestBindingDelegateSingleService(
+    private val context: Context,
+    private val manager: Boolean = false
+) : StorageServiceBindingDelegate {
 
     override fun bindStorageService(
         conn: ServiceConnection,
         flags: Int,
         options: ParcelableStoreOptions?
     ): Boolean {
-        val intent = StorageService.createStorageManagerBindIntent(context)
+        val intent = if (manager) StorageService.createStorageManagerBindIntent(context)
+            else StorageService.createBindIntent(context, options!!)
         val binder = serviceController.get().onBind(intent)
         conn.onServiceConnected(null, binder)
         return true
     }
 
     override fun unbindStorageService(conn: ServiceConnection) = Unit
+
+    companion object {
+        private val serviceController by lazy {
+            Robolectric.buildService(StorageService::class.java).create()
+        }
+    }
 }

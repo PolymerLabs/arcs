@@ -210,7 +210,7 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
     }
 
     /** Clears everything from storage. */
-    fun clear() = entries.clear()
+    fun clear() = synchronized(lock) { entries.clear() }
 
     /* internal */ fun addListener(listener: (StorageKey, Any?) -> Unit) = synchronized(lock) {
         listeners.add(listener)
