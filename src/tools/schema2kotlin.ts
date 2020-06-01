@@ -145,11 +145,14 @@ export class Schema2Kotlin extends Schema2Base {
     return `\
 /* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
+
 package ${this.namespace}
+
 //
 // GENERATED CODE -- DO NOT EDIT
 //
 // Current implementation doesn't support optional field detection
+
 ${imports.join('\n')}
 `;
   }
@@ -258,9 +261,12 @@ ${imports.join('\n')}
     const {typeAliases, classes, handleClassDecl} = this.generateParticleClassComponents(particle, nodeGenerators);
     return `
 ${typeAliases.join(`\n`)}
+
 abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
     ${this.opts.wasm ? '' : 'override '}val handles: Handles = Handles(${this.opts.wasm ? 'this' : ''})
+
     ${classes.join(`\n    `)}
+
     ${handleClassDecl}
 }
 `;
@@ -325,7 +331,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
       const interfaceType = this.handleInterfaceType(connection, nodes, true);
       // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
       //                    allowing multiple EntitySpecs for handles of tuples.
-      const entityType = SchemaNode.singleSchemaFullName(connection, nodes);//SchemaNode.singleSchemaHumanName(connection, nodes);
+      const entityType = SchemaNode.singleSchemaFullName(connection, nodes);
       handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
       handleSpecs.push(this.handleSpec(handleName, entityType, connection));
     }
@@ -527,8 +533,11 @@ ${lines}
       ktUtils.joinWithIndents(constructorFields, classDef.length+classInterface.length, 2);
 
     return `\
+
     ${classDef}${constructorArguments}${classInterface}
+
         ${withFields(`${this.fieldVals.join('\n        ')}`)}
+
         ${this.opts.wasm ? `override var entityId = ""` : withFields(`init {
             ${this.fieldInitializers.join('\n            ')}
         }`)}
@@ -546,20 +555,24 @@ ${lines}
         fun reset() {
           ${withFields(`${this.fieldsReset.join('\n            ')}`)}
         }
+
         override fun encodeEntity(): NullTermByteArray {
             val encoder = StringEncoder()
             encoder.encode("", entityId)
             ${this.encode.join('\n        ')}
             return encoder.toNullTermByteArray()
         }
+
         override fun toString() =
             "${name}(${this.fieldsForToString.join(', ')})"
     ` : ''}
         companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
             ${this.opts.wasm ? '' : `
             override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 12, true)}
+
             private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
                 ${ktUtils.mapOf(this.nestedEntitySpecs, 16)}
+
             init {
                 SchemaRegistry.register(SCHEMA)
             }`}
@@ -569,6 +582,7 @@ ${lines}
             }` : `
             override fun decode(encoded: ByteArray): ${name}? {
                 if (encoded.isEmpty()) return null
+                
                 val decoder = StringDecoder(encoded)
                 val entityId = decoder.decodeText()
                 decoder.validate("|")

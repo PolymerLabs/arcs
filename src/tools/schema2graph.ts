@@ -83,8 +83,6 @@ export class SchemaNode {
   // This will return the most "human friendly" name for the schema. This is the name (actual class
   // name or alias) that should be used when typing a handle exposed to the particle. It will never
   // return internal names, e.g. Internal$N.
-  // Note: RightparticlePreface now this will always return source.fullName, but it is a stepping stone towards
-  // renaming the generated entities to use schema names when possible.
   humanName(connection: HandleConnectionSpec): string {
     if (this.uniqueSchema || this.sources.length === 1) {
       return this.entityClassName;
