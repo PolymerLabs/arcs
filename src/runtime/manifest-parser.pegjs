@@ -174,6 +174,7 @@ ManifestItem
   / Resource
   / AnnotationNode
   / Policy
+  / Adapter
 
 Annotation = annotationRefs:(SameIndent AnnotationRef eolWhiteSpace)*
   {
@@ -1602,6 +1603,62 @@ SchemaPrimitiveType
       type,
       refinement: null,
       annotations: [],
+    });
+  }
+
+Adapter
+  = 'adapter' whiteSpace adapterName:upperIdent whiteSpace? '(' multiLineSpace? params:AdapterParamsDeclaration multiLineSpace? ')' whiteSpace? '=>' multiLineSpace? body:AdapterBodyDefinition eolWhiteSpace
+  {
+     return toAstNode<AstNode.Adapter>({
+       kind: 'adapter-node',
+       params,
+       body
+     });
+  }
+
+AdapterParamsDeclaration
+  = param:AdapterParam restParams:(whiteSpace? ',' multiLineSpace AdapterParam)* {
+     return [param].concat(restParams.map(rparam => rparam[3]));
+  }
+
+AdapterParam
+  = paramName:fieldName whiteSpace? ':' whiteSpace? type:ParticleHandleConnectionType {
+     return toAstNode<AstNode.AdapterParam>({
+        kind: 'adapter-param',
+        name: paramName,
+        type
+     });
+  }
+
+AdapterBodyDefinition
+  = name:('*' / upperIdent) whiteSpace? '{' multiLineSpace fields:(AdapterField (',' multiLineSpace AdapterField)*)? ','? multiLineSpace '}' {
+     return toAstNode<AstNode.AdapterBodyDefinition>({
+        kind: 'adapter-body-definition',
+        name,
+        fields
+     })
+  }
+
+AdapterFields
+  = field:AdapterField rest:(',' multiLineSpace AdapterField)* {
+    return [field].concat(rest.map(rfield => rfield[2]))
+  }
+
+AdapterField
+  = fieldName:fieldName whiteSpace? ':' whiteSpace? expression:AdapterScopeExpression {
+    return toAstNode<AstNode.AdapterField>({
+        kind: 'adapter-field',
+        name: fieldName,
+        expression
+    });
+  }
+
+AdapterScopeExpression
+  = paramName:fieldName scopeChain:('.' fieldName)* {
+    return toAstNode<AstNode.AdapterScopeExpression>({
+      kind: 'adapter-scope-expression',
+      paramName,
+      scopeChain: scopeChain.map(scope => scope[1])
     });
   }
 

@@ -762,6 +762,36 @@ export interface SchemaAlias extends BaseNode {
   alias: string;
 }
 
+export interface Adapter extends BaseNode {
+  kind: 'adapter-node';
+  params: AdapterParam[];
+  body: AdapterBodyDefinition;
+}
+
+export interface AdapterParam extends BaseNode {
+  kind: 'adapter-param';
+  name: string;
+  type: ParticleHandleConnectionType;
+}
+
+export interface AdapterBodyDefinition extends BaseNode {
+  kind: 'adapter-body-definition';
+  name: string;
+  fields: AdapterField[]
+}
+
+export interface AdapterField extends BaseNode {
+  kind: 'adapter-field';
+  name: string;
+  expression: AdapterScopeExpression;
+}
+
+export interface AdapterScopeExpression extends BaseNode {
+  kind: 'adapter-scope-expression';
+  paramName: string;
+  scopeChain: string[];
+}
+
 export interface Interface extends BaseNode {
   kind: 'interface';
   name: string;

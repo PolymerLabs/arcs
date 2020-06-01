@@ -64,6 +64,14 @@ describe('manifest parser', () => {
         places: map #locations
         pairs: join (people, places)`);
   });
+  it('parses adapter declarations with inline schema', () => {
+    parse(`
+      adapter ToFriend ( 
+        person: Person { name: Text, age: Number },
+        company: Company { name: Text, address: Text }
+      ) => Friend { nickName: person.name, work: company.name }     
+    `)
+  });
   it('parses recipe handles with capabilities', () => {
     parse(`
       recipe Thing
