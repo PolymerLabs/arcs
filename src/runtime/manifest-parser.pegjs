@@ -392,7 +392,7 @@ MetaName = 'name' whiteSpace? ':' whiteSpace? name:id eolWhiteSpace
 
 MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
 {
-  return toAstNode<AstNode.MetaStorageKey>({key: 'storageKey', value: key, kind: 'storageKey' });
+  return toAstNode<AstNode.MetaStorageKey>({key: 'storageKey', value: key, kind: 'storage-key' });
 };
 
 MetaNamespace = 'namespace' whiteSpace? ':' whiteSpace? namespace:dottedName eolWhiteSpace
@@ -1309,7 +1309,7 @@ RequireHandleSection
   = 'handle' name:(whiteSpace LocalName)? ref:(whiteSpace HandleRef)? eolWhiteSpace
   {
     return toAstNode<AstNode.RequireHandleSection>({
-      kind: 'requireHandle',
+      kind: 'require-handle',
       name: optional(name, name => name[1], null),
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
     });
