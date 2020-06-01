@@ -181,7 +181,7 @@ ${imports.join('\n')}
    * Returns the type of the thing stored in the handle, e.g. MyEntity,
    * Reference<MyEntity>, Tuple2<Reference<Entity1>, Reference<Entity2>>.
    */
-  private handleInnerType(connection: HandleConnectionSpec, nodes: SchemaNode[], forTest: Boolean): string {
+  private handleInnerType(connection: HandleConnectionSpec, nodes: SchemaNode[], forTest: boolean): string {
     let type = connection.type;
     if (type.isCollection || type.isSingleton) {
       // The top level collection / singleton distinction is handled by the flavour of a handle.
@@ -582,7 +582,7 @@ ${lines}
             }` : `
             override fun decode(encoded: ByteArray): ${name}? {
                 if (encoded.isEmpty()) return null
-                
+
                 val decoder = StringDecoder(encoded)
                 val entityId = decoder.decodeText()
                 decoder.validate("|")
