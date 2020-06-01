@@ -127,11 +127,7 @@ class Scheduler(
     /** Wait for the [Scheduler] to become idle. */
     /* internal */
     suspend fun waitForIdle() {
-        idlenessFlow.onEach { log.debug { "Awaiting Idleness: isIdle = $it" } }
-            .debounce(50)
-            .filter { it }
-            .onEach { log.debug { "Scheduler became idle" } }
-            .first()
+        idlenessFlow.debounce(50).filter { it }.first()
     }
 
     /** Cancel the [CoroutineScope] belonging to this Scheduler. */
