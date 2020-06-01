@@ -18,63 +18,57 @@ import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HandleMode
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StoreManager
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
+import arcs.jvm.util.JvmTime
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertWithMessage
-import java.util.concurrent.Executors
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.coroutines.EmptyCoroutineContext
 
 private typealias Person = ReadSdkPerson_Person
 
 @RunWith(JUnit4::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 @Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
 class HandleUtilsTest {
     @get:Rule
     val log = LogRule()
 
     private lateinit var scheduler: Scheduler
-    private lateinit var stores: StoreManager
     private lateinit var manager: EntityHandleManager
 
     @Before
     fun setUp() = runBlocking {
-        RamDisk.clear()
         RamDiskDriverProvider()
         ReferenceModeStorageKey.registerParser()
-        stores = StoreManager()
-        scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher() + Job())
+        scheduler = Scheduler(JvmTime, EmptyCoroutineContext)
         manager = EntityHandleManager(
             "testArc",
             "testHost",
             FakeTime(),
-            scheduler,
-            stores = stores
+            scheduler
         )
     }
 
     @After
-    fun tearDown() = runBlocking {
-        scheduler.waitForIdle()
-        stores.waitForIdle()
-        manager.close()
+    fun tearDown() {
         scheduler.cancel()
+        RamDisk.clear()
     }
 
     @Test
@@ -96,11 +90,11 @@ class HandleUtilsTest {
             }
             launch { signalChannel.send(Unit) }
         }
-        withContext(collection.dispatcher) { collection.store(Person("George")) }
+        collection.store(Person("George"))
         signalChannel.receive()
         assertWithMessage("Expected Collection to include George").that(x).isEqualTo(1)
         assertWithMessage("Expected Singleton to not Equal Martha").that(y).isEqualTo(0)
-        withContext(singleton.dispatcher) { singleton.store(Person("Martha")) }
+        singleton.store(Person("Martha"))
         signalChannel.receive()
         assertWithMessage("Expected Collection to include George").that(x).isEqualTo(2)
         assertWithMessage("Expected Singleton to include Martha").that(y).isEqualTo(1)
@@ -131,17 +125,17 @@ class HandleUtilsTest {
             }
             launch { signalChannel.send(Unit) }
         }
-        withContext(handle1.dispatcher) { handle1.store(Person("A")) }
+        handle1.store(Person("A"))
         signalChannel.receive()
         assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(1)
         assertWithMessage("Expected handle2 to not equal B").that(handle2Tracking).isEqualTo(0)
         assertWithMessage("Expected handle3 to not include C").that(handle3Tracking).isEqualTo(0)
-        withContext(handle2.dispatcher) { handle2.store(Person("B")) }
+        handle2.store(Person("B"))
         signalChannel.receive()
         assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(2)
         assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(1)
         assertWithMessage("Expected handle3 to not include C").that(handle3Tracking).isEqualTo(0)
-        withContext(handle3.dispatcher) { handle3.store(Person("C")) }
+        handle3.store(Person("C"))
         signalChannel.receive()
         assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(3)
         assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(2)
@@ -177,28 +171,28 @@ class HandleUtilsTest {
             }
             launch { signalChannel.send(Unit) }
         }
-        withContext(handle1.dispatcher) { handle1.store(Person("A")) }
+        handle1.store(Person("A"))
         signalChannel.receive()
         assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(1)
         assertWithMessage("Expected handle2 to not equal B").that(handle2Tracking).isEqualTo(0)
         assertWithMessage("Expected handle3 to not include C").that(handle3Tracking).isEqualTo(0)
         assertWithMessage("Expected handle4 to not equal D").that(handle4Tracking).isEqualTo(0)
 
-        withContext(handle2.dispatcher) { handle2.store(Person("B")) }
+        handle2.store(Person("B"))
         signalChannel.receive()
         assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(2)
         assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(1)
         assertWithMessage("Expected handle3 to not include C").that(handle3Tracking).isEqualTo(0)
         assertWithMessage("Expected handle4 to not equal D").that(handle4Tracking).isEqualTo(0)
 
-        withContext(handle3.dispatcher) { handle3.store(Person("C")) }
+        handle3.store(Person("C"))
         signalChannel.receive()
         assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(3)
         assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(2)
         assertWithMessage("Expected handle3 to include C").that(handle3Tracking).isEqualTo(1)
         assertWithMessage("Expected handle4 to not equal D").that(handle4Tracking).isEqualTo(0)
 
-        withContext(handle4.dispatcher) { handle4.store(Person("D")) }
+        handle4.store(Person("D"))
         signalChannel.receive()
         assertWithMessage("Expected handle1 to include A").that(handle1Tracking).isEqualTo(4)
         assertWithMessage("Expected handle2 to equal B").that(handle2Tracking).isEqualTo(3)
@@ -306,16 +300,16 @@ class HandleUtilsTest {
             if (tracking10 == 10) doneYet.complete()
         }
 
-        withContext(handle1.dispatcher) { handle1.store(Person("A")) }
-        withContext(handle2.dispatcher) { handle2.store(Person("B")) }
-        withContext(handle3.dispatcher) { handle3.store(Person("C")) }
-        withContext(handle4.dispatcher) { handle4.store(Person("D")) }
-        withContext(handle5.dispatcher) { handle5.store(Person("E")) }
-        withContext(handle6.dispatcher) { handle6.store(Person("F")) }
-        withContext(handle7.dispatcher) { handle7.store(Person("G")) }
-        withContext(handle8.dispatcher) { handle8.store(Person("H")) }
-        withContext(handle9.dispatcher) { handle9.store(Person("I")) }
-        withContext(handle10.dispatcher) { handle10.store(Person("J")) }
+        handle1.store(Person("A"))
+        handle2.store(Person("B"))
+        handle3.store(Person("C"))
+        handle4.store(Person("D"))
+        handle5.store(Person("E"))
+        handle6.store(Person("F"))
+        handle7.store(Person("G"))
+        handle8.store(Person("H"))
+        handle9.store(Person("I"))
+        handle10.store(Person("J"))
 
         doneYet.join()
 

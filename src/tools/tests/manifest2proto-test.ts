@@ -43,7 +43,7 @@ describe('manifest2proto', () => {
       recipe
         a: use #tag1 #tag2
         b: map 'by-id'
-        c: create @persistent
+        c: create persistent
         Abc
           a: a
           b: b

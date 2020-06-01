@@ -168,6 +168,16 @@ export function isLongRunning(recipe: Recipe): boolean {
 
 /** Returns arcId for long-running arcs, null otherwise. */
 export function findLongRunningArcId(recipe: Recipe): string | null {
-  const arcIdAnnotation = recipe.getAnnotation('arcId');
-  return arcIdAnnotation ? Object.values(arcIdAnnotation.params)[0].toString() : null;
+  const getTrigger = (group: [string, string][], name: string): string | null => {
+    const trigger = group.find(([key, _]) => key === name);
+    return trigger ? trigger[1] : null;
+  };
+
+  for (const group of recipe.triggers) {
+    if (getTrigger(group, 'launch') === 'startup' &&
+      !!getTrigger(group, 'arcId')) {
+      return getTrigger(group, 'arcId');
+    }
+  }
+  return null;
 }

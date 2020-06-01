@@ -212,7 +212,7 @@ class CppGenerator implements ClassGenerator {
   }
 
   generate(schemaHash: string, fieldCount: number): string {
-    const name = this.node.entityClassName;
+    const name = this.node.name;
     const aliases = this.node.sources.map(s => s.fullName);
     // Template constructor allows implicit type slicing from appropriately matching entities.
     let templateCtor = '';

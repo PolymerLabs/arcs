@@ -14,7 +14,7 @@ import {path} from '../../platform/path-web.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 
-describe('loader', function() {
+describe.only('loader', function() {
   this.timeout(10000);
 
   const testDir = 'test-output';

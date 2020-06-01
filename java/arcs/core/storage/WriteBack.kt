@@ -12,7 +12,6 @@
 package arcs.core.storage
 
 import arcs.core.storage.keys.Protocols
-import arcs.core.util.TaggedLog
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineScope
@@ -98,8 +97,6 @@ open class StoreWriteBack /* internal */ constructor(
 
     override val writebackIdlenessFlow: Flow<Boolean> = idlenessChannel.asFlow()
 
-    private val log = TaggedLog { "StoreWriteBack" }
-
     init {
         // One of write-back thread(s) will wake up and execute flush jobs in FIFO order
         // when there are pending flush jobs in queue. Powerful features like batching,
@@ -109,9 +106,7 @@ open class StoreWriteBack /* internal */ constructor(
                 .onEach {
                     // Neither black out pending flush jobs in this channel nor propagate
                     // the exception within the scope to affect flush jobs at other stores.
-                    exitFlushSection {
-                        try { it() } catch (e: Exception) { log.error(e) { "Exception" } }
-                    }
+                    exitFlushSection { try { it() } catch (_: Exception) {} }
                 }
                 .onCompletion {
                     // Upon cancellation of the write-back scope, change to write-through mode,
@@ -119,9 +114,7 @@ open class StoreWriteBack /* internal */ constructor(
                     passThrough.update { true }
                     if (!channel.isEmpty && !channel.isClosedForReceive) {
                         channel.consumeEach {
-                            exitFlushSection {
-                                try { it() } catch (e: Exception) { log.error(e) { "Exception" } }
-                            }
+                            exitFlushSection { try { it() } catch (_: Exception) {} }
                         }
                     }
                     if (awaitSignal.isLocked) awaitSignal.unlock()

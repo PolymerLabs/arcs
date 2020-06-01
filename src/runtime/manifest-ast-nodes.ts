@@ -45,7 +45,6 @@ export class BaseNode {
 
 export class BaseNodeWithRefinement extends BaseNode {
     refinement?: RefinementNode;
-    annotations?: AnnotationRef[];
 }
 
 //  PARTICLE TYPES
@@ -451,6 +450,7 @@ export interface RecipeNode extends BaseNode {
   verbs: VerbList;
   items: RecipeItem[];
   annotation?: string; // simpleAnnotation
+  triggers?: Triggers;
   annotationRefs?: AnnotationRef[];
 }
 
@@ -497,11 +497,15 @@ export interface ParticleConnectionTargetComponents extends BaseNode {
 
 export type RecipeHandleFate = string;
 
+export type RecipeHandleCapability = 'persistent' | 'queryable' | 'tied-to-runtime' | 'tied-to-arc';
+
 export interface RecipeHandle extends BaseNode {
   kind: 'handle';
   name: string|null;
   ref: HandleRef;
   fate: Fate;
+  capabilities: RecipeHandleCapability[];
+  annotation: ParameterizedAnnotation|null;
   annotations: AnnotationRef[];
 }
 
@@ -626,11 +630,6 @@ export interface KotlinPrimitiveType extends BaseNodeWithRefinement {
 
 export interface SchemaCollectionType extends BaseNodeWithRefinement {
   kind: 'schema-collection';
-  schema: SchemaType;
-}
-
-export interface SchemaOrderedListType extends BaseNodeWithRefinement {
-  kind: 'schema-ordered-list';
   schema: SchemaType;
 }
 
@@ -796,39 +795,21 @@ export interface NameAndTagList extends BaseNode {
 
 export interface Annotation extends BaseNode {
   kind: 'annotation';
+  triggerSet: Triggers;
+  simpleAnnotation?: string;
   annotationRefs: AnnotationRef[];
+}
+
+export interface ParameterizedAnnotation extends BaseNode {
+  kind: 'param-annotation';
+  simpleAnnotation: string;
+  parameter: NumberedUnits;
 }
 
 export interface NumberedUnits extends BaseNode {
   kind: 'numbered-units';
   count: number;
   units: string;
-}
-
-export interface Policy extends BaseNode {
-  kind: 'policy';
-  name: string;
-  targets: PolicyTarget[];
-  configs: PolicyConfig[];
-  annotationRefs?: AnnotationRef[];
-}
-
-export interface PolicyTarget extends BaseNode {
-  kind: 'policy-target';
-  schemaName: string;
-  fields: PolicyField[];
-}
-
-export interface PolicyField extends BaseNode {
-  kind: 'policy-field';
-  name: string;
-  subfields: PolicyField[];
-}
-
-export interface PolicyConfig extends BaseNode {
-  kind: 'policy-config';
-  name: string;
-  metadata: Map<string, string>;
 }
 
 // Aliases to simplify ts-pegjs returnTypes requirement in sigh.

@@ -9,45 +9,13 @@
  */
 
 export const canonicalManifest = `
-annotation active
-  targets: [Recipe]
-  retention: Source
-  doc: 'active recipe in arc'
 annotation arcId(id: Text)
   targets: [Recipe]
   retention: Source
   doc: 'predefined ID of a long running arc'
-
 annotation ttl(value: Text)
   // Atm TTL is only supported for recipes handles.
   targets: [Handle]
   retention: Runtime
   doc: 'data time-to-live'
-
-annotation persistent
-  targets: [Handle, Store, HandleConnection]
-  retention: Runtime
-  doc: 'storage capability: persistency'
-annotation queryable
-  targets: [Handle, Store, HandleConnection]
-  retention: Runtime
-  doc: 'storage capability: queryable'
-annotation tiedToArc
-  targets: [Handle]
-  retention: Runtime
-  doc: 'DEPRECATED storage capability mapped to volatile storage'
-annotation tiedToRuntime
-  targets: [Handle]
-  retention: Runtime
-  doc: 'DEPRECATED storage capability mapped to ramdisk storage'
-
-annotation isolated
-  targets: [Particle]
-  retention: Source
-  doc: 'Indicates that the given particle is an isolated particle, and does not egress data.'
-
-annotation egress
-  targets: [Particle]
-  retention: Source
-  doc: 'Indicates that the given particle can egress data out of the system (i.e. is not isolated).'
 `;

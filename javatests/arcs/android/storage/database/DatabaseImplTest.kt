@@ -407,26 +407,12 @@ class DatabaseImplTest {
                 singletons = mapOf(
                     "text" to FieldType.Text,
                     "bool" to FieldType.Boolean,
-                    "num" to FieldType.Number,
-                    "byte" to FieldType.Byte,
-                    "short" to FieldType.Short,
-                    "int" to FieldType.Int,
-                    "long" to FieldType.Long,
-                    "char" to FieldType.Char,
-                    "float" to FieldType.Float,
-                    "double" to FieldType.Double
+                    "num" to FieldType.Number
                 ),
                 collections = mapOf(
                     "texts" to FieldType.Text,
                     "bools" to FieldType.Boolean,
-                    "nums" to FieldType.Number,
-                    "bytes" to FieldType.Byte,
-                    "shorts" to FieldType.Short,
-                    "ints" to FieldType.Int,
-                    "longs" to FieldType.Long,
-                    "chars" to FieldType.Char,
-                    "floats" to FieldType.Float,
-                    "doubles" to FieldType.Double
+                    "nums" to FieldType.Number
                 )
             )
         )
@@ -436,28 +422,12 @@ class DatabaseImplTest {
                 mapOf(
                     "text" to "abc".toReferencable(),
                     "bool" to true.toReferencable(),
-                    "num" to 123.0.toReferencable(),
-                    "byte" to 42.toByte().toReferencable(),
-                    "short" to 382.toShort().toReferencable(),
-                    "int" to 1000000000.toReferencable(),
-                    // This number is not representable as a double
-                    "long" to  1000000000000000001L.toReferencable(),
-                    "char" to 'A'.toReferencable(),
-                    "float" to 34.567f.toReferencable(),
-                    "double" to 4e100.toReferencable()
-
+                    "num" to 123.0.toReferencable()
                 ),
                 mapOf(
                     "texts" to setOf("abc".toReferencable(), "def".toReferencable()),
                     "bools" to setOf(true.toReferencable(), false.toReferencable()),
-                    "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable()),
-                    "bytes" to setOf(100.toByte().toReferencable(), 27.toByte().toReferencable()),
-                    "shorts" to setOf(129.toShort().toReferencable(), 30000.toShort().toReferencable()),
-                    "ints" to setOf(1000000000.toReferencable(), 28.toReferencable()),
-                    "longs" to setOf(1000000000000000002L.toReferencable(), 1000000000000000003L.toReferencable()),
-                    "chars" to listOf('a', 'r', 'c', 's').map { it.toReferencable() }.toSet(),
-                    "floats" to setOf(1.1f.toReferencable(), 100.101f.toReferencable()),
-                    "doubles" to setOf(1.0.toReferencable(), 2e80.toReferencable())
+                    "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())
                 )
             ),
             schema,
@@ -1389,163 +1359,12 @@ class DatabaseImplTest {
     }
 
     @Test
-    fun garbageCollectionEntityWithNestedEntityRemovedFromCollection() = runBlockingTest {
-        val schema = newSchema(
-            "hash",
-            SchemaFields(
-                collections = mapOf("refs" to FieldType.EntityRef("hash")),
-                singletons = mapOf("text" to FieldType.Text)
-            )
-        )
-        val backingKey = DummyStorageKey("backing")
-        val entityKey = DummyStorageKey("backing/entity")
-        val nestedKey = DummyStorageKey("backing/nested")
-        var version = 1
-        val nested = DatabaseData.Entity(
-            RawEntity(
-                "nested",
-                singletons = mapOf("text" to "abc".toReferencable()),
-                collections = mapOf("refs" to setOf()),
-                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(10).toMillis()
-            ),
-            schema,
-            FIRST_VERSION_NUMBER,
-            VERSION_MAP
-        )
-        val entity = DatabaseData.Entity(
-            RawEntity(
-                "entity",
-                singletons = mapOf("text" to "def".toReferencable()),
-                collections = mapOf("refs" to setOf(Reference("nested", backingKey, VERSION_MAP))),
-                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(10).toMillis()
-            ),
-            schema,
-            FIRST_VERSION_NUMBER,
-            VERSION_MAP
-        )
-        suspend fun updateCollection(vararg entities: DatabaseData.Entity) {
-            val values = entities.map { Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)) }
-            val collection = DatabaseData.Collection(
-                values = values.toSet(),
-                schema = schema,
-                databaseVersion = version++,
-                versionMap = VERSION_MAP
-            )
-            database.insertOrUpdate(DummyStorageKey("collection"), collection)
-        }
-
-        database.insertOrUpdate(nestedKey, nested)
-        database.insertOrUpdate(entityKey, entity)
-        // Insert in collection.
-        updateCollection(entity)
-        // Remove from collection.
-        updateCollection()
-
-        // First run, entity is detected as orphan.
-        database.runGarbageCollection()
-        assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
-        assertThat(readOrphanField(entityKey)).isTrue()
-
-        // Second run, entity is removed, nested entity is still in the db.
-        database.runGarbageCollection()
-        assertThat(database.getEntity(entityKey, schema)).isEqualTo(null)
-        assertThat(database.getEntity(nestedKey, schema)).isEqualTo(nested)
-
-        // Next run, nested is marked as orphan.
-        database.runGarbageCollection()
-        assertThat(readOrphanField(nestedKey)).isTrue()
-
-        // Finally, nested gets removed.
-        database.runGarbageCollection()
-        assertThat(database.getEntity(nestedKey, schema)).isEqualTo(null)
-    }
-
-    @Test
-    fun garbageCollectionEntityWithNestedEntityRemovedFromSingleton() = runBlockingTest {
-        val schema = newSchema(
-            "hash",
-            SchemaFields(
-                collections = mapOf("texts" to FieldType.Text),
-                singletons = mapOf("ref" to FieldType.EntityRef("hash"))
-            )
-        )
-        val backingKey = DummyStorageKey("backing")
-        val entityKey = DummyStorageKey("backing/entity")
-        val nestedKey = DummyStorageKey("backing/nested")
-        var version = 1
-        val nested = DatabaseData.Entity(
-            RawEntity(
-                "nested",
-                singletons = mapOf("ref" to null),
-                collections = mapOf("texts" to setOf("abc".toReferencable())),
-                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(10).toMillis()
-            ),
-            schema,
-            FIRST_VERSION_NUMBER,
-            VERSION_MAP
-        )
-        val entity = DatabaseData.Entity(
-            RawEntity(
-                "entity",
-                singletons = mapOf("ref" to Reference("nested", backingKey, VERSION_MAP)),
-                collections = mapOf("texts" to setOf("def".toReferencable())),
-                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(10).toMillis()
-            ),
-            schema,
-            FIRST_VERSION_NUMBER,
-            VERSION_MAP
-        )
-        suspend fun updateSingleton(entity: DatabaseData.Entity?) {
-            val ref = entity?.let{Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1))}
-            val singleton = DatabaseData.Singleton(
-                reference = ref,
-                schema = schema,
-                databaseVersion = version++,
-                versionMap = VERSION_MAP
-            )
-            database.insertOrUpdate(DummyStorageKey("singleton"), singleton)
-        }
-
-        database.insertOrUpdate(nestedKey, nested)
-        database.insertOrUpdate(entityKey, entity)
-        // Insert in singleton.
-        updateSingleton(entity)
-        // Remove from singleton.
-        updateSingleton(null)
-
-        // First run, entity is detected as orphan.
-        database.runGarbageCollection()
-        assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
-        assertThat(readOrphanField(entityKey)).isTrue()
-
-        // Second run, entity is removed, nested entity is still in the db.
-        database.runGarbageCollection()
-        assertThat(database.getEntity(entityKey, schema)).isEqualTo(null)
-        assertThat(database.getEntity(nestedKey, schema)).isEqualTo(nested)
-
-        // Next run, nested is marked as orphan.
-        database.runGarbageCollection()
-        assertThat(readOrphanField(nestedKey)).isTrue()
-
-        // Finally, nested gets removed.
-        database.runGarbageCollection()
-        assertThat(database.getEntity(nestedKey, schema)).isEqualTo(null)
-    }
-
-    @Test
     fun removeExpiredEntities_entityIsCleared() = runBlockingTest {
         val schema = newSchema(
             "hash",
             SchemaFields(
-                singletons = mapOf(
-                    "text" to FieldType.Text,
-                    "long" to FieldType.Long,
-                    "float" to FieldType.Float
-                ),
-                collections = mapOf(
-                    "nums" to FieldType.Number,
-                    "chars" to FieldType.Char
-                )
+                singletons = mapOf("text" to FieldType.Text),
+                collections = mapOf("nums" to FieldType.Number)
             )
         )
         val collectionKey = DummyStorageKey("collection")
@@ -1559,15 +1378,8 @@ class DatabaseImplTest {
         val expiredEntity = DatabaseData.Entity(
             RawEntity(
                 "expiredEntity",
-                mapOf(
-                    "text" to "abc".toReferencable(),
-                    "long" to 1000000000000000001L.toReferencable(),
-                    "float" to 3.412f.toReferencable()
-                ),
-                mapOf(
-                    "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable()),
-                    "chars" to listOf('A', 'R', 'C', 'S', '!').map { it.toReferencable() }.toSet()
-                ),
+                mapOf("text" to "abc".toReferencable()),
+                mapOf("nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())),
                 11L,
                 timeInPast // expirationTimestamp, in the past.
             ),
@@ -1579,15 +1391,8 @@ class DatabaseImplTest {
         val entity = DatabaseData.Entity(
             RawEntity(
                 "entity",
-                mapOf(
-                    "text" to "def".toReferencable(),
-                    "long" to 1L.toReferencable(),
-                    "float" to 42.0f.toReferencable()
-                ),
-                mapOf(
-                    "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
-                    "chars" to listOf('R', 'O', 'C', 'K', 'S').map { it.toReferencable() }.toSet()
-                ),
+                mapOf("text" to "def".toReferencable()),
+                mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable())),
                 11L,
                 JvmTime.currentTimeMillis + 10000 // expirationTimestamp, in the future.
             ),
@@ -1599,15 +1404,8 @@ class DatabaseImplTest {
         val entity2 = DatabaseData.Entity(
             RawEntity(
                 "entity2",
-                mapOf(
-                    "text" to "def".toReferencable(),
-                    "long" to 10L.toReferencable(),
-                    "float" to 37.5f.toReferencable()
-                ),
-                mapOf(
-                    "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
-                    "chars" to listOf('H', 'e', 'l', 'L', 'o').map { it.toReferencable() }.toSet()
-                ),
+                mapOf("text" to "def".toReferencable()),
+                mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable())),
                 11L,
                 UNINITIALIZED_TIMESTAMP // no expirationTimestamp
             ),
@@ -1649,12 +1447,8 @@ class DatabaseImplTest {
             .isEqualTo(DatabaseData.Entity(
                 RawEntity(
                     "expiredEntity",
-                    mapOf(
-                        "text" to null,
-                        "long" to null,
-                        "float" to null
-                    ),
-                    mapOf("nums" to emptySet(), "chars" to emptySet()),
+                    mapOf("text" to null),
+                    mapOf("nums" to emptySet()),
                     11L,
                     timeInPast
                 ),
@@ -1676,24 +1470,23 @@ class DatabaseImplTest {
             .isEqualTo(collection.copy(values = newValues))
 
         // Check unused values have been deleted from the global table as well, it should contain
-        // only values referenced from the two entity (five values each).
-        assertTableIsSize("field_values", 10)
+        // only values referenced from the two entity (two values each).
+        assertTableIsSize("field_values", 4)
 
-        // Check collection entries have been cleared. For each remaining entity there should only
-        // be eight values (two for the nums collection, five for the chars collection, 
-        // one for the membership of the entity).
-        assertTableIsSize("collection_entries", 16)
+        // Check collection entries have been cleared. For each reamining entity there should only
+        // be three values (two for the nums collection, one for the membership of the entity).
+        assertTableIsSize("collection_entries", 6)
 
-        // Check the collections for chars/nums in expiredEntity is gone (5 collections left are nums for
-        // the two entities, chars for the two entities, and the entity collection).
-        assertTableIsSize("collections", 5)
+        // Check the collection for nums in expiredEntity is gone (3 collections left are nums for
+        // the two entities and the entity collection).
+        assertTableIsSize("collections", 3)
 
         // Check the expired entity ref is gone.
         assertThat(readEntityRefsEntityId()).containsExactly("entity", "entity2")
 
         // Check unused primitive values have been removed.
         assertThat(readTextPrimitiveValues()).containsExactly("def")
-        assertThat(readNumberPrimitiveValues()).containsExactly(123.0, 789.0, 42.0, 37.5)
+        assertThat(readNumberPrimitiveValues()).containsExactly(123L, 789L)
 
         // Check the corrent clients were notified.
         collectionClient.eventMutex.withLock {
@@ -2248,9 +2041,9 @@ class DatabaseImplTest {
             .map { it.getString(0) }
             .toSet()
 
-    private fun readNumberPrimitiveValues(): Set<Double> =
+    private fun readNumberPrimitiveValues(): Set<Long> =
         database.readableDatabase.rawQuery("SELECT value FROM number_primitive_values", emptyArray())
-            .map { it.getDouble(0) }
+            .map { it.getLong(0) }
             .toSet()
 
     private fun readEntityRefsEntityId(): Set<String> =

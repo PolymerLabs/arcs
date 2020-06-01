@@ -11,7 +11,7 @@ import {assert} from '../../platform/chai-web.js';
 import {ArcId} from '../id.js';
 import {Flags} from '../flags.js';
 import {CapabilitiesResolver, StorageKeyOptions} from '../capabilities-resolver.js';
-import {Capabilities, Capability} from '../capabilities.js';
+import {Capabilities} from '../capabilities.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {Schema} from '../schema.js';
 import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.js';
@@ -144,9 +144,9 @@ describe('Capabilities Resolver', () => {
         Capabilities.tiedToRuntime, referenceType, handleId));
 
     await assertThrowsAsync(async () => await capabilitiesResolver.createStorageKey(
-        new Capabilities([Capability.Persistent, Capability.TiedToArc]), entityType, handleId));
+        new Capabilities(['persistent', 'tied-to-arc']), entityType, handleId));
     await assertThrowsAsync(async () => await capabilitiesResolver.createStorageKey(
-        new Capabilities([Capability.Persistent, Capability.TiedToArc]), referenceType, handleId));
+        new Capabilities(['persistent', 'tied-to-arc']), referenceType, handleId));
   }));
 
   it('verifies static creators', () => {

@@ -89,7 +89,8 @@ class RecipeProtoDecoderTest {
 
     /**
      * Defines the following recipe:
-     *    @arcId('pass-through-arc')
+     *    @trigger
+     *      arcId pass-through-arc
      *    recipe PassThrough
      *      thing: create
      *      Writer

@@ -71,7 +71,6 @@ describe('ArcStoresFetcher', () => {
               description: {},
               fields: {
                 value: {
-                  annotations: [],
                   kind: 'schema-primitive',
                   refinement: null,
                   type: 'Text'

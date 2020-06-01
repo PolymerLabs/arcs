@@ -26,24 +26,9 @@ sealed class InformationFlowLabel {
 
     /** Represents a boolean expression of [InformationFlowLabel] constants. */
     sealed class Predicate {
-        data class Label(val label: InformationFlowLabel) : Predicate() {
-            override fun toString() = "$label"
-        }
-
-        data class Not(val predicate: Predicate) : Predicate() {
-            override fun toString() = "not $predicate"
-        }
-
-        data class Or(val lhs: Predicate, val rhs: Predicate) : Predicate() {
-            override fun toString() = "($lhs or $rhs)"
-        }
-
-        data class And(val lhs: Predicate, val rhs: Predicate) : Predicate() {
-            override fun toString() = "($lhs and $rhs)"
-        }
-
-        infix fun and(other: Predicate) = Predicate.And(this, other)
-        infix fun or(other: Predicate) = Predicate.Or(this, other)
-        fun not() = Predicate.Not(this)
+        data class Label(val label: InformationFlowLabel) : Predicate()
+        data class Not(val predicate: Predicate) : Predicate()
+        data class Or(val lhs: Predicate, val rhs: Predicate) : Predicate()
+        data class And(val lhs: Predicate, val rhs: Predicate) : Predicate()
     }
 }

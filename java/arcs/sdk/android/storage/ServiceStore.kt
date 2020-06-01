@@ -189,13 +189,9 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean {
         val service = checkNotNull(storageService)
         val result = DeferredResult(coroutineContext)
-        // Trick: make an indirect access to the message to keep kotlin flow
-        // from holding the entire message that might encapsulate a large size data.
-        var messageRef: ProxyMessage<Data, Op, ConsumerData>? = message
         outgoingMessages.incrementAndGet()
         send {
-            service.sendProxyMessage(messageRef!!.toProto().toByteArray(), result)
-            messageRef = null
+            service.sendProxyMessage(message.toProto().toByteArray(), result)
         }
         // Just return false if the message couldn't be applied.
         return try {

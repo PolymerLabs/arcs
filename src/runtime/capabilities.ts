@@ -8,45 +8,19 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {AnnotationRef} from './recipe/annotation.js';
-import {Dictionary} from './hot.js';
-
-export enum Capability {
-  Persistent = 'persistent',
-  Queryable = 'queryable',
-  TiedToRuntime = 'tiedToRuntime',
-  TiedToArc = 'tiedToArc',
-}
+import {RecipeHandleCapability} from './manifest-ast-nodes.js';
 
 export class Capabilities {
-  private readonly capabilities: Set<Capability>;
+  private readonly capabilities: Set<RecipeHandleCapability>;
 
-  constructor(capabilities: Capability[]) {
+  constructor(capabilities: RecipeHandleCapability[]) {
     this.capabilities = new Set(capabilities);
   }
 
-  static fromAnnotations(annotations: AnnotationRef[]) {
-    const capabilitiesSet = new Set<Capability>();
-    for (const annotation of annotations) {
-      const capability = Object.keys(Capability).find(
-          capability => Capability[capability] === annotation.name);
-      if (capability) {
-        capabilitiesSet.add(Capability[capability]);
-      }
-    }
-    return new Capabilities([...capabilitiesSet]);
-  }
-
-  merge(other: Capabilities) {
-    for (const capability of other.capabilities) {
-      this.capabilities.add(capability);
-    }
-  }
-
-  get isPersistent() { return this.capabilities.has(Capability.Persistent); }
-  get isQueryable() { return this.capabilities.has(Capability.Queryable); }
-  get isTiedToRuntime() { return this.capabilities.has(Capability.TiedToRuntime); }
-  get isTiedToArc() { return this.capabilities.has(Capability.TiedToArc); }
+  get isPersistent() { return this.capabilities.has('persistent'); }
+  get isQueryable() { return this.capabilities.has('queryable'); }
+  get isTiedToRuntime() { return this.capabilities.has('tied-to-runtime'); }
+  get isTiedToArc() { return this.capabilities.has('tied-to-arc'); }
 
   clone(): Capabilities { return new Capabilities([...this.capabilities]); }
 
@@ -72,11 +46,11 @@ export class Capabilities {
   }
 
   static readonly empty = new Capabilities([]);
-  static readonly tiedToArc = new Capabilities([Capability.TiedToArc]);
-  static readonly tiedToRuntime = new Capabilities([Capability.TiedToRuntime]);
-  static readonly persistent = new Capabilities([Capability.Persistent]);
-  static readonly queryable = new Capabilities([Capability.Queryable]);
-  static readonly tiedToArcQueryable = new Capabilities([Capability.TiedToArc, Capability.Queryable]);
-  static readonly tiedToRuntimeQueryable = new Capabilities([Capability.TiedToRuntime, Capability.Queryable]);
-  static readonly persistentQueryable = new Capabilities([Capability.Persistent, Capability.Queryable]);
+  static readonly tiedToArc = new Capabilities(['tied-to-arc']);
+  static readonly tiedToRuntime = new Capabilities(['tied-to-runtime']);
+  static readonly persistent = new Capabilities(['persistent']);
+  static readonly queryable = new Capabilities(['queryable']);
+  static readonly tiedToArcQueryable = new Capabilities(['tied-to-arc', 'queryable']);
+  static readonly tiedToRuntimeQueryable = new Capabilities(['tied-to-runtime', 'queryable']);
+  static readonly persistentQueryable = new Capabilities(['persistent', 'queryable']);
 }

@@ -84,7 +84,8 @@ export class AnnotationRef {
 
   toString(): string {
     const result: string[] = [];
-    let paramStr = '';
+    // TODO(#5291): skip (), if no params (when deprated `annotation` in recipe.ts).
+    let paramStr = '()';
     if (Object.keys(this.params).length > 0) {
       const params: string[] = [];
       for (const [name, value] of Object.entries(this.params)) {

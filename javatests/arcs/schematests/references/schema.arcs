@@ -37,14 +37,16 @@ particle Writer2 in 'arcs.schematests.references.Writer2'
 particle Reader2 in 'arcs.schematests.references.Reader2'
   level2: reads [Level2]
 
-@arcId('testArc')
+@trigger
+  launch startup
+  arcId testArc
 recipe WriteRecipe
-  level0: create 'level0' @persistent
-  level1: create 'level1' @persistent
-  level2: create 'level2' @persistent
+  level0: create persistent 'level0'
+  level1: create persistent 'level1'
+  level2: create persistent 'level2'
 
-  level0s: create 'level0s' @persistent
-  level1s: create 'level1s' @persistent
+  level0s: create persistent 'level0s'
+  level1s: create persistent 'level1s'
 
   Writer0
     level0: level0

@@ -187,7 +187,8 @@ class RecipeTest {
     /**
      * Tests a conversion of a recipe equivalent to:
      * ```
-     * @arcId('egress-contacts')
+     * @trigger
+     *   arcId egress-contacts
      * recipe EgressContacts
      *   people: map 'reference-mode://...'
      *   contacts: create

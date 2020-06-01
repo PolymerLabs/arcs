@@ -28,18 +28,6 @@
     return items[1].map(item => item[1]);
   }
 
-  /**
-   * Utility for extracting values out of comma-separated lists, of the form:
-   * `items:(X (commaOrNewline X)*)?`.
-   */
-  function extractCommaSeparated(items) {
-    if (items == null || items.length === 0) {
-      return [];
-    }
-    const [first, rest] = items;
-    return [first, ...rest.map(item => item[1])];
-  }
-
   function optional<S, R>(result: S, extract: (source: S) => R, defaultValue: R): R {
     if (result !== null) {
       const value = extract(result);
@@ -62,12 +50,6 @@
       for (const item of result) {
         checkNormal(item, `${path}/${i}`);
         i++;
-      }
-      return;
-    }
-    if (result instanceof Map) {
-      for (const [key, value] of result) {
-        checkNormal(value, `${path}/${key}`);
       }
       return;
     }
@@ -155,6 +137,8 @@ Manifest
     const result: AstNode.ManifestItem[] = items.map(item => {
       const annotations = item[0];
       const manifestItem = item[2];
+      manifestItem.triggers = annotations.triggerSet;
+      manifestItem.annotation = annotations.simpleAnnotation;
       manifestItem.annotationRefs = annotations.annotationRefs;
       return manifestItem;
     });
@@ -173,15 +157,41 @@ ManifestItem
   / Meta
   / Resource
   / AnnotationNode
-  / Policy
 
-Annotation = annotationRefs:(SameIndent AnnotationRef eolWhiteSpace)*
+AnnotationItem
+  = ParameterizedAnnotation
+  / SimpleAnnotation
+
+// This is the full "@trigger\n foo bar" annotation combo OR simple annotation.
+Annotation = triggerSet:(SameIndent Trigger eolWhiteSpace)* simpleAnnotation:(SameIndent AnnotationItem eolWhiteSpace)? annotationRefs:(SameIndent AnnotationRef eolWhiteSpace)*
   {
     return toAstNode<AstNode.Annotation>({
       kind: 'annotation',
+      triggerSet: triggerSet.map(trigger => trigger[1]),
+      simpleAnnotation: optional(simpleAnnotation, s => s[1], null),
       annotationRefs: annotationRefs.map(aRef => aRef[1]),
     });
   }
+
+// TODO(#5291): deprecate
+Trigger "a trigger for a recipe"
+  = '@trigger' eolWhiteSpace Indent pairs:(eolWhiteSpace? SameIndent simpleName whiteSpace dottedName)+ {
+  return pairs.map(pair => {
+    return [pair[2], pair[4]];
+  });
+}
+
+ParameterizedAnnotation "a parameterized annotation (e.g. @foo(bar))"
+  = simpleAnnotation:SimpleAnnotation whiteSpace? '(' whiteSpace? parameter:NumberedUnits whiteSpace? ')' {
+  return toAstNode<AstNode.ParameterizedAnnotation>({
+    kind: 'param-annotation',
+    simpleAnnotation,
+    parameter,
+  });
+}
+
+SimpleAnnotation "an annotation (e.g. @foo)"
+  = '@' annotation:lowerIdent { return annotation; }
 
 Resource = 'resource' whiteSpace name:upperIdent eolWhiteSpace Indent SameIndent ResourceStart body:ResourceBody eolWhiteSpace? {
   return toAstNode<AstNode.Resource>({
@@ -1016,11 +1026,12 @@ AnnotationDoc = 'doc:' whiteSpace doc:QuotedString eolWhiteSpace? {
 }
 
 // Reference to an annotation (for example: `@foo(bar='hello', baz=5)`)
-AnnotationRef = '@' name:lowerIdent params:(whiteSpace? '(' whiteSpace? AnnotationRefParam whiteSpace? (whiteSpace? ',' whiteSpace? AnnotationRefParam)* ')')? {
+AnnotationRef = '@' name:lowerIdent params:('('whiteSpace? AnnotationRefParam? (whiteSpace? ',' whiteSpace? AnnotationRefParam)* ')')? {
   return toAstNode<AstNode.AnnotationRef>({
     kind: 'annotation-ref',
     name,
-    params: optional(params, p => [p[3], ...p[5].map(tail => tail[3])], [])
+    // TODO(#5291): once simple-annotation is deprecated, make first param nonoptional.
+    params: optional(params, p => p[2] ? [p[2], ...p[3].map(tail => tail[3])] : p[3].map(tail => tail[3]), [])
   });
 }
 
@@ -1293,14 +1304,23 @@ RecipeHandleFate
   / 'copy'
   / '`slot'
 
+RecipeHandleCapability
+ = 'persistent'
+ / 'queryable'
+ / 'tied-to-runtime'
+ / 'tied-to-arc'
+
+// TODO(#5291): deprecate `capabilities` and `annotation` for `annotations`.
 RecipeHandle
-  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? annotations:SpaceAnnotationRefList? eolWhiteSpace
+  = name:NameWithColon? fate:RecipeHandleFate capabilities:(whiteSpace RecipeHandleCapability)* ref:(whiteSpace HandleRef)? annotation:(whiteSpace AnnotationItem)? annotations:SpaceAnnotationRefList? eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeHandle>({
       kind: 'handle',
       name,
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
       fate,
+      capabilities: capabilities.map(c => c[1]),
+      annotation: optional(annotation, s => s[1], null),
       annotations: annotations || [],
     });
   }
@@ -1521,20 +1541,18 @@ SchemaField
 SchemaType
   = type:(SchemaReferenceType
   / SchemaCollectionType
-  / SchemaOrderedListType
   / SchemaPrimitiveType
   / KotlinPrimitiveType
   / SchemaUnionType
   / SchemaTupleType
   / [^\n\]}]* { expected('a schema type'); }
-  ) whiteSpace? refinement:Refinement? whiteSpace? annotations:AnnotationRefList?
+  ) whiteSpace? refinement:Refinement?
   {
     if (!Flags.fieldRefinementsAllowed && refinement) {
       error('field refinements are unsupported');
     }
-    type.refinement = refinement;
-    type.annotations = annotations || [];
-    return type;
+      type.refinement = refinement;
+      return type;
   }
 
 SchemaCollectionType = '[' whiteSpace? schema:(SchemaReferenceType / SchemaPrimitiveType / KotlinPrimitiveType) whiteSpace? ']'
@@ -1543,14 +1561,6 @@ SchemaCollectionType = '[' whiteSpace? schema:(SchemaReferenceType / SchemaPrimi
       kind: 'schema-collection',
       schema,
       refinement: null
-    });
-  }
-
-SchemaOrderedListType = 'List<' whiteSpace? schema:(SchemaType) whiteSpace? '>'
-  {
-    return toAstNode<AstNode.SchemaOrderedListType>({
-      kind: 'schema-ordered-list',
-      schema
     });
   }
 
@@ -1576,8 +1586,7 @@ SchemaPrimitiveType
     return toAstNode<AstNode.SchemaPrimitiveType>({
       kind: 'schema-primitive',
       type,
-      refinement: null,
-      annotations: [],
+      refinement: null
     });
   }
 
@@ -1598,7 +1607,7 @@ SchemaUnionType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return toAstNode<AstNode.SchemaUnionType>({kind: 'schema-union', types, refinement: null, annotations: []});
+    return toAstNode<AstNode.SchemaUnionType>({kind: 'schema-union', types, refinement: null});
   }
 
 SchemaTupleType
@@ -1608,7 +1617,7 @@ SchemaTupleType
     for (const type of rest) {
       types.push(type[3]);
     }
-    return toAstNode<AstNode.SchemaTupleType>({kind: 'schema-tuple', types, refinement: null, annotations: []});
+    return toAstNode<AstNode.SchemaTupleType>({kind: 'schema-tuple', types, refinement: null});
   }
 
 Refinement
@@ -1741,87 +1750,6 @@ NumberedUnits
     });
   }
 
-// TODO(b/157605585): Annotations on policies.
-Policy
-  = 'policy' whiteSpace name:upperIdent openBrace items:(PolicyItem (commaOrNewline PolicyItem)*)? closeBrace
-  {
-    const targets: AstNode.PolicyTarget[] = [];
-    const configs: AstNode.PolicyConfig[] = [];
-    for (const item of extractCommaSeparated(items)) {
-      switch (item.kind) {
-        case 'policy-target':
-          targets.push(item);
-          break;
-        case 'policy-config':
-          configs.push(item);
-          break;
-        default:
-          error(`Unknown PolicyItem: ${item}`);
-      }
-    }
-    return toAstNode<AstNode.Policy>({
-      kind: 'policy',
-      name,
-      targets,
-      configs,
-    });
-  }
-
-PolicyItem
-  = PolicyTarget
-  / PolicyConfig
-
-// TODO(b/157605585): Annotations on policy targets.
-PolicyTarget
-  = 'from' whiteSpace schemaName:upperIdent whiteSpace 'access' fields:PolicyFieldSet
-  {
-    return toAstNode<AstNode.PolicyTarget>({
-      kind: 'policy-target',
-      schemaName,
-      fields,
-    });
-  }
-
-PolicyFieldSet 'Set of policy fields enclosed in curly braces'
-  = openBrace fields:(PolicyField (commaOrNewline PolicyField)*)? closeBrace
-  {
-    return extractCommaSeparated(fields);
-  }
-
-// TODO(b/157605585): Nested fields, annotations.
-PolicyField
-  = name:fieldName subfields:PolicyFieldSet?
-  {
-    return toAstNode<AstNode.PolicyField>({
-      kind: 'policy-field',
-      name,
-      subfields: subfields || [],
-    });
-  }
-
-PolicyConfig
-  = 'config' whiteSpace name:simpleName openBrace items:(PolicyConfigKeyValuePair (commaOrNewline PolicyConfigKeyValuePair)*)? closeBrace
-  {
-    const metadata: Map<string, string> = new Map();
-    for (const [key, value] of extractCommaSeparated(items)) {
-      if (metadata.has(key)) {
-        error(`Duplicate key in policy config: ${key}.`);
-      }
-      metadata.set(key, value);
-    }
-    return toAstNode<AstNode.PolicyConfig>({
-      kind: 'policy-config',
-      name,
-      metadata,
-    });
-  }
-
-PolicyConfigKeyValuePair
-  = key:simpleName whiteSpace? ':' whiteSpace? value:QuotedString
-  {
-    return [key, value];
-  }
-
 Indent "indentation" = &(i:" "+ &{
   i = i.join('');
   if (i.length > indent.length) {
@@ -1894,18 +1822,6 @@ QuotedString "a 'quoted string'"
     });
     return parts.join('') + end.join('');
  }
-
-// Helpers for creating curly brace blocks with comma or newline separated
-// items, optional whitespace, and optional trailing commas.
-//
-// Example: openBrace X (commaOrNewline X)* closeBrace
-commaOrNewline
-  = multiLineSpace ',' multiLineSpace
-  / eolWhiteSpace multiLineSpace
-openBrace
-  = multiLineSpace '{' multiLineSpace
-closeBrace
-  = commaOrNewline? multiLineSpace '}'
 
 backquotedString "a `backquoted string`"
   = '`' pattern:([^`]+) '`' { return pattern.join(''); }

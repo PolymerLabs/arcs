@@ -281,7 +281,7 @@ export function capabilitiesToProtoOrdinals(capabilities: Capabilities) {
   // Tests will continue to ensure we access the right field.
   // tslint:disable-next-line: no-any
   return [...(capabilities as any).capabilities].map(c => {
-    const ordinal = CapabilityEnum.values[c.replace(/([A-Z])/g, '_$1').toUpperCase()];
+    const ordinal = CapabilityEnum.values[c.replace(/-/g, '_').toUpperCase()];
     if (ordinal === undefined) {
       throw Error(`Capability ${c} is not supported`);
     }

@@ -10,7 +10,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Schema2Kotlin} from '../schema2kotlin.js';
-import {SchemaGraph} from '../schema2graph.js';
+import {SchemaGraph, SchemaNode} from '../schema2graph.js';
 
 describe('schema2kotlin', () => {
   describe('Handle Interface Type', () => {
@@ -74,16 +74,6 @@ describe('schema2kotlin', () => {
          h: writes [&Thing {name: Text}]`,
       'WriteCollectionHandle<Reference<P_H>>'
     ));
-    it('Read Tuple of 2 References', async () => await assertHandleInterface(
-      `particle P
-         h: reads (&Foo {name: Text}, &Bar {age: Number})`,
-      'ReadSingletonHandle<Tuple2<Reference<P_H_0>, Reference<P_H_1>>>'
-    ));
-    it('Write Collection of Tuples of 3 References', async () => await assertHandleInterface(
-      `particle P
-         h: writes [(&Foo {name: Text}, &Bar {age: Number}, &Baz {isThisIt: Boolean})]`,
-      'WriteCollectionHandle<Tuple3<Reference<P_H_0>, Reference<P_H_1>, Reference<P_H_2>>>'
-    ));
     async function assertHandleInterface(manifestString: string, expectedHandleInterface: string) {
       const manifest = await Manifest.parse(manifestString);
       assert.lengthOf(manifest.particles, 1);
@@ -93,10 +83,11 @@ describe('schema2kotlin', () => {
       const [connection] = particle.connections;
 
       const graph = new SchemaGraph(particle);
+      const entityType = SchemaNode.entityTypeForConnection(connection, graph.nodes);
       const schema2kotlin = new Schema2Kotlin({_: []});
 
       assert.equal(
-        schema2kotlin.handleInterfaceType(connection, graph.nodes),
+        schema2kotlin.handleInterfaceType(connection, entityType),
         expectedHandleInterface);
     }
   });
@@ -146,25 +137,6 @@ describe('schema2kotlin', () => {
         val h1: ReadSingletonHandle<P_H1> by handles
     }`
     ));
-    // Below test shows the shortcoming of our handle declaration, which allows
-    // specifying a single entity per handle.
-    // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
-    //                    allowing multiple EntitySpecs for handles of tuples.
-    it('Handle with a tuple', async () => await assertHandleClassDeclaration(
-      `particle P
-        h1: reads (
-          &Person {name: Text},
-          &Accommodation {squareFootage: Number},
-          &Address {streetAddress: Text, postCode: Text}
-        )
-      `,
-      `class Handles : HandleHolderBase(
-        "P",
-        mapOf("h1" to P_H1_0)
-    ) {
-        val h1: ReadSingletonHandle<Tuple3<Reference<P_H1_0>, Reference<P_H1_1>, Reference<P_H1_2>>> by handles
-    }`
-    ));
     async function assertHandleClassDeclaration(manifest: string, expectedHandleClass: string) {
       await assertComponent(manifest, ({handleClassDecl}) => handleClassDecl, expectedHandleClass);
     }
@@ -204,19 +176,6 @@ describe('schema2kotlin', () => {
         'typealias P_H1 = AbstractP.P_H1',
         'typealias P_H1_Home = AbstractP.P_H1_Home',
         'typealias P_H1_Home_Address = AbstractP.P_H1_Home_Address',
-      ]
-    ));
-    it('Handle with a tuple', async () => await assertSchemaAliases(
-      `particle P
-        h1: reads (
-          &Person {name: Text},
-          &Accommodation {squareFootage: Number},
-          &Address {streetAddress: Text, postCode: Text}
-        )
-      `, [
-        'typealias P_H1_0 = AbstractP.P_H1_0',
-        'typealias P_H1_1 = AbstractP.P_H1_1',
-        'typealias P_H1_2 = AbstractP.P_H1_2',
       ]
     ));
     async function assertSchemaAliases(manifest: string, expectedAliases: string[]) {

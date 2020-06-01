@@ -23,12 +23,16 @@ export class Ttl {
       public readonly count: number,
       public readonly units: TtlUnits) {}
 
+  public toString(): string {
+    return this.isInfinite ? `` : `${this.count}${this.units}`;
+  }
+
   public static fromString(ttlStr: string): Ttl {
     if (!ttlStr) {
       return Ttl.infinite;
     }
     const ttlTokens = ttlStr.match(/([0-9]+)([d|h|m])/);
-    assert(ttlTokens && ttlTokens.length === 3, `Invalid ttl: ${ttlStr}`);
+    assert(ttlTokens.length === 3, `Invalid ttl: ${ttlStr}`);
     return new Ttl(Number(ttlTokens[1]), Ttl.ttlUnitsFromString(ttlTokens[2]));
   }
 

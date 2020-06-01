@@ -102,14 +102,6 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
         validateFieldAndTypes(name, element, schema, fieldType.schema);
       }
       break;
-    case 'schema-ordered-list':
-      if (typeof value.length !== 'number') {
-        throw new TypeError(`Cannot set ordered list ${name} with non-list '${value}'`);
-      }
-      for (const element of value) {
-        validateFieldAndTypes(name, element, schema, fieldType.schema);
-      }
-      break;
     default:
       throw new Error(`Unknown kind '${fieldType.kind}' for field ${name} in schema ${schema.name}`);
   }

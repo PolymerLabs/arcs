@@ -71,16 +71,16 @@ describe('schema', () => {
 
     const kind = 'schema-primitive';
     const expected = {
-      description: {kind, refinement: null, type: 'Text', annotations: []},
-      image: {kind, refinement: null, type: 'URL', annotations: []},
-      category: {kind, refinement: null, type: 'Text', annotations: []},
-      price: {kind, refinement: null, type: 'Text', annotations: []},
-      seller: {kind, refinement: null, type: 'Text', annotations: []},
-      shipDays: {kind, refinement: null, type: 'Number', annotations: []},
-      url: {kind, refinement: null, type: 'URL', annotations: []},
-      identifier: {kind, refinement: null, type: 'Text', annotations: []},
-      isReal: {kind, refinement: null, type: 'Boolean', annotations: []},
-      name: {kind, refinement: null, type: 'Text', annotations: []}
+      description: {kind, refinement: null, type: 'Text'},
+      image: {kind, refinement: null, type: 'URL'},
+      category: {kind, refinement: null, type: 'Text'},
+      price: {kind, refinement: null, type: 'Text'},
+      seller: {kind, refinement: null, type: 'Text'},
+      shipDays: {kind, refinement: null, type: 'Number'},
+      url: {kind, refinement: null, type: 'URL'},
+      identifier: {kind, refinement: null, type: 'Text'},
+      isReal: {kind, refinement: null, type: 'Boolean'},
+      name: {kind, refinement: null, type: 'Text'}
     };
     assert.deepEqual(deleteLocations(schema).fields, expected);
   });

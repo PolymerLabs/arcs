@@ -12,7 +12,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {Modality} from '../modality.js';
-import {Capabilities, Capability} from '../capabilities.js';
+import {Capabilities} from '../capabilities.js';
 import {Entity} from '../entity.js';
 import {TtlUnits, Ttl} from '../recipe/ttl.js';
 import {Recipe} from '../recipe/recipe.js';
@@ -785,8 +785,8 @@ describe('recipe', () => {
   it('parses recipe handle ttls', async () => {
     const recipe = (await Manifest.parse(`
       recipe
-        h0: create @ttl('20d')
-        h1: create @ttl('5m')
+        h0: create @ttl(20d)
+        h1: create @ttl(5m)
         h2: create
     `)).recipes[0];
     assert.lengthOf(recipe.handles, 3);
@@ -799,27 +799,27 @@ describe('recipe', () => {
   it('parses recipe handle capabilities', async () => {
     const recipe = (await Manifest.parse(`
       recipe Thing
-        h0: create @persistent
-        h1: create 'my-id' @tiedToRuntime
-        h2: create #myTag @persistent @tiedToArc
-        h3: create @persistent
-        h4: create @persistent @ttl('20d')
-        h5: create @ttl('20d')
+        h0: create persistent
+        h1: create tied-to-runtime 'my-id'
+        h2: create persistent tied-to-arc #myTag
+        h3: create persistent
+        h4: create persistent @ttl(20d)
+        h5: create @ttl(20d)
         h6: create #otherTag`)).recipes[0];
     const verifyRecipeHandleCapabilities = (recipe) => {
       assert.lengthOf(recipe.handles, 7);
       assert.isTrue(
-          recipe.handles[0].capabilities.isSame(new Capabilities([Capability.Persistent])));
+          recipe.handles[0].capabilities.isSame(new Capabilities(['persistent'])));
       assert.isTrue(
-          recipe.handles[1].capabilities.isSame(new Capabilities([Capability.TiedToRuntime])));
+          recipe.handles[1].capabilities.isSame(new Capabilities(['tied-to-runtime'])));
       assert.isTrue(
-          recipe.handles[2].capabilities.isSame(new Capabilities([Capability.Persistent, Capability.TiedToArc])));
+          recipe.handles[2].capabilities.isSame(new Capabilities(['persistent', 'tied-to-arc'])));
       assert.isTrue(
-          recipe.handles[3].capabilities.isSame(new Capabilities([Capability.Persistent])));
+          recipe.handles[3].capabilities.isSame(new Capabilities(['persistent'])));
       assert.isTrue(
-          recipe.handles[4].capabilities.isSame(new Capabilities([Capability.Persistent, Capability.Queryable])));
+          recipe.handles[4].capabilities.isSame(new Capabilities(['persistent', 'queryable'])));
       assert.isTrue(
-          recipe.handles[5].capabilities.isSame(new Capabilities([Capability.Queryable])));
+          recipe.handles[5].capabilities.isSame(new Capabilities(['queryable'])));
       assert.isTrue(recipe.handles[6].capabilities.isEmpty());
     };
     verifyRecipeHandleCapabilities(recipe);

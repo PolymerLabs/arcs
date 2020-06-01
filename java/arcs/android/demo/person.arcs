@@ -10,7 +10,9 @@ particle ReadPerson in 'arcs.android.demo.DemoService.ReadPerson'
 particle WritePerson in 'arcs.android.demo.DemoService.WritePerson'
   person: writes Person {name}
 
-@arcId('personArc')
+@trigger
+  launch startup
+  arcId personArc
 recipe PersonRecipe
   recipePerson: create
 

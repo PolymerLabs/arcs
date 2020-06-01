@@ -2,11 +2,11 @@ package arcs.sdk
 
 class ReadSdkPerson : AbstractReadSdkPerson() {
     var name = ""
-    var onStartCalled = false
+    var firstStartCalled = false
     var shutdownCalled = false
 
-    override fun onStart() {
-        onStartCalled = true
+    override suspend fun onFirstStart() {
+        firstStartCalled = true
         name = ""
         handles.person.onUpdate {
             name = handles.person.fetch()?.name ?: ""

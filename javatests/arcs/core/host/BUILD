@@ -14,6 +14,7 @@ package(default_visibility = ["//visibility:public"])
 arcs_kt_jvm_test_suite(
     name = "host",
     srcs = glob(["*Test.kt"]),
+    constraints = ["android"],
     # TODO(b/157513871): Deflake this test suite.
     flaky = True,
     package = "arcs.core.host",
@@ -21,14 +22,12 @@ arcs_kt_jvm_test_suite(
         ":particle",  # buildcleaner: keep
         ":plans",
         ":schemas",
-        ":testhost",
         "//java/arcs/core/allocator",  # buildcleaner: keep
         "//java/arcs/core/common",
         "//java/arcs/core/data",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
         "//java/arcs/core/host/api",
-        "//java/arcs/core/storage:storage-kt",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/keys",
@@ -40,19 +39,16 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk",
         "//javatests/arcs/core/entity:lib",
-        "//third_party/java/junit",
-        "//third_party/java/mockito",
-        "//third_party/java/truth",
+        "//third_party/java/junit:junit-android",
+        "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
-        "//third_party/kotlin/mockito_kotlin",
     ],
 )
 
 arcs_kt_schema(
     name = "schemas",
     srcs = [
-        "lifecycle.arcs",
         "person.arcs",
         "reflective.arcs",
         "test.arcs",
@@ -62,7 +58,6 @@ arcs_kt_schema(
 arcs_kt_plan(
     name = "plans",
     srcs = [
-        "lifecycle.arcs",
         "person.arcs",
         "reflective.arcs",
     ],
@@ -96,15 +91,11 @@ arcs_kt_jvm_library(
     ],
     constraints = ["android"],
     deps = [
-        "//java/arcs/core/common",
         "//java/arcs/core/data",
-        "//java/arcs/core/entity",
         "//java/arcs/core/host",
-        "//java/arcs/core/host/api",
         "//java/arcs/core/util",
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
-        "//java/arcs/sdk:sdk-kt",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
@@ -113,7 +104,6 @@ arcs_kt_jvm_library(
     name = "particle",
     testonly = 1,
     srcs = [
-        "LifecycleParticles.kt",
         "ReadPerson.kt",
         "TestHost.kt",
         "TestHostParticle.kt",

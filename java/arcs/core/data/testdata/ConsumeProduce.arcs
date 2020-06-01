@@ -12,10 +12,12 @@ particle SummarizeSentiment
     summary: Text
   }
 
-@arcId('transform')
+@trigger
+  launch startup
+  arcId transform
 recipe Transform
   events: map 'raw-events'
-  summary: create 'processed-events' @persistent
+  summary: create persistent 'processed-events'
   SummarizeSentiment
     events: reads events
     result: writes summary

@@ -12,10 +12,12 @@ particle Ingestion
   events: writes [Event {type, timestamp, value}]
 
 // Example: Long running arc ingesting events into a collection.
-@arcId('eventIngestion')
+@trigger
+  launch startup
+  arcId eventIngestion
 recipe EventsIngestion
   // Example: Handle created with id, capabilities and TTL.
-  events: create 'raw-events' @persistent @ttl('1d')
+  events: create persistent 'raw-events' @ttl(1d)
   Ingestion
     events: events
 
@@ -37,13 +39,15 @@ particle SummarizeSentiment
 
 // Example: Long running arc mapping data from another long running arc
 //          and providing data derived from the mapped data.
-@arcId('sentimentAnalysis')
+@trigger
+  launch startup
+  arcId sentimentAnalysis
 recipe SentimentAnalyzer
   // Example: Mapping by id and type; mapping a collection.
   events: map 'raw-events'
   // Example: Handle created without capabilities in a long running arc.
   processed: create
-  summary: create 'events-summary' @persistent @ttl('15d')
+  summary: create persistent 'events-summary' @ttl(15d)
   AnalyzeSentiment
     events: reads events
     processed: writes processed
@@ -66,7 +70,7 @@ recipe RequestHandler
   // Example: Handle created without capabilities in an ephemeral arc.
   request: create
   // Example: Handle created with capabilities in an ephemeral arc.
-  response: create @tiedToArc
+  response: create tied-to-arc
   RequestProvider
     request: writes request
   ResponseCalculator

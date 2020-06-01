@@ -239,9 +239,6 @@ class EntityInternals {
     if (value.constructor.name === 'Uint8Array') {
       return Uint8Array.from(value);
     }
-    if (typeof value.length === 'number') {
-      return value.slice().map(this.cloneValue);
-    }
     return value.dataClone();
   }
 

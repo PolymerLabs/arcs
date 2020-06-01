@@ -163,7 +163,7 @@ class AndroidSqliteDatabaseRegistry(
         private val MANIFEST_NAME = "arcs_database_manifest"
 
         private val SCHEMA = """
-            CREATE TABLE IF NOT EXISTS arcs_databases (
+            CREATE TABLE arcs_databases (
                 name TEXT NOT NULL UNIQUE,
                 created INTEGER NOT NULL,
                 last_accessed INTEGER NOT NULL

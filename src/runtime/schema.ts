@@ -55,8 +55,7 @@ export class Schema {
     }
     for (const [name, field] of Object.entries(fields)) {
       if (typeof(field) === 'string') {
-        assert(['Text', 'URL', 'Number', 'Boolean', 'Bytes'].includes(field), `non-primitive schema type ${field} need to be defined as a parser production`);
-        this.fields[name] = {kind: 'schema-primitive', refinement: null, type: field, annotations: []};
+        this.fields[name] = {kind: 'schema-primitive', refinement: null, type: field};
       } else {
         this.fields[name] = field;
       }
@@ -107,9 +106,6 @@ export class Schema {
         `Annotation '${a.name}' is invalid for Schema`));
     this._annotations = annotations;
   }
-  getAnnotation(name: string): AnnotationRef | null {
-    return this.annotations.find(a => a.name === name);
-  }
 
   static typesEqual(fieldType1, fieldType2): boolean {
     // TODO(cypher1): structural check instead of stringification.
@@ -146,7 +142,6 @@ export class Schema {
           return null;
         }
         fields[field].refinement = Refinement.intersectionOf(fields[field].refinement, type.refinement);
-        fields[field].annotations = [...(fields[field].annotations || []), ...(type.annotations || [])];
       } else {
         fields[field] = {...type};
       }
@@ -163,7 +158,6 @@ export class Schema {
       if (otherType && Schema.typesEqual(type, otherType)) {
         fields[field] = {...type};
         fields[field].refinement = Refinement.unionOf(type.refinement, otherType.refinement);
-        fields[field].annotations = (type.annotations || []).filter(a => (otherType.annotations || []).includes(a));
       }
     }
     // if schema level refinement contains fields not present in the intersection, discard it
@@ -275,12 +269,7 @@ export class Schema {
         case 'schema-reference': {
           singletons[field] = new CRDTSingleton<Reference>();
           break;
-        }
-        case 'schema-ordered-list': {
-          singletons[field] = new CRDTSingleton<{id: string}>();
-          break;
-        }
-        default: {
+        } default: {
           throw new Error(`Big Scary Exception: entity field ${field} of type ${schema.type} doesn't yet have a CRDT mapping implemented`);
         }
       }
@@ -297,8 +286,7 @@ export class Schema {
   static fieldToString([name, type]: [string, SchemaType]) {
     const typeStr = Schema._typeString(type);
     const refExpr = type.refinement ? type.refinement.toString() : '';
-    const annotationsStr = (type.annotations || []).map(ann => ` ${ann.toString()}`).join('');
-    return `${name}: ${typeStr}${refExpr}${annotationsStr}`;
+    return `${name}: ${typeStr}${refExpr}`;
   }
 
   toInlineSchemaString(options?: {hideFields?: boolean}): string {

@@ -12,11 +12,6 @@ import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleMode
 import arcs.core.entity.HandleSpec
-import arcs.core.entity.Tuple1
-import arcs.core.entity.Tuple2
-import arcs.core.entity.Tuple3
-import arcs.core.entity.Tuple4
-import arcs.core.entity.Tuple5
 import arcs.sdk.*
 import arcs.sdk.testing.*
 import kotlinx.coroutines.CoroutineScope

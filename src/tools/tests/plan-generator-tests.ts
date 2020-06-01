@@ -14,7 +14,7 @@ import {Manifest} from '../../runtime/manifest.js';
 import {Ttl, TtlUnits} from '../../runtime/recipe/ttl.js';
 import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
 import {Handle} from '../../runtime/recipe/handle.js';
-import {Capabilities, Capability} from '../../runtime/capabilities.js';
+import {Capabilities} from '../../runtime/capabilities.js';
 
 describe('recipe2plan', () => {
   describe('plan-generator', () => {
@@ -55,7 +55,7 @@ describe('recipe2plan', () => {
        data: writes Thing {num: Number}
      
      recipe R
-       h: create 'some-id' @persistent
+       h: create persistent 'some-id'
        A
          data: writes h`);
 
@@ -75,7 +75,7 @@ describe('recipe2plan', () => {
        data: writes [Thing {num: Number}]
        
      recipe R
-       h: create 'some-id' @persistent
+       h: create persistent 'some-id'
        A
          data: writes h`);
 
@@ -95,7 +95,7 @@ describe('recipe2plan', () => {
        data: writes [&Thing {num: Number}]
        
      recipe R
-       h: create 'some-id' @persistent
+       h: create persistent 'some-id'
        A
          data: writes h`);
 
@@ -125,10 +125,10 @@ describe('recipe2plan', () => {
        data: writes Thing {num: Number}
        
      recipe R
-       h0: create @persistent
-       h1: create #test @persistent
-       h2: create #test2 @persistent
-       h3: create #test @persistent
+       h0: create persistent 
+       h1: create persistent #test
+       h2: create persistent #test2
+       h3: create persistent #test
        A
          data: writes h0
        A
@@ -152,10 +152,10 @@ describe('recipe2plan', () => {
        data: writes Thing {num: Number}
        
      recipe R
-       h0: create @persistent
-       h1: create #test @persistent
-       h2: create #test2 @persistent
-       h3: create #test @persistent
+       h0: create persistent 
+       h1: create persistent #test
+       h2: create persistent #test2
+       h3: create persistent #test
        A
          data: writes h0
        A
@@ -184,9 +184,9 @@ describe('recipe2plan', () => {
        
      recipe R
        h0: create
-       h1: create @ttl('12h')
-       h2: create @persistent
-       h3: create @persistent @ttl('24h')
+       h1: create @ttl(12h)
+       h2: create persistent
+       h3: create persistent @ttl(24h)
        A
          data: writes h0
        A
@@ -240,8 +240,8 @@ describe('recipe2plan', () => {
        data: writes Thing {num: Number}
        
      recipe R
-       h1: create 'id-1' @persistent
-       h2: create 'id-2' @persistent
+       h1: create persistent 'id-1'
+       h2: create persistent 'id-2'
        A
          data: writes h2
        B
@@ -291,7 +291,7 @@ describe('recipe2plan', () => {
         `Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.Queryable))`
       );
       assert.deepStrictEqual(
-        generator.createCapabilities(new Capabilities([Capability.TiedToArc, Capability.Persistent])),
+        generator.createCapabilities(new Capabilities(['tied-to-arc', 'persistent'])),
         `Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc))`
       );
     });
