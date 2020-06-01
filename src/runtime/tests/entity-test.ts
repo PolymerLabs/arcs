@@ -40,7 +40,7 @@ describe('Entity', () => {
   });
 
   it('behaves like a regular object except writing to any field fails', () => {
-    const e = new entityClass({txt: 'abc', num: 56, lst: [1,2,5,4,3]});
+    const e = new entityClass({txt: 'abc', num: 56, lst: [1, 2, 5, 4, 3]});
 
     assert.strictEqual(e.txt, 'abc');
     assert.strictEqual(e.num, 56);
@@ -173,7 +173,7 @@ describe('Entity', () => {
     Entity.mutate(e, e => e.txt = 'xyz');
     assert.strictEqual(e.txt, 'xyz');
     assert.strictEqual(e.num, 56);
-    assert.deepEqual(e.lst, [1, 2, 5, 4, 3])
+    assert.deepEqual(e.lst, [1, 2, 5, 4, 3]);
     Entity.mutate(e, e => e.lst = []);
     assert.strictEqual(e.num, 56);
     assert.deepEqual(e.lst, []);
@@ -187,10 +187,10 @@ describe('Entity', () => {
     assert.deepEqual(e.lst, [1, 2, 3]);
   });
 
-  it ('prevents mutating a list if contained values are not of the appropriate type', () => {
+  it('prevents mutating a list if contained values are not of the appropriate type', () => {
     const e = new entityClass({});
-    assert.throws(() => Entity.mutate(e, {lst: ["foo"]}), `Type mismatch setting field lst`);
-    assert.throws(() => Entity.mutate(e, {lst: [1, 2, "foo"]}), `Type mismatch setting field lst`);
+    assert.throws(() => Entity.mutate(e, {lst: ['foo']}), `Type mismatch setting field lst`);
+    assert.throws(() => Entity.mutate(e, {lst: [1, 2, 'foo']}), `Type mismatch setting field lst`);
   });
 
   it('prevents mutations of Kotlin types', () => {
@@ -237,7 +237,7 @@ describe('Entity', () => {
       ref: {id: 'i1', entityStorageKey: storageKey, creationTimestamp, expirationTimestamp},
       tuple: ['def', 'link', -12, true, new Uint8Array([5, 7])],
       union: new Uint8Array([80]),
-      lst: [1,2,5,4,3]
+      lst: [1, 2, 5, 4, 3]
     });
 
     const e2 = new entityClass(Entity.dataClone(e1));

@@ -17,9 +17,9 @@ import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
 import {newHandle, handleForStore, newStore} from '../storage-ng.js';
 import {Schema} from '../../schema.js';
 import {Particle} from '../../particle.js';
-import { Exists } from '../drivers/driver.js';
-import { StorageProxy } from '../storage-proxy.js';
-import { CollectionHandle } from '../handle.js';
+import {Exists} from '../drivers/driver.js';
+import {StorageProxy} from '../storage-proxy.js';
+import {CollectionHandle} from '../handle.js';
 
 describe('ReferenceModeStore Integration', async () => {
 
