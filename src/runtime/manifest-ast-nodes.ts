@@ -407,7 +407,17 @@ export interface AnnotationParam extends BaseNode {
   type: SchemaPrimitiveTypeValue;
 }
 
-export type AnnotationTargetValue = 'Recipe' | 'Particle' | 'Store' | 'Handle' | 'HandleConnection' | 'Schema' | 'SchemaField';
+export type AnnotationTargetValue =
+  'Recipe' |
+  'Particle' |
+  'Store' |
+  'Handle' |
+  'HandleConnection' |
+  'Schema' |
+  'SchemaField' |
+  'PolicyField' |
+  'PolicyTarget' |
+  'Policy';
 
 export interface AnnotationTargets extends BaseNode {
   kind: 'annotation-targets';

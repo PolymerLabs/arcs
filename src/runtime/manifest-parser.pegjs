@@ -993,7 +993,17 @@ AnnotationNodeItem
   / AnnotationMultiple
   / AnnotationDoc
 
-AnnotationTargetValue = 'Recipe' / 'Particle' / 'HandleConnection' / 'Store' / 'Handle' / 'SchemaField' / 'Schema'
+AnnotationTargetValue
+  = 'Recipe'
+  / 'Particle'
+  / 'HandleConnection'
+  / 'Store'
+  / 'Handle'
+  / 'SchemaField'
+  / 'Schema'
+  / 'PolicyField'
+  / 'PolicyTarget'
+  / 'Policy'
 
 AnnotationTargets = 'targets:'  whiteSpace '[' whiteSpace? targets:(AnnotationTargetValue (',' whiteSpace? AnnotationTargetValue)*) whiteSpace? ']' eolWhiteSpace? {
   return toAstNode<AstNode.AnnotationTargets>({
