@@ -94,6 +94,10 @@ class Scheduler(
                 }
             }
             .launchIn(scope)
+
+        idlenessFlow
+            .onEach { log.debug { "Idleness: $it" } }
+            .launchIn(scope)
     }
 
     /** Schedule a single [Task] to be run as part of the next agenda. */
@@ -127,7 +131,11 @@ class Scheduler(
     /** Wait for the [Scheduler] to become idle. */
     /* internal */
     suspend fun waitForIdle() {
-        idlenessFlow.debounce(50).filter { it }.first()
+        idlenessFlow.onEach { log.debug { "Awaiting Idleness: $it" } }
+            .debounce(50)
+            .onEach { log.debug { "Awaiting Idleness (Debounced): $it" } }
+            .filter { it }
+            .first()
     }
 
     /** Cancel the [CoroutineScope] belonging to this Scheduler. */
