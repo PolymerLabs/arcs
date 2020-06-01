@@ -16,6 +16,7 @@ public:
   GoldInternal1() = default;
   GoldInternal1(GoldInternal1&&) = default;
   GoldInternal1& operator=(GoldInternal1&&) = default;
+
   template<typename T>
   GoldInternal1(const T& other) :
     val_(other.val()), val_valid_(other.has_val())
@@ -42,7 +43,6 @@ public:
   }
 
 protected:
-
   // Allow private copying for use in Handles.
   GoldInternal1(const GoldInternal1&) = default;
   GoldInternal1& operator=(const GoldInternal1&) = default;
@@ -158,6 +158,7 @@ public:
   Gold_AllPeople() = default;
   Gold_AllPeople(Gold_AllPeople&&) = default;
   Gold_AllPeople& operator=(Gold_AllPeople&&) = default;
+
   template<typename T>
   Gold_AllPeople(const T& other) :
     name_(other.name()), name_valid_(other.has_name()),
@@ -232,7 +233,6 @@ public:
   }
 
 protected:
-
   // Allow private copying for use in Handles.
   Gold_AllPeople(const Gold_AllPeople&) = default;
   Gold_AllPeople& operator=(const Gold_AllPeople&) = default;
@@ -423,6 +423,7 @@ public:
   Gold_Collection() = default;
   Gold_Collection(Gold_Collection&&) = default;
   Gold_Collection& operator=(Gold_Collection&&) = default;
+
   template<typename T>
   Gold_Collection(const T& other) :
     num_(other.num()), num_valid_(other.has_num())
@@ -449,7 +450,6 @@ public:
   }
 
 protected:
-
   // Allow private copying for use in Handles.
   Gold_Collection(const Gold_Collection&) = default;
   Gold_Collection& operator=(const Gold_Collection&) = default;
@@ -555,149 +555,6 @@ struct std::hash<arcs::Gold_Collection> {
 
 namespace arcs::golden {
 
-// Aliased as Gold_TypeVarIn, Gold_TypeVarOut
-class GoldInternal2 {
-public:
-  // Entities must be copied with arcs::clone_entity(), which will exclude the internal id.
-  // Move operations are ok (and will include the internal id).
-  GoldInternal2() = default;
-  GoldInternal2(GoldInternal2&&) = default;
-  GoldInternal2& operator=(GoldInternal2&&) = default;
-
-  double amt() const { return amt_; }
-  void set_amt(double value) { amt_ = value; amt_valid_ = true; }
-
-  // Equality ops compare internal ids and all data fields.
-  // Use arcs::fields_equal() to compare only the data fields.
-  bool operator==(const GoldInternal2& other) const;
-  bool operator!=(const GoldInternal2& other) const { return !(*this == other); }
-
-  // For STL containers.
-  friend bool operator<(const GoldInternal2& a, const GoldInternal2& b) {
-    if (int cmp = a._internal_id_.compare(b._internal_id_)) {
-      return cmp < 0;
-    }
-    if (0) {
-    } else if (a.amt_ != b.amt_) {
-      return a.amt_ < b.amt_;
-    }
-    return false;
-  }
-
-protected:
-  template<typename T>
-  GoldInternal2(const T& other) :
-    amt_(other.amt()), amt_valid_(other.has_amt())
-  {}
-
-  // Allow private copying for use in Handles.
-  GoldInternal2(const GoldInternal2&) = default;
-  GoldInternal2& operator=(const GoldInternal2&) = default;
-
-  static const char* _schema_hash() { return "96ac6e3c32cf8b7f37c5b9dd69b9796ace59b288"; }
-  static const int _field_count = 1;
-
-  double amt_ = 0;
-  bool amt_valid_ = false;
-
-  std::string _internal_id_;
-
-  friend class Singleton<GoldInternal2>;
-  friend class Collection<GoldInternal2>;
-  friend class Ref<GoldInternal2>;
-  friend class internal::Accessor;
-};
-
-using Gold_TypeVarIn = GoldInternal2;
-using Gold_TypeVarOut = GoldInternal2;
-
-template<>
-inline GoldInternal2 internal::Accessor::clone_entity(const GoldInternal2& entity) {
-  GoldInternal2 clone;
-  clone.amt_ = entity.amt_;
-  clone.amt_valid_ = entity.amt_valid_;
-  return clone;
-}
-
-template<>
-inline size_t internal::Accessor::hash_entity(const GoldInternal2& entity) {
-  size_t h = 0;
-  internal::hash_combine(h, entity._internal_id_);
-  internal::hash_combine(h, entity.amt_);
-  return h;
-}
-
-template<>
-inline bool internal::Accessor::fields_equal(const GoldInternal2& a, const GoldInternal2& b) {
-  return (a.amt_ == b.amt_);
-}
-
-inline bool GoldInternal2::operator==(const GoldInternal2& other) const {
-  return _internal_id_ == other._internal_id_ && fields_equal(*this, other);
-}
-
-template<>
-inline std::string internal::Accessor::entity_to_str(const GoldInternal2& entity, const char* join, bool with_id) {
-  internal::StringPrinter printer;
-  if (with_id) {
-    printer.addId(entity._internal_id_);
-  }
-  if (entity.amt_valid_) printer.add("amt: ", entity.amt_);
-  return printer.result(join);
-}
-
-template<>
-inline void internal::Accessor::decode_entity(GoldInternal2* entity, const char* str) {
-  if (str == nullptr) return;
-  internal::StringDecoder decoder(str);
-  decoder.decode(entity->_internal_id_);
-  decoder.validate("|");
-  for (int i = 0; !decoder.done() && i < GoldInternal2::_field_count; i++) {
-    std::string name = decoder.upTo(':');
-    if (0) {
-    } else if (name == "amt") {
-      decoder.validate("N");
-      decoder.decode(entity->amt_);
-      entity->amt_valid_ = true;
-    } else {
-      // Ignore unknown fields until type slicing is fully implemented.
-      std::string typeChar = decoder.chomp(1);
-      if (typeChar == "T" || typeChar == "U") {
-        std::string s;
-        decoder.decode(s);
-      } else if (typeChar == "N") {
-        double d;
-        decoder.decode(d);
-      } else if (typeChar == "B") {
-        bool b;
-        decoder.decode(b);
-      }
-      i--;
-    }
-    decoder.validate("|");
-  }
-}
-
-template<>
-inline std::string internal::Accessor::encode_entity(const GoldInternal2& entity) {
-  internal::StringEncoder encoder;
-  encoder.encode("", entity._internal_id_);
-  encoder.encode("amt:N", entity.amt_);
-  return encoder.result();
-}
-
-}  // namespace arcs::golden
-
-// For STL unordered associative containers. Entities will need to be std::move()-inserted.
-template<>
-struct std::hash<arcs::GoldInternal2> {
-  size_t operator()(const arcs::GoldInternal2& entity) const {
-    return arcs::hash_entity(entity);
-  }
-};
-
-namespace arcs::golden {
-
 class Gold_QCollection {
 public:
   // Entities must be copied with arcs::clone_entity(), which will exclude the internal id.
@@ -705,6 +562,7 @@ public:
   Gold_QCollection() = default;
   Gold_QCollection(Gold_QCollection&&) = default;
   Gold_QCollection& operator=(Gold_QCollection&&) = default;
+
   template<typename T>
   Gold_QCollection(const T& other) :
     name_(other.name()), name_valid_(other.has_name()),
@@ -970,6 +828,7 @@ public:
   Gold_Data() = default;
   Gold_Data(Gold_Data&&) = default;
   Gold_Data& operator=(Gold_Data&&) = default;
+
   template<typename T>
   Gold_Data(const T& other) :
     num_(other.num()), num_valid_(other.has_num()),
@@ -1028,7 +887,6 @@ public:
   }
 
 protected:
-
   // Allow private copying for use in Handles.
   Gold_Data(const Gold_Data&) = default;
   Gold_Data& operator=(const Gold_Data&) = default;
@@ -1191,8 +1049,6 @@ protected:
   arcs::Collection<arcs::Gold_QCollection> qCollection_{this, "qCollection"};
   arcs::Singleton<arcs::Gold_Alias> alias_{this, "alias"};
   arcs::Collection<arcs::Gold_Collection> collection_{this, "collection"};
-  arcs::Singleton<arcs::Gold_TypeVarIn> typeVarIn_{this, "typeVarIn"};
-  arcs::Singleton<arcs::Gold_TypeVarOut> typeVarOut_{this, "typeVarOut"};
 };
 
 #endif

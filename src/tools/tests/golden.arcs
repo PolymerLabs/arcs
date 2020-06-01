@@ -16,10 +16,3 @@ particle Gold
   alias: writes {val: Text}
 
   collection: reads [{num: Number}]
-
-  typeVarIn: reads ~a with {amt: Number}
-  typeVarOut: writes ~a
-
-  // This type var shares a schema with `collection`. Will two different entities still be created?
-  typeVarS: reads ~b with {num: Number}
-

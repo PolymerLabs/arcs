@@ -15,8 +15,6 @@ typealias Gold_Data_Ref = AbstractGold.GoldInternal1
 typealias Gold_Alias = AbstractGold.GoldInternal1
 typealias Gold_AllPeople = AbstractGold.Gold_AllPeople
 typealias Gold_Collection = AbstractGold.Gold_Collection
-typealias Gold_TypeVarIn = AbstractGold.GoldInternal2
-typealias Gold_TypeVarOut = AbstractGold.GoldInternal2
 typealias Gold_QCollection = AbstractGold.Gold_QCollection
 typealias Gold_Data = AbstractGold.Gold_Data
 
@@ -336,77 +334,6 @@ abstract class AbstractGold : WasmParticleImpl() {
     }
 
     @Suppress("UNCHECKED_CAST")
-    class GoldInternal2 private constructor(
-        amt: Double = 0.0
-    ) : WasmEntity {
-
-        var amt = amt
-            get() = field
-            private set(_value) {
-                field = _value
-            }
-
-        override var entityId = ""
-
-        fun copy(amt: Double = this.amt) = GoldInternal2(amt = amt)
-
-
-        fun reset() {
-          amt = 0.0
-        }
-
-        override fun encodeEntity(): NullTermByteArray {
-            val encoder = StringEncoder()
-            encoder.encode("", entityId)
-            amt.let { encoder.encode("amt:N", amt) }
-            return encoder.toNullTermByteArray()
-        }
-
-        override fun toString() =
-            "GoldInternal2(amt = $amt)"
-
-        companion object : WasmEntitySpec<GoldInternal2> {
-
-
-            override fun decode(encoded: ByteArray): GoldInternal2? {
-                if (encoded.isEmpty()) return null
-
-                val decoder = StringDecoder(encoded)
-                val entityId = decoder.decodeText()
-                decoder.validate("|")
-
-                var amt = 0.0
-                var i = 0
-                while (i < 1 && !decoder.done()) {
-                    val _name = decoder.upTo(':').toUtf8String()
-                    when (_name) {
-                        "amt" -> {
-                        decoder.validate("N")
-                        amt = decoder.decodeNum()
-                    }
-                        else -> {
-                            // Ignore unknown fields until type slicing is fully implemented.
-                            when (decoder.chomp(1).toUtf8String()) {
-                                "T", "U" -> decoder.decodeText()
-                                "N" -> decoder.decodeNum()
-                                "B" -> decoder.decodeBool()
-                            }
-                            i--
-                        }
-                    }
-                    decoder.validate("|")
-                    i++
-                }
-                val _rtn = GoldInternal2().copy(
-                    amt = amt
-                )
-               _rtn.entityId = entityId
-                return _rtn
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
     class Gold_QCollection(
         name: String = "",
         age: Double = 0.0,
@@ -702,7 +629,5 @@ abstract class AbstractGold : WasmParticleImpl() {
         val qCollection: WasmCollectionImpl<Gold_QCollection> = WasmCollectionImpl<Gold_QCollection>(particle, "qCollection", Gold_QCollection)
         val alias: WasmSingletonImpl<Gold_Alias> = WasmSingletonImpl<Gold_Alias>(particle, "alias", Gold_Alias)
         val collection: WasmCollectionImpl<Gold_Collection> = WasmCollectionImpl<Gold_Collection>(particle, "collection", Gold_Collection)
-        val typeVarIn: WasmSingletonImpl<Gold_TypeVarIn> = WasmSingletonImpl<Gold_TypeVarIn>(particle, "typeVarIn", Gold_TypeVarIn)
-        val typeVarOut: WasmSingletonImpl<Gold_TypeVarOut> = WasmSingletonImpl<Gold_TypeVarOut>(particle, "typeVarOut", Gold_TypeVarOut)
     }
 }
