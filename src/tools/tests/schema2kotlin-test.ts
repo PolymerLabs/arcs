@@ -29,6 +29,11 @@ describe('schema2kotlin', () => {
          h: reads writes Thing {name: Text}`,
       'ReadWriteSingletonHandle<Thing>'
     ));
+    it('Read Write Anonymous Entity', async () => await assertHandleInterface(
+      `particle P
+         h: reads writes * {name: Text}`,
+      'ReadWriteSingletonHandle<P_H>'
+    ));
     it('Read Collection of Entities', async () => await assertHandleInterface(
       `particle P
          h: reads [Thing {name: Text}]`,
@@ -109,6 +114,18 @@ describe('schema2kotlin', () => {
         mapOf("h1" to Person)
     ) {
         val h1: ReadSingletonHandle<Person> by handles
+    }`
+    ));
+    it('Conflicting Schema Names', async () => await assertHandleClassDeclaration(
+      `particle P
+         h1: reads Person {name: Text}
+         h2: reads Person {age: Number}`,
+      `class Handles : HandleHolderBase(
+        "P",
+        mapOf("h1" to P_H1, "h2" to P_H2)
+    ) {
+        val h1: ReadSingletonHandle<P_H1> by handles
+        val h2: ReadSingletonHandle<P_H2> by handles
     }`
     ));
     it('Read, Write and Query Handles', async () => await assertHandleClassDeclaration(
