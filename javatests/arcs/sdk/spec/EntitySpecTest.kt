@@ -6,13 +6,13 @@ import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.data.Ttl
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.SchemaRegistry
+import arcs.core.testutil.runTest
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.Reference
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.withContext
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -39,9 +39,8 @@ class EntitySpecTest {
     val harness = EntitySpecParticleTestHarness { EntitySpecParticle() }
 
     @Before
-    fun setUp() = runBlocking {
+    fun setUp() {
         idGenerator = Id.Generator.newForTest("session")
-        harness.start()
     }
 
     @Test
@@ -72,7 +71,9 @@ class EntitySpecTest {
     }
 
     @Test
-    fun createWithFieldValues() = runBlocking<Unit> {
+    fun createWithFieldValues() = runTest {
+        harness.start()
+
         val ref1 = createBarReference(Bar(value = "bar1"))
         val ref2 = createBarReference(Bar(value = "bar2"))
         val ref3 = createBarReference(Bar(value = "bar3"))
@@ -158,7 +159,9 @@ class EntitySpecTest {
     }
 
     @Test
-    fun copy() = runBlocking<Unit> {
+    fun copy() = runTest {
+        harness.start()
+
         val ref1 = createBarReference(Bar(value = "bar1"))
         val ref2 = createBarReference(Bar(value = "bar2"))
         val ref3 = createBarReference(Bar(value = "bar3"))
@@ -247,7 +250,9 @@ class EntitySpecTest {
     }
 
     @Test
-    fun serialize_roundTrip() = runBlocking {
+    fun serialize_roundTrip() = runTest {
+        harness.start()
+
         val ref1 = createBarReference(Bar(value = "bar1"))
         val ref2 = createBarReference(Bar(value = "bar2"))
         val ref3 = createBarReference(Bar(value = "bar3"))
@@ -325,10 +330,11 @@ class EntitySpecTest {
      * Stores the given [Bar] entity in a collection, and then creates and returns a reference to
      * it.
      */
-    private suspend fun createBarReference(bar: Bar): Reference<Bar> {
-        harness.bars.store(bar)
-        return harness.bars.createReference(bar)
-    }
+    private suspend fun createBarReference(bar: Bar): Reference<Bar> =
+        withContext(harness.bars.dispatcher) {
+            harness.bars.store(bar)
+            return@withContext harness.bars.createReference(bar)
+        }
 
     /** Generates and returns an ID for the entity. */
     private fun (Foo).identify(): String {
