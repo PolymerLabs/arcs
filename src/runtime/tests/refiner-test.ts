@@ -187,23 +187,26 @@ describe('refiner enforcement', () => {
 
 describe('dynamic refinements', () => {
     describe('Parses and type checks a particle with dynamic refinements.', Flags.withFieldRefinementsAllowed(async () => {
-        const manifestAst = parse(`
+        let ref: Refinement;
+        before(Flags.withFieldRefinementsAllowed(async () => {
+          const manifestAst = parse(`
             particle AddressBook
-                contacts: reads [Contact {name: Text [ name == ? ] }]
-        `);
-        const typeData = {'name': 'Text'};
-        const contacts = manifestAst[0].args[0];
-        const nameType = contacts.type.type.fields[0].type;
-        const ref = Refinement.fromAst(nameType.refinement, typeData);
+              contacts: reads [Contact {name: Text [ name == ? ] }]
+          `);
+          const typeData = {'name': 'Text'};
+          const contacts = manifestAst[0].args[0];
+          const nameType = contacts.type.type.fields[0].type;
+          ref = Refinement.fromAst(nameType.refinement, typeData);
+        }));
         it('field names, query argument names and query argument types', () => {
-            assert.deepEqual(JSON.stringify([...ref.expression.getFieldParams()]), '[["name","Text"]]', 'should infer indexes from refinement');
-            assert.deepEqual(JSON.stringify([...ref.expression.getQueryParams()]), '[["?","Text"]]', 'should infer query args from refinement');
-
-            assert.strictEqual(ref.toString(), '[(name == ?)]');
+          assert.deepEqual(JSON.stringify([...ref.expression.getFieldParams()]), '[["name","Text"]]', 'should infer indexes from refinement');
+          assert.deepEqual(JSON.stringify([...ref.expression.getQueryParams()]), '[["?","Text"]]', 'should infer query args from refinement');
+          assert.strictEqual(ref.toString(), '[(name == ?)]');
         });
-
-        const dyn = (ref.expression as BinaryExpression).rightExpr;
-        assert.equal(dyn.evalType, 'Text', 'the algorithm discovers the type');
+        it('the algorithm discovers the type', () => {
+          const dyn = (ref.expression as BinaryExpression).rightExpr;
+          assert.equal(dyn.evalType, 'Text');
+        });
         it('without the query param', () => {
           const data = {
               name: 'Ghost Busters'
@@ -219,23 +222,25 @@ describe('dynamic refinements', () => {
         });
     }));
     describe('Parses and type checks a particle with dynamic and static refinements.', () => {
-        const manifestAst = parse(`
+        let ref: Refinement;
+        before(Flags.withFieldRefinementsAllowed(async () => {
+          const manifestAst = parse(`
             particle AddressBook
-                contacts: reads [Contact {name: Text, age: Number } [ name == ?  and age > 10]]
-        `);
-        const typeData = {'name': 'Text', 'age': 'Number'};
-        const contacts = manifestAst[0].args[0];
-        const ref = Refinement.fromAst(contacts.type.type.refinement, typeData);
-
+              contacts: reads [Contact {name: Text, age: Number } [ name == ?  and age > 10]]
+          `);
+          const typeData = {'name': 'Text', 'age': 'Number'};
+          const contacts = manifestAst[0].args[0];
+          ref = Refinement.fromAst(contacts.type.type.refinement, typeData);
+        }));
         it('field names, query argument names and query argument types', () => {
-            assert.deepEqual(JSON.stringify([...ref.expression.getFieldParams()]), '[["name","Text"],["age","Number"]]', 'should infer indexes from refinement');
-            assert.deepEqual(JSON.stringify([...ref.expression.getQueryParams()]), '[["?","Text"]]', 'should infer query args from refinement');
-
-            assert.strictEqual(ref.toString(), '[((name == ?) and (age > 10))]');
+          assert.deepEqual(JSON.stringify([...ref.expression.getFieldParams()]), '[["name","Text"],["age","Number"]]', 'should infer indexes from refinement');
+          assert.deepEqual(JSON.stringify([...ref.expression.getQueryParams()]), '[["?","Text"]]', 'should infer query args from refinement');
+          assert.strictEqual(ref.toString(), '[((name == ?) and (age > 10))]');
         });
-
-        const dyn = ((ref.expression as BinaryExpression).leftExpr as BinaryExpression).rightExpr;
-        assert.equal(dyn.evalType, 'Text', 'the algorithm discovers the type');
+        it('the algorithm discovers the type', () => {
+          const dyn = ((ref.expression as BinaryExpression).leftExpr as BinaryExpression).rightExpr;
+          assert.equal(dyn.evalType, 'Text');
+        });
         it('without the query param and a valid age', () => {
           const data = {
               name: 'Ghost Busters',
