@@ -39,5 +39,8 @@ class StoreManager {
         }
     }
 
+    /**
+     * Drops all [Store] instances.
+     */
     suspend fun reset() = storesMutex.withLock { stores.clear() }
 }

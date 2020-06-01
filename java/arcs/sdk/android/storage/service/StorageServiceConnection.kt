@@ -56,7 +56,10 @@ fun DefaultConnectionFactory(
  */
 @Suppress("FunctionName")
 @ExperimentalCoroutinesApi
-@Deprecated("Use ManagerConnectionFactory")
+@Deprecated(
+    "Use ManagerConnectionFactory to get a Factory",
+    ReplaceWith("ManagerConnectionFactory(context, bindingDelegate, coroutineContext)")
+)
 fun GetManagerConnection(
     context: Context,
     bindingDelegate: StorageServiceBindingDelegate = StorageServiceManagerBindingDelegate(context),
