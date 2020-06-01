@@ -637,7 +637,6 @@ public:
   }
 
 protected:
-
   // Allow private copying for use in Handles.
   Gold_QCollection(const Gold_QCollection&) = default;
   Gold_QCollection& operator=(const Gold_QCollection&) = default;
