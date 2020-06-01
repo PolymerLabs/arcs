@@ -817,7 +817,7 @@ export interface Policy extends BaseNode {
 
 export interface PolicyTarget extends BaseNode {
   kind: 'policy-target';
-  storeId: string;
+  schemaName: string;
   fields: PolicyField[];
 }
 

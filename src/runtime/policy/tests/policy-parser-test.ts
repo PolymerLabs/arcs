@@ -60,30 +60,30 @@ describe('policy parser', () => {
   describe('targets', () => {
     it('parses a single empty target', () => {
       const policy = parsePolicy(`policy MyPolicy {
-        from 'abc' access {}
+        from Abc access {}
       }`);
       assert.deepStrictEqual(policy.targets, [{
         kind: 'policy-target',
-        storeId: 'abc',
+        schemaName: 'Abc',
         fields: [],
       }]);
     });
 
     it('parses multiple targets', () => {
       const policy = parsePolicy(`policy MyPolicy {
-        from 'abc' access {}
-        from 'xyz' access {}
+        from Abc access {}
+        from Xyz access {}
       }`);
       assert.lengthOf(policy.targets, 2);
-      assert.deepStrictEqual(policy.targets.map(target => target.storeId), [
-        'abc',
-        'xyz',
+      assert.deepStrictEqual(policy.targets.map(target => target.schemaName), [
+        'Abc',
+        'Xyz',
       ]);
     });
 
     it('parses a single field', () => {
       const policy = parsePolicy(`policy MyPolicy {
-        from 'abc' access {
+        from Abc access {
           someField,
         }
       }`);
@@ -96,7 +96,7 @@ describe('policy parser', () => {
 
     it('parses multiple fields', () => {
       const policy = parsePolicy(`policy MyPolicy {
-        from 'abc' access {
+        from Abc access {
           someField1,
           someField2,
           someField3
@@ -111,7 +111,7 @@ describe('policy parser', () => {
 
     it('parses nested fields', () => {
       const policy = parsePolicy(`policy MyPolicy {
-        from 'abc' access {
+        from Abc access {
           grandParent {
             parent1 {
               child1,

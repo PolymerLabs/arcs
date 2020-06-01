@@ -1779,11 +1779,11 @@ PolicyItem
 
 // TODO(b/157605585): Annotations on policy targets.
 PolicyTarget
-  = 'from' whiteSpace storeId:id whiteSpace 'access' fields:PolicyFieldSet
+  = 'from' whiteSpace schemaName:upperIdent whiteSpace 'access' fields:PolicyFieldSet
   {
     return toAstNode<AstNode.PolicyTarget>({
       kind: 'policy-target',
-      storeId,
+      schemaName,
       fields,
     });
   }
