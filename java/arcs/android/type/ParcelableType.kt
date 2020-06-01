@@ -18,6 +18,7 @@ import arcs.core.data.CountType
 import arcs.core.data.EntityType
 import arcs.core.data.ReferenceType
 import arcs.core.data.SingletonType
+import arcs.core.data.TupleType
 import arcs.core.data.TypeVariable
 import arcs.core.type.Tag
 import arcs.core.type.Type
@@ -113,6 +114,31 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
         }
     }
 
+    /** [Parcelable] variant of [arcs.core.data.TupleType]. */
+    class TupleType(
+        override val actual: arcs.core.data.TupleType
+    ) : ParcelableType(actual) {
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            super.writeToParcel(parcel, flags)
+            parcel.writeInt(actual.elementTypes.size)
+            for (element in actual.elementTypes) {
+                parcel.writeType(element, flags)
+            }
+        }
+
+        companion object CREATOR : Parcelable.Creator<TupleType> {
+            override fun createFromParcel(parcel: Parcel): TupleType {
+                val elements = mutableListOf<Type>()
+                repeat(parcel.readInt()) {
+                    elements.add(requireNotNull(parcel.readType()))
+                }
+                return TupleType(actual = TupleType(elements))
+            }
+
+            override fun newArray(size: Int): Array<TupleType?> = arrayOfNulls(size)
+        }
+    }
+
     /** [Parcelable] variant of [arcs.core.data.TypeVariable]. */
     data class TypeVariable(
         override val actual: arcs.core.data.TypeVariable
@@ -139,6 +165,7 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
                 Tag.Entity -> EntityType.createFromParcel(parcel)
                 Tag.Reference -> ReferenceType.createFromParcel(parcel)
                 Tag.Singleton -> SingletonType.createFromParcel(parcel)
+                Tag.Tuple -> TupleType.createFromParcel(parcel)
                 Tag.TypeVariable -> TypeVariable.createFromParcel(parcel)
             }
 
@@ -153,6 +180,7 @@ fun Type.toParcelable(): ParcelableType = when (tag) {
     Tag.Entity -> ParcelableType.EntityType(this as EntityType)
     Tag.Reference -> ParcelableType.ReferenceType(this as ReferenceType<*>)
     Tag.Singleton -> ParcelableType.SingletonType(this as SingletonType<*>)
+    Tag.Tuple -> ParcelableType.TupleType(this as TupleType)
     Tag.TypeVariable -> ParcelableType.TypeVariable(this as TypeVariable)
 }
 
