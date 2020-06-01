@@ -31,7 +31,7 @@ export class SchemaSource {
     return new SchemaSource(this.particleSpec, this.connection, [...this.path, leaf]);
   }
 
-  // Full name is used to described this particular occurence of the schema.
+  // Full name is used to described this particular occurrence of the schema.
   get fullName() {
     return `${this.particleSpec.name}_${upperFirst(this.connection.name)}` +
        this.path.map(p => `_${upperFirst(p)}`).join('');
@@ -40,7 +40,7 @@ export class SchemaSource {
 
 export class SchemaNode {
   constructor(
-    readonly schema: Schema,
+    readonly schema: Schema | null,
     readonly particleSpec: ParticleSpec,
     readonly allSchemaNodes: SchemaNode[],
     readonly fromVariable: string = ''
@@ -108,7 +108,7 @@ export class SchemaNode {
 }
 
 function* topLevelSchemas(type: Type, path: string[] = []):
-    IterableIterator<{schema: Schema, path: string[], fromVariable: string}> {
+    IterableIterator<{schema: Schema | null, path: string[], fromVariable: string}> {
   if (type.getContainedType()) {
     yield* topLevelSchemas(type.getContainedType(), path);
   } else if (type.getContainedTypes()) {
@@ -122,14 +122,20 @@ function* topLevelSchemas(type: Type, path: string[] = []):
     yield {
       schema: type.canWriteSuperset.getEntitySchema(),
       path,
-      fromVariable: (type as TypeVariable).variable.name
+      fromVariable: (type as TypeVariable).variable.name,
     };
   } else if (type.hasVariable && type.canReadSubset) {
     yield {
       schema: type.canReadSubset.getEntitySchema(),
       path,
-      fromVariable: (type as TypeVariable).variable.name
+      fromVariable: (type as TypeVariable).variable.name,
     };
+  } else if (type.hasVariable) {
+    yield {
+      schema: null,
+      path,
+      fromVariable: (type as TypeVariable).variable.name,
+    }
   }
 }
 
@@ -204,6 +210,11 @@ export class SchemaGraph {
       this.nodes.push(node);
     }
 
+    // Handles type variables with no constraints (null schemas)
+    if (!schema) {
+      return node;
+    }
+
     // Recurse on any nested schemas in reference-typed fields. We need to do this even if we've
     // seen this schema before, to ensure any nested schemas end up aliased appropriately.
     for (const [field, descriptor] of Object.entries(schema.fields)) {
@@ -214,9 +225,11 @@ export class SchemaGraph {
         nestedSchema = descriptor.schema.schema.model.entitySchema;
       }
       if (nestedSchema) {
+        // TODO(alxr): Document this behavior
+        const nestedVar = fromVariable ? fromVariable + field : '';
         // We have a reference field. Generate a node for its nested schema and connect it into the
         // refs map to indicate that this node requires nestedNode's class to be generated first.
-        const nestedNode = this.createNodes(nestedSchema, particleSpec, source.child(field), fromVariable);
+        const nestedNode = this.createNodes(nestedSchema, particleSpec, source.child(field), nestedVar);
         node.refs.set(field, nestedNode);
       }
     }

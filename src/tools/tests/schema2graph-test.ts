@@ -726,25 +726,25 @@ describe('schema2graph', () => {
           name: Text,
           friends: [&Friend {
             name: Text,
-            friendshipEstablished: Timestamp
+            friendshipEstablished: Boolean
           }]
         }
         bar: writes ~a
         baz: reads Friend {
           name: Text,
-          friendshipEstablished: Timestamp
+          friendshipEstablished: Boolean
         }
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
-      {name: 'T_FOO', parents: '', children: ''},
-      {name: 'T_FOO_Friend', parents: '', children: ''},
-      {name: 'T_BAZ', parents: '', children: ''},
+      {name: 'T_Foo',         parents: '', children: ''},
+      {name: 'T_Foo_Friends', parents: '', children: ''},
+      {name: 'T_Baz',         parents: '', children: ''},
     ]);
     assert.deepStrictEqual(res.aliases, {
-      'T_FOO': ['T_FOO', 'T_BAR'],
-      'T_FOO_Friend': ['T_FOO_Friend'],
-      'T_BAZ': ['T_BAZ']
+      'T_Foo': ['T_Foo', 'T_Bar'],
+      'T_Foo_Friends': ['T_Foo_Friends'],
+      'T_Baz': ['T_Baz']
     });
   });
 });

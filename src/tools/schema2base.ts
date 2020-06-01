@@ -111,6 +111,9 @@ export abstract class Schema2Base {
     const nodes: NodeAndGenerator[] = [];
     for (const node of graph.walk()) {
       const generator = this.getClassGenerator(node);
+      if (!node.schema) {
+        continue;
+      }
       for (const [field, descriptor] of Object.entries(node.schema.fields)) {
         if (descriptor.kind === 'schema-primitive') {
           if (['Text', 'URL', 'Number', 'Boolean'].includes(descriptor.type)) {
