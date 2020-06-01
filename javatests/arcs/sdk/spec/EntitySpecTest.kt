@@ -333,7 +333,7 @@ class EntitySpecTest {
     private suspend fun createBarReference(bar: Bar): Reference<Bar> =
         withContext(harness.bars.dispatcher) {
             harness.bars.store(bar)
-            return@withContext harness.bars.createReference(bar)
+            harness.bars.createReference(bar)
         }
 
     /** Generates and returns an ID for the entity. */
