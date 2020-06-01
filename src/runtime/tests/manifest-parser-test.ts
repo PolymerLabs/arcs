@@ -13,7 +13,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Flags} from '../flags.js';
 
 describe('manifest parser', () => {
-  it('parses an empy manifest', () => {
+  it('parses an empty manifest', () => {
     parse('');
   });
   it('parses a trivial recipe', () => {

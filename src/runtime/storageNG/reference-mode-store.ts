@@ -159,6 +159,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
 
   reportExceptionInHost(exception: PropagatedException): void {
     // TODO(shans): Figure out idle / exception store for reference mode stores.
+    throw new Error(exception.message);
   }
 
   // For referenceMode stores, the version tracked is just the version

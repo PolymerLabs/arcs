@@ -55,6 +55,7 @@ export class Schema {
     }
     for (const [name, field] of Object.entries(fields)) {
       if (typeof(field) === 'string') {
+        assert(['Text', 'URL', 'Number', 'Boolean', 'Bytes'].includes(field), `non-primitive schema type ${field} need to be defined as a parser production`);
         this.fields[name] = {kind: 'schema-primitive', refinement: null, type: field, annotations: []};
       } else {
         this.fields[name] = field;
@@ -274,7 +275,12 @@ export class Schema {
         case 'schema-reference': {
           singletons[field] = new CRDTSingleton<Reference>();
           break;
-        } default: {
+        }
+        case 'schema-ordered-list': {
+          singletons[field] = new CRDTSingleton<{id: string}>();
+          break;
+        }
+        default: {
           throw new Error(`Big Scary Exception: entity field ${field} of type ${schema.type} doesn't yet have a CRDT mapping implemented`);
         }
       }
