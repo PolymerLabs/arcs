@@ -17,9 +17,15 @@ import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
 import {newHandle, handleForStore, newStore} from '../storage-ng.js';
 import {Schema} from '../../schema.js';
 import {Particle} from '../../particle.js';
+<<<<<<< HEAD
 import {Exists} from '../drivers/driver.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {CollectionHandle} from '../handle.js';
+=======
+import { Exists } from '../drivers/driver.js';
+import { StorageProxy } from '../storage-proxy.js';
+import { CollectionHandle } from '../handle.js';
+>>>>>>> 137a1d626... Add tests to demonstrate that list values are preserved end-to-end.
 
 describe('ReferenceModeStore Integration', async () => {
 
@@ -209,4 +215,8 @@ describe('ReferenceModeStore Integration', async () => {
     await writeHandle.addFromData({foo: ['This', 'is', 'text', 'in', 'foo']});
     return returnPromise;
   });
+<<<<<<< HEAD
 });
+=======
+});
+>>>>>>> 137a1d626... Add tests to demonstrate that list values are preserved end-to-end.
