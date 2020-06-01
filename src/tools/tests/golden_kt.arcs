@@ -17,5 +17,7 @@ particle KotlinPrimitivesGolden
     lng: Long,
     chr: Char,
     flt: Float,
-    dbl: Double
+    dbl: Double,
+    txtlst: List<Text>,
+    lnglst: List<Long>
   }

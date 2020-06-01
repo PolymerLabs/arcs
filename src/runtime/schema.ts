@@ -348,6 +348,8 @@ export class Schema {
         str += '[' + schema.type + ']';
       } else if (kind === 'schema-tuple') {
         str += `(${types.map(t => t.type).join('|')})`;
+      } else if (kind === 'schema-ordered-list') {
+        str += 'List<' + schema.type + '>';
       } else {
         throw new Error('Schema hash: unsupported field type');
       }

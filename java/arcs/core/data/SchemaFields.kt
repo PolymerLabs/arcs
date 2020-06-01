@@ -24,10 +24,13 @@ sealed class FieldType(
     /** A tuple of [FieldType]s */
     data class Tuple(val types: List<FieldType>) : FieldType(Tag.Tuple)
 
+    data class ListOf(val primitiveType: PrimitiveType) : FieldType(Tag.List)
+
     enum class Tag {
         Primitive,
         EntityRef,
-        Tuple
+        Tuple,
+        List
     }
 
     // Convenient aliases for all of the primitive field types.

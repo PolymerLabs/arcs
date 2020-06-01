@@ -79,6 +79,9 @@ class StringDecoder(private var bytes: ByteArray) {
     fun decodeDouble(): Double =
         throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Doubles")
 
+    fun <T> decodeList(): List<T> =
+        throw NotImplementedError("No JS to Kotlin enocding exists for Kotlin Lists")
+
     companion object {
         fun decodeDictionary(bytes: ByteArray): Map<String, String> {
             val decoder = StringDecoder(bytes)
@@ -174,6 +177,10 @@ class StringEncoder(
 
     fun encode(prefix: String, flt: Float) {
         throw NotImplementedError("No Kotlin to JS encoding exists for Kotlin Floats")
+    }
+
+    fun <T> encode(prefix: String, lst: List<T>) {
+        throw NotImplementedError("No Kotlin to JS encoding exists for Lists")
     }
 
     private fun addStr(str: String) {
