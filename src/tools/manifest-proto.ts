@@ -13,10 +13,14 @@ import {runfilesDir} from './runfiles-dir.oss.js';
 
 // These variables store classes that deal with protos, upper case name is justified.
 // tslint:disable: variable-name
-const RootNamespace = protobuf.loadSync(runfilesDir + 'java/arcs/core/data/proto/manifest.proto');
-export const ManifestProto = RootNamespace.lookupType('arcs.ManifestProto');
-export const FateEnum = RootNamespace.lookupEnum('arcs.Fate');
+const RootNamespace = protobuf.loadSync([
+  runfilesDir + 'java/arcs/core/data/proto/manifest.proto',
+  runfilesDir + 'java/arcs/core/data/proto/policy.proto',
+]);
 export const CapabilityEnum = RootNamespace.lookupEnum('arcs.Capability');
 export const DirectionEnum = RootNamespace.lookupEnum('arcs.Direction');
-export const PrimitiveTypeEnum = RootNamespace.lookupEnum('arcs.PrimitiveTypeProto');
+export const FateEnum = RootNamespace.lookupEnum('arcs.Fate');
+export const ManifestProto = RootNamespace.lookupType('arcs.ManifestProto');
 export const OperatorEnum = RootNamespace.lookupEnum('arcs.OPERATOR');
+export const PrimitiveTypeEnum = RootNamespace.lookupEnum('arcs.PrimitiveTypeProto');
+export const TypeProto = RootNamespace.lookupType('arcs.TypeProto');

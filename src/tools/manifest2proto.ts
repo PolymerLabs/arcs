@@ -21,8 +21,8 @@ import {Capabilities} from '../runtime/capabilities.js';
 import {CapabilityEnum, DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
 import {Refinement, RefinementExpressionLiteral} from '../runtime/refiner.js';
 import {Op} from '../runtime/manifest-ast-nodes.js';
-import {Claim, ClaimType} from '../runtime/particle-claim.js';
-import {Check, CheckCondition, CheckExpression, CheckType} from '../runtime/particle-check.js';
+import {ClaimType} from '../runtime/particle-claim.js';
+import {CheckCondition, CheckExpression, CheckType} from '../runtime/particle-check.js';
 import {flatMap} from '../runtime/util.js';
 
 export async function encodeManifestToProto(path: string): Promise<Uint8Array> {

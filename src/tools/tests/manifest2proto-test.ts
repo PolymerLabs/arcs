@@ -13,12 +13,7 @@ import {CountType, EntityType, SingletonType, TupleType, Type} from '../../runti
 import {Manifest} from '../../runtime/manifest.js';
 import {Capabilities} from '../../runtime/capabilities.js';
 import {fs} from '../../platform/fs-web.js';
-import protobuf from 'protobufjs';
-
-const rootNamespace = protobuf.loadSync('./java/arcs/core/data/proto/manifest.proto');
-const manifestProto = rootNamespace.lookupType('arcs.ManifestProto');
-const typeProto = rootNamespace.lookupType('arcs.TypeProto');
-const CAPABILITY_ENUM = rootNamespace.lookupEnum('arcs.Capability');
+import {CapabilityEnum, ManifestProto, TypeProto} from '../manifest-proto.js';
 
 describe('manifest2proto', () => {
 
@@ -27,10 +22,10 @@ describe('manifest2proto', () => {
   // from the proto object. This ensures that all JSON produced fits the
   // expectations of the protobufjs library and the shape of the proto declaration.
   async function toProtoAndBack(manifest: Manifest) {
-    return manifestProto.fromObject(await manifestToProtoPayload(manifest)).toJSON();
+    return ManifestProto.fromObject(await manifestToProtoPayload(manifest)).toJSON();
   }
   async function toProtoAndBackType(type: Type) {
-    return typeProto.fromObject(await typeToProtoPayload(type)).toJSON();
+    return TypeProto.fromObject(await typeToProtoPayload(type)).toJSON();
   }
 
   it('encodes a recipe with use, map, create handles, ids and tags', async () => {
@@ -90,7 +85,7 @@ describe('manifest2proto', () => {
 
   it('encodes handle capabilities', () => {
     function capabilitiesToStrings(capabilities: Capabilities) {
-      return capabilitiesToProtoOrdinals(capabilities).map(ordinal => CAPABILITY_ENUM.valuesById[ordinal]);
+      return capabilitiesToProtoOrdinals(capabilities).map(ordinal => CapabilityEnum.valuesById[ordinal]);
     }
 
     assert.deepEqual(capabilitiesToStrings(Capabilities.empty), []);
