@@ -135,7 +135,7 @@ function* topLevelSchemas(type: Type, path: string[] = []):
       schema: null,
       path,
       fromVariable: (type as TypeVariable).variable.name,
-    }
+    };
   }
 }
 
