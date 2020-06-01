@@ -93,27 +93,31 @@ open class BaseTestHarness<P : Particle>(
                     time = JvmTime,
                     scheduler = scheduler
                 )
-                runBlocking {
-                    specs.forEach { spec ->
-                        val storageKey = when (spec.dataType) {
-                            HandleDataType.Entity -> ReferenceModeStorageKey(
-                                backingKey = RamDiskStorageKey("backing_${spec.baseName}"),
-                                storageKey = RamDiskStorageKey("entity_${spec.baseName}")
-                            )
-                            HandleDataType.Reference -> RamDiskStorageKey("ref_${spec.baseName}")
-                        }
-                        try {
-                            val handle = handleManager.createHandle(spec, storageKey)
-                            handles[spec.baseName] = handle
-                        } catch (e: Exception) {
-                            throw e
+                try {
+                    runBlocking {
+                        specs.forEach { spec ->
+                            val storageKey = when (spec.dataType) {
+                                HandleDataType.Entity -> ReferenceModeStorageKey(
+                                    backingKey = RamDiskStorageKey("backing_${spec.baseName}"),
+                                    storageKey = RamDiskStorageKey("entity_${spec.baseName}")
+                                )
+                                HandleDataType.Reference ->
+                                    RamDiskStorageKey("ref_${spec.baseName}")
+                            }
+                            try {
+                                val handle = handleManager.createHandle(spec, storageKey)
+                                handles[spec.baseName] = handle
+                            } catch (e: Exception) {
+                                throw e
+                            }
                         }
                     }
-                }
-                statement.evaluate()
-                runBlocking {
-                    withTimeout(1500) { scheduler.waitForIdle() }
-                    withTimeout(1500) { handleManager.close() }
+                    statement.evaluate()
+                    runBlocking {
+                        withTimeout(1500) { scheduler.waitForIdle() }
+                        withTimeout(1500) { handleManager.close() }
+                    }
+                } finally {
                     schedulerProvider.cancelAll()
                 }
             }
