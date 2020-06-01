@@ -114,8 +114,8 @@ open class BaseTestHarness<P : Particle>(
                     }
                     statement.evaluate()
                     runBlocking {
-                        withTimeout(1500) { scheduler.waitForIdle() }
-                        withTimeout(1500) { handleManager.close() }
+                        scheduler.waitForIdle()
+                        handleManager.close()
                     }
                 } finally {
                     schedulerProvider.cancelAll()
