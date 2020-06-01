@@ -4371,7 +4371,6 @@ recipe
     assert.equal(handle.toString(), `foo: create @persistent @ttl(value: '3d')`);
 
     const isolatedParticleAnnotations = manifest.findParticleByName('IsolatedParticle').annotations;
-    console.error(manifest.findParticleByName('IsolatedParticle'));
     assert.lengthOf(isolatedParticleAnnotations, 1);
     assert.equal(isolatedParticleAnnotations[0].name, 'isolated');
     assert.lengthOf(Object.entries(isolatedParticleAnnotations[0].params), 0);
