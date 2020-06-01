@@ -30,5 +30,9 @@ sealed class InformationFlowLabel {
         data class Not(val predicate: Predicate) : Predicate()
         data class Or(val lhs: Predicate, val rhs: Predicate) : Predicate()
         data class And(val lhs: Predicate, val rhs: Predicate) : Predicate()
+
+        infix fun and(other: Predicate) = Predicate.And(this, other)
+        infix fun or(other: Predicate) = Predicate.Or(this, other)
+        fun not() = Predicate.Not(this)
     }
 }
