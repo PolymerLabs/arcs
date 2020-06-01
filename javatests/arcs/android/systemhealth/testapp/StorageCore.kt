@@ -382,13 +382,10 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             // The very first SingletonHandle is responsible for writing an entity
             // to storage then creating its reference.
             if (taskId == 0) {
-                withContext(handle.dispatcher) {
-                    handle.store(SystemHealthTestEntity.referencedEntity)
-                }.join()
-
-                SystemHealthTestEntity.entityReference = handle.createReference(
-                    SystemHealthTestEntity.referencedEntity
-                ).toReferencable()
+                SystemHealthTestEntity.entityReference = withContext(handle.dispatcher) {
+                    handle.store(SystemHealthTestEntity.referencedEntity).join()
+                    handle.createReference(SystemHealthTestEntity.referencedEntity).toReferencable()
+                }
             }
             taskHandle.handle = handle
         }
@@ -436,13 +433,10 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             // The very first CollectionHandle is responsible for writing an entity
             // to storage then creating its reference.
             if (taskId == 0) {
-                withContext(handle.dispatcher) {
-                    handle.store(SystemHealthTestEntity.referencedEntity)
-                }.join()
-
-                SystemHealthTestEntity.entityReference = handle.createReference(
-                    SystemHealthTestEntity.referencedEntity
-                ).toReferencable()
+                SystemHealthTestEntity.entityReference = withContext(handle.dispatcher) {
+                    handle.store(SystemHealthTestEntity.referencedEntity).join()
+                    handle.createReference(SystemHealthTestEntity.referencedEntity).toReferencable()
+                }
             }
             taskHandle.handle = handle
         }
@@ -798,8 +792,9 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             tasksEvents.forEach { _, events ->
                 events.reader.withLock {
                     calculator.addAll(
-                        events.queue.filter {
-                            it.eventId == TaskEventId.DEREFERENCE_LATENCY }.map { it.timeMs }
+                        events.queue
+                            .filter { it.eventId == TaskEventId.DEREFERENCE_LATENCY }
+                            .map { it.timeMs }
                     )
                 }
             }
