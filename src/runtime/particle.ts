@@ -48,7 +48,7 @@ export class Particle {
     // Typescript only sees this.constructor as a Function type.
     // TODO(shans): move spec off the constructor
     this.spec = this.constructor['spec'];
-    if (this.spec.inputs.length === 0) {
+    if (this.spec && this.spec.inputs.length === 0) {
       this.extraData = true;
     }
     this.created = false;
