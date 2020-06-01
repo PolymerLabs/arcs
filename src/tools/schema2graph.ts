@@ -181,8 +181,13 @@ export class SchemaGraph {
       if (fromVariable) {
         return fromVariable === candidate.fromVariable;
       }
-      // Aggregate nodes with the same schema together.
-      return schema.equals(candidate.schema);
+
+      if (!candidate.fromVariable) {
+        // Aggregate nodes with the same schema together.
+        return schema.equals(candidate.schema);
+      }
+
+      return false;
     });
     if (node) {
       node.sources.push(source);

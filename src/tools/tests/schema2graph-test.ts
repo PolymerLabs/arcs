@@ -737,13 +737,13 @@ describe('schema2graph', () => {
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
-      {name: 'T_Foo',         parents: '', children: ''},
       {name: 'T_Foo_Friends', parents: '', children: ''},
       {name: 'T_Baz',         parents: '', children: ''},
+      {name: 'T_Foo',         parents: '', children: ''},
     ]);
     assert.deepStrictEqual(res.aliases, {
-      'T_Foo': ['T_Foo', 'T_Bar'],
-      'T_Foo_Friends': ['T_Foo_Friends'],
+      'T_Foo': ['T_Bar', 'T_Foo'],
+      'T_Foo_Friends': ['T_Bar_Friends', 'T_Foo_Friends'],
       'T_Baz': ['T_Baz']
     });
   });
