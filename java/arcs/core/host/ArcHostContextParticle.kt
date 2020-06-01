@@ -19,7 +19,8 @@ import arcs.core.data.SingletonType
 import arcs.core.data.Ttl
 import arcs.core.entity.Reference
 import arcs.core.host.api.Particle
-import arcs.core.host.generated.*
+import arcs.core.host.generated.AbstractArcHostContextParticle
+import arcs.core.host.generated.ArcHostContextPlan
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKeyParser
 import arcs.core.type.Tag
@@ -30,6 +31,9 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.withContext
+
+typealias ArcHostContextParticle_HandleConnections = AbstractArcHostContextParticle.HandleConnection
+typealias ArcHostContextParticle_Particles = AbstractArcHostContextParticle.ParticleSchema
 
 /**
  * An implicit [Particle] that lives within the [ArcHost] and used as a utility class to
@@ -69,7 +73,7 @@ class ArcHostContextParticle(
             val storedConnections = handles.handleConnections.fetchAll()
 
             val particles = context.particles.map {
-                ArcHostContextParticle_Particles (
+                ArcHostContextParticle_Particles(
                     particleName = it.key,
                     location = it.value.planParticle.location,
                     particleState = it.value.particleState.name,

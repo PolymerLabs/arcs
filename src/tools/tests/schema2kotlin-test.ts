@@ -12,7 +12,7 @@ import {Manifest} from '../../runtime/manifest.js';
 import {Schema2Kotlin} from '../schema2kotlin.js';
 import {SchemaGraph} from '../schema2graph.js';
 
-describe.only('schema2kotlin', () => {
+describe('schema2kotlin', () => {
   describe('Handle Interface Type', () => {
     it('Read Singleton Entity', async () => await assertHandleInterface(
       `particle P
@@ -77,12 +77,12 @@ describe.only('schema2kotlin', () => {
     it('Read Tuple of 2 References', async () => await assertHandleInterface(
       `particle P
          h: reads (&Foo {name: Text}, &Bar {age: Number})`,
-      'ReadSingletonHandle<Tuple2<Reference<P_H_0>, Reference<P_H_1>>>'
+      'ReadSingletonHandle<Tuple2<Reference<Foo>, Reference<Bar>>>'
     ));
     it('Write Collection of Tuples of 3 References', async () => await assertHandleInterface(
       `particle P
          h: writes [(&Foo {name: Text}, &Bar {age: Number}, &Baz {isThisIt: Boolean})]`,
-      'WriteCollectionHandle<Tuple3<Reference<P_H_0>, Reference<P_H_1>, Reference<P_H_2>>>'
+      'WriteCollectionHandle<Tuple3<Reference<Foo>, Reference<Bar>, Reference<Baz>>>'
     ));
     async function assertHandleInterface(manifestString: string, expectedHandleInterface: string) {
       const manifest = await Manifest.parse(manifestString);

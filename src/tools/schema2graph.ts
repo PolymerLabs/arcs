@@ -86,10 +86,8 @@ export class SchemaNode {
   // Note: RightparticlePreface now this will always return source.fullName, but it is a stepping stone towards
   // renaming the generated entities to use schema names when possible.
   humanName(connection: HandleConnectionSpec): string {
-    console.log(`connection: ${connection}`)
     if (this.uniqueSchema || this.sources.length === 1) {
-      console.log(`using entityclass name, ${this.entityClassName}`)
-      return this.entityClassName
+      return this.entityClassName;
     }
     const sourcesFromConnection = this.sources.filter(s => s.connection === connection);
     const minPathLength = Math.min(...sourcesFromConnection.map(s => s.path.length));
@@ -104,8 +102,6 @@ export class SchemaNode {
   static singleSchemaHumanName(connection: HandleConnectionSpec, nodes: SchemaNode[]): string {
     const topLevelNodes = SchemaNode.findTopLevelNodes(connection, nodes);
     const humanNames = topLevelNodes.map(n => n.humanName(connection));
-    console.log(`what is this? ${humanNames}`)
-    console.log(`returning ${humanNames[0]}`)
     return humanNames.sort()[0];
   }
 
