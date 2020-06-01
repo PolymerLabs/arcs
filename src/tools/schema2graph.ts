@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Schema} from '../runtime/schema.js';
-import {Type} from '../runtime/type.js';
+import {Type, TypeVariable} from '../runtime/type.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 import {upperFirst} from './kotlin-generation-utils.js';
 import {AtLeastAsSpecific} from '../runtime/refiner.js';
@@ -43,7 +43,7 @@ export class SchemaNode {
     readonly schema: Schema,
     readonly particleSpec: ParticleSpec,
     readonly allSchemaNodes: SchemaNode[],
-    readonly fromVariable: boolean = false
+    readonly fromVariable: string = ''
   ) {}
 
   readonly sources: SchemaSource[] = [];
@@ -108,7 +108,7 @@ export class SchemaNode {
 }
 
 function* topLevelSchemas(type: Type, path: string[] = []):
-    IterableIterator<{schema: Schema, path: string[], fromVariable: boolean}> {
+    IterableIterator<{schema: Schema, path: string[], fromVariable: string}> {
   if (type.getContainedType()) {
     yield* topLevelSchemas(type.getContainedType(), path);
   } else if (type.getContainedTypes()) {
@@ -117,11 +117,19 @@ function* topLevelSchemas(type: Type, path: string[] = []):
       yield* topLevelSchemas(inner[i], [...path, `${i}`]);
     }
   } else if (type.getEntitySchema()) {
-    yield {schema: type.getEntitySchema(), path, fromVariable: false};
-  } else if (type.isVariable && type.canWriteSuperset) {
-    yield {schema: type.canWriteSuperset.getEntitySchema(), path, fromVariable: true};
-  } else if (type.isVariable && type.canReadSubset) {
-    yield {schema: type.canWriteSuperset.getEntitySchema(), path, fromVariable: true};
+    yield {schema: type.getEntitySchema(), path, fromVariable: ''};
+  } else if (type.hasVariable && type.canWriteSuperset) {
+    yield {
+      schema: type.canWriteSuperset.getEntitySchema(),
+      path,
+      fromVariable: (type as TypeVariable).variable.name
+    };
+  } else if (type.hasVariable && type.canReadSubset) {
+    yield {
+      schema: type.canReadSubset.getEntitySchema(),
+      path,
+      fromVariable: (type as TypeVariable).variable.name
+    };
   }
 }
 
@@ -161,8 +169,15 @@ export class SchemaGraph {
   }
 
   private createNodes(schema: Schema, particleSpec: ParticleSpec, source: SchemaSource,
-                      fromVariable: boolean) {
-    let node = this.nodes.find(n => schema.equals(n.schema));
+                      fromVariable: string) {
+    let node = this.nodes.find((candidate: SchemaNode) => {
+      // Aggregate type variable nodes of the same name together.
+      if (fromVariable) {
+        return fromVariable === candidate.fromVariable;
+      }
+      // Aggregate nodes with the same schema together.
+      return schema.equals(candidate.schema);
+    });
     if (node) {
       node.sources.push(source);
     } else {
@@ -172,7 +187,11 @@ export class SchemaGraph {
       node.sources.push(source);
       for (const previous of this.nodes) {
         for (const [a, b] of [[node, previous], [previous, node]]) {
-          if (b.schema.isEquivalentOrMoreSpecific(a.schema) === AtLeastAsSpecific.YES) {
+          if (a.fromVariable &&a.fromVariable === b.fromVariable && !b.descendants.has(a)) {
+            a.descendants.add(b);
+            b.parents = [];
+          } else if (!a.fromVariable && !b.fromVariable &&
+            b.schema.isEquivalentOrMoreSpecific(a.schema) === AtLeastAsSpecific.YES) {
             if (b.descendants.has(a)) {
               throw new Error(`Cannot add ${b} to ${a}.descendants as it would create a cycle.`);
             }
