@@ -5,6 +5,8 @@ package arcs;
 option java_package = "arcs.core.data.proto";
 option java_multiple_files = true;
 
+import "java/arcs/core/data/proto/annotation.proto";
+
 // Defines a data usage policy.
 message PolicyProto {
   // Policy name.
@@ -26,6 +28,9 @@ message PolicyProto {
   }
   // Egress type permitted by the policy.
   EgressType egress_type = 5;
+
+  // Annotations on the policy.
+  repeated AnnotationRefProto annotations = 6;
 }
 
 message PolicyTargetProto {
@@ -41,6 +46,9 @@ message PolicyTargetProto {
 
   // Allowed usages for all fields in this target type.
   repeated PolicyFieldProto fields = 4;
+
+  // Annotations on the policy target.
+  repeated AnnotationRefProto annotations = 5;
 }
 
 message PolicyFieldProto {
@@ -72,6 +80,9 @@ message PolicyFieldProto {
 
   // Specified usages for subfields nested inside this field.
   repeated PolicyFieldProto subfields = 4;
+
+  // Annotations on the policy field.
+  repeated AnnotationRefProto annotations = 5;
 }
 
 // Storage retention options for a policy target.
