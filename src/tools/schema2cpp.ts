@@ -12,6 +12,7 @@ import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {Type} from '../runtime/type.js';
 import {Dictionary} from '../runtime/hot.js';
+import { CONSOLE_CLIENT_NAME } from '../tracelib/systrace-clients.js';
 
 // https://en.cppreference.com/w/cpp/keyword
 // [...document.getElementsByClassName('wikitable')[0].getElementsByTagName('code')].map(x => x.innerHTML);
@@ -135,6 +136,10 @@ class CppGenerator implements ClassGenerator {
   }
 
   addField({field, typeName, refClassName, isOptional = false, isCollection = false}: AddFieldOptions) {
+    // Work around for schema2graph giving the Kotlin RefClassName.
+    if (refClassName !== undefined) {
+      refClassName = `${this.node.sources[0].fullName}_Ref`;
+    }
     const fixed = this.escapeIdentifier(field);
     const valid = `${field}_valid_`;
     let {type, defaultVal, isString} = getTypeInfo(typeName);
@@ -212,7 +217,8 @@ class CppGenerator implements ClassGenerator {
   }
 
   generate(schemaHash: string, fieldCount: number): string {
-    const name = this.node.entityClassName;
+    const name = this.node.fullEntityClassName;
+    console.log(`name: ${name}`);
     const aliases = this.node.sources.map(s => s.fullName);
     // Template constructor allows implicit type slicing from appropriately matching entities.
     let templateCtor = '';

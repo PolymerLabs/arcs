@@ -572,7 +572,7 @@ ${lines}
 
             private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
                 ${ktUtils.mapOf(this.nestedEntitySpecs, 16)}
-
+                
             init {
                 SchemaRegistry.register(SCHEMA)
             }`}

@@ -988,8 +988,8 @@ public:
   bool flg() const { return flg_; }
   void set_flg(bool value) { flg_ = value; flg_valid_ = true; }
 
-  const Ref<GoldInternal1>& ref() const { return ref_; }
-  void set_ref(const GoldInternal1& value) { internal::Accessor::bind(&ref_, value); }
+  const Ref<Gold_Data_Ref>& ref() const { return ref_; }
+  void set_ref(const Gold_Data_Ref& value) { internal::Accessor::bind(&ref_, value); }
 
   // Equality ops compare internal ids and all data fields.
   // Use arcs::fields_equal() to compare only the data fields.
@@ -1044,7 +1044,7 @@ protected:
   bool flg_ = false;
   bool flg_valid_ = false;
 
-  Ref<GoldInternal1> ref_ = {};
+  Ref<Gold_Data_Ref> ref_ = {};
   bool ref_valid_ = false;
 
   std::string _internal_id_;

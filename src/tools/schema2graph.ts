@@ -67,6 +67,10 @@ export class SchemaNode {
     if (this.uniqueSchema && this.schema.name) {
       return this.schema.name;
     }
+    return this.fullEntityClassName;
+  }
+
+  get fullEntityClassName() {
     if (this.sources.length === 1) {
       // If there is just one source, use its full name.
       return this.sources[0].fullName;
