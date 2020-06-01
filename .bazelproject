@@ -6,7 +6,6 @@ directories:
   third_party
   particles
   src
-  devtools/android
 
 targets:
   //java/...
