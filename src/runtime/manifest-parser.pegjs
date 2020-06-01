@@ -1741,7 +1741,6 @@ NumberedUnits
     });
   }
 
-// TODO(b/157605585): Annotations on policies.
 Policy
   = 'policy' whiteSpace name:upperIdent openBrace items:(PolicyItem (commaOrNewline PolicyItem)*)? closeBrace
   {
@@ -1764,6 +1763,7 @@ Policy
       name,
       targets,
       configs,
+      annotationRefs: [], // This gets overridden by the Manifest rule.
     });
   }
 
@@ -1771,14 +1771,14 @@ PolicyItem
   = PolicyTarget
   / PolicyConfig
 
-// TODO(b/157605585): Annotations on policy targets.
 PolicyTarget
-  = 'from' whiteSpace schemaName:upperIdent whiteSpace 'access' fields:PolicyFieldSet
+  = annotationRefs:(AnnotationRef multiLineSpace)* 'from' whiteSpace schemaName:upperIdent whiteSpace 'access' fields:PolicyFieldSet
   {
     return toAstNode<AstNode.PolicyTarget>({
       kind: 'policy-target',
       schemaName,
       fields,
+      annotationRefs: annotationRefs.map(item => item[0]),
     });
   }
 
@@ -1788,14 +1788,14 @@ PolicyFieldSet 'Set of policy fields enclosed in curly braces'
     return extractCommaSeparated(fields);
   }
 
-// TODO(b/157605585): Nested fields, annotations.
 PolicyField
-  = name:fieldName subfields:PolicyFieldSet?
+  = annotationRefs:(AnnotationRef multiLineSpace)* name:fieldName subfields:PolicyFieldSet?
   {
     return toAstNode<AstNode.PolicyField>({
       kind: 'policy-field',
       name,
       subfields: subfields || [],
+      annotationRefs: annotationRefs.map(item => item[0]),
     });
   }
 
