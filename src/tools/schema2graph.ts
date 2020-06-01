@@ -43,6 +43,7 @@ export class SchemaNode {
     readonly schema: Schema | null,
     readonly particleSpec: ParticleSpec,
     readonly allSchemaNodes: SchemaNode[],
+    // Type variable associated with the schema node.
     readonly fromVariable: string = ''
   ) {}
 
@@ -182,8 +183,8 @@ export class SchemaGraph {
         return fromVariable === candidate.fromVariable;
       }
 
+      // Aggregate nodes with the same schema together.
       if (!candidate.fromVariable) {
-        // Aggregate nodes with the same schema together.
         return schema.equals(candidate.schema);
       }
 
@@ -198,7 +199,7 @@ export class SchemaGraph {
       node.sources.push(source);
       for (const previous of this.nodes) {
         for (const [a, b] of [[node, previous], [previous, node]]) {
-          if (a.fromVariable &&a.fromVariable === b.fromVariable && !b.descendants.has(a)) {
+          if (a.fromVariable && a.fromVariable === b.fromVariable && !b.descendants.has(a)) {
             a.descendants.add(b);
             b.parents = [];
           } else if (!a.fromVariable && !b.fromVariable &&
@@ -215,7 +216,7 @@ export class SchemaGraph {
       this.nodes.push(node);
     }
 
-    // Handles type variables with no constraints (null schemas)
+    // Handle type variables with no constraints (null schemas).
     if (!schema) {
       return node;
     }
@@ -230,7 +231,9 @@ export class SchemaGraph {
         nestedSchema = descriptor.schema.schema.model.entitySchema;
       }
       if (nestedSchema) {
-        // TODO(alxr): Document this behavior
+        // When a type variable has a nested schema, it should be backed by a) a distinct entity from
+        // a schema with the same name and b) a distinct entity from the original type variable.
+        // To accomplish this, we need to associate the nested schema with a "child" type variable.
         const nestedVar = fromVariable ? fromVariable + field : '';
         // We have a reference field. Generate a node for its nested schema and connect it into the
         // refs map to indicate that this node requires nestedNode's class to be generated first.
