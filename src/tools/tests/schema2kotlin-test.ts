@@ -180,6 +180,21 @@ describe('schema2kotlin', () => {
         val h1: ReadSingletonHandle<Tuple3<Reference<P_H1_0>, Reference<P_H1_1>, Reference<P_H1_2>>> by handles
     }`
     ));
+    it('Progressively constrained Variable Handles', async () => await assertHandleClassDeclaration(
+      `particle T
+         h1: reads ~a
+         h2: writes ~a with {amt: Number}
+         h3: reads writes ~a with {name: Text, age: Number}
+         `,
+      `class Handles : HandleHolderBase(
+        "T",
+        mapOf("h1" to T_H1, "h2" to T_H2, "h3" to T_H3)
+    ) {
+        val h1: ReadSingletonHandle<T_H1> by handles
+        val h2: WriteSingletonHandle<T_H2> by handles
+        val h3: ReadWriteSingletonHandle<T_H3> by handles
+    }`
+    ));
     async function assertHandleClassDeclaration(manifest: string, expectedHandleClass: string) {
       await assertComponent(manifest, ({handleClassDecl}) => handleClassDecl, expectedHandleClass);
     }
