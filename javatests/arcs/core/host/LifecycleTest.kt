@@ -18,6 +18,7 @@ import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.testutil.runTest
+import arcs.core.util.Log
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.ExplicitHostRegistry
@@ -43,7 +44,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 @OptIn(ExperimentalCoroutinesApi::class)
 class LifecycleTest {
     @get:Rule
-    val log = LogRule()
+    val log = LogRule(Log.Level.Warning)
 
     private lateinit var schedulerProvider: JvmSchedulerProvider
     private lateinit var scheduler: Scheduler
