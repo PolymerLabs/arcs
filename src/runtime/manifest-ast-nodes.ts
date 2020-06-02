@@ -210,7 +210,7 @@ export interface MetaName extends BaseNode {
 export interface MetaStorageKey extends BaseNode {
   key: 'storageKey';
   value: string;
-  kind: 'storageKey';
+  kind: 'storage-key';
 }
 
 export interface MetaNamespace extends BaseNode {
@@ -463,7 +463,7 @@ export interface RecipeParticle extends BaseNode {
 }
 
 export interface RequireHandleSection extends BaseNode {
-  kind: 'requireHandle';
+  kind: 'require-handle';
   name: string;
   ref: HandleRef;
 }

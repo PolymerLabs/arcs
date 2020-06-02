@@ -874,7 +874,7 @@ ${e.message}
       syntheticHandles: recipeItems.filter(item => item.kind === 'synthetic-handle') as AstNode.RecipeSyntheticHandle[],
       byHandle: new Map<Handle, AstNode.RecipeHandle | AstNode.RecipeSyntheticHandle | AstNode.RequireHandleSection>(),
       // requireHandles are handles constructed by the 'handle' keyword. This is intended to replace handles.
-      requireHandles: recipeItems.filter(item => item.kind === 'requireHandle') as AstNode.RequireHandleSection[],
+      requireHandles: recipeItems.filter(item => item.kind === 'require-handle') as AstNode.RequireHandleSection[],
       particles: recipeItems.filter(item => item.kind === 'recipe-particle') as AstNode.RecipeParticle[],
       byParticle: new Map<Particle, AstNode.RecipeParticle>(),
       slots: recipeItems.filter(item => item.kind === 'slot') as AstNode.RecipeSlot[],
@@ -1174,7 +1174,7 @@ ${e.message}
 
           if (entry.item.kind === 'handle'
               || entry.item.kind === 'synthetic-handle'
-              || entry.item.kind === 'requireHandle') {
+              || entry.item.kind === 'require-handle') {
             targetHandle = entry.handle;
           } else if (entry.item.kind === 'particle') {
             targetParticle = entry.particle;
