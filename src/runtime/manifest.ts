@@ -779,7 +779,8 @@ ${e.message}
       params[param.name] = param.type;
     }
     manifest._annotations[annotationItem.name] = new Annotation(
-      annotationItem.name, params, annotationItem.targets, annotationItem.retention, annotationItem.doc);
+      annotationItem.name, params, annotationItem.targets, annotationItem.retention,
+      annotationItem.allowMultiple, annotationItem.doc);
   }
 
   private static _processParticle(manifest: Manifest, particleItem, loader?: LoaderBase) {
@@ -1316,6 +1317,12 @@ ${e.message}
       if (!annotation) {
         throw new ManifestError(
             aRefItem.location, `annotation not found: '${aRefItem.name}'`);
+      }
+      if (!annotation.allowMultiple) {
+        if (annotationRefs.some(a => a.name === aRefItem.name)) {
+          throw new ManifestError(
+              aRefItem.location, `annotation '${aRefItem.name}' already exists.`);
+        }
       }
       const params: Dictionary<string|number|boolean|{}> = {};
       for (const param of aRefItem.params) {

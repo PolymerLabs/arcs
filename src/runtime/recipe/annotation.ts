@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Comparable, compareStrings, compareArrays} from './comparable.js';
+import {Comparable, compareStrings, compareArrays, compareBools} from './comparable.js';
 import {Dictionary} from '../hot.js';
 import {AnnotationTargetValue, AnnotationRetentionValue, SchemaPrimitiveTypeValue} from '../manifest-ast-nodes.js';
 
@@ -18,6 +18,7 @@ export class Annotation implements Comparable<Annotation> {
               public readonly params: Dictionary<SchemaPrimitiveTypeValue>,
               public readonly targets: AnnotationTargetValue[],
               public readonly retention: AnnotationRetentionValue,
+              public readonly allowMultiple: boolean,
               public readonly doc: string) {}
 
   _compareTo(other: Annotation): number {
@@ -25,6 +26,7 @@ export class Annotation implements Comparable<Annotation> {
     if ((cmp = compareStrings(this.name, other.name)) !== 0) return cmp;
     if ((cmp = compareArrays(this.targets, other.targets, compareStrings)) !== 0) return cmp;
     if ((cmp = compareStrings(this.retention, other.retention)) !== 0) return cmp;
+    if ((cmp = compareBools(this.allowMultiple, other.allowMultiple)) !== 0) return cmp;
     if ((cmp = compareStrings(this.doc, other.doc)) !== 0) return cmp;
     return 0;
   }
@@ -40,6 +42,9 @@ export class Annotation implements Comparable<Annotation> {
       result.push(`  targets: [${this.targets.join(', ')}]`);
     }
     result.push(`  retention: ${this.retention}`);
+    if (this.allowMultiple) {
+      result.push(`  allowMultiple: ${this.allowMultiple}`);
+    }
     if (this.doc) {
       result.push(`  doc: '${this.doc}'`);
     }
