@@ -810,19 +810,21 @@ export interface Policy extends BaseNode {
   name: string;
   targets: PolicyTarget[];
   configs: PolicyConfig[];
-  annotationRefs?: AnnotationRef[];
+  annotationRefs: AnnotationRef[];
 }
 
 export interface PolicyTarget extends BaseNode {
   kind: 'policy-target';
   schemaName: string;
   fields: PolicyField[];
+  annotationRefs: AnnotationRef[];
 }
 
 export interface PolicyField extends BaseNode {
   kind: 'policy-field';
   name: string;
   subfields: PolicyField[];
+  annotationRefs: AnnotationRef[];
 }
 
 export interface PolicyConfig extends BaseNode {
