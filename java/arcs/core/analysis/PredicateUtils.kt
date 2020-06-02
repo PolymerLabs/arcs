@@ -15,32 +15,45 @@ import arcs.core.data.InformationFlowLabel
 import arcs.core.data.InformationFlowLabel.Predicate
 import java.util.BitSet
 
-fun BitSet.toString(transform: ((Int) -> String)?): String {
-    if (transform == null) return "$this"
-    var labels = mutableListOf<String>()
-    var nextBit = nextSetBit(0)
-    while (nextBit != -1) {
-        labels.add(transform(nextBit))
-        if (nextBit == Int.MAX_VALUE) break
-        nextBit = nextSetBit(nextBit + 1)
-    }
-    return labels.joinToString(prefix = "{", postfix = "}")
-}
+/**
+ * Represents a conjunct in a Disjunctive Normal Form (DNF).
+ *
+ * [mask] determines the set of indices that are valid in [bits]. Suppose that the universe of
+ * labels is {A, B, C}. Here are some examples of how various conjuncts are represented:
+ *
+ *      Conjunction : (mask, bits)
+ *                A : (100, 100)
+ *           not(A) : (100, 000)
+ *          A and B : (110, 110)
+ *     A and not(B) : (110, 100)
+ */
+data class Conjunct(val mask: BitSet, val bits: BitSet)
 
 /**
- * Returns a set of [BitSet] representation for the predicate using the given [indices] to
- * determine the index of an [InformationFlowLabel] in the bitset.
+ * Returns the predicate in Disjunctive Normal Form (DNF) as [Set<Conjunct>].
+ *
+ * The [indices] map is used to determine the index of an [InformationFlowLabel] in the bitset of
+ * the conjuncts. Suppose that the universe of labels is {A, B, C}. Here are some examples:
+ *
+ *          Predicate : {(mask, bits)}
+ *                  A : {(100, 100)}
+ *             not(A) : {(100, 000)}
+ *            A and B : {(110, 110)}
+ *       A and not(B) : {(110, 100)}
+ *             A or B : {(100, 100), (010, 010)}
+ *        A or not(B) : {(100, 100), (010, 000)}
+ *   (A and B) or (C) : {(110, 110), (001, 001)}
  */
-fun InformationFlowLabel.Predicate.asSetOfBitSets(
+fun InformationFlowLabel.Predicate.asDNF(
     indices: Map<InformationFlowLabel, Int>
-): Set<BitSet> {
+): Set<Conjunct> {
     // TODO(b/157530728): This is not very efficient. We will want to replace this with
     // an implementation that uses a Binary Decision Diagram (BDD).
     when (this) {
         is Predicate.Label -> {
-            val result = BitSet(indices.size)
-            result.set(requireNotNull(indices[label]))
-            return setOf(result)
+            val index = indices.getValue(label)
+            val result = BitSet(indices.size).apply { set(index) }
+            return setOf(Conjunct(result, result))
         }
         is Predicate.Not -> {
             val labelPredicate = requireNotNull(predicate as? Predicate.Label) {
@@ -48,32 +61,57 @@ fun InformationFlowLabel.Predicate.asSetOfBitSets(
                 // datastructure like BDDs. For now, we only support `not` on labels.
                 "Not is only supported for label predicates when converting to bitsets!"
             }
-            val labelIndex = requireNotNull(indices[labelPredicate.label])
-            // Not(A) = empty \/ B \/ C ...
-            return (0..(indices.size - 1))
-                .filter { it != labelIndex }
-                .map { index -> BitSet(indices.size).apply { set(index) } }
-                .plus(BitSet(indices.size))
-                .toSet()
+            val index = indices.getValue(labelPredicate.label)
+            val mask = BitSet(indices.size).apply { set(index) }
+            val result = BitSet(indices.size)
+            return setOf(Conjunct(mask, result))
         }
         is Predicate.Or -> {
-            val lhsBitSets = lhs.asSetOfBitSets(indices)
-            val rhsBitSets = rhs.asSetOfBitSets(indices)
-            return lhsBitSets union rhsBitSets
+            val lhsConjuncts = lhs.asDNF(indices)
+            val rhsConjuncts = rhs.asDNF(indices)
+            return lhsConjuncts union rhsConjuncts
         }
         is Predicate.And -> {
-            val lhsBitSets = lhs.asSetOfBitSets(indices)
-            val rhsBitSets = rhs.asSetOfBitSets(indices)
-            val result = mutableSetOf<BitSet>()
-            lhsBitSets.forEach { lhsBitSet ->
-                rhsBitSets.forEach { rhsBitSet ->
-                    val combined = BitSet(indices.size)
-                    combined.or(lhsBitSet)
-                    combined.or(rhsBitSet)
-                    result.add(combined)
-                }
-            }
-            return result.toSet()
+            val lhsConjuncts = lhs.asDNF(indices)
+            val rhsConjuncts = rhs.asDNF(indices)
+            return lhsConjuncts.and(rhsConjuncts, indices)
         }
     }
+}
+
+/** Returns the DNF form for ([this] and [that]) by applying distributivity law. */
+private fun Set<Conjunct>.and(
+    that: Set<Conjunct>,
+    indices: Map<InformationFlowLabel, Int>
+): Set<Conjunct> {
+    val result = mutableSetOf<Conjunct>()
+    // Apply distributivity law.
+    forEach { (thisMask, thisBits) ->
+        that.forEach { (thatMask, thatBits) ->
+            val commonThisBits = BitSet(indices.size).apply {
+                or(thisMask)
+                and(thatMask)
+                and(thisBits)
+            }
+            val commonThatBits = BitSet(indices.size).apply {
+                or(thisMask)
+                and(thatMask)
+                and(thatBits)
+            }
+            // Make sure that the common bits match. If they don't match, then this
+            // combination is contradiction and, therefore, is not included in the result.
+            if (commonThatBits == commonThisBits) {
+                val combinedMask = BitSet(indices.size).apply {
+                    or(thisMask)
+                    or(thatMask)
+                }
+                val combinedBits = BitSet(indices.size).apply {
+                    or(thisBits)
+                    or(thatBits)
+                }
+                result.add(Conjunct(combinedMask, combinedBits))
+            }
+        }
+    }
+    return result.toSet()
 }

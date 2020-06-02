@@ -23,53 +23,84 @@ class PredicateUtilsTest {
     }.toMap()
 
     fun Predicate.asStringList(): List<String> {
-        return asSetOfBitSets(indicesMap).map { bitset ->
-            bitset.toString { bit ->
-                labels[bit]
+        return asDNF(indicesMap).map { (mask, values) ->
+            var nextBit = mask.nextSetBit(0)
+            var literals = mutableListOf<String>()
+            while (nextBit != -1) {
+                literals.add(
+                    if (values.get(nextBit)) labels[nextBit] else "!${labels[nextBit]}"
+                )
+                if (nextBit == Int.MAX_VALUE) break
+                nextBit = mask.nextSetBit(nextBit + 1)
             }
+            literals.joinToString(separator = " ^ ")
         }
-    }
-
-    @Test
-    fun prettyPrintBitSet() {
-        val setAC = BitSet(labels.size).apply {
-            set(Labels.A.ordinal)
-            set(Labels.C.ordinal)
-        }
-        assertThat(setAC.toString { bit -> labels[bit] }).isEqualTo("{A, C}")
-        assertThat(setAC.toString { _ -> "HAHA" }).isEqualTo("{HAHA, HAHA}")
     }
 
     @Test
     fun labelPredicate() {
         assertThat(Labels.A.asPredicate.asStringList())
-            .containsExactly("{A}")
+            .containsExactly("A")
         assertThat(Labels.B.asPredicate.asStringList())
-            .containsExactly("{B}")
-    }
-
-    @Test
-    fun simpleAndPredicate() {
-        val predicateAandB = Labels.A.asPredicate and Labels.B.asPredicate
-        assertThat(predicateAandB.asStringList()).containsExactly("{A, B}")
-        val predicateAandBandC =
-            Labels.C.asPredicate and Labels.A.asPredicate and Labels.B.asPredicate
-        assertThat(predicateAandBandC.asStringList()).containsExactly("{A, B, C}")
-    }
-
-    @Test
-    fun simpleOrPredicate() {
-        val predicateAorB = Labels.A.asPredicate or Labels.B.asPredicate
-        assertThat((predicateAorB).asStringList()).containsExactly("{A}", "{B}")
-        val predicateAorBorC =
-            Labels.C.asPredicate or Labels.A.asPredicate or Labels.B.asPredicate
-        assertThat(predicateAorBorC.asStringList()).containsExactly("{A}", "{B}", "{C}")
+            .containsExactly("B")
     }
 
     @Test
     fun simpleNotPredicate() {
         val notA = Predicate.Not(Labels.A.asPredicate)
-        assertThat(notA.asStringList()).containsExactly("{}", "{B}", "{C}", "{D}")
+        assertThat(notA.asStringList()).containsExactly("!A")
+    }
+
+    @Test
+    fun contradictionsAreRemoved() {
+        // !A /\ A
+        val notA = Predicate.Not(Labels.A.asPredicate)
+        val notAandA = Predicate.And(notA, Labels.A.asPredicate)
+        assertThat(notAandA.asStringList()).isEmpty()
+
+        // (!A \/ B) /\ A
+        val notAorB = Predicate.Or(notA, Labels.B.asPredicate)
+        val notAorBandA = Predicate.And(notAorB, Labels.A.asPredicate)
+        assertThat(notAorBandA.asStringList()).containsExactly("A ^ B")
+    }
+
+    @Test
+    fun simpleAndPredicate() {
+        val predicateAandB = Labels.A.asPredicate and Labels.B.asPredicate
+        assertThat(predicateAandB.asStringList()).containsExactly("A ^ B")
+
+        val predicateAandBandC =
+            Labels.C.asPredicate and Labels.A.asPredicate and Labels.B.asPredicate
+        assertThat(predicateAandBandC.asStringList()).containsExactly("A ^ B ^ C")
+    }
+
+    @Test
+    fun andNotPredicate() {
+        val predicateAandNotB = Labels.A.asPredicate and Predicate.Not(Labels.B.asPredicate)
+        assertThat(predicateAandNotB.asStringList()).containsExactly("A ^ !B")
+        val predicateNotAandBandC =
+            Labels.C.asPredicate and Predicate.Not(Labels.A.asPredicate) and Labels.B.asPredicate
+        assertThat(predicateNotAandBandC.asStringList()).containsExactly("!A ^ B ^ C")
+    }
+
+    @Test
+    fun simpleOrPredicate() {
+        val predicateAorB = Labels.A.asPredicate or Labels.B.asPredicate
+        assertThat((predicateAorB).asStringList()).containsExactly("A", "B")
+
+        val predicateAorBorC =
+            Labels.C.asPredicate or Labels.A.asPredicate or Labels.B.asPredicate
+        assertThat(predicateAorBorC.asStringList()).containsExactly("A", "B", "C")
+    }
+
+    @Test
+    fun orNotPredicate() {
+        val predicateNotAorB = Predicate.Not(Labels.A.asPredicate) or Labels.B.asPredicate
+        assertThat((predicateNotAorB).asStringList()).containsExactly("!A", "B")
+
+        val predicateAorBorNotC =
+            Predicate.Not(Labels.C.asPredicate) or Labels.A.asPredicate or Labels.B.asPredicate
+        assertThat(predicateAorBorNotC.asStringList()).containsExactly("A", "B", "!C")
     }
 
     @Test
@@ -79,13 +110,14 @@ class PredicateUtilsTest {
             .or(Labels.B.asPredicate)
             .and(Labels.C.asPredicate)
         assertThat(predicate_AorB_and_C.asStringList())
-            .containsExactly("{A, C}", "{B, C}")
+            .containsExactly("A ^ C", "B ^ C")
+
         // (A \/ B) /\ (C \/ D)
         val predicate_AorB_and_CorD =  Labels.A.asPredicate
             .or(Labels.B.asPredicate)
             .and(Labels.C.asPredicate.or(Labels.D.asPredicate))
         assertThat(predicate_AorB_and_CorD.asStringList())
-            .containsExactly("{A, C}", "{A, D}", "{B, C}", "{B, D}")
+            .containsExactly("A ^ C", "A ^ D", "B ^ C", "B ^ D")
     }
 
     @Test
@@ -95,13 +127,21 @@ class PredicateUtilsTest {
             .and(Labels.B.asPredicate)
             .or(Labels.C.asPredicate)
         assertThat(predicate_AandB_or_C.asStringList())
-            .containsExactly("{A, B}", "{C}")
+            .containsExactly("A ^ B", "C")
+
+        // (A /\ !B) \/ C
+        val predicate_AandNotB_or_C = Labels.A.asPredicate
+            .and(Predicate.Not(Labels.B.asPredicate))
+            .or(Labels.C.asPredicate)
+        assertThat(predicate_AandNotB_or_C.asStringList())
+            .containsExactly("A ^ !B", "C")
+
         // (A /\ B) \/ (C /\ D)
         val predicate_AorB_and_CorD =  Labels.A.asPredicate
             .and(Labels.B.asPredicate)
             .or(Labels.C.asPredicate.and(Labels.D.asPredicate))
         assertThat(predicate_AorB_and_CorD.asStringList())
-            .containsExactly("{A, B}", "{C, D}")
+            .containsExactly("A ^ B", "C ^ D")
     }
 
     @Test
