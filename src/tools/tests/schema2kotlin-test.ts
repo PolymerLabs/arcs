@@ -249,6 +249,17 @@ describe('schema2kotlin', () => {
         'typealias P_H1_2 = AbstractP.P_H1_2',
       ]
     ));
+    it('Progressively constrained variables', async () => await assertSchemaAliases(
+      `particle T
+         h1: reads ~a
+         h2: writes ~a with {amt: Number}
+         h3: reads writes ~a with {name: Text, age: Number}
+      `, [
+        'typealias T_H1 = AbstractT.TInternal1',
+        'typealias T_H2 = AbstractT.TInternal1',
+        'typealias T_H3 = AbstractT.TInternal1',
+      ]
+    ));
     async function assertSchemaAliases(manifest: string, expectedAliases: string[]) {
       await assertComponent(manifest, ({typeAliases}) => typeAliases.sort(), expectedAliases);
     }
