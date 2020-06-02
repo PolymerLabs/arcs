@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package arcs;
+
+option java_package = "arcs.core.data.proto";
+option java_multiple_files = true;
+
+// Represents the usage of an annotation.
+// TODO(b/155796088): Add support for all annotation functionality, including
+// annotation definitions and all parameter types.
+message AnnotationRefProto {
+  string name = 1;
+
+  // Maps from param name to value.
+  // TODO(b/155796088): Support parameter types other than just string.
+  map<string, string> params = 2;
+}

@@ -53,6 +53,27 @@ arcs_kt_library(
 )
 
 proto_library(
+    name = "annotation_proto",
+    srcs = ["annotation.proto"],
+)
+
+android_proto_library(
+    name = "annotation_java_proto_lite",
+    deps = [":annotation_proto"],
+)
+
+java_proto_library(
+    name = "annotation_java_proto",
+    deps = [":annotation_proto"],
+)
+
+py_proto_library(
+    name = "annotation_py_proto",
+    api_version = 2,
+    deps = [":annotation_proto"],
+)
+
+proto_library(
     name = "manifest_proto",
     srcs = ["manifest.proto"],
     deps = [
@@ -79,6 +100,7 @@ py_proto_library(
 proto_library(
     name = "policy_proto",
     srcs = ["policy.proto"],
+    deps = [":annotation_proto"],
 )
 
 android_proto_library(
