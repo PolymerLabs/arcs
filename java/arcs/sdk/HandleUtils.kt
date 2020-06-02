@@ -23,7 +23,7 @@ import arcs.core.entity.ReadableHandle
  * @param handle2 The second handle the callback will be assigned to
  * @param action callback
  */
-suspend fun <T1, T2> combineUpdates(
+fun <T1, T2> combineUpdates(
     handle1: ReadableHandle<T1>,
     handle2: ReadableHandle<T2>,
     action: (T1, T2) -> Unit
@@ -38,7 +38,7 @@ suspend fun <T1, T2> combineUpdates(
     }
 }
 
-suspend fun <T1, T2, T3> combineUpdates(
+fun <T1, T2, T3> combineUpdates(
     handle1: ReadableHandle<T1>,
     handle2: ReadableHandle<T2>,
     handle3: ReadableHandle<T3>,
@@ -55,7 +55,7 @@ suspend fun <T1, T2, T3> combineUpdates(
     }
 }
 
-suspend fun <T1, T2, T3, T4> combineUpdates(
+fun <T1, T2, T3, T4> combineUpdates(
     handle1: ReadableHandle<T1>,
     handle2: ReadableHandle<T2>,
     handle3: ReadableHandle<T3>,
@@ -74,7 +74,7 @@ suspend fun <T1, T2, T3, T4> combineUpdates(
     }
 }
 
-suspend fun <T1, T2, T3, T4, T5> combineUpdates(
+fun <T1, T2, T3, T4, T5> combineUpdates(
     handle1: ReadableHandle<T1>,
     handle2: ReadableHandle<T2>,
     handle3: ReadableHandle<T3>,
@@ -101,7 +101,7 @@ suspend fun <T1, T2, T3, T4, T5> combineUpdates(
     }
 }
 
-suspend fun <T1, T2, T3, T4, T5, T6> combineUpdates(
+fun <T1, T2, T3, T4, T5, T6> combineUpdates(
     handle1: ReadableHandle<T1>,
     handle2: ReadableHandle<T2>,
     handle3: ReadableHandle<T3>,
@@ -131,7 +131,7 @@ suspend fun <T1, T2, T3, T4, T5, T6> combineUpdates(
     }
 }
 
-suspend fun <T1, T2, T3, T4, T5, T6, T7> combineUpdates(
+fun <T1, T2, T3, T4, T5, T6, T7> combineUpdates(
     handle1: ReadableHandle<T1>,
     handle2: ReadableHandle<T2>,
     handle3: ReadableHandle<T3>,
@@ -164,7 +164,7 @@ suspend fun <T1, T2, T3, T4, T5, T6, T7> combineUpdates(
     }
 }
 
-suspend fun <T1, T2, T3, T4, T5, T6, T7, T8> combineUpdates(
+fun <T1, T2, T3, T4, T5, T6, T7, T8> combineUpdates(
     handle1: ReadableHandle<T1>,
     handle2: ReadableHandle<T2>,
     handle3: ReadableHandle<T3>,
@@ -200,7 +200,7 @@ suspend fun <T1, T2, T3, T4, T5, T6, T7, T8> combineUpdates(
     }
 }
 
-suspend fun <T1, T2, T3, T4, T5, T6, T7, T8, T9> combineUpdates(
+fun <T1, T2, T3, T4, T5, T6, T7, T8, T9> combineUpdates(
     handle1: ReadableHandle<T1>,
     handle2: ReadableHandle<T2>,
     handle3: ReadableHandle<T3>,
@@ -239,7 +239,7 @@ suspend fun <T1, T2, T3, T4, T5, T6, T7, T8, T9> combineUpdates(
     }
 }
 
-suspend fun <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> combineUpdates(
+fun <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> combineUpdates(
     handle1: ReadableHandle<T1>,
     handle2: ReadableHandle<T2>,
     handle3: ReadableHandle<T3>,
