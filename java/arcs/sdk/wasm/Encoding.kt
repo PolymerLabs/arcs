@@ -80,7 +80,7 @@ class StringDecoder(private var bytes: ByteArray) {
         throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Doubles")
 
     fun <T> decodeList(): List<T> =
-        throw NotImplementedError("No JS to Kotlin enocding exists for Kotlin Lists")
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Lists")
 
     companion object {
         fun decodeDictionary(bytes: ByteArray): Map<String, String> {
