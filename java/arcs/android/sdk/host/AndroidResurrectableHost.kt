@@ -30,8 +30,10 @@ abstract class AndroidResurrectableHost(
     vararg particles: ParticleRegistration
 ) : AndroidHost(context, lifecycle, schedulerProvider, *particles), ResurrectableHost {
 
-    override val resurrectionHelper: ResurrectionHelper = ResurrectionHelper(context,
-        ::onResurrected)
+    override val resurrectionHelper: ResurrectionHelper = ResurrectionHelper(
+        context,
+        ::onResurrected
+    )
 
     override fun maybeRequestResurrection(context: ArcHostContext) {
         if (context.arcState == ArcState.Running) {
