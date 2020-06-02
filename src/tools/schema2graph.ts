@@ -110,7 +110,7 @@ export class SchemaNode {
 }
 
 function* topLevelSchemas(type: Type, path: string[] = []):
-    IterableIterator<{schema: Schema | null, path: string[], fromVariable: string}> {
+    IterableIterator<{schema: Schema | null, path: string[], fromVariable: string | null}> {
   if (type.getContainedType()) {
     yield* topLevelSchemas(type.getContainedType(), path);
   } else if (type.getContainedTypes()) {
