@@ -206,8 +206,10 @@ class LifecycleTest {
         }
         waitForAllTheThings()
 
-        // Pause and check that the events we expected showed up in the correct order.
-        testHost.pause()
+        arc.stop()
+        arc.waitForStop()
+
+        // Check that the events we expected showed up in the correct order.
         assertVariableOrdering(
             particleFirstPause.events,
             // No onFirstStart.
@@ -218,34 +220,6 @@ class LifecycleTest {
                 "onReady:1.1:[first]",
                 "data.onUpdate:2.2",
                 "onUpdate:2.2:[first]",
-                "onShutdown"
-            )
-        )
-
-        // Now unpause and update the collection.
-        testHost.unpause()
-
-        val particleSecondPause: PausingParticle = testHost.getParticle(arc.id, name)
-        val (_, list2) = makeHandles()
-        withContext(list2.dispatcher) {
-            list2.store(PausingParticle_List("second"))
-        }
-        waitForAllTheThings()
-
-        // Finish up by stopping completely.
-        arc.stop()
-        arc.waitForStop()
-
-        assertVariableOrdering(
-            particleSecondPause.events,
-            // No onFirstStart.
-            listOf("onStart"),
-            // Values stored in the previous session should still be present.
-            setOf("data.onReady:2.2", "list.onReady:[first]"),
-            listOf(
-                "onReady:2.2:[first]",
-                "list.onUpdate:[first, second]",
-                "onUpdate:2.2:[first, second]",
                 "onShutdown"
             )
         )
