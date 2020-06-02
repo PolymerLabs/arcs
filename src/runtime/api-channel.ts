@@ -19,17 +19,17 @@ import * as recipeParticle from './recipe/particle.js';
 import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
 import {Type} from './type.js';
 import {PropagatedException, reportGlobalException} from './arc-exceptions.js';
-import {Consumer, Literal, Literalizable, Runnable} from './hot.js';
+import {Consumer, Literal, Literalizable} from './hot.js';
 import {floatingPromiseToAudit} from './util.js';
 import {MessagePort} from './message-channel.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
-import {ProxyCallback, ProxyMessage, Store} from './storageNG/store.js';
+import {ProxyCallback, ProxyMessage, Store, StoreMuxer} from './storageNG/store.js';
 import {NoTraceWithReason, SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
 import {Ttl} from './recipe/ttl.js';
 import {Handle} from './storageNG/handle.js';
-import {DirectStoreMuxer} from './storageNG/direct-store-muxer.js';
 import {StorageProxyMuxer} from './storageNG/storage-proxy-muxer.js';
+import {CRDTMuxEntity} from './storageNG/storage-ng.js';
 
 type StorageProxy = StorageProxyNG<CRDTTypeRecord>;
 
@@ -531,7 +531,8 @@ export abstract class PECOuterPort extends APIPort {
 
   @NoArgs Stop() {}
   DefineHandle(@RedundantInitializer store: AbstractStore, @ByLiteral(Type) type: Type, @Direct name: string, @Direct storageKey: string, @ByLiteral(Ttl) ttl: Ttl) {}
-  InstantiateParticle(@Initializer particle: recipeParticle.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, AbstractStore>, @Direct reinstantiate: boolean) {}
+  DefineHandleFactory(@RedundantInitializer store: AbstractStore, @ByLiteral(Type) type: Type, @Direct name: string, @Direct storageKey: string, @ByLiteral(Ttl) ttl: Ttl) {}
+  InstantiateParticle(@Initializer particle: recipeParticle.Particle, @Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, AbstractStore>, @ObjectMap(MappingType.Direct, MappingType.Mapped) storeMuxers: Map<string, AbstractStore>, @Direct reinstantiate: boolean) {}
   ReinstantiateParticle(@Identifier @Direct id: string, @ByLiteral(ParticleSpec) spec: ParticleSpec, @ObjectMap(MappingType.Direct, MappingType.Mapped) stores: Map<string, AbstractStore>) {}
   ReloadParticles(@OverridingInitializer particles: recipeParticle.Particle[], @List(MappingType.Direct) ids: string[]) {}
 
@@ -540,14 +541,14 @@ export abstract class PECOuterPort extends APIPort {
   AwaitIdle(@Direct version: number) {}
 
   abstract onRegister(handle: Store<CRDTTypeRecord>, messagesCallback: number, idCallback: number);
-  abstract onDirectStoreMuxerRegister(handle: DirectStoreMuxer<CRDTTypeRecord>, messagesCallback: number, idCallback: number);
+  abstract onDirectStoreMuxerRegister(handle: StoreMuxer<CRDTMuxEntity>, messagesCallback: number, idCallback: number);
   abstract onProxyMessage(handle: Store<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
-  abstract onStorageProxyMuxerMessage(handle: DirectStoreMuxer<CRDTTypeRecord>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
+  abstract onStorageProxyMuxerMessage(handle: StoreMuxer<CRDTMuxEntity>, message: ProxyMessage<CRDTTypeRecord>, callback: number);
 
   abstract onIdle(version: number, relevance: Map<recipeParticle.Particle, number[]>);
 
   abstract onGetDirectStoreMuxer(callback: number, storageKey: string, type: Type);
-  GetDirectStoreMuxerCallback(@Initializer store: DirectStoreMuxer<CRDTTypeRecord>, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string, @Direct storageKey: string) {}
+  GetDirectStoreMuxerCallback(@Initializer store: StoreMuxer<CRDTMuxEntity>, @RemoteMapped callback: number, @ByLiteral(Type) type: Type, @Direct name: string, @Identifier @Direct id: string, @Direct storageKey: string) {}
 
   abstract onConstructInnerArc(callback: number, particle: recipeParticle.Particle);
   ConstructArcCallback(@RemoteMapped callback: number, @LocalMapped arc: {}) {}
@@ -588,7 +589,8 @@ export abstract class PECInnerPort extends APIPort {
 
   abstract onStop();
   abstract onDefineHandle(identifier: string, type: Type, name: string, storageKey: string, ttl: Ttl);
-  abstract onInstantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy|StorageProxyNG<CRDTTypeRecord>>, reinstantiate: boolean);
+  abstract onDefineHandleFactory(identifier: string, type: Type, name: string, storageKey: string, ttl: Ttl);
+  abstract onInstantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy|StorageProxyNG<CRDTTypeRecord>>, proxyMuxers: Map<string, StorageProxyMuxer<CRDTMuxEntity>>, reinstantiate: boolean);
   abstract onReinstantiateParticle(id: string, spec: ParticleSpec, proxies: Map<string, StorageProxy>);
   abstract onReloadParticles(ids: string[]);
 

@@ -65,6 +65,7 @@ describe('DevtoolsArcInspector', () => {
       id: `!${sessionId}:demo:particle3`,
       identifier: `!${sessionId}:demo:particle3`,
       reinstantiate: false,
+      storeMuxers: {},
       stores: {
         foo: 'fooStore'
       },
