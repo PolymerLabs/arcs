@@ -84,6 +84,21 @@ describe('schema2kotlin', () => {
          h: writes [(&Foo {name: Text}, &Bar {age: Number}, &Baz {isThisIt: Boolean})]`,
       'WriteCollectionHandle<Tuple3<Reference<P_H_0>, Reference<P_H_1>, Reference<P_H_2>>>'
     ));
+    it('Read Singleton Variable Entity', async () => await assertHandleInterface(
+      `particle T
+         h: reads ~a with {name: Text}`,
+      'ReadSingletonHandle<T_H>'
+    ));
+    it('Write Singleton Variable Entity', async () => await assertHandleInterface(
+      `particle T
+         h: writes ~a with {name: Text}`,
+      'WriteSingletonHandle<T_H>'
+    ));
+    it('Read Write Singleton Unconstrained Variable Entity', async () => await assertHandleInterface(
+      `particle T
+         h: reads writes ~a`,
+      'ReadWriteSingletonHandle<T_H>'
+    ));
     async function assertHandleInterface(manifestString: string, expectedHandleInterface: string) {
       const manifest = await Manifest.parse(manifestString);
       assert.lengthOf(manifest.particles, 1);

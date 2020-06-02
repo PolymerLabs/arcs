@@ -10,7 +10,7 @@
 import {Schema2Base, ClassGenerator, AddFieldOptions, NodeAndGenerator} from './schema2base.js';
 import {SchemaNode, SchemaSource} from './schema2graph.js';
 import {ParticleSpec, HandleConnectionSpec} from '../runtime/particle-spec.js';
-import {EntityType, CollectionType, Type} from '../runtime/type.js';
+import {EntityType, CollectionType, Type, TypeVariable} from '../runtime/type.js';
 import {KTExtracter} from '../runtime/refiner.js';
 import {Dictionary} from '../runtime/hot.js';
 import minimist from 'minimist';
@@ -196,6 +196,12 @@ ${imports.join('\n')}
       } else if (type.isTuple) {
         const innerTypes = type.getContainedTypes();
         return `Tuple${innerTypes.length}<${innerTypes.map(t => generateInnerType(t)).join(', ')}>`;
+      } else if (type.hasVariable) {
+        const constraint = type.canWriteSuperset || type.canReadSubset;
+        if (constraint) {
+          return generateInnerType(constraint);
+        }
+        return nodes.find(n => n.fromVariable === (type as TypeVariable).variable.name).humanName(connection);
       } else {
         throw new Error(`Type '${type.tag}' not supported on code generated particle handle connections.`);
       }
