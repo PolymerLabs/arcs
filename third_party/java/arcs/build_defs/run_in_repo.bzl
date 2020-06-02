@@ -56,7 +56,7 @@ def _write_shell_script(ctx, run_script):
             execution_requirements = EXECUTION_REQUIREMENTS_DICT,
         )
 
-        moved_files = [ctx.declare_files(x) for x in output_files]
+        moved_files = [ctx.actions.declare_file(x.basename, sibling=x) for x in output_files]
 
         ctx.actions.run_shell(
             inputs = depset(output_files),
