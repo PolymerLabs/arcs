@@ -32,6 +32,8 @@ import kotlinx.coroutines.Job
 typealias ConnectionFactory =
         (StoreOptions<*, *, *>, ParcelableCrdtType) -> StorageServiceConnection
 
+typealias ManagerConnectionFactory = () -> StorageServiceConnection
+
 /**
  * Returns a default [ConnectionFactory] implementation which uses the provided [context] to bind to
  * the [StorageService] and the provided [coroutineContext] as the parent for
@@ -54,11 +56,28 @@ fun DefaultConnectionFactory(
  */
 @Suppress("FunctionName")
 @ExperimentalCoroutinesApi
+@Deprecated(
+    "Use ManagerConnectionFactory to get a Factory",
+    ReplaceWith("ManagerConnectionFactory(context, bindingDelegate, coroutineContext)")
+)
 fun GetManagerConnection(
     context: Context,
     bindingDelegate: StorageServiceBindingDelegate = StorageServiceManagerBindingDelegate(context),
     coroutineContext: CoroutineContext = Dispatchers.Default
 ): StorageServiceConnection = StorageServiceConnection(bindingDelegate, null, coroutineContext)
+
+/**
+ * Returns a [ManagerConnectionFactory] implementation which uses the provided [context] to bind to
+ * the [StorageService] and the provided [coroutineContext] as the parent for
+ * [StorageServiceConnection.connectAsync]'s [Deferred] return value.
+ */
+@Suppress("FunctionName")
+@ExperimentalCoroutinesApi
+fun ManagerConnectionFactory(
+    context: Context,
+    bindingDelegate: StorageServiceBindingDelegate = StorageServiceManagerBindingDelegate(context),
+    coroutineContext: CoroutineContext = Dispatchers.Default
+): ManagerConnectionFactory = { StorageServiceConnection(bindingDelegate, null, coroutineContext) }
 
 /** Defines an object capable of binding-to and unbinding-from the [StorageService]. */
 interface StorageServiceBindingDelegate {

@@ -110,6 +110,7 @@ abstract class AbstractArcHost(
     }
 
     override suspend fun unpause() {
+        stores.reset()
         paused = false
         pausedArcs.forEach {
             try {

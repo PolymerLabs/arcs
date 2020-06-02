@@ -38,4 +38,9 @@ class StoreManager {
             stores.values.forEach { it.waitForActiveIdle() }
         }
     }
+
+    /**
+     * Drops all [Store] instances.
+     */
+    suspend fun reset() = storesMutex.withLock { stores.clear() }
 }
