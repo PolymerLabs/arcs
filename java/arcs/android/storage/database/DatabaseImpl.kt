@@ -1473,6 +1473,8 @@ class DatabaseImpl(
         // TODO(b/156003617)
         is FieldType.Tuple ->
             throw NotImplementedError("[FieldType.Tuple]s not currently supported.")
+        is FieldType.ListOf ->
+            throw NotImplementedError("[FieldType.ListOf]s not currently supported.")
     }
 
     /** Test-only version of [getTypeId]. */

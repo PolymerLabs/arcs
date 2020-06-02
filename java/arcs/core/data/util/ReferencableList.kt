@@ -22,7 +22,6 @@ import kotlin.reflect.KClass
 data class ReferencableList<T>(
     /** Type of primitive inside the list being converted into a referencable */
     private val klass: KClass<*>,
-    /** The value */
     val value: List<T>
 ) : Referencable {
     private val klassRepr =
