@@ -171,7 +171,7 @@ class LifecycleTest {
     }
 
     @Test
-    fun pausing() = runTest {
+    fun pausing() = runTest(timeoutMillis = 15000L) {
         val name = "PausingParticle"
         val arc = startArc(PausingTestPlan)
 

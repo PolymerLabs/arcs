@@ -548,8 +548,10 @@ abstract class AbstractArcHost(
     private suspend fun stopArcInternal(arcId: String, context: ArcHostContext) {
         val scheduler = schedulerProvider(arcId)
         val dispatcher = SchedulerDispatcher(scheduler)
-        withContext(dispatcher) {
-            context.particles.values.forEach { particleContext -> stopParticle(particleContext) }
+        context.particles.values.forEach { particleContext ->
+            withContext(dispatcher) {
+                stopParticle(particleContext)
+            }
         }
         scheduler.waitForIdle()
         maybeCancelResurrection(context)
