@@ -1,5 +1,7 @@
 package arcs.core.host
 
+import arcs.core.util.TaggedLog
+
 class SingleReadHandleParticle : AbstractSingleReadHandleParticle() {
     val events = mutableListOf<String>()
 
@@ -49,20 +51,26 @@ class MultiHandleParticle : AbstractMultiHandleParticle() {
 }
 
 class PausingParticle : AbstractPausingParticle() {
+    private val log = TaggedLog { "PausingParticle" }
     val events = mutableListOf<String>()
 
     override fun onFirstStart() { events.add("onFirstStart") }
     override fun onStart() {
-        handles.data.onReady { events.add("data.onReady:${data()}") }
-        handles.data.onUpdate { events.add("data.onUpdate:${data()}") }
-        handles.list.onReady { events.add("list.onReady:${list()}") }
-        handles.list.onUpdate { events.add("list.onUpdate:${list()}") }
-        events.add("onStart")
+        addEvent("onStart")
+        handles.data.onReady { addEvent("data.onReady:${data()}") }
+        handles.data.onUpdate { addEvent("data.onUpdate:${data()}") }
+        handles.list.onReady { addEvent("list.onReady:${list()}") }
+        handles.list.onUpdate { addEvent("list.onUpdate:${list()}") }
     }
-    override fun onReady() { events.add("onReady:${data()}:${list()}") }
-    override fun onUpdate() { events.add("onUpdate:${data()}:${list()}") }
-    override fun onShutdown() { events.add("onShutdown") }
+    override fun onReady() { addEvent("onReady:${data()}:${list()}") }
+    override fun onUpdate() { addEvent("onUpdate:${data()}:${list()}") }
+    override fun onShutdown() { addEvent("onShutdown") }
 
     fun data() = handles.data.fetch()?.num.toString()
     fun list() = handles.list.fetchAll().map { it.txt }.toSortedSet()
+
+    private fun addEvent(event: String) {
+        log.info { "Observed: $event" }
+        events.add(event)
+    }
 }

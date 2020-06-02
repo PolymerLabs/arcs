@@ -192,7 +192,9 @@ class LifecycleTest {
         }
         waitForAllTheThings()
 
+        log("PAUSING")
         testHost.pause()
+        log("UNPAUSING")
         testHost.unpause()
 
         val particle: PausingParticle = testHost.getParticle(arc.id, name)
@@ -205,6 +207,8 @@ class LifecycleTest {
         waitForAllTheThings()
         arc.stop()
         arc.waitForStop()
+
+        log("STOPPPED")
 
         assertVariableOrdering(
             particle.events,

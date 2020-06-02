@@ -301,7 +301,14 @@ class Allocator private constructor(
                 STORAGE_KEY
             )
 
-            suspendCoroutine<Unit> { collection.onReady { it.resume(Unit) } }
+            var called = false
+            suspendCoroutine<Unit> {
+                collection.onReady {
+                    if (called) return@onReady
+                    called = true
+                    it.resume(Unit)
+                }
+            }
 
             return Allocator(
                 hostRegistry,
