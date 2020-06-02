@@ -80,9 +80,9 @@ class Allocator private constructor(
      * Start a new Arc given a [Plan] and return an [Arc].
      */
     private suspend fun startArcForPlan(plan: Plan, nameForTesting: String): Arc {
-        if (plan.arcId != null) {
-            if (readPartitions(plan.arcId.toArcId()).isNotEmpty()) {
-                return Arc(plan.arcId.toArcId(), this)
+        plan.arcId?.toArcId()?.let {
+            if (readPartitions(it).isNotEmpty()) {
+                return Arc(it, this)
             }
         }
         val idGenerator = Id.Generator.newSession()
