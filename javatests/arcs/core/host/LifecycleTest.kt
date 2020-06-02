@@ -44,7 +44,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 @OptIn(ExperimentalCoroutinesApi::class)
 class LifecycleTest {
     @get:Rule
-    val log = LogRule(Log.Level.Warning)
+    val log = LogRule(Log.Level.Debug)
 
     private lateinit var schedulerProvider: JvmSchedulerProvider
     private lateinit var scheduler: Scheduler
@@ -140,14 +140,12 @@ class LifecycleTest {
 
         withContext(data.dispatcher) {
             data.store(MultiHandleParticle_Data(3.2))
-            waitForAllTheThings()
             list.store(MultiHandleParticle_List("hi"))
         }
         waitForAllTheThings()
         // Write-only handle ops do not trigger any lifecycle APIs.
         withContext(result.dispatcher) {
             result.store(MultiHandleParticle_Result(19.0))
-            waitForAllTheThings()
             config.store(MultiHandleParticle_Config(true))
         }
         waitForAllTheThings()

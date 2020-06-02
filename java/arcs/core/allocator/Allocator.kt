@@ -26,7 +26,6 @@ import arcs.core.entity.EntityBaseSpec
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
-import arcs.core.entity.awaitReady
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostException
 import arcs.core.host.ArcHostNotFoundException
@@ -41,8 +40,6 @@ import arcs.core.type.Type
 import arcs.core.util.TaggedLog
 import arcs.core.util.plus
 import arcs.core.util.traverse
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -83,9 +80,9 @@ class Allocator private constructor(
      * Start a new Arc given a [Plan] and return an [Arc].
      */
     private suspend fun startArcForPlan(plan: Plan, nameForTesting: String): Arc {
-        if (plan.arcId !== null) {
-            if (readPartitions(plan.arcId!!.toArcId()).isNotEmpty()) {
-                return Arc(plan.arcId!!.toArcId(), this)
+        if (plan.arcId != null) {
+            if (readPartitions(plan.arcId.toArcId()).isNotEmpty()) {
+                return Arc(plan.arcId.toArcId(), this)
             }
         }
         val idGenerator = Id.Generator.newSession()
@@ -288,7 +285,7 @@ class Allocator private constructor(
             RamDiskStorageKey("partitions")
         )
 
-        @Suppress("UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST", "EXPERIMENTAL_API_USAGE")
         suspend fun create(
             hostRegistry: HostRegistry,
             handleManager: EntityHandleManager
