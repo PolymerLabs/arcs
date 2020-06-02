@@ -20,6 +20,7 @@ import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.Schema
 import arcs.core.data.Ttl
+import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference as StorageReference
@@ -199,6 +200,12 @@ open class EntityBase(
                 // TODO(b/156003617)
                 throw NotImplementedError("[FieldType.Tuple]s are not supported.")
             }
+            is FieldType.ListOf -> {
+                require(value is List<*>) {
+                    "Expected list for $entityClassName.$field, but received $value."
+                }
+                value.forEach { checkType(field, it, FieldType.Primitive(type.primitiveType)) }
+            }
         }
     }
 
@@ -348,6 +355,7 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
     // TODO(b/155025255)
     is FieldType.Tuple ->
         throw NotImplementedError("[FieldType.Tuple]s cannot be converted to references.")
+    is FieldType.ListOf -> (value as List<*>).toReferencable()
 }
 
 private fun fromReferencable(
@@ -376,5 +384,13 @@ private fun fromReferencable(
         // TODO(b/155025255)
         is FieldType.Tuple ->
             throw NotImplementedError("References cannot be converted [FieldType.Tuple]s.")
+        is FieldType.ListOf -> {
+            require(referencable is ReferencableList<*>) {
+                "Expected ReferencableList but was $referencable."
+            }
+            requireNotNull(referencable.value) {
+                "ReferencableList encoded an unexpected null value."
+            }
+        }
     }
 }

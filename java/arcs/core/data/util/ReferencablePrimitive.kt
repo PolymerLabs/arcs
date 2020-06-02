@@ -56,8 +56,8 @@ data class ReferencablePrimitive<T>(
         private const val primitiveKotlinString = "kotlin.String"
         private const val primitiveKotlinBoolean = "kotlin.Boolean"
         private const val primitiveKotlinByteArray = "kotlin.ByteArray"
-        private val primitiveKClassMap = mapOf<KClass<*>, String>(
-            Byte::class to primitiveKotlinChar,
+        public val primitiveKClassMap = mapOf<KClass<*>, String>(
+            Byte::class to primitiveKotlinByte,
             Short::class to primitiveKotlinShort,
             Int::class to primitiveKotlinInt,
             Long::class to primitiveKotlinLong,

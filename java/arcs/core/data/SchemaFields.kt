@@ -32,10 +32,13 @@ sealed class FieldType(
         override fun toString() = "(${types.joinToString()})"
     }
 
+    data class ListOf(val primitiveType: PrimitiveType) : FieldType(Tag.List)
+
     enum class Tag {
         Primitive,
         EntityRef,
-        Tuple
+        Tuple,
+        List
     }
 
     // Convenient aliases for all of the primitive field types.
