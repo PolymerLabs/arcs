@@ -101,9 +101,9 @@ describe('schema2graph', () => {
     `);
     const res = convert(new SchemaGraph(manifest.particles[0]));
     assert.deepStrictEqual(res.nodes, [
-      {name: 'A_H1',       parents: '',                 children: 'A_H2, A_H3'},
-      {name: 'A_H2', parents: 'A_H1',             children: 'A_H4'},
-      {name: 'A_H3',       parents: 'A_H1',             children: 'A_H4'},
+      {name: 'A_H1', parents: '',           children: 'A_H2, A_H3'},
+      {name: 'A_H2', parents: 'A_H1',       children: 'A_H4'},
+      {name: 'A_H3', parents: 'A_H1',       children: 'A_H4'},
       {name: 'A_H4', parents: 'A_H2, A_H3', children: ''},
     ]);
     assert.deepStrictEqual(res.aliases, {
@@ -591,6 +591,160 @@ describe('schema2graph', () => {
       'R_Tuple_0': ['R_Tuple_0'],
       'R_Tuple_1': ['R_Ref_Review', 'R_Tuple_1'],
       'R_Tuple_1_Author': ['R_Ref_Review_Author', 'R_Tuple_1_Author'],
+    });
+  });
+
+  it('constrained variables are distinct from conventional schemas', async () => {
+    const manifest = await Manifest.parse(`
+      particle T
+        h1: reads * {a: Text}                     // 1 
+        h2: reads ~a with {a: Text}               // 2
+    `);
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'T_H1', parents: '', children: ''},
+      {name: 'T_H2', parents: '', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'T_H1': ['T_H1'],
+      'T_H2': ['T_H2'],
+    });
+  });
+
+  it('variables with no constraints are not empty', async () => {
+    const manifest = await Manifest.parse(`
+      particle T
+        h1: reads ~a                               // 1 
+        h2: reads ~a                               // 1
+    `);
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'T_H1', parents: '', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'T_H1': ['T_H1', 'T_H2'],
+    });
+  });
+
+  it('distinct variables with the same constraint should be distinct', async () => {
+    const manifest = await Manifest.parse(`
+      particle T
+        h1: reads ~a with {foo: Text}               // 1 
+        h2: reads ~b with {foo: Text}               // 2 
+    `);
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'T_H1', parents: '', children: ''},
+      {name: 'T_H2', parents: '', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'T_H1': ['T_H1'],
+      'T_H2': ['T_H2'],
+    });
+  });
+
+  it('variables are aliased correctly within a scope', async () => {
+    // Type variables with the same name in a particle scope should be treated
+    // as the same type, even with constraints applied.
+    // Variables with different names but the same constraints should be distinct.
+    const manifest = await Manifest.parse(`
+      particle T
+        h1: reads ~a with {a: Text}                 // 1 
+        h2: reads ~b                                // 2
+        h3: reads ~c                                // 3
+        h4: reads ~d with {a: Text}                 // 4
+        h5: writes ~a                               // 1
+        h6: writes ~b with {b: Number}              // 2
+        h7: writes ~c                               // 3 
+        h8: writes ~d                               // 4
+    `);
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'T_H1', parents: '', children: ''},
+      {name: 'T_H2', parents: '', children: ''},
+      {name: 'T_H3', parents: '', children: ''},
+      {name: 'T_H4', parents: '', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'T_H1': ['T_H1', 'T_H5'],
+      'T_H2': ['T_H2', 'T_H6'],
+      'T_H3': ['T_H3', 'T_H7'],
+      'T_H4': ['T_H4', 'T_H8'],
+    });
+  });
+
+  it('type variables aggregate all constraints', async () => {
+    const manifest = await Manifest.parse(`
+      particle T
+        h1: reads ~a with {a: Text}                     // 1
+        h2: reads ~a with {b: Number}                   // 1
+        h3: writes ~a with {c: Text}                    // 1
+    `);
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'T_H1', parents: '', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'T_H1': ['T_H1', 'T_H2', 'T_H3'],
+    });
+  });
+
+  it('variables can be nested in collections, tuples, or references', async () => {
+    const manifest = await Manifest.parse(`
+      particle T
+        // Singleton constraint definition, usage in collection
+        h1: reads ~a with {foo: Text}
+        h2: writes [~a]
+        
+        // Collection constraint definition, usage in reference
+        h3: reads [~b with {bar: Number}]
+        h4: writes &~b
+        
+        // Usage in tuple, tuple constraint definition
+        h5: reads (&~b, &~c with {baz: URL})
+        h6: writes [(&~d with {foobar: Boolean}, &~c)] 
+    `);
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'T_H1',   parents: '', children: ''},
+      {name: 'T_H3',   parents: '', children: ''},
+      {name: 'T_H5_1', parents: '', children: ''},
+      {name: 'T_H6_0', parents: '', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'T_H1': ['T_H1', 'T_H2'],
+      'T_H3': ['T_H3', 'T_H4', 'T_H5_0'],
+      'T_H5_1': ['T_H5_1', 'T_H6_1'],
+      'T_H6_0': ['T_H6_0'],
+    });
+  });
+
+  it('constrained variables should create distinct nested types, even when concrete', async () => {
+    const manifest = await Manifest.parse(`
+      particle T
+        foo: reads ~a with Person {
+          name: Text,
+          friends: [&Friend {
+            name: Text,
+            friendshipEstablished: Boolean
+          }]
+        }
+        bar: writes ~a
+        baz: reads Friend {
+          name: Text,
+          friendshipEstablished: Boolean
+        }
+    `);
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'T_Foo_Friends', parents: '', children: ''},
+      {name: 'T_Baz',         parents: '', children: ''},
+      {name: 'T_Foo',         parents: '', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'T_Foo': ['T_Bar', 'T_Foo'],
+      'T_Foo_Friends': ['T_Bar_Friends', 'T_Foo_Friends'],
+      'T_Baz': ['T_Baz']
     });
   });
 });

@@ -452,6 +452,8 @@ export class KotlinGenerator implements ClassGenerator {
   }
 
   createSchema(schemaHash: string): string {
+    if (!this.node.schema) return ``;
+
     const schemaNames = this.node.schema.names.map(n => `SchemaName("${n}")`);
     return `\
 Schema(
@@ -475,6 +477,9 @@ Schema(
   }
 
   generatePredicates() {
+    if (!this.node.schema) {
+      return;
+    }
     const expression = KTExtracter.fromSchema(this.node.schema, this);
     const refinement = this.node.schema.refinement;
     const queryType = refinement.getQueryParams().get('?');
@@ -500,7 +505,7 @@ ${lines}
   generateClasses(schemaHash: string): string {
     const name = this.node.entityClassName;
 
-    const fieldCount = Object.keys(this.node.schema.fields).length;
+    const fieldCount = this.node.schema ? Object.keys(this.node.schema.fields).length : 0;
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
 
     const classDef = `\
