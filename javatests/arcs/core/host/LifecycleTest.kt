@@ -203,9 +203,9 @@ class LifecycleTest {
         val particle: PausingParticle = testHost.getParticle(arc.id, name)
         val (data2, list2) = makeHandles()
         withContext(data2.dispatcher) {
-            data2.store(PausingParticle_Data(2.2))
+            data2.store(PausingParticle_Data(2.2)).join()
             waitForAllTheThings()
-            list2.store(PausingParticle_List("second"))
+            list2.store(PausingParticle_List("second")).join()
         }
         waitForAllTheThings()
         arc.stop()
@@ -220,16 +220,32 @@ class LifecycleTest {
             // Values stored in the previous session should still be present.
             setOf("data.onReady:1.1", "list.onReady:[first]"),
             listOf(
-                "onReady:1.1:[first]",
+                "onReady:1.1:[first]"
+            ),
+            listOf(
                 "data.onUpdate:2.2",
-                "onUpdate:2.2:[first]",
-                "data.onUpdate:2.2",
-                "onUpdate:2.2:[first]",
+                "onUpdate:2.2:[first]"
+            ),
+            listOf(
                 "list.onUpdate:[first, second]",
-                "onUpdate:2.2:[first, second]",
-                "onShutdown"
-            )
+                "onUpdate:2.2:[first, second]"
+            ),
+            listOf("onShutdown")
         )
+        /*
+        expected      : [onReady:1.1:[first], data.onUpdate:2.2, onUpdate:2.2:[first],
+                        data.onUpdate:2.2,
+                        onUpdate:2.2:[first],
+                        list.onUpdate:[first, second],
+                        onUpdate:2.2:[first, second],
+                        onShutdown]
+        but was       : [onReady:1.1:[first], data.onUpdate:2.2, onUpdate:2.2:[first],
+                        list.onUpdate:[first, second],
+                        onUpdate:2.2:[first, second],
+                        data.onUpdate:2.2,
+                        onUpdate:2.2:[first, second],
+                        onShutdown]
+         */
     }
 
     /**
