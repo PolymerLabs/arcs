@@ -466,7 +466,7 @@ Schema(
 
   generatePredicates() {
     if (!this.node.schema) {
-      this.refinement = `{ data -> {}}`;
+      return;
     }
     const expression = KTExtracter.fromSchema(this.node.schema, this);
     const refinement = this.node.schema.refinement;

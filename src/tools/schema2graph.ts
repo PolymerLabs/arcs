@@ -40,11 +40,12 @@ export class SchemaSource {
 
 export class SchemaNode {
   constructor(
+    // Schemas can be null when the node represents a type variable with no constraints.
     readonly schema: Schema | null,
     readonly particleSpec: ParticleSpec,
     readonly allSchemaNodes: SchemaNode[],
     // Type variable associated with the schema node.
-    readonly fromVariable: string = ''
+    readonly fromVariable: string | null = null
   ) {}
 
   readonly sources: SchemaSource[] = [];
@@ -118,25 +119,11 @@ function* topLevelSchemas(type: Type, path: string[] = []):
       yield* topLevelSchemas(inner[i], [...path, `${i}`]);
     }
   } else if (type.getEntitySchema()) {
-    yield {schema: type.getEntitySchema(), path, fromVariable: ''};
-  } else if (type.hasVariable && type.canWriteSuperset) {
-    yield {
-      schema: type.canWriteSuperset.getEntitySchema(),
-      path,
-      fromVariable: (type as TypeVariable).variable.name,
-    };
-  } else if (type.hasVariable && type.canReadSubset) {
-    yield {
-      schema: type.canReadSubset.getEntitySchema(),
-      path,
-      fromVariable: (type as TypeVariable).variable.name,
-    };
+    yield {schema: type.getEntitySchema(), path, fromVariable: null};
   } else if (type.hasVariable) {
-    yield {
-      schema: null,
-      path,
-      fromVariable: (type as TypeVariable).variable.name,
-    };
+    const schema = (type.canWriteSuperset && type.canWriteSuperset.getEntitySchema())
+      || (type.canReadSubset && type.canReadSubset.getEntitySchema());
+    yield {schema, path, fromVariable: (type as TypeVariable).variable.name};
   }
 }
 
@@ -176,7 +163,7 @@ export class SchemaGraph {
   }
 
   private createNodes(schema: Schema, particleSpec: ParticleSpec, source: SchemaSource,
-                      fromVariable: string) {
+                      fromVariable: string | null) {
     let node = this.nodes.find((candidate: SchemaNode) => {
       // Aggregate type variable nodes of the same name together.
       if (fromVariable) {
@@ -234,7 +221,7 @@ export class SchemaGraph {
         // When a type variable has a nested schema, it should be backed by a) a distinct entity from
         // a schema with the same name and b) a distinct entity from the original type variable.
         // To accomplish this, we need to associate the nested schema with a "child" type variable.
-        const nestedVar = fromVariable ? fromVariable + field : '';
+        const nestedVar = fromVariable && `${fromVariable}.${field}`;
         // We have a reference field. Generate a node for its nested schema and connect it into the
         // refs map to indicate that this node requires nestedNode's class to be generated first.
         const nestedNode = this.createNodes(nestedSchema, particleSpec, source.child(field), nestedVar);
