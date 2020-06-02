@@ -20,7 +20,7 @@ import {Id, IdGenerator} from '../id.js';
 import {ParticleSpec, StorableSerializedParticleSpec} from '../particle-spec.js';
 import {CRDTCollectionTypeRecord} from '../crdt/crdt-collection.js';
 import {SerializedReference, Reference} from '../reference.js';
-import {StoreInfo, AbstractStore} from './abstract-store.js';
+import {StoreInfo, AbstractStore, isMuxEntityStore} from './abstract-store.js';
 import {StorageKey} from './storage-key.js';
 import {Exists} from './drivers/driver.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
@@ -155,6 +155,16 @@ export function handleType<T extends Handle<CRDTTypeRecord>>(handle: T) {
   return handle.type as HandleToType<T>;
 }
 
+export async function newHandle<T extends Type>(type: T, storageKey: StorageKey, arc: ArcLike, options: StoreInfo & HandleOptions): Promise<ToHandle<TypeToCRDTTypeRecord<T>>> {
+  options['storageKey'] = storageKey;
+  options['exists'] = Exists.MayExist;
+  const store = newStore(type, options as StoreInfo & {storageKey: StorageKey, exists: Exists});
+  if (isMuxEntityStore(store)) {
+    return await handleForMuxer(store, arc, options) as ToHandle<TypeToCRDTTypeRecord<T>>;
+  }
+  return handleForStore(store as unknown as Store<TypeToCRDTTypeRecord<T>>, arc, options);
+}
+
 export function handleForActiveStore<T extends CRDTTypeRecord>(
   store: AbstractActiveStore<T>,
   arc: ArcLike,
@@ -187,5 +197,9 @@ export function handleForActiveStore<T extends CRDTTypeRecord>(
 }
 
 export async function handleForStore<T extends CRDTTypeRecord>(store: Store<T>, arc: ArcLike, options?: HandleOptions): Promise<ToHandle<T>> {
-  return handleForActiveStore(await store.activate(), arc, options);
+  return handleForActiveStore(await store.activate(), arc, options) as ToHandle<T>;
+}
+
+export async function handleForMuxer<T extends CRDTMuxEntity>(store: StoreMuxer<T>, arc: ArcLike, options?: HandleOptions): Promise<ToHandle<T>> {
+  return handleForActiveStore(await store.activate(), arc, options) as ToHandle<T>;
 }
