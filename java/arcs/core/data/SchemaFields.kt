@@ -11,23 +11,34 @@
 
 package arcs.core.data
 
+import arcs.core.type.Type
+
 /** The possible types for a field in a [Schema]. */
 sealed class FieldType(
     val tag: Tag
 ) {
     /** An Arcs primitive type. */
-    data class Primitive(val primitiveType: PrimitiveType) : FieldType(Tag.Primitive)
+    data class Primitive(val primitiveType: PrimitiveType) : FieldType(Tag.Primitive) {
+        override fun toString() = primitiveType.name
+    }
 
     /** A reference to an entity. */
-    data class EntityRef(val schemaHash: String) : FieldType(Tag.EntityRef)
+    data class EntityRef(val schemaHash: String) : FieldType(Tag.EntityRef) {
+        override fun toString() = "&$schemaHash"
+    }
 
     /** A tuple of [FieldType]s */
-    data class Tuple(val types: List<FieldType>) : FieldType(Tag.Tuple)
+    data class Tuple(val types: List<FieldType>) : FieldType(Tag.Tuple) {
+        override fun toString() = "(${types.joinToString()})"
+    }
+
+    data class ListOf(val primitiveType: PrimitiveType) : FieldType(Tag.List)
 
     enum class Tag {
         Primitive,
         EntityRef,
-        Tuple
+        Tuple,
+        List
     }
 
     // Convenient aliases for all of the primitive field types.
@@ -65,4 +76,18 @@ val LARGEST_PRIMITIVE_TYPE_ID = PrimitiveType.values().size - 1
 data class SchemaFields(
     val singletons: Map<FieldName, FieldType>,
     val collections: Map<FieldName, FieldType>
-)
+) {
+
+    override fun toString() = toString(Type.ToStringOptions())
+
+    fun toString(options: Type.ToStringOptions): String {
+        val fields = when (options.hideFields) {
+            true -> "..."
+            false -> listOf(
+                singletons.map { (name, type) -> "$name: $type" },
+                collections.map { (name, type) -> "$name: [$type]" }
+            ).flatten().joinToString()
+        }
+        return "{$fields}"
+    }
+}

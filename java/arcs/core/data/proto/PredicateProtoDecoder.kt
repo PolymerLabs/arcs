@@ -29,5 +29,9 @@ fun InformationFlowLabelProto.Predicate.decode(): Predicate = when (predicateCas
         Predicate.Label(label.decode())
     InformationFlowLabelProto.Predicate.PredicateCase.NOT ->
         Predicate.Not(not.predicate.decode())
+    InformationFlowLabelProto.Predicate.PredicateCase.OR ->
+        Predicate.Or(or.disjunct0.decode(), or.disjunct1.decode())
+    InformationFlowLabelProto.Predicate.PredicateCase.AND ->
+        Predicate.And(and.conjunct0.decode(), and.conjunct1.decode())
     else -> TODO("TODO(bgogul): Implement the rest of the predicate cases.")
 }

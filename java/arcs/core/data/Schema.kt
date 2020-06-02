@@ -55,6 +55,14 @@ data class Schema(
 
     fun createCrdtEntityModel(): CrdtEntity = CrdtEntity(VersionMap(), emptyRawEntity)
 
+    override fun toString() = toString(Type.ToStringOptions())
+
+    /**
+     * @param options granular options, e.g. whether to list Schema fields.
+     */
+    fun toString(options: Type.ToStringOptions) =
+        names.map { it.name }.plusElement(fields.toString(options)).joinToString(" ")
+
     data class Literal(
         val names: Set<SchemaName>,
         val fields: SchemaFields,

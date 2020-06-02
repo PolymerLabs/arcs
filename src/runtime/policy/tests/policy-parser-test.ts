@@ -12,10 +12,25 @@ import {parse} from '../../../gen/runtime/manifest-parser.js';
 import {assert} from '../../../platform/chai-web.js';
 import {Dictionary} from '../../hot.js';
 
-// Recursively delete all fields with the given name.
+const noParamAnnotationRef = {
+  kind: 'annotation-ref',
+  name: 'noParam',
+  params: [],
+};
+
+const oneParamAnnotationRef = {
+  kind: 'annotation-ref',
+  name: 'oneParam',
+  params: [{
+    kind: 'annotation-simple-param',
+    value: 'aaa',
+  }],
+};
+
+/** Recursively delete all fields with the given name. */
 // tslint:disable-next-line: no-any
 function deleteFieldRecursively(node: any, field: string) {
-  if (typeof node !== 'object') {
+  if (node == null || typeof node !== 'object') {
     return;
   }
   if (field in node) {
@@ -57,6 +72,16 @@ describe('policy parser', () => {
     });
   });
 
+  it('parses a policy with annotations', () => {
+    const policy = parsePolicy(`@noParam
+@oneParam('aaa')
+policy MyPolicy {}`);
+    assert.deepStrictEqual(policy.annotationRefs, [
+      noParamAnnotationRef,
+      oneParamAnnotationRef,
+    ]);
+  });
+
   describe('targets', () => {
     it('parses a single empty target', () => {
       const policy = parsePolicy(`policy MyPolicy {
@@ -66,6 +91,7 @@ describe('policy parser', () => {
         kind: 'policy-target',
         schemaName: 'Abc',
         fields: [],
+        annotationRefs: [],
       }]);
     });
 
@@ -81,6 +107,18 @@ describe('policy parser', () => {
       ]);
     });
 
+    it('parses a target with annotations', () => {
+      const policy = parsePolicy(`policy MyPolicy {
+        @noParam
+        @oneParam('aaa')
+        from Abc access {}
+      }`);
+      assert.deepStrictEqual(policy.targets[0].annotationRefs, [
+        noParamAnnotationRef,
+        oneParamAnnotationRef,
+      ]);
+    });
+
     it('parses a single field', () => {
       const policy = parsePolicy(`policy MyPolicy {
         from Abc access {
@@ -91,7 +129,22 @@ describe('policy parser', () => {
         kind: 'policy-field',
         name: 'someField',
         subfields: [],
+        annotationRefs: [],
       }]);
+    });
+
+    it('parses a field with annotations', () => {
+      const policy = parsePolicy(`policy MyPolicy {
+        from Abc access {
+          @noParam
+          @oneParam('aaa')
+          someField
+        }
+      }`);
+      assert.deepStrictEqual(policy.targets[0].fields[0].annotationRefs, [
+        noParamAnnotationRef,
+        oneParamAnnotationRef,
+      ]);
     });
 
     it('parses multiple fields', () => {
@@ -125,6 +178,7 @@ describe('policy parser', () => {
         }
       }`);
       deleteFieldRecursively(policy, 'kind');
+      deleteFieldRecursively(policy, 'annotationRefs');
       assert.deepStrictEqual(policy.targets[0].fields, [
         {name: 'grandParent', subfields: [
           {name: 'parent1', subfields: [
@@ -141,6 +195,49 @@ describe('policy parser', () => {
         ]},
         {name: 'child6', subfields: []},
         {name: 'child7', subfields: []},
+      ]);
+    });
+
+    it('parses nested fields with annotations', () => {
+      const policy = parsePolicy(`policy MyPolicy {
+        from Abc access {
+          grandParent {
+            @noParam
+            parent {
+              child1,
+              @oneParam('aaa')
+              child2
+            },
+          },
+        }
+      }`);
+      assert.deepStrictEqual(policy.targets[0].fields, [
+        {
+          name: 'grandParent',
+          kind: 'policy-field',
+          annotationRefs: [],
+          subfields: [
+            {
+              name: 'parent',
+              kind: 'policy-field',
+              annotationRefs: [noParamAnnotationRef],
+              subfields: [
+                {
+                  name: 'child1',
+                  kind: 'policy-field',
+                  annotationRefs: [],
+                  subfields: [],
+                },
+                {
+                  name: 'child2',
+                  kind: 'policy-field',
+                  annotationRefs: [oneParamAnnotationRef],
+                  subfields: [],
+                },
+              ],
+            },
+          ],
+        },
       ]);
     });
   });

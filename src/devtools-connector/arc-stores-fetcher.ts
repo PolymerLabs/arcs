@@ -13,7 +13,7 @@ import {ArcDevtoolsChannel} from './abstract-devtools-channel.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Type} from '../runtime/type.js';
 import {StorageKey} from '../runtime/storageNG/storage-key.js';
-import {Store} from '../runtime/storageNG/store.js';
+import {Store, ActiveStore} from '../runtime/storageNG/store.js';
 import {AbstractStore} from '../runtime/storageNG/abstract-store.js';
 
 type Result = {
@@ -93,8 +93,7 @@ export class ArcStoresFetcher {
   private async dereference(store: AbstractStore): Promise<any> {
     // TODO(shanestephens): Replace this with handle-based reading
     if (store instanceof Store) {
-      // tslint:disable-next-line: no-any
-      const crdtData = await (await (store as Store<any>).activate()).serializeContents();
+      const crdtData = await (await store.activate()).serializeContents();
       if (crdtData.values) {
         if (Object.values(crdtData.values).length === 1) {
           // Single value, extract the value only (discard the version).

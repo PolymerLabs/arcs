@@ -40,7 +40,19 @@ export interface KotlinTypeInfo {
   schemaType: string;
 }
 
-function getTypeInfo(opts: {name: string, isCollection?: boolean, refClassName?: string, refSchemaHash?: string}): KotlinTypeInfo {
+function getTypeInfo(opts: {name: string, isCollection?: boolean, refClassName?: string, listTypeName?: string, refSchemaHash?: string}): KotlinTypeInfo {
+  if (opts.name === 'List') {
+    assert(opts.listTypeName, 'listTypeName must be provided for Lists');
+    assert(!opts.isCollection, 'collections of Lists are not supported');
+    const itemTypeInfo = getTypeInfo({name: opts.listTypeName});
+    return {
+      type: `List<${itemTypeInfo.type}>`,
+      decodeFn: `decodeList<${itemTypeInfo.type}>()`,
+      defaultVal: `listOf<${itemTypeInfo.type}>()`,
+      schemaType: `FieldType.ListOf(${itemTypeInfo.schemaType}.primitiveType)`
+    };
+  }
+
   const typeMap: Dictionary<KotlinTypeInfo> = {
     'Text': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
     'URL': {type: 'String',  decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
@@ -381,10 +393,10 @@ export class KotlinGenerator implements ClassGenerator {
   }
 
   // TODO: allow optional fields in kotlin
-  addField({field, typeName, refClassName, refSchemaHash, isOptional = false, isCollection = false}: AddFieldOptions) {
+  addField({field, typeName, refClassName, refSchemaHash, isOptional = false, isCollection = false, listTypeName}: AddFieldOptions) {
     if (typeName === 'Reference' && this.opts.wasm) return;
 
-    const {type, decodeFn, defaultVal, schemaType} = getTypeInfo({name: typeName, isCollection, refClassName, refSchemaHash});
+    const {type, decodeFn, defaultVal, schemaType} = getTypeInfo({name: typeName, isCollection, refClassName, refSchemaHash, listTypeName});
     const fixed = this.escapeIdentifier(field);
     const quotedFieldName = quote(field);
     const nullableType = type.endsWith('?') ? type : `${type}?`;

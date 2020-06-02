@@ -236,6 +236,8 @@ class LifecycleTest {
                 "onReady:1.1:[first]",
                 "data.onUpdate:2.2",
                 "onUpdate:2.2:[first]",
+                "data.onUpdate:2.2",
+                "onUpdate:2.2:[first]",
                 "list.onUpdate:[first, second]",
                 "onUpdate:2.2:[first, second]",
                 "onShutdown"

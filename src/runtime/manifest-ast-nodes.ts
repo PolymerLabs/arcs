@@ -210,7 +210,7 @@ export interface MetaName extends BaseNode {
 export interface MetaStorageKey extends BaseNode {
   key: 'storageKey';
   value: string;
-  kind: 'storageKey';
+  kind: 'storage-key';
 }
 
 export interface MetaNamespace extends BaseNode {
@@ -463,7 +463,7 @@ export interface RecipeParticle extends BaseNode {
 }
 
 export interface RequireHandleSection extends BaseNode {
-  kind: 'requireHandle';
+  kind: 'require-handle';
   name: string;
   ref: HandleRef;
 }
@@ -810,19 +810,21 @@ export interface Policy extends BaseNode {
   name: string;
   targets: PolicyTarget[];
   configs: PolicyConfig[];
-  annotationRefs?: AnnotationRef[];
+  annotationRefs: AnnotationRef[];
 }
 
 export interface PolicyTarget extends BaseNode {
   kind: 'policy-target';
   schemaName: string;
   fields: PolicyField[];
+  annotationRefs: AnnotationRef[];
 }
 
 export interface PolicyField extends BaseNode {
   kind: 'policy-field';
   name: string;
   subfields: PolicyField[];
+  annotationRefs: AnnotationRef[];
 }
 
 export interface PolicyConfig extends BaseNode {

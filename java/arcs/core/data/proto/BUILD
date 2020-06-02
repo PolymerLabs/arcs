@@ -17,7 +17,7 @@ package(default_visibility = ["//visibility:public"])
 # This target is needed in Google internal repo when running TypeScript with Bazel.
 filegroup(
     name = "proto_files",
-    srcs = ["manifest.proto"],
+    srcs = glob(["*.proto"]),
 )
 
 arcs_kt_library(
@@ -55,6 +55,9 @@ arcs_kt_library(
 proto_library(
     name = "manifest_proto",
     srcs = ["manifest.proto"],
+    deps = [
+        ":policy_proto",
+    ],
 )
 
 android_proto_library(
@@ -71,4 +74,25 @@ py_proto_library(
     name = "manifest_py_proto",
     api_version = 2,
     deps = [":manifest_proto"],
+)
+
+proto_library(
+    name = "policy_proto",
+    srcs = ["policy.proto"],
+)
+
+android_proto_library(
+    name = "policy_java_proto_lite",
+    deps = [":policy_proto"],
+)
+
+java_proto_library(
+    name = "policy_java_proto",
+    deps = [":policy_proto"],
+)
+
+py_proto_library(
+    name = "policy_py_proto",
+    api_version = 2,
+    deps = [":policy_proto"],
 )

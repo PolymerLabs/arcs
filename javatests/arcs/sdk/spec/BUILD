@@ -16,6 +16,7 @@ arcs_kt_jvm_test_suite(
         ":schemas",
         ":schemas_test_harness",
         "//java/arcs/core/common",
+        "//java/arcs/core/testutil",
         "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk",

@@ -31,6 +31,8 @@ import {ChannelConstructor} from './channel-constructor.js';
 import {Ttl} from './recipe/ttl.js';
 import {Handle} from './storageNG/handle.js';
 import {StorageProxyMuxer} from './storageNG/storage-proxy-muxer.js';
+import {EntityHandleFactory} from './storageNG/entity-handle-factory.js';
+import {CRDTMuxEntity} from './storageNG/storage-ng.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 
@@ -79,6 +81,10 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         return new StorageProxy(identifier, pec, type, storageKey, ttl);
       }
 
+      onDefineHandleFactory(identifier: string, type: Type, name: string, storageKey: string, ttl: Ttl) {
+        return new StorageProxyMuxer(pec, type, storageKey);
+      }
+
       onGetDirectStoreMuxerCallback(
           callback: (storageProxyMuxer: StorageProxyMuxer<CRDTTypeRecord>, key: string) => void,
           type: Type,
@@ -113,8 +119,8 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         }
       }
 
-      async onInstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy<CRDTTypeRecord>>, reinstantiate: boolean) {
-        return pec.instantiateParticle(id, spec, proxies, reinstantiate);
+      async onInstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy<CRDTTypeRecord>>, proxyMuxers: ReadonlyMap<string, StorageProxyMuxer<CRDTMuxEntity>>, reinstantiate: boolean) {
+        return pec.instantiateParticle(id, spec, proxies, proxyMuxers, reinstantiate);
       }
 
       async onReinstantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy<CRDTTypeRecord>>) {
@@ -312,7 +318,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
   }
 
   // tslint:disable-next-line: no-any
-  private async instantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy<CRDTTypeRecord>>, reinstantiate: boolean): Promise<[any, () => Promise<void>]> {
+  private async instantiateParticle(id: string, spec: ParticleSpec, proxies: ReadonlyMap<string, StorageProxy<CRDTTypeRecord>>, proxyMuxers: ReadonlyMap<string, StorageProxyMuxer<CRDTMuxEntity>>, reinstantiate: boolean): Promise<[any, () => Promise<void>]> {
     let resolve: Runnable;
     const p = new Promise<void>(res => resolve = res);
     this.pendingLoads.push(p);
@@ -320,16 +326,21 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     const particle: Particle = await this.createParticleFromSpec(id, spec);
 
     const handleMap = new Map();
+    const handleFactoryMap = new Map();
 
     proxies.forEach((proxy, name) => {
       this.createHandle(particle, spec, id, name, proxy, handleMap);
+    });
+
+    proxyMuxers.forEach((proxyMuxer, name) => {
+      this.createHandleFactory(name, proxyMuxer, handleFactoryMap);
     });
 
     return [particle, async () => {
       if (reinstantiate) {
         particle.setCreated();
       }
-      await this.assignHandle(particle, spec, id, handleMap, p);
+      await this.assignHandle(particle, spec, id, handleMap, handleFactoryMap, p);
       resolve();
     }];
   }
@@ -359,6 +370,7 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
       const particle: Particle = await this.createParticleFromSpec(id, oldParticle.spec);
 
       const handleMap = new Map();
+      const handleFactoryMap = new Map();
 
       const storageList: StorageProxy<CRDTTypeRecord>[] = [];
 
@@ -374,9 +386,13 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
         oldHandle.disable(oldParticle);
       });
 
+      oldParticle.handleFactories.forEach((oldHandleFactory) => {
+        this.createHandleFactory(oldHandleFactory.name, oldHandleFactory.storageProxyMuxer, handleFactoryMap);
+      });
+
       result.push([particle, async () => {
         // Set the new handles to the new particle
-        await this.assignHandle(particle, oldParticle.spec, id, handleMap, p);
+        await this.assignHandle(particle, oldParticle.spec, id, handleMap, handleFactoryMap, p);
         storageList.forEach(storage => storage.unpause());
         resolve();
       }]);
@@ -391,8 +407,13 @@ export class ParticleExecutionContext implements StorageCommunicationEndpointPro
     handleMap.set(name, handle);
   }
 
-  private async assignHandle(particle: Particle, spec: ParticleSpec, id: string, handleMap, p) {
-    await particle.callSetHandles(handleMap, err => {
+  private createHandleFactory(name: string, proxyMuxer: StorageProxyMuxer<CRDTMuxEntity>, handleFactoryMap) {
+      const handleFactory = new EntityHandleFactory(proxyMuxer);
+      handleFactoryMap.set(name, handleFactory);
+    }
+
+  private async assignHandle(particle: Particle, spec: ParticleSpec, id: string, handleMap, handleFactoryMap, p) {
+    await particle.callSetHandles(handleMap, handleFactoryMap, err => {
       if (typeof err === 'string') {
         err = new Error(err); // Convert to a real error.
       }

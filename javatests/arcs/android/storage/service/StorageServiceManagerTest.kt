@@ -24,6 +24,7 @@ import arcs.core.entity.SchemaRegistry
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageKey
+import arcs.core.storage.Store
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -36,8 +37,6 @@ import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -46,6 +45,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
@@ -56,7 +56,8 @@ class StorageServiceManagerTest {
     @get:Rule
     val log = LogRule()
 
-    private suspend fun buildManager() = StorageServiceManager(coroutineContext)
+    private suspend fun buildManager() =
+        StorageServiceManager(coroutineContext, ConcurrentHashMap<StorageKey, Store<*, *, *>>())
     private val time = FakeTime()
     private val scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
     private val ramdiskKey = ReferenceModeStorageKey(

@@ -17,6 +17,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.entity.SchemaRegistry
+import arcs.core.storage.Reference
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -26,8 +27,10 @@ import arcs.sdk.EntitySpec
 class TestEntity(
     text: String = "",
     number: Double = 0.0,
-    boolean: Boolean = false
-) : EntityBase("TestEntity", SCHEMA) {
+    boolean: Boolean = false,
+    val reference: Reference? = null,
+    val id: String? = null
+) : EntityBase("TestEntity", SCHEMA, id) {
 
     var text: String by SingletonProperty()
     var number: Double by SingletonProperty()
@@ -49,7 +52,8 @@ class TestEntity(
                 singletons = mapOf(
                     "text" to FieldType.Text,
                     "number" to FieldType.Number,
-                    "boolean" to FieldType.Boolean
+                    "boolean" to FieldType.Boolean,
+                    "reference" to FieldType.EntityRef(schemaHash)
                 ),
                 collections = emptyMap()
             ),

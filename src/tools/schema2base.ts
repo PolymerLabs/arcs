@@ -21,6 +21,7 @@ export type AddFieldOptions = Readonly<{
   isOptional?: boolean;
   refClassName?: string;
   refSchemaHash?: string;
+  listTypeName?: string;
   isCollection?: boolean;
 }>;
 
@@ -139,6 +140,8 @@ export abstract class Schema2Base {
           generator.addField({field, typeName: schema.type, isCollection: true});
         } else if (descriptor.kind === 'kotlin-primitive') {
           generator.addField({field, typeName: descriptor.type});
+        } else if (descriptor.kind === 'schema-ordered-list') {
+          generator.addField({field, typeName: 'List', listTypeName: descriptor.schema.type});
         }
         else {
           throw new Error(`Schema kind '${descriptor.kind}' for field '${field}' is not supported`);
