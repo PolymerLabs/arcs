@@ -26,6 +26,7 @@ import arcs.core.entity.EntityBaseSpec
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
+import arcs.core.entity.awaitReady
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostException
 import arcs.core.host.ArcHostNotFoundException
@@ -43,6 +44,7 @@ import arcs.core.util.traverse
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
 /**
@@ -302,11 +304,11 @@ class Allocator private constructor(
             )
 
             var called = false
-            suspendCoroutine<Unit> {
+            suspendCancellableCoroutine<Unit> {
                 collection.onReady {
                     if (called) return@onReady
                     called = true
-                    it.resume(Unit)
+                    it.resume(Unit) { }
                 }
             }
 
