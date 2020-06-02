@@ -198,7 +198,7 @@ class ParticleSpecProtoDecoderTest {
             }
             predicate {
               label {
-                semantic_tag: "valid"
+                semantic_tag: "invalid"
               }
             }
           }
@@ -212,7 +212,7 @@ class ParticleSpecProtoDecoderTest {
             ),
             Check.Assert(
                 AccessPath("ReaderWriter", readConnectionSpec),
-                Predicate.Label(InformationFlowLabel.SemanticTag("valid"))
+                Predicate.Label(InformationFlowLabel.SemanticTag("invalid"))
             )
         )
     }
