@@ -152,22 +152,24 @@ class LifecycleTest {
         arc.stop()
         arc.waitForStop()
 
-        assertVariableOrdering(
-            particle.events,
-            listOf("onFirstStart", "onStart"),
-            // Handle onReady events are not guaranteed to be in any specific order.
-            setOf("data.onReady:null", "list.onReady:[]", "config.onReady:null"),
-            listOf(
-                "onReady:null:[]:null",
-                "data.onUpdate:3.2",
-                "onUpdate:3.2:[]:null",
-                "list.onUpdate:[hi]",
-                "onUpdate:3.2:[hi]:null",
-                "config.onUpdate:true",
-                "onUpdate:3.2:[hi]:true",
-                "onShutdown"
+        withContext(result.dispatcher) {
+            assertVariableOrdering(
+                particle.events,
+                listOf("onFirstStart", "onStart"),
+                // Handle onReady events are not guaranteed to be in any specific order.
+                setOf("data.onReady:null", "list.onReady:[]", "config.onReady:null"),
+                listOf(
+                    "onReady:null:[]:null",
+                    "data.onUpdate:3.2",
+                    "onUpdate:3.2:[]:null",
+                    "list.onUpdate:[hi]",
+                    "onUpdate:3.2:[hi]:null",
+                    "config.onUpdate:true",
+                    "onUpdate:3.2:[hi]:true",
+                    "onShutdown"
+                )
             )
-        )
+        }
     }
 
     @Test
@@ -194,6 +196,7 @@ class LifecycleTest {
 
         log("PAUSING")
         testHost.pause()
+        waitForAllTheThings()
         log("UNPAUSING")
         testHost.unpause()
 
