@@ -28,7 +28,8 @@ async function resetStorageKeyForTesting(key: FirebaseStorageKey) {
   await app.delete();
 }
 
-describe('firebase-ng-driver', function() {
+// TODO(#5419) re-enable test
+describe.skip('firebase-ng-driver', function() {
   this.timeout(10000);
 
   it('can write to a new location', async () => {
