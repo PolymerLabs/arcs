@@ -66,9 +66,7 @@ open class HandleHolderBase(
     }
 
     override fun reset() {
-        runBlocking {
-            handles.forEach { (_, handle) -> handle.close() }
-        }
+        handles.forEach { (_, handle) -> handle.close() }
         handles.clear()
     }
 

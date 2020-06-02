@@ -13,10 +13,12 @@ package arcs.core.entity
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.TaggedLog
 import kotlinx.coroutines.CoroutineDispatcher
 
 /** Base functionality common to all read/write singleton and collection handles. */
 abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
+    private val log = TaggedLog { "Handle($name)" }
     override val name: String = config.name
 
     override val dispatcher: CoroutineDispatcher
@@ -52,6 +54,7 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
     }
 
     override fun close() {
+        log.debug { "closing" }
         closed = true
         storageProxy.removeCallbacksForName(callbackIdentifier)
     }
