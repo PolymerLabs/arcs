@@ -283,7 +283,9 @@ abstract class AbstractArcHost(
         // All particles have now received their onStart events. Trigger any proxy sync
         // requests so that the ensuing onReady events will fire after this point.
         context.entityHandleManager.initiateProxySync()
-        context.particles.values.forEach { it.notifyWriteOnlyParticles() }
+        withContext(SchedulerDispatcher(schedulerProvider(partition.arcId))) {
+            context.particles.values.forEach { it.notifyWriteOnlyParticles() }
+        }
 
         // If the platform supports resurrection, request it for this Arc's StorageKeys
         maybeRequestResurrection(context)
@@ -536,9 +538,12 @@ abstract class AbstractArcHost(
      * releasing [Handle]s, and modifying [ArcState] and [ParticleState] to stopped states.
      */
     private suspend fun stopArcInternal(arcId: String, context: ArcHostContext) {
-        context.particles.values.forEach { particleContext ->
-            stopParticle(particleContext)
+        val scheduler = schedulerProvider(arcId)
+        val dispatcher = SchedulerDispatcher(scheduler)
+        withContext(dispatcher) {
+            context.particles.values.forEach { particleContext -> stopParticle(particleContext) }
         }
+        scheduler.waitForIdle()
         maybeCancelResurrection(context)
         setArcState(context, ArcState.Stopped)
         updateArcHostContext(arcId, context)
@@ -548,8 +553,10 @@ abstract class AbstractArcHost(
     /**
      * Shuts down a [Particle] by invoking its shutdown lifecycle methods, moving it to a
      * [ParticleState.Stopped], and releasing any used [Handle]s.
+     *
+     * This method must be called from within the particle's Scheduler's thread.
      */
-    private suspend fun stopParticle(context: ParticleContext) {
+    private fun stopParticle(context: ParticleContext) {
         try {
             context.particle.onShutdown()
         } catch (e: Exception) {
@@ -573,12 +580,10 @@ abstract class AbstractArcHost(
     /**
      * Unregisters [Handle]s from [StorageProxy]s, and clears references to them from [Particle]s.
      */
-    private suspend fun cleanupHandles(context: ParticleContext) {
+    private fun cleanupHandles(context: ParticleContext) {
         if (context.particle.handles.isEmpty()) return
 
-        withContext(context.particle.handles.dispatcher) {
-            context.particle.handles.reset()
-        }
+        context.particle.handles.reset()
     }
 
     override suspend fun isHostForParticle(particle: Plan.Particle) =

@@ -52,6 +52,8 @@ data class ParticleContext(
     /**
      * Particles with only write-only handles won't receive any storage events and thus
      * need to have their `onReady` method invoked as a special case.
+     *
+     * This will be executed in the context of the StorageProxy's scheduler.
      */
     fun notifyWriteOnlyParticles() {
         if (awaitingReady.isEmpty()) {
