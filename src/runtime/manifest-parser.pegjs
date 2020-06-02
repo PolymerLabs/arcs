@@ -1319,7 +1319,7 @@ RecipeHandleFate
   / '`slot'
 
 RecipeHandle
-  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? annotations:SpaceAnnotationRefList? eolWhiteSpace
+  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? annotations:SpaceAnnotationRefList? adapter:ApplyAdapter? eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeHandle>({
       kind: 'handle',
@@ -1327,16 +1327,18 @@ RecipeHandle
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
       fate,
       annotations: annotations || [],
+      adapter
     });
   }
 
 RecipeSyntheticHandle
-  = name:NameWithColon? 'join' whiteSpace '(' whiteSpace? first:lowerIdent rest:(whiteSpace? ',' whiteSpace? lowerIdent)* ')' eolWhiteSpace
+  = name:NameWithColon? 'join' whiteSpace '(' whiteSpace? first:lowerIdent rest:(whiteSpace? ',' whiteSpace? lowerIdent)* ')' whiteSpace? adapter:ApplyAdapter? eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeSyntheticHandle>({
       kind: 'synthetic-handle',
       name,
       associations: [first].concat(rest.map(t => t[3])),
+      adapter,
     });
   }
 
@@ -1606,23 +1608,37 @@ SchemaPrimitiveType
     });
   }
 
-Adapter
-  = 'adapter' whiteSpace adapterName:upperIdent whiteSpace? '(' multiLineSpace? params:AdapterParamsDeclaration multiLineSpace? ')' whiteSpace? '=>' multiLineSpace? body:AdapterBodyDefinition eolWhiteSpace
+Adapter "an adapter, (e.g. adapter Foo(param: Person { name: Text }) => Friend { nickName: param.name } )"
+  = 'adapter' whiteSpace adapterName:AdapterName whiteSpace? '(' multiLineSpace? params:AdapterParamsDeclaration multiLineSpace? ')' whiteSpace? '=>' multiLineSpace? body:AdapterBodyDefinition eolWhiteSpace
   {
-     return toAstNode<AstNode.Adapter>({
+     return toAstNode<AstNode.AdapterNode>({
        kind: 'adapter-node',
+       name: adapterName,
        params,
        body
      });
   }
 
+AdapterName
+  = upperIdent
+
+AdapterParamName
+  = fieldName
+
 AdapterParamsDeclaration
   = param:AdapterParam restParams:(whiteSpace? ',' multiLineSpace AdapterParam)* {
-     return [param].concat(restParams.map(rparam => rparam[3]));
+     const params = [param].concat(restParams.map(rparam => rparam[3]));
+     const names = params.map(p => p.name);
+     const duplicateNames = names.filter((item, index) => names.indexOf(item) != index);
+     if (duplicateNames.length) {
+        error(`Duplicate adapter param names ${duplicateNames.join(',')}`);
+     } else {
+        return params;
+     }
   }
 
 AdapterParam
-  = paramName:fieldName whiteSpace? ':' whiteSpace? type:ParticleHandleConnectionType {
+  = paramName:AdapterParamName whiteSpace? ':' whiteSpace? type:ParticleHandleConnectionType {
      return toAstNode<AstNode.AdapterParam>({
         kind: 'adapter-param',
         name: paramName,
@@ -1631,7 +1647,7 @@ AdapterParam
   }
 
 AdapterBodyDefinition
-  = name:('*' / upperIdent) whiteSpace? '{' multiLineSpace fields:(AdapterField (',' multiLineSpace AdapterField)*)? ','? multiLineSpace '}' {
+  = name:('*' / upperIdent) whiteSpace? '{' multiLineSpace fields:AdapterFields? ','? multiLineSpace '}' {
      return toAstNode<AstNode.AdapterBodyDefinition>({
         kind: 'adapter-body-definition',
         name,
@@ -1653,12 +1669,20 @@ AdapterField
     });
   }
 
-AdapterScopeExpression
-  = paramName:fieldName scopeChain:('.' fieldName)* {
+AdapterScopeExpression "a dotted scope chain, starting at a root param, e.g. param.schemaFieldName.schemaFieldName"
+  = paramName:AdapterParamName scopeChain:('.' fieldName)* {
     return toAstNode<AstNode.AdapterScopeExpression>({
       kind: 'adapter-scope-expression',
-      paramName,
-      scopeChain: scopeChain.map(scope => scope[1])
+      scopeChain: [paramName].concat(scopeChain.map(scope => scope[1]))
+    });
+  }
+
+ApplyAdapter "an apply expression, e.g. apply AdapterName(param1, param2) or apply AdapterName(this)"
+  = 'apply' whiteSpace? adapterName:AdapterName '(' param:fieldName restParams:(',' whiteSpace? fieldName)* whiteSpace? ')' {
+    return toAstNode<AstNode.AppliedAdapter>({
+      kind: 'adapter-apply-node',
+      name: adapterName,
+      params: [param].concat(restParams.map(p => p[2]))
     });
   }
 

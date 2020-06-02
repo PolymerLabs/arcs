@@ -520,12 +520,20 @@ export interface RecipeHandle extends BaseNode {
   ref: HandleRef;
   fate: Fate;
   annotations: AnnotationRef[];
+  adapter: AppliedAdapter;
 }
 
 export interface RecipeSyntheticHandle extends BaseNode {
   kind: 'synthetic-handle';
   name: string|null;
   associations: string[];
+  adapter: AppliedAdapter;
+}
+
+export interface AppliedAdapter extends BaseNode {
+  kind: 'adapter-apply-node';
+  name: string;
+  params: string[];
 }
 
 export interface RecipeParticleSlotConnection extends BaseNode {
@@ -762,8 +770,9 @@ export interface SchemaAlias extends BaseNode {
   alias: string;
 }
 
-export interface Adapter extends BaseNode {
+export interface AdapterNode extends BaseNode {
   kind: 'adapter-node';
+  name: string;
   params: AdapterParam[];
   body: AdapterBodyDefinition;
 }
@@ -788,7 +797,6 @@ export interface AdapterField extends BaseNode {
 
 export interface AdapterScopeExpression extends BaseNode {
   kind: 'adapter-scope-expression';
-  paramName: string;
   scopeChain: string[];
 }
 
