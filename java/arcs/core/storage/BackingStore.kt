@@ -18,6 +18,7 @@ import arcs.core.storage.ProxyMessage.ModelUpdate
 import arcs.core.storage.ProxyMessage.Operations
 import arcs.core.storage.ProxyMessage.SyncRequest
 import arcs.core.type.Type
+import arcs.core.util.LruCacheMap
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -37,7 +38,7 @@ class BackingStore<Data : CrdtData, Op : CrdtOperation, T>(
     val callbackFactory: (String) -> ProxyCallback<Data, Op, T>
 ) {
     private val storeMutex = Mutex()
-    /* internal */ val stores = mutableMapOf<String, StoreRecord<Data, Op, T>>()
+    /* internal */ val stores = LruCacheMap<String, StoreRecord<Data, Op, T>>()
 
     /**
      * Gets data from the store corresponding to the given [referenceId].
