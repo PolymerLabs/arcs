@@ -9,7 +9,7 @@
  */
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Schema2Kotlin} from '../schema2kotlin.js';
+import {KotlinGenerator, Schema2Kotlin} from '../schema2kotlin.js';
 import {SchemaGraph} from '../schema2graph.js';
 
 describe('schema2kotlin', () => {
@@ -262,6 +262,44 @@ describe('schema2kotlin', () => {
     ));
     async function assertSchemaAliases(manifest: string, expectedAliases: string[]) {
       await assertComponent(manifest, ({typeAliases}) => typeAliases.sort(), expectedAliases);
+    }
+  });
+  describe('Kotlin Generator', () => {
+    it('generates entity with public constructor', async () => await assertClassDefinition(
+      `particle T
+         h1: reads Thing {num: Number}`,
+      `@Suppress("UNCHECKED_CAST")
+    class T_H1(
+        num: Double = 0.0,
+        entityId: String? = null,
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("T_H1", SCHEMA, entityId, creationTimestamp, expirationTimestamp)`
+    ));
+    it('generates variable entity with private constructor', async () => await assertClassDefinition(
+      `particle T
+         h1: reads ~a with {num: Number}
+         `,
+      `@Suppress("UNCHECKED_CAST")
+    class T_H1 private constructor(
+        num: Double = 0.0,
+        entityId: String? = null,
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("T_H1", SCHEMA, entityId, creationTimestamp, expirationTimestamp)`
+    ));
+
+    async function assertClassDefinition(manifestString: string, expectedValue: string) {
+      const manifest = await Manifest.parse(manifestString);
+      assert.lengthOf(manifest.particles, 1);
+      const [particle] = manifest.particles;
+
+      const schema2kotlin = new Schema2Kotlin({_: []});
+      const generators = await schema2kotlin.calculateNodeAndGenerators(particle);
+      const generator = (generators[0].generator as KotlinGenerator);
+      const component =  generator.generateClassDefinition();
+      assert.deepEqual(component, expectedValue);
+
     }
   });
 

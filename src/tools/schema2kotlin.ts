@@ -508,25 +508,35 @@ ${lines}
     return this.node.sources.map(s => `typealias ${s.fullName} = Abstract${particleName}.${name}`);
   }
 
+  generateClassDefinition(): string {
+    const name = this.node.entityClassName;
+    const ctor = this.node.fromVariable == null ? '(' : ' private constructor(';
+
+    const classDef = `\
+@Suppress("UNCHECKED_CAST")
+    class ${name}${ctor}`;
+
+    const baseClass = this.opts.wasm
+      ? 'WasmEntity'
+      : ktUtils.applyFun('EntityBase', [quote(name), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp']);
+    const classInterface = `) : ${baseClass}`;
+
+    const constructorFields = this.fields.concat(this.opts.wasm ? [] : [
+      'entityId: String? = null',
+      'creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP',
+      'expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP',
+    ]);
+    const constructorArguments =
+      ktUtils.joinWithIndents(constructorFields, classDef.length+classInterface.length, 2);
+
+    return `${classDef}${constructorArguments}${classInterface}`;
+  }
+
   generateClasses(schemaHash: string): string {
     const name = this.node.entityClassName;
 
     const fieldCount = this.node.schema ? Object.keys(this.node.schema.fields).length : 0;
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
-
-    const classDef = `\
-@Suppress("UNCHECKED_CAST")
-    class ${name}(`;
-    const baseClass = this.opts.wasm
-        ? 'WasmEntity'
-        : ktUtils.applyFun('EntityBase', [quote(name), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp']);
-    const classInterface = `) : ${baseClass} {`;
-
-    const constructorFields = this.fields.concat(this.opts.wasm ? [] : [
-      'entityId: String? = null',
-      'creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP',
-      'expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP',
-    ]);
 
     const fieldsForMutate = this.fieldsForCopy.concat(this.opts.wasm ? [] : [
       'entityId = entityId',
@@ -534,12 +544,10 @@ ${lines}
       'expirationTimestamp = expirationTimestamp'
     ]);
 
-    const constructorArguments =
-      ktUtils.joinWithIndents(constructorFields, classDef.length+classInterface.length, 2);
 
     return `\
 
-    ${classDef}${constructorArguments}${classInterface}
+    ${this.generateClassDefinition()} {
 
         ${withFields(`${this.fieldVals.join('\n        ')}`)}
 
