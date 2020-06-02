@@ -152,24 +152,22 @@ class LifecycleTest {
         arc.stop()
         arc.waitForStop()
 
-        withContext(result.dispatcher) {
-            assertVariableOrdering(
-                particle.events,
-                listOf("onFirstStart", "onStart"),
-                // Handle onReady events are not guaranteed to be in any specific order.
-                setOf("data.onReady:null", "list.onReady:[]", "config.onReady:null"),
-                listOf(
-                    "onReady:null:[]:null",
-                    "data.onUpdate:3.2",
-                    "onUpdate:3.2:[]:null",
-                    "list.onUpdate:[hi]",
-                    "onUpdate:3.2:[hi]:null",
-                    "config.onUpdate:true",
-                    "onUpdate:3.2:[hi]:true",
-                    "onShutdown"
-                )
+        assertVariableOrdering(
+            particle.events,
+            listOf("onFirstStart", "onStart"),
+            // Handle onReady events are not guaranteed to be in any specific order.
+            setOf("data.onReady:null", "list.onReady:[]", "config.onReady:null"),
+            listOf(
+                "onReady:null:[]:null",
+                "data.onUpdate:3.2",
+                "onUpdate:3.2:[]:null",
+                "list.onUpdate:[hi]",
+                "onUpdate:3.2:[hi]:null",
+                "config.onUpdate:true",
+                "onUpdate:3.2:[hi]:true",
+                "onShutdown"
             )
-        }
+        )
     }
 
     @Test
@@ -189,63 +187,66 @@ class LifecycleTest {
         val (data1, list1) = makeHandles()
         withContext(data1.dispatcher) {
             data1.store(PausingParticle_Data(1.1))
-            waitForAllTheThings()
             list1.store(PausingParticle_List("first"))
         }
         waitForAllTheThings()
 
-        log("PAUSING")
+        // Pause!
         testHost.pause()
-        waitForAllTheThings()
-        log("UNPAUSING")
+
+        // Now unpause and update the singleton.
         testHost.unpause()
 
-        val particle: PausingParticle = testHost.getParticle(arc.id, name)
-        val (data2, list2) = makeHandles()
+        val particleFirstPause: PausingParticle = testHost.getParticle(arc.id, name)
+        val (data2, _) = makeHandles()
         withContext(data2.dispatcher) {
-            data2.store(PausingParticle_Data(2.2)).join()
-            waitForAllTheThings()
-            list2.store(PausingParticle_List("second")).join()
+            data2.store(PausingParticle_Data(2.2))
         }
         waitForAllTheThings()
-        arc.stop()
-        arc.waitForStop()
 
-        log("STOPPPED")
-
+        // Pause and check that the events we expected showed up in the correct order.
+        testHost.pause()
         assertVariableOrdering(
-            particle.events,
+            particleFirstPause.events,
             // No onFirstStart.
             listOf("onStart"),
             // Values stored in the previous session should still be present.
             setOf("data.onReady:1.1", "list.onReady:[first]"),
             listOf(
-                "onReady:1.1:[first]"
-            ),
-            listOf(
+                "onReady:1.1:[first]",
                 "data.onUpdate:2.2",
-                "onUpdate:2.2:[first]"
-            ),
-            listOf(
-                "list.onUpdate:[first, second]",
-                "onUpdate:2.2:[first, second]"
-            ),
-            listOf("onShutdown")
+                "onUpdate:2.2:[first]",
+                "onShutdown"
+            )
         )
-        /*
-        expected      : [onReady:1.1:[first], data.onUpdate:2.2, onUpdate:2.2:[first],
-                        data.onUpdate:2.2,
-                        onUpdate:2.2:[first],
-                        list.onUpdate:[first, second],
-                        onUpdate:2.2:[first, second],
-                        onShutdown]
-        but was       : [onReady:1.1:[first], data.onUpdate:2.2, onUpdate:2.2:[first],
-                        list.onUpdate:[first, second],
-                        onUpdate:2.2:[first, second],
-                        data.onUpdate:2.2,
-                        onUpdate:2.2:[first, second],
-                        onShutdown]
-         */
+
+        // Now unpause and update the collection.
+        testHost.unpause()
+
+        val particleSecondPause: PausingParticle = testHost.getParticle(arc.id, name)
+        val (_, list2) = makeHandles()
+        withContext(list2.dispatcher) {
+            list2.store(PausingParticle_List("second"))
+        }
+        waitForAllTheThings()
+
+        // Finish up by stopping completely.
+        arc.stop()
+        arc.waitForStop()
+
+        assertVariableOrdering(
+            particleSecondPause.events,
+            // No onFirstStart.
+            listOf("onStart"),
+            // Values stored in the previous session should still be present.
+            setOf("data.onReady:2.2", "list.onReady:[first]"),
+            listOf(
+                "onReady:2.2:[first]",
+                "list.onUpdate:[first, second]",
+                "onUpdate:2.2:[first, second]",
+                "onShutdown"
+            )
+        )
     }
 
     /**
