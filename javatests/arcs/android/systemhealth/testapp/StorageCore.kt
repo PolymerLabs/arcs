@@ -21,6 +21,7 @@ import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.Reference
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -378,6 +379,14 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 }
             }
 
+            // The very first SingletonHandle is responsible for writing an entity
+            // to storage then creating its reference.
+            if (taskId == 0) {
+                SystemHealthTestEntity.entityReference = withContext(handle.dispatcher) {
+                    handle.store(SystemHealthTestEntity.referencedEntity).join()
+                    handle.createReference(SystemHealthTestEntity.referencedEntity).toReferencable()
+                }
+            }
             taskHandle.handle = handle
         }
         HandleType.COLLECTION -> {
@@ -421,6 +430,14 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 }
             }
 
+            // The very first CollectionHandle is responsible for writing an entity
+            // to storage then creating its reference.
+            if (taskId == 0) {
+                SystemHealthTestEntity.entityReference = withContext(handle.dispatcher) {
+                    handle.store(SystemHealthTestEntity.referencedEntity).join()
+                    handle.createReference(SystemHealthTestEntity.referencedEntity).toReferencable()
+                }
+            }
             taskHandle.handle = handle
         }
     }
@@ -465,6 +482,15 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 tasksEvents[taskController.taskId]?.queue?.add(
                     TaskEvent(TaskEventId.HANDLE_FETCH_LATENCY, timeElapsed)
                 )
+            }
+
+            SystemHealthTestEntity.entityReference?.let {
+                val elapsedTime = measureTimeMillis { it.dereference() }
+                tasksEvents[taskController.taskId]?.writer?.withLock {
+                    tasksEvents[taskController.taskId]?.queue?.add(
+                        TaskEvent(TaskEventId.DEREFERENCE_LATENCY, elapsedTime)
+                    )
+                }
             }
         }
     }
@@ -616,6 +642,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             .generateHandleFetchLatencyStats()
             .generateHandleStoreLatencyStats()
             .generateWriteToReadTripLatencyStats()
+            .generateDereferenceLatencyStats()
             .generateHandleAwaitReadyTimeStats()
             .generateAnomalyReport()
             .generateExceptionReport()
@@ -752,6 +779,30 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 bulletin +=
                     """
                     [writer-to-reader latency]
+                    ${calculator.snapshot()}
+                    ${platformNewline.repeat(1)}
+                    """.trimIndent()
+            }
+        }
+
+        @Suppress("UnstableApiUsage")
+        fun generateDereferenceLatencyStats(): Stats = also {
+            val calculator = StatsAccumulator()
+
+            tasksEvents.forEach { _, events ->
+                events.reader.withLock {
+                    calculator.addAll(
+                        events.queue
+                            .filter { it.eventId == TaskEventId.DEREFERENCE_LATENCY }
+                            .map { it.timeMs }
+                    )
+                }
+            }
+
+            calculator.takeIf { it.count() > 0 }?.let {
+                bulletin +=
+                    """
+                    [dereference() latency]
                     ${calculator.snapshot()}
                     ${platformNewline.repeat(1)}
                     """.trimIndent()
@@ -972,6 +1023,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         HANDLE_STORE_READER_END,
         HANDLE_FETCH_LATENCY,
         HANDLE_AWAIT_READY_TIME,
+        DEREFERENCE_LATENCY,
         MEMORY_STATS,
         EXCEPTION,
         TIMEOUT,
@@ -1003,12 +1055,22 @@ object SystemHealthTestEntity {
     private val seqNo = atomic(0)
     private val allChars: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
 
+    /** For benchmarking [Reference] latency. */
+    val referencedEntity = TestEntity(
+        text = "__unused__",
+        number = 0.0,
+        boolean = false,
+        id = "foo"
+    )
+    var entityReference: Reference? = null
+
     operator fun invoke(size: Int = 64) = TestEntity(
         // 16 = 4 ('true') + 12 ('1.xxxxxxx1E8')
         text = allChars[seqNo.value % allChars.size].toString().repeat(size - 16),
         // The atomic number is also treated as unique data id to pair round-trips.
         number = BASE_SEQNO + seqNo.getAndIncrement().toDouble() * 10,
-        boolean = BASE_BOOLEAN
+        boolean = BASE_BOOLEAN,
+        reference = entityReference
     )
 }
 

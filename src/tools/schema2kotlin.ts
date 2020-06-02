@@ -510,7 +510,7 @@ ${lines}
 
   generateClassDefinition(): string {
     const name = this.node.entityClassName;
-    const ctorType = this.node.fromVariable == null ? '(' : ' private constructor(';
+    const ctorType = this.node.variableName == null ? '(' : ' private constructor(';
 
     const classDef = `\
 @Suppress("UNCHECKED_CAST")
