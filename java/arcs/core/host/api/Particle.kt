@@ -11,7 +11,6 @@
 package arcs.core.host.api
 
 import arcs.core.entity.Handle
-import kotlinx.coroutines.CoroutineDispatcher
 
 /** Base interface for all particles. */
 interface Particle {
