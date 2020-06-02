@@ -12,13 +12,13 @@
 package arcs.jvm.host
 
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.testutil.runTest
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import org.junit.Rule
 import org.junit.Test
@@ -31,7 +31,7 @@ class JvmSchedulerProviderTest {
     val log = LogRule()
 
     @Test
-    fun one_thread_multipleSchedulers() = runBlocking {
+    fun one_thread_multipleSchedulers() = runTest {
         val schedulerProvider = JvmSchedulerProvider(coroutineContext, 1)
 
         val schedulerA = schedulerProvider("a")
@@ -69,7 +69,7 @@ class JvmSchedulerProviderTest {
     }
 
     @Test
-    fun two_threads_threeSchedulers_roundRobin() = runBlocking {
+    fun two_threads_threeSchedulers_roundRobin() = runTest {
         val schedulerProvider = JvmSchedulerProvider(coroutineContext, 2)
 
         val schedulerA = schedulerProvider("a")
@@ -98,7 +98,7 @@ class JvmSchedulerProviderTest {
     }
 
     @Test
-    fun throwing_from_a_task_failsTheParentContext() = runBlocking {
+    fun throwing_from_a_task_failsTheParentContext() = runTest {
         val e = assertSuspendingThrows(IllegalStateException::class) {
             withContext(coroutineContext) {
                 val schedulerProvider = JvmSchedulerProvider(coroutineContext, 1)
@@ -119,25 +119,30 @@ class JvmSchedulerProviderTest {
     }
 
     @Test
-    fun canceling_thenReInvoking_givesNewScheduler() = runBlocking {
+    fun canceling_thenReInvoking_givesNewScheduler() = runTest {
         val schedulerProvider = JvmSchedulerProvider(coroutineContext, 1)
 
         val scheduler = schedulerProvider("a")
+        val schedulerJob = scheduler.scope.coroutineContext[Job]
 
+        val sameScheduler = schedulerProvider("a")
         assertWithMessage(
             "While the scheduler is still active, the provider returns the same scheduler " +
                 "for additional calls with the same arcId."
-        ).that(schedulerProvider("a")).isSameInstanceAs(scheduler)
+        ).that(sameScheduler).isSameInstanceAs(scheduler)
 
+        // Cancel the scheduler, and wait until its job has completed before trying to create
+        // another scheduler with the same arcId.
+        val schedulerJobCanceled = Job()
+        schedulerJob?.invokeOnCompletion { schedulerJobCanceled.complete() }
         scheduler.cancel()
+        schedulerJobCanceled.join()
 
-        // Delay just a bit to ensure the `invokeOnCompletion` has been called for our scheduler
-        delay(100)
-
+        val newScheduler = schedulerProvider("a")
         assertWithMessage(
             "After canceling the original scheduler, we should get a new one, even with the " +
                 "same arcId."
-        ).that(schedulerProvider("a")).isNotEqualTo(scheduler)
+        ).that(newScheduler).isNotEqualTo(scheduler)
 
         schedulerProvider.cancelAll()
     }
