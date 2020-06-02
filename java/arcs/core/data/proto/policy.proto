@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package arcs;
+
+option java_package = "arcs.core.data.proto";
+option java_multiple_files = true;
+
+// Defines a data usage policy.
+message PolicyProto {
+  // Policy name.
+  string name = 1;
+
+  // Targets governed by the policy.
+  repeated PolicyTargetProto targets = 2;
+
+  // Additional config metadata for the policy.
+  repeated PolicyConfigProto configs = 3;
+
+  // Human readable description for the policy.
+  string description = 4;
+
+  enum EgressType {
+    EGRESS_TYPE_UNSPECIFIED = 0;
+    LOGGING = 1;
+    FEDERATED_AGGREGATION = 2;
+  }
+  // Egress type permitted by the policy.
+  EgressType egress_type = 5;
+}
+
+message PolicyTargetProto {
+  // Schema type of the store targeted by the policy.
+  string schema_type = 1;
+
+  // The maximum age of the data that can be used, as a duration (not timestamp)
+  // in milliseconds.
+  int64 max_age_ms = 2;
+
+  // Valid retention options for storing the target data.
+  repeated PolicyRetentionProto retentions = 3;
+
+  // Allowed usages for all fields in this target type.
+  repeated PolicyFieldProto fields = 4;
+}
+
+message PolicyFieldProto {
+  // Field name.
+  string name = 1;
+
+  enum UsageType {
+    USAGE_TYPE_UNSPECIFIED = 0;
+    // Can be used for anything.
+    ANY = 1;
+    // Can be egressed.
+    EGRESS = 2;
+    // Can be used in joins, but not read.
+    JOIN = 3;
+  }
+
+  message AllowedUsage {
+    // The type of usage that is permitted.
+    UsageType usage = 1;
+
+    // An redaction label that must be applied before the data can be used for
+    // this usage type. Optional: an empty string means no redaction is
+    // required.
+    string redaction_label = 2;
+  }
+
+  // Specifies the allowed usages of raw data.
+  repeated AllowedUsage usages = 2;
+
+  // Specified usages for subfields nested inside this field.
+  repeated PolicyFieldProto subfields = 4;
+}
+
+// Storage retention options for a policy target.
+message PolicyRetentionProto {
+  enum Medium {
+    MEDIUM_UNSPECIFIED = 0;
+    RAM = 1;
+    DISK = 2;
+  }
+  // Allowed retention medium.
+  Medium medium = 1;
+
+  // Whether encryption is required when using this medium.
+  bool encryption_required = 2;
+}
+
+// Encode additional metadata for a policy.
+message PolicyConfigProto {
+  // Name for the config.
+  string name = 1;
+
+  // Data contained in the config. This encodes arbitrary metadata as string
+  // key-value pairs. The keys should all have a known meaning given the config
+  // name.
+  map<string, string> metadata = 2;
+}
