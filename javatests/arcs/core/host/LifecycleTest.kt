@@ -26,6 +26,7 @@ import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.After
@@ -176,6 +177,13 @@ class LifecycleTest {
     fun pausing() = runBlocking {
         val name = "PausingParticle"
         val arc = startArc(PausingTestPlan)
+        var runningJob = Job()
+        var stoppedJob = Job()
+        arc.onRunning { runningJob.complete() }
+        arc.onStopped { stoppedJob.complete() }
+
+        runningJob.join()
+        log("Arc is Running!")
 
         // Test handles use the same storage proxies as the real handles which will be closed
         // when the arc is paused, so we need to re-create them after unpausing.
@@ -194,10 +202,16 @@ class LifecycleTest {
         waitForAllTheThings()
 
         // Pause!
+        log("Pausing Arc!!!")
         testHost.pause()
+        stoppedJob.join()
+        log("Arc is Paused, Unpausing!!!")
 
         // Now unpause and update the singleton.
+        runningJob = Job()
         testHost.unpause()
+        runningJob.join()
+        log("Arc is unpaused!")
 
         val particleFirstPause: PausingParticle = testHost.getParticle(arc.id, name)
         val (data2, _) = makeHandles()
@@ -206,8 +220,12 @@ class LifecycleTest {
         }
         waitForAllTheThings()
 
+        log("Stopping Arc!")
+        stoppedJob = Job()
         arc.stop()
         arc.waitForStop()
+        stoppedJob.join()
+        log("Arc is stopped!")
 
         // Check that the events we expected showed up in the correct order.
         assertVariableOrdering(
