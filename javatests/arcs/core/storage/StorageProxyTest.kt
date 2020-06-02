@@ -235,7 +235,10 @@ class StorageProxyTest {
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
         verify(onReady).invoke()
 
-        // Sending another model should trigger the onUpdate callback.
+        // Sending another model should trigger the onUpdate callback only if the data changed.
+        whenever(mockCrdtModel.consumerView)
+            .thenReturn("blah")
+            .thenReturn("data")
         proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
 
         channels.onUpdate.receiveOrTimeout()
@@ -586,7 +589,6 @@ class StorageProxyTest {
         whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(false)
         proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
         proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation),null))
-        assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.UPDATE)
         assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.DESYNC)
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.DESYNC)
 
