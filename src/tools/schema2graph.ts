@@ -45,7 +45,7 @@ export class SchemaNode {
     readonly particleSpec: ParticleSpec,
     readonly allSchemaNodes: SchemaNode[],
     // Type variable associated with the schema node.
-    readonly fromVariable: string | null = null
+    readonly variableName: string | null = null
   ) {}
 
   readonly sources: SchemaSource[] = [];
@@ -110,7 +110,7 @@ export class SchemaNode {
 }
 
 function* topLevelSchemas(type: Type, path: string[] = []):
-    IterableIterator<{schema: Schema | null, path: string[], fromVariable: string | null}> {
+    IterableIterator<{schema: Schema | null, path: string[], variableName: string | null}> {
   if (type.getContainedType()) {
     yield* topLevelSchemas(type.getContainedType(), path);
   } else if (type.getContainedTypes()) {
@@ -119,11 +119,11 @@ function* topLevelSchemas(type: Type, path: string[] = []):
       yield* topLevelSchemas(inner[i], [...path, `${i}`]);
     }
   } else if (type.getEntitySchema()) {
-    yield {schema: type.getEntitySchema(), path, fromVariable: null};
+    yield {schema: type.getEntitySchema(), path, variableName: null};
   } else if (type.hasVariable) {
     const schema = (type.canWriteSuperset && type.canWriteSuperset.getEntitySchema())
       || (type.canReadSubset && type.canReadSubset.getEntitySchema());
-    yield {schema, path, fromVariable: (type as TypeVariable).variable.name};
+    yield {schema, path, variableName: (type as TypeVariable).variable.name};
   }
 }
 
@@ -142,12 +142,12 @@ export class SchemaGraph {
   constructor(readonly particleSpec: ParticleSpec) {
     // First pass to establish a node for each unique schema, with the descendants field populated.
     for (const connection of this.particleSpec.connections) {
-      for (const {schema, path, fromVariable} of topLevelSchemas(connection.type)) {
+      for (const {schema, path, variableName} of topLevelSchemas(connection.type)) {
         this.createNodes(
           schema,
           this.particleSpec,
           new SchemaSource(this.particleSpec, connection, path),
-          fromVariable
+          variableName
         );
       }
     }
@@ -163,15 +163,15 @@ export class SchemaGraph {
   }
 
   private createNodes(schema: Schema, particleSpec: ParticleSpec, source: SchemaSource,
-                      fromVariable: string | null) {
+                      variabelName: string | null) {
     let node = this.nodes.find((candidate: SchemaNode) => {
       // Aggregate type variable nodes of the same name together.
-      if (fromVariable) {
-        return fromVariable === candidate.fromVariable;
+      if (variabelName) {
+        return variabelName === candidate.variableName;
       }
 
       // Aggregate nodes with the same schema together.
-      if (!candidate.fromVariable) {
+      if (!candidate.variableName) {
         return schema.equals(candidate.schema);
       }
 
@@ -182,14 +182,14 @@ export class SchemaGraph {
     } else {
       // This is a new schema. Check for slicability against all previous schemas
       // (in both directions) to establish the descendancy mappings.
-      node = new SchemaNode(schema, particleSpec, this.nodes, fromVariable);
+      node = new SchemaNode(schema, particleSpec, this.nodes, variabelName);
       node.sources.push(source);
       for (const previous of this.nodes) {
         for (const [a, b] of [[node, previous], [previous, node]]) {
-          if (a.fromVariable && a.fromVariable === b.fromVariable && !b.descendants.has(a)) {
+          if (a.variableName && a.variableName === b.variableName && !b.descendants.has(a)) {
             a.descendants.add(b);
             b.parents = [];
-          } else if (!a.fromVariable && !b.fromVariable &&
+          } else if (!a.variableName && !b.variableName &&
             b.schema.isEquivalentOrMoreSpecific(a.schema) === AtLeastAsSpecific.YES) {
             if (b.descendants.has(a)) {
               throw new Error(`Cannot add ${b} to ${a}.descendants as it would create a cycle.`);
@@ -221,7 +221,7 @@ export class SchemaGraph {
         // When a type variable has a nested schema, it should be backed by a) a distinct entity from
         // a schema with the same name and b) a distinct entity from the original type variable.
         // To accomplish this, we need to associate the nested schema with a "child" type variable.
-        const nestedVar = fromVariable && `${fromVariable}.${field}`;
+        const nestedVar = variabelName && `${variabelName}.${field}`;
         // We have a reference field. Generate a node for its nested schema and connect it into the
         // refs map to indicate that this node requires nestedNode's class to be generated first.
         const nestedNode = this.createNodes(nestedSchema, particleSpec, source.child(field), nestedVar);
