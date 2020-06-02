@@ -288,7 +288,6 @@ describe('schema2kotlin', () => {
         expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
     ) : EntityBase("T_H1", SCHEMA, entityId, creationTimestamp, expirationTimestamp)`
     ));
-
     async function assertClassDefinition(manifestString: string, expectedValue: string) {
       const manifest = await Manifest.parse(manifestString);
       assert.lengthOf(manifest.particles, 1);

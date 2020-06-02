@@ -510,11 +510,11 @@ ${lines}
 
   generateClassDefinition(): string {
     const name = this.node.entityClassName;
-    const ctor = this.node.fromVariable == null ? '(' : ' private constructor(';
+    const ctorType = this.node.fromVariable == null ? '(' : ' private constructor(';
 
     const classDef = `\
 @Suppress("UNCHECKED_CAST")
-    class ${name}${ctor}`;
+    class ${name}${ctorType}`;
 
     const baseClass = this.opts.wasm
       ? 'WasmEntity'
@@ -530,6 +530,40 @@ ${lines}
       ktUtils.joinWithIndents(constructorFields, classDef.length+classInterface.length, 2);
 
     return `${classDef}${constructorArguments}${classInterface}`;
+  }
+
+  generateCopyMethods(): string {
+    const name = this.node.entityClassName;
+
+    const fieldsForMutate = this.fieldsForCopy.concat(this.opts.wasm ? [] : [
+      'entityId = entityId',
+      'creationTimestamp = creationTimestamp',
+      'expirationTimestamp = expirationTimestamp'
+    ]);
+
+    const fun = `fun`;
+
+    const copy = ktUtils.applyFun('copy', this.fieldsForCopy);
+
+    const copyFun = `fun ${copy} = `;
+
+    const copyInst = ktUtils.applyFun(name, this.fieldsForCopy, copyFun.length);
+
+    const copyDefinition = `${copyFun}${copyInst}`;
+
+
+    return `\
+        ${this.opts.wasm ? `` : `/**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */`}
+        fun copy(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${name}(${ktUtils.joinWithIndents(this.fieldsForCopy, 8+name.length, 3)})
+        ${this.opts.wasm ? `` : `/**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${name}(${ktUtils.joinWithIndents(fieldsForMutate, 8+name.length, 3)})`}
+    `;
   }
 
   generateClasses(schemaHash: string): string {
