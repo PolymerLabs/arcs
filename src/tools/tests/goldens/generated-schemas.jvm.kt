@@ -37,7 +37,7 @@ abstract class AbstractGold : BaseParticle() {
         val_: String = "",
         entityId: String? = null,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP
+        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
     ) : EntityBase("GoldInternal1", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
 
         var val_: String
@@ -100,7 +100,7 @@ abstract class AbstractGold : BaseParticle() {
         birthDayDOM: Double = 0.0,
         entityId: String? = null,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP
+        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
     ) : EntityBase("Gold_AllPeople", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
 
         var name: String
@@ -219,7 +219,7 @@ abstract class AbstractGold : BaseParticle() {
         num: Double = 0.0,
         entityId: String? = null,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP
+        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
     ) : EntityBase("Gold_Collection", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
 
         var num: Double
@@ -282,7 +282,7 @@ abstract class AbstractGold : BaseParticle() {
         birthDayDOM: Double = 0.0,
         entityId: String? = null,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP
+        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
     ) : EntityBase("Gold_QCollection", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
 
         var name: String
@@ -410,7 +410,7 @@ abstract class AbstractGold : BaseParticle() {
         ref: Reference<GoldInternal1>? = null,
         entityId: String? = null,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP
+        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
     ) : EntityBase("Gold_Data", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
 
         var num: Double
