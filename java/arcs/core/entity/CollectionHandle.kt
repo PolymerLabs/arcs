@@ -62,9 +62,9 @@ class CollectionHandle<T : Storable, R : Referencable>(
     // endregion
 
     // region implement QueryCollectionHandle<T, Any>
-    override suspend fun query(args: Any): Set<T> = checkPreconditions {
+    override fun query(args: Any): Set<T> = checkPreconditions {
         (spec.entitySpec.SCHEMA.query?.let { query ->
-            storageProxy.getParticleView().filter {
+            storageProxy.getParticleViewUnsafe().filter {
                 val entity = checkNotNull(it as? RawEntity) {
                     "Queries only work with Entity-typed Handles."
                 }
@@ -132,12 +132,12 @@ class CollectionHandle<T : Storable, R : Referencable>(
     override fun onResync(action: () -> Unit) =
         storageProxy.addOnResync(callbackIdentifier, action)
 
-    override suspend fun <E : Entity> createReference(entity: E): Reference<E> {
+    override fun <E : Entity> createReference(entity: E): Reference<E> {
         val entityId = requireNotNull(entity.entityId) {
             "Entity must have an ID before it can be referenced."
         }
 
-        adaptValues(storageProxy.getParticleView()).let { data ->
+        adaptValues(storageProxy.getParticleViewUnsafe()).let { data ->
             data.firstOrNull()?.let {
                 require(it is Entity) {
                     "Handle must contain Entity-typed elements in order to create references."

@@ -297,7 +297,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         checkNotClosed()
         log.debug { "Getting particle view (lifecycle)" }
 
-        check(stateHolder.value.state != ProxyState.NO_SYNC) {
+        check(stateHolder.value.syncCount > 0) {
             "Cannot get particle view directly before the storage proxy's first sync; " +
             "current state is ${stateHolder.value.state}"
         }
@@ -565,9 +565,13 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
     private data class StateHolder<T>(
         val state: ProxyState,
-        val waitingSyncs: List<CompletableDeferred<T>> = emptyList()
+        val waitingSyncs: List<CompletableDeferred<T>> = emptyList(),
+        val syncCount: Int = 0
     ) {
-        fun setState(newState: ProxyState) = copy(state = newState)
+        fun setState(newState: ProxyState) = copy(
+            state = newState,
+            syncCount = syncCount + if (newState == ProxyState.SYNC) 1 else 0
+        )
 
         fun addWaitingSync(deferred: CompletableDeferred<T>) =
             copy(waitingSyncs = waitingSyncs + deferred)

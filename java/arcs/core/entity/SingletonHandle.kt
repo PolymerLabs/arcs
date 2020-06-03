@@ -84,11 +84,11 @@ class SingletonHandle<T : Storable, R : Referencable>(
     override fun onResync(action: () -> Unit) =
         storageProxy.addOnResync(callbackIdentifier, action)
 
-    override suspend fun <E : Entity> createReference(entity: E): Reference<E> {
+    override fun <E : Entity> createReference(entity: E): Reference<E> {
         val entityId = requireNotNull(entity.entityId) {
             "Entity must have an ID before it can be referenced."
         }
-        adaptValue(storageProxy.getParticleView()).let {
+        adaptValue(storageProxy.getParticleViewUnsafe()).let {
             require(it is Entity && it.entityId == entityId) {
                 "Entity is not stored in the Singleton."
             }

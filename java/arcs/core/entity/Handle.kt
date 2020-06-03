@@ -13,7 +13,6 @@ package arcs.core.entity
 
 import arcs.core.data.HandleMode
 import arcs.core.storage.StorageProxy.StorageEvent
-import kotlin.coroutines.resume
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -93,7 +92,7 @@ interface ReadableHandle<UpdateType> : Handle {
      * Note that this method only works for handles which store [Entity] types (i.e. not handles
      * containing [Reference]s). [E] must be the same type the handle stores.
      */
-    suspend fun <E : Entity> createReference(entity: E): Reference<E>
+    fun <E : Entity> createReference(entity: E): Reference<E>
 }
 
 /** A singleton handle with read access. */
@@ -141,7 +140,7 @@ interface WriteCollectionHandle<T : Storable> : Handle {
 /** A collection handle with query access. */
 interface QueryCollectionHandle<T : Storable, QueryArgs> : Handle {
     /** Returns a set with all the entities in the collection that match the associated query. */
-    suspend fun query(args: QueryArgs): Set<T>
+    fun query(args: QueryArgs): Set<T>
 }
 
 /** A collection handle with read and write access. */
