@@ -1,4 +1,6 @@
 // succeeds when an inout handle claims the same tag it checks
+// #Ingress: P
+// #OK
 particle P
   foo: reads writes Foo {}
   check foo is t

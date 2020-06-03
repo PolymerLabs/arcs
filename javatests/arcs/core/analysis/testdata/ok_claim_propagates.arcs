@@ -1,4 +1,6 @@
 // claim propagates through a chain of particles
+// #Ingress: P1
+// #OK
 particle P1
   foo: writes Foo {}
   claim foo is trusted

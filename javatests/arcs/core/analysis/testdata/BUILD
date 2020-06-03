@@ -12,7 +12,8 @@ ALL_MANIFESTS = VALID_MANIFESTS + INVALID_MANIFESTS
 
 filegroup(
     name = "example_manifest_protos",
-    srcs = [":%s" % m.replace(".arcs", "") for m in ALL_MANIFESTS],
+    srcs = [":%s" % m.replace(".arcs", "") for m in ALL_MANIFESTS] +
+           [":%s" % m for m in ALL_MANIFESTS],
 )
 
 [arcs_manifest_proto(

@@ -1,4 +1,6 @@
 // succeeds when a "not tag" cancels a tag that is reclaimed downstream
+// #Ingress: P1
+// #OK
 particle P1
   foo: writes Foo {}
   claim foo is trusted

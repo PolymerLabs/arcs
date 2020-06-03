@@ -1,4 +1,6 @@
 // fails when a "not tag" cancels a tag
+// #Ingress: P1
+// #Fail: hc:P3.bye is trusted
 particle P1
   foo: writes Foo {}
   claim foo is trusted

@@ -1,5 +1,7 @@
 // fails for a negated tag check when the tag is present
-particle P1
+// #Ingress: P1
+// #Fail: hc:P2.bar is not private
+ particle P1
   foo: writes Foo {}
   claim foo is private
 particle P2

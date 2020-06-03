@@ -1,4 +1,7 @@
 // succeeds when handle has multiple inputs with the right tags
+// #Ingress: P1
+// #Ingress: P2
+// #OK
 particle P1
   foo: writes Foo {}
   claim foo is trusted
