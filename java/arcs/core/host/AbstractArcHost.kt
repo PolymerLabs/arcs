@@ -33,6 +33,7 @@ import arcs.core.util.Time
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -211,14 +212,20 @@ abstract class AbstractArcHost(
     private suspend fun createArcHostContextParticle(
         arcHostContext: ArcHostContext
     ): ArcHostContextParticle {
+        log.info { "createArcHostContextParticle" }
         val handleManager = entityHandleManager("$hostId-${arcHostContext.arcId}")
 
+        log.info { "createArcHostContextParticle: handleManager received, instantiating" }
         return ArcHostContextParticle(hostId, handleManager, this::instantiateParticle).apply {
+            log.info { "createArcHostContextParticle: instantiated, creating persistence plan" }
             val partition = createArcHostContextPersistencePlan(
                 arcHostContextCapability,
                 arcHostContext.arcId
             )
+
+            log.info { "createArcHostContextParticle: creating handles" }
             partition.particles[0].handles.forEach { handleSpec ->
+                // TODO: consider copying the stuff from startParticle to here.
                 createHandle(
                     handleManager,
                     handleSpec.key,
@@ -227,6 +234,9 @@ abstract class AbstractArcHost(
                     this.toString()
                 )
             }
+            log.info { "createArcHostContextParticle: handles created" }
+        }.also {
+            log.info { "createArcHostContextParticle: done" }
         }
     }
 
@@ -251,10 +261,14 @@ abstract class AbstractArcHost(
      *
      * Subclasses may override this to store the [context] using a different implementation.
      */
-    protected open suspend fun writeContextToStorage(arcId: String, context: ArcHostContext) =
-        createArcHostContextParticle(context).run {
+    protected open suspend fun writeContextToStorage(arcId: String, context: ArcHostContext): Job {
+        log.info { "writeContextToStorage for $arcId, context: $context" }
+        return createArcHostContextParticle(context).run {
             writeArcHostContext(context.arcId, context)
+        }.also {
+            log.info { "writeContextToStorage for $arcId: complete" }
         }
+    }
 
     override suspend fun startArc(partition: Plan.Partition) {
         log.info { "starting arc: $partition" }
