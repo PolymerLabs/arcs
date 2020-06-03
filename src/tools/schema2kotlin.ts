@@ -575,13 +575,6 @@ ${lines}
     const fieldCount = this.node.schema ? Object.keys(this.node.schema.fields).length : 0;
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
 
-    const fieldsForMutate = this.fieldsForCopy.concat(this.opts.wasm ? [] : [
-      'entityId = entityId',
-      'creationTimestamp = creationTimestamp',
-      'expirationTimestamp = expirationTimestamp'
-    ]);
-
-
     return `\
 
     ${this.generateClassDefinition()} {

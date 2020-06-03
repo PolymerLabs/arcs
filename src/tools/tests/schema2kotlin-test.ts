@@ -316,7 +316,7 @@ describe('schema2kotlin', () => {
         fun copy(num: Double = this.num) = T_H1(num = num)
         `
     ));
-    it('copes underlying data for type variables.', async () => await assertCopyMethods(
+    it('copies underlying data for type variables.', async () => await assertCopyMethods(
       `particle T
          h1: reads ~a with Thing {num: Number}`,
       `/**
@@ -336,7 +336,6 @@ describe('schema2kotlin', () => {
             expirationTimestamp = expirationTimestamp
         ).also { this.copyInto(it) }`
     ));
-    // TODO(alxr): Why do we omit the docstring for Wasm?
     it('generates only copy method by entity fields for wasm', async () => await assertCopyMethodsForWasm(
       `particle T
          h1: reads  ~a with Thing {num: Number}`,

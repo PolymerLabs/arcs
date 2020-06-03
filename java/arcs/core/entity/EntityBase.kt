@@ -147,7 +147,7 @@ open class EntityBase(
     /** Returns the [FieldType] for the given collection field, or null if it does not exist. */
     private fun getCollectionTypeOrNull(field: String) = schema.fields.collections[field]
 
-    /** Copies all singleton and collection values into another entity base. */
+    /** Copies all singleton and collection values into another [EntityBase]. */
     protected fun copyInto(that: EntityBase) {
         that.singletons.putAll(this.singletons)
         that.collections.putAll(this.collections)
