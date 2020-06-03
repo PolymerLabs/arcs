@@ -578,7 +578,7 @@ ${lines}
 
     ${this.generateClassDefinition()} {
 
-${withFields(ktUtils.indent(`${this.fieldVals.join('\n')}`,2))}
+${withFields(ktUtils.indent(`${this.fieldVals.join('\n')}`, 2))}
 
         ${this.opts.wasm ? `override var entityId = ""` : withFields(`init {
             ${this.fieldInitializers.join('\n            ')}
