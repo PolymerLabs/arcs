@@ -25,6 +25,7 @@ import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
@@ -195,11 +196,13 @@ class LifecycleTest {
             )
         }
         val (data1, list1) = makeHandles()
-        withContext(data1.dispatcher) {
+        withContext(data1.dispatcher + CoroutineName("Initialization")) {
             data1.store(PausingParticle_Data(1.1))
             list1.store(PausingParticle_List("first"))
         }
         waitForAllTheThings()
+        data1.close()
+        list1.close()
 
         // Pause!
         log("Pausing Arc!!!")
@@ -214,11 +217,13 @@ class LifecycleTest {
         log("Arc is unpaused!")
 
         val particleFirstPause: PausingParticle = testHost.getParticle(arc.id, name)
-        val (data2, _) = makeHandles()
-        withContext(data2.dispatcher) {
+        val (data2, list2) = makeHandles()
+        withContext(data2.dispatcher + CoroutineName("Updating")) {
             data2.store(PausingParticle_Data(2.2))
         }
         waitForAllTheThings()
+        data2.close()
+        list2.close()
 
         log("Stopping Arc!")
         stoppedJob = Job()

@@ -27,6 +27,7 @@ import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.util.plus
 import arcs.core.util.traverse
+import kotlinx.coroutines.CoroutineName
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.joinAll
@@ -54,7 +55,7 @@ class ArcHostContextParticle(
     suspend fun writeArcHostContext(
         arcId: String,
         context: arcs.core.host.ArcHostContext
-    ) = onHandlesReady {
+    ) = onHandlesReady(opName = "writeArcHostContext") {
         try {
             val connections = context.particles.flatMap {
                 it.value.planParticle.handles.map { handle ->
@@ -111,7 +112,7 @@ class ArcHostContextParticle(
      */
     suspend fun readArcHostContext(
         arcHostContext: arcs.core.host.ArcHostContext
-    ): arcs.core.host.ArcHostContext? = onHandlesReady {
+    ): ArcHostContext? = onHandlesReady(opName = "readArcHostContext") {
         val arcId = arcHostContext.arcId
 
         try {
@@ -156,7 +157,8 @@ class ArcHostContextParticle(
     }
 
     private suspend inline fun <T> onHandlesReady(
-        coroutineContext: CoroutineContext = handles.dispatcher,
+        coroutineContext: CoroutineContext = handles.dispatcher + CoroutineName(opName),
+        opName: String = "whenHandlesReady",
         crossinline block: suspend () -> T
     ): T {
         val onReadyJobs = mapOf(
