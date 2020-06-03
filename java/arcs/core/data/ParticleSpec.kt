@@ -22,5 +22,6 @@ data class ParticleSpec(
     val name: String,
     val connections: Map<String, HandleConnectionSpec>,
     val location: String,
-    val claims: List<Claim> = emptyList()
+    val claims: List<Claim> = emptyList(),
+    val checks: List<Check> = emptyList()
 )
