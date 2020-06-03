@@ -1781,7 +1781,7 @@ NumberedUnits
   }
 
 Policy
-  = 'policy' whiteSpace name:upperIdent openBrace items:(PolicyItem (commaOrNewline PolicyItem)*)? closeBrace
+  = 'policy' whiteSpace name:upperIdent openBrace items:(PolicyItem (commaOrNewline PolicyItem)*)? closeBrace eolWhiteSpace?
   {
     const targets: AstNode.PolicyTarget[] = [];
     const configs: AstNode.PolicyConfig[] = [];

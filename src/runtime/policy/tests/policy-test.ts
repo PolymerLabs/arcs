@@ -60,12 +60,20 @@ policy MyPolicy {
     assert.strictEqual(manifest.toString(), manifestString);
   });
 
+  it('rejects duplicate policy names', async () => {
+    await assertThrowsAsync(async () => parsePolicy(`
+policy MyPolicy {}
+policy MyPolicy {}
+`), 'A policy named MyPolicy already exists.');
+  });
+
   it('policy annotations work', async () => {
     const policy = await parsePolicy(`
 @intendedPurpose('test')
 @egressType('Logging')
 @custom
-policy MyPolicy {}`);
+policy MyPolicy {}
+`);
     assert.strictEqual(policy.name, 'MyPolicy');
     assert.strictEqual(policy.description, 'test');
     assert.strictEqual(policy.egressType, PolicyEgressType.Logging);
@@ -76,7 +84,8 @@ policy MyPolicy {}`);
   it('rejects unknown egress types', async () => {
     await assertThrowsAsync(async () => parsePolicy(`
 @egressType('SomethingElse')
-policy MyPolicy {}`), 'Expected one of: Logging, FederatedAggregation. Found: SomethingElse.');
+policy MyPolicy {}
+`), 'Expected one of: Logging, FederatedAggregation. Found: SomethingElse.');
   });
 
   it('policy target annotations work', async () => {
