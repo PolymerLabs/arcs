@@ -541,13 +541,17 @@ abstract class AbstractArcHost(
             containerType,
             holder.getEntitySpec(handleName)
         )
+        log.info { "createHandle($handleName) - calling handleManager" }
         return handleManager.createHandle(
             handleSpec,
             connectionSpec.storageKey,
             connectionSpec.ttl ?: Ttl.Infinite,
             particleId,
             immediateSync
-        ).also { holder.setHandle(handleName, it) }
+        ).also {
+            holder.setHandle(handleName, it)
+            log.info { "createHandle($handleName) - done" }
+        }
     }
 
     override suspend fun stopArc(partition: Plan.Partition) {

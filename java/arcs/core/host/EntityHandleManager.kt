@@ -52,6 +52,7 @@ import arcs.core.storage.StorageMode
 import arcs.core.storage.StoreManager
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
+import arcs.core.util.TaggedLog
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
 import kotlinx.coroutines.sync.Mutex
@@ -79,6 +80,7 @@ class EntityHandleManager(
     private val activationFactory: ActivationFactory? = null,
     private val idGenerator: Id.Generator = Id.Generator.newSession()
 ) {
+    private val log = TaggedLog { "EntityHandleManager($arcId)" }
     private val proxyMutex = Mutex()
     private val singletonStorageProxies by guardedBy(
         proxyMutex,
@@ -146,15 +148,26 @@ class EntityHandleManager(
             particleId,
             immediateSync
         )
-        return createHandle(config)
+        log.info { "createHandle($storageKey) - calling createHandle(config)" }
+        return createHandle(config).also {
+            log.info { "createHandle($storageKey) - done" }
+        }
     }
 
     /** Overload of [createHandle] parameterized by a type [R] of the data that is to be stored. */
     private suspend fun <T : Storable, R : Referencable> createHandle(
         config: HandleConfig<T, R>
     ): Handle = when (config.spec.containerType) {
-        HandleContainerType.Singleton -> createSingletonHandle(config)
-        HandleContainerType.Collection -> createCollectionHandle(config)
+        HandleContainerType.Singleton -> {
+            log.info { "createHandle(config) - calling createSingletonHandle(config)" }
+            createSingletonHandle(config)
+        }
+        HandleContainerType.Collection -> {
+            log.info { "createHandle(config) - calling createCollectionHandle(config)" }
+            createCollectionHandle(config)
+        }
+    }.also {
+        log.info { "createHandle(config) - done" }
     }
 
     /** Close all [StorageProxy] instances in this [EntityHandleManager]. */
@@ -182,6 +195,7 @@ class EntityHandleManager(
     private suspend fun <T : Storable, R : Referencable> createSingletonHandle(
         config: HandleConfig<T, R>
     ): Handle {
+        log.info { "createSingletonHandle(config) - enter" }
         val singletonConfig = SingletonHandle.Config(
             name = config.handleName,
             spec = config.spec,
@@ -205,12 +219,15 @@ class EntityHandleManager(
             HandleMode.Write -> object : WriteSingletonHandle<T> by singletonHandle {}
             HandleMode.ReadWrite -> object : ReadWriteSingletonHandle<T> by singletonHandle {}
             else -> throw Error("Singleton Handles do not support mode ${config.spec.mode}")
+        }.also {
+            log.info { "createSingletonHandle(config) - exit" }
         }
     }
 
     private suspend fun <T : Storable, R : Referencable> createCollectionHandle(
         config: HandleConfig<T, R>
     ): Handle {
+        log.info { "createColectionHandle(config) - enter" }
         val collectionConfig = CollectionHandle.Config(
             name = config.handleName,
             spec = config.spec,
@@ -240,6 +257,8 @@ class EntityHandleManager(
             HandleMode.ReadWriteQuery ->
                 object : ReadWriteQueryCollectionHandle<T, Any> by collectionHandle {}
         }
+    }.also {
+        log.info { "createColectionHandle(config) - exit" }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -247,17 +266,26 @@ class EntityHandleManager(
         storageKey: StorageKey,
         schema: Schema,
         storageMode: StorageMode
-    ): SingletonProxy<R> = proxyMutex.withLock {
-        singletonStorageProxies.getOrPut(storageKey) {
-            val activeStore = stores.get(
-                SingletonStoreOptions<Referencable>(
-                    storageKey = storageKey,
-                    type = SingletonType(EntityType(schema)),
-                    mode = storageMode
-                )
-            ).activate(activationFactory)
-            SingletonProxy(activeStore, CrdtSingleton(), scheduler)
-        } as SingletonProxy<R>
+    ): SingletonProxy<R> {
+        log.info { "singletonStoreProxy($storageKey) - entered" }
+        return proxyMutex.withLock {
+            log.info { "singletonStoreProxy($storageKey) - lock achieved" }
+            singletonStorageProxies.getOrPut(storageKey) {
+                val activeStore = stores.get(
+                    SingletonStoreOptions<Referencable>(
+                        storageKey = storageKey,
+                        type = SingletonType(EntityType(schema)),
+                        mode = storageMode
+                    )
+                ).also {
+                    log.info { "singletonStoreProxy($storageKey) - store created, activating" }
+                }.activate(activationFactory)
+                log.info { "singletonStoreProxy($storageKey) - activated" }
+                SingletonProxy(activeStore, CrdtSingleton(), scheduler)
+            } as SingletonProxy<R>
+        }.also {
+            log.info { "singletonStoreProxy($storageKey) - exited" }
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -265,17 +293,25 @@ class EntityHandleManager(
         storageKey: StorageKey,
         schema: Schema,
         storageMode: StorageMode
-    ): CollectionProxy<R> = proxyMutex.withLock {
-        collectionStorageProxies.getOrPut(storageKey) {
-            val activeStore = stores.get(
-                CollectionStoreOptions<Referencable>(
-                    storageKey = storageKey,
-                    type = CollectionType(EntityType(schema)),
-                    mode = storageMode
-                )
-            ).activate(activationFactory)
-            CollectionProxy(activeStore, CrdtSet(), scheduler)
-        } as CollectionProxy<R>
+    ): CollectionProxy<R> {
+        log.info { "collectionStoreProxy($storageKey) - entered" }
+        return proxyMutex.withLock {
+            collectionStorageProxies.getOrPut(storageKey) {
+                val activeStore = stores.get(
+                    CollectionStoreOptions<Referencable>(
+                        storageKey = storageKey,
+                        type = CollectionType(EntityType(schema)),
+                        mode = storageMode
+                    )
+                ).also {
+                    log.info { "collectionStoreProxy($storageKey) - store created, activating" }
+                }.activate(activationFactory)
+                log.info { "collectionStoreProxy($storageKey) - activated" }
+                CollectionProxy(activeStore, CrdtSet(), scheduler)
+            } as CollectionProxy<R>
+        }.also {
+            log.info { "collectionStoreProxy($storageKey) - exited" }
+        }
     }
 }
 
