@@ -245,11 +245,12 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      * Closes this [StorageProxy]. It will no longer receive messages from its associated [Store].
      * Attempting to perform an operation on a closed [StorageProxy] will result in an exception
      * being thrown.
+     *
+     * Must be called from within the Scheduler's coroutine context.
      */
     fun close() {
-        scheduler.scope.launch {
-            _crdt = null
-        }
+        log.info { "Closing" }
+        _crdt = null
         store.close()
         stateHolder.update { it.setState(ProxyState.CLOSED) }
     }
@@ -346,7 +347,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     suspend fun onMessage(message: ProxyMessage<Data, Op, T>) = coroutineScope {
         log.debug { "onMessage: $message" }
         if (stateHolder.value.state == ProxyState.CLOSED) {
-            log.info { "in closed state, received message: $message" }
+            log.debug { "in closed state, received message: $message" }
             return@coroutineScope
         }
 
@@ -357,9 +358,12 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
             return@coroutineScope
         }
 
-        log.debug { "onMessage: $message, scheduling handle" }
         scheduler.schedule(
             MessageFromStoreTask {
+                if (stateHolder.value.state == ProxyState.CLOSED) {
+                    log.debug { "in closed state, skipping handling of: $message" }
+                    return@MessageFromStoreTask
+                }
                 when (message) {
                     is ProxyMessage.ModelUpdate -> processModelUpdate(message.model)
                     is ProxyMessage.Operations -> processModelOps(message.operations)

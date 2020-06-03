@@ -56,6 +56,7 @@ import arcs.core.util.Time
 import arcs.core.util.guardedBy
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 /**
  * Creates [Entity] handles based on [HandleMode], such as
@@ -158,11 +159,13 @@ class EntityHandleManager(
 
     /** Close all [StorageProxy] instances in this [EntityHandleManager]. */
     suspend fun close() {
-        proxyMutex.withLock {
-            singletonStorageProxies.values.forEach { it.close() }
-            collectionStorageProxies.values.forEach { it.close() }
-            singletonStorageProxies.clear()
-            collectionStorageProxies.clear()
+        withContext(scheduler.scope.coroutineContext) {
+            proxyMutex.withLock {
+                singletonStorageProxies.values.forEach { it.close() }
+                collectionStorageProxies.values.forEach { it.close() }
+                singletonStorageProxies.clear()
+                collectionStorageProxies.clear()
+            }
         }
     }
 
