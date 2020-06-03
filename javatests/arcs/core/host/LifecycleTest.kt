@@ -185,10 +185,13 @@ class LifecycleTest {
         // when the arc is paused, so we need to re-create them after unpausing.
         // TODO: allow test handles to persist across arc shutdown?
         val makeHandles = suspend {
+            log("Making handles")
             Pair(
                 testHost.singletonForTest<PausingParticle_Data>(arc.id, name, "data").awaitReady(),
                 testHost.collectionForTest<PausingParticle_List>(arc.id, name, "list").awaitReady()
-            )
+            ).also {
+                "Handles made"
+            }
         }
         val (data1, list1) = makeHandles()
         withContext(data1.dispatcher + CoroutineName("Initialization")) {

@@ -110,6 +110,7 @@ abstract class AbstractArcHost(
     }
 
     override suspend fun unpause() {
+        log.info { "unpausing" }
         stores.reset()
         paused = false
         pausedArcs.forEach {
@@ -255,6 +256,7 @@ abstract class AbstractArcHost(
         }
 
     override suspend fun startArc(partition: Plan.Partition) {
+        log.info { "starting arc: $partition" }
         val context = lookupOrCreateArcHostContext(partition.arcId)
 
         if (paused) {
@@ -302,6 +304,7 @@ abstract class AbstractArcHost(
         spec: Plan.Particle,
         context: ArcHostContext
     ): ParticleContext {
+        log.info { "Starting particle: $spec" }
         val particle = instantiateParticle(ParticleIdentifier.from(spec.location), spec)
 
         val particleContext = lookupParticleContextOrCreate(
@@ -337,6 +340,7 @@ abstract class AbstractArcHost(
             )
             particleContext.handles[handleName] = handle
             if (handleConnection.mode.canRead) {
+                log.info { "expecting ready for $handleName" }
                 // Once all of the readable handles for this particle have received their
                 // [StorageEvent.READY] notification, we need to call [Particle.onReady].
                 particleContext.expectReady(handle)
@@ -347,14 +351,19 @@ abstract class AbstractArcHost(
         // ParticleContext's lifecycle-notification method to the handles' storage events.
         particleContext.handles.forEach { (name, handle) ->
             if (spec.handles[name]?.mode?.canRead == true) {
+                log.info { "registering for events for $name" }
                 // Particles with readable handles need to be notified for storage events against
                 // those handles, but a direct connection is difficult in the current architecture.
                 // Instead, we'll use the [ParticleContext] instance to manage the particle
                 // lifecycle APIs and thread events from the StorageProxy up via a callback.
-                handle.registerForStorageEvents { particleContext.notify(it, handle) }
+                handle.registerForStorageEvents {
+                    log.info { "Storage event: $it on $handle" }
+                    particleContext.notify(it, handle)
+                }
             }
         }
 
+        log.info { "particle started" }
         return particleContext
     }
 
