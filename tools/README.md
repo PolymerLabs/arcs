@@ -51,3 +51,14 @@ are two ways to run them:
 
    ```
    ./run-android-e2e-tests-on-firebase
+
+## Update Golden files for tests
+
+1. Use script to generate all the golden files
+    ```
+    tools/update-goldens
+    ```
+
+2. Verify that goldens are correct
+
+3. Commit changes

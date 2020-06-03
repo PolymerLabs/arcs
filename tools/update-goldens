@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -e
+
+source $(dirname $0)/logging.sh
+
+cd $ROOT
+
+status "[ 1 / 5 ] Kotlin Goldens for Jvm and Wasm"
+tools/sigh schema2wasm --quiet --kotlin src/tools/tests/golden.arcs --outdir src/tools/tests/goldens/ --outfile generated-schemas.jvm.kt
+tools/sigh schema2wasm --quiet --kotlin --wasm src/tools/tests/golden.arcs --outdir src/tools/tests/goldens/ --outfile generated-schemas.wasm.kt
+
+status "[ 2 / 5 ] C++ Golden"
+tools/sigh schema2wasm --quiet --cpp src/tools/tests/golden.arcs --outdir src/tools/tests/goldens/
+mv src/tools/tests/goldens/golden.h src/tools/tests/goldens/generated-schemas.h
+
+status "[ 3 / 5 ] Test Harness Golden, support for Kotlin only."
+tools/sigh schema2wasm --quiet --kotlin --test_harness src/tools/tests/golden.arcs --outdir src/tools/tests/goldens/ --outfile generated-test-harness.kt
+
+status "[ 4 / 5 ] Golden for Schema generation"
+tools/sigh schema2wasm --quiet --kotlin --test_harness src/tools/tests/golden_kt.arcs --outdir src/tools/tests/goldens/ --outfile kt_generated-schemas.kt
+
+status "[ 5 / 5 ] Recipe2Plan Golden"
+tools/sigh recipe2plan --quiet --format kotlin java/arcs/core/data/testdata/WriterReaderExample.arcs --outdir src/tools/tests/goldens/ --outfile WriterReaderExample.kt
+
