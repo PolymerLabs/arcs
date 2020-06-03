@@ -151,7 +151,13 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
     this._annotations = annotations;
   }
   getAnnotation(name: string): AnnotationRef | null {
-    return this.annotations.find(a => a.name === name);
+    const annotations = this.findAnnotations(name);
+    assert(annotations.length <= 1,
+        `Multiple annotations found for '${name}'. Use findAnnotations instead.`);
+    return annotations.length === 0 ? null : annotations[0];
+  }
+  findAnnotations(name: string): AnnotationRef[] {
+    return this.annotations.filter(a => a.name === name);
   }
 }
 
@@ -361,7 +367,13 @@ export class ParticleSpec {
     this._annotations = annotations;
   }
   getAnnotation(name: string): AnnotationRef | null {
-    return this.annotations.find(a => a.name === name);
+    const annotations = this.findAnnotations(name);
+    assert(annotations.length <= 1,
+        `Multiple annotations found for '${name}'. Use findAnnotations instead.`);
+    return annotations.length === 0 ? null : annotations[0];
+  }
+  findAnnotations(name: string): AnnotationRef[] {
+    return this.annotations.filter(a => a.name === name);
   }
 
   /**

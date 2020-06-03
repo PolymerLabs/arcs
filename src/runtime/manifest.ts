@@ -1312,10 +1312,6 @@ ${e.message}
   private static _buildAnnotationRefs(manifest: Manifest, annotationRefItems: AstNode.AnnotationRef[]): AnnotationRef[] {
     const annotationRefs: AnnotationRef[] = [];
     for (const aRefItem of annotationRefItems) {
-      if (annotationRefs.some(a => a.name === aRefItem.name)) {
-        throw new ManifestError(
-            aRefItem.location, `annotation '${aRefItem.name}' already exists.`);
-      }
       const annotation = manifest.findAnnotationByName(aRefItem.name);
       if (!annotation) {
         throw new ManifestError(
