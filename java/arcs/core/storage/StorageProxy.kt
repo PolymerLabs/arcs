@@ -297,9 +297,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         checkNotClosed()
         log.debug { "Getting particle view (lifecycle)" }
 
-        // TODO: handle desync state?
-        check(stateHolder.value.state == ProxyState.SYNC) {
-            "Cannot get particle view directly while the storage proxy is unsynced; " +
+        check(stateHolder.value.state != ProxyState.NO_SYNC) {
+            "Cannot get particle view directly before the storage proxy's first sync; " +
             "current state is ${stateHolder.value.state}"
         }
 
