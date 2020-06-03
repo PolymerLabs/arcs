@@ -18,7 +18,6 @@ import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.InformationFlowLabel
 import arcs.core.data.InformationFlowLabel.Predicate
-import arcs.core.data.InformationFlowLabel.SemanticTag
 import arcs.core.data.Recipe
 import arcs.core.data.Recipe.Particle
 import arcs.core.util.TaggedLog
@@ -153,7 +152,7 @@ class InformationFlow private constructor(
 
         // Compute the label that is obtained by combining labels on all inputs.
         val mixedLabels = inputLabelsMap.values
-           .fold(InformationFlowLabels(emptySet())) { acc, cur -> acc join cur }
+            .fold(InformationFlowLabels(emptySet())) { acc, cur -> acc join cur }
 
         // Update all the outputs with the mixed label value.
         // TODO(bgogul): Fields of the connections.
@@ -185,7 +184,7 @@ class InformationFlow private constructor(
             accessPathLabels
                 .filterKeys { accessPath -> accessPath.root == handleConnection }
                 .map { (accessPath, labels) ->
-                     AccessPath(handle, accessPath.selectors) to labels
+                    AccessPath(handle, accessPath.selectors) to labels
                 }.toMap()
         )
     }
@@ -206,7 +205,7 @@ class InformationFlow private constructor(
             accessPathLabels
                 .filterKeys { accessPath -> accessPath.root == handle }
                 .map { (accessPath, labels) ->
-                     AccessPath(handleConnection, accessPath.selectors) to labels
+                    AccessPath(handleConnection, accessPath.selectors) to labels
                 }.toMap()
         )
     }
@@ -288,7 +287,7 @@ class InformationFlow private constructor(
 }
 
 /** Return the [InformationFlowLabel] occurences in the predicate. */
-private fun Predicate.labels(): List<InformationFlowLabel> = when(this) {
+private fun Predicate.labels(): List<InformationFlowLabel> = when (this) {
     is Predicate.Label -> listOf(label)
     is Predicate.Not -> predicate.labels()
     is Predicate.Or -> lhs.labels() + rhs.labels()
@@ -319,7 +318,7 @@ fun InformationFlow.AnalysisResult.verify(particle: Recipe.Particle, check: Chec
 
     // Returns true if all paths satisfy at least one of the conjuncts in the check.
     return labelsForAllReachingPaths.all { label ->
-         assertConjuncts.any { (assertMask, assertConjunct) ->
+        assertConjuncts.any { (assertMask, assertConjunct) ->
             val maskedLabel = (label.clone() as BitSet).apply { and(assertMask) }
             maskedLabel.equals(assertConjunct)
         }
