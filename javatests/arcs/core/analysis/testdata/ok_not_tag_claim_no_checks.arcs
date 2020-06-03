@@ -1,0 +1,11 @@
+// succeeds when a "not tag" is claimed and there are no checks
+particle P1
+  foo: writes Foo {}
+  claim foo is not trusted
+particle P2
+  bar: reads Foo {}
+recipe R
+  P1
+    foo: writes h
+  P2
+    bar: reads h

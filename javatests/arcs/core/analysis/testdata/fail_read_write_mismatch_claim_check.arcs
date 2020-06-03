@@ -1,0 +1,9 @@
+// fails when an inout handle claims a different tag from the one it checks
+particle P
+  foo: reads writes Foo {}
+  check foo is t1
+  claim foo is t2
+recipe R
+  P
+    foo: reads writes h
+

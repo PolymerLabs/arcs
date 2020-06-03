@@ -1,0 +1,7 @@
+// succeeds for a negated tag check when the tag is missing
+particle P
+  bar: reads Foo {}
+  check bar is not private
+recipe R
+  P
+    bar: reads h

@@ -1,0 +1,8 @@
+// succeeds when an inout handle claims the same tag it checks
+particle P
+  foo: reads writes Foo {}
+  check foo is t
+  claim foo is t
+recipe R
+  P
+    foo: reads writes h

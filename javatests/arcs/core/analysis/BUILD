@@ -9,7 +9,10 @@ package(default_visibility = ["//visibility:public"])
 
 arcs_kt_jvm_test_suite(
     name = "analysis",
-    data = ["//java/arcs/core/data/testdata:examples"],
+    data = [
+        "//java/arcs/core/data/testdata:examples",
+        "//javatests/arcs/core/analysis/testdata:example_manifest_protos",
+    ],
     package = "arcs.core.analysis",
     deps = [
         "//java/arcs/core/analysis",

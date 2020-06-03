@@ -1,0 +1,7 @@
+// fails when handle has no inputs
+particle P
+  bar: reads Foo {}
+  check bar is trusted
+recipe R
+  P
+    bar: reads h

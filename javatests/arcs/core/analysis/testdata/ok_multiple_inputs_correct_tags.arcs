@@ -1,0 +1,17 @@
+// succeeds when handle has multiple inputs with the right tags
+particle P1
+  foo: writes Foo {}
+  claim foo is trusted
+particle P2
+  foo: writes Foo {}
+  claim foo is trusted
+particle P3
+  bar: reads Foo {}
+  check bar is trusted
+recipe R
+  P1
+    foo: writes h
+  P2
+    foo: writes h
+  P3
+    bar: reads h

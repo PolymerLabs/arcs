@@ -1,0 +1,17 @@
+// fails when a check including multiple tags isn't met
+particle P1
+  foo: writes Foo {}
+  claim foo is tag1
+particle P2
+  foo: writes Foo {}
+  claim foo is someOtherTag
+particle P3
+  bar: reads Foo {}
+  check bar is tag1 or is tag2
+recipe R
+  P1
+    foo: writes h
+  P2
+    foo: writes h
+  P3
+    bar: reads h
