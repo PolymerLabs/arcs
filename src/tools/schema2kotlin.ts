@@ -541,11 +541,22 @@ ${lines}
       'expirationTimestamp = expirationTimestamp'
     ]);
 
+    const copyMethod = `fun copy(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${name}(${ktUtils.joinWithIndents(this.fieldsForCopy, 8+name.length, 3)})`;
+
+    // Add clauses to copy entity base data.
+    if (this.node.variableName !== null) {
+      // Calculate which line to append the clause.
+
+
+    }
+
+    const copyBase = `.also { this.copyInto(it) }`;
+
     return `${this.opts.wasm ? `` : `/**
          * Use this method to create a new, distinctly identified copy of the entity.
          * Storing the copy will result in a new copy of the data being stored.
          */`}
-        fun copy(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${name}(${ktUtils.joinWithIndents(this.fieldsForCopy, 8+name.length, 3)})
+        ${copyMethod}
         ${this.opts.wasm ? `` : `/**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.

@@ -316,6 +316,34 @@ describe('schema2kotlin', () => {
         fun copy(num: Double = this.num) = T_H1(num = num)
         `
     ));
+    it('copes underlying data for type variables.', async () => await assertCopyMethods(
+      `particle T
+         h1: reads ~a with Thing {num: Number}`,
+      `/**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
+        fun copy(num: Double = this.num) = T_H1(num = num)
+            .also { this.copyInto(it) }
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(num: Double = this.num) = T_H1(
+            num = num,
+            entityId = entityId,
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
+        ).also { this.copyInto(it) }`
+    ));
+    // TODO(alxr): Why do we omit the docstring for Wasm?
+    it('generates only copy method by entity fields for wasm', async () => await assertCopyMethodsForWasm(
+      `particle T
+         h1: reads Thing {num: Number}`,
+      `
+        fun copy(num: Double = this.num) = T_H1(num = num)
+        `
+    ));
     async function assertClassDefinition(manifestString: string, expectedValue: string) {
       await assertGeneratorComponent<string>(
         manifestString,
