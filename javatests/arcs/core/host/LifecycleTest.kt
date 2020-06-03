@@ -12,6 +12,7 @@ package arcs.core.host
 
 import arcs.core.allocator.Allocator
 import arcs.core.allocator.Arc
+import arcs.core.common.ArcId
 import arcs.core.data.Plan
 import arcs.core.entity.awaitReady
 import arcs.core.storage.StoreManager
@@ -27,7 +28,6 @@ import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.After
@@ -46,7 +46,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 @OptIn(ExperimentalCoroutinesApi::class)
 class LifecycleTest {
     @get:Rule
-    val log = LogRule(Log.Level.Debug)
+    val log = LogRule(Log.Level.Info)
 
     private lateinit var schedulerProvider: JvmSchedulerProvider
     private lateinit var scheduler: Scheduler
@@ -175,15 +175,10 @@ class LifecycleTest {
     }
 
     @Test
-    fun pausing() = runTest(timeoutMillis = 15000) {
+    fun pausing() = runBlocking {
         val name = "PausingParticle"
         val arc = startArc(PausingTestPlan)
-        var runningJob = Job()
-        var stoppedJob = Job()
-        arc.onRunning { runningJob.complete() }
-        arc.onStopped { stoppedJob.complete() }
 
-        runningJob.join()
         log("Arc is Running!")
 
         // Test handles use the same storage proxies as the real handles which will be closed
@@ -205,16 +200,10 @@ class LifecycleTest {
         list1.close()
 
         // Pause!
-        log("Pausing Arc!!!")
         testHost.pause()
-        stoppedJob.join()
-        log("Arc is Paused, Unpausing!!!")
 
         // Now unpause and update the singleton.
-        runningJob = Job()
         testHost.unpause()
-        runningJob.join()
-        log("Arc is unpaused!")
 
         val particleFirstPause: PausingParticle = testHost.getParticle(arc.id, name)
         val (data2, list2) = makeHandles()
@@ -225,12 +214,8 @@ class LifecycleTest {
         data2.close()
         list2.close()
 
-        log("Stopping Arc!")
-        stoppedJob = Job()
         arc.stop()
         arc.waitForStop()
-        stoppedJob.join()
-        log("Arc is stopped!")
 
         // Check that the events we expected showed up in the correct order.
         assertVariableOrdering(
@@ -276,14 +261,38 @@ class LifecycleTest {
         }
     }
 
-    private suspend fun startArc(plan: Plan): Arc {
+    private suspend fun startArc(plan: Plan): ArcIsh {
+        log("Starting Arc for $plan")
         val arc = allocator.startArcForPlan(plan).waitForStart()
         waitForAllTheThings()
-        return arc
+        return object : ArcIsh {
+            override val id: ArcId
+                get() = arc.id
+            override val arcState: ArcState
+                get() = arc.arcState
+            override suspend fun stop() {
+                log("Stopping Arc")
+                arc.stop()
+                log("Stopped Arc")
+            }
+            override suspend fun waitForStop(): Arc {
+                log("Waiting for stop")
+                val arc = arc.waitForStop()
+                log("Done waiting for stop")
+                return arc
+            }
+        }
     }
 
     private suspend fun waitForAllTheThings() {
         scheduler.waitForIdle()
         storeManager.waitForIdle()
+    }
+
+    private interface ArcIsh {
+        val id: ArcId
+        val arcState: ArcState
+        suspend fun stop()
+        suspend fun waitForStop(): Arc
     }
 }
