@@ -966,12 +966,14 @@ AnnotationNode
   = 'annotation' whiteSpace name:lowerIdent params:('(' whiteSpace? first:AnnotationParam rest:(whiteSpace? ',' whiteSpace? AnnotationParam)* whiteSpace? ')')? eolWhiteSpace items:(Indent (SameIndent AnnotationNodeItem)*)?
   {
     const targets = optional(items, extractIndented, []).find(item => item.kind === 'annotation-targets');
+    const multiple = optional(items, extractIndented, []).find(item => item.kind === 'annotation-multiple');
     return toAstNode<AstNode.AnnotationNode>({
         kind: 'annotation-node',
         name,
         params: optional(params, params => [params[2], ...(params[3].map(item => item[3]))], []),
         targets: targets ? targets.targets : [],
         retention: optional(items, extractIndented, []).find(item => item.kind === 'annotation-retention').retention,
+        allowMultiple: multiple ? multiple.allowMultiple : false,
         doc: optional(optional(items, extractIndented, []).find(item => item.kind === 'annotation-doc'), d => d.doc, '')
     });
   }
@@ -988,6 +990,7 @@ AnnotationParam = name:fieldName ':' whiteSpace? type:SchemaPrimitiveType {
 AnnotationNodeItem
   = AnnotationTargets
   / AnnotationRetention
+  / AnnotationMultiple
   / AnnotationDoc
 
 AnnotationTargetValue = 'Recipe' / 'Particle' / 'HandleConnection' / 'Store' / 'Handle' / 'SchemaField' / 'Schema'
@@ -1005,6 +1008,13 @@ AnnotationRetention = 'retention:' whiteSpace retention:AnnotationRetentionValue
   return toAstNode<AstNode.AnnotationRetention>({
     kind: 'annotation-retention',
     retention
+  });
+}
+
+AnnotationMultiple = 'allowMultiple:' whiteSpace bool:('true'i / 'false'i) eolWhiteSpace? {
+  return toAstNode<AstNode.AnnotationMultiple>({
+    kind: 'annotation-multiple',
+    allowMultiple: bool.toLowerCase() === 'true'
   });
 }
 

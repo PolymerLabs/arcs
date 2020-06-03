@@ -397,6 +397,7 @@ export interface AnnotationNode extends BaseNode {
   params: AnnotationParam[];
   targets: AnnotationTargetValue[];
   retention: AnnotationRetentionValue;
+  allowMultiple: boolean;
   doc: string;
 }
 
@@ -423,6 +424,11 @@ export interface AnnotationRetention extends BaseNode {
 export interface AnnotationDoc extends BaseNode {
   kind: 'annotation-doc';
   doc: string;
+}
+
+export interface AnnotationMultiple extends BaseNode {
+  kind: 'annotation-multiple';
+  allowMultiple: boolean;
 }
 
 export interface AnnotationRef extends BaseNode {
