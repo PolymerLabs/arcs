@@ -66,6 +66,7 @@ export class KotlinGenerationUtils {
    *
    * @param items strings to join
    * @param extraIndent (optional) add other indentation when calculating line limits.
+   * @param numberOfIndents (optional) level of indentation
    */
   joinWithIndents(items: string[], extraIndent: number = 0, numberOfIndents: number = 1): string {
     const candidate = items.join(', ');
