@@ -278,9 +278,7 @@ class InformationFlow private constructor(
             val analysis = InformationFlow(recipe, ingress)
             return AnalysisResult(
                 recipe = recipe,
-                fixpoint = analysis.computeFixpoint(graph) {
-                    it.toString { i -> "${analysis.labels[i]}" }
-                },
+                fixpoint = analysis.computeFixpoint(graph),
                 checks = analysis.particleChecks,
                 labels = analysis.labels,
                 labelIndices = analysis.labelIndices

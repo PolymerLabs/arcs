@@ -37,14 +37,6 @@ class InformationFlowTest {
         return "${accessPath} is $predicate"
     }
 
-    private fun displayResults(test: String, recipe: Recipe, result: InformationFlow.AnalysisResult) {
-        val labels = result.labels
-        val resultStr = result.fixpoint.toString(test) {
-            v -> v.toString {index -> "${labels[index]}"}
-        }
-        print(resultStr)
-    }
-
     /**
      * Describes a test for a DFA, where [file] contains the manifest proto, [ingresses] is the
      * name of ingress handles, and [violation] is the expected violation (if any).
@@ -59,7 +51,6 @@ class InformationFlowTest {
     private fun getViolatingChecks(test: String, ingresses: List<String>): List<String> {
         val recipe = parseManifestWithSingleRecipe(test)
         val result = InformationFlow.computeLabels(recipe, ingresses)
-        displayResults(test, recipe, result)
         return result.checks.flatMap { (particle, checks) ->
             checks.filter {
                 check -> !result.verify(particle, check)
@@ -69,7 +60,6 @@ class InformationFlowTest {
 
     @Test
     fun successDFA() {
-        Log.level = Log.Level.Debug
         val tests = listOf(
             DFATest("ok-directly-satisfied", listOf("P1")),
             DFATest("ok-not-tag-claim-no-checks", listOf("P1")),
@@ -91,7 +81,6 @@ class InformationFlowTest {
 
     @Test
     fun failDFA() {
-        Log.level = Log.Level.Debug
         val tests = listOf(
             DFATest("fail-different-tag", listOf("P1"), listOf("hc:P2.bar is trusted")),
             DFATest("fail-no-tags", listOf("P1"), listOf("hc:P2.bar is trusted")),
