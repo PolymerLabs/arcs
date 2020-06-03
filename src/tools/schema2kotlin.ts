@@ -541,17 +541,6 @@ ${lines}
       'expirationTimestamp = expirationTimestamp'
     ]);
 
-    const fun = `fun`;
-
-    const copy = ktUtils.applyFun('copy', this.fieldsForCopy);
-
-    const copyFun = `fun ${copy} = `;
-
-    const copyInst = ktUtils.applyFun(name, this.fieldsForCopy, copyFun.length);
-
-    const copyDefinition = `${copyFun}${copyInst}`;
-
-
     return `${this.opts.wasm ? `` : `/**
          * Use this method to create a new, distinctly identified copy of the entity.
          * Storing the copy will result in a new copy of the data being stored.

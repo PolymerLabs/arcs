@@ -11,6 +11,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {KotlinGenerator, Schema2Kotlin} from '../schema2kotlin.js';
 import {SchemaGraph} from '../schema2graph.js';
+import minimist from 'minimist';
 
 describe('schema2kotlin', () => {
   describe('Handle Interface Type', () => {
@@ -288,7 +289,7 @@ describe('schema2kotlin', () => {
         expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
     ) : EntityBase("T_H1", SCHEMA, entityId, creationTimestamp, expirationTimestamp)`
     ));
-    it('generates copy methods by entity fields', async () => await assertCopyMethods(
+    it('generates copy and mutate by entity fields', async () => await assertCopyMethods(
       `particle T
          h1: reads Thing {num: Number}`,
       `/**
@@ -307,12 +308,29 @@ describe('schema2kotlin', () => {
             expirationTimestamp = expirationTimestamp
         )`
     ));
+    // TODO(alxr): Why do we omit the docstring for Wasm?
+    it('generates only copy method by entity fields for wasm', async () => await assertCopyMethodsForWasm(
+      `particle T
+         h1: reads Thing {num: Number}`,
+      `
+        fun copy(num: Double = this.num) = T_H1(num = num)
+        `
+    ));
     async function assertClassDefinition(manifestString: string, expectedValue: string) {
       await assertGeneratorComponent<string>(
         manifestString,
         generator => generator.generateClassDefinition(),
         expectedValue);
     }
+
+    async function assertCopyMethodsForWasm(manifestString: string, expectedValue: string) {
+      await assertGeneratorComponent<string>(
+        manifestString,
+        generator => generator.generateCopyMethods(),
+        expectedValue,
+        {_: [], wasm: true});
+    }
+
     async function assertCopyMethods(manifestString: string, expectedValue: string) {
       await assertGeneratorComponent<string>(
         manifestString,
@@ -342,12 +360,13 @@ describe('schema2kotlin', () => {
   async function assertGeneratorComponent<T>(
     manifestString: string,
     extractor: (generator: KotlinGenerator) => T,
-    expectedValue: T) {
+    expectedValue: T,
+    opts: minimist.ParsedArgs = {_: []}) {
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
     const [particle] = manifest.particles;
 
-    const schema2kotlin = new Schema2Kotlin({_: []});
+    const schema2kotlin = new Schema2Kotlin(opts);
     const generators = await schema2kotlin.calculateNodeAndGenerators(particle);
     const generator = (generators[0].generator as KotlinGenerator);
     assert.deepEqual(extractor(generator), expectedValue);
