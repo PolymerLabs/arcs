@@ -163,6 +163,21 @@ class AccessPathLabelsTest {
     }
 
     @Test
+    fun prettyPrintWithPrefix() {
+        assertThat(top.toString("|  ") { x -> labels[x] }).isEqualTo("|  TOP")
+        assertThat(bottom.toString("~~~") { x -> labels[x] }).isEqualTo("~~~BOTTOM")
+        assertThat(inputAgeIsAB.toString("| ") { x -> labels[x] }).isEqualTo(
+            "| hcs:TestParticle.input.age -> {{A, B}}"
+        )
+        assertThat(
+            (inputNameIsABorACAgeIsAB.toString("| ") { x -> labels[x] }).lines()
+        ).containsExactly(
+            "| hcs:TestParticle.input.name -> {{A, B}, {A, C}}",
+            "| hcs:TestParticle.input.age -> {{A, B}}"
+        )
+    }
+
+    @Test
     fun isEquivalentTo_bottom() {
         with(bottom) {
             assertThat(isEquivalentTo(bottom)).isTrue()

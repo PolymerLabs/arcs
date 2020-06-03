@@ -65,15 +65,15 @@ data class AccessPathLabels private constructor(
         return AccessPathLabels.makeValue(result)
     }
 
-    override fun toString() = toString(transform = null)
+    override fun toString() = toString(linePrefix = "", transform = null)
 
-    fun toString(transform: ((Int) -> String)?): String {
+    fun toString(linePrefix: String = "", transform: ((Int) -> String)?): String {
         return when {
-            _accessPathLabels.isTop -> "TOP"
-            _accessPathLabels.isBottom -> "BOTTOM"
-            else -> requireNotNull(_accessPathLabels.value).map {
-                (accessPath, labels) -> "$accessPath -> ${labels.toString(transform)}"
-            }.joinToString("\n")
+            _accessPathLabels.isTop -> "${linePrefix}TOP"
+            _accessPathLabels.isBottom -> "${linePrefix}BOTTOM"
+            else -> requireNotNull(_accessPathLabels.value).map { (accessPath, labels) ->
+                "$accessPath -> ${labels.toString(transform)}"
+            }.joinToString("\n$linePrefix", prefix = linePrefix)
         }
     }
 
