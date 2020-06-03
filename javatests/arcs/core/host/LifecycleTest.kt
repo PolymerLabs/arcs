@@ -222,6 +222,8 @@ class LifecycleTest {
         arc.stop()
         arc.waitForStop()
 
+        log("Asserting")
+
         // Check that the events we expected showed up in the correct order.
         assertVariableOrdering(
             particleFirstPause.events,
@@ -236,6 +238,8 @@ class LifecycleTest {
                 "onShutdown"
             )
         )
+
+        log("Test is done")
     }
 
     /**

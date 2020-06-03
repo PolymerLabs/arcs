@@ -115,6 +115,7 @@ abstract class AbstractArcHost(
         paused = false
         pausedArcs.forEach {
             try {
+                log.info { "unpause() starting arc: $it" }
                 startArc(it)
             } catch (e: Exception) {
                 log.error(e) { "Failure starting arc." }
@@ -277,22 +278,29 @@ abstract class AbstractArcHost(
         partition.particles.forEach { particleSpec ->
             context.particles[particleSpec.particleName] = startParticle(particleSpec, context)
         }
+        log.info { "starting arc: $partition, particles started, performing lifecycle" }
 
         // Call lifecycle methods given current state.
         performLifecycleForContext(context)
+
+        log.info { "starting arc: $partition - lifecycle performed, initiating sync" }
 
         // All particles have now received their onStart events. Trigger any proxy sync
         // requests so that the ensuing onReady events will fire after this point.
         val dispatcher = SchedulerDispatcher(schedulerProvider(partition.arcId))
         context.entityHandleManager.initiateProxySync()
+        log.info { "starting arc: $partition - sync initiated, notifying write-only particles" }
         context.particles.values.forEach {
             withContext(dispatcher) { it.notifyWriteOnlyParticles() }
         }
+        log.info { "starting arc: $partition - write-only particles notified, requesting resurrection (maybe?)" }
 
         // If the platform supports resurrection, request it for this Arc's StorageKeys
         maybeRequestResurrection(context)
 
+        log.info { "starting arc: $partition - updating arc host context" }
         updateArcHostContext(partition.arcId, context)
+        log.info { "starting arc: $partition - done" }
     }
 
     /**

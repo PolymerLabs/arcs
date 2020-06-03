@@ -35,10 +35,11 @@ class StoreManager {
             log.info { "Creating Store for ${storeOptions.storageKey}" }
             Store(storeOptions)
         } as Store<Data, Op, T>
-    }
+    }.also { "Returning store for ${storeOptions.storageKey}" }
 
     suspend fun waitForIdle() {
         storesMutex.withLock {
+            log.info { "waitingForIdle" }
             stores.values.forEach {
                 val wentIdle = withTimeoutOrNull(5000) { it.waitForActiveIdle() }
                 if (wentIdle == null) {
@@ -46,6 +47,7 @@ class StoreManager {
                 }
             }
         }
+        log.info { "waitingForIdle: complete" }
     }
 
     /**
@@ -54,5 +56,7 @@ class StoreManager {
     suspend fun reset() = storesMutex.withLock {
         log.info { "Resetting" }
         stores.clear()
+    }.also {
+        log.info { "Reset complete" }
     }
 }
