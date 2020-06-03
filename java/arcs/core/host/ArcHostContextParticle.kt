@@ -157,8 +157,8 @@ class ArcHostContextParticle(
     }
 
     private suspend inline fun <T> onHandlesReady(
-        coroutineContext: CoroutineContext = handles.dispatcher + CoroutineName(opName),
         opName: String = "whenHandlesReady",
+        coroutineContext: CoroutineContext = handles.dispatcher + CoroutineName(opName),
         crossinline block: suspend () -> T
     ): T {
         val onReadyJobs = mapOf(
