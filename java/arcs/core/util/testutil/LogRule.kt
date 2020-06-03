@@ -23,7 +23,8 @@ import org.junit.runners.model.Statement
 
 /** JUnit [TestRule] which prints wrappers around the log output from each test. */
 class LogRule(
-    private val logLevel: Log.Level = Log.Level.Debug
+    private val logLevel: Log.Level = Log.Level.Debug,
+    private val withTimes: Boolean = false
 ) : TestRule {
     private val taggedLog = TaggedLog { "TEST" }
     lateinit var loggedMessages: List<String>
@@ -39,7 +40,7 @@ class LogRule(
             println("|   ${desc.testName.padEnd(94, ' ')} |")
             println("+${"-".repeat(98)}+")
             println()
-            initLogForTest(messages, logLevel)
+            initLogForTest(messages, logLevel, withTimes)
             base.evaluate()
             println()
         }
@@ -52,7 +53,12 @@ class LogRule(
 
     companion object {
         /** Initializes [Log] for tests on the JVM. */
-        private fun initLogForTest(collectedMessages: MutableList<String>, logLevel: Log.Level) {
+        private fun initLogForTest(
+            collectedMessages: MutableList<String>,
+            logLevel: Log.Level,
+            withTimes: Boolean
+        ) {
+            val startTime = System.currentTimeMillis()
             Log.logIndex.value = 0
             Log.level = logLevel
             Log.writer = { level, renderedMessage, _ ->
@@ -74,11 +80,26 @@ class LogRule(
                     "\n$writer"
                 } ?: ""
 
-                String.format(
-                    Locale.ENGLISH,
-                    "%05d (%10s) %s: %s%s",
-                    index, Thread.currentThread().name, level, rawMessage, stackTrace
-                )
+                if (withTimes) {
+                    val time = System.currentTimeMillis()
+                    String.format(
+                        Locale.ENGLISH,
+                        "%05d %d(%d) (%10s) %s: %s%s",
+                        index,
+                        time,
+                        time - startTime,
+                        Thread.currentThread().name,
+                        level,
+                        rawMessage,
+                        stackTrace
+                    )
+                } else {
+                    String.format(
+                        Locale.ENGLISH,
+                        "%05d (%10s) %s: %s%s",
+                        index, Thread.currentThread().name, level, rawMessage, stackTrace
+                    )
+                }
             }
 
             val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
