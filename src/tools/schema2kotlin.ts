@@ -201,7 +201,7 @@ ${imports.join('\n')}
         if (constraint) {
           return generateInnerType(constraint);
         }
-        return nodes.find(n => n.fromVariable === (type as TypeVariable).variable.name).humanName(connection);
+        return nodes.find(n => n.variableName === (type as TypeVariable).variable.name).humanName(connection);
       } else {
         throw new Error(`Type '${type.tag}' not supported on code generated particle handle connections.`);
       }
