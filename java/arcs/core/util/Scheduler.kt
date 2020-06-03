@@ -229,16 +229,18 @@ class Scheduler(
      * [Task.Listener]s, collated by [Task.Listener.namespace].
      */
     private data class ListenersByNamespace(
-        private var listeners: Map<String, ListenersByName> = emptyMap()
+        val listeners: MutableMap<String, ListenersByName> = mutableMapOf()
     ) : Iterable<Task> {
         fun addListener(listener: Task.Listener): ListenersByNamespace {
             val listeners = (listeners[listener.namespace] ?: ListenersByName())
                 .addListener(listener)
 
-            return copy(listeners = this.listeners + (listener.namespace to listeners))
+            return copy(
+                listeners = (this.listeners + (listener.namespace to listeners)).toMutableMap()
+            )
         }
 
-        fun clear() { listeners = emptyMap() }
+        fun clear() = listeners.clear()
 
         override fun iterator(): Iterator<Task> = listeners.values.flatten().iterator()
     }
