@@ -542,15 +542,17 @@ abstract class AbstractArcHost(
             holder.getEntitySpec(handleName)
         )
         log.info { "createHandle($handleName) - calling handleManager" }
-        return handleManager.createHandle(
-            handleSpec,
-            connectionSpec.storageKey,
-            connectionSpec.ttl ?: Ttl.Infinite,
-            particleId,
-            immediateSync
-        ).also {
-            holder.setHandle(handleName, it)
-            log.info { "createHandle($handleName) - done" }
+        return withContext(Dispatchers.Default) {
+            handleManager.createHandle(
+                handleSpec,
+                connectionSpec.storageKey,
+                connectionSpec.ttl ?: Ttl.Infinite,
+                particleId,
+                immediateSync
+            ).also {
+                holder.setHandle(handleName, it)
+                log.info { "createHandle($handleName) - done" }
+            }
         }
     }
 
