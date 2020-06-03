@@ -9,7 +9,6 @@
  */
 import * as AstNode from '../manifest-ast-nodes.js';
 import {AnnotationRef} from '../recipe/annotation.js';
-import {ManifestError} from '../manifest.js';
 import {flatMap} from '../util.js';
 
 export enum PolicyEgressType {
@@ -80,7 +79,7 @@ export class Policy {
       buildAnnotationRefs: (ref: AstNode.AnnotationRef[]) => AnnotationRef[]): Policy {
     const annotationRefs = buildAnnotationRefs(node.annotationRefs);
 
-    checkNamesAreUnique(node.targets.map(target => ({...target, name: target.schemaName})));
+    checkNamesAreUnique(node.targets.map(target => ({name: target.schemaName})));
     const targets = node.targets.map(target => PolicyTarget.fromAstNode(target, buildAnnotationRefs));
 
     checkNamesAreUnique(node.configs);
@@ -256,11 +255,11 @@ function checkValueInEnum(value: any, enumDef: {}) {
 }
 
 /** Checks that the given AST nodes have unique names. Throws otherwise. */
-function checkNamesAreUnique(nodes: {name: string, location: AstNode.SourceLocation}[]) {
+function checkNamesAreUnique(nodes: {name: string}[]) {
   const names: Set<string> = new Set();
   for (const node of nodes) {
     if (names.has(node.name)) {
-      throw new ManifestError(node.location, `A definition for ${node.name} already exists.`);
+      throw new Error(`A definition for ${node.name} already exists.`);
     }
     names.add(node.name);
   }
