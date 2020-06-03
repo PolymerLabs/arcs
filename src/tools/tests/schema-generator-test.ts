@@ -75,7 +75,7 @@ testData.forEach(data => {
 
     Run the following command to update the golden file:
 
-    cp "bazel-bin/${data.generated}" "${data.golden}"
+    tools/update-goldens"
 `);
     });
   });
