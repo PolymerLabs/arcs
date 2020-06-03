@@ -79,7 +79,7 @@ data class ParticleContext(
                 }
             }
             StorageEvent.UPDATE -> {
-                if (particleState == ParticleState.Started) {
+                if (particleState == ParticleState.Running) {
                     particle.onUpdate()
                 }
             }
