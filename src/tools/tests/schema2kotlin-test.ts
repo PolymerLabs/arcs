@@ -288,17 +288,36 @@ describe('schema2kotlin', () => {
         expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
     ) : EntityBase("T_H1", SCHEMA, entityId, creationTimestamp, expirationTimestamp)`
     ));
+    it('generates copy methods by entity fields', async () => await assertCopyMethods(
+      `particle T
+         h1: reads Thing {num: Number}`,
+      `/**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
+        fun copy(num: Double = this.num) = T_H1(num = num)
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(num: Double = this.num) = T_H1(
+            num = num,
+            entityId = entityId,
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
+        )`
+    ));
     async function assertClassDefinition(manifestString: string, expectedValue: string) {
-      const manifest = await Manifest.parse(manifestString);
-      assert.lengthOf(manifest.particles, 1);
-      const [particle] = manifest.particles;
-
-      const schema2kotlin = new Schema2Kotlin({_: []});
-      const generators = await schema2kotlin.calculateNodeAndGenerators(particle);
-      const generator = (generators[0].generator as KotlinGenerator);
-      const component =  generator.generateClassDefinition();
-      assert.deepEqual(component, expectedValue);
-
+      await assertGeneratorComponent<string>(
+        manifestString,
+        generator => generator.generateClassDefinition(),
+        expectedValue);
+    }
+    async function assertCopyMethods(manifestString: string, expectedValue: string) {
+      await assertGeneratorComponent<string>(
+        manifestString,
+        generator => generator.generateCopyMethods(),
+        expectedValue);
     }
   });
 
@@ -316,5 +335,21 @@ describe('schema2kotlin', () => {
     const generators = await schema2kotlin.calculateNodeAndGenerators(particle);
     const components = schema2kotlin.generateParticleClassComponents(particle, generators);
     assert.deepEqual(extractor(components), expectedValue);
+  }
+
+  // Asserts that a certain component from the Kotlin Generator, equals the
+  // expected value.
+  async function assertGeneratorComponent<T>(
+    manifestString: string,
+    extractor: (generator: KotlinGenerator) => T,
+    expectedValue: T) {
+    const manifest = await Manifest.parse(manifestString);
+    assert.lengthOf(manifest.particles, 1);
+    const [particle] = manifest.particles;
+
+    const schema2kotlin = new Schema2Kotlin({_: []});
+    const generators = await schema2kotlin.calculateNodeAndGenerators(particle);
+    const generator = (generators[0].generator as KotlinGenerator);
+    assert.deepEqual(extractor(generator), expectedValue);
   }
 });

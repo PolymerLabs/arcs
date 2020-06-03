@@ -552,8 +552,7 @@ ${lines}
     const copyDefinition = `${copyFun}${copyInst}`;
 
 
-    return `\
-        ${this.opts.wasm ? `` : `/**
+    return `${this.opts.wasm ? `` : `/**
          * Use this method to create a new, distinctly identified copy of the entity.
          * Storing the copy will result in a new copy of the data being stored.
          */`}
@@ -562,8 +561,7 @@ ${lines}
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
          */
-        fun mutate(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${name}(${ktUtils.joinWithIndents(fieldsForMutate, 8+name.length, 3)})`}
-    `;
+        fun mutate(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${name}(${ktUtils.joinWithIndents(fieldsForMutate, 8+name.length, 3)})`}`;
   }
 
   generateClasses(schemaHash: string): string {
@@ -588,16 +586,7 @@ ${lines}
         ${this.opts.wasm ? `override var entityId = ""` : withFields(`init {
             ${this.fieldInitializers.join('\n            ')}
         }`)}
-        ${this.opts.wasm ? `` : `/**
-         * Use this method to create a new, distinctly identified copy of the entity.
-         * Storing the copy will result in a new copy of the data being stored.
-         */`}
-        fun copy(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${name}(${ktUtils.joinWithIndents(this.fieldsForCopy, 8+name.length, 3)})
-        ${this.opts.wasm ? `` : `/**
-         * Use this method to create a new version of an existing entity.
-         * Storing the mutation will overwrite the existing entity in the set, if it exists.
-         */
-        fun mutate(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${name}(${ktUtils.joinWithIndents(fieldsForMutate, 8+name.length, 3)})`}
+        ${this.generateCopyMethods()}
     ${this.opts.wasm ? `
         fun reset() {
           ${withFields(`${this.fieldsReset.join('\n            ')}`)}
