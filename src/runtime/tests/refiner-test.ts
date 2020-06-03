@@ -455,7 +455,7 @@ describe('normalisation', () => {
       const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.refinement, typeData);
       ref1.normalize();
       // normalized version of ref1 should be the same as ref2
-      assert.isTrue(ref1.expression.kind == 'BooleanPrimitiveNode');
+      assert.isTrue(ref1.expression.kind === 'BooleanPrimitiveNode');
       assert.isTrue(ref1.expression['value'], `expected expression (${expr}) to be trivially true`);
   };
   describe('Correctly handles date time units', () => {
