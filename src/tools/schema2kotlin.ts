@@ -418,23 +418,23 @@ export class KotlinGenerator implements ClassGenerator {
       assert(!isCollection, 'Collection fields not supported in Kotlin wasm yet.');
       this.fieldVals.push(
         `var ${fixed} = ${fixed}\n` +
-        `            get() = field\n` +
-        `            private set(_value) {\n` +
-        `                field = _value\n` +
-        `            }`
+        `    get() = field\n` +
+        `    private set(_value) {\n` +
+        `        field = _value\n` +
+        `    }`
       );
     } else if (isCollection) {
       this.fieldVals.push(
         `var ${fixed}: ${type}\n` +
-        `            get() = super.getCollectionValue(${quotedFieldName}) as ${type}\n` +
-        `            private set(_value) = super.setCollectionValue(${quotedFieldName}, _value)`
+        `    get() = super.getCollectionValue(${quotedFieldName}) as ${type}\n` +
+        `    private set(_value) = super.setCollectionValue(${quotedFieldName}, _value)`
         );
     } else {
       const defaultFallback = defaultVal === 'null' ? '' : ` ?: ${defaultVal}`;
       this.fieldVals.push(
         `var ${fixed}: ${type}\n` +
-        `            get() = super.getSingletonValue(${quotedFieldName}) as ${nullableType}${defaultFallback}\n` +
-        `            private set(_value) = super.setSingletonValue(${quotedFieldName}, _value)`
+        `    get() = super.getSingletonValue(${quotedFieldName}) as ${nullableType}${defaultFallback}\n` +
+        `    private set(_value) = super.setSingletonValue(${quotedFieldName}, _value)`
       );
     }
     this.fieldsReset.push(`${fixed} = ${defaultVal}`);
@@ -578,7 +578,7 @@ ${lines}
 
     ${this.generateClassDefinition()} {
 
-        ${withFields(`${this.fieldVals.join('\n        ')}`)}
+${withFields(ktUtils.indent(`${this.fieldVals.join('\n')}`,2))}
 
         ${this.opts.wasm ? `override var entityId = ""` : withFields(`init {
             ${this.fieldInitializers.join('\n            ')}
