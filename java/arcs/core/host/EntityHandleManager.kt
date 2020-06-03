@@ -256,9 +256,9 @@ class EntityHandleManager(
                 object : WriteQueryCollectionHandle<T, Any> by collectionHandle {}
             HandleMode.ReadWriteQuery ->
                 object : ReadWriteQueryCollectionHandle<T, Any> by collectionHandle {}
+        }.also {
+            log.info { "createColectionHandle(config) - exit" }
         }
-    }.also {
-        log.info { "createColectionHandle(config) - exit" }
     }
 
     @Suppress("UNCHECKED_CAST")
