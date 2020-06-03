@@ -339,9 +339,10 @@ describe('schema2kotlin', () => {
     // TODO(alxr): Why do we omit the docstring for Wasm?
     it('generates only copy method by entity fields for wasm', async () => await assertCopyMethodsForWasm(
       `particle T
-         h1: reads Thing {num: Number}`,
+         h1: reads  ~a with Thing {num: Number}`,
       `
         fun copy(num: Double = this.num) = T_H1(num = num)
+            .also { this.copyInto(it) }
         `
     ));
     async function assertClassDefinition(manifestString: string, expectedValue: string) {
