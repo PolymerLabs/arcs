@@ -81,7 +81,7 @@ export class SchemaNode {
   }
 
   get uniqueSchema() {
-    return !this.allSchemaNodes.some(s => s.schema != this.schema && s.schema.name == this.schema.name)
+    return !this.allSchemaNodes.some(s => s.schema !== this.schema && s.schema.name === this.schema.name);
   }
 
   // This will return the most "human friendly" name for the schema. This is the name (actual class
@@ -140,7 +140,7 @@ function* topLevelSchemas(type: Type, path: string[] = []):
     yield {schema: type.getEntitySchema(), path, variableName: null};
   } else if (type.hasVariable) {
     const schema = (type.canWriteSuperset && type.canWriteSuperset.getEntitySchema())
-    (type.canReadSubset && type.canReadSubset.getEntitySchema());
+      || (type.canReadSubset && type.canReadSubset.getEntitySchema());
     yield {schema, path, variableName: (type as TypeVariable).variable.name};
   }
 }
