@@ -576,10 +576,12 @@ class ReferenceModeStore private constructor(
     }
 
     companion object {
+        private val companionLog = TaggedLog { "ReferenceModeStore.Companion" }
         @Suppress("UNCHECKED_CAST")
         suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
             options: StoreOptions<Data, Op, T>
         ): ReferenceModeStore {
+            companionLog.info { "creating - ${options.storageKey}" }
             val refableOptions =
                 requireNotNull(
                     /* ktlint-disable max-line-length */
@@ -616,7 +618,9 @@ class ReferenceModeStore private constructor(
                 containerStore,
                 storageKey.backingKey,
                 type.containedType
-            )
+            ).also {
+                companionLog.info { "done creating - ${options.storageKey}" }
+            }
         }
     }
 }

@@ -431,14 +431,18 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
          */
         private const val MAX_UPDATE_SPINS = 1000
 
+        private val companionLog = TaggedLog { "DirectStore.Companion" }
+
         @Suppress("UNCHECKED_CAST")
         suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
             options: StoreOptions<Data, Op, T>
         ): DirectStore<Data, Op, T> {
+            companionLog.info { "creating - ${options.storageKey}" }
             val crdtType = requireNotNull(options.type as CrdtModelType<Data, Op, T>) {
                 "Type not supported: ${options.type}"
             }
 
+            companionLog.info { "getting driver - ${options.storageKey}" }
             val driver =
                 CrdtException.requireNotNull(
                     DriverFactory.getDriver(
@@ -447,6 +451,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                         options.type
                     ) as? Driver<Data>
                 ) { "No driver exists to support storage key ${options.storageKey}" }
+            companionLog.info { "driver received - ${options.storageKey}" }
 
             val localModel = crdtType.createCrdtModel().apply {
                 options.model?.let { merge(it) }
@@ -457,9 +462,13 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 localModel = localModel,
                 driver = driver
             ).also { store ->
+                companionLog.info { "registering receiver - ${options.storageKey}" }
                 driver.registerReceiver(options.versionToken) { data, version ->
+                    companionLog.info { "receiver heard data: ${options.storageKey}" }
                     store.onReceive(data, version)
+                    companionLog.info { "call to store receive complete: ${options.storageKey}" }
                 }
+                companionLog.info { "done creating - ${options.storageKey}" }
             }
         }
     }
