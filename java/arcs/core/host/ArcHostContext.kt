@@ -78,7 +78,11 @@ data class ParticleContext(
                     particle.onReady()
                 }
             }
-            StorageEvent.UPDATE -> particle.onUpdate()
+            StorageEvent.UPDATE -> {
+                if (particleState == ParticleState.Started) {
+                    particle.onUpdate()
+                }
+            }
             StorageEvent.DESYNC -> {
                 if (desyncedHandles.isEmpty()) {
                     particleState = ParticleState.Desynced
