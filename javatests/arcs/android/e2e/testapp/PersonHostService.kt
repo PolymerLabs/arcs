@@ -62,21 +62,19 @@ class PersonHostService : ArcHostService() {
     }
 
     inner class ReadPerson : AbstractReadPerson() {
-        override suspend fun onHandleSync(handle: arcs.core.entity.Handle, allSynced: Boolean) {
-            super.onHandleSync(handle, allSynced)
-            sendResult(handles.person.fetch()?.name ?: "")
+        override fun onStart() {
             handles.person.onUpdate { person ->
                 person?.name?.let { sendResult(it) }
             }
         }
+
+        override fun onReady() {
+            sendResult(handles.person.fetch()?.name ?: "")
+        }
     }
 
     inner class WritePerson : AbstractWritePerson() {
-        override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
-            // Always clear and re-write John Wick.
-            handles.person.clear()
-
-            // Write John Wick
+        override fun onFirstStart() {
             handles.person.store(WritePerson_Person("John Wick"))
         }
     }

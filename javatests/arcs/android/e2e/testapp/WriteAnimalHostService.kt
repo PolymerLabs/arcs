@@ -69,9 +69,8 @@ class WriteAnimalHostService : ArcHostService() {
         fun arcHostContext(arcId: String) = getArcHostContext(arcId)
     }
 
-    inner class WriteAnimal: AbstractWriteAnimal() {
-
-        override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
+    inner class WriteAnimal : AbstractWriteAnimal() {
+        override fun onFirstStart() {
             handles.animal.store(WriteAnimal_Animal("platypus"))
         }
     }

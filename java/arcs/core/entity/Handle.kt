@@ -32,7 +32,6 @@ interface Handle {
     val dispatcher: CoroutineDispatcher
 
     // TODO(b/157188866): move this to ReadableHandle (write-only handles should not receive this)
-    // TODO: pass the Handle to the action callbacks: handles.foo.onReady { it.fetch() }
     /** Assign a callback when the handle is synced for the first time. */
     fun onReady(action: () -> Unit)
 

@@ -379,8 +379,8 @@ open class AllocatorTestBase {
             writingContext.particles[writePersonParticle.particleName]
         )
 
-        assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Started)
-        assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Started)
+        assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Running)
+        assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Running)
 
         writePersonContext.particle.let { particle ->
             particle as WritePerson
@@ -468,8 +468,8 @@ open class AllocatorTestBase {
             writingContextAfter.particles[writePersonParticle.particleName]
         )
 
-        assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Started)
-        assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Started)
+        assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Running)
+        assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Running)
 
         // onFirstStart() not called a second time
         assertThat((writePersonContext.particle as WritePerson).firstStartCalled).isFalse()
