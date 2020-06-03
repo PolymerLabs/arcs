@@ -161,6 +161,7 @@ class EntityHandleManager(
     suspend fun close() {
         withContext(scheduler.scope.coroutineContext) {
             proxyMutex.withLock {
+                // TODO: log here, see if we get past this step.
                 singletonStorageProxies.values.forEach { it.close() }
                 collectionStorageProxies.values.forEach { it.close() }
                 singletonStorageProxies.clear()

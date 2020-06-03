@@ -83,9 +83,10 @@ class LifecycleTest {
     @After
     fun tearDown() = runBlocking {
         try {
-            scheduler.waitForIdle()
-            storeManager.waitForIdle()
-            entityHandleManager.close()
+            log("tearing down")
+            //scheduler.waitForIdle()
+            //storeManager.waitForIdle()
+            //entityHandleManager.close()
         } finally {
             schedulerProvider.cancelAll()
         }
