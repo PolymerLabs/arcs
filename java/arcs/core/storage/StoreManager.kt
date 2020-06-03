@@ -35,7 +35,7 @@ class StoreManager {
             log.info { "Creating Store for ${storeOptions.storageKey}" }
             Store(storeOptions)
         } as Store<Data, Op, T>
-    }.also { "Returning store for ${storeOptions.storageKey}" }
+    }.also { log.info { "Returning store for ${storeOptions.storageKey}" } }
 
     suspend fun waitForIdle() {
         storesMutex.withLock {

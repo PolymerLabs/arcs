@@ -197,6 +197,7 @@ class EntityHandleManager(
 
         val singletonHandle = SingletonHandle(singletonConfig)
         if (config.immediateSync) {
+            singletonConfig.proxy.prepareForSync()
             singletonConfig.proxy.maybeInitiateSync()
         }
         return when (config.spec.mode) {
@@ -224,6 +225,7 @@ class EntityHandleManager(
         )
         val collectionHandle = CollectionHandle(collectionConfig)
         if (config.immediateSync) {
+            collectionConfig.proxy.prepareForSync()
             collectionConfig.proxy.maybeInitiateSync()
         }
         return when (config.spec.mode) {

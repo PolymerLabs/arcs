@@ -360,8 +360,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
         scheduler.schedule(
             MessageFromStoreTask {
-                if (stateHolder.value.state == ProxyState.CLOSED) {
-                    log.debug { "in closed state, skipping handling of: $message" }
+                if (stateHolder.value.state in setOf(ProxyState.CLOSED, ProxyState.NO_SYNC, ProxyState.READY_TO_SYNC)) {
+                    log.debug { "in closed/no-sync/ready-to-sync state, skipping handling of: $message" }
                     return@MessageFromStoreTask
                 }
                 when (message) {

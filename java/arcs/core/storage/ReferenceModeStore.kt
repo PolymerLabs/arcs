@@ -483,7 +483,8 @@ class ReferenceModeStore private constructor(
         val dataVersionCopy = data.versionMap.copy()
         val modelGetter = when (data) {
             is CrdtSingleton.Data<*> -> {
-                calculatePendingIds(data.values)
+                val valuesCopy = HashMap(data.values)
+                calculatePendingIds(valuesCopy)
 
                 val containerData = data as? CrdtSingleton.Data<Reference>
                 val proxyData = data as? CrdtSingleton.Data<RawEntity>
@@ -492,7 +493,6 @@ class ReferenceModeStore private constructor(
                     // a function which returns a RawEntity-based Data that can be sent to the
                     // storage proxy.
                     containerData != null -> {
-                        val valuesCopy = HashMap(data.values)
                         suspend {
                             RefModeStoreData.Singleton(
                                 dataVersionCopy, proxyFromCollection(valuesCopy)
@@ -502,7 +502,6 @@ class ReferenceModeStore private constructor(
                     // If its type is `RawEntity`, it must be coming from the proxy, so generate a
                     // Reference-based data that can be sent to the container store.
                     proxyData != null -> {
-                        val valuesCopy = HashMap(data.values)
                         suspend {
                             CrdtSingleton.DataImpl(dataVersionCopy, collectionFromProxy(valuesCopy))
                         }
@@ -511,7 +510,8 @@ class ReferenceModeStore private constructor(
                 }
             }
             is CrdtSet.Data<*> -> {
-                calculatePendingIds(data.values)
+                val valuesCopy = HashMap(data.values)
+                calculatePendingIds(valuesCopy)
 
                 val containerData = data as? CrdtSet.Data<Reference>
                 val proxyData = data as? CrdtSet.Data<RawEntity>
@@ -520,7 +520,6 @@ class ReferenceModeStore private constructor(
                     // a function which returns a RawEntity-based Data that can be sent to the
                     // storage proxy.
                     containerData != null -> {
-                        val valuesCopy = HashMap(data.values)
                         suspend {
                             RefModeStoreData.Set(
                                 dataVersionCopy, proxyFromCollection(valuesCopy)
@@ -530,7 +529,6 @@ class ReferenceModeStore private constructor(
                     // If its type is `RawEntity`, it must be coming from the proxy, so generate a
                     // Reference-based data that can be sent to the container store.
                     proxyData != null -> {
-                        val valuesCopy = HashMap(data.values)
                         suspend {
                             CrdtSet.DataImpl(dataVersionCopy, collectionFromProxy(valuesCopy))
                         }
