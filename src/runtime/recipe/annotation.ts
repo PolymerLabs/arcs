@@ -12,6 +12,7 @@ import {assert} from '../../platform/assert-web.js';
 import {Comparable, compareStrings, compareArrays, compareBools} from './comparable.js';
 import {Dictionary} from '../hot.js';
 import {AnnotationTargetValue, AnnotationRetentionValue, SchemaPrimitiveTypeValue} from '../manifest-ast-nodes.js';
+import {ManifestStringBuilder} from '../manifest-string-builder.js';
 
 export class Annotation implements Comparable<Annotation> {
   constructor(public readonly name: string,
@@ -31,24 +32,26 @@ export class Annotation implements Comparable<Annotation> {
     return 0;
   }
 
-  toString(): string {
-    const result: string[] = [];
+  toManifestString(builder?: ManifestStringBuilder): string {
+    builder = builder || new ManifestStringBuilder();
     let paramStr = '';
     if (Object.keys(this.params).length > 0) {
       paramStr = `(${Object.keys(this.params).map(name => `${name}: ${this.params[name]}`).join(', ')})`;
     }
-    result.push(`annotation ${this.name}${paramStr}`);
-    if (this.targets.length > 0) {
-      result.push(`  targets: [${this.targets.join(', ')}]`);
-    }
-    result.push(`  retention: ${this.retention}`);
-    if (this.allowMultiple) {
-      result.push(`  allowMultiple: ${this.allowMultiple}`);
-    }
-    if (this.doc) {
-      result.push(`  doc: '${this.doc}'`);
-    }
-    return result.filter(s => s !== '').join('\n');
+    builder.push(`annotation ${this.name}${paramStr}`);
+    builder.withIndent(builder => {
+      if (this.targets.length > 0) {
+        builder.push(`targets: [${this.targets.join(', ')}]`);
+      }
+      builder.push(`retention: ${this.retention}`);
+      if (this.allowMultiple) {
+        builder.push(`allowMultiple: ${this.allowMultiple}`);
+      }
+      if (this.doc) {
+        builder.push(`doc: '${this.doc}'`);
+      }
+    });
+    return builder.toString();
   }
 }
 
@@ -88,7 +91,6 @@ export class AnnotationRef {
   }
 
   toString(): string {
-    const result: string[] = [];
     let paramStr = '';
     if (Object.keys(this.params).length > 0) {
       const params: string[] = [];
@@ -98,7 +100,6 @@ export class AnnotationRef {
       }
       paramStr = `(${params.join(', ')})`;
     }
-    result.push(`@${this.name}${paramStr}`);
-    return result.filter(s => s !== '').join('\n');
+    return `@${this.name}${paramStr}`;
   }
 }

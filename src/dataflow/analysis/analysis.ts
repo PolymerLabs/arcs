@@ -13,6 +13,7 @@ import {assert} from '../../platform/assert-web.js';
 import {Edge, FlowModifier, FlowSet, FlowModifierSet, Flow} from './graph-internals.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {Manifest} from '../../runtime/manifest.js';
+import {ManifestStringBuilder} from '../../runtime/manifest-string-builder.js';
 
 /** Runs the dataflow analyser on the given recipe. */
 export function analyseDataflow(recipe: Recipe, manifest: Manifest): [FlowGraph, ValidationResult] {
@@ -190,18 +191,20 @@ export class EdgeExpression {
   }
 
   toString() {
-    const result: string[] = [`EdgeExpression(${this.edge.edgeId}) {`];
-
-    for (const flow of this.resolvedFlows) {
-      result.push('  ' + flow.toUniqueString());
-    }
-    for (const [edge, modifierSets] of this.unresolvedFlows) {
-      for (const modifiers of modifierSets) {
-        result.push(`  EdgeExpression(${edge.edgeId}) + ${modifiers.toUniqueString()}`);
+    const builder = new ManifestStringBuilder();
+    builder.push(`EdgeExpression(${this.edge.edgeId}) {`);
+    builder.withIndent(builder => {
+      for (const flow of this.resolvedFlows) {
+        builder.push(flow.toUniqueString());
       }
-    }
-    result.push('}');
-    return result.join('\n');
+      for (const [edge, modifierSets] of this.unresolvedFlows) {
+        for (const modifiers of modifierSets) {
+          builder.push(`EdgeExpression(${edge.edgeId}) + ${modifiers.toUniqueString()}`);
+        }
+      }
+    });
+    builder.push('}');
+    return builder.toString();
   }
 }
 

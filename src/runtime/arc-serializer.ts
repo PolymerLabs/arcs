@@ -16,6 +16,7 @@ import {Recipe} from './recipe/recipe.js';
 import {Manifest} from './manifest.js';
 import {Id} from './id.js';
 import {VolatileMemory, VolatileStorageKey} from './storageNG/drivers/volatile.js';
+import {ManifestStringBuilder} from './manifest-string-builder.js';
 
 /**
  * @license
@@ -67,8 +68,7 @@ ${this.arc.activeRecipe.toString()}`;
 
   private async serializeVolatileMemory(): Promise<string> {
     let resourceNum = 0;
-    let serialization = '';
-    const indent = '  ';
+    const builder = new ManifestStringBuilder();
 
     for (const [key, value] of this.arc.volatileMemory.entries.entries()) {
       this.memoryResourceNames.set(key, `VolatileMemoryResource${resourceNum}`);
@@ -76,19 +76,19 @@ ${this.arc.activeRecipe.toString()}`;
       for (const [key, entry] of Object.entries(value.locations)) {
         data.locations[key] = entry.data;
       }
-      serialization +=
-        `resource VolatileMemoryResource${resourceNum++} // ${key}\n` +
-        indent + 'start\n' +
-        JSON.stringify(data).split('\n').map(line => indent + line).join('\n') + '\n';
+      builder.push(`resource VolatileMemoryResource${resourceNum++} // ${key}`);
+      builder.withIndent().push(
+        'start',
+        ...JSON.stringify(data).split('\n'));
     }
 
-    return serialization;
+    return builder.toString();
   }
 
   private async _serializeStore(store: AbstractStore, name: string): Promise<void> {
     const type = store.type.getContainedType() || store.type;
     if (type instanceof InterfaceType) {
-      this.interfaces += type.interfaceInfo.toString() + '\n';
+      this.interfaces += type.interfaceInfo.toManifestString() + '\n';
     }
     const key = store.storageKey;
     const tags: Set<string> = this.arc.storeTags.get(store) || new Set();
@@ -149,7 +149,7 @@ ${this.arc.activeRecipe.toString()}`;
     particleSpecs.forEach(spec => {
       for (const connection of spec.handleConnections) {
         if (connection.type instanceof InterfaceType) {
-          results.push(connection.type.interfaceInfo.toString());
+          results.push(connection.type.interfaceInfo.toManifestString());
         }
       }
       results.push(spec.toString());

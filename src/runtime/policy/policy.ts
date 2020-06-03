@@ -11,6 +11,7 @@ import * as AstNode from '../manifest-ast-nodes.js';
 import {AnnotationRef} from '../recipe/annotation.js';
 import {flatMap} from '../util.js';
 import {assert} from '../../platform/assert-web.js';
+import {ManifestStringBuilder} from '../manifest-string-builder.js';
 
 export enum PolicyEgressType {
   Logging = 'Logging',
@@ -49,14 +50,16 @@ export class Policy {
       readonly customAnnotations: AnnotationRef[],
       private readonly allAnnotations: AnnotationRef[]) {}
 
-  toManifestString(): string {
-    return [
-      ...this.allAnnotations.map(annotation => annotation.toString()),
-      `policy ${this.name} {`,
-      ...flatMap(this.targets, target => indentLines(target.toManifestString())),
-      ...flatMap(this.configs, config => indentLines(config.toManifestString())),
-      '}',
-    ].join('\n');
+  toManifestString(builder?: ManifestStringBuilder): string {
+    builder = builder || new ManifestStringBuilder();
+    builder.push(...this.allAnnotations.map(annotation => annotation.toString()));
+    builder.push(`policy ${this.name} {`);
+    builder.withIndent(builder => {
+      this.targets.forEach(target => target.toManifestString(builder));
+      this.configs.forEach(config => config.toManifestString(builder));
+    });
+    builder.push('}');
+    return builder.toString();
   }
 
   static fromAstNode(
@@ -111,13 +114,13 @@ export class PolicyTarget {
       readonly customAnnotations: AnnotationRef[],
       private readonly allAnnotations: AnnotationRef[]) {}
 
-  toManifestString(): string {
-    return [
-      ...this.allAnnotations.map(annotation => annotation.toString()),
-      `from ${this.schemaName} access {`,
-      ...flatMap(this.fields, field => indentLines(field.toManifestString())),
-      '}',
-    ].join('\n');
+  toManifestString(builder?: ManifestStringBuilder): string {
+    builder = builder || new ManifestStringBuilder();
+    builder.push(...this.allAnnotations.map(annotation => annotation.toString()));
+    builder.push(`from ${this.schemaName} access {`);
+    this.fields.forEach(field => field.toManifestString(builder.withIndent()));
+    builder.push('}');
+    return builder.toString();
   }
 
   static fromAstNode(
@@ -174,17 +177,17 @@ export class PolicyField {
     // TODO(b/157605585): Validate field structure against Type.
   }
 
-  toManifestString(): string {
-    const lines = this.allAnnotations.map(annotation => annotation.toString());
+  toManifestString(builder?: ManifestStringBuilder): string {
+    builder = builder || new ManifestStringBuilder();
+    builder.push(...this.allAnnotations.map(annotation => annotation.toString()));
     if (this.subfields.length) {
-      lines.push(
-        `${this.name} {`,
-        ...flatMap(this.subfields, field => indentLines(field.toManifestString())),
-        '}');
+      builder.push(`${this.name} {`);
+      this.subfields.forEach(field => field.toManifestString(builder.withIndent()));
+      builder.push('}');
     } else {
-      lines.push(`${this.name},`);
+      builder.push(`${this.name},`);
     }
-    return lines.join('\n');
+    return builder.toString();
   }
 
   static fromAstNode(
@@ -239,13 +242,16 @@ export class PolicyField {
 export class PolicyConfig {
   constructor(readonly name: string, readonly metadata: Map<string, string>) {}
 
-  toManifestString(): string {
-    const lines = [`config ${this.name} {`];
-    for (const [k, v] of this.metadata) {
-      lines.push(`  ${k}: '${v}'`);
-    }
-    lines.push('}');
-    return lines.join('\n');
+  toManifestString(builder?: ManifestStringBuilder): string {
+    builder = builder || new ManifestStringBuilder();
+    builder.push(`config ${this.name} {`);
+    builder.withIndent(builder => {
+      for (const [k, v] of this.metadata) {
+        builder.push(`${k}: '${v}'`);
+      }
+    });
+    builder.push('}');
+    return builder.toString();
   }
 
   static fromAstNode(node: AstNode.PolicyConfig): PolicyConfig {
@@ -271,8 +277,4 @@ function checkNamesAreUnique(nodes: {name: string}[]) {
     }
     names.add(node.name);
   }
-}
-
-function indentLines(str: string): string[] {
-  return str.split('\n').map(line => '  ' + line);
 }
