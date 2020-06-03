@@ -12,15 +12,18 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Store manager provides a central holding places for the [Store] instances that a runtime will
  * use, so that only one instance of a [Store] can be created per [StorageKey].
  */
 class StoreManager {
+    private val log = TaggedLog { "StoreManager" }
     private val storesMutex = Mutex()
     private val stores by guardedBy(storesMutex, mutableMapOf<StorageKey, Store<*, *, *>>())
 
@@ -29,18 +32,27 @@ class StoreManager {
         storeOptions: StoreOptions<Data, Op, T>
     ) = storesMutex.withLock {
         stores.getOrPut(storeOptions.storageKey) {
+            log.info { "Creating Store for ${storeOptions.storageKey}" }
             Store(storeOptions)
         } as Store<Data, Op, T>
     }
 
     suspend fun waitForIdle() {
         storesMutex.withLock {
-            stores.values.forEach { it.waitForActiveIdle() }
+            stores.values.forEach {
+                val wentIdle = withTimeoutOrNull(5000) { it.waitForActiveIdle() }
+                if (wentIdle == null) {
+                    log.warning { "waitForActiveIdle on $it timed-out" }
+                }
+            }
         }
     }
 
     /**
      * Drops all [Store] instances.
      */
-    suspend fun reset() = storesMutex.withLock { stores.clear() }
+    suspend fun reset() = storesMutex.withLock {
+        log.info { "Resetting" }
+        stores.clear()
+    }
 }

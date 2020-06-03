@@ -209,6 +209,7 @@ class LifecycleTest {
         // Now unpause and update the singleton.
         testHost.unpause()
 
+        log("Unpaused. ready to dance")
         val particleFirstPause: PausingParticle = testHost.getParticle(arc.id, name)
         val (data2, list2) = makeHandles()
         withContext(data2.dispatcher + CoroutineName("Updating")) {
