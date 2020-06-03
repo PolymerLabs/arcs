@@ -49,7 +49,7 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>>(val bottom: V) 
             prettyPrinter: ((V, String) -> String)? = null
         ): String {
             val builder = StringBuilder()
-            builder.append("----Fixpoint ($message)----\n");
+            builder.append("----Fixpoint ($message)----\n")
 
             builder.append("Particles:\n")
             graph.nodes
@@ -57,7 +57,7 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>>(val bottom: V) 
                 .forEach {
                     builder.append("${it.particle.spec.name}:\n")
                     val value = getValue(it.particle)
-                    builder.append(prettyPrinter?.let { prettyPrinter(value,  " ") } ?: "$value")
+                    builder.append(prettyPrinter?.let { prettyPrinter(value, " ") } ?: "$value")
                     builder.append("\n")
                 }
 
@@ -71,7 +71,7 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>>(val bottom: V) 
                     builder.append("\n")
                 }
 
-            builder.append("----Fixpoint (end)----\n");
+            builder.append("----Fixpoint (end)----\n")
             return builder.toString()
         }
     }
