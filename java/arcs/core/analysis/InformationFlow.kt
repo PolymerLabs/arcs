@@ -27,7 +27,7 @@ import java.util.BitSet
 /**
  * Information flow analysis of a [Recipe] using the labels in the particle checks and claims.
  *
- * For the time being, we pass in the ingress handles.
+ * TODO(bgogul): For the time being, we pass in the ingress handles.
 */
 class InformationFlow private constructor(
     private val recipe: Recipe,

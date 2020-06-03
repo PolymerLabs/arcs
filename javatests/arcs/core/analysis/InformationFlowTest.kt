@@ -52,8 +52,8 @@ class InformationFlowTest {
         val recipe = parseManifestWithSingleRecipe(test)
         val result = InformationFlow.computeLabels(recipe, ingresses)
         return result.checks.flatMap { (particle, checks) ->
-            checks.filter {
-                check -> !result.verify(particle, check)
+            checks.filter { check ->
+                !result.verify(particle, check)
             }.map { it.asString() }
         }
     }
