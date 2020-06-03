@@ -392,6 +392,11 @@ export class KotlinGenerator implements ClassGenerator {
 
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
 
+  /** @returns the name of the generated class. */
+  get name(): string {
+    return this.node.entityClassName;
+  }
+
   escapeIdentifier(name: string): string {
     // TODO(cypher1): Check for complex keywords (e.g. cases where both 'final' and 'final_' are keywords).
     // TODO(cypher1): Check for name overlaps (e.g. 'final' and 'final_' should not be escaped to the same identifier.
@@ -504,21 +509,19 @@ ${lines}
   generate(schemaHash: string): string { return ''; }
 
   generateAliases(particleName: string): string[] {
-    const name = this.node.entityClassName;
-    return this.node.sources.map(s => `typealias ${s.fullName} = Abstract${particleName}.${name}`);
+    return this.node.sources.map(s => `typealias ${s.fullName} = Abstract${particleName}.${this.name}`);
   }
 
   generateClassDefinition(): string {
-    const name = this.node.entityClassName;
     const ctorType = this.node.variableName == null ? '(' : ' private constructor(';
 
     const classDef = `\
 @Suppress("UNCHECKED_CAST")
-    class ${name}${ctorType}`;
+    class ${this.name}${ctorType}`;
 
     const baseClass = this.opts.wasm
       ? 'WasmEntity'
-      : ktUtils.applyFun('EntityBase', [quote(name), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp']);
+      : ktUtils.applyFun('EntityBase', [quote(this.name), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp']);
     const classInterface = `) : ${baseClass}`;
 
     const constructorFields = this.fields.concat(this.opts.wasm ? [] : [
@@ -533,8 +536,6 @@ ${lines}
   }
 
   generateCopyMethods(): string {
-    const name = this.node.entityClassName;
-
     const fieldsForMutate = this.fieldsForCopy.concat(this.opts.wasm ? [] : [
       'entityId = entityId',
       'creationTimestamp = creationTimestamp',
@@ -542,8 +543,8 @@ ${lines}
     ]);
 
     const copyBaseEntity = `.also { this.copyInto(it) }`;
-    const copyMethod = `fun copy(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${name}(${ktUtils.joinWithIndents(this.fieldsForCopy, 8+name.length, 3)})`;
-    const mutateMethod = `fun mutate(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${name}(${ktUtils.joinWithIndents(fieldsForMutate, 8+name.length, 3)})`;
+    const copyMethod = `fun copy(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${this.name}(${ktUtils.joinWithIndents(this.fieldsForCopy, 8+this.name.length, 3)})`;
+    const mutateMethod = `fun mutate(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${this.name}(${ktUtils.joinWithIndents(fieldsForMutate, 8+this.name.length, 3)})`;
 
     let copy = copyMethod;
     let mutate = mutateMethod;
@@ -570,8 +571,6 @@ ${lines}
   }
 
   generateClasses(schemaHash: string): string {
-    const name = this.node.entityClassName;
-
     const fieldCount = this.node.schema ? Object.keys(this.node.schema.fields).length : 0;
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
 
@@ -598,9 +597,9 @@ ${lines}
         }
 
         override fun toString() =
-            "${name}(${this.fieldsForToString.join(', ')})"
+            "${this.name}(${this.fieldsForToString.join(', ')})"
     ` : ''}
-        companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
+        companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${this.name}> {
             ${this.opts.wasm ? '' : `
             override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 12, true)}
 
@@ -611,10 +610,10 @@ ${lines}
                 SchemaRegistry.register(SCHEMA)
             }`}
             ${!this.opts.wasm ? `
-            override fun deserialize(data: RawEntity) = ${name}().apply {
+            override fun deserialize(data: RawEntity) = ${this.name}().apply {
                 deserialize(data, nestedEntitySpecs)
             }` : `
-            override fun decode(encoded: ByteArray): ${name}? {
+            override fun decode(encoded: ByteArray): ${this.name}? {
                 if (encoded.isEmpty()) return null
 
                 val decoder = StringDecoder(encoded)
@@ -640,7 +639,7 @@ ${lines}
                     decoder.validate("|")
                     i++
                 }`)}
-                val _rtn = ${name}().copy(
+                val _rtn = ${this.name}().copy(
                     ${ktUtils.joinWithIndents(this.fieldsForCopy, 33, 3)}
                 )
                _rtn.entityId = entityId
