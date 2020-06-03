@@ -392,7 +392,7 @@ export class KotlinGenerator implements ClassGenerator {
 
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
 
-  /** @returns the name of the generated class. */
+  /** Returns the name of the generated class. */
   get name(): string {
     return this.node.entityClassName;
   }
