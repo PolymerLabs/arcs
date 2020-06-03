@@ -42,9 +42,10 @@ interface Handle {
 }
 
 /** Suspends until the [Handle] has synced with the store. */
+@Suppress("EXPERIMENTAL_API_USAGE")
 suspend fun <T : Handle> T.awaitReady(): T = suspendCancellableCoroutine<T> { cont ->
     this.onReady {
-        if (cont.isActive) cont.resume(this@awaitReady)
+        if (cont.isActive) cont.resume(this@awaitReady) { }
     }
 }
 
