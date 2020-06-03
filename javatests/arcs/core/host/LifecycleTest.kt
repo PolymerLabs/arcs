@@ -190,7 +190,7 @@ class LifecycleTest {
                 testHost.singletonForTest<PausingParticle_Data>(arc.id, name, "data").awaitReady(),
                 testHost.collectionForTest<PausingParticle_List>(arc.id, name, "list").awaitReady()
             ).also {
-                "Handles made"
+                log("Handles made")
             }
         }
         val (data1, list1) = makeHandles()
@@ -280,9 +280,9 @@ class LifecycleTest {
             }
             override suspend fun waitForStop(): Arc {
                 log("Waiting for stop")
-                val arc = arc.waitForStop()
+                val stopped = arc.waitForStop()
                 log("Done waiting for stop")
-                return arc
+                return stopped
             }
         }
     }

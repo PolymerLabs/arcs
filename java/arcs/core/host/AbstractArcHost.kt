@@ -567,7 +567,6 @@ abstract class AbstractArcHost(
         maybeCancelResurrection(context)
         setArcState(context, ArcState.Stopped)
         updateArcHostContext(arcId, context)
-        scheduler.cancel()
         context.entityHandleManager.close()
     }
 
