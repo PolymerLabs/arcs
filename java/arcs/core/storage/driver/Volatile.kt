@@ -101,9 +101,9 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
         this.pendingModel
             ?.takeIf { this.token != token }
             ?.let {
-                CoroutineScope(coroutineContext + Dispatchers.Default).launch {
+                //CoroutineScope(coroutineContext + Dispatchers.Default).launch {
                     receiver(it, pendingVersion)
-                }
+                //}
             }
         this.pendingModel = null
     }

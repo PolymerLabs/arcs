@@ -13,6 +13,7 @@ package arcs.core.entity
 
 import arcs.core.data.HandleMode
 import arcs.core.storage.StorageProxy.StorageEvent
+import kotlin.coroutines.resume
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -45,7 +46,7 @@ interface Handle {
 @Suppress("EXPERIMENTAL_API_USAGE")
 suspend fun <T : Handle> T.awaitReady(): T = suspendCancellableCoroutine<T> { cont ->
     this.onReady {
-        if (cont.isActive) cont.resume(this@awaitReady) { }
+        if (cont.isActive) cont.resume(this@awaitReady)
     }
 }
 

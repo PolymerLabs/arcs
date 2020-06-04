@@ -182,7 +182,7 @@ class LifecycleTest {
 
     @Test
     fun pausing() = runBlocking {
-        val scope = CoroutineScope(Dispatchers.Unconfined + Job())
+        val scope = CoroutineScope(this.coroutineContext + Job())
         val testCompleteJob = Job()
         val job = scope.launch {
             val name = "PausingParticle"
@@ -205,19 +205,24 @@ class LifecycleTest {
                 }
             }
             val (data1, list1) = makeHandles()
+            log("MY CURRENT THREAD")
             withContext(data1.dispatcher + CoroutineName("Initialization")) {
                 data1.store(PausingParticle_Data(1.1))
                 list1.store(PausingParticle_List("first"))
             }
+            log("MY CURRENT THREAD")
             waitForAllTheThings()
             data1.close()
             list1.close()
 
             // Pause!
+            log("MY CURRENT THREAD")
             testHost.pause()
 
+            log("MY CURRENT THREAD")
             // Now unpause and update the singleton.
             testHost.unpause()
+            log("MY CURRENT THREAD")
 
             log("Unpaused. ready to dance")
             val particleFirstPause: PausingParticle = testHost.getParticle(arc.id, name)
