@@ -27,7 +27,6 @@ import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.After
@@ -55,10 +54,6 @@ class LifecycleTest {
     private lateinit var storeManager: StoreManager
     private lateinit var entityHandleManager: EntityHandleManager
     private lateinit var allocator: Allocator
-
-    init {
-        DebugProbes.install()
-    }
 
     @Before
     fun setUp() = runBlocking {
