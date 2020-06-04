@@ -56,18 +56,27 @@ sealed class FieldType(
     }
 }
 
-/** Arcs primitive types. */
-enum class PrimitiveType {
-    Boolean,
-    Number,
-    Text,
-    Byte,
-    Short,
-    Int,
-    Long,
-    Char,
-    Float,
-    Double
+/**
+ * Arcs primitive types.
+ *
+ * Reordering the ids in this enum will require a DB migration. It is safe to append
+ * additional entries, up to the limit of [DatabaseImpl.REFERENCE_TYPE_SENTINEL].
+ * Note that the order of appearance in this list doesn't matter, just the values
+ * associated with each PrimitiveType.
+ *
+ * When adding new entries, ensure each PrimitiveType gets assigned a unique id!
+ */
+enum class PrimitiveType(val id: kotlin.Int) {
+    Boolean(0),
+    Number(1),
+    Text(2),
+    Byte(3),
+    Short(4),
+    Int(5),
+    Long(6),
+    Char(7),
+    Float(8),
+    Double(9)
 }
 
 val LARGEST_PRIMITIVE_TYPE_ID = PrimitiveType.values().size - 1
