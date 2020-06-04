@@ -28,14 +28,30 @@ class RecipeGraph(recipe: Recipe) {
 
     /** Returns the nodes for the [Recipe.Handle] and [Recipe.Particle] instances in [recipe]. */
     private fun getNodesWithEdges(recipe: Recipe): List<Node> {
-        val handleNodesMap: Map<String, Node> = recipe.handles
+        val handleNodesMap: Map<String, Node.Handle> = recipe.handles
             .map { (_, handle) -> Node.Handle(handle) }
             .associateBy { it.handle.name }
-        return handleNodesMap.values.toList() + recipe.particles.map { it.getNode(handleNodesMap) }
+        val handleNodes = handleNodesMap.values.toList()
+        handleNodes.forEach { it.addJoinEdges(handleNodesMap) }
+        return handleNodes + recipe.particles.map { it.getNode(handleNodesMap) }
+    }
+
+    /**
+     * Adds edges between handles due to the JOINs.
+     *
+     * eg., if the recipe has `joined: join(a, b)`, we will have the following edges:
+     *    { a -> [joined], b -> [joined] }
+     */
+    private fun Node.Handle.addJoinEdges(handleNodesMap: Map<String, Node.Handle>) {
+        if (handle.fate != Recipe.Handle.Fate.JOIN) return
+        handle.associatedHandles.forEach {
+            val joinHandleNode = requireNotNull(handleNodesMap[it.name])
+            joinHandleNode.addSuccessor(this, JoinSpec())
+        }
     }
 
     /** Returns a [Node.Particle] node with the edges associated with the handle connections. */
-    private fun Recipe.Particle.getNode(handleNodesMap: Map<String, Node>): Node {
+    private fun Recipe.Particle.getNode(handleNodesMap: Map<String, Node.Handle>): Node {
         val particleNode = Node.Particle(this)
         handleConnections.forEach { connection ->
             val handleNode = requireNotNull(handleNodesMap[connection.handle.name])
@@ -51,6 +67,27 @@ class RecipeGraph(recipe: Recipe) {
             }
         }
         return particleNode
+    }
+
+    /**
+     * A class representing the properties of a join.
+     *
+     * This is a dummy class for the time being, but will have more information when the support
+     * for join is fully flshed out. This should also move out of this file. */
+    data class JoinSpec(val type: String = "INNER")
+
+    /** Represents an edge kind. */
+    sealed class EdgeKind {
+        /** A handle connection edge between particle and handle. */
+        data class HandleConnection(val spec: HandleConnectionSpec) : EdgeKind()
+
+        /**
+         * A join connection edges between two handles.
+         *
+         * The [spec] just a dummy state for the time being. When the support for join is fully
+         * fleshed out, this would consist of things like refinements, etc.
+         */
+        data class JoinConnection(val spec: JoinSpec = JoinSpec()) : EdgeKind()
     }
 
     /** Represents a node in a [RecipeGraph]. */
@@ -69,6 +106,12 @@ class RecipeGraph(recipe: Recipe) {
         /** (Internal) list of predecessors of this node. */
         private val _predecessors = mutableListOf<Neighbor>()
 
+        /** Adds ([succ], [joinSpec]) as a successor of [this] and updates [succ.predecessors]. */
+        fun addSuccessor(succ: Node, joinSpec: JoinSpec) {
+            _successors.add(Neighbor(succ, joinSpec))
+            succ._predecessors.add(Neighbor(this, joinSpec))
+        }
+
         /** Adds ([succ], [spec]) as a successor of [this] and also updates [succ.predecessors]. */
         fun addSuccessor(succ: Node, spec: HandleConnectionSpec) {
             _successors.add(Neighbor(succ, spec))
@@ -76,7 +119,15 @@ class RecipeGraph(recipe: Recipe) {
         }
 
         /** Represents a successor or predecessor of a [Node] in a [RecipeGraph]. */
-        data class Neighbor(val node: Node, val spec: HandleConnectionSpec)
+        data class Neighbor(val node: Node, val kind: EdgeKind) {
+            /** A handle connection neighbor. */
+            constructor(node: Node, spec: HandleConnectionSpec) :
+                this(node, EdgeKind.HandleConnection(spec))
+
+            /** A join connection neighbor. */
+            constructor(node: Node, spec: JoinSpec) :
+                this(node, EdgeKind.JoinConnection(spec))
+        }
 
         /** A node representing a particle. */
         data class Particle(val particle: Recipe.Particle) : Node() {
