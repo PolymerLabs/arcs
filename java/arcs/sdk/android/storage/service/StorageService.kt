@@ -250,7 +250,7 @@ open class StorageService : ResurrectorService() {
 
     companion object {
         const val EXTRA_OPTIONS = "storeOptions"
-        private const val MANAGER_ACTION = "arcs.sdk.android.storage.service.MANAGER"
+        const val MANAGER_ACTION = "arcs.sdk.android.storage.service.MANAGER"
 
         init {
             // TODO: Remove this, the Allocator should be responsible for setting up providers.
