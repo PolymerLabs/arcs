@@ -18,6 +18,7 @@ import arcs.core.data.Plan
 import arcs.core.data.SingletonType
 import arcs.core.data.Ttl
 import arcs.core.entity.Reference
+import arcs.core.entity.awaitReady
 import arcs.core.host.api.Particle
 import arcs.core.host.generated.AbstractArcHostContextParticle
 import arcs.core.host.generated.ArcHostContextPlan
@@ -30,7 +31,9 @@ import arcs.core.util.traverse
 import kotlinx.coroutines.CoroutineName
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 typealias ArcHostContextParticle_HandleConnections = AbstractArcHostContextParticle.HandleConnection
@@ -43,7 +46,7 @@ typealias ArcHostContextParticle_Particles = AbstractArcHostContextParticle.Part
  */
 class ArcHostContextParticle(
     private val hostId: String,
-    private val handleManager: EntityHandleManager,
+    val handleManager: EntityHandleManager,
     private val instantiateParticle: suspend (ParticleIdentifier, Plan.Particle?) -> Particle,
     private val instantiatedParticles: MutableMap<String, Particle> = mutableMapOf()
 ) : AbstractArcHostContextParticle() {
@@ -160,17 +163,20 @@ class ArcHostContextParticle(
         opName: String = "whenHandlesReady",
         coroutineContext: CoroutineContext = handles.dispatcher + CoroutineName(opName),
         crossinline block: suspend () -> T
-    ): T {
+    ): T = coroutineScope {
         val onReadyJobs = mapOf(
-            "particles" to Job(),
-            "arcHostContext" to Job(),
-            "handleConnections" to Job()
+            "particles" to launch {
+                handles.particles.awaitReady()
+            },
+            "arcHostContext" to launch {
+                handles.arcHostContext.awaitReady()
+            },
+            "handleConnections" to launch {
+                handles.handleConnections.awaitReady()
+            }
         )
-        handles.particles.onReady { onReadyJobs["particles"]?.complete() }
-        handles.arcHostContext.onReady { onReadyJobs["arcHostContext"]?.complete() }
-        handles.handleConnections.onReady { onReadyJobs["handleConnections"]?.complete() }
         onReadyJobs.values.joinAll()
-        return withContext(coroutineContext) { block() }.also { handleManager.close() }
+        withContext(coroutineContext) { block() }
     }
 
     private suspend fun createHandlesMap(

@@ -28,6 +28,7 @@ import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.util.LruCacheMap
+import arcs.core.util.Random
 import arcs.core.util.SchedulerDispatcher
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
@@ -214,7 +215,9 @@ abstract class AbstractArcHost(
         arcHostContext: ArcHostContext
     ): ArcHostContextParticle {
         log.info { "createArcHostContextParticle" }
-        val handleManager = entityHandleManager("$hostId-${arcHostContext.arcId}")
+        val handleManager = entityHandleManager("$hostId-${arcHostContext.arcId}-${Random.nextInt()}")
+        // TODO: jason you just added the random.. does that help? e.g. it should supply a new
+        // scheduler, so maybe this way we're not hung up on stuff?
 
         log.info { "createArcHostContextParticle: handleManager received, instantiating" }
         return ArcHostContextParticle(hostId, handleManager, this::instantiateParticle).apply {
@@ -233,7 +236,7 @@ abstract class AbstractArcHost(
                     handleSpec.value,
                     handles,
                     this.toString()
-                ).awaitReady()
+                )
             }
             log.info { "createArcHostContextParticle: handles created" }
         }.also {
@@ -266,6 +269,10 @@ abstract class AbstractArcHost(
         log.info { "writeContextToStorage for $arcId, context: $context" }
         return createArcHostContextParticle(context).run {
             writeArcHostContext(context.arcId, context)
+            //TODO:
+            //  WHEN YOU WAKE UP TOMORROW JASON, TRY RUNNING IT NOW, since we don't have the handle manager being closed after writing
+            //  If that fails, then something else is wonky.
+            //
         }.also {
             log.info { "writeContextToStorage for $arcId: complete" }
         }
