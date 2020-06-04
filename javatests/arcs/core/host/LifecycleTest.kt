@@ -126,8 +126,8 @@ class LifecycleTest {
         val name = "SingleWriteHandleParticle"
         val arc = startArc(SingleWriteHandleTestPlan)
         val particle: SingleWriteHandleParticle = testHost.getParticle(arc.id, name)
-        particle.onReadyCalled.join()
         val data = testHost.singletonForTest<SingleWriteHandleParticle_Data>(arc.id, name, "data")
+        particle.onReadyCalled.join()
         waitForAllTheThings()
         withContext(data.dispatcher) {
             data.store(SingleWriteHandleParticle_Data(12.0))

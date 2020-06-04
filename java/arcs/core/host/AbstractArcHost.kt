@@ -21,6 +21,7 @@ import arcs.core.entity.Entity
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.awaitReady
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
 import arcs.core.storage.ActivationFactory
@@ -232,7 +233,7 @@ abstract class AbstractArcHost(
                     handleSpec.value,
                     handles,
                     this.toString()
-                )
+                ).awaitReady()
             }
             log.info { "createArcHostContextParticle: handles created" }
         }.also {
