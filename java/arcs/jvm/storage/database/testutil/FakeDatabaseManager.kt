@@ -69,6 +69,10 @@ class FakeDatabaseManager : DatabaseManager {
     override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
         throw UnsupportedOperationException("Fake database manager cannot remove entities.")
     }
+
+    override suspend fun runGarbageCollection(): Job {
+        throw UnsupportedOperationException("Fake database does not gargbage collect.")
+    }
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE")

@@ -48,6 +48,9 @@ interface DatabaseManager {
 
     /** Clears all entities created in the given time range, in all known databases.  */
     suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long)
+
+    /** Garbage collection run: removes unused entities. */
+    suspend fun runGarbageCollection(): Job
 }
 
 /** Identifier for an individual [Database] instance. */

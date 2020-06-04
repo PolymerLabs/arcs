@@ -112,4 +112,12 @@ class AndroidSqliteDatabaseManager(
         registry.fetchAll()
             .map { getDatabase(it.name, it.isPersistent) }
             .forEach { it.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis) }
+
+    override suspend fun runGarbageCollection(): Job = coroutineScope {
+        launch {
+            registry.fetchAll()
+                .map { getDatabase(it.name, it.isPersistent) }
+                .forEach { it.runGarbageCollection() }
+        }
+    }
 }
