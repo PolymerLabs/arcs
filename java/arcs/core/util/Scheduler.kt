@@ -16,6 +16,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
@@ -70,13 +71,15 @@ class Scheduler(
      */
     val idlenessFlow: Flow<Boolean> = idlenessChannel.asFlow()
 
+    private val agendaConsumptionJob: Job
+
     init {
         // Consume the agenda channel:
         // 1. Wait until the latest pause-value is false,
         // 2. Notify the idleness channel that we're busy,
         // 3. Do the work
         // 4. Notify the idleness channel that we're not busy.
-        agendaChannel.consumeAsFlow()
+        agendaConsumptionJob = agendaChannel.consumeAsFlow()
             .onEach { agenda ->
                 // TODO(jasonwyatt): This waiting until not-paused thing would be cleaner with
                 //  something along the lines of atomicBoolean.waitUntilTrue() (would need to be
@@ -133,6 +136,9 @@ class Scheduler(
 
     /** Cancel the [CoroutineScope] belonging to this Scheduler. */
     fun cancel() {
+        agendaConsumptionJob.cancel()
+        pausedChannel.close()
+        idlenessChannel.close()
         scope.cancel()
     }
 

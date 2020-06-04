@@ -27,7 +27,7 @@ import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.debug.junit4.CoroutinesTimeout
+import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.After
@@ -45,12 +45,8 @@ import kotlin.coroutines.EmptyCoroutineContext
 @RunWith(JUnit4::class)
 @Suppress("EXPERIMENTAL_API_USAGE")
 class LifecycleTest {
-    //@get:Rule
-    //val log = LogRule(Log.Level.Warning, true)
-    fun log(msg: String) = Unit
-
     @get:Rule
-    val timeout = CoroutinesTimeout.seconds(15)
+    val log = LogRule(Log.Level.Info, true)
 
     private lateinit var schedulerProvider: JvmSchedulerProvider
     private lateinit var scheduler: Scheduler
@@ -59,6 +55,10 @@ class LifecycleTest {
     private lateinit var storeManager: StoreManager
     private lateinit var entityHandleManager: EntityHandleManager
     private lateinit var allocator: Allocator
+
+    init {
+        DebugProbes.install()
+    }
 
     @Before
     fun setUp() = runBlocking {
@@ -85,12 +85,14 @@ class LifecycleTest {
     }
 
     @After
-    fun tearDown() = runBlocking {
+    fun tearDown() {
         try {
-            log("tearing down")
-            scheduler.waitForIdle()
-            storeManager.waitForIdle()
-            entityHandleManager.close()
+            runBlocking {
+                log("tearing down")
+                scheduler.waitForIdle()
+                storeManager.waitForIdle()
+                entityHandleManager.close()
+            }
         } finally {
             schedulerProvider.cancelAll()
         }
@@ -184,7 +186,7 @@ class LifecycleTest {
     }
 
     @Test
-    fun pausing() = runBlocking {
+    fun pausing() = runTest(timeoutMillis = 30000) {
         val name = "PausingParticle"
         val arc = startArc(PausingTestPlan)
 

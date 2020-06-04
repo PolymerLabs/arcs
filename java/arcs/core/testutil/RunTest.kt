@@ -14,6 +14,8 @@ package arcs.core.testutil
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 
@@ -26,10 +28,18 @@ import kotlinx.coroutines.withTimeout
  *
  * The default value for [timeoutMillis] is 5,000ms (5 seconds).
  */
+@Suppress("EXPERIMENTAL_API_USAGE")
 fun runTest(
     coroutineContext: CoroutineContext = EmptyCoroutineContext,
     timeoutMillis: Long = 5000,
     block: suspend CoroutineScope.() -> Unit
 ) = runBlocking(coroutineContext) {
-    withTimeout(timeoutMillis) { this.block() }
+    try {
+        withTimeout(timeoutMillis) { this.block() }
+    } catch (e: TimeoutCancellationException) {
+        if (DebugProbes.isInstalled) {
+            DebugProbes.dumpCoroutines()
+        }
+        throw e
+    }
 }
