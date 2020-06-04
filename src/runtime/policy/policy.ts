@@ -27,6 +27,11 @@ export enum PolicyAllowedUsageType {
   Join = 'Join',
 }
 
+const intendedPurposeAnnotationName = 'intendedPurpose';
+const egressTypeAnnotationName = 'egressType';
+const allowedRetentionAnnotationName = 'allowedRetention';
+const allowedUsageAnnotationName = 'allowedUsage';
+
 /**
  * Definition of a dataflow policy.
  *
@@ -43,22 +48,22 @@ export class Policy {
   }
 
   get description(): string | null {
-    const description = this.annotationRefs.find(a => a.name === 'intendedPurpose');
+    const description = this.annotationRefs.find(a => a.name === intendedPurposeAnnotationName);
     return description ? description.params['description'] as string : null;
   }
 
   get egressType(): PolicyEgressType {
-    const egressType = this.annotationRefs.find(a => a.name === 'egressType');
+    const egressType = this.annotationRefs.find(a => a.name === egressTypeAnnotationName);
     return PolicyEgressType[egressType.params['type'] as string];
   }
 
   get annotations() {
-    const specialAnnotations = ['intendedPurpose', 'egressType'];
+    const specialAnnotations = [intendedPurposeAnnotationName, egressTypeAnnotationName];
     return this.annotationRefs.filter(annotation => !specialAnnotations.includes(annotation.name));
   }
 
   private validateEgressType() {
-    const egressType = this.annotationRefs.find(annotation => annotation.name === 'egressType');
+    const egressType = this.annotationRefs.find(annotation => annotation.name === egressTypeAnnotationName);
     if (egressType) {
       checkValueInEnum(egressType.params['type'], PolicyEgressType);
     }
@@ -100,7 +105,7 @@ class PolicyTarget {
 
   get retentions() {
     return this.annotationRefs
-        .filter(annotation => annotation.name === 'allowedRetention')
+        .filter(annotation => annotation.name === allowedRetentionAnnotationName)
         .map(annotation => ({
           medium: PolicyRetentionMedium[annotation.params['medium'] as string],
           encryptionRequired: annotation.params['encryption'] as boolean,
@@ -108,21 +113,22 @@ class PolicyTarget {
   }
 
   get annotations() {
-    return this.annotationRefs.filter(annotation => annotation.name !== 'allowedRetention');
+    return this.annotationRefs.filter(annotation => annotation.name !== allowedRetentionAnnotationName);
   }
 
   private validateRetentions() {
-    // Check retention annotations are valid.
     const retentionMediums: Set<PolicyRetentionMedium> = new Set();
-    this.annotationRefs.filter(annotation => annotation.name === 'allowedRetention').forEach(annotation => {
-      const mediumParam = annotation.params['medium'];
-      checkValueInEnum(mediumParam, PolicyRetentionMedium);
-      const medium = mediumParam as PolicyRetentionMedium;
-      if (retentionMediums.has(medium)) {
-        throw new Error(`@allowedRetention has already been defined for ${medium}.`);
-      }
-      retentionMediums.add(medium);
-    });
+    this.annotationRefs
+      .filter(annotation => annotation.name === allowedRetentionAnnotationName)
+      .forEach(annotation => {
+        const mediumParam = annotation.params['medium'];
+        checkValueInEnum(mediumParam, PolicyRetentionMedium);
+        const medium = mediumParam as PolicyRetentionMedium;
+        if (retentionMediums.has(medium)) {
+          throw new Error(`@${allowedRetentionAnnotationName} has already been defined for ${medium}.`);
+        }
+        retentionMediums.add(medium);
+      });
   }
 
   toManifestString(): string {
@@ -159,7 +165,7 @@ class PolicyField {
   get allowedUsages() {
     // TODO(b/157605585): Handle "raw" label separately?
     return this.annotationRefs
-        .filter(annotation => annotation.name === 'allowedUsage')
+        .filter(annotation => annotation.name === allowedUsageAnnotationName)
         .map(annotation => ({
           usage: toAllowedUsageEnum(annotation.params['usageType']),
           label: annotation.params['label'] as string,
@@ -167,24 +173,26 @@ class PolicyField {
   }
 
   get annotations() {
-    return this.annotationRefs.filter(annotation => annotation.name !== 'allowedUsage');
+    return this.annotationRefs.filter(annotation => annotation.name !== allowedUsageAnnotationName);
   }
 
   private validateAllowedUsages() {
     const usages: Map<string, Set<PolicyAllowedUsageType>> = new Map();
-    this.annotationRefs.filter(annotation => annotation.name === 'allowedUsage').forEach(annotation => {
-      const label = annotation.params['label'] as string;
-      const usageTypeParam = annotation.params['usageType'] as string;
-      const usageType = toAllowedUsageEnum(usageTypeParam);
-      if (!usages.has(label)) {
-        usages.set(label, new Set());
-      }
-      const usageTypes = usages.get(label);
-      if (usageTypes.has(usageType)) {
-        throw new Error(`Usage of label '${label}' for usage type '${usageTypeParam}' has already been allowed.`);
-      }
-      usageTypes.add(usageType);
-    });
+    this.annotationRefs
+      .filter(annotation => annotation.name === allowedUsageAnnotationName)
+      .forEach(annotation => {
+        const label = annotation.params['label'] as string;
+        const usageTypeParam = annotation.params['usageType'] as string;
+        const usageType = toAllowedUsageEnum(usageTypeParam);
+        if (!usages.has(label)) {
+          usages.set(label, new Set());
+        }
+        const usageTypes = usages.get(label);
+        if (usageTypes.has(usageType)) {
+          throw new Error(`Usage of label '${label}' for usage type '${usageTypeParam}' has already been allowed.`);
+        }
+        usageTypes.add(usageType);
+      });
   }
 
   toManifestString(): string {
