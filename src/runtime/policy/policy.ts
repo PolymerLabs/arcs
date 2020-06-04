@@ -10,6 +10,7 @@
 import * as AstNode from '../manifest-ast-nodes.js';
 import {AnnotationRef} from '../recipe/annotation.js';
 import {flatMap} from '../util.js';
+import {assert} from '../../platform/chai-web.js';
 
 export enum PolicyEgressType {
   Logging = 'Logging',
@@ -22,9 +23,9 @@ export enum PolicyRetentionMedium {
 }
 
 export enum PolicyAllowedUsageType {
-  Any = 'Any',
-  Egress = 'Egress',
-  Join = 'Join',
+  Any = '*',
+  Egress = 'egress',
+  Join = 'join',
 }
 
 const intendedPurposeAnnotationName = 'intendedPurpose';
@@ -43,35 +44,14 @@ export class Policy {
       readonly name: string,
       readonly targets: PolicyTarget[],
       readonly configs: PolicyConfig[],
-      private readonly annotationRefs: AnnotationRef[]) {
-    this.validateEgressType();
-  }
-
-  get description(): string | null {
-    const description = this.annotationRefs.find(a => a.name === intendedPurposeAnnotationName);
-    return description ? description.params['description'] as string : null;
-  }
-
-  get egressType(): PolicyEgressType {
-    const egressType = this.annotationRefs.find(a => a.name === egressTypeAnnotationName);
-    return PolicyEgressType[egressType.params['type'] as string];
-  }
-
-  get annotations() {
-    const specialAnnotations = [intendedPurposeAnnotationName, egressTypeAnnotationName];
-    return this.annotationRefs.filter(annotation => !specialAnnotations.includes(annotation.name));
-  }
-
-  private validateEgressType() {
-    const egressType = this.annotationRefs.find(annotation => annotation.name === egressTypeAnnotationName);
-    if (egressType) {
-      checkValueInEnum(egressType.params['type'], PolicyEgressType);
-    }
-  }
+      readonly description: string | null,
+      readonly egressType: PolicyEgressType | null,
+      readonly customAnnotations: AnnotationRef[],
+      private readonly allAnnotations: AnnotationRef[]) {}
 
   toManifestString(): string {
     return [
-      ...this.annotationRefs.map(annotation => annotation.toString()),
+      ...this.allAnnotations.map(annotation => annotation.toString()),
       `policy ${this.name} {`,
       ...flatMap(this.targets, target => indentLines(target.toManifestString())),
       ...flatMap(this.configs, config => indentLines(config.toManifestString())),
@@ -82,15 +62,44 @@ export class Policy {
   static fromAstNode(
       node: AstNode.Policy,
       buildAnnotationRefs: (ref: AstNode.AnnotationRef[]) => AnnotationRef[]): Policy {
-    const annotationRefs = buildAnnotationRefs(node.annotationRefs);
-
     checkNamesAreUnique(node.targets.map(target => ({name: target.schemaName})));
     const targets = node.targets.map(target => PolicyTarget.fromAstNode(target, buildAnnotationRefs));
 
     checkNamesAreUnique(node.configs);
     const configs = node.configs.map(config => PolicyConfig.fromAstNode(config));
 
-    return new Policy(node.name, targets, configs, annotationRefs);
+    // Process annotations.
+    const allAnnotations = buildAnnotationRefs(node.annotationRefs);
+    let description: string | null = null;
+    let egressType: PolicyEgressType | null = null;
+    const customAnnotations: AnnotationRef[] = [];
+    for (const annotation of allAnnotations) {
+      switch (annotation.name) {
+        case intendedPurposeAnnotationName:
+          description = this.toDescription(annotation);
+          break;
+        case egressTypeAnnotationName:
+          egressType = this.toEgressType(annotation);
+          break;
+        default:
+          customAnnotations.push(annotation);
+          break;
+      }
+    }
+
+    return new Policy(node.name, targets, configs, description, egressType, customAnnotations, allAnnotations);
+  }
+
+  private static toDescription(annotation: AnnotationRef): string {
+    assert(annotation.name === intendedPurposeAnnotationName);
+    return annotation.params['description'] as string;
+  }
+
+  private static toEgressType(annotation: AnnotationRef): PolicyEgressType {
+    assert(annotation.name === egressTypeAnnotationName);
+    const egressType = annotation.params['type'] as string;
+    checkValueInEnum(egressType, PolicyEgressType);
+    return egressType as PolicyEgressType;
   }
 }
 
@@ -98,42 +107,13 @@ class PolicyTarget {
   constructor(
       readonly schemaName: string,
       readonly fields: PolicyField[],
-      private readonly annotationRefs: AnnotationRef[]) {
-    this.validateRetentions();
-    // TODO(b/157605585): Validate maxAge annotation.
-  }
-
-  get retentions() {
-    return this.annotationRefs
-        .filter(annotation => annotation.name === allowedRetentionAnnotationName)
-        .map(annotation => ({
-          medium: PolicyRetentionMedium[annotation.params['medium'] as string],
-          encryptionRequired: annotation.params['encryption'] as boolean,
-        }));
-  }
-
-  get annotations() {
-    return this.annotationRefs.filter(annotation => annotation.name !== allowedRetentionAnnotationName);
-  }
-
-  private validateRetentions() {
-    const retentionMediums: Set<PolicyRetentionMedium> = new Set();
-    this.annotationRefs
-      .filter(annotation => annotation.name === allowedRetentionAnnotationName)
-      .forEach(annotation => {
-        const mediumParam = annotation.params['medium'];
-        checkValueInEnum(mediumParam, PolicyRetentionMedium);
-        const medium = mediumParam as PolicyRetentionMedium;
-        if (retentionMediums.has(medium)) {
-          throw new Error(`@${allowedRetentionAnnotationName} has already been defined for ${medium}.`);
-        }
-        retentionMediums.add(medium);
-      });
-  }
+      readonly retentions: {medium: PolicyRetentionMedium, encryptionRequired: boolean}[],
+      readonly customAnnotations: AnnotationRef[],
+      private readonly allAnnotations: AnnotationRef[]) {}
 
   toManifestString(): string {
     return [
-      ...this.annotationRefs.map(annotation => annotation.toString()),
+      ...this.allAnnotations.map(annotation => annotation.toString()),
       `from ${this.schemaName} access {`,
       ...flatMap(this.fields, field => indentLines(field.toManifestString())),
       '}',
@@ -143,13 +123,44 @@ class PolicyTarget {
   static fromAstNode(
       node: AstNode.PolicyTarget,
       buildAnnotationRefs: (ref: AstNode.AnnotationRef[]) => AnnotationRef[]): PolicyTarget {
-    const annotationRefs = buildAnnotationRefs(node.annotationRefs);
-
     // Convert fields.
     checkNamesAreUnique(node.fields);
     const fields = node.fields.map(field => PolicyField.fromAstNode(field, buildAnnotationRefs));
 
-    return new PolicyTarget(node.schemaName, fields, annotationRefs);
+    // Process annotations.
+    // TODO(b/157605585): Validate maxAge annotation.
+    const allAnnotations = buildAnnotationRefs(node.annotationRefs);
+    const retentionMediums: Set<PolicyRetentionMedium> = new Set();
+    const retentions: {medium: PolicyRetentionMedium, encryptionRequired: boolean}[] = [];
+    const customAnnotations: AnnotationRef[] = [];
+    for (const annotation of allAnnotations) {
+      switch (annotation.name) {
+        case allowedRetentionAnnotationName: {
+          const retention = this.toRetention(annotation);
+          if (retentionMediums.has(retention.medium)) {
+            throw new Error(`@${allowedRetentionAnnotationName} has already been defined for ${retention.medium}.`);
+          }
+          retentionMediums.add(retention.medium);
+          retentions.push(retention);
+          break;
+        }
+        default:
+          customAnnotations.push(annotation);
+          break;
+      }
+    }
+
+    return new PolicyTarget(node.schemaName, fields, retentions, customAnnotations, allAnnotations);
+  }
+
+  private static toRetention(annotation: AnnotationRef) {
+    assert(annotation.name === allowedRetentionAnnotationName);
+    const medium = annotation.params['medium'] as string;
+    checkValueInEnum(medium, PolicyRetentionMedium);
+    return {
+      medium: medium as PolicyRetentionMedium,
+      encryptionRequired: annotation.params['encryption'] as boolean,
+    };
   }
 }
 
@@ -157,46 +168,14 @@ class PolicyField {
   constructor(
       readonly name: string,
       readonly subfields: PolicyField[],
-      private readonly annotationRefs: AnnotationRef[]) {
-    this.validateAllowedUsages();
+      readonly allowedUsages: {label: string, usage: PolicyAllowedUsageType}[],
+      readonly customAnnotations: AnnotationRef[],
+      private readonly allAnnotations: AnnotationRef[]) {
     // TODO(b/157605585): Validate field structure against Type.
   }
 
-  get allowedUsages() {
-    // TODO(b/157605585): Handle "raw" label separately?
-    return this.annotationRefs
-        .filter(annotation => annotation.name === allowedUsageAnnotationName)
-        .map(annotation => ({
-          usage: toAllowedUsageEnum(annotation.params['usageType']),
-          label: annotation.params['label'] as string,
-        }));
-  }
-
-  get annotations() {
-    return this.annotationRefs.filter(annotation => annotation.name !== allowedUsageAnnotationName);
-  }
-
-  private validateAllowedUsages() {
-    const usages: Map<string, Set<PolicyAllowedUsageType>> = new Map();
-    this.annotationRefs
-      .filter(annotation => annotation.name === allowedUsageAnnotationName)
-      .forEach(annotation => {
-        const label = annotation.params['label'] as string;
-        const usageTypeParam = annotation.params['usageType'] as string;
-        const usageType = toAllowedUsageEnum(usageTypeParam);
-        if (!usages.has(label)) {
-          usages.set(label, new Set());
-        }
-        const usageTypes = usages.get(label);
-        if (usageTypes.has(usageType)) {
-          throw new Error(`Usage of label '${label}' for usage type '${usageTypeParam}' has already been allowed.`);
-        }
-        usageTypes.add(usageType);
-      });
-  }
-
   toManifestString(): string {
-    const lines = this.annotationRefs.map(annotation => annotation.toString());
+    const lines = this.allAnnotations.map(annotation => annotation.toString());
     if (this.subfields.length) {
       lines.push(
         `${this.name} {`,
@@ -211,13 +190,49 @@ class PolicyField {
   static fromAstNode(
       node: AstNode.PolicyField,
       buildAnnotationRefs: (ref: AstNode.AnnotationRef[]) => AnnotationRef[]): PolicyField {
-    const annotationRefs = buildAnnotationRefs(node.annotationRefs);
-
     // Convert subfields.
     checkNamesAreUnique(node.subfields);
     const subfields = node.subfields.map(field => PolicyField.fromAstNode(field, buildAnnotationRefs));
 
-    return new PolicyField(node.name, subfields, annotationRefs);
+    // Process annotations.
+    // TODO(b/157605585): Validate maxAge annotation.
+    const allAnnotations = buildAnnotationRefs(node.annotationRefs);
+    const usages: Map<string, Set<PolicyAllowedUsageType>> = new Map();
+    const allowedUsages: {label: string, usage: PolicyAllowedUsageType}[] = [];
+    const customAnnotations: AnnotationRef[] = [];
+    for (const annotation of allAnnotations) {
+      switch (annotation.name) {
+        case allowedUsageAnnotationName: {
+          const allowedUsage = this.toAllowedUsage(annotation);
+          if (!usages.has(allowedUsage.label)) {
+            usages.set(allowedUsage.label, new Set());
+          }
+          const usageTypes = usages.get(allowedUsage.label);
+          if (usageTypes.has(allowedUsage.usage)) {
+            throw new Error(`Usage of label '${allowedUsage.label}' for usage type '${allowedUsage.usage}' has already been allowed.`);
+          }
+          usageTypes.add(allowedUsage.usage);
+          allowedUsages.push(allowedUsage);
+          break;
+        }
+        default:
+          customAnnotations.push(annotation);
+          break;
+      }
+    }
+
+    return new PolicyField(node.name, subfields, allowedUsages, customAnnotations, allAnnotations);
+  }
+
+  private static toAllowedUsage(annotation: AnnotationRef) {
+    // TODO(b/157605585): Handle "raw" label separately?
+    assert(annotation.name === allowedUsageAnnotationName);
+    const usageType = annotation.params['usageType'] as string;
+    checkValueInEnum(usageType, PolicyAllowedUsageType);
+    return {
+      usage: usageType as PolicyAllowedUsageType,
+      label: annotation.params['label'] as string,
+    };
   }
 }
 
@@ -238,27 +253,12 @@ class PolicyConfig {
   }
 }
 
-/** Converts the given string to a value of PolicyAllowedUsageType. */
-// tslint:disable-next-line: no-any
-function toAllowedUsageEnum(value: any): PolicyAllowedUsageType {
-  switch (value) {
-    case '*':
-      return PolicyAllowedUsageType.Any;
-    case 'join':
-      return PolicyAllowedUsageType.Join;
-    case 'egress':
-      return PolicyAllowedUsageType.Egress;
-    default:
-      throw new Error(`Unknown usage type: ${value}`);
-  }
-}
-
 /** Checks that the given value is an element in the given enum. Throws otherwise. */
-// tslint:disable-next-line: no-any
-function checkValueInEnum(value: any, enumDef: {}) {
-  if (!(value in enumDef)) {
-    const keys = Object.keys(enumDef).filter(key => typeof key === 'string');
-    throw new Error(`Expected one of: ${keys.join(', ')}. Found: ${value}.`);
+function checkValueInEnum(value: string, enumDef: {}) {
+  const keys = Object.keys(enumDef).filter(key => typeof key === 'string');
+  const values = keys.map(key => enumDef[key]);
+  if (!(values.includes(value))) {
+    throw new Error(`Expected one of: ${values.join(', ')}. Found: ${value}.`);
   }
 }
 

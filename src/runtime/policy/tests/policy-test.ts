@@ -77,8 +77,8 @@ policy MyPolicy {}
     assert.strictEqual(policy.name, 'MyPolicy');
     assert.strictEqual(policy.description, 'test');
     assert.strictEqual(policy.egressType, PolicyEgressType.Logging);
-    assert.lengthOf(policy.annotations, 1);
-    assert.strictEqual(policy.annotations[0].name, 'custom');
+    assert.lengthOf(policy.customAnnotations, 1);
+    assert.strictEqual(policy.customAnnotations[0].name, 'custom');
   });
 
   it('rejects unknown egress types', async () => {
@@ -109,8 +109,8 @@ policy MyPolicy {
         encryptionRequired: false,
       },
     ]);
-    assert.lengthOf(target.annotations, 1);
-    assert.strictEqual(target.annotations[0].name, 'custom');
+    assert.lengthOf(target.customAnnotations, 1);
+    assert.strictEqual(target.customAnnotations[0].name, 'custom');
   });
 
   it('rejects duplicate targets', async () => {
@@ -170,8 +170,8 @@ policy MyPolicy {
         label: 'redacted',
       },
     ]);
-    assert.lengthOf(parent.annotations, 1);
-    assert.strictEqual(parent.annotations[0].name, 'custom');
+    assert.lengthOf(parent.customAnnotations, 1);
+    assert.strictEqual(parent.customAnnotations[0].name, 'custom');
 
     const subfields = parent.subfields;
     assert.lengthOf(subfields, 2);
@@ -182,15 +182,15 @@ policy MyPolicy {
       usage: PolicyAllowedUsageType.Join,
       label: 'truncated',
     }]);
-    assert.lengthOf(child1.annotations, 1);
-    assert.strictEqual(child1.annotations[0].name, 'custom');
+    assert.lengthOf(child1.customAnnotations, 1);
+    assert.strictEqual(child1.customAnnotations[0].name, 'custom');
 
     assert.strictEqual(child2.name, 'child2');
     assert.deepStrictEqual(child2.allowedUsages, [{
       usage: PolicyAllowedUsageType.Any,
       label: 'raw',
     }]);
-    assert.lengthOf(child2.annotations, 0);
+    assert.lengthOf(child2.customAnnotations, 0);
   });
 
   it('rejects unknown usage types', async () => {
@@ -200,7 +200,7 @@ policy MyPolicy {
     @allowedUsage(label: 'redacted', usageType: 'SomethingElse')
     field,
   }
-}`), 'Unknown usage type: SomethingElse');
+}`), 'Expected one of: *, egress, join. Found: SomethingElse.');
   });
 
   it('rejects duplicate usage types', async () => {
