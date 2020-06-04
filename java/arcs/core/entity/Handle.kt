@@ -48,6 +48,13 @@ suspend fun <T : Handle> T.awaitReady(): T = suspendCancellableCoroutine<T> { co
     this.onReady {
         if (cont.isActive) cont.resume(this@awaitReady)
     }
+    if (this !is ReadableHandle<*>) {
+        if (cont.isActive) cont.resume(this@awaitReady)
+    } else {
+        this.onResync {
+            if (cont.isActive) cont.resume(this@awaitReady)
+        }
+    }
 }
 
 /** Base interface for types that can be stored in a [Handle] (see [Entity] and [Reference]). */
