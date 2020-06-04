@@ -113,7 +113,6 @@ abstract class AbstractArcHost(
 
     override suspend fun unpause() {
         log.info { "unpausing" }
-        stores.reset()
         paused = false
         pausedArcs.forEach {
             try {
@@ -128,6 +127,7 @@ abstract class AbstractArcHost(
 
     override suspend fun shutdown() {
         pause()
+        stores.reset()
         runningArcs.clear()
         contextCache.clear()
         pausedArcs.clear()
