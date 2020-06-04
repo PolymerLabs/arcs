@@ -10,6 +10,7 @@
  */
 package arcs.core.storage.referencemode
 
+import arcs.core.storage.embed
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
