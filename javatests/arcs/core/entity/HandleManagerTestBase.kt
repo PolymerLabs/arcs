@@ -553,7 +553,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun clientCanSetEntityId() = testRunner {
+    fun clientCanSetEntityId() = testRunner {
         fakeTime.millis = 0
         // Ask faketime to increment to test with changing timestamps.
         fakeTime.autoincrement = 1
@@ -575,6 +575,31 @@ open class HandleManagerTestBase {
             val entity3 = TestParticle_Entities(text = "Bye", number = 2.0, entityId = "OtherId")
             handle.store(entity3)
             assertThat(handle.fetchAll()).containsExactly(entity3, entity2)
+        }
+    }
+
+    @Test
+    fun clientCanSetCreationTimestamp() = testRunner {
+        fakeTime.millis = 100
+        val creationTime = 20L
+        val entity = TestParticle_Entities(text = "Hello", number = 1.0, creationTimestamp = creationTime)
+        val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+        withContext(handle.dispatcher) {
+            handle.store(entity)
+
+            assertThat(handle.fetchAll()).containsExactly(entity)
+            assertThat(entity.creationTimestamp).isEqualTo(20)
+
+            // A different entity that reuses the same creation timestamp.
+            val entity2 = TestParticle_Entities(
+                text = "New Hello",
+                number = 1.1,
+                creationTimestamp = entity.creationTimestamp
+            )
+            handle.store(entity2)
+
+            assertThat(handle.fetchAll()).containsExactly(entity, entity2)
+            assertThat(entity2.creationTimestamp).isEqualTo(20)
         }
     }
 
@@ -1036,7 +1061,7 @@ open class HandleManagerTestBase {
     ) : Entity {
 
         var raw: RawEntity? = null
-        var creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+        override var creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
         override var expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
 
         override fun ensureEntityFields(
@@ -1114,6 +1139,7 @@ open class HandleManagerTestBase {
         override val entityId: ReferenceId,
         val style: String
     ) : Entity {
+        override var creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
         override var expirationTimestamp : Long = RawEntity.UNINITIALIZED_TIMESTAMP
 
         override fun ensureEntityFields(
