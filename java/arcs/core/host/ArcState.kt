@@ -91,11 +91,16 @@ enum class ParticleState {
      * succeeded at least once).
      */
     val hasBeenStarted: Boolean
-        get() = listOf(FirstStart, Waiting, Running, Desynced, Stopped, Failed).contains(this)
+        get() = startedStates.contains(this)
 
     /**
      * Indicates whether the particle has failed during its lifecycle.
      */
     val failed: Boolean
-        get() = listOf(Failed, Failed_NeverStarted, MaxFailed).contains(this)
+        get() = failedStates.contains(this)
+
+    companion object {
+        private val startedStates = arrayOf(FirstStart, Waiting, Running, Desynced, Stopped, Failed)
+        private val failedStates = arrayOf(Failed, Failed_NeverStarted, MaxFailed)
+    }
 }
