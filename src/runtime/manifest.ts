@@ -51,6 +51,7 @@ import {LoaderBase} from '../platform/loader-base.js';
 import {Annotation, AnnotationRef} from './recipe/annotation.js';
 import {SchemaPrimitiveTypeValue} from './manifest-ast-nodes.js';
 import {canonicalManifest} from './canonical-manifest.js';
+import {Policy} from './policy/policy.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -85,6 +86,12 @@ class ManifestVisitor {
     if (ast instanceof Array) {
       for (const item of ast as AstNode.BaseNode[]) {
         this.traverse(item);
+      }
+      return;
+    }
+    if (ast instanceof Map) {
+      for (const value of ast.values()) {
+        this.traverse(value);
       }
       return;
     }
@@ -145,6 +152,7 @@ export class Manifest {
   private _schemas: Dictionary<Schema> = {};
   private _stores: AbstractStore[] = [];
   private _interfaces = <InterfaceInfo[]>[];
+  private _policies: Policy[] = [];
   storeTags: Map<AbstractStore, string[]> = new Map();
   private _fileName: string|null = null;
   private readonly _id: Id;
@@ -222,6 +230,9 @@ export class Manifest {
   }
   get interfaces() {
     return this._interfaces;
+  }
+  get policies() {
+    return this._policies;
   }
   get meta() {
     return this._meta;
@@ -365,6 +376,9 @@ export class Manifest {
   }
   findInterfaceByName(name: string) {
     return this._find(manifest => manifest._interfaces.find(iface => iface.name === name));
+  }
+  findPolicyByName(name: string) {
+    return this._find(manifest => manifest._policies.find(policy => policy.name === name));
   }
   findRecipesByVerb(verb: string) {
     return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
@@ -570,6 +584,7 @@ ${e.message}
       await processItems('particle', item => Manifest._processParticle(manifest, item, loader));
       await processItems('store', item => Manifest._processStore(manifest, item, loader, memoryProvider));
       await processItems('recipe', item => Manifest._processRecipe(manifest, item));
+      await processItems('policy', item => Manifest._processPolicy(manifest, item));
     } catch (e) {
       dumpErrors(manifest);
       throw processError(e, false);
@@ -855,6 +870,15 @@ ${e.message}
     // TODO: move interface to recipe/ and add interface builder?
     const ifaceInfo = InterfaceInfo.make(interfaceItem.name, handles, slots);
     manifest._interfaces.push(ifaceInfo);
+  }
+
+  private static _processPolicy(manifest: Manifest, policyItem: AstNode.Policy) {
+    const buildAnnotationRefs = (refs: AstNode.AnnotationRef[]) => Manifest._buildAnnotationRefs(manifest, refs);
+    const policy = Policy.fromAstNode(policyItem, buildAnnotationRefs);
+    if (manifest._policies.some(p => p.name === policy.name)) {
+      throw new ManifestError(policyItem.location, `A policy named ${policy.name} already exists.`);
+    }
+    manifest._policies.push(policy);
   }
 
   private static _processRecipe(manifest: Manifest, recipeItem: AstNode.RecipeNode) {
@@ -1508,6 +1532,10 @@ ${e.message}
     const stores = [...this.stores].sort(compareComparables);
     stores.forEach(store => {
       results.push(store.toManifestString({handleTags: this.storeTags.get(store)}));
+    });
+
+    this._policies.forEach(policy => {
+      results.push(policy.toManifestString());
     });
 
     return results.join('\n');

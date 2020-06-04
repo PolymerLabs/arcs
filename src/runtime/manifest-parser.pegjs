@@ -993,7 +993,17 @@ AnnotationNodeItem
   / AnnotationMultiple
   / AnnotationDoc
 
-AnnotationTargetValue = 'Recipe' / 'Particle' / 'HandleConnection' / 'Store' / 'Handle' / 'SchemaField' / 'Schema'
+AnnotationTargetValue
+  = 'Recipe'
+  / 'Particle'
+  / 'HandleConnection'
+  / 'Store'
+  / 'Handle'
+  / 'SchemaField'
+  / 'Schema'
+  / 'PolicyField'
+  / 'PolicyTarget'
+  / 'Policy'
 
 AnnotationTargets = 'targets:'  whiteSpace '[' whiteSpace? targets:(AnnotationTargetValue (',' whiteSpace? AnnotationTargetValue)*) whiteSpace? ']' eolWhiteSpace? {
   return toAstNode<AstNode.AnnotationTargets>({
@@ -1771,7 +1781,7 @@ NumberedUnits
   }
 
 Policy
-  = 'policy' whiteSpace name:upperIdent openBrace items:(PolicyItem (commaOrNewline PolicyItem)*)? closeBrace
+  = 'policy' whiteSpace name:upperIdent openBrace items:(PolicyItem (commaOrNewline PolicyItem)*)? closeBrace eolWhiteSpace?
   {
     const targets: AstNode.PolicyTarget[] = [];
     const configs: AstNode.PolicyConfig[] = [];
