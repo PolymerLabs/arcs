@@ -27,15 +27,9 @@ import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.debug.junit4.CoroutinesTimeout
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.fail
 import org.junit.Before
@@ -49,12 +43,14 @@ import kotlin.coroutines.EmptyCoroutineContext
 // TODO: test desync/resync
 
 @RunWith(JUnit4::class)
-@OptIn(ExperimentalCoroutinesApi::class)
+@Suppress("EXPERIMENTAL_API_USAGE")
 class LifecycleTest {
+    //@get:Rule
+    //val log = LogRule(Log.Level.Warning, true)
+    fun log(msg: String) = Unit
+
     @get:Rule
-    val log = LogRule(Log.Level.Info, true)
-    @get:Rule
-    public val timeout = CoroutinesTimeout.seconds(15)
+    val timeout = CoroutinesTimeout.seconds(15)
 
     private lateinit var schedulerProvider: JvmSchedulerProvider
     private lateinit var scheduler: Scheduler
@@ -92,9 +88,9 @@ class LifecycleTest {
     fun tearDown() = runBlocking {
         try {
             log("tearing down")
-            //scheduler.waitForIdle()
-            //storeManager.waitForIdle()
-            //entityHandleManager.close()
+            scheduler.waitForIdle()
+            storeManager.waitForIdle()
+            entityHandleManager.close()
         } finally {
             schedulerProvider.cancelAll()
         }
@@ -189,95 +185,77 @@ class LifecycleTest {
 
     @Test
     fun pausing() = runBlocking {
-        val scope = CoroutineScope(this.coroutineContext + Job())
-        val testCompleteJob = Job()
-        val job = scope.launch {
-            val name = "PausingParticle"
-            val arc = startArc(PausingTestPlan)
+        val name = "PausingParticle"
+        val arc = startArc(PausingTestPlan)
 
-            log("Arc is Running!")
+        log("Arc is Running!")
 
-            // Test handles use the same storage proxies as the real handles which will be closed
-            // when the arc is paused, so we need to re-create them after unpausing.
-            // TODO: allow test handles to persist across arc shutdown?
-            val makeHandles = suspend {
-                log("Making handles")
-                Pair(
-                    testHost.singletonForTest<PausingParticle_Data>(arc.id, name, "data")
-                        .awaitReady(),
-                    testHost.collectionForTest<PausingParticle_List>(arc.id, name, "list")
-                        .awaitReady()
-                ).also {
-                    log("Handles made")
-                }
+        // Test handles use the same storage proxies as the real handles which will be closed
+        // when the arc is paused, so we need to re-create them after unpausing.
+        // TODO: allow test handles to persist across arc shutdown?
+        val makeHandles = suspend {
+            log("Making handles")
+            Pair(
+                testHost.singletonForTest<PausingParticle_Data>(arc.id, name, "data")
+                    .awaitReady(),
+                testHost.collectionForTest<PausingParticle_List>(arc.id, name, "list")
+                    .awaitReady()
+            ).also {
+                log("Handles made")
             }
-            val (data1, list1) = makeHandles()
-            log("MY CURRENT THREAD")
-            withContext(data1.dispatcher + CoroutineName("Initialization")) {
-                data1.store(PausingParticle_Data(1.1))
-                list1.store(PausingParticle_List("first"))
-            }
-            log("MY CURRENT THREAD")
-            waitForAllTheThings()
-            data1.close()
-            list1.close()
+        }
+        val (data1, list1) = makeHandles()
+        log("MY CURRENT THREAD")
+        withContext(data1.dispatcher + CoroutineName("Initialization")) {
+            data1.store(PausingParticle_Data(1.1))
+            list1.store(PausingParticle_List("first"))
+        }
+        log("MY CURRENT THREAD")
+        waitForAllTheThings()
+        data1.close()
+        list1.close()
 
-            // Pause!
-            log("MY CURRENT THREAD")
-            testHost.pause()
+        // Pause!
+        log("MY CURRENT THREAD")
+        testHost.pause()
 
-            log("MY CURRENT THREAD")
-            // Now unpause and update the singleton.
-            testHost.unpause()
-            log("MY CURRENT THREAD")
+        log("MY CURRENT THREAD")
+        // Now unpause and update the singleton.
+        testHost.unpause()
+        log("MY CURRENT THREAD")
 
-            log("Unpaused. ready to dance")
-            val particleFirstPause: PausingParticle = testHost.getParticle(arc.id, name)
-            particleFirstPause.onReadyCalled.join()
-            val (data2, list2) = makeHandles()
-            withContext(data2.dispatcher + CoroutineName("Updating")) {
-                data2.store(PausingParticle_Data(2.2))
-            }
-            waitForAllTheThings()
-            data2.close()
-            list2.close()
+        log("Unpaused. ready to dance")
+        val particleFirstPause: PausingParticle = testHost.getParticle(arc.id, name)
+        particleFirstPause.onReadyCalled.join()
+        val (data2, list2) = makeHandles()
+        withContext(data2.dispatcher + CoroutineName("Updating")) {
+            data2.store(PausingParticle_Data(2.2))
+        }
+        waitForAllTheThings()
+        data2.close()
+        list2.close()
 
-            arc.stop()
-            arc.waitForStop()
+        arc.stop()
+        arc.waitForStop()
 
-            log("Asserting")
+        log("Asserting")
 
-            // Check that the events we expected showed up in the correct order.
-            assertVariableOrdering(
-                particleFirstPause.events,
-                // No onFirstStart.
-                listOf("onStart"),
-                // Values stored in the previous session should still be present.
-                setOf("data.onReady:1.1", "list.onReady:[first]"),
-                listOf(
-                    "onReady:1.1:[first]",
-                    "data.onUpdate:2.2",
-                    "onUpdate:2.2:[first]",
-                    "onShutdown"
-                )
+        // Check that the events we expected showed up in the correct order.
+        assertVariableOrdering(
+            particleFirstPause.events,
+            // No onFirstStart.
+            listOf("onStart"),
+            // Values stored in the previous session should still be present.
+            setOf("data.onReady:1.1", "list.onReady:[first]"),
+            listOf(
+                "onReady:1.1:[first]",
+                "data.onUpdate:2.2",
+                "onUpdate:2.2:[first]",
+                "onShutdown"
             )
+        )
 
-            log("Test is done")
-            testCompleteJob.complete()
-        }
-        testCompleteJob.join()
-        log("Joining launch job")
-        val jobCompleted = withTimeoutOrNull(1000) {
-            job.join()
-        }
-        if (jobCompleted == null) {
-            log("Joining timed out.. digging in.")
-            fun Job.dump(indentLevel: Int = 0) {
-                log("  ".repeat(indentLevel) + this.toString())
-                children.forEach { it.dump(indentLevel + 1) }
-            }
-            job.dump()
-        }
+        log("Test is done")
     }
 
     /**
