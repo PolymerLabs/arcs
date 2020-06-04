@@ -10,7 +10,7 @@
 import * as AstNode from '../manifest-ast-nodes.js';
 import {AnnotationRef} from '../recipe/annotation.js';
 import {flatMap} from '../util.js';
-import {assert} from '../../platform/chai-web.js';
+import {assert} from '../../platform/assert-web.js';
 
 export enum PolicyEgressType {
   Logging = 'Logging',
