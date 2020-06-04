@@ -1,8 +1,10 @@
 package arcs.core.host
 
 import arcs.core.util.TaggedLog
+import kotlinx.coroutines.Job
 
 class SingleReadHandleParticle : AbstractSingleReadHandleParticle() {
+    val onReadyCalled = Job()
     val events = mutableListOf<String>()
 
     override fun onFirstStart() { events.add("onFirstStart") }
@@ -11,7 +13,10 @@ class SingleReadHandleParticle : AbstractSingleReadHandleParticle() {
         handles.data.onUpdate { events.add("data.onUpdate:${data()}") }
         events.add("onStart")
     }
-    override fun onReady() { events.add("onReady:${data()}") }
+    override fun onReady() {
+        events.add("onReady:${data()}")
+        onReadyCalled.complete()
+    }
     override fun onUpdate() { events.add("onUpdate:${data()}") }
     override fun onShutdown() { events.add("onShutdown") }
 
@@ -19,16 +24,21 @@ class SingleReadHandleParticle : AbstractSingleReadHandleParticle() {
 }
 
 class SingleWriteHandleParticle : AbstractSingleWriteHandleParticle() {
+    val onReadyCalled = Job()
     val events = mutableListOf<String>()
 
     override fun onFirstStart() { events.add("onFirstStart") }
     override fun onStart() { events.add("onStart") }
-    override fun onReady() { events.add("onReady") }
+    override fun onReady() {
+        events.add("onReady")
+        onReadyCalled.complete()
+    }
     override fun onUpdate() { events.add("onUpdate") }
     override fun onShutdown() { events.add("onShutdown") }
 }
 
 class MultiHandleParticle : AbstractMultiHandleParticle() {
+    val onReadyCalled = Job()
     val events = mutableListOf<String>()
 
     override fun onFirstStart() { events.add("onFirstStart") }
@@ -41,9 +51,14 @@ class MultiHandleParticle : AbstractMultiHandleParticle() {
         handles.config.onUpdate { events.add("config.onUpdate:${config()}") }
         events.add("onStart")
     }
-    override fun onReady() { events.add("onReady:${data()}:${list()}:${config()}") }
+    override fun onReady() {
+        events.add("onReady:${data()}:${list()}:${config()}")
+        onReadyCalled.complete()
+    }
     override fun onUpdate() { events.add("onUpdate:${data()}:${list()}:${config()}") }
-    override fun onShutdown() { events.add("onShutdown") }
+    override fun onShutdown() {
+        events.add("onShutdown")
+    }
 
     fun data() = handles.data.fetch()?.num.toString()
     fun list() = handles.list.fetchAll().map { it.txt }.toSortedSet()
@@ -52,6 +67,7 @@ class MultiHandleParticle : AbstractMultiHandleParticle() {
 
 class PausingParticle : AbstractPausingParticle() {
     private val log = TaggedLog { "PausingParticle" }
+    val onReadyCalled = Job()
     val events = mutableListOf<String>()
 
     override fun onFirstStart() { events.add("onFirstStart") }
@@ -62,7 +78,10 @@ class PausingParticle : AbstractPausingParticle() {
         handles.list.onReady { addEvent("list.onReady:${list()}") }
         handles.list.onUpdate { addEvent("list.onUpdate:${list()}") }
     }
-    override fun onReady() { addEvent("onReady:${data()}:${list()}") }
+    override fun onReady() {
+        addEvent("onReady:${data()}:${list()}")
+        onReadyCalled.complete()
+    }
     override fun onUpdate() { addEvent("onUpdate:${data()}:${list()}") }
     override fun onShutdown() { addEvent("onShutdown") }
 

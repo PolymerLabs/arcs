@@ -103,6 +103,7 @@ class LifecycleTest {
         val arc = startArc(SingleReadHandleTestPlan)
         val particle: SingleReadHandleParticle = testHost.getParticle(arc.id, name)
         val data = testHost.singletonForTest<SingleReadHandleParticle_Data>(arc.id, name, "data")
+        particle.onReadyCalled.join()
         withContext(data.dispatcher) {
             data.store(SingleReadHandleParticle_Data(5.0))
         }
@@ -125,7 +126,9 @@ class LifecycleTest {
         val name = "SingleWriteHandleParticle"
         val arc = startArc(SingleWriteHandleTestPlan)
         val particle: SingleWriteHandleParticle = testHost.getParticle(arc.id, name)
+        particle.onReadyCalled.join()
         val data = testHost.singletonForTest<SingleWriteHandleParticle_Data>(arc.id, name, "data")
+        waitForAllTheThings()
         withContext(data.dispatcher) {
             data.store(SingleWriteHandleParticle_Data(12.0))
         }
@@ -141,6 +144,7 @@ class LifecycleTest {
         val name = "MultiHandleParticle"
         val arc = startArc(MultiHandleTestPlan)
         val particle: MultiHandleParticle = testHost.getParticle(arc.id, name)
+        particle.onReadyCalled.join()
         val data = testHost.singletonForTest<MultiHandleParticle_Data>(arc.id, name, "data")
         val list = testHost.collectionForTest<MultiHandleParticle_List>(arc.id, name, "list")
         val result = testHost.collectionForTest<MultiHandleParticle_Result>(arc.id, name, "result")
@@ -226,6 +230,7 @@ class LifecycleTest {
 
             log("Unpaused. ready to dance")
             val particleFirstPause: PausingParticle = testHost.getParticle(arc.id, name)
+            particleFirstPause.onReadyCalled.join()
             val (data2, list2) = makeHandles()
             withContext(data2.dispatcher + CoroutineName("Updating")) {
                 data2.store(PausingParticle_Data(2.2))
