@@ -87,6 +87,7 @@ class Scheduler(
                 try {
                     withTimeout(agendaProcessingTimeoutMs) { executeAgenda(agenda) }
                 } finally {
+                    agenda.listenersByNamespace.clear()
                     val agendasLeft = agendasInFlight.getAndDecrement()
                     if (agendasLeft == 1) {
                         idlenessChannel.send(true)
@@ -228,14 +229,18 @@ class Scheduler(
      * [Task.Listener]s, collated by [Task.Listener.namespace].
      */
     private data class ListenersByNamespace(
-        val listeners: Map<String, ListenersByName> = emptyMap()
+        val listeners: MutableMap<String, ListenersByName> = mutableMapOf()
     ) : Iterable<Task> {
         fun addListener(listener: Task.Listener): ListenersByNamespace {
             val listeners = (listeners[listener.namespace] ?: ListenersByName())
                 .addListener(listener)
 
-            return copy(listeners = this.listeners + (listener.namespace to listeners))
+            return copy(
+                listeners = (this.listeners + (listener.namespace to listeners)).toMutableMap()
+            )
         }
+
+        fun clear() = listeners.clear()
 
         override fun iterator(): Iterator<Task> = listeners.values.flatten().iterator()
     }
