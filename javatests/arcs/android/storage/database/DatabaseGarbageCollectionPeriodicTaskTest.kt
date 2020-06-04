@@ -51,27 +51,6 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
         ).build()
     }
 
-    private suspend fun ReadWriteCollectionHandle<DummyEntity>.storeAndWait(entity: DummyEntity) {
-        val deferred = CompletableDeferred<Unit>()
-        onUpdate { deferred.complete(Unit) }
-        runBlocking {
-            withContext(dispatcher) {
-                store(entity).join()
-            }
-        }
-        deferred.await()
-    }
-    private suspend fun ReadWriteCollectionHandle<DummyEntity>.removeAndWait(entity: DummyEntity) {
-        val deferred = CompletableDeferred<Unit>()
-        onUpdate { deferred.complete(Unit) }
-        runBlocking {
-            withContext(dispatcher) {
-                remove(entity).join()
-            }
-        }
-        deferred.await()
-    }
-
     @Test
     fun garbageCollectionWorkerTest() = runBlocking {
         // Set time in the past as only entity older than 2 days are garbage collected.
@@ -89,7 +68,9 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
         val ref1 = handle.createReference(entity)
 
         handle.removeAndWait(entity)
-        assertThat(handle.fetchAll()).isEmpty()
+        withContext(handle.dispatcher) {
+            assertThat(handle.fetchAll()).isEmpty()
+        }
 
         // Trigger gc worker twice (entity are removed only after being orphan for two runs).
         assertThat(worker.doWork()).isEqualTo(Result.success())
@@ -115,4 +96,20 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
             collectionKey
         ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
 
+    private suspend fun ReadWriteCollectionHandle<DummyEntity>.storeAndWait(entity: DummyEntity) {
+        val deferred = CompletableDeferred<Unit>()
+        onUpdate { deferred.complete(Unit) }
+        runBlocking(dispatcher) {
+            store(entity).join()
+        }
+        deferred.await()
+    }
+    private suspend fun ReadWriteCollectionHandle<DummyEntity>.removeAndWait(entity: DummyEntity) {
+        val deferred = CompletableDeferred<Unit>()
+        onUpdate { deferred.complete(Unit) }
+        runBlocking(dispatcher) {
+            remove(entity).join()
+        }
+        deferred.await()
+    }
 }

@@ -91,11 +91,12 @@ open class StorageService : ResurrectorService() {
                 TimeUnit.DAYS
             )
                 .addTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
-                .setConstraints(Constraints.Builder()
-                    .setRequiresDeviceIdle(true)
-                    .setRequiresCharging(true)
-                    .build())
-                .build()
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiresDeviceIdle(true)
+                        .setRequiresCharging(true)
+                        .build()
+                ).build()
 
         val workManager = WorkManager.getInstance(this)
         workManager.enqueueUniquePeriodicWork(
