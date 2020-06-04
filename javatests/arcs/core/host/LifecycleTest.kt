@@ -31,6 +31,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.debug.junit4.CoroutinesTimeout
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -52,6 +53,8 @@ import kotlin.coroutines.EmptyCoroutineContext
 class LifecycleTest {
     @get:Rule
     val log = LogRule(Log.Level.Info, true)
+    @get:Rule
+    public val timeout = CoroutinesTimeout.seconds(15)
 
     private lateinit var schedulerProvider: JvmSchedulerProvider
     private lateinit var scheduler: Scheduler

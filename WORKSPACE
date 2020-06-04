@@ -43,7 +43,7 @@ AUTO_SERVICE_VERSION = "1.0-rc6"
 
 KOTLINX_ATOMICFU_VERSION = "0.14.2"
 
-KOTLINX_COROUTINES_VERSION = "1.3.4"
+KOTLINX_COROUTINES_VERSION = "1.3.6"
 
 ROBOLECTRIC_VERSION = "4.1"
 
@@ -93,6 +93,7 @@ maven_install(
         "org.jetbrains.kotlinx:kotlinx-coroutines-android:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-core-js:" + KOTLINX_COROUTINES_VERSION,
+        "org.jetbrains.kotlinx:kotlinx-coroutines-debug:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:kotlinx-coroutines-test:" + KOTLINX_COROUTINES_VERSION,
         "org.jetbrains.kotlinx:atomicfu:" + KOTLINX_ATOMICFU_VERSION,
         "org.jetbrains.kotlinx:atomicfu-js:" + KOTLINX_ATOMICFU_VERSION,
