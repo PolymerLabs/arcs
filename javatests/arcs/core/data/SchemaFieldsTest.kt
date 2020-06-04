@@ -97,4 +97,13 @@ class SchemaFieldsTest {
             "{name: Text, dimensions: (Number, Number, Number), manufacturer: &x1y2z3}"
         )
     }
+
+    @Test
+    fun primitiveTypeIsWellStructured() {
+        val seenValues = PrimitiveType.values().map { it.id }.toSet()
+        for (i in 0..seenValues.size - 1) {
+            assertThat(seenValues).contains(i);
+        }
+        assertThat(seenValues.size).isEqualTo(LARGEST_PRIMITIVE_TYPE_ID + 1)
+    }
 }
