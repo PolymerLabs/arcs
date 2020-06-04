@@ -10,6 +10,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
+import arcs.core.data.TupleType
 import arcs.core.testutil.fail
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
@@ -189,4 +190,56 @@ class TypeProtoDecodersTest {
         val countType = parseTypeProtoText(countTypeProto).decode()
         assertThat(countType).isInstanceOf(CountType::class.java)
     }
+
+    @Test
+    fun decodesTupleTypeProtoAsReferenceType() {
+        val tupleTypeProto = """
+        tuple {
+          elements {
+            entity {
+              schema {
+                names: "Person"
+                fields: {
+                  key: "name"
+                  value: { primitive: TEXT }
+                }
+              }
+            }
+          }
+          elements {
+            entity {
+              schema {
+                names: "Age"
+                fields: {
+                  key: "value"
+                  value: { primitive: NUMBER }
+                }
+              }
+            }
+          }
+        }
+        """.trimIndent()
+        val tupleType = parseTypeProtoText(tupleTypeProto).decode()
+        val personSchema = Schema(
+            names = setOf(SchemaName("Person")),
+            fields = SchemaFields(singletons=mapOf("name" to FieldType.Text), collections=mapOf()),
+            hash = ""
+        )
+        val ageSchema = Schema(
+            names = setOf(SchemaName("Age")),
+            fields = SchemaFields(
+                singletons=mapOf("value" to FieldType.Number),
+                collections=mapOf()
+            ),
+            hash = ""
+        )
+        when (tupleType) {
+            // Using `listOf` instead of containsExactly to ensure order is preserved when decoding.
+            is TupleType -> assertThat(tupleType.elementTypes).isEqualTo(
+                listOf(EntityType(personSchema), EntityType(ageSchema))
+            )
+            else -> fail("TypeProto should have been decoded to [TupleType].")
+        }
+    }
+
 }
