@@ -250,6 +250,15 @@ describe('schema2kotlin', () => {
         'typealias P_H1_2 = AbstractP.P_H1_2',
       ]
     ));
+    it('Unconstrained variables', async () => await assertSchemaAliases(
+      `particle T
+         h1: reads ~a
+         h2: writes ~a 
+      `, [
+        'typealias T_H1 = AbstractT.TInternal1',
+        'typealias T_H2 = AbstractT.TInternal1',
+      ]
+    ));
     it('Progressively constrained variables', async () => await assertSchemaAliases(
       `particle T
          h1: reads ~a
@@ -261,11 +270,23 @@ describe('schema2kotlin', () => {
         'typealias T_H3 = AbstractT.TInternal1',
       ]
     ));
+    it('Different internal entities for distinct aliases', async () => await assertSchemaAliases(
+      `particle T
+         h1: reads ~a
+         h2: writes &~a with {x: Number}
+         h3: reads ~b
+         h4: reads [~b with {a: Text}]`, [
+        'typealias T_H1 = AbstractT.TInternal1',
+        'typealias T_H2 = AbstractT.TInternal1',
+        'typealias T_H3 = AbstractT.TInternal2',
+        'typealias T_H4 = AbstractT.TInternal2',
+      ]
+    ));
     async function assertSchemaAliases(manifest: string, expectedAliases: string[]) {
       await assertComponent(manifest, ({typeAliases}) => typeAliases.sort(), expectedAliases);
     }
   });
-  describe('Kotlin Generator', () => {
+  describe('Entity Class Generation', () => {
     it('generates entity with public constructor', async () => await assertClassDefinition(
       `particle T
          h1: reads Thing {num: Number}`,

@@ -35,7 +35,7 @@ export interface ClassGenerator {
 export class NodeAndGenerator {
   node: SchemaNode;
   generator: ClassGenerator;
-  hash: string;
+  hash: string | null;
 }
 
 export abstract class Schema2Base {
@@ -113,6 +113,7 @@ export abstract class Schema2Base {
     for (const node of graph.walk()) {
       const generator = this.getClassGenerator(node);
       if (!node.schema) {
+        nodes.push({node, generator, hash: null});
         continue;
       }
       for (const [field, descriptor] of Object.entries(node.schema.fields)) {

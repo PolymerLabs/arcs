@@ -190,18 +190,14 @@ ${imports.join('\n')}
 
     function generateInnerType(type: Type) {
       if (type.isEntity) {
-        return nodes.find(n => n.schema.equals(type.getEntitySchema())).humanName(connection);
+        return nodes.find(n => n.schema && n.schema.equals(type.getEntitySchema())).humanName(connection);
       } else if (type.isReference) {
         return `Reference<${generateInnerType(type.getContainedType())}>`;
       } else if (type.isTuple) {
         const innerTypes = type.getContainedTypes();
         return `Tuple${innerTypes.length}<${innerTypes.map(t => generateInnerType(t)).join(', ')}>`;
-      } else if (type.hasVariable) {
-        const constraint = type.canWriteSuperset || type.canReadSubset;
-        if (constraint) {
-          return generateInnerType(constraint);
-        }
-        return nodes.find(n => n.variableName === (type as TypeVariable).variable.name).humanName(connection);
+      } else if (type.hasVariable && (type as TypeVariable).isVariable) {
+        return nodes.find(n => n.variableName.includes((type as TypeVariable).variable.name)).humanName(connection);
       } else {
         throw new Error(`Type '${type.tag}' not supported on code generated particle handle connections.`);
       }
