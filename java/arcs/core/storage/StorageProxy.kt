@@ -16,7 +16,6 @@ import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
 import arcs.core.util.Scheduler
-import arcs.core.util.SchedulerDispatcher
 import arcs.core.util.TaggedLog
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.getAndUpdate
@@ -66,7 +65,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      * [Store], you must either be performing your interactions within a handle callback or on this
      * [CoroutineDispatcher].
      */
-    val dispatcher: CoroutineDispatcher = SchedulerDispatcher(scheduler)
+    val dispatcher: CoroutineDispatcher
+        get() = scheduler.asCoroutineDispatcher()
 
     /** Identifier of the data this [StorageProxy] is managing. */
     val storageKey: StorageKey = storeEndpointProvider.storageKey
