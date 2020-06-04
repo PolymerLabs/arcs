@@ -250,7 +250,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             is CrdtChange.Data -> {
                 proxyManager.send(
                     message = ProxyMessage.ModelUpdate(thisChange.data, source),
-                    exceptTo = source)
+                    exceptTo = source
+                )
             }
         }
     }

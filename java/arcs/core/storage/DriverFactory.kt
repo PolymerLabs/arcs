@@ -12,7 +12,6 @@
 package arcs.core.storage
 
 import arcs.core.type.Type
-import arcs.core.util.TaggedLog
 import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
@@ -22,7 +21,6 @@ import kotlinx.coroutines.launch
 
 /** Factory with which to register and retrieve [Driver]s. */
 object DriverFactory {
-    private val log = TaggedLog { "DriverFactory" }
     private var providers = atomic(setOf<DriverProvider>())
 
     /**
@@ -48,13 +46,9 @@ object DriverFactory {
         dataClass: KClass<Data>,
         type: Type
     ): Driver<Data>? {
-        log.info { "getDriver($storageKey) - entered" }
         return providers.value
             .find { it.willSupport(storageKey) }
             ?.getDriver(storageKey, dataClass, type)
-            .also {
-                log.info { "getDriver($storageKey) - exited" }
-            }
     }
 
     /**

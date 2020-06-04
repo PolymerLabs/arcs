@@ -21,8 +21,12 @@ import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.type.Type
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
+import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /** [DriverProvider] of [VolatileDriver]s for an arc. */
 data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
@@ -96,7 +100,11 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
         this.receiver = receiver
         this.pendingModel
             ?.takeIf { this.token != token }
-            ?.let { receiver(it, pendingVersion) }
+            ?.let {
+                CoroutineScope(coroutineContext + Dispatchers.Default).launch {
+                    receiver(it, pendingVersion)
+                }
+            }
         this.pendingModel = null
     }
 
