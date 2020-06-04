@@ -1,16 +1,16 @@
 package arcs.schematests.references
 
-data class Level0(
+data class MyLevel0(
     val name: String
 )
 
-data class Level1(
+data class MyLevel1(
     val name: String,
-    val children: Set<Level0>
+    val children: Set<MyLevel0>
 )
 
-data class Level2(
+data class MyLevel2(
     val name: String,
-    val children: Set<Level1>
+    val children: Set<MyLevel1>
 )
 

@@ -70,7 +70,7 @@ describe('schema2wasm', () => {
     const mock = await Schema2Mock.create(manifest);
     assert.deepStrictEqual(mock.res, {
       'FooInternal1': {count: 1, adds: ['txt:T']},
-      'Foo_Input3':   {count: 2, adds: ['url:U', 'ref:R<FooInternal1>']},
+      'Site':         {count: 2, adds: ['url:U', 'ref:R<FooInternal1>']},
       'Foo_Input2':   {count: 2, adds: ['txt:T', 'num:N']},
     });
   });

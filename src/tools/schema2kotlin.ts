@@ -181,7 +181,7 @@ ${imports.join('\n')}
    * Returns the type of the thing stored in the handle, e.g. MyEntity,
    * Reference<MyEntity>, Tuple2<Reference<Entity1>, Reference<Entity2>>.
    */
-  private handleInnerType(connection: HandleConnectionSpec, nodes: SchemaNode[]): string {
+  private handleInnerType(connection: HandleConnectionSpec, nodes: SchemaNode[], forTest: boolean): string {
     let type = connection.type;
     if (type.isCollection || type.isSingleton) {
       // The top level collection / singleton distinction is handled by the flavour of a handle.
@@ -190,7 +190,8 @@ ${imports.join('\n')}
 
     function generateInnerType(type: Type) {
       if (type.isEntity) {
-        return nodes.find(n => n.schema.equals(type.getEntitySchema())).humanName(connection);
+        const node = nodes.find(n => n.schema.equals(type.getEntitySchema()));
+        return forTest ? node.sources[0].fullName : node.humanName(connection);
       } else if (type.isReference) {
         return `Reference<${generateInnerType(type.getContainedType())}>`;
       } else if (type.isTuple) {
@@ -228,7 +229,7 @@ ${imports.join('\n')}
    * Returns the handle interface type, e.g. WriteSingletonHandle,
    * ReadWriteCollectionHandle. Includes generic arguments.
    */
-  handleInterfaceType(connection: HandleConnectionSpec, nodes: SchemaNode[]) {
+  handleInterfaceType(connection: HandleConnectionSpec, nodes: SchemaNode[], forTest: boolean = false) {
     if (connection.direction !== 'reads' && connection.direction !== 'writes' && connection.direction !== 'reads writes') {
       throw new Error(`Unsupported handle direction: ${connection.direction}`);
     }
@@ -240,7 +241,7 @@ ${imports.join('\n')}
     }
 
     const handleMode = this.handleMode(connection);
-    const innerType = this.handleInnerType(connection, nodes);
+    const innerType = this.handleInnerType(connection, nodes, forTest);
     const typeArguments: string[] = [innerType];
     const queryType = this.getQueryType(connection);
     if (queryType) {
@@ -327,10 +328,10 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     for (const connection of particle.connections) {
       connection.direction = 'reads writes';
       const handleName = connection.name;
-      const interfaceType = this.handleInterfaceType(connection, nodes);
+      const interfaceType = this.handleInterfaceType(connection, nodes, true);
       // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
       //                    allowing multiple EntitySpecs for handles of tuples.
-      const entityType = SchemaNode.singleSchemaHumanName(connection, nodes);
+      const entityType = SchemaNode.singleSchemaFullName(connection, nodes);
       handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
       handleSpecs.push(this.handleSpec(handleName, entityType, connection));
     }
@@ -571,7 +572,7 @@ ${lines}
 
             private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
                 ${ktUtils.mapOf(this.nestedEntitySpecs, 16)}
-
+                
             init {
                 SchemaRegistry.register(SCHEMA)
             }`}

@@ -1,5 +1,5 @@
 meta
-  namespace: arcs.core.host
+  namespace: arcs.core.host.generated
 
 // Represents a Plan.HandleConnection
 schema HandleConnection
@@ -13,7 +13,7 @@ schema HandleConnection
   ttl: Number
 
 // Represents a ParticleContext and Plan.Particle
-schema Particle
+schema ParticleSchema
   particleName: Text
   location: Text
   // ParticleState enum name
@@ -27,9 +27,9 @@ particle ArcHostContextParticle
     hostId: Text,
     // ArcState enum name
     arcState: Text,
-    particles: [&Particle]
+    particles: [&ParticleSchema]
   }
-  particles: reads writes [Particle]
+  particles: reads writes [ParticleSchema]
   handleConnections: reads writes [HandleConnection]
 
 recipe ArcHostContext
