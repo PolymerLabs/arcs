@@ -65,6 +65,10 @@ interface Id {
         fun newChildId(parentId: Id, subComponent: String = ""): Id =
             IdImpl(currentSessionId, parentId.idTree + listOf("$subComponent${nextComponentId++}"))
 
+        /** Returns the [Id] of the child [subComponent] of the given [parentId]. */
+        fun getChildId(parentId: Id, subComponent: String): Id =
+            IdImpl(currentSessionId, parentId.idTree + listOf(subComponent))
+
         companion object {
             /** Creates a new random session id and returns a [Generator] using it. */
             fun newSession(): Generator = Generator(Random.nextSafeRandomLong().toString())

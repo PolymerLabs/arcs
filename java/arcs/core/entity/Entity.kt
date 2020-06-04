@@ -35,6 +35,7 @@ interface Entity : Storable {
     fun ensureEntityFields(
         idGenerator: Id.Generator,
         handleName: String,
+        handleSpec: HandleSpec<out Entity>,
         time: Time,
         ttl: Ttl = Ttl.Infinite
     )

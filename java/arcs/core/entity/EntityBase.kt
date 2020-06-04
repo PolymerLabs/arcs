@@ -23,6 +23,7 @@ import arcs.core.data.Ttl
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
+import arcs.core.entity.HandleContainerType.Singleton
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.util.Time
 import kotlin.reflect.KProperty
@@ -271,15 +272,24 @@ open class EntityBase(
     override fun ensureEntityFields(
         idGenerator: Id.Generator,
         handleName: String,
+        handleSpec: HandleSpec<out Entity>,
         time: Time,
         ttl: Ttl
     ) {
         if (entityId == null) {
-            entityId = idGenerator.newChildId(
-                // TODO: should we allow this to be plumbed through?
-                idGenerator.newArcId("dummy-arc"),
-                handleName
-            ).toString()
+            entityId =
+                if (handleSpec.containerType == Singleton)
+                    idGenerator.getChildId(
+                        // TODO: should we allow this to be plumbed through?
+                        idGenerator.newArcId("dummy-arc"),
+                        handleName
+                    ).toString()
+                else
+                    idGenerator.newChildId(
+                        // TODO: should we allow this to be plumbed through?
+                        idGenerator.newArcId("dummy-arc"),
+                        handleName
+                    ).toString()
         }
         if (creationTimestamp == UNINITIALIZED_TIMESTAMP) {
             creationTimestamp = time.currentTimeMillis

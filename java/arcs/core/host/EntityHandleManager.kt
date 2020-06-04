@@ -117,6 +117,7 @@ class EntityHandleManager(
             HandleDataType.Entity -> {
                 EntityStorageAdapter(
                     handleName,
+                    spec,
                     idGenerator,
                     spec.entitySpec,
                     ttl,

@@ -33,6 +33,7 @@ sealed class StorageAdapter<T : Storable, R : Referencable> {
 @Suppress("GoodTime") // use Instant
 class EntityStorageAdapter<T : Entity>(
     val handleName: String,
+    val handleSpec: HandleSpec<out Entity>,
     val idGenerator: Id.Generator,
     val entitySpec: EntitySpec<T>,
     private val ttl: Ttl,
@@ -40,7 +41,7 @@ class EntityStorageAdapter<T : Entity>(
     private val dereferencerFactory: EntityDereferencerFactory
 ) : StorageAdapter<T, RawEntity>() {
     override fun storableToReferencable(value: T): RawEntity {
-        value.ensureEntityFields(idGenerator, handleName, time, ttl)
+        value.ensureEntityFields(idGenerator, handleName, handleSpec, time, ttl)
 
         val rawEntity = value.serialize()
 
