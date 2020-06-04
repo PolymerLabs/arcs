@@ -324,7 +324,7 @@ export class Capabilities extends Capability {
     assert(other instanceof Capabilities);
     const otherCapabilities = other as Capabilities;
     assert(this.list.length === otherCapabilities.list.length);
-    for (let index = 0; index < this.list.length; ++ index) {
+    for (let index = 0; index < this.list.length; ++index) {
       const capability = this.list[index];
       const otherCapability = otherCapabilities.list[index];
       const comparison = capability.compare(otherCapability);
@@ -340,7 +340,7 @@ export class Capabilities extends Capability {
   protected canRestrict(other: Capabilities): boolean {
     assert(this.list.length === other.list.length);
     let totalComparison = CapabilityComparison.Equivalent;
-    for (let index = 0; index < this.list.length; ++ index) {
+    for (let index = 0; index < this.list.length; ++index) {
       const capability = this.list[index];
       const otherCapability = other.list[index];
       const comparison = capability.compare(otherCapability);
@@ -361,7 +361,7 @@ export class Capabilities extends Capability {
     if (!this.canRestrict(otherCapabilities)) {
       return false;
     }
-    for (let index = 0; index < this.list.length; ++ index) {
+    for (let index = 0; index < this.list.length; ++index) {
       this.list[index].setMostRestrictive(otherCapabilities.list[index]);
     }
     return true;
@@ -373,7 +373,7 @@ export class Capabilities extends Capability {
     if (!this.canRestrict(otherCapabilities)) {
       return false;
     }
-    for (let index = 0; index < this.list.length; ++ index) {
+    for (let index = 0; index < this.list.length; ++index) {
       this.list[index].setLeastRestrictive(otherCapabilities.list[index]);
     }
     return true;
