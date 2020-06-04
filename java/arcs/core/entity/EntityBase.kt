@@ -148,9 +148,16 @@ open class EntityBase(
     private fun getCollectionTypeOrNull(field: String) = schema.fields.collections[field]
 
     /** Copies all singleton and collection values into another [EntityBase]. */
-    protected fun copyInto(that: EntityBase) {
-        that.singletons.putAll(this.singletons)
-        that.collections.putAll(this.collections)
+    protected fun copyInto(that: EntityBase, overwrite: Boolean = false) {
+        if (overwrite) {
+            that.singletons.putAll(this.singletons)
+            that.collections.putAll(this.collections)
+            return
+        }
+        this.singletons.forEach { that.singletons.putIfAbsent(it.key, it.value) }
+        this.collections.forEach {
+            that.collections.merge(it.key, it.value) { t, u -> if (t.isEmpty()) u else t }
+        }
     }
 
     /** Checks that the given value is of the expected type. */

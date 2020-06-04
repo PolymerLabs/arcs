@@ -35,6 +35,10 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
 
     fun deserializeForTest(rawEntity: RawEntity) = super.deserialize(rawEntity, nestedEntitySpecs)
 
+    fun copyIntoForTest(that: EntityBase, overwrite: Boolean = false) {
+        this.copyInto(that, overwrite)
+    }
+
     companion object : EntitySpec<DummyEntity> {
         override fun deserialize(data: RawEntity) = DummyEntity().apply { deserialize(data) }
 
