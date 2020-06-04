@@ -41,7 +41,7 @@ open class EntityBase(
      */
     final override var entityId: String? = entityId
         private set
-    var creationTimestamp: Long = creationTimestamp
+    final override var creationTimestamp: Long = creationTimestamp
         private set
     final override var expirationTimestamp: Long = expirationTimestamp
         private set
@@ -281,11 +281,15 @@ open class EntityBase(
                 handleName
             ).toString()
         }
+        val now = time.currentTimeMillis
         if (creationTimestamp == UNINITIALIZED_TIMESTAMP) {
-            creationTimestamp = time.currentTimeMillis
+            creationTimestamp = now
             if (ttl != Ttl.Infinite) {
                 expirationTimestamp = ttl.calculateExpiration(time)
             }
+        }
+        require(creationTimestamp <= now) {
+            "Cannot set a future creationTimestamp=$creationTimestamp."
         }
     }
 
