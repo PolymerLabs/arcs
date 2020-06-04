@@ -116,7 +116,7 @@ policy MyPolicy {
             },
             {
               name: 'child2',
-              usages: [{redactionLabel: 'raw', usage: 'ANY'}],
+              usages: [{redactionLabel: '', usage: 'ANY'}],
             },
           ],
           annotations: [{name: 'custom'}],
