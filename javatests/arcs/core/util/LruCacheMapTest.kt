@@ -44,6 +44,29 @@ class LruCacheMapTest {
     }
 
     @Test
+    fun lruCache_calls_onEvict_for_deadEntries() {
+        val shouldBeEvicted = mutableSetOf<Int>()
+
+        for (x in 1..5) {
+            if (x % 2 == 1) {
+                shouldBeEvicted.add(x)
+            }
+        }
+
+        val cache = LruCacheMap<Int, String>(livenessPredicate = { k, _ -> k % 2 == 0 }) { k, _ ->
+           assertThat(k).isIn(shouldBeEvicted)
+        }
+
+        for (x in 1..5) {
+            cache.put(x, "value$x")
+        }
+
+        shouldBeEvicted.forEach {
+            assertThat(cache.get(it)).isNull()
+        }
+    }
+
+    @Test
     fun lruCache_calls_onEvict_for_evictedEntries() {
         val shouldBeEvicted: MutableMap<String, String> = mutableMapOf()
 

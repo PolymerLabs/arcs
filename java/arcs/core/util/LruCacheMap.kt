@@ -13,14 +13,19 @@ package arcs.core.util
 
 /**
  * An extremely simple [MutableMap] with an LRU policy. Leverages [LinkedHashMap] to maintain
- * order and remove oldest entries which are the first entries returned from the iterator.
+ * order and remove oldest entries which are the first entries returned from the iterator. A
+ * [livenessPredicate] additionally allows entries to be removed during retrieval, or later,
+ * with a periodic cleanup task, if they are no longer usable (e.g. closed, tombstones, etc)
+ * regardless of whether the cache is at maximum capacity or not, or if they were recently used.
  *
  * @property capacity the maximum capacity of the cache.
+ * @property livenessPredicate return true if the entry may be removed even if recently used
  * @property onEvict called on each item evicted.
  */
-class LruCacheMap<K, V>(
+open class LruCacheMap<K, V>(
     val capacity: Int = 100,
     private val backingMap: LinkedHashMap<K, V> = linkedMapOf(),
+    val livenessPredicate: ((K, V) -> Boolean) = { _, _ -> true },
     val onEvict: ((K, V) -> Unit)? = null
 ) : MutableMap<K, V> by backingMap {
 
@@ -46,8 +51,13 @@ class LruCacheMap<K, V>(
         val value = backingMap.get(key)?.let {
             // remove and put moves entry to end of internal linked list
             backingMap.remove(key)
-            backingMap.put(key, it)
-            it
+            if (livenessPredicate(key, it)) {
+                backingMap.put(key, it)
+                return it
+            } else {
+                onEvict?.invoke(key, it)
+                return null
+            }
         }
         return value
     }

@@ -55,6 +55,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
     private val log = TaggedLog { "DirectStore(${state.value}, $storageKey)" }
 
+    private var closed = false
+
     /**
      * [AtomicRef] of a [CompletableDeferred] which will be completed when the [DirectStore]
      * transitions into the Idle state.
@@ -98,9 +100,15 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         }
     }
 
+    /** True if these store has been closed. */
+    fun isClosed() = closed
+
     fun close() {
-        stateChannel.offer(State.Closed())
-        closeWriteBack()
+        if (!closed) {
+            stateChannel.offer(State.Closed())
+            closeWriteBack()
+        }
+        closed = true
     }
 
     /**
@@ -339,7 +347,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
              * determine what state to transition into and perform any necessary operations.
              */
             open suspend fun update(
-                version: Int, messageFromDriver: Boolean, localModel: Data
+                version: Int,
+                messageFromDriver: Boolean,
+                localModel: Data
             ): Pair<Int, StateWithData<Data>> = version to this
 
             /**
@@ -350,6 +360,10 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 true
         }
 
+        /**
+         * Indicates that the current conflated Channel is closed, dropping any held objects in the
+         * channel.
+         **/
         class Closed<Data : CrdtData> : State<Data>(Name.Closed)
 
         /**
