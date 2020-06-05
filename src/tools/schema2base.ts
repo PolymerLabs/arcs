@@ -94,8 +94,10 @@ export abstract class Schema2Base {
     for (const particle of manifest.particles) {
       const nodes = await this.calculateNodeAndGenerators(particle);
 
-      classes.push(...nodes.map(({generator, node, hash}) =>
-          generator.generate(hash, Object.entries(node.schema.fields).length)));
+      classes.push(...nodes.map(({generator, node, hash}) => {
+        const length = node.schema ? Object.entries(node.schema.fields).length : 0;
+        return generator.generate(hash, length);
+      }));
 
       if (this.opts.test_harness) {
         classes.push(this.generateTestHarness(particle, nodes.map(n => n.node)));

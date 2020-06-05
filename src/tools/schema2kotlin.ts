@@ -282,7 +282,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
 
     nodeGenerators.forEach(nodeGenerator => {
       const kotlinGenerator = <KotlinGenerator>nodeGenerator.generator;
-      classes.push(kotlinGenerator.generateClasses(nodeGenerator.hash));
+      classes.push(kotlinGenerator.generateClasses(nodeGenerator.hash || ''));
       typeAliases.push(...kotlinGenerator.generateAliases(particleName));
     });
 
@@ -459,7 +459,18 @@ export class KotlinGenerator implements ClassGenerator {
   }
 
   createSchema(schemaHash: string): string {
-    if (!this.node.schema) return ``;
+    if (!this.node.schema) {
+      const varName = quote(`~${this.node.variableName}`);
+      return `\
+Schema(
+    setOf(SchemaName(${varName})),
+    SchemaFields(singletons = emptyMap(), collections = emptyMap()),
+    ${varName},
+    refinement = ${this.refinement},
+    query = ${this.query}
+)
+`;
+    }
 
     const schemaNames = this.node.schema.names.map(n => `SchemaName("${n}")`);
     return `\
