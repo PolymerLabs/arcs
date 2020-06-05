@@ -145,7 +145,7 @@ class ReferenceModeStore private constructor(
         }
     )
 
-    private var containerCallbackToken: Int = -1
+    private val containerCallbackToken: Int
 
     init {
         @Suppress("UNCHECKED_CAST")
@@ -185,9 +185,7 @@ class ReferenceModeStore private constructor(
     ): Int = callbacks.register(callback)
 
     override fun off(callbackToken: Int) {
-        if (containerCallbackToken != -1) {
-            containerStore.off(callbackToken)
-        }
+        containerStore.off(containerCallbackToken)
         callbacks.unregister(callbackToken)
     }
 
