@@ -68,7 +68,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
      */
     private var pendingDriverModels = atomic(listOf<PendingDriverModel<Data>>())
     private var version = atomic(0)
-    private var state: AtomicRef<State<Data>> = atomic(State.Idle(idleDeferred, driver))
+    private var state: AtomicRef<State.StateWithData<Data>> = atomic(State.Idle(idleDeferred, driver))
     private val stateChannel =
         ConflatedBroadcastChannel<State<Data>>(State.Idle(idleDeferred, driver))
     private val stateFlow = stateChannel.asFlow()
