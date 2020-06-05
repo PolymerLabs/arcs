@@ -1,5 +1,7 @@
 // fails when a "not tag" is claimed and the tag is checked for
-particle P1
+// #Ingress: P1
+// #Fail: hc:P2.bar is trusted
+ particle P1
   foo: writes Foo {}
   claim foo is not trusted
 particle P2

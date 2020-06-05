@@ -23,11 +23,23 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class InformationFlowTest {
+
+    /** Returns the path for the manifest proto binary file for the test. */
+    private fun getManifestProtoTextPath(test: String): String {
+        val testText = test.replace("-", "_")
+        return runfilesDir() + "javatests/arcs/core/analysis/testdata/${testText}.arcs"
+    }
+
+    /** Returns the path for the manifest proto binary file for the test. */
+    private fun getManifestProtoBinPath(test: String): String {
+        return runfilesDir() + "javatests/arcs/core/analysis/testdata/${test}.pb.bin"
+    }
+
     /** A helper function to decode a RecipeProto in a [file] in the testdata directory. */
     private fun parseManifestWithSingleRecipe(file: String): Recipe {
-        val binPath =
-            runfilesDir() + "javatests/arcs/core/analysis/testdata/${file}.pb.bin"
-        val manifestProto = ManifestProto.parseFrom(File(binPath).readBytes())
+        val manifestProto = ManifestProto.parseFrom(
+            File(getManifestProtoBinPath(file)).readBytes()
+        )
         val recipes = manifestProto.decodeRecipes()
         return requireNotNull(recipes.firstOrNull())
     }
@@ -37,88 +49,76 @@ class InformationFlowTest {
         return "${accessPath} is $predicate"
     }
 
-    /**
-     * Describes a test for a DFA, where [file] contains the manifest proto, [ingresses] is the
-     * name of ingress handles, and [violation] is the expected violation (if any).
-     */
-    data class DFATest(
-        val file: String,
-        val ingresses: List<String>,
-        val violation: List<String> = emptyList()
-    )
+    private fun verifyChecksInTestFile(test: String) {
+        val manifestFile = getManifestProtoTextPath(test)
 
-    /** Returns null if the recipe is valid. Otherwise, returns the first violating check. */
-    private fun getViolatingChecks(test: String, ingresses: List<String>): List<String> {
+        // Collect ingresses and failures from the test file.
+        val ingresses = mutableListOf<String>()
+        val violations = mutableListOf<String>()
+        var hasOk = false
+        File(manifestFile).forEachLine {
+            when {
+                it.startsWith(INGRESS_PREFIX, ignoreCase = true) ->
+                    ingresses.add(it.replace(INGRESS_PREFIX, "", ignoreCase = true).trim())
+                it.startsWith(FAIL_PREFIX, ignoreCase = true) ->
+                    violations.add(it.replace(FAIL_PREFIX, "", ignoreCase = true).trim())
+                it.startsWith(OK_PREFIX, ignoreCase = true) -> hasOk = true
+            }
+        }
+        assertWithMessage("Test '$test' has no ingresses!").that(ingresses).isNotEmpty()
+        assertWithMessage("Test '$test' has neither `OK` nor violations!")
+            .that(hasOk || !violations.isEmpty())
+            .isTrue()
+        assertWithMessage("Test '$test' has both `OK` and violations!")
+            .that(hasOk && !violations.isEmpty())
+            .isFalse()
         val recipe = parseManifestWithSingleRecipe(test)
-        val result = InformationFlow.computeLabels(recipe, ingresses)
-        return result.checks.flatMap { (particle, checks) ->
-            checks.filter { check ->
-                !result.verify(particle, check)
-            }.map { it.asString() }
+        val result = InformationFlow.computeLabels(recipe, ingresses.toList())
+        val actualViolations = result.checks.flatMap { (particle, checks) ->
+            checks
+                .filterNot { result.verify(particle, it) }
+                .map { it.asString() }
         }
+        assertWithMessage("Unexpected DFA behavior for test '$test'")
+            .that(actualViolations)
+            .isEqualTo(violations)
     }
 
     @Test
-    fun successDFA() {
-        val tests = listOf(
-            DFATest("ok-directly-satisfied", listOf("P1")),
-            DFATest("ok-not-tag-claim-no-checks", listOf("P1")),
-            DFATest("ok-not-tag-claim-reclaimed", listOf("P1")),
-            DFATest("ok-negated-missing-tag", listOf("P")),
-            DFATest("ok-read-write-match-claim-check", listOf("P")),
-            DFATest("ok-multiple-inputs-correct-tags", listOf("P1", "P2")),
-            DFATest("ok-claim-propagates", listOf("P1")),
-            DFATest("ok-claim-not-overriden-later", listOf("P1")),
-            DFATest("ok-check-multiple-or-tags", listOf("P1", "P2")),
-            DFATest("ok-check-multiple-and-single-claim", listOf("P1")),
-            DFATest("ok-check-multiple-or-single-claim", listOf("P1"))
+    fun checksAreVerifiedInDFA() {
+        val failingTests = listOf(
+            "fail-different-tag",
+            "fail-no-tags",
+            "fail-not-tag-claim",
+            "fail-not-tag-cancels",
+            "fail-negated-tag-present",
+            "fail-read-write-mismatch-claim-check",
+            "fail-multiple-inputs-one-untagged",
+            "fail-check-multiple-or-tags",
+            "fail-multiple-checks",
+            "fail-no-inputs",
+            "fail-mixer"
         )
-        tests.forEach { (test, ingresses, _) ->
-            assertWithMessage("Test '$test' should be valid!")
-                .that(getViolatingChecks(test, ingresses)).isEmpty()
-        }
+        val okTests = listOf<String>(
+            "ok-directly-satisfied",
+            "ok-not-tag-claim-no-checks",
+            "ok-not-tag-claim-reclaimed",
+            "ok-negated-missing-tag",
+            "ok-read-write-match-claim-check",
+            "ok-multiple-inputs-correct-tags",
+            "ok-claim-propagates",
+            "ok-claim-not-overriden-later",
+            "ok-check-multiple-or-tags",
+            "ok-check-multiple-and-single-claim",
+            "ok-check-multiple-or-single-claim"
+        )
+        val tests = okTests + failingTests
+        tests.forEach { verifyChecksInTestFile(it) }
     }
 
-    @Test
-    fun failDFA() {
-        val tests = listOf(
-            DFATest("fail-different-tag", listOf("P1"), listOf("hc:P2.bar is trusted")),
-            DFATest("fail-no-tags", listOf("P1"), listOf("hc:P2.bar is trusted")),
-            DFATest("fail-not-tag-claim", listOf("P1"), listOf("hc:P2.bar is trusted")),
-            DFATest("fail-not-tag-cancels", listOf("P1"), listOf("hc:P3.bye is trusted")),
-            DFATest("fail-negated-tag-present", listOf("P1"), listOf("hc:P2.bar is not private")),
-            DFATest("fail-read-write-mismatch-claim-check", listOf("P"), listOf("hc:P.foo is t1")),
-            DFATest(
-                "fail-multiple-inputs-one-untagged",
-                listOf("P1", "P2"),
-                listOf("hc:P3.bar is trusted")
-            ),
-            DFATest(
-                "fail-check-multiple-or-tags",
-                listOf("P1", "P2"),
-                listOf("hc:P3.bar is (tag1 or tag2)")
-            ),
-            DFATest(
-                "fail-multiple-checks",
-                listOf("P1"),
-                listOf("hc:P2.bar1 is trusted", "hc:P2.bar2 is extraTrusted")
-            ),
-            DFATest("fail-no-inputs", listOf("P.bar"), listOf("hc:P.bar is trusted")),
-            DFATest(
-                "fail-mixer",
-                listOf("IngestionAppName", "IngestionLocation"),
-                listOf(
-                    "hc:Egress2.data is (packageName and coarseLocation)",
-                    "hc:Egress4.data is safeToLog",
-                    "hc:Egress5.data is " +
-                    "((packageName and safeToLog) or (coarseLocation and safeToLog))"
-                )
-            )
-        )
-        tests.forEach { (test, ingresses, violations) ->
-            assertWithMessage("Test '$test' should be invalid!")
-                .that(getViolatingChecks(test, ingresses))
-                .isEqualTo(violations)
-        }
+    companion object {
+        val INGRESS_PREFIX = "// #Ingress:"
+        val FAIL_PREFIX = "// #Fail:"
+        val OK_PREFIX = "// #OK"
     }
 }

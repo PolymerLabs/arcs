@@ -1,4 +1,6 @@
 // succeeds when a "not tag" is claimed and there are no checks
+// #Ingress: P1
+// #OK
 particle P1
   foo: writes Foo {}
   claim foo is not trusted

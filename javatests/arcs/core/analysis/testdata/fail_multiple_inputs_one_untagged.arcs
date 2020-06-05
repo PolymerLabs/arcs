@@ -1,4 +1,7 @@
 // fails when handle has multiple inputs but one is untagged
+// #Ingress: P1
+// #Ingress: P2
+// #Fail: hc:P3.bar is trusted
 particle P1
   foo: writes Foo {}
   claim foo is trusted

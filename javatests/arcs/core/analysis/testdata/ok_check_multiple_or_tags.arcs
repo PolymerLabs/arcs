@@ -1,4 +1,7 @@
 // succeeds when a check includes multiple tags
+// #Ingress: P1
+// #Ingress: P2
+// #OK
 particle P1
   foo: writes Foo {}
   claim foo is tag1

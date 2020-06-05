@@ -1,4 +1,6 @@
 // fails when an inout handle claims a different tag from the one it checks
+// #Ingress: P
+// #Fail: hc:P.foo is t1
 particle P
   foo: reads writes Foo {}
   check foo is t1

@@ -1,4 +1,6 @@
 // succeeds when a check including multiple 'or'd tags is met by a single claim
+// #Ingress: P1
+// #OK
 particle P1
   foo: writes Foo {}
   claim foo is tag1 and is tag2

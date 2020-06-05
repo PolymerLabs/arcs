@@ -1,4 +1,6 @@
 // fails when no tag is claimed
+// #Ingress: P1
+// #Fail: hc:P2.bar is trusted
 particle P1
   foo: writes Foo {}
 particle P2

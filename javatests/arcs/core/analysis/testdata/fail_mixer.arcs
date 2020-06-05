@@ -1,3 +1,8 @@
+// #Ingress: IngestionAppName
+// #Ingress: IngestionLocation
+// #Fail: hc:Egress2.data is (packageName and coarseLocation)
+// #Fail: hc:Egress4.data is safeToLog
+// #Fail: hc:Egress5.data is ((packageName and safeToLog) or (coarseLocation and safeToLog))
 particle IngestionAppName
   data: writes [AppName {
     packageName: Text

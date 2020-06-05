@@ -1,4 +1,7 @@
-// can detect failures for different checks', async () => {
+// can detect failures for different checks'
+// #Ingress: P1
+// #Fail: hc:P2.bar1 is trusted
+// #Fail: hc:P2.bar2 is extraTrusted
 particle P1
   foo1: writes Foo {}
   foo2: writes Foo {}

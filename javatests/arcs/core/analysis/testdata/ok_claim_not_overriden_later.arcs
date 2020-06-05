@@ -1,4 +1,6 @@
 // a claim made later in a chain of particles does not override claims made earlier
+// #Ingress: P1
+// #OK
 particle P1
   foo: writes Foo {}
   claim foo is trusted
