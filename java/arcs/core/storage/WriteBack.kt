@@ -133,9 +133,7 @@ open class StoreWriteBack /* internal */ constructor(
         }
     }
 
-    override fun closeWriteBack() {
-        channel.cancel()
-    }
+    override fun closeWriteBack() = channel.cancel()
 
     override suspend fun flush(job: suspend () -> Unit) {
         if (!passThrough.value) flushSection { job() }
