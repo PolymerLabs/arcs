@@ -359,10 +359,10 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
     // TODO(b/155025255)
     is FieldType.Tuple ->
         throw NotImplementedError("[FieldType.Tuple]s cannot be converted to references.")
-    is FieldType.ListOf ->
-        (value as List<*>).map {
-            toReferencable(it!!, type.primitiveType)
-        }.toReferencable()
+    is FieldType.ListOf -> {
+        @Suppress("UNCHECKED_CAST")
+        (value as List<Referencable>).toReferencable()
+    }
 }
 
 private fun fromReferencable(
