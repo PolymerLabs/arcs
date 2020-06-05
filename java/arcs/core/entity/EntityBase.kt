@@ -204,7 +204,11 @@ open class EntityBase(
                 require(value is List<*>) {
                     "Expected list for $entityClassName.$field, but received $value."
                 }
+<<<<<<< HEAD
                 value.forEach { checkType(field, it, type.primitiveType, "member of ") }
+=======
+                value.forEach { checkType(field, it, type.primitiveType) }
+>>>>>>> 3d7b8e5e6... update conversion + SchemaFields representation
             }
         }
     }
@@ -361,7 +365,7 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
         throw NotImplementedError("[FieldType.Tuple]s cannot be converted to references.")
     is FieldType.ListOf -> {
         @Suppress("UNCHECKED_CAST")
-        (value as List<Referencable>).toReferencable()
+        (value as List<Any>).map { toReferencable(it, type.primitiveType)}.toReferencable()
     }
 }
 
