@@ -280,7 +280,6 @@ abstract class AbstractArcHost(
 
         // All particles have now received their onStart events. Trigger any proxy sync
         // requests so that the ensuing onReady events will fire after this point.
-        val dispatcher = SchedulerDispatcher(schedulerProvider(partition.arcId))
         context.entityHandleManager.initiateProxySync()
         withContext(schedulerProvider(partition.arcId).asCoroutineDispatcher()) {
             context.particles.values.forEach { it.notifyWriteOnlyParticles() }
