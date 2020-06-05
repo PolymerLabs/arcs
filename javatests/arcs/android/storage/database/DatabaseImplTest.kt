@@ -18,6 +18,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.forSingleResult
 import arcs.android.common.getNullableBoolean
 import arcs.android.common.map
+import arcs.android.storage.database.DatabaseImpl.FieldClass
 import arcs.core.common.Referencable
 import arcs.core.crdt.VersionMap
 import arcs.core.data.FieldType
@@ -150,9 +151,9 @@ class DatabaseImplTest {
         // Creates new IDs for each field.
         val fields1 = database.getSchemaFields(schemaTypeId1, db)
         assertThat(fields1).containsExactly(
-            "text", DatabaseImpl.SchemaField("text", 1L, TEXT_TYPE_ID, isCollection = false),
-            "bool", DatabaseImpl.SchemaField("bool", 2L, BOOLEAN_TYPE_ID, isCollection = false),
-            "num", DatabaseImpl.SchemaField("num", 3L, NUMBER_TYPE_ID, isCollection = true)
+            "text", DatabaseImpl.SchemaField("text", 1L, TEXT_TYPE_ID, isCollection = FieldClass.Singleton),
+            "bool", DatabaseImpl.SchemaField("bool", 2L, BOOLEAN_TYPE_ID, isCollection = FieldClass.Singleton),
+            "num", DatabaseImpl.SchemaField("num", 3L, NUMBER_TYPE_ID, isCollection = FieldClass.Collection)
         )
 
         // Re-running with the same schema doesn't create new field IDs
@@ -163,9 +164,9 @@ class DatabaseImplTest {
         val schemaTypeId2 = database.getSchemaTypeId(schema2, db)
         val fields2 = database.getSchemaFields(schemaTypeId2, db)
         assertThat(fields2).containsExactly(
-            "text", DatabaseImpl.SchemaField("text", 4L, TEXT_TYPE_ID, isCollection = false),
-            "bool", DatabaseImpl.SchemaField("bool", 5L, BOOLEAN_TYPE_ID, isCollection = false),
-            "num", DatabaseImpl.SchemaField("num", 6L, NUMBER_TYPE_ID, isCollection = true)
+            "text", DatabaseImpl.SchemaField("text", 4L, TEXT_TYPE_ID, isCollection = FieldClass.Singleton),
+            "bool", DatabaseImpl.SchemaField("bool", 5L, BOOLEAN_TYPE_ID, isCollection = FieldClass.Singleton),
+            "num", DatabaseImpl.SchemaField("num", 6L, NUMBER_TYPE_ID, isCollection = FieldClass.Collection)
         )
     }
 
@@ -415,7 +416,9 @@ class DatabaseImplTest {
                     "long" to FieldType.Long,
                     "char" to FieldType.Char,
                     "float" to FieldType.Float,
-                    "double" to FieldType.Double
+                    "double" to FieldType.Double,
+                    "txtlst" to FieldType.ListOf(FieldType.Text),
+                    "lnglst" to FieldType.ListOf(FieldType.Long)
                 ),
                 collections = mapOf(
                     "texts" to FieldType.Text,
@@ -445,8 +448,9 @@ class DatabaseImplTest {
                     "long" to  1000000000000000001L.toReferencable(),
                     "char" to 'A'.toReferencable(),
                     "float" to 34.567f.toReferencable(),
-                    "double" to 4e100.toReferencable()
-
+                    "double" to 4e100.toReferencable(),
+                    "txtlst" to listOf("this", "is", "a", "list").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "lnglst" to listOf(1L, 2L, 4L, 4L, 3L).map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Long))
                 ),
                 mapOf(
                     "texts" to setOf("abc".toReferencable(), "def".toReferencable()),
@@ -1605,7 +1609,8 @@ class DatabaseImplTest {
                 singletons = mapOf(
                     "text" to FieldType.Text,
                     "long" to FieldType.Long,
-                    "float" to FieldType.Float
+                    "float" to FieldType.Float,
+                    "textlist" to FieldType.ListOf(FieldType.Text)
                 ),
                 collections = mapOf(
                     "nums" to FieldType.Number,
@@ -1627,7 +1632,8 @@ class DatabaseImplTest {
                 mapOf(
                     "text" to "abc".toReferencable(),
                     "long" to 1000000000000000001L.toReferencable(),
-                    "float" to 3.412f.toReferencable()
+                    "float" to 3.412f.toReferencable(),
+                    "textlist" to listOf("abc", "abcd", "def", "ghi").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text))
                 ),
                 mapOf(
                     "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable()),
@@ -1647,7 +1653,8 @@ class DatabaseImplTest {
                 mapOf(
                     "text" to "def".toReferencable(),
                     "long" to 1L.toReferencable(),
-                    "float" to 42.0f.toReferencable()
+                    "float" to 42.0f.toReferencable(),
+                    "textlist" to listOf("abcd", "abcd").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text))
                 ),
                 mapOf(
                     "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
@@ -1667,7 +1674,8 @@ class DatabaseImplTest {
                 mapOf(
                     "text" to "def".toReferencable(),
                     "long" to 10L.toReferencable(),
-                    "float" to 37.5f.toReferencable()
+                    "float" to 37.5f.toReferencable(),
+                    "textlist" to listOf("def", "def").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text))
                 ),
                 mapOf(
                     "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
@@ -1726,7 +1734,8 @@ class DatabaseImplTest {
                     mapOf(
                         "text" to null,
                         "long" to null,
-                        "float" to null
+                        "float" to null,
+                        "textlist" to null
                     ),
                     mapOf("nums" to emptySet(), "chars" to emptySet()),
                     11L,
@@ -1756,23 +1765,24 @@ class DatabaseImplTest {
             .isEqualTo(collection.copy(values = newValues))
 
         // Check unused values have been deleted from the global table as well, it should contain
-        // only values referenced from the two entity (five values each).
-        assertTableIsSize("field_values", 10)
+        // only values referenced from the two entities (six values each).
+        assertTableIsSize("field_values", 12)
 
         // Check collection entries have been cleared. For each remaining entity there should only
-        // be eight values (two for the nums collection, five for the chars collection, 
-        // one for the membership of the entity).
-        assertTableIsSize("collection_entries", 16)
+        // be ten values (two for the nums collection, five for the chars collection, 
+        // two for the text list, one for the membership of the entity).
+        assertTableIsSize("collection_entries", 20)
 
-        // Check the collections for chars/nums in expiredEntity is gone (5 collections left are nums for
-        // the two entities, chars for the two entities, and the entity collection).
-        assertTableIsSize("collections", 5)
+        // Check the collections for chars/nums in expiredEntity is gone (7 collections left are
+        // nums for the two entities, chars for the two entities, strings for the two entities,
+        // and the entity collection).
+        assertTableIsSize("collections", 7)
 
         // Check the expired entity ref is gone.
         assertThat(readEntityRefsEntityId()).containsExactly("entity", "entity2")
 
         // Check unused primitive values have been removed.
-        assertThat(readTextPrimitiveValues()).containsExactly("def")
+        assertThat(readTextPrimitiveValues()).containsExactly("abcd", "def")
         assertThat(readNumberPrimitiveValues()).containsExactly(123.0, 789.0, 42.0, 37.5)
 
         // Check the corrent clients were notified.

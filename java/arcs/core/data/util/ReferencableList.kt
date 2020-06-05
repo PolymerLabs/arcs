@@ -31,10 +31,16 @@ data class ReferencableList<T : Referencable>(
     override fun hashCode(): Int = value.hashCode()
 
     override fun equals(other: Any?): Boolean {
-        val otherRef = other as? Referencable ?: return false
-        return otherRef.id == id
+        if (other is ReferencableList<*>) {
+            return value.equals(other.value)
+        }
+        return false
     }
 }
 
-fun List<Referencable>.toReferencable(itemType: FieldType): ReferencableList<Referencable> =
-    ReferencableList(this, itemType)
+fun List<Referencable>.toReferencable(itemType: FieldType): ReferencableList<Referencable> {
+    require(itemType is FieldType.ListOf) {
+        "ReferencableLists must have List itemTypes, instead $itemType was provided"
+    }
+    return ReferencableList(this, itemType)
+}

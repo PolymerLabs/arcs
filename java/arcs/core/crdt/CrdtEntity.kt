@@ -222,7 +222,17 @@ class CrdtEntity(
             /** Simple converter from [Referencable] to [Reference]. */
             fun buildReference(referencable: Referencable): Reference =
                 ReferenceImpl(referencable.id)
+
+            fun wrapReferencable(referencable: Referencable): Reference =
+                WrappedReferencable(referencable)
         }
+    }
+
+    data class WrappedReferencable(val referencable: Referencable) : Reference {
+        override fun unwrap(): Referencable = referencable
+
+        override val id: String
+            get() = referencable.id
     }
 
     /** Minimal [Reference] for contents of a singletons/collections in [Data]. */
