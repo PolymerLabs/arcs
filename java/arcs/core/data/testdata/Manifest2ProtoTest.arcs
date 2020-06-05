@@ -51,6 +51,7 @@ recipe Consumption
 @egressType('Logging')
 policy MyPolicy {
   @allowedRetention(medium: 'Ram', encryption: false)
+  @maxAge('10m')
   from Thing access {
     @allowedUsage(label: 'redacted', usageType: '*')
     name,

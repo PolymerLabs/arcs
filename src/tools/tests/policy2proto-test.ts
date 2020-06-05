@@ -63,6 +63,7 @@ policy MyPolicy {}
 policy MyPolicy {
   @allowedRetention(medium: 'Disk', encryption: true)
   @allowedRetention(medium: 'Ram', encryption: false)
+  @maxAge('10m')
   @custom
   from Abc access {}
 }`);
@@ -71,6 +72,7 @@ policy MyPolicy {
       name: 'MyPolicy',
       targets: [{
         schemaType: 'Abc',
+        maxAgeMs: '600000',
         retentions: [
           {medium: 'DISK', encryptionRequired: true},
           {medium: 'RAM', encryptionRequired: false},

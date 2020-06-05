@@ -9,9 +9,9 @@
  */
 import * as AstNode from '../manifest-ast-nodes.js';
 import {AnnotationRef} from '../recipe/annotation.js';
-import {flatMap} from '../util.js';
 import {assert} from '../../platform/assert-web.js';
 import {ManifestStringBuilder} from '../manifest-string-builder.js';
+import {Ttl} from '../capabilities-new.js';
 
 export enum PolicyEgressType {
   Logging = 'Logging',
@@ -33,6 +33,7 @@ const intendedPurposeAnnotationName = 'intendedPurpose';
 const egressTypeAnnotationName = 'egressType';
 const allowedRetentionAnnotationName = 'allowedRetention';
 const allowedUsageAnnotationName = 'allowedUsage';
+const maxAgeAnnotationName = 'maxAge';
 
 /**
  * Definition of a dataflow policy.
@@ -110,6 +111,7 @@ export class PolicyTarget {
       readonly schemaName: string,
       readonly fields: PolicyField[],
       readonly retentions: {medium: PolicyRetentionMedium, encryptionRequired: boolean}[],
+      readonly maxAge: Ttl | null,
       readonly customAnnotations: AnnotationRef[],
       private readonly allAnnotations: AnnotationRef[]) {}
 
@@ -129,8 +131,8 @@ export class PolicyTarget {
     const fields = node.fields.map(field => PolicyField.fromAstNode(field, buildAnnotationRefs));
 
     // Process annotations.
-    // TODO(b/157605585): Validate maxAge annotation.
     const allAnnotations = buildAnnotationRefs(node.annotationRefs);
+    let maxAge: Ttl | null = null;
     const retentionMediums: Set<PolicyRetentionMedium> = new Set();
     const retentions: {medium: PolicyRetentionMedium, encryptionRequired: boolean}[] = [];
     const customAnnotations: AnnotationRef[] = [];
@@ -145,13 +147,16 @@ export class PolicyTarget {
           retentions.push(retention);
           break;
         }
+        case maxAgeAnnotationName:
+          maxAge = this.toMaxAge(annotation);
+          break;
         default:
           customAnnotations.push(annotation);
           break;
       }
     }
 
-    return new PolicyTarget(node.schemaName, fields, retentions, customAnnotations, allAnnotations);
+    return new PolicyTarget(node.schemaName, fields, retentions, maxAge, customAnnotations, allAnnotations);
   }
 
   private static toRetention(annotation: AnnotationRef) {
@@ -162,6 +167,12 @@ export class PolicyTarget {
       medium: medium as PolicyRetentionMedium,
       encryptionRequired: annotation.params['encryption'] as boolean,
     };
+  }
+
+  private static toMaxAge(annotation: AnnotationRef): Ttl {
+    assert(annotation.name === maxAgeAnnotationName);
+    const maxAge = annotation.params['age'] as string;
+    return Ttl.fromString(maxAge);
   }
 }
 
@@ -195,7 +206,6 @@ export class PolicyField {
     const subfields = node.subfields.map(field => PolicyField.fromAstNode(field, buildAnnotationRefs));
 
     // Process annotations.
-    // TODO(b/157605585): Validate maxAge annotation.
     const allAnnotations = buildAnnotationRefs(node.annotationRefs);
     const usages: Map<string, Set<PolicyAllowedUsageType>> = new Map();
     const allowedUsages: {label: string, usage: PolicyAllowedUsageType}[] = [];
