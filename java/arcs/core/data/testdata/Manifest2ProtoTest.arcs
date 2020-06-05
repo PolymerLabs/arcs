@@ -46,3 +46,13 @@ recipe Consumption
   Reader
     things: reads data
     summary: summary
+
+@intendedPurpose('check that policies can be serialized to proto')
+@egressType('Logging')
+policy MyPolicy {
+  @allowedRetention(medium: 'Ram', encryption: false)
+  from Thing access {
+    @allowedUsage(label: 'redacted', usageType: '*')
+    name,
+  }
+}

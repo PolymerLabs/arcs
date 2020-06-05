@@ -24,6 +24,8 @@ import {Op} from '../runtime/manifest-ast-nodes.js';
 import {ClaimType} from '../runtime/particle-claim.js';
 import {CheckCondition, CheckExpression, CheckType} from '../runtime/particle-check.js';
 import {flatMap} from '../runtime/util.js';
+import {Policy} from '../runtime/policy/policy.js';
+import {policyToProtoPayload} from './policy2proto.js';
 
 export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path);
@@ -35,7 +37,7 @@ export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
 }
 
 export async function manifestToProtoPayload(manifest: Manifest) {
-  return makeManifestProtoPayload(manifest.particles, manifest.recipes);
+  return makeManifestProtoPayload(manifest.particles, manifest.recipes, manifest.policies);
 }
 
 export async function encodePlansToProto(plans: Recipe[]) {
@@ -43,13 +45,14 @@ export async function encodePlansToProto(plans: Recipe[]) {
   for (const spec of flatMap(plans, r => r.particles).map(p => p.spec)) {
     specMap.set(spec.name, spec);
   }
-  return encodePayload(await makeManifestProtoPayload([...specMap.values()], plans));
+  return encodePayload(await makeManifestProtoPayload([...specMap.values()], plans, /* policies= */ []));
 }
 
-async function makeManifestProtoPayload(particles: ParticleSpec[], recipes: Recipe[]) {
+async function makeManifestProtoPayload(particles: ParticleSpec[], recipes: Recipe[], policies: Policy[]) {
   return {
     particleSpecs: await Promise.all(particles.map(p => particleSpecToProtoPayload(p))),
     recipes: await Promise.all(recipes.map(r => recipeToProtoPayload(r))),
+    policies: policies.map(policyToProtoPayload),
   };
 }
 

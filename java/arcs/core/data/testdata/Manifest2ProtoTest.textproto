@@ -301,3 +301,21 @@ particle_specs {
   }
   location: "Reader"
 }
+policies {
+  name: "MyPolicy"
+  targets {
+    schema_type: "Thing"
+    retentions {
+      medium: RAM
+    }
+    fields {
+      name: "name"
+      usages {
+        usage: ANY
+        redaction_label: "redacted"
+      }
+    }
+  }
+  description: "check that policies can be serialized to proto"
+  egress_type: LOGGING
+}

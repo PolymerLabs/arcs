@@ -10,12 +10,9 @@
 
 import {Manifest} from '../../manifest.js';
 import {assert} from '../../../platform/chai-web.js';
-import {PolicyEgressType, PolicyRetentionMedium, PolicyAllowedUsageType} from '../policy.js';
+import {PolicyEgressType, PolicyRetentionMedium, PolicyAllowedUsageType, Policy} from '../policy.js';
 import {assertThrowsAsync} from '../../../testing/test-util.js';
 import {mapToDictionary} from '../../util.js';
-
-// TODO(b/157605585): Test what happens with >1 description, egressType,
-// allowedRetention, allowedUsage.
 
 const customAnnotation = `
 annotation custom
@@ -79,6 +76,14 @@ policy MyPolicy {}
     assert.strictEqual(policy.egressType, PolicyEgressType.Logging);
     assert.lengthOf(policy.customAnnotations, 1);
     assert.strictEqual(policy.customAnnotations[0].name, 'custom');
+  });
+
+  it('handles missing annotations', async () => {
+    const policy = await parsePolicy(`
+policy MyPolicy {}
+`);
+    assert.isNull(policy.description);
+    assert.isNull(policy.egressType);
   });
 
   it('rejects unknown egress types', async () => {

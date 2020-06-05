@@ -103,7 +103,7 @@ export class Policy {
   }
 }
 
-class PolicyTarget {
+export class PolicyTarget {
   constructor(
       readonly schemaName: string,
       readonly fields: PolicyField[],
@@ -164,7 +164,7 @@ class PolicyTarget {
   }
 }
 
-class PolicyField {
+export class PolicyField {
   constructor(
       readonly name: string,
       readonly subfields: PolicyField[],
@@ -236,7 +236,7 @@ class PolicyField {
   }
 }
 
-class PolicyConfig {
+export class PolicyConfig {
   constructor(readonly name: string, readonly metadata: Map<string, string>) {}
 
   toManifestString(): string {
