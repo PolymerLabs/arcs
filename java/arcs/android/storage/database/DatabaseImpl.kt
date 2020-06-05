@@ -135,18 +135,26 @@ class DatabaseImpl(
     override fun onCreate(db: SQLiteDatabase) = db.transaction {
         CREATE.forEach(db::execSQL)
 
-        // Populate the 'types' table with the primitive types. The ordinal of the enum will be
+        // Populate the 'types' table with the primitive types. The id of the enum will be
         // the Type ID used in the database.
         val content = ContentValues().apply {
             put("is_primitive", true)
         }
         PrimitiveType.values().forEach {
             content.apply {
-                put("id", it.ordinal)
+                put("id", it.id)
                 put("name", it.name)
             }
             insertOrThrow(TABLE_TYPES, null, content)
         }
+
+        val sentinel = ContentValues().apply {
+            put("is_primitive", true)
+            put("id", REFERENCE_TYPE_SENTINEL)
+            put("name", REFERENCE_TYPE_SENTINEL_NAME)
+        }
+        insertOrThrow(TABLE_TYPES, null, sentinel)
+        Unit
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = db.transaction {
@@ -302,16 +310,16 @@ class DatabaseImpl(
             val typeId = it.getInt(2)
 
             val value: Referencable? = when (typeId) {
-                PrimitiveType.Boolean.ordinal -> it.getNullableBoolean(3)?.toReferencable()
-                PrimitiveType.Text.ordinal -> it.getNullableString(4)?.toReferencable()
-                PrimitiveType.Number.ordinal -> it.getNullableDouble(5)?.toReferencable()
-                PrimitiveType.Byte.ordinal -> it.getNullableByte(3)?.toReferencable()
-                PrimitiveType.Short.ordinal -> it.getNullableShort(3)?.toReferencable()
-                PrimitiveType.Int.ordinal -> it.getNullableInt(3)?.toReferencable()
-                PrimitiveType.Long.ordinal -> it.getNullableLong(3)?.toReferencable()
-                PrimitiveType.Char.ordinal -> it.getNullableInt(3)?.toChar()?.toReferencable()
-                PrimitiveType.Float.ordinal -> it.getNullableFloat(5)?.toReferencable()
-                PrimitiveType.Double.ordinal -> it.getNullableDouble(5)?.toReferencable()
+                PrimitiveType.Boolean.id -> it.getNullableBoolean(3)?.toReferencable()
+                PrimitiveType.Text.id -> it.getNullableString(4)?.toReferencable()
+                PrimitiveType.Number.id -> it.getNullableDouble(5)?.toReferencable()
+                PrimitiveType.Byte.id -> it.getNullableByte(3)?.toReferencable()
+                PrimitiveType.Short.id -> it.getNullableShort(3)?.toReferencable()
+                PrimitiveType.Int.id -> it.getNullableInt(3)?.toReferencable()
+                PrimitiveType.Long.id -> it.getNullableLong(3)?.toReferencable()
+                PrimitiveType.Char.id -> it.getNullableInt(3)?.toChar()?.toReferencable()
+                PrimitiveType.Float.id -> it.getNullableFloat(5)?.toReferencable()
+                PrimitiveType.Double.id -> it.getNullableDouble(5)?.toReferencable()
                 else -> if (it.isNull(6)) {
                     null
                 } else {
@@ -926,7 +934,7 @@ class DatabaseImpl(
             )
             delete(
                 TABLE_TEXT_PRIMITIVES,
-                "id NOT IN (${usedFieldIdsQuery(listOf(PrimitiveType.Text.ordinal))})",
+                "id NOT IN (${usedFieldIdsQuery(listOf(PrimitiveType.Text.id))})",
                 arrayOf()
             )
 
@@ -1272,7 +1280,7 @@ class DatabaseImpl(
         counters: Counters?
     ): Set<*> {
         // Booleans are easy, just fetch the values from the collection_entries table directly.
-        if (typeId.toInt() == PrimitiveType.Boolean.ordinal) {
+        if (typeId.toInt() == PrimitiveType.Boolean.id) {
             counters?.increment(DatabaseCounters.GET_PRIMITIVE_COLLECTION_INLINE)
             return db.rawQuery(
                 "SELECT value_id FROM collection_entries WHERE collection_id = ?",
@@ -1282,11 +1290,11 @@ class DatabaseImpl(
 
         // For strings and numbers, join against the appropriate primitive table.
         val (tableName, valueGetter) = when (typeId.toInt()) {
-            PrimitiveType.Text.ordinal -> {
+            PrimitiveType.Text.id -> {
                 counters?.increment(DatabaseCounters.GET_PRIMITIVE_COLLECTION_TEXT)
                 TABLE_TEXT_PRIMITIVES to { cursor: Cursor -> cursor.getString(0).toReferencable() }
             }
-            PrimitiveType.Number.ordinal -> {
+            PrimitiveType.Number.id -> {
                 counters?.increment(DatabaseCounters.GET_PRIMITIVE_COLLECTION_NUMBER)
                 TABLE_NUMBER_PRIMITIVES to {
                     cursor: Cursor -> cursor.getDouble(0).toReferencable()
@@ -1379,7 +1387,7 @@ class DatabaseImpl(
         val value = primitiveValue.value
         // TODO(#4889): Cache the most frequent values somehow.
         when (typeId.toInt()) {
-            PrimitiveType.Boolean.ordinal -> {
+            PrimitiveType.Boolean.id -> {
                 counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
                 return when (value) {
                     true -> 1
@@ -1387,27 +1395,27 @@ class DatabaseImpl(
                     else -> throw IllegalArgumentException("Expected value to be a Boolean.")
                 }
             }
-            PrimitiveType.Byte.ordinal -> {
+            PrimitiveType.Byte.id -> {
                 counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
                 require(value is Byte) { "Expected value to be a Byte." }
                 return value.toLong()
             }
-            PrimitiveType.Short.ordinal -> {
+            PrimitiveType.Short.id -> {
                 counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
                 require(value is Short) { "Expected value to be a Short." }
                 return value.toLong()
             }
-            PrimitiveType.Int.ordinal -> {
+            PrimitiveType.Int.id -> {
                 counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
                 require(value is Int) { "Expected value to be an Int." }
                 return value.toLong()
             }
-            PrimitiveType.Long.ordinal -> {
+            PrimitiveType.Long.id -> {
                 counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
                 require(value is Long) { "Expected value to be a Long." }
                 return value
             }
-            PrimitiveType.Char.ordinal -> {
+            PrimitiveType.Char.id -> {
                 counters?.increment(DatabaseCounters.GET_INLINE_VALUE_ID)
                 require(value is Char) { "Expected value to be a Char." }
                 return value.toLong()
@@ -1415,22 +1423,22 @@ class DatabaseImpl(
         }
         return db.transaction {
             val (tableName, valueStr) = when (typeId.toInt()) {
-                PrimitiveType.Text.ordinal -> {
+                PrimitiveType.Text.id -> {
                     require(value is String) { "Expected value to be a String." }
                     counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
                     TABLE_TEXT_PRIMITIVES to value
                 }
-                PrimitiveType.Number.ordinal -> {
+                PrimitiveType.Number.id -> {
                     require(value is Double) { "Expected value to be a Double." }
                     counters?.increment(DatabaseCounters.GET_NUMBER_VALUE_ID)
                     TABLE_NUMBER_PRIMITIVES to value.toString()
                 }
-                PrimitiveType.Float.ordinal -> {
+                PrimitiveType.Float.id -> {
                     require(value is Float) { "Expected value to be a Float." }
                     counters?.increment(DatabaseCounters.GET_NUMBER_VALUE_ID)
                     TABLE_NUMBER_PRIMITIVES to value.toString()
                 }
-                PrimitiveType.Double.ordinal -> {
+                PrimitiveType.Double.id -> {
                     require(value is Double) { "Expected value to be a Double." }
                     counters?.increment(DatabaseCounters.GET_NUMBER_VALUE_ID)
                     TABLE_NUMBER_PRIMITIVES to value.toString()
@@ -1463,7 +1471,7 @@ class DatabaseImpl(
         fieldType: FieldType,
         database: SQLiteDatabase
     ): TypeId = when (fieldType) {
-        is FieldType.Primitive -> fieldType.primitiveType.ordinal.toLong()
+        is FieldType.Primitive -> fieldType.primitiveType.id.toLong()
         is FieldType.EntityRef -> {
             val schema = requireNotNull(SchemaRegistry.getSchema(fieldType.schemaHash)) {
                 "Unknown Schema with hash: ${fieldType.schemaHash} in SchemaRegistry"
@@ -1578,7 +1586,7 @@ class DatabaseImpl(
     )
 
     companion object {
-        private const val DB_VERSION = 2
+        private const val DB_VERSION = 3
 
         private const val TABLE_STORAGE_KEYS = "storage_keys"
         private const val TABLE_COLLECTION_ENTRIES = "collection_entries"
@@ -1721,15 +1729,47 @@ class DatabaseImpl(
                 CREATE INDEX number_primitive_value_index ON number_primitive_values (value);
             """.trimIndent().split("\n\n")
 
+        private val DROP =
+            """
+                DROP INDEX type_name_index;
+                DROP TABLE types;
+                DROP INDEX storage_key_index;
+                DROP TABLE storage_keys;
+                DROP TABLE entities;
+                DROP INDEX entity_refs_index;
+                DROP TABLE entity_refs;
+                DROP TABLE collections;
+                DROP INDEX collection_entries_collection_id_index;
+                DROP TABLE collection_entries;
+                DROP INDEX field_names_by_parent_type;
+                DROP TABLE fields;
+                DROP INDEX field_values_by_entity_storage_key;
+                DROP TABLE field_values;
+                DROP INDEX text_primitive_value_index;
+                DROP TABLE text_primitive_values;
+                DROP INDEX number_primitive_value_index;
+                DROP TABLE number_primitive_values;
+            """.trimIndent().split("\n")
+
         private val VERSION_2_MIGRATION = arrayOf("ALTER TABLE entities ADD COLUMN orphan INTEGER;")
 
-        private val MIGRATION_STEPS = mapOf(2 to VERSION_2_MIGRATION)
+        private val VERSION_3_MIGRATION = listOf(DROP, CREATE).flatten().toTypedArray()
+
+        private val MIGRATION_STEPS = mapOf(2 to VERSION_2_MIGRATION, 3 to VERSION_3_MIGRATION)
 
         /** The primitive types that are stored in TABLE_NUMBER_PRIMITIVES */
         private val TYPES_IN_NUMBER_TABLE = listOf(
-            PrimitiveType.Number.ordinal,
-            PrimitiveType.Float.ordinal,
-            PrimitiveType.Double.ordinal
+            PrimitiveType.Number.id,
+            PrimitiveType.Float.id,
+            PrimitiveType.Double.id
         )
+
+        /**
+         * The id and name of a sentinel type, to ensure references are namespaced separately to
+         * primitive types. Changing this value will require a DB migration!
+         */
+        @VisibleForTesting
+        const val REFERENCE_TYPE_SENTINEL = 1000000
+        private const val REFERENCE_TYPE_SENTINEL_NAME = "SENTINEL TYPE FOR REFERENCES"
     }
 }
