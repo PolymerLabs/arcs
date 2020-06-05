@@ -191,13 +191,18 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     /* internal */ suspend fun onReceive(data: Data, version: Int) {
         log.debug { "onReceive($data, $version)" }
 
-        if (state.value.shouldApplyPendingDriverModelsOnReceive(data, version)) {
-            val pending = pendingDriverModels.getAndUpdate { emptyList() }
-            applyPendingDriverModels(pending + PendingDriverModel(data, version))
+        if (!closed) {
+            if (state.value.shouldApplyPendingDriverModelsOnReceive(data, version)) {
+                val pending = pendingDriverModels.getAndUpdate { emptyList() }
+                applyPendingDriverModels(pending + PendingDriverModel(data, version))
+            } else {
+                // If the current state doesn't allow us to apply the models yet, tack it onto our
+                // pending list.
+                pendingDriverModels.getAndUpdate { it + PendingDriverModel(data, version) }
+            }
         } else {
-            // If the current state doesn't allow us to apply the models yet, tack it onto our
-            // pending list.
-            pendingDriverModels.getAndUpdate { it + PendingDriverModel(data, version) }
+            // Logging this to see if it ever occurs.
+            log.debug { "onReceive($data, $version) called after close(), ignoring" }
         }
     }
 
