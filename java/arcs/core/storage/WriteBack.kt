@@ -42,6 +42,9 @@ interface WriteBack {
     /** A flow which can be collected to observe idle->busy->idle transitions. */
     val writebackIdlenessFlow: Flow<Boolean>
 
+    /** Dispose of this [WriteBack] and any resources it's using. */
+    fun closeWriteBack() = Unit
+
     /**
      * Write-through: flush directly all data updates to the next storage layer.
      */
@@ -128,6 +131,10 @@ open class StoreWriteBack /* internal */ constructor(
                 }
                 .launchIn(scope)
         }
+    }
+
+    override fun closeWriteBack() {
+        channel.cancel()
     }
 
     override suspend fun flush(job: suspend () -> Unit) {

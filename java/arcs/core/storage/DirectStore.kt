@@ -101,6 +101,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
     fun close() {
         stateChannel.offer(State.Closed())
+        closeWriteBack()
     }
 
     /**
