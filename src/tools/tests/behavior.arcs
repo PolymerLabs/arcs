@@ -1,0 +1,13 @@
+meta
+  namespace: src.tools.tests
+
+particle Concrete
+  h0: reads {num: Number, flavor: Text}
+  h1: writes {num: Number}
+  h2: writes [{flavor: Text}]
+
+particle Variable
+  h0: reads ~a
+  h1: writes ~a
+  h2: reads ~b with {num: Number}
+  h3: writes ~b with {flavor: Text}
