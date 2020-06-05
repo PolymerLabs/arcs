@@ -13,6 +13,7 @@ package arcs.core.host
 import arcs.core.allocator.Allocator
 import arcs.core.allocator.Arc
 import arcs.core.data.Plan
+import arcs.core.entity.awaitReady
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
@@ -171,7 +172,7 @@ class LifecycleTest {
     }
 
     @Test
-    fun pausing() = runTest {
+    fun pausing() = runBlocking {
         val name = "PausingParticle"
         val arc = startArc(PausingTestPlan)
 
@@ -180,8 +181,8 @@ class LifecycleTest {
         // TODO: allow test handles to persist across arc shutdown?
         val makeHandles = suspend {
             Pair(
-                testHost.singletonForTest<PausingParticle_Data>(arc.id, name, "data"),
-                testHost.collectionForTest<PausingParticle_List>(arc.id, name, "list")
+                testHost.singletonForTest<PausingParticle_Data>(arc.id, name, "data").awaitReady(),
+                testHost.collectionForTest<PausingParticle_List>(arc.id, name, "list").awaitReady()
             )
         }
         val (data1, list1) = makeHandles()
@@ -214,8 +215,6 @@ class LifecycleTest {
             setOf("data.onReady:1.1", "list.onReady:[first]"),
             listOf(
                 "onReady:1.1:[first]",
-                "data.onUpdate:2.2",
-                "onUpdate:2.2:[first]",
                 "data.onUpdate:2.2",
                 "onUpdate:2.2:[first]",
                 "list.onUpdate:[first, second]",
