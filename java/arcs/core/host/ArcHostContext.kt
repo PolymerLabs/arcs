@@ -38,6 +38,7 @@ data class ParticleContext(
     /** Used to detect infinite-crash loop particles */
     var consecutiveFailureCount: Int = 0
 ) {
+    private var isWriteOnly = true
     private val awaitingReady: MutableSet<Handle> = mutableSetOf()
     private val desyncedHandles: MutableSet<Handle> = mutableSetOf()
 
@@ -46,6 +47,7 @@ data class ParticleContext(
      * so we can invoke [Particle.onReady] once they have all fired.
      */
     fun expectReady(handle: Handle) {
+        isWriteOnly = false
         awaitingReady.add(handle)
     }
 
@@ -56,7 +58,7 @@ data class ParticleContext(
      * This will be executed in the context of the StorageProxy's scheduler.
      */
     fun notifyWriteOnlyParticles() {
-        if (awaitingReady.isEmpty()) {
+        if (isWriteOnly) {
             particleState = ParticleState.Running
             particle.onReady()
         }
