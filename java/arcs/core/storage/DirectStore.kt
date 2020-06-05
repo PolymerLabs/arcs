@@ -32,6 +32,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
+
 // import kotlinx.coroutines.flow.debounce
 // import kotlinx.coroutines.flow.filter
 // import kotlinx.coroutines.flow.first
@@ -92,7 +93,14 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     }
 
     override fun off(callbackToken: Int) {
-        return proxyManager.unregister(callbackToken)
+        proxyManager.unregister(callbackToken)
+        if (proxyManager.isEmpty()) {
+            close()
+        }
+    }
+
+    fun close() {
+        stateChannel.offer(State.Closed())
     }
 
     /**
@@ -268,7 +276,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     ) {
         if (noDriverSideChanges) {
             // TODO: use a single lock here, rather than two separate atomics.
-            this.state.value = State.Idle(idleDeferred, driver).also { stateChannel.send(it) }
+            this.state.value = State.Idle(idleDeferred, driver).also { /* stateChannel.send(it) */ }
             this.version.value = version
             return
         }
@@ -311,13 +319,38 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     private suspend fun IdleDeferred(): CompletableDeferred<Unit> =
         CompletableDeferred(coroutineContext[Job.Key])
 
-    private sealed class State<Data : CrdtData>(
-        val stateName: Name,
-        val idleDeferred: AtomicRef<IdleDeferred>,
-        val driver: Driver<Data>
-    ) {
+    private sealed class State<Data : CrdtData>(val stateName: Name) {
         /** Simple names for each [State]. */
-        enum class Name { Idle, AwaitingResponse, AwaitingDriverModel }
+        enum class Name { Idle, AwaitingResponse, AwaitingDriverModel, Closed }
+
+        open class StateWithData<Data : CrdtData>(
+            stateName: Name,
+            val idleDeferred: AtomicRef<IdleDeferred>,
+            val driver: Driver<Data>
+        ) : State<Data>(stateName) {
+            /** Waits until the [idleDeferred] signal is triggered. */
+            open suspend fun idle() = idleDeferred.value.await()
+
+            /**
+             * Determines the next state and version of the model while acting. (e.g. sending the
+             * [localModel] to the [Driver])
+             *
+             * Core component of the state machine, called by [DirectStore.updateStateAndAct] to
+             * determine what state to transition into and perform any necessary operations.
+             */
+            open suspend fun update(
+                version: Int, messageFromDriver: Boolean, localModel: Data
+            ): Pair<Int, StateWithData<Data>> = version to this
+
+            /**
+             * Returns whether or not, given the machine being in this state, we should apply any
+             * pending driver models to the local model.
+             */
+            open fun shouldApplyPendingDriverModelsOnReceive(data: Data, version: Int): Boolean =
+                true
+        }
+
+        class Closed<Data : CrdtData> : State<Data>(Name.Closed)
 
         /**
          * The [DirectStore] is currently idle.
@@ -325,7 +358,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         class Idle<Data : CrdtData>(
             idleDeferred: AtomicRef<IdleDeferred>,
             driver: Driver<Data>
-        ) : State<Data>(Idle, idleDeferred, driver) {
+        ) : StateWithData<Data>(Idle, idleDeferred, driver) {
             init {
                 // When a new idle state is created, complete the deferred so anything waiting on it
                 // will unblock.
@@ -339,7 +372,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 version: Int,
                 messageFromDriver: Boolean,
                 localModel: Data
-            ): Pair<Int, State<Data>> {
+            ): Pair<Int, StateWithData<Data>> {
                 // On update() and when idle, we're ready to await the next version.
                 return (version + 1) to AwaitingResponse(idleDeferred, driver)
             }
@@ -351,7 +384,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         class AwaitingResponse<Data : CrdtData>(
             idleDeferred: AtomicRef<IdleDeferred>,
             driver: Driver<Data>
-        ) : State<Data>(AwaitingResponse, idleDeferred, driver) {
+        ) : StateWithData<Data>(AwaitingResponse, idleDeferred, driver) {
             override fun shouldApplyPendingDriverModelsOnReceive(data: Data, version: Int) =
                 false
 
@@ -359,7 +392,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 version: Int,
                 messageFromDriver: Boolean,
                 localModel: Data
-            ): Pair<Int, State<Data>> {
+            ): Pair<Int, StateWithData<Data>> {
                 val response = driver.send(localModel, version)
                 return if (response) {
                     // The driver ack'd our send, we can move to idle state.
@@ -377,12 +410,12 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         class AwaitingDriverModel<Data : CrdtData>(
             idleDeferred: AtomicRef<IdleDeferred>,
             driver: Driver<Data>
-        ) : State<Data>(AwaitingDriverModel, idleDeferred, driver) {
+        ) : StateWithData<Data>(AwaitingDriverModel, idleDeferred, driver) {
             override suspend fun update(
                 version: Int,
                 messageFromDriver: Boolean,
                 localModel: Data
-            ): Pair<Int, State<Data>> {
+            ): Pair<Int, StateWithData<Data>> {
                 // If the message didn't come from the driver, we can't do anything.
                 if (!messageFromDriver) return version to this
 
@@ -397,29 +430,6 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 return (version + 1) to AwaitingResponse(idleDeferred, driver)
             }
         }
-
-        /** Waits until the [idleDeferred] signal is triggered. */
-        open suspend fun idle() = idleDeferred.value.await()
-
-        /**
-         * Determines the next state and version of the model while acting. (e.g. sending the
-         * [localModel] to the [Driver])
-         *
-         * Core component of the state machine, called by [DirectStore.updateStateAndAct] to
-         * determine what state to transition into and perform any necessary operations.
-         */
-        open suspend fun update(
-            version: Int,
-            messageFromDriver: Boolean,
-            localModel: Data
-        ): Pair<Int, State<Data>> = version to this
-
-        /**
-         * Returns whether or not, given the machine being in this state, we should apply any
-         * pending driver models to the local model.
-         */
-        open fun shouldApplyPendingDriverModelsOnReceive(data: Data, version: Int): Boolean =
-            true
 
         override fun toString(): String = "$stateName"
     }
