@@ -30,13 +30,19 @@ arcs_cc_schema(
 arcs_kt_schema(
     name = "kt_only_schemas",
     srcs = ["golden_kt.arcs"],
-    platforms = ["jvm", "wasm"],
+    platforms = [
+        "jvm",
+        "wasm",
+    ],
 )
 
 arcs_kt_schema(
     name = "kt_schemas",
     srcs = ["golden.arcs"],
-    platforms = ["jvm", "wasm"],
+    platforms = [
+        "jvm",
+        "wasm",
+    ],
 )
 
 arcs_ts_test(
@@ -82,5 +88,5 @@ arcs_kt_jvm_test_suite(
         "//third_party/kotlin/kotlin:kotlin_test",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
-    ]
+    ],
 )
