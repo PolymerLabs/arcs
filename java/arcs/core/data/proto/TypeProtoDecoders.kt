@@ -18,6 +18,7 @@ import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.ReferenceType
 import arcs.core.data.SingletonType
+import arcs.core.data.TupleType
 import arcs.core.type.Type
 
 /** Converts a [PrimitiveTypeProto] protobuf instance into a Kotlin [PrimitiveType] instance. */
@@ -78,6 +79,9 @@ fun ReferenceTypeProto.decode() = ReferenceType(referredType.decode())
 /** Converts a [CountTypeProto] protobuf instance into a Kotlin [CountType] instance. */
 fun CountTypeProto.decode() = CountType()
 
+/** Converts a [TupleTypeProto] protobuf instance into a Kotlin [TupleType] instance. */
+fun TupleTypeProto.decode() = TupleType(elementsList.map { it.decode() })
+
 /** Converts a [TypeProto] protobuf instance into a Kotlin [Type] instance. */
 // TODO(b/155812915): RefinementExpression.
 fun TypeProto.decode(): Type = when (dataCase) {
@@ -86,8 +90,7 @@ fun TypeProto.decode(): Type = when (dataCase) {
     TypeProto.DataCase.COLLECTION -> collection.decode()
     TypeProto.DataCase.REFERENCE -> reference.decode()
     TypeProto.DataCase.COUNT -> count.decode()
-    // TODO(b/156003617) Support Kotlin Tuples
-    TypeProto.DataCase.TUPLE,
+    TypeProto.DataCase.TUPLE -> tuple.decode()
     // TODO(b/154733929) Support Kotlin TypeVariables
     TypeProto.DataCase.VARIABLE ->
         throw NotImplementedError(
