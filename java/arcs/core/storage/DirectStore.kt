@@ -277,7 +277,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     ) {
         if (noDriverSideChanges) {
             // TODO: use a single lock here, rather than two separate atomics.
-            this.state.value = State.Idle(idleDeferred, driver).also { /* stateChannel.send(it) */ }
+            this.state.value = State.Idle(idleDeferred, driver).also { stateChannel.send(it) }
             this.version.value = version
             return
         }
