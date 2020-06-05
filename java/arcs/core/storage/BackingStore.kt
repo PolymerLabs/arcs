@@ -38,7 +38,8 @@ class BackingStore<Data : CrdtData, Op : CrdtOperation, T>(
     val callbackFactory: (String) -> ProxyCallback<Data, Op, T>
 ) {
     private val storeMutex = Mutex()
-    /* internal */ val stores = LruCacheMap<String, StoreRecord<Data, Op, T>>(1)
+    // TODO(b/158262634): Make this CacheMap Weak.
+    /* internal */ val stores = LruCacheMap<String, StoreRecord<Data, Op, T>>()
 
     /**
      * Gets data from the store corresponding to the given [referenceId].
