@@ -459,18 +459,7 @@ export class KotlinGenerator implements ClassGenerator {
   }
 
   createSchema(schemaHash: string): string {
-    if (!this.node.schema) {
-      const varName = quote(`~${this.node.variableName}`);
-      return `\
-Schema(
-    setOf(SchemaName(${varName})),
-    SchemaFields(singletons = emptyMap(), collections = emptyMap()),
-    ${varName},
-    refinement = ${this.refinement},
-    query = ${this.query}
-)
-`;
-    }
+    if (!this.node.schema) return `Schema.EMPTY`;
 
     const schemaNames = this.node.schema.names.map(n => `SchemaName("${n}")`);
     return `\
