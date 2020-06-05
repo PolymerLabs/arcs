@@ -145,13 +145,15 @@ class ReferenceModeStore private constructor(
         }
     )
 
+    private var containerCallbackToken: Int = -1
+
     init {
         @Suppress("UNCHECKED_CAST")
         crdtType = requireNotNull(
             type as? Type.TypeContainer<CrdtModelType<CrdtData, CrdtOperationAtTime, Referencable>>
         ) { "Provided type must contain CrdtModelType" }.containedType
 
-        containerStore.on(ProxyCallback {
+        containerCallbackToken = containerStore.on(ProxyCallback {
             CoroutineScope(coroutineContext).launch {
                 receiveQueue.enqueue(Message.PreEnqueuedFromContainer(it.toReferenceModeMessage()))
             }
@@ -182,7 +184,12 @@ class ReferenceModeStore private constructor(
         callback: ProxyCallback<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
     ): Int = callbacks.register(callback)
 
-    override fun off(callbackToken: Int) = callbacks.unregister(callbackToken)
+    override fun off(callbackToken: Int) {
+        if (containerCallbackToken != -1) {
+            containerStore.off(callbackToken)
+        }
+        callbacks.unregister(callbackToken)
+    }
 
     /*
      * Messages are enqueued onto an object-wide queue and processed in order.
