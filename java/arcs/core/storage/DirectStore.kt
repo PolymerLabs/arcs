@@ -180,7 +180,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     }
 
     private suspend fun processModelChange(
-        modelChange: CrdtChange<Data, Op>, otherChange: CrdtChange<Data, Op>?, version: Int,
+        modelChange: CrdtChange<Data, Op>,
+        otherChange: CrdtChange<Data, Op>?,
+        version: Int,
         channel: Int?
     ) {
         if (modelChange.isEmpty() && otherChange?.isEmpty() == true) return
@@ -248,7 +250,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
      * model before we've applied the operations.
      */
     private fun noDriverSideChanges(
-        thisChange: CrdtChange<Data, Op>, otherChange: CrdtChange<Data, Op>?,
+        thisChange: CrdtChange<Data, Op>,
+        otherChange: CrdtChange<Data, Op>?,
         messageFromDriver: Boolean
     ): Boolean {
         return if (messageFromDriver) {
@@ -258,9 +261,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         }
     }
 
-    private suspend fun deliverCallbacks(
-        thisChange: CrdtChange<Data, Op>, source: Int?
-    ) {
+    private suspend fun deliverCallbacks(thisChange: CrdtChange<Data, Op>, source: Int?) {
         when (thisChange) {
             is CrdtChange.Operations -> {
                 proxyManager.send(
@@ -282,7 +283,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
      * [here](https://github.com/PolymerLabs/arcs/wiki/Store-object-State-Machine).
      */
     private suspend fun updateStateAndAct(
-        noDriverSideChanges: Boolean, version: Int, messageFromDriver: Boolean
+        noDriverSideChanges: Boolean,
+        version: Int,
+        messageFromDriver: Boolean
     ) {
         if (closed) return
 
@@ -371,7 +374,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
          * The [DirectStore] is currently idle.
          */
         class Idle<Data : CrdtData>(
-            idleDeferred: AtomicRef<IdleDeferred>, driver: Driver<Data>
+            idleDeferred: AtomicRef<IdleDeferred>,
+            driver: Driver<Data>
         ) : StateWithData<Data>(Idle, idleDeferred, driver) {
             init {
                 // When a new idle state is created, complete the deferred so anything waiting on it
@@ -383,7 +387,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             override suspend fun idle() = Unit
 
             override suspend fun update(
-                version: Int, messageFromDriver: Boolean, localModel: Data
+                version: Int,
+                messageFromDriver: Boolean,
+                localModel: Data
             ): Pair<Int, StateWithData<Data>> {
                 // On update() and when idle, we're ready to await the next version.
                 return (version + 1) to AwaitingResponse(idleDeferred, driver)
@@ -394,7 +400,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
          * On update: sends the local model to the driver and awaits a response.
          */
         class AwaitingResponse<Data : CrdtData>(
-            idleDeferred: AtomicRef<IdleDeferred>, driver: Driver<Data>
+            idleDeferred: AtomicRef<IdleDeferred>,
+            driver: Driver<Data>
         ) : StateWithData<Data>(AwaitingResponse, idleDeferred, driver) {
             override fun shouldApplyPendingDriverModelsOnReceive(data: Data, version: Int) = false
 
@@ -416,7 +423,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
          * Awaiting a model from the driver after a failed send.
          */
         class AwaitingDriverModel<Data : CrdtData>(
-            idleDeferred: AtomicRef<IdleDeferred>, driver: Driver<Data>
+            idleDeferred: AtomicRef<IdleDeferred>,
+            driver: Driver<Data>
         ) : StateWithData<Data>(AwaitingDriverModel, idleDeferred, driver) {
             override suspend fun update(
                 version: Int, messageFromDriver: Boolean, localModel: Data
