@@ -8,8 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Capabilities} from '../capabilities-new.js';
-
 export abstract class StorageKey {
   readonly protocol: string;
 

@@ -15,7 +15,9 @@ import {FakePecFactory} from './fake-pec-factory.js';
 import {Id, IdGenerator} from './id.js';
 import {Loader} from '../platform/loader.js';
 import {Capabilities} from './capabilities.js';
+import {Capabilities as CapabilitiesNew} from './capabilities-new.js';
 import {CapabilitiesResolver} from './capabilities-resolver.js';
+import {CapabilitiesResolver as CapabilitiesResolverNew} from './capabilities-resolver-new.js';
 import {Runnable} from './hot.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
@@ -59,6 +61,7 @@ export type ArcOptions = Readonly<{
   inspectorFactory?: ArcInspectorFactory,
   ports?: MessagePort[],
   capabilitiesResolver?: CapabilitiesResolver,
+  capabilitiesResolverNew?: CapabilitiesResolverNew,
   modality?: Modality
 }>;
 
@@ -92,6 +95,7 @@ export class Arc implements ArcInterface {
   private storageKeys: Dictionary<StorageKey> = {};
   public readonly storageKey?:  StorageKey;
   private readonly capabilitiesResolver?: CapabilitiesResolver;
+  private readonly capabilitiesResolverNew?: CapabilitiesResolverNew;
   // Map from each store to a set of tags. public for debug access
   public readonly storeTags = new Map<AbstractStore, Set<string>>();
   // Map from each store to its description (originating in the manifest).
@@ -111,7 +115,7 @@ export class Arc implements ArcInterface {
   readonly volatileMemory = new VolatileMemory();
   private readonly volatileStorageDriverProvider: VolatileStorageDriverProvider;
 
-  constructor({id, context, pecFactories, slotComposer, loader, storageKey, speculative, innerArc, stub, capabilitiesResolver, inspectorFactory, modality} : ArcOptions) {
+  constructor({id, context, pecFactories, slotComposer, loader, storageKey, speculative, innerArc, stub, capabilitiesResolver, capabilitiesResolverNew, inspectorFactory, modality} : ArcOptions) {
     this._context = context;
     this.modality = modality;
     // TODO: pecFactories should not be optional. update all callers and fix here.
@@ -135,6 +139,7 @@ export class Arc implements ArcInterface {
     this.volatileStorageDriverProvider = new VolatileStorageDriverProvider(this);
     DriverFactory.register(this.volatileStorageDriverProvider);
     this.capabilitiesResolver = capabilitiesResolver;
+    this.capabilitiesResolverNew = capabilitiesResolverNew;
   }
 
   get loader(): Loader {
@@ -582,6 +587,11 @@ export class Arc implements ArcInterface {
       if (this.capabilitiesResolver) {
         storageKey = await this.capabilitiesResolver.createStorageKey(
             capabilities, type, id);
+        assert(this.capabilitiesResolverNew);
+        const capabilitiesNew = CapabilitiesNew.fromOldCapabilities(capabilities, ttl);
+        const storageKeyNew = await this.capabilitiesResolverNew.createStorageKey(
+            capabilitiesNew, type, id);
+        assert(storageKeyNew.toString() === storageKey.toString());
       } else if (this.storageKey) {
         storageKey = this.storageKey.childKeyForHandle(id);
       }

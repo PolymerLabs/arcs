@@ -16,7 +16,8 @@ import {Exists} from './driver.js';
 import {CapabilitiesResolver} from '../../capabilities-resolver.js';
 import {ArcId} from '../../id.js';
 import {Capabilities} from '../../capabilities.js';
-import {Capabilities as CapabilitiesNew, Persistence, Encryption, Ttl, Queryable} from '../../capabilities-new.js';
+import {Capabilities as CapabilitiesNew, Persistence, Encryption, Ttl, Queryable, Shareable} from '../../capabilities-new.js';
+import {CapabilitiesResolver as CapabilitiesResolverNew} from '../../capabilities-resolver-new.js';
 import {StorageKeyFactory, StorageKeyOptions} from '../../storage-key-factory.js';
 
 export class RamDiskStorageKey extends StorageKey {
@@ -49,9 +50,12 @@ export class RamDiskStorageKey extends StorageKey {
 export class RamDiskStorageKeyFactory extends StorageKeyFactory {
   get protocol() { return RamDiskStorageKey.protocol; }
 
-  supportedCapabilities(): CapabilitiesNew {
-    // TODO(b/157761106): add Shareable capability.
+  minCapabilities(): CapabilitiesNew {
     return CapabilitiesNew.unrestricted().restrict(Persistence.inMemory());
+  }
+
+  maxCapabilities(): CapabilitiesNew {
+    return this.minCapabilities().restrict(new Shareable(true));
   }
 
   create(options: StorageKeyOptions): StorageKey {
@@ -93,5 +97,7 @@ export class RamDiskStorageDriverProvider implements StorageDriverProvider {
         RamDiskStorageKey.protocol,
         Capabilities.tiedToRuntime,
         (options: StorageKeyOptions) => new RamDiskStorageKey(options.location()));
-    }
+
+    CapabilitiesResolverNew.registerStorageKeyFactory(new RamDiskStorageKeyFactory());
+  }
 }

@@ -21,6 +21,7 @@ import {DatabaseStorageKey} from '../../runtime/storageNG/database-storage-key.j
 import {CapabilitiesResolver} from '../../runtime/capabilities-resolver.js';
 import {Flags} from '../../runtime/flags.js';
 import {DriverFactory} from '../../runtime/storageNG/drivers/driver-factory.js';
+import {VolatileStorageKey} from '../../runtime/storageNG/drivers/volatile.js';
 
 describe('recipe2plan', () => {
   describe('storage-key-recipe-resolver', () => {

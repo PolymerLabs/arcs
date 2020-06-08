@@ -10,6 +10,8 @@
 
 import {assert} from '../platform/assert-web.js';
 import {AnnotationRef} from './recipe/annotation.js';
+import {Capabilities as CapabilitiesOld} from './capabilities.js';
+import {Ttl as TtlOld} from './recipe/ttl.js';
 
 export enum CapabilityComparison {
   LessStrict, Equivalent, Stricter
@@ -117,7 +119,6 @@ export class Persistence extends Capability {
       case PersistenceType.None: return 'noPersistence';
       default: throw new Error(`Unsupported persistence type: ${this.type}`);
     }
-
   }
 
   static none(): Persistence { return new Persistence(PersistenceType.None); }
@@ -237,7 +238,7 @@ export class Ttl extends Capability {
   }
 
   toDebugString(): string {
-    return `${this.count}${this.units}`;
+    return this.isInfinite ? `infinite` : `${this.count}${this.units}`;
   }
 
   static infinite(): Ttl { return new Ttl(null, TtlUnits.Infinite); }
@@ -291,6 +292,24 @@ export class Queryable extends BooleanCapability {
 
   toDebugString(): string {
     return this.value ? 'queryable' : 'notQueryable';
+  }
+}
+
+// This is an inferred only capabilities that used to distinguish between
+// ramdisk and volatile memory. Currently only introduced for backward
+// compatibility in tests.
+export class Shareable extends BooleanCapability {
+  constructor(isShareable: boolean) { super(isShareable); }
+
+  static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
+    const queryableAnnotations =
+        annotations.filter(annotation => annotation.name === 'shareable');
+    assert(queryableAnnotations.length <= 1, `Containing multiple queryable annotations`);
+    return new Queryable(queryableAnnotations.length > 0);
+  }
+
+  toDebugString(): string {
+    return this.value ? 'shareable' : 'notShareable';
   }
 }
 
@@ -436,14 +455,14 @@ export class Capabilities extends Capability {
   // Constructs and returns Capabilities object with no restrictions whatsoever.
   static unrestricted(): Capabilities {
     return new Capabilities([Persistence.unrestricted(), new Encryption(false),
-        Ttl.infinite(), new Queryable(false)]);
+        Ttl.infinite(), new Queryable(false), new Shareable(false)]);
   }
 
   // Constructs and returns Capabilities object with the most strict
   // capabilities possible (nothing is allowed).
   static none(): Capabilities {
     return new Capabilities([Persistence.none(), new Encryption(true),
-        Ttl.none(), new Queryable(true)]);
+        Ttl.none(), new Queryable(true), new Shareable(true)]);
   }
 
   // List of individual Capabilities in the order of enforcement.
@@ -451,6 +470,22 @@ export class Capabilities extends Capability {
     Persistence,
     Encryption,
     Ttl,
-    Queryable
+    Queryable,
+    Shareable
   ];
+
+  // This method is only needed for backward compatibility testing.
+  static fromOldCapabilities(capabilitiesOld: CapabilitiesOld, ttlOld: TtlOld): Capabilities {
+    let result = Capabilities.unrestricted().restrict(capabilitiesOld.isPersistent ? Persistence.onDisk() : Persistence.inMemory());
+    if (ttlOld && !ttlOld.isInfinite) {
+      result = result.restrict(Ttl.fromString(`${ttlOld.count}${ttlOld.units}`));
+    }
+    if (capabilitiesOld.isQueryable) {
+      result = result.restrict(new Queryable(true));
+    }
+    if (capabilitiesOld.isTiedToRuntime) {
+      result = result.restrict(new Shareable(true));
+    }
+    return result;
+  }
 }

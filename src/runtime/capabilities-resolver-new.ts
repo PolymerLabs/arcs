@@ -17,30 +17,36 @@ import {Capabilities} from './capabilities-new.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 import {Flags} from './flags.js';
 import {StorageKeyFactory, FactorySelector, ContainerStorageKeyOptions, BackingStorageKeyOptions, LeastRestrictiveCapabilitiesSelector} from './storage-key-factory.js';
+import {VolatileStorageKeyFactory} from './storageNG/drivers/volatile.js';
 
 export class CapabilitiesResolver {
-  private static storageKeyFactories: Dictionary<StorageKeyFactory> = {};
-  private static defaultSelector = new LeastRestrictiveCapabilitiesSelector();
+  private static defaultStorageKeyFactories: Dictionary<StorageKeyFactory> = {};
+  private static readonly defaultSelector = new LeastRestrictiveCapabilitiesSelector();
+
+  private readonly factories: Dictionary<StorageKeyFactory> = {};
 
   constructor(public readonly options: CapabilitiesResolverOptions & {
     factories?: StorageKeyFactory[], selector? : FactorySelector}) {
     for (const factory of (options.factories || [])) {
-      assert(!CapabilitiesResolver.storageKeyFactories[factory.protocol],
-          `Storage key creator for '${factory.protocol}' already registered.`);
+      assert(!this.factories[factory.protocol], `Duplicated factory for '${factory.protocol}'.`);
+      this.factories[factory.protocol] = factory;
+    }
+    for (const factory of Object.values(CapabilitiesResolver.defaultStorageKeyFactories)) {
+      if (!this.factories[factory.protocol]) {
+        this.factories[factory.protocol] = factory;
+      }
     }
   }
-  get factories() { return this.options.factories || []; }
+
   get selector() { return this.options.selector || CapabilitiesResolver.defaultSelector; }
 
   async createStorageKey(capabilities: Capabilities, type: Type, handleId: string): Promise<StorageKey> {
-    const selectedFactories = [
-      ...Object.values(CapabilitiesResolver.storageKeyFactories),
-      ...this.factories].filter(factory => {
+    const selectedFactories = Object.values(this.factories).filter(factory => {
         return factory.supports(capabilities);
       }
     );
     if (selectedFactories.length === 0) {
-      throw new Error(`Cannot create a suitable storage key for handle '${handleId}' with capabilities ${capabilities.toString()}`);
+      throw new Error(`Cannot create a suitable storage key for handle '${handleId}' with capabilities ${capabilities.toDebugString()}`);
     }
     const factory = this.selector.select(selectedFactories);
     return this.createStorageKeyWithFactory(factory, type, handleId);
@@ -64,12 +70,12 @@ export class CapabilitiesResolver {
   }
 
   static registerStorageKeyFactory(factory: StorageKeyFactory) {
-    assert(!CapabilitiesResolver.storageKeyFactories[factory.protocol],
-        `Storage key creator for '${factory.protocol}' already registered`);
-    CapabilitiesResolver.storageKeyFactories[factory.protocol] = factory;
+    assert(!CapabilitiesResolver.defaultStorageKeyFactories[factory.protocol],
+        `Storage key factory for '${factory.protocol}' already registered`);
+    CapabilitiesResolver.defaultStorageKeyFactories[factory.protocol] = factory;
   }
 
   static reset() {
-    CapabilitiesResolver.storageKeyFactories = {};
+    CapabilitiesResolver.defaultStorageKeyFactories = {};
   }
 }
