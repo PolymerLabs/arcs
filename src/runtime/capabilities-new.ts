@@ -46,9 +46,7 @@ export abstract class Capability {
   static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
     throw new Error('not implemented');
   }
-  // toString() {
-  // TODO: implement!
-  // }
+  abstract toDebugString(): string;
 }
 
 // The persistence types in order from most to least restrictive.
@@ -109,6 +107,17 @@ export class Persistence extends Capability {
       return CapabilityComparison.Stricter;
     }
     return CapabilityComparison.LessStrict;
+  }
+
+  toDebugString(): string {
+    switch (this.type) {
+      case PersistenceType.Unrestricted: return 'unrestrictedPersistence';
+      case PersistenceType.InMemory: return 'inMemory';
+      case PersistenceType.OnDisk: return 'onDisk';
+      case PersistenceType.None: return 'noPersistence';
+      default: throw new Error(`Unsupported persistence type: ${this.type}`);
+    }
+
   }
 
   static none(): Persistence { return new Persistence(PersistenceType.None); }
@@ -227,6 +236,10 @@ export class Ttl extends Capability {
     }
   }
 
+  toDebugString(): string {
+    return `${this.count}${this.units}`;
+  }
+
   static infinite(): Ttl { return new Ttl(null, TtlUnits.Infinite); }
   static minutes(count: number): Ttl { return new Ttl(count, TtlUnits.Minutes); }
   static hours(count: number): Ttl { return new Ttl(count, TtlUnits.Hours); }
@@ -275,6 +288,10 @@ export class Queryable extends BooleanCapability {
     assert(queryableAnnotations.length <= 1, `Containing multiple queryable annotations`);
     return new Queryable(queryableAnnotations.length > 0);
   }
+
+  toDebugString(): string {
+    return this.value ? 'queryable' : 'notQueryable';
+  }
 }
 
 export class Encryption extends BooleanCapability {
@@ -286,15 +303,21 @@ export class Encryption extends BooleanCapability {
     assert(encryptedAnnotations.length <= 1, `Containing multiple encrypted annotations`);
     return new Encryption(encryptedAnnotations.length > 0);
   }
+
+  toDebugString(): string {
+    return this.value ? 'encrypted' : 'notEncrypted';
+  }
 }
 
 // Capabilities are a grouping of individual capabilities.
 export class Capabilities extends Capability {
   readonly list: Capability[];
+  // The Capability list must contain all supported Capability-types in their
+  // weighted order, hence the constructor is private and helper methods must
+  // be used to create a Capabilities object.
   private constructor(list: Capability[] = []) {
     super();
     assert(list.length === Capabilities.all.length, `Missing capabilities in ctor.`);
-    // TODO(b/157761106): autocomplete the missing capabilities?
     this.list = list;
   }
 
@@ -385,16 +408,11 @@ export class Capabilities extends Capability {
     return true;
   }
 
-  static create(capabilities: {persistence?: Persistence,
-      encryption?: Encryption, ttl?: Ttl, queryable?: Queryable} = {}) {
-      return new Capabilities([
-        capabilities.persistence || Persistence.none(),
-        capabilities.encryption || new Encryption(true),
-        capabilities.ttl || Ttl.none(),
-        capabilities.queryable || new Queryable(true),
-      ]);
+  toDebugString(): string {
+    return this.list.map(capability => capability.toDebugString()).join(' ');
   }
 
+  // Restricts the Capabilities object to the given set.
   restrictAll(capabilities: Capability[]): Capabilities {
     for (const capability of capabilities) {
       for (const thisCapability of this.list) {
@@ -415,23 +433,21 @@ export class Capabilities extends Capability {
     return this.restrictAll([capability]);
   }
 
-  // Returns Capabilities object with no restrictions whatsoever.
+  // Constructs and returns Capabilities object with no restrictions whatsoever.
   static unrestricted(): Capabilities {
-    return Capabilities.create({
-      persistence: Persistence.unrestricted(),
-      encryption: new Encryption(false),
-      ttl: Ttl.infinite(),
-      queryable: new Queryable(false)
-    });
+    return new Capabilities([Persistence.unrestricted(), new Encryption(false),
+        Ttl.infinite(), new Queryable(false)]);
   }
 
-  // Returns Capabilities object with the most strict capabilities possible (nothing is allowed).
+  // Constructs and returns Capabilities object with the most strict
+  // capabilities possible (nothing is allowed).
   static none(): Capabilities {
-    return Capabilities.create();
+    return new Capabilities([Persistence.none(), new Encryption(true),
+        Ttl.none(), new Queryable(true)]);
   }
 
   // List of individual Capabilities in the order of enforcement.
-  static readonly all: (typeof Capability | typeof BooleanCapability)[] = [
+  private static readonly all: (typeof Capability | typeof BooleanCapability)[] = [
     Persistence,
     Encryption,
     Ttl,

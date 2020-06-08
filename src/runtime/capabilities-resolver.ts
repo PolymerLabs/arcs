@@ -19,37 +19,6 @@ export type CapabilitiesResolverOptions = Readonly<{
   arcId: ArcId;
 }>;
 
-// export abstract class StorageKeyOptions {
-//   constructor(
-//       public readonly arcId: ArcId,
-//       public readonly schemaHash: string,
-//       protected readonly schemaName: string = null) {}
-//   abstract location(): string;
-//   abstract unique(): string;
-// }
-
-// export /**/ class ContainerStorageKeyOptions extends StorageKeyOptions {
-//   constructor(arcId: ArcId, schemaHash: string, schemaName?: string) {
-//     super(arcId, schemaHash, schemaName);
-//   }
-
-//   unique(): string { return ''; }
-//   location(): string { return this.arcId.toString(); }
-// }
-
-// export /**/ class BackingStorageKeyOptions extends StorageKeyOptions {
-//   constructor(arcId: ArcId, schemaHash: string, schemaName?: string) {
-//     super(arcId, schemaHash, schemaName);
-//   }
-//   unique(): string {
-//     return this.schemaName && this.schemaName.length > 0
-//         ? this.schemaName : this.schemaHash;
-//   }
-//   location(): string {
-//     return this.unique();
-//   }
-// }
-
 export type StorageKeyCreator = (options: StorageKeyOptions) => StorageKey;
 export type StorageKeyCreatorInfo =
     {protocol: string, capabilities: Capabilities, create: StorageKeyCreator};

@@ -103,7 +103,6 @@ describe('Capabilities Resolver', () => {
     await assertThrowsAsync(async () => await resolver6.createStorageKey(
         Capabilities.tiedToRuntime, referenceType, handleId));
   }));
-// });
 
   it('registers and creates database key', Flags.withDefaultReferenceMode(async () => {
     const resolver1 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});

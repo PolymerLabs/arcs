@@ -50,7 +50,7 @@ export class RamDiskStorageKeyFactory extends StorageKeyFactory {
   get protocol() { return RamDiskStorageKey.protocol; }
 
   supportedCapabilities(): CapabilitiesNew {
-    // TODO: add Shareable capability.
+    // TODO(b/157761106): add Shareable capability.
     return CapabilitiesNew.unrestricted().restrict(Persistence.inMemory());
   }
 
