@@ -365,13 +365,39 @@ describe('schema2kotlin', () => {
             .also { this.copyInto(it) }
         `
     ));
+    it('generates fields for entity when available', async () => await assertFieldsDefinition(
+      `particle T
+         h1: reads Thing {num: Number}`,
+      `\
+
+        var num: Double
+            get() = super.getSingletonValue("num") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("num", _value)
+        
+        init {
+            this.num = num
+        }
+        `
+    ));
+    it('generates an entityId property with Wasm', async () => await assertFieldsDefinitionForWasm(
+      `particle T
+         h1: reads Thing {num: Number}`,
+      `\
+
+        var num = num
+            get() = field
+            private set(_value) {
+                field = _value
+            }
+        
+        override var entityId = ""`
+    ));
     async function assertClassDefinition(manifestString: string, expectedValue: string) {
       await assertGeneratorComponent<string>(
         manifestString,
         generator => generator.generateClassDefinition(),
         expectedValue);
     }
-
     async function assertCopyMethodsForWasm(manifestString: string, expectedValue: string) {
       await assertGeneratorComponent<string>(
         manifestString,
@@ -379,13 +405,26 @@ describe('schema2kotlin', () => {
         expectedValue,
         {_: [], wasm: true});
     }
-
     async function assertCopyMethods(manifestString: string, expectedValue: string) {
       await assertGeneratorComponent<string>(
         manifestString,
         generator => generator.generateCopyMethods(),
         expectedValue);
     }
+    async function assertFieldsDefinition(manifestString: string, expectedValue: string) {
+      await assertGeneratorComponent<string>(
+        manifestString,
+        generator => generator.generateFieldsDefinitions(),
+        expectedValue);
+    }
+    async function assertFieldsDefinitionForWasm(manifestString: string, expectedValue: string) {
+      await assertGeneratorComponent<string>(
+        manifestString,
+        generator => generator.generateFieldsDefinitions(),
+        expectedValue,
+        {_: [], wasm: true});
+    }
+
   });
 
   // Asserts that a certain generated component, i.e. one of the results of the

@@ -566,6 +566,31 @@ ${lines}
         ${mutate}`}`;
   }
 
+  generateFieldsDefinitions(): string {
+    const fieldCount = this.node.schema ? Object.keys(this.node.schema.fields).length : 0;
+    const blocks: string[] = [];
+
+    if (fieldCount !== 0) {
+      blocks.push(this.fieldVals.join('\n'));
+      blocks.push('');
+    }
+
+    if (this.opts.wasm) {
+      blocks.push(`override var entityId = ""`);
+    } else if (fieldCount !== 0) {
+      const initBody = this.fieldInitializers.join('\n');
+      const initBlock = ['init {', ktUtils.indent(initBody), '}'].join('\n');
+      blocks.push(initBlock);
+      blocks.push('')
+    }
+
+    if (blocks.length === 0) {
+      return '';
+    }
+
+    return '\n' + ktUtils.indent(blocks.join('\n'), 2);
+  }
+
   generateClasses(schemaHash: string): string {
     const fieldCount = this.node.schema ? Object.keys(this.node.schema.fields).length : 0;
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
@@ -573,12 +598,7 @@ ${lines}
     return `\
 
     ${this.generateClassDefinition()} {
-
-${withFields(ktUtils.indent(`${this.fieldVals.join('\n')}`, 2))}
-
-        ${this.opts.wasm ? `override var entityId = ""` : withFields(`init {
-            ${this.fieldInitializers.join('\n            ')}
-        }`)}
+${this.generateFieldsDefinitions()}
         ${this.generateCopyMethods()}
     ${this.opts.wasm ? `
         fun reset() {

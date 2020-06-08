@@ -47,6 +47,7 @@ abstract class AbstractGold : BaseParticle() {
         init {
             this.val_ = val_
         }
+
         /**
          * Use this method to create a new, distinctly identified copy of the entity.
          * Storing the copy will result in a new copy of the data being stored.
@@ -134,6 +135,7 @@ abstract class AbstractGold : BaseParticle() {
             this.birthDayMonth = birthDayMonth
             this.birthDayDOM = birthDayDOM
         }
+
         /**
          * Use this method to create a new, distinctly identified copy of the entity.
          * Storing the copy will result in a new copy of the data being stored.
@@ -229,6 +231,7 @@ abstract class AbstractGold : BaseParticle() {
         init {
             this.num = num
         }
+
         /**
          * Use this method to create a new, distinctly identified copy of the entity.
          * Storing the copy will result in a new copy of the data being stored.
@@ -316,6 +319,7 @@ abstract class AbstractGold : BaseParticle() {
             this.birthDayMonth = birthDayMonth
             this.birthDayDOM = birthDayDOM
         }
+
         /**
          * Use this method to create a new, distinctly identified copy of the entity.
          * Storing the copy will result in a new copy of the data being stored.
@@ -436,6 +440,7 @@ abstract class AbstractGold : BaseParticle() {
             this.flg = flg
             this.ref = ref
         }
+
         /**
          * Use this method to create a new, distinctly identified copy of the entity.
          * Storing the copy will result in a new copy of the data being stored.
