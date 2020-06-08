@@ -158,7 +158,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                             message.operations.toMutableList()
                         )
                         processModelChange(
-                            change, otherChange = null, version = version.value,
+                            change,
+                            otherChange = null,
+                            version = version.value,
                             channel = message.id
                         )
                     }
@@ -170,7 +172,10 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                     localModel.merge(message.model)
                 }
                 processModelChange(
-                    modelChange, otherChange, version.value, channel = message.id
+                    modelChange,
+                    otherChange,
+                    version.value,
+                    channel = message.id
                 )
                 true
             }
@@ -230,7 +235,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 if (modelChange.isEmpty() && otherChange.isEmpty()) return@forEach
                 deliverCallbacks(modelChange, null)
                 noDriverSideChanges = noDriverSideChanges && noDriverSideChanges(
-                    modelChange, otherChange, messageFromDriver = true
+                    modelChange,
+                    otherChange,
+                    messageFromDriver = true
                 )
                 log.debug { "No driver side changes? $noDriverSideChanges" }
             } catch (e: Exception) {
@@ -265,12 +272,14 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         when (thisChange) {
             is CrdtChange.Operations -> {
                 proxyManager.send(
-                    message = ProxyMessage.Operations(thisChange.ops, source), exceptTo = source
+                    message = ProxyMessage.Operations(thisChange.ops, source),
+                    exceptTo = source
                 )
             }
             is CrdtChange.Data -> {
                 proxyManager.send(
-                    message = ProxyMessage.ModelUpdate(thisChange.data, source), exceptTo = source
+                    message = ProxyMessage.ModelUpdate(thisChange.data, source),
+                    exceptTo = source
                 )
             }
         }
@@ -472,7 +481,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
             val driver = CrdtException.requireNotNull(
                 DriverFactory.getDriver(
-                    options.storageKey, crdtType.crdtModelDataClass, options.type
+                    options.storageKey,
+                    crdtType.crdtModelDataClass,
+                    options.type
                 ) as? Driver<Data>
             ) { "No driver exists to support storage key ${options.storageKey}" }
 
@@ -481,7 +492,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             }
 
             return DirectStore(
-                options, localModel = localModel, driver = driver
+                options,
+                localModel = localModel,
+                driver = driver
             ).also { store ->
                 driver.registerReceiver(options.versionToken) { data, version ->
                     store.onReceive(data, version)
