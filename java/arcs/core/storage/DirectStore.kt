@@ -340,7 +340,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         enum class Name { Idle, AwaitingResponse, AwaitingDriverModel, Closed }
 
         open class StateWithData<Data : CrdtData>(
-            stateName: Name, val idleDeferred: AtomicRef<IdleDeferred>, val driver: Driver<Data>
+            stateName: Name,
+            val idleDeferred: AtomicRef<IdleDeferred>,
+            val driver: Driver<Data>
         ) : State<Data>(stateName) {
             /** Waits until the [idleDeferred] signal is triggered. */
             open suspend fun idle() = idleDeferred.value.await()
@@ -353,7 +355,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
              * determine what state to transition into and perform any necessary operations.
              */
             open suspend fun update(
-                version: Int, messageFromDriver: Boolean, localModel: Data
+                version: Int,
+                messageFromDriver: Boolean,
+                localModel: Data
             ): Pair<Int, StateWithData<Data>> = version to this
 
             /**
@@ -406,7 +410,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             override fun shouldApplyPendingDriverModelsOnReceive(data: Data, version: Int) = false
 
             override suspend fun update(
-                version: Int, messageFromDriver: Boolean, localModel: Data
+                version: Int,
+                messageFromDriver: Boolean,
+                localModel: Data
             ): Pair<Int, StateWithData<Data>> {
                 val response = driver.send(localModel, version)
                 return if (response) {
@@ -427,7 +433,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             driver: Driver<Data>
         ) : StateWithData<Data>(AwaitingDriverModel, idleDeferred, driver) {
             override suspend fun update(
-                version: Int, messageFromDriver: Boolean, localModel: Data
+                version: Int,
+                messageFromDriver: Boolean,
+                localModel: Data
             ): Pair<Int, StateWithData<Data>> {
                 // If the message didn't come from the driver, we can't do anything.
                 if (!messageFromDriver) return version to this
