@@ -583,7 +583,7 @@ ${lines}
       const initBody = this.fieldInitializers.join('\n');
       const initBlock = ['init {', ktUtils.indent(initBody), '}'].join('\n');
       blocks.push(initBlock);
-      blocks.push('')
+      blocks.push('');
     }
 
     if (blocks.length === 0) {
