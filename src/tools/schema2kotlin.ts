@@ -545,8 +545,8 @@ ${lines}
     let copy = copyMethod;
     let mutate = mutateMethod;
 
-    // Add clauses to copy entity base data.
-    if (this.node.variableName !== null) {
+    // Add clauses to copy entity base data (except for Wasm).
+    if (this.node.variableName !== null && !this.opts.wasm) {
       // The `also` clause should go on a newline if the copy / mutate expression fits on one line.
       const newlineAlsoClause = '\n' + ktUtils.indent(copyBaseEntity, 3);
       copy += (copyMethod.includes('\n') ? copyBaseEntity : newlineAlsoClause);

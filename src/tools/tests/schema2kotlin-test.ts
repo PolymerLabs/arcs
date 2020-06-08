@@ -362,7 +362,6 @@ describe('schema2kotlin', () => {
          h1: reads  ~a with Thing {num: Number}`,
       `
         fun copy(num: Double = this.num) = T_H1(num = num)
-            .also { this.copyInto(it) }
         `
     ));
     it('generates fields for entity when available', async () => await assertFieldsDefinition(
