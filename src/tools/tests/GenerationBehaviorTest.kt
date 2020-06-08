@@ -1,6 +1,5 @@
 package src.tools.tests
 
-import arcs.core.common.ReferenceId
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import com.google.common.truth.Truth.assertThat
@@ -32,17 +31,23 @@ class GenerationBehaviorTest {
 
         val indirectB = Variable_H2.deserialize(RawEntity(id = "~b"))
         val emptyCopyB = indirectB.copy()
-        val overwriteCopyB = indirectB.copy(num = 2.0)
+        val updateCopyB = indirectB.copy(num = 2.0)
+        val overwriteCopyB = indirectB.copy(num = 4.0)
         val emptyMutateB = indirectB.mutate()
-        val overwriteMutateB = indirectB.mutate(num = 2.0)
+        val updateMutateB = indirectB.mutate(num = 2.0)
+        val overwriteMutateB = indirectB.mutate(num = 4.0)
 
         assertThat(emptyCopyB).isNotEqualTo(indirectB)
         assertThat(emptyCopyB).isNotEqualTo(emptyMutateB)
         assertThat(emptyMutateB).isEqualTo(indirectB)
-        assertThat(emptyCopyB).isNotEqualTo(overwriteCopyB)
-        assertThat(emptyMutateB).isNotEqualTo(overwriteMutateB)
-        assertThat(overwriteCopyB).isNotEqualTo(overwriteMutateB)
-        assertThat(overwriteCopyB.num).isEqualTo(2.0)
-        assertThat(overwriteMutateB.num).isEqualTo(2.0)
+        assertThat(emptyCopyB).isNotEqualTo(updateCopyB)
+        assertThat(emptyMutateB).isNotEqualTo(updateMutateB)
+        assertThat(updateCopyB).isNotEqualTo(updateMutateB)
+        assertThat(updateCopyB.num).isEqualTo(2.0)
+        assertThat(updateMutateB.num).isEqualTo(2.0)
+        assertThat(updateCopyB).isNotEqualTo(overwriteCopyB)
+        assertThat(updateMutateB).isNotEqualTo(overwriteMutateB)
+        assertThat(overwriteCopyB.num).isEqualTo(4.0)
+        assertThat(overwriteMutateB.num).isEqualTo(4.0)
     }
 }
