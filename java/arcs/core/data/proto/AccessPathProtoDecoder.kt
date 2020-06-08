@@ -22,6 +22,13 @@ fun AccessPathProto.decode(
     requireNotNull(connectionSpec) {
         "Connection '$handleConnection' not found in connection specs!"
     }
-    // TODO(bgogul): Selectors
-    return AccessPath(particleSpec, connectionSpec)
+    val selectors = selectorsList.map {
+        when (it.selectorCase) {
+            AccessPathProto.Selector.SelectorCase.FIELD -> AccessPath.Selector.Field(it.field)
+            else -> throw IllegalArgumentException(
+                "Cannot decode a ${it.selectorCase.name} type to a [AccessPath.Selector]."
+            )
+        }
+    }
+    return AccessPath(particleSpec, connectionSpec, selectors)
 }
