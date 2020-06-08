@@ -9,6 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
+import {Dictionary} from './hot.js';
 
 /**
  * Returns the set delta between two lists based on direct object comparison.
@@ -95,4 +96,13 @@ export function noAwait(result: {then: Function}) {}
  */
 export function flatMap<T, U>(array: T[], mapper: (element: T) => U) {
   return [].concat(...array.map(mapper));
+}
+
+/** Converts a Map to a Dictionary. */
+export function mapToDictionary<T>(map: Map<string, T>): Dictionary<T> {
+  const dict = {};
+  for (const [k, v] of map) {
+    dict[k] = v;
+  }
+  return dict;
 }

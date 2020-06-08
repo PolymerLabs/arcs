@@ -432,10 +432,68 @@ describe('normalisation', () => {
             input: reads Something {a: Number, b: Number } [a > 0]
     `);
     const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.refinement, typeData);
-    console.log(ref1.toString());
-    console.log(`${ref2}`);
     // normalized version of ref1 should be the same as ref2
     assert.strictEqual(JSON.stringify(ref1), JSON.stringify(ref2));
+  });
+
+  const evaluatesToTrue = (expr: string, data: object = {}) => {
+      const manifestAst1 = parse(`
+          particle Foo
+              input: reads Something {num: Number} [ ${expr} ]
+      `);
+      const typeData = {'num': 'Number'};
+      const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.refinement, typeData);
+      // normalized version of ref1 should be the same as ref2
+      assert.isTrue(ref1.validateData(data), `expected expression (${expr}) to evaluate to true`);
+  };
+  const triviallyTrue = (expr: string) => {
+      const manifestAst1 = parse(`
+          particle Foo
+              input: reads Something {num: Number} [ ${expr} ]
+      `);
+      const typeData = {'num': 'Number'};
+      const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.refinement, typeData);
+      ref1.normalize();
+      // normalized version of ref1 should be the same as ref2
+      assert.isTrue(ref1.expression.kind === 'BooleanPrimitiveNode');
+      assert.isTrue(ref1.expression['value'], `expected expression (${expr}) to be trivially true`);
+  };
+  describe('Correctly handles date time units', () => {
+    it('control (ensure that the test approach works)', async () => {
+      triviallyTrue('1 == 1');
+      triviallyTrue('1 != 2');
+    });
+    it('uses millseconds by default', async () => {
+      triviallyTrue('1 == 1 milliseconds');
+    });
+    it('seconds to milliseconds', async () => {
+      triviallyTrue('1000 == 1 seconds');
+      triviallyTrue('2000 == 2 seconds');
+    });
+    it('minutes to seconds', async () => {
+      triviallyTrue('1 minutes == 60 seconds');
+      triviallyTrue('2 minutes == 120000 milliseconds');
+    });
+    it('hours to minutes', async () => {
+      triviallyTrue('1 hours == 60 minutes');
+      triviallyTrue('2 hours == 7200 seconds');
+    });
+    it('days to hours', async () => {
+      triviallyTrue('1 days == 24 hours');
+      triviallyTrue('2 days == 2880 minutes');
+    });
+    it('handles singular and plural forms', async () => {
+      triviallyTrue('2 * 1 day == 2 days');
+      triviallyTrue('1 day == 24 hours');
+      triviallyTrue('1 day != 24 hours + 1 second');
+    });
+  });
+  describe('Correctly handles date time using now()', () => {
+    it('now() is after time of writing', async () => {
+      // Checks that 'now' is after 04/22/2020 @ 7:19am (UTC).
+      evaluatesToTrue('now() > 1587539956');
+      evaluatesToTrue('not (now() < 1587539956)');
+    });
   });
 });
 

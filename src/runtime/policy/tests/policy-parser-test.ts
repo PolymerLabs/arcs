@@ -10,7 +10,7 @@
 
 import {parse} from '../../../gen/runtime/manifest-parser.js';
 import {assert} from '../../../platform/chai-web.js';
-import {Dictionary} from '../../hot.js';
+import {mapToDictionary} from '../../util.js';
 
 const noParamAnnotationRef = {
   kind: 'annotation-ref',
@@ -50,14 +50,6 @@ function parsePolicy(str: string) {
     `Expected a single policy node, found node with kind ${node.kind}.`);
   deleteFieldRecursively(node, 'location');
   return node;
-}
-
-function mapToDictionary(map: Map<string, string>): Dictionary<string> {
-  const dict = {};
-  for (const [k, v] of map) {
-    dict[k] = v;
-  }
-  return dict;
 }
 
 describe('policy parser', () => {

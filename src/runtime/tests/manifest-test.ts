@@ -4543,4 +4543,40 @@ particle WriteFoo
     assert.equal(annotations3.find(a => a.name === 'ttl').params['value'], '3m');
     assert.equal(manifest.toString(), manifestStr.trim());
   });
+  it('fails parsing multiple annotation refs with same name', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+        annotation oneParam(value: Text)
+          retention: Source
+          targets: [Recipe]
+          doc: 'doc'
+        @oneParam('hello')
+        @oneParam(value: 'world')
+        recipe
+    `), `annotation 'oneParam' already exists`);
+    await assertThrowsAsync(async () => await Manifest.parse(`
+        annotation oneParam(value: Text)
+          retention: Source
+          targets: [Recipe]
+          allowMultiple: false
+          doc: 'doc'
+        @oneParam('hello')
+        @oneParam(value: 'world')
+        recipe
+    `), `annotation 'oneParam' already exists`);
+  });
+  it('parses for multiple annotation refs with same name', async () => {
+    const recipe = (await Manifest.parse(`
+        annotation oneParam(value: Text)
+          retention: Source
+          targets: [Recipe]
+          allowMultiple: true
+          doc: 'doc'
+        @oneParam('hello')
+        @oneParam(value: 'world')
+        recipe
+    `)).recipes[0];
+    assert.lengthOf(recipe.annotations, 2);
+    assert.lengthOf(recipe.findAnnotations('oneParam'), 2);
+    assert.throws(() => recipe.getAnnotation('oneParam'));
+  });
 });

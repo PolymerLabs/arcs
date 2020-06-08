@@ -40,7 +40,8 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
     }
 
     companion object : EntitySpec<DummyEntity> {
-        override fun deserialize(data: RawEntity) = DummyEntity().apply { deserialize(data) }
+        override fun deserialize(data: RawEntity) = 
+            DummyEntity().apply { deserialize(data, mapOf(SCHEMA_HASH to DummyEntity)) }
 
         const val ENTITY_CLASS_NAME = "DummyEntity"
 

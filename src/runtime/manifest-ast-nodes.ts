@@ -397,6 +397,7 @@ export interface AnnotationNode extends BaseNode {
   params: AnnotationParam[];
   targets: AnnotationTargetValue[];
   retention: AnnotationRetentionValue;
+  allowMultiple: boolean;
   doc: string;
 }
 
@@ -406,7 +407,17 @@ export interface AnnotationParam extends BaseNode {
   type: SchemaPrimitiveTypeValue;
 }
 
-export type AnnotationTargetValue = 'Recipe' | 'Particle' | 'Store' | 'Handle' | 'HandleConnection' | 'Schema' | 'SchemaField';
+export type AnnotationTargetValue =
+  'Recipe' |
+  'Particle' |
+  'Store' |
+  'Handle' |
+  'HandleConnection' |
+  'Schema' |
+  'SchemaField' |
+  'PolicyField' |
+  'PolicyTarget' |
+  'Policy';
 
 export interface AnnotationTargets extends BaseNode {
   kind: 'annotation-targets';
@@ -423,6 +434,11 @@ export interface AnnotationRetention extends BaseNode {
 export interface AnnotationDoc extends BaseNode {
   kind: 'annotation-doc';
   doc: string;
+}
+
+export interface AnnotationMultiple extends BaseNode {
+  kind: 'annotation-multiple';
+  allowMultiple: boolean;
 }
 
 export interface AnnotationRef extends BaseNode {
@@ -654,7 +670,7 @@ export interface RefinementNode extends BaseNode {
   expression: RefinementExpressionNode;
 }
 
-export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode | QueryNode | NumberNode | BooleanNode | TextNode;
+export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode | QueryNode | BuiltInNode | NumberNode | BooleanNode | TextNode;
 
 export enum Op {
   AND = 'and',
@@ -698,9 +714,15 @@ export interface QueryNode extends BaseNode {
   value: string;
 }
 
+export interface BuiltInNode extends BaseNode {
+  kind: 'built-in-node';
+  value: string;
+}
+
 export interface NumberNode extends BaseNode {
   kind: 'number-node';
   value: number;
+  units?: string[];
 }
 
 export interface BooleanNode extends BaseNode {

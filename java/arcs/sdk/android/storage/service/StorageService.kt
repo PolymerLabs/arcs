@@ -16,11 +16,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import android.text.format.DateUtils
+import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import arcs.android.common.resurrection.ResurrectorService
 import arcs.android.storage.ParcelableStoreOptions
+import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
 import arcs.android.storage.service.BindingContext
 import arcs.android.storage.service.BindingContextStatsImpl
 import arcs.android.storage.service.StorageServiceManager
@@ -82,11 +84,30 @@ open class StorageService : ResurrectorService() {
             PeriodicWorkRequest.Builder(PeriodicCleanupTask::class.java, 1, TimeUnit.HOURS)
                 .addTag(PeriodicCleanupTask.WORKER_TAG)
                 .build()
+        val garbageCollectionTask =
+            PeriodicWorkRequest.Builder(
+                DatabaseGarbageCollectionPeriodicTask::class.java,
+                1,
+                TimeUnit.DAYS
+            )
+                .addTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiresDeviceIdle(true)
+                        .setRequiresCharging(true)
+                        .build()
+                ).build()
 
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+        val workManager = WorkManager.getInstance(this)
+        workManager.enqueueUniquePeriodicWork(
             PeriodicCleanupTask.WORKER_TAG,
             ExistingPeriodicWorkPolicy.KEEP,
             periodicCleanupTask
+        )
+        workManager.enqueueUniquePeriodicWork(
+            DatabaseGarbageCollectionPeriodicTask.WORKER_TAG,
+            ExistingPeriodicWorkPolicy.KEEP,
+            garbageCollectionTask
         )
     }
 
@@ -250,7 +271,7 @@ open class StorageService : ResurrectorService() {
 
     companion object {
         const val EXTRA_OPTIONS = "storeOptions"
-        private const val MANAGER_ACTION = "arcs.sdk.android.storage.service.MANAGER"
+        const val MANAGER_ACTION = "arcs.sdk.android.storage.service.MANAGER"
 
         init {
             // TODO: Remove this, the Allocator should be responsible for setting up providers.

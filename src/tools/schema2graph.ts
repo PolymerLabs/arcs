@@ -64,6 +64,13 @@ export class SchemaNode {
 
   // A name of the code generated class representing this schema.
   get entityClassName() {
+    if (this.uniqueSchema && this.schema.name) {
+      return this.schema.name;
+    }
+    return this.fullEntityClassName;
+  }
+
+  get fullEntityClassName() {
     if (this.sources.length === 1) {
       // If there is just one source, use its full name.
       return this.sources[0].fullName;
@@ -73,12 +80,17 @@ export class SchemaNode {
     return `${this.particleSpec.name}Internal${index}`;
   }
 
+  get uniqueSchema() {
+    return !this.allSchemaNodes.some(s => s.schema !== this.schema && s.schema.name === this.schema.name);
+  }
+
   // This will return the most "human friendly" name for the schema. This is the name (actual class
   // name or alias) that should be used when typing a handle exposed to the particle. It will never
   // return internal names, e.g. Internal$N.
-  // Note: Right now this will always return source.fullName, but it is a stepping stone towards
-  // renaming the generated entities to use schema names when possible.
   humanName(connection: HandleConnectionSpec): string {
+    if (this.uniqueSchema || this.sources.length === 1) {
+      return this.entityClassName;
+    }
     const sourcesFromConnection = this.sources.filter(s => s.connection === connection);
     const minPathLength = Math.min(...sourcesFromConnection.map(s => s.path.length));
     const bestSource = sourcesFromConnection.find(s => s.path.length === minPathLength);
@@ -93,6 +105,12 @@ export class SchemaNode {
     const topLevelNodes = SchemaNode.findTopLevelNodes(connection, nodes);
     const humanNames = topLevelNodes.map(n => n.humanName(connection));
     return humanNames.sort()[0];
+  }
+
+  static singleSchemaFullName(connection: HandleConnectionSpec, nodes: SchemaNode[]): string {
+    const topLevelNodes = SchemaNode.findTopLevelNodes(connection, nodes);
+    const fullNames = topLevelNodes.map(n => n.sources[0].fullName);
+    return fullNames.sort()[0];
   }
 
   // Returns all "top-level" schema nodes for the given connection.

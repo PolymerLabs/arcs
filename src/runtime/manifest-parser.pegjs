@@ -966,12 +966,14 @@ AnnotationNode
   = 'annotation' whiteSpace name:lowerIdent params:('(' whiteSpace? first:AnnotationParam rest:(whiteSpace? ',' whiteSpace? AnnotationParam)* whiteSpace? ')')? eolWhiteSpace items:(Indent (SameIndent AnnotationNodeItem)*)?
   {
     const targets = optional(items, extractIndented, []).find(item => item.kind === 'annotation-targets');
+    const multiple = optional(items, extractIndented, []).find(item => item.kind === 'annotation-multiple');
     return toAstNode<AstNode.AnnotationNode>({
         kind: 'annotation-node',
         name,
         params: optional(params, params => [params[2], ...(params[3].map(item => item[3]))], []),
         targets: targets ? targets.targets : [],
         retention: optional(items, extractIndented, []).find(item => item.kind === 'annotation-retention').retention,
+        allowMultiple: multiple ? multiple.allowMultiple : false,
         doc: optional(optional(items, extractIndented, []).find(item => item.kind === 'annotation-doc'), d => d.doc, '')
     });
   }
@@ -988,9 +990,20 @@ AnnotationParam = name:fieldName ':' whiteSpace? type:SchemaPrimitiveType {
 AnnotationNodeItem
   = AnnotationTargets
   / AnnotationRetention
+  / AnnotationMultiple
   / AnnotationDoc
 
-AnnotationTargetValue = 'Recipe' / 'Particle' / 'HandleConnection' / 'Store' / 'Handle' / 'SchemaField' / 'Schema'
+AnnotationTargetValue
+  = 'Recipe'
+  / 'Particle'
+  / 'HandleConnection'
+  / 'Store'
+  / 'Handle'
+  / 'SchemaField'
+  / 'Schema'
+  / 'PolicyField'
+  / 'PolicyTarget'
+  / 'Policy'
 
 AnnotationTargets = 'targets:'  whiteSpace '[' whiteSpace? targets:(AnnotationTargetValue (',' whiteSpace? AnnotationTargetValue)*) whiteSpace? ']' eolWhiteSpace? {
   return toAstNode<AstNode.AnnotationTargets>({
@@ -1005,6 +1018,13 @@ AnnotationRetention = 'retention:' whiteSpace retention:AnnotationRetentionValue
   return toAstNode<AstNode.AnnotationRetention>({
     kind: 'annotation-retention',
     retention
+  });
+}
+
+AnnotationMultiple = 'allowMultiple:' whiteSpace bool:('true'i / 'false'i) eolWhiteSpace? {
+  return toAstNode<AstNode.AnnotationMultiple>({
+    kind: 'annotation-multiple',
+    allowMultiple: bool.toLowerCase() === 'true'
   });
 }
 
@@ -1697,13 +1717,17 @@ PrimaryExpression
     const operator = op[0];
     return toAstNode<AstNode.UnaryExpressionNode>({kind: 'unary-expression-node', expr, operator});
   }
-  / num: NumberType
+  / num: NumberType units:Units?
   {
-    return toAstNode<AstNode.NumberNode>({kind: 'number-node', value: num});
+    return toAstNode<AstNode.NumberNode>({kind: 'number-node', value: num, units});
   }
   / bool:('true'i / 'false'i)
   {
     return toAstNode<AstNode.BooleanNode>({kind: 'boolean-node', value: bool.toLowerCase() === 'true'});
+  }
+  / fn: ('now()' / 'creationTimestamp')
+  {
+    return toAstNode<AstNode.BuiltInNode>({kind: 'built-in-node', value: fn});
   }
   / fn: fieldName
   {
@@ -1717,6 +1741,21 @@ PrimaryExpression
   / "'" txt:[^'\n]* "'"
   {
     return toAstNode<AstNode.TextNode>({kind: 'text-node', value: txt.join('')});
+  }
+
+Units = whiteSpace? name: UnitName {
+  // TODO: Support complex units like metres per second.
+  return [name];
+}
+
+UnitName
+  = unit:('day'
+  / 'hour'
+  / 'minute'
+  / 'second'
+  / 'millisecond'
+  ) 's'? {
+    return unit+'s';
   }
 
 NumberType
@@ -1742,7 +1781,7 @@ NumberedUnits
   }
 
 Policy
-  = 'policy' whiteSpace name:upperIdent openBrace items:(PolicyItem (commaOrNewline PolicyItem)*)? closeBrace
+  = 'policy' whiteSpace name:upperIdent openBrace items:(PolicyItem (commaOrNewline PolicyItem)*)? closeBrace eolWhiteSpace?
   {
     const targets: AstNode.PolicyTarget[] = [];
     const configs: AstNode.PolicyConfig[] = [];

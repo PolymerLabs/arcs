@@ -1,0 +1,9 @@
+// fails when handle has no inputs
+// #Ingress: P.bar
+// #Fail: hc:P.bar is trusted
+particle P
+  bar: reads Foo {}
+  check bar is trusted
+recipe R
+  P
+    bar: reads h

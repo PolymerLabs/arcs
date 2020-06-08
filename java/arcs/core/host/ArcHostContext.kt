@@ -38,6 +38,7 @@ data class ParticleContext(
     /** Used to detect infinite-crash loop particles */
     var consecutiveFailureCount: Int = 0
 ) {
+    private var isWriteOnly = true
     private val awaitingReady: MutableSet<Handle> = mutableSetOf()
     private val desyncedHandles: MutableSet<Handle> = mutableSetOf()
 
@@ -46,16 +47,19 @@ data class ParticleContext(
      * so we can invoke [Particle.onReady] once they have all fired.
      */
     fun expectReady(handle: Handle) {
+        isWriteOnly = false
         awaitingReady.add(handle)
     }
 
     /**
      * Particles with only write-only handles won't receive any storage events and thus
      * need to have their `onReady` method invoked as a special case.
+     *
+     * This will be executed in the context of the StorageProxy's scheduler.
      */
     fun notifyWriteOnlyParticles() {
-        if (awaitingReady.isEmpty()) {
-            particleState = ParticleState.Started
+        if (isWriteOnly) {
+            particleState = ParticleState.Running
             particle.onReady()
         }
     }
@@ -70,7 +74,7 @@ data class ParticleContext(
         when (event) {
             StorageEvent.READY -> {
                 if (awaitingReady.remove(handle) && awaitingReady.isEmpty()) {
-                    particleState = ParticleState.Started
+                    particleState = ParticleState.Running
                     particle.onReady()
                 }
             }
@@ -85,7 +89,7 @@ data class ParticleContext(
             StorageEvent.RESYNC -> {
                 desyncedHandles.remove(handle)
                 if (desyncedHandles.isEmpty()) {
-                    particleState = ParticleState.Started
+                    particleState = ParticleState.Running
                     particle.onResync()
                 }
             }

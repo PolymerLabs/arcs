@@ -40,6 +40,33 @@ class AccessPathProtoDecoderTest {
     }
 
     @Test
+    fun decodesAccessPathWithSelectors() {
+        val protoText = """
+            particle_spec: "TestSpec"
+            handle_connection: "input"
+            selectors {
+                field: "address"
+            }
+            selectors {
+                field: "street"
+            }
+        """.trimIndent()
+        val handleConnectionSpec = HandleConnectionSpec(
+            "input",
+            HandleMode.Write,
+            TypeVariable("input")
+        )
+        val connectionSpecs = listOf(handleConnectionSpec).associateBy { it.name }
+        val accessPath = parseAccessPathProto(protoText).decode(connectionSpecs)
+        val root = accessPath.root as AccessPath.Root.HandleConnectionSpec
+        assertThat(root.particleSpecName).isEqualTo("TestSpec")
+        assertThat(root.connectionSpec).isEqualTo(handleConnectionSpec)
+        assertThat(accessPath.selectors).isEqualTo(
+            listOf(AccessPath.Selector.Field("address"), AccessPath.Selector.Field("street"))
+        )
+    }
+
+    @Test
     fun detectsMissingConnections() {
         val protoText = """
         handle_connection: "input"

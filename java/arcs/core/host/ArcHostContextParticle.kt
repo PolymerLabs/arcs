@@ -19,6 +19,8 @@ import arcs.core.data.SingletonType
 import arcs.core.data.Ttl
 import arcs.core.entity.Reference
 import arcs.core.host.api.Particle
+import arcs.core.host.generated.AbstractArcHostContextParticle
+import arcs.core.host.generated.ArcHostContextPlan
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKeyParser
 import arcs.core.type.Tag
@@ -29,6 +31,9 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.withContext
+
+typealias ArcHostContextParticle_HandleConnections = AbstractArcHostContextParticle.HandleConnection
+typealias ArcHostContextParticle_Particles = AbstractArcHostContextParticle.ParticleSchema
 
 /**
  * An implicit [Particle] that lives within the [ArcHost] and used as a utility class to
@@ -46,7 +51,10 @@ class ArcHostContextParticle(
      * types, and write them to the appropriate handles. See `ArcHostContext.arcs` for schema
      * definitions.
      */
-    suspend fun writeArcHostContext(arcId: String, context: ArcHostContext) = onHandlesReady {
+    suspend fun writeArcHostContext(
+        arcId: String,
+        context: arcs.core.host.ArcHostContext
+    ) = onHandlesReady {
         try {
             val connections = context.particles.flatMap {
                 it.value.planParticle.handles.map { handle ->
@@ -82,7 +90,7 @@ class ArcHostContextParticle(
             // TODO(b/155320932): remove. Workaround for createReference precondition
             val storedParticles = handles.particles.fetchAll()
 
-            val arcState = ArcHostContextParticle_ArcHostContext(
+            val arcState = AbstractArcHostContextParticle.ArcHostContext(
                 arcId = arcId, hostId = hostId, arcState = context.arcState.name,
                 particles = storedParticles.map { handles.particles.createReference(it) }.toSet()
             )
@@ -102,8 +110,8 @@ class ArcHostContextParticle(
      * is stored in de-normalized format.
      */
     suspend fun readArcHostContext(
-        arcHostContext: ArcHostContext
-    ): ArcHostContext? = onHandlesReady {
+        arcHostContext: arcs.core.host.ArcHostContext
+    ): arcs.core.host.ArcHostContext? = onHandlesReady {
         val arcId = arcHostContext.arcId
 
         try {
@@ -128,7 +136,7 @@ class ArcHostContextParticle(
                 )
             }.toSet().associateBy({ it.first }, { it.second })
 
-            return@onHandlesReady ArcHostContext(
+            return@onHandlesReady arcs.core.host.ArcHostContext(
                 arcId,
                 particles.toMutableMap(),
                 ArcState.valueOf(arcStateEntity.arcState),
@@ -225,7 +233,7 @@ class ArcHostContextParticle(
          */
         val arcHostContextKey = requireNotNull(
             resolver.createStorageKey(
-                capability, EntityType(ArcHostContextParticle_ArcHostContext.SCHEMA),
+                capability, EntityType(AbstractArcHostContextParticle.ArcHostContext.SCHEMA),
                 "${hostId}_arcState"
             )
         ) {

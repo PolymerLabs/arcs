@@ -347,6 +347,26 @@ class EntityBaseTest {
     }
 
     @Test
+    fun cannotSetFutureCreationTimestamp() {
+        val idGenerator = Id.Generator.newForTest("session1")
+        val time = FakeTime().also { it.millis = 100 }
+
+        // In the past, ok.
+        val entity = EntityBase("Foo", DummyEntity.SCHEMA, creationTimestamp = 20)
+        entity.ensureEntityFields(idGenerator, "handle", time, Ttl.Minutes(1))
+        assertThat(entity.creationTimestamp).isEqualTo(20)
+
+        // In the future, not ok.
+        val entity2 = EntityBase("Foo", DummyEntity.SCHEMA, creationTimestamp = 120)
+        val e = assertFailsWith<IllegalArgumentException> {
+            entity2.ensureEntityFields(idGenerator, "handle", time, Ttl.Minutes(1))
+        }
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Cannot set a future creationTimestamp=120."
+        )
+    }
+
+    @Test
     fun testToString() {
         with (entity) {
             text = "abc"

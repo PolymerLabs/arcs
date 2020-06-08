@@ -14,9 +14,9 @@ import arcs.sdk.wasm.*
 typealias Gold_Data_Ref = AbstractGold.GoldInternal1
 typealias Gold_Alias = AbstractGold.GoldInternal1
 typealias Gold_AllPeople = AbstractGold.Gold_AllPeople
-typealias Gold_Collection = AbstractGold.Gold_Collection
-typealias Gold_QCollection = AbstractGold.Gold_QCollection
+typealias Gold_Collection = AbstractGold.Foo
 typealias Gold_Data = AbstractGold.Gold_Data
+typealias Gold_QCollection = AbstractGold.Gold_QCollection
 
 abstract class AbstractGold : WasmParticleImpl() {
     val handles: Handles = Handles(this)
@@ -265,7 +265,7 @@ abstract class AbstractGold : WasmParticleImpl() {
     }
 
     @Suppress("UNCHECKED_CAST")
-    class Gold_Collection(num: Double = 0.0) : WasmEntity {
+    class Foo(num: Double = 0.0) : WasmEntity {
 
         var num = num
             get() = field
@@ -275,7 +275,7 @@ abstract class AbstractGold : WasmParticleImpl() {
 
         override var entityId = ""
 
-        fun copy(num: Double = this.num) = Gold_Collection(num = num)
+        fun copy(num: Double = this.num) = Foo(num = num)
 
 
         fun reset() {
@@ -290,12 +290,12 @@ abstract class AbstractGold : WasmParticleImpl() {
         }
 
         override fun toString() =
-            "Gold_Collection(num = $num)"
+            "Foo(num = $num)"
 
-        companion object : WasmEntitySpec<Gold_Collection> {
+        companion object : WasmEntitySpec<Foo> {
 
 
-            override fun decode(encoded: ByteArray): Gold_Collection? {
+            override fun decode(encoded: ByteArray): Foo? {
                 if (encoded.isEmpty()) return null
 
                 val decoder = StringDecoder(encoded)
@@ -324,8 +324,123 @@ abstract class AbstractGold : WasmParticleImpl() {
                     decoder.validate("|")
                     i++
                 }
-                val _rtn = Gold_Collection().copy(
+                val _rtn = Foo().copy(
                     num = num
+                )
+               _rtn.entityId = entityId
+                return _rtn
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    class Gold_Data(
+        num: Double = 0.0,
+        txt: String = "",
+        lnk: String = "",
+        flg: Boolean = false
+    ) : WasmEntity {
+
+        var num = num
+            get() = field
+            private set(_value) {
+                field = _value
+            }
+        var txt = txt
+            get() = field
+            private set(_value) {
+                field = _value
+            }
+        var lnk = lnk
+            get() = field
+            private set(_value) {
+                field = _value
+            }
+        var flg = flg
+            get() = field
+            private set(_value) {
+                field = _value
+            }
+
+        override var entityId = ""
+
+        fun copy(
+            num: Double = this.num,
+            txt: String = this.txt,
+            lnk: String = this.lnk,
+            flg: Boolean = this.flg
+        ) = Gold_Data(num = num, txt = txt, lnk = lnk, flg = flg)
+
+
+        fun reset() {
+          num = 0.0
+            txt = ""
+            lnk = ""
+            flg = false
+        }
+
+        override fun encodeEntity(): NullTermByteArray {
+            val encoder = StringEncoder()
+            encoder.encode("", entityId)
+            num.let { encoder.encode("num:N", num) }
+        txt.let { encoder.encode("txt:T", txt) }
+        lnk.let { encoder.encode("lnk:U", lnk) }
+        flg.let { encoder.encode("flg:B", flg) }
+            return encoder.toNullTermByteArray()
+        }
+
+        override fun toString() =
+            "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
+
+        companion object : WasmEntitySpec<Gold_Data> {
+
+
+            override fun decode(encoded: ByteArray): Gold_Data? {
+                if (encoded.isEmpty()) return null
+
+                val decoder = StringDecoder(encoded)
+                val entityId = decoder.decodeText()
+                decoder.validate("|")
+
+                var num = 0.0
+            var txt = ""
+            var lnk = ""
+            var flg = false
+                var i = 0
+                while (i < 5 && !decoder.done()) {
+                    val _name = decoder.upTo(':').toUtf8String()
+                    when (_name) {
+                        "num" -> {
+                        decoder.validate("N")
+                        num = decoder.decodeNum()
+                    }
+                    "txt" -> {
+                        decoder.validate("T")
+                        txt = decoder.decodeText()
+                    }
+                    "lnk" -> {
+                        decoder.validate("U")
+                        lnk = decoder.decodeText()
+                    }
+                    "flg" -> {
+                        decoder.validate("B")
+                        flg = decoder.decodeBool()
+                    }
+                        else -> {
+                            // Ignore unknown fields until type slicing is fully implemented.
+                            when (decoder.chomp(1).toUtf8String()) {
+                                "T", "U" -> decoder.decodeText()
+                                "N" -> decoder.decodeNum()
+                                "B" -> decoder.decodeBool()
+                            }
+                            i--
+                        }
+                    }
+                    decoder.validate("|")
+                    i++
+                }
+                val _rtn = Gold_Data().copy(
+                    num = num, txt = txt, lnk = lnk, flg = flg
                 )
                _rtn.entityId = entityId
                 return _rtn
@@ -506,121 +621,6 @@ abstract class AbstractGold : WasmParticleImpl() {
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    class Gold_Data(
-        num: Double = 0.0,
-        txt: String = "",
-        lnk: String = "",
-        flg: Boolean = false
-    ) : WasmEntity {
-
-        var num = num
-            get() = field
-            private set(_value) {
-                field = _value
-            }
-        var txt = txt
-            get() = field
-            private set(_value) {
-                field = _value
-            }
-        var lnk = lnk
-            get() = field
-            private set(_value) {
-                field = _value
-            }
-        var flg = flg
-            get() = field
-            private set(_value) {
-                field = _value
-            }
-
-        override var entityId = ""
-
-        fun copy(
-            num: Double = this.num,
-            txt: String = this.txt,
-            lnk: String = this.lnk,
-            flg: Boolean = this.flg
-        ) = Gold_Data(num = num, txt = txt, lnk = lnk, flg = flg)
-
-
-        fun reset() {
-          num = 0.0
-            txt = ""
-            lnk = ""
-            flg = false
-        }
-
-        override fun encodeEntity(): NullTermByteArray {
-            val encoder = StringEncoder()
-            encoder.encode("", entityId)
-            num.let { encoder.encode("num:N", num) }
-        txt.let { encoder.encode("txt:T", txt) }
-        lnk.let { encoder.encode("lnk:U", lnk) }
-        flg.let { encoder.encode("flg:B", flg) }
-            return encoder.toNullTermByteArray()
-        }
-
-        override fun toString() =
-            "Gold_Data(num = $num, txt = $txt, lnk = $lnk, flg = $flg)"
-
-        companion object : WasmEntitySpec<Gold_Data> {
-
-
-            override fun decode(encoded: ByteArray): Gold_Data? {
-                if (encoded.isEmpty()) return null
-
-                val decoder = StringDecoder(encoded)
-                val entityId = decoder.decodeText()
-                decoder.validate("|")
-
-                var num = 0.0
-            var txt = ""
-            var lnk = ""
-            var flg = false
-                var i = 0
-                while (i < 5 && !decoder.done()) {
-                    val _name = decoder.upTo(':').toUtf8String()
-                    when (_name) {
-                        "num" -> {
-                        decoder.validate("N")
-                        num = decoder.decodeNum()
-                    }
-                    "txt" -> {
-                        decoder.validate("T")
-                        txt = decoder.decodeText()
-                    }
-                    "lnk" -> {
-                        decoder.validate("U")
-                        lnk = decoder.decodeText()
-                    }
-                    "flg" -> {
-                        decoder.validate("B")
-                        flg = decoder.decodeBool()
-                    }
-                        else -> {
-                            // Ignore unknown fields until type slicing is fully implemented.
-                            when (decoder.chomp(1).toUtf8String()) {
-                                "T", "U" -> decoder.decodeText()
-                                "N" -> decoder.decodeNum()
-                                "B" -> decoder.decodeBool()
-                            }
-                            i--
-                        }
-                    }
-                    decoder.validate("|")
-                    i++
-                }
-                val _rtn = Gold_Data().copy(
-                    num = num, txt = txt, lnk = lnk, flg = flg
-                )
-               _rtn.entityId = entityId
-                return _rtn
-            }
-        }
-    }
-
     class Handles(
         particle: WasmParticleImpl
     ) {
@@ -628,6 +628,6 @@ abstract class AbstractGold : WasmParticleImpl() {
         val allPeople: WasmCollectionImpl<Gold_AllPeople> = WasmCollectionImpl<Gold_AllPeople>(particle, "allPeople", Gold_AllPeople)
         val qCollection: WasmCollectionImpl<Gold_QCollection> = WasmCollectionImpl<Gold_QCollection>(particle, "qCollection", Gold_QCollection)
         val alias: WasmSingletonImpl<Gold_Alias> = WasmSingletonImpl<Gold_Alias>(particle, "alias", Gold_Alias)
-        val collection: WasmCollectionImpl<Gold_Collection> = WasmCollectionImpl<Gold_Collection>(particle, "collection", Gold_Collection)
+        val collection: WasmCollectionImpl<Foo> = WasmCollectionImpl<Foo>(particle, "collection", Foo)
     }
 }

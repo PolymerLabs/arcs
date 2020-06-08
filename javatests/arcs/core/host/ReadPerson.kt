@@ -9,7 +9,7 @@ class ReadPerson : AbstractReadPerson() {
 
     var deferred = CompletableDeferred<Boolean>()
 
-    override suspend fun onFirstStart() {
+    override fun onFirstStart() {
         firstStartCalled = true
     }
 

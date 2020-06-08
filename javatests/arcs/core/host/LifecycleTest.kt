@@ -13,20 +13,24 @@ package arcs.core.host
 import arcs.core.allocator.Allocator
 import arcs.core.allocator.Arc
 import arcs.core.data.Plan
+import arcs.core.entity.awaitReady
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
+import arcs.core.testutil.runTest
 import arcs.core.util.Scheduler
+import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.After
 import org.junit.Assert.fail
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -38,8 +42,10 @@ import kotlin.coroutines.EmptyCoroutineContext
 @RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class LifecycleTest {
-    private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+    @get:Rule
+    val log = LogRule()
 
+    private lateinit var schedulerProvider: JvmSchedulerProvider
     private lateinit var scheduler: Scheduler
     private lateinit var testHost: TestingHost
     private lateinit var hostRegistry: HostRegistry
@@ -47,13 +53,11 @@ class LifecycleTest {
     private lateinit var entityHandleManager: EntityHandleManager
     private lateinit var allocator: Allocator
 
-    private fun runTest(
-        testBody: suspend CoroutineScope.() -> Unit
-    ) = runBlocking(EmptyCoroutineContext) { testBody() }
-
     @Before
     fun setUp() = runBlocking {
+        RamDisk.clear()
         DriverAndKeyConfigurator.configure(null)
+        schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
         scheduler = schedulerProvider("test")
         testHost = TestingHost(
             schedulerProvider,
@@ -75,49 +79,13 @@ class LifecycleTest {
 
     @After
     fun tearDown() = runBlocking {
-        scheduler.waitForIdle()
-        storeManager.waitForIdle()
-        entityHandleManager.close()
-        RamDisk.clear()
-    }
-
-    /**
-     * Asserts that a list of values matches a sequence of groups, where a List group must be in
-     * order while a Set group may be any order. For example:
-     *   assertVariableOrdering(listOf(1, 2, 77, 55, 66, 3, 4),
-     *                          listOf(1, 2), setOf(55, 66, 77), listOf(3, 4)) => matches
-     * TODO: improve error reporting, move to general testutil?
-     */
-    fun <T> assertVariableOrdering(actual: List<T>, vararg groups: Collection<T>) {
-        val expectedSize = groups.fold(0) { sum, group -> sum + group.size }
-        if (expectedSize != actual.size) {
-            fail("expected $expectedSize elements but found ${actual.size}: $actual")
+        try {
+            scheduler.waitForIdle()
+            storeManager.waitForIdle()
+            entityHandleManager.close()
+        } finally {
+            schedulerProvider.cancelAll()
         }
-
-        var start = 0
-        for (group in groups) {
-            val slice = actual.subList(start, start + group.size)
-            when (group) {
-                is List -> assertThat(slice).isEqualTo(group)
-                is Set -> assertThat(slice).containsExactlyElementsIn(group)
-                else -> throw IllegalArgumentException(
-                    "assertVariableOrdering: only List and Set may be used " +
-                        "for the 'groups' argument"
-                )
-            }
-            start += group.size
-        }
-    }
-
-    private suspend fun startArc(plan: Plan): Arc {
-        val arc = allocator.startArcForPlan(plan).waitForStart()
-        waitForAllTheThings()
-        return arc
-    }
-
-    private suspend fun waitForAllTheThings() {
-        scheduler.waitForIdle()
-        storeManager.waitForIdle()
     }
 
     @Test
@@ -126,7 +94,9 @@ class LifecycleTest {
         val arc = startArc(SingleReadHandleTestPlan)
         val particle: SingleReadHandleParticle = testHost.getParticle(arc.id, name)
         val data = testHost.singletonForTest<SingleReadHandleParticle_Data>(arc.id, name, "data")
-        data.store(SingleReadHandleParticle_Data(5.0))
+        withContext(data.dispatcher) {
+            data.store(SingleReadHandleParticle_Data(5.0))
+        }
         waitForAllTheThings()
         arc.stop()
         arc.waitForStop()
@@ -147,7 +117,9 @@ class LifecycleTest {
         val arc = startArc(SingleWriteHandleTestPlan)
         val particle: SingleWriteHandleParticle = testHost.getParticle(arc.id, name)
         val data = testHost.singletonForTest<SingleWriteHandleParticle_Data>(arc.id, name, "data")
-        data.store(SingleWriteHandleParticle_Data(12.0))
+        withContext(data.dispatcher) {
+            data.store(SingleWriteHandleParticle_Data(12.0))
+        }
         waitForAllTheThings()
         arc.stop()
         arc.waitForStop()
@@ -165,14 +137,18 @@ class LifecycleTest {
         val result = testHost.collectionForTest<MultiHandleParticle_Result>(arc.id, name, "result")
         val config = testHost.singletonForTest<MultiHandleParticle_Config>(arc.id, name, "config")
 
-        data.store(MultiHandleParticle_Data(3.2))
-        waitForAllTheThings()
-        list.store(MultiHandleParticle_List("hi"))
+        withContext(data.dispatcher) {
+            data.store(MultiHandleParticle_Data(3.2))
+            waitForAllTheThings()
+            list.store(MultiHandleParticle_List("hi"))
+        }
         waitForAllTheThings()
         // Write-only handle ops do not trigger any lifecycle APIs.
-        result.store(MultiHandleParticle_Result(19.0))
-        waitForAllTheThings()
-        config.store(MultiHandleParticle_Config(true))
+        withContext(result.dispatcher) {
+            result.store(MultiHandleParticle_Result(19.0))
+            waitForAllTheThings()
+            config.store(MultiHandleParticle_Config(true))
+        }
         waitForAllTheThings()
         arc.stop()
         arc.waitForStop()
@@ -196,7 +172,7 @@ class LifecycleTest {
     }
 
     @Test
-    fun pausing() = runTest {
+    fun pausing() = runBlocking {
         val name = "PausingParticle"
         val arc = startArc(PausingTestPlan)
 
@@ -205,13 +181,16 @@ class LifecycleTest {
         // TODO: allow test handles to persist across arc shutdown?
         val makeHandles = suspend {
             Pair(
-                testHost.singletonForTest<PausingParticle_Data>(arc.id, name, "data"),
-                testHost.collectionForTest<PausingParticle_List>(arc.id, name, "list")
+                testHost.singletonForTest<PausingParticle_Data>(arc.id, name, "data").awaitReady(),
+                testHost.collectionForTest<PausingParticle_List>(arc.id, name, "list").awaitReady()
             )
         }
         val (data1, list1) = makeHandles()
-        data1.store(PausingParticle_Data(1.1))
-        list1.store(PausingParticle_List("first"))
+        withContext(data1.dispatcher) {
+            data1.store(PausingParticle_Data(1.1))
+            waitForAllTheThings()
+            list1.store(PausingParticle_List("first"))
+        }
         waitForAllTheThings()
 
         testHost.pause()
@@ -219,9 +198,11 @@ class LifecycleTest {
 
         val particle: PausingParticle = testHost.getParticle(arc.id, name)
         val (data2, list2) = makeHandles()
-        data2.store(PausingParticle_Data(2.2))
-        waitForAllTheThings()
-        list2.store(PausingParticle_List("second"))
+        withContext(data2.dispatcher) {
+            data2.store(PausingParticle_Data(2.2))
+            waitForAllTheThings()
+            list2.store(PausingParticle_List("second"))
+        }
         waitForAllTheThings()
         arc.stop()
         arc.waitForStop()
@@ -236,12 +217,49 @@ class LifecycleTest {
                 "onReady:1.1:[first]",
                 "data.onUpdate:2.2",
                 "onUpdate:2.2:[first]",
-                "data.onUpdate:2.2",
-                "onUpdate:2.2:[first]",
                 "list.onUpdate:[first, second]",
                 "onUpdate:2.2:[first, second]",
                 "onShutdown"
             )
         )
+    }
+
+    /**
+     * Asserts that a list of values matches a sequence of groups, where a List group must be in
+     * order while a Set group may be any order. For example:
+     *   assertVariableOrdering(listOf(1, 2, 77, 55, 66, 3, 4),
+     *                          listOf(1, 2), setOf(55, 66, 77), listOf(3, 4)) => matches
+     * TODO: improve error reporting, move to general testutil?
+     */
+    fun <T> assertVariableOrdering(actual: List<T>, vararg groups: Collection<T>) {
+        val expectedSize = groups.fold(0) { sum, group -> sum + group.size }
+        if (expectedSize != actual.size) {
+            fail("expected $expectedSize elements but found ${actual.size}: $actual")
+        }
+
+        var start = 0
+        groups.forEach { group ->
+            val slice = actual.subList(start, start + group.size)
+            when (group) {
+                is List -> assertThat(slice).isEqualTo(group)
+                is Set -> assertThat(slice).containsExactlyElementsIn(group)
+                else -> throw IllegalArgumentException(
+                    "assertVariableOrdering: only List and Set may be used " +
+                        "for the 'groups' argument"
+                )
+            }
+            start += group.size
+        }
+    }
+
+    private suspend fun startArc(plan: Plan): Arc {
+        val arc = allocator.startArcForPlan(plan).waitForStart()
+        waitForAllTheThings()
+        return arc
+    }
+
+    private suspend fun waitForAllTheThings() {
+        scheduler.waitForIdle()
+        storeManager.waitForIdle()
     }
 }

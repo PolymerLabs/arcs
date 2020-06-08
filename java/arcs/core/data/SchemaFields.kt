@@ -56,18 +56,32 @@ sealed class FieldType(
     }
 }
 
-/** Arcs primitive types. */
-enum class PrimitiveType {
-    Boolean,
-    Number,
-    Text,
-    Byte,
-    Short,
-    Int,
-    Long,
-    Char,
-    Float,
-    Double
+/**
+ * Arcs primitive types.
+ *
+ * Modifying this enum will require a DB migration.
+ * - It is safe to append additional entries, up to the limit of
+ *   [DatabaseImpl.REFERENCE_TYPE_SENTINEL]. However, the new types will need to be inserted into
+ *   active databases, as primitive types are only added in onCreate.
+ * - Modifying DatabaseImpl.REFERENCE_TYPE_SENTINEL is significantly more fraught, and migration
+ *   would putatively require finding all impacted references (i.e. references with typeId less
+ *   than the new REFERENCE_TYPE_SENTINEL) and rewriting them.
+ * - Do not change the established mapping from PrimitiveType to id.
+ * - When adding new entries, ensure each PrimitiveType gets assigned a unique id, and that the
+ *   unique ids are tightly packed in the range 0..size - 1. Note that this requirement is guarded
+ *   by a test in [SchemaFieldsTest].
+ */
+enum class PrimitiveType(val id: kotlin.Int) {
+    Boolean(0),
+    Number(1),
+    Text(2),
+    Byte(3),
+    Short(4),
+    Int(5),
+    Long(6),
+    Char(7),
+    Float(8),
+    Double(9)
 }
 
 val LARGEST_PRIMITIVE_TYPE_ID = PrimitiveType.values().size - 1

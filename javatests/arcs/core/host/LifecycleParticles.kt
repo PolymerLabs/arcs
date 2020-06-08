@@ -3,7 +3,7 @@ package arcs.core.host
 class SingleReadHandleParticle : AbstractSingleReadHandleParticle() {
     val events = mutableListOf<String>()
 
-    override suspend fun onFirstStart() { events.add("onFirstStart") }
+    override fun onFirstStart() { events.add("onFirstStart") }
     override fun onStart() {
         handles.data.onReady { events.add("data.onReady:${data()}") }
         handles.data.onUpdate { events.add("data.onUpdate:${data()}") }
@@ -19,7 +19,7 @@ class SingleReadHandleParticle : AbstractSingleReadHandleParticle() {
 class SingleWriteHandleParticle : AbstractSingleWriteHandleParticle() {
     val events = mutableListOf<String>()
 
-    override suspend fun onFirstStart() { events.add("onFirstStart") }
+    override fun onFirstStart() { events.add("onFirstStart") }
     override fun onStart() { events.add("onStart") }
     override fun onReady() { events.add("onReady") }
     override fun onUpdate() { events.add("onUpdate") }
@@ -29,7 +29,7 @@ class SingleWriteHandleParticle : AbstractSingleWriteHandleParticle() {
 class MultiHandleParticle : AbstractMultiHandleParticle() {
     val events = mutableListOf<String>()
 
-    override suspend fun onFirstStart() { events.add("onFirstStart") }
+    override fun onFirstStart() { events.add("onFirstStart") }
     override fun onStart() {
         handles.data.onReady { events.add("data.onReady:${data()}") }
         handles.data.onUpdate { events.add("data.onUpdate:${data()}") }
@@ -51,7 +51,7 @@ class MultiHandleParticle : AbstractMultiHandleParticle() {
 class PausingParticle : AbstractPausingParticle() {
     val events = mutableListOf<String>()
 
-    override suspend fun onFirstStart() { events.add("onFirstStart") }
+    override fun onFirstStart() { events.add("onFirstStart") }
     override fun onStart() {
         handles.data.onReady { events.add("data.onReady:${data()}") }
         handles.data.onUpdate { events.add("data.onUpdate:${data()}") }

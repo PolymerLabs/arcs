@@ -2,7 +2,7 @@ meta
   namespace: arcs.tutorials.blackjack
 
 // Encodes a card from 0 to 51. -1 indicates an invalid (or joker).
-schema Card
+schema CardSchema
   value: Number
 
 // Encodes the cards in the deck as a string. The cards are assumed to be ordered and the
@@ -27,14 +27,14 @@ particle DealingShoe in 'Blackjack.wasm'
 
 // A dealer.
 particle Dealer in 'Blackjack.wasm'
-  hand: reads writes [Card]
+  hand: reads writes [CardSchema]
   cardRequest: writes CardRequest
   nextCard: reads CardRequestResult
   dealerHandSlot: consumes
 
 // A player.
 particle Player in 'Blackjack.wasm'
-  hand: reads writes [Card]
+  hand: reads writes [CardSchema]
   cardRequest: writes CardRequest
   nextCard: reads CardRequestResult
   playerHandSlot: consumes
