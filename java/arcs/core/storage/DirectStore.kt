@@ -32,6 +32,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
 // import kotlinx.coroutines.flow.debounce
 // import kotlinx.coroutines.flow.filter
 // import kotlinx.coroutines.flow.first
@@ -55,7 +58,10 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
     private val log = TaggedLog { "DirectStore(${state.value}, $storageKey)" }
 
-    private var closed = false
+    /** True if this store has been closed. */
+    var closed = false
+
+    private val closedMutex = Mutex()
 
     /**
      * [AtomicRef] of a [CompletableDeferred] which will be completed when the [DirectStore]
@@ -68,7 +74,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
      */
     private var pendingDriverModels = atomic(listOf<PendingDriverModel<Data>>())
     private var version = atomic(0)
-    private var state: AtomicRef<State.StateWithData<Data>> = atomic(State.Idle(idleDeferred, driver))
+    private var state: AtomicRef<State.StateWithData<Data>> = atomic(
+        State.Idle(idleDeferred, driver)
+    )
     private val stateChannel =
         ConflatedBroadcastChannel<State<Data>>(State.Idle(idleDeferred, driver))
     private val stateFlow = stateChannel.asFlow()
@@ -90,24 +98,46 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     override suspend fun getLocalData(): Data = synchronized(this) { localModel.data }
 
     override fun on(callback: ProxyCallback<Data, Op, T>): Int {
-        synchronized(proxyManager) {
-            return proxyManager.register(callback)
+        try {
+            while (!closedMutex.tryLock()) { /* Wait. */ }
+            // Can't register a listener with a closed store
+            if (closed) {
+                log.debug { "DirectStore.on called for closed Store." }
+                return -1
+            }
+
+            val token = proxyManager.register(callback)
+            closedMutex.unlock()
+            return token
+        } finally {
+            closedMutex.unlock()
         }
     }
 
     override fun off(callbackToken: Int) {
-        synchronized(proxyManager) {
+        try {
+            while (!closedMutex.tryLock()) { /* Wait. */
+            }
             proxyManager.unregister(callbackToken)
             if (proxyManager.isEmpty()) {
-                close()
+                closeInternal()
             }
+        } finally {
+            closedMutex.unlock()
         }
     }
 
-    /** True if these store has been closed. */
-    fun isClosed() = closed
-
+    /** Closes the store. Once closed, it cannot be re-opened. A new instance must be created. */
     fun close() {
+        try {
+            while (!closedMutex.tryLock()) { /* Wait. */ }
+            closeInternal()
+        } finally {
+            closedMutex.unlock()
+        }
+    }
+
+    private fun closeInternal() {
         if (!closed) {
             stateChannel.offer(State.Closed())
             closeWriteBack()
@@ -195,18 +225,20 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     /* internal */ suspend fun onReceive(data: Data, version: Int) {
         log.debug { "onReceive($data, $version)" }
 
-        if (!closed) {
-            if (state.value.shouldApplyPendingDriverModelsOnReceive(data, version)) {
-                val pending = pendingDriverModels.getAndUpdate { emptyList() }
-                applyPendingDriverModels(pending + PendingDriverModel(data, version))
+        closedMutex.withLock {
+            if (!closed) {
+                if (state.value.shouldApplyPendingDriverModelsOnReceive(data, version)) {
+                    val pending = pendingDriverModels.getAndUpdate { emptyList() }
+                    applyPendingDriverModels(pending + PendingDriverModel(data, version))
+                } else {
+                    // If the current state doesn't allow us to apply the models yet, tack it onto our
+                    // pending list.
+                    pendingDriverModels.getAndUpdate { it + PendingDriverModel(data, version) }
+                }
             } else {
-                // If the current state doesn't allow us to apply the models yet, tack it onto our
-                // pending list.
-                pendingDriverModels.getAndUpdate { it + PendingDriverModel(data, version) }
+                // Logging this to see if it ever occurs.
+                log.debug { "onReceive($data, $version) called after close(), ignoring" }
             }
-        } else {
-            // Logging this to see if it ever occurs.
-            log.debug { "onReceive($data, $version) called after close(), ignoring" }
         }
     }
 
@@ -372,7 +404,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         /**
          * Indicates that the current conflated Channel is closed, dropping any held objects in the
          * channel.
-         **/
+         */
         class Closed<Data : CrdtData> : State<Data>(Name.Closed)
 
         /**
