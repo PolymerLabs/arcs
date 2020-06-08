@@ -206,11 +206,11 @@ describe('schema2kotlin', () => {
          `,
       `class Handles : HandleHolderBase(
         "T",
-        mapOf("h1" to T_H1, "h2" to T_H2, "h3" to T_H3)
+        mapOf("h1" to TInternal1, "h2" to TInternal1, "h3" to TInternal1)
     ) {
-        val h1: ReadSingletonHandle<T_H1> by handles
-        val h2: WriteSingletonHandle<T_H2> by handles
-        val h3: ReadWriteSingletonHandle<T_H3> by handles
+        val h1: ReadSingletonHandle<TInternal1> by handles
+        val h2: WriteSingletonHandle<TInternal1> by handles
+        val h3: ReadWriteSingletonHandle<TInternal1> by handles
     }`
     ));
     async function assertHandleClassDeclaration(manifest: string, expectedHandleClass: string) {
@@ -308,12 +308,12 @@ describe('schema2kotlin', () => {
       `particle T
          h1: reads Thing {num: Number}`,
       `@Suppress("UNCHECKED_CAST")
-    class T_H1(
+    class Thing(
         num: Double = 0.0,
         entityId: String? = null,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("T_H1", SCHEMA, entityId, creationTimestamp, expirationTimestamp)`
+    ) : EntityBase("Thing", SCHEMA, entityId, creationTimestamp, expirationTimestamp)`
     ));
     it('generates variable entity with private constructor', async () => await assertClassDefinition(
       `particle T
@@ -334,12 +334,12 @@ describe('schema2kotlin', () => {
          * Use this method to create a new, distinctly identified copy of the entity.
          * Storing the copy will result in a new copy of the data being stored.
          */
-        fun copy(num: Double = this.num) = T_H1(num = num)
+        fun copy(num: Double = this.num) = Thing(num = num)
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
          */
-        fun mutate(num: Double = this.num) = T_H1(
+        fun mutate(num: Double = this.num) = Thing(
             num = num,
             entityId = entityId,
             creationTimestamp = creationTimestamp,
@@ -351,7 +351,7 @@ describe('schema2kotlin', () => {
       `particle T
          h1: reads Thing {num: Number}`,
       `
-        fun copy(num: Double = this.num) = T_H1(num = num)
+        fun copy(num: Double = this.num) = Thing(num = num)
         `
     ));
     it('copies underlying data for type variables.', async () => await assertCopyMethods(
@@ -361,24 +361,24 @@ describe('schema2kotlin', () => {
          * Use this method to create a new, distinctly identified copy of the entity.
          * Storing the copy will result in a new copy of the data being stored.
          */
-        fun copy(num: Double = this.num) = T_H1(num = num)
+        fun copy(num: Double = this.num) = Thing(num = num)
             .also { this.copyInto(it) }
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
          */
-        fun mutate(num: Double = this.num) = T_H1(
+        fun mutate(num: Double = this.num) = Thing(
             num = num,
             entityId = entityId,
             creationTimestamp = creationTimestamp,
             expirationTimestamp = expirationTimestamp
         ).also { this.copyInto(it) }`
     ));
-    it('generates only copy method by entity fields for wasm', async () => await assertCopyMethodsForWasm(
+    it('generates only copy method for variables for wasm', async () => await assertCopyMethodsForWasm(
       `particle T
          h1: reads  ~a with Thing {num: Number}`,
       `
-        fun copy(num: Double = this.num) = T_H1(num = num)
+        fun copy(num: Double = this.num) = Thing(num = num)
         `
     ));
     it('generates fields for entity when available', async () => await assertFieldsDefinition(

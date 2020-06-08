@@ -198,7 +198,8 @@ ${imports.join('\n')}
         const innerTypes = type.getContainedTypes();
         return `Tuple${innerTypes.length}<${innerTypes.map(t => generateInnerType(t)).join(', ')}>`;
       } else if (type.hasVariable && (type as TypeVariable).isVariable) {
-        return nodes.find(n => n.variableName.includes((type as TypeVariable).variable.name)).humanName(connection);
+        const node = nodes.find(n => n.variableName.includes((type as TypeVariable).variable.name));
+        return forTest ? node.sources[0].fullName : node.humanName(connection);
       } else {
         throw new Error(`Type '${type.tag}' not supported on code generated particle handle connections.`);
       }

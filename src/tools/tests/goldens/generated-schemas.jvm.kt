@@ -283,7 +283,7 @@ abstract class AbstractGold : BaseParticle() {
         ref: Reference<GoldInternal1>? = null,
         entityId: String? = null,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP
+        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
     ) : EntityBase("Gold_Data", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
 
         var num: Double
@@ -309,6 +309,7 @@ abstract class AbstractGold : BaseParticle() {
             this.flg = flg
             this.ref = ref
         }
+
         /**
          * Use this method to create a new, distinctly identified copy of the entity.
          * Storing the copy will result in a new copy of the data being stored.

@@ -64,7 +64,7 @@ export class SchemaNode {
 
   // A name of the code generated class representing this schema.
   get entityClassName() {
-    if (this.uniqueSchema && this.schema.name) {
+    if (this.uniqueSchema && this.schema && this.schema.name) {
       return this.schema.name;
     }
     return this.fullEntityClassName;
@@ -81,7 +81,7 @@ export class SchemaNode {
   }
 
   get uniqueSchema() {
-    return !this.allSchemaNodes.some(s => s.schema !== this.schema && s.schema.name === this.schema.name);
+    return !this.allSchemaNodes.some(s => this.schema && s.schema && s.schema !== this.schema && s.schema.name === this.schema.name);
   }
 
   // This will return the most "human friendly" name for the schema. This is the name (actual class
