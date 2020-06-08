@@ -107,7 +107,6 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             }
 
             val token = proxyManager.register(callback)
-            closedMutex.unlock()
             return token
         } finally {
             closedMutex.unlock()
