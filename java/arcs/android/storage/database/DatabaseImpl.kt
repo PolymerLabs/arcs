@@ -244,7 +244,7 @@ class DatabaseImpl(
             dbSingletons.forEach { (fieldName, value) -> rawSingletons[fieldName] = value }
             dbCollections.forEach { (fieldName, value) -> rawCollections[fieldName] = value }
 
-            return DatabaseData.Entity(
+            return@forSingleResult DatabaseData.Entity(
                 RawEntity(
                     id = entityId,
                     singletons = rawSingletons,
