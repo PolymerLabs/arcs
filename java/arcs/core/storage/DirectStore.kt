@@ -71,7 +71,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
      */
     private var pendingDriverModels = atomic(listOf<PendingDriverModel<Data>>())
     private var version = atomic(0)
-    private var state: AtomicRef<State.StateWithData<Data>> = atomic(
+    private var state: AtomicRef<State<Data>> = atomic(
         State.Idle(idleDeferred, driver)
     )
     private val stateChannel =
@@ -119,6 +119,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     private fun closeInternal() {
         if (!closed) {
             stateChannel.offer(State.Closed())
+            stateChannel.close()
+            state.value = State.Closed<Data>() as State.StateWithData<Data>
             closeWriteBack()
         }
         closed = true
@@ -203,18 +205,19 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     /* internal */ suspend fun onReceive(data: Data, version: Int) {
         log.debug { "onReceive($data, $version)" }
 
-        if (!closed) {
-            if (state.value.shouldApplyPendingDriverModelsOnReceive(data, version)) {
-                val pending = pendingDriverModels.getAndUpdate { emptyList() }
-                applyPendingDriverModels(pending + PendingDriverModel(data, version))
-            } else {
-                // If the current state doesn't allow us to apply the models yet, tack it onto our
-                // pending list.
-                pendingDriverModels.getAndUpdate { it + PendingDriverModel(data, version) }
-            }
-        } else {
-            // Logging this to see if it ever occurs.
+        if (state.value is State.Closed<Data> || closed) {
             log.debug { "onReceive($data, $version) called after close(), ignoring" }
+            return
+        }
+
+        val currentState = state.value as State.StateWithData<Data>
+        if (currentState.shouldApplyPendingDriverModelsOnReceive(data, version)) {
+            val pending = pendingDriverModels.getAndUpdate { emptyList() }
+            applyPendingDriverModels(pending + PendingDriverModel(data, version))
+        } else {
+            // If the current state doesn't allow us to apply the models yet, tack it onto our
+            // pending list.
+            pendingDriverModels.getAndUpdate { it + PendingDriverModel(data, version) }
         }
     }
 
@@ -298,7 +301,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     ) {
         if (noDriverSideChanges) {
             // TODO: use a single lock here, rather than two separate atomics.
-            this.state.value = State.Idle(idleDeferred, driver).also { stateChannel.send(it) }
+            this.state.value = State.Idle(idleDeferred, driver).also {
+                if (!stateChannel.isClosedForSend) stateChannel.send(it)
+            }
             this.version.value = version
             return
         }
@@ -310,7 +315,11 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             idleDeferred.getAndSet(IdleDeferred()).await()
         }
 
-        var currentState = state.value
+        if (state.value is State.Closed<Data>) {
+            return
+        }
+
+        var currentState = state.value as State.StateWithData<Data>
         var currentVersion = version
         var spins = 0
         do {
@@ -321,7 +330,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 localModel
             )
             // TODO: use a lock instead here, rather than two separate atomics.
-            this.state.value = newState.also { stateChannel.send(it) }
+            this.state.value = newState.also {
+                if (!stateChannel.isClosedForSend) stateChannel.send(it)
+            }
             this.version.value = currentVersion
             currentState = newState
             currentVersion = newVersion
