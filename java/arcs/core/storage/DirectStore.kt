@@ -78,7 +78,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         ConflatedBroadcastChannel<State<Data>>(State.Idle(idleDeferred, driver))
     private val stateFlow = stateChannel.asFlow()
     private val proxyManager = RandomProxyCallbackManager<Data, Op, T>(
-        "direct", Random
+        "direct",
+        Random
     )
 
     private val storeIdlenessFlow =
@@ -318,7 +319,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         do {
             val localModel = synchronized(this) { localModel.data }
             val (newVersion, newState) = currentState.update(
-                currentVersion, messageFromDriver, localModel
+                currentVersion,
+                messageFromDriver,
+                localModel
             )
             // TODO: use a lock instead here, rather than two separate atomics.
             this.state.value = newState.also { stateChannel.send(it) }
