@@ -21,7 +21,7 @@ class Writer0 : AbstractWriter0() {
     private suspend fun initialize() = this.apply {
         handles.level0.awaitReady()
     }
-    private fun MyLevel0.toArcs() = Writer0_Level0(name)
+    private fun MyLevel0.toArcs() = Level0(name)
 
     suspend fun write(item: MyLevel0) = withContext(handles.level0.dispatcher) {
         initialize()
@@ -35,9 +35,9 @@ class Writer1 : AbstractWriter1() {
         handles.level0.awaitReady()
         handles.level1.awaitReady()
     }
-    private fun MyLevel0.toArcs() = Writer1_Level1_Children(name)
+    private fun MyLevel0.toArcs() = Level0(name)
 
-    private suspend fun MyLevel1.toArcs() = Writer1_Level1(
+    private suspend fun MyLevel1.toArcs() = Level1(
         name = name,
         children = children.map { it.toArcs().toReference(handles.level0) }.toSet()
     )
@@ -54,14 +54,14 @@ class Writer2 : AbstractWriter2() {
         handles.level1.awaitReady()
         handles.level2.awaitReady()
     }
-    private fun MyLevel0.toArcs() = Writer2_Level2_Children_Children(name)
+    private fun MyLevel0.toArcs() = Level0(name)
 
-    private suspend fun MyLevel1.toArcs() = Writer2_Level2_Children(
+    private suspend fun MyLevel1.toArcs() = Level1(
         name = name,
         children = children.map { it.toArcs().toReference(handles.level0) }.toSet()
     )
 
-    private suspend fun MyLevel2.toArcs() = Writer2_Level2(
+    private suspend fun MyLevel2.toArcs() = Level2(
         name = name,
         children = children.map { it.toArcs().toReference(handles.level1) }.toSet()
     )
