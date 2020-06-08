@@ -119,7 +119,6 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     private fun closeInternal() {
         if (!closed) {
             stateChannel.offer(State.Closed())
-            stateChannel.close()
             closeWriteBack()
         }
         closed = true
@@ -297,8 +296,6 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         version: Int,
         messageFromDriver: Boolean
     ) {
-        if (closed) return
-
         if (noDriverSideChanges) {
             // TODO: use a single lock here, rather than two separate atomics.
             this.state.value = State.Idle(idleDeferred, driver).also { stateChannel.send(it) }
