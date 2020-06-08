@@ -61,7 +61,7 @@ arcs_kt_schema(
 
 arcs_kt_jvm_test_suite(
     name = "behavior-tests",
-    srcs = ["GenerationBehaviorTests.kt"],
+    srcs = ["GenerationBehaviorTest.kt"],
     package = "src.tools.tests",
     deps = [
         ":behavior_generation",
