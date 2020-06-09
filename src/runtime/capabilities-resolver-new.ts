@@ -70,6 +70,9 @@ export class CapabilitiesResolver {
   }
 
   static registerStorageKeyFactory(factory: StorageKeyFactory) {
+    // if (factory.protocol === 'volatile') {
+    //   throw new Error('foo!!!');
+    // }
     assert(!CapabilitiesResolver.defaultStorageKeyFactories[factory.protocol],
         `Storage key factory for '${factory.protocol}' already registered`);
     CapabilitiesResolver.defaultStorageKeyFactories[factory.protocol] = factory;

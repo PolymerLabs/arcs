@@ -37,7 +37,7 @@ export class StorageKeyRecipeResolver {
 
   constructor(context: Manifest) {
     this.runtime = new Runtime({context});
-    VolatileStorageKey.register();
+    // VolatileStorageKey.register();
     DatabaseStorageKey.register();
   }
 

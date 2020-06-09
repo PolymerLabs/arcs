@@ -338,6 +338,7 @@ describe('recipe2plan', () => {
         );
     });
     it('fails to resolve when user maps to a volatile create handle', Flags.withDefaultReferenceMode(async () => {
+      VolatileStorageKey.register();
       const manifest = await Manifest.parse(`\
     particle Reader
       data: reads Thing {name: Text}
