@@ -25,6 +25,7 @@ import arcs.core.data.Recipe.Particle
 import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
 import arcs.core.data.SingletonType
+import arcs.core.data.TupleType
 import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.util.TaggedLog
@@ -165,14 +166,8 @@ class InformationFlow private constructor(
         val resultAccessPathLabels = mutableMapOf<AccessPath, InformationFlowLabels>()
         particle.handleConnections.filter { it.spec.isWrite() }
             .flatMap { handleConnection ->
-                val selectorsList = handleConnection.spec.type.accessPathSelectorPrefixes()
-                if (selectorsList.isEmpty()) {
-                    listOf(AccessPath(particle, handleConnection.spec) to mixedLabels.copy())
-                } else {
-                    selectorsList.map { selectors ->
-                        AccessPath(particle, handleConnection.spec, selectors) to mixedLabels.copy()
-                    }
-                }
+                val root = AccessPath.Root.HandleConnection(particle, handleConnection.spec)
+                handleConnection.spec.type.getAccessPaths(root).map { it to mixedLabels.copy() }
             }.toMap(resultAccessPathLabels)
 
         // Apply claims if any.
@@ -195,7 +190,7 @@ class InformationFlow private constructor(
         val accessPathLabels = input.accessPathLabels ?: return input
         val handleConnection = AccessPath.Root.HandleConnection(fromParticle, spec)
         val handle = AccessPath.Root.Handle(toHandle)
-        val targetPrefixes = toHandle.type.accessPathSelectorPrefixes()
+        val targetSelectors = toHandle.type.accessPathSelectors()
 
         // Filter out the information pertaining to the given handle-connection -> handle edge.
         // Also, convert the root of the access path from handle-connection to handle.
@@ -203,7 +198,7 @@ class InformationFlow private constructor(
             accessPathLabels
                 .filterKeys { accessPath ->
                     accessPath.root == handleConnection &&
-                    accessPath.selectorsMatchAnyPrefix(targetPrefixes)
+                    accessPath.selectorsMatchAnyPrefix(targetSelectors)
                 }
                 .map { (accessPath, labels) -> AccessPath(handle, accessPath.selectors) to labels }
                 .toMap()
@@ -219,7 +214,7 @@ class InformationFlow private constructor(
         val accessPathLabels = input.accessPathLabels ?: return input
         val handleConnection = AccessPath.Root.HandleConnection(toParticle, spec)
         val handle = AccessPath.Root.Handle(fromHandle)
-        val targetPrefixes = spec.type.accessPathSelectorPrefixes()
+        val targetSelectors = spec.type.accessPathSelectors()
 
         // Filter out the information pertaining to the given handle -> handle-connection edge.
         // Also, convert the root of the access path from handle to handle-connection.
@@ -227,7 +222,7 @@ class InformationFlow private constructor(
             accessPathLabels
                 .filterKeys { accessPath ->
                     accessPath.root == handle &&
-                    accessPath.selectorsMatchAnyPrefix(targetPrefixes)
+                    accessPath.selectorsMatchAnyPrefix(targetSelectors)
                 }
                 .map { (accessPath, labels) ->
                     AccessPath(handleConnection, accessPath.selectors) to labels
@@ -235,21 +230,54 @@ class InformationFlow private constructor(
         )
     }
 
-    /** Returns a set of prefixes of access path selectors accessible from this [Type]. */
-    private fun Type.accessPathSelectorPrefixes(): Set<List<AccessPath.Selector>> = when (tag) {
-        Tag.Collection -> (this as CollectionType<*>).collectionType.accessPathSelectorPrefixes()
+    override fun edgeTransfer(
+        fromHandle: Recipe.Handle,
+        toHandle: Recipe.Handle,
+        spec: RecipeGraph.JoinSpec,
+        input: AccessPathLabels
+    ): AccessPathLabels {
+        val accessPathLabels = input.accessPathLabels ?: return input
+        val toHandleRoot = AccessPath.Root.Handle(toHandle)
+
+        // Compute the label that is obtained by combining labels on all inputs.
+        val mixedLabels = accessPathLabels.values
+            .fold(InformationFlowLabels(emptySet())) { acc, cur -> acc join cur }
+
+        return AccessPathLabels.makeValue(
+            toHandle.type.getAccessPaths(toHandleRoot).map { it to mixedLabels.copy() }.toMap()
+        )
+    }
+
+    /** Returns all the [AccessPath] instances for this [Type] with the given [root]. */
+    private fun Type.getAccessPaths(root: AccessPath.Root): List<AccessPath> {
+        val selectorsList = accessPathSelectors()
+        if (selectorsList.isEmpty()) {
+            return listOf(AccessPath(root))
+        } else {
+            return selectorsList.map { selectors -> AccessPath(root, selectors) }
+        }
+    }
+
+    /** Returns the [AccessPath.Selector] part of the [AccessPath] instances for this [Type]. */
+    private fun Type.accessPathSelectors(): Set<List<AccessPath.Selector>> = when (tag) {
+        // TODO(bgogul): For fields, we are only going one level deep. Do we need to go further?
+        Tag.Collection -> (this as CollectionType<*>).collectionType.accessPathSelectors()
         Tag.Count -> emptySet<List<AccessPath.Selector>>()
-        Tag.Entity -> (this as EntityType).entitySchema.accessPathSelectorPrefixes()
-        // TODO(b/154234733): This only supports for simple use cases of references.
-        Tag.Reference -> (this as ReferenceType<*>).containedType.accessPathSelectorPrefixes()
-        // TODO(b/158525835): Handle tuples.
-        Tag.Tuple -> emptySet<List<AccessPath.Selector>>()
-        Tag.Singleton -> (this as SingletonType<*>).containedType.accessPathSelectorPrefixes()
+        Tag.Entity -> (this as EntityType).entitySchema.accessPathSelectors()
+        // TODO(b/154234733): This only supports simple use cases of references.
+        Tag.Reference -> (this as ReferenceType<*>).containedType.accessPathSelectors()
+        Tag.Tuple -> (this as TupleType).elementTypes
+            .foldIndexed(emptySet<List<AccessPath.Selector>>()) { index, acc, cur ->
+                acc + cur.accessPathSelectors().map {
+                    listOf(AccessPath.Selector.Field("c$index")) + it
+                }
+            }
+        Tag.Singleton -> (this as SingletonType<*>).containedType.accessPathSelectors()
         Tag.TypeVariable -> throw IllegalArgumentException("TypeVariable should be resolved!")
     }
 
-    /** Returns a set of prefixes of access path selectors accessible from this [Schema]. */
-    private fun Schema.accessPathSelectorPrefixes(): Set<List<AccessPath.Selector>> {
+    /** Returns the [AccessPath.Selector] part of [AccessPath] instances for this [Schema]. */
+    private fun Schema.accessPathSelectors(): Set<List<AccessPath.Selector>> {
         return (
             fields.singletons.keys.map { listOf(AccessPath.Selector.Field(it)) } +
             fields.collections.keys.map { listOf(AccessPath.Selector.Field(it)) }
