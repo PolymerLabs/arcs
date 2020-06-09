@@ -83,7 +83,10 @@ open class StoreWriteBack /* internal */ constructor(
     Mutex by Mutex() {
     // Only apply write-back to physical storage media(s).
     private val passThrough = atomic(
-        scope == null || protocol != Protocols.DATABASE_DRIVER
+        true
+        // TODO(b/158529276): Re-enable WriteBack for physical storage media once we understand why
+        //   some collection_entries were not flushed to disk.
+        // scope == null || protocol != Protocols.DATABASE_DRIVER
     )
 
     // The number of active flush jobs.
