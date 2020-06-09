@@ -204,7 +204,7 @@ open class EntityBase(
                 require(value is List<*>) {
                     "Expected list for $entityClassName.$field, but received $value."
                 }
-                value.forEach { checkType(field, it, type.primitiveType) }
+                value.forEach { checkType(field, it, type.primitiveType, "member of ") }
             }
         }
     }
@@ -359,19 +359,10 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
     // TODO(b/155025255)
     is FieldType.Tuple ->
         throw NotImplementedError("[FieldType.Tuple]s cannot be converted to references.")
-    is FieldType.ListOf -> when (type.primitiveType) {
-        is FieldType.Primitive ->
-            (value as List<*>).map {
-                toReferencable(it!!, type.primitiveType)
-            }.toReferencable()
-        is FieldType.EntityRef ->
-            @Suppress("UNCHECKED_CAST")
-            (value as List<Referencable>).toReferencable()
-        else ->
-            throw NotImplementedError(
-                "Ordered lists of type [${type.primitiveType}] are not supported"
-            )
-    }
+    is FieldType.ListOf ->
+        (value as List<*>).map {
+            toReferencable(it!!, type.primitiveType)
+        }.toReferencable()
 }
 
 private fun fromReferencable(
@@ -407,12 +398,27 @@ private fun fromReferencable(
             requireNotNull(referencable.value) {
                 "ReferencableList encoded an unexpected null value."
             }
-            referencable.value.map {
-                if (it is ReferencablePrimitive<*>) {
-                    it.value
-                } else {
-                    it
+            val listType = type.primitiveType
+            when (listType) {
+                is FieldType.Primitive -> {
+                    referencable.value.map {
+                        require(it is ReferencablePrimitive<*>) {
+                            "Expected List to contain ReferencablePrimitives but found $it."
+                        }
+                        it.value
+                    }
                 }
+                is FieldType.EntityRef -> {
+                    val entitySpec = requireNotNull(nestedEntitySpecs[listType.schemaHash])
+                    referencable.value.map {
+                        require(it is StorageReference) {
+                            "Expected List to contain StorageReferences but found $it."
+                        }
+                        Reference(entitySpec, it)
+                    }
+                }
+                else ->
+                    throw IllegalStateException("Unexpected member type $listType for ordered list")
             }
         }
     }
