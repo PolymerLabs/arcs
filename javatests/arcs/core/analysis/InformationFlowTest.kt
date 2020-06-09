@@ -126,7 +126,24 @@ class InformationFlowTest {
             "ok-field-claim-propagates",
             "ok-field-merge-multiple-paths"
         )
-        val tests = okTests + failingTests + okFieldTests + failingFieldTests
+        val okCycleTests = listOf(
+            "ok-cycle-overlapping",
+            "ok-cycle-single-particle",
+            "ok-cycle-two-particles",
+            "ok-cycle-claim-propagates",
+            "ok-cycle-two-origin"
+        )
+        val failingCycleTests = listOf(
+            "fail-cycle-overlapping-a",
+            "fail-cycle-overlapping-b",
+            "fail-cycle-remove-tag",
+            "fail-cycle-remove-tag-in-chain"
+        )
+        val tests = (
+            okTests + failingTests +
+            okFieldTests + failingFieldTests +
+            okCycleTests + failingCycleTests
+        )
         tests.forEach { verifyChecksInTestFile(it) }
     }
 
