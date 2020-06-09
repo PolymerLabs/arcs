@@ -1,19 +1,19 @@
 // #Ingress: IngestionAppName
 // #Ingress: IngestionLocation
-// #Fail: hc:Egress2.data is (packageName and coarseLocation)
-// #Fail: hc:Egress4.data is safeToLog
-// #Fail: hc:Egress5.data is ((packageName and safeToLog) or (coarseLocation and safeToLog))
+// #Fail: hc:Egress2.data.whoKnowsWhat is (packageName and coarseLocation)
+// #Fail: hc:Egress4.data.whoKnowsWhat is safeToLog
+// #Fail: hc:Egress5.data.whoKnowsWhat is ((packageName and safeToLog) or (coarseLocation and safeToLog))
 particle IngestionAppName
   data: writes [AppName {
     packageName: Text
   }]
-  claim data is safeToLog and is packageName
+  claim data.packageName is safeToLog and is packageName
 
 particle IngestionLocation
   data: writes [Location {
     location: Text
   }]
-  claim data is coarseLocation
+  claim data.location is coarseLocation
 
 particle Mixer
   input1: reads [AppName {packageName: Text}]
@@ -23,27 +23,27 @@ particle Mixer
 // DFA Pass
 particle Egress1
   data: reads [MixedData {whoKnowsWhat: Text}]
-  check data is packageName or is coarseLocation
+  check data.whoKnowsWhat is packageName or is coarseLocation
 
 // DFA fail
 particle Egress2
   data: reads [MixedData {whoKnowsWhat: Text}]
-  check data is packageName and is coarseLocation
+  check data.whoKnowsWhat is packageName and is coarseLocation
 
 // DFA pass
 particle Egress3
   data: reads [MixedData {whoKnowsWhat: Text}]
-  check data is packageName or is coarseLocation or is safeToLog
+  check data.whoKnowsWhat is packageName or is coarseLocation or is safeToLog
 
 // DFA fail
 particle Egress4
   data: reads [MixedData {whoKnowsWhat: Text}]
-  check data is safeToLog
+  check data.whoKnowsWhat is safeToLog
 
 // DFA fail
 particle Egress5
   data: reads [MixedData {whoKnowsWhat: Text}]
-  check data (is packageName and is safeToLog) or (is coarseLocation and is safeToLog)
+  check data.whoKnowsWhat (is packageName and is safeToLog) or (is coarseLocation and is safeToLog)
 
 recipe Test
   data: create
