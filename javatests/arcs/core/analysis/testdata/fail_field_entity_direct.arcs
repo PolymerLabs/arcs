@@ -1,0 +1,14 @@
+// #Ingress: P1
+// #Fail: hc:P2.foo.a is untrusted
+particle P1
+  foo: writes Foo {a: Text, b: Number}
+  claim foo.a is trusted
+  claim foo.b is untrusted
+particle P2
+  foo: reads Foo {a: Text}
+  check foo.a is untrusted
+recipe R
+  P1
+    foo: writes h
+  P2
+    foo: reads h
