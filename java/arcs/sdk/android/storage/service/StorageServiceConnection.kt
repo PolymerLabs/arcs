@@ -44,7 +44,7 @@ typealias ManagerConnectionFactory = () -> StorageServiceConnection
 fun DefaultConnectionFactory(
     context: Context,
     bindingDelegate: StorageServiceBindingDelegate = DefaultStorageServiceBindingDelegate(context),
-    coroutineContext: CoroutineContext = Dispatchers.Default
+    coroutineContext: CoroutineContext = Dispatchers.IO
 ): ConnectionFactory = { options, crdtType ->
     StorageServiceConnection(bindingDelegate, options.toParcelable(crdtType), coroutineContext)
 }
@@ -63,7 +63,7 @@ fun DefaultConnectionFactory(
 fun GetManagerConnection(
     context: Context,
     bindingDelegate: StorageServiceBindingDelegate = StorageServiceManagerBindingDelegate(context),
-    coroutineContext: CoroutineContext = Dispatchers.Default
+    coroutineContext: CoroutineContext = Dispatchers.IO
 ): StorageServiceConnection = StorageServiceConnection(bindingDelegate, null, coroutineContext)
 
 /**
@@ -76,7 +76,7 @@ fun GetManagerConnection(
 fun ManagerConnectionFactory(
     context: Context,
     bindingDelegate: StorageServiceBindingDelegate = StorageServiceManagerBindingDelegate(context),
-    coroutineContext: CoroutineContext = Dispatchers.Default
+    coroutineContext: CoroutineContext = Dispatchers.IO
 ): ManagerConnectionFactory = { StorageServiceConnection(bindingDelegate, null, coroutineContext) }
 
 /** Defines an object capable of binding-to and unbinding-from the [StorageService]. */
@@ -142,7 +142,7 @@ class StorageServiceConnection(
     /** Parcelable [StoreOptions] to pass to the [bindingDelegate] when connecting. */
     private val storeOptions: ParcelableStoreOptions?,
     /** Parent [CoroutineContext] for the [Deferred] returned by [connectAsync]. */
-    private val coroutineContext: CoroutineContext = Dispatchers.Default
+    private val coroutineContext: CoroutineContext = Dispatchers.IO
 ) : ServiceConnection {
     private var needsDisconnect = false
     private var service = atomic<CompletableDeferred<IBinder>?>(null)
