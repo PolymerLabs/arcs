@@ -177,7 +177,7 @@ describe('schema2kotlin', () => {
       `,
       `class Handles : HandleHolderBase(
         "P",
-        mapOf("h1" to Accommodation)
+        mapOf("h1" to Person)
     ) {
         val h1: ReadSingletonHandle<Tuple3<Reference<Person>, Reference<Accommodation>, Reference<Address>>> by handles
     }`
@@ -256,4 +256,62 @@ describe('schema2kotlin', () => {
     const components = schema2kotlin.generateParticleClassComponents(particle, generators);
     assert.deepEqual(extractor(components), expectedValue);
   }
+
+  describe('Test Harness', () => {
+    it('exposes a handle as a read write handle regardless of particle spec direction', async () => await assertTestHarness(
+      `particle P
+        h1: reads Person {name: Text}
+        h2: reads Address {streetAddress: Text}
+      `, `
+class PTestHarness<P : AbstractP>(
+    factory : (CoroutineScope) -> P
+) : BaseTestHarness<P>(factory, listOf(
+    HandleSpec("h1", HandleMode.ReadWrite, HandleContainerType.Singleton, P_H1, HandleDataType.Entity),
+    HandleSpec("h2", HandleMode.ReadWrite, HandleContainerType.Singleton, P_H2, HandleDataType.Entity)
+)) {
+    val h1: ReadWriteSingletonHandle<P_H1> by handleMap
+    val h2: ReadWriteSingletonHandle<P_H2> by handleMap
+}
+`
+    ));
+    it('specifies handle type correctly - singleton, collection, entity, reference, tuples', async () => await assertTestHarness(
+      `particle P
+        singletonEntity: reads Person {name: Text}
+        singletonReference: writes &Person {name: Text}
+        collectionEntity: writes [Person {name: Text}]
+        collectionReference: reads [&Person {name: Text}]
+        collectionTuples: reads [(&Product {name: Text}, &Manufacturer {name: Text})]
+  `,
+    // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
+    //                    allowing multiple EntitySpecs for handles of tuples.
+`
+class PTestHarness<P : AbstractP>(
+    factory : (CoroutineScope) -> P
+) : BaseTestHarness<P>(factory, listOf(
+    HandleSpec("singletonEntity", HandleMode.ReadWrite, HandleContainerType.Singleton, P_SingletonEntity, HandleDataType.Entity),
+    HandleSpec("singletonReference", HandleMode.ReadWrite, HandleContainerType.Singleton, P_SingletonReference, HandleDataType.Reference),
+    HandleSpec("collectionEntity", HandleMode.ReadWrite, HandleContainerType.Collection, P_CollectionEntity, HandleDataType.Entity),
+    HandleSpec("collectionReference", HandleMode.ReadWrite, HandleContainerType.Collection, P_CollectionReference, HandleDataType.Reference),
+    HandleSpec("collectionTuples", HandleMode.ReadWrite, HandleContainerType.Collection, P_CollectionTuples_0, HandleDataType.Entity)
+)) {
+    val singletonEntity: ReadWriteSingletonHandle<P_SingletonEntity> by handleMap
+    val singletonReference: ReadWriteSingletonHandle<Reference<P_SingletonReference>> by handleMap
+    val collectionEntity: ReadWriteCollectionHandle<P_CollectionEntity> by handleMap
+    val collectionReference: ReadWriteCollectionHandle<Reference<P_CollectionReference>> by handleMap
+    val collectionTuples: ReadWriteCollectionHandle<Tuple2<Reference<P_CollectionTuples_0>, Reference<P_CollectionTuples_1>>> by handleMap
+}
+`
+    ));
+    async function assertTestHarness(manifestString: string, expected: string) {
+      const manifest = await Manifest.parse(manifestString);
+      assert.lengthOf(manifest.particles, 1);
+      const [particle] = manifest.particles;
+
+      const schema2kotlin = new Schema2Kotlin({_: []});
+      const generators = await schema2kotlin.calculateNodeAndGenerators(particle);
+      const nodes = generators.map(g => g.node);
+      const actual = schema2kotlin.generateTestHarness(particle, nodes);
+      assert.equal(actual, expected);
+    }
+  });
 });

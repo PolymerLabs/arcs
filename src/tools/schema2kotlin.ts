@@ -191,7 +191,9 @@ ${imports.join('\n')}
     function generateInnerType(type: Type) {
       if (type.isEntity) {
         const node = nodes.find(n => n.schema.equals(type.getEntitySchema()));
-        return forTest ? node.sources[0].fullName : node.humanName(connection);
+        // Test harness needs the full name, as it does not extend the particle base,
+        // and the humnan name may only be available inside the particle.
+        return forTest ? node.fullName(connection) : node.humanName(connection);
       } else if (type.isReference) {
         return `Reference<${generateInnerType(type.getContainedType())}>`;
       } else if (type.isTuple) {
@@ -328,12 +330,12 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     for (const connection of particle.connections) {
       connection.direction = 'reads writes';
       const handleName = connection.name;
-      const interfaceType = this.handleInterfaceType(connection, nodes, true);
       // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
       //                    allowing multiple EntitySpecs for handles of tuples.
       const entityType = SchemaNode.singleSchemaFullName(connection, nodes);
-      handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
       handleSpecs.push(this.handleSpec(handleName, entityType, connection));
+      const interfaceType = this.handleInterfaceType(connection, nodes, true);
+      handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
     }
 
     return `
