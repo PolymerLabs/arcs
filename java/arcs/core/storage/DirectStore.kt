@@ -312,15 +312,15 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             return
         }
 
+        if (state.value is State.Closed<Data>) {
+            return
+        }
+
         // Wait until we're idle before we continue, unless - of course - we've been waiting on
         // driver model information, in which case - we can start without being idle.
         if (state.value !is State.AwaitingDriverModel<Data>) {
             // Await is called on the old value of idleDeferred.
             idleDeferred.getAndSet(IdleDeferred()).await()
-        }
-
-        if (state.value is State.Closed<Data>) {
-            return
         }
 
         var currentState = state.value as State.StateWithData<Data>
