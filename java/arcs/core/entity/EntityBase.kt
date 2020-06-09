@@ -359,9 +359,18 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
     // TODO(b/155025255)
     is FieldType.Tuple ->
         throw NotImplementedError("[FieldType.Tuple]s cannot be converted to references.")
-    is FieldType.ListOf -> {
-        @Suppress("UNCHECKED_CAST")
-        (value as List<Any>).map { toReferencable(it, type.primitiveType)}.toReferencable()
+    is FieldType.ListOf -> when (type.primitiveType) {
+        is FieldType.Primitive ->
+            (value as List<*>).map {
+                toReferencable(it!!, type.primitiveType)
+            }.toReferencable()
+        is FieldType.EntityRef ->
+            @Suppress("UNCHECKED_CAST")
+            (value as List<Referencable>).toReferencable()
+        else ->
+            throw NotImplementedError(
+                "Ordered lists of type [${type.primitiveType}] are not supported"
+            )
     }
 }
 
@@ -397,6 +406,13 @@ private fun fromReferencable(
             }
             requireNotNull(referencable.value) {
                 "ReferencableList encoded an unexpected null value."
+            }
+            referencable.value.map {
+                if (it is ReferencablePrimitive<*>) {
+                    it.value
+                } else {
+                    it
+                }
             }
         }
     }
