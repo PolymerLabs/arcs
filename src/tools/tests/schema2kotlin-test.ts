@@ -276,7 +276,7 @@ describe('schema2kotlin', () => {
         'typealias T_H2 = AbstractT.TInternal1',
       ]
     ));
-    it('Progressively constrained variables', async () => await assertSchemaAliases(
+    it('Variable constrained at multiple connections', async () => await assertSchemaAliases(
       `particle T
          h1: reads ~a
          h2: writes ~a with {amt: Number}
