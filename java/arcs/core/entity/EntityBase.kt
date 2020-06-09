@@ -154,9 +154,15 @@ open class EntityBase(
             that.collections.putAll(this.collections)
             return
         }
-        this.singletons.forEach { that.singletons.putIfAbsent(it.key, it.value) }
+        this.singletons.forEach {
+            if (that.singletons.get(it.key) == null) {
+                that.singletons[it.key] = it.value
+            }
+        }
         this.collections.forEach {
-            that.collections.merge(it.key, it.value) { t, u -> if (t.isEmpty()) u else t }
+            if (that.collections.getOrDefault(it.key, emptySet()).isEmpty()) {
+                that.collections[it.key] = it.value
+            }
         }
     }
 
