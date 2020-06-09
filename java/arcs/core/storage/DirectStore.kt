@@ -32,6 +32,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.runBlocking
 
 // import kotlinx.coroutines.flow.debounce
 // import kotlinx.coroutines.flow.filter
@@ -118,12 +119,15 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
     private fun closeInternal() {
         if (!closed) {
+            closed = true
             stateChannel.offer(State.Closed())
             stateChannel.close()
-            state.value = State.Closed<Data>() as State.StateWithData<Data>
+            state.value = State.Closed()
             closeWriteBack()
+            runBlocking {
+                driver.close()
+            }
         }
-        closed = true
     }
 
     /**
