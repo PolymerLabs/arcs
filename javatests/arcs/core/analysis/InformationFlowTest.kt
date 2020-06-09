@@ -99,7 +99,7 @@ class InformationFlowTest {
             "fail-no-inputs",
             "fail-mixer"
         )
-        val okTests = listOf<String>(
+        val okTests = listOf(
             "ok-directly-satisfied",
             "ok-not-tag-claim-no-checks",
             "ok-not-tag-claim-reclaimed",
@@ -112,7 +112,21 @@ class InformationFlowTest {
             "ok-check-multiple-and-single-claim",
             "ok-check-multiple-or-single-claim"
         )
-        val tests = okTests + failingTests
+        val failingFieldTests = listOf(
+            "fail-field-entity-direct",
+            "fail-field-entity-ref-direct",
+            "fail-field-collection-direct",
+            "fail-field-claim-propagates",
+            "fail-field-merge-multiple-paths"
+        )
+        val okFieldTests = listOf(
+            "ok-field-entity-direct",
+            "ok-field-entity-ref-direct",
+            "ok-field-collection-direct",
+            "ok-field-claim-propagates",
+            "ok-field-merge-multiple-paths"
+        )
+        val tests = okTests + failingTests + okFieldTests + failingFieldTests
         tests.forEach { verifyChecksInTestFile(it) }
     }
 
