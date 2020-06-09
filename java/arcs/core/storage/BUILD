@@ -14,6 +14,7 @@ PROXY_SRCS = [
 STORAGE_KEY_SRCS = [
     "StorageKey.kt",
     "StorageKeyParser.kt",
+    "StorageKeyUtils.kt",
 ]
 
 REFERENCE_SRCS = [

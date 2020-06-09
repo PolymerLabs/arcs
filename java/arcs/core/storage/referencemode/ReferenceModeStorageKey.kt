@@ -13,6 +13,8 @@ package arcs.core.storage.referencemode
 
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyUtils
+import arcs.core.storage.embed
 
 const val REFERENCE_MODE_PROTOCOL = "reference-mode"
 
@@ -43,44 +45,13 @@ data class ReferenceModeStorageKey(
         private fun fromString(rawValue: String): ReferenceModeStorageKey {
             val invalidFormatMessage: () -> String =
                 { "Invalid format for ReferenceModeStorageKey: $rawValue" }
-            var backing: StorageKey? = null
-            var direct: StorageKey? = null
+            val storageKeys = StorageKeyUtils.extractKeysFromString(rawValue)
+            require(storageKeys.size == 2, invalidFormatMessage)
 
-            var openCount = 0
-            var openIndex = -1
-            rawValue.forEachIndexed { i, char ->
-                require(direct == null, invalidFormatMessage)
-                when (char) {
-                    '{' -> {
-                        openCount++
-                        if (openIndex < 0) openIndex = i
-                    }
-                    '}' -> {
-                        openCount--
-                        if (openCount == 0) {
-                            require(openIndex >= 0, invalidFormatMessage)
-                            val childComponent = rawValue.substring(openIndex + 1, i).unEmbed()
-                            if (backing == null) {
-                                backing = childComponent
-                            } else {
-                                direct = childComponent
-                            }
-                            // Reset to negative, so we mark openIndex when we see the next '{'
-                            openIndex = -1
-                        }
-                    }
-                }
-            }
             return ReferenceModeStorageKey(
-                requireNotNull(backing, invalidFormatMessage),
-                requireNotNull(direct, invalidFormatMessage)
+                storageKeys[0],
+                storageKeys[1]
             )
         }
     }
 }
-
-/* internal */ fun String.unEmbed(): StorageKey =
-    StorageKeyParser.parse(replace("\\{\\{".toRegex(), "{").replace("\\}\\}".toRegex(), "}"))
-
-/* internal */ fun StorageKey.embed() =
-    toString().replace("\\{".toRegex(), "{{").replace("\\}".toRegex(), "}}")
