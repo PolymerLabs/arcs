@@ -29,6 +29,8 @@ import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.toCrdtSetData
 import arcs.core.storage.referencemode.toCrdtSingletonData
+import arcs.core.storage.referencemode.toReferenceSet
+import arcs.core.storage.referencemode.toReferenceSingleton
 import arcs.core.type.Type
 import arcs.core.util.Random
 import arcs.core.util.TaggedLog
@@ -188,7 +190,7 @@ class DatabaseDriver<Data : Any>(
                     "Data must be CrdtSingleton.Data<Reference>"
                 }
                 DatabaseData.Singleton(
-                    CrdtSingleton.createWithData(referenceData).consumerView,
+                    referenceData.toReferenceSingleton(),
                     schema,
                     version,
                     referenceData.versionMap
@@ -199,7 +201,7 @@ class DatabaseDriver<Data : Any>(
                     "Data must be CrdtSet.Data<Reference>"
                 }
                 DatabaseData.Collection(
-                    CrdtSet(referenceData).consumerView,
+                    referenceData.toReferenceSet(),
                     schema,
                     version,
                     referenceData.versionMap
