@@ -32,6 +32,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.runBlocking
+
 // import kotlinx.coroutines.flow.debounce
 // import kotlinx.coroutines.flow.filter
 // import kotlinx.coroutines.flow.first
@@ -55,18 +57,24 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
     private val log = TaggedLog { "DirectStore(${state.value}, $storageKey)" }
 
+    /** True if this store has been closed. */
+    var closed = false
+
     /**
      * [AtomicRef] of a [CompletableDeferred] which will be completed when the [DirectStore]
      * transitions into the Idle state.
      */
     private val idleDeferred: AtomicRef<IdleDeferred> = atomic(CompletableDeferred(Unit))
+
     /**
      * [AtomicRef] of a list of [PendingDriverModel]s, allowing us to treat it as a copy-on-write,
      * threadsafe list using [AtomicRef.update].
      */
     private var pendingDriverModels = atomic(listOf<PendingDriverModel<Data>>())
     private var version = atomic(0)
-    private var state: AtomicRef<State<Data>> = atomic(State.Idle(idleDeferred, driver))
+    private var state: AtomicRef<State<Data>> = atomic(
+        State.Idle(idleDeferred, driver)
+    )
     private val stateChannel =
         ConflatedBroadcastChannel<State<Data>>(State.Idle(idleDeferred, driver))
     private val stateFlow = stateChannel.asFlow()
@@ -88,11 +96,38 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     override suspend fun getLocalData(): Data = synchronized(this) { localModel.data }
 
     override fun on(callback: ProxyCallback<Data, Op, T>): Int {
-        return proxyManager.register(callback)
+        synchronized(proxyManager) {
+            return proxyManager.register(callback)
+        }
     }
 
     override fun off(callbackToken: Int) {
-        return proxyManager.unregister(callbackToken)
+        synchronized(proxyManager) {
+            proxyManager.unregister(callbackToken)
+            if (proxyManager.isEmpty()) {
+                closeInternal()
+            }
+        }
+    }
+
+    /** Closes the store. Once closed, it cannot be re-opened. A new instance must be created. */
+    fun close() {
+        synchronized(proxyManager) {
+            closeInternal()
+        }
+    }
+
+    private fun closeInternal() {
+        if (!closed) {
+            closed = true
+            stateChannel.offer(State.Closed())
+            stateChannel.close()
+            state.value = State.Closed()
+            closeWriteBack()
+            runBlocking {
+                driver.close()
+            }
+        }
     }
 
     /**
@@ -114,10 +149,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 true
             }
             is ProxyMessage.Operations -> {
-                val failure =
-                    synchronized(this) {
-                        !message.operations.all { localModel.applyOperation(it) }
-                    }
+                val failure = synchronized(this) {
+                    !message.operations.all { localModel.applyOperation(it) }
+                }
 
                 if (failure) {
                     proxyManager.getCallback(message.id)?.invoke(
@@ -175,7 +209,13 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     /* internal */ suspend fun onReceive(data: Data, version: Int) {
         log.debug { "onReceive($data, $version)" }
 
-        if (state.value.shouldApplyPendingDriverModelsOnReceive(data, version)) {
+        if (state.value is State.Closed<Data> || closed) {
+            log.debug { "onReceive($data, $version) called after close(), ignoring" }
+            return
+        }
+
+        val currentState = state.value as State.StateWithData<Data>
+        if (currentState.shouldApplyPendingDriverModelsOnReceive(data, version)) {
             val pending = pendingDriverModels.getAndUpdate { emptyList() }
             applyPendingDriverModels(pending + PendingDriverModel(data, version))
         } else {
@@ -201,12 +241,11 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 theVersion = version
                 if (modelChange.isEmpty() && otherChange.isEmpty()) return@forEach
                 deliverCallbacks(modelChange, null)
-                noDriverSideChanges =
-                    noDriverSideChanges && noDriverSideChanges(
-                        modelChange,
-                        otherChange,
-                        messageFromDriver = true
-                    )
+                noDriverSideChanges = noDriverSideChanges && noDriverSideChanges(
+                    modelChange,
+                    otherChange,
+                    messageFromDriver = true
+                )
                 log.debug { "No driver side changes? $noDriverSideChanges" }
             } catch (e: Exception) {
                 log.error(e) { "Error while applying pending driver models." }
@@ -236,10 +275,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         }
     }
 
-    private suspend fun deliverCallbacks(
-        thisChange: CrdtChange<Data, Op>,
-        source: Int?
-    ) {
+    private suspend fun deliverCallbacks(thisChange: CrdtChange<Data, Op>, source: Int?) {
         when (thisChange) {
             is CrdtChange.Operations -> {
                 proxyManager.send(
@@ -250,7 +286,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             is CrdtChange.Data -> {
                 proxyManager.send(
                     message = ProxyMessage.ModelUpdate(thisChange.data, source),
-                    exceptTo = source)
+                    exceptTo = source
+                )
             }
         }
     }
@@ -268,8 +305,14 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     ) {
         if (noDriverSideChanges) {
             // TODO: use a single lock here, rather than two separate atomics.
-            this.state.value = State.Idle(idleDeferred, driver).also { stateChannel.send(it) }
+            this.state.value = State.Idle(idleDeferred, driver).also {
+                if (!stateChannel.isClosedForSend) stateChannel.send(it)
+            }
             this.version.value = version
+            return
+        }
+
+        if (state.value is State.Closed<Data>) {
             return
         }
 
@@ -280,15 +323,20 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             idleDeferred.getAndSet(IdleDeferred()).await()
         }
 
-        var currentState = state.value
+        var currentState = state.value as State.StateWithData<Data>
         var currentVersion = version
         var spins = 0
         do {
             val localModel = synchronized(this) { localModel.data }
-            val (newVersion, newState) =
-                currentState.update(currentVersion, messageFromDriver, localModel)
+            val (newVersion, newState) = currentState.update(
+                currentVersion,
+                messageFromDriver,
+                localModel
+            )
             // TODO: use a lock instead here, rather than two separate atomics.
-            this.state.value = newState.also { stateChannel.send(it) }
+            this.state.value = newState.also {
+                if (!stateChannel.isClosedForSend) stateChannel.send(it)
+            }
             this.version.value = currentVersion
             currentState = newState
             currentVersion = newVersion
@@ -311,13 +359,44 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     private suspend fun IdleDeferred(): CompletableDeferred<Unit> =
         CompletableDeferred(coroutineContext[Job.Key])
 
-    private sealed class State<Data : CrdtData>(
-        val stateName: Name,
-        val idleDeferred: AtomicRef<IdleDeferred>,
-        val driver: Driver<Data>
-    ) {
+    private sealed class State<Data : CrdtData>(val stateName: Name) {
         /** Simple names for each [State]. */
-        enum class Name { Idle, AwaitingResponse, AwaitingDriverModel }
+        enum class Name { Idle, AwaitingResponse, AwaitingDriverModel, Closed }
+
+        open class StateWithData<Data : CrdtData>(
+            stateName: Name,
+            val idleDeferred: AtomicRef<IdleDeferred>,
+            val driver: Driver<Data>
+        ) : State<Data>(stateName) {
+            /** Waits until the [idleDeferred] signal is triggered. */
+            open suspend fun idle() = idleDeferred.value.await()
+
+            /**
+             * Determines the next state and version of the model while acting. (e.g. sending the
+             * [localModel] to the [Driver])
+             *
+             * Core component of the state machine, called by [DirectStore.updateStateAndAct] to
+             * determine what state to transition into and perform any necessary operations.
+             */
+            open suspend fun update(
+                version: Int,
+                messageFromDriver: Boolean,
+                localModel: Data
+            ): Pair<Int, StateWithData<Data>> = version to this
+
+            /**
+             * Returns whether or not, given the machine being in this state, we should apply any
+             * pending driver models to the local model.
+             */
+            open fun shouldApplyPendingDriverModelsOnReceive(data: Data, version: Int): Boolean =
+                true
+        }
+
+        /**
+         * Indicates that the current conflated Channel is closed, dropping any held objects in the
+         * channel.
+         */
+        class Closed<Data : CrdtData> : State<Data>(Name.Closed)
 
         /**
          * The [DirectStore] is currently idle.
@@ -325,7 +404,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         class Idle<Data : CrdtData>(
             idleDeferred: AtomicRef<IdleDeferred>,
             driver: Driver<Data>
-        ) : State<Data>(Idle, idleDeferred, driver) {
+        ) : StateWithData<Data>(Idle, idleDeferred, driver) {
             init {
                 // When a new idle state is created, complete the deferred so anything waiting on it
                 // will unblock.
@@ -339,7 +418,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 version: Int,
                 messageFromDriver: Boolean,
                 localModel: Data
-            ): Pair<Int, State<Data>> {
+            ): Pair<Int, StateWithData<Data>> {
                 // On update() and when idle, we're ready to await the next version.
                 return (version + 1) to AwaitingResponse(idleDeferred, driver)
             }
@@ -351,15 +430,14 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         class AwaitingResponse<Data : CrdtData>(
             idleDeferred: AtomicRef<IdleDeferred>,
             driver: Driver<Data>
-        ) : State<Data>(AwaitingResponse, idleDeferred, driver) {
-            override fun shouldApplyPendingDriverModelsOnReceive(data: Data, version: Int) =
-                false
+        ) : StateWithData<Data>(AwaitingResponse, idleDeferred, driver) {
+            override fun shouldApplyPendingDriverModelsOnReceive(data: Data, version: Int) = false
 
             override suspend fun update(
                 version: Int,
                 messageFromDriver: Boolean,
                 localModel: Data
-            ): Pair<Int, State<Data>> {
+            ): Pair<Int, StateWithData<Data>> {
                 val response = driver.send(localModel, version)
                 return if (response) {
                     // The driver ack'd our send, we can move to idle state.
@@ -377,12 +455,12 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         class AwaitingDriverModel<Data : CrdtData>(
             idleDeferred: AtomicRef<IdleDeferred>,
             driver: Driver<Data>
-        ) : State<Data>(AwaitingDriverModel, idleDeferred, driver) {
+        ) : StateWithData<Data>(AwaitingDriverModel, idleDeferred, driver) {
             override suspend fun update(
                 version: Int,
                 messageFromDriver: Boolean,
                 localModel: Data
-            ): Pair<Int, State<Data>> {
+            ): Pair<Int, StateWithData<Data>> {
                 // If the message didn't come from the driver, we can't do anything.
                 if (!messageFromDriver) return version to this
 
@@ -397,29 +475,6 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 return (version + 1) to AwaitingResponse(idleDeferred, driver)
             }
         }
-
-        /** Waits until the [idleDeferred] signal is triggered. */
-        open suspend fun idle() = idleDeferred.value.await()
-
-        /**
-         * Determines the next state and version of the model while acting. (e.g. sending the
-         * [localModel] to the [Driver])
-         *
-         * Core component of the state machine, called by [DirectStore.updateStateAndAct] to
-         * determine what state to transition into and perform any necessary operations.
-         */
-        open suspend fun update(
-            version: Int,
-            messageFromDriver: Boolean,
-            localModel: Data
-        ): Pair<Int, State<Data>> = version to this
-
-        /**
-         * Returns whether or not, given the machine being in this state, we should apply any
-         * pending driver models to the local model.
-         */
-        open fun shouldApplyPendingDriverModelsOnReceive(data: Data, version: Int): Boolean =
-            true
 
         override fun toString(): String = "$stateName"
     }
@@ -439,14 +494,13 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 "Type not supported: ${options.type}"
             }
 
-            val driver =
-                CrdtException.requireNotNull(
-                    DriverFactory.getDriver(
-                        options.storageKey,
-                        crdtType.crdtModelDataClass,
-                        options.type
-                    ) as? Driver<Data>
-                ) { "No driver exists to support storage key ${options.storageKey}" }
+            val driver = CrdtException.requireNotNull(
+                DriverFactory.getDriver(
+                    options.storageKey,
+                    crdtType.crdtModelDataClass,
+                    options.type
+                ) as? Driver<Data>
+            ) { "No driver exists to support storage key ${options.storageKey}" }
 
             val localModel = crdtType.createCrdtModel().apply {
                 options.model?.let { merge(it) }

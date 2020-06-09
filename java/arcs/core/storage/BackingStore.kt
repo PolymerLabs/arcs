@@ -39,7 +39,14 @@ class BackingStore<Data : CrdtData, Op : CrdtOperation, T>(
 ) {
     private val storeMutex = Mutex()
     // TODO(b/158262634): Make this CacheMap Weak.
-    /* internal */ val stores = LruCacheMap<String, StoreRecord<Data, Op, T>>()
+    /* internal */ val stores = LruCacheMap<String, StoreRecord<Data, Op, T>>(
+        50,
+        livenessPredicate = { _, sr -> !sr.store.closed }
+    ) { _, sr ->
+        if (!sr.store.closed) {
+            sr.store.close()
+        }
+    }
 
     /**
      * Gets data from the store corresponding to the given [referenceId].

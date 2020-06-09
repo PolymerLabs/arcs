@@ -70,6 +70,7 @@ class AndroidSqliteDatabaseManager(
     fun close() = runBlocking {
         mutex.withLock {
             dbCache.values.forEach { it.close() }
+            dbCache.clear()
         }
 
         registry.close()
