@@ -14,6 +14,7 @@ message ReferencableProto {
     ReferenceProto reference = 3;
     ReferencablePrimitiveProto primitive = 4;
     ReferencablePrimitiveListProto primitive_list = 5;
+    ReferencableReferenceListProto reference_list = 6;
   }
 }
 
@@ -46,5 +47,11 @@ message ReferencablePrimitiveProto {
 }
 
 message ReferencablePrimitiveListProto {
-  repeated ReferencablePrimitiveProto value = 1;
+  int32 type = 1;
+  repeated ReferencablePrimitiveProto value = 2;
+}
+
+message ReferencableReferenceListProto {
+  string type = 1;
+  repeated ReferenceProto value = 2;
 }
