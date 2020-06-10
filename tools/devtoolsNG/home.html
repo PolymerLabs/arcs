@@ -1,0 +1,41 @@
+<body>
+
+  <div id="log"></div> 
+ <input type="button" onclick="myFunction()" value="Clear">
+
+ <script>
+
+   const websocket = new WebSocket('ws://localhost:12345');
+
+   websocket.onopen = e => {
+
+    websocket.send('Hello dear Server!');
+
+     websocket.onmessage = msg => {
+
+      document.getElementById("log").innerHTML = document.getElementById("log").innerHTML + "<div>" + msg.data + "</div>"
+
+     }
+
+   };
+
+   websocket.onerror = e => {
+
+     console.log('No connection found');
+
+   };
+
+   websocket.onclose = e => {
+
+    console.log(`Websocket closing. ${e}`)
+    document.getElementById("log").innerHTML = document.getElementById("log").innerHTML + "<div>WebSocket Closing</div>"
+
+   }
+
+   function myFunction() {
+    document.getElementById("log").innerHTML = ""
+   };
+
+ </script>
+
+</body>

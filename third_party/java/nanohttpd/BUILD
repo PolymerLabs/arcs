@@ -6,3 +6,8 @@ alias(
     name = "nanohttpd",
     actual = "@maven//:org_nanohttpd_nanohttpd",
 )
+
+alias(
+    name = "nanohttpd-websocket",
+    actual = "@maven//:org_nanohttpd_nanohttpd_websocket",
+)
