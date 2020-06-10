@@ -39,8 +39,14 @@ import kotlinx.coroutines.test.TestCoroutineScope
 @ExperimentalCoroutinesApi
 class WriteBackForTesting private constructor(
     protocol: String,
-    queueSize: Int
-) : StoreWriteBack(protocol, queueSize, TestCoroutineScope(TestCoroutineDispatcher())) {
+    queueSize: Int,
+    forceEnable: Boolean
+) : StoreWriteBack(
+    protocol,
+    queueSize,
+    forceEnable,
+    TestCoroutineScope(TestCoroutineDispatcher())
+) {
 
     init { track(this) }
 
@@ -58,7 +64,7 @@ class WriteBackForTesting private constructor(
             for (instance in instances) instance.awaitIdle()
         }
 
-        override fun create(protocol: String, queueSize: Int): WriteBack =
-            WriteBackForTesting(protocol, queueSize)
+        override fun create(protocol: String, queueSize: Int, forceEnable: Boolean): WriteBack =
+            WriteBackForTesting(protocol, queueSize, forceEnable)
     }
 }

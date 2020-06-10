@@ -68,7 +68,11 @@ interface WriteBackFactory {
         /**
          * The maximum queue size above which new incoming flush jobs will be suspended.
          */
-        queueSize: Int = Channel.UNLIMITED
+        queueSize: Int = Channel.UNLIMITED,
+        /**
+         * Whether or not to force non-pass-through behavior of the [WriteBack].
+         */
+        forceEnable: Boolean = false
     ): WriteBack
 }
 
@@ -81,12 +85,13 @@ interface WriteBackFactory {
 open class StoreWriteBack /* internal */ constructor(
     protocol: String,
     queueSize: Int,
+    forceEnable: Boolean,
     val scope: CoroutineScope?
 ) : WriteBack,
     Mutex by Mutex() {
     // Only apply write-back to physical storage media(s).
     private val passThrough = atomic(
-        true
+        !forceEnable
         // TODO(b/158529276): Re-enable WriteBack for physical storage media once we understand why
         //   some collection_entries were not flushed to disk.
         // scope == null || protocol != Protocols.DATABASE_DRIVER
@@ -186,9 +191,9 @@ open class StoreWriteBack /* internal */ constructor(
         var writeBackFactoryOverride: WriteBackFactory? = null
 
         /** The factory of creating [WriteBack] instances. */
-        override fun create(protocol: String, queueSize: Int): WriteBack =
-            writeBackFactoryOverride?.create(protocol, queueSize)
-                ?: StoreWriteBack(protocol, queueSize, writeBackScope)
+        override fun create(protocol: String, queueSize: Int, forceEnable: Boolean): WriteBack =
+            writeBackFactoryOverride?.create(protocol, queueSize, forceEnable)
+                ?: StoreWriteBack(protocol, queueSize, forceEnable, writeBackScope)
 
         /**
          * Initialize write-back coroutine scope.
