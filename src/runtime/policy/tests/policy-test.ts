@@ -244,16 +244,19 @@ policy MyPolicy {
   });
 
   it('allowed usages defaults to any', async () => {
-    const policy = await parsePolicy(`
+    const policyStr = `
 policy MyPolicy {
   from Abc access {
     field,
   }
-}`);
+}`.trim();
+    const policy = await parsePolicy(policyStr);
     assert.deepStrictEqual(policy.targets[0].fields[0].allowedUsages, [{
       label: '',
       usage: PolicyAllowedUsageType.Any,
     }]);
+
+    assert.strictEqual(policy.toManifestString(), policyStr);
   });
 
   it('policy configs work', async () => {
