@@ -231,6 +231,12 @@ class ReferenceModeStore private constructor(
             is ProxyMessage.Operations -> {
                 proxyMessage.operations.toBridgingOps(backingStore.storageKey)
                     .all { op ->
+                        if (op is BridgingOperation.ClearSingleton ||
+                            op is BridgingOperation.UpdateSingleton) {
+                            // Free up the memory used by the previous instance (for a Singleton,
+                            // there would be only one instance).
+                            backingStore.clearStoresCache()
+                        }
                         op.entityValue?.let {
                             if (op is BridgingOperation.RemoveFromSet) {
                                 // If this is a removal, we clear the entity rather than updating it
