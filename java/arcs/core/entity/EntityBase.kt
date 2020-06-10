@@ -398,28 +398,7 @@ private fun fromReferencable(
             requireNotNull(referencable.value) {
                 "ReferencableList encoded an unexpected null value."
             }
-            val listType = type.primitiveType
-            when (listType) {
-                is FieldType.Primitive -> {
-                    referencable.value.map {
-                        require(it is ReferencablePrimitive<*>) {
-                            "Expected List to contain ReferencablePrimitives but found $it."
-                        }
-                        it.value
-                    }
-                }
-                is FieldType.EntityRef -> {
-                    val entitySpec = requireNotNull(nestedEntitySpecs[listType.schemaHash])
-                    referencable.value.map {
-                        require(it is StorageReference) {
-                            "Expected List to contain StorageReferences but found $it."
-                        }
-                        Reference(entitySpec, it)
-                    }
-                }
-                else ->
-                    throw IllegalStateException("Unexpected member type $listType for ordered list")
-            }
+            referencable.value.map { fromReferencable(it, type.primitiveType, nestedEntitySpecs) }
         }
     }
 }
