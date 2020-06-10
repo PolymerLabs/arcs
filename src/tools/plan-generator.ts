@@ -67,7 +67,7 @@ export class PlanGenerator {
       }
 
       const start = `object ${planName} : `;
-      const plan = `${start}${ktUtils.applyFun('Plan', planArgs, start.length)}`;
+      const plan = `${start}${ktUtils.applyFun('Plan', planArgs, {startIndent: start.length})}`;
       plans.push(plan);
     }
     return plans;
@@ -106,7 +106,7 @@ export class PlanGenerator {
     const type = await this.createType(connection.type);
     const ttl = this.createTtl(connection.handle.ttl);
 
-    return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl], 24);
+    return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl], {startIndent: 24});
   }
 
   /** Generates a Kotlin `HandleMode` from a Direction and Type. */
