@@ -104,6 +104,7 @@ policy MyPolicy {
       name: 'MyPolicy',
       targets: [{
         schemaType: 'Abc',
+        maxAgeMs: '0',
         fields: [{
           name: 'parent',
           usages: [

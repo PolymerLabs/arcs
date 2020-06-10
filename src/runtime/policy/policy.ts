@@ -111,7 +111,7 @@ export class PolicyTarget {
       readonly schemaName: string,
       readonly fields: PolicyField[],
       readonly retentions: {medium: PolicyRetentionMedium, encryptionRequired: boolean}[],
-      readonly maxAge: Ttl | null,
+      readonly maxAge: Ttl,
       readonly customAnnotations: AnnotationRef[],
       private readonly allAnnotations: AnnotationRef[]) {}
 
@@ -132,7 +132,7 @@ export class PolicyTarget {
 
     // Process annotations.
     const allAnnotations = buildAnnotationRefs(node.annotationRefs);
-    let maxAge: Ttl | null = null;
+    let maxAge = Ttl.none();
     const retentionMediums: Set<PolicyRetentionMedium> = new Set();
     const retentions: {medium: PolicyRetentionMedium, encryptionRequired: boolean}[] = [];
     const customAnnotations: AnnotationRef[] = [];

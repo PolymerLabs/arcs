@@ -223,6 +223,7 @@ export class Ttl extends Capability {
     }
   }
 
+  static none(): Ttl { return new Ttl(0, TtlUnits.Millis); }
   static infinite(): Ttl { return new Ttl(null, TtlUnits.Infinite); }
   static minutes(count: number): Ttl { return new Ttl(count, TtlUnits.Minutes); }
   static hours(count: number): Ttl { return new Ttl(count, TtlUnits.Hours); }

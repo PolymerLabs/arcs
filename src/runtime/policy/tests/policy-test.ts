@@ -129,7 +129,7 @@ policy MyPolicy {
 }
 `);
     const target = policy.targets[0];
-    assert.isNull(target.maxAge);
+    assert.strictEqual(target.maxAge.millis, 0);
     assert.isEmpty(target.fields);
     assert.isEmpty(target.customAnnotations);
   });
