@@ -304,9 +304,9 @@ class InformationFlow private constructor(
         val updatedAccessPaths = mutableMapOf<AccessPath, InformationFlowLabels>()
         claims.asSequence().filterIsInstance<Claim.DerivesFrom>().forEach { derivesFrom ->
             val sourceValue = input[derivesFrom.source] ?: getEmptyLabels()
-        val currentValue =
-            updatedAccessPaths[derivesFrom.target] ?: InformationFlowLabels(emptySet())
-        updatedAccessPaths[derivesFrom.target] = sourceValue join currentValue
+            val currentValue =
+                updatedAccessPaths[derivesFrom.target] ?: InformationFlowLabels(emptySet())
+            updatedAccessPaths[derivesFrom.target] = sourceValue join currentValue
         }
         updatedAccessPaths.forEach { (accessPath, labels) -> this[accessPath] = labels }
     }
