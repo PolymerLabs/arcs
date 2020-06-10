@@ -163,12 +163,17 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                         val change = CrdtChange.Operations<Data, Op>(
                             message.operations.toMutableList()
                         )
-                        processModelChange(
-                            change,
-                            otherChange = null,
-                            version = version.value,
-                            channel = message.id
-                        )
+
+                        // As the localModel has already been applied with new operations,
+                        // leave the flush job to write-back threads.
+                        asyncFlush {
+                            processModelChange(
+                                change,
+                                otherChange = null,
+                                version = version.value,
+                                channel = message.id
+                            )
+                        }
                     }
                     true
                 }
@@ -177,12 +182,16 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 val (modelChange, otherChange) = synchronized(this) {
                     localModel.merge(message.model)
                 }
-                processModelChange(
-                    modelChange,
-                    otherChange,
-                    version.value,
-                    channel = message.id
-                )
+                // As the localModel has already been merged with new model updates,
+                // leave the flush job to write-back threads.
+                asyncFlush {
+                    processModelChange(
+                        modelChange,
+                        otherChange,
+                        version.value,
+                        channel = message.id
+                    )
+                }
                 true
             }
         }.also {
@@ -199,11 +208,11 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         if (modelChange.isEmpty() && otherChange?.isEmpty() == true) return
 
         deliverCallbacks(modelChange, source = channel)
-
-        // As the localModel has already been applied with new operations and/or merged with
-        // new model updates, leave the flush job with write-back threads.
-        val noDriverSideChanges = noDriverSideChanges(modelChange, otherChange, false)
-        asyncFlush { updateStateAndAct(noDriverSideChanges, version, messageFromDriver = false) }
+        updateStateAndAct(
+            noDriverSideChanges(modelChange, otherChange, false),
+            version,
+            messageFromDriver = false
+        )
     }
 
     /* internal */ suspend fun onReceive(data: Data, version: Int) {
