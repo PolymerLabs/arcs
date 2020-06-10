@@ -362,7 +362,7 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
     is FieldType.ListOf ->
         (value as List<*>).map {
             toReferencable(it!!, type.primitiveType)
-        }.toReferencable()
+        }.toReferencable(type)
 }
 
 private fun fromReferencable(
