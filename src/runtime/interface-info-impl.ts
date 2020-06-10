@@ -15,6 +15,7 @@ import {Type, TypeVariable, TypeLiteral, HandleConnection, Slot, InterfaceInfo,
         InterfaceInfoLiteral, MatchResult} from './type.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
+import {ManifestStringBuilder} from './manifest-string-builder.js';
 
 const handleConnectionFields = ['type', 'name', 'direction'];
 const slotFields = ['name', 'direction', 'isRequired', 'isSet'];
@@ -139,35 +140,35 @@ class InterfaceInfoImpl extends InterfaceInfo {
     return false;
   }
 
-  _handleConnectionsToManifestString() {
-    return this.handleConnections
-      .map(h => {
-        const parts = [];
-        if (h.name) {
-          parts.push(`${h.name}:`);
-        }
-        if (h.direction !== undefined && h.direction !== 'any') {
-          parts.push(h.direction);
-        }
-        parts.push(h.type.toString());
-        return `  ${parts.join(' ')}`;
-      }).join('\n');
+  _handleConnectionsToManifestString(builder: ManifestStringBuilder) {
+    builder.push(...this.handleConnections.map(h => {
+      const parts = [];
+      if (h.name) {
+        parts.push(`${h.name}:`);
+      }
+      if (h.direction !== undefined && h.direction !== 'any') {
+        parts.push(h.direction);
+      }
+      parts.push(h.type.toString());
+      return parts.join(' ');
+    }));
   }
 
-  _slotsToManifestString() {
+  _slotsToManifestString(builder: ManifestStringBuilder) {
     // TODO deal with isRequired
-    return this.slots
-      .map(slot => {
-        const nameStr = slot.name ? `${slot.name}: ` : '';
-        return `  ${nameStr}${slot.direction}${slot.isRequired ? '' : '?'} ${slot.isSet ? '[Slot]' : 'Slot'}`;
-      })
-      .join('\n');
+    builder.push(...this.slots.map(slot => {
+      const nameStr = slot.name ? `${slot.name}: ` : '';
+      return `${nameStr}${slot.direction}${slot.isRequired ? '' : '?'} ${slot.isSet ? '[Slot]' : 'Slot'}`;
+    }));
   }
   // TODO: Include name as a property of the interface and normalize this to just toString()
-  toString() : string {
-    return `interface ${this.name}
-${this._handleConnectionsToManifestString()}
-${this._slotsToManifestString()}`;
+  toManifestString(builder = new ManifestStringBuilder()) : string {
+    builder.push(`interface ${this.name}`);
+    builder.withIndent(builder => {
+      this._handleConnectionsToManifestString(builder);
+      this._slotsToManifestString(builder);
+    });
+    return builder.toString();
   }
 
   clone(variableMap: Map<string, Type>) : InterfaceInfo {

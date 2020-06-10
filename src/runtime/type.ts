@@ -20,6 +20,7 @@ import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Refinement} from './refiner.js';
 import {AnnotationRef} from './recipe/annotation.js';
+import {ManifestStringBuilder} from './manifest-string-builder.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -1415,7 +1416,7 @@ export abstract class InterfaceInfo {
 
   abstract _applyExistenceTypeTest(test: Predicate<TypeVarReference>) : boolean;
 
-  abstract toString() : string;
+  abstract toManifestString(builder?: ManifestStringBuilder) : string;
 
   static make : Maker = null;
 

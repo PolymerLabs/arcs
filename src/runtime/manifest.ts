@@ -1514,7 +1514,7 @@ ${e.message}
     });
 
     Object.values(this._annotations).forEach(a => {
-      results.push(a.toString());
+      results.push(a.toManifestString());
     });
 
     Object.values(this._schemas).forEach(s => {

@@ -415,7 +415,7 @@ describe('types', () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
       const variable = TypeVariable.make('a');
       const iface = InterfaceType.make('i', [{type: entity, name: 'foo'}, {type: variable}], [{name: 'x', direction: 'consumes'}]);
-      assert.strictEqual(iface.interfaceInfo.toString(),
+      assert.strictEqual(iface.interfaceInfo.toManifestString(),
 `interface i
   foo: Foo {value: Text}
   ~a
@@ -427,10 +427,9 @@ describe('types', () => {
       const variable = TypeVariable.make('a');
       variable.variable.resolution = EntityType.make(['Foo'], {value: 'Text'});
       const iface = InterfaceType.make('i', [{type: variable}], []);
-      assert.strictEqual(iface.interfaceInfo.toString(),
+      assert.strictEqual(iface.interfaceInfo.toManifestString(),
 `interface i
-  ~a
-`);
+  ~a`);
     });
   });
 
