@@ -11,11 +11,11 @@ import {Recipe} from '../runtime/recipe/recipe.js';
 import {Type} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
 import {KotlinGenerationUtils, quote, tryImport, upperFirst} from './kotlin-generation-utils.js';
+import {generateConnectionType} from './kotlin-codegen-shared.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Ttl, TtlUnits} from '../runtime/recipe/ttl.js';
-import {Dictionary} from '../runtime/hot.js';
 import {Random} from '../runtime/random.js';
 import {findLongRunningArcId} from './storage-key-recipe-resolver.js';
 import {Capabilities} from '../runtime/capabilities.js';
@@ -31,7 +31,6 @@ export class PlanGeneratorError extends Error {
 
 /** Generates plan objects from resolved recipes. */
 export class PlanGenerator {
-  private specRegistry: Dictionary<string> = {};
   private createHandleRegistry: Map<Handle, string> = new Map<Handle, string>();
 
   constructor(private resolvedRecipes: Recipe[], private namespace: string) {
@@ -57,7 +56,6 @@ export class PlanGenerator {
 
       const particles: string[] = [];
       for (const particle of recipe.particles) {
-        await this.collectParticleConnectionSpecs(particle);
         particles.push(await this.createParticle(particle));
       }
 
@@ -90,20 +88,11 @@ export class PlanGenerator {
     ]);
   }
 
-  /** Aggregate mapping of schema hashes and schema properties from particle connections. */
-  async collectParticleConnectionSpecs(particle: Particle): Promise<void> {
-    for (const connection of particle.spec.connections) {
-      const specName = [particle.spec.name, upperFirst(connection.name)].join('_');
-      const schemaHash = await connection.type.getEntitySchema().hash();
-      this.specRegistry[schemaHash] = specName;
-    }
-  }
-
   /** Generates a Kotlin `Plan.HandleConnection` from a HandleConnection. */
   async createHandleConnection(connection: HandleConnection): Promise<string> {
     const storageKey = this.createStorageKey(connection.handle);
     const mode = this.createHandleMode(connection.direction, connection.type);
-    const type = await this.createType(connection.type);
+    const type = generateConnectionType(connection);
     const ttl = this.createTtl(connection.handle.ttl);
 
     return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl], 24);
@@ -192,36 +181,6 @@ export class PlanGenerator {
       case TtlUnits.Hour: return `Ttl.Hours`;
       case TtlUnits.Day: return `Ttl.Days`;
       default: return `Ttl.Infinite`;
-    }
-  }
-
-  /** Generates a Kotlin `core.arc.type.Type` from a Type. */
-  async createType(type: Type): Promise<string> {
-    const initialType = await this.createNestedType(type);
-    return (type.isEntity || type.isReference) ?
-      ktUtils.applyFun('SingletonType', [initialType]) : initialType;
-  }
-  async createNestedType(type: Type) {
-    switch (type.tag) {
-      case 'Collection':
-        return ktUtils.applyFun('CollectionType', [await this.createNestedType(type.getContainedType())]);
-      case 'Count':
-        return ktUtils.applyFun('CountType', [await this.createNestedType(type.getContainedType())]);
-      case 'Entity':
-        return ktUtils.applyFun('EntityType', [`${this.specRegistry[await type.getEntitySchema().hash()]}.SCHEMA`]);
-      case 'Reference':
-        return ktUtils.applyFun('ReferenceType', [await this.createNestedType(type.getContainedType())]);
-      case 'Singleton':
-        return ktUtils.applyFun('SingletonType', [await this.createNestedType(type.getContainedType())]);
-      case 'TypeVariable':
-      case 'Arc':
-      case 'BigCollection':
-      case 'Handle':
-      case 'Interface':
-      case 'Slot':
-      case 'Tuple':
-      default:
-        throw Error(`Type of ${type.tag} is not supported.`);
     }
   }
 
