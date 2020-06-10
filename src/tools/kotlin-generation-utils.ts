@@ -33,43 +33,57 @@ export class KotlinGenerationUtils {
    *
    * @param name name of the function
    * @param args list of arguments to the function
-   * @param startIndent (optional) starting indentation level.
-   * @param emptyName alternative name for the function with empty arguments.
+   * @param opts additional options for formatting
    */
-  applyFun(name: string, args: string[], startIndent: number = 0, emptyName: string = name): string {
+  applyFun(name: string, args: string[], {
+      // Starting indentation level.
+      startIndent = 0,
+      // Alternative name for the function with empty arguments.
+      emptyName = name,
+      // Number of existing indents where the resulting code will be inserted.
+      numberOfIndents = 0
+    } = {}): string {
     if (args.length === 0) return `${emptyName}()`;
-    return `${name}(${this.joinWithIndents(args, startIndent + name.length + 2)})`;
+    return `${name}(${this.joinWithIndents(args, {
+      startIndent: startIndent + name.length + 2,
+      numberOfIndents: numberOfIndents + 1
+    })})`;
   }
 
   /** Formats `mapOf` with correct indentation and defaults. */
   mapOf(args: string[], startIndent: number = 0): string {
-    return this.applyFun('mapOf', args, startIndent, 'emptyMap');
+    return this.applyFun('mapOf', args, {startIndent, emptyName: 'emptyMap'});
   }
 
   /** Formats `mutableMapOf` with correct indentation and defaults. */
   mutableMapOf(args: string[], startIndent: number = 0): string {
-    return this.applyFun('mutableMapOf', args, startIndent, 'mutableMapOf');
+    return this.applyFun('mutableMapOf', args, {startIndent, emptyName: 'mutableMapOf'});
   }
 
   /** Formats `listOf` with correct indentation and defaults. */
   listOf(args: string[], startIndent: number = 0): string {
-    return this.applyFun('listOf', args, startIndent, 'emptyList');
+    return this.applyFun('listOf', args, {startIndent, emptyName: 'emptyList'});
   }
 
   /** Formats `setOf` with correct indentation and defaults. */
   setOf(args: string[], startIndent: number = 0): string {
-    return this.applyFun('setOf', args, startIndent, 'emptySet');
+    return this.applyFun('setOf', args, {startIndent, emptyName: 'emptySet'});
   }
 
   /**
    * Joins a list of items, taking line length and indentation into account.
    *
    * @param items strings to join
-   * @param extraIndent (optional) add other indentation when calculating line limits.
+   * @param opts additional options for formatting
    */
-  joinWithIndents(items: string[], extraIndent: number = 0, numberOfIndents: number = 1): string {
+  joinWithIndents(items: string[], {
+      // Starting indentation level.
+      startIndent = 0,
+      // Number of existing indents where the resulting code will be inserted.
+      numberOfIndents = 1
+    } = {}): string {
     const candidate = items.join(', ');
-    if (extraIndent + candidate.length <= this.pref.lineLength) return candidate;
+    if (startIndent + candidate.length <= this.pref.lineLength) return candidate;
     return `\n${this.indent(items.join(',\n'), numberOfIndents)}\n${this.indent('', numberOfIndents-1)}`;
   }
 

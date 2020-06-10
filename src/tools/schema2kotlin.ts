@@ -249,7 +249,7 @@ ${imports.join('\n')}
     if (queryType) {
       typeArguments.push(queryType);
     }
-    return `${handleMode}${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, 4)}>`;
+    return `${handleMode}${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, {startIndent: 4})}>`;
   }
 
   private handleSpec(handleName: string, entityType: string, connection: HandleConnectionSpec): string {
@@ -314,7 +314,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     )`
       : `class Handles : HandleHolderBase(
         "${particleName}",
-        mapOf(${ktUtils.joinWithIndents(entitySpecs, 4, 3)})
+        mapOf(${ktUtils.joinWithIndents(entitySpecs, {startIndent: 4, numberOfIndents: 3})})
     )`;
 
     return `${header} {
@@ -460,7 +460,7 @@ export class KotlinGenerator implements ClassGenerator {
     const schemaNames = this.node.schema.names.map(n => `SchemaName("${n}")`);
     return `\
 Schema(
-    setOf(${ktUtils.joinWithIndents(schemaNames, 8)}),
+    setOf(${ktUtils.joinWithIndents(schemaNames, {startIndent: 8})}),
     SchemaFields(
         singletons = ${leftPad(ktUtils.mapOf(this.singletonSchemaFields, 30), 8, true)},
         collections = ${leftPad(ktUtils.mapOf(this.collectionSchemaFields, 30), 8, true)}
@@ -532,7 +532,7 @@ ${lines}
     ]);
 
     const constructorArguments =
-      ktUtils.joinWithIndents(constructorFields, classDef.length+classInterface.length, 2);
+      ktUtils.joinWithIndents(constructorFields, {startIndent: classDef.length+classInterface.length, numberOfIndents: 2});
 
     return `\
 
@@ -547,12 +547,28 @@ ${lines}
          * Use this method to create a new, distinctly identified copy of the entity.
          * Storing the copy will result in a new copy of the data being stored.
          */`}
-        fun copy(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${name}(${ktUtils.joinWithIndents(this.fieldsForCopy, 8+name.length, 3)})
+        fun ${ktUtils.applyFun(
+            'copy',
+            this.fieldsForCopyDecl,
+            {startIndent: 14, numberOfIndents: 2}
+        )} = ${ktUtils.applyFun(
+            name,
+            this.fieldsForCopy,
+            {startIndent: 8 + name.length, numberOfIndents: 2}
+        )}
         ${this.opts.wasm ? `` : `/**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
          */
-        fun mutate(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${name}(${ktUtils.joinWithIndents(fieldsForMutate, 8+name.length, 3)})`}
+        fun ${ktUtils.applyFun(
+            'mutate',
+            this.fieldsForCopyDecl,
+            {startIndent: 14, numberOfIndents: 2}
+        )} = ${ktUtils.applyFun(
+            name,
+            fieldsForMutate,
+            {startIndent: 8 + name.length, numberOfIndents: 2}
+        )}`}
     ${this.opts.wasm ? `
         fun reset() {
           ${withFields(`${this.fieldsReset.join('\n            ')}`)}
@@ -609,7 +625,7 @@ ${lines}
                     i++
                 }`)}
                 val _rtn = ${name}().copy(
-                    ${ktUtils.joinWithIndents(this.fieldsForCopy, 33, 3)}
+                    ${ktUtils.joinWithIndents(this.fieldsForCopy, {startIndent: 33, numberOfIndents: 3})}
                 )
                _rtn.entityId = entityId
                 return _rtn
