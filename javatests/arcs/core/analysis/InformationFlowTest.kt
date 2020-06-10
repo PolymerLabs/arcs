@@ -97,7 +97,9 @@ class InformationFlowTest {
             "fail-check-multiple-or-tags",
             "fail-multiple-checks",
             "fail-no-inputs",
-            "fail-mixer"
+            "fail-mixer",
+            "fail-derives-from-cycle",
+            "fail-derives-from-multiple"
         )
         val okTests = listOf(
             "ok-directly-satisfied",
@@ -110,7 +112,9 @@ class InformationFlowTest {
             "ok-claim-not-overriden-later",
             "ok-check-multiple-or-tags",
             "ok-check-multiple-and-single-claim",
-            "ok-check-multiple-or-single-claim"
+            "ok-check-multiple-or-single-claim",
+            "ok-derives-from-cycle",
+            "ok-derives-from-multiple"
         )
         val failingFieldTests = listOf(
             "fail-field-entity-direct",

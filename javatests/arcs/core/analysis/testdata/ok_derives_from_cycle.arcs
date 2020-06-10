@@ -1,0 +1,17 @@
+// supports breaking cycles using 'derives from' claims
+// #Ingress: P
+// #OK
+particle P
+  input1: reads Foo {}
+  input2: reads Foo {}
+  output1: writes Foo {}
+  output2: writes Foo {}
+  claim output1 derives from input1 and is a
+  claim output2 derives from input2 and is b
+  check input2 is b and is not a
+recipe R
+  P
+    input1: reads h1
+    input2: reads h2
+    output1: writes h1
+    output2: writes h2
