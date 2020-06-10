@@ -269,6 +269,7 @@ export interface ParticleClaimDerivesFrom extends BaseNode {
   kind: 'particle-trust-claim-derives-from';
   claimType: ClaimType.DerivesFrom;
   parentHandle: string;
+  fieldPath: string[];
 }
 
 export interface ParticleCheckStatement extends BaseNode {

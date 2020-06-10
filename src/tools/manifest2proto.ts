@@ -115,10 +115,7 @@ function claimsToProtoPayload(
           protos.push({
             derivesFrom: {
               target: accessPath,
-              source: {
-                particleSpec: spec.name,
-                handleConnection: claim.parentHandle.name
-              }
+              source: accessPathProtoPayload(spec, claim.parentHandle, claim.fieldPath),
             }
           });
           break;

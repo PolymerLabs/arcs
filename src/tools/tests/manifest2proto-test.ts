@@ -585,9 +585,11 @@ describe('manifest2proto', () => {
   it('encodes particle spec with field-level claims', async () => {
     const manifest = await Manifest.parse(`
       particle Test in 'a/b/c.js'
+        input: reads {bar: Text}
         private: writes {name: Text, ref: &Foo {foo: Text}}
         claim private is private_tag
         claim private.ref.foo is not private_tag
+        claim private.ref derives from input.bar
      `);
     const spec = await toProtoAndBack(manifest);
     assert.deepStrictEqual(spec.particleSpecs[0].claims, [
@@ -621,7 +623,22 @@ describe('manifest2proto', () => {
             }
           }
         }
-      }]);
+      },
+      {
+        derivesFrom: {
+          source: {
+            particleSpec: 'Test',
+            handleConnection: 'input',
+            selectors: [{field: 'bar'}],
+          },
+          target: {
+            particleSpec: 'Test',
+            handleConnection: 'private',
+            selectors: [{field: 'ref'}],
+          },
+        },
+      }
+    ]);
   });
 
   it('encodes particle spec with checkHasTag checks', async () => {

@@ -3185,6 +3185,36 @@ resource SomeName
       assert.sameMembers((claim.claims as ClaimDerivesFrom[]).map(claim => claim.parentHandle.name), ['input1', 'input2']);
     });
 
+    it('supports field-level "derives from" claims', async () => {
+      const manifest = await parseManifest(`
+        particle A
+          input: reads T {foo: Text}
+          output: writes T {bar: Text}
+          claim output.bar derives from input.foo
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustChecks);
+      assert.strictEqual(particle.trustClaims.length, 1);
+
+      const claim = particle.trustClaims.find(claim => claim.handle.name === 'output');
+      assert.lengthOf(claim.claims, 1);
+      const derivesFrom = claim.claims[0] as ClaimDerivesFrom;
+      assert.strictEqual(derivesFrom.parentHandle.name, 'input');
+      assert.deepStrictEqual(derivesFrom.fieldPath, ['foo']);
+      assert.strictEqual(derivesFrom.target, 'input.foo');
+      assert.strictEqual(claim.toManifestString(), 'claim output.bar derives from input.foo');
+    });
+
+    it('rejects invalid fields in field-level "derives from" claims', async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: writes T {foo: Text}
+          output: writes T {foo: Text}
+          claim output.foo derives from input.bar
+      `), 'Field bar does not exist');
+    });
+
     it('supports mixed claims with multiple tags, not tags, and "derives from"', async () => {
       const manifest = await parseManifest(`
         particle A
