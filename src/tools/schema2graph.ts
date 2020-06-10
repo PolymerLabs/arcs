@@ -91,10 +91,17 @@ export class SchemaNode {
     if (this.uniqueSchema || this.sources.length === 1) {
       return this.entityClassName;
     }
+    return this.fullName(connection);
+  }
+
+  fullName(connection: HandleConnectionSpec): string {
+    return this.nearestSourceForConnection(connection).fullName;
+  }
+
+  private nearestSourceForConnection(connection: HandleConnectionSpec): SchemaSource {
     const sourcesFromConnection = this.sources.filter(s => s.connection === connection);
     const minPathLength = Math.min(...sourcesFromConnection.map(s => s.path.length));
-    const bestSource = sourcesFromConnection.find(s => s.path.length === minPathLength);
-    return bestSource.fullName;
+    return sourcesFromConnection.find(s => s.path.length === minPathLength);
   }
 
   // This method is a temporary workaround. To fully support tuples we need to enhance the spec
@@ -102,15 +109,17 @@ export class SchemaNode {
   // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
   //                    allowing multiple EntitySpecs for handles of tuples.
   static singleSchemaHumanName(connection: HandleConnectionSpec, nodes: SchemaNode[]): string {
-    const topLevelNodes = SchemaNode.findTopLevelNodes(connection, nodes);
-    const humanNames = topLevelNodes.map(n => n.humanName(connection));
-    return humanNames.sort()[0];
+    const topLevelNode = SchemaNode.findTopLevelNodes(connection, nodes)[0];
+    return topLevelNode.humanName(connection);
   }
 
+  // This method is a temporary workaround. To fully support tuples we need to enhance the spec
+  // definition for Kotlin handles.
+  // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
+  //                    allowing multiple EntitySpecs for handles of tuples.
   static singleSchemaFullName(connection: HandleConnectionSpec, nodes: SchemaNode[]): string {
-    const topLevelNodes = SchemaNode.findTopLevelNodes(connection, nodes);
-    const fullNames = topLevelNodes.map(n => n.sources[0].fullName);
-    return fullNames.sort()[0];
+    const topLevelNode = SchemaNode.findTopLevelNodes(connection, nodes)[0];
+    return topLevelNode.fullName(connection);
   }
 
   // Returns all "top-level" schema nodes for the given connection.
