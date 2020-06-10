@@ -16,8 +16,6 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
     var num: Double? by SingletonProperty()
     var text: String? by SingletonProperty()
     var ref: Reference<DummyEntity>? by SingletonProperty()
-    var primList: List<Double> by SingletonProperty()
-    var refList: List<Reference<DummyEntity>> by SingletonProperty()
     var bools: Set<Boolean> by CollectionProperty()
     var nums: Set<Double> by CollectionProperty()
     var texts: Set<String> by CollectionProperty()
@@ -52,9 +50,7 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
                     "text" to FieldType.Text,
                     "num" to FieldType.Number,
                     "bool" to FieldType.Boolean,
-                    "ref" to FieldType.EntityRef(SCHEMA_HASH),
-                    "primList" to FieldType.ListOf(FieldType.Number),
-                    "refList" to FieldType.ListOf(FieldType.EntityRef(SCHEMA_HASH))
+                    "ref" to FieldType.EntityRef(SCHEMA_HASH)
                 ),
                 collections = mapOf(
                     "texts" to FieldType.Text,
