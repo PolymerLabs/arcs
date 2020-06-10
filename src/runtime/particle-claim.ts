@@ -11,7 +11,6 @@
 import {HandleConnectionSpec} from './particle-spec.js';
 import {ParticleClaimIsTag, ParticleClaimDerivesFrom, ParticleClaimStatement} from './manifest-ast-nodes.js';
 import {Type} from './type.js';
-import {assert} from '../platform/assert-web.js';
 import {Schema} from './schema.js';
 
 /** The different types of trust claims that particles can make. */
@@ -60,7 +59,9 @@ export class ClaimIsTag {
 export class ClaimDerivesFrom {
   readonly type: ClaimType.DerivesFrom = ClaimType.DerivesFrom;
 
-  constructor(readonly parentHandle: HandleConnectionSpec) {}
+  constructor(
+      readonly parentHandle: HandleConnectionSpec,
+      readonly fieldPath: string[]) {}
 
   static fromASTNode(
       astNode: ParticleClaimDerivesFrom,
@@ -68,15 +69,21 @@ export class ClaimDerivesFrom {
 
     // Convert handle names into HandleConnectionSpec objects.
     const parentHandle = handleConnectionMap.get(astNode.parentHandle);
-  if (!parentHandle) {
-    throw new Error(`Unknown "derives from" handle name: ${parentHandle}.`);
+    if (!parentHandle) {
+      throw new Error(`Unknown "derives from" handle name: ${parentHandle}.`);
+    }
+
+    validateFieldPath(astNode.fieldPath, parentHandle.type);
+
+    return new ClaimDerivesFrom(parentHandle, astNode.fieldPath);
   }
 
-    return new ClaimDerivesFrom(parentHandle);
+  get target(): string {
+    return [this.parentHandle.name, ...this.fieldPath].join('.');
   }
 
   toManifestString() {
-    return `derives from ${this.parentHandle.name}`;
+    return `derives from ${this.target}`;
   }
 }
 
