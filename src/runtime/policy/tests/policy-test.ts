@@ -193,7 +193,7 @@ policy MyPolicy {
     assert.strictEqual(child2.name, 'child2');
     assert.deepStrictEqual(child2.allowedUsages, [{
       usage: PolicyAllowedUsageType.Any,
-      label: 'raw',
+      label: '',
     }]);
     assert.lengthOf(child2.customAnnotations, 0);
   });
@@ -241,6 +241,22 @@ policy MyPolicy {
     }
   }
 }`), 'A definition for child already exists.');
+  });
+
+  it('allowed usages defaults to any', async () => {
+    const policyStr = `
+policy MyPolicy {
+  from Abc access {
+    field,
+  }
+}`.trim();
+    const policy = await parsePolicy(policyStr);
+    assert.deepStrictEqual(policy.targets[0].fields[0].allowedUsages, [{
+      label: '',
+      usage: PolicyAllowedUsageType.Any,
+    }]);
+
+    assert.strictEqual(policy.toManifestString(), policyStr);
   });
 
   it('policy configs work', async () => {

@@ -169,6 +169,11 @@ export class PolicyField {
   constructor(
       readonly name: string,
       readonly subfields: PolicyField[],
+      /**
+       * The acceptable usages this field. Each (label, usage) pair defines a
+       * usage type that is acceptable for a given redaction label. The empty
+       * string label describes the usage for the raw data, given no redaction.
+       */
       readonly allowedUsages: {label: string, usage: PolicyAllowedUsageType}[],
       readonly customAnnotations: AnnotationRef[],
       private readonly allAnnotations: AnnotationRef[]) {
@@ -221,17 +226,21 @@ export class PolicyField {
       }
     }
 
+    if (allowedUsages.length === 0) {
+      allowedUsages.push({label: '', usage: PolicyAllowedUsageType.Any});
+    }
+
     return new PolicyField(node.name, subfields, allowedUsages, customAnnotations, allAnnotations);
   }
 
   private static toAllowedUsage(annotation: AnnotationRef) {
-    // TODO(b/157605585): Handle "raw" label separately?
     assert(annotation.name === allowedUsageAnnotationName);
     const usageType = annotation.params['usageType'] as string;
     checkValueInEnum(usageType, PolicyAllowedUsageType);
+    const label = annotation.params['label'] as string;
     return {
       usage: usageType as PolicyAllowedUsageType,
-      label: annotation.params['label'] as string,
+      label: label === 'raw' ? '' : label,
     };
   }
 }
