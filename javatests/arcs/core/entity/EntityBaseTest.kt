@@ -382,56 +382,6 @@ class EntityBaseTest {
         )
     }
 
-    @Test
-    fun copyInto_default() {
-        with (entity) {
-            text = "abc"
-            num = 12.0
-            bool = true
-            texts = setOf("aa", "bb")
-            nums = setOf(1.0, 2.0)
-            bools = setOf(true, false)
-        }
-
-        val emptyEntity = DummyEntity()
-            .also { entity.copyIntoForTest(it)}
-
-        assertThat(emptyEntity).isEqualTo(entity)
-
-        val partialEntity = DummyEntity()
-        partialEntity.bool = false
-
-        entity.copyIntoForTest(partialEntity)
-
-        assertThat(partialEntity).isNotEqualTo(entity)
-        assertThat(partialEntity.bool).isFalse()
-    }
-
-    @Test
-    fun copyInto_overwrite() {
-        with (entity) {
-            text = "abc"
-            num = 12.0
-            bool = true
-            texts = setOf("aa", "bb")
-            nums = setOf(1.0, 2.0)
-            bools = setOf(true, false)
-        }
-
-        val emptyEntity = DummyEntity()
-            .also { entity.copyIntoForTest(it, overwrite = true)}
-
-        assertThat(emptyEntity).isEqualTo(entity)
-
-        val partialEntity = DummyEntity()
-        partialEntity.bool = false
-
-        entity.copyIntoForTest(partialEntity, overwrite = true)
-
-        assertThat(partialEntity).isEqualTo(entity)
-        assertThat(partialEntity.bool).isTrue()
-    }
-
     private fun createReference(id: String) = Reference(
         DummyEntity,
         StorageReference(id, DummyStorageKey(id), VersionMap("id" to 1))
