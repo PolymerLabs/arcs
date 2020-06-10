@@ -162,8 +162,7 @@ class InterfaceInfoImpl extends InterfaceInfo {
     }));
   }
   // TODO: Include name as a property of the interface and normalize this to just toString()
-  toManifestString(builder?: ManifestStringBuilder) : string {
-    builder = builder || new ManifestStringBuilder();
+  toManifestString(builder = new ManifestStringBuilder()) : string {
     builder.push(`interface ${this.name}`);
     builder.withIndent(builder => {
       this._handleConnectionsToManifestString(builder);

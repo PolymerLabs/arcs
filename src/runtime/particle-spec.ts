@@ -455,8 +455,7 @@ export class ParticleSpec {
     return InterfaceType.make(this.name, handles, slots);
   }
 
-  toManifestString(builder?: ManifestStringBuilder): string {
-    builder = builder || new ManifestStringBuilder();
+  toManifestString(builder = new ManifestStringBuilder()): string {
     for (const annotation of this.annotations) {
       builder.push(annotation.toString());
     }

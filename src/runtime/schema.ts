@@ -314,8 +314,7 @@ export class Schema {
     return `${names} {${fields.length > 0 && options && options.hideFields ? '...' : fields}}${this.refinement ? this.refinement.toString() : ''}`;
   }
 
-  toManifestString(builder?: ManifestStringBuilder): string {
-    builder = builder || new ManifestStringBuilder();
+  toManifestString(builder = new ManifestStringBuilder()): string {
     builder.push(...this.annotations.map(a => a.toString()));
     builder.push(`schema ${this.names.join(' ')}`);
     builder.withIndent(builder => {

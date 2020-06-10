@@ -50,8 +50,7 @@ export class Policy {
       readonly customAnnotations: AnnotationRef[],
       private readonly allAnnotations: AnnotationRef[]) {}
 
-  toManifestString(builder?: ManifestStringBuilder): string {
-    builder = builder || new ManifestStringBuilder();
+  toManifestString(builder = new ManifestStringBuilder()): string {
     builder.push(...this.allAnnotations.map(annotation => annotation.toString()));
     builder.push(`policy ${this.name} {`);
     builder.withIndent(builder => {
@@ -114,8 +113,7 @@ export class PolicyTarget {
       readonly customAnnotations: AnnotationRef[],
       private readonly allAnnotations: AnnotationRef[]) {}
 
-  toManifestString(builder?: ManifestStringBuilder): string {
-    builder = builder || new ManifestStringBuilder();
+  toManifestString(builder = new ManifestStringBuilder()): string {
     builder.push(...this.allAnnotations.map(annotation => annotation.toString()));
     builder.push(`from ${this.schemaName} access {`);
     this.fields.forEach(field => field.toManifestString(builder.withIndent()));
@@ -177,8 +175,7 @@ export class PolicyField {
     // TODO(b/157605585): Validate field structure against Type.
   }
 
-  toManifestString(builder?: ManifestStringBuilder): string {
-    builder = builder || new ManifestStringBuilder();
+  toManifestString(builder = new ManifestStringBuilder()): string {
     builder.push(...this.allAnnotations.map(annotation => annotation.toString()));
     if (this.subfields.length) {
       builder.push(`${this.name} {`);
@@ -242,8 +239,7 @@ export class PolicyField {
 export class PolicyConfig {
   constructor(readonly name: string, readonly metadata: Map<string, string>) {}
 
-  toManifestString(builder?: ManifestStringBuilder): string {
-    builder = builder || new ManifestStringBuilder();
+  toManifestString(builder = new ManifestStringBuilder()): string {
     builder.push(`config ${this.name} {`);
     builder.withIndent(builder => {
       for (const [k, v] of this.metadata) {

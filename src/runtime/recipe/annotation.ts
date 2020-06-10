@@ -32,8 +32,7 @@ export class Annotation implements Comparable<Annotation> {
     return 0;
   }
 
-  toManifestString(builder?: ManifestStringBuilder): string {
-    builder = builder || new ManifestStringBuilder();
+  toManifestString(builder = new ManifestStringBuilder()): string {
     let paramStr = '';
     if (Object.keys(this.params).length > 0) {
       paramStr = `(${Object.keys(this.params).map(name => `${name}: ${this.params[name]}`).join(', ')})`;

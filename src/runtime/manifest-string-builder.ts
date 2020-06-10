@@ -39,7 +39,7 @@ export class ManifestStringBuilder {
    * Example 1:
    *
    * ```
-   * const indented = builder.withIndent()
+   * const indented = builder.withIndent();
    * indented.push('a');
    * indented.push('a');
    * ```
