@@ -49,7 +49,7 @@ function getTypeInfo(opts: {name: string, isCollection?: boolean, refClassName?:
       type: `List<${itemTypeInfo.type}>`,
       decodeFn: `decodeList<${itemTypeInfo.type}>()`,
       defaultVal: `listOf<${itemTypeInfo.type}>()`,
-      schemaType: `FieldType.ListOf(${itemTypeInfo.schemaType}.primitiveType)`
+      schemaType: `FieldType.ListOf(${itemTypeInfo.schemaType})`
     };
   }
 

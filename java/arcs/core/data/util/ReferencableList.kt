@@ -13,21 +13,16 @@ package arcs.core.data.util
 
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
-import kotlin.reflect.KClass
 
 /**
  * Represents a list of primitives which can be referenced - and thus used
  * as field values by CRDT Collections & Singletons.
  */
-data class ReferencableList<T>(
-    /** Type of primitive inside the list being converted into a referencable */
-    private val klass: KClass<*>,
+data class ReferencableList<T : Referencable>(
     val value: List<T>
 ) : Referencable {
-    private val klassRepr =
-        "List<${ReferencablePrimitive.primitiveKClassMap.getOrElse(klass, klass::toString)}>"
     override val id: ReferenceId
-        get() = "$klassRepr(${value.hashCode()})"
+        get() = "ReferencableList(${value.hashCode()})"
 
     override fun toString(): String = "List($value)"
 
@@ -39,5 +34,5 @@ data class ReferencableList<T>(
     }
 }
 
-inline fun <reified T> List<T>.toReferencable(): ReferencableList<T> =
-    ReferencableList(T::class, this)
+fun List<Referencable>.toReferencable(): ReferencableList<Referencable> =
+    ReferencableList(this)

@@ -32,7 +32,7 @@ sealed class FieldType(
         override fun toString() = "(${types.joinToString()})"
     }
 
-    data class ListOf(val primitiveType: PrimitiveType) : FieldType(Tag.List)
+    data class ListOf(val primitiveType: FieldType) : FieldType(Tag.List)
 
     enum class Tag {
         Primitive,
