@@ -13,6 +13,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {PolicyEgressType, PolicyRetentionMedium, PolicyAllowedUsageType, Policy} from '../policy.js';
 import {assertThrowsAsync} from '../../../testing/test-util.js';
 import {mapToDictionary} from '../../util.js';
+import {TtlUnits} from '../../capabilities-new.js';
 
 const customAnnotation = `
 annotation custom
@@ -33,7 +34,7 @@ describe('policy', () => {
 @egressType(type: 'Logging')
 @custom
 policy MyPolicy {
-  @maxAge(age: '2days')
+  @maxAge(age: '2d')
   @allowedRetention(medium: 'Ram', encryption: false)
   @allowedRetention(medium: 'Disk', encryption: true)
   @custom
@@ -78,7 +79,7 @@ policy MyPolicy {}
     assert.strictEqual(policy.customAnnotations[0].name, 'custom');
   });
 
-  it('handles missing annotations', async () => {
+  it('handles missing policy annotations', async () => {
     const policy = await parsePolicy(`
 policy MyPolicy {}
 `);
@@ -98,6 +99,7 @@ policy MyPolicy {}
 policy MyPolicy {
   @allowedRetention(medium: 'Disk', encryption: true)
   @allowedRetention(medium: 'Ram', encryption: false)
+  @maxAge('2d')
   @custom
   from Abc access {}
 }`);
@@ -114,8 +116,22 @@ policy MyPolicy {
         encryptionRequired: false,
       },
     ]);
+    assert.strictEqual(target.maxAge.count, 2);
+    assert.strictEqual(target.maxAge.units, TtlUnits.Days);
     assert.lengthOf(target.customAnnotations, 1);
     assert.strictEqual(target.customAnnotations[0].name, 'custom');
+  });
+
+  it('handles missing target annotations', async () => {
+    const policy = await parsePolicy(`
+policy MyPolicy {
+  from Abc access {}
+}
+`);
+    const target = policy.targets[0];
+    assert.strictEqual(target.maxAge.millis, 0);
+    assert.isEmpty(target.fields);
+    assert.isEmpty(target.customAnnotations);
   });
 
   it('rejects duplicate targets', async () => {
@@ -141,6 +157,14 @@ policy MyPolicy {
   @allowedRetention(medium: 'SomethingElse', encryption: false)
   from Abc access {}
 }`), 'Expected one of: Ram, Disk. Found: SomethingElse.');
+  });
+
+  it('rejects invalid maxAge', async () => {
+    await assertThrowsAsync(async () => parsePolicy(`
+policy MyPolicy {
+  @maxAge('4x')
+  from Abc access {}
+}`), 'Invalid ttl: 4x');
   });
 
   it('policy field annotations work', async () => {

@@ -29,7 +29,7 @@ annotation allowedRetention(medium: Text, encryption: Boolean)
 annotation maxAge(age: Text)
   targets: [PolicyTarget]
   retention: Source
-  doc: 'Indicates the maximum age the target data can be in order to be used. Age is a string like "2 days". Supported units are minutes, hours, days.'
+  doc: 'Indicates the maximum age the target data can be in order to be used. Age is a string like "2d". Supported units are minutes ("m"), hours ("h"), days ("d").'
 
 // TODO(b/157961278): Support varargs or dictionaries, and then convert this to
 // be: @allowedUsages(raw: [join], someLabel: [egress]).

@@ -213,17 +213,17 @@ export class Ttl extends Capability {
     return new Ttl(Number(ttlTokens[1]), Ttl.ttlUnitsFromString(ttlTokens[2]));
   }
 
-  public static ttlUnitsFromString(units: string): TtlUnits|undefined {
+  public static ttlUnitsFromString(units: string): TtlUnits {
     switch (units) {
       case 'm': return TtlUnits.Minutes;
       case 'h': return TtlUnits.Hours;
       case 'd': return TtlUnits.Days;
       default:
-        assert(`Unsupported ttl units ${units}`);
-        return undefined;
+        throw new Error(`Unsupported ttl units ${units}`);
     }
   }
 
+  static none(): Ttl { return new Ttl(0, TtlUnits.Millis); }
   static infinite(): Ttl { return new Ttl(null, TtlUnits.Infinite); }
   static minutes(count: number): Ttl { return new Ttl(count, TtlUnits.Minutes); }
   static hours(count: number): Ttl { return new Ttl(count, TtlUnits.Hours); }

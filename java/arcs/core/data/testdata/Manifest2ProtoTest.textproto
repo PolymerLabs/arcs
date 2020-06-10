@@ -305,6 +305,7 @@ policies {
   name: "MyPolicy"
   targets {
     schema_type: "Thing"
+    max_age_ms: 600000
     retentions {
       medium: RAM
     }
