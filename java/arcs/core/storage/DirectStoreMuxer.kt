@@ -53,7 +53,10 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
      */
     suspend fun getLocalData(referenceId: String) = store(referenceId).store.getLocalData()
 
-    suspend fun clearStoresCache() = storeMutex.withLock { stores.clear() }
+    suspend fun clearStoresCache() = storeMutex.withLock {
+        stores.forEach { _, r -> r.store.close() }
+        stores.clear()
+    }
 
     /** Calls [idle] on all existing contained stores and waits for their completion. */
     suspend fun idle() = storeMutex.withLock {

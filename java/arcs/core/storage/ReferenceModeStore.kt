@@ -58,6 +58,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 /**
  * [ReferenceModeStore]s adapt between a collection ([CrdtSet] or [CrdtSingleton]) of entities from
@@ -188,6 +189,10 @@ class ReferenceModeStore private constructor(
     override fun off(callbackToken: Int) {
         containerStore.off(containerCallbackToken)
         callbacks.unregister(callbackToken)
+
+        if (containerStore.closed) {
+            runBlocking { backingStore.clearStoresCache() }
+        }
     }
 
     /*
