@@ -7,7 +7,7 @@ load(
 
 licenses(["notice"])
 
-TEST_SRCS = glob(["*Test.kt"])
+TEST_SRCS = glob(["*Test.kt"]) + ["EntityTestBase.kt"]
 
 arcs_kt_schema(
     name = "test_arcs_gen",
