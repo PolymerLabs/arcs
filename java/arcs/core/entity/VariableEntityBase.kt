@@ -6,7 +6,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 
 /**
- * A base [Entity] for type variables.
+ * A base [Entity] to access data from type variables.
  *
  * This class behaves just like [EntityBase], except for (de)serialization. During deserialization,
  * all the fields from [RawEntity] are stored for later use in serialization.
