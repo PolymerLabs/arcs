@@ -54,7 +54,12 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
     suspend fun getLocalData(referenceId: String) = store(referenceId).store.getLocalData()
 
     suspend fun clearStoresCache() = storeMutex.withLock {
-        stores.forEach { _, r -> r.store.close() }
+        stores.forEach { _, sr ->
+            /** The same eviction logic as [stores]'s [LruCacheMap.onEvict]. */
+            if (!sr.store.closed) {
+                sr.store.close()
+            }
+        }
         stores.clear()
     }
 
