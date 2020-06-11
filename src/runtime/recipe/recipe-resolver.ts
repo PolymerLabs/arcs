@@ -38,14 +38,14 @@ export class ResolveWalker extends RecipeWalker {
       }
       return [];
     };
-    if (handle.fate === '`slot') {
+    if (handle.fate === '`slot' || handle.fate === 'join') {
       return [];
     }
     if (handle.type.slandleType()) {
       return [];
     }
     const arc = this.arc;
-    if (handle.connections.length === 0 ||
+    if ((handle.connections.length === 0 && !handle.isJoined) ||
         (handle.id && handle.storageKey) || (!handle.type) ||
         (!handle.fate)) {
       return error('No connections to handle or missing handle information');

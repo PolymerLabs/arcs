@@ -20,6 +20,7 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.VolatileDriverProvider
 import arcs.core.storage.keys.DatabaseStorageKey
+import arcs.core.storage.keys.JoinStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -65,5 +66,7 @@ object DriverAndKeyConfigurator {
         DatabaseStorageKey.registerKeyCreator()
         // ReferenceModeStorageKey has no key creator.
         ReferenceModeStorageKey.registerParser()
+        // JoinStorageKey has no key creator.
+        JoinStorageKey.registerParser()
     }
 }
