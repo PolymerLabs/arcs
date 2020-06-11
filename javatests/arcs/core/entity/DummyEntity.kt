@@ -11,29 +11,29 @@ import arcs.core.data.SchemaName
  * in the test. Also adds convenient getters and setters for entity fields, similar to what a
  * code-generated subclass would do.
  */
-class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable, Dummy<DummyEntity> {
-    override var bool: Boolean? by SingletonProperty()
-    override var num: Double? by SingletonProperty()
-    override var text: String? by SingletonProperty()
-    override var ref: Reference<DummyEntity>? by SingletonProperty()
-    override var bools: Set<Boolean> by CollectionProperty()
-    override var nums: Set<Double> by CollectionProperty()
-    override var texts: Set<String> by CollectionProperty()
-    override var refs: Set<Reference<DummyEntity>> by CollectionProperty()
+class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
+    var bool: Boolean? by SingletonProperty()
+    var num: Double? by SingletonProperty()
+    var text: String? by SingletonProperty()
+    var ref: Reference<DummyEntity>? by SingletonProperty()
+    var bools: Set<Boolean> by CollectionProperty()
+    var nums: Set<Double> by CollectionProperty()
+    var texts: Set<String> by CollectionProperty()
+    var refs: Set<Reference<DummyEntity>> by CollectionProperty()
 
     private val nestedEntitySpecs = mapOf(SCHEMA_HASH to DummyEntity)
 
-    override fun getSingletonValueForTest(field: String) = super.getSingletonValue(field)
+    fun getSingletonValueForTest(field: String) = super.getSingletonValue(field)
 
-    override fun getCollectionValueForTest(field: String) = super.getCollectionValue(field)
+    fun getCollectionValueForTest(field: String) = super.getCollectionValue(field)
 
-    override fun setSingletonValueForTest(field: String, value: Any?) =
+    fun setSingletonValueForTest(field: String, value: Any?) =
         super.setSingletonValue(field, value)
 
-    override fun setCollectionValueForTest(field: String, values: Set<Any>) =
+    fun setCollectionValueForTest(field: String, values: Set<Any>) =
         super.setCollectionValue(field, values)
 
-    override fun deserializeForTest(rawEntity: RawEntity) = super.deserialize(rawEntity, nestedEntitySpecs)
+    fun deserializeForTest(rawEntity: RawEntity) = super.deserialize(rawEntity, nestedEntitySpecs)
 
     companion object : EntitySpec<DummyEntity> {
         override fun deserialize(data: RawEntity) = 
