@@ -132,7 +132,7 @@ export class PolicyTarget {
 
     // Process annotations.
     const allAnnotations = buildAnnotationRefs(node.annotationRefs);
-    let maxAge = Ttl.none();
+    let maxAge = Ttl.zero();
     const retentionMediums: Set<PolicyRetentionMedium> = new Set();
     const retentions: {medium: PolicyRetentionMedium, encryptionRequired: boolean}[] = [];
     const customAnnotations: AnnotationRef[] = [];

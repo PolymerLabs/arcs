@@ -15,9 +15,12 @@ import {IsValidOptions, Recipe, RecipeComponent} from '../runtime/recipe/recipe.
 import {volatileStorageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
 import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
+import {Capabilities as CapabilitiesNew} from '../runtime/capabilities-new.js';
+import {CapabilitiesResolver as CapabilitiesResolverNew} from '../runtime/capabilities-resolver-new.js';
 import {Store} from '../runtime/storageNG/store.js';
 import {Exists} from '../runtime/storageNG/drivers/driver.js';
 import {DatabaseStorageKey} from '../runtime/storageNG/database-storage-key.js';
+import {VolatileStorageKey} from '../runtime/storageNG/drivers/volatile.js';
 
 export class StorageKeyRecipeResolverError extends Error {
   constructor(message: string) {
@@ -107,6 +110,7 @@ export class StorageKeyRecipeResolver {
   async createStoresForCreateHandles(recipe: Recipe): Promise<Recipe> {
     const arcId = Id.fromString(findLongRunningArcId(recipe));
     const resolver = new CapabilitiesResolver({arcId});
+    const resolverNew = new CapabilitiesResolverNew({arcId});
     const cloneRecipe = recipe.clone();
     for (const createHandle of cloneRecipe.handles.filter(h => h.fate === 'create' && !!h.id)) {
       if (createHandle.type.hasVariable && !createHandle.type.isResolved()) {
@@ -120,6 +124,9 @@ export class StorageKeyRecipeResolver {
 
       const storageKey = await resolver.createStorageKey(
         createHandle.capabilities, createHandle.type, createHandle.id);
+      const storageKeyNew = await resolverNew.createStorageKey(
+        CapabilitiesNew.fromOldCapabilities(createHandle.capabilities, createHandle.ttl), createHandle.type, createHandle.id);
+      assert(storageKey.toString() === storageKeyNew.toString());
       const store = new Store(createHandle.type, {
         storageKey,
         exists: Exists.MayExist,
