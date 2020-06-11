@@ -73,7 +73,7 @@ testData.forEach(data => {
 
     ${diffLog.join('\n    ')}
 
-    Run the following command to update the golden file:
+    Run the following command to update all the golden files:
 
     tools/update-goldens"
 `);
