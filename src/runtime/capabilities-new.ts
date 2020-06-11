@@ -223,10 +223,10 @@ export class Ttl extends Capability {
 
   static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
     const ttlAnnotations = annotations.filter(annotation => annotation.name === 'ttl');
-    assert(ttlAnnotations.length <= 1, `Containing multiple TTL annotations`);
     if (ttlAnnotations.length === 0) {
       return null;
     }
+    assert(ttlAnnotations.length === 1, `Containing multiple TTL annotations`);
     const annotation = ttlAnnotations[0];
     return Ttl.fromString(annotation.params['value'].toString());
   }
@@ -302,7 +302,7 @@ export class Queryable extends BooleanCapability {
     if (queryableAnnotations.length === 0) {
       return null;
     }
-    assert(queryableAnnotations.length <= 1, `Containing multiple queryable annotations`);
+    assert(queryableAnnotations.length === 1, `Containing multiple queryable annotations`);
     return new Queryable(true);
   }
 
@@ -323,7 +323,7 @@ export class Shareable extends BooleanCapability {
     if (shareableAnnotations.length === 0) {
       return null;
     }
-    assert(shareableAnnotations.length <= 1, `Containing multiple queryable annotations`);
+    assert(shareableAnnotations.length === 1, `Containing multiple queryable annotations`);
     return new Queryable(true);
   }
 
@@ -341,7 +341,7 @@ export class Encryption extends BooleanCapability {
     if (encryptedAnnotations.length === 0) {
       return null;
     }
-    assert(encryptedAnnotations.length <= 1, `Containing multiple encrypted annotations`);
+    assert(encryptedAnnotations.length === 1, `Containing multiple encrypted annotations`);
     return new Encryption(true);
   }
 

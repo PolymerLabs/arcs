@@ -38,7 +38,7 @@ describe('Capabilities Resolver', () => {
   const referenceType = new ReferenceType(entityType);
   const handleId = 'h0';
 
-    it('creates storage keys', Flags.withDefaultReferenceMode(async () => {
+  it('creates storage keys', Flags.withDefaultReferenceMode(async () => {
     const resolver1 = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
     const key = await resolver1.createStorageKey(Capabilities.tiedToArc, entityType, handleId);
     verifyReferenceModeStorageKey(key, VolatileStorageKey);
