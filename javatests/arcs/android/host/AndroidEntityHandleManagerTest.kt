@@ -372,7 +372,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             handleName,
             handleMode,
             HandleContainerType.Singleton,
-            handleHolder.getEntitySpec(handleName)
+            handleHolder.getEntitySpecs(handleName).single()
         ),
         singletonKey
     ).awaitReady().also {
@@ -388,7 +388,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             handleName,
             handleMode,
             HandleContainerType.Collection,
-            handleHolder.getEntitySpec(handleName)
+            handleHolder.getEntitySpecs(handleName).single()
         ),
         collectionKey
     ).awaitReady().also {

@@ -102,7 +102,7 @@ class EntityHandleManager(
     }
 
     suspend fun createHandle(
-        spec: HandleSpec<out Entity>,
+        spec: HandleSpec,
         storageKey: StorageKey,
         ttl: Ttl = Ttl.Infinite,
         particleId: String = "",
@@ -168,7 +168,7 @@ class EntityHandleManager(
 
     data class HandleConfig<T : Storable, R : Referencable>(
         val handleName: String,
-        val spec: HandleSpec<out Entity>,
+        val spec: HandleSpec,
         val storageKey: StorageKey,
         val storageAdapter: StorageAdapter<T, R>,
         val particleId: String = "",

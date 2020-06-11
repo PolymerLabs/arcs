@@ -101,7 +101,7 @@ describe('schema2kotlin', () => {
       const schema2kotlin = new Schema2Kotlin({_: []});
 
       assert.equal(
-        schema2kotlin.handleInterfaceType(connection, graph.nodes),
+        schema2kotlin.handleInterfaceType(connection, graph.nodes, /* particleScope= */ true),
         expectedHandleInterface);
     }
   });
@@ -111,7 +111,7 @@ describe('schema2kotlin', () => {
          h1: reads Person {name: Text}`,
       `class Handles : HandleHolderBase(
         "P",
-        mapOf("h1" to Person)
+        mapOf("h1" to setOf(Person))
     ) {
         val h1: ReadSingletonHandle<Person> by handles
     }`
@@ -122,7 +122,7 @@ describe('schema2kotlin', () => {
          h2: reads Person {age: Number}`,
       `class Handles : HandleHolderBase(
         "P",
-        mapOf("h1" to P_H1, "h2" to P_H2)
+        mapOf("h1" to setOf(P_H1), "h2" to setOf(P_H2))
     ) {
         val h1: ReadSingletonHandle<P_H1> by handles
         val h2: ReadSingletonHandle<P_H2> by handles
@@ -136,7 +136,7 @@ describe('schema2kotlin', () => {
       `,
       `class Handles : HandleHolderBase(
         "P",
-        mapOf("h1" to P_H1, "h2" to P_H2, "h3" to P_H3)
+        mapOf("h1" to setOf(P_H1), "h2" to setOf(P_H2), "h3" to setOf(P_H3))
     ) {
         val h1: ReadSingletonHandle<P_H1> by handles
         val h2: WriteSingletonHandle<P_H2> by handles
@@ -158,15 +158,11 @@ describe('schema2kotlin', () => {
       `,
       `class Handles : HandleHolderBase(
         "P",
-        mapOf("h1" to Person)
+        mapOf("h1" to setOf(Person))
     ) {
         val h1: ReadSingletonHandle<Person> by handles
     }`
     ));
-    // Below test shows the shortcoming of our handle declaration, which allows
-    // specifying a single entity per handle.
-    // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
-    //                    allowing multiple EntitySpecs for handles of tuples.
     it('Handle with a tuple', async () => await assertHandleClassDeclaration(
       `particle P
         h1: reads (
@@ -177,7 +173,7 @@ describe('schema2kotlin', () => {
       `,
       `class Handles : HandleHolderBase(
         "P",
-        mapOf("h1" to Person)
+        mapOf("h1" to setOf(Person, Accommodation, Address))
     ) {
         val h1: ReadSingletonHandle<Tuple3<Reference<Person>, Reference<Accommodation>, Reference<Address>>> by handles
     }`
@@ -266,8 +262,8 @@ describe('schema2kotlin', () => {
 class PTestHarness<P : AbstractP>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
-    HandleSpec("h1", HandleMode.ReadWrite, HandleContainerType.Singleton, P_H1, HandleDataType.Entity),
-    HandleSpec("h2", HandleMode.ReadWrite, HandleContainerType.Singleton, P_H2, HandleDataType.Entity)
+    HandleSpec("h1", HandleMode.ReadWrite, SingletonType(EntityType(P_H1.SCHEMA)), setOf(P_H1)),
+    HandleSpec("h2", HandleMode.ReadWrite, SingletonType(EntityType(P_H2.SCHEMA)), setOf(P_H2))
 )) {
     val h1: ReadWriteSingletonHandle<P_H1> by handleMap
     val h2: ReadWriteSingletonHandle<P_H2> by handleMap
@@ -281,18 +277,45 @@ class PTestHarness<P : AbstractP>(
         collectionEntity: writes [Person {name: Text}]
         collectionReference: reads [&Person {name: Text}]
         collectionTuples: reads [(&Product {name: Text}, &Manufacturer {name: Text})]
-  `,
-    // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
-    //                    allowing multiple EntitySpecs for handles of tuples.
-`
+  `, `
 class PTestHarness<P : AbstractP>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
-    HandleSpec("singletonEntity", HandleMode.ReadWrite, HandleContainerType.Singleton, P_SingletonEntity, HandleDataType.Entity),
-    HandleSpec("singletonReference", HandleMode.ReadWrite, HandleContainerType.Singleton, P_SingletonReference, HandleDataType.Reference),
-    HandleSpec("collectionEntity", HandleMode.ReadWrite, HandleContainerType.Collection, P_CollectionEntity, HandleDataType.Entity),
-    HandleSpec("collectionReference", HandleMode.ReadWrite, HandleContainerType.Collection, P_CollectionReference, HandleDataType.Reference),
-    HandleSpec("collectionTuples", HandleMode.ReadWrite, HandleContainerType.Collection, P_CollectionTuples_0, HandleDataType.Entity)
+    HandleSpec(
+        "singletonEntity",
+        HandleMode.ReadWrite,
+        SingletonType(EntityType(P_SingletonEntity.SCHEMA)),
+        setOf(P_SingletonEntity)
+    ),
+    HandleSpec(
+        "singletonReference",
+        HandleMode.ReadWrite,
+        SingletonType(ReferenceType(EntityType(P_SingletonReference.SCHEMA))),
+        setOf(P_SingletonReference)
+    ),
+    HandleSpec(
+        "collectionEntity",
+        HandleMode.ReadWrite,
+        CollectionType(EntityType(P_CollectionEntity.SCHEMA)),
+        setOf(P_CollectionEntity)
+    ),
+    HandleSpec(
+        "collectionReference",
+        HandleMode.ReadWrite,
+        CollectionType(ReferenceType(EntityType(P_CollectionReference.SCHEMA))),
+        setOf(P_CollectionReference)
+    ),
+    HandleSpec(
+        "collectionTuples",
+        HandleMode.ReadWrite,
+        CollectionType(
+            TupleType.of(
+                ReferenceType(EntityType(P_CollectionTuples_0.SCHEMA)),
+                ReferenceType(EntityType(P_CollectionTuples_1.SCHEMA))
+            )
+        ),
+        setOf(P_CollectionTuples_0, P_CollectionTuples_1)
+    )
 )) {
     val singletonEntity: ReadWriteSingletonHandle<P_SingletonEntity> by handleMap
     val singletonReference: ReadWriteSingletonHandle<Reference<P_SingletonReference>> by handleMap
