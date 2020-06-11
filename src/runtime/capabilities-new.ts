@@ -66,7 +66,7 @@ export abstract class Capability {
 
 // The persistence types in order from most to least restrictive.
 export enum PersistenceType {
-  None = 0, InMemory, OnDisk, Unrestricted
+  None = 'none', InMemory = 'inMemory', OnDisk = 'onDisk', Unrestricted = 'unrestricted'
 }
 
 export class Persistence extends Capability {
@@ -80,10 +80,10 @@ export class Persistence extends Capability {
   static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
     const types = new Set<PersistenceType>();
     for (const annotation of annotations) {
-      if (['persistent', 'onDisk'].includes(annotation.name)) {
+      if ([PersistenceType.OnDisk, 'persistent'].includes(annotation.name)) {
         types.add(PersistenceType.OnDisk);
       }
-      if (['inMemory', 'tiedToArc', 'tiedToRuntime'].includes(annotation.name)) {
+      if ([PersistenceType.InMemory, 'tiedToArc', 'tiedToRuntime'].includes(annotation.name)) {
         types.add(PersistenceType.InMemory);
       }
     }
@@ -117,21 +117,14 @@ export class Persistence extends Capability {
     if (this.type === otherPersistence.type) {
       return CapabilityComparison.Equivalent;
     }
-    if (this.type < otherPersistence.type) {
+    if (Object.values(PersistenceType).indexOf(this.type) <
+        Object.values(PersistenceType).indexOf(otherPersistence.type)) {
       return CapabilityComparison.Stricter;
     }
     return CapabilityComparison.LessStrict;
   }
 
-  toDebugString(): string {
-    switch (this.type) {
-      case PersistenceType.Unrestricted: return 'unrestrictedPersistence';
-      case PersistenceType.InMemory: return 'inMemory';
-      case PersistenceType.OnDisk: return 'onDisk';
-      case PersistenceType.None: return 'noPersistence';
-      default: throw new Error(`Unsupported persistence type: ${this.type}`);
-    }
-  }
+  toDebugString(): string { return this.type.toString(); }
 
   static none(): Persistence { return new Persistence(PersistenceType.None); }
   static inMemory(): Persistence { return new Persistence(PersistenceType.InMemory); }
