@@ -50,23 +50,6 @@ fun DefaultConnectionFactory(
 }
 
 /**
- * Returns a [Connection] implementation which uses the provided [context] to bind to
- * the [StorageService] and the provided [coroutineContext] as the parent for
- * [StorageServiceConnection.connectAsync]'s [Deferred] return value.
- */
-@Suppress("FunctionName")
-@ExperimentalCoroutinesApi
-@Deprecated(
-    "Use ManagerConnectionFactory to get a Factory",
-    ReplaceWith("ManagerConnectionFactory(context, bindingDelegate, coroutineContext)")
-)
-fun GetManagerConnection(
-    context: Context,
-    bindingDelegate: StorageServiceBindingDelegate = StorageServiceManagerBindingDelegate(context),
-    coroutineContext: CoroutineContext = Dispatchers.Default
-): StorageServiceConnection = StorageServiceConnection(bindingDelegate, null, coroutineContext)
-
-/**
  * Returns a [ManagerConnectionFactory] implementation which uses the provided [context] to bind to
  * the [StorageService] and the provided [coroutineContext] as the parent for
  * [StorageServiceConnection.connectAsync]'s [Deferred] return value.
