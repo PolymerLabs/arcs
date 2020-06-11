@@ -17,6 +17,7 @@ import {SingletonInterfaceStore, SingletonEntityStore, SingletonReferenceStore, 
 import {AbstractActiveStore} from './store-interface.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {AnnotationRef} from '../recipe/annotation.js';
+import {ManifestStringBuilder} from '../manifest-string-builder.js';
 
 export function isSingletonInterfaceStore(store: AbstractStore): store is SingletonInterfaceStore {
   return (store.type.isSingleton && store.type.getContainedType().isInterface);
@@ -110,9 +111,9 @@ export abstract class AbstractStore implements Comparable<AbstractStore> {
   toManifestString(opts?: {handleTags?: string[], overrides?: Partial<StoreInfo>}): string {
     opts = opts || {};
     const info = {...this.storeInfo, ...opts.overrides};
-    const results: string[] = [];
+    const builder = new ManifestStringBuilder();
     if ((this.storeInfo.annotations || []).length > 0) {
-      results.push(`${this.storeInfo.annotations.map(a => a.toString()).join('\n')}`);
+      builder.push(...this.storeInfo.annotations.map(a => a.toString()));
     }
     const handleStr: string[] = [];
     handleStr.push(`store`);
@@ -144,17 +145,19 @@ export abstract class AbstractStore implements Comparable<AbstractStore> {
     } else if (this.storageKey) {
       handleStr.push(`at '${this.storageKey}'`);
     }
-    results.push(handleStr.join(' '));
-    if (info.claims && info.claims.size > 0) {
-      for (const [target, claims] of info.claims) {
-        const claimClause = target.length ? `claim field ${target}` : 'claim';
-        results.push(`  ${claimClause} is ${claims.map(claim => claim.tag).join(' and is ')}`);
+    builder.push(handleStr.join(' '));
+    builder.withIndent(builder => {
+      if (info.claims && info.claims.size > 0) {
+        for (const [target, claims] of info.claims) {
+          const claimClause = target.length ? `claim field ${target}` : 'claim';
+          builder.push(`${claimClause} is ${claims.map(claim => claim.tag).join(' and is ')}`);
+        }
       }
-    }
-    if (info.description) {
-      results.push(`  description \`${info.description}\``);
-    }
-    return results.join('\n');
+      if (info.description) {
+        builder.push(`description \`${info.description}\``);
+      }
+    });
+    return builder.toString();
   }
 }
 

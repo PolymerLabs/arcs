@@ -33,8 +33,8 @@ interface HandleHolder {
     /** Returns the [Handle] for the given handle name. */
     fun getHandle(handleName: String): Handle
 
-    /** Returns the [EntitySpec] for the given handle name. */
-    fun getEntitySpec(handleName: String): EntitySpec<out Entity>
+    /** Returns [EntitySpec]s for the given handle name. */
+    fun getEntitySpecs(handleName: String): Set<EntitySpec<out Entity>>
 
     /** Sets the given [Handle]. */
     fun setHandle(handleName: String, handle: Handle)

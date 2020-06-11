@@ -25,7 +25,12 @@ class ParcelableSchemaFieldsTest {
     @Test
     fun parcelableRoundtrip_works() {
         val fields = SchemaFields(
-            singletons = mapOf("foo" to FieldType.Text, "bar" to FieldType.Number),
+            singletons = mapOf(
+                "foo" to FieldType.Text,
+                "bar" to FieldType.Number,
+                "foolist" to FieldType.ListOf(FieldType.Text),
+                "barlist" to FieldType.ListOf(FieldType.EntityRef("schema hash R Us"))
+            ),
             collections = mapOf(
                 "fooCollection" to FieldType.Text,
                 "barCollection" to FieldType.Number

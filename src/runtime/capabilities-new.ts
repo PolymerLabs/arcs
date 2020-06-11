@@ -10,6 +10,8 @@
 
 import {assert} from '../platform/assert-web.js';
 import {AnnotationRef} from './recipe/annotation.js';
+import {Capabilities as CapabilitiesOld} from './capabilities.js';
+import {Ttl as TtlOld} from './recipe/ttl.js';
 
 export enum CapabilityComparison {
   LessStrict, Equivalent, Stricter
@@ -21,6 +23,11 @@ export abstract class Capability {
     const comparison = this.compare(other);
     return comparison === CapabilityComparison.Equivalent;
   }
+
+  contains(other: Capability): boolean {
+    return this.isEquivalent(other);
+  }
+
   isLessStrict(other: Capability): boolean {
     return this.compare(other) === CapabilityComparison.LessStrict;
   }
@@ -38,19 +45,28 @@ export abstract class Capability {
     return [CapabilityComparison.Stricter, CapabilityComparison.Equivalent]
         .includes(this.compare(other));
   }
+
+  static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
+    throw new Error('not implemented');
+  }
+
   abstract compare(other: Capability): CapabilityComparison;
 
   abstract setMostRestrictive(other: Capability): boolean;
   abstract setLeastRestrictive(other: Capability): boolean;
 
-  static fromAnnotations(annotations: AnnotationRef[]): Capability {
-    throw new Error('not implemented');
+  isCompatible(other: Capability): boolean {
+    return this.constructor.name === other.constructor.name;
   }
+
+  toRange(): CapabilityRange { return new CapabilityRange(this, this); }
+
+  abstract toDebugString(): string;
 }
 
 // The persistence types in order from most to least restrictive.
 export enum PersistenceType {
-  None = 0, InMemory, OnDisk, Unrestricted
+  None = 'none', InMemory = 'inMemory', OnDisk = 'onDisk', Unrestricted = 'unrestricted'
 }
 
 export class Persistence extends Capability {
@@ -61,18 +77,18 @@ export class Persistence extends Capability {
     this.type = type;
   }
 
-  static fromAnnotations(annotations: AnnotationRef[]): Capability {
+  static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
     const types = new Set<PersistenceType>();
     for (const annotation of annotations) {
-      if (['persistent', 'onDisk'].includes(annotation.name)) {
+      if ([PersistenceType.OnDisk, 'persistent'].includes(annotation.name)) {
         types.add(PersistenceType.OnDisk);
       }
-      if (['inMemory', 'tiedToArc', 'tiedToRuntime'].includes(annotation.name)) {
+      if ([PersistenceType.InMemory, 'tiedToArc', 'tiedToRuntime'].includes(annotation.name)) {
         types.add(PersistenceType.InMemory);
       }
     }
     if (types.size === 0) {
-      return Persistence.unrestricted();
+      return null;
     }
 
     assert(types.size === 1,
@@ -96,22 +112,26 @@ export class Persistence extends Capability {
   }
 
   compare(other: Capability): CapabilityComparison {
-    assert(other instanceof Persistence);
-
+    assert(this.isCompatible(other));
     const otherPersistence = other as Persistence;
     if (this.type === otherPersistence.type) {
       return CapabilityComparison.Equivalent;
     }
-    if (this.type < otherPersistence.type) {
+    if (Object.values(PersistenceType).indexOf(this.type) <
+        Object.values(PersistenceType).indexOf(otherPersistence.type)) {
       return CapabilityComparison.Stricter;
     }
     return CapabilityComparison.LessStrict;
   }
 
+  toDebugString(): string { return this.type.toString(); }
+
   static none(): Persistence { return new Persistence(PersistenceType.None); }
   static inMemory(): Persistence { return new Persistence(PersistenceType.InMemory); }
   static onDisk(): Persistence { return new Persistence(PersistenceType.OnDisk); }
   static unrestricted(): Persistence { return new Persistence(PersistenceType.Unrestricted); }
+
+  static any(): Capability { return new CapabilityRange(Persistence.unrestricted(), Persistence.none()); }
 }
 
 // TODO(b/157761106): use full names (minutes, hours, days) to be compatible
@@ -162,7 +182,7 @@ export class Ttl extends Capability {
   get isInfinite(): boolean { return this.units === TtlUnits.Infinite; }
 
   compare(other: Capability): CapabilityComparison {
-    assert(other instanceof Ttl);
+    assert(this.isCompatible(other));
     const otherTtl = other as Ttl;
     if (this.isInfinite || otherTtl.isInfinite) {
       return this.isInfinite === otherTtl.isInfinite
@@ -172,7 +192,7 @@ export class Ttl extends Capability {
     const millis = this.millis;
     const otherMillis = otherTtl.millis;
     return (millis === otherMillis)
-        ? CapabilityComparison.Equivalent : (millis >= otherMillis)
+        ? CapabilityComparison.Equivalent : (millis > otherMillis)
             ? CapabilityComparison.LessStrict : CapabilityComparison.Stricter;
   }
 
@@ -194,12 +214,12 @@ export class Ttl extends Capability {
     return true;
   }
 
-  static fromAnnotations(annotations: AnnotationRef[]): Capability {
+  static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
     const ttlAnnotations = annotations.filter(annotation => annotation.name === 'ttl');
-    assert(ttlAnnotations.length <= 1, `Containing multiple TTL annotations`);
     if (ttlAnnotations.length === 0) {
-      return Ttl.infinite();
+      return null;
     }
+    assert(ttlAnnotations.length === 1, `Containing multiple TTL annotations`);
     const annotation = ttlAnnotations[0];
     return Ttl.fromString(annotation.params['value'].toString());
   }
@@ -213,21 +233,27 @@ export class Ttl extends Capability {
     return new Ttl(Number(ttlTokens[1]), Ttl.ttlUnitsFromString(ttlTokens[2]));
   }
 
-  public static ttlUnitsFromString(units: string): TtlUnits|undefined {
+  public static ttlUnitsFromString(units: string): TtlUnits {
     switch (units) {
       case 'm': return TtlUnits.Minutes;
       case 'h': return TtlUnits.Hours;
       case 'd': return TtlUnits.Days;
       default:
-        assert(`Unsupported ttl units ${units}`);
-        return undefined;
+        throw new Error(`Unsupported ttl units ${units}`);
     }
+  }
+
+  toDebugString(): string {
+    return this.isInfinite ? `infinite` : `${this.count}${this.units}`;
   }
 
   static infinite(): Ttl { return new Ttl(null, TtlUnits.Infinite); }
   static minutes(count: number): Ttl { return new Ttl(count, TtlUnits.Minutes); }
   static hours(count: number): Ttl { return new Ttl(count, TtlUnits.Hours); }
   static days(count: number): Ttl { return new Ttl(count, TtlUnits.Days); }
+  static zero(): Ttl { return new Ttl(0, TtlUnits.Millis); }
+
+  static any(): Capability { return new CapabilityRange(Ttl.infinite(), Ttl.zero()); }
 }
 
 export abstract class BooleanCapability extends Capability {
@@ -263,127 +289,195 @@ export abstract class BooleanCapability extends Capability {
 }
 
 export class Queryable extends BooleanCapability {
-  constructor(isQueryable: boolean) { super(isQueryable); }
-
-  static fromAnnotations(annotations: AnnotationRef[]): Capability {
+  static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
     const queryableAnnotations =
         annotations.filter(annotation => annotation.name === 'queryable');
-    assert(queryableAnnotations.length <= 1, `Containing multiple queryable annotations`);
-    return new Queryable(queryableAnnotations.length > 0);
+    if (queryableAnnotations.length === 0) {
+      return null;
+    }
+    assert(queryableAnnotations.length === 1, `Containing multiple queryable annotations`);
+    return new Queryable(true);
   }
+
+  toDebugString(): string {
+    return this.value ? 'queryable' : 'notQueryable';
+  }
+
+  static any(): Capability { return new CapabilityRange(new Queryable(false), new Queryable(true)); }
+}
+
+// This is an inferred only capabilities that used to distinguish between
+// ramdisk and volatile memory. Currently only introduced for backward
+// compatibility in tests.
+export class Shareable extends BooleanCapability {
+  static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
+    const shareableAnnotations =
+        annotations.filter(annotation => annotation.name === 'shareable');
+    if (shareableAnnotations.length === 0) {
+      return null;
+    }
+    assert(shareableAnnotations.length === 1, `Containing multiple queryable annotations`);
+    return new Queryable(true);
+  }
+
+  toDebugString(): string {
+    return this.value ? 'shareable' : 'notShareable';
+  }
+
+  static any(): Capability { return new CapabilityRange(new Shareable(false), new Shareable(true)); }
 }
 
 export class Encryption extends BooleanCapability {
-  constructor(isEncrypted: boolean) { super(isEncrypted); }
-
-  static fromAnnotations(annotations: AnnotationRef[]): Capability {
+  static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
     const encryptedAnnotations =
         annotations.filter(annotation => annotation.name === 'encrypted');
-    assert(encryptedAnnotations.length <= 1, `Containing multiple encrypted annotations`);
-    return new Encryption(encryptedAnnotations.length > 0);
+    if (encryptedAnnotations.length === 0) {
+      return null;
+    }
+    assert(encryptedAnnotations.length === 1, `Containing multiple encrypted annotations`);
+    return new Encryption(true);
+  }
+
+  toDebugString(): string {
+    return this.value ? 'encrypted' : 'notEncrypted';
+  }
+
+  static any(): Capability { return new CapabilityRange(new Encryption(false), new Encryption(true)); }
+}
+
+export class CapabilityRange extends Capability {
+  min: Capability;
+  max: Capability;
+
+  constructor(min: Capability, max?: Capability) {
+    super();
+    this.min = min;
+    this.max = max || min;
+    assert(this.min.isSameOrLessStrict(this.max));
+  }
+
+  isEquivalent(other: Capability): boolean {
+    if (other instanceof CapabilityRange) {
+      const range = other as CapabilityRange;
+      return this.min.isEquivalent(range.min) && this.max.isEquivalent(range.max);
+    }
+    return this.min.isEquivalent(other) && this.max.isEquivalent(other);
+  }
+
+  isCompatible(other: Capability): boolean {
+    if (other instanceof CapabilityRange) {
+      return this.min.isCompatible((other as CapabilityRange).min);
+    }
+    return this.min.isCompatible(other);
+  }
+
+  contains(other: Capability): boolean {
+    if (other instanceof CapabilityRange) {
+      const range = other as CapabilityRange;
+      return this.min.isSameOrLessStrict(range.min) && this.max.isSameOrStricter(range.max);
+    }
+    return this.min.isSameOrLessStrict(other) && this.max.isSameOrStricter(other);
+  }
+
+  compare(other: Capability): CapabilityComparison {
+    throw new Error('not supported');
+  }
+
+  setMostRestrictive(other: Capability): boolean {
+    throw new Error('not supported');
+  }
+
+  setLeastRestrictive(other: Capability): boolean {
+    throw new Error('not supported');
+  }
+
+  toRange(): CapabilityRange { return this; }
+
+  toDebugString(): string {
+    if (this.min.isEquivalent(this.max)) {
+      return this.min.toDebugString();
+    }
+    return `${this.min.toDebugString()} - ${this.max.toDebugString()}`;
   }
 }
 
 // Capabilities are a grouping of individual capabilities.
-export class Capabilities extends Capability {
-  readonly list: Capability[];
-  constructor(list: Capability[] = []) {
-    super();
-    this.list = list;
-  }
-
-  static fromAnnotations(annotations: AnnotationRef[]): Capabilities {
-    const list: Capability[] = [];
-    for (const capabilityType of Capabilities.all) {
-      list.push(capabilityType.fromAnnotations(annotations));
+export class Capabilities {
+  private readonly ranges: CapabilityRange[] = [];
+  private constructor(ranges: Capability[] = []) {
+    for (const capability of ranges) {
+      this.ranges.push(capability.toRange());
     }
-    return new Capabilities(list);
   }
 
-  getPersistence(): Persistence|null {
-    const persistence = this.list.find(capability => capability instanceof Persistence);
-    return persistence ? persistence as Persistence : null;
+  static create(ranges: Capability[] = []) {
+    return new Capabilities(ranges);
   }
 
-  getTtl(): Ttl|null {
-    const ttl = this.list.find(capability => capability instanceof Ttl);
-    return ttl ? ttl as Ttl : null;
+  getPersistence(): Capability|undefined {
+    return this.ranges.find(range => range.min instanceof Persistence);
   }
 
-  isEncrypted(): boolean {
-    const encryption = this.list.find(capability => capability instanceof Encryption);
-    return encryption ? (encryption as Encryption).value : false;
+  getTtl(): Capability {
+    return this.ranges.find(range => range.min instanceof Ttl);
   }
 
-  isQueryable(): boolean {
-    const queryable = this.list.find(capability => capability instanceof Queryable);
-    return queryable ? (queryable as Queryable).value : false;
+  isEncrypted(): boolean|undefined {
+    const encryption = this.ranges.find(range => range.min instanceof Encryption);
+    return encryption ? (encryption.min as Encryption).value : undefined;
   }
 
-  compare(other: Capability): CapabilityComparison {
-    assert(other instanceof Capabilities);
-    const otherCapabilities = other as Capabilities;
-    assert(this.list.length === otherCapabilities.list.length);
-    for (let index = 0; index < this.list.length; ++index) {
-      const capability = this.list[index];
-      const otherCapability = otherCapabilities.list[index];
-      const comparison = capability.compare(otherCapability);
-      if (comparison !== CapabilityComparison.Equivalent) {
-        return comparison;
+  isQueryable(): boolean|undefined {
+    const queryable = this.ranges.find(range => range.min instanceof Queryable);
+    return queryable ? (queryable.min as Queryable).value : undefined;
+  }
+
+  isShareable(): boolean|undefined {
+    const shareable = this.ranges.find(range => range.min instanceof Shareable);
+    return shareable ? (shareable.min as Shareable).value : undefined;
+  }
+
+  static fromAnnotations(annotations: AnnotationRef[] = []): Capabilities {
+    const ranges: Capability[] = [];
+    for (const type of Capabilities.all) {
+      const capability = type.fromAnnotations(annotations);
+      if (capability) {
+        ranges.push(capability);
       }
     }
-    return CapabilityComparison.Equivalent;
+    return new Capabilities(ranges);
   }
 
-  // Returns true, if all capabilities in one sets are consistently equivalent
-  // or stricter than the other.
-  protected canRestrict(other: Capabilities): boolean {
-    assert(this.list.length === other.list.length);
-    let totalComparison = CapabilityComparison.Equivalent;
-    for (let index = 0; index < this.list.length; ++index) {
-      const capability = this.list[index];
-      const otherCapability = other.list[index];
-      const comparison = capability.compare(otherCapability);
-      if (comparison !== CapabilityComparison.Equivalent) {
-        if (totalComparison !== CapabilityComparison.Equivalent &&
-            totalComparison !== comparison) {
-            return false;
-        }
-        totalComparison = comparison;
-      }
-    }
-    return true;
+  containsAll(other: Capabilities): boolean {
+    return other.ranges.every(otherRange => {
+      const range = this.ranges.find(r => r.isCompatible(otherRange));
+      return range && range.contains(otherRange);
+    });
   }
 
-  setMostRestrictive(other: Capability): boolean {
-    assert(other instanceof Capabilities);
-    const otherCapabilities = other as Capabilities;
-    if (!this.canRestrict(otherCapabilities)) {
-      return false;
-    }
-    for (let index = 0; index < this.list.length; ++index) {
-      this.list[index].setMostRestrictive(otherCapabilities.list[index]);
-    }
-    return true;
-  }
-
-  setLeastRestrictive(other: Capability): boolean {
-    assert(other instanceof Capabilities);
-    const otherCapabilities = other as Capabilities;
-    if (!this.canRestrict(otherCapabilities)) {
-      return false;
-    }
-    for (let index = 0; index < this.list.length; ++index) {
-      this.list[index].setLeastRestrictive(otherCapabilities.list[index]);
-    }
-    return true;
-  }
-
-  // List of individual Capabilities in the order of enforcement.
-  static readonly all: (typeof Capability | typeof BooleanCapability)[] = [
-    Persistence,
-    Encryption,
-    Ttl,
-    Queryable
+  private static readonly all: (typeof Capability | typeof BooleanCapability)[] = [
+    Persistence, Encryption, Ttl, Queryable, Shareable
   ];
+
+  // This method is only needed for backward compatibility testing.
+  static fromOldCapabilities(capabilitiesOld: CapabilitiesOld, ttlOld: TtlOld): Capabilities {
+    const ranges = [];
+    ranges.push(capabilitiesOld.isPersistent ? Persistence.onDisk() : Persistence.inMemory());
+    if (ttlOld && !ttlOld.isInfinite) {
+      ranges.push(Ttl.fromString(`${ttlOld.count}${ttlOld.units}`));
+    }
+    if (capabilitiesOld.isQueryable) {
+      ranges.push(new Queryable(true));
+    }
+    if (capabilitiesOld.isTiedToRuntime) {
+      ranges.push(new Shareable(true));
+    }
+    return new Capabilities(ranges);
+  }
+
+  toDebugString(): string {
+    return this.ranges.map(({min, max}) => min.isEquivalent(max)
+        ? min.toDebugString() : `${min.toDebugString()} - ${max.toDebugString()}`
+    ).join(' /// ');
+  }
 }

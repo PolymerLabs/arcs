@@ -529,12 +529,16 @@ ParticleClaimIsTag
   }
 
 ParticleClaimDerivesFrom
-  = 'derives from' whiteSpace handle:lowerIdent
+  = 'derives from' whiteSpace target:dottedFields
   {
+    const targetParts = target.split('.');
+    const handle = targetParts[0];
+    const fieldPath = targetParts.slice(1);
     return toAstNode<AstNode.ParticleClaimDerivesFrom>({
       kind: 'particle-trust-claim-derives-from',
       claimType: ClaimType.DerivesFrom,
       parentHandle: handle,
+      fieldPath,
     });
   }
 

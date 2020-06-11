@@ -12,14 +12,10 @@ package arcs.core.host
 
 import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
-import arcs.core.data.CollectionType
-import arcs.core.data.EntityType
 import arcs.core.data.Plan
-import arcs.core.data.SingletonType
 import arcs.core.data.Ttl
 import arcs.core.entity.Entity
 import arcs.core.entity.Handle
-import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
@@ -497,16 +493,11 @@ abstract class AbstractArcHost(
         particleId: String = "",
         immediateSync: Boolean = true
     ): Handle {
-        val containerType = when (connectionSpec.type) {
-            is SingletonType<*>, is EntityType -> HandleContainerType.Singleton
-            is CollectionType<*> -> HandleContainerType.Collection
-            else -> throw IllegalArgumentException("Unknown type ${connectionSpec.type}")
-        }
         val handleSpec = HandleSpec(
             handleName,
             connectionSpec.mode,
-            containerType,
-            holder.getEntitySpec(handleName)
+            connectionSpec.type,
+            holder.getEntitySpecs(handleName)
         )
         return handleManager.createHandle(
             handleSpec,

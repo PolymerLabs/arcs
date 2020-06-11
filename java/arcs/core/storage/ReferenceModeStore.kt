@@ -145,13 +145,15 @@ class ReferenceModeStore private constructor(
         }
     )
 
+    private val containerCallbackToken: Int
+
     init {
         @Suppress("UNCHECKED_CAST")
         crdtType = requireNotNull(
             type as? Type.TypeContainer<CrdtModelType<CrdtData, CrdtOperationAtTime, Referencable>>
         ) { "Provided type must contain CrdtModelType" }.containedType
 
-        containerStore.on(ProxyCallback {
+        containerCallbackToken = containerStore.on(ProxyCallback {
             CoroutineScope(coroutineContext).launch {
                 receiveQueue.enqueue(Message.PreEnqueuedFromContainer(it.toReferenceModeMessage()))
             }
@@ -182,7 +184,10 @@ class ReferenceModeStore private constructor(
         callback: ProxyCallback<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
     ): Int = callbacks.register(callback)
 
-    override fun off(callbackToken: Int) = callbacks.unregister(callbackToken)
+    override fun off(callbackToken: Int) {
+        containerStore.off(containerCallbackToken)
+        callbacks.unregister(callbackToken)
+    }
 
     /*
      * Messages are enqueued onto an object-wide queue and processed in order.
@@ -226,6 +231,12 @@ class ReferenceModeStore private constructor(
             is ProxyMessage.Operations -> {
                 proxyMessage.operations.toBridgingOps(backingStore.storageKey)
                     .all { op ->
+                        if (op is BridgingOperation.ClearSingleton ||
+                            op is BridgingOperation.UpdateSingleton) {
+                            // Free up the memory used by the previous instance (for a Singleton,
+                            // there would be only one instance).
+                            backingStore.clearStoresCache()
+                        }
                         op.entityValue?.let {
                             if (op is BridgingOperation.RemoveFromSet) {
                                 // If this is a removal, we clear the entity rather than updating it

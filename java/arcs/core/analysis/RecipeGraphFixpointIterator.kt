@@ -98,6 +98,14 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>>(val bottom: V) 
         input: V
     ): V = input
 
+    /** State transfer function for a [Recipe.Handle] -> [Recipe.Handle] join edge. */
+    open fun edgeTransfer(
+        fromHandle: Recipe.Handle,
+        toHandle: Recipe.Handle,
+        spec: RecipeGraph.JoinSpec,
+        input: V
+    ): V = input
+
     /**
      * Returns the initial values for the nodes for starting a fixpoint iteration.
      *
@@ -167,6 +175,21 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>>(val bottom: V) 
     private fun nodeTransfer(node: RecipeGraph.Node, input: V) = when (node) {
         is RecipeGraph.Node.Particle -> nodeTransfer(node.particle, input)
         is RecipeGraph.Node.Handle -> nodeTransfer(node.handle, input)
+    }
+
+    private fun edgeTransfer(
+        source: RecipeGraph.Node,
+        target: RecipeGraph.Node,
+        edgeKind: RecipeGraph.EdgeKind,
+        input: V
+    ) = when (edgeKind) {
+        is RecipeGraph.EdgeKind.HandleConnection ->
+            edgeTransfer(source, target, edgeKind.spec, input)
+        is RecipeGraph.EdgeKind.JoinConnection -> {
+            require(source is RecipeGraph.Node.Handle)
+            require(target is RecipeGraph.Node.Handle)
+            edgeTransfer(source.handle, target.handle, edgeKind.spec, input)
+        }
     }
 
     private fun edgeTransfer(

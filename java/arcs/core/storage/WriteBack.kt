@@ -42,6 +42,9 @@ interface WriteBack {
     /** A flow which can be collected to observe idle->busy->idle transitions. */
     val writebackIdlenessFlow: Flow<Boolean>
 
+    /** Dispose of this [WriteBack] and any resources it's using. */
+    fun closeWriteBack() = Unit
+
     /**
      * Write-through: flush directly all data updates to the next storage layer.
      */
@@ -65,7 +68,11 @@ interface WriteBackFactory {
         /**
          * The maximum queue size above which new incoming flush jobs will be suspended.
          */
-        queueSize: Int = Channel.UNLIMITED
+        queueSize: Int = Channel.UNLIMITED,
+        /**
+         * Whether or not to force non-pass-through behavior of the [WriteBack].
+         */
+        forceEnable: Boolean = false
     ): WriteBack
 }
 
@@ -78,12 +85,13 @@ interface WriteBackFactory {
 open class StoreWriteBack /* internal */ constructor(
     protocol: String,
     queueSize: Int,
+    forceEnable: Boolean,
     val scope: CoroutineScope?
 ) : WriteBack,
     Mutex by Mutex() {
-    // Only apply write-back to physical storage media(s).
+    // Only apply write-back to physical storage media(s) unless forceEnable is specified.
     private val passThrough = atomic(
-        scope == null || protocol != Protocols.DATABASE_DRIVER
+        !forceEnable && (scope == null || protocol != Protocols.DATABASE_DRIVER)
     )
 
     // The number of active flush jobs.
@@ -129,6 +137,8 @@ open class StoreWriteBack /* internal */ constructor(
                 .launchIn(scope)
         }
     }
+
+    override fun closeWriteBack() = channel.cancel()
 
     override suspend fun flush(job: suspend () -> Unit) {
         if (!passThrough.value) flushSection { job() }
@@ -178,9 +188,9 @@ open class StoreWriteBack /* internal */ constructor(
         var writeBackFactoryOverride: WriteBackFactory? = null
 
         /** The factory of creating [WriteBack] instances. */
-        override fun create(protocol: String, queueSize: Int): WriteBack =
-            writeBackFactoryOverride?.create(protocol, queueSize)
-                ?: StoreWriteBack(protocol, queueSize, writeBackScope)
+        override fun create(protocol: String, queueSize: Int, forceEnable: Boolean): WriteBack =
+            writeBackFactoryOverride?.create(protocol, queueSize, forceEnable)
+                ?: StoreWriteBack(protocol, queueSize, forceEnable, writeBackScope)
 
         /**
          * Initialize write-back coroutine scope.

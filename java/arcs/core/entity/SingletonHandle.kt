@@ -108,7 +108,7 @@ class SingletonHandle<T : Storable, R : Referencable>(
         /** See [BaseHandleConfig.name]. */
         name: String,
         /** See [BaseHandleConfig.spec]. */
-        spec: HandleSpec<out Entity>,
+        spec: HandleSpec,
         /**
          * Interface to storage for [RawEntity] objects backing an `entity: T`.
          *

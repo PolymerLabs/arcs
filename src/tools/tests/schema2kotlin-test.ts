@@ -117,7 +117,7 @@ describe('schema2kotlin', () => {
       const schema2kotlin = new Schema2Kotlin({_: []});
 
       assert.equal(
-        schema2kotlin.handleInterfaceType(connection, graph.nodes),
+        schema2kotlin.handleInterfaceType(connection, graph.nodes, /* particleScope= */ true),
         expectedHandleInterface);
     }
   });
@@ -127,7 +127,7 @@ describe('schema2kotlin', () => {
          h1: reads Person {name: Text}`,
       `class Handles : HandleHolderBase(
         "P",
-        mapOf("h1" to Person)
+        mapOf("h1" to setOf(Person))
     ) {
         val h1: ReadSingletonHandle<Person> by handles
     }`
@@ -138,7 +138,7 @@ describe('schema2kotlin', () => {
          h2: reads Person {age: Number}`,
       `class Handles : HandleHolderBase(
         "P",
-        mapOf("h1" to P_H1, "h2" to P_H2)
+        mapOf("h1" to setOf(P_H1), "h2" to setOf(P_H2))
     ) {
         val h1: ReadSingletonHandle<P_H1> by handles
         val h2: ReadSingletonHandle<P_H2> by handles
@@ -152,7 +152,7 @@ describe('schema2kotlin', () => {
       `,
       `class Handles : HandleHolderBase(
         "P",
-        mapOf("h1" to P_H1, "h2" to P_H2, "h3" to P_H3)
+        mapOf("h1" to setOf(P_H1), "h2" to setOf(P_H2), "h3" to setOf(P_H3))
     ) {
         val h1: ReadSingletonHandle<P_H1> by handles
         val h2: WriteSingletonHandle<P_H2> by handles
@@ -174,15 +174,11 @@ describe('schema2kotlin', () => {
       `,
       `class Handles : HandleHolderBase(
         "P",
-        mapOf("h1" to Person)
+        mapOf("h1" to setOf(Person))
     ) {
         val h1: ReadSingletonHandle<Person> by handles
     }`
     ));
-    // Below test shows the shortcoming of our handle declaration, which allows
-    // specifying a single entity per handle.
-    // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
-    //                    allowing multiple EntitySpecs for handles of tuples.
     it('Handle with a tuple', async () => await assertHandleClassDeclaration(
       `particle P
         h1: reads (
@@ -193,7 +189,7 @@ describe('schema2kotlin', () => {
       `,
       `class Handles : HandleHolderBase(
         "P",
-        mapOf("h1" to Accommodation)
+        mapOf("h1" to setOf(Person, Accommodation, Address))
     ) {
         val h1: ReadSingletonHandle<Tuple3<Reference<Person>, Reference<Accommodation>, Reference<Address>>> by handles
     }`
@@ -441,6 +437,90 @@ describe('schema2kotlin', () => {
     }
 
   });
+  describe('Test Harness', () => {
+    it('exposes a handle as a read write handle regardless of particle spec direction', async () => await assertTestHarness(
+      `particle P
+        h1: reads Person {name: Text}
+        h2: reads Address {streetAddress: Text}
+      `, `
+class PTestHarness<P : AbstractP>(
+    factory : (CoroutineScope) -> P
+) : BaseTestHarness<P>(factory, listOf(
+    HandleSpec("h1", HandleMode.ReadWrite, SingletonType(EntityType(P_H1.SCHEMA)), setOf(P_H1)),
+    HandleSpec("h2", HandleMode.ReadWrite, SingletonType(EntityType(P_H2.SCHEMA)), setOf(P_H2))
+)) {
+    val h1: ReadWriteSingletonHandle<P_H1> by handleMap
+    val h2: ReadWriteSingletonHandle<P_H2> by handleMap
+}
+`
+    ));
+    it('specifies handle type correctly - singleton, collection, entity, reference, tuples', async () => await assertTestHarness(
+      `particle P
+        singletonEntity: reads Person {name: Text}
+        singletonReference: writes &Person {name: Text}
+        collectionEntity: writes [Person {name: Text}]
+        collectionReference: reads [&Person {name: Text}]
+        collectionTuples: reads [(&Product {name: Text}, &Manufacturer {name: Text})]
+  `, `
+class PTestHarness<P : AbstractP>(
+    factory : (CoroutineScope) -> P
+) : BaseTestHarness<P>(factory, listOf(
+    HandleSpec(
+        "singletonEntity",
+        HandleMode.ReadWrite,
+        SingletonType(EntityType(P_SingletonEntity.SCHEMA)),
+        setOf(P_SingletonEntity)
+    ),
+    HandleSpec(
+        "singletonReference",
+        HandleMode.ReadWrite,
+        SingletonType(ReferenceType(EntityType(P_SingletonReference.SCHEMA))),
+        setOf(P_SingletonReference)
+    ),
+    HandleSpec(
+        "collectionEntity",
+        HandleMode.ReadWrite,
+        CollectionType(EntityType(P_CollectionEntity.SCHEMA)),
+        setOf(P_CollectionEntity)
+    ),
+    HandleSpec(
+        "collectionReference",
+        HandleMode.ReadWrite,
+        CollectionType(ReferenceType(EntityType(P_CollectionReference.SCHEMA))),
+        setOf(P_CollectionReference)
+    ),
+    HandleSpec(
+        "collectionTuples",
+        HandleMode.ReadWrite,
+        CollectionType(
+            TupleType.of(
+                ReferenceType(EntityType(P_CollectionTuples_0.SCHEMA)),
+                ReferenceType(EntityType(P_CollectionTuples_1.SCHEMA))
+            )
+        ),
+        setOf(P_CollectionTuples_0, P_CollectionTuples_1)
+    )
+)) {
+    val singletonEntity: ReadWriteSingletonHandle<P_SingletonEntity> by handleMap
+    val singletonReference: ReadWriteSingletonHandle<Reference<P_SingletonReference>> by handleMap
+    val collectionEntity: ReadWriteCollectionHandle<P_CollectionEntity> by handleMap
+    val collectionReference: ReadWriteCollectionHandle<Reference<P_CollectionReference>> by handleMap
+    val collectionTuples: ReadWriteCollectionHandle<Tuple2<Reference<P_CollectionTuples_0>, Reference<P_CollectionTuples_1>>> by handleMap
+}
+`
+    ));
+    async function assertTestHarness(manifestString: string, expected: string) {
+      const manifest = await Manifest.parse(manifestString);
+      assert.lengthOf(manifest.particles, 1);
+      const [particle] = manifest.particles;
+
+      const schema2kotlin = new Schema2Kotlin({_: []});
+      const generators = await schema2kotlin.calculateNodeAndGenerators(particle);
+      const nodes = generators.map(g => g.node);
+      const actual = schema2kotlin.generateTestHarness(particle, nodes);
+      assert.equal(actual, expected);
+    }
+  });
 
   // Asserts that a certain generated component, i.e. one of the results of the
   // generateParticleClassComponents equals the expected value.
@@ -474,4 +554,5 @@ describe('schema2kotlin', () => {
     const generator = (generators[0].generator as KotlinGenerator);
     assert.deepEqual(extractor(generator), expectedValue);
   }
+
 });

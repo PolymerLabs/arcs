@@ -43,4 +43,7 @@ interface Driver<Data : Any> {
 
     /** Sends data to the [Driver] for storage. */
     suspend fun send(data: Data, version: Int): Boolean
+
+    /** Closes the driver and releases any held resources. */
+    suspend fun close() = Unit
 }

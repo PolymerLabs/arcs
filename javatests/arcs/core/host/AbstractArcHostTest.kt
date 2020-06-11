@@ -2,6 +2,7 @@ package arcs.core.host
 
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
+import arcs.core.data.SingletonType
 import arcs.core.data.Ttl
 import arcs.core.entity.DummyEntity
 import arcs.core.entity.EntityBaseSpec
@@ -28,8 +29,10 @@ import org.junit.runners.JUnit4
 open class AbstractArcHostTest {
 
     class TestParticle : BaseParticle() {
-        override val handles: HandleHolder =
-            HandleHolderBase("TestParticle", mapOf("foo" to EntityBaseSpec(DummyEntity.SCHEMA)))
+        override val handles: HandleHolder = HandleHolderBase(
+            "TestParticle",
+            mapOf("foo" to setOf(EntityBaseSpec(DummyEntity.SCHEMA)))
+        )
     }
 
     class MyTestHost(
@@ -90,7 +93,7 @@ open class AbstractArcHostTest {
                 storageKey = RamDiskStorageKey("container")
             ),
             HandleMode.ReadWrite,
-            EntityType(DummyEntity.SCHEMA),
+            SingletonType(EntityType(DummyEntity.SCHEMA)),
             Ttl.Minutes(2)
         )
         val particle = Plan.Particle(

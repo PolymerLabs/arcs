@@ -508,11 +508,11 @@ abstract class AbstractGold : BaseParticle() {
     class Handles : HandleHolderBase(
         "Gold",
         mapOf(
-            "data" to Gold_Data,
-            "allPeople" to Gold_AllPeople,
-            "qCollection" to Gold_QCollection,
-            "alias" to Gold_Alias,
-            "collection" to Foo
+            "data" to setOf(Gold_Data),
+            "allPeople" to setOf(Gold_AllPeople),
+            "qCollection" to setOf(Gold_QCollection),
+            "alias" to setOf(Gold_Alias),
+            "collection" to setOf(Foo)
         )
     ) {
         val data: ReadSingletonHandle<Gold_Data> by handles

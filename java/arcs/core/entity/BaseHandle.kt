@@ -22,7 +22,7 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
     override val dispatcher: CoroutineDispatcher
         get() = storageProxy.dispatcher
 
-    val spec: HandleSpec<out Entity> = config.spec
+    val spec: HandleSpec = config.spec
 
     protected var closed = false
     protected val callbackIdentifier =
@@ -80,7 +80,7 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
         /** Name of the [Handle], typically comes from a particle manifest. */
         val name: String,
         /** Description of the capabilities and other details about the [Handle]. */
-        val spec: HandleSpec<out Entity>,
+        val spec: HandleSpec,
         /**
          * [StorageProxy] instance to use when listening for updates, fetching data, or issuing
          * changes.

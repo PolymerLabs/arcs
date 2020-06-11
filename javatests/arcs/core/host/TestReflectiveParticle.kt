@@ -15,7 +15,7 @@ open class TestReflectiveParticle(val spec: Plan.Particle?) : BaseParticle() {
     class Handles(schema: Schema) : HandleHolderBase(
         "TestReflectiveParticle",
         mapOf(
-            "data" to EntityBaseSpec(schema)
+            "data" to setOf(EntityBaseSpec(schema))
         )
     ) {
         val data: ReadCollectionHandle<EntityBase> by handles

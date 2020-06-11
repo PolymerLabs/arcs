@@ -21,7 +21,7 @@ import {SingletonType, EntityType} from '../type.js';
 import {Runtime} from '../runtime.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
-import {VolatileStorageKey, VolatileDriver} from '../storageNG/drivers/volatile.js';
+import {VolatileStorageKey, VolatileDriver, VolatileStorageKeyFactory} from '../storageNG/drivers/volatile.js';
 import {StorageKey} from '../storageNG/storage-key.js';
 import {Store, ActiveStore} from '../storageNG/store.js';
 import {ReferenceModeStore} from '../storageNG/reference-mode-store.js';
@@ -35,8 +35,11 @@ import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.j
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {SingletonEntityStore, CollectionEntityStore, handleForStore} from '../storageNG/storage-ng.js';
 import {Capabilities} from '../capabilities.js';
-import {CapabilitiesResolver, StorageKeyOptions} from '../capabilities-resolver.js';
+import {Capabilities as CapabilitiesNew, Ttl, Queryable, Persistence} from '../capabilities-new.js';
+import {CapabilitiesResolver} from '../capabilities-resolver.js';
+import {CapabilitiesResolver as CapabilitiesResolverNew} from '../capabilities-resolver-new.js';
 import {isActiveStore} from '../storageNG/store-interface.js';
+import {StorageKeyOptions} from '../storage-key-factory.js';
 
 async function setup(storageKeyPrefix:  (arcId: ArcId) => StorageKey) {
   const loader = new Loader();
@@ -1043,7 +1046,6 @@ describe('Arc storage migration', () => {
         VolatileStorageKey.protocol,
         Capabilities.queryable,
         (options: StorageKeyOptions) => new VolatileStorageKey(options.arcId, options.unique(), ''));
-
     const id = ArcId.newForTest('test');
     const loader = new Loader(null, {
       'ThingAdder.js': `
@@ -1089,7 +1091,12 @@ describe('Arc storage migration', () => {
     assert.isTrue(recipe.normalize() && recipe.isResolved());
 
     const runtime = new Runtime({loader, context: manifest});
-    const arc = runtime.newArc('test', volatileStorageKeyPrefixForTest());
+    const volatileFactory = new class extends VolatileStorageKeyFactory {
+      capabilities(): CapabilitiesNew {
+        return CapabilitiesNew.create([Persistence.inMemory(), Ttl.any(), Queryable.any()]);
+      }
+    }();
+    const arc = runtime.newArc('test', volatileStorageKeyPrefixForTest(), {storargeKeyFactories: [volatileFactory]});
     await arc.instantiate(recipe);
     await arc.idle;
 

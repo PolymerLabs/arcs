@@ -9,8 +9,9 @@
  */
 import * as AstNode from '../manifest-ast-nodes.js';
 import {AnnotationRef} from '../recipe/annotation.js';
-import {flatMap} from '../util.js';
 import {assert} from '../../platform/assert-web.js';
+import {ManifestStringBuilder} from '../manifest-string-builder.js';
+import {Ttl} from '../capabilities-new.js';
 
 export enum PolicyEgressType {
   Logging = 'Logging',
@@ -32,6 +33,7 @@ const intendedPurposeAnnotationName = 'intendedPurpose';
 const egressTypeAnnotationName = 'egressType';
 const allowedRetentionAnnotationName = 'allowedRetention';
 const allowedUsageAnnotationName = 'allowedUsage';
+const maxAgeAnnotationName = 'maxAge';
 
 /**
  * Definition of a dataflow policy.
@@ -49,14 +51,15 @@ export class Policy {
       readonly customAnnotations: AnnotationRef[],
       private readonly allAnnotations: AnnotationRef[]) {}
 
-  toManifestString(): string {
-    return [
-      ...this.allAnnotations.map(annotation => annotation.toString()),
-      `policy ${this.name} {`,
-      ...flatMap(this.targets, target => indentLines(target.toManifestString())),
-      ...flatMap(this.configs, config => indentLines(config.toManifestString())),
-      '}',
-    ].join('\n');
+  toManifestString(builder = new ManifestStringBuilder()): string {
+    builder.push(...this.allAnnotations.map(annotation => annotation.toString()));
+    builder.push(`policy ${this.name} {`);
+    builder.withIndent(builder => {
+      this.targets.forEach(target => target.toManifestString(builder));
+      this.configs.forEach(config => config.toManifestString(builder));
+    });
+    builder.push('}');
+    return builder.toString();
   }
 
   static fromAstNode(
@@ -108,16 +111,16 @@ export class PolicyTarget {
       readonly schemaName: string,
       readonly fields: PolicyField[],
       readonly retentions: {medium: PolicyRetentionMedium, encryptionRequired: boolean}[],
+      readonly maxAge: Ttl,
       readonly customAnnotations: AnnotationRef[],
       private readonly allAnnotations: AnnotationRef[]) {}
 
-  toManifestString(): string {
-    return [
-      ...this.allAnnotations.map(annotation => annotation.toString()),
-      `from ${this.schemaName} access {`,
-      ...flatMap(this.fields, field => indentLines(field.toManifestString())),
-      '}',
-    ].join('\n');
+  toManifestString(builder = new ManifestStringBuilder()): string {
+    builder.push(...this.allAnnotations.map(annotation => annotation.toString()));
+    builder.push(`from ${this.schemaName} access {`);
+    this.fields.forEach(field => field.toManifestString(builder.withIndent()));
+    builder.push('}');
+    return builder.toString();
   }
 
   static fromAstNode(
@@ -128,8 +131,8 @@ export class PolicyTarget {
     const fields = node.fields.map(field => PolicyField.fromAstNode(field, buildAnnotationRefs));
 
     // Process annotations.
-    // TODO(b/157605585): Validate maxAge annotation.
     const allAnnotations = buildAnnotationRefs(node.annotationRefs);
+    let maxAge = Ttl.zero();
     const retentionMediums: Set<PolicyRetentionMedium> = new Set();
     const retentions: {medium: PolicyRetentionMedium, encryptionRequired: boolean}[] = [];
     const customAnnotations: AnnotationRef[] = [];
@@ -144,13 +147,16 @@ export class PolicyTarget {
           retentions.push(retention);
           break;
         }
+        case maxAgeAnnotationName:
+          maxAge = this.toMaxAge(annotation);
+          break;
         default:
           customAnnotations.push(annotation);
           break;
       }
     }
 
-    return new PolicyTarget(node.schemaName, fields, retentions, customAnnotations, allAnnotations);
+    return new PolicyTarget(node.schemaName, fields, retentions, maxAge, customAnnotations, allAnnotations);
   }
 
   private static toRetention(annotation: AnnotationRef) {
@@ -162,29 +168,39 @@ export class PolicyTarget {
       encryptionRequired: annotation.params['encryption'] as boolean,
     };
   }
+
+  private static toMaxAge(annotation: AnnotationRef): Ttl {
+    assert(annotation.name === maxAgeAnnotationName);
+    const maxAge = annotation.params['age'] as string;
+    return Ttl.fromString(maxAge);
+  }
 }
 
 export class PolicyField {
   constructor(
       readonly name: string,
       readonly subfields: PolicyField[],
+      /**
+       * The acceptable usages this field. Each (label, usage) pair defines a
+       * usage type that is acceptable for a given redaction label. The empty
+       * string label describes the usage for the raw data, given no redaction.
+       */
       readonly allowedUsages: {label: string, usage: PolicyAllowedUsageType}[],
       readonly customAnnotations: AnnotationRef[],
       private readonly allAnnotations: AnnotationRef[]) {
     // TODO(b/157605585): Validate field structure against Type.
   }
 
-  toManifestString(): string {
-    const lines = this.allAnnotations.map(annotation => annotation.toString());
+  toManifestString(builder = new ManifestStringBuilder()): string {
+    builder.push(...this.allAnnotations.map(annotation => annotation.toString()));
     if (this.subfields.length) {
-      lines.push(
-        `${this.name} {`,
-        ...flatMap(this.subfields, field => indentLines(field.toManifestString())),
-        '}');
+      builder.push(`${this.name} {`);
+      this.subfields.forEach(field => field.toManifestString(builder.withIndent()));
+      builder.push('}');
     } else {
-      lines.push(`${this.name},`);
+      builder.push(`${this.name},`);
     }
-    return lines.join('\n');
+    return builder.toString();
   }
 
   static fromAstNode(
@@ -195,7 +211,6 @@ export class PolicyField {
     const subfields = node.subfields.map(field => PolicyField.fromAstNode(field, buildAnnotationRefs));
 
     // Process annotations.
-    // TODO(b/157605585): Validate maxAge annotation.
     const allAnnotations = buildAnnotationRefs(node.annotationRefs);
     const usages: Map<string, Set<PolicyAllowedUsageType>> = new Map();
     const allowedUsages: {label: string, usage: PolicyAllowedUsageType}[] = [];
@@ -221,17 +236,21 @@ export class PolicyField {
       }
     }
 
+    if (allowedUsages.length === 0) {
+      allowedUsages.push({label: '', usage: PolicyAllowedUsageType.Any});
+    }
+
     return new PolicyField(node.name, subfields, allowedUsages, customAnnotations, allAnnotations);
   }
 
   private static toAllowedUsage(annotation: AnnotationRef) {
-    // TODO(b/157605585): Handle "raw" label separately?
     assert(annotation.name === allowedUsageAnnotationName);
     const usageType = annotation.params['usageType'] as string;
     checkValueInEnum(usageType, PolicyAllowedUsageType);
+    const label = annotation.params['label'] as string;
     return {
       usage: usageType as PolicyAllowedUsageType,
-      label: annotation.params['label'] as string,
+      label: label === 'raw' ? '' : label,
     };
   }
 }
@@ -239,13 +258,15 @@ export class PolicyField {
 export class PolicyConfig {
   constructor(readonly name: string, readonly metadata: Map<string, string>) {}
 
-  toManifestString(): string {
-    const lines = [`config ${this.name} {`];
-    for (const [k, v] of this.metadata) {
-      lines.push(`  ${k}: '${v}'`);
-    }
-    lines.push('}');
-    return lines.join('\n');
+  toManifestString(builder = new ManifestStringBuilder()): string {
+    builder.push(`config ${this.name} {`);
+    builder.withIndent(builder => {
+      for (const [k, v] of this.metadata) {
+        builder.push(`${k}: '${v}'`);
+      }
+    });
+    builder.push('}');
+    return builder.toString();
   }
 
   static fromAstNode(node: AstNode.PolicyConfig): PolicyConfig {
@@ -271,8 +292,4 @@ function checkNamesAreUnique(nodes: {name: string}[]) {
     }
     names.add(node.name);
   }
-}
-
-function indentLines(str: string): string[] {
-  return str.split('\n').map(line => '  ' + line);
 }

@@ -154,7 +154,7 @@ open class EntityBase(
     protected fun hasCollectionField(field: String) = getCollectionTypeOrNull(field) != null
 
     /** Checks that the given value is of the expected type. */
-    private fun checkType(field: String, value: Any?, type: FieldType) {
+    private fun checkType(field: String, value: Any?, type: FieldType, context: String = "") {
         if (value == null) {
             // Null values always pass.
             return
@@ -163,39 +163,39 @@ open class EntityBase(
         return when (type) {
             is FieldType.Primitive -> when (type.primitiveType) {
                 PrimitiveType.Boolean -> require(value is Boolean) {
-                    "Expected Boolean for $entityClassName.$field, but received $value."
+                    "Expected Boolean for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Number -> require(value is Double) {
-                    "Expected Double for $entityClassName.$field, but received $value."
+                    "Expected Double for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Text -> require(value is String) {
-                    "Expected String for $entityClassName.$field, but received $value."
+                    "Expected String for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Byte -> require(value is Byte) {
-                    "Expected Byte for $entityClassName.$field, but received $value."
+                    "Expected Byte for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Short -> require(value is Short) {
-                    "Expected Short for $entityClassName.$field, but received $value."
+                    "Expected Short for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Int -> require(value is Int) {
-                    "Expected Int for $entityClassName.$field, but received $value."
+                    "Expected Int for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Long -> require(value is Long) {
-                    "Expected Long for $entityClassName.$field, but received $value."
+                    "Expected Long for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Char -> require(value is Char) {
-                    "Expected Char for $entityClassName.$field, but received $value."
+                    "Expected Char for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Float -> require(value is Float) {
-                    "Expected Float for $entityClassName.$field, but received $value."
+                    "Expected Float for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Double -> require(value is Double) {
-                    "Expected Double for $entityClassName.$field, but received $value."
+                    "Expected Double for $context$entityClassName.$field, but received $value."
                 }
             }
             is FieldType.EntityRef -> {
                 require(value is Reference<*>) {
-                    "Expected Reference for $entityClassName.$field, but received $value."
+                    "Expected Reference for $context$entityClassName.$field, but received $value."
                 }
                 require(value.schemaHash == type.schemaHash) {
                     "Expected Reference type to have schema hash ${type.schemaHash} but had " +
@@ -210,7 +210,7 @@ open class EntityBase(
                 require(value is List<*>) {
                     "Expected list for $entityClassName.$field, but received $value."
                 }
-                value.forEach { checkType(field, it, FieldType.Primitive(type.primitiveType)) }
+                value.forEach { checkType(field, it, type.primitiveType, "member of ") }
             }
         }
     }
@@ -365,7 +365,10 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
     // TODO(b/155025255)
     is FieldType.Tuple ->
         throw NotImplementedError("[FieldType.Tuple]s cannot be converted to references.")
-    is FieldType.ListOf -> (value as List<*>).toReferencable()
+    is FieldType.ListOf ->
+        (value as List<*>).map {
+            toReferencable(it!!, type.primitiveType)
+        }.toReferencable()
 }
 
 private fun fromReferencable(
@@ -401,6 +404,7 @@ private fun fromReferencable(
             requireNotNull(referencable.value) {
                 "ReferencableList encoded an unexpected null value."
             }
+            referencable.value.map { fromReferencable(it, type.primitiveType, nestedEntitySpecs) }
         }
     }
 }

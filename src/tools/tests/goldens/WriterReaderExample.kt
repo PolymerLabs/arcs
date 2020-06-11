@@ -107,7 +107,7 @@ object ReferencesRecipePlan : Plan(
                         "db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:referencesArcId/handle/my-refs-id"
                     ),
                     HandleMode.Read,
-                    CollectionType(ReferenceType(EntityType(ReadWriteReferences_OutThingRef.SCHEMA))),
+                    CollectionType(ReferenceType(EntityType(ReadWriteReferences_InThingRefs.SCHEMA))),
                     Ttl.Infinite
                 ),
                 "outThingRef" to HandleConnection(

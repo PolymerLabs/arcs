@@ -9,6 +9,7 @@
  */
 import {AddFieldOptions, ClassGenerator, NodeAndGenerator, Schema2Base} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
+import {generateConnectionSpecType} from './kotlin-codegen-shared.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 import {CollectionType, EntityType, Type, TypeVariable} from '../runtime/type.js';
 import {KTExtracter} from '../runtime/refiner.js';
@@ -49,7 +50,7 @@ function getTypeInfo(opts: {name: string, isCollection?: boolean, refClassName?:
       type: `List<${itemTypeInfo.type}>`,
       decodeFn: `decodeList<${itemTypeInfo.type}>()`,
       defaultVal: `listOf<${itemTypeInfo.type}>()`,
-      schemaType: `FieldType.ListOf(${itemTypeInfo.schemaType}.primitiveType)`
+      schemaType: `FieldType.ListOf(${itemTypeInfo.schemaType})`
     };
   }
 
@@ -108,6 +109,11 @@ export class Schema2Kotlin extends Schema2Base {
 
     if (this.opts.test_harness) {
       imports.push(
+        'import arcs.core.data.EntityType',
+        'import arcs.core.data.CollectionType',
+        'import arcs.core.data.ReferenceType',
+        'import arcs.core.data.SingletonType',
+        'import arcs.core.data.TupleType',
         'import arcs.core.entity.HandleContainerType',
         'import arcs.core.entity.HandleDataType',
         'import arcs.core.entity.HandleMode',
@@ -166,32 +172,24 @@ ${imports.join('\n')}
     return type.isCollectionType() ? 'Collection' : 'Singleton';
   }
 
-  /** Returns whether this handle contains either Entity or Reference. */
-  private handleDataType(type: Type): string {
-    if (type.isReference) {
-      return 'Reference';
-    } else if (type.isCollection) {
-      return this.handleDataType(type.getContainedType());
-    } else {
-      return 'Entity';
-    }
-  }
-
   /**
    * Returns the type of the thing stored in the handle, e.g. MyEntity,
    * Reference<MyEntity>, Tuple2<Reference<Entity1>, Reference<Entity2>>.
+   *
+   * @param particleScope whether the generated declaration will be used inside the particle or outside it.
    */
-  private handleInnerType(connection: HandleConnectionSpec, nodes: SchemaNode[], forTest: boolean): string {
+  private handleInnerType(connection: HandleConnectionSpec, nodes: SchemaNode[], particleScope: boolean): string {
     let type = connection.type;
     if (type.isCollection || type.isSingleton) {
       // The top level collection / singleton distinction is handled by the flavour of a handle.
       type = type.getContainedType();
     }
 
-    function generateInnerType(type: Type) {
+    function generateInnerType(type: Type): string {
       if (type.isEntity) {
         const node = nodes.find(n => n.schema && n.schema.equals(type.getEntitySchema()));
-        return forTest ? node.sources[0].fullName : node.humanName(connection);
+        // Only the full name is available outside the particle scope.
+        return particleScope ? node.humanName(connection) : node.fullName(connection);
       } else if (type.isReference) {
         return `Reference<${generateInnerType(type.getContainedType())}>`;
       } else if (type.isTuple) {
@@ -199,7 +197,8 @@ ${imports.join('\n')}
         return `Tuple${innerTypes.length}<${innerTypes.map(t => generateInnerType(t)).join(', ')}>`;
       } else if (type.hasVariable && (type as TypeVariable).isVariable) {
         const node = nodes.find(n => n.variableName.includes((type as TypeVariable).variable.name));
-        return forTest ? node.sources[0].fullName : node.humanName(connection);
+        // Only the full name is available outside the particle scope.
+        return particleScope ? node.humanName(connection) : node.fullName(connection);
       } else {
         throw new Error(`Type '${type.tag}' not supported on code generated particle handle connections.`);
       }
@@ -231,33 +230,42 @@ ${imports.join('\n')}
   /**
    * Returns the handle interface type, e.g. WriteSingletonHandle,
    * ReadWriteCollectionHandle. Includes generic arguments.
+   *
+   * @param particleScope whether the generated declaration will be used inside the particle or outside it.
    */
-  handleInterfaceType(connection: HandleConnectionSpec, nodes: SchemaNode[], forTest: boolean = false) {
+  handleInterfaceType(connection: HandleConnectionSpec, nodes: SchemaNode[], particleScope: boolean) {
     if (connection.direction !== 'reads' && connection.direction !== 'writes' && connection.direction !== 'reads writes') {
       throw new Error(`Unsupported handle direction: ${connection.direction}`);
     }
 
     const containerType = this.handleContainerType(connection.type);
     if (this.opts.wasm) {
-      const entityType = SchemaNode.singleSchemaHumanName(connection, nodes);
+      const topLevelNodes = SchemaNode.topLevelNodes(connection, nodes);
+      if (topLevelNodes.length !== 1) throw new Error('Wasm does not support handles of tuples');
+      const entityType = topLevelNodes[0].humanName(connection);
       return `Wasm${containerType}Impl<${entityType}>`;
     }
 
     const handleMode = this.handleMode(connection);
-    const innerType = this.handleInnerType(connection, nodes, forTest);
+    const innerType = this.handleInnerType(connection, nodes, particleScope);
     const typeArguments: string[] = [innerType];
     const queryType = this.getQueryType(connection);
     if (queryType) {
       typeArguments.push(queryType);
     }
-    return `${handleMode}${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, 4)}>`;
+    return `${handleMode}${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, {startIndent: 4})}>`;
   }
 
-  private handleSpec(handleName: string, entityType: string, connection: HandleConnectionSpec): string {
+  private handleSpec(handleName: string, connection: HandleConnectionSpec, nodes: SchemaNode[]): string {
     const mode = this.handleMode(connection);
-    const containerType = this.handleContainerType(connection.type);
-    const dataType = this.handleDataType(connection.type);
-    return `HandleSpec("${handleName}", HandleMode.${mode}, HandleContainerType.${containerType}, ${entityType}, HandleDataType.${dataType})`;
+    const type = generateConnectionSpecType(connection, nodes);
+    // Using full names of entities, as these are aliases available outside the particle scope.
+    const entityNames = SchemaNode.topLevelNodes(connection, nodes).map(node => node.fullName(connection));
+    return ktUtils.applyFun(
+        'HandleSpec',
+        [`"${handleName}"`, `HandleMode.${mode}`, type, ktUtils.setOf(entityNames)],
+        {numberOfIndents: 1}
+    );
   }
 
   generateParticleClass(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]): string {
@@ -291,14 +299,13 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     const nodes = nodeGenerators.map(ng => ng.node);
     for (const connection of particle.connections) {
       const handleName = connection.name;
-      const handleInterfaceType = this.handleInterfaceType(connection, nodes);
-      // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
-      //                    allowing multiple EntitySpecs for handles of tuples.
-      const entityType = SchemaNode.singleSchemaHumanName(connection, nodes);
+      const handleInterfaceType = this.handleInterfaceType(connection, nodes, /* particleScope= */ true);
+      const entityNames = SchemaNode.topLevelNodes(connection, nodes).map(node => node.humanName(connection));
       if (this.opts.wasm) {
-        handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityType})`);
+        if (entityNames.length !== 1) throw new Error('Wasm does not support handles of tuples');
+        handleDecls.push(`val ${handleName}: ${handleInterfaceType} = ${handleInterfaceType}(particle, "${handleName}", ${entityNames[0]})`);
       } else {
-        specDecls.push(`"${handleName}" to ${entityType}`);
+        specDecls.push(`"${handleName}" to ${ktUtils.setOf(entityNames)}`);
         handleDecls.push(`val ${handleName}: ${handleInterfaceType} by handles`);
       }
     }
@@ -315,7 +322,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     )`
       : `class Handles : HandleHolderBase(
         "${particleName}",
-        mapOf(${ktUtils.joinWithIndents(entitySpecs, 4, 3)})
+        mapOf(${ktUtils.joinWithIndents(entitySpecs, {startIndent: 4, numberOfIndents: 3})})
     )`;
 
     return `${header} {
@@ -331,12 +338,9 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     for (const connection of particle.connections) {
       connection.direction = 'reads writes';
       const handleName = connection.name;
-      const interfaceType = this.handleInterfaceType(connection, nodes, true);
-      // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
-      //                    allowing multiple EntitySpecs for handles of tuples.
-      const entityType = SchemaNode.singleSchemaFullName(connection, nodes);
+      const interfaceType = this.handleInterfaceType(connection, nodes, /* particleScope= */ false);
       handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
-      handleSpecs.push(this.handleSpec(handleName, entityType, connection));
+      handleSpecs.push(this.handleSpec(handleName, connection, nodes));
     }
 
     return `
@@ -466,7 +470,7 @@ export class KotlinGenerator implements ClassGenerator {
     const schemaNames = this.node.schema.names.map(n => `SchemaName("${n}")`);
     return `\
 Schema(
-    setOf(${ktUtils.joinWithIndents(schemaNames, 8)}),
+    setOf(${ktUtils.joinWithIndents(schemaNames, {startIndent: 8})}),
     SchemaFields(
         singletons = ${leftPad(ktUtils.mapOf(this.singletonSchemaFields, 30), 8, true)},
         collections = ${leftPad(ktUtils.mapOf(this.collectionSchemaFields, 30), 8, true)}
@@ -535,7 +539,7 @@ ${lines}
     const classInterface = `) : ${baseClass}`;
 
     const constructorArguments =
-      ktUtils.joinWithIndents(constructorFields, classDef.length+classInterface.length, 2);
+      ktUtils.joinWithIndents(constructorFields, {startIndent: classDef.length+classInterface.length, numberOfIndents: 2});
 
     return `${classDef}${constructorArguments}${classInterface}`;
   }
@@ -547,8 +551,8 @@ ${lines}
       'expirationTimestamp = expirationTimestamp'
     ]);
 
-    const copyMethod = `fun copy(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${this.name}(${ktUtils.joinWithIndents(this.fieldsForCopy, 8+this.name.length, 3)})`;
-    const mutateMethod = `fun mutate(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, 14, 3)}) = ${this.name}(${ktUtils.joinWithIndents(fieldsForMutate, 8+this.name.length, 3)})`;
+    const copyMethod = `fun copy(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, {startIndent: 14, numberOfIndents: 3})}) = ${this.name}(${ktUtils.joinWithIndents(this.fieldsForCopy, {startIndent: 8+this.name.length, numberOfIndents: 3})})`;
+    const mutateMethod = `fun mutate(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, {startIndent: 14, numberOfIndents: 3})}) = ${this.name}(${ktUtils.joinWithIndents(fieldsForMutate, {startIndent: 8+this.name.length, numberOfIndents: 3})})`;
 
     return `${this.opts.wasm ? `` : `/**
          * Use this method to create a new, distinctly identified copy of the entity.
@@ -652,7 +656,7 @@ ${this.generateFieldsDefinitions()}
                     i++
                 }`)}
                 val _rtn = ${this.name}().copy(
-                    ${ktUtils.joinWithIndents(this.fieldsForCopy, 33, 3)}
+                    ${ktUtils.joinWithIndents(this.fieldsForCopy, {startIndent: 33, numberOfIndents: 3})}
                 )
                _rtn.entityId = entityId
                 return _rtn

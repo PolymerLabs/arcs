@@ -13,7 +13,6 @@ import {assert} from '../../platform/chai-node.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Ttl, TtlUnits} from '../../runtime/recipe/ttl.js';
 import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
-import {Handle} from '../../runtime/recipe/handle.js';
 import {Capabilities, Capability} from '../../runtime/capabilities.js';
 
 describe('recipe2plan', () => {
@@ -48,66 +47,6 @@ describe('recipe2plan', () => {
       const actual = generator.fileHeader();
 
       assert.notInclude(actual, 'import arcs.core.data.*');
-    });
-    it('creates valid singleton entity types with schemas', async () => {
-      const manifest = await Manifest.parse(`\
-     particle A
-       data: writes Thing {num: Number}
-     
-     recipe R
-       h: create 'some-id' @persistent
-       A
-         data: writes h`);
-
-      await emptyGenerator.collectParticleConnectionSpecs(manifest.recipes[0].particles[0]);
-      const actual = await emptyGenerator.createType(manifest.particles[0].handleConnections[0].type);
-
-      assert.include(actual, 'A_Data.SCHEMA');
-      assert.include(actual, 'EntityType');
-      assert.notInclude(actual, 'ReferenceType');
-      assert.include(actual, 'SingletonType');
-      assert.notInclude(actual, 'CollectionType');
-      assert.isBelow(actual.indexOf('SingletonType'), actual.indexOf('EntityType'));
-    });
-    it('creates valid collection entity types with schemas', async () => {
-      const manifest = await Manifest.parse(`\
-     particle A
-       data: writes [Thing {num: Number}]
-       
-     recipe R
-       h: create 'some-id' @persistent
-       A
-         data: writes h`);
-
-      await emptyGenerator.collectParticleConnectionSpecs(manifest.recipes[0].particles[0]);
-      const actual = await emptyGenerator.createType(manifest.particles[0].handleConnections[0].type);
-
-      assert.include(actual, 'A_Data.SCHEMA');
-      assert.include(actual, 'EntityType');
-      assert.notInclude(actual, 'ReferenceType');
-      assert.notInclude(actual, 'SingletonType');
-      assert.include(actual, 'CollectionType');
-      assert.isBelow(actual.indexOf('CollectionType'), actual.indexOf('EntityType'));
-    });
-    it('creates valid collection reference types with schemas', async () => {
-      const manifest = await Manifest.parse(`\
-     particle A
-       data: writes [&Thing {num: Number}]
-       
-     recipe R
-       h: create 'some-id' @persistent
-       A
-         data: writes h`);
-
-      await emptyGenerator.collectParticleConnectionSpecs(manifest.recipes[0].particles[0]);
-      const actual = await emptyGenerator.createType(manifest.particles[0].handleConnections[0].type);
-
-      assert.include(actual, 'A_Data.SCHEMA');
-      assert.include(actual, 'EntityType');
-      assert.include(actual, 'ReferenceType');
-      assert.notInclude(actual, 'SingletonType');
-      assert.include(actual, 'CollectionType');
-      assert.isBelow(actual.indexOf('CollectionType'), actual.indexOf('ReferenceType'));
     });
     it('can create Infinite Ttl objects', () => {
       const ttl = Ttl.infinite;

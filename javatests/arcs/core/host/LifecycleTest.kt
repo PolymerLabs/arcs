@@ -17,6 +17,7 @@ import arcs.core.entity.awaitReady
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
+import arcs.core.testutil.assertVariableOrdering
 import arcs.core.testutil.runTest
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
@@ -28,7 +29,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.After
-import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -222,34 +222,6 @@ class LifecycleTest {
                 "onShutdown"
             )
         )
-    }
-
-    /**
-     * Asserts that a list of values matches a sequence of groups, where a List group must be in
-     * order while a Set group may be any order. For example:
-     *   assertVariableOrdering(listOf(1, 2, 77, 55, 66, 3, 4),
-     *                          listOf(1, 2), setOf(55, 66, 77), listOf(3, 4)) => matches
-     * TODO: improve error reporting, move to general testutil?
-     */
-    fun <T> assertVariableOrdering(actual: List<T>, vararg groups: Collection<T>) {
-        val expectedSize = groups.fold(0) { sum, group -> sum + group.size }
-        if (expectedSize != actual.size) {
-            fail("expected $expectedSize elements but found ${actual.size}: $actual")
-        }
-
-        var start = 0
-        groups.forEach { group ->
-            val slice = actual.subList(start, start + group.size)
-            when (group) {
-                is List -> assertThat(slice).isEqualTo(group)
-                is Set -> assertThat(slice).containsExactlyElementsIn(group)
-                else -> throw IllegalArgumentException(
-                    "assertVariableOrdering: only List and Set may be used " +
-                        "for the 'groups' argument"
-                )
-            }
-            start += group.size
-        }
     }
 
     private suspend fun startArc(plan: Plan): Arc {

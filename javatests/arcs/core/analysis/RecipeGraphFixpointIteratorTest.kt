@@ -52,6 +52,16 @@ class TestAnalyzer(
     ) = input.set?.let {
         AbstractSet<String>(it + "p:${fromParticle.spec.name} -> h:${toHandle.name}")
     } ?: input
+
+    override fun edgeTransfer(
+        fromHandle: Recipe.Handle,
+        toHandle: Recipe.Handle,
+        spec: RecipeGraph.JoinSpec,
+        input: AbstractSet<String>
+    ) = input.set?.let {
+        AbstractSet<String>(it + "h:${fromHandle.name} -> h:${toHandle.name}")
+    } ?: input
+
 }
 
 @RunWith(JUnit4::class)
@@ -259,6 +269,44 @@ class RecipeGraphFixpointIteratorTest {
             assertThat(getValue(taggerParticle).set).isEqualTo(expectedLoopValue)
             assertThat(getValue(readerParticle).set)
                 .isEqualTo(expectedLoopValue + "h:thing -> p:Reader")
+        }
+    }
+
+    @Test
+    fun joinHandles() {
+        // recipe X
+        //   thing: create
+        //   name: create
+        //   joined: join(thing, name)
+        //   Reader
+        //     r: reads joined
+        val joined = Recipe.Handle(
+            name = "joined",
+            fate = Recipe.Handle.Fate.JOIN,
+            type = TypeVariable("joined"),
+            associatedHandles=listOf(name, thing)
+        )
+        val joinReaderParticle = Recipe.Particle(
+            readerSpec,
+            listOf(Recipe.Particle.HandleConnection(readConnection, joined))
+        )
+        val graph = createGraph(
+            name = "JoinHandles",
+            handles = listOf(thing, name, joined),
+            particles = listOf(joinReaderParticle)
+        )
+        val analyzer = TestAnalyzer(setOf("h:thing", "h:name"))
+        val result = analyzer.computeFixpoint(graph)
+        print(result.toString())
+        with(result) {
+            assertThat(getValue(joinReaderParticle).set).containsExactly(
+                "h:thing",
+                "h:name",
+                "h:joined",
+                "h:name -> h:joined",
+                "h:thing -> h:joined",
+                "h:joined -> p:Reader"
+            )
         }
     }
 }

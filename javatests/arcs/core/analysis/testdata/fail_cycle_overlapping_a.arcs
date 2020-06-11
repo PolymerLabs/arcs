@@ -1,0 +1,51 @@
+// tags propagate throughout overlapping cycles'
+// Two cycles: P1-P2-P3 and P1-P2-P4. One cycle is tagged with a, the
+// other is tagged with b. All paths should be a or b, but not all paths
+// are a, and not all paths are b.
+// #Ingress: P1
+// #Fail: hc:P1.input1 is a
+// #Fail: hc:P1.input2 is a
+// #Fail: hc:P2.input2 is a
+// #Fail: hc:P3.input is a
+// #Fail: hc:P4.input is a
+particle P1
+  input1: reads Foo {}
+  input2: reads Foo {}
+  output1: writes Foo {}
+  output2: writes Foo {}
+  check input1 is a
+  check input2 is a
+  claim output1 is a
+  claim output2 is b
+particle P2
+  input1: reads Foo {}
+  input2: reads Foo {}
+  output1: writes Foo {}
+  output2: writes Foo {}
+  check input1 is a
+  check input2 is a
+particle P3
+  input: reads Foo {}
+  output: writes Foo {}
+  check input is a
+particle P4
+  input: reads Foo {}
+  output: writes Foo {}
+  check input is a
+recipe R
+  P1
+    input1: reads h3
+    input2: reads h6
+    output1: writes h1
+    output2: writes h4
+  P2
+    input1: reads h1
+    input2: reads h5
+    output1: writes h2
+    output2: writes h6
+  P3
+    input: reads h2
+    output: writes h3
+  P4
+    input: reads h4
+    output: writes h5

@@ -170,7 +170,10 @@ class DatabaseImpl(
 
     override suspend fun removeClient(identifier: Int) = clientMutex.withLock {
         clients.remove(nextClientId)
-        // TODO: When all clients are done with the database, close the connection.
+        // When all clients are done with the database, close the connection.
+        if (clients.isEmpty()) {
+            super.close()
+        }
         Unit
     }
 
@@ -244,7 +247,7 @@ class DatabaseImpl(
             dbSingletons.forEach { (fieldName, value) -> rawSingletons[fieldName] = value }
             dbCollections.forEach { (fieldName, value) -> rawCollections[fieldName] = value }
 
-            return DatabaseData.Entity(
+            return@forSingleResult DatabaseData.Entity(
                 RawEntity(
                     id = entityId,
                     singletons = rawSingletons,

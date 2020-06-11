@@ -12,6 +12,7 @@ import {Type, TypeVariable} from '../runtime/type.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 import {upperFirst} from './kotlin-generation-utils.js';
 import {AtLeastAsSpecific} from '../runtime/refiner.js';
+import {flatMap} from '../runtime/util.js';
 
 // Describes a source from where the Schema has been collected.
 export class SchemaSource {
@@ -35,6 +36,11 @@ export class SchemaSource {
   get fullName() {
     return `${this.particleSpec.name}_${upperFirst(this.connection.name)}` +
        this.path.map(p => `_${upperFirst(p)}`).join('');
+  }
+
+  static filterToShortestPaths(sources: SchemaSource[]): SchemaSource[] {
+    const minPathLength = Math.min(...sources.map(s => s.path.length));
+    return sources.filter(s => s.path.length === minPathLength);
   }
 }
 
@@ -62,14 +68,25 @@ export class SchemaNode {
   // ensure that nested schemas are generated before the references that rely on them.
   refs = new Map<string, SchemaNode>();
 
-  // A name of the code generated class representing this schema.
+  get uniqueSchema() {
+    return !this.allSchemaNodes.some(s => s.schema && this.schema && s.schema !== this.schema && s.schema.name === this.schema.name);
+  }
+
+  // A name of the code generated class representing this schema on platforms where we've adopted
+  // generating entity names from schema names where possible (i.e. in Kotlin, not C++).
+  // Name of the generated class can be based off:
+  // - The schema name: if a name uniquely identifes a schema.
+  // - The connection name: if schema name is not unique, but connection name is.
+  // - The internal index (i.e. using Internal$N pattern): if schema is not unique.
   get entityClassName() {
-    if (this.uniqueSchema && this.schema && this.schema.name) {
+    if (this.uniqueSchema && this.schema.name) {
       return this.schema.name;
     }
     return this.fullEntityClassName;
   }
 
+  // A name of the code generated class representing this schema on platforms where we have not
+  // adopted generating entity names from schema (i.e. in C++, not Kotlin).
   get fullEntityClassName() {
     if (this.sources.length === 1) {
       // If there is just one source, use its full name.
@@ -80,50 +97,37 @@ export class SchemaNode {
     return `${this.particleSpec.name}Internal${index}`;
   }
 
-  get uniqueSchema() {
-    return !this.allSchemaNodes.some(s => this.schema && s.schema && s.schema !== this.schema && s.schema.name === this.schema.name);
-  }
-
-  // This will return the most "human friendly" name for the schema. This is the name (actual class
-  // name or alias) that should be used when typing a handle exposed to the particle. It will never
-  // return internal names, e.g. Internal$N.
+  // The most "human friendly" name for the schema. This is the name that should be used when
+  // generating the handle exposed to the particle. It will preferentially be a name based off the
+  // schema name, if not possible the full schema address will be used. It will never the name
+  // based off the internal counter (i.e. Internal$N pattern)
   humanName(connection: HandleConnectionSpec): string {
     if (this.uniqueSchema || this.sources.length === 1) {
       return this.entityClassName;
     }
-    const sourcesFromConnection = this.sources.filter(s => s.connection === connection);
-    const minPathLength = Math.min(...sourcesFromConnection.map(s => s.path.length));
-    const bestSource = sourcesFromConnection.find(s => s.path.length === minPathLength);
-    return bestSource.fullName;
+    return this.fullName(connection);
   }
 
-  // This method is a temporary workaround. To fully support tuples we need to enhance the spec
-  // definition for Kotlin handles.
-  // TODO(b/157598151): Update HandleSpec from hardcoded single EntitySpec to
-  //                    allowing multiple EntitySpecs for handles of tuples.
-  static singleSchemaHumanName(connection: HandleConnectionSpec, nodes: SchemaNode[]): string {
-    const topLevelNodes = SchemaNode.findTopLevelNodes(connection, nodes);
-    const humanNames = topLevelNodes.map(n => n.humanName(connection));
-    return humanNames.sort()[0];
-  }
-
-  static singleSchemaFullName(connection: HandleConnectionSpec, nodes: SchemaNode[]): string {
-    const topLevelNodes = SchemaNode.findTopLevelNodes(connection, nodes);
-    const fullNames = topLevelNodes.map(n => n.sources[0].fullName);
-    return fullNames.sort()[0];
+  // Represents the location of the schema among the particle connections and the location inside
+  // the particular connection. The example would be: FavProduct_Review, for the schema that
+  // describes the reviews of Product read with the favProduct connection.
+  //
+  // Address names are the only names that can be relied on being available outside the scope of
+  // the particle due to generated type aliases.
+  fullName(connection: HandleConnectionSpec): string {
+    const sourcesForThisConnection = this.sources.filter(s => s.connection === connection);
+    const representativeSource = SchemaSource.filterToShortestPaths(sourcesForThisConnection)[0];
+    return representativeSource.fullName;
   }
 
   // Returns all "top-level" schema nodes for the given connection.
   // There will be a single one for handles of entities or references to entities,
-  // but arbitrary many for handles of tuples.
-  private static findTopLevelNodes(connection: HandleConnectionSpec, nodes: SchemaNode[]): SchemaNode[] {
-    const sourcesFromConnection = nodes
-        .map(n => n.sources)
-        .reduce((curr, acc) => [...acc, ...curr], [])
-        .filter(s => s.connection === connection);
-    const minPathLength = Math.min(...sourcesFromConnection.map(s => s.path.length));
-    const bestSources = sourcesFromConnection.filter(s => s.path.length === minPathLength);
-    return nodes.filter(n => n.sources.some(s => bestSources.includes(s)));
+  // but arbitrarily many for handles of tuples.
+  static topLevelNodes(connection: HandleConnectionSpec, nodes: SchemaNode[]): SchemaNode[] {
+    const sourcesFromConnection = flatMap(
+        nodes, n => n.sources.filter(s => s.connection === connection));
+    const topLevelConnectionSources = SchemaSource.filterToShortestPaths(sourcesFromConnection);
+    return nodes.filter(n => n.sources.some(s => topLevelConnectionSources.includes(s)));
   }
 }
 

@@ -17,7 +17,8 @@ import {assert} from '../../../platform/chai-web.js';
 import {RuntimeCacheService} from '../../runtime-cache.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
 import {Capabilities} from '../../capabilities.js';
-import {CapabilitiesResolver, StorageKeyOptions} from '../../capabilities-resolver.js';
+import {CapabilitiesResolver} from '../../capabilities-resolver.js';
+import {StorageKeyOptions} from '../../storage-key-factory.js';
 
 /**
  * These classes are intended to mimic firebase behaviour, including asynchrony.

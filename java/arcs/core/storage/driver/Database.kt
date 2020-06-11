@@ -159,6 +159,11 @@ class DatabaseDriver<Data : Any>(
         receiver(pendingReceiverData, pendingReceiverVersion)
     }
 
+    override suspend fun close() {
+        receiver = null
+        database.removeClient(clientId)
+    }
+
     @Suppress("UNCHECKED_CAST")
     override suspend fun send(data: Data, version: Int): Boolean {
         log.debug {

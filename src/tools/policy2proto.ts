@@ -27,7 +27,7 @@ export function policyToProtoPayload(policy: Policy) {
 function policyTargetToProtoPayload(target: PolicyTarget) {
   return {
     schemaType: target.schemaName,
-    // TODO(b/157605585): Include maxAgeMs.
+    maxAgeMs: target.maxAge ? target.maxAge.millis : null,
     retentions: target.retentions.map(retention => ({
       medium: convertToProtoEnum(retention.medium, PolicyRetentionMediumEnum),
       encryptionRequired: retention.encryptionRequired,
