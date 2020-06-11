@@ -325,7 +325,7 @@ describe('schema2kotlin', () => {
         entityId: String? = null,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("T_H1", SCHEMA, entityId, creationTimestamp, expirationTimestamp)`
+    ) : VariableEntityBase("T_H1", SCHEMA, entityId, creationTimestamp, expirationTimestamp)`
     ));
     it('generates copy and mutate by entity fields', async () => await assertCopyMethods(
       `particle T

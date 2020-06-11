@@ -7,10 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base, ClassGenerator, AddFieldOptions, NodeAndGenerator} from './schema2base.js';
-import {SchemaNode, SchemaSource} from './schema2graph.js';
-import {ParticleSpec, HandleConnectionSpec} from '../runtime/particle-spec.js';
-import {EntityType, CollectionType, Type, TypeVariable} from '../runtime/type.js';
+import {AddFieldOptions, ClassGenerator, NodeAndGenerator, Schema2Base} from './schema2base.js';
+import {SchemaNode} from './schema2graph.js';
+import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
+import {CollectionType, EntityType, Type, TypeVariable} from '../runtime/type.js';
 import {KTExtracter} from '../runtime/refiner.js';
 import {Dictionary} from '../runtime/hot.js';
 import minimist from 'minimist';
@@ -517,16 +517,23 @@ ${lines}
 @Suppress("UNCHECKED_CAST")
     class ${this.name}${ctorType}`;
 
-    const baseClass = this.opts.wasm
-      ? 'WasmEntity'
-      : ktUtils.applyFun('EntityBase', [quote(this.name), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp']);
+    let baseClass: string;
+    let constructorFields: string[];
+    if (this.opts.wasm) {
+      baseClass = 'WasmEntity';
+      constructorFields = this.fields
+    } else {
+      const concreteOrVariableEntity = this.node.variableName == null ? 'EntityBase' : 'VariableEntityBase';
+      baseClass = ktUtils.applyFun(concreteOrVariableEntity, [quote(this.name), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp']);
+      constructorFields = this.fields.concat([
+        'entityId: String? = null',
+        'creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP',
+        'expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP',
+      ]);
+    }
+
     const classInterface = `) : ${baseClass}`;
 
-    const constructorFields = this.fields.concat(this.opts.wasm ? [] : [
-      'entityId: String? = null',
-      'creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP',
-      'expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP',
-    ]);
     const constructorArguments =
       ktUtils.joinWithIndents(constructorFields, classDef.length+classInterface.length, 2);
 
