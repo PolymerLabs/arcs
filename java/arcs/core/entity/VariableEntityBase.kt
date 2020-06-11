@@ -5,12 +5,21 @@ import arcs.core.data.FieldName
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 
+/**
+ * A base [Entity] for type variables.
+ *
+ * This class behaves just like [EntityBase], except for (de)serialization. During deserialization,
+ * all the fields from [RawEntity] are stored for later use in serialization.
+ *
+ * In this way, an entity representing a type variable will pass data through the system without
+ * a specific description of the data (an exact match with a [Schema]).
+ */
 open class VariableEntityBase(
     entityClassName: String,
     schema: Schema,
-    entityId: String? = null,
-    creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-    expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    entityId: String,
+    creationTimestamp: Long,
+    expirationTimestamp: Long
 ) : EntityBase(entityClassName, schema, entityId, creationTimestamp, expirationTimestamp) {
 
     private val rawSingletons = mutableMapOf<FieldName, Referencable?>()

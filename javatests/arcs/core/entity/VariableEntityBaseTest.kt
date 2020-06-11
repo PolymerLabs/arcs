@@ -16,22 +16,14 @@ import kotlin.test.assertFailsWith
 class VariableEntityBaseTest {
 
     private lateinit var entity: DummyVariableEntity
+    private lateinit var biggerEntity: DummyEntity
 
     @Before
     fun setUp() {
         SchemaRegistry.register(DummyEntity.SCHEMA)
         SchemaRegistry.register(DummyVariableEntity.SCHEMA)
         entity = DummyVariableEntity()
-    }
-
-    @After
-    fun tearDown() {
-        SchemaRegistry.clearForTest()
-    }
-
-    @Test
-    fun serializationRoundTrip() {
-        val biggerEntity = DummyEntity()
+        biggerEntity = DummyEntity()
             .apply {
                 text = "abc"
                 num = 12.0
@@ -43,6 +35,15 @@ class VariableEntityBaseTest {
                 refs = setOf(createDummyReference("ref1"), createDummyReference("ref2"))
             }
 
+    }
+
+    @After
+    fun tearDown() {
+        SchemaRegistry.clearForTest()
+    }
+
+    @Test
+    fun serializationRoundTrip() {
         val biggerRaw = biggerEntity.serialize()
 
         val variableEntity = DummyVariableEntity()
@@ -57,19 +58,7 @@ class VariableEntityBaseTest {
     }
 
     @Test
-    fun variableSerialization_propertyAccess() {
-        val biggerEntity = DummyEntity()
-            .apply {
-                text = "abc"
-                num = 12.0
-                bool = true
-                ref = createDummyReference("foo")
-                texts = setOf("aa", "bb")
-                nums = setOf(1.0, 2.0)
-                bools = setOf(true, false)
-                refs = setOf(createDummyReference("ref1"), createDummyReference("ref2"))
-            }
-
+    fun onlyFieldsListedInSchemaAreAccessible() {
         val biggerRaw = biggerEntity.serialize()
 
         val variableEntity = DummyVariableEntity()
@@ -81,7 +70,7 @@ class VariableEntityBaseTest {
         assertThat(variableEntity.nums).isEqualTo(setOf(1.0, 2.0))
 
         val e = assertFailsWith<InvalidFieldNameException> {
-            variableEntity.getSingletonValueForTest("num")
+            variableEntity.getSingletonValue("num")
         }
         assertThat(e).hasMessageThat().isEqualTo(
             "${DummyVariableEntity.ENTITY_CLASS_NAME} does not have a singleton field called \"num\"."
