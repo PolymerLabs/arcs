@@ -11,6 +11,7 @@ arcs_kt_jvm_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//third_party/java/junit:junit-android",
+        "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
