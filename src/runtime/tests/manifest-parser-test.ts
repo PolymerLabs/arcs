@@ -77,7 +77,7 @@ describe('manifest parser', () => {
   });
   it('parses recipes with a synthetic join handles and applied adapter', () => {
     parse(`
-      adapter PairPerson ( 
+      adapter PairPerson( 
         person: Person { name: Text, age: Number },
         place: ~a with { name: Text, address: Text },
         data: (Person {name: Text, age: Number }, Company { name: Text, address: Text })
@@ -89,24 +89,52 @@ describe('manifest parser', () => {
   });
   it('parses adapter declarations with inline schema', () => {
     parse(`
-      adapter ToFriend ( 
+      adapter ToFriend( 
         person: Person { name: Text, age: Number },
         company: ~a with { name: Text, address: Text },
         data: (Person {name: Text, age: Number }, Company { name: Text, address: Text })
       ) => Friend { nickName: person.name, work: company.name, newdata: data.first }     
-    `)
+    `);
+  });
+  it('parses adapter declarations with inline schema with no identifier', () => {
+    parse(`
+      adapter ToFriend( 
+        person: Person { name: Text, age: Number },
+        company: ~a with { name: Text, address: Text },
+        data: (Person {name: Text, age: Number }, Company { name: Text, address: Text })
+      ) => { nickName: person.name, work: company.name, newdata: data.first }     
+    `);
+  });
+  it('parses adapter declarations with inline schema with multiple identifier', () => {
+    parse(`
+      adapter ToFriend( 
+        person: Person { name: Text, age: Number },
+        company: ~a with { name: Text, address: Text },
+        data: (Person {name: Text, age: Number }, Company { name: Text, address: Text })
+      ) => Product Thing { nickName: person.name, work: company.name, newdata: data.first }     
+    `);
+  });
+  it('parses adapter declarations with inline schema with nested addresing', () => {
+    parse(`
+      adapter Inline(person: Person { 
+        name: Text,
+        address: &Address { address: Text }
+      }) => Person {
+        name: person.name,
+        address: person.address.address
+      }`);
   });
   it('fails to parse adapter declarations with with duplicate param names', () => {
     try {
       parse(`
-      adapter ToFriend ( 
+      adapter ToFriend( 
         person: Person { name: Text, age: Number },
         person: Company { name: Text, address: Text }
       ) => Friend { nickName: person.name, work: person.name }     
-    `)
+    `);
       assert.fail('this parse should have failed, adapter params cannot contain duplicates');
-    } catch(e) {
-      assert.include(e.message, "Duplicate adapter param names person")
+    } catch (e) {
+      assert.include(e.message, 'Duplicate adapter param names person');
     }
   });
   it('parses recipe handles with capabilities', () => {

@@ -785,8 +785,8 @@ export interface AdapterParam extends BaseNode {
 
 export interface AdapterBodyDefinition extends BaseNode {
   kind: 'adapter-body-definition';
-  name: string;
-  fields: AdapterField[]
+  names: string[];
+  fields: AdapterField[];
 }
 
 export interface AdapterField extends BaseNode {

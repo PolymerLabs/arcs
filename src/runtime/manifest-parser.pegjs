@@ -1609,7 +1609,7 @@ SchemaPrimitiveType
   }
 
 Adapter "an adapter, (e.g. adapter Foo(param: Person { name: Text }) => Friend { nickName: param.name } )"
-  = 'adapter' whiteSpace adapterName:AdapterName whiteSpace? '(' multiLineSpace? params:AdapterParamsDeclaration multiLineSpace? ')' whiteSpace? '=>' multiLineSpace? body:AdapterBodyDefinition eolWhiteSpace
+  = 'adapter' whiteSpace adapterName:AdapterName '(' multiLineSpace? params:AdapterParamsDeclaration multiLineSpace? ')' whiteSpace? '=>' multiLineSpace? body:AdapterBodyDefinition eolWhiteSpace
   {
      return toAstNode<AstNode.AdapterNode>({
        kind: 'adapter-node',
@@ -1629,7 +1629,7 @@ AdapterParamsDeclaration
   = param:AdapterParam restParams:(whiteSpace? ',' multiLineSpace AdapterParam)* {
      const params = [param].concat(restParams.map(rparam => rparam[3]));
      const names = params.map(p => p.name);
-     const duplicateNames = names.filter((item, index) => names.indexOf(item) != index);
+     const duplicateNames = names.filter((item, index) => names.indexOf(item) !== index);
      if (duplicateNames.length) {
         error(`Duplicate adapter param names ${duplicateNames.join(',')}`);
      } else {
@@ -1647,17 +1647,17 @@ AdapterParam
   }
 
 AdapterBodyDefinition
-  = name:('*' / upperIdent) whiteSpace? '{' multiLineSpace fields:AdapterFields? ','? multiLineSpace '}' {
+  = names:((upperIdent / '*') whiteSpace?)* '{' multiLineSpace fields:AdapterFields? ','? multiLineSpace '}' {
      return toAstNode<AstNode.AdapterBodyDefinition>({
         kind: 'adapter-body-definition',
-        name,
+        names: optional(names, names => names.map(name => name[0]).filter(name => name !== '*'), ['*']),
         fields
-     })
+     });
   }
 
 AdapterFields
   = field:AdapterField rest:(',' multiLineSpace AdapterField)* {
-    return [field].concat(rest.map(rfield => rfield[2]))
+    return [field].concat(rest.map(rfield => rfield[2]));
   }
 
 AdapterField
