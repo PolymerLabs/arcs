@@ -284,6 +284,21 @@ export class TypeChecker {
   static compareTypes(left: TypeListInfo, right: TypeListInfo): boolean {
     const resolvedLeft = left.type.resolvedType();
     const resolvedRight = right.type.resolvedType();
+
+    const [leftInnerTypes, rightInnerTypes] = Type.tryUnwrapMulti(resolvedLeft, resolvedRight);
+    if (rightInnerTypes !== null) {
+      if (leftInnerTypes.length !== rightInnerTypes.length) return false;
+      for (let i = 0; i < leftInnerTypes.length; i++) {
+        if (!this.compareTypes(
+          {type: leftInnerTypes[i], direction: left.direction, connection: left.connection},
+          {type: rightInnerTypes[i], direction: right.direction, connection: right.connection}
+        )) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     const [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
 
     // a variable is compatible with a set only if it is unconstrained.
