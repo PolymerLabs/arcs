@@ -520,12 +520,20 @@ export interface RecipeHandle extends BaseNode {
   ref: HandleRef;
   fate: Fate;
   annotations: AnnotationRef[];
+  adapter: AppliedAdapter;
 }
 
 export interface RecipeSyntheticHandle extends BaseNode {
   kind: 'synthetic-handle';
   name: string|null;
   associations: string[];
+  adapter: AppliedAdapter;
+}
+
+export interface AppliedAdapter extends BaseNode {
+  kind: 'adapter-apply-node';
+  name: string;
+  params: string[];
 }
 
 export interface RecipeParticleSlotConnection extends BaseNode {
@@ -760,6 +768,36 @@ export interface SchemaAlias extends BaseNode {
   kind: 'schema';
   items: SchemaItem[];
   alias: string;
+}
+
+export interface AdapterNode extends BaseNode {
+  kind: 'adapter-node';
+  name: string;
+  params: AdapterParam[];
+  body: AdapterBodyDefinition;
+}
+
+export interface AdapterParam extends BaseNode {
+  kind: 'adapter-param';
+  name: string;
+  type: ParticleHandleConnectionType;
+}
+
+export interface AdapterBodyDefinition extends BaseNode {
+  kind: 'adapter-body-definition';
+  names: string[];
+  fields: AdapterField[];
+}
+
+export interface AdapterField extends BaseNode {
+  kind: 'adapter-field';
+  name: string;
+  expression: AdapterScopeExpression;
+}
+
+export interface AdapterScopeExpression extends BaseNode {
+  kind: 'adapter-scope-expression';
+  scopeChain: string[];
 }
 
 export interface Interface extends BaseNode {
