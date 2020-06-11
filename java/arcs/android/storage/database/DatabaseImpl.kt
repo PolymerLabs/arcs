@@ -99,7 +99,8 @@ typealias ReferenceId = Long
 class DatabaseImpl(
     context: Context,
     databaseName: String,
-    persistent: Boolean = true
+    persistent: Boolean = true,
+    val onDatabaseClose: suspend () -> Unit = {}
 ) : Database, SQLiteOpenHelper(
     context,
     // Using `null` with SQLiteOpenHelper's database name makes it an in-memory database.
@@ -169,9 +170,10 @@ class DatabaseImpl(
     }
 
     override suspend fun removeClient(identifier: Int) = clientMutex.withLock {
-        clients.remove(nextClientId)
+        clients.remove(identifier)
         // When all clients are done with the database, close the connection.
         if (clients.isEmpty()) {
+            onDatabaseClose()
             super.close()
         }
         Unit
