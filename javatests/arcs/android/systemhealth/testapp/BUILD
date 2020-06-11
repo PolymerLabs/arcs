@@ -59,6 +59,7 @@ android_binary(
     name = "testapp",
     testonly = 1,
     dexopts = ["--force-jumbo"],
+    incremental_dexing = 0,
     manifest = ":AndroidManifest.xml",
     multidex = "native",
     deps = [":test_app_lib"],
