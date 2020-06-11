@@ -134,9 +134,6 @@ open class EntityBase(
     /** Returns the [FieldType] for the given singleton field, or null if it does not exist. */
     private fun getSingletonTypeOrNull(field: String) = schema.fields.singletons[field]
 
-    /** Returns true if the singleton has the [FieldType]. */
-    protected fun hasSingletonField(field: String) = getSingletonTypeOrNull(field) != null
-
     /**
      * Returns the [FieldType] for the given collection field.
      *
@@ -149,9 +146,6 @@ open class EntityBase(
 
     /** Returns the [FieldType] for the given collection field, or null if it does not exist. */
     private fun getCollectionTypeOrNull(field: String) = schema.fields.collections[field]
-
-    /** Returns true if the collection has the [FieldType]. */
-    protected fun hasCollectionField(field: String) = getCollectionTypeOrNull(field) != null
 
     /** Checks that the given value is of the expected type. */
     private fun checkType(field: String, value: Any?, type: FieldType) {
@@ -249,7 +243,7 @@ open class EntityBase(
      * @param nestedEntitySpecs mapping from [SchemaHash] to [EntitySpec], used when dereferencing
      *     [Reference] fields inside the entity
      */
-    open fun deserialize(
+    fun deserialize(
         rawEntity: RawEntity,
         nestedEntitySpecs: Map<SchemaHash, EntitySpec<out Entity>> = mapOf()
     ) {
