@@ -26,7 +26,7 @@ import {CRDTTypeRecord} from './crdt/crdt.js';
 import {ProxyCallback, ProxyMessage, Store, StoreMuxer} from './storageNG/store.js';
 import {NoTraceWithReason, SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
-import {Ttl} from './recipe/ttl.js';
+import {Ttl} from './capabilities-new.js';
 import {Handle} from './storageNG/handle.js';
 import {StorageProxyMuxer} from './storageNG/storage-proxy-muxer.js';
 import {CRDTMuxEntity} from './storageNG/storage-ng.js';

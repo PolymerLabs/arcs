@@ -106,7 +106,7 @@ export class ParticleExecutionHost {
           store.type.resolvedType(),
           name,
           store.storageKey.toString(),
-          particle.getConnectionByName(name).handle.ttl);
+          particle.getConnectionByName(name).handle.getTtl());
     });
     storeMuxers.forEach((storeMuxer, name) => {
       apiPort.DefineHandleFactory(
@@ -114,7 +114,7 @@ export class ParticleExecutionHost {
         storeMuxer.type.resolvedType(),
         name,
         storeMuxer.storageKey.toString(),
-        particle.getConnectionByName(name).handle.ttl
+        particle.getConnectionByName(name).handle.getTtl()
       );
     });
     apiPort.InstantiateParticle(particle, particle.id.toString(), particle.spec, stores, storeMuxers, reinstantiate);
@@ -126,7 +126,7 @@ export class ParticleExecutionHost {
     this.apiPorts.forEach(apiPort => { apiPort.clear(); });
     const apiPort = this.getPort(particle);
     stores.forEach((store, name) => {
-      apiPort.DefineHandle(store, store.type.resolvedType(), name, store.storageKey.toString(), particle.getConnectionByName(name).handle.ttl);
+      apiPort.DefineHandle(store, store.type.resolvedType(), name, store.storageKey.toString(), particle.getConnectionByName(name).handle.getTtl());
     });
     apiPort.ReinstantiateParticle(particle.id.toString(), particle.spec, stores);
   }

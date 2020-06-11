@@ -45,8 +45,8 @@ import {ArcSerializer, ArcInterface} from './arc-serializer.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
-import {Ttl} from './recipe/ttl.js';
 import {SingletonInterfaceHandle, handleForStore, ToStore, newStore} from './storageNG/storage-ng.js';
+import {AnnotationRef} from './recipe/annotation.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -486,13 +486,13 @@ export class Arc implements ArcInterface {
           type = new SingletonType(type);
         }
         const newStore = await this.createStoreInternal(type, /* name= */ null, storeId,
-            recipeHandle.tags, volatileKey, recipeHandle.capabilities, recipeHandle.ttl);
+            recipeHandle.tags, volatileKey, recipeHandle.capabilities, recipeHandle.annotations);
         if (recipeHandle.immediateValue) {
           const particleSpec = recipeHandle.immediateValue;
           const type = recipeHandle.type;
           if (isSingletonInterfaceStore(newStore)) {
             assert(type instanceof InterfaceType && type.interfaceInfo.particleMatches(particleSpec));
-            const handle: SingletonInterfaceHandle = await handleForStore(newStore, this, {ttl: recipeHandle.ttl});
+            const handle: SingletonInterfaceHandle = await handleForStore(newStore, this, {ttl: recipeHandle.getTtl()});
             await handle.set(particleSpec.clone());
           } else {
             throw new Error(`Can't currently store immediate values in non-singleton stores`);
@@ -569,7 +569,7 @@ export class Arc implements ArcInterface {
   }
 
   private async createStoreInternal<T extends Type>(type: T, name?: string, id?: string, tags?: string[],
-      storageKey?: StorageKey, capabilities: Capabilities = Capabilities.empty, ttl?: Ttl): Promise<ToStore<T>> {
+      storageKey?: StorageKey, capabilities: Capabilities = Capabilities.empty, annotations?: AnnotationRef[]): Promise<ToStore<T>> {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
     if (this.storesByKey.has(storageKey)) {
       return this.storesByKey.get(storageKey) as ToStore<T>;
@@ -588,7 +588,7 @@ export class Arc implements ArcInterface {
         storageKey = await this.capabilitiesResolver.createStorageKey(
             capabilities, type, id);
         assert(this.capabilitiesResolverNew);
-        const capabilitiesNew = CapabilitiesNew.fromOldCapabilities(capabilities, ttl);
+        const capabilitiesNew = CapabilitiesNew.fromAnnotations(annotations || []);
         const storageKeyNew = await this.capabilitiesResolverNew.createStorageKey(
             capabilitiesNew, type, id);
         assert(storageKeyNew.toString() === storageKey.toString());

@@ -11,7 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 import {AnnotationRef} from './recipe/annotation.js';
 import {Capabilities as CapabilitiesOld} from './capabilities.js';
-import {Ttl as TtlOld} from './recipe/ttl.js';
+import {Literal} from './hot.js';
 
 export enum CapabilityComparison {
   LessStrict, Equivalent, Stricter
@@ -144,8 +144,12 @@ export enum TtlUnits {
   Infinite = 'infinite'
 }
 
+export interface TtlLiteral extends Literal {
+  count: number;
+  units: TtlUnits;
+}
+
 // TTL as Capability.
-// TODO(b/157761106): deprecate ttl.ts
 export class Ttl extends Capability {
   private _count: number;
   private _units: TtlUnits;
@@ -233,6 +237,17 @@ export class Ttl extends Capability {
     return new Ttl(Number(ttlTokens[1]), Ttl.ttlUnitsFromString(ttlTokens[2]));
   }
 
+  static fromLiteral(data: TtlLiteral): Ttl {
+    if (data.units === TtlUnits.Infinite) {
+      return Ttl.infinite();
+    }
+    return new Ttl(data.count, data.units);
+  }
+
+  toLiteral(): TtlLiteral {
+    return {count: this.count, units: this.units};
+  }
+
   public static ttlUnitsFromString(units: string): TtlUnits {
     switch (units) {
       case 'm': return TtlUnits.Minutes;
@@ -312,12 +327,12 @@ export class Queryable extends BooleanCapability {
 export class Shareable extends BooleanCapability {
   static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
     const shareableAnnotations =
-        annotations.filter(annotation => annotation.name === 'shareable');
+        annotations.filter(annotation => ['shareable', 'tiedToRuntime'].includes(annotation.name));
     if (shareableAnnotations.length === 0) {
       return null;
     }
     assert(shareableAnnotations.length === 1, `Containing multiple queryable annotations`);
-    return new Queryable(true);
+    return new Shareable(true);
   }
 
   toDebugString(): string {
@@ -414,27 +429,41 @@ export class Capabilities {
     return new Capabilities(ranges);
   }
 
-  getPersistence(): Capability|undefined {
-    return this.ranges.find(range => range.min instanceof Persistence);
+  getPersistence(): Persistence|undefined {
+    const range = this.getOfType(Persistence);
+    if (range) {
+      assert(range.min.isEquivalent(range.max));
+      return range.min as Persistence;
+    }
+    return undefined;
   }
 
-  getTtl(): Capability {
-    return this.ranges.find(range => range.min instanceof Ttl);
+  getTtl(): Ttl|undefined {
+    const range = this.getOfType(Ttl);
+    if (range) {
+      assert(range.min.isEquivalent(range.max));
+      return range.min as Ttl;
+    }
+    return undefined;
   }
 
   isEncrypted(): boolean|undefined {
-    const encryption = this.ranges.find(range => range.min instanceof Encryption);
+    const encryption = this.getOfType(Encryption);
     return encryption ? (encryption.min as Encryption).value : undefined;
   }
 
   isQueryable(): boolean|undefined {
-    const queryable = this.ranges.find(range => range.min instanceof Queryable);
+    const queryable = this.getOfType(Queryable);
     return queryable ? (queryable.min as Queryable).value : undefined;
   }
 
   isShareable(): boolean|undefined {
-    const shareable = this.ranges.find(range => range.min instanceof Shareable);
+    const shareable = this.getOfType(Shareable);
     return shareable ? (shareable.min as Shareable).value : undefined;
+  }
+
+  private getOfType(type: typeof Capability): CapabilityRange|undefined  {
+    return this.ranges.find(range => range.min instanceof type);
   }
 
   static fromAnnotations(annotations: AnnotationRef[] = []): Capabilities {
@@ -458,22 +487,6 @@ export class Capabilities {
   private static readonly all: (typeof Capability | typeof BooleanCapability)[] = [
     Persistence, Encryption, Ttl, Queryable, Shareable
   ];
-
-  // This method is only needed for backward compatibility testing.
-  static fromOldCapabilities(capabilitiesOld: CapabilitiesOld, ttlOld: TtlOld): Capabilities {
-    const ranges = [];
-    ranges.push(capabilitiesOld.isPersistent ? Persistence.onDisk() : Persistence.inMemory());
-    if (ttlOld && !ttlOld.isInfinite) {
-      ranges.push(Ttl.fromString(`${ttlOld.count}${ttlOld.units}`));
-    }
-    if (capabilitiesOld.isQueryable) {
-      ranges.push(new Queryable(true));
-    }
-    if (capabilitiesOld.isTiedToRuntime) {
-      ranges.push(new Shareable(true));
-    }
-    return new Capabilities(ranges);
-  }
 
   toDebugString(): string {
     return this.ranges.map(({min, max}) => min.isEquivalent(max)

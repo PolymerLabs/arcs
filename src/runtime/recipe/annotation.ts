@@ -89,6 +89,10 @@ export class AnnotationRef {
     return this.annotation.targets.length === 0 || this.annotation.targets.includes(target);
   }
 
+  clone(): AnnotationRef {
+    return new AnnotationRef(this.annotation, {...this.params});
+  }
+
   toString(): string {
     let paramStr = '';
     if (Object.keys(this.params).length > 0) {

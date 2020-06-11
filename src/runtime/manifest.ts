@@ -31,7 +31,6 @@ import {connectionMatchesHandleDirection} from './recipe/direction-util.js';
 import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
-import {Ttl} from './recipe/ttl.js';
 import {Schema} from './schema.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
         ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType} from './type.js';
@@ -940,12 +939,8 @@ ${e.message}
       if (item.kind === 'handle') {
         if (item.annotations) {
           handle.annotations = Manifest._buildAnnotationRefs(manifest, item.annotations);
-          const ttlAnnotation = handle.getAnnotation('ttl');
-          if (ttlAnnotation) {
-            handle.ttl = Ttl.fromString(ttlAnnotation.params['value'].toString());
-          }
           handle.capabilities = Capabilities.fromAnnotations(handle.annotations);
-          if (!handle.ttl.isInfinite) {
+          if (!handle.getTtl().isInfinite) {
             handle.capabilities.merge(Capabilities.queryable);
           }
         }

@@ -15,7 +15,7 @@ import {generateConnectionType} from './kotlin-codegen-shared.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Handle} from '../runtime/recipe/handle.js';
-import {Ttl, TtlUnits} from '../runtime/recipe/ttl.js';
+import {Ttl, TtlUnits} from '../runtime/capabilities-new.js';
 import {Random} from '../runtime/random.js';
 import {findLongRunningArcId} from './storage-key-recipe-resolver.js';
 import {Capabilities} from '../runtime/capabilities.js';
@@ -93,7 +93,7 @@ export class PlanGenerator {
     const storageKey = this.createStorageKey(connection.handle);
     const mode = this.createHandleMode(connection.direction, connection.type);
     const type = generateConnectionType(connection);
-    const ttl = this.createTtl(connection.handle.ttl);
+    const ttl = this.createTtl(connection.handle.getTtl());
 
     return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl], {startIndent: 24});
   }
@@ -183,9 +183,9 @@ export class PlanGenerator {
   /** Translates TtlUnits to Kotlin Ttl case classes. */
   createTtlUnit(ttlUnits: TtlUnits): string {
     switch (ttlUnits) {
-      case TtlUnits.Minute: return `Ttl.Minutes`;
-      case TtlUnits.Hour: return `Ttl.Hours`;
-      case TtlUnits.Day: return `Ttl.Days`;
+      case TtlUnits.Minutes: return `Ttl.Minutes`;
+      case TtlUnits.Hours: return `Ttl.Hours`;
+      case TtlUnits.Days: return `Ttl.Days`;
       default: return `Ttl.Infinite`;
     }
   }

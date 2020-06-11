@@ -15,7 +15,6 @@ import {Type, TypeVariable, TypeVariableInfo, TupleType, CollectionType} from '.
 import {Slot} from './slot.js';
 import {HandleConnection} from './handle-connection.js';
 import {SlotConnection} from './slot-connection.js';
-import {Ttl} from './ttl.js';
 import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, ToStringOptions, VariableMap} from './recipe.js';
 import {TypeChecker, TypeListInfo} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
@@ -23,6 +22,7 @@ import {Fate, Direction} from '../manifest-ast-nodes.js';
 import {ClaimIsTag, Claim} from '../particle-claim.js';
 import {StorageKey} from '../storageNG/storage-key.js';
 import {Capabilities} from '../capabilities.js';
+import {Capabilities as CapabilitiesNew, Ttl} from '../capabilities-new.js';
 import {AnnotationRef} from './annotation.js';
 import {StoreClaims} from '../storageNG/abstract-store.js';
 
@@ -52,8 +52,8 @@ export class Handle implements Comparable<Handle> {
   // Currently only supports ParticleSpec.
   private _immediateValue: ParticleSpec | undefined = undefined;
   claims: StoreClaims | undefined = undefined;
-  private _ttl = Ttl.infinite;
-  private _annotations: AnnotationRef[];
+  private _annotations: AnnotationRef[] = [];
+  private capabilitiesNew: CapabilitiesNew;
 
   constructor(recipe: Recipe) {
     assert(recipe);
@@ -106,7 +106,7 @@ export class Handle implements Comparable<Handle> {
       handle._storageKey = this._storageKey;
       handle._immediateValue = this._immediateValue;
       handle.capabilities = this.capabilities.clone();
-      handle._ttl = this._ttl;
+      handle.annotations = this.annotations.map(a => a.clone());
       // the connections are re-established when Particles clone their
       // attached HandleConnection objects.
       handle._connections = [];
@@ -130,6 +130,7 @@ export class Handle implements Comparable<Handle> {
     handle.tags = handle.tags.concat(this.tags);
     handle.recipe.removeHandle(this);
     handle.fate = this._mergedFate([this.fate, handle.fate]);
+    handle.annotations = handle.annotations.concat(this.annotations);
   }
 
   _mergedFate(fates: Fate[]) {
@@ -226,8 +227,6 @@ export class Handle implements Comparable<Handle> {
   set mappedType(mappedType: Type) { this._mappedType = mappedType; }
   get immediateValue() { return this._immediateValue; }
   set immediateValue(value: ParticleSpec) { this._immediateValue = value; }
-  get ttl() { return this._ttl; }
-  set ttl(ttl: Ttl) { this._ttl = ttl; }
   get isSynthetic() { return this.fate === 'join'; } // Join handles are the first type of synthetic handles, other may come.
   get joinedHandles() { return this._joinedHandles; }
   get isJoined() { return this._isJoined; }
@@ -246,6 +245,13 @@ export class Handle implements Comparable<Handle> {
   }
   findAnnotations(name: string): AnnotationRef[] {
     return this.annotations.filter(a => a.name === name);
+  }
+
+  getCapabilities(): CapabilitiesNew {
+    return CapabilitiesNew.fromAnnotations(this.annotations);
+  }
+  getTtl(): Ttl {
+    return this.getCapabilities().getTtl() || Ttl.infinite();
   }
 
   static effectiveType(handleType: Type, connections: {type?: Type, direction?: Direction, relaxed?: boolean}[]) {

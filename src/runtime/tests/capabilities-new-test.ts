@@ -8,6 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../platform/chai-web.js';
+import {assertThrowsAsync} from '../../testing/test-util.js';
 import {Persistence, PersistenceType, Ttl, TtlUnits, Capabilities, Encryption, Queryable, CapabilityRange} from '../capabilities-new.js';
 import {Manifest} from '../manifest.js';
 
@@ -96,8 +97,7 @@ describe('Persistence Capability', () => {
         recipe
           h0: create @persistent @tiedToArc @ttl('3d')
     `;
-    const handle = (await Manifest.parse(manifestStr)).recipes[0].handles[0];
-    assert.throws(() => Persistence.fromAnnotations(handle.annotations));
+    await assertThrowsAsync(async () => await Manifest.parse(manifestStr));
   });
 });
 
@@ -184,6 +184,12 @@ describe('Ttl Capability', () => {
     assert.equal(
       Ttl.fromString('2h').calculateExpiration(start).getTime(),
       ttl60m.calculateExpiration(ttl60m.calculateExpiration(start)).getTime());
+  });
+
+  it('fails creating range with incompatible min and max', () => {
+    assert.isTrue(Ttl.infinite().isEquivalent(Ttl.fromLiteral(Ttl.infinite().toLiteral())));
+    assert.isTrue(Ttl.days(5).isEquivalent(Ttl.fromLiteral(Ttl.days(5).toLiteral())));
+    assert.isTrue(Ttl.zero().isEquivalent(Ttl.fromLiteral(Ttl.zero().toLiteral())));
   });
 });
 

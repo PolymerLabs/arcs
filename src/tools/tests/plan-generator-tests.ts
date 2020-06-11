@@ -11,7 +11,7 @@
 import {PlanGenerator} from '../plan-generator.js';
 import {assert} from '../../platform/chai-node.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Ttl, TtlUnits} from '../../runtime/recipe/ttl.js';
+import {Ttl} from '../../runtime/capabilities-new.js';
 import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
 import {Capabilities, Capability} from '../../runtime/capabilities.js';
 
@@ -49,12 +49,12 @@ describe('recipe2plan', () => {
       assert.notInclude(actual, 'import arcs.core.data.*');
     });
     it('can create Infinite Ttl objects', () => {
-      const ttl = Ttl.infinite;
+      const ttl = Ttl.infinite();
       const actual = emptyGenerator.createTtl(ttl);
       assert.deepStrictEqual(actual, 'Ttl.Infinite');
     });
     it('can create Ttls at a valid time resolution', () => {
-      const ttl = new Ttl(30, TtlUnits.Day);
+      const ttl = Ttl.days(30);
       const actual = emptyGenerator.createTtl(ttl);
       assert.deepStrictEqual(actual, 'Ttl.Days(30)');
     });
