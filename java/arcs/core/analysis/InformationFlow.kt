@@ -238,13 +238,21 @@ class InformationFlow private constructor(
     ): AccessPathLabels {
         val accessPathLabels = input.accessPathLabels ?: return input
         val toHandleRoot = AccessPath.Root.Handle(toHandle)
+        val handle = AccessPath.Root.Handle(fromHandle)
+        val sourceSelectors = fromHandle.type.accessPathSelectors()
 
-        // Compute the label that is obtained by combining labels on all inputs.
-        val mixedLabels = accessPathLabels.values
-            .fold(InformationFlowLabels(emptySet())) { acc, cur -> acc join cur }
-
+        // Filter out the information pertaining to the given handle -> join-handle edge.
+        // Also, convert the root of the access path from handle to join-handle.
+        val component = listOf(AccessPath.Selector.Field("c${spec.component}"))
         return AccessPathLabels.makeValue(
-            toHandle.type.getAccessPaths(toHandleRoot).map { it to mixedLabels.copy() }.toMap()
+            accessPathLabels
+                .filterKeys { accessPath ->
+                    accessPath.root == handle &&
+                    accessPath.selectorsMatchAnyPrefix(sourceSelectors)
+                }
+                .map { (accessPath, labels) ->
+                    AccessPath(toHandleRoot, component + accessPath.selectors) to labels
+                }.toMap()
         )
     }
 

@@ -44,9 +44,9 @@ class RecipeGraph(recipe: Recipe) {
      */
     private fun Node.Handle.addJoinEdges(handleNodesMap: Map<String, Node.Handle>) {
         if (handle.fate != Recipe.Handle.Fate.JOIN) return
-        handle.associatedHandles.forEach {
-            val joinHandleNode = requireNotNull(handleNodesMap[it.name])
-            joinHandleNode.addSuccessor(this, JoinSpec())
+        handle.associatedHandles.forEachIndexed { index, targetHandle ->
+            val joinHandleNode = requireNotNull(handleNodesMap[targetHandle.name])
+            joinHandleNode.addSuccessor(this, JoinSpec(index))
         }
     }
 
@@ -74,7 +74,7 @@ class RecipeGraph(recipe: Recipe) {
      *
      * This is a dummy class for the time being, but will have more information when the support
      * for join is fully flshed out. This should also move out of this file. */
-    data class JoinSpec(val type: String = "INNER")
+    data class JoinSpec(val component: Int, val type: String = "INNER")
 
     /** Represents an edge kind. */
     sealed class EdgeKind {
@@ -87,7 +87,7 @@ class RecipeGraph(recipe: Recipe) {
          * The [spec] just a dummy state for the time being. When the support for join is fully
          * fleshed out, this would consist of things like refinements, etc.
          */
-        data class JoinConnection(val spec: JoinSpec = JoinSpec()) : EdgeKind()
+        data class JoinConnection(val spec: JoinSpec) : EdgeKind()
     }
 
     /** Represents a node in a [RecipeGraph]. */
