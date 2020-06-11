@@ -12,17 +12,22 @@ ENTITY_SRCS = [
     "RawEntity.kt",
 ]
 
+SCHEMA_FIELDS_SRCS = [
+    "SchemaFields.kt",
+]
+
 arcs_kt_library(
     name = "data",
     srcs = glob(
         ["*.kt"],
-        exclude = ENTITY_SRCS,
+        exclude = ENTITY_SRCS + SCHEMA_FIELDS_SRCS,
     ),
     exports = [
         ":rawentity",
     ],
     deps = [
         ":rawentity",
+        ":schema_fields",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/storage:storage_key",
@@ -37,5 +42,14 @@ arcs_kt_library(
     srcs = ENTITY_SRCS,
     deps = [
         "//java/arcs/core/common",
+    ],
+)
+
+arcs_kt_library(
+    name = "schema_fields",
+    srcs = SCHEMA_FIELDS_SRCS,
+    deps = [
+        ":rawentity",
+        "//java/arcs/core/type",
     ],
 )

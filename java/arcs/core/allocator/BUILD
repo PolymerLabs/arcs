@@ -11,6 +11,7 @@ arcs_kt_library(
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",

@@ -13,6 +13,7 @@ arcs_kt_jvm_test_suite(
     package = "arcs.core.data",
     deps = [
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/type",
