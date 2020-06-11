@@ -230,6 +230,7 @@ export class Handle implements Comparable<Handle> {
   set ttl(ttl: Ttl) { this._ttl = ttl; }
   get isSynthetic() { return this.fate === 'join'; } // Join handles are the first type of synthetic handles, other may come.
   get joinedHandles() { return this._joinedHandles; }
+  get isJoined() { return this._isJoined; }
 
   get annotations(): AnnotationRef[] { return this._annotations; }
   set annotations(annotations: AnnotationRef[]) {

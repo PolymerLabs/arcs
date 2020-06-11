@@ -367,4 +367,37 @@ Resolver generated 0 recipes`
       );
     }));
   });
+  it('resolves joining mapped handles and reading tuples of data', Flags.withDefaultReferenceMode(async () => {
+    const manifest = await Manifest.parse(`\
+  particle Writer
+    products: writes [Product {name: Text}]
+    manufacturers: writes [Manufacturer {address: Text}]
+
+  particle Reader
+    data: reads [(
+      &Product {name: Text},
+      &Manufacturer {address: Text}
+    )]
+
+  @arcId('write-data-for-join')
+  recipe WriteData
+    products: create 'products' @persistent
+    manufacturers: create 'manufacturers' @persistent
+    Writer
+      products: products
+      manufacturers: manufacturers
+
+  recipe ReadJoin
+    products: map 'products'
+    manufacturers: map 'manufacturers'
+    data: join (products, manufacturers)
+  
+    Reader
+      data: data`);
+
+    const resolver = new StorageKeyRecipeResolver(manifest);
+    for (const it of (await resolver.resolve())) {
+      assert.isTrue(it.isResolved());
+    }
+  }));
 });

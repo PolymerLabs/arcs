@@ -1,15 +1,10 @@
 meta
   namespace: arcs.schematests.joins
 
-recipe ReadJoin
-  products: map 'products'
-  reviews: map 'reviews'
-  manufacturers: map 'manufacturers'
-
-  triples: join (products, reviews, manufacturers)
-
-  Reader
-    data: triples
+particle Writer
+  products: writes [Product {name: Text, photo: URL}]
+  reviews: writes [Review {author: Text, content: Text, rating: Number}]
+  manufacturers: writes [Manufacturer {name: Text, address: Text}]
 
 particle Reader in 'arcs.schematests.joins.Reader'
   data: reads [(
@@ -17,3 +12,22 @@ particle Reader in 'arcs.schematests.joins.Reader'
     &Review {author: Text, content: Text, rating: Number},
     &Manufacturer {name: Text, address: Text}
   )]
+
+@arcId('write-data-for-join')
+recipe WriteData
+  products: create 'products' @persistent
+  reviews: create 'reviews' @persistent
+  manufacturers: create 'manufacturers' @persistent
+  Writer
+    products: products
+    reviews: reviews
+    manufacturers: manufacturers
+
+recipe ReadJoin
+  products: map 'products'
+  reviews: map 'reviews'
+  manufacturers: map 'manufacturers'
+  triples: join (products, reviews, manufacturers)
+
+  Reader
+    data: triples

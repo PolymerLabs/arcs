@@ -10,7 +10,7 @@
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Type} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {KotlinGenerationUtils, quote, tryImport, upperFirst} from './kotlin-generation-utils.js';
+import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils.js';
 import {generateConnectionType} from './kotlin-codegen-shared.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
@@ -123,6 +123,12 @@ export class PlanGenerator {
         createKeyArgs.push(capabilities);
       }
       return ktUtils.applyFun('CreateableStorageKey', createKeyArgs);
+    }
+    if (handle.fate === 'join') {
+      // TODO(piotrs): Implement JoinStorageKey in TypeScript.
+      const components = handle.joinedHandles.map(h => h.storageKey);
+      const joinSk = `join://${components.length}/${components.map(sk => `{${sk.embedKey()}}`).join('/')}`;
+      return ktUtils.applyFun('StorageKeyParser.parse', [quote(joinSk)]);
     }
     throw new PlanGeneratorError(`Problematic handle '${handle.id}': Only 'create' Handles can have null 'StorageKey's.`);
   }

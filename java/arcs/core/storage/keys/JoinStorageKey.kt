@@ -21,12 +21,12 @@ const val COMPOSITE_PROTOCOL = "join"
 
 /** Implementation for a composite [StorageKey] for joining entities. */
 class JoinStorageKey(
-    private val storageKeys: List<StorageKey>
+    val components: List<StorageKey>
 ) : StorageKey(COMPOSITE_PROTOCOL) {
     override fun toKeyString(): String {
         val builder = StringBuilder()
-        builder.append("${storageKeys.size}/")
-        storageKeys.forEach { builder.append("{${it.embed()}}") }
+        builder.append("${components.size}/")
+        components.forEach { builder.append("{${it.embed()}}") }
 
         return builder.toString()
     }
