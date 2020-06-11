@@ -56,14 +56,17 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
     /** Removes [DirectStore] caches and closes those that can be closed safely. */
     fun clearStoresCache() {
         while (!storeMutex.tryLock()) { /* Wait */ }
-        stores.forEach { _, sr ->
-            /** Aligns with the logic of [stores]'s [LruCacheMap.onEvict]. */
-            if (!sr.store.closed) {
-                sr.store.close()
+        try {
+            stores.forEach { _, sr ->
+                /** Aligns with the logic of [stores]'s [LruCacheMap.onEvict]. */
+                if (!sr.store.closed) {
+                    sr.store.close()
+                }
             }
+        } finally {
+            stores.clear()
+            storeMutex.unlock()
         }
-        stores.clear()
-        storeMutex.unlock()
     }
 
     /** Calls [idle] on all existing contained stores and waits for their completion. */
