@@ -11,6 +11,7 @@ arcs_kt_android_library(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/type",
     ],
 )
