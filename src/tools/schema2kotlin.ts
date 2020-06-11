@@ -525,7 +525,7 @@ ${lines}
     let constructorFields: string[];
     if (this.opts.wasm) {
       baseClass = 'WasmEntity';
-      constructorFields = this.fields
+      constructorFields = this.fields;
     } else {
       const concreteOrVariableEntity = this.node.variableName == null ? 'EntityBase' : 'VariableEntityBase';
       baseClass = ktUtils.applyFun(concreteOrVariableEntity, [quote(this.name), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp']);

@@ -202,7 +202,7 @@ describe('schema2kotlin', () => {
          `,
       `class Handles : HandleHolderBase(
         "T",
-        mapOf("h1" to TInternal1, "h2" to TInternal1, "h3" to TInternal1)
+        mapOf("h1" to setOf(TInternal1), "h2" to setOf(TInternal1), "h3" to setOf(TInternal1))
     ) {
         val h1: ReadSingletonHandle<TInternal1> by handles
         val h2: WriteSingletonHandle<TInternal1> by handles

@@ -79,7 +79,7 @@ export class SchemaNode {
   // - The connection name: if schema name is not unique, but connection name is.
   // - The internal index (i.e. using Internal$N pattern): if schema is not unique.
   get entityClassName() {
-    if (this.uniqueSchema && this.schema.name) {
+    if (this.uniqueSchema && this.schema && this.schema.name) {
       return this.schema.name;
     }
     return this.fullEntityClassName;

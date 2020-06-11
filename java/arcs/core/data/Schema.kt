@@ -82,7 +82,7 @@ data class Schema(
         val EMPTY = Schema(
             setOf(),
             SchemaFields(emptyMap(), emptyMap()),
-            // Calculated from TypeScript's hash() function on schemas for an empty schema.
+            // Calculated from TypeScript's Schema.hash() function for an empty schema.
             "42099b4af021e53fd8fd4e056c2568d7c2e3ffa8"
         )
     }
