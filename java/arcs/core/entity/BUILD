@@ -15,6 +15,7 @@ arcs_kt_library(
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/referencemode",
+        "//java/arcs/core/type",
         "//java/arcs/core/util",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
