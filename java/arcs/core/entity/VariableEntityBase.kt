@@ -17,9 +17,9 @@ import arcs.core.data.Schema
 open class VariableEntityBase(
     entityClassName: String,
     schema: Schema,
-    entityId: String,
-    creationTimestamp: Long,
-    expirationTimestamp: Long
+    entityId: String? = null,
+    creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+    expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
 ) : EntityBase(entityClassName, schema, entityId, creationTimestamp, expirationTimestamp) {
 
     private val rawSingletons = mutableMapOf<FieldName, Referencable?>()
