@@ -658,7 +658,7 @@ class ReferenceModeStoreTest {
 
     // region Helpers
 
-    private fun BackingStore<CrdtData, CrdtOperation, Any?>.getEntityDriver(
+    private fun DirectStoreMuxer<CrdtData, CrdtOperation, Any?>.getEntityDriver(
         id: ReferenceId
     ): MockDriver<CrdtEntity.Data> =
         requireNotNull(stores[id]).store.driver as MockDriver<CrdtEntity.Data>
