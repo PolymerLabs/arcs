@@ -16,7 +16,7 @@ import arcs.core.data.Schema
  */
 open class VariableEntityBase : EntityBase {
 
-    constructor(entityClassName: String, schema: Schema): super(entityClassName, schema)
+    constructor(entityClassName: String, schema: Schema) : super(entityClassName, schema)
 
     constructor(
         entityClassName: String,
@@ -31,7 +31,6 @@ open class VariableEntityBase : EntityBase {
         creationTimestamp: Long,
         expirationTimestamp: Long
     ) : super(entityClassName, schema, entityId, creationTimestamp, expirationTimestamp)
-
 
     private val rawSingletons = mutableMapOf<FieldName, Referencable?>()
     private val rawCollections = mutableMapOf<FieldName, Set<Referencable>>()
