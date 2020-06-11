@@ -25,6 +25,7 @@ arcs_kt_android_library(
         "//java/arcs/android/util",
         "//java/arcs/core/common",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",

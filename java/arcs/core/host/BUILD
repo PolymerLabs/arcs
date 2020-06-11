@@ -12,6 +12,7 @@ arcs_kt_library(
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
         "//java/arcs/core/data:rawentity",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/entity",
         "//java/arcs/core/host/api",
         "//java/arcs/core/host/generated:archostcontext",
