@@ -144,8 +144,7 @@ export class StorageKeyRecipeResolver {
    */
   async createStoresForCreateHandles(recipe: Recipe): Promise<Recipe> {
     const arcId = Id.fromString(findLongRunningArcId(recipe));
-    // const resolver = new CapabilitiesResolver({arcId});
-    const resolverNew = new CapabilitiesResolverNew({arcId});
+    const resolver = new CapabilitiesResolver({arcId});
     const cloneRecipe = recipe.clone();
     for (const createHandle of cloneRecipe.handles.filter(h => h.fate === 'create' && !!h.id)) {
       if (createHandle.type.hasVariable && !createHandle.type.isResolved()) {
@@ -157,11 +156,8 @@ export class StorageKeyRecipeResolver {
         throw new StorageKeyRecipeResolverError(`Handle '${createHandle.id}' was not properly resolved.`);
       }
 
-      // const storageKey = await resolver.createStorageKey(
-      //   createHandle.capabilities, createHandle.type, createHandle.id);
-      const storageKey/*New*/ = await resolverNew.createStorageKey(
-        CapabilitiesNew.fromAnnotations(createHandle.annotations), createHandle.type, createHandle.id);
-      // assert(storageKey.toString() === storageKeyNew.toString());
+      const storageKey = await resolver.createStorageKey(
+          createHandle.capabilities, createHandle.type, createHandle.id);
       const store = new Store(createHandle.type, {
         storageKey,
         exists: Exists.MayExist,

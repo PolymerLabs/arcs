@@ -15,7 +15,7 @@ import {Schema} from '../schema.js';
 import {EntityType} from '../type.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ConCap} from '../../testing/test-util.js';
-import {Ttl} from '../capabilities-new.js';
+import {Ttl} from '../capabilities.js';
 
 describe('Entity', () => {
 

@@ -11,7 +11,7 @@
 import {PlanGenerator} from '../plan-generator.js';
 import {assert} from '../../platform/chai-node.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Capabilities, Ttl, Persistence, Queryable, Shareable} from '../../runtime/capabilities-new.js';
+import {Capabilities, Ttl, Persistence, Queryable, Shareable} from '../../runtime/capabilities.js';
 import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 

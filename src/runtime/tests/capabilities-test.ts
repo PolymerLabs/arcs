@@ -9,7 +9,7 @@
  */
 import {assert} from '../../platform/chai-web.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
-import {Persistence, PersistenceType, Ttl, TtlUnits, Capabilities, Encryption, Queryable, CapabilityRange} from '../capabilities-new.js';
+import {Persistence, PersistenceType, Ttl, TtlUnits, Capabilities, Encryption, Queryable, CapabilityRange} from '../capabilities.js';
 import {Manifest} from '../manifest.js';
 
 describe('Persistence Capability', () => {
@@ -305,7 +305,9 @@ describe('Capabilities', () => {
 
     const capabilities6 = Capabilities.fromAnnotations(recipe.handles[6].annotations);
     assert.isTrue(capabilities6.hasEquivalent(Persistence.onDisk()));
+    assert.isTrue(capabilities6.contains(Persistence.onDisk()));
     assert.isTrue(capabilities6.getTtl().isEquivalent(Ttl.minutes(30)));
+    assert.isTrue(capabilities6.contains(Ttl.minutes(30)));
     assert.isTrue(capabilities6.isEncrypted());
     assert.isTrue(capabilities6.isQueryable());
   });

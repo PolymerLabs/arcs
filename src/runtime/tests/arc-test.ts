@@ -34,10 +34,7 @@ import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
 import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {SingletonEntityStore, CollectionEntityStore, handleForStore} from '../storageNG/storage-ng.js';
-// import {Capabilities} from '../capabilities.js';
-import {Capabilities as CapabilitiesNew, Ttl, Queryable, Persistence} from '../capabilities-new.js';
-// import {CapabilitiesResolver} from '../capabilities-resolver.js';
-import {CapabilitiesResolver as CapabilitiesResolverNew} from '../capabilities-resolver-new.js';
+import {Capabilities, Ttl, Queryable, Persistence} from '../capabilities.js';
 import {isActiveStore} from '../storageNG/store-interface.js';
 import {StorageKeyOptions} from '../storage-key-factory.js';
 
@@ -1042,10 +1039,6 @@ describe('Arc storage migration', () => {
   }));
 
   it('sets ttl on create entities', async () => {
-    // CapabilitiesResolver.registerKeyCreator(
-    //     VolatileStorageKey.protocol,
-    //     Capabilities.queryable,
-    //     (options: StorageKeyOptions) => new VolatileStorageKey(options.arcId, options.unique(), ''));
     const id = ArcId.newForTest('test');
     const loader = new Loader(null, {
       'ThingAdder.js': `
@@ -1092,8 +1085,8 @@ describe('Arc storage migration', () => {
 
     const runtime = new Runtime({loader, context: manifest});
     const volatileFactory = new class extends VolatileStorageKeyFactory {
-      capabilities(): CapabilitiesNew {
-        return CapabilitiesNew.create([Persistence.inMemory(), Ttl.any(), Queryable.any()]);
+      capabilities(): Capabilities {
+        return Capabilities.create([Persistence.inMemory(), Ttl.any(), Queryable.any()]);
       }
     }();
     const arc = runtime.newArc('test', volatileStorageKeyPrefixForTest(), {storargeKeyFactories: [volatileFactory]});
@@ -1142,7 +1135,6 @@ describe('Arc storage migration', () => {
         // `foo` was added at the same time as `bar`, `bar` has a >1d longer ttl than `foo`.
         assert.isTrue(barThing2.expirationTimestamp - fooThing1.expirationTimestamp >
             24 * 60 * 60 * 1000);
-        // CapabilitiesResolver.reset();
       } else {
         assert.fail('things2 store is not an active store');
       }

@@ -21,8 +21,7 @@ import {compareArrays, compareComparables, compareStrings, Comparable} from './c
 import {Fate, Direction} from '../manifest-ast-nodes.js';
 import {ClaimIsTag, Claim} from '../particle-claim.js';
 import {StorageKey} from '../storageNG/storage-key.js';
-// import {Capabilities} from '../capabilities.js';
-import {Capabilities as CapabilitiesNew, Ttl} from '../capabilities-new.js';
+import {Capabilities, Ttl} from '../capabilities.js';
 import {AnnotationRef} from './annotation.js';
 import {StoreClaims} from '../storageNG/abstract-store.js';
 
@@ -46,15 +45,13 @@ export class Handle implements Comparable<Handle> {
   private _isJoined = false;
   private _mappedType: Type | undefined = undefined;
   private _storageKey: StorageKey | undefined = undefined;
-  // capabilities: Capabilities = Capabilities.empty;
-  capabilities: string[] = [];
   private _pattern: string | undefined = undefined;
   // Value assigned in the immediate mode, E.g. hostedParticle = ShowProduct
   // Currently only supports ParticleSpec.
   private _immediateValue: ParticleSpec | undefined = undefined;
   claims: StoreClaims | undefined = undefined;
   private _annotations: AnnotationRef[] = [];
-  private capabilitiesNew = CapabilitiesNew.create();
+  private _capabilities = Capabilities.create();
 
   constructor(recipe: Recipe) {
     assert(recipe);
@@ -106,7 +103,6 @@ export class Handle implements Comparable<Handle> {
       handle._mappedType = this._mappedType;
       handle._storageKey = this._storageKey;
       handle._immediateValue = this._immediateValue;
-      // handle.capabilities = this.capabilities.clone();
       handle.annotations = this.annotations.map(a => a.clone());
       // the connections are re-established when Particles clone their
       // attached HandleConnection objects.
@@ -237,7 +233,7 @@ export class Handle implements Comparable<Handle> {
     annotations.every(a => assert(a.isValidForTarget('Handle'),
         `Annotation '${a.name}' is invalid for Handle`));
     this._annotations = annotations;
-    this.capabilitiesNew = CapabilitiesNew.fromAnnotations(this.annotations);
+    this._capabilities = Capabilities.fromAnnotations(this.annotations);
   }
   getAnnotation(name: string): AnnotationRef | null {
     const annotations = this.findAnnotations(name);
@@ -249,12 +245,11 @@ export class Handle implements Comparable<Handle> {
     return this.annotations.filter(a => a.name === name);
   }
 
-  getCapabilities(): CapabilitiesNew {
-    // return CapabilitiesNew.fromAnnotations(this.annotations);
-    return this.capabilitiesNew;
+  get capabilities(): Capabilities {
+    return this._capabilities;
   }
   getTtl(): Ttl {
-    return this.getCapabilities().getTtl() || Ttl.infinite();
+    return this.capabilities.getTtl() || Ttl.infinite();
   }
 
   static effectiveType(handleType: Type, connections: {type?: Type, direction?: Direction, relaxed?: boolean}[]) {

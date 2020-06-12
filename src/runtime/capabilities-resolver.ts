@@ -9,11 +9,10 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-// import {StorageKeyCreator, CapabilitiesResolverOptions} from './capabilities-resolver.js';
 import {Dictionary} from './hot.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Type} from './type.js';
-import {Capabilities} from './capabilities-new.js';
+import {Capabilities} from './capabilities.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 import {Flags} from './flags.js';
 import {StorageKeyFactory, FactorySelector, ContainerStorageKeyOptions, BackingStorageKeyOptions, SimpleCapabilitiesSelector} from './storage-key-factory.js';

@@ -11,8 +11,7 @@ import {assert} from '../../platform/chai-web.js';
 import {capabilitiesToProtoOrdinals, encodeManifestToProto, manifestToProtoPayload, typeToProtoPayload} from '../manifest2proto.js';
 import {CountType, EntityType, SingletonType, TupleType, Type} from '../../runtime/type.js';
 import {Manifest} from '../../runtime/manifest.js';
-// import {Capabilities} from '../../runtime/capabilities.js';
-import {Capabilities, Shareable, Persistence, Queryable} from '../../runtime/capabilities-new.js';
+import {Capabilities, Shareable, Persistence, Queryable} from '../../runtime/capabilities.js';
 import {fs} from '../../platform/fs-web.js';
 import {CapabilityEnum, ManifestProto, TypeProto} from '../manifest-proto.js';
 
@@ -45,7 +44,6 @@ describe('manifest2proto', () => {
           b: b
           c: c
     `);
-    debugger;
     const recipe = (await toProtoAndBack(manifest)).recipes[0];
     assert.deepEqual(recipe.handles[0].type.entity.schema.names, ['X']);
     assert.deepEqual(recipe.handles[1].type.entity.schema.names, ['Y']);
@@ -59,7 +57,7 @@ describe('manifest2proto', () => {
       handles: [{
         fate: 'USE',
         name: 'handle0',
-        tags: ['tag1', 'tag2'],
+        tags: ['tag1', 'tag2']
       }, {
         fate: 'MAP',
         id: 'by-id',

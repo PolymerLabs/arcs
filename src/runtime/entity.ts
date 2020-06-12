@@ -17,7 +17,7 @@ import {SYMBOL_INTERNALS} from './symbols.js';
 import {Refinement} from './refiner.js';
 import {Flags} from './flags.js';
 import {ChannelConstructor} from './channel-constructor.js';
-import {Ttl} from './capabilities-new.js';
+import {Ttl} from './capabilities.js';
 import {Storable} from './storable.js';
 
 export type EntityRawData = {};

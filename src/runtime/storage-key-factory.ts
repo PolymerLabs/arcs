@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {StorageKey} from './storageNG/storage-key.js';
-import {Capabilities, CapabilityRange} from './capabilities-new.js';
+import {Capabilities, CapabilityRange} from './capabilities.js';
 import {ArcId} from './id.js';
 
 export abstract class StorageKeyOptions {

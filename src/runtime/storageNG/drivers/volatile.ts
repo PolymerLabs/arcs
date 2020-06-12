@@ -17,10 +17,8 @@ import {RamDiskStorageKey} from './ramdisk.js';
 import {Dictionary} from '../../hot.js';
 import {assert} from '../../../platform/assert-web.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
-import {Capabilities as CapabilitiesNew, Persistence, Encryption, Ttl, Queryable} from '../../capabilities-new.js';
-import {CapabilitiesResolver as CapabilitiesResolverNew} from '../../capabilities-resolver-new.js';
-// import {Capabilities} from '../../capabilities.js';
-// import {CapabilitiesResolver} from '../../capabilities-resolver.js';
+import {Capabilities, Persistence, Encryption, Ttl, Queryable, Shareable} from '../../capabilities.js';
+import {CapabilitiesResolver} from '../../capabilities-resolver.js';
 import {StorageKeyFactory, StorageKeyOptions} from '../../storage-key-factory.js';
 
 type VolatileEntry<Data> = {data: Data, version: number, drivers: VolatileDriver<Data>[]};
@@ -62,15 +60,15 @@ export class VolatileStorageKey extends StorageKey {
   }
 
   static register() {
-    CapabilitiesResolverNew.registerStorageKeyFactory(new VolatileStorageKeyFactory());
+    CapabilitiesResolver.registerStorageKeyFactory(new VolatileStorageKeyFactory());
   }
 }
 
 export class VolatileStorageKeyFactory extends StorageKeyFactory {
     get protocol() { return VolatileStorageKey.protocol; }
 
-    capabilities(): CapabilitiesNew {
-      return CapabilitiesNew.create([Persistence.inMemory()]);
+    capabilities(): Capabilities {
+      return Capabilities.create([Persistence.inMemory(), new Shareable(false)]);
     }
 
     create(options: StorageKeyOptions): StorageKey {
@@ -275,11 +273,3 @@ export class VolatileStorageDriverProvider implements StorageDriverProvider {
 }
 
 StorageKeyParser.addDefaultParser(VolatileStorageKey.protocol, VolatileStorageKey.fromString);
-// CapabilitiesResolver.registerDefaultKeyCreator(
-//     VolatileStorageKey.protocol,
-//     Capabilities.tiedToArc,
-//     (options: StorageKeyOptions) => new VolatileStorageKey(options.arcId, options.unique(), ''));
-// CapabilitiesResolver.registerDefaultKeyCreator(
-//     VolatileStorageKey.protocol,
-//     Capabilities.empty,
-//     (options: StorageKeyOptions) => new VolatileStorageKey(options.arcId, options.unique(), ''));

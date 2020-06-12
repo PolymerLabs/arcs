@@ -28,7 +28,7 @@ import {UserException} from './arc-exceptions.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';
 import {ChannelConstructor} from './channel-constructor.js';
-import {Ttl} from './capabilities-new.js';
+import {Ttl} from './capabilities.js';
 import {Handle} from './storageNG/handle.js';
 import {StorageProxyMuxer} from './storageNG/storage-proxy-muxer.js';
 import {EntityHandleFactory} from './storageNG/entity-handle-factory.js';
