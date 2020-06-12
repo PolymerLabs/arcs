@@ -125,9 +125,9 @@ open class HandleManagerTestBase {
 
     @Test
     fun singleton_initialState() = testRunner {
-        val readHandle = readHandleManager.createSingletonHandle()
-            as ReadSingletonHandle<*>
-        assertThat(readHandle.fetch()).isNull()
+        val handle = readHandleManager.createSingletonHandle()
+        assertThat(handle.fetch()).isNull()
+        handle.clear().join()
     }
 
     @Test
@@ -474,8 +474,11 @@ open class HandleManagerTestBase {
     @Test
     fun collection_initialState() = testRunner {
         val handle = writeHandleManager.createCollectionHandle()
-            as ReadCollectionHandle<*>
+        assertThat(handle.size()).isEqualTo(0)
+        assertThat(handle.isEmpty()).isEqualTo(true)
         assertThat(handle.fetchAll()).isEmpty()
+        handle.clear().join()
+        handle.remove(entity1).join()
     }
 
     @Test

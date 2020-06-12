@@ -52,9 +52,9 @@ class CollectionHandle<T : Storable, R : Referencable>(
     }
 
     // region implement ReadCollectionHandle<T>
-    override fun size() = fetchAll().size
+    override fun size() = checkPreconditions { storageProxy.getParticleViewUnsafe().size }
 
-    override fun isEmpty() = fetchAll().isEmpty()
+    override fun isEmpty() = checkPreconditions { storageProxy.getParticleViewUnsafe().isEmpty() }
 
     override fun fetchAll() = checkPreconditions {
         adaptValues(storageProxy.getParticleViewUnsafe())
@@ -97,13 +97,17 @@ class CollectionHandle<T : Storable, R : Referencable>(
         }
 
         val masterJob = Job()
-        val jobsRemaining = atomic(individualJobs.size)
-
-        individualJobs.forEach {
-            it.invokeOnCompletion { error ->
-                if (error != null) masterJob.completeExceptionally(error)
-                else if (jobsRemaining.decrementAndGet() == 0) {
-                    masterJob.complete()
+        if (individualJobs.isEmpty()) {
+            masterJob.complete()
+        } else {
+            val jobsRemaining = atomic(individualJobs.size)
+            individualJobs.forEach {
+                it.invokeOnCompletion { error ->
+                    if (error != null) {
+                        masterJob.completeExceptionally(error)
+                    } else if (jobsRemaining.decrementAndGet() == 0) {
+                        masterJob.complete()
+                    }
                 }
             }
         }
