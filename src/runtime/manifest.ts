@@ -36,7 +36,7 @@ import {Schema} from './schema.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
         ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType} from './type.js';
 import {Dictionary} from './hot.js';
-import {ClaimIsTag, validateFieldPath} from './particle-claim.js';
+import {ClaimIsTag} from './particle-claim.js';
 import {AbstractStore, StoreClaims} from './storageNG/abstract-store.js';
 import {Store} from './storageNG/store.js';
 import {StorageKey} from './storageNG/storage-key.js';
@@ -52,6 +52,7 @@ import {Annotation, AnnotationRef} from './recipe/annotation.js';
 import {SchemaPrimitiveTypeValue} from './manifest-ast-nodes.js';
 import {canonicalManifest} from './canonical-manifest.js';
 import {Policy} from './policy/policy.js';
+import {validateFieldPath} from './field-path.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -1388,7 +1389,7 @@ ${e.message}
 
     const claims: Map<string, ClaimIsTag[]> = new Map();
     item.claims.forEach(claim => {
-      validateFieldPath(claim.fieldPath, type);
+      validateFieldPath(claim.fieldPath, type, 'writes');
       const target = claim.fieldPath.join('.');
       if (claims.has(target)) {
         throw new ManifestError(claim.location, `A claim for target ${target} already exists in store ${name}`);

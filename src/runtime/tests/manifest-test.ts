@@ -3118,19 +3118,19 @@ resource SomeName
         particle A
           output: writes T {foo: Text}
           claim output.bar is something
-      `), 'Field bar does not exist');
+      `), `Field 'bar' does not exist`);
 
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
           output: writes T {foo: &Bar {bar: Number}}
           claim output.foo.baz is something
-      `), 'Field foo.baz does not exist');
+      `), `Field 'foo.baz' does not exist`);
 
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
           output: writes [T {foo: [&Bar {bar: Number}]}]
           claim output.foo.bar.baz is something
-      `), 'Field foo.bar.baz does not exist');
+      `), `Field 'foo.bar.baz' does not exist`);
     });
 
     it('supports claim statement with multiple tags', async () => {
@@ -3212,7 +3212,7 @@ resource SomeName
           input: writes T {foo: Text}
           output: writes T {foo: Text}
           claim output.foo derives from input.bar
-      `), 'Field bar does not exist');
+      `), `Field 'bar' does not exist`);
     });
 
     it('supports mixed claims with multiple tags, not tags, and "derives from"', async () => {
@@ -3315,19 +3315,19 @@ resource SomeName
         particle A
           input: reads T {foo: Text}
           check input.bar is something
-      `), 'Field bar does not exist');
+      `), `Field 'bar' does not exist`);
 
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
           input: reads T {foo: &Bar {bar: Number}}
           check input.foo.baz is something
-      `), 'Field foo.baz does not exist');
+      `), `Field 'foo.baz' does not exist`);
 
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
           input: reads [T {foo: [&Bar {bar: Number}]}]
           check input.foo.bar.baz is something
-      `), 'Field foo.bar.baz does not exist');
+      `), `Field 'foo.bar.baz' does not exist`);
     });
 
     it(`supports 'is from store' checks`, async () => {
@@ -3526,6 +3526,19 @@ resource SomeName
       );
     });
 
+    it('supports field-level checks with type variables', async () => {
+      const manifest = await parseManifest(`
+        particle TimestampToDate
+          input: reads [~a with {timestampInMs: Number}]
+          output: writes [~a]
+          claim output.timestampInMs is roundedToDate
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustChecks);
+      assert.lengthOf(particle.trustClaims, 1);
+    });
+
     it('data stores can make claims', async () => {
       const data = '{"root": {}, "locations": {}}';
 
@@ -3584,7 +3597,7 @@ resource SomeName
         resource NobIdJson
           start
           ${data}
-      `), 'Field foo does not exist in');
+      `), `Field 'foo' does not exist in`);
 
       await assertThrowsAsync(async () => await parseManifest(`
         store NobId of NobIdStore {nobId: Text, someRef: [&Foo {foo: [Text]}]} in NobIdJson
@@ -3592,7 +3605,7 @@ resource SomeName
         resource NobIdJson
           start
           ${data}
-      `), 'Field someRef.bar does not exist in');
+      `), `Field 'someRef.bar' does not exist in`);
     });
 
     it(`doesn't allow mixing 'and' and 'or' operations without nesting`, async () => {
