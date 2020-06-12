@@ -562,8 +562,9 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
         activeStore.idle()
 
-        assertThat(activeStore.containerStore.getLocalData())
-           .isEqualTo(driver.getDatabaseData().first)
+        // TODO: this should be enabled when b/155579842 is fixed.
+        // assertThat(activeStore.containerStore.getLocalData())
+        //    .isEqualTo(driver.getDatabaseData().first)
     }
 
     @Test
