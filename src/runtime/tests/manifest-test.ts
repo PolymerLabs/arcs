@@ -3526,6 +3526,49 @@ resource SomeName
       );
     });
 
+    it('supports field-level checks and claims with type variables', async () => {
+      const manifest = await parseManifest(`
+        particle A
+          input: reads [~a with {foo: Number}]
+          output: writes [~a]
+          check input.foo is trusted
+          claim output.foo derives from input.foo
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+
+      assert.lengthOf(particle.trustChecks, 1);
+      const check = particle.trustChecks[0];
+      assert.strictEqual(check.target.name, 'input');
+      assert.deepStrictEqual(check.fieldPath, ['foo']);
+
+      assert.lengthOf(particle.trustClaims, 1);
+      const claim = particle.trustClaims[0];
+      assert.strictEqual(claim.handle.name, 'output');
+      assert.deepStrictEqual(claim.fieldPath, ['foo']);
+    });
+
+    it('rejects unknown fields in type variables', async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: reads ~a
+          check input.foo is trusted
+      `), `Type variable ~a does not contain field 'foo'`);
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          output: writes ~a
+          claim output.foo is trusted
+      `), `Type variable ~a does not contain field 'foo'`);
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: reads ~a
+          output: writes Result {foo: Text}
+          claim output.foo derives from input.foo
+      `), `Type variable ~a does not contain field 'foo'`);
+    });
+
     it('data stores can make claims', async () => {
       const data = '{"root": {}, "locations": {}}';
 

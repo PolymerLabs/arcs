@@ -9,7 +9,7 @@
  */
 
 import {validateFieldPath} from '../field-path.js';
-import {EntityType, SingletonType, CollectionType} from '../type.js';
+import {EntityType, SingletonType, CollectionType, TypeVariable} from '../type.js';
 import {Manifest} from '../manifest.js';
 import {assert} from '../../platform/chai-web.js';
 
@@ -17,6 +17,15 @@ async function parseSchema(manifestStr: string) {
   const manifest = await Manifest.parse(manifestStr);
   assert.lengthOf(manifest.allSchemas, 1);
   return manifest.allSchemas[0];
+}
+
+async function parseTypeFromHandle(handleName: string, manifestStr: string) {
+  const manifest = await Manifest.parse(manifestStr);
+  assert.lengthOf(manifest.allParticles, 1);
+  const particle = manifest.allParticles[0];
+  assert.isTrue(particle.handleConnectionMap.has(handleName));
+  const handleSpec = particle.handleConnectionMap.get(handleName);
+  return handleSpec.type;
 }
 
 describe('field path validation', () => {
@@ -141,5 +150,82 @@ describe('field path validation', () => {
     assert.throws(
       () => validateFieldPath(['missing'], type),
       `Field 'missing' does not exist in: schema Foo`);
+  });
+
+  describe('type variables', () => {
+    it('cannot refer to fields inside unconstrained type variables', async () => {
+      const type = await parseTypeFromHandle('foo', `
+        particle P
+          foo: reads ~a
+      `);
+      assert.instanceOf(type, TypeVariable);
+      assert.throws(
+          () => validateFieldPath(['foo'], type),
+          `Type variable ~a does not contain field 'foo'.`);
+    });
+
+    it('can refer to known fields inside type variables with read constraints', async () => {
+      const type = await parseTypeFromHandle('foo', `
+        particle P
+          foo: reads ~a with {name: Text}
+      `);
+      validateFieldPath(['name'], type);
+    });
+
+    it('can refer to known fields inside type variables with write constraints', async () => {
+      const type = await parseTypeFromHandle('foo', `
+        particle P
+          foo: writes ~a with {name: Text}
+      `);
+      validateFieldPath(['name'], type);
+    });
+
+    it('can refer to known fields inside type variables with read-write constraints', async () => {
+      const type = await parseTypeFromHandle('foo', `
+        particle P
+          foo: reads writes ~a with {name: Text}
+      `);
+      validateFieldPath(['name'], type);
+    });
+
+    it('cannot refer to missing fields inside type variables that do not match the constraints', async () => {
+      const type = await parseTypeFromHandle('foo', `
+        particle P
+          foo: reads ~a with {name: Text}
+      `);
+      assert.throws(
+          () => validateFieldPath(['missing'], type),
+          `Field 'missing' does not exist in`);
+    });
+
+    it('can refer to known fields inside type variables constraints from other handles', async () => {
+      const type = await parseTypeFromHandle('bar', `
+        particle P
+          foo: reads ~a with {name: Text}
+          bar: writes ~a
+      `);
+      validateFieldPath(['name'], type);
+    });
+
+    it('can refer to known fields inside type variables from numerous constraints', async () => {
+      const type = await parseTypeFromHandle('bar', `
+        particle P
+          foo: reads ~a with {name: Text}
+          bar: writes ~a with {age: Number}
+      `);
+      validateFieldPath(['name'], type);
+      validateFieldPath(['age'], type);
+    });
+
+    it('supports complex nesting inside type variables', async () => {
+      const type = await parseTypeFromHandle('bar', `
+        particle P
+          foo1: reads ~a with {name: Text, friends: [&Person {name: Text}]}
+          bar: writes ~a
+      `);
+      validateFieldPath(['name'], type);
+      validateFieldPath(['friends'], type);
+      validateFieldPath(['friends', 'name'], type);
+    });
   });
 });

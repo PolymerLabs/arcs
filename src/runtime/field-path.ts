@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Schema} from './schema.js';
-import {Type} from './type.js';
+import {InterfaceInfo, Type} from './type.js';
 
 /**
  * Validates a field path against the given Type. Throws an exception if the
@@ -25,7 +25,15 @@ export function validateFieldPath(fieldPath: string[], type: Type) {
 
   const schema = type.getEntitySchema();
   if (!schema) {
-    throw new Error(`Expected type to contain an entity schema: ${type}.`);
+    if (InterfaceInfo.isTypeVar(type)) {
+      if (type.canWriteSuperset == null) {
+        throw new Error(`Type variable ${type} does not contain field '${fieldPath[0]}'.`);
+      }
+      validateFieldPath(fieldPath, type.canWriteSuperset);
+      return;
+    } else {
+      throw new Error(`Expected type to contain an entity schema: ${type}.`);
+    }
   }
 
   if (!checkSchema(fieldPath, schema)) {
