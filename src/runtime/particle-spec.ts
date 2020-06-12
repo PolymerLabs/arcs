@@ -567,7 +567,7 @@ export class ParticleSpec {
         if (!handle.isOutput) {
           throw new Error(`Can't make a claim on handle ${statement.handle} (not an output handle).`);
         }
-        validateFieldPath(statement.fieldPath, handle.type, handle.direction);
+        validateFieldPath(statement.fieldPath, handle.type);
         if (!handle.claims) {
           handle.claims = [];
         } else if (handle.claims.some(claim => claim.target === target)) {
@@ -601,7 +601,7 @@ export class ParticleSpec {
             } else if (!handle.isInput) {
               throw new Error(`Can't make a check on handle ${handleName} with direction ${handle.direction} (not an input handle).`);
             }
-            validateFieldPath(check.target.fieldPath, handle.type, handle.direction);
+            validateFieldPath(check.target.fieldPath, handle.type);
             const checkObject = createCheck(handle, check, this.handleConnectionMap);
             if (!handle.checks) {
               handle.checks = [];

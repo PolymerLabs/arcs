@@ -8,38 +8,24 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Schema} from './schema.js';
-import {InterfaceInfo, Type} from './type.js';
-import {Direction} from './manifest-ast-nodes.js';
+import {Type} from './type.js';
 
 /**
  * Validates a field path against the given Type. Throws an exception if the
  * field path is invalid.
  */
-export function validateFieldPath(fieldPath: string[], type: Type, direction: Direction) {
+export function validateFieldPath(fieldPath: string[], type: Type) {
   if (fieldPath.length === 0) {
     return;
   }
-  if (!['reads', 'writes', 'reads writes'].includes(direction)) {
-    throw new Error(`Unsupported direction: ${direction}.`);
-  }
   if (type.isTypeContainer()) {
-    validateFieldPath(fieldPath, type.getContainedType(), direction);
+    validateFieldPath(fieldPath, type.getContainedType());
     return;
   }
 
   const schema = type.getEntitySchema();
   if (!schema) {
-    if (InterfaceInfo.isTypeVar(type)) {
-      if (direction === 'writes' || direction === 'reads writes') {
-        validateFieldPath(fieldPath, type.canWriteSuperset, direction);
-      }
-      if (direction === 'reads' || direction === 'reads writes') {
-        validateFieldPath(fieldPath, type.canReadSubset, direction);
-      }
-      return;
-    } else {
-      throw new Error(`Expected type to contain an entity schema: ${type}.\n${JSON.stringify(type, null, 2)}`);
-    }
+    throw new Error(`Expected type to contain an entity schema: ${type}.`);
   }
 
   if (!checkSchema(fieldPath, schema)) {

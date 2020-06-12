@@ -22,7 +22,7 @@ async function parseSchema(manifestStr: string) {
 describe('field path validation', () => {
   it('empty field path is valid', async () => {
     const type = new EntityType(await parseSchema('schema Foo'));
-    validateFieldPath([], type, 'writes');
+    validateFieldPath([], type);
   });
 
   it('top-level entity fields are valid', async () => {
@@ -35,12 +35,12 @@ describe('field path validation', () => {
         nums: [Number]
         bools: [Boolean]
     `));
-    validateFieldPath(['txt'], type, 'writes');
-    validateFieldPath(['num'], type, 'writes');
-    validateFieldPath(['bool'], type, 'writes');
-    validateFieldPath(['txts'], type, 'writes');
-    validateFieldPath(['nums'], type, 'writes');
-    validateFieldPath(['bools'], type, 'writes');
+    validateFieldPath(['txt'], type);
+    validateFieldPath(['num'], type);
+    validateFieldPath(['bool'], type);
+    validateFieldPath(['txts'], type);
+    validateFieldPath(['nums'], type);
+    validateFieldPath(['bools'], type);
   });
 
   it('unknown top-level fields are invalid', async () => {
@@ -49,7 +49,7 @@ describe('field path validation', () => {
         real: Number
     `));
     assert.throws(
-        () => validateFieldPath(['missing'], type, 'writes'),
+        () => validateFieldPath(['missing'], type),
         `Field 'missing' does not exist in: schema Foo`);
   });
 
@@ -60,10 +60,10 @@ describe('field path validation', () => {
         txts: [Text]
     `));
     assert.throws(
-        () => validateFieldPath(['txt.inside'], type, 'writes'),
+        () => validateFieldPath(['txt.inside'], type),
         `Field 'txt.inside' does not exist in: schema Foo`);
     assert.throws(
-        () => validateFieldPath(['txts.inside'], type, 'writes'),
+        () => validateFieldPath(['txts.inside'], type),
         `Field 'txts.inside' does not exist in: schema Foo`);
   });
 
@@ -72,7 +72,7 @@ describe('field path validation', () => {
       schema Foo
         person: &Person {name: Text}
     `));
-    validateFieldPath(['person'], type, 'writes');
+    validateFieldPath(['person'], type);
   });
 
   it('can refer to fields inside references', async () => {
@@ -80,7 +80,7 @@ describe('field path validation', () => {
       schema Foo
         person: &Person {name: Text}
     `));
-    validateFieldPath(['person', 'name'], type, 'writes');
+    validateFieldPath(['person', 'name'], type);
   });
 
   it('missing fields inside references are rejected', async () => {
@@ -89,7 +89,7 @@ describe('field path validation', () => {
         person: &Person {name: Text}
     `));
     assert.throws(
-        () => validateFieldPath(['person', 'missing'], type, 'writes'),
+        () => validateFieldPath(['person', 'missing'], type),
         `Field 'person.missing' does not exist in: schema Foo`);
   });
 
@@ -98,7 +98,7 @@ describe('field path validation', () => {
       schema Foo
         person: [&Person {name: Text}]
     `));
-    validateFieldPath(['person', 'name'], type, 'writes');
+    validateFieldPath(['person', 'name'], type);
   });
 
   it('missing fields inside collections of references are rejected', async () => {
@@ -107,7 +107,7 @@ describe('field path validation', () => {
         person: [&Person {name: Text}]
     `));
     assert.throws(
-        () => validateFieldPath(['person', 'missing'], type, 'writes'),
+        () => validateFieldPath(['person', 'missing'], type),
         `Field 'person.missing' does not exist in: schema Foo`);
   });
 
@@ -116,9 +116,9 @@ describe('field path validation', () => {
       schema Foo
         aaa: [&Aaa {bbb: [&Bbb {ccc: [Number]}]}]
     `));
-    validateFieldPath(['aaa'], type, 'writes');
-    validateFieldPath(['aaa', 'bbb'], type, 'writes');
-    validateFieldPath(['aaa', 'bbb', 'ccc'], type, 'writes');
+    validateFieldPath(['aaa'], type);
+    validateFieldPath(['aaa', 'bbb'], type);
+    validateFieldPath(['aaa', 'bbb', 'ccc'], type);
   });
 
   it('works transparently with SingletonType', async () => {
@@ -126,9 +126,9 @@ describe('field path validation', () => {
       schema Foo
         name: Text
     `)));
-    validateFieldPath(['name'], type, 'writes');
+    validateFieldPath(['name'], type);
     assert.throws(
-      () => validateFieldPath(['missing'], type, 'writes'),
+      () => validateFieldPath(['missing'], type),
       `Field 'missing' does not exist in: schema Foo`);
   });
 
@@ -137,9 +137,9 @@ describe('field path validation', () => {
       schema Foo
         name: Text
     `)));
-    validateFieldPath(['name'], type, 'writes');
+    validateFieldPath(['name'], type);
     assert.throws(
-      () => validateFieldPath(['missing'], type, 'writes'),
+      () => validateFieldPath(['missing'], type),
       `Field 'missing' does not exist in: schema Foo`);
   });
 });

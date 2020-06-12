@@ -3526,19 +3526,6 @@ resource SomeName
       );
     });
 
-    it('supports field-level checks with type variables', async () => {
-      const manifest = await parseManifest(`
-        particle TimestampToDate
-          input: reads [~a with {timestampInMs: Number}]
-          output: writes [~a]
-          claim output.timestampInMs is roundedToDate
-      `);
-      assert.lengthOf(manifest.particles, 1);
-      const particle = manifest.particles[0];
-      assert.isEmpty(particle.trustChecks);
-      assert.lengthOf(particle.trustClaims, 1);
-    });
-
     it('data stores can make claims', async () => {
       const data = '{"root": {}, "locations": {}}';
 

@@ -1389,7 +1389,7 @@ ${e.message}
 
     const claims: Map<string, ClaimIsTag[]> = new Map();
     item.claims.forEach(claim => {
-      validateFieldPath(claim.fieldPath, type, 'writes');
+      validateFieldPath(claim.fieldPath, type);
       const target = claim.fieldPath.join('.');
       if (claims.has(target)) {
         throw new ManifestError(claim.location, `A claim for target ${target} already exists in store ${name}`);

@@ -72,7 +72,7 @@ export class ClaimDerivesFrom {
       throw new Error(`Unknown "derives from" handle name: ${parentHandle}.`);
     }
 
-    validateFieldPath(astNode.fieldPath, parentHandle.type, parentHandle.direction);
+    validateFieldPath(astNode.fieldPath, parentHandle.type);
 
     return new ClaimDerivesFrom(parentHandle, astNode.fieldPath);
   }
