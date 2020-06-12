@@ -276,11 +276,7 @@ async function recipeHandleToProtoPayload(handle: Handle) {
 }
 
 export function capabilitiesToProtoOrdinals(capabilities: Capabilities) {
-  // We bypass the inteface and grab the underlying set of capability strings for the purpose of
-  // serialization. It is rightfully hidden in the Capabilities object, but this use is justified.
-  // Tests will continue to ensure we access the right field.
-  // tslint:disable-next-line: no-any
-  return [...(capabilities as any).capabilities].map(c => {
+  return [...capabilities.capabilities].map(c => {
     const ordinal = CapabilityEnum.values[c.replace(/([A-Z])/g, '_$1').toUpperCase()];
     if (ordinal === undefined) {
       throw Error(`Capability ${c} is not supported`);
