@@ -18,7 +18,7 @@ import arcs.core.storage.StorageKeyParser
  */
 data class CreateableStorageKey(
     val nameFromManifest: String,
-    val capabilities: Capabilities = Capabilities.TiedToRuntime
+    val capabilities: Capabilities = Capabilities.Empty
 ) : StorageKey(CREATEABLE_KEY_PROTOCOL) {
 
     override fun toKeyString() = capabilities.capabilities.joinToString(
@@ -37,7 +37,7 @@ data class CreateableStorageKey(
         const val CAPABILITY_ARG_SEPARATOR = "?"
 
         private val CREATEABLE_STORAGE_KEY_PATTERN =
-            ("^([^:^?]*)(\\$CAPABILITY_ARG_SEPARATOR.*)?\$").toRegex()
+            ("^([^:^?]*)(?:\\$CAPABILITY_ARG_SEPARATOR(.*))?\$").toRegex()
 
         fun registerParser() {
             StorageKeyParser.addParser(CREATEABLE_KEY_PROTOCOL, ::parse)
@@ -55,14 +55,11 @@ data class CreateableStorageKey(
             )
         }
 
-        private fun parseCapabilities(capabilities: String): Capabilities {
-            val capabilityStrings = when (capabilities) {
-                "", CAPABILITY_ARG_SEPARATOR -> emptyList()
-                else -> capabilities.substring(1).split(',')
-            }
-            return Capabilities(
-                capabilityStrings.map { name -> Capabilities.Capability.valueOf(name) }.toSet()
-            )
+        private fun parseCapabilities(capabilities: String) = when (capabilities) {
+            "" -> Capabilities.Empty
+            else -> Capabilities(capabilities.split(',').map {
+                Capabilities.Capability.valueOf(it)
+            }.toSet())
         }
     }
 }

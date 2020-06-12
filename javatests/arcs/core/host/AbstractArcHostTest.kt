@@ -8,6 +8,7 @@ import arcs.core.entity.DummyEntity
 import arcs.core.entity.EntityBaseSpec
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.host.api.HandleHolder
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -49,7 +50,7 @@ open class AbstractArcHostTest {
     @Before
     fun setUp() {
         RamDisk.clear()
-        RamDiskStorageKey.registerKeyCreator()
+        DriverAndKeyConfigurator.configureKeyParsers()
         RamDiskDriverProvider()
     }
 

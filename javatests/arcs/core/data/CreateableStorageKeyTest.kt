@@ -29,6 +29,10 @@ class CreateableStorageKeyTest {
     @Test
     fun serializesToString() {
         assertThat(
+            CreateableStorageKey("abc").toString()
+        ).isEqualTo("create://abc")
+
+        assertThat(
             CreateableStorageKey("abc", Capabilities.Empty).toString()
         ).isEqualTo("create://abc")
 

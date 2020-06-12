@@ -17,8 +17,6 @@ import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Ttl, TtlUnits} from '../runtime/capabilities-new.js';
 import {findLongRunningArcId} from './storage-key-recipe-resolver.js';
-import {Capabilities} from '../runtime/capabilities.js';
-import {digest} from '../platform/digest-web.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -31,10 +29,8 @@ export class PlanGeneratorError extends Error {
 
 /** Generates plan objects from resolved recipes. */
 export class PlanGenerator {
-  private createHandleRegistry: Map<Handle, string> = new Map<Handle, string>();
-  private createHandleIndex = 0;
 
-  constructor(private resolvedRecipes: Recipe[], private namespace: string, private randomSalt: string) {
+  constructor(private resolvedRecipes: Recipe[], private namespace: string) {
   }
 
   /** Generates a Kotlin file with plan classes derived from resolved recipes. */
@@ -118,14 +114,6 @@ export class PlanGenerator {
     if (handle.storageKey) {
       return ktUtils.applyFun('StorageKeyParser.parse', [quote(handle.storageKey.toString())]);
     }
-    if (handle.fate === 'create') {
-      const createKeyArgs = [quote(await this.createCreateHandleId(handle))];
-      const capabilities = PlanGenerator.createCapabilities(handle.capabilities);
-      if (capabilities !== 'Capabilities.Empty') {
-        createKeyArgs.push(capabilities);
-      }
-      return ktUtils.applyFun('CreateableStorageKey', createKeyArgs);
-    }
     if (handle.fate === 'join') {
       // TODO(piotrs): Implement JoinStorageKey in TypeScript.
       const components = handle.joinedHandles.map(h => h.storageKey);
@@ -133,46 +121,6 @@ export class PlanGenerator {
       return ktUtils.applyFun('StorageKeyParser.parse', [quote(joinSk)]);
     }
     throw new PlanGeneratorError(`Problematic handle '${handle.id}': Only 'create' Handles can have null 'StorageKey's.`);
-  }
-
-  /** Generates a consistent handle id. */
-  async createCreateHandleId(handle: Handle): Promise<string> {
-    if (handle.id) return handle.id;
-    if (!this.createHandleRegistry.has(handle)) {
-      this.createHandleRegistry.set(handle, await digest(this.randomSalt + this.createHandleIndex++));
-    }
-    return this.createHandleRegistry.get(handle);
-  }
-
-  /** Generates Kotlin `Capabilities` from Capabilities. */
-  static createCapabilities(capabilities: Capabilities): string {
-    const ktCapabilities  = [];
-
-    if (capabilities.isEmpty()) {
-      return 'Capabilities.Empty';
-    }
-
-    if (capabilities.isPersistent) {
-      ktCapabilities.push('Capabilities.Capability.Persistent');
-    }
-
-    if (capabilities.isQueryable) {
-      ktCapabilities.push('Capabilities.Capability.Queryable');
-    }
-
-    if (capabilities.isTiedToArc) {
-      ktCapabilities.push('Capabilities.Capability.TiedToArc');
-    }
-
-    if (capabilities.isTiedToRuntime) {
-      ktCapabilities.push('Capabilities.Capability.TiedToRuntime');
-    }
-
-    if (ktCapabilities.length === 1) {
-      return ktCapabilities[0].replace('Capability.', '');
-    }
-
-    return ktUtils.applyFun('Capabilities', [ktUtils.setOf(ktCapabilities)]);
   }
 
   /** Generates a Kotlin `Ttl` from a Ttl. */

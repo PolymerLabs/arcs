@@ -28,7 +28,7 @@ export async function recipe2plan(
     recipeFilter?: string): Promise<string | Uint8Array> {
   return await Flags.withDefaultReferenceMode(async () => {
     const manifest = await Runtime.parseFile(path);
-    let plans = await (new StorageKeyRecipeResolver(manifest)).resolve();
+    let plans = await (new StorageKeyRecipeResolver(manifest, `salt_${Math.random()}`)).resolve();
 
     if (recipeFilter) {
       plans = plans.filter(p => p.name === recipeFilter);
@@ -38,7 +38,7 @@ export async function recipe2plan(
     switch (format) {
       case OutputFormat.Kotlin:
         assert(manifest.meta.namespace, `Namespace is required in '${manifest.fileName}' for Kotlin code generation.`);
-        return new PlanGenerator(plans, manifest.meta.namespace, `salt_${Math.random()}`).generate();
+        return new PlanGenerator(plans, manifest.meta.namespace).generate();
       case OutputFormat.Proto:
         return Buffer.from(await encodePlansToProto(plans));
       default: throw new Error('Output Format should be Kotlin or Proto');

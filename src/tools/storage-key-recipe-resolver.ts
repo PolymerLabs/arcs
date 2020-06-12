@@ -17,10 +17,12 @@ import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
 import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {Capabilities as CapabilitiesNew} from '../runtime/capabilities-new.js';
 import {CapabilitiesResolver as CapabilitiesResolverNew} from '../runtime/capabilities-resolver-new.js';
+import {CreatableStorageKey} from '../runtime/storageNG/creatable-storage-key.js';
 import {Store} from '../runtime/storageNG/store.js';
 import {Exists} from '../runtime/storageNG/drivers/driver.js';
 import {DatabaseStorageKey} from '../runtime/storageNG/database-storage-key.js';
-import {VolatileStorageKey} from '../runtime/storageNG/drivers/volatile.js';
+import {Handle} from '../runtime/recipe/handle.js';
+import {digest} from '../platform/digest-web.js';
 
 export class StorageKeyRecipeResolverError extends Error {
   constructor(message: string) {
@@ -34,8 +36,11 @@ export class StorageKeyRecipeResolverError extends Error {
  */
 export class StorageKeyRecipeResolver {
   private readonly runtime: Runtime;
+  private readonly createHandleRegistry: Map<Handle, string> = new Map<Handle, string>();
+  private createHandleIndex = 0;
 
-  constructor(context: Manifest) {
+
+  constructor(context: Manifest, private randomSalt: string) {
     this.runtime = new Runtime({context});
     DatabaseStorageKey.register();
   }
@@ -67,15 +72,17 @@ export class StorageKeyRecipeResolver {
       firstPass.push(withStores);
     }
 
-    // Second pass: resolve recipes
+    // Second pass: resolve and assign creatable storage keys
     const recipes = [];
-    for (const recipe of firstPass) {
-      const resolved = await this.tryResolve(recipe, opts);
-
+    for (let recipe of firstPass) {
       // Only include recipes from primary (non-imported) manifest
-      if (this.runtime.context.recipes.map(r => r.name).includes(recipe.name)) {
-        recipes.push(resolved);
-      }
+      if (!this.runtime.context.recipes.map(r => r.name).includes(recipe.name)) continue;
+
+      recipe = await this.tryResolve(recipe, opts);
+      recipe = await this.assignCreatableStorageKeys(recipe);
+      recipe.normalize();
+
+      recipes.push(recipe);
     }
     return recipes;
   }
@@ -100,6 +107,34 @@ export class StorageKeyRecipeResolver {
     }
     assert(resolvedRecipe.isResolved());
     return resolvedRecipe;
+  }
+
+  /**
+   * Instantiates CreatableStorageKeys for stores that need to be separate for each recipe instance.
+   */
+  async assignCreatableStorageKeys(recipe: Recipe): Promise<Recipe> {
+    // Recipe is normalized at this stage, we need to modify it further.
+    recipe = recipe.clone();
+
+    for (const handle of recipe.handles) {
+      if (handle.fate !== 'create' || handle.storageKey) continue;
+
+      handle.storageKey = new CreatableStorageKey(
+        await this.createCreateHandleName(handle),
+        handle.capabilities
+      );
+    }
+
+    return recipe;
+  }
+
+  /** Generates a consistent handle id. */
+  async createCreateHandleName(handle: Handle): Promise<string> {
+    if (handle.id) return handle.id;
+    if (!this.createHandleRegistry.has(handle)) {
+      this.createHandleRegistry.set(handle, await digest(this.randomSalt + this.createHandleIndex++));
+    }
+    return this.createHandleRegistry.get(handle);
   }
 
   /**
