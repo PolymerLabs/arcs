@@ -160,30 +160,6 @@ class ReferenceModeStoreTest {
     }
 
     @Test
-    fun canCloneData_fromAnotherStore() = runBlockingTest {
-        DriverFactory.register(MockDriverProvider())
-
-        val activeStore = createReferenceModeStore()
-
-        // Add some data.
-        val collection = CrdtSet<RawEntity>()
-        val entity = createPersonEntity("an-id", "bob", 42)
-        collection.applyOperation(
-            CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
-        )
-        activeStore.onProxyMessage(
-            ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
-        )
-
-        // Clone
-        val activeStore2 = createReferenceModeStore()
-        activeStore2.cloneFrom(activeStore)
-
-        assertThat(activeStore2.getLocalData()).isEqualTo(activeStore.getLocalData())
-        assertThat(activeStore2.getLocalData()).isNotSameInstanceAs(activeStore.getLocalData())
-    }
-
-    @Test
     fun appliesAndPropagatesOperationUpdate_fromProxies_toDrivers() = runBlockingTest {
         DriverFactory.register(MockDriverProvider())
 

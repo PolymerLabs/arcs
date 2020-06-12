@@ -66,9 +66,4 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 
         override fun close() = off(id)
     }
-
-    /** Clones data from the given store into this one. */
-    suspend fun cloneFrom(store: ActiveStore<Data, Op, ConsumerData>) {
-        onProxyMessage(ProxyMessage.ModelUpdate(store.getLocalData(), id = null))
-    }
 }
