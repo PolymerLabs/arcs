@@ -66,8 +66,8 @@ class Allocator private constructor(
      * Start a new Arc given a [Plan] and return the generated [ArcId].
      */
     @Deprecated(
-        "Use startArcForPlan(plan) to retrieve the ArcId via Arc.arcId",
-        replaceWith = ReplaceWith("startArcForPlan(plan).arcId", "arcs.core.allocator.Arc")
+        "Use startArcForPlan(plan) to retrieve the ArcId via Arc.id",
+        replaceWith = ReplaceWith("startArcForPlan(plan).id", "arcs.core.allocator.Arc")
     )
     suspend fun startArcForPlan(arcName: String, plan: Plan) =
         startArcForPlan(plan, arcName).waitForStart().id
