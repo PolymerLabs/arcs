@@ -75,7 +75,7 @@ export class SchemaNode {
   // A name of the code generated class representing this schema on platforms where we've adopted
   // generating entity names from schema names where possible (i.e. in Kotlin, not C++).
   // Name of the generated class can be based off:
-  // - The schema name: if a name uniquely identifes a schema.
+  // - The schema name: if a name uniquely identifies a schema.
   // - The connection name: if schema name is not unique, but connection name is.
   // - The internal index (i.e. using Internal$N pattern): if schema is not unique.
   get entityClassName() {
@@ -186,11 +186,11 @@ export class SchemaGraph {
   }
 
   private createNodes(schema: Schema, particleSpec: ParticleSpec, source: SchemaSource,
-                      variabelName: string | null) {
+                      variableName: string | null) {
     let node = this.nodes.find((candidate: SchemaNode) => {
       // Aggregate type variable nodes of the same name together.
-      if (variabelName) {
-        return variabelName === candidate.variableName;
+      if (variableName) {
+        return variableName === candidate.variableName;
       }
 
       // Aggregate nodes with the same schema together.
@@ -200,12 +200,13 @@ export class SchemaGraph {
 
       return false;
     });
+
     if (node) {
       node.sources.push(source);
     } else {
       // This is a new schema. Check for slicability against all previous schemas
       // (in both directions) to establish the descendancy mappings.
-      node = new SchemaNode(schema, particleSpec, this.nodes, variabelName);
+      node = new SchemaNode(schema, particleSpec, this.nodes, variableName);
       node.sources.push(source);
       for (const previous of this.nodes) {
         for (const [a, b] of [[node, previous], [previous, node]]) {
@@ -226,11 +227,6 @@ export class SchemaGraph {
       this.nodes.push(node);
     }
 
-    // Handle type variables with no constraints (null schemas).
-    if (!schema) {
-      return node;
-    }
-
     // Recurse on any nested schemas in reference-typed fields. We need to do this even if we've
     // seen this schema before, to ensure any nested schemas end up aliased appropriately.
     for (const [field, descriptor] of Object.entries(schema.fields)) {
@@ -244,7 +240,7 @@ export class SchemaGraph {
         // When a type variable has a nested schema, it should be backed by a) a distinct entity from
         // a schema with the same name and b) a distinct entity from the original type variable.
         // To accomplish this, we need to associate the nested schema with a "child" type variable.
-        const nestedVar = variabelName && `${variabelName}.${field}`;
+        const nestedVar = variableName && `${variableName}.${field}`;
         // We have a reference field. Generate a node for its nested schema and connect it into the
         // refs map to indicate that this node requires nestedNode's class to be generated first.
         const nestedNode = this.createNodes(nestedSchema, particleSpec, source.child(field), nestedVar);
