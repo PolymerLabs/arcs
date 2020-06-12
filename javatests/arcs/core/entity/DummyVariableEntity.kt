@@ -2,6 +2,9 @@ package arcs.core.entity
 
 import arcs.core.data.*
 
+/**
+ * An [Entity] similar to [DummyEntity], except with only a subset of its properties.
+ */
 class DummyVariableEntity : VariableEntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
     var text: String? by SingletonProperty()
     var ref: Reference<DummyEntity>? by SingletonProperty()
@@ -11,16 +14,6 @@ class DummyVariableEntity : VariableEntityBase(ENTITY_CLASS_NAME, SCHEMA), Stora
     private val nestedEntitySpecs = mapOf(
         DummyEntity.SCHEMA_HASH to DummyEntity
     )
-
-    fun getSingletonValueForTest(field: String) = super.getSingletonValue(field)
-
-    fun getCollectionValueForTest(field: String) = super.getCollectionValue(field)
-
-    fun setSingletonValueForTest(field: String, value: Any?) =
-        super.setSingletonValue(field, value)
-
-    fun setCollectionValueForTest(field: String, values: Set<Any>) =
-        super.setCollectionValue(field, values)
 
     fun deserializeForTest(rawEntity: RawEntity) = super.deserialize(rawEntity, nestedEntitySpecs)
 

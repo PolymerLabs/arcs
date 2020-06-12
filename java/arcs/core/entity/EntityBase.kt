@@ -134,7 +134,7 @@ open class EntityBase(
     /** Returns the [FieldType] for the given singleton field, or null if it does not exist. */
     private fun getSingletonTypeOrNull(field: String) = schema.fields.singletons[field]
 
-    /** Returns true if the singleton has the [FieldType]. */
+    /** Returns true if the singleton has the Field. */
     protected fun hasSingletonField(field: String) = getSingletonTypeOrNull(field) != null
 
     /**
@@ -150,7 +150,7 @@ open class EntityBase(
     /** Returns the [FieldType] for the given collection field, or null if it does not exist. */
     private fun getCollectionTypeOrNull(field: String) = schema.fields.collections[field]
 
-    /** Returns true if the collection has the [FieldType]. */
+    /** Returns true if the collection has the Field. */
     protected fun hasCollectionField(field: String) = getCollectionTypeOrNull(field) != null
 
     /** Checks that the given value is of the expected type. */
@@ -368,7 +368,7 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
     is FieldType.ListOf ->
         (value as List<*>).map {
             toReferencable(it!!, type.primitiveType)
-        }.toReferencable()
+        }.toReferencable(type)
 }
 
 private fun fromReferencable(

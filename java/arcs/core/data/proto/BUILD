@@ -28,6 +28,7 @@ arcs_kt_library(
     deps = [
         ":manifest_java_proto_lite",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
@@ -46,6 +47,7 @@ arcs_kt_library(
     deps = [
         ":manifest_java_proto",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
         "//java/arcs/core/util",

@@ -13,13 +13,15 @@ package arcs.core.data.util
 
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
+import arcs.core.data.FieldType
 
 /**
  * Represents a list of primitives which can be referenced - and thus used
  * as field values by CRDT Collections & Singletons.
  */
 data class ReferencableList<T : Referencable>(
-    val value: List<T>
+    val value: List<T>,
+    val itemType: FieldType
 ) : Referencable {
     override val id: ReferenceId
         get() = "ReferencableList(${value.hashCode()})"
@@ -34,5 +36,5 @@ data class ReferencableList<T : Referencable>(
     }
 }
 
-fun List<Referencable>.toReferencable(): ReferencableList<Referencable> =
-    ReferencableList(this)
+fun List<Referencable>.toReferencable(itemType: FieldType): ReferencableList<Referencable> =
+    ReferencableList(this, itemType)
