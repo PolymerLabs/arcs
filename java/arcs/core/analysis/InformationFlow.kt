@@ -125,15 +125,14 @@ class InformationFlow private constructor(
         particle.handleConnections
             .filter { connectionName?.equals(it.spec.name) ?: it.spec.isWrite() }
             .forEach {
-                val emptyLabels = InformationFlowLabels(setOf(BitSet(labels.size)))
                 val accessPath = AccessPath(particle, it.spec)
-                initialValues[accessPath] = emptyLabels
+                initialValues[accessPath] = getEmptyLabels()
             }
 
         // For read-write connections, apply any claims that are present. This is necessary as
         // the claim on a read-write connection immediately manifests on the read connection.
         particleClaims[particle]?.let { claims ->
-            initialValues.applyClaims(
+            initialValues.applyAssumes(
                 claims.filterIsInstance<Claim.Assume>()
                     .filter {
                         val accessPathRoot =
@@ -177,7 +176,11 @@ class InformationFlow private constructor(
             }.toMap(resultAccessPathLabels)
 
         // Apply claims if any.
-        particleClaims[particle]?.let { resultAccessPathLabels.applyClaims(it) }
+        particleClaims[particle]?.let {
+            // First `derives from` claims followed by `assume` claims.
+            resultAccessPathLabels.applyDerivesFromClaims(inputLabelsMap, it)
+            resultAccessPathLabels.applyAssumes(it)
+        }
 
         // Return the final result.
         return AccessPathLabels.makeValue(resultAccessPathLabels.toMap())
@@ -275,6 +278,11 @@ class InformationFlow private constructor(
         }
     }
 
+    /** Apply the [Claim.Assume] [claims] to the given map. */
+    private fun MutableMap<AccessPath, InformationFlowLabels>.applyAssumes(claims: List<Claim>) {
+        claims.asSequence().filterIsInstance<Claim.Assume>().forEach { applyAssume(it) }
+    }
+
     /** Apply the [assume] to the given map. */
     private fun MutableMap<AccessPath, InformationFlowLabels>.applyAssume(assume: Claim.Assume) {
         val accessPathLabels =
@@ -287,6 +295,24 @@ class InformationFlow private constructor(
             }.toSet()
         )
     }
+
+    /** Apply the [Claim.DerivedFrom] [claims] to the given map. */
+    private fun MutableMap<AccessPath, InformationFlowLabels>.applyDerivesFromClaims(
+        input: Map<AccessPath, InformationFlowLabels>,
+        claims: List<Claim>
+    ) {
+        val updatedAccessPaths = mutableMapOf<AccessPath, InformationFlowLabels>()
+        claims.asSequence().filterIsInstance<Claim.DerivesFrom>().forEach { derivesFrom ->
+            val sourceValue = input[derivesFrom.source] ?: getEmptyLabels()
+            val currentValue =
+                updatedAccessPaths[derivesFrom.target] ?: InformationFlowLabels(emptySet())
+            updatedAccessPaths[derivesFrom.target] = sourceValue join currentValue
+        }
+        updatedAccessPaths.forEach { (accessPath, labels) -> this[accessPath] = labels }
+    }
+
+    /** Returns an [InformationFlowLabels] entity with all the labels not set. */
+    private fun getEmptyLabels() = InformationFlowLabels(setOf(BitSet(labels.size)))
 
     /** Update the [labels] bitset to reflect the predicate. */
     private fun Predicate.updateLabels(labels: BitSet) = when (this) {
