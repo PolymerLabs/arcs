@@ -26,6 +26,7 @@ import arcs.core.data.SchemaName
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.database.DatabaseData
+import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.driver.DatabaseDriver
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -117,7 +118,10 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
         assertThat(capturedCollection.values)
             .containsExactly(
-                Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
+                ReferenceWithVersion(
+                    Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1)),
+                    VersionMap("me" to 1)
+                )
             )
 
         val bobKey = activeStore.backingStore.storageKey.childKeyWithComponent("an-id")
@@ -184,14 +188,13 @@ class ReferenceModeStoreDatabaseIntegrationTest {
             Reference("e2", activeStore2.backingStore.storageKey, VersionMap("me" to 2))
         )
 
-        // TODO: this should be enabled when b/155579842 is fixed.
-        // assertThat(activeStore2.containerStore.getLocalData()).isEqualTo(CrdtSet.DataImpl(
-        //     VersionMap("me" to 2),
-        //     mutableMapOf(
-        //         "e1" to e1Ref,
-        //         "e2" to e2Ref
-        //     )
-        // ))
+        assertThat(activeStore2.containerStore.getLocalData()).isEqualTo(CrdtSet.DataImpl(
+            VersionMap("me" to 2),
+            mutableMapOf(
+                "e1" to e1Ref,
+                "e2" to e2Ref
+            )
+        ))
         assertThat((activeStore2.backingStore.getLocalData("e1") as CrdtEntity.Data).toRawEntity())
             .isEqualTo(e1)
         assertThat((activeStore2.backingStore.getLocalData("e2") as CrdtEntity.Data).toRawEntity())
@@ -213,7 +216,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
             activeStore.backingStore.storageKey,
             VersionMap(actor to 1)
         )
-        val refOperation = CrdtSet.Operation.Add(actor, VersionMap(actor to 1), bobRef)
+        val refOperation = CrdtSet.Operation.Add("me", VersionMap("me" to 1), bobRef)
 
         val bobEntity = createPersonEntityCrdt()
 
@@ -221,7 +224,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         assertThat(
             activeStore.onProxyMessage(
                 ProxyMessage.Operations(
-                    listOf(RefModeStoreOp.SetAdd(actor, VersionMap(actor to 1), bob)),
+                    listOf(RefModeStoreOp.SetAdd("me", VersionMap("me" to 1), bob)),
                     id = 1
                 )
             )
@@ -264,7 +267,13 @@ class ReferenceModeStoreDatabaseIntegrationTest {
                 schema
             ) as DatabaseData.Collection
 
-        assertThat(capturedPeople.values).isEqualTo(referenceCollection.consumerView)
+        assertThat(capturedPeople.values)
+            .containsExactly(
+                ReferenceWithVersion(
+                    Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1)),
+                    VersionMap("me" to 1)
+                )
+            )
         val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
         // Check that the stored bob's singleton data is equal to the expected bob's singleton data
         assertThat(storedBob.singletons).isEqualTo(bobEntity.data.singletons)
@@ -544,9 +553,8 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
         activeStore.idle()
 
-        // TODO: this should be enabled when b/155579842 is fixed.
-        // assertThat(activeStore.containerStore.getLocalData())
-        //    .isEqualTo(driver.getDatabaseData().first)
+        assertThat(activeStore.containerStore.getLocalData())
+           .isEqualTo(driver.getDatabaseData().first)
     }
 
     @Test

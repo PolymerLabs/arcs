@@ -20,6 +20,7 @@ import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
+import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.util.resultOfSuspend
 
 /**
@@ -98,22 +99,22 @@ private suspend fun CrdtSet.DataValue<RawEntity>.toReferenceDataValue(
 )
 
 /** Converts a [Set] of [Reference]s into a [CrdtSet.Data] of those [Reference]s. */
-fun Set<Reference>.toCrdtSetData(versionMap: VersionMap): CrdtSet.Data<Reference> {
+fun Set<ReferenceWithVersion>.toCrdtSetData(versionMap: VersionMap): CrdtSet.Data<Reference> {
     return CrdtSet.DataImpl(
         versionMap.copy(),
-        this.associateBy { it.id }
-            // TODO(b/155579842) The database should also pass a verion for this item.
-            .mapValues { CrdtSet.DataValue(versionMap.copy(), it.value) }
+        this.associateBy { it.reference.id }
+            .mapValues { CrdtSet.DataValue(it.value.versionMap, it.value.reference) }
             .toMutableMap()
     )
 }
 
 /** Converts a nullable [Reference] into a [CrdtSingleton.Data]. */
-fun Reference?.toCrdtSingletonData(versionMap: VersionMap): CrdtSingleton.Data<Reference> {
+fun ReferenceWithVersion?.toCrdtSingletonData(
+    versionMap: VersionMap
+): CrdtSingleton.Data<Reference> {
     if (this == null) return CrdtSingleton.DataImpl(versionMap.copy())
     return CrdtSingleton.DataImpl(
         versionMap.copy(),
-        // TODO(b/155579842) The database should also pass a verion for this item.
-        mutableMapOf(this.id to CrdtSet.DataValue(versionMap.copy(), this))
+        mutableMapOf(this.reference.id to CrdtSet.DataValue(this.versionMap, this.reference))
     )
 }

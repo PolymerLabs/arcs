@@ -53,6 +53,7 @@ import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabasePerformanceStatistics
+import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.Counters
@@ -388,9 +389,9 @@ class DatabaseImpl(
         require(values.size <= 1) {
             "Singleton at storage key $storageKey has more than one value."
         }
-        val reference = values.singleOrNull()
+        val value = values.singleOrNull()
         DatabaseData.Singleton(
-            reference,
+            value?.let { ReferenceWithVersion(value.reference, value.versionMap) },
             schema,
             versionNumber,
             versionMap
@@ -651,9 +652,9 @@ class DatabaseImpl(
         // TODO(#4889): Don't do this one-by-one.
         data.values
             .map {
-                getEntityReferenceId(it, db)
+                getEntityReferenceId(it.reference, db) to it.versionMap
             }
-            .forEach { referenceId ->
+            .forEach { (referenceId, versionMap) ->
                 when (dataType) {
                     DataType.Collection ->
                         counters?.increment(DatabaseCounters.INSERT_COLLECTION_ENTRY)
@@ -664,7 +665,10 @@ class DatabaseImpl(
                 insertOrThrow(
                     TABLE_COLLECTION_ENTRIES,
                     null,
-                    content.apply { put("value_id", referenceId) }
+                    content.apply {
+                        put("value_id", referenceId)
+                        put("version_map", versionMap.toProtoLiteral())
+                    }
                 )
             }
         true
@@ -677,8 +681,8 @@ class DatabaseImpl(
         counters: Counters? = null
     ): Boolean {
         // Convert Singleton into a a zero-or-one-element Collection.
-        val set = mutableSetOf<Reference>()
-        data.reference?.let { set.add(it) }
+        val set = mutableSetOf<ReferenceWithVersion>()
+        data.value?.let { set.add(it) }
         val collectionData = with(data) {
             DatabaseData.Collection(
                 set,
@@ -1270,27 +1274,30 @@ class DatabaseImpl(
     private fun getCollectionReferenceEntries(
         collectionId: CollectionId,
         db: SQLiteDatabase
-    ): Set<Reference> = db.rawQuery(
+    ): Set<ReferenceWithVersion> = db.rawQuery(
         """
             SELECT
                 entity_refs.entity_id,
                 entity_refs.creation_timestamp,
                 entity_refs.expiration_timestamp,
                 entity_refs.backing_storage_key,
-                entity_refs.version_map
+                entity_refs.version_map,
+                collection_entries.version_map
             FROM collection_entries
             JOIN entity_refs ON collection_entries.value_id = entity_refs.id
             WHERE collection_entries.collection_id = ?
         """.trimIndent(),
         arrayOf(collectionId.toString())
     ).map {
-        Reference(
-            id = it.getString(0),
-            storageKey = StorageKeyParser.parse(it.getString(3)),
-            version = it.getVersionMap(4),
-            _creationTimestamp = it.getString(1).toLong(),
-            _expirationTimestamp = it.getString(2).toLong()
-        )
+        ReferenceWithVersion(
+            Reference(
+                id = it.getString(0),
+                storageKey = StorageKeyParser.parse(it.getString(3)),
+                version = it.getVersionMap(4),
+                _creationTimestamp = it.getLong(1),
+                _expirationTimestamp = it.getLong(2)
+            ),
+        it.getVersionMap(5)!!)
     }.toSet()
 
     /** Returns true if the given [TypeId] represents a primitive type. */
@@ -1540,7 +1547,7 @@ class DatabaseImpl(
     )
 
     companion object {
-        private const val DB_VERSION = 3
+        private const val DB_VERSION = 4
 
         private const val TABLE_STORAGE_KEYS = "storage_keys"
         private const val TABLE_COLLECTION_ENTRIES = "collection_entries"
@@ -1631,7 +1638,12 @@ class DatabaseImpl(
                     collection_id INTEGER NOT NULL,
                     -- For collections of primitives: value_id for primitive in collection.
                     -- For collections/singletons of entities: id of reference in entity_refs table.
-                    value_id INTEGER NOT NULL
+                    value_id INTEGER NOT NULL,
+                    -- Serialized VersionMapProto for the entry in this collection/singleton
+                    -- (version at which the entry was added to the collection).
+                    -- (Not required for entity field collections but required for top level
+                    -- collections.)
+                    version_map TEXT
                 );
 
                 CREATE INDEX collection_entries_collection_id_index
@@ -1709,7 +1721,10 @@ class DatabaseImpl(
 
         private val VERSION_3_MIGRATION = listOf(DROP, CREATE).flatten().toTypedArray()
 
-        private val MIGRATION_STEPS = mapOf(2 to VERSION_2_MIGRATION, 3 to VERSION_3_MIGRATION)
+        private val VERSION_4_MIGRATION = VERSION_3_MIGRATION
+
+        private val MIGRATION_STEPS =
+            mapOf(2 to VERSION_2_MIGRATION, 3 to VERSION_3_MIGRATION, 4 to VERSION_4_MIGRATION)
 
         /** The primitive types that are stored in TABLE_NUMBER_PRIMITIVES */
         private val TYPES_IN_NUMBER_TABLE = listOf(
