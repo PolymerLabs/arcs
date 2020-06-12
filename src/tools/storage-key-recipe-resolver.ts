@@ -125,7 +125,7 @@ export class StorageKeyRecipeResolver {
       const storageKey = await resolver.createStorageKey(
         createHandle.capabilities, createHandle.type, createHandle.id);
       const storageKeyNew = await resolverNew.createStorageKey(
-        CapabilitiesNew.fromOldCapabilities(createHandle.capabilities, createHandle.ttl), createHandle.type, createHandle.id);
+        CapabilitiesNew.fromAnnotations(createHandle.annotations), createHandle.type, createHandle.id);
       assert(storageKey.toString() === storageKeyNew.toString());
       const store = new Store(createHandle.type, {
         storageKey,

@@ -14,7 +14,7 @@ import {Manifest} from '../manifest.js';
 import {Modality} from '../modality.js';
 import {Capabilities, Capability} from '../capabilities.js';
 import {Entity} from '../entity.js';
-import {TtlUnits, Ttl} from '../recipe/ttl.js';
+import {Ttl} from '../capabilities-new.js';
 import {Recipe} from '../recipe/recipe.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
@@ -790,18 +790,19 @@ describe('recipe', () => {
         h2: create
     `)).recipes[0];
     assert.lengthOf(recipe.handles, 3);
-    assert.equal(recipe.handles[0].ttl.count, 20);
-    assert.equal(recipe.handles[0].ttl.units, TtlUnits.Day);
-    assert.equal(recipe.handles[1].ttl.count, 5);
-    assert.equal(recipe.handles[1].ttl.units, TtlUnits.Minute);
-    assert.equal(Ttl.infinite, recipe.handles[2].ttl);
+    assert.isTrue(recipe.handles[0].getCapabilities().getTtl().isEquivalent(Ttl.days(20)));
+    assert.isTrue(recipe.handles[0].getTtl().isEquivalent(Ttl.days(20)));
+    assert.isTrue(recipe.handles[1].getCapabilities().getTtl().isEquivalent(Ttl.minutes(5)));
+    assert.isTrue(recipe.handles[1].getTtl().isEquivalent(Ttl.minutes(5)));
+    assert.isUndefined(recipe.handles[2].getCapabilities().getTtl());
+    assert.isTrue(recipe.handles[2].getTtl().isInfinite);
   });
   it('parses recipe handle capabilities', async () => {
     const recipe = (await Manifest.parse(`
       recipe Thing
         h0: create @persistent
         h1: create 'my-id' @tiedToRuntime
-        h2: create #myTag @persistent @tiedToArc
+        h2: create #myTag @persistent @queryable
         h3: create @persistent
         h4: create @persistent @ttl('20d')
         h5: create @ttl('20d')
@@ -813,7 +814,7 @@ describe('recipe', () => {
       assert.isTrue(
           recipe.handles[1].capabilities.isSame(new Capabilities([Capability.TiedToRuntime])));
       assert.isTrue(
-          recipe.handles[2].capabilities.isSame(new Capabilities([Capability.Persistent, Capability.TiedToArc])));
+          recipe.handles[2].capabilities.isSame(new Capabilities([Capability.Persistent, Capability.Queryable])));
       assert.isTrue(
           recipe.handles[3].capabilities.isSame(new Capabilities([Capability.Persistent])));
       assert.isTrue(

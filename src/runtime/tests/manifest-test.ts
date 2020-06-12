@@ -34,7 +34,7 @@ import {mockFirebaseStorageKeyOptions} from '../storageNG/testing/mock-firebase.
 import {Flags} from '../flags.js';
 import {TupleType, CollectionType, EntityType} from '../type.js';
 import {ActiveCollectionEntityStore, handleForActiveStore} from '../storageNG/storage-ng.js';
-import {TtlUnits} from '../recipe/ttl.js';
+import {Ttl} from '../capabilities-new.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -4396,8 +4396,7 @@ recipe
     assert.lengthOf(handle.annotations, 2);
     assert.isNotNull(handle.getAnnotation('persistent'));
     assert.equal(handle.getAnnotation('ttl').params['value'], '3d');
-    assert.equal(handle.ttl.count, 3);
-    assert.equal(handle.ttl.units, TtlUnits.Day);
+    assert.isTrue(handle.getTtl().isEquivalent(Ttl.days(3)));
     assert.equal(handle.toString(), `foo: create @persistent @ttl(value: '3d')`);
 
     const isolatedParticleAnnotations = manifest.findParticleByName('IsolatedParticle').annotations;
@@ -4608,5 +4607,18 @@ particle WriteFoo
     assert.lengthOf(recipe.annotations, 2);
     assert.lengthOf(recipe.findAnnotations('oneParam'), 2);
     assert.throws(() => recipe.getAnnotation('oneParam'));
+  });
+  it('merges recipes with annotations', async () => {
+    const manifestStr = `
+@active
+recipe
+  h0: create @persistent @ttl('1d')
+recipe
+    `;
+    const recipes = (await Manifest.parse(manifestStr)).recipes;
+    assert.lengthOf(recipes[1].handles, 0);
+    recipes[0].mergeInto(recipes[1]);
+    assert.lengthOf(recipes[1].handles, 1);
+    assert.lengthOf(recipes[1].handles[0].annotations, 2);
   });
 });

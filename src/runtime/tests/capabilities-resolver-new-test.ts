@@ -137,20 +137,17 @@ describe('Capabilities Resolver New', () => {
           h4: create @queryable @ttl('30m')
     `;
     const recipe = (await Manifest.parse(manifestStr)).recipes[0];
-
     const resolver = new CapabilitiesResolver({arcId: ArcId.newForTest('test')});
-    const verifyHandleKey = async (handle, expectedStorageKeyType) => {
-        const fromOldCapabilities = Capabilities.fromOldCapabilities(handle.capabilities, handle.ttl);
-        verifyReferenceModeStorageKey(await resolver.createStorageKey(
-            fromOldCapabilities, entityType, handleId), expectedStorageKeyType);
-        const capabilities = Capabilities.fromAnnotations(handle.annotations);
-        verifyReferenceModeStorageKey(await resolver.createStorageKey(
-            capabilities, entityType, handleId), expectedStorageKeyType);
-    };
-    await verifyHandleKey(recipe.handles[0], VolatileStorageKey);
-    await verifyHandleKey(recipe.handles[1], MemoryDatabaseStorageKey);
-    await verifyHandleKey(recipe.handles[2], PersistentDatabaseStorageKey);
-    await verifyHandleKey(recipe.handles[3], PersistentDatabaseStorageKey);
-    await verifyHandleKey(recipe.handles[4], MemoryDatabaseStorageKey);
+
+    verifyReferenceModeStorageKey(await resolver.createStorageKey(
+        recipe.handles[0].getCapabilities(), entityType, handleId), VolatileStorageKey);
+    verifyReferenceModeStorageKey(await resolver.createStorageKey(
+        recipe.handles[1].getCapabilities(), entityType, handleId), MemoryDatabaseStorageKey);
+    verifyReferenceModeStorageKey(await resolver.createStorageKey(
+        recipe.handles[2].getCapabilities(), entityType, handleId), PersistentDatabaseStorageKey);
+    verifyReferenceModeStorageKey(await resolver.createStorageKey(
+        recipe.handles[3].getCapabilities(), entityType, handleId), PersistentDatabaseStorageKey);
+    verifyReferenceModeStorageKey(await resolver.createStorageKey(
+        recipe.handles[4].getCapabilities(), entityType, handleId), MemoryDatabaseStorageKey);
   }));
 });
