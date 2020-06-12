@@ -134,6 +134,41 @@ describe('recipe2plan', () => {
       assert.isBelow(plan.indexOf('particle.B'), plan.indexOf('particle.C'));
       assert.isBelow(plan.indexOf('particle.C'), plan.indexOf('particle.D'));
     });
+<<<<<<< HEAD
+=======
+    it('refers to static constants when translating a single capability', () => {
+      assert.deepStrictEqual(
+        PlanGenerator.createCapabilities(Capabilities.create([Persistence.onDisk()])),
+        `Capabilities.Persistent`
+      );
+      assert.deepStrictEqual(
+        PlanGenerator.createCapabilities(Capabilities.create([new Queryable(true)])),
+        `Capabilities.Queryable`
+      );
+      assert.deepStrictEqual(
+        PlanGenerator.createCapabilities(Capabilities.create([Ttl.hours(5)])),
+        `Capabilities.Queryable`
+      );
+      assert.deepStrictEqual(
+        PlanGenerator.createCapabilities(Capabilities.create([new Shareable(false)])),
+        `Capabilities.TiedToArc`
+      );
+      assert.deepStrictEqual(
+        PlanGenerator.createCapabilities(Capabilities.create([new Shareable(true)])),
+        `Capabilities.TiedToRuntime`
+      );
+    });
+    it('constructs a capabilities object when translating multiple capabilities', () => {
+      assert.deepStrictEqual(
+        PlanGenerator.createCapabilities(Capabilities.create([Persistence.onDisk(), new Queryable(true)])),
+        `Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.Queryable))`
+      );
+      assert.deepStrictEqual(
+        PlanGenerator.createCapabilities(Capabilities.create([Persistence.onDisk(), Ttl.hours(5)])),
+        `Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.Queryable))`
+      );
+    });
+>>>>>>> fix plan-generator merge
   });
   async function process(manifestString: string): Promise<{
       recipes: Recipe[],
