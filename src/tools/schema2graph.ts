@@ -92,7 +92,7 @@ export class SchemaNode {
       // If there is just one source, use its full name.
       return this.sources[0].fullName;
     }
-    // If there are multiple occurences use a generated name to which we will generate aliases.
+    // If there are multiple occurrences use a generated name to which we will generate aliases.
     const index = this.allSchemaNodes.filter(n => n.sources.length > 1).indexOf(this) + 1;
     return `${this.particleSpec.name}Internal${index}`;
   }
@@ -102,7 +102,7 @@ export class SchemaNode {
   // schema name, if not possible the full schema address will be used. It will never the name
   // based off the internal counter (i.e. Internal$N pattern)
   humanName(connection: HandleConnectionSpec): string {
-    if (this.uniqueSchema || this.sources.length === 1) {
+    if ((!this.variableName && this.uniqueSchema) || this.sources.length === 1) {
       return this.entityClassName;
     }
     return this.fullName(connection);

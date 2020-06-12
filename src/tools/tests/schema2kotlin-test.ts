@@ -202,11 +202,11 @@ describe('schema2kotlin', () => {
          `,
       `class Handles : HandleHolderBase(
         "T",
-        mapOf("h1" to setOf(TInternal1), "h2" to setOf(TInternal1), "h3" to setOf(TInternal1))
+        mapOf("h1" to setOf(T_H1), "h2" to setOf(T_H2), "h3" to setOf(T_H3))
     ) {
-        val h1: ReadSingletonHandle<TInternal1> by handles
-        val h2: WriteSingletonHandle<TInternal1> by handles
-        val h3: ReadWriteSingletonHandle<TInternal1> by handles
+        val h1: ReadSingletonHandle<T_H1> by handles
+        val h2: WriteSingletonHandle<T_H2> by handles
+        val h3: ReadWriteSingletonHandle<T_H3> by handles
     }`
     ));
     async function assertHandleClassDeclaration(manifest: string, expectedHandleClass: string) {
