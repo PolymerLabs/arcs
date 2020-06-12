@@ -9,7 +9,6 @@
  */
 
 import {AnnotationRef} from './recipe/annotation.js';
-import {Dictionary} from './hot.js';
 
 export enum Capability {
   Persistent = 'persistent',
@@ -19,7 +18,7 @@ export enum Capability {
 }
 
 export class Capabilities {
-  private readonly capabilities: Set<Capability>;
+  readonly capabilities: Set<Capability>;
 
   constructor(capabilities: Capability[]) {
     this.capabilities = new Set(capabilities);
