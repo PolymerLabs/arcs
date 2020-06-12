@@ -197,10 +197,6 @@ ${imports.join('\n')}
       } else if (type.isTuple) {
         const innerTypes = type.getContainedTypes();
         return `Tuple${innerTypes.length}<${innerTypes.map(t => generateInnerType(t)).join(', ')}>`;
-      } else if (type.isVariable) {
-        const node = nodes.find(n => n.variableName.includes((type as TypeVariable).variable.name));
-        // Only the full name is available outside the particle scope.
-        return particleScope ? node.humanName(connection) : node.fullName(connection);
       } else {
         throw new Error(`Type '${type.tag}' not supported on code generated particle handle connections.`);
       }
