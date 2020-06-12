@@ -197,6 +197,10 @@ export abstract class Type {
     return false;
   }
 
+  get isVariable(): boolean {
+    return false;
+  }
+
   collectionOf() {
     return new CollectionType(this);
   }

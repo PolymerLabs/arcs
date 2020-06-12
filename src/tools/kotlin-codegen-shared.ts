@@ -42,7 +42,7 @@ export function generateConnectionSpecType(connection: HandleConnectionSpec, nod
       return ktUtils.applyFun('ReferenceType', [generateType(type.getContainedType())]);
     } else if (type.isTuple) {
       return ktUtils.applyFun('TupleType.of', type.getContainedTypes().map(t => generateType(t)));
-    } else if (type.hasVariable && (type as TypeVariable).isVariable) {
+    } else if (type.isVariable) {
       const candidate = type.resolvedType() || type.canReadSubset || type.canWriteSuperset;
       if (candidate) {
         return generateType(candidate);

@@ -47,7 +47,7 @@ export class SchemaSource {
 export class SchemaNode {
   constructor(
     // Schemas can be null when the node represents a type variable with no constraints.
-    readonly schema: Schema | null,
+    readonly schema: Schema,
     readonly particleSpec: ParticleSpec,
     readonly allSchemaNodes: SchemaNode[],
     // Type variable associated with the schema node.
@@ -69,7 +69,7 @@ export class SchemaNode {
   refs = new Map<string, SchemaNode>();
 
   get uniqueSchema() {
-    return !this.allSchemaNodes.some(s => s.schema && this.schema && s.schema !== this.schema && s.schema.name === this.schema.name);
+    return !this.allSchemaNodes.some(s => s.schema !== this.schema && s.schema.name === this.schema.name);
   }
 
   // A name of the code generated class representing this schema on platforms where we've adopted
@@ -79,7 +79,7 @@ export class SchemaNode {
   // - The connection name: if schema name is not unique, but connection name is.
   // - The internal index (i.e. using Internal$N pattern): if schema is not unique.
   get entityClassName() {
-    if (this.uniqueSchema && this.schema && this.schema.name) {
+    if (this.uniqueSchema && this.schema.name) {
       return this.schema.name;
     }
     return this.fullEntityClassName;
@@ -132,7 +132,7 @@ export class SchemaNode {
 }
 
 function* topLevelSchemas(type: Type, path: string[] = []):
-    IterableIterator<{schema: Schema | null, path: string[], variableName: string | null}> {
+    IterableIterator<{schema: Schema, path: string[], variableName: string | null}> {
   if (type.getContainedType()) {
     yield* topLevelSchemas(type.getContainedType(), path);
   } else if (type.getContainedTypes()) {
@@ -144,7 +144,8 @@ function* topLevelSchemas(type: Type, path: string[] = []):
     yield {schema: type.getEntitySchema(), path, variableName: null};
   } else if (type.hasVariable) {
     const schema = (type.canWriteSuperset && type.canWriteSuperset.getEntitySchema())
-      || (type.canReadSubset && type.canReadSubset.getEntitySchema());
+      || (type.canReadSubset && type.canReadSubset.getEntitySchema())
+      || Schema.EMPTY; // defaults to the empty Schema
     yield {schema, path, variableName: (type as TypeVariable).variable.name};
   }
 }

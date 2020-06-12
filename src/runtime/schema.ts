@@ -38,6 +38,8 @@ export class Schema {
   // separated out. This variable serves the purpose of an abstract static.
   static fromLiteral: SchemaMethod = null;
 
+  static EMPTY = new Schema([], {});
+
   // For convenience, primitive field types can be specified as {name: 'Type'}
   // in `fields`; the constructor will convert these to the correct schema form.
   // tslint:disable-next-line: no-any

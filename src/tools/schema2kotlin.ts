@@ -18,6 +18,7 @@ import minimist from 'minimist';
 import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.js';
 import {assert} from '../platform/assert-web.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
+import {Schema} from '../runtime/schema.js';
 
 // TODO: use the type lattice to generate interfaces
 
@@ -186,16 +187,17 @@ ${imports.join('\n')}
     }
 
     function generateInnerType(type: Type): string {
-      if (type.isEntity) {
-        const node = nodes.find(n => n.schema && n.schema.equals(type.getEntitySchema()));
-        // Only the full name is available outside the particle scope.
-        return particleScope ? node.humanName(connection) : node.fullName(connection);
+      if (type.isEntity || type.isVariable) {
+          const node = type.isEntity
+            ? nodes.find(n => n.variableName === null && n.schema.equals(type.getEntitySchema()))
+            : nodes.find(n => n.variableName.includes((type as TypeVariable).variable.name));
+          return particleScope ? node.humanName(connection) : node.fullName(connection);
       } else if (type.isReference) {
         return `Reference<${generateInnerType(type.getContainedType())}>`;
       } else if (type.isTuple) {
         const innerTypes = type.getContainedTypes();
         return `Tuple${innerTypes.length}<${innerTypes.map(t => generateInnerType(t)).join(', ')}>`;
-      } else if (type.hasVariable && (type as TypeVariable).isVariable) {
+      } else if (type.isVariable) {
         const node = nodes.find(n => n.variableName.includes((type as TypeVariable).variable.name));
         // Only the full name is available outside the particle scope.
         return particleScope ? node.humanName(connection) : node.fullName(connection);
@@ -292,7 +294,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
 
     nodeGenerators.forEach(nodeGenerator => {
       const kotlinGenerator = <KotlinGenerator>nodeGenerator.generator;
-      classes.push(kotlinGenerator.generateClasses(nodeGenerator.hash || ''));
+      classes.push(kotlinGenerator.generateClasses(nodeGenerator.hash));
       typeAliases.push(...kotlinGenerator.generateAliases(particleName));
     });
 
@@ -395,7 +397,7 @@ export class KotlinGenerator implements ClassGenerator {
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
 
   /** Returns the name of the generated class. */
-  get name(): string {
+  get className(): string {
     return this.node.entityClassName;
   }
 
@@ -465,7 +467,7 @@ export class KotlinGenerator implements ClassGenerator {
   }
 
   createSchema(schemaHash: string): string {
-    if (!this.node.schema) return `Schema.EMPTY`;
+    if (this.node.schema.equals(Schema.EMPTY)) return `Schema.EMPTY`;
 
     const schemaNames = this.node.schema.names.map(n => `SchemaName("${n}")`);
     return `\
@@ -490,9 +492,6 @@ Schema(
   }
 
   generatePredicates() {
-    if (!this.node.schema) {
-      return;
-    }
     const expression = KTExtracter.fromSchema(this.node.schema, this);
     const refinement = this.node.schema.refinement;
     const queryType = refinement.getQueryParams().get('?');
@@ -511,15 +510,15 @@ ${lines}
   generate(schemaHash: string): string { return ''; }
 
   generateAliases(particleName: string): string[] {
-    return this.node.sources.map(s => `typealias ${s.fullName} = Abstract${particleName}.${this.name}`);
+    return this.node.sources.map(s => `typealias ${s.fullName} = Abstract${particleName}.${this.className}`);
   }
 
   generateClassDefinition(): string {
     const ctorType = this.node.variableName == null ? '(' : ' private constructor(';
 
-    const classDef = `\
-@Suppress("UNCHECKED_CAST")
-    class ${this.name}${ctorType}`;
+    const classDecl = `\
+    class ${this.className}${ctorType}`;
+    const classDef = '@Suppress("UNCHECKED_CAST")' + '\n' + classDecl;
 
     let baseClass: string;
     let constructorFields: string[];
@@ -528,7 +527,9 @@ ${lines}
       constructorFields = this.fields;
     } else {
       const concreteOrVariableEntity = this.node.variableName == null ? 'EntityBase' : 'VariableEntityBase';
-      baseClass = ktUtils.applyFun(concreteOrVariableEntity, [quote(this.name), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp']);
+      baseClass = ktUtils.applyFun(concreteOrVariableEntity, [
+        quote(this.className), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp'
+      ]);
       constructorFields = this.fields.concat([
         'entityId: String? = null',
         'creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP',
@@ -538,8 +539,10 @@ ${lines}
 
     const classInterface = `) : ${baseClass}`;
 
-    const constructorArguments =
-      ktUtils.joinWithIndents(constructorFields, {startIndent: classDef.length+classInterface.length, numberOfIndents: 2});
+    const constructorArguments = ktUtils.joinWithIndents(constructorFields, {
+      startIndent: classDecl.length + classInterface.length,
+      numberOfIndents: 2
+    });
 
     return `${classDef}${constructorArguments}${classInterface}`;
   }
@@ -551,8 +554,15 @@ ${lines}
       'expirationTimestamp = expirationTimestamp'
     ]);
 
-    const copyMethod = `fun copy(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, {startIndent: 14, numberOfIndents: 3})}) = ${this.name}(${ktUtils.joinWithIndents(this.fieldsForCopy, {startIndent: 8+this.name.length, numberOfIndents: 3})})`;
-    const mutateMethod = `fun mutate(${ktUtils.joinWithIndents(this.fieldsForCopyDecl, {startIndent: 14, numberOfIndents: 3})}) = ${this.name}(${ktUtils.joinWithIndents(fieldsForMutate, {startIndent: 8+this.name.length, numberOfIndents: 3})})`;
+    const fieldArgs = ktUtils.joinWithIndents(this.fieldsForCopyDecl, {startIndent: 14, numberOfIndents: 3});
+    const indentOpts = {startIndent: 8 + this.className.length, numberOfIndents: 3};
+
+    const copyMethod = `fun copy(${fieldArgs}) = ${this.className}(${
+      ktUtils.joinWithIndents(this.fieldsForCopy, indentOpts)
+    })`;
+    const mutateMethod = `fun mutate(${fieldArgs}) = ${this.className}(${
+      ktUtils.joinWithIndents(fieldsForMutate, indentOpts)
+    })`;
 
     return `${this.opts.wasm ? `` : `/**
          * Use this method to create a new, distinctly identified copy of the entity.
@@ -567,7 +577,7 @@ ${lines}
   }
 
   generateFieldsDefinitions(): string {
-    const fieldCount = this.node.schema ? Object.keys(this.node.schema.fields).length : 0;
+    const fieldCount = Object.keys(this.node.schema.fields).length;
     const blocks: string[] = [];
 
     if (fieldCount !== 0) {
@@ -592,7 +602,7 @@ ${lines}
   }
 
   generateClasses(schemaHash: string): string {
-    const fieldCount = this.node.schema ? Object.keys(this.node.schema.fields).length : 0;
+    const fieldCount = Object.keys(this.node.schema.fields).length;
     const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
 
     return `\
@@ -613,9 +623,9 @@ ${this.generateFieldsDefinitions()}
         }
 
         override fun toString() =
-            "${this.name}(${this.fieldsForToString.join(', ')})"
+            "${this.className}(${this.fieldsForToString.join(', ')})"
     ` : ''}
-        companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${this.name}> {
+        companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${this.className}> {
             ${this.opts.wasm ? '' : `
             override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 12, true)}
 
@@ -626,10 +636,10 @@ ${this.generateFieldsDefinitions()}
                 SchemaRegistry.register(SCHEMA)
             }`}
             ${!this.opts.wasm ? `
-            override fun deserialize(data: RawEntity) = ${this.name}().apply {
+            override fun deserialize(data: RawEntity) = ${this.className}().apply {
                 deserialize(data, nestedEntitySpecs)
             }` : `
-            override fun decode(encoded: ByteArray): ${this.name}? {
+            override fun decode(encoded: ByteArray): ${this.className}? {
                 if (encoded.isEmpty()) return null
 
                 val decoder = StringDecoder(encoded)
@@ -655,7 +665,7 @@ ${this.generateFieldsDefinitions()}
                     decoder.validate("|")
                     i++
                 }`)}
-                val _rtn = ${this.name}().copy(
+                val _rtn = ${this.className}().copy(
                     ${ktUtils.joinWithIndents(this.fieldsForCopy, {startIndent: 33, numberOfIndents: 3})}
                 )
                _rtn.entityId = entityId
