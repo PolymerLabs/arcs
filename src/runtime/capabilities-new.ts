@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {AnnotationRef} from './recipe/annotation.js';
-import {Capabilities as CapabilitiesOld} from './capabilities.js';
+// import {Capabilities as CapabilitiesOld} from './capabilities.js';
 import {Literal} from './hot.js';
 
 export enum CapabilityComparison {
@@ -476,6 +476,24 @@ export class Capabilities {
     }
     return new Capabilities(ranges);
   }
+
+  isEmpty() { return this.ranges.length === 0; }
+
+  isEquivalent(other: Capabilities): boolean {
+    return this.ranges.length === other.ranges.length && this.containsAll(other);
+  }
+
+  hasEquivalent(capability: Capability): boolean {
+    return this.ranges.some(range => {
+      return range.isCompatible(capability) && range.isEquivalent(capability);
+    });
+  };
+
+  contains(capability: Capability): boolean {
+    return this.ranges.some(range => {
+      return range.isCompatible(capability) && range.contains(capability);
+    });
+  };
 
   containsAll(other: Capabilities): boolean {
     return other.ranges.every(otherRange => {

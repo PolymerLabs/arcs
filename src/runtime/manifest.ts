@@ -44,7 +44,7 @@ import {StorageKeyParser} from './storageNG/storage-key-parser.js';
 import {VolatileMemoryProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
 import {Refinement} from './refiner.js';
-import {Capabilities} from './capabilities.js';
+// import {Capabilities} from './capabilities.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 import {LoaderBase} from '../platform/loader-base.js';
 import {Annotation, AnnotationRef} from './recipe/annotation.js';
@@ -940,10 +940,10 @@ ${e.message}
       if (item.kind === 'handle') {
         if (item.annotations) {
           handle.annotations = Manifest._buildAnnotationRefs(manifest, item.annotations);
-          handle.capabilities = Capabilities.fromAnnotations(handle.annotations);
-          if (!handle.getTtl().isInfinite) {
-            handle.capabilities.merge(Capabilities.queryable);
-          }
+          // handle.capabilities = Capabilities.fromAnnotations(handle.annotations);
+          // if (!handle.getTtl().isInfinite) {
+          //   handle.capabilities.merge(Capabilities.queryable);
+          // }
         }
       }
       items.byHandle.set(handle, item);

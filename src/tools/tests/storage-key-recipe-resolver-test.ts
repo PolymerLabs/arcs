@@ -17,6 +17,8 @@ import {
   StorageKeyRecipeResolverError
 } from '../storage-key-recipe-resolver.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
+import {DatabaseStorageKey} from '../../runtime/storageNG/database-storage-key.js';
+// import {CapabilitiesResolver} from '../../runtime/capabilities-resolver.js';
 import {Flags} from '../../runtime/flags.js';
 import {DriverFactory} from '../../runtime/storageNG/drivers/driver-factory.js';
 import {VolatileStorageKey} from '../../runtime/storageNG/drivers/volatile.js';

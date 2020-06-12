@@ -123,6 +123,48 @@ export class PlanGenerator {
     throw new PlanGeneratorError(`Problematic handle '${handle.id}': Only 'create' Handles can have null 'StorageKey's.`);
   }
 
+  /** Generates a consistent handle id. */
+  async createCreateHandleId(handle: Handle): Promise<string> {
+    if (handle.id) return handle.id;
+    if (!this.createHandleRegistry.has(handle)) {
+      this.createHandleRegistry.set(handle, await digest(this.randomSalt + this.createHandleIndex++));
+    }
+    return this.createHandleRegistry.get(handle);
+  }
+
+  /** Generates Kotlin `Capabilities` from Capabilities. */
+  static createCapabilities(capabilities: Capabilities): string {
+    const ktCapabilities  = [];
+
+    if (capabilities.isEmpty()) {
+      return 'Capabilities.Empty';
+    }
+
+    if (capabilities.hasEquivalent(Persistence.onDisk())) {
+      ktCapabilities.push('Capabilities.Capability.Persistent');
+    }
+
+    if (capabilities.isQueryable() || (capabilities.getTtl() && !capabilities.getTtl().isInfinite)) {
+      ktCapabilities.push('Capabilities.Capability.Queryable');
+    }
+
+    if (capabilities.isShareable()) {
+      ktCapabilities.push('Capabilities.Capability.TiedToRuntime');
+    }
+
+    // if (capabilities.isTiedToArc) {
+//    if (capabilities.getPersistence().isEquivalent(Persistence.inMemory())) {
+  if (capabilities.hasEquivalent(new Shareable(false))) {
+      ktCapabilities.push('Capabilities.Capability.TiedToArc');
+    }
+
+    if (ktCapabilities.length === 1) {
+      return ktCapabilities[0].replace('Capability.', '');
+    }
+
+    return ktUtils.applyFun('Capabilities', [ktUtils.setOf(ktCapabilities)]);
+  }
+
   /** Generates a Kotlin `Ttl` from a Ttl. */
   static createTtl(ttl: Ttl): string {
     if (ttl.isInfinite) return 'Ttl.Infinite';

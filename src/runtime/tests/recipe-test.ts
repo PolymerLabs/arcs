@@ -12,9 +12,10 @@ import {assert} from '../../platform/chai-web.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {Modality} from '../modality.js';
-import {Capabilities, Capability} from '../capabilities.js';
+// import {Capabilities, Capability} from '../capabilities.js';
+import {Capabilities as CapabilitiesNew, Queryable} from '../capabilities-new.js';
 import {Entity} from '../entity.js';
-import {Ttl} from '../capabilities-new.js';
+import {Ttl, Capabilities, Persistence} from '../capabilities-new.js';
 import {Recipe} from '../recipe/recipe.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
@@ -803,25 +804,21 @@ describe('recipe', () => {
         h0: create @persistent
         h1: create 'my-id' @tiedToRuntime
         h2: create #myTag @persistent @queryable
-        h3: create @persistent
-        h4: create @persistent @ttl('20d')
-        h5: create @ttl('20d')
-        h6: create #otherTag`)).recipes[0];
+        h3: create @persistent @ttl('20d')
+        h4: create @ttl('20d')
+        h5: create #otherTag`)).recipes[0];
     const verifyRecipeHandleCapabilities = (recipe) => {
-      assert.lengthOf(recipe.handles, 7);
+      assert.lengthOf(recipe.handles, 6);
       assert.isTrue(
-          recipe.handles[0].capabilities.isSame(new Capabilities([Capability.Persistent])));
+        recipe.handles[0].getCapabilities().isEquivalent(CapabilitiesNew.create([Persistence.onDisk()])));
+      assert.isTrue(recipe.handles[1].getCapabilities().isShareable());
+      assert.isTrue(recipe.handles[2].getCapabilities().isEquivalent(
+            CapabilitiesNew.create([Persistence.onDisk(), new Queryable(true)])));
+      assert.isTrue(recipe.handles[3].getCapabilities().isEquivalent(
+            CapabilitiesNew.create([Persistence.onDisk(), Ttl.days(20)])));
       assert.isTrue(
-          recipe.handles[1].capabilities.isSame(new Capabilities([Capability.TiedToRuntime])));
-      assert.isTrue(
-          recipe.handles[2].capabilities.isSame(new Capabilities([Capability.Persistent, Capability.Queryable])));
-      assert.isTrue(
-          recipe.handles[3].capabilities.isSame(new Capabilities([Capability.Persistent])));
-      assert.isTrue(
-          recipe.handles[4].capabilities.isSame(new Capabilities([Capability.Persistent, Capability.Queryable])));
-      assert.isTrue(
-          recipe.handles[5].capabilities.isSame(new Capabilities([Capability.Queryable])));
-      assert.isTrue(recipe.handles[6].capabilities.isEmpty());
+          recipe.handles[4].getCapabilities().getTtl().isEquivalent(Ttl.days(20)));
+      assert.isTrue(recipe.handles[5].getCapabilities().isEmpty());
     };
     verifyRecipeHandleCapabilities(recipe);
     verifyRecipeHandleCapabilities((await Manifest.parse(recipe.toString())).recipes[0]);

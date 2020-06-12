@@ -14,7 +14,7 @@ import {Manifest} from '../runtime/manifest.js';
 import {IsValidOptions, Recipe, RecipeComponent} from '../runtime/recipe/recipe.js';
 import {volatileStorageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
-import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
+// import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {Capabilities as CapabilitiesNew} from '../runtime/capabilities-new.js';
 import {CapabilitiesResolver as CapabilitiesResolverNew} from '../runtime/capabilities-resolver-new.js';
 import {CreatableStorageKey} from '../runtime/storageNG/creatable-storage-key.js';
@@ -144,7 +144,7 @@ export class StorageKeyRecipeResolver {
    */
   async createStoresForCreateHandles(recipe: Recipe): Promise<Recipe> {
     const arcId = Id.fromString(findLongRunningArcId(recipe));
-    const resolver = new CapabilitiesResolver({arcId});
+    // const resolver = new CapabilitiesResolver({arcId});
     const resolverNew = new CapabilitiesResolverNew({arcId});
     const cloneRecipe = recipe.clone();
     for (const createHandle of cloneRecipe.handles.filter(h => h.fate === 'create' && !!h.id)) {
@@ -157,11 +157,11 @@ export class StorageKeyRecipeResolver {
         throw new StorageKeyRecipeResolverError(`Handle '${createHandle.id}' was not properly resolved.`);
       }
 
-      const storageKey = await resolver.createStorageKey(
-        createHandle.capabilities, createHandle.type, createHandle.id);
-      const storageKeyNew = await resolverNew.createStorageKey(
+      // const storageKey = await resolver.createStorageKey(
+      //   createHandle.capabilities, createHandle.type, createHandle.id);
+      const storageKey/*New*/ = await resolverNew.createStorageKey(
         CapabilitiesNew.fromAnnotations(createHandle.annotations), createHandle.type, createHandle.id);
-      assert(storageKey.toString() === storageKeyNew.toString());
+      // assert(storageKey.toString() === storageKeyNew.toString());
       const store = new Store(createHandle.type, {
         storageKey,
         exists: Exists.MayExist,

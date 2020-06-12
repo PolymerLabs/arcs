@@ -10,8 +10,8 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {StorageKey} from './storage-key.js';
-import {CapabilitiesResolver} from '../capabilities-resolver.js';
-import {Capabilities} from '../capabilities.js';
+// import {CapabilitiesResolver} from '../capabilities-resolver.js';
+// import {Capabilities} from '../capabilities.js';
 import {Capabilities as CapabilitiesNew, Persistence, Encryption, Queryable, Ttl, Shareable} from '../capabilities-new.js';
 import {CapabilitiesResolver as CapabilitiesResolverNew} from '../capabilities-resolver-new.js';
 import {StorageKeyFactory, StorageKeyOptions} from '../storage-key-factory.js';
@@ -45,20 +45,20 @@ export abstract class DatabaseStorageKey extends StorageKey {
   }
 
   static register() {
-    CapabilitiesResolver.registerKeyCreator(
-        PersistentDatabaseStorageKey.protocol,
-        Capabilities.persistentQueryable,
-        (options: StorageKeyOptions) =>
-            new PersistentDatabaseStorageKey(options.location(), options.schemaHash));
+    // CapabilitiesResolver.registerKeyCreator(
+    //     PersistentDatabaseStorageKey.protocol,
+    //     Capabilities.persistentQueryable,
+    //     (options: StorageKeyOptions) =>
+    //         new PersistentDatabaseStorageKey(options.location(), options.schemaHash));
 
-    // Registering all possible in-memory capabilities with `queryable`.
-    for (const capabilities of [Capabilities.queryable, Capabilities.tiedToArcQueryable, Capabilities.tiedToRuntimeQueryable]) {
-      CapabilitiesResolver.registerKeyCreator(
-          MemoryDatabaseStorageKey.protocol,
-          capabilities,
-          (options: StorageKeyOptions) =>
-              new MemoryDatabaseStorageKey(options.location(), options.schemaHash));
-    }
+    // // Registering all possible in-memory capabilities with `queryable`.
+    // for (const capabilities of [Capabilities.queryable, Capabilities.tiedToArcQueryable, Capabilities.tiedToRuntimeQueryable]) {
+    //   CapabilitiesResolver.registerKeyCreator(
+    //       MemoryDatabaseStorageKey.protocol,
+    //       capabilities,
+    //       (options: StorageKeyOptions) =>
+    //           new MemoryDatabaseStorageKey(options.location(), options.schemaHash));
+    // }
 
     CapabilitiesResolverNew.registerStorageKeyFactory(new PersistentDatabaseStorageKeyFactory());
     CapabilitiesResolverNew.registerStorageKeyFactory(new MemoryDatabaseStorageKeyFactory());

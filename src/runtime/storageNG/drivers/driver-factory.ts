@@ -11,7 +11,7 @@
 import {StorageKey} from '../storage-key.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
 import {Exists, Driver} from './driver.js';
-import {CapabilitiesResolver} from '../../capabilities-resolver.js';
+// import {CapabilitiesResolver} from '../../capabilities-resolver.js';
 import {CapabilitiesResolver as CapabilitiesResolverNew} from '../../capabilities-resolver-new.js';
 
 export interface StorageDriverProvider {
@@ -25,7 +25,7 @@ export class DriverFactory {
   static clearRegistrationsForTesting() {
     this.providers = new Set();
     StorageKeyParser.reset();
-    CapabilitiesResolver.reset();
+    // CapabilitiesResolver.reset();
     CapabilitiesResolverNew.reset();
   }
   static providers: Set<StorageDriverProvider> = new Set();

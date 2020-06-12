@@ -280,18 +280,19 @@ describe('Capabilities', () => {
 
     const capabilities2 = Capabilities.fromAnnotations(recipe.handles[2].annotations);
     assert.isTrue(capabilities2.getPersistence().isEquivalent(Persistence.onDisk()));
+    assert.isTrue(capabilities2.hasEquivalent(Persistence.onDisk()));
     assert.isUndefined(capabilities2.getTtl());
     assert.isUndefined(capabilities2.isEncrypted());
     assert.isUndefined(capabilities2.isQueryable());
 
     const capabilities3 = Capabilities.fromAnnotations(recipe.handles[3].annotations);
-    assert.isTrue(capabilities3.getPersistence().isEquivalent(Persistence.onDisk()));
+    assert.isTrue(capabilities3.hasEquivalent(Persistence.onDisk()));
     assert.isTrue(capabilities3.getTtl().isEquivalent(Ttl.minutes(30)));
     assert.isUndefined(capabilities3.isEncrypted());
     assert.isUndefined(capabilities3.isQueryable());
 
     const capabilities4 = Capabilities.fromAnnotations(recipe.handles[4].annotations);
-    assert.isTrue(capabilities4.getPersistence().isEquivalent(Persistence.onDisk()));
+    assert.isTrue(capabilities4.hasEquivalent(Persistence.onDisk()));
     assert.isTrue(capabilities4.getTtl().isEquivalent(Ttl.minutes(30)));
     assert.isTrue(capabilities4.isEncrypted());
     assert.isUndefined(capabilities4.isQueryable());
@@ -303,9 +304,10 @@ describe('Capabilities', () => {
     assert.isTrue(capabilities5.isQueryable());
 
     const capabilities6 = Capabilities.fromAnnotations(recipe.handles[6].annotations);
-    assert.isTrue(capabilities6.getPersistence().isEquivalent(Persistence.onDisk()));
+    assert.isTrue(capabilities6.hasEquivalent(Persistence.onDisk()));
     assert.isTrue(capabilities6.getTtl().isEquivalent(Ttl.minutes(30)));
     assert.isTrue(capabilities6.isEncrypted());
     assert.isTrue(capabilities6.isQueryable());
   });
+  // TODO: add tests for contains and hasEquivalent
 });
