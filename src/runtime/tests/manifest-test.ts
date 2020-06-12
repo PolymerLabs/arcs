@@ -452,6 +452,66 @@ ${particleStr1}
     const errors = [...options.errors.values()];
     assert.sameMembers(errors, [`Invalid fate 'join' for handle 'pairs: join (people, places)'; it is used for 'writes' JoinReader::data connection`]);
   });
+  it('can parse a recipe with an adapter', async () => {
+    const manifest = await parseManifest(`
+      particle FriendReader
+        friend: reads Friend { nickName: Text }
+        friend2: reads Friend { nickName: Text }
+        companyPerson: reads CompanyPerson { name: Text, address: Text }
+        place: reads Place { name: Text, state: Text }
+        
+      adapter ToFriend(person: Person { name: Text, age: Number }) => Friend { nickName: person.name }
+      adapter ToFriend2(person: ~a with { name: Text, age: Number }) => Friend { nickName: person.name }
+      adapter ToPlace(company: Company { name: Text, address: &Address { state: Text } }) => Place { name: company.name, state: company.address.state }
+      adapter TupleToCompanyPerson(people: Person { nameAndAddress: (Text, Text ) }) => CompanyPerson { name: people.nameAndAddress.first, address: people.nameAndAddress.second }
+      recipe 
+        people: map 'people' apply ToFriend(this)
+        people2: map 'people2' apply ToFriend(this)
+        tuplepeople: map 'tuplepeople' apply TupleToCompanyPerson(this)
+        companies: map 'companies' apply ToPlace(this)
+        
+        FriendReader
+          friend: reads people
+          friend2: reads people2
+          companyPerson: reads tuplepeople
+          place: reads companies`);
+
+    const verify = (manifest: Manifest) => {
+      assert.lengthOf(manifest.allAdapters, 4);
+      assert.isNotNull(manifest.allAdapters.find(a => a.name == "ToPerson"));
+      assert.isNotNull(manifest.allAdapters.find(a => a.name == "ToPerson2"));
+      assert.isNotNull(manifest.allAdapters.find(a => a.name == "TupleToCompany"));
+      assert.isNotNull(manifest.allAdapters.find(a => a.name == "ToPlace"));
+
+      const [recipe] = manifest.recipes;
+      assert.isTrue(recipe.normalize());
+
+      const peopleHandle = recipe.handles.find(h => h.id === 'people');
+      peopleHandle.type.maybeEnsureResolved();
+      assert.equal(peopleHandle.type.resolvedType().toString(),
+        'Friend {nickName: Text}');
+
+      const peopleHandle2 = recipe.handles.find(h => h.id === 'people2');
+      peopleHandle2.type.maybeEnsureResolved();
+      assert.equal(peopleHandle2.type.resolvedType().toString(),
+        'Friend {nickName: Text}');
+
+      const tuplePeopleHandle = recipe.handles.find(h => h.id === 'tuplepeople');
+      tuplePeopleHandle.type.maybeEnsureResolved();
+      assert.equal(tuplePeopleHandle.type.resolvedType().toString(),
+        'CompanyPerson {name: Text, address: Text}');
+
+      const companyHandle = recipe.handles.find(h => h.id === 'companies');
+      companyHandle.type.maybeEnsureResolved();
+      assert.equal(companyHandle.type.resolvedType().toString(),
+        'Place {name: Text, state: Text}');
+      const options = {errors: new Map()};
+      assert.isTrue(recipe.isResolved(options));
+    };
+    verify(manifest);
+    // verify(await parseManifest(manifest.toString()));
+  });
+
   it('supports recipes with constraints', async () => {
     const manifest = await parseManifest(`
       schema S
