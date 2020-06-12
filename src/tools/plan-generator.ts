@@ -16,9 +16,9 @@ import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Ttl, TtlUnits} from '../runtime/capabilities-new.js';
-import {Random} from '../runtime/random.js';
 import {findLongRunningArcId} from './storage-key-recipe-resolver.js';
 import {Capabilities} from '../runtime/capabilities.js';
+import {digest} from '../platform/digest-web.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -32,12 +32,14 @@ export class PlanGeneratorError extends Error {
 /** Generates plan objects from resolved recipes. */
 export class PlanGenerator {
   private createHandleRegistry: Map<Handle, string> = new Map<Handle, string>();
+  private createHandleIndex = 0;
 
-  constructor(private resolvedRecipes: Recipe[], private namespace: string) {
+  constructor(private resolvedRecipes: Recipe[], private namespace: string, private randomSalt: string) {
   }
 
   /** Generates a Kotlin file with plan classes derived from resolved recipes. */
   async generate(): Promise<string> {
+
     const planOutline = [
       this.fileHeader(),
       ...(await this.createPlans()),
@@ -90,10 +92,10 @@ export class PlanGenerator {
 
   /** Generates a Kotlin `Plan.HandleConnection` from a HandleConnection. */
   async createHandleConnection(connection: HandleConnection): Promise<string> {
-    const storageKey = this.createStorageKey(connection.handle);
+    const storageKey = await this.createStorageKey(connection.handle);
     const mode = this.createHandleMode(connection.direction, connection.type);
     const type = generateConnectionType(connection);
-    const ttl = this.createTtl(connection.handle.getTtl());
+    const ttl = PlanGenerator.createTtl(connection.handle.getTtl());
 
     return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl], {startIndent: 24});
   }
@@ -112,13 +114,13 @@ export class PlanGenerator {
   }
 
   /** Generates a Kotlin `StorageKey` from a recipe Handle. */
-  createStorageKey(handle: Handle): string {
+  async createStorageKey(handle: Handle): Promise<string> {
     if (handle.storageKey) {
       return ktUtils.applyFun('StorageKeyParser.parse', [quote(handle.storageKey.toString())]);
     }
     if (handle.fate === 'create') {
-      const createKeyArgs = [quote(this.createCreateHandleId(handle))];
-      const capabilities = this.createCapabilities(handle.capabilities);
+      const createKeyArgs = [quote(await this.createCreateHandleId(handle))];
+      const capabilities = PlanGenerator.createCapabilities(handle.capabilities);
       if (capabilities !== 'Capabilities.Empty') {
         createKeyArgs.push(capabilities);
       }
@@ -134,17 +136,16 @@ export class PlanGenerator {
   }
 
   /** Generates a consistent handle id. */
-  createCreateHandleId(handle: Handle): string {
+  async createCreateHandleId(handle: Handle): Promise<string> {
     if (handle.id) return handle.id;
     if (!this.createHandleRegistry.has(handle)) {
-      const rand = Math.floor(Random.next() * Math.pow(2, 50));
-      this.createHandleRegistry.set(handle, `handle/${rand}`);
+      this.createHandleRegistry.set(handle, await digest(this.randomSalt + this.createHandleIndex++));
     }
     return this.createHandleRegistry.get(handle);
   }
 
   /** Generates Kotlin `Capabilities` from Capabilities. */
-  createCapabilities(capabilities: Capabilities): string {
+  static createCapabilities(capabilities: Capabilities): string {
     const ktCapabilities  = [];
 
     if (capabilities.isEmpty()) {
@@ -175,13 +176,13 @@ export class PlanGenerator {
   }
 
   /** Generates a Kotlin `Ttl` from a Ttl. */
-  createTtl(ttl: Ttl): string {
+  static createTtl(ttl: Ttl): string {
     if (ttl.isInfinite) return 'Ttl.Infinite';
     return ktUtils.applyFun(this.createTtlUnit(ttl.units), [ttl.count.toString()]);
   }
 
   /** Translates TtlUnits to Kotlin Ttl case classes. */
-  createTtlUnit(ttlUnits: TtlUnits): string {
+  static createTtlUnit(ttlUnits: TtlUnits): string {
     switch (ttlUnits) {
       case TtlUnits.Minutes: return `Ttl.Minutes`;
       case TtlUnits.Hours: return `Ttl.Hours`;

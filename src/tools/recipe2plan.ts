@@ -38,7 +38,7 @@ export async function recipe2plan(
     switch (format) {
       case OutputFormat.Kotlin:
         assert(manifest.meta.namespace, `Namespace is required in '${manifest.fileName}' for Kotlin code generation.`);
-        return new PlanGenerator(plans, manifest.meta.namespace).generate();
+        return new PlanGenerator(plans, manifest.meta.namespace, `salt_${Math.random()}`).generate();
       case OutputFormat.Proto:
         return Buffer.from(await encodePlansToProto(plans));
       default: throw new Error('Output Format should be Kotlin or Proto');
