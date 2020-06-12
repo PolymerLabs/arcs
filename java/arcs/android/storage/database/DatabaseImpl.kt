@@ -1267,57 +1267,6 @@ class DatabaseImpl(
             CollectionMetadata(collectionId, versionMap, versionNumber)
         }
 
-    private fun getCollectionEntries(
-        collectionId: CollectionId,
-        typeId: TypeId,
-        db: SQLiteDatabase,
-        counters: Counters?
-    ): Set<*> = if (isPrimitiveType(typeId)) {
-        getCollectionPrimitiveEntries(collectionId, typeId, db, counters)
-    } else {
-        getCollectionReferenceEntries(collectionId, db)
-    }
-
-    private fun getCollectionPrimitiveEntries(
-        collectionId: CollectionId,
-        typeId: TypeId,
-        db: SQLiteDatabase,
-        counters: Counters?
-    ): Set<*> {
-        // Booleans are easy, just fetch the values from the collection_entries table directly.
-        if (typeId.toInt() == PrimitiveType.Boolean.id) {
-            counters?.increment(DatabaseCounters.GET_PRIMITIVE_COLLECTION_INLINE)
-            return db.rawQuery(
-                "SELECT value_id FROM collection_entries WHERE collection_id = ?",
-                arrayOf(collectionId.toString())
-            ).map { it.getBoolean(0).toReferencable() }.toSet()
-        }
-
-        // For strings and numbers, join against the appropriate primitive table.
-        val (tableName, valueGetter) = when (typeId.toInt()) {
-            PrimitiveType.Text.id -> {
-                counters?.increment(DatabaseCounters.GET_PRIMITIVE_COLLECTION_TEXT)
-                TABLE_TEXT_PRIMITIVES to { cursor: Cursor -> cursor.getString(0).toReferencable() }
-            }
-            PrimitiveType.Number.id -> {
-                counters?.increment(DatabaseCounters.GET_PRIMITIVE_COLLECTION_NUMBER)
-                TABLE_NUMBER_PRIMITIVES to {
-                    cursor: Cursor -> cursor.getDouble(0).toReferencable()
-                }
-            }
-            else -> throw IllegalArgumentException("Not a primitive type ID: $typeId")
-        }
-        return db.rawQuery(
-            """
-                SELECT $tableName.value
-                FROM collection_entries
-                JOIN $tableName ON collection_entries.value_id = $tableName.id
-                WHERE collection_entries.collection_id = ?
-            """.trimIndent(),
-            arrayOf(collectionId.toString())
-        ).map(valueGetter).toSet()
-    }
-
     private fun getCollectionReferenceEntries(
         collectionId: CollectionId,
         db: SQLiteDatabase
