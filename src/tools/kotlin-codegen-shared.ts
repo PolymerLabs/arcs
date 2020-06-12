@@ -31,8 +31,10 @@ export function generateConnectionSpecType(connection: HandleConnectionSpec, nod
   }
 
   return (function generateType(type: Type): string {
-    if (type.isEntity) {
-      const node = nodes.find(n => n.schema && n.schema.equals(type.getEntitySchema()));
+    if (type.isEntity || type.isVariable) {
+      const node = type.isEntity
+        ? nodes.find(n => n.schema && n.schema.equals(type.getEntitySchema()))
+        : nodes.find(n => n.variableName.includes((type as TypeVariable).variable.name));
       return ktUtils.applyFun('EntityType', [`${node.fullName(connection)}.SCHEMA`]);
     } else if (type.isCollection) {
       return ktUtils.applyFun('CollectionType', [generateType(type.getContainedType())]);
@@ -42,14 +44,6 @@ export function generateConnectionSpecType(connection: HandleConnectionSpec, nod
       return ktUtils.applyFun('ReferenceType', [generateType(type.getContainedType())]);
     } else if (type.isTuple) {
       return ktUtils.applyFun('TupleType.of', type.getContainedTypes().map(t => generateType(t)));
-    } else if (type.isVariable) {
-      const candidate = type.resolvedType() || type.canReadSubset || type.canWriteSuperset;
-      if (candidate) {
-        return generateType(candidate);
-      }
-      // TODO(alxr): verify if this should actually be TypeVariable
-      const node = nodes.find(n => n.variableName.includes((type as TypeVariable).variable.name));
-      return ktUtils.applyFun('EntityType', [`${node.fullName(connection)}.SCHEMA`]);
     } else {
       throw new Error(`Type '${type.tag}' not supported as code generated handle connection type.`);
     }
