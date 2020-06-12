@@ -18,7 +18,6 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.storage.decodeProxyMessage
-import arcs.android.storage.service.DeferredProxyCallback
 import arcs.android.storage.service.DeferredResult
 import arcs.android.storage.service.IStorageService
 import arcs.android.storage.service.IStorageServiceCallback
@@ -135,21 +134,6 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         service.idle(TIMEOUT_IDLE_WAIT_MILLIS, callback)
         withTimeout(TIMEOUT_IDLE_WAIT_MILLIS) { callback.await() }
         log.debug { "ServiceStore is idle" }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    override suspend fun getLocalData(): Data {
-        val service = checkNotNull(storageService)
-        return DeferredProxyCallback().let {
-            outgoingMessages.incrementAndGet()
-            service.getLocalData(it)
-            val message = it.await()
-            outgoingMessages.decrementAndGet()
-            val modelUpdate = message.decodeProxyMessage()
-                as? ProxyMessage.ModelUpdate<Data, Op, ConsumerData>
-            if (modelUpdate == null) throw CrdtException("Wrong message type received $modelUpdate")
-            modelUpdate.model
-        }
     }
 
     override fun on(callback: ProxyCallback<Data, Op, ConsumerData>): Int {

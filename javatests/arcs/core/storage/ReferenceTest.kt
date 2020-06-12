@@ -39,6 +39,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
+typealias RefCollectionStore =
+    DirectStore<CrdtSet.Data<Reference>, CrdtSet.Operation<Reference>, Set<Reference>>
+
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
 class ReferenceTest {
@@ -89,7 +92,10 @@ class ReferenceTest {
                 type = CollectionType(ReferenceType(EntityType(Person.SCHEMA))),
                 mode = StorageMode.Direct
             )
-        val directCollection = Store(collectionOptions).activate()
+
+        @Suppress("UNCHECKED_CAST")
+        val directCollection = Store(collectionOptions).activate() as RefCollectionStore
+
         val job = Job()
         val me = directCollection.on(ProxyCallback {
             if (it is ProxyMessage.ModelUpdate<*, *, *>) job.complete()
