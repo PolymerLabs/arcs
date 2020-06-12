@@ -30,7 +30,7 @@ arcs_kt_jvm_test_suite(
     package = "arcs.schematests.joins",
     deps = [
         ":join_codegen",
-        "//java/arcs/core/data:data-kt",
+        "//java/arcs/core/data",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
