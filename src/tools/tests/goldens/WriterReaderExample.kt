@@ -49,8 +49,7 @@ object IngestionPlan : Plan(
             )
         )
     ),
-    listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str("writingArcId")))),
-    "writingArcId"
+    listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str("writingArcId"))))
 )
 object ConsumptionPlan : Plan(
     listOf(
@@ -70,8 +69,7 @@ object ConsumptionPlan : Plan(
             )
         )
     ),
-    listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str("readingArcId")))),
-    "readingArcId"
+    listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str("readingArcId"))))
 )
 object EphemeralWritingPlan : Plan(
     listOf(
@@ -136,6 +134,5 @@ object ReferencesRecipePlan : Plan(
             )
         )
     ),
-    listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str("referencesArcId")))),
-    "referencesArcId"
+    listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str("referencesArcId"))))
 )

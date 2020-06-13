@@ -5,6 +5,7 @@ package arcs;
 option java_package = "arcs.core.data.proto";
 option java_multiple_files = true;
 
+import "java/arcs/core/data/proto/annotation.proto";
 import "java/arcs/core/data/proto/policy.proto";
 
 // A manifest containing multiple recipes and particle specs.
@@ -20,8 +21,7 @@ message RecipeProto {
   string name = 1;
   repeated HandleProto handles = 2;
   repeated ParticleProto particles = 3;
-  // Optional arc id provided by the recipe annotation.
-  string arc_id = 4;
+  repeated AnnotationProto annotations = 5;
 }
 
 // Recipe-level representation of a store.

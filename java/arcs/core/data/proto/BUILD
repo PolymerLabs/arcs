@@ -79,6 +79,7 @@ proto_library(
     name = "manifest_proto",
     srcs = ["manifest.proto"],
     deps = [
+        ":annotation_proto",
         ":policy_proto",
     ],
 )

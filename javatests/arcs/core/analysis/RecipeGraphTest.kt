@@ -1,5 +1,6 @@
 package arcs.core.analysis
 
+import arcs.core.data.Annotation
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.ParticleSpec
@@ -100,7 +101,7 @@ class RecipeGraphTest {
             "PassThrough",
             listOf(thingHandle, someHandle, joinedHandle).associateBy { it.name },
             listOf(readerParticle, writerParticle),
-            "arcId"
+            listOf(Annotation.arcId("arcId"))
         )
     }
 

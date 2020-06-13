@@ -155,14 +155,14 @@ class RecipeTest {
         assertThat(
             Recipe(
                 name = null,
-                arcId = null,
                 particles = emptyList(),
-                handles = emptyMap()
+                handles = emptyMap(),
+                annotations = emptyList()
             ).toPlan()
         ).isEqualTo(
             Plan(
-                arcId = null,
-                particles = emptyList()
+                particles = emptyList(),
+                annotations = emptyList()
             )
         )
     }
@@ -172,14 +172,14 @@ class RecipeTest {
         assertThat(
             Recipe(
                 name = "RecipeName",
-                arcId = "arc-id",
                 particles = emptyList(),
-                handles = emptyMap()
+                handles = emptyMap(),
+                annotations = listOf(Annotation.arcId("arc-id"))
             ).toPlan()
         ).isEqualTo(
             Plan(
-                arcId = "arc-id",
-                particles = emptyList()
+                particles = emptyList(),
+                annotations = listOf(Annotation.arcId("arc-id"))
             )
         )
     }
@@ -261,11 +261,10 @@ class RecipeTest {
                         )
                     )
                 ),
-                arcId = "egress-contacts"
+                annotations = listOf(Annotation.arcId("egress-contacts"))
             ).toPlan()
         ).isEqualTo(
             Plan(
-                arcId = "egress-contacts",
                 particles = listOf(
                     Plan.Particle(
                         particleName = "ConvertToContacts",
@@ -293,6 +292,12 @@ class RecipeTest {
                                 type = contactCollectionType
                             )
                         )
+                    )
+                ),
+                annotations = listOf(
+                    Annotation(
+                        name = "arcId",
+                        params = mapOf("id" to AnnotationParam.Str("egress-contacts"))
                     )
                 )
             )
