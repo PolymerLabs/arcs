@@ -21,7 +21,8 @@ import arcs.core.util.lens
 open class Plan(
     // TODO(cromwellian): add more fields as needed (e.g. RecipeName, etc for debugging)
     val particles: List<Particle>,
-    val arcId: String? = null
+    val arcId: String? = null,
+    val annotations: List<Annotation>? = emptyList()
 ) {
     /**
      * A [Particle] consists of the information necessary to instantiate a particle
@@ -45,7 +46,8 @@ open class Plan(
         val storageKey: StorageKey,
         val mode: HandleMode,
         val type: Type,
-        val ttl: Ttl? = null
+        val ttl: Ttl? = null,
+        val annotations: List<Annotation>? = emptyList()
     ) {
         companion object {
             val storageKeyLens =
