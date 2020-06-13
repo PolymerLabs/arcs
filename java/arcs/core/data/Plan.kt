@@ -21,8 +21,33 @@ import arcs.core.util.lens
 open class Plan(
     // TODO(cromwellian): add more fields as needed (e.g. RecipeName, etc for debugging)
     val particles: List<Particle>,
-    val arcId: String? = null
+    val annotations: List<Annotation>
 ) {
+    // TODO(b/155796088): get rid of these ctors and use annotations in PlanPartition and Recipe.
+    constructor(particles: List<Particle>, arcId: String? = null) :
+        this(
+            particles,
+            if (arcId != null)
+                listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str(arcId))))
+            else emptyList()
+        )
+
+    constructor(particles: List<Particle>, annotations: List<Annotation>, arcId: String) :
+        this(particles, annotations) {
+        require(this.arcId == arcId)
+    }
+
+    val arcId: String?
+        get() {
+            return annotations.find { it.name == "arcId" }?.let {
+                val idParam = requireNotNull(it.params["id"])
+                return when (idParam) {
+                    is AnnotationParam.Str -> idParam.value
+                    else -> throw UnsupportedOperationException("Unexpected arcId param $idParam")
+                }
+            }
+        }
+
     /**
      * A [Particle] consists of the information necessary to instantiate a particle
      * when starting an arc.
@@ -45,7 +70,8 @@ open class Plan(
         val storageKey: StorageKey,
         val mode: HandleMode,
         val type: Type,
-        val ttl: Ttl? = null
+        val ttl: Ttl? = null,
+        val annotations: List<Annotation>? = emptyList()
     ) {
         companion object {
             val storageKeyLens =

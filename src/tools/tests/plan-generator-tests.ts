@@ -90,7 +90,8 @@ describe('recipe2plan', () => {
     StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
     HandleMode.Write,
     SingletonType(EntityType(A_Data.SCHEMA)),
-    Ttl.Infinite
+    Ttl.Infinite,
+    emptyList()
 )`
       );
       assert.equal(
@@ -99,7 +100,8 @@ describe('recipe2plan', () => {
     StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
     HandleMode.Read,
     SingletonType(EntityType(B_Data.SCHEMA)),
-    Ttl.Infinite
+    Ttl.Infinite,
+    emptyList()
 )`
       );
     });
@@ -161,7 +163,8 @@ Particle(
             StorageKeyParser.parse("create://some-handle?Persistent"),
             HandleMode.Write,
             SingletonType(EntityType(Writer_Data.SCHEMA)),
-            Ttl.Infinite
+            Ttl.Infinite,
+            listOf(Annotation("persistent", emptyMap()))
         )
     )
 )`
@@ -193,7 +196,8 @@ Particle(
             StorageKeyParser.parse("create://some-handle?Persistent"),
             HandleMode.ReadWrite,
             SingletonType(EntityType(Intermediary_Data.SCHEMA)),
-            Ttl.Infinite
+            Ttl.Infinite,
+            listOf(Annotation("persistent", emptyMap()))
         )
     )
 )`
