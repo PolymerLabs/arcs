@@ -59,7 +59,7 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
 
     /** Removes [DirectStore] caches and closes those that can be closed safely. */
     suspend fun clearStoresCache() = storeMutex.withLock {
-        stores.forEach { _, sr -> closeStore(sr) }
+        for ((_, sr) in stores) closeStore(sr)
         stores.clear()
     }
 
