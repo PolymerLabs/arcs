@@ -56,7 +56,16 @@ import arcs.core.util.nextSafeRandomLong
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 /**
@@ -131,6 +140,10 @@ class ReferenceModeStore private constructor(
      */
     private val versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
 
+    /** Tracks the state of container store: Active (true) and Closed (false). */
+    @ExperimentalCoroutinesApi
+    private val containerStateChannel = ConflatedBroadcastChannel(true)
+
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     val backingStore = DirectStoreMuxer<CrdtData, CrdtOperation, Any?>(
         storageKey = backingKey,
@@ -185,12 +198,13 @@ class ReferenceModeStore private constructor(
         callback: ProxyCallback<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
     ): Int = callbacks.register(callback)
 
+    @ExperimentalCoroutinesApi
     override fun off(callbackToken: Int) {
         containerStore.off(containerCallbackToken)
         callbacks.unregister(callbackToken)
 
-        if (containerStore.closed) {
-            backingStore.clearStoresCache()
+        if (containerStore.closed && !containerStateChannel.isClosedForSend) {
+            containerStateChannel.offer(false)
         }
     }
 
@@ -422,6 +436,22 @@ class ReferenceModeStore private constructor(
         }
         return@fn true
     }
+
+    @ExperimentalCoroutinesApi
+    @FlowPreview
+    private val clearStoreCachesFlow = combine(
+        containerStateChannel.asFlow(),
+        receiveQueue.sizeChannel.asFlow()
+    ) { containerState, queueSize -> queueSize + if (containerState) 1 else 0 }
+        .filter { it == 0 }
+        .onEach {
+            if (receiveQueue.size.value == 0) {
+                backingStore.clearStoresCache()
+                receiveQueue.sizeChannel.close()
+                containerStateChannel.close()
+            }
+        }
+        .launchIn(CoroutineScope(Dispatchers.Default + Job()))
 
     private fun newBackingInstance(): CrdtModel<CrdtData, CrdtOperationAtTime, Referencable> =
         crdtType.createCrdtModel()

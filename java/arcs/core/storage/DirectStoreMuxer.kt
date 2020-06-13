@@ -42,9 +42,13 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
     /* internal */ val stores = LruCacheMap<String, StoreRecord<Data, Op, T>>(
         50,
         livenessPredicate = { _, sr -> !sr.store.closed }
-    ) { _, sr ->
-        if (!sr.store.closed) {
-            sr.store.close()
+    ) { _, sr -> closeStore(sr) }
+
+    /** Safely closes a [DirectStore] and cleans up its resources. */
+    private fun closeStore(storeRecord: StoreRecord<*, *, *>) {
+        if (!storeRecord.store.closed) {
+            // The store will be actually closed as soon as there are no connected proxies.
+            storeRecord.store.off(storeRecord.id)
         }
     }
 
@@ -54,19 +58,9 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
     suspend fun getLocalData(referenceId: String) = store(referenceId).store.getLocalData()
 
     /** Removes [DirectStore] caches and closes those that can be closed safely. */
-    fun clearStoresCache() {
-        while (!storeMutex.tryLock()) { /* Wait */ }
-        try {
-            stores.forEach { _, sr ->
-                /** Aligns with the logic of [stores]'s [LruCacheMap.onEvict]. */
-                if (!sr.store.closed) {
-                    sr.store.close()
-                }
-            }
-        } finally {
-            stores.clear()
-            storeMutex.unlock()
-        }
+    suspend fun clearStoresCache() = storeMutex.withLock {
+        stores.forEach { _, sr -> closeStore(sr) }
+        stores.clear()
     }
 
     /** Calls [idle] on all existing contained stores and waits for their completion. */
