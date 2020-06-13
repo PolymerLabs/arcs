@@ -25,6 +25,8 @@ import {Capabilities} from '../capabilities.js';
 import {Capabilities as CapabilitiesNew, Ttl} from '../capabilities-new.js';
 import {AnnotationRef} from './annotation.js';
 import {StoreClaims} from '../storageNG/abstract-store.js';
+import {Dictionary} from "../hot";
+import {Adapter, HandleAdapter} from "./adapter";
 
 export class Handle implements Comparable<Handle> {
   private readonly _recipe: Recipe;
@@ -44,6 +46,8 @@ export class Handle implements Comparable<Handle> {
   // Whether this handle is being joined by other handles.
   // E.g. for `x: join (a, b, c)`, this field is true on a, b and c.
   private _isJoined = false;
+  // Whether this handle has an adapter applied, e.g. with an apply statement
+  private _adapter: HandleAdapter | undefined = undefined;
   private _mappedType: Type | undefined = undefined;
   private _storageKey: StorageKey | undefined = undefined;
   capabilities: Capabilities = Capabilities.empty;
@@ -113,6 +117,16 @@ export class Handle implements Comparable<Handle> {
       handle._pattern = this._pattern;
       for (const joined of this.joinedHandles) {
         handle.joinDataFromHandle(cloneMap.get(joined) as Handle);
+      }
+      if (this.adapter) {
+        const adapterArgs = this.adapter.adapterArguments;
+        const paramNames = Object.keys(adapterArgs) as string[];
+        handle.applyAdapter(new HandleAdapter(this.adapter.adapter,
+          paramNames.reduce((dict, name) => {
+            const arg = adapterArgs[name];
+            dict[name] = arg instanceof Handle ? cloneMap.get(arg) : arg;
+            return dict;
+          }, {})));
       }
     }
     return handle;
@@ -229,6 +243,7 @@ export class Handle implements Comparable<Handle> {
   set immediateValue(value: ParticleSpec) { this._immediateValue = value; }
   get isSynthetic() { return this.fate === 'join'; } // Join handles are the first type of synthetic handles, other may come.
   get joinedHandles() { return this._joinedHandles; }
+  get adapter() { return this._adapter; }
   get isJoined() { return this._isJoined; }
 
   get annotations(): AnnotationRef[] { return this._annotations; }
@@ -285,6 +300,13 @@ export class Handle implements Comparable<Handle> {
       });
     }
 
+    // Applying an Adapter is a kin to writing into the Adapter type
+    if (this._adapter) {
+        typeSet.push({
+          type: this._adapter.adapter.target.targetType,
+          direction: 'writes'
+        });
+    }
     return TypeChecker.processTypeList(this._mappedType, typeSet, options);
   }
 
@@ -407,7 +429,9 @@ export class Handle implements Comparable<Handle> {
     if (this.annotations && this.annotations.length > 0) {
       result.push(this.annotations.map(a => a.toString()).join(' '));
     }
-
+    if (this.adapter) {
+      result.push(` ${this.adapter.toString()}`);
+    }
     // Debug information etc.
     if (this.type) {
       result.push('//');
@@ -436,6 +460,10 @@ export class Handle implements Comparable<Handle> {
 
   findConnectionByDirection(dir: Direction): HandleConnection|undefined {
     return this._connections.find(conn => conn.direction === dir);
+  }
+
+  applyAdapter(adapter: HandleAdapter) {
+    this._adapter = adapter;
   }
 
   joinDataFromHandle(handle: Handle) {

@@ -50,6 +50,7 @@ import {LoaderBase} from '../platform/loader-base.js';
 import {Annotation, AnnotationRef} from './recipe/annotation.js';
 import {SchemaPrimitiveTypeValue} from './manifest-ast-nodes.js';
 import {canonicalManifest} from './canonical-manifest.js';
+import {Adapter, AdaptedType, HandleAdapter} from "./recipe/adapter";
 import {Policy} from './policy/policy.js';
 
 export enum ErrorSeverity {
@@ -162,6 +163,7 @@ export class Manifest {
   private storeManifestUrls: Map<string, string> = new Map();
   readonly errors: ManifestError[] = [];
   private _annotations: Dictionary<Annotation> = {};
+  private _adapters: Adapter[] = [];
   // readonly warnings: ManifestError[] = [];
 
   constructor({id}: {id: Id | string}) {
@@ -190,6 +192,13 @@ export class Manifest {
   }
   get allRecipes() {
     return [...new Set(this._findAll(manifest => manifest._recipes))];
+  }
+  get adapters() {
+    return this._adapters;
+  }
+
+  get allAdapters() {
+    return [...new Set(this._findAll(manifest => Object.values(manifest._adapters)))];
   }
   get allHandles() {
     // TODO(#4820) Update `reduce` to use flatMap
@@ -310,6 +319,10 @@ export class Manifest {
   }
   findSchemaByName(name: string): Schema {
     return this._find(manifest => manifest._schemas[name]);
+  }
+
+  findAdapterByName(name: string): Adapter {
+    return this._find(manifest => manifest._adapters[name]);
   }
 
   findTypeByName(name: string): EntityType | InterfaceType | undefined {
@@ -583,6 +596,7 @@ ${e.message}
       await processItems('particle', item => Manifest._processParticle(manifest, item, loader));
       await processItems('store', item => Manifest._processStore(manifest, item, loader, memoryProvider));
       await processItems('recipe', item => Manifest._processRecipe(manifest, item));
+      await processItems('adapter-node', item => Manifest._processAdapter(manifest, item));
       await processItems('policy', item => Manifest._processPolicy(manifest, item));
     } catch (e) {
       dumpErrors(manifest);
@@ -718,6 +732,79 @@ ${e.message}
       }
     }();
     visitor.traverse(items);
+  }
+
+  private static _processAdapter(manifest: Manifest, adapterItem: AstNode.AdapterNode) {
+
+    // Initial scope is a dictionary of the adapter param types
+    const params = adapterItem.params.reduce((dict, param) => {
+      dict[param.name] = param.type['model'];
+      return dict;
+    }, {});
+
+    // We support Tuple.ordinal syntax up to 5-arity
+    const ordinals = ["first", "second", "third", "fourth", "fifth"]
+    const toOrdinal = num => ordinals[num]
+
+    /*
+     * Walks object graph defined by 'scope' according to scopeChain, which is an array of lookups to apply. Scope
+     * should either be the top level dictionary of params, a model object, or a leaf value if scopeChain is empty.
+     */
+    function lookupTypeInScope(scope: any, scopeChain: string[]): Type {
+      if (!scopeChain.length) {
+        return scope;
+      }
+      const next = scopeChain[0];
+      const rest = scopeChain.slice(1);
+      const scopeType = scope;
+
+      if (scope instanceof EntityType
+        || scope instanceof ReferenceType
+        || scope instanceof TypeVariable
+        || scope instanceof SingletonType
+        || scope instanceof CollectionType) {
+        scope.maybeEnsureResolved();
+        scope = scope.getEntitySchema().fields
+      } else if (scope instanceof TupleType) { // TODO: doesn't seem to occur
+        scope = scope.innerTypes.reduce((dict, type) => dict[toOrdinal(scope.innerTypes.indexOf(type))] = type);
+      } else if (scope instanceof Type) {
+        throw new ManifestError(adapterItem.location, `Unable to lookup entries in scope type ${scope.tag}`);
+      } else if (scope.kind === 'schema-primitive') {
+        if (scopeChain.length !== 0) {
+          throw new ManifestError(adapterItem.location, `Can't dereference ${next} on schema primitive`)
+        }
+        return scope;
+      } else if (scope.kind === 'schema-reference') {
+        return lookupTypeInScope(scope.schema, scopeChain);
+      } else if (scope.kind === 'schema-inline') {
+        return scope.model;
+      } else if (scope.kind === 'schema-tuple') {
+        scope = scope.types.reduce((dict, type) => {
+            dict[toOrdinal(scope.types.indexOf(type))] = type;
+            return dict;
+          }, {});
+      } else {
+        // Dictionary types are ok
+      }
+
+      if (next in scope) {
+        return lookupTypeInScope(scope[next], rest)
+      }
+      throw new ManifestError(adapterItem.location,
+        `Unknown field ${next} in scope type ${scopeType.constructor.name} with value
+         ${JSON.stringify(scope)} for adapter ${adapterItem.name}`);
+    }
+
+    // Creates a new Schema from the adapter body, with types computed from looking up scope expressions
+    const targetSchema = new Schema(adapterItem.body.names, adapterItem.body.fields.map(field => {
+        lookupTypeInScope(params, field.expression.scopeChain)
+      })
+    )
+    const targetType = new EntityType(targetSchema);
+    const target = new AdaptedType(targetType, adapterItem.body.fields);
+    const adapter = new Adapter(adapterItem.name, params, target);
+    manifest._adapters.push(adapter);
+    // TODO: should we push the schemas into the _schemas field?
   }
 
   private static _processSchema(manifest: Manifest, schemaItem) {
@@ -944,6 +1031,9 @@ ${e.message}
             handle.capabilities.merge(Capabilities.queryable);
           }
         }
+        if (item.adapter) {
+          // add handle.adapter
+        }
       }
       items.byHandle.set(handle, item);
     }
@@ -966,6 +1056,12 @@ ${e.message}
         handle.joinDataFromHandle(associatedHandle);
       }
 
+      if (item.adapter) {
+        const adapter = manifest.findAdapterByName(item.adapter.name);
+        const handleAdapter = new HandleAdapter(adapter, (Object.keys(adapter.params) as string[])
+          .reduce((dict, paramName, index) => { dict[paramName] = item.associations[index]; return dict; }, {}));
+        handle.applyAdapter(handleAdapter);
+      }
       items.byHandle.set(handle, item);
     }
 
@@ -1518,6 +1614,10 @@ ${e.message}
 
     Object.values(this._particles).forEach(p => {
       results.push(p.toString());
+    });
+
+    Object.values(this._adapters).forEach(a => {
+      results.push(a.toString());
     });
 
     this._recipes.forEach(r => {
