@@ -13,22 +13,19 @@ import {assert} from '../../platform/chai-node.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Ttl} from '../../runtime/capabilities-new.js';
 import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
-import {Capabilities, Capability} from '../../runtime/capabilities.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
-
-const randomSalt = 'test-random-seed';
 
 describe('recipe2plan', () => {
   describe('plan-generator', () => {
     it('imports arcs.core.data when the package is different', () => {
-      const generator = new PlanGenerator([], 'some.package', randomSalt);
+      const generator = new PlanGenerator([], 'some.package');
 
       const actual = generator.fileHeader();
 
       assert.include(actual, 'import arcs.core.data.*');
     });
     it('does not import arcs.core.data when the package is the same', () => {
-      const generator = new PlanGenerator([], 'arcs.core.data', randomSalt);
+      const generator = new PlanGenerator([], 'arcs.core.data');
 
       const actual = generator.fileHeader();
 
@@ -43,33 +40,6 @@ describe('recipe2plan', () => {
       const ttl = Ttl.days(30);
       const actual = PlanGenerator.createTtl(ttl);
       assert.deepStrictEqual(actual, 'Ttl.Days(30)');
-    });
-    it('creates a unique identifiers for create handles with no id', async () => {
-      const {recipes, generator} = await process(`
-     particle A
-       data: writes Thing {num: Number}
-       
-     recipe R
-       h0: create @persistent
-       h1: create #test @persistent
-       h2: create #test2 @persistent
-       h3: create #test @persistent
-       A
-         data: writes h0
-       A
-         data: writes h1
-       A
-         data: writes h2
-       A
-         data: writes h3`);
-
-      assert.deepEqual(
-        await Promise.all(recipes[0].handles.map(h => generator.createStorageKey(h))), [
-        'CreateableStorageKey("f737c995c77b2ff1399521941b82d1045da61daf", Capabilities.Persistent)',
-        'CreateableStorageKey("6b8932a97188a3c9da089604035c80afa72d6fab", Capabilities.Persistent)',
-        'CreateableStorageKey("399c4cefdc8a611a6aedb43b7cb6497e36e89896", Capabilities.Persistent)',
-        'CreateableStorageKey("088b16e75e8a4d44ef92e1bb497370e8ab108053", Capabilities.Persistent)'
-      ]);
     });
     it('uses the same identifier for created and mapped handle', async () => {
       const {recipes, generator} = await process(`
@@ -98,39 +68,7 @@ describe('recipe2plan', () => {
         'StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data")'
       );
     });
-    it('creates a createable storage key with correct capabilities', async () => {
-      const {recipes, generator} = await process(`
-        particle A
-          data: writes Thing {num: Number}
-          
-        recipe R
-          h0: create
-          h1: create @ttl('12h')
-          h2: create @persistent
-          h3: create @tiedToArc @ttl('24h')
-          A
-            data: writes h0
-          A
-            data: writes h1
-          A
-            data: writes h2
-          A
-            data: writes h3`);
-
-      assert.deepEqual(
-        await Promise.all(recipes[0].handles.map(h => generator.createStorageKey(h))), [
-'CreateableStorageKey("f737c995c77b2ff1399521941b82d1045da61daf")',
-// TODO: Investigate if Queryable should be here? If so, explain with a comment.
-'CreateableStorageKey("6b8932a97188a3c9da089604035c80afa72d6fab", Capabilities.Queryable)',
-'CreateableStorageKey("399c4cefdc8a611a6aedb43b7cb6497e36e89896", Capabilities.Persistent)',
-// TODO: Investigate if Queryable should be here? If so, explain with a comment.
-`CreateableStorageKey(
-    "088b16e75e8a4d44ef92e1bb497370e8ab108053",
-    Capabilities(setOf(Capabilities.Capability.Queryable, Capabilities.Capability.TiedToArc))
-)`
-      ]);
-    });
-    it('uses the same identifier for all HandleConnections connected to the same handle', async () => {
+    it('generated handle connections pertaining to the same handle use the same storage key', async () => {
       const {recipes, generator} = await process(`
         particle A
           data: writes Thing {num: Number}
@@ -149,7 +87,7 @@ describe('recipe2plan', () => {
       assert.equal(
         await generator.createHandleConnection(writer.connections['data']),
 `HandleConnection(
-    CreateableStorageKey("f737c995c77b2ff1399521941b82d1045da61daf"),
+    StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
     HandleMode.Write,
     SingletonType(EntityType(A_Data.SCHEMA)),
     Ttl.Infinite
@@ -158,7 +96,7 @@ describe('recipe2plan', () => {
       assert.equal(
         await generator.createHandleConnection(reader.connections['data']),
 `HandleConnection(
-    CreateableStorageKey("f737c995c77b2ff1399521941b82d1045da61daf"),
+    StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
     HandleMode.Read,
     SingletonType(EntityType(B_Data.SCHEMA)),
     Ttl.Infinite
@@ -196,34 +134,6 @@ describe('recipe2plan', () => {
       assert.isBelow(plan.indexOf('particle.B'), plan.indexOf('particle.C'));
       assert.isBelow(plan.indexOf('particle.C'), plan.indexOf('particle.D'));
     });
-    it('refers to static constants when translating a single capability', () => {
-      assert.deepStrictEqual(
-        PlanGenerator.createCapabilities(Capabilities.persistent),
-        `Capabilities.Persistent`
-      );
-      assert.deepStrictEqual(
-        PlanGenerator.createCapabilities(Capabilities.queryable),
-        `Capabilities.Queryable`
-      );
-      assert.deepStrictEqual(
-        PlanGenerator.createCapabilities(Capabilities.tiedToArc),
-        `Capabilities.TiedToArc`
-      );
-      assert.deepStrictEqual(
-        PlanGenerator.createCapabilities(Capabilities.tiedToRuntime),
-        `Capabilities.TiedToRuntime`
-      );
-    });
-    it('constructs a capabilities object when translating multiple capabilities', () => {
-      assert.deepStrictEqual(
-        PlanGenerator.createCapabilities(Capabilities.persistentQueryable),
-        `Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.Queryable))`
-      );
-      assert.deepStrictEqual(
-        PlanGenerator.createCapabilities(new Capabilities([Capability.TiedToArc, Capability.Persistent])),
-        `Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc))`
-      );
-    });
   });
   async function process(manifestString: string): Promise<{
       recipes: Recipe[],
@@ -231,8 +141,8 @@ describe('recipe2plan', () => {
       plan: string
   }> {
     const manifest = await Manifest.parse(manifestString);
-    const recipes = await new StorageKeyRecipeResolver(manifest).resolve();
-    const generator = new PlanGenerator(recipes, 'test.namespace', randomSalt);
+    const recipes = await new StorageKeyRecipeResolver(manifest, 'random_salt').resolve();
+    const generator = new PlanGenerator(recipes, 'test.namespace');
     const plan = await generator.generate();
     return {recipes, generator, plan};
   }

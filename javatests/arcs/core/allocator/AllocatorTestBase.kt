@@ -8,11 +8,10 @@ import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.host.*
 import arcs.core.storage.CapabilitiesResolver
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.VolatileDriverProvider
-import arcs.core.storage.keys.RamDiskStorageKey
-import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.Log
 import arcs.core.util.plus
@@ -94,10 +93,8 @@ open class AllocatorTestBase {
     @Before
     open fun setUp() = runBlocking {
         RamDisk.clear()
-        RamDiskStorageKey.registerKeyCreator()
+        DriverAndKeyConfigurator.configureKeyParsers()
         RamDiskDriverProvider()
-
-        VolatileStorageKey.registerKeyCreator()
 
         readingExternalHost = readingHost()
         writingExternalHost = writingHost()

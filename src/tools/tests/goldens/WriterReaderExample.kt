@@ -69,7 +69,7 @@ object EphemeralWritingPlan : Plan(
             "arcs.core.data.testdata.Writer",
             mapOf(
                 "data" to HandleConnection(
-                    CreateableStorageKey("my-ephemeral-handle-id"),
+                    StorageKeyParser.parse("create://my-ephemeral-handle-id"),
                     HandleMode.Write,
                     SingletonType(EntityType(Writer_Data.SCHEMA)),
                     Ttl.Infinite
