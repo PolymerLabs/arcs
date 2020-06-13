@@ -114,7 +114,8 @@ class InformationFlowTest {
             "ok-check-multiple-and-single-claim",
             "ok-check-multiple-or-single-claim",
             "ok-derives-from-cycle",
-            "ok-derives-from-multiple"
+            "ok-derives-from-multiple",
+            "ok-join-simple"
         )
         val failingFieldTests = listOf(
             "fail-field-entity-direct",

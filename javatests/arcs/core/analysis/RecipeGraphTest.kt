@@ -27,7 +27,7 @@ class RecipeGraphTest {
             name = "joined",
             fate = Recipe.Handle.Fate.JOIN,
             type = TypeVariable("joined"),
-            associatedHandles=listOf(someHandle, thingHandle)
+            associatedHandles=listOf(thingHandle, someHandle)
         )
         val readConnectionSpec = HandleConnectionSpec(
             "r",
@@ -130,7 +130,6 @@ class RecipeGraphTest {
     private fun testAllConnections(testRecipe: TestRecipe) {
         with (testRecipe) {
             val graph = RecipeGraph(recipe)
-            val joinSpec = RecipeGraph.JoinSpec()
             val readerNode = RecipeGraph.Node.Particle(readerParticle)
             val writerNode = RecipeGraph.Node.Particle(writerParticle)
             val thingNode = RecipeGraph.Node.Handle(thingHandle)
@@ -154,7 +153,7 @@ class RecipeGraphTest {
                 RecipeGraph.Node.Neighbor(writerNode, readConnectionSpec),
                 RecipeGraph.Node.Neighbor(writerNode, rwConnectionSpec),
                 RecipeGraph.Node.Neighbor(readerNode, readConnectionSpec),
-                RecipeGraph.Node.Neighbor(joinedNode, joinSpec)
+                RecipeGraph.Node.Neighbor(joinedNode, RecipeGraph.JoinSpec(0))
             )
             val thingPredecessors = listOf(
                 RecipeGraph.Node.Neighbor(writerNode, writeConnectionSpec),
@@ -162,15 +161,15 @@ class RecipeGraphTest {
             )
             val someSuccessors = listOf(
                 RecipeGraph.Node.Neighbor(readerNode, readSomeConnectionSpec),
-                RecipeGraph.Node.Neighbor(joinedNode, joinSpec)
+                RecipeGraph.Node.Neighbor(joinedNode, RecipeGraph.JoinSpec(1))
             )
             val somePredecessors = emptyList<RecipeGraph.Node.Neighbor>()
             val joinedSuccessors = listOf(
                 RecipeGraph.Node.Neighbor(readerNode, readJoinConnectionSpec)
             )
             val joinedPredecessors = listOf(
-                RecipeGraph.Node.Neighbor(thingNode, joinSpec),
-                RecipeGraph.Node.Neighbor(someNode, joinSpec)
+                RecipeGraph.Node.Neighbor(thingNode, RecipeGraph.JoinSpec(0)),
+                RecipeGraph.Node.Neighbor(someNode, RecipeGraph.JoinSpec(1))
             )
             val expectedSuccessors = mapOf(
                 readerNode to readerSuccessors,
