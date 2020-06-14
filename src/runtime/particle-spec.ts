@@ -16,10 +16,11 @@ import {Schema} from './schema.js';
 import {InterfaceType, SlotType, Type, TypeLiteral, TypeVariableInfo} from './type.js';
 import {Literal} from './hot.js';
 import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './particle-check.js';
-import {ParticleClaim, createParticleClaim, validateFieldPath} from './particle-claim.js';
+import {ParticleClaim, createParticleClaim} from './particle-claim.js';
 import {ManifestStringBuilder} from './manifest-string-builder.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {AnnotationRef} from './recipe/annotation.js';
+import {validateFieldPath} from './field-path.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
