@@ -16,6 +16,7 @@ import android.os.Parcelable
 import arcs.core.data.CollectionType
 import arcs.core.data.CountType
 import arcs.core.data.EntityType
+import arcs.core.data.MuxType
 import arcs.core.data.ReferenceType
 import arcs.core.data.SingletonType
 import arcs.core.data.TupleType
@@ -75,6 +76,22 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
                 EntityType(actual = EntityType(requireNotNull(parcel.readSchema())))
 
             override fun newArray(size: Int): Array<EntityType?> = arrayOfNulls(size)
+        }
+    }
+
+    data class MuxType(
+        override val actual: arcs.core.data.MuxType<*>
+    ) : ParcelableType(actual) {
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            super.writeToParcel(parcel, flags)
+            parcel.writeType(actual.containedType, flags)
+        }
+
+        companion object CREATOR : Parcelable.Creator<MuxType> {
+            override fun createFromParcel(parcel: Parcel): MuxType =
+                MuxType(actual = MuxType(requireNotNull(parcel.readType())))
+
+            override fun newArray(size: Int): Array<MuxType?> = arrayOfNulls(size)
         }
     }
 
@@ -163,6 +180,7 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
                 Tag.Collection -> CollectionType.createFromParcel(parcel)
                 Tag.Count -> CountType.createFromParcel(parcel)
                 Tag.Entity -> EntityType.createFromParcel(parcel)
+                Tag.Mux -> MuxType.createFromParcel(parcel)
                 Tag.Reference -> ReferenceType.createFromParcel(parcel)
                 Tag.Singleton -> SingletonType.createFromParcel(parcel)
                 Tag.Tuple -> TupleType.createFromParcel(parcel)
@@ -178,6 +196,7 @@ fun Type.toParcelable(): ParcelableType = when (tag) {
     Tag.Collection -> ParcelableType.CollectionType(this as CollectionType<*>)
     Tag.Count -> ParcelableType.CountType(this as CountType)
     Tag.Entity -> ParcelableType.EntityType(this as EntityType)
+    Tag.Mux -> ParcelableType.MuxType(this as MuxType<*>)
     Tag.Reference -> ParcelableType.ReferenceType(this as ReferenceType<*>)
     Tag.Singleton -> ParcelableType.SingletonType(this as SingletonType<*>)
     Tag.Tuple -> ParcelableType.TupleType(this as TupleType)
