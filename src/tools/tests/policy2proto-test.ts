@@ -60,6 +60,8 @@ policy MyPolicy {}
 
   it('encodes policy targets', async () => {
     const proto = await parsePolicyToProto(`
+schema Abc
+
 policy MyPolicy {
   @allowedRetention(medium: 'Disk', encryption: true)
   @allowedRetention(medium: 'Ram', encryption: false)
@@ -85,6 +87,9 @@ policy MyPolicy {
 
   it('encodes policy fields', async () => {
     const proto = await parsePolicyToProto(`
+schema Abc
+  parent: &{child1: Text, child2: Text}
+
 policy MyPolicy {
   from Abc access {
     @allowedUsage(label: 'redacted', usageType: 'egress')

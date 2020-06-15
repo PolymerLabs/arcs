@@ -18,7 +18,7 @@ export type FieldPathType = Type | SchemaPrimitiveTypeValue;
  * Resolves a field path against the given Type. Returns the Type referenced by
  * the field path if valid. Throws an exception if the field path is invalid.
  */
-export function resolveFieldPathType(fieldPath: string[], type: Type): FieldPathType {
+export function resolveFieldPathType(fieldPath: string[], type: FieldPathType): FieldPathType {
   if (fieldPath.length === 0) {
     return type;
   }

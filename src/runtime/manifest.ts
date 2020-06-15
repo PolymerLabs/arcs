@@ -879,7 +879,8 @@ ${e.message}
 
   private static _processPolicy(manifest: Manifest, policyItem: AstNode.Policy) {
     const buildAnnotationRefs = (refs: AstNode.AnnotationRef[]) => Manifest._buildAnnotationRefs(manifest, refs);
-    const policy = Policy.fromAstNode(policyItem, buildAnnotationRefs);
+    const findTypeByName = (name: string) => manifest.findTypeByName(name);
+    const policy = Policy.fromAstNode(policyItem, buildAnnotationRefs, findTypeByName);
     if (manifest._policies.some(p => p.name === policy.name)) {
       throw new ManifestError(policyItem.location, `A policy named ${policy.name} already exists.`);
     }

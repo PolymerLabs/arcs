@@ -79,6 +79,9 @@ describe('field path validation', () => {
     assert.throws(
         () => resolveFieldPathType(['txts.inside'], type),
         `Schema 'Foo {txt: Text, txts: [Text]}' does not contain field 'txts.inside'.`);
+    assert.throws(
+        () => evaluateFieldPath(['foo'], 'Text'),
+        `Field path 'foo' could not be resolved because the target type is a primitive: 'Text'.`);
   });
 
   it('reference fields are valid', async () => {
