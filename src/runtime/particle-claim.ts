@@ -10,7 +10,7 @@
 
 import {HandleConnectionSpec} from './particle-spec.js';
 import {ParticleClaimIsTag, ParticleClaimDerivesFrom, ParticleClaimStatement, Direction} from './manifest-ast-nodes.js';
-import {validateFieldPath} from './field-path.js';
+import {evaluateFieldPath} from './field-path.js';
 
 /** The different types of trust claims that particles can make. */
 export enum ClaimType {
@@ -72,7 +72,7 @@ export class ClaimDerivesFrom {
       throw new Error(`Unknown "derives from" handle name: ${parentHandle}.`);
     }
 
-    validateFieldPath(astNode.fieldPath, parentHandle.type);
+    evaluateFieldPath(astNode.fieldPath, parentHandle.type);
 
     return new ClaimDerivesFrom(parentHandle, astNode.fieldPath);
   }

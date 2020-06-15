@@ -10,7 +10,7 @@
 
 import {parse} from '../../../gen/runtime/manifest-parser.js';
 import {assert} from '../../../platform/chai-web.js';
-import {mapToDictionary} from '../../util.js';
+import {mapToDictionary, deleteFieldRecursively} from '../../util.js';
 
 const noParamAnnotationRef = {
   kind: 'annotation-ref',
@@ -26,20 +26,6 @@ const oneParamAnnotationRef = {
     value: 'aaa',
   }],
 };
-
-/** Recursively delete all fields with the given name. */
-// tslint:disable-next-line: no-any
-function deleteFieldRecursively(node: any, field: string) {
-  if (node == null || typeof node !== 'object') {
-    return;
-  }
-  if (field in node) {
-    delete node[field];
-  }
-  for (const value of Object.values(node)) {
-    deleteFieldRecursively(value, field);
-  }
-}
 
 function parsePolicy(str: string) {
   const nodes = parse(str);
