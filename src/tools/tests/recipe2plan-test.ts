@@ -43,4 +43,70 @@ $ tools/update-goldens \n\n`
     assert.lengthOf(decoded['recipes'], 1);
     assert.lengthOf(decoded['particleSpecs'], 1);
   }));
+  it('allows namespace to prefix particle path', Flags.withDefaultReferenceMode(async () => {
+    const manifest = await Runtime.parse(`
+    meta
+      namespace: arcs.core.data.testdata
+      
+    particle Writer in '.Writer'
+      data: writes Thing {name: Text}
+      
+    particle Reader in 'arcs.core.data.testdata.Reader'
+      data: reads Thing {name: Text}
+      
+    recipe Namespace
+      data: create 'some-handle' @persistent
+      
+      Writer
+        data: writes data
+      Reader
+        data: reads data
+    `);
+    assert.deepStrictEqual(
+      await recipe2plan(manifest, OutputFormat.Kotlin, 'Namespace'),
+      `\
+/* ktlint-disable */
+@file:Suppress("PackageName", "TopLevelName")
+
+package arcs.core.data.testdata
+
+//
+// GENERATED CODE -- DO NOT EDIT
+//
+
+import arcs.core.data.*
+import arcs.core.storage.StorageKeyParser
+
+object NamespacePlan : Plan(
+    listOf(
+        Particle(
+            "Reader",
+            "arcs.core.data.testdata.Reader",
+            mapOf(
+                "data" to HandleConnection(
+                    StorageKeyParser.parse("create://some-handle?Persistent"),
+                    HandleMode.Read,
+                    SingletonType(EntityType(Reader_Data.SCHEMA)),
+                    Ttl.Infinite
+                )
+            )
+        ),
+        Particle(
+            "Writer",
+            "arcs.core.data.testdata.Writer",
+            mapOf(
+                "data" to HandleConnection(
+                    StorageKeyParser.parse("create://some-handle?Persistent"),
+                    HandleMode.Write,
+                    SingletonType(EntityType(Writer_Data.SCHEMA)),
+                    Ttl.Infinite
+                )
+            )
+        )
+    )
+)
+`
+    );
+
+  }));
 });
