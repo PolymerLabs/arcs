@@ -77,6 +77,31 @@ class VariableEntityBaseTest {
         )
     }
 
+    @Test
+    fun copyIntoTest() {
+        val biggerRaw = biggerEntity.serialize()
+
+        val variableEntity = DummyVariableEntity()
+        variableEntity.deserializeForTest(biggerRaw)
+
+        val copy = DummyVariableEntity()
+        with (copy) {
+            bools = variableEntity.bools
+            nums = variableEntity.nums
+            ref = variableEntity.ref
+            text = variableEntity.text
+        }
+
+        variableEntity.copyInto(copy)
+
+        val backToBiggerRaw = copy.serialize()
+        assertThat(backToBiggerRaw).isEqualTo(biggerRaw)
+
+        val backToBigger = DummyEntity()
+        backToBigger.deserializeForTest(backToBiggerRaw)
+        assertThat(backToBigger).isEqualTo(biggerEntity)
+    }
+
     private fun createDummyReference(id: String) = Reference(
         DummyEntity,
         arcs.core.storage.Reference(id, DummyStorageKey(id), VersionMap("id" to 1))

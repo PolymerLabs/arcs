@@ -560,16 +560,28 @@ ${lines}
       ktUtils.joinWithIndents(fieldsForMutate, indentOpts)
     })`;
 
+    const copyBaseEntity = `.also { this.copyInto(it) }`;
+    let copy = copyMethod;
+    let mutate = mutateMethod;
+
+    // Add clauses to copy entity base data (except for Wasm).
+    if (this.node.variableName !== null && !this.opts.wasm) {
+      // The `also` clause should go on a newline if the copy / mutate expression fits on one line.
+      const newlineAlsoClause = '\n' + ktUtils.indent(copyBaseEntity, 3);
+      copy += (copyMethod.includes('\n') ? copyBaseEntity : newlineAlsoClause);
+      mutate += (mutateMethod.includes('\n') ? copyBaseEntity : newlineAlsoClause);
+    }
+
     return `${this.opts.wasm ? `` : `/**
          * Use this method to create a new, distinctly identified copy of the entity.
          * Storing the copy will result in a new copy of the data being stored.
          */`}
-        ${copyMethod}
+        ${copy}
         ${this.opts.wasm ? `` : `/**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
          */
-        ${mutateMethod}`}`;
+        ${mutate}`}`;
   }
 
   generateFieldsDefinitions(): string {
