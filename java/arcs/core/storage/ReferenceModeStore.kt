@@ -132,7 +132,7 @@ class ReferenceModeStore private constructor(
     private val versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    val backingStore = BackingStore<CrdtData, CrdtOperation, Any?>(
+    val backingStore = DirectStoreMuxer<CrdtData, CrdtOperation, Any?>(
         storageKey = backingKey,
         backingType = backingType,
         callbackFactory = { muxId ->

@@ -20,10 +20,10 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class BackingStoreTest {
+class DirectStoreMuxerTest {
 
     @Test
-    fun backingStoreNoRace() = runBlocking<Unit>(Dispatchers.IO) {
+    fun directStoreMuxerNoRace() = runBlocking<Unit>(Dispatchers.IO) {
         DriverAndKeyConfigurator.configure(null)
 
         val storageKey = RamDiskStorageKey("test")
@@ -44,7 +44,7 @@ class BackingStoreTest {
             callbacks++
         }
 
-        val backingStore = BackingStore(
+        val directStoreMuxer = DirectStoreMuxer(
             storageKey = storageKey,
             backingType = EntityType(schema),
             callbackFactory = { callback }
@@ -64,12 +64,12 @@ class BackingStoreTest {
 
         // Attempt to trigger a child store setup race
         coroutineScope {
-            launch { backingStore.getLocalData("a") }
-            launch { backingStore.onProxyMessage(ProxyMessage.ModelUpdate(data, 1), "a") }
-            launch { backingStore.getLocalData("a") }
-            launch { backingStore.onProxyMessage(ProxyMessage.ModelUpdate(data, 1), "a") }
-            launch { backingStore.getLocalData("a") }
-            launch { backingStore.onProxyMessage(ProxyMessage.ModelUpdate(data, 1), "a") }
+            launch { directStoreMuxer.getLocalData("a") }
+            launch { directStoreMuxer.onProxyMessage(ProxyMessage.ModelUpdate(data, 1), "a") }
+            launch { directStoreMuxer.getLocalData("a") }
+            launch { directStoreMuxer.onProxyMessage(ProxyMessage.ModelUpdate(data, 1), "a") }
+            launch { directStoreMuxer.getLocalData("a") }
+            launch { directStoreMuxer.onProxyMessage(ProxyMessage.ModelUpdate(data, 1), "a") }
         }
 
         val otherStore = DirectStore.create<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(

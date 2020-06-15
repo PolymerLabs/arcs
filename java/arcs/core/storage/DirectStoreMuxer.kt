@@ -32,7 +32,7 @@ import kotlinx.coroutines.withContext
  *
  * This is what *backs* Entities.
  */
-class BackingStore<Data : CrdtData, Op : CrdtOperation, T>(
+class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
     val storageKey: StorageKey,
     val backingType: Type,
     val callbackFactory: (String) -> ProxyCallback<Data, Op, T>

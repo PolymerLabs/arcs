@@ -34,10 +34,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/** Tests for [RamDiskDriver] coupled with [BackingStore]. */
+/** Tests for [RamDiskDriver] coupled with [DirectStoreMuxer]. */
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
-class RamDiskBackingStoreIntegrationTest {
+class RamDiskDirectStoreMuxerIntegrationTest {
     private lateinit var ramDiskProvider: DriverProvider
 
     @Before
@@ -59,7 +59,7 @@ class RamDiskBackingStoreIntegrationTest {
         var job = Job()
 
         val storageKey = RamDiskStorageKey("unique")
-        val store = BackingStore<CrdtData, CrdtOperation, Any?>(
+        val store = DirectStoreMuxer<CrdtData, CrdtOperation, Any?>(
             storageKey = storageKey,
             backingType = CountType(),
             callbackFactory = { eventId ->
