@@ -231,7 +231,7 @@ export class Ttl extends Capability {
     if (!ttlStr) {
       return Ttl.infinite();
     }
-    const ttlTokens = ttlStr.match(/([0-9]+)([d|h|m])/);
+    const ttlTokens = ttlStr.match(/([0-9]+)[ ]*(day[s]?|hour[s]?|minute[s]?|[d|h|m])$/);
     assert(ttlTokens && ttlTokens.length === 3, `Invalid ttl: ${ttlStr}`);
     return new Ttl(Number(ttlTokens[1]), Ttl.ttlUnitsFromString(ttlTokens[2]));
   }
@@ -248,13 +248,16 @@ export class Ttl extends Capability {
   }
 
   public static ttlUnitsFromString(units: string): TtlUnits {
-    switch (units) {
-      case 'm': return TtlUnits.Minutes;
-      case 'h': return TtlUnits.Hours;
-      case 'd': return TtlUnits.Days;
-      default:
-        throw new Error(`Unsupported ttl units ${units}`);
+    if ([TtlUnits.Minutes, 'minutes', 'minute'].includes(units)) {
+      return TtlUnits.Minutes;
     }
+    if ([TtlUnits.Hours, 'hours', 'hour'].includes(units)) {
+      return TtlUnits.Hours;
+    }
+    if ([TtlUnits.Days, 'days', 'days'].includes(units)) {
+      return TtlUnits.Days;
+    }
+    throw new Error(`Unsupported ttl units ${units}`);
   }
 
   toDebugString(): string {
