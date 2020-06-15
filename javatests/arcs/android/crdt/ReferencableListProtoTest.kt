@@ -28,7 +28,9 @@ import org.junit.runner.RunWith
 class ReferencableListProtoTest {
     @Test
     fun parcelableRoundTrip_works_for_primitives() {
-        val list = listOf(4, 5, 4, 6).map { it.toReferencable() }.toReferencable(FieldType.Primitive(PrimitiveType.Int))
+        val list = listOf(4, 5, 4, 6).map {
+            it.toReferencable()
+        }.toReferencable(FieldType.ListOf(FieldType.Primitive(PrimitiveType.Int)))
 
         val marshalled = with(Parcel.obtain()) {
             writeProto(list.toPrimitiveListProto())

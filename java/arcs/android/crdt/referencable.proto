@@ -15,6 +15,7 @@ message ReferencableProto {
     ReferencablePrimitiveProto primitive = 4;
     ReferencablePrimitiveListProto primitive_list = 5;
     ReferencableReferenceListProto reference_list = 6;
+    ReferencableProto wrapped_referencable = 7;
   }
 }
 

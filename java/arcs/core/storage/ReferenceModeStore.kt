@@ -29,6 +29,7 @@ import arcs.core.data.FieldName
 import arcs.core.data.RawEntity
 import arcs.core.data.ReferenceType
 import arcs.core.data.SingletonType
+import arcs.core.data.util.ReferencableList
 import arcs.core.storage.referencemode.BridgingOperation
 import arcs.core.storage.referencemode.Message
 import arcs.core.storage.referencemode.Message.EnqueuedFromBackingStore
@@ -638,8 +639,11 @@ class ReferenceModeStore private constructor(
             VersionMap(crdtKey to maxVersion),
             fieldVersionProvider
         ) {
-            if (it is Reference) it
-            else CrdtEntity.Reference.buildReference(it)
+            when (it) {
+                is Reference -> it
+                is ReferencableList<*> -> CrdtEntity.Reference.wrapReferencable(it)
+                else -> CrdtEntity.Reference.buildReference(it)
+            }
         }
     }
 

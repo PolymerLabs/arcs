@@ -25,12 +25,12 @@ fun ReferencablePrimitiveListProto.toReferencableList(): ReferencableList<Refere
     val fieldType = FieldType.Primitive(PrimitiveType.values()[type])
     return valueList.mapTo(mutableListOf<ReferencablePrimitive<*>>()) {
         it.toReferencablePrimitive()
-    }.toReferencable(fieldType)
+    }.toReferencable(FieldType.ListOf(fieldType))
 }
 
 /** Serializes a [ReferencablePrimitive] to its proto form. */
 fun ReferencableList<*>.toPrimitiveListProto(): ReferencablePrimitiveListProto {
-    val type = itemType
+    val type = (itemType as FieldType.ListOf).primitiveType
     return when (type) {
         is FieldType.Primitive -> ReferencablePrimitiveListProto
             .newBuilder()

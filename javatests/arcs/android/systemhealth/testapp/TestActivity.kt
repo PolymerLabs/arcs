@@ -12,10 +12,13 @@
 package arcs.android.systemhealth.testapp
 
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.ServiceConnection
 import android.os.Bundle
+import android.os.IBinder
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
@@ -39,6 +42,8 @@ import arcs.sdk.android.storage.ServiceStoreFactory
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -71,6 +76,11 @@ class TestActivity : AppCompatActivity() {
     private var storageServiceCrashRate: Int
     private var storageClientCrashRate: Int
     private var intentReceiver: BroadcastReceiver? = null
+    private var bound = atomic(false)
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, service: IBinder) = bound.update { true }
+        override fun onServiceDisconnected(name: ComponentName) = bound.update { false }
+    }
 
     init {
         // Supply the default settings being displayed on UI at app. startup.
@@ -317,7 +327,8 @@ class TestActivity : AppCompatActivity() {
                 intent.putExtra(it.storageServiceCrashRate, storageServiceCrashRate)
                 intent.putExtra(it.storageClientCrashRate, storageClientCrashRate)
 
-                startService(intent)
+                if (bound.value) unbindService(connection)
+                bindService(intent, connection, Context.BIND_AUTO_CREATE)
             }
         }
 
@@ -342,7 +353,8 @@ class TestActivity : AppCompatActivity() {
                 intent.putExtra(it.storageServiceCrashRate, storageServiceCrashRate)
                 intent.putExtra(it.storageClientCrashRate, storageClientCrashRate)
 
-                startService(intent)
+                if (bound.value) unbindService(connection)
+                bindService(intent, connection, Context.BIND_AUTO_CREATE)
             }
         }
     }
@@ -358,6 +370,7 @@ class TestActivity : AppCompatActivity() {
         }
 
         scope.cancel()
+        if (bound.value) unbindService(connection)
         super.onDestroy()
     }
 
