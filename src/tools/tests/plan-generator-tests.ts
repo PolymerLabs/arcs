@@ -12,7 +12,7 @@ import {PlanGenerator} from '../plan-generator.js';
 import {assert} from '../../platform/chai-node.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Capabilities, Ttl, Persistence, Queryable, Shareable} from '../../runtime/capabilities.js';
-import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
+import {PlanResolver} from '../plan-resolver.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 
 describe('recipe2plan', () => {
@@ -141,7 +141,7 @@ describe('recipe2plan', () => {
       plan: string
   }> {
     const manifest = await Manifest.parse(manifestString);
-    const recipes = await new StorageKeyRecipeResolver(manifest, 'random_salt').resolve();
+    const recipes = await new PlanResolver(manifest, 'random_salt').resolve();
     const generator = new PlanGenerator(recipes, 'test.namespace');
     const plan = await generator.generate();
     return {recipes, generator, plan};

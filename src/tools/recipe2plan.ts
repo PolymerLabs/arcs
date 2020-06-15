@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Runtime} from '../runtime/runtime.js';
-import {StorageKeyRecipeResolver} from './storage-key-recipe-resolver.js';
+import {PlanResolver} from './plan-resolver.js';
 import {PlanGenerator} from './plan-generator.js';
 import {Flags} from '../runtime/flags.js';
 import {assert} from '../platform/assert-node.js';
@@ -28,7 +28,7 @@ export async function recipe2plan(
     recipeFilter?: string): Promise<string | Uint8Array> {
   return await Flags.withDefaultReferenceMode(async () => {
     const manifest = await Runtime.parseFile(path);
-    let plans = await (new StorageKeyRecipeResolver(manifest, `salt_${Math.random()}`)).resolve();
+    let plans = await (new PlanResolver(manifest, `salt_${Math.random()}`)).resolve();
 
     if (recipeFilter) {
       plans = plans.filter(p => p.name === recipeFilter);

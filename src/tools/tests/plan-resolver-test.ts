@@ -13,9 +13,9 @@ import {assert} from '../../platform/chai-node.js';
 import {
   findLongRunningArcId,
   isLongRunning,
-  StorageKeyRecipeResolver,
-  StorageKeyRecipeResolverError
-} from '../storage-key-recipe-resolver.js';
+  PlanResolver,
+  PlanResolverError
+} from '../plan-resolver.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 import {DatabaseStorageKey} from '../../runtime/storageNG/database-storage-key.js';
 import {Flags} from '../../runtime/flags.js';
@@ -25,7 +25,7 @@ import {VolatileStorageKey} from '../../runtime/storageNG/drivers/volatile.js';
 const randomSalt = 'random_salt';
 
 describe('recipe2plan', () => {
-  describe('storage-key-recipe-resolver', () => {
+  describe('plan-resolver', () => {
     afterEach(() => DriverFactory.clearRegistrationsForTesting());
     it('detects long running arc', async () => {
       const manifest = (await Manifest.parse(`
@@ -34,7 +34,7 @@ describe('recipe2plan', () => {
           recipe One
       `));
       assert.lengthOf(manifest.recipes, 2);
-      const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+      const resolver = new PlanResolver(manifest, randomSalt);
       assert.isFalse(isLongRunning(manifest.recipes[0]));
       assert.isNull(findLongRunningArcId(manifest.recipes[0]));
       assert.equal(findLongRunningArcId(manifest.recipes[1]), 'myLongRunningArc');
@@ -59,7 +59,7 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+      const resolver = new PlanResolver(manifest, randomSalt);
       for (const it of (await resolver.resolve())) {
         assert.isTrue(it.isResolved());
       }
@@ -82,10 +82,10 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+      const resolver = new PlanResolver(manifest, randomSalt);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
-        StorageKeyRecipeResolverError,
+        PlanResolverError,
         `Handle data mapped to ephemeral handle 'my-handle-id'.`
       );
     }));
@@ -108,10 +108,10 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+      const resolver = new PlanResolver(manifest, randomSalt);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
-        StorageKeyRecipeResolverError,
+        PlanResolverError,
         `Handle data mapped to ephemeral handle 'my-handle-id'.`
       );
     }));
@@ -134,7 +134,7 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+      const resolver = new PlanResolver(manifest, randomSalt);
       const recipes = await resolver.resolve();
       for (const it of recipes) {
         assert.isTrue(it.isResolved());
@@ -160,7 +160,7 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+      const resolver = new PlanResolver(manifest, randomSalt);
       // TODO: specify the correct error to be thrown
       await assertThrowsAsync(resolver.resolve);
     }));
@@ -182,7 +182,7 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+      const resolver = new PlanResolver(manifest, randomSalt);
       for (const it of (await resolver.resolve())) {
         assert.isTrue(it.isResolved());
       }
@@ -206,10 +206,10 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+      const resolver = new PlanResolver(manifest, randomSalt);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
-        StorageKeyRecipeResolverError,
+        PlanResolverError,
         `Handle data mapped to ephemeral handle 'my-handle-id'.`
       );
     });
@@ -232,10 +232,10 @@ describe('recipe2plan', () => {
       data: map 'my-handle-id'
       Reader
         data: reads data`);
-      const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+      const resolver = new PlanResolver(manifest, randomSalt);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
-        StorageKeyRecipeResolverError,
+        PlanResolverError,
         'No matching handles found for data.'
       );
     });
@@ -265,10 +265,10 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+      const resolver = new PlanResolver(manifest, randomSalt);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
-        StorageKeyRecipeResolverError,
+        PlanResolverError,
         'More than one handle found for data.'
       );
     });
@@ -286,7 +286,7 @@ describe('recipe2plan', () => {
       Writer
         data: writes thing2`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+      const resolver = new PlanResolver(manifest, randomSalt);
       await resolver.resolve();
       assert.deepStrictEqual(manifest.stores.map(s => s.id), ['my-handle-id']);
     });
@@ -301,7 +301,7 @@ describe('recipe2plan', () => {
       Writer
         data: writes thing`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+      const resolver = new PlanResolver(manifest, randomSalt);
       for (const it of (await resolver.resolve())) {
         assert.isTrue(it.isResolved());
       }
@@ -317,7 +317,7 @@ describe('recipe2plan', () => {
       Writer
         data: thing`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+      const resolver = new PlanResolver(manifest, randomSalt);
       for (const it of (await resolver.resolve())) {
         assert.isTrue(it.isResolved());
       }
@@ -331,10 +331,10 @@ describe('recipe2plan', () => {
         data: map 'my-handle-id'
         Reader
           data: reads data`);
-        const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+        const resolver = new PlanResolver(manifest, randomSalt);
         await assertThrowsAsync(
           async () => await resolver.resolve(),
-          StorageKeyRecipeResolverError,
+          PlanResolverError,
           'No matching handles found for data.'
         );
     });
@@ -358,10 +358,10 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+      const resolver = new PlanResolver(manifest, randomSalt);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
-        StorageKeyRecipeResolverError,
+        PlanResolverError,
         `Recipe ReadingRecipe failed to resolve:
 cannot find associated store with handle id 'my-handle-id'
 Resolver generated 0 recipes`
@@ -396,7 +396,7 @@ Resolver generated 0 recipes`
     Reader
       data: data`);
 
-    const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+    const resolver = new PlanResolver(manifest, randomSalt);
     for (const it of (await resolver.resolve())) {
       assert.isTrue(it.isResolved());
     }
@@ -416,7 +416,7 @@ Resolver generated 0 recipes`
     Reader
       data: thing`);
 
-    const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+    const resolver = new PlanResolver(manifest, randomSalt);
     const [recipe] = await resolver.resolve();
     assert.equal(
       recipe.handles[0].storageKey.toString(),
@@ -449,7 +449,7 @@ Resolver generated 0 recipes`
        data: writes h5
     `);
 
-    const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
+    const resolver = new PlanResolver(manifest, randomSalt);
     const [recipe] = await resolver.resolve();
 
     assert.deepEqual(await Promise.all(recipe.handles.map(h => h.storageKey.toString())), [
