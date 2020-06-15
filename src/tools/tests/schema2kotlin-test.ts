@@ -358,7 +358,7 @@ describe('schema2kotlin', () => {
          * Storing the copy will result in a new copy of the data being stored.
          */
         fun copy(num: Double = this.num) = Thing(num = num)
-            .also { this.copyInto(it) }
+            .also { this.copyLatentDataInto(it) }
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -368,7 +368,7 @@ describe('schema2kotlin', () => {
             entityId = entityId,
             creationTimestamp = creationTimestamp,
             expirationTimestamp = expirationTimestamp
-        ).also { this.copyInto(it) }`
+        ).also { this.copyLatentDataInto(it) }`
     ));
     it('generates only copy method for variables for wasm', async () => await assertCopyMethodsForWasm(
       `particle T

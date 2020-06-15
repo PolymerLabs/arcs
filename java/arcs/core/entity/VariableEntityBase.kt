@@ -59,7 +59,7 @@ open class VariableEntityBase : EntityBase {
     }
 
     /** Copies all hidden singleton and collection values into another [VariableEntityBase]. */
-    fun copyInto(that: VariableEntityBase) {
+    fun copyLatentDataInto(that: VariableEntityBase) {
         that.rawSingletons.putAll(this.rawSingletons)
         that.rawCollections.putAll(this.rawCollections)
     }

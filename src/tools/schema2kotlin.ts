@@ -560,7 +560,7 @@ ${lines}
       ktUtils.joinWithIndents(fieldsForMutate, indentOpts)
     })`;
 
-    const copyBaseEntity = `.also { this.copyInto(it) }`;
+    const copyBaseEntity = `.also { this.copyLatentDataInto(it) }`;
     let copy = copyMethod;
     let mutate = mutateMethod;
 

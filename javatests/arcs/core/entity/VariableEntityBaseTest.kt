@@ -78,7 +78,7 @@ class VariableEntityBaseTest {
     }
 
     @Test
-    fun copyIntoTest() {
+    fun copyLatentDataIntoTest() {
         val biggerRaw = biggerEntity.serialize()
 
         val variableEntity = DummyVariableEntity()
@@ -92,7 +92,7 @@ class VariableEntityBaseTest {
             text = variableEntity.text
         }
 
-        variableEntity.copyInto(copy)
+        variableEntity.copyLatentDataInto(copy)
 
         val backToBiggerRaw = copy.serialize()
         assertThat(backToBiggerRaw).isEqualTo(biggerRaw)
