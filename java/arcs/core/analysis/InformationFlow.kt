@@ -20,6 +20,7 @@ import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.InformationFlowLabel
 import arcs.core.data.InformationFlowLabel.Predicate
+import arcs.core.data.MuxType
 import arcs.core.data.Recipe
 import arcs.core.data.Recipe.Particle
 import arcs.core.data.ReferenceType
@@ -274,6 +275,7 @@ class InformationFlow private constructor(
         Tag.Entity -> (this as EntityType).entitySchema.accessPathSelectors()
         // TODO(b/154234733): This only supports simple use cases of references.
         Tag.Reference -> (this as ReferenceType<*>).containedType.accessPathSelectors()
+        Tag.Mux -> (this as MuxType<*>).containedType.accessPathSelectors()
         Tag.Tuple -> (this as TupleType).elementTypes
             .foldIndexed(emptySet<List<AccessPath.Selector>>()) { index, acc, cur ->
                 acc + cur.accessPathSelectors().map {
