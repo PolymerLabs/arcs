@@ -8,7 +8,7 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.schematests.joins
+package arcs.showcase.joins
 
 // This file acts as a test that particle reading tuples can be generated and compiled.
 class TupleReader : AbstractReader() {
