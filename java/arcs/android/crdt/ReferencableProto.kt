@@ -16,6 +16,8 @@ fun ReferencableProto.toReferencable(): Referencable? = when (referencableCase) 
     ReferencableProto.ReferencableCase.RAW_ENTITY -> rawEntity.toRawEntity()
     ReferencableProto.ReferencableCase.CRDT_ENTITY_REFERENCE ->
         crdtEntityReference.toCrdtEntityReference()
+    ReferencableProto.ReferencableCase.WRAPPED_REFERENCABLE ->
+        CrdtEntity.Reference.wrapReferencable(wrappedReferencable.toReferencable()!!)
     ReferencableProto.ReferencableCase.REFERENCE -> reference.toReference()
     ReferencableProto.ReferencableCase.PRIMITIVE -> primitive.toReferencablePrimitive()
     ReferencableProto.ReferencableCase.PRIMITIVE_LIST -> primitiveList.toReferencableList()
@@ -31,12 +33,20 @@ fun Referencable.toProto(): ReferencableProto {
     when (this) {
         is RawEntity -> proto.rawEntity = toProto()
         is CrdtEntity.ReferenceImpl -> proto.crdtEntityReference = toProto()
+        is CrdtEntity.WrappedReferencable -> proto.wrappedReferencable = unwrap().toProto()
         is Reference -> proto.reference = toProto()
         is ReferencablePrimitive<*> -> proto.primitive = toProto()
-        is ReferencableList<*> -> when (this.itemType) {
-            is FieldType.Primitive -> proto.primitiveList = toPrimitiveListProto()
-            is FieldType.EntityRef -> proto.referenceList = toReferenceListProto()
-            else -> throw UnsupportedOperationException("Unsupported Referencable: $this.")
+        is ReferencableList<*> -> {
+            val itemType = this.itemType
+            require(itemType is FieldType.ListOf) {
+                "ReferencableLists should have list field types but this one has $itemType"
+            }
+
+            when (itemType.primitiveType) {
+                is FieldType.Primitive -> proto.primitiveList = toPrimitiveListProto()
+                is FieldType.EntityRef -> proto.referenceList = toReferenceListProto()
+                else -> throw UnsupportedOperationException("Unsupported Referencable: $this.")
+            }
         }
         else -> throw UnsupportedOperationException("Unsupported Referencable: $this.")
     }

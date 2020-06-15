@@ -10,6 +10,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.Ttl
+import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
@@ -64,7 +65,8 @@ open class HandleManagerTestBase {
         age = 21.0,
         isCool = false,
         bestFriend = StorageReference("entity2", backingKey, null),
-        hat = null
+        hat = null,
+        favoriteWords = listOf("coolio", "sasquatch", "indubitably")
     )
     private val entity2 = Person(
         entityId = "entity2",
@@ -72,7 +74,8 @@ open class HandleManagerTestBase {
         age = 22.0,
         isCool = true,
         bestFriend = StorageReference("entity1", backingKey, null),
-        hat = null
+        hat = null,
+        favoriteWords = listOf("wonderful", "exemplary", "yeet")
     )
 
     private val singletonRefKey = RamDiskStorageKey("single-ent")
@@ -303,7 +306,8 @@ open class HandleManagerTestBase {
             age = 25.0,
             isCool = true,
             bestFriend = null,
-            hat = fezStorageRef
+            hat = fezStorageRef,
+            favoriteWords = listOf("Fez")
         )
         val writeHandle = writeHandleManager.createSingletonHandle()
         val readHandle = readHandleManager.createSingletonHandle()
@@ -561,6 +565,17 @@ open class HandleManagerTestBase {
     }
 
     @Test
+    fun listsWorkEndToEnd() = testRunner {
+        val entity = TestParticle_Entities(text = "Hello", number = 1.0, list = listOf(1L, 2L, 4L, 2L))
+        val writeHandle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+        val readHandle = readHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+        
+        val updateDeferred = readHandle.onUpdateDeferred() { it.size == 1 }
+        writeHandle.store(entity)
+        assertThat(updateDeferred.await()).containsExactly(entity)
+    }
+
+    @Test
     fun clientCanSetEntityId() = testRunner {
         fakeTime.millis = 0
         // Ask faketime to increment to test with changing timestamps.
@@ -655,9 +670,9 @@ open class HandleManagerTestBase {
         handleA.store(Person("a", "a", 1.0, true))
         handleA.store(Person("b", "b", 2.0, false))
         handleA.store(Person("c", "c", 3.0, true))
-        handleA.store(Person("d", "d", 4.0, false))
-        handleA.store(Person("e", "e", 5.0, true))
-        handleA.store(Person("f", "f", 6.0, false))
+        handleA.store(Person("d", "d", 4.0, false, favoriteWords=listOf("uncool")))
+        handleA.store(Person("e", "e", 5.0, true, favoriteWords=listOf("waycool")))
+        handleA.store(Person("f", "f", 6.0, false, favoriteWords=listOf("salami", "wurst")))
         handleA.store(Person("g", "g", 7.0, true))
 
         assertThat(handleA.fetchAll()).hasSize(7)
@@ -1065,7 +1080,8 @@ open class HandleManagerTestBase {
         val age: Double,
         val isCool: Boolean,
         val bestFriend: StorageReference? = null,
-        val hat: StorageReference? = null
+        val hat: StorageReference? = null,
+        val favoriteWords: List<String> = listOf()
     ) : Entity {
 
         var raw: RawEntity? = null
@@ -1091,7 +1107,8 @@ open class HandleManagerTestBase {
                 "age" to age.toReferencable(),
                 "is_cool" to isCool.toReferencable(),
                 "best_friend" to bestFriend,
-                "hat" to hat
+                "hat" to hat,
+                "favorite_words" to favoriteWords.map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text))
             ),
             collections = emptyMap(),
             creationTimestamp = creationTimestamp,
@@ -1117,7 +1134,10 @@ open class HandleManagerTestBase {
                 age = (data.singletons["age"] as ReferencablePrimitive<Double>).value,
                 isCool = (data.singletons["is_cool"] as ReferencablePrimitive<Boolean>).value,
                 bestFriend = data.singletons["best_friend"] as? StorageReference,
-                hat = data.singletons["hat"] as? StorageReference
+                hat = data.singletons["hat"] as? StorageReference,
+                favoriteWords = (data.singletons["favorite_words"] as ReferencableList<*>).value.map {
+                    (it as ReferencablePrimitive<String>).value
+                }
             ).apply {
                 raw = data
                 creationTimestamp = data.creationTimestamp
@@ -1132,7 +1152,8 @@ open class HandleManagerTestBase {
                         "age" to FieldType.Number,
                         "is_cool" to FieldType.Boolean,
                         "best_friend" to FieldType.EntityRef("person-hash"),
-                        "hat" to FieldType.EntityRef("hat-hash")
+                        "hat" to FieldType.EntityRef("hat-hash"),
+                        "favorite_words" to FieldType.ListOf(FieldType.Text)
                     ),
                     collections = emptyMap()
                 ),

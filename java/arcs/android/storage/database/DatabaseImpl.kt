@@ -18,7 +18,6 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Base64
 import androidx.annotation.VisibleForTesting
-import arcs.android.common.bindBoolean
 import arcs.android.common.forEach
 import arcs.android.common.forSingleResult
 import arcs.android.common.getBoolean
@@ -43,6 +42,7 @@ import arcs.core.data.LARGEST_PRIMITIVE_TYPE_ID
 import arcs.core.data.PrimitiveType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
+import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.SchemaRegistry
@@ -274,6 +274,8 @@ class DatabaseImpl(
         counters?.increment(DatabaseCounters.GET_ENTITY_FIELDS)
         val singletons = mutableMapOf<FieldName, Referencable?>()
         val collections = mutableMapOf<FieldName, MutableSet<Referencable>>()
+        val lists = mutableMapOf<FieldName, MutableList<Referencable>>()
+        val listTypes = mutableMapOf<FieldName, FieldType>()
 
         val numeric_types = TYPES_IN_NUMBER_TABLE.joinToString(prefix = "(", postfix = ")")
 
@@ -297,14 +299,14 @@ class DatabaseImpl(
                 FROM field_values
                 JOIN fields ON field_values.field_id = fields.id
                 LEFT JOIN collection_entries
-                    ON fields.is_collection = 1
+                    ON fields.is_collection > 0
                     AND collection_entries.collection_id = field_values.value_id
                 LEFT JOIN number_primitive_values
                     ON fields.type_id IN $numeric_types AND number_primitive_values.id = field_value_id
                 LEFT JOIN text_primitive_values
                     ON fields.type_id = 2 AND text_primitive_values.id = field_value_id
                 LEFT JOIN entity_refs
-                    ON fields.type_id > 2 AND entity_refs.id = field_value_id
+                    ON fields.type_id > $LARGEST_PRIMITIVE_TYPE_ID AND entity_refs.id = field_value_id
                 WHERE field_values.entity_storage_key_id = ?
             """.trimIndent(),
             arrayOf(storageKeyId.toString())
@@ -312,7 +314,7 @@ class DatabaseImpl(
             // Artifact of all the LEFT JOINs. If the entity is empty, there can be a single
             // row full of NULLs. Just skip it if null.
             val fieldName = it.getNullableString(0) ?: return@forEach
-            val isCollection = it.getBoolean(1)
+            val isCollection = FieldClass.fromOrdinal(it.getInt(1))
             val typeId = it.getInt(2)
 
             val value: Referencable? = when (typeId) {
@@ -339,13 +341,32 @@ class DatabaseImpl(
                 }
             }
 
-            if (isCollection) {
+            when (isCollection) {
+                FieldClass.Collection -> {
                 // Ensure we create the collection even if the element to add is null.
-                val collection = collections.getOrPut(fieldName) { mutableSetOf() }
-                value?.let { x -> collection.add(x) }
-            } else {
-                singletons[fieldName] = value
+                    val collection = collections.getOrPut(fieldName) { mutableSetOf() }
+                    value?.let { x -> collection.add(x) }
+                }
+                FieldClass.List -> {
+                    val list = lists.getOrPut(fieldName) { mutableListOf() }
+                    if (typeId > LARGEST_PRIMITIVE_TYPE_ID) {
+                        listTypes.getOrPut(fieldName) {
+                            FieldType.EntityRef(getSchemaHash(typeId, db))
+                        }
+                    } else {
+                        listTypes.put(
+                            fieldName,
+                            FieldType.Primitive(PrimitiveType.values()[typeId])
+                        )
+                    }
+                    value?.let { list.add(it) }
+                }
+                FieldClass.Singleton -> singletons[fieldName] = value
             }
+        }
+        lists.entries.forEach {
+            (key, value) -> singletons[key] =
+                value.toReferencable(FieldType.ListOf(listTypes[key]!!))
         }
         return singletons to collections
     }
@@ -464,7 +485,22 @@ class DatabaseImpl(
                     val field = fields.getValue(fieldName)
                     put("field_id", field.fieldId)
                     val valueId = when {
-                        field.isCollection -> {
+                        field.isCollection == FieldClass.List -> {
+                            if (fieldValue == null) return@forEach
+                            require(fieldValue is ReferencableList<*>) {
+                                "Ordered List fields must be of type List. Instead found " +
+                                    "${fieldValue::class}."
+                            }
+                            val value = fieldValue.value
+                            if (value.isEmpty()) return@forEach
+                            insertFieldCollection(
+                                value,
+                                field.typeId,
+                                db,
+                                counters
+                            )
+                        }
+                        field.isCollection == FieldClass.Collection -> {
                             if (fieldValue == null) return@forEach
                             require(fieldValue is Set<*>) {
                                 "Collection fields must be of type Set. Instead found " +
@@ -513,7 +549,7 @@ class DatabaseImpl(
      * collections should use [insertOrUpdateCollection]).
      */
     private fun insertFieldCollection(
-        elements: Set<*>,
+        elements: Iterable<*>,
         typeId: TypeId,
         db: SQLiteDatabase,
         counters: Counters?
@@ -931,7 +967,7 @@ class DatabaseImpl(
                     LEFT JOIN fields
                         ON field_values.field_id = fields.id
                     LEFT JOIN collection_entries
-                        ON fields.is_collection = 1
+                        ON fields.is_collection > 0
                         AND collection_entries.collection_id = field_values.value_id
                     WHERE fields.type_id in (${typeIds.map { it.toString() }.joinToString()})
                 """.trimIndent()
@@ -998,9 +1034,9 @@ class DatabaseImpl(
                 LEFT JOIN field_values
                     ON field_values.field_id = fields.id
                 LEFT JOIN collection_entries
-                    ON fields.is_collection = 1
+                    ON fields.is_collection > 0
                     AND collection_entries.collection_id = field_values.value_id
-                WHERE fields.is_collection = 1
+                WHERE fields.is_collection > 0
                     AND field_values.entity_storage_key_id IN ($questionMarks)
             """.trimIndent(),
             storageKeyIds
@@ -1031,6 +1067,15 @@ class DatabaseImpl(
      * to pass [array] as parameters to sql statements.
      */
     private fun questionMarks(array: Array<String>): String = array.map { "?" }.joinToString()
+
+    private fun getSchemaHash(typeId: Int, db: SQLiteDatabase): String =
+        db.rawQuery("SELECT name FROM types WHERE id = ?", arrayOf(typeId.toString()))
+            .forSingleResult {
+                it.getString(0)
+                    ?: throw IllegalArgumentException(
+                        "Attempted to extract schema hash for invalid typeId $typeId"
+                    )
+            }!!
 
     @VisibleForTesting
     suspend fun getSchemaTypeId(
@@ -1080,22 +1125,27 @@ class DatabaseImpl(
         suspend fun insertFieldBlock(
             fieldName: String,
             fieldType: FieldType,
-            isCollection: Boolean
+            isCollection: FieldClass
         ) {
             counters?.increment(DatabaseCounters.INSERT_ENTITY_FIELD)
             insertFieldStatement.apply {
                 bindLong(1, getTypeId(fieldType, db))
                 bindLong(2, schemaTypeId)
                 bindString(3, fieldName)
-                bindBoolean(4, isCollection)
+                bindLong(4, isCollection.ordinal.toLong())
                 executeInsert()
             }
         }
         schema.fields.singletons.forEach { (fieldName, fieldType) ->
-            insertFieldBlock(fieldName, fieldType, isCollection = false)
+            val fieldClass = if (fieldType.tag == FieldType.Tag.List) {
+                FieldClass.List
+            } else {
+                FieldClass.Singleton
+            }
+            insertFieldBlock(fieldName, fieldType, fieldClass)
         }
         schema.fields.collections.forEach { (fieldName, fieldType) ->
-            insertFieldBlock(fieldName, fieldType, isCollection = true)
+            insertFieldBlock(fieldName, fieldType, isCollection = FieldClass.Collection)
         }
         schemaTypeId
     }
@@ -1324,7 +1374,7 @@ class DatabaseImpl(
                 fieldName = it.getString(0),
                 fieldId = it.getLong(1),
                 typeId = it.getLong(2),
-                isCollection = it.getBoolean(3)
+                isCollection = FieldClass.fromOrdinal(it.getInt(3))
             )
         }
         return fields
@@ -1432,7 +1482,7 @@ class DatabaseImpl(
         fieldType: FieldType,
         database: SQLiteDatabase
     ): TypeId = when (fieldType) {
-        is FieldType.Primitive -> fieldType.primitiveType.id.toLong()
+        is FieldType.Primitive -> fieldType.primitiveType.primitiveTypeId()
         is FieldType.EntityRef -> {
             val schema = requireNotNull(SchemaRegistry.getSchema(fieldType.schemaHash)) {
                 "Unknown Schema with hash: ${fieldType.schemaHash} in SchemaRegistry"
@@ -1442,8 +1492,7 @@ class DatabaseImpl(
         // TODO(b/156003617)
         is FieldType.Tuple ->
             throw NotImplementedError("[FieldType.Tuple]s not currently supported.")
-        is FieldType.ListOf ->
-            throw NotImplementedError("[FieldType.ListOf]s not currently supported.")
+        is FieldType.ListOf -> getTypeId(fieldType.primitiveType, database)
     }
 
     /** Test-only version of [getTypeId]. */
@@ -1531,12 +1580,29 @@ class DatabaseImpl(
         Collection
     }
 
+    enum class FieldClass {
+        Singleton,
+        Collection,
+        List;
+
+        companion object {
+            fun fromOrdinal(ordinal: Int) = when (ordinal) {
+                0 -> FieldClass.Singleton
+                1 -> FieldClass.Collection
+                2 -> FieldClass.List
+                else -> throw IllegalStateException(
+                    "Invalid value $ordinal for FieldClass stored in isCollection field."
+                )
+            }
+        }
+    }
+
     @VisibleForTesting
     data class SchemaField(
         val fieldName: String,
         val fieldId: FieldId,
         val typeId: TypeId,
-        val isCollection: Boolean
+        val isCollection: FieldClass
     )
 
     @VisibleForTesting

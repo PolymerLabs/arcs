@@ -81,7 +81,9 @@ enum class PrimitiveType(val id: kotlin.Int) {
     Long(6),
     Char(7),
     Float(8),
-    Double(9)
+    Double(9);
+
+    fun primitiveTypeId() = id.toLong()
 }
 
 val LARGEST_PRIMITIVE_TYPE_ID = PrimitiveType.values().size - 1
