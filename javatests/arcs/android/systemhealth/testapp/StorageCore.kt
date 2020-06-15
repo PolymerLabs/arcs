@@ -14,6 +14,7 @@ package arcs.android.systemhealth.testapp
 import android.content.Context
 import android.content.Intent
 import android.os.Debug
+import android.os.Trace
 import androidx.lifecycle.Lifecycle
 import arcs.core.data.HandleMode
 import arcs.core.entity.Handle
@@ -114,6 +115,19 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
 
     private val log = TaggedLog(::toString)
 
+    private val memoryFootprint: Array<Pair<String, Long>>
+        get() {
+            val currMem = arrayOf(
+                "appJvmHeapKbytes" to MemoryStats.appJvmHeapKbytes,
+                "appNativeHeapKbytes" to MemoryStats.appNativeHeapKbytes,
+                "allHeapsKbytes" to MemoryStats.allHeapsKbytes
+            )
+            for ((k, v) in currMem) {
+                Trace.setCounter(k, v)
+            }
+            return currMem
+        }
+
     /**
      * As the only entry to accept then dispatch a test with [settings] to the [taskManager].
      * This should only be called by remote/local system health test service's onStartCommand.
@@ -207,11 +221,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                             TaskEvent(
                                 TaskEventId.MEMORY_STATS,
                                 0,
-                                listOf(
-                                    MemoryStats.appJvmHeapKbytes,
-                                    MemoryStats.appNativeHeapKbytes,
-                                    MemoryStats.allHeapsKbytes
-                                )
+                                memoryFootprint.map { (_, v) -> v }
                             )
                         )
                         this@StorageCore.execute(settings)
@@ -581,7 +591,6 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 (settings.iterationIntervalMs + systemHzTickMs) * settings.timesOfIterations
             val progressUpdateTimes = ceil(awaitTimeMs / progressUpdateIntervalMs)
             for (progress in 0 until progressUpdateTimes.toInt()) {
-
                 notify { "Progress: %.2f%%".format(progress * 100 / progressUpdateTimes) }
                 tasks[Random.nextInt(0, tasks.size)].awaitTermination(
                     progressUpdateIntervalMs.toLong(), MILLISECONDS
@@ -595,6 +604,9 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                     // Randomly crash StorageService if we are testing stability.
                     maybeCrashStorageService(settings.storageServiceCrashRate)
                 }
+
+                // Dump and system-trace memory footprint.
+                memoryFootprint
             }
 
             // Yield an extra time for tasks completing their final round trips i.e. until onXxx().
@@ -880,18 +892,16 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             memInitial?.let {
                 val formatter = DecimalFormat("+#;-#")
                 val hprofFilePath = context.applicationInfo.dataDir + "/" + hprofFile
-                val appJvmHeapBeforeGc = MemoryStats.appJvmHeapKbytes
-                val appNativeHeapBeforeGc = MemoryStats.appNativeHeapKbytes
-                val allHeapsBeforeGc = MemoryStats.allHeapsKbytes
+                val (appJvmHeapBeforeGc, appNativeHeapBeforeGc, allHeapsBeforeGc) =
+                    memoryFootprint.map { (_, v) -> v }
 
                 // Whether gc or not is not guaranteed, synchronous or asynchronous gc is also
                 // JVM implementation-dependent.
                 Runtime.getRuntime().gc()
                 Thread.sleep(GcWaitTimeMs)
 
-                val appJvmHeapAfterGc = MemoryStats.appJvmHeapKbytes
-                val appNativeHeapAfterGc = MemoryStats.appNativeHeapKbytes
-                val allHeapsAfterGc = MemoryStats.allHeapsKbytes
+                val (appJvmHeapAfterGc, appNativeHeapAfterGc, allHeapsAfterGc) =
+                    memoryFootprint.map { (_, v) -> v }
                 bulletin +=
                     """
                     |[Memory Stats]
