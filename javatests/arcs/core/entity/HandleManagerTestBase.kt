@@ -127,6 +127,8 @@ open class HandleManagerTestBase {
     fun singleton_initialState() = testRunner {
         val handle = readHandleManager.createSingletonHandle()
         assertThat(handle.fetch()).isNull()
+
+        // Verify that clear works on an empty singleton (including the join op).
         handle.clear().join()
     }
 
@@ -477,6 +479,9 @@ open class HandleManagerTestBase {
         assertThat(handle.size()).isEqualTo(0)
         assertThat(handle.isEmpty()).isEqualTo(true)
         assertThat(handle.fetchAll()).isEmpty()
+
+        // Verify that clear works on an empty collection (including the join op),
+        // and that removing any entity is also safe.
         handle.clear().join()
         handle.remove(entity1).join()
     }
