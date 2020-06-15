@@ -209,24 +209,6 @@ class StoreTest {
     }
 
     @Test
-    fun clonesData_fromAnotherStore() = runBlockingTest {
-        setupMocks()
-
-        val activeStore = createStore().activate()
-
-        // Write some data.
-        val count = CrdtCount()
-        count.applyOperation(Increment("me", 0 to 1))
-        activeStore.onProxyMessage(ProxyMessage.ModelUpdate(count.data, 1))
-        assertThat(activeStore.getLocalData()).isEqualTo(count.data)
-
-        // Clone into another store.
-        val activeStore2 = createStore().activate()
-        activeStore2.cloneFrom(activeStore)
-        assertThat(activeStore2.getLocalData()).isEqualTo(count.data)
-    }
-
-    @Test
     fun doesntSendUpdateToDriver_afterDriverOriginatedMessages() = runBlockingTest {
         val (driver, _) = setupMocks()
         val receiverCaptor = argumentCaptor<suspend (CrdtCount.Data, Int) -> Unit>()

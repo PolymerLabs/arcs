@@ -150,30 +150,6 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     }
 
     @Test
-    fun canCloneData_fromAnotherStore() = runBlockingTest {
-        val activeStore = createReferenceModeStore()
-
-        // Add some data.
-        val collection = CrdtSet<RawEntity>()
-        val entity = createPersonEntity("an-id", "bob", 42)
-        collection.applyOperation(
-            CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
-        )
-        activeStore.onProxyMessage(
-            ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
-        )
-
-        logRule("Creating activeStore2")
-        // Clone
-        val activeStore2 = createReferenceModeStore()
-        logRule("Cloning into activeStore2")
-        activeStore2.cloneFrom(activeStore)
-
-        assertThat(activeStore2.getLocalData()).isEqualTo(activeStore.getLocalData())
-        assertThat(activeStore2.getLocalData()).isNotSameInstanceAs(activeStore.getLocalData())
-    }
-
-    @Test
     fun appliesAndPropagatesOperationUpdate_fromProxies_toDrivers() = runBlockingTest {
         val activeStore = createReferenceModeStore()
         val actor = activeStore.crdtKey
