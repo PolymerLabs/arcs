@@ -262,10 +262,10 @@ describe('field path validation', () => {
       `);
       const tupleType = new TupleType([fooType, barType]);
       assert.deepEqual(resolveFieldPathType([], tupleType), tupleType);
-      assert.deepEqual(resolveFieldPathType(['component0'], tupleType), fooType);
-      assert.strictEqual(resolveFieldPathType(['component0', 'foo'], tupleType), 'Text');
-      assert.deepEqual(resolveFieldPathType(['component1'], tupleType), barType);
-      assert.strictEqual(resolveFieldPathType(['component1', 'bar'], tupleType), 'Text');
+      assert.deepEqual(resolveFieldPathType(['first'], tupleType), fooType);
+      assert.strictEqual(resolveFieldPathType(['first', 'foo'], tupleType), 'Text');
+      assert.deepEqual(resolveFieldPathType(['second'], tupleType), barType);
+      assert.strictEqual(resolveFieldPathType(['second', 'bar'], tupleType), 'Text');
     });
 
     it('rejects invalid tuple components', async () => {
@@ -275,11 +275,11 @@ describe('field path validation', () => {
       `);
       const tupleType = new TupleType([entityType, entityType]);
       assert.throws(
-          () => resolveFieldPathType(['component2'], tupleType),
-          `'component2' requested but largest component in tuple is 'component1'.`);
+          () => resolveFieldPathType(['third'], tupleType),
+          `The third tuple component was requested but tuple only has 2 components.`);
       assert.throws(
           () => resolveFieldPathType(['missing'], tupleType),
-          `Expected a tuple component accessor of the form 'componentN' but found 'missing'.`);
+          `Expected a tuple component accessor of the form 'first', 'second', etc., but found 'missing'.`);
     });
 
     it('rejects missing fields nested inside tuples', async () => {
@@ -289,7 +289,7 @@ describe('field path validation', () => {
       `);
       const tupleType = new TupleType([entityType, entityType]);
       assert.throws(
-          () => resolveFieldPathType(['component1', 'missing'], tupleType),
+          () => resolveFieldPathType(['second', 'missing'], tupleType),
           `Schema 'Foo {foo: Text}' does not contain field 'missing'.`);
     });
   });

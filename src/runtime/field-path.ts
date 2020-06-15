@@ -10,6 +10,7 @@
 import {Schema} from './schema.js';
 import {InterfaceInfo, Type, EntityType, TupleType} from './type.js';
 import {SchemaPrimitiveTypeValue} from './manifest-ast-nodes.js';
+import {Dictionary} from './hot.js';
 
 export type FieldPathType = Type | SchemaPrimitiveTypeValue;
 
@@ -87,15 +88,27 @@ function resolveForTuple(fieldPath: string[], tupleType: TupleType): FieldPathTy
     return tupleType;
   }
   const first = fieldPath[0];
-  const match = first.match(/component(\d+)/);
-  if (match == null) {
-    throw new FieldPathError(`Expected a tuple component accessor of the form 'componentN' but found '${first}'.`);
-  }
-  const component = +match[1];
+  const component = parseTupleAccessor(first);
   if (component >= tupleType.innerTypes.length) {
-    throw new FieldPathError(`'${first}' requested but largest component in tuple is 'component${tupleType.innerTypes.length - 1}'.`);
+    throw new FieldPathError(`The ${first} tuple component was requested but tuple only has ${tupleType.innerTypes.length} components.`);
   }
-  return evaluateFieldPath(fieldPath.slice(1), tupleType.innerTypes[component]);
+  return resolveFieldPathType(fieldPath.slice(1), tupleType.innerTypes[component]);
+}
+
+const tupleAccessors: Dictionary<number> = {
+  'first': 0,
+  'second': 1,
+  'third': 2,
+  'fourth': 3,
+  'fifth': 4,
+};
+
+function parseTupleAccessor(field: string): number {
+  const result = tupleAccessors[field];
+  if (result == null) {
+    throw new FieldPathError(`Expected a tuple component accessor of the form 'first', 'second', etc., but found '${field}'.`);
+  }
+  return result;
 }
 
 class FieldPathError extends Error {}
