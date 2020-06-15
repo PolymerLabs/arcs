@@ -11,7 +11,7 @@ import * as AstNode from '../manifest-ast-nodes.js';
 import {AnnotationRef} from '../recipe/annotation.js';
 import {assert} from '../../platform/assert-web.js';
 import {ManifestStringBuilder} from '../manifest-string-builder.js';
-import {Ttl} from '../capabilities-new.js';
+import {Ttl} from '../capabilities.js';
 
 export enum PolicyEgressType {
   Logging = 'Logging',

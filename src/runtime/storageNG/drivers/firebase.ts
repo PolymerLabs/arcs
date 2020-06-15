@@ -16,10 +16,8 @@ import {RuntimeCacheService} from '../../runtime-cache.js';
 import {assert} from '../../../platform/assert-web.js';
 import {firebase} from '../../../../concrete-storage/firebase.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
-import {Capabilities} from '../../capabilities.js';
 import {CapabilitiesResolver} from '../../capabilities-resolver.js';
-import {CapabilitiesResolver as CapabilitiesResolverNew} from '../../capabilities-resolver-new.js';
-import {Capabilities as CapabilitiesNew, Persistence, Shareable} from '../../capabilities-new.js';
+import {Capabilities, Persistence, Shareable} from '../../capabilities.js';
 import {StorageKeyOptions, StorageKeyFactory} from '../../storage-key-factory.js';
 
 export {firebase};
@@ -237,12 +235,7 @@ export class FirebaseStorageDriverProvider implements StorageDriverProvider {
     DriverFactory.register(new FirebaseStorageDriverProvider(cacheService));
     StorageKeyParser.addParser(FirebaseStorageKey.protocol, FirebaseStorageKey.fromString);
     const {projectId, domain, apiKey} = options;
-    CapabilitiesResolverNew.registerStorageKeyFactory(new FirebaseStorageKeyFactory(options));
-
-    CapabilitiesResolver.registerKeyCreator(
-        FirebaseStorageKey.protocol,
-        Capabilities.persistent,
-        (options: StorageKeyOptions) => new FirebaseStorageKey(projectId, domain, apiKey, options.location()));
+    CapabilitiesResolver.registerStorageKeyFactory(new FirebaseStorageKeyFactory(options));
   }
 }
 
@@ -250,8 +243,8 @@ export class FirebaseStorageKeyFactory extends StorageKeyFactory {
   constructor(public readonly options: FirebaseStorageKeyOptions) { super(); }
   get protocol() { return FirebaseStorageKey.protocol; }
 
-  capabilities(): CapabilitiesNew {
-    return CapabilitiesNew.create([Persistence.onDisk(), Shareable.any()]);
+  capabilities(): Capabilities {
+    return Capabilities.create([Persistence.onDisk(), Shareable.any()]);
   }
 
   create(options: StorageKeyOptions): StorageKey {

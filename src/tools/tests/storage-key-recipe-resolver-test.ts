@@ -17,6 +17,7 @@ import {
   StorageKeyRecipeResolverError
 } from '../storage-key-recipe-resolver.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
+import {DatabaseStorageKey} from '../../runtime/storageNG/database-storage-key.js';
 import {Flags} from '../../runtime/flags.js';
 import {DriverFactory} from '../../runtime/storageNG/drivers/driver-factory.js';
 import {VolatileStorageKey} from '../../runtime/storageNG/drivers/volatile.js';
@@ -431,12 +432,22 @@ Resolver generated 0 recipes`
      h0: create @persistent
      h1: create #test
      h2: create #test2 @tiedToArc @queryable
+     h3: create #test2 @tiedToRuntime @queryable
+     h4: create #test2 @queryable
+     h5: create #test2 @ttl('1d')
      A
        data: writes h0
      A
        data: writes h1
      A
-       data: writes h2`);
+       data: writes h2
+     A
+       data: writes h3
+     A
+       data: writes h4
+     A
+       data: writes h5
+    `);
 
     const resolver = new StorageKeyRecipeResolver(manifest, randomSalt);
     const [recipe] = await resolver.resolve();
@@ -444,7 +455,10 @@ Resolver generated 0 recipes`
     assert.deepEqual(await Promise.all(recipe.handles.map(h => h.storageKey.toString())), [
       'create://67835270998a62139f8b366f1cb545fb9b72a90b?Persistent',
       'create://03bb91626a7354b34b8fe962047892f9789f98e7',
-      'create://86ba6a2b3b8be3f9ce6edc903164acf38a3633d6?TiedToArc,Queryable'
+      'create://86ba6a2b3b8be3f9ce6edc903164acf38a3633d6?TiedToArc,Queryable',
+      'create://9fc6be81752428faa26e74c81dcd90ae9711524b?TiedToRuntime,Queryable',
+      'create://4c370708d442e50b9cd4baab2c3b7ca5ab33e51b?Queryable',
+      'create://88482bc72ab0fe947dbba8a0b7d23fb51ccf8a0b?Queryable'
     ]);
   });
 });

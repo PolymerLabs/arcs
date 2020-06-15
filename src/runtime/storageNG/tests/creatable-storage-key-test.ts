@@ -10,7 +10,7 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {CreatableStorageKey} from '../creatable-storage-key.js';
-import {Capabilities} from '../../capabilities.js';
+import {Capabilities, Shareable, Queryable, Persistence} from '../../capabilities.js';
 
 describe('Creatable storage key', async () => {
   it('parses without capabilities', () => {
@@ -26,18 +26,18 @@ describe('Creatable storage key', async () => {
   it('parses with a single capability', () => {
     const sk = CreatableStorageKey.fromString('create://abc?TiedToRuntime');
     assert.equal(sk.name, 'abc');
-    assert.isTrue(sk.capabilities.isTiedToRuntime);
-    assert.isFalse(sk.capabilities.isTiedToArc);
-    assert.isFalse(sk.capabilities.isPersistent);
-    assert.isFalse(sk.capabilities.isQueryable);
+    assert.isTrue(sk.capabilities.hasEquivalent(new Shareable(true)));
+    assert.isFalse(sk.capabilities.hasEquivalent(new Shareable(false)));
+    assert.isFalse(sk.capabilities.hasEquivalent(Persistence.onDisk()));
+    assert.isFalse(sk.capabilities.hasEquivalent(new Queryable(true)));
   });
   it('parses with multiple capabilities', () => {
     const sk = CreatableStorageKey.fromString('create://abc?Persistent,Queryable');
     assert.equal(sk.name, 'abc');
-    assert.isFalse(sk.capabilities.isTiedToRuntime);
-    assert.isFalse(sk.capabilities.isTiedToArc);
-    assert.isTrue(sk.capabilities.isPersistent);
-    assert.isTrue(sk.capabilities.isQueryable);
+    assert.isFalse(sk.capabilities.hasEquivalent(new Shareable(false)));
+    assert.isFalse(sk.capabilities.hasEquivalent(new Shareable(true)));
+    assert.isTrue(sk.capabilities.hasEquivalent(Persistence.onDisk()));
+    assert.isTrue(sk.capabilities.hasEquivalent(new Queryable(true)));
   });
   it('does not parse invalid string', () => {
     assert.throws(
@@ -59,13 +59,13 @@ describe('Creatable storage key', async () => {
   });
   it('serializes to string with one capability', () => {
     assert.equal(
-      new CreatableStorageKey('my-handle-id', Capabilities.tiedToArc).toString(),
+      new CreatableStorageKey('my-handle-id', Capabilities.create([new Shareable(false)])).toString(),
       'create://my-handle-id?TiedToArc'
     );
   });
   it('serializes to string with multiple capabilities', () => {
     assert.equal(
-      new CreatableStorageKey('my-handle-id', Capabilities.tiedToRuntimeQueryable).toString(),
+      new CreatableStorageKey('my-handle-id', Capabilities.create([new Queryable(true), new Shareable(true)])).toString(),
       'create://my-handle-id?TiedToRuntime,Queryable'
     );
   });

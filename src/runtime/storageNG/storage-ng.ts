@@ -10,7 +10,7 @@
 
 import {StorageProxy} from './storage-proxy.js';
 import {Type, CollectionType, EntityType, ReferenceType, SingletonType, InterfaceType, MuxType, CountType} from '../type.js';
-import {Ttl} from '../capabilities-new.js';
+import {Ttl} from '../capabilities.js';
 import {SingletonHandle, CollectionHandle, Handle} from './handle.js';
 import {Particle} from '../particle.js';
 import {CRDTSingletonTypeRecord} from '../crdt/crdt-singleton.js';

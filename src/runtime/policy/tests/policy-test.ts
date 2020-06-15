@@ -13,7 +13,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {PolicyEgressType, PolicyRetentionMedium, PolicyAllowedUsageType, Policy} from '../policy.js';
 import {assertThrowsAsync} from '../../../testing/test-util.js';
 import {mapToDictionary} from '../../util.js';
-import {TtlUnits} from '../../capabilities-new.js';
+import {TtlUnits} from '../../capabilities.js';
 
 const customAnnotation = `
 annotation custom

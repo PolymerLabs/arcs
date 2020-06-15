@@ -8,8 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+import {assert} from '../../platform/assert-web.js';
 import {StorageKey} from './storage-key.js';
-import {Capabilities, Capability} from '../capabilities.js';
+import {Capabilities, Capability, Persistence, Queryable, Shareable} from '../capabilities.js';
 
 /**
  * Represents a store that will be created once the recipe is instantiated.
@@ -17,18 +18,32 @@ import {Capabilities, Capability} from '../capabilities.js';
  */
 export class CreatableStorageKey extends StorageKey {
   public static readonly protocol = 'create';
+  readonly capabilities: Capabilities;
 
-  constructor(readonly name: string, readonly capabilities = Capabilities.empty) {
+  constructor(readonly name: string, capabilities?: Capabilities) {
     super(CreatableStorageKey.protocol);
+    this.capabilities = capabilities || Capabilities.create();
   }
 
   toString() {
-    const separator = this.capabilities.isEmpty() ? '' : '?';
-    const capabilities = [...this.capabilities.capabilities]
-        // This is sad: expectation of casing of
-        // serialized capability names differ across the system.
-        .map(c => c[0].toUpperCase() + c.substring(1))
-        .join(',');
+    // TODO(b/157761106): use annotations instead of creatable keys to pass capabilities.
+    const capabilities = [];
+    if (this.capabilities.hasEquivalent(Persistence.onDisk())) {
+      capabilities.push('Persistent');
+    }
+    if (this.capabilities.hasEquivalent(new Shareable(true))) {
+      capabilities.push('TiedToRuntime');
+    } else if (this.capabilities.hasEquivalent(Persistence.inMemory()) || this.capabilities.hasEquivalent(new Shareable(false))) {
+      // if (this.capabilities.hasEquivalent(new Shareable(true))) {
+      //   capabilities.push('TiedToRuntime');
+      // } else {
+        capabilities.push('TiedToArc');
+      // }
+    }
+    if (this.capabilities.isQueryable() || (this.capabilities.getTtl() && !this.capabilities.getTtl().isInfinite)) {
+      capabilities.push('Queryable');
+    }
+    const separator = capabilities.length === 0 ? '' : '?';
     return `${CreatableStorageKey.protocol}://${this.name}${separator}${capabilities}`;
   }
 
@@ -48,15 +63,24 @@ export class CreatableStorageKey extends StorageKey {
     const [_, name, capabilitiesString] = match;
 
     if (capabilitiesString === undefined || capabilitiesString === '') {
-      return new CreatableStorageKey(name, Capabilities.empty);
+      return new CreatableStorageKey(name, Capabilities.create()); //Capabilities.empty);
     }
 
-    const capabilities = new Capabilities(capabilitiesString.split(',').map(name => {
-      const capability = Capability[name] as Capability;
-      if (!capability) throw new Error(`Capability not recognized: ${name}.`);
-      return capability;
-    }));
+    // TODO(b/157761106): use annotations instead of creatable keys to pass capabilities.
+    const capabilities = capabilitiesString.split(',').map(name => {
+      switch (name) {
+        case 'Persistent':
+          return Persistence.onDisk();
+        case 'Queryable':
+          return new Queryable(true);
+        case 'TiedToArc':
+          return new Shareable(false);
+        case 'TiedToRuntime':
+          return new Shareable(true);
+        default: throw new Error(`Capability not recognized: ${name}.`);
+      }
+    });
 
-    return new CreatableStorageKey(name, capabilities);
+    return new CreatableStorageKey(name, Capabilities.create(capabilities));
   }
 }

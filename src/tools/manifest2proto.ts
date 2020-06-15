@@ -17,7 +17,7 @@ import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 import {assert} from '../platform/assert-web.js';
 import {findLongRunningArcId} from './storage-key-recipe-resolver.js';
 import {Manifest} from '../runtime/manifest.js';
-import {Capabilities} from '../runtime/capabilities.js';
+import {Capabilities, Persistence, Shareable} from '../runtime/capabilities.js';
 import {CapabilityEnum, DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
 import {Refinement, RefinementExpressionLiteral} from '../runtime/refiner.js';
 import {Op} from '../runtime/manifest-ast-nodes.js';
@@ -276,10 +276,29 @@ async function recipeHandleToProtoPayload(handle: Handle) {
 }
 
 export function capabilitiesToProtoOrdinals(capabilities: Capabilities) {
-  return [...capabilities.capabilities].map(c => {
-    const ordinal = CapabilityEnum.values[c.replace(/([A-Z])/g, '_$1').toUpperCase()];
+  // We bypass the inteface and grab the underlying set of capability strings for the purpose of
+  // serialization. It is rightfully hidden in the Capabilities object, but this use is justified.
+  // Tests will continue to ensure we access the right field.
+  const values = [];
+  if (capabilities.hasEquivalent(Persistence.onDisk())) {
+    values.push('PERSISTENT');
+  }
+
+  if (capabilities.isQueryable() || (capabilities.getTtl() && !capabilities.getTtl().isInfinite)) {
+    values.push('QUERYABLE');
+  }
+
+  if (capabilities.isShareable()) {
+    values.push('TIED_TO_RUNTIME');
+  }
+
+  if (capabilities.hasEquivalent(new Shareable(false))) {
+    values.push('TIED_TO_ARC');
+  }
+  return values.map(value => {
+    const ordinal = CapabilityEnum.values[value];
     if (ordinal === undefined) {
-      throw Error(`Capability ${c} is not supported`);
+      throw new Error(`Capability ${value} is not supported`);
     }
     return ordinal;
   });

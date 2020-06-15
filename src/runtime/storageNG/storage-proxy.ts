@@ -18,7 +18,7 @@ import {ChannelConstructor} from '../channel-constructor.js';
 import {EntityType, Type} from '../type.js';
 import {Handle, HandleOptions} from './handle.js';
 import {ActiveStore, ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store.js';
-import {Ttl} from '../capabilities-new.js';
+import {Ttl} from '../capabilities.js';
 
 /**
  * Mediates between one or more Handles and the backing store. The store can be outside the PEC or

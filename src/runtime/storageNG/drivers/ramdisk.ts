@@ -13,11 +13,9 @@ import {StorageDriverProvider, DriverFactory} from './driver-factory.js';
 import {VolatileDriver, VolatileMemoryProvider} from './volatile.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
 import {Exists} from './driver.js';
-import {CapabilitiesResolver} from '../../capabilities-resolver.js';
 import {ArcId} from '../../id.js';
-import {Capabilities} from '../../capabilities.js';
-import {Capabilities as CapabilitiesNew, Persistence, Encryption, Ttl, Queryable, Shareable} from '../../capabilities-new.js';
-import {CapabilitiesResolver as CapabilitiesResolverNew} from '../../capabilities-resolver-new.js';
+import {Capabilities, Persistence, Encryption, Ttl, Queryable, Shareable} from '../../capabilities.js';
+import {CapabilitiesResolver} from '../../capabilities-resolver.js';
 import {StorageKeyFactory, StorageKeyOptions} from '../../storage-key-factory.js';
 
 export class RamDiskStorageKey extends StorageKey {
@@ -50,8 +48,8 @@ export class RamDiskStorageKey extends StorageKey {
 export class RamDiskStorageKeyFactory extends StorageKeyFactory {
   get protocol() { return RamDiskStorageKey.protocol; }
 
-  capabilities(): CapabilitiesNew {
-    return CapabilitiesNew.create([Persistence.inMemory(), Shareable.any()]);
+  capabilities(): Capabilities {
+    return Capabilities.create([Persistence.inMemory(), Shareable.any()]);
   }
 
   create(options: StorageKeyOptions): StorageKey {
@@ -89,11 +87,6 @@ export class RamDiskStorageDriverProvider implements StorageDriverProvider {
   static register(memoryProvider: VolatileMemoryProvider) {
     DriverFactory.register(new RamDiskStorageDriverProvider(memoryProvider));
     StorageKeyParser.addParser(RamDiskStorageKey.protocol, RamDiskStorageKey.fromString);
-    CapabilitiesResolver.registerKeyCreator(
-        RamDiskStorageKey.protocol,
-        Capabilities.tiedToRuntime,
-        (options: StorageKeyOptions) => new RamDiskStorageKey(options.location()));
-
-    CapabilitiesResolverNew.registerStorageKeyFactory(new RamDiskStorageKeyFactory());
+    CapabilitiesResolver.registerStorageKeyFactory(new RamDiskStorageKeyFactory());
   }
 }

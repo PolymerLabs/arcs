@@ -10,10 +10,8 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {StorageKey} from './storage-key.js';
+import {Capabilities, Persistence, Encryption, Queryable, Ttl, Shareable} from '../capabilities.js';
 import {CapabilitiesResolver} from '../capabilities-resolver.js';
-import {Capabilities} from '../capabilities.js';
-import {Capabilities as CapabilitiesNew, Persistence, Encryption, Queryable, Ttl, Shareable} from '../capabilities-new.js';
-import {CapabilitiesResolver as CapabilitiesResolverNew} from '../capabilities-resolver-new.js';
 import {StorageKeyFactory, StorageKeyOptions} from '../storage-key-factory.js';
 
 export abstract class DatabaseStorageKey extends StorageKey {
@@ -45,31 +43,16 @@ export abstract class DatabaseStorageKey extends StorageKey {
   }
 
   static register() {
-    CapabilitiesResolver.registerKeyCreator(
-        PersistentDatabaseStorageKey.protocol,
-        Capabilities.persistentQueryable,
-        (options: StorageKeyOptions) =>
-            new PersistentDatabaseStorageKey(options.location(), options.schemaHash));
-
-    // Registering all possible in-memory capabilities with `queryable`.
-    for (const capabilities of [Capabilities.queryable, Capabilities.tiedToArcQueryable, Capabilities.tiedToRuntimeQueryable]) {
-      CapabilitiesResolver.registerKeyCreator(
-          MemoryDatabaseStorageKey.protocol,
-          capabilities,
-          (options: StorageKeyOptions) =>
-              new MemoryDatabaseStorageKey(options.location(), options.schemaHash));
-    }
-
-    CapabilitiesResolverNew.registerStorageKeyFactory(new PersistentDatabaseStorageKeyFactory());
-    CapabilitiesResolverNew.registerStorageKeyFactory(new MemoryDatabaseStorageKeyFactory());
+    CapabilitiesResolver.registerStorageKeyFactory(new PersistentDatabaseStorageKeyFactory());
+    CapabilitiesResolver.registerStorageKeyFactory(new MemoryDatabaseStorageKeyFactory());
   }
 }
 
 export class PersistentDatabaseStorageKeyFactory extends StorageKeyFactory {
   get protocol() { return PersistentDatabaseStorageKey.protocol; }
 
-  capabilities(): CapabilitiesNew {
-    return CapabilitiesNew.create([Persistence.onDisk(), Ttl.any(), Queryable.any(), Shareable.any()]);
+  capabilities(): Capabilities {
+    return Capabilities.create([Persistence.onDisk(), Ttl.any(), Queryable.any(), Shareable.any()]);
   }
 
   create(options: StorageKeyOptions): StorageKey {
@@ -80,8 +63,8 @@ export class PersistentDatabaseStorageKeyFactory extends StorageKeyFactory {
 export class MemoryDatabaseStorageKeyFactory extends StorageKeyFactory {
   get protocol() { return MemoryDatabaseStorageKey.protocol; }
 
-  capabilities(): CapabilitiesNew {
-    return CapabilitiesNew.create([Persistence.inMemory(), Ttl.any(), Queryable.any(), Shareable.any()]);
+  capabilities(): Capabilities {
+    return Capabilities.create([Persistence.inMemory(), Ttl.any(), Queryable.any(), Shareable.any()]);
   }
 
   create(options: StorageKeyOptions): StorageKey {

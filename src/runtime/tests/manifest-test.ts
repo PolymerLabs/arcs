@@ -34,7 +34,7 @@ import {mockFirebaseStorageKeyOptions} from '../storageNG/testing/mock-firebase.
 import {Flags} from '../flags.js';
 import {TupleType, CollectionType, EntityType} from '../type.js';
 import {ActiveCollectionEntityStore, handleForActiveStore} from '../storageNG/storage-ng.js';
-import {Ttl} from '../capabilities-new.js';
+import {Ttl} from '../capabilities.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};

@@ -12,8 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
-import {CapabilitiesResolver, StorageKeyCreatorInfo} from './capabilities-resolver.js';
-import {CapabilitiesResolver as CapabilitiesResolverNew} from './capabilities-resolver-new.js';
+import {CapabilitiesResolver} from './capabilities-resolver.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId, Id} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
@@ -50,7 +49,6 @@ export type RuntimeArcOptions = Readonly<{
   stub?: boolean;
   listenerClasses?: ArcInspectorFactory[];
   inspectorFactory?: ArcInspectorFactory;
-  storageKeyCreators?: StorageKeyCreatorInfo[];
   storargeKeyFactories?: StorageKeyFactory[];
   modality?: Modality;
 }>;
@@ -182,7 +180,6 @@ export class Runtime {
     const {loader, context} = this;
     const id = (options && options.id) || IdGenerator.newSession().newArcId(name);
     const slotComposer = this.composerClass ? new this.composerClass() : null;
-    const capabilitiesResolver = new CapabilitiesResolver({arcId: id}, options ? options.storageKeyCreators : undefined);
     let storageKey : StorageKey;
     if (storageKeyPrefix == null) {
       storageKey = new VolatileStorageKey(id, '');
@@ -190,8 +187,8 @@ export class Runtime {
       storageKey = storageKeyPrefix(id);
     }
     const factories = (options && options.storargeKeyFactories) || [new VolatileStorageKeyFactory()];
-    const capabilitiesResolverNew = new CapabilitiesResolverNew({arcId: id, factories});
-    return new Arc({id, storageKey, capabilitiesResolver, capabilitiesResolverNew, loader, slotComposer, context, ...options});
+    const capabilitiesResolver = new CapabilitiesResolver({arcId: id, factories});
+    return new Arc({id, storageKey, capabilitiesResolver, loader, slotComposer, context, ...options});
   }
 
   // Stuff the shell needs

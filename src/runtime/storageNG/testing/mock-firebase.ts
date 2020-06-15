@@ -16,8 +16,6 @@ import {Exists} from '../drivers/driver.js';
 import {assert} from '../../../platform/chai-web.js';
 import {RuntimeCacheService} from '../../runtime-cache.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
-import {Capabilities} from '../../capabilities.js';
-import {CapabilitiesResolver} from '../../capabilities-resolver.js';
 import {StorageKeyOptions} from '../../storage-key-factory.js';
 
 /**
@@ -354,11 +352,6 @@ export class MockFirebaseStorageDriverProvider extends FirebaseStorageDriverProv
     DriverFactory.register(new MockFirebaseStorageDriverProvider(cacheService));
     StorageKeyParser.addParser(FirebaseStorageKey.protocol, FirebaseStorageKey.fromString);
     const {projectId, domain, apiKey} = mockFirebaseStorageKeyOptions;
-    CapabilitiesResolver.registerKeyCreator(
-        'firebase',
-        Capabilities.persistentQueryable,
-        (options: StorageKeyOptions) => new FirebaseStorageKey(projectId, domain, apiKey, options.location()));
-
   }
 
   static getValueForTesting(cacheService: RuntimeCacheService, storageKey: MockFirebaseStorageKey) {

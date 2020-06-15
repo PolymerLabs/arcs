@@ -11,7 +11,7 @@ import {assert} from '../../platform/chai-web.js';
 import {capabilitiesToProtoOrdinals, encodeManifestToProto, manifestToProtoPayload, typeToProtoPayload} from '../manifest2proto.js';
 import {CountType, EntityType, SingletonType, TupleType, Type} from '../../runtime/type.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Capabilities} from '../../runtime/capabilities.js';
+import {Capabilities, Shareable, Persistence, Queryable} from '../../runtime/capabilities.js';
 import {fs} from '../../platform/fs-web.js';
 import {CapabilityEnum, ManifestProto, TypeProto} from '../manifest-proto.js';
 
@@ -88,12 +88,13 @@ describe('manifest2proto', () => {
       return capabilitiesToProtoOrdinals(capabilities).map(ordinal => CapabilityEnum.valuesById[ordinal]);
     }
 
-    assert.deepEqual(capabilitiesToStrings(Capabilities.empty), []);
-    assert.deepEqual(capabilitiesToStrings(Capabilities.tiedToArc), ['TIED_TO_ARC']);
-    assert.deepEqual(capabilitiesToStrings(Capabilities.tiedToRuntime), ['TIED_TO_RUNTIME']);
-    assert.deepEqual(capabilitiesToStrings(Capabilities.persistent), ['PERSISTENT']);
-    assert.deepEqual(capabilitiesToStrings(Capabilities.queryable), ['QUERYABLE']);
-    assert.deepEqual(capabilitiesToStrings(Capabilities.persistentQueryable), ['PERSISTENT', 'QUERYABLE']);
+    assert.deepEqual(capabilitiesToStrings(Capabilities.create()), []);
+    assert.deepEqual(capabilitiesToStrings(Capabilities.create([new Shareable(false)])), ['TIED_TO_ARC']);
+    assert.deepEqual(capabilitiesToStrings(Capabilities.create([new Shareable(true)])), ['TIED_TO_RUNTIME']);
+    assert.deepEqual(capabilitiesToStrings(Capabilities.create([Persistence.onDisk()])), ['PERSISTENT']);
+    assert.deepEqual(capabilitiesToStrings(Capabilities.create([new Queryable(true)])), ['QUERYABLE']);
+    assert.deepEqual(capabilitiesToStrings(Capabilities.create(
+        [Persistence.onDisk(), new Queryable(true)])), ['PERSISTENT', 'QUERYABLE']);
   });
 
   it('encodes handle joins', async () => {
