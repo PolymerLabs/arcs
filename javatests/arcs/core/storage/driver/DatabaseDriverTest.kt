@@ -28,6 +28,7 @@ import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseData
+import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.testutil.LogRule
@@ -145,8 +146,8 @@ class DatabaseDriverTest {
     @Test
     fun send_singleton_withValue() = runBlockingTest {
         val driver = buildDriver<CrdtSingleton.DataImpl<Reference>>(database)
-        val entity = createPersonCrdt("jason", setOf("555-5555", "555-5556"))
-        val singleton = entity.toCrdtSingleton(driver.storageKey)
+        val entity = createPersonCrdt("jason", setOf("555-5555", "555-5556"), VersionMap("foo" to 1))
+        val singleton = entity.toCrdtSingleton(driver.storageKey, VersionMap("bar" to 2))
 
         driver.send(singleton, 1)
 
@@ -154,7 +155,8 @@ class DatabaseDriverTest {
             database.data[driver.storageKey] as? DatabaseData.Singleton
         )
 
-        assertThat(databaseValue.reference).isEqualTo(entity.toReference(driver.storageKey))
+        assertThat(databaseValue.value).isEqualTo(
+            ReferenceWithVersion(entity.toReference(driver.storageKey), VersionMap("bar" to 2)))
         assertThat(databaseValue.databaseVersion).isEqualTo(1)
         assertThat(databaseValue.versionMap).isEqualTo(singleton.versionMap)
 
@@ -180,7 +182,7 @@ class DatabaseDriverTest {
             database.data[driver.storageKey] as? DatabaseData.Singleton
         )
 
-        assertThat(databaseValue.reference).isNull()
+        assertThat(databaseValue.value).isNull()
         assertThat(databaseValue.databaseVersion).isEqualTo(1)
         assertThat(databaseValue.versionMap).isEqualTo(singleton.versionMap)
 
@@ -206,7 +208,7 @@ class DatabaseDriverTest {
                 VersionMap("bar" to 1)
             )
         )
-        val set = entities.toCrdtSet(driver.storageKey, VersionMap("foo" to 1, "bar" to 1))
+        val set = entities.toCrdtSet(driver.storageKey, VersionMap("other" to 2))
 
         driver.send(set, 1)
 
@@ -214,7 +216,8 @@ class DatabaseDriverTest {
             database.data[driver.storageKey] as? DatabaseData.Collection
         )
 
-        assertThat(databaseValue.values).isEqualTo(set.values.map { it.value.value }.toSet())
+        assertThat(databaseValue.values).isEqualTo(
+            set.values.map { ReferenceWithVersion(it.value.value, it.value.versionMap) }.toSet())
         assertThat(databaseValue.databaseVersion).isEqualTo(1)
         assertThat(databaseValue.versionMap).isEqualTo(set.versionMap)
 
@@ -224,8 +227,7 @@ class DatabaseDriverTest {
             receiverSet = data
             receiverVersion = version
         }
-        // TODO: this should be enabled when b/155579842 is fixed.
-        // assertThat(receiverSet).isEqualTo(set)
+        assertThat(receiverSet).isEqualTo(set)
         assertThat(receiverVersion).isEqualTo(1)
     }
 
@@ -241,7 +243,7 @@ class DatabaseDriverTest {
             database.data[driver.storageKey] as? DatabaseData.Collection
         )
 
-        assertThat(databaseValue.values).isEqualTo(set.values.map { it.value.value }.toSet())
+        assertThat(databaseValue.values).isEqualTo(emptySet<ReferenceWithVersion>())
         assertThat(databaseValue.databaseVersion).isEqualTo(1)
         assertThat(databaseValue.versionMap).isEqualTo(set.versionMap)
 
@@ -413,7 +415,7 @@ class DatabaseDriverTest {
         ): CrdtSet.DataImpl<Reference> = CrdtSet.DataImpl(
             versionMap,
             this.map { it.toReference(baseKey) }
-                .associate { it.id to CrdtSet.DataValue(requireNotNull(it.version), it) }
+                .associate { it.id to CrdtSet.DataValue(versionMap, it) }
                 .toMutableMap()
         )
 
@@ -425,7 +427,7 @@ class DatabaseDriverTest {
             this?.let {
                 val reference = it.toReference(baseKey)
                 mutableMapOf(
-                    reference.id to CrdtSet.DataValue(requireNotNull(reference.version), reference)
+                    reference.id to CrdtSet.DataValue(versionMap, reference)
                 )
             } ?: mutableMapOf()
         )
