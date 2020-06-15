@@ -102,7 +102,7 @@ export class SchemaNode {
   // schema name, if not possible the full schema address will be used. It will never the name
   // based off the internal counter (i.e. Internal$N pattern)
   humanName(connection: HandleConnectionSpec): string {
-    if ((!this.variableName && this.uniqueSchema) || this.sources.length === 1) {
+    if ((this.variableName === null && this.uniqueSchema) || this.sources.length === 1) {
       return this.entityClassName;
     }
     return this.fullName(connection);

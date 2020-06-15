@@ -33,8 +33,8 @@ export function generateConnectionSpecType(connection: HandleConnectionSpec, nod
   return (function generateType(type: Type): string {
     if (type.isEntity || type.isVariable) {
       const node = type.isEntity
-        ? nodes.find(n => n.schema && n.schema.equals(type.getEntitySchema()))
-        : nodes.find(n => n.variableName.includes((type as TypeVariable).variable.name));
+        ? nodes.find(n => n.schema.equals(type.getEntitySchema()))
+        : nodes.find(n => n.variableName !== null && n.variableName.includes((type as TypeVariable).variable.name));
       return ktUtils.applyFun('EntityType', [`${node.fullName(connection)}.SCHEMA`]);
     } else if (type.isCollection) {
       return ktUtils.applyFun('CollectionType', [generateType(type.getContainedType())]);
