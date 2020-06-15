@@ -67,6 +67,6 @@
       android:exported="false"
       android:process=":test"/>
 
-    <service android:name="arcs.android.devTools.DevToolsService"/>
+    <service android:name="arcs.android.devtools.DevToolsService"/>
   </application>
 </manifest>

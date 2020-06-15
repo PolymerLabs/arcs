@@ -5,7 +5,7 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 arcs_kt_android_library(
-    name = "devTools",
+    name = "devtools",
     srcs = glob([
         "*.kt",
     ]),

@@ -13,7 +13,9 @@
 
      websocket.onmessage = msg => {
 
-      document.getElementById("log").innerHTML = document.getElementById("log").innerHTML + "<div>" + msg.data + "</div>"
+      const newEntry = document.createElement('div');
+      newEntry.innerText = msg.data
+      document.getElementById("log").append(newEntry);
 
      }
 
