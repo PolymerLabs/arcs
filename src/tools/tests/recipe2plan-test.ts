@@ -54,11 +54,16 @@ $ tools/update-goldens \n\n`
     particle Reader in 'arcs.core.data.testdata.Reader'
       data: reads Thing {name: Text}
       
+    particle Intermediary in '.subdir.Intermediary'
+      data: reads writes Thing {name: Text}
+      
     recipe Namespace
       data: create 'some-handle' @persistent
       
       Writer
         data: writes data
+      Intermediary
+        data: reads writes data
       Reader
         data: reads data
     `);
@@ -79,6 +84,18 @@ import arcs.core.storage.StorageKeyParser
 
 object NamespacePlan : Plan(
     listOf(
+        Particle(
+            "Intermediary",
+            "arcs.core.data.testdata.subdir.Intermediary",
+            mapOf(
+                "data" to HandleConnection(
+                    StorageKeyParser.parse("create://some-handle?Persistent"),
+                    HandleMode.ReadWrite,
+                    SingletonType(EntityType(Intermediary_Data.SCHEMA)),
+                    Ttl.Infinite
+                )
+            )
+        ),
         Particle(
             "Reader",
             "arcs.core.data.testdata.Reader",
