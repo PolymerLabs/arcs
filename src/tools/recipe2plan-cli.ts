@@ -56,10 +56,8 @@ if (opts._.some((file) => !file.endsWith('.arcs'))) {
 
 const outFormat = (() => {
   switch (opts.format.toLowerCase()) {
-    case 'kotlin':
-      return OutputFormat.Kotlin;
-    case 'proto':
-      return OutputFormat.Proto;
+    case 'kotlin': return OutputFormat.Kotlin;
+    case 'proto': return OutputFormat.Proto;
     default:
       console.error(`Only Kotlin and Proto output format is supported.`);
       process.exit(1);
