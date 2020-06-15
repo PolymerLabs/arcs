@@ -7,17 +7,18 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base, ClassGenerator, AddFieldOptions, NodeAndGenerator} from './schema2base.js';
+import {AddFieldOptions, ClassGenerator, NodeAndGenerator, Schema2Base} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {generateConnectionSpecType} from './kotlin-codegen-shared.js';
-import {ParticleSpec, HandleConnectionSpec} from '../runtime/particle-spec.js';
-import {EntityType, CollectionType, Type} from '../runtime/type.js';
+import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
+import {CollectionType, EntityType, Type, TypeVariable} from '../runtime/type.js';
 import {KTExtracter} from '../runtime/refiner.js';
 import {Dictionary} from '../runtime/hot.js';
 import minimist from 'minimist';
 import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.js';
 import {assert} from '../platform/assert-web.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
+import {Schema} from '../runtime/schema.js';
 
 // TODO: use the type lattice to generate interfaces
 
@@ -186,10 +187,11 @@ ${imports.join('\n')}
     }
 
     function generateInnerType(type: Type): string {
-      if (type.isEntity) {
-        const node = nodes.find(n => n.schema.equals(type.getEntitySchema()));
-        // Only the full name is available outside the particle scope.
-        return particleScope ? node.humanName(connection) : node.fullName(connection);
+      if (type.isEntity || type.isVariable) {
+          const node = type.isEntity
+            ? nodes.find(n => n.variableName === null && n.schema.equals(type.getEntitySchema()))
+            : nodes.find(n => n.variableName.includes((type as TypeVariable).variable.name));
+          return particleScope ? node.humanName(connection) : node.fullName(connection);
       } else if (type.isReference) {
         return `Reference<${generateInnerType(type.getContainedType())}>`;
       } else if (type.isTuple) {
@@ -390,6 +392,11 @@ export class KotlinGenerator implements ClassGenerator {
 
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {}
 
+  /** Returns the name of the generated class. */
+  get className(): string {
+    return this.node.entityClassName;
+  }
+
   escapeIdentifier(name: string): string {
     // TODO(cypher1): Check for complex keywords (e.g. cases where both 'final' and 'final_' are keywords).
     // TODO(cypher1): Check for name overlaps (e.g. 'final' and 'final_' should not be escaped to the same identifier.
@@ -411,23 +418,23 @@ export class KotlinGenerator implements ClassGenerator {
       assert(!isCollection, 'Collection fields not supported in Kotlin wasm yet.');
       this.fieldVals.push(
         `var ${fixed} = ${fixed}\n` +
-        `            get() = field\n` +
-        `            private set(_value) {\n` +
-        `                field = _value\n` +
-        `            }`
+        `    get() = field\n` +
+        `    private set(_value) {\n` +
+        `        field = _value\n` +
+        `    }`
       );
     } else if (isCollection) {
       this.fieldVals.push(
         `var ${fixed}: ${type}\n` +
-        `            get() = super.getCollectionValue(${quotedFieldName}) as ${type}\n` +
-        `            private set(_value) = super.setCollectionValue(${quotedFieldName}, _value)`
+        `    get() = super.getCollectionValue(${quotedFieldName}) as ${type}\n` +
+        `    private set(_value) = super.setCollectionValue(${quotedFieldName}, _value)`
         );
     } else {
       const defaultFallback = defaultVal === 'null' ? '' : ` ?: ${defaultVal}`;
       this.fieldVals.push(
         `var ${fixed}: ${type}\n` +
-        `            get() = super.getSingletonValue(${quotedFieldName}) as ${nullableType}${defaultFallback}\n` +
-        `            private set(_value) = super.setSingletonValue(${quotedFieldName}, _value)`
+        `    get() = super.getSingletonValue(${quotedFieldName}) as ${nullableType}${defaultFallback}\n` +
+        `    private set(_value) = super.setSingletonValue(${quotedFieldName}, _value)`
       );
     }
     this.fieldsReset.push(`${fixed} = ${defaultVal}`);
@@ -456,7 +463,7 @@ export class KotlinGenerator implements ClassGenerator {
   }
 
   createSchema(schemaHash: string): string {
-    if (!this.node.schema) return ``;
+    if (this.node.schema.equals(Schema.EMPTY)) return `Schema.EMPTY`;
 
     const schemaNames = this.node.schema.names.map(n => `SchemaName("${n}")`);
     return `\
@@ -481,9 +488,6 @@ Schema(
   }
 
   generatePredicates() {
-    if (!this.node.schema) {
-      return;
-    }
     const expression = KTExtracter.fromSchema(this.node.schema, this);
     const refinement = this.node.schema.refinement;
     const queryType = refinement.getQueryParams().get('?');
@@ -502,74 +506,118 @@ ${lines}
   generate(schemaHash: string): string { return ''; }
 
   generateAliases(particleName: string): string[] {
-    const name = this.node.entityClassName;
-    return this.node.sources.map(s => `typealias ${s.fullName} = Abstract${particleName}.${name}`);
+    return this.node.sources.map(s => `typealias ${s.fullName} = Abstract${particleName}.${this.className}`);
   }
 
-  generateClasses(schemaHash: string): string {
-    const name = this.node.entityClassName;
+  generateClassDefinition(): string {
+    const ctorType = this.node.variableName == null ? '(' : ' private constructor(';
 
-    const fieldCount = this.node.schema ? Object.keys(this.node.schema.fields).length : 0;
-    const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
+    const classDecl = `\
+    class ${this.className}${ctorType}`;
+    const classDef = '@Suppress("UNCHECKED_CAST")' + '\n' + classDecl;
 
-    const classDef = `\
-@Suppress("UNCHECKED_CAST")
-    class ${name}(`;
-    const baseClass = this.opts.wasm
-        ? 'WasmEntity'
-        : ktUtils.applyFun('EntityBase', [quote(name), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp']);
-    const classInterface = `) : ${baseClass} {`;
+    let baseClass: string;
+    let constructorFields: string[];
+    if (this.opts.wasm) {
+      baseClass = 'WasmEntity';
+      constructorFields = this.fields;
+    } else {
+      const concreteOrVariableEntity = this.node.variableName == null ? 'EntityBase' : 'VariableEntityBase';
+      baseClass = ktUtils.applyFun(concreteOrVariableEntity, [
+        quote(this.className), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp'
+      ]);
+      constructorFields = this.fields.concat([
+        'entityId: String? = null',
+        'creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP',
+        'expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP',
+      ]);
+    }
 
-    const constructorFields = this.fields.concat(this.opts.wasm ? [] : [
-      'entityId: String? = null',
-      'creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP',
-      'expirationTimestamp:  Long = RawEntity.UNINITIALIZED_TIMESTAMP',
-    ]);
+    const classInterface = `) : ${baseClass}`;
 
+    const constructorArguments = ktUtils.joinWithIndents(constructorFields, {
+      startIndent: classDecl.length + classInterface.length,
+      numberOfIndents: 2
+    });
+
+    return `${classDef}${constructorArguments}${classInterface}`;
+  }
+
+  generateCopyMethods(): string {
     const fieldsForMutate = this.fieldsForCopy.concat(this.opts.wasm ? [] : [
       'entityId = entityId',
       'creationTimestamp = creationTimestamp',
       'expirationTimestamp = expirationTimestamp'
     ]);
 
-    const constructorArguments =
-      ktUtils.joinWithIndents(constructorFields, {startIndent: classDef.length+classInterface.length, numberOfIndents: 2});
+    const fieldArgs = ktUtils.joinWithIndents(this.fieldsForCopyDecl, {startIndent: 14, numberOfIndents: 3});
+    const indentOpts = {startIndent: 8 + this.className.length, numberOfIndents: 3};
 
-    return `\
+    const copyMethod = `fun copy(${fieldArgs}) = ${this.className}(${
+      ktUtils.joinWithIndents(this.fieldsForCopy, indentOpts)
+    })`;
+    const mutateMethod = `fun mutate(${fieldArgs}) = ${this.className}(${
+      ktUtils.joinWithIndents(fieldsForMutate, indentOpts)
+    })`;
 
-    ${classDef}${constructorArguments}${classInterface}
+    const copyBaseEntity = `.also { this.copyLatentDataInto(it) }`;
+    let copy = copyMethod;
+    let mutate = mutateMethod;
 
-        ${withFields(`${this.fieldVals.join('\n        ')}`)}
+    // Add clauses to copy entity base data (except for Wasm).
+    if (this.node.variableName !== null && !this.opts.wasm) {
+      // The `also` clause should go on a newline if the copy / mutate expression fits on one line.
+      const newlineAlsoClause = '\n' + ktUtils.indent(copyBaseEntity, 3);
+      copy += (copyMethod.includes('\n') ? copyBaseEntity : newlineAlsoClause);
+      mutate += (mutateMethod.includes('\n') ? copyBaseEntity : newlineAlsoClause);
+    }
 
-        ${this.opts.wasm ? `override var entityId = ""` : withFields(`init {
-            ${this.fieldInitializers.join('\n            ')}
-        }`)}
-        ${this.opts.wasm ? `` : `/**
+    return `${this.opts.wasm ? `` : `/**
          * Use this method to create a new, distinctly identified copy of the entity.
          * Storing the copy will result in a new copy of the data being stored.
          */`}
-        fun ${ktUtils.applyFun(
-            'copy',
-            this.fieldsForCopyDecl,
-            {startIndent: 14, numberOfIndents: 2}
-        )} = ${ktUtils.applyFun(
-            name,
-            this.fieldsForCopy,
-            {startIndent: 8 + name.length, numberOfIndents: 2}
-        )}
+        ${copy}
         ${this.opts.wasm ? `` : `/**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
          */
-        fun ${ktUtils.applyFun(
-            'mutate',
-            this.fieldsForCopyDecl,
-            {startIndent: 14, numberOfIndents: 2}
-        )} = ${ktUtils.applyFun(
-            name,
-            fieldsForMutate,
-            {startIndent: 8 + name.length, numberOfIndents: 2}
-        )}`}
+        ${mutate}`}`;
+  }
+
+  generateFieldsDefinitions(): string {
+    const fieldCount = Object.keys(this.node.schema.fields).length;
+    const blocks: string[] = [];
+
+    if (fieldCount !== 0) {
+      blocks.push(this.fieldVals.join('\n'));
+      blocks.push('');
+    }
+
+    if (this.opts.wasm) {
+      blocks.push(`override var entityId = ""`);
+    } else if (fieldCount !== 0) {
+      const initBody = this.fieldInitializers.join('\n');
+      const initBlock = ['init {', ktUtils.indent(initBody), '}'].join('\n');
+      blocks.push(initBlock);
+      blocks.push('');
+    }
+
+    if (blocks.length === 0) {
+      return '';
+    }
+
+    return '\n' + ktUtils.indent(blocks.join('\n'), 2);
+  }
+
+  generateClasses(schemaHash: string): string {
+    const fieldCount = Object.keys(this.node.schema.fields).length;
+    const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
+
+    return `\
+
+    ${this.generateClassDefinition()} {
+${this.generateFieldsDefinitions()}
+        ${this.generateCopyMethods()}
     ${this.opts.wasm ? `
         fun reset() {
           ${withFields(`${this.fieldsReset.join('\n            ')}`)}
@@ -583,23 +631,23 @@ ${lines}
         }
 
         override fun toString() =
-            "${name}(${this.fieldsForToString.join(', ')})"
+            "${this.className}(${this.fieldsForToString.join(', ')})"
     ` : ''}
-        companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${name}> {
+        companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${this.className}> {
             ${this.opts.wasm ? '' : `
             override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 12, true)}
 
             private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
                 ${ktUtils.mapOf(this.nestedEntitySpecs, 16)}
-                
+
             init {
                 SchemaRegistry.register(SCHEMA)
             }`}
             ${!this.opts.wasm ? `
-            override fun deserialize(data: RawEntity) = ${name}().apply {
+            override fun deserialize(data: RawEntity) = ${this.className}().apply {
                 deserialize(data, nestedEntitySpecs)
             }` : `
-            override fun decode(encoded: ByteArray): ${name}? {
+            override fun decode(encoded: ByteArray): ${this.className}? {
                 if (encoded.isEmpty()) return null
 
                 val decoder = StringDecoder(encoded)
@@ -625,7 +673,7 @@ ${lines}
                     decoder.validate("|")
                     i++
                 }`)}
-                val _rtn = ${name}().copy(
+                val _rtn = ${this.className}().copy(
                     ${ktUtils.joinWithIndents(this.fieldsForCopy, {startIndent: 33, numberOfIndents: 3})}
                 )
                _rtn.entityId = entityId

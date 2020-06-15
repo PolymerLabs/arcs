@@ -11,7 +11,7 @@
 import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
 import {SchemaNode, SchemaGraph} from './schema2graph.js';
 import {HandleConnectionSpec} from '../runtime/particle-spec.js';
-import {Type} from '../runtime/type.js';
+import {Type, TypeVariable} from '../runtime/type.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 
 const ktUtils = new KotlinGenerationUtils();
@@ -31,8 +31,10 @@ export function generateConnectionSpecType(connection: HandleConnectionSpec, nod
   }
 
   return (function generateType(type: Type): string {
-    if (type.isEntity) {
-      const node = nodes.find(n => n.schema.equals(type.getEntitySchema()));
+    if (type.isEntity || type.isVariable) {
+      const node = type.isEntity
+        ? nodes.find(n => n.schema.equals(type.getEntitySchema()))
+        : nodes.find(n => n.variableName !== null && n.variableName.includes((type as TypeVariable).variable.name));
       return ktUtils.applyFun('EntityType', [`${node.fullName(connection)}.SCHEMA`]);
     } else if (type.isCollection) {
       return ktUtils.applyFun('CollectionType', [generateType(type.getContainedType())]);

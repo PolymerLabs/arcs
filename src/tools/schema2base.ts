@@ -95,7 +95,7 @@ export abstract class Schema2Base {
       const nodes = await this.calculateNodeAndGenerators(particle);
 
       classes.push(...nodes.map(({generator, node, hash}) =>
-          generator.generate(hash, Object.entries(node.schema.fields).length)));
+        generator.generate(hash, Object.entries(node.schema.fields).length)));
 
       if (this.opts.test_harness) {
         classes.push(this.generateTestHarness(particle, nodes.map(n => n.node)));
@@ -112,9 +112,6 @@ export abstract class Schema2Base {
     const nodes: NodeAndGenerator[] = [];
     for (const node of graph.walk()) {
       const generator = this.getClassGenerator(node);
-      if (!node.schema) {
-        continue;
-      }
       for (const [field, descriptor] of Object.entries(node.schema.fields)) {
         if (descriptor.kind === 'schema-primitive') {
           if (['Text', 'URL', 'Number', 'Boolean'].includes(descriptor.type)) {

@@ -57,4 +57,10 @@ open class VariableEntityBase : EntityBase {
 
         super.deserialize(rawEntity, nestedEntitySpecs)
     }
+
+    /** Copies all hidden singleton and collection values into another [VariableEntityBase]. */
+    fun copyLatentDataInto(that: VariableEntityBase) {
+        that.rawSingletons.putAll(this.rawSingletons)
+        that.rawCollections.putAll(this.rawCollections)
+    }
 }
