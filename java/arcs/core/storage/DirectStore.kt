@@ -113,7 +113,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     /** Closes the store. Once closed, it cannot be re-opened. A new instance must be created. */
     fun close() {
         synchronized(proxyManager) {
-            closeInternal()
+            if (proxyManager.isEmpty()) {
+                closeInternal()
+            }
         }
     }
 

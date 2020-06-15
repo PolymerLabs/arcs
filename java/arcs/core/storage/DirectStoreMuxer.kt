@@ -19,6 +19,7 @@ import arcs.core.storage.ProxyMessage.Operations
 import arcs.core.storage.ProxyMessage.SyncRequest
 import arcs.core.type.Type
 import arcs.core.util.LruCacheMap
+import arcs.core.util.TaggedLog
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -38,13 +39,25 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
     val callbackFactory: (String) -> ProxyCallback<Data, Op, T>
 ) {
     private val storeMutex = Mutex()
+    private val log = TaggedLog { "BackingStore" }
+
     // TODO(b/158262634): Make this CacheMap Weak.
     /* internal */ val stores = LruCacheMap<String, StoreRecord<Data, Op, T>>(
         50,
         livenessPredicate = { _, sr -> !sr.store.closed }
-    ) { _, sr ->
-        if (!sr.store.closed) {
-            sr.store.close()
+    ) { _, sr -> closeStore(sr) }
+
+    /** Safely closes a [DirectStore] and cleans up its resources. */
+    private fun closeStore(storeRecord: StoreRecord<*, *, *>) {
+        if (!storeRecord.store.closed) {
+            log.debug { "close the store(${storeRecord.id})" }
+
+            // The store will be actually closed as soon as there are no connected proxies.
+            try {
+                storeRecord.store.off(storeRecord.id)
+            } catch (e: Exception) {
+                log.warning { "failed to close the store(${storeRecord.id})" }
+            }
         }
     }
 
@@ -53,7 +66,11 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
      */
     suspend fun getLocalData(referenceId: String) = store(referenceId).store.getLocalData()
 
-    suspend fun clearStoresCache() = storeMutex.withLock { stores.clear() }
+    /** Removes [DirectStore] caches and closes those that can be closed safely. */
+    suspend fun clearStoresCache() = storeMutex.withLock {
+        for ((_, sr) in stores) closeStore(sr)
+        stores.clear()
+    }
 
     /** Calls [idle] on all existing contained stores and waits for their completion. */
     suspend fun idle() = storeMutex.withLock {
