@@ -13,6 +13,7 @@ import {PlanGenerator} from './plan-generator.js';
 import {Flags} from '../runtime/flags.js';
 import {assert} from '../platform/assert-node.js';
 import {encodePlansToProto} from './manifest2proto.js';
+import {Manifest} from '../runtime/manifest.js';
 
 export enum OutputFormat { Kotlin, Proto }
 
@@ -23,25 +24,23 @@ export enum OutputFormat { Kotlin, Proto }
  * @return Generated Kotlin code.
  */
 export async function recipe2plan(
-    path: string,
+    manifest: Manifest,
     format: OutputFormat,
     recipeFilter?: string): Promise<string | Uint8Array> {
-  return await Flags.withDefaultReferenceMode(async () => {
-    const manifest = await Runtime.parseFile(path);
-    let plans = await (new StorageKeyRecipeResolver(manifest, `salt_${Math.random()}`)).resolve();
+  // const manifest = await Runtime.parseFile(path);
+  let plans = await (new StorageKeyRecipeResolver(manifest, `salt_${Math.random()}`)).resolve();
 
-    if (recipeFilter) {
-      plans = plans.filter(p => p.name === recipeFilter);
-      if (plans.length === 0) throw Error(`Recipe '${recipeFilter}' not found.`);
-    }
+  if (recipeFilter) {
+    plans = plans.filter(p => p.name === recipeFilter);
+    if (plans.length === 0) throw Error(`Recipe '${recipeFilter}' not found.`);
+  }
 
-    switch (format) {
-      case OutputFormat.Kotlin:
-        assert(manifest.meta.namespace, `Namespace is required in '${manifest.fileName}' for Kotlin code generation.`);
-        return new PlanGenerator(plans, manifest.meta.namespace).generate();
-      case OutputFormat.Proto:
-        return Buffer.from(await encodePlansToProto(plans));
-      default: throw new Error('Output Format should be Kotlin or Proto');
-    }
-  })();
+  switch (format) {
+    case OutputFormat.Kotlin:
+      assert(manifest.meta.namespace, `Namespace is required in '${manifest.fileName}' for Kotlin code generation.`);
+      return new PlanGenerator(plans, manifest.meta.namespace).generate();
+    case OutputFormat.Proto:
+      return Buffer.from(await encodePlansToProto(plans));
+    default: throw new Error('Output Format should be Kotlin or Proto');
+  }
 }
