@@ -115,14 +115,6 @@ export class PlanGenerator {
     if (handle.storageKey) {
       return ktUtils.applyFun('StorageKeyParser.parse', [quote(handle.storageKey.toString())]);
     }
-    if (handle.fate === 'create') {
-      const createKeyArgs = [quote(await this.createCreateHandleId(handle))];
-      const capabilities = PlanGenerator.createCapabilities(handle.capabilities);
-      if (capabilities !== 'Capabilities.Empty') {
-        createKeyArgs.push(capabilities);
-      }
-      return ktUtils.applyFun('CreateableStorageKey', createKeyArgs);
-    }
     if (handle.fate === 'join') {
       // TODO(piotrs): Implement JoinStorageKey in TypeScript.
       const components = handle.joinedHandles.map(h => h.storageKey);
@@ -130,46 +122,6 @@ export class PlanGenerator {
       return ktUtils.applyFun('StorageKeyParser.parse', [quote(joinSk)]);
     }
     throw new PlanGeneratorError(`Problematic handle '${handle.id}': Only 'create' Handles can have null 'StorageKey's.`);
-  }
-
-  /** Generates a consistent handle id. */
-  async createCreateHandleId(handle: Handle): Promise<string> {
-    if (handle.id) return handle.id;
-    if (!this.createHandleRegistry.has(handle)) {
-      this.createHandleRegistry.set(handle, await digest(this.randomSalt + this.createHandleIndex++));
-    }
-    return this.createHandleRegistry.get(handle);
-  }
-
-  /** Generates Kotlin `Capabilities` from Capabilities. */
-  static createCapabilities(capabilities: Capabilities): string {
-    const ktCapabilities  = [];
-
-    if (capabilities.isEmpty()) {
-      return 'Capabilities.Empty';
-    }
-
-    if (capabilities.hasEquivalent(Persistence.onDisk())) {
-      ktCapabilities.push('Capabilities.Capability.Persistent');
-    }
-
-    if (capabilities.isQueryable() || (capabilities.getTtl() && !capabilities.getTtl().isInfinite)) {
-      ktCapabilities.push('Capabilities.Capability.Queryable');
-    }
-
-    if (capabilities.isShareable()) {
-      ktCapabilities.push('Capabilities.Capability.TiedToRuntime');
-    }
-
-    if (capabilities.hasEquivalent(new Shareable(false))) {
-      ktCapabilities.push('Capabilities.Capability.TiedToArc');
-    }
-
-    if (ktCapabilities.length === 1) {
-      return ktCapabilities[0].replace('Capability.', '');
-    }
-
-    return ktUtils.applyFun('Capabilities', [ktUtils.setOf(ktCapabilities)]);
   }
 
   /** Generates a Kotlin `Ttl` from a Ttl. */
