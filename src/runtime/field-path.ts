@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Schema} from './schema.js';
-import {InterfaceInfo, Type, EntityType} from './type.js';
+import {InterfaceInfo, Type, EntityType, TupleType} from './type.js';
 import {SchemaPrimitiveTypeValue} from './manifest-ast-nodes.js';
 
 export type FieldPathType = Type | SchemaPrimitiveTypeValue;
@@ -21,7 +21,12 @@ export function resolveFieldPathType(fieldPath: string[], type: Type): FieldPath
   if (fieldPath.length === 0) {
     return type;
   }
-  if (type.isTypeContainer()) {
+  if (typeof type === 'string') {
+    throw new FieldPathError(`Field path '${fieldPath.join('.')}' could not be resolved because the target type is a primitive: '${type}'.`);
+  }
+  if (type.isTupleType()) {
+    return resolveForTuple(fieldPath, type);
+  } else if (type.isTypeContainer()) {
     return resolveFieldPathType(fieldPath, type.getContainedType());
   }
 
@@ -75,6 +80,22 @@ function resolveForSchema(fieldPath: string[], schema: Schema): FieldPathType {
   }
   const field = schema.fields[fieldName];
   return resolveForField(fieldPath, field);
+}
+
+function resolveForTuple(fieldPath: string[], tupleType: TupleType): FieldPathType {
+  if (fieldPath.length === 0) {
+    return tupleType;
+  }
+  const first = fieldPath[0];
+  const match = first.match(/component(\d+)/);
+  if (match == null) {
+    throw new FieldPathError(`Expected a tuple component accessor of the form 'componentN' but found '${first}'.`);
+  }
+  const component = +match[1];
+  if (component >= tupleType.innerTypes.length) {
+    throw new FieldPathError(`'${first}' requested but largest component in tuple is 'component${tupleType.innerTypes.length - 1}'.`);
+  }
+  return evaluateFieldPath(fieldPath.slice(1), tupleType.innerTypes[component]);
 }
 
 class FieldPathError extends Error {}
