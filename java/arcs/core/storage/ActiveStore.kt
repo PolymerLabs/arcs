@@ -31,9 +31,6 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     /** The [IStore] this instance is fronting. */
     val baseStore: IStore<Data, Op, ConsumerData>? = options.baseStore
 
-    /** Returns the model [Data]. */
-    abstract suspend fun getLocalData(): Data
-
     /** Suspends until all pending operations are complete. */
     open suspend fun idle() = Unit
 

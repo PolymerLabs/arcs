@@ -55,7 +55,6 @@ import arcs.core.util.TaggedLog
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
 import kotlin.coroutines.coroutineContext
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -178,21 +177,6 @@ class ReferenceModeStore private constructor(
     override suspend fun idle() {
         backingStore.idle()
         containerStore.idle()
-    }
-
-    override suspend fun getLocalData(): RefModeStoreData {
-        val containerData = containerStore.getLocalData()
-        val (pendingIds, modelGetter) = constructPendingIdsAndModel(containerData)
-
-        if (pendingIds.isEmpty()) {
-            return modelGetter() as RefModeStoreData
-        }
-
-        val deferred = CompletableDeferred<RefModeStoreData>(coroutineContext[Job.Key])
-        sendQueue.enqueueBlocking(pendingIds) {
-            deferred.complete(modelGetter() as RefModeStoreData)
-        }
-        return deferred.await()
     }
 
     override fun on(

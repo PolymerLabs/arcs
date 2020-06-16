@@ -60,8 +60,6 @@ class StorageServiceConnectionTest {
                 resultCallback: IResultCallback?
             ) = Unit
 
-            override fun getLocalData(callback: IStorageServiceCallback?) = Unit
-
             override fun unregisterCallback(token: Int) = Unit
         }
     }
