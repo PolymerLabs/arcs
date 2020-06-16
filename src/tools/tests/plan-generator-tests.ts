@@ -135,6 +135,70 @@ describe('recipe2plan', () => {
       assert.isBelow(plan.indexOf('particle.C'), plan.indexOf('particle.D'));
     });
   });
+  it('can prefixes namespaces for particle classes', async () => {
+    const {recipes, generator} = await process(`
+    meta
+      namespace: arcs.core.data.testdata
+      
+    particle Writer in '.Writer'
+      data: writes Thing {name: Text}
+      
+    recipe Namespace
+      data: create 'some-handle' @persistent
+      Writer
+        data: writes data`);
+
+    const particle = recipes[0].particles[0];
+
+    assert.deepStrictEqual(
+      await generator.createParticle(particle),
+      `\
+Particle(
+    "Writer",
+    "arcs.core.data.testdata.Writer",
+    mapOf(
+        "data" to HandleConnection(
+            StorageKeyParser.parse("create://some-handle?Persistent"),
+            HandleMode.Write,
+            SingletonType(EntityType(Writer_Data.SCHEMA)),
+            Ttl.Infinite
+        )
+    )
+)`
+    );
+  });
+  it('can prefixes namespaces for particle class subpaths', async () => {
+      const {recipes, generator} = await process(`
+    meta
+      namespace: arcs.core.data.testdata
+      
+    particle Intermediary in '.subdir.Intermediary'
+      data: reads writes Thing {name: Text}
+      
+    recipe Namespace
+      data: create 'some-handle' @persistent
+      Intermediary
+        data: writes data`);
+
+      const particle = recipes[0].particles[0];
+
+      assert.deepStrictEqual(
+        await generator.createParticle(particle),
+        `\
+Particle(
+    "Intermediary",
+    "arcs.core.data.testdata.subdir.Intermediary",
+    mapOf(
+        "data" to HandleConnection(
+            StorageKeyParser.parse("create://some-handle?Persistent"),
+            HandleMode.ReadWrite,
+            SingletonType(EntityType(Intermediary_Data.SCHEMA)),
+            Ttl.Infinite
+        )
+    )
+)`
+      );
+  });
   async function process(manifestString: string): Promise<{
       recipes: Recipe[],
       generator: PlanGenerator,
@@ -142,7 +206,7 @@ describe('recipe2plan', () => {
   }> {
     const manifest = await Manifest.parse(manifestString);
     const recipes = await new StorageKeyRecipeResolver(manifest, 'random_salt').resolve();
-    const generator = new PlanGenerator(recipes, 'test.namespace');
+    const generator = new PlanGenerator(recipes, manifest.meta.namespace || 'test.namespace');
     const plan = await generator.generate();
     return {recipes, generator, plan};
   }
