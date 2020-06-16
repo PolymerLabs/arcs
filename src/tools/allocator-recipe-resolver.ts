@@ -30,7 +30,10 @@ export class AllocatorRecipeResolverError extends Error {
 }
 
 /**
- * Responsible for resolving recipes with storage keys.
+ * Resolves recipes in preparation for the Allocator.
+ *
+ * The Allocator expects artifacts to be resolved in a way that is conducive for partition (particles should be
+ * distributed to the proper ArcHost) and  lifecycle management (for arcs within ArcHosts).
  */
 export class AllocatorRecipeResolver {
   private readonly runtime: Runtime;
