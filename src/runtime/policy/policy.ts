@@ -13,7 +13,7 @@ import {assert} from '../../platform/assert-web.js';
 import {ManifestStringBuilder} from '../manifest-string-builder.js';
 import {Ttl} from '../capabilities.js';
 import {EntityType, InterfaceType, Type} from '../type.js';
-import {FieldPathType, evaluateFieldPath} from '../field-path.js';
+import {FieldPathType, resolveFieldPathType} from '../field-path.js';
 
 export enum PolicyEgressType {
   Logging = 'Logging',
@@ -218,7 +218,7 @@ export class PolicyField {
       parentType: FieldPathType,
       buildAnnotationRefs: (ref: AstNode.AnnotationRef[]) => AnnotationRef[]): PolicyField {
     // Validate field name against type.
-    const type = evaluateFieldPath([node.name], parentType);
+    const type = resolveFieldPathType([node.name], parentType);
 
     // Convert subfields.
     checkNamesAreUnique(node.subfields);
