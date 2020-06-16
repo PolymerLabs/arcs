@@ -896,10 +896,12 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 val (appJvmHeapBeforeGc, appNativeHeapBeforeGc, allHeapsBeforeGc) =
                     memoryFootprint.map { (_, v) -> v }
 
-                // Whether gc or not is not guaranteed, synchronous or asynchronous gc is also
-                // JVM implementation-dependent.
-                Runtime.getRuntime().gc()
-                Thread.sleep(GcWaitTimeMs)
+                for (i in 1..2) {
+                    // Whether gc or not is not guaranteed, synchronous or asynchronous gc is also
+                    // JVM implementation-dependent.
+                    Runtime.getRuntime().gc()
+                    Thread.sleep(GcWaitTimeMs)
+                }
 
                 val (appJvmHeapAfterGc, appNativeHeapAfterGc, allHeapsAfterGc) =
                     memoryFootprint.map { (_, v) -> v }
