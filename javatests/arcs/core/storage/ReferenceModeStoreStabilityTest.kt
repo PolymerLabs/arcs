@@ -34,7 +34,6 @@ import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -103,35 +102,6 @@ class ReferenceModeStoreStabilityTest {
     }
 
     @Test
-    fun singleton_getLocalData_missingBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
-        val singletonCrdt = CrdtSingleton<Reference>()
-        singletonCrdt.applyOperation(
-            CrdtSingleton.Operation.Update(
-                "foo",
-                VersionMap("foo" to 1),
-                Reference(
-                    "foo_value",
-                    backingKey,
-                    VersionMap("foo" to 1)
-                )
-            )
-        )
-        RamDisk.memory[containerKey] = VolatileEntry(singletonCrdt.data, 1)
-
-        val store = Store(
-            StoreOptions<RefModeStoreData, RefModeStoreOp, RawEntity?>(
-                storageKey,
-                SingletonType(EntityType(schema)),
-                StorageMode.ReferenceMode
-            )
-        ).activate()
-
-        assertThat(store.getLocalData().values).isEmpty()
-        assertThat(RamDisk.memory.get<CrdtSingleton.Data<RawEntity>>(containerKey)?.data?.values)
-            .isEmpty()
-    }
-
-    @Test
     fun collection_syncRequest_missingBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
         val setCrdt = CrdtSet<Reference>()
         setCrdt.applyOperation(
@@ -167,35 +137,6 @@ class ReferenceModeStoreStabilityTest {
         store.onProxyMessage(ProxyMessage.SyncRequest(id))
 
         assertThat(modelValue.await().values).isEmpty()
-        assertThat(RamDisk.memory.get<CrdtSet.Data<RawEntity>>(containerKey)?.data?.values)
-            .isEmpty()
-    }
-
-    @Test
-    fun collection_getLocalData_missingBackingData_timesOutAnd_resolvesAsEmpty() = runBlocking {
-        val setCrdt = CrdtSet<Reference>()
-        setCrdt.applyOperation(
-            CrdtSet.Operation.Add(
-                "foo",
-                VersionMap("foo" to 1),
-                Reference(
-                    "foo_value",
-                    backingKey,
-                    VersionMap("foo" to 1)
-                )
-            )
-        )
-        RamDisk.memory[containerKey] = VolatileEntry(setCrdt.data, 1)
-
-        val store = Store(
-            StoreOptions<RefModeStoreData, RefModeStoreOp, RawEntity?>(
-                storageKey,
-                CollectionType(EntityType(schema)),
-                StorageMode.ReferenceMode
-            )
-        ).activate()
-
-        assertThat(store.getLocalData().values).isEmpty()
         assertThat(RamDisk.memory.get<CrdtSet.Data<RawEntity>>(containerKey)?.data?.values)
             .isEmpty()
     }
