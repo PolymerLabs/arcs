@@ -14,7 +14,6 @@ import {Manifest} from '../runtime/manifest.js';
 import {IsValidOptions, Recipe, RecipeComponent} from '../runtime/recipe/recipe.js';
 import {volatileStorageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
-import {Capabilities} from '../runtime/capabilities.js';
 import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {CreatableStorageKey} from '../runtime/storageNG/creatable-storage-key.js';
 import {Store} from '../runtime/storageNG/store.js';
@@ -23,17 +22,20 @@ import {DatabaseStorageKey} from '../runtime/storageNG/database-storage-key.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {digest} from '../platform/digest-web.js';
 
-export class StorageKeyRecipeResolverError extends Error {
+export class AllocatorRecipeResolverError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'StorageKeyRecipeResolverError';
+    this.name = 'AllocatorRecipeResolverError';
   }
 }
 
 /**
- * Responsible for resolving recipes with storage keys.
+ * Resolves recipes in preparation for the Allocator.
+ *
+ * The Allocator expects artifacts to be resolved in a way that is conducive for partition (particles should be
+ * distributed to the proper ArcHost) and  lifecycle management (for arcs within ArcHosts).
  */
-export class StorageKeyRecipeResolver {
+export class AllocatorRecipeResolver {
   private readonly runtime: Runtime;
   private readonly createHandleRegistry: Map<Handle, string> = new Map<Handle, string>();
   private createHandleIndex = 0;
@@ -59,7 +61,7 @@ export class StorageKeyRecipeResolver {
       this.validateHandles(recipe);
 
       if (!recipe.normalize(opts)) {
-        throw new StorageKeyRecipeResolverError(
+        throw new AllocatorRecipeResolverError(
           `Recipe ${recipe.name} failed to normalize:\n${[...opts.errors.values()].join('\n')}`);
       }
 
@@ -101,7 +103,7 @@ export class StorageKeyRecipeResolver {
 
     const resolvedRecipe = await (new RecipeResolver(arc).resolve(recipe, opts));
     if (!resolvedRecipe) {
-      throw new StorageKeyRecipeResolverError(
+      throw new AllocatorRecipeResolverError(
         `Recipe ${recipe.name} failed to resolve:\n${[...opts.errors.values()].join('\n')}`);
     }
     assert(resolvedRecipe.isResolved());
@@ -152,7 +154,7 @@ export class StorageKeyRecipeResolver {
       }
 
       if (createHandle.type.getEntitySchema() === null) {
-        throw new StorageKeyRecipeResolverError(`Handle '${createHandle.id}' was not properly resolved.`);
+        throw new AllocatorRecipeResolverError(`Handle '${createHandle.id}' was not properly resolved.`);
       }
 
       const storageKey = await resolver.createStorageKey(
@@ -183,14 +185,14 @@ export class StorageKeyRecipeResolver {
         .filter(h => h.fate === 'create');
 
       if (matches.length === 0) {
-        throw new StorageKeyRecipeResolverError(`No matching handles found for ${handle.localName}.`);
+        throw new AllocatorRecipeResolverError(`No matching handles found for ${handle.localName}.`);
       } else if (matches.length > 1) {
-        throw new StorageKeyRecipeResolverError(`More than one handle found for ${handle.localName}.`);
+        throw new AllocatorRecipeResolverError(`More than one handle found for ${handle.localName}.`);
       }
 
       const match = matches[0];
       if (!isLongRunning(match.recipe)) {
-        throw new StorageKeyRecipeResolverError(
+        throw new AllocatorRecipeResolverError(
           `Handle ${handle.localName} mapped to ephemeral handle '${match.id}'.`
         );
       }

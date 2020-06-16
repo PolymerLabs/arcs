@@ -148,4 +148,20 @@ mapOf(
       );
     });
   });
+  describe('indentFollowingLines', () => {
+    it('indents only following lines', () => {
+      assert.equal(`
+        ${ktUtils.indentFollowing(['foo', 'bar', 'baz'], 2)}
+            ${ktUtils.indentFollowing(['abc', 'def'], 3)}
+        ${ktUtils.indentFollowing(['yay'], 2)}
+      `, `
+        foo
+        bar
+        baz
+            abc
+            def
+        yay
+      `);
+    });
+  });
 });

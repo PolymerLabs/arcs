@@ -12,7 +12,9 @@ import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {Type} from '../runtime/type.js';
 import {Dictionary} from '../runtime/hot.js';
-import {CONSOLE_CLIENT_NAME} from '../tracelib/systrace-clients.js';
+
+// TODO(cypher1): Generate refinements and predicates for cpp
+// https://github.com/PolymerLabs/arcs/issues/4884
 
 // https://en.cppreference.com/w/cpp/keyword
 // [...document.getElementsByClassName('wikitable')[0].getElementsByTagName('code')].map(x => x.innerHTML);
@@ -211,12 +213,7 @@ class CppGenerator implements ClassGenerator {
     return getTypeInfo(name).defaultVal;
   }
 
-  generatePredicates() {
-    // TODO(cypher1): Generate refinements and predicates for cpp
-    // https://github.com/PolymerLabs/arcs/issues/4884
-  }
-
-  generate(schemaHash: string, fieldCount: number): string {
+  generate(fieldCount: number): string {
     const name = this.node.fullEntityClassName;
     console.log(`name: ${name}`);
     const aliases = this.node.sources.map(s => s.fullName);
@@ -277,7 +274,7 @@ protected:
   ${name}(const ${name}&) = default;
   ${name}& operator=(const ${name}&) = default;
 
-  static const char* _schema_hash() { return "${schemaHash}"; }
+  static const char* _schema_hash() { return "${this.node.hash}"; }
   static const int _field_count = ${fieldCount};
 
   ${this.fields.join('\n  ')}

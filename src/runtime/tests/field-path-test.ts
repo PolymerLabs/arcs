@@ -8,15 +8,18 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {validateFieldPath} from '../field-path.js';
-import {EntityType, SingletonType, CollectionType, TypeVariable} from '../type.js';
+import {resolveFieldPathType} from '../field-path.js';
+import {EntityType, SingletonType, CollectionType, TypeVariable, TupleType} from '../type.js';
 import {Manifest} from '../manifest.js';
 import {assert} from '../../platform/chai-web.js';
+import {deleteFieldRecursively} from '../util.js';
 
-async function parseSchema(manifestStr: string) {
+async function parseTypeFromSchema(manifestStr: string) {
   const manifest = await Manifest.parse(manifestStr);
   assert.lengthOf(manifest.allSchemas, 1);
-  return manifest.allSchemas[0];
+  const schema = manifest.allSchemas[0];
+  deleteFieldRecursively(schema, 'location');
+  return new EntityType(schema);
 }
 
 async function parseTypeFromHandle(handleName: string, manifestStr: string) {
@@ -25,17 +28,19 @@ async function parseTypeFromHandle(handleName: string, manifestStr: string) {
   const particle = manifest.allParticles[0];
   assert.isTrue(particle.handleConnectionMap.has(handleName));
   const handleSpec = particle.handleConnectionMap.get(handleName);
-  return handleSpec.type;
+  const type = handleSpec.type;
+  deleteFieldRecursively(type, 'location');
+  return type;
 }
 
 describe('field path validation', () => {
   it('empty field path is valid', async () => {
-    const type = new EntityType(await parseSchema('schema Foo'));
-    validateFieldPath([], type);
+    const type = await parseTypeFromSchema('schema Foo');
+    assert.deepEqual(resolveFieldPathType([], type), type);
   });
 
   it('top-level entity fields are valid', async () => {
-    const type = new EntityType(await parseSchema(`
+    const type = await parseTypeFromSchema(`
       schema Foo
         txt: Text
         num: Number
@@ -43,113 +48,125 @@ describe('field path validation', () => {
         txts: [Text]
         nums: [Number]
         bools: [Boolean]
-    `));
-    validateFieldPath(['txt'], type);
-    validateFieldPath(['num'], type);
-    validateFieldPath(['bool'], type);
-    validateFieldPath(['txts'], type);
-    validateFieldPath(['nums'], type);
-    validateFieldPath(['bools'], type);
+    `);
+    assert.strictEqual(resolveFieldPathType(['txt'], type), 'Text');
+    assert.strictEqual(resolveFieldPathType(['num'], type), 'Number');
+    assert.strictEqual(resolveFieldPathType(['bool'], type), 'Boolean');
+    assert.strictEqual(resolveFieldPathType(['txts'], type), 'Text');
+    assert.strictEqual(resolveFieldPathType(['nums'], type), 'Number');
+    assert.strictEqual(resolveFieldPathType(['bools'], type), 'Boolean');
   });
 
   it('unknown top-level fields are invalid', async () => {
-    const type = new EntityType(await parseSchema(`
+    const type = await parseTypeFromSchema(`
       schema Foo
         real: Number
-    `));
+    `);
     assert.throws(
-        () => validateFieldPath(['missing'], type),
-        `Field 'missing' does not exist in: schema Foo`);
+        () => resolveFieldPathType(['missing'], type),
+        `Schema 'Foo {real: Number}' does not contain field 'missing'.`);
   });
 
   it('cannot refer to fields inside a primitive', async () => {
-    const type = new EntityType(await parseSchema(`
+    const type = await parseTypeFromSchema(`
       schema Foo
         txt: Text
         txts: [Text]
-    `));
+    `);
     assert.throws(
-        () => validateFieldPath(['txt.inside'], type),
-        `Field 'txt.inside' does not exist in: schema Foo`);
+        () => resolveFieldPathType(['txt.inside'], type),
+        `Schema 'Foo {txt: Text, txts: [Text]}' does not contain field 'txt.inside'.`);
     assert.throws(
-        () => validateFieldPath(['txts.inside'], type),
-        `Field 'txts.inside' does not exist in: schema Foo`);
+        () => resolveFieldPathType(['txts.inside'], type),
+        `Schema 'Foo {txt: Text, txts: [Text]}' does not contain field 'txts.inside'.`);
   });
 
   it('reference fields are valid', async () => {
-    const type = new EntityType(await parseSchema(`
+    const type = await parseTypeFromSchema(`
       schema Foo
         person: &Person {name: Text}
-    `));
-    validateFieldPath(['person'], type);
+    `);
+    const expectedPersonType = await parseTypeFromSchema(`
+      schema Person
+        name: Text
+    `);
+    assert.deepEqual(resolveFieldPathType(['person'], type), expectedPersonType);
   });
 
   it('can refer to fields inside references', async () => {
-    const type = new EntityType(await parseSchema(`
+    const type = await parseTypeFromSchema(`
       schema Foo
         person: &Person {name: Text}
-    `));
-    validateFieldPath(['person', 'name'], type);
+    `);
+    assert.strictEqual(resolveFieldPathType(['person', 'name'], type), 'Text');
   });
 
   it('missing fields inside references are rejected', async () => {
-    const type = new EntityType(await parseSchema(`
+    const type = await parseTypeFromSchema(`
       schema Foo
         person: &Person {name: Text}
-    `));
+    `);
     assert.throws(
-        () => validateFieldPath(['person', 'missing'], type),
-        `Field 'person.missing' does not exist in: schema Foo`);
+        () => resolveFieldPathType(['person', 'missing'], type),
+        `Schema 'Person {name: Text}' does not contain field 'missing'.`);
   });
 
   it('can refer to fields inside collections of references', async () => {
-    const type = new EntityType(await parseSchema(`
+    const type = await parseTypeFromSchema(`
       schema Foo
         person: [&Person {name: Text}]
-    `));
-    validateFieldPath(['person', 'name'], type);
+    `);
+    assert.strictEqual(resolveFieldPathType(['person', 'name'], type), 'Text');
   });
 
   it('missing fields inside collections of references are rejected', async () => {
-    const type = new EntityType(await parseSchema(`
+    const type = await parseTypeFromSchema(`
       schema Foo
         person: [&Person {name: Text}]
-    `));
+    `);
     assert.throws(
-        () => validateFieldPath(['person', 'missing'], type),
-        `Field 'person.missing' does not exist in: schema Foo`);
+        () => resolveFieldPathType(['person', 'missing'], type),
+        `Schema 'Person {name: Text}' does not contain field 'missing'.`);
   });
 
   it('can refer to fields inside deeply nested references', async () => {
-    const type = new EntityType(await parseSchema(`
+    const type = await parseTypeFromSchema(`
       schema Foo
         aaa: [&Aaa {bbb: [&Bbb {ccc: [Number]}]}]
-    `));
-    validateFieldPath(['aaa'], type);
-    validateFieldPath(['aaa', 'bbb'], type);
-    validateFieldPath(['aaa', 'bbb', 'ccc'], type);
+    `);
+    const expectedAaaType = await parseTypeFromSchema(`
+      schema Aaa
+        bbb: [&Bbb {ccc: [Number]}]
+    `);
+    const expectedBbbType = await parseTypeFromSchema(`
+      schema Bbb
+        ccc: [Number]
+    `);
+    assert.deepEqual(resolveFieldPathType(['aaa'], type), expectedAaaType);
+    assert.deepEqual(resolveFieldPathType(['aaa', 'bbb'], type), expectedBbbType);
+    assert.strictEqual(resolveFieldPathType(['aaa', 'bbb', 'ccc'], type), 'Number');
   });
 
   it('works transparently with SingletonType', async () => {
-    const type = new SingletonType(new EntityType(await parseSchema(`
+    const type = new SingletonType(await parseTypeFromSchema(`
       schema Foo
         name: Text
-    `)));
-    validateFieldPath(['name'], type);
+    `));
+    assert.strictEqual(resolveFieldPathType(['name'], type), 'Text');
     assert.throws(
-      () => validateFieldPath(['missing'], type),
-      `Field 'missing' does not exist in: schema Foo`);
+      () => resolveFieldPathType(['missing'], type),
+      `Schema 'Foo {name: Text}' does not contain field 'missing'.`);
   });
 
   it('works transparently with CollectionType', async () => {
-    const type = new CollectionType(new EntityType(await parseSchema(`
+    const type = new CollectionType(await parseTypeFromSchema(`
       schema Foo
         name: Text
-    `)));
-    validateFieldPath(['name'], type);
+    `));
+    assert.strictEqual(resolveFieldPathType(['name'], type), 'Text');
     assert.throws(
-      () => validateFieldPath(['missing'], type),
-      `Field 'missing' does not exist in: schema Foo`);
+      () => resolveFieldPathType(['missing'], type),
+      `Schema 'Foo {name: Text}' does not contain field 'missing'.`);
   });
 
   describe('type variables', () => {
@@ -160,7 +177,7 @@ describe('field path validation', () => {
       `);
       assert.instanceOf(type, TypeVariable);
       assert.throws(
-          () => validateFieldPath(['foo'], type),
+          () => resolveFieldPathType(['foo'], type),
           `Type variable ~a does not contain field 'foo'.`);
     });
 
@@ -169,7 +186,7 @@ describe('field path validation', () => {
         particle P
           foo: reads ~a with {name: Text}
       `);
-      validateFieldPath(['name'], type);
+      assert.strictEqual(resolveFieldPathType(['name'], type), 'Text');
     });
 
     it('can refer to known fields inside type variables with write constraints', async () => {
@@ -177,7 +194,7 @@ describe('field path validation', () => {
         particle P
           foo: writes ~a with {name: Text}
       `);
-      validateFieldPath(['name'], type);
+      assert.strictEqual(resolveFieldPathType(['name'], type), 'Text');
     });
 
     it('can refer to known fields inside type variables with read-write constraints', async () => {
@@ -185,7 +202,7 @@ describe('field path validation', () => {
         particle P
           foo: reads writes ~a with {name: Text}
       `);
-      validateFieldPath(['name'], type);
+      assert.strictEqual(resolveFieldPathType(['name'], type), 'Text');
     });
 
     it('cannot refer to missing fields inside type variables that do not match the constraints', async () => {
@@ -194,8 +211,8 @@ describe('field path validation', () => {
           foo: reads ~a with {name: Text}
       `);
       assert.throws(
-          () => validateFieldPath(['missing'], type),
-          `Field 'missing' does not exist in`);
+          () => resolveFieldPathType(['missing'], type),
+          `Schema '* {name: Text}' does not contain field 'missing'.`);
     });
 
     it('can refer to known fields inside type variables constraints from other handles', async () => {
@@ -204,7 +221,7 @@ describe('field path validation', () => {
           foo: reads ~a with {name: Text}
           bar: writes ~a
       `);
-      validateFieldPath(['name'], type);
+      assert.strictEqual(resolveFieldPathType(['name'], type), 'Text');
     });
 
     it('can refer to known fields inside type variables from numerous constraints', async () => {
@@ -213,8 +230,8 @@ describe('field path validation', () => {
           foo: reads ~a with {name: Text}
           bar: writes ~a with {age: Number}
       `);
-      validateFieldPath(['name'], type);
-      validateFieldPath(['age'], type);
+      assert.strictEqual(resolveFieldPathType(['name'], type), 'Text');
+      assert.strictEqual(resolveFieldPathType(['age'], type), 'Number');
     });
 
     it('supports complex nesting inside type variables', async () => {
@@ -223,9 +240,57 @@ describe('field path validation', () => {
           foo1: reads ~a with {name: Text, friends: [&Person {name: Text}]}
           bar: writes ~a
       `);
-      validateFieldPath(['name'], type);
-      validateFieldPath(['friends'], type);
-      validateFieldPath(['friends', 'name'], type);
+      const expectedPersonType = await parseTypeFromSchema(`
+        schema Person
+          name: Text
+      `);
+      assert.strictEqual(resolveFieldPathType(['name'], type), 'Text');
+      assert.deepEqual(resolveFieldPathType(['friends'], type), expectedPersonType);
+      assert.strictEqual(resolveFieldPathType(['friends', 'name'], type), 'Text');
+    });
+  });
+
+  describe('tuples', () => {
+    it('supports tuples', async () => {
+      const fooType = await parseTypeFromSchema(`
+        schema Foo
+          foo: Text
+      `);
+      const barType = await parseTypeFromSchema(`
+        schema Bar
+          bar: Text
+      `);
+      const tupleType = new TupleType([fooType, barType]);
+      assert.deepEqual(resolveFieldPathType([], tupleType), tupleType);
+      assert.deepEqual(resolveFieldPathType(['first'], tupleType), fooType);
+      assert.strictEqual(resolveFieldPathType(['first', 'foo'], tupleType), 'Text');
+      assert.deepEqual(resolveFieldPathType(['second'], tupleType), barType);
+      assert.strictEqual(resolveFieldPathType(['second', 'bar'], tupleType), 'Text');
+    });
+
+    it('rejects invalid tuple components', async () => {
+      const entityType = await parseTypeFromSchema(`
+        schema Foo
+          foo: Text
+      `);
+      const tupleType = new TupleType([entityType, entityType]);
+      assert.throws(
+          () => resolveFieldPathType(['third'], tupleType),
+          `The third tuple component was requested but tuple only has 2 components.`);
+      assert.throws(
+          () => resolveFieldPathType(['missing'], tupleType),
+          `Expected a tuple component accessor of the form 'first', 'second', etc., but found 'missing'.`);
+    });
+
+    it('rejects missing fields nested inside tuples', async () => {
+      const entityType = await parseTypeFromSchema(`
+        schema Foo
+          foo: Text
+      `);
+      const tupleType = new TupleType([entityType, entityType]);
+      assert.throws(
+          () => resolveFieldPathType(['second', 'missing'], tupleType),
+          `Schema 'Foo {foo: Text}' does not contain field 'missing'.`);
     });
   });
 });

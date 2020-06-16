@@ -16,6 +16,13 @@ import arcs.core.type.Type
 import arcs.core.type.TypeFactory
 import arcs.core.type.TypeLiteral
 
+/**
+ * [MuxType] is a wrapper around an [EntityType]
+ *
+ * The [MuxType] is used when a particle needs access to entities of the same [EntityType].
+ * A particle can access several entities from a single storage stack if each entity is wrapped in
+ * a [MuxType]. This ensures the storage stack manages data of the same type.
+ */
 data class MuxType<T : Type>(private val innerType: T) :
     Type, Type.TypeContainer<T>, EntitySchemaProviderType {
     override val tag = Tag.Mux

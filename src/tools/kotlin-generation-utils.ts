@@ -91,6 +91,15 @@ export class KotlinGenerationUtils {
   indent(block: string, numberOfIndents: number = 1): string  {
     return leftPad(block, this.pref.indent * numberOfIndents);
   }
+
+  /**
+   * Joins a list of lines, indenting all but the first one.
+   */
+  indentFollowing(lines: string[], numberOfIndents: number) {
+    return lines
+      .map((line, idx) => idx > 0 ? ' '.repeat(this.pref.indent * numberOfIndents) + line : line)
+      .join('\n');
+  }
 }
 
 /** Everyone's favorite NPM module, install not required. */

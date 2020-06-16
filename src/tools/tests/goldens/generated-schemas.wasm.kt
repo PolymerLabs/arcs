@@ -37,7 +37,7 @@ abstract class AbstractGold : WasmParticleImpl() {
 
 
         fun reset() {
-          val_ = ""
+            val_ = ""
         }
 
         override fun encodeEntity(): NullTermByteArray {
@@ -160,7 +160,7 @@ abstract class AbstractGold : WasmParticleImpl() {
 
 
         fun reset() {
-          name = ""
+            name = ""
             age = 0.0
             lastCall = 0.0
             address = ""
@@ -173,12 +173,12 @@ abstract class AbstractGold : WasmParticleImpl() {
             val encoder = StringEncoder()
             encoder.encode("", entityId)
             name.let { encoder.encode("name:T", name) }
-        age.let { encoder.encode("age:N", age) }
-        lastCall.let { encoder.encode("lastCall:N", lastCall) }
-        address.let { encoder.encode("address:T", address) }
-        favoriteColor.let { encoder.encode("favoriteColor:T", favoriteColor) }
-        birthDayMonth.let { encoder.encode("birthDayMonth:N", birthDayMonth) }
-        birthDayDOM.let { encoder.encode("birthDayDOM:N", birthDayDOM) }
+            age.let { encoder.encode("age:N", age) }
+            lastCall.let { encoder.encode("lastCall:N", lastCall) }
+            address.let { encoder.encode("address:T", address) }
+            favoriteColor.let { encoder.encode("favoriteColor:T", favoriteColor) }
+            birthDayMonth.let { encoder.encode("birthDayMonth:N", birthDayMonth) }
+            birthDayDOM.let { encoder.encode("birthDayDOM:N", birthDayDOM) }
             return encoder.toNullTermByteArray()
         }
 
@@ -279,7 +279,7 @@ abstract class AbstractGold : WasmParticleImpl() {
 
 
         fun reset() {
-          num = 0.0
+            num = 0.0
         }
 
         override fun encodeEntity(): NullTermByteArray {
@@ -373,7 +373,7 @@ abstract class AbstractGold : WasmParticleImpl() {
 
 
         fun reset() {
-          num = 0.0
+            num = 0.0
             txt = ""
             lnk = ""
             flg = false
@@ -383,9 +383,9 @@ abstract class AbstractGold : WasmParticleImpl() {
             val encoder = StringEncoder()
             encoder.encode("", entityId)
             num.let { encoder.encode("num:N", num) }
-        txt.let { encoder.encode("txt:T", txt) }
-        lnk.let { encoder.encode("lnk:U", lnk) }
-        flg.let { encoder.encode("flg:B", flg) }
+            txt.let { encoder.encode("txt:T", txt) }
+            lnk.let { encoder.encode("lnk:U", lnk) }
+            flg.let { encoder.encode("flg:B", flg) }
             return encoder.toNullTermByteArray()
         }
 
@@ -517,7 +517,7 @@ abstract class AbstractGold : WasmParticleImpl() {
 
 
         fun reset() {
-          name = ""
+            name = ""
             age = 0.0
             lastCall = 0.0
             address = ""
@@ -530,12 +530,12 @@ abstract class AbstractGold : WasmParticleImpl() {
             val encoder = StringEncoder()
             encoder.encode("", entityId)
             name.let { encoder.encode("name:T", name) }
-        age.let { encoder.encode("age:N", age) }
-        lastCall.let { encoder.encode("lastCall:N", lastCall) }
-        address.let { encoder.encode("address:T", address) }
-        favoriteColor.let { encoder.encode("favoriteColor:T", favoriteColor) }
-        birthDayMonth.let { encoder.encode("birthDayMonth:N", birthDayMonth) }
-        birthDayDOM.let { encoder.encode("birthDayDOM:N", birthDayDOM) }
+            age.let { encoder.encode("age:N", age) }
+            lastCall.let { encoder.encode("lastCall:N", lastCall) }
+            address.let { encoder.encode("address:T", address) }
+            favoriteColor.let { encoder.encode("favoriteColor:T", favoriteColor) }
+            birthDayMonth.let { encoder.encode("birthDayMonth:N", birthDayMonth) }
+            birthDayDOM.let { encoder.encode("birthDayDOM:N", birthDayDOM) }
             return encoder.toNullTermByteArray()
         }
 
