@@ -17,6 +17,7 @@ import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.extension.toCrdtEntityData
 import arcs.core.data.Schema
+import arcs.core.data.util.ReferencableList
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
@@ -233,8 +234,11 @@ class DatabaseDriver<Data : Any>(
             is DatabaseData.Singleton -> data.value.toCrdtSingletonData(data.versionMap)
             is DatabaseData.Collection -> data.values.toCrdtSetData(data.versionMap)
             is DatabaseData.Entity -> data.rawEntity.toCrdtEntityData(data.versionMap) {
-                if (it is Reference) it
-                else CrdtEntity.Reference.buildReference(it)
+                when (it) {
+                    is Reference -> it
+                    is ReferencableList<*> -> CrdtEntity.Reference.wrapReferencable(it)
+                    else -> CrdtEntity.Reference.buildReference(it)
+                }
             }
         } as Data
 
@@ -287,9 +291,11 @@ class DatabaseDriver<Data : Any>(
             dataAndVersion = when (it) {
                 is DatabaseData.Entity ->
                     it.rawEntity.toCrdtEntityData(it.versionMap) { refable ->
-                        // Use the storage reference if it is one.
-                        if (refable is Reference) refable
-                        else CrdtEntity.Reference.buildReference(refable)
+                        when (refable) {
+                            is Reference -> refable
+                            is ReferencableList<*> -> CrdtEntity.Reference.wrapReferencable(refable)
+                            else -> CrdtEntity.Reference.buildReference(refable)
+                        }
                     }
                 is DatabaseData.Singleton ->
                     it.value.toCrdtSingletonData(it.versionMap)

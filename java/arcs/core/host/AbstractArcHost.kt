@@ -123,6 +123,7 @@ abstract class AbstractArcHost(
         contextCache.clear()
         pausedArcs.clear()
         scope.cancel()
+        schedulerProvider.cancelAll()
     }
 
     /**

@@ -88,7 +88,7 @@ class JvmSchedulerProvider(
     }
 
     @Synchronized
-    fun cancelAll() {
+    override fun cancelAll() {
         schedulersByArcId.values.toList().forEach { it.cancel() }
         threads.forEach { it?.interrupt() }
     }

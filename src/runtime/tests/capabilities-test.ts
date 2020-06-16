@@ -142,23 +142,22 @@ describe('Ttl Capability', () => {
           h0: create @persistent @ttl('30m')
           h1: create @ttl('2h')
           h2: create
+          h3: create @ttl('30 days')
+          h4: create @ttl('1 hour')
+          h5: create @ttl('15minutes')
     `;
     const recipe = (await Manifest.parse(manifestStr)).recipes[0];
-    const ttl0 = Ttl.fromAnnotations(recipe.handles[0].annotations);
-    assert.isTrue(ttl0.isEquivalent(Ttl.minutes(30)));
-    const ttl1 = Ttl.fromAnnotations(recipe.handles[1].annotations);
-    assert.isTrue(ttl1.isEquivalent(Ttl.hours(2)));
-    const ttl2 = Ttl.fromAnnotations(recipe.handles[2].annotations);
-    assert.isNull(ttl2);
+    assert.isTrue(Ttl.fromAnnotations(recipe.handles[0].annotations).isEquivalent(Ttl.minutes(30)));
+    assert.isTrue(Ttl.fromAnnotations(recipe.handles[1].annotations).isEquivalent(Ttl.hours(2)));
+    assert.isNull(Ttl.fromAnnotations(recipe.handles[2].annotations));
+    assert.isTrue(Ttl.fromAnnotations(recipe.handles[3].annotations).isEquivalent(Ttl.days(30)));
+    assert.isTrue(Ttl.fromAnnotations(recipe.handles[4].annotations).isEquivalent(Ttl.hours(1)));
+    assert.isTrue(Ttl.fromAnnotations(recipe.handles[5].annotations).isEquivalent(Ttl.minutes(15)));
   });
-  it('roundtrips ttl', () => {
-    const ttl3m = Ttl.fromString('3m');
-    assert.equal(ttl3m.count, 3);
-    assert.equal(ttl3m.units, TtlUnits.Minutes);
-    assert.equal(ttl3m.count, 3);
-    assert.equal(ttl3m.units, TtlUnits.Minutes);
-    assert.equal(Ttl.days(5).toString(),
-                 Ttl.fromString('5d').toString());
+
+  it('parses ttl from string', () => {
+    assert.isTrue(Ttl.fromString('3m').isEquivalent(Ttl.minutes(3)));
+    assert.isTrue(Ttl.fromString('3 minutes').isEquivalent(Ttl.minutes(3)));
   });
 
   it('calculates ttl', () => {
@@ -186,7 +185,7 @@ describe('Ttl Capability', () => {
       ttl60m.calculateExpiration(ttl60m.calculateExpiration(start)).getTime());
   });
 
-  it('fails creating range with incompatible min and max', () => {
+  it('roundtrips to and from literal ttl', () => {
     assert.isTrue(Ttl.infinite().isEquivalent(Ttl.fromLiteral(Ttl.infinite().toLiteral())));
     assert.isTrue(Ttl.days(5).isEquivalent(Ttl.fromLiteral(Ttl.days(5).toLiteral())));
     assert.isTrue(Ttl.zero().isEquivalent(Ttl.fromLiteral(Ttl.zero().toLiteral())));
