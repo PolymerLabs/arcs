@@ -3118,19 +3118,19 @@ resource SomeName
         particle A
           output: writes T {foo: Text}
           claim output.bar is something
-      `), `Field 'bar' does not exist`);
+      `), `Schema 'T {foo: Text}' does not contain field 'bar'.`);
 
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
           output: writes T {foo: &Bar {bar: Number}}
           claim output.foo.baz is something
-      `), `Field 'foo.baz' does not exist`);
+      `), `Schema 'Bar {bar: Number}' does not contain field 'baz'.`);
 
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
           output: writes [T {foo: [&Bar {bar: Number}]}]
           claim output.foo.bar.baz is something
-      `), `Field 'foo.bar.baz' does not exist`);
+      `), `Field path 'bar.baz' could not be resolved because 'baz' is a primitive.`);
     });
 
     it('supports claim statement with multiple tags', async () => {
@@ -3212,7 +3212,7 @@ resource SomeName
           input: writes T {foo: Text}
           output: writes T {foo: Text}
           claim output.foo derives from input.bar
-      `), `Field 'bar' does not exist`);
+      `), `Schema 'T {foo: Text}' does not contain field 'bar'.`);
     });
 
     it('supports mixed claims with multiple tags, not tags, and "derives from"', async () => {
@@ -3315,19 +3315,19 @@ resource SomeName
         particle A
           input: reads T {foo: Text}
           check input.bar is something
-      `), `Field 'bar' does not exist`);
+      `), `Schema 'T {foo: Text}' does not contain field 'bar'.`);
 
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
           input: reads T {foo: &Bar {bar: Number}}
           check input.foo.baz is something
-      `), `Field 'foo.baz' does not exist`);
+      `), `Schema 'Bar {bar: Number}' does not contain field 'baz'.`);
 
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
           input: reads [T {foo: [&Bar {bar: Number}]}]
           check input.foo.bar.baz is something
-      `), `Field 'foo.bar.baz' does not exist`);
+      `), `Field path 'bar.baz' could not be resolved because 'baz' is a primitive.`);
     });
 
     it(`supports 'is from store' checks`, async () => {
@@ -3627,7 +3627,7 @@ resource SomeName
         resource NobIdJson
           start
           ${data}
-      `), `Field 'foo' does not exist in`);
+      `), `Schema 'NobIdStore {nobId: Text}' does not contain field 'foo'.`);
 
       await assertThrowsAsync(async () => await parseManifest(`
         store NobId of NobIdStore {nobId: Text, someRef: [&Foo {foo: [Text]}]} in NobIdJson
@@ -3635,7 +3635,7 @@ resource SomeName
         resource NobIdJson
           start
           ${data}
-      `), `Field 'someRef.bar' does not exist in`);
+      `), `Schema 'Foo {foo: [Text]}' does not contain field 'bar'.`);
     });
 
     it(`doesn't allow mixing 'and' and 'or' operations without nesting`, async () => {
