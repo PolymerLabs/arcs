@@ -14,6 +14,14 @@ package arcs.core.storage.util
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.VersionMap
 import arcs.core.storage.Reference
+import kotlin.coroutines.coroutineContext
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -48,17 +56,52 @@ class SendQueue(
      * Enqueues a send function on the send queue, blocking on its execution until the provided
      * [references] are all available in the [backingStore].
      */
-    suspend fun enqueueBlocking(references: List<Reference>, runnable: suspend () -> Unit) {
-        mutex.withLock {
+    suspend fun enqueueBlocking(references: List<Reference>, runnable: suspend () -> Unit): Deferred<Unit> {
+        val completableDeferred = CompletableDeferred<Unit>()
+        val queuedBlockName = mutex.withLock {
             val block = "${currentBlock++}"
-            queue.add(PendingSend.Blocking(block, runnable))
-            holdQueue.enqueue(references.map { HoldQueue.Entity(it.id, it.version?.copy()) }) {
+            val holdQueueId = holdQueue.enqueue(
+                references.map { HoldQueue.Entity(it.id, it.version?.copy()) }
+            ) {
                 drain(block)
             }
+            queue.add(
+                PendingSend.Blocking(block, holdQueueId) {
+                    try {
+                        runnable()
+                    } finally {
+                        completableDeferred.complete(Unit)
+                    }
+                }
+            )
+            block
         }
 
         // Additionally, we can drain any non-blocked items.
         if (drainOnEnqueue) drain()
+
+        val localScope = CoroutineScope(Dispatchers.Unconfined + Job())
+        completableDeferred.invokeOnCompletion {
+            if (it is CancellationException) localScope.launch {
+                removeBlocking(queuedBlockName)
+            }
+        }
+
+        return completableDeferred
+    }
+
+    /**
+     * Removes a send function from the send queue which was blocking on the availability of
+     * references in a [backingStore].
+     */
+    suspend fun removeBlocking(enqueueId: String) = mutex.withLock {
+        val toRemove = queue.filter {
+            if (it is PendingSend.Blocking && it.block == enqueueId) {
+                holdQueue.removeFromQueue(it.holdQueueId)
+                true
+            } else false
+        }
+        queue.removeAll(toRemove)
     }
 
     /**
@@ -109,6 +152,7 @@ class SendQueue(
          */
         data class Blocking(
             val block: String,
+            val holdQueueId: Int,
             override val fn: suspend () -> Unit
         ) : PendingSend(fn)
     }

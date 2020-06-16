@@ -35,6 +35,7 @@ import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.type.Type
+import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,6 +46,7 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -54,6 +56,9 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 @ExperimentalCoroutinesApi
 class ReferenceModeStoreTest {
+    @get:Rule
+    val log = LogRule()
+
     private lateinit var testKey: ReferenceModeStorageKey
     private lateinit var baseStore: Store<CrdtCount.Data, CrdtCount.Operation, Int>
     private lateinit var schema: Schema
@@ -339,7 +344,6 @@ class ReferenceModeStoreTest {
                 job.complete()
                 return@ProxyCallback
             }
-            return@ProxyCallback
         })
 
         activeStore.onProxyMessage(
@@ -582,6 +586,7 @@ class ReferenceModeStoreTest {
         val job = Job(coroutineContext[Job.Key])
         var backingStoreSent = false
         val id = activeStore.on(ProxyCallback {
+            log("active store saw: $it")
             if (!backingStoreSent) {
                 job.completeExceptionally(
                     AssertionError("Backing store data should've been sent first.")
@@ -600,8 +605,11 @@ class ReferenceModeStoreTest {
         })
 
         val containerJob = launch {
+            log("sending data to container")
             activeStore.containerStore.onReceive(referenceCollection.data, id + 1)
+            log("data sent to container")
         }
+        containerJob.join()
 
         backingStoreSent = true
 
@@ -625,8 +633,10 @@ class ReferenceModeStoreTest {
 
         val backingStore = activeStore.backingStore.store("an-id")
         backingStore.store.onReceive(entityCrdt.data, id + 2)
+        log("data sent to backing store")
 
         activeStore.idle()
+        log("store went idle")
 
         job.join()
         containerJob.join()

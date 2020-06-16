@@ -54,12 +54,15 @@ import arcs.core.util.Result
 import arcs.core.util.TaggedLog
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
+import kotlinx.coroutines.CancellationException
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
@@ -67,6 +70,10 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
 
 /**
  * [ReferenceModeStore]s adapt between a collection ([CrdtSet] or [CrdtSingleton]) of entities from
@@ -168,6 +175,7 @@ class ReferenceModeStore private constructor(
         ) { "Provided type must contain CrdtModelType" }.containedType
 
         containerCallbackToken = containerStore.on(ProxyCallback {
+            log.debug { "Message from container: $it" }
             CoroutineScope(coroutineContext).launch {
                 receiveQueue.enqueue(Message.PreEnqueuedFromContainer(it.toReferenceModeMessage()))
             }
@@ -303,7 +311,19 @@ class ReferenceModeStore private constructor(
                 if (pendingIds.isEmpty()) {
                     sendQueue.enqueue(::sender)
                 } else {
-                    sendQueue.enqueueBlocking(pendingIds, ::sender)
+                    try {
+                        withTimeout(BLOCKING_QUEUE_TIMEOUT_MILLIS) {
+                            sendQueue.enqueueBlocking(pendingIds, ::sender).await()
+                        }
+                    } catch (e: TimeoutCancellationException) {
+                        val ops = buildClearContainerStoreOps()
+                        log.warning {
+                            "SyncRequest timed out, sending clear operations to container store"
+                        }
+                        log.debug { "Clear ops = $ops" }
+                        containerStore.onProxyMessage(ProxyMessage.Operations(ops, null))
+                        onProxyMessage(proxyMessage)
+                    }
                 }
                 true
             }
@@ -480,7 +500,7 @@ class ReferenceModeStore private constructor(
         ) {
             // Find any pending ids given the reference ids of the data values.
             dataValues.forEach { (refId, dataValue) ->
-                val version = dataValue.versionMap
+                val version = (dataValue.value as? Reference)?.version ?: dataValue.versionMap
 
                 // This object is requested at an empty version, which means that it's new and
                 // can be directly constructed rather than waiting for an update.
@@ -631,7 +651,33 @@ class ReferenceModeStore private constructor(
         }
     }
 
+    private fun buildClearContainerStoreOps(): List<CrdtOperation> {
+        val containerModel = containerStore.localModel
+        val actor = "ReferenceModeStore(${hashCode()})"
+        val containerVersion = containerModel.versionMap.copy()
+        return if (containerModel is CrdtSet<*>) {
+            val containerData = containerModel.data
+            containerData.values.map { dataValue ->
+                CrdtSet.Operation.Remove(actor, containerVersion, dataValue.value.value)
+            }
+        } else if (containerModel is CrdtSingleton<*>) {
+            listOf(CrdtSingleton.Operation.Clear<Reference>(actor, containerVersion))
+        } else throw UnsupportedOperationException()
+    }
+
     companion object {
+        /**
+         * Timeout duration in milliseconds we are allowed to wait for results from the
+         * [BackingStore] during a [SyncRequest] or a call to [ReferenceModeStore.getLocalData].
+         * If this timeout is exceeded, we will assume the backing store is corrupt and will log a
+         * warning and clear the container store.
+         *
+         * This timeout value is high because we don't want to be too aggressive with clearing the
+         * container store, while also avoiding a scenario where the [ReferenceModeStore] is hung
+         * up forever.
+         */
+        /* internal */ var BLOCKING_QUEUE_TIMEOUT_MILLIS = 30000L
+
         @Suppress("UNCHECKED_CAST")
         suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
             options: StoreOptions<Data, Op, T>
