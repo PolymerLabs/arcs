@@ -15,7 +15,7 @@ import {Type, CollectionType, ReferenceType, SingletonType, TupleType} from '../
 import {Schema} from '../runtime/schema.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 import {assert} from '../platform/assert-web.js';
-import {findLongRunningArcId} from './plan-resolver.js';
+import {findLongRunningArcId} from './allocator-resolver.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Capabilities, Persistence, Shareable} from '../runtime/capabilities.js';
 import {CapabilityEnum, DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';

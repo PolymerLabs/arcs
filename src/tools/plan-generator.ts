@@ -16,7 +16,7 @@ import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Capabilities, Ttl, TtlUnits, Persistence, Shareable} from '../runtime/capabilities.js';
-import {findLongRunningArcId} from './plan-resolver.js';
+import {findLongRunningArcId} from './allocator-resolver.js';
 import {digest} from '../platform/digest-web.js';
 
 const ktUtils = new KotlinGenerationUtils();

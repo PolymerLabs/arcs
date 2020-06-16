@@ -23,17 +23,17 @@ import {DatabaseStorageKey} from '../runtime/storageNG/database-storage-key.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {digest} from '../platform/digest-web.js';
 
-export class PlanResolverError extends Error {
+export class AllocatorResolverError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'PlanResolverError';
+    this.name = 'AllocatorResolverError';
   }
 }
 
 /**
  * Responsible for resolving recipes with storage keys.
  */
-export class PlanResolver {
+export class AllocatorResolver {
   private readonly runtime: Runtime;
   private readonly createHandleRegistry: Map<Handle, string> = new Map<Handle, string>();
   private createHandleIndex = 0;
@@ -59,7 +59,7 @@ export class PlanResolver {
       this.validateHandles(recipe);
 
       if (!recipe.normalize(opts)) {
-        throw new PlanResolverError(
+        throw new AllocatorResolverError(
           `Recipe ${recipe.name} failed to normalize:\n${[...opts.errors.values()].join('\n')}`);
       }
 
@@ -101,7 +101,7 @@ export class PlanResolver {
 
     const resolvedRecipe = await (new RecipeResolver(arc).resolve(recipe, opts));
     if (!resolvedRecipe) {
-      throw new PlanResolverError(
+      throw new AllocatorResolverError(
         `Recipe ${recipe.name} failed to resolve:\n${[...opts.errors.values()].join('\n')}`);
     }
     assert(resolvedRecipe.isResolved());
@@ -152,7 +152,7 @@ export class PlanResolver {
       }
 
       if (createHandle.type.getEntitySchema() === null) {
-        throw new PlanResolverError(`Handle '${createHandle.id}' was not properly resolved.`);
+        throw new AllocatorResolverError(`Handle '${createHandle.id}' was not properly resolved.`);
       }
 
       const storageKey = await resolver.createStorageKey(
@@ -183,14 +183,14 @@ export class PlanResolver {
         .filter(h => h.fate === 'create');
 
       if (matches.length === 0) {
-        throw new PlanResolverError(`No matching handles found for ${handle.localName}.`);
+        throw new AllocatorResolverError(`No matching handles found for ${handle.localName}.`);
       } else if (matches.length > 1) {
-        throw new PlanResolverError(`More than one handle found for ${handle.localName}.`);
+        throw new AllocatorResolverError(`More than one handle found for ${handle.localName}.`);
       }
 
       const match = matches[0];
       if (!isLongRunning(match.recipe)) {
-        throw new PlanResolverError(
+        throw new AllocatorResolverError(
           `Handle ${handle.localName} mapped to ephemeral handle '${match.id}'.`
         );
       }
