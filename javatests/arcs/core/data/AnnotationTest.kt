@@ -18,51 +18,44 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/** Tests for [Annotation]. */
 @RunWith(JUnit4::class)
 class AnnotationTest {
     @Test
-    fun from_string_no_param() {
-        val annotations = Annotation.fromString("@test")
-        assertThat(annotations.size).isEqualTo(1)
-        assertThat(annotations[0].name).isEqualTo("test")
-        assertThat(annotations[0].params.size).isEqualTo(0)
-    }
-
-    @Test
-    fun from_string_with_single_param() {
-        val annotations = Annotation.fromString("@test(hello: 'world world!')")
-        assertThat(annotations.size).isEqualTo(1)
-        assertThat(annotations[0].name).isEqualTo("test")
-        assertThat(annotations[0].params.size).isEqualTo(1)
-        assertThat(annotations[0].params.get("hello")).isEqualTo(AnnotationParam.Str("world world!"))
-    }
-
-    @Test
-    fun from_string_with_multiple_params() {
-        val annotations = Annotation.fromString("@test(hello: 'world', foo: 5, bar: true)")
-        assertThat(annotations.size).isEqualTo(1)
-        assertThat(annotations[0].name).isEqualTo("test")
-        assertThat(annotations[0].params.size).isEqualTo(3)
-        assertThat(annotations[0].params.get("hello")).isEqualTo(AnnotationParam.Str("world"))
-        assertThat(annotations[0].params.get("foo")).isEqualTo(AnnotationParam.Num(5))
-        assertThat(annotations[0].params.get("bar")).isEqualTo(AnnotationParam.Bool(true))
-    }
-    @Test
-    fun from_string_multiple_annotations() {
-        val annotations = Annotation.fromString(
-            "@foo(bar: 'baz') @qux @test(hello: 'world', five: 5, yes: true)"
+    fun fromString_noParam() {
+        val annotation = Annotation.fromString("@test")
+        val expected = Annotation(
+            name = "test",
+            params = emptyMap()
         )
-        assertThat(annotations.size).isEqualTo(3)
-        assertThat(annotations[0].name).isEqualTo("foo")
-        assertThat(annotations[0].params.get("bar")?.strValue()).isEqualTo("baz")
-        assertThat(annotations[0].params.size).isEqualTo(1)
-        assertThat(annotations[1].name).isEqualTo("qux")
-        assertThat(annotations[1].params.size).isEqualTo(0)
-        assertThat(annotations[2].name).isEqualTo("test")
-        assertThat(annotations[2].params.size).isEqualTo(3)
-        assertThat(annotations[2].params.get("hello")?.strValue()).isEqualTo("world")
-        assertThat(annotations[2].params.get("five")?.numValue()).isEqualTo(5)
-        assertThat(annotations[2].params.get("yes")?.boolValue()).isEqualTo(true)
+        assertThat(annotation).isEqualTo(expected)
+    }
+
+    @Test
+    fun fromString_singleParam() {
+        val annotation = Annotation.fromString("@test(hello: 'world world!')")
+        val expected = Annotation(
+            name = "test",
+            params = mapOf(
+                "hello" to AnnotationParam.Str("world world!")
+            )
+        )
+        assertThat(annotation).isEqualTo(expected)
+    }
+
+    @Test
+    fun fromString_multipleParams() {
+        val annotation = Annotation.fromString("@test(hello: 'world', foo: 5, bar: true)")
+        val expected = Annotation(
+            name = "test",
+            params = mapOf(
+                "hello" to AnnotationParam.Str("world"),
+                "foo" to AnnotationParam.Num(5),
+                "bar" to AnnotationParam.Bool(true)
+            )
+        )
+        assertThat(annotation).isEqualTo(expected)
+        // assertThat(annotation.params["hello"].value).isEqualTo("world")
+        // assertThat(annotation.params["foo"].value).isEqualTo(5)
+        // assertThat(annotation.params["bar"].value).isEqualTo(true)
     }
 }

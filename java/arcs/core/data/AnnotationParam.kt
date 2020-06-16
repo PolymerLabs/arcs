@@ -11,28 +11,14 @@
 
 package arcs.core.data
 
-/** A class containing an annotation param. */
-sealed class AnnotationParam(strValue: String?, numValue: Int? = null, boolValue: Boolean? = null) {
-    data class Str(val strValue: String) : AnnotationParam(strValue)
-    data class Num(val numValue: Int) : AnnotationParam(null, numValue)
-    data class Bool(val boolValue: Boolean) : AnnotationParam(null, null, boolValue)
-
-    fun strValue(): String {
-        if (this is AnnotationParam.Str) return strValue
-        throw UnsupportedOperationException("Unsupported strValue: $this.")
-    }
-
-    fun numValue(): Int {
-        if (this is AnnotationParam.Num) return numValue
-        throw UnsupportedOperationException("Unsupported numValue: $this.")
-    }
-
-    fun boolValue(): Boolean {
-        if (this is AnnotationParam.Bool) return boolValue
-        throw UnsupportedOperationException("Unsupported boolValue: $this.")
-    }
+/** [Annotation] parameter's value: may be string, numeric or boolean. */
+sealed class AnnotationParam {
+    data class Str(val value: String) : AnnotationParam()
+    data class Num(val value: Int) : AnnotationParam()
+    data class Bool(val value: Boolean) : AnnotationParam()
 
     companion object {
+        private val NUM_VALUE_PATTERN = "-?\\d+".toRegex()
         private val STR_VALUE_PATTERN = "^'(.*)'$".toRegex()
 
         fun fromString(value: String): AnnotationParam {
@@ -40,7 +26,7 @@ sealed class AnnotationParam(strValue: String?, numValue: Int? = null, boolValue
                 "true" -> AnnotationParam.Bool(true)
                 "false" -> AnnotationParam.Bool(false)
                 else -> {
-                    if (value.matches("-?\\d+".toRegex())) AnnotationParam.Num(value.toInt())
+                    if (value.matches(NUM_VALUE_PATTERN)) AnnotationParam.Num(value.toInt())
                     else {
                         val valueMatch = requireNotNull(STR_VALUE_PATTERN.matchEntire(value)) {
                             "Unexpected annotation value: $value"
