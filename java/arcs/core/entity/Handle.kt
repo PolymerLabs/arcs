@@ -59,9 +59,13 @@ interface Handle {
     fun getProxy(): StorageProxy<*, *, *>
 }
 
-/** Suspends until the [Handle] has synced with the store. */
-suspend fun <T : Handle> T.awaitReady(): T = suspendCancellableCoroutine<T> { cont ->
-    this.onReady {
+@Deprecated("b/157188866: handle/particle lifecycle updates will obsolete this soon")
+suspend fun <T : Handle> T.awaitReady(): T = suspendCancellableCoroutine { cont ->
+    if (this is ReadableHandle<*>) {
+        this.onReady {
+            if (cont.isActive) cont.resume(this@awaitReady)
+        }
+    } else {
         if (cont.isActive) cont.resume(this@awaitReady)
     }
 }
