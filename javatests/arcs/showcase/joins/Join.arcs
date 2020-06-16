@@ -1,12 +1,12 @@
 meta
-  namespace: arcs.schematests.joins
+  namespace: arcs.showcase.joins
 
 particle Writer
   products: writes [Product {name: Text, photo: URL}]
   reviews: writes [Review {author: Text, content: Text, rating: Number}]
   manufacturers: writes [Manufacturer {name: Text, address: Text}]
 
-particle Reader in 'arcs.schematests.joins.Reader'
+particle Reader in 'arcs.showcase.joins.Reader'
   data: reads [(
     &Product {name: Text, photo: URL},
     &Review {author: Text, content: Text, rating: Number},

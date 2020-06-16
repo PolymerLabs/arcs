@@ -9,6 +9,7 @@ class TestHost(
 ) : AbstractArcHost(
     object : SchedulerProvider {
         override fun invoke(arcId: String) = scheduler
+        override fun cancelAll() = scheduler.cancel()
     },
     *particles
 ) {
