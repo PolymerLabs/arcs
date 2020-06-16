@@ -29,28 +29,33 @@ import kotlinx.coroutines.CoroutineScope
 class GoldTestHarness<P : AbstractGold>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
-    HandleSpec("data", HandleMode.Read, SingletonType(EntityType(Gold_Data.SCHEMA)), setOf(Gold_Data)),
+    HandleSpec(
+        "data",
+        HandleMode.ReadWrite,
+        SingletonType(EntityType(Gold_Data.SCHEMA)),
+        setOf(Gold_Data)
+    ),
     HandleSpec(
         "allPeople",
-        HandleMode.Read,
+        HandleMode.ReadWrite,
         CollectionType(EntityType(Gold_AllPeople.SCHEMA)),
         setOf(Gold_AllPeople)
     ),
     HandleSpec(
         "qCollection",
-        HandleMode.ReadQuery,
+        HandleMode.ReadWriteQuery,
         CollectionType(EntityType(Gold_QCollection.SCHEMA)),
         setOf(Gold_QCollection)
     ),
     HandleSpec(
         "alias",
-        HandleMode.Write,
+        HandleMode.ReadWrite,
         SingletonType(EntityType(Gold_Alias.SCHEMA)),
         setOf(Gold_Alias)
     ),
     HandleSpec(
         "collection",
-        HandleMode.Read,
+        HandleMode.ReadWrite,
         CollectionType(EntityType(Gold_Collection.SCHEMA)),
         setOf(Gold_Collection)
     )

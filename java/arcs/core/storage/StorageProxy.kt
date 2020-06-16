@@ -127,14 +127,6 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         busySendingMessagesChannel.asFlow().debounce(50).filter { !it }.first()
     }
 
-    /**
-     * Suspends until there are no more outgoing messages or handle notifications in flight.
-     */
-    suspend fun waitForIdle() {
-        scheduler.waitForIdle()
-        awaitOutgoingMessageQueueDrain()
-    }
-
     /* visible for testing */
     fun getStateForTesting(): ProxyState = stateHolder.value.state
 
@@ -143,7 +135,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      * in synchronized mode. This is done via a two-step process:
      *   1) When constructed, all readable handles call this method to move the proxy from its
      *      initial state of [NO_SYNC] to [READY_TO_SYNC].
-     *   2) [ParticleContext] then triggers the actual sync request after the arc has been
+     *   2) [EntityHandleManager] then triggers the actual sync request after the arc has been
      *      set up and all particles have received their onStart events.
      */
     fun prepareForSync() {
@@ -280,7 +272,6 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         val result = CompletableDeferred<Boolean>()
         sendMessageToStore(ProxyMessage.Operations(listOf(op), null), result)
 
-        // TODO: the returned Deferred doesn't account for this update propagation; should it?
         notifyUpdate(value)
         return result
     }
@@ -456,7 +447,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         log.debug { "notifying ready" }
         val tasks = handleCallbacks.value.let {
             buildCallbackTasks(handleCallbacks.value.onReady, "onReady") { it() } +
-                buildCallbackTasks(handleCallbacks.value.notify, "notify(READY)") {
+                buildCallbackTasks(handleCallbacks.value.notify, "notify") {
                     it(StorageEvent.READY)
                 }
         }

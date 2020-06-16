@@ -11,7 +11,9 @@
 package arcs.core.host
 
 import arcs.core.allocator.Allocator
-import arcs.core.entity.Handle
+import arcs.core.allocator.Arc
+import arcs.core.data.Plan
+import arcs.core.entity.awaitReady
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
@@ -24,7 +26,6 @@ import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.After
@@ -90,14 +91,15 @@ class LifecycleTest {
     @Test
     fun singleReadHandle() = runTest {
         val name = "SingleReadHandleParticle"
-        val arc = allocator.startArcForPlan(SingleReadHandleTestPlan).waitForStart()
+        val arc = startArc(SingleReadHandleTestPlan)
         val particle: SingleReadHandleParticle = testHost.getParticle(arc.id, name)
         val data = testHost.singletonForTest<SingleReadHandleParticle_Data>(arc.id, name, "data")
-
-        storeAndWait(data) { it.store(SingleReadHandleParticle_Data(5.0)) }
+        withContext(data.dispatcher) {
+            data.store(SingleReadHandleParticle_Data(5.0))
+        }
+        waitForAllTheThings()
         arc.stop()
         arc.waitForStop()
-
         assertThat(particle.events).isEqualTo(listOf(
             "onFirstStart",
             "onStart",
@@ -112,14 +114,15 @@ class LifecycleTest {
     @Test
     fun singleWriteHandle() = runTest {
         val name = "SingleWriteHandleParticle"
-        val arc = allocator.startArcForPlan(SingleWriteHandleTestPlan).waitForStart()
+        val arc = startArc(SingleWriteHandleTestPlan)
         val particle: SingleWriteHandleParticle = testHost.getParticle(arc.id, name)
         val data = testHost.singletonForTest<SingleWriteHandleParticle_Data>(arc.id, name, "data")
-
-        storeAndWait(data) { it.store(SingleWriteHandleParticle_Data(12.0)) }
+        withContext(data.dispatcher) {
+            data.store(SingleWriteHandleParticle_Data(12.0))
+        }
+        waitForAllTheThings()
         arc.stop()
         arc.waitForStop()
-
         assertThat(particle.events)
             .isEqualTo(listOf("onFirstStart", "onStart", "onReady", "onShutdown"))
     }
@@ -127,18 +130,26 @@ class LifecycleTest {
     @Test
     fun multiHandle() = runTest {
         val name = "MultiHandleParticle"
-        val arc = allocator.startArcForPlan(MultiHandleTestPlan).waitForStart()
+        val arc = startArc(MultiHandleTestPlan)
         val particle: MultiHandleParticle = testHost.getParticle(arc.id, name)
         val data = testHost.singletonForTest<MultiHandleParticle_Data>(arc.id, name, "data")
         val list = testHost.collectionForTest<MultiHandleParticle_List>(arc.id, name, "list")
         val result = testHost.collectionForTest<MultiHandleParticle_Result>(arc.id, name, "result")
         val config = testHost.singletonForTest<MultiHandleParticle_Config>(arc.id, name, "config")
 
-        storeAndWait(data) { it.store(MultiHandleParticle_Data(3.2)) }
-        storeAndWait(list) { it.store(MultiHandleParticle_List("hi")) }
+        withContext(data.dispatcher) {
+            data.store(MultiHandleParticle_Data(3.2))
+            waitForAllTheThings()
+            list.store(MultiHandleParticle_List("hi"))
+        }
+        waitForAllTheThings()
         // Write-only handle ops do not trigger any lifecycle APIs.
-        storeAndWait(result) { it.store(MultiHandleParticle_Result(19.0)) }
-        storeAndWait(config) { it.store(MultiHandleParticle_Config(true)) }
+        withContext(result.dispatcher) {
+            result.store(MultiHandleParticle_Result(19.0))
+            waitForAllTheThings()
+            config.store(MultiHandleParticle_Config(true))
+        }
+        waitForAllTheThings()
         arc.stop()
         arc.waitForStop()
 
@@ -161,31 +172,38 @@ class LifecycleTest {
     }
 
     @Test
-    fun pausing() = runTest {
+    fun pausing() = runBlocking {
         val name = "PausingParticle"
-        val arc = allocator.startArcForPlan(PausingTestPlan).waitForStart()
+        val arc = startArc(PausingTestPlan)
 
         // Test handles use the same storage proxies as the real handles which will be closed
         // when the arc is paused, so we need to re-create them after unpausing.
         // TODO: allow test handles to persist across arc shutdown?
         val makeHandles = suspend {
             Pair(
-                testHost.singletonForTest<PausingParticle_Data>(arc.id, name, "data"),
-                testHost.collectionForTest<PausingParticle_List>(arc.id, name, "list")
+                testHost.singletonForTest<PausingParticle_Data>(arc.id, name, "data").awaitReady(),
+                testHost.collectionForTest<PausingParticle_List>(arc.id, name, "list").awaitReady()
             )
         }
         val (data1, list1) = makeHandles()
-        storeAndWait(data1) { it.store(PausingParticle_Data(1.1)) }
-        storeAndWait(list1) { it.store(PausingParticle_List("first")) }
+        withContext(data1.dispatcher) {
+            data1.store(PausingParticle_Data(1.1))
+            waitForAllTheThings()
+            list1.store(PausingParticle_List("first"))
+        }
+        waitForAllTheThings()
 
         testHost.pause()
-        arc.waitForStop()
         testHost.unpause()
 
         val particle: PausingParticle = testHost.getParticle(arc.id, name)
         val (data2, list2) = makeHandles()
-        storeAndWait(data2) { it.store(PausingParticle_Data(2.2)) }
-        storeAndWait(list2) { it.store(PausingParticle_List("second")) }
+        withContext(data2.dispatcher) {
+            data2.store(PausingParticle_Data(2.2))
+            waitForAllTheThings()
+            list2.store(PausingParticle_List("second"))
+        }
+        waitForAllTheThings()
         arc.stop()
         arc.waitForStop()
 
@@ -206,11 +224,14 @@ class LifecycleTest {
         )
     }
 
-    private suspend fun <H : Handle> storeAndWait(handle: H, op: (H) -> Job) {
-        // Wait for the store to complete the op.
-        withContext(handle.dispatcher) { op(handle) }.join()
+    private suspend fun startArc(plan: Plan): Arc {
+        val arc = allocator.startArcForPlan(plan).waitForStart()
+        waitForAllTheThings()
+        return arc
+    }
 
-        // Wait for the update to propagate from the test handle to the particle handle.
-        handle.getProxy().waitForIdle()
+    private suspend fun waitForAllTheThings() {
+        scheduler.waitForIdle()
+        storeManager.waitForIdle()
     }
 }

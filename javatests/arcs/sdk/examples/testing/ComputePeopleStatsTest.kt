@@ -1,11 +1,13 @@
 package arcs.sdk.examples.testing
 
+import arcs.core.entity.awaitReady
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -25,32 +27,58 @@ class ComputePeopleStatsTest {
 
     @Test
     fun emptyInput() = runTest {
-        assertWithMessage("Can't compute stats for an empty set")
-                .that(harness.fetch(harness.stats)).isNull()
+        harness.stats.awaitReady()
+        withContext(harness.stats.dispatcher) {
+            assertWithMessage("Can't compute stats for an empty set")
+                .that(harness.stats.fetch()).isNull()
+        }
     }
 
     @Test
     fun onePersonInput() = runTest {
-        harness.store(harness.people, Person(42.0))
-        assertThat(harness.fetch(harness.stats)?.medianAge).isEqualTo(42.0)
+        withContext(harness.people.dispatcher) {
+            harness.people.store(Person(42.0))
+        }.join()
+        withContext(harness.stats.dispatcher) {
+            assertThat(harness.stats.fetch()?.medianAge).isEqualTo(42.0)
+        }
     }
 
     @Test
     fun twoPersonInput() = runTest {
-        harness.store(harness.people, Person(10.0), Person(30.0))
-        assertWithMessage("Median of two integers should be their mean")
-            .that(harness.fetch(harness.stats)?.medianAge).isEqualTo(20.0)
+        withContext(harness.people.dispatcher) {
+            listOf(
+                harness.people.store(Person(10.0)),
+                harness.people.store(Person(30.0))
+            )
+        }.joinAll()
+
+        withContext(harness.stats.dispatcher) {
+            assertWithMessage("Median of two integers should be their mean")
+                .that(harness.stats.fetch()?.medianAge).isEqualTo(20.0)
+        }
     }
 
     @Test
     fun threePersonInput() = runTest {
-        harness.store(harness.people, Person(10.0), Person(30.0), Person(11.0))
-        assertThat(harness.fetch(harness.stats)?.medianAge).isEqualTo(11)
+        withContext(harness.people.dispatcher) {
+            listOf(
+                harness.people.store(Person(10.0)),
+                harness.people.store(Person(30.0)),
+                harness.people.store(Person(11.0))
+            )
+        }.joinAll()
+        withContext(harness.stats.dispatcher) {
+            assertThat(harness.stats.fetch()?.medianAge).isEqualTo(11)
+        }
     }
 
     @Test
     fun changingInput() = runTest {
-        assertThat(harness.fetch(harness.stats)).isNull()
+        harness.stats.awaitReady()
+        withContext(harness.stats.dispatcher) {
+            assertThat(harness.stats.fetch()).isNull()
+        }
 
         var statsUpdateAge = CompletableDeferred<Double?>()
         harness.stats.onUpdate { statsUpdateAge.complete(it?.medianAge) }
