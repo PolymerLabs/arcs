@@ -63,16 +63,6 @@ class Allocator private constructor(
     private val partitionMap: MutableMap<ArcId, List<Plan.Partition>> = mutableMapOf()
 
     /**
-     * Start a new Arc given a [Plan] and return the generated [ArcId].
-     */
-    @Deprecated(
-        "Use startArcForPlan(plan) to retrieve the ArcId via Arc.id",
-        replaceWith = ReplaceWith("startArcForPlan(plan).id", "arcs.core.allocator.Arc")
-    )
-    suspend fun startArcForPlan(arcName: String, plan: Plan) =
-        startArcForPlan(plan, arcName).waitForStart().id
-
-    /**
      * Start a new Arc given a [Plan] and return an [Arc].
      */
     suspend fun startArcForPlan(plan: Plan): Arc = startArcForPlan(plan, "arc")
