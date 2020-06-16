@@ -13,9 +13,9 @@ import {assert} from '../../platform/chai-node.js';
 import {
   findLongRunningArcId,
   isLongRunning,
-  AllocatorResolver,
-  AllocatorResolverError
-} from '../allocator-resolver.js';
+  AllocatorRecipeResolver,
+  AllocatorRecipeResolverError
+} from '../allocator-recipe-resolver.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 import {Flags} from '../../runtime/flags.js';
 import {DriverFactory} from '../../runtime/storageNG/drivers/driver-factory.js';
@@ -24,7 +24,7 @@ import {VolatileStorageKey} from '../../runtime/storageNG/drivers/volatile.js';
 const randomSalt = 'random_salt';
 
 describe('recipe2plan', () => {
-  describe('allocator-resolver', () => {
+  describe('allocator-recipe-resolver', () => {
     afterEach(() => DriverFactory.clearRegistrationsForTesting());
     it('detects long running arc', async () => {
       const manifest = (await Manifest.parse(`
@@ -33,7 +33,7 @@ describe('recipe2plan', () => {
           recipe One
       `));
       assert.lengthOf(manifest.recipes, 2);
-      const resolver = new AllocatorResolver(manifest, randomSalt);
+      const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
       assert.isFalse(isLongRunning(manifest.recipes[0]));
       assert.isNull(findLongRunningArcId(manifest.recipes[0]));
       assert.equal(findLongRunningArcId(manifest.recipes[1]), 'myLongRunningArc');
@@ -58,7 +58,7 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new AllocatorResolver(manifest, randomSalt);
+      const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
       for (const it of (await resolver.resolve())) {
         assert.isTrue(it.isResolved());
       }
@@ -81,10 +81,10 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new AllocatorResolver(manifest, randomSalt);
+      const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
-        AllocatorResolverError,
+        AllocatorRecipeResolverError,
         `Handle data mapped to ephemeral handle 'my-handle-id'.`
       );
     }));
@@ -107,10 +107,10 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new AllocatorResolver(manifest, randomSalt);
+      const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
-        AllocatorResolverError,
+        AllocatorRecipeResolverError,
         `Handle data mapped to ephemeral handle 'my-handle-id'.`
       );
     }));
@@ -133,7 +133,7 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new AllocatorResolver(manifest, randomSalt);
+      const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
       const recipes = await resolver.resolve();
       for (const it of recipes) {
         assert.isTrue(it.isResolved());
@@ -159,7 +159,7 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new AllocatorResolver(manifest, randomSalt);
+      const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
       // TODO: specify the correct error to be thrown
       await assertThrowsAsync(resolver.resolve);
     }));
@@ -181,7 +181,7 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new AllocatorResolver(manifest, randomSalt);
+      const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
       for (const it of (await resolver.resolve())) {
         assert.isTrue(it.isResolved());
       }
@@ -205,10 +205,10 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new AllocatorResolver(manifest, randomSalt);
+      const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
-        AllocatorResolverError,
+        AllocatorRecipeResolverError,
         `Handle data mapped to ephemeral handle 'my-handle-id'.`
       );
     });
@@ -231,10 +231,10 @@ describe('recipe2plan', () => {
       data: map 'my-handle-id'
       Reader
         data: reads data`);
-      const resolver = new AllocatorResolver(manifest, randomSalt);
+      const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
-        AllocatorResolverError,
+        AllocatorRecipeResolverError,
         'No matching handles found for data.'
       );
     });
@@ -264,10 +264,10 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new AllocatorResolver(manifest, randomSalt);
+      const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
-        AllocatorResolverError,
+        AllocatorRecipeResolverError,
         'More than one handle found for data.'
       );
     });
@@ -285,7 +285,7 @@ describe('recipe2plan', () => {
       Writer
         data: writes thing2`);
 
-      const resolver = new AllocatorResolver(manifest, randomSalt);
+      const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
       await resolver.resolve();
       assert.deepStrictEqual(manifest.stores.map(s => s.id), ['my-handle-id']);
     });
@@ -300,7 +300,7 @@ describe('recipe2plan', () => {
       Writer
         data: writes thing`);
 
-      const resolver = new AllocatorResolver(manifest, randomSalt);
+      const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
       for (const it of (await resolver.resolve())) {
         assert.isTrue(it.isResolved());
       }
@@ -316,7 +316,7 @@ describe('recipe2plan', () => {
       Writer
         data: thing`);
 
-      const resolver = new AllocatorResolver(manifest, randomSalt);
+      const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
       for (const it of (await resolver.resolve())) {
         assert.isTrue(it.isResolved());
       }
@@ -330,10 +330,10 @@ describe('recipe2plan', () => {
         data: map 'my-handle-id'
         Reader
           data: reads data`);
-        const resolver = new AllocatorResolver(manifest, randomSalt);
+        const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
         await assertThrowsAsync(
           async () => await resolver.resolve(),
-          AllocatorResolverError,
+          AllocatorRecipeResolverError,
           'No matching handles found for data.'
         );
     });
@@ -357,10 +357,10 @@ describe('recipe2plan', () => {
       Reader
         data: reads data`);
 
-      const resolver = new AllocatorResolver(manifest, randomSalt);
+      const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
       await assertThrowsAsync(
         async () => await resolver.resolve(),
-        AllocatorResolverError,
+        AllocatorRecipeResolverError,
         `Recipe ReadingRecipe failed to resolve:
 cannot find associated store with handle id 'my-handle-id'
 Resolver generated 0 recipes`
@@ -395,7 +395,7 @@ Resolver generated 0 recipes`
     Reader
       data: data`);
 
-    const resolver = new AllocatorResolver(manifest, randomSalt);
+    const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
     for (const it of (await resolver.resolve())) {
       assert.isTrue(it.isResolved());
     }
@@ -415,7 +415,7 @@ Resolver generated 0 recipes`
     Reader
       data: thing`);
 
-    const resolver = new AllocatorResolver(manifest, randomSalt);
+    const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
     const [recipe] = await resolver.resolve();
     assert.equal(
       recipe.handles[0].storageKey.toString(),
@@ -448,7 +448,7 @@ Resolver generated 0 recipes`
        data: writes h5
     `);
 
-    const resolver = new AllocatorResolver(manifest, randomSalt);
+    const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
     const [recipe] = await resolver.resolve();
 
     assert.deepEqual(await Promise.all(recipe.handles.map(h => h.storageKey.toString())), [

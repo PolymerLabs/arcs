@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Runtime} from '../runtime/runtime.js';
-import {AllocatorResolver} from './allocator-resolver.js';
+import {AllocatorRecipeResolver} from './allocator-recipe-resolver.js';
 import {PlanGenerator} from './plan-generator.js';
 import {Flags} from '../runtime/flags.js';
 import {assert} from '../platform/assert-node.js';
@@ -28,7 +28,7 @@ export async function recipe2plan(
     recipeFilter?: string): Promise<string | Uint8Array> {
   return await Flags.withDefaultReferenceMode(async () => {
     const manifest = await Runtime.parseFile(path);
-    let plans = await (new AllocatorResolver(manifest, `salt_${Math.random()}`)).resolve();
+    let plans = await (new AllocatorRecipeResolver(manifest, `salt_${Math.random()}`)).resolve();
 
     if (recipeFilter) {
       plans = plans.filter(p => p.name === recipeFilter);
