@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {evaluateFieldPath} from '../field-path.js';
+import {resolveFieldPathType} from '../field-path.js';
 import {EntityType, SingletonType, CollectionType, TypeVariable} from '../type.js';
 import {Manifest} from '../manifest.js';
 import {assert} from '../../platform/chai-web.js';
@@ -36,7 +36,7 @@ async function parseTypeFromHandle(handleName: string, manifestStr: string) {
 describe('field path validation', () => {
   it('empty field path is valid', async () => {
     const type = await parseTypeFromSchema('schema Foo');
-    assert.deepEqual(evaluateFieldPath([], type), type);
+    assert.deepEqual(resolveFieldPathType([], type), type);
   });
 
   it('top-level entity fields are valid', async () => {
@@ -49,12 +49,12 @@ describe('field path validation', () => {
         nums: [Number]
         bools: [Boolean]
     `);
-    assert.strictEqual(evaluateFieldPath(['txt'], type), 'Text');
-    assert.strictEqual(evaluateFieldPath(['num'], type), 'Number');
-    assert.strictEqual(evaluateFieldPath(['bool'], type), 'Boolean');
-    assert.strictEqual(evaluateFieldPath(['txts'], type), 'Text');
-    assert.strictEqual(evaluateFieldPath(['nums'], type), 'Number');
-    assert.strictEqual(evaluateFieldPath(['bools'], type), 'Boolean');
+    assert.strictEqual(resolveFieldPathType(['txt'], type), 'Text');
+    assert.strictEqual(resolveFieldPathType(['num'], type), 'Number');
+    assert.strictEqual(resolveFieldPathType(['bool'], type), 'Boolean');
+    assert.strictEqual(resolveFieldPathType(['txts'], type), 'Text');
+    assert.strictEqual(resolveFieldPathType(['nums'], type), 'Number');
+    assert.strictEqual(resolveFieldPathType(['bools'], type), 'Boolean');
   });
 
   it('unknown top-level fields are invalid', async () => {
@@ -63,7 +63,7 @@ describe('field path validation', () => {
         real: Number
     `);
     assert.throws(
-        () => evaluateFieldPath(['missing'], type),
+        () => resolveFieldPathType(['missing'], type),
         `Schema 'Foo {real: Number}' does not contain field 'missing'.`);
   });
 
@@ -74,10 +74,10 @@ describe('field path validation', () => {
         txts: [Text]
     `);
     assert.throws(
-        () => evaluateFieldPath(['txt.inside'], type),
+        () => resolveFieldPathType(['txt.inside'], type),
         `Schema 'Foo {txt: Text, txts: [Text]}' does not contain field 'txt.inside'.`);
     assert.throws(
-        () => evaluateFieldPath(['txts.inside'], type),
+        () => resolveFieldPathType(['txts.inside'], type),
         `Schema 'Foo {txt: Text, txts: [Text]}' does not contain field 'txts.inside'.`);
   });
 
@@ -90,7 +90,7 @@ describe('field path validation', () => {
       schema Person
         name: Text
     `);
-    assert.deepEqual(evaluateFieldPath(['person'], type), expectedPersonType);
+    assert.deepEqual(resolveFieldPathType(['person'], type), expectedPersonType);
   });
 
   it('can refer to fields inside references', async () => {
@@ -98,7 +98,7 @@ describe('field path validation', () => {
       schema Foo
         person: &Person {name: Text}
     `);
-    assert.strictEqual(evaluateFieldPath(['person', 'name'], type), 'Text');
+    assert.strictEqual(resolveFieldPathType(['person', 'name'], type), 'Text');
   });
 
   it('missing fields inside references are rejected', async () => {
@@ -107,7 +107,7 @@ describe('field path validation', () => {
         person: &Person {name: Text}
     `);
     assert.throws(
-        () => evaluateFieldPath(['person', 'missing'], type),
+        () => resolveFieldPathType(['person', 'missing'], type),
         `Schema 'Person {name: Text}' does not contain field 'missing'.`);
   });
 
@@ -116,7 +116,7 @@ describe('field path validation', () => {
       schema Foo
         person: [&Person {name: Text}]
     `);
-    assert.strictEqual(evaluateFieldPath(['person', 'name'], type), 'Text');
+    assert.strictEqual(resolveFieldPathType(['person', 'name'], type), 'Text');
   });
 
   it('missing fields inside collections of references are rejected', async () => {
@@ -125,7 +125,7 @@ describe('field path validation', () => {
         person: [&Person {name: Text}]
     `);
     assert.throws(
-        () => evaluateFieldPath(['person', 'missing'], type),
+        () => resolveFieldPathType(['person', 'missing'], type),
         `Schema 'Person {name: Text}' does not contain field 'missing'.`);
   });
 
@@ -142,9 +142,9 @@ describe('field path validation', () => {
       schema Bbb
         ccc: [Number]
     `);
-    assert.deepEqual(evaluateFieldPath(['aaa'], type), expectedAaaType);
-    assert.deepEqual(evaluateFieldPath(['aaa', 'bbb'], type), expectedBbbType);
-    assert.strictEqual(evaluateFieldPath(['aaa', 'bbb', 'ccc'], type), 'Number');
+    assert.deepEqual(resolveFieldPathType(['aaa'], type), expectedAaaType);
+    assert.deepEqual(resolveFieldPathType(['aaa', 'bbb'], type), expectedBbbType);
+    assert.strictEqual(resolveFieldPathType(['aaa', 'bbb', 'ccc'], type), 'Number');
   });
 
   it('works transparently with SingletonType', async () => {
@@ -152,9 +152,9 @@ describe('field path validation', () => {
       schema Foo
         name: Text
     `));
-    assert.strictEqual(evaluateFieldPath(['name'], type), 'Text');
+    assert.strictEqual(resolveFieldPathType(['name'], type), 'Text');
     assert.throws(
-      () => evaluateFieldPath(['missing'], type),
+      () => resolveFieldPathType(['missing'], type),
       `Schema 'Foo {name: Text}' does not contain field 'missing'.`);
   });
 
@@ -163,9 +163,9 @@ describe('field path validation', () => {
       schema Foo
         name: Text
     `));
-    assert.strictEqual(evaluateFieldPath(['name'], type), 'Text');
+    assert.strictEqual(resolveFieldPathType(['name'], type), 'Text');
     assert.throws(
-      () => evaluateFieldPath(['missing'], type),
+      () => resolveFieldPathType(['missing'], type),
       `Schema 'Foo {name: Text}' does not contain field 'missing'.`);
   });
 
@@ -177,7 +177,7 @@ describe('field path validation', () => {
       `);
       assert.instanceOf(type, TypeVariable);
       assert.throws(
-          () => evaluateFieldPath(['foo'], type),
+          () => resolveFieldPathType(['foo'], type),
           `Type variable ~a does not contain field 'foo'.`);
     });
 
@@ -186,7 +186,7 @@ describe('field path validation', () => {
         particle P
           foo: reads ~a with {name: Text}
       `);
-      assert.strictEqual(evaluateFieldPath(['name'], type), 'Text');
+      assert.strictEqual(resolveFieldPathType(['name'], type), 'Text');
     });
 
     it('can refer to known fields inside type variables with write constraints', async () => {
@@ -194,7 +194,7 @@ describe('field path validation', () => {
         particle P
           foo: writes ~a with {name: Text}
       `);
-      assert.strictEqual(evaluateFieldPath(['name'], type), 'Text');
+      assert.strictEqual(resolveFieldPathType(['name'], type), 'Text');
     });
 
     it('can refer to known fields inside type variables with read-write constraints', async () => {
@@ -202,7 +202,7 @@ describe('field path validation', () => {
         particle P
           foo: reads writes ~a with {name: Text}
       `);
-      assert.strictEqual(evaluateFieldPath(['name'], type), 'Text');
+      assert.strictEqual(resolveFieldPathType(['name'], type), 'Text');
     });
 
     it('cannot refer to missing fields inside type variables that do not match the constraints', async () => {
@@ -211,7 +211,7 @@ describe('field path validation', () => {
           foo: reads ~a with {name: Text}
       `);
       assert.throws(
-          () => evaluateFieldPath(['missing'], type),
+          () => resolveFieldPathType(['missing'], type),
           `Schema '* {name: Text}' does not contain field 'missing'.`);
     });
 
@@ -221,7 +221,7 @@ describe('field path validation', () => {
           foo: reads ~a with {name: Text}
           bar: writes ~a
       `);
-      assert.strictEqual(evaluateFieldPath(['name'], type), 'Text');
+      assert.strictEqual(resolveFieldPathType(['name'], type), 'Text');
     });
 
     it('can refer to known fields inside type variables from numerous constraints', async () => {
@@ -230,8 +230,8 @@ describe('field path validation', () => {
           foo: reads ~a with {name: Text}
           bar: writes ~a with {age: Number}
       `);
-      assert.strictEqual(evaluateFieldPath(['name'], type), 'Text');
-      assert.strictEqual(evaluateFieldPath(['age'], type), 'Number');
+      assert.strictEqual(resolveFieldPathType(['name'], type), 'Text');
+      assert.strictEqual(resolveFieldPathType(['age'], type), 'Number');
     });
 
     it('supports complex nesting inside type variables', async () => {
@@ -244,9 +244,9 @@ describe('field path validation', () => {
         schema Person
           name: Text
       `);
-      assert.strictEqual(evaluateFieldPath(['name'], type), 'Text');
-      assert.deepEqual(evaluateFieldPath(['friends'], type), expectedPersonType);
-      assert.strictEqual(evaluateFieldPath(['friends', 'name'], type), 'Text');
+      assert.strictEqual(resolveFieldPathType(['name'], type), 'Text');
+      assert.deepEqual(resolveFieldPathType(['friends'], type), expectedPersonType);
+      assert.strictEqual(resolveFieldPathType(['friends', 'name'], type), 'Text');
     });
   });
 });

@@ -50,7 +50,7 @@ import {Annotation, AnnotationRef} from './recipe/annotation.js';
 import {SchemaPrimitiveTypeValue} from './manifest-ast-nodes.js';
 import {canonicalManifest} from './canonical-manifest.js';
 import {Policy} from './policy/policy.js';
-import {evaluateFieldPath} from './field-path.js';
+import {resolveFieldPathType} from './field-path.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -1379,7 +1379,7 @@ ${e.message}
 
     const claims: Map<string, ClaimIsTag[]> = new Map();
     item.claims.forEach(claim => {
-      evaluateFieldPath(claim.fieldPath, type);
+      resolveFieldPathType(claim.fieldPath, type);
       const target = claim.fieldPath.join('.');
       if (claims.has(target)) {
         throw new ManifestError(claim.location, `A claim for target ${target} already exists in store ${name}`);

@@ -20,7 +20,7 @@ import {ParticleClaim, createParticleClaim} from './particle-claim.js';
 import {ManifestStringBuilder} from './manifest-string-builder.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {AnnotationRef} from './recipe/annotation.js';
-import {evaluateFieldPath} from './field-path.js';
+import {resolveFieldPathType} from './field-path.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -567,7 +567,7 @@ export class ParticleSpec {
         if (!handle.isOutput) {
           throw new Error(`Can't make a claim on handle ${statement.handle} (not an output handle).`);
         }
-        evaluateFieldPath(statement.fieldPath, handle.type);
+        resolveFieldPathType(statement.fieldPath, handle.type);
         if (!handle.claims) {
           handle.claims = [];
         } else if (handle.claims.some(claim => claim.target === target)) {
@@ -601,7 +601,7 @@ export class ParticleSpec {
             } else if (!handle.isInput) {
               throw new Error(`Can't make a check on handle ${handleName} with direction ${handle.direction} (not an input handle).`);
             }
-            evaluateFieldPath(check.target.fieldPath, handle.type);
+            resolveFieldPathType(check.target.fieldPath, handle.type);
             const checkObject = createCheck(handle, check, this.handleConnectionMap);
             if (!handle.checks) {
               handle.checks = [];
