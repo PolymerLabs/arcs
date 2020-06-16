@@ -154,8 +154,8 @@ class TestActivity : AppCompatActivity() {
                 )
             )
         )
-        allocator?.startArcForPlan("Person", PersonRecipePlan)
-            ?.also { allocator?.stopArc(it) }
+        allocator?.startArcForPlan(PersonRecipePlan)
+            ?.also { allocator?.stopArc(it.id) }
     }
 
     private suspend fun startResurrectionArc() {
@@ -171,7 +171,7 @@ class TestActivity : AppCompatActivity() {
                 )
             )
         )
-        resurrectionArcId = allocator?.startArcForPlan("Animal", AnimalRecipePlan)
+        resurrectionArcId = allocator?.startArcForPlan(AnimalRecipePlan)?.id
     }
 
     private fun stopReadService() {
@@ -208,7 +208,7 @@ class TestActivity : AppCompatActivity() {
                 )
             )
         )
-        val arcId = allocator.startArcForPlan("Person", PersonRecipePlan)
+        val arcId = allocator.startArcForPlan(PersonRecipePlan).id
         allocator.stopArc(arcId)
     }
 
