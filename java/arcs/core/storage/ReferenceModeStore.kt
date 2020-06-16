@@ -668,7 +668,8 @@ class ReferenceModeStore private constructor(
     companion object {
         /**
          * Timeout duration in milliseconds we are allowed to wait for results from the
-         * [BackingStore] during a [SyncRequest] or a call to [ReferenceModeStore.getLocalData].
+         * [BackingStore] during a [SyncRequest].
+         *
          * If this timeout is exceeded, we will assume the backing store is corrupt and will log a
          * warning and clear the container store.
          *
