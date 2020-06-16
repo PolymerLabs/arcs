@@ -31,7 +31,6 @@ sealed class StorageAdapter<T : Storable, R : Referencable> {
     /** Checks if the [Storable] is expired (its expiration time is in the past). */
     abstract fun isExpired(value: T): Boolean
 
-    @Throws(IllegalStateException::class)
     fun checkStorageKey(handleKey: StorageKey, referencedKey: StorageKey) {
         // References always point to backing stores (this is also enforced at reference creation).
         check(referencedKey !is ReferenceModeStorageKey) {
@@ -47,10 +46,11 @@ sealed class StorageAdapter<T : Storable, R : Referencable> {
         // the same database. Otherwise the entity may be garbage collected from the database and
         // the reference become invalid.
         if (referencedKey is DatabaseStorageKey) {
-            if (entitiesKey !is DatabaseStorageKey || entitiesKey.dbName != referencedKey.dbName)
-                throw IllegalStateException("References to database entity should only be stored" +
-                    " in the same database. You are using $handleKey to store a reference that" +
-                    " lives in the ${referencedKey.dbName} database.")
+            check(entitiesKey is DatabaseStorageKey && entitiesKey.dbName == referencedKey.dbName) {
+                "References to database entity should only be stored in the same database. " +
+                    "You are using $handleKey to store a reference that lives in the " +
+                    "${referencedKey.dbName} database."
+            }
         }
     }
 }
