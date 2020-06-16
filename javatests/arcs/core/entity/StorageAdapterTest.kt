@@ -10,6 +10,7 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.util.Scheduler
 import arcs.jvm.util.testutil.FakeTime
@@ -141,6 +142,7 @@ class StorageAdapterTest {
         val dbKey = DatabaseStorageKey.Persistent("db", DummyEntity.SCHEMA_HASH)
         val ramdiskKey = RamDiskStorageKey("ramdsik")
         val dummyKey = DummyStorageKey("dummy")
+        val dbRefMode = ReferenceModeStorageKey(dbKey, dbKey)
 
         // These combinations should work.
         refAdapterWithKey(dbKey).storableToReferencable(referenceWithKey(dbKey))
@@ -160,6 +162,11 @@ class StorageAdapterTest {
         // Storing the reference in a different db.
         val dbKey2 = DatabaseStorageKey.Persistent("db", DummyEntity.SCHEMA_HASH, dbName = "different")
         assertFails { refAdapterWithKey(dbKey2).storableToReferencable(referenceWithKey(dbKey)) }
+
+        // Illegal reference (points to refmode key).
+        assertFailsWith<IllegalStateException> {
+            refAdapterWithKey(dbKey).storableToReferencable(referenceWithKey(dbRefMode))
+        }
     }
 
     @Test
@@ -167,6 +174,8 @@ class StorageAdapterTest {
         val dbKey = DatabaseStorageKey.Persistent("db", DummyEntity.SCHEMA_HASH)
         val ramdiskKey = RamDiskStorageKey("ramdsik")
         val dummyKey = DummyStorageKey("dummy")
+        val ramdiskRefMode = ReferenceModeStorageKey(ramdiskKey, ramdiskKey)
+        val dbRefMode = ReferenceModeStorageKey(dbKey, dbKey)
 
         // These combinations should work.
         entityStorageAdapterWithKey(dbKey).storableToReferencable(entityWithKey(dbKey))
@@ -176,9 +185,11 @@ class StorageAdapterTest {
         entityStorageAdapterWithKey(dbKey).storableToReferencable(entityWithKey(dummyKey))
         entityStorageAdapterWithKey(ramdiskKey).storableToReferencable(entityWithKey(dummyKey))
         entityStorageAdapterWithKey(dummyKey).storableToReferencable(entityWithKey(ramdiskKey))
+        entityStorageAdapterWithKey(dbRefMode).storableToReferencable(entityWithKey(dbKey))
 
         // Storing in ramdisk a reference to the db.
         assertFails { entityStorageAdapterWithKey(ramdiskKey).storableToReferencable(entityWithKey(dbKey)) }
+        assertFails { entityStorageAdapterWithKey(ramdiskRefMode).storableToReferencable(entityWithKey(dbKey)) }
 
         // Storing in dummy a reference to the db.
         assertFails { entityStorageAdapterWithKey(dummyKey).storableToReferencable(entityWithKey(dbKey)) }
@@ -186,6 +197,15 @@ class StorageAdapterTest {
         // Storing the reference in a different db.
         val dbKey2 = DatabaseStorageKey.Persistent("db", DummyEntity.SCHEMA_HASH, dbName = "different")
         assertFails { entityStorageAdapterWithKey(dbKey2).storableToReferencable(entityWithKey(dbKey)) }
+
+        // Illegal reference (points to refmode key).
+        assertFailsWith<IllegalStateException> {
+            entityStorageAdapterWithKey(dbKey).storableToReferencable(entityWithKey(dbRefMode))
+        }
+
+        // Invalid refmode key, the container is in ramdisk but the backing store is in the db.
+        val invalidKey = ReferenceModeStorageKey(ramdiskKey, dbKey)
+        assertFails { entityStorageAdapterWithKey(invalidKey).storableToReferencable(entityWithKey(dbKey)) }
     }
 
     private fun refAdapterWithKey(key: StorageKey) =

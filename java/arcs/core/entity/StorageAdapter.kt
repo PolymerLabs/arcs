@@ -17,6 +17,7 @@ import arcs.core.data.Ttl
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.DatabaseStorageKey
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Time
 
 /** Converts instances of developer-facing type [T] into a raw storage instances of type [R]. */
@@ -32,11 +33,21 @@ sealed class StorageAdapter<T : Storable, R : Referencable> {
 
     @Throws(IllegalStateException::class)
     fun checkStorageKey(handleKey: StorageKey, referencedKey: StorageKey) {
+        // References always point to backing stores (this is also enforced at reference creation).
+        check(referencedKey !is ReferenceModeStorageKey) {
+            "Reference points to ReferenceModeStorageKey $referencedKey, this is invalid."
+        }
+        var entitiesKey = handleKey
+        if (handleKey is ReferenceModeStorageKey) {
+            // For reference mode keys, check that the container and backing stores are compatible.
+            checkStorageKey(handleKey.backingKey, handleKey.storageKey)
+            entitiesKey = handleKey.backingKey
+        }
         // If we are pointing to an entity in the database, we should also be using a storage key in
         // the same database. Otherwise the entity may be garbage collected from the database and
         // the reference become invalid.
         if (referencedKey is DatabaseStorageKey) {
-            if (handleKey !is DatabaseStorageKey || handleKey.dbName != referencedKey.dbName)
+            if (entitiesKey !is DatabaseStorageKey || entitiesKey.dbName != referencedKey.dbName)
                 throw IllegalStateException("References to database entity should only be stored" +
                     " in the same database. You are using $handleKey to store a reference that" +
                     " lives in the ${referencedKey.dbName} database.")
