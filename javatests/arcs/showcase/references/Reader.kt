@@ -2,16 +2,22 @@
 
 package arcs.showcase.references
 
-import arcs.core.entity.awaitReady;
+import arcs.core.entity.awaitReady
 import arcs.jvm.host.TargetHost
+import arcs.sdk.Entity
+import arcs.sdk.ReadCollectionHandle
+import arcs.sdk.Reference
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
 
-@ExperimentalCoroutinesApi
+fun <T : Entity> Reference<T>.dereferenceViaHandle(handle: ReadCollectionHandle<T>): T? {
+    return handle.fetchAll().firstOrNull { it.entityId == entityId }
+}
+
 @TargetHost(ArcHost::class)
 class Reader0 : AbstractReader0() {
     private suspend fun initialize() = this.apply {
-        handles.level0.awaitReady()
+        handles.handles.values.forEach { it.awaitReady() }
     }
     private fun Level0.fromArcs() = MyLevel0(name)
 
@@ -25,13 +31,14 @@ class Reader0 : AbstractReader0() {
 @TargetHost(ArcHost::class)
 class Reader1 : AbstractReader1() {
     private suspend fun initialize() = this.apply {
-        handles.level1.awaitReady()
+        handles.handles.values.forEach { it.awaitReady() }
     }
+
     private fun Level0.fromArcs() = MyLevel0(name)
 
     private suspend fun Level1.fromArcs() = MyLevel1(
         name = name,
-        children = children.map { it.dereference()!!.fromArcs() }.toSet()
+        children = children.map { it.dereferenceViaHandle(handles.level0)!!.fromArcs() }.toSet()
     )
 
     suspend fun read(): List<MyLevel1> = withContext(handles.level1.dispatcher) {
@@ -44,18 +51,18 @@ class Reader1 : AbstractReader1() {
 @TargetHost(ArcHost::class)
 class Reader2 : AbstractReader2() {
     private suspend fun initialize() = this.apply {
-        handles.level2.awaitReady()
+        handles.handles.values.forEach { it.awaitReady() }
     }
     private fun Level0.fromArcs() = MyLevel0(name)
 
     private suspend fun Level1.fromArcs() = MyLevel1(
         name = name,
-        children = children.map { it.dereference()!!.fromArcs() }.toSet()
+        children = children.map { it.dereferenceViaHandle(handles.level0)!!.fromArcs() }.toSet()
     )
 
     private suspend fun Level2.fromArcs() = MyLevel2(
         name = name,
-        children = children.map { it.dereference()!!.fromArcs() }.toSet()
+        children = children.map { it.dereferenceViaHandle(handles.level1)!!.fromArcs() }.toSet()
     )
 
     suspend fun read(): List<MyLevel2> = withContext(handles.level2.dispatcher) {
