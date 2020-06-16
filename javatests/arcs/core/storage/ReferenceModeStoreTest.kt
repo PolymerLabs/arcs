@@ -586,7 +586,6 @@ class ReferenceModeStoreTest {
         val job = Job(coroutineContext[Job.Key])
         var backingStoreSent = false
         val id = activeStore.on(ProxyCallback {
-            log("active store saw: $it")
             if (!backingStoreSent) {
                 job.completeExceptionally(
                     AssertionError("Backing store data should've been sent first.")
@@ -605,9 +604,7 @@ class ReferenceModeStoreTest {
         })
 
         val containerJob = launch {
-            log("sending data to container")
             activeStore.containerStore.onReceive(referenceCollection.data, id + 1)
-            log("data sent to container")
         }
         containerJob.join()
 
@@ -633,10 +630,8 @@ class ReferenceModeStoreTest {
 
         val backingStore = activeStore.backingStore.store("an-id")
         backingStore.store.onReceive(entityCrdt.data, id + 2)
-        log("data sent to backing store")
 
         activeStore.idle()
-        log("store went idle")
 
         job.join()
         containerJob.join()

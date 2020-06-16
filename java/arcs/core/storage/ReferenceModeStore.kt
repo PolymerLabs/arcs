@@ -54,7 +54,6 @@ import arcs.core.util.Result
 import arcs.core.util.TaggedLog
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
-import kotlinx.coroutines.CancellationException
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,7 +61,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
@@ -70,9 +68,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 
 /**
@@ -175,7 +170,6 @@ class ReferenceModeStore private constructor(
         ) { "Provided type must contain CrdtModelType" }.containedType
 
         containerCallbackToken = containerStore.on(ProxyCallback {
-            log.debug { "Message from container: $it" }
             CoroutineScope(coroutineContext).launch {
                 receiveQueue.enqueue(Message.PreEnqueuedFromContainer(it.toReferenceModeMessage()))
             }
@@ -316,12 +310,17 @@ class ReferenceModeStore private constructor(
                             sendQueue.enqueueBlocking(pendingIds, ::sender).await()
                         }
                     } catch (e: TimeoutCancellationException) {
+                        // If the queued+blocked send item times out (likely due to missing data in
+                        // the backing-store), assume that the backing store is corrupted and
+                        // clear-out the collection store before re-attempting the sync.
                         val ops = buildClearContainerStoreOps()
                         log.warning {
-                            "SyncRequest timed out, sending clear operations to container store"
+                            "SyncRequest timed out, backing store is likely corrputed - sending " +
+                                "clear operations to container store."
                         }
                         log.debug { "Clear ops = $ops" }
                         containerStore.onProxyMessage(ProxyMessage.Operations(ops, null))
+                        // Re-issue the sync.
                         onProxyMessage(proxyMessage)
                     }
                 }

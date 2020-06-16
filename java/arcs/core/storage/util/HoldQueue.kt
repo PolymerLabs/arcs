@@ -74,11 +74,7 @@ class HoldQueue {
             // the onRelease method.
             queue[id]?.forEach { record ->
                 record.ids[id]
-                    ?.takeIf {
-                        val res = version dominates it
-                        if (!res) println("waiting for >= $it, but saw $version")
-                        res
-                    }
+                    ?.takeIf { version dominates it }
                     ?.let { record.ids.remove(id) }
 
                 if (record.ids.isEmpty()) {

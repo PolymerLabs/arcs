@@ -14,7 +14,6 @@ package arcs.core.storage.util
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.VersionMap
 import arcs.core.storage.Reference
-import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -56,7 +55,10 @@ class SendQueue(
      * Enqueues a send function on the send queue, blocking on its execution until the provided
      * [references] are all available in the [backingStore].
      */
-    suspend fun enqueueBlocking(references: List<Reference>, runnable: suspend () -> Unit): Deferred<Unit> {
+    suspend fun enqueueBlocking(
+        references: List<Reference>,
+        runnable: suspend () -> Unit
+    ): Deferred<Unit> {
         val completableDeferred = CompletableDeferred<Unit>()
         val queuedBlockName = mutex.withLock {
             val block = "${currentBlock++}"
