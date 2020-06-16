@@ -135,7 +135,7 @@ describe('recipe2plan', () => {
       assert.isBelow(plan.indexOf('particle.C'), plan.indexOf('particle.D'));
     });
   });
-  it('can prefixes namespaces for particle classes', async () => {
+  it('can prefix namespaces for particle classes', async () => {
     const {recipes, generator} = await process(`
     meta
       namespace: arcs.core.data.testdata
@@ -167,7 +167,7 @@ Particle(
 )`
     );
   });
-  it('can prefixes namespaces for particle class subpaths', async () => {
+  it('can prefix namespaces for particle class subpaths', async () => {
       const {recipes, generator} = await process(`
     meta
       namespace: arcs.core.data.testdata
