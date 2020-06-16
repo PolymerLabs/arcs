@@ -54,6 +54,9 @@ class SendQueue(
     /**
      * Enqueues a send function on the send queue, blocking on its execution until the provided
      * [references] are all available in the [backingStore].
+     *
+     * The [Deferred] returned by this method will be resolved when the [runnable] has finished
+     * executing.
      */
     suspend fun enqueueBlocking(
         references: List<Reference>,
@@ -84,6 +87,7 @@ class SendQueue(
 
         val localScope = CoroutineScope(Dispatchers.Unconfined + Job())
         completableDeferred.invokeOnCompletion {
+            // If the deferred was canceled, remove the runnable block from the queue.
             if (it is CancellationException) localScope.launch {
                 removeBlocking(queuedBlockName)
             }

@@ -33,6 +33,9 @@ class HoldQueue {
     /**
      * Enqueues a collection of [Entities] into the [HoldQueue]. When they are ready, [onRelease]
      * will be called.
+     *
+     * @return an identifier for the hold record which can be used to remove a hold using
+     * [removeFromQueue].
      */
     suspend fun enqueue(entities: Collection<Entity>, onRelease: suspend () -> Unit): Int {
         val holdRecord = Record(
@@ -57,7 +60,7 @@ class HoldQueue {
      */
     suspend fun removeFromQueue(enqueueId: Int) = mutex.withLock {
         queue.values.forEach { records ->
-            records.removeIf { it.hashCode() == enqueueId }
+            records.removeAll { it.hashCode() == enqueueId }
         }
     }
 

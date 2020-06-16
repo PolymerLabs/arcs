@@ -315,7 +315,7 @@ class ReferenceModeStore private constructor(
                         // clear-out the collection store before re-attempting the sync.
                         val ops = buildClearContainerStoreOps()
                         log.warning {
-                            "SyncRequest timed out, backing store is likely corrputed - sending " +
+                            "SyncRequest timed out, backing store is likely corrupted - sending " +
                                 "clear operations to container store."
                         }
                         log.debug { "Clear ops = $ops" }
