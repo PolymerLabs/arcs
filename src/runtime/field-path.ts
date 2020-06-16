@@ -8,8 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Schema} from './schema.js';
-import {InterfaceInfo, Type, EntityType} from './type.js';
+import {InterfaceInfo, Type, EntityType, TupleType} from './type.js';
 import {SchemaPrimitiveTypeValue} from './manifest-ast-nodes.js';
+import {Dictionary} from './hot.js';
 
 export type FieldPathType = Type | SchemaPrimitiveTypeValue;
 
@@ -21,7 +22,12 @@ export function resolveFieldPathType(fieldPath: string[], type: Type): FieldPath
   if (fieldPath.length === 0) {
     return type;
   }
-  if (type.isTypeContainer()) {
+  if (typeof type === 'string') {
+    throw new FieldPathError(`Field path '${fieldPath.join('.')}' could not be resolved because the target type is a primitive: '${type}'.`);
+  }
+  if (type.isTupleType()) {
+    return resolveForTuple(fieldPath, type);
+  } else if (type.isTypeContainer()) {
     return resolveFieldPathType(fieldPath, type.getContainedType());
   }
 
@@ -75,6 +81,34 @@ function resolveForSchema(fieldPath: string[], schema: Schema): FieldPathType {
   }
   const field = schema.fields[fieldName];
   return resolveForField(fieldPath, field);
+}
+
+function resolveForTuple(fieldPath: string[], tupleType: TupleType): FieldPathType {
+  if (fieldPath.length === 0) {
+    return tupleType;
+  }
+  const first = fieldPath[0];
+  const component = parseTupleAccessor(first);
+  if (component >= tupleType.innerTypes.length) {
+    throw new FieldPathError(`The ${first} tuple component was requested but tuple only has ${tupleType.innerTypes.length} components.`);
+  }
+  return resolveFieldPathType(fieldPath.slice(1), tupleType.innerTypes[component]);
+}
+
+const tupleAccessors: Dictionary<number> = {
+  'first': 0,
+  'second': 1,
+  'third': 2,
+  'fourth': 3,
+  'fifth': 4,
+};
+
+function parseTupleAccessor(field: string): number {
+  const result = tupleAccessors[field];
+  if (result == null) {
+    throw new FieldPathError(`Expected a tuple component accessor of the form 'first', 'second', etc., but found '${field}'.`);
+  }
+  return result;
 }
 
 class FieldPathError extends Error {}

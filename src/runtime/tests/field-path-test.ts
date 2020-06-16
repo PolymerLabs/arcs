@@ -9,7 +9,7 @@
  */
 
 import {resolveFieldPathType} from '../field-path.js';
-import {EntityType, SingletonType, CollectionType, TypeVariable} from '../type.js';
+import {EntityType, SingletonType, CollectionType, TypeVariable, TupleType} from '../type.js';
 import {Manifest} from '../manifest.js';
 import {assert} from '../../platform/chai-web.js';
 import {deleteFieldRecursively} from '../util.js';
@@ -247,6 +247,50 @@ describe('field path validation', () => {
       assert.strictEqual(resolveFieldPathType(['name'], type), 'Text');
       assert.deepEqual(resolveFieldPathType(['friends'], type), expectedPersonType);
       assert.strictEqual(resolveFieldPathType(['friends', 'name'], type), 'Text');
+    });
+  });
+
+  describe('tuples', () => {
+    it('supports tuples', async () => {
+      const fooType = await parseTypeFromSchema(`
+        schema Foo
+          foo: Text
+      `);
+      const barType = await parseTypeFromSchema(`
+        schema Bar
+          bar: Text
+      `);
+      const tupleType = new TupleType([fooType, barType]);
+      assert.deepEqual(resolveFieldPathType([], tupleType), tupleType);
+      assert.deepEqual(resolveFieldPathType(['first'], tupleType), fooType);
+      assert.strictEqual(resolveFieldPathType(['first', 'foo'], tupleType), 'Text');
+      assert.deepEqual(resolveFieldPathType(['second'], tupleType), barType);
+      assert.strictEqual(resolveFieldPathType(['second', 'bar'], tupleType), 'Text');
+    });
+
+    it('rejects invalid tuple components', async () => {
+      const entityType = await parseTypeFromSchema(`
+        schema Foo
+          foo: Text
+      `);
+      const tupleType = new TupleType([entityType, entityType]);
+      assert.throws(
+          () => resolveFieldPathType(['third'], tupleType),
+          `The third tuple component was requested but tuple only has 2 components.`);
+      assert.throws(
+          () => resolveFieldPathType(['missing'], tupleType),
+          `Expected a tuple component accessor of the form 'first', 'second', etc., but found 'missing'.`);
+    });
+
+    it('rejects missing fields nested inside tuples', async () => {
+      const entityType = await parseTypeFromSchema(`
+        schema Foo
+          foo: Text
+      `);
+      const tupleType = new TupleType([entityType, entityType]);
+      assert.throws(
+          () => resolveFieldPathType(['second', 'missing'], tupleType),
+          `Schema 'Foo {foo: Text}' does not contain field 'missing'.`);
     });
   });
 });
