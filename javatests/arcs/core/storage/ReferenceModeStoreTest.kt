@@ -634,7 +634,6 @@ class ReferenceModeStoreTest {
         activeStore.idle()
 
         job.join()
-        containerJob.join()
     }
 
     // region Helpers
