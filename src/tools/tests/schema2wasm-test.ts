@@ -40,10 +40,7 @@ class Schema2Mock extends Schema2Base {
         collector.adds.push(field + ':' + typeName[0] + refInfo + (isOptional ? '?' : ''));
       },
 
-      generatePredicates() {
-      },
-
-      generate(schemaHash: string, fieldCount: number): string {
+      generate(fieldCount: number): string {
         collector.count = fieldCount;
         return '';
       }

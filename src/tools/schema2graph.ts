@@ -68,6 +68,13 @@ export class SchemaNode {
   // ensure that nested schemas are generated before the references that rely on them.
   refs = new Map<string, SchemaNode>();
 
+  hash: string | null = null;
+
+  async calculateHash(): Promise<void> {
+    this.hash = await this.schema.hash();
+    await Promise.all([...this.refs.values()].map(n => n.calculateHash));
+  }
+
   get uniqueSchema() {
     return !this.allSchemaNodes.some(s => s.schema !== this.schema && s.schema.name === this.schema.name);
   }

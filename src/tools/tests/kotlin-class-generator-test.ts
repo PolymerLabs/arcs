@@ -119,50 +119,181 @@ describe('kotlin-class-generator', () => {
         
         override var entityId = ""`
   ));
+  it('generates empty schema', async () => await assertSchemas(
+    `particle T
+         h1: reads {}`,
+    [`Schema.EMPTY`]
+  ));
+  it('generates a schema with multiple names', async () => await assertSchemas(
+    `particle T
+         h1: reads Person Friend Parent {}`, [
+`Schema(
+    setOf(SchemaName("Person"), SchemaName("Friend"), SchemaName("Parent")),
+    SchemaFields(
+        singletons = emptyMap(),
+        collections = emptyMap()
+    ),
+    "cd956ff7d2d4a14f434aa1427b84097d5c47037b",
+    refinement = { _ -> true },
+    query = null
+)`
+    ]
+  ));
+  it('generates a schema with primitive fields', async () => await assertSchemas(
+    `particle T
+         h1: reads Person {name: Text, age: Number, friendNames: [Text]}`, [
+`Schema(
+    setOf(SchemaName("Person")),
+    SchemaFields(
+        singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
+        collections = mapOf("friendNames" to FieldType.Text)
+    ),
+    "accd28212161fc896d658e8c22c06051d1239e18",
+    refinement = { _ -> true },
+    query = null
+)`
+    ]
+  ));
+  it('generates schemas for a reference', async () => await assertSchemas(
+    `particle T
+         h1: reads Person {address: &Address {streetAddress: Text}}`, [
+`Schema(
+    setOf(SchemaName("Address")),
+    SchemaFields(
+        singletons = mapOf("streetAddress" to FieldType.Text),
+        collections = emptyMap()
+    ),
+    "41a3bd27b7c53f1c5846754291653d13f49e3e8d",
+    refinement = { _ -> true },
+    query = null
+)`,
+`Schema(
+    setOf(SchemaName("Person")),
+    SchemaFields(
+        singletons = mapOf(
+            "address" to FieldType.EntityRef("41a3bd27b7c53f1c5846754291653d13f49e3e8d")
+        ),
+        collections = emptyMap()
+    ),
+    "d44c98a544cbbdd187a7e0529046166ed6a4bcb0",
+    refinement = { _ -> true },
+    query = null
+)`
+    ]
+  ));
+  it('generates a schema with a refinement', async () => await assertSchemas(
+    `particle T
+         h1: reads Person {name: Text, age: Number} [age >= 21]`, [
+`Schema(
+    setOf(SchemaName("Person")),
+    SchemaFields(
+        singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
+        collections = emptyMap()
+    ),
+    "edabcee36cb653ff468fb77804911ddfa9303d67",
+    refinement = { data ->
+        val age = data.singletons["age"].toPrimitiveValue(Double::class, 0.0)
+        ((age > 21) || (age == 21))
+    },
+    query = null
+)`
+    ]
+  ));
+  it('generates a schema with a query', async () => await assertSchemas(
+    `particle T
+         h1: reads Person {name: Text, age: Number} [age >= ?]`, [
+`Schema(
+    setOf(SchemaName("Person")),
+    SchemaFields(
+        singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
+        collections = emptyMap()
+    ),
+    "edabcee36cb653ff468fb77804911ddfa9303d67",
+    refinement = { _ -> true },
+    query = { data, queryArgs ->
+        val age = data.singletons["age"].toPrimitiveValue(Double::class, 0.0)
+        val queryArgument = queryArgs as Double
+        ((age > queryArgument) || (age == queryArgument))
+    }
+)`
+    ]
+  ));
+  it('generates schemas for a tuple connection', async () => await assertSchemas(
+    `particle T
+         h1: reads (&Person {name: Text}, &Product {sku: Text})`, [
+`Schema(
+    setOf(SchemaName("Person")),
+    SchemaFields(
+        singletons = mapOf("name" to FieldType.Text),
+        collections = emptyMap()
+    ),
+    "0149326a894f2d81705e1a08480330826f919cf0",
+    refinement = { _ -> true },
+    query = null
+)`,
+`Schema(
+    setOf(SchemaName("Product")),
+    SchemaFields(
+        singletons = mapOf("sku" to FieldType.Text),
+        collections = emptyMap()
+    ),
+    "32bcfc983b9ea6145aa42fbc525abb96baafbc1f",
+    refinement = { _ -> true },
+    query = null
+)`
+    ]
+  ));
 
   async function assertClassDefinition(manifestString: string, expectedValue: string) {
-    await assertGeneratorComponent<string>(
+    await assertGeneratorComponents<string>(
       manifestString,
       generator => generator.generateClassDefinition(),
-      expectedValue);
+      [expectedValue]);
   }
 
   async function assertCopyMethodsForWasm(manifestString: string, expectedValue: string) {
-    await assertGeneratorComponent<string>(
+    await assertGeneratorComponents<string>(
       manifestString,
       generator => generator.generateCopyMethods(),
-      expectedValue,
+      [expectedValue],
       {_: [], wasm: true});
   }
 
   async function assertCopyMethods(manifestString: string, expectedValue: string) {
-    await assertGeneratorComponent<string>(
+    await assertGeneratorComponents<string>(
       manifestString,
       generator => generator.generateCopyMethods(),
-      expectedValue);
+      [expectedValue]);
   }
 
   async function assertFieldsDefinition(manifestString: string, expectedValue: string) {
-    await assertGeneratorComponent<string>(
+    await assertGeneratorComponents<string>(
       manifestString,
       generator => generator.generateFieldsDefinitions(),
-      expectedValue);
+      [expectedValue]);
   }
 
   async function assertFieldsDefinitionForWasm(manifestString: string, expectedValue: string) {
-    await assertGeneratorComponent<string>(
+    await assertGeneratorComponents<string>(
       manifestString,
       generator => generator.generateFieldsDefinitions(),
-      expectedValue,
+      [expectedValue],
       {_: [], wasm: true});
+  }
+
+  async function assertSchemas(manifestString: string, expectedValues: string[]) {
+    await assertGeneratorComponents<string>(
+      manifestString,
+      generator => generator.generateSchema(),
+      expectedValues);
   }
 
   // Asserts that a certain component from the Kotlin Generator, equals the
   // expected value.
-  async function assertGeneratorComponent<T>(
+  async function assertGeneratorComponents<T>(
     manifestString: string,
     extractor: (generator: KotlinGenerator) => T,
-    expectedValue: T,
+    expectedValues: T[],
     opts: minimist.ParsedArgs = {_: []}) {
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
@@ -170,7 +301,16 @@ describe('kotlin-class-generator', () => {
 
     const schema2kotlin = new Schema2Kotlin(opts);
     const generators = await schema2kotlin.calculateNodeAndGenerators(particle);
-    const generator = (generators[0].generator as KotlinGenerator);
-    assert.deepEqual(extractor(generator), expectedValue);
+    const actualValues = generators.map(g => extractor(g.generator as KotlinGenerator));
+
+    // We could do the followiong asserting with a one liner, e.g.
+    //   assert.sameDeepMembers(actualValues, expectedValues);
+    // But comparing values one by one gives much nicer debug messages
+    // for multiline strings, diffing each string line by line and
+    // printing '\n' with new lines.
+    assert.equal(actualValues.length, expectedValues.length);
+    for (let i = 0; i < actualValues.length; i++) {
+      assert.equal(actualValues[i], expectedValues[i]);
+    }
   }
 });

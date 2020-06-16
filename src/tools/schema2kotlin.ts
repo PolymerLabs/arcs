@@ -198,7 +198,7 @@ ${typeAliases.join(`\n`)}
 abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
     ${this.opts.wasm ? '' : 'override '}val handles: Handles = Handles(${this.opts.wasm ? 'this' : ''})
 
-    ${classes.join(`\n    `)}
+    ${ktUtils.indentFollowing(classes, 1)}
 
     ${handleClassDecl}
 }
@@ -214,7 +214,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
 
     nodeGenerators.forEach(nodeGenerator => {
       const kotlinGenerator = <KotlinGenerator>nodeGenerator.generator;
-      classes.push(kotlinGenerator.generateClasses(nodeGenerator.hash));
+      classes.push(kotlinGenerator.generateClasses());
       typeAliases.push(...kotlinGenerator.generateAliases(particleName));
     });
 
@@ -248,7 +248,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     )`;
 
     return `${header} {
-        ${handleDecls.join('\n        ')}
+        ${ktUtils.indentFollowing(handleDecls, 2)}
     }`;
   }
 
