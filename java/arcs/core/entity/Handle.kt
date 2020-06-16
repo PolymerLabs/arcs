@@ -16,7 +16,6 @@ import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.ReferenceType
 import arcs.core.data.SingletonType
-import arcs.core.storage.StorageProxy
 import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.type.Type
 import java.lang.IllegalStateException
@@ -28,9 +27,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 /** Base interface for all handle classes. */
 interface Handle {
     val name: String
-
-    /** The read/write/query permissions for this handle. */
-    val mode: HandleMode
 
     /**
      * If you need to access or mutate the [Handle]'s data from outside of a particle or handle
@@ -48,24 +44,13 @@ interface Handle {
     /** Release resources needed by this, unregister all callbacks. */
     fun close()
 
-    // TODO(b/158785940): move internal methods to an internal interface
     /** Internal method used to connect [StorageProxy] events to the [ParticleContext]. */
     fun registerForStorageEvents(notify: (StorageEvent) -> Unit)
-
-    /** Internal method used to trigger a sync request on this handle's [StorageProxy]. */
-    fun maybeInitiateSync()
-
-    /** Internal method to return this handle's underlying [StorageProxy]. */
-    fun getProxy(): StorageProxy<*, *, *>
 }
 
-@Deprecated("b/157188866: handle/particle lifecycle updates will obsolete this soon")
-suspend fun <T : Handle> T.awaitReady(): T = suspendCancellableCoroutine { cont ->
-    if (this is ReadableHandle<*>) {
-        this.onReady {
-            if (cont.isActive) cont.resume(this@awaitReady)
-        }
-    } else {
+/** Suspends until the [Handle] has synced with the store. */
+suspend fun <T : Handle> T.awaitReady(): T = suspendCancellableCoroutine<T> { cont ->
+    this.onReady {
         if (cont.isActive) cont.resume(this@awaitReady)
     }
 }

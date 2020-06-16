@@ -258,15 +258,11 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     const handleSpecs: string[] = [];
 
     for (const connection of particle.connections) {
-      const handleName = connection.name;
-
-      // Particle handles are set up with the read/write mode from the manifest.
-      handleSpecs.push(this.handleSpec(handleName, connection, nodes));
-
-      // The harness has a "copy" of each handle with full read/write access.
       connection.direction = 'reads writes';
+      const handleName = connection.name;
       const interfaceType = this.handleInterfaceType(connection, nodes, /* particleScope= */ false);
       handleDecls.push(`val ${handleName}: ${interfaceType} by handleMap`);
+      handleSpecs.push(this.handleSpec(handleName, connection, nodes));
     }
 
     return `

@@ -7,6 +7,7 @@ import arcs.core.data.Ttl
 import arcs.core.entity.DummyEntity
 import arcs.core.entity.EntityBaseSpec
 import arcs.core.entity.ReadWriteSingletonHandle
+import arcs.core.host.api.HandleHolder
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -29,7 +30,7 @@ import org.junit.runners.JUnit4
 open class AbstractArcHostTest {
 
     class TestParticle : BaseParticle() {
-        override val handles = HandleHolderBase(
+        override val handles: HandleHolder = HandleHolderBase(
             "TestParticle",
             mapOf("foo" to setOf(EntityBaseSpec(DummyEntity.SCHEMA)))
         )
@@ -41,11 +42,9 @@ open class AbstractArcHostTest {
     ) : AbstractArcHost(schedulerProvider, *particles) {
         override val platformTime = FakeTime()
 
-        @Suppress("UNCHECKED_CAST")
-        fun getFooHandle(): ReadWriteSingletonHandle<DummyEntity> {
-            val p = getArcHostContext("arcId")!!.particles["Foobar"]!!.particle as TestParticle
-            return p.handles.getHandle("foo") as ReadWriteSingletonHandle<DummyEntity>
-        }
+        fun getFooHandle(): ReadWriteSingletonHandle<DummyEntity> =
+            getArcHostContext("arcId")!!.particles["Foobar"]!!.handles["foo"]!!
+                as ReadWriteSingletonHandle<DummyEntity>
     }
 
     @Before

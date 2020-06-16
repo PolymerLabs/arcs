@@ -166,7 +166,7 @@ describe('schema2kotlin', () => {
             squareFootage: Number,
             address: &Address {
               streetAddress: Text,
-              postCode: Text
+              postCode: Text  
             }
           }
         }
@@ -239,7 +239,7 @@ describe('schema2kotlin', () => {
             squareFootage: Number,
             address: &Address {
               streetAddress: Text,
-              postCode: Text
+              postCode: Text  
             }
           }
         }
@@ -299,16 +299,16 @@ describe('schema2kotlin', () => {
     }
   });
   describe('Test Harness', () => {
-    it('exposes harness handles as a read write handle regardless of particle spec direction', async () => await assertTestHarness(
+    it('exposes a handle as a read write handle regardless of particle spec direction', async () => await assertTestHarness(
       `particle P
         h1: reads Person {name: Text}
-        h2: writes Address {streetAddress: Text}
+        h2: reads Address {streetAddress: Text}
       `, `
 class PTestHarness<P : AbstractP>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
-    HandleSpec("h1", HandleMode.Read, SingletonType(EntityType(P_H1.SCHEMA)), setOf(P_H1)),
-    HandleSpec("h2", HandleMode.Write, SingletonType(EntityType(P_H2.SCHEMA)), setOf(P_H2))
+    HandleSpec("h1", HandleMode.ReadWrite, SingletonType(EntityType(P_H1.SCHEMA)), setOf(P_H1)),
+    HandleSpec("h2", HandleMode.ReadWrite, SingletonType(EntityType(P_H2.SCHEMA)), setOf(P_H2))
 )) {
     val h1: ReadWriteSingletonHandle<P_H1> by handleMap
     val h2: ReadWriteSingletonHandle<P_H2> by handleMap
@@ -321,32 +321,32 @@ class PTestHarness<P : AbstractP>(
         singletonReference: writes &Person {name: Text}
         collectionEntity: writes [Person {name: Text}]
         collectionReference: reads [&Person {name: Text}]
-        collectionTuples: reads writes [(&Product {name: Text}, &Manufacturer {name: Text})]
+        collectionTuples: reads [(&Product {name: Text}, &Manufacturer {name: Text})]
   `, `
 class PTestHarness<P : AbstractP>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
     HandleSpec(
         "singletonEntity",
-        HandleMode.Read,
+        HandleMode.ReadWrite,
         SingletonType(EntityType(P_SingletonEntity.SCHEMA)),
         setOf(P_SingletonEntity)
     ),
     HandleSpec(
         "singletonReference",
-        HandleMode.Write,
+        HandleMode.ReadWrite,
         SingletonType(ReferenceType(EntityType(P_SingletonReference.SCHEMA))),
         setOf(P_SingletonReference)
     ),
     HandleSpec(
         "collectionEntity",
-        HandleMode.Write,
+        HandleMode.ReadWrite,
         CollectionType(EntityType(P_CollectionEntity.SCHEMA)),
         setOf(P_CollectionEntity)
     ),
     HandleSpec(
         "collectionReference",
-        HandleMode.Read,
+        HandleMode.ReadWrite,
         CollectionType(ReferenceType(EntityType(P_CollectionReference.SCHEMA))),
         setOf(P_CollectionReference)
     ),
