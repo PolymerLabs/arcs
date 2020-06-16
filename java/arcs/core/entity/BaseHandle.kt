@@ -69,7 +69,7 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
         }
         return Reference(
             spec.entitySpec,
-            arcs.core.storage.Reference(entity.serialize().id, storageKey.backingKey, null).also {
+            arcs.core.storage.Reference(entity.entityId!!, storageKey.backingKey, null).also {
                 it.dereferencer = dereferencerFactory.create(spec.entitySpec.SCHEMA)
             }
         ) as Reference<E>
