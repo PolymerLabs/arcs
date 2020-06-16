@@ -14,6 +14,7 @@ package arcs.android.systemhealth.testapp
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
+import android.os.Process
 import androidx.lifecycle.LifecycleService
 
 /**
@@ -24,6 +25,14 @@ import androidx.lifecycle.LifecycleService
 class LocalService : LifecycleService() {
     private val storageCore = StorageCore(this, lifecycle)
     private val binder = Binder()
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        // Avoid Android cached process so as to have a
+        // cleaner measurement of memory footprint.
+        Process.killProcess(Process.myPid())
+    }
 
     override fun onBind(intent: Intent): IBinder {
         // Parse local service's specific settings.

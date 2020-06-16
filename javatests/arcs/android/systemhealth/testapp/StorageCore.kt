@@ -158,6 +158,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         _statsBulletin.update { "" }
 
         if (settings.function != Function.STOP && settings.timesOfIterations > 0) {
+            notify { "Preparing data and tests..." }
             tasks = Array(settings.numOfListenerThreads + settings.numOfWriterThreads) { id ->
                 object : ScheduledThreadPoolExecutor(
                     if (settings.function == Function.STABILITY_TEST) 2 else 1) {
