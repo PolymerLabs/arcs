@@ -28,14 +28,12 @@ export type AddFieldOptions = Readonly<{
 export interface ClassGenerator {
   addField(opts: AddFieldOptions): void;
   escapeIdentifier(ident: string): string;
-  generatePredicates(): void;
-  generate(schemaHash: string, fieldCount: number): string;
+  generate(fieldCount: number): string;
 }
 
 export class NodeAndGenerator {
   node: SchemaNode;
   generator: ClassGenerator;
-  hash: string;
 }
 
 export abstract class Schema2Base {
@@ -94,8 +92,8 @@ export abstract class Schema2Base {
     for (const particle of manifest.particles) {
       const nodes = await this.calculateNodeAndGenerators(particle);
 
-      classes.push(...nodes.map(({generator, node, hash}) =>
-        generator.generate(hash, Object.entries(node.schema.fields).length)));
+      classes.push(...nodes.map(({generator, node}) =>
+        generator.generate(Object.entries(node.schema.fields).length)));
 
       if (this.opts.test_harness) {
         classes.push(this.generateTestHarness(particle, nodes.map(n => n.node)));
@@ -144,11 +142,8 @@ export abstract class Schema2Base {
           throw new Error(`Schema kind '${descriptor.kind}' for field '${field}' is not supported`);
         }
       }
-      if (node.schema.refinement) {
-        generator.generatePredicates();
-      }
-      const hash = await node.schema.hash();
-      nodes.push({node, generator, hash});
+      await node.calculateHash();
+      nodes.push({node, generator});
     }
 
     return nodes;

@@ -46,10 +46,18 @@ export class KotlinGenerator implements ClassGenerator {
   collectionSchemaFields: string[] = [];
   nestedEntitySpecs: string[] = [];
 
-  refinement = `{ _ -> true }`;
-  query = 'null'; // TODO(cypher1): Support multiple queries.
-
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {
+  }
+
+  generateClasses(): string {
+    return `\
+
+    ${this.generateClassDefinition()} {
+        ${this.generateFieldsDefinitions()}
+        ${this.generateCopyMethods()}
+        ${this.maybeGenerateWasmSpecificMethods()}
+        ${this.generateEntitySpec()}
+    }`;
   }
 
   /** Returns the name of the generated class. */
@@ -128,10 +136,11 @@ export class KotlinGenerator implements ClassGenerator {
     }
   }
 
-  createSchema(schemaHash: string): string {
+  generateSchema(): string {
     if (this.node.schema.equals(Schema.EMPTY)) return `Schema.EMPTY`;
 
     const schemaNames = this.node.schema.names.map(n => `SchemaName("${n}")`);
+    const {refinement, query} = this.generatePredicates();
     return `\
 Schema(
     setOf(${ktUtils.joinWithIndents(schemaNames, {startIndent: 8})}),
@@ -139,9 +148,9 @@ Schema(
         singletons = ${leftPad(ktUtils.mapOf(this.singletonSchemaFields, 30), 8, true)},
         collections = ${leftPad(ktUtils.mapOf(this.collectionSchemaFields, 30), 8, true)}
     ),
-    ${quote(schemaHash)},
-    refinement = ${this.refinement},
-    query = ${this.query}
+    ${quote(this.node.hash)},
+    refinement = ${refinement},
+    query = ${query}
 )`;
   }
 
@@ -153,23 +162,24 @@ Schema(
     return getTypeInfo({name}).defaultVal;
   }
 
-  generatePredicates() {
-    const expression = KTExtracter.fromSchema(this.node.schema, this);
-    const refinement = this.node.schema.refinement;
-    const queryType = refinement.getQueryParams().get('?');
-    const lines = leftPad(expression, 8);
-    if (queryType) {
-      this.query = `{ data, queryArgs ->
-${lines}
-    }`;
-    } else {
-      this.refinement = `{ data ->
-${lines}
-    }`;
-    }
+  private generatePredicates(): {query: string, refinement: string} {
+    const schema = this.node.schema;
+    const hasQuery = schema.refinement && schema.refinement.getQueryParams().get('?');
+    const hasRefinement = !!schema.refinement;
+    const expression = leftPad(KTExtracter.fromSchema(this.node.schema, this), 8);
+
+    return {
+      // TODO(cypher1): Support multiple queries.
+      query: hasQuery ? `{ data, queryArgs ->
+${expression}
+    }` : 'null',
+      refinement: (hasRefinement && !hasQuery) ? `{ data ->
+${expression}
+    }` : `{ _ -> true }`
+    };
   }
 
-  generate(schemaHash: string): string {
+  generate(): string {
     return '';
   }
 
@@ -277,33 +287,30 @@ ${lines}
     return '\n' + ktUtils.indent(blocks.join('\n'), 2);
   }
 
-  generateClasses(schemaHash: string): string {
-    const fieldCount = Object.keys(this.node.schema.fields).length;
-    const withFields = (populate: string) => fieldCount === 0 ? '' : populate;
-
-    return `\
-
-    ${this.generateClassDefinition()} {
-${this.generateFieldsDefinitions()}
-        ${this.generateCopyMethods()}
-    ${this.opts.wasm ? `
+  private maybeGenerateWasmSpecificMethods() {
+    if (!this.opts.wasm) return '';
+    return `
         fun reset() {
-          ${withFields(`${this.fieldsReset.join('\n            ')}`)}
+            ${ktUtils.indentFollowing(this.fieldsReset, 3)}
         }
 
         override fun encodeEntity(): NullTermByteArray {
             val encoder = StringEncoder()
             encoder.encode("", entityId)
-            ${this.encode.join('\n        ')}
+            ${ktUtils.indentFollowing(this.encode, 3)}
             return encoder.toNullTermByteArray()
         }
 
         override fun toString() =
             "${this.className}(${this.fieldsForToString.join(', ')})"
-    ` : ''}
-        companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${this.className}> {
+`;
+  }
+
+  private generateEntitySpec() {
+    const fieldCount = Object.keys(this.node.schema.fields).length;
+    return `companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${this.className}> {
             ${this.opts.wasm ? '' : `
-            override val SCHEMA = ${leftPad(this.createSchema(schemaHash), 12, true)}
+            override val SCHEMA = ${leftPad(this.generateSchema(), 12, true)}
 
             private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
                 ${ktUtils.mapOf(this.nestedEntitySpecs, 16)}
@@ -321,13 +328,13 @@ ${this.generateFieldsDefinitions()}
                 val decoder = StringDecoder(encoded)
                 val entityId = decoder.decodeText()
                 decoder.validate("|")
-                ${withFields(`
-                ${this.setFieldsToDefaults.join('\n            ')}
+                ${fieldCount > 0 ? (`
+                ${ktUtils.indentFollowing(this.setFieldsToDefaults, 3)}
                 var i = 0
                 while (i < ${fieldCount} && !decoder.done()) {
                     val _name = decoder.upTo(':').toUtf8String()
                     when (_name) {
-                        ${this.decode.join('\n                    ')}
+                        ${ktUtils.indentFollowing(this.decode, 5)}
                         else -> {
                             // Ignore unknown fields until type slicing is fully implemented.
                             when (decoder.chomp(1).toUtf8String()) {
@@ -340,15 +347,14 @@ ${this.generateFieldsDefinitions()}
                     }
                     decoder.validate("|")
                     i++
-                }`)}
+                }`) : ''}
                 val _rtn = ${this.className}().copy(
                     ${ktUtils.joinWithIndents(this.fieldsForCopy, {startIndent: 33, numberOfIndents: 3})}
                 )
                _rtn.entityId = entityId
                 return _rtn
             }`}
-        }
-    }`;
+        }`;
   }
 
   private prefixTypeForRuntime(type: string): string {
