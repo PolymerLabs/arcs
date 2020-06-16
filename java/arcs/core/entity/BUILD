@@ -15,6 +15,7 @@ arcs_kt_library(
         "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage",
+        "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
