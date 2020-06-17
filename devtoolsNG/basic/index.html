@@ -1,43 +1,36 @@
 <body>
-
   <div id="log"></div> 
- <input type="button" onclick="myFunction()" value="Clear">
+  <input type="button" onclick="clearEntries()" value="Clear">
+  <script>
 
- <script>
+    const websocket = new WebSocket('ws://localhost:12345');
 
-   const websocket = new WebSocket('ws://localhost:12345');
+    websocket.onopen = e => {
+      websocket.send('WebSocket Open');  
+    };
 
-   websocket.onopen = e => {
+    websocket.onmessage = msg => {
+      appendEntry(msg.data)
+    }
 
-    websocket.send('Hello dear Server!');
+    websocket.onerror = e => {
+      console.log('No connection found');
+    };
 
-     websocket.onmessage = msg => {
+    websocket.onclose = e => {
+      console.log(`Websocket closing. ${e}`);
+      appendEntry(`Web Socket is Closed, try restarting the Arc.`);
+    }
 
+    function clearEntries() {
+      document.getElementById("log").innerHTML = "";
+    };
+
+    function appendEntry(str) {
       const newEntry = document.createElement('div');
-      newEntry.innerText = msg.data
+      newEntry.innerText = str;
       document.getElementById("log").append(newEntry);
+    }
 
-     }
-
-   };
-
-   websocket.onerror = e => {
-
-     console.log('No connection found');
-
-   };
-
-   websocket.onclose = e => {
-
-    console.log(`Websocket closing. ${e}`)
-    document.getElementById("log").innerHTML = document.getElementById("log").innerHTML + "<div>WebSocket Closing</div>"
-
-   }
-
-   function myFunction() {
-    document.getElementById("log").innerHTML = ""
-   };
-
- </script>
-
+  </script>
 </body>

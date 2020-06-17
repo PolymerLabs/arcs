@@ -23,6 +23,7 @@ import android.widget.RadioButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import arcs.android.devtools.DevToolsService
+import arcs.android.devtools.IDevToolsService
 import arcs.android.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
 import arcs.core.common.ArcId
@@ -69,13 +70,11 @@ class TestActivity : AppCompatActivity() {
     private var allocator: Allocator? = null
     private var resurrectionArcId: ArcId? = null
 
-    private var devToolsService: DevToolsService? = null
+    private var devToolsService: IDevToolsService? = null
 
     private val connection = object : ServiceConnection {
-
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            val binder = service as DevToolsService.LocalBinder
-            devToolsService = binder.getService()
+            devToolsService = IDevToolsService.Stub.asInterface(service)
         }
 
         override fun onServiceDisconnected(arg0: ComponentName) {
@@ -138,9 +137,7 @@ class TestActivity : AppCompatActivity() {
             }
         }
 
-        val devToolsIntent = Intent(
-            this, DevToolsService::class.java
-        )
+        val devToolsIntent = Intent(this, DevToolsService::class.java)
         bindService(devToolsIntent, connection, Context.BIND_AUTO_CREATE)
     }
 
