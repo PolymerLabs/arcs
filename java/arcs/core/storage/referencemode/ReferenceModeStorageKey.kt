@@ -26,6 +26,17 @@ data class ReferenceModeStorageKey(
     val backingKey: StorageKey,
     val storageKey: StorageKey
 ) : StorageKey(REFERENCE_MODE_PROTOCOL) {
+
+    init {
+        // This is a overly strict check as some combinations of different protocols are fine, so it
+        // can be relaxed if needed (see [StorageAdapter] for a more precise check).
+        require(backingKey.protocol == storageKey.protocol) {
+            "Different protocols (${backingKey.protocol} and ${storageKey.protocol}) in a " +
+                "ReferenceModeStorageKey can cause problems with garbage collection if the " +
+                "backing key is in the database and the container key isn't."
+        }
+    }
+
     override fun childKeyWithComponent(component: String): StorageKey =
         ReferenceModeStorageKey(backingKey, storageKey.childKeyWithComponent(component))
 
