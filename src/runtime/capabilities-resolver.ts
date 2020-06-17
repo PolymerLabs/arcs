@@ -16,7 +16,6 @@ import {Capabilities} from './capabilities.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 import {Flags} from './flags.js';
 import {StorageKeyFactory, FactorySelector, ContainerStorageKeyOptions, BackingStorageKeyOptions, SimpleCapabilitiesSelector} from './storage-key-factory.js';
-import {VolatileStorageKeyFactory} from './storageNG/drivers/volatile.js';
 import {ArcId} from './id.js';
 
 export type CapabilitiesResolverOptions = Readonly<{
@@ -70,6 +69,10 @@ export class CapabilitiesResolver {
     }
     const backingKey = factory.create(new BackingStorageKeyOptions(
         this.options.arcId, schemaHash, type.getEntitySchema().name));
+
+    // ReferenceModeStorageKeys in different drivers can cause problems with garbage collection.
+    assert(backingKey.protocol === containerKey.protocol);
+
     return new ReferenceModeStorageKey(backingKey, containerChildKey);
   }
 
