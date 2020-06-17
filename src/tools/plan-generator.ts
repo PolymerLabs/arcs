@@ -16,6 +16,7 @@ import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Ttl, TtlUnits} from '../runtime/capabilities.js';
+import {AnnotationRef} from '../runtime/recipe/annotation.js';
 import {findLongRunningArcId} from './allocator-recipe-resolver.js';
 
 const ktUtils = new KotlinGenerationUtils();
@@ -58,6 +59,9 @@ export class PlanGenerator {
       }
 
       const planArgs = [ktUtils.listOf(particles)];
+      if (recipe.annotations.length > 0) {
+        planArgs.push(PlanGenerator.createAnnotations(recipe.annotations));
+      }
       if (arcId) {
         planArgs.push(quote(arcId));
       }
@@ -95,8 +99,9 @@ export class PlanGenerator {
     const mode = this.createHandleMode(connection.direction, connection.type);
     const type = generateConnectionType(connection);
     const ttl = PlanGenerator.createTtl(connection.handle.getTtl());
+    const annotations = PlanGenerator.createAnnotations(connection.handle.annotations);
 
-    return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl], {startIndent: 24});
+    return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl, annotations], {startIndent: 24});
   }
 
   /** Generates a Kotlin `HandleMode` from a Direction and Type. */
@@ -140,6 +145,32 @@ export class PlanGenerator {
       case TtlUnits.Days: return `Ttl.Days`;
       default: return `Ttl.Infinite`;
     }
+  }
+
+  static createAnnotations(annotations: AnnotationRef[]): string {
+    const annotationStrs: string[] = [];
+    for (const ref of annotations) {
+      const paramMappings = Object.entries(ref.annotation.params).map(([name, type]) => {
+        const paramToMapping = () => {
+          switch (type) {
+            case 'Text':
+                return `AnnotationParam.Str(${quote(ref.params[name].toString())})`;
+            case 'Number':
+              return `AnnotationParam.Num(${ref.params[name]})`;
+            case 'Boolean':
+              return `AnnotationParam.Bool(${ref.params[name]})`;
+            default: throw new Error(`Unsupported param type ${type}`);
+          }
+        };
+        return `"${name}" to ${paramToMapping()}`;
+      });
+
+      annotationStrs.push(ktUtils.applyFun('Annotation', [
+        quote(ref.name),
+        ktUtils.mapOf(paramMappings, 12)
+      ]));
+    }
+    return ktUtils.listOf(annotationStrs);
   }
 
   fileHeader(): string {
