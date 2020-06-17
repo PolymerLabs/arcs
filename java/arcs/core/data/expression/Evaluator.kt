@@ -1,3 +1,13 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 @file:Suppress("UNCHECKED_CAST")
 
 package arcs.core.data.expression
@@ -34,7 +44,7 @@ class ExpressionEvaluator(val parameterScope: Expression.Scope = ParameterScope(
 
     override fun visit(expr: Expression.TextLiteralExpression): String = expr.value
 
-    override fun visit(expr: Expression.BooleanLiteralExpresson): Boolean = expr.value
+    override fun visit(expr: Expression.BooleanLiteralExpression): Boolean = expr.value
 
     override fun <T> visit(expr: Expression.ObjectLiteralExpression<T>): Any = expr.value as Any
 }

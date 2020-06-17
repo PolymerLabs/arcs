@@ -55,8 +55,8 @@ sealed class Expression<T> {
         /** Called when [TextLiteralExpression] encountered. */
         fun visit(expr: TextLiteralExpression): Result
 
-        /** Called when [BooleanLiteralExpresson] encountered. */
-        fun visit(expr: BooleanLiteralExpresson): Result
+        /** Called when [BooleanLiteralExpression] encountered. */
+        fun visit(expr: BooleanLiteralExpression): Result
 
         /** Called when [ObjectLiteralExpression] encountered. */
         fun <T> visit(expr: ObjectLiteralExpression<T>): Result
@@ -242,7 +242,7 @@ sealed class Expression<T> {
     }
 
     /** A reference to a literal boolean value, e.g. true/false */
-    class BooleanLiteralExpresson(boolean: Boolean) : LiteralExpression<Boolean>(boolean) {
+    class BooleanLiteralExpression(boolean: Boolean) : LiteralExpression<Boolean>(boolean) {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
     }
 }

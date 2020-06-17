@@ -1,6 +1,17 @@
-package arcs.core.data.expression
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+@file:Suppress("UNCHECKED_CAST")
 
-/** Extension, infix, and operator overload functions for constructing [Expression] DSL. */
+/** Extension, infix, and operator overload functions for constructing Expression DSL. */
+package arcs.core.data.expression
 
 /** Constructs a [Expression.NumberLiteralExpression] */
 fun Double.asExpr() = Expression.NumberLiteralExpression(this)
@@ -12,7 +23,7 @@ fun Int.asExpr() = Expression.NumberLiteralExpression(this)
 fun String.asExpr() = Expression.TextLiteralExpression(this)
 
 /** Constructs a [Expression.BooleanLiteralExpression] */
-fun Boolean.asExpr() = Expression.BooleanLiteralExpresson(this)
+fun Boolean.asExpr() = Expression.BooleanLiteralExpression(this)
 
 /** Constructs a [Expression.Scope] for looking up query parameter references. */
 fun ParameterScope() = mutableMapOf<String, Any>().asScope()
@@ -118,5 +129,5 @@ fun <T> Map<String, T>.asScope(scopeName: String = "<object>") = object : Expres
     override fun <T> lookup(param: String): T = this@asScope[param] as T
 }
 
-/** Constructs a [QueryParameterExpression] witht he given [queryArgName]. */
+/** Constructs a [Expression.QueryParameterExpression] witht he given [queryArgName]. */
 fun <T> query(queryArgName: String) = Expression.QueryParameterExpression<T>(queryArgName)

@@ -1,3 +1,13 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 package arcs.core.data.expression
 
 /** Traverses a tree of [Expression] objects, converting each node to manifest format (String). */
@@ -29,7 +39,7 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
 
     override fun visit(expr: Expression.TextLiteralExpression) = "\"${expr.value}\""
 
-    override fun visit(expr: Expression.BooleanLiteralExpresson) = expr.value.toString()
+    override fun visit(expr: Expression.BooleanLiteralExpression) = expr.value.toString()
 
     override fun <T> visit(expr: Expression.ObjectLiteralExpression<T>) =
         (expr.value as? Expression.Scope)?.scopeName ?: "<object>"
