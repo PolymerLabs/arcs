@@ -475,6 +475,7 @@ describe('manifest2proto', () => {
   it('encodes variable type - resolved constraint', async () => {
     const constraint = EntityType.make(['Foo'], {value: 'Text'}).singletonOf();
     const varType = TypeVariable.make('a', constraint, constraint);
+    varType.maybeEnsureResolved();
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
       variable: {
         name: 'a',
