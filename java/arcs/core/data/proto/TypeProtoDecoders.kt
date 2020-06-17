@@ -11,14 +11,7 @@
 
 package arcs.core.data.proto
 
-import arcs.core.data.CollectionType
-import arcs.core.data.CountType
-import arcs.core.data.EntityType
-import arcs.core.data.FieldType
-import arcs.core.data.PrimitiveType
-import arcs.core.data.ReferenceType
-import arcs.core.data.SingletonType
-import arcs.core.data.TupleType
+import arcs.core.data.*
 import arcs.core.type.Type
 
 /** Converts a [PrimitiveTypeProto] protobuf instance into a Kotlin [PrimitiveType] instance. */
@@ -82,6 +75,17 @@ fun CountTypeProto.decode() = CountType()
 /** Converts a [TupleTypeProto] protobuf instance into a Kotlin [TupleType] instance. */
 fun TupleTypeProto.decode() = TupleType(elementsList.map { it.decode() })
 
+/** Converts a [TypeVariableProto] protobuf instance into a Kotlin [TypeVariable] instance. */
+fun TypeVariableProto.decode() = TypeVariable(
+    name,
+    constraint.constraintType.let {
+        when (it.dataCase) {
+            TypeProto.DataCase.DATA_NOT_SET -> null
+            else -> it.decode()
+        }
+    }
+)
+
 /** Converts a [TypeProto] protobuf instance into a Kotlin [Type] instance. */
 // TODO(b/155812915): RefinementExpression.
 fun TypeProto.decode(): Type = when (dataCase) {
@@ -91,10 +95,7 @@ fun TypeProto.decode(): Type = when (dataCase) {
     TypeProto.DataCase.REFERENCE -> reference.decode()
     TypeProto.DataCase.COUNT -> count.decode()
     TypeProto.DataCase.TUPLE -> tuple.decode()
-    // TODO(b/154733929) Support Kotlin TypeVariables
-    TypeProto.DataCase.VARIABLE ->
-        throw NotImplementedError(
-            "Decoding of a ${dataCase.name} type to a [Type] is not implemented.")
+    TypeProto.DataCase.VARIABLE -> variable.decode()
     TypeProto.DataCase.DATA_NOT_SET ->
         throw IllegalArgumentException("Unknown data field in TypeProto.")
     else ->

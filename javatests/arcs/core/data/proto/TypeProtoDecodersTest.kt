@@ -1,16 +1,6 @@
 package arcs.core.data.proto
 
-import arcs.core.data.CollectionType
-import arcs.core.data.CountType
-import arcs.core.data.EntityType
-import arcs.core.data.FieldType
-import arcs.core.data.PrimitiveType
-import arcs.core.data.ReferenceType
-import arcs.core.data.Schema
-import arcs.core.data.SchemaFields
-import arcs.core.data.SchemaName
-import arcs.core.data.SingletonType
-import arcs.core.data.TupleType
+import arcs.core.data.*
 import arcs.core.testutil.fail
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
@@ -239,6 +229,54 @@ class TypeProtoDecodersTest {
                 listOf(EntityType(personSchema), EntityType(ageSchema))
             )
             else -> fail("TypeProto should have been decoded to [TupleType].")
+        }
+    }
+
+    @Test
+    fun decodesVariableTypeProtoAsVariableType() {
+        val variableTypeProto = """
+        variable {
+          name: "a"
+          constraint { constraint_type {
+            entity {
+              schema {
+                names: "Person"
+                fields: {
+                  key: "name"
+                  value: { primitive: TEXT }
+                }
+              }
+            }
+          } }
+          
+        }
+        """.trimIndent()
+        val variableType = parseTypeProtoText(variableTypeProto).decode()
+        val expectedSchema = Schema(
+            names = setOf(SchemaName("Person")),
+            fields = SchemaFields(singletons=mapOf("name" to FieldType.Text), collections=mapOf()),
+            hash = ""
+        )
+        when (variableType) {
+            is TypeVariable -> assertThat(variableType).isEqualTo(
+                TypeVariable("a", EntityType(expectedSchema))
+            )
+            else -> fail("TypeProto should have been decoded to [TypeVariable].")
+        }
+    }
+
+    @Test
+    fun decodesVariableTypeProtoAsUnconstrainedVariableType() {
+        val variableTypeProto = """
+        variable {
+          name: "a"
+          constraint { constraint_type {} }
+        }
+        """.trimIndent()
+        val variableType = parseTypeProtoText(variableTypeProto).decode()
+        when (variableType) {
+            is TypeVariable -> assertThat(variableType).isEqualTo(TypeVariable("a", null))
+            else -> fail("TypeProto should have been decoded to [TypeVariable].")
         }
     }
 
