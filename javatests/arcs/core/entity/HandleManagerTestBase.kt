@@ -676,47 +676,37 @@ open class HandleManagerTestBase {
         val handleB = writeHandleManager.createCollectionHandle()
             as ReadWriteCollectionHandle<Person>
 
-        val handleBGotAll7 = Job()
-        handleB.onUpdate {
-            log("HandleB onUpdate: ${it.map(Person::entityId)}")
-            if (it.size == 7 || handleB.fetchAll().size == 7) handleBGotAll7.complete()
+        val handleBGotAll7 = handleB.onUpdateDeferred { it.size == 7 }
+        withContext(handleA.dispatcher) {
+            handleA.store(Person("a", "a", 1.0, true))
+            handleA.store(Person("b", "b", 2.0, false))
+            handleA.store(Person("c", "c", 3.0, true))
+            handleA.store(Person("d", "d", 4.0, false, favoriteWords = listOf("uncool")))
+            handleA.store(Person("e", "e", 5.0, true, favoriteWords = listOf("waycool")))
+            handleA.store(Person("f", "f", 6.0, false, favoriteWords = listOf("salami", "wurst")))
+            handleA.store(Person("g", "g", 7.0, true))
+
+            assertThat(handleA.fetchAll()).hasSize(7)
         }
 
-        handleA.store(Person("a", "a", 1.0, true))
-        handleA.store(Person("b", "b", 2.0, false))
-        handleA.store(Person("c", "c", 3.0, true))
-        handleA.store(Person("d", "d", 4.0, false, favoriteWords=listOf("uncool")))
-        handleA.store(Person("e", "e", 5.0, true, favoriteWords=listOf("waycool")))
-        handleA.store(Person("f", "f", 6.0, false, favoriteWords=listOf("salami", "wurst")))
-        handleA.store(Person("g", "g", 7.0, true))
-
-        assertThat(handleA.fetchAll()).hasSize(7)
-        withTimeout(15000) {
-            handleBGotAll7.join()
+        handleBGotAll7.await()
+        withContext(handleB.dispatcher) {
+            assertThat(handleB.fetchAll()).hasSize(7)
         }
-        assertThat(handleB.fetchAll()).hasSize(7)
 
         // Ensure we get update from A before checking.
         // Since some test configurations may result in the handles
         // operating on different threads.
-        val gotUpdate = handleA.onUpdateDeferred {
-            log(
-                "HandleA onUpdate: ${it.map(Person::entityId)}, " +
-                    "HandleA fetchAll: ${handleA.fetchAll().map(Person::entityId)}"
-            )
-            // TODO: seems like the latest value is not always passed to the onUpdate callback. Not
-            //  only that, but sometimes the same value can be passed more than once.  Using
-            //  fetchAll here is more reliable. Need to figure out why.
-            handleA.fetchAll().isEmpty()
+        val gotUpdate = handleA.onUpdateDeferred { it.isEmpty() }
+        withContext(handleB.dispatcher) {
+            handleB.clear()
+            assertThat(handleB.fetchAll()).isEmpty()
         }
+        gotUpdate.await()
 
-        handleB.clear()
-        assertThat(handleB.fetchAll()).isEmpty()
-
-        withTimeout(15000) {
-            gotUpdate.await()
+        withContext(handleA.dispatcher) {
+            assertThat(handleA.fetchAll()).isEmpty()
         }
-        assertThat(handleA.fetchAll()).isEmpty()
     }
 
     @Test
