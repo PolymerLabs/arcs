@@ -500,6 +500,17 @@ describe('manifest2proto', () => {
       }
     });
   });
+
+  it('encodes variable type - unconstrained', async () => {
+    const varType = TypeVariable.make('a');
+    assert.deepStrictEqual(await toProtoAndBackType(varType), {
+      variable: {
+        name: 'a',
+        constraint: { constraintType: {} }
+      }
+    });
+  });
+
   it('encodes schemas with primitives and collections of primitives', async () => {
     const manifest = await Manifest.parse(`
       particle Abc in 'a/b/c.js'

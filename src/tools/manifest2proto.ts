@@ -305,10 +305,6 @@ export function capabilitiesToProtoOrdinals(capabilities: Capabilities) {
 }
 
 export async function typeToProtoPayload(type: Type) {
-  if (type.hasVariable && !type.isResolved()) {
-    assert(type.maybeEnsureResolved());
-    assert(type.isResolved());
-  }
   switch (type.tag) {
     case 'Entity': {
       const entity = {
@@ -344,15 +340,17 @@ export async function typeToProtoPayload(type: Type) {
     case 'Count': return {
       count: {}
     };
-    case 'TypeVariable': return {
-      variable: {
-        name: (type as TypeVariable).variable.name,
-        constraint: {
-          constraintType: await typeToProtoPayload(type.canReadSubset || type.canWriteSuperset || type.resolvedType())
-        }
+    case 'TypeVariable':{
+      const constraint = type.canReadSubset || type.canWriteSuperset || type.resolvedType();
+      const constraintType = constraint.isResolved() ? await typeToProtoPayload(constraint) : {};
+      return {
+        variable: {
+          name: (type as TypeVariable).variable.name,
+          constraint: { constraintType }
 
-      }
-    };
+        }
+      };
+    }
     default: throw Error(`Type '${type.tag}' is not supported.`);
   }
 }
