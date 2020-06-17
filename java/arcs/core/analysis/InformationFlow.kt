@@ -389,7 +389,9 @@ class InformationFlow private constructor(
         val tupleIndexNames = listOf("first", "second", "third", "fourth", "fifth")
 
         public fun getTupleField(component: Int): AccessPath.Selector.Field {
-            require(component >= 0 && component < 5) { "Only up to 5 tuple components is allowed!"}
+            require(component >= 0 && component < tupleIndexNames.size) {
+                "Only up to ${tupleIndexNames.size} tuple components is allowed!"
+            }
             return AccessPath.Selector.Field(tupleIndexNames[component])
         }
 
