@@ -11,7 +11,7 @@ import {Runtime} from '../runtime/runtime.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {Type, CollectionType, ReferenceType, SingletonType, TupleType} from '../runtime/type.js';
+import {Type, CollectionType, ReferenceType, SingletonType, TupleType, TypeVariable} from '../runtime/type.js';
 import {Schema} from '../runtime/schema.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 import {assert} from '../platform/assert-web.js';
@@ -309,7 +309,6 @@ export async function typeToProtoPayload(type: Type) {
     assert(type.maybeEnsureResolved());
     assert(type.isResolved());
   }
-  type = type.resolvedType();
   switch (type.tag) {
     case 'Entity': {
       const entity = {
@@ -345,12 +344,15 @@ export async function typeToProtoPayload(type: Type) {
     case 'Count': return {
       count: {}
     };
-    // TODO(b/154733929)
-    // case 'TypeVariable': return {
-    //   variable: {
-    //     name: (type as TypeVariable).variable.name,
-    //   }
-    // };
+    case 'TypeVariable': return {
+      variable: {
+        name: (type as TypeVariable).variable.name,
+        constraint: {
+          constraintType: await typeToProtoPayload(type.canReadSubset || type.canWriteSuperset || type.resolvedType())
+        }
+
+      }
+    };
     default: throw Error(`Type '${type.tag}' is not supported.`);
   }
 }
