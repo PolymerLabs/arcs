@@ -439,8 +439,13 @@ open class HandleManagerTestBase {
 
         // Modify the entity.
         val modEntity1 = entity1.copy(name = "Ben")
-        val entityModified = monitorHandle.onUpdateDeferred { it.single().name == "Ben" }
-        withContext(writeEntityHandle.dispatcher) { writeEntityHandle.store(modEntity1) }
+        val entityModified = monitorHandle.onUpdateDeferred {
+            it.all { person -> person.name == "Ben" }
+        }
+        withContext(writeEntityHandle.dispatcher) {
+            writeEntityHandle.store(modEntity1)
+            assertThat(writeEntityHandle.size()).isEqualTo(1)
+        }
         withTimeout(1500) {
             entityModified.await()
         }
@@ -954,9 +959,8 @@ open class HandleManagerTestBase {
         // Modify the entities.
         val modEntity1 = entity1.copy(name = "Ben")
         val modEntity2 = entity2.copy(name = "Ben")
-        var count = 0
         val entitiesWritten = monitorHandle.onUpdateDeferred {
-            ++count == 2
+            it.all { person -> person.name == "Ben" }
         }
         withContext(writeEntityHandle.dispatcher) {
             writeEntityHandle.store(modEntity1)
