@@ -24,7 +24,10 @@ data class TypeVariable(val name: String, val constraint: Type? = null) : Type {
     override fun toString(options: Type.ToStringOptions) = "~$name"
 
     /** [Literal][arcs.core.common.Literal] representation of the variable. */
-    data class VariableLiteral(val name: String, val constraint: TypeLiteral?) : arcs.core.common.Literal
+    data class VariableLiteral(
+        val name: String,
+        val constraint: TypeLiteral?
+    ) : arcs.core.common.Literal
 
     /** [TypeLiteral] representation of a [TypeVariable]. */
     data class Literal(override val tag: Tag, override val data: VariableLiteral) : TypeLiteral

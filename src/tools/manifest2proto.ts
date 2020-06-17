@@ -340,14 +340,13 @@ export async function typeToProtoPayload(type: Type) {
     case 'Count': return {
       count: {}
     };
-    case 'TypeVariable':{
+    case 'TypeVariable': {
       const constraint = type.canReadSubset || type.canWriteSuperset || type.resolvedType();
       const constraintType = constraint.isResolved() ? await typeToProtoPayload(constraint) : {};
       return {
         variable: {
           name: (type as TypeVariable).variable.name,
-          constraint: { constraintType }
-
+          constraint: {constraintType}
         }
       };
     }

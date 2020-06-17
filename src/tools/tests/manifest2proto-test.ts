@@ -506,7 +506,9 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
       variable: {
         name: 'a',
-        constraint: { constraintType: {} }
+        constraint: {
+          constraintType: {}
+        }
       }
     });
   });
