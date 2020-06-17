@@ -203,8 +203,8 @@ class StorageAdapterTest {
             entityStorageAdapterWithKey(dbKey).storableToReferencable(entityWithKey(dbRefMode))
         }
 
-        // Invalid refmode key, the container is in ramdisk but the backing store is in the db.
-        val invalidKey = ReferenceModeStorageKey(ramdiskKey, dbKey)
+        // Invalid refmode key, the container and backing store are in different dbs.
+        val invalidKey = ReferenceModeStorageKey(dbKey2, dbKey)
         assertFails { entityStorageAdapterWithKey(invalidKey).storableToReferencable(entityWithKey(dbKey)) }
     }
 
