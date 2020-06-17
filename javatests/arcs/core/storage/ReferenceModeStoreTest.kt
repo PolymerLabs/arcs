@@ -35,6 +35,7 @@ import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.type.Type
+import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,6 +46,7 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -54,6 +56,9 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 @ExperimentalCoroutinesApi
 class ReferenceModeStoreTest {
+    @get:Rule
+    val log = LogRule()
+
     private lateinit var testKey: ReferenceModeStorageKey
     private lateinit var baseStore: Store<CrdtCount.Data, CrdtCount.Operation, Int>
     private lateinit var schema: Schema
@@ -339,7 +344,6 @@ class ReferenceModeStoreTest {
                 job.complete()
                 return@ProxyCallback
             }
-            return@ProxyCallback
         })
 
         activeStore.onProxyMessage(
@@ -602,6 +606,7 @@ class ReferenceModeStoreTest {
         val containerJob = launch {
             activeStore.containerStore.onReceive(referenceCollection.data, id + 1)
         }
+        containerJob.join()
 
         backingStoreSent = true
 
@@ -629,7 +634,6 @@ class ReferenceModeStoreTest {
         activeStore.idle()
 
         job.join()
-        containerJob.join()
     }
 
     // region Helpers
