@@ -40,10 +40,13 @@ open class Plan(
     val arcId: String?
         get() {
             return annotations.find { it.name == "arcId" }?.let {
-                val idParam = requireNotNull(it.params["id"])
+                val idParam = requireNotNull(it.params["id"]) {
+                    "Annotation arcId missing 'id' parameter"
+                }
                 return when (idParam) {
                     is AnnotationParam.Str -> idParam.value
-                    else -> throw UnsupportedOperationException("Unexpected arcId param $idParam")
+                    else -> throw IllegalStateException(
+                        "Annotation arcId param id must be string, instead got $idParam")
                 }
             }
         }
