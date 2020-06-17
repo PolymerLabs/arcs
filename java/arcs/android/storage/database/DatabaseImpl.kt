@@ -1447,7 +1447,7 @@ class DatabaseImpl(
                     TABLE_TEXT_PRIMITIVES to value
                 }
                 PrimitiveType.BigInt.id -> {
-                    require(value is BigInteger) { "Expected value to be a BigInteger"}
+                    require(value is BigInteger) { "Expected value to be a BigInteger" }
                     counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
                     TABLE_TEXT_PRIMITIVES to value.toString()
                 }
@@ -1801,10 +1801,16 @@ class DatabaseImpl(
 
         private val VERSION_4_MIGRATION = VERSION_3_MIGRATION
 
-        private val VERSION_5_MIGRATION = arrayOf("INSERT INTO types (id, name, is_primitive) VALUES (10, \"BigInt\", True)")
+        private val VERSION_5_MIGRATION = arrayOf(
+            "INSERT INTO types (id, name, is_primitive) VALUES (10, \"BigInt\", True)"
+        )
 
-        private val MIGRATION_STEPS =
-            mapOf(2 to VERSION_2_MIGRATION, 3 to VERSION_3_MIGRATION, 4 to VERSION_4_MIGRATION, 5 to VERSION_5_MIGRATION)
+        private val MIGRATION_STEPS = mapOf(
+            2 to VERSION_2_MIGRATION,
+            3 to VERSION_3_MIGRATION,
+            4 to VERSION_4_MIGRATION,
+            5 to VERSION_5_MIGRATION
+        )
 
         /** The primitive types that are stored in TABLE_NUMBER_PRIMITIVES */
         private val TYPES_IN_NUMBER_TABLE = listOf(
