@@ -15,7 +15,11 @@ import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.type.TypeLiteral
 
-/** [Type] representation for a type variable. */
+/**
+ * [Type] representation for a type variable.
+ *
+ * The constraint reflects a specification by the particle author, not type inference.
+ */
 data class TypeVariable(val name: String, val constraint: Type? = null) : Type {
     override val tag = Tag.TypeVariable
 

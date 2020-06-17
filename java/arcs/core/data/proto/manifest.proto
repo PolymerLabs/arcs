@@ -148,6 +148,8 @@ message TypeVariableProto {
   ConstraintInfo constraint = 2;
 }
 
+// These are constraints expressed by the particle author,
+// not those resulting from type inference.
 message ConstraintInfo {
   TypeProto constraint_type = 1;
 }
