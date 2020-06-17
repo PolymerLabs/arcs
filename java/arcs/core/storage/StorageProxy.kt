@@ -383,7 +383,9 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     }
 
     private fun processModelUpdate(model: Data) {
+        log.debug { "Handling Model Update: $model" }
         // TODO: send the returned merge changes to notifyUpdate()
+        log.debug { "Current value: ${crdt.data}" }
         val valueBefore = crdt.consumerView
         crdt.merge(model)
 
@@ -401,7 +403,10 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
         when (priorState) {
             ProxyState.AWAITING_SYNC -> notifyReady()
-            ProxyState.SYNC -> if (valueBefore != value) notifyUpdate(value)
+            ProxyState.SYNC -> {
+                if (valueBefore != value) notifyUpdate(value)
+                else log.debug { "valueBefore:\n$valueBefore\nis same as value after:\n$value" }
+            }
             ProxyState.DESYNC -> notifyResync()
             ProxyState.NO_SYNC,
             ProxyState.READY_TO_SYNC,
@@ -412,6 +417,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     }
 
     private fun processModelOps(operations: List<Op>) {
+        log.debug { "Handling ops" }
         // Ignore update ops when not synchronized.
         if (stateHolder.value.state != ProxyState.SYNC) return
 

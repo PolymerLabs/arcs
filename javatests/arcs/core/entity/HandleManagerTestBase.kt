@@ -101,20 +101,21 @@ open class HandleManagerTestBase {
     lateinit var schedulerProvider: JvmSchedulerProvider
     lateinit var readHandleManager: EntityHandleManager
     lateinit var writeHandleManager: EntityHandleManager
-    val monitorHandleManager: EntityHandleManager by lazy {
-        EntityHandleManager(
+    lateinit var monitorHandleManager: EntityHandleManager
+
+    open var testRunner = { block: suspend CoroutineScope.() -> Unit ->
+        monitorHandleManager = EntityHandleManager(
             arcId = "testArc",
             hostId = "monitorHost",
             time = fakeTime,
             scheduler = schedulerProvider("monitor"),
             stores = StoreManager()
         )
-    }
-
-    open var testRunner = { block: suspend CoroutineScope.() -> Unit ->
         runBlocking {
-            this.block()
+            //withTimeout(10000) { block() }
+            block()
             schedulerProvider.cancelAll()
+            //monitorHandleManager.close()
         }
     }
 
@@ -131,8 +132,8 @@ open class HandleManagerTestBase {
         // TODO(b/151366899): this is less than ideal - we should investigate how to make the entire
         //  test process cancellable/stoppable, even when we cross scopes into a BindingContext or
         //  over to other RamDisk listeners.
-        readHandleManager.close()
-        writeHandleManager.close()
+        //readHandleManager.close()
+        //writeHandleManager.close()
     }
 
     @Test
@@ -404,7 +405,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun singleton_referenceLiveness() = runBlocking {
+    open fun singleton_referenceLiveness() = testRunner {
         // Create and store an entity.
         val writeEntityHandle = writeHandleManager.createCollectionHandle()
         val readEntityHandle = readHandleManager.createCollectionHandle()
@@ -915,12 +916,17 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun collection_referenceLiveness() = runBlocking<Unit> {
+    open fun collection_referenceLiveness() = testRunner {
         // Create and store some entities.
         val writeEntityHandle = writeHandleManager.createCollectionHandle()
-        val readEntityHandle = readHandleManager.createCollectionHandle()
         val monitorHandle = monitorHandleManager.createCollectionHandle()
-        val monitorSawEntities = monitorHandle.onUpdateDeferred { it.size == 2 }
+        monitorHandle.onUpdate {
+            log("Monitor Handle: $it")
+        }
+        val monitorSawEntities = monitorHandle.onUpdateDeferred {
+            log("First batch of entities - so far: $it")
+            it.size == 2
+        }
         withContext(writeEntityHandle.dispatcher) {
             writeEntityHandle.store(entity1)
             writeEntityHandle.store(entity2)
@@ -935,7 +941,10 @@ open class HandleManagerTestBase {
         val entity2Ref = writeEntityHandle.createReference(entity2)
         val writeRefHandle = writeHandleManager.createReferenceCollectionHandle()
         val readRefHandle = readHandleManager.createReferenceCollectionHandle()
-        val refWritesHappened = readRefHandle.onUpdateDeferred { it.size == 2 }
+        val refWritesHappened = readRefHandle.onUpdateDeferred {
+            log("References created so far: $it")
+            it.size == 2
+        }
         withContext(writeRefHandle.dispatcher) {
             writeRefHandle.store(entity1Ref)
             writeRefHandle.store(entity2Ref)
@@ -960,16 +969,17 @@ open class HandleManagerTestBase {
         val modEntity1 = entity1.copy(name = "Ben")
         val modEntity2 = entity2.copy(name = "Ben")
         val entitiesWritten = monitorHandle.onUpdateDeferred {
+            log("Heard update with $it")
             it.all { person -> person.name == "Ben" }
         }
         withContext(writeEntityHandle.dispatcher) {
             writeEntityHandle.store(modEntity1)
             writeEntityHandle.store(modEntity2)
         }
-        withTimeout(5000) { entitiesWritten.await() }
+        entitiesWritten.await()
 
         // Reference should still be alive.
-        references = readRefHandle.fetchAll()
+        references = withContext(readRefHandle.dispatcher) { readRefHandle.fetchAll() }
         assertThat(references.map { it.dereference() }).containsExactly(modEntity1, modEntity2)
         references.forEach {
             val storageReference = it.toReferencable()
@@ -983,7 +993,7 @@ open class HandleManagerTestBase {
             writeEntityHandle.remove(entity1)
             writeEntityHandle.remove(entity2)
         }
-        withTimeout(5000) { entitiesDeleted.await() }
+        entitiesDeleted.await()
 
         // Reference should be dead. (Removed entities currently aren't actually deleted, but
         // instead are "nulled out".)
@@ -1108,10 +1118,11 @@ open class HandleManagerTestBase {
             "age" to null,
             "is_cool" to null,
             "best_friend" to null,
-            "hat" to null
+            "hat" to null,
+            "favorite_words" to null
         ),
         collections = emptyMap(),
-        creationTimestamp = fakeTime.millis,
+        creationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
     )
 

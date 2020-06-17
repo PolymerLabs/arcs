@@ -52,7 +52,7 @@ class RawEntityDereferencer(
             StorageMode.Direct
         )
 
-        val store = storeManager.get(options).activate(entityActivationFactory)
+        val store = Store(options).activate(entityActivationFactory)
         val deferred = CompletableDeferred<RawEntity?>()
         var token = -1
         token = store.on(
@@ -71,14 +71,18 @@ class RawEntityDereferencer(
             }
         )
 
-        return withContext(coroutineContext) {
-            launch { store.onProxyMessage(ProxyMessage.SyncRequest(token)) }
+        return try {
+            withContext(coroutineContext) {
+                launch { store.onProxyMessage(ProxyMessage.SyncRequest(token)) }
 
-            // Only return the item if we've actually managed to pull it out of storage, and that
-            // it matches the schema we wanted.
-            val entity = deferred.await()?.takeIf { it matches schema }?.copy(id = reference.id)
-            referenceCheckFun?.invoke(schema, entity)
-            entity
+                // Only return the item if we've actually managed to pull it out of storage, and that
+                // it matches the schema we wanted.
+                val entity = deferred.await()?.takeIf { it matches schema }?.copy(id = reference.id)
+                referenceCheckFun?.invoke(schema, entity)
+                entity
+            }
+        } finally {
+            store.off(token)
         }
     }
 }
