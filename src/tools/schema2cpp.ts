@@ -32,6 +32,12 @@ const keywords = [
   'xor', 'xor_eq'
 ];
 
+function escapeIdentifier(name: string): string {
+  // TODO(cypher1): Check for complex keywords (e.g. cases where both 'final' and '_final' are keywords).
+  // TODO(cypher1): Check for name overlaps (e.g. 'final' and '_final' should not be escaped to the same identifier.
+  return (keywords.includes(name) ? '_' : '') + name;
+}
+
 export interface CppTypeInfo {
   type: string;
   defaultVal: string;
@@ -131,18 +137,12 @@ class CppGenerator implements ClassGenerator {
 
   constructor(readonly node: SchemaNode, readonly namespace: string) {}
 
-  escapeIdentifier(name: string): string {
-    // TODO(cypher1): Check for complex keywords (e.g. cases where both 'final' and '_final' are keywords).
-    // TODO(cypher1): Check for name overlaps (e.g. 'final' and '_final' should not be escaped to the same identifier.
-    return (keywords.includes(name) ? '_' : '') + name;
-  }
-
   addField({field, typeName, refClassName, isOptional = false, isCollection = false}: AddFieldOptions) {
     // Work around for schema2graph giving the Kotlin RefClassName.
     if (refClassName !== undefined) {
       refClassName = `${this.node.sources[0].fullName}_Ref`;
     }
-    const fixed = this.escapeIdentifier(field);
+    const fixed = escapeIdentifier(field);
     const valid = `${field}_valid_`;
     let {type, defaultVal, isString} = getTypeInfo(typeName);
     if (typeName === 'Reference') {

@@ -18,6 +18,25 @@ import {Dictionary} from '../runtime/hot.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
+// Includes reserve words for Entity Interface
+// https://kotlinlang.org/docs/reference/keyword-reference.html
+// [...document.getElementsByTagName('code')].map(x => x.innerHTML);
+const keywords = [
+  'as', 'as?', 'break', 'class', 'continue', 'do', 'else', 'false', 'for', 'fun', 'if', 'in', '!in', 'interface', 'is',
+  '!is', 'null', 'object', 'package', 'return', 'super', 'this', 'throw', 'true', 'try', 'typealias', 'val', 'var',
+  'when', 'while', 'by', 'catch', 'constructor', 'delegate', 'dynamic', 'field', 'file', 'finally', 'get', 'import',
+  'init', 'param', 'property', 'receiver', 'set', 'setparam', 'where', 'actual', 'abstract', 'annotation', 'companion',
+  'const', 'crossinline', 'data', 'enum', 'expect', 'external', 'final', 'infix', 'inline', 'inner', 'internal',
+  'lateinit', 'noinline', 'open', 'operator', 'out', 'override', 'private', 'protected', 'public', 'reified', 'sealed',
+  'suspend', 'tailrec', 'vararg', 'it', 'entityId', 'creationTimestamp', 'expirationTimestamp'
+];
+
+export function escapeIdentifier(name: string): string {
+  // TODO(cypher1): Check for complex keywords (e.g. cases where both 'final' and 'final_' are keywords).
+  // TODO(cypher1): Check for name overlaps (e.g. 'final' and 'final_' should not be escaped to the same identifier.
+  return name + (keywords.includes(name) ? '_' : '');
+}
+
 /**
  * Generates a Kotlin type instance for the given handle connection.
  */
@@ -57,6 +76,14 @@ export interface KotlinTypeInfo {
   decodeFn: string;
   defaultVal: string;
   schemaType: string;
+}
+
+export function typeFor(name: string): string {
+  return getTypeInfo({name}).type;
+}
+
+export function defaultValFor(name: string): string {
+  return getTypeInfo({name}).defaultVal;
 }
 
 export function getTypeInfo(opts: { name: string, isCollection?: boolean, refClassName?: string, listTypeName?: string, refSchemaHash?: string }): KotlinTypeInfo {
