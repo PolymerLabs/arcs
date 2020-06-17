@@ -61,6 +61,7 @@ import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
 import arcs.jvm.util.JvmTime
 import com.google.protobuf.InvalidProtocolBufferException
+import java.math.BigInteger
 import java.time.Duration
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
@@ -278,6 +279,7 @@ class DatabaseImpl(
         val listTypes = mutableMapOf<FieldName, FieldType>()
 
         val numeric_types = TYPES_IN_NUMBER_TABLE.joinToString(prefix = "(", postfix = ")")
+        val text_types = TYPES_IN_TEXT_TABLE.joinToString(prefix = "(", postfix = ")")
 
         db.rawQuery(
             """
@@ -304,7 +306,7 @@ class DatabaseImpl(
                 LEFT JOIN number_primitive_values
                     ON fields.type_id IN $numeric_types AND number_primitive_values.id = field_value_id
                 LEFT JOIN text_primitive_values
-                    ON fields.type_id = 2 AND text_primitive_values.id = field_value_id
+                    ON fields.type_id IN $text_types AND text_primitive_values.id = field_value_id
                 LEFT JOIN entity_refs
                     ON fields.type_id > $LARGEST_PRIMITIVE_TYPE_ID AND entity_refs.id = field_value_id
                 WHERE field_values.entity_storage_key_id = ?
@@ -328,6 +330,11 @@ class DatabaseImpl(
                 PrimitiveType.Char.id -> it.getNullableInt(3)?.toChar()?.toReferencable()
                 PrimitiveType.Float.id -> it.getNullableFloat(5)?.toReferencable()
                 PrimitiveType.Double.id -> it.getNullableDouble(5)?.toReferencable()
+                PrimitiveType.BigInt.id -> if (it.isNull(4)) {
+                    null
+                } else {
+                    BigInteger(it.getString(4)).toReferencable()
+                }
                 else -> if (it.isNull(6)) {
                     null
                 } else {
@@ -979,7 +986,7 @@ class DatabaseImpl(
             )
             delete(
                 TABLE_TEXT_PRIMITIVES,
-                "id NOT IN (${usedFieldIdsQuery(listOf(PrimitiveType.Text.id))})",
+                "id NOT IN (${usedFieldIdsQuery(TYPES_IN_TEXT_TABLE)})",
                 arrayOf()
             )
 
@@ -1439,6 +1446,11 @@ class DatabaseImpl(
                     counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
                     TABLE_TEXT_PRIMITIVES to value
                 }
+                PrimitiveType.BigInt.id -> {
+                    require(value is BigInteger) { "Expected value to be a BigInteger"}
+                    counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
+                    TABLE_TEXT_PRIMITIVES to value.toString()
+                }
                 PrimitiveType.Number.id -> {
                     require(value is Double) { "Expected value to be a Double." }
                     counters?.increment(DatabaseCounters.GET_NUMBER_VALUE_ID)
@@ -1789,14 +1801,21 @@ class DatabaseImpl(
 
         private val VERSION_4_MIGRATION = VERSION_3_MIGRATION
 
+        private val VERSION_5_MIGRATION = arrayOf("INSERT INTO types (id, name, is_primitive) VALUES (10, \"BigInt\", True)")
+
         private val MIGRATION_STEPS =
-            mapOf(2 to VERSION_2_MIGRATION, 3 to VERSION_3_MIGRATION, 4 to VERSION_4_MIGRATION)
+            mapOf(2 to VERSION_2_MIGRATION, 3 to VERSION_3_MIGRATION, 4 to VERSION_4_MIGRATION, 5 to VERSION_5_MIGRATION)
 
         /** The primitive types that are stored in TABLE_NUMBER_PRIMITIVES */
         private val TYPES_IN_NUMBER_TABLE = listOf(
             PrimitiveType.Number.id,
             PrimitiveType.Float.id,
             PrimitiveType.Double.id
+        )
+
+        private val TYPES_IN_TEXT_TABLE = listOf(
+            PrimitiveType.Text.id,
+            PrimitiveType.BigInt.id
         )
 
         /**
