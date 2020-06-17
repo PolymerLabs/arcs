@@ -20,6 +20,8 @@ export enum OutputFormat { Kotlin, Proto }
  * Generates Kotlin Plans from recipes in an arcs manifest.
  *
  * @param path path/to/manifest.arcs
+ * @param format Kotlin or Proto supported.
+ * @param recipeFilter Optionally, target a single recipe within the manifest.
  * @return Generated Kotlin code.
  */
 export async function recipe2plan(
