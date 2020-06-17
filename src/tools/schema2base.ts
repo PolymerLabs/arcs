@@ -27,7 +27,6 @@ export type AddFieldOptions = Readonly<{
 
 export interface ClassGenerator {
   addField(opts: AddFieldOptions): void;
-  escapeIdentifier(ident: string): string;
   generate(fieldCount: number): string;
 }
 

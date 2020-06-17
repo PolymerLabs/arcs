@@ -11,25 +11,12 @@ import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.j
 import {AddFieldOptions, ClassGenerator} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import minimist from 'minimist';
-import {getTypeInfo} from './kotlin-codegen-shared.js';
+import {getTypeInfo, escapeIdentifier} from './kotlin-codegen-shared.js';
 import {assert} from '../platform/assert-web.js';
 import {Schema} from '../runtime/schema.js';
-import {KTExtracter} from '../runtime/refiner.js';
+import {KTExtracter} from './kotlin-refinement-generator.js';
 
 const ktUtils = new KotlinGenerationUtils();
-
-// Includes reserve words for Entity Interface
-// https://kotlinlang.org/docs/reference/keyword-reference.html
-// [...document.getElementsByTagName('code')].map(x => x.innerHTML);
-const keywords = [
-  'as', 'as?', 'break', 'class', 'continue', 'do', 'else', 'false', 'for', 'fun', 'if', 'in', '!in', 'interface', 'is',
-  '!is', 'null', 'object', 'package', 'return', 'super', 'this', 'throw', 'true', 'try', 'typealias', 'val', 'var',
-  'when', 'while', 'by', 'catch', 'constructor', 'delegate', 'dynamic', 'field', 'file', 'finally', 'get', 'import',
-  'init', 'param', 'property', 'receiver', 'set', 'setparam', 'where', 'actual', 'abstract', 'annotation', 'companion',
-  'const', 'crossinline', 'data', 'enum', 'expect', 'external', 'final', 'infix', 'inline', 'inner', 'internal',
-  'lateinit', 'noinline', 'open', 'operator', 'out', 'override', 'private', 'protected', 'public', 'reified', 'sealed',
-  'suspend', 'tailrec', 'vararg', 'it', 'entityId', 'creationTimestamp', 'expirationTimestamp'
-];
 
 export class KotlinGenerator implements ClassGenerator {
   fields: string[] = [];
@@ -65,12 +52,6 @@ export class KotlinGenerator implements ClassGenerator {
     return this.node.entityClassName;
   }
 
-  escapeIdentifier(name: string): string {
-    // TODO(cypher1): Check for complex keywords (e.g. cases where both 'final' and 'final_' are keywords).
-    // TODO(cypher1): Check for name overlaps (e.g. 'final' and 'final_' should not be escaped to the same identifier.
-    return name + (keywords.includes(name) ? '_' : '');
-  }
-
   // TODO: allow optional fields in kotlin
   addField({field, typeName, refClassName, refSchemaHash, isOptional = false, isCollection = false, listTypeName}: AddFieldOptions) {
     if (typeName === 'Reference' && this.opts.wasm) return;
@@ -82,7 +63,7 @@ export class KotlinGenerator implements ClassGenerator {
       refSchemaHash,
       listTypeName
     });
-    const fixed = this.escapeIdentifier(field);
+    const fixed = escapeIdentifier(field);
     const quotedFieldName = quote(field);
     const nullableType = type.endsWith('?') ? type : `${type}?`;
 
@@ -154,19 +135,11 @@ Schema(
 )`;
   }
 
-  typeFor(name: string): string {
-    return getTypeInfo({name}).type;
-  }
-
-  defaultValFor(name: string): string {
-    return getTypeInfo({name}).defaultVal;
-  }
-
   private generatePredicates(): {query: string, refinement: string} {
     const schema = this.node.schema;
     const hasQuery = schema.refinement && schema.refinement.getQueryParams().get('?');
     const hasRefinement = !!schema.refinement;
-    const expression = leftPad(KTExtracter.fromSchema(this.node.schema, this), 8);
+    const expression = leftPad(KTExtracter.fromSchema(this.node.schema), 8);
 
     return {
       // TODO(cypher1): Support multiple queries.
