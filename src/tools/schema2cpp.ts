@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base, ClassGenerator, AddFieldOptions} from './schema2base.js';
+import {Schema2Base, EntityGenerator, AddFieldOptions, SchemaDescriptorBase} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {Type} from '../runtime/type.js';
@@ -83,7 +83,7 @@ export class Schema2Cpp extends Schema2Base {
     return '\n#endif\n';
   }
 
-  getClassGenerator(node: SchemaNode): ClassGenerator {
+  getEntityGenerator(node: SchemaNode): EntityGenerator {
     return new CppGenerator(node, this.namespace.replace(/\./g, '::'));
   }
 
@@ -123,7 +123,13 @@ protected:
   }
 }
 
-class CppGenerator implements ClassGenerator {
+class CppSchemaDescriptor extends SchemaDescriptorBase {
+
+  constructor(node: SchemaNode) {
+    super(node);
+    this.process();
+  }
+
   fields: string[] = [];
   api: string[] = [];
   ctor: string[] = [];
@@ -134,8 +140,6 @@ class CppGenerator implements ClassGenerator {
   decode: string[] = [];
   encode: string[] = [];
   stringify: string[] = [];
-
-  constructor(readonly node: SchemaNode, readonly namespace: string) {}
 
   addField({field, typeName, refClassName, isOptional = false, isCollection = false}: AddFieldOptions) {
     // Work around for schema2graph giving the Kotlin RefClassName.
@@ -204,6 +208,15 @@ class CppGenerator implements ClassGenerator {
     // For convenience, don't include unset required fields in the entity_to_str output.
     this.stringify.push(`if (entity.${valid}) printer.add("${field}: ", entity.${field}_);`);
   }
+}
+
+class CppGenerator implements EntityGenerator {
+
+  private descriptor: CppSchemaDescriptor;
+
+  constructor(readonly node: SchemaNode, readonly namespace: string) {
+    this.descriptor = new CppSchemaDescriptor(node);
+  }
 
   typeFor(name: string): string {
     return getTypeInfo(name).type;
@@ -213,17 +226,17 @@ class CppGenerator implements ClassGenerator {
     return getTypeInfo(name).defaultVal;
   }
 
-  generate(fieldCount: number): string {
+  generate(): string {
     const name = this.node.fullEntityClassName;
     console.log(`name: ${name}`);
     const aliases = this.node.sources.map(s => s.fullName);
     // Template constructor allows implicit type slicing from appropriately matching entities.
     let templateCtor = '';
-    if (this.ctor.length) {
+    if (this.descriptor.ctor.length) {
       templateCtor = `\
   template<typename T>
   ${name}(const T& other) :
-    ${this.ctor.join(',\n    ')}
+    ${this.descriptor.ctor.join(',\n    ')}
   {}
   `;
     }
@@ -237,8 +250,8 @@ class CppGenerator implements ClassGenerator {
     }
 
     // Schemas with no fields will always be equal.
-    if (fieldCount === 0) {
-      this.equals.push('true');
+    if (this.descriptor.fields.length === 0) {
+      this.descriptor.equals.push('true');
     }
 
     return `\
@@ -254,7 +267,7 @@ public:
   ${name}& operator=(${name}&&) = default;
 
 ${templateCtor}
-  ${this.api.join('\n  ')}
+  ${this.descriptor.api.join('\n  ')}
   // Equality ops compare internal ids and all data fields.
   // Use arcs::fields_equal() to compare only the data fields.
   bool operator==(const ${name}& other) const;
@@ -265,7 +278,7 @@ ${templateCtor}
     if (int cmp = a._internal_id_.compare(b._internal_id_)) {
       return cmp < 0;
     }
-    ${this.less.join('\n    ')}
+    ${this.descriptor.less.join('\n    ')}
     return false;
   }
 
@@ -275,9 +288,9 @@ protected:
   ${name}& operator=(const ${name}&) = default;
 
   static const char* _schema_hash() { return "${this.node.hash}"; }
-  static const int _field_count = ${fieldCount};
+  static const int _field_count = ${Object.entries(this.descriptor.node.schema.fields).length};
 
-  ${this.fields.join('\n  ')}
+  ${this.descriptor.fields.join('\n  ')}
   std::string _internal_id_;
 
   friend class Singleton<${name}>;
@@ -289,7 +302,7 @@ ${usingDecls}
 template<>
 inline ${name} internal::Accessor::clone_entity(const ${name}& entity) {
   ${name} clone;
-  ${this.clone.join('\n  ')}
+  ${this.descriptor.clone.join('\n  ')}
   return clone;
 }
 
@@ -297,13 +310,13 @@ template<>
 inline size_t internal::Accessor::hash_entity(const ${name}& entity) {
   size_t h = 0;
   internal::hash_combine(h, entity._internal_id_);
-  ${this.hash.join('\n  ')}
+  ${this.descriptor.hash.join('\n  ')}
   return h;
 }
 
 template<>
 inline bool internal::Accessor::fields_equal(const ${name}& a, const ${name}& b) {
-  return ${this.equals.join(' && \n         ')};
+  return ${this.descriptor.equals.join(' && \n         ')};
 }
 
 inline bool ${name}::operator==(const ${name}& other) const {
@@ -316,7 +329,7 @@ inline std::string internal::Accessor::entity_to_str(const ${name}& entity, cons
   if (with_id) {
     printer.addId(entity._internal_id_);
   }
-  ${this.stringify.join('\n  ')}
+  ${this.descriptor.stringify.join('\n  ')}
   return printer.result(join);
 }
 
@@ -329,7 +342,7 @@ inline void internal::Accessor::decode_entity(${name}* entity, const char* str) 
   for (int i = 0; !decoder.done() && i < ${name}::_field_count; i++) {
     std::string name = decoder.upTo(':');
     if (0) {
-    ${this.decode.join('\n    ')}
+    ${this.descriptor.decode.join('\n    ')}
     } else {
       // Ignore unknown fields until type slicing is fully implemented.
       std::string typeChar = decoder.chomp(1);
@@ -353,7 +366,7 @@ template<>
 inline std::string internal::Accessor::encode_entity(const ${name}& entity) {
   internal::StringEncoder encoder;
   encoder.encode("", entity._internal_id_);
-  ${this.encode.join('\n  ')}
+  ${this.descriptor.encode.join('\n  ')}
   return encoder.result();
 }
 

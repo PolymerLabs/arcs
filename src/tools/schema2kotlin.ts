@@ -7,14 +7,14 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {ClassGenerator, NodeAndGenerator, Schema2Base} from './schema2base.js';
+import {EntityGenerator, NodeAndGenerator, Schema2Base} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {generateConnectionSpecType, getTypeInfo} from './kotlin-codegen-shared.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 import {CollectionType, EntityType, Type, TypeVariable} from '../runtime/type.js';
 import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
-import {KotlinGenerator} from './kotlin-class-generator.js';
+import {KotlinEntityGenerator} from './kotlin-entity-generator.js';
 
 // TODO: use the type lattice to generate interfaces
 
@@ -88,8 +88,8 @@ ${imports.join('\n')}
 `;
   }
 
-  getClassGenerator(node: SchemaNode): ClassGenerator {
-    return new KotlinGenerator(node, this.opts);
+  getEntityGenerator(node: SchemaNode): EntityGenerator {
+    return new KotlinEntityGenerator(node, this.opts);
   }
 
   /** Returns the container type of the handle, e.g. Singleton or Collection. */
@@ -213,7 +213,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     const typeAliases: string[] = [];
 
     nodeGenerators.forEach(nodeGenerator => {
-      const kotlinGenerator = <KotlinGenerator>nodeGenerator.generator;
+      const kotlinGenerator = <KotlinEntityGenerator>nodeGenerator.generator;
       classes.push(kotlinGenerator.generateClasses());
       typeAliases.push(...kotlinGenerator.generateAliases(particleName));
     });
@@ -299,4 +299,3 @@ class ${particleName}TestHarness<P : Abstract${particleName}>(
     return getTypeInfo({name: type}).type;
   }
 }
-
