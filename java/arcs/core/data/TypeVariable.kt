@@ -26,7 +26,7 @@ data class TypeVariable(val name: String, val constraint: Type? = null) : Type {
     /** [Literal][arcs.core.common.Literal] representation of the variable. */
     data class VariableLiteral(
         val name: String,
-        val constraint: TypeLiteral?
+        val constraint: arcs.core.common.Literal? = null
     ) : arcs.core.common.Literal
 
     /** [TypeLiteral] representation of a [TypeVariable]. */
