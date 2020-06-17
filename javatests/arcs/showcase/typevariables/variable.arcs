@@ -1,5 +1,5 @@
 meta
-  namespace: src.tools.tests
+  namespace: arcs.showcase.typevariables
 
 particle Variable
   h0: reads ~a

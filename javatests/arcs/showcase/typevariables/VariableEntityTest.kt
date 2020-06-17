@@ -1,4 +1,4 @@
-package src.tools.tests
+package arcs.showcase.typevariables
 
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -8,7 +8,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class GenerationBehaviorTest {
+class VariableEntityTest {
 
     @Test
     fun variable_equality() {
