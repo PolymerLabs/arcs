@@ -26,6 +26,7 @@ import {CheckCondition, CheckExpression, CheckType} from '../runtime/particle-ch
 import {flatMap} from '../runtime/util.js';
 import {Policy} from '../runtime/policy/policy.js';
 import {policyToProtoPayload} from './policy2proto.js';
+import {annotationToProtoPayload} from './annotation2proto.js';
 
 export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path);
@@ -231,9 +232,9 @@ async function recipeToProtoPayload(recipe: Recipe) {
 
   return {
     name: recipe.name,
-    arcId: findLongRunningArcId(recipe),
     particles: recipe.particles.map(p => recipeParticleToProtoPayload(p, handleToProtoPayload)),
     handles: [...handleToProtoPayload.values()],
+    annotations: recipe.annotations.map(a => annotationToProtoPayload(a))
   };
 }
 

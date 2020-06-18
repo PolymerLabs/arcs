@@ -30,7 +30,7 @@ message PolicyProto {
   EgressType egress_type = 5;
 
   // Annotations on the policy.
-  repeated AnnotationRefProto annotations = 6;
+  repeated AnnotationProto annotations = 6;
 }
 
 message PolicyTargetProto {
@@ -48,7 +48,7 @@ message PolicyTargetProto {
   repeated PolicyFieldProto fields = 4;
 
   // Annotations on the policy target.
-  repeated AnnotationRefProto annotations = 5;
+  repeated AnnotationProto annotations = 5;
 }
 
 message PolicyFieldProto {
@@ -82,7 +82,7 @@ message PolicyFieldProto {
   repeated PolicyFieldProto subfields = 4;
 
   // Annotations on the policy field.
-  repeated AnnotationRefProto annotations = 5;
+  repeated AnnotationProto annotations = 5;
 }
 
 // Storage retention options for a policy target.

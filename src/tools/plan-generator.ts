@@ -62,9 +62,6 @@ export class PlanGenerator {
       if (recipe.annotations.length > 0) {
         planArgs.push(PlanGenerator.createAnnotations(recipe.annotations));
       }
-      if (arcId) {
-        planArgs.push(quote(arcId));
-      }
 
       const start = `object ${planName} : `;
       const plan = `${start}${ktUtils.applyFun('Plan', planArgs, {startIndent: start.length})}`;

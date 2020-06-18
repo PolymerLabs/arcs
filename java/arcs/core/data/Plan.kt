@@ -21,28 +21,19 @@ import arcs.core.util.lens
 open class Plan(
     // TODO(cromwellian): add more fields as needed (e.g. RecipeName, etc for debugging)
     val particles: List<Particle>,
-    val annotations: List<Annotation>
+    val annotations: List<Annotation> = emptyList()
 ) {
     // TODO(b/155796088): get rid of these ctors and use annotations in PlanPartition and Recipe.
-    constructor(particles: List<Particle>, arcId: String? = null) :
+    constructor(particles: List<Particle>, arcId: String?) :
         this(
             particles,
-            if (arcId != null)
-                listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str(arcId))))
-            else emptyList()
+            if (arcId != null) listOf(Annotation.arcId(arcId)) else emptyList()
         )
-
-    constructor(particles: List<Particle>, annotations: List<Annotation>, arcId: String) :
-        this(particles, annotations) {
-        require(this.arcId == arcId)
-    }
 
     val arcId: String?
         get() {
             return annotations.find { it.name == "arcId" }?.let {
-                val idParam = requireNotNull(it.params["id"]) {
-                    "Annotation arcId missing 'id' parameter"
-                }
+                val idParam = it.getParam("id")
                 return when (idParam) {
                     is AnnotationParam.Str -> idParam.value
                     else -> throw IllegalStateException(

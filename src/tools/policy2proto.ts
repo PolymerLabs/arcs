@@ -12,6 +12,7 @@ import {mapToDictionary} from '../runtime/util.js';
 import {PolicyConfig, PolicyField, PolicyTarget, Policy, PolicyAllowedUsageType} from '../runtime/policy/policy.js';
 import {AnnotationRef} from '../runtime/recipe/annotation.js';
 import {PolicyRetentionMediumEnum, PolicyFieldUsageEnum, PolicyEgressEnum} from './manifest-proto.js';
+import {annotationToProtoPayload} from './annotation2proto.js';
 
 export function policyToProtoPayload(policy: Policy) {
   return {
@@ -59,13 +60,6 @@ function policyConfigToProtoPayload(config: PolicyConfig) {
   return {
     name: config.name,
     metadata: mapToDictionary(config.metadata),
-  };
-}
-
-function annotationToProtoPayload(annotation: AnnotationRef) {
-  return {
-    name: annotation.name,
-    params: annotation.params,
   };
 }
 

@@ -19,7 +19,7 @@ data class Recipe(
     val name: String?,
     val handles: Map<String, Handle>,
     val particles: List<Particle>,
-    val arcId: String?
+    val annotations: List<Annotation> = emptyList()
 ) {
     /** Representation of a particle in a recipe. */
     data class Particle(
@@ -52,8 +52,8 @@ data class Recipe(
 
 /** Translates a [Recipe] into a [Plan] */
 fun Recipe.toPlan() = Plan(
-    arcId = arcId,
-    particles = particles.map { it.toPlanParticle() }
+    particles = particles.map { it.toPlanParticle() },
+    annotations = annotations
 )
 
 /** Translates a [Recipe.Particle] into a [Plan.Particle] */
@@ -68,7 +68,7 @@ fun Recipe.Particle.HandleConnection.toPlanHandleConnection() = Plan.HandleConne
     mode = spec.direction,
     type = spec.type,
     storageKey = handle.toStorageKey()
-    // TODO: Add TTL.
+    // TODO: Add annotations (with TTL).
 )
 
 /** Translates a [Recipe.Handle] into a [StorageKey] */

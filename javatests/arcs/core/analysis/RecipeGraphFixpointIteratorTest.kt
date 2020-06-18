@@ -1,5 +1,6 @@
 package arcs.core.analysis
 
+import arcs.core.data.Annotation
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.ParticleSpec
@@ -108,7 +109,7 @@ class RecipeGraphFixpointIteratorTest {
                 name,
                 handles.associateBy { it.name },
                 particles,
-                "arcId"
+                listOf(Annotation.arcId("arcId"))
             )
         )
     }

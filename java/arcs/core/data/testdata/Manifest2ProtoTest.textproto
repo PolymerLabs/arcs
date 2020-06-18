@@ -95,7 +95,13 @@ recipes {
       handle: "handle0"
     }
   }
-  arc_id: "writingArcId"
+  annotations {
+    name: "arcId"
+    params {
+      name: "id"
+      str_value: "writingArcId"
+    }
+  }
 }
 recipes {
   name: "Consumption"
