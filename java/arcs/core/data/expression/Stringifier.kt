@@ -33,7 +33,8 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
     override fun <E : Expression.Scope, T> visit(expr: Expression.FieldExpression<E, T>) =
         expr.qualifier.accept(this) + ".${expr.field}"
 
-    override fun <T> visit(expr: Expression.QueryParameterExpression<T>) = "?"
+    override fun <T> visit(expr: Expression.QueryParameterExpression<T>) =
+        "?${expr.paramIdentifier}"
 
     override fun visit(expr: Expression.NumberLiteralExpression) = expr.value.toString()
 
@@ -45,8 +46,6 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
         (expr.value as? Expression.Scope)?.scopeName ?: "<object>"
 }
 
-/**
- * Given an expression, and a list of parameter mappings, evaluate the expression and return
- * the result using an [ExpressionEvaluator].
- */
-fun <T> stringify(expression: Expression<T>) = expression.accept(ExpressionStringifier())
+/** Given an expression, return a string representation. */
+fun <T> Expression<T>.stringify() = this.accept(ExpressionStringifier())
+

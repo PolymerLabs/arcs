@@ -129,5 +129,5 @@ fun <T> Map<String, T>.asScope(scopeName: String = "<object>") = object : Expres
     override fun <T> lookup(param: String): T = this@asScope[param] as T
 }
 
-/** Constructs a [Expression.QueryParameterExpression] witht he given [queryArgName]. */
+/** Constructs a [Expression.QueryParameterExpression] with the given [queryArgName]. */
 fun <T> query(queryArgName: String) = Expression.QueryParameterExpression<T>(queryArgName)

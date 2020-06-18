@@ -65,6 +65,8 @@ sealed class Expression<T> {
     /** Accepts a visitor and invokes the appropriate [Visitor.visit] method. */
     abstract fun <Result> accept(visitor: Visitor<Result>): Result
 
+    override fun toString() = this.stringify()
+
     /**
      * Type that represents all supported binary operations of the [BinaryExpression] node.
      * @param L the left side type of the binary op

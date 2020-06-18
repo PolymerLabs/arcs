@@ -39,23 +39,35 @@ class ExpressionTest {
 
         // Boolean ops
         assertThat(evalBool(1.asExpr() lt 2.asExpr())).isTrue()
+        assertThat(evalBool(2.asExpr() lt 1.asExpr())).isFalse()
         assertThat(evalBool(2.asExpr() lte 2.asExpr())).isTrue()
+        assertThat(evalBool(3.asExpr() lte 2.asExpr())).isFalse()
         assertThat(evalBool(2.asExpr() gt 1.asExpr())).isTrue()
-        assertThat(evalBool(2.asExpr() gte 2.asExpr())).isTrue()
+        assertThat(evalBool(1.asExpr() gt 2.asExpr())).isFalse()
+        assertThat(evalBool(1.asExpr() gte 2.asExpr())).isFalse()
         assertThat(evalBool((1.asExpr() lt 2.asExpr()) and (2.asExpr() gt 1.asExpr()))).isTrue()
+        assertThat(evalBool((2.asExpr() lt 1.asExpr()) and (2.asExpr() gt 1.asExpr()))).isFalse()
+        assertThat(evalBool((1.asExpr() lt 2.asExpr()) or (2.asExpr() lt 1.asExpr()))).isTrue()
+        assertThat(evalBool((1.asExpr() gt 2.asExpr()) or (2.asExpr() lt 1.asExpr()))).isFalse()
 
         // Unary ops
         assertThat(evalNum(-2.asExpr())).isEqualTo(-2)
         assertThat(evalBool(!(2.asExpr() lt 1.asExpr()))).isTrue()
+        assertThat(evalBool(!(2.asExpr() gt 1.asExpr()))).isFalse()
 
         // Equality ops
         assertThat(evalBool(2.asExpr() eq 2.asExpr())).isTrue()
+        assertThat(evalBool(2.asExpr() eq 1.asExpr())).isFalse()
         assertThat(evalBool("Hello".asExpr() eq "Hello".asExpr())).isTrue()
+        assertThat(evalBool("Hello".asExpr() eq "World".asExpr())).isFalse()
         assertThat(evalBool(true.asExpr() eq true.asExpr())).isTrue()
-
+        assertThat(evalBool(true.asExpr() eq false.asExpr())).isFalse()
         assertThat(evalBool(2.asExpr() neq 1.asExpr())).isTrue()
+        assertThat(evalBool(2.asExpr() neq 2.asExpr())).isFalse()
         assertThat(evalBool("Hello".asExpr() neq "World".asExpr())).isTrue()
+        assertThat(evalBool("Hello".asExpr() neq "Hello".asExpr())).isFalse()
         assertThat(evalBool(true.asExpr() neq false.asExpr())).isTrue()
+        assertThat(evalBool(true.asExpr() neq true.asExpr())).isFalse()
 
         // Test complex expression
         // (2 + (3 * 4) + scope.foo + ?arg - 1) / 2
@@ -92,6 +104,6 @@ class ExpressionTest {
         val expr = (2.0.asExpr() + (3.asExpr() * 4.asExpr()) + obj["foo"] + query(
             "arg"
         ) - 1.asExpr()) / 2.asExpr()
-        assertThat(stringify(expr)).isEqualTo("((((2.0 + (3 * 4)) + handle.foo) + ?) - 1) / 2")
+        assertThat(expr.toString()).isEqualTo("((((2.0 + (3 * 4)) + handle.foo) + ?arg) - 1) / 2")
     }
 }
