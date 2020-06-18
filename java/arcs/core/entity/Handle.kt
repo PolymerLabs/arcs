@@ -66,7 +66,14 @@ data class HandleSpec(
     val entitySpecs: Set<EntitySpec<*>>
 ) {
 
-    @Deprecated("Use main constructor")
+    @Deprecated(
+        "Use main constructor",
+        ReplaceWith(
+            /* ktlint-disable max-line-length */
+            "HandleSpec(baseName, mode, toType(entitySpec, dataType, containerType), setOf(entitySpec))"
+            /* ktlint-enable max-line-length */
+        )
+    )
     constructor(
         baseName: String,
         mode: HandleMode,
@@ -80,7 +87,7 @@ data class HandleSpec(
         setOf(entitySpec)
     )
 
-    @Deprecated("Use all entity specs.")
+    @Deprecated("Use all entity specs.", ReplaceWith("entitySpecs.single()"))
     val entitySpec: EntitySpec<*>
         get() = entitySpecs.single()
 
@@ -106,7 +113,7 @@ data class HandleSpec(
         }
 
     companion object {
-        private fun toType(
+        fun toType(
             entitySpec: EntitySpec<*>,
             dataType: HandleDataType,
             containerType: HandleContainerType

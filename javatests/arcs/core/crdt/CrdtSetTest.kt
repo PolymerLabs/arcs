@@ -15,6 +15,8 @@ import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtSet.Data
 import arcs.core.crdt.CrdtSet.IOperation
+import arcs.core.data.RawEntity
+import arcs.core.data.util.toReferencable
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.Before
@@ -556,6 +558,85 @@ class CrdtSetTest {
 
         assertThat(modelChange3.isEmpty()).isFalse()
         assertThat(otherChange3.isEmpty()).isFalse()
+    }
+
+    @Test
+    fun merge_handlesRawEntityChange() {
+        val new = CrdtSet(
+            CrdtSet.DataImpl(
+                VersionMap(
+                    "collectionReadHandle1" to 4,
+                    "referenceCollectionReadHandle3" to 2
+                ),
+                mutableMapOf(
+                    "entity1" to CrdtSet.DataValue(
+                        VersionMap(
+                            "collectionReadHandle1" to 3,
+                            "referenceCollectionReadHandle3" to 1
+                        ),
+                        RawEntity(
+                            id = "entity1",
+                            singletons = mapOf("name" to "Jason".toReferencable()),
+                            collections = emptyMap()
+                        )
+                    ),
+                    "entity2" to CrdtSet.DataValue(
+                        VersionMap(
+                            "collectionReadHandle1" to 4,
+                            "referenceCollectionReadHandle3" to 2
+                        ),
+                        RawEntity(
+                            id = "entity2",
+                            singletons = mapOf("name" to "Bob".toReferencable()),
+                            collections = emptyMap()
+                        )
+                    )
+                )
+            )
+        )
+        val old = CrdtSet(
+            CrdtSet.DataImpl(
+                VersionMap(
+                    "collectionReadHandle1" to 3,
+                    "referenceCollectionReadHandle3" to 2
+                ),
+                mutableMapOf(
+                    "entity1" to CrdtSet.DataValue(
+                        VersionMap(
+                            "collectionReadHandle1" to 3,
+                            "referenceCollectionReadHandle3" to 1
+                        ),
+                        RawEntity(
+                            id = "entity1",
+                            singletons = mapOf("name" to "Jason".toReferencable()),
+                            collections = emptyMap()
+                        )
+                    ),
+                    "entity2" to CrdtSet.DataValue(
+                        VersionMap(
+                            "collectionReadHandle1" to 2,
+                            "referenceCollectionReadHandle3" to 2
+                        ),
+                        RawEntity(
+                            id = "entity2",
+                            singletons = mapOf("name" to "NotBobYet".toReferencable()),
+                            collections = emptyMap()
+                        )
+                    )
+                )
+            )
+        )
+
+        // NotBobYet should've been overwritten with Bob, given that the "new" entry for entity2 has
+        // a name of "Bob" and a newer VersionMap.
+        old.merge(new.data)
+        assertThat(old.consumerView).contains(
+            RawEntity(
+                id = "entity2",
+                singletons = mapOf("name" to "Bob".toReferencable()),
+                collections = emptyMap()
+            )
+        )
     }
 
     private data class Reference(override val id: ReferenceId) : Referencable
