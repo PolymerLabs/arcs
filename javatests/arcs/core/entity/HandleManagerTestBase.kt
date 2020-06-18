@@ -36,11 +36,16 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Rule
 import org.junit.Test
 import kotlin.coroutines.resume
@@ -119,6 +124,13 @@ open class HandleManagerTestBase {
         }
     }
 
+    private var ramDiskActivity = callbackFlow {
+        offer(Unit)
+        val listener: (StorageKey, Any?) -> Unit = { _, _ -> offer(Unit) }
+        RamDisk.addListener(listener)
+        awaitClose { RamDisk.removeListener(listener) }
+    }.debounce(500)
+
     // Must call from subclasses.
     open fun setUp() {
         fakeTime = FakeTime()
@@ -127,13 +139,16 @@ open class HandleManagerTestBase {
     }
 
     // Must call from subclasses
-    open fun tearDown() = runBlocking {
+    open fun tearDown() = runBlocking<Unit> {
         schedulerProvider.cancelAll()
         // TODO(b/151366899): this is less than ideal - we should investigate how to make the entire
         //  test process cancellable/stoppable, even when we cross scopes into a BindingContext or
         //  over to other RamDisk listeners.
         readHandleManager.close()
         writeHandleManager.close()
+        withTimeoutOrNull(5000) {
+            ramDiskActivity.first()
+        }
     }
 
     @Test
@@ -585,8 +600,10 @@ open class HandleManagerTestBase {
         val writeHandle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
         val readHandle = readHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
         
-        val updateDeferred = readHandle.onUpdateDeferred() { it.size == 1 }
-        writeHandle.store(entity)
+        val updateDeferred = readHandle.onUpdateDeferred { it.size == 1 }
+        withContext(writeHandle.dispatcher) {
+            writeHandle.store(entity)
+        }
         assertThat(updateDeferred.await()).containsExactly(entity)
     }
 
