@@ -33,11 +33,8 @@ data class Annotation(val name: String, val params: Map<String, AnnotationParam>
     }
 
     companion object {
-        fun arcId(id: String): Annotation {
-            return Annotation("arcId", mapOf("id" to AnnotationParam.Str(id)))
-        }
-        fun ttl(value: String): Annotation {
-            return Annotation("ttl", mapOf("value" to AnnotationParam.Str(value)))
-        }
+        fun arcId(id: String) = Annotation("arcId", mapOf("id" to AnnotationParam.Str(id)))
+
+        fun ttl(value: String) = Annotation("ttl", mapOf("value" to AnnotationParam.Str(value)))
     }
 }

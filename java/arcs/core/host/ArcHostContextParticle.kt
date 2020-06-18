@@ -185,9 +185,11 @@ class ArcHostContextParticle(
         handle.handleName to Plan.HandleConnection(
             StorageKeyParser.parse(handle.storageKey), HandleMode.valueOf(handle.mode),
             fromTag(arcId, particle, handle.type, handle.handleName),
-            if (handle.ttl != Ttl.TTL_INFINITE)
+            if (handle.ttl != Ttl.TTL_INFINITE) {
                 listOf(Annotation.ttl("$handle.ttl minutes"))
-            else emptyList()
+            } else {
+                emptyList()
+            }
         )
     }.toSet().associateBy({ it.first }, { it.second })
 
