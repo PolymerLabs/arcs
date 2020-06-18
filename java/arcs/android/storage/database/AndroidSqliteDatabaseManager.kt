@@ -110,12 +110,14 @@ class AndroidSqliteDatabaseManager(
 
     override suspend fun removeAllEntities() =
         registry.fetchAll()
-            .map { getDatabase(it.name, it.isPersistent) }
+            // Use a separate instance for cleardata, to avoid race conditions.
+            .map { DatabaseImpl(context, it.name, it.isPersistent) }
             .forEach { it.removeAllEntities() }
 
     override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
         registry.fetchAll()
-            .map { getDatabase(it.name, it.isPersistent) }
+            // Use a separate instance for cleardata, to avoid race conditions.
+            .map { DatabaseImpl(context, it.name, it.isPersistent) }
             .forEach { it.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis) }
 
     override suspend fun runGarbageCollection(): Job = coroutineScope {
