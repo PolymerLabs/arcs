@@ -1625,7 +1625,7 @@ class DatabaseImpl(
     )
 
     companion object {
-        private const val DB_VERSION = 4
+        private const val DB_VERSION = 5
 
         private const val TABLE_STORAGE_KEYS = "storage_keys"
         private const val TABLE_COLLECTION_ENTRIES = "collection_entries"
