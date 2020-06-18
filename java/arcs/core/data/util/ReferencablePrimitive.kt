@@ -84,7 +84,8 @@ data class ReferencablePrimitive<T>(
                 klass == Double::class ||
                 klass == String::class ||
                 klass == Boolean::class ||
-                klass == ByteArray::class
+                klass == ByteArray::class ||
+                klass == BigInteger::class
 
         /**
          * If the given [ReferenceId] matches the type of `serialized` reference id created by
@@ -124,6 +125,8 @@ data class ReferencablePrimitive<T>(
                     ReferencablePrimitive(Boolean::class, value.toBoolean())
                 className == primitiveKotlinByteArray ->
                     ReferencablePrimitive(ByteArray::class, value.toBase64Bytes(), value)
+                className == primitiveJavaBigInteger ->
+                    ReferencablePrimitive(BigInteger::class, BigInteger(value))
                 else -> null
             }
         }
