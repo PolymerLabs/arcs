@@ -48,4 +48,3 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
 
 /** Given an expression, return a string representation. */
 fun <T> Expression<T>.stringify() = this.accept(ExpressionStringifier())
-
