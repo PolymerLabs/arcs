@@ -21,6 +21,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
+import java.util.concurrent.ExecutorService
 
 /**
  * Implementation of a [SchedulerProvider] for the Java Virtual Machine (including Android).
@@ -42,6 +43,7 @@ class JvmSchedulerProvider(
     private val providedSoFar = atomic(0)
     private val threads = arrayOfNulls<Thread>(maxThreadCount)
     private val dispatchers = mutableListOf<CoroutineDispatcher>()
+    private val executors = mutableListOf<ExecutorService>()
     private val schedulersByArcId = mutableMapOf<String, Scheduler>()
 
     @Synchronized
@@ -68,6 +70,7 @@ class JvmSchedulerProvider(
                         threads[threadIndex % maxThreadCount] = this
                     }
                 }
+                .also { executors.add(it) }
                 .asCoroutineDispatcher()
                 .also { dispatchers.add(it) }
         }
@@ -90,6 +93,7 @@ class JvmSchedulerProvider(
     @Synchronized
     override fun cancelAll() {
         schedulersByArcId.values.toList().forEach { it.cancel() }
+        executors.forEach { it.shutdownNow() }
         threads.forEach { it?.interrupt() }
     }
 

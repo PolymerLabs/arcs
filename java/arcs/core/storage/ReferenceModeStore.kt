@@ -61,6 +61,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
@@ -191,7 +192,12 @@ class ReferenceModeStore private constructor(
         callbacks.unregister(callbackToken)
 
         if (containerStore.closed && !containerStateChannel.isClosedForSend) {
-            containerStateChannel.offer(false)
+            try {
+                containerStateChannel.offer(false)
+            } catch (e: ClosedSendChannelException) {
+                // No-op. If the channel is closed (which can happen between the if's check and the
+                // offer call above), then it's no big deal.
+            }
         }
     }
 
@@ -293,7 +299,7 @@ class ReferenceModeStore private constructor(
             }
             is ProxyMessage.SyncRequest -> {
                 val (pendingIds, model) =
-                    constructPendingIdsAndModel(containerStore.localModel.data)
+                    constructPendingIdsAndModel(containerStore.getLocalData())
 
                 suspend fun sender() {
                     callbacks.getCallback(requireNotNull(proxyMessage.id))
@@ -651,15 +657,14 @@ class ReferenceModeStore private constructor(
     }
 
     private fun buildClearContainerStoreOps(): List<CrdtOperation> {
-        val containerModel = containerStore.localModel
+        val containerModel = containerStore.getLocalData()
         val actor = "ReferenceModeStore(${hashCode()})"
         val containerVersion = containerModel.versionMap.copy()
-        return if (containerModel is CrdtSet<*>) {
-            val containerData = containerModel.data
-            containerData.values.map { dataValue ->
+        return if (containerModel is CrdtSet.Data<*>) {
+            containerModel.values.map { dataValue ->
                 CrdtSet.Operation.Remove(actor, containerVersion, dataValue.value.value)
             }
-        } else if (containerModel is CrdtSingleton<*>) {
+        } else if (containerModel is CrdtSingleton.Data<*>) {
             listOf(CrdtSingleton.Operation.Clear<Reference>(actor, containerVersion))
         } else throw UnsupportedOperationException()
     }
