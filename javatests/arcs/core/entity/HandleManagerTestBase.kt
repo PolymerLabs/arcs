@@ -260,31 +260,24 @@ open class HandleManagerTestBase {
         val writeHandle = writeHandleManager.createSingletonHandle()
         val readHandle = readHandleManager.createSingletonHandle()
         val readHandleUpdated = readHandle.onUpdateDeferred()
-        writeHandle.store(entity1).join()
-        withTimeout(1500) { readHandleUpdated.await() }
+        withContext(writeHandle.dispatcher) {
+            writeHandle.store(entity1)
+        }
+        readHandleUpdated.await()
         log("Wrote entity1 to writeHandle")
 
         // Create a second handle for the second entity, so we can store it.
         val storageKey = ReferenceModeStorageKey(backingKey, RamDiskStorageKey("entity2"))
-        val refWriteHandle = writeHandleManager.createSingletonHandle(
-            storageKey,
-            "otherWriteHandle"
-        )
-        val refReadHandle = readHandleManager.createSingletonHandle(
-            storageKey,
-            "otherReadHandle"
-        )
-        val refReadHandleUpdated = refReadHandle.onUpdateDeferred()
+        val monitorRefHandle = monitorHandleManager.createSingletonHandle(storageKey, "monitor")
+        val refWriteHandle = writeHandleManager.createSingletonHandle(storageKey, "otherWriteHandle")
+        val refReadHandle = readHandleManager.createSingletonHandle(storageKey, "otherReadHandle")
+        val monitorKnows = monitorRefHandle.onUpdateDeferred()
 
-        refWriteHandle.store(entity2)
-        val ramDiskKnows = async(Dispatchers.IO) {
-            val ref = refWriteHandle.createReference(entity2)
-            val refKey = ref.toReferencable().referencedStorageKey()
-            RamDisk.waitUntilSet(refKey)
+        withContext(refWriteHandle.dispatcher) {
+            refWriteHandle.store(entity2)
         }
         withTimeout(1500) {
-            refReadHandleUpdated.await()
-            ramDiskKnows.await()
+            monitorKnows.await()
         }
 
         // Now read back entity1, and dereference its best_friend.
@@ -300,8 +293,9 @@ open class HandleManagerTestBase {
         assertThat(dereferencedEntity2).isEqualTo(entity2)
 
         // Do the same for entity2's best_friend
-        val dereferencedRawEntity1 =
+        val dereferencedRawEntity1 = withContext(refReadHandle.dispatcher) {
             refReadHandle.fetch()!!.bestFriend!!.dereference(coroutineContext)!!
+        }
         val dereferencedEntity1 = Person.deserialize(dereferencedRawEntity1)
         assertThat(dereferencedEntity1).isEqualTo(entity1)
     }
@@ -313,8 +307,12 @@ open class HandleManagerTestBase {
             HandleSpec(
                 "hatCollection",
                 HandleMode.ReadWrite,
-                HandleContainerType.Collection,
-                Hat
+                toType(
+                    Hat,
+                    HandleDataType.Entity,
+                    HandleContainerType.Collection
+                ),
+                setOf(Hat)
             ),
             hatCollectionKey
         ) as ReadWriteCollectionHandle<Hat>
