@@ -23,10 +23,6 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
 RUN curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add
 RUN echo "deb [arch=amd64]  http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
 RUN apt-get -y update && apt-get -y install google-chrome-stable
-# Install Selenium
-RUN curl https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip -o  /usr/bin/chromedriver_linux64.zip
-RUN unzip /usr/bin/chromedriver_linux64.zip -d /usr/bin/chromedriver
-RUN chmod +x /usr/bin/chromedriver
 
 # Set up workspace
 ENV WORKSPACE /usr/src/app
