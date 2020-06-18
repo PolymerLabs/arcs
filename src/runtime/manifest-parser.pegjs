@@ -1472,13 +1472,19 @@ RecipeSlot
   }
 
 SchemaInline
-  = names:((upperIdent / '*') whiteSpace?)* '{' multiLineSpace fields:(SchemaInlineField (',' multiLineSpace SchemaInlineField)*)? ','? multiLineSpace '}'
+  = names:((upperIdent / '*') whiteSpace?)* fields:SchemaInlineFields
   {
     return toAstNode<AstNode.SchemaInline>({
       kind: 'schema-inline',
       names: optional(names, names => names.map(name => name[0]).filter(name => name !== '*'), ['*']),
-      fields: optional(fields, fields => [fields[0], ...fields[1].map(tail => tail[2])], []),
+      fields
     });
+  }
+
+SchemaInlineFields
+  = '{' multiLineSpace fields:(SchemaInlineField (',' multiLineSpace SchemaInlineField)*)? ','? multiLineSpace '}'
+  {
+    return optional(fields, fields => [fields[0], ...fields[1].map(tail => tail[2])], []);
   }
 
 SchemaInlineField
@@ -1553,6 +1559,7 @@ SchemaType
   / KotlinPrimitiveType
   / SchemaUnionType
   / SchemaTupleType
+  / NestedSchemaType
   / [^\n\]}]* { expected('a schema type'); }
   ) whiteSpace? refinement:Refinement? whiteSpace? annotations:AnnotationRefList?
   {
@@ -1606,6 +1613,14 @@ SchemaPrimitiveType
       refinement: null,
       annotations: [],
     });
+  }
+
+NestedSchemaType = fields:SchemaInlineFields
+  {
+    return toAstNode<AstNode.NestedSchema>({
+      kind: 'schema-nested',
+      fields
+    }); 
   }
 
 Adapter "an adapter, (e.g. adapter Foo(param: Person { name: Text }) => Friend { nickName: param.name } )"
