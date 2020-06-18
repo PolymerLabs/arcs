@@ -118,7 +118,6 @@ open class HandleManagerTestBase {
         )
         runBlocking {
             withTimeout(10000) { block() }
-            //block()
             schedulerProvider.cancelAll()
             monitorHandleManager.close()
         }
