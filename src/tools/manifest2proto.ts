@@ -229,6 +229,7 @@ async function recipeToProtoPayload(recipe: Recipe) {
 
   const handleToProtoPayload = new Map<Handle, {name: string}>();
   for (const h of recipe.handles) {
+    h.type.maybeEnsureResolved();
     handleToProtoPayload.set(h, await recipeHandleToProtoPayload(h));
   }
 
@@ -305,6 +306,9 @@ export function capabilitiesToProtoOrdinals(capabilities: Capabilities) {
 }
 
 export async function typeToProtoPayload(type: Type) {
+  if (type.hasVariable && type.isResolved()) {
+    type = type.resolvedType();
+  }
   switch (type.tag) {
     case 'Entity': {
       const entity = {
