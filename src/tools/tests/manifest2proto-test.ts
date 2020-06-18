@@ -431,7 +431,7 @@ describe('manifest2proto', () => {
             }
             }
           }
-          },
+          }
         }
         }
       }
@@ -505,14 +505,14 @@ describe('manifest2proto', () => {
 
     assert.deepStrictEqual(varInput, varOutput);
     assert.deepStrictEqual(varInput.name, 'a');
-    assert.deepStrictEqual(varInput.constraint, {constraintType: {
-      entity: {
-        schema: {
+    assert.deepStrictEqual(varInput.constraint, {
+      constraintType: {
+        entity: {schema: {
           fields: {time: {primitive: 'NUMBER'}},
           hash: '5c7ae2de06d2111eeef1a845d57d52e23ff214da',
         }
       }
-      }
+    }
     });
   });
 
