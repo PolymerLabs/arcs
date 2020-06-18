@@ -62,9 +62,6 @@ export class PlanGenerator {
       if (recipe.annotations.length > 0) {
         planArgs.push(PlanGenerator.createAnnotations(recipe.annotations));
       }
-      if (arcId) {
-        planArgs.push(quote(arcId));
-      }
 
       const start = `object ${planName} : `;
       const plan = `${start}${ktUtils.applyFun('Plan', planArgs, {startIndent: start.length})}`;
@@ -98,10 +95,10 @@ export class PlanGenerator {
     const storageKey = await this.createStorageKey(connection.handle);
     const mode = this.createHandleMode(connection.direction, connection.type);
     const type = generateConnectionType(connection);
-    const ttl = PlanGenerator.createTtl(connection.handle.getTtl());
     const annotations = PlanGenerator.createAnnotations(connection.handle.annotations);
 
-    return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, ttl, annotations], {startIndent: 24});
+    return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, annotations],
+        {startIndent: 24});
   }
 
   /** Generates a Kotlin `HandleMode` from a Direction and Type. */
@@ -129,22 +126,6 @@ export class PlanGenerator {
       return ktUtils.applyFun('StorageKeyParser.parse', [quote(joinSk)]);
     }
     throw new PlanGeneratorError(`Problematic handle '${handle.id}': Only 'create' Handles can have null 'StorageKey's.`);
-  }
-
-  /** Generates a Kotlin `Ttl` from a Ttl. */
-  static createTtl(ttl: Ttl): string {
-    if (ttl.isInfinite) return 'Ttl.Infinite';
-    return ktUtils.applyFun(this.createTtlUnit(ttl.units), [ttl.count.toString()]);
-  }
-
-  /** Translates TtlUnits to Kotlin Ttl case classes. */
-  static createTtlUnit(ttlUnits: TtlUnits): string {
-    switch (ttlUnits) {
-      case TtlUnits.Minutes: return `Ttl.Minutes`;
-      case TtlUnits.Hours: return `Ttl.Hours`;
-      case TtlUnits.Days: return `Ttl.Days`;
-      default: return `Ttl.Infinite`;
-    }
   }
 
   static createAnnotations(annotations: AnnotationRef[]): string {

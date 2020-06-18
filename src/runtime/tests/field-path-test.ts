@@ -57,6 +57,26 @@ describe('field path validation', () => {
     assert.strictEqual(resolveFieldPathType(['bools'], type), 'Boolean');
   });
 
+  it('support Kotlin primitive types', async () => {
+    const type = await parseTypeFromSchema(`
+      schema Foo
+        byte: Byte
+        short: Short
+        int: Int
+        long: Long
+        char: Char
+        float: Float
+        double: Double
+    `);
+    assert.strictEqual(resolveFieldPathType(['byte'], type), 'Byte');
+    assert.strictEqual(resolveFieldPathType(['short'], type), 'Short');
+    assert.strictEqual(resolveFieldPathType(['int'], type), 'Int');
+    assert.strictEqual(resolveFieldPathType(['long'], type), 'Long');
+    assert.strictEqual(resolveFieldPathType(['char'], type), 'Char');
+    assert.strictEqual(resolveFieldPathType(['float'], type), 'Float');
+    assert.strictEqual(resolveFieldPathType(['double'], type), 'Double');
+  });
+
   it('unknown top-level fields are invalid', async () => {
     const type = await parseTypeFromSchema(`
       schema Foo
@@ -79,6 +99,9 @@ describe('field path validation', () => {
     assert.throws(
         () => resolveFieldPathType(['txts.inside'], type),
         `Schema 'Foo {txt: Text, txts: [Text]}' does not contain field 'txts.inside'.`);
+    assert.throws(
+        () => resolveFieldPathType(['foo'], 'Text'),
+        `Field path 'foo' could not be resolved because the target type is a primitive: 'Text'.`);
   });
 
   it('reference fields are valid', async () => {

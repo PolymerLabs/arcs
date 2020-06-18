@@ -26,6 +26,7 @@ arcs_kt_library(
         ["*.kt"],
     ),
     deps = [
+        ":annotation_java_proto_lite",
         ":manifest_java_proto_lite",
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
@@ -45,6 +46,7 @@ arcs_kt_library(
     ),
     add_android_constraints = False,
     deps = [
+        ":annotation_java_proto",
         ":manifest_java_proto",
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
@@ -79,6 +81,7 @@ proto_library(
     name = "manifest_proto",
     srcs = ["manifest.proto"],
     deps = [
+        ":annotation_proto",
         ":policy_proto",
     ],
 )

@@ -14,6 +14,8 @@ import {Manifest} from '../../runtime/manifest.js';
 import {Capabilities, Shareable, Persistence, Queryable} from '../../runtime/capabilities.js';
 import {fs} from '../../platform/fs-web.js';
 import {CapabilityEnum, ManifestProto, TypeProto} from '../manifest-proto.js';
+import {Loader} from '../../platform/loader.js';
+import {assertThrowsAsync} from '../../testing/test-util.js';
 
 describe('manifest2proto', () => {
 
@@ -1040,6 +1042,62 @@ describe('manifest2proto', () => {
         },
       },
     ]);
+  });
+
+  it('supports imports in .arcs files', async () => {
+    const loader = new Loader(null, {
+      '/a.arcs': `
+        particle ParticleA
+          foo: writes Person {name: Text}
+      `,
+      '/b.arcs': `
+        particle ParticleB
+          bar: reads Person {name: Text}
+      `,
+      '/c.arcs': `
+        import './a.arcs'
+        import './b.arcs'
+
+        recipe R
+          h: create
+          ParticleA
+            foo: h
+          ParticleB
+            bar: h
+      `,
+    });
+    const manifest = await Manifest.load('/c.arcs', loader);
+    const data = await toProtoAndBack(manifest);
+    const recipe = data.recipes[0];
+    const particleSpecs = data.particleSpecs;
+    assert.deepStrictEqual(recipe.particles.map(p => p.specName), ['ParticleA', 'ParticleB']);
+    assert.deepStrictEqual(particleSpecs.map(p => p.name), ['ParticleA', 'ParticleB']);
+  });
+
+  it('rejects duplicate definitions in imported .arcs files', async () => {
+    const loader = new Loader(null, {
+      '/a.arcs': `
+        particle Dupe
+          foo: reads Person {}
+      `,
+      '/b.arcs': `
+        particle Dupe
+          foo: reads Person {}
+      `,
+      '/c.arcs': `
+        import './a.arcs'
+        import './b.arcs'
+
+        recipe R
+          h: create
+          Dupe
+            foo: h
+      `,
+    });
+    const manifest = await Manifest.load('/c.arcs', loader);
+    await assertThrowsAsync(
+        async () => toProtoAndBack(manifest),
+        `Duplicate definition of particle named 'Dupe'.`);
   });
 
   // On the TypeScript side we serialize .arcs file and validate it equals the .pb.bin file.

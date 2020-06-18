@@ -103,7 +103,13 @@ recipes {
       handle: "handle0"
     }
   }
-  arc_id: "writingArcId"
+  annotations {
+    name: "arcId"
+    params {
+      name: "id"
+      str_value: "writingArcId"
+    }
+  }
 }
 recipes {
   name: "Consumption"
@@ -327,7 +333,7 @@ particle_specs {
 policies {
   name: "MyPolicy"
   targets {
-    schema_type: "Thing"
+    schema_type: "RestrictedThing"
     max_age_ms: 600000
     retentions {
       medium: RAM

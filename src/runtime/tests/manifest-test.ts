@@ -4664,4 +4664,98 @@ recipe
     assert.lengthOf(recipes[1].handles, 1);
     assert.lengthOf(recipes[1].handles[0].annotations, 2);
   });
+
+  describe('validateUniqueDefinitions', () => {
+    async function parseTwoFiles(fileA: string, fileB: string): Promise<Manifest> {
+      const loader = new Loader(null, {
+        '/a.arcs': fileA,
+        '/b.arcs': fileB,
+        '/c.arcs': `
+          import './a.arcs'
+          import './b.arcs'
+        `,
+      });
+      return await Manifest.load('/c.arcs', loader, {memoryProvider: new TestVolatileMemoryProvider()});
+    }
+
+    it('rejects duplicate particle names', async () => {
+      const manifest = await parseTwoFiles(`
+        particle Dupe
+          foo: reads Foo {}
+      `, `
+        particle Dupe
+          bar: reads Bar {}
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of particle named 'Dupe'.`);
+    });
+
+    it('rejects duplicate policy names', async () => {
+      const manifest = await parseTwoFiles(`
+        policy Dupe {}
+      `, `
+        policy Dupe {}
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of policy named 'Dupe'.`);
+    });
+
+    it('rejects duplicate recipe names', async () => {
+      const manifest = await parseTwoFiles(`
+        recipe Dupe
+      `, `
+        recipe Dupe
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of recipe named 'Dupe'.`);
+    });
+
+    it('rejects duplicate resource names', async () => {
+      const manifest = await parseTwoFiles(`
+        resource Dupe
+          start
+          {}
+      `, `
+        resource Dupe
+          start
+          {}
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of resource named 'Dupe'.`);
+    });
+
+    it('rejects duplicate schema names', async () => {
+      const manifest = await parseTwoFiles(`
+        schema Dupe
+          foo: Text
+      `, `
+        schema Dupe
+          bar: Text
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of schema named 'Dupe'.`);
+    });
+
+    it('rejects duplicate store names', async () => {
+      const manifest = await parseTwoFiles(`
+        store Dupe of Foo {} in FooResource
+        resource FooResource
+          start
+          {}
+      `, `
+        store Dupe of Bar {} in BarResource
+        resource BarResource
+          start
+          {}
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of store named 'Dupe'.`);
+    });
+  });
 });

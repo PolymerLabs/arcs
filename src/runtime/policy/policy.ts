@@ -12,6 +12,8 @@ import {AnnotationRef} from '../recipe/annotation.js';
 import {assert} from '../../platform/assert-web.js';
 import {ManifestStringBuilder} from '../manifest-string-builder.js';
 import {Ttl} from '../capabilities.js';
+import {EntityType, InterfaceType, Type} from '../type.js';
+import {FieldPathType, resolveFieldPathType} from '../field-path.js';
 
 export enum PolicyEgressType {
   Logging = 'Logging',
@@ -64,9 +66,10 @@ export class Policy {
 
   static fromAstNode(
       node: AstNode.Policy,
-      buildAnnotationRefs: (ref: AstNode.AnnotationRef[]) => AnnotationRef[]): Policy {
+      buildAnnotationRefs: (ref: AstNode.AnnotationRef[]) => AnnotationRef[],
+      findTypeByName: (name: string) => EntityType | InterfaceType | undefined): Policy {
     checkNamesAreUnique(node.targets.map(target => ({name: target.schemaName})));
-    const targets = node.targets.map(target => PolicyTarget.fromAstNode(target, buildAnnotationRefs));
+    const targets = node.targets.map(target => PolicyTarget.fromAstNode(target, buildAnnotationRefs, findTypeByName));
 
     checkNamesAreUnique(node.configs);
     const configs = node.configs.map(config => PolicyConfig.fromAstNode(config));
@@ -109,6 +112,7 @@ export class Policy {
 export class PolicyTarget {
   constructor(
       readonly schemaName: string,
+      readonly type: Type,
       readonly fields: PolicyField[],
       readonly retentions: {medium: PolicyRetentionMedium, encryptionRequired: boolean}[],
       readonly maxAge: Ttl,
@@ -125,10 +129,17 @@ export class PolicyTarget {
 
   static fromAstNode(
       node: AstNode.PolicyTarget,
-      buildAnnotationRefs: (ref: AstNode.AnnotationRef[]) => AnnotationRef[]): PolicyTarget {
+      buildAnnotationRefs: (ref: AstNode.AnnotationRef[]) => AnnotationRef[],
+      findTypeByName: (name: string) => EntityType | InterfaceType | undefined): PolicyTarget {
+    // Check type.
+    const type = findTypeByName(node.schemaName);
+    if (!type) {
+      throw new Error(`Unknown type name: ${node.schemaName}.`);
+    }
+
     // Convert fields.
     checkNamesAreUnique(node.fields);
-    const fields = node.fields.map(field => PolicyField.fromAstNode(field, buildAnnotationRefs));
+    const fields = node.fields.map(field => PolicyField.fromAstNode(field, type, buildAnnotationRefs));
 
     // Process annotations.
     const allAnnotations = buildAnnotationRefs(node.annotationRefs);
@@ -156,7 +167,7 @@ export class PolicyTarget {
       }
     }
 
-    return new PolicyTarget(node.schemaName, fields, retentions, maxAge, customAnnotations, allAnnotations);
+    return new PolicyTarget(node.schemaName, type, fields, retentions, maxAge, customAnnotations, allAnnotations);
   }
 
   private static toRetention(annotation: AnnotationRef) {
@@ -179,6 +190,7 @@ export class PolicyTarget {
 export class PolicyField {
   constructor(
       readonly name: string,
+      readonly type: FieldPathType,
       readonly subfields: PolicyField[],
       /**
        * The acceptable usages this field. Each (label, usage) pair defines a
@@ -187,9 +199,7 @@ export class PolicyField {
        */
       readonly allowedUsages: {label: string, usage: PolicyAllowedUsageType}[],
       readonly customAnnotations: AnnotationRef[],
-      private readonly allAnnotations: AnnotationRef[]) {
-    // TODO(b/157605585): Validate field structure against Type.
-  }
+      private readonly allAnnotations: AnnotationRef[]) {}
 
   toManifestString(builder = new ManifestStringBuilder()): string {
     builder.push(...this.allAnnotations.map(annotation => annotation.toString()));
@@ -205,10 +215,14 @@ export class PolicyField {
 
   static fromAstNode(
       node: AstNode.PolicyField,
+      parentType: FieldPathType,
       buildAnnotationRefs: (ref: AstNode.AnnotationRef[]) => AnnotationRef[]): PolicyField {
+    // Validate field name against type.
+    const type = resolveFieldPathType([node.name], parentType);
+
     // Convert subfields.
     checkNamesAreUnique(node.subfields);
-    const subfields = node.subfields.map(field => PolicyField.fromAstNode(field, buildAnnotationRefs));
+    const subfields = node.subfields.map(field => PolicyField.fromAstNode(field, type, buildAnnotationRefs));
 
     // Process annotations.
     const allAnnotations = buildAnnotationRefs(node.annotationRefs);
@@ -240,7 +254,7 @@ export class PolicyField {
       allowedUsages.push({label: '', usage: PolicyAllowedUsageType.Any});
     }
 
-    return new PolicyField(node.name, subfields, allowedUsages, customAnnotations, allAnnotations);
+    return new PolicyField(node.name, type, subfields, allowedUsages, customAnnotations, allAnnotations);
   }
 
   private static toAllowedUsage(annotation: AnnotationRef) {
@@ -288,7 +302,7 @@ function checkNamesAreUnique(nodes: {name: string}[]) {
   const names: Set<string> = new Set();
   for (const node of nodes) {
     if (names.has(node.name)) {
-      throw new Error(`A definition for ${node.name} already exists.`);
+      throw new Error(`A definition for '${node.name}' already exists.`);
     }
     names.add(node.name);
   }

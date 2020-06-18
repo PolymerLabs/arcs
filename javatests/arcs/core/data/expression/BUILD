@@ -8,13 +8,10 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 arcs_kt_jvm_test_suite(
-    name = "crdt",
-    package = "arcs.core.crdt",
+    name = "expression",
+    package = "arcs.core.data.expression",
     deps = [
-        "//java/arcs/core/common",
-        "//java/arcs/core/crdt",
-        "//java/arcs/core/data",
-        "//java/arcs/core/data/util:data-util",
+        "//java/arcs/core/data/expression",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlin:kotlin_test",

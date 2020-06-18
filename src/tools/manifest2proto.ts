@@ -26,18 +26,16 @@ import {CheckCondition, CheckExpression, CheckType} from '../runtime/particle-ch
 import {flatMap} from '../runtime/util.js';
 import {Policy} from '../runtime/policy/policy.js';
 import {policyToProtoPayload} from './policy2proto.js';
+import {annotationToProtoPayload} from './annotation2proto.js';
 
 export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path);
-
-  if (manifest.imports.length) {
-    throw Error('Only single-file manifests are currently supported');
-  }
   return encodePayload(await manifestToProtoPayload(manifest));
 }
 
 export async function manifestToProtoPayload(manifest: Manifest) {
-  return makeManifestProtoPayload(manifest.particles, manifest.recipes, manifest.policies);
+  manifest.validateUniqueDefinitions();
+  return makeManifestProtoPayload(manifest.allParticles, manifest.allRecipes, manifest.allPolicies);
 }
 
 export async function encodePlansToProto(plans: Recipe[]) {
@@ -58,7 +56,7 @@ async function makeManifestProtoPayload(particles: ParticleSpec[], recipes: Reci
 
 function encodePayload(payload: {}): Uint8Array {
   const error = ManifestProto.verify(payload);
-  if (error) throw Error(error);
+  if (error) throw new Error(error);
   return ManifestProto.encode(ManifestProto.create(payload)).finish();
 }
 
@@ -79,7 +77,7 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
 async function handleConnectionSpecToProtoPayload(spec: HandleConnectionSpec) {
   const directionOrdinal = DirectionEnum.values[spec.direction.replace(/ /g, '_').toUpperCase()];
   if (directionOrdinal === undefined) {
-    throw Error(`Handle connection direction ${spec.direction} is not supported`);
+    throw new Error(`Handle connection direction ${spec.direction} is not supported`);
   }
   return {
     name: spec.name,
@@ -235,9 +233,9 @@ async function recipeToProtoPayload(recipe: Recipe) {
 
   return {
     name: recipe.name,
-    arcId: findLongRunningArcId(recipe),
     particles: recipe.particles.map(p => recipeParticleToProtoPayload(p, handleToProtoPayload)),
     handles: [...handleToProtoPayload.values()],
+    annotations: recipe.annotations.map(a => annotationToProtoPayload(a))
   };
 }
 
@@ -253,7 +251,7 @@ function recipeParticleToProtoPayload(particle: Particle, handleMap: Map<Handle,
 async function recipeHandleToProtoPayload(handle: Handle) {
   const fateOrdinal = FateEnum.values[handle.fate.toUpperCase()];
   if (fateOrdinal === undefined) {
-    throw Error(`Handle fate ${handle.fate} is not supported`);
+    throw new Error(`Handle fate ${handle.fate} is not supported`);
   }
   const toName = handle => handle.localName || `handle${handle.recipe.handles.indexOf(handle)}`;
   const handleData = {
@@ -354,7 +352,7 @@ export async function typeToProtoPayload(type: Type) {
         }
       };
     }
-    default: throw Error(`Type '${type.tag}' is not supported.`);
+    default: throw new Error(`Type '${type.tag}' is not supported.`);
   }
 }
 
@@ -380,7 +378,7 @@ async function schemaFieldToProtoPayload(fieldType: SchemaField) {
     case 'schema-primitive': {
       const primitive = PrimitiveTypeEnum.values[fieldType.type.toUpperCase()];
       if (primitive === undefined) {
-        throw Error(`Primitive field type ${fieldType.type} is not supported.`);
+        throw new Error(`Primitive field type ${fieldType.type} is not supported.`);
       }
       return {primitive};
     }
@@ -410,7 +408,7 @@ async function schemaFieldToProtoPayload(fieldType: SchemaField) {
     }
     // TODO(b/154947220) support schema-unions
     case 'schema-union':
-    default: throw Error(`Schema field kind ${fieldType.kind} is not supported.`);
+    default: throw new Error(`Schema field kind ${fieldType.kind} is not supported.`);
   }
 }
 
@@ -429,7 +427,7 @@ function toOpProto(op: Op): number {
     Op.EQ, Op.NEQ,
   ].indexOf(op);
 
-  if (opEnum === -1) throw Error(`Op type '${op}' is not supported.`);
+  if (opEnum === -1) throw new Error(`Op type '${op}' is not supported.`);
 
   return opEnum;
 }
