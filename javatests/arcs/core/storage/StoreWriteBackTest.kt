@@ -220,8 +220,7 @@ class StoreWriteBackTest {
         return ReferenceModeStore.create(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
                 testKey,
-                CollectionType(EntityType(schema)),
-                StorageMode.ReferenceMode
+                CollectionType(EntityType(schema))
             )
         )
     }

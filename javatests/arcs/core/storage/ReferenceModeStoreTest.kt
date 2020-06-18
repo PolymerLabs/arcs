@@ -92,8 +92,7 @@ class ReferenceModeStoreTest {
         val store = Store<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
             StoreOptions(
                 testKey,
-                SingletonType(EntityType(schema)),
-                StorageMode.ReferenceMode
+                SingletonType(EntityType(schema))
             )
         )
         assertSuspendingThrows(CrdtException::class) { store.activate() }
@@ -106,8 +105,7 @@ class ReferenceModeStoreTest {
         val store = Store<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
             StoreOptions(
                 testKey,
-                CollectionType(EntityType(schema)),
-                mode = StorageMode.ReferenceMode
+                CollectionType(EntityType(schema))
             )
         )
         val activeStore = store.activate()
@@ -647,8 +645,7 @@ class ReferenceModeStoreTest {
         return ReferenceModeStore.create(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
                 testKey,
-                CollectionType(EntityType(schema)),
-                StorageMode.ReferenceMode
+                CollectionType(EntityType(schema))
             )
         )
     }
@@ -657,8 +654,7 @@ class ReferenceModeStoreTest {
         return ReferenceModeStore.create(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
                 testKey,
-                SingletonType(EntityType(schema)),
-                StorageMode.ReferenceMode
+                SingletonType(EntityType(schema))
             )
         )
     }

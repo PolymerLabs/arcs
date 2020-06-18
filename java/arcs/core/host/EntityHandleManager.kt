@@ -48,7 +48,6 @@ import arcs.core.entity.WriteQueryCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageMode
 import arcs.core.storage.StoreManager
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
@@ -207,8 +206,7 @@ class EntityHandleManager(
             spec = config.spec,
             proxy = singletonStoreProxy(
                 config.storageKey,
-                config.spec.entitySpecs.single().SCHEMA,
-                config.spec.dataType.toStorageMode()
+                config.spec.entitySpecs.single().SCHEMA
             ),
             storageAdapter = config.storageAdapter,
             dereferencerFactory = dereferencerFactory,
@@ -236,8 +234,7 @@ class EntityHandleManager(
             spec = config.spec,
             proxy = collectionStoreProxy(
                 config.storageKey,
-                config.spec.entitySpecs.single().SCHEMA,
-                config.spec.dataType.toStorageMode()
+                config.spec.entitySpecs.single().SCHEMA
             ),
             storageAdapter = config.storageAdapter,
             dereferencerFactory = dereferencerFactory,
@@ -265,15 +262,13 @@ class EntityHandleManager(
     @Suppress("UNCHECKED_CAST")
     private suspend fun <R : Referencable> singletonStoreProxy(
         storageKey: StorageKey,
-        schema: Schema,
-        storageMode: StorageMode
+        schema: Schema
     ): SingletonProxy<R> = proxyMutex.withLock {
         singletonStorageProxies.getOrPut(storageKey) {
             val activeStore = stores.get(
                 SingletonStoreOptions<Referencable>(
                     storageKey = storageKey,
-                    type = SingletonType(EntityType(schema)),
-                    mode = storageMode
+                    type = SingletonType(EntityType(schema))
                 )
             )
             SingletonProxy(activeStore, CrdtSingleton(), scheduler)
@@ -284,23 +279,16 @@ class EntityHandleManager(
     @Suppress("UNCHECKED_CAST")
     private suspend fun <R : Referencable> collectionStoreProxy(
         storageKey: StorageKey,
-        schema: Schema,
-        storageMode: StorageMode
+        schema: Schema
     ): CollectionProxy<R> = proxyMutex.withLock {
         collectionStorageProxies.getOrPut(storageKey) {
             val activeStore = stores.get(
                 CollectionStoreOptions<Referencable>(
                     storageKey = storageKey,
-                    type = CollectionType(EntityType(schema)),
-                    mode = storageMode
+                    type = CollectionType(EntityType(schema))
                 )
             )
             CollectionProxy(activeStore, CrdtSet(), scheduler)
         } as CollectionProxy<R>
     }
-}
-
-private fun HandleDataType.toStorageMode() = when (this) {
-    HandleDataType.Entity -> StorageMode.ReferenceMode
-    HandleDataType.Reference -> StorageMode.Direct
 }

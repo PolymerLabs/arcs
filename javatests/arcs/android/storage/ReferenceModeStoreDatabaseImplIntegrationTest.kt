@@ -27,14 +27,12 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
-import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Reference
 import arcs.core.storage.ReferenceModeStore
-import arcs.core.storage.StorageMode
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.database.DatabaseData
@@ -655,8 +653,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         return ReferenceModeStore.create(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
                 testKey,
-                CollectionType(EntityType(schema)),
-                StorageMode.ReferenceMode
+                CollectionType(EntityType(schema))
             )
         )
     }
@@ -665,8 +662,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         return ReferenceModeStore.create(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
                 testKey,
-                SingletonType(EntityType(schema)),
-                StorageMode.ReferenceMode
+                SingletonType(EntityType(schema))
             )
         )
     }
