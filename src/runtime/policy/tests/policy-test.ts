@@ -19,17 +19,27 @@ const customAnnotation = `
 annotation custom
   targets: [Policy, PolicyTarget, PolicyField]
   retention: Source
-  doc: 'custom annotation for testing'`;
+  doc: 'custom annotation for testing'
+`;
+
+const personSchema = `
+schema Person
+  name: Text
+  age: Number
+  friends: [&Friend {name: Text, age: Number}]
+`;
 
 async function parsePolicy(str: string) {
-  const manifest = await Manifest.parse(customAnnotation + str);
+  const manifest = await Manifest.parse(customAnnotation + personSchema + str);
   assert.lengthOf(manifest.policies, 1);
   return manifest.policies[0];
 }
 
 describe('policy', () => {
   it('can round-trip to string', async () => {
-    const manifestString = `${customAnnotation}
+    const manifestString = `
+${customAnnotation.trim()}
+${personSchema.trim()}
 @intendedPurpose(description: 'test')
 @egressType(type: 'Logging')
 @custom
@@ -38,16 +48,16 @@ policy MyPolicy {
   @allowedRetention(medium: 'Ram', encryption: false)
   @allowedRetention(medium: 'Disk', encryption: true)
   @custom
-  from SomeType access {
+  from Person access {
     @allowedUsage(label: 'raw', usageType: 'join')
     @allowedUsage(label: 'truncated', usageType: 'egress')
-    sensitiveField {
+    friends {
       @allowedUsage(label: 'redacted', usageType: '*')
       @custom
-      someField,
+      age,
     }
     @custom
-    anotherField,
+    name,
   }
   config SomeConfig {
     abc: '123'
@@ -101,11 +111,11 @@ policy MyPolicy {
   @allowedRetention(medium: 'Ram', encryption: false)
   @maxAge('2d')
   @custom
-  from Abc access {}
+  from Person access {}
 }`);
     assert.lengthOf(policy.targets, 1);
     const target = policy.targets[0];
-    assert.strictEqual(target.schemaName, 'Abc');
+    assert.strictEqual(target.schemaName, 'Person');
     assert.deepStrictEqual(target.retentions, [
       {
         medium: PolicyRetentionMedium.Disk,
@@ -125,7 +135,7 @@ policy MyPolicy {
   it('handles missing target annotations', async () => {
     const policy = await parsePolicy(`
 policy MyPolicy {
-  from Abc access {}
+  from Person access {}
 }
 `);
     const target = policy.targets[0];
@@ -134,12 +144,19 @@ policy MyPolicy {
     assert.isEmpty(target.customAnnotations);
   });
 
+  it('rejects unknown target types', async () => {
+    await assertThrowsAsync(async () => await parsePolicy(`
+policy MyPolicy {
+  from UnknownType access {}
+}`), `Unknown type name: UnknownType.`);
+  });
+
   it('rejects duplicate targets', async () => {
     await assertThrowsAsync(async () => parsePolicy(`
 policy MyPolicy {
-  from Abc access {}
-  from Abc access {}
-}`), 'A definition for Abc already exists.');
+  from Person access {}
+  from Person access {}
+}`), `A definition for 'Person' already exists.`);
   });
 
   it('rejects duplicate retentions', async () => {
@@ -147,7 +164,7 @@ policy MyPolicy {
 policy MyPolicy {
   @allowedRetention(medium: 'Ram', encryption: true)
   @allowedRetention(medium: 'Ram', encryption: true)
-  from Abc access {}
+  from Person access {}
 }`), '@allowedRetention has already been defined for Ram.');
   });
 
@@ -155,7 +172,7 @@ policy MyPolicy {
     await assertThrowsAsync(async () => parsePolicy(`
 policy MyPolicy {
   @allowedRetention(medium: 'SomethingElse', encryption: false)
-  from Abc access {}
+  from Person access {}
 }`), 'Expected one of: Ram, Disk. Found: SomethingElse.');
   });
 
@@ -163,33 +180,33 @@ policy MyPolicy {
     await assertThrowsAsync(async () => parsePolicy(`
 policy MyPolicy {
   @maxAge('4x')
-  from Abc access {}
+  from Person access {}
 }`), 'Invalid ttl: 4x');
   });
 
   it('policy field annotations work', async () => {
     const policy = await parsePolicy(`
 policy MyPolicy {
-  from Abc access {
+  from Person access {
     @allowedUsage(label: 'redacted', usageType: 'egress')
     @allowedUsage(label: 'redacted', usageType: 'join')
     @custom
-    parent {
+    friends {
       @allowedUsage(label: 'truncated', usageType: 'join')
       @custom
-      child1,
+      name,
 
       @allowedUsage(label: 'raw', usageType: '*')
-      child2,
+      age,
     }
   }
 }`);
     const fields = policy.targets[0].fields;
     assert.lengthOf(fields, 1);
 
-    const parent = fields[0];
-    assert.strictEqual(parent.name, 'parent');
-    assert.deepStrictEqual(parent.allowedUsages, [
+    const friends = fields[0];
+    assert.strictEqual(friends.name, 'friends');
+    assert.deepStrictEqual(friends.allowedUsages, [
       {
         usage: PolicyAllowedUsageType.Egress,
         label: 'redacted',
@@ -199,35 +216,52 @@ policy MyPolicy {
         label: 'redacted',
       },
     ]);
-    assert.lengthOf(parent.customAnnotations, 1);
-    assert.strictEqual(parent.customAnnotations[0].name, 'custom');
+    assert.lengthOf(friends.customAnnotations, 1);
+    assert.strictEqual(friends.customAnnotations[0].name, 'custom');
 
-    const subfields = parent.subfields;
+    const subfields = friends.subfields;
     assert.lengthOf(subfields, 2);
-    const [child1, child2] = subfields;
+    const [name, age] = subfields;
 
-    assert.strictEqual(child1.name, 'child1');
-    assert.deepStrictEqual(child1.allowedUsages, [{
+    assert.strictEqual(name.name, 'name');
+    assert.deepStrictEqual(name.allowedUsages, [{
       usage: PolicyAllowedUsageType.Join,
       label: 'truncated',
     }]);
-    assert.lengthOf(child1.customAnnotations, 1);
-    assert.strictEqual(child1.customAnnotations[0].name, 'custom');
+    assert.lengthOf(name.customAnnotations, 1);
+    assert.strictEqual(name.customAnnotations[0].name, 'custom');
 
-    assert.strictEqual(child2.name, 'child2');
-    assert.deepStrictEqual(child2.allowedUsages, [{
+    assert.strictEqual(age.name, 'age');
+    assert.deepStrictEqual(age.allowedUsages, [{
       usage: PolicyAllowedUsageType.Any,
       label: '',
     }]);
-    assert.lengthOf(child2.customAnnotations, 0);
+    assert.lengthOf(age.customAnnotations, 0);
+  });
+
+  it('rejects unknown fields and subfields', async () => {
+    await assertThrowsAsync(async () => parsePolicy(`
+policy MyPolicy {
+  from Person access {
+    unknownField,
+  }
+}`), /Schema 'Person \{.*\}' does not contain field 'unknownField'/);
+    await assertThrowsAsync(async () => parsePolicy(`
+policy MyPolicy {
+  from Person access {
+    friends {
+      unknownField,
+    }
+  }
+}`), /Schema 'Friend \{.*\}' does not contain field 'unknownField'/);
   });
 
   it('rejects unknown usage types', async () => {
     await assertThrowsAsync(async () => parsePolicy(`
 policy MyPolicy {
-  from Abc access {
+  from Person access {
     @allowedUsage(label: 'redacted', usageType: 'SomethingElse')
-    field,
+    age,
   }
 }`), 'Expected one of: *, egress, join. Found: SomethingElse.');
   });
@@ -235,10 +269,10 @@ policy MyPolicy {
   it('rejects duplicate usage types', async () => {
     await assertThrowsAsync(async () => parsePolicy(`
 policy MyPolicy {
-  from Abc access {
+  from Person access {
     @allowedUsage(label: 'redacted', usageType: 'egress')
     @allowedUsage(label: 'redacted', usageType: 'egress')
-    field,
+    age,
   }
 }`), `Usage of label 'redacted' for usage type 'egress' has already been allowed.`);
   });
@@ -246,32 +280,30 @@ policy MyPolicy {
   it('rejects duplicate fields', async () => {
     await assertThrowsAsync(async () => parsePolicy(`
 policy MyPolicy {
-  from Abc access {
+  from Person access {
     abc,
     abc,
   }
-}`), 'A definition for abc already exists.');
+}`), `A definition for 'abc' already exists.`);
   });
 
   it('rejects duplicate subfields', async () => {
     await assertThrowsAsync(async () => parsePolicy(`
 policy MyPolicy {
-  from Abc access {
-    parent {
-      child,
-      child {
-        grandchild
-      }
+  from Person access {
+    friends,
+    friends {
+      name
     }
   }
-}`), 'A definition for child already exists.');
+}`), `A definition for 'friends' already exists.`);
   });
 
   it('allowed usages defaults to any', async () => {
     const policyStr = `
 policy MyPolicy {
-  from Abc access {
-    field,
+  from Person access {
+    age,
   }
 }`.trim();
     const policy = await parsePolicy(policyStr);
@@ -305,6 +337,6 @@ policy MyPolicy {
 policy MyPolicy {
   config Abc {}
   config Abc {}
-}`), 'A definition for Abc already exists.');
+}`), `A definition for 'Abc' already exists.`);
   });
 });
