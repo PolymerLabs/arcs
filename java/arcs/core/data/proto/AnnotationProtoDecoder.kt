@@ -19,7 +19,7 @@ fun AnnotationParamProto.decode(): AnnotationParam {
         AnnotationParamProto.ValueCase.STR_VALUE -> AnnotationParam.Str(strValue)
         AnnotationParamProto.ValueCase.NUM_VALUE -> AnnotationParam.Num(numValue)
         AnnotationParamProto.ValueCase.BOOL_VALUE -> AnnotationParam.Bool(boolValue)
-        else -> throw IllegalArgumentException("Cannot decode a [AnnotationParamProto].")
+        else -> throw UnsupportedOperationException("Invalid [AnnotationParam] type $valueCase.")
     }
 }
 

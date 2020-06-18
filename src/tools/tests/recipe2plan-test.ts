@@ -97,7 +97,13 @@ $ tools/update-goldens \n\n`
       }],
       recipes: [{
         name: 'WritingRecipe',
-        arcId: 'writeArcId',
+        annotations: [{
+          name: 'arcId',
+          params: [{
+            name: 'id',
+            strValue: 'writeArcId'
+          }]
+        }],
         handles: [{
           fate: 'CREATE',
           name: 'handle0',
@@ -117,7 +123,13 @@ $ tools/update-goldens \n\n`
       },
       {
         name: 'ReadingRecipe',
-        arcId: 'readArcId',
+        annotations: [{
+          name: 'arcId',
+          params: [{
+            name: 'id',
+            strValue: 'readArcId'
+          }]
+        }],
         handles: [{
           fate: 'MAP',
           name: 'handle0',

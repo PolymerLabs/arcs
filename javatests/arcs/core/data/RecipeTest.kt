@@ -294,12 +294,7 @@ class RecipeTest {
                         )
                     )
                 ),
-                annotations = listOf(
-                    Annotation(
-                        name = "arcId",
-                        params = mapOf("id" to AnnotationParam.Str("egress-contacts"))
-                    )
-                )
+                annotations = listOf(Annotation.arcId("egress-contacts"))
             )
         )
     }

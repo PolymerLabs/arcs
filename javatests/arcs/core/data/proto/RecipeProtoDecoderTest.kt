@@ -19,14 +19,14 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 
-/** Creates and arcId [AnnotationProto]. */
+/** Creates and [arcId] [AnnotationProto]. */
 fun arcIdAnnotationProto(id: String): AnnotationProto {
     return AnnotationProto.newBuilder()
-    .setName("arcId")
-    .addParams(
-        AnnotationParamProto.newBuilder().setName("id").setStrValue(id)
-    )
-    .build()
+        .setName("arcId")
+        .addParams(
+            AnnotationParamProto.newBuilder().setName("id").setStrValue(id)
+        )
+        .build()
 }
 
 @RunWith(JUnit4::class)
