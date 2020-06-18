@@ -124,6 +124,7 @@ open class HandleManagerTestBase {
         }
     }
 
+    @Suppress("NON_APPLICABLE_CALL_FOR_BUILDER_INFERENCE")
     private var ramDiskActivity = callbackFlow {
         offer(Unit)
         val listener: (StorageKey, Any?) -> Unit = { _, _ -> offer(Unit) }
@@ -421,7 +422,6 @@ open class HandleManagerTestBase {
     open fun singleton_referenceLiveness() = testRunner {
         // Create and store an entity.
         val writeEntityHandle = writeHandleManager.createCollectionHandle()
-        val readEntityHandle = readHandleManager.createCollectionHandle()
         val monitorHandle = monitorHandleManager.createCollectionHandle()
         val initialEntityStored = monitorHandle.onUpdateDeferred { it.size == 1 }
         withContext(writeEntityHandle.dispatcher) { writeEntityHandle.store(entity1) }
@@ -764,8 +764,12 @@ open class HandleManagerTestBase {
             HandleSpec(
                 "hatCollection",
                 HandleMode.ReadWrite,
-                HandleContainerType.Collection,
-                Hat
+                toType(
+                    Hat,
+                    HandleDataType.Entity,
+                    HandleContainerType.Collection
+                ),
+                setOf(Hat)
             ),
             hatCollectionKey
         ).awaitReady() as ReadWriteCollectionHandle<Hat>
