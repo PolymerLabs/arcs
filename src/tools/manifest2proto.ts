@@ -227,6 +227,10 @@ async function recipeToProtoPayload(recipe: Recipe) {
 
   const handleToProtoPayload = new Map<Handle, {name: string}>();
   for (const h of recipe.handles) {
+    // After type inference which runs as a part of the recipe.normalize() above
+    // all handle types are constrained type variables. We force these type variables
+    // to their resolution by called maybeEnsureResolved(), so that handle types
+    // are encoded with concrete types, instead of variables.
     h.type.maybeEnsureResolved();
     handleToProtoPayload.set(h, await recipeHandleToProtoPayload(h));
   }
@@ -305,6 +309,10 @@ export function capabilitiesToProtoOrdinals(capabilities: Capabilities) {
 
 export async function typeToProtoPayload(type: Type) {
   if (type.hasVariable && type.isResolved()) {
+    // We encode the resolution of the resolved type variables directly.
+    // This allows us to encode handle types and connection types directly
+    // and only encode type variables where they are not yet resolved,
+    // e.g. in particle specs of generic particles.
     type = type.resolvedType();
   }
   switch (type.tag) {
@@ -343,14 +351,10 @@ export async function typeToProtoPayload(type: Type) {
       count: {}
     };
     case 'TypeVariable': {
-      const constraint = type.canReadSubset || type.canWriteSuperset || type.resolvedType();
-      const constraintType = constraint.isResolved() ? await typeToProtoPayload(constraint) : {};
-      return {
-        variable: {
-          name: (type as TypeVariable).variable.name,
-          constraint: {constraintType}
-        }
-      };
+      const constraintType = type.canReadSubset || type.canWriteSuperset;
+      const name = {name: (type as TypeVariable).variable.name};
+      const constraint = constraintType ? {constraint: {constraintType: await typeToProtoPayload(constraintType)}} : {};
+      return {...name, ...constraint};
     }
     default: throw new Error(`Type '${type.tag}' is not supported.`);
   }

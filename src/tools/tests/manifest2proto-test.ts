@@ -423,14 +423,17 @@ describe('manifest2proto', () => {
       variable: {
         name: 'a',
         constraint: {constraintType: {
-            singleton: {singletonType: {
-                entity: {schema: {
-                    names: ['Foo'],
-                    fields: { value: { primitive: 'TEXT' } },
-                    hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
-                }}
-            }},
-        }}
+          singleton: {singletonType: {
+            entity: {schema: {
+              names: ['Foo'],
+              fields: {value: {primitive: 'TEXT'}},
+              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+            }
+            }
+          }
+          },
+        }
+        }
       }
     });
   });
@@ -490,12 +493,7 @@ describe('manifest2proto', () => {
   it('encodes variable type - unconstrained', async () => {
     const varType = TypeVariable.make('a');
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
-      variable: {
-        name: 'a',
-        constraint: {
-          constraintType: {}
-        }
-      }
+      variable: {name: 'a'}
     });
   });
 
@@ -507,18 +505,18 @@ describe('manifest2proto', () => {
     `);
 
     const particleSpec = (await toProtoAndBack(manifest)).particleSpecs[0];
-    const varInput = particleSpec.connections.find(c => c.name == 'input').type.variable;
-    const varOutput = particleSpec.connections.find(c => c.name == 'output').type.variable;
+    const varInput = particleSpec.connections.find(c => c.name === 'input').type.variable;
+    const varOutput = particleSpec.connections.find(c => c.name === 'output').type.variable;
 
     assert.deepStrictEqual(varInput, varOutput);
     assert.deepStrictEqual(varInput.name, 'a');
-    assert.deepStrictEqual(varInput.constraint, { constraintType: {
+    assert.deepStrictEqual(varInput.constraint, {constraintType: {
       entity: {
-          schema: {
-            fields: { time: {primitive: 'NUMBER'} },
-            hash: '5c7ae2de06d2111eeef1a845d57d52e23ff214da',
-          }
+        schema: {
+          fields: {time: {primitive: 'NUMBER'}},
+          hash: '5c7ae2de06d2111eeef1a845d57d52e23ff214da',
         }
+      }
       }
     });
   });
@@ -531,12 +529,12 @@ describe('manifest2proto', () => {
     `);
 
     const particleSpec = (await toProtoAndBack(manifest)).particleSpecs[0];
-    const varInput = particleSpec.connections.find(c => c.name == 'input').type.variable;
-    const varOutput = particleSpec.connections.find(c => c.name == 'output').type.variable;
+    const varInput = particleSpec.connections.find(c => c.name === 'input').type.variable;
+    const varOutput = particleSpec.connections.find(c => c.name === 'output').type.variable;
 
     assert.deepStrictEqual(varInput, varOutput);
     assert.deepStrictEqual(varInput.name, 'a');
-    assert.deepStrictEqual(varInput.constraint, { constraintType: {} });
+    assert.isUndefined(varInput.constraint);
   });
 
   it('encodes schemas with primitives and collections of primitives', async () => {
