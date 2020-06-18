@@ -784,15 +784,22 @@ open class HandleManagerTestBase {
 
     @Test
     open fun collection_noTTL() = testRunner {
+        val monitor = monitorHandleManager.createCollectionHandle()
         val handle = writeHandleManager.createCollectionHandle()
         val handleB = readHandleManager.createCollectionHandle()
         val handleBChanged = handleB.onUpdateDeferred()
-        handle.store(entity1)
+        val monitorNotified = monitor.onUpdateDeferred()
+        withContext(handle.dispatcher) {
+            handle.store(entity1)
+        }
+        monitorNotified.await()
         handleBChanged.await()
 
-        val readBack = handleB.fetchAll().first { it.entityId == entity1.entityId }
-        assertThat(readBack.creationTimestamp).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
-        assertThat(readBack.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+        withContext(handleB.dispatcher) {
+            val readBack = handleB.fetchAll().first { it.entityId == entity1.entityId }
+            assertThat(readBack.creationTimestamp).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+            assertThat(readBack.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+        }
     }
 
     @Test
