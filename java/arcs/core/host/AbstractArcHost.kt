@@ -54,8 +54,15 @@ typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
 @ExperimentalCoroutinesApi
 abstract class AbstractArcHost(
     protected val schedulerProvider: SchedulerProvider,
+    open val activationFactory: ActivationFactory? = null,
     vararg initialParticles: ParticleRegistration
 ) : ArcHost {
+
+    constructor(
+        schedulerProvider: SchedulerProvider,
+        vararg initialParticles: ParticleRegistration
+    ) : this(schedulerProvider, null, *initialParticles)
+
     private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
@@ -500,8 +507,7 @@ abstract class AbstractArcHost(
         hostId,
         platformTime,
         schedulerProvider(arcId),
-        stores,
-        activationFactory
+        stores
     )
 
     /**
@@ -509,12 +515,6 @@ abstract class AbstractArcHost(
      * singleton defined statically by this package.
      */
     open val stores = singletonStores
-
-    /**
-     * The [ActivationFactory] to use when activating stores. By default this is `null`,
-     * indicating that the default [ActivationFactory] will be used.
-     */
-    open val activationFactory: ActivationFactory? = null
 
     /**
      * Instantiate a [Particle] implementation for a given [ParticleIdentifier].

@@ -31,6 +31,7 @@ arcs_kt_android_library(
         "//java/arcs/core/common",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
+        "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util",

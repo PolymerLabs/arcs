@@ -49,6 +49,7 @@ import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageMode
+import arcs.core.storage.Store
 import arcs.core.storage.StoreManager
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
@@ -76,9 +77,26 @@ class EntityHandleManager(
     private val time: Time,
     private val scheduler: Scheduler,
     private val stores: StoreManager = StoreManager(),
-    private val activationFactory: ActivationFactory? = null,
     private val idGenerator: Id.Generator = Id.Generator.newSession()
 ) {
+
+    @Deprecated("prefer primary constructor")
+    constructor(
+        arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
+        hostId: String = "nohost",
+        time: Time,
+        scheduler: Scheduler,
+        activationFactory: ActivationFactory?,
+        idGenerator: Id.Generator = Id.Generator.newSession()
+    ) : this(
+        arcId,
+        hostId,
+        time,
+        scheduler,
+        StoreManager(activationFactory ?: Store.defaultFactory),
+        idGenerator
+
+    )
     private val proxyMutex = Mutex()
     private val singletonStorageProxies by guardedBy(
         proxyMutex,
@@ -88,7 +106,7 @@ class EntityHandleManager(
         proxyMutex,
         mutableMapOf<StorageKey, CollectionProxy<Referencable>>()
     )
-    private val dereferencerFactory = EntityDereferencerFactory(activationFactory)
+    private val dereferencerFactory = EntityDereferencerFactory(stores.activationFactory)
 
     @Deprecated("Will be replaced by ParticleContext lifecycle handling")
     suspend fun initiateProxySync() {
@@ -253,7 +271,7 @@ class EntityHandleManager(
                     type = SingletonType(EntityType(schema)),
                     mode = storageMode
                 )
-            ).activate(activationFactory)
+            )
             SingletonProxy(activeStore, CrdtSingleton(), scheduler)
         } as SingletonProxy<R>
     }
@@ -272,7 +290,7 @@ class EntityHandleManager(
                     type = CollectionType(EntityType(schema)),
                     mode = storageMode
                 )
-            ).activate(activationFactory)
+            )
             CollectionProxy(activeStore, CrdtSet(), scheduler)
         } as CollectionProxy<R>
     }

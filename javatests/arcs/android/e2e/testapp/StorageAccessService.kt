@@ -10,6 +10,7 @@ import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.StoreManager
 import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
 import arcs.sdk.WriteSingletonHandle
@@ -42,9 +43,11 @@ class StorageAccessService : LifecycleService() {
             val handleManager = EntityHandleManager(
                 time = JvmTime,
                 scheduler = Scheduler(coroutineContext),
-                activationFactory = ServiceStoreFactory(
-                    this@StorageAccessService,
-                    lifecycle
+                stores = StoreManager(
+                    activationFactory = ServiceStoreFactory(
+                        this@StorageAccessService,
+                        lifecycle
+                    )
                 )
             )
             @Suppress("UNCHECKED_CAST")

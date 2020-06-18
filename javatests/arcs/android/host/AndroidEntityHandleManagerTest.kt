@@ -126,11 +126,12 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             "testHost",
             FakeTime(),
             schedulerProvider("testArc"),
-            StoreManager(),
-            ServiceStoreFactory(
-                context = app,
-                lifecycle = lifecycle,
-                connectionFactory = TestConnectionFactory(app)
+            StoreManager(
+                activationFactory = ServiceStoreFactory(
+                    context = app,
+                    lifecycle = lifecycle,
+                    connectionFactory = TestConnectionFactory(app)
+                )
             )
         )
     }
