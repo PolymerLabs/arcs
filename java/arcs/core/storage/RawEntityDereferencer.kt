@@ -36,7 +36,8 @@ class RawEntityDereferencer(
     private val entityActivationFactory: ActivationFactory? = null,
     private val referenceCheckFun: ((Schema, RawEntity?) -> Unit)? = null
 ) : Dereferencer<RawEntity> {
-    private val log = TaggedLog { "Dereferencer(${schema.names})" }
+    // TODO(#5551): Consider including a hash of schema.names for easier tracking.
+    private val log = TaggedLog { "RawEntityDereferencer" }
 
     override suspend fun dereference(
         reference: Reference,

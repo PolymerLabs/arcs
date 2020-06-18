@@ -59,7 +59,8 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
     private val type: Type,
     private val memory: VolatileMemory
 ) : Driver<Data> {
-    private val log = TaggedLog { this.toString() }
+    // TODO(#5551): Consider including a hash of the toString info in log prefix.
+    private val log = TaggedLog { "VolatileDriver" }
     // The identifier is simply used to help differentiate between VolatileDrivers for the same
     // storage key.
     private val identifier = nextIdentifier.incrementAndGet()

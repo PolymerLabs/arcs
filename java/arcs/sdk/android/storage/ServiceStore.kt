@@ -103,7 +103,8 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private val connectionFactory: ConnectionFactory,
     private val coroutineContext: CoroutineContext
 ) : ActiveStore<Data, Op, ConsumerData>(options), LifecycleObserver {
-    private val log = TaggedLog { "ServiceStore(${options.storageKey})" }
+    // TODO(#5551): Consider including hash of options.storageKey for tracking.
+    private val log = TaggedLog { "ServiceStore" }
     private val scope = CoroutineScope(coroutineContext)
     private var storageService: IStorageService? = null
     private var serviceConnection: StorageServiceConnection? = null

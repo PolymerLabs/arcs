@@ -347,7 +347,10 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     suspend fun onMessage(message: ProxyMessage<Data, Op, T>) = coroutineScope {
         log.debug { "onMessage: $message" }
         if (stateHolder.value.state == ProxyState.CLOSED) {
-            log.info { "in closed state, received message: $message" }
+            // TODO(wkorman): Do we really want info level in production, without message, just
+            // to get visibility if/when this happens? Do we have a sense of how frequently it
+            // could occur?
+            log.debug { "in closed state, received message: $message" }
             return@coroutineScope
         }
 
