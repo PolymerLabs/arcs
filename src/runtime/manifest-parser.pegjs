@@ -1823,9 +1823,17 @@ PrimaryExpression
     // TODO(cypher1): Add support for named query arguments
     return toAstNode<AstNode.QueryNode>({kind: 'query-argument-node', value: fn});
   }
-  / "'" txt:[^'\n]* "'"
+  / "'" txt:("\\'"/[^'\n])* "'"
   {
-    return toAstNode<AstNode.TextNode>({kind: 'text-node', value: txt.join('')});
+    const value = txt.join('')
+      .replace('\\t', '\t')
+      .replace('\\b', '\b')
+      .replace('\\n', '\n')
+      .replace('\\r', '\r')
+      .replace('\\\'', '\'')
+      .replace('\\"', '"')
+      .replace('\\\\', '\\');
+    return toAstNode<AstNode.TextNode>({kind: 'text-node', value});
   }
 
 Units = whiteSpace? name: UnitName {
