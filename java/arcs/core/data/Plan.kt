@@ -23,22 +23,10 @@ open class Plan(
     val particles: List<Particle>,
     val annotations: List<Annotation> = emptyList()
 ) {
-    // TODO(b/155796088): get rid of these ctors and use annotations in PlanPartition and Recipe.
-    constructor(particles: List<Particle>, arcId: String?) :
-        this(
-            particles,
-            if (arcId != null) listOf(Annotation.arcId(arcId)) else emptyList()
-        )
-
     val arcId: String?
         get() {
             return annotations.find { it.name == "arcId" }?.let {
-                val idParam = it.getParam("id")
-                return when (idParam) {
-                    is AnnotationParam.Str -> idParam.value
-                    else -> throw IllegalStateException(
-                        "Annotation arcId param id must be string, instead got $idParam")
-                }
+                return it.getStringParam("id")
             }
         }
 
@@ -64,9 +52,15 @@ open class Plan(
         val storageKey: StorageKey,
         val mode: HandleMode,
         val type: Type,
-        val ttl: Ttl? = null,
-        val annotations: List<Annotation>? = emptyList()
+        val annotations: List<Annotation> = emptyList()
     ) {
+        val ttl: Ttl
+            get() {
+                return annotations.find { it.name == "ttl" }?.let {
+                    return Ttl.fromString(it.getStringParam("value"))
+                } ?: Ttl.Infinite
+            }
+
         companion object {
             val storageKeyLens =
                 lens(HandleConnection::storageKey) { t, f -> t.copy(storageKey = f) }
@@ -97,6 +91,8 @@ open class Plan(
     override fun hashCode(): Int = particles.hashCode()
 
     companion object {
-        val particleLens = lens(Plan::particles) { t, f -> Plan(particles = f, arcId = t.arcId) }
+        val particleLens = lens(Plan::particles) { t, f ->
+            Plan(particles = f, annotations = t.annotations)
+        }
     }
 }

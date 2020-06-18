@@ -23,9 +23,21 @@ data class Annotation(val name: String, val params: Map<String, AnnotationParam>
         }
     }
 
+    fun getStringParam(name: String): String {
+        val paramValue = getParam(name)
+        return when (paramValue) {
+            is AnnotationParam.Str -> paramValue.value
+            else -> throw IllegalStateException(
+                "Annotation param $name must be string, instead got $paramValue")
+        }
+    }
+
     companion object {
         fun arcId(id: String): Annotation {
             return Annotation("arcId", mapOf("id" to AnnotationParam.Str(id)))
+        }
+        fun ttl(value: String): Annotation {
+            return Annotation("ttl", mapOf("value" to AnnotationParam.Str(value)))
         }
     }
 }

@@ -31,16 +31,6 @@ describe('recipe2plan', () => {
 
       assert.notInclude(actual, 'import arcs.core.data.*');
     });
-    it('can create Infinite Ttl objects', () => {
-      const ttl = Ttl.infinite();
-      const actual = PlanGenerator.createTtl(ttl);
-      assert.deepStrictEqual(actual, 'Ttl.Infinite');
-    });
-    it('can create Ttls at a valid time resolution', () => {
-      const ttl = Ttl.days(30);
-      const actual = PlanGenerator.createTtl(ttl);
-      assert.deepStrictEqual(actual, 'Ttl.Days(30)');
-    });
     it('uses the same identifier for created and mapped handle', async () => {
       const {recipes, generator} = await process(`
         particle A
@@ -90,7 +80,6 @@ describe('recipe2plan', () => {
     StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
     HandleMode.Write,
     SingletonType(EntityType(A_Data.SCHEMA)),
-    Ttl.Infinite,
     emptyList()
 )`
       );
@@ -100,7 +89,6 @@ describe('recipe2plan', () => {
     StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
     HandleMode.Read,
     SingletonType(EntityType(B_Data.SCHEMA)),
-    Ttl.Infinite,
     emptyList()
 )`
       );
@@ -163,7 +151,6 @@ Particle(
             StorageKeyParser.parse("create://some-handle?Persistent"),
             HandleMode.Write,
             SingletonType(EntityType(Writer_Data.SCHEMA)),
-            Ttl.Infinite,
             listOf(Annotation("persistent", emptyMap()))
         )
     )
@@ -196,7 +183,6 @@ Particle(
             StorageKeyParser.parse("create://some-handle?Persistent"),
             HandleMode.ReadWrite,
             SingletonType(EntityType(Intermediary_Data.SCHEMA)),
-            Ttl.Infinite,
             listOf(Annotation("persistent", emptyMap()))
         )
     )

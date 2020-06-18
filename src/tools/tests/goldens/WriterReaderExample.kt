@@ -22,7 +22,6 @@ object IngestionPlan : Plan(
                     ),
                     HandleMode.Read,
                     SingletonType(EntityType(Reader_Data.SCHEMA)),
-                    Ttl.Days(20),
                     listOf(
                         Annotation("persistent", emptyMap()),
                         Annotation("ttl", mapOf("value" to AnnotationParam.Str("20d")))
@@ -40,7 +39,6 @@ object IngestionPlan : Plan(
                     ),
                     HandleMode.Write,
                     SingletonType(EntityType(Writer_Data.SCHEMA)),
-                    Ttl.Days(20),
                     listOf(
                         Annotation("persistent", emptyMap()),
                         Annotation("ttl", mapOf("value" to AnnotationParam.Str("20d")))
@@ -63,7 +61,6 @@ object ConsumptionPlan : Plan(
                     ),
                     HandleMode.Read,
                     SingletonType(EntityType(Reader_Data.SCHEMA)),
-                    Ttl.Infinite,
                     emptyList()
                 )
             )
@@ -81,7 +78,6 @@ object EphemeralWritingPlan : Plan(
                     StorageKeyParser.parse("create://my-ephemeral-handle-id"),
                     HandleMode.Write,
                     SingletonType(EntityType(Writer_Data.SCHEMA)),
-                    Ttl.Infinite,
                     emptyList()
                 )
             )
@@ -100,7 +96,6 @@ object EphemeralReadingPlan : Plan(
                     ),
                     HandleMode.Read,
                     SingletonType(EntityType(Reader_Data.SCHEMA)),
-                    Ttl.Infinite,
                     emptyList()
                 )
             )
@@ -119,7 +114,6 @@ object ReferencesRecipePlan : Plan(
                     ),
                     HandleMode.Read,
                     CollectionType(ReferenceType(EntityType(ReadWriteReferences_InThingRefs.SCHEMA))),
-                    Ttl.Infinite,
                     listOf(Annotation("persistent", emptyMap()))
                 ),
                 "outThingRef" to HandleConnection(
@@ -128,7 +122,6 @@ object ReferencesRecipePlan : Plan(
                     ),
                     HandleMode.Write,
                     SingletonType(ReferenceType(EntityType(ReadWriteReferences_OutThingRef.SCHEMA))),
-                    Ttl.Days(1),
                     listOf(Annotation("ttl", mapOf("value" to AnnotationParam.Str("1d"))))
                 )
             )
