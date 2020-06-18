@@ -8,12 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../platform/chai-web.js';
-import {capabilitiesToProtoOrdinals, encodeManifestToProto, manifestToProtoPayload, typeToProtoPayload} from '../manifest2proto.js';
+import {encodeManifestToProto, manifestToProtoPayload, typeToProtoPayload} from '../manifest2proto.js';
 import {CountType, EntityType, SingletonType, TupleType, Type, TypeVariable} from '../../runtime/type.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Capabilities, Shareable, Persistence, Queryable} from '../../runtime/capabilities.js';
 import {fs} from '../../platform/fs-web.js';
-import {CapabilityEnum, ManifestProto, TypeProto} from '../manifest-proto.js';
+import {ManifestProto, TypeProto} from '../manifest-proto.js';
 import {Loader} from '../../platform/loader.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 
@@ -67,7 +66,7 @@ describe('manifest2proto', () => {
       }, {
         fate: 'CREATE',
         name: 'handle2',
-        capabilities: ['PERSISTENT']
+        annotations: [{name: 'persistent'}]
       }],
       particles: [{
         specName: 'Abc',
@@ -85,20 +84,6 @@ describe('manifest2proto', () => {
     });
   });
 
-  it('encodes handle capabilities', () => {
-    function capabilitiesToStrings(capabilities: Capabilities) {
-      return capabilitiesToProtoOrdinals(capabilities).map(ordinal => CapabilityEnum.valuesById[ordinal]);
-    }
-
-    assert.deepEqual(capabilitiesToStrings(Capabilities.create()), []);
-    assert.deepEqual(capabilitiesToStrings(Capabilities.create([new Shareable(false)])), ['TIED_TO_ARC']);
-    assert.deepEqual(capabilitiesToStrings(Capabilities.create([new Shareable(true)])), ['TIED_TO_RUNTIME']);
-    assert.deepEqual(capabilitiesToStrings(Capabilities.create([Persistence.onDisk()])), ['PERSISTENT']);
-    assert.deepEqual(capabilitiesToStrings(Capabilities.create([new Queryable(true)])), ['QUERYABLE']);
-    assert.deepEqual(capabilitiesToStrings(Capabilities.create(
-        [Persistence.onDisk(), new Queryable(true)])), ['PERSISTENT', 'QUERYABLE']);
-  });
-
   it('encodes handle joins', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
@@ -106,12 +91,15 @@ describe('manifest2proto', () => {
           &Person {name: Text},
           &Place {address: Text},
         )]
+        stats: writes [{address: Text, numPeople: Number}]
       recipe
         people: use 'folks' #tag1
         pairs: join (people, places)
         places: map 'locations'
+        stats: create @persistent
         Foo
           data: reads pairs
+          stats: writes stats
     `);
     const recipe = (await toProtoAndBack(manifest)).recipes[0];
 
@@ -123,15 +111,21 @@ describe('manifest2proto', () => {
       handles: [{
         fate: 'JOIN',
         name: 'handle0',
-        associatedHandles: ['handle1', 'handle2']
+        associatedHandles: ['handle2', 'handle3']
+      }, {
+        fate: 'CREATE',
+        name: 'handle1',
+        annotations: [{
+          name: 'persistent'
+        }]
       }, {
         fate: 'USE',
-        name: 'handle1',
+        name: 'handle2',
         id: 'folks',
         tags: ['tag1'],
       }, {
         fate: 'MAP',
-        name: 'handle2',
+        name: 'handle3',
         id: 'locations'
       }],
       particles: [{
@@ -139,6 +133,9 @@ describe('manifest2proto', () => {
         connections: [{
           handle: 'handle0',
           name: 'data'
+        }, {
+          handle: 'handle1',
+          name: 'stats'
         }]
       }]
     });

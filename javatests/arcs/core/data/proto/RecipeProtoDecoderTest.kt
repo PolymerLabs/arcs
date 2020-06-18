@@ -1,7 +1,6 @@
 package arcs.core.data.proto
 
 import arcs.core.data.Annotation
-import arcs.core.data.Capabilities
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.HandleConnectionSpec
@@ -43,7 +42,7 @@ class RecipeProtoDecoderTest {
         Handle.Fate.CREATE,
         TypeVariable("thing"),
         ramdiskStorageKey + "thing",
-        Capabilities.Empty
+        emptyList()
     )
     val thingSchema = Schema(
         names = setOf(SchemaName("Thing")),
@@ -61,7 +60,7 @@ class RecipeProtoDecoderTest {
         Handle.Fate.MAP,
         TypeVariable("thang"),
         ramdiskStorageKey + "thang",
-        Capabilities.Empty
+        emptyList()
     )
     val joinHandleProto = HandleProto.newBuilder()
         .setName("pairs")
@@ -75,7 +74,7 @@ class RecipeProtoDecoderTest {
         Handle.Fate.JOIN,
         TypeVariable("pairs"),
         ramdiskStorageKey + "pairs",
-        Capabilities.Empty,
+        emptyList(),
         associatedHandles = mutableListOf(thingHandle, thangHandle)
     )
     val readConnectionSpec = HandleConnectionSpec("data", HandleMode.Read, thingEntity)

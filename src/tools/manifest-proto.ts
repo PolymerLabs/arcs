@@ -18,7 +18,7 @@ const RootNamespace = protobuf.loadSync([
   runfilesDir + 'java/arcs/core/data/proto/manifest.proto',
   runfilesDir + 'java/arcs/core/data/proto/policy.proto',
 ]);
-export const CapabilityEnum = RootNamespace.lookupEnum('arcs.Capability');
+// export const CapabilityEnum = RootNamespace.lookupEnum('arcs.Capability');
 export const DirectionEnum = RootNamespace.lookupEnum('arcs.Direction');
 export const FateEnum = RootNamespace.lookupEnum('arcs.Fate');
 export const ManifestProto = RootNamespace.lookupType('arcs.ManifestProto');

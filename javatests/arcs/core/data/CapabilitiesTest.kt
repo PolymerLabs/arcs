@@ -44,4 +44,30 @@ class CapabilitiesTest {
                 Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc)))
         ).isFalse()
     }
+    @Test
+    fun capabilities_fromAnnotations() {
+        assertThat(Capabilities.fromAnnotations(emptyList())).isEqualTo(Capabilities.Empty)
+        assertThat(Capabilities.fromAnnotations(listOf(Annotation.capability("persistent"))))
+            .isEqualTo(Capabilities.Persistent)
+        assertThat(Capabilities.fromAnnotations(listOf(Annotation.capability("queryable"))))
+            .isEqualTo(Capabilities.Queryable)
+        assertThat(Capabilities.fromAnnotations(listOf(Annotation.capability("tiedToRuntime"))))
+            .isEqualTo(Capabilities.TiedToRuntime)
+        assertThat(Capabilities.fromAnnotations(listOf(Annotation.capability("tiedToArc"))))
+            .isEqualTo(Capabilities.TiedToArc)
+        assertThat(Capabilities.fromAnnotations(
+            listOf(
+                Annotation.capability("persistent"),
+                Annotation.capability("queryable")
+            )
+        )).isEqualTo(Capabilities.PersistentQueryable)
+        assertThat(Capabilities.fromAnnotations(listOf(Annotation.ttl("3 days"))))
+            .isEqualTo(Capabilities.Queryable)
+        assertThat(Capabilities.fromAnnotations(
+            listOf(
+                Annotation.capability("persistent"),
+                Annotation.ttl("10 minutes")
+            )
+        )).isEqualTo(Capabilities.PersistentQueryable)  
+    }
 }

@@ -4,7 +4,7 @@ import arcs.core.common.ArcId
 import arcs.core.common.Id
 import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
-import arcs.core.data.CreateableStorageKey
+import arcs.core.data.CreatableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.host.*
@@ -184,13 +184,13 @@ open class AllocatorTestBase {
             Plan.Partition(
                 arc.id.toString(),
                 readingHost.hostId,
-                // replace the CreateableKeys with the allocated keys
+                // replace the CreatableKeys with the allocated keys
                 listOf(allStorageKeyLens.mod(readPersonParticle) { readPersonKey })
             ),
             Plan.Partition(
                 arc.id.toString(),
                 prodHost.hostId,
-                // replace the CreateableKeys with the allocated keys
+                // replace the CreatableKeys with the allocated keys
                 listOf(Plan.Particle.handlesLens.mod(purePartition.particles[0]) {
                     mapOf(
                         "inputPerson" to storageKeyLens.mod(it["inputPerson"]!!) { writePersonKey },
@@ -201,7 +201,7 @@ open class AllocatorTestBase {
             Plan.Partition(
                 arc.id.toString(),
                 writingHost.hostId,
-                // replace the CreateableKeys with the allocated keys
+                // replace the CreatableKeys with the allocated keys
                 listOf(allStorageKeyLens.mod(writePersonParticle) { writePersonKey })
             )
         )
@@ -211,7 +211,7 @@ open class AllocatorTestBase {
     open fun allocator_verifyStorageKeysCreated() = runAllocatorTest {
         PersonPlan.particles.forEach {
             it.handles.forEach { (_, connection) ->
-                assertThat(connection.storageKey).isInstanceOf(CreateableStorageKey::class.java)
+                assertThat(connection.storageKey).isInstanceOf(CreatableStorageKey::class.java)
             }
         }
         log("Plan handles are using correct storage keys")
@@ -221,7 +221,7 @@ open class AllocatorTestBase {
         arc.partitions.flatMap { it.particles }.forEach { particle ->
             particle.handles.forEach { (_, connection) ->
                 assertThat(connection.storageKey).isNotInstanceOf(
-                    CreateableStorageKey::class.java
+                    CreatableStorageKey::class.java
                 )
             }
         }
@@ -269,7 +269,7 @@ open class AllocatorTestBase {
                 Plan.HandleConnection.storageKeyLens
 
         val testPlan = allStorageKeyLens.mod(PersonPlan) { storageKey ->
-            storageKey as CreateableStorageKey
+            storageKey as CreatableStorageKey
             when (storageKey.nameFromManifest) {
                 "inputPerson" -> inputPerson!!
                 "outputPerson" -> outputPerson!!

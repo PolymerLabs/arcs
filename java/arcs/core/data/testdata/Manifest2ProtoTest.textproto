@@ -14,7 +14,7 @@ recipes {
     name: "handle0"
     id: "products"
     fate: CREATE
-    capabilities: PERSISTENT
+    annotations: [{name: "persistent"}]
     type {
       collection {
         collection_type {

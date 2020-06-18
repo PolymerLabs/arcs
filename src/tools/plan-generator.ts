@@ -15,7 +15,6 @@ import {generateConnectionType} from './kotlin-codegen-shared.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Handle} from '../runtime/recipe/handle.js';
-import {Ttl, TtlUnits} from '../runtime/capabilities.js';
 import {AnnotationRef} from '../runtime/recipe/annotation.js';
 import {findLongRunningArcId} from './allocator-recipe-resolver.js';
 

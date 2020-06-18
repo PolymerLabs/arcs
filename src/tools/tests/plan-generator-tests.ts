@@ -148,7 +148,7 @@ Particle(
     "arcs.core.data.testdata.Writer",
     mapOf(
         "data" to HandleConnection(
-            StorageKeyParser.parse("create://some-handle?Persistent"),
+            StorageKeyParser.parse("create://some-handle"),
             HandleMode.Write,
             SingletonType(EntityType(Writer_Data.SCHEMA)),
             listOf(Annotation("persistent", emptyMap()))
@@ -180,7 +180,7 @@ Particle(
     "arcs.core.data.testdata.subdir.Intermediary",
     mapOf(
         "data" to HandleConnection(
-            StorageKeyParser.parse("create://some-handle?Persistent"),
+            StorageKeyParser.parse("create://some-handle"),
             HandleMode.ReadWrite,
             SingletonType(EntityType(Intermediary_Data.SCHEMA)),
             listOf(Annotation("persistent", emptyMap()))

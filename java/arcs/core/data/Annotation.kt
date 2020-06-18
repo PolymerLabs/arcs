@@ -15,7 +15,7 @@ package arcs.core.data
  * An Arcs annotations containing additional information on an Arcs manifest element.
  * An Annotation may be attached to a plan, particle, handle, type etc.
  */
-data class Annotation(val name: String, val params: Map<String, AnnotationParam>) {
+data class Annotation(val name: String, val params: Map<String, AnnotationParam> = emptyMap()) {
 
     fun getParam(name: String): AnnotationParam {
         return requireNotNull(params[name]) {
@@ -36,5 +36,7 @@ data class Annotation(val name: String, val params: Map<String, AnnotationParam>
         fun arcId(id: String) = Annotation("arcId", mapOf("id" to AnnotationParam.Str(id)))
 
         fun ttl(value: String) = Annotation("ttl", mapOf("value" to AnnotationParam.Str(value)))
+
+        fun capability(name: String) = Annotation(name)
     }
 }

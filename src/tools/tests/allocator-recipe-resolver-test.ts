@@ -451,13 +451,14 @@ Resolver generated 0 recipes`
     const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
     const [recipe] = await resolver.resolve();
 
-    assert.deepEqual(await Promise.all(recipe.handles.map(h => h.storageKey.toString())), [
-      'create://67835270998a62139f8b366f1cb545fb9b72a90b?Persistent',
-      'create://03bb91626a7354b34b8fe962047892f9789f98e7',
-      'create://86ba6a2b3b8be3f9ce6edc903164acf38a3633d6?TiedToArc,Queryable',
-      'create://9fc6be81752428faa26e74c81dcd90ae9711524b?TiedToRuntime,Queryable',
-      'create://4c370708d442e50b9cd4baab2c3b7ca5ab33e51b?Queryable',
-      'create://88482bc72ab0fe947dbba8a0b7d23fb51ccf8a0b?Queryable'
+    assert.isTrue(recipe.handles.every(h => h.storageKey.protocol === 'create'));
+    assert.deepEqual(recipe.handles.map(h => h.annotations.map(a => a.toString())), [
+      ['@persistent'],
+      [],
+      ['@tiedToArc', '@queryable'],
+      ['@tiedToRuntime', '@queryable'],
+      ['@queryable'],
+      ['@ttl(value: \'1d\')']
     ]);
   });
 });

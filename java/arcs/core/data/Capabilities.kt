@@ -50,5 +50,18 @@ data class Capabilities(val capabilities: Set<Capability>) {
         )
         val TiedToRuntime: Capabilities = Capabilities(setOf<Capability>(Capability.TiedToRuntime))
         val TiedToArc: Capabilities = Capabilities(setOf<Capability>(Capability.TiedToArc))
+
+        fun fromAnnotations(annotations: List<Annotation>): Capabilities {
+            val capabilities = mutableSetOf<Capability>()
+            annotations.forEach {
+                when (it.name) {
+                    "persistent" -> capabilities.add(Capability.Persistent)
+                    "queryable", "ttl" -> capabilities.add(Capability.Queryable)
+                    "tiedToRuntime" -> capabilities.add(Capability.TiedToRuntime)
+                    "tiedToArc" -> capabilities.add(Capability.TiedToArc)
+                }
+            }
+            return Capabilities(capabilities)
+        }
     }
 }
