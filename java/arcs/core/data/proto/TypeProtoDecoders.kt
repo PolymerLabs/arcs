@@ -86,11 +86,10 @@ fun TupleTypeProto.decode() = TupleType(elementsList.map { it.decode() })
 /** Converts a [TypeVariableProto] protobuf instance into a Kotlin [TypeVariable] instance. */
 fun TypeVariableProto.decode() = TypeVariable(
     name,
-    constraint.constraintType.let {
-        when (it.dataCase) {
-            TypeProto.DataCase.DATA_NOT_SET -> null
-            else -> it.decode()
-        }
+    if (constraint.constraintType. == TypeProto.DataCase.DATA_NOT_SET) {
+        null
+    } else {
+        constraint.constraintType.decode()
     }
 )
 

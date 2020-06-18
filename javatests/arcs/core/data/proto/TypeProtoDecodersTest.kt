@@ -247,8 +247,8 @@ class TypeProtoDecodersTest {
                 }
               }
             }
-          } }
-          
+          } 
+          }
         }
         """.trimIndent()
         val variableType = parseTypeProtoText(variableTypeProto).decode()
