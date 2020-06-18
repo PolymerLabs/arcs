@@ -270,7 +270,6 @@ class TypeProtoDecodersTest {
         val variableTypeProto = """
         variable {
           name: "a"
-          constraint { constraint_type {} }
         }
         """.trimIndent()
         val variableType = parseTypeProtoText(variableTypeProto).decode()
