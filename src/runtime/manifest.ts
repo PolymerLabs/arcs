@@ -158,7 +158,7 @@ export class Manifest {
   // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
   readonly idGenerator: IdGenerator = IdGenerator.newSession();
   private _meta = new ManifestMeta();
-  private _resources = {};
+  private _resources: Dictionary<string> = {};
   private storeManifestUrls: Map<string, string> = new Map();
   readonly errors: ManifestError[] = [];
   private _annotations: Dictionary<Annotation> = {};
@@ -233,11 +233,17 @@ export class Manifest {
   get policies() {
     return this._policies;
   }
+  get allPolicies() {
+    return [...new Set(this._findAll(manifest => manifest._policies))];
+  }
   get meta() {
     return this._meta;
   }
   get resources() {
     return this._resources;
+  }
+  get allResources(): {name: string, resource: string}[] {
+    return [...new Set(this._findAll(manifest => Object.entries(manifest.resources).map(([name, resource]) => ({name, resource}))))];
   }
   get annotations() {
     return this._annotations;
@@ -1488,6 +1494,30 @@ ${e.message}
     }
     if (tags.includes('volatile')) return true;
     return false;
+  }
+
+  /**
+   * Verifies that all definitions in the manifest (including all other
+   * manifests that it imports) have unique names.
+   */
+  validateUniqueDefinitions() {
+    function checkUnique(type: string, items: {name: string}[]) {
+      const names: Set<string> = new Set();
+      for (const item of items) {
+        if (names.has(item.name)) {
+          throw new Error(`Duplicate definition of ${type} named '${item.name}'.`);
+        }
+        names.add(item.name);
+      }
+    }
+    // TODO: Validate annotations as well. They're tricky because of canonical
+    // annotations.
+    checkUnique('particle', this.allParticles);
+    checkUnique('policy', this.allPolicies);
+    checkUnique('recipe', this.allRecipes);
+    checkUnique('resource', this.allResources);
+    checkUnique('schema', this.allSchemas);
+    checkUnique('store', this.allStores);
   }
 
   toString(options: {recursive?: boolean, showUnresolved?: boolean, hideFields?: boolean} = {}): string {
