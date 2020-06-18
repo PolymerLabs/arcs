@@ -69,9 +69,9 @@ data class HandleSpec(
     @Deprecated(
         "Use main constructor",
         ReplaceWith(
-            //ktlint-disable: max-line-length
+            /* ktlint-disable max-line-length */
             "HandleSpec(baseName, mode, toType(entitySpec, dataType, containerType), setOf(entitySpec))"
-            //ktlint-enable: max-line-length
+            /* ktlint-enable max-line-length */
         )
     )
     constructor(
