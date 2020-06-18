@@ -11,7 +11,7 @@
 import {Op} from './manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
 import {Schema} from './schema.js';
-import {RefinementExpressionVisitor, BinaryExpression, UnaryExpression, FieldNamePrimitive, QueryArgumentPrimitive, BuiltIn, NumberPrimitive, BooleanPrimitive, TextPrimitive, Primitive} from './refiner.js';
+import {RefinementExpressionVisitor, BinaryExpression, UnaryExpression, FieldNamePrimitive, QueryArgumentPrimitive, BuiltIn, NumberPrimitive, BigIntPrimitive, BooleanPrimitive, TextPrimitive, Primitive} from './refiner.js';
 
 const sqlOperator: Dictionary<string> = {
   [Op.AND]: 'AND',
@@ -60,6 +60,9 @@ class SqlRefinementGenerator extends RefinementExpressionVisitor<string> {
     }
     // TODO: Implement SQL getter for 'creationTimeStamp'
     throw new Error(`Unhandled BuiltInNode '${expr.value}' in toSQLExpression`);
+  }
+  visitBigIntPrimitive(expr: BigIntPrimitive): string {
+    return expr.value.toString();
   }
   visitNumberPrimitive(expr: NumberPrimitive): string {
     return expr.value.toString();

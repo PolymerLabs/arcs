@@ -745,15 +745,6 @@ export class BigIntPrimitive extends RefinementExpression {
     return this.value.toString();
   }
 
-  toSQLExpression(codeGenerator: CodeGenerator): string {
-    return this.value.toString();
-  }
-
-  toKTExpression(codeGenerator: CodeGenerator): string {
-    // This assumes that the associated Kotlin type will be `double`.
-    return this.value.toString();
-  }
-
   applyOperator(): ExpressionPrimitives {
     return this.value;
   }
