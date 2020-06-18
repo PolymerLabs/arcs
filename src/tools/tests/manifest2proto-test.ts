@@ -444,24 +444,21 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
       variable: {
         name: 'a',
-        constraint: {
-          constraintType: {
-            singleton: {
-              singletonType: {
-                entity: {
-                  schema: {
-                    names: ['Foo'],
-                    fields: {
-                      value: {
-                        primitive: 'TEXT'
-                      }
-                    },
-                    hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
-                  }
+        constraint: {constraintType: {
+          singleton: {singletonType: {
+            entity: {schema: {
+              names: ['Foo'],
+              fields: {
+                value: {
+                  primitive: 'TEXT'
                 }
               },
-            },
+              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+            }
+            }
           }
+          }
+        }
         }
       }
     });
@@ -472,21 +469,19 @@ describe('manifest2proto', () => {
     const varType = TypeVariable.make('a', constraint, constraint);
     varType.maybeEnsureResolved();
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
-      singleton: {
-        singletonType: {
-          entity: {
-            schema: {
-              names: ['Foo'],
-              fields: {
-                value: {
-                  primitive: 'TEXT'
-                }
-              },
-              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+      singleton: {singletonType: {
+        entity: {schema: {
+          names: ['Foo'],
+          fields: {
+            value: {
+              primitive: 'TEXT'
             }
-          }
-        },
-      },
+          },
+          hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+        }
+        }
+      }
+      }
     });
   });
 
