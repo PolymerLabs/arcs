@@ -2,6 +2,7 @@ package arcs.core.allocator
 
 import arcs.core.common.ArcId
 import arcs.core.common.Id
+import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
 import arcs.core.data.CreateableStorageKey
 import arcs.core.data.EntityType
@@ -434,7 +435,12 @@ open class AllocatorTestBase {
 
         assertAllStatus(arc, ArcState.Stopped)
 
-        val arc2 = allocator.startArcForPlan(Plan(PersonPlan.particles, arcId.toString()))
+        val arc2 = allocator.startArcForPlan(
+            Plan(
+                PersonPlan.particles,
+                listOf(Annotation.arcId(arcId.toString()))
+            )
+        )
         arc2.waitForStart()
 
         val readingContextAfter = requireNotNull(
@@ -508,7 +514,12 @@ open class AllocatorTestBase {
         pureHost.setup()
         writingExternalHost.setup()
 
-        val arc2 = allocator.startArcForPlan(Plan(PersonPlan.particles, arc.id.toString()))
+        val arc2 = allocator.startArcForPlan(
+            Plan(
+                PersonPlan.particles,
+                listOf(Annotation.arcId(arc.id.toString()))
+            )
+        )
 
         arc2.waitForStop()
         assertThat(arc.arcState).isEqualTo(ArcState.Stopped)

@@ -1,9 +1,9 @@
 package arcs.core.host
 
+import arcs.core.data.Annotation
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.data.SingletonType
-import arcs.core.data.Ttl
 import arcs.core.entity.DummyEntity
 import arcs.core.entity.EntityBaseSpec
 import arcs.core.entity.ReadWriteSingletonHandle
@@ -95,7 +95,7 @@ open class AbstractArcHostTest {
             ),
             HandleMode.ReadWrite,
             SingletonType(EntityType(DummyEntity.SCHEMA)),
-            Ttl.Minutes(2)
+            listOf(Annotation.ttl("2minutes"))
         )
         val particle = Plan.Particle(
             "Foobar",

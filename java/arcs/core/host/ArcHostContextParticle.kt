@@ -11,6 +11,7 @@
 package arcs.core.host
 
 import arcs.core.common.toArcId
+import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
@@ -183,7 +184,10 @@ class ArcHostContextParticle(
     }.map { handle ->
         handle.handleName to Plan.HandleConnection(
             StorageKeyParser.parse(handle.storageKey), HandleMode.valueOf(handle.mode),
-            fromTag(arcId, particle, handle.type, handle.handleName), handle.ttl.toTtl()
+            fromTag(arcId, particle, handle.type, handle.handleName),
+            if (handle.ttl != Ttl.TTL_INFINITE)
+                listOf(Annotation.ttl("$handle.ttl minutes"))
+            else emptyList()
         )
     }.toSet().associateBy({ it.first }, { it.second })
 
@@ -274,5 +278,3 @@ class ArcHostContextParticle(
         return Plan.Partition(arcId, hostId, listOf(particle))
     }
 }
-
-fun Double.toTtl() = if (this != Ttl.TTL_INFINITE) Ttl.Minutes(this.toInt()) else Ttl.Infinite
