@@ -12,7 +12,7 @@ import path from 'path';
 import minimist from 'minimist';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
-import {SchemaGraph, SchemaNode, SchemaSource} from './schema2graph.js';
+import {SchemaGraph, SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 
 export type AddFieldOptions = Readonly<{
@@ -25,14 +25,58 @@ export type AddFieldOptions = Readonly<{
   isCollection?: boolean;
 }>;
 
-export interface ClassGenerator {
-  addField(opts: AddFieldOptions): void;
-  generate(fieldCount: number): string;
+export interface EntityGenerator {
+  generate(): string;
 }
 
 export class NodeAndGenerator {
   node: SchemaNode;
-  generator: ClassGenerator;
+  generator: EntityGenerator;
+}
+
+/**
+ * Iterates over schema fields and composes metadata useful for entity codegen.
+ */
+export abstract class SchemaDescriptorBase {
+
+  constructor(readonly node: SchemaNode) {}
+
+  process() {
+    for (const [field, descriptor] of Object.entries(this.node.schema.fields)) {
+      if (descriptor.kind === 'schema-primitive') {
+        if (['Text', 'URL', 'Number', 'Boolean'].includes(descriptor.type)) {
+          this.addField({field, typeName: descriptor.type});
+        } else {
+          throw new Error(`Schema type '${descriptor.type}' for field '${field}' is not supported`);
+        }
+      } else if (descriptor.kind === 'schema-reference' || (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference')) {
+        const isCollection = descriptor.kind === 'schema-collection';
+        const schemaNode = this.node.refs.get(field);
+        this.addField({
+          field,
+          typeName: 'Reference',
+          isCollection,
+          refClassName: schemaNode.entityClassName,
+          refSchemaHash: schemaNode.hash,
+        });
+      } else if (descriptor.kind === 'schema-collection') {
+        const schema = descriptor.schema;
+         if (!((schema.kind === 'kotlin-primitive') || ['Text', 'URL', 'Number', 'Boolean'].includes(schema.type))) {
+          throw new Error(`Schema type '${schema.type}' for field '${field}' is not supported`);
+        }
+        this.addField({field, typeName: schema.type, isCollection: true});
+      } else if (descriptor.kind === 'kotlin-primitive') {
+        this.addField({field, typeName: descriptor.type});
+      } else if (descriptor.kind === 'schema-ordered-list') {
+        this.addField({field, typeName: 'List', listTypeName: descriptor.schema.type});
+      }
+      else {
+        throw new Error(`Schema kind '${descriptor.kind}' for field '${field}' is not supported`);
+      }
+    }
+  }
+
+  abstract addField(opts: AddFieldOptions): void;
 }
 
 export abstract class Schema2Base {
@@ -91,8 +135,7 @@ export abstract class Schema2Base {
     for (const particle of manifest.particles) {
       const nodes = await this.calculateNodeAndGenerators(particle);
 
-      classes.push(...nodes.map(({generator, node}) =>
-        generator.generate(Object.entries(node.schema.fields).length)));
+      classes.push(...nodes.map(ng => ng.generator.generate()));
 
       if (this.opts.test_harness) {
         classes.push(this.generateTestHarness(particle, nodes.map(n => n.node)));
@@ -108,39 +151,7 @@ export abstract class Schema2Base {
     const graph = new SchemaGraph(particle);
     const nodes: NodeAndGenerator[] = [];
     for (const node of graph.walk()) {
-      const generator = this.getClassGenerator(node);
-      for (const [field, descriptor] of Object.entries(node.schema.fields)) {
-        if (descriptor.kind === 'schema-primitive') {
-          if (['Text', 'URL', 'Number', 'Boolean'].includes(descriptor.type)) {
-            generator.addField({field, typeName: descriptor.type});
-          } else {
-            throw new Error(`Schema type '${descriptor.type}' for field '${field}' is not supported`);
-          }
-        } else if (descriptor.kind === 'schema-reference' || (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference')) {
-          const isCollection = descriptor.kind === 'schema-collection';
-          const schemaNode = node.refs.get(field);
-          generator.addField({
-            field,
-            typeName: 'Reference',
-            isCollection,
-            refClassName: schemaNode.entityClassName,
-            refSchemaHash: await schemaNode.schema.hash(),
-          });
-        } else if (descriptor.kind === 'schema-collection') {
-          const schema = descriptor.schema;
-           if (!((schema.kind === 'kotlin-primitive') || ['Text', 'URL', 'Number', 'Boolean'].includes(schema.type))) {
-            throw new Error(`Schema type '${schema.type}' for field '${field}' is not supported`);
-          }
-          generator.addField({field, typeName: schema.type, isCollection: true});
-        } else if (descriptor.kind === 'kotlin-primitive') {
-          generator.addField({field, typeName: descriptor.type});
-        } else if (descriptor.kind === 'schema-ordered-list') {
-          generator.addField({field, typeName: 'List', listTypeName: descriptor.schema.type});
-        }
-        else {
-          throw new Error(`Schema kind '${descriptor.kind}' for field '${field}' is not supported`);
-        }
-      }
+      const generator = this.getEntityGenerator(node);
       await node.calculateHash();
       nodes.push({node, generator});
     }
@@ -158,7 +169,7 @@ export abstract class Schema2Base {
 
   fileFooter(): string { return ''; }
 
-  abstract getClassGenerator(node: SchemaNode): ClassGenerator;
+  abstract getEntityGenerator(node: SchemaNode): EntityGenerator;
 
   abstract generateParticleClass(particle: ParticleSpec, nodes: NodeAndGenerator[]): string;
 
