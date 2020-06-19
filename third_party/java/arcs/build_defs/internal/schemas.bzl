@@ -171,8 +171,7 @@ def _arcs_ts_preproc_impl(ctx):
         arguments = [src.path for src in ctx.files.srcs],
         command = """
         for i in "$@"; do
-          out="$(pwd)/bazel-out/host/bin/$i"
-          sed -e 's/-web.js/-node.js/g' $i > "$out"
+          sed -e 's/-web.js/-node.js/g' $i > "$(OUTS)"
         done
         """,
     )
