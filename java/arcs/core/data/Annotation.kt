@@ -17,18 +17,18 @@ package arcs.core.data
  */
 data class Annotation(val name: String, val params: Map<String, AnnotationParam> = emptyMap()) {
 
-    fun getParam(name: String): AnnotationParam {
+    fun param(name: String): AnnotationParam {
         return requireNotNull(params[name]) {
             "Annotation '$this.name' missing '$name' parameter"
         }
     }
 
-    fun getStringParam(name: String): String {
-        val paramValue = getParam(name)
+    fun stringValue(paramName: String): String {
+        val paramValue = param(paramName)
         return when (paramValue) {
             is AnnotationParam.Str -> paramValue.value
             else -> throw IllegalStateException(
-                "Annotation param $name must be string, instead got $paramValue")
+                "Annotation param $paramName must be string, instead got $paramValue")
         }
     }
 

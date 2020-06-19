@@ -47,8 +47,17 @@ class CapabilitiesTest {
     @Test
     fun capabilities_fromAnnotations() {
         assertThat(Capabilities.fromAnnotations(emptyList())).isEqualTo(Capabilities.Empty)
+        assertThat(Capabilities.fromAnnotations(listOf(Annotation("justAnnotation"))))
+            .isEqualTo(Capabilities.Empty)
+
         assertThat(Capabilities.fromAnnotations(listOf(Annotation.capability("persistent"))))
             .isEqualTo(Capabilities.Persistent)
+        assertThat(Capabilities.fromAnnotations(
+            listOf(
+                Annotation.capability("persistent"),
+                Annotation("justAnnotation")
+            )
+        )).isEqualTo(Capabilities.Persistent)
         assertThat(Capabilities.fromAnnotations(listOf(Annotation.capability("queryable"))))
             .isEqualTo(Capabilities.Queryable)
         assertThat(Capabilities.fromAnnotations(listOf(Annotation.capability("tiedToRuntime"))))
