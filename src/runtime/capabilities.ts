@@ -28,8 +28,7 @@ export abstract class Capability {
   }
 
   isEquivalent(other: Capability): boolean {
-    const comparison = this.compare(other);
-    return comparison === CapabilityComparison.Equivalent;
+    return this.compare(other) === CapabilityComparison.Equivalent;
   }
 
   contains(other: Capability): boolean {
@@ -143,8 +142,6 @@ export class Persistence extends Capability {
   static any(): Capability { return new CapabilityRange(Persistence.unrestricted(), Persistence.none()); }
 }
 
-// TODO(b/157761106): use full names (minutes, hours, days) to be compatible
-// with the policies language.
 export enum TtlUnits {
   Millis = 'ms',
   Minutes = 'm',
