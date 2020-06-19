@@ -39,7 +39,7 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
     val callbackFactory: (String) -> ProxyCallback<Data, Op, T>
 ) {
     private val storeMutex = Mutex()
-    private val log = TaggedLog { "BackingStore" }
+    private val log = TaggedLog { "DirectStoreMuxer" }
 
     // TODO(b/158262634): Make this CacheMap Weak.
     /* internal */ val stores = LruCacheMap<String, StoreRecord<Data, Op, T>>(

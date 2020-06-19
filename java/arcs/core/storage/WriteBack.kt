@@ -118,6 +118,8 @@ open class StoreWriteBack /* internal */ constructor(
                     // Neither black out pending flush jobs in this channel nor propagate
                     // the exception within the scope to affect flush jobs at other stores.
                     exitFlushSection {
+                        // TODO(wkorman): Consider adding TaggedLog support for logging
+                        // exceptions to get a stack trace without requiring a message.
                         try { it() } catch (e: Exception) { log.error(e) { "Exception" } }
                     }
                 }

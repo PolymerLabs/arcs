@@ -110,7 +110,8 @@ class DatabaseImpl(
     /* cursorFactory = */ null,
     DB_VERSION
 ) {
-    private val log = TaggedLog { this.toString() }
+    // TODO(#5551): Consider including a hash of toString for tracking.
+    private val log = TaggedLog { "DatabaseImpl" }
 
     // TODO: handle rehydrating from a snapshot.
     private val stats = DatabasePerformanceStatistics(

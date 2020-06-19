@@ -96,7 +96,8 @@ class ReferenceModeStore private constructor(
     /* internal */
     backingType: Type
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
-    private val log = TaggedLog { "Store($storageKey)" }
+    // TODO(#5551): Consider including a hash of the storage key in log prefix.
+    private val log = TaggedLog { "ReferenceModeStore" }
 
     /**
      * A queue of incoming updates from the backing store, container store, and connected proxies.

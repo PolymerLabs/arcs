@@ -129,7 +129,9 @@ class DatabaseDriver<Data : Any>(
         get() = checkNotNull(schemaLookup(storageKey.entitySchemaHash)) {
             "Schema not found for hash: ${storageKey.entitySchemaHash}"
         }
-    private val log = TaggedLog { this.toString() }
+    // TODO(#5551): Consider including a hash of the toString info in log prefix.
+    private val log = TaggedLog { "DatabaseDriver" }
+
     override var token: String? = null
         private set
 
