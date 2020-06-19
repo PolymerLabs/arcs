@@ -21,7 +21,7 @@ arcs_kt_android_library(
         ":aidl",
         "//java/arcs/core/util",
         "//third_party/java/nanohttpd",
-        "//third_party/java/nanohttpd:nanohttpd-websocket",
+        "//third_party/java/nanohttpd:nanohttpd_websocket",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
