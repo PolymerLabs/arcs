@@ -16,10 +16,12 @@ import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.util.Time
 import arcs.jvm.util.JvmTime
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
  * An [ArcHost] that runs on Java VM platforms.
  */
+@ExperimentalCoroutinesApi
 open class JvmHost(
     schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration

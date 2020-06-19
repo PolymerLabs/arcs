@@ -155,32 +155,36 @@ class StringEncoder(
         addStr("$prefix${if (flag) "1" else "0"}|")
     }
 
-    fun encode(prefix: String, bt: Byte) {
-        throw NotImplementedError("No Kotlin to JS encoding exists for Kotlin Bytes")
+    @Suppress("UNUSED_PARAMETER") fun encode(prefix: String, bt: Byte) {
+        throwNoJsEncoding("Kotlin Bytes")
     }
 
-    fun encode(prefix: String, shrt: Short) {
-        throw NotImplementedError("No Kotlin to JS encoding exists for Kotlin Shorts")
+    @Suppress("UNUSED_PARAMETER") fun encode(prefix: String, shrt: Short) {
+        throwNoJsEncoding("Kotlin Shorts")
     }
 
-    fun encode(prefix: String, nt: Int) {
-        throw NotImplementedError("No Kotlin to JS encoding exists for Kotlin Ints")
+    @Suppress("UNUSED_PARAMETER") fun encode(prefix: String, nt: Int) {
+        throwNoJsEncoding("Kotlin Ints")
     }
 
-    fun encode(prefix: String, lng: Long) {
-        throw NotImplementedError("No Kotlin to JS encoding exists for Kotlin Longs")
+    @Suppress("UNUSED_PARAMETER") fun encode(prefix: String, lng: Long) {
+        throwNoJsEncoding("Kotlin Longs")
     }
 
-    fun encode(prefix: String, chr: Char) {
-        throw NotImplementedError("No Kotlin to JS encoding exists for Kotlin Chars")
+    @Suppress("UNUSED_PARAMETER") fun encode(prefix: String, chr: Char) {
+        throwNoJsEncoding("Kotlin Chars")
     }
 
-    fun encode(prefix: String, flt: Float) {
-        throw NotImplementedError("No Kotlin to JS encoding exists for Kotlin Floats")
+    @Suppress("UNUSED_PARAMETER") fun encode(prefix: String, flt: Float) {
+        throwNoJsEncoding("Kotlin Floats")
     }
 
-    fun <T> encode(prefix: String, lst: List<T>) {
-        throw NotImplementedError("No Kotlin to JS encoding exists for Lists")
+    @Suppress("UNUSED_PARAMETER") fun <T> encode(prefix: String, lst: List<T>) {
+        throwNoJsEncoding("Lists")
+    }
+
+    private fun throwNoJsEncoding(typeName: String) {
+        throw NotImplementedError("No Kotlin to JS encoding exists for $typeName")
     }
 
     private fun addStr(str: String) {

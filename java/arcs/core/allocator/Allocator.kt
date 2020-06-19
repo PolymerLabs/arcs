@@ -28,6 +28,7 @@ import arcs.core.type.Type
 import arcs.core.util.TaggedLog
 import arcs.core.util.plus
 import arcs.core.util.traverse
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
  * An [Allocator] is responsible for starting and stopping arcs via a distributed
@@ -211,6 +212,7 @@ class Allocator(
             ?: throw ParticleNotFoundException(particle)
 
     companion object {
+        @ExperimentalCoroutinesApi
         fun create(
             hostRegistry: HostRegistry,
             handleManager: EntityHandleManager

@@ -16,12 +16,14 @@ import android.os.Binder
 import android.os.IBinder
 import android.os.Process
 import androidx.lifecycle.LifecycleService
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
  * Arcs system-health-test local service.
  * The local service type evaluates latency/RTT within the same process boundary,
  * stability of storage service, etc.
  */
+@ExperimentalCoroutinesApi
 class LocalService : LifecycleService() {
     private val storageCore = StorageCore(this, lifecycle)
     private val binder = Binder()

@@ -22,15 +22,14 @@ import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
-import arcs.sdk.Handle
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 /**
  * Service which wraps an ArcHost containing person.arcs related particles.
  */
+@ExperimentalCoroutinesApi
 class PersonHostService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
@@ -45,6 +44,7 @@ class PersonHostService : ArcHostService() {
 
     override val arcHosts = listOf(arcHost)
 
+    @ExperimentalCoroutinesApi
     inner class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,

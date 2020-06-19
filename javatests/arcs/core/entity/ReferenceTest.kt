@@ -17,6 +17,7 @@ import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import org.junit.After
 import org.junit.Before
@@ -26,6 +27,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.util.concurrent.Executors
 
+@ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 @Suppress("UNCHECKED_CAST")
 class ReferenceTest {

@@ -23,6 +23,7 @@ import arcs.sdk.WriteSingletonHandle
 import com.google.common.truth.Truth.assertWithMessage
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
@@ -63,12 +64,12 @@ import org.junit.runners.model.Statement
  *
  * @property factory lambda instantiating a particle under test
  */
+@ExperimentalCoroutinesApi
 open class BaseTestHarness<P : Particle>(
     private val factory: (CoroutineScope) -> P,
     private val specs: List<HandleSpec>
 ) : TestRule {
 
-    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private val scope = TestCoroutineScope()
 
     // Particle handles are set up with the read/write mode specified by the manifest.
