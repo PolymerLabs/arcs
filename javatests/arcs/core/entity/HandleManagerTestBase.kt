@@ -1149,18 +1149,6 @@ open class HandleManagerTestBase {
                 deferred.complete(it)
             }
         }
-        /*
-        onResync {
-            if (deferred.isActive) {
-                val (data, matches) = when (this) {
-                    is CollectionHandle<*, *> -> (fetchAll() as T).let { it to predicate(it) }
-                    is SingletonHandle<*, *> -> (fetch() as T).let { it to predicate(it) }
-                    else -> return@onResync
-                }
-                if (matches) deferred.complete(data)
-            }
-        }
-         */
     }
 
     private fun createNulledOutPerson(entityId: ReferenceId) = RawEntity(

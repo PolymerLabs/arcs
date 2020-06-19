@@ -86,7 +86,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private val outgoingMessagesInFlight = atomic(0)
     private val busySendingMessagesChannel = ConflatedBroadcastChannel(false)
 
-    private var updateNotifications = 0
+    private var firstUpdateSent = false
     private var lastDataUpdateHash: Int? = null
 
     init {
@@ -401,11 +401,10 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         }
         do {
             val sent = outgoingMessagesChannel.offer(message to deferred)
-            log.debug {
-                "Queueing ${if (sent) "" else "un"}successful for message (pos: $queueNum) " +
-                    "for sending to the store: $message"
-            }
         } while (!sent)
+        log.debug {
+            "Queueing successful for message (pos: $queueNum) for sending to the store: $message"
+        }
     }
 
     private fun processModelUpdate(model: Data) {
@@ -505,8 +504,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private fun notifyUpdate(data: T) {
         // If this isn't our first update and the data's hashCode is equivalent to the old data's
         // hashCode, no need to send an update.
-        if (updateNotifications > 0 && lastDataUpdateHash == data?.hashCode()) return
-        updateNotifications++
+        if (firstUpdateSent && lastDataUpdateHash == data?.hashCode()) return
+        firstUpdateSent = true
         lastDataUpdateHash = data?.hashCode()
 
         log.debug { "notifying update" }
