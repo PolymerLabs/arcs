@@ -187,15 +187,6 @@ arcs_ts_preprocessing = rule(
     doc = """Converts to node platforms for the arcs ts runtime.""",
 )
 
-def arcs_peg_generator(name):
-    sigh_command(
-       name = name,
-       srcs = [],
-       outs = ["gen/runtime/manifest-parser.ts"],
-       sigh_cmd = "pegOnly -f",
-       quiet = False,
-    )
-
 def _schema2pkg_impl(ctx):
     output_name = ctx.label.name + "_GeneratedSchemas.%s.kt" % ctx.attr.platform
     out = ctx.actions.declare_file(output_name)

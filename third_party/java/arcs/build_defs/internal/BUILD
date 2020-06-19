@@ -16,12 +16,6 @@ exports_files([
 ])
 
 nodejs_binary(
-    name = "history-server",
-    entry_point = "@npm//:node_modules/history-server/modules/cli.js",
-    data = ["@npm//history-server"],
-)
-
-nodejs_binary(
    name = "ts_pegjs_cli",
    entry_point = "@npm//:node_modules/ts-pegjs/src/cli.js",
    data = ["@npm//ts-pegjs"]

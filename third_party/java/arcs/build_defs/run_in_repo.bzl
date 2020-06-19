@@ -56,29 +56,13 @@ def _write_shell_script(ctx, run_script):
             execution_requirements = EXECUTION_REQUIREMENTS_DICT,
         )
 
-        moved_files = [ctx.actions.declare_file(x.basename, sibling=x) for x in output_files]
-
-        ctx.actions.run_shell(
-            inputs = depset(output_files),
-            outputs = moved_files,
-            command = """
-            for i in "$@"; do
-              out="$(pwd)/bazel-out/host/bin/$i"
-              cp $i $out
-            done
-            """
-
-        )
-
-    return script_file, output_files
+    return script_file
 
 def _run_in_repo(ctx):
-    _, outputs = _write_shell_script(ctx = ctx, run_script = True)
-
-#    return [DefaultInfo(files = depset(outputs))]
+    _write_shell_script(ctx = ctx, run_script = True)
 
 def _run_in_repo_test(ctx):
-    script_file, outputs = _write_shell_script(ctx = ctx, run_script = False)
+    script_file = _write_shell_script(ctx = ctx, run_script = False)
     return [DefaultInfo(
         executable = script_file,
         runfiles = ctx.runfiles(files = ctx.files.srcs + ctx.files.deps),
