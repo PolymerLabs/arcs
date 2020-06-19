@@ -76,6 +76,12 @@ class ExpressionTest {
             "arg"
         ) - 1.asExpr()) / 2.asExpr()
 
+        val q = query<Expression.Scope>("arg")
+        val field = Expression.FieldExpression<Expression.Scope, Number>(q , "bar")
+        val expr2 = (2.0.asExpr() + (3.asExpr() * 4.asExpr()) + field - 1.asExpr()) / 2.asExpr()
+        val json = expr2.serialize()
+        val parsed = json.deserializeExpression()
+        assertThat(parsed.stringify()).isEqualTo("foo")
         assertThat(evalExpression<Number, Number>(expr, "arg" to 1)).isEqualTo(28)
     }
 

@@ -10,6 +10,7 @@
  */
 package arcs.core.data
 
+import arcs.core.data.expression.Expression
 import arcs.core.storage.StorageKey
 import arcs.core.type.Type
 import arcs.core.util.lens
@@ -47,11 +48,26 @@ open class Plan(
         }
     }
 
+    /** Represents the expression to be evaluated to produce a new field. */
+    data class AdapterField<T>(
+        val fieldName: String,
+        val expression: Expression<T>
+    )
+
+    /** Represents a data adapter to be applied to a [Handle]. */
+    data class Adapter(
+        val name: String,
+        val params: List<String>,
+        val type: Type,
+        val fields: List<AdapterField<*>>
+    )
+
     /** Represents a use of a [Handle] by a [Particle]. */
     data class HandleConnection(
         val storageKey: StorageKey,
         val mode: HandleMode,
         val type: Type,
+        val adapter: Adapter? = null,
         val annotations: List<Annotation> = emptyList()
     ) {
         val ttl: Ttl
