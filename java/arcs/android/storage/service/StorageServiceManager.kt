@@ -13,6 +13,9 @@ package arcs.android.storage.service
 
 import arcs.core.host.ArcHostManager
 import arcs.core.storage.DriverFactory
+import arcs.core.storage.StorageKey
+import arcs.core.storage.Store
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.runBlocking
@@ -23,7 +26,9 @@ import kotlinx.coroutines.runBlocking
  */
 class StorageServiceManager(
     /** [CoroutineContext] on which to build one specific to this [StorageServiceManager]. */
-    parentCoroutineContext: CoroutineContext
+    parentCoroutineContext: CoroutineContext,
+    /** The stores managed by StorageService. */
+    val stores: ConcurrentHashMap<StorageKey, Store<*, *, *>>
 ) : IStorageServiceManager.Stub() {
 
     /** The local [CoroutineContext]. */
@@ -33,6 +38,7 @@ class StorageServiceManager(
         runBlocking(coroutineContext) {
             ArcHostManager.pauseAllHostsFor {
                 DriverFactory.removeAllEntities().join()
+                stores.clear()
             }
         }
         resultCallback.onResult(null)

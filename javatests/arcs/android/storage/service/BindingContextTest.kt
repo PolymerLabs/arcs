@@ -88,53 +88,6 @@ class BindingContextTest {
     )
 
     @Test
-    fun getLocalData_fetchesLocalData() = runBlocking {
-        val bindingContext = buildContext()
-        val callback = DeferredProxyCallback()
-        bindingContext.getLocalData(callback)
-
-        var modelUpdate = callback.await().decodeProxyMessage() as ProxyMessage.ModelUpdate
-        var model = checkNotNull(modelUpdate.model as? CrdtCount.Data)
-
-        // Should be empty to start.
-        assertThat(model.values).isEmpty()
-
-        // Now let's increment the count.
-        store.activate().onProxyMessage(
-            ProxyMessage.Operations(
-                listOf(CrdtCount.Operation.Increment("alice", 0 to 1)),
-                id = 1
-            )
-        )
-
-        val callback2 = DeferredProxyCallback()
-        bindingContext.getLocalData(callback2)
-
-        modelUpdate = callback2.await().decodeProxyMessage() as ProxyMessage.ModelUpdate
-        model = checkNotNull(modelUpdate.model as? CrdtCount.Data)
-
-        // Should contain a single entry.
-        assertThat(model.values).containsExactly("alice", 1).inOrder()
-    }
-
-    @Test
-    fun sendProxyMessage_propagatesToTheStore() = runBlocking<Unit> {
-        val bindingContext = buildContext()
-        val deferredResult = DeferredResult(coroutineContext)
-        val message = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
-            listOf(CrdtCount.Operation.MultiIncrement("alice", 0 to 10, 10)),
-            id = 1
-        )
-        bindingContext.sendProxyMessage(message.toProto().toByteArray(), deferredResult)
-
-        assertThat(deferredResult.await()).isTrue()
-
-        val data = store.activate().getLocalData()
-        assertThat(data.versionMap).isEqualTo(VersionMap("alice" to 10))
-        assertThat(data.values).containsExactly("alice", 10)
-    }
-
-    @Test
     fun registerCallback_registersCallbackWithStore() = runBlocking {
         val bindingContext = buildContext()
         val callback = DeferredProxyCallback()

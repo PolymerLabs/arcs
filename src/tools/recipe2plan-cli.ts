@@ -12,6 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import {Runtime} from '../runtime/runtime.js';
 import {recipe2plan, OutputFormat} from './recipe2plan.js';
+import {Flags} from '../runtime/flags.js';
 
 const opts = minimist(process.argv.slice(2), {
   string: ['outdir', 'outfile', 'format', 'recipe'],
@@ -63,12 +64,13 @@ const outFormat = (() => {
   }
 })();
 
-async function main() {
+void Flags.withDefaultReferenceMode(async () => {
   try {
     Runtime.init('../..');
     fs.mkdirSync(opts.outdir, {recursive: true});
 
-    const plans = await recipe2plan(opts._[0], outFormat, opts.recipe);
+    const manifest = await Runtime.parseFile(opts._[0]);
+    const plans = await recipe2plan(manifest, outFormat, opts.recipe);
 
     const outPath = path.join(opts.outdir, opts.outfile);
     console.log(outPath);
@@ -80,6 +82,4 @@ async function main() {
     console.error(e);
     process.exit(1);
   }
-}
-
-void main();
+})();

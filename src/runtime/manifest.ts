@@ -31,12 +31,11 @@ import {connectionMatchesHandleDirection} from './recipe/direction-util.js';
 import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
-import {Ttl} from './recipe/ttl.js';
 import {Schema} from './schema.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
         ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType} from './type.js';
 import {Dictionary} from './hot.js';
-import {ClaimIsTag, validateFieldPath} from './particle-claim.js';
+import {ClaimIsTag} from './particle-claim.js';
 import {AbstractStore, StoreClaims} from './storageNG/abstract-store.js';
 import {Store} from './storageNG/store.js';
 import {StorageKey} from './storageNG/storage-key.js';
@@ -45,12 +44,13 @@ import {StorageKeyParser} from './storageNG/storage-key-parser.js';
 import {VolatileMemoryProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
 import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
 import {Refinement} from './refiner.js';
-import {Capabilities} from './capabilities.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 import {LoaderBase} from '../platform/loader-base.js';
 import {Annotation, AnnotationRef} from './recipe/annotation.js';
 import {SchemaPrimitiveTypeValue} from './manifest-ast-nodes.js';
 import {canonicalManifest} from './canonical-manifest.js';
+import {Policy} from './policy/policy.js';
+import {resolveFieldPathType} from './field-path.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -85,6 +85,12 @@ class ManifestVisitor {
     if (ast instanceof Array) {
       for (const item of ast as AstNode.BaseNode[]) {
         this.traverse(item);
+      }
+      return;
+    }
+    if (ast instanceof Map) {
+      for (const value of ast.values()) {
+        this.traverse(value);
       }
       return;
     }
@@ -145,13 +151,14 @@ export class Manifest {
   private _schemas: Dictionary<Schema> = {};
   private _stores: AbstractStore[] = [];
   private _interfaces = <InterfaceInfo[]>[];
+  private _policies: Policy[] = [];
   storeTags: Map<AbstractStore, string[]> = new Map();
   private _fileName: string|null = null;
   private readonly _id: Id;
   // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
   readonly idGenerator: IdGenerator = IdGenerator.newSession();
   private _meta = new ManifestMeta();
-  private _resources = {};
+  private _resources: Dictionary<string> = {};
   private storeManifestUrls: Map<string, string> = new Map();
   readonly errors: ManifestError[] = [];
   private _annotations: Dictionary<Annotation> = {};
@@ -223,11 +230,20 @@ export class Manifest {
   get interfaces() {
     return this._interfaces;
   }
+  get policies() {
+    return this._policies;
+  }
+  get allPolicies() {
+    return [...new Set(this._findAll(manifest => manifest._policies))];
+  }
   get meta() {
     return this._meta;
   }
   get resources() {
     return this._resources;
+  }
+  get allResources(): {name: string, resource: string}[] {
+    return [...new Set(this._findAll(manifest => Object.entries(manifest.resources).map(([name, resource]) => ({name, resource}))))];
   }
   get annotations() {
     return this._annotations;
@@ -365,6 +381,9 @@ export class Manifest {
   }
   findInterfaceByName(name: string) {
     return this._find(manifest => manifest._interfaces.find(iface => iface.name === name));
+  }
+  findPolicyByName(name: string) {
+    return this._find(manifest => manifest._policies.find(policy => policy.name === name));
   }
   findRecipesByVerb(verb: string) {
     return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
@@ -570,6 +589,7 @@ ${e.message}
       await processItems('particle', item => Manifest._processParticle(manifest, item, loader));
       await processItems('store', item => Manifest._processStore(manifest, item, loader, memoryProvider));
       await processItems('recipe', item => Manifest._processRecipe(manifest, item));
+      await processItems('policy', item => Manifest._processPolicy(manifest, item));
     } catch (e) {
       dumpErrors(manifest);
       throw processError(e, false);
@@ -779,7 +799,8 @@ ${e.message}
       params[param.name] = param.type;
     }
     manifest._annotations[annotationItem.name] = new Annotation(
-      annotationItem.name, params, annotationItem.targets, annotationItem.retention, annotationItem.doc);
+      annotationItem.name, params, annotationItem.targets, annotationItem.retention,
+      annotationItem.allowMultiple, annotationItem.doc);
   }
 
   private static _processParticle(manifest: Manifest, particleItem, loader?: LoaderBase) {
@@ -856,6 +877,16 @@ ${e.message}
     manifest._interfaces.push(ifaceInfo);
   }
 
+  private static _processPolicy(manifest: Manifest, policyItem: AstNode.Policy) {
+    const buildAnnotationRefs = (refs: AstNode.AnnotationRef[]) => Manifest._buildAnnotationRefs(manifest, refs);
+    const findTypeByName = (name: string) => manifest.findTypeByName(name);
+    const policy = Policy.fromAstNode(policyItem, buildAnnotationRefs, findTypeByName);
+    if (manifest._policies.some(p => p.name === policy.name)) {
+      throw new ManifestError(policyItem.location, `A policy named ${policy.name} already exists.`);
+    }
+    manifest._policies.push(policy);
+  }
+
   private static _processRecipe(manifest: Manifest, recipeItem: AstNode.RecipeNode) {
     const recipe = manifest._newRecipe(recipeItem.name);
 
@@ -874,7 +905,7 @@ ${e.message}
       syntheticHandles: recipeItems.filter(item => item.kind === 'synthetic-handle') as AstNode.RecipeSyntheticHandle[],
       byHandle: new Map<Handle, AstNode.RecipeHandle | AstNode.RecipeSyntheticHandle | AstNode.RequireHandleSection>(),
       // requireHandles are handles constructed by the 'handle' keyword. This is intended to replace handles.
-      requireHandles: recipeItems.filter(item => item.kind === 'requireHandle') as AstNode.RequireHandleSection[],
+      requireHandles: recipeItems.filter(item => item.kind === 'require-handle') as AstNode.RequireHandleSection[],
       particles: recipeItems.filter(item => item.kind === 'recipe-particle') as AstNode.RecipeParticle[],
       byParticle: new Map<Particle, AstNode.RecipeParticle>(),
       slots: recipeItems.filter(item => item.kind === 'slot') as AstNode.RecipeSlot[],
@@ -915,14 +946,6 @@ ${e.message}
       if (item.kind === 'handle') {
         if (item.annotations) {
           handle.annotations = Manifest._buildAnnotationRefs(manifest, item.annotations);
-          const ttlAnnotation = handle.getAnnotation('ttl');
-          if (ttlAnnotation) {
-            handle.ttl = Ttl.fromString(ttlAnnotation.params['value'].toString());
-          }
-          handle.capabilities = Capabilities.fromAnnotations(handle.annotations);
-          if (!handle.ttl.isInfinite) {
-            handle.capabilities.merge(Capabilities.queryable);
-          }
         }
       }
       items.byHandle.set(handle, item);
@@ -1174,7 +1197,7 @@ ${e.message}
 
           if (entry.item.kind === 'handle'
               || entry.item.kind === 'synthetic-handle'
-              || entry.item.kind === 'requireHandle') {
+              || entry.item.kind === 'require-handle') {
             targetHandle = entry.handle;
           } else if (entry.item.kind === 'particle') {
             targetParticle = entry.particle;
@@ -1312,14 +1335,16 @@ ${e.message}
   private static _buildAnnotationRefs(manifest: Manifest, annotationRefItems: AstNode.AnnotationRef[]): AnnotationRef[] {
     const annotationRefs: AnnotationRef[] = [];
     for (const aRefItem of annotationRefItems) {
-      if (annotationRefs.some(a => a.name === aRefItem.name)) {
-        throw new ManifestError(
-            aRefItem.location, `annotation '${aRefItem.name}' already exists.`);
-      }
       const annotation = manifest.findAnnotationByName(aRefItem.name);
       if (!annotation) {
         throw new ManifestError(
             aRefItem.location, `annotation not found: '${aRefItem.name}'`);
+      }
+      if (!annotation.allowMultiple) {
+        if (annotationRefs.some(a => a.name === aRefItem.name)) {
+          throw new ManifestError(
+              aRefItem.location, `annotation '${aRefItem.name}' already exists.`);
+        }
       }
       const params: Dictionary<string|number|boolean|{}> = {};
       for (const param of aRefItem.params) {
@@ -1361,7 +1386,7 @@ ${e.message}
 
     const claims: Map<string, ClaimIsTag[]> = new Map();
     item.claims.forEach(claim => {
-      validateFieldPath(claim.fieldPath, type);
+      resolveFieldPathType(claim.fieldPath, type);
       const target = claim.fieldPath.join('.');
       if (claims.has(target)) {
         throw new ManifestError(claim.location, `A claim for target ${target} already exists in store ${name}`);
@@ -1472,6 +1497,30 @@ ${e.message}
     return false;
   }
 
+  /**
+   * Verifies that all definitions in the manifest (including all other
+   * manifests that it imports) have unique names.
+   */
+  validateUniqueDefinitions() {
+    function checkUnique(type: string, items: {name: string}[]) {
+      const names: Set<string> = new Set();
+      for (const item of items) {
+        if (names.has(item.name)) {
+          throw new Error(`Duplicate definition of ${type} named '${item.name}'.`);
+        }
+        names.add(item.name);
+      }
+    }
+    // TODO: Validate annotations as well. They're tricky because of canonical
+    // annotations.
+    checkUnique('particle', this.allParticles);
+    checkUnique('policy', this.allPolicies);
+    checkUnique('recipe', this.allRecipes);
+    checkUnique('resource', this.allResources);
+    checkUnique('schema', this.allSchemas);
+    checkUnique('store', this.allStores);
+  }
+
   toString(options: {recursive?: boolean, showUnresolved?: boolean, hideFields?: boolean} = {}): string {
     // TODO: sort?
     const results: string[] = [];
@@ -1487,7 +1536,7 @@ ${e.message}
     });
 
     Object.values(this._annotations).forEach(a => {
-      results.push(a.toString());
+      results.push(a.toManifestString());
     });
 
     Object.values(this._schemas).forEach(s => {
@@ -1505,6 +1554,10 @@ ${e.message}
     const stores = [...this.stores].sort(compareComparables);
     stores.forEach(store => {
       results.push(store.toManifestString({handleTags: this.storeTags.get(store)}));
+    });
+
+    this._policies.forEach(policy => {
+      results.push(policy.toManifestString());
     });
 
     return results.join('\n');

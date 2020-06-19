@@ -1,0 +1,69 @@
+// #Ingress: IngestionAppName
+// #Ingress: IngestionLocation
+// #Fail: hc:Egress2.data.whoKnowsWhat is (packageName and coarseLocation)
+// #Fail: hc:Egress4.data.whoKnowsWhat is safeToLog
+// #Fail: hc:Egress5.data.whoKnowsWhat is ((packageName and safeToLog) or (coarseLocation and safeToLog))
+particle IngestionAppName
+  data: writes [AppName {
+    packageName: Text
+  }]
+  claim data.packageName is safeToLog and is packageName
+
+particle IngestionLocation
+  data: writes [Location {
+    location: Text
+  }]
+  claim data.location is coarseLocation
+
+particle Mixer
+  input1: reads [AppName {packageName: Text}]
+  input2: reads [Location {location: Text}]
+  output: writes [MixedData {whoKnowsWhat: Text}]
+
+// DFA Pass
+particle Egress1
+  data: reads [MixedData {whoKnowsWhat: Text}]
+  check data.whoKnowsWhat is packageName or is coarseLocation
+
+// DFA fail
+particle Egress2
+  data: reads [MixedData {whoKnowsWhat: Text}]
+  check data.whoKnowsWhat is packageName and is coarseLocation
+
+// DFA pass
+particle Egress3
+  data: reads [MixedData {whoKnowsWhat: Text}]
+  check data.whoKnowsWhat is packageName or is coarseLocation or is safeToLog
+
+// DFA fail
+particle Egress4
+  data: reads [MixedData {whoKnowsWhat: Text}]
+  check data.whoKnowsWhat is safeToLog
+
+// DFA fail
+particle Egress5
+  data: reads [MixedData {whoKnowsWhat: Text}]
+  check data.whoKnowsWhat (is packageName and is safeToLog) or (is coarseLocation and is safeToLog)
+
+recipe Test
+  data: create
+  appName: create
+  location: create
+  IngestionAppName
+    data: appName
+  IngestionLocation
+    data: location
+  Mixer
+    input1: appName
+    input2: location
+    output: data
+  Egress1
+    data: data
+  Egress2
+    data: data
+  Egress3
+    data: data
+  Egress4
+    data: data 
+  Egress5
+    data: data

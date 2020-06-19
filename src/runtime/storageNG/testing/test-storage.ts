@@ -19,8 +19,9 @@ import {Handle} from '../handle.js';
 import {StorageKey} from '../storage-key.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ActiveStore, ProxyCallback, ProxyMessage, StorageMode, ProxyMessageType} from '../store.js';
-import {CountType} from '../../type.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
+import {CRDTMuxEntity} from '../storage-ng.js';
+import {Identified} from '../../crdt/crdt-entity.js';
 
 
 /**
@@ -59,7 +60,7 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
     super({
       storageKey: new MockStorageKey(),
       exists: Exists.ShouldCreate,
-      type: new CountType(),
+      type: null,
       mode: StorageMode.Direct,
       baseStore: null,
       versionToken: null
@@ -92,7 +93,7 @@ export class MockStore<T extends CRDTTypeRecord> extends ActiveStore<T> {
   }
 }
 
-export class MockDirectStoreMuxer<T extends CRDTTypeRecord> extends DirectStoreMuxer<T> {
+export class MockDirectStoreMuxer<T extends CRDTMuxEntity> extends DirectStoreMuxer<Identified, Identified, T> {
   lastCapturedMessage: ProxyMessage<T> = null;
   lastCapturedException: PropagatedException = null;
   callback: ProxyCallback<T> = null;

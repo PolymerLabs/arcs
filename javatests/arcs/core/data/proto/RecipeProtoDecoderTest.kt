@@ -1,5 +1,6 @@
 package arcs.core.data.proto
 
+import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
@@ -16,6 +17,17 @@ import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+
+
+/** Creates and [arcId] [AnnotationProto]. */
+fun arcIdAnnotationProto(id: String): AnnotationProto {
+    return AnnotationProto.newBuilder()
+        .setName("arcId")
+        .addParams(
+            AnnotationParamProto.newBuilder().setName("id").setStrValue(id)
+        )
+        .build()
+}
 
 @RunWith(JUnit4::class)
 class RecipeProtoDecoderTest {
@@ -99,7 +111,7 @@ class RecipeProtoDecoderTest {
      */
     val recipeProto = RecipeProto.newBuilder()
         .setName("PassThrough")
-        .setArcId("pass-through-arc")
+        .addAnnotations(arcIdAnnotationProto("pass-through-arc"))
         .addHandles(thingHandleProto)
         .addParticles(readerParticle)
         .addParticles(writerParticle)
@@ -107,7 +119,7 @@ class RecipeProtoDecoderTest {
 
     val recipeWithJoin = RecipeProto.newBuilder()
         .setName("WithJoin")
-        .setArcId("arc-with-join")
+        .addAnnotations(arcIdAnnotationProto("arc-with-join"))
         .addHandles(thingHandleProto)
         .addHandles(thangHandleProto)
         .addHandles(joinHandleProto)
@@ -117,12 +129,12 @@ class RecipeProtoDecoderTest {
     fun decodesRecipe() {
         with(recipeProto.decode(context.particleSpecs)) {
             assertThat(name).isEqualTo("PassThrough")
-            assertThat(arcId).isEqualTo("pass-through-arc")
             assertThat(handles).isEqualTo(mapOf("thing" to thingHandle))
             assertThat(particles).containsExactly(
                 readerParticle.decode(context),
                 writerParticle.decode(context)
             )
+            assertThat(annotations).isEqualTo(listOf(Annotation.arcId("pass-through-arc")))
         }
     }
 
@@ -132,9 +144,9 @@ class RecipeProtoDecoderTest {
             .build()
         with(emptyRecipeProto.decode(context.particleSpecs)) {
             assertThat(name).isNull()
-            assertThat(arcId).isNull()
             assertThat(handles).isEmpty()
             assertThat(particles).isEmpty()
+            assertThat(annotations).isEmpty()
         }
     }
 
@@ -157,7 +169,6 @@ class RecipeProtoDecoderTest {
     fun decodeRecipeWithJoins() {
         with(recipeWithJoin.decode(context.particleSpecs)) {
             assertThat(name).isEqualTo("WithJoin")
-            assertThat(arcId).isEqualTo("arc-with-join")
             assertThat(handles).isEqualTo(
                 mapOf(
                     "thing" to thingHandle,
@@ -165,6 +176,7 @@ class RecipeProtoDecoderTest {
                     "pairs" to joinHandle
                 )
             )
+            assertThat(annotations).isEqualTo(listOf(Annotation.arcId("arc-with-join")))
         }
     }
 }

@@ -12,14 +12,14 @@ import {assert} from '../platform/assert-web.js';
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
-import {CapabilitiesResolver, StorageKeyCreatorInfo} from './capabilities-resolver.js';
+import {CapabilitiesResolver} from './capabilities-resolver.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId, Id} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
 import {SlotComposer} from './slot-composer.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
 import {RamDiskStorageDriverProvider} from './storageNG/drivers/ramdisk.js';
-import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
+import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey, VolatileStorageKeyFactory} from './storageNG/drivers/volatile.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Recipe} from './recipe/recipe.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
@@ -29,6 +29,7 @@ import {logsFactory} from '../platform/logs-factory.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
 import {Modality} from './modality.js';
+import {StorageKeyFactory} from './storage-key-factory.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
@@ -48,7 +49,7 @@ export type RuntimeArcOptions = Readonly<{
   stub?: boolean;
   listenerClasses?: ArcInspectorFactory[];
   inspectorFactory?: ArcInspectorFactory;
-  storageKeyCreators?: StorageKeyCreatorInfo[];
+  storargeKeyFactories?: StorageKeyFactory[];
   modality?: Modality;
 }>;
 
@@ -121,6 +122,7 @@ export class Runtime {
       memoryProvider
     });
     RamDiskStorageDriverProvider.register(memoryProvider);
+    VolatileStorageKey.register();
     return runtime;
   }
 
@@ -178,13 +180,14 @@ export class Runtime {
     const {loader, context} = this;
     const id = (options && options.id) || IdGenerator.newSession().newArcId(name);
     const slotComposer = this.composerClass ? new this.composerClass() : null;
-    const capabilitiesResolver = new CapabilitiesResolver({arcId: id}, options ? options.storageKeyCreators : undefined);
     let storageKey : StorageKey;
     if (storageKeyPrefix == null) {
       storageKey = new VolatileStorageKey(id, '');
     } else {
       storageKey = storageKeyPrefix(id);
     }
+    const factories = (options && options.storargeKeyFactories) || [new VolatileStorageKeyFactory()];
+    const capabilitiesResolver = new CapabilitiesResolver({arcId: id, factories});
     return new Arc({id, storageKey, capabilitiesResolver, loader, slotComposer, context, ...options});
   }
 

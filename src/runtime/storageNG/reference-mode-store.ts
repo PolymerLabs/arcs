@@ -12,17 +12,18 @@ import {CRDTSingletonTypeRecord, SingletonOperation, SingletonOpTypes, CRDTSingl
 import {CRDTCollectionTypeRecord, Referenceable, CollectionOpTypes, CollectionOperation, CRDTCollection, CollectionOperationAdd, CollectionOperationRemove} from '../crdt/crdt-collection.js';
 import {ActiveStore, ProxyCallback, ProxyMessage, ProxyMessageType, StorageMode, StoreConstructorOptions} from './store-interface.js';
 import {DirectStoreMuxer} from './direct-store-muxer.js';
-import {CRDTEntityTypeRecord, CRDTEntity, EntityData, EntityOperation, EntityOpTypes} from '../crdt/crdt-entity.js';
+import {CRDTEntityTypeRecord, CRDTEntity, EntityData, EntityOperation, EntityOpTypes, Identified} from '../crdt/crdt-entity.js';
 import {DirectStore} from './direct-store.js';
 import {StorageKey} from './storage-key.js';
 import {VersionMap, CRDTTypeRecord} from '../crdt/crdt.js';
-import {Type, CollectionType, ReferenceType, SingletonType} from '../type.js';
+import {Type, CollectionType, ReferenceType, SingletonType, MuxType, EntityType} from '../type.js';
 import {Producer, Consumer, Runnable, Dictionary} from '../hot.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {Store} from './store.js';
 import {noAwait} from '../util.js';
 import {SerializedEntity} from '../entity.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
+import {CRDTTypeRecordToType} from './storage-ng.js';
 
 // ReferenceMode store uses an expanded notion of Reference that also includes a version. This allows stores to block on
 // receiving an update to contained Entities, which keeps remote versions of the store in sync with each other.
@@ -58,14 +59,16 @@ type BlockableRunnable = {fn: Runnable, block?: string};
  *   outgoing updates are sent in the correct order.
  *
  */
-export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dictionary<Referenceable>, C extends Dictionary<Referenceable>,
+export class ReferenceModeStore<Entity extends SerializedEntity,
+                                S extends Identified,
+                                C extends Identified,
                                 ReferenceContainer extends CRDTSingletonTypeRecord<Reference> | CRDTCollectionTypeRecord<Reference>,
                                 Container extends CRDTSingletonTypeRecord<Entity> | CRDTCollectionTypeRecord<Entity>> extends ActiveStore<Container> {
 
   /*
    * The underlying backing store and container store that this reference view is built from
    */
-  backingStore: DirectStoreMuxer<CRDTEntityTypeRecord<S, C>>;
+  backingStore: DirectStoreMuxer<S, C, CRDTEntityTypeRecord<S, C>>;
   containerStore: DirectStore<ReferenceContainer>;
 
   /*
@@ -112,7 +115,9 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
    */
   private blockCounter = 0;
 
-  static async construct<Entity extends SerializedEntity, S extends Dictionary<Referenceable>, C extends Dictionary<Referenceable>,
+  static async construct<Entity extends SerializedEntity,
+                         S extends Identified,
+                         C extends Identified,
                          ReferenceContainer extends CRDTSingletonTypeRecord<Reference> | CRDTCollectionTypeRecord<Reference>,
                          Container extends CRDTSingletonTypeRecord<Entity> | CRDTCollectionTypeRecord<Entity>>(
       options: StoreConstructorOptions<Container> & {storageKey: ReferenceModeStorageKey}) {
@@ -120,7 +125,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
     const {storageKey, type} = options;
     result.backingStore = await DirectStoreMuxer.construct({
       storageKey: storageKey.backingKey,
-      type: type.getContainedType(),
+      type: new MuxType(type.getContainedType() as EntityType),
       mode: StorageMode.Backing,
       exists: options.exists,
       baseStore: options.baseStore as unknown as Store<CRDTEntityTypeRecord<S, C>>,
@@ -132,9 +137,10 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
     } else {
       refType = new SingletonType(new ReferenceType(type.getContainedType()));
     }
+
     result.containerStore = await DirectStore.construct({
       storageKey: storageKey.storageKey,
-      type: refType,
+      type: refType as CRDTTypeRecordToType<ReferenceContainer>,
       mode: StorageMode.Direct,
       exists: options.exists,
       baseStore: options.baseStore as unknown as Store<ReferenceContainer>,
@@ -159,6 +165,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
 
   reportExceptionInHost(exception: PropagatedException): void {
     // TODO(shans): Figure out idle / exception store for reference mode stores.
+    throw new Error(exception.message);
   }
 
   // For referenceMode stores, the version tracked is just the version
@@ -457,7 +464,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity, S extends Dicti
       this.versions[entity.id] = {};
     }
     const entityVersion = this.versions[entity.id];
-    const model = this.newBackingInstance().getData();
+    const model = this.newBackingInstance().getData() as EntityData<S, C>;
     let maxVersion = 0;
     for (const key of Object.keys(entity.rawData)) {
       if (entityVersion[key] == undefined) {

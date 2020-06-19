@@ -38,7 +38,7 @@ class JvmSchedulerProvider(
         maxOf(1, Runtime.getRuntime().availableProcessors() / 2),
     private val threadPriority: Int = DEFAULT_THREAD_PRIORITY
 ) : SchedulerProvider {
-    private val log = TaggedLog { toString() }
+    private val log = TaggedLog { "JvmSchedulerProvider" }
     private val providedSoFar = atomic(0)
     private val threads = arrayOfNulls<Thread>(maxThreadCount)
     private val dispatchers = mutableListOf<CoroutineDispatcher>()
@@ -88,7 +88,7 @@ class JvmSchedulerProvider(
     }
 
     @Synchronized
-    fun cancelAll() {
+    override fun cancelAll() {
         schedulersByArcId.values.toList().forEach { it.cancel() }
         threads.forEach { it?.interrupt() }
     }

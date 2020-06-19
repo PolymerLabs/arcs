@@ -46,12 +46,18 @@ class FakeDatabaseManager : DatabaseManager {
         by guardedBy(mutex, mutableMapOf())
 
     private val _manifest = FakeDatabaseRegistry()
+    private val clients = arrayListOf<DatabaseClient>()
     override val registry: DatabaseRegistry = _manifest
+
+    fun addClients(vararg clients: DatabaseClient) = this.clients.addAll(clients)
 
     override suspend fun getDatabase(name: String, persistent: Boolean): Database = mutex.withLock {
         _manifest.register(name, persistent)
         cache[name to persistent]
-            ?: FakeDatabase().also { cache[name to persistent] = it }
+            ?: FakeDatabase().also {
+                clients.forEach { client -> it.addClient(client) }
+                cache[name to persistent] = it
+            }
     }
 
     override suspend fun snapshotStatistics():
@@ -68,6 +74,10 @@ class FakeDatabaseManager : DatabaseManager {
 
     override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
         throw UnsupportedOperationException("Fake database manager cannot remove entities.")
+    }
+
+    override suspend fun runGarbageCollection(): Job {
+        throw UnsupportedOperationException("Fake database does not gargbage collect.")
     }
 }
 
@@ -108,7 +118,7 @@ open class FakeDatabase : Database {
         if (isNew) {
             clientFlow.filter { it.storageKey == storageKey }
                 .onEach { it.onDatabaseUpdate(data, version, originatingClientId) }
-                .launchIn(CoroutineScope(coroutineContext))
+                .launchIn(CoroutineScope(coroutineContext + Job())).join()
         }
 
         isNew
@@ -127,7 +137,7 @@ open class FakeDatabase : Database {
         stats.delete.timeSuspending {
             dataMutex.withLock { data.remove(storageKey) }
             clientFlow.onEach { it.onDatabaseDelete(originatingClientId) }
-                .launchIn(CoroutineScope(coroutineContext))
+                .launchIn(CoroutineScope(coroutineContext + Job())).join()
             Unit
         }
 
@@ -142,6 +152,10 @@ open class FakeDatabase : Database {
     override suspend fun removeClient(identifier: Int) = clientMutex.withLock {
         clients.remove(identifier)
         Unit
+    }
+
+    override fun reset() {
+        data.clear()
     }
 
     override suspend fun removeExpiredEntities() {

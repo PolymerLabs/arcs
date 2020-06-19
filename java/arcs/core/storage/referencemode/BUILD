@@ -18,8 +18,10 @@ arcs_kt_library(
         "//java/arcs/core/storage:proxy",
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",
+        "//java/arcs/core/storage/database",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
+        "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

@@ -210,7 +210,7 @@ export interface MetaName extends BaseNode {
 export interface MetaStorageKey extends BaseNode {
   key: 'storageKey';
   value: string;
-  kind: 'storageKey';
+  kind: 'storage-key';
 }
 
 export interface MetaNamespace extends BaseNode {
@@ -269,6 +269,7 @@ export interface ParticleClaimDerivesFrom extends BaseNode {
   kind: 'particle-trust-claim-derives-from';
   claimType: ClaimType.DerivesFrom;
   parentHandle: string;
+  fieldPath: string[];
 }
 
 export interface ParticleCheckStatement extends BaseNode {
@@ -397,6 +398,7 @@ export interface AnnotationNode extends BaseNode {
   params: AnnotationParam[];
   targets: AnnotationTargetValue[];
   retention: AnnotationRetentionValue;
+  allowMultiple: boolean;
   doc: string;
 }
 
@@ -406,7 +408,17 @@ export interface AnnotationParam extends BaseNode {
   type: SchemaPrimitiveTypeValue;
 }
 
-export type AnnotationTargetValue = 'Recipe' | 'Particle' | 'Store' | 'Handle' | 'HandleConnection' | 'Schema' | 'SchemaField';
+export type AnnotationTargetValue =
+  'Recipe' |
+  'Particle' |
+  'Store' |
+  'Handle' |
+  'HandleConnection' |
+  'Schema' |
+  'SchemaField' |
+  'PolicyField' |
+  'PolicyTarget' |
+  'Policy';
 
 export interface AnnotationTargets extends BaseNode {
   kind: 'annotation-targets';
@@ -423,6 +435,11 @@ export interface AnnotationRetention extends BaseNode {
 export interface AnnotationDoc extends BaseNode {
   kind: 'annotation-doc';
   doc: string;
+}
+
+export interface AnnotationMultiple extends BaseNode {
+  kind: 'annotation-multiple';
+  allowMultiple: boolean;
 }
 
 export interface AnnotationRef extends BaseNode {
@@ -463,7 +480,7 @@ export interface RecipeParticle extends BaseNode {
 }
 
 export interface RequireHandleSection extends BaseNode {
-  kind: 'requireHandle';
+  kind: 'require-handle';
   name: string;
   ref: HandleRef;
 }
@@ -503,12 +520,20 @@ export interface RecipeHandle extends BaseNode {
   ref: HandleRef;
   fate: Fate;
   annotations: AnnotationRef[];
+  adapter: AppliedAdapter;
 }
 
 export interface RecipeSyntheticHandle extends BaseNode {
   kind: 'synthetic-handle';
   name: string|null;
   associations: string[];
+  adapter: AppliedAdapter;
+}
+
+export interface AppliedAdapter extends BaseNode {
+  kind: 'adapter-apply-node';
+  name: string;
+  params: string[];
 }
 
 export interface RecipeParticleSlotConnection extends BaseNode {
@@ -654,7 +679,7 @@ export interface RefinementNode extends BaseNode {
   expression: RefinementExpressionNode;
 }
 
-export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode | QueryNode | NumberNode | BooleanNode | TextNode;
+export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode | QueryNode | BuiltInNode | NumberNode | BooleanNode | TextNode;
 
 export enum Op {
   AND = 'and',
@@ -698,9 +723,15 @@ export interface QueryNode extends BaseNode {
   value: string;
 }
 
+export interface BuiltInNode extends BaseNode {
+  kind: 'built-in-node';
+  value: string;
+}
+
 export interface NumberNode extends BaseNode {
   kind: 'number-node';
   value: number;
+  units?: string[];
 }
 
 export interface BooleanNode extends BaseNode {
@@ -737,6 +768,36 @@ export interface SchemaAlias extends BaseNode {
   kind: 'schema';
   items: SchemaItem[];
   alias: string;
+}
+
+export interface AdapterNode extends BaseNode {
+  kind: 'adapter-node';
+  name: string;
+  params: AdapterParam[];
+  body: AdapterBodyDefinition;
+}
+
+export interface AdapterParam extends BaseNode {
+  kind: 'adapter-param';
+  name: string;
+  type: ParticleHandleConnectionType;
+}
+
+export interface AdapterBodyDefinition extends BaseNode {
+  kind: 'adapter-body-definition';
+  names: string[];
+  fields: AdapterField[];
+}
+
+export interface AdapterField extends BaseNode {
+  kind: 'adapter-field';
+  name: string;
+  expression: AdapterScopeExpression;
+}
+
+export interface AdapterScopeExpression extends BaseNode {
+  kind: 'adapter-scope-expression';
+  scopeChain: string[];
 }
 
 export interface Interface extends BaseNode {
@@ -803,6 +864,34 @@ export interface NumberedUnits extends BaseNode {
   kind: 'numbered-units';
   count: number;
   units: string;
+}
+
+export interface Policy extends BaseNode {
+  kind: 'policy';
+  name: string;
+  targets: PolicyTarget[];
+  configs: PolicyConfig[];
+  annotationRefs: AnnotationRef[];
+}
+
+export interface PolicyTarget extends BaseNode {
+  kind: 'policy-target';
+  schemaName: string;
+  fields: PolicyField[];
+  annotationRefs: AnnotationRef[];
+}
+
+export interface PolicyField extends BaseNode {
+  kind: 'policy-field';
+  name: string;
+  subfields: PolicyField[];
+  annotationRefs: AnnotationRef[];
+}
+
+export interface PolicyConfig extends BaseNode {
+  kind: 'policy-config';
+  name: string;
+  metadata: Map<string, string>;
 }
 
 // Aliases to simplify ts-pegjs returnTypes requirement in sigh.

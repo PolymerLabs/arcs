@@ -64,6 +64,10 @@ class Scheduler(
     private val pausedChannel = ConflatedBroadcastChannel(false)
     private val idlenessChannel = ConflatedBroadcastChannel(true)
 
+    private val dispatcher: CoroutineDispatcher by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        Dispatcher(this)
+    }
+
     /**
      * Flow of booleans indicating when the Scheduler has entered (`true`) or exited (`false`) and
      * idle state.
@@ -87,6 +91,7 @@ class Scheduler(
                 try {
                     withTimeout(agendaProcessingTimeoutMs) { executeAgenda(agenda) }
                 } finally {
+                    agenda.listenersByNamespace.clear()
                     val agendasLeft = agendasInFlight.getAndDecrement()
                     if (agendasLeft == 1) {
                         idlenessChannel.send(true)
@@ -129,6 +134,9 @@ class Scheduler(
     suspend fun waitForIdle() {
         idlenessFlow.debounce(50).filter { it }.first()
     }
+
+    /** Returns a wrapper of this [Scheduler] capable of serving as a [CoroutineDispatcher]. */
+    fun asCoroutineDispatcher(): CoroutineDispatcher = dispatcher
 
     /** Cancel the [CoroutineScope] belonging to this Scheduler. */
     fun cancel() {
@@ -228,14 +236,18 @@ class Scheduler(
      * [Task.Listener]s, collated by [Task.Listener.namespace].
      */
     private data class ListenersByNamespace(
-        val listeners: Map<String, ListenersByName> = emptyMap()
+        val listeners: MutableMap<String, ListenersByName> = mutableMapOf()
     ) : Iterable<Task> {
         fun addListener(listener: Task.Listener): ListenersByNamespace {
             val listeners = (listeners[listener.namespace] ?: ListenersByName())
                 .addListener(listener)
 
-            return copy(listeners = this.listeners + (listener.namespace to listeners))
+            return copy(
+                listeners = (this.listeners + (listener.namespace to listeners)).toMutableMap()
+            )
         }
+
+        fun clear() = listeners.clear()
 
         override fun iterator(): Iterator<Task> = listeners.values.flatten().iterator()
     }
@@ -254,6 +266,23 @@ class Scheduler(
         override fun iterator(): Iterator<Task> = listeners.values.flatten().iterator()
     }
 
+    /**
+     * Implementation of a [CoroutineDispatcher] which can be used by code unaware of the [Scheduler]
+     * itself to run operations as listeners on the scheduler.
+     *
+     * For example: [Handle.dispatcher] returns an instance of [Dispatcher] so that code outside of
+     * particle-context can run operations on the scheduler to access the handle data safely and
+     * correctly.
+     */
+    private class Dispatcher(private val scheduler: Scheduler) : CoroutineDispatcher() {
+        override fun dispatch(context: CoroutineContext, block: Runnable) =
+            scheduler.schedule(DispatchedTask(block::run))
+
+        private class DispatchedTask(
+            block: () -> Unit
+        ) : Scheduler.Task.Listener("dispatcher", "non-particle", block)
+    }
+
     companion object {
         /**
          * The default maximum duration, in milliseconds, each iteration of scheduled tasks'
@@ -263,19 +292,10 @@ class Scheduler(
     }
 }
 
-/**
- * Implementation of a [CoroutineDispatcher] which can be used by code unaware of the [Scheduler]
- * itself to run operations as listeners on the scheduler.
- *
- * For example: [Handle.dispatcher] returns an instance of [SchedulerDispatcher] so that code
- * outside of particle-context can run operations on the scheduler to access the handle data
- * safely and correctly.
- */
-class SchedulerDispatcher(private val scheduler: Scheduler) : CoroutineDispatcher() {
-    override fun dispatch(context: CoroutineContext, block: Runnable) =
-        scheduler.schedule(DispatchedTask(block::run))
-
-    private class DispatchedTask(
-        block: () -> Unit
-    ) : Scheduler.Task.Listener("dispatcher", "non-particle", block)
-}
+@Suppress("FunctionName")
+@Deprecated(
+    "Use scheduler.asCoroutineDispatcher() instead",
+    ReplaceWith("scheduler.asCoroutineDispatcher()")
+)
+fun SchedulerDispatcher(scheduler: Scheduler): CoroutineDispatcher =
+    scheduler.asCoroutineDispatcher()

@@ -85,22 +85,6 @@ class BindingContext(
         }
     }
 
-    override fun getLocalData(callback: IStorageServiceCallback) {
-        bindingContextStatisticsSink.traceTransaction("getLocalData") {
-            bindingContextStatisticsSink.measure(coroutineContext) {
-                val activeStore = store.activate()
-                sendQueue.enqueue {
-                    callback.onProxyMessage(
-                        ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>(
-                            model = activeStore.getLocalData(),
-                            id = null
-                        ).toProto().toByteArray()
-                    )
-                }
-            }
-        }
-    }
-
     @Suppress("UNCHECKED_CAST")
     override fun registerCallback(callback: IStorageServiceCallback): Int {
         var callbackToken = 0

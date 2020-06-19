@@ -10,7 +10,7 @@
 
 import {mapStackTrace} from '../../platform/sourcemapped-stacktrace-web.js';
 import {PropagatedException, SystemException} from '../arc-exceptions.js';
-import {CRDTError, CRDTModel, CRDTOperation, CRDTTypeRecord, VersionMap} from '../crdt/crdt.js';
+import {CRDTError, CRDTModel, CRDTOperation, CRDTTypeRecord, VersionMap, ChangeType} from '../crdt/crdt.js';
 import {Runnable, Predicate} from '../hot.js';
 import {Particle} from '../particle.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
@@ -18,7 +18,7 @@ import {ChannelConstructor} from '../channel-constructor.js';
 import {EntityType, Type} from '../type.js';
 import {Handle, HandleOptions} from './handle.js';
 import {ActiveStore, ProxyMessage, ProxyMessageType, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './store.js';
-import {Ttl} from '../recipe/ttl.js';
+import {Ttl} from '../capabilities.js';
 
 /**
  * Mediates between one or more Handles and the backing store. The store can be outside the PEC or
@@ -45,7 +45,7 @@ export class StorageProxy<T extends CRDTTypeRecord> {
       storeProvider: StorageCommunicationEndpointProvider<T>,
       type: Type,
       storageKey: string,
-      ttl = Ttl.infinite) {
+      ttl = Ttl.infinite()) {
     this.apiChannelId = apiChannelId;
     this.store = storeProvider.getStorageEndpoint(this);
     this.crdt = new (type.crdtInstanceConstructor<T>())();
@@ -89,6 +89,12 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   }
 
   registerHandle(handle: Handle<T>): void {
+    // Check whether we're synchronized up-front; it's possible that calling requestSynchronization
+    // will result in immediate delivery of a message that causes us to become synchronized
+    // partway through running this method. If that's the case, the normal notifySync process
+    // will kick in and we don't need to notifySyncForHandle explicitly. We only need to do that
+    // if we were *already* synchronized
+    const isSynchronized = this.synchronized;
     // Attach an event listener to the backing store when the first handle is registered.
     if (!this.listenerAttached) {
       this.store.setCallback(x => this.onMessage(x));
@@ -100,11 +106,11 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     }
     this.handles.push(handle);
 
-
     // Change to synchronized mode as soon as we get any handle configured with keepSynced and send
     // a request to get the full model (once).
     // TODO: drop back to non-sync mode if all handles re-configure to !keepSynced.
     if (handle.options.keepSynced) {
+
       if (!this.keepSynced) {
         this.requestSynchronization().catch(e => {
           this.reportExceptionInHost(new SystemException(
@@ -113,9 +119,10 @@ export class StorageProxy<T extends CRDTTypeRecord> {
         this.keepSynced = true;
       }
 
+
       // If a handle configured for sync notifications registers after we've received the full
       // model, notify it immediately.
-      if (handle.options.notifySync && this.synchronized) {
+      if (handle.options.notifySync && isSynchronized) {
         this.notifySyncForHandle(handle);
       }
     }
@@ -172,6 +179,11 @@ export class StorageProxy<T extends CRDTTypeRecord> {
     return this.crdt.getParticleView()!;
   }
 
+  /**
+   * Set synchronized state and call notifySync if not currently synced. If initialModel is
+   * provided, pass this to notifySync, otherwise notifySync will generate a model from
+   * the CRDT data.
+   */
   private setSynchronized(initialModel = null) {
     if (!this.synchronized) {
       this.synchronized = true;
@@ -189,12 +201,28 @@ export class StorageProxy<T extends CRDTTypeRecord> {
   async onMessage(message: ProxyMessage<T>): Promise<void> {
     switch (message.type) {
       case ProxyMessageType.ModelUpdate:
-        this.crdt.merge(message.model);
+      {
+        const {modelChange} = this.crdt.merge(message.model);
+        if (this.synchronized) {
+          // if the particle is already synchronized, try to interpret this update
+          // as a sequence of operations. If that's impossible (because merge returned)
+          // a model rather than operations) then clear synchronization so that
+          // the particle knows to expect a resync message with the new model
+          if (modelChange.changeType === ChangeType.Operations) {
+            modelChange.operations.forEach(
+              op => this.notifyUpdate(
+                  op, options => !options.keepSynced && options.notifyUpdate));
+            break;
+          }
+
+          this.clearSynchronized();
+        }
         this.setSynchronized();
         // NOTE: this.modelHasSynced used to run after this.synchronized
         // was set to true but before notifySync() was called. Is that a problem?
         this.modelHasSynced();
         break;
+      }
       case ProxyMessageType.Operations: {
         // Immediately notify any handles that are not configured with keepSynced but do want updates.
         message.operations.forEach(

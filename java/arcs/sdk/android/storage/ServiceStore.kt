@@ -18,7 +18,6 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.storage.decodeProxyMessage
-import arcs.android.storage.service.DeferredProxyCallback
 import arcs.android.storage.service.DeferredResult
 import arcs.android.storage.service.IStorageService
 import arcs.android.storage.service.IStorageServiceCallback
@@ -104,7 +103,8 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private val connectionFactory: ConnectionFactory,
     private val coroutineContext: CoroutineContext
 ) : ActiveStore<Data, Op, ConsumerData>(options), LifecycleObserver {
-    private val log = TaggedLog { "ServiceStore(${options.storageKey})" }
+    // TODO(#5551): Consider including hash of options.storageKey for tracking.
+    private val log = TaggedLog { "ServiceStore" }
     private val scope = CoroutineScope(coroutineContext)
     private var storageService: IStorageService? = null
     private var serviceConnection: StorageServiceConnection? = null
@@ -135,21 +135,6 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         service.idle(TIMEOUT_IDLE_WAIT_MILLIS, callback)
         withTimeout(TIMEOUT_IDLE_WAIT_MILLIS) { callback.await() }
         log.debug { "ServiceStore is idle" }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    override suspend fun getLocalData(): Data {
-        val service = checkNotNull(storageService)
-        return DeferredProxyCallback().let {
-            outgoingMessages.incrementAndGet()
-            service.getLocalData(it)
-            val message = it.await()
-            outgoingMessages.decrementAndGet()
-            val modelUpdate = message.decodeProxyMessage()
-                as? ProxyMessage.ModelUpdate<Data, Op, ConsumerData>
-            if (modelUpdate == null) throw CrdtException("Wrong message type received $modelUpdate")
-            modelUpdate.model
-        }
     }
 
     override fun on(callback: ProxyCallback<Data, Op, ConsumerData>): Int {

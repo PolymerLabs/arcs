@@ -50,9 +50,19 @@ data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
 
         override fun newArray(size: Int): Array<ParcelableSchemaFields?> = arrayOfNulls(size)
 
+        private fun Parcel.readListFieldType(): FieldType =
+            when (FieldType.Tag.values()[readInt()]) {
+                FieldType.Tag.Primitive ->
+                    FieldType.ListOf(FieldType.Primitive(PrimitiveType.values()[readInt()]))
+                FieldType.Tag.EntityRef ->
+                    FieldType.ListOf(FieldType.EntityRef(requireNotNull(readString())))
+                else -> throw IllegalStateException("List of unexpected type encountered")
+            }
+
         private fun Parcel.readFieldType(): FieldType =
             when (FieldType.Tag.values()[readInt()]) {
                 FieldType.Tag.Primitive -> FieldType.Primitive(PrimitiveType.values()[readInt()])
+                FieldType.Tag.List -> readListFieldType()
                 FieldType.Tag.EntityRef -> FieldType.EntityRef(requireNotNull(readString()))
                 FieldType.Tag.Tuple -> {
                     val collector = mutableListOf<FieldType>()
@@ -70,6 +80,7 @@ data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
                                 throw IllegalStateException(
                                     "Nested [FieldType.Tuple]s are not allowed."
                                 )
+                            FieldType.Tag.List -> collector.add(readListFieldType())
                         }
                     }
                     FieldType.Tuple(collector.toList())
@@ -82,6 +93,24 @@ data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
         // Return Unit to force match to be exhaustive.
         return when (type) {
             is FieldType.Primitive -> writeInt(type.primitiveType.ordinal)
+            is FieldType.ListOf -> {
+                val wrappedType = type.primitiveType
+                when (wrappedType) {
+                    is FieldType.Primitive -> {
+                        writeInt(FieldType.Tag.Primitive.ordinal)
+                        writeInt(wrappedType.primitiveType.ordinal)
+                    }
+                    is FieldType.EntityRef -> {
+                        writeInt(FieldType.Tag.EntityRef.ordinal)
+                        writeString(wrappedType.schemaHash)
+                    }
+                    else -> {
+                        throw IllegalStateException(
+                            "Parcelables for lists of type $wrappedType not yet implemented."
+                        )
+                    }
+                }
+            }
             is FieldType.EntityRef -> writeString(type.schemaHash)
             is FieldType.Tuple -> {
                 writeByte('('.toByte())

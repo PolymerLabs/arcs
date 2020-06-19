@@ -13,7 +13,6 @@ import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
-import arcs.sdk.Handle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -61,24 +60,24 @@ class DemoService : ArcHostService() {
     }
 
     inner class ReadPerson : AbstractReadPerson() {
-        override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
+        override fun onReady() {
             val name = handles.person.fetch()?.name ?: ""
             val notification =
                 Notification.Builder(this@DemoService, "arcs-demo-service")
                     .setSmallIcon(R.drawable.notification_template_icon_bg)
-                    .setContentTitle("onHandleSync")
+                    .setContentTitle("onReady")
                     .setContentText(name)
                     .setAutoCancel(true)
                     .build()
 
             scope.launch {
-                notificationManager.notify(handle.hashCode(), notification)
+                notificationManager.notify(handles.person.hashCode(), notification)
             }
         }
     }
 
     inner class WritePerson : AbstractWritePerson() {
-        override suspend fun onHandleSync(handle: Handle, allSynced: Boolean) {
+        override fun onFirstStart() {
             handles.person.store(WritePerson_Person("John Wick"))
         }
     }

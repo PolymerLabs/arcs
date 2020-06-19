@@ -18,6 +18,7 @@ android_binary(
     javacopts = ["-Xep:AndroidJdkLibsChecker:OFF"],
     licenses = ["notice"],
     manifest = "AndroidManifest.xml",
+    multidex = "native",
     resource_files = glob(["res/**"]),
     deps = [
         "//java/arcs/sdk/android/dev/api:api-android",

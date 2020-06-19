@@ -11,30 +11,12 @@
 import {PlanGenerator} from '../plan-generator.js';
 import {assert} from '../../platform/chai-node.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Ttl, TtlUnits} from '../../runtime/recipe/ttl.js';
-import {StorageKeyRecipeResolver} from '../storage-key-recipe-resolver.js';
-import {Handle} from '../../runtime/recipe/handle.js';
-import {Capabilities, Capability} from '../../runtime/capabilities.js';
+import {Ttl} from '../../runtime/capabilities.js';
+import {AllocatorRecipeResolver} from '../allocator-recipe-resolver.js';
+import {Recipe} from '../../runtime/recipe/recipe.js';
 
 describe('recipe2plan', () => {
   describe('plan-generator', () => {
-    const collectOccurrences = (corpus: string, targetPrefix: string, targetSuffix: string): string[] => {
-      let idx = 0;
-      const collection: string[] = [];
-      while (idx !== -1) {
-        const start = corpus.indexOf(targetPrefix, idx);
-        const end = corpus.indexOf(targetSuffix, start);
-        if (start === -1 || end === -1) break;
-        idx = end;
-        const target = corpus.substring(start + targetPrefix.length, end);
-        collection.push(target);
-      }
-      return collection;
-    };
-    let emptyGenerator: PlanGenerator;
-    beforeEach(() => {
-      emptyGenerator = new PlanGenerator([], '');
-    });
     it('imports arcs.core.data when the package is different', () => {
       const generator = new PlanGenerator([], 'some.package');
 
@@ -49,187 +31,70 @@ describe('recipe2plan', () => {
 
       assert.notInclude(actual, 'import arcs.core.data.*');
     });
-    it('creates valid singleton entity types with schemas', async () => {
-      const manifest = await Manifest.parse(`\
-     particle A
-       data: writes Thing {num: Number}
-     
-     recipe R
-       h: create 'some-id' @persistent
-       A
-         data: writes h`);
+    it('uses the same identifier for created and mapped handle', async () => {
+      const {recipes, generator} = await process(`
+        particle A
+          data: writes Thing {num: Number}
+        particle B
+          data: reads Thing {num: Number}
+        
+        @arcId('ingestion')
+        recipe Ingest
+          h: create 'data' @persistent
+          A
+            data: writes h
+        
+        recipe Retrieve
+          h: map 'data'
+          B
+            data: reads h`);
 
-      await emptyGenerator.collectParticleConnectionSpecs(manifest.recipes[0].particles[0]);
-      const actual = await emptyGenerator.createType(manifest.particles[0].handleConnections[0].type);
+      assert.equal(
+        await generator.createStorageKey(recipes.find(r => r.name === 'Ingest').handles[0]),
+        'StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data")'
+      );
+      assert.equal(
+        await generator.createStorageKey(recipes.find(r => r.name === 'Retrieve').handles[0]),
+        'StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data")'
+      );
+    });
+    it('generated handle connections pertaining to the same handle use the same storage key', async () => {
+      const {recipes, generator} = await process(`
+        particle A
+          data: writes Thing {num: Number}
+        particle B
+          data: reads Thing {num: Number}
+          
+        recipe R
+          h: create 
+          A
+            data: writes h
+          B
+            data: reads h`);
 
-      assert.include(actual, 'A_Data.SCHEMA');
-      assert.include(actual, 'EntityType');
-      assert.notInclude(actual, 'ReferenceType');
-      assert.include(actual, 'SingletonType');
-      assert.notInclude(actual, 'CollectionType');
-      assert.isBelow(actual.indexOf('SingletonType'), actual.indexOf('EntityType'));
-    });
-    it('creates valid collection entity types with schemas', async () => {
-      const manifest = await Manifest.parse(`\
-     particle A
-       data: writes [Thing {num: Number}]
-       
-     recipe R
-       h: create 'some-id' @persistent
-       A
-         data: writes h`);
+      const [writer, reader] = recipes[0].particles;
 
-      await emptyGenerator.collectParticleConnectionSpecs(manifest.recipes[0].particles[0]);
-      const actual = await emptyGenerator.createType(manifest.particles[0].handleConnections[0].type);
-
-      assert.include(actual, 'A_Data.SCHEMA');
-      assert.include(actual, 'EntityType');
-      assert.notInclude(actual, 'ReferenceType');
-      assert.notInclude(actual, 'SingletonType');
-      assert.include(actual, 'CollectionType');
-      assert.isBelow(actual.indexOf('CollectionType'), actual.indexOf('EntityType'));
-    });
-    it('creates valid collection reference types with schemas', async () => {
-      const manifest = await Manifest.parse(`\
-     particle A
-       data: writes [&Thing {num: Number}]
-       
-     recipe R
-       h: create 'some-id' @persistent
-       A
-         data: writes h`);
-
-      await emptyGenerator.collectParticleConnectionSpecs(manifest.recipes[0].particles[0]);
-      const actual = await emptyGenerator.createType(manifest.particles[0].handleConnections[0].type);
-
-      assert.include(actual, 'A_Data.SCHEMA');
-      assert.include(actual, 'EntityType');
-      assert.include(actual, 'ReferenceType');
-      assert.notInclude(actual, 'SingletonType');
-      assert.include(actual, 'CollectionType');
-      assert.isBelow(actual.indexOf('CollectionType'), actual.indexOf('ReferenceType'));
-    });
-    it('can create Infinite Ttl objects', () => {
-      const ttl = Ttl.infinite;
-      const actual = emptyGenerator.createTtl(ttl);
-      assert.deepStrictEqual(actual, 'Ttl.Infinite');
-    });
-    it('can create Ttls at a valid time resolution', () => {
-      const ttl = new Ttl(30, TtlUnits.Day);
-      const actual = emptyGenerator.createTtl(ttl);
-      assert.deepStrictEqual(actual, 'Ttl.Days(30)');
-    });
-    it('creates a stable create handle name when the id is missing', async () => {
-      const manifest = await Manifest.parse(`\
-     particle A
-       data: writes Thing {num: Number}
-       
-     recipe R
-       h0: create @persistent
-       h1: create #test @persistent
-       h2: create #test2 @persistent
-       h3: create #test @persistent
-       A
-         data: writes h0
-       A
-         data: writes h1
-       A
-         data: writes h2
-       A
-         data: writes h3`);
-      const actuals: string[] = [];
-      for (const handle of manifest.recipes[0].handles) {
-        const newActual = await emptyGenerator.createStorageKey(handle);
-        assert.match(newActual, /CreateableStorageKey\("handle\/[\w\d]+"/); for (const existing of actuals) {
-          assert.notDeepEqual(existing, newActual);
-        }
-        actuals.push(newActual);
-      }
-    });
-    it('creates a stable create handle name from resolved recipes when the id is missing', async () => {
-      const manifest = await Manifest.parse(`\
-     particle A
-       data: writes Thing {num: Number}
-       
-     recipe R
-       h0: create @persistent
-       h1: create #test @persistent
-       h2: create #test2 @persistent
-       h3: create #test @persistent
-       A
-         data: writes h0
-       A
-         data: writes h1
-       A
-         data: writes h2
-       A
-         data: writes h3`);
-      const recipeResolver = new StorageKeyRecipeResolver(manifest);
-      const recipes = await recipeResolver.resolve();
-      const generator = new PlanGenerator(recipes, '');
-      const actuals: string[] = [];
-      for (const handle of recipes[0].handles) {
-        const newActual = await generator.createStorageKey(handle);
-        assert.match(newActual, /CreateableStorageKey\("handle\/[\w\d]+"/);
-        for (const existing of actuals) {
-          assert.notDeepEqual(existing, newActual);
-        }
-        actuals.push(newActual);
-      }
-    });
-    it('creates a createable storage key with correct capabilities', async () => {
-      const manifest = await Manifest.parse(`\
-     particle A
-       data: writes Thing {num: Number}
-       
-     recipe R
-       h0: create
-       h1: create @ttl('12h')
-       h2: create @persistent
-       h3: create @persistent @ttl('24h')
-       A
-         data: writes h0
-       A
-         data: writes h1
-       A
-         data: writes h2
-       A
-         data: writes h3`);
-      const recipeResolver = new StorageKeyRecipeResolver(manifest);
-      const recipe = (await recipeResolver.resolve())[0];
-      const generator = new PlanGenerator([recipe], '');
-      const h0Key = await generator.createStorageKey(recipe.handles[0]);
-      assert.isFalse(h0Key.includes('Capabilities'));
-      const h1Key = await generator.createStorageKey(recipe.handles[1]);
-      assert.match(h1Key, /CreateableStorageKey\("handle\/[\d]+", Capabilities.Queryable\)/);
-      const h2Key = await generator.createStorageKey(recipe.handles[2]);
-      assert.match(h2Key, /CreateableStorageKey\("handle\/[\d]+", Capabilities.Persistent\)/);
-      const h3Key = await generator.createStorageKey(recipe.handles[3]);
-      assert.isTrue(h3Key.includes('Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.Queryable))'));
-    });
-    it('uses the same identifier for all HandleConnections connected to the same handle', async () => {
-      const manifest = await Manifest.parse(`\
-     particle A
-       data: writes Thing {num: Number}
-     particle B
-       data: reads Thing {num: Number}
-       
-     recipe R
-       h: create 
-       A
-         data: writes h
-       B
-         data: reads h`);
-      const recipeResolver = new StorageKeyRecipeResolver(manifest);
-      const recipes = await recipeResolver.resolve();
-      const generator = new PlanGenerator(recipes, '');
-      const plan = await generator.generate();
-      const keys = collectOccurrences(plan, 'CreateableStorageKey("', '")');
-      assert.lengthOf(keys, 2);
-      assert.deepStrictEqual(keys[0], keys[1]);
+      assert.equal(
+        await generator.createHandleConnection(writer.connections['data']),
+`HandleConnection(
+    StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
+    HandleMode.Write,
+    SingletonType(EntityType(A_Data.SCHEMA)),
+    emptyList()
+)`
+      );
+      assert.equal(
+        await generator.createHandleConnection(reader.connections['data']),
+`HandleConnection(
+    StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
+    HandleMode.Read,
+    SingletonType(EntityType(B_Data.SCHEMA)),
+    emptyList()
+)`
+      );
     });
     it('creates particles in the same order as the recipe and not the manifest', async () => {
-      const manifest = await Manifest.parse(`\
+      const {plan} = await process(`
      particle D in 'particle.D'
        data: reads Thing {num: Number}
      particle C in 'particle.C'
@@ -250,10 +115,6 @@ describe('recipe2plan', () => {
          data: writes h1
        D
          data: reads h1`);
-      const recipeResolver = new StorageKeyRecipeResolver(manifest);
-      const recipes = await recipeResolver.resolve();
-      const generator = new PlanGenerator(recipes, 'blah');
-      const plan = await generator.generate();
 
       assert.include(plan, 'particle.A');
       assert.include(plan, 'particle.B');
@@ -263,37 +124,80 @@ describe('recipe2plan', () => {
       assert.isBelow(plan.indexOf('particle.B'), plan.indexOf('particle.C'));
       assert.isBelow(plan.indexOf('particle.C'), plan.indexOf('particle.D'));
     });
-    it('refers to static constants when translating a single capability', () => {
-      const generator = new PlanGenerator([], 'blah');
-
-      assert.deepStrictEqual(
-        generator.createCapabilities(Capabilities.persistent),
-        `Capabilities.Persistent`
-      );
-      assert.deepStrictEqual(
-        generator.createCapabilities(Capabilities.queryable),
-        `Capabilities.Queryable`
-      );
-      assert.deepStrictEqual(
-        generator.createCapabilities(Capabilities.tiedToArc),
-        `Capabilities.TiedToArc`
-      );
-      assert.deepStrictEqual(
-        generator.createCapabilities(Capabilities.tiedToRuntime),
-        `Capabilities.TiedToRuntime`
-      );
-    });
-    it('constructs a capabilities object when translating multiple capabilities', () => {
-      const generator = new PlanGenerator([], 'blah');
-
-      assert.deepStrictEqual(
-        generator.createCapabilities(Capabilities.persistentQueryable),
-        `Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.Queryable))`
-      );
-      assert.deepStrictEqual(
-        generator.createCapabilities(new Capabilities([Capability.TiedToArc, Capability.Persistent])),
-        `Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc))`
-      );
-    });
   });
+  it('can prefix namespaces for particle classes', async () => {
+    const {recipes, generator} = await process(`
+    meta
+      namespace: arcs.core.data.testdata
+      
+    particle Writer in '.Writer'
+      data: writes Thing {name: Text}
+      
+    recipe Namespace
+      data: create 'some-handle' @persistent
+      Writer
+        data: writes data`);
+
+    const particle = recipes[0].particles[0];
+
+    assert.deepStrictEqual(
+      await generator.createParticle(particle),
+      `\
+Particle(
+    "Writer",
+    "arcs.core.data.testdata.Writer",
+    mapOf(
+        "data" to HandleConnection(
+            StorageKeyParser.parse("create://some-handle?Persistent"),
+            HandleMode.Write,
+            SingletonType(EntityType(Writer_Data.SCHEMA)),
+            listOf(Annotation("persistent", emptyMap()))
+        )
+    )
+)`
+    );
+  });
+  it('can prefix namespaces for particle class subpaths', async () => {
+      const {recipes, generator} = await process(`
+    meta
+      namespace: arcs.core.data.testdata
+      
+    particle Intermediary in '.subdir.Intermediary'
+      data: reads writes Thing {name: Text}
+      
+    recipe Namespace
+      data: create 'some-handle' @persistent
+      Intermediary
+        data: writes data`);
+
+      const particle = recipes[0].particles[0];
+
+      assert.deepStrictEqual(
+        await generator.createParticle(particle),
+        `\
+Particle(
+    "Intermediary",
+    "arcs.core.data.testdata.subdir.Intermediary",
+    mapOf(
+        "data" to HandleConnection(
+            StorageKeyParser.parse("create://some-handle?Persistent"),
+            HandleMode.ReadWrite,
+            SingletonType(EntityType(Intermediary_Data.SCHEMA)),
+            listOf(Annotation("persistent", emptyMap()))
+        )
+    )
+)`
+      );
+  });
+  async function process(manifestString: string): Promise<{
+      recipes: Recipe[],
+      generator: PlanGenerator,
+      plan: string
+  }> {
+    const manifest = await Manifest.parse(manifestString);
+    const recipes = await new AllocatorRecipeResolver(manifest, 'random_salt').resolve();
+    const generator = new PlanGenerator(recipes, manifest.meta.namespace || 'test.namespace');
+    const plan = await generator.generate();
+    return {recipes, generator, plan};
+  }
 });

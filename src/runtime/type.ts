@@ -20,6 +20,7 @@ import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Refinement} from './refiner.js';
 import {AnnotationRef} from './recipe/annotation.js';
+import {ManifestStringBuilder} from './manifest-string-builder.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -127,8 +128,8 @@ export abstract class Type {
     return this instanceof ReferenceType;
   }
 
-  isMuxType(): this is MuxType<Type> {
-    return this instanceof MuxType;
+  isMuxType(): this is MuxType<EntityType> {
+    return this instanceof MuxType && this.innerType instanceof  EntityType;
   }
 
   isTupleType(): this is TupleType {
@@ -193,6 +194,10 @@ export abstract class Type {
   }
 
   get isTuple(): boolean {
+    return false;
+  }
+
+  get isVariable(): boolean {
     return false;
   }
 
@@ -440,7 +445,6 @@ export class EntityType extends Type {
     throw new Error(`Entity handle not yet implemented - you probably want to use a SingletonType`);
   }
 }
-
 
 export class TypeVariable extends Type {
   readonly variable: TypeVariableInfo;
@@ -1032,6 +1036,7 @@ export class ReferenceType<T extends Type> extends Type {
 
 export class MuxType<T extends Type> extends Type {
   readonly innerType: T;
+  static handleClass = null;
 
   constructor(type: T) {
     super('Mux');
@@ -1102,6 +1107,10 @@ export class MuxType<T extends Type> extends Type {
 
   crdtInstanceConstructor<T extends CRDTTypeRecord>(): new () => CRDTModel<T> {
     return this.innerType.crdtInstanceConstructor();
+  }
+
+  handleConstructor<T>() {
+    return MuxType.handleClass;
   }
 }
 
@@ -1411,7 +1420,7 @@ export abstract class InterfaceInfo {
 
   abstract _applyExistenceTypeTest(test: Predicate<TypeVarReference>) : boolean;
 
-  abstract toString() : string;
+  abstract toManifestString(builder?: ManifestStringBuilder) : string;
 
   static make : Maker = null;
 

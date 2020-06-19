@@ -33,10 +33,6 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
 
     lateinit var app: Application
 
-    override var testRunner = { block: suspend CoroutineScope.() -> Unit ->
-        runBlocking { this.block() }
-    }
-
     @Before
     override fun setUp() {
         super.setUp()

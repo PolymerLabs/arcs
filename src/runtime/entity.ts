@@ -17,7 +17,7 @@ import {SYMBOL_INTERNALS} from './symbols.js';
 import {Refinement} from './refiner.js';
 import {Flags} from './flags.js';
 import {ChannelConstructor} from './channel-constructor.js';
-import {Ttl} from './recipe/ttl.js';
+import {Ttl} from './capabilities.js';
 import {Storable} from './storable.js';
 
 export type EntityRawData = {};
@@ -238,6 +238,9 @@ class EntityInternals {
     }
     if (value.constructor.name === 'Uint8Array') {
       return Uint8Array.from(value);
+    }
+    if (typeof value.length === 'number') {
+      return value.slice().map(this.cloneValue);
     }
     return value.dataClone();
   }

@@ -9,16 +9,19 @@
  */
 
 import {assert} from '../../../platform/chai-web.js';
-import {StorageMode, ProxyMessageType, ProxyMessage, Store} from '../store.js';
-import {CRDTCountTypeRecord, CRDTCount, CountOpTypes} from '../../crdt/crdt-count.js';
+import {StorageMode, ProxyMessageType, ProxyMessage, StoreMuxer} from '../store.js';
 import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../drivers/ramdisk.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
 import {Runtime} from '../../runtime.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
-import {CountType} from '../../type.js';
+import {EntityType, MuxType} from '../../type.js';
+import {Manifest} from '../../manifest.js';
+import {CRDTMuxEntity} from '../storage-ng.js';
+import {Identified, CRDTEntity, EntityOpTypes} from '../../crdt/crdt-entity.js';
+import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
 
-function assertHasModel(message: ProxyMessage<CRDTCountTypeRecord>, model: CRDTCount) {
+function assertHasModel(message: ProxyMessage<CRDTMuxEntity>, model: CRDTEntity<Identified, Identified>) {
   if (message.type === ProxyMessageType.ModelUpdate) {
     assert.deepEqual(message.model, model.getData());
   } else {
@@ -32,41 +35,49 @@ describe('RamDisk + Direct Store Muxer Integration', async () => {
   });
 
   it('will allow storage of a number of objects', async () => {
+    const manifest = await Manifest.parse(`
+      schema Simple
+        txt: Text
+    `);
+    const simpleSchema = manifest.schemas.Simple;
+
     const runtime = new Runtime();
     RamDiskStorageDriverProvider.register(runtime.getMemoryProvider());
     const storageKey = new RamDiskStorageKey('unique');
-    const baseStore = new Store<CRDTCountTypeRecord>(new CountType(), {storageKey, exists: Exists.ShouldCreate, id: 'base-store-id'});
-    const store = await DirectStoreMuxer.construct<CRDTCountTypeRecord>({
+    const baseStore = new StoreMuxer<CRDTMuxEntity>(new MuxType(new EntityType(simpleSchema)), {storageKey, exists: Exists.ShouldCreate, id: 'base-store-id'});
+    const store = await DirectStoreMuxer.construct<Identified, Identified, CRDTMuxEntity>({
       storageKey,
       exists: Exists.ShouldCreate,
-      type: new CountType(),
+      type: new MuxType(new EntityType(simpleSchema)),
       mode: StorageMode.Backing,
       baseStore,
       versionToken: null
     });
 
-    const count1 = new CRDTCount();
-    count1.applyOperation({type: CountOpTypes.Increment, actor: 'me', version: {from: 0, to: 1}});
 
-    const count2 = new CRDTCount();
-    count2.applyOperation({type: CountOpTypes.MultiIncrement, actor: 'them', version: {from: 0, to: 10}, value: 15});
+    const entity1 = new CRDTEntity({txt: new CRDTSingleton<{id: string, value: string}>()}, {});
+    entity1.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'text1', value: 'text1'}, actor: 'me', clock: {'me': 1}});
+
+    const entity2 = new CRDTEntity({txt: new CRDTSingleton<{id: string, value: string}>()}, {});
+    entity2.applyOperation({type: EntityOpTypes.Set, field: 'txt', value: {id: 'text2', value: 'text2'}, actor: 'me', clock: {'me': 1}});
 
     const id = store.on(async (message) => {return;});
-    await store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count1.getData(), id, muxId: 'thing0'});
-    await store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: count2.getData(), id, muxId: 'thing1'});
+    await store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: entity1.getData(), id, muxId: 'thing0'});
+    await store.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: entity2.getData(), id, muxId: 'thing1'});
 
     await store.idle();
-    let message: ProxyMessage<CRDTCountTypeRecord>;
+
+    let message: ProxyMessage<CRDTMuxEntity>;
     let muxId: string;
     const id2 = store.on(async (m) => {message = m; muxId = m.muxId;});
     await store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: id2, muxId: 'thing0'});
-    assertHasModel(message, count1);
+    assertHasModel(message, entity1);
     assert.strictEqual(muxId, 'thing0');
     await store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: id2, muxId: 'thing1'});
-    assertHasModel(message, count2);
+    assertHasModel(message, entity2);
     assert.strictEqual(muxId, 'thing1');
     await store.onProxyMessage({type: ProxyMessageType.SyncRequest, id: id2, muxId: 'not-a-thing'});
-    assertHasModel(message, new CRDTCount());
+    assertHasModel(message, new CRDTEntity({txt: new CRDTSingleton<{id: string, value: string}>()}, {}));
     assert.strictEqual(muxId, 'not-a-thing');
   });
 });

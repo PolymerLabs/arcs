@@ -11,8 +11,15 @@
 
 package arcs.core.entity
 
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
+import arcs.core.data.ReferenceType
+import arcs.core.data.SingletonType
+import arcs.core.storage.StorageProxy
 import arcs.core.storage.StorageProxy.StorageEvent
+import arcs.core.type.Type
+import java.lang.IllegalStateException
 import kotlin.coroutines.resume
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -21,6 +28,9 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 /** Base interface for all handle classes. */
 interface Handle {
     val name: String
+
+    /** The read/write/query permissions for this handle. */
+    val mode: HandleMode
 
     /**
      * If you need to access or mutate the [Handle]'s data from outside of a particle or handle
@@ -32,19 +42,25 @@ interface Handle {
     val dispatcher: CoroutineDispatcher
 
     // TODO(b/157188866): move this to ReadableHandle (write-only handles should not receive this)
-    // TODO: pass the Handle to the action callbacks: handles.foo.onReady { it.fetch() }
     /** Assign a callback when the handle is synced for the first time. */
     fun onReady(action: () -> Unit)
 
     /** Release resources needed by this, unregister all callbacks. */
     fun close()
 
+    // TODO(b/158785940): move internal methods to an internal interface
     /** Internal method used to connect [StorageProxy] events to the [ParticleContext]. */
     fun registerForStorageEvents(notify: (StorageEvent) -> Unit)
+
+    /** Internal method used to trigger a sync request on this handle's [StorageProxy]. */
+    fun maybeInitiateSync()
+
+    /** Internal method to return this handle's underlying [StorageProxy]. */
+    fun getProxy(): StorageProxy<*, *, *>
 }
 
 /** Suspends until the [Handle] has synced with the store. */
-suspend fun <T : Handle> T.awaitReady(): T = suspendCancellableCoroutine<T> { cont ->
+suspend fun <T : Handle> T.awaitReady(): T = suspendCancellableCoroutine { cont ->
     this.onReady {
         if (cont.isActive) cont.resume(this@awaitReady)
     }
@@ -54,13 +70,76 @@ suspend fun <T : Handle> T.awaitReady(): T = suspendCancellableCoroutine<T> { co
 interface Storable
 
 /** Configuration for a [Handle]. */
-data class HandleSpec<T : Entity>(
+data class HandleSpec(
     val baseName: String,
     val mode: HandleMode,
-    val containerType: HandleContainerType,
-    val entitySpec: EntitySpec<T>,
-    val dataType: HandleDataType = HandleDataType.Entity
-)
+    val type: Type,
+    val entitySpecs: Set<EntitySpec<*>>
+) {
+
+    @Deprecated(
+        "Use main constructor",
+        ReplaceWith(
+            /* ktlint-disable max-line-length */
+            "HandleSpec(baseName, mode, toType(entitySpec, dataType, containerType), setOf(entitySpec))"
+            /* ktlint-enable max-line-length */
+        )
+    )
+    constructor(
+        baseName: String,
+        mode: HandleMode,
+        containerType: HandleContainerType,
+        entitySpec: EntitySpec<*>,
+        dataType: HandleDataType = HandleDataType.Entity
+    ) : this(
+        baseName,
+        mode,
+        toType(entitySpec, dataType, containerType),
+        setOf(entitySpec)
+    )
+
+    @Deprecated("Use all entity specs.", ReplaceWith("entitySpecs.single()"))
+    val entitySpec: EntitySpec<*>
+        get() = entitySpecs.single()
+
+    val containerType: HandleContainerType
+        get() = when (type) {
+            is CollectionType<*> -> HandleContainerType.Collection
+            is SingletonType<*> -> HandleContainerType.Singleton
+            else -> throw IllegalStateException("Handle type should be a Collection or a Singleton")
+        }
+
+    val dataType: HandleDataType
+        get() = when (innerType) {
+            is EntityType -> HandleDataType.Entity
+            is ReferenceType<*> -> HandleDataType.Reference
+            else -> throw IllegalStateException("Unrecognized Type: ${innerType.tag}")
+        }
+
+    private val innerType: Type
+        get() = when (type) {
+            is CollectionType<*> -> type.collectionType
+            is SingletonType<*> -> type.containedType
+            else -> throw IllegalStateException("Handle type should be a Collection or a Singleton")
+        }
+
+    companion object {
+        fun toType(
+            entitySpec: EntitySpec<*>,
+            dataType: HandleDataType,
+            containerType: HandleContainerType
+        ): Type {
+            val innerType = when (dataType) {
+                HandleDataType.Entity -> EntityType(entitySpec.SCHEMA)
+                HandleDataType.Reference -> ReferenceType(EntityType(entitySpec.SCHEMA))
+            }
+            return when (containerType) {
+                HandleContainerType.Collection -> CollectionType(innerType)
+                HandleContainerType.Singleton -> SingletonType(innerType)
+            }
+        }
+    }
+}
 
 typealias HandleMode = HandleMode
 

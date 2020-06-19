@@ -9,9 +9,11 @@
  */
 
 import {SingletonHandle, CollectionHandle} from './storageNG/handle.js';
-import {SingletonType, CollectionType} from './type.js';
+import {SingletonType, CollectionType, MuxType} from './type.js';
+import {EntityHandleFactory} from './storageNG/entity-handle-factory.js';
 
 // We inject SingletonHandle and CollectionHandle constructors into the
 // corresponding types to avoid type.js depending on storageNG/handle.js.
 SingletonType.handleClass = SingletonHandle;
 CollectionType.handleClass = CollectionHandle;
+MuxType.handleClass = EntityHandleFactory;

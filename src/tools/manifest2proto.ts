@@ -11,31 +11,31 @@ import {Runtime} from '../runtime/runtime.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {Type, CollectionType, ReferenceType, SingletonType, TupleType} from '../runtime/type.js';
+import {Type, CollectionType, ReferenceType, SingletonType, TupleType, TypeVariable} from '../runtime/type.js';
 import {Schema} from '../runtime/schema.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 import {assert} from '../platform/assert-web.js';
-import {findLongRunningArcId} from './storage-key-recipe-resolver.js';
+import {findLongRunningArcId} from './allocator-recipe-resolver.js';
 import {Manifest} from '../runtime/manifest.js';
-import {Capabilities} from '../runtime/capabilities.js';
+import {Capabilities, Persistence, Shareable} from '../runtime/capabilities.js';
 import {CapabilityEnum, DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
 import {Refinement, RefinementExpressionLiteral} from '../runtime/refiner.js';
 import {Op} from '../runtime/manifest-ast-nodes.js';
-import {Claim, ClaimType} from '../runtime/particle-claim.js';
-import {Check, CheckCondition, CheckExpression, CheckType} from '../runtime/particle-check.js';
+import {ClaimType} from '../runtime/particle-claim.js';
+import {CheckCondition, CheckExpression, CheckType} from '../runtime/particle-check.js';
 import {flatMap} from '../runtime/util.js';
+import {Policy} from '../runtime/policy/policy.js';
+import {policyToProtoPayload} from './policy2proto.js';
+import {annotationToProtoPayload} from './annotation2proto.js';
 
 export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path);
-
-  if (manifest.imports.length) {
-    throw Error('Only single-file manifests are currently supported');
-  }
   return encodePayload(await manifestToProtoPayload(manifest));
 }
 
 export async function manifestToProtoPayload(manifest: Manifest) {
-  return makeManifestProtoPayload(manifest.particles, manifest.recipes);
+  manifest.validateUniqueDefinitions();
+  return makeManifestProtoPayload(manifest.allParticles, manifest.allRecipes, manifest.allPolicies);
 }
 
 export async function encodePlansToProto(plans: Recipe[]) {
@@ -43,19 +43,20 @@ export async function encodePlansToProto(plans: Recipe[]) {
   for (const spec of flatMap(plans, r => r.particles).map(p => p.spec)) {
     specMap.set(spec.name, spec);
   }
-  return encodePayload(await makeManifestProtoPayload([...specMap.values()], plans));
+  return encodePayload(await makeManifestProtoPayload([...specMap.values()], plans, /* policies= */ []));
 }
 
-async function makeManifestProtoPayload(particles: ParticleSpec[], recipes: Recipe[]) {
+async function makeManifestProtoPayload(particles: ParticleSpec[], recipes: Recipe[], policies: Policy[]) {
   return {
     particleSpecs: await Promise.all(particles.map(p => particleSpecToProtoPayload(p))),
     recipes: await Promise.all(recipes.map(r => recipeToProtoPayload(r))),
+    policies: policies.map(policyToProtoPayload),
   };
 }
 
 function encodePayload(payload: {}): Uint8Array {
   const error = ManifestProto.verify(payload);
-  if (error) throw Error(error);
+  if (error) throw new Error(error);
   return ManifestProto.encode(ManifestProto.create(payload)).finish();
 }
 
@@ -76,7 +77,7 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
 async function handleConnectionSpecToProtoPayload(spec: HandleConnectionSpec) {
   const directionOrdinal = DirectionEnum.values[spec.direction.replace(/ /g, '_').toUpperCase()];
   if (directionOrdinal === undefined) {
-    throw Error(`Handle connection direction ${spec.direction} is not supported`);
+    throw new Error(`Handle connection direction ${spec.direction} is not supported`);
   }
   return {
     name: spec.name,
@@ -112,10 +113,7 @@ function claimsToProtoPayload(
           protos.push({
             derivesFrom: {
               target: accessPath,
-              source: {
-                particleSpec: spec.name,
-                handleConnection: claim.parentHandle.name
-              }
+              source: accessPathProtoPayload(spec, claim.parentHandle, claim.fieldPath),
             }
           });
           break;
@@ -229,14 +227,19 @@ async function recipeToProtoPayload(recipe: Recipe) {
 
   const handleToProtoPayload = new Map<Handle, {name: string}>();
   for (const h of recipe.handles) {
+    // After type inference which runs as a part of the recipe.normalize() above
+    // all handle types are constrained type variables. We force these type variables
+    // to their resolution by called maybeEnsureResolved(), so that handle types
+    // are encoded with concrete types, instead of variables.
+    h.type.maybeEnsureResolved();
     handleToProtoPayload.set(h, await recipeHandleToProtoPayload(h));
   }
 
   return {
     name: recipe.name,
-    arcId: findLongRunningArcId(recipe),
     particles: recipe.particles.map(p => recipeParticleToProtoPayload(p, handleToProtoPayload)),
     handles: [...handleToProtoPayload.values()],
+    annotations: recipe.annotations.map(a => annotationToProtoPayload(a))
   };
 }
 
@@ -252,7 +255,7 @@ function recipeParticleToProtoPayload(particle: Particle, handleMap: Map<Handle,
 async function recipeHandleToProtoPayload(handle: Handle) {
   const fateOrdinal = FateEnum.values[handle.fate.toUpperCase()];
   if (fateOrdinal === undefined) {
-    throw Error(`Handle fate ${handle.fate} is not supported`);
+    throw new Error(`Handle fate ${handle.fate} is not supported`);
   }
   const toName = handle => handle.localName || `handle${handle.recipe.handles.indexOf(handle)}`;
   const handleData = {
@@ -279,22 +282,39 @@ export function capabilitiesToProtoOrdinals(capabilities: Capabilities) {
   // We bypass the inteface and grab the underlying set of capability strings for the purpose of
   // serialization. It is rightfully hidden in the Capabilities object, but this use is justified.
   // Tests will continue to ensure we access the right field.
-  // tslint:disable-next-line: no-any
-  return [...(capabilities as any).capabilities].map(c => {
-    const ordinal = CapabilityEnum.values[c.replace(/([A-Z])/g, '_$1').toUpperCase()];
+  const values = [];
+  if (capabilities.hasEquivalent(Persistence.onDisk())) {
+    values.push('PERSISTENT');
+  }
+
+  if (capabilities.isQueryable() || (capabilities.getTtl() && !capabilities.getTtl().isInfinite)) {
+    values.push('QUERYABLE');
+  }
+
+  if (capabilities.isShareable()) {
+    values.push('TIED_TO_RUNTIME');
+  }
+
+  if (capabilities.hasEquivalent(new Shareable(false))) {
+    values.push('TIED_TO_ARC');
+  }
+  return values.map(value => {
+    const ordinal = CapabilityEnum.values[value];
     if (ordinal === undefined) {
-      throw Error(`Capability ${c} is not supported`);
+      throw new Error(`Capability ${value} is not supported`);
     }
     return ordinal;
   });
 }
 
 export async function typeToProtoPayload(type: Type) {
-  if (type.hasVariable && !type.isResolved()) {
-    assert(type.maybeEnsureResolved());
-    assert(type.isResolved());
+  if (type.hasVariable && type.isResolved()) {
+    // We encode the resolution of the resolved type variables directly.
+    // This allows us to encode handle types and connection types directly
+    // and only encode type variables where they are not yet resolved,
+    // e.g. in particle specs of generic particles.
+    type = type.resolvedType();
   }
-  type = type.resolvedType();
   switch (type.tag) {
     case 'Entity': {
       const entity = {
@@ -330,13 +350,13 @@ export async function typeToProtoPayload(type: Type) {
     case 'Count': return {
       count: {}
     };
-    // TODO(b/154733929)
-    // case 'TypeVariable': return {
-    //   variable: {
-    //     name: (type as TypeVariable).variable.name,
-    //   }
-    // };
-    default: throw Error(`Type '${type.tag}' is not supported.`);
+    case 'TypeVariable': {
+      const constraintType = type.canReadSubset || type.canWriteSuperset;
+      const name = {name: (type as TypeVariable).variable.name};
+      const constraint = constraintType ? {constraint: {constraintType: await typeToProtoPayload(constraintType)}} : {};
+      return {variable: {...name, ...constraint}};
+    }
+    default: throw new Error(`Type '${type.tag}' is not supported.`);
   }
 }
 
@@ -362,7 +382,7 @@ async function schemaFieldToProtoPayload(fieldType: SchemaField) {
     case 'schema-primitive': {
       const primitive = PrimitiveTypeEnum.values[fieldType.type.toUpperCase()];
       if (primitive === undefined) {
-        throw Error(`Primitive field type ${fieldType.type} is not supported.`);
+        throw new Error(`Primitive field type ${fieldType.type} is not supported.`);
       }
       return {primitive};
     }
@@ -392,7 +412,7 @@ async function schemaFieldToProtoPayload(fieldType: SchemaField) {
     }
     // TODO(b/154947220) support schema-unions
     case 'schema-union':
-    default: throw Error(`Schema field kind ${fieldType.kind} is not supported.`);
+    default: throw new Error(`Schema field kind ${fieldType.kind} is not supported.`);
   }
 }
 
@@ -411,7 +431,7 @@ function toOpProto(op: Op): number {
     Op.EQ, Op.NEQ,
   ].indexOf(op);
 
-  if (opEnum === -1) throw Error(`Op type '${op}' is not supported.`);
+  if (opEnum === -1) throw new Error(`Op type '${op}' is not supported.`);
 
   return opEnum;
 }

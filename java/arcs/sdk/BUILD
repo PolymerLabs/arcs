@@ -20,6 +20,7 @@ arcs_kt_jvm_library(
     exports = [
         "//java/arcs/core/data",
         "//java/arcs/core/data:rawentity",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity",
         "//java/arcs/core/host/api",

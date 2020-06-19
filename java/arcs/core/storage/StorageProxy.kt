@@ -16,7 +16,6 @@ import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
 import arcs.core.util.Scheduler
-import arcs.core.util.SchedulerDispatcher
 import arcs.core.util.TaggedLog
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.getAndUpdate
@@ -66,7 +65,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      * [Store], you must either be performing your interactions within a handle callback or on this
      * [CoroutineDispatcher].
      */
-    val dispatcher: CoroutineDispatcher = SchedulerDispatcher(scheduler)
+    val dispatcher: CoroutineDispatcher
+        get() = scheduler.asCoroutineDispatcher()
 
     /** Identifier of the data this [StorageProxy] is managing. */
     val storageKey: StorageKey = storeEndpointProvider.storageKey
@@ -127,6 +127,14 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         busySendingMessagesChannel.asFlow().debounce(50).filter { !it }.first()
     }
 
+    /**
+     * Suspends until there are no more outgoing messages or handle notifications in flight.
+     */
+    suspend fun waitForIdle() {
+        scheduler.waitForIdle()
+        awaitOutgoingMessageQueueDrain()
+    }
+
     /* visible for testing */
     fun getStateForTesting(): ProxyState = stateHolder.value.state
 
@@ -135,7 +143,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      * in synchronized mode. This is done via a two-step process:
      *   1) When constructed, all readable handles call this method to move the proxy from its
      *      initial state of [NO_SYNC] to [READY_TO_SYNC].
-     *   2) [EntityHandleManager] then triggers the actual sync request after the arc has been
+     *   2) [ParticleContext] then triggers the actual sync request after the arc has been
      *      set up and all particles have received their onStart events.
      */
     fun prepareForSync() {
@@ -272,6 +280,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         val result = CompletableDeferred<Boolean>()
         sendMessageToStore(ProxyMessage.Operations(listOf(op), null), result)
 
+        // TODO: the returned Deferred doesn't account for this update propagation; should it?
         notifyUpdate(value)
         return result
     }
@@ -347,7 +356,10 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     suspend fun onMessage(message: ProxyMessage<Data, Op, T>) = coroutineScope {
         log.debug { "onMessage: $message" }
         if (stateHolder.value.state == ProxyState.CLOSED) {
-            log.info { "in closed state, received message: $message" }
+            // TODO(wkorman): Do we really want info level in production, without message, just
+            // to get visibility if/when this happens? Do we have a sense of how frequently it
+            // could occur?
+            log.debug { "in closed state, received message: $message" }
             return@coroutineScope
         }
 
@@ -384,6 +396,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
     private fun processModelUpdate(model: Data) {
         // TODO: send the returned merge changes to notifyUpdate()
+        val valueBefore = crdt.consumerView
         crdt.merge(model)
 
         val value = crdt.consumerView
@@ -400,7 +413,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
         when (priorState) {
             ProxyState.AWAITING_SYNC -> notifyReady()
-            ProxyState.SYNC -> notifyUpdate(value)
+            ProxyState.SYNC -> if (valueBefore != value) notifyUpdate(value)
             ProxyState.DESYNC -> notifyResync()
             ProxyState.NO_SYNC,
             ProxyState.READY_TO_SYNC,
@@ -444,41 +457,55 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
     private fun notifyReady() {
         log.debug { "notifying ready" }
-        scheduleCallbackTasks(handleCallbacks.value.onReady, "onReady") { it() }
-        scheduleCallbackTasks(handleCallbacks.value.notify, "notify") { it(StorageEvent.READY) }
+        val tasks = handleCallbacks.value.let {
+            buildCallbackTasks(handleCallbacks.value.onReady, "onReady") { it() } +
+                buildCallbackTasks(handleCallbacks.value.notify, "notify(READY)") {
+                    it(StorageEvent.READY)
+                }
+        }
+        if (tasks.isNotEmpty()) scheduler.schedule(tasks)
     }
 
     private fun notifyUpdate(data: T) {
         log.debug { "notifying update" }
-        scheduleCallbackTasks(handleCallbacks.value.onUpdate, "onUpdate") { it(data) }
-        scheduleCallbackTasks(handleCallbacks.value.notify, "notify(UPDATE)") {
-            it(StorageEvent.UPDATE)
+        val tasks = handleCallbacks.value.let {
+            buildCallbackTasks(handleCallbacks.value.onUpdate, "onUpdate") { it(data) } +
+                buildCallbackTasks(handleCallbacks.value.notify, "notify(UPDATE)") {
+                    it(StorageEvent.UPDATE)
+                }
         }
+        if (tasks.isNotEmpty()) scheduler.schedule(tasks)
     }
 
     private fun notifyDesync() {
         log.debug { "notifying desync" }
-        scheduleCallbackTasks(handleCallbacks.value.onDesync, "onDesync") { it() }
-        scheduleCallbackTasks(handleCallbacks.value.notify, "notify(DESYNC)") {
-            it(StorageEvent.DESYNC)
+        val tasks = handleCallbacks.value.let {
+            buildCallbackTasks(handleCallbacks.value.onDesync, "onDesync") { it() } +
+                buildCallbackTasks(handleCallbacks.value.notify, "notify(DESYNC)") {
+                    it(StorageEvent.DESYNC)
+                }
         }
+        if (tasks.isNotEmpty()) scheduler.schedule(tasks)
     }
 
     private fun notifyResync() {
         log.debug { "notifying resync" }
-        scheduleCallbackTasks(handleCallbacks.value.onResync, "onResync") { it() }
-        scheduleCallbackTasks(handleCallbacks.value.notify, "notify(RESYNC)") {
-            it(StorageEvent.RESYNC)
+        val tasks = handleCallbacks.value.let {
+            buildCallbackTasks(handleCallbacks.value.onResync, "onResync") { it() } +
+                buildCallbackTasks(handleCallbacks.value.notify, "notify(RESYNC)") {
+                    it(StorageEvent.RESYNC)
+                }
         }
+        if (tasks.isNotEmpty()) scheduler.schedule(tasks)
     }
 
     /** Schedule [HandleCallbackTask]s for all given [callbacks] with the [Scheduler]. */
-    private fun <FT : Function<Unit>> scheduleCallbackTasks(
+    private fun <FT : Function<Unit>> buildCallbackTasks(
         callbacks: Map<CallbackIdentifier, List<FT>>,
         callbackName: String,
         block: (FT) -> Unit
-    ) {
-        val tasks = callbacks.entries.flatMap { (id, callbacks) ->
+    ): List<Scheduler.Task> {
+        return callbacks.entries.flatMap { (id, callbacks) ->
             callbacks.map { callback ->
                 HandleCallbackTask(id, callbackName) {
                     log.debug { "Executing callback for $id" }
@@ -486,8 +513,6 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                 }
             }
         }
-
-        scheduler.schedule(tasks)
     }
 
     private fun checkNotClosed() = check(stateHolder.value.state != ProxyState.CLOSED) {

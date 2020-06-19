@@ -21,8 +21,15 @@ import arcs.core.util.lens
 open class Plan(
     // TODO(cromwellian): add more fields as needed (e.g. RecipeName, etc for debugging)
     val particles: List<Particle>,
-    val arcId: String? = null
+    val annotations: List<Annotation> = emptyList()
 ) {
+    val arcId: String?
+        get() {
+            return annotations.find { it.name == "arcId" }?.let {
+                return it.getStringParam("id")
+            }
+        }
+
     /**
      * A [Particle] consists of the information necessary to instantiate a particle
      * when starting an arc.
@@ -45,8 +52,15 @@ open class Plan(
         val storageKey: StorageKey,
         val mode: HandleMode,
         val type: Type,
-        val ttl: Ttl? = null
+        val annotations: List<Annotation> = emptyList()
     ) {
+        val ttl: Ttl
+            get() {
+                return annotations.find { it.name == "ttl" }?.let {
+                    return Ttl.fromString(it.getStringParam("value"))
+                } ?: Ttl.Infinite
+            }
+
         companion object {
             val storageKeyLens =
                 lens(HandleConnection::storageKey) { t, f -> t.copy(storageKey = f) }
@@ -77,6 +91,8 @@ open class Plan(
     override fun hashCode(): Int = particles.hashCode()
 
     companion object {
-        val particleLens = lens(Plan::particles) { t, f -> Plan(particles = f, arcId = t.arcId) }
+        val particleLens = lens(Plan::particles) { t, f ->
+            Plan(particles = f, annotations = t.annotations)
+        }
     }
 }

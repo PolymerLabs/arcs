@@ -13,6 +13,9 @@ message ReferencableProto {
     CrdtEntityReferenceProto crdt_entity_reference = 2;
     ReferenceProto reference = 3;
     ReferencablePrimitiveProto primitive = 4;
+    ReferencablePrimitiveListProto primitive_list = 5;
+    ReferencableReferenceListProto reference_list = 6;
+    ReferencableProto wrapped_referencable = 7;
   }
 }
 
@@ -42,4 +45,14 @@ message ReferenceProto {
 
 message ReferencablePrimitiveProto {
   string id = 1;
+}
+
+message ReferencablePrimitiveListProto {
+  int32 type = 1;
+  repeated ReferencablePrimitiveProto value = 2;
+}
+
+message ReferencableReferenceListProto {
+  string type = 1;
+  repeated ReferenceProto value = 2;
 }

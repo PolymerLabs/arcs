@@ -16,16 +16,8 @@ export class ReferenceModeStorageKey extends StorageKey {
     super(ReferenceModeStorageKey.protocol);
   }
 
-  embedKey(key: StorageKey) {
-    return key.toString().replace(/\{/g, '{{').replace(/\}/g, '}}');
-  }
-
-  static unembedKey(key: string) {
-    return key.replace(/\}\}/g, '}').replace(/\{\{/g, '}');
-  }
-
   toString(): string {
-    return `${this.protocol}://{${this.embedKey(this.backingKey)}}{${this.embedKey(this.storageKey)}}`;
+    return `${this.protocol}://{${this.backingKey.embedKey()}}{${this.storageKey.embedKey()}}`;
   }
 
   childWithComponent(component: string): StorageKey {
@@ -41,8 +33,8 @@ export class ReferenceModeStorageKey extends StorageKey {
     const [_, backingKey, storageKey] = match;
 
     return new ReferenceModeStorageKey(
-      parse(ReferenceModeStorageKey.unembedKey(backingKey)),
-      parse(ReferenceModeStorageKey.unembedKey(storageKey))
+      parse(StorageKey.unembedKey(backingKey)),
+      parse(StorageKey.unembedKey(storageKey))
     );
   }
 }

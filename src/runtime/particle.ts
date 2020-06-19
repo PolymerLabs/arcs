@@ -15,6 +15,8 @@ import {HandleConnectionSpec, ParticleSpec} from './particle-spec.js';
 import {Relevance} from './relevance.js';
 import {Entity, EntityRawData, MutableEntityData} from './entity.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
+import {EntityHandleFactory} from './storageNG/entity-handle-factory.js';
+import {CRDTMuxEntity} from './storageNG/storage-ng.js';
 
 export interface Capabilities {
   constructInnerArc?: (particle: Particle) => Promise<InnerArcHandle>;
@@ -33,6 +35,7 @@ export class Particle {
   public readonly extraData: boolean;
   public readonly relevances: (Relevance | number)[] = [];
   public handles: ReadonlyMap<string, Handle<CRDTTypeRecord>>;
+  public handleFactories: ReadonlyMap<string, EntityHandleFactory<CRDTMuxEntity>>;
 
   private _idle: Promise<void> = Promise.resolve();
   private _idleResolver: Runnable;
@@ -48,7 +51,7 @@ export class Particle {
     // Typescript only sees this.constructor as a Function type.
     // TODO(shans): move spec off the constructor
     this.spec = this.constructor['spec'];
-    if (this.spec.inputs.length === 0) {
+    if (this.spec && this.spec.inputs.length === 0) {
       this.extraData = true;
     }
     this.created = false;
@@ -106,9 +109,15 @@ export class Particle {
     }
   }
 
-  async callSetHandles(handles: ReadonlyMap<string, Handle<CRDTTypeRecord>>, onException: Consumer<Error>) {
+  async callSetHandles(handles: ReadonlyMap<string, Handle<CRDTTypeRecord>>, handleFactories: ReadonlyMap<string, EntityHandleFactory<CRDTMuxEntity>>, onException: Consumer<Error>) {
     this.handles = handles;
-    await this.invokeSafely(async p => p.setHandles(handles), onException);
+    this.handleFactories = handleFactories;
+
+    const allHandles = new Map<string, Handle<CRDTTypeRecord>|EntityHandleFactory<CRDTMuxEntity>>();
+    this.handles.forEach((handle, name) => {allHandles.set(name, handle); });
+    this.handleFactories.forEach((handleFactory, name) => {allHandles.set(name, handleFactory); });
+
+    await this.invokeSafely(async p => p.setHandles(allHandles), onException);
     this._handlesToSync = this._countInputHandles(handles);
     this.onError = onException;
     if (!this._handlesToSync) {
@@ -125,7 +134,7 @@ export class Particle {
    *
    * @param handles a map from handle names to store handles.
    */
-  protected async setHandles(handles: ReadonlyMap<string, Handle<CRDTTypeRecord>>): Promise<void> {
+  protected async setHandles(handles: ReadonlyMap<string, Handle<CRDTTypeRecord>|EntityHandleFactory<CRDTMuxEntity>>): Promise<void> {
   }
 
   private _countInputHandles(handles: ReadonlyMap<string, Handle<CRDTTypeRecord>>): number {

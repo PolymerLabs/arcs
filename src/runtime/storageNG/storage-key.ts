@@ -46,4 +46,12 @@ export abstract class StorageKey {
   childKeyForSearch(id: string) {
     return this.subKeyWithComponent(`search/${id}`);
   }
+
+  embedKey() {
+    return this.toString().replace(/\{/g, '{{').replace(/\}/g, '}}');
+  }
+
+  static unembedKey(key: string) {
+    return key.replace(/\}\}/g, '}').replace(/\{\{/g, '}');
+  }
 }

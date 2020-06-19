@@ -27,6 +27,7 @@ arcs_kt_android_library(
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data:rawentity",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage:reference",
         "//java/arcs/core/storage:storage_key",

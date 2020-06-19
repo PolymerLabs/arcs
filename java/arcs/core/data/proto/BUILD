@@ -17,7 +17,7 @@ package(default_visibility = ["//visibility:public"])
 # This target is needed in Google internal repo when running TypeScript with Bazel.
 filegroup(
     name = "proto_files",
-    srcs = ["manifest.proto"],
+    srcs = glob(["*.proto"]),
 )
 
 arcs_kt_library(
@@ -26,8 +26,10 @@ arcs_kt_library(
         ["*.kt"],
     ),
     deps = [
+        ":annotation_java_proto_lite",
         ":manifest_java_proto_lite",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
@@ -44,8 +46,10 @@ arcs_kt_library(
     ),
     add_android_constraints = False,
     deps = [
+        ":annotation_java_proto",
         ":manifest_java_proto",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
@@ -53,8 +57,33 @@ arcs_kt_library(
 )
 
 proto_library(
+    name = "annotation_proto",
+    srcs = ["annotation.proto"],
+)
+
+android_proto_library(
+    name = "annotation_java_proto_lite",
+    deps = [":annotation_proto"],
+)
+
+java_proto_library(
+    name = "annotation_java_proto",
+    deps = [":annotation_proto"],
+)
+
+py_proto_library(
+    name = "annotation_py_proto",
+    api_version = 2,
+    deps = [":annotation_proto"],
+)
+
+proto_library(
     name = "manifest_proto",
     srcs = ["manifest.proto"],
+    deps = [
+        ":annotation_proto",
+        ":policy_proto",
+    ],
 )
 
 android_proto_library(
@@ -71,4 +100,26 @@ py_proto_library(
     name = "manifest_py_proto",
     api_version = 2,
     deps = [":manifest_proto"],
+)
+
+proto_library(
+    name = "policy_proto",
+    srcs = ["policy.proto"],
+    deps = [":annotation_proto"],
+)
+
+android_proto_library(
+    name = "policy_java_proto_lite",
+    deps = [":policy_proto"],
+)
+
+java_proto_library(
+    name = "policy_java_proto",
+    deps = [":policy_proto"],
+)
+
+py_proto_library(
+    name = "policy_py_proto",
+    api_version = 2,
+    deps = [":policy_proto"],
 )

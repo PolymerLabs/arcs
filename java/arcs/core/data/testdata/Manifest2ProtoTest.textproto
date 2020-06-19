@@ -95,7 +95,13 @@ recipes {
       handle: "handle0"
     }
   }
-  arc_id: "writingArcId"
+  annotations {
+    name: "arcId"
+    params {
+      name: "id"
+      str_value: "writingArcId"
+    }
+  }
 }
 recipes {
   name: "Consumption"
@@ -300,4 +306,23 @@ particle_specs {
     }
   }
   location: "Reader"
+}
+policies {
+  name: "MyPolicy"
+  targets {
+    schema_type: "RestrictedThing"
+    max_age_ms: 600000
+    retentions {
+      medium: RAM
+    }
+    fields {
+      name: "name"
+      usages {
+        usage: ANY
+        redaction_label: "redacted"
+      }
+    }
+  }
+  description: "check that policies can be serialized to proto"
+  egress_type: LOGGING
 }

@@ -32,7 +32,8 @@ class DeferredResult(context: CoroutineContext) :
             complete(true)
         } else {
             val exceptionProto = decodeProto(exception, CrdtExceptionProto.getDefaultInstance())
-            Log.warning(CrdtException(exceptionProto.message ?: "Unknown error")) {
+            // TODO(#5551): Consider logging at debug level with exceptionProto.message detail.
+            Log.warning(CrdtException("CRDT Exception: error detail elided.")) {
                 "Result was unsuccessful"
             }
             complete(false)

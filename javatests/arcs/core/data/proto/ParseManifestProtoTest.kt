@@ -23,7 +23,6 @@ class ParseManifestProtoTest {
         val txtPath = runfilesDir() + "java/arcs/core/data/testdata/Manifest2ProtoTest.textproto"
         val manifestTxt = ManifestProto.newBuilder()
         TextFormat.getParser().merge(File(txtPath).readText(), manifestTxt)
-
         assertThat(manifestTxt.build()).isEqualTo(manifestBin)
     }
 

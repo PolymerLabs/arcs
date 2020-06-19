@@ -81,12 +81,12 @@ class CapabilitiesResolverTest {
         )
         assertThat(resolver.createStorageKey(Capabilities.TiedToArc, thingReferenceType, handleId))
             .isInstanceOf(VolatileStorageKey::class.java)
-        verifyStorageKey(
-            resolver.createStorageKey(Capabilities.Empty, thingEntityType, handleId),
-            VolatileStorageKey::class.java
-        )
-        assertThat(resolver.createStorageKey(Capabilities.Empty, thingReferenceType, handleId))
-            .isInstanceOf(VolatileStorageKey::class.java)
+        assertFailsWith<IllegalArgumentException> {
+            resolver.createStorageKey(Capabilities.Empty, thingEntityType, handleId)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            resolver.createStorageKey(Capabilities.Empty, thingReferenceType, handleId)
+        }
         assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(Capabilities.TiedToRuntime, thingEntityType, handleId)
         }
@@ -138,12 +138,12 @@ class CapabilitiesResolverTest {
         assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(Capabilities.TiedToArc, thingReferenceType, handleId)
         }
-        assertFailsWith<IllegalArgumentException> {
-            resolver.createStorageKey(Capabilities.Empty, thingEntityType, handleId)
-        }
-        assertFailsWith<IllegalArgumentException> {
-            resolver.createStorageKey(Capabilities.Empty, thingReferenceType, handleId)
-        }
+        verifyStorageKey(
+            resolver.createStorageKey(Capabilities.Empty, thingEntityType, handleId),
+            RamDiskStorageKey::class.java
+        )
+        assertThat(resolver.createStorageKey(Capabilities.Empty, thingReferenceType, handleId))
+            .isInstanceOf(RamDiskStorageKey::class.java)
         verifyStorageKey(
             resolver.createStorageKey(Capabilities.TiedToRuntime, thingEntityType, handleId),
             RamDiskStorageKey::class.java
@@ -181,10 +181,10 @@ class CapabilitiesResolverTest {
             .isInstanceOf(VolatileStorageKey::class.java)
         verifyStorageKey(
             resolver1.createStorageKey(Capabilities.Empty, thingEntityType, handleId),
-            VolatileStorageKey::class.java
+            RamDiskStorageKey::class.java
         )
         assertThat(resolver1.createStorageKey(Capabilities.Empty, thingReferenceType, handleId))
-            .isInstanceOf(VolatileStorageKey::class.java)
+            .isInstanceOf(RamDiskStorageKey::class.java)
         val ramdiskKey =
             resolver1.createStorageKey(Capabilities.TiedToRuntime, thingEntityType, handleId)
         verifyStorageKey(ramdiskKey, RamDiskStorageKey::class.java)

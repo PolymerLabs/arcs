@@ -11,9 +11,10 @@
 import {assert} from '../../platform/chai-node.js';
 import {KotlinGenerationUtils} from '../kotlin-generation-utils.js';
 
+const ktUtils = new KotlinGenerationUtils();
+
 describe('kotlin-generations-utils', () => {
   describe('mapOf', () => {
-    const ktUtils = new KotlinGenerationUtils();
     it('creates an empty map when no items are present', () => {
       const actual = ktUtils.mapOf([]);
       assert.strictEqual('emptyMap()', actual);
@@ -95,6 +96,72 @@ mapOf(
     "a" to "b",
     "b" to "c"
 )`, actual);
+    });
+  });
+  describe('applyFun', () => {
+    it('invokes the function in one line if possible', () => {
+      assert.equal(
+        ktUtils.applyFun('function', ['argument1', 'argument2', 'argument3']),
+        'function(argument1, argument2, argument3)'
+      );
+    });
+    it('invokes the function in multiple lines due to function name length', () => {
+      assert.equal(
+        ktUtils.applyFun('thisIsAVeryNonTrivialFunctionThatDoesABunchOfThingsForYouAndMeAndTheSociety', [
+          'argument1', 'argument2', 'argument3'
+        ]),
+`thisIsAVeryNonTrivialFunctionThatDoesABunchOfThingsForYouAndMeAndTheSociety(
+    argument1,
+    argument2,
+    argument3
+)`
+      );
+    });
+    it(`invokes the function in multiple lines due to arguments size`, () => {
+      assert.equal(
+        ktUtils.applyFun('function', [
+          'argument1_argument1_argument1',
+          'argument2_argument2_argument2',
+          'argument3_argument3_argument3'
+        ]),
+`function(
+    argument1_argument1_argument1,
+    argument2_argument2_argument2,
+    argument3_argument3_argument3
+)`
+      );
+    });
+    it(`accepts existing indent at a place of invocation`, () => {
+      const numberOfIndents = 1;
+      const startString = '\n' + ' '.repeat(ktUtils.pref.indent * numberOfIndents);
+      assert.equal(
+        startString + ktUtils.applyFun('function', [
+          'argument1_argument1_argument1',
+          'argument2_argument2_argument2',
+          'argument3_argument3_argument3'
+        ], {numberOfIndents}), `
+    function(
+        argument1_argument1_argument1,
+        argument2_argument2_argument2,
+        argument3_argument3_argument3
+    )`
+      );
+    });
+  });
+  describe('indentFollowingLines', () => {
+    it('indents only following lines', () => {
+      assert.equal(`
+        ${ktUtils.indentFollowing(['foo', 'bar', 'baz'], 2)}
+            ${ktUtils.indentFollowing(['abc', 'def'], 3)}
+        ${ktUtils.indentFollowing(['yay'], 2)}
+      `, `
+        foo
+        bar
+        baz
+            abc
+            def
+        yay
+      `);
     });
   });
 });

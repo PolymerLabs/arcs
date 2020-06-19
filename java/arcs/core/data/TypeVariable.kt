@@ -15,17 +15,24 @@ import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.type.TypeLiteral
 
-/** [Type] representation for a type variable. */
-data class TypeVariable(val name: String) : Type {
+/**
+ * [Type] representation for a type variable.
+ *
+ * The [constraint] reflects a specification by the particle author, not by type inference.
+ */
+data class TypeVariable(val name: String, val constraint: Type? = null) : Type {
     override val tag = Tag.TypeVariable
 
-    override fun toLiteral() = Literal(tag, LiteralName(name))
+    override fun toLiteral() = Literal(tag, VariableLiteral(name, constraint?.toLiteral()))
 
     override fun toString(options: Type.ToStringOptions) = "~$name"
 
-    /** [Literal][arcs.core.common.Literal] representation of the name. */
-    data class LiteralName(val name: String) : arcs.core.common.Literal
+    /** [Literal][arcs.core.common.Literal] representation of the variable. */
+    data class VariableLiteral(
+        val name: String,
+        val constraint: arcs.core.common.Literal? = null
+    ) : arcs.core.common.Literal
 
     /** [TypeLiteral] representation of a [TypeVariable]. */
-    data class Literal(override val tag: Tag, override val data: LiteralName) : TypeLiteral
+    data class Literal(override val tag: Tag, override val data: VariableLiteral) : TypeLiteral
 }

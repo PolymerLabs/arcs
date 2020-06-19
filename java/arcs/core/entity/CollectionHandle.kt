@@ -52,9 +52,9 @@ class CollectionHandle<T : Storable, R : Referencable>(
     }
 
     // region implement ReadCollectionHandle<T>
-    override fun size() = fetchAll().size
+    override fun size() = checkPreconditions { storageProxy.getParticleViewUnsafe().size }
 
-    override fun isEmpty() = fetchAll().isEmpty()
+    override fun isEmpty() = checkPreconditions { storageProxy.getParticleViewUnsafe().isEmpty() }
 
     override fun fetchAll() = checkPreconditions {
         adaptValues(storageProxy.getParticleViewUnsafe())
@@ -85,6 +85,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
         )
     }
 
+    // TODO(b/159257058): don't read the collection contents for write ops
     override fun clear(): Job = checkPreconditions {
         val individualJobs = storageProxy.getParticleViewUnsafe().map {
             storageProxy.applyOp(
@@ -97,13 +98,17 @@ class CollectionHandle<T : Storable, R : Referencable>(
         }
 
         val masterJob = Job()
-        val jobsRemaining = atomic(individualJobs.size)
-
-        individualJobs.forEach {
-            it.invokeOnCompletion { error ->
-                if (error != null) masterJob.completeExceptionally(error)
-                else if (jobsRemaining.decrementAndGet() == 0) {
-                    masterJob.complete()
+        if (individualJobs.isEmpty()) {
+            masterJob.complete()
+        } else {
+            val jobsRemaining = atomic(individualJobs.size)
+            individualJobs.forEach {
+                it.invokeOnCompletion { error ->
+                    if (error != null) {
+                        masterJob.completeExceptionally(error)
+                    } else if (jobsRemaining.decrementAndGet() == 0) {
+                        masterJob.complete()
+                    }
                 }
             }
         }
@@ -162,7 +167,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
         /** See [BaseHandleConfig.name]. */
         name: String,
         /** See [BaseHandleConfig.spec]. */
-        spec: HandleSpec<out Entity>,
+        spec: HandleSpec,
         /**
          * Interface to storage for [RawEntity] objects backing an `entity: T`.
          *

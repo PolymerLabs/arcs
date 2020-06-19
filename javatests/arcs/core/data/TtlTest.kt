@@ -43,4 +43,17 @@ class TtlTest {
         assertFalse(Ttl.Minutes(60).isInfinite)
         assertTrue(Ttl.Infinite.isInfinite)
     }
+
+    @Test
+    fun ttl_fromString() {
+        assertThat(Ttl.fromString("20minutes")).isEqualTo(Ttl.Minutes(20))
+        assertThat(Ttl.fromString("1 minute")).isEqualTo(Ttl.Minutes(1))
+        assertThat(Ttl.fromString("5m")).isEqualTo(Ttl.Minutes(5))
+        assertThat(Ttl.fromString("6 hours")).isEqualTo(Ttl.Hours(6))
+        assertThat(Ttl.fromString("1hour")).isEqualTo(Ttl.Hours(1))
+        assertThat(Ttl.fromString("24h")).isEqualTo(Ttl.Hours(24))
+        assertThat(Ttl.fromString("3 days")).isEqualTo(Ttl.Days(3))
+        assertThat(Ttl.fromString("1 day")).isEqualTo(Ttl.Days(1))
+        assertThat(Ttl.fromString("2d")).isEqualTo(Ttl.Days(2))
+    }
 }

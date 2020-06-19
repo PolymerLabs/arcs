@@ -180,9 +180,9 @@ export class SlotConnection implements Comparable<SlotConnection> {
     consumeRes.push(`${this.name}:`);
     consumeRes.push('consumes');
     if (this.targetSlot) {
-      consumeRes.push(`${
+      consumeRes.push(
           (nameMap && nameMap.get(this.targetSlot)) ||
-          this.targetSlot.localName}`);
+          this.targetSlot.localName);
     }
 
     if (options && options.showUnresolved) {

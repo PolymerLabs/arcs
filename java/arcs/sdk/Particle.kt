@@ -30,7 +30,7 @@ typealias Particle = Particle
  */
 open class HandleHolderBase(
     private val particleName: String,
-    private val entitySpecs: Map<String, EntitySpec<out Entity>>
+    private val entitySpecs: Map<String, Set<EntitySpec<out Entity>>>
 ) : HandleHolder {
     val handles = mutableMapOf<String, Handle>().withDefault { handleName ->
         checkHandleIsValid(handleName)
@@ -47,7 +47,7 @@ open class HandleHolderBase(
             return handle.dispatcher
         }
 
-    override fun getEntitySpec(handleName: String): EntitySpec<out Entity> {
+    override fun getEntitySpecs(handleName: String): Set<EntitySpec<out Entity>> {
         checkHandleIsValid(handleName)
         return entitySpecs.getValue(handleName)
     }

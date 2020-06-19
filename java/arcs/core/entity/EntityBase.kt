@@ -20,10 +20,12 @@ import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.Schema
 import arcs.core.data.Ttl
+import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.util.Time
+import java.math.BigInteger
 import kotlin.reflect.KProperty
 
 open class EntityBase(
@@ -40,7 +42,7 @@ open class EntityBase(
      */
     final override var entityId: String? = entityId
         private set
-    var creationTimestamp: Long = creationTimestamp
+    final override var creationTimestamp: Long = creationTimestamp
         private set
     final override var expirationTimestamp: Long = expirationTimestamp
         private set
@@ -133,6 +135,9 @@ open class EntityBase(
     /** Returns the [FieldType] for the given singleton field, or null if it does not exist. */
     private fun getSingletonTypeOrNull(field: String) = schema.fields.singletons[field]
 
+    /** Returns true if the singleton has the Field. */
+    protected fun hasSingletonField(field: String) = getSingletonTypeOrNull(field) != null
+
     /**
      * Returns the [FieldType] for the given collection field.
      *
@@ -146,8 +151,11 @@ open class EntityBase(
     /** Returns the [FieldType] for the given collection field, or null if it does not exist. */
     private fun getCollectionTypeOrNull(field: String) = schema.fields.collections[field]
 
+    /** Returns true if the collection has the Field. */
+    protected fun hasCollectionField(field: String) = getCollectionTypeOrNull(field) != null
+
     /** Checks that the given value is of the expected type. */
-    private fun checkType(field: String, value: Any?, type: FieldType) {
+    private fun checkType(field: String, value: Any?, type: FieldType, context: String = "") {
         if (value == null) {
             // Null values always pass.
             return
@@ -156,39 +164,42 @@ open class EntityBase(
         return when (type) {
             is FieldType.Primitive -> when (type.primitiveType) {
                 PrimitiveType.Boolean -> require(value is Boolean) {
-                    "Expected Boolean for $entityClassName.$field, but received $value."
+                    "Expected Boolean for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Number -> require(value is Double) {
-                    "Expected Double for $entityClassName.$field, but received $value."
+                    "Expected Double for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Text -> require(value is String) {
-                    "Expected String for $entityClassName.$field, but received $value."
+                    "Expected String for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Byte -> require(value is Byte) {
-                    "Expected Byte for $entityClassName.$field, but received $value."
+                    "Expected Byte for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Short -> require(value is Short) {
-                    "Expected Short for $entityClassName.$field, but received $value."
+                    "Expected Short for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Int -> require(value is Int) {
-                    "Expected Int for $entityClassName.$field, but received $value."
+                    "Expected Int for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Long -> require(value is Long) {
-                    "Expected Long for $entityClassName.$field, but received $value."
+                    "Expected Long for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Char -> require(value is Char) {
-                    "Expected Char for $entityClassName.$field, but received $value."
+                    "Expected Char for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Float -> require(value is Float) {
-                    "Expected Float for $entityClassName.$field, but received $value."
+                    "Expected Float for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Double -> require(value is Double) {
-                    "Expected Double for $entityClassName.$field, but received $value."
+                    "Expected Double for $context$entityClassName.$field, but received $value."
+                }
+                PrimitiveType.BigInt -> require(value is BigInteger) {
+                    "Expected BigInt for $context$entityClassName.$field, but received $value."
                 }
             }
             is FieldType.EntityRef -> {
                 require(value is Reference<*>) {
-                    "Expected Reference for $entityClassName.$field, but received $value."
+                    "Expected Reference for $context$entityClassName.$field, but received $value."
                 }
                 require(value.schemaHash == type.schemaHash) {
                     "Expected Reference type to have schema hash ${type.schemaHash} but had " +
@@ -198,6 +209,12 @@ open class EntityBase(
             is FieldType.Tuple -> {
                 // TODO(b/156003617)
                 throw NotImplementedError("[FieldType.Tuple]s are not supported.")
+            }
+            is FieldType.ListOf -> {
+                require(value is List<*>) {
+                    "Expected list for $entityClassName.$field, but received $value."
+                }
+                value.forEach { checkType(field, it, type.primitiveType, "member of ") }
             }
         }
     }
@@ -236,7 +253,7 @@ open class EntityBase(
      * @param nestedEntitySpecs mapping from [SchemaHash] to [EntitySpec], used when dereferencing
      *     [Reference] fields inside the entity
      */
-    fun deserialize(
+    open fun deserialize(
         rawEntity: RawEntity,
         nestedEntitySpecs: Map<SchemaHash, EntitySpec<out Entity>> = mapOf()
     ) {
@@ -274,11 +291,15 @@ open class EntityBase(
                 handleName
             ).toString()
         }
+        val now = time.currentTimeMillis
         if (creationTimestamp == UNINITIALIZED_TIMESTAMP) {
-            creationTimestamp = time.currentTimeMillis
+            creationTimestamp = now
             if (ttl != Ttl.Infinite) {
                 expirationTimestamp = ttl.calculateExpiration(time)
             }
+        }
+        require(creationTimestamp <= now) {
+            "Cannot set a future creationTimestamp=$creationTimestamp."
         }
     }
 
@@ -343,11 +364,16 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
         PrimitiveType.Char -> (value as Char).toReferencable()
         PrimitiveType.Float -> (value as Float).toReferencable()
         PrimitiveType.Double -> (value as Double).toReferencable()
+        PrimitiveType.BigInt -> (value as BigInteger).toReferencable()
     }
     is FieldType.EntityRef -> (value as Reference<*>).toReferencable()
     // TODO(b/155025255)
     is FieldType.Tuple ->
         throw NotImplementedError("[FieldType.Tuple]s cannot be converted to references.")
+    is FieldType.ListOf ->
+        (value as List<*>).map {
+            toReferencable(it!!, type.primitiveType)
+        }.toReferencable(type)
 }
 
 private fun fromReferencable(
@@ -376,5 +402,14 @@ private fun fromReferencable(
         // TODO(b/155025255)
         is FieldType.Tuple ->
             throw NotImplementedError("References cannot be converted [FieldType.Tuple]s.")
+        is FieldType.ListOf -> {
+            require(referencable is ReferencableList<*>) {
+                "Expected ReferencableList but was $referencable."
+            }
+            requireNotNull(referencable.value) {
+                "ReferencableList encoded an unexpected null value."
+            }
+            referencable.value.map { fromReferencable(it, type.primitiveType, nestedEntitySpecs) }
+        }
     }
 }

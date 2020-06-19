@@ -13,9 +13,10 @@ import {StorageDriverProvider, DriverFactory} from './driver-factory.js';
 import {VolatileDriver, VolatileMemoryProvider} from './volatile.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
 import {Exists} from './driver.js';
-import {CapabilitiesResolver, StorageKeyOptions} from '../../capabilities-resolver.js';
 import {ArcId} from '../../id.js';
-import {Capabilities} from '../../capabilities.js';
+import {Capabilities, Persistence, Encryption, Ttl, Queryable, Shareable} from '../../capabilities.js';
+import {CapabilitiesResolver} from '../../capabilities-resolver.js';
+import {StorageKeyFactory, StorageKeyOptions} from '../../storage-key-factory.js';
 
 export class RamDiskStorageKey extends StorageKey {
   public static readonly protocol = 'ramdisk';
@@ -41,6 +42,18 @@ export class RamDiskStorageKey extends StorageKey {
     }
     const unique = match[1];
     return new RamDiskStorageKey(unique);
+  }
+}
+
+export class RamDiskStorageKeyFactory extends StorageKeyFactory {
+  get protocol() { return RamDiskStorageKey.protocol; }
+
+  capabilities(): Capabilities {
+    return Capabilities.create([Persistence.inMemory(), Shareable.any()]);
+  }
+
+  create(options: StorageKeyOptions): StorageKey {
+    return new RamDiskStorageKey(options.location());
   }
 }
 
@@ -74,9 +87,6 @@ export class RamDiskStorageDriverProvider implements StorageDriverProvider {
   static register(memoryProvider: VolatileMemoryProvider) {
     DriverFactory.register(new RamDiskStorageDriverProvider(memoryProvider));
     StorageKeyParser.addParser(RamDiskStorageKey.protocol, RamDiskStorageKey.fromString);
-    CapabilitiesResolver.registerKeyCreator(
-        RamDiskStorageKey.protocol,
-        Capabilities.tiedToRuntime,
-        (options: StorageKeyOptions) => new RamDiskStorageKey(options.location()));
-    }
+    CapabilitiesResolver.registerStorageKeyFactory(new RamDiskStorageKeyFactory());
+  }
 }

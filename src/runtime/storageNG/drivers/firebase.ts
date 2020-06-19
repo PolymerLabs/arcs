@@ -16,8 +16,9 @@ import {RuntimeCacheService} from '../../runtime-cache.js';
 import {assert} from '../../../platform/assert-web.js';
 import {firebase} from '../../../../concrete-storage/firebase.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
-import {Capabilities} from '../../capabilities.js';
-import {CapabilitiesResolver, StorageKeyOptions} from '../../capabilities-resolver.js';
+import {CapabilitiesResolver} from '../../capabilities-resolver.js';
+import {Capabilities, Persistence, Shareable} from '../../capabilities.js';
+import {StorageKeyOptions, StorageKeyFactory} from '../../storage-key-factory.js';
 
 export {firebase};
 
@@ -234,13 +235,23 @@ export class FirebaseStorageDriverProvider implements StorageDriverProvider {
     DriverFactory.register(new FirebaseStorageDriverProvider(cacheService));
     StorageKeyParser.addParser(FirebaseStorageKey.protocol, FirebaseStorageKey.fromString);
     const {projectId, domain, apiKey} = options;
-    CapabilitiesResolver.registerKeyCreator(
-        FirebaseStorageKey.protocol,
-        Capabilities.persistent,
-        (options: StorageKeyOptions) => new FirebaseStorageKey(projectId, domain, apiKey, options.location()));
+    CapabilitiesResolver.registerStorageKeyFactory(new FirebaseStorageKeyFactory(options));
   }
 }
 
+export class FirebaseStorageKeyFactory extends StorageKeyFactory {
+  constructor(public readonly options: FirebaseStorageKeyOptions) { super(); }
+  get protocol() { return FirebaseStorageKey.protocol; }
+
+  capabilities(): Capabilities {
+    return Capabilities.create([Persistence.onDisk(), Shareable.any()]);
+  }
+
+  create(options: StorageKeyOptions): StorageKey {
+    const {projectId, domain, apiKey} = this.options;
+    return new FirebaseStorageKey(projectId, domain, apiKey, options.location());
+  }
+}
 // If you want to test using the firebase driver you have three options.
 // (1) for (_slow_) manual testing, call FirebaseStorageDriverProvider.register()
 // somewhere at the beginning of your test; if you want to be hermetic,

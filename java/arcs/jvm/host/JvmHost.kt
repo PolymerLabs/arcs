@@ -25,11 +25,4 @@ open class JvmHost(
     vararg particles: ParticleRegistration
 ) : AbstractArcHost(schedulerProvider, *particles) {
     override val platformTime: Time = JvmTime
-
-    override suspend fun shutdown() {
-        super.shutdown()
-        if (schedulerProvider is JvmSchedulerProvider) {
-            schedulerProvider.cancelAll()
-        }
-    }
 }

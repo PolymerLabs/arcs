@@ -111,7 +111,6 @@ def _impl(repository_ctx):
         repository_ctx.symlink("{0}/{1}".format(src_path, dep), alias)
 
     repository_ctx.file("{0}/dependencies/.extracted".format(src_path), "\n".join(deps_names))
-    repository_ctx.file("{0}/cache/.lock".format(src_path), "")
 
     repository_ctx.file("{0}/BUILD".format(src_path), KOTLIN_NATIVE_BUILD_FILE)
 

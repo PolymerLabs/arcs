@@ -393,6 +393,93 @@ describe('TypeChecker', () => {
     assert.isFalse(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
   });
 
+  it('can compare a type variable with a tuple', async () => {
+    const leftType = TypeVariable.make('a');
+    const rightType = new TupleType([TypeVariable.make('b'), TypeVariable.make('c')]);
+    assert.isTrue(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isTrue(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+
+  it('can compare a type variable with a tuple (with constraints)', async () => {
+    const canWrite = EntityType.make(['Product', 'Thing'], {});
+    const leftType = TypeVariable.make('a', canWrite);
+    const rightType = new TupleType([TypeVariable.make('b'), TypeVariable.make('c')]);
+    assert.isFalse(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isFalse(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+
+  it('can compare a collection with a tuple', async () => {
+    const leftType = TypeVariable.make('a').collectionOf();
+    const rightType = new TupleType([TypeVariable.make('b'), TypeVariable.make('c')]);
+    assert.isFalse(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isFalse(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+
+  it('can compare a tuple of references with a tuple of variables', async () => {
+    const leftType = new TupleType([
+      EntityType.make(['Thing'], {}).referenceTo(),
+      EntityType.make(['Product'], {}).referenceTo()
+    ]);
+    const rightType = new TupleType([
+      TypeVariable.make('a'),
+      TypeVariable.make('b')
+    ]);
+    assert.isTrue(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isTrue(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+
+  it('can compare equal tuples of entity references', async () => {
+    const leftType = new TupleType([
+      EntityType.make(['Thing'], {}).referenceTo(),
+      EntityType.make(['Product'], {}).referenceTo()
+    ]);
+    const rightType = new TupleType([
+      EntityType.make(['Thing'], {}).referenceTo(),
+      EntityType.make(['Product'], {}).referenceTo()
+    ]);
+    assert.isTrue(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isTrue(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+
+  it('can compare different tuples of entity references', async () => {
+    const leftType = new TupleType([
+      EntityType.make(['Thing'], {}).referenceTo(),
+      EntityType.make(['Product'], {}).referenceTo()
+    ]);
+    const rightType = new TupleType([
+      EntityType.make(['Person'], {}).referenceTo(),
+      EntityType.make(['Friend'], {}).referenceTo()
+    ]);
+    assert.isFalse(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isFalse(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+
+  it('can compare tuples of entity references, one strictly smaller than the other', async () => {
+    const leftType = new TupleType([
+      EntityType.make(['Thing', 'Product'], {}).referenceTo(),
+      EntityType.make(['Person', 'Friend'], {}).referenceTo()
+    ]);
+    const rightType = new TupleType([
+      EntityType.make(['Product'], {}).referenceTo(),
+      EntityType.make(['Friend'], {}).referenceTo()
+    ]);
+    assert.isTrue(TypeChecker.compareTypes(
+      {type: leftType, direction: 'writes'},
+      {type: rightType, direction: 'reads'}
+    ));
+    assert.isFalse(TypeChecker.compareTypes(
+      {type: leftType, direction: 'reads'},
+      {type: rightType, direction: 'writes'}
+    ));
+  });
+
+  it('can compare tuples of different arities', async () => {
+    const leftType = new TupleType([TypeVariable.make('a'), TypeVariable.make('b')]);
+    const rightType = new TupleType([TypeVariable.make('c')]);
+    assert.isFalse(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isFalse(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+
   it(`doesn't mutate types provided to effectiveType calls`, () => {
     const a = TypeVariable.make('a');
     assert.isNull(a.variable._resolution);

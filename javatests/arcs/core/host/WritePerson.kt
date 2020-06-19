@@ -10,7 +10,7 @@ class WritePerson : AbstractWritePerson() {
 
     var deferred = CompletableDeferred<Boolean>()
 
-    override suspend fun onFirstStart() {
+    override fun onFirstStart() {
         firstStartCalled = true
         if (throws) {
             throw IllegalArgumentException("Boom!")
