@@ -90,10 +90,7 @@ class EntityHandleManager(
     private val dereferencerFactory =
         EntityDereferencerFactory(stores, scheduler, activationFactory)
 
-    /**
-     * Any readable handles created by the [EntityHandleManager] will have prepared their underlying
-     * [StorageProxy]'s to be synchronized. This method actually triggers their sync requests.
-     */
+    @Deprecated("Will be replaced by ParticleContext lifecycle handling")
     suspend fun initiateProxySync() {
         proxyMutex.withLock {
             singletonStorageProxies.values.forEach { it.maybeInitiateSync() }
@@ -173,8 +170,8 @@ class EntityHandleManager(
         val spec: HandleSpec,
         val storageKey: StorageKey,
         val storageAdapter: StorageAdapter<T, R>,
-        val particleId: String = "",
-        val immediateSync: Boolean = true
+        val particleId: String,
+        val immediateSync: Boolean
     )
 
     private suspend fun <T : Storable, R : Referencable> createSingletonHandle(

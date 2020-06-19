@@ -85,6 +85,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
         )
     }
 
+    // TODO(b/159257058): don't read the collection contents for write ops
     override fun clear(): Job = checkPreconditions {
         val individualJobs = storageProxy.getParticleViewUnsafe().map {
             storageProxy.applyOp(
