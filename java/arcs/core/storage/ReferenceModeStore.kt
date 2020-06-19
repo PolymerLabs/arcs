@@ -90,7 +90,7 @@ import kotlinx.coroutines.withTimeout
  */
 @ExperimentalCoroutinesApi
 class ReferenceModeStore private constructor(
-    options: StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>,
+    options: StoreOptions,
     /* internal */
     val containerStore: DirectStore<CrdtData, CrdtOperation, Any?>,
     /* internal */
@@ -698,13 +698,13 @@ class ReferenceModeStore private constructor(
         /* internal */ var BLOCKING_QUEUE_TIMEOUT_MILLIS = 30000L
 
         @Suppress("UNCHECKED_CAST")
-        suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
-            options: StoreOptions<Data, Op, T>
+        suspend fun create(
+            options: StoreOptions
         ): ReferenceModeStore {
             val refableOptions =
                 requireNotNull(
                     /* ktlint-disable max-line-length */
-                    options as? StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
+                    options as? StoreOptions
                     /* ktlint-enable max-line-length */
                 ) { "ReferenceMode stores only manage singletons/collections of Entities." }
 

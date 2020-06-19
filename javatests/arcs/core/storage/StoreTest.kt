@@ -249,10 +249,11 @@ class StoreTest {
             SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
             "abc"
         )
-        val store = Store(StoreOptions<CrdtSet.Data<RawEntity>, CrdtSet.Operation<RawEntity>, Set<RawEntity>>(
-            testKey,
-            CollectionType(EntityType(schema))
-        )).activate()
+        val store = Store<CrdtSet.Data<RawEntity>, CrdtSet.Operation<RawEntity>, Set<RawEntity>>(
+            StoreOptions(
+                testKey,
+                CollectionType(EntityType(schema))
+            )).activate()
 
         val remoteSet = CrdtSet<RawEntity>()
         val entity = RawEntity(

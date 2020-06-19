@@ -104,8 +104,8 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
     }
 
     /* internal */ suspend fun setupStore(referenceId: String): StoreRecord<Data, Op, T> {
-        val store = DirectStore.create(
-            StoreOptions<Data, Op, T>(
+        val store = DirectStore.create<Data, Op, T>(
+            StoreOptions(
                 storageKey = storageKey.childKeyWithComponent(referenceId),
                 type = backingType
             )
