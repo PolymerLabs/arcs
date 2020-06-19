@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {RefinementNode, Op, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, QueryNode, NumberNode, BooleanNode, TextNode} from './manifest-ast-nodes.js';
+import {RefinementNode, Op, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, QueryNode, BuiltInNode, NumberNode, BooleanNode, TextNode} from './manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
 import {Schema} from './schema.js';
 import {Entity} from './entity.js';
@@ -26,16 +26,6 @@ export enum AtLeastAsSpecific {
   NO = 'NO',
   UNKNOWN = 'UNKNOWN'
 }
-
-// The variable name used for the query argument in generated Kotlin code.
-const KOTLIN_QUERY_ARGUMENT_NAME = 'queryArgument';
-
-interface CodeGenerator {
-  escapeIdentifier(name: string): string;
-  typeFor(name: string): string;
-  defaultValFor(name: string): string;
-}
-
 
 // Using 'any' because operators are type dependent and generically can only be applied to any.
 // tslint:disable-next-line: no-any
@@ -174,16 +164,6 @@ export class Refinement {
     return '[' + this.expression.toString() + ']';
   }
 
-  toKTExpression(codeGenerator: CodeGenerator): string {
-    this.normalize();
-    return this.expression.toKTExpression(codeGenerator);
-  }
-
-  toSQLExpression(codeGenerator: CodeGenerator): string {
-    this.normalize();
-    return this.expression.toSQLExpression(codeGenerator);
-  }
-
   validateData(data: Dictionary<ExpressionPrimitives>): boolean {
     const res = this.expression.applyOperator(data);
     if (res === null && this.expression.getQueryParams().has('?')) {
@@ -202,7 +182,7 @@ export interface RefinementExpressionLiteral {
   [propName: string]: any;
 }
 
-export type RefinementExpressionNodeType = 'BinaryExpressionNode' | 'UnaryExpressionNode' | 'FieldNamePrimitiveNode' | 'QueryArgumentPrimitiveNode' | 'NumberPrimitiveNode' | 'BooleanPrimitiveNode' | 'TextPrimitiveNode';
+export type RefinementExpressionNodeType = 'BinaryExpressionNode' | 'UnaryExpressionNode' | 'FieldNamePrimitiveNode' | 'QueryArgumentPrimitiveNode' | 'NumberPrimitiveNode' | 'BooleanPrimitiveNode' | 'TextPrimitiveNode' | 'BuiltInNode';
 
 abstract class RefinementExpression {
   evalType: Primitive;
@@ -216,6 +196,7 @@ abstract class RefinementExpression {
       case 'binary-expression-node': return BinaryExpression.fromAst(expr, typeData);
       case 'unary-expression-node': return UnaryExpression.fromAst(expr, typeData);
       case 'field-name-node': return FieldNamePrimitive.fromAst(expr, typeData);
+      case 'built-in-node': return BuiltIn.fromAst(expr, typeData);
       case 'query-argument-node': return QueryArgumentPrimitive.fromAst(expr, typeData);
       case 'number-node': return NumberPrimitive.fromAst(expr);
       case 'boolean-node': return BooleanPrimitive.fromAst(expr);
@@ -233,6 +214,7 @@ abstract class RefinementExpression {
       case 'BinaryExpressionNode': return BinaryExpression.fromLiteral(expr);
       case 'UnaryExpressionNode': return UnaryExpression.fromLiteral(expr);
       case 'FieldNamePrimitiveNode': return FieldNamePrimitive.fromLiteral(expr);
+      case 'BuiltInNode': return BuiltIn.fromLiteral(expr);
       case 'QueryArgumentPrimitiveNode': return QueryArgumentPrimitive.fromLiteral(expr);
       case 'NumberPrimitiveNode': return NumberPrimitive.fromLiteral(expr);
       case 'BooleanPrimitiveNode': return BooleanPrimitive.fromLiteral(expr);
@@ -256,10 +238,6 @@ abstract class RefinementExpression {
   }
 
   abstract toString(): string;
-
-  abstract toSQLExpression(codeGenerator: CodeGenerator): string;
-
-  abstract toKTExpression(codeGenerator: CodeGenerator): string;
 
   abstract applyOperator(data: Dictionary<ExpressionPrimitives>): ExpressionPrimitives;
 
@@ -329,14 +307,6 @@ export class BinaryExpression extends RefinementExpression {
 
   toString(): string {
     return `(${this.leftExpr.toString()} ${this.operator.op} ${this.rightExpr.toString()})`;
-  }
-
-  toSQLExpression(codeGenerator: CodeGenerator): string {
-    return `(${this.leftExpr.toSQLExpression(codeGenerator)} ${this.operator.toSQLOp()} ${this.rightExpr.toSQLExpression(codeGenerator)})`;
-  }
-
-  toKTExpression(codeGenerator: CodeGenerator): string {
-    return `(${this.leftExpr.toKTExpression(codeGenerator)} ${this.operator.toKTOp()} ${this.rightExpr.toKTExpression(codeGenerator)})`;
   }
 
   applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
@@ -517,14 +487,6 @@ export class UnaryExpression extends RefinementExpression {
     return `(${this.operator.op === Op.NEG ? '-' : this.operator.op} ${this.expr.toString()})`;
   }
 
-  toSQLExpression(codeGenerator: CodeGenerator): string {
-    return `(${this.operator.toSQLOp()} ${this.expr.toSQLExpression(codeGenerator)})`;
-  }
-
-  toKTExpression(codeGenerator: CodeGenerator): string {
-    return `(${this.operator.toKTOp()}${this.expr.toKTExpression(codeGenerator)})`;
-  }
-
   applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
     const expression = this.expr.applyOperator(data);
     if (expression === null) {
@@ -589,7 +551,7 @@ export class FieldNamePrimitive extends RefinementExpression {
   }
 
   static fromAst(expression: FieldNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
-    if (typeData[expression.value] == undefined) {
+    if (typeData[expression.value] === undefined) {
       throw new Error(`Unresolved field name '${expression.value}' in the refinement expression.`);
     }
     return new FieldNamePrimitive(expression.value, typeData[expression.value]);
@@ -609,18 +571,6 @@ export class FieldNamePrimitive extends RefinementExpression {
 
   toString(): string {
     return this.value.toString();
-  }
-
-  toSQLExpression(codeGenerator: CodeGenerator): string {
-    const fixed = codeGenerator.escapeIdentifier(this.value.toString());
-    if (this.evalType === Primitive.BOOLEAN) {
-      return `(${fixed} = 1)`;
-    }
-    return fixed;
-  }
-
-  toKTExpression(codeGenerator: CodeGenerator): string {
-    return codeGenerator.escapeIdentifier(this.value.toString());
   }
 
   applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
@@ -665,15 +615,6 @@ export class QueryArgumentPrimitive extends RefinementExpression {
     return this.value.toString();
   }
 
-  toSQLExpression(codeGenerator: CodeGenerator): string {
-    return this.value.toString();
-  }
-
-  toKTExpression(codeGenerator: CodeGenerator): string {
-    // TODO(cypher1): Handle multiple query arguments.
-    return KOTLIN_QUERY_ARGUMENT_NAME;
-  }
-
   applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
     if (data[this.value] != undefined) {
       return data[this.value];
@@ -687,17 +628,26 @@ export class QueryArgumentPrimitive extends RefinementExpression {
   }
 }
 
-export class NumberPrimitive extends RefinementExpression {
-  evalType = Primitive.NUMBER;
-  value: number;
+export class BuiltIn extends RefinementExpression {
+  evalType: Primitive;
+  value: string;
 
-  constructor(value: number) {
-    super('NumberPrimitiveNode');
+  constructor(value: string, evalType: Primitive.NUMBER | Primitive.BOOLEAN | Primitive.TEXT) {
+    super('BuiltInNode');
     this.value = value;
+    this.evalType = evalType;
   }
 
-  static fromAst(expression: NumberNode): RefinementExpression {
-    return new NumberPrimitive(expression.value);
+  static fromAst(expression: BuiltInNode, _typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
+    let type = undefined;
+      switch (expression.value) {
+        case 'now()':
+          type = Primitive.NUMBER;
+          break;
+        default:
+          throw new Error(`Unresolved built in name '${expression.value}' in the refinement expression.`);
+      }
+    return new BuiltIn(expression.value, type);
   }
 
   toLiteral() {
@@ -709,25 +659,76 @@ export class NumberPrimitive extends RefinementExpression {
   }
 
   static fromLiteral(expr): RefinementExpression {
-    return new NumberPrimitive(expr.value);
+    return new BuiltIn(expr.value, expr.evalType);
   }
 
   toString(): string {
     return this.value.toString();
   }
 
-  toSQLExpression(codeGenerator: CodeGenerator): string {
-    return this.value.toString();
+  applyOperator(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
+    if (this.value === 'now()') {
+      return new Date().getTime(); // milliseconds since epoch;
+    }
+
+    // TODO: Implement TS getter for 'creationTimeStamp'
+    throw new Error(`Unhandled BuiltInNode '${this.value}' in applyOperator`);
   }
 
-  toKTExpression(codeGenerator: CodeGenerator): string {
-    // This assumes that the associated Kotlin type will be `double`.
-    if (this.value === Infinity) {
-        return 'Double.POSITIVE_INFINITY';
+  getFieldParams(): Map<string, Primitive> {
+    return new Map<string, Primitive>();
+  }
+}
+
+export class NumberPrimitive extends RefinementExpression {
+  evalType = Primitive.NUMBER;
+  value: number;
+
+  constructor(value: number, units: string[] = []) {
+    super('NumberPrimitiveNode');
+
+    // Convert to Si units.
+    this.value = value;
+    // For time units, the base unit is milliseconds.
+    for (const unit of units) {
+      switch (unit) {
+        case 'milliseconds':
+          break;
+        case 'seconds':
+          this.value *= 1000;
+          break;
+        case 'minutes':
+          this.value *= 60 * 1000;
+          break;
+        case 'hours':
+          this.value *= 60 * 60 * 1000;
+          break;
+        case 'days':
+          this.value *= 24 * 60 * 60 * 1000;
+          break;
+        default:
+          throw new Error(`Unsupported units ${unit}`);
+      }
     }
-    if (this.value === -Infinity) {
-        return 'Double.NEGATIVE_INFINITY';
-    }
+  }
+
+  static fromAst(expression: NumberNode): RefinementExpression {
+    return new NumberPrimitive(expression.value, expression.units || []);
+  }
+
+  toLiteral() {
+    return {
+      kind: this.kind,
+      evalType: this.evalType,
+      value: this.value
+    };
+  }
+
+  static fromLiteral(expr): RefinementExpression {
+    return new NumberPrimitive(expr.value, expr.units);
+  }
+
+  toString(): string {
     return this.value.toString();
   }
 
@@ -736,7 +737,7 @@ export class NumberPrimitive extends RefinementExpression {
   }
 }
 
-class BooleanPrimitive extends RefinementExpression {
+export class BooleanPrimitive extends RefinementExpression {
   evalType = Primitive.BOOLEAN;
   value: boolean;
 
@@ -765,20 +766,12 @@ class BooleanPrimitive extends RefinementExpression {
     return this.value.toString();
   }
 
-  toSQLExpression(codeGenerator: CodeGenerator): string {
-    throw new Error('BooleanPrimitive.toSQLExpression should never be called. The expression is assumed to be normalized.');
-  }
-
-  toKTExpression(codeGenerator: CodeGenerator): string {
-    return `${this.value}`;
-  }
-
   applyOperator(): ExpressionPrimitives {
     return this.value;
   }
 }
 
-class TextPrimitive extends RefinementExpression {
+export class TextPrimitive extends RefinementExpression {
   evalType = Primitive.TEXT;
   value: string;
 
@@ -805,16 +798,6 @@ class TextPrimitive extends RefinementExpression {
 
   toString(): string {
     return `'${this.value}'`;
-  }
-
-  toSQLExpression(codeGenerator: CodeGenerator): string {
-    // TODO(cypher1): Consider escaping this for SQL code generation.
-    return `'${this.value}'`;
-  }
-
-  toKTExpression(codeGenerator: CodeGenerator): string {
-    // TODO(cypher1): Consider escaping this for Kotlin code generation.
-    return `"${this.value}"`;
   }
 
   applyOperator(): ExpressionPrimitives {
@@ -1177,25 +1160,23 @@ interface OperatorInfo {
   nArgs: number;
   argType: Primitive | 'same';
   evalType: Primitive;
-  sqlOp: string;
-  ktOp: string;
 }
 
 const operatorTable: Dictionary<OperatorInfo> = {
-  [Op.AND]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN, sqlOp: 'AND', ktOp: '&&'},
-  [Op.OR]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN, sqlOp: 'OR', ktOp: '||'},
-  [Op.LT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, sqlOp: '<', ktOp: '<'},
-  [Op.GT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, sqlOp: '>', ktOp: '>'},
-  [Op.LTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, sqlOp: '<=', ktOp: '<='},
-  [Op.GTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN, sqlOp: '>=', ktOp: '>='},
-  [Op.ADD]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '+', ktOp: '+'},
-  [Op.SUB]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '-', ktOp: '-'},
-  [Op.MUL]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '*', ktOp: '*'},
-  [Op.DIV]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '/', ktOp: '/'},
-  [Op.NOT]: {nArgs: 1, argType: Primitive.BOOLEAN,  evalType: Primitive.BOOLEAN, sqlOp: 'NOT', ktOp: '!'},
-  [Op.NEG]: {nArgs: 1, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER, sqlOp: '-', ktOp: '-'},
-  [Op.EQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, sqlOp: '=', ktOp: '=='},
-  [Op.NEQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN, sqlOp: '<>', ktOp: '!='},
+  [Op.AND]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN},
+  [Op.OR]: {nArgs: 2, argType: Primitive.BOOLEAN, evalType: Primitive.BOOLEAN},
+  [Op.LT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN},
+  [Op.GT]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN},
+  [Op.LTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN},
+  [Op.GTE]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.BOOLEAN},
+  [Op.ADD]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER},
+  [Op.SUB]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER},
+  [Op.MUL]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER},
+  [Op.DIV]: {nArgs: 2, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER},
+  [Op.NOT]: {nArgs: 1, argType: Primitive.BOOLEAN,  evalType: Primitive.BOOLEAN},
+  [Op.NEG]: {nArgs: 1, argType: Primitive.NUMBER,  evalType: Primitive.NUMBER},
+  [Op.EQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN},
+  [Op.NEQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN},
 };
 
 const evalTable: Dictionary<(exprs: ExpressionPrimitives[]) => ExpressionPrimitives> = {
@@ -1239,14 +1220,6 @@ export class RefinementOperator {
       case Op.GTE: this.updateOp(Op.LTE); break;
       default: break;
     }
-  }
-
-  toSQLOp(): string {
-    return this.opInfo.sqlOp;
-  }
-
-  toKTOp(): string {
-    return this.opInfo.ktOp;
   }
 
   updateOp(operator: Op) {
@@ -1295,57 +1268,6 @@ export class RefinementOperator {
         }
       }
     }
-  }
-}
-
-export class SQLExtracter {
-  static fromSchema(schema: Schema, table: string, codeGenerator: CodeGenerator): string {
-    const filterTerms = [];
-    if (schema.refinement) {
-      filterTerms.push(schema.refinement.toSQLExpression(codeGenerator));
-    }
-    for (const field of Object.values(schema.fields)) {
-      if (field.refinement) {
-        filterTerms.push(field.refinement.toSQLExpression(codeGenerator));
-      }
-    }
-    return `SELECT * FROM ${table}` + (filterTerms.length ? ` WHERE ${filterTerms.join(' AND ')}` : '') + ';';
-  }
-}
-
-export class KTExtracter {
-  static fromSchema(schema: Schema, codeGenerator: CodeGenerator): string {
-    const genFieldAsLocal = (fieldName: string) => {
-      const type = schema.fields[fieldName].type;
-      const fixed = codeGenerator.escapeIdentifier(fieldName);
-      return `val ${fixed} = data.singletons["${fieldName}"].toPrimitiveValue(${codeGenerator.typeFor(type)}::class, ${codeGenerator.defaultValFor(type)})`;
-    };
-
-    const genQueryArgAsLocal = ([_, type]: [string, string]) => {
-        return `val ${KOTLIN_QUERY_ARGUMENT_NAME} = queryArgs as ${codeGenerator.typeFor(type)}`;
-    };
-
-    const fieldNames = new Set<string>();
-    const filterTerms = [];
-    if (schema.refinement) {
-      [...schema.refinement.getFieldParams().keys()].forEach(name => fieldNames.add(name));
-      filterTerms.push(schema.refinement.toKTExpression(codeGenerator));
-    }
-    for (const field of Object.values(schema.fields)) {
-      if (field.refinement) {
-        [...field.refinement.getFieldParams().keys()].forEach(name => fieldNames.add(name));
-        filterTerms.push(field.refinement.toKTExpression(codeGenerator));
-      }
-    }
-
-    const locals = [...fieldNames].map(genFieldAsLocal);
-    if (schema.refinement) {
-      const querysArgs = [...schema.refinement.getQueryParams()].map(genQueryArgAsLocal);
-      locals.push(...querysArgs);
-    }
-    const expr = filterTerms.length > 0 ? `${filterTerms.join(' && ')}` : 'true';
-
-    return `${locals.map(x => `${x}\n`).join('')}${expr}`;
   }
 }
 
@@ -1707,5 +1629,48 @@ export class Normalizer {
     const dneq0 = frac.den.toExpression(Op.NEQ);
     return new BinaryExpression(neq0, dneq0, new RefinementOperator(Op.AND));
   }
+}
 
+/**
+ * A visitor for the refinement expression to aid translation of refinement expressions
+ * into expressions in another language, e.g. SQL or Kotlin.
+ */
+export abstract class RefinementExpressionVisitor<T> {
+
+  generate(refinement: Refinement): T {
+    refinement.normalize();
+    return this.visit(refinement.expression);
+  }
+
+  visit(expression: RefinementExpression): T {
+    switch (expression.kind) {
+      case 'BinaryExpressionNode':
+        return this.visitBinaryExpression(expression as BinaryExpression);
+      case 'BooleanPrimitiveNode':
+        return this.visitBooleanPrimitive(expression as BooleanPrimitive);
+      case 'BuiltInNode':
+        return this.visitBuiltIn(expression as BuiltIn);
+      case 'FieldNamePrimitiveNode':
+        return this.visitFieldNamePrimitive(expression as FieldNamePrimitive);
+      case 'NumberPrimitiveNode':
+        return this.visitNumberPrimitive(expression as NumberPrimitive);
+      case 'QueryArgumentPrimitiveNode':
+        return this.visitQueryArgumentPrimitive(expression as QueryArgumentPrimitive);
+      case 'TextPrimitiveNode':
+        return this.visitTextPrimitive(expression as TextPrimitive);
+      case 'UnaryExpressionNode':
+        return this.visitUnaryExpression(expression as UnaryExpression);
+      default:
+        throw new Error(`Unsupported refinement expression kind ${expression.kind}`);
+    }
+  }
+
+  abstract visitBinaryExpression(expr: BinaryExpression): T;
+  abstract visitUnaryExpression(expr: UnaryExpression): T;
+  abstract visitFieldNamePrimitive(expr: FieldNamePrimitive): T;
+  abstract visitQueryArgumentPrimitive(expr: QueryArgumentPrimitive): T;
+  abstract visitBuiltIn(expr: BuiltIn): T;
+  abstract visitNumberPrimitive(expr: NumberPrimitive): T;
+  abstract visitBooleanPrimitive(expr: BooleanPrimitive): T;
+  abstract visitTextPrimitive(expr: TextPrimitive): T;
 }

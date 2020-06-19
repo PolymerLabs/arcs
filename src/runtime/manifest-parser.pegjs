@@ -28,6 +28,18 @@
     return items[1].map(item => item[1]);
   }
 
+  /**
+   * Utility for extracting values out of comma-separated lists, of the form:
+   * `items:(X (commaOrNewline X)*)?`.
+   */
+  function extractCommaSeparated(items) {
+    if (items == null || items.length === 0) {
+      return [];
+    }
+    const [first, rest] = items;
+    return [first, ...rest.map(item => item[1])];
+  }
+
   function optional<S, R>(result: S, extract: (source: S) => R, defaultValue: R): R {
     if (result !== null) {
       const value = extract(result);
@@ -50,6 +62,12 @@
       for (const item of result) {
         checkNormal(item, `${path}/${i}`);
         i++;
+      }
+      return;
+    }
+    if (result instanceof Map) {
+      for (const [key, value] of result) {
+        checkNormal(value, `${path}/${key}`);
       }
       return;
     }
@@ -155,6 +173,8 @@ ManifestItem
   / Meta
   / Resource
   / AnnotationNode
+  / Policy
+  / Adapter
 
 Annotation = annotationRefs:(SameIndent AnnotationRef eolWhiteSpace)*
   {
@@ -392,7 +412,7 @@ MetaName = 'name' whiteSpace? ':' whiteSpace? name:id eolWhiteSpace
 
 MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
 {
-  return toAstNode<AstNode.MetaStorageKey>({key: 'storageKey', value: key, kind: 'storageKey' });
+  return toAstNode<AstNode.MetaStorageKey>({key: 'storageKey', value: key, kind: 'storage-key' });
 };
 
 MetaNamespace = 'namespace' whiteSpace? ':' whiteSpace? namespace:dottedName eolWhiteSpace
@@ -510,12 +530,16 @@ ParticleClaimIsTag
   }
 
 ParticleClaimDerivesFrom
-  = 'derives from' whiteSpace handle:lowerIdent
+  = 'derives from' whiteSpace target:dottedFields
   {
+    const targetParts = target.split('.');
+    const handle = targetParts[0];
+    const fieldPath = targetParts.slice(1);
     return toAstNode<AstNode.ParticleClaimDerivesFrom>({
       kind: 'particle-trust-claim-derives-from',
       claimType: ClaimType.DerivesFrom,
       parentHandle: handle,
+      fieldPath,
     });
   }
 
@@ -947,12 +971,14 @@ AnnotationNode
   = 'annotation' whiteSpace name:lowerIdent params:('(' whiteSpace? first:AnnotationParam rest:(whiteSpace? ',' whiteSpace? AnnotationParam)* whiteSpace? ')')? eolWhiteSpace items:(Indent (SameIndent AnnotationNodeItem)*)?
   {
     const targets = optional(items, extractIndented, []).find(item => item.kind === 'annotation-targets');
+    const multiple = optional(items, extractIndented, []).find(item => item.kind === 'annotation-multiple');
     return toAstNode<AstNode.AnnotationNode>({
         kind: 'annotation-node',
         name,
         params: optional(params, params => [params[2], ...(params[3].map(item => item[3]))], []),
         targets: targets ? targets.targets : [],
         retention: optional(items, extractIndented, []).find(item => item.kind === 'annotation-retention').retention,
+        allowMultiple: multiple ? multiple.allowMultiple : false,
         doc: optional(optional(items, extractIndented, []).find(item => item.kind === 'annotation-doc'), d => d.doc, '')
     });
   }
@@ -969,9 +995,20 @@ AnnotationParam = name:fieldName ':' whiteSpace? type:SchemaPrimitiveType {
 AnnotationNodeItem
   = AnnotationTargets
   / AnnotationRetention
+  / AnnotationMultiple
   / AnnotationDoc
 
-AnnotationTargetValue = 'Recipe' / 'Particle' / 'HandleConnection' / 'Store' / 'Handle' / 'SchemaField' / 'Schema'
+AnnotationTargetValue
+  = 'Recipe'
+  / 'Particle'
+  / 'HandleConnection'
+  / 'Store'
+  / 'Handle'
+  / 'SchemaField'
+  / 'Schema'
+  / 'PolicyField'
+  / 'PolicyTarget'
+  / 'Policy'
 
 AnnotationTargets = 'targets:'  whiteSpace '[' whiteSpace? targets:(AnnotationTargetValue (',' whiteSpace? AnnotationTargetValue)*) whiteSpace? ']' eolWhiteSpace? {
   return toAstNode<AstNode.AnnotationTargets>({
@@ -986,6 +1023,13 @@ AnnotationRetention = 'retention:' whiteSpace retention:AnnotationRetentionValue
   return toAstNode<AstNode.AnnotationRetention>({
     kind: 'annotation-retention',
     retention
+  });
+}
+
+AnnotationMultiple = 'allowMultiple:' whiteSpace bool:('true'i / 'false'i) eolWhiteSpace? {
+  return toAstNode<AstNode.AnnotationMultiple>({
+    kind: 'annotation-multiple',
+    allowMultiple: bool.toLowerCase() === 'true'
   });
 }
 
@@ -1275,7 +1319,7 @@ RecipeHandleFate
   / '`slot'
 
 RecipeHandle
-  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? annotations:SpaceAnnotationRefList? eolWhiteSpace
+  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? annotations:SpaceAnnotationRefList? whiteSpace? adapter:ApplyAdapter? eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeHandle>({
       kind: 'handle',
@@ -1283,16 +1327,18 @@ RecipeHandle
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
       fate,
       annotations: annotations || [],
+      adapter
     });
   }
 
 RecipeSyntheticHandle
-  = name:NameWithColon? 'join' whiteSpace '(' whiteSpace? first:lowerIdent rest:(whiteSpace? ',' whiteSpace? lowerIdent)* ')' eolWhiteSpace
+  = name:NameWithColon? 'join' whiteSpace '(' whiteSpace? first:lowerIdent rest:(whiteSpace? ',' whiteSpace? lowerIdent)* ')' whiteSpace? adapter:ApplyAdapter? eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeSyntheticHandle>({
       kind: 'synthetic-handle',
       name,
       associations: [first].concat(rest.map(t => t[3])),
+      adapter,
     });
   }
 
@@ -1309,7 +1355,7 @@ RequireHandleSection
   = 'handle' name:(whiteSpace LocalName)? ref:(whiteSpace HandleRef)? eolWhiteSpace
   {
     return toAstNode<AstNode.RequireHandleSection>({
-      kind: 'requireHandle',
+      kind: 'require-handle',
       name: optional(name, name => name[1], null),
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
     });
@@ -1562,6 +1608,84 @@ SchemaPrimitiveType
     });
   }
 
+Adapter "an adapter, (e.g. adapter Foo(param: Person { name: Text }) => Friend { nickName: param.name } )"
+  = 'adapter' whiteSpace adapterName:AdapterName '(' multiLineSpace? params:AdapterParamsDeclaration multiLineSpace? ')' whiteSpace? '=>' multiLineSpace? body:AdapterBodyDefinition eolWhiteSpace
+  {
+     return toAstNode<AstNode.AdapterNode>({
+       kind: 'adapter-node',
+       name: adapterName,
+       params,
+       body
+     });
+  }
+
+AdapterName
+  = upperIdent
+
+AdapterParamName
+  = fieldName
+
+AdapterParamsDeclaration
+  = param:AdapterParam restParams:(whiteSpace? ',' multiLineSpace AdapterParam)* {
+     const params = [param].concat(restParams.map(rparam => rparam[3]));
+     const names = params.map(p => p.name);
+     const duplicateNames = names.filter((item, index) => names.indexOf(item) !== index);
+     if (duplicateNames.length) {
+        error(`Duplicate adapter param names ${duplicateNames.join(',')}`);
+     } else {
+        return params;
+     }
+  }
+
+AdapterParam
+  = paramName:AdapterParamName whiteSpace? ':' whiteSpace? type:ParticleHandleConnectionType {
+     return toAstNode<AstNode.AdapterParam>({
+        kind: 'adapter-param',
+        name: paramName,
+        type
+     });
+  }
+
+AdapterBodyDefinition
+  = names:((upperIdent / '*') whiteSpace?)* '{' multiLineSpace fields:AdapterFields? ','? multiLineSpace '}' {
+     return toAstNode<AstNode.AdapterBodyDefinition>({
+        kind: 'adapter-body-definition',
+        names: optional(names, names => names.map(name => name[0]).filter(name => name !== '*'), ['*']),
+        fields
+     });
+  }
+
+AdapterFields
+  = field:AdapterField rest:(',' multiLineSpace AdapterField)* {
+    return [field].concat(rest.map(rfield => rfield[2]));
+  }
+
+AdapterField
+  = fieldName:fieldName whiteSpace? ':' whiteSpace? expression:AdapterScopeExpression {
+    return toAstNode<AstNode.AdapterField>({
+        kind: 'adapter-field',
+        name: fieldName,
+        expression
+    });
+  }
+
+AdapterScopeExpression "a dotted scope chain, starting at a root param, e.g. param.schemaFieldName.schemaFieldName"
+  = paramName:AdapterParamName scopeChain:('.' fieldName)* {
+    return toAstNode<AstNode.AdapterScopeExpression>({
+      kind: 'adapter-scope-expression',
+      scopeChain: [paramName].concat(scopeChain.map(scope => scope[1]))
+    });
+  }
+
+ApplyAdapter "an apply expression, e.g. apply AdapterName(param1, param2) or apply AdapterName(this)"
+  = 'apply' whiteSpace? adapterName:AdapterName '(' param:fieldName restParams:(',' whiteSpace? fieldName)* whiteSpace? ')' {
+    return toAstNode<AstNode.AppliedAdapter>({
+      kind: 'adapter-apply-node',
+      name: adapterName,
+      params: [param].concat(restParams.map(p => p[2]))
+    });
+  }
+
 KotlinPrimitiveType
   = type:('Byte' / 'Short' / 'Int' / 'Long' / 'Char' / 'Float' / 'Double')
   {
@@ -1678,13 +1802,17 @@ PrimaryExpression
     const operator = op[0];
     return toAstNode<AstNode.UnaryExpressionNode>({kind: 'unary-expression-node', expr, operator});
   }
-  / num: NumberType
+  / num: NumberType units:Units?
   {
-    return toAstNode<AstNode.NumberNode>({kind: 'number-node', value: num});
+    return toAstNode<AstNode.NumberNode>({kind: 'number-node', value: num, units});
   }
   / bool:('true'i / 'false'i)
   {
     return toAstNode<AstNode.BooleanNode>({kind: 'boolean-node', value: bool.toLowerCase() === 'true'});
+  }
+  / fn: ('now()' / 'creationTimestamp')
+  {
+    return toAstNode<AstNode.BuiltInNode>({kind: 'built-in-node', value: fn});
   }
   / fn: fieldName
   {
@@ -1695,9 +1823,32 @@ PrimaryExpression
     // TODO(cypher1): Add support for named query arguments
     return toAstNode<AstNode.QueryNode>({kind: 'query-argument-node', value: fn});
   }
-  / "'" txt:[^'\n]* "'"
+  / "'" txt:("\\'"/[^'\n])* "'"
   {
-    return toAstNode<AstNode.TextNode>({kind: 'text-node', value: txt.join('')});
+    const value = txt.join('')
+      .replace('\\t', '\t')
+      .replace('\\b', '\b')
+      .replace('\\n', '\n')
+      .replace('\\r', '\r')
+      .replace('\\\'', '\'')
+      .replace('\\"', '"')
+      .replace('\\\\', '\\');
+    return toAstNode<AstNode.TextNode>({kind: 'text-node', value});
+  }
+
+Units = whiteSpace? name: UnitName {
+  // TODO: Support complex units like metres per second.
+  return [name];
+}
+
+UnitName
+  = unit:('day'
+  / 'hour'
+  / 'minute'
+  / 'second'
+  / 'millisecond'
+  ) 's'? {
+    return unit+'s';
   }
 
 NumberType
@@ -1720,6 +1871,87 @@ NumberedUnits
       count: count.join(''),
       units
     });
+  }
+
+Policy
+  = 'policy' whiteSpace name:upperIdent openBrace items:(PolicyItem (commaOrNewline PolicyItem)*)? closeBrace eolWhiteSpace?
+  {
+    const targets: AstNode.PolicyTarget[] = [];
+    const configs: AstNode.PolicyConfig[] = [];
+    for (const item of extractCommaSeparated(items)) {
+      switch (item.kind) {
+        case 'policy-target':
+          targets.push(item);
+          break;
+        case 'policy-config':
+          configs.push(item);
+          break;
+        default:
+          error(`Unknown PolicyItem: ${item}`);
+      }
+    }
+    return toAstNode<AstNode.Policy>({
+      kind: 'policy',
+      name,
+      targets,
+      configs,
+      annotationRefs: [], // This gets overridden by the Manifest rule.
+    });
+  }
+
+PolicyItem
+  = PolicyTarget
+  / PolicyConfig
+
+PolicyTarget
+  = annotationRefs:(AnnotationRef multiLineSpace)* 'from' whiteSpace schemaName:upperIdent whiteSpace 'access' fields:PolicyFieldSet
+  {
+    return toAstNode<AstNode.PolicyTarget>({
+      kind: 'policy-target',
+      schemaName,
+      fields,
+      annotationRefs: annotationRefs.map(item => item[0]),
+    });
+  }
+
+PolicyFieldSet 'Set of policy fields enclosed in curly braces'
+  = openBrace fields:(PolicyField (commaOrNewline PolicyField)*)? closeBrace
+  {
+    return extractCommaSeparated(fields);
+  }
+
+PolicyField
+  = annotationRefs:(AnnotationRef multiLineSpace)* name:fieldName subfields:PolicyFieldSet?
+  {
+    return toAstNode<AstNode.PolicyField>({
+      kind: 'policy-field',
+      name,
+      subfields: subfields || [],
+      annotationRefs: annotationRefs.map(item => item[0]),
+    });
+  }
+
+PolicyConfig
+  = 'config' whiteSpace name:simpleName openBrace items:(PolicyConfigKeyValuePair (commaOrNewline PolicyConfigKeyValuePair)*)? closeBrace
+  {
+    const metadata: Map<string, string> = new Map();
+    for (const [key, value] of extractCommaSeparated(items)) {
+      if (metadata.has(key)) {
+        error(`Duplicate key in policy config: ${key}.`);
+      }
+      metadata.set(key, value);
+    }
+    return toAstNode<AstNode.PolicyConfig>({
+      kind: 'policy-config',
+      name,
+      metadata,
+    });
+  }
+
+PolicyConfigKeyValuePair
+  = key:simpleName whiteSpace? ':' whiteSpace? value:QuotedString
+  {
+    return [key, value];
   }
 
 Indent "indentation" = &(i:" "+ &{
@@ -1794,6 +2026,18 @@ QuotedString "a 'quoted string'"
     });
     return parts.join('') + end.join('');
  }
+
+// Helpers for creating curly brace blocks with comma or newline separated
+// items, optional whitespace, and optional trailing commas.
+//
+// Example: openBrace X (commaOrNewline X)* closeBrace
+commaOrNewline
+  = multiLineSpace ',' multiLineSpace
+  / eolWhiteSpace multiLineSpace
+openBrace
+  = multiLineSpace '{' multiLineSpace
+closeBrace
+  = commaOrNewline? multiLineSpace '}'
 
 backquotedString "a `backquoted string`"
   = '`' pattern:([^`]+) '`' { return pattern.join(''); }

@@ -23,10 +23,6 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
 RUN curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add
 RUN echo "deb [arch=amd64]  http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
 RUN apt-get -y update && apt-get -y install google-chrome-stable
-# Install Selenium
-RUN curl https://chromedriver.storage.googleapis.com/81.0.4044.69/chromedriver_linux64.zip -o  /usr/bin/chromedriver_linux64.zip
-RUN unzip /usr/bin/chromedriver_linux64.zip -d /usr/bin/chromedriver
-RUN chmod +x /usr/bin/chromedriver
 
 # Set up workspace
 ENV WORKSPACE /usr/src/app
@@ -51,7 +47,10 @@ ENV ANDROID_HOME "/sdk"
 COPY tools/android-sdk-packages.txt tools/android-sdk-packages.txt
 COPY tools/install-android-sdk tools/install-android-sdk
 COPY tools/logging.sh tools/logging.sh
-RUN tools/install-android-sdk ${ANDROID_HOME}
+# Android sdkmanager does not have a quiet option and outputs highly
+# verbose progress to stdout, so we forcibly silence it at risk of
+# missing insight into failure modes.
+RUN tools/install-android-sdk ${ANDROID_HOME} > /dev/null
 
 # Install npm packages
 COPY concrete-storage/package.json concrete-storage/package.json

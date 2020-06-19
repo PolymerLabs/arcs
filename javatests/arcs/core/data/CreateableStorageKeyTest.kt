@@ -12,7 +12,9 @@
 package arcs.core.data
 
 import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import com.google.common.truth.Truth.assertThat
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -21,33 +23,100 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class CreateableStorageKeyTest {
 
+    @Before
+    fun registerParsers() = DriverAndKeyConfigurator.configureKeyParsers()
+
     @Test
-    fun createableStorageKey_parses() {
+    fun serializesToString() {
+        assertThat(
+            CreateableStorageKey("abc").toString()
+        ).isEqualTo("create://abc")
+
+        assertThat(
+            CreateableStorageKey("abc", Capabilities.Empty).toString()
+        ).isEqualTo("create://abc")
+
+        assertThat(
+            CreateableStorageKey("abc", Capabilities.TiedToArc).toString()
+        ).isEqualTo("create://abc?TiedToArc")
+
+        assertThat(
+            CreateableStorageKey("abc", Capabilities.PersistentQueryable).toString()
+        ).isEqualTo("create://abc?Persistent,Queryable")
+    }
+
+    @Test
+    fun parsesFromString() {
+        val name = "abc"
+
+        run {
+            val storageKey = StorageKeyParser.parse("create://$name")
+            assertThat(storageKey).isInstanceOf(CreateableStorageKey::class.java)
+            storageKey as CreateableStorageKey
+            assertThat(storageKey.nameFromManifest).isEqualTo(name)
+            assertThat(storageKey.capabilities.isEmpty()).isTrue()
+        }
+
+        run {
+            val storageKey = StorageKeyParser.parse("create://$name?")
+            assertThat(storageKey).isInstanceOf(CreateableStorageKey::class.java)
+            storageKey as CreateableStorageKey
+            assertThat(storageKey.nameFromManifest).isEqualTo(name)
+            assertThat(storageKey.capabilities.isEmpty()).isTrue()
+        }
+
+        run {
+            val storageKey = StorageKeyParser.parse("create://$name?TiedToRuntime")
+            assertThat(storageKey).isInstanceOf(CreateableStorageKey::class.java)
+            storageKey as CreateableStorageKey
+            assertThat(storageKey.nameFromManifest).isEqualTo(name)
+            assertThat(storageKey.capabilities.isPersistent).isFalse()
+            assertThat(storageKey.capabilities.isQueryable).isFalse()
+            assertThat(storageKey.capabilities.isTiedToArc).isFalse()
+            assertThat(storageKey.capabilities.isTiedToRuntime).isTrue()
+        }
+
+        run {
+            val storageKey = StorageKeyParser.parse("create://$name?Persistent,Queryable")
+            assertThat(storageKey).isInstanceOf(CreateableStorageKey::class.java)
+            storageKey as CreateableStorageKey
+            assertThat(storageKey.nameFromManifest).isEqualTo(name)
+            assertThat(storageKey.capabilities.isPersistent).isTrue()
+            assertThat(storageKey.capabilities.isQueryable).isTrue()
+            assertThat(storageKey.capabilities.isTiedToArc).isFalse()
+            assertThat(storageKey.capabilities.isTiedToRuntime).isFalse()
+        }
+    }
+
+    @Test
+    fun serializationRoundTrip() {
         val name = "recipePerson"
-        val key = CreateableStorageKey(name, Capabilities.Persistent)
-        val parsedKey = StorageKeyParser.parse(key.toString())
-        assertThat(parsedKey).isInstanceOf(CreateableStorageKey::class.java)
-        assertThat(parsedKey).isEqualTo(key)
-        parsedKey as CreateableStorageKey
-        assertThat(parsedKey.capabilities.isPersistent).isTrue()
-        assertThat(parsedKey.capabilities.isTiedToArc).isFalse()
-        assertThat(parsedKey.capabilities.isTiedToRuntime).isFalse()
 
-        val noCapKey = CreateableStorageKey(name, Capabilities(setOf<Capabilities.Capability>()))
-        val parsedNoCapKey = StorageKeyParser.parse(noCapKey.toString())
-        parsedNoCapKey as CreateableStorageKey
-        assertThat(parsedNoCapKey).isEqualTo(noCapKey)
-        assertThat(parsedNoCapKey.capabilities.isEmpty()).isTrue()
+        run {
+            val key = CreateableStorageKey(name, Capabilities.Persistent)
+            val parsedKey = StorageKeyParser.parse(key.toString())
+            assertThat(parsedKey).isEqualTo(key)
+        }
 
-        val multiCapKey = CreateableStorageKey(name, Capabilities(setOf<Capabilities.Capability>(
-            Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc
-        )))
+        run {
+            val noCapKey = CreateableStorageKey(name, Capabilities(setOf()))
+            val parsedNoCapKey = StorageKeyParser.parse(noCapKey.toString())
+            parsedNoCapKey as CreateableStorageKey
+            assertThat(parsedNoCapKey).isEqualTo(noCapKey)
+        }
 
-        val parsedMultiCapKey = StorageKeyParser.parse(multiCapKey.toString())
-        parsedMultiCapKey as CreateableStorageKey
-        assertThat(parsedMultiCapKey).isEqualTo(multiCapKey)
-        assertThat(parsedMultiCapKey.capabilities.isPersistent).isTrue()
-        assertThat(parsedMultiCapKey.capabilities.isTiedToArc).isTrue()
-        assertThat(parsedMultiCapKey.capabilities.isTiedToRuntime).isFalse()
+        run {
+            val multiCapKey = CreateableStorageKey(name, Capabilities(setOf(
+                Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc
+            )))
+            val parsedMultiCapKey = StorageKeyParser.parse(multiCapKey.toString())
+            assertThat(parsedMultiCapKey).isEqualTo(multiCapKey)
+        }
+    }
+
+    @Test
+    fun keyWithoutCapabilitiesButWithSeparatorIsNormalized() {
+        val key = StorageKeyParser.parse("create://abc?")
+        assertThat(key.toString()).isEqualTo("create://abc")
     }
 }

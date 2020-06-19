@@ -11,8 +11,10 @@
 
 package arcs.android.systemhealth.testapp
 
-import android.app.Service
 import android.content.Intent
+import android.os.Binder
+import android.os.IBinder
+import android.os.Process
 import androidx.lifecycle.LifecycleService
 
 /**
@@ -22,90 +24,95 @@ import androidx.lifecycle.LifecycleService
  */
 class LocalService : LifecycleService() {
     private val storageCore = StorageCore(this, lifecycle)
+    private val binder = Binder()
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        super.onStartCommand(intent, flags, startId)
+    override fun onDestroy() {
+        super.onDestroy()
 
+        // Avoid Android cached process so as to have a
+        // cleaner measurement of memory footprint.
+        Process.killProcess(Process.myPid())
+    }
+
+    override fun onBind(intent: Intent): IBinder {
         // Parse local service's specific settings.
-        val settings = intent?.let {
-            SystemHealthData.Settings(
-                enumValueOf(
-                    it.getStringExtra(
-                        intentExtras.function
-                    ) ?: defaultSettings.function.name
+        val settings = SystemHealthData.Settings(
+            enumValueOf(
+                intent.getStringExtra(
+                    intentExtras.function
+                ) ?: defaultSettings.function.name
+            ),
+            enumValueOf(
+                intent.getStringExtra(
+                    intentExtras.handleType
+                ) ?: defaultSettings.handleType.name
+            ),
+            enumValueOf(
+                intent.getStringExtra(
+                    intentExtras.storage_mode
+                ) ?: defaultSettings.storageMode.name
+            ),
+            maxOf(
+                intent.getIntExtra(
+                    intentExtras.numOfListenerThreads,
+                    defaultSettings.numOfListenerThreads
                 ),
-                enumValueOf(
-                    it.getStringExtra(
-                        intentExtras.handleType
-                    ) ?: defaultSettings.handleType.name
+                0
+            ),
+            maxOf(
+                intent.getIntExtra(
+                    intentExtras.numOfWriterThreads,
+                    defaultSettings.numOfWriterThreads
                 ),
-                enumValueOf(
-                    it.getStringExtra(
-                        intentExtras.storage_mode
-                    ) ?: defaultSettings.storageMode.name
+                0
+            ),
+            maxOf(
+                intent.getIntExtra(
+                    intentExtras.timesOfIterations,
+                    defaultSettings.timesOfIterations
                 ),
-                maxOf(
-                    it.getIntExtra(
-                        intentExtras.numOfListenerThreads,
-                        defaultSettings.numOfListenerThreads
-                    ),
-                    0
+                0
+            ),
+            maxOf(
+                intent.getIntExtra(
+                    intentExtras.iterationIntervalMs,
+                    defaultSettings.iterationIntervalMs
                 ),
-                maxOf(
-                    it.getIntExtra(
-                        intentExtras.numOfWriterThreads,
-                        defaultSettings.numOfWriterThreads
-                    ),
-                    0
+                0
+            ),
+            maxOf(
+                intent.getIntExtra(
+                    intentExtras.dataSizeInBytes,
+                    defaultSettings.dataSizeInBytes
                 ),
-                maxOf(
-                    it.getIntExtra(
-                        intentExtras.timesOfIterations,
-                        defaultSettings.timesOfIterations
-                    ),
-                    0
+                0
+            ),
+            maxOf(
+                intent.getIntExtra(
+                    intentExtras.delayedStartMs,
+                    defaultSettings.delayedStartMs
                 ),
-                maxOf(
-                    it.getIntExtra(
-                        intentExtras.iterationIntervalMs,
-                        defaultSettings.iterationIntervalMs
-                    ),
-                    0
+                0
+            ),
+            minOf(
+                intent.getIntExtra(
+                    intentExtras.storageServiceCrashRate,
+                    defaultSettings.storageServiceCrashRate
                 ),
-                maxOf(
-                    it.getIntExtra(
-                        intentExtras.dataSizeInBytes,
-                        defaultSettings.dataSizeInBytes
-                    ),
-                    0
+                100
+            ),
+            minOf(
+                intent.getIntExtra(
+                    intentExtras.storageClientCrashRate,
+                    defaultSettings.storageClientCrashRate
                 ),
-                maxOf(
-                    it.getIntExtra(
-                        intentExtras.delayedStartMs,
-                        defaultSettings.delayedStartMs
-                    ),
-                    0
-                ),
-                minOf(
-                    it.getIntExtra(
-                        intentExtras.storageServiceCrashRate,
-                        defaultSettings.storageServiceCrashRate
-                    ),
-                    100
-                ),
-                minOf(
-                    it.getIntExtra(
-                        intentExtras.storageClientCrashRate,
-                        defaultSettings.storageClientCrashRate
-                    ),
-                    100
-                )
+                100
             )
-        } ?: defaultSettings
+        )
 
         storageCore.accept(settings)
 
-        return Service.START_NOT_STICKY
+        return binder
     }
 
     companion object {

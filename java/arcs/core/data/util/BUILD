@@ -12,6 +12,7 @@ arcs_kt_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/core/common",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/util",
     ],
 )

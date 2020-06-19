@@ -1,0 +1,14 @@
+// succeeds when a check including multiple anded tags is met by a single claim
+// #Ingress: P1
+// #OK
+particle P1
+  foo: writes Foo {}
+  claim foo is tag1 and is tag2
+particle P2
+  bar: reads Foo {}
+  check bar is tag1 and is tag2
+recipe R
+  P1
+    foo: writes h
+  P2
+    bar: reads h

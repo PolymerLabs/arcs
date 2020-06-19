@@ -1,0 +1,20 @@
+// fails when a check including multiple tags isn't met
+// #Ingress: P1
+// #Ingress: P2
+// #Fail: hc:P3.bar is (tag1 or tag2)
+particle P1
+  foo: writes Foo {}
+  claim foo is tag1
+particle P2
+  foo: writes Foo {}
+  claim foo is someOtherTag
+particle P3
+  bar: reads Foo {}
+  check bar is tag1 or is tag2
+recipe R
+  P1
+    foo: writes h
+  P2
+    foo: writes h
+  P3
+    bar: reads h

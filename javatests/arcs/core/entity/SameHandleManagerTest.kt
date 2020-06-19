@@ -34,25 +34,21 @@ class SameHandleManagerTest : HandleManagerTestBase() {
     @After
     override fun tearDown() = super.tearDown()
 
-    @Ignore("b/156865977 - Deflake")
     @Test
     override fun collection_noTTL() {
         super.collection_noTTL()
     }
 
-    @Ignore("b/157052996 - Deflake")
     @Test
     override fun singleton_referenceLiveness() {
         super.singleton_referenceLiveness()
     }
 
-    @Ignore("b/157203248 - Deflake")
     @Test
     override fun collection_referenceLiveness() {
         super.collection_referenceLiveness()
     }
 
-    @Ignore("b/157267026 - Deflake")
     @Test
     override fun collection_clearingElementsFromA_clearsThemFromB() {
         super.collection_clearingElementsFromA_clearsThemFromB()

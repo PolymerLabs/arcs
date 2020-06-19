@@ -12,6 +12,7 @@ arcs_kt_android_library(
         "//java/arcs/android/common/resurrection",
         "//java/arcs/android/crdt",
         "//java/arcs/android/storage",
+        "//java/arcs/android/storage/database",
         "//java/arcs/android/storage/service",
         "//java/arcs/android/storage/service:aidl",
         "//java/arcs/android/storage/ttl",

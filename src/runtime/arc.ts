@@ -38,13 +38,13 @@ import {DriverFactory} from './storageNG/drivers/driver-factory.js';
 import {Exists} from './storageNG/drivers/driver.js';
 import {StorageKey} from './storageNG/storage-key.js';
 import {Store} from './storageNG/store.js';
-import {AbstractStore, isSingletonInterfaceStore} from './storageNG/abstract-store.js';
+import {AbstractStore, isSingletonInterfaceStore, isMuxEntityStore} from './storageNG/abstract-store.js';
 import {ArcSerializer, ArcInterface} from './arc-serializer.js';
 import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {StorageKeyParser} from './storageNG/storage-key-parser.js';
-import {Ttl} from './recipe/ttl.js';
 import {SingletonInterfaceHandle, handleForStore, ToStore, newStore} from './storageNG/storage-ng.js';
+import {AnnotationRef} from './recipe/annotation.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -86,7 +86,7 @@ export class Arc implements ArcInterface {
   public readonly _loader: Loader;
   private readonly dataChangeCallbacks = new Map<object, Runnable>();
   // All the stores, mapped by store ID
-  private readonly storesById = new Map<string, AbstractStore>();
+  public readonly storesById = new Map<string, AbstractStore>();
   private readonly storesByKey = new Map<string | StorageKey, AbstractStore>();
   // storage keys for referenced handles
   private storageKeys: Dictionary<StorageKey> = {};
@@ -315,11 +315,11 @@ export class Arc implements ArcInterface {
       recipeParticle.id = this.generateID('particle');
     }
     const info = await this._getParticleInstantiationInfo(recipeParticle);
-    this.peh.instantiate(recipeParticle, info.stores, reinstantiate);
+    this.peh.instantiate(recipeParticle, info.stores, info.storeMuxers, reinstantiate);
   }
 
-  async _getParticleInstantiationInfo(recipeParticle: Particle): Promise<{spec: ParticleSpec, stores: Map<string, AbstractStore>}> {
-    const info = {spec: recipeParticle.spec, stores: new Map<string, AbstractStore>()};
+  async _getParticleInstantiationInfo(recipeParticle: Particle): Promise<{spec: ParticleSpec, stores: Map<string, AbstractStore>, storeMuxers: Map<string, AbstractStore>}> {
+    const info = {spec: recipeParticle.spec, stores: new Map<string, AbstractStore>(), storeMuxers: new Map<string, AbstractStore>()};
     this.loadedParticleInfo.set(recipeParticle.id.toString(), info);
 
     // if supported, provide particle caching via a BlobUrl representing spec.implFile
@@ -332,7 +332,11 @@ export class Arc implements ArcInterface {
         const store = this.findStoreById(connection.handle.id);
         assert(store, `can't find store of id ${connection.handle.id}`);
         assert(info.spec.handleConnectionMap.get(name) !== undefined, 'can\'t connect handle to a connection that doesn\'t exist');
-        info.stores.set(name, store as AbstractStore);
+        if (isMuxEntityStore(store)) {
+          info.storeMuxers.set(name, store as AbstractStore);
+        } else {
+          info.stores.set(name, store as AbstractStore);
+        }
       }
     }
     return info;
@@ -369,16 +373,19 @@ export class Arc implements ArcInterface {
                          inspectorFactory: this.inspectorFactory});
     const storeMap: Map<AbstractStore, AbstractStore> = new Map();
     for (const store of this._stores) {
-      const clone: AbstractStore = new Store(store.type, {
-        storageKey: new VolatileStorageKey(this.id, store.id),
-        exists: Exists.MayExist,
-        id: store.id
-      });
-      await (await clone.activate()).cloneFrom(await store.activate());
+      if (store instanceof Store) {
+        // TODO(alicej): Should we be able to clone a StoreMux as well?
+        const clone = new Store(store.type, {
+          storageKey: new VolatileStorageKey(this.id, store.id),
+          exists: Exists.MayExist,
+          id: store.id
+        });
+        await (await clone.activate()).cloneFrom(await store.activate());
 
-      storeMap.set(store, clone);
-      if (this.storeDescriptions.has(store)) {
-        arc.storeDescriptions.set(clone, this.storeDescriptions.get(store));
+        storeMap.set(store, clone);
+        if (this.storeDescriptions.has(store)) {
+          arc.storeDescriptions.set(clone, this.storeDescriptions.get(store));
+        }
       }
     }
 
@@ -474,13 +481,13 @@ export class Arc implements ArcInterface {
           type = new SingletonType(type);
         }
         const newStore = await this.createStoreInternal(type, /* name= */ null, storeId,
-            recipeHandle.tags, volatileKey, recipeHandle.capabilities, recipeHandle.ttl);
+            recipeHandle.tags, volatileKey, recipeHandle.capabilities);
         if (recipeHandle.immediateValue) {
           const particleSpec = recipeHandle.immediateValue;
           const type = recipeHandle.type;
           if (isSingletonInterfaceStore(newStore)) {
             assert(type instanceof InterfaceType && type.interfaceInfo.particleMatches(particleSpec));
-            const handle: SingletonInterfaceHandle = await handleForStore(newStore, this, {ttl: recipeHandle.ttl});
+            const handle: SingletonInterfaceHandle = await handleForStore(newStore, this, {ttl: recipeHandle.getTtl()});
             await handle.set(particleSpec.clone());
           } else {
             throw new Error(`Can't currently store immediate values in non-singleton stores`);
@@ -557,7 +564,7 @@ export class Arc implements ArcInterface {
   }
 
   private async createStoreInternal<T extends Type>(type: T, name?: string, id?: string, tags?: string[],
-      storageKey?: StorageKey, capabilities: Capabilities = Capabilities.empty, ttl?: Ttl): Promise<ToStore<T>> {
+      storageKey?: StorageKey, capabilities?: Capabilities): Promise<ToStore<T>> {
     assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
     if (this.storesByKey.has(storageKey)) {
       return this.storesByKey.get(storageKey) as ToStore<T>;
@@ -574,7 +581,7 @@ export class Arc implements ArcInterface {
     if (storageKey == undefined) {
       if (this.capabilitiesResolver) {
         storageKey = await this.capabilitiesResolver.createStorageKey(
-            capabilities, type, id);
+            capabilities || Capabilities.create(), type, id);
       } else if (this.storageKey) {
         storageKey = this.storageKey.childKeyForHandle(id);
       }

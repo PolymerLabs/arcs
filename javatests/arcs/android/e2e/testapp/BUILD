@@ -28,6 +28,8 @@ arcs_kt_android_library(
     deps = [
         ":animal_arcs",
         ":person_arcs",
+        "//java/arcs/android/devtools",
+        "//java/arcs/android/devtools:aidl",
         "//java/arcs/android/host",
         "//java/arcs/android/sdk/host",
         "//java/arcs/android/storage/database",

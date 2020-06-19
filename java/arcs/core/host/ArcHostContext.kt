@@ -12,86 +12,8 @@ package arcs.core.host
 
 import arcs.core.common.ArcId
 import arcs.core.common.toArcId
-import arcs.core.data.Plan
-import arcs.core.entity.Handle
 import arcs.core.host.api.Particle
-import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.util.TaggedLog
-
-/**
- * Holds per-[Particle] context state needed by [ArcHost] to implement [Particle] lifecycle.
- * TODO: this now has active logic and probably shouldn't be a data class
- *
- * @property particle currently instantiated [Particle] class
- * @property planParticle the [Plan.Particle] used to instantiate [particle]
- * @property handles a map of each handle created for [particle]
- * @property particleState the current state the particle lifecycle is in
- * @property consecutiveFailureCount how many times this particle failed to start in a row
- * @property awaitingReady set of handles that expect to receive a `ready` StorageEvent
- * @property desyncedHandles set of handles that are currently desynchronized from storage
- */
-data class ParticleContext(
-    val particle: Particle,
-    val planParticle: Plan.Particle,
-    val handles: MutableMap<String, Handle> = mutableMapOf(),
-    var particleState: ParticleState = ParticleState.Instantiated,
-    /** Used to detect infinite-crash loop particles */
-    var consecutiveFailureCount: Int = 0
-) {
-    private val awaitingReady: MutableSet<Handle> = mutableSetOf()
-    private val desyncedHandles: MutableSet<Handle> = mutableSetOf()
-
-    /**
-     * Track which handles are expecting [StorageEvent.READY] notifications,
-     * so we can invoke [Particle.onReady] once they have all fired.
-     */
-    fun expectReady(handle: Handle) {
-        awaitingReady.add(handle)
-    }
-
-    /**
-     * Particles with only write-only handles won't receive any storage events and thus
-     * need to have their `onReady` method invoked as a special case.
-     */
-    fun notifyWriteOnlyParticles() {
-        if (awaitingReady.isEmpty()) {
-            particleState = ParticleState.Started
-            particle.onReady()
-        }
-    }
-
-    /**
-     * Called by [StorageProxy] when it receives storage events. This is responsible for
-     * driving the particle lifecycle API and managing the running particle state.
-     *
-     * This will be executed in the context of the StorageProxy's scheduler.
-     */
-    fun notify(event: StorageEvent, handle: Handle) {
-        when (event) {
-            StorageEvent.READY -> {
-                if (awaitingReady.remove(handle) && awaitingReady.isEmpty()) {
-                    particleState = ParticleState.Started
-                    particle.onReady()
-                }
-            }
-            StorageEvent.UPDATE -> particle.onUpdate()
-            StorageEvent.DESYNC -> {
-                if (desyncedHandles.isEmpty()) {
-                    particleState = ParticleState.Desynced
-                    particle.onDesync()
-                }
-                desyncedHandles.add(handle)
-            }
-            StorageEvent.RESYNC -> {
-                desyncedHandles.remove(handle)
-                if (desyncedHandles.isEmpty()) {
-                    particleState = ParticleState.Started
-                    particle.onResync()
-                }
-            }
-        }
-    }
-}
 
 /**
  * Runtime context state needed by the [ArcHost] on a per [ArcId] basis. For each [Arc],

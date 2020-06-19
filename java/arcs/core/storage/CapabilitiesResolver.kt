@@ -82,10 +82,13 @@ class CapabilitiesResolver(
         type: Type,
         handleId: String
     ): StorageKey? {
+        // RamDisk is the default driver.
+        val capabilitiesToUse = if (capabilities.isEmpty())
+            Capabilities.TiedToRuntime else capabilities
         // TODO: This is a naive and basic solution for picking the appropriate
         // storage key creator for the given capabilities. As more capabilities are
         // added the heuristics will become more robust.
-        val creators = findCreators(capabilities)
+        val creators = findCreators(capabilitiesToUse)
         require(creators.isNotEmpty()) {
             "Cannot create a suitable storage key for $capabilities"
         }

@@ -60,11 +60,17 @@ class CrdtSet<T : Referencable>(
                     // Both models have the same value at the same version. Add it to the merge.
                     mergedData.values[id] = myEntry
                 } else {
-                    // Models have different versions for the same value. Merge the versions,
-                    // and update other.
+                    // Models have different versions for the value with the same id.
+                    // Merge the versions, and update the value to whichever is newer.
                     DataValue(
                         myVersion mergeWith otherVersion,
-                        myValue
+                        if (myVersion dominates otherVersion) myValue
+                        else if (otherVersion dominates myVersion) otherValue
+                        else {
+                            // Concurrent changes. Pick value with smaller hashcode.
+                            if (myValue.hashCode() <= otherValue.hashCode()) myValue
+                            else otherValue
+                        }
                     ).also {
                         mergedData.values[id] = it
                         fastForwardOp.added += it

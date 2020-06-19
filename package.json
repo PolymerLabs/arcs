@@ -48,7 +48,7 @@
     "bufferutil": "4.0.1",
     "c8": "4.1.5",
     "chai": "4.2.0",
-    "chromedriver": "81.0.0",
+    "chromedriver": "83.0.0",
     "concurrently": "4.1.2",
     "cross-env": "5.2.1",
     "diff": "4.0.1",

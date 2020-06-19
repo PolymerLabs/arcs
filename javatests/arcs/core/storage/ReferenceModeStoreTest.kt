@@ -35,6 +35,7 @@ import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.type.Type
+import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,6 +46,7 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -54,6 +56,9 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 @ExperimentalCoroutinesApi
 class ReferenceModeStoreTest {
+    @get:Rule
+    val log = LogRule()
+
     private lateinit var testKey: ReferenceModeStorageKey
     private lateinit var baseStore: Store<CrdtCount.Data, CrdtCount.Operation, Int>
     private lateinit var schema: Schema
@@ -160,30 +165,6 @@ class ReferenceModeStoreTest {
     }
 
     @Test
-    fun canCloneData_fromAnotherStore() = runBlockingTest {
-        DriverFactory.register(MockDriverProvider())
-
-        val activeStore = createReferenceModeStore()
-
-        // Add some data.
-        val collection = CrdtSet<RawEntity>()
-        val entity = createPersonEntity("an-id", "bob", 42)
-        collection.applyOperation(
-            CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
-        )
-        activeStore.onProxyMessage(
-            ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
-        )
-
-        // Clone
-        val activeStore2 = createReferenceModeStore()
-        activeStore2.cloneFrom(activeStore)
-
-        assertThat(activeStore2.getLocalData()).isEqualTo(activeStore.getLocalData())
-        assertThat(activeStore2.getLocalData()).isNotSameInstanceAs(activeStore.getLocalData())
-    }
-
-    @Test
     fun appliesAndPropagatesOperationUpdate_fromProxies_toDrivers() = runBlockingTest {
         DriverFactory.register(MockDriverProvider())
 
@@ -284,6 +265,59 @@ class ReferenceModeStoreTest {
     }
 
     @Test
+    fun singletonClearFreesBackingStoreCopy() = runBlockingTest {
+        DriverFactory.register(MockDriverProvider())
+
+        val activeStore = createSingletonReferenceModeStore()
+        val actor = activeStore.crdtKey
+        val bob = createPersonEntity("an-id", "bob", 42)
+
+        // Set singleton to Bob.
+        val updateOp = RefModeStoreOp.SingletonUpdate(actor, VersionMap(actor to 1), bob)
+        assertThat(
+            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp), id = 1))
+        ).isTrue()
+        // Bob was added to the backing store.
+        assertThat(activeStore.backingStore.stores.keys).containsExactly("an-id")
+
+        // Remove Bob from the collection.
+        val clearOp = RefModeStoreOp.SingletonClear(actor, VersionMap(actor to 1))
+        assertThat(
+            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(clearOp), id = 1))
+        ).isTrue()
+
+        // Check memory copy has been freed.
+        assertThat(activeStore.backingStore.stores.keys).isEmpty()
+    }
+
+    @Test
+    fun singletonUpdateFreesBackingStoreCopy() = runBlockingTest {
+        DriverFactory.register(MockDriverProvider())
+        
+        val activeStore = createSingletonReferenceModeStore()
+        val actor = activeStore.crdtKey
+        val alice = createPersonEntity("a-id", "alice", 41)
+        val bob = createPersonEntity("b-id", "bob", 42)
+
+        // Set singleton to Bob.
+        val updateOp = RefModeStoreOp.SingletonUpdate(actor, VersionMap(actor to 1), bob)
+        assertThat(
+            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp), id = 1))
+        ).isTrue()
+        // Bob was added to the backing store.
+        assertThat(activeStore.backingStore.stores.keys).containsExactly("b-id")
+
+        // Set singleton to Alice.
+        val updateOp2 = RefModeStoreOp.SingletonUpdate(actor, VersionMap(actor to 2), alice)
+        assertThat(
+            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp2), id = 1))
+        ).isTrue()
+
+        // Check Bob's memory copy has been freed.
+        assertThat(activeStore.backingStore.stores.keys).containsExactly("a-id")
+    }
+
+    @Test
     fun respondsToAModelRequest_fromProxy_withModel() = runBlockingTest {
         DriverFactory.register(MockDriverProvider())
 
@@ -310,7 +344,6 @@ class ReferenceModeStoreTest {
                 job.complete()
                 return@ProxyCallback
             }
-            return@ProxyCallback
         })
 
         activeStore.onProxyMessage(
@@ -573,6 +606,7 @@ class ReferenceModeStoreTest {
         val containerJob = launch {
             activeStore.containerStore.onReceive(referenceCollection.data, id + 1)
         }
+        containerJob.join()
 
         backingStoreSent = true
 
@@ -600,12 +634,11 @@ class ReferenceModeStoreTest {
         activeStore.idle()
 
         job.join()
-        containerJob.join()
     }
 
     // region Helpers
 
-    private fun BackingStore<CrdtData, CrdtOperation, Any?>.getEntityDriver(
+    private fun DirectStoreMuxer<CrdtData, CrdtOperation, Any?>.getEntityDriver(
         id: ReferenceId
     ): MockDriver<CrdtEntity.Data> =
         requireNotNull(stores[id]).store.driver as MockDriver<CrdtEntity.Data>
@@ -615,6 +648,16 @@ class ReferenceModeStoreTest {
             StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
                 testKey,
                 CollectionType(EntityType(schema)),
+                StorageMode.ReferenceMode
+            )
+        )
+    }
+
+    private suspend fun createSingletonReferenceModeStore(): ReferenceModeStore {
+        return ReferenceModeStore.create(
+            StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
+                testKey,
+                SingletonType(EntityType(schema)),
                 StorageMode.ReferenceMode
             )
         )

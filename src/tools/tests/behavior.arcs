@@ -1,0 +1,8 @@
+meta
+  namespace: src.tools.tests
+
+particle Variable
+  h0: reads ~a
+  h1: writes ~a
+  h2: reads ~b with {num: Number}
+  h3: writes ~b with {flavor: Text}

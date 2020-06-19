@@ -34,7 +34,7 @@ import {mockFirebaseStorageKeyOptions} from '../storageNG/testing/mock-firebase.
 import {Flags} from '../flags.js';
 import {TupleType, CollectionType, EntityType} from '../type.js';
 import {ActiveCollectionEntityStore, handleForActiveStore} from '../storageNG/storage-ng.js';
-import {TtlUnits} from '../recipe/ttl.js';
+import {Ttl} from '../capabilities.js';
 
 function verifyPrimitiveType(field, type) {
   const copy = {...field};
@@ -3118,19 +3118,19 @@ resource SomeName
         particle A
           output: writes T {foo: Text}
           claim output.bar is something
-      `), 'Field bar does not exist');
+      `), `Schema 'T {foo: Text}' does not contain field 'bar'.`);
 
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
           output: writes T {foo: &Bar {bar: Number}}
           claim output.foo.baz is something
-      `), 'Field foo.baz does not exist');
+      `), `Schema 'Bar {bar: Number}' does not contain field 'baz'.`);
 
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
           output: writes [T {foo: [&Bar {bar: Number}]}]
           claim output.foo.bar.baz is something
-      `), 'Field foo.bar.baz does not exist');
+      `), `Field path 'bar.baz' could not be resolved because 'baz' is a primitive.`);
     });
 
     it('supports claim statement with multiple tags', async () => {
@@ -3183,6 +3183,36 @@ resource SomeName
       const claim = particle.trustClaims.find(claim => claim.handle.name === 'output');
       assert.isNotNull(claim);
       assert.sameMembers((claim.claims as ClaimDerivesFrom[]).map(claim => claim.parentHandle.name), ['input1', 'input2']);
+    });
+
+    it('supports field-level "derives from" claims', async () => {
+      const manifest = await parseManifest(`
+        particle A
+          input: reads T {foo: Text}
+          output: writes T {bar: Text}
+          claim output.bar derives from input.foo
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+      assert.isEmpty(particle.trustChecks);
+      assert.strictEqual(particle.trustClaims.length, 1);
+
+      const claim = particle.trustClaims.find(claim => claim.handle.name === 'output');
+      assert.lengthOf(claim.claims, 1);
+      const derivesFrom = claim.claims[0] as ClaimDerivesFrom;
+      assert.strictEqual(derivesFrom.parentHandle.name, 'input');
+      assert.deepStrictEqual(derivesFrom.fieldPath, ['foo']);
+      assert.strictEqual(derivesFrom.target, 'input.foo');
+      assert.strictEqual(claim.toManifestString(), 'claim output.bar derives from input.foo');
+    });
+
+    it('rejects invalid fields in field-level "derives from" claims', async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: writes T {foo: Text}
+          output: writes T {foo: Text}
+          claim output.foo derives from input.bar
+      `), `Schema 'T {foo: Text}' does not contain field 'bar'.`);
     });
 
     it('supports mixed claims with multiple tags, not tags, and "derives from"', async () => {
@@ -3285,19 +3315,19 @@ resource SomeName
         particle A
           input: reads T {foo: Text}
           check input.bar is something
-      `), 'Field bar does not exist');
+      `), `Schema 'T {foo: Text}' does not contain field 'bar'.`);
 
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
           input: reads T {foo: &Bar {bar: Number}}
           check input.foo.baz is something
-      `), 'Field foo.baz does not exist');
+      `), `Schema 'Bar {bar: Number}' does not contain field 'baz'.`);
 
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
           input: reads [T {foo: [&Bar {bar: Number}]}]
           check input.foo.bar.baz is something
-      `), 'Field foo.bar.baz does not exist');
+      `), `Field path 'bar.baz' could not be resolved because 'baz' is a primitive.`);
     });
 
     it(`supports 'is from store' checks`, async () => {
@@ -3496,6 +3526,49 @@ resource SomeName
       );
     });
 
+    it('supports field-level checks and claims with type variables', async () => {
+      const manifest = await parseManifest(`
+        particle A
+          input: reads [~a with {foo: Number}]
+          output: writes [~a]
+          check input.foo is trusted
+          claim output.foo derives from input.foo
+      `);
+      assert.lengthOf(manifest.particles, 1);
+      const particle = manifest.particles[0];
+
+      assert.lengthOf(particle.trustChecks, 1);
+      const check = particle.trustChecks[0];
+      assert.strictEqual(check.target.name, 'input');
+      assert.deepStrictEqual(check.fieldPath, ['foo']);
+
+      assert.lengthOf(particle.trustClaims, 1);
+      const claim = particle.trustClaims[0];
+      assert.strictEqual(claim.handle.name, 'output');
+      assert.deepStrictEqual(claim.fieldPath, ['foo']);
+    });
+
+    it('rejects unknown fields in type variables', async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: reads ~a
+          check input.foo is trusted
+      `), `Type variable ~a does not contain field 'foo'`);
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          output: writes ~a
+          claim output.foo is trusted
+      `), `Type variable ~a does not contain field 'foo'`);
+
+      await assertThrowsAsync(async () => await parseManifest(`
+        particle A
+          input: reads ~a
+          output: writes Result {foo: Text}
+          claim output.foo derives from input.foo
+      `), `Type variable ~a does not contain field 'foo'`);
+    });
+
     it('data stores can make claims', async () => {
       const data = '{"root": {}, "locations": {}}';
 
@@ -3554,7 +3627,7 @@ resource SomeName
         resource NobIdJson
           start
           ${data}
-      `), 'Field foo does not exist in');
+      `), `Schema 'NobIdStore {nobId: Text}' does not contain field 'foo'.`);
 
       await assertThrowsAsync(async () => await parseManifest(`
         store NobId of NobIdStore {nobId: Text, someRef: [&Foo {foo: [Text]}]} in NobIdJson
@@ -3562,7 +3635,7 @@ resource SomeName
         resource NobIdJson
           start
           ${data}
-      `), 'Field someRef.bar does not exist in');
+      `), `Schema 'Foo {foo: [Text]}' does not contain field 'bar'.`);
     });
 
     it(`doesn't allow mixing 'and' and 'or' operations without nesting`, async () => {
@@ -4366,12 +4439,10 @@ recipe
     assert.lengthOf(handle.annotations, 2);
     assert.isNotNull(handle.getAnnotation('persistent'));
     assert.equal(handle.getAnnotation('ttl').params['value'], '3d');
-    assert.equal(handle.ttl.count, 3);
-    assert.equal(handle.ttl.units, TtlUnits.Day);
+    assert.isTrue(handle.getTtl().isEquivalent(Ttl.days(3)));
     assert.equal(handle.toString(), `foo: create @persistent @ttl(value: '3d')`);
 
     const isolatedParticleAnnotations = manifest.findParticleByName('IsolatedParticle').annotations;
-    console.error(manifest.findParticleByName('IsolatedParticle'));
     assert.lengthOf(isolatedParticleAnnotations, 1);
     assert.equal(isolatedParticleAnnotations[0].name, 'isolated');
     assert.lengthOf(Object.entries(isolatedParticleAnnotations[0].params), 0);
@@ -4543,5 +4614,148 @@ particle WriteFoo
     assert.lengthOf(annotations3, 1);
     assert.equal(annotations3.find(a => a.name === 'ttl').params['value'], '3m');
     assert.equal(manifest.toString(), manifestStr.trim());
+  });
+  it('fails parsing multiple annotation refs with same name', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+        annotation oneParam(value: Text)
+          retention: Source
+          targets: [Recipe]
+          doc: 'doc'
+        @oneParam('hello')
+        @oneParam(value: 'world')
+        recipe
+    `), `annotation 'oneParam' already exists`);
+    await assertThrowsAsync(async () => await Manifest.parse(`
+        annotation oneParam(value: Text)
+          retention: Source
+          targets: [Recipe]
+          allowMultiple: false
+          doc: 'doc'
+        @oneParam('hello')
+        @oneParam(value: 'world')
+        recipe
+    `), `annotation 'oneParam' already exists`);
+  });
+  it('parses for multiple annotation refs with same name', async () => {
+    const recipe = (await Manifest.parse(`
+        annotation oneParam(value: Text)
+          retention: Source
+          targets: [Recipe]
+          allowMultiple: true
+          doc: 'doc'
+        @oneParam('hello')
+        @oneParam(value: 'world')
+        recipe
+    `)).recipes[0];
+    assert.lengthOf(recipe.annotations, 2);
+    assert.lengthOf(recipe.findAnnotations('oneParam'), 2);
+    assert.throws(() => recipe.getAnnotation('oneParam'));
+  });
+  it('merges recipes with annotations', async () => {
+    const manifestStr = `
+@active
+recipe
+  h0: create @persistent @ttl('1d')
+recipe
+    `;
+    const recipes = (await Manifest.parse(manifestStr)).recipes;
+    assert.lengthOf(recipes[1].handles, 0);
+    recipes[0].mergeInto(recipes[1]);
+    assert.lengthOf(recipes[1].handles, 1);
+    assert.lengthOf(recipes[1].handles[0].annotations, 2);
+  });
+
+  describe('validateUniqueDefinitions', () => {
+    async function parseTwoFiles(fileA: string, fileB: string): Promise<Manifest> {
+      const loader = new Loader(null, {
+        '/a.arcs': fileA,
+        '/b.arcs': fileB,
+        '/c.arcs': `
+          import './a.arcs'
+          import './b.arcs'
+        `,
+      });
+      return await Manifest.load('/c.arcs', loader, {memoryProvider: new TestVolatileMemoryProvider()});
+    }
+
+    it('rejects duplicate particle names', async () => {
+      const manifest = await parseTwoFiles(`
+        particle Dupe
+          foo: reads Foo {}
+      `, `
+        particle Dupe
+          bar: reads Bar {}
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of particle named 'Dupe'.`);
+    });
+
+    it('rejects duplicate policy names', async () => {
+      const manifest = await parseTwoFiles(`
+        policy Dupe {}
+      `, `
+        policy Dupe {}
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of policy named 'Dupe'.`);
+    });
+
+    it('rejects duplicate recipe names', async () => {
+      const manifest = await parseTwoFiles(`
+        recipe Dupe
+      `, `
+        recipe Dupe
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of recipe named 'Dupe'.`);
+    });
+
+    it('rejects duplicate resource names', async () => {
+      const manifest = await parseTwoFiles(`
+        resource Dupe
+          start
+          {}
+      `, `
+        resource Dupe
+          start
+          {}
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of resource named 'Dupe'.`);
+    });
+
+    it('rejects duplicate schema names', async () => {
+      const manifest = await parseTwoFiles(`
+        schema Dupe
+          foo: Text
+      `, `
+        schema Dupe
+          bar: Text
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of schema named 'Dupe'.`);
+    });
+
+    it('rejects duplicate store names', async () => {
+      const manifest = await parseTwoFiles(`
+        store Dupe of Foo {} in FooResource
+        resource FooResource
+          start
+          {}
+      `, `
+        store Dupe of Bar {} in BarResource
+        resource BarResource
+          start
+          {}
+      `);
+      assert.throws(
+          () => manifest.validateUniqueDefinitions(),
+          `Duplicate definition of store named 'Dupe'.`);
+    });
   });
 });

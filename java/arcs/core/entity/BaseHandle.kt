@@ -19,10 +19,12 @@ import kotlinx.coroutines.CoroutineDispatcher
 abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
     override val name: String = config.name
 
+    override val mode: HandleMode = config.spec.mode
+
     override val dispatcher: CoroutineDispatcher
         get() = storageProxy.dispatcher
 
-    val spec: HandleSpec<out Entity> = config.spec
+    val spec: HandleSpec = config.spec
 
     protected var closed = false
     protected val callbackIdentifier =
@@ -32,9 +34,8 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
     private val dereferencerFactory = config.dereferencerFactory
 
     init {
-        // If this is a readable handle, tell the underlying proxy that it will need to
-        // be synchronized. This does not cause the proxy to send a sync request; that's
-        // controlled by [EntityHandleManager.initiateProxySync].
+        // If this is a readable handle, tell the underlying proxy that it will
+        // need to send a sync request when maybeInitiateSync() is called.
         if (spec.mode.canRead) {
             storageProxy.prepareForSync()
         }
@@ -42,6 +43,10 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
 
     override fun registerForStorageEvents(notify: (StorageEvent) -> Unit) =
         storageProxy.registerForStorageEvents(callbackIdentifier, notify)
+
+    override fun maybeInitiateSync() = storageProxy.maybeInitiateSync()
+
+    override fun getProxy() = storageProxy
 
     override fun onReady(action: () -> Unit) =
         storageProxy.addOnReady(callbackIdentifier, action)
@@ -69,7 +74,7 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
         }
         return Reference(
             spec.entitySpec,
-            arcs.core.storage.Reference(entity.serialize().id, storageKey.backingKey, null).also {
+            arcs.core.storage.Reference(entity.entityId!!, storageKey.backingKey, null).also {
                 it.dereferencer = dereferencerFactory.create(spec.entitySpec.SCHEMA)
             }
         ) as Reference<E>
@@ -80,7 +85,7 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
         /** Name of the [Handle], typically comes from a particle manifest. */
         val name: String,
         /** Description of the capabilities and other details about the [Handle]. */
-        val spec: HandleSpec<out Entity>,
+        val spec: HandleSpec,
         /**
          * [StorageProxy] instance to use when listening for updates, fetching data, or issuing
          * changes.

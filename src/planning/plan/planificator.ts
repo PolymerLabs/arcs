@@ -183,7 +183,7 @@ export class Planificator {
     return Planificator._initStore(arc, 'search-id', PlanningResult.suggestionEntityType, storageKey);
   }
 
-  private static async _initStore(arc: Arc, id: string, type: Type, storageKey: StorageKey): Promise<ActiveSingletonEntityStore> {
+  private static async _initStore(arc: Arc, id: string, type: EntityType, storageKey: StorageKey): Promise<ActiveSingletonEntityStore> {
     return new Store<CRDTEntitySingleton>(new SingletonType(type), {storageKey, exists: Exists.MayExist, id}).activate();
   }
 

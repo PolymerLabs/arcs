@@ -15,6 +15,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/crdt",
         "//java/arcs/core/crdt/extension",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/database",

@@ -45,11 +45,11 @@ export class StorageProxyMuxer<T extends CRDTTypeRecord> {
     return {
       getStorageEndpoint(): StorageCommunicationEndpoint<T> {
         return {
-          async onProxyMessage(message: ProxyMessage<CRDTTypeRecord>): Promise<void> {
+          async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
             message.muxId = muxId;
             await storageEndpoint.onProxyMessage(message);
           },
-          setCallback(callback: ProxyCallback<CRDTTypeRecord>): void {
+          setCallback(callback: ProxyCallback<T>): void {
             storageProxyMuxer.callbacks[muxId] = callback;
           },
           reportExceptionInHost(exception: PropagatedException): void {

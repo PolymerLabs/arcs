@@ -63,5 +63,65 @@ class PredicateProtoDecoderTest {
             Predicate.Not(Predicate.Label(InformationFlowLabel.SemanticTag("public")))
         )
     }
+
+    @Test
+    fun decodesOrPredicate() {
+        val protoText = """
+          or {
+            disjunct0 {
+              label {
+                semantic_tag: "public"
+              }
+            }
+            disjunct1 {
+              not {
+                predicate {
+                  label {
+                    semantic_tag: "private"
+                  }
+                }
+              }
+            }
+          }
+        """.trimIndent()
+        val predicate = parsePredicateProto(protoText).decode()
+        val orPredicate = requireNotNull(predicate as? Predicate.Or)
+        assertThat(orPredicate).isEqualTo(
+            Predicate.Or(
+                Predicate.Label(InformationFlowLabel.SemanticTag("public")),
+                Predicate.Not(Predicate.Label(InformationFlowLabel.SemanticTag("private")))
+            )
+        )
+    }
+
+    @Test
+    fun decodesAndPredicate() {
+        val protoText = """
+          and {
+            conjunct0 {
+              label {
+                semantic_tag: "public"
+              }
+            }
+            conjunct1 {
+              not {
+                predicate {
+                  label {
+                    semantic_tag: "private"
+                  }
+                }
+              }
+            }
+          }
+        """.trimIndent()
+        val predicate = parsePredicateProto(protoText).decode()
+        val andPredicate = requireNotNull(predicate as? Predicate.And)
+        assertThat(andPredicate).isEqualTo(
+            Predicate.And(
+                Predicate.Label(InformationFlowLabel.SemanticTag("public")),
+                Predicate.Not(Predicate.Label(InformationFlowLabel.SemanticTag("private")))
+            )
+        )
+    }
 }
 

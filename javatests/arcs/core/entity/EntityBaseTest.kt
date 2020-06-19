@@ -103,6 +103,50 @@ class EntityBaseTest {
     }
 
     @Test
+    fun singletonFields_primitiveList() {
+        assertThat(entity.primList).isNull()
+        entity.primList = listOf(1.0, 2.0, 3.0)
+        assertThat(entity.primList).isEqualTo(listOf(1.0, 2.0, 3.0))
+
+        val e = assertFailsWith<IllegalArgumentException> {
+            entity.setSingletonValueForTest("primList", 42)
+        }
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Expected list for DummyEntity.primList, but received 42."
+        )
+
+        val f = assertFailsWith<IllegalArgumentException> {
+            entity.setSingletonValueForTest("primList", listOf("forty two"))
+        }
+        assertThat(f).hasMessageThat().isEqualTo(
+            "Expected Double for member of DummyEntity.primList, but received forty two."
+        )
+    }
+
+    @Test
+    fun singletonFields_referenceList() {
+        assertThat(entity.refList).isNull()
+        val ref1 = createReference("foo")
+        val ref2 = createReference("bar")
+        entity.refList = listOf(ref1, ref2, ref1)
+        assertThat(entity.refList).isEqualTo(listOf(ref1, ref2, ref1))
+
+        val e = assertFailsWith<IllegalArgumentException> {
+            entity.setSingletonValueForTest("refList", 42)
+        }
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Expected list for DummyEntity.refList, but received 42."
+        )
+
+        val f = assertFailsWith<IllegalArgumentException> {
+            entity.setSingletonValueForTest("refList", listOf("forty two"))
+        }
+        assertThat(f).hasMessageThat().isEqualTo(
+            "Expected Reference for member of DummyEntity.refList, but received forty two."
+        )
+    }
+
+    @Test
     fun singletonFields_getInvalidFieldName() {
         val e = assertFailsWith<InvalidFieldNameException> {
             entity.getSingletonValueForTest("not_a_real_field")
@@ -207,6 +251,8 @@ class EntityBaseTest {
             num = 12.0
             bool = true
             ref = createReference("foo")
+            primList = listOf(1.0, 4.0, 4.0, 1.0)
+            refList = listOf(createReference("foo"), createReference("bar"), createReference("foo"))
             texts = setOf("aa", "bb")
             nums = setOf(1.0, 2.0)
             bools = setOf(true, false)
@@ -347,18 +393,39 @@ class EntityBaseTest {
     }
 
     @Test
+    fun cannotSetFutureCreationTimestamp() {
+        val idGenerator = Id.Generator.newForTest("session1")
+        val time = FakeTime().also { it.millis = 100 }
+
+        // In the past, ok.
+        val entity = EntityBase("Foo", DummyEntity.SCHEMA, creationTimestamp = 20)
+        entity.ensureEntityFields(idGenerator, "handle", time, Ttl.Minutes(1))
+        assertThat(entity.creationTimestamp).isEqualTo(20)
+
+        // In the future, not ok.
+        val entity2 = EntityBase("Foo", DummyEntity.SCHEMA, creationTimestamp = 120)
+        val e = assertFailsWith<IllegalArgumentException> {
+            entity2.ensureEntityFields(idGenerator, "handle", time, Ttl.Minutes(1))
+        }
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Cannot set a future creationTimestamp=120."
+        )
+    }
+
+    @Test
     fun testToString() {
         with (entity) {
             text = "abc"
             num = 12.0
             bool = true
+            primList = listOf(1.0, 1.0)
             texts = setOf("aa", "bb")
             nums = setOf(1.0, 2.0)
             bools = setOf(true, false)
         }
         assertThat(entity.toString()).isEqualTo(
             "DummyEntity(bool = true, bools = [true, false], num = 12.0, nums = [1.0, 2.0], " +
-                "ref = null, refs = [], text = abc, texts = [aa, bb])"
+                "primList = [1.0, 1.0], ref = null, refList = null, refs = [], text = abc, texts = [aa, bb])"
         )
     }
 

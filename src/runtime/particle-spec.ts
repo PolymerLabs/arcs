@@ -16,9 +16,11 @@ import {Schema} from './schema.js';
 import {InterfaceType, SlotType, Type, TypeLiteral, TypeVariableInfo} from './type.js';
 import {Literal} from './hot.js';
 import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './particle-check.js';
-import {ParticleClaim, createParticleClaim, validateFieldPath} from './particle-claim.js';
+import {ParticleClaim, createParticleClaim} from './particle-claim.js';
+import {ManifestStringBuilder} from './manifest-string-builder.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {AnnotationRef} from './recipe/annotation.js';
+import {resolveFieldPathType} from './field-path.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -151,7 +153,13 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
     this._annotations = annotations;
   }
   getAnnotation(name: string): AnnotationRef | null {
-    return this.annotations.find(a => a.name === name);
+    const annotations = this.findAnnotations(name);
+    assert(annotations.length <= 1,
+        `Multiple annotations found for '${name}'. Use findAnnotations instead.`);
+    return annotations.length === 0 ? null : annotations[0];
+  }
+  findAnnotations(name: string): AnnotationRef[] {
+    return this.annotations.filter(a => a.name === name);
   }
 }
 
@@ -361,7 +369,13 @@ export class ParticleSpec {
     this._annotations = annotations;
   }
   getAnnotation(name: string): AnnotationRef | null {
-    return this.annotations.find(a => a.name === name);
+    const annotations = this.findAnnotations(name);
+    assert(annotations.length <= 1,
+        `Multiple annotations found for '${name}'. Use findAnnotations instead.`);
+    return annotations.length === 0 ? null : annotations[0];
+  }
+  findAnnotations(name: string): AnnotationRef[] {
+    return this.annotations.filter(a => a.name === name);
   }
 
   /**
@@ -442,10 +456,9 @@ export class ParticleSpec {
     return InterfaceType.make(this.name, handles, slots);
   }
 
-  toString(): string {
-    const results: string[] = [];
+  toManifestString(builder = new ManifestStringBuilder()): string {
     for (const annotation of this.annotations) {
-      results.push(annotation.toString());
+      builder.push(annotation.toString());
     }
     let verbs = '';
     if (this.verbs.length > 0) {
@@ -459,10 +472,11 @@ export class ParticleSpec {
     if (this.implFile) {
       line += ` in '${this.implFile}'`;
     }
-    results.push(line);
-    const indent = '  ';
+    builder.push(line);
 
-    const writeConnection = (connection: HandleConnectionSpec, indent: string) => {
+    const indentedBuilder = builder.withIndent();
+
+    const writeConnection = (connection: HandleConnectionSpec, builder: ManifestStringBuilder) => {
       const dir = connection.direction === 'any' ? '' : `${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)}`;
 
       const subresults = [
@@ -474,9 +488,9 @@ export class ParticleSpec {
         ...connection.tags.map((tag: string) => `#${tag}`)
       ];
 
-      results.push(indent+subresults.filter(s => s !== '').join(' '));
+      builder.push(subresults.filter(s => s !== '').join(' '));
       for (const dependent of connection.dependentConnections) {
-        writeConnection(dependent, indent + '  ');
+        writeConnection(dependent, builder.withIndent());
       }
     };
 
@@ -484,14 +498,15 @@ export class ParticleSpec {
       if (connection.parentConnection) {
         continue;
       }
-      writeConnection(connection, indent);
+      writeConnection(connection, indentedBuilder);
     }
 
-    this.trustClaims.forEach(claim => results.push(`  ${claim.toManifestString()}`));
-    this.trustChecks.forEach(check => results.push(`  ${check.toManifestString()}`));
+    indentedBuilder.push(
+        ...this.trustClaims.map(claim => claim.toManifestString()),
+        ...this.trustChecks.map(check => check.toManifestString()));
 
-    this.modality.names.forEach(a => results.push(`  modality ${a}`));
-    const slotToString = (s: SerializedSlotConnectionSpec | ProvideSlotConnectionSpec, direction: SlotDirection, indent: string):void => {
+    this.modality.names.forEach(a => indentedBuilder.push(`modality ${a}`));
+    const slotToString = (s: SerializedSlotConnectionSpec | ProvideSlotConnectionSpec, direction: SlotDirection, builder: ManifestStringBuilder):void => {
       const tokens: string[] = [];
       tokens.push(`${s.name}:`);
       tokens.push(`${direction}${s.isRequired ? '' : '?'}`);
@@ -513,30 +528,31 @@ export class ParticleSpec {
       if (s.tags.length > 0) {
         tokens.push(s.tags.map(a => `#${a}`).join(' '));
       }
-      results.push(`${indent}${tokens.join(' ')}`);
+      builder.push(`${tokens.join(' ')}`);
       if (s.provideSlotConnections) {
         // Provided slots.
-        s.provideSlotConnections.forEach(p => slotToString(p, 'provides', indent+'  '));
+        s.provideSlotConnections.forEach(p => slotToString(p, 'provides', builder.withIndent()));
       }
     };
 
-    this.slotConnections.forEach(
-      s => slotToString(s, 'consumes', '  ')
-    );
+    this.slotConnections.forEach(s => slotToString(s, 'consumes', indentedBuilder));
+
     // Description
     if (this.pattern) {
-      results.push(`  description \`${this.pattern}\``);
-      this.handleConnectionMap.forEach(cs => {
-        if (cs.pattern) {
-          results.push(`    ${cs.name} \`${cs.pattern}\``);
-        }
+      indentedBuilder.push(`description \`${this.pattern}\``);
+      indentedBuilder.withIndent(indentedBuilder => {
+        this.handleConnectionMap.forEach(cs => {
+          if (cs.pattern) {
+            indentedBuilder.push(`${cs.name} \`${cs.pattern}\``);
+          }
+        });
       });
     }
-    return results.join('\n');
+    return builder.toString();
   }
 
-  toManifestString(): string {
-    return this.toString();
+  toString(): string {
+    return this.toManifestString();
   }
 
   private validateTrustClaims(statements: ParticleClaimStatement[]): ParticleClaim[] {
@@ -551,7 +567,7 @@ export class ParticleSpec {
         if (!handle.isOutput) {
           throw new Error(`Can't make a claim on handle ${statement.handle} (not an output handle).`);
         }
-        validateFieldPath(statement.fieldPath, handle.type);
+        resolveFieldPathType(statement.fieldPath, handle.type);
         if (!handle.claims) {
           handle.claims = [];
         } else if (handle.claims.some(claim => claim.target === target)) {
@@ -585,7 +601,7 @@ export class ParticleSpec {
             } else if (!handle.isInput) {
               throw new Error(`Can't make a check on handle ${handleName} with direction ${handle.direction} (not an input handle).`);
             }
-            validateFieldPath(check.target.fieldPath, handle.type);
+            resolveFieldPathType(check.target.fieldPath, handle.type);
             const checkObject = createCheck(handle, check, this.handleConnectionMap);
             if (!handle.checks) {
               handle.checks = [];

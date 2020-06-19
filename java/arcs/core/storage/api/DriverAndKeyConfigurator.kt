@@ -12,6 +12,7 @@
 package arcs.core.storage.api
 
 import arcs.core.common.ArcId
+import arcs.core.data.CreateableStorageKey
 import arcs.core.entity.SchemaRegistry
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKeyParser
@@ -20,6 +21,7 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.VolatileDriverProvider
 import arcs.core.storage.keys.DatabaseStorageKey
+import arcs.core.storage.keys.JoinStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -63,7 +65,10 @@ object DriverAndKeyConfigurator {
         RamDiskStorageKey.registerKeyCreator()
         DatabaseStorageKey.registerParser()
         DatabaseStorageKey.registerKeyCreator()
-        // ReferenceModeStorageKey has no key creator.
+        // Below storage keys don't have respective drivers,
+        // and therefore they don't have key creators.
+        CreateableStorageKey.registerParser()
         ReferenceModeStorageKey.registerParser()
+        JoinStorageKey.registerParser()
     }
 }

@@ -98,8 +98,11 @@ open class TestingHost(
         val particleContext = requireNotNull(arcHostContext.particles[particleName])
         val handleConnection = requireNotNull(particleContext.planParticle.handles[handleName])
         val readWriteConnection = handleConnection.copy(mode = HandleMode.ReadWrite)
-        val entitySpec = particleContext.particle.handles.getEntitySpec(handleName)
-        val handleHolder = HandleHolderBase("TestHolder", mapOf(handleName to entitySpec))
+        val entitySpecs = particleContext.particle.handles.getEntitySpecs(handleName)
+        val handleHolder = HandleHolderBase(
+            "TestHolder",
+            mapOf(handleName to entitySpecs)
+        )
         val handle = createHandle(
             arcHostContext.entityHandleManager, handleName, readWriteConnection, handleHolder
         )

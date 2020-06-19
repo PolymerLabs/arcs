@@ -11,11 +11,11 @@
 import {EntityHandle} from './handle.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {Entity} from '../entity.js';
-import {Identified, CRDTEntityTypeRecord} from '../crdt/crdt-entity.js';
+import {CRDTMuxEntity} from './storage-ng.js';
 
-export class EntityHandleFactory<T extends CRDTEntityTypeRecord<Identified, Identified>> {
+export class EntityHandleFactory<T extends CRDTMuxEntity> {
 
-  constructor(readonly storageProxyMuxer: StorageProxyMuxer<T>) {}
+  constructor(readonly storageProxyMuxer: StorageProxyMuxer<T>, readonly name?: string, ) {}
 
   getHandle(muxId: string): EntityHandle<Entity> {
     const storageProxy = this.storageProxyMuxer.getStorageProxy(muxId);

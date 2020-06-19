@@ -5,10 +5,14 @@ package arcs;
 option java_package = "arcs.core.data.proto";
 option java_multiple_files = true;
 
+import "java/arcs/core/data/proto/annotation.proto";
+import "java/arcs/core/data/proto/policy.proto";
+
 // A manifest containing multiple recipes and particle specs.
 message ManifestProto {
   repeated RecipeProto recipes = 1;
   repeated ParticleSpecProto particle_specs = 2;
+  repeated PolicyProto policies = 3;
 }
 
 // Plan: A resolved recipe that can be instantiated.
@@ -17,8 +21,7 @@ message RecipeProto {
   string name = 1;
   repeated HandleProto handles = 2;
   repeated ParticleProto particles = 3;
-  // Optional arc id provided by the recipe annotation.
-  string arc_id = 4;
+  repeated AnnotationProto annotations = 5;
 }
 
 // Recipe-level representation of a store.
@@ -140,11 +143,15 @@ message ReferenceTypeProto {
   TypeProto referred_type = 1;
 }
 
-// TODO(b/155944755) more fields pending.
 message TypeVariableProto {
-  // Identifies a type variable in a recipe or a particle spec.
-  // Type variables with the same name are linked together.
   string name = 1;
+  ConstraintInfo constraint = 2;
+}
+
+// These are constraints expressed by the particle author,
+// not those resulting from type inference.
+message ConstraintInfo {
+  TypeProto constraint_type = 1;
 }
 
 message SchemaProto {

@@ -40,8 +40,7 @@ data class EntityType(override val entitySchema: Schema) :
     override fun toLiteral() = Literal(tag, entitySchema.toLiteral())
 
     override fun toString(options: Type.ToStringOptions): String {
-        return entitySchema.name?.toPrettyString()
-            ?: entitySchema.toLiteral().toJson()
+        return entitySchema.toString(options)
     }
 
     /** Serialization-friendly [TypeLiteral] for [EntityType]. */

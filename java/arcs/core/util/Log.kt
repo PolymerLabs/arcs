@@ -14,6 +14,7 @@ import arcs.core.util.Log.formatter
 import arcs.core.util.Log.toString
 import arcs.core.util.Log.writer
 import kotlinx.atomicfu.atomic
+
 /**
  * Arcs-specific logging utility.
  *
@@ -46,8 +47,12 @@ object Log {
     /** Defines available logging-levels. */
     enum class Level {
         // Order matters here.
-        Debug, Info, Warning, Error, Wtf
+        Verbose, Debug, Info, Warning, Error, Wtf
     }
+
+    /** Logs at a verbose-level. */
+    fun verbose(throwable: Throwable? = null, messageBuilder: () -> String) =
+        maybeLog(Level.Verbose, throwable, messageBuilder)
 
     /** Logs at a debug-level. */
     fun debug(throwable: Throwable? = null, messageBuilder: () -> String) =

@@ -44,5 +44,19 @@ sealed class Ttl(count: Int, val isInfinite: Boolean = false) {
 
     companion object {
         const val TTL_INFINITE = -1.0
+        private val TTL_PATTERN = "^([0-9]+)[ ]*(day[s]?|hour[s]?|minute[s]?|[d|h|m])$".toRegex()
+
+        fun fromString(ttlStr: String): Ttl {
+            val ttlMatch = requireNotNull(TTL_PATTERN.matchEntire(ttlStr.trim())) {
+                "Invalid TTL $ttlStr."
+            }
+            val (_, count, units) = ttlMatch.groupValues
+            return when (units.trim()) {
+                "m", "minute", "minutes" -> Ttl.Minutes(count.toInt())
+                "h", "hour", "hours" -> Ttl.Hours(count.toInt())
+                "d", "day", "days" -> Ttl.Days(count.toInt())
+                else -> throw IllegalStateException("Invalid TTL units $units")
+            }
+        }
     }
 }

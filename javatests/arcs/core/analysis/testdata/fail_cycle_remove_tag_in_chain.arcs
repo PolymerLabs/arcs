@@ -1,0 +1,28 @@
+// tags can be removed by a cycle along a chain
+// We have a chain of particles P1-P2-P3, through which a tag gets
+// propagated. However, we also have a small cycle from P2.output ->
+// P2.input, which removes the tag. A check at P3 should fail.
+// #Ingress: P1
+// #Fail: hc:P3.input is trusted
+particle P1
+  output: writes Foo {}
+  claim output is trusted
+particle P2
+  input1: reads Foo {}
+  input2: reads Foo {}
+  output1: writes Foo {}
+  output2: writes Foo {}
+  claim output2 is not trusted
+particle P3
+  input: reads Foo {}
+  check input is trusted
+recipe R
+  P1
+    output: writes h1
+  P2
+    input1: reads h1
+    input2: reads h3
+    output1: writes h2
+    output2: writes h3
+  P3
+    input: reads h2

@@ -22,7 +22,8 @@ import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {Producer} from '../hot.js';
-import {CRDTEntityTypeRecord, EntityOperation, RawEntity, Identified} from '../crdt/crdt-entity.js';
+import {EntityOperation, RawEntity, Identified} from '../crdt/crdt-entity.js';
+import {CRDTMuxEntity} from './storage-ng.js';
 
 export interface HandleOptions {
   keepSynced: boolean;
@@ -145,7 +146,7 @@ export abstract class Handle<StorageType extends CRDTTypeRecord> {
   }
 
   protected reportUserExceptionInHost(exception: Error, particle: Particle, method: string) {
-    this.storageProxy.reportExceptionInHost(new UserException(exception, method, this.key, particle.spec.name));
+    this.storageProxy.reportExceptionInHost(new UserException(exception, method, this.key, particle.spec ? particle.spec.name : ''));
   }
 
   abstract onUpdate(update: StorageType['operation']): void;
@@ -483,10 +484,10 @@ export class SingletonHandle<T> extends Handle<CRDTSingletonTypeRecord<Reference
 /**
  * A handle on an entity.
  */
-export class EntityHandle<T> extends Handle<CRDTEntityTypeRecord<Identified, Identified>> {
+export class EntityHandle<T> extends Handle<CRDTMuxEntity> {
   constructor(
     key: string,
-    storageProxy: StorageProxy<CRDTEntityTypeRecord<Identified, Identified>>,
+    storageProxy: StorageProxy<CRDTMuxEntity>,
     idGenerator: IdGenerator,
     particle: Particle,
     canRead: boolean,

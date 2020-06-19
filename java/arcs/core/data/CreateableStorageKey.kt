@@ -18,12 +18,13 @@ import arcs.core.storage.StorageKeyParser
  */
 data class CreateableStorageKey(
     val nameFromManifest: String,
-    val capabilities: Capabilities = Capabilities.TiedToRuntime
+    val capabilities: Capabilities = Capabilities.Empty
 ) : StorageKey(CREATEABLE_KEY_PROTOCOL) {
-    override fun toKeyString() =
-        "$nameFromManifest$CAPABILITY_ARG_SEPARATOR${capabilitiesToString()}"
 
-    fun capabilitiesToString() = capabilities.capabilities.map { it -> it.name }.joinToString(",")
+    override fun toKeyString() = capabilities.capabilities.joinToString(
+        prefix = "$nameFromManifest${if (capabilities.isEmpty()) "" else CAPABILITY_ARG_SEPARATOR}",
+        separator = ","
+    ) { it.name }
 
     override fun childKeyWithComponent(component: String): StorageKey {
         throw UnsupportedOperationException("CreateableStorageKey is used as a placeholder only.")
@@ -36,12 +37,10 @@ data class CreateableStorageKey(
         const val CAPABILITY_ARG_SEPARATOR = "?"
 
         private val CREATEABLE_STORAGE_KEY_PATTERN =
-            ("^([^:]*)\\$CAPABILITY_ARG_SEPARATOR(.*)\$").toRegex()
+            ("^([^:^?]*)(?:\\$CAPABILITY_ARG_SEPARATOR(.*))?\$").toRegex()
 
-        init {
-            StorageKeyParser.addParser(
-                CREATEABLE_KEY_PROTOCOL, Companion::parse
-            )
+        fun registerParser() {
+            StorageKeyParser.addParser(CREATEABLE_KEY_PROTOCOL, ::parse)
         }
 
         private fun parse(rawKeyString: String): CreateableStorageKey {
@@ -56,13 +55,11 @@ data class CreateableStorageKey(
             )
         }
 
-        private fun parseCapabilities(capabilities: String): Capabilities {
-            val capabilityStrings =
-                if (capabilities == "") emptyList<String>()
-                else capabilities.split(',')
-            return Capabilities(
-                capabilityStrings.map { name -> Capabilities.Capability.valueOf(name) }.toSet()
-            )
+        private fun parseCapabilities(capabilities: String) = when (capabilities) {
+            "" -> Capabilities.Empty
+            else -> Capabilities(capabilities.split(',').map {
+                Capabilities.Capability.valueOf(it)
+            }.toSet())
         }
     }
 }

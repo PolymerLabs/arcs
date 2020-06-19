@@ -19,6 +19,7 @@ import {SchemaType} from './manifest-ast-nodes.js';
 import {Refinement, AtLeastAsSpecific} from './refiner.js';
 import {Reference} from './reference.js';
 import {AnnotationRef} from './recipe/annotation.js';
+import {ManifestStringBuilder} from './manifest-string-builder.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
@@ -36,6 +37,8 @@ export class Schema {
   // The implementation of fromLiteral creates a cyclic dependency, so it is
   // separated out. This variable serves the purpose of an abstract static.
   static fromLiteral: SchemaMethod = null;
+
+  static EMPTY = new Schema([], {});
 
   // For convenience, primitive field types can be specified as {name: 'Type'}
   // in `fields`; the constructor will convert these to the correct schema form.
@@ -55,6 +58,7 @@ export class Schema {
     }
     for (const [name, field] of Object.entries(fields)) {
       if (typeof(field) === 'string') {
+        assert(['Text', 'URL', 'Number', 'Boolean', 'Bytes'].includes(field), `non-primitive schema type ${field} need to be defined as a parser production`);
         this.fields[name] = {kind: 'schema-primitive', refinement: null, type: field, annotations: []};
       } else {
         this.fields[name] = field;
@@ -107,7 +111,13 @@ export class Schema {
     this._annotations = annotations;
   }
   getAnnotation(name: string): AnnotationRef | null {
-    return this.annotations.find(a => a.name === name);
+    const annotations = this.findAnnotations(name);
+    assert(annotations.length <= 1,
+        `Multiple annotations found for '${name}'. Use findAnnotations instead.`);
+    return annotations.length === 0 ? null : annotations[0];
+  }
+  findAnnotations(name: string): AnnotationRef[] {
+    return this.annotations.filter(a => a.name === name);
   }
 
   static typesEqual(fieldType1, fieldType2): boolean {
@@ -274,7 +284,12 @@ export class Schema {
         case 'schema-reference': {
           singletons[field] = new CRDTSingleton<Reference>();
           break;
-        } default: {
+        }
+        case 'schema-ordered-list': {
+          singletons[field] = new CRDTSingleton<{id: string}>();
+          break;
+        }
+        default: {
           throw new Error(`Big Scary Exception: entity field ${field} of type ${schema.type} doesn't yet have a CRDT mapping implemented`);
         }
       }
@@ -301,23 +316,26 @@ export class Schema {
     return `${names} {${fields.length > 0 && options && options.hideFields ? '...' : fields}}${this.refinement ? this.refinement.toString() : ''}`;
   }
 
-  toManifestString(): string {
-    const results:string[] = [];
-    results.push(this.annotations.map(a => a.toString()).join('\n'));
-    results.push(`schema ${this.names.join(' ')}`);
-    results.push(...Object.entries(this.fields).map(f => `  ${Schema.fieldToString(f)}`));
-    if (this.refinement) {
-      results.push(`  ${this.refinement.toString()}`);
-    }
-    if (Object.keys(this.description).length > 0) {
-      results.push(`  description \`${this.description.pattern}\``);
-      for (const name of Object.keys(this.description)) {
-        if (name !== 'pattern') {
-          results.push(`    ${name} \`${this.description[name]}\``);
-        }
+  toManifestString(builder = new ManifestStringBuilder()): string {
+    builder.push(...this.annotations.map(a => a.toString()));
+    builder.push(`schema ${this.names.join(' ')}`);
+    builder.withIndent(builder => {
+      builder.push(...Object.entries(this.fields).map(f => Schema.fieldToString(f)));
+      if (this.refinement) {
+        builder.push(this.refinement.toString());
       }
-    }
-    return results.filter(result => !!result).join('\n');
+      if (Object.keys(this.description).length > 0) {
+        builder.push(`description \`${this.description.pattern}\``);
+        builder.withIndent(builder => {
+          for (const name of Object.keys(this.description)) {
+            if (name !== 'pattern') {
+              builder.push(`${name} \`${this.description[name]}\``);
+            }
+          }
+        });
+      }
+    });
+    return builder.toString();
   }
 
   async hash(): Promise<string> {
@@ -342,6 +360,8 @@ export class Schema {
         str += '[' + schema.type + ']';
       } else if (kind === 'schema-tuple') {
         str += `(${types.map(t => t.type).join('|')})`;
+      } else if (kind === 'schema-ordered-list') {
+        str += 'List<' + schema.type + '>';
       } else {
         throw new Error('Schema hash: unsupported field type');
       }

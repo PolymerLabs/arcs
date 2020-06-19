@@ -9,6 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
+import {Dictionary} from './hot.js';
 
 /**
  * Returns the set delta between two lists based on direct object comparison.
@@ -95,4 +96,27 @@ export function noAwait(result: {then: Function}) {}
  */
 export function flatMap<T, U>(array: T[], mapper: (element: T) => U) {
   return [].concat(...array.map(mapper));
+}
+
+/** Converts a Map to a Dictionary. */
+export function mapToDictionary<T>(map: Map<string, T>): Dictionary<T> {
+  const dict = {};
+  for (const [k, v] of map) {
+    dict[k] = v;
+  }
+  return dict;
+}
+
+/** Recursively delete all fields with the given name. */
+// tslint:disable-next-line: no-any
+export function deleteFieldRecursively(node: any, field: string) {
+  if (node == null || typeof node !== 'object') {
+    return;
+  }
+  if (field in node) {
+    delete node[field];
+  }
+  for (const value of Object.values(node)) {
+    deleteFieldRecursively(value, field);
+  }
 }

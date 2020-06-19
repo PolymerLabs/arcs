@@ -1,0 +1,21 @@
+// can detect failures for different checks'
+// #Ingress: P1
+// #Fail: hc:P2.bar1 is trusted
+// #Fail: hc:P2.bar2 is extraTrusted
+particle P1
+  foo1: writes Foo {}
+  foo2: writes Foo {}
+  claim foo1 is notTrusted
+  claim foo2 is trusted
+particle P2
+  bar1: reads Foo {}
+  bar2: reads Foo {}
+  check bar1 is trusted
+  check bar2 is extraTrusted
+recipe R
+  P1
+    foo1: writes h1
+    foo2: writes h2
+  P2
+    bar1: reads h1
+    bar2: reads h2

@@ -4,9 +4,10 @@ meta
 schema TestEntity
   text: Text
   number: Number
+  list: List<Long>
 
 particle TestParticle
-  entities: reads writes [TestEntity {text, number} [text == ?]]
+  entities: reads writes [TestEntity {text, number, list} [text == ?]]
 
 recipe TestRecipe
   entities: create

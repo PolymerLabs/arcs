@@ -59,6 +59,14 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         return res
     }
 
+    /** True if no callbacks are registered. */
+    fun isEmpty(): Boolean {
+        while (!mutex.tryLock()) { /* Wait. */ }
+        val isEmpty = callbacks.isEmpty()
+        mutex.unlock()
+        return isEmpty
+    }
+
     /**
      * Notifies all registered [ProxyCallbackManager] of a [message].
      *

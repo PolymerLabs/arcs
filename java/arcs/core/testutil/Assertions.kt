@@ -11,6 +11,7 @@
 
 package arcs.core.testutil
 
+import com.google.common.truth.Truth.assertThat
 import kotlin.AssertionError
 import kotlin.reflect.KClass
 import org.junit.Assert.fail
@@ -35,3 +36,32 @@ suspend fun <T : Exception> assertSuspendingThrows(
 
 /** Implementation of `fail` which returns [Nothing], and thus will work in elvis-situations. */
 fun fail(message: String): Nothing = throw AssertionError(message)
+
+/**
+ * Asserts that a list of values matches a sequence of groups, where a List group must be in
+ * order while a Set group may be any order. For example:
+ *   assertVariableOrdering(listOf(1, 2, 77, 55, 66, 3, 4),
+ *                          listOf(1, 2), setOf(55, 66, 77), listOf(3, 4)) => matches
+ * TODO: improve error reporting
+ * TODO: consider more complex nested groupings
+ */
+fun <T> assertVariableOrdering(actual: List<T>, vararg groups: Collection<T>) {
+    val expectedSize = groups.fold(0) { sum, group -> sum + group.size }
+    if (expectedSize != actual.size) {
+        throw AssertionError("expected $expectedSize elements but found ${actual.size}: $actual")
+    }
+
+    var start = 0
+    groups.forEach { group ->
+        val slice = actual.subList(start, start + group.size)
+        when (group) {
+            is List -> assertThat(slice).isEqualTo(group)
+            is Set -> assertThat(slice).containsExactlyElementsIn(group)
+            else -> throw IllegalArgumentException(
+                "assertVariableOrdering: only List and Set may be used " +
+                    "for the 'groups' argument"
+            )
+        }
+        start += group.size
+    }
+}

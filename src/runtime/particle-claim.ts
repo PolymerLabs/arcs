@@ -9,10 +9,8 @@
  */
 
 import {HandleConnectionSpec} from './particle-spec.js';
-import {ParticleClaimIsTag, ParticleClaimDerivesFrom, ParticleClaimStatement} from './manifest-ast-nodes.js';
-import {Type} from './type.js';
-import {assert} from '../platform/assert-web.js';
-import {Schema} from './schema.js';
+import {ParticleClaimIsTag, ParticleClaimDerivesFrom, ParticleClaimStatement, Direction} from './manifest-ast-nodes.js';
+import {resolveFieldPathType} from './field-path.js';
 
 /** The different types of trust claims that particles can make. */
 export enum ClaimType {
@@ -60,7 +58,9 @@ export class ClaimIsTag {
 export class ClaimDerivesFrom {
   readonly type: ClaimType.DerivesFrom = ClaimType.DerivesFrom;
 
-  constructor(readonly parentHandle: HandleConnectionSpec) {}
+  constructor(
+      readonly parentHandle: HandleConnectionSpec,
+      readonly fieldPath: string[]) {}
 
   static fromASTNode(
       astNode: ParticleClaimDerivesFrom,
@@ -68,15 +68,21 @@ export class ClaimDerivesFrom {
 
     // Convert handle names into HandleConnectionSpec objects.
     const parentHandle = handleConnectionMap.get(astNode.parentHandle);
-  if (!parentHandle) {
-    throw new Error(`Unknown "derives from" handle name: ${parentHandle}.`);
+    if (!parentHandle) {
+      throw new Error(`Unknown "derives from" handle name: ${parentHandle}.`);
+    }
+
+    resolveFieldPathType(astNode.fieldPath, parentHandle.type);
+
+    return new ClaimDerivesFrom(parentHandle, astNode.fieldPath);
   }
 
-    return new ClaimDerivesFrom(parentHandle);
+  get target(): string {
+    return [this.parentHandle.name, ...this.fieldPath].join('.');
   }
 
   toManifestString() {
-    return `derives from ${this.parentHandle.name}`;
+    return `derives from ${this.target}`;
   }
 }
 
@@ -95,55 +101,4 @@ export function createParticleClaim(
     }
   });
   return new ParticleClaim(handle, astNode.fieldPath, claims);
-}
-
-/**
- * Validates a field path against the given Type. Throws an exception if the
- * field path is invalid.
- */
-export function validateFieldPath(fieldPath: string[], type: Type) {
-  if (fieldPath.length === 0) {
-    return;
-  }
-  const schema = type.getEntitySchema();
-  if (!schema) {
-    throw new Error(`Expected type to contain an entity schema: ${type}.`);
-  }
-
-  /** Checks a field path against the given Schema. */
-  const checkSchema = (fieldPath: string[], schema: Schema): boolean => {
-    if (fieldPath.length === 0) {
-      return true;
-    }
-    const fieldName = fieldPath[0];
-    if (!(fieldName in schema.fields)) {
-      return false;
-    }
-    const field = schema.fields[fieldName];
-    return checkField(fieldPath, field);
-  };
-
-  /** Checks a field path for a particular field definition. */
-  const checkField = (fieldPath: string[], field): boolean => {
-    switch (field.kind) {
-      case 'schema-primitive': {
-        // Field path must end here.
-        return fieldPath.length === 1;
-      }
-      case 'schema-collection': {
-        // Check inner type.
-        return checkField(fieldPath, field.schema);
-      }
-      case 'schema-reference': {
-        // Check rest of field path against inner type.
-        return checkSchema(fieldPath.slice(1), field.schema.model.entitySchema);
-      }
-      default:
-        throw new Error(`Unsupported field type: ${JSON.stringify(field)}`);
-    }
-  };
-
-  if (!checkSchema(fieldPath, schema)) {
-    throw new Error(`Field ${fieldPath.join('.')} does not exist in: ${schema.toManifestString()}`);
-  }
 }

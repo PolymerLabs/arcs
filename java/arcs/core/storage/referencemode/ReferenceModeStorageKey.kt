@@ -13,6 +13,8 @@ package arcs.core.storage.referencemode
 
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeyUtils
+import arcs.core.storage.embed
 
 const val REFERENCE_MODE_PROTOCOL = "reference-mode"
 
@@ -24,6 +26,17 @@ data class ReferenceModeStorageKey(
     val backingKey: StorageKey,
     val storageKey: StorageKey
 ) : StorageKey(REFERENCE_MODE_PROTOCOL) {
+
+    init {
+        // This is a overly strict check as some combinations of different protocols are fine, so it
+        // can be relaxed if needed (see [StorageAdapter] for a more precise check).
+        require(backingKey.protocol == storageKey.protocol) {
+            "Different protocols (${backingKey.protocol} and ${storageKey.protocol}) in a " +
+                "ReferenceModeStorageKey can cause problems with garbage collection if the " +
+                "backing key is in the database and the container key isn't."
+        }
+    }
+
     override fun childKeyWithComponent(component: String): StorageKey =
         ReferenceModeStorageKey(backingKey, storageKey.childKeyWithComponent(component))
 
@@ -43,44 +56,13 @@ data class ReferenceModeStorageKey(
         private fun fromString(rawValue: String): ReferenceModeStorageKey {
             val invalidFormatMessage: () -> String =
                 { "Invalid format for ReferenceModeStorageKey: $rawValue" }
-            var backing: StorageKey? = null
-            var direct: StorageKey? = null
+            val storageKeys = StorageKeyUtils.extractKeysFromString(rawValue)
+            require(storageKeys.size == 2, invalidFormatMessage)
 
-            var openCount = 0
-            var openIndex = -1
-            rawValue.forEachIndexed { i, char ->
-                require(direct == null, invalidFormatMessage)
-                when (char) {
-                    '{' -> {
-                        openCount++
-                        if (openIndex < 0) openIndex = i
-                    }
-                    '}' -> {
-                        openCount--
-                        if (openCount == 0) {
-                            require(openIndex >= 0, invalidFormatMessage)
-                            val childComponent = rawValue.substring(openIndex + 1, i).unEmbed()
-                            if (backing == null) {
-                                backing = childComponent
-                            } else {
-                                direct = childComponent
-                            }
-                            // Reset to negative, so we mark openIndex when we see the next '{'
-                            openIndex = -1
-                        }
-                    }
-                }
-            }
             return ReferenceModeStorageKey(
-                requireNotNull(backing, invalidFormatMessage),
-                requireNotNull(direct, invalidFormatMessage)
+                storageKeys[0],
+                storageKeys[1]
             )
         }
     }
 }
-
-/* internal */ fun String.unEmbed(): StorageKey =
-    StorageKeyParser.parse(replace("\\{\\{".toRegex(), "{").replace("\\}\\}".toRegex(), "}"))
-
-/* internal */ fun StorageKey.embed() =
-    toString().replace("\\{".toRegex(), "{{").replace("\\}".toRegex(), "}}")

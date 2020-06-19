@@ -1,9 +1,9 @@
 package arcs.core.host
 
 import arcs.core.data.Plan
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmSchedulerProvider
 import com.google.common.truth.Truth.assertThat
@@ -21,7 +21,7 @@ open class ArcHostManagerTest {
     @Before
     fun setUp() {
         RamDisk.clear()
-        RamDiskStorageKey.registerKeyCreator()
+        DriverAndKeyConfigurator.configureKeyParsers()
         RamDiskDriverProvider()
     }
 
