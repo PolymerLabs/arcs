@@ -714,10 +714,7 @@ open class HandleManagerTestBase {
         // Ensure we get update from A before checking.
         // Since some test configurations may result in the handles
         // operating on different threads.
-        val gotUpdate = handleA.onUpdateDeferred {
-            log("GOT UPDATE: ${it.size} = $it")
-            it.isEmpty()
-        }
+        val gotUpdate = handleA.onUpdateDeferred { it.isEmpty() }
         withContext(handleB.dispatcher) {
             handleB.clear()
             assertThat(handleB.fetchAll()).isEmpty()
@@ -1150,6 +1147,7 @@ open class HandleManagerTestBase {
                 deferred.complete(it)
             }
         }
+        /*
         onResync {
             if (deferred.isActive) {
                 val (data, matches) = when (this) {
@@ -1160,6 +1158,7 @@ open class HandleManagerTestBase {
                 if (matches) deferred.complete(data)
             }
         }
+         */
     }
 
     private fun createNulledOutPerson(entityId: ReferenceId) = RawEntity(

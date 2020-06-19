@@ -457,7 +457,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     }
 
     private fun processModelOps(operations: List<Op>) {
-        // Ignore update ops when not synchronized.
+        // Queue-up ops we receive while we're not-synced.
         if (stateHolder.value.state != ProxyState.SYNC) {
             modelOpsToApplyAfterSyncing.addAll(operations)
             return
@@ -503,6 +503,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     }
 
     private fun notifyUpdate(data: T) {
+        // If this isn't our first update and the data's hashCode is equivalent to the old data's
+        // hashCode, no need to send an update.
         if (updateNotifications > 0 && lastDataUpdateHash == data?.hashCode()) return
         updateNotifications++
         lastDataUpdateHash = data?.hashCode()

@@ -197,6 +197,10 @@ class ReferenceModeStore private constructor(
             } catch (e: ClosedSendChannelException) {
                 // No-op. If the channel is closed (which can happen between the if's check and the
                 // offer call above), then it's no big deal.
+                log.debug {
+                    "Attempted to send false to the containerStateChannel when it was already " +
+                        "closed."
+                }
             }
         }
     }
