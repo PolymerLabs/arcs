@@ -29,11 +29,14 @@ load(
     _arcs_kt_gen = "arcs_kt_gen",
     _arcs_kt_schema = "arcs_kt_schema",
     _arcs_ts_preprocessing = "arcs_ts_preprocessing",
-    _arcs_peg_generator = "arcs_peg_generator",
 )
 load(
     "//third_party/java/arcs/build_defs/internal:tools.oss.bzl",
     _arcs_manifest_parse_test = "arcs_manifest_parse_test",
+)
+load(
+    "//third_party/java/arcs/build_defs/internal:gentspegjs.bzl",
+    _arcs_peg_generator = "gentspegjs",
 )
 load(":sigh.bzl", "sigh_command")
 

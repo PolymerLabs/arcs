@@ -7,9 +7,22 @@ load(
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "parser",
+    srcs = [":runtime/manifest-parser.pegjs"],
+)
 
+filegroup(
+    name = "ast_nodes",
+    srcs = [":runtime/manifest-ast-nodes.ts"],
+)
 arcs_peg_generator(
-    name = "manifest_parser"
+    name = "parser_gen",
+    src = ":parser",
+    out = "gen/runtime/manifest-parser.ts",
+    ast_nodes = ":ast_nodes",
+    custom_header = "import * as AstNode from \"../../runtime/manifest-ast-nodes\";\nimport {Flags} from \"../../runtime/flags.js\";\nimport {CheckType} from \"../../runtime/particle-check.js\";import {ClaimType} from \"../../runtime/particle-claim.js\";",
+    module_name = "parse",
 )
 
 arcs_ts_preprocessing(
@@ -30,6 +43,9 @@ arcs_ts_preprocessing(
 
             # This is actually browser based
             "platform/image-node.ts",
+
+            # Exclude to not create conflicting Bazel actions
+            "gen/**/*.ts",
 
             # Exclude test code
             "**/storageNG/testing/**",
@@ -61,12 +77,12 @@ arcs_ts_preprocessing(
             # Exclude until import is fixed by copybara (unused?)
             "platform/protobuf*",
         ],
-    ) + [":manifest_parser"],
+    ) ,
 )
 
 ts_library(
     name = "runtime_lib",
-    srcs = [":runtime_files"],
+    srcs = [":runtime_files"] + [":parser_gen"],
     runtime = "nodejs",
     tsconfig = "//:tsconfig",
     deps = [
