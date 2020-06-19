@@ -479,6 +479,16 @@ export class Capabilities {
     return new Capabilities(ranges);
   }
 
+  setCapability(capability: Capability, type: typeof Capability): boolean {
+    let existing = this.getOfType(type);
+    if (existing) {
+      existing = capability.toRange();
+    } else {
+      this.ranges.push(capability.toRange());
+    }
+    return true;
+  }
+
   isEmpty() { return this.ranges.length === 0; }
 
   isEquivalent(other: Capabilities): boolean {
