@@ -97,6 +97,12 @@ sealed class JsonValue<T>() {
     ) : JsonValue<List<JsonValue<*>>>() {
         override fun toString() = value.joinToString(prefix = "[", postfix = "]", separator = ",")
 
+        /** Number of elements in the array. */
+        val size = value.size
+
+        /** If the array is empty. */
+        fun isEmpty() = size == 0
+
         /** Lookup a value in an array by index. */
         operator fun <T : JsonValue<*>> get(index: Int) = value[index]
 
@@ -133,17 +139,23 @@ sealed class JsonValue<T>() {
     object JsonNull : JsonAny<Null>(Null)
 }
 
-/** Simple parser-combinator based multiple-platform JSON parser. */
+/**
+ * Simple parser-combinator based multiple-platform JSON parser.
+ * TODO: Limitations
+ * 1) lax parsing (trailing commas allowed)
+ * 2) float parsing non-exact
+ * 3) whitespace not allowed
+ * 4) unicode escaping not handled
+ */
 object Json {
     /** Parses a string in JSON format and returns a [JsonValue] */
-    fun parse(jsonString: String) = jsonValue(jsonString)
+    fun parse(jsonString: String) = (jsonValue(jsonString) as? ParseResult.Success<JsonValue<*>>)?.
+        value ?: throw IllegalArgumentException("Parse failed")
 
-    private val jsonNumber: Parser<JsonValue<*>> = RegexToken("(-?[0-9]+\\.?[0-9]*)").map {
-        JsonNumber(it.toDouble())
-    }
-
-    private val jsonString: Parser<JsonValue<*>> = RegexToken("\"([^\"]*)\"").map {
-        JsonString(it)
+    private val jsonNumber: Parser<JsonValue<*>> = RegexToken("(-?[0-9]+\\.?[0-9]*(?:e-?[0-9]+)?)")
+        .map { JsonNumber(it.toDouble()) }
+    private val jsonString: Parser<JsonValue<*>> = RegexToken("\"((?:[^\"\\\\]|\\\\.)*)\"").map {
+        JsonString(it.replace("\\\"", "\"").replace("\\\n","\n"))
     }
 
     private val jsonBoolean: Parser<JsonValue<*>> = (StringToken("true") / StringToken("false")).map {

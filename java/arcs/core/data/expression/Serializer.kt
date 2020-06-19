@@ -118,6 +118,4 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
 fun <T> Expression<T>.serialize() = this.accept(ExpressionSerializer()).toString()
 
 /** Given a serialized [Expression], deserialize it. */
-fun String.deserializeExpression() = ExpressionDeserializer().visit(
-    (Json.parse(this) as ParseResult.Success<JsonValue<*>>).value
-)
+fun String.deserializeExpression() = ExpressionDeserializer().visit(Json.parse(this))
