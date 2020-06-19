@@ -22,6 +22,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.TimeUnit
 
 /**
  * Implementation of a [SchedulerProvider] for the Java Virtual Machine (including Android).
@@ -93,7 +94,10 @@ class JvmSchedulerProvider(
     @Synchronized
     override fun cancelAll() {
         schedulersByArcId.values.toList().forEach { it.cancel() }
-        executors.forEach { it.shutdownNow() }
+        executors.forEach {
+            it.shutdown()
+            it.awaitTermination(1, TimeUnit.SECONDS)
+        }
         threads.forEach { it?.interrupt() }
     }
 

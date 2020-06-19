@@ -24,6 +24,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.coroutines.EmptyCoroutineContext
 
 @RunWith(JUnit4::class)
 class JvmSchedulerProviderTest {
@@ -54,13 +55,13 @@ class JvmSchedulerProviderTest {
 
         // All three run on the same thread.
         schedulerA.schedule(
-            SimpleProc { schedulerAThread.complete(Thread.currentThread()) }
+            SimpleProc("a") { schedulerAThread.complete(Thread.currentThread()) }
         )
         schedulerB.schedule(
-            SimpleProc { schedulerBThread.complete(Thread.currentThread()) }
+            SimpleProc("b") { schedulerBThread.complete(Thread.currentThread()) }
         )
         schedulerC.schedule(
-            SimpleProc { schedulerCThread.complete(Thread.currentThread()) }
+            SimpleProc("c") { schedulerCThread.complete(Thread.currentThread()) }
         )
         assertThat(schedulerAThread.await()).isEqualTo(schedulerBThread.await())
         assertThat(schedulerBThread.await()).isEqualTo(schedulerCThread.await())
@@ -76,19 +77,19 @@ class JvmSchedulerProviderTest {
         val schedulerB = schedulerProvider("b")
         val schedulerC = schedulerProvider("c")
 
-        val schedulerAThread = CompletableDeferred<Thread>()
-        val schedulerBThread = CompletableDeferred<Thread>()
-        val schedulerCThread = CompletableDeferred<Thread>()
+        val schedulerAThread = CompletableDeferred<Thread>(coroutineContext[Job.Key])
+        val schedulerBThread = CompletableDeferred<Thread>(coroutineContext[Job.Key])
+        val schedulerCThread = CompletableDeferred<Thread>(coroutineContext[Job.Key])
 
         // A and C run on the same thread, but B runs on a different one.
         schedulerA.schedule(
-            SimpleProc { schedulerAThread.complete(Thread.currentThread()) }
+            SimpleProc("a") { schedulerAThread.complete(Thread.currentThread()) }
         )
         schedulerB.schedule(
-            SimpleProc { schedulerBThread.complete(Thread.currentThread()) }
+            SimpleProc("b") { schedulerBThread.complete(Thread.currentThread()) }
         )
         schedulerC.schedule(
-            SimpleProc { schedulerCThread.complete(Thread.currentThread()) }
+            SimpleProc("c") { schedulerCThread.complete(Thread.currentThread()) }
         )
         assertThat(schedulerAThread.await()).isEqualTo(schedulerCThread.await())
         assertThat(schedulerBThread.await()).isNotEqualTo(schedulerCThread.await())
@@ -106,7 +107,7 @@ class JvmSchedulerProviderTest {
                 val scheduler = schedulerProvider("a")
 
                 scheduler.schedule (
-                    SimpleProc {
+                    SimpleProc("test") {
                         throw IllegalStateException("Washington DC is not a state.")
                     }
                 )
@@ -123,7 +124,7 @@ class JvmSchedulerProviderTest {
         val schedulerProvider = JvmSchedulerProvider(coroutineContext, 1)
 
         val scheduler = schedulerProvider("a")
-        val schedulerJob = scheduler.scope.coroutineContext[Job]
+        val schedulerJob = scheduler.scope.coroutineContext[Job.Key]
 
         val sameScheduler = schedulerProvider("a")
         assertWithMessage(
@@ -147,5 +148,7 @@ class JvmSchedulerProviderTest {
         schedulerProvider.cancelAll()
     }
 
-    private class SimpleProc(block: () -> Unit) : Scheduler.Task.Processor(block)
+    private class SimpleProc(val name: String, block: () -> Unit) : Scheduler.Task.Processor(block) {
+        override fun toString() = "SimpleProc($name)"
+    }
 }
