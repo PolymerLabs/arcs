@@ -41,6 +41,5 @@ data class StoreOptions<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         if (storageKey is ReferenceModeStorageKey) StorageMode.ReferenceMode
         else StorageMode.Direct,
     val baseStore: IStore<Data, Op, ConsumerData>? = null,
-    val versionToken: String? = null,
-    val model: Data? = null
+    val versionToken: String? = null
 )

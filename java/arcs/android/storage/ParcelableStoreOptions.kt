@@ -14,8 +14,6 @@ package arcs.android.storage
 import android.os.Parcel
 import android.os.Parcelable
 import arcs.android.crdt.ParcelableCrdtType
-import arcs.android.crdt.readModelData
-import arcs.android.crdt.writeModelData
 import arcs.android.type.readType
 import arcs.android.type.writeType
 import arcs.core.crdt.CrdtData
@@ -36,7 +34,6 @@ data class ParcelableStoreOptions(
         parcel.writeInt(actual.mode.ordinal)
         // Skip StoreOptions.baseStore.
         parcel.writeString(actual.versionToken)
-        parcel.writeModelData(actual.model)
     }
 
     override fun describeContents(): Int = 0
@@ -48,7 +45,6 @@ data class ParcelableStoreOptions(
             val type = requireNotNull(parcel.readType()) { "Could not extract Type from Parcel" }
             val mode = StorageMode.values()[parcel.readInt()]
             val versionToken = parcel.readString()
-            val modelData = parcel.readModelData()
 
             return ParcelableStoreOptions(
                 StoreOptions(
@@ -56,8 +52,7 @@ data class ParcelableStoreOptions(
                     type = type,
                     mode = mode,
                     baseStore = null, // Skip baseStore.
-                    versionToken = versionToken,
-                    model = modelData
+                    versionToken = versionToken
                 ),
                 crdtType
             )
