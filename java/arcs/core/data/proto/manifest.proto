@@ -143,11 +143,15 @@ message ReferenceTypeProto {
   TypeProto referred_type = 1;
 }
 
-// TODO(b/155944755) more fields pending.
 message TypeVariableProto {
-  // Identifies a type variable in a recipe or a particle spec.
-  // Type variables with the same name are linked together.
   string name = 1;
+  ConstraintInfo constraint = 2;
+}
+
+// These are constraints expressed by the particle author,
+// not those resulting from type inference.
+message ConstraintInfo {
+  TypeProto constraint_type = 1;
 }
 
 message SchemaProto {

@@ -11,7 +11,7 @@ import {Runtime} from '../runtime/runtime.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {Type, CollectionType, ReferenceType, SingletonType, TupleType} from '../runtime/type.js';
+import {Type, CollectionType, ReferenceType, SingletonType, TupleType, TypeVariable} from '../runtime/type.js';
 import {Schema} from '../runtime/schema.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 import {assert} from '../platform/assert-web.js';
@@ -227,6 +227,11 @@ async function recipeToProtoPayload(recipe: Recipe) {
 
   const handleToProtoPayload = new Map<Handle, {name: string}>();
   for (const h of recipe.handles) {
+    // After type inference which runs as a part of the recipe.normalize() above
+    // all handle types are constrained type variables. We force these type variables
+    // to their resolution by called maybeEnsureResolved(), so that handle types
+    // are encoded with concrete types, instead of variables.
+    h.type.maybeEnsureResolved();
     handleToProtoPayload.set(h, await recipeHandleToProtoPayload(h));
   }
 
@@ -303,11 +308,13 @@ export function capabilitiesToProtoOrdinals(capabilities: Capabilities) {
 }
 
 export async function typeToProtoPayload(type: Type) {
-  if (type.hasVariable && !type.isResolved()) {
-    assert(type.maybeEnsureResolved());
-    assert(type.isResolved());
+  if (type.hasVariable && type.isResolved()) {
+    // We encode the resolution of the resolved type variables directly.
+    // This allows us to encode handle types and connection types directly
+    // and only encode type variables where they are not yet resolved,
+    // e.g. in particle specs of generic particles.
+    type = type.resolvedType();
   }
-  type = type.resolvedType();
   switch (type.tag) {
     case 'Entity': {
       const entity = {
@@ -343,12 +350,12 @@ export async function typeToProtoPayload(type: Type) {
     case 'Count': return {
       count: {}
     };
-    // TODO(b/154733929)
-    // case 'TypeVariable': return {
-    //   variable: {
-    //     name: (type as TypeVariable).variable.name,
-    //   }
-    // };
+    case 'TypeVariable': {
+      const constraintType = type.canReadSubset || type.canWriteSuperset;
+      const name = {name: (type as TypeVariable).variable.name};
+      const constraint = constraintType ? {constraint: {constraintType: await typeToProtoPayload(constraintType)}} : {};
+      return {variable: {...name, ...constraint}};
+    }
     default: throw new Error(`Type '${type.tag}' is not supported.`);
   }
 }

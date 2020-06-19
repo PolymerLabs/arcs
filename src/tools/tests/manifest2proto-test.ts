@@ -9,7 +9,7 @@
  */
 import {assert} from '../../platform/chai-web.js';
 import {capabilitiesToProtoOrdinals, encodeManifestToProto, manifestToProtoPayload, typeToProtoPayload} from '../manifest2proto.js';
-import {CountType, EntityType, SingletonType, TupleType, Type} from '../../runtime/type.js';
+import {CountType, EntityType, SingletonType, TupleType, Type, TypeVariable} from '../../runtime/type.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Capabilities, Shareable, Persistence, Queryable} from '../../runtime/capabilities.js';
 import {fs} from '../../platform/fs-web.js';
@@ -414,6 +414,122 @@ describe('manifest2proto', () => {
         }
       }
     });
+  });
+
+  it('encodes variable type - writeSuperset constraint', async () => {
+    const constraint = EntityType.make(['Foo'], {value: 'Text'}).singletonOf();
+    const varType = TypeVariable.make('a', constraint);
+    assert.deepStrictEqual(await toProtoAndBackType(varType), {
+      variable: {
+        name: 'a',
+        constraint: {constraintType: {
+          singleton: {singletonType: {
+            entity: {schema: {
+              names: ['Foo'],
+              fields: {value: {primitive: 'TEXT'}},
+              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+            }
+            }
+          }
+          }
+        }
+        }
+      }
+    });
+  });
+
+  it('encodes variable type - readSubset constraint', async () => {
+    const constraint = EntityType.make(['Foo'], {value: 'Text'}).singletonOf();
+    const varType = TypeVariable.make('a', null, constraint);
+    assert.deepStrictEqual(await toProtoAndBackType(varType), {
+      variable: {
+        name: 'a',
+        constraint: {constraintType: {
+          singleton: {singletonType: {
+            entity: {schema: {
+              names: ['Foo'],
+              fields: {
+                value: {
+                  primitive: 'TEXT'
+                }
+              },
+              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+            }
+            }
+          }
+          }
+        }
+        }
+      }
+    });
+  });
+
+  it('encodes variable type - resolved constraint', async () => {
+    const constraint = EntityType.make(['Foo'], {value: 'Text'}).singletonOf();
+    const varType = TypeVariable.make('a', constraint, constraint);
+    varType.maybeEnsureResolved();
+    assert.deepStrictEqual(await toProtoAndBackType(varType), {
+      singleton: {singletonType: {
+        entity: {schema: {
+          names: ['Foo'],
+          fields: {
+            value: {
+              primitive: 'TEXT'
+            }
+          },
+          hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+        }
+        }
+      }
+      }
+    });
+  });
+
+  it('encodes variable type - unconstrained', async () => {
+    const varType = TypeVariable.make('a');
+    assert.deepStrictEqual(await toProtoAndBackType(varType), {
+      variable: {name: 'a'}
+    });
+  });
+
+  it('encodes variable type for particle specs', async () => {
+    const manifest = await Manifest.parse(`
+    particle TimeRedactor
+      input: reads ~a with {time: Number}
+      output: writes ~a
+    `);
+
+    const particleSpec = (await toProtoAndBack(manifest)).particleSpecs[0];
+    const varInput = particleSpec.connections.find(c => c.name === 'input').type.variable;
+    const varOutput = particleSpec.connections.find(c => c.name === 'output').type.variable;
+
+    assert.deepStrictEqual(varInput, varOutput);
+    assert.deepStrictEqual(varInput.name, 'a');
+    assert.deepStrictEqual(varInput.constraint, {
+      constraintType: {
+        entity: {schema: {
+          fields: {time: {primitive: 'NUMBER'}},
+          hash: '5c7ae2de06d2111eeef1a845d57d52e23ff214da',
+        }
+      }
+    }
+    });
+  });
+
+  it('encodes variable type for particle specs - unconstrained', async () => {
+    const manifest = await Manifest.parse(`
+    particle P
+      input: reads ~a
+      output: writes ~a
+    `);
+
+    const particleSpec = (await toProtoAndBack(manifest)).particleSpecs[0];
+    const varInput = particleSpec.connections.find(c => c.name === 'input').type.variable;
+    const varOutput = particleSpec.connections.find(c => c.name === 'output').type.variable;
+
+    assert.deepStrictEqual(varInput, varOutput);
+    assert.deepStrictEqual(varInput.name, 'a');
+    assert.isUndefined(varInput.constraint);
   });
 
   it('encodes schemas with primitives and collections of primitives', async () => {
