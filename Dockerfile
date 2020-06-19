@@ -47,7 +47,10 @@ ENV ANDROID_HOME "/sdk"
 COPY tools/android-sdk-packages.txt tools/android-sdk-packages.txt
 COPY tools/install-android-sdk tools/install-android-sdk
 COPY tools/logging.sh tools/logging.sh
-RUN tools/install-android-sdk ${ANDROID_HOME}
+# Android sdkmanager does not have a quiet option and outputs highly
+# verbose progress to stdout, so we forcibly silence it at risk of
+# missing insight into failure modes.
+RUN tools/install-android-sdk ${ANDROID_HOME} > /dev/null
 
 # Install npm packages
 COPY concrete-storage/package.json concrete-storage/package.json
