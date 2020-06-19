@@ -567,20 +567,22 @@ open class HandleManagerTestBase {
     open fun collection_writeMutatedEntityReplaces() = testRunner {
         val entity = TestParticle_Entities(text = "Hello")
         val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
-        handle.store(entity)
+        withContext(handle.dispatcher) {
+            handle.store(entity)
 
-        assertThat(handle.fetchAll()).containsExactly(entity)
+            assertThat(handle.fetchAll()).containsExactly(entity)
 
-        val modified = entity.mutate(text = "Changed")
-        assertThat(modified).isNotEqualTo(entity)
+            val modified = entity.mutate(text = "Changed")
+            assertThat(modified).isNotEqualTo(entity)
 
-        // Entity internals should not change.
-        assertThat(modified.entityId).isEqualTo(entity.entityId)
-        assertThat(modified.creationTimestamp).isEqualTo(entity.creationTimestamp)
-        assertThat(modified.expirationTimestamp).isEqualTo(entity.expirationTimestamp)
+            // Entity internals should not change.
+            assertThat(modified.entityId).isEqualTo(entity.entityId)
+            assertThat(modified.creationTimestamp).isEqualTo(entity.creationTimestamp)
+            assertThat(modified.expirationTimestamp).isEqualTo(entity.expirationTimestamp)
 
-        handle.store(modified)
-        assertThat(handle.fetchAll()).containsExactly(modified)
+            handle.store(modified)
+            assertThat(handle.fetchAll()).containsExactly(modified)
+        }
     }
 
     @Test

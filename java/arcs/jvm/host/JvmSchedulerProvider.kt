@@ -14,15 +14,16 @@ package arcs.jvm.host
 import arcs.core.host.SchedulerProvider
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.TimeUnit
 
 /**
  * Implementation of a [SchedulerProvider] for the Java Virtual Machine (including Android).
@@ -45,7 +46,7 @@ class JvmSchedulerProvider(
     private val threads = arrayOfNulls<Thread>(maxThreadCount)
     private val dispatchers = mutableListOf<CoroutineDispatcher>()
     private val executors = mutableListOf<ExecutorService>()
-    private val schedulersByArcId = mutableMapOf<String, Scheduler>()
+    private val schedulersByArcId = ConcurrentHashMap<String, Scheduler>()
 
     @Synchronized
     override fun invoke(arcId: String): Scheduler {
@@ -78,9 +79,7 @@ class JvmSchedulerProvider(
 
         val schedulerParentJob = Job(baseCoroutineContext[Job])
         schedulerParentJob.invokeOnCompletion {
-            synchronized(this@JvmSchedulerProvider) {
-                schedulersByArcId.remove(arcId)
-            }
+            schedulersByArcId.remove(arcId)
         }
 
         val schedulerContext = baseCoroutineContext +
@@ -93,7 +92,7 @@ class JvmSchedulerProvider(
 
     @Synchronized
     override fun cancelAll() {
-        schedulersByArcId.values.toList().forEach { it.cancel() }
+        schedulersByArcId.forEach { (_, scheduler) -> scheduler.cancel() }
         executors.forEach {
             it.shutdown()
             it.awaitTermination(1, TimeUnit.SECONDS)
