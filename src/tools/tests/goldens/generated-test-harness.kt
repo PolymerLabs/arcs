@@ -26,6 +26,7 @@ import arcs.sdk.*
 import arcs.sdk.testing.*
 import kotlinx.coroutines.CoroutineScope
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class GoldTestHarness<P : AbstractGold>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(

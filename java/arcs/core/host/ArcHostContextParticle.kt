@@ -62,7 +62,7 @@ class ArcHostContextParticle(
                     ArcHostContextParticle_HandleConnections(
                         handleName = handle.key, storageKey = handle.value.storageKey.toString(),
                         mode = handle.value.mode.name, type = handle.value.type.tag.name,
-                        ttl = handle.value.ttl?.minutes?.toDouble() ?: Ttl.TTL_INFINITE
+                        ttl = handle.value.ttl.minutes.toDouble()
                     )
                 }
             }

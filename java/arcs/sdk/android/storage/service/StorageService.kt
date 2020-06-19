@@ -111,6 +111,7 @@ open class StorageService : ResurrectorService() {
         )
     }
 
+    @ExperimentalCoroutinesApi
     override fun onBind(intent: Intent): IBinder? {
         log.debug { "onBind: $intent" }
 

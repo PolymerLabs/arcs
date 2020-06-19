@@ -74,6 +74,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
@@ -89,6 +90,7 @@ private typealias Settings = SystemHealthData.Settings
 private typealias TaskEventQueue<T> = Pair<ReadWriteLock, MutableList<T>>
 
 /** System health test core for performance, power, memory footprint and stability. */
+@ExperimentalCoroutinesApi
 class StorageCore(val context: Context, val lifecycle: Lifecycle) {
     /** Query the last record of system-health stats */
     val statsBulletin: String
@@ -240,6 +242,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         }
     }
 
+    @ExperimentalCoroutinesApi
     private fun execute(settings: Settings) {
         earlyExit = false
         val numOfTasks = settings.numOfListenerThreads + settings.numOfWriterThreads

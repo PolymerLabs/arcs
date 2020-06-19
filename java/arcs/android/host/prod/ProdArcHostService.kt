@@ -21,14 +21,17 @@ import arcs.core.host.ProdHost
 import arcs.core.host.SchedulerProvider
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.host.scanForParticles
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
  * An isolatable (can run in another process) [Service] that has a [ProdHost] inside. [Particle]
  * implementations wishing to run inside of this [Prod] should use `arcs_kt_particles` macro
  * to make themselves automatically discoverable by ProdHost.
  */
+@ExperimentalCoroutinesApi
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 open class ProdArcHostService : ArcHostService() {
+    @ExperimentalCoroutinesApi
     class ProdAndroidHost(
         context: Context,
         lifecycle: Lifecycle,

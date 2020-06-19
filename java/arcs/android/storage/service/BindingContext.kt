@@ -29,6 +29,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -39,6 +40,7 @@ import kotlinx.coroutines.withTimeout
  * A [BindingContext] is used by a client of the [StorageService] to facilitate communication with a
  * [Store] residing within the [StorageService] from elsewhere in an application.
  */
+@ExperimentalCoroutinesApi
 class BindingContext(
     /**
      * The [Store] this [BindingContext] provides bindings for, it may or may not be shared with

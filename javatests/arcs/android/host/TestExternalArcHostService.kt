@@ -17,9 +17,11 @@ import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.ConnectionFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 
+@ExperimentalCoroutinesApi
 abstract class TestExternalArcHostService : Service() {
     protected val scope: CoroutineScope = MainScope()
 
@@ -48,6 +50,7 @@ abstract class TestExternalArcHostService : Service() {
         override fun getCurrentState(): State = State.CREATED
     }
 
+    @ExperimentalCoroutinesApi
     abstract class TestingAndroidHost(
         context: Context,
         schedulerProvider: SchedulerProvider,

@@ -27,6 +27,7 @@ import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertWithMessage
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import java.util.concurrent.Executors
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -43,6 +44,7 @@ import org.junit.runners.JUnit4
 
 private typealias Person = ReadSdkPerson_Person
 
+@ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 @Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
 class HandleUtilsTest {

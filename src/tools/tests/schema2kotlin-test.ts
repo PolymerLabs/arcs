@@ -304,6 +304,7 @@ describe('schema2kotlin', () => {
         h1: reads Person {name: Text}
         h2: writes Address {streetAddress: Text}
       `, `
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class PTestHarness<P : AbstractP>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
@@ -323,6 +324,7 @@ class PTestHarness<P : AbstractP>(
         collectionReference: reads [&Person {name: Text}]
         collectionTuples: reads writes [(&Product {name: Text}, &Manufacturer {name: Text})]
   `, `
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class PTestHarness<P : AbstractP>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(

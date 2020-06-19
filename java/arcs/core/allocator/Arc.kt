@@ -165,5 +165,5 @@ class Arc internal constructor(
     /** Stop the current [Arc]. */
     suspend fun stop() = allocator.stopArc(id)
 
-    private fun <T> sync(obj: Any, block: () -> T) = block()
+    @Suppress("UNUSED_PARAMETER") private fun <T> sync(obj: Any, block: () -> T) = block()
 }

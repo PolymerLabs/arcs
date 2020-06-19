@@ -54,6 +54,7 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -98,6 +99,7 @@ class EntityHandleManager(
         }
     }
 
+    @ExperimentalCoroutinesApi
     suspend fun createHandle(
         spec: HandleSpec,
         storageKey: StorageKey,
@@ -148,6 +150,7 @@ class EntityHandleManager(
     }
 
     /** Overload of [createHandle] parameterized by a type [R] of the data that is to be stored. */
+    @ExperimentalCoroutinesApi
     private suspend fun <T : Storable, R : Referencable> createHandle(
         config: HandleConfig<T, R>
     ): Handle = when (config.spec.containerType) {
@@ -174,6 +177,7 @@ class EntityHandleManager(
         val immediateSync: Boolean
     )
 
+    @ExperimentalCoroutinesApi
     private suspend fun <T : Storable, R : Referencable> createSingletonHandle(
         config: HandleConfig<T, R>
     ): Handle {
@@ -202,6 +206,7 @@ class EntityHandleManager(
         }
     }
 
+    @ExperimentalCoroutinesApi
     private suspend fun <T : Storable, R : Referencable> createCollectionHandle(
         config: HandleConfig<T, R>
     ): Handle {
@@ -235,6 +240,7 @@ class EntityHandleManager(
         }
     }
 
+    @ExperimentalCoroutinesApi
     @Suppress("UNCHECKED_CAST")
     private suspend fun <R : Referencable> singletonStoreProxy(
         storageKey: StorageKey,
@@ -253,6 +259,7 @@ class EntityHandleManager(
         } as SingletonProxy<R>
     }
 
+    @ExperimentalCoroutinesApi
     @Suppress("UNCHECKED_CAST")
     private suspend fun <R : Referencable> collectionStoreProxy(
         storageKey: StorageKey,

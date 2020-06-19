@@ -87,6 +87,7 @@ import kotlinx.coroutines.withTimeout
  * * updates should always be sent in order, so a blocked send should block subsequent sends too.
  *   The pendingSends queue ensures that all outgoing updates are sent in the correct order.
  */
+@ExperimentalCoroutinesApi
 class ReferenceModeStore private constructor(
     options: StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>,
     /* internal */
@@ -144,7 +145,6 @@ class ReferenceModeStore private constructor(
     private val versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
 
     /** Tracks the state of container store: Active (true) and Closed (false). */
-    @ExperimentalCoroutinesApi
     private val containerStateChannel = ConflatedBroadcastChannel(true)
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
@@ -186,7 +186,6 @@ class ReferenceModeStore private constructor(
         callback: ProxyCallback<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
     ): Int = callbacks.register(callback)
 
-    @ExperimentalCoroutinesApi
     override fun off(callbackToken: Int) {
         containerStore.off(containerCallbackToken)
         callbacks.unregister(callbackToken)
@@ -443,7 +442,6 @@ class ReferenceModeStore private constructor(
         return@fn true
     }
 
-    @ExperimentalCoroutinesApi
     @FlowPreview
     private val clearStoreCachesFlow = combine(
         containerStateChannel.asFlow(),

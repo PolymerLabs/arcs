@@ -270,6 +270,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     }
 
     return `
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class ${particleName}TestHarness<P : Abstract${particleName}>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
