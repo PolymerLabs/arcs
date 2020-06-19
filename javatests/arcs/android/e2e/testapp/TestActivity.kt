@@ -28,8 +28,11 @@ import arcs.android.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
 import arcs.core.common.ArcId
 import arcs.core.data.HandleMode
+import arcs.core.entity.EntitySpec
 import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.jvm.host.JvmSchedulerProvider
@@ -147,7 +150,7 @@ class TestActivity : AppCompatActivity() {
         intent?.run {
             if (this@run.hasExtra(RESULT_NAME)) {
                 scope.launch {
-                    appendResultText(this@run.getStringExtra(RESULT_NAME))
+                    appendResultText(this@run.getStringExtra(RESULT_NAME) ?: "")
                 }
             }
         }
@@ -270,8 +273,12 @@ class TestActivity : AppCompatActivity() {
                 HandleSpec(
                     "collectionHandle",
                     HandleMode.ReadWrite,
-                    HandleContainerType.Collection,
-                    TestEntity.Companion
+                    toType(
+                        TestEntity.Companion,
+                        HandleDataType.Entity,
+                        HandleContainerType.Collection
+                    ),
+                    setOf<EntitySpec<*>>(TestEntity.Companion)
                 ),
                 when (storageMode) {
                     TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
@@ -312,8 +319,12 @@ class TestActivity : AppCompatActivity() {
                 HandleSpec(
                     "singletonHandle",
                     HandleMode.ReadWrite,
-                    HandleContainerType.Singleton,
-                    TestEntity
+                    toType(
+                        TestEntity,
+                        HandleDataType.Entity,
+                        HandleContainerType.Singleton
+                    ),
+                    setOf<EntitySpec<*>>(TestEntity)
                 ),
                 when (storageMode) {
                     TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey

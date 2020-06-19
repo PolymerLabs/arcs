@@ -23,7 +23,6 @@ import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.Store
-import arcs.core.storage.util.SendQueue
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
@@ -56,12 +55,6 @@ class BindingContext(
 ) : IStorageService.Stub() {
     @VisibleForTesting
     val id = nextId.incrementAndGet()
-
-    /**
-     * The [SendQueue] ensures that all [ProxyMessage]s are handled in the order in which they were
-     * received.
-     */
-    private val sendQueue = SendQueue()
 
     /** The local [CoroutineContext]. */
     private val job = Job(parentCoroutineContext[Job])

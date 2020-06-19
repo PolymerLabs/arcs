@@ -88,8 +88,7 @@ class EntityHandleManager(
         proxyMutex,
         mutableMapOf<StorageKey, CollectionProxy<Referencable>>()
     )
-    private val dereferencerFactory =
-        EntityDereferencerFactory(stores, scheduler, activationFactory)
+    private val dereferencerFactory = EntityDereferencerFactory(activationFactory)
 
     @Deprecated("Will be replaced by ParticleContext lifecycle handling")
     suspend fun initiateProxySync() {
@@ -117,7 +116,7 @@ class EntityHandleManager(
                 EntityStorageAdapter(
                     handleName,
                     idGenerator,
-                    spec.entitySpec,
+                    spec.entitySpecs.single(),
                     ttl,
                     time,
                     dereferencerFactory,
@@ -129,7 +128,7 @@ class EntityHandleManager(
                     "Reference-mode storage keys are not supported for reference-typed handles."
                 }
                 ReferenceStorageAdapter(
-                    spec.entitySpec,
+                    spec.entitySpecs.single(),
                     dereferencerFactory,
                     ttl,
                     time,
@@ -186,7 +185,7 @@ class EntityHandleManager(
             spec = config.spec,
             proxy = singletonStoreProxy(
                 config.storageKey,
-                config.spec.entitySpec.SCHEMA,
+                config.spec.entitySpecs.single().SCHEMA,
                 config.spec.dataType.toStorageMode()
             ),
             storageAdapter = config.storageAdapter,
@@ -215,7 +214,7 @@ class EntityHandleManager(
             spec = config.spec,
             proxy = collectionStoreProxy(
                 config.storageKey,
-                config.spec.entitySpec.SCHEMA,
+                config.spec.entitySpecs.single().SCHEMA,
                 config.spec.dataType.toStorageMode()
             ),
             storageAdapter = config.storageAdapter,
