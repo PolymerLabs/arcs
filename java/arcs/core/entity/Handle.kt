@@ -61,11 +61,7 @@ interface Handle {
 
 /** Suspends until the [Handle] has synced with the store. */
 suspend fun <T : Handle> T.awaitReady(): T = suspendCancellableCoroutine { cont ->
-    if (this is ReadableHandle<*>) {
-        this.onReady {
-            if (cont.isActive) cont.resume(this@awaitReady)
-        }
-    } else {
+    this.onReady {
         if (cont.isActive) cont.resume(this@awaitReady)
     }
 }
