@@ -884,7 +884,7 @@ class DatabaseImpl(
     override suspend fun snapshotStatistics() = stats.snapshot()
 
     /** Deletes everything from the database. */
-    fun reset() {
+    override fun reset() {
         writableDatabase.transaction {
             execSQL("DELETE FROM collection_entries")
             execSQL("DELETE FROM collections")

@@ -75,6 +75,9 @@ interface Database {
      * [addClient]
      */
     suspend fun removeClient(identifier: Int)
+
+    /** Deletes everything from the database. */
+    fun reset()
 }
 
 /** A client interested in changes to a specific [StorageKey] in the database. */
