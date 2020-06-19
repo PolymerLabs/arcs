@@ -36,7 +36,9 @@ import kotlinx.coroutines.sync.withLock
  */
 class AndroidSqliteDatabaseManager(
     context: Context,
-    lifecycleParam: Lifecycle? = null
+    lifecycleParam: Lifecycle? = null,
+    // Maximum size of the database file, if it surpasses this size, the database gets reset.
+    private val maxDbSizeBytes: Int = MAX_DB_SIZE_BYTES
 ) : DatabaseManager, LifecycleObserver {
     private val context = context.applicationContext
     private val lifecycle = lifecycleParam ?: getLifecycle()
@@ -103,8 +105,15 @@ class AndroidSqliteDatabaseManager(
     override suspend fun removeExpiredEntities(): Job = coroutineScope {
         launch {
             registry.fetchAll()
-                .map { getDatabase(it.name, it.isPersistent) }
-                .forEach { it.removeExpiredEntities() }
+                .map { it.name to getDatabase(it.name, it.isPersistent) }
+                .forEach { (name, db) ->
+                    if (databaseSizeTooLarge(name)) {
+                        // If the database size is too large, we clear it entirely.
+                        db.reset()
+                    } else {
+                        db.removeExpiredEntities()
+                    }
+                }
         }
     }
 
@@ -124,5 +133,14 @@ class AndroidSqliteDatabaseManager(
                 .map { getDatabase(it.name, it.isPersistent) }
                 .forEach { it.runGarbageCollection() }
         }
+    }
+
+    private fun databaseSizeTooLarge(dbName: String): Boolean {
+        return context.getDatabasePath(dbName).length() > maxDbSizeBytes
+    }
+
+    companion object {
+        /** Maximum size of the database in bytes. */
+        const val MAX_DB_SIZE_BYTES = 50 * 1024 * 1024 // 50 Megabytes.
     }
 }
