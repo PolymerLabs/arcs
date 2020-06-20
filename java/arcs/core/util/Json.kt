@@ -152,38 +152,34 @@ object Json {
     fun parse(jsonString: String) = (jsonValue(jsonString) as? ParseResult.Success<JsonValue<*>>)?.
         value ?: throw IllegalArgumentException("Parse failed")
 
-    private val jsonNumber: Parser<JsonValue<*>> = RegexToken("(-?[0-9]+\\.?[0-9]*(?:e-?[0-9]+)?)")
+    private val jsonNumber: Parser<JsonValue<*>> = regex("(-?[0-9]+\\.?[0-9]*(?:e-?[0-9]+)?)")
         .map { JsonNumber(it.toDouble()) }
-    private val jsonString: Parser<JsonValue<*>> = RegexToken("\"((?:[^\"\\\\]|\\\\.)*)\"").map {
+
+    private val jsonString: Parser<JsonValue<*>> = regex("\"((?:[^\"\\\\]|\\\\.)*)\"").map {
         JsonString(it.replace("\\\"", "\"").replace("\\\n","\n"))
     }
 
-    private val jsonBoolean: Parser<JsonValue<*>> = (StringToken("true") / StringToken("false")).map {
+    private val jsonBoolean: Parser<JsonValue<*>> = (token("true") / token("false")).map {
         JsonBoolean(
             it.toBoolean()
         )
     }
-    private val jsonNull: Parser<JsonValue<*>> = StringToken("null").map { JsonNull }
+    private val jsonNull: Parser<JsonValue<*>> = token("null").map { JsonNull }
     private val jsonArray: Parser<JsonValue<*>> = (
-        StringToken("[") + many(parser(::jsonValue) + optional(StringToken(","))) + StringToken("]")
-        ).map {
-          JsonArray(it.first.second.map { p -> p.first })
-        }
+        -token("[") + many(parser(::jsonValue) + -optional(token(","))) + -token("]")
+        ).map { JsonArray(it) }
 
-    private val fieldName: Parser<String> = (jsonString + StringToken(":")).map {
-        it.first.value as String
-    }
+
+    private val fieldName: Parser<String> = (jsonString + -token(":")).map { it.string()!! }
 
     private val jsonObjectField: Parser<Pair<String, JsonValue<*>>> =
-        fieldName + ((parser(::jsonValue) + optional(StringToken(","))).map { it.first })
+        fieldName + ((parser(::jsonValue) + -optional(token(","))).map { it })
 
-    private val jsonObject: Parser<JsonValue<*>> = (
-        StringToken("{") + (many(jsonObjectField).map { result ->
+    private val jsonObject: Parser<JsonValue<*>> =
+        (-token("{") + many(jsonObjectField) + -token("}")).map { result ->
             JsonObject(result.associateBy({ it.first }, { it.second }))
-        }) + StringToken("}")).map { it.first.second }
-
+        }
 
     private val jsonValue: Parser<JsonValue<*>> = jsonObject / jsonArray /
         jsonNumber / jsonString / jsonBoolean / jsonNull
-
 }

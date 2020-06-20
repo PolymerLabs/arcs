@@ -128,20 +128,56 @@ class LazyParser<T>(val parser: () -> Parser<T>) : Parser<T>() {
     override fun invoke(string: String): ParseResult<T> = parser()(string)
 }
 
+/** A parser that represents three parsers in sequence yielding a [Triple]. */
+class TriSeq<T, S, R>(val left: Seq<T, S>, val right: Parser<R>) : Parser<Triple<T, S, R>>() {
+    override fun invoke(string: String): ParseResult<Triple<T, S, R>> =
+        left(string).flatMap { v1, r1 ->
+            right(r1).flatMap { v2, r2 ->
+                Success(Triple(v1.first, v1.second, v2), r2)
+            }
+        }
+}
+
+/** A parser which omits its output from the result type. */
+class IgnoreParser<T>(val parser: Parser<T>) : Parser<T>() {
+    override fun invoke(string: String): ParseResult<T> = parser(string)
+}
+
 /** Combines two parsers via addition operator as [Seq] combinator. */
-operator fun <T, S> Parser<T>.plus(other: Parser<S>) = Seq(this, other)
+inline operator fun <reified T, reified S> Parser<T>.plus(other: Parser<S>) = Seq(this, other)
+
+/** Combines two parsers in sequence with a third as a [TriSeq] combinator. */
+inline operator fun <reified T, reified S, reified R> Seq<T, S>.plus(other: Parser<R>) =
+    TriSeq(this, other)
+
+/** Combines an [IgnoreParsewr] with a [Parser] ignoring the output of the first. */
+inline operator fun<reified T, reified S> IgnoreParser<T>.plus(other: Parser<S>) =
+    Seq(this, other).map { (_, y) -> y }
+
+/** Combines an [Parsewr] with an [IgnoreParser] ignoring the output of the second. */
+inline operator fun<reified T, reified S> Parser<T>.plus(other: IgnoreParser<S>) =
+    Seq(this, other).map { (x, _) -> x }
+
+/** Unary minus as shorthand for ignoring a parser's output. */
+inline operator fun<reified T> Parser<T>.unaryMinus() = IgnoreParser(this)
 
 /** Combines to parsers via division operator as [Par] combinator. */
-operator fun <T> Parser<T>.div(other: Parser<T>) = Par(this, other)
+inline operator fun <T> Parser<T>.div(other: Parser<T>) = Par(this, other)
+
+/** Shorthand to create [RegexToken] parser. */
+inline fun regex(regex: String) = RegexToken(regex)
+
+/** Shorthand to create a [StringToken] parser. */
+inline fun token(prefix: String) = StringToken(prefix)
 
 /** Helper function for [Optional]. */
-fun <T> optional(parser: Parser<T>) = Optional<T>(parser)
+inline fun <T> optional(parser: Parser<T>) = Optional<T>(parser)
 
 /** Helper for [Many]. */
-fun <T> many(parser: Parser<T>) = Many<T>(parser)
+inline fun <T> many(parser: Parser<T>) = Many<T>(parser)
 
 /** Helper for [Transform]. */
-fun <T, R> Parser<T>.map(f: (T) -> R) = Transform(this, f)
+inline fun <T, R> Parser<T>.map(noinline f: (T) -> R) = Transform(this, f)
 
 /** Helper for [LazyParser]. */
-fun <T> parser(f: () -> Parser<T>) = LazyParser<T>(f)
+inline fun <T> parser(noinline f: () -> Parser<T>) = LazyParser<T>(f)

@@ -17,7 +17,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import kotlin.test.assertFailsWith
 
-/** Tests for [TypeVariable]. */
+/** Tests for [Expression]. */
 @RunWith(JUnit4::class)
 class ExpressionTest {
     fun <T> evalBool(expression: Expression<T>) = evalExpression<T, Boolean>(expression)
