@@ -152,30 +152,32 @@ object Json {
     fun parse(jsonString: String) = (jsonValue(jsonString) as? ParseResult.Success<JsonValue<*>>)?.
         value ?: throw IllegalArgumentException("Parse failed")
 
-    private val jsonNumber: Parser<JsonValue<*>> = regex("(-?[0-9]+\\.?[0-9]*(?:e-?[0-9]+)?)")
+    private val jsonNumber = regex("(-?[0-9]+\\.?[0-9]*(?:e-?[0-9]+)?)")
         .map { JsonNumber(it.toDouble()) }
 
-    private val jsonString: Parser<JsonValue<*>> = regex("\"((?:[^\"\\\\]|\\\\.)*)\"").map {
+    private val jsonString = regex("\"((?:[^\"\\\\]|\\\\.)*)\"").map {
         JsonString(it.replace("\\\"", "\"").replace("\\\n","\n"))
     }
 
-    private val jsonBoolean: Parser<JsonValue<*>> = (token("true") / token("false")).map {
+    private val jsonBoolean = (token("true") / token("false")).map {
         JsonBoolean(
             it.toBoolean()
         )
     }
-    private val jsonNull: Parser<JsonValue<*>> = token("null").map { JsonNull }
-    private val jsonArray: Parser<JsonValue<*>> = (
+
+    private val jsonNull = token("null").map { JsonNull }
+
+    private val jsonArray = (
         -token("[") + many(parser(::jsonValue) + -optional(token(","))) + -token("]")
         ).map { JsonArray(it) }
 
 
-    private val fieldName: Parser<String> = (jsonString + -token(":")).map { it.string()!! }
+    private val fieldName = (jsonString + -token(":")).map { it.value }
 
-    private val jsonObjectField: Parser<Pair<String, JsonValue<*>>> =
+    private val jsonObjectField =
         fieldName + ((parser(::jsonValue) + -optional(token(","))).map { it })
 
-    private val jsonObject: Parser<JsonValue<*>> =
+    private val jsonObject =
         (-token("{") + many(jsonObjectField) + -token("}")).map { result ->
             JsonObject(result.associateBy({ it.first }, { it.second }))
         }
