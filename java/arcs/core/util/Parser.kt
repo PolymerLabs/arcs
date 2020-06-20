@@ -22,12 +22,12 @@ import arcs.core.util.ParseResult.Success
  * <br>
  *
  * ## Basic Parsing
- * The the most basic parser consumes parser of a string, and returns the result.
+ * The most basic parser consumes parser of a string, and returns the result.
  * ```kotlin
  * val helloParser = token("hello")
- * val helloResult = helloParser("hello world")
- * // returns Success("hello", " world")
- * val helloResult = helloParser("world hello")
+ * val helloResult = helloParser("helloworld")
+ * // returns Success("hello", "world")
+ * val helloResult = helloParser("worldhello")
  * // returns Failure
  * ```
  *
@@ -73,9 +73,9 @@ import arcs.core.util.ParseResult.Success
  *
  * ```kotlin
  * val helloOrFooWorld = (token("hello") / token("foo")) + token("world")
- * helloOrFooWorld("foo world") // success!
- * helloOrFooWorld("hello world") // success!
- * helloOrFooWorld("bar world") // failure!
+ * helloOrFooWorld("fooworld") // success!
+ * helloOrFooWorld("helloworld") // success!
+ * helloOrFooWorld("barworld") // failure!
  * ```
  *
  * ### The Many and Optional combinators.
