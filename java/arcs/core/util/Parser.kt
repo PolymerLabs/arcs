@@ -13,6 +13,110 @@ package arcs.core.util
 import arcs.core.util.ParseResult.Failure
 import arcs.core.util.ParseResult.Success
 
+/**
+ * # Introduction
+ * Monadic parser combinator facility for Kotlin. Parser combinators can be composed like monads,
+ * and produce a [ParseResult] containing the current parsed value and unconsumed string, or
+ * a [Failure]. Two primitive string parsers are provided, along with a set of combinators:
+ * [Seq]uence, [Par]allel, [Many], [Optional], [LazyParser], [TransformParser].
+ * <br>
+ *
+ * ## Basic Parsing
+ * The the most basic parser consumes parser of a string, and returns the result.
+ * ```kotlin
+ * val helloParser = token("hello")
+ * val helloResult = helloParser("hello world")
+ * // returns Success("hello", " world")
+ * val helloResult = helloParser("world hello")
+ * // returns Failure
+ * ```
+ *
+ * ## Transforming String Results to other types
+ * Sometimes you want to return AST nodes instead of strings, that's where the [Transform] parser
+ * comes into play via the [map] extension function.
+ *
+ * ```
+ * val helloParser = token("hello").map { StringNode(it) }
+ * val helloResult = helloParser("hello world")
+ * // returns Success(StringNode("hello"), " world")
+ * ```
+ *
+ * ## Handling Failures
+ * If you want to handle results without worrying about [Failure] cases, you can [flatMap] them
+ * which only invokes the function if the result is a [Success].
+ *
+ * ```
+ * helloResult.flatMap { value, rest -> doSomething(value) }
+ * ```
+ *
+ * but sometimes you want to supply a default.
+ *
+ * ```
+ * helloResult.orElse { Success("default", "") }
+ * ```
+ *
+ * ## Combining Parsers
+ * You can combine two parsers together in sequence and transform them as well. Here, '+' is
+ * used for sequence combination.
+ *
+ * ```
+ * val helloWorld = token("hello") + token(" world").map { (hello, world) ->
+ *   listOf(hello, world)
+ * }
+ *
+ * val helloResult = helloWorld("hello world")
+ * // returns Success(List<String>("hello", " world"), "")
+ * ```
+ *
+ * ### The [Par]allel 'or' combinator
+ * If you want combine two parsers, so that one or the other may success, use the '/' operator.
+ *
+ * ```kotlin
+ * val helloOrFooWorld = (token("hello") / token("foo")) + token("world")
+ * helloOrFooWorld("foo world") // success!
+ * helloOrFooWorld("hello world") // success!
+ * helloOrFooWorld("bar world") // failure!
+ * ```
+ *
+ * ### The Many and Optional combinators.
+ * If a parser can succeed 0 or 1 times, use [optional], and if it can succeed 0 or many times,
+ * use [many]. [optional] returns Success(null, rest) if it didn't match, and [many] returns
+ * Success(List<T>, rest) with the matched results.
+ *
+ * ```kotlin
+ * val helloWorld = token("hello") + optional(token(" ")) + token("world")
+ * helloWorld("hello world") // success!
+ * helloWorld("helloworld") // success!
+ * helloWorld("hello  world") // failure! only one space allowed
+ *
+ * val helloWorld2 = token("hello") + many(token(" ")) + token("world")
+ * helloWorld("hello world") // success!
+ * helloWorld("helloworld") // success!
+ * helloWorld("hello   world") // success!!
+ * ```
+ *
+ * ### Ignoring Parser results
+ * Each time you sequence two parsers via '+', you add another argument to the resulting return
+ * value tuple.
+ *
+ * If you have `Parser<T>` + `Parser<S>`, the result is `ParserResult<Pair<T,S>>` and if you have
+ * `Parser<T> + Parser<S> + Parser<R>` the result is `ParserResult<Triple<T,S,R>>`. Often times,
+ * some of these values are from non-relevant surrounding tokens. You can remove these from the
+ * output signature via the [IgnoreParser], which is normally used via the [unaryMinus] helper.
+ *
+ * ```kotlin
+ * val term = token("hello") / token("world")
+ * val array = token("[") + many(term + optional(token(","))) + token("]")
+ * // without IgnoreParser the return result is Triple<String, List<Pair<String, String?>>, String>
+ *
+ * val arrayClean = -token("[") + many(term + -optional(token(","))) + -token("]")
+ * // arrayClean("[hello,world]") returns Success(List<String>("hello", "world"))
+ * ```
+ */
+abstract class Parser<out T> {
+    abstract operator fun invoke(string: String): ParseResult<T>
+}
+
 /** The result (Functor) of a [Parser] application is a either [Success] or [Failure]. */
 sealed class ParseResult<out T> {
     @Suppress("UNCHECKED_CAST")
@@ -40,15 +144,6 @@ sealed class ParseResult<out T> {
 
 /** Chop off the consumed part of the string. */
 fun String.advance(str: String) = this.substring(str.length)
-
-/**
- * Monadic parser combinator interface. Parser combinators can be composed like monads, and
- * produce a [ParseResult] containing the current parsed value and unconsumed income, or
- * a [Failure].
- */
-abstract class Parser<out T> {
-    abstract operator fun invoke(string: String): ParseResult<T>
-}
 
 /** A parser that consumes a prefix of a string. */
 class StringToken(val token: String) : Parser<String>() {
@@ -112,14 +207,14 @@ class Many<T>(val parser: Parser<T>) : Parser<List<T>>() {
             lastSuccess = parseResult
             parseResult = parser(parseResult.rest)
         }
-        return Success<List<T>>(result, (lastSuccess as? Success<T>)?.rest ?: string)
+        return Success(result, (lastSuccess as? Success<T>)?.rest ?: string)
     }
 }
 
 /** A parser which converts the return value of a parser into another value. */
 class Transform<T, R>(val parser: Parser<T>, val transform: (T) -> R) : Parser<R>() {
     override fun invoke(string: String): ParseResult<R> = parser(string).flatMap { v, r ->
-        Success<R>(transform(v), r)
+        Success(transform(v), r)
     }
 }
 
@@ -150,11 +245,11 @@ inline operator fun <reified T, reified S> Parser<T>.plus(other: Parser<S>) = Se
 inline operator fun <reified T, reified S, reified R> Seq<T, S>.plus(other: Parser<R>) =
     TriSeq(this, other)
 
-/** Combines an [IgnoreParsewr] with a [Parser] ignoring the output of the first. */
+/** Combines an [IgnoreParser] with a [Parser] ignoring the output of the first. */
 inline operator fun<reified T, reified S> IgnoreParser<T>.plus(other: Parser<S>) =
     Seq(this, other).map { (_, y) -> y }
 
-/** Combines an [Parsewr] with an [IgnoreParser] ignoring the output of the second. */
+/** Combines an [Parser] with an [IgnoreParser] ignoring the output of the second. */
 inline operator fun<reified T, reified S> Parser<T>.plus(other: IgnoreParser<S>) =
     Seq(this, other).map { (x, _) -> x }
 

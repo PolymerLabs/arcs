@@ -175,7 +175,7 @@ object Json {
     private val fieldName = (jsonString + -token(":")).map { it.value }
 
     private val jsonObjectField =
-        fieldName + ((parser(::jsonValue) + -optional(token(","))).map { it })
+        (fieldName + parser(::jsonValue) + (-optional(token(","))).map { it })
 
     private val jsonObject =
         (-token("{") + many(jsonObjectField) + -token("}")).map { result ->
