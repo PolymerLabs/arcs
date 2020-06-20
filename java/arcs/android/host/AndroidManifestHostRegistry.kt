@@ -70,7 +70,7 @@ class AndroidManifestHostRegistry private constructor(
      */
     private fun findHostsByManifest(): List<IntentRegistryAdapter> =
         context.packageManager.queryIntentServices(
-            Intent(ArcHostHelper.Companion.ACTION_HOST_INTENT),
+            Intent(ArcHostHelper.ACTION_HOST_INTENT),
             PackageManager.MATCH_ALL
         )
         .filter { it.serviceInfo != null }

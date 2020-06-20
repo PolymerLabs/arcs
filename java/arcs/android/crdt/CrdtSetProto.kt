@@ -20,14 +20,14 @@ fun CrdtSetProto.Data.toData() = CrdtSet.DataImpl<Referencable>(
 /** Constructs a [CrdtSet.Operation] from the given [CrdtSetProto.Operation]. */
 fun CrdtSetProto.Operation.toOperation(): CrdtSet.Operation<Referencable> = when (operationCase) {
     CrdtSetProto.Operation.OperationCase.ADD -> with(add) {
-        CrdtSet.Operation.Add<Referencable>(
+        CrdtSet.Operation.Add(
             actor = actor,
             clock = fromProto(versionMap),
             added = added.toReferencable()!!
         )
     }
     CrdtSetProto.Operation.OperationCase.REMOVE -> with(remove) {
-        CrdtSet.Operation.Remove<Referencable>(
+        CrdtSet.Operation.Remove(
             actor = actor,
             clock = fromProto(versionMap),
             removed = removed.toReferencable()!!
@@ -64,7 +64,6 @@ fun CrdtSet.Operation<*>.toProto(): CrdtSetProto.Operation {
         is CrdtSet.Operation.Add<*> -> proto.add = toProto()
         is CrdtSet.Operation.Remove<*> -> proto.remove = toProto()
         is CrdtSet.Operation.FastForward<*> -> proto.fastForward = toProto()
-        else -> throw UnsupportedOperationException("Unsupported CrdtSet.Operation: $this.")
     }
     return proto.build()
 }

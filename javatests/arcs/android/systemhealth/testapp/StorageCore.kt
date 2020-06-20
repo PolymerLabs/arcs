@@ -17,9 +17,12 @@ import android.os.Debug
 import android.os.Trace
 import androidx.lifecycle.Lifecycle
 import arcs.core.data.HandleMode
+import arcs.core.entity.EntitySpec
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.Reference
@@ -356,9 +359,13 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             val handle = taskHandle.handleManager.createHandle(
                 HandleSpec(
                     "singletonHandle$taskId",
-                    HandleMode.ReadWrite,
-                    HandleContainerType.Singleton,
-                    TestEntity.Companion
+                           HandleMode.ReadWrite,
+                           toType(
+                               TestEntity.Companion,
+                               HandleDataType.Entity,
+                               HandleContainerType.Singleton
+                           ),
+                           setOf<EntitySpec<*>>(TestEntity.Companion)
                 ),
                 when (settings.storageMode) {
                     TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
@@ -408,11 +415,15 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 HandleSpec(
                     "collectionHandle$taskId",
                     HandleMode.ReadWrite,
-                    HandleContainerType.Collection,
-                    TestEntity.Companion
+                    toType(
+                        TestEntity.Companion,
+                        HandleDataType.Entity,
+                        HandleContainerType.Collection
+                    ),
+                    setOf<EntitySpec<*>>(TestEntity.Companion)
                 ),
                 when (settings.storageMode) {
-                    TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
+                    StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
                     else -> TestEntity.collectionInMemoryStorageKey
                 }
             ) as ReadWriteCollectionHandle<TestEntity>

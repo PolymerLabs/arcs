@@ -3,6 +3,7 @@ package arcs.core.entity
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
+import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -53,11 +54,7 @@ class ReferenceTest {
 
         scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher())
         stores = StoreManager()
-        dereferencer = RawEntityDereferencer(
-            DummyEntity.SCHEMA,
-            scheduler = scheduler,
-            storeManager = stores
-        )
+        dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA)
         entityHandleManager = EntityHandleManager(
             "testArc",
             "",
@@ -70,8 +67,12 @@ class ReferenceTest {
             HandleSpec(
                 "testHandle",
                 HandleMode.ReadWrite,
-                HandleContainerType.Collection,
-                DummyEntity
+                toType(
+                    DummyEntity,
+                    HandleDataType.Entity,
+                    HandleContainerType.Collection
+                ),
+                setOf<EntitySpec<*>>(DummyEntity)
             ),
             STORAGE_KEY
         ) as ReadWriteCollectionHandle<DummyEntity>

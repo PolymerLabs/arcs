@@ -130,7 +130,7 @@ class CapabilitiesResolver(
 
     /** Returns list of creator info corresponding to the given [Capabilities]. */
     /* internal */ fun findCreators(capabilities: Capabilities): List<StorageKeyCreatorInfo> {
-        var result = creators.filter { creator -> creator.capabilities == capabilities }
+        val result = creators.filter { creator -> creator.capabilities == capabilities }
         if (result.isNotEmpty()) return result
         return creators.filter { creator -> capabilities in creator.capabilities }
     }
@@ -145,7 +145,7 @@ class CapabilitiesResolver(
             capabilities: Capabilities,
             create: StorageKeyCreator
         ) {
-            CapabilitiesResolver.defaultCreators.add(
+            defaultCreators.add(
                 StorageKeyCreatorInfo(protocol, capabilities, create)
             )
         }
@@ -156,20 +156,20 @@ class CapabilitiesResolver(
             capabilities: Capabilities,
             create: StorageKeyCreator
         ) {
-            CapabilitiesResolver.registeredCreators.add(
+            registeredCreators.add(
                 StorageKeyCreatorInfo(protocol, capabilities, create)
             )
         }
 
         private fun getAllCreators(): List<StorageKeyCreatorInfo> {
             val creators: MutableList<StorageKeyCreatorInfo> = mutableListOf()
-            CapabilitiesResolver.defaultCreators.forEach { creators.add(it) }
-            CapabilitiesResolver.registeredCreators.forEach { creators.add(it) }
+            defaultCreators.forEach { creators.add(it) }
+            registeredCreators.forEach { creators.add(it) }
             return creators
         }
 
         fun reset() {
-            CapabilitiesResolver.registeredCreators.clear()
+            registeredCreators.clear()
         }
     }
 }

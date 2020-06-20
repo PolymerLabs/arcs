@@ -43,7 +43,7 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
         require(
             willSupport(storageKey)
         ) { "This provider does not support storageKey: $storageKey" }
-        return VolatileDriver(storageKey, type, arcMemory)
+        return VolatileDriver(storageKey, arcMemory)
     }
 
     override suspend fun removeAllEntities() = arcMemory.clear()
@@ -56,7 +56,6 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
 /** [Driver] implementation for an in-memory store of data. */
 /* internal */ class VolatileDriver<Data : Any>(
     override val storageKey: StorageKey,
-    private val type: Type,
     private val memory: VolatileMemory
 ) : Driver<Data> {
     // TODO(#5551): Consider including a hash of the toString info in log prefix.

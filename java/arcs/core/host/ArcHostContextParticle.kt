@@ -79,8 +79,8 @@ class ArcHostContextParticle(
                     location = it.value.planParticle.location,
                     particleState = it.value.particleState.name,
                     consecutiveFailures = it.value.consecutiveFailureCount.toDouble(),
-                    handles = storedConnections.map {
-                        handles.handleConnections.createReference(it)
+                    handles = storedConnections.map { connection ->
+                        handles.handleConnections.createReference(connection)
                     }.toSet()
                 )
             }
@@ -137,7 +137,7 @@ class ArcHostContextParticle(
                 )
             }.toSet().associateBy({ it.first }, { it.second })
 
-            return@onHandlesReady arcs.core.host.ArcHostContext(
+            return@onHandlesReady ArcHostContext(
                 arcId,
                 particles.toMutableMap(),
                 ArcState.valueOf(arcStateEntity.arcState),

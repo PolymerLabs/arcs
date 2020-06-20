@@ -4,8 +4,11 @@ import android.app.Service
 import android.content.Intent
 import androidx.lifecycle.LifecycleService
 import arcs.core.data.HandleMode
+import arcs.core.entity.EntitySpec
 import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.host.EntityHandleManager
 import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
@@ -49,8 +52,12 @@ class StorageAccessService : LifecycleService() {
                 HandleSpec(
                     "singletonHandle",
                     HandleMode.Write,
-                    HandleContainerType.Singleton,
-                    TestEntity.Companion
+                    toType(
+                        TestEntity.Companion,
+                        HandleDataType.Entity,
+                        HandleContainerType.Singleton
+                    ),
+                    setOf<EntitySpec<*>>(TestEntity.Companion)
                 ),
                 when (storageMode) {
                     TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey

@@ -32,8 +32,6 @@ import kotlinx.coroutines.withContext
  */
 class RawEntityDereferencer(
     private val schema: Schema,
-    private val storeManager: StoreManager = StoreManager(),
-    private val scheduler: Scheduler,
     private val entityActivationFactory: ActivationFactory? = null,
     private val referenceCheckFun: ((Schema, RawEntity?) -> Unit)? = null
 ) : Dereferencer<RawEntity> {

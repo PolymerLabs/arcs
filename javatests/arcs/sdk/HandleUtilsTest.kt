@@ -11,8 +11,11 @@
 
 package arcs.sdk
 
+import arcs.core.entity.EntitySpec
 import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
@@ -341,8 +344,12 @@ class HandleUtilsTest {
         HandleSpec(
             READ_WRITE_HANDLE,
             HandleMode.ReadWriteQuery,
-            HandleContainerType.Collection,
-            Person
+            toType(
+                Person,
+                HandleDataType.Entity,
+                HandleContainerType.Collection
+            ),
+            setOf<EntitySpec<*>>(Person)
         ),
         storageKey
     ).awaitReady() as ReadWriteQueryCollectionHandle<Person, *>
@@ -353,8 +360,11 @@ class HandleUtilsTest {
         HandleSpec(
             READ_WRITE_HANDLE,
             HandleMode.ReadWrite,
-            HandleContainerType.Singleton,
-            Person
+            toType(
+                Person,
+                HandleDataType.Entity, HandleContainerType.Singleton
+            ),
+            setOf<EntitySpec<*>>(Person)
         ),
         storageKey
     ).awaitReady() as ReadWriteSingletonHandle<Person>

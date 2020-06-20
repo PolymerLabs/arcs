@@ -50,7 +50,6 @@ fun ProxyMessage<*, *, *>.toProto(): ProxyMessageProto {
                 .addAllOperations(operations.map { it.toProto() })
                 .build()
         }
-        else -> throw UnsupportedOperationException("Unknown ProxyMessage type: $this.")
     }
     return proto.build()
 }

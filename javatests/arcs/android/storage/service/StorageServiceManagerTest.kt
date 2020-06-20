@@ -16,8 +16,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.common.ArcId
 import arcs.core.data.HandleMode
 import arcs.core.entity.DummyEntity
+import arcs.core.entity.EntitySpec
 import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.SchemaRegistry
@@ -194,8 +197,12 @@ class StorageServiceManagerTest {
             HandleSpec(
                 "name",
                 HandleMode.ReadWrite,
-                HandleContainerType.Singleton,
-                DummyEntity
+                toType(
+                    DummyEntity,
+                    HandleDataType.Entity,
+                    HandleContainerType.Singleton
+                ),
+                setOf<EntitySpec<*>>(DummyEntity)
             ),
             storageKey
         ).awaitReady() as ReadWriteSingletonHandle<DummyEntity>
@@ -208,8 +215,12 @@ class StorageServiceManagerTest {
             HandleSpec(
                 "name",
                 HandleMode.ReadWrite,
-                HandleContainerType.Collection,
-                DummyEntity
+                toType(
+                    DummyEntity,
+                    HandleDataType.Entity,
+                    HandleContainerType.Collection
+                ),
+                setOf<EntitySpec<*>>(DummyEntity)
             ),
             storageKey
         ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>

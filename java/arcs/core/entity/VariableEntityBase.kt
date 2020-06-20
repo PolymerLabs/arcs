@@ -3,6 +3,7 @@ package arcs.core.entity
 import arcs.core.common.Referencable
 import arcs.core.data.FieldName
 import arcs.core.data.RawEntity
+import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.Schema
 
 /**
@@ -14,24 +15,13 @@ import arcs.core.data.Schema
  * In this way, an entity representing a type variable will pass data through the system without
  * a specific description of the data (an exact match with a [Schema]).
  */
-open class VariableEntityBase : EntityBase {
-
-    constructor(entityClassName: String, schema: Schema) : super(entityClassName, schema)
-
-    constructor(
-        entityClassName: String,
-        schema: Schema,
-        entityId: String?
-    ) : super(entityClassName, schema, entityId)
-
-    constructor(
-        entityClassName: String,
-        schema: Schema,
-        entityId: String?,
-        creationTimestamp: Long,
-        expirationTimestamp: Long
-    ) : super(entityClassName, schema, entityId, creationTimestamp, expirationTimestamp)
-
+open class VariableEntityBase(
+    entityClassName: String,
+    schema: Schema,
+    entityId: String? = null,
+    creationTimestamp: Long = UNINITIALIZED_TIMESTAMP,
+    expirationTimestamp: Long = UNINITIALIZED_TIMESTAMP
+) : EntityBase(entityClassName, schema, entityId, creationTimestamp, expirationTimestamp) {
     private val rawSingletons = mutableMapOf<FieldName, Referencable?>()
     private val rawCollections = mutableMapOf<FieldName, Set<Referencable>>()
 

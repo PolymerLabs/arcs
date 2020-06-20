@@ -25,10 +25,10 @@ abstract class HostRegistry {
     /**
      * Register a new [ArcHost].
      */
-    abstract suspend fun registerHost(host: ArcHost): Unit
+    abstract suspend fun registerHost(host: ArcHost)
 
     /**
      * Remove an [ArcHost] from the list of those available.
      */
-    abstract suspend fun unregisterHost(host: ArcHost): Unit
+    abstract suspend fun unregisterHost(host: ArcHost)
 }

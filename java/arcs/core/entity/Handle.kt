@@ -98,10 +98,6 @@ data class HandleSpec(
         setOf(entitySpec)
     )
 
-    @Deprecated("Use all entity specs.", ReplaceWith("entitySpecs.single()"))
-    val entitySpec: EntitySpec<*>
-        get() = entitySpecs.single()
-
     val containerType: HandleContainerType
         get() = when (type) {
             is CollectionType<*> -> HandleContainerType.Collection

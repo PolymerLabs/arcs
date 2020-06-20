@@ -53,12 +53,7 @@ class RawEntityDereferencerTest {
     private lateinit var aliceDriver: Driver<CrdtEntity.Data>
     private lateinit var bobDriver: Driver<CrdtEntity.Data>
     // TODO: Test with an activation factory in android-specific tests.
-    private val scheduler = Scheduler(EmptyCoroutineContext)
-    private val dereferencer = RawEntityDereferencer(
-        schema,
-        entityActivationFactory = null,
-        scheduler = scheduler
-    )
+    private val dereferencer = RawEntityDereferencer(schema)
     private val referenceBuilder = { refable: Referencable ->
         if (refable is Reference) refable
         else buildReference(refable)
