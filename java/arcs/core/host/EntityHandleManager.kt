@@ -55,6 +55,7 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
+import arcs.jvm.util.JvmTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -80,7 +81,10 @@ class EntityHandleManager(
     private val idGenerator: Id.Generator = Id.Generator.newSession()
 ) {
 
-    @Deprecated("prefer primary constructor")
+    @Deprecated(
+        message = "prefer primary constructor",
+        replaceWith = ReplaceWith("EntityHandleManager(arcId, hostId, time, scheduler, StoreManager(activationFactory), idGenerator )")
+    )
     constructor(
         arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
         hostId: String = "nohost",
@@ -93,7 +97,7 @@ class EntityHandleManager(
         hostId,
         time,
         scheduler,
-        StoreManager(activationFactory ?: Store.defaultFactory),
+        StoreManager(activationFactory),
         idGenerator
     )
     

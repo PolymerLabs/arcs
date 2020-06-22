@@ -13,6 +13,7 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.util.guardedBy
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -25,17 +26,18 @@ class StoreManager(
      * If a store doesn't yet exist in this [StoreManager] for a provided [StorageKey],
      * it will be created using this [ActivationFactory].
      */
-    val activationFactory: ActivationFactory = Store.defaultFactory
+    val activationFactory: ActivationFactory? = null
 ) {
     private val storesMutex = Mutex()
     private val stores by guardedBy(storesMutex, mutableMapOf<StorageKey, ActiveStore<*, *, *>>())
 
+    @ExperimentalCoroutinesApi
     @Suppress("UNCHECKED_CAST")
     suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> get(
         storeOptions: StoreOptions<Data, Op, T>
     ) = storesMutex.withLock {
         stores.getOrPut(storeOptions.storageKey) {
-            activationFactory(storeOptions)
+            (activationFactory ?: Store.defaultFactory).invoke(storeOptions)
         } as ActiveStore<Data, Op, T>
     }
 
