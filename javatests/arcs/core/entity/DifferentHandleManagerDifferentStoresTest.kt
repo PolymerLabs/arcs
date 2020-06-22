@@ -40,37 +40,31 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
     @After
     override fun tearDown() = super.tearDown()
 
-    @Ignore("b/154947352 - Deflake")
     @Test
     override fun collection_removingFromA_isRemovedFromB() {
         super.collection_removingFromA_isRemovedFromB()
     }
 
-    @Ignore("b/156433279 - Deflake")
     @Test
     override fun singleton_referenceLiveness() {
         super.singleton_referenceLiveness()
     }
 
-    @Ignore("b/157185966 - Deflake")
     @Test
     override fun collection_referenceLiveness() {
         super.collection_referenceLiveness()
     }
 
-    @Ignore("b/157201431 - Deflake")
     @Test
     override fun singleton_dereferenceEntity() {
         super.singleton_dereferenceEntity()
     }
 
-    @Ignore("b/157201835 - Deflake")
     @Test
     override fun collection_entityDereference() {
         super.collection_entityDereference()
     }
 
-    @Ignore("b/157266863 - Deflake")
     @Test
     override fun singleton_clearOnAClearDataWrittenByB() {
         super.singleton_clearOnAClearDataWrittenByB()
