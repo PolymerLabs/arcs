@@ -256,7 +256,7 @@ export class Handle implements Comparable<Handle> {
     this._capabilities = Capabilities.fromAnnotations(this.annotations);
     if (this._connections.some(c => c.type && c.type.getEntitySchema()
         && c.type.getEntitySchema().refinement)) {
-      this._capabilities.setCapability(new Queryable(true), Queryable);
+      this._capabilities.setCapability(new Queryable(true));
     }
     // Note: Consider adding `Shareable` if handle has an id, or used in other recipes.
   }

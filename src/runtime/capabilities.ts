@@ -16,8 +16,17 @@ export enum CapabilityComparison {
   LessStrict, Equivalent, Stricter
 }
 
+export type CapabilityTag =
+    'persistence' | 'ttl' | 'encryption' | 'queryable' | 'shareable' | 'range';
+
 // Base class for all store capabilities.
 export abstract class Capability {
+  readonly tag: CapabilityTag;
+
+  protected constructor(tag: CapabilityTag) {
+    this.tag = tag;
+  }
+
   isEquivalent(other: Capability): boolean {
     const comparison = this.compare(other);
     return comparison === CapabilityComparison.Equivalent;
@@ -69,10 +78,11 @@ export enum PersistenceType {
 }
 
 export class Persistence extends Capability {
+  static readonly tag: CapabilityTag = 'persistence';
   public type: PersistenceType;
 
   constructor(type: PersistenceType = PersistenceType.None) {
-    super();
+    super(Persistence.tag);
     this.type = type;
   }
 
@@ -150,11 +160,12 @@ export interface TtlLiteral extends Literal {
 
 // TTL as Capability.
 export class Ttl extends Capability {
+  static readonly tag: CapabilityTag = 'ttl';
   private _count: number;
   private _units: TtlUnits;
 
   private constructor(count: number = 0, units: TtlUnits = TtlUnits.Millis) {
-    super();
+    super(Ttl.tag);
     this._count = count;
     this._units = units;
   }
@@ -276,8 +287,8 @@ export class Ttl extends Capability {
 export abstract class BooleanCapability extends Capability {
   public value: boolean;
 
-  constructor(value: boolean = false) {
-    super();
+  constructor(tag: CapabilityTag, value: boolean = false) {
+    super(tag);
     this.value = value;
   }
 
@@ -306,6 +317,12 @@ export abstract class BooleanCapability extends Capability {
 }
 
 export class Queryable extends BooleanCapability {
+  static readonly tag: CapabilityTag = 'queryable';
+
+  constructor(value: boolean = false) {
+    super(Queryable.tag, value);
+  }
+
   static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
     const queryableAnnotations =
         annotations.filter(annotation => annotation.name === 'queryable');
@@ -327,6 +344,12 @@ export class Queryable extends BooleanCapability {
 // ramdisk and volatile memory. Currently only introduced for backward
 // compatibility in tests.
 export class Shareable extends BooleanCapability {
+  static readonly tag: CapabilityTag = 'shareable';
+
+  constructor(value: boolean = false) {
+    super(Shareable.tag, value);
+  }
+
   static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
     const shareableAnnotations =
         annotations.filter(annotation => ['shareable', 'tiedToRuntime'].includes(annotation.name));
@@ -345,6 +368,12 @@ export class Shareable extends BooleanCapability {
 }
 
 export class Encryption extends BooleanCapability {
+  static readonly tag: CapabilityTag = 'encryption';
+
+  constructor(value: boolean = false) {
+    super(Encryption.tag, value);
+  }
+
   static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
     const encryptedAnnotations =
         annotations.filter(annotation => annotation.name === 'encrypted');
@@ -363,11 +392,12 @@ export class Encryption extends BooleanCapability {
 }
 
 export class CapabilityRange extends Capability {
+  static readonly tag: CapabilityTag = 'range';
   min: Capability;
   max: Capability;
 
   constructor(min: Capability, max?: Capability) {
-    super();
+    super(CapabilityRange.tag);
     this.min = min;
     this.max = max || min;
     assert(this.min.isSameOrLessStrict(this.max));
@@ -432,7 +462,7 @@ export class Capabilities {
   }
 
   getPersistence(): Persistence|undefined {
-    const range = this.getOfType(Persistence);
+    const range = this.getWithTag(Persistence.tag);
     if (range) {
       assert(range.min.isEquivalent(range.max));
       return range.min as Persistence;
@@ -441,7 +471,7 @@ export class Capabilities {
   }
 
   getTtl(): Ttl|undefined {
-    const range = this.getOfType(Ttl);
+    const range = this.getWithTag(Ttl.tag);
     if (range) {
       assert(range.min.isEquivalent(range.max));
       return range.min as Ttl;
@@ -450,28 +480,32 @@ export class Capabilities {
   }
 
   isEncrypted(): boolean|undefined {
-    const encryption = this.getOfType(Encryption);
+    const encryption = this.getWithTag(Encryption.tag);
     return encryption ? (encryption.min as Encryption).value : undefined;
   }
 
   isQueryable(): boolean|undefined {
-    const queryable = this.getOfType(Queryable);
+    const queryable = this.getWithTag(Queryable.tag);
     return queryable ? (queryable.min as Queryable).value : undefined;
   }
 
   isShareable(): boolean|undefined {
-    const shareable = this.getOfType(Shareable);
+    const shareable = this.getWithTag(Shareable.tag);
     return shareable ? (shareable.min as Shareable).value : undefined;
   }
 
-  private getOfType(type: typeof Capability): CapabilityRange|undefined  {
-    return this.ranges.find(range => range.min instanceof type);
+  private getWithTag(tag: CapabilityTag): CapabilityRange|undefined {
+    return this.ranges.find(range => range.min.tag === tag);
   }
 
   static fromAnnotations(annotations: AnnotationRef[] = []): Capabilities {
     const ranges: Capability[] = [];
-    for (const type of Capabilities.all) {
-      const capability = type.fromAnnotations(annotations);
+    for (const parser of [Persistence.fromAnnotations,
+        Encryption.fromAnnotations,
+        Ttl.fromAnnotations,
+        Queryable.fromAnnotations,
+        Shareable.fromAnnotations])  {
+      const capability = parser(annotations);
       if (capability) {
         ranges.push(capability);
       }
@@ -479,8 +513,8 @@ export class Capabilities {
     return new Capabilities(ranges);
   }
 
-  setCapability(capability: Capability, type: typeof Capability): boolean {
-    let existing = this.getOfType(type);
+  setCapability(capability: Capability): boolean {
+    let existing = this.getWithTag(capability.tag);
     if (existing) {
       existing = capability.toRange();
     } else {
@@ -513,10 +547,6 @@ export class Capabilities {
       return range && range.contains(otherRange);
     });
   }
-
-  private static readonly all: (typeof Capability | typeof BooleanCapability)[] = [
-    Persistence, Encryption, Ttl, Queryable, Shareable
-  ];
 
   toDebugString(): string {
     return this.ranges.map(({min, max}) => min.isEquivalent(max)
