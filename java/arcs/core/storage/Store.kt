@@ -15,9 +15,10 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.Store.Companion.defaultFactory
 import arcs.core.type.Type
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
- * An interface defining a method that will create a particular [ActivateStore] instance
+ * An interface defining a method that will create a particular [ActiveStore] instance
  * based on provided [StoreOptions] of the same type.
  *
  * An implementation of this interface should be passed to the `activate` method
@@ -61,6 +62,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
      *
      * Supply a custom [activationFactory] to override the default behavior.
      */
+    @ExperimentalCoroutinesApi
     suspend fun activate(
         activationFactory: ActivationFactory? = null
     ): ActiveStore<Data, Op, ConsumerData> {
@@ -91,6 +93,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
          * This is a helper method to reduce the space of UNCHECKED_CAST suppression when accessing
          * the [defaultFactory] instance.
          */
+        @ExperimentalCoroutinesApi
         private val defaultFactory = object : ActivationFactory {
             override suspend fun <Data : CrdtData, Op : CrdtOperation, T> invoke(
                 options: StoreOptions<Data, Op, T>

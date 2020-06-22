@@ -4,8 +4,10 @@ package arcs.showcase.references
 
 import arcs.core.entity.awaitReady;
 import arcs.jvm.host.TargetHost
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
 
+@ExperimentalCoroutinesApi
 @TargetHost(ArcHost::class)
 class Reader0 : AbstractReader0() {
     private suspend fun initialize() = this.apply {
@@ -19,6 +21,7 @@ class Reader0 : AbstractReader0() {
     }
 }
 
+@ExperimentalCoroutinesApi
 @TargetHost(ArcHost::class)
 class Reader1 : AbstractReader1() {
     private suspend fun initialize() = this.apply {
@@ -37,6 +40,7 @@ class Reader1 : AbstractReader1() {
     }
 }
 
+@ExperimentalCoroutinesApi
 @TargetHost(ArcHost::class)
 class Reader2 : AbstractReader2() {
     private suspend fun initialize() = this.apply {

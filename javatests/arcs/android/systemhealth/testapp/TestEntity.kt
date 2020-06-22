@@ -47,7 +47,7 @@ class TestEntity(
         private const val schemaHash = "abcdef"
 
         override val SCHEMA = Schema(
-            listOf(SchemaName("TestEntity")),
+            setOf(SchemaName("TestEntity")),
             SchemaFields(
                 singletons = mapOf(
                     "text" to FieldType.Text,

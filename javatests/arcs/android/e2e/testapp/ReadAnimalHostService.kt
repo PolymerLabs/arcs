@@ -29,6 +29,7 @@ import kotlinx.coroutines.Job
 /**
  * Service wrapping an ArcHost which hosts a particle writing data to a handle.
  */
+@ExperimentalCoroutinesApi
 class ReadAnimalHostService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
@@ -42,13 +43,13 @@ class ReadAnimalHostService : ArcHostService() {
 
     override val arcHosts = listOf(arcHost)
 
+    @ExperimentalCoroutinesApi
     class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,
         schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
     ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
-        @ExperimentalCoroutinesApi
         override val activationFactory = ServiceStoreFactory(context, lifecycle)
     }
 

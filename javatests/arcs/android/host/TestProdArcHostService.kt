@@ -9,7 +9,9 @@ import arcs.core.host.TestingJvmProdHost
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
+@ExperimentalCoroutinesApi
 class TestProdArcHostService : ProdArcHostService() {
     override val arcHost = TestingAndroidProdHost(
         this,

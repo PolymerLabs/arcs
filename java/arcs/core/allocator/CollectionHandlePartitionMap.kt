@@ -10,14 +10,18 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.entity.EntityBase
 import arcs.core.entity.EntityBaseSpec
+import arcs.core.entity.EntitySpec
 import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.TaggedLog
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -28,6 +32,7 @@ import kotlinx.coroutines.withContext
  * collection handle, created by the [EntityHandleManager] provided at construction. The handle
  * will be created the first time any of the publicly exposed methods is called.
  */
+@ExperimentalCoroutinesApi
 class CollectionHandlePartitionMap(
     private val handleManager: EntityHandleManager
 ) : Allocator.PartitionSerialization {
@@ -37,14 +42,20 @@ class CollectionHandlePartitionMap(
     private val collectionMutex = Mutex()
     private lateinit var _collection: ReadWriteCollectionHandle<EntityBase>
 
+    @Suppress("UNCHECKED_CAST")
     private suspend fun collection() = collectionMutex.withLock {
         if (!::_collection.isInitialized) {
+            val entitySpec = EntityBaseSpec(SCHEMA)
             _collection = handleManager.createHandle(
                 HandleSpec(
                     "partitions",
                     HandleMode.ReadWrite,
-                    HandleContainerType.Collection,
-                    EntityBaseSpec(SCHEMA)
+                    toType(
+                        entitySpec,
+                        HandleDataType.Entity,
+                        HandleContainerType.Collection
+                    ),
+                    setOf<EntitySpec<*>>(entitySpec)
                 ),
                 STORAGE_KEY
             ) as ReadWriteCollectionHandle<EntityBase>

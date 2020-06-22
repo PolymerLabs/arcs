@@ -18,6 +18,7 @@ import arcs.core.data.Plan
  * Represents a registered callback listenenr and the [ArcId] it's registered to compactly.
  * Primarily used to remove callbacks.
  */
+@Suppress("EXPERIMENTAL_FEATURE_WARNING")
 inline class ArcStateChangeRegistration(private val callbackId: String) {
     constructor(arcId: ArcId, block: Any) : this("$arcId:${block.hashCode()}")
 

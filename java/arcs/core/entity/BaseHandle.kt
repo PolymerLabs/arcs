@@ -73,9 +73,9 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
             "ReferenceModeStorageKey required in order to create references."
         }
         return Reference(
-            spec.entitySpec,
+            spec.entitySpecs.single(),
             arcs.core.storage.Reference(entity.entityId!!, storageKey.backingKey, null).also {
-                it.dereferencer = dereferencerFactory.create(spec.entitySpec.SCHEMA)
+                it.dereferencer = dereferencerFactory.create(spec.entitySpecs.single().SCHEMA)
             }
         ) as Reference<E>
     }

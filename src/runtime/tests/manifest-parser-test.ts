@@ -466,6 +466,42 @@ describe('manifest parser', () => {
         kotlinThings: reads KotlinThings {aByte: Byte, aShort: Short, anInt: Int, aLong: Long, aChar: Char, aFloat: Float, aDouble: Double}
     `);
   });
+  it('parses a schema with a nested schema', () => {
+    parse(`
+      schema ContainsNested
+        fieldBefore: Double
+        nestedField: inline * {someNums: List<Number>, aString: Text}
+        fieldAfter: List<Long>
+    `);
+  });
+  it('parses an inline schema with a nested schema', () => {
+    parse(`
+      particle Foo
+        containsNested: reads ContainsNested {
+          fieldBefore: Double,
+          nestedField: inline Thing {someNums: List<Number>, aString: Text},
+          fieldAfter: Long
+        }
+    `);
+  });
+  it('parses a schema with a list of nested schemas', () => {
+    parse(`
+      schema ContainsNested
+        fieldBefore: Double
+        nestedField: List<inline * {someNums: List<Number>, aString: Text}>
+        fieldAfter: List<Long>
+    `);
+  });
+  it('parses an inline schema with a list of nested schemas', () => {
+    parse(`
+      particle Foo
+        containsNested: reads ContainsNested {
+          fieldBefore: Double,
+          nestedField: List<inline Thing {someNums: List<Number>, aString: Text}>,
+          fieldAfter: Long
+        }
+    `);
+  });
   it('parses a schema with ordered list types', () => {
     parse(`
       schema OrderedLists

@@ -13,7 +13,6 @@ package arcs.core.host
 import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
 import arcs.core.data.Plan
-import arcs.core.data.Ttl
 import arcs.core.entity.Entity
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
@@ -29,6 +28,7 @@ import arcs.core.util.Time
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -51,6 +51,7 @@ typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
  *
  * @property initialParticles The initial set of [Particle]s that this host contains.
  */
+@ExperimentalCoroutinesApi
 abstract class AbstractArcHost(
     protected val schedulerProvider: SchedulerProvider,
     vararg initialParticles: ParticleRegistration
@@ -437,7 +438,7 @@ abstract class AbstractArcHost(
         return handleManager.createHandle(
             handleSpec,
             connectionSpec.storageKey,
-            connectionSpec.ttl ?: Ttl.Infinite,
+            connectionSpec.ttl,
             particleId,
             immediateSync
         ).also { holder.setHandle(handleName, it) }

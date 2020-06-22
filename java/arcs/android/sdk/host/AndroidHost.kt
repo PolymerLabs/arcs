@@ -26,6 +26,7 @@ import kotlinx.coroutines.runBlocking
 /**
  * An [ArcHost] that runs on Android inside of a [Service], uses [StorageService] for storage.
  */
+@ExperimentalCoroutinesApi
 abstract class AndroidHost(
     val context: Context,
     val lifecycle: Lifecycle,
@@ -37,7 +38,6 @@ abstract class AndroidHost(
         lifecycle.addObserver(this)
     }
 
-    @ExperimentalCoroutinesApi
     override val activationFactory = ServiceStoreFactory(context, lifecycle)
 
     /*

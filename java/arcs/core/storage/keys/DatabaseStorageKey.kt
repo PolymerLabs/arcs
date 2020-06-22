@@ -97,7 +97,7 @@ sealed class DatabaseStorageKey(
                 DATABASE_DRIVER_PROTOCOL,
                 Capabilities.PersistentQueryable
             ) { storageKeyOptions ->
-                DatabaseStorageKey.Persistent(
+                Persistent(
                     storageKeyOptions.location,
                     storageKeyOptions.entitySchema.hash
                 )
@@ -106,7 +106,7 @@ sealed class DatabaseStorageKey(
                 MEMORY_DATABASE_DRIVER_PROTOCOL,
                 Capabilities.Queryable
             ) { storageKeyOptions ->
-                DatabaseStorageKey.Memory(
+                Memory(
                     storageKeyOptions.location,
                     storageKeyOptions.entitySchema.hash
                 )

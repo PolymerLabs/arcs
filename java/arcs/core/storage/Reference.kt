@@ -15,7 +15,6 @@ import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
-import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.Schema
 import arcs.core.data.Ttl
 import arcs.core.util.Time
@@ -45,7 +44,7 @@ data class Reference(
     override val expirationTimestamp: Long get() = _expirationTimestamp
 
     fun ensureTimestampsAreSet(time: Time, ttl: Ttl) {
-        if (_creationTimestamp == UNINITIALIZED_TIMESTAMP) {
+        if (_creationTimestamp == RawEntity.UNINITIALIZED_TIMESTAMP) {
             _creationTimestamp = time.currentTimeMillis
             if (ttl != Ttl.Infinite) {
                 _expirationTimestamp = ttl.calculateExpiration(time)

@@ -109,7 +109,7 @@ class AndroidSqliteDatabaseManager(
                 .forEach { (name, db) ->
                     if (databaseSizeTooLarge(name)) {
                         // If the database size is too large, we clear it entirely.
-                        db.reset()
+                        db.removeAllEntities()
                     } else {
                         db.removeExpiredEntities()
                     }

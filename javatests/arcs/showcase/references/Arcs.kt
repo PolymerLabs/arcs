@@ -25,6 +25,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 
 /** Container to own the allocator and start the long-running arc. */
+@ExperimentalCoroutinesApi
 class Arcs(
     private val context: Context,
     // A test [ConnectionFactory] can be provided here under test.
@@ -134,6 +135,7 @@ class Arcs(
  *
  * It exposes their public methods to provide required read/write functionality.
  */
+@ExperimentalCoroutinesApi
 class ArcHost(
     context: Context,
     lifecycle: Lifecycle,
@@ -150,7 +152,6 @@ class ArcHost(
     ::Reader2.toRegistration(),
     ::Writer2.toRegistration()
 ) {
-    @OptIn(ExperimentalCoroutinesApi::class)
     override val activationFactory = ServiceStoreFactory(
         context,
         lifecycle,

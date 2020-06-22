@@ -213,7 +213,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     fun onLifecycleDestroyed() {
         serviceConnection?.disconnect()
         storageService = null
-        channel?.let { it.cancel() }
+        channel?.cancel()
         channel = null
         scope.coroutineContext[Job.Key]?.cancelChildren()
     }

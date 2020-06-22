@@ -19,6 +19,7 @@ import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -31,14 +32,13 @@ import kotlinx.coroutines.withContext
  */
 class RawEntityDereferencer(
     private val schema: Schema,
-    private val storeManager: StoreManager = StoreManager(),
-    private val scheduler: Scheduler,
     private val entityActivationFactory: ActivationFactory? = null,
     private val referenceCheckFun: ((Schema, RawEntity?) -> Unit)? = null
 ) : Dereferencer<RawEntity> {
     // TODO(#5551): Consider including a hash of schema.names for easier tracking.
     private val log = TaggedLog { "RawEntityDereferencer" }
 
+    @ExperimentalCoroutinesApi
     override suspend fun dereference(
         reference: Reference,
         coroutineContext: CoroutineContext

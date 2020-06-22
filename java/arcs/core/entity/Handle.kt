@@ -98,10 +98,6 @@ data class HandleSpec(
         setOf(entitySpec)
     )
 
-    @Deprecated("Use all entity specs.", ReplaceWith("entitySpecs.single()"))
-    val entitySpec: EntitySpec<*>
-        get() = entitySpecs.single()
-
     val containerType: HandleContainerType
         get() = when (type) {
             is CollectionType<*> -> HandleContainerType.Collection
@@ -221,7 +217,7 @@ interface WriteCollectionHandle<T : Storable> : Handle {
 /** A collection handle with query access. */
 interface QueryCollectionHandle<T : Storable, QueryArgs> : Handle {
     /** Returns a set with all the entities in the collection that match the associated query. */
-    suspend fun query(args: QueryArgs): Set<T>
+    fun query(args: QueryArgs): Set<T>
 }
 
 /** A collection handle with read and write access. */

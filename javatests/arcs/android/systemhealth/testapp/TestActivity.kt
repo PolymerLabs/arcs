@@ -28,8 +28,11 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import arcs.core.data.HandleMode
+import arcs.core.entity.EntitySpec
 import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
@@ -46,6 +49,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -53,6 +57,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 /** Test app for Arcs System Health. */
+@ExperimentalCoroutinesApi
 class TestActivity : AppCompatActivity() {
     private lateinit var resultTextView: TextView
 
@@ -397,8 +402,12 @@ class TestActivity : AppCompatActivity() {
                             HandleSpec(
                                 "singletonHandle",
                                 HandleMode.ReadWrite,
-                                HandleContainerType.Singleton,
-                                TestEntity.Companion
+                                toType(
+                                    TestEntity.Companion,
+                                    HandleDataType.Entity,
+                                    HandleContainerType.Singleton
+                                ),
+                                setOf<EntitySpec<*>>(TestEntity.Companion)
                             ),
                             when (storageMode) {
                                 TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
@@ -429,11 +438,14 @@ class TestActivity : AppCompatActivity() {
                 ReadWriteCollectionHandle::class -> {
                     if (collectionHandle == null) {
                         val handle = handleManager.createHandle(
-                            HandleSpec(
-                                "collectionHandle",
-                                HandleMode.ReadWrite,
-                                HandleContainerType.Collection,
-                                TestEntity.Companion
+                            HandleSpec("collectionHandle",
+                                       HandleMode.ReadWrite,
+                                       toType(
+                                           TestEntity.Companion,
+                                           HandleDataType.Entity,
+                                           HandleContainerType.Collection
+                                       ),
+                                       setOf<EntitySpec<*>>(TestEntity.Companion)
                             ),
                             when (storageMode) {
                                 TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
