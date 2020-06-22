@@ -49,13 +49,11 @@ import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageMode
-import arcs.core.storage.Store
 import arcs.core.storage.StoreManager
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
-import arcs.jvm.util.JvmTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -83,7 +81,9 @@ class EntityHandleManager(
 
     @Deprecated(
         message = "prefer primary constructor",
-        replaceWith = ReplaceWith("EntityHandleManager(arcId, hostId, time, scheduler, StoreManager(activationFactory), idGenerator )")
+        /* ktlint-disable max-line-length */
+        replaceWith = ReplaceWith("EntityHandleManager(arcId, hostId, time, scheduler, StoreManager(activationFactory), idGenerator)")
+        /* ktlint-enable max-line-length */
     )
     constructor(
         arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
@@ -100,7 +100,7 @@ class EntityHandleManager(
         StoreManager(activationFactory),
         idGenerator
     )
-    
+
     private val proxyMutex = Mutex()
     private val singletonStorageProxies by guardedBy(
         proxyMutex,
