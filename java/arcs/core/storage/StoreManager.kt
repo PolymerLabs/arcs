@@ -23,7 +23,7 @@ import kotlinx.coroutines.sync.withLock
 class StoreManager(
     /**
      * If a store doesn't yet exist in this [StoreManager] for a provided [StorageKey],
-     * it will be created using this [ActivationFactory]
+     * it will be created using this [ActivationFactory].
      */
     val activationFactory: ActivationFactory = Store.defaultFactory
 ) {
