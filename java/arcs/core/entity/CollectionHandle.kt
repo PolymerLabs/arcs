@@ -66,7 +66,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
 
     // region implement QueryCollectionHandle<T, Any>
     override fun query(args: Any): Set<T> = checkPreconditions {
-        (spec.entitySpecs.SCHEMA.single().SCHEMA.query?.let { query ->
+        (spec.entitySpecs.single().SCHEMA.query?.let { query ->
             storageProxy.getParticleViewUnsafe().filter {
                 val entity = checkNotNull(it as? RawEntity) {
                     "Queries only work with Entity-typed Handles."

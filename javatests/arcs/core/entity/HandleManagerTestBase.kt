@@ -2,17 +2,20 @@ package arcs.core.entity
 
 import arcs.core.common.Id.Generator
 import arcs.core.common.ReferenceId
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
+import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.data.SingletonType
 import arcs.core.data.Ttl
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
@@ -28,18 +31,13 @@ import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -306,11 +304,7 @@ open class HandleManagerTestBase {
             HandleSpec(
                 "hatCollection",
                 HandleMode.ReadWrite,
-                toType(
-                    Hat,
-                    HandleDataType.Entity,
-                    HandleContainerType.Collection
-                ),
+                CollectionType(EntityType(Hat.SCHEMA)),
                 setOf(Hat)
             ),
             hatCollectionKey
@@ -764,11 +758,7 @@ open class HandleManagerTestBase {
         val hatSpec = HandleSpec(
             "hatCollection",
             HandleMode.ReadWrite,
-            toType(
-                Hat,
-                HandleDataType.Entity,
-                HandleContainerType.Collection
-            ),
+            CollectionType(EntityType(Hat.SCHEMA)),
             setOf(Hat)
         )
         val hatCollection = writeHandleManager.createHandle(
@@ -1066,11 +1056,7 @@ open class HandleManagerTestBase {
         HandleSpec(
             name,
             HandleMode.ReadWrite,
-            toType(
-                Person,
-                HandleDataType.Entity,
-                HandleContainerType.Singleton
-            ),
+            SingletonType(EntityType(Person.SCHEMA)),
             setOf(Person)
         ),
         storageKey,
@@ -1092,11 +1078,7 @@ open class HandleManagerTestBase {
         HandleSpec(
             name,
             HandleMode.ReadWriteQuery,
-            toType(
-                entitySpec,
-                HandleDataType.Entity,
-                HandleContainerType.Collection
-            ),
+            CollectionType(EntityType(entitySpec.SCHEMA)),
             setOf(entitySpec)
         ),
         storageKey,
@@ -1111,11 +1093,7 @@ open class HandleManagerTestBase {
         HandleSpec(
             name,
             HandleMode.ReadWrite,
-            toType(
-                Person,
-                HandleDataType.Reference,
-                HandleContainerType.Singleton
-            ),
+            SingletonType(ReferenceType(EntityType(Person.SCHEMA))),
             setOf(Person)
         ),
         storageKey,
@@ -1130,11 +1108,7 @@ open class HandleManagerTestBase {
         HandleSpec(
             name,
             HandleMode.ReadWriteQuery,
-            toType(
-                Person,
-                HandleDataType.Reference,
-                HandleContainerType.Collection
-            ),
+            CollectionType(ReferenceType(EntityType(Person.SCHEMA))),
             setOf(Person)
         ),
         storageKey,

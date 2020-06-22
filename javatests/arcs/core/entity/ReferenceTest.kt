@@ -1,9 +1,10 @@
 package arcs.core.entity
 
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
-import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -67,11 +68,7 @@ class ReferenceTest {
             HandleSpec(
                 "testHandle",
                 HandleMode.ReadWrite,
-                toType(
-                    DummyEntity,
-                    HandleDataType.Entity,
-                    HandleContainerType.Collection
-                ),
+                CollectionType(EntityType(DummyEntity.SCHEMA)),
                 setOf<EntitySpec<*>>(DummyEntity)
             ),
             STORAGE_KEY
