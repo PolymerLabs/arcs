@@ -99,9 +99,9 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         //    at the same time as the message (and was returned to the caller)
         outgoingMessagesChannel.consumeAsFlow()
             .map { (message, deferredToComplete) ->
-                log.debug { "Sending operations to store" }
+                log.verbose { "Sending operations to store" }
                 store.onProxyMessage(message)
-                log.debug { "Operations sent to store" }
+                log.verbose { "Operations sent to store" }
                 deferredToComplete
             }
             .buffer(Channel.UNLIMITED)
@@ -276,7 +276,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     @Suppress("DeferredIsResult")
     fun applyOp(op: Op): Deferred<Boolean> {
         checkNotClosed()
-        log.debug { "Applying operation: $op" }
+        log.verbose { "Applying operation: $op" }
 
         if (!crdt.applyOperation(op)) {
             return CompletableDeferred(false)
@@ -351,7 +351,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         if (priorState == ProxyState.SYNC) {
             scheduler.scope.launch {
                 val result = crdt.consumerView
-                log.debug { "Already synchronized, returning $result" }
+                log.verbose { "Already synchronized, returning $result" }
                 future.complete(result)
             }
         }
@@ -363,12 +363,9 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      * Applies messages from a [Store].
      */
     suspend fun onMessage(message: ProxyMessage<Data, Op, T>) = coroutineScope {
-        log.debug { "onMessage: $message" }
+        log.verbose { "onMessage: $message" }
         if (stateHolder.value.state == ProxyState.CLOSED) {
-            // TODO(wkorman): Do we really want info level in production, without message, just
-            // to get visibility if/when this happens? Do we have a sense of how frequently it
-            // could occur?
-            log.debug { "in closed state, received message: $message" }
+            log.verbose { "in closed state, received message: $message" }
             return@coroutineScope
         }
 
@@ -379,7 +376,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
             return@coroutineScope
         }
 
-        log.debug { "onMessage: $message, scheduling handle" }
+        log.verbose { "onMessage: $message, scheduling handle" }
         scheduler.schedule(
             MessageFromStoreTask {
                 when (message) {
@@ -402,7 +399,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         do {
             val sent = outgoingMessagesChannel.offer(message to deferred)
         } while (!sent)
-        log.debug {
+        log.verbose {
             "Queueing successful for message (pos: $queueNum) for sending to the store: $message"
         }
     }

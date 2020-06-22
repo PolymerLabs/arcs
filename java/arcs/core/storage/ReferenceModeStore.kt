@@ -219,7 +219,7 @@ class ReferenceModeStore private constructor(
     override suspend fun onProxyMessage(
         message: ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
     ): Boolean {
-        log.debug { "onProxyMessage: $message" }
+        log.verbose { "onProxyMessage: $message" }
         val refModeMessage = message.sanitizeForRefModeStore(type)
         return receiveQueue.enqueue(Message.PreEnqueuedFromStorageProxy(refModeMessage))
     }
@@ -242,7 +242,7 @@ class ReferenceModeStore private constructor(
      */
     @Suppress("UNCHECKED_CAST")
     private val handleProxyMessage: suspend (EnqueuedFromStorageProxy) -> Boolean = fn@{ message ->
-        log.debug { "handleProxyMessage: $message" }
+        log.verbose { "handleProxyMessage: $message" }
         suspend fun itemVersionGetter(item: RawEntity): VersionMap {
             val localBackingVersion = backingStore.getLocalData(item.id).versionMap
             if (localBackingVersion.isNotEmpty()) return localBackingVersion
@@ -329,7 +329,7 @@ class ReferenceModeStore private constructor(
                                 "milliseconds, backing store is likely corrupted - sending " +
                                 "clear operations to container store."
                         }
-                        log.debug { "Clear ops = $ops" }
+                        log.verbose { "Clear ops = $ops" }
                         containerStore.onProxyMessage(ProxyMessage.Operations(ops, null))
                         // Re-issue the sync.
                         onProxyMessage(proxyMessage)
