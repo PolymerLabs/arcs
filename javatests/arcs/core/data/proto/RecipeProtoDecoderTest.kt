@@ -133,7 +133,7 @@ class RecipeProtoDecoderTest {
                 readerParticle.decode(context),
                 writerParticle.decode(context)
             )
-            assertThat(annotations).isEqualTo(listOf(Annotation.arcId("pass-through-arc")))
+            assertThat(annotations).isEqualTo(listOf(Annotation.createArcId("pass-through-arc")))
         }
     }
 
@@ -175,7 +175,7 @@ class RecipeProtoDecoderTest {
                     "pairs" to joinHandle
                 )
             )
-            assertThat(annotations).isEqualTo(listOf(Annotation.arcId("arc-with-join")))
+            assertThat(annotations).isEqualTo(listOf(Annotation.createArcId("arc-with-join")))
         }
     }
 }

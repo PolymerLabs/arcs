@@ -186,7 +186,7 @@ class ArcHostContextParticle(
             StorageKeyParser.parse(handle.storageKey), HandleMode.valueOf(handle.mode),
             fromTag(arcId, particle, handle.type, handle.handleName),
             if (handle.ttl != Ttl.TTL_INFINITE) {
-                listOf(Annotation.ttl("$handle.ttl minutes"))
+                listOf(Annotation.createTtl("$handle.ttl minutes"))
             } else {
                 emptyList()
             }

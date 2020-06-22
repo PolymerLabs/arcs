@@ -26,7 +26,7 @@ open class Plan(
     val arcId: String?
         get() {
             return annotations.find { it.name == "arcId" }?.let {
-                return it.stringValue("id")
+                return it.getStringParam("id")
             }
         }
 
@@ -57,7 +57,7 @@ open class Plan(
         val ttl: Ttl
             get() {
                 return annotations.find { it.name == "ttl" }?.let {
-                    return Ttl.fromString(it.stringValue("value"))
+                    return Ttl.fromString(it.getStringParam("value"))
                 } ?: Ttl.Infinite
             }
 

@@ -1,6 +1,7 @@
 package arcs.core.data.proto
 
 import arcs.core.data.Annotation
+import arcs.core.data.Capabilities
 import arcs.core.data.Recipe.Handle
 import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
@@ -53,7 +54,8 @@ class HandleProtoDecoderTest {
             assertThat(associatedHandles).containsExactly(handles["handle1"], handles["handle_c"])
             assertThat(type).isEqualTo(TypeVariable("notype_thing"))
             assertThat(tags).isEmpty()
-            assertThat(annotations).isEqualTo(listOf(Annotation.capability("tiedToArc")))
+            assertThat(annotations)
+                .isEqualTo(listOf(Annotation.createCapability(Capabilities.TIED_TO_ARC)))
         }
     }
 
@@ -95,7 +97,10 @@ class HandleProtoDecoderTest {
             assertThat(associatedHandles).isEqualTo(listOf(handles["handle1"], handles["handle_join"]))
             assertThat(type).isEqualTo(entityType)
             assertThat(tags).isEmpty()
-            assertThat(annotations).isEqualTo(listOf(Annotation.capability("persistent"), Annotation.capability("queryable")))
+            assertThat(annotations).isEqualTo(listOf(
+                Annotation.createCapability(Capabilities.PERSISTENT),
+                Annotation.createCapability(Capabilities.QUERYABLE)
+            ))
         }
     }
 
@@ -148,7 +153,10 @@ class HandleProtoDecoderTest {
             assertThat(associatedHandles).isEqualTo(listOf(handles["handle1"], handles["handle_join"]))
             assertThat(type).isEqualTo(entityType)
             assertThat(tags).containsExactly("foo", "bar", "baz")
-            assertThat(annotations).isEqualTo(listOf(Annotation.capability("persistent"), Annotation.capability("queryable")))
+            assertThat(annotations).isEqualTo(listOf(
+                Annotation.createCapability(Capabilities.PERSISTENT),
+                Annotation.createCapability(Capabilities.QUERYABLE)
+            ))
         }
     }
 
@@ -186,7 +194,8 @@ class HandleProtoDecoderTest {
             assertThat(associatedHandles).containsExactly(handles["handle1"], handles["handle_c"])
             assertThat(type).isEqualTo(TypeVariable("notype_thing"))
             assertThat(tags).isEmpty()
-            assertThat(annotations).isEqualTo(listOf(Annotation.capability("tiedToArc")))
+            assertThat(annotations)
+                .isEqualTo(listOf(Annotation.createCapability(Capabilities.TIED_TO_ARC)))
         }
     }
 

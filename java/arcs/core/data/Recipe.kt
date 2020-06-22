@@ -39,7 +39,6 @@ data class Recipe(
         val fate: Fate,
         val type: Type,
         val storageKey: String? = null,
-        // val capabilities: Capabilities? = null,
         val annotations: List<Annotation> = emptyList(),
         val associatedHandles: List<Handle> = emptyList(),
         val id: String = "",

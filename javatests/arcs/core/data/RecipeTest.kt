@@ -76,8 +76,8 @@ class RecipeTest {
                 type = personCollectionType,
                 storageKey = storageKey,
                 annotations = listOf(
-                    Annotation.capability("persistent"),
-                    Annotation.capability("queryable")
+                    Annotation.createCapability("persistent"),
+                    Annotation.createCapability("queryable")
                 )
             ).toStorageKey()
         ).isEqualTo(
@@ -163,12 +163,12 @@ class RecipeTest {
                 name = "RecipeName",
                 particles = emptyList(),
                 handles = emptyMap(),
-                annotations = listOf(Annotation.arcId("arc-id"))
+                annotations = listOf(Annotation.createArcId("arc-id"))
             ).toPlan()
         ).isEqualTo(
             Plan(
                 particles = emptyList(),
-                annotations = listOf(Annotation.arcId("arc-id"))
+                annotations = listOf(Annotation.createArcId("arc-id"))
             )
         )
     }
@@ -250,7 +250,7 @@ class RecipeTest {
                         )
                     )
                 ),
-                annotations = listOf(Annotation.arcId("egress-contacts"))
+                annotations = listOf(Annotation.createArcId("egress-contacts"))
             ).toPlan()
         ).isEqualTo(
             Plan(
@@ -283,7 +283,7 @@ class RecipeTest {
                         )
                     )
                 ),
-                annotations = listOf(Annotation.arcId("egress-contacts"))
+                annotations = listOf(Annotation.createArcId("egress-contacts"))
             )
         )
     }

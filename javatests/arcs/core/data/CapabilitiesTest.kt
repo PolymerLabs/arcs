@@ -50,32 +50,44 @@ class CapabilitiesTest {
         assertThat(Capabilities.fromAnnotations(listOf(Annotation("justAnnotation"))))
             .isEqualTo(Capabilities.Empty)
 
-        assertThat(Capabilities.fromAnnotations(listOf(Annotation.capability("persistent"))))
-            .isEqualTo(Capabilities.Persistent)
         assertThat(Capabilities.fromAnnotations(
             listOf(
-                Annotation.capability("persistent"),
+                Annotation.createCapability(Capabilities.PERSISTENT)
+            )
+        )).isEqualTo(Capabilities.Persistent)
+        assertThat(Capabilities.fromAnnotations(
+            listOf(
+                Annotation.createCapability(Capabilities.PERSISTENT),
                 Annotation("justAnnotation")
             )
         )).isEqualTo(Capabilities.Persistent)
-        assertThat(Capabilities.fromAnnotations(listOf(Annotation.capability("queryable"))))
-            .isEqualTo(Capabilities.Queryable)
-        assertThat(Capabilities.fromAnnotations(listOf(Annotation.capability("tiedToRuntime"))))
-            .isEqualTo(Capabilities.TiedToRuntime)
-        assertThat(Capabilities.fromAnnotations(listOf(Annotation.capability("tiedToArc"))))
-            .isEqualTo(Capabilities.TiedToArc)
         assertThat(Capabilities.fromAnnotations(
             listOf(
-                Annotation.capability("persistent"),
-                Annotation.capability("queryable")
+                Annotation.createCapability(Capabilities.QUERYABLE)
+            )
+        )).isEqualTo(Capabilities.Queryable)
+        assertThat(Capabilities.fromAnnotations(
+            listOf(
+                Annotation.createCapability(Capabilities.TIED_TO_RUNTIME)
+            )
+        )).isEqualTo(Capabilities.TiedToRuntime)
+        assertThat(Capabilities.fromAnnotations(
+            listOf(
+                Annotation.createCapability(Capabilities.TIED_TO_ARC)
+            )
+        )).isEqualTo(Capabilities.TiedToArc)
+        assertThat(Capabilities.fromAnnotations(
+            listOf(
+                Annotation.createCapability(Capabilities.PERSISTENT),
+                Annotation.createCapability(Capabilities.QUERYABLE)
             )
         )).isEqualTo(Capabilities.PersistentQueryable)
-        assertThat(Capabilities.fromAnnotations(listOf(Annotation.ttl("3 days"))))
+        assertThat(Capabilities.fromAnnotations(listOf(Annotation.createTtl("3 days"))))
             .isEqualTo(Capabilities.Queryable)
         assertThat(Capabilities.fromAnnotations(
             listOf(
-                Annotation.capability("persistent"),
-                Annotation.ttl("10 minutes")
+                Annotation.createCapability(Capabilities.PERSISTENT),
+                Annotation.createTtl("10 minutes")
             )
         )).isEqualTo(Capabilities.PersistentQueryable)  
     }

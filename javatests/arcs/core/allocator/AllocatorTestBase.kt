@@ -438,7 +438,7 @@ open class AllocatorTestBase {
         val arc2 = allocator.startArcForPlan(
             Plan(
                 PersonPlan.particles,
-                listOf(Annotation.arcId(arcId.toString()))
+                listOf(Annotation.createArcId(arcId.toString()))
             )
         )
         arc2.waitForStart()
@@ -517,7 +517,7 @@ open class AllocatorTestBase {
         val arc2 = allocator.startArcForPlan(
             Plan(
                 PersonPlan.particles,
-                listOf(Annotation.arcId(arc.id.toString()))
+                listOf(Annotation.createArcId(arc.id.toString()))
             )
         )
 

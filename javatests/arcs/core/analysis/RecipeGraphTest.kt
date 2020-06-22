@@ -101,7 +101,7 @@ class RecipeGraphTest {
             "PassThrough",
             listOf(thingHandle, someHandle, joinedHandle).associateBy { it.name },
             listOf(readerParticle, writerParticle),
-            listOf(Annotation.arcId("arcId"))
+            listOf(Annotation.createArcId("arcId"))
         )
     }
 

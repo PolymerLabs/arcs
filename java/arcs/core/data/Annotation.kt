@@ -17,14 +17,14 @@ package arcs.core.data
  */
 data class Annotation(val name: String, val params: Map<String, AnnotationParam> = emptyMap()) {
 
-    fun param(name: String): AnnotationParam {
+    fun getParam(name: String): AnnotationParam {
         return requireNotNull(params[name]) {
             "Annotation '$this.name' missing '$name' parameter"
         }
     }
 
-    fun stringValue(paramName: String): String {
-        val paramValue = param(paramName)
+    fun getStringParam(paramName: String): String {
+        val paramValue = getParam(paramName)
         return when (paramValue) {
             is AnnotationParam.Str -> paramValue.value
             else -> throw IllegalStateException(
@@ -33,10 +33,15 @@ data class Annotation(val name: String, val params: Map<String, AnnotationParam>
     }
 
     companion object {
-        fun arcId(id: String) = Annotation("arcId", mapOf("id" to AnnotationParam.Str(id)))
+        fun createArcId(id: String) = Annotation("arcId", mapOf("id" to AnnotationParam.Str(id)))
+        // Deprecated: use createArcId instead.
+        fun arcId(id: String) = createArcId(id)
 
-        fun ttl(value: String) = Annotation("ttl", mapOf("value" to AnnotationParam.Str(value)))
+        fun createTtl(value: String) = Annotation(
+            "ttl",
+            mapOf("value" to AnnotationParam.Str(value))
+        )
 
-        fun capability(name: String) = Annotation(name)
+        fun createCapability(name: String) = Annotation(name)
     }
 }
