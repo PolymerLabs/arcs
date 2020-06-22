@@ -2,17 +2,20 @@ package arcs.core.entity
 
 import arcs.core.common.Id.Generator
 import arcs.core.common.ReferenceId
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
+import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.data.SingletonType
 import arcs.core.data.Ttl
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
@@ -32,7 +35,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
@@ -217,18 +219,23 @@ open class HandleManagerTestBase {
     open fun singleton_clearOnAClearDataWrittenByB() = testRunner {
         val handleA = writeHandleManager.createSingletonHandle()
         val handleB = readHandleManager.createSingletonHandle()
-        val handleBUpdated = handleB.onUpdateDeferred()
-        handleA.store(entity1)
+        val handleBUpdated = handleB.onUpdateDeferred { it != null }
+        withContext(handleA.dispatcher) {
+            handleA.store(entity1)
+        }
         handleBUpdated.await()
 
         // Now read back from a different handle
-        val updateADeferred = handleA.onUpdateDeferred()
-        handleB.clear()
-
-        assertThat(handleB.fetch()).isNull()
+        val updateADeferred = handleA.onUpdateDeferred { it == null }
+        withContext(handleB.dispatcher) {
+            handleB.clear()
+            assertThat(handleB.fetch()).isNull()
+        }
 
         updateADeferred.await()
-        assertThat(handleA.fetch()).isNull()
+        withContext(handleA.dispatcher) {
+            assertThat(handleA.fetch()).isNull()
+        }
     }
 
     @Test
@@ -297,11 +304,7 @@ open class HandleManagerTestBase {
             HandleSpec(
                 "hatCollection",
                 HandleMode.ReadWrite,
-                toType(
-                    Hat,
-                    HandleDataType.Entity,
-                    HandleContainerType.Collection
-                ),
+                CollectionType(EntityType(Hat.SCHEMA)),
                 setOf(Hat)
             ),
             hatCollectionKey
@@ -546,10 +549,11 @@ open class HandleManagerTestBase {
         val readHandle = readHandleManager.createCollectionHandle()
             as ReadWriteCollectionHandle<Person>
 
-        writeHandle.store(entity1)
-
-        val updateDeferred = readHandle.onUpdateDeferred() { it.size == 2 }
-        writeHandle.store(entity2)
+        val updateDeferred = readHandle.onUpdateDeferred { it.size == 2 }
+        withContext(writeHandle.dispatcher) {
+            writeHandle.store(entity1)
+            writeHandle.store(entity2)
+        }
         assertThat(updateDeferred.await()).containsExactly(entity1, entity2)
     }
 
@@ -557,20 +561,22 @@ open class HandleManagerTestBase {
     open fun collection_writeMutatedEntityReplaces() = testRunner {
         val entity = TestParticle_Entities(text = "Hello")
         val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
-        handle.store(entity)
+        withContext(handle.dispatcher) {
+            handle.store(entity)
 
-        assertThat(handle.fetchAll()).containsExactly(entity)
+            assertThat(handle.fetchAll()).containsExactly(entity)
 
-        val modified = entity.mutate(text = "Changed")
-        assertThat(modified).isNotEqualTo(entity)
+            val modified = entity.mutate(text = "Changed")
+            assertThat(modified).isNotEqualTo(entity)
 
-        // Entity internals should not change.
-        assertThat(modified.entityId).isEqualTo(entity.entityId)
-        assertThat(modified.creationTimestamp).isEqualTo(entity.creationTimestamp)
-        assertThat(modified.expirationTimestamp).isEqualTo(entity.expirationTimestamp)
+            // Entity internals should not change.
+            assertThat(modified.entityId).isEqualTo(entity.entityId)
+            assertThat(modified.creationTimestamp).isEqualTo(entity.creationTimestamp)
+            assertThat(modified.expirationTimestamp).isEqualTo(entity.expirationTimestamp)
 
-        handle.store(modified)
-        assertThat(handle.fetchAll()).containsExactly(modified)
+            handle.store(modified)
+            assertThat(handle.fetchAll()).containsExactly(modified)
+        }
     }
 
     @Test
@@ -640,37 +646,48 @@ open class HandleManagerTestBase {
     @Test
     open fun collection_removingFromA_isRemovedFromB() = testRunner {
         val handleA = readHandleManager.createCollectionHandle()
-        val gotUpdateAtA = handleA.onUpdateDeferred {
+        val handleB = writeHandleManager.createCollectionHandle()
 
+        log("Handles ready")
+
+        val gotUpdateAtA = handleA.onUpdateDeferred {
+            log("Size of A: ${it.size}")
             it.size == 2
         }
-        val handleB = writeHandleManager.createCollectionHandle()
-        var gotUpdateAtB = handleB.onUpdateDeferred {
-            it.size == 1
+        withContext(handleB.dispatcher) {
+            log("storing in B")
+            handleB.store(entity1)
+            handleB.store(entity2)
+            assertThat(handleB.fetchAll()).containsExactly(entity1, entity2)
         }
 
-        handleA.store(entity1).join()
-        handleB.store(entity2).join()
         gotUpdateAtA.await()
+        withContext(handleA.dispatcher) {
+            log("checking a")
+            assertThat(handleA.fetchAll()).containsExactly(entity1, entity2)
+        }
+
+        val gotUpdateAtB = handleB.onUpdateDeferred {
+            log("B size later = ${it.size}")
+            it.size == 1
+        }
+        withContext(handleA.dispatcher) {
+            log("removing")
+            handleA.remove(entity1)
+            assertThat(handleA.fetchAll()).containsExactly(entity2)
+        }
+
         gotUpdateAtB.await()
-
-        assertThat(handleA.fetchAll()).containsExactly(entity1, entity2)
-        assertThat(handleB.fetchAll()).containsExactly(entity1, entity2)
-
-        gotUpdateAtB = handleB.onUpdateDeferred { it.size == 1 }
-        handleA.remove(entity1).join()
-        assertThat(handleA.fetchAll()).containsExactly(entity2)
-
-        gotUpdateAtB.await()
-        assertThat(handleB.fetchAll()).containsExactly(entity2)
+        withContext(handleB.dispatcher) {
+            log("checking after removal")
+            assertThat(handleB.fetchAll()).containsExactly(entity2)
+        }
     }
 
     @Test
     open fun collection_clearingElementsFromA_clearsThemFromB() = testRunner {
         val handleA = readHandleManager.createCollectionHandle()
-            as ReadWriteCollectionHandle<Person>
         val handleB = writeHandleManager.createCollectionHandle()
-            as ReadWriteCollectionHandle<Person>
 
         val handleBGotAll7 = handleB.onUpdateDeferred { it.size == 7 }
         withContext(handleA.dispatcher) {
@@ -709,6 +726,8 @@ open class HandleManagerTestBase {
     open fun collection_entityDereference() = testRunner {
         val writeHandle = writeHandleManager.createCollectionHandle()
         val readHandle = readHandleManager.createCollectionHandle()
+        val monitorHandle = monitorHandleManager.createCollectionHandle()
+        val monitorInitialized = monitorHandle.onUpdateDeferred { it.size == 2 }
         val readUpdated = readHandle.onUpdateDeferred { it.size == 2 }
 
         withContext(writeHandle.dispatcher) {
@@ -717,10 +736,7 @@ open class HandleManagerTestBase {
         }
         log("wrote entity1 and entity2 to writeHandle")
 
-        RamDisk.waitUntilSet(entity1.bestFriend!!.referencedStorageKey())
-        log("RamDisk heard of entity1's best friend (entity2)")
-        RamDisk.waitUntilSet(entity2.bestFriend!!.referencedStorageKey())
-        log("RamDisk heard of entity2's best friend (entity1)")
+        monitorInitialized.await()
         readUpdated.await()
         log("readHandle and the ramDisk have heard of the update")
 
@@ -739,24 +755,32 @@ open class HandleManagerTestBase {
     @Test
     open fun collection_dereferenceEntity_nestedReference() = testRunner {
         // Create a stylish new hat, and create a reference to it.
+        val hatSpec = HandleSpec(
+            "hatCollection",
+            HandleMode.ReadWrite,
+            CollectionType(EntityType(Hat.SCHEMA)),
+            setOf(Hat)
+        )
         val hatCollection = writeHandleManager.createHandle(
-            HandleSpec(
-                "hatCollection",
-                HandleMode.ReadWrite,
-                toType(
-                    Hat,
-                    HandleDataType.Entity,
-                    HandleContainerType.Collection
-                ),
-                setOf(Hat)
-            ),
+            hatSpec,
             hatCollectionKey
         ).awaitReady() as ReadWriteCollectionHandle<Hat>
+        val hatMonitor = monitorHandleManager.createHandle(
+            hatSpec,
+            hatCollectionKey
+        ).awaitReady() as ReadWriteCollectionHandle<Hat>
+        val writeHandle = writeHandleManager.createCollectionHandle()
+        val readHandle = readHandleManager.createCollectionHandle()
 
         val fez = Hat(entityId = "fez-id", style = "fez")
-        hatCollection.store(fez).join()
-        val fezRef = hatCollection.createReference(fez)
-        val fezStorageRef = fezRef.toReferencable()
+        val hatMonitorKnows = hatMonitor.onUpdateDeferred {
+            it.find { hat -> hat.entityId == "fez-id" } != null
+        }
+        val fezStorageRef = withContext(hatCollection.dispatcher) {
+            hatCollection.store(fez).join()
+            val fezRef = hatCollection.createReference(fez)
+            fezRef.toReferencable()
+        }
 
         // Give the hat to an entity and store it.
         val personWithHat = Person(
@@ -767,16 +791,22 @@ open class HandleManagerTestBase {
             bestFriend = null,
             hat = fezStorageRef
         )
-        val writeHandle = writeHandleManager.createCollectionHandle()
-        writeHandle.store(personWithHat).join()
+        val readHandleKnows = readHandle.onUpdateDeferred {
+            it.find { person -> person.entityId == "a-hatted-individual" } != null
+        }
+        withContext(writeHandle.dispatcher) {
+            writeHandle.store(personWithHat)
+        }
 
         // Read out the entity, and fetch its hat.
-        val readHandle = readHandleManager.createCollectionHandle()
-        // TODO(jwf): remove this delay when we get around to throwing on invalid thread usage.
-        delay(100)
-        val entityOut = readHandle.fetchAll().single { it.entityId == "a-hatted-individual" }
+        readHandleKnows.await()
+        val entityOut = withContext(readHandle.dispatcher) {
+            readHandle.fetchAll().single { it.entityId == "a-hatted-individual" }
+        }
         val hatRef = entityOut.hat!!
         assertThat(hatRef).isEqualTo(fezStorageRef)
+
+        hatMonitorKnows.await()
         val rawHat = hatRef.dereference(coroutineContext)!!
         val hat = Hat.deserialize(rawHat)
         assertThat(hat).isEqualTo(fez)
@@ -861,20 +891,24 @@ open class HandleManagerTestBase {
             it.size == 2
         }
 
-        log("Writing entity1 to A")
-        writeHandle.store(entity1)
-        log("Writing entity2 to A")
-        writeHandle.store(entity2)
+        withContext(writeHandle.dispatcher) {
+            log("Writing entity1 to A")
+            writeHandle.store(entity1)
+            log("Writing entity2 to A")
+            writeHandle.store(entity2)
+        }
 
         log("Waiting for entities on B")
         readUpdatedTwice.await()
 
-        // Ensure that the query argument is being used.
-        assertThat(readHandle.query(21.0)).containsExactly(entity1)
-        assertThat(readHandle.query(22.0)).containsExactly(entity2)
+        withContext(readHandle.dispatcher) {
+            // Ensure that the query argument is being used.
+            assertThat(readHandle.query(21.0)).containsExactly(entity1)
+            assertThat(readHandle.query(22.0)).containsExactly(entity2)
 
-        // Ensure that an empty set of results can be returned.
-        assertThat(readHandle.query(60.0)).isEmpty()
+            // Ensure that an empty set of results can be returned.
+            assertThat(readHandle.query(60.0)).isEmpty()
+        }
     }
 
     @Test
@@ -897,15 +931,17 @@ open class HandleManagerTestBase {
     @Test
     fun collection_queryWithInvalidQueryThrows() = testRunner {
         val handle = writeHandleManager.createCollectionHandle()
-        handle.store(entity1).join()
-        handle.store(entity2).join()
+        withContext(handle.dispatcher) {
+            handle.store(entity1)
+            handle.store(entity2)
 
-        assertThat(handle.fetchAll()).containsExactly(entity1, entity2)
-        // Ensure that queries can be performed.
-        (handle as ReadWriteQueryCollectionHandle<Person, Double>).query(44.0)
-        // Ensure that queries can be performed.
-        assertSuspendingThrows(ClassCastException::class) {
-            (handle as ReadWriteQueryCollectionHandle<Person, String>).query("44")
+            assertThat(handle.fetchAll()).containsExactly(entity1, entity2)
+            // Ensure that queries can be performed.
+            (handle as ReadWriteQueryCollectionHandle<Person, Double>).query(44.0)
+            // Ensure that queries can be performed.
+            assertSuspendingThrows(ClassCastException::class) {
+                (handle as ReadWriteQueryCollectionHandle<Person, String>).query("44")
+            }
         }
     }
 
@@ -1020,11 +1056,7 @@ open class HandleManagerTestBase {
         HandleSpec(
             name,
             HandleMode.ReadWrite,
-            toType(
-                Person,
-                HandleDataType.Entity,
-                HandleContainerType.Singleton
-            ),
+            SingletonType(EntityType(Person.SCHEMA)),
             setOf(Person)
         ),
         storageKey,
@@ -1046,11 +1078,7 @@ open class HandleManagerTestBase {
         HandleSpec(
             name,
             HandleMode.ReadWriteQuery,
-            toType(
-                entitySpec,
-                HandleDataType.Entity,
-                HandleContainerType.Collection
-            ),
+            CollectionType(EntityType(entitySpec.SCHEMA)),
             setOf(entitySpec)
         ),
         storageKey,
@@ -1065,11 +1093,7 @@ open class HandleManagerTestBase {
         HandleSpec(
             name,
             HandleMode.ReadWrite,
-            toType(
-                Person,
-                HandleDataType.Reference,
-                HandleContainerType.Singleton
-            ),
+            SingletonType(ReferenceType(EntityType(Person.SCHEMA))),
             setOf(Person)
         ),
         storageKey,
@@ -1084,11 +1108,7 @@ open class HandleManagerTestBase {
         HandleSpec(
             name,
             HandleMode.ReadWriteQuery,
-            toType(
-                Person,
-                HandleDataType.Reference,
-                HandleContainerType.Collection
-            ),
+            CollectionType(ReferenceType(EntityType(Person.SCHEMA))),
             setOf(Person)
         ),
         storageKey,
