@@ -2,31 +2,6 @@
   "include": [
     "src/**/*.ts"
   ],
-  "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-    "alwaysStrict": true,
-    "declaration": true,
-    "esModuleInterop": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "module": "es2015",
-    "moduleResolution": "Node",
-    "skipLibCheck": true,
-    "strictBindCallApply": true,
-    "strictFunctionTypes": true,
-    "allowJs": false,
-    "sourceMap": true,
-    "target": "ES2019",
-    "lib": ["es2019", "dom", "webworker.importscripts"],
-
-    "outDir": "build",
-    "declaration": true,
-    "experimentalDecorators": true,
-    "incremental": false,
-    "noErrorTruncation": true
-  },
   "exclude": [
     "src/platform/devtools-*",
     "src/**/devtools/**",
@@ -52,5 +27,30 @@
     "src/**/keymgmt/manager.ts",
     "src/**/webmain.ts",
     "src/platform/protobuf*",
-  ]
+  ],
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "alwaysStrict": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "module": "es2015",
+    "moduleResolution": "Node",
+    "skipLibCheck": true,
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true,
+    "allowJs": false,
+    "sourceMap": true,
+    "target": "ES2019",
+    "lib": ["es2019", "dom", "webworker.importscripts"],
+
+    "outDir": "build",
+    "declaration": true,
+    "experimentalDecorators": true,
+    "incremental": false,
+    "noErrorTruncation": true
+  },
 }

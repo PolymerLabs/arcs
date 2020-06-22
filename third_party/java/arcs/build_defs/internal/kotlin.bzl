@@ -32,6 +32,7 @@ load(
 load(":kotlin_serviceloader_registry.bzl", "kotlin_serviceloader_registry")
 load(":kotlin_wasm_annotations.bzl", "kotlin_wasm_annotations")
 load(":util.bzl", "manifest_only", "merge_lists", "replace_arcs_suffix")
+load(":plan.oss.bzl", "recipe2plan")
 
 ARCS_SDK_DEPS = ["//third_party/java/arcs"]
 
@@ -463,23 +464,28 @@ def arcs_kt_plan(name,
 
     for src in srcs:
         genrule_name = replace_arcs_suffix(src, "_GeneratedPlan")
-        out = replace_arcs_suffix(src, "_GeneratedPlan.kt")
-        outs.append(out)
+        outs.append(genrule_name)
         rest = [s for s in srcs if s != src]
-        sigh_command(
+#        sigh_command(
+#            name = genrule_name,
+#            srcs = [src],
+#            outs = [out],
+#            progress_message = "Generating Kotlin Plans",
+#            sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
+#            deps = deps + data + rest,
+#        )
+        recipe2plan(
             name = genrule_name,
             srcs = [src],
-            outs = [out],
-            progress_message = "Generating Kotlin Plans",
-            sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
-            deps = deps + data + rest,
+            data = data + rest,
+            deps = deps
         )
 
     deps = manifest_only(deps, inverse = True)
 
     arcs_kt_library(
         name = name,
-        srcs = outs,
+        srcs = [":" + out for out in outs],
         platforms = platforms,
         visibility = visibility,
         testonly=testonly,

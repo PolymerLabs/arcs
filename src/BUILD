@@ -82,7 +82,10 @@ arcs_ts_preprocessing(
 
 ts_library(
     name = "runtime_lib",
-    srcs = [":runtime_files"] + [":parser_gen"],
+    srcs = [
+        ":runtime_files",
+        ":parser_gen",
+    ],
     runtime = "nodejs",
     tsconfig = "//:tsconfig",
     deps = [
