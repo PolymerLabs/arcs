@@ -28,9 +28,29 @@
     "noErrorTruncation": true
   },
   "exclude": [
-    "build/**/*",
-    "cloud/**/*",
-    "./src/tools/language-server/**/*",
-    "./src/tools/vscode-language-client/**/*"
+    "src/platform/devtools-*",
+    "src/**/devtools/**",
+    "src/**/devtools-connector/**",
+    "src/platform/tf-node.ts",
+    "src/platform/pouch*",
+    "src/platform/image-node.ts",
+    "src/gen/**/*.ts",
+    "src/**/storageNG/testing/**",
+    "src/**/tests/**",
+    "src/**/time/tests/**",
+    "src/**/manual_tets/**",
+    "src/**/test/**",
+    "src/**/keymgmt/testing/**",
+    "src/**/firebase*",
+    "src/**/testing/test-helper.ts",
+    "src/planning/testing/**",
+    "src/runtime/testing/callback-tracker.ts",
+    "src/**/services/**",
+    "src/**/tools/**",
+    "src/**/cli/**",
+    "src/**/keymgmt/webcrypto.ts",
+    "src/**/keymgmt/manager.ts",
+    "src/**/webmain.ts",
+    "src/platform/protobuf*",
   ]
 }
