@@ -271,25 +271,24 @@ open class HandleManagerTestBase {
         val refWriteHandle = writeHandleManager.createSingletonHandle(storageKey, "otherWriteHandle")
         val refReadHandle = readHandleManager.createSingletonHandle(storageKey, "otherReadHandle")
         val monitorKnows = monitorRefHandle.onUpdateDeferred()
+        val refReadKnows = refReadHandle.onUpdateDeferred()
 
         withContext(refWriteHandle.dispatcher) {
             refWriteHandle.store(entity2)
         }
         monitorKnows.await()
+        refReadKnows.await()
 
         // Now read back entity1, and dereference its best_friend.
+        log("Checking entity1's best friend")
         val dereferencedRawEntity2 = withContext(readHandle.dispatcher) {
-            (readHandle.fetch()!!.bestFriend)!!
-                .also {
-                    // Check that it's alive
-                    assertThat(it.isAlive(coroutineContext)).isTrue()
-                }
-                .dereference(coroutineContext)!!
+            readHandle.fetch()!!.bestFriend!!.dereference(coroutineContext)!!
         }
         val dereferencedEntity2 = Person.deserialize(dereferencedRawEntity2)
         assertThat(dereferencedEntity2).isEqualTo(entity2)
 
         // Do the same for entity2's best_friend
+        log("Checking entity2's best friend")
         val dereferencedRawEntity1 = withContext(refReadHandle.dispatcher) {
             refReadHandle.fetch()!!.bestFriend!!.dereference(coroutineContext)!!
         }
