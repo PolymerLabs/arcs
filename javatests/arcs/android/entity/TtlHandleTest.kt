@@ -73,9 +73,7 @@ class TtlHandleTest {
     fun setUp() {
         fakeTime = FakeTime()
         scheduler = schedulerProvider("myArc")
-        databaseManager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
-        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
-        DriverAndKeyConfigurator.configure(databaseManager)
+        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting        
         SchemaRegistry.register(DummyEntity.SCHEMA)
     }
 
@@ -87,6 +85,7 @@ class TtlHandleTest {
 
     @Test
     fun singletonWithExpiredEntities() = runBlocking {
+        setUpManager()
         val handle = createSingletonHandle()
         val entity1 = DummyEntity().apply {
             num = 1.0
@@ -159,6 +158,7 @@ class TtlHandleTest {
 
     @Test
     fun collectionWithExpiredEntities() = runBlocking {
+        setUpManager()
         val handle = createCollectionHandle()
         val entity1 = DummyEntity().apply {
             num = 1.0
@@ -253,6 +253,7 @@ class TtlHandleTest {
 
     @Test
     fun sameEntityInTwoCollections() = runBlocking {
+        setUpManager()
         val entity1 = DummyEntity().apply { num = 1.0 }
         val entity2 = DummyEntity().apply { num = 2.0 }
         val entity3 = DummyEntity().apply { num = 3.0 }
@@ -332,6 +333,7 @@ class TtlHandleTest {
 
     @Test
     fun handleWithTtlNoExpiredEntities() = runBlocking {
+        setUpManager()
         val entity1 = DummyEntity().apply { num = 1.0 }
         val entity2 = DummyEntity().apply { num = 2.0 }
 
@@ -350,6 +352,52 @@ class TtlHandleTest {
 
         assertThat(handle1.fetchAll()).containsExactly(entity1)
         assertThat(handle2.fetch()).isEqualTo(entity2)
+    }
+
+    @Test
+    fun databaseResetWhenTooLarge() = runBlocking {
+        // Database can only store 20 bytes, hence it will be wiped when we call removeExpiredEntities.
+        setUpManager(20)
+        val handle = createCollectionHandle()
+        val entity = DummyEntity().apply { num = 1.0 }
+
+        // Sync the handle, then store entity
+        var readyJob = Job()
+        var storeEntity: Job? = null
+        handle.onReady {
+            log("handle ready")
+            // Store at time now, so entities are not expired.
+            fakeTime.millis = System.currentTimeMillis()
+            storeEntity = handle.store(entity)
+            log("completing ready job")
+            readyJob.complete()
+        }
+        readyJob.join()
+        log("awaiting completion of store job")
+        storeEntity!!.join()
+        
+        val updateJob = Job()
+        handle.onUpdate {
+            log("received update from databaseManager.removeExpiredEntities()")
+            updateJob.complete()
+            log("completed")
+        }
+
+        // Simulate periodic job triggering.
+        log("Removing Expired Entities")
+        databaseManager.removeExpiredEntities().join()
+        updateJob.join()
+
+        assertThat(handle.fetchAll()).isEmpty()
+    }
+
+    private fun setUpManager(maxDbSize:Int = AndroidSqliteDatabaseManager.MAX_DB_SIZE_BYTES) {
+        databaseManager = AndroidSqliteDatabaseManager(
+            ApplicationProvider.getApplicationContext(),
+            null,
+            maxDbSize
+        )
+        DriverAndKeyConfigurator.configure(databaseManager)
     }
 
     @Suppress("UNCHECKED_CAST")
