@@ -52,4 +52,3 @@ arcs_ts_test(
         ":goldens",
     ],
 )
-
