@@ -262,6 +262,37 @@ class CrdtSet<T : Referencable>(
             override fun toString(): String = "CrdtSet.Operation.Remove($clock, $actor, $removed)"
         }
 
+        /**
+         * Represents the removal of all items from a [CrdtSet]. If an empty [clock] is given,
+         * all items in the set are removed; otherwise, only those items dominated by the clock
+         * are removed. This allow actors with write-only access to a model to operate without
+         * needing to synchronise the clock data.
+         */
+        open class Clear<T : Referencable>(
+            val actor: Actor,
+            override val clock: VersionMap = VersionMap()
+        ) : Operation<T>() {
+            override fun applyTo(data: Data<T>, isDryRun: Boolean): Boolean {
+                if (isDryRun) return true
+
+                if (clock.isEmpty()) {
+                    data.values.clear()
+                } else if (clock[actor] == data.versionMap[actor]) {
+                    data.values.entries.removeAll { clock dominates it.value.versionMap }
+                }
+                return true
+            }
+
+            override fun equals(other: Any?): Boolean =
+                other is Clear<*> &&
+                    other.clock == clock &&
+                    other.actor == actor
+
+            override fun hashCode(): Int = toString().hashCode()
+
+            override fun toString(): String = "CrdtSet.Operation.Clear($clock, $actor)"
+        }
+
         /** Represents a batch operation to catch one [CrdtSet] up with another. */
         data class FastForward<T : Referencable>(
             val oldClock: VersionMap,

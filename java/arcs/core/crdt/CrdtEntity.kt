@@ -213,7 +213,7 @@ class CrdtEntity(
     private fun ISetOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
         is SetOp.Add -> Operation.AddToSet(actor, clock, fieldName, added)
         is SetOp.Remove -> Operation.RemoveFromSet(actor, clock, fieldName, removed)
-        else -> throw CrdtException("Cannot convert FastForward to CrdtEntity Operation")
+        else -> throw CrdtException("Cannot convert FastForward or Clear to CrdtEntity Operation")
     }
 
     /** Defines the type of data managed by [CrdtEntity] for its singletons and collections. */

@@ -15,7 +15,6 @@ import arcs.core.crdt.CrdtSet
 import arcs.core.data.RawEntity
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StoreOptions
-import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.Job
 
 typealias CollectionData<T> = CrdtSet.Data<T>
@@ -88,35 +87,8 @@ class CollectionHandle<T : Storable, R : Referencable>(
         )
     }
 
-    // TODO(b/159257058): don't read the collection contents for write ops
     override fun clear(): Job = checkPreconditions {
-        val individualJobs = storageProxy.getParticleViewUnsafe().map {
-            storageProxy.applyOp(
-                CrdtSet.Operation.Remove(
-                    name,
-                    storageProxy.getVersionMap(),
-                    it
-                )
-            )
-        }
-
-        val masterJob = Job()
-        if (individualJobs.isEmpty()) {
-            masterJob.complete()
-        } else {
-            val jobsRemaining = atomic(individualJobs.size)
-            individualJobs.forEach {
-                it.invokeOnCompletion { error ->
-                    if (error != null) {
-                        masterJob.completeExceptionally(error)
-                    } else if (jobsRemaining.decrementAndGet() == 0) {
-                        masterJob.complete()
-                    }
-                }
-            }
-        }
-
-        masterJob
+        storageProxy.applyOp(CrdtSet.Operation.Clear(name, storageProxy.getVersionMap()))
     }
 
     override fun remove(element: T): Job = checkPreconditions {

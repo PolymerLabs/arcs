@@ -23,6 +23,7 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.referencemode.BridgingOperation.AddToSet
 import arcs.core.storage.referencemode.BridgingOperation.ClearSingleton
 import arcs.core.storage.referencemode.BridgingOperation.RemoveFromSet
+import arcs.core.storage.referencemode.BridgingOperation.ClearSet
 import arcs.core.storage.referencemode.BridgingOperation.UpdateSingleton
 import arcs.core.storage.toReference
 
@@ -82,6 +83,16 @@ sealed class BridgingOperation : CrdtOperationAtTime {
     ) : BridgingOperation() {
         override val clock: VersionMap = containerOp.clock
     }
+
+    /** Denotes a clear of the [CrdtSet] managed by the store. */
+    class ClearSet /* internal */ constructor(
+        override val containerOp: CrdtSet.Operation.Clear<Reference>,
+        override val refModeOp: RefModeStoreOp.SetClear
+    ) : BridgingOperation() {
+        override val entityValue: RawEntity? = null
+        override val referenceValue: Reference? = null
+        override val clock: VersionMap = containerOp.clock
+    }
 }
 
 /**
@@ -103,7 +114,7 @@ fun List<RefModeStoreOp>.toBridgingOps(
 fun CrdtOperationAtTime.toBridgingOp(value: RawEntity?): BridgingOperation =
     when (this) {
         is CrdtSet.Operation<*> ->
-            (this as CrdtSet.Operation<Reference>).setToBridgingOp(requireNotNull(value))
+            (this as CrdtSet.Operation<Reference>).setToBridgingOp(value)
         is CrdtSingleton.Operation<*> ->
             (this as CrdtSingleton.Operation<Reference>).singletonToBridgingOp(value)
         else -> throw CrdtException("Unsupported raw entity operation")
@@ -131,6 +142,9 @@ fun RefModeStoreOp.toBridgingOp(backingStorageKey: StorageKey): BridgingOperatio
         val reference = removed.toReference(backingStorageKey, clock)
         RemoveFromSet(removed, reference, CrdtSet.Operation.Remove(actor, clock, reference), this)
     }
+    is RefModeStoreOp.SetClear -> {
+        ClearSet(CrdtSet.Operation.Clear(actor, clock), this)
+    }
     else -> throw CrdtException("Unsupported operation: $this")
 }
 
@@ -139,22 +153,23 @@ fun RefModeStoreOp.toBridgingOp(backingStorageKey: StorageKey): BridgingOperatio
  * using the provided [newValue] as the [RawEntity].
  */
 private fun CrdtSet.Operation<Reference>.setToBridgingOp(
-    newValue: RawEntity
+    newValue: RawEntity?
 ): BridgingOperation = when (this) {
     is CrdtSet.Operation.Add ->
         AddToSet(
             newValue,
             added,
             this,
-            RefModeStoreOp.SetAdd(actor, clock, newValue)
+            RefModeStoreOp.SetAdd(actor, clock, requireNotNull(newValue))
         )
     is CrdtSet.Operation.Remove ->
         RemoveFromSet(
             newValue,
             removed,
             this,
-            RefModeStoreOp.SetRemove(actor, clock, newValue)
+            RefModeStoreOp.SetRemove(actor, clock, requireNotNull(newValue))
         )
+    is CrdtSet.Operation.Clear -> ClearSet(this, RefModeStoreOp.SetClear(actor, clock))
     is CrdtSet.Operation.FastForward ->
         throw CrdtException("Unsupported reference-mode operation: FastForward.")
 }
