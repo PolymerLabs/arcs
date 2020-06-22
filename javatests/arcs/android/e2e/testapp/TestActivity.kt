@@ -35,6 +35,7 @@ import arcs.core.entity.HandleSpec
 import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.StoreManager
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
@@ -172,9 +173,11 @@ class TestActivity : AppCompatActivity() {
             EntityHandleManager(
                 time = JvmTime,
                 scheduler = schedulerProvider("readWriteArc"),
-                activationFactory = ServiceStoreFactory(
-                    context = this@TestActivity,
-                    lifecycle = this@TestActivity.lifecycle
+                stores = StoreManager(
+                    activationFactory = ServiceStoreFactory(
+                        context = this@TestActivity,
+                        lifecycle = this@TestActivity.lifecycle
+                    )
                 )
             )
         )
@@ -189,9 +192,11 @@ class TestActivity : AppCompatActivity() {
             EntityHandleManager(
                 time = JvmTime,
                 scheduler = schedulerProvider("resurrectionArc"),
-                activationFactory = ServiceStoreFactory(
-                    context = this@TestActivity,
-                    lifecycle = this@TestActivity.lifecycle
+                stores = StoreManager(
+                    activationFactory = ServiceStoreFactory(
+                        context = this@TestActivity,
+                        lifecycle = this@TestActivity.lifecycle
+                    )
                 )
             )
         )
@@ -226,9 +231,11 @@ class TestActivity : AppCompatActivity() {
             EntityHandleManager(
                 time = JvmTime,
                 scheduler = schedulerProvider("allocator"),
-                activationFactory = ServiceStoreFactory(
-                    context = this@TestActivity,
-                    lifecycle = this@TestActivity.lifecycle
+                stores = StoreManager(
+                    activationFactory = ServiceStoreFactory(
+                        context = this@TestActivity,
+                        lifecycle = this@TestActivity.lifecycle
+                    )
                 )
             )
         )
@@ -262,9 +269,11 @@ class TestActivity : AppCompatActivity() {
         val handleManager = EntityHandleManager(
             time = JvmTime,
             scheduler = schedulerProvider("handle"),
-            activationFactory = ServiceStoreFactory(
-                this,
-                lifecycle
+            stores = StoreManager(
+                activationFactory = ServiceStoreFactory(
+                    this,
+                    lifecycle
+                )
             )
         )
         if (isCollection) {

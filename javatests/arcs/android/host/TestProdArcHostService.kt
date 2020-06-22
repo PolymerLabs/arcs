@@ -6,6 +6,7 @@ import arcs.android.host.prod.ProdArcHostService
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.TestingJvmProdHost
+import arcs.core.storage.StoreManager
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
@@ -28,11 +29,13 @@ class TestProdArcHostService : ProdArcHostService() {
         vararg particles: ParticleRegistration
     ) : TestingJvmProdHost(schedulerProvider, *particles) {
 
-        @kotlinx.coroutines.ExperimentalCoroutinesApi
-        override val activationFactory = ServiceStoreFactory(
-            context,
-            lifecycle,
-            connectionFactory = TestConnectionFactory(context)
+        @ExperimentalCoroutinesApi
+        override val stores = StoreManager(
+            activationFactory = ServiceStoreFactory(
+                context,
+                lifecycle,
+                connectionFactory = TestConnectionFactory(context)
+            )
         )
     }
 }

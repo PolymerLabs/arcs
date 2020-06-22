@@ -94,7 +94,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
          * the [defaultFactory] instance.
          */
         @ExperimentalCoroutinesApi
-        private val defaultFactory = object : ActivationFactory {
+        val defaultFactory = object : ActivationFactory {
             override suspend fun <Data : CrdtData, Op : CrdtOperation, T> invoke(
                 options: StoreOptions<Data, Op, T>
             ): ActiveStore<Data, Op, T> = when (options.mode) {

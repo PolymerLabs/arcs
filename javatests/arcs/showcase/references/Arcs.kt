@@ -12,6 +12,7 @@ import arcs.core.common.toArcId
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
+import arcs.core.storage.StoreManager
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
@@ -152,12 +153,14 @@ class ArcHost(
     ::Reader2.toRegistration(),
     ::Writer2.toRegistration()
 ) {
-    override val activationFactory = ServiceStoreFactory(
-        context,
-        lifecycle,
-        connectionFactory = connectionFactory
+    @ExperimentalCoroutinesApi
+    override val stores = StoreManager(
+        activationFactory = ServiceStoreFactory(
+            context,
+            lifecycle,
+            connectionFactory = connectionFactory
+        )
     )
-
     @Suppress("UNCHECKED_CAST")
     private fun <T> getParticle(name: String) =
         getArcHostContext("!:testArc")!!.particles[name]!!.particle as T

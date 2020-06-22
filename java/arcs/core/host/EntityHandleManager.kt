@@ -76,9 +76,31 @@ class EntityHandleManager(
     private val time: Time,
     private val scheduler: Scheduler,
     private val stores: StoreManager = StoreManager(),
-    private val activationFactory: ActivationFactory? = null,
     private val idGenerator: Id.Generator = Id.Generator.newSession()
 ) {
+
+    @Deprecated(
+        message = "prefer primary constructor",
+        /* ktlint-disable max-line-length */
+        replaceWith = ReplaceWith("EntityHandleManager(arcId, hostId, time, scheduler, StoreManager(activationFactory), idGenerator)")
+        /* ktlint-enable max-line-length */
+    )
+    constructor(
+        arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
+        hostId: String = "nohost",
+        time: Time,
+        scheduler: Scheduler,
+        activationFactory: ActivationFactory?,
+        idGenerator: Id.Generator = Id.Generator.newSession()
+    ) : this(
+        arcId,
+        hostId,
+        time,
+        scheduler,
+        StoreManager(activationFactory),
+        idGenerator
+    )
+
     private val proxyMutex = Mutex()
     private val singletonStorageProxies by guardedBy(
         proxyMutex,
@@ -88,7 +110,7 @@ class EntityHandleManager(
         proxyMutex,
         mutableMapOf<StorageKey, CollectionProxy<Referencable>>()
     )
-    private val dereferencerFactory = EntityDereferencerFactory(activationFactory)
+    private val dereferencerFactory = EntityDereferencerFactory(stores.activationFactory)
 
     @Deprecated("Will be replaced by ParticleContext lifecycle handling")
     suspend fun initiateProxySync() {
@@ -253,7 +275,7 @@ class EntityHandleManager(
                     type = SingletonType(EntityType(schema)),
                     mode = storageMode
                 )
-            ).activate(activationFactory)
+            )
             SingletonProxy(activeStore, CrdtSingleton(), scheduler)
         } as SingletonProxy<R>
     }
@@ -272,7 +294,7 @@ class EntityHandleManager(
                     type = CollectionType(EntityType(schema)),
                     mode = storageMode
                 )
-            ).activate(activationFactory)
+            )
             CollectionProxy(activeStore, CrdtSet(), scheduler)
         } as CollectionProxy<R>
     }

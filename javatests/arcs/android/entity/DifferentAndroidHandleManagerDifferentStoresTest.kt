@@ -44,11 +44,12 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("reader"),
-            stores = StoreManager(),
-            activationFactory = ServiceStoreFactory(
-                app,
-                fakeLifecycleOwner.lifecycle,
-                connectionFactory = testConnectionFactory
+            stores = StoreManager(
+                activationFactory = ServiceStoreFactory(
+                    app,
+                    fakeLifecycleOwner.lifecycle,
+                    connectionFactory = testConnectionFactory
+                )
             )
         )
         writeHandleManager = EntityHandleManager(
@@ -56,11 +57,12 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("writer"),
-            stores = StoreManager(),
-            activationFactory = ServiceStoreFactory(
-                app,
-                fakeLifecycleOwner.lifecycle,
-                connectionFactory = testConnectionFactory
+            stores = StoreManager(
+                activationFactory = ServiceStoreFactory(
+                    app,
+                    fakeLifecycleOwner.lifecycle,
+                    connectionFactory = testConnectionFactory
+                )
             )
         )
         // Initialize WorkManager for instrumentation tests.

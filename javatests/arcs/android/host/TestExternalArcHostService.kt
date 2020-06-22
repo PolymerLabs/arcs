@@ -12,6 +12,7 @@ import arcs.core.data.Capabilities
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.TestingHost
+import arcs.core.storage.StoreManager
 import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.ConnectionFactory
@@ -56,18 +57,18 @@ abstract class TestExternalArcHostService : Service() {
         schedulerProvider: SchedulerProvider,
         vararg particles: ParticleRegistration
     ) : TestingHost(schedulerProvider, *particles), ResurrectableHost {
-        override val stores = singletonStores
-
-        override val resurrectionHelper: ResurrectionHelper =
-            ResurrectionHelper(context, ::onResurrected)
-
-        @kotlinx.coroutines.ExperimentalCoroutinesApi
-        override val activationFactory =  ServiceStoreFactory(
+        @ExperimentalCoroutinesApi
+        override val stores = StoreManager(
+            activationFactory = ServiceStoreFactory(
                 context,
                 FakeLifecycle(),
                 Dispatchers.Default,
                 testConnectionFactory
             )
+        )
+
+        override val resurrectionHelper: ResurrectionHelper =
+            ResurrectionHelper(context, ::onResurrected)
 
         override val arcHostContextCapability = testingCapability
     }

@@ -26,6 +26,7 @@ import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.Reference
+import arcs.core.storage.StoreManager
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -266,18 +267,20 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             TaskHandle(
                 EntityHandleManager(
                     time = JvmTime,
-                    activationFactory = ServiceStoreFactory(
-                        context,
-                        lifecycle,
-                        taskCoroutineContext,
-                        DefaultConnectionFactory(
+                    stores = StoreManager(
+                        activationFactory = ServiceStoreFactory(
                             context,
-                            if (settings.function == Function.STABILITY_TEST) {
-                                TestStorageServiceBindingDelegate(context)
-                            } else {
-                                DefaultStorageServiceBindingDelegate(context)
-                            },
-                            taskCoroutineContext
+                            lifecycle,
+                            taskCoroutineContext,
+                            DefaultConnectionFactory(
+                                context,
+                                if (settings.function == Function.STABILITY_TEST) {
+                                    TestStorageServiceBindingDelegate(context)
+                                } else {
+                                    DefaultStorageServiceBindingDelegate(context)
+                                },
+                                taskCoroutineContext
+                            )
                         )
                     ),
                     // Per-task single-threaded Scheduler being cascaded with Watchdog capabilities
