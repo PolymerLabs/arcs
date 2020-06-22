@@ -165,15 +165,12 @@ def _arcs_ts_preproc_impl(ctx):
         for x in ctx.files.srcs
     ]
 
+    cmd_args = zip([src.path for src in ctx.files.srcs], [dst.path for dst in outputs])
+
     ctx.actions.run_shell(
         inputs = ctx.files.srcs,
         outputs = outputs,
-        arguments = [src.path for src in ctx.files.srcs],
-        command = """
-        for i in "$@"; do
-          sed -e 's/-web.js/-node.js/g' $i > "$(OUTS)"
-        done
-        """,
+        command = "\n".join(["sed -e 's/-web.js/-node.js/g' {0} > {1}".format(src, dst) for src, dst in cmd_args]),
     )
 
     return DefaultInfo(files = depset(outputs))
