@@ -825,6 +825,7 @@ open class HandleManagerTestBase {
 
         // Fast forward time to 5 minutes later, so entity2 expires, entity1 doesn't.
         fakeTime.millis += 5*60*1000
+        assertThat(handleB.size()).isEqualTo(1)
         assertThat(handleB.fetchAll()).containsExactly(entity1)
     }
 
