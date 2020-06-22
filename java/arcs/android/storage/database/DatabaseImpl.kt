@@ -1803,7 +1803,7 @@ class DatabaseImpl(
         private val VERSION_4_MIGRATION = VERSION_3_MIGRATION
 
         private val VERSION_5_MIGRATION = arrayOf(
-            "INSERT INTO types (id, name, is_primitive) VALUES (10, \"BigInt\", True)"
+            "INSERT INTO types (id, name, is_primitive) VALUES (10, \"BigInt\", 1)"
         )
 
         private val MIGRATION_STEPS = mapOf(
