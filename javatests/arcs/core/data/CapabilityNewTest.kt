@@ -65,8 +65,8 @@ class CapabilityNewTest {
 
     @Test
     fun capability_ttl_compare() {
-        val ttl3Days = CapabilityNew.TtlNew.Days(3)
-        val ttl10Hours = CapabilityNew.TtlNew.Hours(10)
+        val ttl3Days = CapabilityNew.Ttl.Days(3)
+        val ttl10Hours = CapabilityNew.Ttl.Hours(10)
 
         assertTrue(ttl3Days.isEquivalent(ttl3Days))
         assertFalse(ttl3Days.isEquivalent(ttl10Hours))
@@ -76,9 +76,9 @@ class CapabilityNewTest {
         assertFalse(ttl3Days.isSameOrStricter(ttl10Hours))
         assertFalse(ttl3Days.isEquivalent(ttl10Hours))
         assertTrue(ttl10Hours.isStricter(ttl3Days))
-        assertTrue(ttl10Hours.isEquivalent(CapabilityNew.TtlNew.Minutes(600)))
+        assertTrue(ttl10Hours.isEquivalent(CapabilityNew.Ttl.Minutes(600)))
     
-        val ttlInfinite = CapabilityNew.TtlNew.Infinite()
+        val ttlInfinite = CapabilityNew.Ttl.Infinite()
         assertTrue(ttlInfinite.isEquivalent(ttlInfinite))
         assertTrue(ttlInfinite.isSameOrLessStrict(ttlInfinite))
         assertTrue(ttlInfinite.isSameOrStricter(ttlInfinite))
@@ -116,5 +116,18 @@ class CapabilityNewTest {
         assertTrue(shareable.isSameOrStricter(shareable))
         assertTrue(shareable.isSameOrStricter(nonShareable))
         assertTrue(nonShareable.isLessStrict(shareable))
+    }
+
+    @Test
+    fun capability_encryption_compare() {
+        val encrypted = CapabilityNew.Encryption(true)
+        val nonEncrypted = CapabilityNew.Encryption(false)
+        assertTrue(encrypted.isEquivalent(encrypted))
+        assertTrue(nonEncrypted.isEquivalent(nonEncrypted))
+        assertFalse(nonEncrypted.isEquivalent(encrypted))
+        assertFalse(encrypted.isStricter(encrypted))
+        assertTrue(encrypted.isSameOrStricter(encrypted))
+        assertTrue(encrypted.isSameOrStricter(nonEncrypted))
+        assertTrue(nonEncrypted.isLessStrict(encrypted))
     }
 }
