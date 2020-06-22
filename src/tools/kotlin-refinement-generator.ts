@@ -11,7 +11,7 @@
 import {Op} from '../runtime/manifest-ast-nodes.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Schema} from '../runtime/schema.js';
-import {escapeIdentifier, typeFor, defaultValFor} from './kotlin-codegen-shared.js';
+import {escapeIdentifier, getTypeInfo} from './kotlin-codegen-shared.js';
 import {RefinementExpressionVisitor, BinaryExpression, UnaryExpression, FieldNamePrimitive, QueryArgumentPrimitive, BuiltIn, NumberPrimitive, BooleanPrimitive, TextPrimitive} from '../runtime/refiner.js';
 
 // The variable name used for the query argument in generated Kotlin code.
@@ -71,8 +71,20 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
     return `${expr.value}`;
   }
   visitTextPrimitive(expr: TextPrimitive): string {
-    // TODO(b/159211498): Escape this for Kotlin code generation.
-    return `"${expr.value}"`;
+    const escapeForKotlin = (value: string) => {
+      // Convert values that need to be escaped into their corresponding escape codes.
+      // Escape codes taken from https://www.programiz.com/kotlin-programming/string
+      return value
+        .replace('\\', '\\\\')
+        .replace('\t', '\\t')
+        .replace('\b', '\\b')
+        .replace('\n', '\\n')
+        .replace('\r', '\\r')
+        .replace('\'', '\\\'')
+        .replace('"', '\\"')
+        .replace('$', '\\$');
+    };
+    return `"${escapeForKotlin(expr.value)}"`;
   }
 }
 
@@ -83,7 +95,7 @@ export class KTExtracter {
     const genFieldAsLocal = (fieldName: string) => {
       const type = schema.fields[fieldName].type;
       const fixed = escapeIdentifier(fieldName);
-      return `val ${fixed} = data.singletons["${fieldName}"].toPrimitiveValue(${typeFor(type)}::class, ${defaultValFor(type)})`;
+      return `val ${fixed} = data.singletons["${fieldName}"].toPrimitiveValue(${typeFor(type)}::class, ${getTypeInfo({name: type}).defaultVal})`;
     };
 
     const genQueryArgAsLocal = ([_, type]: [string, string]) => {
@@ -112,4 +124,8 @@ export class KTExtracter {
 
     return `${locals.map(x => `${x}\n`).join('')}${expr}`;
   }
+}
+
+function typeFor(name: string) {
+  return getTypeInfo({name}).type;
 }

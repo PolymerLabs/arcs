@@ -121,8 +121,7 @@ export class AllocatorRecipeResolver {
       if (handle.fate !== 'create' || handle.storageKey) continue;
 
       handle.storageKey = new CreatableStorageKey(
-        await this.createCreateHandleName(handle),
-        handle.capabilities
+        await this.createCreateHandleName(handle)
       );
     }
 

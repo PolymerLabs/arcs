@@ -81,7 +81,7 @@ open class StorageService : ResurrectorService() {
         StoreWriteBack.init(writeBackScope)
 
         val periodicCleanupTask =
-            PeriodicWorkRequest.Builder(PeriodicCleanupTask::class.java, 1, TimeUnit.HOURS)
+            PeriodicWorkRequest.Builder(PeriodicCleanupTask::class.java, 12, TimeUnit.HOURS)
                 .addTag(PeriodicCleanupTask.WORKER_TAG)
                 .build()
         val garbageCollectionTask =
@@ -111,6 +111,7 @@ open class StorageService : ResurrectorService() {
         )
     }
 
+    @ExperimentalCoroutinesApi
     override fun onBind(intent: Intent): IBinder? {
         log.debug { "onBind: $intent" }
 

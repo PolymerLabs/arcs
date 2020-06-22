@@ -11,8 +11,6 @@
 
 package arcs.android.storage.service
 
-import arcs.android.crdt.CrdtExceptionProto
-import arcs.android.util.decodeProto
 import arcs.core.crdt.CrdtException
 import arcs.core.util.Log
 import kotlin.coroutines.CoroutineContext
@@ -31,8 +29,9 @@ class DeferredResult(context: CoroutineContext) :
         if (exception == null) {
             complete(true)
         } else {
-            val exceptionProto = decodeProto(exception, CrdtExceptionProto.getDefaultInstance())
-            Log.warning(CrdtException(exceptionProto.message ?: "Unknown error")) {
+            // TODO(#5551): Consider logging at debug level with exceptionProto.message detail.
+            // val exceptionProto = decodeProto(exception, CrdtExceptionProto.getDefaultInstance())
+            Log.warning(CrdtException("CRDT Exception: error detail elided.")) {
                 "Result was unsuccessful"
             }
             complete(false)

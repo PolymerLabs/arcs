@@ -12,6 +12,7 @@
 package arcs.core.allocator
 
 import arcs.core.common.ArcId
+import arcs.core.data.Plan
 import arcs.core.host.ArcState
 import arcs.core.host.ArcState.Deleted
 import arcs.core.host.ArcState.Error
@@ -36,6 +37,7 @@ import kotlinx.coroutines.runBlocking
 class Arc internal constructor(
     val id: ArcId,
     private val allocator: Allocator,
+    val partitions: List<Plan.Partition>,
     private var arcStateInternal: ArcState = NeverStarted
 ) {
     private val arcStateChangeHandlers = mutableListOf<(ArcState) -> Unit>()
@@ -111,8 +113,7 @@ class Arc internal constructor(
     }
 
     private suspend fun fetchCurrentStates() {
-        val partitionsFor = allocator.getPartitionsFor(id)
-        partitionsFor?.forEach {
+        partitions.forEach {
             val arcHost = allocator.lookupArcHost(it.arcHost)
             arcStatesByHostId[it.arcHost] = arcHost.lookupArcHostStatus(it)
         }
@@ -122,13 +123,12 @@ class Arc internal constructor(
         require(registration == null) {
             "registration called more than once"
         }
-        val partitionsFor = allocator.getPartitionsFor(id)
         runBlocking {
             // first poll the current states of all hosts
             fetchCurrentStates()
 
             // Register event listeners
-            partitionsFor?.forEach { partition ->
+            partitions.forEach { partition ->
                 val arcHost = allocator.lookupArcHost(partition.arcHost)
                 registration = arcHost.addOnArcStateChange(id) { _, state ->
                     sync(this) {
@@ -165,5 +165,5 @@ class Arc internal constructor(
     /** Stop the current [Arc]. */
     suspend fun stop() = allocator.stopArc(id)
 
-    private fun <T> sync(obj: Any, block: () -> T) = block()
+    @Suppress("UNUSED_PARAMETER") private fun <T> sync(obj: Any, block: () -> T) = block()
 }

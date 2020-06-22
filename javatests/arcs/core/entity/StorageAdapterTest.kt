@@ -7,6 +7,7 @@ import arcs.core.data.Ttl
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
+import arcs.core.storage.Store
 import arcs.core.storage.StoreManager
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -26,8 +27,7 @@ import org.junit.runners.JUnit4
 class StorageAdapterTest {
 
     private val time = FakeTime()
-    private val scheduler = Scheduler(EmptyCoroutineContext)
-    private val dereferencerFactory = EntityDereferencerFactory(StoreManager(), scheduler)
+    private val dereferencerFactory = EntityDereferencerFactory(Store.defaultFactory)
     private val idGenerator = Id.Generator.newForTest("session")
     private val storageKey = DummyStorageKey("entities")
 

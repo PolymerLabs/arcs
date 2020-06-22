@@ -129,7 +129,9 @@ class DatabaseDriver<Data : Any>(
         get() = checkNotNull(schemaLookup(storageKey.entitySchemaHash)) {
             "Schema not found for hash: ${storageKey.entitySchemaHash}"
         }
-    private val log = TaggedLog { this.toString() }
+    // TODO(#5551): Consider including a hash of the toString info in log prefix.
+    private val log = TaggedLog { "DatabaseDriver" }
+
     override var token: String? = null
         private set
 
@@ -150,7 +152,7 @@ class DatabaseDriver<Data : Any>(
 
         if (pendingReceiverData == null || pendingReceiverVersion == null) return
 
-        log.debug {
+        log.verbose {
             """
                 registerReceiver($token) - calling receiver(
                     $pendingReceiverData,
@@ -168,7 +170,7 @@ class DatabaseDriver<Data : Any>(
 
     @Suppress("UNCHECKED_CAST")
     override suspend fun send(data: Data, version: Int): Boolean {
-        log.debug {
+        log.verbose {
             """
                 send(
                     $data,
@@ -242,7 +244,7 @@ class DatabaseDriver<Data : Any>(
             }
         } as Data
 
-        log.debug {
+        log.verbose {
             """
                 onDatabaseUpdate(
                     $data,

@@ -47,6 +47,7 @@ class TestBindingDelegate(private val context: Context) : StorageServiceBindingD
         Robolectric.buildService(StorageService::class.java, null).create()
     }
 
+    @ExperimentalCoroutinesApi
     override fun bindStorageService(
         conn: ServiceConnection,
         flags: Int,
@@ -68,6 +69,7 @@ class TestBindingDelegateSingleService(
     private val manager: Boolean = false
 ) : StorageServiceBindingDelegate {
 
+    @ExperimentalCoroutinesApi
     override fun bindStorageService(
         conn: ServiceConnection,
         flags: Int,

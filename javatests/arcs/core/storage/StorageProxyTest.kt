@@ -23,7 +23,11 @@ import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.never
+import com.nhaarman.mockitokotlin2.reset
+import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import com.nhaarman.mockitokotlin2.whenever
@@ -71,9 +75,7 @@ class StorageProxyTest {
         fakeStoreEndpoint = StoreEndpointFake()
         whenever(mockStorageEndpointProvider.getStorageEndpoint(any()))
             .thenReturn(fakeStoreEndpoint)
-        whenever(mockCrdtModel.data).thenReturn(mockCrdtData)
-        whenever(mockCrdtModel.versionMap).thenReturn(VersionMap())
-        whenever(mockCrdtModel.consumerView).thenReturn("data")
+        setupMockModel()
         whenever(mockCrdtOperation.clock).thenReturn(VersionMap())
     }
 
@@ -81,6 +83,13 @@ class StorageProxyTest {
     fun tearDown() = runBlocking {
         scheduler.waitForIdle()
         scheduler.cancel()
+    }
+
+    private fun setupMockModel() {
+        reset(mockCrdtModel)
+        whenever(mockCrdtModel.data).thenReturn(mockCrdtData)
+        whenever(mockCrdtModel.versionMap).thenReturn(VersionMap())
+        whenever(mockCrdtModel.consumerView).thenReturn("data")
     }
 
     @Test
@@ -236,14 +245,12 @@ class StorageProxyTest {
         verify(onReady).invoke()
 
         // Sending another model should trigger the onUpdate callback only if the data changed.
-        whenever(mockCrdtModel.consumerView)
-            .thenReturn("blah")
-            .thenReturn("data")
+        whenever(mockCrdtModel.consumerView).thenReturn("blah")
         proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
 
         channels.onUpdate.receiveOrTimeout()
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
-        verify(onUpdate).invoke("data")
+        verify(onUpdate).invoke("blah")
         verifyNoMoreInteractions(onReady, onDesync, onResync)
     }
 
@@ -255,10 +262,6 @@ class StorageProxyTest {
 
         val (onReady, onUpdate, onDesync, onResync, channels) = addAllActions(callbackId, proxy)
         whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(true)
-
-        // Ops should be ignored prior to syncing.
-        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
-        scheduler.waitForIdle()
 
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.AWAITING_SYNC)
         verifyNoMoreInteractions(onReady, onUpdate, onDesync, onResync)
@@ -316,10 +319,6 @@ class StorageProxyTest {
         channels.onDesync.receiveOrTimeout()
         verify(onDesync).invoke()
 
-        // Ops should be ignored when desynced.
-        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
-        scheduler.waitForIdle()
-
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.DESYNC)
         verifyNoMoreInteractions(onReady, onUpdate, onDesync, onResync)
 
@@ -331,7 +330,8 @@ class StorageProxyTest {
         channels.onResync.receiveOrTimeout()
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
         verify(onResync).invoke()
-        verifyNoMoreInteractions(onReady, onUpdate, onDesync)
+        verify(onUpdate).invoke(any())
+        verifyNoMoreInteractions(onReady, onDesync)
     }
 
     @Test
@@ -587,7 +587,6 @@ class StorageProxyTest {
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
 
         whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(false)
-        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
         proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation),null))
         assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.DESYNC)
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.DESYNC)
@@ -630,6 +629,85 @@ class StorageProxyTest {
         proxy.close()
         assertThat(fakeStoreEndpoint.closed).isTrue()
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.CLOSED)
+    }
+
+    @Test
+    fun opsReceived_beforeSync_areAppliedAfter_sync() = runTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val notifyChannel = Channel<StorageEvent>(Channel.BUFFERED)
+        proxy.registerForStorageEvents(callbackId) {
+            runBlocking { notifyChannel.send(it) }
+        }
+        proxy.prepareForSync()
+
+        // Now send a message, it should not be applied.
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
+        proxy.awaitOutgoingMessageQueueDrain()
+        scheduler.waitForIdle()
+        assertThat(fakeStoreEndpoint.getProxyMessages()).isEmpty()
+        verify(mockCrdtModel, never()).applyOperation(any())
+
+        // Sync it.
+        proxy.maybeInitiateSync()
+        proxy.awaitOutgoingMessageQueueDrain()
+        fakeStoreEndpoint.waitFor(ProxyMessage.SyncRequest(null))
+        fakeStoreEndpoint.clearProxyMessages()
+        whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(true)
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.READY)
+        assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
+
+        // After applying the model update, we should have also applied the operation.
+        assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.UPDATE)
+        verify(mockCrdtModel).merge(eq(mockCrdtData))
+    }
+
+    @Test
+    fun opsReceived_whileDesynced_areAppliedAfter_resync() = runTest {
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val notifyChannel = Channel<StorageEvent>(Channel.BUFFERED)
+        proxy.registerForStorageEvents(callbackId) {
+            runBlocking { notifyChannel.send(it) }
+        }
+        proxy.prepareForSync()
+        proxy.maybeInitiateSync()
+
+        // Initialize
+        proxy.awaitOutgoingMessageQueueDrain()
+        fakeStoreEndpoint.waitFor(ProxyMessage.SyncRequest(null))
+        fakeStoreEndpoint.clearProxyMessages()
+
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.READY)
+        assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
+
+        // Now de-sync it.
+        setupMockModel()
+        whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(false)
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation),null))
+        assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.DESYNC)
+        assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.DESYNC)
+        proxy.awaitOutgoingMessageQueueDrain()
+        fakeStoreEndpoint.waitFor(ProxyMessage.SyncRequest(null))
+        fakeStoreEndpoint.clearProxyMessages()
+        verify(mockCrdtModel).applyOperation(any())
+
+        // Now send a message, it should not be applied.
+        setupMockModel()
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
+        proxy.awaitOutgoingMessageQueueDrain()
+        scheduler.waitForIdle()
+        assertThat(fakeStoreEndpoint.getProxyMessages()).isEmpty()
+        verify(mockCrdtModel, never()).applyOperation(any())
+
+        // Send the re-sync ModelUpdate.
+        setupMockModel()
+        whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(true)
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.RESYNC)
+        // After applying the model update, we should have also applied the operation.
+        assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.UPDATE)
+        verify(mockCrdtModel).merge(eq(mockCrdtData))
     }
 
     // Convenience wrapper for destructuring.
@@ -675,7 +753,7 @@ class StorageProxyTest {
         return mocks
     }
 
-    private suspend fun <E> Channel<E>.receiveOrTimeout(timeout: Long = 1500): E =
+    private suspend fun <E> Channel<E>.receiveOrTimeout(timeout: Long = 5000): E =
         withTimeout(timeout) { receive() }
 
     private fun runTest(block: suspend CoroutineScope.() -> Unit) = runBlocking {

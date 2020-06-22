@@ -823,6 +823,41 @@ describe('recipe', () => {
     verifyRecipeHandleCapabilities(recipe);
     verifyRecipeHandleCapabilities((await Manifest.parse(recipe.toString())).recipes[0]);
   });
+  it('adds queryable capability to handles with refinements', async () => {
+    const recipe = (await Manifest.parse(`
+      schema Thing
+        t1: Number
+        t2: Number
+      particle MyParticle
+        a: writes Thing {t1}
+        b: writes ThingB {b1: Number, b2: Text}
+        c: writes ThingC {a1: Number, a2: Text} [a1 > 0]
+        d: writes Thing {t1} [t1 > 5]
+        e: writes Thing {t1} [t1 < 100]
+      recipe Thing
+        hA: create
+        hB: create
+        hC: create
+        hD: create
+        hE: create @persistent @queryable
+        MyParticle
+          a: hA
+          b: hB
+          c: hC
+          d: hD
+          e: hE
+    `)).recipes[0];
+    assert.isTrue(recipe.normalize());
+    const particle = recipe.particles[0];
+    assert.isTrue(particle.connections['a'].handle.capabilities.isEmpty());
+    assert.isTrue(particle.connections['b'].handle.capabilities.isEmpty());
+    assert.isTrue(particle.connections['c'].handle.capabilities.isEquivalent(
+        Capabilities.create([new Queryable(true)])));
+    assert.isTrue(particle.connections['d'].handle.capabilities.isEquivalent(
+        Capabilities.create([new Queryable(true)])));
+    assert.isTrue(particle.connections['e'].handle.capabilities.isEquivalent(
+        Capabilities.create([Persistence.onDisk(), new Queryable(true)])));
+  });
   it('can normalize and clone a recipe with a synthetic join handle', async () => {
     const [recipe] = (await Manifest.parse(`
       recipe

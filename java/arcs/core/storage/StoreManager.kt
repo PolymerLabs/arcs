@@ -13,6 +13,7 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.util.guardedBy
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -20,22 +21,29 @@ import kotlinx.coroutines.sync.withLock
  * Store manager provides a central holding places for the [Store] instances that a runtime will
  * use, so that only one instance of a [Store] can be created per [StorageKey].
  */
-class StoreManager {
+class StoreManager(
+    /**
+     * If a store doesn't yet exist in this [StoreManager] for a provided [StorageKey],
+     * it will be created using this [ActivationFactory].
+     */
+    val activationFactory: ActivationFactory? = null
+) {
     private val storesMutex = Mutex()
-    private val stores by guardedBy(storesMutex, mutableMapOf<StorageKey, Store<*, *, *>>())
+    private val stores by guardedBy(storesMutex, mutableMapOf<StorageKey, ActiveStore<*, *, *>>())
 
+    @ExperimentalCoroutinesApi
     @Suppress("UNCHECKED_CAST")
     suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> get(
         storeOptions: StoreOptions<Data, Op, T>
     ) = storesMutex.withLock {
         stores.getOrPut(storeOptions.storageKey) {
-            Store(storeOptions)
-        } as Store<Data, Op, T>
+            (activationFactory ?: Store.defaultFactory).invoke(storeOptions)
+        } as ActiveStore<Data, Op, T>
     }
 
     suspend fun waitForIdle() {
         storesMutex.withLock {
-            stores.values.forEach { it.waitForActiveIdle() }
+            stores.values.forEach { it.idle() }
         }
     }
 

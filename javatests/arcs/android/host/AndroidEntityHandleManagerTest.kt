@@ -15,6 +15,9 @@ import arcs.core.data.HandleMode
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
 import arcs.core.data.RawEntity
+import arcs.core.entity.Handle
+import arcs.core.entity.HandleDataType
+import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadWriteCollectionHandle
@@ -123,11 +126,12 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             "testHost",
             FakeTime(),
             schedulerProvider("testArc"),
-            StoreManager(),
-            ServiceStoreFactory(
-                context = app,
-                lifecycle = lifecycle,
-                connectionFactory = TestConnectionFactory(app)
+            StoreManager(
+                activationFactory = ServiceStoreFactory(
+                    context = app,
+                    lifecycle = lifecycle,
+                    connectionFactory = TestConnectionFactory(app)
+                )
             )
         )
     }
@@ -367,31 +371,45 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         handleManager: EntityHandleManager,
         handleName: String,
         handleMode: HandleMode
-    ) = handleManager.createHandle(
-        HandleSpec(
-            handleName,
-            handleMode,
-            HandleContainerType.Singleton,
-            handleHolder.getEntitySpecs(handleName).single()
-        ),
-        singletonKey
-    ).awaitReady().also {
-        handleHolder.setHandle(handleName, it)
+    ): Handle {
+        val entitySpec = handleHolder.getEntitySpecs(handleName).single()
+        return handleManager.createHandle(
+            HandleSpec(
+                handleName,
+                handleMode,
+                toType(
+                    entitySpec,
+                    HandleDataType.Entity,
+                    HandleContainerType.Singleton
+                ),
+                setOf(entitySpec)
+            ),
+            singletonKey
+        ).awaitReady().also {
+            handleHolder.setHandle(handleName, it)
+        }
     }
 
     private suspend fun createCollectionHandle(
         handleManager: EntityHandleManager,
         handleName: String,
         handleMode: HandleMode
-    ) = handleManager.createHandle(
-        HandleSpec(
-            handleName,
-            handleMode,
-            HandleContainerType.Collection,
-            handleHolder.getEntitySpecs(handleName).single()
-        ),
-        collectionKey
-    ).awaitReady().also {
-        handleHolder.setHandle(handleName, it)
+    ): Handle {
+        val entitySpec = handleHolder.getEntitySpecs(handleName).single()
+        return handleManager.createHandle(
+            HandleSpec(
+                handleName,
+                handleMode,
+                toType(
+                    entitySpec,
+                    HandleDataType.Entity,
+                    HandleContainerType.Collection
+                ),
+                setOf(entitySpec)
+            ),
+            collectionKey
+        ).awaitReady().also {
+            handleHolder.setHandle(handleName, it)
+        }
     }
 }

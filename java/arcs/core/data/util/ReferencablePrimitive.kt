@@ -15,6 +15,7 @@ import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.util.Base64
 import arcs.core.util.toBase64Bytes
+import java.math.BigInteger
 import kotlin.reflect.KClass
 
 /**
@@ -56,6 +57,7 @@ data class ReferencablePrimitive<T>(
         private const val primitiveKotlinString = "kotlin.String"
         private const val primitiveKotlinBoolean = "kotlin.Boolean"
         private const val primitiveKotlinByteArray = "kotlin.ByteArray"
+        private const val primitiveJavaBigInteger = "java.math.BigInteger"
         private val primitiveKClassMap = mapOf<KClass<*>, String>(
             Byte::class to primitiveKotlinByte,
             Short::class to primitiveKotlinShort,
@@ -66,7 +68,8 @@ data class ReferencablePrimitive<T>(
             Double::class to primitiveKotlinDouble,
             String::class to primitiveKotlinString,
             Boolean::class to primitiveKotlinBoolean,
-            ByteArray::class to primitiveKotlinByteArray
+            ByteArray::class to primitiveKotlinByteArray,
+            BigInteger::class to primitiveJavaBigInteger
         )
         private val pattern = "Primitive<([^>]+)>\\((.*)\\)$".toRegex()
 
@@ -81,7 +84,8 @@ data class ReferencablePrimitive<T>(
                 klass == Double::class ||
                 klass == String::class ||
                 klass == Boolean::class ||
-                klass == ByteArray::class
+                klass == ByteArray::class ||
+                klass == BigInteger::class
 
         /**
          * If the given [ReferenceId] matches the type of `serialized` reference id created by
@@ -121,6 +125,8 @@ data class ReferencablePrimitive<T>(
                     ReferencablePrimitive(Boolean::class, value.toBoolean())
                 className == primitiveKotlinByteArray ->
                     ReferencablePrimitive(ByteArray::class, value.toBase64Bytes(), value)
+                className == primitiveJavaBigInteger ->
+                    ReferencablePrimitive(BigInteger::class, BigInteger(value))
                 else -> null
             }
         }
@@ -171,3 +177,6 @@ fun Boolean.toReferencable(): ReferencablePrimitive<Boolean> =
  */
 fun ByteArray.toReferencable(): ReferencablePrimitive<ByteArray> =
     ReferencablePrimitive(ByteArray::class, this, Base64.encode(this))
+
+fun BigInteger.toReferencable(): ReferencablePrimitive<BigInteger> =
+    ReferencablePrimitive(BigInteger::class, this)

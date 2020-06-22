@@ -43,7 +43,7 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
         require(
             willSupport(storageKey)
         ) { "This provider does not support storageKey: $storageKey" }
-        return VolatileDriver(storageKey, type, arcMemory)
+        return VolatileDriver(storageKey, arcMemory)
     }
 
     override suspend fun removeAllEntities() = arcMemory.clear()
@@ -56,10 +56,10 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
 /** [Driver] implementation for an in-memory store of data. */
 /* internal */ class VolatileDriver<Data : Any>(
     override val storageKey: StorageKey,
-    private val type: Type,
     private val memory: VolatileMemory
 ) : Driver<Data> {
-    private val log = TaggedLog { this.toString() }
+    // TODO(#5551): Consider including a hash of the toString info in log prefix.
+    private val log = TaggedLog { "VolatileDriver" }
     // The identifier is simply used to help differentiate between VolatileDrivers for the same
     // storage key.
     private val identifier = nextIdentifier.incrementAndGet()
@@ -101,13 +101,14 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
     }
 
     override suspend fun send(data: Data, version: Int): Boolean {
-        log.debug { "send($data, $version)" }
+        log.verbose { "send($data, $version)" }
         val (success, newEntry) = memory.update<Data>(storageKey) { optCurrentValue ->
             val currentValue = optCurrentValue ?: VolatileEntry<Data>()
             val currentVersion = currentValue.version
             // If the new version isn't immediately after this one, return false.
             if (currentVersion != version - 1) {
-                log.debug { "current entry version = ${currentValue.version}, incoming = $version" }
+                log.verbose {
+                    "current entry version = ${currentValue.version}, incoming = $version" }
                 currentValue
             } else {
                 currentValue.copy(
@@ -121,7 +122,7 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
         if (success) {
             newEntry.drivers.forEach { driver ->
                 val receiver = driver.takeIf { it != this }?.receiver
-                log.debug { "Invoking receiver: $receiver" }
+                log.verbose { "Invoking receiver: $receiver" }
                 receiver?.invoke(data, version)
             }
         }

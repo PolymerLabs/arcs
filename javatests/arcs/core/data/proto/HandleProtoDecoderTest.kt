@@ -1,5 +1,6 @@
 package arcs.core.data.proto
 
+import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
 import arcs.core.data.Recipe.Handle
 import arcs.core.data.TypeVariable
@@ -35,36 +36,10 @@ class HandleProtoDecoderTest {
     }
 
     @Test
-    fun decodesCapabilitiesList() {
-        assertThat(
-            listOf(HandleProto.Capability.TIED_TO_ARC).decode()
-        ).isEqualTo(Capabilities.TiedToArc)
-        assertThat(
-            listOf(HandleProto.Capability.TIED_TO_RUNTIME).decode()
-        ).isEqualTo(Capabilities.TiedToRuntime)
-        assertThat(
-            listOf(HandleProto.Capability.PERSISTENT).decode()
-        ).isEqualTo(Capabilities.Persistent)
-        assertThat(
-            listOf(HandleProto.Capability.QUERYABLE).decode()
-        ).isEqualTo(Capabilities.Queryable)
-        assertThat(
-            listOf(
-                HandleProto.Capability.QUERYABLE,
-                HandleProto.Capability.PERSISTENT
-            ).decode()
-        ).isEqualTo(Capabilities.PersistentQueryable)
-
-        assertFailsWith<IllegalArgumentException> {
-            listOf(HandleProto.Capability.UNRECOGNIZED).decode()
-        }
-    }
-
-    @Test
     fun decodesHandleProtoWithNoType() {
         val storageKey = "ramdisk://a"
         val handleText = buildHandleProtoText(
-            "notype_thing", "CREATE", "", storageKey, "handle_c", listOf("TIED_TO_ARC")
+            "notype_thing", "CREATE", "", storageKey, "handle_c", "[{name: \"tiedToArc\"}]"
         )
         val handles = mapOf(
             "handle_c" to Handle("handle_c", Handle.Fate.MAP, TypeVariable("handle_c")),
@@ -79,7 +54,8 @@ class HandleProtoDecoderTest {
             assertThat(associatedHandles).containsExactly(handles["handle1"], handles["handle_c"])
             assertThat(type).isEqualTo(TypeVariable("notype_thing"))
             assertThat(tags).isEmpty()
-            assertThat(capabilities).isEqualTo(Capabilities.TiedToArc)
+            assertThat(annotations)
+                .isEqualTo(listOf(Annotation.createCapability(Capabilities.TIED_TO_ARC)))
         }
     }
 
@@ -105,7 +81,7 @@ class HandleProtoDecoderTest {
             type = "type { ${entityTypeProto} }",
             storageKey = storageKey,
             associatedHandle = "handle_join",
-            capabilities = listOf("PERSISTENT", "QUERYABLE")
+            annotations = "[{name: \"persistent\"}, {name: \"queryable\"}]"
         )
         val handleProto = parseHandleProtoText(handleText)
 
@@ -121,7 +97,10 @@ class HandleProtoDecoderTest {
             assertThat(associatedHandles).isEqualTo(listOf(handles["handle1"], handles["handle_join"]))
             assertThat(type).isEqualTo(entityType)
             assertThat(tags).isEmpty()
-            assertThat(capabilities).isEqualTo(Capabilities.PersistentQueryable)
+            assertThat(annotations).isEqualTo(listOf(
+                Annotation.createCapability(Capabilities.PERSISTENT),
+                Annotation.createCapability(Capabilities.QUERYABLE)
+            ))
         }
     }
 
@@ -147,7 +126,7 @@ class HandleProtoDecoderTest {
             type = "type { ${entityTypeProto} }",
             storageKey = storageKey,
             associatedHandle = "handle_join",
-            capabilities = listOf("PERSISTENT", "QUERYABLE"),
+            annotations = "[{name: \"persistent\"}, {name: \"queryable\"}]",
             tags = listOf("foo", "bar", "baz")
         )
         val handleProto = parseHandleProtoText(handleText)
@@ -174,7 +153,10 @@ class HandleProtoDecoderTest {
             assertThat(associatedHandles).isEqualTo(listOf(handles["handle1"], handles["handle_join"]))
             assertThat(type).isEqualTo(entityType)
             assertThat(tags).containsExactly("foo", "bar", "baz")
-            assertThat(capabilities).isEqualTo(Capabilities.PersistentQueryable)
+            assertThat(annotations).isEqualTo(listOf(
+                Annotation.createCapability(Capabilities.PERSISTENT),
+                Annotation.createCapability(Capabilities.QUERYABLE)
+            ))
         }
     }
 
@@ -187,7 +169,7 @@ class HandleProtoDecoderTest {
             type = "",
             storageKey = storageKey,
             associatedHandle = "handle_c",
-            capabilities = listOf("TIED_TO_ARC"),
+            annotations = "{name: \"tiedToArc\"}",
             tags = emptyList(),
             id = "veryofficialid_2342"
         )
@@ -212,7 +194,8 @@ class HandleProtoDecoderTest {
             assertThat(associatedHandles).containsExactly(handles["handle1"], handles["handle_c"])
             assertThat(type).isEqualTo(TypeVariable("notype_thing"))
             assertThat(tags).isEmpty()
-            assertThat(capabilities).isEqualTo(Capabilities.TiedToArc)
+            assertThat(annotations)
+                .isEqualTo(listOf(Annotation.createCapability(Capabilities.TIED_TO_ARC)))
         }
     }
 
@@ -223,7 +206,7 @@ class HandleProtoDecoderTest {
         type: String,
         storageKey: String,
         associatedHandle: String,
-        capabilities: List<String>,
+        annotations: String,
         tags: List<String> = emptyList(),
         id: String = ""
     ) =
@@ -235,7 +218,7 @@ class HandleProtoDecoderTest {
           associated_handles: "handle1"
           associated_handles: "${associatedHandle}"
           ${type}
-          ${capabilities.joinToString { "capabilities: $it" }}
+          annotations: ${annotations}
           ${tags.joinToString { """tags: "$it"""" }}
         """.trimIndent()
 }

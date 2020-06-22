@@ -1,5 +1,7 @@
 package arcs.core.entity
 
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -17,6 +19,7 @@ import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import org.junit.After
 import org.junit.Before
@@ -26,6 +29,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.util.concurrent.Executors
 
+@ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 @Suppress("UNCHECKED_CAST")
 class ReferenceTest {
@@ -51,11 +55,7 @@ class ReferenceTest {
 
         scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher())
         stores = StoreManager()
-        dereferencer = RawEntityDereferencer(
-            DummyEntity.SCHEMA,
-            scheduler = scheduler,
-            storeManager = stores
-        )
+        dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA)
         entityHandleManager = EntityHandleManager(
             "testArc",
             "",
@@ -68,8 +68,8 @@ class ReferenceTest {
             HandleSpec(
                 "testHandle",
                 HandleMode.ReadWrite,
-                HandleContainerType.Collection,
-                DummyEntity
+                CollectionType(EntityType(DummyEntity.SCHEMA)),
+                setOf<EntitySpec<*>>(DummyEntity)
             ),
             STORAGE_KEY
         ) as ReadWriteCollectionHandle<DummyEntity>

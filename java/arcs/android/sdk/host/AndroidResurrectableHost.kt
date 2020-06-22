@@ -18,11 +18,13 @@ import arcs.core.host.ArcState
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.sdk.android.storage.ResurrectionHelper
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
  * An [AndroidHost] that can be resurrected via [ResurrectorService] if the [ArcHost] is
  * embedded in its own service.
  */
+@ExperimentalCoroutinesApi
 abstract class AndroidResurrectableHost(
     context: Context,
     lifecycle: Lifecycle,

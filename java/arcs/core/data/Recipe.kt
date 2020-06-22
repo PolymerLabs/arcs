@@ -19,7 +19,7 @@ data class Recipe(
     val name: String?,
     val handles: Map<String, Handle>,
     val particles: List<Particle>,
-    val arcId: String?
+    val annotations: List<Annotation> = emptyList()
 ) {
     /** Representation of a particle in a recipe. */
     data class Particle(
@@ -39,7 +39,7 @@ data class Recipe(
         val fate: Fate,
         val type: Type,
         val storageKey: String? = null,
-        val capabilities: Capabilities? = null,
+        val annotations: List<Annotation> = emptyList(),
         val associatedHandles: List<Handle> = emptyList(),
         val id: String = "",
         val tags: List<String> = emptyList()
@@ -47,13 +47,17 @@ data class Recipe(
         enum class Fate {
             CREATE, USE, MAP, COPY, JOIN
         }
+        val capabilities: Capabilities
+            get() {
+                return Capabilities.fromAnnotations(annotations)
+            }
     }
 }
 
 /** Translates a [Recipe] into a [Plan] */
 fun Recipe.toPlan() = Plan(
-    arcId = arcId,
-    particles = particles.map { it.toPlanParticle() }
+    particles = particles.map { it.toPlanParticle() },
+    annotations = annotations
 )
 
 /** Translates a [Recipe.Particle] into a [Plan.Particle] */
@@ -67,13 +71,12 @@ fun Recipe.Particle.toPlanParticle() = Plan.Particle(
 fun Recipe.Particle.HandleConnection.toPlanHandleConnection() = Plan.HandleConnection(
     mode = spec.direction,
     type = spec.type,
-    storageKey = handle.toStorageKey()
-    // TODO: Add TTL.
+    storageKey = handle.toStorageKey(),
+    annotations = handle.annotations
 )
 
 /** Translates a [Recipe.Handle] into a [StorageKey] */
 fun Recipe.Handle.toStorageKey() = when {
     storageKey != null -> StorageKeyParser.parse(storageKey)
-    capabilities != null -> CreateableStorageKey(name, capabilities)
-    else -> CreateableStorageKey(name)
+    else -> CreatableStorageKey(name)
 }

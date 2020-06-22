@@ -18,6 +18,7 @@ import arcs.android.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
+import arcs.core.storage.StoreManager
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.android.storage.ServiceStoreFactory
@@ -56,9 +57,11 @@ class DemoActivity : AppCompatActivity() {
                 EntityHandleManager(
                     time = JvmTime,
                     scheduler = schedulerProvider("personArc"),
-                    activationFactory = ServiceStoreFactory(
-                        context = this@DemoActivity,
-                        lifecycle = this@DemoActivity.lifecycle
+                    stores = StoreManager(
+                        activationFactory = ServiceStoreFactory(
+                            context = this@DemoActivity,
+                            lifecycle = this@DemoActivity.lifecycle
+                        )
                     )
                 )
             )

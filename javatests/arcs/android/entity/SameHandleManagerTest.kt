@@ -32,10 +32,6 @@ class SameHandleManagerTest : HandleManagerTestBase() {
 
     lateinit var app: Application
 
-    override var testRunner = { block: suspend CoroutineScope.() -> Unit ->
-        runBlocking { this.block() }
-    }
-
     @Before
     override fun setUp() {
         super.setUp()
@@ -46,11 +42,12 @@ class SameHandleManagerTest : HandleManagerTestBase() {
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("test"),
-            stores = StoreManager(),
-            activationFactory = ServiceStoreFactory(
-                app,
-                fakeLifecycleOwner.lifecycle,
-                connectionFactory = TestConnectionFactory(app)
+            stores = StoreManager(
+                activationFactory = ServiceStoreFactory(
+                    app,
+                    fakeLifecycleOwner.lifecycle,
+                    connectionFactory = TestConnectionFactory(app)
+                )
             )
         )
         writeHandleManager = readHandleManager

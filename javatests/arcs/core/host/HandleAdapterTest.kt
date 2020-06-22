@@ -12,8 +12,11 @@
 package arcs.core.host
 
 import arcs.core.common.Id
+import arcs.core.entity.EntitySpec
 import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadWriteCollectionHandle
@@ -80,8 +83,12 @@ class HandleAdapterTest {
             HandleSpec(
                 READ_ONLY_HANDLE,
                 HandleMode.Read,
-                HandleContainerType.Singleton,
-                Person
+                toType(
+                    Person,
+                    HandleDataType.Entity,
+                    HandleContainerType.Singleton
+                ),
+                setOf<EntitySpec<*>>(Person)
             ),
             STORAGE_KEY
         )
@@ -97,8 +104,12 @@ class HandleAdapterTest {
             HandleSpec(
                 WRITE_ONLY_HANDLE,
                 HandleMode.Write,
-                HandleContainerType.Singleton,
-                Person
+                toType(
+                    Person,
+                    HandleDataType.Entity,
+                    HandleContainerType.Singleton
+                ),
+                setOf<EntitySpec<*>>(Person)
             ),
             STORAGE_KEY
         )
@@ -113,8 +124,12 @@ class HandleAdapterTest {
             HandleSpec(
                 READ_WRITE_HANDLE,
                 HandleMode.ReadWrite,
-                HandleContainerType.Singleton,
-                Person
+                toType(
+                    Person,
+                    HandleDataType.Entity,
+                    HandleContainerType.Singleton
+                ),
+                setOf<EntitySpec<*>>(Person)
             ),
             STORAGE_KEY
         ) as ReadWriteSingletonHandle<Person>
@@ -153,8 +168,12 @@ class HandleAdapterTest {
            HandleSpec(
                READ_WRITE_HANDLE,
                HandleMode.ReadWrite,
-               HandleContainerType.Singleton,
-               Person
+               toType(
+                   Person,
+                   HandleDataType.Entity,
+                   HandleContainerType.Singleton
+               ),
+               setOf<EntitySpec<*>>(Person)
            ),
            STORAGE_KEY
        ) as ReadWriteSingletonHandle<Person>
@@ -177,8 +196,12 @@ class HandleAdapterTest {
             HandleSpec(
                 READ_ONLY_HANDLE,
                 HandleMode.Read,
-                HandleContainerType.Collection,
-                Person
+                toType(
+                    Person,
+                    HandleDataType.Entity,
+                    HandleContainerType.Collection
+                ),
+                setOf<EntitySpec<*>>(Person)
             ),
             STORAGE_KEY
         )
@@ -191,12 +214,11 @@ class HandleAdapterTest {
     @Test
     fun collectionHandleAdapter_writeOnlyCantRead() = runBlockingTest {
         val writeOnlyHandle = manager.createHandle(
-            HandleSpec(
-                WRITE_ONLY_HANDLE,
-                HandleMode.Write,
-                HandleContainerType.Collection,
-                Person
-            ),
+            HandleSpec(WRITE_ONLY_HANDLE,
+                       HandleMode.Write,
+                       toType(Person,
+                              HandleDataType.Entity, HandleContainerType.Collection),
+                       setOf<EntitySpec<*>>(Person)),
             STORAGE_KEY
         )
 
@@ -211,8 +233,12 @@ class HandleAdapterTest {
             HandleSpec(
                 READ_WRITE_HANDLE,
                 HandleMode.ReadWrite,
-                HandleContainerType.Singleton,
-                Person
+                toType(
+                    Person,
+                    HandleDataType.Entity,
+                    HandleContainerType.Singleton
+                ),
+                setOf<EntitySpec<*>>(Person)
             ),
             STORAGE_KEY
         ) as ReadWriteSingletonHandle<Person>
@@ -238,8 +264,11 @@ class HandleAdapterTest {
             HandleSpec(
                 READ_WRITE_HANDLE,
                 HandleMode.ReadWrite,
-                HandleContainerType.Collection,
-                Person
+                toType(
+                    Person,
+                    HandleDataType.Entity, HandleContainerType.Collection
+                ),
+                setOf<EntitySpec<*>>(Person)
             ),
             STORAGE_KEY
         ) as ReadWriteCollectionHandle<Person>
@@ -266,8 +295,12 @@ class HandleAdapterTest {
             HandleSpec(
                 READ_WRITE_HANDLE,
                 HandleMode.ReadWrite,
-                HandleContainerType.Collection,
-                Person
+                toType(
+                    Person,
+                    HandleDataType.Entity,
+                    HandleContainerType.Collection
+                ),
+                setOf<EntitySpec<*>>(Person)
             ),
             STORAGE_KEY
         ) as ReadWriteCollectionHandle<Person>
@@ -308,8 +341,12 @@ class HandleAdapterTest {
             HandleSpec(
                 READ_WRITE_HANDLE,
                 HandleMode.ReadWriteQuery,
-                HandleContainerType.Collection,
-                QueryPerson
+                toType(
+                    QueryPerson,
+                    HandleDataType.Entity,
+                    HandleContainerType.Collection
+                ),
+                setOf<EntitySpec<*>>(QueryPerson)
             ),
             STORAGE_KEY
         ) as ReadWriteQueryCollectionHandle<Person, Any>

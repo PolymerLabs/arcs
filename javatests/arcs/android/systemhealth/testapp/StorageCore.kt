@@ -17,12 +17,16 @@ import android.os.Debug
 import android.os.Trace
 import androidx.lifecycle.Lifecycle
 import arcs.core.data.HandleMode
+import arcs.core.entity.EntitySpec
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.Reference
+import arcs.core.storage.StoreManager
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -74,6 +78,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
@@ -89,6 +94,7 @@ private typealias Settings = SystemHealthData.Settings
 private typealias TaskEventQueue<T> = Pair<ReadWriteLock, MutableList<T>>
 
 /** System health test core for performance, power, memory footprint and stability. */
+@ExperimentalCoroutinesApi
 class StorageCore(val context: Context, val lifecycle: Lifecycle) {
     /** Query the last record of system-health stats */
     val statsBulletin: String
@@ -240,6 +246,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         }
     }
 
+    @ExperimentalCoroutinesApi
     private fun execute(settings: Settings) {
         earlyExit = false
         val numOfTasks = settings.numOfListenerThreads + settings.numOfWriterThreads
@@ -260,18 +267,20 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             TaskHandle(
                 EntityHandleManager(
                     time = JvmTime,
-                    activationFactory = ServiceStoreFactory(
-                        context,
-                        lifecycle,
-                        taskCoroutineContext,
-                        DefaultConnectionFactory(
+                    stores = StoreManager(
+                        activationFactory = ServiceStoreFactory(
                             context,
-                            if (settings.function == Function.STABILITY_TEST) {
-                                TestStorageServiceBindingDelegate(context)
-                            } else {
-                                DefaultStorageServiceBindingDelegate(context)
-                            },
-                            taskCoroutineContext
+                            lifecycle,
+                            taskCoroutineContext,
+                            DefaultConnectionFactory(
+                                context,
+                                if (settings.function == Function.STABILITY_TEST) {
+                                    TestStorageServiceBindingDelegate(context)
+                                } else {
+                                    DefaultStorageServiceBindingDelegate(context)
+                                },
+                                taskCoroutineContext
+                            )
                         )
                     ),
                     // Per-task single-threaded Scheduler being cascaded with Watchdog capabilities
@@ -353,9 +362,13 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             val handle = taskHandle.handleManager.createHandle(
                 HandleSpec(
                     "singletonHandle$taskId",
-                    HandleMode.ReadWrite,
-                    HandleContainerType.Singleton,
-                    TestEntity.Companion
+                           HandleMode.ReadWrite,
+                           toType(
+                               TestEntity.Companion,
+                               HandleDataType.Entity,
+                               HandleContainerType.Singleton
+                           ),
+                           setOf<EntitySpec<*>>(TestEntity.Companion)
                 ),
                 when (settings.storageMode) {
                     TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
@@ -405,11 +418,15 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 HandleSpec(
                     "collectionHandle$taskId",
                     HandleMode.ReadWrite,
-                    HandleContainerType.Collection,
-                    TestEntity.Companion
+                    toType(
+                        TestEntity.Companion,
+                        HandleDataType.Entity,
+                        HandleContainerType.Collection
+                    ),
+                    setOf<EntitySpec<*>>(TestEntity.Companion)
                 ),
                 when (settings.storageMode) {
-                    TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
+                    StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
                     else -> TestEntity.collectionInMemoryStorageKey
                 }
             ) as ReadWriteCollectionHandle<TestEntity>

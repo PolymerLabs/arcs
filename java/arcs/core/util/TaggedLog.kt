@@ -19,6 +19,10 @@ class TaggedLog(private val tagBuilder: () -> String) {
         return { "${tagBuilder()}: ${messageBuilder()}" }
     }
 
+    /** Logs at a verbose-level. */
+    fun verbose(throwable: Throwable? = null, messageBuilder: () -> String) =
+        Log.verbose(throwable, taggedMessageBuilder(messageBuilder))
+
     /** Logs at a debug-level. */
     fun debug(throwable: Throwable? = null, messageBuilder: () -> String) =
         Log.debug(throwable, taggedMessageBuilder(messageBuilder))

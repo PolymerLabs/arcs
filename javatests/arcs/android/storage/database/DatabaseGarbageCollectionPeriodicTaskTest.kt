@@ -6,8 +6,11 @@ import androidx.work.ListenableWorker.Result
 import androidx.work.testing.TestWorkerBuilder
 import arcs.core.data.HandleMode
 import arcs.core.entity.DummyEntity
+import arcs.core.entity.EntitySpec
 import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.SchemaRegistry
 import arcs.core.entity.awaitReady
@@ -19,7 +22,6 @@ import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import kotlinx.coroutines.withContext
@@ -90,8 +92,12 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
             HandleSpec(
                 "name",
                 HandleMode.ReadWrite,
-                HandleContainerType.Collection,
-                DummyEntity
+                toType(
+                    DummyEntity,
+                    HandleDataType.Entity,
+                    HandleContainerType.Collection
+                ),
+                setOf<EntitySpec<*>>(DummyEntity)
             ),
             collectionKey
         ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>

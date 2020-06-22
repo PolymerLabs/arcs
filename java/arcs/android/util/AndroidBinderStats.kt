@@ -67,7 +67,7 @@ object AndroidBinderStats {
         } catch (e: Exception) {
             // The possible reasons could be Linux debugfs is not mounted on some Android
             // devices and builds, denial of permission, etc.
-            log.info { e.message ?: "Unknown exception on accessing $STATS_FILE_NODE" }
+            log.warning { e.message ?: "Unknown exception on accessing $STATS_FILE_NODE" }
             emptyMap()
         }
     }

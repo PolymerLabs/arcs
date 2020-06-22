@@ -34,5 +34,6 @@ fun RecipeProto.decode(particleSpecs: Map<String, ParticleSpec>): Recipe {
 
     val context = DecodingContext(particleSpecs, recipeHandles)
     val particles = particlesList.map { it.decode(context) }
-    return Recipe(name.ifBlank { null }, recipeHandles, particles, arcId.ifBlank { null })
+    val annotations = annotationsList.map { it.decode() }
+    return Recipe(name.ifBlank { null }, recipeHandles, particles, annotations)
 }

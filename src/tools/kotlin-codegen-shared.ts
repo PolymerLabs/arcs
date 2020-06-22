@@ -78,14 +78,6 @@ export interface KotlinTypeInfo {
   schemaType: string;
 }
 
-export function typeFor(name: string): string {
-  return getTypeInfo({name}).type;
-}
-
-export function defaultValFor(name: string): string {
-  return getTypeInfo({name}).defaultVal;
-}
-
 export function getTypeInfo(opts: { name: string, isCollection?: boolean, refClassName?: string, listTypeName?: string, refSchemaHash?: string }): KotlinTypeInfo {
   if (opts.name === 'List') {
     assert(opts.listTypeName, 'listTypeName must be provided for Lists');

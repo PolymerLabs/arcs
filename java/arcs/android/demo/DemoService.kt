@@ -14,12 +14,14 @@ import arcs.core.host.toRegistration
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
  * Service which wraps an ArcHost.
  */
+@ExperimentalCoroutinesApi
 class DemoService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
@@ -50,6 +52,7 @@ class DemoService : ArcHostService() {
         )
     }
 
+    @ExperimentalCoroutinesApi
     inner class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,

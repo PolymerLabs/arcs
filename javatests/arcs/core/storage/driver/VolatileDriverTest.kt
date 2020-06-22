@@ -42,7 +42,7 @@ class VolatileDriverTest {
 
     @Test
     fun constructor_addsEntryToMemory() {
-        val driver = VolatileDriver<Int>(key, DummyType, memory)
+        val driver = VolatileDriver<Int>(key, memory)
 
         val expected = VolatileEntry(null, 0, driver)
         val actual: VolatileEntry<Int>? = memory[key]
@@ -51,8 +51,8 @@ class VolatileDriverTest {
 
     @Test
     fun constructor_addsEntryToMemory_andAppendsItselfToEntryDrivers() {
-        val driver1 = VolatileDriver<Int>(key, DummyType, memory)
-        val driver2 = VolatileDriver<Int>(key, DummyType, memory)
+        val driver1 = VolatileDriver<Int>(key, memory)
+        val driver2 = VolatileDriver<Int>(key, memory)
 
         val expected = VolatileEntry(null, 0, driver1, driver2)
         val actual: VolatileEntry<Int>? = memory[key]
@@ -66,12 +66,12 @@ class VolatileDriverTest {
             override fun childKeyWithComponent(component: String): StorageKey = NotVolatileKey()
         }
 
-        VolatileDriver<Int>(NotVolatileKey(), DummyType, memory)
+        VolatileDriver<Int>(NotVolatileKey(), memory)
     }
 
     @Test
     fun send_updatesMemory_whenVersion_isCorrect() = runBlockingTest {
-        val driver = VolatileDriver<Int>(key, DummyType, memory)
+        val driver = VolatileDriver<Int>(key, memory)
 
         assertThat(driver.send(data = 1, version = 1)).isTrue()
 
@@ -88,7 +88,7 @@ class VolatileDriverTest {
 
     @Test
     fun send_doesNotUpdateMemory_whenVersion_isIncorrect() = runBlockingTest {
-        val driver = VolatileDriver<Int>(key, DummyType, memory)
+        val driver = VolatileDriver<Int>(key, memory)
 
         assertThat(driver.send(data = 1, version = 0)).isFalse()
 
@@ -105,8 +105,8 @@ class VolatileDriverTest {
 
     @Test
     fun send_canSendToOtherDriverReceiver() = runBlockingTest {
-        val driver1 = VolatileDriver<Int>(key, DummyType, memory)
-        val driver2 = VolatileDriver<Int>(key, DummyType, memory)
+        val driver1 = VolatileDriver<Int>(key, memory)
+        val driver2 = VolatileDriver<Int>(key, memory)
 
         var receivedDataAt1: Int? = null
         var receivedVersionAt1: Int? = null
@@ -133,12 +133,5 @@ class VolatileDriverTest {
         assertThat(receivedVersionAt2).isEqualTo(1)
         assertThat(receivedDataAt1).isEqualTo(2)
         assertThat(receivedVersionAt1).isEqualTo(2)
-    }
-
-    companion object {
-        object DummyType: Type {
-            override val tag = Tag.Count
-            override fun toLiteral() = throw UnsupportedOperationException("")
-        }
     }
 }

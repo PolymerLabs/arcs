@@ -42,6 +42,7 @@ import arcs.core.util.guardedBy
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import java.math.BigInteger
 import java.time.Duration
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -418,7 +419,8 @@ class DatabaseImplTest {
                     "float" to FieldType.Float,
                     "double" to FieldType.Double,
                     "txtlst" to FieldType.ListOf(FieldType.Text),
-                    "lnglst" to FieldType.ListOf(FieldType.Long)
+                    "lnglst" to FieldType.ListOf(FieldType.Long),
+                    "bigint" to FieldType.BigInt
                 ),
                 collections = mapOf(
                     "texts" to FieldType.Text,
@@ -430,7 +432,8 @@ class DatabaseImplTest {
                     "longs" to FieldType.Long,
                     "chars" to FieldType.Char,
                     "floats" to FieldType.Float,
-                    "doubles" to FieldType.Double
+                    "doubles" to FieldType.Double,
+                    "bigints" to FieldType.BigInt
                 )
             )
         )
@@ -450,7 +453,8 @@ class DatabaseImplTest {
                     "float" to 34.567f.toReferencable(),
                     "double" to 4e100.toReferencable(),
                     "txtlst" to listOf("this", "is", "a", "list").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text)),
-                    "lnglst" to listOf(1L, 2L, 4L, 4L, 3L).map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Long))
+                    "lnglst" to listOf(1L, 2L, 4L, 4L, 3L).map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Long)),
+                    "bigint" to BigInteger.valueOf(123).toReferencable()
                 ),
                 mapOf(
                     "texts" to setOf("abc".toReferencable(), "def".toReferencable()),
@@ -462,7 +466,8 @@ class DatabaseImplTest {
                     "longs" to setOf(1000000000000000002L.toReferencable(), 1000000000000000003L.toReferencable()),
                     "chars" to listOf('a', 'r', 'c', 's').map { it.toReferencable() }.toSet(),
                     "floats" to setOf(1.1f.toReferencable(), 100.101f.toReferencable()),
-                    "doubles" to setOf(1.0.toReferencable(), 2e80.toReferencable())
+                    "doubles" to setOf(1.0.toReferencable(), 2e80.toReferencable()),
+                    "bigints" to setOf(BigInteger.valueOf(123).toReferencable(), BigInteger.valueOf(678).toReferencable())
                 )
             ),
             schema,
@@ -1610,11 +1615,13 @@ class DatabaseImplTest {
                     "text" to FieldType.Text,
                     "long" to FieldType.Long,
                     "float" to FieldType.Float,
-                    "textlist" to FieldType.ListOf(FieldType.Text)
+                    "textlist" to FieldType.ListOf(FieldType.Text),
+                    "bigint" to FieldType.BigInt
                 ),
                 collections = mapOf(
                     "nums" to FieldType.Number,
-                    "chars" to FieldType.Char
+                    "chars" to FieldType.Char,
+                    "bigints" to FieldType.BigInt
                 )
             )
         )
@@ -1633,11 +1640,13 @@ class DatabaseImplTest {
                     "text" to "abc".toReferencable(),
                     "long" to 1000000000000000001L.toReferencable(),
                     "float" to 3.412f.toReferencable(),
-                    "textlist" to listOf("abc", "abcd", "def", "ghi").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text))
+                    "textlist" to listOf("abc", "abcd", "def", "ghi").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "bigint" to BigInteger.valueOf(1000).toReferencable()
                 ),
                 mapOf(
                     "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable()),
-                    "chars" to listOf('A', 'R', 'C', 'S', '!').map { it.toReferencable() }.toSet()
+                    "chars" to listOf('A', 'R', 'C', 'S', '!').map { it.toReferencable() }.toSet(),
+                    "bigints" to setOf(BigInteger("12345678901234567890").toReferencable(), BigInteger.valueOf(3).toReferencable())
                 ),
                 11L,
                 timeInPast // expirationTimestamp, in the past.
@@ -1654,11 +1663,13 @@ class DatabaseImplTest {
                     "text" to "def".toReferencable(),
                     "long" to 1L.toReferencable(),
                     "float" to 42.0f.toReferencable(),
-                    "textlist" to listOf("abcd", "abcd").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text))
+                    "textlist" to listOf("abcd", "abcd").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "bigint" to BigInteger.valueOf(2000).toReferencable()
                 ),
                 mapOf(
                     "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
-                    "chars" to listOf('R', 'O', 'C', 'K', 'S').map { it.toReferencable() }.toSet()
+                    "chars" to listOf('R', 'O', 'C', 'K', 'S').map { it.toReferencable() }.toSet(),
+                    "bigints" to setOf(BigInteger("44412345678901234567890").toReferencable(), BigInteger.valueOf(5).toReferencable())
                 ),
                 11L,
                 JvmTime.currentTimeMillis + 10000 // expirationTimestamp, in the future.
@@ -1675,11 +1686,13 @@ class DatabaseImplTest {
                     "text" to "def".toReferencable(),
                     "long" to 10L.toReferencable(),
                     "float" to 37.5f.toReferencable(),
-                    "textlist" to listOf("def", "def").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text))
+                    "textlist" to listOf("def", "def").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "bigint" to BigInteger.valueOf(3000).toReferencable()
                 ),
                 mapOf(
                     "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
-                    "chars" to listOf('H', 'e', 'l', 'L', 'o').map { it.toReferencable() }.toSet()
+                    "chars" to listOf('H', 'e', 'l', 'L', 'o').map { it.toReferencable() }.toSet(),
+                    "bigints" to setOf(BigInteger("33344412345678901234567890").toReferencable(), BigInteger.valueOf(7).toReferencable())
                 ),
                 11L,
                 UNINITIALIZED_TIMESTAMP // no expirationTimestamp
@@ -1735,9 +1748,10 @@ class DatabaseImplTest {
                         "text" to null,
                         "long" to null,
                         "float" to null,
-                        "textlist" to null
+                        "textlist" to null,
+                        "bigint" to null
                     ),
-                    mapOf("nums" to emptySet(), "chars" to emptySet()),
+                    mapOf("nums" to emptySet(), "chars" to emptySet(), "bigints" to emptySet()),
                     11L,
                     timeInPast
                 ),
@@ -1765,24 +1779,34 @@ class DatabaseImplTest {
             .isEqualTo(collection.copy(values = newValues))
 
         // Check unused values have been deleted from the global table as well, it should contain
-        // only values referenced from the two entities (six values each).
-        assertTableIsSize("field_values", 12)
+        // only values referenced from the two entities (eight values each).
+        assertTableIsSize("field_values", 16)
 
         // Check collection entries have been cleared. For each remaining entity there should only
-        // be ten values (two for the nums collection, five for the chars collection, 
-        // two for the text list, one for the membership of the entity).
-        assertTableIsSize("collection_entries", 20)
+        // be twelve values (two for the nums collection, five for the chars collection, 
+        // two for the text list, two for the bigint list, one for the membership of the entity).
+        assertTableIsSize("collection_entries", 24)
 
         // Check the collections for chars/nums in expiredEntity is gone (7 collections left are
         // nums for the two entities, chars for the two entities, strings for the two entities,
-        // and the entity collection).
-        assertTableIsSize("collections", 7)
+        // bigints for the two entities, and the entity collection).
+        assertTableIsSize("collections", 9)
 
         // Check the expired entity ref is gone.
         assertThat(readEntityRefsEntityId()).containsExactly("entity", "entity2")
 
         // Check unused primitive values have been removed.
-        assertThat(readTextPrimitiveValues()).containsExactly("abcd", "def")
+        assertThat(readTextPrimitiveValues()).containsExactly(
+            "abcd",
+            "def",
+            "2000",
+            "44412345678901234567890",
+            "5",
+            "3000",
+            "33344412345678901234567890",
+            "7"
+        )
+        
         assertThat(readNumberPrimitiveValues()).containsExactly(123.0, 789.0, 42.0, 37.5)
 
         // Check the corrent clients were notified.

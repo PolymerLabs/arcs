@@ -1,0 +1,36 @@
+<body>
+  <div id="log"></div> 
+  <input type="button" onclick="clearEntries()" value="Clear">
+  <script>
+
+    const websocket = new WebSocket('ws://localhost:12345');
+
+    websocket.onopen = e => {
+      websocket.send('WebSocket Open');  
+    };
+
+    websocket.onmessage = msg => {
+      appendEntry(msg.data)
+    }
+
+    websocket.onerror = e => {
+      console.log('No connection found');
+    };
+
+    websocket.onclose = e => {
+      console.log(`Websocket closing. ${e}`);
+      appendEntry(`Web Socket is Closed, try restarting the Arc.`);
+    }
+
+    function clearEntries() {
+      document.getElementById("log").innerHTML = "";
+    };
+
+    function appendEntry(str) {
+      const newEntry = document.createElement('div');
+      newEntry.innerText = str;
+      document.getElementById("log").append(newEntry);
+    }
+
+  </script>
+</body>

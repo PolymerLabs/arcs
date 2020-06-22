@@ -61,6 +61,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
@@ -87,6 +88,7 @@ import kotlinx.coroutines.withTimeout
  * * updates should always be sent in order, so a blocked send should block subsequent sends too.
  *   The pendingSends queue ensures that all outgoing updates are sent in the correct order.
  */
+@ExperimentalCoroutinesApi
 class ReferenceModeStore private constructor(
     options: StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>,
     /* internal */
@@ -96,7 +98,8 @@ class ReferenceModeStore private constructor(
     /* internal */
     backingType: Type
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
-    private val log = TaggedLog { "Store($storageKey)" }
+    // TODO(#5551): Consider including a hash of the storage key in log prefix.
+    private val log = TaggedLog { "ReferenceModeStore" }
 
     /**
      * A queue of incoming updates from the backing store, container store, and connected proxies.
@@ -143,7 +146,6 @@ class ReferenceModeStore private constructor(
     private val versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
 
     /** Tracks the state of container store: Active (true) and Closed (false). */
-    @ExperimentalCoroutinesApi
     private val containerStateChannel = ConflatedBroadcastChannel(true)
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
@@ -185,13 +187,21 @@ class ReferenceModeStore private constructor(
         callback: ProxyCallback<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
     ): Int = callbacks.register(callback)
 
-    @ExperimentalCoroutinesApi
     override fun off(callbackToken: Int) {
         containerStore.off(containerCallbackToken)
         callbacks.unregister(callbackToken)
 
         if (containerStore.closed && !containerStateChannel.isClosedForSend) {
-            containerStateChannel.offer(false)
+            try {
+                containerStateChannel.offer(false)
+            } catch (e: ClosedSendChannelException) {
+                // No-op. If the channel is closed (which can happen between the if's check and the
+                // offer call above), then it's no big deal.
+                log.debug {
+                    "Attempted to send false to the containerStateChannel when it was already " +
+                        "closed."
+                }
+            }
         }
     }
 
@@ -209,7 +219,7 @@ class ReferenceModeStore private constructor(
     override suspend fun onProxyMessage(
         message: ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
     ): Boolean {
-        log.debug { "onProxyMessage: $message" }
+        log.verbose { "onProxyMessage: $message" }
         val refModeMessage = message.sanitizeForRefModeStore(type)
         return receiveQueue.enqueue(Message.PreEnqueuedFromStorageProxy(refModeMessage))
     }
@@ -232,7 +242,7 @@ class ReferenceModeStore private constructor(
      */
     @Suppress("UNCHECKED_CAST")
     private val handleProxyMessage: suspend (EnqueuedFromStorageProxy) -> Boolean = fn@{ message ->
-        log.debug { "handleProxyMessage: $message" }
+        log.verbose { "handleProxyMessage: $message" }
         suspend fun itemVersionGetter(item: RawEntity): VersionMap {
             val localBackingVersion = backingStore.getLocalData(item.id).versionMap
             if (localBackingVersion.isNotEmpty()) return localBackingVersion
@@ -293,7 +303,7 @@ class ReferenceModeStore private constructor(
             }
             is ProxyMessage.SyncRequest -> {
                 val (pendingIds, model) =
-                    constructPendingIdsAndModel(containerStore.localModel.data)
+                    constructPendingIdsAndModel(containerStore.getLocalData())
 
                 suspend fun sender() {
                     callbacks.getCallback(requireNotNull(proxyMessage.id))
@@ -319,7 +329,7 @@ class ReferenceModeStore private constructor(
                                 "milliseconds, backing store is likely corrupted - sending " +
                                 "clear operations to container store."
                         }
-                        log.debug { "Clear ops = $ops" }
+                        log.verbose { "Clear ops = $ops" }
                         containerStore.onProxyMessage(ProxyMessage.Operations(ops, null))
                         // Re-issue the sync.
                         onProxyMessage(proxyMessage)
@@ -442,7 +452,6 @@ class ReferenceModeStore private constructor(
         return@fn true
     }
 
-    @ExperimentalCoroutinesApi
     @FlowPreview
     private val clearStoreCachesFlow = combine(
         containerStateChannel.asFlow(),
@@ -652,15 +661,14 @@ class ReferenceModeStore private constructor(
     }
 
     private fun buildClearContainerStoreOps(): List<CrdtOperation> {
-        val containerModel = containerStore.localModel
+        val containerModel = containerStore.getLocalData()
         val actor = "ReferenceModeStore(${hashCode()})"
         val containerVersion = containerModel.versionMap.copy()
-        return if (containerModel is CrdtSet<*>) {
-            val containerData = containerModel.data
-            containerData.values.map { dataValue ->
+        return if (containerModel is CrdtSet.Data<*>) {
+            containerModel.values.map { dataValue ->
                 CrdtSet.Operation.Remove(actor, containerVersion, dataValue.value.value)
             }
-        } else if (containerModel is CrdtSingleton<*>) {
+        } else if (containerModel is CrdtSingleton.Data<*>) {
             listOf(CrdtSingleton.Operation.Clear<Reference>(actor, containerVersion))
         } else throw UnsupportedOperationException()
     }

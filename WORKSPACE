@@ -53,6 +53,8 @@ CLIKT_VERSION = "2.2.0"
 
 UI_AUTOMATOR_VERSION = "2.2.0"
 
+NANOHTTPD_VERSION = "2.3.0"
+
 # NOTE: Artifacts are being pinned.  Whenever `maven_install` is changed, the
 # `maven_install.json` file should be updated by running the following cmd:
 #    $ bazel run @unpinned_maven//:pin.
@@ -102,6 +104,8 @@ maven_install(
         "org.robolectric:shadowapi:" + ROBOLECTRIC_VERSION,
         "org.robolectric:shadows-framework:" + ROBOLECTRIC_VERSION,
         "com.squareup:kotlinpoet:" + KOTLINPOET_VERSION,
+        "org.nanohttpd:nanohttpd:" + NANOHTTPD_VERSION,
+        "org.nanohttpd:nanohttpd-websocket:" + NANOHTTPD_VERSION,
     ],
     fetch_sources = True,
     maven_install_json = "//:maven_install.json",

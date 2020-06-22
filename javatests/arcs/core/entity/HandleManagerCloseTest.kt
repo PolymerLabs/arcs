@@ -1,8 +1,10 @@
 package arcs.core.entity
 
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
+import arcs.core.data.SingletonType
 import arcs.core.data.Ttl
-import arcs.core.entity.HandleManagerTestBase.Hat.Companion
 import arcs.core.entity.HandleManagerTestBase.Person
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageKey
@@ -140,8 +142,8 @@ class HandleManagerCloseTest {
         HandleSpec(
             name,
             HandleMode.ReadWrite,
-            HandleContainerType.Singleton,
-            Person
+            SingletonType(EntityType(Person.SCHEMA)),
+            setOf<EntitySpec<*>>(Person)
         ),
         storageKey,
         ttl
@@ -156,8 +158,8 @@ class HandleManagerCloseTest {
         HandleSpec(
             name,
             HandleMode.ReadWrite,
-            HandleContainerType.Collection,
-            Person
+            CollectionType(EntityType(Person.SCHEMA)),
+            setOf<EntitySpec<*>>(Person)
         ),
         storageKey,
         ttl

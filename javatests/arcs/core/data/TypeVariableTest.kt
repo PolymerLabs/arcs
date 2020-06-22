@@ -39,10 +39,41 @@ class TypeVariableTest {
         val typeVarA = TypeVariable("A")
         val typeVarBaz = TypeVariable("Baz")
         assertThat(typeVarA.toLiteral()).isEqualTo(
-            TypeVariable.Literal(Tag.TypeVariable, TypeVariable.LiteralName("A"))
+            TypeVariable.Literal(Tag.TypeVariable, TypeVariable.VariableLiteral("A"))
         )
         assertThat(typeVarBaz.toLiteral()).isEqualTo(
-            TypeVariable.Literal(Tag.TypeVariable, TypeVariable.LiteralName("Baz"))
+            TypeVariable.Literal(Tag.TypeVariable, TypeVariable.VariableLiteral("Baz"))
+        )
+    }
+
+    @Test
+    fun toLiteralContainsNameTagAndConstraint() {
+        val constraint = EntityType(Schema(
+            setOf(SchemaName("Product"), SchemaName("Thing")),
+            SchemaFields(
+                mapOf("name" to FieldType.Text),
+                mapOf("ratings" to FieldType.Number)
+            ),
+            "fake-hash"
+        ))
+        val typeVarBaz = TypeVariable("Baz", constraint)
+        assertThat(typeVarBaz.toLiteral()).isEqualTo(
+            TypeVariable.Literal(
+                Tag.TypeVariable,
+                TypeVariable.VariableLiteral("Baz", constraint.toLiteral())
+            )
+        )
+    }
+
+    @Test
+    fun toLiteralContainsNameTagAndEmptyConstraint() {
+        val constraint = EntityType(Schema.EMPTY)
+        val typeVarA = TypeVariable("A", constraint)
+        assertThat(typeVarA.toLiteral()).isEqualTo(
+            TypeVariable.Literal(
+                Tag.TypeVariable,
+                TypeVariable.VariableLiteral("A", constraint.toLiteral())
+            )
         )
     }
 }

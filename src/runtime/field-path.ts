@@ -9,16 +9,16 @@
  */
 import {Schema} from './schema.js';
 import {InterfaceInfo, Type, EntityType, TupleType} from './type.js';
-import {SchemaPrimitiveTypeValue} from './manifest-ast-nodes.js';
+import {SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue} from './manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
 
-export type FieldPathType = Type | SchemaPrimitiveTypeValue;
+export type FieldPathType = Type | SchemaPrimitiveTypeValue | KotlinPrimitiveTypeValue;
 
 /**
  * Resolves a field path against the given Type. Returns the Type referenced by
  * the field path if valid. Throws an exception if the field path is invalid.
  */
-export function resolveFieldPathType(fieldPath: string[], type: Type): FieldPathType {
+export function resolveFieldPathType(fieldPath: string[], type: FieldPathType): FieldPathType {
   if (fieldPath.length === 0) {
     return type;
   }
@@ -49,6 +49,7 @@ export function resolveFieldPathType(fieldPath: string[], type: Type): FieldPath
 /** Checks a field path for a particular field definition. */
 function resolveForField(fieldPath: string[], field): FieldPathType {
   switch (field.kind) {
+    case 'kotlin-primitive':
     case 'schema-primitive': {
       // Field path must end here.
       if (fieldPath.length === 1) {

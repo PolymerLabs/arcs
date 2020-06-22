@@ -5,6 +5,7 @@ package arcs;
 option java_package = "arcs.core.data.proto";
 option java_multiple_files = true;
 
+import "java/arcs/core/data/proto/annotation.proto";
 import "java/arcs/core/data/proto/policy.proto";
 
 // A manifest containing multiple recipes and particle specs.
@@ -20,8 +21,7 @@ message RecipeProto {
   string name = 1;
   repeated HandleProto handles = 2;
   repeated ParticleProto particles = 3;
-  // Optional arc id provided by the recipe annotation.
-  string arc_id = 4;
+  repeated AnnotationProto annotations = 5;
 }
 
 // Recipe-level representation of a store.
@@ -36,24 +36,16 @@ message HandleProto {
     JOIN = 5;
   }
 
-  // Next Id: 4
-  enum Capability {
-    PERSISTENT = 0;
-    TIED_TO_RUNTIME = 1;
-    TIED_TO_ARC = 2;
-    QUERYABLE = 3;
-  }
-
   // Identifies a handle in a recipe.
   string name = 1;
   string id = 2;
   Fate fate = 3;
   repeated string tags = 4;
   TypeProto type = 5;
-  repeated Capability capabilities = 6;
   string storage_key = 7;
   // Only present for fate = JOIN handles.
   repeated string associated_handles = 8;
+  repeated AnnotationProto annotations = 9;
 }
 
 // A single particle instance in a recipe.
@@ -143,11 +135,15 @@ message ReferenceTypeProto {
   TypeProto referred_type = 1;
 }
 
-// TODO(b/155944755) more fields pending.
 message TypeVariableProto {
-  // Identifies a type variable in a recipe or a particle spec.
-  // Type variables with the same name are linked together.
   string name = 1;
+  ConstraintInfo constraint = 2;
+}
+
+// These are constraints expressed by the particle author,
+// not those resulting from type inference.
+message ConstraintInfo {
+  TypeProto constraint_type = 1;
 }
 
 message SchemaProto {

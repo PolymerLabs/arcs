@@ -55,7 +55,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     override val versionToken: String?
         get() = driver.token
 
-    private val log = TaggedLog { "DirectStore(${state.value}, $storageKey)" }
+    // TODO(#5551): Consider including a hash of state.value and storage key in log prefix.
+    private val log = TaggedLog { "DirectStore" }
 
     /** True if this store has been closed. */
     var closed = false
@@ -197,7 +198,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 true
             }
         }.also {
-            log.debug { "Model after proxy message: ${localModel.data}" }
+            log.verbose { "Model after proxy message: ${localModel.data}" }
         }
     }
 
@@ -218,10 +219,10 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     }
 
     /* internal */ suspend fun onReceive(data: Data, version: Int) {
-        log.debug { "onReceive($data, $version)" }
+        log.verbose { "onReceive($data, $version)" }
 
         if (state.value is State.Closed<Data> || closed) {
-            log.debug { "onReceive($data, $version) called after close(), ignoring" }
+            log.verbose { "onReceive($data, $version) called after close(), ignoring" }
             return
         }
 
@@ -239,16 +240,16 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     private suspend fun applyPendingDriverModels(models: List<PendingDriverModel<Data>>) {
         if (models.isEmpty()) return
 
-        log.debug { "Applying ${models.size} pending models: $models" }
+        log.verbose { "Applying ${models.size} pending models: $models" }
 
         var noDriverSideChanges = true
         var theVersion = 0
         models.forEach { (model, version) ->
             try {
-                log.debug { "Merging $model into ${localModel.data}" }
+                log.verbose { "Merging $model into ${localModel.data}" }
                 val (modelChange, otherChange) = synchronized(this) { localModel.merge(model) }
-                log.debug { "ModelChange: $modelChange" }
-                log.debug { "OtherChange: $otherChange" }
+                log.verbose { "ModelChange: $modelChange" }
+                log.verbose { "OtherChange: $otherChange" }
                 theVersion = version
                 if (modelChange.isEmpty() && otherChange.isEmpty()) return@forEach
                 deliverCallbacks(modelChange, null)

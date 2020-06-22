@@ -23,12 +23,12 @@ import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.Store
-import arcs.core.storage.util.SendQueue
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -39,6 +39,7 @@ import kotlinx.coroutines.withTimeout
  * A [BindingContext] is used by a client of the [StorageService] to facilitate communication with a
  * [Store] residing within the [StorageService] from elsewhere in an application.
  */
+@ExperimentalCoroutinesApi
 class BindingContext(
     /**
      * The [Store] this [BindingContext] provides bindings for, it may or may not be shared with
@@ -54,12 +55,6 @@ class BindingContext(
 ) : IStorageService.Stub() {
     @VisibleForTesting
     val id = nextId.incrementAndGet()
-
-    /**
-     * The [SendQueue] ensures that all [ProxyMessage]s are handled in the order in which they were
-     * received.
-     */
-    private val sendQueue = SendQueue()
 
     /** The local [CoroutineContext]. */
     private val job = Job(parentCoroutineContext[Job])

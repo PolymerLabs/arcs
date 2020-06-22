@@ -244,7 +244,7 @@ class InformationFlow private constructor(
 
         // Filter out the information pertaining to the given handle -> join-handle edge.
         // Also, convert the root of the access path from handle to join-handle.
-        val component = listOf(AccessPath.Selector.Field("c${spec.component}"))
+        val component = listOf(getTupleField(spec.component))
         return AccessPathLabels.makeValue(
             accessPathLabels
                 .filterKeys { accessPath ->
@@ -278,9 +278,7 @@ class InformationFlow private constructor(
         Tag.Mux -> (this as MuxType<*>).containedType.accessPathSelectors()
         Tag.Tuple -> (this as TupleType).elementTypes
             .foldIndexed(emptySet<List<AccessPath.Selector>>()) { index, acc, cur ->
-                acc + cur.accessPathSelectors().map {
-                    listOf(AccessPath.Selector.Field("c$index")) + it
-                }
+                acc + cur.accessPathSelectors().map { listOf(getTupleField(index)) + it }
             }
         Tag.Singleton -> (this as SingletonType<*>).containedType.accessPathSelectors()
         Tag.TypeVariable -> throw IllegalArgumentException("TypeVariable should be resolved!")
@@ -387,6 +385,16 @@ class InformationFlow private constructor(
     )
 
     companion object {
+
+        val tupleIndexNames = listOf("first", "second", "third", "fourth", "fifth")
+
+        public fun getTupleField(component: Int): AccessPath.Selector.Field {
+            require(component >= 0 && component < tupleIndexNames.size) {
+                "Only up to ${tupleIndexNames.size} tuple components is allowed!"
+            }
+            return AccessPath.Selector.Field(tupleIndexNames[component])
+        }
+
         /** Computes the labels for [recipe] when [ingress] is used as the ingress handles. */
         public fun computeLabels(recipe: Recipe, ingress: List<String>): AnalysisResult {
             val graph = RecipeGraph(recipe)

@@ -11,6 +11,7 @@
 package arcs.core.host
 
 import arcs.core.common.toArcId
+import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
@@ -61,7 +62,7 @@ class ArcHostContextParticle(
                     ArcHostContextParticle_HandleConnections(
                         handleName = handle.key, storageKey = handle.value.storageKey.toString(),
                         mode = handle.value.mode.name, type = handle.value.type.tag.name,
-                        ttl = handle.value.ttl?.minutes?.toDouble() ?: Ttl.TTL_INFINITE
+                        ttl = handle.value.ttl.minutes.toDouble()
                     )
                 }
             }
@@ -78,8 +79,8 @@ class ArcHostContextParticle(
                     location = it.value.planParticle.location,
                     particleState = it.value.particleState.name,
                     consecutiveFailures = it.value.consecutiveFailureCount.toDouble(),
-                    handles = storedConnections.map {
-                        handles.handleConnections.createReference(it)
+                    handles = storedConnections.map { connection ->
+                        handles.handleConnections.createReference(connection)
                     }.toSet()
                 )
             }
@@ -136,7 +137,7 @@ class ArcHostContextParticle(
                 )
             }.toSet().associateBy({ it.first }, { it.second })
 
-            return@onHandlesReady arcs.core.host.ArcHostContext(
+            return@onHandlesReady ArcHostContext(
                 arcId,
                 particles.toMutableMap(),
                 ArcState.valueOf(arcStateEntity.arcState),
@@ -183,7 +184,12 @@ class ArcHostContextParticle(
     }.map { handle ->
         handle.handleName to Plan.HandleConnection(
             StorageKeyParser.parse(handle.storageKey), HandleMode.valueOf(handle.mode),
-            fromTag(arcId, particle, handle.type, handle.handleName), handle.ttl.toTtl()
+            fromTag(arcId, particle, handle.type, handle.handleName),
+            if (handle.ttl != Ttl.TTL_INFINITE) {
+                listOf(Annotation.createTtl("$handle.ttl minutes"))
+            } else {
+                emptyList()
+            }
         )
     }.toSet().associateBy({ it.first }, { it.second })
 
@@ -274,5 +280,3 @@ class ArcHostContextParticle(
         return Plan.Partition(arcId, hostId, listOf(particle))
     }
 }
-
-fun Double.toTtl() = if (this != Ttl.TTL_INFINITE) Ttl.Minutes(this.toInt()) else Ttl.Infinite

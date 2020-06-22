@@ -11,21 +11,31 @@
 
 package arcs.android.e2e.testapp
 
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.os.Bundle
+import android.os.IBinder
 import android.view.View
 import android.widget.Button
 import android.widget.RadioButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import arcs.android.devtools.DevToolsService
+import arcs.android.devtools.IDevToolsService
 import arcs.android.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
 import arcs.core.common.ArcId
 import arcs.core.data.HandleMode
+import arcs.core.entity.EntitySpec
 import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.StoreManager
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
@@ -63,6 +73,18 @@ class TestActivity : AppCompatActivity() {
 
     private var allocator: Allocator? = null
     private var resurrectionArcId: ArcId? = null
+
+    private var devToolsService: IDevToolsService? = null
+
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            devToolsService = IDevToolsService.Stub.asInterface(service)
+        }
+
+        override fun onServiceDisconnected(arg0: ComponentName) {
+            devToolsService = null
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,6 +140,9 @@ class TestActivity : AppCompatActivity() {
                 runPersistentPersonRecipe()
             }
         }
+
+        val devToolsIntent = Intent(this, DevToolsService::class.java)
+        bindService(devToolsIntent, connection, Context.BIND_AUTO_CREATE)
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -126,7 +151,7 @@ class TestActivity : AppCompatActivity() {
         intent?.run {
             if (this@run.hasExtra(RESULT_NAME)) {
                 scope.launch {
-                    appendResultText(this@run.getStringExtra(RESULT_NAME))
+                    appendResultText(this@run.getStringExtra(RESULT_NAME) ?: "")
                 }
             }
         }
@@ -148,9 +173,11 @@ class TestActivity : AppCompatActivity() {
             EntityHandleManager(
                 time = JvmTime,
                 scheduler = schedulerProvider("readWriteArc"),
-                activationFactory = ServiceStoreFactory(
-                    context = this@TestActivity,
-                    lifecycle = this@TestActivity.lifecycle
+                stores = StoreManager(
+                    activationFactory = ServiceStoreFactory(
+                        context = this@TestActivity,
+                        lifecycle = this@TestActivity.lifecycle
+                    )
                 )
             )
         )
@@ -165,9 +192,11 @@ class TestActivity : AppCompatActivity() {
             EntityHandleManager(
                 time = JvmTime,
                 scheduler = schedulerProvider("resurrectionArc"),
-                activationFactory = ServiceStoreFactory(
-                    context = this@TestActivity,
-                    lifecycle = this@TestActivity.lifecycle
+                stores = StoreManager(
+                    activationFactory = ServiceStoreFactory(
+                        context = this@TestActivity,
+                        lifecycle = this@TestActivity.lifecycle
+                    )
                 )
             )
         )
@@ -202,9 +231,11 @@ class TestActivity : AppCompatActivity() {
             EntityHandleManager(
                 time = JvmTime,
                 scheduler = schedulerProvider("allocator"),
-                activationFactory = ServiceStoreFactory(
-                    context = this@TestActivity,
-                    lifecycle = this@TestActivity.lifecycle
+                stores = StoreManager(
+                    activationFactory = ServiceStoreFactory(
+                        context = this@TestActivity,
+                        lifecycle = this@TestActivity.lifecycle
+                    )
                 )
             )
         )
@@ -238,9 +269,11 @@ class TestActivity : AppCompatActivity() {
         val handleManager = EntityHandleManager(
             time = JvmTime,
             scheduler = schedulerProvider("handle"),
-            activationFactory = ServiceStoreFactory(
-                this,
-                lifecycle
+            stores = StoreManager(
+                activationFactory = ServiceStoreFactory(
+                    this,
+                    lifecycle
+                )
             )
         )
         if (isCollection) {
@@ -249,8 +282,12 @@ class TestActivity : AppCompatActivity() {
                 HandleSpec(
                     "collectionHandle",
                     HandleMode.ReadWrite,
-                    HandleContainerType.Collection,
-                    TestEntity.Companion
+                    toType(
+                        TestEntity.Companion,
+                        HandleDataType.Entity,
+                        HandleContainerType.Collection
+                    ),
+                    setOf<EntitySpec<*>>(TestEntity.Companion)
                 ),
                 when (storageMode) {
                     TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
@@ -291,8 +328,12 @@ class TestActivity : AppCompatActivity() {
                 HandleSpec(
                     "singletonHandle",
                     HandleMode.ReadWrite,
-                    HandleContainerType.Singleton,
-                    TestEntity
+                    toType(
+                        TestEntity,
+                        HandleDataType.Entity,
+                        HandleContainerType.Singleton
+                    ),
+                    setOf<EntitySpec<*>>(TestEntity)
                 ),
                 when (storageMode) {
                     TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
@@ -432,6 +473,7 @@ class TestActivity : AppCompatActivity() {
         result2 = result
         resultView1.text = "1: $result1"
         resultView2.text = "2: $result2"
+        devToolsService?.send(result)
     }
 
     companion object {

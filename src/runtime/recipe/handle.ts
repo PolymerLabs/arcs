@@ -21,7 +21,7 @@ import {compareArrays, compareComparables, compareStrings, Comparable} from './c
 import {Fate, Direction} from '../manifest-ast-nodes.js';
 import {ClaimIsTag, Claim} from '../particle-claim.js';
 import {StorageKey} from '../storageNG/storage-key.js';
-import {Capabilities, Ttl} from '../capabilities.js';
+import {Capabilities, Ttl, Queryable, Shareable} from '../capabilities.js';
 import {AnnotationRef} from './annotation.js';
 import {StoreClaims} from '../storageNG/abstract-store.js';
 
@@ -153,6 +153,7 @@ export class Handle implements Comparable<Handle> {
     if (isSlotType(resolvedType) || isSlotType(collectionType)) {
       this._fate = '`slot';
     }
+    this.updateCapabilities();
   }
 
   _finishNormalize() {
@@ -233,7 +234,7 @@ export class Handle implements Comparable<Handle> {
     annotations.every(a => assert(a.isValidForTarget('Handle'),
         `Annotation '${a.name}' is invalid for Handle`));
     this._annotations = annotations;
-    this._capabilities = Capabilities.fromAnnotations(this.annotations);
+    this.updateCapabilities();
   }
   getAnnotation(name: string): AnnotationRef | null {
     const annotations = this.findAnnotations(name);
@@ -248,6 +249,18 @@ export class Handle implements Comparable<Handle> {
   get capabilities(): Capabilities {
     return this._capabilities;
   }
+
+  updateCapabilities(): void {
+    // Combines capabilities extracted from annotations with implicit
+    // capabilities derived from the recipe.
+    this._capabilities = Capabilities.fromAnnotations(this.annotations);
+    if (this._connections.some(c => c.type && c.type.getEntitySchema()
+        && c.type.getEntitySchema().refinement)) {
+      this._capabilities.setCapability(new Queryable(true));
+    }
+    // Note: Consider adding `Shareable` if handle has an id, or used in other recipes.
+  }
+
   getTtl(): Ttl {
     return this.capabilities.getTtl() || Ttl.infinite();
   }

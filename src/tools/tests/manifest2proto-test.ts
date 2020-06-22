@@ -8,12 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../../platform/chai-web.js';
-import {capabilitiesToProtoOrdinals, encodeManifestToProto, manifestToProtoPayload, typeToProtoPayload} from '../manifest2proto.js';
-import {CountType, EntityType, SingletonType, TupleType, Type} from '../../runtime/type.js';
+import {encodeManifestToProto, manifestToProtoPayload, typeToProtoPayload} from '../manifest2proto.js';
+import {CountType, EntityType, SingletonType, TupleType, Type, TypeVariable} from '../../runtime/type.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Capabilities, Shareable, Persistence, Queryable} from '../../runtime/capabilities.js';
 import {fs} from '../../platform/fs-web.js';
-import {CapabilityEnum, ManifestProto, TypeProto} from '../manifest-proto.js';
+import {ManifestProto, TypeProto} from '../manifest-proto.js';
+import {Loader} from '../../platform/loader.js';
+import {assertThrowsAsync} from '../../testing/test-util.js';
 
 describe('manifest2proto', () => {
 
@@ -65,7 +66,7 @@ describe('manifest2proto', () => {
       }, {
         fate: 'CREATE',
         name: 'handle2',
-        capabilities: ['PERSISTENT']
+        annotations: [{name: 'persistent'}]
       }],
       particles: [{
         specName: 'Abc',
@@ -83,20 +84,6 @@ describe('manifest2proto', () => {
     });
   });
 
-  it('encodes handle capabilities', () => {
-    function capabilitiesToStrings(capabilities: Capabilities) {
-      return capabilitiesToProtoOrdinals(capabilities).map(ordinal => CapabilityEnum.valuesById[ordinal]);
-    }
-
-    assert.deepEqual(capabilitiesToStrings(Capabilities.create()), []);
-    assert.deepEqual(capabilitiesToStrings(Capabilities.create([new Shareable(false)])), ['TIED_TO_ARC']);
-    assert.deepEqual(capabilitiesToStrings(Capabilities.create([new Shareable(true)])), ['TIED_TO_RUNTIME']);
-    assert.deepEqual(capabilitiesToStrings(Capabilities.create([Persistence.onDisk()])), ['PERSISTENT']);
-    assert.deepEqual(capabilitiesToStrings(Capabilities.create([new Queryable(true)])), ['QUERYABLE']);
-    assert.deepEqual(capabilitiesToStrings(Capabilities.create(
-        [Persistence.onDisk(), new Queryable(true)])), ['PERSISTENT', 'QUERYABLE']);
-  });
-
   it('encodes handle joins', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
@@ -104,12 +91,15 @@ describe('manifest2proto', () => {
           &Person {name: Text},
           &Place {address: Text},
         )]
+        stats: writes [{address: Text, numPeople: Number}]
       recipe
         people: use 'folks' #tag1
         pairs: join (people, places)
         places: map 'locations'
+        stats: create @persistent
         Foo
           data: reads pairs
+          stats: writes stats
     `);
     const recipe = (await toProtoAndBack(manifest)).recipes[0];
 
@@ -121,15 +111,21 @@ describe('manifest2proto', () => {
       handles: [{
         fate: 'JOIN',
         name: 'handle0',
-        associatedHandles: ['handle1', 'handle2']
+        associatedHandles: ['handle2', 'handle3']
+      }, {
+        fate: 'CREATE',
+        name: 'handle1',
+        annotations: [{
+          name: 'persistent'
+        }]
       }, {
         fate: 'USE',
-        name: 'handle1',
+        name: 'handle2',
         id: 'folks',
         tags: ['tag1'],
       }, {
         fate: 'MAP',
-        name: 'handle2',
+        name: 'handle3',
         id: 'locations'
       }],
       particles: [{
@@ -137,6 +133,9 @@ describe('manifest2proto', () => {
         connections: [{
           handle: 'handle0',
           name: 'data'
+        }, {
+          handle: 'handle1',
+          name: 'stats'
         }]
       }]
     });
@@ -412,6 +411,122 @@ describe('manifest2proto', () => {
         }
       }
     });
+  });
+
+  it('encodes variable type - writeSuperset constraint', async () => {
+    const constraint = EntityType.make(['Foo'], {value: 'Text'}).singletonOf();
+    const varType = TypeVariable.make('a', constraint);
+    assert.deepStrictEqual(await toProtoAndBackType(varType), {
+      variable: {
+        name: 'a',
+        constraint: {constraintType: {
+          singleton: {singletonType: {
+            entity: {schema: {
+              names: ['Foo'],
+              fields: {value: {primitive: 'TEXT'}},
+              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+            }
+            }
+          }
+          }
+        }
+        }
+      }
+    });
+  });
+
+  it('encodes variable type - readSubset constraint', async () => {
+    const constraint = EntityType.make(['Foo'], {value: 'Text'}).singletonOf();
+    const varType = TypeVariable.make('a', null, constraint);
+    assert.deepStrictEqual(await toProtoAndBackType(varType), {
+      variable: {
+        name: 'a',
+        constraint: {constraintType: {
+          singleton: {singletonType: {
+            entity: {schema: {
+              names: ['Foo'],
+              fields: {
+                value: {
+                  primitive: 'TEXT'
+                }
+              },
+              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+            }
+            }
+          }
+          }
+        }
+        }
+      }
+    });
+  });
+
+  it('encodes variable type - resolved constraint', async () => {
+    const constraint = EntityType.make(['Foo'], {value: 'Text'}).singletonOf();
+    const varType = TypeVariable.make('a', constraint, constraint);
+    varType.maybeEnsureResolved();
+    assert.deepStrictEqual(await toProtoAndBackType(varType), {
+      singleton: {singletonType: {
+        entity: {schema: {
+          names: ['Foo'],
+          fields: {
+            value: {
+              primitive: 'TEXT'
+            }
+          },
+          hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+        }
+        }
+      }
+      }
+    });
+  });
+
+  it('encodes variable type - unconstrained', async () => {
+    const varType = TypeVariable.make('a');
+    assert.deepStrictEqual(await toProtoAndBackType(varType), {
+      variable: {name: 'a'}
+    });
+  });
+
+  it('encodes variable type for particle specs', async () => {
+    const manifest = await Manifest.parse(`
+    particle TimeRedactor
+      input: reads ~a with {time: Number}
+      output: writes ~a
+    `);
+
+    const particleSpec = (await toProtoAndBack(manifest)).particleSpecs[0];
+    const varInput = particleSpec.connections.find(c => c.name === 'input').type.variable;
+    const varOutput = particleSpec.connections.find(c => c.name === 'output').type.variable;
+
+    assert.deepStrictEqual(varInput, varOutput);
+    assert.deepStrictEqual(varInput.name, 'a');
+    assert.deepStrictEqual(varInput.constraint, {
+      constraintType: {
+        entity: {schema: {
+          fields: {time: {primitive: 'NUMBER'}},
+          hash: '5c7ae2de06d2111eeef1a845d57d52e23ff214da',
+        }
+      }
+    }
+    });
+  });
+
+  it('encodes variable type for particle specs - unconstrained', async () => {
+    const manifest = await Manifest.parse(`
+    particle P
+      input: reads ~a
+      output: writes ~a
+    `);
+
+    const particleSpec = (await toProtoAndBack(manifest)).particleSpecs[0];
+    const varInput = particleSpec.connections.find(c => c.name === 'input').type.variable;
+    const varOutput = particleSpec.connections.find(c => c.name === 'output').type.variable;
+
+    assert.deepStrictEqual(varInput, varOutput);
+    assert.deepStrictEqual(varInput.name, 'a');
+    assert.isUndefined(varInput.constraint);
   });
 
   it('encodes schemas with primitives and collections of primitives', async () => {
@@ -917,6 +1032,62 @@ describe('manifest2proto', () => {
         },
       },
     ]);
+  });
+
+  it('supports imports in .arcs files', async () => {
+    const loader = new Loader(null, {
+      '/a.arcs': `
+        particle ParticleA
+          foo: writes Person {name: Text}
+      `,
+      '/b.arcs': `
+        particle ParticleB
+          bar: reads Person {name: Text}
+      `,
+      '/c.arcs': `
+        import './a.arcs'
+        import './b.arcs'
+
+        recipe R
+          h: create
+          ParticleA
+            foo: h
+          ParticleB
+            bar: h
+      `,
+    });
+    const manifest = await Manifest.load('/c.arcs', loader);
+    const data = await toProtoAndBack(manifest);
+    const recipe = data.recipes[0];
+    const particleSpecs = data.particleSpecs;
+    assert.deepStrictEqual(recipe.particles.map(p => p.specName), ['ParticleA', 'ParticleB']);
+    assert.deepStrictEqual(particleSpecs.map(p => p.name), ['ParticleA', 'ParticleB']);
+  });
+
+  it('rejects duplicate definitions in imported .arcs files', async () => {
+    const loader = new Loader(null, {
+      '/a.arcs': `
+        particle Dupe
+          foo: reads Person {}
+      `,
+      '/b.arcs': `
+        particle Dupe
+          foo: reads Person {}
+      `,
+      '/c.arcs': `
+        import './a.arcs'
+        import './b.arcs'
+
+        recipe R
+          h: create
+          Dupe
+            foo: h
+      `,
+    });
+    const manifest = await Manifest.load('/c.arcs', loader);
+    await assertThrowsAsync(
+        async () => toProtoAndBack(manifest),
+        `Duplicate definition of particle named 'Dupe'.`);
   });
 
   // On the TypeScript side we serialize .arcs file and validate it equals the .pb.bin file.

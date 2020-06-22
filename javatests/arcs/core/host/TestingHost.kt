@@ -11,8 +11,10 @@ import arcs.sdk.HandleHolderBase
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import java.lang.IllegalArgumentException
 
+@ExperimentalCoroutinesApi
 open class TestingHost(
     schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration

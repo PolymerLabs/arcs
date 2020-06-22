@@ -19,6 +19,7 @@ import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -31,18 +32,18 @@ import kotlinx.coroutines.withContext
  */
 class RawEntityDereferencer(
     private val schema: Schema,
-    private val storeManager: StoreManager = StoreManager(),
-    private val scheduler: Scheduler,
     private val entityActivationFactory: ActivationFactory? = null,
     private val referenceCheckFun: ((Schema, RawEntity?) -> Unit)? = null
 ) : Dereferencer<RawEntity> {
-    private val log = TaggedLog { "Dereferencer(${schema.names})" }
+    // TODO(#5551): Consider including a hash of schema.names for easier tracking.
+    private val log = TaggedLog { "RawEntityDereferencer" }
 
+    @ExperimentalCoroutinesApi
     override suspend fun dereference(
         reference: Reference,
         coroutineContext: CoroutineContext
     ): RawEntity? {
-        log.debug { "De-referencing $reference" }
+        log.verbose { "De-referencing $reference" }
 
         val storageKey = reference.referencedStorageKey()
 
@@ -52,14 +53,14 @@ class RawEntityDereferencer(
             StorageMode.Direct
         )
 
-        val store = storeManager.get(options).activate(entityActivationFactory)
+        val store = Store(options).activate(entityActivationFactory)
         val deferred = CompletableDeferred<RawEntity?>()
         var token = -1
         token = store.on(
             ProxyCallback { message ->
                 when (message) {
                     is ProxyMessage.ModelUpdate<*, *, *> -> {
-                        log.debug { "modelUpdate Model: ${message.model}" }
+                        log.verbose { "modelUpdate Model: ${message.model}" }
                         val model = (message.model as CrdtEntity.Data)
                             .takeIf { it.versionMap.isNotEmpty() }
                         deferred.complete(model?.toRawEntity())
@@ -71,14 +72,18 @@ class RawEntityDereferencer(
             }
         )
 
-        return withContext(coroutineContext) {
-            launch { store.onProxyMessage(ProxyMessage.SyncRequest(token)) }
+        return try {
+            withContext(coroutineContext) {
+                launch { store.onProxyMessage(ProxyMessage.SyncRequest(token)) }
 
-            // Only return the item if we've actually managed to pull it out of storage, and that
-            // it matches the schema we wanted.
-            val entity = deferred.await()?.takeIf { it matches schema }?.copy(id = reference.id)
-            referenceCheckFun?.invoke(schema, entity)
-            entity
+                // Only return the item if we've actually managed to pull it out of storage, and that
+                // it matches the schema we wanted.
+                val entity = deferred.await()?.takeIf { it matches schema }?.copy(id = reference.id)
+                referenceCheckFun?.invoke(schema, entity)
+                entity
+            }
+        } finally {
+            store.off(token)
         }
     }
 }

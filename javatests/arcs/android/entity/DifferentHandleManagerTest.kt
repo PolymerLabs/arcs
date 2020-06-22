@@ -33,40 +33,32 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
 
     lateinit var app: Application
 
-    override var testRunner = { block: suspend CoroutineScope.() -> Unit ->
-        runBlocking { this.block() }
-    }
-
     @Before
     override fun setUp() {
         super.setUp()
         app = ApplicationProvider.getApplicationContext()
-        val stores = StoreManager()
         val testConnectionFactory = TestConnectionFactory(app)
-        schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
-        readHandleManager = EntityHandleManager(
-            arcId = "arcId",
-            hostId = "hostId",
-            time = fakeTime,
-            scheduler = schedulerProvider("reader"),
-            stores = stores,
+        val stores = StoreManager(
             activationFactory = ServiceStoreFactory(
                 app,
                 fakeLifecycleOwner.lifecycle,
                 connectionFactory = testConnectionFactory
             )
         )
+        schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+        readHandleManager = EntityHandleManager(
+            arcId = "arcId",
+            hostId = "hostId",
+            time = fakeTime,
+            scheduler = schedulerProvider("reader"),
+            stores = stores
+        )
         writeHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("writer"),
-            stores = stores,
-            activationFactory = ServiceStoreFactory(
-                app,
-                fakeLifecycleOwner.lifecycle,
-                connectionFactory = testConnectionFactory
-            )
+            stores = stores
         )
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)

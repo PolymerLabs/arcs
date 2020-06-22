@@ -53,6 +53,7 @@ sealed class FieldType(
         val Char = Primitive(PrimitiveType.Char)
         val Float = Primitive(PrimitiveType.Float)
         val Double = Primitive(PrimitiveType.Double)
+        val BigInt = Primitive(PrimitiveType.BigInt)
     }
 }
 
@@ -81,7 +82,8 @@ enum class PrimitiveType(val id: kotlin.Int) {
     Long(6),
     Char(7),
     Float(8),
-    Double(9);
+    Double(9),
+    BigInt(10);
 
     fun primitiveTypeId() = id.toLong()
 }

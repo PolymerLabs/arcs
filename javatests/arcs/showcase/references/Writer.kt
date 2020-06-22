@@ -7,6 +7,7 @@ import arcs.jvm.host.TargetHost
 import arcs.sdk.Entity
 import arcs.sdk.ReadWriteSingletonHandle
 import arcs.sdk.Reference
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
 
 suspend fun <T : Entity> T.toReference(handle: ReadWriteSingletonHandle<T>): Reference<T> {
@@ -16,6 +17,7 @@ suspend fun <T : Entity> T.toReference(handle: ReadWriteSingletonHandle<T>): Ref
     return handle.createReference(this@toReference)
 }
 
+@ExperimentalCoroutinesApi
 @TargetHost(ArcHost::class)
 class Writer0 : AbstractWriter0() {
     private suspend fun initialize() = this.apply {
@@ -29,6 +31,7 @@ class Writer0 : AbstractWriter0() {
     }
 }
 
+@ExperimentalCoroutinesApi
 @TargetHost(ArcHost::class)
 class Writer1 : AbstractWriter1() {
     private suspend fun initialize() = this.apply {
@@ -47,6 +50,7 @@ class Writer1 : AbstractWriter1() {
     }
 }
 
+@ExperimentalCoroutinesApi
 @TargetHost(ArcHost::class)
 class Writer2 : AbstractWriter2() {
     private suspend fun initialize() = this.apply {

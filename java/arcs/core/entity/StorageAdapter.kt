@@ -56,7 +56,6 @@ sealed class StorageAdapter<T : Storable, R : Referencable> {
 }
 
 /** [StorageAdapter] for converting [Entity] to/from [RawEntity]. */
-@Suppress("GoodTime") // use Instant
 class EntityStorageAdapter<T : Entity>(
     val handleName: String,
     val idGenerator: Id.Generator,

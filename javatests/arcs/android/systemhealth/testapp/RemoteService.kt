@@ -15,12 +15,14 @@ import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
 import androidx.lifecycle.LifecycleService
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
  * Arcs system-health-test remote service.
  * The remote service type evaluates latency/RTT crossing process boundary,
  * stability of storage clients, etc.
  */
+@ExperimentalCoroutinesApi
 class RemoteService : LifecycleService() {
     private val storageCore = StorageCore(this, lifecycle)
     private val binder = Binder()

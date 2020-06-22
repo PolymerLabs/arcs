@@ -14,6 +14,7 @@ arcs_kt_jvm_test_suite(
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
+        "//java/arcs/core/data/proto:annotation_java_proto",
         "//java/arcs/core/data/proto:manifest_java_proto",
         "//java/arcs/core/data/proto:proto_for_test",
         "//java/arcs/core/storage",

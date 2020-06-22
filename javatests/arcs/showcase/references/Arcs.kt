@@ -12,6 +12,7 @@ import arcs.core.common.toArcId
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
+import arcs.core.storage.StoreManager
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
@@ -25,6 +26,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 
 /** Container to own the allocator and start the long-running arc. */
+@ExperimentalCoroutinesApi
 class Arcs(
     private val context: Context,
     // A test [ConnectionFactory] can be provided here under test.
@@ -134,6 +136,7 @@ class Arcs(
  *
  * It exposes their public methods to provide required read/write functionality.
  */
+@ExperimentalCoroutinesApi
 class ArcHost(
     context: Context,
     lifecycle: Lifecycle,
@@ -150,13 +153,14 @@ class ArcHost(
     ::Reader2.toRegistration(),
     ::Writer2.toRegistration()
 ) {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override val activationFactory = ServiceStoreFactory(
-        context,
-        lifecycle,
-        connectionFactory = connectionFactory
+    @ExperimentalCoroutinesApi
+    override val stores = StoreManager(
+        activationFactory = ServiceStoreFactory(
+            context,
+            lifecycle,
+            connectionFactory = connectionFactory
+        )
     )
-
     @Suppress("UNCHECKED_CAST")
     private fun <T> getParticle(name: String) =
         getArcHostContext("!:testArc")!!.particles[name]!!.particle as T

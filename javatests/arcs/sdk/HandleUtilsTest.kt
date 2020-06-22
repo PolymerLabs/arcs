@@ -11,8 +11,11 @@
 
 package arcs.sdk
 
+import arcs.core.entity.EntitySpec
 import arcs.core.entity.HandleContainerType
+import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
@@ -27,6 +30,7 @@ import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertWithMessage
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import java.util.concurrent.Executors
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -43,6 +47,7 @@ import org.junit.runners.JUnit4
 
 private typealias Person = ReadSdkPerson_Person
 
+@ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 @Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
 class HandleUtilsTest {
@@ -339,8 +344,12 @@ class HandleUtilsTest {
         HandleSpec(
             READ_WRITE_HANDLE,
             HandleMode.ReadWriteQuery,
-            HandleContainerType.Collection,
-            Person
+            toType(
+                Person,
+                HandleDataType.Entity,
+                HandleContainerType.Collection
+            ),
+            setOf<EntitySpec<*>>(Person)
         ),
         storageKey
     ).awaitReady() as ReadWriteQueryCollectionHandle<Person, *>
@@ -351,8 +360,11 @@ class HandleUtilsTest {
         HandleSpec(
             READ_WRITE_HANDLE,
             HandleMode.ReadWrite,
-            HandleContainerType.Singleton,
-            Person
+            toType(
+                Person,
+                HandleDataType.Entity, HandleContainerType.Singleton
+            ),
+            setOf<EntitySpec<*>>(Person)
         ),
         storageKey
     ).awaitReady() as ReadWriteSingletonHandle<Person>

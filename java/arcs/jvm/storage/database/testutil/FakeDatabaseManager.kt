@@ -154,6 +154,10 @@ open class FakeDatabase : Database {
         Unit
     }
 
+    override fun reset() {
+        data.clear()
+    }
+
     override suspend fun removeExpiredEntities() {
         throw UnsupportedOperationException("Fake database cannot remove expired entities.")
     }

@@ -14,7 +14,10 @@ package arcs.jvm.host
 import arcs.core.host.SchedulerProvider
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
@@ -38,11 +41,12 @@ class JvmSchedulerProvider(
         maxOf(1, Runtime.getRuntime().availableProcessors() / 2),
     private val threadPriority: Int = DEFAULT_THREAD_PRIORITY
 ) : SchedulerProvider {
-    private val log = TaggedLog { toString() }
+    private val log = TaggedLog { "JvmSchedulerProvider" }
     private val providedSoFar = atomic(0)
     private val threads = arrayOfNulls<Thread>(maxThreadCount)
     private val dispatchers = mutableListOf<CoroutineDispatcher>()
-    private val schedulersByArcId = mutableMapOf<String, Scheduler>()
+    private val executors = mutableListOf<ExecutorService>()
+    private val schedulersByArcId = ConcurrentHashMap<String, Scheduler>()
 
     @Synchronized
     override fun invoke(arcId: String): Scheduler {
@@ -68,15 +72,14 @@ class JvmSchedulerProvider(
                         threads[threadIndex % maxThreadCount] = this
                     }
                 }
+                .also { executors.add(it) }
                 .asCoroutineDispatcher()
                 .also { dispatchers.add(it) }
         }
 
         val schedulerParentJob = Job(baseCoroutineContext[Job])
         schedulerParentJob.invokeOnCompletion {
-            synchronized(this@JvmSchedulerProvider) {
-                schedulersByArcId.remove(arcId)
-            }
+            schedulersByArcId.remove(arcId)
         }
 
         val schedulerContext = baseCoroutineContext +
@@ -89,7 +92,11 @@ class JvmSchedulerProvider(
 
     @Synchronized
     override fun cancelAll() {
-        schedulersByArcId.values.toList().forEach { it.cancel() }
+        schedulersByArcId.forEach { (_, scheduler) -> scheduler.cancel() }
+        executors.forEach {
+            it.shutdown()
+            it.awaitTermination(1, TimeUnit.SECONDS)
+        }
         threads.forEach { it?.interrupt() }
     }
 
