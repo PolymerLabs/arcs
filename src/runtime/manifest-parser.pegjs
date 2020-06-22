@@ -1477,7 +1477,7 @@ SchemaInline
     return toAstNode<AstNode.SchemaInline>({
       kind: 'schema-inline',
       names: optional(names, names => names.map(name => name[0]).filter(name => name !== '*'), ['*']),
-      fields: optional(fields, fields => [fields[0], ...fields[1].map(tail => tail[2])], []),
+      fields: optional(fields, fields => [fields[0], ...fields[1].map(tail => tail[2])], [])
     });
   }
 
@@ -1553,6 +1553,7 @@ SchemaType
   / KotlinPrimitiveType
   / SchemaUnionType
   / SchemaTupleType
+  / NestedSchemaType
   / [^\n\]}]* { expected('a schema type'); }
   ) whiteSpace? refinement:Refinement? whiteSpace? annotations:AnnotationRefList?
   {
@@ -1606,6 +1607,14 @@ SchemaPrimitiveType
       refinement: null,
       annotations: [],
     });
+  }
+
+NestedSchemaType = 'inline' whiteSpace? schema:SchemaInline
+  {
+    return toAstNode<AstNode.NestedSchema>({
+      kind: 'schema-nested',
+      schema
+    }); 
   }
 
 Adapter "an adapter, (e.g. adapter Foo(param: Person { name: Text }) => Friend { nickName: param.name } )"
