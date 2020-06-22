@@ -52,9 +52,12 @@ class CollectionHandle<T : Storable, R : Referencable>(
     }
 
     // region implement ReadCollectionHandle<T>
-    override fun size() = checkPreconditions { storageProxy.getParticleViewUnsafe().size }
 
-    override fun isEmpty() = checkPreconditions { storageProxy.getParticleViewUnsafe().isEmpty() }
+    // Use fetchAll to filter out expired items.
+    override fun size() = fetchAll().size
+
+    // Use fetchAll to filter out expired items.
+    override fun isEmpty() = fetchAll().isEmpty()
 
     override fun fetchAll() = checkPreconditions {
         adaptValues(storageProxy.getParticleViewUnsafe())
