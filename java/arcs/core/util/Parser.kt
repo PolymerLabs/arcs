@@ -18,7 +18,7 @@ import arcs.core.util.ParseResult.Success
  * Monadic parser combinator facility for Kotlin. Parser combinators can be composed like monads,
  * and produce a [ParseResult] containing the current parsed value and unconsumed string, or
  * a [Failure]. Two primitive string parsers are provided, along with a set of combinators:
- * [Seq]uence, [Par]allel, [Many], [Optional], [LazyParser], [TransformParser].
+ * [SeqOf], [AnyOf], [Many], [Optional], [LazyParser], [TransformParser].
  * <br>
  *
  * ## Basic Parsing
@@ -68,7 +68,7 @@ import arcs.core.util.ParseResult.Success
  * // returns Success(List<String>("hello", " world"), "")
  * ```
  *
- * ### The [Par]allel 'or' combinator
+ * ### The [AnyOf] parallel 'or' combinator
  * If you want combine two parsers, so that one or the other may success, use the '/' operator.
  *
  * ```kotlin
@@ -102,7 +102,7 @@ import arcs.core.util.ParseResult.Success
  * If you have `Parser<T>` + `Parser<S>`, the result is `ParserResult<Pair<T,S>>` and if you have
  * `Parser<T> + Parser<S> + Parser<R>` the result is `ParserResult<Triple<T,S,R>>`. Often times,
  * some of these values are from non-relevant surrounding tokens. You can remove these from the
- * output signature via the [IgnoreParser], which is normally used via the [unaryMinus] helper.
+ * output signature via the [IgnoringParser], which is normally used via the [unaryMinus] helper.
  *
  * ```kotlin
  * val term = token("hello") / token("world")
@@ -114,11 +114,41 @@ import arcs.core.util.ParseResult.Success
  * ```
  */
 abstract class Parser<out T> {
-    abstract operator fun invoke(string: String): ParseResult<T>
+    operator fun invoke(string: String, pos: Int) = invoke(string, SourcePosition(pos, 0, 0))
+    abstract fun name(): String
+
+    abstract operator fun invoke(
+        string: String,
+        pos: SourcePosition
+    ): ParseResult<T>
+}
+
+data class SourcePosition(val offset: Int, val line: Int, val column: Int) {
+    fun advance(str: String): SourcePosition {
+        var last = 0.toChar()
+        var newOffset = offset
+        var newLine = line
+        var newCol = column
+
+        for (chr in str) {
+            newOffset += 1
+            if ((last == '\r' && chr == '\n') || chr == '\n' || chr == '\r') {
+                newLine += 1
+                newCol = 1
+            } else {
+                newCol += 1
+            }
+            last = chr
+        }
+        return SourcePosition(newOffset, newLine, newCol)
+    }
 }
 
 /** The result (Functor) of a [Parser] application is a either [Success] or [Failure]. */
-sealed class ParseResult<out T> {
+sealed class ParseResult<out T>() {
+    abstract val start: SourcePosition
+    abstract val end: SourcePosition
+
     @Suppress("UNCHECKED_CAST")
     fun <T> orElse(f: () -> ParseResult<T>): ParseResult<T> {
         return when (this) {
@@ -128,18 +158,26 @@ sealed class ParseResult<out T> {
     }
 
     /** Map a function over the contents of this functor returning a new functor. */
-    fun <S> flatMap(f: (T, String) -> ParseResult<S>): ParseResult<S> {
+    fun <S> flatMap(f: (T, SourcePosition, SourcePosition) -> ParseResult<S>): ParseResult<S> {
         return when (this) {
-            is Success<T> -> f(value, rest)
-            else -> Failure
+            is Success<T> -> f(value, start, end)
+            else -> this as Failure
         }
     }
 
     /** Represents a successful parse, containing the parsed value, and unparsed leftover. */
-    data class Success<out T>(val value: T, val rest: String) : ParseResult<T>()
+    data class Success<out T>(
+        val value: T,
+        override val start: SourcePosition,
+        override val end: SourcePosition
+    ) : ParseResult<T>()
 
     /** Represents a parse failure. */
-    object Failure : ParseResult<Nothing>()
+    class Failure(
+        val error: String,
+        override val start: SourcePosition,
+        override val end: SourcePosition
+    ) : ParseResult<Nothing>()
 }
 
 /** Chop off the consumed part of the string. */
@@ -147,9 +185,10 @@ fun String.advance(str: String) = this.substring(str.length)
 
 /** A parser that consumes a prefix of a string. */
 class StringToken(val token: String) : Parser<String>() {
-    override fun invoke(string: String): ParseResult<String> = when {
-        string.startsWith(token) -> Success(token, string.advance(token))
-        else -> Failure
+    override fun name() = "\"${token}\""
+    override fun invoke(string: String, pos: SourcePosition): ParseResult<String> = when {
+        string.startsWith(token, pos.offset) -> Success(token, pos, pos.advance(token))
+        else -> Failure("Expecting ${token}", pos, pos)
     }
 }
 
@@ -158,10 +197,12 @@ class StringToken(val token: String) : Parser<String>() {
  * first matchgroup.
  */
 class RegexToken(val regexToken: String) : Parser<String>() {
-    override fun invoke(string: String): ParseResult<String> =
-        Regex("^${regexToken}").find(string, 0)?.let { it ->
-            Success(it.groupValues[1], string.advance(it.groupValues[0]))
-        } ?: Failure
+    override fun name() = "\"${regexToken}\""
+
+    override fun invoke(string: String, pos: SourcePosition): ParseResult<String> =
+        Regex("^${regexToken}").find(string.substring(pos.offset))?.let { it ->
+            Success(it.groupValues[1], pos, pos.advance(it.groupValues[0]))
+        } ?: Failure("Expecting ${regexToken}", pos, pos)
 }
 
 /**
@@ -169,27 +210,43 @@ class RegexToken(val regexToken: String) : Parser<String>() {
  * null.
  */
 class Optional<T>(val parser: Parser<T>) : Parser<T?>() {
-    override fun invoke(string: String): ParseResult<T?> = parser(string).orElse {
-        Success<T?>(null, string)
+    override fun name() = "optional ${parser.name()} "
+
+    override fun invoke(
+        string: String,
+        pos: SourcePosition
+    ): ParseResult<T?> = parser(string, pos).orElse {
+        Success<T?>(null, pos, pos)
     }
 }
 
 /**
  * A parser that combines two parsers in sequence, if either one fails, the parse fails,
- * otherwise the combined results are returned as a [Pair<T, S].
+ * otherwise the combined results are returned as a [Pair<T, S>].
  */
-class Seq<T, S>(val left: Parser<T>, val right: Parser<S>) : Parser<Pair<T, S>>() {
-    override fun invoke(string: String) = left(string).flatMap { v1, r ->
-        right(r).flatMap { v2, r2 ->
-            Success(Pair(v1, v2), r2)
+class SeqOf<T, S>(val left: Parser<T>, val right: Parser<S>) : Parser<Pair<T, S>>() {
+    override fun name() = "${left.name()} followed by ${right.name()} "
+
+    override fun invoke(string: String, pos: SourcePosition) =
+        left(string, pos).flatMap { v1, s1, e1 ->
+            right(string, e1).flatMap { v2, _, e2 ->
+                Success(Pair(v1, v2), s1, e2)
         }
     }
 }
 
 /** A parser that combines two parsers by returning the value of the first one that succeeds. */
-class Par<T>(val left: Parser<T>, val right: Parser<T>) : Parser<T>() {
-    override fun invoke(string: String): ParseResult<T> = left(string).orElse {
-        right(string)
+class AnyOf<T>(val parsers: List<Parser<T>>) : Parser<T>() {
+    override fun name() = "one of ${parsers.map { it.name() }.joinToString()} "
+
+    override fun invoke(string: String, pos: SourcePosition): ParseResult<T> {
+        for (parser in parsers) {
+            when (val result = parser(string, pos)) {
+                is Success<T> -> return result
+                else -> Unit
+            }
+        }
+        return Failure("Expecting one of " + parsers.map { it.name() }.joinToString(), pos, pos)
     }
 }
 
@@ -198,81 +255,93 @@ class Par<T>(val left: Parser<T>, val right: Parser<T>) : Parser<T>() {
  * of success values. If no parse succeeds, it returns an empty list.
  */
 class Many<T>(val parser: Parser<T>) : Parser<List<T>>() {
-    override fun invoke(string: String): ParseResult<List<T>> {
+    override fun name() = "zero or more ${parser.name()}"
+
+    override fun invoke(string: String, pos: SourcePosition): ParseResult<List<T>> {
         val result = mutableListOf<T>()
-        var parseResult = parser(string)
+        var parseResult = parser(string, pos)
         var lastSuccess = parseResult
         while (parseResult is Success<T>) {
             result.add(parseResult.value)
             lastSuccess = parseResult
-            parseResult = parser(parseResult.rest)
+            parseResult = parser(string, parseResult.end)
         }
-        return Success(result, (lastSuccess as? Success<T>)?.rest ?: string)
+        return Success(result, pos, (lastSuccess as? Success<T>)?.end ?: pos)
     }
 }
 
 /** A parser which converts the return value of a parser into another value. */
 class Transform<T, R>(val parser: Parser<T>, val transform: (T) -> R) : Parser<R>() {
-    override fun invoke(string: String): ParseResult<R> = parser(string).flatMap { v, r ->
-        Success(transform(v), r)
+    override fun name() = parser.name()
+
+    override fun invoke(
+        string: String,
+        pos: SourcePosition
+    ): ParseResult<R> = parser(string, pos).flatMap { v, start, end ->
+        Success(transform(v), start, end)
     }
 }
 
 /** A parser used to refer to parsers that haven't been constructed yet. */
 class LazyParser<T>(val parser: () -> Parser<T>) : Parser<T>() {
-    override fun invoke(string: String): ParseResult<T> = parser()(string)
+    override fun name() = "lazy"
+    override fun invoke(string: String, pos: SourcePosition): ParseResult<T> = parser()(string, pos)
 }
 
 /** A parser that represents three parsers in sequence yielding a [Triple]. */
-class TriSeq<T, S, R>(val left: Seq<T, S>, val right: Parser<R>) : Parser<Triple<T, S, R>>() {
-    override fun invoke(string: String): ParseResult<Triple<T, S, R>> =
-        left(string).flatMap { v1, r1 ->
-            right(r1).flatMap { v2, r2 ->
-                Success(Triple(v1.first, v1.second, v2), r2)
+class TripleSeqOf<T, S, R>(val left: SeqOf<T, S>, val right: Parser<R>) : Parser<Triple<T, S, R>>() {
+    override fun name() = "${left.name()} then ${right.name()} "
+
+    override fun invoke(string: String, pos: SourcePosition): ParseResult<Triple<T, S, R>> =
+        left(string, pos).flatMap { v1, s1, e1 ->
+            right(string, e1).flatMap { v2, _, e2 ->
+                Success(Triple(v1.first, v1.second, v2), s1, e2)
             }
         }
 }
 
 /** A parser which omits its output from the result type. */
-class IgnoreParser<T>(val parser: Parser<T>) : Parser<T>() {
-    override fun invoke(string: String): ParseResult<T> = parser(string)
+class IgnoringParser<T>(val parser: Parser<T>) : Parser<T>() {
+    override fun name() = parser.name()
+    override fun invoke(string: String, pos: SourcePosition): ParseResult<T> = parser(string, pos)
 }
 
-/** Combines two parsers via addition operator as [Seq] combinator. */
-inline operator fun <reified T, reified S> Parser<T>.plus(other: Parser<S>) = Seq(this, other)
+/** Combines two parsers via addition operator as [SeqOf] combinator. */
+inline operator fun <reified T, reified S> Parser<T>.plus(other: Parser<S>) = SeqOf(this, other)
 
-/** Combines two parsers in sequence with a third as a [TriSeq] combinator. */
-inline operator fun <reified T, reified S, reified R> Seq<T, S>.plus(other: Parser<R>) =
-    TriSeq(this, other)
+/** Combines two parsers in sequence with a third as a [TripleSeqOf] combinator. */
+inline operator fun <reified T, reified S, reified R> SeqOf<T, S>.plus(other: Parser<R>) =
+    TripleSeqOf(this, other)
 
-/** Combines an [IgnoreParser] with a [Parser] ignoring the output of the first. */
-inline operator fun<reified T, reified S> IgnoreParser<T>.plus(other: Parser<S>) =
-    Seq(this, other).map { (_, y) -> y }
+/** Combines an [IgnoringParser] with a [Parser] ignoring the output of the first. */
+inline operator fun<reified T, reified S> IgnoringParser<T>.plus(other: Parser<S>) =
+    SeqOf(this, other).map { (_, y) -> y }
 
-/** Combines an [Parser] with an [IgnoreParser] ignoring the output of the second. */
-inline operator fun<reified T, reified S> Parser<T>.plus(other: IgnoreParser<S>) =
-    Seq(this, other).map { (x, _) -> x }
+/** Combines an [Parser] with an [IgnoringParser] ignoring the output of the second. */
+inline operator fun<reified T, reified S> Parser<T>.plus(other: IgnoringParser<S>) =
+    SeqOf(this, other).map { (x, _) -> x }
 
 /** Unary minus as shorthand for ignoring a parser's output. */
-inline operator fun<reified T> Parser<T>.unaryMinus() = IgnoreParser(this)
+inline operator fun<reified T> Parser<T>.unaryMinus() = IgnoringParser(this)
 
-/** Combines to parsers via division operator as [Par] combinator. */
-inline operator fun <T> Parser<T>.div(other: Parser<T>) = Par(this, other)
+/** Combines to parsers via division operator as [AnyOf] combinator. */
+operator fun <T> Parser<T>.div(other: Parser<T>) = AnyOf<T>(listOf(this, other))
+operator fun <T> AnyOf<T>.div(other: Parser<T>) = AnyOf<T>(this.parsers + listOf(other))
 
 /** Shorthand to create [RegexToken] parser. */
-inline fun regex(regex: String) = RegexToken(regex)
+fun regex(regex: String) = RegexToken(regex)
 
 /** Shorthand to create a [StringToken] parser. */
-inline fun token(prefix: String) = StringToken(prefix)
+fun token(prefix: String) = StringToken(prefix)
 
 /** Helper function for [Optional]. */
-inline fun <T> optional(parser: Parser<T>) = Optional<T>(parser)
+fun <T> optional(parser: Parser<T>) = Optional(parser)
 
 /** Helper for [Many]. */
-inline fun <T> many(parser: Parser<T>) = Many<T>(parser)
+fun <T> many(parser: Parser<T>) = Many(parser)
 
 /** Helper for [Transform]. */
-inline fun <T, R> Parser<T>.map(noinline f: (T) -> R) = Transform(this, f)
+fun <T, R> Parser<T>.map(f: (T) -> R) = Transform(this, f)
 
 /** Helper for [LazyParser]. */
-inline fun <T> parser(noinline f: () -> Parser<T>) = LazyParser<T>(f)
+fun <T> parser(f: () -> Parser<T>) = LazyParser(f)

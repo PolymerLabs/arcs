@@ -22,6 +22,7 @@ import arcs.core.util.JsonValue.JsonString
 /** Visitor interface for [JsonValue] hierarchy. */
 interface JsonVisitor<R> {
     /** Primary entrypoint to visitor. */
+    @Suppress("USELESS_CAST")
     fun visit(value: JsonValue<*>) = when(value) {
         is JsonBoolean -> visit(value as JsonBoolean)
         is JsonString -> visit(value as JsonString)
@@ -149,8 +150,14 @@ sealed class JsonValue<T>() {
  */
 object Json {
     /** Parses a string in JSON format and returns a [JsonValue] */
-    fun parse(jsonString: String) = (jsonValue(jsonString) as? ParseResult.Success<JsonValue<*>>)?.
-        value ?: throw IllegalArgumentException("Parse failed")
+    fun parse(jsonString: String) =
+        when (val result = jsonValue(jsonString, SourcePosition(0, 0, 0))) {
+            is ParseResult.Success<JsonValue<*>> -> result.value
+            is ParseResult.Failure -> throw IllegalArgumentException(
+                "Parse Failed reading ${jsonString.substring(result.start.offset)}: ${result.error}"
+            )
+        }
+
 
     private val jsonNumber = regex("(-?[0-9]+\\.?[0-9]*(?:e-?[0-9]+)?)")
         .map { JsonNumber(it.toDouble()) }
@@ -182,6 +189,6 @@ object Json {
             JsonObject(result.associateBy({ it.first }, { it.second }))
         }
 
-    private val jsonValue: Parser<JsonValue<*>> = jsonObject / jsonArray /
-        jsonNumber / jsonString / jsonBoolean / jsonNull
+    private val jsonValue: Parser<JsonValue<*>> =
+        jsonNumber / jsonString / jsonBoolean / jsonNull / jsonObject / jsonArray
 }
