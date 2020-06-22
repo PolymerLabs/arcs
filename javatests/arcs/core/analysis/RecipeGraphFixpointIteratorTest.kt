@@ -109,7 +109,7 @@ class RecipeGraphFixpointIteratorTest {
                 name,
                 handles.associateBy { it.name },
                 particles,
-                listOf(Annotation.arcId("arcId"))
+                listOf(Annotation.createArcId("arcId"))
             )
         )
     }

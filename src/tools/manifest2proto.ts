@@ -17,8 +17,7 @@ import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 import {assert} from '../platform/assert-web.js';
 import {findLongRunningArcId} from './allocator-recipe-resolver.js';
 import {Manifest} from '../runtime/manifest.js';
-import {Capabilities, Persistence, Shareable} from '../runtime/capabilities.js';
-import {CapabilityEnum, DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
+import {DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
 import {Refinement, RefinementExpressionLiteral} from '../runtime/refiner.js';
 import {Op} from '../runtime/manifest-ast-nodes.js';
 import {ClaimType} from '../runtime/particle-claim.js';
@@ -263,8 +262,8 @@ async function recipeHandleToProtoPayload(handle: Handle) {
     id: handle.id,
     tags: handle.tags,
     fate: fateOrdinal,
-    capabilities: capabilitiesToProtoOrdinals(handle.capabilities),
-    type: await typeToProtoPayload(handle.type || handle.mappedType)
+    type: await typeToProtoPayload(handle.type || handle.mappedType),
+    annotations: handle.annotations.map(annotationToProtoPayload)
   };
 
   if (handle.storageKey) {
@@ -276,35 +275,6 @@ async function recipeHandleToProtoPayload(handle: Handle) {
   }
 
   return handleData;
-}
-
-export function capabilitiesToProtoOrdinals(capabilities: Capabilities) {
-  // We bypass the inteface and grab the underlying set of capability strings for the purpose of
-  // serialization. It is rightfully hidden in the Capabilities object, but this use is justified.
-  // Tests will continue to ensure we access the right field.
-  const values = [];
-  if (capabilities.hasEquivalent(Persistence.onDisk())) {
-    values.push('PERSISTENT');
-  }
-
-  if (capabilities.isQueryable() || (capabilities.getTtl() && !capabilities.getTtl().isInfinite)) {
-    values.push('QUERYABLE');
-  }
-
-  if (capabilities.isShareable()) {
-    values.push('TIED_TO_RUNTIME');
-  }
-
-  if (capabilities.hasEquivalent(new Shareable(false))) {
-    values.push('TIED_TO_ARC');
-  }
-  return values.map(value => {
-    const ordinal = CapabilityEnum.values[value];
-    if (ordinal === undefined) {
-      throw new Error(`Capability ${value} is not supported`);
-    }
-    return ordinal;
-  });
 }
 
 export async function typeToProtoPayload(type: Type) {

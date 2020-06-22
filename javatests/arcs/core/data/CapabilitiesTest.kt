@@ -44,4 +44,51 @@ class CapabilitiesTest {
                 Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc)))
         ).isFalse()
     }
+    @Test
+    fun capabilities_fromAnnotations() {
+        assertThat(Capabilities.fromAnnotations(emptyList())).isEqualTo(Capabilities.Empty)
+        assertThat(Capabilities.fromAnnotations(listOf(Annotation("justAnnotation"))))
+            .isEqualTo(Capabilities.Empty)
+
+        assertThat(Capabilities.fromAnnotations(
+            listOf(
+                Annotation.createCapability(Capabilities.PERSISTENT)
+            )
+        )).isEqualTo(Capabilities.Persistent)
+        assertThat(Capabilities.fromAnnotations(
+            listOf(
+                Annotation.createCapability(Capabilities.PERSISTENT),
+                Annotation("justAnnotation")
+            )
+        )).isEqualTo(Capabilities.Persistent)
+        assertThat(Capabilities.fromAnnotations(
+            listOf(
+                Annotation.createCapability(Capabilities.QUERYABLE)
+            )
+        )).isEqualTo(Capabilities.Queryable)
+        assertThat(Capabilities.fromAnnotations(
+            listOf(
+                Annotation.createCapability(Capabilities.TIED_TO_RUNTIME)
+            )
+        )).isEqualTo(Capabilities.TiedToRuntime)
+        assertThat(Capabilities.fromAnnotations(
+            listOf(
+                Annotation.createCapability(Capabilities.TIED_TO_ARC)
+            )
+        )).isEqualTo(Capabilities.TiedToArc)
+        assertThat(Capabilities.fromAnnotations(
+            listOf(
+                Annotation.createCapability(Capabilities.PERSISTENT),
+                Annotation.createCapability(Capabilities.QUERYABLE)
+            )
+        )).isEqualTo(Capabilities.PersistentQueryable)
+        assertThat(Capabilities.fromAnnotations(listOf(Annotation.createTtl("3 days"))))
+            .isEqualTo(Capabilities.Queryable)
+        assertThat(Capabilities.fromAnnotations(
+            listOf(
+                Annotation.createCapability(Capabilities.PERSISTENT),
+                Annotation.createTtl("10 minutes")
+            )
+        )).isEqualTo(Capabilities.PersistentQueryable)  
+    }
 }

@@ -51,6 +51,8 @@ sealed class Ttl(count: Int, val isInfinite: Boolean = false) {
                 "Invalid TTL $ttlStr."
             }
             val (_, count, units) = ttlMatch.groupValues
+            // Note: consider using idiomatic KT types:
+            // https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.time/-duration-unit/
             return when (units.trim()) {
                 "m", "minute", "minutes" -> Ttl.Minutes(count.toInt())
                 "h", "hour", "hours" -> Ttl.Hours(count.toInt())

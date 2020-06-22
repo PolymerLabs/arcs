@@ -13,7 +13,9 @@ package arcs.core.allocator
 import arcs.core.common.ArcId
 import arcs.core.common.Id
 import arcs.core.common.toArcId
-import arcs.core.data.CreateableStorageKey
+import arcs.core.data.Annotation
+import arcs.core.data.Capabilities
+import arcs.core.data.CreatableStorageKey
 import arcs.core.data.Plan
 import arcs.core.entity.HandleSpec
 import arcs.core.host.ArcHost
@@ -133,7 +135,7 @@ class Allocator(
 
     /**
      * Finds [HandleConnection] instances which were unresolved at build time
-     * [CreateableStorageKey]) and attaches generated keys via [CapabilitiesResolver].
+     * [CreatableStorageKey]) and attaches generated keys via [CapabilitiesResolver].
      */
     private fun createStorageKeysIfNecessary(
         arcId: ArcId,
@@ -145,7 +147,14 @@ class Allocator(
 
         return allHandles.mod(plan) { handle ->
             Plan.HandleConnection.storageKeyLens.mod(handle) {
-                replaceCreateKey(createdKeys, arcId, idGenerator, it, handle.type)
+                replaceCreateKey(
+                    createdKeys,
+                    arcId,
+                    idGenerator,
+                    it,
+                    handle.type,
+                    handle.annotations
+                )
             }
         }
     }
@@ -155,11 +164,12 @@ class Allocator(
         arcId: ArcId,
         idGenerator: Id.Generator,
         storageKey: StorageKey,
-        type: Type
+        type: Type,
+        annotations: List<Annotation>
     ): StorageKey {
-        if (storageKey is CreateableStorageKey) {
+        if (storageKey is CreatableStorageKey) {
             return createdKeys.getOrPut(storageKey) {
-                createStorageKey(arcId, idGenerator, storageKey, type)
+                createStorageKey(arcId, idGenerator, storageKey, type, annotations)
             }
         }
         return storageKey
@@ -172,12 +182,13 @@ class Allocator(
     private fun createStorageKey(
         arcId: ArcId,
         idGenerator: Id.Generator,
-        storageKey: CreateableStorageKey,
-        type: Type
+        storageKey: CreatableStorageKey,
+        type: Type,
+        annotations: List<Annotation>
     ): StorageKey =
         CapabilitiesResolver(CapabilitiesResolver.CapabilitiesResolverOptions(arcId))
             .createStorageKey(
-                storageKey.capabilities,
+                Capabilities.fromAnnotations(annotations),
                 type,
                 idGenerator.newChildId(arcId, "").toString()
             )

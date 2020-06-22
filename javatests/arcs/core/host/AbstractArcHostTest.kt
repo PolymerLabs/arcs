@@ -96,7 +96,7 @@ open class AbstractArcHostTest {
             ),
             HandleMode.ReadWrite,
             SingletonType(EntityType(DummyEntity.SCHEMA)),
-            listOf(Annotation.ttl("2minutes"))
+            listOf(Annotation.createTtl("2minutes"))
         )
         val particle = Plan.Particle(
             "Foobar",

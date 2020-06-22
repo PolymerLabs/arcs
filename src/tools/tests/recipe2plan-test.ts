@@ -108,7 +108,7 @@ $ tools/update-goldens \n\n`
           fate: 'CREATE',
           name: 'handle0',
           id: 'my-handle-id',
-          capabilities: ['PERSISTENT'],
+          annotations: [{name: 'persistent'}],
           storageKey: 'reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writeArcId/handle/my-handle-id}',
           type: {entity: {schema: {
             names: ['Thing'],

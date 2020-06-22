@@ -41,6 +41,12 @@ data class Capabilities(val capabilities: Set<Capability>) {
     }
 
     companion object {
+        const val PERSISTENT = "persistent"
+        const val QUERYABLE = "queryable"
+        const val TTL = "ttl"
+        const val TIED_TO_RUNTIME = "tiedToRuntime"
+        const val TIED_TO_ARC = "tiedToArc"
+
         /** Helper constants with useful capability variants. */
         val Empty: Capabilities = Capabilities(emptySet())
         val Persistent: Capabilities = Capabilities(setOf<Capability>(Capability.Persistent))
@@ -50,5 +56,18 @@ data class Capabilities(val capabilities: Set<Capability>) {
         )
         val TiedToRuntime: Capabilities = Capabilities(setOf<Capability>(Capability.TiedToRuntime))
         val TiedToArc: Capabilities = Capabilities(setOf<Capability>(Capability.TiedToArc))
+
+        fun fromAnnotations(annotations: List<Annotation>): Capabilities {
+            val capabilities = mutableSetOf<Capability>()
+            annotations.forEach {
+                when (it.name) {
+                    PERSISTENT -> capabilities.add(Capability.Persistent)
+                    QUERYABLE, TTL -> capabilities.add(Capability.Queryable)
+                    TIED_TO_RUNTIME -> capabilities.add(Capability.TiedToRuntime)
+                    TIED_TO_ARC -> capabilities.add(Capability.TiedToArc)
+                }
+            }
+            return Capabilities(capabilities)
+        }
     }
 }
