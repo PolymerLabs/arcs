@@ -14,8 +14,6 @@ import {Particle} from '../runtime/recipe/particle.js';
 import {Type, CollectionType, ReferenceType, SingletonType, TupleType, TypeVariable} from '../runtime/type.js';
 import {Schema} from '../runtime/schema.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
-import {assert} from '../platform/assert-web.js';
-import {findLongRunningArcId} from './allocator-recipe-resolver.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Capabilities, Persistence, Shareable} from '../runtime/capabilities.js';
 import {CapabilityEnum, DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
