@@ -23,6 +23,7 @@ import arcs.core.host.ArcState.Stopped
 import arcs.core.host.ArcStateChangeRegistration
 import java.lang.RuntimeException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -129,9 +130,11 @@ class Arc internal constructor(
         partitions.forEach { partition ->
             val arcHost = allocator.lookupArcHost(partition.arcHost)
             registration = arcHost.addOnArcStateChange(id) { _, state ->
-                val shouldFire = mutex.withLock {
-                    arcStatesByHostId[partition.arcHost] = state
-                    recomputeArcState()
+                val shouldFire = runBlocking {
+                    mutex.withLock {
+                        arcStatesByHostId[partition.arcHost] = state
+                        recomputeArcState()
+                    }
                 }
                 if (shouldFire) {
                     fireArcStateChange()
