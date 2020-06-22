@@ -42,10 +42,10 @@ sealed class CapabilityNew {
         }
 
         companion object {
-            fun unrestricted() = Persistence(Kind.Unrestricted)
-            fun onDisk() = Persistence(Kind.OnDisk)
-            fun inMemory() = Persistence(Kind.InMemory)
-            fun none() = Persistence(Kind.None)
+            val UNRESTRICTED = Persistence(Kind.Unrestricted)
+            val ON_DISK = Persistence(Kind.OnDisk)
+            val IN_MEMORY = Persistence(Kind.InMemory)
+            val NONE = Persistence(Kind.None)
         }
     }
 
@@ -61,7 +61,7 @@ sealed class CapabilityNew {
         }
         init {
             require(count > 0 || isInfinite) {
-                "must be either positive count on infinite, " +
+                "must be either positive count or infinite, " +
                     "but got count=$count and isInfinite=$isInfinite"
             }
         }
@@ -90,7 +90,7 @@ sealed class CapabilityNew {
 
         companion object {
             const val TTL_INFINITE = -1
-            const val MILLIS_IN_MIN: Long = 60 * 1000
+            const val MILLIS_IN_MIN = 60 * 1000L
         }
     }
 
@@ -99,7 +99,7 @@ sealed class CapabilityNew {
         override fun compare(other: CapabilityNew): Comparison {
             require(other is Encryption) { "Cannot compare Encryption with $other" }
             return when {
-                value.equals(other.value) -> Comparison.Equivalent
+                value == other.value -> Comparison.Equivalent
                 value -> Comparison.Stricter
                 else -> Comparison.LessStrict
             }
@@ -111,7 +111,7 @@ sealed class CapabilityNew {
         override fun compare(other: CapabilityNew): Comparison {
             require(other is Queryable) { "Cannot compare Queryable with $other" }
             return when {
-                value.equals(other.value) -> Comparison.Equivalent
+                value == other.value -> Comparison.Equivalent
                 value -> Comparison.Stricter
                 else -> Comparison.LessStrict
             }
@@ -123,7 +123,7 @@ sealed class CapabilityNew {
         override fun compare(other: CapabilityNew): Comparison {
             require(other is Shareable) { "Cannot compare Shareable with $other" }
             return when {
-                value.equals(other.value) -> Comparison.Equivalent
+                value == other.value -> Comparison.Equivalent
                 value -> Comparison.Stricter
                 else -> Comparison.LessStrict
             }

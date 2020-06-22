@@ -18,49 +18,48 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/** Tests for [CapabilityNew]. */
 @RunWith(JUnit4::class)
 class CapabilityNewTest {
     @Test
     fun capability_persistence_isEquivalent() {
-        assertTrue(CapabilityNew.Persistence.unrestricted().isEquivalent(
-            CapabilityNew.Persistence.unrestricted()))
-        assertTrue(CapabilityNew.Persistence.onDisk().isEquivalent(
-            CapabilityNew.Persistence.onDisk()))
-        assertTrue(CapabilityNew.Persistence.inMemory().isEquivalent(
-            CapabilityNew.Persistence.inMemory()))
-        assertTrue(CapabilityNew.Persistence.none().isEquivalent(
-            CapabilityNew.Persistence.none()))
+        assertTrue(CapabilityNew.Persistence.UNRESTRICTED.isEquivalent(
+            CapabilityNew.Persistence.UNRESTRICTED))
+        assertTrue(CapabilityNew.Persistence.ON_DISK.isEquivalent(
+            CapabilityNew.Persistence.ON_DISK))
+        assertTrue(CapabilityNew.Persistence.IN_MEMORY.isEquivalent(
+            CapabilityNew.Persistence.IN_MEMORY))
+        assertTrue(CapabilityNew.Persistence.NONE.isEquivalent(
+            CapabilityNew.Persistence.NONE))
 
-        assertFalse(CapabilityNew.Persistence.unrestricted().isEquivalent(
-            CapabilityNew.Persistence.onDisk()))
-        assertFalse(CapabilityNew.Persistence.onDisk().isEquivalent(
-            CapabilityNew.Persistence.inMemory()))
-        assertFalse(CapabilityNew.Persistence.inMemory().isEquivalent(
-            CapabilityNew.Persistence.none()))
-        assertFalse(CapabilityNew.Persistence.none().isEquivalent(
-            CapabilityNew.Persistence.unrestricted()))
+        assertFalse(CapabilityNew.Persistence.UNRESTRICTED.isEquivalent(
+            CapabilityNew.Persistence.ON_DISK))
+        assertFalse(CapabilityNew.Persistence.ON_DISK.isEquivalent(
+            CapabilityNew.Persistence.IN_MEMORY))
+        assertFalse(CapabilityNew.Persistence.IN_MEMORY.isEquivalent(
+            CapabilityNew.Persistence.NONE))
+        assertFalse(CapabilityNew.Persistence.NONE.isEquivalent(
+            CapabilityNew.Persistence.UNRESTRICTED))
     }
 
     @Test
     fun capability_persistence_compare() {
-        assertFalse(CapabilityNew.Persistence.unrestricted().isLessStrict(
-            CapabilityNew.Persistence.unrestricted()))
-        assertTrue(CapabilityNew.Persistence.unrestricted().isSameOrLessStrict(
-            CapabilityNew.Persistence.inMemory()))
-        assertTrue(CapabilityNew.Persistence.unrestricted().isLessStrict(
-            CapabilityNew.Persistence.inMemory()))
+        assertFalse(CapabilityNew.Persistence.UNRESTRICTED.isLessStrict(
+            CapabilityNew.Persistence.UNRESTRICTED))
+        assertTrue(CapabilityNew.Persistence.UNRESTRICTED.isSameOrLessStrict(
+            CapabilityNew.Persistence.IN_MEMORY))
+        assertTrue(CapabilityNew.Persistence.UNRESTRICTED.isLessStrict(
+            CapabilityNew.Persistence.IN_MEMORY))
 
-        assertTrue(CapabilityNew.Persistence.inMemory().isStricter(
-            CapabilityNew.Persistence.onDisk()))
-        assertFalse(CapabilityNew.Persistence.inMemory().isLessStrict(
-            CapabilityNew.Persistence.onDisk()))
-        assertFalse(CapabilityNew.Persistence.inMemory().isSameOrLessStrict(
-            CapabilityNew.Persistence.onDisk()))
-        assertTrue(CapabilityNew.Persistence.onDisk().isLessStrict(
-            CapabilityNew.Persistence.inMemory()))
-        assertTrue(CapabilityNew.Persistence.onDisk().isSameOrLessStrict(
-            CapabilityNew.Persistence.inMemory()))
+        assertTrue(CapabilityNew.Persistence.IN_MEMORY.isStricter(
+            CapabilityNew.Persistence.ON_DISK))
+        assertFalse(CapabilityNew.Persistence.IN_MEMORY.isLessStrict(
+            CapabilityNew.Persistence.ON_DISK))
+        assertFalse(CapabilityNew.Persistence.IN_MEMORY.isSameOrLessStrict(
+            CapabilityNew.Persistence.ON_DISK))
+        assertTrue(CapabilityNew.Persistence.ON_DISK.isLessStrict(
+            CapabilityNew.Persistence.IN_MEMORY))
+        assertTrue(CapabilityNew.Persistence.ON_DISK.isSameOrLessStrict(
+            CapabilityNew.Persistence.IN_MEMORY))
     }
 
     @Test
