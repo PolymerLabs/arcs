@@ -1,12 +1,8 @@
 load(
-    "@rules_java//java:defs.bzl",
-    "java_test",
-)
-load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_jvm_library",
-    "arcs_kt_jvm_test_suite",
 )
+load("//third_party/java/arcs/build_defs:native.oss.bzl", "java_test")
 
 licenses(["notice"])
 

@@ -40,7 +40,7 @@ fun main(args: Array<String>) {
 class DFARunner(val sighCmd: String) {
     private fun Check.asString(): String {
         this as Check.Assert
-        return "${accessPath} is $predicate"
+        return "$accessPath is $predicate"
     }
 
     private fun manifestToProto(manifestFile: String): ManifestProto {
@@ -78,7 +78,7 @@ class DFARunner(val sighCmd: String) {
     fun verifyChecksInFile(manifestFile: String) {
         val INGRESS_PREFIX = "// #Ingress:"
 
-        print("Verifying ${manifestFile}")
+        print("Verifying $manifestFile")
         // Collect ingresses and failures from the test file.
         val ingresses = mutableListOf<String>()
         File(manifestFile).forEachLine {
