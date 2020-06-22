@@ -55,6 +55,7 @@ class AndroidSqliteDatabaseManagerTest {
     fun setUp() {
         manager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
         random = Random(System.currentTimeMillis())
+        DummyStorageKey.registerParser()
     }
 
     @Test
@@ -114,8 +115,14 @@ class AndroidSqliteDatabaseManagerTest {
 
         manager.removeExpiredEntities()
 
-        // The database has been reset.
-        assertThat(database.get(key,DatabaseData.Entity::class, schema)).isEqualTo(null)
+        // The database has been reset and the entity has been tombstoned.
+        val nulledEntity = DatabaseData.Entity(
+            RawEntity("entity", mapOf("text" to null), mapOf()),
+            schema,
+            1,
+            VersionMap("me" to 1)
+        )
+        assertThat(database.get(key,DatabaseData.Entity::class, schema)).isEqualTo(nulledEntity)
     }
 
     @Test
