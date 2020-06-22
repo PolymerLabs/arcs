@@ -466,14 +466,6 @@ def arcs_kt_plan(name,
         genrule_name = replace_arcs_suffix(src, "_GeneratedPlan")
         outs.append(genrule_name)
         rest = [s for s in srcs if s != src]
-#        sigh_command(
-#            name = genrule_name,
-#            srcs = [src],
-#            outs = [out],
-#            progress_message = "Generating Kotlin Plans",
-#            sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
-#            deps = deps + data + rest,
-#        )
         recipe2plan(
             name = genrule_name,
             srcs = [src],

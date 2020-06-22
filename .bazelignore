@@ -1,6 +1,5 @@
 # Some npm modules include their own WORKSPACE/BUILD files, so we need to ignore
-# them from our build. Manually listing them is not ideal, but we can't ignore
-# the entire node_modules folder, because we need it for our bazel builds.
+# them from our build. 
 node_modules
 server/node_modules
 cloud/node_modules
