@@ -95,8 +95,8 @@ class EntityHandleManager(
         scheduler,
         StoreManager(activationFactory ?: Store.defaultFactory),
         idGenerator
-
     )
+    
     private val proxyMutex = Mutex()
     private val singletonStorageProxies by guardedBy(
         proxyMutex,
