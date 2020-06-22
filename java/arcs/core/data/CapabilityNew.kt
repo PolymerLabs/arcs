@@ -29,23 +29,23 @@ sealed class CapabilityNew {
     abstract fun compare(other: CapabilityNew): Comparison
 
     /** Capability describing persistence requirement for the store. */
-    data class Persistence(val type: Type) : CapabilityNew() {
-        enum class Type { None, InMemory, OnDisk, Unrestricted }
+    data class Persistence(val kind: Kind) : CapabilityNew() {
+        enum class Kind { None, InMemory, OnDisk, Unrestricted }
 
         override fun compare(other: CapabilityNew): Comparison {
             require(other is Persistence) { "Cannot compare Persistence with $other" }
             return when {
-                type.ordinal < other.type.ordinal -> Comparison.Stricter
-                type.ordinal > other.type.ordinal -> Comparison.LessStrict
+                kind.ordinal < other.kind.ordinal -> Comparison.Stricter
+                kind.ordinal > other.kind.ordinal -> Comparison.LessStrict
                 else -> Comparison.Equivalent
             }
         }
 
         companion object {
-            fun unrestricted() = Persistence(Type.Unrestricted)
-            fun onDisk() = Persistence(Type.OnDisk)
-            fun inMemory() = Persistence(Type.InMemory)
-            fun none() = Persistence(Type.None)
+            fun unrestricted() = Persistence(Kind.Unrestricted)
+            fun onDisk() = Persistence(Kind.OnDisk)
+            fun inMemory() = Persistence(Kind.InMemory)
+            fun none() = Persistence(Kind.None)
         }
     }
 
