@@ -470,7 +470,7 @@ describe('manifest parser', () => {
     parse(`
       schema ContainsNested
         fieldBefore: Double
-        nestedField: {someNums: List<Number>, aString: Text}
+        nestedField: inline * {someNums: List<Number>, aString: Text}
         fieldAfter: List<Long>
     `);
   });
@@ -479,7 +479,25 @@ describe('manifest parser', () => {
       particle Foo
         containsNested: reads ContainsNested {
           fieldBefore: Double,
-          nestedField: {someNums: List<Number>, aString: Text},
+          nestedField: inline Thing {someNums: List<Number>, aString: Text},
+          fieldAfter: Long
+        }
+    `);
+  });
+  it('parses a schema with a list of nested schemas', () => {
+    parse(`
+      schema ContainsNested
+        fieldBefore: Double
+        nestedField: List<inline * {someNums: List<Number>, aString: Text}>
+        fieldAfter: List<Long>
+    `);
+  });
+  it('parses an inline schema with a list of nested schemas', () => {
+    parse(`
+      particle Foo
+        containsNested: reads ContainsNested {
+          fieldBefore: Double,
+          nestedField: List<inline Thing {someNums: List<Number>, aString: Text}>,
           fieldAfter: Long
         }
     `);
