@@ -43,7 +43,7 @@ class RawEntityDereferencer(
         reference: Reference,
         coroutineContext: CoroutineContext
     ): RawEntity? {
-        log.debug { "De-referencing $reference" }
+        log.verbose { "De-referencing $reference" }
 
         val storageKey = reference.referencedStorageKey()
 
@@ -60,7 +60,7 @@ class RawEntityDereferencer(
             ProxyCallback { message ->
                 when (message) {
                     is ProxyMessage.ModelUpdate<*, *, *> -> {
-                        log.debug { "modelUpdate Model: ${message.model}" }
+                        log.verbose { "modelUpdate Model: ${message.model}" }
                         val model = (message.model as CrdtEntity.Data)
                             .takeIf { it.versionMap.isNotEmpty() }
                         deferred.complete(model?.toRawEntity())
