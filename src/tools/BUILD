@@ -11,7 +11,17 @@ ts_library(
 
 ts_library(
     name = "schema2pkg_lib",
-    srcs = glob(["schema2*.ts"]),
+    srcs = [
+        ":schema2base.ts",
+        ":schema2graph.ts",
+        ":schema2wasm.ts",
+        ":schema2kotlin.ts",
+        ":schema2cpp.ts",
+        ":kotlin-codegen-shared.ts",
+        ":kotlin-entity-generator.ts",
+        ":kotlin-refinement-generator.ts",
+        ":kotlin-schema-generator.ts",
+    ],
     tsconfig = "//:tsconfig",
     deps = [
         ":kt-generation-utils",
