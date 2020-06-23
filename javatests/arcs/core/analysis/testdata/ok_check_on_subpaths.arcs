@@ -1,0 +1,14 @@
+// #Ingress: P1
+// #OK
+particle P1
+  foo: writes Foo {a: Text, b: Number}
+  claim foo.a is trusted
+  claim foo.b is loggable
+particle P2
+  foo: reads Foo {a: Text, b: Number}
+  check foo is trusted or is loggable
+recipe R
+  P1
+    foo: writes h
+  P2
+    foo: reads h
