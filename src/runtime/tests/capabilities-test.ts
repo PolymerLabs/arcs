@@ -9,7 +9,7 @@
  */
 import {assert} from '../../platform/chai-web.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
-import {Persistence, PersistenceType, Ttl, TtlUnits, Capabilities, Encryption, Queryable, CapabilityRange} from '../capabilities.js';
+import {Persistence, PersistenceKind, Ttl, TtlUnits, Capabilities, Encryption, Queryable, CapabilityRange} from '../capabilities.js';
 import {Manifest} from '../manifest.js';
 
 describe('Persistence Capability', () => {
@@ -19,7 +19,7 @@ describe('Persistence Capability', () => {
   const unrestricted = Persistence.unrestricted();
 
   it('compares persistence capability', () => {
-    assert.equal(none.type, PersistenceType.None);
+    assert.equal(none.kind, PersistenceKind.None);
     assert.isTrue(none.isEquivalent(Persistence.none()));
     assert.isTrue(none.isSameOrLessStrict(Persistence.none()));
     assert.isTrue(none.isSameOrStricter(Persistence.none()));
