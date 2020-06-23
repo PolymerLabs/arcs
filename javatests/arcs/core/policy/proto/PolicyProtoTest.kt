@@ -36,7 +36,7 @@ class PolicyProtoTest {
         val expected = Policy(
             name = "foo",
             description = "bar",
-            egressType = EgressType.FederatedAggregation,
+            egressType = EgressType.FEDERATED_AGGREGATION,
             targets = emptyList(),
             configs = emptyMap(),
             annotations = listOf(ANNOTATION)
@@ -75,7 +75,7 @@ class PolicyProtoTest {
             schemaName = "schema",
             maxAgeMs = 123,
             retentions = listOf(
-                PolicyRetention(medium = StorageMedium.Disk, encryptionRequired = true)
+                PolicyRetention(medium = StorageMedium.DISK, encryptionRequired = true)
             ),
             fields = emptyList(),
             annotations = listOf(ANNOTATION)
@@ -128,8 +128,8 @@ class PolicyProtoTest {
 
         val expected = PolicyField(
             fieldName = "field",
-            rawUsages = setOf(UsageType.Join),
-            redactedUsages = mapOf("label" to setOf(UsageType.Egress, UsageType.Join)),
+            rawUsages = setOf(UsageType.JOIN),
+            redactedUsages = mapOf("label" to setOf(UsageType.EGRESS, UsageType.JOIN)),
             subfields = emptyList(),
             annotations = listOf(ANNOTATION)
         )
@@ -192,7 +192,7 @@ class PolicyProtoTest {
         val expected = Policy(
             name = "",
             description = "",
-            egressType = EgressType.Logging,
+            egressType = EgressType.LOGGING,
             targets = emptyList(),
             configs = mapOf("config" to mapOf("k1" to "v1", "k2" to "v2")),
             annotations = emptyList()

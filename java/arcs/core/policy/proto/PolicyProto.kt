@@ -77,23 +77,23 @@ private fun PolicyRetentionProto.decode(): PolicyRetention {
 }
 
 private fun PolicyProto.EgressType.decode() = when (this) {
-    PolicyProto.EgressType.LOGGING -> EgressType.Logging
-    PolicyProto.EgressType.FEDERATED_AGGREGATION -> EgressType.FederatedAggregation
+    PolicyProto.EgressType.LOGGING -> EgressType.LOGGING
+    PolicyProto.EgressType.FEDERATED_AGGREGATION -> EgressType.FEDERATED_AGGREGATION
     PolicyProto.EgressType.EGRESS_TYPE_UNSPECIFIED, PolicyProto.EgressType.UNRECOGNIZED ->
         throw UnsupportedOperationException("Unknown egress type: $this")
 }
 
 private fun PolicyFieldProto.UsageType.decode() = when (this) {
-    PolicyFieldProto.UsageType.ANY -> UsageType.Any
-    PolicyFieldProto.UsageType.EGRESS -> UsageType.Egress
-    PolicyFieldProto.UsageType.JOIN -> UsageType.Join
+    PolicyFieldProto.UsageType.ANY -> UsageType.ANY
+    PolicyFieldProto.UsageType.EGRESS -> UsageType.EGRESS
+    PolicyFieldProto.UsageType.JOIN -> UsageType.JOIN
     PolicyFieldProto.UsageType.USAGE_TYPE_UNSPECIFIED, PolicyFieldProto.UsageType.UNRECOGNIZED ->
         throw UnsupportedOperationException("Unknown usage type: $this")
 }
 
 private fun PolicyRetentionProto.Medium.decode() = when (this) {
-    PolicyRetentionProto.Medium.RAM -> StorageMedium.Ram
-    PolicyRetentionProto.Medium.DISK -> StorageMedium.Disk
+    PolicyRetentionProto.Medium.RAM -> StorageMedium.RAM
+    PolicyRetentionProto.Medium.DISK -> StorageMedium.DISK
     PolicyRetentionProto.Medium.MEDIUM_UNSPECIFIED, PolicyRetentionProto.Medium.UNRECOGNIZED ->
         throw UnsupportedOperationException("Unknown retention medium: $this")
 }

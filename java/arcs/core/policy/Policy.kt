@@ -59,19 +59,19 @@ typealias PolicyConfig = Map<String, String>
 
 /** Egress type permitted by a policy, see [PolicyProto.EgressType]. */
 enum class EgressType {
-    Logging,
-    FederatedAggregation,
+    LOGGING,
+    FEDERATED_AGGREGATION,
 }
 
 /** Type of usage permitted of a field, see [PolicyFieldProto.UsageType]. */
 enum class UsageType {
-    Any,
-    Egress,
-    Join,
+    ANY,
+    EGRESS,
+    JOIN,
 }
 
 /** Target schema governed by a policy, see [PolicyRetentionProto.Medium]. */
 enum class StorageMedium {
-    Ram,
-    Disk,
+    RAM,
+    DISK,
 }
