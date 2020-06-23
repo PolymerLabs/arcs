@@ -3,15 +3,13 @@ package arcs.android.entity
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
+import arcs.core.data.SingletonType
 import arcs.core.data.Ttl
 import arcs.core.entity.DummyEntity
-import arcs.core.entity.EntitySpec
-import arcs.core.entity.Handle
-import arcs.core.entity.HandleContainerType
-import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
-import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.SchemaRegistry
@@ -34,14 +32,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 @RunWith(AndroidJUnit4::class)
@@ -73,7 +68,7 @@ class TtlHandleTest {
     fun setUp() {
         fakeTime = FakeTime()
         scheduler = schedulerProvider("myArc")
-        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting        
+        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         SchemaRegistry.register(DummyEntity.SCHEMA)
     }
 
@@ -119,7 +114,7 @@ class TtlHandleTest {
         handle.onUpdate {
             log("received update from databaseManager.removeExpiredEntities()")
             updateJob.complete()
-            log("completed")            
+            log("completed")
         }
 
         // Simulate periodic job triggering.
@@ -375,7 +370,7 @@ class TtlHandleTest {
         readyJob.join()
         log("awaiting completion of store job")
         storeEntity!!.join()
-        
+
         val updateJob = Job()
         handle.onUpdate {
             log("received update from databaseManager.removeExpiredEntities()")
@@ -408,12 +403,8 @@ class TtlHandleTest {
         HandleSpec(
             "name",
             HandleMode.ReadWrite,
-            toType(
-                DummyEntity,
-                HandleDataType.Entity,
-                HandleContainerType.Collection
-            ),
-            setOf<EntitySpec<*>>(DummyEntity)
+            CollectionType(EntityType(DummyEntity.SCHEMA)),
+            DummyEntity
         ),
         key,
         ttl
@@ -425,12 +416,8 @@ class TtlHandleTest {
             HandleSpec(
                 "name",
                 HandleMode.ReadWrite,
-                toType(
-                    DummyEntity,
-                    HandleDataType.Entity,
-                    HandleContainerType.Singleton
-                ),
-                setOf<EntitySpec<*>>(DummyEntity)
+                SingletonType(EntityType(DummyEntity.SCHEMA)),
+                DummyEntity
             ),
             singletonKey,
             Ttl.Hours(1)

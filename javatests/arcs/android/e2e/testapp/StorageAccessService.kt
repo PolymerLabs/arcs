@@ -3,12 +3,10 @@ package arcs.android.e2e.testapp
 import android.app.Service
 import android.content.Intent
 import androidx.lifecycle.LifecycleService
+import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
-import arcs.core.entity.EntitySpec
-import arcs.core.entity.HandleContainerType
-import arcs.core.entity.HandleDataType
+import arcs.core.data.SingletonType
 import arcs.core.entity.HandleSpec
-import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
 import arcs.core.util.Scheduler
@@ -55,12 +53,8 @@ class StorageAccessService : LifecycleService() {
                 HandleSpec(
                     "singletonHandle",
                     HandleMode.Write,
-                    toType(
-                        TestEntity.Companion,
-                        HandleDataType.Entity,
-                        HandleContainerType.Singleton
-                    ),
-                    setOf<EntitySpec<*>>(TestEntity.Companion)
+                    SingletonType(EntityType(TestEntity.SCHEMA)),
+                    TestEntity
                 ),
                 when (storageMode) {
                     TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey

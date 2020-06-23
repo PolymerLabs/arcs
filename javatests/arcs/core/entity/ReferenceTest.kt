@@ -69,7 +69,7 @@ class ReferenceTest {
                 "testHandle",
                 HandleMode.ReadWrite,
                 CollectionType(EntityType(DummyEntity.SCHEMA)),
-                setOf<EntitySpec<*>>(DummyEntity)
+                DummyEntity
             ),
             STORAGE_KEY
         ) as ReadWriteCollectionHandle<DummyEntity>

@@ -143,7 +143,7 @@ class HandleManagerCloseTest {
             name,
             HandleMode.ReadWrite,
             SingletonType(EntityType(Person.SCHEMA)),
-            setOf<EntitySpec<*>>(Person)
+            Person
         ),
         storageKey,
         ttl
@@ -159,7 +159,7 @@ class HandleManagerCloseTest {
             name,
             HandleMode.ReadWrite,
             CollectionType(EntityType(Person.SCHEMA)),
-            setOf<EntitySpec<*>>(Person)
+            Person
         ),
         storageKey,
         ttl

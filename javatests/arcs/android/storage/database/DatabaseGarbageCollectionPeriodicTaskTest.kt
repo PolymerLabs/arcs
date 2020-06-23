@@ -4,13 +4,11 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.ListenableWorker.Result
 import androidx.work.testing.TestWorkerBuilder
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.entity.DummyEntity
-import arcs.core.entity.EntitySpec
-import arcs.core.entity.HandleContainerType
-import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
-import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.SchemaRegistry
 import arcs.core.entity.awaitReady
@@ -82,9 +80,8 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
         assertThat(ref1.dereference()).isEqualTo(null)
     }
 
-
     @Suppress("UNCHECKED_CAST")
-    private suspend fun createCollectionHandle() = 
+    private suspend fun createCollectionHandle() =
         EntityHandleManager(
             time = fakeTime,
             scheduler = schedulerProvider("test")
@@ -92,12 +89,8 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
             HandleSpec(
                 "name",
                 HandleMode.ReadWrite,
-                toType(
-                    DummyEntity,
-                    HandleDataType.Entity,
-                    HandleContainerType.Collection
-                ),
-                setOf<EntitySpec<*>>(DummyEntity)
+                CollectionType(EntityType(DummyEntity.SCHEMA)),
+                DummyEntity
             ),
             collectionKey
         ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
