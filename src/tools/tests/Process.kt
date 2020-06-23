@@ -1,4 +1,4 @@
-package arcs.showcase.typevariables
+package src.tools.tests
 
 class Process : AbstractProcess() {
 }

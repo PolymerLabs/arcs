@@ -1,5 +1,6 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
+    "arcs_kt_gen",
     "arcs_cc_schema",
     "arcs_kt_jvm_test_suite",
     "arcs_kt_schema",
@@ -54,17 +55,17 @@ arcs_ts_test(
     ],
 )
 
-arcs_kt_schema(
-    name = "behavior_generation",
-    srcs = ["behavior.arcs"],
+arcs_kt_gen(
+    name = "variable_generation",
+    srcs = ["Variable.arcs"],
 )
 
 arcs_kt_jvm_test_suite(
     name = "behavior-tests",
-    srcs = ["GenerationBehaviorTest.kt"],
+    srcs = glob(["*Test.kt"]),
     package = "src.tools.tests",
     deps = [
-        ":behavior_generation",
+        ":variable_generation",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",

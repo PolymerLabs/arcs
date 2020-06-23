@@ -1,4 +1,4 @@
-package arcs.showcase.typevariables
+package src.tools.tests
 
 import arcs.core.data.FieldType
 import arcs.core.data.SchemaFields
