@@ -17,7 +17,7 @@ import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ConCap} from '../../testing/test-util.js';
 import {Ttl} from '../capabilities.js';
 
-describe('Entity', () => {
+describe.only('Entity', () => {
 
   let schema: Schema;
   let entityClass: EntityClass;
@@ -34,13 +34,14 @@ describe('Entity', () => {
         union: (Text or URL or Number or Boolean or Bytes)
         kt: Long
         lst: List<Number>
+        inner: inline { txt: Text, num: Number }
     `);
     schema = manifest.findSchemaByName('Foo');
     entityClass = Entity.createEntityClass(schema, null);
   });
 
   it('behaves like a regular object except writing to any field fails', () => {
-    const e = new entityClass({txt: 'abc', num: 56, lst: [1, 2, 5, 4, 3]});
+    const e = new entityClass({txt: 'abc', num: 56, lst: [1, 2, 5, 4, 3], inner: {txt: 'def', num: 78}});
 
     assert.strictEqual(e.txt, 'abc');
     assert.strictEqual(e.num, 56);
@@ -57,13 +58,13 @@ describe('Entity', () => {
     assert.throws(() => { e.notInSchema = 3; }, `Tried to modify entity field 'notInSchema'`);
     assert.throws(() => {e['lst'] = []; }, `Tried to modify entity field 'lst'`);
 
-    assert.strictEqual(JSON.stringify(e), '{"txt":"abc","num":56,"lst":[1,2,5,4,3]}');
-    assert.strictEqual(e.toString(), 'Foo { txt: "abc", num: 56, lst: [1,2,5,4,3] }');
-    assert.strictEqual(`${e}`, 'Foo { txt: "abc", num: 56, lst: [1,2,5,4,3] }');
+    assert.strictEqual(JSON.stringify(e), '{"txt":"abc","num":56,"lst":[1,2,5,4,3],"inner":{"txt":"def","num":78}}');
+    assert.strictEqual(e.toString(), 'Foo { txt: "abc", num: 56, lst: [1,2,5,4,3], inner: { txt: "def", num: 78 } }');
+    assert.strictEqual(`${e}`, 'Foo { txt: "abc", num: 56, lst: [1,2,5,4,3], inner: { txt: "def", num: 78 } }');
 
-    assert.deepEqual(Object.entries(e), [['txt', 'abc'], ['num', 56], ['lst', [1, 2, 5, 4, 3]]]);
-    assert.deepEqual(Object.keys(e), ['txt', 'num', 'lst']);
-    assert.deepEqual(Object.values(e), ['abc', 56, [1, 2, 5, 4, 3]]);
+    assert.deepEqual(Object.entries(e), [['txt', 'abc'], ['num', 56], ['lst', [1, 2, 5, 4, 3]], ['inner', {txt: 'def', num: 78}]]);
+    assert.deepEqual(Object.keys(e), ['txt', 'num', 'lst', 'inner']);
+    assert.deepEqual(Object.values(e), ['abc', 56, [1, 2, 5, 4, 3], {txt: 'def', num: 78}]);
   });
 
   it('static Entity API maps onto EntityInternals methods', () => {
@@ -169,7 +170,7 @@ describe('Entity', () => {
   });
 
   it('allows mutations via the mutate method with a callback function', () => {
-    const e = new entityClass({txt: 'abc', num: 56, lst: [1, 2, 5, 4, 3]});
+    const e = new entityClass({txt: 'abc', num: 56, lst: [1, 2, 5, 4, 3], inner: {txt: 'def', num: 78}});
     Entity.mutate(e, e => e.txt = 'xyz');
     assert.strictEqual(e.txt, 'xyz');
     assert.strictEqual(e.num, 56);
@@ -177,14 +178,17 @@ describe('Entity', () => {
     Entity.mutate(e, e => e.lst = []);
     assert.strictEqual(e.num, 56);
     assert.deepEqual(e.lst, []);
+    Entity.mutate(e, e => e.inner = {txt: 'ghi', num: 90});
+    assert.deepEqual(e.inner, {txt: 'ghi', num: 90});
   });
 
   it('allows mutations via the mutate method with new data', () => {
     const e = new entityClass({txt: 'abc', num: 56});
-    Entity.mutate(e, {num: 35, lst: [1, 2, 3]});
+    Entity.mutate(e, {num: 35, lst: [1, 2, 3], inner: {txt: 'def', num: 78}});
     assert.strictEqual(e.txt, 'abc');
     assert.strictEqual(e.num, 35);
     assert.deepEqual(e.lst, [1, 2, 3]);
+    assert.deepEqual(e.inner, {txt: 'def', num: 78})
   });
 
   it('prevents mutating a list if contained values are not of the appropriate type', () => {
@@ -192,6 +196,12 @@ describe('Entity', () => {
     assert.throws(() => Entity.mutate(e, {lst: ['foo']}), `Type mismatch setting field lst`);
     assert.throws(() => Entity.mutate(e, {lst: [1, 2, 'foo']}), `Type mismatch setting field lst`);
   });
+
+  it('prevents mutating a nested schema if values are not of the appropriate type', () => {
+    const e = new entityClass({});
+    assert.throws(() => Entity.mutate(e, {inner: 77}),'Cannot set nested schema inner with non-object');
+    assert.throws(() => Entity.mutate(e, {inner: {txt: 3}}),'Type mismatch setting field txt');
+  })
 
   it('prevents mutations of Kotlin types', () => {
     const e = new entityClass({txt: 'abc', num: 56});
@@ -237,7 +247,8 @@ describe('Entity', () => {
       ref: {id: 'i1', entityStorageKey: storageKey, creationTimestamp, expirationTimestamp},
       tuple: ['def', 'link', -12, true, new Uint8Array([5, 7])],
       union: new Uint8Array([80]),
-      lst: [1, 2, 5, 4, 3]
+      lst: [1, 2, 5, 4, 3],
+      inner: {txt: 'def', num: 45}
     });
 
     const e2 = new entityClass(Entity.dataClone(e1));
@@ -249,6 +260,7 @@ describe('Entity', () => {
     assert.isFalse(e1.tuple === e2.tuple);
     assert.isFalse(e1.union === e2.union);
     assert.isFalse(e1.lst === e2.lst);
+    assert.isFalse(e1.inner === e2.inner);
 
     // Modify all non-reference object fields on e1 and confirm e2 is not affected.
     e1.buf.fill(9);
@@ -256,11 +268,13 @@ describe('Entity', () => {
     e1.tuple[4].fill(2);
     e1.union.fill(0);
     e1.lst[3] = 6;
+    Entity.mutate(e1.inner, {txt: 'bar'})
 
     assert.deepStrictEqual(e2.buf, new Uint8Array([25, 73]));
     assert.deepStrictEqual(e2.tuple, ['def', 'link', -12, true, new Uint8Array([5, 7])]);
     assert.deepStrictEqual(e2.union, new Uint8Array([80]));
     assert.deepStrictEqual(e2.lst, [1, 2, 5, 4, 3]);
+    assert.deepStrictEqual(e2.inner, {txt: 'def', num: 45});
   });
 
   // TODO(mmandlis): add tests with TTLs

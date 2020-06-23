@@ -224,6 +224,9 @@ class EntityInternals {
           if (value) {
             clone[name] = [...value].map(a => this.cloneValue(a));
           }
+        } else if (desc && desc.kind === 'schema-nested') {
+            const data = getInternals(value).dataClone();
+            clone[name] = new (value.constructor)(data);
         } else {
           clone[name] = this.cloneValue(value);
         }
@@ -360,6 +363,21 @@ export abstract class Entity implements Storable {
       static get schema() {
         return schema;
       }
+
+      toString() {
+        const entry2field = (name, value) => `${name}: ${JSON.stringify(value)}`;
+        const object2string = (object, schema) => {
+          let fields = Object.entries(object).map(([name, value]) => {
+            if (schema.fields[name].kind === 'schema-nested') {
+              return `${name}: ${object2string(value, schema.fields[name].schema.model.entitySchema)}`
+            }
+            return entry2field(name, value);
+          });
+          return `{ ${fields.join(', ')} }`;
+        }
+
+        return `${this.constructor.name} ${object2string(this, schema)}`;
+      }
     };
 
     // Override the name property to use the name of the entity given in the schema.
@@ -467,3 +485,4 @@ function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, c
     target[name] = value;
   }
 }
+0
