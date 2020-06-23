@@ -243,7 +243,7 @@ export interface Particle extends BaseNode {
 
 /** A trust claim made by a particle about one of its handles. */
 export interface ParticleClaimStatement extends BaseNode {
-  kind: 'particle-trust-claim';
+  kind: 'claim';
   handle: string;
   fieldPath: string[];
   expression: ParticleClaimExpression;
@@ -255,7 +255,7 @@ export type ParticleClaim = ParticleClaimIsTag | ParticleClaimDerivesFrom;
 
 /** A claim made by a particle, saying that one of its outputs has a particular trust tag (e.g. "claim output is foo"). */
 export interface ParticleClaimIsTag extends BaseNode {
-  kind: 'particle-trust-claim-is-tag';
+  kind: 'claim-is-tag';
   claimType: ClaimType.IsTag;
   isNot: boolean;
   tag: string;
@@ -266,27 +266,27 @@ export interface ParticleClaimIsTag extends BaseNode {
  * input2").
  */
 export interface ParticleClaimDerivesFrom extends BaseNode {
-  kind: 'particle-trust-claim-derives-from';
+  kind: 'claim-derives-from';
   claimType: ClaimType.DerivesFrom;
   parentHandle: string;
   fieldPath: string[];
 }
 
 export interface ParticleCheckStatement extends BaseNode {
-  kind: 'particle-trust-check';
+  kind: 'check';
   target: ParticleCheckTarget;
   expression: ParticleCheckExpression;
 }
 
 export interface ParticleCheckTarget extends BaseNode {
-  kind: 'particle-check-target';
+  kind: 'check-target';
   targetType: 'handle' | 'slot';
   name: string;
   fieldPath: string[];
 }
 
 export interface ParticleCheckBooleanExpression extends BaseNode {
-  kind: 'particle-trust-check-boolean-expression';
+  kind: 'check-boolean-expression';
   operator: 'and' | 'or';
   children: ParticleCheckExpression[];
 }
@@ -296,35 +296,35 @@ export type ParticleCheckExpression = ParticleCheckBooleanExpression | ParticleC
 export type ParticleCheckCondition = ParticleCheckHasTag | ParticleCheckIsFromHandle | ParticleCheckIsFromOutput | ParticleCheckIsFromStore | ParticleCheckImplication;
 
 export interface ParticleCheckHasTag extends BaseNode {
-  kind: 'particle-trust-check-has-tag';
+  kind: 'check-has-tag';
   checkType: CheckType.HasTag;
   isNot: boolean;
   tag: string;
 }
 
 export interface ParticleCheckIsFromHandle extends BaseNode {
-  kind: 'particle-trust-check-is-from-handle';
+  kind: 'check-is-from-handle';
   checkType: CheckType.IsFromHandle;
   isNot: boolean;
   parentHandle: string;
 }
 
 export interface ParticleCheckIsFromOutput extends BaseNode {
-  kind: 'particle-trust-check-is-from-output';
+  kind: 'check-is-from-output';
   checkType: CheckType.IsFromOutput;
   isNot: boolean;
   output: string;
 }
 
 export interface ParticleCheckIsFromStore extends BaseNode {
-  kind: 'particle-trust-check-is-from-store';
+  kind: 'check-is-from-store';
   checkType: CheckType.IsFromStore;
   isNot: boolean;
   storeRef: StoreReference;
 }
 
 export interface ParticleCheckImplication extends BaseNode {
-  kind: 'particle-trust-check-implication';
+  kind: 'check-implication';
   checkType: CheckType.Implication;
   antecedent: ParticleCheckCondition;
   consequent: ParticleCheckCondition;

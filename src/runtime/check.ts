@@ -228,7 +228,7 @@ function createCheckCondition(astNode: AstNode.ParticleCheckCondition, handleCon
 
 /** Converts the given AST node into a CheckExpression object. */
 function createCheckExpression(astNode: AstNode.ParticleCheckExpression, handleConnectionMap: Map<string, HandleConnectionSpecInterface>): CheckExpression {
-  if (astNode.kind === 'particle-trust-check-boolean-expression') {
+  if (astNode.kind === 'check-boolean-expression') {
     assert(astNode.children.length >= 2, 'Boolean check expressions must have at least two children.');
     return new CheckBooleanExpression(astNode.operator, astNode.children.map(child => createCheckExpression(child, handleConnectionMap)));
   } else {
