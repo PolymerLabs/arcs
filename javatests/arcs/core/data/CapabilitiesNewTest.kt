@@ -96,4 +96,57 @@ class CapabilitiesNewTest {
         assertThat(tiedToRuntime.isQueryable).isNull()
         assertThat(tiedToRuntime.isShareable).isTrue()
     }
+
+    @Test
+    fun capabilities_contains() {
+        val capabilities = CapabilitiesNew(
+            listOf<CapabilityNew.Range>(
+                CapabilityNew.Persistence.ON_DISK.toRange(),
+                CapabilityNew.Range(CapabilityNew.Ttl.Days(30), CapabilityNew.Ttl.Hours(1)),
+                CapabilityNew.Queryable(true).toRange()
+            )
+        )
+        assertThat(capabilities.contains(CapabilityNew.Persistence.ON_DISK)).isTrue()
+        assertThat(capabilities.contains(CapabilityNew.Persistence.UNRESTRICTED)).isFalse()
+        assertThat(capabilities.contains(CapabilityNew.Persistence.IN_MEMORY)).isFalse()
+        assertThat(capabilities.contains(CapabilityNew.Ttl.Minutes(15))).isFalse()
+        assertThat(capabilities.contains(CapabilityNew.Ttl.Hours(2))).isTrue()
+        assertThat(capabilities.contains(CapabilityNew.Ttl.Days(30))).isTrue()
+        assertThat(
+            capabilities.contains(
+                CapabilityNew.Range(CapabilityNew.Ttl.Days(20), CapabilityNew.Ttl.Hours(15))
+            )
+        ).isTrue()
+        assertThat(capabilities.contains(CapabilityNew.Queryable(true))).isTrue()
+        assertThat(capabilities.contains(CapabilityNew.Queryable(false))).isFalse()
+        assertThat(capabilities.contains(CapabilityNew.Encryption(true))).isFalse()
+        assertThat(capabilities.contains(CapabilityNew.Encryption(false))).isFalse()
+
+        assertThat(capabilities.containsAll(capabilities)).isTrue()
+        assertThat(
+            capabilities.containsAll(
+                CapabilitiesNew(
+                    listOf<CapabilityNew.Range>(
+                        CapabilityNew.Persistence.ON_DISK.toRange(),
+                        CapabilityNew.Ttl.Days(10).toRange()
+                    )
+                )
+            )
+        ).isTrue()
+        assertThat(
+            capabilities.containsAll(
+                CapabilitiesNew(
+                    listOf<CapabilityNew.Range>(
+                        CapabilityNew.Ttl.Days(10).toRange(),
+                        CapabilityNew.Shareable(true).toRange()
+                    )
+                )
+            )
+        ).isFalse()
+        assertThat(
+            capabilities.containsAll(
+                CapabilitiesNew(listOf<CapabilityNew.Range>(CapabilityNew.Queryable.ANY))
+            )
+        ).isFalse()
+    }
 }

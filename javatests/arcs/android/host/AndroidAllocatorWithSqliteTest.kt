@@ -42,12 +42,4 @@ class AndroidAllocatorWithSqliteTest : AndroidAllocatorTest() {
         AndroidDriverAndKeyConfigurator.configure(context)
         Unit
     }
-
-    @After
-    fun tearDown() {
-        // Workaround for this needing to be setup each time between tests.
-        CapabilitiesResolver.reset()
-        // TODO: this leaks to mutex/lock issues
-        // manager.resetAll()
-    }
 }
