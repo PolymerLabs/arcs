@@ -43,6 +43,8 @@ import arcs.core.host.ParticleIdentifier
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.util.guardedBy
 import com.google.common.truth.Truth.assertThat
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -52,7 +54,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
-import kotlin.coroutines.experimental.suspendCoroutine
 
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
