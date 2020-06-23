@@ -14,11 +14,9 @@ class VariablePlanTest {
     @Test
     fun variable_hasSameSchema() {
         DriverAndKeyConfigurator.configure(null)
-        val ingestParticle = VariableIngestionPlan.particles[0]
-        val processParticle = VariableIngestionPlan.particles[1]
 
-        assertThat(ingestParticle.particleName).isEqualTo("Ingest")
-        assertThat(processParticle.particleName).isEqualTo("Process")
+        val ingestParticle = VariableIngestionPlan.particles.first { it.particleName == "Ingest"}
+        val processParticle = VariableIngestionPlan.particles.first { it.particleName == "Process" }
 
         val ingestSchema = ingestParticle.handles.values.single().type.toSchema()
         val processSchema = processParticle.handles.values.single().type.toSchema()
