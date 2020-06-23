@@ -22,7 +22,7 @@ export enum ClaimType {
  * A list of claims made by a particle on a specific handle (or on a field
  * inside a handle).
  */
-export class ParticleClaim {
+export class Claim {
   constructor(
       readonly handle: HandleConnectionSpec,
       readonly fieldPath: string[],
@@ -89,7 +89,7 @@ export class ClaimDerivesFrom {
 export function createClaim(
     handle: HandleConnectionSpec,
     astNode: AstNode.ParticleClaimStatement,
-    handleConnectionMap: Map<string, HandleConnectionSpec>): ParticleClaim {
+    handleConnectionMap: Map<string, HandleConnectionSpec>): Claim {
   const claims: ClaimExpression[] = astNode.expression.map(claimNode => {
     switch (claimNode.claimType) {
       case ClaimType.IsTag:
@@ -100,5 +100,5 @@ export function createClaim(
         throw new Error('Unknown claim type.');
     }
   });
-  return new ParticleClaim(handle, astNode.fieldPath, claims);
+  return new Claim(handle, astNode.fieldPath, claims);
 }

@@ -10,7 +10,7 @@
 
 import * as AstNode from './manifest-ast-nodes.js';
 import {Direction} from './manifest-ast-nodes.js';
-import {ParticleClaim} from './claim.js';
+import {Claim} from './claim.js';
 import {Type} from './type.js';
 import {assert} from '../platform/assert-web.js';
 
@@ -35,7 +35,7 @@ export interface HandleConnectionSpecInterface {
   dependentConnections: HandleConnectionSpecInterface[];
   pattern?: string;
   parentConnection: HandleConnectionSpecInterface | null;
-  claims?: ParticleClaim[];
+  claims?: Claim[];
   checks?: Check[];
   isInput: boolean;
   isOutput: boolean;

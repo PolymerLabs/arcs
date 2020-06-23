@@ -16,7 +16,7 @@ import {Schema} from './schema.js';
 import {InterfaceType, SlotType, Type, TypeLiteral, TypeVariableInfo} from './type.js';
 import {Literal} from './hot.js';
 import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './check.js';
-import {ParticleClaim, createClaim} from './claim.js';
+import {Claim, createClaim} from './claim.js';
 import {ManifestStringBuilder} from './manifest-string-builder.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {AnnotationRef} from './recipe/annotation.js';
@@ -79,7 +79,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
   dependentConnections: HandleConnectionSpec[];
   pattern?: string;
   parentConnection: HandleConnectionSpec | null = null;
-  claims?: ParticleClaim[];
+  claims?: Claim[];
   checks?: Check[];
   _annotations: AnnotationRef[];
 
@@ -256,7 +256,7 @@ export class ParticleSpec {
   implBlobUrl: string | null;
   modality: Modality;
   slotConnections: Map<string, ConsumeSlotConnectionSpec>;
-  trustClaims: ParticleClaim[];
+  trustClaims: Claim[];
   trustChecks: Check[];
   _annotations: AnnotationRef[] = [];
 
@@ -555,8 +555,8 @@ export class ParticleSpec {
     return this.toManifestString();
   }
 
-  private validateTrustClaims(statements: ParticleClaimStatement[]): ParticleClaim[] {
-    const results: ParticleClaim[] = [];
+  private validateTrustClaims(statements: ParticleClaimStatement[]): Claim[] {
+    const results: Claim[] = [];
     if (statements) {
       statements.forEach(statement => {
         const target = [statement.handle, ...statement.fieldPath].join('.');
