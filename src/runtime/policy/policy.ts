@@ -11,7 +11,7 @@ import * as AstNode from '../manifest-ast-nodes.js';
 import {AnnotationRef} from '../recipe/annotation.js';
 import {assert} from '../../platform/assert-web.js';
 import {ManifestStringBuilder} from '../manifest-string-builder.js';
-import {Ttl} from '../capabilities.js';
+import {Ttl, Capabilities, Capability, Persistence, CapabilityRange, Encryption} from '../capabilities.js';
 import {EntityType, InterfaceType, Type} from '../type.js';
 import {FieldPathType, resolveFieldPathType} from '../field-path.js';
 
@@ -184,6 +184,27 @@ export class PolicyTarget {
     assert(annotation.name === maxAgeAnnotationName);
     const maxAge = annotation.params['age'] as string;
     return Ttl.fromString(maxAge);
+  }
+
+  toCapabilities(): Capabilities[] {
+    return this.retentions.map(retention => {
+      const ranges: Capability[] = [];
+      switch (retention.medium) {
+        case PolicyRetentionMedium.Disk:
+          ranges.push(Persistence.onDisk());
+          break;
+        case PolicyRetentionMedium.Ram:
+          ranges.push(Persistence.inMemory());
+          break;
+        default:
+          throw new Error(`Unsupported retention medium ${retention.medium}`);
+      }
+      if (retention.encryptionRequired) {
+        ranges.push(new Encryption(true));
+      }
+      ranges.push(this.maxAge);
+      return Capabilities.create(ranges);
+    });
   }
 }
 
