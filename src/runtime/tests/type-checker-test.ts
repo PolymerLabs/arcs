@@ -13,7 +13,7 @@ import {Manifest} from '../manifest.js';
 import {Handle} from '../recipe/handle.js';
 import {TypeChecker, TypeListInfo} from '../recipe/type-checker.js';
 import {EntityType, SlotType, TypeVariable, CollectionType, BigCollectionType, TupleType, Type} from '../type.js';
-import { Schema } from '../schema.js';
+import {Schema} from '../schema.js';
 
 describe('TypeChecker', () => {
   it('resolves a trio of in [~a], out [~b], in [Product]', async () => {
@@ -504,7 +504,7 @@ describe('TypeChecker', () => {
 
     const innerReadSchema = new EntityType(new Schema(['Inner'], {a: 'Text'}));
     const outerReadSchema = new Schema(['Outer'], {inner: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerReadSchema}}});
-    const readType = new EntityType(outerReadSchema); 
+    const readType = new EntityType(outerReadSchema);
 
     const result = TypeChecker.processTypeList(null, [{type: writeType, direction: 'writes'}, {type: readType, direction: 'reads'}]);
     assert(result.canEnsureResolved());
@@ -520,7 +520,7 @@ describe('TypeChecker', () => {
 
     const innerReadSchema = new EntityType(new Schema(['Inner'], {a: 'Text', b: 'Number'}));
     const outerReadSchema = new Schema(['Outer'], {inner: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerReadSchema}}});
-    const readType = new EntityType(outerReadSchema); 
+    const readType = new EntityType(outerReadSchema);
 
     const result = TypeChecker.processTypeList(null, [{type: writeType, direction: 'writes'}, {type: readType, direction: 'reads'}]);
     assert.isNull(result);

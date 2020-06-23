@@ -112,10 +112,6 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
       break;
     case 'schema-nested':
       // sanitizeEntry will check the nested fields, no need to do so here.
-      // const nestedSchema = fieldType.schema.model.entitySchema;
-      // for (const nestedName of Object.keys(value)) {
-      //   validateFieldAndTypes(nestedName, value[nestedName], nestedSchema);
-      // }
       break;
     default:
       throw new Error(`Unknown kind '${fieldType.kind}' for field ${name} in schema ${schema.name}`);
@@ -154,7 +150,7 @@ function sanitizeEntry(type, value, name, context: ChannelConstructor) {
     } else {
       throw new TypeError(`Cannot set collection ${name} with non-collection '${value}'`);
     }
-  } else if (type.kind == 'schema-nested') {
+  } else if (type.kind === 'schema-nested') {
     if (value instanceof Entity) {
       return value;
     } else if (typeof value !== 'object') {

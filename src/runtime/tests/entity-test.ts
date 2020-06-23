@@ -17,7 +17,7 @@ import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ConCap} from '../../testing/test-util.js';
 import {Ttl} from '../capabilities.js';
 
-describe.only('Entity', () => {
+describe('Entity', () => {
 
   let schema: Schema;
   let entityClass: EntityClass;
@@ -188,7 +188,7 @@ describe.only('Entity', () => {
     assert.strictEqual(e.txt, 'abc');
     assert.strictEqual(e.num, 35);
     assert.deepEqual(e.lst, [1, 2, 3]);
-    assert.deepEqual(e.inner, {txt: 'def', num: 78})
+    assert.deepEqual(e.inner, {txt: 'def', num: 78});
   });
 
   it('prevents mutating a list if contained values are not of the appropriate type', () => {
@@ -199,9 +199,9 @@ describe.only('Entity', () => {
 
   it('prevents mutating a nested schema if values are not of the appropriate type', () => {
     const e = new entityClass({});
-    assert.throws(() => Entity.mutate(e, {inner: 77}),'Cannot set nested schema inner with non-object');
-    assert.throws(() => Entity.mutate(e, {inner: {txt: 3}}),'Type mismatch setting field txt');
-  })
+    assert.throws(() => Entity.mutate(e, {inner: 77}), 'Cannot set nested schema inner with non-object');
+    assert.throws(() => Entity.mutate(e, {inner: {txt: 3}}), 'Type mismatch setting field txt');
+  });
 
   it('prevents mutations of Kotlin types', () => {
     const e = new entityClass({txt: 'abc', num: 56});
@@ -268,7 +268,7 @@ describe.only('Entity', () => {
     e1.tuple[4].fill(2);
     e1.union.fill(0);
     e1.lst[3] = 6;
-    Entity.mutate(e1.inner, {txt: 'bar'})
+    Entity.mutate(e1.inner, {txt: 'bar'});
 
     assert.deepStrictEqual(e2.buf, new Uint8Array([25, 73]));
     assert.deepStrictEqual(e2.tuple, ['def', 'link', -12, true, new Uint8Array([5, 7])]);

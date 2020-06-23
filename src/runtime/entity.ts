@@ -367,14 +367,14 @@ export abstract class Entity implements Storable {
       toString() {
         const entry2field = (name, value) => `${name}: ${JSON.stringify(value)}`;
         const object2string = (object, schema) => {
-          let fields = Object.entries(object).map(([name, value]) => {
+          const fields = Object.entries(object).map(([name, value]) => {
             if (schema.fields[name].kind === 'schema-nested') {
-              return `${name}: ${object2string(value, schema.fields[name].schema.model.entitySchema)}`
+              return `${name}: ${object2string(value, schema.fields[name].schema.model.entitySchema)}`;
             }
             return entry2field(name, value);
           });
           return `{ ${fields.join(', ')} }`;
-        }
+        };
 
         return `${this.constructor.name} ${object2string(this, schema)}`;
       }
@@ -485,4 +485,3 @@ function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, c
     target[name] = value;
   }
 }
-0

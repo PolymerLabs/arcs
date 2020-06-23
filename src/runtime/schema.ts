@@ -143,7 +143,7 @@ export class Schema {
       case 'schema-ordered-list':
         return `List<${Schema._typeString(type.schema)}>`;
       case 'schema-nested':
-        return `inline ${Schema._typeString(type.schema)}`        
+        return `inline ${Schema._typeString(type.schema)}`;
       default:
         throw new Error(`Unknown type kind ${type.kind} in schema ${this.name}`);
     }
@@ -220,6 +220,9 @@ export class Schema {
             return AtLeastAsSpecific.NO;
           case AtLeastAsSpecific.UNKNOWN:
             best = AtLeastAsSpecific.UNKNOWN;
+            break;
+          default:
+            break;
         }
       }
       else if (!Schema.typesEqual(fields[name], type)) {
