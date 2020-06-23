@@ -111,8 +111,8 @@ class Arc internal constructor(
         }
 
         return when (oldState != arcState) {
-            is true -> arcStateChangeHandlers.toList()
-            is false -> emptyList()
+            true -> arcStateChangeHandlers.toList()
+            false -> emptyList()
         }
     }
 
