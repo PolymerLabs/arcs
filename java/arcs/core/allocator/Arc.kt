@@ -126,7 +126,7 @@ class Arc internal constructor(
     }
 
     private suspend fun maybeRegisterChangeHandlerWithArcHosts() {
-        if (registered.compareAndSet(false, true)) {
+        if (!registered.compareAndSet(false, true)) {
             return
         }
 
