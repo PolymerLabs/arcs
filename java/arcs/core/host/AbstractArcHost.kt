@@ -12,6 +12,8 @@ package arcs.core.host
 
 import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
+import arcs.core.data.CapabilitiesNew
+import arcs.core.data.CapabilityNew.Shareable
 import arcs.core.data.Plan
 import arcs.core.entity.Entity
 import arcs.core.entity.Handle
@@ -220,6 +222,7 @@ abstract class AbstractArcHost(
         return ArcHostContextParticle(hostId, handleManager, this::instantiateParticle).apply {
             val partition = createArcHostContextPersistencePlan(
                 arcHostContextCapability,
+                arcHostContextCapabilityNew,
                 arcHostContext.arcId
             )
             partition.particles[0].handles.forEach { handleSpec ->
@@ -495,6 +498,7 @@ abstract class AbstractArcHost(
     abstract val platformTime: Time
 
     open val arcHostContextCapability = Capabilities.TiedToRuntime
+    open val arcHostContextCapabilityNew = CapabilitiesNew(listOf(Shareable(true)))
 
     override suspend fun isHostForParticle(particle: Plan.Particle) =
         registeredParticles().contains(ParticleIdentifier.from(particle.location))

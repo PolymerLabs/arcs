@@ -15,6 +15,8 @@ import arcs.core.common.Id
 import arcs.core.common.toArcId
 import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
+import arcs.core.data.CapabilitiesNew
+import arcs.core.data.CapabilityNew.Shareable
 import arcs.core.data.CreatableStorageKey
 import arcs.core.data.Plan
 import arcs.core.entity.HandleSpec
@@ -25,6 +27,7 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.storage.CapabilitiesResolver
+import arcs.core.storage.CapabilitiesResolverNew
 import arcs.core.storage.StorageKey
 import arcs.core.type.Type
 import arcs.core.util.TaggedLog
@@ -185,16 +188,28 @@ class Allocator(
         storageKey: CreatableStorageKey,
         type: Type,
         annotations: List<Annotation>
-    ): StorageKey =
-        CapabilitiesResolver(CapabilitiesResolver.CapabilitiesResolverOptions(arcId))
-            .createStorageKey(
-                Capabilities.fromAnnotations(annotations),
-                type,
-                idGenerator.newChildId(arcId, "").toString()
-            )
+    ): StorageKey {
+        val id = idGenerator.newChildId(arcId, "").toString()
+        val storageKey = CapabilitiesResolver(
+            CapabilitiesResolver.CapabilitiesResolverOptions(arcId)
+        ).createStorageKey(Capabilities.fromAnnotations(annotations), type, id)
             ?: throw Exception(
                 "Unable to create storage key $storageKey"
             )
+        val capabilitiesNew = CapabilitiesNew.fromAnnotations(annotations)
+        val storageKeyNew = CapabilitiesResolverNew(CapabilitiesResolverNew.Options(arcId))
+            .createStorageKey(
+                if (capabilitiesNew.isEmpty)
+                    CapabilitiesNew(listOf(Shareable(true)))
+                else capabilitiesNew,
+                type,
+                id
+            )
+        require(storageKeyNew == storageKey) {
+            "Keys must be same, but new: $storageKeyNew, and old: $storageKey"
+        }
+        return storageKey
+    }
 
     /**
      * Slice plan into pieces grouped by [ArcHost], each group consisting of a [Plan.Partition]

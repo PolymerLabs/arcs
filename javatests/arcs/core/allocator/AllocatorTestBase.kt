@@ -4,11 +4,13 @@ import arcs.core.common.ArcId
 import arcs.core.common.Id
 import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
+import arcs.core.data.CapabilitiesNew
 import arcs.core.data.CreatableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.host.*
 import arcs.core.storage.CapabilitiesResolver
+import arcs.core.storage.CapabilitiesResolverNew
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -263,6 +265,26 @@ open class AllocatorTestBase {
         val outputPerson = CapabilitiesResolver(
             CapabilitiesResolver.CapabilitiesResolverOptions(testArcId)
         ).createStorageKey(Capabilities.TiedToArc, EntityType(personSchema), "outputPerson")
+
+        ///////////////////////
+        val resolverNew = CapabilitiesResolverNew(CapabilitiesResolverNew.Options(testArcId))
+        val inputPersonNew = resolverNew.createStorageKey(
+            CapabilitiesNew.fromAnnotations(listOf(Annotation.createCapability("tiedToArc"))),
+            EntityType(personSchema),
+            "inputPerson"
+        )
+        val outputPersonNew = resolverNew.createStorageKey(
+            CapabilitiesNew.fromAnnotations(listOf(Annotation.createCapability("tiedToArc"))),
+            EntityType(personSchema),
+            "outputPerson"
+        )
+        require(inputPersonNew == inputPerson) {
+            "Keys must be same, but new: $inputPersonNew, and old: $inputPerson"
+        }
+        require(outputPersonNew == outputPerson) {
+            "Keys must be same, but new: $outputPersonNew, and old: $outputPerson"
+        }
+        ///////////////////////
 
         val allStorageKeyLens =
             Plan.particleLens.traverse() + Plan.Particle.handlesLens.traverse() +

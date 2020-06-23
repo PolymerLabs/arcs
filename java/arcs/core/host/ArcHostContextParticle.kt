@@ -13,6 +13,7 @@ package arcs.core.host
 import arcs.core.common.toArcId
 import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
+import arcs.core.data.CapabilitiesNew
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
@@ -23,6 +24,7 @@ import arcs.core.host.api.Particle
 import arcs.core.host.generated.AbstractArcHostContextParticle
 import arcs.core.host.generated.ArcHostContextPlan
 import arcs.core.storage.CapabilitiesResolver
+import arcs.core.storage.CapabilitiesResolverNew
 import arcs.core.storage.StorageKeyParser
 import arcs.core.type.Tag
 import arcs.core.type.Type
@@ -226,10 +228,14 @@ class ArcHostContextParticle(
      */
     fun createArcHostContextPersistencePlan(
         capability: Capabilities,
+        capabilityNew: CapabilitiesNew,
         arcId: String
     ): Plan.Partition {
         val resolver = CapabilitiesResolver(
             CapabilitiesResolver.CapabilitiesResolverOptions(arcId.toArcId())
+        )
+        val resolverNew = CapabilitiesResolverNew(
+            CapabilitiesResolverNew.Options(arcId.toArcId())
         )
 
         /*
@@ -245,6 +251,19 @@ class ArcHostContextParticle(
         ) {
             "Can't create arcHostContextKey for $arcId and $hostId"
         }
+        // ////////////////////////////
+        val arcHostContextKeyNew = requireNotNull(
+            resolverNew.createStorageKey(
+                capabilityNew, EntityType(AbstractArcHostContextParticle.ArcHostContext.SCHEMA),
+                "${hostId}_arcState"
+            )
+        ) {
+            "Can't create arcHostContextKey for $arcId and $hostId"
+        }
+        require(arcHostContextKeyNew == arcHostContextKey) {
+            "Keys must be same, but new: $arcHostContextKeyNew, and old: $arcHostContextKey"
+        }
+        // ////////////////////////////
 
         val particlesKey = requireNotNull(
             resolver.createStorageKey(
@@ -255,6 +274,20 @@ class ArcHostContextParticle(
             "Can't create particlesKey $arcId and $hostId"
         }
 
+        // ////////////////////////////
+        val particlesKeyNew = requireNotNull(
+            resolverNew.createStorageKey(
+                capabilityNew, EntityType(ArcHostContextParticle_Particles.SCHEMA),
+                "${hostId}_arcState_particles"
+            )
+        ) {
+            "Can't create particlesKey $arcId and $hostId"
+        }
+        require(particlesKeyNew == particlesKey) {
+            "Keys must be same, but new: $particlesKeyNew, and old: $particlesKey"
+        }
+        // ////////////////////////////
+
         val handleConnectionsKey = requireNotNull(
             resolver.createStorageKey(
                 capability, EntityType(ArcHostContextParticle_HandleConnections.SCHEMA),
@@ -263,6 +296,21 @@ class ArcHostContextParticle(
         ) {
             "Can't create handleConnectionsKey $arcId and $hostId"
         }
+
+        // ////////////////////////////
+        val handleConnectionsKeyNew = requireNotNull(
+            resolverNew.createStorageKey(
+                capabilityNew, EntityType(ArcHostContextParticle_HandleConnections.SCHEMA),
+                "${hostId}_arcState_handleConnections"
+            )
+        ) {
+            "Can't create handleConnectionsKey $arcId and $hostId"
+        }
+        require(handleConnectionsKeyNew == handleConnectionsKey) {
+            "Keys must be same, but new: $handleConnectionsKeyNew, and old: $handleConnectionsKey"
+        }
+
+        // ////////////////////////////
 
         // replace keys with per-arc created ones.
         val allStorageKeyLens =
