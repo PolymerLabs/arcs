@@ -20,6 +20,7 @@ import arcs.core.host.ArcState.Indeterminate
 import arcs.core.host.ArcState.NeverStarted
 import arcs.core.host.ArcState.Running
 import arcs.core.host.ArcState.Stopped
+import arcs.core.host.ArcStateChangeCallback
 import arcs.core.host.ArcStateChangeRegistration
 import java.lang.RuntimeException
 import kotlinx.coroutines.CompletableDeferred
@@ -93,11 +94,11 @@ class Arc internal constructor(
     /** Called whenever the [ArcState] changes to [Error]. */
     fun onError(handler: () -> Unit) = onArcStateChangeFiltered(Error, handler)
 
-    private fun fireArcStateChange() = arcStateChangeHandlers.forEach {
+    private fun fireArcStateChange(handlers: List<(ArcState) -> Unit>) = handlers.forEach {
         it(arcState)
     }
 
-    private fun recomputeArcState(): Boolean {
+    private fun recomputeArcState(): List<(ArcState) -> Unit> {
         val states = arcStatesByHostId.values
         val oldState = arcState
         arcState = when {
@@ -109,7 +110,10 @@ class Arc internal constructor(
             else -> Indeterminate
         }
 
-        return oldState != arcState
+        return when (oldState != arcState) {
+            is true -> arcStateChangeHandlers.toList()
+            is false -> emptyList()
+        }
     }
 
     private suspend fun fetchCurrentStates() {
@@ -130,15 +134,14 @@ class Arc internal constructor(
         partitions.forEach { partition ->
             val arcHost = allocator.lookupArcHost(partition.arcHost)
             registration = arcHost.addOnArcStateChange(id) { _, state ->
-                val shouldFire = runBlocking {
+                val handlersToNotify = runBlocking {
                     mutex.withLock {
                         arcStatesByHostId[partition.arcHost] = state
                         recomputeArcState()
                     }
                 }
-                if (shouldFire) {
-                    fireArcStateChange()
-                }
+
+                fireArcStateChange(handlersToNotify)
             }
         }
 
@@ -161,13 +164,12 @@ class Arc internal constructor(
         }
         onArcStateChange(handler)
 
-        val shouldFire = mutex.withLock {
+        val handlersToNotify = mutex.withLock {
             fetchCurrentStates()
             recomputeArcState()
         }
-        if (shouldFire) {
-            fireArcStateChange()
-        }
+
+        fireArcStateChange(handlersToNotify)
 
         return deferred.await().also {
             arcStateChangeHandlers -= handler
