@@ -51,7 +51,10 @@ data class PolicyRetention(
     val encryptionRequired: Boolean
 )
 
-/** Target schema governed by a policy, see [PolicyConfigProto]. */
+/**
+ * Config options specified by a policy, see [PolicyConfigProto]. These are arbitrary string
+ * key-value pairs set by the policy author. They have no direct affect on the policy itself.
+ */
 typealias PolicyConfig = Map<String, String>
 
 /** Egress type permitted by a policy, see [PolicyProto.EgressType]. */
