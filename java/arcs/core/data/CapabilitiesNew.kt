@@ -19,6 +19,8 @@ package arcs.core.data
 class CapabilitiesNew(capabilities: List<CapabilityNew> = emptyList()) {
     val ranges: List<CapabilityNew.Range>
 
+    constructor(capability: CapabilityNew) : this(listOf(capability))
+
     init {
         ranges = capabilities.map { it -> it.toRange() }
         require(ranges.distinctBy { it.min.tag }.size == capabilities.size) {
@@ -82,5 +84,7 @@ class CapabilitiesNew(capabilities: List<CapabilityNew> = emptyList()) {
             CapabilityNew.Shareable.fromAnnotations(annotations)?.let { ranges.add(it.toRange()) }
             return CapabilitiesNew(ranges)
         }
+
+        fun fromAnnotation(annotation: Annotation) = fromAnnotations(listOf(annotation))
     }
 }

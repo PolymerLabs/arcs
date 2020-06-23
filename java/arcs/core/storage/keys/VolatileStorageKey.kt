@@ -12,10 +12,8 @@ package arcs.core.storage.keys
 
 import arcs.core.common.ArcId
 import arcs.core.common.toArcId
-import arcs.core.data.Capabilities
 import arcs.core.data.CapabilitiesNew
 import arcs.core.data.CapabilityNew
-import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.CapabilitiesResolverNew
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyFactory
@@ -66,19 +64,6 @@ data class VolatileStorageKey(
         }
 
         fun registerKeyCreator() {
-            CapabilitiesResolver.registerDefaultKeyCreator(
-                VOLATILE_DRIVER_PROTOCOL,
-                Capabilities.TiedToArc
-            ) { storageKeyOptions ->
-                VolatileStorageKey(storageKeyOptions.arcId, storageKeyOptions.unique)
-            }
-            CapabilitiesResolver.registerDefaultKeyCreator(
-                VOLATILE_DRIVER_PROTOCOL,
-                Capabilities.Empty
-            ) { storageKeyOptions ->
-                VolatileStorageKey(storageKeyOptions.arcId, storageKeyOptions.unique)
-            }
-
             CapabilitiesResolverNew.registerStorageKeyFactory(VolatileStorageKeyFactory())
         }
 

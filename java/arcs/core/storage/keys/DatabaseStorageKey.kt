@@ -11,10 +11,8 @@
 
 package arcs.core.storage.keys
 
-import arcs.core.data.Capabilities
 import arcs.core.data.CapabilitiesNew
 import arcs.core.data.CapabilityNew
-import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.CapabilitiesResolverNew
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyFactory
@@ -129,24 +127,6 @@ sealed class DatabaseStorageKey(
         }
 
         fun registerKeyCreator() {
-            CapabilitiesResolver.registerKeyCreator(
-                DATABASE_DRIVER_PROTOCOL,
-                Capabilities.PersistentQueryable
-            ) { storageKeyOptions ->
-                Persistent(
-                    storageKeyOptions.location,
-                    storageKeyOptions.entitySchema.hash
-                )
-            }
-            CapabilitiesResolver.registerKeyCreator(
-                MEMORY_DATABASE_DRIVER_PROTOCOL,
-                Capabilities.Queryable
-            ) { storageKeyOptions ->
-                Memory(
-                    storageKeyOptions.location,
-                    storageKeyOptions.entitySchema.hash
-                )
-            }
             CapabilitiesResolverNew.registerStorageKeyFactory(Persistent.Factory())
             CapabilitiesResolverNew.registerStorageKeyFactory(Memory.Factory())
         }

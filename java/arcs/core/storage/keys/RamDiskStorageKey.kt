@@ -11,10 +11,8 @@
 
 package arcs.core.storage.keys
 
-import arcs.core.data.Capabilities
 import arcs.core.data.CapabilitiesNew
 import arcs.core.data.CapabilityNew
-import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.CapabilitiesResolverNew
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyFactory
@@ -62,11 +60,6 @@ data class RamDiskStorageKey(private val unique: String) : StorageKey(RAMDISK_DR
         }
 
         fun registerKeyCreator() {
-            CapabilitiesResolver.registerKeyCreator(
-                RAMDISK_DRIVER_PROTOCOL,
-                Capabilities.TiedToRuntime
-            ) { storageKeyOptions -> RamDiskStorageKey(storageKeyOptions.location) }
-
             CapabilitiesResolverNew.registerStorageKeyFactory(RamDiskStorageKeyFactory())
         }
 

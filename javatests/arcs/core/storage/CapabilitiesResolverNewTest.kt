@@ -50,15 +50,13 @@ class CapabilitiesResolverNewTest {
     private val handleId = "h0"
 
     private val unspecified = CapabilitiesNew()
-    private val inMemory = CapabilitiesNew(listOf(Persistence.IN_MEMORY))
+    private val inMemory = CapabilitiesNew(Persistence.IN_MEMORY)
     private val inMemoryWithTtls = CapabilitiesNew(listOf(Persistence.IN_MEMORY, Ttl.Days(1)))
-    private val onDisk = CapabilitiesNew(listOf(Persistence.ON_DISK))
+    private val onDisk = CapabilitiesNew(Persistence.ON_DISK)
     private val onDiskWithTtl = CapabilitiesNew(listOf(Persistence.ON_DISK, Ttl.Days(1)))
   
     @After
     fun tearDown() {
-        CapabilitiesResolver.reset()
-        CapabilitiesResolver.defaultCreators.clear()
         CapabilitiesResolverNew.reset()
     }
 
@@ -149,10 +147,10 @@ class CapabilitiesResolverNewTest {
             resolver.createStorageKey(unspecified, entityType, handleId)
         )
         verifyStorageKey<VolatileStorageKey>(
-            resolver.createStorageKey(CapabilitiesNew(listOf(Shareable(false))), entityType, handleId)
+            resolver.createStorageKey(CapabilitiesNew(Shareable(false)), entityType, handleId)
         )
         verifyStorageKey<RamDiskStorageKey>(
-            resolver.createStorageKey(CapabilitiesNew(listOf(Shareable(true))), entityType, handleId)
+            resolver.createStorageKey(CapabilitiesNew(Shareable(true)), entityType, handleId)
         )
         verifyStorageKey<VolatileStorageKey>(
             resolver.createStorageKey(inMemory, entityType, handleId)

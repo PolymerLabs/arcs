@@ -11,6 +11,7 @@
 
 package arcs.core.data
 
+import arcs.core.data.CapabilityNew.Ttl
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -23,6 +24,8 @@ class CapabilitiesNewTest {
     fun capabilities_empty() {
         assertThat(CapabilitiesNew().isEmpty).isTrue()
         assertThat(CapabilitiesNew.fromAnnotations(emptyList<Annotation>()).isEmpty).isTrue()
+        assertThat(CapabilitiesNew(CapabilityNew.Persistence.ON_DISK).isEmpty)
+            .isFalse()
         assertThat(CapabilitiesNew(listOf(CapabilityNew.Persistence.ON_DISK)).isEmpty)
             .isFalse()
     }
@@ -30,14 +33,14 @@ class CapabilitiesNewTest {
     @Test
     fun capabilities_unique() {
         assertFailsWith<IllegalArgumentException> {
-            CapabilitiesNew(listOf(CapabilityNew.Ttl.Days(1).toRange(), CapabilityNew.Ttl.Hours(3)))
+            CapabilitiesNew(listOf(Ttl.Days(1).toRange(), Ttl.Hours(3)))
         }
     }
 
     @Test
     fun capabilities_fromAnnotations_persistent() {
         val persistent =
-            CapabilitiesNew.fromAnnotations(listOf(Annotation.createCapability("persistent")))
+            CapabilitiesNew.fromAnnotation(Annotation.createCapability("persistent"))
         assertThat(persistent.persistence).isEqualTo(CapabilityNew.Persistence.ON_DISK)
         assertThat(persistent.isEncrypted).isNull()
         assertThat(persistent.ttl).isNull()
@@ -47,7 +50,7 @@ class CapabilitiesNewTest {
 
     @Test
     fun capabilities_fromAnnotations_ttl() {
-        val ttl30d = CapabilitiesNew.fromAnnotations(listOf(Annotation.createTtl("30d")))
+        val ttl30d = CapabilitiesNew.fromAnnotation(Annotation.createTtl("30d"))
         assertThat(ttl30d.persistence).isNull()
         assertThat(ttl30d.isEncrypted).isNull()
         assertThat(ttl30d.ttl).isEqualTo(CapabilityNew.Ttl.Days(30))
@@ -87,8 +90,8 @@ class CapabilitiesNewTest {
 
     @Test
     fun capabilities_fromAnnotations_tiedToRuntimeAndTtl() {
-        val tiedToRuntime = CapabilitiesNew.fromAnnotations(
-            listOf(Annotation.createCapability("tiedToRuntime"))
+        val tiedToRuntime = CapabilitiesNew.fromAnnotation(
+            Annotation.createCapability("tiedToRuntime")
         )
         assertThat(tiedToRuntime.persistence).isEqualTo(CapabilityNew.Persistence.IN_MEMORY)
         assertThat(tiedToRuntime.isEncrypted).isNull()

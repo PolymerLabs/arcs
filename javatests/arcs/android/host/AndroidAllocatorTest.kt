@@ -19,7 +19,8 @@ import arcs.android.host.prod.ProdArcHostService
 import arcs.android.sdk.host.toComponentName
 import arcs.core.allocator.AllocatorTestBase
 import arcs.core.host.TestingJvmProdHost
-import arcs.core.data.Capabilities
+import arcs.core.data.CapabilitiesNew
+import arcs.core.data.CapabilityNew.Shareable
 import arcs.core.host.ArcHostException
 import arcs.core.host.ArcState
 import arcs.core.host.HostRegistry
@@ -81,7 +82,7 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
     override fun pureHost() = testProdService.arcHost as TestingJvmProdHost
 
     // TODO: wire up some kind of mock persistent database?
-    override val storageCapability = Capabilities.TiedToRuntime
+    override val storageCapability = CapabilitiesNew(Shareable(true))
 
     @Before
     override fun setUp() = runBlocking {

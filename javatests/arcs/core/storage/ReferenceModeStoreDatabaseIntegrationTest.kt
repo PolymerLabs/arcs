@@ -82,7 +82,6 @@ class ReferenceModeStoreDatabaseIntegrationTest {
     @After
     fun tearDown() {
         WriteBackForTesting.clear()
-        CapabilitiesResolver.reset()
     }
 
     @Test

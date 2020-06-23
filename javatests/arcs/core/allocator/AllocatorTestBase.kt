@@ -3,12 +3,13 @@ package arcs.core.allocator
 import arcs.core.common.ArcId
 import arcs.core.common.Id
 import arcs.core.data.Annotation
-import arcs.core.data.Capabilities
+import arcs.core.data.CapabilitiesNew
+import arcs.core.data.CapabilityNew.Shareable
 import arcs.core.data.CreatableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.host.*
-import arcs.core.storage.CapabilitiesResolver
+import arcs.core.storage.CapabilitiesResolverNew
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -76,7 +77,8 @@ open class AllocatorTestBase {
     /** Return the [ArcHost] that contains all isolatable [Particle]s. */
     open fun pureHost() = TestingJvmProdHost(schedulerProvider)
 
-    open val storageCapability = Capabilities.TiedToRuntime
+    open val storageCapability = CapabilitiesNew(Shareable(true))
+
     open fun runAllocatorTest(
         coroutineContext: CoroutineContext = EmptyCoroutineContext,
         testBody: suspend CoroutineScope.() -> Unit
@@ -256,13 +258,17 @@ open class AllocatorTestBase {
         val testArcId = idGenerator.newArcId("Test")
         VolatileDriverProvider(testArcId)
 
-        val inputPerson = CapabilitiesResolver(
-            CapabilitiesResolver.CapabilitiesResolverOptions(testArcId)
-        ).createStorageKey(Capabilities.TiedToArc, EntityType(personSchema), "inputPerson")
-
-        val outputPerson = CapabilitiesResolver(
-            CapabilitiesResolver.CapabilitiesResolverOptions(testArcId)
-        ).createStorageKey(Capabilities.TiedToArc, EntityType(personSchema), "outputPerson")
+        val resolver = CapabilitiesResolverNew(CapabilitiesResolverNew.Options(testArcId))
+        val inputPerson = resolver.createStorageKey(
+            CapabilitiesNew.fromAnnotation(Annotation.createCapability("tiedToArc")),
+            EntityType(personSchema),
+            "inputPerson"
+        )
+        val outputPerson = resolver.createStorageKey(
+            CapabilitiesNew.fromAnnotation(Annotation.createCapability("tiedToArc")),
+            EntityType(personSchema),
+            "outputPerson"
+        )
 
         val allStorageKeyLens =
             Plan.particleLens.traverse() + Plan.Particle.handlesLens.traverse() +
@@ -271,8 +277,8 @@ open class AllocatorTestBase {
         val testPlan = allStorageKeyLens.mod(PersonPlan) { storageKey ->
             storageKey as CreatableStorageKey
             when (storageKey.nameFromManifest) {
-                "inputPerson" -> inputPerson!!
-                "outputPerson" -> outputPerson!!
+                "inputPerson" -> inputPerson
+                "outputPerson" -> outputPerson
                 else -> storageKey
             }
         }

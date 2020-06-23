@@ -36,7 +36,7 @@ class CapabilitiesResolverNew(
         selector: FactorySelector = SimpleCapabilitiesSelector()
     ) : this(options, CapabilitiesResolverNew.getFactoryMap(factoriesList), selector)
 
-    /** Options used to construct [CapabilitiesResolver]. */
+    /** Options used to construct [CapabilitiesResolverNew]. */
     data class Options(val arcId: ArcId)
 
     fun createStorageKey(capabilities: CapabilitiesNew, type: Type, handleId: String): StorageKey {
