@@ -14,7 +14,7 @@ particle Process in '.Process'
   data: reads [~a]
 
 @arcId('overviewArc')
-recipe Ingestion
+recipe VariableIngestion
   incomingAction: create 'action' @persistent @ttl('2d')
 
   Ingest

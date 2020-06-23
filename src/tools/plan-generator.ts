@@ -8,15 +8,17 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Recipe} from '../runtime/recipe/recipe.js';
-import {Type} from '../runtime/type.js';
+import {Type, TypeVariable} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
 import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils.js';
-import {generateConnectionType} from './kotlin-codegen-shared.js';
+import {generateConnectionSpecType, generateConnectionType} from './kotlin-codegen-shared.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {AnnotationRef} from '../runtime/recipe/annotation.js';
 import {findLongRunningArcId} from './allocator-recipe-resolver.js';
+import {SchemaGraph, SchemaNode} from './schema2graph.js';
+import {generateSchema, KotlinSchemaDescriptor} from './kotlin-schema-generator.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -91,9 +93,22 @@ export class PlanGenerator {
 
   /** Generates a Kotlin `Plan.HandleConnection` from a HandleConnection. */
   async createHandleConnection(connection: HandleConnection): Promise<string> {
+    connection.type.maybeEnsureResolved();
+    const resolvedType = connection.type.resolvedType();
+    const spec = connection.particle.spec;
+    const nodes = new SchemaGraph(spec).nodes;
+
+    let schemaRegistry = [];
+    if(connection.type.hasVariable) {
+      const newNode = new SchemaNode(resolvedType.getEntitySchema(), spec, nodes);
+      await newNode.calculateHash();
+      const genSchema = new KotlinSchemaDescriptor(newNode, false);
+      schemaRegistry.push([resolvedType.getEntitySchema(), generateSchema(genSchema)])
+    }
+
     const storageKey = await this.createStorageKey(connection.handle);
     const mode = this.createHandleMode(connection.direction, connection.type);
-    const type = generateConnectionType(connection);
+    const type = generateConnectionType(connection, schemaRegistry);
     const annotations = PlanGenerator.createAnnotations(connection.handle.annotations);
 
     return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, annotations],
