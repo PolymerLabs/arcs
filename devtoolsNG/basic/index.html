@@ -1,9 +1,15 @@
+<style>
+  .class1 {
+    background-color: lightgrey;
+  }
+</style>
 <body>
   <div id="log"></div> 
   <input type="button" onclick="clearEntries()" value="Clear">
   <script>
 
     const websocket = new WebSocket('ws://localhost:12345');
+    var divNum = 0;
 
     websocket.onopen = e => {
       websocket.send('WebSocket Open');  
@@ -28,6 +34,8 @@
 
     function appendEntry(str) {
       const newEntry = document.createElement('div');
+      newEntry.className = "class" + (divNum % 2);
+      divNum++;
       newEntry.innerText = str;
       document.getElementById("log").append(newEntry);
     }

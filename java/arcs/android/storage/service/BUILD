@@ -19,6 +19,8 @@ arcs_kt_android_library(
         ":aidl",
         "//java/arcs/android/crdt",
         "//java/arcs/android/crdt:crdt_exception_android_proto",
+        "//java/arcs/android/devtools",
+        "//java/arcs/android/devtools:aidl",
         "//java/arcs/android/storage",
         "//java/arcs/android/storage:proxy_message_android_proto",
         "//java/arcs/android/util",

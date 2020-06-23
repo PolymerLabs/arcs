@@ -473,7 +473,6 @@ class TestActivity : AppCompatActivity() {
         result2 = result
         resultView1.text = "1: $result1"
         resultView2.text = "2: $result2"
-        devToolsService?.send(result)
     }
 
     companion object {

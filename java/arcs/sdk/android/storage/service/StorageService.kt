@@ -12,8 +12,11 @@
 package arcs.sdk.android.storage.service
 
 import android.app.Service
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
+import android.content.pm.ApplicationInfo
 import android.os.IBinder
 import android.text.format.DateUtils
 import androidx.work.Constraints
@@ -21,10 +24,13 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import arcs.android.common.resurrection.ResurrectorService
+import arcs.android.devtools.DevToolsService
+import arcs.android.devtools.IDevToolsService
 import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
 import arcs.android.storage.service.BindingContext
 import arcs.android.storage.service.BindingContextStatsImpl
+import arcs.android.storage.service.DevToolsBindingContext
 import arcs.android.storage.service.StorageServiceManager
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
@@ -71,6 +77,19 @@ open class StorageService : ResurrectorService() {
     private val stats = BindingContextStatsImpl()
     private val log = TaggedLog { "StorageService" }
 
+    var devToolsService: IDevToolsService? = null
+    val connection = object : ServiceConnection {
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            if (0 != applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) {
+                devToolsService = IDevToolsService.Stub.asInterface(service)
+            }
+        }
+
+        override fun onServiceDisconnected(arg0: ComponentName) {
+            devToolsService = null
+        }
+    }
+
     @ExperimentalCoroutinesApi
     override fun onCreate() {
         super.onCreate()
@@ -115,6 +134,8 @@ open class StorageService : ResurrectorService() {
     override fun onBind(intent: Intent): IBinder? {
         log.debug { "onBind: $intent" }
 
+        val devToolsIntent = Intent(this, DevToolsService::class.java)
+
         if (intent.action == MANAGER_ACTION) {
             return StorageServiceManager(coroutineContext, stores)
         }
@@ -124,6 +145,25 @@ open class StorageService : ResurrectorService() {
         ) { "No StoreOptions found in Intent" }
 
         val options = parcelableOptions.actual
+
+        if (0 != applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) {
+            bindService(devToolsIntent, connection, Context.BIND_AUTO_CREATE)
+            log.debug { "DevToolsBindingContext" }
+
+            return DevToolsBindingContext(
+                stores.computeIfAbsent(options.storageKey) { Store(options) },
+                coroutineContext,
+                stats,
+                devToolsService
+            ) { storageKey, message ->
+                when (message) {
+                    is ProxyMessage.ModelUpdate<*, *, *>,
+                    is ProxyMessage.Operations<*, *, *> -> resurrectClients(storageKey)
+                    is ProxyMessage.SyncRequest<*, *, *> -> Unit
+                }
+            }
+        }
+
         return BindingContext(
             stores.computeIfAbsent(options.storageKey) { Store(options) },
             coroutineContext,

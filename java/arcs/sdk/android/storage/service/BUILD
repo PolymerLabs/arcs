@@ -11,6 +11,8 @@ arcs_kt_android_library(
     deps = [
         "//java/arcs/android/common/resurrection",
         "//java/arcs/android/crdt",
+        "//java/arcs/android/devtools",
+        "//java/arcs/android/devtools:aidl",
         "//java/arcs/android/storage",
         "//java/arcs/android/storage/database",
         "//java/arcs/android/storage/service",

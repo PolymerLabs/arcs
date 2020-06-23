@@ -28,6 +28,8 @@ arcs_kt_android_library(
     resource_files = glob(["res/**/*"]),
     deps = [
         ":manifest",
+        "//java/arcs/android/devtools",
+        "//java/arcs/android/devtools:aidl",
         "//java/arcs/android/host",
         "//java/arcs/android/sdk/host",
         "//java/arcs/android/storage/database",

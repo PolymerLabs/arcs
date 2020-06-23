@@ -13,6 +13,7 @@
   xmlns:tools="http://schemas.android.com/tools"
   package="arcs.android.demo">
   <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="29"/>
+  <uses-permission android:name="android.permission.INTERNET"/>
 
   <application
     android:icon="@mipmap/ic_launcher"
@@ -44,5 +45,7 @@
         <action android:name="arcs.android.host.ARC_HOST"/>
       </intent-filter>
     </service>
+
+    <service android:name="arcs.android.devtools.DevToolsService"/>
   </application>
 </manifest>
