@@ -1,5 +1,5 @@
 meta
-  namespace: arcs.showcase.typevariables
+  namespace: src.tools.tests
 
 particle Ingest
   action: writes [Action {sessionId: Text, action: Text, timestampInMs: Number}]
