@@ -5,16 +5,16 @@ load(
 )
 
 arcs_kt_gen(
-    name = "var_generation",
-    srcs = ["variable.arcs"],
+    name = "variable_generation",
+    srcs = ["Variable.arcs"],
 )
 
 arcs_kt_jvm_test_suite(
-    name = "variable-tests",
+    name = "variables",
     srcs = glob(["*Test.kt"]),
     package = "arcs.showcase.typevariables",
     deps = [
-        ":var_generation",
+        ":variable_generation",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",

@@ -1,12 +1,6 @@
 meta
   namespace: arcs.showcase.typevariables
 
-particle Variable
-  h0: reads ~a
-  h1: writes ~a
-  h2: reads ~b with {num: Number}
-  h3: writes ~b with {flavor: Text}
-
 particle Ingest
   action: writes [Action {sessionId: Text, action: Text, timestampInMs: Number}]
 
