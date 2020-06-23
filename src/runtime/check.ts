@@ -10,7 +10,7 @@
 
 import * as AstNode from './manifest-ast-nodes.js';
 import {Direction} from './manifest-ast-nodes.js';
-import {Claim, ParticleClaim} from './particle-claim.js';
+import {ParticleClaim} from './claim.js';
 import {Type} from './type.js';
 import {assert} from '../platform/assert-web.js';
 

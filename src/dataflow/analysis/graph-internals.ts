@@ -18,8 +18,8 @@
  * of Node/Edge like ParticleNode, etc.
  */
 
-import {Claim, ClaimType} from '../../runtime/particle-claim.js';
-import {Check} from '../../runtime/particle-check.js';
+import {Claim, ClaimType} from '../../runtime/claim.js';
+import {Check} from '../../runtime/check.js';
 import {DeepSet} from './deep-set.js';
 import {OrderedSet} from './ordered-set.js';
 import {assert} from '../../platform/assert-web.js';

@@ -19,7 +19,7 @@ import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, To
 import {TypeChecker, TypeListInfo} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Fate, Direction} from '../manifest-ast-nodes.js';
-import {ClaimIsTag, Claim} from '../particle-claim.js';
+import {ClaimIsTag, Claim} from '../claim.js';
 import {StorageKey} from '../storageNG/storage-key.js';
 import {Capabilities, Ttl, Queryable, Shareable} from '../capabilities.js';
 import {AnnotationRef} from './annotation.js';

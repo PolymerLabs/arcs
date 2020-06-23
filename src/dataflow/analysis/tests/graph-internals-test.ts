@@ -11,7 +11,7 @@
 import {Flow, FlowModifier, TagOperation, FlowCheck, FlowSet} from '../graph-internals.js';
 import {assert} from '../../../platform/chai-web.js';
 import {TestEdge, TestNode} from '../testing/flow-graph-testing.js';
-import {ClaimIsTag} from '../../../runtime/particle-claim.js';
+import {ClaimIsTag} from '../../../runtime/claim.js';
 
 describe('Flow', () => {
   it('starts empty', () => {

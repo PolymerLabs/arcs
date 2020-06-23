@@ -9,7 +9,7 @@
  */
 
 import {Node, Edge, FlowModifier, FlowCheck} from './graph-internals.js';
-import {ClaimType, Claim} from '../../runtime/particle-claim.js';
+import {ClaimType, Claim} from '../../runtime/claim.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {assert} from '../../platform/assert-web.js';
 import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
