@@ -16,7 +16,7 @@ import {Schema} from './schema.js';
 import {InterfaceType, SlotType, Type, TypeLiteral, TypeVariableInfo} from './type.js';
 import {Literal} from './hot.js';
 import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './check.js';
-import {ParticleClaim, createParticleClaim} from './claim.js';
+import {ParticleClaim, createClaim} from './claim.js';
 import {ManifestStringBuilder} from './manifest-string-builder.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {AnnotationRef} from './recipe/annotation.js';
@@ -573,7 +573,7 @@ export class ParticleSpec {
         } else if (handle.claims.some(claim => claim.target === target)) {
           throw new Error(`Can't make multiple claims on the same target (${target}).`);
         }
-        const particleClaim = createParticleClaim(handle, statement, this.handleConnectionMap);
+        const particleClaim = createClaim(handle, statement, this.handleConnectionMap);
         handle.claims.push(particleClaim);
         results.push(particleClaim);
       });

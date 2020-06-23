@@ -9,7 +9,7 @@
  */
 
 import {Node, Edge, FlowModifier, FlowCheck} from './graph-internals.js';
-import {ClaimType, Claim} from '../../runtime/claim.js';
+import {ClaimType, ClaimExpression} from '../../runtime/claim.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {assert} from '../../platform/assert-web.js';
 import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
@@ -245,7 +245,7 @@ function isSchemaFieldCompatibleWithReference(field: any, target: ReferenceType<
   }
 }
 
-function getClaimsFromHandleConnection(spec: HandleConnectionSpec): Claim[] {
+function getClaimsFromHandleConnection(spec: HandleConnectionSpec): ClaimExpression[] {
   if (!spec.claims || spec.claims.length === 0) {
     return [];
   }
@@ -257,7 +257,7 @@ function getClaimsFromHandleConnection(spec: HandleConnectionSpec): Claim[] {
   return spec.claims[0].claims;
 }
 
-function getClaimsFromStore(handle: Handle): Claim[] {
+function getClaimsFromStore(handle: Handle): ClaimExpression[] {
   if (!handle.claims || handle.claims.size === 0) {
     return [];
   }
