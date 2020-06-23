@@ -48,6 +48,7 @@ arcs_kt_library(
         "//java/arcs/core/data:rawentity",  # buildcleaner: keep
         "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/util:data-util",
+        "//java/arcs/core/storage/analytics",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/util",
         "//java/arcs/core/type",
