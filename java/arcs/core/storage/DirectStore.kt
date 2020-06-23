@@ -514,13 +514,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 ) as? Driver<Data>
             ) { "No driver exists to support storage key ${options.storageKey}" }
 
-            val localModel = crdtType.createCrdtModel().apply {
-                options.model?.let { merge(it) }
-            }
-
             return DirectStore(
                 options,
-                localModel = localModel,
+                localModel = crdtType.createCrdtModel(),
                 driver = driver
             ).also { store ->
                 driver.registerReceiver(options.versionToken) { data, version ->
