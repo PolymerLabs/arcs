@@ -1,6 +1,7 @@
 package arcs.android.entity
 
 import android.app.Application
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -25,16 +26,18 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class SameHandleManagerTest : HandleManagerTestBase() {
 
-    val fakeLifecycleOwner = object : LifecycleOwner {
-        private val lifecycle = LifecycleRegistry(this)
-        override fun getLifecycle() = lifecycle
+    class FakeLifecycleOwner : LifecycleOwner {
+        val lifecycleRegistry = LifecycleRegistry(this)
+        override fun getLifecycle() = lifecycleRegistry
     }
 
+    lateinit var fakeLifecycleOwner: FakeLifecycleOwner
     lateinit var app: Application
 
     @Before
     override fun setUp() {
         super.setUp()
+        fakeLifecycleOwner = FakeLifecycleOwner()
         app = ApplicationProvider.getApplicationContext()
         schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
         readHandleManager = EntityHandleManager(
@@ -57,39 +60,36 @@ class SameHandleManagerTest : HandleManagerTestBase() {
     }
 
     @After
-    override fun tearDown() = super.tearDown()
+    override fun tearDown() {
+        super.tearDown()
+        fakeLifecycleOwner.lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
+    }
 
-    @Ignore("b/154947352 - Deflake")
     @Test
     override fun singleton_clearOnAClearDataWrittenByB() {
         super.singleton_clearOnAClearDataWrittenByB()
     }
 
-    @Ignore("b/154947352 - Deflake")
     @Test
     override fun collection_clearingElementsFromA_clearsThemFromB() {
         super.collection_clearingElementsFromA_clearsThemFromB()
     }
 
-    @Ignore("b/156435662 - Deflake")
     @Test
     override fun collection_referenceLiveness() {
         super.collection_referenceLiveness()
     }
 
-    @Ignore("b/156863049 - Deflake")
     @Test
     override fun singleton_referenceLiveness() {
         super.singleton_referenceLiveness()
     }
 
-    @Ignore("b/156994024 - Deflake")
     @Test
     override fun singleton_withTTL() {
         super.singleton_withTTL()
     }
 
-    @Ignore("b/157390220 - Deflake")
     @Test
     override fun singleton_writeAndReadBackAndClear() {
         super.singleton_writeAndReadBackAndClear()
