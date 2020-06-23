@@ -63,7 +63,7 @@ export abstract class Capability {
   abstract setLeastRestrictive(other: Capability): boolean;
 
   isCompatible(other: Capability): boolean {
-    return this.constructor.name === other.constructor.name;
+    return this.tag === other.tag;
   }
 
   toRange(): CapabilityRange { return new CapabilityRange(this, this); }
@@ -304,7 +304,7 @@ export abstract class BooleanCapability extends Capability {
   }
 
   compare(other: Capability): CapabilityComparison {
-    assert(other instanceof BooleanCapability);
+    assert(this.isCompatible(other));
     const otherCapability = other as BooleanCapability;
     if (this.value === otherCapability.value) {
       return CapabilityComparison.Equivalent;
@@ -401,7 +401,7 @@ export class CapabilityRange extends Capability {
   }
 
   isEquivalent(other: Capability): boolean {
-    if (other instanceof CapabilityRange) {
+    if (other.tag === CapabilityRange.tag) {
       const range = other as CapabilityRange;
       return this.min.isEquivalent(range.min) && this.max.isEquivalent(range.max);
     }
@@ -409,14 +409,14 @@ export class CapabilityRange extends Capability {
   }
 
   isCompatible(other: Capability): boolean {
-    if (other instanceof CapabilityRange) {
+    if (other.tag === CapabilityRange.tag) {
       return this.min.isCompatible((other as CapabilityRange).min);
     }
     return this.min.isCompatible(other);
   }
 
   contains(other: Capability): boolean {
-    if (other instanceof CapabilityRange) {
+    if (other.tag === CapabilityRange.tag) {
       const range = other as CapabilityRange;
       return this.min.isSameOrLessStrict(range.min) && this.max.isSameOrStricter(range.max);
     }

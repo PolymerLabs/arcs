@@ -17,10 +17,10 @@ import arcs.core.util.Time
 sealed class CapabilityNew {
     enum class Comparison { LessStrict, Equivalent, Stricter }
 
-    fun isEquivalent(other: CapabilityNew): Boolean {
+    open fun isEquivalent(other: CapabilityNew): Boolean {
         return compare(other) == Comparison.Equivalent
     }
-    fun contains(other: CapabilityNew) = isEquivalent(other)
+    open fun contains(other: CapabilityNew) = isEquivalent(other)
     fun isLessStrict(other: CapabilityNew) = compare(other) == Comparison.LessStrict
     fun isSameOrLessStrict(other: CapabilityNew) = compare(other) != Comparison.Stricter
     fun isStricter(other: CapabilityNew) = compare(other) == Comparison.Stricter
@@ -33,8 +33,13 @@ sealed class CapabilityNew {
             is Ttl -> compare(other as Ttl)
             is Queryable -> compare(other as Queryable)
             is Shareable -> compare(other as Shareable)
+            is Range -> throw UnsupportedOperationException(
+                "Capability.Range comparison not supported yet."
+            )
         }
     }
+
+    open fun toRange() = Range(this, this)
 
     /** Capability describing persistence requirement for the store. */
     data class Persistence(val kind: Kind) : CapabilityNew() {
@@ -53,6 +58,30 @@ sealed class CapabilityNew {
             val ON_DISK = Persistence(Kind.OnDisk)
             val IN_MEMORY = Persistence(Kind.InMemory)
             val NONE = Persistence(Kind.None)
+
+            val ANY = Range(Persistence.UNRESTRICTED, Persistence.NONE)
+
+            fun fromAnnotations(annotations: List<Annotation>): Persistence? {
+                val kinds = mutableSetOf<Kind>()
+                for (annotation in annotations) {
+                    if (arrayOf("onDisk", "persistent").contains(annotation.name)) {
+                        kinds.add(Kind.OnDisk)
+                    }
+                    if (arrayOf("inMemory", "tiedToArc", "tiedToRuntime")
+                        .contains(annotation.name)) {
+                        kinds.add(Kind.InMemory)
+                    }
+                }
+                return when {
+                    kinds.isEmpty() -> null
+                    else -> {
+                        require(kinds.size == 1) {
+                            "Containing multiple persistence capabilities: $annotations"
+                        }
+                        Persistence(kinds.elementAt(0))
+                    }
+                }
+            }
         }
     }
 
@@ -67,7 +96,7 @@ sealed class CapabilityNew {
             is Infinite -> -1
         }
         init {
-            require(count > 0 || isInfinite) {
+            require(count >= 0 || isInfinite) {
                 "must be either positive count or infinite, " +
                     "but got count=$count and isInfinite=$isInfinite"
             }
@@ -97,6 +126,33 @@ sealed class CapabilityNew {
         companion object {
             const val TTL_INFINITE = -1
             const val MILLIS_IN_MIN = 60 * 1000L
+
+            val ZERO = Ttl.Millis(0)
+            val ANY = Range(Ttl.Infinite(), Ttl.ZERO)
+
+            private val TTL_PATTERN =
+                "^([0-9]+)[ ]*(day[s]?|hour[s]?|minute[s]?|[d|h|m])$".toRegex()
+
+            fun fromString(ttlStr: String): Ttl {
+                val ttlMatch = requireNotNull(TTL_PATTERN.matchEntire(ttlStr.trim())) {
+                    "Invalid TTL $ttlStr."
+                }
+                val (_, count, units) = ttlMatch.groupValues
+                // Note: consider using idiomatic KT types:
+                // https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.time/-duration-unit/
+                return when (units.trim()) {
+                    "m", "minute", "minutes" -> Ttl.Minutes(count.toInt())
+                    "h", "hour", "hours" -> Ttl.Hours(count.toInt())
+                    "d", "day", "days" -> Ttl.Days(count.toInt())
+                    else -> throw IllegalStateException("Invalid TTL units $units")
+                }
+            }
+
+            fun fromAnnotations(annotations: List<Annotation>): Ttl? {
+                return annotations.find { it.name == "ttl" }?.let {
+                    CapabilityNew.Ttl.fromString(it.getStringParam("value"))
+                }
+            }
         }
     }
 
@@ -107,6 +163,15 @@ sealed class CapabilityNew {
                 value == other.value -> Comparison.Equivalent
                 value -> Comparison.Stricter
                 else -> Comparison.LessStrict
+            }
+        }
+        companion object {
+            val ANY = Range(Encryption(false), Encryption(true))
+
+            fun fromAnnotations(annotations: List<Annotation>): Encryption? {
+                return annotations.find { it.name == "encrypted" }?.let {
+                    CapabilityNew.Encryption(true)
+                }
             }
         }
     }
@@ -120,6 +185,16 @@ sealed class CapabilityNew {
                 else -> Comparison.LessStrict
             }
         }
+
+        companion object {
+            val ANY = Range(Queryable(false), Queryable(true))
+
+            fun fromAnnotations(annotations: List<Annotation>): Queryable? {
+                return annotations.find { it.name == "queryable" }?.let {
+                    CapabilityNew.Queryable(true)
+                }
+            }
+        }
     }
 
     /** Capability describing whether the store needs to be shareable across arcs. */
@@ -131,5 +206,40 @@ sealed class CapabilityNew {
                 else -> Comparison.LessStrict
             }
         }
+
+        companion object {
+            val ANY = Range(Shareable(false), Shareable(true))
+
+            fun fromAnnotations(annotations: List<Annotation>): Shareable? {
+                return annotations.find {
+                    arrayOf("shareable", "tiedToRuntime").contains(it.name)
+                }?.let { CapabilityNew.Shareable(true) }
+            }
+        }
+    }
+
+    data class Range(val min: CapabilityNew, val max: CapabilityNew) : CapabilityNew() {
+        init {
+            require(min.isSameOrLessStrict(max)) {
+                "Minimum capability in a range must be equivalent or less strict than maximum."
+            }
+        }
+
+        override fun isEquivalent(other: CapabilityNew): Boolean {
+            return when (other) {
+                is Range -> min.isEquivalent(other.min) && max.isEquivalent(other.max)
+                else -> min.isEquivalent(other) && max.isEquivalent(other)
+            }
+        }
+
+        override fun contains(other: CapabilityNew): Boolean {
+            return when (other) {
+                is Range ->
+                    min.isSameOrLessStrict(other.min) && max.isSameOrStricter(other.max)
+                else -> min.isSameOrLessStrict(other) && max.isSameOrStricter(other)
+            }
+        }
+
+        override fun toRange() = this
     }
 }
