@@ -23,6 +23,7 @@ import arcs.core.host.ArcState.Stopped
 import arcs.core.host.ArcStateChangeRegistration
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
+import java.lang.RuntimeException
 
 /**
  * Represents an instantiated Arc running on one or more [ArcHost]s. An [Arc] can be stopped
@@ -147,8 +148,15 @@ class Arc internal constructor(
         if (arcState == state) return this
 
         val deferred: CompletableDeferred<Arc> = CompletableDeferred()
-        onArcStateChangeFiltered(state) {
-            deferred.complete(this@Arc)
+
+        onArcStateChange {
+            when(it) {
+                state -> deferred.complete(this@Arc)
+                Error -> deferred.completeExceptionally(
+                    ArcErrorException("Arc failed to start.")
+                )
+                else -> Unit
+            }
         }
 
         fetchCurrentStates()
@@ -166,4 +174,11 @@ class Arc internal constructor(
     suspend fun stop() = allocator.stopArc(id)
 
     @Suppress("UNUSED_PARAMETER") private fun <T> sync(obj: Any, block: () -> T) = block()
+
+    /** Used for signaling to listeners that an Arc has entered the Error state. */
+    class ArcErrorException(
+        msg: String = "Arc reached Error state",
+        cause: Throwable? = null
+    ) : RuntimeException(msg, cause)
+
 }
