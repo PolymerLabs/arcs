@@ -117,7 +117,7 @@ export class CheckHasTag {
 
   constructor(readonly tag: string, readonly isNot: boolean) {}
 
-  static fromASTNode(astNode: AstNode.ParticleCheckHasTag) {
+  static fromASTNode(astNode: AstNode.CheckHasTag) {
     return new CheckHasTag(astNode.tag, astNode.isNot);
   }
 
@@ -132,7 +132,7 @@ export class CheckIsFromHandle {
 
   constructor(readonly parentHandle: HandleConnectionSpecInterface, readonly isNot: boolean) {}
 
-  static fromASTNode(astNode: AstNode.ParticleCheckIsFromHandle, handleConnectionMap: Map<string, HandleConnectionSpecInterface>) {
+  static fromASTNode(astNode: AstNode.CheckIsFromHandle, handleConnectionMap: Map<string, HandleConnectionSpecInterface>) {
     const parentHandle = handleConnectionMap.get(astNode.parentHandle);
     if (!parentHandle) {
       throw new Error(`Unknown "check is from handle" handle name: ${astNode.parentHandle}.`);
@@ -151,7 +151,7 @@ export class CheckIsFromOutput {
 
   constructor(readonly output: HandleConnectionSpecInterface, readonly isNot: boolean) {}
 
-  static fromASTNode(astNode: AstNode.ParticleCheckIsFromOutput, handleConnectionMap: Map<string, HandleConnectionSpecInterface>) {
+  static fromASTNode(astNode: AstNode.CheckIsFromOutput, handleConnectionMap: Map<string, HandleConnectionSpecInterface>) {
     const output = handleConnectionMap.get(astNode.output);
     if (!output) {
       throw new Error(`Unknown "check is from output" output name: ${astNode.output}.`);
@@ -173,7 +173,7 @@ export class CheckIsFromStore {
 
   constructor(readonly storeRef: StoreReference, readonly isNot: boolean) {}
 
-  static fromASTNode(astNode: AstNode.ParticleCheckIsFromStore) {
+  static fromASTNode(astNode: AstNode.CheckIsFromStore) {
     return new CheckIsFromStore({
       type: astNode.storeRef.type,
       store: astNode.storeRef.store,
@@ -197,7 +197,7 @@ export class CheckImplication {
 
   constructor(readonly antecedent: CheckExpression, readonly consequent: CheckExpression) {}
 
-  static fromASTNode(astNode: AstNode.ParticleCheckImplication, handleConnectionMap: Map<string, HandleConnectionSpecInterface>) {
+  static fromASTNode(astNode: AstNode.CheckImplication, handleConnectionMap: Map<string, HandleConnectionSpecInterface>) {
     const antecedent = createCheckExpression(astNode.antecedent, handleConnectionMap);
     const consequent = createCheckExpression(astNode.consequent, handleConnectionMap);
     return new CheckImplication(antecedent, consequent);
@@ -209,7 +209,7 @@ export class CheckImplication {
 }
 
 /** Converts the given AST node into a CheckCondition object. */
-function createCheckCondition(astNode: AstNode.ParticleCheckCondition, handleConnectionMap: Map<string, HandleConnectionSpecInterface>): CheckCondition {
+function createCheckCondition(astNode: AstNode.CheckCondition, handleConnectionMap: Map<string, HandleConnectionSpecInterface>): CheckCondition {
   switch (astNode.checkType) {
     case CheckType.HasTag:
       return CheckHasTag.fromASTNode(astNode);
@@ -227,7 +227,7 @@ function createCheckCondition(astNode: AstNode.ParticleCheckCondition, handleCon
 }
 
 /** Converts the given AST node into a CheckExpression object. */
-function createCheckExpression(astNode: AstNode.ParticleCheckExpression, handleConnectionMap: Map<string, HandleConnectionSpecInterface>): CheckExpression {
+function createCheckExpression(astNode: AstNode.CheckExpression, handleConnectionMap: Map<string, HandleConnectionSpecInterface>): CheckExpression {
   if (astNode.kind === 'check-boolean-expression') {
     assert(astNode.children.length >= 2, 'Boolean check expressions must have at least two children.');
     return new CheckBooleanExpression(astNode.operator, astNode.children.map(child => createCheckExpression(child, handleConnectionMap)));
@@ -239,7 +239,7 @@ function createCheckExpression(astNode: AstNode.ParticleCheckExpression, handleC
 /** Converts the given AST node into a Check object. */
 export function createCheck(
     checkTarget: CheckTarget,
-    astNode: AstNode.ParticleCheckStatement,
+    astNode: AstNode.CheckStatement,
     handleConnectionMap: Map<string, HandleConnectionSpecInterface>): Check {
   const expression = createCheckExpression(astNode.expression, handleConnectionMap);
   return new Check(checkTarget, astNode.target.fieldPath, expression);

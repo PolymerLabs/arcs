@@ -46,7 +46,7 @@ export class ClaimIsTag {
 
   constructor(readonly isNot: boolean, readonly tag: string) {}
 
-  static fromASTNode(astNode: AstNode.ParticleClaimIsTag) {
+  static fromASTNode(astNode: AstNode.ClaimIsTag) {
     return new ClaimIsTag(astNode.isNot, astNode.tag);
   }
 
@@ -63,7 +63,7 @@ export class ClaimDerivesFrom {
       readonly fieldPath: string[]) {}
 
   static fromASTNode(
-      astNode: AstNode.ParticleClaimDerivesFrom,
+      astNode: AstNode.ClaimDerivesFrom,
       handleConnectionMap: Map<string, HandleConnectionSpec>) {
 
     // Convert handle names into HandleConnectionSpec objects.
@@ -88,7 +88,7 @@ export class ClaimDerivesFrom {
 
 export function createClaim(
     handle: HandleConnectionSpec,
-    astNode: AstNode.ParticleClaimStatement,
+    astNode: AstNode.ClaimStatement,
     handleConnectionMap: Map<string, HandleConnectionSpec>): Claim {
   const claims: ClaimExpression[] = astNode.expression.map(claimNode => {
     switch (claimNode.claimType) {

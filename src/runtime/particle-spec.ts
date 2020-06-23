@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Modality} from './modality.js';
-import {Direction, SlotDirection, ParticleClaimStatement, ParticleCheckStatement} from './manifest-ast-nodes.js';
+import {Direction, SlotDirection, ClaimStatement, CheckStatement} from './manifest-ast-nodes.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {InterfaceType, SlotType, Type, TypeLiteral, TypeVariableInfo} from './type.js';
@@ -236,8 +236,8 @@ export interface SerializedParticleSpec extends Literal {
   implBlobUrl: string | null;
   modality: string[];
   slotConnections: SerializedSlotConnectionSpec[];
-  trustClaims?: ParticleClaimStatement[];
-  trustChecks?: ParticleCheckStatement[];
+  trustClaims?: ClaimStatement[];
+  trustChecks?: CheckStatement[];
   annotations?: AnnotationRef[];
 }
 
@@ -555,7 +555,7 @@ export class ParticleSpec {
     return this.toManifestString();
   }
 
-  private validateTrustClaims(statements: ParticleClaimStatement[]): Claim[] {
+  private validateTrustClaims(statements: ClaimStatement[]): Claim[] {
     const results: Claim[] = [];
     if (statements) {
       statements.forEach(statement => {
@@ -581,7 +581,7 @@ export class ParticleSpec {
     return results;
   }
 
-  private validateTrustChecks(checks: ParticleCheckStatement[]): Check[] {
+  private validateTrustChecks(checks: CheckStatement[]): Check[] {
     const results: Check[] = [];
     if (checks) {
       const providedSlotNames = this.getProvidedSlotsByName();
