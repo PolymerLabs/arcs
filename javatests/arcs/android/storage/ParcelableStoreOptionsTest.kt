@@ -33,8 +33,7 @@ class ParcelableStoreOptionsTest {
             RamDiskStorageKey("test"),
             CountType(),
             StorageMode.Direct,
-            versionToken = "Foo",
-            model = CrdtCount.Data()
+            versionToken = "Foo"
         )
 
         val marshalled = with(Parcel.obtain()) {

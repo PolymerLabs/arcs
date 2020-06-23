@@ -52,7 +52,6 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
      * If there's a parsed model then it's stored here and provided to [activate] when
      * reconstituting an [ActiveStore].
      */
-    var model: Data? = options.model
     private val parsedVersionToken: String? = options.versionToken
     val versionToken: String?
         get() = activeStore?.versionToken ?: parsedVersionToken
@@ -73,8 +72,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
             type = type,
             mode = mode,
             baseStore = this,
-            versionToken = parsedVersionToken,
-            model = model
+            versionToken = parsedVersionToken
         )
         // If we were given a specific factory to use, use it; otherwise use the default factory.
         val activeStore = (activationFactory ?: defaultFactory).invoke(options)
