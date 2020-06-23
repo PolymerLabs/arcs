@@ -49,7 +49,7 @@ class PolicyProtoTest {
         val e = assertFailsWith<UnsupportedOperationException> {
             PolicyProto.getDefaultInstance().decode()
         }
-        assertThat(e).hasMessageThat().isEqualTo("Unknown egress type: EGRESS_TYPE_UNSPECIFIED")
+        assertThat(e).hasMessageThat().startsWith("Unknown egress type:")
     }
 
     @Test
@@ -93,7 +93,7 @@ class PolicyProtoTest {
             )
             .build()
         val e = assertFailsWith<UnsupportedOperationException> { proto.decode() }
-        assertThat(e).hasMessageThat().isEqualTo("Unknown retention medium: MEDIUM_UNSPECIFIED")
+        assertThat(e).hasMessageThat().startsWith("Unknown retention medium:")
     }
 
     @Test
