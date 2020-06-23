@@ -720,6 +720,24 @@ ${particleStr1}
     `);
     assert.equal(manifest.meta.namespace, 'com.some.namespace');
   });
+  it('parses and type checks a recipe with nested schemas', async () => {
+    const manifest = await parseManifest(`
+      particle P in 'a.js'
+        writer: writes * {inner: inline {x: Text, y: List<Number>}, z: Text}
+
+      particle Q in 'b.js'
+        reader: reads * {inner: inline {y: List<Number>}, z: Text}
+      
+      recipe
+        h0: create *
+        P
+          writer: writes h0
+        Q
+          reader: reads h0
+    `);
+    const recipe = manifest.recipes[0];
+    assert.isTrue(recipe.normalize());
+  });
   describe('refinement types', async () => {
     it('can construct manifest containing schema with refinement types', Flags.withFieldRefinementsAllowed(async () => {
       const manifest = await parseManifest(`

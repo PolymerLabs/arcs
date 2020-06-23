@@ -13,6 +13,7 @@ import {Manifest} from '../manifest.js';
 import {Handle} from '../recipe/handle.js';
 import {TypeChecker, TypeListInfo} from '../recipe/type-checker.js';
 import {EntityType, SlotType, TypeVariable, CollectionType, BigCollectionType, TupleType, Type} from '../type.js';
+import {Schema} from '../schema.js';
 
 describe('TypeChecker', () => {
   it('resolves a trio of in [~a], out [~b], in [Product]', async () => {
@@ -494,6 +495,35 @@ describe('TypeChecker', () => {
     result.maybeEnsureResolved();
     assert(result.isResolved());
     assert(result.resolvedType() instanceof SlotType);
+  });
+
+  it('resolves a less restrictive inline entity write against a more restrictive inline entity read', () => {
+    const innerWriteSchema = new EntityType(new Schema(['Inner'], {a: 'Text', b: 'Number'}));
+    const outerWriteSchema = new Schema(['Outer'], {inner: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerWriteSchema}}});
+    const writeType = new EntityType(outerWriteSchema);
+
+    const innerReadSchema = new EntityType(new Schema(['Inner'], {a: 'Text'}));
+    const outerReadSchema = new Schema(['Outer'], {inner: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerReadSchema}}});
+    const readType = new EntityType(outerReadSchema);
+
+    const result = TypeChecker.processTypeList(null, [{type: writeType, direction: 'writes'}, {type: readType, direction: 'reads'}]);
+    assert(result.canEnsureResolved());
+    result.maybeEnsureResolved();
+    assert(result.isResolved());
+    assert.deepEqual(result.getEntitySchema().fields['inner'], outerReadSchema.fields['inner']);
+  });
+
+  it('does not resolve a more restrictive inline entity write against a less restrictive inline entity read', () => {
+    const innerWriteSchema = new EntityType(new Schema(['Inner'], {a: 'Text'}));
+    const outerWriteSchema = new Schema(['Outer'], {inner: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerWriteSchema}}});
+    const writeType = new EntityType(outerWriteSchema);
+
+    const innerReadSchema = new EntityType(new Schema(['Inner'], {a: 'Text', b: 'Number'}));
+    const outerReadSchema = new Schema(['Outer'], {inner: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerReadSchema}}});
+    const readType = new EntityType(outerReadSchema);
+
+    const result = TypeChecker.processTypeList(null, [{type: writeType, direction: 'writes'}, {type: readType, direction: 'reads'}]);
+    assert.isNull(result);
   });
 
   describe('Tuples', () => {

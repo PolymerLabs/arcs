@@ -140,6 +140,10 @@ export class Schema {
         return type.model.entitySchema.toInlineSchemaString();
       case 'schema-collection':
         return `[${Schema._typeString(type.schema)}]`;
+      case 'schema-ordered-list':
+        return `List<${Schema._typeString(type.schema)}>`;
+      case 'schema-nested':
+        return `inline ${Schema._typeString(type.schema)}`;
       default:
         throw new Error(`Unknown type kind ${type.kind} in schema ${this.name}`);
     }
@@ -206,7 +210,22 @@ export class Schema {
       if (fields[name] == undefined) {
         return AtLeastAsSpecific.NO;
       }
-      if (!Schema.typesEqual(fields[name], type)) {
+      if (type.kind && type.kind === 'schema-nested') {
+        if (!(fields[name].kind && fields[name].kind === 'schema-nested')) {
+          return AtLeastAsSpecific.NO;
+        }
+        const subResult = fields[name].schema.model.entitySchema.isEquivalentOrMoreSpecific(type.schema.model.entitySchema);
+        switch (subResult) {
+          case AtLeastAsSpecific.NO:
+            return AtLeastAsSpecific.NO;
+          case AtLeastAsSpecific.UNKNOWN:
+            best = AtLeastAsSpecific.UNKNOWN;
+            break;
+          default:
+            break;
+        }
+      }
+      else if (!Schema.typesEqual(fields[name], type)) {
         return AtLeastAsSpecific.NO;
       }
       const fieldRes = Refinement.isAtLeastAsSpecificAs(fields[name].refinement, type.refinement);
