@@ -8,16 +8,16 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Recipe} from '../runtime/recipe/recipe.js';
-import {Type, TypeVariable} from '../runtime/type.js';
+import {Type} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
 import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils.js';
-import {generateConnectionSpecType, generateConnectionType} from './kotlin-codegen-shared.js';
+import {generateConnectionType} from './kotlin-codegen-shared.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {AnnotationRef} from '../runtime/recipe/annotation.js';
 import {findLongRunningArcId} from './allocator-recipe-resolver.js';
-import {SchemaGraph, SchemaNode} from './schema2graph.js';
+import {SchemaNode} from './schema2graph.js';
 import {generateSchema, KotlinSchemaDescriptor} from './kotlin-schema-generator.js';
 import {Schema} from '../runtime/schema.js';
 
@@ -108,12 +108,14 @@ export class PlanGenerator {
         {startIndent: 24});
   }
 
+  // Generate schemas for connections that have a type variable.
   private async createSchemaForVariableHandleConnection(connection: HandleConnection): Promise<{schema: Schema, generation: string}> {
+      connection.type.maybeEnsureResolved();
       const schema = connection.type.resolvedType().getEntitySchema();
       const genNode = new SchemaNode(schema, connection.particle.spec, []);
       await genNode.calculateHash();
-      const schemaDescriptor = new KotlinSchemaDescriptor(genNode, false);
-      return {schema, generation: generateSchema(schemaDescriptor)};
+      const descriptor = new KotlinSchemaDescriptor(genNode, false);
+      return {schema, generation: generateSchema(descriptor)};
   }
 
   /** Generates a Kotlin `HandleMode` from a Direction and Type. */
