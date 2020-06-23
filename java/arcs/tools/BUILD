@@ -1,8 +1,5 @@
-load(
-    "//third_party/java/arcs/build_defs:build_defs.bzl",
-    "arcs_kt_jvm_library",
-)
 load("//third_party/java/arcs/build_defs:native.oss.bzl", "java_test")
+load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
 
 licenses(["notice"])
 
@@ -16,7 +13,7 @@ java_test(
     runtime_deps = [":run_dfa_main_lib"],
 )
 
-arcs_kt_jvm_library(
+kt_jvm_library(
     name = "run_dfa_main_lib",
     testonly = 1,
     srcs = ["RunDFAMain.kt"],
