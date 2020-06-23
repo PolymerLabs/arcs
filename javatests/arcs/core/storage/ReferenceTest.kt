@@ -58,8 +58,7 @@ class ReferenceTest {
         val options =
             StoreOptions<CrdtSet.Data<RawEntity>, CrdtSet.Operation<RawEntity>, Set<RawEntity>>(
                 storageKey = refModeKey,
-                type = CollectionType(EntityType(Person.SCHEMA)),
-                mode = StorageMode.ReferenceMode
+                type = CollectionType(EntityType(Person.SCHEMA))
             )
         val store = Store(options).activate()
 
@@ -86,8 +85,7 @@ class ReferenceTest {
         val collectionOptions =
             StoreOptions<CrdtSet.Data<Reference>, CrdtSet.Operation<Reference>, Set<Reference>>(
                 storageKey = collectionKey,
-                type = CollectionType(ReferenceType(EntityType(Person.SCHEMA))),
-                mode = StorageMode.Direct
+                type = CollectionType(ReferenceType(EntityType(Person.SCHEMA)))
             )
 
         @Suppress("UNCHECKED_CAST")

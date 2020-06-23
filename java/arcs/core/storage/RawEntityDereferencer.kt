@@ -49,8 +49,7 @@ class RawEntityDereferencer(
 
         val options = StoreOptions<CrdtEntity.Data, CrdtEntity.Operation, RawEntity>(
             storageKey,
-            EntityType(schema),
-            StorageMode.Direct
+            EntityType(schema)
         )
 
         val store = Store(options).activate(entityActivationFactory)

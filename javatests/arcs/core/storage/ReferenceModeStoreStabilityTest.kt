@@ -82,8 +82,7 @@ class ReferenceModeStoreStabilityTest {
         val store = Store(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RawEntity?>(
                 storageKey,
-                SingletonType(EntityType(schema)),
-                StorageMode.ReferenceMode
+                SingletonType(EntityType(schema))
             )
         ).activate()
 
@@ -122,8 +121,7 @@ class ReferenceModeStoreStabilityTest {
         val store = Store(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RawEntity?>(
                 storageKey,
-                CollectionType(EntityType(schema)),
-                StorageMode.ReferenceMode
+                CollectionType(EntityType(schema))
             )
         ).activate()
 
@@ -185,8 +183,7 @@ class ReferenceModeStoreStabilityTest {
         val store = Store(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RawEntity?>(
                 storageKey,
-                CollectionType(EntityType(schema)),
-                StorageMode.ReferenceMode
+                CollectionType(EntityType(schema))
             )
         ).activate()
 
@@ -248,8 +245,7 @@ class ReferenceModeStoreStabilityTest {
         val store = Store(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RawEntity?>(
                 storageKey,
-                SingletonType(EntityType(schema)),
-                StorageMode.ReferenceMode
+                SingletonType(EntityType(schema))
             )
         ).activate()
 
@@ -311,8 +307,7 @@ class ReferenceModeStoreStabilityTest {
         val store = Store(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RawEntity?>(
                 storageKey,
-                CollectionType(EntityType(schema)),
-                StorageMode.ReferenceMode
+                CollectionType(EntityType(schema))
             )
         ).activate()
 

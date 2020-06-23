@@ -609,8 +609,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         return ReferenceModeStore.create(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
                 testKey,
-                CollectionType(EntityType(schema)),
-                StorageMode.ReferenceMode
+                CollectionType(EntityType(schema))
             )
         )
     }
@@ -619,8 +618,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         return ReferenceModeStore.create(
             StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
                 testKey,
-                SingletonType(EntityType(schema)),
-                StorageMode.ReferenceMode
+                SingletonType(EntityType(schema))
             )
         )
     }
