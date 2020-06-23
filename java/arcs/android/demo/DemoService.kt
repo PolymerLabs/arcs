@@ -64,7 +64,7 @@ class DemoService : ArcHostService() {
 
     inner class ReadPerson : AbstractReadPerson() {
         override fun onReady() {
-            val name = handles.person.fetch()?.name ?: ""
+            val name = handles.person.fetchZZ()?.name ?: ""
             val notification =
                 Notification.Builder(this@DemoService, "arcs-demo-service")
                     .setSmallIcon(R.drawable.notification_template_icon_bg)
@@ -81,7 +81,7 @@ class DemoService : ArcHostService() {
 
     inner class WritePerson : AbstractWritePerson() {
         override fun onFirstStart() {
-            handles.person.store(WritePerson_Person("John Wick"))
+            handles.person.storeZZ(WritePerson_Person("John Wick"))
         }
     }
 }

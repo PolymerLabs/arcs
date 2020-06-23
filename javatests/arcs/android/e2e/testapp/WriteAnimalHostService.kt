@@ -49,7 +49,7 @@ class WriteAnimalHostService : ArcHostService() {
             context?.particles?.get("WriteAnimal")?.particle as? WriteAnimal
         writeAnimalParticle?.apply {
             scope.launch(handles.dispatcher) {
-                handles.animal.store(WriteAnimal_Animal("capybara"))
+                handles.animal.storeZZ(WriteAnimal_Animal("capybara"))
             }
         }
 
@@ -68,7 +68,7 @@ class WriteAnimalHostService : ArcHostService() {
 
     inner class WriteAnimal : AbstractWriteAnimal() {
         override fun onFirstStart() {
-            handles.animal.store(WriteAnimal_Animal("platypus"))
+            handles.animal.storeZZ(WriteAnimal_Animal("platypus"))
         }
     }
 

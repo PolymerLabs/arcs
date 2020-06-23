@@ -8,9 +8,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 class PurePerson : AbstractPurePerson() {
     override fun onStart() {
         handles.inputPerson.onUpdate {
-            val name = handles.inputPerson.fetch()?.name
+            val name = handles.inputPerson.fetchZZ()?.name
             if (name != null) {
-                handles.outputPerson.store(PurePerson_OutputPerson("Hello $name"))
+                handles.outputPerson.storeZZ(PurePerson_OutputPerson("Hello $name"))
             }
         }
     }

@@ -55,7 +55,7 @@ class ReadAnimalHostService : ArcHostService() {
     inner class ReadAnimal: AbstractReadAnimal() {
         override fun onStart() {
             handles.animal.onUpdate {
-                val name = handles.animal.fetch()?.name ?: ""
+                val name = handles.animal.fetchZZ()?.name ?: ""
 
                 val intent = Intent(this@ReadAnimalHostService, TestActivity::class.java)
                     .apply {

@@ -19,13 +19,13 @@ class ComputePeopleStats : AbstractComputePeopleStats() {
     }
 
     override fun onReady() {
-        calculateMedian(handles.people.fetchAll())
+        calculateMedian(handles.people.fetchAllZZ())
     }
 
     fun calculateMedian(people: Set<Person>) = when {
         people.isEmpty() -> {
             log.debug { "Clearing" }
-            handles.stats.clear()
+            handles.stats.clearZZ()
         }
         else -> {
             val newValue = people.map { it.age }.sorted().let {
@@ -33,7 +33,7 @@ class ComputePeopleStats : AbstractComputePeopleStats() {
             }
             val newStats = Stats(newValue)
             log.debug { "Calculated: $newStats" }
-            handles.stats.store(newStats)
+            handles.stats.storeZZ(newStats)
         }
     }
 }

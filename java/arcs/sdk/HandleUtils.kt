@@ -284,9 +284,9 @@ fun <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> combineUpdates(
 @Suppress("UNCHECKED_CAST")
 private fun <T> ReadableHandle<T>.getContent(): T =
     when (this) {
-        is ReadWriteSingletonHandle<*> -> fetch() as T
-        is ReadSingletonHandle<*> -> fetch() as T
-        is ReadWriteCollectionHandle<*> -> fetchAll() as T
-        is ReadCollectionHandle<*> -> fetchAll() as T
+        is ReadWriteSingletonHandle<*> -> fetchZZ() as T
+        is ReadSingletonHandle<*> -> fetchZZ() as T
+        is ReadWriteCollectionHandle<*> -> fetchAllZZ() as T
+        is ReadCollectionHandle<*> -> fetchAllZZ() as T
         else -> throw IllegalArgumentException("Unknown ReadableHandle type found")
     }

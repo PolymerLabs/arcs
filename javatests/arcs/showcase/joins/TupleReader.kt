@@ -14,7 +14,7 @@ package arcs.showcase.joins
 class TupleReader : AbstractReader() {
 
     suspend fun typeChecking() {
-        handles.data.fetchAll().forEach { tuple ->
+        handles.data.fetchAllZZ().forEach { tuple ->
             val product = checkNotNull(tuple.first.dereference())
             product.name
             product.photo

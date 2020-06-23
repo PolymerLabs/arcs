@@ -13,7 +13,7 @@ class SingleReadHandleParticle : AbstractSingleReadHandleParticle() {
     override fun onUpdate() { events.add("onUpdate:${data()}") }
     override fun onShutdown() { events.add("onShutdown") }
 
-    fun data() = handles.data.fetch()?.num.toString()
+    fun data() = handles.data.fetchZZ()?.num.toString()
 }
 
 class SingleWriteHandleParticle : AbstractSingleWriteHandleParticle() {
@@ -43,9 +43,9 @@ class MultiHandleParticle : AbstractMultiHandleParticle() {
     override fun onUpdate() { events.add("onUpdate:${data()}:${list()}:${config()}") }
     override fun onShutdown() { events.add("onShutdown") }
 
-    fun data() = handles.data.fetch()?.num.toString()
-    fun list() = handles.list.fetchAll().map { it.txt }.toSortedSet()
-    fun config() = handles.config.fetch()?.flg.toString()
+    fun data() = handles.data.fetchZZ()?.num.toString()
+    fun list() = handles.list.fetchAllZZ().map { it.txt }.toSortedSet()
+    fun config() = handles.config.fetchZZ()?.flg.toString()
 }
 
 class PausingParticle : AbstractPausingParticle() {
@@ -63,6 +63,6 @@ class PausingParticle : AbstractPausingParticle() {
     override fun onUpdate() { events.add("onUpdate:${data()}:${list()}") }
     override fun onShutdown() { events.add("onShutdown") }
 
-    fun data() = handles.data.fetch()?.num.toString()
-    fun list() = handles.list.fetchAll().map { it.txt }.toSortedSet()
+    fun data() = handles.data.fetchZZ()?.num.toString()
+    fun list() = handles.list.fetchAllZZ().map { it.txt }.toSortedSet()
 }

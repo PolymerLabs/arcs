@@ -10,7 +10,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
 
 fun <T : Entity> Reference<T>.dereferenceViaHandle(handle: ReadCollectionHandle<T>): T? {
-    return handle.fetchAll().firstOrNull { it.entityId == entityId }
+    return handle.fetchAllZZ().firstOrNull { it.entityId == entityId }
 }
 
 @TargetHost(ArcHost::class)
@@ -19,7 +19,7 @@ class Reader0 : AbstractReader0() {
 
     suspend fun read(): List<MyLevel0> = withContext(handles.level0.dispatcher) {
         handles.awaitReady()
-        handles.level0.fetchAll().map { it.fromArcs() }
+        handles.level0.fetchAllZZ().map { it.fromArcs() }
     }
 }
 
@@ -35,7 +35,7 @@ class Reader1 : AbstractReader1() {
 
     suspend fun read(): List<MyLevel1> = withContext(handles.level1.dispatcher) {
         handles.awaitReady()
-        handles.level1.fetchAll().map { it.fromArcs() }
+        handles.level1.fetchAllZZ().map { it.fromArcs() }
     }
 }
 
@@ -56,6 +56,6 @@ class Reader2 : AbstractReader2() {
 
     suspend fun read(): List<MyLevel2> = withContext(handles.level2.dispatcher) {
         handles.awaitReady()
-        handles.level2.fetchAll().map { it.fromArcs() }
+        handles.level2.fetchAllZZ().map { it.fromArcs() }
     }
 }

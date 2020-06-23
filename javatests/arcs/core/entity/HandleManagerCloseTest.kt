@@ -116,14 +116,14 @@ class HandleManagerCloseTest {
 
         withContext(handle.dispatcher) {
             listOf(
-                "store" to suspend { handle.store(person) },
+                "store" to suspend { handle.storeZZ(person) },
                 "onUpdate" to suspend { handle.onUpdate {} },
                 "onReady" to suspend { handle.onReady {} },
                 "onResync" to suspend { handle.onResync {} },
                 "onDesync" to suspend { handle.onDesync {} },
-                "clear" to suspend { handle.clear() },
-                "createReference" to suspend { handle.createReference(person); Unit },
-                "fetch" to suspend { handle.fetch(); Unit }
+                "clear" to suspend { handle.clearZZ() },
+                "createReference" to suspend { handle.createReferenceZZ(person); Unit },
+                "fetch" to suspend { handle.fetchZZ(); Unit }
             ).forEach { (name, fn) ->
                 log("calling $name")
                 assertSuspendingThrows(IllegalStateException::class) { fn() }
@@ -143,17 +143,17 @@ class HandleManagerCloseTest {
 
         withContext(handle.dispatcher) {
             listOf(
-                "store" to suspend { handle.store(person) },
-                "remove" to suspend { handle.remove(person) },
+                "store" to suspend { handle.storeZZ(person) },
+                "remove" to suspend { handle.removeZZ(person) },
                 "onUpdate" to suspend { handle.onUpdate {} },
                 "onReady" to suspend { handle.onReady {} },
                 "onResync" to suspend { handle.onResync {} },
                 "onDesync" to suspend { handle.onDesync {} },
-                "clear" to suspend { handle.clear() },
-                "createReference" to suspend { handle.createReference(person); Unit },
-                "fetchAll" to suspend { handle.fetchAll(); Unit },
-                "size" to suspend { handle.size(); Unit },
-                "isEmpty" to suspend { handle.isEmpty(); Unit }
+                "clear" to suspend { handle.clearZZ() },
+                "createReference" to suspend { handle.createReferenceZZ(person); Unit },
+                "fetchAll" to suspend { handle.fetchAllZZ(); Unit },
+                "size" to suspend { handle.sizeZZ(); Unit },
+                "isEmpty" to suspend { handle.isEmptyZZ(); Unit }
             ).forEach { (name, fn) ->
                 log("calling $name")
                 assertSuspendingThrows(IllegalStateException::class) { fn() }

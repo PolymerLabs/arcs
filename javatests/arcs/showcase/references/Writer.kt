@@ -12,9 +12,9 @@ import kotlinx.coroutines.withContext
 
 suspend fun <T : Entity> T.toReference(handle: ReadWriteCollectionHandle<T>): Reference<T> {
     if (this@toReference.entityId == null) {
-        handle.store(this@toReference)
+        handle.storeZZ(this@toReference)
     }
-    return handle.createReference(this@toReference)
+    return handle.createReferenceZZ(this@toReference)
 }
 
 @ExperimentalCoroutinesApi
@@ -24,7 +24,7 @@ class Writer0 : AbstractWriter0() {
 
     suspend fun write(item: MyLevel0) = withContext(handles.level0.dispatcher) {
         handles.awaitReady()
-        handles.level0.store(item.toArcs())
+        handles.level0.storeZZ(item.toArcs())
     }
 }
 
@@ -39,7 +39,7 @@ class Writer1 : AbstractWriter1() {
     )
     suspend fun write(item: MyLevel1) = withContext(handles.level1.dispatcher) {
         handles.awaitReady()
-        handles.level1.store(item.toArcs())
+        handles.level1.storeZZ(item.toArcs())
     }
 }
 
@@ -60,6 +60,6 @@ class Writer2 : AbstractWriter2() {
 
     suspend fun write(item: MyLevel2) = withContext(handles.level2.dispatcher) {
         handles.awaitReady()
-        handles.level2.store(item.toArcs())
+        handles.level2.storeZZ(item.toArcs())
     }
 }

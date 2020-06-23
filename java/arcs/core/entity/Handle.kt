@@ -46,7 +46,7 @@ interface Handle {
     fun onReady(action: () -> Unit)
 
     /** Release resources needed by this, unregister all callbacks. */
-    fun close()
+    fun closeZZ()
 
     // TODO(b/158785940): move internal methods to an internal interface
     /** Internal method used to connect [StorageProxy] events to the [ParticleContext]. */
@@ -138,22 +138,22 @@ interface ReadableHandle<UpdateType> : Handle {
      * Note that this method only works for handles which store [Entity] types (i.e. not handles
      * containing [Reference]s). [E] must be the same type the handle stores.
      */
-    suspend fun <E : Entity> createReference(entity: E): Reference<E>
+    suspend fun <E : Entity> createReferenceZZ(entity: E): Reference<E>
 }
 
 /** A singleton handle with read access. */
 interface ReadSingletonHandle<T : Storable> : ReadableHandle<T?> {
     /** Returns the value of the singleton. */
-    fun fetch(): T?
+    fun fetchZZ(): T?
 }
 
 /** A singleton handle with write access. */
 interface WriteSingletonHandle<T : Storable> : Handle {
     /** Sets the value of the singleton. */
-    fun store(element: T): Job
+    fun storeZZ(element: T): Job
 
     /** Clears the value of the singleton. */
-    fun clear(): Job
+    fun clearZZ(): Job
 }
 
 /** A singleton handle with read and write access. */
@@ -162,31 +162,31 @@ interface ReadWriteSingletonHandle<T : Storable> : ReadSingletonHandle<T>, Write
 /** A collection handle with read access. */
 interface ReadCollectionHandle<T : Storable> : ReadableHandle<Set<T>> {
     /** The number of elements in the collection. */
-    fun size(): Int
+    fun sizeZZ(): Int
 
     /** Returns true if the collection is empty. */
-    fun isEmpty(): Boolean
+    fun isEmptyZZ(): Boolean
 
     /** Returns a set with all the entities in the collection. */
-    fun fetchAll(): Set<T>
+    fun fetchAllZZ(): Set<T>
 }
 
 /** A collection handle with write access. */
 interface WriteCollectionHandle<T : Storable> : Handle {
     /** Adds the given [element] to the collection. */
-    fun store(element: T): Job
+    fun storeZZ(element: T): Job
 
     /** Removes everything from the collection. */
-    fun clear(): Job
+    fun clearZZ(): Job
 
     /** Removes the given [element] from the collection. */
-    fun remove(element: T): Job
+    fun removeZZ(element: T): Job
 }
 
 /** A collection handle with query access. */
 interface QueryCollectionHandle<T : Storable, QueryArgs> : Handle {
     /** Returns a set with all the entities in the collection that match the associated query. */
-    fun query(args: QueryArgs): Set<T>
+    fun queryZZ(args: QueryArgs): Set<T>
 }
 
 /** A collection handle with read and write access. */

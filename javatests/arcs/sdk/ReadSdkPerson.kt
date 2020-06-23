@@ -9,7 +9,7 @@ class ReadSdkPerson : AbstractReadSdkPerson() {
         onStartCalled = true
         name = ""
         handles.person.onUpdate {
-            name = handles.person.fetch()?.name ?: ""
+            name = handles.person.fetchZZ()?.name ?: ""
         }
     }
 

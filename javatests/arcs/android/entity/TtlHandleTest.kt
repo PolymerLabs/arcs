@@ -101,7 +101,7 @@ class TtlHandleTest {
 
             // Set a time in the past. So that this entity is already expired.
             fakeTime.millis = 1L
-            storeEntity1 = handle.store(entity1)
+            storeEntity1 = handle.storeZZ(entity1)
             log("completing ready job")
             readyJob.complete()
         }
@@ -134,15 +134,15 @@ class TtlHandleTest {
         handle2.onReady {
             try {
                 log("in handle2.onReady")
-                assertThat(handle2.fetch()).isEqualTo(null)
+                assertThat(handle2.fetchZZ()).isEqualTo(null)
 
                 log("Replacing with entity 2 in handle 2.")
-                modifications.add(handle2.store(entity2))
-                assertThat(handle2.fetch()).isEqualTo(entity2)
+                modifications.add(handle2.storeZZ(entity2))
+                assertThat(handle2.fetchZZ()).isEqualTo(entity2)
 
                 log("Clearing handle 2")
-                modifications.add(handle2.clear())
-                assertThat(handle2.fetch()).isNull()
+                modifications.add(handle2.clearZZ())
+                assertThat(handle2.fetchZZ()).isNull()
                 readyDeferred.complete(Unit)
             } catch (e: Throwable) {
                 readyDeferred.completeExceptionally(e)
@@ -181,16 +181,16 @@ class TtlHandleTest {
             // Set a time in the past. So that this entity is already expired.
             fakeTime.millis = 1L
             log("handle.store(entity1)")
-            activeWrites.add(handle.store(entity1))
+            activeWrites.add(handle.storeZZ(entity1))
 
             // Then set time to now and add another entity - not expired.
             fakeTime.millis = System.currentTimeMillis()
             log("handle.store(entity2)")
-            activeWrites.add(handle.store(entity2))
+            activeWrites.add(handle.storeZZ(entity2))
 
             try {
                 log("handle should contain only entity 2")
-                assertThat(handle.fetchAll()).containsExactly(entity2)
+                assertThat(handle.fetchAllZZ()).containsExactly(entity2)
                 deferred.complete(Unit)
             } catch (e: Throwable) {
                 deferred.completeExceptionally(e)
@@ -211,10 +211,10 @@ class TtlHandleTest {
         deferred = CompletableDeferred()
         handle.onUpdate {
             try {
-                assertThat(handle.fetchAll()).containsExactly(entity2)
+                assertThat(handle.fetchAllZZ()).containsExactly(entity2)
 
-                activeWrites.add(handle.store(entity3))
-                assertThat(handle.fetchAll()).containsExactly(entity2, entity3)
+                activeWrites.add(handle.storeZZ(entity3))
+                assertThat(handle.fetchAllZZ()).containsExactly(entity2, entity3)
 
                 deferred.complete(Unit)
             } catch (e: Throwable) {
@@ -235,10 +235,10 @@ class TtlHandleTest {
         deferred = CompletableDeferred()
         handle2.onReady {
             try {
-                assertThat(handle2.fetchAll()).containsExactly(entity2, entity3)
+                assertThat(handle2.fetchAllZZ()).containsExactly(entity2, entity3)
 
-                activeWrites.add(handle2.store(entity4))
-                assertThat(handle2.fetchAll()).containsExactly(entity2, entity3, entity4)
+                activeWrites.add(handle2.storeZZ(entity4))
+                assertThat(handle2.fetchAllZZ()).containsExactly(entity2, entity3, entity4)
                 deferred.complete(Unit)
             } catch (e: Throwable) {
                 deferred.completeExceptionally(e)
@@ -279,7 +279,7 @@ class TtlHandleTest {
         handle1.onUpdate {
             try {
                 // Entity4 is present because it was first stored through handle2.
-                assertThat(handle1.fetchAll()).containsExactly(entity4)
+                assertThat(handle1.fetchAllZZ()).containsExactly(entity4)
                 deferred1.complete(Unit)
             } catch (e: Throwable) {
                 deferred1.completeExceptionally(e)
@@ -290,7 +290,7 @@ class TtlHandleTest {
         handle2.onUpdate {
             try {
                 // Entity1 is gone because it was first stored through handle1.
-                assertThat(handle2.fetchAll()).containsExactly(entity3, entity4)
+                assertThat(handle2.fetchAllZZ()).containsExactly(entity3, entity4)
                 deferred2.complete(Unit)
             } catch (e: Throwable) {
                 deferred2.completeExceptionally(e)
@@ -341,7 +341,7 @@ class TtlHandleTest {
             log("handle ready")
             // Store at time now, so entities are not expired.
             fakeTime.millis = System.currentTimeMillis()
-            storeEntity = handle.store(entity)
+            storeEntity = handle.storeZZ(entity)
             log("completing ready job")
             readyJob.complete()
         }

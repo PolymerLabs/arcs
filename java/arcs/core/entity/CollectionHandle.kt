@@ -54,18 +54,18 @@ class CollectionHandle<T : Storable, R : Referencable>(
     // region implement ReadCollectionHandle<T>
 
     // Use fetchAll to filter out expired items.
-    override fun size() = fetchAll().size
+    override fun sizeZZ() = fetchAllZZ().size
 
     // Use fetchAll to filter out expired items.
-    override fun isEmpty() = fetchAll().isEmpty()
+    override fun isEmptyZZ() = fetchAllZZ().isEmpty()
 
-    override fun fetchAll() = checkPreconditions {
+    override fun fetchAllZZ() = checkPreconditions {
         adaptValues(storageProxy.getParticleViewUnsafe())
     }
     // endregion
 
     // region implement QueryCollectionHandle<T, Any>
-    override fun query(args: Any): Set<T> = checkPreconditions {
+    override fun queryZZ(args: Any): Set<T> = checkPreconditions {
         (spec.entitySpecs.single().SCHEMA.query?.let { query ->
             storageProxy.getParticleViewUnsafe().filter {
                 val entity = checkNotNull(it as? RawEntity) {
@@ -78,7 +78,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
     // endregion
 
     // region implement WriteCollectionHandle<T>
-    override fun store(element: T): Job = checkPreconditions {
+    override fun storeZZ(element: T): Job = checkPreconditions {
         storageProxy.applyOp(
             CrdtSet.Operation.Add(
                 name,
@@ -89,7 +89,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
     }
 
     // TODO(b/159257058): don't read the collection contents for write ops
-    override fun clear(): Job = checkPreconditions {
+    override fun clearZZ(): Job = checkPreconditions {
         val individualJobs = storageProxy.getParticleViewUnsafe().map {
             storageProxy.applyOp(
                 CrdtSet.Operation.Remove(
@@ -119,7 +119,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
         masterJob
     }
 
-    override fun remove(element: T): Job = checkPreconditions {
+    override fun removeZZ(element: T): Job = checkPreconditions {
         storageProxy.applyOp(
             CrdtSet.Operation.Remove(
                 name,
@@ -140,7 +140,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
     override fun onResync(action: () -> Unit) =
         storageProxy.addOnResync(callbackIdentifier, action)
 
-    override suspend fun <E : Entity> createReference(entity: E): Reference<E> {
+    override suspend fun <E : Entity> createReferenceZZ(entity: E): Reference<E> {
         val entityId = requireNotNull(entity.entityId) {
             "Entity must have an ID before it can be referenced."
         }

@@ -72,7 +72,7 @@ class CollectionHandlePartitionMap(
                     partition.particles.map { it.particleName }.toSet()
                 )
                 log.debug { "Writing $entity" }
-                collection().store(entity)
+                collection().storeZZ(entity)
             }
         }
 
@@ -100,7 +100,7 @@ class CollectionHandlePartitionMap(
     override suspend fun readAndClearPartitions(arcId: ArcId): List<Plan.Partition> {
         val entities = entitiesForArc(arcId)
         val removals = withContext(collection().dispatcher) {
-            entities.map { collection().remove(it) }
+            entities.map { collection().removeZZ(it) }
         }
         removals.joinAll()
         return entities.map { entityToPartition(it) }
@@ -109,7 +109,7 @@ class CollectionHandlePartitionMap(
     /** Looks up [RawEntity]s representing [PlanPartition]s for a given [ArcId] */
     private suspend fun entitiesForArc(arcId: ArcId): List<EntityBase> {
         return withContext(collection().dispatcher) {
-            collection().fetchAll()
+            collection().fetchAllZZ()
         }.filter { it.getSingletonValue("arc") == arcId.toString() }
     }
 

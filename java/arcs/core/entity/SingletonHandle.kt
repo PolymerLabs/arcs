@@ -48,13 +48,13 @@ class SingletonHandle<T : Storable, R : Referencable>(
     }
 
     // region implement ReadSingletonHandle<T>
-    override fun fetch() = checkPreconditions {
+    override fun fetchZZ() = checkPreconditions {
         adaptValue(storageProxy.getParticleViewUnsafe())
     }
     // endregion
 
     // region implement WriteSingletonHandle<T>
-    override fun store(element: T): Job = checkPreconditions {
+    override fun storeZZ(element: T): Job = checkPreconditions {
         storageProxy.applyOp(
             CrdtSingleton.Operation.Update(
                 name,
@@ -64,7 +64,7 @@ class SingletonHandle<T : Storable, R : Referencable>(
         )
     }
 
-    override fun clear(): Job = checkPreconditions {
+    override fun clearZZ(): Job = checkPreconditions {
         storageProxy.applyOp(
             CrdtSingleton.Operation.Clear(
                 name,
@@ -84,7 +84,7 @@ class SingletonHandle<T : Storable, R : Referencable>(
     override fun onResync(action: () -> Unit) =
         storageProxy.addOnResync(callbackIdentifier, action)
 
-    override suspend fun <E : Entity> createReference(entity: E): Reference<E> {
+    override suspend fun <E : Entity> createReferenceZZ(entity: E): Reference<E> {
         val entityId = requireNotNull(entity.entityId) {
             "Entity must have an ID before it can be referenced."
         }

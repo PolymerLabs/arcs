@@ -67,11 +67,11 @@ class ArcHostContextParticle(
                 }
             }
             // Write Plan.HandleConnection
-            handles.handleConnections.clear()
-            connections.forEach { handles.handleConnections.store(it) }
+            handles.handleConnections.clearZZ()
+            connections.forEach { handles.handleConnections.storeZZ(it) }
 
             // TODO(b/155320932): remove. Workaround for createReference precondition
-            val storedConnections = handles.handleConnections.fetchAll()
+            val storedConnections = handles.handleConnections.fetchAllZZ()
 
             val particles = context.particles.map {
                 ArcHostContextParticle_Particles(
@@ -80,24 +80,24 @@ class ArcHostContextParticle(
                     particleState = it.value.particleState.name,
                     consecutiveFailures = it.value.consecutiveFailureCount.toDouble(),
                     handles = storedConnections.map { connection ->
-                        handles.handleConnections.createReference(connection)
+                        handles.handleConnections.createReferenceZZ(connection)
                     }.toSet()
                 )
             }
 
             // Write Plan.Particle + ParticleContext
-            handles.particles.clear()
-            particles.forEach { handles.particles.store(it) }
+            handles.particles.clearZZ()
+            particles.forEach { handles.particles.storeZZ(it) }
             // TODO(b/155320932): remove. Workaround for createReference precondition
-            val storedParticles = handles.particles.fetchAll()
+            val storedParticles = handles.particles.fetchAllZZ()
 
             val arcState = AbstractArcHostContextParticle.ArcHostContext(
                 arcId = arcId, hostId = hostId, arcState = context.arcState.name,
-                particles = storedParticles.map { handles.particles.createReference(it) }.toSet()
+                particles = storedParticles.map { handles.particles.createReferenceZZ(it) }.toSet()
             )
 
-            handles.arcHostContext.clear()
-            handles.arcHostContext.store(arcState)
+            handles.arcHostContext.clearZZ()
+            handles.arcHostContext.storeZZ(arcState)
         } catch (e: Exception) {
             // TODO: retry?
             throw IllegalStateException("Unable to serialize $arcId for $hostId", e)
@@ -117,7 +117,7 @@ class ArcHostContextParticle(
 
         try {
             // TODO(cromwellian): replace with .query(arcId, hostId) when queryHandles are efficient
-            val arcStateEntity = handles.arcHostContext.fetch()
+            val arcStateEntity = handles.arcHostContext.fetchZZ()
                 ?: return@onHandlesReady null
             val particles = arcStateEntity.particles.map {
                 requireNotNull(it.dereference()) {

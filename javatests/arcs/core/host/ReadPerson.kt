@@ -15,7 +15,7 @@ class ReadPerson : AbstractReadPerson() {
 
     override fun onStart() {
         handles.person.onUpdate {
-            name = handles.person.fetch()?.name ?: ""
+            name = handles.person.fetchZZ()?.name ?: ""
             if (name != "") {
                 if (!deferred.isCompleted) {
                     deferred.complete(true)

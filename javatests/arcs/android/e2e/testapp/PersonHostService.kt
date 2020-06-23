@@ -69,13 +69,13 @@ class PersonHostService : ArcHostService() {
         }
 
         override fun onReady() {
-            sendResult(handles.person.fetch()?.name ?: "")
+            sendResult(handles.person.fetchZZ()?.name ?: "")
         }
     }
 
     inner class WritePerson : AbstractWritePerson() {
         override fun onFirstStart() {
-            handles.person.store(WritePerson_Person("John Wick"))
+            handles.person.storeZZ(WritePerson_Person("John Wick"))
         }
     }
 

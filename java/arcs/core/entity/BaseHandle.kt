@@ -56,7 +56,7 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
         return block()
     }
 
-    override fun close() {
+    override fun closeZZ() {
         closed = true
         storageProxy.removeCallbacksForName(callbackIdentifier)
     }

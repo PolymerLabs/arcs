@@ -18,7 +18,7 @@ class WritePerson : AbstractWritePerson() {
     }
 
     override fun onReady() {
-        handles.person.store(WritePerson_Person("John Wick"))
+        handles.person.storeZZ(WritePerson_Person("John Wick"))
         wrote = true
         if (!deferred.isCompleted) {
             deferred.complete(true)

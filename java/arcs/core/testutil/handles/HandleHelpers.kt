@@ -25,23 +25,23 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.withContext
 
 /** Calls [Handle.close] with the handle's dispatcher context. */
-suspend fun <H : Handle> H.dispatchClose() = withContext(dispatcher) { close() }
+suspend fun <H : Handle> H.dispatchClose() = withContext(dispatcher) { closeZZ() }
 
 /** Calls [ReadableHandle.createReference] with the handle's dispatcher context. */
 suspend fun <H : ReadableHandle<U>, U, E : Entity>
             H.dispatchCreateReference(entity: E): Reference<E> =
-    withContext(dispatcher) { createReference(entity) }
+    withContext(dispatcher) { createReferenceZZ(entity) }
 
 /** Calls [ReadSingletonHandle.fetch] with the handle's dispatcher context. */
 suspend fun <H : ReadSingletonHandle<T>, T> H.dispatchFetch(): T? =
-    withContext(dispatcher) { fetch() }
+    withContext(dispatcher) { fetchZZ() }
 
 /**
  * Calls [WriteSingletonHandle.store] with the handle's dispatcher context and waits for it to
  * complete (including notifications being sent to other handles reading from the same store).
  */
 suspend fun <H : WriteSingletonHandle<T>, T> H.dispatchStore(element: T) {
-    withContext(dispatcher) { store(element) }.join()
+    withContext(dispatcher) { storeZZ(element) }.join()
     getProxy().waitForIdle()
 }
 
@@ -50,21 +50,21 @@ suspend fun <H : WriteSingletonHandle<T>, T> H.dispatchStore(element: T) {
  * complete (including notifications being sent to other handles reading from the same store).
  */
 suspend fun <H : WriteSingletonHandle<T>, T> H.dispatchClear() {
-    withContext(dispatcher) { clear() }.join()
+    withContext(dispatcher) { clearZZ() }.join()
     getProxy().waitForIdle()
 }
 
 /** Calls [ReadCollectionHandle.size] with the handle's dispatcher context. */
 suspend fun <H : ReadCollectionHandle<T>, T> H.dispatchSize(): Int =
-    withContext(dispatcher) { size() }
+    withContext(dispatcher) { sizeZZ() }
 
 /** Calls [ReadCollectionHandle.isEmpty] with the handle's dispatcher context. */
 suspend fun <H : ReadCollectionHandle<T>, T> H.dispatchIsEmpty(): Boolean =
-    withContext(dispatcher) { isEmpty() }
+    withContext(dispatcher) { isEmptyZZ() }
 
 /** Calls [ReadCollectionHandle.fetchAll] with the handle's dispatcher context. */
 suspend fun <H : ReadCollectionHandle<T>, T> H.dispatchFetchAll(): Set<T> =
-    withContext(dispatcher) { fetchAll() }
+    withContext(dispatcher) { fetchAllZZ() }
 
 /**
  * Calls [WriteCollectionHandle.store] with the handle's dispatcher context and waits for it to
@@ -74,7 +74,7 @@ suspend fun <H : ReadCollectionHandle<T>, T> H.dispatchFetchAll(): Set<T> =
  */
 suspend fun <H : WriteCollectionHandle<T>, T> H.dispatchStore(first: T, vararg rest: T) {
     withContext(dispatcher) {
-        listOf(store(first)) + rest.map { store(it) }
+        listOf(storeZZ(first)) + rest.map { storeZZ(it) }
     }.joinAll()
     getProxy().waitForIdle()
 }
@@ -87,7 +87,7 @@ suspend fun <H : WriteCollectionHandle<T>, T> H.dispatchStore(first: T, vararg r
  */
 suspend fun <H : WriteCollectionHandle<T>, T> H.dispatchRemove(first: T, vararg rest: T) {
     withContext(dispatcher) {
-        listOf(remove(first)) + rest.map { remove(it) }
+        listOf(removeZZ(first)) + rest.map { removeZZ(it) }
     }.joinAll()
     getProxy().waitForIdle()
 }
@@ -97,10 +97,10 @@ suspend fun <H : WriteCollectionHandle<T>, T> H.dispatchRemove(first: T, vararg 
  * complete (including notifications being sent to other handles reading from the same store).
  */
 suspend fun <H : WriteCollectionHandle<T>, T> H.dispatchClear() {
-    withContext(dispatcher) { clear() }.join()
+    withContext(dispatcher) { clearZZ() }.join()
     getProxy().waitForIdle()
 }
 
 /** Calls [QueryCollectionHandle.query] with the handle's dispatcher context. */
 suspend fun <H : QueryCollectionHandle<T, A>, T : Storable, A> H.dispatchQuery(args: A): Set<T> =
-    withContext(dispatcher) { query(args) }
+    withContext(dispatcher) { queryZZ(args) }
