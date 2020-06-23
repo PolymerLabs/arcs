@@ -426,8 +426,8 @@ Particle
     const args: AstNode.ParticleHandleConnection[] = [];
     const modality: string[] = [];
     const slotConnections: AstNode.RecipeParticleSlotConnection[] = [];
-    const trustClaims: AstNode.ParticleClaimStatement[] = [];
-    const trustChecks: AstNode.ParticleCheckStatement[] = [];
+    const trustClaims: AstNode.ClaimStatement[] = [];
+    const trustChecks: AstNode.CheckStatement[] = [];
     let description: AstNode.Description | null = null;
     let hasParticleHandleConnection = false;
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
@@ -455,9 +455,9 @@ Particle
           location: location() // TODO: FIXME Get the locations of the item descriptions.
         } as AstNode.Description;
         item.description.forEach(d => description[d.name] = d.pattern || d.patterns[0]);
-      } else if (item.kind === 'particle-trust-claim') {
+      } else if (item.kind === 'claim') {
         trustClaims.push(item);
-      } else if (item.kind === 'particle-trust-check') {
+      } else if (item.kind === 'check') {
         trustChecks.push(item);
       } else if (item.modality) {
         modality.push(item.modality);
@@ -491,69 +491,69 @@ ParticleItem "a particle item"
   / ParticleSlotConnection
   / Description
   / ParticleHandleConnection
-  / ParticleClaimStatement
-  / ParticleCheckStatement
+  / ClaimStatement
+  / CheckStatement
 
-ParticleClaimStatement
-  = 'claim' whiteSpace target:dottedFields whiteSpace expression:ParticleClaimExpression eolWhiteSpace
+ClaimStatement
+  = 'claim' whiteSpace target:dottedFields whiteSpace expression:ClaimExpression eolWhiteSpace
   {
     const targetParts = target.split('.');
     const handle = targetParts[0];
     const fieldPath = targetParts.slice(1);
-    return toAstNode<AstNode.ParticleClaimStatement>({
-      kind: 'particle-trust-claim',
+    return toAstNode<AstNode.ClaimStatement>({
+      kind: 'claim',
       handle,
       fieldPath,
       expression,
     });
   }
 
-ParticleClaimExpression
-  = first:ParticleClaim rest:(whiteSpace 'and' whiteSpace ParticleClaim)*
+ClaimExpression
+  = first:Claim rest:(whiteSpace 'and' whiteSpace Claim)*
   {
-    return [first, ...rest.map(item => item[3])] as AstNode.ParticleClaimExpression;
+    return [first, ...rest.map(item => item[3])] as AstNode.ClaimExpression;
   }
 
-ParticleClaim
-  = ParticleClaimIsTag
-  / ParticleClaimDerivesFrom
+Claim
+  = ClaimIsTag
+  / ClaimDerivesFrom
 
-ParticleClaimIsTag
+ClaimIsTag
   = 'is' whiteSpace not:('not' whiteSpace)? tag:lowerIdent
   {
-    return toAstNode<AstNode.ParticleClaimIsTag>({
-      kind: 'particle-trust-claim-is-tag',
+    return toAstNode<AstNode.ClaimIsTag>({
+      kind: 'claim-is-tag',
       claimType: ClaimType.IsTag,
       isNot: not != null,
       tag,
     });
   }
 
-ParticleClaimDerivesFrom
+ClaimDerivesFrom
   = 'derives from' whiteSpace target:dottedFields
   {
     const targetParts = target.split('.');
     const handle = targetParts[0];
     const fieldPath = targetParts.slice(1);
-    return toAstNode<AstNode.ParticleClaimDerivesFrom>({
-      kind: 'particle-trust-claim-derives-from',
+    return toAstNode<AstNode.ClaimDerivesFrom>({
+      kind: 'claim-derives-from',
       claimType: ClaimType.DerivesFrom,
       parentHandle: handle,
       fieldPath,
     });
   }
 
-ParticleCheckStatement
-  = 'check' whiteSpace target:ParticleCheckTarget whiteSpace expression:ParticleCheckExpressionBody eolWhiteSpace
+CheckStatement
+  = 'check' whiteSpace target:CheckTarget whiteSpace expression:CheckExpressionBody eolWhiteSpace
   {
-    return toAstNode<AstNode.ParticleCheckStatement>({
-      kind: 'particle-trust-check',
+    return toAstNode<AstNode.CheckStatement>({
+      kind: 'check',
       target,
       expression,
     });
   }
 
-ParticleCheckTarget
+CheckTarget
   = target:dottedFields isSlot:(whiteSpace 'data')?
   {
     const targetParts = target.split('.');
@@ -562,8 +562,8 @@ ParticleCheckTarget
     if (isSlot && fieldPath.length) {
       error('Checks on slots cannot specify a field');
     }
-    return toAstNode<AstNode.ParticleCheckTarget>({
-      kind: 'particle-check-target',
+    return toAstNode<AstNode.CheckTarget>({
+      kind: 'check-target',
       targetType: isSlot ? 'slot' : 'handle',
       name,
       fieldPath,
@@ -571,8 +571,8 @@ ParticleCheckTarget
   }
 
 // A series of check conditions using `and`/`or` operations (doesn't need to be surrounded by parentheses).
-ParticleCheckExpressionBody
-  = left:ParticleCheckExpression rest:(whiteSpace ('or'/'and') whiteSpace ParticleCheckExpression)*
+CheckExpressionBody
+  = left:CheckExpression rest:(whiteSpace ('or'/'and') whiteSpace CheckExpression)*
   {
     if (rest.length === 0) {
       return left;
@@ -582,74 +582,74 @@ ParticleCheckExpressionBody
       expected(`You cannot combine 'and' and 'or' operations in a single check expression. You must nest them inside parentheses.`);
     }
     const operator = rest[0][1];
-    return toAstNode<AstNode.ParticleCheckBooleanExpression>({
-      kind: 'particle-trust-check-boolean-expression',
+    return toAstNode<AstNode.CheckBooleanExpression>({
+      kind: 'check-boolean-expression',
       operator,
       children: [left, ...rest.map(item => item[3])],
     });
   }
 
 // Can be either a single check condition, or a series of conditions using `and`/`or` operations surrounded by parentheses.
-ParticleCheckExpression
-  = condition:ParticleCheckCondition { return condition; }
-  / '(' whiteSpace? condition:ParticleCheckExpressionBody whiteSpace? ')' { return condition; }
+CheckExpression
+  = condition:CheckCondition { return condition; }
+  / '(' whiteSpace? condition:CheckExpressionBody whiteSpace? ')' { return condition; }
 
-ParticleCheckCondition
-  = ParticleCheckImplication
-  / ParticleCheckIsFromHandle
-  / ParticleCheckIsFromStore
-  / ParticleCheckIsFromOutput
-  / ParticleCheckHasTag
+CheckCondition
+  = CheckImplication
+  / CheckIsFromHandle
+  / CheckIsFromStore
+  / CheckIsFromOutput
+  / CheckHasTag
 
-ParticleCheckImplication
-  = '(' whiteSpace? antecedent:ParticleCheckExpression whiteSpace? '=>' whiteSpace? consequent:ParticleCheckExpression whiteSpace? ')'
+CheckImplication
+  = '(' whiteSpace? antecedent:CheckExpression whiteSpace? '=>' whiteSpace? consequent:CheckExpression whiteSpace? ')'
   {
-    return toAstNode<AstNode.ParticleCheckImplication>({
-      kind: 'particle-trust-check-implication',
+    return toAstNode<AstNode.CheckImplication>({
+      kind: 'check-implication',
       checkType: CheckType.Implication,
       antecedent,
       consequent,
     });
   }
 
-ParticleCheckHasTag
+CheckHasTag
   = 'is' isNot:(whiteSpace 'not')? whiteSpace tag:lowerIdent
   {
-    return toAstNode<AstNode.ParticleCheckHasTag>({
-      kind: 'particle-trust-check-has-tag',
+    return toAstNode<AstNode.CheckHasTag>({
+      kind: 'check-has-tag',
       checkType: CheckType.HasTag,
       isNot: !!isNot,
       tag,
     });
   }
 
-ParticleCheckIsFromHandle
+CheckIsFromHandle
   = 'is' isNot:(whiteSpace 'not')? whiteSpace 'from' whiteSpace 'handle' whiteSpace parentHandle:lowerIdent
   {
-    return toAstNode<AstNode.ParticleCheckIsFromHandle>({
-      kind: 'particle-trust-check-is-from-handle',
+    return toAstNode<AstNode.CheckIsFromHandle>({
+      kind: 'check-is-from-handle',
       checkType: CheckType.IsFromHandle,
       isNot: !!isNot,
       parentHandle,
     });
   }
 
-ParticleCheckIsFromOutput
+CheckIsFromOutput
   = 'is' isNot:(whiteSpace 'not')? whiteSpace 'from' whiteSpace 'output' whiteSpace output:lowerIdent
   {
-    return toAstNode<AstNode.ParticleCheckIsFromOutput>({
-      kind: 'particle-trust-check-is-from-output',
+    return toAstNode<AstNode.CheckIsFromOutput>({
+      kind: 'check-is-from-output',
       checkType: CheckType.IsFromOutput,
       isNot: !!isNot,
       output,
     });
   }
 
-ParticleCheckIsFromStore
+CheckIsFromStore
   = 'is' isNot:(whiteSpace 'not')? whiteSpace 'from' whiteSpace 'store' whiteSpace storeRef:StoreReference
   {
-    return toAstNode<AstNode.ParticleCheckIsFromStore>({
-      kind: 'particle-trust-check-is-from-store',
+    return toAstNode<AstNode.CheckIsFromStore>({
+      kind: 'check-is-from-store',
       checkType: CheckType.IsFromStore,
       isNot: !!isNot,
       storeRef,
@@ -1614,7 +1614,7 @@ NestedSchemaType = 'inline' whiteSpace? schema:SchemaInline
     return toAstNode<AstNode.NestedSchema>({
       kind: 'schema-nested',
       schema
-    }); 
+    });
   }
 
 Adapter "an adapter, (e.g. adapter Foo(param: Person { name: Text }) => Friend { nickName: param.name } )"

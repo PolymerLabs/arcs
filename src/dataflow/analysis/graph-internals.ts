@@ -18,8 +18,8 @@
  * of Node/Edge like ParticleNode, etc.
  */
 
-import {Claim, ClaimType} from '../../runtime/particle-claim.js';
-import {Check} from '../../runtime/particle-check.js';
+import {ClaimExpression, ClaimType} from '../../runtime/claim.js';
+import {Check} from '../../runtime/check.js';
 import {DeepSet} from './deep-set.js';
 import {OrderedSet} from './ordered-set.js';
 import {assert} from '../../platform/assert-web.js';
@@ -189,7 +189,7 @@ export class FlowModifier {
     return modifier;
   }
 
-  static fromClaims(edge: Edge, claims: Claim[]): FlowModifier {
+  static fromClaims(edge: Edge, claims: ClaimExpression[]): FlowModifier {
     const modifier = new FlowModifier();
     if (claims) {
       for (const claim of claims) {
