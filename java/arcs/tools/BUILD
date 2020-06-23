@@ -17,7 +17,6 @@ kt_jvm_library(
     name = "run_dfa_main_lib",
     testonly = 1,
     srcs = ["RunDFAMain.kt"],
-    data = ["//tools:sigh_bin"],
     deps = [
         "//java/arcs/core/analysis",
         "//java/arcs/core/data",
