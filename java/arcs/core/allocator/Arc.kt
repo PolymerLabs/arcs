@@ -13,6 +13,7 @@ package arcs.core.allocator
 
 import arcs.core.common.ArcId
 import arcs.core.data.Plan
+import arcs.core.host.ArcHost
 import arcs.core.host.ArcState
 import arcs.core.host.ArcState.Deleted
 import arcs.core.host.ArcState.Error
@@ -20,13 +21,12 @@ import arcs.core.host.ArcState.Indeterminate
 import arcs.core.host.ArcState.NeverStarted
 import arcs.core.host.ArcState.Running
 import arcs.core.host.ArcState.Stopped
-import arcs.core.host.ArcStateChangeCallback
 import arcs.core.host.ArcStateChangeRegistration
+import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.update
 import java.lang.RuntimeException
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 /**
  * Represents an instantiated Arc running on one or more [ArcHost]s. An [Arc] can be stopped
@@ -42,13 +42,12 @@ class Arc internal constructor(
     val id: ArcId,
     private val allocator: Allocator,
     val partitions: List<Plan.Partition>,
-    private var arcStateInternal: ArcState = NeverStarted
+    private var arcStateInternal: AtomicRef<ArcState> = atomic(NeverStarted)
 ) {
-    private val arcStateChangeHandlers = mutableListOf<(ArcState) -> Unit>()
-    private val arcStatesByHostId = mutableMapOf<String, ArcState>()
-    // Used to remove the listener from the ArcHost later
-    private var registration: ArcStateChangeRegistration? = null
-    private val mutex = Mutex()
+    private val arcStateChangeHandlers = atomic(listOf<(ArcState) -> Unit>())
+    private val arcStatesByHostId = atomic(mapOf<String, ArcState>())
+    private val registered = atomic(false)
+    private val registrations = mutableMapOf<String, ArcStateChangeRegistration>()
 
     /**
      *  The current running state of an Arc. This is computed by computing the dominant state
@@ -58,17 +57,17 @@ class Arc internal constructor(
      *  is considered to be [Error].
      */
     var arcState: ArcState
-        get() = arcStateInternal
+        get() = arcStateInternal.value
         private set(state) {
-            arcStateInternal = state
+            arcStateInternal.update { state }
         }
 
     private suspend fun onArcStateChange(handler: (ArcState) -> Unit) {
-        mutex.withLock {
-            if (arcStateChangeHandlers.isEmpty()) {
-                registerChangeHandlerWithArcHosts()
-            }
-            arcStateChangeHandlers += handler
+        maybeRegisterChangeHandlerWithArcHosts()
+        arcStateChangeHandlers.update {
+            val newHandlers = it.toMutableList()
+            newHandlers += handler
+            newHandlers
         }
         handler(arcState)
     }
@@ -99,49 +98,51 @@ class Arc internal constructor(
     }
 
     private fun recomputeArcState(): List<(ArcState) -> Unit> {
-        val states = arcStatesByHostId.values
-        val oldState = arcState
-        arcState = when {
-            states.any { it == Deleted } -> Deleted
-            states.any { it == Error } -> Error
-            states.all { it == Running } -> Running
-            states.all { it == Stopped } -> Stopped
-            states.all { it == NeverStarted } -> NeverStarted
-            else -> Indeterminate
-        }
+        val states = arcStatesByHostId.value.values.toList()
+        val oldState = arcStateInternal.value
+        val newState = when {
+                states.any { it == Deleted } -> Deleted
+                states.any { it == Error } -> Error
+                states.all { it == Running } -> Running
+                states.all { it == Stopped } -> Stopped
+                states.all { it == NeverStarted } -> NeverStarted
+                else -> Indeterminate
+            }
+        arcStateInternal.update { newState }
 
         return when (oldState != arcState) {
-            true -> arcStateChangeHandlers.toList()
+            true -> arcStateChangeHandlers.value.toList()
             false -> emptyList()
         }
     }
 
     private suspend fun fetchCurrentStates() {
-        partitions.forEach {
+        val newStates: Map<String, ArcState> = partitions.map {
             val arcHost = allocator.lookupArcHost(it.arcHost)
-            arcStatesByHostId[it.arcHost] = arcHost.lookupArcHostStatus(it)
-        }
+            it.arcHost to arcHost.lookupArcHostStatus(it)
+        }.associateBy({ it.first }, { it.second })
+
+        arcStatesByHostId.update { newStates }
     }
 
-    private suspend fun registerChangeHandlerWithArcHosts() {
-        require(registration == null) {
-            "registration called more than once"
+    private suspend fun maybeRegisterChangeHandlerWithArcHosts() {
+        if (registered.compareAndSet(false, true)) {
+            return
         }
+
         // first poll the current states of all hosts
         fetchCurrentStates()
 
         // Register event listeners
         partitions.forEach { partition ->
             val arcHost = allocator.lookupArcHost(partition.arcHost)
-            registration = arcHost.addOnArcStateChange(id) { _, state ->
-                val handlersToNotify = runBlocking {
-                    mutex.withLock {
-                        arcStatesByHostId[partition.arcHost] = state
-                        recomputeArcState()
-                    }
+            registrations[partition.arcHost] = arcHost.addOnArcStateChange(id) { _, state ->
+                arcStatesByHostId.update {
+                    val newStates = it.toMutableMap()
+                    newStates[partition.arcHost] = state
+                    newStates
                 }
-
-                fireArcStateChange(handlersToNotify)
+                fireArcStateChange(recomputeArcState())
             }
         }
 
@@ -164,13 +165,8 @@ class Arc internal constructor(
         }
         onArcStateChange(handler)
 
-        val handlersToNotify = mutex.withLock {
-            fetchCurrentStates()
-            recomputeArcState()
-        }
-
-        fireArcStateChange(handlersToNotify)
-
+        fetchCurrentStates()
+        fireArcStateChange(recomputeArcState())
         return deferred.await().also {
             arcStateChangeHandlers -= handler
         }
