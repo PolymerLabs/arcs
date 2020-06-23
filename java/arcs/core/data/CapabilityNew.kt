@@ -14,26 +14,33 @@ package arcs.core.data
 import arcs.core.util.Time
 
 /** A base class for all the store capabilities. */
-sealed class CapabilityNew {
+sealed class CapabilityNew<V : CapabilityNew<V>> {
     enum class Comparison { LessStrict, Equivalent, Stricter }
 
-    fun isEquivalent(other: CapabilityNew): Boolean {
+    fun isEquivalent(other: V): Boolean {
         return compare(other) == Comparison.Equivalent
     }
-    fun contains(other: CapabilityNew) = isEquivalent(other)
-    fun isLessStrict(other: CapabilityNew) = compare(other) == Comparison.LessStrict
-    fun isSameOrLessStrict(other: CapabilityNew) = compare(other) != Comparison.Stricter
-    fun isStricter(other: CapabilityNew) = compare(other) == Comparison.Stricter
-    fun isSameOrStricter(other: CapabilityNew) = compare(other) != Comparison.LessStrict
+    fun contains(other: V) = isEquivalent(other)
+    fun isLessStrict(other: V) = compare(other) == Comparison.LessStrict
+    fun isSameOrLessStrict(other: V) = compare(other) != Comparison.Stricter
+    fun isStricter(other: V) = compare(other) == Comparison.Stricter
+    fun isSameOrStricter(other: V) = compare(other) != Comparison.LessStrict
 
-    abstract fun compare(other: CapabilityNew): Comparison
+    open fun compare(other: V): Comparison {
+        return when (this) {
+            is Persistence -> compare(other as Persistence)
+            is Encryption -> compare(other as Encryption)
+            is Ttl -> compare(other as Ttl)
+            is Queryable -> compare(other as Queryable)
+            is Shareable -> compare(other as Shareable)
+        }
+    }
 
     /** Capability describing persistence requirement for the store. */
-    data class Persistence(val kind: Kind) : CapabilityNew() {
+    data class Persistence(val kind: Kind) : CapabilityNew<Persistence>() {
         enum class Kind { None, InMemory, OnDisk, Unrestricted }
 
-        override fun compare(other: CapabilityNew): Comparison {
-            require(other is Persistence) { "Cannot compare Persistence with $other" }
+        override fun compare(other: Persistence): Comparison {
             return when {
                 kind.ordinal < other.kind.ordinal -> Comparison.Stricter
                 kind.ordinal > other.kind.ordinal -> Comparison.LessStrict
@@ -50,7 +57,7 @@ sealed class CapabilityNew {
     }
 
     /** Capability describing retention policy of the store. */
-    sealed class Ttl(count: Int, val isInfinite: Boolean = false) : CapabilityNew() {
+    sealed class Ttl(count: Int, val isInfinite: Boolean = false) : CapabilityNew<Ttl>() {
         /** Number of milliseconds for retention, or -1 for infinite. */
         val millis: Long = count * when (this) {
             is Millis -> 1
@@ -66,8 +73,7 @@ sealed class CapabilityNew {
             }
         }
 
-        override fun compare(other: CapabilityNew): Comparison {
-            require(other is Ttl) { "Cannot compare Ttl with $other" }
+        override fun compare(other: Ttl): Comparison {
             return when {
                 (isInfinite && other.isInfinite) || millis == other.millis -> Comparison.Equivalent
                 isInfinite -> Comparison.LessStrict
@@ -95,9 +101,8 @@ sealed class CapabilityNew {
     }
 
     /** Capability describing whether the store needs to be encrypted. */
-    data class Encryption(val value: Boolean) : CapabilityNew() {
-        override fun compare(other: CapabilityNew): Comparison {
-            require(other is Encryption) { "Cannot compare Encryption with $other" }
+    data class Encryption(val value: Boolean) : CapabilityNew<Encryption>() {
+        override fun compare(other: Encryption): Comparison {
             return when {
                 value == other.value -> Comparison.Equivalent
                 value -> Comparison.Stricter
@@ -107,9 +112,8 @@ sealed class CapabilityNew {
     }
 
     /** Capability describing whether the store needs to be queryable. */
-    data class Queryable(val value: Boolean) : CapabilityNew() {
-        override fun compare(other: CapabilityNew): Comparison {
-            require(other is Queryable) { "Cannot compare Queryable with $other" }
+    data class Queryable(val value: Boolean) : CapabilityNew<Queryable>() {
+        override fun compare(other: Queryable): Comparison {
             return when {
                 value == other.value -> Comparison.Equivalent
                 value -> Comparison.Stricter
@@ -119,9 +123,8 @@ sealed class CapabilityNew {
     }
 
     /** Capability describing whether the store needs to be shareable across arcs. */
-    data class Shareable(val value: Boolean) : CapabilityNew() {
-        override fun compare(other: CapabilityNew): Comparison {
-            require(other is Shareable) { "Cannot compare Shareable with $other" }
+    data class Shareable(val value: Boolean) : CapabilityNew<Shareable>() {
+        override fun compare(other: Shareable): Comparison {
             return when {
                 value == other.value -> Comparison.Equivalent
                 value -> Comparison.Stricter
