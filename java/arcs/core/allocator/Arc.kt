@@ -22,10 +22,10 @@ import arcs.core.host.ArcState.NeverStarted
 import arcs.core.host.ArcState.Running
 import arcs.core.host.ArcState.Stopped
 import arcs.core.host.ArcStateChangeRegistration
+import java.lang.RuntimeException
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
-import java.lang.RuntimeException
 import kotlinx.coroutines.CompletableDeferred
 
 /**
@@ -64,11 +64,7 @@ class Arc internal constructor(
 
     private suspend fun onArcStateChange(handler: (ArcState) -> Unit) {
         maybeRegisterChangeHandlerWithArcHosts()
-        arcStateChangeHandlers.update {
-            val newHandlers = it.toMutableList()
-            newHandlers += handler
-            newHandlers
-        }
+        arcStateChangeHandlers.update { it + handler }
         handler(arcState)
     }
 
@@ -168,7 +164,7 @@ class Arc internal constructor(
         fetchCurrentStates()
         fireArcStateChange(recomputeArcState())
         return deferred.await().also {
-            arcStateChangeHandlers -= handler
+            arcStateChangeHandlers.update { it - handler }
         }
     }
 
