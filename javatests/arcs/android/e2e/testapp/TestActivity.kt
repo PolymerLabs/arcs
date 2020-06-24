@@ -27,12 +27,14 @@ import arcs.android.devtools.IDevToolsService
 import arcs.android.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
 import arcs.core.common.ArcId
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
+import arcs.core.data.SingletonType
 import arcs.core.entity.EntitySpec
 import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
-import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
@@ -282,12 +284,8 @@ class TestActivity : AppCompatActivity() {
                 HandleSpec(
                     "collectionHandle",
                     HandleMode.ReadWrite,
-                    toType(
-                        TestEntity.Companion,
-                        HandleDataType.Entity,
-                        HandleContainerType.Collection
-                    ),
-                    setOf<EntitySpec<*>>(TestEntity.Companion)
+                    CollectionType(EntityType(TestEntity.SCHEMA)),
+                    TestEntity
                 ),
                 when (storageMode) {
                     TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
@@ -328,12 +326,8 @@ class TestActivity : AppCompatActivity() {
                 HandleSpec(
                     "singletonHandle",
                     HandleMode.ReadWrite,
-                    toType(
-                        TestEntity,
-                        HandleDataType.Entity,
-                        HandleContainerType.Singleton
-                    ),
-                    setOf<EntitySpec<*>>(TestEntity)
+                    SingletonType(EntityType(TestEntity.SCHEMA)),
+                    TestEntity
                 ),
                 when (storageMode) {
                     TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey

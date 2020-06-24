@@ -76,27 +76,13 @@ data class HandleSpec(
     val type: Type,
     val entitySpecs: Set<EntitySpec<*>>
 ) {
-
-    @Deprecated(
-        "Use main constructor",
-        ReplaceWith(
-            /* ktlint-disable max-line-length */
-            "HandleSpec(baseName, mode, toType(entitySpec, dataType, containerType), setOf(entitySpec))"
-            /* ktlint-enable max-line-length */
-        )
-    )
+    // Convenience constructor for a single EntitySpec.
     constructor(
         baseName: String,
         mode: HandleMode,
-        containerType: HandleContainerType,
-        entitySpec: EntitySpec<*>,
-        dataType: HandleDataType = HandleDataType.Entity
-    ) : this(
-        baseName,
-        mode,
-        toType(entitySpec, dataType, containerType),
-        setOf(entitySpec)
-    )
+        type: Type,
+        entitySpec: EntitySpec<*>
+    ) : this(baseName, mode, type, setOf(entitySpec))
 
     val containerType: HandleContainerType
         get() = when (type) {
@@ -118,23 +104,6 @@ data class HandleSpec(
             is SingletonType<*> -> type.containedType
             else -> throw IllegalStateException("Handle type should be a Collection or a Singleton")
         }
-
-    companion object {
-        fun toType(
-            entitySpec: EntitySpec<*>,
-            dataType: HandleDataType,
-            containerType: HandleContainerType
-        ): Type {
-            val innerType = when (dataType) {
-                HandleDataType.Entity -> EntityType(entitySpec.SCHEMA)
-                HandleDataType.Reference -> ReferenceType(EntityType(entitySpec.SCHEMA))
-            }
-            return when (containerType) {
-                HandleContainerType.Collection -> CollectionType(innerType)
-                HandleContainerType.Singleton -> SingletonType(innerType)
-            }
-        }
-    }
 }
 
 typealias HandleMode = HandleMode

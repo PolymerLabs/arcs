@@ -18,6 +18,7 @@ arcs_kt_jvm_test_suite(
         ":particle",  # buildcleaner: keep
         ":schemas",
         "//java/arcs/core/common",
+        "//java/arcs/core/data",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
         "//java/arcs/core/storage",

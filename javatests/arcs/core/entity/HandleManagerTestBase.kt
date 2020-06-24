@@ -304,7 +304,7 @@ open class HandleManagerTestBase {
                 "hatCollection",
                 HandleMode.ReadWrite,
                 CollectionType(EntityType(Hat.SCHEMA)),
-                setOf(Hat)
+                Hat
             ),
             hatCollectionKey
         ) as ReadWriteCollectionHandle<Hat>
@@ -583,7 +583,7 @@ open class HandleManagerTestBase {
         val entity = TestParticle_Entities(text = "Hello", number = 1.0, list = listOf(1L, 2L, 4L, 2L))
         val writeHandle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
         val readHandle = readHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
-        
+
         val updateDeferred = readHandle.onUpdateDeferred { it.size == 1 }
         withContext(writeHandle.dispatcher) {
             writeHandle.store(entity)
@@ -758,7 +758,7 @@ open class HandleManagerTestBase {
             "hatCollection",
             HandleMode.ReadWrite,
             CollectionType(EntityType(Hat.SCHEMA)),
-            setOf(Hat)
+            Hat
         )
         val hatCollection = writeHandleManager.createHandle(
             hatSpec,
@@ -1056,7 +1056,7 @@ open class HandleManagerTestBase {
             name,
             HandleMode.ReadWrite,
             SingletonType(EntityType(Person.SCHEMA)),
-            setOf(Person)
+            Person
         ),
         storageKey,
         ttl
@@ -1078,7 +1078,7 @@ open class HandleManagerTestBase {
             name,
             HandleMode.ReadWriteQuery,
             CollectionType(EntityType(entitySpec.SCHEMA)),
-            setOf(entitySpec)
+            entitySpec
         ),
         storageKey,
         ttl
@@ -1093,7 +1093,7 @@ open class HandleManagerTestBase {
             name,
             HandleMode.ReadWrite,
             SingletonType(ReferenceType(EntityType(Person.SCHEMA))),
-            setOf(Person)
+            Person
         ),
         storageKey,
         ttl
@@ -1108,7 +1108,7 @@ open class HandleManagerTestBase {
             name,
             HandleMode.ReadWriteQuery,
             CollectionType(ReferenceType(EntityType(Person.SCHEMA))),
-            setOf(Person)
+            Person
         ),
         storageKey,
         ttl

@@ -14,13 +14,12 @@ package arcs.android.storage.service
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.common.ArcId
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
+import arcs.core.data.SingletonType
 import arcs.core.entity.DummyEntity
-import arcs.core.entity.EntitySpec
-import arcs.core.entity.HandleContainerType
-import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
-import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.SchemaRegistry
@@ -197,12 +196,8 @@ class StorageServiceManagerTest {
             HandleSpec(
                 "name",
                 HandleMode.ReadWrite,
-                toType(
-                    DummyEntity,
-                    HandleDataType.Entity,
-                    HandleContainerType.Singleton
-                ),
-                setOf<EntitySpec<*>>(DummyEntity)
+                SingletonType(EntityType(DummyEntity.SCHEMA)),
+                DummyEntity
             ),
             storageKey
         ).awaitReady() as ReadWriteSingletonHandle<DummyEntity>
@@ -215,12 +210,8 @@ class StorageServiceManagerTest {
             HandleSpec(
                 "name",
                 HandleMode.ReadWrite,
-                toType(
-                    DummyEntity,
-                    HandleDataType.Entity,
-                    HandleContainerType.Collection
-                ),
-                setOf<EntitySpec<*>>(DummyEntity)
+                CollectionType(EntityType(DummyEntity.SCHEMA)),
+                DummyEntity
             ),
             storageKey
         ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>

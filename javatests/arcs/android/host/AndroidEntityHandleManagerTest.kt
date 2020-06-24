@@ -7,17 +7,17 @@ import androidx.lifecycle.LifecycleRegistry
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.HandleMode
-import arcs.core.entity.HandleContainerType
 import arcs.core.entity.HandleSpec
 import arcs.core.data.RawEntity
+import arcs.core.data.SingletonType
 import arcs.core.entity.Handle
-import arcs.core.entity.HandleDataType
-import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadWriteCollectionHandle
@@ -377,12 +377,8 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             HandleSpec(
                 handleName,
                 handleMode,
-                toType(
-                    entitySpec,
-                    HandleDataType.Entity,
-                    HandleContainerType.Singleton
-                ),
-                setOf(entitySpec)
+                SingletonType(EntityType(entitySpec.SCHEMA)),
+                entitySpec
             ),
             singletonKey
         ).awaitReady().also {
@@ -400,12 +396,8 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             HandleSpec(
                 handleName,
                 handleMode,
-                toType(
-                    entitySpec,
-                    HandleDataType.Entity,
-                    HandleContainerType.Collection
-                ),
-                setOf(entitySpec)
+                CollectionType(EntityType(entitySpec.SCHEMA)),
+                entitySpec
             ),
             collectionKey
         ).awaitReady().also {
