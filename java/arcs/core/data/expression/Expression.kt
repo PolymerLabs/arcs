@@ -175,7 +175,7 @@ sealed class Expression<T> {
             /** Given a [BinaryOp]'s string token, return the associated [BinaryOp] */
             fun fromToken(token: String): BinaryOp<*, *, *>? {
                 return allOps.find {
-                   it.token == token
+                    it.token == token
                 }
             }
         }

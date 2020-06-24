@@ -118,6 +118,7 @@ abstract class Parser<out T>() {
 
     private var _name: String = ""
 
+    /** Readable debug name for parser, to be used for improved debugging. */
     var name: String
         get() = _name
         internal set(value) {
@@ -351,25 +352,25 @@ object EofParser : Parser<Unit>() {
 }
 
 /** Combines two parsers via addition operator as [PairOfParser] combinator. */
-operator fun <T,S> Parser<T>.plus(other: Parser<S>) = PairOfParser(this, other)
+operator fun <T, S> Parser<T>.plus(other: Parser<S>) = PairOfParser(this, other)
 
 /** Combines two parsers in sequence with a third as a [TripleOfParser] combinator. */
-operator fun <T,  S,  R> PairOfParser<T, S>.plus(other: Parser<R>) =
+operator fun <T, S, R> PairOfParser<T, S>.plus(other: Parser<R>) =
     TripleOfParser(this, other)
 
-operator fun <T,  S,  R> PairOfParser<T, S>.plus(other: IgnoringParser<R>) =
+operator fun <T, S, R> PairOfParser<T, S>.plus(other: IgnoringParser<R>) =
     PairOfParser(this, other).map { (x, _) -> x }
 
 /** Combines an [IgnoringParser] with a [Parser] ignoring the output of the first. */
-operator fun<T, S> IgnoringParser<T>.plus(other: Parser<S>) =
+operator fun <T, S> IgnoringParser<T>.plus(other: Parser<S>) =
     PairOfParser(this, other).map { (_, y) -> y }
 
 /** Combines an [Parser] with an [IgnoringParser] ignoring the output of the second. */
-operator fun<T, S> Parser<T>.plus(other: IgnoringParser<S>) =
+operator fun <T, S> Parser<T>.plus(other: IgnoringParser<S>) =
     PairOfParser(this, other).map { (x, _) -> x }
 
 /** Unary minus as shorthand for ignoring a parser's output. */
-operator fun<T> Parser<T>.unaryMinus() = IgnoringParser(this)
+operator fun <T> Parser<T>.unaryMinus() = IgnoringParser(this)
 
 /** Combines to parsers via division operator as [AnyOfParser] combinator. */
 operator fun <T> Parser<T>.div(other: Parser<T>) = AnyOfParser<T>(listOf(this, other))

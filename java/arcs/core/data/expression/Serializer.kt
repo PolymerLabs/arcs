@@ -23,7 +23,6 @@ import arcs.core.util.JsonValue.JsonNumber
 import arcs.core.util.JsonValue.JsonObject
 import arcs.core.util.JsonValue.JsonString
 import arcs.core.util.JsonVisitor
-import arcs.core.util.ParseResult
 
 /** Traverses a tree of [Expression] objects, serializing it into a JSON format. */
 class ExpressionSerializer() :
@@ -111,7 +110,6 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
 
     override fun visit(value: JsonValue.JsonNull) =
         throw IllegalArgumentException("Nulls should not appear in JSON serialized expressions")
-
 }
 
 /** Given an expression, return a string representation. */

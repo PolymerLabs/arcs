@@ -56,7 +56,7 @@ open class Plan(
 
     /**
      *  Represents a data adapter to be applied to a [Handle].
-     *  
+     *
      *  @property name name of the adapter specified in the manifest.
      *  @property contextParams the names of parameters that can be bound from context
      *  @property type the output [Type] of this adapter

@@ -23,7 +23,7 @@ import arcs.core.util.JsonValue.JsonString
 interface JsonVisitor<R> {
     /** Primary entrypoint to visitor. */
     @Suppress("USELESS_CAST")
-    fun visit(value: JsonValue<*>) = when(value) {
+    fun visit(value: JsonValue<*>) = when (value) {
         is JsonBoolean -> visit(value as JsonBoolean)
         is JsonString -> visit(value as JsonString)
         is JsonNumber -> visit(value as JsonNumber)
@@ -117,11 +117,11 @@ sealed class JsonValue<T>() {
             (value as? MutableList<JsonValue<T>>)?.run {
                 if (index < size) {
                     return value.set(index, arg)
-                } else if (index == size ) {
+                } else if (index == size) {
                     this@JsonArray.add(arg)
                     return arg
                 } else throw IllegalArgumentException("JsonArray.set $index > $size")
-            }?: throw IllegalArgumentException("JsonArray is immutable")
+            } ?: throw IllegalArgumentException("JsonArray is immutable")
     }
 
     /** Used to represent a Json object. */
@@ -129,7 +129,7 @@ sealed class JsonValue<T>() {
         override val value: Map<String, JsonValue<*>> = mutableMapOf()
     ) : JsonValue<Map<String, JsonValue<*>>>() {
         override fun toString() = value.map { (name, value) ->
-            JsonString(name).toString() + ":${value.toString()}"
+            JsonString(name).toString() + ":$value"
         }.joinToString(prefix = "{", postfix = "}", separator = ",")
 
         /** Lookup a object value by key. */
@@ -137,8 +137,8 @@ sealed class JsonValue<T>() {
 
         /** Set an object value by key. */
         operator fun <T> set(key: String, value: T) =
-            (value as? MutableMap<String, T>)?.put(key, value) ?:
-            throw IllegalArgumentException("JsonObject is immutable")
+            (value as? MutableMap<String, T>)?.put(key, value)
+            ?: throw IllegalArgumentException("JsonObject is immutable")
     }
 
     /** Used to represent a Json null value. */
@@ -159,7 +159,6 @@ object Json {
                 "Parse Failed reading ${jsonString.substring(result.start.offset)}: ${result.error}"
             )
         }
-
 
     private val jsonNumber = regex("([+-]?[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?)")
         .map { JsonNumber(it.toDouble()) }
@@ -207,7 +206,6 @@ object Json {
     private val jsonArray = (
         jsonOpenBracket + many(parser(::jsonValue) + jsonComma) + jsonCloseBracket
         ).map { JsonArray(it) }
-
 
     private val fieldName = (jsonString + -regex("\\s*(:)\\s*")).map { it.value }
 
