@@ -21,9 +21,9 @@ import arcs.core.host.ArcState.NeverStarted
 import arcs.core.host.ArcState.Running
 import arcs.core.host.ArcState.Stopped
 import arcs.core.host.ArcStateChangeRegistration
+import java.lang.RuntimeException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
-import java.lang.RuntimeException
 
 /**
  * Represents an instantiated Arc running on one or more [ArcHost]s. An [Arc] can be stopped
@@ -70,7 +70,7 @@ class Arc internal constructor(
         handler(arcState)
     }
 
-    private suspend fun onArcStateChangeFiltered(stateToFilter: ArcState, handler: () -> Unit) {
+    private fun onArcStateChangeFiltered(stateToFilter: ArcState, handler: () -> Unit) {
         if (arcState == stateToFilter) {
             handler()
         }
@@ -83,13 +83,13 @@ class Arc internal constructor(
     }
 
     /** Called whenever the [ArcState] changes to [Running]. */
-    suspend fun onRunning(handler: () -> Unit) = onArcStateChangeFiltered(Running, handler)
+    fun onRunning(handler: () -> Unit) = onArcStateChangeFiltered(Running, handler)
 
     /** Called whenever the [ArcState] changes to [Stopped]. */
-    suspend fun onStopped(handler: () -> Unit) = onArcStateChangeFiltered(Stopped, handler)
+    fun onStopped(handler: () -> Unit) = onArcStateChangeFiltered(Stopped, handler)
 
     /** Called whenever the [ArcState] changes to [Error]. */
-    suspend fun onError(handler: () -> Unit) = onArcStateChangeFiltered(Error, handler)
+    fun onError(handler: () -> Unit) = onArcStateChangeFiltered(Error, handler)
 
     private fun fireArcStateChange() {
         sync(this) {
@@ -149,19 +149,21 @@ class Arc internal constructor(
 
         val deferred: CompletableDeferred<Arc> = CompletableDeferred()
 
-        onArcStateChange { newState ->
-            when(newState) {
+        val handler = { newState: ArcState ->
+            when (newState) {
                 state -> deferred.complete(this@Arc)
-                Error -> deferred.completeExceptionally(
-                    ArcErrorException("Arc failed to start.")
-                )
+                Error -> deferred.completeExceptionally(ArcErrorException())
                 else -> Unit
             }
+            Unit
         }
+        onArcStateChange(handler)
 
         fetchCurrentStates()
         recomputeArcState()
-        return deferred.await()
+        return deferred.await().also {
+            arcStateChangeHandlers -= handler
+        }
     }
 
     /** Wait for the current [Arc] to enter a [Stopped] state. */
@@ -180,5 +182,4 @@ class Arc internal constructor(
         msg: String = "Arc reached Error state",
         cause: Throwable? = null
     ) : RuntimeException(msg, cause)
-
 }
