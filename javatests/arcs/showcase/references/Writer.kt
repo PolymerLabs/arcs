@@ -5,12 +5,12 @@ package arcs.showcase.references
 import arcs.core.entity.awaitReady
 import arcs.jvm.host.TargetHost
 import arcs.sdk.Entity
-import arcs.sdk.ReadWriteSingletonHandle
+import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.Reference
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
 
-suspend fun <T : Entity> T.toReference(handle: ReadWriteSingletonHandle<T>): Reference<T> {
+suspend fun <T : Entity> T.toReference(handle: ReadWriteCollectionHandle<T>): Reference<T> {
     if (this@toReference.entityId == null) {
         handle.store(this@toReference)
     }
@@ -21,7 +21,7 @@ suspend fun <T : Entity> T.toReference(handle: ReadWriteSingletonHandle<T>): Ref
 @TargetHost(ArcHost::class)
 class Writer0 : AbstractWriter0() {
     private suspend fun initialize() = this.apply {
-        handles.level0.awaitReady()
+        handles.handles.values.forEach { it.awaitReady() }
     }
     private fun MyLevel0.toArcs() = Level0(name)
 
@@ -35,8 +35,7 @@ class Writer0 : AbstractWriter0() {
 @TargetHost(ArcHost::class)
 class Writer1 : AbstractWriter1() {
     private suspend fun initialize() = this.apply {
-        handles.level0.awaitReady()
-        handles.level1.awaitReady()
+        handles.handles.values.forEach { it.awaitReady() }
     }
     private fun MyLevel0.toArcs() = Level0(name)
 
@@ -54,9 +53,7 @@ class Writer1 : AbstractWriter1() {
 @TargetHost(ArcHost::class)
 class Writer2 : AbstractWriter2() {
     private suspend fun initialize() = this.apply {
-        handles.level0.awaitReady()
-        handles.level1.awaitReady()
-        handles.level2.awaitReady()
+        handles.handles.values.forEach { it.awaitReady() }
     }
     private fun MyLevel0.toArcs() = Level0(name)
 

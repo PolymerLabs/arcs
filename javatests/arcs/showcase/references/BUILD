@@ -29,6 +29,7 @@ arcs_kt_android_library(
         "//java/arcs/android/storage/database",
         "//java/arcs/core/allocator",
         "//java/arcs/core/common",
+        "//java/arcs/core/data",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
         "//java/arcs/core/storage",
@@ -50,7 +51,9 @@ arcs_kt_android_test_suite(
     deps = [
         ":particles",
         "//java/arcs/android/storage/database",
+        "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
+        "//java/arcs/core/storage/database",
         "//java/arcs/sdk/android/storage/service/testutil",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",
