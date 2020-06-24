@@ -81,7 +81,7 @@ class InformationFlowTest {
         }
         assertWithMessage("Unexpected DFA behavior for test '$test'")
             .that(actualViolations)
-            .isEqualTo(violations)
+            .containsExactlyElementsIn(violations)
     }
 
     @Test
@@ -100,7 +100,8 @@ class InformationFlowTest {
             "fail-mixer",
             "fail-derives-from-cycle",
             "fail-derives-from-multiple",
-            "fail-join-tuple-components"
+            "fail-join-tuple-components",
+            "fail-check-on-subpaths"
         )
         val okTests = listOf(
             "ok-directly-satisfied",
@@ -117,7 +118,8 @@ class InformationFlowTest {
             "ok-derives-from-cycle",
             "ok-derives-from-multiple",
             "ok-join-simple",
-            "ok-join-tuple-components"
+            "ok-join-tuple-components",
+            "ok-check-on-subpaths"
         )
         val failingFieldTests = listOf(
             "fail-field-entity-direct",

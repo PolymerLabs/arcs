@@ -431,8 +431,7 @@ fun InformationFlow.AnalysisResult.verify(particle: Recipe.Particle, check: Chec
     if (result.isTop) return false
 
     val assert = requireNotNull(check as? Check.Assert)
-    val accessPathLabels =
-        result.accessPathLabels?.get(assert.accessPath) ?: InformationFlowLabels.getBottom()
+    val accessPathLabels = result.getLabels(assert.accessPath)
 
     // Unreachable => check is trivially satisfied.
     if (accessPathLabels.isBottom) return true

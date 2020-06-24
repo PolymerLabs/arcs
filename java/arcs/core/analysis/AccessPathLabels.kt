@@ -67,6 +67,24 @@ data class AccessPathLabels private constructor(
 
     override fun toString() = toString(linePrefix = "", transform = null)
 
+    /**
+     * Returns the join of labels for the access paths for which the given [accessPath] is a prefix.
+     *
+     * For example, suppose that there is an entry for `root.foo` (say `fooValue`) and an entry for
+     * `root.bar` (say `barValue`), then [getLabels] on `root` returns `fooValue join barValue`.
+     */
+    fun getLabels(accessPath: AccessPath): InformationFlowLabels {
+        val combinedLabels = accessPathLabels?.entries
+            ?.fold(InformationFlowLabels.getBottom()) { acc, (curAccessPath, curLabels) ->
+                if (accessPath.isPrefixOf(curAccessPath)) {
+                    acc join curLabels
+                } else {
+                    acc
+                }
+            }
+        return combinedLabels ?: InformationFlowLabels.getBottom()
+    }
+
     fun toString(linePrefix: String = "", transform: ((Int) -> String)?): String {
         return when {
             _accessPathLabels.isTop -> "${linePrefix}TOP"
