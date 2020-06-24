@@ -27,6 +27,7 @@ import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.runBlocking
 
 /**
  * Represents an instantiated Arc running on one or more [ArcHost]s. An [Arc] can be stopped
@@ -62,7 +63,7 @@ class Arc internal constructor(
             arcStateInternal.update { state }
         }
 
-    private suspend fun onArcStateChange(handler: (ArcState) -> Unit) {
+    private fun onArcStateChange(handler: (ArcState) -> Unit) {
         maybeRegisterChangeHandlerWithArcHosts()
         arcStateChangeHandlers.update { it + handler }
         handler(arcState)
@@ -121,28 +122,30 @@ class Arc internal constructor(
         arcStatesByHostId.update { newStates }
     }
 
-    private suspend fun maybeRegisterChangeHandlerWithArcHosts() {
+    private fun maybeRegisterChangeHandlerWithArcHosts() {
         if (!registered.compareAndSet(false, true)) {
             return
         }
 
-        // first poll the current states of all hosts
-        fetchCurrentStates()
+        runBlocking {
+            // first poll the current states of all hosts
+            fetchCurrentStates()
 
-        // Register event listeners
-        partitions.forEach { partition ->
-            val arcHost = allocator.lookupArcHost(partition.arcHost)
-            registrations[partition.arcHost] = arcHost.addOnArcStateChange(id) { _, state ->
-                arcStatesByHostId.update {
-                    val newStates = it.toMutableMap()
-                    newStates[partition.arcHost] = state
-                    newStates
+            // Register event listeners
+            partitions.forEach { partition ->
+                val arcHost = allocator.lookupArcHost(partition.arcHost)
+                registrations[partition.arcHost] = arcHost.addOnArcStateChange(id) { _, state ->
+                    arcStatesByHostId.update {
+                        val newStates = it.toMutableMap()
+                        newStates[partition.arcHost] = state
+                        newStates
+                    }
+                    fireArcStateChange(recomputeArcState())
                 }
-                fireArcStateChange(recomputeArcState())
             }
-        }
 
-        recomputeArcState()
+            recomputeArcState()
+        }
     }
 
     // suspend until a desired state is achieved
