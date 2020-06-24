@@ -99,23 +99,28 @@ sealed class JsonValue<T>() {
         override fun toString() = value.joinToString(prefix = "[", postfix = "]", separator = ",")
 
         /** Number of elements in the array. */
-        val size = value.size
+        val size get() = value.size
 
         /** If the array is empty. */
         fun isEmpty() = size == 0
 
         /** Lookup a value in an array by index. */
-        operator fun <T : JsonValue<*>> get(index: Int) = value[index]
+        operator fun get(index: Int) = value[index]
+
+        /** Append a value to the end of an array. */
+        fun <T> add(arg: JsonValue<T>) = (value as? MutableList<JsonValue<T>>)?.run {
+            add(arg)
+        }
 
         /** Set a value in an array by index, if the index > array size, it is appended. */
         operator fun <T> set(index: Int, arg: JsonValue<T>): JsonValue<T> =
             (value as? MutableList<JsonValue<T>>)?.run {
                 if (index < size) {
                     return value.set(index, arg)
-                } else {
-                    add(arg)
+                } else if (index == size ) {
+                    this@JsonArray.add(arg)
                     return arg
-                }
+                } else throw IllegalArgumentException("JsonArray.set $index > $size")
             }?: throw IllegalArgumentException("JsonArray is immutable")
     }
 

@@ -18,7 +18,7 @@ class ParserTest {
     @Test
     fun parseWithTokenizer() {
         val hello = token("hello")
-        hello("hello world", 0).flatMap { match, start, end ->
+        hello("hello world", 0).map { match, start, end ->
             assertThat(match).isEqualTo("hello")
             assertThat("hello world".rest(end)).isEqualTo(" world")
             Success(match, start, end)
@@ -27,7 +27,7 @@ class ParserTest {
 
         val helloregex = regex("(h.ll)o")
 
-        helloregex("hello world", 0).flatMap { match, start, end ->
+        helloregex("hello world", 0).map { match, start, end ->
             assertThat(match).isEqualTo("hell")
             assertThat("hello world".rest(end)).isEqualTo(" world")
             Success(match, start, end)
@@ -38,7 +38,7 @@ class ParserTest {
     @Test
     fun parseSequential() {
         val helloworld = token("hello") + token("world")
-        helloworld("helloworld", 0).flatMap { (hello, world), start, end ->
+        helloworld("helloworld", 0).map { (hello, world), start, end ->
             assertThat(hello).isEqualTo("hello")
             assertThat(world).isEqualTo("world")
             assertThat("helloworld".rest(end)).isEqualTo("")
@@ -46,7 +46,7 @@ class ParserTest {
         }
 
         val helloworld2 = token("hello") + token("world") + token("two")
-        helloworld2("helloworldtwo", 0).flatMap { (hello, world, two), start, end ->
+        helloworld2("helloworldtwo", 0).map { (hello, world, two), start, end ->
             assertThat(hello).isEqualTo("hello")
             assertThat(world).isEqualTo("world")
             assertThat(two).isEqualTo("two")
@@ -60,13 +60,13 @@ class ParserTest {
     @Test
     fun parseParallel() {
         val helloworld = token("hello") / token("goodbye") / token("foo") / token("bar")
-        helloworld("hello world", 0).flatMap { match, start, end ->
+        helloworld("hello world", 0).map { match, start, end ->
             assertThat(match).isEqualTo("hello")
             assertThat("hello world".rest(end)).isEqualTo(" world")
             Success(match, start, end)
         }
 
-        helloworld("goodbye world", 0).flatMap { match, start, end ->
+        helloworld("goodbye world", 0).map { match, start, end ->
             assertThat(match).isEqualTo("goodbye")
             assertThat("goodbye world".rest(end)).isEqualTo(" world")
             Success(match, start, end)
@@ -78,7 +78,7 @@ class ParserTest {
     fun parseMany() {
         val intro = token("a ") + many(token("long ")) + token("time ago in a far away galaxy")
         val string = "a long long long time ago in a far away galaxy"
-        intro(string, 0).flatMap { (_, many, _), start, end ->
+        intro(string, 0).map { (_, many, _), start, end ->
             assertThat(many).containsExactly("long ", "long ", "long ")
             assertThat(string.rest(end)).isEqualTo("")
             Success(many, start, end)
@@ -90,13 +90,13 @@ class ParserTest {
     @Test
     fun parseOptional() {
         val trailing = token("hello.") + optional(token(", "))
-        trailing("hello", 0).flatMap { (hello, _), start, end ->
+        trailing("hello", 0).map { (hello, _), start, end ->
             assertThat(hello).isEqualTo("hello")
             assertThat("hello".rest(end)).isEqualTo(".")
             Success(hello, start, end)
         }
 
-        trailing("hello, ", 0).flatMap { (hello, opt), start, end ->
+        trailing("hello, ", 0).map { (hello, opt), start, end ->
             assertThat(hello).isEqualTo("hello")
             assertThat(opt).isEqualTo(", ")
             assertThat("hello, ".rest(end)).isEqualTo("")
@@ -107,8 +107,8 @@ class ParserTest {
     @Test
     fun testIgnoring() {
         val space: IgnoringParser<String> = -token(" ")
-        val ignoring: SeqOf<String, String> = token("hello") + space + token("world")
-        ignoring("hello world", 0).flatMap { (hello, world), start, end ->
+        val ignoring: PairOfParser<String, String> = token("hello") + space + token("world")
+        ignoring("hello world", 0).map { (hello, world), start, end ->
             assertThat(hello).isEqualTo("hello")
             assertThat(world).isEqualTo("world")
             Success(hello, start, end)

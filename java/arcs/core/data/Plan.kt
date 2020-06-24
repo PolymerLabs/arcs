@@ -54,10 +54,17 @@ open class Plan(
         val expression: Expression<T>
     )
 
-    /** Represents a data adapter to be applied to a [Handle]. */
+    /**
+     *  Represents a data adapter to be applied to a [Handle].
+     *  
+     *  @property name name of the adapter specified in the manifest.
+     *  @property contextParams the names of parameters that can be bound from context
+     *  @property type the output [Type] of this adapter
+     *  @property fields a list of fields (with expressions) that map contextParams to output [type]
+     */
     data class Adapter(
         val name: String,
-        val params: List<String>,
+        val contextParams: List<String>,
         val type: Type,
         val fields: List<AdapterField<*>>
     )

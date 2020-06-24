@@ -32,7 +32,7 @@ class ExpressionSerializer() :
     override fun <E, T> visit(expr: UnaryExpression<E, T>) =
         JsonObject(
             mapOf(
-                "type" to JsonString(expr.op.token),
+                "op" to JsonString(expr.op.token),
                 "expr" to expr.expr.accept(this)
             )
         )
@@ -40,7 +40,7 @@ class ExpressionSerializer() :
     override fun <L, R, T> visit(expr: BinaryExpression<L, R, T>) =
         JsonObject(
             mapOf(
-                "type" to JsonString(expr.op.token),
+                "op" to JsonString(expr.op.token),
                 "left" to expr.left.accept(this),
                 "right" to expr.right.accept(this)
             )
@@ -49,7 +49,7 @@ class ExpressionSerializer() :
     override fun <E : Expression.Scope, T> visit(expr: Expression.FieldExpression<E, T>) =
         JsonObject(
             mapOf(
-                "type" to JsonString("."),
+                "op" to JsonString("."),
                 "qualifier" to expr.qualifier.accept(this),
                 "field" to JsonString(expr.field)
             )
@@ -58,8 +58,8 @@ class ExpressionSerializer() :
     override fun <T> visit(expr: Expression.QueryParameterExpression<T>) =
         JsonObject(
             mapOf(
-                "type" to JsonString("?"),
-                "arg" to JsonString(expr.paramIdentifier)
+                "op" to JsonString("?"),
+                "identifier" to JsonString(expr.paramIdentifier)
             )
         )
 
@@ -85,7 +85,7 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
         throw IllegalArgumentException("Arrays should not appear in JSON Serialized Expressions")
 
     override fun visit(value: JsonObject): Expression<*> {
-        val type = value["type"].string()!!
+        val type = value["op"].string()!!
 
         return when {
             type == "." -> Expression.FieldExpression<Expression.Scope, Any>(
@@ -104,7 +104,7 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                     visit(value["expr"]) as Expression<Any>
                 )
             }
-            type == "?" -> Expression.QueryParameterExpression<Any>(value["arg"].string()!!)
+            type == "?" -> Expression.QueryParameterExpression<Any>(value["identifier"].string()!!)
             else -> throw IllegalArgumentException("Unknown type $type during deserialization")
         }
     }
