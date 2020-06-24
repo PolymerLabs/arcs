@@ -316,6 +316,18 @@ class IgnoringParser<T>(val parser: Parser<T>) : Parser<T>() {
     override fun invoke(string: String, pos: SourcePosition): ParseResult<T> = parser(string, pos)
 }
 
+/** A parser that succeeds by matching the end of the input. */
+object EofParser : Parser<Unit>() {
+    override fun name() = "<eof>"
+
+    override fun invoke(string: String, pos: SourcePosition): ParseResult<Unit> =
+        if (pos.offset == string.length) Success(Unit, pos, pos) else Failure(
+            "Expecting eof",
+            pos,
+            pos
+        )
+}
+
 /** Combines two parsers via addition operator as [PairOfParser] combinator. */
 operator fun <T,S> Parser<T>.plus(other: Parser<S>) = PairOfParser(this, other)
 
@@ -355,3 +367,5 @@ fun <T, R> Parser<T>.map(f: (T) -> R) = TransformParser(this, f)
 
 /** Helper for [LazyParser]. */
 fun <T> parser(f: () -> Parser<T>) = LazyParser(f)
+
+val eof = -EofParser
