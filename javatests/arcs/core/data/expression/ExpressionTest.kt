@@ -17,7 +17,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import kotlin.test.assertFailsWith
 
-/** Tests for [TypeVariable]. */
+/** Tests for [Expression]. */
 @RunWith(JUnit4::class)
 class ExpressionTest {
     fun <T> evalBool(expression: Expression<T>) = evalExpression<T, Boolean>(expression)
@@ -105,5 +105,18 @@ class ExpressionTest {
             "arg"
         ) - 1.asExpr()) / 2.asExpr()
         assertThat(expr.toString()).isEqualTo("((((2.0 + (3 * 4)) + handle.foo) + ?arg) - 1) / 2")
+    }
+
+    @Test
+    fun testJsonSerialization() {
+        val q = query<Expression.Scope>("arg")
+        val field = Expression.FieldExpression<Expression.Scope, Number>(q , "bar")
+        val expr = (2.0.asExpr() + (3.asExpr() * 4.asExpr()) + field - 1.asExpr()) / 2.asExpr()
+        val json = expr.serialize()
+        val parsed = json.deserializeExpression() as Expression<Number>
+        assertThat(evalExpression<Number, Number>(
+            parsed,
+            "arg" to mapOf("bar" to 5).asScope()
+        )).isEqualTo(9.0)
     }
 }

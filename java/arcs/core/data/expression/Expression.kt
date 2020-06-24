@@ -153,6 +153,32 @@ sealed class Expression<T> {
             override operator fun invoke(l: Any, r: Any): Boolean = l != r
             override val token = "!="
         }
+
+        companion object {
+            private val allOps: List<BinaryOp<*, *, *>> by lazy {
+                listOf(
+                    And,
+                    Or,
+                    Add,
+                    Subtract,
+                    Multiply,
+                    Divide,
+                    Equals,
+                    NotEquals,
+                    LessThan,
+                    LessThanOrEquals,
+                    GreaterThan,
+                    GreaterThanOrEquals
+                )
+            }
+
+            /** Given a [BinaryOp]'s string token, return the associated [BinaryOp] */
+            fun fromToken(token: String): BinaryOp<*, *, *>? {
+                return allOps.find {
+                    it.token == token
+                }
+            }
+        }
     }
 
     /**
@@ -175,6 +201,15 @@ sealed class Expression<T> {
         object Negate : UnaryOp<Number, Number>() {
             override operator fun invoke(expression: Number): Number = -expression.toDouble()
             override val token = "-"
+        }
+
+        companion object {
+            /** Given a [UnaryOp]'s token, return the associated [UnaryOp] */
+            fun fromToken(token: String): UnaryOp<*, *>? = when (token) {
+                Not.token -> Not
+                Negate.token -> Negate
+                else -> null
+            }
         }
     }
 
