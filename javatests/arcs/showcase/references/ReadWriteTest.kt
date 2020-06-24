@@ -45,7 +45,15 @@ class ReadWriteTest {
     fun tearDown() {
         arcsStorage.stop()
         runBlocking {
-            dbManager.resetAll()
+            // Attempt a resetAll().
+            // Rarely, this fails with "attempt to re-open an already-closed object"
+            // Ignoring this exception should be OK.
+            try {
+                dbManager.resetAll()
+            } catch(e: Exception) {
+                println("Ignoring dbManager.resetAll() exception: $e")
+            }
+
         }
     }
 
