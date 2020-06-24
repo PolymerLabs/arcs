@@ -61,7 +61,7 @@ export function generateConnectionSpecType(
       const node = nodes.find(n => n.schema.equals(type.getEntitySchema()));
       return ktUtils.applyFun('EntityType', [`${node.fullName(connection)}.SCHEMA`]);
     } else if (type.isVariable) {
-      const node = nodes.find(n => n.variableName !== null && n.variableName.includes((type as TypeVariable).variable.name));
+      const node = nodes.find(n => n.variableName === (type as TypeVariable).variable.name);
       const schemaPair = schemaRegistry.find(pair => pair.schema.equals(type.getEntitySchema())) || {generation: 'Schema.EMPTY'};
       const schema = node != null ? `${node.fullName(connection)}.SCHEMA` : schemaPair.generation;
       return ktUtils.applyFun('EntityType', [schema]);
