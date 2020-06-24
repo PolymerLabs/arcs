@@ -149,8 +149,8 @@ class Arc internal constructor(
 
         val deferred: CompletableDeferred<Arc> = CompletableDeferred()
 
-        onArcStateChange {
-            when(it) {
+        onArcStateChange { newState ->
+            when(newState) {
                 state -> deferred.complete(this@Arc)
                 Error -> deferred.completeExceptionally(
                     ArcErrorException("Arc failed to start.")
