@@ -536,4 +536,14 @@ open class AllocatorTestBase {
             ArcState.Error
         )
     }
+
+    @Test
+    open fun allocator_startArc_particleException_failsWaitForStart() = runAllocatorTest {
+        WritePerson.throws = true
+        val arc = allocator.startArcForPlan(PersonPlan)
+
+        assertSuspendingThrows(Arc.ArcErrorException::class) {
+            arc.waitForStart()
+        }
+    }
 }
