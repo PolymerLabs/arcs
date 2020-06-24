@@ -21,14 +21,26 @@ class JsonTest {
         assertThat(Json.parse("null")).isEqualTo(JsonNull)
         assertThat(Json.parse("42.0").number()).isEqualTo(42.0)
         assertThat(Json.parse("1e3").number()).isEqualTo(1000.0)
+        assertThat(Json.parse("1e+3").number()).isEqualTo(1000.0)
+        assertThat(Json.parse("+1e+3").number()).isEqualTo(1000.0)
         assertThat(Json.parse("-1.2e-2").number()).isEqualTo(-0.012)
         assertThat(Json.parse("-42.0").number()).isEqualTo(-42.0)
         assertThat(Json.parse("\"hello\\\"world\"").string()).isEqualTo("hello\"world")
+        assertThat(Json.parse("\"hello\\nworld\"").string()).isEqualTo("hello\nworld")
+        assertThat(Json.parse("\"hello\\u0041world\"").string()).isEqualTo("helloAworld")
         assertThat(Json.parse("true").bool()).isTrue()
         assertThat(Json.parse("false").bool()).isFalse()
         assertThat(Json.parse("[]").array()?.value).isEmpty()
+        assertThat(Json.parse("[ ]").array()?.value).isEmpty()
         assertThat(Json.parse("{}").obj()?.value).isEmpty()
+        assertThat(Json.parse("{ }").obj()?.value).isEmpty()
         assertThat(Json.parse("[1]").array()?.value).containsExactly(JsonNumber(1.0))
+        assertThat(Json.parse("[ 1 ]").array()?.value).containsExactly(JsonNumber(1.0))
+        assertThat(Json.parse("[1 , \"foo\",  true]").array()?.value).containsExactly(
+            JsonNumber(1.0),
+            JsonString("foo"),
+            JsonBoolean(true)
+        )
         assertThat(Json.parse("[1,\"foo\",true]").array()?.value).containsExactly(
             JsonNumber(1.0),
             JsonString("foo"),

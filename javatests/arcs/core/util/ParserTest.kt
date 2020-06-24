@@ -148,7 +148,7 @@ class ParserTest {
         }
 
         val failure = hello("hello!2", 0).map { _, s, e ->
-            assertFails { "Shouldn't be called " }
+            require(false) { "Shouldn't be called" }
             Failure("", s, e)
         } as Failure
 

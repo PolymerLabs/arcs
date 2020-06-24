@@ -148,10 +148,7 @@ sealed class JsonValue<T>() {
 /**
  * Simple parser-combinator based multiple-platform JSON parser.
  * TODO: Limitations
- * 1) lax parsing (trailing commas allowed)
- * 2) float parsing non-exact
- * 3) whitespace not allowed
- * 4) unicode escaping not handled
+ * lax parsing (trailing commas allowed), allows control characters, etc.
  */
 object Json {
     /** Parses a string in JSON format and returns a [JsonValue] */
@@ -164,11 +161,33 @@ object Json {
         }
 
 
-    private val jsonNumber = regex("(-?[0-9]+\\.?[0-9]*(?:e-?[0-9]+)?)")
+    private val jsonNumber = regex("([+-]?[0-9]+\\.?[0-9]*(?:[eE][+-]?[0-9]+)?)")
         .map { JsonNumber(it.toDouble()) }
 
-    private val jsonString = regex("\"((?:[^\"\\\\]|\\\\.)*)\"").map {
-        JsonString(it.replace("\\\"", "\"").replace("\\\n","\n"))
+    private val escapes = mapOf(
+        "\\\\" to "\\",
+        "\\\"" to "\"",
+        "\\b" to "\b",
+        "\\f" to 12.toChar().toString(),
+        "\\n" to "\n",
+        "\\r" to "\r",
+        "\\t" to "\t"
+    )
+
+    private fun unescape(string: String) = string.replace(
+        Regex("\\\\[\"/bfnrt]|\\\\u[0-9a-f]{4}")
+    ) { match: MatchResult ->
+        when {
+            escapes.contains(match.value) -> escapes[match.value]!!
+            match.value.startsWith("\\u") -> {
+                match.value.substring(3).toInt(16).toChar().toString()
+            }
+            else -> throw IllegalArgumentException("${match.value} shouldn't match")
+        }
+    }
+
+    private val jsonString = regex("\"((?:[^\"\\\\]|\\\\[\"\\\\/bfnrt]|\\\\u[0-9a-f]{4})*)\"").map {
+        JsonString(unescape(it))
     }
 
     private val jsonBoolean = (token("true") / token("false")).map {
@@ -179,18 +198,23 @@ object Json {
 
     private val jsonNull = token("null").map { JsonNull }
 
+    private val jsonOpenBracket = -regex("\\s*(\\[)\\s*")
+    private val jsonCloseBracket = -regex("\\s*(\\])\\s*")
+    private val jsonOpenBrace = -regex("\\s*(\\{)\\s*")
+    private val jsonCloseBrace = -regex("\\s*(\\})\\s*")
+    private val jsonComma = -optional(regex("\\s*(,)\\s*"))
+
     private val jsonArray = (
-        -token("[") + many(parser(::jsonValue) + -optional(token(","))) + -token("]")
+        jsonOpenBracket + many(parser(::jsonValue) + jsonComma) + jsonCloseBracket
         ).map { JsonArray(it) }
 
 
-    private val fieldName = (jsonString + -token(":")).map { it.value }
+    private val fieldName = (jsonString + -regex("\\s*(:)\\s*")).map { it.value }
 
-    private val jsonObjectField =
-        (fieldName + parser(::jsonValue) + (-optional(token(","))).map { it })
+    private val jsonObjectField = (fieldName + parser(::jsonValue) + jsonComma).map { it }
 
     private val jsonObject =
-        (-token("{") + many(jsonObjectField) + -token("}")).map { result ->
+        (jsonOpenBrace + many(jsonObjectField) + jsonCloseBrace).map { result ->
             JsonObject(result.associateBy({ it.first }, { it.second }))
         }
 
