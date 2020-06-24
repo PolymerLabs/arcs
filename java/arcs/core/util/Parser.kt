@@ -114,7 +114,7 @@ import arcs.core.util.ParseResult.Success
  * ```
  */
 abstract class Parser<out T>() {
-    operator fun invoke(string: String, pos: Int) = invoke(string, SourcePosition(pos, 0, 0))
+    operator fun invoke(string: String, pos: Int = 0) = invoke(string, SourcePosition(pos, 0, 0))
 
     private var _name: String = ""
 
@@ -394,4 +394,5 @@ fun <T, R> Parser<T>.map(f: (T) -> R) = TransformParser(this, f)
 /** Helper for [LazyParser]. */
 fun <T> parser(f: () -> Parser<T>) = LazyParser(f)
 
+/** Helper for [EofParser], matches end of input and ignores it in the result. */
 val eof = -EofParser

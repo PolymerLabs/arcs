@@ -45,7 +45,7 @@ interface JsonVisitor<R> {
     /** Called when a [JsonArray] is encountered. */
     fun visit(value: JsonArray): R
 
-    /** Called when a [JsonNull] is encountered. */
+    /** Called when a [JsonObject] is encountered. */
     fun visit(value: JsonObject): R
 
     /** Called when a [JsonNull] is encountered. */
@@ -153,7 +153,7 @@ sealed class JsonValue<T>() {
 object Json {
     /** Parses a string in JSON format and returns a [JsonValue] */
     fun parse(jsonString: String) =
-        when (val result = jsonValue(jsonString, SourcePosition(0, 0, 0))) {
+        when (val result = jsonValue(jsonString)) {
             is ParseResult.Success<JsonValue<*>> -> result.value
             is ParseResult.Failure -> throw IllegalArgumentException(
                 "Parse Failed reading ${jsonString.substring(result.start.offset)}: ${result.error}"
