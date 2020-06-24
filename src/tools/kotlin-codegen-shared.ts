@@ -15,6 +15,7 @@ import {Type, TypeVariable} from '../runtime/type.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {assert} from '../platform/assert-web.js';
 import {Dictionary} from '../runtime/hot.js';
+import {Schema} from '../runtime/schema.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -40,11 +41,15 @@ export function escapeIdentifier(name: string): string {
 /**
  * Generates a Kotlin type instance for the given handle connection.
  */
-export function generateConnectionType(connection: HandleConnection): string {
-  return generateConnectionSpecType(connection.spec, new SchemaGraph(connection.particle.spec).nodes);
+export function generateConnectionType(connection: HandleConnection,
+                                       schemaRegistry: {schema: Schema, generation: string}[] = []): string {
+  return generateConnectionSpecType(connection.spec, new SchemaGraph(connection.particle.spec).nodes, schemaRegistry);
 }
 
-export function generateConnectionSpecType(connection: HandleConnectionSpec, nodes: SchemaNode[]): string {
+export function generateConnectionSpecType(
+  connection: HandleConnectionSpec,
+  nodes: SchemaNode[],
+  schemaRegistry: {schema: Schema, generation: string}[] = []): string {
   let type = connection.type;
   if (type.isEntity || type.isReference) {
     // Moving to the new style types with explicit singleton.
@@ -52,11 +57,14 @@ export function generateConnectionSpecType(connection: HandleConnectionSpec, nod
   }
 
   return (function generateType(type: Type): string {
-    if (type.isEntity || type.isVariable) {
-      const node = type.isEntity
-        ? nodes.find(n => n.schema.equals(type.getEntitySchema()))
-        : nodes.find(n => n.variableName !== null && n.variableName.includes((type as TypeVariable).variable.name));
+    if (type.isEntity) {
+      const node = nodes.find(n => n.schema.equals(type.getEntitySchema()));
       return ktUtils.applyFun('EntityType', [`${node.fullName(connection)}.SCHEMA`]);
+    } else if (type.isVariable) {
+      const node = nodes.find(n => n.variableName === (type as TypeVariable).variable.name);
+      const schemaPair = schemaRegistry.find(pair => pair.schema.equals(type.getEntitySchema())) || {generation: 'Schema.EMPTY'};
+      const schema = node != null ? `${node.fullName(connection)}.SCHEMA` : schemaPair.generation;
+      return ktUtils.applyFun('EntityType', [schema]);
     } else if (type.isCollection) {
       return ktUtils.applyFun('CollectionType', [generateType(type.getContainedType())]);
     } else if (type.isSingleton) {
