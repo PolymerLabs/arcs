@@ -38,6 +38,8 @@ class SameHandleManagerTest : HandleManagerTestBase() {
     override fun setUp() {
         super.setUp()
         fakeLifecycleOwner = FakeLifecycleOwner()
+        fakeLifecycleOwner.lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+        fakeLifecycleOwner.lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
         app = ApplicationProvider.getApplicationContext()
         schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
         readHandleManager = EntityHandleManager(
@@ -62,7 +64,7 @@ class SameHandleManagerTest : HandleManagerTestBase() {
     @After
     override fun tearDown() {
         super.tearDown()
-        fakeLifecycleOwner.lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
+        fakeLifecycleOwner.lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     }
 
     @Test
