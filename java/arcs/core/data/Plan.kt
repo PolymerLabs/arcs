@@ -74,8 +74,8 @@ open class Plan(
         val storageKey: StorageKey,
         val mode: HandleMode,
         val type: Type,
-        val adapter: Adapter? = null,
-        val annotations: List<Annotation> = emptyList()
+        val annotations: List<Annotation> = emptyList(),
+        val adapter: Adapter? = null
     ) {
         val ttl: Ttl
             get() {
