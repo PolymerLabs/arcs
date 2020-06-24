@@ -139,6 +139,7 @@ class ParticleContext(
     suspend fun runParticle(notifyReady: (Particle) -> Unit) {
         withContext(requireNotNull(dispatcher)) {
             check(particleState in arrayOf(ParticleState.Waiting, ParticleState.Running)) {
+                // TODO(b/159834053) - Clarify messaging here
                 "${planParticle.particleName}: runParticle can only be called after " +
                         "a successful call to initParticle"
             }
