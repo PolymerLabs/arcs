@@ -121,7 +121,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     // So we need to create fresh instances when off() invoked
     private fun initChannel() {
         synchronized(this) {
-            channel?.let { it.cancel() }
+            channel?.takeIf { !it.isClosedForSend }?.cancel()
             channel = Channel(Channel.UNLIMITED)
             channel!!.consumeAsFlow().onEach { it() }.launchIn(scope)
         }
