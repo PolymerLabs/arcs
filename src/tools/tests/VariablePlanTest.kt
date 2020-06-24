@@ -2,12 +2,17 @@ package src.tools.tests
 
 import arcs.core.data.FieldType
 import arcs.core.data.SchemaFields
+import arcs.core.data.proto.ManifestProto
+import arcs.core.data.proto.decodeRecipes
+import arcs.core.data.toPlan
 import arcs.core.host.toSchema
 import arcs.core.storage.api.DriverAndKeyConfigurator
+import arcs.repoutils.runfilesDir
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.io.File
 
 @RunWith(JUnit4::class)
 class VariablePlanTest {
@@ -32,5 +37,21 @@ class VariablePlanTest {
         ))
 
         assertThat(processSchema.toLiteral()).isEqualTo(ingestSchema.toLiteral())
+    }
+
+    @Test
+    fun variable_recipePlanEquivalence() {
+        DriverAndKeyConfigurator.configure(null)
+
+        val manifestProto = ManifestProto.parseFrom(
+            File(runfilesDir() + "src/tools/tests/variable-proto.pb.bin").readBytes()
+        )
+        val recipes = manifestProto.decodeRecipes()
+
+        val variableIngestionRecipe = recipes.first { it.name == "VariableIngestion" }
+
+        val fromRecipe = variableIngestionRecipe.toPlan()
+
+        assertThat(fromRecipe.particles).isEqualTo(VariableIngestionPlan.particles)
     }
 }
