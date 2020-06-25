@@ -14,7 +14,7 @@ package arcs.core.data
 import arcs.core.util.Time
 
 /** A base class for all the store capabilities. */
-sealed class CapabilityNew {
+sealed class CapabilityNew(val tag: String) {
     enum class Comparison { LessStrict, Equivalent, Stricter }
 
     open fun isEquivalent(other: CapabilityNew): Boolean {
@@ -42,7 +42,7 @@ sealed class CapabilityNew {
     open fun toRange() = Range(this, this)
 
     /** Capability describing persistence requirement for the store. */
-    data class Persistence(val kind: Kind) : CapabilityNew() {
+    data class Persistence(val kind: Kind) : CapabilityNew(TAG) {
         enum class Kind { None, InMemory, OnDisk, Unrestricted }
 
         fun compare(other: Persistence): Comparison {
@@ -54,6 +54,7 @@ sealed class CapabilityNew {
         }
 
         companion object {
+            const val TAG = "persistence"
             val UNRESTRICTED = Persistence(Kind.Unrestricted)
             val ON_DISK = Persistence(Kind.OnDisk)
             val IN_MEMORY = Persistence(Kind.InMemory)
@@ -81,7 +82,7 @@ sealed class CapabilityNew {
     }
 
     /** Capability describing retention policy of the store. */
-    sealed class Ttl(count: Int, val isInfinite: Boolean = false) : CapabilityNew() {
+    sealed class Ttl(count: Int, val isInfinite: Boolean = false) : CapabilityNew(TAG) {
         /** Number of milliseconds for retention, or -1 for infinite. */
         val millis: Long = count * when (this) {
             is Millis -> 1
@@ -119,6 +120,7 @@ sealed class CapabilityNew {
         data class Infinite(val count: Int = TTL_INFINITE) : Ttl(count, true)
 
         companion object {
+            const val TAG = "ttl"
             const val TTL_INFINITE = -1
             const val MILLIS_IN_MIN = 60 * 1000L
 
@@ -152,7 +154,7 @@ sealed class CapabilityNew {
     }
 
     /** Capability describing whether the store needs to be encrypted. */
-    data class Encryption(val value: Boolean) : CapabilityNew() {
+    data class Encryption(val value: Boolean) : CapabilityNew(TAG) {
         fun compare(other: Encryption): Comparison {
             return when {
                 value == other.value -> Comparison.Equivalent
@@ -161,6 +163,7 @@ sealed class CapabilityNew {
             }
         }
         companion object {
+            const val TAG = "encryption"
             val ANY = Range(Encryption(false), Encryption(true))
 
             fun fromAnnotations(annotations: List<Annotation>): Encryption? {
@@ -172,7 +175,7 @@ sealed class CapabilityNew {
     }
 
     /** Capability describing whether the store needs to be queryable. */
-    data class Queryable(val value: Boolean) : CapabilityNew() {
+    data class Queryable(val value: Boolean) : CapabilityNew(TAG) {
         fun compare(other: Queryable): Comparison {
             return when {
                 value == other.value -> Comparison.Equivalent
@@ -182,6 +185,7 @@ sealed class CapabilityNew {
         }
 
         companion object {
+            const val TAG = "queryable"
             val ANY = Range(Queryable(false), Queryable(true))
 
             fun fromAnnotations(annotations: List<Annotation>): Queryable? {
@@ -193,7 +197,7 @@ sealed class CapabilityNew {
     }
 
     /** Capability describing whether the store needs to be shareable across arcs. */
-    data class Shareable(val value: Boolean) : CapabilityNew() {
+    data class Shareable(val value: Boolean) : CapabilityNew(TAG) {
         fun compare(other: Shareable): Comparison {
             return when {
                 value == other.value -> Comparison.Equivalent
@@ -203,6 +207,7 @@ sealed class CapabilityNew {
         }
 
         companion object {
+            const val TAG = "shareable"
             val ANY = Range(Shareable(false), Shareable(true))
 
             fun fromAnnotations(annotations: List<Annotation>): Shareable? {
@@ -213,7 +218,7 @@ sealed class CapabilityNew {
         }
     }
 
-    data class Range(val min: CapabilityNew, val max: CapabilityNew) : CapabilityNew() {
+    data class Range(val min: CapabilityNew, val max: CapabilityNew) : CapabilityNew(TAG) {
         init {
             require(min.isSameOrLessStrict(max)) {
                 "Minimum capability in a range must be equivalent or less strict than maximum."
@@ -236,5 +241,9 @@ sealed class CapabilityNew {
         }
 
         override fun toRange() = this
+
+        companion object {
+            const val TAG = "range"
+        }
     }
 }

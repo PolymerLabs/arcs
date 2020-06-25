@@ -15,6 +15,7 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.test.assertFailsWith
 
 @RunWith(JUnit4::class)
 class CapabilitiesNewTest {
@@ -24,6 +25,13 @@ class CapabilitiesNewTest {
         assertThat(CapabilitiesNew.fromAnnotations(emptyList<Annotation>()).isEmpty).isTrue()
         assertThat(CapabilitiesNew(listOf(CapabilityNew.Persistence.ON_DISK)).isEmpty)
             .isFalse()
+    }
+
+    @Test
+    fun capabilities_unique() {
+        assertFailsWith<IllegalArgumentException> {
+            CapabilitiesNew(listOf(CapabilityNew.Ttl.Days(1).toRange(), CapabilityNew.Ttl.Hours(3)))
+        }
     }
 
     @Test

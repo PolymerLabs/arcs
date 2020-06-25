@@ -21,6 +21,10 @@ class CapabilitiesNew(capabilities: List<CapabilityNew> = emptyList()) {
 
     init {
         ranges = capabilities.map { it -> it.toRange() }
+        require(ranges.distinctBy { it.min.tag }.size == capabilities.size) {
+            val size = capabilities.distinctBy { it.tag }.size
+            "Capabilities must be unique $size $capabilities."
+        }
     }
 
     val persistence: CapabilityNew.Persistence?
