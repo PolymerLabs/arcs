@@ -21,7 +21,7 @@ describe('SQLExtracter', () => {
       `);
       const schema = manifest.particles[0].handleConnectionMap.get('input').type.getEntitySchema();
       const query: string = SQLExtracter.fromSchema(schema, 'table');
-      assert.strictEqual(query, 'SELECT * FROM table WHERE ((b + (a * 3)) > 300) AND ((a > 3) AND (NOT (a = 100))) AND ((b > 20) AND (b < 100));');
+      assert.strictEqual(query, 'SELECT * FROM table WHERE (300 < (b + (a * 3))) AND ((a > 3) AND (a <> 100)) AND ((b > 20) AND (b < 100));');
   }));
   it('tests can create queries from refinement expressions involving boolean expressions', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`

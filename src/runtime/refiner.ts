@@ -354,14 +354,16 @@ export class BinaryExpression extends RefinementExpression {
   }
 
   rearrange(): RefinementExpression {
-    const leftNumeric = [Primitive.NUMBER, Primitive.BIGINT].includes(this.leftExpr.evalType);
-    const rightNumeric = [Primitive.NUMBER, Primitive.BIGINT].includes(this.rightExpr.evalType);
+    const numberTypes = [Primitive.NUMBER, Primitive.BIGINT];
+    const leftNumeric = numberTypes.includes(this.leftExpr.evalType);
+    const rightNumeric = numberTypes.includes(this.rightExpr.evalType);
     if (this.evalType === Primitive.BOOLEAN && leftNumeric && rightNumeric) {
       try {
         Normalizer.rearrangeNumericalExpression(this);
-      } catch {
+      } catch (e) {
         // tslint:disable-next-line no-empty
         //TODO(cypher1): Report polynomial errors without using the console.
+        console.error(e);
       }
     } else {
       this.leftExpr = this.leftExpr.rearrange();
@@ -377,7 +379,7 @@ export class BinaryExpression extends RefinementExpression {
     if (sp) {
       return sp;
     }
-    if (this.rightExpr instanceof FieldNamePrimitive) {
+    if (this.leftExpr.toString() < this.rightExpr.toString() ) {
       this.swapChildren();
     }
     switch (this.operator.op) {
@@ -413,6 +415,30 @@ export class BinaryExpression extends RefinementExpression {
           }
           return this;
       }
+      case Op.DIV: {
+          if (this.rightExpr instanceof NumberPrimitive && this.rightExpr.value === 1) {
+              return this.leftExpr;
+          }
+          if (this.rightExpr instanceof BigIntPrimitive && this.rightExpr.value === BigInt(1)) {
+              return this.leftExpr;
+          }
+          return this;
+      }
+      case Op.MUL: {
+          if (this.leftExpr instanceof NumberPrimitive && this.leftExpr.value === 1) {
+              return this.rightExpr;
+          }
+          if (this.leftExpr instanceof BigIntPrimitive && this.leftExpr.value === BigInt(1)) {
+              return this.rightExpr;
+          }
+          if (this.rightExpr instanceof NumberPrimitive && this.rightExpr.value === 1) {
+              return this.leftExpr;
+          }
+          if (this.rightExpr instanceof BigIntPrimitive && this.rightExpr.value === BigInt(1)) {
+              return this.leftExpr;
+          }
+          return this;
+      }
       default: return this;
     }
   }
@@ -422,8 +448,8 @@ export class BinaryExpression extends RefinementExpression {
     this.rightExpr = this.rightExpr.normalizeOperators();
     switch (this.operator.op) {
       case Op.GTE: return new BinaryExpression(
-        new BinaryExpression(this.leftExpr, this.rightExpr, new RefinementOperator(Op.GT)),
-        new BinaryExpression(this.leftExpr, this.rightExpr, new RefinementOperator(Op.EQ)),
+        new BinaryExpression(this.rightExpr, this.leftExpr, new RefinementOperator(Op.LT)),
+        new BinaryExpression(this.rightExpr, this.leftExpr, new RefinementOperator(Op.EQ)),
         new RefinementOperator(Op.OR)
       );
       case Op.LTE: return new BinaryExpression(
@@ -526,6 +552,14 @@ export class UnaryExpression extends RefinementExpression {
       case Op.NOT: {
         if (this.expr instanceof UnaryExpression && this.expr.operator.op === Op.NOT) {
           return this.expr.expr;
+        }
+        if (this.expr instanceof BinaryExpression) {
+          if (this.expr.operator.op === Op.NEQ) {
+          return new BinaryExpression(this.expr.leftExpr, this.expr.rightExpr, new RefinementOperator(Op.EQ));
+          }
+          if (this.expr.operator.op === Op.EQ) {
+            return new BinaryExpression(this.expr.leftExpr, this.expr.rightExpr, new RefinementOperator(Op.NEQ));
+          }
         }
         return this;
       }
@@ -642,6 +676,7 @@ export class QueryArgumentPrimitive extends RefinementExpression {
 
 export class BuiltIn extends RefinementExpression {
   evalType: Primitive;
+  // TODO(cypher1): support arguments (e.g. floor(expr))
   value: string;
 
   constructor(value: string, evalType: Primitive.NUMBER | Primitive.BOOLEAN | Primitive.TEXT) {
@@ -965,58 +1000,48 @@ export class NumberRange {
     }
   }
 
-  intersect(range: NumberRange): void {
+  intersect(range: NumberRange): NumberRange {
     const newRange = new NumberRange();
     for (const seg of range.segments) {
-      const dup = NumberRange.copyOf(this);
-      dup.intersectWithSeg(seg);
+      const dup = this.intersectWithSeg(seg);
       newRange.union(dup);
     }
-    this.segments = newRange.segments;
+    return newRange;
   }
 
   unionWithSeg(seg: NumberSegment): void {
     let i = 0;
-    let j = this.segments.length;
-    let x: Boundary<number> = {...seg.from};
-    let y: Boundary<number> = {...seg.to};
     for (const subRange of this.segments) {
       if (seg.isGreaterThan(subRange, false)) {
         i += 1;
+      } else if (seg.mergeableWith(subRange)) {
+        seg.from = NumberSegment.min(subRange.from, seg.from, false);
       } else {
-        if (seg.mergeableWith(subRange)) {
-          const m = NumberSegment.merge(seg, subRange);
-          x = {...m.from};
-        } else {
-          x = subRange.from.val < x.val ? {...subRange.from} : x;
-        }
         break;
       }
     }
+
+    let j = this.segments.length;
     for (const subRange of this.segments.slice().reverse()) {
       if (seg.isLessThan(subRange, false)) {
         j -= 1;
+      } else if (seg.mergeableWith(subRange)) {
+        seg.to = NumberSegment.max(subRange.to, seg.to, false);
       } else {
-        if (seg.mergeableWith(subRange)) {
-          const m = NumberSegment.merge(seg, subRange);
-          y = {...m.to};
-        } else {
-          y = subRange.to.val > y.val ? {...subRange.to} : y;
-        }
         break;
       }
     }
-    this.segments.splice(i, j-i, new NumberSegment(x, y));
+    this.segments.splice(i, j-i, seg);
   }
 
-  intersectWithSeg(seg: NumberSegment): void {
+  intersectWithSeg(seg: NumberSegment): NumberRange {
     const newRange = new NumberRange();
     for (const subRange of this.segments) {
       if (subRange.overlapsWith(seg)) {
         newRange.segments.push(NumberSegment.overlap(seg, subRange));
       }
     }
-    this.segments = newRange.segments;
+    return newRange;
   }
 
   // This function assumes that the expression is univariate
@@ -1226,11 +1251,13 @@ export class BigIntRange {
 
   static universal(type: Primitive): BigIntRange {
     if (type === Primitive.BOOLEAN) {
+      // TODO: Support long, int etc.
       const b0 = BigInt(0);
       const b1 = BigInt(1);
       return new BigIntRange([BigIntSegment.closedClosed(b0, b0), BigIntSegment.closedClosed(b1, b1)], type);
     }
-    return new BigIntRange([BigIntSegment.openOpen(undefined, undefined)], type);
+    // These are used to represent 'infinity'.
+    return new BigIntRange([BigIntSegment.closedClosed('NEGATIVE_INFINITY', 'POSITIVE_INFINITY')], type);
   }
 
   static unit(val: bigint, ty: Primitive): BigIntRange {
@@ -1589,6 +1616,7 @@ const evalTable: Dictionary<(exprs: ExpressionPrimitives[]) => ExpressionPrimiti
 
   // Numerics
   [Op.ADD]: (e: (number|bigint)[]) => {
+    // TODO(cypher1): Fix these to be 'typesafe'
     if (typeof e[0] === 'number' || typeof e[1] === 'number') {
       return Number(e[0]) + Number(e[1]);
     }
@@ -1799,7 +1827,7 @@ export class NumberFraction {
       case Op.DIV: return NumberFraction.divide(fractions[0], fractions[1]);
       case Op.NEG: return NumberFraction.negate(fractions[0]);
       default:
-        throw new Error(`Unsupported operator: cannot update NumberFraction`);
+        throw new Error(`Unsupported operator: '${op}'. Cannot update NumberFraction`);
     }
   }
 }
@@ -1888,7 +1916,7 @@ export class BigIntFraction {
       case Op.DIV: return BigIntFraction.divide(fractions[0], fractions[1]);
       case Op.NEG: return BigIntFraction.negate(fractions[0]);
       default:
-        throw new Error(`Unsupported operator: cannot update BigIntFraction`);
+        throw new Error(`Unsupported operator: '${op}'. Cannot update BigIntFraction`);
     }
   }
 }
@@ -1928,19 +1956,24 @@ export class NumberTerm {
   }
 
   static fromKey(key: string): NumberTerm {
-    return new NumberTerm(JSON.parse(key));
+    const data = JSON.parse(key);
+    for (const [indeterminate, power] of Object.entries(data)) {
+      data[indeterminate] = Number(power);
+    }
+    return new NumberTerm(data);
   }
 
   static indeterminateToExpression(fn: string, pow: number): RefinementExpression {
     if (pow <= 0) {
-      throw new Error('Must have positive power.');
+      throw new Error('Pow should be >= 0');
     }
     if (pow === 1) {
       return new FieldNamePrimitive(fn, Primitive.NUMBER);
     }
+    const n = Math.floor(pow/2);
     return new BinaryExpression(
-      NumberTerm.indeterminateToExpression(fn, 1),
-      NumberTerm.indeterminateToExpression(fn, pow - 1),
+      NumberTerm.indeterminateToExpression(fn, n),
+      NumberTerm.indeterminateToExpression(fn, pow - n),
       new RefinementOperator(Op.MUL));
   }
 
@@ -1962,7 +1995,7 @@ export class NumberMultinomial {
   private _terms: Dictionary<number>;
 
   constructor(terms: Dictionary<number> = {}) {
-    this.terms = terms;
+    this._terms = terms;
   }
 
   static copyOf(mn: NumberMultinomial): NumberMultinomial {
@@ -1975,17 +2008,13 @@ export class NumberMultinomial {
         delete this._terms[term];
       }
     }
-    const ordered = {};
-    const unordered = this._terms;
+    const ordered: Dictionary<number> = {};
+    const unordered: Dictionary<number> = this._terms;
     Object.keys(unordered).sort().forEach((key) => {
       ordered[key] = unordered[key];
     });
     this._terms = ordered;
     return this._terms;
-  }
-
-  set terms(tms: Dictionary<number>) {
-    this._terms = {...tms};
   }
 
   static add(a: NumberMultinomial, b: NumberMultinomial): NumberMultinomial {
@@ -2050,10 +2079,10 @@ export class NumberMultinomial {
   }
 
   degree(): number {
-    let degree = 0;
+    let degree: number = 0;
     for (const tKey of Object.keys(this.terms)) {
       const term = NumberTerm.fromKey(tKey);
-      let sum = 0;
+      let sum: number = 0;
       for (const power of Object.values(term.indeterminates)) {
         sum += power;
       }
@@ -2064,15 +2093,15 @@ export class NumberMultinomial {
 
   // returns <multinomial> <op> CONSTANT
   toExpression(op: Op): RefinementExpression {
+    const operator = new RefinementOperator(op);
     if (this.isConstant()) {
       return new BinaryExpression(
         new NumberPrimitive(this.isZero() ? 0 : this.terms[CONSTANT]),
         new NumberPrimitive(0),
-        new RefinementOperator(op));
+        operator);
     }
     if (this.isUnivariate() && this.degree() === 1) {
-      const operator = new RefinementOperator(op);
-      const indeterminate = this.getIndeterminates().values().next().value;
+      const indeterminate: string = this.getIndeterminates().values().next().value;
       // TODO(ragdev): Implement a neater way to get the leading coefficient
       const leadingCoeff: number = this.terms[`{"${indeterminate}":1}`];
       const cnst: number = this.terms[CONSTANT] || 0;
@@ -2106,7 +2135,7 @@ export class NumberMultinomial {
         expr = expr ? new BinaryExpression(expr, termExpr, new RefinementOperator(Op.ADD)) : termExpr;
       }
     }
-    return new BinaryExpression(expr, new NumberPrimitive(-cnst), new RefinementOperator(op));
+    return new BinaryExpression(expr, new NumberPrimitive(-cnst), operator);
   }
 }
 
@@ -2149,19 +2178,24 @@ export class BigIntTerm {
   }
 
   static fromKey(key: string): BigIntTerm {
-    return new BigIntTerm(JSON.parse(key));
+    const data = JSON.parse(key);
+    for (const [indeterminate, power] of Object.entries(data)) {
+      data[indeterminate] = BigInt(power);
+    }
+    return new BigIntTerm(data);
   }
 
   static indeterminateToExpression(fn: string, pow: bigint): RefinementExpression {
     if (pow <= 0) {
-      throw new Error('Must have positive power.');
+      throw new Error('Pow should be >= 0');
     }
     if (pow === BigInt(1)) {
       return new FieldNamePrimitive(fn, Primitive.BIGINT);
     }
+    const n = pow/BigInt(2);
     return new BinaryExpression(
-      BigIntTerm.indeterminateToExpression(fn, BigInt(1)),
-      BigIntTerm.indeterminateToExpression(fn, pow - BigInt(1)),
+      BigIntTerm.indeterminateToExpression(fn, n),
+      BigIntTerm.indeterminateToExpression(fn, pow - n),
       new RefinementOperator(Op.MUL));
   }
 
@@ -2183,7 +2217,7 @@ export class BigIntMultinomial {
   private _terms: Dictionary<bigint>;
 
   constructor(terms: Dictionary<bigint> = {}) {
-    this.terms = terms;
+    this._terms = terms;
   }
 
   static copyOf(mn: BigIntMultinomial): BigIntMultinomial {
@@ -2203,10 +2237,6 @@ export class BigIntMultinomial {
     });
     this._terms = ordered;
     return this._terms;
-  }
-
-  set terms(tms: Dictionary<bigint>) {
-    this._terms = {...tms};
   }
 
   static add(a: BigIntMultinomial, b: BigIntMultinomial): BigIntMultinomial {
@@ -2272,10 +2302,10 @@ export class BigIntMultinomial {
   }
 
   degree(): bigint {
-    let degree = BigInt(0);
+    let degree: bigint = BigInt(0);
     for (const tKey of Object.keys(this.terms)) {
       const term = BigIntTerm.fromKey(tKey);
-      let sum = BigInt(0);
+      let sum: bigint = BigInt(0);
       for (const power of Object.values(term.indeterminates)) {
         sum += power;
       }
@@ -2336,6 +2366,7 @@ export class Normalizer {
 
   // Updates 'expr' after rearrangement.
   static rearrangeNumericalExpression(expr: BinaryExpression): void {
+    // TODO(cypher1): Use Number or BigInt here
     const lF = NumberFraction.fromExpression(expr.leftExpr);
     const rF = NumberFraction.fromExpression(expr.rightExpr);
     const frac = NumberFraction.subtract(lF, rF);
@@ -2350,16 +2381,14 @@ export class Normalizer {
     expr.update(rearranged);
   }
 
-  static fracLessThanZero(frac: NumberFraction): BinaryExpression {
+  static fracLessThanZero(frac: NumberFraction): RefinementExpression {
     const ngt0 = frac.num.toExpression(Op.GT);
     const nlt0 = frac.num.toExpression(Op.LT);
     const dgt0 = frac.den.toExpression(Op.GT);
     const dlt0 = frac.den.toExpression(Op.LT);
-    return new BinaryExpression(
-      new BinaryExpression(ngt0, dlt0, new RefinementOperator(Op.AND)),
-      new BinaryExpression(nlt0, dgt0, new RefinementOperator(Op.AND)),
-      new RefinementOperator(Op.OR)
-    );
+    const left = new BinaryExpression(ngt0, dlt0, new RefinementOperator(Op.AND));
+    const right = new BinaryExpression(nlt0, dgt0, new RefinementOperator(Op.AND));
+    return new BinaryExpression(left, right, new RefinementOperator(Op.OR));
   }
 
   static fracGreaterThanZero(frac: NumberFraction): BinaryExpression {
@@ -2374,8 +2403,11 @@ export class Normalizer {
     );
   }
 
-  static fracEqualsToZero(frac: NumberFraction): BinaryExpression {
+  static fracEqualsToZero(frac: NumberFraction): RefinementExpression {
     const neq0 = frac.num.toExpression(Op.EQ);
+    if (frac.den.isConstant() && !frac.den.isZero()) {
+      return neq0; // TODO(cypher1): This normalizer should be doing this for us.
+    }
     const dneq0 = frac.den.toExpression(Op.NEQ);
     return new BinaryExpression(neq0, dneq0, new RefinementOperator(Op.AND));
   }

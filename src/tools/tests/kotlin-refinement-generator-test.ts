@@ -25,7 +25,7 @@ describe('KTExtracter', () => {
         `\
 val a = data.singletons["a"].toPrimitiveValue(Double::class, 0.0)
 val b = data.singletons["b"].toPrimitiveValue(Double::class, 0.0)
-((b + (a * 3)) > 300) && ((a > 3) && (!(a == 100))) && ((b > 20) && (b < 100))`);
+(300 < (b + (a * 3))) && ((a > 3) && (a != 100)) && ((b > 20) && (b < 100))`);
   }));
   it('creates queries from refinement expressions involving boolean expressions', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`

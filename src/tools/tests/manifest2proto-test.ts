@@ -427,9 +427,9 @@ describe('manifest2proto', () => {
               leftExpr: {
                 field: 'num',
               },
-              operator: 'LESS_THAN',
+              operator: 'GREATER_THAN',
               rightExpr: {
-                number: 12
+                number: -1
               }
             }
           },
@@ -439,9 +439,9 @@ describe('manifest2proto', () => {
               leftExpr: {
                 field: 'num'
               },
-              operator: 'GREATER_THAN',
+              operator: 'LESS_THAN',
               rightExpr: {
-                number: -1
+                number: 12
               }
             }
           },
