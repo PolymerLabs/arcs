@@ -56,6 +56,8 @@ data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
                     FieldType.ListOf(FieldType.Primitive(PrimitiveType.values()[readInt()]))
                 FieldType.Tag.EntityRef ->
                     FieldType.ListOf(FieldType.EntityRef(requireNotNull(readString())))
+                FieldType.Tag.InlineEntity ->
+                    FieldType.ListOf(FieldType.InlineEntity(requireNotNull(readString())))
                 else -> throw IllegalStateException("List of unexpected type encountered")
             }
 
@@ -81,6 +83,10 @@ data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
                                     "Nested [FieldType.Tuple]s are not allowed."
                                 )
                             FieldType.Tag.List -> collector.add(readListFieldType())
+                            FieldType.Tag.InlineEntity ->
+                                collector.add(
+                                    FieldType.InlineEntity(requireNotNull(readString()))
+                                )
                         }
                     }
                     FieldType.Tuple(collector.toList())
@@ -103,6 +109,10 @@ data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
                     }
                     is FieldType.EntityRef -> {
                         writeInt(FieldType.Tag.EntityRef.ordinal)
+                        writeString(wrappedType.schemaHash)
+                    }
+                    is FieldType.InlineEntity -> {
+                        writeInt(FieldType.Tag.InlineEntity.ordinal)
                         writeString(wrappedType.schemaHash)
                     }
                     else -> {
