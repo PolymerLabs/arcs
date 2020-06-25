@@ -1867,7 +1867,7 @@ NumberType
     if (txt.match(/\./)) {
       return Number(text());
     }
-    return text();
+    return BigInt(text());
   }
 
 Version "a version number (e.g. @012)"
