@@ -18,6 +18,7 @@ import java.io.File
 @RunWith(JUnit4::class)
 class VariablePlanTest {
 
+    // Assert two particles are equal since [Schema] data classes have lambdas.
     private fun particleEquality(left: Plan.Particle, right: Plan.Particle) {
         assertThat(left.particleName).isEqualTo(right.particleName)
         assertThat(left.location).isEqualTo(right.location)
@@ -77,5 +78,6 @@ class VariablePlanTest {
         val fromRecipe = variableIngestionRecipe.toPlan()
 
         particleEquality(fromRecipe.particles[0], VariableIngestionPlan.particles[0])
+        particleEquality(fromRecipe.particles[1], VariableIngestionPlan.particles[1])
     }
 }
