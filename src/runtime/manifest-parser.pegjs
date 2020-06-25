@@ -326,6 +326,10 @@ ManifestStorageInlineData
   {
     return Number(text());
   }
+  / '-'? [0-9]+ ('.' [0-9]+)? 'n'
+  {
+    return BigInt(text());
+  }
   / bool:('true'i / 'false'i)
   {
     return bool.toLowerCase() === 'true';
@@ -1811,6 +1815,10 @@ PrimaryExpression
     const operator = op[0];
     return toAstNode<AstNode.UnaryExpressionNode>({kind: 'unary-expression-node', expr, operator});
   }
+  / num: BigIntType units:Units?
+  {
+    return toAstNode<AstNode.BigIntNode>({kind: 'bigint-node', value: num, units});
+  }
   / num: NumberType units:Units?
   {
     return toAstNode<AstNode.NumberNode>({kind: 'number-node', value: num, units});
@@ -1863,11 +1871,13 @@ UnitName
 NumberType
   = whole:[0-9]+ fractional:('.' [0-9]+)?
   {
-    const txt = text();
-    if (txt.match(/\./)) {
-      return Number(text());
-    }
-    return BigInt(text());
+    return Number(text());
+  }
+
+BigIntType
+  = whole:[0-9]+ 'n'
+  {
+    return BigInt(whole.join(''));
   }
 
 Version "a version number (e.g. @012)"

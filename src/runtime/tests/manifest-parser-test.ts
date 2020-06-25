@@ -654,13 +654,13 @@ describe('manifest parser', () => {
     root = refExpr.rightExpr.rightExpr;
     assert.deepEqual(root.kind, 'binary-expression-node');
     assert.deepEqual(root.operator, '+');
-    assert.deepEqual(root.rightExpr.value, '1');
+    assert.deepEqual(root.rightExpr.value, 1);
 
     root = refExpr.rightExpr.rightExpr.leftExpr;
     assert.deepEqual(root.kind, 'binary-expression-node');
     assert.deepEqual(root.operator, '*');
-    assert.deepEqual(root.leftExpr.value, '2');
-    assert.deepEqual(root.rightExpr.value, '2');
+    assert.deepEqual(root.leftExpr.value, 2);
+    assert.deepEqual(root.rightExpr.value, 2);
   }));
   it('does not parse invalid refinement expressions', () => {
       assert.throws(() => {

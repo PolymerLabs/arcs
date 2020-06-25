@@ -200,6 +200,7 @@ abstract class RefinementExpression {
       case 'built-in-node': return BuiltIn.fromAst(expr, typeData);
       case 'query-argument-node': return QueryArgumentPrimitive.fromAst(expr, typeData);
       case 'number-node': return NumberPrimitive.fromAst(expr);
+      case 'bigint-node': return BigIntPrimitive.fromAst(expr);
       case 'boolean-node': return BooleanPrimitive.fromAst(expr);
       case 'text-node': return TextPrimitive.fromAst(expr);
       default:
@@ -683,7 +684,7 @@ export class BuiltIn extends RefinementExpression {
       return new Date().getTime(); // milliseconds since epoch;
     }
 
-    // TODO: Implement TS getter for 'creationTimeStamp'
+    // TODO(cypher1): Implement TS getter for 'creationTimeStamp'
     throw new Error(`Unhandled BuiltInNode '${this.value}' in applyOperator`);
   }
 
@@ -724,9 +725,8 @@ export class BigIntPrimitive extends RefinementExpression {
     }
   }
 
-  static fromAst(expression: NumberNode): RefinementExpression {
-    const value = BigInt(expression.value);
-    return new BigIntPrimitive(value, expression.units || []);
+  static fromAst(expression: BigIntNode): RefinementExpression {
+    return new BigIntPrimitive(expression.value, expression.units || []);
   }
 
   toLiteral() {
@@ -890,17 +890,17 @@ export class NumberRange {
   private type: Primitive;
 
   constructor(segs: NumberSegment[] = [], type: Primitive = Primitive.NUMBER) {
+    this.type = type;
     for (const seg of segs) {
       this.unionWithSeg(seg);
     }
-    this.type = type;
   }
 
   static universal(type: Primitive): NumberRange {
     if (type === Primitive.BOOLEAN) {
       return new NumberRange([NumberSegment.closedClosed(0, 0), NumberSegment.closedClosed(1, 1)], type);
     }
-    return new NumberRange([NumberSegment.openOpen(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY)], type);
+    return new NumberRange([NumberSegment.closedClosed(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY)], type);
   }
 
   static unit(val: number, ty: Primitive): NumberRange {
@@ -1721,7 +1721,7 @@ export class RefinementOperator {
       for (const operand of operands) {
         if (!this.opInfo.argType.includes(operand.evalType)) {
           if (operand.evalType !== Primitive.UNKNOWN || operand.kind !== 'QueryArgumentPrimitiveNode') {
-            throw new Error(`Refinement expression ${operand} has type ${operand.evalType}. Expected ${this.opInfo.argType}.`);
+            throw new Error(`Refinement expression ${operand} has type ${operand.evalType}. Expected ${this.opInfo.argType.join(' or ')}.`);
           }
           // operand.evalType = this.opInfo.argType;
         }

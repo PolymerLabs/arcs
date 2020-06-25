@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Primitive, NumberRange, NumberSegment, Refinement, BinaryExpression, NumberMultinomial, NumberFraction, NumberTerm as Term, BigIntRange, BigIntSegment} from '../refiner.js';
+import {Primitive, NumberRange, NumberSegment, Refinement, BinaryExpression, NumberMultinomial, NumberFraction, NumberTerm, BigIntTerm, BigIntRange, BigIntFraction, BigIntMultinomial, BigIntSegment} from '../refiner.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
@@ -97,7 +97,7 @@ describe('refiner', () => {
                 num: 6,
             };
             ref.validateData(data);
-        }, `Refinement expression (num < 5) has type Boolean. Expected Number.`);
+        }, `Refinement expression (num < 5) has type Boolean. Expected Number or BigInt.`);
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
@@ -121,9 +121,9 @@ describe('refiner', () => {
               name: 'Josh',
           };
             ref.validateData(data);
-        }, `Refinement expression name has type Text. Expected Number.`);
+        }, `Refinement expression name has type Text. Expected Number or BigInt.`);
     }));
-    it.only('tests simple expression to range conversion', Flags.withFieldRefinementsAllowed(async () => {
+    it('tests simple expression to range conversion', Flags.withFieldRefinementsAllowed(async () => {
         let manifestAst = parse(`
             particle Foo
                 input: reads Something {num: Number [ (num < 3) ] }
@@ -131,14 +131,14 @@ describe('refiner', () => {
         const typeData = {'num': 'Number'};
         let ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         let range = NumberRange.fromExpression(ref.expression);
-        assert.isTrue(range.equals(new NumberRange([NumberSegment.openOpen(Number.NEGATIVE_INFINITY, 3)])));
+        assert.deepEqual(range, new NumberRange([NumberSegment.openOpen(Number.NEGATIVE_INFINITY, 3)]));
         manifestAst = parse(`
             particle Foo
                 input: reads Something {num: Number [(num > 10)] }
         `);
         ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         range = NumberRange.fromExpression(ref.expression);
-        assert.isTrue(range.equals(new NumberRange([NumberSegment.openOpen(10, Number.POSITIVE_INFINITY)])));
+        assert.deepEqual(range, new NumberRange([NumberSegment.openOpen(10, Number.POSITIVE_INFINITY)]));
         manifestAst = parse(`
             particle Foo
                 input: reads Something {num: Number [not (num != 10)] }
