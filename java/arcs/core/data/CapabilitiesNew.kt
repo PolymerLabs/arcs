@@ -11,8 +11,17 @@
 
 package arcs.core.data
 
-/** Store capabilities containing a grouping of individual capabilities. */
-class CapabilitiesNew(val ranges: List<CapabilityNew.Range> = emptyList()) {
+/**
+ * Store capabilities containing a combination of individual [CapabilityNew]s (e.g. Persistence
+ * and/or Ttl and/or Queryable etc).
+ * If a certain capability does not appear in the combination, it is not restricted.
+ */
+class CapabilitiesNew(capabilities: List<CapabilityNew> = emptyList()) {
+    val ranges: List<CapabilityNew.Range>
+
+    init {
+        ranges = capabilities.map { it -> it.toRange() }
+    }
 
     val persistence: CapabilityNew.Persistence?
         get() = getCapability<CapabilityNew.Persistence>()

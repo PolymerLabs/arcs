@@ -22,7 +22,7 @@ class CapabilitiesNewTest {
     fun capabilities_empty() {
         assertThat(CapabilitiesNew().isEmpty).isTrue()
         assertThat(CapabilitiesNew.fromAnnotations(emptyList<Annotation>()).isEmpty).isTrue()
-        assertThat(CapabilitiesNew(listOf(CapabilityNew.Persistence.ON_DISK.toRange())).isEmpty)
+        assertThat(CapabilitiesNew(listOf(CapabilityNew.Persistence.ON_DISK)).isEmpty)
             .isFalse()
     }
 
