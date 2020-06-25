@@ -85,6 +85,7 @@ data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
                     }
                     FieldType.Tuple(collector.toList())
                 }
+                FieldType.Tag.InlineEntity -> FieldType.InlineEntity(requireNotNull(readString()))
             }
     }
 
@@ -121,6 +122,9 @@ data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
                     }
                 }
                 writeByte(')'.toByte())
+            }
+            is FieldType.InlineEntity -> {
+                writeString(type.schemaHash)
             }
         }
     }
