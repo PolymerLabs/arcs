@@ -5,7 +5,7 @@ load(
     "arcs_kt_jvm_test_suite",
     "arcs_kt_plan",
     "arcs_kt_schema",
-    "arcs_manifest_proto",
+    "arcs_proto_plan",
     "arcs_ts_test",
 )
 
@@ -62,7 +62,7 @@ arcs_kt_gen(
     srcs = ["Variable.arcs"],
 )
 
-arcs_manifest_proto(
+arcs_proto_plan(
     name = "variable_proto",
     src = "Variable.arcs",
 )
@@ -70,7 +70,7 @@ arcs_manifest_proto(
 arcs_kt_jvm_test_suite(
     name = "behavior-tests",
     srcs = glob(["*Test.kt"]),
-    data = [":variable-proto.pb.bin"],
+    data = [":variable_proto.pb.bin"],
     package = "src.tools.tests",
     deps = [
         ":variable_generation",

@@ -1,6 +1,7 @@
 package src.tools.tests
 
 import arcs.core.data.FieldType
+import arcs.core.data.Plan
 import arcs.core.data.SchemaFields
 import arcs.core.data.proto.ManifestProto
 import arcs.core.data.proto.decodeRecipes
@@ -16,6 +17,29 @@ import java.io.File
 
 @RunWith(JUnit4::class)
 class VariablePlanTest {
+
+    private fun particleEquality(left: Plan.Particle, right: Plan.Particle) {
+        assertThat(left.particleName).isEqualTo(right.particleName)
+        assertThat(left.location).isEqualTo(right.location)
+
+        val handlePairs = (left.handles.toList() + right.handles.toList())
+            .groupBy({ it.first }, { it.second })
+
+        for (pairs in handlePairs.values) {
+            assertThat(pairs).hasSize(2)
+
+            val firstHandle = pairs[0]
+            val secondHandle = pairs[1]
+
+            assertThat(firstHandle.storageKey).isEqualTo(secondHandle.storageKey)
+            assertThat(firstHandle.annotations).isEqualTo(secondHandle.annotations)
+            assertThat(firstHandle.mode).isEqualTo(secondHandle.mode)
+            assertThat(firstHandle.ttl).isEqualTo(secondHandle.ttl)
+            assertThat(firstHandle.type.toLiteral()).isEqualTo(secondHandle.type.toLiteral())
+        }
+
+    }
+
     @Test
     fun variable_hasSameSchema() {
         DriverAndKeyConfigurator.configure(null)
@@ -44,7 +68,7 @@ class VariablePlanTest {
         DriverAndKeyConfigurator.configure(null)
 
         val manifestProto = ManifestProto.parseFrom(
-            File(runfilesDir() + "src/tools/tests/variable-proto.pb.bin").readBytes()
+            File(runfilesDir() + "src/tools/tests/variable_proto.pb.bin").readBytes()
         )
         val recipes = manifestProto.decodeRecipes()
 
@@ -52,6 +76,6 @@ class VariablePlanTest {
 
         val fromRecipe = variableIngestionRecipe.toPlan()
 
-        assertThat(fromRecipe.particles).isEqualTo(VariableIngestionPlan.particles)
+        particleEquality(fromRecipe.particles[0], VariableIngestionPlan.particles[0])
     }
 }
