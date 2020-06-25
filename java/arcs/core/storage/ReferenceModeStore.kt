@@ -163,15 +163,13 @@ class ReferenceModeStore private constructor(
         }
     )
 
-    private val containerCallbackToken: Int
-
     init {
         @Suppress("UNCHECKED_CAST")
         crdtType = requireNotNull(
             type as? Type.TypeContainer<CrdtModelType<CrdtData, CrdtOperationAtTime, Referencable>>
         ) { "Provided type must contain CrdtModelType" }.containedType
 
-        containerCallbackToken = containerStore.on(ProxyCallback {
+        containerStore.on(ProxyCallback {
             CoroutineScope(coroutineContext).launch {
                 receiveQueue.enqueue(Message.PreEnqueuedFromContainer(it.toReferenceModeMessage()))
             }
