@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {RefinementNode, Op, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, QueryNode, BuiltInNode, NumberNode, BooleanNode, TextNode} from './manifest-ast-nodes.js';
+import {RefinementNode, Op, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, QueryNode, BuiltInNode, BigIntNode, NumberNode, BooleanNode, TextNode} from './manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
 import {Schema} from './schema.js';
 import {Entity} from './entity.js';
@@ -37,7 +37,6 @@ export class Refinement {
   expression: RefinementExpression;
 
   constructor(expr: RefinementExpression) {
-    // TODO(ragdev): Should be a copy?
     // TODO(ragdev): ensure that the refinement contains at least 1 fieldName
     this.expression = expr;
   }
@@ -917,22 +916,15 @@ export class NumberRange {
     return newRange;
   }
 
-  static intersectionOf(range1: NumberRange, range2: NumberRange): NumberRange {
-    const newRange = NumberRange.copyOf(range1);
-    newRange.intersect(range2);
-    return newRange;
-  }
-
-  static complementOf(range: NumberRange): NumberRange {
-    return NumberRange.difference(NumberRange.universal(range.type), range);
+  complement(): NumberRange {
+    return NumberRange.difference(NumberRange.universal(this.type), this);
   }
 
   // difference(A,B) = A\B = A - B
   static difference(range1: NumberRange, range2: NumberRange): NumberRange {
-    const newRange = new NumberRange();
+    const newRange = new NumberRange([], range1.type);
     for (const seg of range1.segments) {
-      const ntrsct = NumberRange.copyOf(range2);
-      ntrsct.intersectWithSeg(seg);
+      const ntrsct = range2.intersectWithSeg(seg);
       let from: Boundary<number> = {...seg.from};
       for (const iseg of ntrsct.segments) {
         const to: Boundary<number> = {...iseg.from};
@@ -964,7 +956,7 @@ export class NumberRange {
   }
 
   isSubsetOf(range: NumberRange): boolean {
-    return this.equals(NumberRange.intersectionOf(this, range));
+    return this.equals(this.intersect(range));
   }
 
   union(range: NumberRange): void {
@@ -1059,12 +1051,12 @@ export class NumberRange {
 
   static makeInitialGivenOp(op: Op, val: ExpressionPrimitives): NumberRange {
     switch (op) {
-      case Op.LT: return new NumberRange([NumberSegment.openOpen(Number.NEGATIVE_INFINITY, val)]);
-      case Op.LTE: return new NumberRange([NumberSegment.openClosed(Number.NEGATIVE_INFINITY, val)]);
-      case Op.GT: return new NumberRange([NumberSegment.openOpen(val, Number.POSITIVE_INFINITY)]);
-      case Op.GTE: return new NumberRange([NumberSegment.closedOpen(val, Number.POSITIVE_INFINITY)]);
+      case Op.LT: return new NumberRange([NumberSegment.closedOpen(Number.NEGATIVE_INFINITY, val)]);
+      case Op.LTE: return new NumberRange([NumberSegment.closedClosed(Number.NEGATIVE_INFINITY, val)]);
+      case Op.GT: return new NumberRange([NumberSegment.openClosed(val, Number.POSITIVE_INFINITY)]);
+      case Op.GTE: return new NumberRange([NumberSegment.closedClosed(val, Number.POSITIVE_INFINITY)]);
       case Op.EQ: return new NumberRange([NumberSegment.closedClosed(val, val)]);
-      case Op.NEQ: return NumberRange.complementOf(new NumberRange([NumberSegment.closedClosed(val, val)]));
+      case Op.NEQ: return new NumberRange([NumberSegment.closedClosed(val, val)]).complement();
       default: throw new Error(`Unsupported operator: field ${op} number`);
     }
   }
@@ -1072,27 +1064,27 @@ export class NumberRange {
   static updateGivenOp(op: Op, ranges: NumberRange[]): NumberRange {
     switch (op) {
       case Op.AND: {
-        return NumberRange.intersectionOf(ranges[0], ranges[1]);
+        return ranges[0].intersect(ranges[1]);
       }
       case Op.OR: {
         return NumberRange.unionOf(ranges[0], ranges[1]);
       }
       case Op.EQ: {
-        const lc = NumberRange.complementOf(ranges[0]);
-        const rc = NumberRange.complementOf(ranges[1]);
-        const lnr = NumberRange.intersectionOf(ranges[0], ranges[1]);
-        const lcnrc = NumberRange.intersectionOf(lc, rc);
+        const lc = ranges[0].complement();
+        const rc = ranges[1].complement();
+        const lnr = ranges[0].intersect(ranges[1]);
+        const lcnrc = lc.intersect(rc);
         return NumberRange.unionOf(lnr, lcnrc);
       }
       case Op.NEQ: {
-        const lc = NumberRange.complementOf(ranges[0]);
-        const rc = NumberRange.complementOf(ranges[1]);
-        const lnrc = NumberRange.intersectionOf(ranges[0], rc);
-        const lcnr = NumberRange.intersectionOf(lc, ranges[1]);
+        const lc = ranges[0].complement();
+        const rc = ranges[1].complement();
+        const lnrc = ranges[0].intersect(rc);
+        const lcnr = lc.intersect(ranges[1]);
         return NumberRange.unionOf(lnrc, lcnr);
       }
       case Op.NOT: {
-        return NumberRange.complementOf(ranges[0]);
+        return ranges[0].complement();
       }
       default: {
         throw new Error(`Unsupported operator '${op}': cannot update range`);
@@ -1114,6 +1106,15 @@ export class NumberSegment {
   }
 
   static isValid(from: Boundary<number>, to: Boundary<number>): boolean {
+    if (to.val === undefined || from.val === undefined) {
+      return false;
+    }
+    if ((to.val === Infinity || to.val === -Infinity) && to.isOpen) {
+      return false;
+    }
+    if ((from.val === Infinity || from.val === -Infinity) && from.isOpen) {
+      return false;
+    }
     if (to.val < from.val) {
       return false;
     } else if (from.val === to.val && (from.isOpen || to.isOpen)) {
@@ -1177,46 +1178,38 @@ export class NumberSegment {
     return !this.isLessThan(seg, true) && !this.isGreaterThan(seg, true);
   }
 
+  static min(a: Boundary<number>, b: Boundary<number>, inclusive: boolean): Boundary<number> {
+    if (a.val !== b.val) {
+      return (a.val < b.val) ? {...a} : {...b};
+    }
+    return {...a, isOpen: inclusive ? a.isOpen && b.isOpen : a.isOpen || b.isOpen};
+  }
+
+  static max(a: Boundary<number>, b: Boundary<number>, inclusive: boolean): Boundary<number> {
+    if (a.val !== b.val) {
+      return (a.val < b.val) ? {...b} : {...a};
+    }
+    return {...a, isOpen: inclusive ? a.isOpen && b.isOpen : a.isOpen || b.isOpen};
+  }
+
   static merge(a: NumberSegment, b: NumberSegment): NumberSegment {
     if (!a.mergeableWith(b)) {
       throw new Error('Cannot merge non-overlapping segments');
     }
-    let left: Boundary<number>;
-    let right: Boundary<number>;
-    if (a.from.val === b.from.val) {
-      left = {...a.from};
-      left.isOpen = a.from.isOpen && b.from.isOpen;
-    } else {
-      left = a.from.val < b.from.val ? {...a.from} : {...b.from};
-    }
-    if (a.to.val === b.to.val) {
-      right = {...a.to};
-      right.isOpen = a.to.isOpen && b.to.isOpen;
-    } else {
-      right = a.to.val > b.to.val ? {...a.to} : {...b.to};
-    }
-    return new NumberSegment(left, right);
+    return new NumberSegment(
+      NumberSegment.min(a.from, b.from, true),
+      NumberSegment.max(a.to, b.to, true)
+    );
   }
 
   static overlap(a: NumberSegment, b: NumberSegment): NumberSegment {
     if (!a.overlapsWith(b)) {
       throw new Error('Cannot find intersection of non-overlapping segments');
     }
-    let left: Boundary<number>;
-    let right: Boundary<number>;
-    if (a.from.val === b.from.val) {
-      left = {...a.from};
-      left.isOpen = a.from.isOpen || b.from.isOpen;
-    } else {
-      left = a.from.val > b.from.val ? {...a.from} : {...b.from};
-    }
-    if (a.to.val === b.to.val) {
-      right = {...a.to};
-      right.isOpen = a.to.isOpen || b.to.isOpen;
-    } else {
-      right = a.to.val < b.to.val ? {...a.to} : {...b.to};
-    }
-    return new NumberSegment(left, right);
+    return new NumberSegment(
+      NumberSegment.max(a.from, b.from, false),
+      NumberSegment.min(a.to, b.to, false)
+    );
   }
 }
 
@@ -1254,25 +1247,18 @@ export class BigIntRange {
     return newRange;
   }
 
-  static intersectionOf(range1: BigIntRange, range2: BigIntRange): BigIntRange {
-    const newRange = BigIntRange.copyOf(range1);
-    newRange.intersect(range2);
-    return newRange;
-  }
-
-  static complementOf(range: BigIntRange): BigIntRange {
-    return BigIntRange.difference(BigIntRange.universal(range.type), range);
+  complement(): BigIntRange {
+    return BigIntRange.difference(BigIntRange.universal(this.type), this);
   }
 
   // difference(A,B) = A\B = A - B
   static difference(range1: BigIntRange, range2: BigIntRange): BigIntRange {
-    const newRange = new BigIntRange();
+    const newRange = new BigIntRange([], range1.type);
     for (const seg of range1.segments) {
-      const ntrsct = BigIntRange.copyOf(range2);
-      ntrsct.intersectWithSeg(seg);
-      let from: Boundary<bigint> = {...seg.from};
+      const ntrsct = range2.intersectWithSeg(seg);
+      let from: Boundary<BigIntValue> = {...seg.from};
       for (const iseg of ntrsct.segments) {
-        const to: Boundary<bigint> = {...iseg.from};
+        const to: Boundary<BigIntValue> = {...iseg.from};
         to.isOpen = !to.isOpen;
         if (BigIntSegment.isValid(from, to)) {
           newRange.segments.push(new BigIntSegment(from, to));
@@ -1280,7 +1266,7 @@ export class BigIntRange {
         from = iseg.to;
         from.isOpen = !from.isOpen;
       }
-      const to: Boundary<bigint> = {...seg.to};
+      const to: Boundary<BigIntValue> = {...seg.to};
       if (BigIntSegment.isValid(from, to)) {
         newRange.segments.push(new BigIntSegment(from, to));
       }
@@ -1301,7 +1287,7 @@ export class BigIntRange {
   }
 
   isSubsetOf(range: BigIntRange): boolean {
-    return this.equals(BigIntRange.intersectionOf(this, range));
+    return this.equals(this.intersect(range));
   }
 
   union(range: BigIntRange): void {
@@ -1310,58 +1296,47 @@ export class BigIntRange {
     }
   }
 
-  intersect(range: BigIntRange): void {
+  intersect(range: BigIntRange): BigIntRange {
     const newRange = new BigIntRange();
     for (const seg of range.segments) {
-      const dup = BigIntRange.copyOf(this);
-      dup.intersectWithSeg(seg);
+      const dup = this.intersectWithSeg(seg);
       newRange.union(dup);
     }
-    this.segments = newRange.segments;
+    return newRange;
   }
 
   unionWithSeg(seg: BigIntSegment): void {
     let i = 0;
-    let j = this.segments.length;
-    let x: Boundary<bigint> = {...seg.from};
-    let y: Boundary<bigint> = {...seg.to};
     for (const subRange of this.segments) {
       if (seg.isGreaterThan(subRange, false)) {
         i += 1;
+      } else if (seg.mergeableWith(subRange)) {
+        seg.from = BigIntSegment.min(subRange.from, seg.from, false);
       } else {
-        if (seg.mergeableWith(subRange)) {
-          const m = BigIntSegment.merge(seg, subRange);
-          x = {...m.from};
-        } else {
-          x = subRange.from.val < x.val ? {...subRange.from} : x;
-        }
         break;
       }
     }
+    let j = this.segments.length;
     for (const subRange of this.segments.slice().reverse()) {
       if (seg.isLessThan(subRange, false)) {
         j -= 1;
+      } else if (seg.mergeableWith(subRange)) {
+        seg.to = BigIntSegment.max(subRange.to, seg.to, false);
       } else {
-        if (seg.mergeableWith(subRange)) {
-          const m = BigIntSegment.merge(seg, subRange);
-          y = {...m.to};
-        } else {
-          y = subRange.to.val > y.val ? {...subRange.to} : y;
-        }
         break;
       }
     }
-    this.segments.splice(i, j-i, new BigIntSegment(x, y));
+    this.segments.splice(i, j-i, seg);
   }
 
-  intersectWithSeg(seg: BigIntSegment): void {
+  intersectWithSeg(seg: BigIntSegment): BigIntRange {
     const newRange = new BigIntRange();
     for (const subRange of this.segments) {
       if (subRange.overlapsWith(seg)) {
         newRange.segments.push(BigIntSegment.overlap(seg, subRange));
       }
     }
-    this.segments = newRange.segments;
+    return newRange;
   }
 
   // This function assumes that the expression is univariate
@@ -1396,12 +1371,12 @@ export class BigIntRange {
 
   static makeInitialGivenOp(op: Op, val: ExpressionPrimitives): BigIntRange {
     switch (op) {
-      case Op.LT: return new BigIntRange([BigIntSegment.openOpen(undefined, val)]);
-      case Op.LTE: return new BigIntRange([BigIntSegment.openClosed(undefined, val)]);
-      case Op.GT: return new BigIntRange([BigIntSegment.openOpen(val, undefined)]);
-      case Op.GTE: return new BigIntRange([BigIntSegment.closedOpen(val, undefined)]);
+      case Op.LT: return new BigIntRange([BigIntSegment.closedOpen('NEGATIVE_INFINITY', val)]);
+      case Op.LTE: return new BigIntRange([BigIntSegment.closedClosed('NEGATIVE_INFINITY', val)]);
+      case Op.GT: return new BigIntRange([BigIntSegment.openClosed(val, 'POSITIVE_INFINITY')]);
+      case Op.GTE: return new BigIntRange([BigIntSegment.closedClosed(val, 'POSITIVE_INFINITY')]);
       case Op.EQ: return new BigIntRange([BigIntSegment.closedClosed(val, val)]);
-      case Op.NEQ: return BigIntRange.complementOf(new BigIntRange([BigIntSegment.closedClosed(val, val)]));
+      case Op.NEQ: return new BigIntRange([BigIntSegment.closedClosed(val, val)]).complement();
       default: throw new Error(`Unsupported operator: field ${op} bigint`);
     }
   }
@@ -1409,27 +1384,27 @@ export class BigIntRange {
   static updateGivenOp(op: Op, ranges: BigIntRange[]): BigIntRange {
     switch (op) {
       case Op.AND: {
-        return BigIntRange.intersectionOf(ranges[0], ranges[1]);
+        return ranges[0].intersect(ranges[1]);
       }
       case Op.OR: {
         return BigIntRange.unionOf(ranges[0], ranges[1]);
       }
       case Op.EQ: {
-        const lc = BigIntRange.complementOf(ranges[0]);
-        const rc = BigIntRange.complementOf(ranges[1]);
-        const lnr = BigIntRange.intersectionOf(ranges[0], ranges[1]);
-        const lcnrc = BigIntRange.intersectionOf(lc, rc);
+        const lc = ranges[0].complement();
+        const rc = ranges[1].complement();
+        const lnr = ranges[0].intersect(ranges[1]);
+        const lcnrc = lc.intersect(rc);
         return BigIntRange.unionOf(lnr, lcnrc);
       }
       case Op.NEQ: {
-        const lc = BigIntRange.complementOf(ranges[0]);
-        const rc = BigIntRange.complementOf(ranges[1]);
-        const lnrc = BigIntRange.intersectionOf(ranges[0], rc);
-        const lcnr = BigIntRange.intersectionOf(lc, ranges[1]);
+        const lc = ranges[0].complement();
+        const rc = ranges[1].complement();
+        const lnrc = ranges[0].intersect(rc);
+        const lcnr = lc.intersect(ranges[1]);
         return BigIntRange.unionOf(lnrc, lcnr);
       }
       case Op.NOT: {
-        return BigIntRange.complementOf(ranges[0]);
+        return ranges[0].complement();
       }
       default: {
         throw new Error(`Unsupported operator '${op}': cannot update range`);
@@ -1438,11 +1413,13 @@ export class BigIntRange {
   }
 }
 
-export class BigIntSegment {
-  from: Boundary<bigint>;
-  to: Boundary<bigint>;
+type BigIntValue = bigint | 'POSITIVE_INFINITY' | 'NEGATIVE_INFINITY';
 
-  constructor(from: Boundary<bigint>, to: Boundary<bigint>) {
+export class BigIntSegment {
+  from: Boundary<BigIntValue>;
+  to: Boundary<BigIntValue>;
+
+  constructor(from: Boundary<BigIntValue>, to: Boundary<BigIntValue>) {
     if (!BigIntSegment.isValid(from, to)) {
       throw new Error(`Invalid range from: ${from.val}, open:${from.isOpen}, to: ${to.val}, open:${to.isOpen}`);
     }
@@ -1450,9 +1427,15 @@ export class BigIntSegment {
     this.to = {...to};
   }
 
-  static isValid(from: Boundary<bigint>, to: Boundary<bigint>): boolean {
+  static isValid(from: Boundary<BigIntValue>, to: Boundary<BigIntValue>): boolean {
     if (to.val === undefined || from.val === undefined) {
-      return true;
+      return false;
+    }
+    if (from.val === 'NEGATIVE_INFINITY') {
+      return to.val !== 'NEGATIVE_INFINITY' && !from.isOpen;
+    }
+    if (to.val === 'POSITIVE_INFINITY') {
+      return from.val !== 'POSITIVE_INFINITY' && !to.isOpen;
     }
     if (to.val < from.val) {
       return false;
@@ -1462,19 +1445,19 @@ export class BigIntSegment {
     return true;
   }
 
-  static closedClosed(from: bigint, to: bigint): BigIntSegment {
+  static closedClosed(from: BigIntValue, to: BigIntValue): BigIntSegment {
     return new BigIntSegment({val: from, isOpen: false}, {val: to, isOpen: false});
   }
 
-  static openOpen(from: bigint, to: bigint): BigIntSegment {
+  static openOpen(from: BigIntValue, to: BigIntValue): BigIntSegment {
     return new BigIntSegment({val: from, isOpen: true}, {val: to, isOpen: true});
   }
 
-  static closedOpen(from: bigint, to: bigint): BigIntSegment {
+  static closedOpen(from: BigIntValue, to: BigIntValue): BigIntSegment {
     return new BigIntSegment({val: from, isOpen: false}, {val: to, isOpen: true});
   }
 
-  static openClosed(from: bigint, to: bigint): BigIntSegment {
+  static openClosed(from: BigIntValue, to: BigIntValue): BigIntSegment {
     return new BigIntSegment({val: from, isOpen: true}, {val: to, isOpen: false});
   }
 
@@ -1494,7 +1477,7 @@ export class BigIntSegment {
       }
       return this.to.isOpen && seg.from.isOpen;
     }
-    return this.to.val < seg.from.val;
+    return BigIntSegment.gt(seg.from, this.to);
   }
 
   // If strict is false, (x,a) is NOT greater than (b,x]
@@ -1506,7 +1489,7 @@ export class BigIntSegment {
       }
       return this.from.isOpen && seg.to.isOpen;
     }
-    return this.from.val > seg.to.val;
+    return BigIntSegment.gt(this.from, seg.to);
   }
 
   mergeableWith(seg: BigIntSegment): boolean {
@@ -1517,46 +1500,42 @@ export class BigIntSegment {
     return !this.isLessThan(seg, true) && !this.isGreaterThan(seg, true);
   }
 
+  static gt(a: Boundary<BigIntValue>, b: Boundary<BigIntValue>) {
+    return (a.val === 'POSITIVE_INFINITY' || b.val === 'NEGATIVE_INFINITY' || (typeof a.val === 'bigint' && typeof b.val === 'bigint' && a.val > b.val));
+  }
+
+  static min(a: Boundary<BigIntValue>, b: Boundary<BigIntValue>, inclusive: boolean): Boundary<BigIntValue> {
+    if (a.val !== b.val) {
+      return BigIntSegment.gt(a, b) ? {...b} : {...a};
+    }
+    return {...a, isOpen: inclusive ? a.isOpen && b.isOpen : a.isOpen || b.isOpen};
+  }
+
+  static max(a: Boundary<BigIntValue>, b: Boundary<BigIntValue>, inclusive: boolean): Boundary<BigIntValue> {
+    if (a.val !== b.val) {
+      return BigIntSegment.gt(a, b) ? {...a} : {...b};
+    }
+    return {...a, isOpen: inclusive ? a.isOpen && b.isOpen : a.isOpen || b.isOpen};
+  }
+
   static merge(a: BigIntSegment, b: BigIntSegment): BigIntSegment {
     if (!a.mergeableWith(b)) {
       throw new Error('Cannot merge non-overlapping segments');
     }
-    let left: Boundary<bigint>;
-    let right: Boundary<bigint>;
-    if (a.from.val === b.from.val) {
-      left = {...a.from};
-      left.isOpen = a.from.isOpen && b.from.isOpen;
-    } else {
-      left = a.from.val < b.from.val ? {...a.from} : {...b.from};
-    }
-    if (a.to.val === b.to.val) {
-      right = {...a.to};
-      right.isOpen = a.to.isOpen && b.to.isOpen;
-    } else {
-      right = a.to.val > b.to.val ? {...a.to} : {...b.to};
-    }
-    return new BigIntSegment(left, right);
+    return new BigIntSegment(
+      BigIntSegment.min(a.from, b.from, true),
+      BigIntSegment.max(a.to, b.to, true)
+    );
   }
 
   static overlap(a: BigIntSegment, b: BigIntSegment): BigIntSegment {
     if (!a.overlapsWith(b)) {
       throw new Error('Cannot find intersection of non-overlapping segments');
     }
-    let left: Boundary<bigint>;
-    let right: Boundary<bigint>;
-    if (a.from.val === b.from.val) {
-      left = {...a.from};
-      left.isOpen = a.from.isOpen || b.from.isOpen;
-    } else {
-      left = a.from.val > b.from.val ? {...a.from} : {...b.from};
-    }
-    if (a.to.val === b.to.val) {
-      right = {...a.to};
-      right.isOpen = a.to.isOpen || b.to.isOpen;
-    } else {
-      right = a.to.val < b.to.val ? {...a.to} : {...b.to};
-    }
-    return new BigIntSegment(left, right);
+    return new BigIntSegment(
+      BigIntSegment.max(a.from, b.from, false),
+      BigIntSegment.min(a.to, b.to, false)
+    );
   }
 }
 
@@ -2032,10 +2011,10 @@ export class NumberMultinomial {
 
   static multiply(a: NumberMultinomial, b: NumberMultinomial): NumberMultinomial {
     const prod = new NumberMultinomial();
-    for (const [aKey, acoeff] of Object.entries(a.terms)) {
-      for (const [bKey, bcoeff] of Object.entries(b.terms)) {
-        const tprod = NumberTerm.fromKey(aKey);
-        const bterm = NumberTerm.fromKey(bKey);
+    for (const [aTerm, acoeff] of Object.entries(a.terms)) {
+      for (const [bTerm, bcoeff] of Object.entries(b.terms)) {
+        const tprod = NumberTerm.fromKey(aTerm);
+        const bterm = NumberTerm.fromKey(bTerm);
         for (const [indeterminate, power] of Object.entries(bterm.indeterminates)) {
           const val: number = power + (tprod.indeterminates[indeterminate] || 0);
           tprod.indeterminates[indeterminate] = val;
@@ -2253,12 +2232,13 @@ export class BigIntMultinomial {
 
   static multiply(a: BigIntMultinomial, b: BigIntMultinomial): BigIntMultinomial {
     const prod = new BigIntMultinomial();
-    for (const [aKey, acoeff] of Object.entries(a.terms)) {
-      for (const [bKey, bcoeff] of Object.entries(b.terms)) {
-        const tprod = BigIntTerm.fromKey(aKey);
-        const bterm = BigIntTerm.fromKey(bKey);
+    for (const [aTerm, acoeff] of Object.entries(a.terms)) {
+      for (const [bTerm, bcoeff] of Object.entries(b.terms)) {
+        const tprod = BigIntTerm.fromKey(aTerm);
+        const bterm = BigIntTerm.fromKey(bTerm);
         for (const [indeterminate, power] of Object.entries(bterm.indeterminates)) {
-          const val: bigint = power + (tprod.indeterminates[indeterminate] || BigInt(0));
+          const new_pow = tprod.indeterminates[indeterminate] || 0;
+          const val: bigint = BigInt(power) + BigInt(new_pow);
           tprod.indeterminates[indeterminate] = val;
         }
         const val: bigint = acoeff*bcoeff + (prod.terms[tprod.toKey()] || BigInt(0));
