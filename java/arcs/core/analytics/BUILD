@@ -14,5 +14,6 @@ arcs_kt_library(
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/storage/keys:protocols",
+        "//java/arcs/core/storage/referencemode",
     ],
 )

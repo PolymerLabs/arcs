@@ -10,6 +10,7 @@
  */
 package arcs.core.host
 
+import arcs.core.analytics.Analytics
 import arcs.core.common.Id
 import arcs.core.common.Referencable
 import arcs.core.common.toArcId
@@ -75,7 +76,8 @@ class EntityHandleManager(
     private val time: Time,
     private val scheduler: Scheduler,
     private val stores: StoreManager = StoreManager(),
-    private val idGenerator: Id.Generator = Id.Generator.newSession()
+    private val idGenerator: Id.Generator = Id.Generator.newSession(),
+    private val analytics: Analytics = Analytics.defaultAnalytics
 ) {
 
     @Deprecated(
@@ -271,7 +273,7 @@ class EntityHandleManager(
                     type = SingletonType(EntityType(schema))
                 )
             )
-            SingletonProxy(activeStore, CrdtSingleton(), scheduler, time)
+            SingletonProxy(activeStore, CrdtSingleton(), scheduler, time, analytics)
         } as SingletonProxy<R>
     }
 
@@ -288,7 +290,7 @@ class EntityHandleManager(
                     type = CollectionType(EntityType(schema))
                 )
             )
-            CollectionProxy(activeStore, CrdtSet(), scheduler, time)
+            CollectionProxy(activeStore, CrdtSet(), scheduler, time, analytics)
         } as CollectionProxy<R>
     }
 }

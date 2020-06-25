@@ -55,7 +55,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     storeEndpointProvider: StorageCommunicationEndpointProvider<Data, Op, T>,
     crdt: CrdtModel<Data, Op, T>,
     private val scheduler: Scheduler,
-    private val time: Time
+    private val time: Time,
+    private val analytics: Analytics? = null
 ) {
     // Nullable internally, we don't allow constructor to pass null model
     private var _crdt: CrdtModel<Data, Op, T>? = crdt
@@ -369,19 +370,15 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      */
     suspend fun onMessage(message: ProxyMessage<Data, Op, T>) = coroutineScope {
         log.verbose { "onMessage: $message" }
-        log.error{ "XXX  0 here $message" }
         if (stateHolder.value.state == ProxyState.CLOSED) {
             log.verbose { "in closed state, received message: $message" }
             return@coroutineScope
         }
 
-        log.error{ "XXX  0.5 here $message" }
         if (message is ProxyMessage.SyncRequest) {
             // Storage wants our latest state.
             val data = withContext(this@StorageProxy.dispatcher) { crdt.data }
             sendMessageToStore(ProxyMessage.ModelUpdate(data, null))
-            lastSyncRequestTimestampMillis = time.currentTimeMillis
-            log.error{ "XXX  1 here $lastSyncRequestTimestampMillis " }
             return@coroutineScope
         }
 
@@ -390,17 +387,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
             MessageFromStoreTask {
                 when (message) {
                     is ProxyMessage.ModelUpdate -> {
-                        log.error{ "XXX  2 here $lastSyncRequestTimestampMillis " }
-                        lastSyncRequestTimestampMillis?.run {
-                            Analytics.logger.logStorageLatency(
-                                time.currentTimeMillis - this,
-                                Analytics.protocolToStorageType(storageKey.protocol),
-                                Analytics.crdtModelToHandleType(crdt),
-                                Analytics.Event.SYNC_REQUEST_TO_MODEL_UPDATE
-                            )
-                        }
-                        lastSyncRequestTimestampMillis = null
-
+                        maybeLogSyncRequestToModelUpdateLatency()
                         processModelUpdate(message.model)
                     }
                     is ProxyMessage.Operations -> processModelOps(message.operations)
@@ -408,6 +395,20 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                 }
             }
         )
+    }
+
+    private fun maybeLogSyncRequestToModelUpdateLatency() {
+        analytics?.run {
+            lastSyncRequestTimestampMillis?.run {
+                analytics.logStorageLatency(
+                    time.currentTimeMillis - this,
+                    Analytics.protocolToStorageType(storageKey.protocol),
+                    Analytics.crdtModelToHandleType(crdt),
+                    Analytics.Event.SYNC_REQUEST_TO_MODEL_UPDATE
+                )
+            }
+            lastSyncRequestTimestampMillis = null
+        }
     }
 
     private fun sendMessageToStore(
@@ -507,6 +508,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
     private fun requestSynchronization() {
         sendMessageToStore(ProxyMessage.SyncRequest(null))
+        lastSyncRequestTimestampMillis = time.currentTimeMillis
     }
 
     private fun notifyReady() {

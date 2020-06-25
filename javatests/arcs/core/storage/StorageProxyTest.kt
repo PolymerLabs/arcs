@@ -11,6 +11,7 @@
 
 package arcs.core.storage
 
+import arcs.core.analytics.Analytics
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation
@@ -18,6 +19,7 @@ import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
 import arcs.core.storage.StorageProxy.ProxyState
 import arcs.core.storage.StorageProxy.StorageEvent
+import arcs.core.storage.keys.Protocols
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
@@ -28,6 +30,7 @@ import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.never
 import com.nhaarman.mockitokotlin2.reset
+import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import com.nhaarman.mockitokotlin2.whenever
@@ -65,6 +68,8 @@ class StorageProxyTest {
     @Mock private lateinit var mockCrdtModel: CrdtModel<CrdtData, CrdtOperationAtTime, String>
     @Mock private lateinit var mockCrdtData: CrdtData
     @Mock private lateinit var mockTime: Time
+    @Mock private lateinit var mockAnalytics: Analytics
+    @Mock private lateinit var mockStorageKey: StorageKey
 
     private lateinit var scheduler: Scheduler
     private val callbackId = StorageProxy.CallbackIdentifier("test")
@@ -709,6 +714,49 @@ class StorageProxyTest {
         // After applying the model update, we should have also applied the operation.
         assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.UPDATE)
         verify(mockCrdtModel).merge(eq(mockCrdtData))
+    }
+
+    @Test
+    fun syncRequestToModelUpdate_logged() = runTest {
+        whenever(mockStorageEndpointProvider.storageKey).thenReturn(
+            object : StorageKey(Protocols.DATABASE_DRIVER) {
+                override fun toKeyString(): String {
+                    return Protocols.DATABASE_DRIVER
+                }
+                override fun childKeyWithComponent(component: String): StorageKey {
+                    return mockStorageKey
+                }
+            }
+        )
+
+        val proxy =
+            StorageProxy(
+                mockStorageEndpointProvider,
+                mockCrdtModel,
+                scheduler,
+                mockTime,
+                mockAnalytics
+            )
+        proxy.prepareForSync()
+        proxy.awaitOutgoingMessageQueueDrain()
+
+        // Return 2 as first timestamp.
+        whenever(mockTime.currentTimeMillis).thenReturn(2)
+        proxy.maybeInitiateSync()
+
+        verify(mockTime, times(1)).currentTimeMillis
+
+        // Return 97 as first timestamp.
+        whenever(mockTime.currentTimeMillis).thenReturn(97)
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        scheduler.waitForIdle()
+        verify(mockTime, times(2)).currentTimeMillis
+        verify(mockAnalytics, times(1)).logStorageLatency(
+            95 /* 97 - 2 */,
+            Analytics.StorageType.DATABASE,
+            Analytics.HandleType.OTHER,
+            Analytics.Event.SYNC_REQUEST_TO_MODEL_UPDATE
+        )
     }
 
     // Convenience wrapper for destructuring.
