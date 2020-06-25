@@ -21,8 +21,9 @@ export type AddFieldOptions = Readonly<{
   isOptional?: boolean;
   refClassName?: string;
   refSchemaHash?: string;
-  listTypeName?: string;
+  listTypeInfo?: {name: string, refSchemaHash?: string, isInlineClass?: boolean};
   isCollection?: boolean;
+  isInlineClass?: boolean;
 }>;
 
 export interface EntityGenerator {
@@ -61,14 +62,29 @@ export abstract class SchemaDescriptorBase {
         });
       } else if (descriptor.kind === 'schema-collection') {
         const schema = descriptor.schema;
-         if (!((schema.kind === 'kotlin-primitive') || ['Text', 'URL', 'Number', 'Boolean'].includes(schema.type))) {
-          throw new Error(`Schema type '${schema.type}' for field '${field}' is not supported`);
+        if (schema.kind === 'kotlin-primitive' || schema.kind === 'schema-primitive') {
+          this.addField({field, typeName: schema.type, isCollection: true});
+        } else if (schema.kind === 'schema-nested') {
+          const schemaNode = this.node.refs.get(field);
+          this.addField({field, typeName: schemaNode.entityClassName, refSchemaHash: schemaNode.hash, isCollection: true, isInlineClass: true});
+        } else {
+          throw new Error(`Schema kind '${schema.kind}' for field '${field}' is not supported`);
         }
-        this.addField({field, typeName: schema.type, isCollection: true});
       } else if (descriptor.kind === 'kotlin-primitive') {
         this.addField({field, typeName: descriptor.type});
       } else if (descriptor.kind === 'schema-ordered-list') {
-        this.addField({field, typeName: 'List', listTypeName: descriptor.schema.type});
+        const schema = descriptor.schema;
+        if (schema.kind === 'kotlin-primitive' || schema.kind === 'schema-primitive') {
+          this.addField({field, typeName: 'List', listTypeInfo: {name: schema.type}});
+        } else if (schema.kind === 'schema-nested') {
+          const schemaNode = this.node.refs.get(field);
+          this.addField({field, typeName: 'List', listTypeInfo: {name: schemaNode.entityClassName, refSchemaHash: schemaNode.hash, isInlineClass: true}});
+        } else {
+          throw new Error(`Schema kind '${schema.kind}' for field '${field}' is not supported`);
+        }
+      } else if (descriptor.kind === 'schema-nested') {
+        const schemaNode = this.node.refs.get(field);
+        this.addField({field, typeName: schemaNode.entityClassName, refSchemaHash: schemaNode.hash, isInlineClass: true});
       }
       else {
         throw new Error(`Schema kind '${descriptor.kind}' for field '${field}' is not supported`);

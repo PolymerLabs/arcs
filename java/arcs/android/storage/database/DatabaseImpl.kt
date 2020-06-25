@@ -1506,6 +1506,9 @@ class DatabaseImpl(
         is FieldType.Tuple ->
             throw NotImplementedError("[FieldType.Tuple]s not currently supported.")
         is FieldType.ListOf -> getTypeId(fieldType.primitiveType, database)
+        // TODO(b/144508181)
+        is FieldType.InlineEntity ->
+            throw NotImplementedError("[FieldType.InlineEntity]s not currently supported.")
     }
 
     /** Test-only version of [getTypeId]. */
