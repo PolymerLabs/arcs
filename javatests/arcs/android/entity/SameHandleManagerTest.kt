@@ -37,6 +37,7 @@ class SameHandleManagerTest : HandleManagerTestBase() {
     @Before
     override fun setUp() {
         super.setUp()
+        testTimeout = 30000
         fakeLifecycleOwner = FakeLifecycleOwner()
         fakeLifecycleOwner.lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
         fakeLifecycleOwner.lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)

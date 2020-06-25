@@ -63,7 +63,6 @@ class RawEntityDereferencer(
                         val model = (message.model as CrdtEntity.Data)
                             .takeIf { it.versionMap.isNotEmpty() }
                         deferred.complete(model?.toRawEntity())
-                        store.off(token)
                     }
                     is ProxyMessage.SyncRequest -> Unit
                     is ProxyMessage.Operations -> Unit
