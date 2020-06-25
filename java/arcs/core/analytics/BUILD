@@ -10,4 +10,9 @@ package(default_visibility = ["//visibility:public"])
 arcs_kt_library(
     name = "analytics",
     srcs = glob(["*.kt"]),
+    deps = [
+        "//java/arcs/core/common",
+        "//java/arcs/core/crdt",
+        "//java/arcs/core/storage/keys:protocols",
+    ],
 )

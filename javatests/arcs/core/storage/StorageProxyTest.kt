@@ -19,6 +19,7 @@ import arcs.core.crdt.VersionMap
 import arcs.core.storage.StorageProxy.ProxyState
 import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.util.Scheduler
+import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -27,7 +28,6 @@ import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.never
 import com.nhaarman.mockitokotlin2.reset
-import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import com.nhaarman.mockitokotlin2.whenever
@@ -64,6 +64,7 @@ class StorageProxyTest {
     @Mock private lateinit var mockCrdtOperation: CrdtOperationAtTime
     @Mock private lateinit var mockCrdtModel: CrdtModel<CrdtData, CrdtOperationAtTime, String>
     @Mock private lateinit var mockCrdtData: CrdtData
+    @Mock private lateinit var mockTime: Time
 
     private lateinit var scheduler: Scheduler
     private val callbackId = StorageProxy.CallbackIdentifier("test")
@@ -94,7 +95,7 @@ class StorageProxyTest {
 
     @Test
     fun initiatingSyncWhenPreparedSendsSyncRequest() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.NO_SYNC)
 
         // Readable handles are observing this proxy.
@@ -118,7 +119,7 @@ class StorageProxyTest {
     @Ignore("b/157188866 - remove onReady from write-only handles")
     @Test
     fun initiatingSyncWhenNotPreparedDoesNotSendSyncRequest() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.NO_SYNC)
 
         // No readable handles are observing this proxy; sync request should not be sent.
@@ -131,7 +132,7 @@ class StorageProxyTest {
 
     @Test
     fun cannotAddActionsOnNonSyncingProxy() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.NO_SYNC)
 
         val check = { block: () -> Unit ->
@@ -146,7 +147,7 @@ class StorageProxyTest {
 
     @Test
     fun addingActionsInvokesCallbacksBasedOnState() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
 
         // READY_TO_SYNC and AWAITING_SYNC: none of the callbacks are invoked immediately.
         proxy.prepareForSync()
@@ -190,7 +191,7 @@ class StorageProxyTest {
 
     @Test
     fun storageEvents() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         val notifyChannel = Channel<StorageEvent>(Channel.BUFFERED)
         proxy.registerForStorageEvents(callbackId) {
             runBlocking { notifyChannel.send(it) }
@@ -230,7 +231,7 @@ class StorageProxyTest {
 
     @Test
     fun modelUpdatesTriggerOnReadyThenOnUpdate() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         proxy.prepareForSync()
         proxy.maybeInitiateSync()
 
@@ -256,7 +257,7 @@ class StorageProxyTest {
 
     @Test
     fun modelOperationsTriggerOnUpdate() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         proxy.prepareForSync()
         proxy.maybeInitiateSync()
 
@@ -285,7 +286,7 @@ class StorageProxyTest {
 
     @Test
     fun failingModelOperationsTriggerDesync() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         val notifyChannel = Channel<StorageEvent>(Channel.BUFFERED)
         proxy.registerForStorageEvents(callbackId) {
             runBlocking { notifyChannel.send(it) }
@@ -336,7 +337,7 @@ class StorageProxyTest {
 
     @Test
     fun listOfModelOperationsWithOneFailing() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         proxy.prepareForSync()
         proxy.maybeInitiateSync()
 
@@ -371,7 +372,7 @@ class StorageProxyTest {
 
     @Test
     fun syncRequestReturnsTheLocalModel() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         proxy.prepareForSync()
         proxy.maybeInitiateSync()
 
@@ -390,7 +391,7 @@ class StorageProxyTest {
 
     @Test
     fun removeCallbacksForName() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         val notifyChannel = Channel<StorageEvent>(Channel.BUFFERED)
         proxy.registerForStorageEvents(StorageProxy.CallbackIdentifier("dontRemoveMe")) {
             runBlocking { notifyChannel.send(it) }
@@ -455,7 +456,7 @@ class StorageProxyTest {
 
     @Test
     fun applyOpSucceeds() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         proxy.prepareForSync()
         proxy.maybeInitiateSync()
 
@@ -480,7 +481,7 @@ class StorageProxyTest {
 
     @Test
     fun applyOpFails() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         proxy.prepareForSync()
         proxy.maybeInitiateSync()
 
@@ -498,7 +499,7 @@ class StorageProxyTest {
 
     @Test
     fun getParticleViewReturnsSyncedState() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         val notifyChannel = Channel<StorageEvent>(Channel.BUFFERED)
         proxy.registerForStorageEvents(callbackId) {
             runBlocking { notifyChannel.send(it) }
@@ -523,7 +524,7 @@ class StorageProxyTest {
 
     @Test
     fun getParticleViewWhenNotSyncingFails() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.NO_SYNC)
 
         val exception = assertFailsWith<IllegalStateException> {
@@ -536,7 +537,7 @@ class StorageProxyTest {
 
     @Test
     fun getParticleViewWhenReadyToSyncQueuesAndRequestsSync() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         val notifyChannel = Channel<StorageEvent>()
         proxy.registerForStorageEvents(callbackId) {
             runBlocking { notifyChannel.send(it) }
@@ -570,7 +571,7 @@ class StorageProxyTest {
 
     @Test
     fun getParticleViewWhenDesyncedQueues() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         val notifyChannel = Channel<StorageEvent>(Channel.BUFFERED)
         proxy.registerForStorageEvents(callbackId) {
             runBlocking { notifyChannel.send(it) }
@@ -612,7 +613,7 @@ class StorageProxyTest {
 
     @Test
     fun getVersionMap() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         val versionMap = VersionMap(mapOf("x" to 7))
         whenever(mockCrdtModel.versionMap).thenReturn(versionMap)
         val proxyMap = proxy.getVersionMap()
@@ -625,7 +626,7 @@ class StorageProxyTest {
 
     @Test
     fun closeStorageProxy_closesStoreEndpoint() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         proxy.close()
         assertThat(fakeStoreEndpoint.closed).isTrue()
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.CLOSED)
@@ -633,7 +634,7 @@ class StorageProxyTest {
 
     @Test
     fun opsReceived_beforeSync_areAppliedAfter_sync() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         val notifyChannel = Channel<StorageEvent>(Channel.BUFFERED)
         proxy.registerForStorageEvents(callbackId) {
             runBlocking { notifyChannel.send(it) }
@@ -664,7 +665,7 @@ class StorageProxyTest {
 
     @Test
     fun opsReceived_whileDesynced_areAppliedAfter_resync() = runTest {
-        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler)
+        val proxy = StorageProxy(mockStorageEndpointProvider, mockCrdtModel, scheduler, mockTime)
         val notifyChannel = Channel<StorageEvent>(Channel.BUFFERED)
         proxy.registerForStorageEvents(callbackId) {
             runBlocking { notifyChannel.send(it) }

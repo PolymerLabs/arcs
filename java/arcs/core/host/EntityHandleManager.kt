@@ -271,7 +271,7 @@ class EntityHandleManager(
                     type = SingletonType(EntityType(schema))
                 )
             )
-            SingletonProxy(activeStore, CrdtSingleton(), scheduler)
+            SingletonProxy(activeStore, CrdtSingleton(), scheduler, time)
         } as SingletonProxy<R>
     }
 
@@ -288,7 +288,7 @@ class EntityHandleManager(
                     type = CollectionType(EntityType(schema))
                 )
             )
-            CollectionProxy(activeStore, CrdtSet(), scheduler)
+            CollectionProxy(activeStore, CrdtSet(), scheduler, time)
         } as CollectionProxy<R>
     }
 }
