@@ -369,11 +369,13 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      */
     suspend fun onMessage(message: ProxyMessage<Data, Op, T>) = coroutineScope {
         log.verbose { "onMessage: $message" }
+        log.error{ "XXX  0 here $message" }
         if (stateHolder.value.state == ProxyState.CLOSED) {
             log.verbose { "in closed state, received message: $message" }
             return@coroutineScope
         }
 
+        log.error{ "XXX  0.5 here $message" }
         if (message is ProxyMessage.SyncRequest) {
             // Storage wants our latest state.
             val data = withContext(this@StorageProxy.dispatcher) { crdt.data }
