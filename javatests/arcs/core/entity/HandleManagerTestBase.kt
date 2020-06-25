@@ -51,7 +51,7 @@ import arcs.core.storage.Reference as StorageReference
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 open class HandleManagerTestBase {
     @get:Rule
-    val log = LogRule(Log.Level.Verbose)
+    val log = LogRule()
 
     init {
         SchemaRegistry.register(Person.SCHEMA)
@@ -131,6 +131,12 @@ open class HandleManagerTestBase {
 
     // Must call from subclasses.
     open fun setUp() {
+        // We need to initialize to -1 instead of the default (999999) because our test cases around
+        // deleted items where we look for "nulled-out" entities can result in the
+        // `UNINITIALIZED_TIMESTAMP` being used for creationTimestamp, and others can result in the
+        // current time being used.
+        // TODO: Determine why this is happening. It seems for a nulled-out entity, we shouldn't
+        //  use the current time as the creationTimestamp.
         fakeTime = FakeTime(-1)
         DriverAndKeyConfigurator.configure(null)
         RamDisk.clear()
@@ -354,7 +360,7 @@ open class HandleManagerTestBase {
         val handleB = readHandleManager.createSingletonHandle()
         val handleBUpdated = handleB.onUpdateDeferred()
 
-        val expectedCreateTime = System.currentTimeMillis()
+        val expectedCreateTime = 123456789L
         fakeTime.millis = expectedCreateTime
 
         withContext(handle.dispatcher) {
@@ -415,6 +421,7 @@ open class HandleManagerTestBase {
             assertThat(readBack.creationTimestamp).isEqualTo(0)
             assertThat(readBack.expirationTimestamp).isEqualTo(2 * 60 * 1000)
 
+            // Fast forward time to 5 minutes later, so the reference expires.
             fakeTime.millis += 5 * 60 * 1000
             assertThat(refHandle.fetch()).isNull()
         }
@@ -832,7 +839,7 @@ open class HandleManagerTestBase {
         val handleBChanged = handleB.onUpdateDeferred()
         val monitorNotified = monitor.onUpdateDeferred()
 
-        val expectedCreateTime = System.currentTimeMillis()
+        val expectedCreateTime = 123456789L
         fakeTime.millis = expectedCreateTime
 
         withContext(handle.dispatcher) {
@@ -896,6 +903,7 @@ open class HandleManagerTestBase {
             assertThat(readBack.creationTimestamp).isEqualTo(0)
             assertThat(readBack.expirationTimestamp).isEqualTo(2 * 60 * 1000)
 
+            // Fast forward time to 5 minutes later, so the reference expires.
             fakeTime.millis += 5 * 60 * 1000
             assertThat(refHandle.fetchAll()).isEmpty()
             assertThat(refHandle.size()).isEqualTo(0)

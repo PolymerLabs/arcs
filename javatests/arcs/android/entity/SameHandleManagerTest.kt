@@ -25,12 +25,6 @@ import org.junit.runner.RunWith
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
 class SameHandleManagerTest : HandleManagerTestBase() {
-
-    class FakeLifecycleOwner : LifecycleOwner {
-        val lifecycleRegistry = LifecycleRegistry(this)
-        override fun getLifecycle() = lifecycleRegistry
-    }
-
     lateinit var fakeLifecycleOwner: FakeLifecycleOwner
     lateinit var app: Application
 
@@ -67,33 +61,8 @@ class SameHandleManagerTest : HandleManagerTestBase() {
         fakeLifecycleOwner.lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     }
 
-    @Test
-    override fun singleton_clearOnAClearDataWrittenByB() {
-        super.singleton_clearOnAClearDataWrittenByB()
-    }
-
-    @Test
-    override fun collection_clearingElementsFromA_clearsThemFromB() {
-        super.collection_clearingElementsFromA_clearsThemFromB()
-    }
-
-    @Test
-    override fun collection_referenceLiveness() {
-        super.collection_referenceLiveness()
-    }
-
-    @Test
-    override fun singleton_referenceLiveness() {
-        super.singleton_referenceLiveness()
-    }
-
-    @Test
-    override fun singleton_withTTL() {
-        super.singleton_withTTL()
-    }
-
-    @Test
-    override fun singleton_writeAndReadBackAndClear() {
-        super.singleton_writeAndReadBackAndClear()
+    class FakeLifecycleOwner : LifecycleOwner {
+        val lifecycleRegistry = LifecycleRegistry(this)
+        override fun getLifecycle() = lifecycleRegistry
     }
 }
