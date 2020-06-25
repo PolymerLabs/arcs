@@ -64,11 +64,15 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
 
   return {
     name: spec.name,
-    location: spec.implFile,
+    location: spec.implFile && replaceAll(spec.implFile, "/", ".").replace("..", "."),
     connections,
     claims,
     checks
   };
+}
+
+function replaceAll(candidate: string, target: string, replacement: string): string {
+  return candidate.split(target).join(replacement);
 }
 
 async function handleConnectionSpecToProtoPayload(spec: HandleConnectionSpec) {
@@ -261,7 +265,7 @@ async function recipeHandleToProtoPayload(handle: Handle) {
     tags: handle.tags,
     fate: fateOrdinal,
     type: await typeToProtoPayload(handle.type || handle.mappedType),
-    annotations: handle.annotations.map(annotationToProtoPayload)
+    annotations: handle.annotations.map(annotationToProtoPayload),
   };
 
   if (handle.storageKey) {
