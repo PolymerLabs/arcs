@@ -12,8 +12,6 @@
 package arcs.core.data
 
 import com.google.common.truth.Truth.assertThat
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -22,9 +20,10 @@ import org.junit.runners.JUnit4
 class CapabilitiesNewTest {
     @Test
     fun capabilities_empty() {
-        assertTrue(CapabilitiesNew().isEmpty)
-        assertTrue(CapabilitiesNew.fromAnnotations(emptyList<Annotation>()).isEmpty)
-        assertFalse(CapabilitiesNew(listOf(CapabilityNew.Persistence.ON_DISK.toRange())).isEmpty)
+        assertThat(CapabilitiesNew().isEmpty).isTrue()
+        assertThat(CapabilitiesNew.fromAnnotations(emptyList<Annotation>()).isEmpty).isTrue()
+        assertThat(CapabilitiesNew(listOf(CapabilityNew.Persistence.ON_DISK.toRange())).isEmpty)
+            .isFalse()
     }
 
     @Test
@@ -72,9 +71,9 @@ class CapabilitiesNewTest {
             )
         )
         assertThat(queryableEncrypted.persistence).isNull()
-        assertTrue(queryableEncrypted.isEncrypted ?: false)
+        assertThat(queryableEncrypted.isEncrypted).isTrue()
         assertThat(queryableEncrypted.ttl).isNull()
-        assertTrue(queryableEncrypted.isQueryable ?: false)
+        assertThat(queryableEncrypted.isQueryable).isTrue()
         assertThat(queryableEncrypted.isShareable).isNull()
     }
 
@@ -84,9 +83,9 @@ class CapabilitiesNewTest {
             listOf(Annotation.createCapability("tiedToRuntime"))
         )
         assertThat(tiedToRuntime.persistence).isEqualTo(CapabilityNew.Persistence.IN_MEMORY)
-        assertThat(tiedToRuntime.isEncrypted ?: false)
+        assertThat(tiedToRuntime.isEncrypted).isNull()
         assertThat(tiedToRuntime.ttl).isNull()
         assertThat(tiedToRuntime.isQueryable).isNull()
-        assertTrue(tiedToRuntime.isShareable ?: false)
+        assertThat(tiedToRuntime.isShareable).isTrue()
     }
 }

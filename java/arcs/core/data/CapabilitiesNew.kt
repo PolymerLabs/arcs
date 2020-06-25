@@ -11,48 +11,30 @@
 
 package arcs.core.data
 
-/** Store capabilities containing a grouping of individual capabilities */
+/** Store capabilities containing a grouping of individual capabilities. */
 class CapabilitiesNew(val ranges: List<CapabilityNew.Range> = emptyList()) {
 
     val persistence: CapabilityNew.Persistence?
-        get() {
-            return ranges.find { it.min is CapabilityNew.Persistence }?.let {
-                require(it.min.isEquivalent(it.max)) { "Cannot get Persistence for a range" }
-                return it.min as CapabilityNew.Persistence
-            }
-        }
+        get() = getCapability<CapabilityNew.Persistence>()
 
     val ttl: CapabilityNew.Ttl?
-        get() {
-            return ranges.find { it.min is CapabilityNew.Ttl }?.let {
-                require(it.min.isEquivalent(it.max)) { "Cannot get Ttl for a range" }
-                return it.min as CapabilityNew.Ttl
-            }
-        }
+        get() = getCapability<CapabilityNew.Ttl>()
 
     val isEncrypted: Boolean?
-        get() {
-            return ranges.find { it.min is CapabilityNew.Encryption }?.let {
-                require(it.min.isEquivalent(it.max)) { "Cannot get Encryption for a range" }
-                return (it.min as CapabilityNew.Encryption).value
-            }
-        }
+        get() = getCapability<CapabilityNew.Encryption>()?.let { it.value }
 
     val isQueryable: Boolean?
-        get() {
-            return ranges.find { it.min is CapabilityNew.Queryable }?.let {
-                require(it.min.isEquivalent(it.max)) { "Cannot get Queryable for a range" }
-                return (it.min as CapabilityNew.Queryable).value
-            }
-        }
+        get() = getCapability<CapabilityNew.Queryable>()?.let { it.value }
 
     val isShareable: Boolean?
-        get() {
-            return ranges.find { it.min is CapabilityNew.Shareable }?.let {
-                require(it.min.isEquivalent(it.max)) { "Cannot get Encryption for a range" }
-                return (it.min as CapabilityNew.Shareable).value
-            }
+        get() = getCapability<CapabilityNew.Shareable>()?.let { it.value }
+
+    private inline fun <reified T : CapabilityNew> getCapability(): T? {
+        return ranges.find { it.min is T }?.let {
+            require(it.min.isEquivalent(it.max)) { "Cannot get capability for a range" }
+            it.min as T
         }
+    }
 
     val isEmpty = ranges.isEmpty()
 

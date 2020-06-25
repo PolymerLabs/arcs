@@ -64,22 +64,17 @@ sealed class CapabilityNew {
             fun fromAnnotations(annotations: List<Annotation>): Persistence? {
                 val kinds = mutableSetOf<Kind>()
                 for (annotation in annotations) {
-                    if (arrayOf("onDisk", "persistent").contains(annotation.name)) {
-                        kinds.add(Kind.OnDisk)
-                    }
-                    if (arrayOf("inMemory", "tiedToArc", "tiedToRuntime")
-                        .contains(annotation.name)) {
-                        kinds.add(Kind.InMemory)
+                    when (annotation.name) {
+                        "onDisk", "persistent" -> kinds.add(Kind.OnDisk)
+                        "inMemory", "tiedToArc", "tiedToRuntime" -> kinds.add(Kind.InMemory)
                     }
                 }
-                return when {
-                    kinds.isEmpty() -> null
-                    else -> {
-                        require(kinds.size == 1) {
-                            "Containing multiple persistence capabilities: $annotations"
-                        }
-                        Persistence(kinds.elementAt(0))
-                    }
+                return when (kinds.size) {
+                    0 -> null
+                    1 -> Persistence(kinds.elementAt(0))
+                    else -> throw IllegalStateException(
+                        "Containing multiple persistence capabilities: $annotations"
+                    )
                 }
             }
         }
@@ -97,7 +92,7 @@ sealed class CapabilityNew {
         }
         init {
             require(count >= 0 || isInfinite) {
-                "must be either positive count or infinite, " +
+                "must be either non-negative count or infinite, " +
                     "but got count=$count and isInfinite=$isInfinite"
             }
         }
