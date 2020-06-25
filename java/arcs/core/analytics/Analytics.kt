@@ -21,7 +21,7 @@ import arcs.core.util.TaggedLog
 /** Entry for logging analytics. */
 interface Analytics {
 
-    /** Types of StorageKey to log. */
+    /** Types of Storage to log. */
     enum class StorageType {
         VOLATILE,
         RAM_DISK,
@@ -31,14 +31,14 @@ interface Analytics {
         OTHER
     }
 
-    /** Types of Handle to log. */
+    /** Types of Handles to log. */
     enum class HandleType {
         SINGLETON,
         COLLECTION,
         OTHER
     }
 
-    /** Event to log. */
+    /** Types of Storage events to log. */
     enum class Event {
         SYNC_REQUEST_TO_MODEL_UPDATE
     }
@@ -91,4 +91,3 @@ interface Analytics {
         }
     }
 }
-
