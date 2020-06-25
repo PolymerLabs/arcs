@@ -174,10 +174,9 @@ class DatabaseImpl(
 
     override suspend fun removeClient(identifier: Int) = clientMutex.withLock {
         clients.remove(identifier)
-        // When all clients are done with the database, close the connection.
         if (clients.isEmpty()) {
             onDatabaseClose()
-            super.close()
+            // TODO: track bulk deletes, and if none is in progress we can close the connection.
         }
         Unit
     }

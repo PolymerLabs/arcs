@@ -145,8 +145,8 @@ class ReferenceModeStore private constructor(
      */
     private val versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
 
-    /** Tracks the state of container store: Active (true) and Closed (false). */
-    private val containerStateChannel = ConflatedBroadcastChannel(true)
+    /** Tracks the state of callback: true: active callbacks, false: no callbacks registered. */
+    private val callbacksStateChannel = ConflatedBroadcastChannel(true)
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     val backingStore = DirectStoreMuxer<CrdtData, CrdtOperation, Any?>(
@@ -188,17 +188,15 @@ class ReferenceModeStore private constructor(
     ): Int = callbacks.register(callback)
 
     override fun off(callbackToken: Int) {
-        containerStore.off(containerCallbackToken)
         callbacks.unregister(callbackToken)
-
-        if (containerStore.closed && !containerStateChannel.isClosedForSend) {
+        if (callbacks.isEmpty() && !callbacksStateChannel.isClosedForSend) {
             try {
-                containerStateChannel.offer(false)
+                callbacksStateChannel.offer(false)
             } catch (e: ClosedSendChannelException) {
                 // No-op. If the channel is closed (which can happen between the if's check and the
                 // offer call above), then it's no big deal.
                 log.debug {
-                    "Attempted to send false to the containerStateChannel when it was already " +
+                    "Attempted to send false to the callbacksStateChannel when it was already " +
                         "closed."
                 }
             }
@@ -454,15 +452,15 @@ class ReferenceModeStore private constructor(
 
     @FlowPreview
     private val clearStoreCachesFlow = combine(
-        containerStateChannel.asFlow(),
+        callbacksStateChannel.asFlow(),
         receiveQueue.sizeChannel.asFlow()
-    ) { containerState, queueSize -> queueSize + if (containerState) 1 else 0 }
+    ) { callbacksState, queueSize -> queueSize + if (callbacksState) 1 else 0 }
         .filter { it == 0 }
         .onEach {
             if (receiveQueue.size.value == 0) {
                 backingStore.clearStoresCache()
                 receiveQueue.sizeChannel.close()
-                containerStateChannel.close()
+                callbacksStateChannel.close()
             }
         }
         .launchIn(CoroutineScope(Dispatchers.Default + Job()))

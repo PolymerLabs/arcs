@@ -13,6 +13,7 @@ package arcs.android.storage.database
 import android.content.Context
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.util.TaggedLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -30,9 +31,10 @@ class DatabaseGarbageCollectionPeriodicTask(
 
     override fun doWork(): Result = runBlocking(Dispatchers.IO) {
         log.debug { "Running." }
-        val databaseManager = AndroidSqliteDatabaseManager(appContext)
+        // Use the DatabaseDriverProvider instance of the databaseManager to make sure changes by
+        // GC are propagated to listening Stores.
+        val databaseManager = DatabaseDriverProvider.manager
         databaseManager.runGarbageCollection().join()
-        databaseManager.close()
         log.debug { "Success." }
         // Indicate whether the task finished successfully with the Result
         Result.success()
