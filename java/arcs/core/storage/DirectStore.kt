@@ -105,18 +105,14 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     override fun off(callbackToken: Int) {
         synchronized(proxyManager) {
             proxyManager.unregister(callbackToken)
-            if (proxyManager.isEmpty()) {
-                closeInternal()
-            }
         }
     }
 
     /** Closes the store. Once closed, it cannot be re-opened. A new instance must be created. */
     fun close() {
         synchronized(proxyManager) {
-            if (proxyManager.isEmpty()) {
-                closeInternal()
-            }
+            proxyManager.callbacks.clear()
+            closeInternal()
         }
     }
 

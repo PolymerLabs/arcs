@@ -52,7 +52,7 @@ class RawEntityDereferencer(
             EntityType(schema)
         )
 
-        val store = Store(options).activate(entityActivationFactory)
+        val store = (entityActivationFactory ?: Store.defaultFactory).invoke(options)
         val deferred = CompletableDeferred<RawEntity?>()
         var token = -1
         token = store.on(

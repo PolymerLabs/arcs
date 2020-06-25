@@ -42,18 +42,17 @@ class SameHandleManagerTest : HandleManagerTestBase() {
         fakeLifecycleOwner.lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
         app = ApplicationProvider.getApplicationContext()
         schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+        activationFactory = ServiceStoreFactory(
+            app,
+            fakeLifecycleOwner.lifecycle,
+            connectionFactory = TestConnectionFactory(app)
+        )
         readHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("test"),
-            stores = StoreManager(
-                activationFactory = ServiceStoreFactory(
-                    app,
-                    fakeLifecycleOwner.lifecycle,
-                    connectionFactory = TestConnectionFactory(app)
-                )
-            )
+            stores = StoreManager(activationFactory)
         )
         writeHandleManager = readHandleManager
 

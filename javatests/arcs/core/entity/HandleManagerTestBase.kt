@@ -17,6 +17,7 @@ import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -25,6 +26,7 @@ import arcs.core.storage.driver.testutil.waitUntilSet
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.util.Log
 import arcs.core.util.Time
 import arcs.jvm.util.testutil.FakeTime
 import arcs.core.util.testutil.LogRule
@@ -49,7 +51,7 @@ import arcs.core.storage.Reference as StorageReference
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 open class HandleManagerTestBase {
     @get:Rule
-    val log = LogRule()
+    val log = LogRule(Log.Level.Verbose)
 
     init {
         SchemaRegistry.register(Person.SCHEMA)
@@ -97,6 +99,7 @@ open class HandleManagerTestBase {
         storageKey = hatCollectionRefKey
     )
 
+    var activationFactory: ActivationFactory? = null
     lateinit var schedulerProvider: JvmSchedulerProvider
     lateinit var readHandleManager: EntityHandleManager
     lateinit var writeHandleManager: EntityHandleManager
@@ -108,7 +111,7 @@ open class HandleManagerTestBase {
             hostId = "monitorHost",
             time = fakeTime,
             scheduler = schedulerProvider("monitor"),
-            stores = StoreManager()
+            stores = StoreManager(activationFactory)
         )
         runBlocking {
             withTimeout(10000) { block() }
@@ -127,7 +130,7 @@ open class HandleManagerTestBase {
 
     // Must call from subclasses.
     open fun setUp() {
-        fakeTime = FakeTime()
+        fakeTime = FakeTime(-1)
         DriverAndKeyConfigurator.configure(null)
         RamDisk.clear()
     }
