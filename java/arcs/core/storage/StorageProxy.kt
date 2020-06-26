@@ -398,8 +398,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     }
 
     private fun maybeLogSyncRequestToModelUpdateLatency() {
-        analytics?.let{
-            lastSyncRequestTimestampMillis?.let{
+        analytics?.let {
+            lastSyncRequestTimestampMillis?.let {
                 analytics.logStorageLatency(
                     time.currentTimeMillis - it,
                     Analytics.storageKeyToStorageType(storageKey),
