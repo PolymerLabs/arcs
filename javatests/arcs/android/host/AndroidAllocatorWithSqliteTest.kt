@@ -18,7 +18,6 @@ import arcs.core.storage.CapabilitiesResolver
 import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.runner.RunWith
@@ -41,13 +40,5 @@ class AndroidAllocatorWithSqliteTest : AndroidAllocatorTest() {
         super.setUp()
         AndroidDriverAndKeyConfigurator.configure(context)
         Unit
-    }
-
-    @After
-    fun tearDown() {
-        // Workaround for this needing to be setup each time between tests.
-        CapabilitiesResolver.reset()
-        // TODO: this leaks to mutex/lock issues
-        // manager.resetAll()
     }
 }

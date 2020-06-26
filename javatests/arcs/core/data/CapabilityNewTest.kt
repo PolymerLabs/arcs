@@ -128,6 +128,7 @@ class CapabilityNewTest {
             Range(Encryption(true), Encryption(false))
         }
     }
+
     @Test
     fun capabilityRange_compareBooleanRanges() {
         assertThat(Queryable.ANY.isEquivalent(Queryable.ANY)).isTrue()
@@ -148,14 +149,26 @@ class CapabilityNewTest {
 
     @Test
     fun capabilityRange_ttl_contains() {
-        assertThat(Range(CapabilityNew.Ttl.Hours(10), CapabilityNew.Ttl.Hours(3)).contains(
-                      Range(CapabilityNew.Ttl.Hours(10), CapabilityNew.Ttl.Hours(3)))).isTrue()
-        assertThat(Range(CapabilityNew.Ttl.Hours(10), CapabilityNew.Ttl.Hours(3)).contains(
-                      Range(CapabilityNew.Ttl.Hours(8), CapabilityNew.Ttl.Hours(6)))).isTrue()
-        assertThat(Range(CapabilityNew.Ttl.Hours(10), CapabilityNew.Ttl.Hours(3)).contains(
-                       Range(CapabilityNew.Ttl.Hours(8), CapabilityNew.Ttl.Hours(2)))).isFalse()
-        assertThat(Range(CapabilityNew.Ttl.Infinite(), CapabilityNew.Ttl.Hours(3)).contains(
-                      Range(CapabilityNew.Ttl.Hours(8), CapabilityNew.Ttl.Hours(3)))).isTrue()
+        assertThat(
+            Range(CapabilityNew.Ttl.Hours(10), CapabilityNew.Ttl.Hours(3)).contains(
+                Range(CapabilityNew.Ttl.Hours(10), CapabilityNew.Ttl.Hours(3))
+            )
+        ).isTrue()
+        assertThat(
+            Range(CapabilityNew.Ttl.Hours(10), CapabilityNew.Ttl.Hours(3)).contains(
+                Range(CapabilityNew.Ttl.Hours(8), CapabilityNew.Ttl.Hours(6))
+            )
+        ).isTrue()
+        assertThat(
+            Range(CapabilityNew.Ttl.Hours(10), CapabilityNew.Ttl.Hours(3)).contains(
+                Range(CapabilityNew.Ttl.Hours(8), CapabilityNew.Ttl.Hours(2))
+            )
+        ).isFalse()
+        assertThat(
+            Range(CapabilityNew.Ttl.Infinite(), CapabilityNew.Ttl.Hours(3)).contains(
+                Range(CapabilityNew.Ttl.Hours(8), CapabilityNew.Ttl.Hours(3))
+            )
+        ).isTrue()
         assertThat(CapabilityNew.Ttl.ANY.contains(CapabilityNew.Ttl.Infinite())).isTrue()
         assertThat(
             CapabilityNew.Ttl.ANY.contains(
@@ -183,12 +196,17 @@ class CapabilityNewTest {
         assertThat(
             Range(Persistence.ON_DISK, Persistence.IN_MEMORY).contains(Persistence.ON_DISK)
         ).isTrue()
-        assertThat(Range(Persistence.ON_DISK, Persistence.IN_MEMORY)
-            .contains(Persistence.IN_MEMORY.toRange())).isTrue()
-        assertThat(Range(Persistence.ON_DISK, Persistence.IN_MEMORY)
-            .contains(Persistence.UNRESTRICTED)).isFalse()
-        assertThat(Range(Persistence.ON_DISK, Persistence.IN_MEMORY)
-            .contains(Persistence.ANY)).isFalse()
+        assertThat(
+            Range(Persistence.ON_DISK, Persistence.IN_MEMORY).contains(
+                Persistence.IN_MEMORY.toRange()
+            )
+        ).isTrue()
+        assertThat(
+            Range(Persistence.ON_DISK, Persistence.IN_MEMORY).contains(Persistence.UNRESTRICTED)
+        ).isFalse()
+        assertThat(
+            Range(Persistence.ON_DISK, Persistence.IN_MEMORY).contains(Persistence.ANY)
+        ).isFalse()
         assertThat(Persistence.ANY.contains(Persistence.ON_DISK)).isTrue()
         assertThat(Persistence.ANY.contains(Persistence.ON_DISK.toRange())).isTrue()
         assertThat(Persistence.ANY.contains(Range(Persistence.ON_DISK, Persistence.IN_MEMORY)))

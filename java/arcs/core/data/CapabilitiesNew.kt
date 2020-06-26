@@ -22,8 +22,7 @@ class CapabilitiesNew(capabilities: List<CapabilityNew> = emptyList()) {
     init {
         ranges = capabilities.map { it -> it.toRange() }
         require(ranges.distinctBy { it.min.tag }.size == capabilities.size) {
-            val size = capabilities.distinctBy { it.tag }.size
-            "Capabilities must be unique $size $capabilities."
+            "Capabilities must be unique $capabilities."
         }
     }
 
@@ -42,14 +41,34 @@ class CapabilitiesNew(capabilities: List<CapabilityNew> = emptyList()) {
     val isShareable: Boolean?
         get() = getCapability<CapabilityNew.Shareable>()?.let { it.value }
 
+    val isEmpty = ranges.isEmpty()
+
+    /**
+     * Returns true, if the given [CapabilityNew] is within the corresponding [CapabilityNew.Range]
+     * of same type of this.
+     * For example, [CapabilitiesNew] with Ttl range of 1-5 days `contains` a Ttl of 3 days.
+     */
+    fun contains(capability: CapabilityNew): Boolean {
+        val otherTag = when (capability.tag) {
+            CapabilityNew.Range.TAG -> (capability as CapabilityNew.Range).min.tag
+            else -> capability.tag
+        }
+        return ranges.find { it.min.tag == otherTag }?.contains(capability) ?: false
+    }
+
+    /**
+     * Returns true if all ranges in the given [CapabilitiesNew] are contained in this.
+     */
+    fun containsAll(other: CapabilitiesNew): Boolean {
+        return other.ranges.all { otherRange -> contains(otherRange) }
+    }
+
     private inline fun <reified T : CapabilityNew> getCapability(): T? {
         return ranges.find { it.min is T }?.let {
             require(it.min.isEquivalent(it.max)) { "Cannot get capability for a range" }
             it.min as T
         }
     }
-
-    val isEmpty = ranges.isEmpty()
 
     companion object {
         fun fromAnnotations(annotations: List<Annotation>): CapabilitiesNew {

@@ -13,8 +13,12 @@ package arcs.core.storage.keys
 import arcs.core.common.ArcId
 import arcs.core.common.toArcId
 import arcs.core.data.Capabilities
+import arcs.core.data.CapabilitiesNew
+import arcs.core.data.CapabilityNew
 import arcs.core.storage.CapabilitiesResolver
+import arcs.core.storage.CapabilitiesResolverNew
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyFactory
 import arcs.core.storage.StorageKeyParser
 
 /** Protocol to be used with the volatile driver. */
@@ -33,6 +37,20 @@ data class VolatileStorageKey(
         VolatileStorageKey(arcId, "$unique/$component")
 
     override fun toString(): String = super.toString()
+
+    class VolatileStorageKeyFactory : StorageKeyFactory(
+        VOLATILE_DRIVER_PROTOCOL,
+        CapabilitiesNew(
+            listOf(
+                CapabilityNew.Persistence.IN_MEMORY,
+                CapabilityNew.Shareable(false)
+            )
+        )
+    ) {
+        override fun create(options: StorageKeyFactory.StorageKeyOptions): StorageKey {
+            return VolatileStorageKey(options.arcId, options.unique)
+        }
+    }
 
     companion object {
         private val VOLATILE_STORAGE_KEY_PATTERN = "^([^/]+)/(.*)\$".toRegex()
@@ -60,6 +78,8 @@ data class VolatileStorageKey(
             ) { storageKeyOptions ->
                 VolatileStorageKey(storageKeyOptions.arcId, storageKeyOptions.unique)
             }
+
+            CapabilitiesResolverNew.registerStorageKeyFactory(VolatileStorageKeyFactory())
         }
 
         private fun fromString(rawKeyString: String): VolatileStorageKey {

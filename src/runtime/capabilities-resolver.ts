@@ -46,8 +46,7 @@ export class CapabilitiesResolver {
   async createStorageKey(capabilities: Capabilities, type: Type, handleId: string): Promise<StorageKey> {
     const selectedFactories = Object.values(this.factories).filter(factory => {
         return factory.supports(capabilities);
-      }
-    );
+    });
     if (selectedFactories.length === 0) {
       throw new Error(`Cannot create a suitable storage key for handle '${handleId}' with capabilities ${capabilities.toDebugString()}`);
     }

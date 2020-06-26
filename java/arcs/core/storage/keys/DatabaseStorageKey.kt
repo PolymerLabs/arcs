@@ -12,8 +12,12 @@
 package arcs.core.storage.keys
 
 import arcs.core.data.Capabilities
+import arcs.core.data.CapabilitiesNew
+import arcs.core.data.CapabilityNew
 import arcs.core.storage.CapabilitiesResolver
+import arcs.core.storage.CapabilitiesResolverNew
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyFactory
 import arcs.core.storage.StorageKeyParser
 
 /** Protocol to be used with the database driver for persistent databases. */
@@ -60,6 +64,22 @@ sealed class DatabaseStorageKey(
         init { checkValidity() }
 
         override fun toString() = super.toString()
+
+        class Factory : StorageKeyFactory(
+            DATABASE_DRIVER_PROTOCOL,
+            CapabilitiesNew(
+                listOf(
+                    CapabilityNew.Persistence.ON_DISK,
+                    CapabilityNew.Ttl.ANY,
+                    CapabilityNew.Queryable.ANY,
+                    CapabilityNew.Shareable.ANY
+                )
+            )
+        ) {
+            override fun create(options: StorageKeyFactory.StorageKeyOptions): StorageKey {
+                return Persistent(options.location, options.entitySchema.hash)
+            }
+        }
     }
 
     /** [DatabaseStorageKey] for values to be stored in-memory. */
@@ -71,6 +91,22 @@ sealed class DatabaseStorageKey(
         init { checkValidity() }
 
         override fun toString() = super.toString()
+
+        class Factory : StorageKeyFactory(
+            MEMORY_DATABASE_DRIVER_PROTOCOL,
+            CapabilitiesNew(
+                listOf(
+                    CapabilityNew.Persistence.IN_MEMORY,
+                    CapabilityNew.Ttl.ANY,
+                    CapabilityNew.Queryable.ANY,
+                    CapabilityNew.Shareable.ANY
+                )
+            )
+        ) {
+            override fun create(options: StorageKeyFactory.StorageKeyOptions): StorageKey {
+                return Memory(options.location, options.entitySchema.hash)
+            }
+        }
     }
 
     companion object {
@@ -111,6 +147,8 @@ sealed class DatabaseStorageKey(
                     storageKeyOptions.entitySchema.hash
                 )
             }
+            CapabilitiesResolverNew.registerStorageKeyFactory(Persistent.Factory())
+            CapabilitiesResolverNew.registerStorageKeyFactory(Memory.Factory())
         }
         /* internal */
         fun persistentFromString(rawKeyString: String): Persistent = fromString(rawKeyString)
