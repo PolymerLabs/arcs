@@ -15,6 +15,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/data",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
+        "//java/arcs/core/storage:writeback",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
