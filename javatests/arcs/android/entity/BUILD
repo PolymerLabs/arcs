@@ -5,13 +5,13 @@ load(
 
 licenses(["notice"])
 
-NONFLAKY_SRCS = [
-    "SameHandleManagerTest.kt",
+FLAKY_SRCS = [
+    "DifferentAndroidHandleManagerDifferentStoresTest.kt",
 ]
 
-FLAKY_SRCS = glob(
+NONFLAKY_SRCS = glob(
     ["*.kt"],
-    exclude = NONFLAKY_SRCS,
+    exclude = FLAKY_SRCS,
 )
 
 arcs_kt_android_test_suite(
@@ -27,6 +27,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/host",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
+        "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/testutil",
@@ -63,6 +64,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/host",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
+        "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/testutil",
