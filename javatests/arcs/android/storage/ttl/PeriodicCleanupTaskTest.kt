@@ -16,9 +16,11 @@ import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.SchemaRegistry
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.WriteBackForTesting
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
@@ -45,6 +47,7 @@ class PeriodicCleanupTaskTest {
         val context : Context = ApplicationProvider.getApplicationContext()
         DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(context))
         SchemaRegistry.register(DummyEntity.SCHEMA)
+        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         worker = TestWorkerBuilder.from(context, PeriodicCleanupTask::class.java).build()
     }
 
@@ -92,5 +95,7 @@ class PeriodicCleanupTaskTest {
             store(entity).join()
         }
         deferred.await()
+        // Make sure the write has reached storage.
+        WriteBackForTesting.awaitAllIdle()
     }
 }
