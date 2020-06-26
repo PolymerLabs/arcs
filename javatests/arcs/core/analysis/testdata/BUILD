@@ -1,6 +1,6 @@
 load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_manifest_proto")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 licenses(["notice"])
 

@@ -6,7 +6,7 @@ load("//tools/build_defs/android:rules.bzl", "android_binary")
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 exports_files(
     ["AndroidManifest.xml"],

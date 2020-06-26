@@ -3,7 +3,7 @@ load("//tools/build_defs/android:rules.bzl", "android_library")
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 android_library(
     name = "aidl",
