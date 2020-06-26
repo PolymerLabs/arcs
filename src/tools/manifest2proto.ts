@@ -24,6 +24,7 @@ import {flatMap} from '../runtime/util.js';
 import {Policy} from '../runtime/policy/policy.js';
 import {policyToProtoPayload} from './policy2proto.js';
 import {annotationToProtoPayload} from './annotation2proto.js';
+import {Loader} from '../platform/loader-node.js';
 
 export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path);
@@ -32,20 +33,20 @@ export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
 
 export async function manifestToProtoPayload(manifest: Manifest) {
   manifest.validateUniqueDefinitions();
-  return makeManifestProtoPayload(manifest.allParticles, manifest.allRecipes, manifest.allPolicies);
+  return makeManifestProtoPayload(manifest.allParticles, manifest.allRecipes, manifest.allPolicies, manifest.meta.namespace || '');
 }
 
-export async function encodePlansToProto(plans: Recipe[]) {
+export async function encodePlansToProto(plans: Recipe[], namespace: string = '') {
   const specMap = new Map<string, ParticleSpec>();
   for (const spec of flatMap(plans, r => r.particles).map(p => p.spec)) {
     specMap.set(spec.name, spec);
   }
-  return encodePayload(await makeManifestProtoPayload([...specMap.values()], plans, /* policies= */ []));
+  return encodePayload(await makeManifestProtoPayload([...specMap.values()], plans, [], namespace));
 }
 
-async function makeManifestProtoPayload(particles: ParticleSpec[], recipes: Recipe[], policies: Policy[]) {
+async function makeManifestProtoPayload(particles: ParticleSpec[], recipes: Recipe[], policies: Policy[], namespace: string = '') {
   return {
-    particleSpecs: await Promise.all(particles.map(p => particleSpecToProtoPayload(p))),
+    particleSpecs: await Promise.all(particles.map(p => particleSpecToProtoPayload(p, namespace))),
     recipes: await Promise.all(recipes.map(r => recipeToProtoPayload(r))),
     policies: policies.map(policyToProtoPayload),
   };
@@ -57,14 +58,21 @@ function encodePayload(payload: {}): Uint8Array {
   return ManifestProto.encode(ManifestProto.create(payload)).finish();
 }
 
-async function particleSpecToProtoPayload(spec: ParticleSpec) {
+async function particleSpecToProtoPayload(spec: ParticleSpec, namespace: string = '') {
   const connections = await Promise.all(spec.connections.map(async connectionSpec => handleConnectionSpecToProtoPayload(connectionSpec)));
   const claims = flatMap(spec.connections, connectionSpec => claimsToProtoPayload(spec, connectionSpec));
   const checks = flatMap(spec.connections, connectionSpec => checksToProtoPayload(spec, connectionSpec));
 
+  const loader = new Loader({});
+
+  let classpath = spec.implFile && spec.implFile.substring(spec.implFile.lastIndexOf('/') + 1);
+  if (classpath && classpath.startsWith('.')) {
+    classpath = namespace + classpath;
+  }
+
   return {
     name: spec.name,
-    location: spec.implFile && replaceAll(spec.implFile, '/', '.').replace('..', '.'),
+    location: loader.isJvmClasspath(classpath) ? classpath : spec.implFile,
     connections,
     claims,
     checks
