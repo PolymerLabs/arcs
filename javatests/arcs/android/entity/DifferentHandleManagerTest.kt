@@ -7,9 +7,11 @@ import androidx.lifecycle.LifecycleRegistry
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
+import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.entity.HandleManagerTestBase
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
+import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
@@ -32,6 +34,8 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
         fakeLifecycleOwner = FakeLifecycleOwner()
         fakeLifecycleOwner.lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
         fakeLifecycleOwner.lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
+        val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
+        DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
         app = ApplicationProvider.getApplicationContext()
         activationFactory = ServiceStoreFactory(
             app,
