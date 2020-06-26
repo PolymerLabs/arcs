@@ -48,6 +48,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -169,10 +170,10 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private suspend fun send(block: suspend () -> Unit) = requireNotNull(channel) {
         "Channel is not initialized"
     }.apply {
-        if (isClosedForSend) {
-            log.debug { "Channel is closed, ignoring" }
-        } else {
+        try {
             send(block)
+        } catch (e: ClosedSendChannelException) {
+            log.debug { "Channel is closed, ignoring" }
         }
     }
 
