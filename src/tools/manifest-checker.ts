@@ -45,13 +45,9 @@ async function checkManifest(src: string) {
     if (!particle.implFile) {
       throw new Error(`Particle ${particle.name} does not have an implementation file and is not marked external.`);
     }
-    let classpath = particle.implFile.substring(particle.implFile.lastIndexOf('/') + 1);
-    if (classpath.startsWith('.')) {
-      classpath = manifest.meta.namespace + classpath;
-    }
-    if (loader.isJvmClasspath(classpath)) {
-      if (!loader.jvmClassExists(classpath)) {
-        throw new Error(`Particle ${particle.name} does not have a valid classpath: '${classpath}'.`);
+    if (Loader.isJvmClasspath(particle.implFile)) {
+      if (!loader.jvmClassExists(particle.implFile)) {
+        throw new Error(`Particle ${particle.name} does not have a valid classpath: '${particle.implFile}'.`);
       }
     } else {
       await loader.loadResource(particle.implFile);
