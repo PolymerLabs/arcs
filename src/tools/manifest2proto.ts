@@ -64,7 +64,7 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
 
   return {
     name: spec.name,
-    location: spec.implFile && replaceAll(spec.implFile, "/", ".").replace("..", "."),
+    location: spec.implFile && replaceAll(spec.implFile, '/', '.').replace('..', '.'),
     connections,
     claims,
     checks

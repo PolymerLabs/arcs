@@ -3,7 +3,6 @@ load(
     "arcs_cc_schema",
     "arcs_kt_gen",
     "arcs_kt_jvm_test_suite",
-    "arcs_kt_plan",
     "arcs_kt_schema",
     "arcs_proto_plan",
     "arcs_ts_test",
