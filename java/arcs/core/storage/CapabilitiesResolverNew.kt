@@ -26,21 +26,15 @@ import arcs.core.type.Type
  * providers and given [CapabilitiesNew].
  */
 class CapabilitiesResolverNew(
-    val options: Options,
-    factoriesList: List<StorageKeyFactory> = listOf(),
-    val selector: FactorySelector = SimpleCapabilitiesSelector()
+    private val options: Options,
+    private val factories: Map<String, StorageKeyFactory>,
+    private val selector: FactorySelector = SimpleCapabilitiesSelector()
 ) {
-    val factories: Map<String, StorageKeyFactory>
-
-    init {
-        require(factoriesList.distinctBy { it.protocol }.size == factoriesList.size) {
-            "Storage keys protocol must be unique $factoriesList."
-        }
-        factories = factoriesList.associateBy { it.protocol }.toMutableMap()
-        CapabilitiesResolverNew.defaultStorageKeyFactories.forEach { (protocol, factory) ->
-            factories.getOrPut(protocol) { factory }
-        }
-    }
+    constructor(
+        options: Options,
+        factoriesList: List<StorageKeyFactory> = listOf(),
+        selector: FactorySelector = SimpleCapabilitiesSelector()
+    ) : this(options, CapabilitiesResolverNew.getFactoryMap(factoriesList), selector)
 
     /** Options used to construct [CapabilitiesResolver]. */
     data class Options(val arcId: ArcId)
@@ -49,15 +43,14 @@ class CapabilitiesResolverNew(
         val selectedFactories =
             factories.filterValues { it.supports(capabilities) }
 
-        if (selectedFactories.isEmpty()) {
-            throw IllegalStateException("Cannot create storage key for handle '$handleId' with " +
-                "capabilities $capabilities")
+        require(!selectedFactories.isEmpty()) {
+            "Cannot create storage key for handle '$handleId' with capabilities $capabilities"
         }
         val factory = selector.select(selectedFactories.values)
-        return createStorageKeyWithFactory(requireNotNull(factory), type, handleId)
+        return createStorageKeyWithFactory(factory, type, handleId)
     }
 
-    fun createStorageKeyWithFactory(
+    private fun createStorageKeyWithFactory(
         factory: StorageKeyFactory,
         type: Type,
         handleId: String
@@ -136,6 +129,17 @@ class CapabilitiesResolverNew(
 
         fun reset() {
             defaultStorageKeyFactories.clear()
+        }
+
+        fun getFactoryMap(factoriesList: List<StorageKeyFactory>): Map<String, StorageKeyFactory> {
+            require(factoriesList.distinctBy { it.protocol }.size == factoriesList.size) {
+                "Storage keys protocol must be unique $factoriesList."
+            }
+            val factories = factoriesList.associateBy { it.protocol }.toMutableMap()
+            CapabilitiesResolverNew.defaultStorageKeyFactories.forEach { (protocol, factory) ->
+                factories.getOrPut(protocol) { factory }
+            }
+            return factories
         }
     }
 }

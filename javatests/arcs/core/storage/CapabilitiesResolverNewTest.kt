@@ -80,19 +80,19 @@ class CapabilitiesResolverNewTest {
     fun capabilitiesResolver_createStorageKey_failsUnsupported() {
         val resolver = CapabilitiesResolverNew(Options(ArcId.newForTest("test")))
         // Verify storage keys for none of the capabilities cannot be created.
-        assertFailsWith<IllegalStateException> {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(unspecified, entityType, handleId)
         }
-        assertFailsWith<IllegalStateException> {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(inMemory, entityType, handleId)
         }
-        assertFailsWith<IllegalStateException> {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(inMemoryWithTtls, entityType, handleId)
         }
-        assertFailsWith<IllegalStateException> {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(onDisk, entityType, handleId)
         }
-        assertFailsWith<IllegalStateException> {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(onDiskWithTtl, entityType, handleId)
         }
     }
@@ -109,13 +109,13 @@ class CapabilitiesResolverNewTest {
         verifyStorageKey<VolatileStorageKey>(
             resolver.createStorageKey(inMemory, entityType, handleId)
         )
-        assertFailsWith<IllegalStateException> {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(inMemoryWithTtls, entityType, handleId)
         }
-        assertFailsWith<IllegalStateException> {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(onDisk, entityType, handleId)
         }
-        assertFailsWith<IllegalStateException> {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(onDiskWithTtl, entityType, handleId)
         }
     }
@@ -184,10 +184,10 @@ class CapabilitiesResolverNewTest {
         verifyStorageKey<DatabaseStorageKey.Memory>(
             resolver.createStorageKey(inMemoryWithTtls, entityType, handleId)
         )
-        assertFailsWith<IllegalStateException> {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(onDisk, entityType, handleId)
         }
-        assertFailsWith<IllegalStateException> {
+        assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(onDiskWithTtl, entityType, handleId)
         }
     }

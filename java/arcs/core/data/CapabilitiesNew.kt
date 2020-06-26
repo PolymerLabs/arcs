@@ -43,16 +43,22 @@ class CapabilitiesNew(capabilities: List<CapabilityNew> = emptyList()) {
 
     val isEmpty = ranges.isEmpty()
 
+    /**
+     * Returns true, if the given [CapabilityNew] is within the corresponding [CapabilityNew.Range]
+     * of same type of this.
+     * For example, [CapabilitiesNew] with Ttl range of 1-5 days `contains` a Ttl of 3 days.
+     */
     fun contains(capability: CapabilityNew): Boolean {
         val otherTag = when (capability.tag) {
             CapabilityNew.Range.TAG -> (capability as CapabilityNew.Range).min.tag
             else -> capability.tag
         }
-        return ranges.find { it.min.tag == otherTag }?.let {
-            it.contains(capability)
-        } ?: false
+        return ranges.find { it.min.tag == otherTag }?.contains(capability) ?: false
     }
 
+    /**
+     * Returns true if all ranges in the given [CapabilitiesNew] are contained in this.
+     */
     fun containsAll(other: CapabilitiesNew): Boolean {
         return other.ranges.all { otherRange -> contains(otherRange) }
     }
