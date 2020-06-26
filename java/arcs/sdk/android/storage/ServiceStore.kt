@@ -47,11 +47,12 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -94,6 +95,7 @@ class ServiceStoreFactory(
 }
 
 /** Implementation of [ActiveStore] which pipes [ProxyMessage]s to and from the [StorageService]. */
+@Suppress("EXPERIMENTAL_API_USAGE")
 @OptIn(FlowPreview::class)
 @ExperimentalCoroutinesApi
 class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
@@ -108,8 +110,8 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private val scope = CoroutineScope(coroutineContext)
     private var storageService: IStorageService? = null
     private var serviceConnection: StorageServiceConnection? = null
-    private var channel: Channel<suspend () -> Unit>? = null
-    private var flow: Flow<suspend () -> Unit>? = null
+    private var channel: BroadcastChannel<suspend () -> Unit>? = null
+    private var channelConsumptionJob: Job? = null
     private val outgoingMessages = atomic(0)
 
     init {
@@ -121,9 +123,12 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     // So we need to create fresh instances when off() invoked
     private fun initChannel() {
         synchronized(this) {
-            channel?.let { it.cancel() }
-            channel = Channel(Channel.UNLIMITED)
-            channel!!.consumeAsFlow().onEach { it() }.launchIn(scope)
+            channel?.takeIf { !it.isClosedForSend }?.cancel()
+            channel = ConflatedBroadcastChannel<suspend () -> Unit>().also {
+                channelConsumptionJob = it.asFlow().buffer()
+                    .onEach { it() }
+                    .launchIn(scope)
+            }
         }
     }
 

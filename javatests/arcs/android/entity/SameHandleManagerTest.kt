@@ -1,6 +1,7 @@
 package arcs.android.entity
 
 import android.app.Application
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -24,31 +25,29 @@ import org.junit.runner.RunWith
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
 class SameHandleManagerTest : HandleManagerTestBase() {
-
-    val fakeLifecycleOwner = object : LifecycleOwner {
-        private val lifecycle = LifecycleRegistry(this)
-        override fun getLifecycle() = lifecycle
-    }
-
+    lateinit var fakeLifecycleOwner: FakeLifecycleOwner
     lateinit var app: Application
 
     @Before
     override fun setUp() {
         super.setUp()
+        testTimeout = 30000
+        fakeLifecycleOwner = FakeLifecycleOwner()
+        fakeLifecycleOwner.lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+        fakeLifecycleOwner.lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
         app = ApplicationProvider.getApplicationContext()
         schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+        activationFactory = ServiceStoreFactory(
+            app,
+            fakeLifecycleOwner.lifecycle,
+            connectionFactory = TestConnectionFactory(app)
+        )
         readHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("test"),
-            stores = StoreManager(
-                activationFactory = ServiceStoreFactory(
-                    app,
-                    fakeLifecycleOwner.lifecycle,
-                    connectionFactory = TestConnectionFactory(app)
-                )
-            )
+            stores = StoreManager(activationFactory)
         )
         writeHandleManager = readHandleManager
 
@@ -57,41 +56,13 @@ class SameHandleManagerTest : HandleManagerTestBase() {
     }
 
     @After
-    override fun tearDown() = super.tearDown()
-
-    @Ignore("b/154947352 - Deflake")
-    @Test
-    override fun singleton_clearOnAClearDataWrittenByB() {
-        super.singleton_clearOnAClearDataWrittenByB()
+    override fun tearDown() {
+        super.tearDown()
+        fakeLifecycleOwner.lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     }
 
-    @Ignore("b/154947352 - Deflake")
-    @Test
-    override fun collection_clearingElementsFromA_clearsThemFromB() {
-        super.collection_clearingElementsFromA_clearsThemFromB()
-    }
-
-    @Ignore("b/156435662 - Deflake")
-    @Test
-    override fun collection_referenceLiveness() {
-        super.collection_referenceLiveness()
-    }
-
-    @Ignore("b/156863049 - Deflake")
-    @Test
-    override fun singleton_referenceLiveness() {
-        super.singleton_referenceLiveness()
-    }
-
-    @Ignore("b/156994024 - Deflake")
-    @Test
-    override fun singleton_withTTL() {
-        super.singleton_withTTL()
-    }
-
-    @Ignore("b/157390220 - Deflake")
-    @Test
-    override fun singleton_writeAndReadBackAndClear() {
-        super.singleton_writeAndReadBackAndClear()
+    class FakeLifecycleOwner : LifecycleOwner {
+        val lifecycleRegistry = LifecycleRegistry(this)
+        override fun getLifecycle() = lifecycleRegistry
     }
 }

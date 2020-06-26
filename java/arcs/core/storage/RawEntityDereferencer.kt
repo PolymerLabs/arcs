@@ -52,7 +52,7 @@ class RawEntityDereferencer(
             EntityType(schema)
         )
 
-        val store = Store(options).activate(entityActivationFactory)
+        val store = (entityActivationFactory ?: Store.defaultFactory).invoke(options)
         val deferred = CompletableDeferred<RawEntity?>()
         var token = -1
         token = store.on(
@@ -63,7 +63,6 @@ class RawEntityDereferencer(
                         val model = (message.model as CrdtEntity.Data)
                             .takeIf { it.versionMap.isNotEmpty() }
                         deferred.complete(model?.toRawEntity())
-                        store.off(token)
                     }
                     is ProxyMessage.SyncRequest -> Unit
                     is ProxyMessage.Operations -> Unit
