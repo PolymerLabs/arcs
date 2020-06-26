@@ -508,7 +508,9 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
     private fun requestSynchronization() {
         sendMessageToStore(ProxyMessage.SyncRequest(null))
-        lastSyncRequestTimestampMillis = time.currentTimeMillis
+        analytics?.let {
+            lastSyncRequestTimestampMillis = time.currentTimeMillis
+        }
     }
 
     private fun notifyReady() {

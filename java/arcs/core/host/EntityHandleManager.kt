@@ -77,7 +77,7 @@ class EntityHandleManager(
     private val scheduler: Scheduler,
     private val stores: StoreManager = StoreManager(),
     private val idGenerator: Id.Generator = Id.Generator.newSession(),
-    private val analytics: Analytics = Analytics.defaultAnalytics
+    private val analytics: Analytics? = null
 ) {
 
     @Deprecated(
