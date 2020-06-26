@@ -14,12 +14,21 @@ package arcs.core.analytics
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
+import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.Protocols
-import arcs.core.storage.referencemode.REFERENCE_MODE_PROTOCOL
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.TaggedLog
 
 /** Entry for logging analytics. */
 interface Analytics {
+
+    /** Log storage latency based on [StorageType], [HandleType] and [Event]. */
+    fun logStorageLatency(
+        latencyMillis: Long,
+        storageType: StorageType,
+        handleType: HandleType,
+        event: Event
+    )
 
     /** Types of Storage to log. */
     enum class StorageType {
@@ -27,8 +36,12 @@ interface Analytics {
         RAM_DISK,
         MEMORY_DATABASE,
         DATABASE,
-        REFERENCE_MODE,
-        OTHER
+        OTHER,
+        REFERENCE_MODE_VOLATILE,
+        REFERENCE_MODE_RAM_DISK,
+        REFERENCE_MODE_MEMORY_DATABASE,
+        REFERENCE_MODE_DATABASE,
+        REFERENCE_MODE_OTHER
     }
 
     /** Types of Handles to log. */
@@ -43,31 +56,31 @@ interface Analytics {
         SYNC_REQUEST_TO_MODEL_UPDATE
     }
 
-
-    /** Log storage latency based on [StorageType], [HandleType] and [Event]. */
-    fun logStorageLatency(
-        latencyMillis: Long,
-        storageType: StorageType,
-        handleType: HandleType,
-        event: Event
-    )
-
     companion object {
         /** Converts a StorageKey to loggable [StorageType]. */
-        fun protocolToStorageType(storageKey: String?) : StorageType {
-            return when (storageKey) {
-                Protocols.DATABASE_DRIVER -> StorageType.DATABASE
-                Protocols.MEMORY_DATABASE_DRIVER -> StorageType.MEMORY_DATABASE
-                Protocols.RAMDISK_DRIVER -> StorageType.RAM_DISK
-                Protocols.VOLATILE_DRIVER -> StorageType.VOLATILE
-                REFERENCE_MODE_PROTOCOL -> StorageType.REFERENCE_MODE
-                else -> StorageType.OTHER
+        fun storageKeyToStorageType(storageKey: StorageKey): StorageType {
+            if (storageKey is ReferenceModeStorageKey) {
+                return when (storageKey.backingKey.protocol) {
+                    Protocols.DATABASE_DRIVER -> StorageType.REFERENCE_MODE_DATABASE
+                    Protocols.MEMORY_DATABASE_DRIVER -> StorageType.REFERENCE_MODE_MEMORY_DATABASE
+                    Protocols.RAMDISK_DRIVER -> StorageType.REFERENCE_MODE_RAM_DISK
+                    Protocols.VOLATILE_DRIVER -> StorageType.REFERENCE_MODE_VOLATILE
+                    else -> StorageType.REFERENCE_MODE_OTHER
+                }
+            } else {
+                return when (storageKey.protocol) {
+                    Protocols.DATABASE_DRIVER -> StorageType.DATABASE
+                    Protocols.MEMORY_DATABASE_DRIVER -> StorageType.MEMORY_DATABASE
+                    Protocols.RAMDISK_DRIVER -> StorageType.RAM_DISK
+                    Protocols.VOLATILE_DRIVER -> StorageType.VOLATILE
+                    else -> StorageType.OTHER
+                }
             }
         }
 
         /** Converts a [CrdtModel] to loggable [HandleType]. */
-        fun crdtModelToHandleType(crdtModel: CrdtModel<*, *, *>?) : HandleType {
-            return when(crdtModel) {
+        fun crdtModelToHandleType(crdtModel: CrdtModel<*, *, *>?): HandleType {
+            return when (crdtModel) {
                 is CrdtSingleton -> HandleType.SINGLETON
                 is CrdtSet<*> -> HandleType.COLLECTION
                 else -> HandleType.OTHER
@@ -82,7 +95,8 @@ interface Analytics {
                 latencyMillis: Long,
                 storageType: StorageType,
                 handleType: HandleType,
-                event: Event) {
+                event: Event
+            ) {
                 log.debug {
                     "Analytics: logStorageLatency: " +
                     "$event, $handleType, $storageType: $latencyMillis (ms)."

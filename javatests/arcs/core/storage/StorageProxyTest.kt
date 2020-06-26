@@ -20,6 +20,7 @@ import arcs.core.crdt.VersionMap
 import arcs.core.storage.StorageProxy.ProxyState
 import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.storage.keys.Protocols
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
@@ -717,8 +718,51 @@ class StorageProxyTest {
     }
 
     @Test
-    fun syncRequestToModelUpdate_logged() = runTest {
-        whenever(mockStorageEndpointProvider.storageKey).thenReturn(
+    fun syncRequestToModelUpdate_NormalStorageKey_logged() = runTest {
+        val volatileStorageKey =
+            object : StorageKey(Protocols.VOLATILE_DRIVER) {
+                override fun toKeyString(): String {
+                    return Protocols.VOLATILE_DRIVER
+                }
+                override fun childKeyWithComponent(component: String): StorageKey {
+                    return mockStorageKey
+                }
+            }
+
+        whenever(mockStorageEndpointProvider.storageKey).thenReturn(volatileStorageKey)
+        val proxy =
+            StorageProxy(
+                mockStorageEndpointProvider,
+                mockCrdtModel,
+                scheduler,
+                mockTime,
+                mockAnalytics
+            )
+        proxy.prepareForSync()
+        proxy.awaitOutgoingMessageQueueDrain()
+
+        // Return 2 as first timestamp.
+        whenever(mockTime.currentTimeMillis).thenReturn(2)
+        proxy.maybeInitiateSync()
+
+        verify(mockTime, times(1)).currentTimeMillis
+
+        // Return 98 as first timestamp.
+        whenever(mockTime.currentTimeMillis).thenReturn(98)
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        scheduler.waitForIdle()
+        verify(mockTime, times(2)).currentTimeMillis
+        verify(mockAnalytics, times(1)).logStorageLatency(
+            96 /* 98 - 2 */,
+            Analytics.StorageType.VOLATILE,
+            Analytics.HandleType.OTHER,
+            Analytics.Event.SYNC_REQUEST_TO_MODEL_UPDATE
+        )
+    }
+
+    @Test
+    fun syncRequestToModelUpdate_ReferenceModeStorageKey_logged() = runTest {
+        val dbBackingStorageKey =
             object : StorageKey(Protocols.DATABASE_DRIVER) {
                 override fun toKeyString(): String {
                     return Protocols.DATABASE_DRIVER
@@ -727,8 +771,21 @@ class StorageProxyTest {
                     return mockStorageKey
                 }
             }
-        )
 
+        val dbStorageKey =
+            object : StorageKey(Protocols.DATABASE_DRIVER) {
+                override fun toKeyString(): String {
+                    return Protocols.DATABASE_DRIVER
+                }
+                override fun childKeyWithComponent(component: String): StorageKey {
+                    return mockStorageKey
+                }
+            }
+
+        val dbReferenceModeStorageKey =
+            ReferenceModeStorageKey(dbBackingStorageKey, dbStorageKey)
+
+        whenever(mockStorageEndpointProvider.storageKey).thenReturn(dbReferenceModeStorageKey)
         val proxy =
             StorageProxy(
                 mockStorageEndpointProvider,
@@ -753,7 +810,7 @@ class StorageProxyTest {
         verify(mockTime, times(2)).currentTimeMillis
         verify(mockAnalytics, times(1)).logStorageLatency(
             95 /* 97 - 2 */,
-            Analytics.StorageType.DATABASE,
+            Analytics.StorageType.REFERENCE_MODE_DATABASE,
             Analytics.HandleType.OTHER,
             Analytics.Event.SYNC_REQUEST_TO_MODEL_UPDATE
         )
