@@ -36,18 +36,17 @@ class CapabilitiesResolverNew(
         require(factoriesList.distinctBy { it.protocol }.size == factoriesList.size) {
             "Storage keys protocol must be unique $factoriesList."
         }
-        factories = factoriesList.map { it.protocol to it }.toMap().toMutableMap()
+        factories = factoriesList.associateBy { it.protocol }.toMutableMap()
         CapabilitiesResolverNew.defaultStorageKeyFactories.forEach { (protocol, factory) ->
-            if (factories[protocol] == null) factories.put(protocol, factory)
+            factories.getOrPut(protocol) { factory }
         }
     }
 
-    /* Options used to construct [CapabilitiesResolver] */
+    /** Options used to construct [CapabilitiesResolver]. */
     data class Options(val arcId: ArcId)
 
     fun createStorageKey(capabilities: CapabilitiesNew, type: Type, handleId: String): StorageKey {
         val selectedFactories =
-            // defaultStorageKeyFactories.filterValues { it.supports(capabilities) } +
             factories.filterValues { it.supports(capabilities) }
 
         if (selectedFactories.isEmpty()) {
@@ -63,14 +62,16 @@ class CapabilitiesResolverNew(
         type: Type,
         handleId: String
     ): StorageKey {
-        val containerKey = factory.create(StorageKeyFactory.ContainerStorageKeyOptions(
-            options.arcId, toEntitySchema(type)))
+        val containerKey = factory.create(
+            StorageKeyFactory.ContainerStorageKeyOptions(options.arcId, toEntitySchema(type))
+        )
         val containerChildKey = containerKey.childKeyForHandle(handleId)
         if (type is ReferenceType<*>) {
             return containerChildKey
         }
         val backingKey = factory.create(
-            StorageKeyFactory.BackingStorageKeyOptions(options.arcId, toEntitySchema(type)))
+            StorageKeyFactory.BackingStorageKeyOptions(options.arcId, toEntitySchema(type))
+        )
         // ReferenceModeStorageKeys in different drivers can cause problems with garbage collection.
         require(backingKey.protocol == containerKey.protocol) {
             "Backing and containers keys must use same protocol"
@@ -80,29 +81,31 @@ class CapabilitiesResolverNew(
 
     /**
      * Retrieves [Schema] from the given [Type], if possible.
-     * TODO: declare a common interface.
      */
     private fun toEntitySchema(type: Type): Schema {
-        when (type) {
-            is SingletonType<*> -> if (type.containedType is EntityType) {
-                return (type.containedType as EntityType).entitySchema
-            }
-            is CollectionType<*> -> if (type.collectionType is EntityType) {
-                return (type.collectionType as EntityType).entitySchema
-            }
-            is ReferenceType<*> -> return type.entitySchema!!
-            is EntityType -> return type.entitySchema
+        return when {
+            type is SingletonType<*> && type.containedType is EntityType ->
+                (type.containedType as EntityType).entitySchema
+            type is CollectionType<*> && type.collectionType is EntityType ->
+                (type.collectionType as EntityType).entitySchema
+            type is ReferenceType<*> -> type.entitySchema!!
+            type is EntityType -> type.entitySchema
+            else -> throw IllegalArgumentException(
+                "Can't retrieve entitySchema of unknown type $type")
         }
-        throw IllegalArgumentException("Can't retrieve entitySchema of unknown type $type")
     }
 
-    // An interface for selecting a factory, if more than one are available for the Capabilities.
+    /**
+     * An interface for selecting a factory, if more than one are available for [CapabilitiesNew].
+     */
     interface FactorySelector {
         fun select(factories: Collection<StorageKeyFactory>): StorageKeyFactory
     }
 
-    // An implementation of a FactorySelector choosing a factory with a least
-    // restrictive max capabilities set.
+    /**
+     * An implementation of a [FactorySelector] choosing a factory with a least restrictive max
+     * [CapabilitiesNew] set.
+     */
     class SimpleCapabilitiesSelector(
         val sortedProtocols: Array<String> = arrayOf("volatile", "ramdisk", "memdb", "db")
     ) : FactorySelector {

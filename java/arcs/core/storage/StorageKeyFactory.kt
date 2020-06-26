@@ -19,7 +19,9 @@ abstract class StorageKeyFactory(val protocol: String, val capabilities: Capabil
 
     abstract fun create(options: StorageKeyOptions): StorageKey
 
-    // Returns true, if the current storage key class can support the given set of [CapabilitiesNew].
+    /**
+     * Returns true, if the current storage key class supports the given set of [CapabilitiesNew].
+     */
     fun supports(other: CapabilitiesNew): Boolean {
         return capabilities.containsAll(other)
     }

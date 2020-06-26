@@ -55,7 +55,6 @@ open class AbstractArcHostTest {
         RamDiskDriverProvider()
     }
 
-
     @Test
     fun pause_Unpause() = runBlocking {
         val schedulerProvider = JvmSchedulerProvider(coroutineContext)

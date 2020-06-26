@@ -18,7 +18,6 @@ import arcs.core.storage.CapabilitiesResolver
 import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.runner.RunWith

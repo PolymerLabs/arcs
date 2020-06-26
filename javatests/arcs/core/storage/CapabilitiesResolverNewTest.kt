@@ -62,10 +62,10 @@ class CapabilitiesResolverNewTest {
         CapabilitiesResolverNew.reset()
     }
 
-    fun verifyStorageKey(key: StorageKey?, expectedClass: Class<out StorageKey>) {
+    private inline fun <reified T : StorageKey> verifyStorageKey(key: StorageKey) {
         assertThat(key).isInstanceOf(ReferenceModeStorageKey::class.java)
-        assertThat((key as ReferenceModeStorageKey).backingKey).isInstanceOf(expectedClass)
-        assertThat(key.storageKey).isInstanceOf(expectedClass)
+        assertThat((key as ReferenceModeStorageKey).backingKey is T).isTrue()
+        assertThat(key.storageKey is T).isTrue()
     }
 
     @Test
@@ -77,7 +77,7 @@ class CapabilitiesResolverNewTest {
     }
 
     @Test
-    fun capabilitiesResolver_fails() {
+    fun capabilitiesResolver_createStorageKey_failsUnsupported() {
         val resolver = CapabilitiesResolverNew(Options(ArcId.newForTest("test")))
         // Verify storage keys for none of the capabilities cannot be created.
         assertFailsWith<IllegalStateException> {
@@ -103,13 +103,11 @@ class CapabilitiesResolverNewTest {
         VolatileStorageKey.registerKeyCreator()
         val resolver = CapabilitiesResolverNew(Options(ArcId.newForTest("test")))
         // Verify only volatile (in-memory, no ttl) storage key can be created.
-        verifyStorageKey(
-            resolver.createStorageKey(unspecified, entityType, handleId),
-            VolatileStorageKey::class.java
+        verifyStorageKey<VolatileStorageKey>(
+            resolver.createStorageKey(unspecified, entityType, handleId)
         )
-        verifyStorageKey(
-            resolver.createStorageKey(inMemory, entityType, handleId),
-            VolatileStorageKey::class.java
+        verifyStorageKey<VolatileStorageKey>(
+            resolver.createStorageKey(inMemory, entityType, handleId)
         )
         assertFailsWith<IllegalStateException> {
             resolver.createStorageKey(inMemoryWithTtls, entityType, handleId)
@@ -126,25 +124,20 @@ class CapabilitiesResolverNewTest {
     fun capabilitiesResolver_createsDatabaseKeys() {
         DatabaseStorageKey.registerKeyCreator()
         val resolver = CapabilitiesResolverNew(Options(ArcId.newForTest("test")))
-        verifyStorageKey(
-            resolver.createStorageKey(unspecified, entityType, handleId),
-            DatabaseStorageKey.Memory::class.java
+        verifyStorageKey<DatabaseStorageKey.Memory>(
+            resolver.createStorageKey(unspecified, entityType, handleId)
         )
-        verifyStorageKey(
-            resolver.createStorageKey(inMemory, entityType, handleId),
-            DatabaseStorageKey.Memory::class.java
+        verifyStorageKey<DatabaseStorageKey.Memory>(
+            resolver.createStorageKey(inMemory, entityType, handleId)
         )
-        verifyStorageKey(
-            resolver.createStorageKey(inMemoryWithTtls, entityType, handleId),
-            DatabaseStorageKey.Memory::class.java
+        verifyStorageKey<DatabaseStorageKey.Memory>(
+            resolver.createStorageKey(inMemoryWithTtls, entityType, handleId)
         )
-        verifyStorageKey(
-            resolver.createStorageKey(onDisk, entityType, handleId),
-            DatabaseStorageKey.Persistent::class.java
+        verifyStorageKey<DatabaseStorageKey.Persistent>(
+            resolver.createStorageKey(onDisk, entityType, handleId)
         )
-        verifyStorageKey(
-            resolver.createStorageKey(onDiskWithTtl, entityType, handleId),
-            DatabaseStorageKey.Persistent::class.java
+        verifyStorageKey<DatabaseStorageKey.Persistent>(
+            resolver.createStorageKey(onDiskWithTtl, entityType, handleId)
         )
     }
 
@@ -152,33 +145,26 @@ class CapabilitiesResolverNewTest {
     fun capabilitiesResolver_createsAllKeys() {
         DriverAndKeyConfigurator.configureKeyParsers()
         val resolver = CapabilitiesResolverNew(Options(ArcId.newForTest("test")))
-        verifyStorageKey(
-            resolver.createStorageKey(unspecified, entityType, handleId),
-            VolatileStorageKey::class.java
+        verifyStorageKey<VolatileStorageKey>(
+            resolver.createStorageKey(unspecified, entityType, handleId)
         )
-        verifyStorageKey(
-            resolver.createStorageKey(CapabilitiesNew(listOf(Shareable(false))), entityType, handleId),
-            VolatileStorageKey::class.java
+        verifyStorageKey<VolatileStorageKey>(
+            resolver.createStorageKey(CapabilitiesNew(listOf(Shareable(false))), entityType, handleId)
         )
-        verifyStorageKey(
-            resolver.createStorageKey(CapabilitiesNew(listOf(Shareable(true))), entityType, handleId),
-            RamDiskStorageKey::class.java
+        verifyStorageKey<RamDiskStorageKey>(
+            resolver.createStorageKey(CapabilitiesNew(listOf(Shareable(true))), entityType, handleId)
         )
-        verifyStorageKey(
-            resolver.createStorageKey(inMemory, entityType, handleId),
-            VolatileStorageKey::class.java
+        verifyStorageKey<VolatileStorageKey>(
+            resolver.createStorageKey(inMemory, entityType, handleId)
         )
-        verifyStorageKey(
-            resolver.createStorageKey(inMemoryWithTtls, entityType, handleId),
-            DatabaseStorageKey.Memory::class.java
+        verifyStorageKey<DatabaseStorageKey.Memory>(
+            resolver.createStorageKey(inMemoryWithTtls, entityType, handleId)
         )
-        verifyStorageKey(
-            resolver.createStorageKey(onDisk, entityType, handleId),
-            DatabaseStorageKey.Persistent::class.java
+        verifyStorageKey<DatabaseStorageKey.Persistent>(
+            resolver.createStorageKey(onDisk, entityType, handleId)
         )
-        verifyStorageKey(
-            resolver.createStorageKey(onDiskWithTtl, entityType, handleId),
-            DatabaseStorageKey.Persistent::class.java
+        verifyStorageKey<DatabaseStorageKey.Persistent>(
+            resolver.createStorageKey(onDiskWithTtl, entityType, handleId)
         )
     }
 
@@ -189,17 +175,14 @@ class CapabilitiesResolverNewTest {
             Options(ArcId.newForTest("test")),
             listOf(DatabaseStorageKey.Memory.Factory())
         )
-        verifyStorageKey(
-            resolver.createStorageKey(unspecified, entityType, handleId),
-            VolatileStorageKey::class.java
+        verifyStorageKey<VolatileStorageKey>(
+            resolver.createStorageKey(unspecified, entityType, handleId)
         )
-        verifyStorageKey(
-            resolver.createStorageKey(inMemory, entityType, handleId),
-            VolatileStorageKey::class.java
+        verifyStorageKey<VolatileStorageKey>(
+            resolver.createStorageKey(inMemory, entityType, handleId)
         )
-        verifyStorageKey(
-            resolver.createStorageKey(inMemoryWithTtls, entityType, handleId),
-            DatabaseStorageKey.Memory::class.java
+        verifyStorageKey<DatabaseStorageKey.Memory>(
+            resolver.createStorageKey(inMemoryWithTtls, entityType, handleId)
         )
         assertFailsWith<IllegalStateException> {
             resolver.createStorageKey(onDisk, entityType, handleId)
