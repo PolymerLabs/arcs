@@ -4103,6 +4103,54 @@ particle A
     assert.isNull(particle.implFile);
     assert.strictEqual(manifestString, particle.toString());
   });
+  it('parses JVM class path', async () => {
+    const manifest = await parseManifest(`
+      particle Particle in 'com.wow.Particle'
+    `);
+
+    assert.equal(manifest.particles[0].implFile, 'com.wow.Particle');
+  });
+  it('derives JVM class path from namespace', async () => {
+    const manifest = await parseManifest(`
+      meta
+        namespace: com.wow
+      particle Particle in '.Particle'
+      particle Other in 'org.other.Other'
+    `);
+
+    assert.sameMembers(manifest.allParticles.map(p => p.implFile), [
+      'com.wow.Particle',
+      'org.other.Other'
+    ]);
+  });
+  it('derives JVM implFile from namespace across imports', async () => {
+    const manifest = await Manifest.load('/c.arcs', new Loader(null, {
+      '/a.arcs': `
+        meta
+          namespace: com.wow
+        particle Wow in '.Wow'
+      `,
+      '/b.arcs': `
+        meta
+          namespace: org.arcs
+        particle Thing in '.super.Thing'
+      `,
+      '/c.arcs': `
+        meta
+          namespace: com.abc
+        import './a.arcs'
+        import './b.arcs'
+
+        particle Boom in '.Boom'
+      `,
+    }));
+
+    assert.sameMembers(manifest.allParticles.map(p => p.implFile), [
+      'com.abc.Boom',
+      'com.wow.Wow',
+      'org.arcs.super.Thing'
+    ]);
+  });
 });
 
 describe('Manifest storage migration', () => {

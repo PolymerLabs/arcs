@@ -818,9 +818,18 @@ ${e.message}
       manifest.errors.push(warning);
     }
 
+    if (particleItem.implFile
+        && particleItem.implFile.startsWith('.')
+        && manifest.meta.namespace) {
+      const classpath = manifest.meta.namespace + particleItem.implFile;
+      if (Loader.isJvmClasspath(classpath)) {
+        particleItem.implFile = classpath;
+      }
+    }
+
     // TODO: loader should not be optional.
     if (particleItem.implFile && loader) {
-      if (!loader.isJvmClasspath(particleItem.implFile)) {
+      if (!Loader.isJvmClasspath(particleItem.implFile)) {
         particleItem.implFile = loader.join(manifest.fileName, particleItem.implFile);
       }
     }
