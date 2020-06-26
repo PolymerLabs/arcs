@@ -2,7 +2,6 @@
 
 package arcs.showcase.references
 
-import arcs.core.entity.awaitReady
 import arcs.jvm.host.TargetHost
 import arcs.sdk.Entity
 import arcs.sdk.ReadCollectionHandle
@@ -16,13 +15,10 @@ fun <T : Entity> Reference<T>.dereferenceViaHandle(handle: ReadCollectionHandle<
 
 @TargetHost(ArcHost::class)
 class Reader0 : AbstractReader0() {
-    private suspend fun initialize() = this.apply {
-        handles.handles.values.forEach { it.awaitReady() }
-    }
     private fun Level0.fromArcs() = MyLevel0(name)
 
     suspend fun read(): List<MyLevel0> = withContext(handles.level0.dispatcher) {
-        initialize()
+        handles.awaitReady()
         handles.level0.fetchAll().map { it.fromArcs() }
     }
 }
@@ -30,10 +26,6 @@ class Reader0 : AbstractReader0() {
 @ExperimentalCoroutinesApi
 @TargetHost(ArcHost::class)
 class Reader1 : AbstractReader1() {
-    private suspend fun initialize() = this.apply {
-        handles.handles.values.forEach { it.awaitReady() }
-    }
-
     private fun Level0.fromArcs() = MyLevel0(name)
 
     private suspend fun Level1.fromArcs() = MyLevel1(
@@ -42,7 +34,7 @@ class Reader1 : AbstractReader1() {
     )
 
     suspend fun read(): List<MyLevel1> = withContext(handles.level1.dispatcher) {
-        initialize()
+        handles.awaitReady()
         handles.level1.fetchAll().map { it.fromArcs() }
     }
 }
@@ -50,9 +42,6 @@ class Reader1 : AbstractReader1() {
 @ExperimentalCoroutinesApi
 @TargetHost(ArcHost::class)
 class Reader2 : AbstractReader2() {
-    private suspend fun initialize() = this.apply {
-        handles.handles.values.forEach { it.awaitReady() }
-    }
     private fun Level0.fromArcs() = MyLevel0(name)
 
     private suspend fun Level1.fromArcs() = MyLevel1(
@@ -66,7 +55,7 @@ class Reader2 : AbstractReader2() {
     )
 
     suspend fun read(): List<MyLevel2> = withContext(handles.level2.dispatcher) {
-        initialize()
+        handles.awaitReady()
         handles.level2.fetchAll().map { it.fromArcs() }
     }
 }
