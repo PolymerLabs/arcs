@@ -22,6 +22,7 @@ arcs_kt_android_library(
         "//java/arcs/core/storage",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/storage/database",
+        "//java/arcs/core/storage/driver",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
         "//java/arcs/core/util/performance",
