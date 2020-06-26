@@ -8,6 +8,7 @@ arcs_kt_library(
     name = "host",
     srcs = glob(["*.kt"]),
     deps = [
+        "//java/arcs/core/analytics",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",

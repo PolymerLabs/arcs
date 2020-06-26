@@ -42,6 +42,7 @@ arcs_kt_library(
         ":reference",
         ":storage_key",
         ":writeback",
+        "//java/arcs/core/analytics",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
