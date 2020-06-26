@@ -26,14 +26,14 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class DifferentHandleManagerTest : HandleManagerTestBase() {
 
-    lateinit var fakeLifecycleOwner: SameHandleManagerTest.FakeLifecycleOwner
+    lateinit var fakeLifecycleOwner: FakeLifecycleOwner
     lateinit var app: Application
 
     @Before
     override fun setUp() {
         super.setUp()
         testTimeout = 30000
-        fakeLifecycleOwner = SameHandleManagerTest.FakeLifecycleOwner()
+        fakeLifecycleOwner = FakeLifecycleOwner()
         fakeLifecycleOwner.lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
         fakeLifecycleOwner.lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
         app = ApplicationProvider.getApplicationContext()
