@@ -97,7 +97,8 @@ typealias ReferenceId = Long
 
 /** Implementation of [Database] for Android using SQLite. */
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-@Suppress("Recycle", "EXPERIMENTAL_API_USAGE") // Our helper extension methods close Cursors correctly.
+@Suppress("Recycle", "EXPERIMENTAL_API_USAGE")
+// Our helper extension methods close Cursors correctly.
 class DatabaseImpl(
     context: Context,
     databaseName: String,
@@ -1681,7 +1682,6 @@ class DatabaseImpl(
         /* internal */
         val TABLES = TABLES_VERSION_5
 
-
         private val CREATE_VERSION_3 =
             """
                 CREATE TABLE types (
@@ -1846,8 +1846,10 @@ class DatabaseImpl(
         private val DROP_VERSION_3 = DROP_VERSION_2
 
         private val VERSION_2_MIGRATION = arrayOf("ALTER TABLE entities ADD COLUMN orphan INTEGER;")
-        private val VERSION_3_MIGRATION = listOf(DROP_VERSION_2, CREATE_VERSION_3).flatten().toTypedArray()
-        private val VERSION_4_MIGRATION = listOf(DROP_VERSION_3, CREATE_VERSION_4).flatten().toTypedArray()
+        private val VERSION_3_MIGRATION =
+            listOf(DROP_VERSION_2, CREATE_VERSION_3).flatten().toTypedArray()
+        private val VERSION_4_MIGRATION =
+            listOf(DROP_VERSION_3, CREATE_VERSION_4).flatten().toTypedArray()
         private val VERSION_5_MIGRATION = arrayOf(
             "INSERT INTO types (id, name, is_primitive) VALUES (10, \"BigInt\", 1)"
         )
