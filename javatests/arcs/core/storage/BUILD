@@ -17,6 +17,7 @@ arcs_kt_android_test_suite(
     package = "arcs.core.storage",
     deps = [
         ":fakes",
+        "//java/arcs/core/analytics",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
@@ -27,6 +28,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/keys",
+        "//java/arcs/core/storage/keys:protocols",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/testutil",  # buildcleaner: keep
         "//java/arcs/core/testutil",
