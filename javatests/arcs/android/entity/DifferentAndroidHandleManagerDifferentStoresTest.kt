@@ -68,61 +68,6 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
         fakeLifecycleOwner.lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     }
 
-    @Test
-    override fun collection_referenceLiveness() {
-        super.collection_referenceLiveness()
-    }
-
-    @Test
-    override fun collection_removingFromA_isRemovedFromB() {
-        super.collection_removingFromA_isRemovedFromB()
-    }
-
-    @Test
-    override fun collection_addingToA_showsUpInQueryOnB() {
-        super.collection_addingToA_showsUpInQueryOnB()
-    }
-
-    @Test
-    override fun collection_clearingElementsFromA_clearsThemFromB() {
-        super.collection_clearingElementsFromA_clearsThemFromB()
-    }
-
-    @Test
-    override fun singleton_dereferenceEntity_nestedReference() {
-        super.singleton_dereferenceEntity_nestedReference()
-    }
-
-    @Test
-    override fun collection_entityDereference() {
-        super.collection_entityDereference()
-    }
-
-    @Test
-    override fun singleton_clearOnAClearDataWrittenByB() {
-        super.singleton_clearOnAClearDataWrittenByB()
-    }
-
-    @Test
-    override fun collection_dereferenceEntity_nestedReference() {
-        super.collection_dereferenceEntity_nestedReference()
-    }
-
-    @Test
-    override fun collection_withTTL() {
-        super.collection_withTTL()
-    }
-
-    @Test
-    override fun singleton_referenceLiveness() {
-        super.singleton_referenceLiveness()
-    }
-
-    @Test
-    override fun singleton_dereferenceEntity() {
-        super.singleton_dereferenceEntity()
-    }
-
     class FakeLifecycleOwner : LifecycleOwner {
         val lifecycleRegistry = LifecycleRegistry(this)
         override fun getLifecycle() = lifecycleRegistry
