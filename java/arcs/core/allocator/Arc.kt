@@ -22,11 +22,20 @@ import arcs.core.host.ArcState.NeverStarted
 import arcs.core.host.ArcState.Running
 import arcs.core.host.ArcState.Stopped
 import arcs.core.host.ArcStateChangeRegistration
-import java.lang.RuntimeException
-import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -39,14 +48,29 @@ import kotlinx.coroutines.runBlocking
  *
  * TODO: add some mechanism to detect host crashes and re-register state change listeners.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class Arc internal constructor(
     val id: ArcId,
     private val allocator: Allocator,
     val partitions: List<Plan.Partition>,
-    private var arcStateInternal: AtomicRef<ArcState> = atomic(NeverStarted)
+    private var arcStateInternal: ArcState = NeverStarted
 ) {
     private val arcStateChangeHandlers = atomic(listOf<(ArcState) -> Unit>())
-    private val arcStatesByHostId = atomic(mapOf<String, ArcState>())
+    private val arcStatesByHostChannel = Channel<Pair<String, ArcState>>(partitions.size)
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
+    private val arcStatesByHostFlow = arcStatesByHostChannel.consumeAsFlow().scan(
+        partitions.map { it.arcHost to NeverStarted }.associateBy({ it.first }, { it.second })
+    ) { states, (host, state) ->
+        val newStates = states.toMutableMap()
+        newStates[host] = state
+        newStates
+    }.map {
+        recomputeArcState(it.values)
+    }.onEach { state ->
+        arcStateInternal = state
+        arcStateChangeHandlers.value.toList().forEach { handler -> handler(state) }
+    }
+
     private val registered = atomic(false)
     private val registrations = mutableMapOf<String, ArcStateChangeRegistration>()
 
@@ -58,14 +82,14 @@ class Arc internal constructor(
      *  is considered to be [Error].
      */
     var arcState: ArcState
-        get() = arcStateInternal.value
+        get() = arcStateInternal
         private set(state) {
-            arcStateInternal.update { state }
+            arcStateInternal = state
         }
 
     private fun onArcStateChange(handler: (ArcState) -> Unit) {
-        maybeRegisterChangeHandlerWithArcHosts()
         arcStateChangeHandlers.update { it + handler }
+        maybeRegisterChangeHandlerWithArcHosts()
         handler(arcState)
     }
 
@@ -90,36 +114,13 @@ class Arc internal constructor(
     /** Called whenever the [ArcState] changes to [Error]. */
     fun onError(handler: () -> Unit) = onArcStateChangeFiltered(Error, handler)
 
-    private fun fireArcStateChange(handlers: List<(ArcState) -> Unit>) = handlers.forEach {
-        it(arcState)
-    }
-
-    private fun recomputeArcState(): List<(ArcState) -> Unit> {
-        val states = arcStatesByHostId.value.values.toList()
-        val oldState = arcStateInternal.value
-        val newState = when {
-                states.any { it == Deleted } -> Deleted
-                states.any { it == Error } -> Error
-                states.all { it == Running } -> Running
-                states.all { it == Stopped } -> Stopped
-                states.all { it == NeverStarted } -> NeverStarted
-                else -> Indeterminate
-            }
-        arcStateInternal.update { newState }
-
-        return when (oldState != arcState) {
-            true -> arcStateChangeHandlers.value.toList()
-            false -> emptyList()
-        }
-    }
-
-    private suspend fun fetchCurrentStates() {
-        val newStates: Map<String, ArcState> = partitions.map {
-            val arcHost = allocator.lookupArcHost(it.arcHost)
-            it.arcHost to arcHost.lookupArcHostStatus(it)
-        }.associateBy({ it.first }, { it.second })
-
-        arcStatesByHostId.update { newStates }
+    private fun recomputeArcState(states: Collection<ArcState>): ArcState = when {
+        states.any { it == Deleted } -> Deleted
+        states.any { it == Error } -> Error
+        states.all { it == Running } -> Running
+        states.all { it == Stopped } -> Stopped
+        states.all { it == NeverStarted } -> NeverStarted
+        else -> Indeterminate
     }
 
     private fun maybeRegisterChangeHandlerWithArcHosts() {
@@ -127,24 +128,20 @@ class Arc internal constructor(
             return
         }
 
-        runBlocking {
-            // first poll the current states of all hosts
-            fetchCurrentStates()
+        arcStatesByHostFlow.launchIn(
+            CoroutineScope(
+                Dispatchers.Default + Job() + CoroutineName("Arc (flow collector) $id")
+            )
+        )
 
+        runBlocking {
             // Register event listeners
             partitions.forEach { partition ->
                 val arcHost = allocator.lookupArcHost(partition.arcHost)
                 registrations[partition.arcHost] = arcHost.addOnArcStateChange(id) { _, state ->
-                    arcStatesByHostId.update {
-                        val newStates = it.toMutableMap()
-                        newStates[partition.arcHost] = state
-                        newStates
-                    }
-                    fireArcStateChange(recomputeArcState())
+                    arcStatesByHostChannel.offer(partition.arcHost to state)
                 }
             }
-
-            recomputeArcState()
         }
     }
 
@@ -164,8 +161,6 @@ class Arc internal constructor(
         }
         onArcStateChange(handler)
 
-        fetchCurrentStates()
-        fireArcStateChange(recomputeArcState())
         return deferred.await().also {
             arcStateChangeHandlers.update { it - handler }
         }
@@ -178,7 +173,19 @@ class Arc internal constructor(
     suspend fun waitForStart() = waitFor(Running)
 
     /** Stop the current [Arc]. */
-    suspend fun stop() = allocator.stopArc(id)
+    suspend fun stop() = allocator.stopArc(id).also {
+        onArcStateChangeFiltered(Stopped) { unregisterChangeHandlerWithArcHosts() }
+    }
+
+    private fun unregisterChangeHandlerWithArcHosts() {
+        runBlocking {
+            registrations.forEach { (host, registration) ->
+                val arcHost = allocator.lookupArcHost(host)
+                arcHost.removeOnArcStateChange(registration)
+                arcStatesByHostChannel.close()
+            }
+        }
+    }
 
     /** Used for signaling to listeners that an Arc has entered the Error state. */
     class ArcErrorException(
