@@ -30,8 +30,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -56,21 +57,8 @@ class Arc internal constructor(
     private var arcStateInternal: ArcState = NeverStarted
 ) {
     private val arcStateChangeHandlers = atomic(listOf<(ArcState) -> Unit>())
-    private val arcStatesByHostChannel = Channel<Pair<String, ArcState>>(partitions.size)
-    @OptIn(kotlinx.coroutines.FlowPreview::class)
-    private val arcStatesByHostFlow = arcStatesByHostChannel.consumeAsFlow().scan(
-        partitions.map { it.arcHost to NeverStarted }.associateBy({ it.first }, { it.second })
-    ) { states, (host, state) ->
-        val newStates = states.toMutableMap()
-        newStates[host] = state
-        newStates
-    }.map {
-        recomputeArcState(it.values)
-    }.onEach { state ->
-        arcStateInternal = state
-        arcStateChangeHandlers.value.toList().forEach { handler -> handler(state) }
-    }
-
+    private lateinit var arcStatesByHostFlow: Flow<ArcState>
+    private lateinit var closeFlow: () -> Unit
     private val registered = atomic(false)
     private val registrations = mutableMapOf<String, ArcStateChangeRegistration>()
 
@@ -128,21 +116,33 @@ class Arc internal constructor(
             return
         }
 
+        arcStatesByHostFlow = callbackFlow {
+            partitions.forEach { partition ->
+                val arcHost = allocator.lookupArcHost(partition.arcHost)
+                registrations[partition.arcHost] = arcHost.addOnArcStateChange(id) { _, state ->
+                    offer(partition.arcHost to state)
+                }
+            }
+            closeFlow = { close() }
+            awaitClose { unregisterChangeHandlerWithArcHosts() }
+        }.scan(
+            partitions.map { it.arcHost to NeverStarted }.associateBy({ it.first }, { it.second })
+        ) { states, (host, state) ->
+            val newStates = states.toMutableMap()
+            newStates[host] = state
+            newStates
+        }.map {
+            recomputeArcState(it.values)
+        }.onEach { state ->
+            arcStateInternal = state
+            arcStateChangeHandlers.value.toList().forEach { handler -> handler(state) }
+        }
+
         arcStatesByHostFlow.launchIn(
             CoroutineScope(
                 Dispatchers.Default + Job() + CoroutineName("Arc (flow collector) $id")
             )
         )
-
-        runBlocking {
-            // Register event listeners
-            partitions.forEach { partition ->
-                val arcHost = allocator.lookupArcHost(partition.arcHost)
-                registrations[partition.arcHost] = arcHost.addOnArcStateChange(id) { _, state ->
-                    arcStatesByHostChannel.offer(partition.arcHost to state)
-                }
-            }
-        }
     }
 
     // suspend until a desired state is achieved
@@ -174,7 +174,7 @@ class Arc internal constructor(
 
     /** Stop the current [Arc]. */
     suspend fun stop() = allocator.stopArc(id).also {
-        onArcStateChangeFiltered(Stopped) { unregisterChangeHandlerWithArcHosts() }
+        onArcStateChangeFiltered(Stopped) { closeFlow() }
     }
 
     private fun unregisterChangeHandlerWithArcHosts() {
@@ -182,7 +182,6 @@ class Arc internal constructor(
             registrations.forEach { (host, registration) ->
                 val arcHost = allocator.lookupArcHost(host)
                 arcHost.removeOnArcStateChange(registration)
-                arcStatesByHostChannel.close()
             }
         }
     }
