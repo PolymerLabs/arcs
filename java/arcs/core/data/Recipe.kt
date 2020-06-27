@@ -47,9 +47,9 @@ data class Recipe(
         enum class Fate {
             CREATE, USE, MAP, COPY, JOIN
         }
-        val capabilities: CapabilitiesNew
+        val capabilities: Capabilities
             get() {
-                return CapabilitiesNew.fromAnnotations(annotations)
+                return Capabilities.fromAnnotations(annotations)
             }
     }
 }

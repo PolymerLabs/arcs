@@ -3,13 +3,13 @@ package arcs.core.allocator
 import arcs.core.common.ArcId
 import arcs.core.common.Id
 import arcs.core.data.Annotation
-import arcs.core.data.CapabilitiesNew
-import arcs.core.data.CapabilityNew.Shareable
+import arcs.core.data.Capabilities
+import arcs.core.data.Capability.Shareable
 import arcs.core.data.CreatableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.host.*
-import arcs.core.storage.CapabilitiesResolverNew
+import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -77,7 +77,7 @@ open class AllocatorTestBase {
     /** Return the [ArcHost] that contains all isolatable [Particle]s. */
     open fun pureHost() = TestingJvmProdHost(schedulerProvider)
 
-    open val storageCapability = CapabilitiesNew(Shareable(true))
+    open val storageCapability = Capabilities(Shareable(true))
 
     open fun runAllocatorTest(
         coroutineContext: CoroutineContext = EmptyCoroutineContext,
@@ -258,14 +258,14 @@ open class AllocatorTestBase {
         val testArcId = idGenerator.newArcId("Test")
         VolatileDriverProvider(testArcId)
 
-        val resolver = CapabilitiesResolverNew(CapabilitiesResolverNew.Options(testArcId))
+        val resolver = CapabilitiesResolver(CapabilitiesResolver.Options(testArcId))
         val inputPerson = resolver.createStorageKey(
-            CapabilitiesNew.fromAnnotation(Annotation.createCapability("tiedToArc")),
+            Capabilities.fromAnnotation(Annotation.createCapability("tiedToArc")),
             EntityType(personSchema),
             "inputPerson"
         )
         val outputPerson = resolver.createStorageKey(
-            CapabilitiesNew.fromAnnotation(Annotation.createCapability("tiedToArc")),
+            Capabilities.fromAnnotation(Annotation.createCapability("tiedToArc")),
             EntityType(personSchema),
             "outputPerson"
         )

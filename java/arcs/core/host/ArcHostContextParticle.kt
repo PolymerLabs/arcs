@@ -12,7 +12,7 @@ package arcs.core.host
 
 import arcs.core.common.toArcId
 import arcs.core.data.Annotation
-import arcs.core.data.CapabilitiesNew
+import arcs.core.data.Capabilities
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
@@ -22,7 +22,7 @@ import arcs.core.entity.Reference
 import arcs.core.host.api.Particle
 import arcs.core.host.generated.AbstractArcHostContextParticle
 import arcs.core.host.generated.ArcHostContextPlan
-import arcs.core.storage.CapabilitiesResolverNew
+import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKeyParser
 import arcs.core.type.Tag
 import arcs.core.type.Type
@@ -225,11 +225,11 @@ class ArcHostContextParticle(
      * the move away from denormalized schemas to schema definitions using references.
      */
     fun createArcHostContextPersistencePlan(
-        capability: CapabilitiesNew,
+        capability: Capabilities,
         arcId: String
     ): Plan.Partition {
-        val resolver = CapabilitiesResolverNew(
-            CapabilitiesResolverNew.Options(arcId.toArcId())
+        val resolver = CapabilitiesResolver(
+            CapabilitiesResolver.Options(arcId.toArcId())
         )
 
         /*

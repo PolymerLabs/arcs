@@ -14,19 +14,19 @@ package arcs.core.data
 import arcs.core.util.Time
 
 /** A base class for all the store capabilities. */
-sealed class CapabilityNew(val tag: String) {
+sealed class Capability(val tag: String) {
     enum class Comparison { LessStrict, Equivalent, Stricter }
 
-    open fun isEquivalent(other: CapabilityNew): Boolean {
+    open fun isEquivalent(other: Capability): Boolean {
         return compare(other) == Comparison.Equivalent
     }
-    open fun contains(other: CapabilityNew) = isEquivalent(other)
-    fun isLessStrict(other: CapabilityNew) = compare(other) == Comparison.LessStrict
-    fun isSameOrLessStrict(other: CapabilityNew) = compare(other) != Comparison.Stricter
-    fun isStricter(other: CapabilityNew) = compare(other) == Comparison.Stricter
-    fun isSameOrStricter(other: CapabilityNew) = compare(other) != Comparison.LessStrict
+    open fun contains(other: Capability) = isEquivalent(other)
+    fun isLessStrict(other: Capability) = compare(other) == Comparison.LessStrict
+    fun isSameOrLessStrict(other: Capability) = compare(other) != Comparison.Stricter
+    fun isStricter(other: Capability) = compare(other) == Comparison.Stricter
+    fun isSameOrStricter(other: Capability) = compare(other) != Comparison.LessStrict
 
-    fun compare(other: CapabilityNew): Comparison {
+    fun compare(other: Capability): Comparison {
         return when (this) {
             is Persistence -> compare(other as Persistence)
             is Encryption -> compare(other as Encryption)
@@ -42,7 +42,7 @@ sealed class CapabilityNew(val tag: String) {
     open fun toRange() = Range(this, this)
 
     /** Capability describing persistence requirement for the store. */
-    data class Persistence(val kind: Kind) : CapabilityNew(TAG) {
+    data class Persistence(val kind: Kind) : Capability(TAG) {
         enum class Kind { None, InMemory, OnDisk, Unrestricted }
 
         fun compare(other: Persistence): Comparison {
@@ -82,7 +82,7 @@ sealed class CapabilityNew(val tag: String) {
     }
 
     /** Capability describing retention policy of the store. */
-    sealed class Ttl(count: Int, val isInfinite: Boolean = false) : CapabilityNew(TAG) {
+    sealed class Ttl(count: Int, val isInfinite: Boolean = false) : Capability(TAG) {
         /** Number of milliseconds for retention, or -1 for infinite. */
         val millis: Long = count * when (this) {
             is Millis -> 1
@@ -147,14 +147,14 @@ sealed class CapabilityNew(val tag: String) {
 
             fun fromAnnotations(annotations: List<Annotation>): Ttl? {
                 return annotations.find { it.name == "ttl" }?.let {
-                    CapabilityNew.Ttl.fromString(it.getStringParam("value"))
+                    Capability.Ttl.fromString(it.getStringParam("value"))
                 }
             }
         }
     }
 
     /** Capability describing whether the store needs to be encrypted. */
-    data class Encryption(val value: Boolean) : CapabilityNew(TAG) {
+    data class Encryption(val value: Boolean) : Capability(TAG) {
         fun compare(other: Encryption): Comparison {
             return when {
                 value == other.value -> Comparison.Equivalent
@@ -168,14 +168,14 @@ sealed class CapabilityNew(val tag: String) {
 
             fun fromAnnotations(annotations: List<Annotation>): Encryption? {
                 return annotations.find { it.name == "encrypted" }?.let {
-                    CapabilityNew.Encryption(true)
+                    Capability.Encryption(true)
                 }
             }
         }
     }
 
     /** Capability describing whether the store needs to be queryable. */
-    data class Queryable(val value: Boolean) : CapabilityNew(TAG) {
+    data class Queryable(val value: Boolean) : Capability(TAG) {
         fun compare(other: Queryable): Comparison {
             return when {
                 value == other.value -> Comparison.Equivalent
@@ -190,14 +190,14 @@ sealed class CapabilityNew(val tag: String) {
 
             fun fromAnnotations(annotations: List<Annotation>): Queryable? {
                 return annotations.find { it.name == "queryable" }?.let {
-                    CapabilityNew.Queryable(true)
+                    Capability.Queryable(true)
                 }
             }
         }
     }
 
     /** Capability describing whether the store needs to be shareable across arcs. */
-    data class Shareable(val value: Boolean) : CapabilityNew(TAG) {
+    data class Shareable(val value: Boolean) : Capability(TAG) {
         fun compare(other: Shareable): Comparison {
             return when {
                 value == other.value -> Comparison.Equivalent
@@ -213,26 +213,26 @@ sealed class CapabilityNew(val tag: String) {
             fun fromAnnotations(annotations: List<Annotation>): Shareable? {
                 return annotations.find {
                     arrayOf("shareable", "tiedToRuntime").contains(it.name)
-                }?.let { CapabilityNew.Shareable(true) }
+                }?.let { Capability.Shareable(true) }
             }
         }
     }
 
-    data class Range(val min: CapabilityNew, val max: CapabilityNew) : CapabilityNew(TAG) {
+    data class Range(val min: Capability, val max: Capability) : Capability(TAG) {
         init {
             require(min.isSameOrLessStrict(max)) {
                 "Minimum capability in a range must be equivalent or less strict than maximum."
             }
         }
 
-        override fun isEquivalent(other: CapabilityNew): Boolean {
+        override fun isEquivalent(other: Capability): Boolean {
             return when (other) {
                 is Range -> min.isEquivalent(other.min) && max.isEquivalent(other.max)
                 else -> min.isEquivalent(other) && max.isEquivalent(other)
             }
         }
 
-        override fun contains(other: CapabilityNew): Boolean {
+        override fun contains(other: Capability): Boolean {
             return when (other) {
                 is Range ->
                     min.isSameOrLessStrict(other.min) && max.isSameOrStricter(other.max)

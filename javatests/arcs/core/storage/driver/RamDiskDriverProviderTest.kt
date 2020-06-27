@@ -12,7 +12,7 @@
 package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
-import arcs.core.storage.CapabilitiesResolverNew
+import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -32,7 +32,7 @@ class RamDiskDriverProviderTest {
     @After
     fun teardown() {
         DriverFactory.clearRegistrations()
-        CapabilitiesResolverNew.reset()
+        CapabilitiesResolver.reset()
         RamDisk.clear()
     }
 

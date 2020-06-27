@@ -8,8 +8,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import arcs.android.sdk.host.ArcHostHelper
 import arcs.android.sdk.host.ResurrectableHost
-import arcs.core.data.CapabilitiesNew
-import arcs.core.data.CapabilityNew.Shareable
+import arcs.core.data.Capabilities
+import arcs.core.data.Capability.Shareable
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.TestingHost
@@ -76,6 +76,6 @@ abstract class TestExternalArcHostService : Service() {
 
     companion object {
         var testConnectionFactory: ConnectionFactory? = null
-        var testingCapability = CapabilitiesNew(Shareable(true))
+        var testingCapability = Capabilities(Shareable(true))
     }
 }

@@ -11,9 +11,9 @@
 
 package arcs.core.storage.keys
 
-import arcs.core.data.CapabilitiesNew
-import arcs.core.data.CapabilityNew
-import arcs.core.storage.CapabilitiesResolverNew
+import arcs.core.data.Capabilities
+import arcs.core.data.Capability
+import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyFactory
 import arcs.core.storage.StorageKeyParser
@@ -65,12 +65,12 @@ sealed class DatabaseStorageKey(
 
         class Factory : StorageKeyFactory(
             DATABASE_DRIVER_PROTOCOL,
-            CapabilitiesNew(
+            Capabilities(
                 listOf(
-                    CapabilityNew.Persistence.ON_DISK,
-                    CapabilityNew.Ttl.ANY,
-                    CapabilityNew.Queryable.ANY,
-                    CapabilityNew.Shareable.ANY
+                    Capability.Persistence.ON_DISK,
+                    Capability.Ttl.ANY,
+                    Capability.Queryable.ANY,
+                    Capability.Shareable.ANY
                 )
             )
         ) {
@@ -92,12 +92,12 @@ sealed class DatabaseStorageKey(
 
         class Factory : StorageKeyFactory(
             MEMORY_DATABASE_DRIVER_PROTOCOL,
-            CapabilitiesNew(
+            Capabilities(
                 listOf(
-                    CapabilityNew.Persistence.IN_MEMORY,
-                    CapabilityNew.Ttl.ANY,
-                    CapabilityNew.Queryable.ANY,
-                    CapabilityNew.Shareable.ANY
+                    Capability.Persistence.IN_MEMORY,
+                    Capability.Ttl.ANY,
+                    Capability.Queryable.ANY,
+                    Capability.Shareable.ANY
                 )
             )
         ) {
@@ -127,8 +127,8 @@ sealed class DatabaseStorageKey(
         }
 
         fun registerKeyCreator() {
-            CapabilitiesResolverNew.registerStorageKeyFactory(Persistent.Factory())
-            CapabilitiesResolverNew.registerStorageKeyFactory(Memory.Factory())
+            CapabilitiesResolver.registerStorageKeyFactory(Persistent.Factory())
+            CapabilitiesResolver.registerStorageKeyFactory(Memory.Factory())
         }
         /* internal */
         fun persistentFromString(rawKeyString: String): Persistent = fromString(rawKeyString)

@@ -12,17 +12,17 @@
 package arcs.core.storage
 
 import arcs.core.common.ArcId
-import arcs.core.data.CapabilitiesNew
-import arcs.core.data.CapabilityNew.Persistence
-import arcs.core.data.CapabilityNew.Ttl
-import arcs.core.data.CapabilityNew.Shareable
+import arcs.core.data.Capabilities
+import arcs.core.data.Capability.Persistence
+import arcs.core.data.Capability.Ttl
+import arcs.core.data.Capability.Shareable
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.storage.CapabilitiesResolverNew.Options
+import arcs.core.storage.CapabilitiesResolver.Options
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -36,9 +36,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/** Tests for [CapabilitiesResolverNew]. */
+/** Tests for [CapabilitiesResolver]. */
 @RunWith(JUnit4::class)
-class CapabilitiesResolverNewTest {
+class CapabilitiesResolverTest {
     private val entityType = EntityType(
         Schema(
             setOf(SchemaName("Thing")),
@@ -49,15 +49,15 @@ class CapabilitiesResolverNewTest {
     private val thingReferenceType = ReferenceType(entityType)
     private val handleId = "h0"
 
-    private val unspecified = CapabilitiesNew()
-    private val inMemory = CapabilitiesNew(Persistence.IN_MEMORY)
-    private val inMemoryWithTtls = CapabilitiesNew(listOf(Persistence.IN_MEMORY, Ttl.Days(1)))
-    private val onDisk = CapabilitiesNew(Persistence.ON_DISK)
-    private val onDiskWithTtl = CapabilitiesNew(listOf(Persistence.ON_DISK, Ttl.Days(1)))
+    private val unspecified = Capabilities()
+    private val inMemory = Capabilities(Persistence.IN_MEMORY)
+    private val inMemoryWithTtls = Capabilities(listOf(Persistence.IN_MEMORY, Ttl.Days(1)))
+    private val onDisk = Capabilities(Persistence.ON_DISK)
+    private val onDiskWithTtl = Capabilities(listOf(Persistence.ON_DISK, Ttl.Days(1)))
   
     @After
     fun tearDown() {
-        CapabilitiesResolverNew.reset()
+        CapabilitiesResolver.reset()
     }
 
     private inline fun <reified T : StorageKey> verifyStorageKey(key: StorageKey) {
@@ -76,7 +76,7 @@ class CapabilitiesResolverNewTest {
 
     @Test
     fun capabilitiesResolver_createStorageKey_failsUnsupported() {
-        val resolver = CapabilitiesResolverNew(Options(ArcId.newForTest("test")))
+        val resolver = CapabilitiesResolver(Options(ArcId.newForTest("test")))
         // Verify storage keys for none of the capabilities cannot be created.
         assertFailsWith<IllegalArgumentException> {
             resolver.createStorageKey(unspecified, entityType, handleId)
@@ -99,7 +99,7 @@ class CapabilitiesResolverNewTest {
     fun capabilitiesResolver_createsVolatileKeys() {
         // Register volatile storage key factory.
         VolatileStorageKey.registerKeyCreator()
-        val resolver = CapabilitiesResolverNew(Options(ArcId.newForTest("test")))
+        val resolver = CapabilitiesResolver(Options(ArcId.newForTest("test")))
         // Verify only volatile (in-memory, no ttl) storage key can be created.
         verifyStorageKey<VolatileStorageKey>(
             resolver.createStorageKey(unspecified, entityType, handleId)
@@ -121,7 +121,7 @@ class CapabilitiesResolverNewTest {
     @Test
     fun capabilitiesResolver_createsDatabaseKeys() {
         DatabaseStorageKey.registerKeyCreator()
-        val resolver = CapabilitiesResolverNew(Options(ArcId.newForTest("test")))
+        val resolver = CapabilitiesResolver(Options(ArcId.newForTest("test")))
         verifyStorageKey<DatabaseStorageKey.Memory>(
             resolver.createStorageKey(unspecified, entityType, handleId)
         )
@@ -142,15 +142,15 @@ class CapabilitiesResolverNewTest {
     @Test
     fun capabilitiesResolver_createsAllKeys() {
         DriverAndKeyConfigurator.configureKeyParsers()
-        val resolver = CapabilitiesResolverNew(Options(ArcId.newForTest("test")))
+        val resolver = CapabilitiesResolver(Options(ArcId.newForTest("test")))
         verifyStorageKey<VolatileStorageKey>(
             resolver.createStorageKey(unspecified, entityType, handleId)
         )
         verifyStorageKey<VolatileStorageKey>(
-            resolver.createStorageKey(CapabilitiesNew(Shareable(false)), entityType, handleId)
+            resolver.createStorageKey(Capabilities(Shareable(false)), entityType, handleId)
         )
         verifyStorageKey<RamDiskStorageKey>(
-            resolver.createStorageKey(CapabilitiesNew(Shareable(true)), entityType, handleId)
+            resolver.createStorageKey(Capabilities(Shareable(true)), entityType, handleId)
         )
         verifyStorageKey<VolatileStorageKey>(
             resolver.createStorageKey(inMemory, entityType, handleId)
@@ -169,7 +169,7 @@ class CapabilitiesResolverNewTest {
     @Test
     fun capabilitiesResolver_createWithCustomFactories() {
         VolatileStorageKey.registerKeyCreator()
-        val resolver = CapabilitiesResolverNew(
+        val resolver = CapabilitiesResolver(
             Options(ArcId.newForTest("test")),
             listOf(DatabaseStorageKey.Memory.Factory())
         )

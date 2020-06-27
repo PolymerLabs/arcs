@@ -12,7 +12,7 @@
 package arcs.core.storage
 
 import arcs.core.common.ArcId
-import arcs.core.data.CapabilitiesNew
+import arcs.core.data.Capabilities
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.ReferenceType
@@ -22,10 +22,10 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
 
 /**
- * [CapabilitiesResolverNew] is a factory class that creates [StorageKey]s based on the registered
- * providers and given [CapabilitiesNew].
+ * [CapabilitiesResolver] is a factory class that creates [StorageKey]s based on the registered
+ * providers and given [Capabilities].
  */
-class CapabilitiesResolverNew(
+class CapabilitiesResolver(
     private val options: Options,
     private val factories: Map<String, StorageKeyFactory>,
     private val selector: FactorySelector = SimpleCapabilitiesSelector()
@@ -34,12 +34,12 @@ class CapabilitiesResolverNew(
         options: Options,
         factoriesList: List<StorageKeyFactory> = listOf(),
         selector: FactorySelector = SimpleCapabilitiesSelector()
-    ) : this(options, CapabilitiesResolverNew.getFactoryMap(factoriesList), selector)
+    ) : this(options, CapabilitiesResolver.getFactoryMap(factoriesList), selector)
 
-    /** Options used to construct [CapabilitiesResolverNew]. */
+    /** Options used to construct [CapabilitiesResolver]. */
     data class Options(val arcId: ArcId)
 
-    fun createStorageKey(capabilities: CapabilitiesNew, type: Type, handleId: String): StorageKey {
+    fun createStorageKey(capabilities: Capabilities, type: Type, handleId: String): StorageKey {
         val selectedFactories =
             factories.filterValues { it.supports(capabilities) }
 
@@ -89,7 +89,7 @@ class CapabilitiesResolverNew(
     }
 
     /**
-     * An interface for selecting a factory, if more than one are available for [CapabilitiesNew].
+     * An interface for selecting a factory, if more than one are available for [Capabilities].
      */
     interface FactorySelector {
         fun select(factories: Collection<StorageKeyFactory>): StorageKeyFactory
@@ -97,7 +97,7 @@ class CapabilitiesResolverNew(
 
     /**
      * An implementation of a [FactorySelector] choosing a factory with a least restrictive max
-     * [CapabilitiesNew] set.
+     * [Capabilities] set.
      */
     class SimpleCapabilitiesSelector(
         val sortedProtocols: Array<String> = arrayOf("volatile", "ramdisk", "memdb", "db")
@@ -136,7 +136,7 @@ class CapabilitiesResolverNew(
                 "Storage keys protocol must be unique $factoriesList."
             }
             val factories = factoriesList.associateBy { it.protocol }.toMutableMap()
-            CapabilitiesResolverNew.defaultStorageKeyFactories.forEach { (protocol, factory) ->
+            CapabilitiesResolver.defaultStorageKeyFactories.forEach { (protocol, factory) ->
                 factories.getOrPut(protocol) { factory }
             }
             return factories

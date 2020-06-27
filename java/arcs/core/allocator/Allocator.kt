@@ -14,8 +14,8 @@ import arcs.core.common.ArcId
 import arcs.core.common.Id
 import arcs.core.common.toArcId
 import arcs.core.data.Annotation
-import arcs.core.data.CapabilitiesNew
-import arcs.core.data.CapabilityNew.Shareable
+import arcs.core.data.Capabilities
+import arcs.core.data.Capability.Shareable
 import arcs.core.data.CreatableStorageKey
 import arcs.core.data.Plan
 import arcs.core.entity.HandleSpec
@@ -25,7 +25,7 @@ import arcs.core.host.ArcHostNotFoundException
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
-import arcs.core.storage.CapabilitiesResolverNew
+import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
 import arcs.core.type.Type
 import arcs.core.util.TaggedLog
@@ -136,7 +136,7 @@ class Allocator(
 
     /**
      * Finds [HandleConnection] instances which were unresolved at build time
-     * [CreatableStorageKey]) and attaches generated keys via [CapabilitiesResolverNew].
+     * [CreatableStorageKey]) and attaches generated keys via [CapabilitiesResolver].
      */
     private fun createStorageKeysIfNecessary(
         arcId: ArcId,
@@ -186,10 +186,10 @@ class Allocator(
         type: Type,
         annotations: List<Annotation>
     ): StorageKey {
-        val capabilitiesNew = CapabilitiesNew.fromAnnotations(annotations)
-        return CapabilitiesResolverNew(CapabilitiesResolverNew.Options(arcId))
+        val capabilities = Capabilities.fromAnnotations(annotations)
+        return CapabilitiesResolver(CapabilitiesResolver.Options(arcId))
             .createStorageKey(
-                if (capabilitiesNew.isEmpty) CapabilitiesNew(Shareable(true)) else capabilitiesNew,
+                if (capabilities.isEmpty) Capabilities(Shareable(true)) else capabilities,
                 type,
                 idGenerator.newChildId(arcId, "").toString()
         )
