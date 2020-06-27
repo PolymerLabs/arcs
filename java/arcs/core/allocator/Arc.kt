@@ -39,6 +39,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.runBlocking
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Represents an instantiated Arc running on one or more [ArcHost]s. An [Arc] can be stopped
@@ -55,8 +57,9 @@ class Arc internal constructor(
     val id: ArcId,
     private val allocator: Allocator,
     val partitions: List<Plan.Partition>,
-    private var arcStateInternal: AtomicRef<ArcState> = atomic(NeverStarted)
+    private val coroutineContext: CoroutineContext = EmptyCoroutineContext
 ) {
+    private val arcStateInternal: AtomicRef<ArcState> = atomic(NeverStarted)
     private val arcStateChangeHandlers = atomic(listOf<(ArcState) -> Unit>())
     private lateinit var arcStatesByHostFlow: Flow<ArcState>
     private lateinit var closeFlow: () -> Unit
@@ -140,9 +143,7 @@ class Arc internal constructor(
         }
 
         arcStatesByHostFlow.launchIn(
-            CoroutineScope(
-                Dispatchers.Default + Job() + CoroutineName("Arc (flow collector) $id")
-            )
+            CoroutineScope(coroutineContext + CoroutineName("Arc (flow collector) $id"))
         )
     }
 
