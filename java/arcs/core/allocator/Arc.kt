@@ -22,6 +22,7 @@ import arcs.core.host.ArcState.NeverStarted
 import arcs.core.host.ArcState.Running
 import arcs.core.host.ArcState.Stopped
 import arcs.core.host.ArcStateChangeRegistration
+import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
@@ -54,7 +55,7 @@ class Arc internal constructor(
     val id: ArcId,
     private val allocator: Allocator,
     val partitions: List<Plan.Partition>,
-    private var arcStateInternal: ArcState = NeverStarted
+    private var arcStateInternal: AtomicRef<ArcState> = atomic(NeverStarted)
 ) {
     private val arcStateChangeHandlers = atomic(listOf<(ArcState) -> Unit>())
     private lateinit var arcStatesByHostFlow: Flow<ArcState>
@@ -70,9 +71,9 @@ class Arc internal constructor(
      *  is considered to be [Error].
      */
     var arcState: ArcState
-        get() = arcStateInternal
+        get() = arcStateInternal.value
         private set(state) {
-            arcStateInternal = state
+            arcStateInternal.update { state }
         }
 
     private fun onArcStateChange(handler: (ArcState) -> Unit) {
@@ -134,7 +135,7 @@ class Arc internal constructor(
         }.map {
             recomputeArcState(it.values)
         }.onEach { state ->
-            arcStateInternal = state
+            arcState = state
             arcStateChangeHandlers.value.toList().forEach { handler -> handler(state) }
         }
 
