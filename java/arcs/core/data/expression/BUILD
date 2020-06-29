@@ -10,4 +10,5 @@ package(default_visibility = ["//visibility:public"])
 arcs_kt_library(
     name = "expression",
     srcs = glob(["*.kt"]),
+    deps = ["//java/arcs/core/util"],
 )

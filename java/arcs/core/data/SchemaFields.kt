@@ -34,11 +34,14 @@ sealed class FieldType(
 
     data class ListOf(val primitiveType: FieldType) : FieldType(Tag.List)
 
+    data class InlineEntity(val schemaHash: String) : FieldType(Tag.InlineEntity)
+
     enum class Tag {
         Primitive,
         EntityRef,
         Tuple,
-        List
+        List,
+        InlineEntity
     }
 
     // Convenient aliases for all of the primitive field types.

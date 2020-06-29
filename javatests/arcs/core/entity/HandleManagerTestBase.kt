@@ -17,6 +17,7 @@ import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -25,6 +26,7 @@ import arcs.core.storage.driver.testutil.waitUntilSet
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.util.Log
 import arcs.core.util.Time
 import arcs.jvm.util.testutil.FakeTime
 import arcs.core.util.testutil.LogRule
@@ -97,10 +99,12 @@ open class HandleManagerTestBase {
         storageKey = hatCollectionRefKey
     )
 
+    var activationFactory: ActivationFactory? = null
     lateinit var schedulerProvider: JvmSchedulerProvider
     lateinit var readHandleManager: EntityHandleManager
     lateinit var writeHandleManager: EntityHandleManager
     lateinit var monitorHandleManager: EntityHandleManager
+    var testTimeout: Long = 10000
 
     open var testRunner = { block: suspend CoroutineScope.() -> Unit ->
         monitorHandleManager = EntityHandleManager(
@@ -108,10 +112,10 @@ open class HandleManagerTestBase {
             hostId = "monitorHost",
             time = fakeTime,
             scheduler = schedulerProvider("monitor"),
-            stores = StoreManager()
+            stores = StoreManager(activationFactory)
         )
         runBlocking {
-            withTimeout(10000) { block() }
+            withTimeout(testTimeout) { block() }
             schedulerProvider.cancelAll()
             monitorHandleManager.close()
         }
@@ -127,7 +131,13 @@ open class HandleManagerTestBase {
 
     // Must call from subclasses.
     open fun setUp() {
-        fakeTime = FakeTime()
+        // We need to initialize to -1 instead of the default (999999) because our test cases around
+        // deleted items where we look for "nulled-out" entities can result in the
+        // `UNINITIALIZED_TIMESTAMP` being used for creationTimestamp, and others can result in the
+        // current time being used.
+        // TODO: Determine why this is happening. It seems for a nulled-out entity, we shouldn't
+        //  use the current time as the creationTimestamp.
+        fakeTime = FakeTime(-1)
         DriverAndKeyConfigurator.configure(null)
         RamDisk.clear()
     }
@@ -349,11 +359,17 @@ open class HandleManagerTestBase {
         val handle = writeHandleManager.createSingletonHandle()
         val handleB = readHandleManager.createSingletonHandle()
         val handleBUpdated = handleB.onUpdateDeferred()
-        handle.store(entity1)
+
+        val expectedCreateTime = 123456789L
+        fakeTime.millis = expectedCreateTime
+
+        withContext(handle.dispatcher) {
+            handle.store(entity1)
+        }
         handleBUpdated.await()
 
-        val readBack = handleB.fetch()!!
-        assertThat(readBack.creationTimestamp).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+        val readBack = withContext(handleB.dispatcher) { handleB.fetch()!! }
+        assertThat(readBack.creationTimestamp).isEqualTo(expectedCreateTime)
         assertThat(readBack.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
     }
 
@@ -390,21 +406,25 @@ open class HandleManagerTestBase {
         fakeTime.millis = 0
         // Create and store an entity with no TTL.
         val entityHandle = writeHandleManager.createSingletonHandle()
-        var updated = entityHandle.onUpdateDeferred()
-        entityHandle.store(entity1).join()
+        val refHandle = writeHandleManager.createReferenceSingletonHandle(ttl = Ttl.Minutes(2))
+        val updated = entityHandle.onUpdateDeferred()
+        withContext(entityHandle.dispatcher) {
+            entityHandle.store(entity1)
+        }
         updated.await()
 
         // Create and store a reference with TTL.
         val entity1Ref = entityHandle.createReference(entity1)
-        val refHandle = writeHandleManager.createReferenceSingletonHandle(ttl = Ttl.Minutes(2))
-        withContext(refHandle.dispatcher) { refHandle.store(entity1Ref) }
-        val readBack = refHandle.fetch()!!
-        assertThat(readBack.creationTimestamp).isEqualTo(0)
-        assertThat(readBack.expirationTimestamp).isEqualTo(2 * 60 * 1000)
+        withContext(refHandle.dispatcher) {
+            refHandle.store(entity1Ref)
+            val readBack = refHandle.fetch()!!
+            assertThat(readBack.creationTimestamp).isEqualTo(0)
+            assertThat(readBack.expirationTimestamp).isEqualTo(2 * 60 * 1000)
 
-        // Fast forward time to 5 minutes later, so the reference expires.
-        fakeTime.millis += 5 * 60 * 1000
-        assertThat(refHandle.fetch()).isNull()
+            // Fast forward time to 5 minutes later, so the reference expires.
+            fakeTime.millis += 5 * 60 * 1000
+            assertThat(refHandle.fetch()).isNull()
+        }
     }
 
     @Test
@@ -818,6 +838,10 @@ open class HandleManagerTestBase {
         val handleB = readHandleManager.createCollectionHandle()
         val handleBChanged = handleB.onUpdateDeferred()
         val monitorNotified = monitor.onUpdateDeferred()
+
+        val expectedCreateTime = 123456789L
+        fakeTime.millis = expectedCreateTime
+
         withContext(handle.dispatcher) {
             handle.store(entity1)
         }
@@ -826,7 +850,7 @@ open class HandleManagerTestBase {
 
         withContext(handleB.dispatcher) {
             val readBack = handleB.fetchAll().first { it.entityId == entity1.entityId }
-            assertThat(readBack.creationTimestamp).isNotEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+            assertThat(readBack.creationTimestamp).isEqualTo(expectedCreateTime)
             assertThat(readBack.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
         }
     }
@@ -861,23 +885,29 @@ open class HandleManagerTestBase {
     @Test
     fun referenceCollection_withTtl() = testRunner {
         fakeTime.millis = 0
-        // Create and store an entity with no TTL.
         val entityHandle = writeHandleManager.createCollectionHandle()
-        var updated = entityHandle.onUpdateDeferred()
-        entityHandle.store(entity1).join()
+        val refHandle = writeHandleManager.createReferenceCollectionHandle(ttl = Ttl.Minutes(2))
+
+        // Create and store an entity with no TTL.
+        val updated = entityHandle.onUpdateDeferred()
+        withContext(entityHandle.dispatcher) {
+            entityHandle.store(entity1)
+        }
         updated.await()
 
         // Create and store a reference with TTL.
         val entity1Ref = entityHandle.createReference(entity1)
-        val refHandle = writeHandleManager.createReferenceCollectionHandle(ttl = Ttl.Minutes(2))
-        withContext(refHandle.dispatcher) { refHandle.store(entity1Ref) }
-        val readBack = refHandle.fetchAll().first()
-        assertThat(readBack.creationTimestamp).isEqualTo(0)
-        assertThat(readBack.expirationTimestamp).isEqualTo(2 * 60 * 1000)
+        withContext(refHandle.dispatcher) {
+            refHandle.store(entity1Ref)
+            val readBack = refHandle.fetchAll().first()
+            assertThat(readBack.creationTimestamp).isEqualTo(0)
+            assertThat(readBack.expirationTimestamp).isEqualTo(2 * 60 * 1000)
 
-        // Fast forward time to 5 minutes later, so the reference expires.
-        fakeTime.millis += 5 * 60 * 1000
-        assertThat(refHandle.fetchAll()).isEmpty()
+            // Fast forward time to 5 minutes later, so the reference expires.
+            fakeTime.millis += 5 * 60 * 1000
+            assertThat(refHandle.fetchAll()).isEmpty()
+            assertThat(refHandle.size()).isEqualTo(0)
+        }
     }
 
     @Test
@@ -1016,6 +1046,8 @@ open class HandleManagerTestBase {
             assertThat(storageReference.isDead(coroutineContext)).isFalse()
         }
 
+        log("Removing the entities")
+
         // Remove the entities from the collection.
         val entitiesDeleted = monitorHandle.onUpdateDeferred { it.isEmpty() }
         withContext(writeEntityHandle.dispatcher) {
@@ -1023,6 +1055,8 @@ open class HandleManagerTestBase {
             writeEntityHandle.remove(entity2)
         }
         entitiesDeleted.await()
+
+        log("Checking that they are empty when de-referencing.")
 
         // Reference should be dead. (Removed entities currently aren't actually deleted, but
         // instead are "nulled out".)

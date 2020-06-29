@@ -82,6 +82,9 @@ class StringDecoder(private var bytes: ByteArray) {
     fun <T> decodeList(): List<T> =
         throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Lists")
 
+    fun <T> decodeInline(): T =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Inlines")
+
     companion object {
         fun decodeDictionary(bytes: ByteArray): Map<String, String> {
             val decoder = StringDecoder(bytes)
@@ -181,6 +184,10 @@ class StringEncoder(
 
     @Suppress("UNUSED_PARAMETER") fun <T> encode(prefix: String, lst: List<T>) {
         throwNoJsEncoding("Lists")
+    }
+
+    @Suppress("UNUSED_PARAMETER") fun <T> encode(prefix: String, inline: T) {
+        throwNoJsEncoding("Inline")
     }
 
     private fun throwNoJsEncoding(typeName: String) {

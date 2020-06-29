@@ -29,13 +29,12 @@ arcs_cc_schema(
     src = "golden.arcs",
 )
 
+# golden_kt.arcs contains types that only work
+# for Kotlin jvm. Don't try to build this using
+# wasm support!
 arcs_kt_schema(
     name = "kt_only_schemas",
     srcs = ["golden_kt.arcs"],
-    platforms = [
-        "jvm",
-        "wasm",
-    ],
 )
 
 arcs_kt_schema(

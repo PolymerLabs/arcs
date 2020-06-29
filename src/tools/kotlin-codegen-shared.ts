@@ -86,16 +86,44 @@ export interface KotlinTypeInfo {
   schemaType: string;
 }
 
-export function getTypeInfo(opts: { name: string, isCollection?: boolean, refClassName?: string, listTypeName?: string, refSchemaHash?: string }): KotlinTypeInfo {
+type AddFieldOptions = Readonly<{
+  field: string;
+  typeName: string;
+  isOptional?: boolean;
+  refClassName?: string;
+  refSchemaHash?: string;
+  listTypeInfo?: AddFieldOptions;
+  isCollection?: boolean;
+  isInlineClass?: boolean;
+}>;
+
+export function getTypeInfo(opts: { name: string, isCollection?: boolean, refClassName?: string, listTypeInfo?: {name: string, refSchemaHash?: string, isInlineClass?: boolean}, refSchemaHash?: string, isInlineClass?: boolean }): KotlinTypeInfo {
   if (opts.name === 'List') {
-    assert(opts.listTypeName, 'listTypeName must be provided for Lists');
+    assert(opts.listTypeInfo, 'listTypeInfo must be provided for Lists');
     assert(!opts.isCollection, 'collections of Lists are not supported');
-    const itemTypeInfo = getTypeInfo({name: opts.listTypeName});
+    const itemTypeInfo = getTypeInfo(opts.listTypeInfo);
     return {
       type: `List<${itemTypeInfo.type}>`,
       decodeFn: `decodeList<${itemTypeInfo.type}>()`,
       defaultVal: `listOf<${itemTypeInfo.type}>()`,
       schemaType: `FieldType.ListOf(${itemTypeInfo.schemaType})`
+    };
+  }
+
+  if (opts.isInlineClass) {
+    if (opts.isCollection) {
+      return {
+        type: `Set<${opts.name}>`,
+        decodeFn: `decodeInline<${opts.name}>()`,
+        defaultVal: `emptySet<${opts.name}>()`,
+        schemaType: `FieldType.InlineEntity(${quote(opts.refSchemaHash)})`
+      };
+    }
+    return {
+      type: opts.name,
+      decodeFn: `decodeInline<${opts.name}>()`,
+      defaultVal: `${opts.name}()`,
+      schemaType: `FieldType.InlineEntity(${quote(opts.refSchemaHash)})`
     };
   }
 

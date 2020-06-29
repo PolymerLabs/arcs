@@ -11,55 +11,44 @@
 
 package arcs.core.data
 
+import arcs.core.data.CapabilityNew.Persistence
+import arcs.core.data.CapabilityNew.Encryption
+import arcs.core.data.CapabilityNew.Queryable
+import arcs.core.data.CapabilityNew.Shareable
+import arcs.core.data.CapabilityNew.Range
 import com.google.common.truth.Truth.assertThat
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.test.assertFailsWith
+
 
 @RunWith(JUnit4::class)
 class CapabilityNewTest {
     @Test
     fun capability_persistence_isEquivalent() {
-        assertTrue(CapabilityNew.Persistence.UNRESTRICTED.isEquivalent(
-            CapabilityNew.Persistence.UNRESTRICTED))
-        assertTrue(CapabilityNew.Persistence.ON_DISK.isEquivalent(
-            CapabilityNew.Persistence.ON_DISK))
-        assertTrue(CapabilityNew.Persistence.IN_MEMORY.isEquivalent(
-            CapabilityNew.Persistence.IN_MEMORY))
-        assertTrue(CapabilityNew.Persistence.NONE.isEquivalent(
-            CapabilityNew.Persistence.NONE))
+        assertThat(Persistence.UNRESTRICTED.isEquivalent(Persistence.UNRESTRICTED)).isTrue()
+        assertThat(Persistence.ON_DISK.isEquivalent(Persistence.ON_DISK)).isTrue()
+        assertThat(Persistence.IN_MEMORY.isEquivalent(Persistence.IN_MEMORY)).isTrue()
+        assertThat(Persistence.NONE.isEquivalent(Persistence.NONE)).isTrue()
 
-        assertFalse(CapabilityNew.Persistence.UNRESTRICTED.isEquivalent(
-            CapabilityNew.Persistence.ON_DISK))
-        assertFalse(CapabilityNew.Persistence.ON_DISK.isEquivalent(
-            CapabilityNew.Persistence.IN_MEMORY))
-        assertFalse(CapabilityNew.Persistence.IN_MEMORY.isEquivalent(
-            CapabilityNew.Persistence.NONE))
-        assertFalse(CapabilityNew.Persistence.NONE.isEquivalent(
-            CapabilityNew.Persistence.UNRESTRICTED))
+        assertThat(Persistence.UNRESTRICTED.isEquivalent(Persistence.ON_DISK)).isFalse()
+        assertThat(Persistence.ON_DISK.isEquivalent(Persistence.IN_MEMORY)).isFalse()
+        assertThat(Persistence.IN_MEMORY.isEquivalent(Persistence.NONE)).isFalse()
+        assertThat(Persistence.NONE.isEquivalent(Persistence.UNRESTRICTED)).isFalse()
     }
 
     @Test
     fun capability_persistence_compare() {
-        assertFalse(CapabilityNew.Persistence.UNRESTRICTED.isLessStrict(
-            CapabilityNew.Persistence.UNRESTRICTED))
-        assertTrue(CapabilityNew.Persistence.UNRESTRICTED.isSameOrLessStrict(
-            CapabilityNew.Persistence.IN_MEMORY))
-        assertTrue(CapabilityNew.Persistence.UNRESTRICTED.isLessStrict(
-            CapabilityNew.Persistence.IN_MEMORY))
+        assertThat(Persistence.UNRESTRICTED.isLessStrict(Persistence.UNRESTRICTED)).isFalse()
+        assertThat(Persistence.UNRESTRICTED.isSameOrLessStrict(Persistence.IN_MEMORY)).isTrue()
+        assertThat(Persistence.UNRESTRICTED.isLessStrict(Persistence.IN_MEMORY)).isTrue()
 
-        assertTrue(CapabilityNew.Persistence.IN_MEMORY.isStricter(
-            CapabilityNew.Persistence.ON_DISK))
-        assertFalse(CapabilityNew.Persistence.IN_MEMORY.isLessStrict(
-            CapabilityNew.Persistence.ON_DISK))
-        assertFalse(CapabilityNew.Persistence.IN_MEMORY.isSameOrLessStrict(
-            CapabilityNew.Persistence.ON_DISK))
-        assertTrue(CapabilityNew.Persistence.ON_DISK.isLessStrict(
-            CapabilityNew.Persistence.IN_MEMORY))
-        assertTrue(CapabilityNew.Persistence.ON_DISK.isSameOrLessStrict(
-            CapabilityNew.Persistence.IN_MEMORY))
+        assertThat(Persistence.IN_MEMORY.isStricter(Persistence.ON_DISK)).isTrue()
+        assertThat(Persistence.IN_MEMORY.isLessStrict(Persistence.ON_DISK)).isFalse()
+        assertThat(Persistence.IN_MEMORY.isSameOrLessStrict(Persistence.ON_DISK)).isFalse()
+        assertThat(Persistence.ON_DISK.isLessStrict(Persistence.IN_MEMORY)).isTrue()
+        assertThat(Persistence.ON_DISK.isSameOrLessStrict(Persistence.IN_MEMORY)).isTrue()
     }
 
     @Test
@@ -67,66 +56,160 @@ class CapabilityNewTest {
         val ttl3Days = CapabilityNew.Ttl.Days(3)
         val ttl10Hours = CapabilityNew.Ttl.Hours(10)
 
-        assertTrue(ttl3Days.isEquivalent(ttl3Days))
-        assertFalse(ttl3Days.isEquivalent(ttl10Hours))
-        assertTrue(ttl3Days.isLessStrict(ttl10Hours))
-        assertTrue(ttl3Days.isSameOrLessStrict(ttl10Hours))
-        assertFalse(ttl3Days.isStricter(ttl10Hours))
-        assertFalse(ttl3Days.isSameOrStricter(ttl10Hours))
-        assertFalse(ttl3Days.isEquivalent(ttl10Hours))
-        assertTrue(ttl10Hours.isStricter(ttl3Days))
-        assertTrue(ttl10Hours.isEquivalent(CapabilityNew.Ttl.Minutes(600)))
+        assertThat(ttl3Days.isEquivalent(ttl3Days)).isTrue()
+        assertThat(ttl3Days.isEquivalent(ttl10Hours)).isFalse()
+        assertThat(ttl3Days.isLessStrict(ttl10Hours)).isTrue()
+        assertThat(ttl3Days.isSameOrLessStrict(ttl10Hours)).isTrue()
+        assertThat(ttl3Days.isStricter(ttl10Hours)).isFalse()
+        assertThat(ttl3Days.isSameOrStricter(ttl10Hours)).isFalse()
+        assertThat(ttl3Days.isEquivalent(ttl10Hours)).isFalse()
+        assertThat(ttl10Hours.isStricter(ttl3Days)).isTrue()
+        assertThat(ttl10Hours.isEquivalent(CapabilityNew.Ttl.Minutes(600))).isTrue()
     
         val ttlInfinite = CapabilityNew.Ttl.Infinite()
-        assertTrue(ttlInfinite.isEquivalent(ttlInfinite))
-        assertTrue(ttlInfinite.isSameOrLessStrict(ttlInfinite))
-        assertTrue(ttlInfinite.isSameOrStricter(ttlInfinite))
-        assertFalse(ttlInfinite.isStricter(ttlInfinite))
-        assertFalse(ttlInfinite.isLessStrict(ttlInfinite))
+        assertThat(ttlInfinite.isEquivalent(ttlInfinite)).isTrue()
+        assertThat(ttlInfinite.isSameOrLessStrict(ttlInfinite)).isTrue()
+        assertThat(ttlInfinite.isSameOrStricter(ttlInfinite)).isTrue()
+        assertThat(ttlInfinite.isStricter(ttlInfinite)).isFalse()
+        assertThat(ttlInfinite.isLessStrict(ttlInfinite)).isFalse()
     
-        assertTrue(ttl3Days.isStricter(ttlInfinite))
-        assertFalse(ttlInfinite.isStricter(ttl3Days))
-        assertTrue(ttlInfinite.isLessStrict(ttl3Days))
-        assertFalse(ttl3Days.isLessStrict(ttlInfinite))
-        assertFalse(ttlInfinite.isEquivalent(ttl3Days))
+        assertThat(ttl3Days.isStricter(ttlInfinite)).isTrue()
+        assertThat(ttlInfinite.isStricter(ttl3Days)).isFalse()
+        assertThat(ttlInfinite.isLessStrict(ttl3Days)).isTrue()
+        assertThat(ttl3Days.isLessStrict(ttlInfinite)).isFalse()
+        assertThat(ttlInfinite.isEquivalent(ttl3Days)).isFalse()
     }
 
     @Test
     fun capability_queryable_compare() {
-        val queryable = CapabilityNew.Queryable(true)
-        val nonQueryable = CapabilityNew.Queryable(false)
-        assertTrue(queryable.isEquivalent(queryable))
-        assertTrue(nonQueryable.isEquivalent(nonQueryable))
-        assertFalse(nonQueryable.isEquivalent(queryable))
-        assertFalse(queryable.isStricter(queryable))
-        assertTrue(queryable.isSameOrStricter(queryable))
-        assertTrue(queryable.isSameOrStricter(nonQueryable))
-        assertTrue(nonQueryable.isLessStrict(queryable))
+        val queryable = Queryable(true)
+        val nonQueryable = Queryable(false)
+        assertThat(queryable.isEquivalent(queryable)).isTrue()
+        assertThat(nonQueryable.isEquivalent(nonQueryable)).isTrue()
+        assertThat(nonQueryable.isEquivalent(queryable)).isFalse()
+        assertThat(queryable.isStricter(queryable)).isFalse()
+        assertThat(queryable.isSameOrStricter(queryable)).isTrue()
+        assertThat(queryable.isSameOrStricter(nonQueryable)).isTrue()
+        assertThat(nonQueryable.isLessStrict(queryable)).isTrue()
     }
 
     @Test
     fun capability_shareable_compare() {
-        val shareable = CapabilityNew.Shareable(true)
-        val nonShareable = CapabilityNew.Shareable(false)
-        assertTrue(shareable.isEquivalent(shareable))
-        assertTrue(nonShareable.isEquivalent(nonShareable))
-        assertFalse(nonShareable.isEquivalent(shareable))
-        assertFalse(shareable.isStricter(shareable))
-        assertTrue(shareable.isSameOrStricter(shareable))
-        assertTrue(shareable.isSameOrStricter(nonShareable))
-        assertTrue(nonShareable.isLessStrict(shareable))
+        val shareable = Shareable(true)
+        val nonShareable = Shareable(false)
+        assertThat(shareable.isEquivalent(shareable)).isTrue()
+        assertThat(nonShareable.isEquivalent(nonShareable)).isTrue()
+        assertThat(nonShareable.isEquivalent(shareable)).isFalse()
+        assertThat(shareable.isStricter(shareable)).isFalse()
+        assertThat(shareable.isSameOrStricter(shareable)).isTrue()
+        assertThat(shareable.isSameOrStricter(nonShareable)).isTrue()
+        assertThat(nonShareable.isLessStrict(shareable)).isTrue()
     }
 
     @Test
     fun capability_encryption_compare() {
-        val encrypted = CapabilityNew.Encryption(true)
-        val nonEncrypted = CapabilityNew.Encryption(false)
-        assertTrue(encrypted.isEquivalent(encrypted))
-        assertTrue(nonEncrypted.isEquivalent(nonEncrypted))
-        assertFalse(nonEncrypted.isEquivalent(encrypted))
-        assertFalse(encrypted.isStricter(encrypted))
-        assertTrue(encrypted.isSameOrStricter(encrypted))
-        assertTrue(encrypted.isSameOrStricter(nonEncrypted))
-        assertTrue(nonEncrypted.isLessStrict(encrypted))
+        val encrypted = Encryption(true)
+        val nonEncrypted = Encryption(false)
+        assertThat(encrypted.isEquivalent(encrypted)).isTrue()
+        assertThat(nonEncrypted.isEquivalent(nonEncrypted)).isTrue()
+        assertThat(nonEncrypted.isEquivalent(encrypted)).isFalse()
+        assertThat(encrypted.isStricter(encrypted)).isFalse()
+        assertThat(encrypted.isSameOrStricter(encrypted)).isTrue()
+        assertThat(encrypted.isSameOrStricter(nonEncrypted)).isTrue()
+        assertThat(nonEncrypted.isLessStrict(encrypted)).isTrue()
+    }
+
+    @Test
+    fun capabilityRange_fail_init() {
+        assertFailsWith<ClassCastException> {
+            Range(Encryption(true), Shareable(true))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            Range(Encryption(true), Encryption(false))
+        }
+    }
+
+    @Test
+    fun capabilityRange_compareBooleanRanges() {
+        assertThat(Queryable.ANY.isEquivalent(Queryable.ANY)).isTrue()
+        assertThat(Queryable.ANY.isEquivalent(Queryable(true))).isFalse()
+        assertThat(Queryable.ANY.contains(Queryable.ANY)).isTrue()
+        assertThat(Queryable.ANY.contains(Queryable(false))).isTrue()
+        assertThat(Queryable.ANY.contains(Queryable(false).toRange())).isTrue()
+        assertThat(Queryable.ANY.contains(Queryable(true))).isTrue()
+        assertThat(Queryable.ANY.contains(Queryable(true).toRange())).isTrue()
+    }
+
+    @Test
+    fun capabilityRange_ttl_isEquivalent() {
+        assertThat(CapabilityNew.Ttl.ANY.isEquivalent(CapabilityNew.Ttl.ANY)).isTrue()
+        assertThat(CapabilityNew.Ttl.ANY.isEquivalent(CapabilityNew.Ttl.Infinite())).isFalse()
+        assertThat(CapabilityNew.Ttl.Infinite().toRange().isEquivalent(CapabilityNew.Ttl.Infinite())).isTrue()
+    }
+
+    @Test
+    fun capabilityRange_ttl_contains() {
+        assertThat(
+            Range(CapabilityNew.Ttl.Hours(10), CapabilityNew.Ttl.Hours(3)).contains(
+                Range(CapabilityNew.Ttl.Hours(10), CapabilityNew.Ttl.Hours(3))
+            )
+        ).isTrue()
+        assertThat(
+            Range(CapabilityNew.Ttl.Hours(10), CapabilityNew.Ttl.Hours(3)).contains(
+                Range(CapabilityNew.Ttl.Hours(8), CapabilityNew.Ttl.Hours(6))
+            )
+        ).isTrue()
+        assertThat(
+            Range(CapabilityNew.Ttl.Hours(10), CapabilityNew.Ttl.Hours(3)).contains(
+                Range(CapabilityNew.Ttl.Hours(8), CapabilityNew.Ttl.Hours(2))
+            )
+        ).isFalse()
+        assertThat(
+            Range(CapabilityNew.Ttl.Infinite(), CapabilityNew.Ttl.Hours(3)).contains(
+                Range(CapabilityNew.Ttl.Hours(8), CapabilityNew.Ttl.Hours(3))
+            )
+        ).isTrue()
+        assertThat(CapabilityNew.Ttl.ANY.contains(CapabilityNew.Ttl.Infinite())).isTrue()
+        assertThat(
+            CapabilityNew.Ttl.ANY.contains(
+                Range(CapabilityNew.Ttl.Infinite(), CapabilityNew.Ttl.Hours(3))
+            )
+        ).isTrue()
+        assertThat(
+            CapabilityNew.Ttl.ANY.contains(
+                Range(CapabilityNew.Ttl.Hours(3), CapabilityNew.Ttl.ZERO)
+            )
+        ).isTrue()
+    }
+
+    @Test
+    fun capabilityRange_persistence_isEquivalent() {
+        assertThat(Persistence.ANY.isEquivalent(Persistence.ANY)).isTrue()
+        assertThat(Persistence.ANY.isEquivalent(Persistence.UNRESTRICTED)).isFalse()
+        assertThat(Persistence.UNRESTRICTED.toRange().isEquivalent(Persistence.UNRESTRICTED)).isTrue()
+        assertThat(Persistence.ON_DISK.toRange().isEquivalent(Persistence.ON_DISK.toRange())).isTrue()
+    }
+
+    @Test
+    fun capabilityRange_persistence_contains() {
+        assertThat(Persistence.ON_DISK.toRange().contains(Persistence.ON_DISK.toRange())).isTrue()
+        assertThat(
+            Range(Persistence.ON_DISK, Persistence.IN_MEMORY).contains(Persistence.ON_DISK)
+        ).isTrue()
+        assertThat(
+            Range(Persistence.ON_DISK, Persistence.IN_MEMORY).contains(
+                Persistence.IN_MEMORY.toRange()
+            )
+        ).isTrue()
+        assertThat(
+            Range(Persistence.ON_DISK, Persistence.IN_MEMORY).contains(Persistence.UNRESTRICTED)
+        ).isFalse()
+        assertThat(
+            Range(Persistence.ON_DISK, Persistence.IN_MEMORY).contains(Persistence.ANY)
+        ).isFalse()
+        assertThat(Persistence.ANY.contains(Persistence.ON_DISK)).isTrue()
+        assertThat(Persistence.ANY.contains(Persistence.ON_DISK.toRange())).isTrue()
+        assertThat(Persistence.ANY.contains(Range(Persistence.ON_DISK, Persistence.IN_MEMORY)))
+            .isTrue()
     }
 }

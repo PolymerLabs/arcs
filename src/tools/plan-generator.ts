@@ -75,11 +75,7 @@ export class PlanGenerator {
   /** Generates a Kotlin `Plan.Particle` instantiation from a Particle. */
   async createParticle(particle: Particle): Promise<string> {
     const spec = particle.spec;
-    let locationFromFile = (spec.implFile && spec.implFile.substring(spec.implFile.lastIndexOf('/') + 1));
-    if (locationFromFile && locationFromFile.startsWith('.')) {
-      locationFromFile = this.namespace + locationFromFile;
-    }
-    const location = (spec && (spec.implBlobUrl || locationFromFile)) || '';
+    const location = (spec && (spec.implBlobUrl || spec.implFile)) || '';
     const connectionMappings: string[] = [];
     for (const [key, conn] of Object.entries(particle.connections)) {
       connectionMappings.push(`"${key}" to ${await this.createHandleConnection(conn)}`);

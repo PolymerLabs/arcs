@@ -97,7 +97,8 @@ typealias ReferenceId = Long
 
 /** Implementation of [Database] for Android using SQLite. */
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-@Suppress("Recycle", "EXPERIMENTAL_API_USAGE") // Our helper extension methods close Cursors correctly.
+@Suppress("Recycle", "EXPERIMENTAL_API_USAGE")
+// Our helper extension methods close Cursors correctly.
 class DatabaseImpl(
     context: Context,
     databaseName: String,
@@ -136,7 +137,33 @@ class DatabaseImpl(
         }.forEach { emit(it) }
     }
 
-    override fun onCreate(db: SQLiteDatabase) = db.transaction {
+    override fun onCreate(db: SQLiteDatabase) = db.transaction { initializeDatabase(this) }
+
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = db.transaction {
+        ((oldVersion + 1)..newVersion).forEach {
+            nextVersion -> MIGRATION_STEPS[nextVersion]?.forEach(db::execSQL)
+        }
+    }
+
+    override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) =
+        db.transaction {
+            // Select all of the tables from the database, not just the ones we know about given
+            // our version, then generate DROP TABLE statements and execute them.
+            rawQuery(
+                "SELECT name FROM sqlite_master WHERE type = 'table'",
+                emptyArray()
+            ).map { "DROP TABLE ${it.getString(0)}" }.forEach(db::execSQL)
+
+            initializeDatabase(this)
+            Unit
+        }
+
+    /**
+     * Creates the tables for the database and initializes the [PrimitiveType] values.
+     *
+     * Assumes it's being called within a transaction.
+     */
+    private fun initializeDatabase(db: SQLiteDatabase) {
         CREATE.forEach(db::execSQL)
 
         // Populate the 'types' table with the primitive types. The id of the enum will be
@@ -149,7 +176,7 @@ class DatabaseImpl(
                 put("id", it.id)
                 put("name", it.name)
             }
-            insertOrThrow(TABLE_TYPES, null, content)
+            db.insertOrThrow(TABLE_TYPES, null, content)
         }
 
         val sentinel = ContentValues().apply {
@@ -157,14 +184,7 @@ class DatabaseImpl(
             put("id", REFERENCE_TYPE_SENTINEL)
             put("name", REFERENCE_TYPE_SENTINEL_NAME)
         }
-        insertOrThrow(TABLE_TYPES, null, sentinel)
-        Unit
-    }
-
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = db.transaction {
-        ((oldVersion + 1)..newVersion).forEach {
-            nextVersion -> MIGRATION_STEPS[nextVersion]?.forEach(db::execSQL)
-        }
+        db.insertOrThrow(TABLE_TYPES, null, sentinel)
     }
 
     override suspend fun addClient(client: DatabaseClient): Int = clientMutex.withLock {
@@ -174,10 +194,9 @@ class DatabaseImpl(
 
     override suspend fun removeClient(identifier: Int) = clientMutex.withLock {
         clients.remove(identifier)
-        // When all clients are done with the database, close the connection.
         if (clients.isEmpty()) {
             onDatabaseClose()
-            super.close()
+            // TODO: track bulk deletes, and if none is in progress we can close the connection.
         }
         Unit
     }
@@ -1506,6 +1525,9 @@ class DatabaseImpl(
         is FieldType.Tuple ->
             throw NotImplementedError("[FieldType.Tuple]s not currently supported.")
         is FieldType.ListOf -> getTypeId(fieldType.primitiveType, database)
+        // TODO(b/144508181)
+        is FieldType.InlineEntity ->
+            throw NotImplementedError("[FieldType.InlineEntity]s not currently supported.")
     }
 
     /** Test-only version of [getTypeId]. */
@@ -1626,19 +1648,41 @@ class DatabaseImpl(
     )
 
     companion object {
-        private const val DB_VERSION = 5
+        /* internal */
+        const val DB_VERSION = 5
 
         private const val TABLE_STORAGE_KEYS = "storage_keys"
         private const val TABLE_COLLECTION_ENTRIES = "collection_entries"
         private const val TABLE_COLLECTIONS = "collections"
         private const val TABLE_ENTITIES = "entities"
         private const val TABLE_ENTITY_REFS = "entity_refs"
+        private const val TABLE_FIELDS = "fields"
         private const val TABLE_FIELD_VALUES = "field_values"
         private const val TABLE_TYPES = "types"
         private const val TABLE_TEXT_PRIMITIVES = "text_primitive_values"
         private const val TABLE_NUMBER_PRIMITIVES = "number_primitive_values"
 
-        private val CREATE =
+        private val TABLES_VERSION_1 = arrayOf(
+            TABLE_STORAGE_KEYS,
+            TABLE_COLLECTION_ENTRIES,
+            TABLE_COLLECTIONS,
+            TABLE_ENTITIES,
+            TABLE_ENTITY_REFS,
+            TABLE_FIELDS,
+            TABLE_FIELD_VALUES,
+            TABLE_TYPES,
+            TABLE_TEXT_PRIMITIVES,
+            TABLE_NUMBER_PRIMITIVES
+        )
+        private val TABLES_VERSION_2 = TABLES_VERSION_1
+        private val TABLES_VERSION_3 = TABLES_VERSION_2
+        private val TABLES_VERSION_4 = TABLES_VERSION_3
+        private val TABLES_VERSION_5 = TABLES_VERSION_4
+
+        /* internal */
+        val TABLES = TABLES_VERSION_5
+
+        private val CREATE_VERSION_3 =
             """
                 CREATE TABLE types (
                     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -1773,8 +1817,12 @@ class DatabaseImpl(
 
                 CREATE INDEX number_primitive_value_index ON number_primitive_values (value);
             """.trimIndent().split("\n\n")
+        private val CREATE_VERSION_4 = CREATE_VERSION_3
+        private val CREATE_VERSION_5 = CREATE_VERSION_3
 
-        private val DROP =
+        private val CREATE = CREATE_VERSION_5
+
+        private val DROP_VERSION_2 =
             """
                 DROP INDEX type_name_index;
                 DROP TABLE types;
@@ -1795,13 +1843,13 @@ class DatabaseImpl(
                 DROP INDEX number_primitive_value_index;
                 DROP TABLE number_primitive_values;
             """.trimIndent().split("\n")
+        private val DROP_VERSION_3 = DROP_VERSION_2
 
         private val VERSION_2_MIGRATION = arrayOf("ALTER TABLE entities ADD COLUMN orphan INTEGER;")
-
-        private val VERSION_3_MIGRATION = listOf(DROP, CREATE).flatten().toTypedArray()
-
-        private val VERSION_4_MIGRATION = VERSION_3_MIGRATION
-
+        private val VERSION_3_MIGRATION =
+            listOf(DROP_VERSION_2, CREATE_VERSION_3).flatten().toTypedArray()
+        private val VERSION_4_MIGRATION =
+            listOf(DROP_VERSION_3, CREATE_VERSION_4).flatten().toTypedArray()
         private val VERSION_5_MIGRATION = arrayOf(
             "INSERT INTO types (id, name, is_primitive) VALUES (10, \"BigInt\", 1)"
         )

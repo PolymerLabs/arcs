@@ -88,7 +88,7 @@ export abstract class LoaderBase {
    * Test to determine if string matches JVM package / class naming convention:
    * https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html
    */
-  isJvmClasspath(candidate: string): boolean {
+  static isJvmClasspath(candidate: string): boolean {
     if (!candidate) return false;
 
     const isCapitalized = (s: string) => s[0] === s[0].toUpperCase();

@@ -52,7 +52,15 @@ class ParticleContext(
     private val desyncedHandles: MutableSet<Handle> = mutableSetOf()
 
     // One-shot callback used to notify the arc host that the particle is in the Running state.
+    // If the particle is already in the running state, the method will be called, but not set.
     private var notifyReady: ((Particle) -> Unit)? = null
+        set(value) {
+            if (particleState == ParticleState.Running) {
+                value?.invoke(this.particle)
+            } else {
+                field = value
+            }
+        }
 
     private val dispatcher = scheduler?.asCoroutineDispatcher()
 
@@ -130,12 +138,14 @@ class ParticleContext(
      */
     suspend fun runParticle(notifyReady: (Particle) -> Unit) {
         withContext(requireNotNull(dispatcher)) {
-            check(particleState == ParticleState.Waiting) {
+            check(particleState in arrayOf(ParticleState.Waiting, ParticleState.Running)) {
+                // TODO(b/159834053) - Clarify messaging here
                 "${planParticle.particleName}: runParticle can only be called after " +
                         "a successful call to initParticle"
             }
 
             this@ParticleContext.notifyReady = notifyReady
+
             if (isWriteOnly) {
                 // Particles with only write-only handles won't receive any storage
                 // events and thus need to have onReady invoked directly.

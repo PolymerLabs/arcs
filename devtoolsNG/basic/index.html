@@ -1,4 +1,32 @@
+<head>
+  <meta charset="utf-8">
+  <title>Arcs DevTools</title>
+  <link rel="shortcut icon" href="img/favicon.png">
+  <script src='../../devtools/src/arcs-shared.js' type='module'></script>
+  <script src='../../devtools/src/common/object-explorer.js' type='module'></script>
+  <script src='../../devtools/src/common/filter-input.js' type='module'></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Helvetica, Verdana, Arial, sans-serif;
+    }    
+    header {
+      padding: 3px;
+      background-color: #f3f3f3;
+      border-bottom: 1px solid gray;
+    }
+    object-explorer {
+      border-bottom: 1px solid #eee;
+    }
+    object-explorer[find]:not([found]) {
+      display: none;
+    }
+  </style>
+</head>
 <body>
+  <header>
+    <filter-input id="filter"/>
+  </header>
   <div id="log"></div> 
   <input type="button" onclick="clearEntries()" value="Clear">
   <script>
@@ -26,11 +54,24 @@
       document.getElementById("log").innerHTML = "";
     };
 
-    function appendEntry(str) {
-      const newEntry = document.createElement('div');
-      newEntry.innerText = str;
+    function appendEntry(object) {
+      const newEntry = document.createElement('object-explorer');
+      newEntry.object = object;
       document.getElementById("log").append(newEntry);
     }
 
+    document.getElementById('filter').addEventListener('filter-changed', (event) => {
+      for (const explorer of document.querySelectorAll('object-explorer')) {
+        explorer.find = event.detail.value;
+      }
+    });
+
+    // This is just to show what's possible.
+    // Sarah, please play with it and then remove in your next PR :)
+    appendEntry({here: "I just"})
+    appendEntry(["want", "to", {show: ['that many', 'different']}])
+    appendEntry({types: {of: true, objects: false}})
+    appendEntry("can\nbe\ndisplayed")
+    appendEntry(42)
   </script>
 </body>

@@ -57,6 +57,7 @@ class CapabilitiesResolverTest {
     fun tearDown() {
         CapabilitiesResolver.reset()
         CapabilitiesResolver.defaultCreators.clear()
+        CapabilitiesResolverNew.reset()
     }
 
     fun verifyStorageKey(key: StorageKey?, expectedClass: Class<out StorageKey>) {
@@ -224,6 +225,7 @@ class CapabilitiesResolverTest {
         )
 
         CapabilitiesResolver.reset()
+        CapabilitiesResolverNew.reset()
         val resolver2 = CapabilitiesResolver(options)
         val volatileKey =
             resolver2.createStorageKey(Capabilities.TiedToArc, thingEntityType, handleId)
@@ -269,6 +271,7 @@ class CapabilitiesResolverTest {
         assertThat(CapabilitiesResolver.registeredCreators).hasSize(1)
 
         CapabilitiesResolver.reset()
+        CapabilitiesResolverNew.reset()
         assertThat(CapabilitiesResolver.defaultCreators).hasSize(3);
         assertThat(CapabilitiesResolver.registeredCreators).isEmpty()
     }

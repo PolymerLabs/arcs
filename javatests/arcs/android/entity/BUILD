@@ -8,8 +8,7 @@ licenses(["notice"])
 arcs_kt_android_test_suite(
     name = "entity",
     size = "medium",
-    # TODO(b/157513765): Deflake this test suite.
-    flaky = True,
+    srcs = glob(["*.kt"]),
     manifest = "AndroidManifest.xml",
     package = "arcs.android.entity",
     deps = [
@@ -19,6 +18,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/host",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
+        "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/testutil",

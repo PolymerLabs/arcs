@@ -20,13 +20,10 @@ suspend fun <T : Entity> T.toReference(handle: ReadWriteCollectionHandle<T>): Re
 @ExperimentalCoroutinesApi
 @TargetHost(ArcHost::class)
 class Writer0 : AbstractWriter0() {
-    private suspend fun initialize() = this.apply {
-        handles.handles.values.forEach { it.awaitReady() }
-    }
     private fun MyLevel0.toArcs() = Level0(name)
 
     suspend fun write(item: MyLevel0) = withContext(handles.level0.dispatcher) {
-        initialize()
+        handles.awaitReady()
         handles.level0.store(item.toArcs())
     }
 }
@@ -34,9 +31,6 @@ class Writer0 : AbstractWriter0() {
 @ExperimentalCoroutinesApi
 @TargetHost(ArcHost::class)
 class Writer1 : AbstractWriter1() {
-    private suspend fun initialize() = this.apply {
-        handles.handles.values.forEach { it.awaitReady() }
-    }
     private fun MyLevel0.toArcs() = Level0(name)
 
     private suspend fun MyLevel1.toArcs() = Level1(
@@ -44,7 +38,7 @@ class Writer1 : AbstractWriter1() {
         children = children.map { it.toArcs().toReference(handles.level0) }.toSet()
     )
     suspend fun write(item: MyLevel1) = withContext(handles.level1.dispatcher) {
-        initialize()
+        handles.awaitReady()
         handles.level1.store(item.toArcs())
     }
 }
@@ -52,9 +46,6 @@ class Writer1 : AbstractWriter1() {
 @ExperimentalCoroutinesApi
 @TargetHost(ArcHost::class)
 class Writer2 : AbstractWriter2() {
-    private suspend fun initialize() = this.apply {
-        handles.handles.values.forEach { it.awaitReady() }
-    }
     private fun MyLevel0.toArcs() = Level0(name)
 
     private suspend fun MyLevel1.toArcs() = Level1(
@@ -68,7 +59,7 @@ class Writer2 : AbstractWriter2() {
     )
 
     suspend fun write(item: MyLevel2) = withContext(handles.level2.dispatcher) {
-        initialize()
+        handles.awaitReady()
         handles.level2.store(item.toArcs())
     }
 }

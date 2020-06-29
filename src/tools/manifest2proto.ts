@@ -24,7 +24,6 @@ import {flatMap} from '../runtime/util.js';
 import {Policy} from '../runtime/policy/policy.js';
 import {policyToProtoPayload} from './policy2proto.js';
 import {annotationToProtoPayload} from './annotation2proto.js';
-import {Loader} from '../platform/loader-node.js';
 
 export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path);
@@ -33,20 +32,27 @@ export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
 
 export async function manifestToProtoPayload(manifest: Manifest) {
   manifest.validateUniqueDefinitions();
-  return makeManifestProtoPayload(manifest.allParticles, manifest.allRecipes, manifest.allPolicies, manifest.meta.namespace || '');
+  return makeManifestProtoPayload(manifest.allParticles, manifest.allRecipes, manifest.allPolicies);
 }
 
-export async function encodePlansToProto(plans: Recipe[], namespace: string = '') {
-  const specMap = new Map<string, ParticleSpec>();
-  for (const spec of flatMap(plans, r => r.particles).map(p => p.spec)) {
-    specMap.set(spec.name, spec);
-  }
-  return encodePayload(await makeManifestProtoPayload([...specMap.values()], plans, [], namespace));
+export async function encodePlansToProto(plans: Recipe[], manifest: Manifest) {
+  // In the recipe data structure every particle in a recipe currently has its own copy
+  // of a particle spec. This copy is used in type inference and gets mutated as recipe
+  // is type checked. As we need to encode particle specs without such mutations, below
+  // we reach for ParticleSpecs from manifest.particles, instead of the ones hanging from
+  // the recipe.particles.
+  // This should be cleaned-up in the recipe data structure and type infrence code,
+  // once that happens, we can remove the below hack.
+  const specToId = (spec: ParticleSpec) => `${spec.name}:${spec.implFile}`;
+  const planParticleIds = flatMap(plans, p => p.particles).map(p => specToId(p.spec));
+  const particleSpecs = manifest.allParticles.filter(p => planParticleIds.includes(specToId(p)));
+
+  return encodePayload(await makeManifestProtoPayload(particleSpecs, plans, /* policies= */ []));
 }
 
-async function makeManifestProtoPayload(particles: ParticleSpec[], recipes: Recipe[], policies: Policy[], namespace: string = '') {
+async function makeManifestProtoPayload(particles: ParticleSpec[], recipes: Recipe[], policies: Policy[]) {
   return {
-    particleSpecs: await Promise.all(particles.map(p => particleSpecToProtoPayload(p, namespace))),
+    particleSpecs: await Promise.all(particles.map(p => particleSpecToProtoPayload(p))),
     recipes: await Promise.all(recipes.map(r => recipeToProtoPayload(r))),
     policies: policies.map(policyToProtoPayload),
   };
@@ -58,29 +64,18 @@ function encodePayload(payload: {}): Uint8Array {
   return ManifestProto.encode(ManifestProto.create(payload)).finish();
 }
 
-async function particleSpecToProtoPayload(spec: ParticleSpec, namespace: string = '') {
+async function particleSpecToProtoPayload(spec: ParticleSpec) {
   const connections = await Promise.all(spec.connections.map(async connectionSpec => handleConnectionSpecToProtoPayload(connectionSpec)));
   const claims = flatMap(spec.connections, connectionSpec => claimsToProtoPayload(spec, connectionSpec));
   const checks = flatMap(spec.connections, connectionSpec => checksToProtoPayload(spec, connectionSpec));
 
-  const loader = new Loader({});
-
-  let classpath = spec.implFile && spec.implFile.substring(spec.implFile.lastIndexOf('/') + 1);
-  if (classpath && classpath.startsWith('.')) {
-    classpath = namespace + classpath;
-  }
-
   return {
     name: spec.name,
-    location: loader.isJvmClasspath(classpath) ? classpath : spec.implFile,
+    location: spec.implFile,
     connections,
     claims,
     checks
   };
-}
-
-function replaceAll(candidate: string, target: string, replacement: string): string {
-  return candidate.split(target).join(replacement);
 }
 
 async function handleConnectionSpecToProtoPayload(spec: HandleConnectionSpec) {
@@ -273,7 +268,7 @@ async function recipeHandleToProtoPayload(handle: Handle) {
     tags: handle.tags,
     fate: fateOrdinal,
     type: await typeToProtoPayload(handle.type || handle.mappedType),
-    annotations: handle.annotations.map(annotationToProtoPayload),
+    annotations: handle.annotations.map(annotationToProtoPayload)
   };
 
   if (handle.storageKey) {
