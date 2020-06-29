@@ -776,7 +776,7 @@ export class BigIntPrimitive extends RefinementExpression {
   }
 
   toString(): string {
-    return this.value.toString();
+    return `${this.value}n`;
   }
 
   applyOperator(): ExpressionPrimitives {
@@ -1727,17 +1727,29 @@ export class RefinementOperator {
       // E.g. if both arguments are unknown, the types will be unknown but not enforced to be equal.
     } else {
       let argType: Primitive = Primitive.UNKNOWN;
-      for (const operand of operands) {
-        if (this.opInfo.argType.includes(operand.evalType) && operand.evalType !== Primitive.UNKNOWN) {
-          argType = operand.evalType;
+      // Discover the argument types.
+      if (this.opInfo.argType.length === 1) {
+        argType = this.opInfo.argType[0];
+      } else {
+        for (const operand of operands) {
+          if (this.opInfo.argType.includes(operand.evalType) && operand.evalType !== Primitive.UNKNOWN) {
+            argType = operand.evalType;
+          }
         }
       }
+      // Check that the argument types are valid.
       for (const operand of operands) {
         if (operand.evalType === Primitive.UNKNOWN) {
           operand.evalType = argType;
         }
         if (operand.evalType !== argType) {
-          throw new Error(`Refinement expression ${operand} has type ${operand.evalType}. Expected ${this.opInfo.argType.join(' or ')}.`);
+          let argString: String = argType;
+          if (argType === Primitive.UNKNOWN) {
+            argString = this.opInfo.argType.join(` or `);
+          }
+          throw new Error(
+            `Refinement expression ${operand} has type ${operand.evalType}. Expected ${argString}.`
+          );
         }
       }
     }
@@ -1823,7 +1835,7 @@ export class NumberFraction {
     } else if (expr instanceof NumberPrimitive) {
       return new NumberFraction(new NumberMultinomial({[CONSTANT]: expr.value}));
     }
-    throw new Error(`Cannot resolve expression: ${expr.toString()}`);
+    throw new Error(`Cannot model expression as NumberFraction: ${expr.toString()}`);
   }
 
   static updateGivenOp(op: Op, fractions: NumberFraction[]): NumberFraction {
@@ -1906,13 +1918,13 @@ export class BigIntFraction {
     } else if (expr instanceof UnaryExpression) {
       const fn = BigIntFraction.fromExpression(expr.expr);
       return BigIntFraction.updateGivenOp(expr.operator.op, [fn]);
-    } else if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.NUMBER) {
+    } else if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.BIGINT) {
       const term = new BigIntTerm({[expr.value]: BigInt(1)});
       return new BigIntFraction(new BigIntMultinomial({[term.toKey()]: BigInt(1)}));
     } else if (expr instanceof BigIntPrimitive) {
       return new BigIntFraction(new BigIntMultinomial({[CONSTANT]: expr.value}));
     }
-    throw new Error(`Cannot resolve expression: ${expr.toString()}`);
+    throw new Error(`Cannot model expression as BigIntFraction: ${expr.toString()}`);
   }
 
   static updateGivenOp(op: Op, fractions: BigIntFraction[]): BigIntFraction {
@@ -2374,21 +2386,36 @@ export class Normalizer {
   // Updates 'expr' after rearrangement.
   static rearrangeNumericalExpression(expr: BinaryExpression): void {
     // TODO(cypher1): Use Number or BigInt here
-    const lF = NumberFraction.fromExpression(expr.leftExpr);
-    const rF = NumberFraction.fromExpression(expr.rightExpr);
-    const frac = NumberFraction.subtract(lF, rF);
-    let rearranged = null;
-    switch (expr.operator.op) {
-      case Op.LT: rearranged = Normalizer.fracLessThanZero(frac); break;
-      case Op.GT: rearranged = Normalizer.fracGreaterThanZero(frac); break;
-      case Op.EQ: rearranged = Normalizer.fracEqualsToZero(frac); break;
-      default:
-          throw new Error(`Unsupported operator ${expr.operator.op}: cannot rearrange numerical expression.`);
+    try {
+      const lF = NumberFraction.fromExpression(expr.leftExpr);
+      const rF = NumberFraction.fromExpression(expr.rightExpr);
+      const frac = NumberFraction.subtract(lF, rF);
+      let rearranged = null;
+      switch (expr.operator.op) {
+        case Op.LT: rearranged = Normalizer.fracLessThanZero(frac); break;
+        case Op.GT: rearranged = Normalizer.fracGreaterThanZero(frac); break;
+        case Op.EQ: rearranged = Normalizer.fracEqualsToZero(frac); break;
+        default:
+            throw new Error(`Unsupported operator ${expr.operator.op}: cannot rearrange numerical expression.`);
+      }
+      expr.update(rearranged);
+    } catch {
+      const lF = BigIntFraction.fromExpression(expr.leftExpr);
+      const rF = BigIntFraction.fromExpression(expr.rightExpr);
+      const frac = BigIntFraction.subtract(lF, rF);
+      let rearranged = null;
+      switch (expr.operator.op) {
+        case Op.LT: rearranged = Normalizer.fracLessThanZero(frac); break;
+        case Op.GT: rearranged = Normalizer.fracGreaterThanZero(frac); break;
+        case Op.EQ: rearranged = Normalizer.fracEqualsToZero(frac); break;
+        default:
+            throw new Error(`Unsupported operator ${expr.operator.op}: cannot rearrange numerical expression.`);
+      }
+      expr.update(rearranged);
     }
-    expr.update(rearranged);
   }
 
-  static fracLessThanZero(frac: NumberFraction): RefinementExpression {
+  static fracLessThanZero(frac: NumberFraction | BigIntFraction): RefinementExpression {
     const ngt0 = frac.num.toExpression(Op.GT);
     const nlt0 = frac.num.toExpression(Op.LT);
     const dgt0 = frac.den.toExpression(Op.GT);
@@ -2398,7 +2425,7 @@ export class Normalizer {
     return new BinaryExpression(left, right, new RefinementOperator(Op.OR));
   }
 
-  static fracGreaterThanZero(frac: NumberFraction): BinaryExpression {
+  static fracGreaterThanZero(frac: NumberFraction | BigIntFraction): BinaryExpression {
     const ngt0 = frac.num.toExpression(Op.GT);
     const nlt0 = frac.num.toExpression(Op.LT);
     const dgt0 = frac.den.toExpression(Op.GT);
@@ -2410,7 +2437,7 @@ export class Normalizer {
     );
   }
 
-  static fracEqualsToZero(frac: NumberFraction): RefinementExpression {
+  static fracEqualsToZero(frac: NumberFraction | BigIntFraction): RefinementExpression {
     const neq0 = frac.num.toExpression(Op.EQ);
     if (frac.den.isConstant() && !frac.den.isZero()) {
       return neq0; // TODO(cypher1): This normalizer should be doing this for us.
