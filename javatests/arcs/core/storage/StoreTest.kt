@@ -16,8 +16,16 @@ import arcs.core.crdt.CrdtCount.Operation.Increment
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
+import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
+import arcs.core.data.CollectionType
 import arcs.core.data.CountType
+import arcs.core.data.EntityType
+import arcs.core.data.FieldType
+import arcs.core.data.RawEntity
+import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
+import arcs.core.data.util.toReferencable
 import arcs.core.storage.testutil.DummyStorageKey
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
@@ -228,6 +236,42 @@ class StoreTest {
     }
 
     @Test
+    fun doesntSendUpdateToDriver_afterDriverOriginatedMessages_CrdtSet() = runBlockingTest {
+        val (driver, _) = setupSetMocks()
+        val receiverCaptor = argumentCaptor<suspend (CrdtSet.Data<*>, Int) -> Unit>()
+        whenever(driver.registerReceiver(anyOrNull(), receiverCaptor.capture())).thenReturn(Unit)
+        whenever(driver.send(any(), any())).thenThrow(
+            IllegalStateException("Should not be invoked")
+        )
+
+        val schema = Schema(
+            emptySet(),
+            SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
+            "abc"
+        )
+        val store = Store(StoreOptions<CrdtSet.Data<RawEntity>, CrdtSet.Operation<RawEntity>, Set<RawEntity>>(
+            testKey,
+            CollectionType(EntityType(schema))
+        )).activate()
+
+        val remoteSet = CrdtSet<RawEntity>()
+        val entity = RawEntity(
+            id = "id",
+            singletons = mapOf("name" to "a".toReferencable()),
+            collections = emptyMap()
+        )
+        remoteSet.applyOperation(CrdtSet.Operation.Add(
+            "bob",
+            VersionMap("bob" to 1),
+            entity
+        ))
+
+        // Note that this assumes no asynchrony inside store.ts. This is guarded by the following
+        // test, which will fail if driver.receiver() doesn't synchronously invoke driver.send().
+        receiverCaptor.lastValue(remoteSet.data, 1)
+    }
+
+    @Test
     fun resendsFailedDriverUpdates_afterMerging() = runBlockingTest {
         val (driver, _) = setupMocks()
         val receiverCaptor = argumentCaptor<suspend (CrdtCount.Data, Int) -> Unit>()
@@ -318,6 +362,21 @@ class StoreTest {
             on { willSupport(testKey) }.thenReturn(true)
         }
         whenever(provider.getDriver(any(), eq(CrdtCount.Data::class), any())).thenReturn(driver)
+
+        DriverFactory.register(provider)
+
+        return driver to provider
+    }
+
+    private suspend fun setupSetMocks(): Pair<Driver<CrdtSet.DataImpl<*>>, DriverProvider> {
+        val driver = mock<Driver<CrdtSet.DataImpl<*>>> {
+            on { storageKey }.thenReturn(testKey)
+        }
+        whenever(driver.send(any(), any())).thenReturn(true)
+        val provider = mock<DriverProvider> {
+            on { willSupport(testKey) }.thenReturn(true)
+        }
+        whenever(provider.getDriver(any(), eq(CrdtSet.DataImpl::class), any())).thenReturn(driver)
 
         DriverFactory.register(provider)
 

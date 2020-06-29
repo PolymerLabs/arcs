@@ -670,7 +670,17 @@ describe('CRDTCollection', () => {
       assert.isFalse(isEmptyChange(modelChange3));
       assert.isFalse(isEmptyChange(otherChange3));
     });
+
+    it('returns empty other change when merging into empty model', () => {
+      const set = new CRDTCollection<{id: string}>();
+      const set2 = new CRDTCollection<{id: string}>();
+      set2.applyOperation({type: CollectionOpTypes.Add, actor: 'a', added: {id: 'foo'}, clock: {'a': 1}});
+
+      const {modelChange: modelChange, otherChange: otherChange} = set.merge(set2.getData());
+      assert.isFalse(isEmptyChange(modelChange));
+      assert.isTrue(isEmptyChange(otherChange));
+    });
   });
 });
 
-// Note: if/when adding more tests to this file, please, also update CrdtTest.java
+// Note: if/when adding more tests to this file, please, also update CrdtSetTest.kt

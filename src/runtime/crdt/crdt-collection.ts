@@ -267,6 +267,10 @@ export function simplifyFastForwardOp<T>(fastForwardOp: CollectionFastForwardOp<
     return null;
   }
   if (fastForwardOp.added.length === 0) {
+    if (sameVersions(fastForwardOp.oldClock, fastForwardOp.newClock)) {
+      // No added, no removed, and no clock changes: op should be empty.
+      return [];
+    }
     // Just a version bump, no add ops to replay.
     return null;
   }
