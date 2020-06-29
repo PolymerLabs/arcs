@@ -19,6 +19,7 @@ import java.io.File
 class VariablePlanTest {
 
     // Assert two particles are equal since [Schema] data classes have lambdas.
+    // This should no longer be necessary once b/155813124 is implemented.
     private fun particleEquality(left: Plan.Particle, right: Plan.Particle) {
         assertThat(left.particleName).isEqualTo(right.particleName)
         assertThat(left.location).isEqualTo(right.location)
