@@ -121,7 +121,7 @@ $ tools/update-goldens \n\n`
             type: {entity: {schema: {
               names: ['Thing'],
               fields: {name: {primitive: 'TEXT'}},
-              hash: "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
             }}}
           }]
         }]

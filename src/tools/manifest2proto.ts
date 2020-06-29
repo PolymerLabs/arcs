@@ -235,7 +235,9 @@ async function recipeToProtoPayload(recipe: Recipe) {
     // all handle types are constrained type variables. We force these type variables
     // to their resolution by called maybeEnsureResolved(), so that handle types
     // are encoded with concrete types, instead of variables.
-    h.type && h.type.maybeEnsureResolved();
+    if (h.type) {
+      h.type.maybeEnsureResolved();
+    }
     handleToProtoPayload.set(h, await recipeHandleToProtoPayload(h));
   }
 
