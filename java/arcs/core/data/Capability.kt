@@ -83,14 +83,15 @@ sealed class Capability(val tag: String) {
 
     /** Capability describing retention policy of the store. */
     sealed class Ttl(count: Int, val isInfinite: Boolean = false) : Capability(TAG) {
-        /** Number of milliseconds for retention, or -1 for infinite. */
-        val millis: Long = count * when (this) {
-            is Millis -> 1
-            is Minutes -> 1 * MILLIS_IN_MIN
-            is Hours -> 60 * MILLIS_IN_MIN
-            is Days -> 60 * 24 * MILLIS_IN_MIN
+        /** Number of minutes for retention, or -1 for infinite. */
+        val minutes: Int = count * when (this) {
+            is Minutes -> 1
+            is Hours -> 60
+            is Days -> 60 * 24
             is Infinite -> -1
         }
+        /** Number of milliseconds for retention, or -1 for infinite. */
+        val millis: Long = if (this is Infinite) -1 else minutes * MILLIS_IN_MIN
         init {
             require(count >= 0 || isInfinite) {
                 "must be either non-negative count or infinite, " +
@@ -113,7 +114,6 @@ sealed class Capability(val tag: String) {
             else time.currentTimeMillis + millis
         }
 
-        data class Millis(val count: Int) : Ttl(count)
         data class Minutes(val count: Int) : Ttl(count)
         data class Hours(val count: Int) : Ttl(count)
         data class Days(val count: Int) : Ttl(count)
@@ -124,7 +124,7 @@ sealed class Capability(val tag: String) {
             const val TTL_INFINITE = -1
             const val MILLIS_IN_MIN = 60 * 1000L
 
-            val ZERO = Ttl.Millis(0)
+            val ZERO = Ttl.Minutes(0)
             val ANY = Range(Ttl.Infinite(), Ttl.ZERO)
 
             private val TTL_PATTERN =

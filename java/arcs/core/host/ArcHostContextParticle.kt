@@ -13,11 +13,11 @@ package arcs.core.host
 import arcs.core.common.toArcId
 import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.data.SingletonType
-import arcs.core.data.Ttl
 import arcs.core.entity.Reference
 import arcs.core.host.api.Particle
 import arcs.core.host.generated.AbstractArcHostContextParticle
@@ -185,7 +185,7 @@ class ArcHostContextParticle(
         handle.handleName to Plan.HandleConnection(
             StorageKeyParser.parse(handle.storageKey), HandleMode.valueOf(handle.mode),
             fromTag(arcId, particle, handle.type, handle.handleName),
-            if (handle.ttl != Ttl.TTL_INFINITE) {
+            if (handle.ttl != Ttl.TTL_INFINITE.toDouble()) {
                 listOf(Annotation.createTtl("$handle.ttl minutes"))
             } else {
                 emptyList()

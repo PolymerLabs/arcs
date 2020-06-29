@@ -13,13 +13,13 @@ package arcs.core.entity
 
 import arcs.core.common.Id
 import arcs.core.common.Referencable
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.RawEntity
 import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.Schema
-import arcs.core.data.Ttl
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
@@ -303,7 +303,7 @@ open class EntityBase(
         val now = time.currentTimeMillis
         if (creationTimestamp == UNINITIALIZED_TIMESTAMP) {
             creationTimestamp = now
-            if (ttl != Ttl.Infinite) {
+            if (ttl != Ttl.Infinite()) {
                 expirationTimestamp = ttl.calculateExpiration(time)
             }
         }

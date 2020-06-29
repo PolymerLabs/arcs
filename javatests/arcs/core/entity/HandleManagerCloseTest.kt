@@ -4,7 +4,7 @@ import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
-import arcs.core.data.Ttl
+import arcs.core.data.Capability.Ttl
 import arcs.core.entity.HandleManagerTestBase.Person
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageKey
@@ -168,7 +168,7 @@ class HandleManagerCloseTest {
     private suspend fun EntityHandleManager.createSingletonHandle(
         storageKey: StorageKey = singletonKey,
         name: String = "singletonHandle",
-        ttl: Ttl = Ttl.Infinite
+        ttl: Ttl = Ttl.Infinite()
     ) = (createHandle(
         HandleSpec(
             name,
@@ -184,7 +184,7 @@ class HandleManagerCloseTest {
     private suspend fun EntityHandleManager.createCollectionHandle(
         storageKey: StorageKey = collectionKey,
         name: String = "collecitonKey",
-        ttl: Ttl = Ttl.Infinite
+        ttl: Ttl = Ttl.Infinite()
     ) = (createHandle(
         HandleSpec(
             name,

@@ -3,7 +3,7 @@ package arcs.sdk.spec
 import arcs.core.common.Id
 import arcs.core.data.RawEntity
 import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
-import arcs.core.data.Ttl
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.SchemaRegistry
 import arcs.core.testutil.runTest

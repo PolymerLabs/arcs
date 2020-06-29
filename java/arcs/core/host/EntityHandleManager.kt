@@ -16,12 +16,12 @@ import arcs.core.common.Referencable
 import arcs.core.common.toArcId
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.Schema
 import arcs.core.data.SingletonType
-import arcs.core.data.Ttl
 import arcs.core.entity.CollectionHandle
 import arcs.core.entity.CollectionProxy
 import arcs.core.entity.CollectionStoreOptions
@@ -125,7 +125,7 @@ class EntityHandleManager(
     suspend fun createHandle(
         spec: HandleSpec,
         storageKey: StorageKey,
-        ttl: Ttl = Ttl.Infinite,
+        ttl: Ttl = Ttl.Infinite(),
         particleId: String = "",
         immediateSync: Boolean = true
     ): Handle {

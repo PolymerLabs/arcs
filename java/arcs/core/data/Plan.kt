@@ -10,6 +10,7 @@
  */
 package arcs.core.data
 
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.expression.Expression
 import arcs.core.storage.StorageKey
 import arcs.core.type.Type
@@ -81,7 +82,7 @@ open class Plan(
             get() {
                 return annotations.find { it.name == "ttl" }?.let {
                     return Ttl.fromString(it.getStringParam("value"))
-                } ?: Ttl.Infinite
+                } ?: Ttl.Infinite()
             }
 
         companion object {
