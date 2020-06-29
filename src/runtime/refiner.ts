@@ -1616,7 +1616,8 @@ const evalTable: Dictionary<(exprs: ExpressionPrimitives[]) => ExpressionPrimiti
 
   // Numerics
   [Op.ADD]: (e: (number|bigint)[]) => {
-    // TODO(cypher1): Fix these to be 'typesafe'
+    // Note: These operators support automatic casting of bigint types to number.
+    // The type system enforces that these are not used in `validateOperandCompatibility`.
     if (typeof e[0] === 'number' || typeof e[1] === 'number') {
       return Number(e[0]) + Number(e[1]);
     }
@@ -1725,12 +1726,18 @@ export class RefinementOperator {
       // TODO(cypher1): Use the type checker here (with type variables) as this is not typesafe.
       // E.g. if both arguments are unknown, the types will be unknown but not enforced to be equal.
     } else {
+      let argType: Primitive = Primitive.UNKNOWN;
       for (const operand of operands) {
-        if (!this.opInfo.argType.includes(operand.evalType)) {
-          if (operand.evalType !== Primitive.UNKNOWN || operand.kind !== 'QueryArgumentPrimitiveNode') {
-            throw new Error(`Refinement expression ${operand} has type ${operand.evalType}. Expected ${this.opInfo.argType.join(' or ')}.`);
-          }
-          // operand.evalType = this.opInfo.argType;
+        if (this.opInfo.argType.includes(operand.evalType) && operand.evalType !== Primitive.UNKNOWN) {
+          argType = operand.evalType;
+        }
+      }
+      for (const operand of operands) {
+        if (operand.evalType === Primitive.UNKNOWN) {
+          operand.evalType = argType;
+        }
+        if (operand.evalType !== argType) {
+          throw new Error(`Refinement expression ${operand} has type ${operand.evalType}. Expected ${this.opInfo.argType.join(' or ')}.`);
         }
       }
     }
