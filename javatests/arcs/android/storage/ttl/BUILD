@@ -21,6 +21,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/testutil",
         "//java/arcs/jvm/host",
+        "//java/arcs/jvm/util",
         "//java/arcs/jvm/util/testutil",
         "//javatests/arcs/core/entity:lib",
         "//third_party/android/androidx_test/core",

@@ -22,6 +22,7 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.WriteBackForTesting
 import arcs.jvm.host.JvmSchedulerProvider
+import arcs.jvm.util.JvmTime
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
@@ -41,18 +42,18 @@ class PeriodicCleanupTaskTest {
     )
     private val fakeTime = FakeTime()
     private lateinit var worker: PeriodicCleanupTask
+    private val context: Context = ApplicationProvider.getApplicationContext()
 
     @Before
     fun setUp() {
-        val context : Context = ApplicationProvider.getApplicationContext()
-        DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(context))
         SchemaRegistry.register(DummyEntity.SCHEMA)
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         worker = TestWorkerBuilder.from(context, PeriodicCleanupTask::class.java).build()
     }
 
     @Test
-    fun ttlWorkerTest() = runBlocking {
+    fun ttlWorker_removesExpiredEntity() = runBlocking {
+        DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(context))
         // Set time in the past so entity is already expired.
         fakeTime.millis = 1L
 
@@ -67,6 +68,28 @@ class PeriodicCleanupTaskTest {
         assertThat(worker.doWork()).isEqualTo(Result.success())
 
         // Verify entity is gone.
+        withContext(handle.dispatcher) {
+            assertThat(handle.fetchAll()).isEmpty()
+        }
+    }
+
+    @Test
+    fun ttlWorker_resetDatabaseWhenTooLarge() = runBlocking {
+        DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(context, null, 5 /* maxDbSize */))
+        // Set time to now, so entity is NOT expired.
+        fakeTime.millis = JvmTime.currentTimeMillis
+
+        val handle = createCollectionHandle()
+        val entity = DummyEntity().apply { num = 1.0 }
+        handle.storeAndWait(entity)
+        withContext(handle.dispatcher) {
+            assertThat(handle.fetchAll()).containsExactly(entity)
+        }
+
+        // Trigger worker.
+        assertThat(worker.doWork()).isEqualTo(Result.success())
+
+        // Verify entity is gone even though it was not expired.
         withContext(handle.dispatcher) {
             assertThat(handle.fetchAll()).isEmpty()
         }
