@@ -485,10 +485,10 @@ abstract class AbstractGold : BaseParticle() {
                 "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa",
                 refinement = { _ -> true },
                 query = { data, queryArgs ->
-                    val lastCall = data.singletons["lastCall"].toPrimitiveValue(Double::class, 0.0)
                     val name = data.singletons["name"].toPrimitiveValue(String::class, "")
+                    val lastCall = data.singletons["lastCall"].toPrimitiveValue(Double::class, 0.0)
                     val queryArgument = queryArgs as String
-                    ((lastCall < 259200) && (name == queryArgument))
+                    ((name == queryArgument) && (lastCall < 259200))
                 }
             )
 
