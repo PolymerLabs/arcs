@@ -85,7 +85,7 @@ describe('refiner', () => {
             ref.validateData(data);
         }, `Refinement expression (num + 5) evaluated to a non-boolean type.`);
     }));
-    it('Throws error when operators and operands are incompatible', Flags.withFieldRefinementsAllowed(async () => {
+    it('Throws error when operators and operands are incompatible: Number', Flags.withFieldRefinementsAllowed(async () => {
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
@@ -97,7 +97,7 @@ describe('refiner', () => {
                 num: 6,
             };
             ref.validateData(data);
-        }, `Refinement expression (num < 5) has type Boolean. Expected Number or BigInt.`);
+        }, `Refinement expression (num < 5) has type Boolean. Expected Number.`);
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
@@ -122,6 +122,44 @@ describe('refiner', () => {
           };
             ref.validateData(data);
         }, `Refinement expression name has type Text. Expected Number or BigInt.`);
+    }));
+    it('Throws error when operators and operands are incompatible: BigInt', Flags.withFieldRefinementsAllowed(async () => {
+        assert.throws(() => {
+            const manifestAst = parse(`
+                particle Foo
+                    input: reads Something {num: BigInt [ (num < 5n) + 3n == 0n ] }
+            `);
+            const typeData = {'num': 'BigInt'};
+            const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
+            const data = {
+                num: BigInt(6),
+            };
+            ref.validateData(data);
+        }, `Refinement expression (num < 5n) has type Boolean. Expected BigInt.`);
+        assert.throws(() => {
+            const manifestAst = parse(`
+                particle Foo
+                    input: reads Something {num: BigInt [ (num + 3) == 0n ] }
+            `);
+            const typeData = {'num': 'BigInt'};
+            const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
+            const data = {
+                num: 6,
+            };
+            ref.validateData(data);
+        }, `Refinement expression num has type BigInt. Expected Number.`);
+        assert.throws(() => {
+            const manifestAst = parse(`
+                particle Foo
+                    input: reads Something {num: BigInt [ (num and 3) == 0 ] }
+            `);
+            const typeData = {'num': 'BigInt'};
+            const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
+            const data = {
+                num: 6,
+            };
+            ref.validateData(data);
+        }, `Refinement expression num has type BigInt. Expected Boolean.`);
     }));
     it('tests simple expression to range conversion', Flags.withFieldRefinementsAllowed(async () => {
         let manifestAst = parse(`
@@ -243,12 +281,13 @@ describe('refiner', () => {
       let schema: Schema;
       let entityClass: EntityClass;
       let exceptions: Error[] = [];
-      before(Flags.withFieldRefinementsAllowed(async () => {
+      beforeEach(Flags.withFieldRefinementsAllowed(async () => {
         exceptions = [];
         const manifest = await Manifest.parse(`
           schema Foo
             txt: Text
             num: Number [num < 10]
+            int: BigInt [int < 10n]
             flg: Boolean
         `);
         schema = manifest.schemas.Foo;
@@ -256,16 +295,23 @@ describe('refiner', () => {
         // tslint:disable-next-line: no-any
         entityClass = Entity.createEntityClass(schema, {reportExceptionInHost} as any);
       }));
-      it('data does not conform to the refinement', Flags.whileEnforcingRefinements(async () => {
-        const _ = new entityClass({txt: 'abc', num: 56});
+      it('data does not conform to num refinement', Flags.whileEnforcingRefinements(async () => {
+        const _ = new entityClass({txt: 'abc', num: 56, int: BigInt(5)});
         assert.lengthOf(exceptions, 1);
         exceptions.map(except => {
-           assert.deepEqual(except.message, `AuditException: exception Error raised when invoking function Refinement:refineData on particle undefined: Entity schema field 'num' does not conform to the refinement [(num < 10)]`);
+          assert.deepEqual(except.message, `AuditException: exception Error raised when invoking function Refinement:refineData on particle undefined: Entity schema field 'num' does not conform to the refinement [(num < 10)]`);
+        });
+      }));
+      it('data does not conform to int refinement', Flags.whileEnforcingRefinements(async () => {
+        const _ = new entityClass({txt: 'abc', num: 5, int: BigInt(56)});
+        assert.lengthOf(exceptions, 1);
+        exceptions.map(except => {
+          assert.deepEqual(except.message, `AuditException: exception Error raised when invoking function Refinement:refineData on particle undefined: Entity schema field 'int' does not conform to the refinement [(int < 10n)]`);
         });
       }));
       it('data does conform to the refinement', Flags.whileEnforcingRefinements(async () => {
-          assert.doesNotThrow(() => { const _ = new entityClass({txt: 'abc', num: 8}); });
-        }));
+        assert.doesNotThrow(() => { const _ = new entityClass({txt: 'abc', num: 8, int: BigInt(5)}); });
+      }));
   });
 
   describe('dynamic refinements', () => {
@@ -637,46 +683,86 @@ describe('refiner', () => {
         // normalized version of ref1 should be the same as ref2
         assert.isTrue(ref1.validateData(data), `expected expression (${expr}) to evaluate to true`);
     };
-    const triviallyTrue = (expr: string) => {
+    const triviallyTrue = (expr: string, type: string = 'Number') => {
         const manifestAst1 = parse(`
             particle Foo
-                input: reads Something {num: Number} [ ${expr} ]
+                input: reads Something {num: ${type}} [ ${expr} ]
         `);
-        const typeData = {'num': 'Number'};
+        const typeData = {'num': type};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.refinement, typeData);
         ref1.normalize();
-        // normalized version of ref1 should be the same as ref2
-        assert.strictEqual(ref1.expression.kind, 'BooleanPrimitiveNode');
-        assert.isTrue(ref1.expression['value'], `expected expression (${expr}) to be trivially true`);
+        // normalized version of ref1 should be equivalent to 'true'.
+        assert.strictEqual(ref1.toString(), '[true]', `expected expression (${expr}) to be trivially true`);
     };
     describe('Correctly handles date time units', () => {
-      it('control (ensure that the test approach works)', () => {
-        triviallyTrue('1 == 1');
-        triviallyTrue('1 != 2');
+      describe('for Number', () => {
+        it('control (ensure that the test approach works)', () => {
+          triviallyTrue('1 == 1');
+          triviallyTrue('1 != 2');
+        });
+        it('uses millseconds by default', () => {
+          triviallyTrue('1 == 1 milliseconds');
+        });
+        it('seconds to milliseconds', () => {
+          triviallyTrue('1000 == 1 seconds');
+          triviallyTrue('2000 == 2 seconds');
+        });
+        it('minutes to seconds', () => {
+          triviallyTrue('1 minutes == 60 seconds');
+          triviallyTrue('2 minutes == 120000 milliseconds');
+        });
+        it('hours to minutes', () => {
+          triviallyTrue('1 hours == 60 minutes');
+          triviallyTrue('2 hours == 7200 seconds');
+        });
+        it('days to hours', () => {
+          triviallyTrue('1 days == 24 hours');
+          triviallyTrue('2 days == 2880 minutes');
+        });
+        it('handles singular and plural forms', () => {
+          triviallyTrue('2 * 1 day == 2 days');
+          triviallyTrue('1 day == 24 hours');
+          triviallyTrue('1 day != 24 hours + 1 second');
+        });
+        it('handles simple linear solving', () => {
+          triviallyTrue('num + 1 milliseconds > num');
+        });
       });
-      it('uses millseconds by default', () => {
-        triviallyTrue('1 == 1 milliseconds');
-      });
-      it('seconds to milliseconds', () => {
-        triviallyTrue('1000 == 1 seconds');
-        triviallyTrue('2000 == 2 seconds');
-      });
-      it('minutes to seconds', () => {
-        triviallyTrue('1 minutes == 60 seconds');
-        triviallyTrue('2 minutes == 120000 milliseconds');
-      });
-      it('hours to minutes', () => {
-        triviallyTrue('1 hours == 60 minutes');
-        triviallyTrue('2 hours == 7200 seconds');
-      });
-      it('days to hours', () => {
-        triviallyTrue('1 days == 24 hours');
-        triviallyTrue('2 days == 2880 minutes');
-      });
-      it('handles singular and plural forms', () => {
-        triviallyTrue('2 * 1 day == 2 days');
-        triviallyTrue('1 day == 24 hours');
-        triviallyTrue('1 day != 24 hours + 1 second');
+      describe('for BigInt', () => {
+        it('control (ensure that the test approach works)', () => {
+          triviallyTrue('1n == 1n');
+          triviallyTrue('1n != 2n');
+        });
+        it('uses millseconds by default', () => {
+          triviallyTrue('1n == 1n milliseconds');
+        });
+        it('seconds to milliseconds', () => {
+          triviallyTrue('1000n == 1n seconds');
+          triviallyTrue('2000n == 2n seconds');
+        });
+        it('minutes to seconds', () => {
+          triviallyTrue('1n minutes == 60n seconds');
+          triviallyTrue('2n minutes == 120000n milliseconds');
+        });
+        it('hours to minutes', () => {
+          triviallyTrue('1n hours == 60n minutes');
+          triviallyTrue('2n hours == 7200n seconds');
+        });
+        it('days to hours', () => {
+          triviallyTrue('1n days == 24n hours');
+          triviallyTrue('2n days == 2880n minutes');
+        });
+        it('handles singular and plural forms', () => {
+          triviallyTrue('2n * 1n day == 2n days');
+          triviallyTrue('1n day == 24n hours');
+          triviallyTrue('1n day != 24n hours + 1n second');
+        });
+        it('handles simple linear solving', () => {
+          triviallyTrue('num + 1n milliseconds > num', 'BigInt');
+        });
+        it.skip('handles simple polynomial solving', () => {
+          triviallyTrue('num * num >= 0n', 'BigInt');
+        });
       });
     });
     describe('Correctly handles date time using now()', () => {

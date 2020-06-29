@@ -11,7 +11,7 @@ particle Gold
 
   // These are People that have a lastCall value less than three (24 hour) days ago
   // lastCall represents the time since last phone call to/from this contact (in seconds)
-  qCollection: reads [People {name: Text, age: Number, lastCall: Number, address: Text, favoriteColor: Text, birthDayMonth: Number, birthDayDOM: Number}[lastCall < 3*24*60*60 and name == ?]]
+  qCollection: reads [People {name: Text, age: BigInt, lastCall: Number, address: Text, favoriteColor: Text, birthDayMonth: Number, birthDayDOM: Number}[age > 0n and lastCall < 3*24*60*60 and name == ?]]
 
   alias: writes {val: Text}
 
