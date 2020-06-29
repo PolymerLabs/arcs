@@ -235,24 +235,28 @@ async function recipeToProtoPayload(recipe: Recipe) {
     // all handle types are constrained type variables. We force these type variables
     // to their resolution by called maybeEnsureResolved(), so that handle types
     // are encoded with concrete types, instead of variables.
-    h.type.maybeEnsureResolved();
+    h.type && h.type.maybeEnsureResolved();
     handleToProtoPayload.set(h, await recipeHandleToProtoPayload(h));
   }
 
   return {
     name: recipe.name,
-    particles: recipe.particles.map(p => recipeParticleToProtoPayload(p, handleToProtoPayload)),
+    particles: await Promise.all(recipe.particles.map(p => recipeParticleToProtoPayload(p, handleToProtoPayload))),
     handles: [...handleToProtoPayload.values()],
     annotations: recipe.annotations.map(a => annotationToProtoPayload(a))
   };
 }
 
-function recipeParticleToProtoPayload(particle: Particle, handleMap: Map<Handle, {name: string}>) {
+async function recipeParticleToProtoPayload(particle: Particle, handleMap: Map<Handle, {name: string}>) {
   return {
     specName: particle.name,
-    connections: Object.entries(particle.connections).map(
-      ([name, connection]) => ({name, handle: handleMap.get(connection.handle).name})
-    )
+    connections: await Promise.all(Object.entries(particle.connections).map(
+      async ([name, connection]) => ({
+        name,
+        handle: handleMap.get(connection.handle).name,
+        type: await typeToProtoPayload(connection.type)
+      })
+    ))
   };
 }
 
@@ -283,6 +287,7 @@ async function recipeHandleToProtoPayload(handle: Handle) {
 }
 
 export async function typeToProtoPayload(type: Type) {
+  if (!type) return {};
   if (type.hasVariable && type.isResolved()) {
     // We encode the resolution of the resolved type variables directly.
     // This allows us to encode handle types and connection types directly
