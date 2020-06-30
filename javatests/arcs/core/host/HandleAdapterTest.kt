@@ -28,17 +28,6 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
-import arcs.core.testutil.handles.dispatchClear
-import arcs.core.testutil.handles.dispatchClose
-import arcs.core.testutil.handles.dispatchCreateReference
-import arcs.core.testutil.handles.dispatchFetch
-import arcs.core.testutil.handles.dispatchFetchAll
-import arcs.core.testutil.handles.dispatchIsEmpty
-import arcs.core.testutil.handles.dispatchQuery
-import arcs.core.testutil.handles.dispatchRemove
-import arcs.core.testutil.handles.dispatchSize
-import arcs.core.testutil.handles.dispatchStore
-import arcs.core.testutil.runTest
 import arcs.core.util.Scheduler
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
@@ -46,7 +35,10 @@ import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.withContext
 import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
@@ -85,7 +77,7 @@ class HandleAdapterTest {
     }
 
     @Test
-    fun singletonHandleAdapter_readOnlyCantWrite() = runTest {
+    fun singletonHandleAdapter_readOnlyCantWrite() = runBlockingTest {
         val readOnlyHandle = manager.createHandle(
             HandleSpec(
                 READ_ONLY_HANDLE,
@@ -102,7 +94,7 @@ class HandleAdapterTest {
     }
 
     @Test
-    fun singletonHandleAdapter_writeOnlyCantRead() = runTest {
+    fun singletonHandleAdapter_writeOnlyCantRead() = runBlockingTest {
         val writeOnlyHandle = manager.createHandle(
             HandleSpec(
                 WRITE_ONLY_HANDLE,
@@ -118,7 +110,7 @@ class HandleAdapterTest {
     }
 
     @Test
-    fun singletonHandleAdapter_createReference() = runTest {
+    fun singletonHandleAdapter_createReference() = runBlocking {
         val handle = manager.createHandle(
             HandleSpec(
                 READ_WRITE_HANDLE,
@@ -132,7 +124,7 @@ class HandleAdapterTest {
 
         // Fails when there's no entityId.
         var e = assertSuspendingThrows(IllegalArgumentException::class) {
-            handle.dispatchCreateReference(entity)
+            handle.createReference(entity)
         }
         assertThat(e).hasMessageThat().isEqualTo(
             "Entity must have an ID before it can be referenced."
@@ -142,21 +134,23 @@ class HandleAdapterTest {
 
         // Fails when the entity is not in the collection.
         e = assertSuspendingThrows(IllegalArgumentException::class) {
-            handle.dispatchCreateReference(entity)
+            handle.createReference(entity)
         }
         assertThat(e).hasMessageThat().isEqualTo(
             "Entity is not stored in the Singleton."
         )
-        handle.dispatchStore(entity)
 
-        val reference = handle.dispatchCreateReference(entity)
+        // TODO(b/153564224): Make this nicer.
+        scheduler.scope.launch { handle.store(entity) }.join()
+
+        val reference = handle.createReference(entity)
         assertThat(reference.schemaHash).isEqualTo(Person.SCHEMA.hash)
         assertThat(reference.entityId).isEqualTo(entity.entityId)
         assertThat(reference.dereference()).isEqualTo(entity)
     }
 
     @Test
-    fun singleton_noOpsAfterClose() = runTest {
+    fun singleton_noOpsAfterClose() = runBlocking {
        val handle = manager.createHandle(
            HandleSpec(
                READ_WRITE_HANDLE,
@@ -167,16 +161,20 @@ class HandleAdapterTest {
            STORAGE_KEY
        ) as ReadWriteSingletonHandle<Person>
 
-        handle.dispatchStore(Person("test"))
-        handle.dispatchClose()
+        withContext(handle.dispatcher) {
+            handle.store(Person("test"))
+            handle.close()
+        }
 
-        assertSuspendingThrows(IllegalStateException::class) { handle.dispatchStore(Person("x")) }
-        assertSuspendingThrows(IllegalStateException::class) { handle.dispatchClear() }
-        assertSuspendingThrows(IllegalStateException::class) { handle.dispatchFetch() }
+        assertSuspendingThrows(IllegalStateException::class) { handle.store(Person("other")) }
+        assertSuspendingThrows(IllegalStateException::class) { handle.clear() }
+        assertSuspendingThrows(IllegalStateException::class) { handle.fetch() }
+
+        Unit
     }
 
     @Test
-    fun collectionHandleAdapter_readOnlyCantWrite() = runTest {
+    fun collectionHandleAdapter_readOnlyCantWrite() = runBlockingTest {
         val readOnlyHandle = manager.createHandle(
             HandleSpec(
                 READ_ONLY_HANDLE,
@@ -193,7 +191,7 @@ class HandleAdapterTest {
     }
 
     @Test
-    fun collectionHandleAdapter_writeOnlyCantRead() = runTest {
+    fun collectionHandleAdapter_writeOnlyCantRead() = runBlockingTest {
         val writeOnlyHandle = manager.createHandle(
             HandleSpec(
                 WRITE_ONLY_HANDLE,
@@ -210,7 +208,7 @@ class HandleAdapterTest {
     }
 
     @Test
-    fun singletonHandleAdapter_onUpdateTest() = runTest {
+    fun singletonHandleAdapter_onUpdateTest() = runBlocking {
         val handle = manager.createHandle(
             HandleSpec(
                 READ_WRITE_HANDLE,
@@ -228,14 +226,16 @@ class HandleAdapterTest {
             }
         }
 
-        handle.dispatchStore(Person("Eliza Hamilton"))
+        withContext(handle.dispatcher) {
+            handle.store(Person("Eliza Hamilton"))
+        }.join()
         scheduler.waitForIdle()
 
         assertThat(x).isEqualTo(1)
     }
 
     @Test
-    fun collectionHandleAdapter_onUpdateTest() = runTest {
+    fun collectionHandleAdapter_onUpdateTest() = runBlocking {
         val handle = manager.createHandle(
             HandleSpec(
                 READ_WRITE_HANDLE,
@@ -253,7 +253,9 @@ class HandleAdapterTest {
             }
         }
 
-        handle.dispatchStore(Person("Elder Price"))
+        withContext(handle.dispatcher) {
+            handle.store(Person("Elder Price"))
+        }.join()
         scheduler.waitForIdle()
 
         assertThat(x).isEqualTo(1)
@@ -261,7 +263,7 @@ class HandleAdapterTest {
 
     @Ignore("b/157390221 - Deflake")
     @Test
-    fun collectionHandleAdapter_createReference() = runTest {
+    fun collectionHandleAdapter_createReference() = runBlocking {
         val handle = manager.createHandle(
             HandleSpec(
                 READ_WRITE_HANDLE,
@@ -275,7 +277,7 @@ class HandleAdapterTest {
 
         // Fails when there's no entityId.
         var e = assertSuspendingThrows(IllegalArgumentException::class) {
-            handle.dispatchCreateReference(entity)
+            handle.createReference(entity)
         }
         assertThat(e).hasMessageThat().isEqualTo(
             "Entity must have an ID before it can be referenced."
@@ -285,25 +287,25 @@ class HandleAdapterTest {
 
         // Fails when the entity is not in the collection.
         e = assertSuspendingThrows(IllegalArgumentException::class) {
-            handle.dispatchCreateReference(entity)
+            handle.createReference(entity)
         }
         assertThat(e).hasMessageThat().isEqualTo(
             "Entity is not stored in the Collection."
         )
 
-        handle.dispatchStore(entity)
+        handle.store(entity).join()
 
         // Wait for the storage to make it down to the driver, so dereferencing works.
         delay(150)
 
-        val reference = handle.dispatchCreateReference(entity)
+        val reference = handle.createReference(entity)
         assertThat(reference.schemaHash).isEqualTo(Person.SCHEMA.hash)
         assertThat(reference.entityId).isEqualTo(entity.entityId)
         assertThat(reference.dereference()).isEqualTo(entity)
     }
 
     @Test
-    fun collection_noOpsAfterClose() = runTest {
+    fun collection_noOpsAfterClose() = runBlocking<Unit> {
         val handle = manager.createHandle(
             HandleSpec(
                 READ_WRITE_HANDLE,
@@ -316,16 +318,20 @@ class HandleAdapterTest {
         val testPerson = Person("test")
         val otherPerson = Person("other")
 
-        handle.dispatchStore(testPerson)
-        handle.dispatchClose()
+        withContext(handle.dispatcher) {
+            handle.store(testPerson)
+            handle.close()
+        }
 
-        assertSuspendingThrows(IllegalStateException::class) { handle.dispatchStore(otherPerson) }
-        assertSuspendingThrows(IllegalStateException::class) { handle.dispatchRemove(testPerson) }
-        assertSuspendingThrows(IllegalStateException::class) { handle.dispatchClear() }
-        assertSuspendingThrows(IllegalStateException::class) { handle.dispatchFetchAll() }
-        assertSuspendingThrows(IllegalStateException::class) { handle.dispatchSize() }
-        assertSuspendingThrows(IllegalStateException::class) { handle.dispatchIsEmpty() }
-        assertSuspendingThrows(IllegalStateException::class) { handle.dispatchQuery("other") }
+        withContext(handle.dispatcher) {
+            assertSuspendingThrows(IllegalStateException::class) { handle.store(otherPerson) }
+            assertSuspendingThrows(IllegalStateException::class) { handle.remove(testPerson) }
+            assertSuspendingThrows(IllegalStateException::class) { handle.clear() }
+            assertSuspendingThrows(IllegalStateException::class) { handle.fetchAll() }
+            assertSuspendingThrows(IllegalStateException::class) { handle.size() }
+            assertSuspendingThrows(IllegalStateException::class) { handle.isEmpty() }
+            assertSuspendingThrows(IllegalStateException::class) { handle.query("other") }
+        }
     }
 
     private companion object {

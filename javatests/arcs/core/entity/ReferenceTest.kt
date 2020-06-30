@@ -14,8 +14,6 @@ import arcs.core.storage.StoreManager
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.testutil.handles.dispatchCreateReference
-import arcs.core.testutil.handles.dispatchStore
 import arcs.core.testutil.runTest
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
@@ -89,14 +87,14 @@ class ReferenceTest {
     }
 
     @Test
-    fun dereference() = runTest {
+    fun dereference() = runTest(handle.dispatcher) {
         val entity = DummyEntity().apply {
             text = "Watson"
             num = 6.0
         }
-        handle.dispatchStore(entity)
+        handle.store(entity).join()
 
-        val reference = handle.dispatchCreateReference(entity)
+        val reference = handle.createReference(entity)
         val entityOut = reference.dereference()
 
         assertThat(entityOut).isEqualTo(entity)

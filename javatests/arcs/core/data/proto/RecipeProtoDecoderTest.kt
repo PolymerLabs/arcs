@@ -32,6 +32,17 @@ fun arcIdAnnotationProto(id: String): AnnotationProto {
 class RecipeProtoDecoderTest {
     // The test environment.
     val ramdiskStorageKey = "ramdisk://"
+    val thingTypeProto = parseTypeProtoText("""
+       entity {
+         schema {
+           names: "Thing"
+           fields {
+             key: "name"
+             value: { primitive: TEXT }
+           }
+         }
+       } 
+    """.trimIndent())
     val thingHandleProto = HandleProto.newBuilder()
         .setName("thing")
         .setFate(HandleProto.Fate.CREATE)
@@ -88,6 +99,7 @@ class RecipeProtoDecoderTest {
     var dataConnection = HandleConnectionProto.newBuilder()
         .setName("data")
         .setHandle("thing")
+        .setType(thingTypeProto)
         .build()
     val readerParticle = ParticleProto.newBuilder()
         .setSpecName("Reader")

@@ -6,14 +6,13 @@ import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.data.Capability.Ttl
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.SchemaRegistry
-import arcs.core.testutil.handles.dispatchCreateReference
-import arcs.core.testutil.handles.dispatchStore
 import arcs.core.testutil.runTest
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.Reference
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.withContext
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -152,9 +151,9 @@ class EntitySpecTest {
     @Test
     fun expiryTimestamp() {
         val entity = Foo()
-
+        
         entity.ensureEntityFields(idGenerator, "handle", FakeTime(currentTime), Ttl.Minutes(1))
-
+        
         val expirationTimestamp = entity.serialize().expirationTimestamp
         assertThat(expirationTimestamp).isEqualTo(currentTime + 60000) // 1 minute = 60'000 milliseconds
     }
@@ -331,10 +330,11 @@ class EntitySpecTest {
      * Stores the given [Bar] entity in a collection, and then creates and returns a reference to
      * it.
      */
-    private suspend fun createBarReference(bar: Bar): Reference<Bar> {
-        harness.bars.dispatchStore(bar)
-        return harness.bars.dispatchCreateReference(bar)
-    }
+    private suspend fun createBarReference(bar: Bar): Reference<Bar> =
+        withContext(harness.bars.dispatcher) {
+            harness.bars.store(bar)
+            harness.bars.createReference(bar)
+        }
 
     /** Generates and returns an ID for the entity. */
     private fun (Foo).identify(): String {

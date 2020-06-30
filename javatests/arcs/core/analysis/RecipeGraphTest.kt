@@ -8,8 +8,6 @@ import arcs.core.data.Recipe
 import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
-import org.junit.Assert.assertTrue
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -69,17 +67,17 @@ class RecipeGraphTest {
         val readerParticle = Recipe.Particle(
             readerSpec,
             listOf(
-                Recipe.Particle.HandleConnection(readConnectionSpec, thingHandle),
-                Recipe.Particle.HandleConnection(readSomeConnectionSpec, someHandle),
-                Recipe.Particle.HandleConnection(readJoinConnectionSpec, joinedHandle)
+                Recipe.Particle.HandleConnection(readConnectionSpec, thingHandle, TypeVariable("thing")),
+                Recipe.Particle.HandleConnection(readSomeConnectionSpec, someHandle, TypeVariable("some")),
+                Recipe.Particle.HandleConnection(readJoinConnectionSpec, joinedHandle, TypeVariable("joined"))
             )
         )
         val writerParticle = Recipe.Particle(
             writerSpec,
             listOf(
-                Recipe.Particle.HandleConnection(writeConnectionSpec, thingHandle),
-                Recipe.Particle.HandleConnection(readConnectionSpec, thingHandle),
-                Recipe.Particle.HandleConnection(rwConnectionSpec, thingHandle)
+                Recipe.Particle.HandleConnection(writeConnectionSpec, thingHandle, TypeVariable("thing")),
+                Recipe.Particle.HandleConnection(readConnectionSpec, thingHandle, TypeVariable("thing")),
+                Recipe.Particle.HandleConnection(rwConnectionSpec, thingHandle, TypeVariable("thing"))
             )
         )
         /**

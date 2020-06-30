@@ -11,11 +11,11 @@
 package arcs.core.host
 
 import arcs.core.allocator.Allocator
+import arcs.core.entity.Handle
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.testutil.assertVariableOrdering
-import arcs.core.testutil.handles.dispatchStore
 import arcs.core.testutil.runTest
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
@@ -24,7 +24,9 @@ import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -92,7 +94,7 @@ class LifecycleTest {
         val particle: SingleReadHandleParticle = testHost.getParticle(arc.id, name)
         val data = testHost.singletonForTest<SingleReadHandleParticle_Data>(arc.id, name, "data")
 
-        data.dispatchStore(SingleReadHandleParticle_Data(5.0))
+        storeAndWait(data) { it.store(SingleReadHandleParticle_Data(5.0)) }
         arc.stop()
         arc.waitForStop()
 
@@ -114,7 +116,7 @@ class LifecycleTest {
         val particle: SingleWriteHandleParticle = testHost.getParticle(arc.id, name)
         val data = testHost.singletonForTest<SingleWriteHandleParticle_Data>(arc.id, name, "data")
 
-        data.dispatchStore(SingleWriteHandleParticle_Data(12.0))
+        storeAndWait(data) { it.store(SingleWriteHandleParticle_Data(12.0)) }
         arc.stop()
         arc.waitForStop()
 
@@ -132,11 +134,11 @@ class LifecycleTest {
         val result = testHost.collectionForTest<MultiHandleParticle_Result>(arc.id, name, "result")
         val config = testHost.singletonForTest<MultiHandleParticle_Config>(arc.id, name, "config")
 
-        data.dispatchStore(MultiHandleParticle_Data(3.2))
-        list.dispatchStore(MultiHandleParticle_List("hi"))
+        storeAndWait(data) { it.store(MultiHandleParticle_Data(3.2)) }
+        storeAndWait(list) { it.store(MultiHandleParticle_List("hi")) }
         // Write-only handle ops do not trigger any lifecycle APIs.
-        result.dispatchStore(MultiHandleParticle_Result(19.0))
-        config.dispatchStore(MultiHandleParticle_Config(true))
+        storeAndWait(result) { it.store(MultiHandleParticle_Result(19.0)) }
+        storeAndWait(config) { it.store(MultiHandleParticle_Config(true)) }
         arc.stop()
         arc.waitForStop()
 
@@ -173,8 +175,8 @@ class LifecycleTest {
             )
         }
         val (data1, list1) = makeHandles()
-        data1.dispatchStore(PausingParticle_Data(1.1))
-        list1.dispatchStore(PausingParticle_List("first"))
+        storeAndWait(data1) { it.store(PausingParticle_Data(1.1)) }
+        storeAndWait(list1) { it.store(PausingParticle_List("first")) }
 
         testHost.pause()
         arc.waitForStop()
@@ -182,8 +184,8 @@ class LifecycleTest {
 
         val particle: PausingParticle = testHost.getParticle(arc.id, name)
         val (data2, list2) = makeHandles()
-        data2.dispatchStore(PausingParticle_Data(2.2))
-        list2.dispatchStore(PausingParticle_List("second"))
+        storeAndWait(data2) { it.store(PausingParticle_Data(2.2)) }
+        storeAndWait(list2) { it.store(PausingParticle_List("second")) }
         arc.stop()
         arc.waitForStop()
 
@@ -202,5 +204,13 @@ class LifecycleTest {
                 "onShutdown"
             )
         )
+    }
+
+    private suspend fun <H : Handle> storeAndWait(handle: H, op: (H) -> Job) {
+        // Wait for the store to complete the op.
+        withContext(handle.dispatcher) { op(handle) }.join()
+
+        // Wait for the update to propagate from the test handle to the particle handle.
+        handle.getProxy().waitForIdle()
     }
 }

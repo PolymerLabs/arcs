@@ -29,7 +29,8 @@ data class Recipe(
         /** Representation of a handle connection in a particle. */
         data class HandleConnection(
             val spec: HandleConnectionSpec,
-            val handle: Handle
+            val handle: Handle,
+            val type: Type
         )
     }
 
@@ -70,7 +71,7 @@ fun Recipe.Particle.toPlanParticle() = Plan.Particle(
 /** Translates a [Recipe.Particle.HandleConnection] into a [Plan.HandleConnection] */
 fun Recipe.Particle.HandleConnection.toPlanHandleConnection() = Plan.HandleConnection(
     mode = spec.direction,
-    type = spec.type,
+    type = type,
     storageKey = handle.toStorageKey(),
     annotations = handle.annotations
 )
