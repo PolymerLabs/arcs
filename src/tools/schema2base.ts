@@ -38,7 +38,7 @@ export class NodeAndGenerator {
 /**
  * Iterates over schema fields and composes metadata useful for entity codegen.
  */
-export abstract class SchemaDescriptorBase {
+export abstract class EntityDescriptorBase {
 
   constructor(readonly node: SchemaNode) {}
 
@@ -158,7 +158,7 @@ export abstract class Schema2Base {
         continue;
       }
 
-      classes.push(this.generateParticleClass(particle, nodes));
+      classes.push(await this.generateParticleClass(particle, nodes));
     }
     return classes;
   }
@@ -187,7 +187,7 @@ export abstract class Schema2Base {
 
   abstract getEntityGenerator(node: SchemaNode): EntityGenerator;
 
-  abstract generateParticleClass(particle: ParticleSpec, nodes: NodeAndGenerator[]): string;
+  abstract async generateParticleClass(particle: ParticleSpec, nodes: NodeAndGenerator[]): Promise<string>;
 
   abstract generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): string;
 }

@@ -16,9 +16,7 @@ import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {AnnotationRef} from '../runtime/recipe/annotation.js';
-import {findLongRunningArcId} from './allocator-recipe-resolver.js';
-import {SchemaNode} from './schema2graph.js';
-import {generateSchema, KotlinSchemaDescriptor} from './kotlin-schema-generator.js';
+import {generateSchema} from './kotlin-schema-generator.js';
 import {Schema} from '../runtime/schema.js';
 
 const ktUtils = new KotlinGenerationUtils();
@@ -52,9 +50,6 @@ export class PlanGenerator {
   async createPlans(): Promise<string[]> {
     const plans: string[] = [];
     for (const recipe of this.resolvedRecipes) {
-      const planName = `${recipe.name}Plan`;
-      const arcId = findLongRunningArcId(recipe);
-
       const particles: string[] = [];
       for (const particle of recipe.particles) {
         particles.push(await this.createParticle(particle));
@@ -65,7 +60,7 @@ export class PlanGenerator {
         planArgs.push(PlanGenerator.createAnnotations(recipe.annotations));
       }
 
-      const start = `object ${planName} : `;
+      const start = `object ${recipe.name}Plan : `;
       const plan = `${start}${ktUtils.applyFun('Plan', planArgs, {startIndent: start.length})}`;
       plans.push(plan);
     }
@@ -108,10 +103,7 @@ export class PlanGenerator {
   private async createSchemaForVariableHandleConnection(connection: HandleConnection): Promise<{schema: Schema, generation: string}> {
       connection.type.maybeEnsureResolved();
       const schema = connection.type.resolvedType().getEntitySchema();
-      const genNode = new SchemaNode(schema, connection.particle.spec, []);
-      await genNode.calculateHash();
-      const descriptor = new KotlinSchemaDescriptor(genNode, false);
-      return {schema, generation: generateSchema(descriptor)};
+      return {schema, generation: await generateSchema(schema)};
   }
 
   /** Generates a Kotlin `HandleMode` from a Direction and Type. */

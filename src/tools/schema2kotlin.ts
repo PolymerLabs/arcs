@@ -190,8 +190,8 @@ ${imports.join('\n')}
     );
   }
 
-  generateParticleClass(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]): string {
-    const {typeAliases, classes, handleClassDecl} = this.generateParticleClassComponents(particle, nodeGenerators);
+  async generateParticleClass(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]): Promise<string> {
+    const {typeAliases, classes, handleClassDecl} = await this.generateParticleClassComponents(particle, nodeGenerators);
     return `
 ${typeAliases.join(`\n`)}
 
@@ -205,18 +205,18 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
 `;
   }
 
-  generateParticleClassComponents(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]) {
+  async generateParticleClassComponents(particle: ParticleSpec, nodeGenerators: NodeAndGenerator[]) {
     const particleName = particle.name;
     const handleDecls: string[] = [];
     const specDecls: string[] = [];
     const classes: string[] = [];
     const typeAliases: string[] = [];
 
-    nodeGenerators.forEach(nodeGenerator => {
+    for (const nodeGenerator of nodeGenerators) {
       const kotlinGenerator = <KotlinEntityGenerator>nodeGenerator.generator;
-      classes.push(kotlinGenerator.generateClasses());
+      classes.push(await kotlinGenerator.generateClasses());
       typeAliases.push(...kotlinGenerator.generateAliases(particleName));
-    });
+    }
 
     const nodes = nodeGenerators.map(ng => ng.node);
     for (const connection of particle.connections) {
