@@ -241,7 +241,7 @@ option and increase the mocha timeout. In combination, these two changes will
 allow you to see what's happening on the screen, and will give you enough time
 to debug the situation.
 
-```
+```diff
 arcs/shells> vi test/wdio.conf.js
 arcs/shells> git diff test/wdio.conf.js
 diff --git a/test/wdio.conf.js b/test/wdio.conf.js
@@ -286,7 +286,7 @@ To attach a debugger, uncomment the `execArgv` `--inspect` configuration option.
 It's likely that you'll still want to have increased the `mochaTimeout` and to
 be running graphically, so those are in the example as well:
 
-```
+```diff
 arcs/shells> git diff test/wdio.conf.js
 diff --git a/test/wdio.conf.js b/test/wdio.conf.js
 index 0e36452..4240c0a 100644
