@@ -9,6 +9,7 @@ arcs_kt_jvm_test_suite(
     name = "policy",
     package = "arcs.core.policy",
     deps = [
+        "//java/arcs/core/analysis",
         "//java/arcs/core/data",
         "//java/arcs/core/policy",
         "//third_party/java/junit:junit-android",
