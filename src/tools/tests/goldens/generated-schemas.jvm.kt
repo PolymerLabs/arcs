@@ -20,6 +20,7 @@ import arcs.core.entity.Tuple4
 import arcs.core.entity.Tuple5
 import arcs.core.entity.toPrimitiveValue
 import arcs.sdk.*
+import java.math.BigInteger
 
 typealias Gold_Data_Ref = AbstractGold.GoldInternal1
 typealias Gold_Alias = AbstractGold.GoldInternal1
