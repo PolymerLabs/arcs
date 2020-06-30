@@ -77,6 +77,8 @@ message ParticleSpecProto {
   repeated ClaimProto claims = 4;
   // Conjunction of all checks.
   repeated CheckProto checks = 5;
+  // Indicates whether the particle is an isolated (non-egress) particle.
+  bool isolated = 6;
 }
 
 // Defines a single connection of a particle spec.

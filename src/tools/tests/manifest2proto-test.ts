@@ -151,6 +151,7 @@ describe('manifest2proto', () => {
 
   it('encodes particle spec', async () => {
     const manifest = await Manifest.parse(`
+      @isolated
       particle Abc in 'a/b/c.js'
         input: reads X {a: Text}
     `);
@@ -174,7 +175,8 @@ describe('manifest2proto', () => {
           }
         }],
         location: 'a/b/c.js',
-        name: 'Abc'
+        name: 'Abc',
+        isolated: true,
       }]
     });
   });

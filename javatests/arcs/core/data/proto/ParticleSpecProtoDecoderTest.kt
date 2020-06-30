@@ -65,12 +65,12 @@ class ParticleSpecProtoDecoderTest {
         schemaName: String
     ): String {
         return """
-        name: "${name}"
-        direction: ${direction}
+        name: "$name"
+        direction: $direction
         type {
           entity {
             schema {
-              names: "${schemaName}"
+              names: "$schemaName"
               fields {
                 key: "name"
                 value: { primitive: TEXT }
@@ -84,7 +84,7 @@ class ParticleSpecProtoDecoderTest {
     @Test
     fun decodesHandleConnectionSpecProto() {
         val singletons = mapOf<FieldName, FieldType>("name" to FieldType.Text)
-        val fields = SchemaFields(singletons, mapOf<FieldName, FieldType>())
+        val fields = SchemaFields(singletons, mapOf())
         // TODO: Hash.
         val handleConnectionSpecProto = getHandleConnectionSpecProto("data", "READS", "Thing")
         val schema = Schema(setOf(SchemaName("Thing")), fields, hash="")
@@ -100,27 +100,38 @@ class ParticleSpecProtoDecoderTest {
         val writeConnectionSpecProto = getHandleConnectionSpecProto("write", "WRITES", "Thing")
         val readerSpecProto = """
           name: "Reader"
-          connections { ${readConnectionSpecProto} }
+          connections { $readConnectionSpecProto }
           location: "Everywhere"
+          isolated: true
         """.trimIndent()
         val readerSpec = decodeParticleSpecProto(readerSpecProto)
         val readConnectionSpec = decodeHandleConnectionSpecProto(readConnectionSpecProto)
-        assertThat(readerSpec.name).isEqualTo("Reader")
-        assertThat(readerSpec.location).isEqualTo("Everywhere")
-        assertThat(readerSpec.connections).isEqualTo(mapOf("read" to readConnectionSpec))
+        assertThat(readerSpec).isEqualTo(
+            ParticleSpec(
+                name = "Reader",
+                location = "Everywhere",
+                connections = mapOf("read" to readConnectionSpec),
+                isolated = true
+            )
+        )
 
         val readerWriterSpecProto = """
           name: "ReaderWriter"
-          connections { ${readConnectionSpecProto} }
-          connections { ${writeConnectionSpecProto} }
+          connections { $readConnectionSpecProto }
+          connections { $writeConnectionSpecProto }
           location: "Nowhere"
+          isolated: false
         """.trimIndent()
         val readerWriterSpec = decodeParticleSpecProto(readerWriterSpecProto)
         val writeConnectionSpec = decodeHandleConnectionSpecProto(writeConnectionSpecProto)
-        assertThat(readerWriterSpec.name).isEqualTo("ReaderWriter")
-        assertThat(readerWriterSpec.location).isEqualTo("Nowhere")
-        assertThat(readerWriterSpec.connections).isEqualTo(
-            mapOf("read" to readConnectionSpec, "write" to writeConnectionSpec))
+        assertThat(readerWriterSpec).isEqualTo(
+            ParticleSpec(
+                name = "ReaderWriter",
+                location = "Nowhere",
+                connections = mapOf("read" to readConnectionSpec, "write" to writeConnectionSpec),
+                isolated = false
+            )
+        )
     }
 
     @Test
@@ -129,8 +140,8 @@ class ParticleSpecProtoDecoderTest {
         val writeConnectionSpecProto = getHandleConnectionSpecProto("write", "WRITES", "Thing")
         val readerWriterSpecProto = """
           name: "ReaderWriter"
-          connections { ${readConnectionSpecProto} }
-          connections { ${writeConnectionSpecProto} }
+          connections { $readConnectionSpecProto }
+          connections { $writeConnectionSpecProto }
           location: "Nowhere"
           claims {
             assume {
@@ -178,7 +189,7 @@ class ParticleSpecProtoDecoderTest {
         val readConnectionSpecProto = getHandleConnectionSpecProto("read", "READS", "Thing")
         val readerWriterSpecProto = """
           name: "ReaderWriter"
-          connections { ${readConnectionSpecProto} }
+          connections { $readConnectionSpecProto }
           location: "Nowhere"
           checks {
             access_path {
@@ -222,8 +233,8 @@ class ParticleSpecProtoDecoderTest {
         val readConnectionSpecProto = getHandleConnectionSpecProto("read", "READS", "Thing")
         val readerSpecProto = """
           name: "Reader"
-          connections { ${readConnectionSpecProto} }
-          connections { ${readConnectionSpecProto} }
+          connections { $readConnectionSpecProto }
+          connections { $readConnectionSpecProto }
           location: "Everywhere"
         """.trimIndent()
         val exception = assertFailsWith<IllegalArgumentException> {
