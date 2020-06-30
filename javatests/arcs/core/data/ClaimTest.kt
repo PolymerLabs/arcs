@@ -23,7 +23,7 @@ import org.junit.runners.JUnit4
 class ClaimTest {
     private val handle = Recipe.Handle("thing",  Recipe.Handle.Fate.CREATE, TypeVariable("thing"))
     private val connectionSpec = HandleConnectionSpec("data", HandleMode.Read, TypeVariable("data"))
-    private val connection = Recipe.Particle.HandleConnection(connectionSpec, handle)
+    private val connection = Recipe.Particle.HandleConnection(connectionSpec, handle, TypeVariable("thing"))
     private val particleSpec = ParticleSpec("Reader", mapOf("data" to connectionSpec), "Location")
     private val particle = Recipe.Particle(particleSpec, listOf(connection))
 
