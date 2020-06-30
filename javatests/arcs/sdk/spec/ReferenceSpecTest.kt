@@ -1,9 +1,5 @@
 package arcs.sdk.spec
 
-import arcs.core.testutil.handles.dispatchCreateReference
-import arcs.core.testutil.handles.dispatchFetch
-import arcs.core.testutil.handles.dispatchFetchAll
-import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
 import arcs.sdk.Reference
 import com.google.common.truth.Truth.assertThat
@@ -37,16 +33,16 @@ class ReferenceSpecTest {
     @Test
     fun createReference_singletonHandle() = runBlocking {
         val child = Child(age = 10.0)
-        harness.singletonChild.dispatchStore(child)
-        val ref = harness.singletonChild.dispatchCreateReference(child)
+        harness.singletonChild.store(child).join()
+        val ref = harness.singletonChild.createReference(child)
         assertThat(ref.dereference()).isEqualTo(child)
     }
 
     @Test
     fun createReference_collectionHandle() = runBlocking {
         val child = Child(age = 10.0)
-        harness.collectionChild.dispatchStore(child)
-        val ref = harness.collectionChild.dispatchCreateReference(child)
+        harness.collectionChild.store(child).join()
+        val ref = harness.collectionChild.createReference(child)
         assertThat(ref.dereference()).isEqualTo(child)
     }
 
@@ -56,8 +52,8 @@ class ReferenceSpecTest {
         val childRef = createChildReference(child)
         val parent = Parent(age = 40.0, favorite = childRef)
 
-        harness.parents.dispatchStore(parent)
-        val parentOut = harness.parents.dispatchFetchAll().single()
+        harness.parents.store(parent).join()
+        val parentOut = harness.parents.fetchAll().single()
 
         assertThat(parentOut).isEqualTo(parent)
         assertThat(parentOut.favorite).isEqualTo(childRef)
@@ -72,8 +68,8 @@ class ReferenceSpecTest {
         val childRef2 = createChildReference(child2)
         val parent = Parent(age = 40.0, children = setOf(childRef1, childRef2))
 
-        harness.parents.dispatchStore(parent)
-        val parentOut = harness.parents.dispatchFetchAll().single()
+        harness.parents.store(parent).join()
+        val parentOut = harness.parents.fetchAll().single()
 
         assertThat(parentOut).isEqualTo(parent)
         assertThat(parentOut.children).containsExactly(childRef1, childRef2)
@@ -89,14 +85,14 @@ class ReferenceSpecTest {
         val childRef2 = createChildReference(child2)
 
         // Store a reference in the handle.
-        harness.singletonChildRef.dispatchStore(childRef1)
-        var childRefOut = harness.singletonChildRef.dispatchFetch()
+        harness.singletonChildRef.store(childRef1)
+        var childRefOut = harness.singletonChildRef.fetch()
         assertThat(childRefOut).isEqualTo(childRef1)
         assertThat(childRefOut!!.dereference()).isEqualTo(child1)
 
         // Store a different reference in the handle.
-        harness.singletonChildRef.dispatchStore(childRef2)
-        childRefOut = harness.singletonChildRef.dispatchFetch()
+        harness.singletonChildRef.store(childRef2)
+        childRefOut = harness.singletonChildRef.fetch()
         assertThat(childRefOut).isEqualTo(childRef2)
         assertThat(childRefOut!!.dereference()).isEqualTo(child2)
     }
@@ -109,14 +105,14 @@ class ReferenceSpecTest {
         val childRef2 = createChildReference(child2)
 
         // Store some references in the handle.
-        harness.collectionChildRef.dispatchStore(childRef1)
-        var childRefsOut = harness.collectionChildRef.dispatchFetchAll()
+        harness.collectionChildRef.store(childRef1)
+        var childRefsOut = harness.collectionChildRef.fetchAll()
         assertThat(childRefsOut).containsExactly(childRef1)
         assertThat(childRefsOut.map { it.dereference() }).containsExactly(child1)
 
         // Store another reference in the handle.
-        harness.collectionChildRef.dispatchStore(childRef2)
-        childRefsOut = harness.collectionChildRef.dispatchFetchAll()
+        harness.collectionChildRef.store(childRef2)
+        childRefsOut = harness.collectionChildRef.fetchAll()
         assertThat(childRefsOut).containsExactly(childRef1, childRef2)
         assertThat(childRefsOut.map { it.dereference() }).containsExactly(child1, child2)
         Unit
@@ -124,7 +120,7 @@ class ReferenceSpecTest {
 
     /** Creates a [Reference] for the given [Child]. */
     private suspend fun createChildReference(child: Child): Reference<Child> {
-        harness.collectionChild.dispatchStore(child)
-        return harness.collectionChild.dispatchCreateReference(child)
+        harness.collectionChild.store(child).join()
+        return harness.collectionChild.createReference(child)
     }
 }

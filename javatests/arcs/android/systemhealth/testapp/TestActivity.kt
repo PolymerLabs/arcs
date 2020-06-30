@@ -36,11 +36,6 @@ import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
-import arcs.core.testutil.handles.dispatchClear
-import arcs.core.testutil.handles.dispatchClose
-import arcs.core.testutil.handles.dispatchFetch
-import arcs.core.testutil.handles.dispatchFetchAll
-import arcs.core.testutil.handles.dispatchStore
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadCollectionHandle
@@ -59,6 +54,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 /** Test app for Arcs System Health. */
 @ExperimentalCoroutinesApi
@@ -143,11 +139,19 @@ class TestActivity : AppCompatActivity() {
                 when (handleType) {
                     SystemHealthEnums.HandleType.SINGLETON ->
                         withHandle<ReadWriteSingletonHandle<TestEntity>> {
-                            it?.dispatchStore(SystemHealthTestEntity())
+                            it?.let { handle ->
+                                withContext(handle.dispatcher) {
+                                    handle.store(SystemHealthTestEntity())
+                                }.join()
+                            }
                         }
                     else ->
                         withHandle<ReadWriteCollectionHandle<TestEntity>> {
-                            it?.dispatchStore(SystemHealthTestEntity())
+                            it?.let { handle ->
+                                withContext(handle.dispatcher) {
+                                    handle.store(SystemHealthTestEntity())
+                                }.join()
+                            }
                         }
                 }
             }
@@ -157,11 +161,15 @@ class TestActivity : AppCompatActivity() {
                 when (handleType) {
                     SystemHealthEnums.HandleType.SINGLETON ->
                         withHandle<ReadWriteSingletonHandle<TestEntity>> {
-                            it?.dispatchClear()
+                            it?.let { handle ->
+                                withContext(handle.dispatcher) { handle.clear() }.join()
+                            }
                         }
                     else ->
                         withHandle<ReadWriteCollectionHandle<TestEntity>> {
-                            it?.dispatchClear()
+                            it?.let { handle ->
+                                withContext(handle.dispatcher) { handle.clear() }.join()
+                            }
                         }
                 }
             }
@@ -171,12 +179,16 @@ class TestActivity : AppCompatActivity() {
                 runBlocking(coroutineContext) {
                     when (handleType) {
                         SystemHealthEnums.HandleType.SINGLETON -> {
-                            singletonHandle?.dispatchClose()
-                            singletonHandle = null
+                            singletonHandle?.let {
+                                withContext(it.dispatcher) { it.close() }
+                                singletonHandle = null
+                            }
                         }
                         else -> {
-                            collectionHandle?.dispatchClose()
-                            collectionHandle = null
+                            collectionHandle?.let {
+                                withContext(it.dispatcher) { it.close() }
+                                collectionHandle = null
+                            }
                         }
                     }
                 }
@@ -360,8 +372,8 @@ class TestActivity : AppCompatActivity() {
         }
 
         runBlocking(coroutineContext) {
-            singletonHandle?.dispatchClose()
-            collectionHandle?.dispatchClose()
+            singletonHandle?.close()
+            collectionHandle?.close()
         }
 
         scope.cancel()
@@ -465,8 +477,10 @@ class TestActivity : AppCompatActivity() {
         handle: ReadSingletonHandle<TestEntity>?,
         prefix: String = "?"
     ) {
-        val result = handle?.dispatchFetch()?.let {
-            "${it.text},${it.number},${it.boolean}"
+        val result = handle?.let {
+            withContext(handle.dispatcher) { handle.fetch() }?.let {
+                "${it.text},${it.number},${it.boolean}"
+            }
         } ?: "null"
 
         // Update UI components at the Main/UI Thread.
@@ -480,9 +494,12 @@ class TestActivity : AppCompatActivity() {
         handle: ReadCollectionHandle<TestEntity>?,
         prefix: String = "?"
     ) {
-        val sep = System.getProperty("line.separator") ?: "\r\n"
-        val result = handle?.dispatchFetchAll()?.takeIf { it.isNotEmpty() }?.joinToString(sep) {
-            "${it.text},${it.number},${it.boolean}"
+        val result = handle?.let {
+            withContext(handle.dispatcher) { handle.fetchAll() }.takeIf {
+                it.isNotEmpty()
+            }?.joinToString(separator = System.getProperty("line.separator") ?: "\r\n") {
+                "${it.text},${it.number},${it.boolean}"
+            }
         } ?: "empty"
 
         // Update UI components at the Main/UI Thread.

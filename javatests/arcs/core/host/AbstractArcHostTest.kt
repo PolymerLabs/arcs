@@ -12,7 +12,6 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.testutil.handles.dispatchStore
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.BaseParticle
@@ -109,7 +108,7 @@ open class AbstractArcHostTest {
 
         // Verify that the created handle use the TTL config to set an expiry time.
         val entity = DummyEntity()
-        host.getFooHandle().dispatchStore(entity)
+        host.getFooHandle().store(entity)
         // Should expire in 2 minutes.
         val expectedExpiry = 2 * 60 * 1000 + FakeTime().currentTimeMillis
         assertThat(entity.expirationTimestamp).isEqualTo(expectedExpiry)
