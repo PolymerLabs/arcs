@@ -165,7 +165,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun singleton_writeAndReadBackAndClear() = testRunner {
+    fun singleton_writeAndReadBackAndClear() = testRunner {
         val writeHandle = writeHandleManager.createSingletonHandle()
         val readHandle = readHandleManager.createSingletonHandle()
 
@@ -204,7 +204,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun singleton_clearOnAClearDataWrittenByA() = testRunner {
+    fun singleton_clearOnAClearDataWrittenByA() = testRunner {
         val handleA = writeHandleManager.createSingletonHandle()
         val handleB = readHandleManager.createSingletonHandle()
 
@@ -226,7 +226,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun singleton_clearOnAClearDataWrittenByB() = testRunner {
+    fun singleton_clearOnAClearDataWrittenByB() = testRunner {
         val handleA = writeHandleManager.createSingletonHandle()
         val handleB = readHandleManager.createSingletonHandle()
         val handleBUpdated = handleB.onUpdateDeferred { it != null }
@@ -249,7 +249,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun singleton_writeAndOnUpdate() = testRunner {
+    fun singleton_writeAndOnUpdate() = testRunner {
         val writeHandle = writeHandleManager.createSingletonHandle()
             as WriteSingletonHandle<Person>
 
@@ -265,7 +265,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun singleton_dereferenceEntity() = testRunner {
+    fun singleton_dereferenceEntity() = testRunner {
         val writeHandle = writeHandleManager.createSingletonHandle()
         val readHandle = readHandleManager.createSingletonHandle()
         val readHandleUpdated = readHandle.onUpdateDeferred()
@@ -307,7 +307,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun singleton_dereferenceEntity_nestedReference() = testRunner {
+    fun singleton_dereferenceEntity_nestedReference() = testRunner {
         // Create a stylish new hat, and create a reference to it.
         val hatCollection = writeHandleManager.createHandle(
             HandleSpec(
@@ -374,7 +374,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun singleton_withTTL() = testRunner {
+    fun singleton_withTTL() = testRunner {
         fakeTime.millis = 0
         val handle = writeHandleManager.createSingletonHandle(ttl = Ttl.Days(2))
         val handleB = readHandleManager.createSingletonHandle()
@@ -428,7 +428,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun singleton_referenceLiveness() = testRunner {
+    fun singleton_referenceLiveness() = testRunner {
         // Create and store an entity.
         val writeEntityHandle = writeHandleManager.createCollectionHandle()
         val monitorHandle = monitorHandleManager.createCollectionHandle()
@@ -522,7 +522,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun collection_addingToA_showsUpInB() = testRunner {
+    fun collection_addingToA_showsUpInB() = testRunner {
         val handleA = writeHandleManager.createCollectionHandle()
             as ReadWriteCollectionHandle<Person>
         val handleB = readHandleManager.createCollectionHandle()
@@ -543,7 +543,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun collection_writeAndReadBack() = testRunner {
+    fun collection_writeAndReadBack() = testRunner {
         val writeHandle = writeHandleManager.createCollectionHandle()
         val readHandle = readHandleManager.createCollectionHandle()
         val allHeard = Job()
@@ -560,7 +560,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun collection_writeAndOnUpdate() = testRunner {
+    fun collection_writeAndOnUpdate() = testRunner {
         val writeHandle = writeHandleManager.createCollectionHandle()
             as WriteCollectionHandle<Person>
 
@@ -577,7 +577,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun collection_writeMutatedEntityReplaces() = testRunner {
+    fun collection_writeMutatedEntityReplaces() = testRunner {
         val entity = TestParticle_Entities(text = "Hello")
         val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
         withContext(handle.dispatcher) {
@@ -663,7 +663,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun collection_removingFromA_isRemovedFromB() = testRunner {
+    fun collection_removingFromA_isRemovedFromB() = testRunner {
         val handleA = readHandleManager.createCollectionHandle()
         val handleB = writeHandleManager.createCollectionHandle()
 
@@ -704,7 +704,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun collection_clearingElementsFromA_clearsThemFromB() = testRunner {
+    fun collection_clearingElementsFromA_clearsThemFromB() = testRunner {
         val handleA = readHandleManager.createCollectionHandle()
         val handleB = writeHandleManager.createCollectionHandle()
 
@@ -742,7 +742,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun collection_entityDereference() = testRunner {
+    fun collection_entityDereference() = testRunner {
         val writeHandle = writeHandleManager.createCollectionHandle()
         val readHandle = readHandleManager.createCollectionHandle()
         val monitorHandle = monitorHandleManager.createCollectionHandle()
@@ -772,7 +772,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun collection_dereferenceEntity_nestedReference() = testRunner {
+    fun collection_dereferenceEntity_nestedReference() = testRunner {
         // Create a stylish new hat, and create a reference to it.
         val hatSpec = HandleSpec(
             "hatCollection",
@@ -832,7 +832,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun collection_noTTL() = testRunner {
+    fun collection_noTTL() = testRunner {
         val monitor = monitorHandleManager.createCollectionHandle()
         val handle = writeHandleManager.createCollectionHandle()
         val handleB = readHandleManager.createCollectionHandle()
@@ -856,7 +856,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun collection_withTTL() = testRunner {
+    fun collection_withTTL() = testRunner {
         fakeTime.millis = 0
         val handle = writeHandleManager.createCollectionHandle(ttl = Ttl.Days(2))
         val handleB = readHandleManager.createCollectionHandle()
@@ -911,7 +911,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun collection_addingToA_showsUpInQueryOnB() = testRunner {
+    fun collection_addingToA_showsUpInQueryOnB() = testRunner {
         val writeHandle = writeHandleManager.createCollectionHandle()
         val readHandle = readHandleManager.createCollectionHandle()
 
@@ -975,7 +975,7 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    open fun collection_referenceLiveness() = testRunner {
+    fun collection_referenceLiveness() = testRunner {
         // Create and store some entities.
         val writeEntityHandle = writeHandleManager.createCollectionHandle()
         val monitorHandle = monitorHandleManager.createCollectionHandle()
