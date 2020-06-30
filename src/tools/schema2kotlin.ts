@@ -50,6 +50,7 @@ export class Schema2Kotlin extends Schema2Base {
         'import arcs.core.entity.Tuple4',
         'import arcs.core.entity.Tuple5',
         'import arcs.sdk.testing.*',
+        'import java.math.BigInteger',
         'import kotlinx.coroutines.CoroutineScope',
       );
     } else if (this.opts.wasm) {
@@ -70,6 +71,7 @@ export class Schema2Kotlin extends Schema2Base {
         'import arcs.core.entity.Tuple3',
         'import arcs.core.entity.Tuple4',
         'import arcs.core.entity.Tuple5',
+        'import java.math.BigInteger',
       );
     }
     imports.sort();
