@@ -31,6 +31,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -38,6 +39,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -118,15 +120,21 @@ class Arc internal constructor(
             return
         }
 
+        val scope = CoroutineScope(
+            coroutineContext + Job() + CoroutineName("Arc (flow collector) $id")
+        )
+
         arcStatesByHostFlow = callbackFlow {
             partitions.forEach { partition ->
                 val arcHost = allocator.lookupArcHost(partition.arcHost)
                 registrations[partition.arcHost] = arcHost.addOnArcStateChange(id) { _, state ->
-                    offer(partition.arcHost to state)
+                    if (!isClosedForSend) {
+                        offer(partition.arcHost to state)
+                    }
                 }
             }
             closeFlow = { close() }
-            awaitClose { unregisterChangeHandlerWithArcHosts() }
+            awaitClose { unregisterChangeHandlerWithArcHosts(scope) }
         }.scan(
             partitions.map { it.arcHost to NeverStarted }.associateBy({ it.first }, { it.second })
         ) { states, (host, state) ->
@@ -140,9 +148,7 @@ class Arc internal constructor(
             arcStateChangeHandlers.value.toList().forEach { handler -> handler(state) }
         }
 
-        arcStatesByHostFlow.launchIn(
-            CoroutineScope(coroutineContext + CoroutineName("Arc (flow collector) $id"))
-        )
+        arcStatesByHostFlow.launchIn(scope)
     }
 
     // suspend until a desired state is achieved
@@ -177,12 +183,10 @@ class Arc internal constructor(
         onArcStateChangeFiltered(Stopped) { closeFlow() }
     }
 
-    private fun unregisterChangeHandlerWithArcHosts() {
-        runBlocking {
-            registrations.forEach { (host, registration) ->
-                val arcHost = allocator.lookupArcHost(host)
-                arcHost.removeOnArcStateChange(registration)
-            }
+    private fun unregisterChangeHandlerWithArcHosts(scope: CoroutineScope) = scope.launch {
+        registrations.forEach { (host, registration) ->
+            val arcHost = allocator.lookupArcHost(host)
+            arcHost.removeOnArcStateChange(registration)
         }
     }
 
