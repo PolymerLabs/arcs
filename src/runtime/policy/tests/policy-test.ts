@@ -35,7 +35,7 @@ async function parsePolicy(str: string) {
   return manifest.policies[0];
 }
 
-describe.only('policy', () => {
+describe('policy', () => {
   it('can round-trip to string', async () => {
     const manifestString = `
 ${customAnnotation.trim()}
