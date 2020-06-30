@@ -20,7 +20,7 @@ describe('refiner', () => {
     it('Refines data given an expression 1', Flags.withFieldRefinementsAllowed(async () => {
         const manifestAst = parse(`
             particle Foo
-                input: reads Something {num: Number [ (num/-3 < 0 and num*num == 36) or num == 0 ] }
+                input: reads Something {num: Number [ (num/-3 < 0 and num*num == 36) or num == 0 ]}
         `);
         const typeData = {'num': 'Number'};
         const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
@@ -33,7 +33,7 @@ describe('refiner', () => {
     it('Refines data given an expression 2', () => {
       const manifestAst = parse(`
           particle Foo
-              input: reads Something {num: Number } [(num/-3 < 0 and num*num == 36) or num == 0]
+              input: reads Something {num: Number} [(num/-3 < 0 and num*num == 36) or num == 0]
       `);
       const typeData = {'num': 'Number'};
       const ref = Refinement.fromAst(manifestAst[0].args[0].type.refinement, typeData);
@@ -47,7 +47,7 @@ describe('refiner', () => {
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
-                    input: reads Something {num: Number [ num < num2 ] }
+                    input: reads Something {num: Number [ num < num2 ]}
             `);
             const typeData = {'num': 'Number'};
             const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
@@ -61,7 +61,7 @@ describe('refiner', () => {
       assert.throws(() => {
           const manifestAst = parse(`
               particle Foo
-                  input: reads Something {num: Number } [num < num2]
+                  input: reads Something {num: Number} [num < num2]
           `);
           const typeData = {'num': 'Number'};
           const ref = Refinement.fromAst(manifestAst[0].args[0].type.refinement, typeData);
@@ -75,7 +75,7 @@ describe('refiner', () => {
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
-                    input: reads Something {num: Number [ num + 5 ] }
+                    input: reads Something {num: Number [ num + 5 ]}
             `);
             const typeData = {'num': 'Number'};
             const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
@@ -89,7 +89,7 @@ describe('refiner', () => {
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
-                    input: reads Something {num: Number [ (num < 5) + 3 == 0 ] }
+                    input: reads Something {num: Number [ (num < 5) + 3 == 0 ]}
             `);
             const typeData = {'num': 'Number'};
             const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
@@ -101,7 +101,7 @@ describe('refiner', () => {
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
-                    input: reads Something {num: Number [ (num and 3) == 0 ] }
+                    input: reads Something {num: Number [ (num and 3) == 0 ]}
             `);
             const typeData = {'num': 'Number'};
             const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
@@ -113,7 +113,7 @@ describe('refiner', () => {
         assert.throws(() => {
           const manifestAst = parse(`
               particle Foo
-                  input: reads Something {name: Text [ name > 'Ragav' ] }
+                  input: reads Something {name: Text [ name > 'Ragav' ]}
           `);
           const typeData = {'name': 'Text'};
           const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
@@ -127,7 +127,7 @@ describe('refiner', () => {
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
-                    input: reads Something {num: BigInt [ (num < 5n) + 3n == 0n ] }
+                    input: reads Something {num: BigInt [ (num < 5n) + 3n == 0n ]}
             `);
             const typeData = {'num': 'BigInt'};
             const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
@@ -139,7 +139,7 @@ describe('refiner', () => {
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
-                    input: reads Something {num: BigInt [ (num + 3) == 0n ] }
+                    input: reads Something {num: BigInt [ (num + 3) == 0n ]}
             `);
             const typeData = {'num': 'BigInt'};
             const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
@@ -151,7 +151,7 @@ describe('refiner', () => {
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
-                    input: reads Something {num: BigInt [ (num and 3) == 0 ] }
+                    input: reads Something {num: BigInt [ (num and 3) == 0 ]}
             `);
             const typeData = {'num': 'BigInt'};
             const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
@@ -164,7 +164,7 @@ describe('refiner', () => {
     it('tests simple expression to range conversion', Flags.withFieldRefinementsAllowed(async () => {
         let manifestAst = parse(`
             particle Foo
-                input: reads Something {num: Number [ (num < 3) ] }
+                input: reads Something {num: Number [ (num < 3) ]}
         `);
         const typeData = {'num': 'Number'};
         let ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
@@ -172,14 +172,14 @@ describe('refiner', () => {
         assert.deepEqual(range, new NumberRange([NumberSegment.closedOpen(Number.NEGATIVE_INFINITY, 3)]));
         manifestAst = parse(`
             particle Foo
-                input: reads Something {num: Number [(num > 10)] }
+                input: reads Something {num: Number [(num > 10)]}
         `);
         ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         range = NumberRange.fromExpression(ref.expression);
         assert.deepEqual(range, new NumberRange([NumberSegment.openClosed(10, Number.POSITIVE_INFINITY)]));
         manifestAst = parse(`
             particle Foo
-                input: reads Something {num: Number [not (num != 10)] }
+                input: reads Something {num: Number [not (num != 10)]}
         `);
         ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         range = NumberRange.fromExpression(ref.expression);
@@ -189,7 +189,7 @@ describe('refiner', () => {
         const typeData = {'num': 'BigInt'};
         const manifestAst = parse(`
             particle Foo
-                input: reads Something {num: BigInt [ num < 3n ] }
+                input: reads Something {num: BigInt [ num < 3n ]}
         `);
         const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         const range = BigIntRange.fromExpression(ref.expression);
@@ -199,7 +199,7 @@ describe('refiner', () => {
         const typeData = {'num': 'BigInt'};
         const manifestAst = parse(`
             particle Foo
-                input: reads Something {num: BigInt [(num > 10n)] }
+                input: reads Something {num: BigInt [(num > 10n)]}
         `);
         const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         const range = BigIntRange.fromExpression(ref.expression);
@@ -208,22 +208,22 @@ describe('refiner', () => {
     it('tests complement BigIntRange', Flags.withFieldRefinementsAllowed(async () => {
       const ten = BigInt(10);
       const singleValue = new BigIntRange([BigIntSegment.closedClosed(ten, ten)]);
-      assert.deepEqual((singleValue as any).segments, [
-        { from: {val: ten, isOpen: false}, to: {val: ten, isOpen: false}}
+      assert.deepEqual(singleValue.segmentsForTesting(), [
+        {from: {val: ten, isOpen: false}, to: {val: ten, isOpen: false}}
       ]);
       const not10 = singleValue.complement();
-      const not_not10 = not10.complement();
-      assert.deepEqual(singleValue, not_not10);
-      assert.deepEqual((not10 as any).segments, [
-        { from: { val: 'NEGATIVE_INFINITY', isOpen: false}, to: { val: ten, isOpen: true}},
-        { from: { val: ten, isOpen: true}, to: { val: 'POSITIVE_INFINITY', isOpen: false}},
+      const notNot10 = not10.complement();
+      assert.deepEqual(singleValue, notNot10);
+      assert.deepEqual(not10.segmentsForTesting(), [
+        {from: {val: 'NEGATIVE_INFINITY', isOpen: false}, to: {val: ten, isOpen: true}},
+        {from: {val: ten, isOpen: true}, to: {val: 'POSITIVE_INFINITY', isOpen: false}},
       ]);
     }));
     it('tests simple expression to range conversions using bigint 3', Flags.withFieldRefinementsAllowed(async () => {
         const typeData = {'num': 'BigInt'};
         const manifestAst = parse(`
             particle Foo
-                input: reads Something {num: BigInt [not (num != 10n)] }
+                input: reads Something {num: BigInt [not (num != 10n)]}
         `);
         const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         const range = BigIntRange.fromExpression(ref.expression);
@@ -233,7 +233,7 @@ describe('refiner', () => {
         const typeData = {'num': 'Number'};
         const manifestAst = parse(`
             particle Foo
-                input: reads Something {num: Number [ (num < 3) and (num > 0) ] }
+                input: reads Something {num: Number [ (num < 3) and (num > 0) ]}
         `);
         const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         const range = NumberRange.fromExpression(ref.expression);
@@ -243,7 +243,7 @@ describe('refiner', () => {
         const typeData = {'num': 'Number'};
         const manifestAst = parse(`
             particle Foo
-                input: reads Something {num: Number [ ((num < 3) and (num > 0)) or (num == 5) ] }
+                input: reads Something {num: Number [ ((num < 3) and (num > 0)) or (num == 5) ]}
         `);
         const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         const range = NumberRange.fromExpression(ref.expression);
@@ -253,7 +253,7 @@ describe('refiner', () => {
         const typeData = {'num': 'Number'};
         const manifestAst = parse(`
             particle Foo
-                input: reads Something {num: Number [(num > 10) == (num >= 20)] }
+                input: reads Something {num: Number [(num > 10) == (num >= 20)]}
         `);
         const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         const range = NumberRange.fromExpression(ref.expression);
@@ -263,7 +263,7 @@ describe('refiner', () => {
         const typeData = {'num': 'Number'};
         const manifestAst = parse(`
             particle Foo
-                input: reads Something {num: Number [not (num != 10)] }
+                input: reads Something {num: Number [not (num != 10)]}
         `);
         const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         const range = NumberRange.fromExpression(ref.expression);
@@ -273,7 +273,7 @@ describe('refiner', () => {
     it('regression test for parse failure on operator ordering', () => {
       parse(`
       particle Foo
-          input: reads Something {num: Number } [num <= 20]
+          input: reads Something {num: Number} [num <= 20]
       `);
   });
 
@@ -291,7 +291,7 @@ describe('refiner', () => {
             flg: Boolean
         `);
         schema = manifest.schemas.Foo;
-        const reportExceptionInHost = (error) => {exceptions.push(error);};
+        const reportExceptionInHost = (error: Error) => {exceptions.push(error);};
         // tslint:disable-next-line: no-any
         entityClass = Entity.createEntityClass(schema, {reportExceptionInHost} as any);
       }));
@@ -310,7 +310,7 @@ describe('refiner', () => {
         });
       }));
       it('data does conform to the refinement', Flags.whileEnforcingRefinements(async () => {
-        assert.doesNotThrow(() => { const _ = new entityClass({txt: 'abc', num: 8, int: BigInt(5)}); });
+        assert.doesNotThrow(() => { const _ = new entityClass({txt: 'abc', num: 8, int: BigInt(5)});});
       }));
   });
 
@@ -320,7 +320,7 @@ describe('refiner', () => {
           before(Flags.withFieldRefinementsAllowed(async () => {
             const manifestAst = parse(`
               particle AddressBook
-                contacts: reads [Contact {name: Text [ name == ? ] }]
+                contacts: reads [Contact {name: Text [ name == ? ]}]
             `);
             const typeData = {'name': 'Text'};
             const contacts = manifestAst[0].args[0];
@@ -355,7 +355,7 @@ describe('refiner', () => {
           before(Flags.withFieldRefinementsAllowed(async () => {
             const manifestAst = parse(`
               particle AddressBook
-                contacts: reads [Contact {name: Text, age: Number } [ name == ?  and age > 10]]
+                contacts: reads [Contact {name: Text, age: Number} [ name == ?  and age > 10]]
             `);
             const typeData = {'name': 'Text', 'age': 'Number'};
             const contacts = manifestAst[0].args[0];
@@ -407,14 +407,14 @@ describe('refiner', () => {
     it('tests if field name is rearranged to left in a binary node', Flags.withFieldRefinementsAllowed(async () => {
         const manifestAst1 = parse(`
             particle Foo
-                input: reads Something {num: Number [ (10+2) > num ] }
+                input: reads Something {num: Number [ (10+2) > num ]}
         `);
         const typeData = {'num': 'Number'};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
         ref1.normalize();
         const manifestAst2 = parse(`
             particle Foo
-                input: reads Something {num: Number [ num < 12 ] }
+                input: reads Something {num: Number [ num < 12 ]}
         `);
         const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
         // normalized version of ref1 should be the same as ref2
@@ -423,14 +423,14 @@ describe('refiner', () => {
     it('tests if primitive boolean expressions are automatically evaluated', Flags.withFieldRefinementsAllowed(async () => {
         const manifestAst1 = parse(`
             particle Foo
-                input: reads Something {num: Boolean [ num == not (true or false) ] }
+                input: reads Something {num: Boolean [ num == not (true or false) ]}
         `);
         const typeData = {'num': 'Boolean'};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
         ref1.normalize();
         const manifestAst2 = parse(`
             particle Foo
-                input: reads Something {num: Boolean [ not num ] }
+                input: reads Something {num: Boolean [ not num ]}
         `);
         const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
         // normalized version of ref1 should be the same as ref2
@@ -439,14 +439,14 @@ describe('refiner', () => {
     it('tests if primitive math expressions are automatically evaluated', Flags.withFieldRefinementsAllowed(async () => {
         const manifestAst1 = parse(`
             particle Foo
-                input: reads Something {num: Number [ (2+11-9) > num or False ] }
+                input: reads Something {num: Number [ (2+11-9) > num or False ]}
         `);
         const typeData = {'num': 'Number'};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
         ref1.normalize();
         const manifestAst2 = parse(`
             particle Foo
-                input: reads Something {num: Number [ num < 4 ] }
+                input: reads Something {num: Number [ num < 4 ]}
         `);
         const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
         // normalized version of ref1 should be the same as ref2
@@ -455,14 +455,14 @@ describe('refiner', () => {
     it(`tests if multiple 'not's are cancelled. `, Flags.withFieldRefinementsAllowed(async () => {
         const manifestAst1 = parse(`
             particle Foo
-                input: reads Something {num: Boolean [ not (not num) ] }
+                input: reads Something {num: Boolean [ not (not num) ]}
         `);
         const typeData = {'num': 'Boolean'};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
         ref1.normalize();
         const manifestAst2 = parse(`
             particle Foo
-                input: reads Something {num: Boolean [ num ] }
+                input: reads Something {num: Boolean [ num ]}
         `);
         const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
         // normalized version of ref1 should be the same as ref2
@@ -471,14 +471,14 @@ describe('refiner', () => {
     it(`tests if expressions are rearranged 0`, Flags.withFieldRefinementsAllowed(async () => {
       const manifestAst1 = parse(`
           particle Foo
-              input: reads Something {num: Number [ (num + 5) <= 0 ] }
+              input: reads Something {num: Number [ (num + 5) <= 0 ]}
       `);
       const typeData = {'num': 'Number'};
       const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
       ref1.normalize();
       const manifestAst2 = parse(`
           particle Foo
-              input: reads Something {num: Number [ num <= -5 ] }
+              input: reads Something {num: Number [ num <= -5 ]}
       `);
       const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
       ref2.normalize();
@@ -489,14 +489,14 @@ describe('refiner', () => {
     it(`tests if expressions are rearranged 1`, Flags.withFieldRefinementsAllowed(async () => {
       const manifestAst1 = parse(`
           particle Foo
-              input: reads Something {num: Number [ num <= -5 ] }
+              input: reads Something {num: Number [ num <= -5 ]}
       `);
       const typeData = {'num': 'Number'};
       const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
       ref1.normalize();
       const manifestAst2 = parse(`
           particle Foo
-              input: reads Something {num: Number [ -5 >= num ] }
+              input: reads Something {num: Number [ -5 >= num ]}
       `);
       const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
       ref2.normalize();
@@ -507,14 +507,14 @@ describe('refiner', () => {
     it(`tests if expressions are rearranged 2`, Flags.withFieldRefinementsAllowed(async () => {
       const manifestAst1 = parse(`
           particle Foo
-              input: reads Something {num: Number [ (num + 5) <= (2*num - 11) ] }
+              input: reads Something {num: Number [ (num + 5) <= (2*num - 11) ]}
       `);
       const typeData = {'num': 'Number'};
       const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
       ref1.normalize();
       const manifestAst2 = parse(`
           particle Foo
-              input: reads Something {num: Number [ num > 16 or num == 16] }
+              input: reads Something {num: Number [ num > 16 or num == 16]}
       `);
       const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
       // normalized version of ref1 should be the same as ref2
@@ -524,14 +524,14 @@ describe('refiner', () => {
     it(`tests if expressions are rearranged 3`, Flags.withFieldRefinementsAllowed(async () => {
       const manifestAst1 = parse(`
           particle Foo
-              input: reads Something {num: Number [ (num - 5)/(num - 2) <= 0 ] }
+              input: reads Something {num: Number [ (num - 5)/(num - 2) <= 0 ]}
       `);
       const typeData = {'num': 'Number'};
       const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
       ref1.normalize();
       const manifestAst2 = parse(`
           particle Foo
-              input: reads Something {num: Number [ ((num > 5 and num < 2) or (num < 5 and num > 2)) or (num == 5 and num != 2) ] }
+              input: reads Something {num: Number [ ((num > 5 and num < 2) or (num < 5 and num > 2)) or (num == 5 and num != 2) ]}
       `);
       const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
       ref2.normalize();
@@ -541,14 +541,14 @@ describe('refiner', () => {
     it(`tests if expressions are rearranged 4`, Flags.withFieldRefinementsAllowed(async () => {
       const manifestAst1 = parse(`
           particle Foo
-              input: reads Something {num: Number [ (num+2)*(num+1)+3 > 6 ] }
+              input: reads Something {num: Number [ (num+2)*(num+1)+3 > 6 ]}
       `);
       const typeData = {'num': 'Number'};
       const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
       ref1.normalize();
       const manifestAst2 = parse(`
           particle Foo
-              input: reads Something {num: Number [ num*3 + num*num > 1 ] }
+              input: reads Something {num: Number [ num*3 + num*num > 1 ]}
       `);
       const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
       ref2.normalize();
@@ -558,73 +558,73 @@ describe('refiner', () => {
     it(`tests if expressions are rearranged 5`, Flags.withFieldRefinementsAllowed(async () => {
       const manifestAst1 = parse(`
           particle Foo
-              input: reads Something {num: Number [ num == 3 ] }
+              input: reads Something {num: Number [ num == 3 ]}
       `);
       const typeData = {'num': 'Number'};
       const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
 
-      Normalizer.rearrangeNumericalExpression(ref1.expression as any);
+      Normalizer.rearrangeNumericalExpression(ref1.expression as BinaryExpression);
       assert.strictEqual(ref1.toString(), '[(num == 3)]');
     }));
     it(`tests if expressions are rearranged 4.0`, Flags.withFieldRefinementsAllowed(async () => {
       const manifestAst1 = parse(`
           particle Foo
-              input: reads Something {num: Number [ 3 == num ] }
+              input: reads Something {num: Number [ 3 == num ]}
       `);
       const typeData = {'num': 'Number'};
       const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
 
-      Normalizer.rearrangeNumericalExpression(ref1.expression as any);
+      Normalizer.rearrangeNumericalExpression(ref1.expression as BinaryExpression);
       assert.strictEqual(ref1.toString(), '[(num == 3)]');
     }));
     it(`tests if expressions are rearranged 4.1`, Flags.withFieldRefinementsAllowed(async () => {
       const manifestAst1 = parse(`
           particle Foo
-              input: reads Something {num: Number [ 2 == (num-1) ] }
+              input: reads Something {num: Number [ 2 == (num-1) ]}
       `);
       const typeData = {'num': 'Number'};
       const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
 
-      Normalizer.rearrangeNumericalExpression(ref1.expression as any);
+      Normalizer.rearrangeNumericalExpression(ref1.expression as BinaryExpression);
       assert.strictEqual(ref1.toString(), '[(num == 3)]');
     }));
     it(`tests if expressions are rearranged 4.2`, Flags.withFieldRefinementsAllowed(async () => {
       const manifestAst1 = parse(`
           particle Foo
-              input: reads Something {num: Number [ (num+2) == (2*num-1) ] }
+              input: reads Something {num: Number [ (num+2) == (2*num-1) ]}
       `);
       const typeData = {'num': 'Number'};
       const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
 
-      Normalizer.rearrangeNumericalExpression(ref1.expression as any);
+      Normalizer.rearrangeNumericalExpression(ref1.expression as BinaryExpression);
       assert.strictEqual(ref1.toString(), '[(num == 3)]');
     }));
     it(`tests if expressions are rearranged 4.3`, Flags.withFieldRefinementsAllowed(async () => {
       const manifestAst1 = parse(`
           particle Foo
-              input: reads Something {num: Number [ ((num+2)/(2*num-1)) == 1 ] }
+              input: reads Something {num: Number [ ((num+2)/(2*num-1)) == 1 ]}
       `);
       const typeData = {'num': 'Number'};
       const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
 
-      Normalizer.rearrangeNumericalExpression(ref1.expression as any);
+      Normalizer.rearrangeNumericalExpression(ref1.expression as BinaryExpression);
       assert.strictEqual(ref1.toString(), '[((num == 3) and (num != 0.5))]');
     }));
     it(`tests if expressions are rearranged 4.4`, Flags.withFieldRefinementsAllowed(async () => {
       const manifestAst1 = parse(`
           particle Foo
-              input: reads Something {num: Number [ ((num+2)/(2*num-1))+3 == 4 ] }
+              input: reads Something {num: Number [ ((num+2)/(2*num-1))+3 == 4 ]}
       `);
       const typeData = {'num': 'Number'};
       const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
 
-      Normalizer.rearrangeNumericalExpression(ref1.expression as any);
+      Normalizer.rearrangeNumericalExpression(ref1.expression as BinaryExpression);
       assert.strictEqual(ref1.toString(), '[((num == 3) and (num != 0.5))]');
     }));
     it(`tests if expressions are rearranged 4.5`, Flags.withFieldRefinementsAllowed(async () => {
       const manifestAst1 = parse(`
           particle Foo
-              input: reads Something {num: Number [ ((num+2)/(2*num-1))+3 == 4 ] }
+              input: reads Something {num: Number [ ((num+2)/(2*num-1))+3 == 4 ]}
       `);
       const typeData = {'num': 'Number'};
       const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.fields[0].type.refinement, typeData);
@@ -632,7 +632,7 @@ describe('refiner', () => {
       ref1.normalize();
       const manifestAst2 = parse(`
           particle Foo
-              input: reads Something {num: Number [ num == 3 and num != 0.5 ] }
+              input: reads Something {num: Number [ num == 3 and num != 0.5 ]}
       `);
       const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.fields[0].type.refinement, typeData);
       // normalized version of ref1 should be the same as ref2
@@ -641,14 +641,14 @@ describe('refiner', () => {
     it(`tests if expressions are rearranged 5`, () => {
       const manifestAst1 = parse(`
           particle Foo
-              input: reads Something {a: Number, b: Number } [3*(a+b) > a+2*b]
+              input: reads Something {a: Number, b: Number} [3*(a+b) > a+2*b]
       `);
       const typeData = {'a': 'Number', 'b': 'Number'};
       const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.refinement, typeData);
       ref1.normalize();
       const manifestAst2 = parse(`
           particle Foo
-              input: reads Something {a: Number, b: Number } [b + a*2 > 0]
+              input: reads Something {a: Number, b: Number} [b + a*2 > 0]
       `);
       const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.refinement, typeData);
       ref2.normalize();
@@ -658,14 +658,14 @@ describe('refiner', () => {
     it(`tests if expressions are rearranged 6`, () => {
       const manifestAst1 = parse(`
           particle Foo
-              input: reads Something {a: Number, b: Number } [2*(a+b) > a+2*b]
+              input: reads Something {a: Number, b: Number} [2*(a+b) > a+2*b]
       `);
       const typeData = {'a': 'Number', 'b': 'Number'};
       const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.refinement, typeData);
       ref1.normalize();
       const manifestAst2 = parse(`
           particle Foo
-              input: reads Something {a: Number, b: Number } [a > 0]
+              input: reads Something {a: Number, b: Number} [a > 0]
       `);
       const ref2 = Refinement.fromAst(manifestAst2[0].args[0].type.refinement, typeData);
       ref2.normalize();
@@ -879,9 +879,9 @@ describe('refiner', () => {
           assert.deepEqual(diff, new NumberRange([NumberSegment.closedClosed(0, 0), NumberSegment.closedOpen(5, 7), NumberSegment.closedOpen(12, 15), NumberSegment.openClosed(43, 45)]));
       });
       it('tests the complement of number ranges', () => {
-        let range = new NumberRange([NumberSegment.closedClosed(0, 10)], Primitive.NUMBER);
+        const range = new NumberRange([NumberSegment.closedClosed(0, 10)], Primitive.NUMBER);
         // range =  [0,10]
-        let complement = range.complement();
+        const complement = range.complement();
         // complement = (-inf, 0) U (10, inf)
         assert.deepEqual(complement, new NumberRange([NumberSegment.closedOpen(Number.NEGATIVE_INFINITY, 0), NumberSegment.openClosed(10, Number.POSITIVE_INFINITY)], Primitive.NUMBER));
       });
@@ -1178,32 +1178,32 @@ describe('refiner', () => {
   describe('BigIntRange', () => {
       it('BigIntRange construction functions forms an identity with a single segment', () => {
           const range = new BigIntRange([BigIntSegment.closedClosed(BigInt(0), BigInt(10))]);
-          assert.sameDeepMembers((range as any).segments, [
+          assert.deepEqual(range.segmentsForTesting(), [
             {
-              from: { isOpen: false, val: BigInt(0) },
-              to: { isOpen: false, val: BigInt(10) },
+              from: {isOpen: false, val: BigInt(0)},
+              to: {isOpen: false, val: BigInt(10)},
             }
           ]);
       });
       it('BigIntRange uses unionWithSeg without removing important segments', () => {
           const range = new BigIntRange([BigIntSegment.closedClosed(BigInt(0), BigInt(10)), BigIntSegment.openClosed(BigInt(20), BigInt(30))]);
-          assert.sameDeepMembers((range as any).segments, [
+          assert.deepEqual(range.segmentsForTesting(), [
             {
-              from: { isOpen: false, val: BigInt(0) },
-              to: { isOpen: false, val: BigInt(10) },
+              from: {isOpen: false, val: BigInt(0)},
+              to: {isOpen: false, val: BigInt(10)},
             },
             {
-              from: { isOpen: true, val: BigInt(20) },
-              to: { isOpen: false, val: BigInt(30) },
+              from: {isOpen: true, val: BigInt(20)},
+              to: {isOpen: false, val: BigInt(30)},
             }
           ]);
       });
       it('BigIntRange uses unionWithSeg merges overlapping segments', () => {
           const range = new BigIntRange([BigIntSegment.closedClosed(BigInt(0), BigInt(25)), BigIntSegment.openClosed(BigInt(20), BigInt(30))]);
-          assert.sameDeepMembers((range as any).segments, [
+          assert.deepEqual(range.segmentsForTesting(), [
             {
-              from: { isOpen: false, val: BigInt(0) },
-              to: { isOpen: false, val: BigInt(30) }
+              from: {isOpen: false, val: BigInt(0)},
+              to: {isOpen: false, val: BigInt(30)}
             }
           ]);
       });

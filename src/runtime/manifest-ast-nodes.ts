@@ -633,7 +633,7 @@ export interface SchemaField extends BaseNode {
 }
 
 export type SchemaType = SchemaReferenceType|SchemaCollectionType|
-    SchemaPrimitiveType|KotlinPrimitiveType|SchemaUnionType|SchemaTupleType;
+    SchemaPrimitiveType|KotlinPrimitiveType|SchemaUnionType|SchemaTupleType|TypeName|SchemaInline|SchemaOrderedListType|NestedSchema|KotlinPrimitiveType;
 
 export type SchemaPrimitiveTypeValue = 'Text'|'URL'|'Number'|'BigInteger'|'Boolean'|'Bytes'|'Object';
 
@@ -666,12 +666,12 @@ export interface SchemaReferenceType extends BaseNodeWithRefinement {
 
 export interface SchemaUnionType extends BaseNodeWithRefinement {
   kind: 'schema-union';
-  types: string[];
+  types: SchemaPrimitiveType[];
 }
 
 export interface SchemaTupleType extends BaseNodeWithRefinement {
   kind: 'schema-tuple';
-  types: string[];
+  types: SchemaPrimitiveType[];
 }
 
 export interface RefinementNode extends BaseNode {
@@ -856,7 +856,7 @@ export interface SlotFormFactor extends BaseNode {
 
 export type ParticleSlotConnectionItem = SlotFormFactor | ParticleProvidedSlot;
 
-export interface TypeName extends BaseNode {
+export interface TypeName extends BaseNodeWithRefinement {
   kind: 'type-name';
   name: string;
 }

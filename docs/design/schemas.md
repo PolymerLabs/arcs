@@ -127,7 +127,7 @@ Primitive Types
 * Boolean
 * URL
 * Number
-* BigInteger
+* BigInt
 * Object (an object that can be serialized as JSON)
 
 Structured Types

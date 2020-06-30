@@ -1743,7 +1743,7 @@ export class RefinementOperator {
           operand.evalType = argType;
         }
         if (operand.evalType !== argType) {
-          let argString: String = argType;
+          let argString: string = argType;
           if (argType === Primitive.UNKNOWN) {
             argString = this.opInfo.argType.join(` or `);
           }
@@ -2098,10 +2098,10 @@ export class NumberMultinomial {
   }
 
   degree(): number {
-    let degree: number = 0;
+    let degree = 0;
     for (const tKey of Object.keys(this.terms)) {
       const term = NumberTerm.fromKey(tKey);
-      let sum: number = 0;
+      let sum = 0;
       for (const power of Object.values(term.indeterminates)) {
         sum += power;
       }
@@ -2286,8 +2286,8 @@ export class BigIntMultinomial {
         const tprod = BigIntTerm.fromKey(aTerm);
         const bterm = BigIntTerm.fromKey(bTerm);
         for (const [indeterminate, power] of Object.entries(bterm.indeterminates)) {
-          const new_pow = tprod.indeterminates[indeterminate] || 0;
-          const val: bigint = BigInt(power) + BigInt(new_pow);
+          const newPow = tprod.indeterminates[indeterminate] || 0;
+          const val: bigint = BigInt(power) + BigInt(newPow);
           tprod.indeterminates[indeterminate] = val;
         }
         const val: bigint = acoeff*bcoeff + (prod.terms[tprod.toKey()] || BigInt(0));
@@ -2470,6 +2470,8 @@ export abstract class RefinementExpressionVisitor<T> {
         return this.visitFieldNamePrimitive(expression as FieldNamePrimitive);
       case 'NumberPrimitiveNode':
         return this.visitNumberPrimitive(expression as NumberPrimitive);
+      case 'BigIntPrimitiveNode':
+        return this.visitBigIntPrimitive(expression as BigIntPrimitive);
       case 'QueryArgumentPrimitiveNode':
         return this.visitQueryArgumentPrimitive(expression as QueryArgumentPrimitive);
       case 'TextPrimitiveNode':

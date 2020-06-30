@@ -23,6 +23,8 @@ function convertToJsType(primitiveType, schemaName: string) {
       return 'string';
     case 'Number':
       return 'number';
+    case 'BigInt':
+      return 'bigint';
     case 'Boolean':
       return 'boolean';
     case 'Bytes':

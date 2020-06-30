@@ -125,11 +125,13 @@ export class Schema {
     return Schema._typeString(fieldType1) === Schema._typeString(fieldType2);
   }
 
-  static _typeString(type): string {
+  static _typeString(type: SchemaType): string {
     switch (type.kind) {
       case 'kotlin-primitive':
       case 'schema-primitive':
         return type.type;
+      case 'kotlin-primitive':
+        return `${type.type}`;
       case 'schema-union':
         return `(${type.types.map(t => t.type).join(' or ')})`;
       case 'schema-tuple':
@@ -138,7 +140,7 @@ export class Schema {
         return `&${Schema._typeString(type.schema)}`;
       case 'type-name':
       case 'schema-inline':
-        return type.model.entitySchema.toInlineSchemaString();
+        return type['model'].entitySchema.toInlineSchemaString();
       case 'schema-collection':
         return `[${Schema._typeString(type.schema)}]`;
       case 'schema-ordered-list':
@@ -146,7 +148,7 @@ export class Schema {
       case 'schema-nested':
         return `inline ${Schema._typeString(type.schema)}`;
       default:
-        throw new Error(`Unknown type kind ${type.kind} in schema ${this.name}`);
+        throw new Error(`Unknown type kind ${type['kind']} in schema ${this.name}`);
     }
   }
 
