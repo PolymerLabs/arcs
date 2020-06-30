@@ -1833,9 +1833,13 @@ export class NumberFraction {
     } else if (expr instanceof UnaryExpression) {
       const fn = NumberFraction.fromExpression(expr.expr);
       return NumberFraction.updateGivenOp(expr.operator.op, [fn]);
-    } else if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.NUMBER) {
-      const term = new BigIntTerm({[expr.value]: BigInt(1)});
-      return new NumberFraction(new NumberMultinomial({[term.toKey()]: 1}));
+    } else if (expr instanceof FieldNamePrimitive) {
+      if (expr.evalType === Primitive.NUMBER) {
+        const term = new NumberTerm({[expr.value]: 1});
+        return new NumberFraction(new NumberMultinomial({[term.toKey()]: 1}));
+      } else {
+        throw new Error(`Cannot model expression as BigIntFraction: ${expr.toString()}, wrong type: ${expr.evalType}`);
+      }
     } else if (expr instanceof NumberPrimitive) {
       return new NumberFraction(new NumberMultinomial({[CONSTANT]: expr.value}));
     }
@@ -1922,9 +1926,13 @@ export class BigIntFraction {
     } else if (expr instanceof UnaryExpression) {
       const fn = BigIntFraction.fromExpression(expr.expr);
       return BigIntFraction.updateGivenOp(expr.operator.op, [fn]);
-    } else if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.BIGINT) {
-      const term = new BigIntTerm({[expr.value]: BigInt(1)});
-      return new BigIntFraction(new BigIntMultinomial({[term.toKey()]: BigInt(1)}));
+    } else if (expr instanceof FieldNamePrimitive) {
+      if (expr.evalType === Primitive.BIGINT) {
+        const term = new BigIntTerm({[expr.value]: BigInt(1)});
+        return new BigIntFraction(new BigIntMultinomial({[term.toKey()]: BigInt(1)}));
+      } else {
+        throw new Error(`Cannot model expression as BigIntFraction: ${expr.toString()}, wrong type: ${expr.evalType}`);
+      }
     } else if (expr instanceof BigIntPrimitive) {
       return new BigIntFraction(new BigIntMultinomial({[CONSTANT]: expr.value}));
     }
@@ -2349,14 +2357,14 @@ export class BigIntMultinomial {
       const operator = new RefinementOperator(op);
       const indeterminate = this.getIndeterminates().values().next().value;
       // TODO(ragdev): Implement a neater way to get the leading coefficient
-      const leadingCoeff: bigint = this.terms[`{"${indeterminate}":1}`];
+      const leadingCoeff: bigint = this.terms[`{"${indeterminate}":"1"}`];
       const cnst: bigint = this.terms[CONSTANT] || BigInt(0);
-      if (leadingCoeff < 0) {
+      if (leadingCoeff < BigInt(0)) {
         operator.flip();
       }
-      const scaledCnst = cnst/leadingCoeff;
+      const scaledCnst: bigint = cnst/leadingCoeff;
       return new BinaryExpression(
-        new FieldNamePrimitive(indeterminate, Primitive.NUMBER),
+        new FieldNamePrimitive(indeterminate, Primitive.BIGINT),
         new BigIntPrimitive(-scaledCnst),
         operator);
     }
