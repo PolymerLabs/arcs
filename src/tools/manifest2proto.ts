@@ -235,9 +235,7 @@ async function recipeToProtoPayload(recipe: Recipe) {
     // all handle types are constrained type variables. We force these type variables
     // to their resolution by called maybeEnsureResolved(), so that handle types
     // are encoded with concrete types, instead of variables.
-    if (h.type) {
-      h.type.maybeEnsureResolved();
-    }
+    h.type.maybeEnsureResolved();
     handleToProtoPayload.set(h, await recipeHandleToProtoPayload(h));
   }
 
@@ -289,7 +287,6 @@ async function recipeHandleToProtoPayload(handle: Handle) {
 }
 
 export async function typeToProtoPayload(type: Type) {
-  if (!type) return {};
   if (type.hasVariable && type.isResolved()) {
     // We encode the resolution of the resolved type variables directly.
     // This allows us to encode handle types and connection types directly

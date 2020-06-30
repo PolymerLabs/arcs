@@ -15,7 +15,6 @@ import {fs} from '../../platform/fs-web.js';
 import {ManifestProto, TypeProto} from '../manifest-proto.js';
 import {Loader} from '../../platform/loader.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
-import {flatMap} from '../../runtime/util.js';
 
 describe('manifest2proto', () => {
 
@@ -28,6 +27,18 @@ describe('manifest2proto', () => {
   }
   async function toProtoAndBackType(type: Type) {
     return TypeProto.fromObject(await typeToProtoPayload(type)).toJSON();
+  }
+
+  // Clear the type so that the test is more readable.
+  function clearTypesForTests(recipe) {
+    for (const handle of recipe.handles) {
+      delete handle.type;
+    }
+    for (const particle of recipe.particles) {
+      for (const connection of particle.connections) {
+        delete connection.type;
+      }
+    }
   }
 
   it('encodes a recipe with use, map, create handles, ids and tags', async () => {
@@ -51,15 +62,8 @@ describe('manifest2proto', () => {
     assert.deepEqual(recipe.handles[1].type.entity.schema.names, ['Y']);
     assert.deepEqual(recipe.handles[2].type.entity.schema.names, ['Z']);
 
-    // Clear the type so that the test is more readable. Tests for types encoding below.
-    for (const handle of recipe.handles) {
-      delete handle.type;
-    }
-    for (const particle of recipe.particles) {
-      for (const connection of particle.connections) {
-        delete connection.type;
-      }
-    }
+    clearTypesForTests(recipe);
+
     assert.deepStrictEqual(recipe, {
       handles: [{
         fate: 'USE',
@@ -78,13 +82,13 @@ describe('manifest2proto', () => {
         specName: 'Abc',
         connections: [{
           handle: 'handle0',
-          name: 'a',
+          name: 'a'
         }, {
           handle: 'handle1',
-          name: 'b',
+          name: 'b'
         }, {
           handle: 'handle2',
-          name: 'c',
+          name: 'c'
         }]
       }]
     });
@@ -109,15 +113,8 @@ describe('manifest2proto', () => {
     `);
     const recipe = (await toProtoAndBack(manifest)).recipes[0];
 
-    // Clear the type so that the test is more readable. Tests for types encoding below.
-    for (const handle of recipe.handles) {
-      delete handle.type;
-    }
-    for (const particle of recipe.particles) {
-      for (const connection of particle.connections) {
-        delete connection.type;
-      }
-    }
+    clearTypesForTests(recipe);
+
     assert.deepStrictEqual(recipe, {
       handles: [{
         fate: 'JOIN',
@@ -193,7 +190,7 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(connections.map(hc => hc.direction), ['READS', 'WRITES', 'READS_WRITES']);
   });
 
-  it('encodes concrete particle instance types', async () => {
+  it('encodes particle instance handle connection concrete types', async () => {
     const manifest = await Manifest.parse(`
       particle Abc in 'a/b/c.js'
         a: reads X {a: Text}
@@ -252,11 +249,11 @@ describe('manifest2proto', () => {
         first: writes [Foo {a: Text, b: Text}]
         second: writes [Bar {a: Text, c: Text}]
       particle Reader1
-        first: reads [~f with Foo {a: Text, b: Text, c: Text}]
+        first: reads [~f with {a: Text}]
         second: reads [{}]
       particle Reader2
         first: reads [Foo {}]
-        second: reads [~b with Bar {a: Text, b: Text, c: Text}]
+        second: reads [~b]
       
       recipe
         h0: create 
@@ -278,11 +275,48 @@ describe('manifest2proto', () => {
 
     assert.deepStrictEqual(particles, [
       {
+        specName: 'Reader1',
+        connections: [
+          {
+            name: 'first',
+            handle: 'handle0',
+            type: {collection: {collectionType: {entity: {schema: {
+              names: ['Foo'],
+              fields: {a: {primitive: 'TEXT'}},
+              hash: 'f1ad402186d86434f807bf3f9281551ead306aa8',
+            }}}}}
+          },
+          {
+            name: 'second',
+            handle: 'handle1',
+            type: {collection: {collectionType: {entity: {schema: {hash: '42099b4af021e53fd8fd4e056c2568d7c2e3ffa8'}}}}}
+          },
+        ]
+      },
+      {
+        specName: 'Reader2',
+        connections: [
+          {
+            name: 'first',
+            handle: 'handle0',
+            type: {collection: {collectionType: {entity: {schema: {
+              names: ['Foo'],
+              hash: 'ec8cd58dd81749ef65d1fd4f322d666d414e9a1c'
+            }}}}}
+          },
+          {
+            name: 'second',
+            handle: 'handle1',
+            type: {collection: {collectionType: {entity: {schema: {hash: '42099b4af021e53fd8fd4e056c2568d7c2e3ffa8'}}}}}
+          },
+        ]
+      },
+      {
         specName: 'Writer1',
         connections: [
           {
             name: 'first',
-            handle: 'h0',
+            handle: 'handle0',
             type: {collection: {collectionType: {entity: {schema: {
               names: ['Foo'],
               fields: {a: {primitive: 'TEXT'}, c: {primitive: 'TEXT'}},
@@ -291,7 +325,7 @@ describe('manifest2proto', () => {
           },
           {
             name: 'second',
-            handle: 'h1',
+            handle: 'handle1',
             type: {collection: {collectionType: {entity: {schema: {
               names: ['Bar'],
               fields: {a: {primitive: 'TEXT'}, b: {primitive: 'TEXT'}},
@@ -305,7 +339,7 @@ describe('manifest2proto', () => {
         connections: [
           {
             name: 'first',
-            handle: 'h0',
+            handle: 'handle0',
             type: {collection: {collectionType: {entity: {schema: {
               names: ['Foo'],
               fields: {a: {primitive: 'TEXT'}, b: {primitive: 'TEXT'}},
@@ -314,7 +348,7 @@ describe('manifest2proto', () => {
           },
           {
             name: 'second',
-            handle: 'h1',
+            handle: 'handle1',
             type: {collection: {collectionType: {entity: {schema: {
               names: ['Bar'],
               fields: {a: {primitive: 'TEXT'}, c: {primitive: 'TEXT'}},
@@ -323,54 +357,6 @@ describe('manifest2proto', () => {
           },
         ]
       },
-      {
-        specName: 'Reader1',
-        connections: [
-          {
-            name: 'first',
-            handle: 'h0',
-            type: {collection: {collectionType: {variable: {
-              name: 'f',
-              constraint: {constraintType: {entity: {schema: {
-                names: ['Foo'],
-                fields: {a: {primitive: 'TEXT'}},
-                hash: 'f1ad402186d86434f807bf3f9281551ead306aa8',
-              }}}}
-            }}}}
-          },
-          {
-            name: 'second',
-            handle: 'h1',
-            type: {collection: {collectionType: {entity: {schema: {hash: '42099b4af021e53fd8fd4e056c2568d7c2e3ffa8'}}}}}
-          },
-        ]
-      },
-      {
-        specName: 'Reader2',
-        connections: [
-          {
-            name: 'first',
-            handle: 'h0',
-            type: {collection: {collectionType: {entity: {schema: {
-              names: ['Foo'],
-              hash: 'ec8cd58dd81749ef65d1fd4f322d666d414e9a1c'
-            }}}}}
-          },
-          {
-            name: 'second',
-            handle: 'h1',
-            type: {collection: {collectionType: {
-              variable: {
-                name: 'b',
-                constraint: {constraintType: {entity: {schema: {
-                  names: ['Bar'],
-                  fields: {a: {primitive: 'TEXT'}},
-                  hash: '6a170633d80c84f3fe3b380f9eb4bfcd6fa895cc',
-                }}}},
-            }}}}
-          },
-        ]
-      }
     ]);
   });
 
