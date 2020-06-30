@@ -1,15 +1,17 @@
 package arcs.core.analysis
 
+import arcs.core.data.AccessPath
 import arcs.core.data.Annotation
+import arcs.core.data.Check
+import arcs.core.data.Claim
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
+import arcs.core.data.InformationFlowLabel
 import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe
 import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
-import org.junit.Assert.assertTrue
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -203,6 +205,29 @@ class RecipeGraphTest {
     fun graphContainsAllConnections() {
         setOf(TestRecipe(queryMode = false), TestRecipe(queryMode = true)).forEach {
             testAllConnections(it)
+        }
+    }
+
+    @Test
+    fun particleNodes() {
+        with (TestRecipe()) {
+            val graph = RecipeGraph(recipe)
+            assertThat(graph.particleNodes.map { it.particle }).containsExactly(
+                readerParticle,
+                writerParticle
+            )
+        }
+    }
+
+    @Test
+    fun handleNodes() {
+        with (TestRecipe()) {
+            val graph = RecipeGraph(recipe)
+            assertThat(graph.handleNodes.map { it.handle }).containsExactly(
+                thingHandle,
+                someHandle,
+                joinedHandle
+            )
         }
     }
 }
