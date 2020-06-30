@@ -58,8 +58,9 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
     throw new Error(`Unhandled BuiltInNode '${expr.value}' in toKTExpression`);
   }
   visitBigIntPrimitive(expr: BigIntPrimitive): string {
-    // This assumes that the associated Kotlin type will be `Java.math.BigInteger`.
-    return expr.value.toString();
+    // This assumes that the associated Kotlin type will be `Java.math.BigInteger` and constructs
+    // the BigInteger via String as there is no support for a literal form.
+    return `BigInteger("${expr.value}")`;
   }
   visitNumberPrimitive(expr: NumberPrimitive): string {
     // This assumes that the associated Kotlin type will be `double`.
