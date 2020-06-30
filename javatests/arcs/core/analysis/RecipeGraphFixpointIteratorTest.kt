@@ -16,18 +16,12 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/** Returns the name of the underlying handle or particle. */
-fun RecipeGraph.Node.getName() = when (this) {
-    is RecipeGraph.Node.Particle -> "p:${particle.spec.name}"
-    is RecipeGraph.Node.Handle -> "h:${handle.name}"
-}
-
 /** A simple Fixpoint iterator for the purposes of testing. */
 class TestAnalyzer(
     val startNames: Set<String>
 ) : RecipeGraphFixpointIterator<AbstractSet<String>>(AbstractSet.getBottom<String>()) {
     override fun getInitialValues(graph: RecipeGraph) = graph.nodes.filter {
-        startNames.contains(it.getName())
+        startNames.contains(it.debugName)
     }.associateWith {
         AbstractSet<String>(setOf())
     }
