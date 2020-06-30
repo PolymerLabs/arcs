@@ -29,6 +29,18 @@ describe('manifest2proto', () => {
     return TypeProto.fromObject(await typeToProtoPayload(type)).toJSON();
   }
 
+  // Clear the type so that the test is more readable.
+  function clearTypesForTests(recipe) {
+    for (const handle of recipe.handles) {
+      delete handle.type;
+    }
+    for (const particle of recipe.particles) {
+      for (const connection of particle.connections) {
+        delete connection.type;
+      }
+    }
+  }
+
   it('encodes a recipe with use, map, create handles, ids and tags', async () => {
     const manifest = await Manifest.parse(`
       particle Abc in 'a/b/c.js'
@@ -50,10 +62,8 @@ describe('manifest2proto', () => {
     assert.deepEqual(recipe.handles[1].type.entity.schema.names, ['Y']);
     assert.deepEqual(recipe.handles[2].type.entity.schema.names, ['Z']);
 
-    // Clear the type so that the test is more readable. Tests for types encoding below.
-    for (const handle of recipe.handles) {
-      delete handle.type;
-    }
+    clearTypesForTests(recipe);
+
     assert.deepStrictEqual(recipe, {
       handles: [{
         fate: 'USE',
@@ -103,10 +113,8 @@ describe('manifest2proto', () => {
     `);
     const recipe = (await toProtoAndBack(manifest)).recipes[0];
 
-    // Clear the type so that the test is more readable. Tests for types encoding below.
-    for (const handle of recipe.handles) {
-      delete handle.type;
-    }
+    clearTypesForTests(recipe);
+
     assert.deepStrictEqual(recipe, {
       handles: [{
         fate: 'JOIN',
@@ -180,6 +188,176 @@ describe('manifest2proto', () => {
     `);
     const connections = (await toProtoAndBack(manifest)).particleSpecs[0].connections;
     assert.deepStrictEqual(connections.map(hc => hc.direction), ['READS', 'WRITES', 'READS_WRITES']);
+  });
+
+  it('encodes particle instance handle connection concrete types', async () => {
+    const manifest = await Manifest.parse(`
+      particle Abc in 'a/b/c.js'
+        a: reads X {a: Text}
+        b: reads Y {b: Number}
+        c: writes Z {c: Boolean}
+
+      recipe
+        a: use #tag1 #tag2
+        b: map 'by-id'
+        c: create @persistent
+        Abc
+          a: a
+          b: b
+          c: c
+    `);
+    const connections = (await toProtoAndBack(manifest)).recipes[0].particles[0].connections;
+
+    assert.deepStrictEqual(connections, [
+      {
+        handle: 'handle0',
+        name: 'a',
+        type: {entity: {schema: {
+          names: ['X'],
+          fields: {a: {primitive: 'TEXT'}},
+          hash: 'eb8597be8b72862d5580f567ab563cefe192508d',
+        }}}
+      },
+      {
+        handle: 'handle1',
+        name: 'b',
+        type: {entity: {schema: {
+          names: ['Y'],
+          fields: {b: {primitive: 'NUMBER'}},
+          hash: '19caf7b30005cfd9b03c7f96ae526dc49995105f',
+        }}},
+      },
+      {
+        handle: 'handle2',
+        name: 'c',
+        type: {entity: {schema: {
+          names: ['Z'],
+          fields: {c: {primitive: 'BOOLEAN'}},
+          hash: 'e1ad5776554cda0ee2aad4c45dc0afda2ffc56b9',
+        }}},
+      }
+    ]);
+  });
+
+
+  it('encodes variable particle instance types', async () => {
+    const manifest = await Manifest.parse(`
+      particle Writer1
+        first: writes [Foo {a: Text, c: Text}]
+        second: writes [Bar {a: Text, b: Text}]
+      particle Writer2
+        first: writes [Foo {a: Text, b: Text}]
+        second: writes [Bar {a: Text, c: Text}]
+      particle Reader1
+        first: reads [~f with {a: Text}]
+        second: reads [{}]
+      particle Reader2
+        first: reads [Foo {}]
+        second: reads [~b]
+      
+      recipe
+        h0: create 
+        h2: create 
+        Writer1
+          first: h0
+          second: h1
+        Writer2
+          first: h0
+          second: h1
+        Reader1
+          first: h0
+          second: h1
+        Reader2
+          first: h0
+          second: h1
+    `);
+    const particles = (await toProtoAndBack(manifest)).recipes[0].particles;
+
+    assert.deepStrictEqual(particles, [
+      {
+        specName: 'Reader1',
+        connections: [
+          {
+            name: 'first',
+            handle: 'handle0',
+            type: {collection: {collectionType: {entity: {schema: {
+              names: ['Foo'],
+              fields: {a: {primitive: 'TEXT'}},
+              hash: 'f1ad402186d86434f807bf3f9281551ead306aa8',
+            }}}}}
+          },
+          {
+            name: 'second',
+            handle: 'handle1',
+            type: {collection: {collectionType: {entity: {schema: {hash: '42099b4af021e53fd8fd4e056c2568d7c2e3ffa8'}}}}}
+          },
+        ]
+      },
+      {
+        specName: 'Reader2',
+        connections: [
+          {
+            name: 'first',
+            handle: 'handle0',
+            type: {collection: {collectionType: {entity: {schema: {
+              names: ['Foo'],
+              hash: 'ec8cd58dd81749ef65d1fd4f322d666d414e9a1c'
+            }}}}}
+          },
+          {
+            name: 'second',
+            handle: 'handle1',
+            type: {collection: {collectionType: {entity: {schema: {hash: '42099b4af021e53fd8fd4e056c2568d7c2e3ffa8'}}}}}
+          },
+        ]
+      },
+      {
+        specName: 'Writer1',
+        connections: [
+          {
+            name: 'first',
+            handle: 'handle0',
+            type: {collection: {collectionType: {entity: {schema: {
+              names: ['Foo'],
+              fields: {a: {primitive: 'TEXT'}, c: {primitive: 'TEXT'}},
+              hash: '08266b26520a746b944249ce1a6f3375e7480178'
+            }}}}}
+          },
+          {
+            name: 'second',
+            handle: 'handle1',
+            type: {collection: {collectionType: {entity: {schema: {
+              names: ['Bar'],
+              fields: {a: {primitive: 'TEXT'}, b: {primitive: 'TEXT'}},
+              hash: 'cb189f1044b3f59bf13928fe759f5d72b5913c75'
+            }}}}}
+          },
+        ]
+      },
+      {
+        specName: 'Writer2',
+        connections: [
+          {
+            name: 'first',
+            handle: 'handle0',
+            type: {collection: {collectionType: {entity: {schema: {
+              names: ['Foo'],
+              fields: {a: {primitive: 'TEXT'}, b: {primitive: 'TEXT'}},
+              hash: 'c99bd43b5f6e012613062feb5152d073f2e8155d'
+            }}}}}
+          },
+          {
+            name: 'second',
+            handle: 'handle1',
+            type: {collection: {collectionType: {entity: {schema: {
+              names: ['Bar'],
+              fields: {a: {primitive: 'TEXT'}, c: {primitive: 'TEXT'}},
+              hash: '68dc41439853353b2238470a84bdc2e9545838d8'
+            }}}}}
+          },
+        ]
+      },
+    ]);
   });
 
   it('encodes entity type', async () => {
