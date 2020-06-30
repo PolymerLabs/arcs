@@ -230,40 +230,4 @@ class RecipeGraphTest {
             )
         }
     }
-
-    @Test
-    fun particleNode_claimsAreMutable() {
-        with (TestRecipe()) {
-            val node = RecipeGraph.Node.Particle(readerParticle)
-            assertThat(node.claims).isEmpty()
-            val selector = listOf(AccessPath.Selector.Field("bar"))
-            val claim = Claim.Assume(
-                AccessPath("r", readConnectionSpec, selector),
-                InformationFlowLabel.Predicate.Label(
-                    InformationFlowLabel.SemanticTag("packageName")
-                )
-            )
-
-            node.claims.add(claim)
-            assertThat(node.claims).containsExactly(claim)
-        }
-    }
-
-    @Test
-    fun particleNode_checksAreMutable() {
-        with (TestRecipe()) {
-            val node = RecipeGraph.Node.Particle(readerParticle)
-            assertThat(node.checks).isEmpty()
-            val selector = listOf(AccessPath.Selector.Field("bar"))
-            val check = Check.Assert(
-                AccessPath("r", readConnectionSpec, selector),
-                InformationFlowLabel.Predicate.Label(
-                    InformationFlowLabel.SemanticTag("packageName")
-                )
-            )
-
-            node.checks.add(check)
-            assertThat(node.checks).containsExactly(check)
-        }
-    }
 }
