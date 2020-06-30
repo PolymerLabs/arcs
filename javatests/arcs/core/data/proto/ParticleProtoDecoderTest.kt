@@ -126,7 +126,7 @@ class ParticleProtoDecoderTest {
         }
         assertThat(exception)
             .hasMessageThat()
-            .contains("HandleConnection type not found when decoding ParticleProto 'Reader'.")
+            .contains("Unknown data field in TypeProto.")
     }
 
     @Test
