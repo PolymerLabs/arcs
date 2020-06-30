@@ -120,7 +120,8 @@ class RecipeTest {
                 handleConnections = listOf(
                     Recipe.Particle.HandleConnection(
                         spec = requireNotNull(spec.connections["data"]),
-                        handle = handle
+                        handle = handle,
+                        type = contactCollectionType
                     )
                 )
             ).toPlanParticle()
@@ -232,11 +233,13 @@ class RecipeTest {
                         handleConnections = listOf(
                             Recipe.Particle.HandleConnection(
                                 spec = requireNotNull(convertToContactsSpec.connections["input"]),
-                                handle = peopleHandle
+                                handle = peopleHandle,
+                                type = personCollectionType
                             ),
                             Recipe.Particle.HandleConnection(
                                 spec = requireNotNull(convertToContactsSpec.connections["output"]),
-                                handle = contactsHandle
+                                handle = contactsHandle,
+                                type = contactCollectionType
                             )
                         )
                     ),
@@ -245,7 +248,8 @@ class RecipeTest {
                         handleConnections = listOf(
                             Recipe.Particle.HandleConnection(
                                 spec = requireNotNull(egressContactsSpec.connections["data"]),
-                                handle = contactsHandle
+                                handle = contactsHandle,
+                                type = contactCollectionType
                             )
                         )
                     )

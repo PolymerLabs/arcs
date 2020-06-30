@@ -1,15 +1,17 @@
 package arcs.core.analysis
 
 import arcs.core.data.Annotation
+import arcs.core.data.EntityType
+import arcs.core.data.FieldType
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe
+import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
 import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.Truth.assertWithMessage
-import org.junit.Assert.assertTrue
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -68,7 +70,17 @@ class TestAnalyzer(
 @RunWith(JUnit4::class)
 class RecipeGraphFixpointIteratorTest {
     private val thing = Recipe.Handle("thing", Recipe.Handle.Fate.CREATE, TypeVariable("thing"))
+    private val thingType = EntityType(Schema(
+        names = setOf(SchemaName("Thing")),
+        fields = SchemaFields(singletons = mapOf("name" to FieldType.Text), collections = emptyMap()),
+        hash = ""
+    ))
     private val name = Recipe.Handle("name", Recipe.Handle.Fate.CREATE, TypeVariable("name"))
+    private val nameType = EntityType(Schema(
+        names = setOf(SchemaName("Name")),
+        fields = SchemaFields(singletons = mapOf("fullname" to FieldType.Text), collections = emptyMap()),
+        hash = ""
+    ))
     private val readConnection = HandleConnectionSpec("r", HandleMode.Read, TypeVariable("r"))
     private val writeConnection = HandleConnectionSpec("w", HandleMode.Write, TypeVariable("w"))
     private val readerSpec = ParticleSpec(
@@ -88,15 +100,15 @@ class RecipeGraphFixpointIteratorTest {
     )
     private val readerParticle = Recipe.Particle(
         readerSpec,
-        listOf(Recipe.Particle.HandleConnection(readConnection, thing))
+        listOf(Recipe.Particle.HandleConnection(readConnection, thing, thingType))
     )
     private val writerParticle = Recipe.Particle(
         writerSpec,
-        listOf(Recipe.Particle.HandleConnection(writeConnection, thing))
+        listOf(Recipe.Particle.HandleConnection(writeConnection, thing, nameType))
     )
     private val anotherWriterParticle = Recipe.Particle(
         anotherWriterSpec,
-        listOf(Recipe.Particle.HandleConnection(writeConnection, thing))
+        listOf(Recipe.Particle.HandleConnection(writeConnection, thing, thingType))
     )
 
     private fun createGraph(
@@ -224,8 +236,8 @@ class RecipeGraphFixpointIteratorTest {
         val recognizerParticle = Recipe.Particle(
             recognizerSpec,
             listOf(
-                Recipe.Particle.HandleConnection(writeConnection, name),
-                Recipe.Particle.HandleConnection(readConnection, thing)
+                Recipe.Particle.HandleConnection(writeConnection, name, nameType),
+                Recipe.Particle.HandleConnection(readConnection, thing, thingType)
             )
         )
         val taggerSpec = ParticleSpec(
@@ -236,8 +248,8 @@ class RecipeGraphFixpointIteratorTest {
         val taggerParticle = Recipe.Particle(
             taggerSpec,
             listOf(
-                Recipe.Particle.HandleConnection(writeConnection, thing),
-                Recipe.Particle.HandleConnection(readConnection, name)
+                Recipe.Particle.HandleConnection(writeConnection, thing, thingType),
+                Recipe.Particle.HandleConnection(readConnection, name, nameType)
             )
         )
         val graph = createGraph(
@@ -289,7 +301,7 @@ class RecipeGraphFixpointIteratorTest {
         )
         val joinReaderParticle = Recipe.Particle(
             readerSpec,
-            listOf(Recipe.Particle.HandleConnection(readConnection, joined))
+            listOf(Recipe.Particle.HandleConnection(readConnection, joined, thingType))
         )
         val graph = createGraph(
             name = "JoinHandles",
