@@ -1249,6 +1249,10 @@ export class BigIntRange {
     this.type = type;
   }
 
+  segmentsForTesting(): {from: Boundary<BigIntValue>, to: Boundary<BigIntValue>}[] {
+    return this.segments;
+  }
+
   static universal(type: Primitive): BigIntRange {
     if (type === Primitive.BOOLEAN) {
       // TODO: Support long, int etc.
