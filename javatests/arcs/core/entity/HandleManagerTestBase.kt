@@ -12,7 +12,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
-import arcs.core.data.Ttl
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
@@ -1084,7 +1084,7 @@ open class HandleManagerTestBase {
     private suspend fun EntityHandleManager.createSingletonHandle(
         storageKey: StorageKey = singletonKey,
         name: String = "singletonWriteHandle",
-        ttl: Ttl = Ttl.Infinite
+        ttl: Ttl = Ttl.Infinite()
     ) = createHandle(
         HandleSpec(
             name,
@@ -1099,13 +1099,13 @@ open class HandleManagerTestBase {
     private suspend fun EntityHandleManager.createCollectionHandle(
         storageKey: StorageKey = collectionKey,
         name: String = "collectionReadHandle",
-        ttl: Ttl = Ttl.Infinite
+        ttl: Ttl = Ttl.Infinite()
     ) = createCollectionHandle(storageKey, name, ttl, Person)
 
     private suspend fun <T : Entity> EntityHandleManager.createCollectionHandle(
         storageKey: StorageKey = collectionKey,
         name: String = "collectionReadHandle",
-        ttl: Ttl = Ttl.Infinite,
+        ttl: Ttl = Ttl.Infinite(),
         entitySpec: EntitySpec<T>
     ) = createHandle(
         HandleSpec(
@@ -1121,7 +1121,7 @@ open class HandleManagerTestBase {
     private suspend fun EntityHandleManager.createReferenceSingletonHandle(
         storageKey: StorageKey = singletonRefKey,
         name: String = "referenceSingletonWriteHandle",
-        ttl: Ttl = Ttl.Infinite
+        ttl: Ttl = Ttl.Infinite()
     ) = createHandle(
         HandleSpec(
             name,
@@ -1136,7 +1136,7 @@ open class HandleManagerTestBase {
     private suspend fun EntityHandleManager.createReferenceCollectionHandle(
         storageKey: StorageKey = collectionRefKey,
         name: String = "referenceCollectionReadHandle",
-        ttl: Ttl = Ttl.Infinite
+        ttl: Ttl = Ttl.Infinite()
     ) = createHandle(
         HandleSpec(
             name,
@@ -1194,7 +1194,7 @@ open class HandleManagerTestBase {
             ttl: Ttl
         ) {
             creationTimestamp = time.currentTimeMillis
-            if (ttl != Ttl.Infinite) {
+            if (ttl != Ttl.Infinite()) {
                 expirationTimestamp = ttl.calculateExpiration(time)
             }
         }

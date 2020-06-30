@@ -7,7 +7,7 @@ import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
-import arcs.core.data.Ttl
+import arcs.core.data.Capability.Ttl
 import arcs.core.entity.DummyEntity
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle

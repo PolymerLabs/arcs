@@ -12,6 +12,7 @@ package arcs.core.host
 
 import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
+import arcs.core.data.Capability.Shareable
 import arcs.core.data.Plan
 import arcs.core.entity.Entity
 import arcs.core.entity.Handle
@@ -494,7 +495,7 @@ abstract class AbstractArcHost(
      */
     abstract val platformTime: Time
 
-    open val arcHostContextCapability = Capabilities.TiedToRuntime
+    open val arcHostContextCapability = Capabilities(Shareable(true))
 
     override suspend fun isHostForParticle(particle: Plan.Particle) =
         registeredParticles().contains(ParticleIdentifier.from(particle.location))

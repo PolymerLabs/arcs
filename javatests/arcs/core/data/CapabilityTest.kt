@@ -11,11 +11,11 @@
 
 package arcs.core.data
 
-import arcs.core.data.CapabilityNew.Persistence
-import arcs.core.data.CapabilityNew.Encryption
-import arcs.core.data.CapabilityNew.Queryable
-import arcs.core.data.CapabilityNew.Shareable
-import arcs.core.data.CapabilityNew.Range
+import arcs.core.data.Capability.Persistence
+import arcs.core.data.Capability.Encryption
+import arcs.core.data.Capability.Queryable
+import arcs.core.data.Capability.Shareable
+import arcs.core.data.Capability.Range
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,7 +24,7 @@ import kotlin.test.assertFailsWith
 
 
 @RunWith(JUnit4::class)
-class CapabilityNewTest {
+class CapabilityTest {
     @Test
     fun capability_persistence_isEquivalent() {
         assertThat(Persistence.UNRESTRICTED.isEquivalent(Persistence.UNRESTRICTED)).isTrue()
@@ -53,8 +53,8 @@ class CapabilityNewTest {
 
     @Test
     fun capability_ttl_compare() {
-        val ttl3Days = CapabilityNew.Ttl.Days(3)
-        val ttl10Hours = CapabilityNew.Ttl.Hours(10)
+        val ttl3Days = Capability.Ttl.Days(3)
+        val ttl10Hours = Capability.Ttl.Hours(10)
 
         assertThat(ttl3Days.isEquivalent(ttl3Days)).isTrue()
         assertThat(ttl3Days.isEquivalent(ttl10Hours)).isFalse()
@@ -64,9 +64,9 @@ class CapabilityNewTest {
         assertThat(ttl3Days.isSameOrStricter(ttl10Hours)).isFalse()
         assertThat(ttl3Days.isEquivalent(ttl10Hours)).isFalse()
         assertThat(ttl10Hours.isStricter(ttl3Days)).isTrue()
-        assertThat(ttl10Hours.isEquivalent(CapabilityNew.Ttl.Minutes(600))).isTrue()
+        assertThat(ttl10Hours.isEquivalent(Capability.Ttl.Minutes(600))).isTrue()
     
-        val ttlInfinite = CapabilityNew.Ttl.Infinite()
+        val ttlInfinite = Capability.Ttl.Infinite()
         assertThat(ttlInfinite.isEquivalent(ttlInfinite)).isTrue()
         assertThat(ttlInfinite.isSameOrLessStrict(ttlInfinite)).isTrue()
         assertThat(ttlInfinite.isSameOrStricter(ttlInfinite)).isTrue()
@@ -142,42 +142,42 @@ class CapabilityNewTest {
 
     @Test
     fun capabilityRange_ttl_isEquivalent() {
-        assertThat(CapabilityNew.Ttl.ANY.isEquivalent(CapabilityNew.Ttl.ANY)).isTrue()
-        assertThat(CapabilityNew.Ttl.ANY.isEquivalent(CapabilityNew.Ttl.Infinite())).isFalse()
-        assertThat(CapabilityNew.Ttl.Infinite().toRange().isEquivalent(CapabilityNew.Ttl.Infinite())).isTrue()
+        assertThat(Capability.Ttl.ANY.isEquivalent(Capability.Ttl.ANY)).isTrue()
+        assertThat(Capability.Ttl.ANY.isEquivalent(Capability.Ttl.Infinite())).isFalse()
+        assertThat(Capability.Ttl.Infinite().toRange().isEquivalent(Capability.Ttl.Infinite())).isTrue()
     }
 
     @Test
     fun capabilityRange_ttl_contains() {
         assertThat(
-            Range(CapabilityNew.Ttl.Hours(10), CapabilityNew.Ttl.Hours(3)).contains(
-                Range(CapabilityNew.Ttl.Hours(10), CapabilityNew.Ttl.Hours(3))
+            Range(Capability.Ttl.Hours(10), Capability.Ttl.Hours(3)).contains(
+                Range(Capability.Ttl.Hours(10), Capability.Ttl.Hours(3))
             )
         ).isTrue()
         assertThat(
-            Range(CapabilityNew.Ttl.Hours(10), CapabilityNew.Ttl.Hours(3)).contains(
-                Range(CapabilityNew.Ttl.Hours(8), CapabilityNew.Ttl.Hours(6))
+            Range(Capability.Ttl.Hours(10), Capability.Ttl.Hours(3)).contains(
+                Range(Capability.Ttl.Hours(8), Capability.Ttl.Hours(6))
             )
         ).isTrue()
         assertThat(
-            Range(CapabilityNew.Ttl.Hours(10), CapabilityNew.Ttl.Hours(3)).contains(
-                Range(CapabilityNew.Ttl.Hours(8), CapabilityNew.Ttl.Hours(2))
+            Range(Capability.Ttl.Hours(10), Capability.Ttl.Hours(3)).contains(
+                Range(Capability.Ttl.Hours(8), Capability.Ttl.Hours(2))
             )
         ).isFalse()
         assertThat(
-            Range(CapabilityNew.Ttl.Infinite(), CapabilityNew.Ttl.Hours(3)).contains(
-                Range(CapabilityNew.Ttl.Hours(8), CapabilityNew.Ttl.Hours(3))
+            Range(Capability.Ttl.Infinite(), Capability.Ttl.Hours(3)).contains(
+                Range(Capability.Ttl.Hours(8), Capability.Ttl.Hours(3))
             )
         ).isTrue()
-        assertThat(CapabilityNew.Ttl.ANY.contains(CapabilityNew.Ttl.Infinite())).isTrue()
+        assertThat(Capability.Ttl.ANY.contains(Capability.Ttl.Infinite())).isTrue()
         assertThat(
-            CapabilityNew.Ttl.ANY.contains(
-                Range(CapabilityNew.Ttl.Infinite(), CapabilityNew.Ttl.Hours(3))
+            Capability.Ttl.ANY.contains(
+                Range(Capability.Ttl.Infinite(), Capability.Ttl.Hours(3))
             )
         ).isTrue()
         assertThat(
-            CapabilityNew.Ttl.ANY.contains(
-                Range(CapabilityNew.Ttl.Hours(3), CapabilityNew.Ttl.ZERO)
+            Capability.Ttl.ANY.contains(
+                Range(Capability.Ttl.Hours(3), Capability.Ttl.ZERO)
             )
         ).isTrue()
     }

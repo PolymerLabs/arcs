@@ -15,7 +15,6 @@ import arcs.core.common.ArcId
 import arcs.core.data.CreatableStorageKey
 import arcs.core.entity.SchemaRegistry
 import arcs.core.storage.CapabilitiesResolver
-import arcs.core.storage.CapabilitiesResolverNew
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.database.DatabaseManager
@@ -61,7 +60,6 @@ object DriverAndKeyConfigurator {
         // Start fresh.
         StorageKeyParser.reset()
         CapabilitiesResolver.reset()
-        CapabilitiesResolverNew.reset()
 
         VolatileStorageKey.registerParser()
         VolatileStorageKey.registerKeyCreator()
