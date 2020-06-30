@@ -110,10 +110,12 @@ class RecipeTest {
             name = "ParticleName",
             location = "com.Particle",
             connections = listOf(
-                HandleConnectionSpec("data", HandleMode.Read, contactCollectionType)
+                HandleConnectionSpec("data", HandleMode.Read, personCollectionType)
             ).associateBy { it.name }
         )
 
+        // Given that the ParticleSpec type is different from the HandleConnection instance type,
+        // prefer the HandleConnection instance type for the translation.
         assertThat(
             Recipe.Particle(
                 spec = spec,
