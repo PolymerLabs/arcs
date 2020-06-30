@@ -61,7 +61,7 @@ class JvmSchedulerProvider(
                     val thread = threads[threadIndex % maxThreadCount]
                     if (thread != null && thread.isAlive) return@newSingleThreadExecutor thread
 
-                    if (thread?.isAlive == false) log.warning {
+                    if (thread?.isAlive == false) log.info {
                         "Creating a new thread (index: ${threadIndex % maxThreadCount}) because " +
                             "a previously-created one had died."
                     }

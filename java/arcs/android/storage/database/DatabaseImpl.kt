@@ -1601,7 +1601,9 @@ class DatabaseImpl(
         try {
             proto = VersionMapProto.parseFrom(bytes)
         } catch (e: InvalidProtocolBufferException) {
-            log.error(e) { "Parsing serialized VersionMap \"$str\"." }
+            // TODO(b/160251910): Make logging detail more cleanly conditional.
+            log.debug(e) { "Parsing serialized VersionMap \"$str\"." }
+            log.info { "Failed to parse serialized version map." }
             throw e
         }
         return fromProto(proto)

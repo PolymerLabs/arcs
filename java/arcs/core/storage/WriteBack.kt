@@ -120,7 +120,7 @@ open class StoreWriteBack /* internal */ constructor(
                     exitFlushSection {
                         // TODO(wkorman): Consider adding TaggedLog support for logging
                         // exceptions to get a stack trace without requiring a message.
-                        try { it() } catch (e: Exception) { log.error(e) { "Exception" } }
+                        try { it() } catch (e: Exception) { log.info(e) { "Exception" } }
                     }
                 }
                 .onCompletion {
@@ -130,7 +130,7 @@ open class StoreWriteBack /* internal */ constructor(
                     if (!channel.isEmpty && !channel.isClosedForReceive) {
                         channel.consumeEach {
                             exitFlushSection {
-                                try { it() } catch (e: Exception) { log.error(e) { "Exception" } }
+                                try { it() } catch (e: Exception) { log.info(e) { "Exception" } }
                             }
                         }
                     }

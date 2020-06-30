@@ -235,7 +235,9 @@ class ParticleContext(
     }
 
     private fun markParticleAsFailed(error: Exception, eventName: String): Exception {
-        log.error(error) { "Failure in particle ${planParticle.particleName}.$eventName()" }
+        // TODO(b/160251910): Make logging detail more cleanly conditional.
+        log.debug(error) { "Failure in particle ${planParticle.particleName}.$eventName()" }
+        log.info { "Failure in particle." }
 
         if (particleState != ParticleState.MaxFailed) {
             particleState = if (particleState.hasBeenStarted) {
