@@ -21,7 +21,25 @@ import {ChannelConstructor} from '../channel-constructor.js';
 import {Identified, CRDTEntityTypeRecord} from '../crdt/crdt-entity.js';
 import {BiMap} from '../bimap.js';
 
-export type StoreRecord<T extends CRDTTypeRecord> = {type: 'record', store: DirectStore<T>, idMap: BiMap<number, number|Promise<number>>} | {type: 'pending', promise: Promise<{type: 'record', store: DirectStore<T>, idMap: BiMap<number, number|Promise<number>>}>};
+/**
+ * Registering a callback results in a callback ID. Storage Proxy Muxers/Reference Mode Stores register a
+ * callback with the DSM, and the DSM registers callbacks with the Direct Stores it contains. 
+ * 
+ * Each callback a DSM registers with a Direct Store is associated with a callback that has been registered with the DSM.
+ * This gives the illusion of a single communication channel between a Storage Proxy Muxer or Reference Mode Store and a 
+ * Direct Store.
+ * 
+ * CallbackIdMapping is a bidirectional mapping of ID numbers of callbacks registered with the DSM to ID numbers of
+ * callbacks the DSM registers with a designated Direct Store. There is one CallbackIdMapping per Direct Store
+ */
+type CallbackIdMapping = BiMap<number, number|Promise<number>>
+
+/**
+ * A StoreRecord of type 'record' includes the DirectStore and the CallbackIdMapping for that Direct Store.
+ * A StoreRecord of type 'pending' includes a promise for a StoreRecord of type 'record'. 
+ */
+export type StoreRecord<T extends CRDTTypeRecord> = {type: 'record', store: DirectStore<T>, idMap: CallbackIdMapping} | {type: 'pending', promise: Promise<{type: 'record', store: DirectStore<T>, idMap: CallbackIdMapping}>};
+
 /**
  * A store that allows multiple CRDT models to be stored as sub-keys of a single storageKey location.
  */
@@ -79,6 +97,10 @@ export class DirectStoreMuxer<S extends Identified, C extends Identified, T exte
   private async setupStore(muxId: string, callbackId: number): Promise<{type: 'record', store: DirectStore<T>, idMap: BiMap<number, number|Promise<number>>}> {
     const store = await DirectStore.construct<T>({...this.options, mode: StorageMode.Direct, storageKey: this.storageKey.childKeyForBackingElement(muxId)});
     const record: StoreRecord<T> = {store, idMap: new BiMap<number, number>(), type: 'record'};
+
+    // Creating a listener for the store may trigger an event; this will be delivered upstream and may in turn trigger
+    // a request for the localModel. It's important that there's a recorded store in place for the local model to be
+    // retrieved from, even though we don't have the correct id until store.on returns.
     this.stores[muxId] = record;
 
     const storeCallbackId = await this.createListenerForStore(store, muxId, callbackId);
