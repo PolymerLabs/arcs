@@ -34,13 +34,15 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.testutil.handles.dispatchFetch
+import arcs.core.testutil.handles.dispatchFetchAll
+import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
@@ -126,7 +128,7 @@ class StorageServiceManagerTest {
             num = 1.0
             texts = setOf("1", "one")
         }
-        withContext(handle.dispatcher) { handle.store(entity) }.join()
+        handle.dispatchStore(entity)
         log("Wrote entity")
 
         val manager = buildManager()
@@ -140,9 +142,7 @@ class StorageServiceManagerTest {
 
         // Create a new handle (with new Entity manager) to confirm data is gone from storage.
         val newHandle = createSingletonHandle(storageKey)
-        withContext(newHandle.dispatcher) {
-            assertThat(newHandle.fetch()).isNull()
-        }
+        assertThat(newHandle.dispatchFetch()).isNull()
     }
 
     private suspend fun testClearDataBetweenForKey(storageKey: StorageKey, allRemoved: Boolean) {
@@ -153,17 +153,13 @@ class StorageServiceManagerTest {
         val handle = createCollectionHandle(storageKey)
         withTimeout(5000) {
             time.millis = 1L
-            withContext(handle.dispatcher) {
-                handle.store(entity1)
-            }.join()
+            handle.dispatchStore(entity1)
+
             time.millis = 2L
-            withContext(handle.dispatcher) {
-                handle.store(entity2)
-            }.join()
+            handle.dispatchStore(entity2)
+
             time.millis = 3L
-            withContext(handle.dispatcher) {
-                handle.store(entity3)
-            }.join()
+            handle.dispatchStore(entity3)
         }
         log("Wrote entities")
 
@@ -171,24 +167,22 @@ class StorageServiceManagerTest {
         val deferredResult = DeferredResult(coroutineContext)
 
         log("Clearing data created at t=2")
-        manager.clearDataBetween(2,2, deferredResult)
+        manager.clearDataBetween(2, 2, deferredResult)
 
         withTimeout(2000) { assertThat(deferredResult.await()).isTrue() }
         log("Clear complete, asserting")
 
         // Create a new handle (with new Entity manager) to confirm data is gone from storage.
         val newHandle = createCollectionHandle(storageKey)
-        withContext(newHandle.dispatcher) {
-            if(allRemoved) {
-                assertThat(newHandle.fetchAll()).isEmpty()
-            } else {
-                assertThat(newHandle.fetchAll()).containsExactly(entity1, entity3)
-            }
+        if (allRemoved) {
+            assertThat(newHandle.dispatchFetchAll()).isEmpty()
+        } else {
+            assertThat(newHandle.dispatchFetchAll()).containsExactly(entity1, entity3)
         }
     }
 
     private suspend fun createSingletonHandle(storageKey: StorageKey) =
-        // Creates a new handle manager each time, to simulare arcs stop/start behavior.
+        // Creates a new handle manager each time, to simulate arcs stop/start behavior.
         EntityHandleManager(
             time = time,
             scheduler = scheduler
