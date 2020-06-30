@@ -1,16 +1,10 @@
 package arcs.sdk.testing
 
 import arcs.core.testutil.assertVariableOrdering
-import arcs.core.testutil.handles.dispatchClear
-import arcs.core.testutil.handles.dispatchFetch
-import arcs.core.testutil.handles.dispatchFetchAll
-import arcs.core.testutil.handles.dispatchIsEmpty
-import arcs.core.testutil.handles.dispatchRemove
-import arcs.core.testutil.handles.dispatchSize
-import arcs.core.testutil.handles.dispatchStore
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.Test
 import org.junit.runner.Description
 import org.junit.runner.RunWith
@@ -22,8 +16,8 @@ import org.junit.runners.model.Statement
 class BaseTestHarnessTest {
     @Test
     fun handleHelpers() {
-        // Verify that the effects of calling the harness handles are observable from the
-        // particle handles.
+        // Verify that the effects of calling BaseTestHarness's helper methods
+        // on the harness handles are observable from the particle handles.
         val harness = arcs.core.host.MultiHandleParticleTestHarness {
             arcs.core.host.MultiHandleParticle()
         }
@@ -33,32 +27,50 @@ class BaseTestHarnessTest {
             // Singleton handles
             val particleData = harness.particle.handles.data
 
-            harness.data.dispatchStore(arcs.core.host.MultiHandleParticle_Data(7.0))
-            assertThat(particleData.dispatchFetch()?.num).isEqualTo(7.0)
+            harness.store(harness.data, arcs.core.host.MultiHandleParticle_Data(7.0))
+            assertThat(harness.fetch(harness.data)?.num).isEqualTo(7.0)
+            withContext(particleData.dispatcher) {
+                assertThat(particleData.fetch()?.num).isEqualTo(7.0)
+            }
 
-            harness.data.dispatchClear()
-            assertThat(particleData.dispatchFetch()).isNull()
+            harness.clear(harness.data)
+            assertThat(harness.fetch(harness.data)).isNull()
+            withContext(particleData.dispatcher) {
+                assertThat(particleData.fetch()).isNull()
+            }
 
             // Collection handles
             val particleList = harness.particle.handles.list
             val e1 = arcs.core.host.MultiHandleParticle_List("element1")
             val e2 = arcs.core.host.MultiHandleParticle_List("element2")
             val e3 = arcs.core.host.MultiHandleParticle_List("element3")
+            val e4 = arcs.core.host.MultiHandleParticle_List("element4")
 
-            harness.list.dispatchStore(e1, e2, e3)
-            assertThat(particleList.dispatchSize()).isEqualTo(3)
-            assertThat(particleList.dispatchIsEmpty()).isEqualTo(false)
-            assertThat(particleList.dispatchFetchAll()).isEqualTo(setOf(e1, e2, e3))
+            harness.store(harness.list, e1)
+            harness.store(harness.list, e2, e3)
+            harness.remove(harness.list, e2)
+            harness.store(harness.list, e4)
+            harness.remove(harness.list, e4, e1)
+            assertThat(harness.size(harness.list)).isEqualTo(1)
+            assertThat(harness.isEmpty(harness.list)).isEqualTo(false)
+            assertThat(harness.fetchAll(harness.list)).isEqualTo(setOf(e3))
 
-            harness.list.dispatchRemove(e2)
-            assertThat(particleList.dispatchSize()).isEqualTo(2)
-            assertThat(particleList.dispatchIsEmpty()).isEqualTo(false)
-            assertThat(particleList.dispatchFetchAll()).isEqualTo(setOf(e1, e3))
+            withContext(particleList.dispatcher) {
+                assertThat(particleList.size()).isEqualTo(1)
+                assertThat(particleList.isEmpty()).isEqualTo(false)
+                assertThat(particleList.fetchAll()).isEqualTo(setOf(e3))
+            }
 
-            harness.list.dispatchClear()
-            assertThat(particleList.dispatchSize()).isEqualTo(0)
-            assertThat(particleList.dispatchIsEmpty()).isEqualTo(true)
-            assertThat(particleList.dispatchFetchAll()).isEmpty()
+            harness.clear(harness.list)
+            assertThat(harness.size(harness.list)).isEqualTo(0)
+            assertThat(harness.isEmpty(harness.list)).isEqualTo(true)
+            assertThat(harness.fetchAll(harness.list)).isEmpty()
+
+            withContext(particleList.dispatcher) {
+                assertThat(particleList.size()).isEqualTo(0)
+                assertThat(particleList.isEmpty()).isEqualTo(true)
+                assertThat(particleList.fetchAll()).isEmpty()
+            }
         }
     }
 
@@ -73,7 +85,7 @@ class BaseTestHarnessTest {
                 .isEqualTo(listOf("onFirstStart", "onStart", "data.onReady:null", "onReady:null"))
             harness.particle.events.clear()
 
-            harness.data.dispatchStore(arcs.core.host.SingleReadHandleParticle_Data(5.0))
+            harness.store(harness.data, arcs.core.host.SingleReadHandleParticle_Data(5.0))
             assertThat(harness.particle.events)
                 .isEqualTo(listOf("data.onUpdate:5.0", "onUpdate:5.0"))
         }
@@ -90,7 +102,7 @@ class BaseTestHarnessTest {
                 .isEqualTo(listOf("onFirstStart", "onStart", "onReady"))
             harness.particle.events.clear()
 
-            harness.data.dispatchStore(arcs.core.host.SingleWriteHandleParticle_Data(5.0))
+            harness.store(harness.data, arcs.core.host.SingleWriteHandleParticle_Data(5.0))
             assertThat(harness.particle.events).isEmpty()
         }
     }
@@ -103,10 +115,10 @@ class BaseTestHarnessTest {
 
         runTest(harness, "multiHandle") {
             harness.start()
-            harness.data.dispatchStore(arcs.core.host.MultiHandleParticle_Data(3.2))
-            harness.list.dispatchStore(arcs.core.host.MultiHandleParticle_List("hi"))
-            harness.result.dispatchStore(arcs.core.host.MultiHandleParticle_Result(19.0))
-            harness.config.dispatchStore(arcs.core.host.MultiHandleParticle_Config(true))
+            harness.store(harness.data, arcs.core.host.MultiHandleParticle_Data(3.2))
+            harness.store(harness.list, arcs.core.host.MultiHandleParticle_List("hi"))
+            harness.store(harness.result, arcs.core.host.MultiHandleParticle_Result(19.0))
+            harness.store(harness.config, arcs.core.host.MultiHandleParticle_Config(true))
             assertVariableOrdering(
                 harness.particle.events,
                 listOf("onFirstStart", "onStart"),
