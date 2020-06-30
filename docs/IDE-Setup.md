@@ -153,7 +153,7 @@ Hail-Mary Fixes:
 | MacOS   | `/Applications/Android Studio.app/Contents/MacOS/studio` |
 
 - Create a `~/.xsessionrc` file with the following contents:
-  ```
+  ```sh
   if [ -f ~/.profile ]; then
        . ~/.profile
   fi
