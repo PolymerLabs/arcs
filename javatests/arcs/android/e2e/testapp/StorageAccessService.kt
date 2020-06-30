@@ -20,7 +20,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 class StorageAccessService : LifecycleService() {
 
@@ -64,15 +63,27 @@ class StorageAccessService : LifecycleService() {
             ) as WriteSingletonHandle<TestEntity>
 
             singletonHandle.onReady {
-                when (action) {
-                    Action.SET -> singletonHandle.store(
-                        TestEntity(TestEntity.text, TestEntity.number, TestEntity.boolean)
-                    )
-                    Action.CLEAR -> singletonHandle.clear()
+                scope.launch {
+                    when (action) {
+                        Action.SET -> {
+                            singletonHandle.store(
+                                TestEntity(
+                                    text = TestEntity.text,
+                                    number = TestEntity.number,
+                                    boolean = TestEntity.boolean
+                                )
+                            )
+                        }
+                        Action.CLEAR -> {
+                            singletonHandle.clear()
+                        }
+                    }
+
+                    singletonHandle.close()
+                    handleManager.close()
                 }
-                singletonHandle.close()
-                runBlocking { handleManager.close() }
             }
+
         }
 
         return Service.START_NOT_STICKY
