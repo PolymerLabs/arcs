@@ -63,7 +63,7 @@ async function createReferenceModeStore() {
 
 // Load the model from the backing store and convert it to an entity.
 function loadEntityFromBackingStore(activeStore, id: string): SerializedEntity {
-  return activeStore['entityFromModel'](activeStore.backingStore.getLocalModel(id).getData(), id);
+  return activeStore['entityFromModel'](activeStore.backingStore.getLocalModel(id, 1).getData(), id);
 }
 
 describe('Reference Mode Store', async () => {
@@ -126,7 +126,7 @@ describe('Reference Mode Store', async () => {
     entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob'}, actor, clock: {[actor]: 1}});
 
     assert.deepEqual(capturedModel, referenceCollection.getData());
-    const storedEntity = activeStore.backingStore.getLocalModel('an-id');
+    const storedEntity = activeStore.backingStore.getLocalModel('an-id', 1);
     assert.deepEqual(storedEntity.getData(), entityCRDT.getData());
   });
 
@@ -179,7 +179,7 @@ describe('Reference Mode Store', async () => {
     entityCRDT.applyOperation({type: EntityOpTypes.Set, field: 'name', value: {id: 'bob'}, actor, clock: {[actor]: 1}});
 
     assert.deepEqual(capturedModel, referenceCollection.getData());
-    const storedEntity = activeStore.backingStore.getLocalModel('an-id');
+    const storedEntity = activeStore.backingStore.getLocalModel('an-id', 1);
     assert.deepEqual(storedEntity.getData(), entityCRDT.getData());
   });
 
@@ -359,7 +359,8 @@ describe('Reference Mode Store', async () => {
     remoteCollection.applyOperation({type: CollectionOpTypes.Add, clock: {them: 1}, actor: 'them', added: reference});
 
     // ensure remote entity is stored in backing store
-    await activeStore.backingStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: {singletons: {name: {values: {}, version: {}}, age: {values: {}, version: {}}}, collections: {}, version: {}}, id: 2, muxId: 'another-id'});
+    const id2 = activeStore.backingStore.on(msg => null);
+    await activeStore.backingStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model: {singletons: {name: {values: {}, version: {}}, age: {values: {}, version: {}}}, collections: {}, version: {}}, id: id2, muxId: 'another-id'});
 
     const driver = activeStore.containerStore['driver'] as MockDriver<CollectionData<Reference>>;
     let sendInvoked = false;

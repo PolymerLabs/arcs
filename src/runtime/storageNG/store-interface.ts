@@ -186,7 +186,7 @@ export abstract class ActiveMuxer<T extends CRDTTypeRecord> implements StorageCo
   abstract async onProxyMessage(message: ProxyMessage<T>): Promise<void>;
   abstract reportExceptionInHost(exception: PropagatedException): void;
 
-  abstract getLocalModel(muxId: string): CRDTModel<T>;
+  abstract getLocalModel(muxId: string, id: number): CRDTModel<T>;
 
   async cloneFrom(store: ActiveMuxer<T>): Promise<void> {
     assert(store instanceof ActiveMuxer);
@@ -194,7 +194,7 @@ export abstract class ActiveMuxer<T extends CRDTTypeRecord> implements StorageCo
     for (const muxId of Object.keys(activeMuxer.stores)) {
       await this.onProxyMessage({
         type: ProxyMessageType.ModelUpdate,
-        model: activeMuxer.getLocalModel(muxId).getData(),
+        model: activeMuxer.getLocalModel(muxId, 0).getData(),
         id: 0
       });
     }
