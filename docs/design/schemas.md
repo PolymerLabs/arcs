@@ -103,7 +103,7 @@ create Tesla param
 
 TODO:
 * Should it be possible to import schemas?
-  * Perhaps during developement, but not in a published manifest.
+  * Perhaps during development, but not in a published manifest.
 * Creating new entities should require a fully defined schema:
   * Fully in the manifest alongside the particle.
   * Or imported via a handle.
