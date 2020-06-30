@@ -23,20 +23,20 @@ import {BiMap} from '../bimap.js';
 
 /**
  * Registering a callback results in a callback ID. Storage Proxy Muxers/Reference Mode Stores register a
- * callback with the DSM, and the DSM registers callbacks with the Direct Stores it contains. 
- * 
+ * callback with the DSM, and the DSM registers callbacks with the Direct Stores it contains.
+ *
  * Each callback a DSM registers with a Direct Store is associated with a callback that has been registered with the DSM.
- * This gives the illusion of a single communication channel between a Storage Proxy Muxer or Reference Mode Store and a 
+ * This gives the illusion of a single communication channel between a Storage Proxy Muxer or Reference Mode Store and a
  * Direct Store.
- * 
+ *
  * CallbackIdMapping is a bidirectional mapping of ID numbers of callbacks registered with the DSM to ID numbers of
  * callbacks the DSM registers with a designated Direct Store. There is one CallbackIdMapping per Direct Store
  */
-type CallbackIdMapping = BiMap<number, number|Promise<number>>
+type CallbackIdMapping = BiMap<number, number|Promise<number>>;
 
 /**
  * A StoreRecord of type 'record' includes the DirectStore and the CallbackIdMapping for that Direct Store.
- * A StoreRecord of type 'pending' includes a promise for a StoreRecord of type 'record'. 
+ * A StoreRecord of type 'pending' includes a promise for a StoreRecord of type 'record'.
  */
 export type StoreRecord<T extends CRDTTypeRecord> = {type: 'record', store: DirectStore<T>, idMap: CallbackIdMapping} | {type: 'pending', promise: Promise<{type: 'record', store: DirectStore<T>, idMap: CallbackIdMapping}>};
 
