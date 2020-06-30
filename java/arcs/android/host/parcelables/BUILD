@@ -6,6 +6,7 @@ package(default_visibility = ["//visibility:public"])
 
 arcs_kt_android_library(
     name = "parcelables",
+    testonly = 1,
     srcs = glob(["*.kt"]),
     idl_parcelables = glob(["*.aidl"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",

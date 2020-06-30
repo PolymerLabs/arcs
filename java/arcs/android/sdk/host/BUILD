@@ -6,8 +6,14 @@ package(default_visibility = ["//visibility:public"])
 
 arcs_kt_android_library(
     name = "host",
+    testonly = 1,
     srcs = glob(["*.kt"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
+    visibility = [
+        "//java/arcs/android/demo:__pkg__",
+        "//java/arcs/android/host:__subpackages__",
+        "//javatests/arcs:__subpackages__",
+    ],
     deps = [
         "//java/arcs/android/host/parcelables",
         "//java/arcs/android/type",

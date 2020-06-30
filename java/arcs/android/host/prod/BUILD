@@ -6,8 +6,10 @@ package(default_visibility = ["//visibility:public"])
 
 arcs_kt_android_library(
     name = "prod",
+    testonly = 1,
     srcs = glob(["*.kt"]),
     manifest = ":AndroidManifest.xml",
+    visibility = ["//javatests/arcs:__subpackages__"],
     deps = [
         "//java/arcs/android/sdk/host",
         "//java/arcs/core/host",
