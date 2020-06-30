@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {KotlinGenerationUtils, quote} from './kotlin-generation-utils.js';
+import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
 import {SchemaGraph, SchemaNode} from './schema2graph.js';
 import {HandleConnectionSpec} from '../runtime/particle-spec.js';
 import {Type, TypeVariable} from '../runtime/type.js';
@@ -83,7 +83,6 @@ export interface KotlinTypeInfo {
   type: string;
   decodeFn: string;
   defaultVal: string;
-  schemaType: string;
 }
 
 type AddFieldOptions = Readonly<{
@@ -97,7 +96,7 @@ type AddFieldOptions = Readonly<{
   isInlineClass?: boolean;
 }>;
 
-export function getTypeInfo(opts: { name: string, isCollection?: boolean, refClassName?: string, listTypeInfo?: {name: string, refSchemaHash?: string, isInlineClass?: boolean}, refSchemaHash?: string, isInlineClass?: boolean }): KotlinTypeInfo {
+export function getTypeInfo(opts: { name: string, isCollection?: boolean, refClassName?: string, listTypeInfo?: {name: string, isInlineClass?: boolean}, isInlineClass?: boolean }): KotlinTypeInfo {
   if (opts.name === 'List') {
     assert(opts.listTypeInfo, 'listTypeInfo must be provided for Lists');
     assert(!opts.isCollection, 'collections of Lists are not supported');
@@ -106,7 +105,6 @@ export function getTypeInfo(opts: { name: string, isCollection?: boolean, refCla
       type: `List<${itemTypeInfo.type}>`,
       decodeFn: `decodeList<${itemTypeInfo.type}>()`,
       defaultVal: `listOf<${itemTypeInfo.type}>()`,
-      schemaType: `FieldType.ListOf(${itemTypeInfo.schemaType})`
     };
   }
 
@@ -116,35 +114,28 @@ export function getTypeInfo(opts: { name: string, isCollection?: boolean, refCla
         type: `Set<${opts.name}>`,
         decodeFn: `decodeInline<${opts.name}>()`,
         defaultVal: `emptySet<${opts.name}>()`,
-        schemaType: `FieldType.InlineEntity(${quote(opts.refSchemaHash)})`
       };
     }
     return {
       type: opts.name,
       decodeFn: `decodeInline<${opts.name}>()`,
       defaultVal: `${opts.name}()`,
-      schemaType: `FieldType.InlineEntity(${quote(opts.refSchemaHash)})`
     };
   }
 
   const typeMap: Dictionary<KotlinTypeInfo> = {
-    'Text': {type: 'String', decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
-    'URL': {type: 'String', decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
-    'Number': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0', schemaType: 'FieldType.Number'},
-    'Boolean': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false', schemaType: 'FieldType.Boolean'},
-    'Byte': {type: 'Byte', decodeFn: 'decodeByte()', defaultVal: '0.toByte()', schemaType: 'FieldType.Byte'},
-    'Short': {type: 'Short', decodeFn: 'decodeShort()', defaultVal: '0.toShort()', schemaType: 'FieldType.Short'},
-    'Int': {type: 'Int', decodeFn: 'decodeInt()', defaultVal: '0', schemaType: 'FieldType.Int'},
-    'Long': {type: 'Long', decodeFn: 'decodeLong()', defaultVal: '0L', schemaType: 'FieldType.Long'},
-    'Char': {type: 'Char', decodeFn: 'decodeChar()', defaultVal: `'\u0000'`, schemaType: 'FieldType.Char'},
-    'Float': {type: 'Float', decodeFn: 'decodeFloat()', defaultVal: '0.0f', schemaType: 'FieldType.Float'},
-    'Double': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0', schemaType: 'FieldType.Double'},
-    'Reference': {
-      type: `Reference<${opts.refClassName}>`,
-      decodeFn: null,
-      defaultVal: 'null',
-      schemaType: `FieldType.EntityRef(${quote(opts.refSchemaHash)})`,
-    },
+    'Text': {type: 'String', decodeFn: 'decodeText()', defaultVal: `""`},
+    'URL': {type: 'String', decodeFn: 'decodeText()', defaultVal: `""`},
+    'Number': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0'},
+    'Boolean': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false'},
+    'Byte': {type: 'Byte', decodeFn: 'decodeByte()', defaultVal: '0.toByte()'},
+    'Short': {type: 'Short', decodeFn: 'decodeShort()', defaultVal: '0.toShort()'},
+    'Int': {type: 'Int', decodeFn: 'decodeInt()', defaultVal: '0'},
+    'Long': {type: 'Long', decodeFn: 'decodeLong()', defaultVal: '0L'},
+    'Char': {type: 'Char', decodeFn: 'decodeChar()', defaultVal: `'\u0000'`},
+    'Float': {type: 'Float', decodeFn: 'decodeFloat()', defaultVal: '0.0f'},
+    'Double': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0'},
+    'Reference': {type: `Reference<${opts.refClassName}>`, decodeFn: null, defaultVal: 'null'},
   };
 
   const info = typeMap[opts.name];
@@ -153,7 +144,6 @@ export function getTypeInfo(opts: { name: string, isCollection?: boolean, refCla
   }
   if (opts.name === 'Reference') {
     assert(opts.refClassName, 'refClassName must be provided for References');
-    assert(opts.refSchemaHash, 'refSchemaHash must be provided for References');
     if (!opts.isCollection) {
       // Singleton Reference fields are nullable.
       info.type += '?';
