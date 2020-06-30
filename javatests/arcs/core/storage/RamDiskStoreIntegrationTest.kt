@@ -51,7 +51,6 @@ class RamDiskStoreIntegrationTest {
     @After
     fun teardown() {
         DriverFactory.clearRegistrations()
-        CapabilitiesResolver.reset()
         RamDisk.clear()
     }
 

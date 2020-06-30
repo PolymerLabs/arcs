@@ -241,18 +241,22 @@ async function recipeToProtoPayload(recipe: Recipe) {
 
   return {
     name: recipe.name,
-    particles: recipe.particles.map(p => recipeParticleToProtoPayload(p, handleToProtoPayload)),
+    particles: await Promise.all(recipe.particles.map(p => recipeParticleToProtoPayload(p, handleToProtoPayload))),
     handles: [...handleToProtoPayload.values()],
     annotations: recipe.annotations.map(a => annotationToProtoPayload(a))
   };
 }
 
-function recipeParticleToProtoPayload(particle: Particle, handleMap: Map<Handle, {name: string}>) {
+async function recipeParticleToProtoPayload(particle: Particle, handleMap: Map<Handle, {name: string}>) {
   return {
     specName: particle.name,
-    connections: Object.entries(particle.connections).map(
-      ([name, connection]) => ({name, handle: handleMap.get(connection.handle).name})
-    )
+    connections: await Promise.all(Object.entries(particle.connections).map(
+      async ([name, connection]) => ({
+        name,
+        handle: handleMap.get(connection.handle).name,
+        type: await typeToProtoPayload(connection.type)
+      })
+    ))
   };
 }
 

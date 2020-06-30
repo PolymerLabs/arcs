@@ -3,7 +3,7 @@ package arcs.core.entity
 import arcs.core.common.Id
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
-import arcs.core.data.Ttl
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey

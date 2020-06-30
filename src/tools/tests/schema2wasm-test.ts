@@ -10,7 +10,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Dictionary} from '../../runtime/hot.js';
-import {Schema2Base, EntityGenerator, AddFieldOptions, SchemaDescriptorBase} from '../schema2base.js';
+import {Schema2Base, EntityGenerator, AddFieldOptions, EntityDescriptorBase} from '../schema2base.js';
 import {SchemaNode} from '../schema2graph.js';
 import {Schema2Cpp} from '../schema2cpp.js';
 import {Schema2Kotlin} from '../schema2kotlin.js';
@@ -31,7 +31,7 @@ class Schema2Mock extends Schema2Base {
     const collector = [];
     this.res[node.entityClassName] = collector;
 
-    new class extends SchemaDescriptorBase {
+    new class extends EntityDescriptorBase {
       addField({field, typeName, isOptional, refClassName}: AddFieldOptions) {
         const refInfo = refClassName ? `<${refClassName}>` : '';
         collector.push(field + ':' + typeName[0] + refInfo + (isOptional ? '?' : ''));
@@ -45,7 +45,7 @@ class Schema2Mock extends Schema2Base {
     };
   }
 
-  generateParticleClass(particle: ParticleSpec) {
+  async generateParticleClass(particle: ParticleSpec) {
     return '';
   }
 

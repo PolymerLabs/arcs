@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base, EntityGenerator, AddFieldOptions, SchemaDescriptorBase} from './schema2base.js';
+import {Schema2Base, EntityGenerator, AddFieldOptions, EntityDescriptorBase} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {Type} from '../runtime/type.js';
@@ -87,7 +87,7 @@ export class Schema2Cpp extends Schema2Base {
     return new CppGenerator(node, this.namespace.replace(/\./g, '::'));
   }
 
-  generateParticleClass(particle: ParticleSpec): string {
+  async generateParticleClass(particle: ParticleSpec): Promise<string> {
     const particleName = particle.name;
     const handleDecls: string[] = [];
 
@@ -123,7 +123,7 @@ protected:
   }
 }
 
-class CppSchemaDescriptor extends SchemaDescriptorBase {
+class CppEntityDescriptor extends EntityDescriptorBase {
 
   constructor(node: SchemaNode) {
     super(node);
@@ -212,10 +212,10 @@ class CppSchemaDescriptor extends SchemaDescriptorBase {
 
 class CppGenerator implements EntityGenerator {
 
-  private descriptor: CppSchemaDescriptor;
+  private descriptor: CppEntityDescriptor;
 
   constructor(readonly node: SchemaNode, readonly namespace: string) {
-    this.descriptor = new CppSchemaDescriptor(node);
+    this.descriptor = new CppEntityDescriptor(node);
   }
 
   typeFor(name: string): string {

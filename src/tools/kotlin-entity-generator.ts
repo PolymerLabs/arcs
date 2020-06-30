@@ -11,27 +11,67 @@ import {KotlinGenerationUtils, leftPad, quote} from './kotlin-generation-utils.j
 import {EntityGenerator} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import minimist from 'minimist';
-import {generateSchema, KotlinSchemaDescriptor, KotlinSchemaField} from './kotlin-schema-generator.js';
+import {generateSchema} from './kotlin-schema-generator.js';
 import {assert} from '../platform/assert-web.js';
+import {AddFieldOptions, EntityDescriptorBase} from './schema2base.js';
+import {escapeIdentifier, getTypeInfo} from './kotlin-codegen-shared.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
-export class KotlinEntityGenerator implements EntityGenerator {
+/**
+ * Metadata about a field in a schema.
+ */
+export type KotlinSchemaField = AddFieldOptions & {
+  type: string,
+  decodeFn: string,
+  defaultVal: string,
+  escaped: string,
+  nullableType: string
+};
 
-  private schemaDescriptor: KotlinSchemaDescriptor;
+/**
+ * Composes and holds a list of KotlinSchemaField for a SchemaNode.
+ */
+export class KotlinEntityDescriptor extends EntityDescriptorBase {
 
-  constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {
-    this.schemaDescriptor = new KotlinSchemaDescriptor(node, opts.wasm);
+  readonly fields: KotlinSchemaField[] = [];
+
+  constructor(node: SchemaNode, private forWasm: boolean) {
+    super(node);
+    this.process();
   }
 
-  generateClasses(): string {
+  addField(opts: AddFieldOptions) {
+    if (opts.typeName === 'Reference' && this.forWasm) return;
+
+    const typeInfo = getTypeInfo({name: opts.typeName, ...opts});
+    const type = typeInfo.type;
+
+    this.fields.push({
+      ...opts,
+      ...typeInfo,
+      escaped: escapeIdentifier(opts.field),
+      nullableType: type.endsWith('?') ? type : `${type}?`
+    });
+  }
+}
+
+export class KotlinEntityGenerator implements EntityGenerator {
+
+  private entityDescriptor: KotlinEntityDescriptor;
+
+  constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {
+    this.entityDescriptor = new KotlinEntityDescriptor(node, opts.wasm);
+  }
+
+  async generateClasses(): Promise<string> {
     return `\
 
     ${this.generateClassDefinition()} {
         ${this.generateFieldsDefinitions()}
         ${this.generateCopyMethods()}
         ${this.maybeGenerateWasmSpecificMethods()}
-        ${this.generateEntitySpec()}
+        ${await this.generateEntitySpec()}
     }`;
   }
 
@@ -132,7 +172,7 @@ export class KotlinEntityGenerator implements EntityGenerator {
     const blocks: string[] = [];
 
     const fieldVals: string[] = [];
-    for (const {field, type, isCollection, escaped, defaultVal, nullableType} of this.schemaDescriptor.fields) {
+    for (const {field, type, isCollection, escaped, defaultVal, nullableType} of this.entityDescriptor.fields) {
       if (this.opts.wasm) {
         // TODO: Add support for collections in wasm.
         assert(!isCollection, 'Collection fields not supported in Kotlin wasm yet.');
@@ -205,15 +245,15 @@ var ${escaped}: ${type}
 `;
   }
 
-  private generateEntitySpec() {
+  private async generateEntitySpec() {
     const fieldCount = Object.keys(this.node.schema.fields).length;
     return `companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${this.className}> {
             ${this.opts.wasm ? '' : `
-            override val SCHEMA = ${leftPad(generateSchema(this.schemaDescriptor), 12, true)}
+            override val SCHEMA = ${leftPad(await generateSchema(this.node.schema), 12, true)}
 
             private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
                 ${ktUtils.mapOf(
-                  this.schemaDescriptor.fields
+                  this.entityDescriptor.fields
                     .filter(f => f.typeName === 'Reference')
                     .map(({refSchemaHash, refClassName}) => `"${refSchemaHash}" to ${refClassName}`),
                   16
@@ -268,7 +308,7 @@ var ${escaped}: ${type}
   }
 
   private mapFields(mapper: (arg: KotlinSchemaField) => string): string[] {
-    return this.schemaDescriptor.fields.map(mapper);
+    return this.entityDescriptor.fields.map(mapper);
   }
 
   private prefixTypeForRuntime(type: string): string {

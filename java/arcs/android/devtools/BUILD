@@ -7,12 +7,14 @@ package(default_visibility = ["//visibility:public"])
 
 android_library(
     name = "aidl",
+    testonly = True,
     idl_srcs = glob(["*.aidl"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
 )
 
 arcs_kt_android_library(
     name = "devtools",
+    testonly = True,
     srcs = glob([
         "*.kt",
     ]),

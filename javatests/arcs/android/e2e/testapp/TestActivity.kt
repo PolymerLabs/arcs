@@ -31,13 +31,15 @@ import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
-import arcs.core.entity.EntitySpec
-import arcs.core.entity.HandleContainerType
-import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
+import arcs.core.testutil.handles.dispatchClear
+import arcs.core.testutil.handles.dispatchClose
+import arcs.core.testutil.handles.dispatchFetch
+import arcs.core.testutil.handles.dispatchFetchAll
+import arcs.core.testutil.handles.dispatchStore
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
@@ -51,7 +53,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 /** Entry UI to launch Arcs Test. */
@@ -259,12 +260,8 @@ class TestActivity : AppCompatActivity() {
     }
 
     private suspend fun createHandle() {
-        singletonHandle?.dispatcher?.let {
-            withContext(it) { singletonHandle?.close() }
-        }
-        collectionHandle?.dispatcher?.let {
-            withContext(it) { collectionHandle?.close() }
-        }
+        singletonHandle?.dispatchClose()
+        collectionHandle?.dispatchClose()
 
         appendResultText(getString(R.string.waiting_for_result))
 
@@ -293,33 +290,10 @@ class TestActivity : AppCompatActivity() {
                 }
             ).awaitReady() as ReadWriteCollectionHandle<TestEntity>
 
-            collectionHandle?.dispatcher?.let {
-                withContext(it) {
-                    collectionHandle?.onReady {
-                        scope.launch {
-                            fetchAndUpdateResult("onReady")
-                        }
-                    }
-
-                    collectionHandle?.onUpdate {
-                        scope.launch {
-                            fetchAndUpdateResult("onUpdate")
-                        }
-                    }
-
-                    collectionHandle?.onDesync {
-                        scope.launch {
-                            fetchAndUpdateResult("onDesync")
-                        }
-                    }
-
-                    collectionHandle?.onResync {
-                        scope.launch {
-                            fetchAndUpdateResult("onResync")
-                        }
-                    }
-                }
-            }
+            collectionHandle?.onReady { fetchAndUpdateResult("onReady") }
+            collectionHandle?.onUpdate { fetchAndUpdateResult("onUpdate") }
+            collectionHandle?.onDesync { fetchAndUpdateResult("onDesync") }
+            collectionHandle?.onResync { fetchAndUpdateResult("onResync") }
         } else {
             @Suppress("UNCHECKED_CAST")
             singletonHandle = handleManager.createHandle(
@@ -335,45 +309,20 @@ class TestActivity : AppCompatActivity() {
                 }
             ).awaitReady() as ReadWriteSingletonHandle<TestEntity>
 
-            singletonHandle?.dispatcher?.let {
-                withContext(it) {
-                    singletonHandle?.onReady {
-                        scope.launch {
-                            fetchAndUpdateResult("onReady")
-                        }
-                    }
-
-                    singletonHandle?.onUpdate {
-                        scope.launch {
-                            fetchAndUpdateResult("onUpdate")
-                        }
-                    }
-
-                    singletonHandle?.onDesync {
-                        scope.launch {
-                            fetchAndUpdateResult("onDesync")
-                        }
-                    }
-
-                    singletonHandle?.onResync {
-                        scope.launch {
-                            fetchAndUpdateResult("onResync")
-                        }
-                    }
-                }
-            }
+            singletonHandle?.onReady { fetchAndUpdateResult("onReady") }
+            singletonHandle?.onUpdate { fetchAndUpdateResult("onUpdate") }
+            singletonHandle?.onDesync { fetchAndUpdateResult("onDesync") }
+            singletonHandle?.onResync { fetchAndUpdateResult("onResync") }
         }
     }
 
-    private suspend fun fetchHandle() {
+    private fun fetchHandle() {
         fetchAndUpdateResult("Fetch")
     }
 
     private suspend fun setHandle() {
         if (setFromRemoteService) {
-            val intent = Intent(
-                this, StorageAccessService::class.java
-            )
+            val intent = Intent(this, StorageAccessService::class.java)
             intent.putExtra(
                 StorageAccessService.IS_COLLECTION_EXTRA, isCollection
             )
@@ -386,40 +335,21 @@ class TestActivity : AppCompatActivity() {
             startService(intent)
         } else {
             if (isCollection) {
-                for (i in 0 until 2) {
-                    collectionHandle?.dispatcher?.let {
-                        withContext(it) {
-                            collectionHandle?.store(
-                                TestEntity(
-                                    text = TestEntity.text,
-                                    number = i.toDouble(),
-                                    boolean = TestEntity.boolean
-                                )
-                            )?.join()
-                        }
-                    }
-                }
+                collectionHandle?.dispatchStore(
+                    TestEntity(TestEntity.text, 0.0, TestEntity.boolean),
+                    TestEntity(TestEntity.text, 1.0, TestEntity.boolean)
+                )
             } else {
-                singletonHandle?.dispatcher?.let {
-                    withContext(it) {
-                        singletonHandle?.store(
-                            TestEntity(
-                                text = TestEntity.text,
-                                number = TestEntity.number,
-                                boolean = TestEntity.boolean
-                            )
-                        )?.join()
-                    }
-                }
+                singletonHandle?.dispatchStore(
+                    TestEntity(TestEntity.text, TestEntity.number, TestEntity.boolean)
+                )
             }
         }
     }
 
     private suspend fun clearHandle() {
         if (setFromRemoteService) {
-            val intent = Intent(
-                this, StorageAccessService::class.java
-            )
+            val intent = Intent(this, StorageAccessService::class.java)
             intent.putExtra(
                 StorageAccessService.IS_COLLECTION_EXTRA, isCollection
             )
@@ -431,33 +361,23 @@ class TestActivity : AppCompatActivity() {
             )
             startService(intent)
         } else {
-            singletonHandle?.dispatcher?.let {
-                withContext(it) { singletonHandle?.clear()?.join() }
-            }
-            collectionHandle?.dispatcher?.let {
-                withContext(it) { collectionHandle?.clear()?.join() }
-            }
+            singletonHandle?.dispatchClear()
+            collectionHandle?.dispatchClear()
         }
     }
 
     private fun fetchAndUpdateResult(prefix: String) {
-        var result: String? = "null"
+        var result = "null"
         if (isCollection) {
-            collectionHandle?.dispatcher?.let {
-                val testEntities = runBlocking(it) { collectionHandle?.fetchAll() }
-                if (testEntities != null && !testEntities.isNullOrEmpty()) {
-                    result = testEntities
-                        .sortedBy { it.number }
-                        .joinToString(separator = ";") { "${it.text},${it.number},${it.boolean}" }
-                }
+            val testEntities = runBlocking { collectionHandle?.dispatchFetchAll() }
+            if (!testEntities.isNullOrEmpty()) {
+                result = testEntities
+                    .sortedBy { it.number }
+                    .joinToString(separator = ";") { "${it.text},${it.number},${it.boolean}" }
             }
         } else {
-            singletonHandle?.dispatcher?.let {
-                val testEntity = runBlocking(it) { singletonHandle?.fetch() }
-                result = testEntity?.let {
-                    "${it.text},${it.number},${it.boolean}"
-                }
-            }
+            val testEntity = runBlocking { singletonHandle?.dispatchFetch() }
+            result = testEntity?.let { "${it.text},${it.number},${it.boolean}" } ?: "null"
         }
         appendResultText("$prefix:$result")
     }

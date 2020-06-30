@@ -11,63 +11,80 @@
 
 package arcs.core.data
 
-/** A class containing a set of capabilities describing a store. */
-data class Capabilities(val capabilities: Set<Capability>) {
-    fun isEmpty(): Boolean = capabilities.isEmpty()
+/**
+ * Store capabilities containing a combination of individual [Capability]s (e.g. Persistence
+ * and/or Ttl and/or Queryable etc).
+ * If a certain capability does not appear in the combination, it is not restricted.
+ */
+class Capabilities(capabilities: List<Capability> = emptyList()) {
+    val ranges: List<Capability.Range>
 
-    operator fun contains(other: Capabilities): Boolean {
-        if (other.isEmpty()) return isEmpty()
-        return capabilities.containsAll(other.capabilities)
+    constructor(capability: Capability) : this(listOf(capability))
+
+    init {
+        ranges = capabilities.map { it -> it.toRange() }
+        require(ranges.distinctBy { it.min.tag }.size == capabilities.size) {
+            "Capabilities must be unique $capabilities."
+        }
     }
 
-    /** Whether the store needs to be persistent */
-    val isPersistent: Boolean
-        get() = capabilities.contains(Capability.Persistent)
-    /** Whether the store needs to be queryable */
-    val isQueryable: Boolean
-        get() = capabilities.contains(Capability.Queryable)
-    /** Whether the store needs to be in-memory and shared across all Arcs (e.g. ramdisk) */
-    val isTiedToRuntime: Boolean
-        get() = capabilities.contains(Capability.TiedToRuntime)
-    /** Whether the store needs to be in-memory and private to the Arc (e.g. volatile) */
-    val isTiedToArc: Boolean
-        get() = capabilities.contains(Capability.TiedToArc)
+    val persistence: Capability.Persistence?
+        get() = getCapability<Capability.Persistence>()
 
-    enum class Capability {
-        Persistent,
-        Queryable,
-        TiedToRuntime,
-        TiedToArc
+    val ttl: Capability.Ttl?
+        get() = getCapability<Capability.Ttl>()
+
+    val isEncrypted: Boolean?
+        get() = getCapability<Capability.Encryption>()?.let { it.value }
+
+    val isQueryable: Boolean?
+        get() = getCapability<Capability.Queryable>()?.let { it.value }
+
+    val isShareable: Boolean?
+        get() = getCapability<Capability.Shareable>()?.let { it.value }
+
+    val isEmpty = ranges.isEmpty()
+
+    /**
+     * Returns true, if the given [Capability] is within the corresponding [Capability.Range]
+     * of same type of this.
+     * For example, [Capabilities] with Ttl range of 1-5 days `contains` a Ttl of 3 days.
+     */
+    fun contains(capability: Capability): Boolean {
+        val otherTag = when (capability.tag) {
+            Capability.Range.TAG -> (capability as Capability.Range).min.tag
+            else -> capability.tag
+        }
+        return ranges.find { it.min.tag == otherTag }?.contains(capability) ?: false
+    }
+
+    /**
+     * Returns true if all ranges in the given [Capabilities] are contained in this.
+     */
+    fun containsAll(other: Capabilities): Boolean {
+        return other.ranges.all { otherRange -> contains(otherRange) }
+    }
+
+    private inline fun <reified T : Capability> getCapability(): T? {
+        return ranges.find { it.min is T }?.let {
+            require(it.min.isEquivalent(it.max)) { "Cannot get capability for a range" }
+            it.min as T
+        }
     }
 
     companion object {
-        const val PERSISTENT = "persistent"
-        const val QUERYABLE = "queryable"
-        const val TTL = "ttl"
-        const val TIED_TO_RUNTIME = "tiedToRuntime"
-        const val TIED_TO_ARC = "tiedToArc"
-
-        /** Helper constants with useful capability variants. */
-        val Empty: Capabilities = Capabilities(emptySet())
-        val Persistent: Capabilities = Capabilities(setOf<Capability>(Capability.Persistent))
-        val Queryable: Capabilities = Capabilities(setOf<Capability>(Capability.Queryable))
-        val PersistentQueryable: Capabilities = Capabilities(
-            setOf<Capability>(Capability.Persistent, Capability.Queryable)
-        )
-        val TiedToRuntime: Capabilities = Capabilities(setOf<Capability>(Capability.TiedToRuntime))
-        val TiedToArc: Capabilities = Capabilities(setOf<Capability>(Capability.TiedToArc))
-
         fun fromAnnotations(annotations: List<Annotation>): Capabilities {
-            val capabilities = mutableSetOf<Capability>()
-            annotations.forEach {
-                when (it.name) {
-                    PERSISTENT -> capabilities.add(Capability.Persistent)
-                    QUERYABLE, TTL -> capabilities.add(Capability.Queryable)
-                    TIED_TO_RUNTIME -> capabilities.add(Capability.TiedToRuntime)
-                    TIED_TO_ARC -> capabilities.add(Capability.TiedToArc)
-                }
+            val ranges = mutableListOf<Capability.Range>()
+            Capability.Persistence.fromAnnotations(annotations)?.let {
+                ranges.add(it.toRange())
             }
-            return Capabilities(capabilities)
+            Capability.Encryption.fromAnnotations(annotations)?.let { ranges.add(it.toRange()) }
+            Capability.Ttl.fromAnnotations(annotations)?.let { ranges.add(it.toRange()) }
+            Capability.Queryable.fromAnnotations(annotations)?.let { ranges.add(it.toRange()) }
+            Capability.Shareable.fromAnnotations(annotations)?.let { ranges.add(it.toRange()) }
+            return Capabilities(ranges)
         }
+
+        fun fromAnnotation(annotation: Annotation) = fromAnnotations(listOf(annotation))
     }
 }

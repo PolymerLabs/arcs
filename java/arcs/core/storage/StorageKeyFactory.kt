@@ -12,17 +12,17 @@
 package arcs.core.storage
 
 import arcs.core.common.ArcId
-import arcs.core.data.CapabilitiesNew
+import arcs.core.data.Capabilities
 import arcs.core.data.Schema
 
-abstract class StorageKeyFactory(val protocol: String, val capabilities: CapabilitiesNew) {
+abstract class StorageKeyFactory(val protocol: String, val capabilities: Capabilities) {
 
     abstract fun create(options: StorageKeyOptions): StorageKey
 
     /**
-     * Returns true, if the current storage key class supports the given set of [CapabilitiesNew].
+     * Returns true, if the current storage key class supports the given set of [Capabilities].
      */
-    fun supports(other: CapabilitiesNew): Boolean {
+    fun supports(other: Capabilities): Boolean {
         return capabilities.containsAll(other)
     }
 

@@ -115,7 +115,15 @@ $ tools/update-goldens \n\n`
         }],
         particles: [{
           specName: 'Writer',
-          connections: [{name: 'data', handle: 'handle0'}]
+          connections: [{
+            name: 'data',
+            handle: 'handle0',
+            type: {entity: {schema: {
+              names: ['Thing'],
+              fields: {name: {primitive: 'TEXT'}},
+              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            }}}
+          }]
         }]
       },
       {
@@ -140,7 +148,15 @@ $ tools/update-goldens \n\n`
         }],
         particles: [{
           specName: 'Reader',
-          connections: [{name: 'data', handle: 'handle0'}],
+          connections: [{
+            name: 'data',
+            handle: 'handle0',
+            type: {entity: {schema: {
+              names: ['Thing'],
+              fields: {name: {primitive: 'TEXT'}},
+              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            }}}
+          }],
         }]
       }, {
         name: 'ReadWriteRecipe',
@@ -156,10 +172,26 @@ $ tools/update-goldens \n\n`
         }],
         particles: [{
           specName: 'Reader',
-          connections: [{name: 'data', handle: 'handle0'}]
+          connections: [{
+            name: 'data',
+            handle: 'handle0',
+            type: {entity: {schema: {
+              names: ['Thing'],
+              fields: {'name': {primitive: 'TEXT'}},
+              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            }}}
+          }]
         }, {
           specName: 'Writer',
-          connections: [{name: 'data', handle: 'handle0'}],
+          connections: [{
+            name: 'data',
+            handle: 'handle0',
+            type: {entity: {schema: {
+              names: ['Thing'],
+              fields: {name: {primitive: 'TEXT'}},
+              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            }}}
+          }],
         }]
       }]
     });
@@ -218,10 +250,26 @@ $ tools/update-goldens \n\n`
         }],
         particles: [{
           specName: 'Reader',
-          connections: [{name: 'data', handle: 'handle0'}]
+          connections: [{
+            name: 'data',
+            handle: 'handle0',
+            type: {collection: {collectionType: {entity: {schema: {
+              names: ['Thing'],
+              fields: {name: {primitive: 'TEXT'}},
+              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            }}}}}
+          }]
         }, {
           specName: 'Writer',
-          connections: [{name: 'data', handle: 'handle0'}],
+          connections: [{
+            name: 'data',
+            handle: 'handle0',
+            type: {collection: {collectionType: {entity: {schema: {
+              names: ['Thing'],
+              fields: {name: {primitive: 'TEXT'}},
+              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            }}}}}
+          }],
         }]
       }]
     });

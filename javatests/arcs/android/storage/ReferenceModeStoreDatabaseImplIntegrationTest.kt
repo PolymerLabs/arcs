@@ -27,7 +27,6 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
@@ -95,7 +94,6 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
     @After
     fun tearDown() = runBlockingTest {
         WriteBackForTesting.clear()
-        CapabilitiesResolver.reset()
         databaseFactory.resetAll()
     }
 

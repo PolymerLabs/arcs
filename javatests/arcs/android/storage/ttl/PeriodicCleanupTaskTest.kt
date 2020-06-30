@@ -9,7 +9,7 @@ import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
-import arcs.core.data.Ttl
+import arcs.core.data.Capability.Ttl
 import arcs.core.entity.DummyEntity
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
@@ -21,13 +21,14 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.testutil.handles.dispatchFetchAll
+import arcs.core.testutil.handles.dispatchStore
 import arcs.jvm.host.JvmSchedulerProvider
+import arcs.jvm.util.JvmTime
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -41,35 +42,53 @@ class PeriodicCleanupTaskTest {
     )
     private val fakeTime = FakeTime()
     private lateinit var worker: PeriodicCleanupTask
+    private val context: Context = ApplicationProvider.getApplicationContext()
 
     @Before
     fun setUp() {
-        val context : Context = ApplicationProvider.getApplicationContext()
-        DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(context))
         SchemaRegistry.register(DummyEntity.SCHEMA)
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         worker = TestWorkerBuilder.from(context, PeriodicCleanupTask::class.java).build()
     }
 
     @Test
-    fun ttlWorkerTest() = runBlocking {
+    fun ttlWorker_removesExpiredEntity() = runBlocking {
+        DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(context))
         // Set time in the past so entity is already expired.
         fakeTime.millis = 1L
 
         val handle = createCollectionHandle()
         val entity = DummyEntity().apply { num = 1.0 }
-        handle.storeAndWait(entity)
-        withContext(handle.dispatcher) {
-            assertThat(handle.fetchAll()).containsExactly(entity)
-        }
+        handle.dispatchStore(entity)
+
+        // Make sure the write has reached storage.
+        WriteBackForTesting.awaitAllIdle()
+
+        assertThat(handle.dispatchFetchAll()).containsExactly(entity)
 
         // Trigger worker.
         assertThat(worker.doWork()).isEqualTo(Result.success())
 
         // Verify entity is gone.
-        withContext(handle.dispatcher) {
-            assertThat(handle.fetchAll()).isEmpty()
-        }
+        assertThat(handle.dispatchFetchAll()).isEmpty()
+    }
+
+    @Test
+    fun ttlWorker_resetDatabaseWhenTooLarge() = runBlocking {
+        DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(context, null, 5 /* maxDbSize */))
+        // Set time to now, so entity is NOT expired.
+        fakeTime.millis = JvmTime.currentTimeMillis
+
+        val handle = createCollectionHandle()
+        val entity = DummyEntity().apply { num = 1.0 }
+        handle.dispatchStore(entity)
+        assertThat(handle.dispatchFetchAll()).containsExactly(entity)
+
+        // Trigger worker.
+        assertThat(worker.doWork()).isEqualTo(Result.success())
+
+        // Verify entity is gone even though it was not expired.
+        assertThat(handle.dispatchFetchAll()).isEmpty()
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -87,15 +106,4 @@ class PeriodicCleanupTaskTest {
             collectionKey,
             Ttl.Days(2)
         ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
-
-    private suspend fun ReadWriteCollectionHandle<DummyEntity>.storeAndWait(entity: DummyEntity) {
-        val deferred = CompletableDeferred<Unit>()
-        onUpdate { deferred.complete(Unit) }
-        runBlocking(dispatcher) {
-            store(entity).join()
-        }
-        deferred.await()
-        // Make sure the write has reached storage.
-        WriteBackForTesting.awaitAllIdle()
-    }
 }
