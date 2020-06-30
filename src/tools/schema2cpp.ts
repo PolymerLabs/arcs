@@ -55,7 +55,7 @@ const typeMap: Dictionary<CppTypeInfo> = {
 function getTypeInfo(name: string): CppTypeInfo {
   const info = typeMap[name];
   if (!info) {
-    throw new Error(`Unhandled type '${name}' for kotlin.`);
+    throw new Error(`Unhandled type '${name}' for cpp.`);
   }
   return info;
 }
