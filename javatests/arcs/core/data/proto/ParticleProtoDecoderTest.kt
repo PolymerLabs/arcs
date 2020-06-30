@@ -1,21 +1,18 @@
 package arcs.core.data.proto
 
+import arcs.core.data.EntityType
+import arcs.core.data.FieldType
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
+import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe.Handle
 import arcs.core.data.Recipe.Particle
-import arcs.core.data.ParticleSpec
+import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
 import arcs.core.data.TypeVariable
-import arcs.core.testutil.fail
-import arcs.core.util.Result
-import arcs.repoutils.runfilesDir
 import com.google.common.truth.Truth.assertThat
-import com.google.protobuf.Message.Builder
-import com.google.protobuf.Message
-import com.google.protobuf.TextFormat
-import java.io.File
 import kotlin.test.assertFailsWith
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -30,6 +27,24 @@ class ParticleProtoDecoderTest {
         TypeVariable("thing"),
         ramdiskStorageKey
     )
+    val thingTypeProto = parseTypeProtoText(
+        """
+          entity {
+            schema {
+              names: "Thing"
+              fields {
+                key: "name"
+                value: { primitive: TEXT }
+              }
+            }
+          }
+        """.trimIndent()
+    )
+    val thingType = EntityType(Schema(
+        names = setOf(SchemaName("Thing")),
+        fields = SchemaFields(singletons = mapOf("name" to FieldType.Text), collections = emptyMap()),
+        hash = ""
+    ))
     val readConnectionSpec = HandleConnectionSpec("data", HandleMode.Read, TypeVariable("data"))
     val readerSpec = ParticleSpec("Reader", mapOf("data" to readConnectionSpec), "ReaderLocation")
     val writeConnectionSpec = HandleConnectionSpec("data", HandleMode.Write, TypeVariable("data"))
@@ -57,11 +72,13 @@ class ParticleProtoDecoderTest {
             .newBuilder()
             .setName("data")
             .setHandle("thing")
+            .setType(thingTypeProto)
             .build()
         // When decoded as part of readerSpec, the mode is [HandleMode.Read].
         val readConnection = handleConnectionProto.decode(readerSpec, context)
         assertThat(readConnection.spec).isEqualTo(readConnectionSpec)
         assertThat(readConnection.handle).isEqualTo(thingHandle)
+        assertThat(readConnection.type).isEqualTo(thingType)
     }
 
     @Test
@@ -70,6 +87,7 @@ class ParticleProtoDecoderTest {
             .newBuilder()
             .setName("unknown")
             .setHandle("thing")
+            .setType(thingTypeProto)
             .build()
         val exception = assertFailsWith<IllegalArgumentException> {
             proto.decode(readerSpec, context)
@@ -85,6 +103,7 @@ class ParticleProtoDecoderTest {
             .newBuilder()
             .setName("data")
             .setHandle("unknown")
+            .setType(thingTypeProto)
             .build()
         val exception = assertFailsWith<IllegalArgumentException> {
             proto.decode(writerSpec, context)
@@ -95,11 +114,28 @@ class ParticleProtoDecoderTest {
     }
 
     @Test
+    fun decodeHandleConnectionDetectsMissingType() {
+        val proto = HandleConnectionProto
+            .newBuilder()
+            .setName("data")
+            .setHandle("thing")
+            .build()
+
+        val exception = assertFailsWith<IllegalArgumentException> {
+            proto.decode(readerSpec, context)
+        }
+        assertThat(exception)
+            .hasMessageThat()
+            .contains("HandleConnection type not found when decoding ParticleProto 'Reader'.")
+    }
+
+    @Test
     fun decodesParticleProto() {
         val readConnectionProto = HandleConnectionProto
             .newBuilder()
             .setName("data")
             .setHandle("thing")
+            .setType(thingTypeProto)
             .build()
         val particleProto = ParticleProto
             .newBuilder()
@@ -110,7 +146,7 @@ class ParticleProtoDecoderTest {
         with(particleProto.decode(context)) {
             assertThat(spec).isEqualTo(readerSpec)
             assertThat(handleConnections).isEqualTo(
-                listOf(Particle.HandleConnection(readConnectionSpec, thingHandle))
+                listOf(Particle.HandleConnection(readConnectionSpec, thingHandle, thingType))
             )
         }
     }
@@ -121,11 +157,13 @@ class ParticleProtoDecoderTest {
             .newBuilder()
             .setName("read")
             .setHandle("thing")
+            .setType(thingTypeProto)
             .build()
         val writeConnectionProto = HandleConnectionProto
             .newBuilder()
             .setName("write")
             .setHandle("thing")
+            .setType(thingTypeProto)
             .build()
         val particleProto = ParticleProto
             .newBuilder()
@@ -138,8 +176,8 @@ class ParticleProtoDecoderTest {
         with(particleProto.decode(context)) {
             assertThat(spec).isEqualTo(readerWriterSpec)
             assertThat(handleConnections).containsExactly(
-                Particle.HandleConnection(readConnectionSpec, thingHandle),
-                Particle.HandleConnection(writeConnectionSpec, thingHandle)
+                Particle.HandleConnection(readConnectionSpec, thingHandle, thingType),
+                Particle.HandleConnection(writeConnectionSpec, thingHandle, thingType)
             )
         }
     }

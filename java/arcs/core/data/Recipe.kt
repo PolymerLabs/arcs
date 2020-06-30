@@ -29,7 +29,8 @@ data class Recipe(
         /** Representation of a handle connection in a particle. */
         data class HandleConnection(
             val spec: HandleConnectionSpec,
-            val handle: Handle
+            val handle: Handle,
+            val type: Type
         )
     }
 
