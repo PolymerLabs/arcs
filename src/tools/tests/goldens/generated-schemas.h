@@ -173,8 +173,8 @@ public:
   const std::string& name() const { return name_; }
   void set_name(const std::string& value) { name_ = value; name_valid_ = true; }
 
-  double age() const { return age_; }
-  void set_age(double value) { age_ = value; age_valid_ = true; }
+  long long age() const { return age_; }
+  void set_age(long long value) { age_ = value; age_valid_ = true; }
 
   double lastCall() const { return lastCall_; }
   void set_lastCall(double value) { lastCall_ = value; lastCall_valid_ = true; }
@@ -237,13 +237,13 @@ protected:
   Gold_AllPeople(const Gold_AllPeople&) = default;
   Gold_AllPeople& operator=(const Gold_AllPeople&) = default;
 
-  static const char* _schema_hash() { return "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa"; }
+  static const char* _schema_hash() { return "4efb82316465d50ee3756a8639133c90158f57cc"; }
   static const int _field_count = 7;
 
   std::string name_ = "";
   bool name_valid_ = false;
 
-  double age_ = 0;
+  long long age_ = 0;
   bool age_valid_ = false;
 
   double lastCall_ = 0;
@@ -348,7 +348,7 @@ inline void internal::Accessor::decode_entity(Gold_AllPeople* entity, const char
       decoder.decode(entity->name_);
       entity->name_valid_ = true;
     } else if (name == "age") {
-      decoder.validate("N");
+      decoder.validate("B");
       decoder.decode(entity->age_);
       entity->age_valid_ = true;
     } else if (name == "lastCall") {
@@ -395,7 +395,7 @@ inline std::string internal::Accessor::encode_entity(const Gold_AllPeople& entit
   internal::StringEncoder encoder;
   encoder.encode("", entity._internal_id_);
   encoder.encode("name:T", entity.name_);
-  encoder.encode("age:N", entity.age_);
+  encoder.encode("age:B", entity.age_);
   encoder.encode("lastCall:N", entity.lastCall_);
   encoder.encode("address:T", entity.address_);
   encoder.encode("favoriteColor:T", entity.favoriteColor_);
@@ -800,8 +800,8 @@ public:
   const std::string& name() const { return name_; }
   void set_name(const std::string& value) { name_ = value; name_valid_ = true; }
 
-  double age() const { return age_; }
-  void set_age(double value) { age_ = value; age_valid_ = true; }
+  long long age() const { return age_; }
+  void set_age(long long value) { age_ = value; age_valid_ = true; }
 
   double lastCall() const { return lastCall_; }
   void set_lastCall(double value) { lastCall_ = value; lastCall_valid_ = true; }
@@ -864,13 +864,13 @@ protected:
   Gold_QCollection(const Gold_QCollection&) = default;
   Gold_QCollection& operator=(const Gold_QCollection&) = default;
 
-  static const char* _schema_hash() { return "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa"; }
+  static const char* _schema_hash() { return "4efb82316465d50ee3756a8639133c90158f57cc"; }
   static const int _field_count = 7;
 
   std::string name_ = "";
   bool name_valid_ = false;
 
-  double age_ = 0;
+  long long age_ = 0;
   bool age_valid_ = false;
 
   double lastCall_ = 0;
@@ -975,7 +975,7 @@ inline void internal::Accessor::decode_entity(Gold_QCollection* entity, const ch
       decoder.decode(entity->name_);
       entity->name_valid_ = true;
     } else if (name == "age") {
-      decoder.validate("N");
+      decoder.validate("B");
       decoder.decode(entity->age_);
       entity->age_valid_ = true;
     } else if (name == "lastCall") {
@@ -1022,7 +1022,7 @@ inline std::string internal::Accessor::encode_entity(const Gold_QCollection& ent
   internal::StringEncoder encoder;
   encoder.encode("", entity._internal_id_);
   encoder.encode("name:T", entity.name_);
-  encoder.encode("age:N", entity.age_);
+  encoder.encode("age:B", entity.age_);
   encoder.encode("lastCall:N", entity.lastCall_);
   encoder.encode("address:T", entity.address_);
   encoder.encode("favoriteColor:T", entity.favoriteColor_);
