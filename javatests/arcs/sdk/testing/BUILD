@@ -8,6 +8,7 @@ arcs_kt_jvm_test_suite(
     deps = [
         "//java/arcs/core/entity",
         "//java/arcs/core/testutil",
+        "//java/arcs/core/testutil/handles",
         "//java/arcs/sdk/testing",
         "//javatests/arcs/core/host:particle",
         "//javatests/arcs/core/host:schemas",

@@ -22,6 +22,8 @@ import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.ReadWriteCollectionHandle
+import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.Reference
@@ -29,11 +31,14 @@ import arcs.core.storage.StoreManager
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.testutil.handles.dispatchClose
+import arcs.core.testutil.handles.dispatchCreateReference
+import arcs.core.testutil.handles.dispatchFetch
+import arcs.core.testutil.handles.dispatchFetchAll
+import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.TaggedLog
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
-import arcs.sdk.ReadWriteCollectionHandle
-import arcs.sdk.ReadWriteSingletonHandle
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.DefaultStorageServiceBindingDelegate
@@ -84,7 +89,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 
 private typealias HandleType = SystemHealthEnums.HandleType
 private typealias Function = SystemHealthEnums.Function
@@ -366,7 +370,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                     TestEntity
                 ),
                 when (settings.storageMode) {
-                    TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
+                    StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
                     else -> TestEntity.singletonInMemoryStorageKey
                 }
             ) as ReadWriteSingletonHandle<TestEntity>
@@ -401,10 +405,10 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             // The very first SingletonHandle is responsible for writing an entity
             // to storage then creating its reference.
             if (taskId == 0) {
-                SystemHealthTestEntity.entityReference = withContext(handle.dispatcher) {
-                    handle.store(SystemHealthTestEntity.referencedEntity).join()
-                    handle.createReference(SystemHealthTestEntity.referencedEntity).toReferencable()
-                }
+                handle.dispatchStore(SystemHealthTestEntity.referencedEntity)
+                SystemHealthTestEntity.entityReference =
+                    handle.dispatchCreateReference(SystemHealthTestEntity.referencedEntity)
+                        .toReferencable()
             }
             taskHandle.handle = handle
         }
@@ -452,17 +456,13 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             // The very first CollectionHandle is responsible for writing an entity
             // to storage then creating its reference.
             if (taskId == 0) {
-                SystemHealthTestEntity.entityReference = withContext(handle.dispatcher) {
-                    handle.store(SystemHealthTestEntity.referencedEntity).join()
-                    handle.createReference(SystemHealthTestEntity.referencedEntity).toReferencable()
-                }
+                handle.dispatchStore(SystemHealthTestEntity.referencedEntity)
+                SystemHealthTestEntity.entityReference =
+                    handle.dispatchCreateReference(SystemHealthTestEntity.referencedEntity)
+                        .toReferencable()
             }
             taskHandle.handle = handle
         }
-    }
-
-    private suspend inline fun <T> closeHandleSuspend(handle: T?) {
-        if (handle is Handle) withContext(handle.dispatcher) { handle.close() }
     }
 
     private fun launchIfContext(
@@ -479,22 +479,25 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
     private fun <T> closeHandle(
         handle: T?,
         coroutineContext: CoroutineContext? = null
-    ) = launchIfContext(coroutineContext) { closeHandleSuspend(handle) }
+    ) = launchIfContext(coroutineContext) {
+        if (handle is Handle) handle.dispatchClose()
+    }
 
+    @Suppress("UNCHECKED_CAST")
     private suspend fun listenerTask(
         taskHandle: TaskHandle,
         taskController: TaskController,
         settings: Settings
     ) {
         val timestampStart = System.currentTimeMillis()
+
         when (val handle = taskHandle.handle) {
-            is ReadWriteSingletonHandle<*> -> withContext(handle.dispatcher) {
-                handle.fetch()
-            }
-            is ReadWriteCollectionHandle<*> -> withContext(handle.dispatcher) {
-                handle.fetchAll()
-            }
+            is ReadWriteSingletonHandle<*> ->
+                (handle as? ReadWriteSingletonHandle<TestEntity>)?.dispatchFetch()
+            is ReadWriteCollectionHandle<*> ->
+                (handle as? ReadWriteCollectionHandle<TestEntity>)?.dispatchFetchAll()
         }
+
         val timeElapsed = System.currentTimeMillis() - timestampStart
         if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
             tasksEvents[taskController.taskId]?.writer?.withLock {
@@ -531,17 +534,10 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         }
 
         when (val handle = taskHandle.handle) {
-            is ReadWriteSingletonHandle<*> -> (
-                handle as? ReadWriteSingletonHandle<TestEntity>
-                )?.let {
-                    withContext(it.dispatcher) { it.store(entity) }.join()
-                }
-            is ReadWriteCollectionHandle<*> -> (
-                handle as? ReadWriteCollectionHandle<TestEntity>
-                )?.let {
-                    withContext(it.dispatcher) { it.store(entity) }.join()
-                }
-            else -> Unit
+            is ReadWriteSingletonHandle<*> ->
+                (handle as? ReadWriteSingletonHandle<TestEntity>)?.dispatchStore(entity)
+            is ReadWriteCollectionHandle<*> ->
+                (handle as? ReadWriteCollectionHandle<TestEntity>)?.dispatchStore(entity)
         }
     }
 
@@ -1024,7 +1020,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
     private data class TaskHandle(
         val handleManager: EntityHandleManager,
         val coroutineContext: CoroutineContext,
-        var handle: Any? = null
+        var handle: Handle? = null
     )
     private data class TaskEvent(
         val eventId: TaskEventId,
