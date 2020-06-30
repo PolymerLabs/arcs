@@ -133,6 +133,11 @@ export class Refinement {
          idx += 1;
       }
       // Find the range of values for the field name over which the refinement is valid.
+      if (a.expression.evalType === Primitive.BIGINT || b.expression.evalType === Primitive.BIGINT) {
+        const rangeA = BigIntRange.fromExpression(a.expression, {});
+        const rangeB = BigIntRange.fromExpression(b.expression, {});
+        return rangeA.isSubsetOf(rangeB) ? AtLeastAsSpecific.YES : AtLeastAsSpecific.NO;
+      }
       const rangeA = NumberRange.fromExpression(a.expression, textToNum);
       const rangeB = NumberRange.fromExpression(b.expression, textToNum);
       return rangeA.isSubsetOf(rangeB) ? AtLeastAsSpecific.YES : AtLeastAsSpecific.NO;
@@ -1838,7 +1843,7 @@ export class NumberFraction {
         const term = new NumberTerm({[expr.value]: 1});
         return new NumberFraction(new NumberMultinomial({[term.toKey()]: 1}));
       } else {
-        throw new Error(`Cannot model expression as BigIntFraction: ${expr.toString()}, wrong type: ${expr.evalType}`);
+        throw new Error(`Cannot model expression as NumberFraction: ${expr.toString()}, wrong type: ${expr.evalType}`);
       }
     } else if (expr instanceof NumberPrimitive) {
       return new NumberFraction(new NumberMultinomial({[CONSTANT]: expr.value}));
