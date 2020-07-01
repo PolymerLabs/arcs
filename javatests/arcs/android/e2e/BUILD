@@ -6,7 +6,7 @@ load("//tools/build_defs/android:rules.bzl", "android_binary")
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_android_library(
     name = "arcs_e2e_test_lib",

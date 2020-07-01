@@ -3,7 +3,7 @@ load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 # We use `java_test` and not `java_binary` as `run_dfa` requires testonly targets.
 # This would still create a java binary.
