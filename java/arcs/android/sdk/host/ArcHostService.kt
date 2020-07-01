@@ -12,7 +12,6 @@ package arcs.android.sdk.host
 
 import android.content.Intent
 import androidx.lifecycle.LifecycleService
-import arcs.android.util.ProtoPrefetcher
 import arcs.core.host.ArcHost
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
@@ -34,11 +33,6 @@ abstract class ArcHostService : LifecycleService() {
 
     val arcHostHelper: ArcHostHelper by lazy {
         ArcHostHelper(this, *arcHosts.toTypedArray())
-    }
-
-    override fun onCreate() {
-        super.onCreate()
-        ProtoPrefetcher.prefetch()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
