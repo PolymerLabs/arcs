@@ -19,12 +19,12 @@ import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.toParcelable
 import arcs.core.storage.StoreOptions
+import arcs.core.util.Dispatchers
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 

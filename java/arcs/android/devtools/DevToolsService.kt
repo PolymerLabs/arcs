@@ -14,9 +14,9 @@ package arcs.android.devtools
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import arcs.core.util.Dispatchers
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 
 /**

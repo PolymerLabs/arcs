@@ -14,11 +14,11 @@ package arcs.core.storage.util
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.VersionMap
 import arcs.core.storage.Reference
+import arcs.core.util.Dispatchers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex

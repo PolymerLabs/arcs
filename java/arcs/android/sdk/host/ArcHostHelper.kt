@@ -32,10 +32,10 @@ import arcs.core.host.ArcHostException
 import arcs.core.host.ArcState
 import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.host.ParticleIdentifier
+import arcs.core.util.Dispatchers
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 

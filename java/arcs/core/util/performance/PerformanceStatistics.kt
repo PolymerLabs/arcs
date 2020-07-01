@@ -11,12 +11,12 @@
 
 package arcs.core.util.performance
 
+import arcs.core.util.Dispatchers
 import arcs.core.util.RunningStatistics
 import arcs.core.util.guardedBy
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
