@@ -13,6 +13,8 @@ package arcs.android.sdk.host
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.os.ResultReceiver
 import arcs.android.host.parcelables.ParcelableParticleIdentifier
 import arcs.core.common.ArcId
@@ -85,7 +87,7 @@ class IntentArcHostAdapter(
 
     private class ResultReceiverStateChangeHandler(
         val block: (ArcId, ArcState) -> Unit
-    ) : ResultReceiver(null) {
+    ) : ResultReceiver(Handler(Looper.getMainLooper())) {
         override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
             val arcId = requireNotNull(
                 resultData?.getString(ArcHostHelper.EXTRA_ARCSTATE_CHANGED_ARCID)
