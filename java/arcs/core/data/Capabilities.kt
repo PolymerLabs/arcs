@@ -66,7 +66,7 @@ class Capabilities(capabilities: List<Capability> = emptyList()) {
     }
 
     fun hasEquivalent(capability: Capability): Boolean {
-        return ranges.find { it.isCompatible(capability) && it.isEquivalent(capability) } != null
+        return ranges.any { it.isCompatible(capability) && it.isEquivalent(capability) }
     }
 
     private inline fun <reified T : Capability> getCapability(): T? {

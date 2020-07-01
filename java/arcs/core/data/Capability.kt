@@ -39,6 +39,10 @@ sealed class Capability(val tag: String) {
         }
     }
 
+    /**
+     * Returns its own tag if this is an individual capability, or the tag of the inner capability,
+     * if this is a range.
+     */
     fun getRealTag(): String {
         return when (tag) {
             Capability.Range.TAG -> (this as Capability.Range).min.tag

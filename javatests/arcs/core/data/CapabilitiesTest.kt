@@ -26,10 +26,8 @@ class CapabilitiesTest {
     fun capabilities_empty() {
         assertThat(Capabilities().isEmpty).isTrue()
         assertThat(Capabilities.fromAnnotations(emptyList<Annotation>()).isEmpty).isTrue()
-        assertThat(Capabilities(Persistence.ON_DISK).isEmpty)
-            .isFalse()
-        assertThat(Capabilities(listOf(Persistence.ON_DISK)).isEmpty)
-            .isFalse()
+        assertThat(Capabilities(Persistence.ON_DISK).isEmpty).isFalse()
+        assertThat(Capabilities(listOf(Persistence.ON_DISK)).isEmpty).isFalse()
     }
 
     @Test
@@ -156,11 +154,7 @@ class CapabilitiesTest {
     }
     @Test
     fun capabilities_isEquivalent() {
-        val capabilities = Capabilities(
-            listOf(
-                Capability.Range(Ttl.Days(10), Ttl.Days(2))
-            )
-        )
+        val capabilities = Capabilities(listOf(Capability.Range(Ttl.Days(10), Ttl.Days(2))))
         assertThat(capabilities.contains(Ttl.Days(5))).isTrue()
         assertThat(capabilities.contains(Capability.Range(Ttl.Days(9), Ttl.Days(2)))).isTrue()
         assertThat(capabilities.containsAll(Capabilities(listOf(Ttl.Days(5))))).isTrue()
