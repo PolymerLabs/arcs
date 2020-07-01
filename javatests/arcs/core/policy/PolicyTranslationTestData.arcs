@@ -1,0 +1,49 @@
+// Test data for PolicyTranslationTest.
+
+// An empty policy.
+@egressType('Logging')
+policy BlankPolicy {}
+
+schema Foo
+  a: Text
+  b: Number
+  c: Boolean
+
+
+// Particle with a single input.
+particle Egress_SingleInput
+  input: reads Foo {a, b, c}
+recipe SingleInput
+  input: create
+  Egress_SingleInput
+    input: input
+
+// Policy allows access to fields a, b, c with redactions redaction1, redaction2, redaction3.
+@egressType('Logging')
+policy FooRedactions {
+  from Foo access {
+    @allowedUsage(label: 'redaction1', usageType: 'egress')
+    a,
+    @allowedUsage(label: 'redaction2', usageType: 'egress')
+    b,
+    @allowedUsage(label: 'redaction3', usageType: 'egress')
+    c,
+  }
+}
+
+// Particle with existing checks.
+particle Egress_ExistingChecks
+  input: reads Foo {}
+  check input is existing
+recipe ExistingChecks
+  input: create
+  Egress_ExistingChecks
+    input: input
+
+// Particle with a single output.
+particle Egress_SingleOutput
+  output: writes Foo {a, b, c}
+recipe SingleOutput
+  output: create
+  Egress_SingleOutput
+    output: output

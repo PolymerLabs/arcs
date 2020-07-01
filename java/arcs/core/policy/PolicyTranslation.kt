@@ -1,6 +1,11 @@
 package arcs.core.policy
 
 import arcs.core.analysis.RecipeGraph
+import arcs.core.data.AccessPath
+import arcs.core.data.Check
+import arcs.core.data.Claim
+import arcs.core.data.InformationFlowLabel.Predicate
+import arcs.core.data.InformationFlowLabel.SemanticTag
 
 /**
  * Translates the given [policy] into dataflow analysis checks and claims on the given [graph],
@@ -9,19 +14,88 @@ import arcs.core.analysis.RecipeGraph
  * @throws PolicyViolation if the [graph] violates the [policy]
  */
 fun applyPolicy(policy: Policy, graph: RecipeGraph): RecipeGraph {
-    checkEgressParticles(policy, graph)
-    // TODO(b/157605232): Modify the graph and attach checks and claims.
-    return graph
+    val egressParticleNodes = graph.particleNodes.filterNot { it.particle.spec.isolated }
+    checkEgressParticles(policy, egressParticleNodes)
+
+    // Add check statements to every egress particle node.
+    val checkPredicate = createCheckPredicate(policy)
+    val additionalChecks = egressParticleNodes.associateWith { node ->
+        // Each handle connection needs its own check statement.
+        node.particle.spec.connections.values
+            .filter { it.direction.canRead }
+            .map { connectionSpec ->
+                Check.Assert(AccessPath(node.particle, connectionSpec), checkPredicate)
+            }
+    }
+
+    // TODO(b/157605232): Add additional claims.
+    val additionalClaims = emptyMap<RecipeGraph.Node.Particle, List<Claim>>()
+
+    return graph.copyWith(additionalClaims, additionalChecks)
 }
 
-private fun checkEgressParticles(policy: Policy, graph: RecipeGraph) {
-    val invalidEgressParticles = graph.particleNodes
+/**
+ * Verifies that the given egress particle nodes match the policy. The only egress particle allowed
+ * to be used with a policy named `Foo` is an egress particle named `Egress_Foo`.
+ */
+private fun checkEgressParticles(
+    policy: Policy,
+    egressParticleNodes: List<RecipeGraph.Node.Particle>
+) {
+    val invalidEgressParticles = egressParticleNodes
         .map { it.particle.spec }
-        .filter { !it.isolated && it.name != policy.egressParticleName }
+        .filter { it.name != policy.egressParticleName }
     if (invalidEgressParticles.isNotEmpty()) {
         throw PolicyViolation.InvalidEgressParticle(policy, invalidEgressParticles.map { it.name })
     }
 }
+
+/**
+ * Constructs the [Predicate] that is to be used for checks on egress particles in the given
+ * [Policy].
+ *
+ * For policies which don't require any redaction labels, the check is a simple one of the form
+ * `check x is allowedForEgress`.
+ *
+ * For policies with redaction labels (e.g. `label1`, `label2`, `label3`), the check looks so:
+ * ```
+ * check x is allowedForEgress
+ *   or (is allowedForEgress_label1 and is label1)
+ *   or (is allowedForEgress_label2 and is label2)
+ *   or (is allowedForEgress_label3 and is label3)
+ * ```
+ */
+private fun createCheckPredicate(policy: Policy): Predicate {
+    val allowedForEgress = labelPredicate("allowedForEgress")
+    if (policy.allRedactionLabels.isEmpty()) {
+        return allowedForEgress
+    }
+    // List of predicates of the form: allowedForEgress_X AND X.
+    val labelPredicates = policy.allRedactionLabels.sorted().map { label ->
+        labelPredicate("allowedForEgress_$label") and labelPredicate(label)
+    }
+    // OR the predicates for each redaction label together.
+    return Predicate.or(allowedForEgress, *labelPredicates.toTypedArray())
+}
+
+/** Returns a copy of the [RecipeGraph] with extra checks and claims added to particle nodes. */
+private fun RecipeGraph.copyWith(
+    additionalClaims: Map<RecipeGraph.Node.Particle, List<Claim>>,
+    additionalChecks: Map<RecipeGraph.Node.Particle, List<Check>>
+): RecipeGraph {
+    return RecipeGraph(
+        particleNodes.map { node ->
+            RecipeGraph.Node.Particle(
+                node.particle,
+                node.claims + additionalClaims.getOrDefault(node, emptyList()),
+                node.checks + additionalChecks.getOrDefault(node, emptyList())
+            )
+        },
+        handleNodes
+    )
+}
+
+private fun labelPredicate(label: String) = Predicate.Label(SemanticTag(label))
 
 /** Indicates that a policy was violated by a recipe. */
 sealed class PolicyViolation(val policy: Policy, message: String) : Exception(
