@@ -21,14 +21,14 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.testutil.handles.dispatchFetchAll
+import arcs.core.testutil.handles.dispatchStore
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -59,18 +59,18 @@ class PeriodicCleanupTaskTest {
 
         val handle = createCollectionHandle()
         val entity = DummyEntity().apply { num = 1.0 }
-        handle.storeAndWait(entity)
-        withContext(handle.dispatcher) {
-            assertThat(handle.fetchAll()).containsExactly(entity)
-        }
+        handle.dispatchStore(entity)
+
+        // Make sure the write has reached storage.
+        WriteBackForTesting.awaitAllIdle()
+
+        assertThat(handle.dispatchFetchAll()).containsExactly(entity)
 
         // Trigger worker.
         assertThat(worker.doWork()).isEqualTo(Result.success())
 
         // Verify entity is gone.
-        withContext(handle.dispatcher) {
-            assertThat(handle.fetchAll()).isEmpty()
-        }
+        assertThat(handle.dispatchFetchAll()).isEmpty()
     }
 
     @Test
@@ -81,18 +81,14 @@ class PeriodicCleanupTaskTest {
 
         val handle = createCollectionHandle()
         val entity = DummyEntity().apply { num = 1.0 }
-        handle.storeAndWait(entity)
-        withContext(handle.dispatcher) {
-            assertThat(handle.fetchAll()).containsExactly(entity)
-        }
+        handle.dispatchStore(entity)
+        assertThat(handle.dispatchFetchAll()).containsExactly(entity)
 
         // Trigger worker.
         assertThat(worker.doWork()).isEqualTo(Result.success())
 
         // Verify entity is gone even though it was not expired.
-        withContext(handle.dispatcher) {
-            assertThat(handle.fetchAll()).isEmpty()
-        }
+        assertThat(handle.dispatchFetchAll()).isEmpty()
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -110,15 +106,4 @@ class PeriodicCleanupTaskTest {
             collectionKey,
             Ttl.Days(2)
         ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
-
-    private suspend fun ReadWriteCollectionHandle<DummyEntity>.storeAndWait(entity: DummyEntity) {
-        val deferred = CompletableDeferred<Unit>()
-        onUpdate { deferred.complete(Unit) }
-        runBlocking(dispatcher) {
-            store(entity).join()
-        }
-        deferred.await()
-        // Make sure the write has reached storage.
-        WriteBackForTesting.awaitAllIdle()
-    }
 }
