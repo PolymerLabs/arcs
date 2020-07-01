@@ -14,6 +14,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.os.ResultReceiver
 import arcs.android.host.parcelables.ParcelableParticleIdentifier
 import arcs.core.common.ArcId
@@ -24,6 +25,12 @@ import arcs.core.host.ArcState
 import arcs.core.host.ArcStateChangeCallback
 import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.host.ParticleIdentifier
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 /**
  * An [ArcHost] stub that translates API calls into [Intent]s directed at a [Service] using
@@ -86,21 +93,28 @@ class IntentArcHostAdapter(
 
     private class ResultReceiverStateChangeHandler(
         val block: (ArcId, ArcState) -> Unit
-    ) : ResultReceiver(Handler()) {
+    ) : ResultReceiver(Handler(Looper.getMainLooper())) {
         override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
-            val arcId = requireNotNull(
-                resultData?.getString(ArcHostHelper.EXTRA_ARCSTATE_CHANGED_ARCID)
-            ) {
-                "Missing arcId in Intent for onArcStateChangeHandler callback."
-            }.toArcId()
-            val arcState = requireNotNull(
-                resultData?.getString(ArcHostHelper.EXTRA_ARCSTATE_CHANGED_ARCSTATE)
-            ) {
-                "Missing state in Intent for onArcStateChangeHandler callback."
-            }.let {
-                ArcState.valueOf(it)
+            val scope = CoroutineScope(
+                EmptyCoroutineContext + Dispatchers.Default + Job() + CoroutineName(
+                    "ArcStateChange"
+                )
+            )
+            scope.launch {
+                val arcId = requireNotNull(
+                    resultData?.getString(ArcHostHelper.EXTRA_ARCSTATE_CHANGED_ARCID)
+                ) {
+                    "Missing arcId in Intent for onArcStateChangeHandler callback."
+                }.toArcId()
+                val arcState = requireNotNull(
+                    resultData?.getString(ArcHostHelper.EXTRA_ARCSTATE_CHANGED_ARCSTATE)
+                ) {
+                    "Missing state in Intent for onArcStateChangeHandler callback."
+                }.let {
+                    ArcState.valueOf(it)
+                }
+                block(arcId, arcState)
             }
-            block(arcId, arcState)
         }
     }
 

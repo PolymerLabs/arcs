@@ -186,10 +186,13 @@ abstract class AbstractArcHost(
         block: ArcStateChangeCallback
     ): ArcStateChangeRegistration {
         val registration = ArcStateChangeRegistration(arcId, block)
-        return lookupOrCreateArcHostContext(arcId.toString()).addOnArcStateChange(
+        val context = lookupOrCreateArcHostContext(arcId.toString())
+        return context.addOnArcStateChange(
             registration,
             block
-        )
+        ).also {
+            block(arcId, context.arcState)
+        }
     }
 
     override suspend fun removeOnArcStateChange(registration: ArcStateChangeRegistration) {
