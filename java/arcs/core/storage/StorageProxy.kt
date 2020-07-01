@@ -116,7 +116,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
                 val success = withTimeoutOrNull(5000) { store.idle() }
                 if (success == null) {
-                    log.warning {
+                    log.info {
                         "Timeout exceeded (5 seconds) while waiting for store to become idle."
                     }
                 }
@@ -487,7 +487,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         if (!couldApplyAllOps) {
             stateHolder.update { it.setState(ProxyState.DESYNC) }
 
-            log.warning { "Could not apply ops, notifying onDesync listeners and requesting Sync." }
+            log.info { "Could not apply ops, notifying onDesync listeners and requesting Sync." }
             notifyDesync()
             requestSynchronization()
         } else {

@@ -56,7 +56,9 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
             try {
                 storeRecord.store.off(storeRecord.id)
             } catch (e: Exception) {
-                log.warning { "failed to close the store(${storeRecord.id})" }
+                // TODO(b/160251910): Make logging detail more cleanly conditional.
+                log.debug(e) { "failed to close the store(${storeRecord.id})" }
+                log.info { "failed to close the store" }
             }
         }
     }

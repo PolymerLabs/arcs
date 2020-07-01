@@ -320,7 +320,7 @@ class ReferenceModeStore private constructor(
                         // the backing-store), assume that the backing store is corrupted and
                         // clear-out the collection store before re-attempting the sync.
                         val ops = buildClearContainerStoreOps()
-                        log.warning {
+                        log.info {
                             "SyncRequest timed out after $BLOCKING_QUEUE_TIMEOUT_MILLIS " +
                                 "milliseconds, backing store is likely corrupted - sending " +
                                 "clear operations to container store."

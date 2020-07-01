@@ -256,7 +256,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 )
                 log.debug { "No driver side changes? $noDriverSideChanges" }
             } catch (e: Exception) {
-                log.error(e) { "Error while applying pending driver models." }
+                // TODO(b/160251910): Make logging detail more cleanly conditional.
+                log.debug(e) { "Error while applying pending driver models." }
+                log.info { "Error while applying pending driver models." }
                 idleDeferred.value.completeExceptionally(e)
                 throw e
             }
