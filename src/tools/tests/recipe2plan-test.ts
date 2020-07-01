@@ -23,7 +23,7 @@ describe('recipe2plan', () => {
     assert.deepStrictEqual(
       await recipe2plan(await readManifest(), OutputFormat.Kotlin),
       fs.readFileSync('src/tools/tests/goldens/WriterReaderExample.kt', 'utf8'),
-      `Golden is out of date! Make sure the new script is correct. If it is, update the goldens with: 
+      `Golden is out of date! Make sure the new script is correct. If it is, update the goldens with:
 $ tools/update-goldens \n\n`
     );
   }));
@@ -61,7 +61,7 @@ $ tools/update-goldens \n\n`
           data: map 'my-handle-id'
           Reader
             data: reads data
-        
+
         recipe ReadWriteRecipe
           thing: create
           Writer
@@ -71,6 +71,7 @@ $ tools/update-goldens \n\n`
       `), {
       particleSpecs: [{
         name: 'Reader',
+        isolated: false,
         connections: [{
           name: 'data',
           direction: 'READS',
@@ -82,6 +83,7 @@ $ tools/update-goldens \n\n`
         }]
       }, {
         name: 'Writer',
+        isolated: false,
         connections: [{
           name: 'data',
           direction: 'WRITES',
@@ -213,6 +215,7 @@ $ tools/update-goldens \n\n`
       `), {
       particleSpecs: [{
         name: 'Writer',
+        isolated: false,
         connections: [{
           name: 'data',
           direction: 'WRITES',
@@ -226,6 +229,7 @@ $ tools/update-goldens \n\n`
         }]
       }, {
         name: 'Reader',
+        isolated: false,
         connections: [{
           name: 'data',
           direction: 'READS',

@@ -74,7 +74,8 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
     location: spec.implFile,
     connections,
     claims,
-    checks
+    checks,
+    isolated: spec.isolated,
   };
 }
 

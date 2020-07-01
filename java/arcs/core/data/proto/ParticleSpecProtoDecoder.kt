@@ -20,7 +20,7 @@ import arcs.core.util.resultOf
 
 typealias DirectionProto = HandleConnectionSpecProto.Direction
 
-/** Converts [HandleConnectionSpecProto.Direction] to [HandleConnectionSpec.Direction]. */
+/** Converts [HandleConnectionSpecProto.Direction] to [HandleMode]. */
 fun DirectionProto.decode() =
     when (this) {
         DirectionProto.UNSPECIFIED ->
@@ -34,9 +34,9 @@ fun DirectionProto.decode() =
 
 /** Converts a [HandleConnnectionSpecProto] to the corresponding [HandleConnectionSpec] instance. */
 fun HandleConnectionSpecProto.decode() = HandleConnectionSpec(
-    name = getName(),
-    direction = getDirection().decode(),
-    type = getType().decode()
+    name = name,
+    direction = direction.decode(),
+    type = type.decode()
 )
 
 /** Converts a [ParticleSpecProto] to the corresponding [ParticleSpec] instance. */
@@ -52,5 +52,5 @@ fun ParticleSpecProto.decode(): Result<ParticleSpec> = resultOf {
     val checks = checksList.map {
         Check.Assert(it.accessPath.decode(connections), it.predicate.decode())
     }
-    ParticleSpec(name, connections, location, claims, checks)
+    ParticleSpec(name, connections, location, claims, checks, isolated)
 }
