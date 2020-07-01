@@ -274,12 +274,15 @@ describe('Capabilities', () => {
     const capabilities1 = Capabilities.fromAnnotations(recipe.handles[1].annotations);
     assert.isUndefined(capabilities1.getPersistence());
     assert.isTrue(capabilities1.getTtl().isEquivalent(Ttl.hours(2)));
+    assert.isTrue(capabilities1.hasEquivalent(Ttl.hours(2)));
+    assert.isTrue(capabilities1.isEquivalent(Capabilities.create([Ttl.hours(2)])));
     assert.isUndefined(capabilities1.isEncrypted());
     assert.isUndefined(capabilities1.isQueryable());
 
     const capabilities2 = Capabilities.fromAnnotations(recipe.handles[2].annotations);
     assert.isTrue(capabilities2.getPersistence().isEquivalent(Persistence.onDisk()));
     assert.isTrue(capabilities2.hasEquivalent(Persistence.onDisk()));
+    assert.isTrue(capabilities2.isEquivalent(Capabilities.create([Persistence.onDisk()])));
     assert.isUndefined(capabilities2.getTtl());
     assert.isUndefined(capabilities2.isEncrypted());
     assert.isUndefined(capabilities2.isQueryable());
@@ -287,6 +290,13 @@ describe('Capabilities', () => {
     const capabilities3 = Capabilities.fromAnnotations(recipe.handles[3].annotations);
     assert.isTrue(capabilities3.hasEquivalent(Persistence.onDisk()));
     assert.isTrue(capabilities3.getTtl().isEquivalent(Ttl.minutes(30)));
+    assert.isTrue(capabilities3.hasEquivalent(Ttl.minutes(30)));
+    assert.isFalse(capabilities3.isEquivalent(Capabilities.create([Ttl.minutes(30)])));
+    assert.isFalse(capabilities3.isEquivalent(Capabilities.create([Persistence.onDisk()])));
+    assert.isTrue(capabilities3.isEquivalent(Capabilities.create([
+      Persistence.onDisk(),
+      Ttl.minutes(30)
+    ])));
     assert.isUndefined(capabilities3.isEncrypted());
     assert.isUndefined(capabilities3.isQueryable());
 
@@ -310,5 +320,47 @@ describe('Capabilities', () => {
     assert.isTrue(capabilities6.isEncrypted());
     assert.isTrue(capabilities6.isQueryable());
   });
-  // TODO: add tests for contains and hasEquivalent
+
+  it('checks equivalent with single range', () => {
+    const capabilities = Capabilities.create([new CapabilityRange(Ttl.days(10), Ttl.days(2))]);
+    assert.isTrue(capabilities.contains(Ttl.days(5)));
+    assert.isTrue(capabilities.contains(new CapabilityRange(Ttl.days(9), Ttl.days(2))));
+    assert.isTrue(capabilities.containsAll(Capabilities.create([Ttl.days(5)])));
+    assert.isTrue(capabilities.containsAll(
+        Capabilities.create([new CapabilityRange(Ttl.days(9), Ttl.days(2))])));
+    assert.isFalse(capabilities.isEquivalent(Capabilities.create([Ttl.days(5)])));
+    assert.isFalse(capabilities.isEquivalent(
+        Capabilities.create([new CapabilityRange(Ttl.days(9), Ttl.days(2))])));
+    assert.isTrue(capabilities.hasEquivalent(new CapabilityRange(Ttl.days(10), Ttl.days(2))));
+    assert.isTrue(capabilities.isEquivalent(
+        Capabilities.create([new CapabilityRange(Ttl.days(10), Ttl.days(2))])));
+  });
+
+  it('checks equivalent with multiple ranges', () => {
+    const capabilities = Capabilities.create([
+        Persistence.onDisk(),
+        new CapabilityRange(Ttl.days(10), Ttl.days(2))
+    ]);
+    assert.isTrue(capabilities.contains(Ttl.days(5)));
+    assert.isTrue(capabilities.contains(new CapabilityRange(Ttl.days(9), Ttl.days(2))));
+    assert.isTrue(capabilities.containsAll(Capabilities.create([Ttl.days(5)])));
+    assert.isTrue(capabilities.containsAll(
+        Capabilities.create([new CapabilityRange(Ttl.days(9), Ttl.days(2))])));
+    assert.isFalse(capabilities.isEquivalent(Capabilities.create([Ttl.days(5)])));
+    assert.isFalse(capabilities.isEquivalent(
+        Capabilities.create([new CapabilityRange(Ttl.days(9), Ttl.days(2))])));
+    assert.isFalse(capabilities.isEquivalent(
+        Capabilities.create([new CapabilityRange(Ttl.days(10), Ttl.days(2))])));
+    assert.isTrue(capabilities.hasEquivalent(new CapabilityRange(Ttl.days(10), Ttl.days(2))));
+    assert.isFalse(capabilities.hasEquivalent(Persistence.inMemory()));
+    assert.isTrue(capabilities.hasEquivalent(Persistence.onDisk()));
+    assert.isTrue(capabilities.containsAll(
+        Capabilities.create([Persistence.onDisk(), Ttl.days(10)])));
+    assert.isFalse(capabilities.containsAll(
+        Capabilities.create([Persistence.onDisk(), new Encryption(true)])));
+    assert.isFalse(capabilities.isEquivalent(
+      Capabilities.create([Persistence.onDisk(), Ttl.days(10)])));
+    assert.isTrue(capabilities.isEquivalent(
+      Capabilities.create([Persistence.onDisk(), new CapabilityRange(Ttl.days(10), Ttl.days(2))])));
+  });
 });

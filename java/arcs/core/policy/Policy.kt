@@ -14,7 +14,6 @@ package arcs.core.policy
 import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability
-import java.util.concurrent.TimeUnit
 
 /** Defines a data usage policy. See [PolicyProto] for the canonical definition of a policy. */
 data class Policy(
@@ -46,7 +45,7 @@ data class PolicyTarget(
             if (it.encryptionRequired) {
                 ranges.add(Capability.Encryption(true))
             }
-            ranges.add(Capability.Ttl.Minutes(TimeUnit.MILLISECONDS.toMinutes(maxAgeMs).toInt()))
+            ranges.add(Capability.Ttl.Minutes((maxAgeMs / Capability.Ttl.MILLIS_IN_MIN).toInt()))
             Capabilities(ranges)
         }
     }

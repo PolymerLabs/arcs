@@ -523,7 +523,8 @@ export class Capabilities {
   isEmpty() { return this.ranges.length === 0; }
 
   isEquivalent(other: Capabilities): boolean {
-    return this.ranges.length === other.ranges.length && this.containsAll(other);
+    return this.ranges.length === other.ranges.length &&
+           other.ranges.every(otherRange => this.hasEquivalent(otherRange));
   }
 
   hasEquivalent(capability: Capability): boolean {
