@@ -39,7 +39,9 @@ abstract class ResurrectorService : Service() {
      */
     protected open val resurrectionDatabaseName: String = DbHelper.RESURRECTION_DB_NAME
 
-    private val job = Job() + Dispatchers.IO + CoroutineName("ResurrectorService")
+    protected open val job =
+        Job() + Dispatchers.IO + CoroutineName("ResurrectorService")
+
     private val dbHelper: DbHelper by lazy { DbHelper(this, resurrectionDatabaseName) }
 
     private val mutex = Mutex()
