@@ -2279,11 +2279,7 @@ class DatabaseImplTest {
         val collectionClient = FakeDatabaseClient(collectionKey)
         database.addClient(collectionClient)
 
-        database.dumpTables("entities", "storage_keys", "entity_refs", "collections", "fields", "field_values", "collection_entries")
-
         database.removeExpiredEntities()
-
-        database.dumpTables("entities", "storage_keys", "entity_refs", "collections", "fields", "field_values", "collection_entries")
 
         // Check the entity itself has not been modified.
         assertThat(database.getEntity(entityKey, schema)).isEqualTo(entity)
