@@ -12,6 +12,7 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
@@ -86,18 +87,14 @@ class HandleManagerCloseTest {
             updateCalled.complete()
         }
 
-        withContext(handleA.dispatcher) {
-            handleA.store(Person("e1", "p1", 1.0, true))
-        }
+        handleA.dispatchStore(Person("e1", "p1", 1.0, true))
         updateCalled.join()
         assertThat(updates).isEqualTo(1)
 
         handleManagerB.close()
 
         updateCalled = Job()
-        withContext(handleA.dispatcher) {
-            handleA.store(Person("e2", "p2", 2.0, true))
-        }
+        handleA.dispatchStore(Person("e2", "p2", 2.0, true))
         assertSuspendingThrows(TimeoutCancellationException::class) {
             withTimeout(100) { updateCalled.join() }
         }
