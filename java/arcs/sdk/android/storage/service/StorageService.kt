@@ -59,16 +59,16 @@ import kotlinx.coroutines.runBlocking
  * the [IStorageService] interface when bound-to by a client.
  */
 open class StorageService : ResurrectorService() {
-    private val coroutineContext = Dispatchers.IO + CoroutineName("StorageService")
-    private val scope = CoroutineScope(coroutineContext)
-    private val writeBackScope = CoroutineScope(
+    open val coroutineContext = Dispatchers.IO + CoroutineName("StorageService")
+    open val scope = CoroutineScope(coroutineContext)
+    open val writeBackScope = CoroutineScope(
         Executors.newCachedThreadPool {
             Thread(it).apply { name = "WriteBack #$id" }
         }.asCoroutineDispatcher() + SupervisorJob()
     )
-    private val stores = ConcurrentHashMap<StorageKey, Store<*, *, *>>()
-    private var startTime: Long? = null
-    private val stats = BindingContextStatsImpl()
+    open val stats = BindingContextStatsImpl()
+    protected val stores = ConcurrentHashMap<StorageKey, Store<*, *, *>>()
+    protected var startTime: Long? = null
     private val log = TaggedLog { "StorageService" }
 
     @ExperimentalCoroutinesApi
