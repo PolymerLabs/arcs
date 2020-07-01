@@ -11,6 +11,8 @@
 
 package arcs.core.analysis
 
+import arcs.core.data.Check
+import arcs.core.data.Claim
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.Recipe
@@ -25,6 +27,9 @@ import arcs.core.data.Recipe
 */
 class RecipeGraph(recipe: Recipe) {
     val nodes: List<Node> = getNodesWithEdges(recipe)
+
+    val particleNodes = nodes.filterIsInstance<Node.Particle>()
+    val handleNodes = nodes.filterIsInstance<Node.Handle>()
 
     /** Returns the nodes for the [Recipe.Handle] and [Recipe.Particle] instances in [recipe]. */
     private fun getNodesWithEdges(recipe: Recipe): List<Node> {
@@ -92,6 +97,9 @@ class RecipeGraph(recipe: Recipe) {
 
     /** Represents a node in a [RecipeGraph]. */
     sealed class Node {
+        /** Name for the node, used in debug logs. */
+        abstract val debugName: String
+
         /** List of successors of this node. */
         val successors: List<Neighbor>
             get() = _successors
@@ -130,13 +138,29 @@ class RecipeGraph(recipe: Recipe) {
         }
 
         /** A node representing a particle. */
-        data class Particle(val particle: Recipe.Particle) : Node() {
-            override fun toString() = "[p:${particle.spec.name}]"
+        data class Particle(
+            val particle: Recipe.Particle,
+            var claims: MutableList<Claim>,
+            var checks: MutableList<Check>
+        ) : Node() {
+            constructor(particle: Recipe.Particle) : this(
+                particle,
+                particle.spec.claims.toMutableList(),
+                particle.spec.checks.toMutableList()
+            )
+
+            val particleName = particle.spec.name
+
+            override val debugName = "p:$particleName"
+
+            override fun toString() = "[$debugName]"
         }
 
         /** A node representing a handle. */
         data class Handle(val handle: Recipe.Handle) : Node() {
-            override fun toString() = "[h:${handle.name}]"
+            override val debugName = "h:${handle.name}"
+
+            override fun toString() = "[$debugName]"
         }
     }
 }

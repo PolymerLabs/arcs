@@ -11,17 +11,16 @@
 
 package arcs.core.data
 
-/**
- * This class contains metadata about a [Particle] in a [Recipe].
- *
- * @property name the name of the particle.
- * @property connections all the handle connections of the particle indexed by the connection name.
- * @property location the location of the implementation.
- */
+/** Specification of an Arcs [Particle]. */
 data class ParticleSpec(
+    /** The name of the particle. */
     val name: String,
+    /** All the handle connections of the particle indexed by the connection name. */
     val connections: Map<String, HandleConnectionSpec>,
+    /** The location of the implementation. */
     val location: String,
     val claims: List<Claim> = emptyList(),
-    val checks: List<Check> = emptyList()
+    val checks: List<Check> = emptyList(),
+    /** Indicates whether the particle is an isolated (non-egress) particle. */
+    val isolated: Boolean = false
 )

@@ -16,20 +16,14 @@ import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Handle
 import arcs.sdk.Particle
-import arcs.sdk.ReadCollectionHandle
-import arcs.sdk.ReadSingletonHandle
-import arcs.sdk.WriteCollectionHandle
-import arcs.sdk.WriteSingletonHandle
 import com.google.common.truth.Truth.assertWithMessage
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScope
-import kotlinx.coroutines.withContext
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -43,6 +37,8 @@ import org.junit.runners.model.Statement
  * the generated test harness depend on the `arcs_kt_schema` target with a `_test_harness` suffix
  * added to the target name.
  *
+ * Handle methods should be invoked using the dispatch helpers in arcs.core.testutil.handles
+ *
  * Test harness should be used as a JUnit rule, e.g.
  * ```
  * @get:Rule val th = YourParticleTestHarness { scope -> YourParticle(scope) }
@@ -53,10 +49,10 @@ import org.junit.runners.model.Statement
  *   harness.start()
  *
  *   // Set up initial state, e.g. handles.
- *   harness.store(harness.handleName, YourEntity(...))
+ *   harness.handleName.dispatchStore(YourEntity(...))
  *
  *   // Continue with the test.
- *   assertThat(harness.fetch(harness.otherHandle)).isEqualTo(...)
+ *   assertThat(harness.otherHandle.dispatchFetch()).isEqualTo(...)
  * }
  * ```
  *
@@ -181,86 +177,5 @@ open class BaseTestHarness<P : Particle>(
             it.getProxy().maybeInitiateSync()
             it.getProxy().awaitOutgoingMessageQueueDrain()
         }
-    }
-
-    /**
-     * Calls [ReadSingletonHandle.fetch] with the handle's dispatcher context.
-     */
-    suspend fun <H : ReadSingletonHandle<T>, T> fetch(handle: H): T? {
-        return withContext(handle.dispatcher) { handle.fetch() }
-    }
-
-    /**
-     * Calls [WriteSingletonHandle.store] with the handle's dispatcher context and waits for it to
-     * complete (including notifications being sent to other handles reading from the same store).
-     */
-    suspend fun <H : WriteSingletonHandle<T>, T> store(handle: H, element: T) {
-        withContext(handle.dispatcher) { handle.store(element) }.join()
-        handle.getProxy().waitForIdle()
-    }
-
-    /**
-     * Calls [WriteSingletonHandle.clear] with the handle's dispatcher context and waits for it to
-     * complete (including notifications being sent to other handles reading from the same store).
-     */
-    suspend fun <H : WriteSingletonHandle<T>, T> clear(handle: H) {
-        withContext(handle.dispatcher) { handle.clear() }.join()
-        handle.getProxy().waitForIdle()
-    }
-
-    /**
-     * Calls [ReadCollectionHandle.size] with the handle's dispatcher context.
-     */
-    suspend fun <H : ReadCollectionHandle<T>, T> size(handle: H): Int {
-        return withContext(handle.dispatcher) { handle.size() }
-    }
-
-    /**
-     * Calls [ReadCollectionHandle.isEmpty] with the handle's dispatcher context.
-     */
-    suspend fun <H : ReadCollectionHandle<T>, T> isEmpty(handle: H): Boolean {
-        return withContext(handle.dispatcher) { handle.isEmpty() }
-    }
-
-    /**
-     * Calls [ReadCollectionHandle.fetchAll] with the handle's dispatcher context.
-     */
-    suspend fun <H : ReadCollectionHandle<T>, T> fetchAll(handle: H): Set<T> {
-        return withContext(handle.dispatcher) { handle.fetchAll() }
-    }
-
-    /**
-     * Calls [WriteCollectionHandle.store] with the handle's dispatcher context and waits for it to
-     * complete (including notifications being sent to other handles reading from the same store).
-     *
-     * This allows multiple elements to be stored and will wait until all the operations are done.
-     */
-    suspend fun <H : WriteCollectionHandle<T>, T> store(handle: H, first: T, vararg rest: T) {
-        withContext(handle.dispatcher) {
-            listOf(handle.store(first)) + rest.map { handle.store(it) }
-        }.joinAll()
-        handle.getProxy().waitForIdle()
-    }
-
-    /**
-     * Calls [WriteCollectionHandle.remove] with the handle's dispatcher context and waits for it to
-     * complete (including notifications being sent to other handles reading from the same store).
-     *
-     * This allows multiple elements to be removed and will wait until all the operations are done.
-     */
-    suspend fun <H : WriteCollectionHandle<T>, T> remove(handle: H, first: T, vararg rest: T) {
-        withContext(handle.dispatcher) {
-            listOf(handle.remove(first)) + rest.map { handle.remove(it) }
-        }.joinAll()
-        handle.getProxy().waitForIdle()
-    }
-
-    /**
-     * Calls [WriteCollectionHandle.clear] with the handle's dispatcher context and waits for it to
-     * complete (including notifications being sent to other handles reading from the same store).
-     */
-    suspend fun <H : WriteCollectionHandle<T>, T> clear(handle: H) {
-        withContext(handle.dispatcher) { handle.clear() }.join()
-        handle.getProxy().waitForIdle()
     }
 }

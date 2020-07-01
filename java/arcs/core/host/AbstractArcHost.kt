@@ -12,6 +12,7 @@ package arcs.core.host
 
 import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
+import arcs.core.data.Capability.Shareable
 import arcs.core.data.Plan
 import arcs.core.entity.Entity
 import arcs.core.entity.Handle
@@ -109,7 +110,9 @@ abstract class AbstractArcHost(
                 stopArc(partition)
                 pausedArcs.add(partition)
             } catch (e: Exception) {
-                log.error(e) { "Failure stopping arc." }
+                // TODO(b/160251910): Make logging detail more cleanly conditional.
+                log.debug(e) { "Failure stopping arc." }
+                log.info { "Failure stopping arc." }
             }
         }
     }
@@ -121,7 +124,9 @@ abstract class AbstractArcHost(
             try {
                 startArc(it)
             } catch (e: Exception) {
-                log.error(e) { "Failure starting arc." }
+                // TODO(b/160251910): Make logging detail more cleanly conditional.
+                log.debug(e) { "Failure starting arc." }
+                log.info { "Failure starting arc." }
             }
         }
         pausedArcs.clear()
@@ -295,7 +300,9 @@ abstract class AbstractArcHost(
             } catch (e: Exception) {
                 // TODO: capture the exception in context?
                 context.arcState = ArcState.Error
-                log.error(e) { "Failure performing particle startup." }
+                // TODO(b/160251910): Make logging detail more cleanly conditional.
+                log.debug(e) { "Failure performing particle startup." }
+                log.info { "Failure performing particle startup." }
             }
         }
 
@@ -459,7 +466,7 @@ abstract class AbstractArcHost(
                 ArcState.NeverStarted -> stopArcError(context, "Arc $arcId was never started")
                 ArcState.Stopped -> stopArcError(context, "Arc $arcId already stopped")
                 ArcState.Deleted -> stopArcError(context, "Arc $arcId is deleted.")
-                ArcState.Error -> stopArcError(context, "Arc $arcId encounted an error.")
+                ArcState.Error -> stopArcError(context, "Arc $arcId encountered an error.")
             }
         }
     }
@@ -471,6 +478,7 @@ abstract class AbstractArcHost(
     @Suppress("UNUSED_PARAMETER", "RedundantSuspendModifier")
     private suspend fun stopArcError(context: ArcHostContext, message: String) {
         // TODO: decide how to propagate this
+        log.debug { "Error stopping arc: $message" }
     }
 
     /**
@@ -494,7 +502,7 @@ abstract class AbstractArcHost(
      */
     abstract val platformTime: Time
 
-    open val arcHostContextCapability = Capabilities.TiedToRuntime
+    open val arcHostContextCapability = Capabilities(Shareable(true))
 
     override suspend fun isHostForParticle(particle: Plan.Particle) =
         registeredParticles().contains(ParticleIdentifier.from(particle.location))

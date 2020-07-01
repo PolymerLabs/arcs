@@ -11,7 +11,7 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {FlowGraph} from '../flow-graph.js';
-import {CheckCondition} from '../../../runtime/particle-check.js';
+import {CheckCondition} from '../../../runtime/check.js';
 import {Edge, Node, FlowModifier} from '../graph-internals.js';
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 

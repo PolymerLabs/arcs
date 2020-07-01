@@ -38,27 +38,21 @@ import java.util.BitSet
  * TODO(bgogul): For the time being, we pass in the ingress handles.
 */
 class InformationFlow private constructor(
-    private val recipe: Recipe,
+    private val graph: RecipeGraph,
     private val ingresses: List<String> = emptyList()
 ) : RecipeGraphFixpointIterator<AccessPathLabels>(AccessPathLabels.getBottom()) {
 
     private val log = TaggedLog { "InformationFlow" }
 
-    private val particleClaims: Map<Particle, List<Claim>> = recipe.particles
-        .filterNot { it.spec.claims.isEmpty() }
-        .map { it to it.instantiatedClaims() }
-        .toMap()
+    private val particleClaims = graph.particleNodes.associateBy(
+        keySelector = { it.particle },
+        valueTransform = { it.instantiatedClaims() }
+    )
 
-    private val particleChecks = recipe.particles
-        .filterNot { it.spec.checks.isEmpty() }
-        .map { it to it.instantiatedChecks() }
-        .toMap()
-
-    /** Returns the instantiated [List<Claim>] for this particle. */
-    private fun Particle.instantiatedClaims() = spec.claims.map { it.instantiateFor(this) }
-
-    /** Returns the instantiated [List<Check>] for this particle. */
-    private fun Particle.instantiatedChecks() = spec.checks.map { it.instantiateFor(this) }
+    private val particleChecks = graph.particleNodes.associateBy(
+        keySelector = { it.particle },
+        valueTransform = { it.instantiatedChecks() }
+    )
 
     /** Represents all the labels mentioned in the particle claims. */
     private val labelsInClaims: Set<InformationFlowLabel> =
@@ -117,7 +111,7 @@ class InformationFlow private constructor(
         val connectionName = if (specParts.size == 2) specParts[1] else null
         val particleNode = graph.nodes.asSequence()
             .filterIsInstance<RecipeGraph.Node.Particle>()
-            .find { it.particle.spec.name == particleName }
+            .find { it.particleName == particleName }
         val initialValues = mutableMapOf<AccessPath, InformationFlowLabels>()
 
         val particle = particleNode?.particle ?: return null
@@ -398,7 +392,7 @@ class InformationFlow private constructor(
         /** Computes the labels for [recipe] when [ingress] is used as the ingress handles. */
         public fun computeLabels(recipe: Recipe, ingress: List<String>): AnalysisResult {
             val graph = RecipeGraph(recipe)
-            val analysis = InformationFlow(recipe, ingress)
+            val analysis = InformationFlow(graph, ingress)
             return AnalysisResult(
                 recipe = recipe,
                 fixpoint = analysis.computeFixpoint(graph) { value, prefix ->
@@ -412,7 +406,17 @@ class InformationFlow private constructor(
     }
 }
 
-/** Return the [InformationFlowLabel] occurences in the predicate. */
+/** Returns the instantiated [List<Claim>] for this particle. */
+private fun RecipeGraph.Node.Particle.instantiatedClaims(): List<Claim> {
+    return claims.map { it.instantiateFor(particle) }
+}
+
+/** Returns the instantiated [List<Check>] for this particle. */
+private fun RecipeGraph.Node.Particle.instantiatedChecks(): List<Check> {
+    return checks.map { it.instantiateFor(particle) }
+}
+
+/** Return the [InformationFlowLabel] occurrences in the predicate. */
 private fun Predicate.labels(): List<InformationFlowLabel> = when (this) {
     is Predicate.Label -> listOf(label)
     is Predicate.Not -> predicate.labels()
@@ -431,8 +435,7 @@ fun InformationFlow.AnalysisResult.verify(particle: Recipe.Particle, check: Chec
     if (result.isTop) return false
 
     val assert = requireNotNull(check as? Check.Assert)
-    val accessPathLabels =
-        result.accessPathLabels?.get(assert.accessPath) ?: InformationFlowLabels.getBottom()
+    val accessPathLabels = result.getLabels(assert.accessPath)
 
     // Unreachable => check is trivially satisfied.
     if (accessPathLabels.isBottom) return true

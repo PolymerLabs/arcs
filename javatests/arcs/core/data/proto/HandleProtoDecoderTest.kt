@@ -1,7 +1,6 @@
 package arcs.core.data.proto
 
 import arcs.core.data.Annotation
-import arcs.core.data.Capabilities
 import arcs.core.data.Recipe.Handle
 import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
@@ -55,7 +54,7 @@ class HandleProtoDecoderTest {
             assertThat(type).isEqualTo(TypeVariable("notype_thing"))
             assertThat(tags).isEmpty()
             assertThat(annotations)
-                .isEqualTo(listOf(Annotation.createCapability(Capabilities.TIED_TO_ARC)))
+                .isEqualTo(listOf(Annotation.createCapability("tiedToArc")))
         }
     }
 
@@ -98,8 +97,8 @@ class HandleProtoDecoderTest {
             assertThat(type).isEqualTo(entityType)
             assertThat(tags).isEmpty()
             assertThat(annotations).isEqualTo(listOf(
-                Annotation.createCapability(Capabilities.PERSISTENT),
-                Annotation.createCapability(Capabilities.QUERYABLE)
+                Annotation.createCapability("persistent"),
+                Annotation.createCapability("queryable")
             ))
         }
     }
@@ -154,8 +153,8 @@ class HandleProtoDecoderTest {
             assertThat(type).isEqualTo(entityType)
             assertThat(tags).containsExactly("foo", "bar", "baz")
             assertThat(annotations).isEqualTo(listOf(
-                Annotation.createCapability(Capabilities.PERSISTENT),
-                Annotation.createCapability(Capabilities.QUERYABLE)
+                Annotation.createCapability("persistent"),
+                Annotation.createCapability("queryable")
             ))
         }
     }
@@ -195,7 +194,7 @@ class HandleProtoDecoderTest {
             assertThat(type).isEqualTo(TypeVariable("notype_thing"))
             assertThat(tags).isEmpty()
             assertThat(annotations)
-                .isEqualTo(listOf(Annotation.createCapability(Capabilities.TIED_TO_ARC)))
+                .isEqualTo(listOf(Annotation.createCapability("tiedToArc")))
         }
     }
 

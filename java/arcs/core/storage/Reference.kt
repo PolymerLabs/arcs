@@ -14,9 +14,9 @@ package arcs.core.storage
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.VersionMap
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
-import arcs.core.data.Ttl
 import arcs.core.util.Time
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Dispatchers
@@ -46,7 +46,7 @@ data class Reference(
     fun ensureTimestampsAreSet(time: Time, ttl: Ttl) {
         if (_creationTimestamp == RawEntity.UNINITIALIZED_TIMESTAMP) {
             _creationTimestamp = time.currentTimeMillis
-            if (ttl != Ttl.Infinite) {
+            if (ttl != Ttl.Infinite()) {
                 _expirationTimestamp = ttl.calculateExpiration(time)
             }
         }

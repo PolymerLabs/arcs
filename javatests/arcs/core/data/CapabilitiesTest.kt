@@ -11,84 +11,145 @@
 
 package arcs.core.data
 
+import arcs.core.data.Capability.Ttl
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.test.assertFailsWith
 
-/** Tests for [CapabilitiesTest]. */
 @RunWith(JUnit4::class)
 class CapabilitiesTest {
     @Test
-    fun capabilities_verifiesContains() {
-        assertThat(Capabilities.Empty.contains(Capabilities.Empty)).isTrue()
-        assertThat(Capabilities.Persistent.contains(Capabilities.Persistent)).isTrue()
-        assertThat(Capabilities.Persistent in Capabilities.Persistent).isTrue()
-        assertThat(Capabilities.Persistent !in Capabilities.Persistent).isFalse()
-        assertThat(Capabilities.TiedToRuntime.contains(Capabilities.TiedToRuntime)).isTrue()
-        assertThat(Capabilities.TiedToArc.contains(Capabilities.TiedToArc)).isTrue()
-
-        assertThat(Capabilities.Empty.contains(Capabilities.Persistent)).isFalse()
-        assertThat(Capabilities.Persistent.contains(Capabilities.Empty)).isFalse()
-        assertThat(Capabilities.Persistent.contains(Capabilities.TiedToRuntime)).isFalse()
-        assertThat(Capabilities.TiedToRuntime.contains(Capabilities.TiedToArc)).isFalse()
-        assertThat(Capabilities.TiedToArc.contains(Capabilities.Persistent)).isFalse()
-
-        assertThat(Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc)).contains(
-                Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc)))
-        ).isTrue()
-        assertThat(Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc)).contains(
-                Capabilities(setOf(Capabilities.Capability.Persistent)))
-        ).isTrue()
-        assertThat(Capabilities.Persistent.contains(
-                Capabilities(setOf(Capabilities.Capability.Persistent, Capabilities.Capability.TiedToArc)))
-        ).isFalse()
+    fun capabilities_empty() {
+        assertThat(Capabilities().isEmpty).isTrue()
+        assertThat(Capabilities.fromAnnotations(emptyList<Annotation>()).isEmpty).isTrue()
+        assertThat(Capabilities(Capability.Persistence.ON_DISK).isEmpty)
+            .isFalse()
+        assertThat(Capabilities(listOf(Capability.Persistence.ON_DISK)).isEmpty)
+            .isFalse()
     }
-    @Test
-    fun capabilities_fromAnnotations() {
-        assertThat(Capabilities.fromAnnotations(emptyList())).isEqualTo(Capabilities.Empty)
-        assertThat(Capabilities.fromAnnotations(listOf(Annotation("justAnnotation"))))
-            .isEqualTo(Capabilities.Empty)
 
-        assertThat(Capabilities.fromAnnotations(
+    @Test
+    fun capabilities_unique() {
+        assertFailsWith<IllegalArgumentException> {
+            Capabilities(listOf(Ttl.Days(1).toRange(), Ttl.Hours(3)))
+        }
+    }
+
+    @Test
+    fun capabilities_fromAnnotations_persistent() {
+        val persistent =
+            Capabilities.fromAnnotation(Annotation.createCapability("persistent"))
+        assertThat(persistent.persistence).isEqualTo(Capability.Persistence.ON_DISK)
+        assertThat(persistent.isEncrypted).isNull()
+        assertThat(persistent.ttl).isNull()
+        assertThat(persistent.isQueryable).isNull()
+        assertThat(persistent.isShareable).isNull()
+    }
+
+    @Test
+    fun capabilities_fromAnnotations_ttl() {
+        val ttl30d = Capabilities.fromAnnotation(Annotation.createTtl("30d"))
+        assertThat(ttl30d.persistence).isNull()
+        assertThat(ttl30d.isEncrypted).isNull()
+        assertThat(ttl30d.ttl).isEqualTo(Capability.Ttl.Days(30))
+        assertThat(ttl30d.isQueryable).isNull()
+        assertThat(ttl30d.isShareable).isNull()
+    }
+
+    @Test
+    fun capabilities_fromAnnotations_persistentAndTtl() {
+        val persistentAndTtl30d = Capabilities.fromAnnotations(
             listOf(
-                Annotation.createCapability(Capabilities.PERSISTENT)
+                Annotation.createCapability("persistent"),
+                Annotation.createTtl("30d")
             )
-        )).isEqualTo(Capabilities.Persistent)
-        assertThat(Capabilities.fromAnnotations(
+        )
+        assertThat(persistentAndTtl30d.persistence).isEqualTo(Capability.Persistence.ON_DISK)
+        assertThat(persistentAndTtl30d.isEncrypted).isNull()
+        assertThat(persistentAndTtl30d.ttl).isEqualTo(Capability.Ttl.Days(30))
+        assertThat(persistentAndTtl30d.isQueryable).isNull()
+        assertThat(persistentAndTtl30d.isShareable).isNull()
+    }
+
+    @Test
+    fun capabilities_fromAnnotations_queryableAndEncrypted() {
+        val queryableEncrypted = Capabilities.fromAnnotations(
             listOf(
-                Annotation.createCapability(Capabilities.PERSISTENT),
-                Annotation("justAnnotation")
+                Annotation.createCapability("encrypted"),
+                Annotation.createCapability("queryable")
             )
-        )).isEqualTo(Capabilities.Persistent)
-        assertThat(Capabilities.fromAnnotations(
-            listOf(
-                Annotation.createCapability(Capabilities.QUERYABLE)
+        )
+        assertThat(queryableEncrypted.persistence).isNull()
+        assertThat(queryableEncrypted.isEncrypted).isTrue()
+        assertThat(queryableEncrypted.ttl).isNull()
+        assertThat(queryableEncrypted.isQueryable).isTrue()
+        assertThat(queryableEncrypted.isShareable).isNull()
+    }
+
+    @Test
+    fun capabilities_fromAnnotations_tiedToRuntimeAndTtl() {
+        val tiedToRuntime = Capabilities.fromAnnotation(
+            Annotation.createCapability("tiedToRuntime")
+        )
+        assertThat(tiedToRuntime.persistence).isEqualTo(Capability.Persistence.IN_MEMORY)
+        assertThat(tiedToRuntime.isEncrypted).isNull()
+        assertThat(tiedToRuntime.ttl).isNull()
+        assertThat(tiedToRuntime.isQueryable).isNull()
+        assertThat(tiedToRuntime.isShareable).isTrue()
+    }
+
+    @Test
+    fun capabilities_contains() {
+        val capabilities = Capabilities(
+            listOf<Capability.Range>(
+                Capability.Persistence.ON_DISK.toRange(),
+                Capability.Range(Capability.Ttl.Days(30), Capability.Ttl.Hours(1)),
+                Capability.Queryable(true).toRange()
             )
-        )).isEqualTo(Capabilities.Queryable)
-        assertThat(Capabilities.fromAnnotations(
-            listOf(
-                Annotation.createCapability(Capabilities.TIED_TO_RUNTIME)
+        )
+        assertThat(capabilities.contains(Capability.Persistence.ON_DISK)).isTrue()
+        assertThat(capabilities.contains(Capability.Persistence.UNRESTRICTED)).isFalse()
+        assertThat(capabilities.contains(Capability.Persistence.IN_MEMORY)).isFalse()
+        assertThat(capabilities.contains(Capability.Ttl.Minutes(15))).isFalse()
+        assertThat(capabilities.contains(Capability.Ttl.Hours(2))).isTrue()
+        assertThat(capabilities.contains(Capability.Ttl.Days(30))).isTrue()
+        assertThat(
+            capabilities.contains(
+                Capability.Range(Capability.Ttl.Days(20), Capability.Ttl.Hours(15))
             )
-        )).isEqualTo(Capabilities.TiedToRuntime)
-        assertThat(Capabilities.fromAnnotations(
-            listOf(
-                Annotation.createCapability(Capabilities.TIED_TO_ARC)
+        ).isTrue()
+        assertThat(capabilities.contains(Capability.Queryable(true))).isTrue()
+        assertThat(capabilities.contains(Capability.Queryable(false))).isFalse()
+        assertThat(capabilities.contains(Capability.Encryption(true))).isFalse()
+        assertThat(capabilities.contains(Capability.Encryption(false))).isFalse()
+
+        assertThat(capabilities.containsAll(capabilities)).isTrue()
+        assertThat(
+            capabilities.containsAll(
+                Capabilities(
+                    listOf<Capability.Range>(
+                        Capability.Persistence.ON_DISK.toRange(),
+                        Capability.Ttl.Days(10).toRange()
+                    )
+                )
             )
-        )).isEqualTo(Capabilities.TiedToArc)
-        assertThat(Capabilities.fromAnnotations(
-            listOf(
-                Annotation.createCapability(Capabilities.PERSISTENT),
-                Annotation.createCapability(Capabilities.QUERYABLE)
+        ).isTrue()
+        assertThat(
+            capabilities.containsAll(
+                Capabilities(
+                    listOf<Capability.Range>(
+                        Capability.Ttl.Days(10).toRange(),
+                        Capability.Shareable(true).toRange()
+                    )
+                )
             )
-        )).isEqualTo(Capabilities.PersistentQueryable)
-        assertThat(Capabilities.fromAnnotations(listOf(Annotation.createTtl("3 days"))))
-            .isEqualTo(Capabilities.Queryable)
-        assertThat(Capabilities.fromAnnotations(
-            listOf(
-                Annotation.createCapability(Capabilities.PERSISTENT),
-                Annotation.createTtl("10 minutes")
+        ).isFalse()
+        assertThat(
+            capabilities.containsAll(
+                Capabilities(listOf<Capability.Range>(Capability.Queryable.ANY))
             )
-        )).isEqualTo(Capabilities.PersistentQueryable)  
+        ).isFalse()
     }
 }

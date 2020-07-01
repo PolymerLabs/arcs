@@ -35,7 +35,7 @@ import {Schema} from './schema.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
         ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType} from './type.js';
 import {Dictionary} from './hot.js';
-import {ClaimIsTag} from './particle-claim.js';
+import {ClaimIsTag} from './claim.js';
 import {AbstractStore, StoreClaims} from './storageNG/abstract-store.js';
 import {Store} from './storageNG/store.js';
 import {StorageKey} from './storageNG/storage-key.js';
@@ -818,9 +818,18 @@ ${e.message}
       manifest.errors.push(warning);
     }
 
+    if (particleItem.implFile
+        && particleItem.implFile.startsWith('.')
+        && manifest.meta.namespace) {
+      const classpath = manifest.meta.namespace + particleItem.implFile;
+      if (Loader.isJvmClasspath(classpath)) {
+        particleItem.implFile = classpath;
+      }
+    }
+
     // TODO: loader should not be optional.
     if (particleItem.implFile && loader) {
-      if (!loader.isJvmClasspath(particleItem.implFile)) {
+      if (!Loader.isJvmClasspath(particleItem.implFile)) {
         particleItem.implFile = loader.join(manifest.fileName, particleItem.implFile);
       }
     }

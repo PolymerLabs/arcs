@@ -15,12 +15,6 @@ import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.Recipe
 import arcs.core.util.TaggedLog
 
-/** Returns the name of the underlying handle or particle. */
-fun RecipeGraph.Node.name() = when (this) {
-    is RecipeGraph.Node.Particle -> "p:${particle.spec.name}"
-    is RecipeGraph.Node.Handle -> "h:${handle.name}"
-}
-
 /**
  * An abstract class that implements dataflow analysis over abstract values of type [V].
  *
@@ -55,7 +49,7 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>>(val bottom: V) 
             graph.nodes
                 .filterIsInstance<RecipeGraph.Node.Particle>()
                 .forEach {
-                    builder.append("${it.particle.spec.name}:\n")
+                    builder.append("${it.particleName}:\n")
                     val value = getValue(it.particle)
                     builder.append(prettyPrinter?.let { prettyPrinter(value, " ") } ?: "$value")
                     builder.append("\n")
@@ -140,7 +134,7 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>>(val bottom: V) 
             val input = nodeValues[current] ?: bottom
             log.debug {
                 """
-                  |Processing node ${current.name()}:
+                  |Processing node ${current.debugName}:
                      ${prettyPrint(input, "|  ")}
                 """.trimMargin()
             }
@@ -152,7 +146,7 @@ abstract class RecipeGraphFixpointIterator<V : AbstractValue<V>>(val bottom: V) 
                 val newValue = oldValue.join(edgeValue)
                 log.debug {
                     """
-                      |Processing Edge ${current.name()} -> ${succ.name()}:
+                      |Processing Edge ${current.debugName} -> ${succ.debugName}:
                       |  changed : ${!oldValue.isEquivalentTo(newValue)}
                       |  edge:
                            ${prettyPrint(edgeValue, "|    ")}

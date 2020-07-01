@@ -12,7 +12,7 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 # This target is needed in Google internal repo when running TypeScript with Bazel.
 filegroup(

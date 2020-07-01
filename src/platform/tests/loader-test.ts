@@ -67,26 +67,24 @@ describe('PlatformLoader', () => {
     assert.equal(loader.join('/a/b/c/', '../../../d/e/f'), '/d/e/f');
   });
   it('recognizes JVM classpaths', () => {
-    const loader = new Loader();
+    assert.isTrue(Loader.isJvmClasspath('com.package.Class'));
+    assert.isTrue(Loader.isJvmClasspath('com.package.Class.InnerClass'));
+    assert.isTrue(Loader.isJvmClasspath('com.package_.Class_.InnerClass'));
+    assert.isTrue(Loader.isJvmClasspath('com.package.cloud9.MyClass'));
 
-    assert.isTrue(loader.isJvmClasspath('com.package.Class'));
-    assert.isTrue(loader.isJvmClasspath('com.package.Class.InnerClass'));
-    assert.isTrue(loader.isJvmClasspath('com.package_.Class_.InnerClass'));
-    assert.isTrue(loader.isJvmClasspath('com.package.cloud9.MyClass'));
-
-    assert.isFalse(loader.isJvmClasspath('com'));
-    assert.isFalse(loader.isJvmClasspath('com.package'));
-    assert.isFalse(loader.isJvmClasspath('com.package.test'));
-    assert.isFalse(loader.isJvmClasspath('.'));
-    assert.isFalse(loader.isJvmClasspath('com.invalid.'));
-    assert.isFalse(loader.isJvmClasspath('com.invalid..ff'));
-    assert.isFalse(loader.isJvmClasspath(''));
-    assert.isFalse(loader.isJvmClasspath('com.package..Class.InnerClass'));
-    assert.isFalse(loader.isJvmClasspath('com.package.Class.InnerClass.class'));
-    assert.isFalse(loader.isJvmClasspath('.com.google.com.Class'));
-    assert.isFalse(loader.isJvmClasspath('Com.pkg.Class'));
-    assert.isFalse(loader.isJvmClasspath('0om.pkg.class'));
-    assert.isFalse(loader.isJvmClasspath('a.js'));
-    assert.isFalse(loader.isJvmClasspath('path/to/MyClass.kt'));
+    assert.isFalse(Loader.isJvmClasspath('com'));
+    assert.isFalse(Loader.isJvmClasspath('com.package'));
+    assert.isFalse(Loader.isJvmClasspath('com.package.test'));
+    assert.isFalse(Loader.isJvmClasspath('.'));
+    assert.isFalse(Loader.isJvmClasspath('com.invalid.'));
+    assert.isFalse(Loader.isJvmClasspath('com.invalid..ff'));
+    assert.isFalse(Loader.isJvmClasspath(''));
+    assert.isFalse(Loader.isJvmClasspath('com.package..Class.InnerClass'));
+    assert.isFalse(Loader.isJvmClasspath('com.package.Class.InnerClass.class'));
+    assert.isFalse(Loader.isJvmClasspath('.com.google.com.Class'));
+    assert.isFalse(Loader.isJvmClasspath('Com.pkg.Class'));
+    assert.isFalse(Loader.isJvmClasspath('0om.pkg.class'));
+    assert.isFalse(Loader.isJvmClasspath('a.js'));
+    assert.isFalse(Loader.isJvmClasspath('path/to/MyClass.kt'));
   });
 });

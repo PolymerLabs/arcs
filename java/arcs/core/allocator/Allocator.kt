@@ -15,6 +15,7 @@ import arcs.core.common.Id
 import arcs.core.common.toArcId
 import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
+import arcs.core.data.Capability.Shareable
 import arcs.core.data.CreatableStorageKey
 import arcs.core.data.Plan
 import arcs.core.entity.HandleSpec
@@ -169,7 +170,7 @@ class Allocator(
     ): StorageKey {
         if (storageKey is CreatableStorageKey) {
             return createdKeys.getOrPut(storageKey) {
-                createStorageKey(arcId, idGenerator, storageKey, type, annotations)
+                createStorageKey(arcId, idGenerator, type, annotations)
             }
         }
         return storageKey
@@ -182,19 +183,17 @@ class Allocator(
     private fun createStorageKey(
         arcId: ArcId,
         idGenerator: Id.Generator,
-        storageKey: CreatableStorageKey,
         type: Type,
         annotations: List<Annotation>
-    ): StorageKey =
-        CapabilitiesResolver(CapabilitiesResolver.CapabilitiesResolverOptions(arcId))
+    ): StorageKey {
+        val capabilities = Capabilities.fromAnnotations(annotations)
+        return CapabilitiesResolver(CapabilitiesResolver.Options(arcId))
             .createStorageKey(
-                Capabilities.fromAnnotations(annotations),
+                if (capabilities.isEmpty) Capabilities(Shareable(true)) else capabilities,
                 type,
                 idGenerator.newChildId(arcId, "").toString()
-            )
-            ?: throw Exception(
-                "Unable to create storage key $storageKey"
-            )
+        )
+    }
 
     /**
      * Slice plan into pieces grouped by [ArcHost], each group consisting of a [Plan.Partition]

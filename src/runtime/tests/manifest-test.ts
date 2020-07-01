@@ -17,8 +17,8 @@ import {checkDefined, checkNotNull} from '../testing/preconditions.js';
 import {Loader} from '../../platform/loader.js';
 import {Dictionary} from '../hot.js';
 import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
-import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../particle-claim.js';
-import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore, CheckImplication} from '../particle-check.js';
+import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../claim.js';
+import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore, CheckImplication} from '../check.js';
 import {ProvideSlotConnectionSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
 import {Store} from '../storageNG/store.js';
@@ -719,6 +719,24 @@ ${particleStr1}
         data: writes * {name: Text, age: Number}
     `);
     assert.equal(manifest.meta.namespace, 'com.some.namespace');
+  });
+  it('parses and type checks a recipe with nested schemas', async () => {
+    const manifest = await parseManifest(`
+      particle P in 'a.js'
+        writer: writes * {inner: inline {x: Text, y: List<Number>}, z: Text}
+
+      particle Q in 'b.js'
+        reader: reads * {inner: inline {y: List<Number>}, z: Text}
+      
+      recipe
+        h0: create *
+        P
+          writer: writes h0
+        Q
+          reader: reads h0
+    `);
+    const recipe = manifest.recipes[0];
+    assert.isTrue(recipe.normalize());
   });
   describe('refinement types', async () => {
     it('can construct manifest containing schema with refinement types', Flags.withFieldRefinementsAllowed(async () => {
@@ -4084,6 +4102,54 @@ particle A
     assert.isTrue(particle.external);
     assert.isNull(particle.implFile);
     assert.strictEqual(manifestString, particle.toString());
+  });
+  it('parses JVM class path', async () => {
+    const manifest = await parseManifest(`
+      particle Particle in 'com.wow.Particle'
+    `);
+
+    assert.equal(manifest.particles[0].implFile, 'com.wow.Particle');
+  });
+  it('derives JVM class path from namespace', async () => {
+    const manifest = await parseManifest(`
+      meta
+        namespace: com.wow
+      particle Particle in '.Particle'
+      particle Other in 'org.other.Other'
+    `);
+
+    assert.sameMembers(manifest.allParticles.map(p => p.implFile), [
+      'com.wow.Particle',
+      'org.other.Other'
+    ]);
+  });
+  it('derives JVM implFile from namespace across imports', async () => {
+    const manifest = await Manifest.load('/c.arcs', new Loader(null, {
+      '/a.arcs': `
+        meta
+          namespace: com.wow
+        particle Wow in '.Wow'
+      `,
+      '/b.arcs': `
+        meta
+          namespace: org.arcs
+        particle Thing in '.super.Thing'
+      `,
+      '/c.arcs': `
+        meta
+          namespace: com.abc
+        import './a.arcs'
+        import './b.arcs'
+
+        particle Boom in '.Boom'
+      `,
+    }));
+
+    assert.sameMembers(manifest.allParticles.map(p => p.implFile), [
+      'com.abc.Boom',
+      'com.wow.Wow',
+      'org.arcs.super.Thing'
+    ]);
   });
 });
 

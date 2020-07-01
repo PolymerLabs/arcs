@@ -11,7 +11,6 @@
 import {PlanGenerator} from '../plan-generator.js';
 import {assert} from '../../platform/chai-node.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Ttl} from '../../runtime/capabilities.js';
 import {AllocatorRecipeResolver} from '../allocator-recipe-resolver.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 
@@ -188,6 +187,47 @@ Particle(
     )
 )`
       );
+  });
+  it('generates schemas for resolved type variables', async () => {
+    const {generator, recipes} = await process(`
+      particle A
+        data: writes [Person Friend {a: Text, b: Text, c: Text}]
+      particle B
+        data: writes [Employer Person {a: Text, b: Text, d: Text}]
+      particle C
+        data: reads [~a]
+
+      recipe
+        h: create
+        A
+          data: h
+        B
+          data: h
+        C
+          data: h
+    `);
+    const cParticle = recipes[0].particles.find(p => p.spec.name === 'C');
+    const result = await generator.createHandleConnection(cParticle.connections['data']);
+    assert.deepStrictEqual(result, `\
+HandleConnection(
+    StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
+    HandleMode.Read,
+    CollectionType(
+        EntityType(
+            Schema(
+                setOf(SchemaName("Person")),
+                SchemaFields(
+                    singletons = mapOf("a" to FieldType.Text, "b" to FieldType.Text),
+                    collections = emptyMap()
+                ),
+                "f33d42dee457673f13e166b4644b0eb42f37a156",
+                refinement = { _ -> true },
+                query = null
+            )
+        )
+    ),
+    emptyList()
+)`);
   });
   async function process(manifestString: string): Promise<{
       recipes: Recipe[],

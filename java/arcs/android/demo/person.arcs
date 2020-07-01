@@ -7,7 +7,7 @@ schema Person
 particle ReadPerson in 'arcs.android.demo.DemoService.ReadPerson'
   person: reads Person {name}
 
-particle WritePerson in 'arcs.android.demo.DemoService.WritePerson'
+particle WritePerson in '.DemoService.WritePerson'
   person: writes Person {name}
 
 @arcId('personArc')

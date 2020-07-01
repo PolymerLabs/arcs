@@ -7,8 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {ClaimType} from './particle-claim.js';
-import {CheckType} from './particle-check.js';
+import {ClaimType} from './claim.js';
+import {CheckType} from './check.js';
 
 /**
  * Complete set of tokens used by `manifest-parser.pegjs`. To use this you
@@ -232,8 +232,8 @@ export interface Particle extends BaseNode {
   slots?: ParticleSlotConnection[];    // not used in RecipeParticle
   description?: Description;  // not used in RecipeParticle
   hasParticleHandleConnection?: boolean;  // not used in RecipeParticle
-  trustChecks?: ParticleCheckStatement[];
-  trustClaims?: ParticleClaimStatement[];
+  trustChecks?: CheckStatement[];
+  trustClaims?: ClaimStatement[];
 
   // fields in RecipeParticle only
   ref?: ParticleRef | '*';
@@ -242,20 +242,20 @@ export interface Particle extends BaseNode {
 }
 
 /** A trust claim made by a particle about one of its handles. */
-export interface ParticleClaimStatement extends BaseNode {
-  kind: 'particle-trust-claim';
+export interface ClaimStatement extends BaseNode {
+  kind: 'claim';
   handle: string;
   fieldPath: string[];
-  expression: ParticleClaimExpression;
+  expression: ClaimExpression;
 }
 
-export type ParticleClaimExpression = ParticleClaim[];
+export type ClaimExpression = Claim[];
 
-export type ParticleClaim = ParticleClaimIsTag | ParticleClaimDerivesFrom;
+export type Claim = ClaimIsTag | ClaimDerivesFrom;
 
 /** A claim made by a particle, saying that one of its outputs has a particular trust tag (e.g. "claim output is foo"). */
-export interface ParticleClaimIsTag extends BaseNode {
-  kind: 'particle-trust-claim-is-tag';
+export interface ClaimIsTag extends BaseNode {
+  kind: 'claim-is-tag';
   claimType: ClaimType.IsTag;
   isNot: boolean;
   tag: string;
@@ -265,69 +265,69 @@ export interface ParticleClaimIsTag extends BaseNode {
  * A claim made by a particle, saying that one of its outputs derives from one/some of its inputs (e.g. "claim output derives from input1 and
  * input2").
  */
-export interface ParticleClaimDerivesFrom extends BaseNode {
-  kind: 'particle-trust-claim-derives-from';
+export interface ClaimDerivesFrom extends BaseNode {
+  kind: 'claim-derives-from';
   claimType: ClaimType.DerivesFrom;
   parentHandle: string;
   fieldPath: string[];
 }
 
-export interface ParticleCheckStatement extends BaseNode {
-  kind: 'particle-trust-check';
-  target: ParticleCheckTarget;
-  expression: ParticleCheckExpression;
+export interface CheckStatement extends BaseNode {
+  kind: 'check';
+  target: CheckTarget;
+  expression: CheckExpression;
 }
 
-export interface ParticleCheckTarget extends BaseNode {
-  kind: 'particle-check-target';
+export interface CheckTarget extends BaseNode {
+  kind: 'check-target';
   targetType: 'handle' | 'slot';
   name: string;
   fieldPath: string[];
 }
 
-export interface ParticleCheckBooleanExpression extends BaseNode {
-  kind: 'particle-trust-check-boolean-expression';
+export interface CheckBooleanExpression extends BaseNode {
+  kind: 'check-boolean-expression';
   operator: 'and' | 'or';
-  children: ParticleCheckExpression[];
+  children: CheckExpression[];
 }
 
-export type ParticleCheckExpression = ParticleCheckBooleanExpression | ParticleCheckCondition;
+export type CheckExpression = CheckBooleanExpression | CheckCondition;
 
-export type ParticleCheckCondition = ParticleCheckHasTag | ParticleCheckIsFromHandle | ParticleCheckIsFromOutput | ParticleCheckIsFromStore | ParticleCheckImplication;
+export type CheckCondition = CheckHasTag | CheckIsFromHandle | CheckIsFromOutput | CheckIsFromStore | CheckImplication;
 
-export interface ParticleCheckHasTag extends BaseNode {
-  kind: 'particle-trust-check-has-tag';
+export interface CheckHasTag extends BaseNode {
+  kind: 'check-has-tag';
   checkType: CheckType.HasTag;
   isNot: boolean;
   tag: string;
 }
 
-export interface ParticleCheckIsFromHandle extends BaseNode {
-  kind: 'particle-trust-check-is-from-handle';
+export interface CheckIsFromHandle extends BaseNode {
+  kind: 'check-is-from-handle';
   checkType: CheckType.IsFromHandle;
   isNot: boolean;
   parentHandle: string;
 }
 
-export interface ParticleCheckIsFromOutput extends BaseNode {
-  kind: 'particle-trust-check-is-from-output';
+export interface CheckIsFromOutput extends BaseNode {
+  kind: 'check-is-from-output';
   checkType: CheckType.IsFromOutput;
   isNot: boolean;
   output: string;
 }
 
-export interface ParticleCheckIsFromStore extends BaseNode {
-  kind: 'particle-trust-check-is-from-store';
+export interface CheckIsFromStore extends BaseNode {
+  kind: 'check-is-from-store';
   checkType: CheckType.IsFromStore;
   isNot: boolean;
   storeRef: StoreReference;
 }
 
-export interface ParticleCheckImplication extends BaseNode {
-  kind: 'particle-trust-check-implication';
+export interface CheckImplication extends BaseNode {
+  kind: 'check-implication';
   checkType: CheckType.Implication;
-  antecedent: ParticleCheckCondition;
-  consequent: ParticleCheckCondition;
+  antecedent: CheckCondition;
+  consequent: CheckCondition;
 }
 
 export interface StoreReference extends BaseNode {

@@ -61,6 +61,8 @@ message HandleConnectionProto {
   string name = 1;
   // Refers to envelope.recipe.handles.name
   string handle = 2;
+  // The type of the handle connection instance.
+  TypeProto type = 3;
 }
 
 // Defines a particle contract and links it with implementation.
@@ -75,6 +77,8 @@ message ParticleSpecProto {
   repeated ClaimProto claims = 4;
   // Conjunction of all checks.
   repeated CheckProto checks = 5;
+  // Indicates whether the particle is an isolated (non-egress) particle.
+  bool isolated = 6;
 }
 
 // Defines a single connection of a particle spec.

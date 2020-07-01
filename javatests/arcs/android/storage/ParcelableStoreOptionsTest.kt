@@ -16,7 +16,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
-import arcs.core.storage.StorageMode
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -32,9 +31,7 @@ class ParcelableStoreOptionsTest {
         val storeOptions = StoreOptions<CrdtCount.Data, CrdtCount.Operation, Int>(
             RamDiskStorageKey("test"),
             CountType(),
-            StorageMode.Direct,
-            versionToken = "Foo",
-            model = CrdtCount.Data()
+            versionToken = "Foo"
         )
 
         val marshalled = with(Parcel.obtain()) {
@@ -58,8 +55,7 @@ class ParcelableStoreOptionsTest {
                 RamDiskStorageKey("backing"),
                 RamDiskStorageKey("collection")
             ),
-            CountType(),
-            StorageMode.ReferenceMode
+            CountType()
         )
 
         val marshalled = with(Parcel.obtain()) {

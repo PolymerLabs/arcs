@@ -17,8 +17,6 @@ arcs_kt_schema(
 arcs_kt_jvm_test_suite(
     name = "entity",
     srcs = TEST_SRCS,
-    # TODO(b/157513559): Deflake this test suite.
-    flaky = True,
     package = "arcs.core.entity",
     deps = [
         ":lib",
@@ -37,6 +35,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/storage/testutil",
         "//java/arcs/core/testutil",
+        "//java/arcs/core/testutil/handles",
         "//java/arcs/core/util",
         "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/host",
@@ -73,6 +72,7 @@ arcs_kt_jvm_library(
         "//java/arcs/core/storage/keys",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/testutil",
+        "//java/arcs/core/testutil/handles",
         "//java/arcs/core/util",
         "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/host",

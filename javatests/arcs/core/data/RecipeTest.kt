@@ -110,17 +110,20 @@ class RecipeTest {
             name = "ParticleName",
             location = "com.Particle",
             connections = listOf(
-                HandleConnectionSpec("data", HandleMode.Read, contactCollectionType)
+                HandleConnectionSpec("data", HandleMode.Read, personCollectionType)
             ).associateBy { it.name }
         )
 
+        // Given that the ParticleSpec type is different from the HandleConnection instance type,
+        // prefer the HandleConnection instance type for the translation.
         assertThat(
             Recipe.Particle(
                 spec = spec,
                 handleConnections = listOf(
                     Recipe.Particle.HandleConnection(
                         spec = requireNotNull(spec.connections["data"]),
-                        handle = handle
+                        handle = handle,
+                        type = contactCollectionType
                     )
                 )
             ).toPlanParticle()
@@ -232,11 +235,13 @@ class RecipeTest {
                         handleConnections = listOf(
                             Recipe.Particle.HandleConnection(
                                 spec = requireNotNull(convertToContactsSpec.connections["input"]),
-                                handle = peopleHandle
+                                handle = peopleHandle,
+                                type = personCollectionType
                             ),
                             Recipe.Particle.HandleConnection(
                                 spec = requireNotNull(convertToContactsSpec.connections["output"]),
-                                handle = contactsHandle
+                                handle = contactsHandle,
+                                type = contactCollectionType
                             )
                         )
                     ),
@@ -245,7 +250,8 @@ class RecipeTest {
                         handleConnections = listOf(
                             Recipe.Particle.HandleConnection(
                                 spec = requireNotNull(egressContactsSpec.connections["data"]),
-                                handle = contactsHandle
+                                handle = contactsHandle,
+                                type = contactCollectionType
                             )
                         )
                     )

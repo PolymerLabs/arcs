@@ -45,7 +45,7 @@ async function checkManifest(src: string) {
     if (!particle.implFile) {
       throw new Error(`Particle ${particle.name} does not have an implementation file and is not marked external.`);
     }
-    if (loader.isJvmClasspath(particle.implFile)) {
+    if (Loader.isJvmClasspath(particle.implFile)) {
       if (!loader.jvmClassExists(particle.implFile)) {
         throw new Error(`Particle ${particle.name} does not have a valid classpath: '${particle.implFile}'.`);
       }

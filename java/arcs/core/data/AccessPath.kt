@@ -81,6 +81,13 @@ data class AccessPath(val root: Root, val selectors: List<Selector> = emptyList(
         return selectors.joinToString(separator = ".", prefix = "$root.")
     }
 
+    /** Returns true if this [AccessPath] is a prefix of [other]. */
+    fun isPrefixOf(other: AccessPath) = when {
+        root != other.root -> false
+        selectors.size > other.selectors.size -> false
+        else -> selectors == other.selectors.subList(0, selectors.size)
+    }
+
     /**
      * Converts an [AccessPath] with [Root.HandleConnectionSpec] as root into a
      * [AccessPath] with the corresponding [Root.HandleConnection] as root.

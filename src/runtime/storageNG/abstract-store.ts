@@ -12,7 +12,7 @@ import {Comparable, compareStrings} from '../recipe/comparable.js';
 import {Type} from '../type.js';
 import {StorageKey} from './storage-key.js';
 import {PropagatedException} from '../arc-exceptions.js';
-import {ClaimIsTag} from '../particle-claim.js';
+import {ClaimIsTag} from '../claim.js';
 import {SingletonInterfaceStore, SingletonEntityStore, SingletonReferenceStore, CollectionEntityStore, CollectionReferenceStore, MuxEntityStore} from './storage-ng.js';
 import {AbstractActiveStore} from './store-interface.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';

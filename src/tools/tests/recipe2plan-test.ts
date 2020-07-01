@@ -23,7 +23,7 @@ describe('recipe2plan', () => {
     assert.deepStrictEqual(
       await recipe2plan(await readManifest(), OutputFormat.Kotlin),
       fs.readFileSync('src/tools/tests/goldens/WriterReaderExample.kt', 'utf8'),
-      `Golden is out of date! Make sure the new script is correct. If it is, update the goldens with: 
+      `Golden is out of date! Make sure the new script is correct. If it is, update the goldens with:
 $ tools/update-goldens \n\n`
     );
   }));
@@ -43,40 +43,38 @@ $ tools/update-goldens \n\n`
     assert.lengthOf(decoded['particleSpecs'], 1);
   }));
   it('outputs a valid protocol buffer for resolved recipes', Flags.withDefaultReferenceMode(async () => {
-    const payload = await protoPayloadFor(`
-      particle Reader
-        data: reads Thing {name: Text}
-      particle Writer
-        data: writes Thing {name: Text}
+    assert.deepEqual(
+      await protoPayloadFor(`
+        particle Reader
+          data: reads Thing {name: Text}
+        particle Writer
+          data: writes Thing {name: Text}
 
-      @arcId('writeArcId')
-      recipe WritingRecipe
-        thing: create 'my-handle-id' @persistent
-        Writer
-          data: writes thing
+        @arcId('writeArcId')
+        recipe WritingRecipe
+          thing: create 'my-handle-id' @persistent
+          Writer
+            data: writes thing
 
-      @arcId('readArcId')
-      recipe ReadingRecipe
-        data: map 'my-handle-id'
-        Reader
-          data: reads data
-      
-      recipe ReadWriteRecipe
-        thing: create
-        Writer
-          data: writes thing
-        Reader
-          data: reads thing
-    `);
+        @arcId('readArcId')
+        recipe ReadingRecipe
+          data: map 'my-handle-id'
+          Reader
+            data: reads data
 
-    // Only validating that the output can be can be decoded as a ManifestProto and right counts.
-    // Tests for for encoding works are in manifest2proto-test.ts.
-    assert.deepEqual(payload, {
+        recipe ReadWriteRecipe
+          thing: create
+          Writer
+            data: writes thing
+          Reader
+            data: reads thing
+      `), {
       particleSpecs: [{
-        name: 'Writer',
+        name: 'Reader',
+        isolated: false,
         connections: [{
           name: 'data',
-          direction: 'WRITES',
+          direction: 'READS',
           type: {entity: {schema: {
             names: ['Thing'],
             fields: {name: {primitive: 'TEXT'}},
@@ -84,10 +82,11 @@ $ tools/update-goldens \n\n`
           }}}
         }]
       }, {
-        name: 'Reader',
+        name: 'Writer',
+        isolated: false,
         connections: [{
           name: 'data',
-          direction: 'READS',
+          direction: 'WRITES',
           type: {entity: {schema: {
             names: ['Thing'],
             fields: {name: {primitive: 'TEXT'}},
@@ -118,7 +117,15 @@ $ tools/update-goldens \n\n`
         }],
         particles: [{
           specName: 'Writer',
-          connections: [{name: 'data', handle: 'handle0'}]
+          connections: [{
+            name: 'data',
+            handle: 'handle0',
+            type: {entity: {schema: {
+              names: ['Thing'],
+              fields: {name: {primitive: 'TEXT'}},
+              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            }}}
+          }]
         }]
       },
       {
@@ -143,7 +150,15 @@ $ tools/update-goldens \n\n`
         }],
         particles: [{
           specName: 'Reader',
-          connections: [{name: 'data', handle: 'handle0'}],
+          connections: [{
+            name: 'data',
+            handle: 'handle0',
+            type: {entity: {schema: {
+              names: ['Thing'],
+              fields: {name: {primitive: 'TEXT'}},
+              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            }}}
+          }],
         }]
       }, {
         name: 'ReadWriteRecipe',
@@ -159,10 +174,106 @@ $ tools/update-goldens \n\n`
         }],
         particles: [{
           specName: 'Reader',
-          connections: [{name: 'data', handle: 'handle0'}]
+          connections: [{
+            name: 'data',
+            handle: 'handle0',
+            type: {entity: {schema: {
+              names: ['Thing'],
+              fields: {'name': {primitive: 'TEXT'}},
+              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            }}}
+          }]
         }, {
           specName: 'Writer',
-          connections: [{name: 'data', handle: 'handle0'}],
+          connections: [{
+            name: 'data',
+            handle: 'handle0',
+            type: {entity: {schema: {
+              names: ['Thing'],
+              fields: {name: {primitive: 'TEXT'}},
+              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            }}}
+          }],
+        }]
+      }]
+    });
+  }));
+  it('outputs a valid protocol buffer for resolved recipes with type variables', Flags.withDefaultReferenceMode(async () => {
+    assert.deepEqual(
+      await protoPayloadFor(`
+        particle Writer
+          data: writes [Thing {name: Text}]
+        particle Reader
+          data: reads [~a]
+
+        recipe ReadWriteRecipe
+          thing: create
+          Writer
+            data: writes thing
+          Reader
+            data: reads thing
+      `), {
+      particleSpecs: [{
+        name: 'Writer',
+        isolated: false,
+        connections: [{
+          name: 'data',
+          direction: 'WRITES',
+          type: {collection: {collectionType:
+            {entity: {schema: {
+              names: ['Thing'],
+              fields: {name: {primitive: 'TEXT'}},
+              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            }}}
+          }}
+        }]
+      }, {
+        name: 'Reader',
+        isolated: false,
+        connections: [{
+          name: 'data',
+          direction: 'READS',
+          // This type should not be resolved or constrained,
+          // as this is a description of the particle spec, not an instance.
+          type: {collection: {collectionType: {variable: {name: 'a'}}}}
+        }]
+      }],
+      recipes: [{
+        name: 'ReadWriteRecipe',
+        handles: [{
+          fate: 'CREATE',
+          name: 'handle0',
+          storageKey: 'create://67835270998a62139f8b366f1cb545fb9b72a90b',
+          type: {collection: {collectionType: {
+              entity: {schema: {
+              names: ['Thing'],
+              fields: {name: {primitive: 'TEXT'}},
+              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            }}}
+          }}
+        }],
+        particles: [{
+          specName: 'Reader',
+          connections: [{
+            name: 'data',
+            handle: 'handle0',
+            type: {collection: {collectionType: {entity: {schema: {
+              names: ['Thing'],
+              fields: {name: {primitive: 'TEXT'}},
+              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            }}}}}
+          }]
+        }, {
+          specName: 'Writer',
+          connections: [{
+            name: 'data',
+            handle: 'handle0',
+            type: {collection: {collectionType: {entity: {schema: {
+              names: ['Thing'],
+              fields: {name: {primitive: 'TEXT'}},
+              hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+            }}}}}
+          }],
         }]
       }]
     });

@@ -54,7 +54,7 @@ class Scheduler(
     context: CoroutineContext,
     private val agendaProcessingTimeoutMs: Long = DEFAULT_AGENDA_PROCESSING_TIMEOUT_MS
 ) {
-    private val log = TaggedLog { "Scheduler(${hashCode()})" }
+    private val log = TaggedLog { "Scheduler" }
     /* internal */
     val launches = atomic(0)
     val scope = CoroutineScope(context)
@@ -146,7 +146,9 @@ class Scheduler(
     private suspend fun executeAgenda(agenda: Agenda) {
         val timeoutHandler = { throwable: Throwable ->
             if (throwable is TimeoutCancellationException) {
-                log.error(throwable) { "Scheduled tasks timed out." }
+                // TODO(b/160251910): Make logging detail more cleanly conditional.
+                log.debug(throwable) { "Scheduled tasks timed out." }
+                log.info { "Scheduled tasks timed out." }
             }
         }
         log.debug { "Processing agenda: $agenda" }

@@ -140,6 +140,10 @@ export class Schema {
         return type.model.entitySchema.toInlineSchemaString();
       case 'schema-collection':
         return `[${Schema._typeString(type.schema)}]`;
+      case 'schema-ordered-list':
+        return `List<${Schema._typeString(type.schema)}>`;
+      case 'schema-nested':
+        return `inline ${Schema._typeString(type.schema)}`;
       default:
         throw new Error(`Unknown type kind ${type.kind} in schema ${this.name}`);
     }
@@ -206,7 +210,22 @@ export class Schema {
       if (fields[name] == undefined) {
         return AtLeastAsSpecific.NO;
       }
-      if (!Schema.typesEqual(fields[name], type)) {
+      if (type.kind && type.kind === 'schema-nested') {
+        if (!(fields[name].kind && fields[name].kind === 'schema-nested')) {
+          return AtLeastAsSpecific.NO;
+        }
+        const subResult = fields[name].schema.model.entitySchema.isEquivalentOrMoreSpecific(type.schema.model.entitySchema);
+        switch (subResult) {
+          case AtLeastAsSpecific.NO:
+            return AtLeastAsSpecific.NO;
+          case AtLeastAsSpecific.UNKNOWN:
+            best = AtLeastAsSpecific.UNKNOWN;
+            break;
+          default:
+            break;
+        }
+      }
+      else if (!Schema.typesEqual(fields[name], type)) {
         return AtLeastAsSpecific.NO;
       }
       const fieldRes = Refinement.isAtLeastAsSpecificAs(fields[name].refinement, type.refinement);
@@ -345,27 +364,31 @@ export class Schema {
     return this.hashStr;
   }
 
-  normalizeForHash(): string {
-    let str = this.names.slice().sort().join(' ') + '/';
-    for (const field of Object.keys(this.fields).sort()) {
-      const {kind, type, schema, types} = this.fields[field];
-      str += field + ':';
-      if (kind === 'schema-primitive' || kind === 'kotlin-primitive') {
-        str += type + '|';
-      } else if (kind === 'schema-reference') {
-        str += '&(' + schema.model.entitySchema.normalizeForHash() + ')';
-      } else if (kind === 'schema-collection' && schema.kind === 'schema-reference') {
-        str += '[&(' + schema.schema.model.entitySchema.normalizeForHash() + ')]';
-      } else if (kind === 'schema-collection' && (schema.kind === 'schema-primitive' || schema.kind === 'kotlin-primitive')) {
-        str += '[' + schema.type + ']';
-      } else if (kind === 'schema-tuple') {
-        str += `(${types.map(t => t.type).join('|')})`;
-      } else if (kind === 'schema-ordered-list') {
-        str += 'List<' + schema.type + '>';
-      } else {
-        throw new Error('Schema hash: unsupported field type');
+  private normalizeTypeForHash({kind, type, schema, types}) {
+    if (kind === 'schema-primitive' || kind === 'kotlin-primitive') {
+      return `${type}|`;
+    } else if (kind === 'schema-reference') {
+      return `&(${schema.model.entitySchema.normalizeForHash()})`;
+    } else if (kind === 'schema-collection') {
+      if (schema.kind === 'schema-primitive' || schema.kind === 'kotlin-primitive') {
+        return `[${schema.type}]`;
       }
+      return `[${this.normalizeTypeForHash(schema)}]`;
+    } else if (kind === 'schema-tuple') {
+      return `(${types.map(t => t.type).join('|')})`;
+    } else if (kind === 'schema-ordered-list') {
+      return `List<${schema.type}>`;
+    } else if (kind === 'schema-nested') {
+      return `inline ${schema.model.entitySchema.normalizeForHash()}`;
+    } else {
+      throw new Error('Schema hash: unsupported field type');
     }
-    return str;
+  }
+
+  normalizeForHash(): string {
+    return this.names.slice().sort().join(' ') + '/' +
+      Object.keys(this.fields).sort().map(field =>
+        `${field}:${this.normalizeTypeForHash(this.fields[field])}`
+      ).join('');
   }
 }

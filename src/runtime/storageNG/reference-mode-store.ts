@@ -78,6 +78,12 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
   private nextCallbackID = 1;
 
   /*
+   * BackingStore and ContainerStore communication channel id
+   */
+  private backingStoreId: number;
+  private containerStoreId: number;
+
+  /*
    * A randomly generated key that is used for synthesized entity CRDT modifications.
    *
    * When entity updates are received by instances of ReferenceModeStore, they're non-CRDT blobs of data.
@@ -185,8 +191,8 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
   }
 
   private registerStoreCallbacks() {
-    this.backingStore.on(this.onBackingStore.bind(this));
-    this.containerStore.on(this.onContainerStore.bind(this));
+    this.backingStoreId = this.backingStore.on(this.onBackingStore.bind(this));
+    this.containerStoreId = this.containerStore.on(this.onContainerStore.bind(this));
   }
 
   /**
@@ -268,10 +274,10 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
           let getEntity: () => (Entity | null);
 
           if (reference) {
-            const entityCRDT = this.backingStore.getLocalModel(reference.id);
+            const entityCRDT = this.backingStore.getLocalModel(reference.id, this.backingStoreId);
             if (!entityCRDT) {
               this.enqueueBlockingSend([reference], () => {
-                const entityCRDT = this.backingStore.getLocalModel(reference.id);
+                const entityCRDT = this.backingStore.getLocalModel(reference.id, this.backingStoreId);
                 const getEntity = () => this.entityFromModel(entityCRDT.getData(), reference.id);
                 const upstreamOp = this.updateOp<Reference, Entity>(operation, getEntity);
                 void this.send({type: ProxyMessageType.Operations, operations: [upstreamOp]});
@@ -368,11 +374,11 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
             } else {
               await this.updateBackingStore(entity);
             }
-            const version = this.backingStore.getLocalModel(entity.id).getData().version;
+            const version = this.backingStore.getLocalModel(entity.id, this.backingStoreId).getData().version;
             reference = {id: entity.id, storageKey: this.backingStore.storageKey, version};
           }
           const containerMessage = this.updateOp<Entity, Reference>(operation, () => reference);
-          await this.containerStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [containerMessage], id: 1});
+          await this.containerStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [containerMessage], id: this.containerStoreId});
           this.enqueueSend(() => void this.sendExcept(message, message.id));
         }
         break;
@@ -383,13 +389,13 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
         const backingStoreReceipts: Promise<void>[] = [];
         Object.entries(values).forEach(([id, {value, version}]) => {
           backingStoreReceipts.push(this.updateBackingStore(value).then(_ => {
-            const entityVersion = this.backingStore.getLocalModel(id).getData().version;
+            const entityVersion = this.backingStore.getLocalModel(id, this.backingStoreId).getData().version;
             newValues[id] = {value: {id, storageKey: this.backingStore.storageKey, version: entityVersion}, version};
           }));
         });
         await Promise.all(backingStoreReceipts);
         const model = {version, values: newValues};
-        await this.containerStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model, id: 1});
+        await this.containerStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model, id: this.containerStoreId});
         this.enqueueSend(() => this.sendExcept(message, message.id));
         break;
       }
@@ -545,7 +551,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
         // rather than waiting for an update.
         continue;
       }
-      const backingModel = this.backingStore.getLocalModel(id);
+      const backingModel = this.backingStore.getLocalModel(id, this.backingStoreId);
       if ((backingModel == null) || !versionIsLarger(backingModel.getData().version, version)) {
         pendingIds.push({id, version});
       }
@@ -555,7 +561,7 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
       const model = {values: {}, version: this.cloneMap(data.version)} as Container['data'];
       for (const id of Object.keys(data.values)) {
         const version = data.values[id].value.version;
-        const entity = Object.keys(version).length === 0 ? this.newBackingInstance() : this.backingStore.getLocalModel(id);
+        const entity = Object.keys(version).length === 0 ? this.newBackingInstance() : this.backingStore.getLocalModel(id, this.backingStoreId);
         model.values[id] = {value: this.entityFromModel(entity.getData(), id), version: data.values[id].version};
       }
       return model;
@@ -590,14 +596,14 @@ export class ReferenceModeStore<Entity extends SerializedEntity,
    */
   private async updateBackingStore(entity: Entity) {
     const model = this.entityToModel(entity);
-    return this.backingStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model, id: 1, muxId: entity.id});
+    return this.backingStore.onProxyMessage({type: ProxyMessageType.ModelUpdate, model, id: this.backingStoreId, muxId: entity.id});
   }
 
   /* Clear the entity in the backing store. */
   private async clearEntityInBackingStore(entity: Entity) {
     const model = this.entityToModel(entity);
     const op: EntityOperation<S, C> = {type: EntityOpTypes.ClearAll, actor: this.crdtKey, clock: model.version};
-    return this.backingStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [op], muxId: entity.id});
+    return this.backingStore.onProxyMessage({type: ProxyMessageType.Operations, operations: [op], id: this.backingStoreId, muxId: entity.id});
   }
 
   private newBackingInstance() {

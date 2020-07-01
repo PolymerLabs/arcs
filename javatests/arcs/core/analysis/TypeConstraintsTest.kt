@@ -107,9 +107,9 @@ class TypeConstraintsTest {
         val connectionsTestParticle = Recipe.Particle(
             connectionsTestSpec,
             listOf(
-                HandleConnection(textCnxnSpec, textHandle),
-                HandleConnection(wordCnxnSpec, textHandle),
-                HandleConnection(numCnxnSpec, numHandle)
+                HandleConnection(textCnxnSpec, textHandle, TypeVariable("text")),
+                HandleConnection(wordCnxnSpec, textHandle, TypeVariable("text")),
+                HandleConnection(numCnxnSpec, numHandle, TypeVariable("num"))
             )
         )
         val constraints = connectionsTestParticle.getTypeConstraints()
@@ -137,8 +137,8 @@ class TypeConstraintsTest {
         val typeVariablesTestParticle = Recipe.Particle(
             typeVariablesTestSpec,
             listOf(
-                HandleConnection(numCnxnSpec, numHandle),
-                HandleConnection(intCnxnSpec, intHandle)
+                HandleConnection(numCnxnSpec, numHandle, TypeVariable("num")),
+                HandleConnection(intCnxnSpec, intHandle, TypeVariable("int"))
             )
         )
         val constraints = typeVariablesTestParticle.getTypeConstraints()

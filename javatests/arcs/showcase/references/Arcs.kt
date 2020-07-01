@@ -3,27 +3,71 @@
 package arcs.showcase.references
 
 import android.content.Context
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
-import arcs.android.sdk.host.AndroidHost
 import arcs.core.allocator.Allocator
+import arcs.core.allocator.Arc
+import arcs.core.common.ArcId
 import arcs.core.common.toArcId
+import arcs.core.data.Plan
+import arcs.core.host.AbstractArcHost
 import arcs.core.host.EntityHandleManager
-import arcs.core.host.SchedulerProvider
+import arcs.core.host.ParticleState
 import arcs.core.host.toRegistration
-import arcs.core.storage.StoreManager
+import arcs.core.host.SchedulerProvider
+import arcs.core.storage.ActivationFactory
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
+import arcs.sdk.Particle
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.ConnectionFactory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeout
 import kotlin.coroutines.EmptyCoroutineContext
 
+/** Container for WriteRecipe specific things */
+@ExperimentalCoroutinesApi
+class ArcsStorage(private val arcs: Arcs) {
+
+    // This is a helper for public methods to dispatcher the suspend calls onto a coroutine and
+    // wait for the result, and to wrap the suspend methods in a timeout, converting a potential
+    // test timeout into a more specific test failure.
+    private inline fun <T> run(crossinline block: suspend () -> T) = runBlocking {
+        withTimeout(15000) {
+            block()
+        }
+    }
+
+    fun all0(): List<MyLevel0> = run {
+        arcs.getParticle<Reader0>(WriteRecipePlan).read()
+    }
+
+    fun put0(item: MyLevel0) = run {
+        arcs.getParticle<Writer0>(WriteRecipePlan).write(item)
+    }
+
+    fun all1(): List<MyLevel1> = run {
+        arcs.getParticle<Reader1>(WriteRecipePlan).read()
+    }
+
+    fun put1(item: MyLevel1) = run {
+        arcs.getParticle<Writer1>(WriteRecipePlan).write(item)
+    }
+
+    fun all2(): List<MyLevel2> = run {
+        arcs.getParticle<Reader2>(WriteRecipePlan).read()
+    }
+
+    fun put2(item: MyLevel2) = run {
+        arcs.getParticle<Writer2>(WriteRecipePlan).write(item)
+    }
+
+    fun stop() = run {
+        arcs.stopArcForPlan(WriteRecipePlan)
+    }
+}
 
 /** Container to own the allocator and start the long-running arc. */
 @ExperimentalCoroutinesApi
@@ -35,116 +79,73 @@ class Arcs(
 ) {
     val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
 
-
     private val fakeLifecycleOwner = object : LifecycleOwner {
         private val lifecycle = LifecycleRegistry(this)
         override fun getLifecycle() = lifecycle
     }
 
-
-    val arcHost = ArcHost(
+    val activationFactory = ServiceStoreFactory(
         context,
         fakeLifecycleOwner.lifecycle,
-        schedulerProvider,
-        connectionFactory
+        connectionFactory = connectionFactory
     )
 
-    private lateinit var allocator: Allocator
+    val arcHost = ArcHost(
+        schedulerProvider,
+        activationFactory = activationFactory
+    )
 
-    /**
-     * Start the arc containing the particles that provide the persistence. This should be run
-     * one time per instance, via [startIfNot].
-     */
-    private suspend fun startArc() {
-        /** This should probably live in an initializer somewhere. */
-        val hostRegistry = ExplicitHostRegistry().apply {
+    val hostRegistry = ExplicitHostRegistry().apply {
+        runBlocking {
             registerHost(arcHost)
         }
+    }
 
-        allocator = Allocator.create(
-            hostRegistry,
-            EntityHandleManager(
-                arcId = "allocator",
-                hostId = "allocator",
-                time = JvmTime,
-                scheduler = schedulerProvider.invoke("allocator")
-            )
+    val allocator = Allocator.create(
+        hostRegistry,
+        EntityHandleManager(
+            arcId = "allocator",
+            hostId = "allocator",
+            time = JvmTime,
+            scheduler = schedulerProvider.invoke("allocator")
         )
+    )
 
-        allocator.startArcForPlan(WriteRecipePlan)
+    suspend fun <T : Particle> getParticle(
+        plan: Plan,
+        particleName: String
+    ): T {
+        val arc = startArc(plan)
+        return getParticle(arc.id, particleName)
     }
 
-    suspend fun stop() {
-        allocator.stopArc("!:testArc".toArcId())
+    suspend fun startArc(plan: Plan): Arc {
+        val arc = allocator.startArcForPlan(plan)
+        arc.waitForStart()
+        return arc
     }
 
-    private var started = false
-    val mutex = Mutex()
-
-    private suspend fun startIfNot() = mutex.withLock {
-        if (!started) {
-            startArc()
-            started = true
-        }
+    suspend fun stopArcForPlan(plan: Plan) {
+        allocator.stopArc(plan.arcId!!.toArcId())
     }
 
-    fun all0(): List<MyLevel0> {
-        return runBlocking {
-            startIfNot()
-            arcHost.reader0.read()
-        }
+    suspend inline fun <reified T: Particle> getParticle(plan: Plan) = getParticle<T>(plan, T::class.simpleName!!)
+
+    fun <T : Particle> getParticle(arcId: ArcId, particleName: String): T {
+        return arcHost.getParticle(arcId.toString(), particleName)
     }
 
-    fun put0(item: MyLevel0) {
-        runBlocking {
-            startIfNot()
-            arcHost.writer0.write(item)
-        }
-    }
 
-    fun all1(): List<MyLevel1> {
-        return runBlocking {
-            startIfNot()
-            arcHost.reader1.read()
-        }
-    }
-
-    fun put1(item: MyLevel1) {
-        runBlocking {
-            startIfNot()
-            arcHost.writer1.write(item)
-        }
-    }
-
-    fun all2(): List<MyLevel2> {
-        return runBlocking {
-            startIfNot()
-            arcHost.reader2.read()
-        }
-    }
-
-    fun put2(item: MyLevel2) {
-        runBlocking {
-            startIfNot()
-            arcHost.writer2.write(item)
-        }
-    }
 }
 
 /**
- * This [ArcHost] is the home of the three particles used by the ParticipantPersistence recipe.
- *
- * It exposes their public methods to provide required read/write functionality.
+ * An [ArcHost] that exposes the ability to get instances of particles.
  */
 @ExperimentalCoroutinesApi
 class ArcHost(
-    context: Context,
-    lifecycle: Lifecycle,
     schedulerProvider: SchedulerProvider,
-    connectionFactory: ConnectionFactory? = null
-) : AndroidHost(
-    context,
-    lifecycle,
+    override val activationFactory: ActivationFactory?
+) : AbstractArcHost(
     schedulerProvider,
     ::Reader0.toRegistration(),
     ::Writer0.toRegistration(),
@@ -153,35 +154,23 @@ class ArcHost(
     ::Reader2.toRegistration(),
     ::Writer2.toRegistration()
 ) {
-    @ExperimentalCoroutinesApi
-    override val stores = StoreManager(
-        activationFactory = ServiceStoreFactory(
-            context,
-            lifecycle,
-            connectionFactory = connectionFactory
-        )
-    )
+    override val platformTime = JvmTime
+
     @Suppress("UNCHECKED_CAST")
-    private fun <T> getParticle(name: String) =
-        getArcHostContext("!:testArc")!!.particles[name]!!.particle as T
+    fun <T> getParticle(arcId: String, particleName: String): T {
+        val arcHostContext = requireNotNull(getArcHostContext(arcId)) {
+            "ArcHost: No arc host context found for $arcId"
+        }
+        val particleContext = requireNotNull(arcHostContext.particles[particleName]) {
+            "ArcHost: No particle named $particleName found in $arcId"
+        }
+        val allowableStartStates = arrayOf(ParticleState.Running, ParticleState.Waiting)
+        check(particleContext.particleState in allowableStartStates) {
+            "ArcHost: Particle $particleName has failed, or not been started"
+        }
 
-    val reader0: Reader0
-        get() = getParticle("Reader0")
-
-    val writer0: Writer0
-        get() = getParticle("Writer0")
-
-    val reader1: Reader1
-        get() = getParticle("Reader1")
-
-    val writer1: Writer1
-        get() = getParticle("Writer1")
-
-    val reader2: Reader2
-        get() = getParticle("Reader2")
-
-    val writer2: Writer2
-        get() = getParticle("Writer2")
-
+        @Suppress("UNCHECKED_CAST")
+        return particleContext.particle as T
+    }
 }
 

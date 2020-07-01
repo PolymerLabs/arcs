@@ -13,13 +13,13 @@ package arcs.core.entity
 
 import arcs.core.common.Id
 import arcs.core.common.Referencable
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.RawEntity
 import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.Schema
-import arcs.core.data.Ttl
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
@@ -216,6 +216,15 @@ open class EntityBase(
                 }
                 value.forEach { checkType(field, it, type.primitiveType, "member of ") }
             }
+            is FieldType.InlineEntity -> {
+                require(value is EntityBase) {
+                    "Expected EntityBase for $context#entityClassName.$field, but received $value."
+                }
+                require(value.schema.hash == type.schemaHash) {
+                    "Expected EntityBase type to have schema hash ${type.schemaHash} but had " +
+                        "schema hash ${value.schema.hash}."
+                }
+            }
         }
     }
 
@@ -294,7 +303,7 @@ open class EntityBase(
         val now = time.currentTimeMillis
         if (creationTimestamp == UNINITIALIZED_TIMESTAMP) {
             creationTimestamp = now
-            if (ttl != Ttl.Infinite) {
+            if (ttl != Ttl.Infinite()) {
                 expirationTimestamp = ttl.calculateExpiration(time)
             }
         }
@@ -374,6 +383,7 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
         (value as List<*>).map {
             toReferencable(it!!, type.primitiveType)
         }.toReferencable(type)
+    is FieldType.InlineEntity -> (value as EntityBase).serialize()
 }
 
 private fun fromReferencable(
@@ -410,6 +420,15 @@ private fun fromReferencable(
                 "ReferencableList encoded an unexpected null value."
             }
             referencable.value.map { fromReferencable(it, type.primitiveType, nestedEntitySpecs) }
+        }
+        is FieldType.InlineEntity -> {
+            require(referencable is RawEntity) {
+                "Expected RawEntity but was $referencable."
+            }
+            val entitySpec = requireNotNull(nestedEntitySpecs[type.schemaHash]) {
+                "Unknown schema with hash ${type.schemaHash}."
+            }
+            entitySpec.deserialize(referencable)
         }
     }
 }

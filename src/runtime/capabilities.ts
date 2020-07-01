@@ -28,8 +28,7 @@ export abstract class Capability {
   }
 
   isEquivalent(other: Capability): boolean {
-    const comparison = this.compare(other);
-    return comparison === CapabilityComparison.Equivalent;
+    return this.compare(other) === CapabilityComparison.Equivalent;
   }
 
   contains(other: Capability): boolean {
@@ -64,7 +63,7 @@ export abstract class Capability {
   abstract setLeastRestrictive(other: Capability): boolean;
 
   isCompatible(other: Capability): boolean {
-    return this.constructor.name === other.constructor.name;
+    return this.tag === other.tag;
   }
 
   toRange(): CapabilityRange { return new CapabilityRange(this, this); }
@@ -72,50 +71,50 @@ export abstract class Capability {
   abstract toDebugString(): string;
 }
 
-// The persistence types in order from most to least restrictive.
-export enum PersistenceType {
+// The persistence kinds in order from most to least restrictive.
+export enum PersistenceKind {
   None = 'none', InMemory = 'inMemory', OnDisk = 'onDisk', Unrestricted = 'unrestricted'
 }
 
 export class Persistence extends Capability {
   static readonly tag: CapabilityTag = 'persistence';
-  public type: PersistenceType;
+  public kind: PersistenceKind;
 
-  constructor(type: PersistenceType = PersistenceType.None) {
+  constructor(kind: PersistenceKind = PersistenceKind.None) {
     super(Persistence.tag);
-    this.type = type;
+    this.kind = kind;
   }
 
   static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
-    const types = new Set<PersistenceType>();
+    const kinds = new Set<PersistenceKind>();
     for (const annotation of annotations) {
-      if ([PersistenceType.OnDisk, 'persistent'].includes(annotation.name)) {
-        types.add(PersistenceType.OnDisk);
+      if ([PersistenceKind.OnDisk, 'persistent'].includes(annotation.name)) {
+        kinds.add(PersistenceKind.OnDisk);
       }
-      if ([PersistenceType.InMemory, 'tiedToArc', 'tiedToRuntime'].includes(annotation.name)) {
-        types.add(PersistenceType.InMemory);
+      if ([PersistenceKind.InMemory, 'tiedToArc', 'tiedToRuntime'].includes(annotation.name)) {
+        kinds.add(PersistenceKind.InMemory);
       }
     }
-    if (types.size === 0) {
+    if (kinds.size === 0) {
       return null;
     }
 
-    assert(types.size === 1,
+    assert(kinds.size === 1,
         `Containing multiple persistence capabilities: ${annotations.map(
               a => a.toString()).join(' ')}`);
-    return new Persistence([...types][0]);
+    return new Persistence([...kinds][0]);
   }
 
   setMostRestrictive(other: Capability): boolean {
     if (this.compare(other) === CapabilityComparison.LessStrict) {
-      this.type = (other as Persistence).type;
+      this.kind = (other as Persistence).kind;
     }
     return true;
   }
 
   setLeastRestrictive(other: Capability): boolean {
     if (this.compare(other) === CapabilityComparison.Stricter) {
-      this.type = (other as Persistence).type;
+      this.kind = (other as Persistence).kind;
     }
     return true;
   }
@@ -123,28 +122,26 @@ export class Persistence extends Capability {
   compare(other: Capability): CapabilityComparison {
     assert(this.isCompatible(other));
     const otherPersistence = other as Persistence;
-    if (this.type === otherPersistence.type) {
+    if (this.kind === otherPersistence.kind) {
       return CapabilityComparison.Equivalent;
     }
-    if (Object.values(PersistenceType).indexOf(this.type) <
-        Object.values(PersistenceType).indexOf(otherPersistence.type)) {
+    if (Object.values(PersistenceKind).indexOf(this.kind) <
+        Object.values(PersistenceKind).indexOf(otherPersistence.kind)) {
       return CapabilityComparison.Stricter;
     }
     return CapabilityComparison.LessStrict;
   }
 
-  toDebugString(): string { return this.type.toString(); }
+  toDebugString(): string { return this.kind.toString(); }
 
-  static none(): Persistence { return new Persistence(PersistenceType.None); }
-  static inMemory(): Persistence { return new Persistence(PersistenceType.InMemory); }
-  static onDisk(): Persistence { return new Persistence(PersistenceType.OnDisk); }
-  static unrestricted(): Persistence { return new Persistence(PersistenceType.Unrestricted); }
+  static none(): Persistence { return new Persistence(PersistenceKind.None); }
+  static inMemory(): Persistence { return new Persistence(PersistenceKind.InMemory); }
+  static onDisk(): Persistence { return new Persistence(PersistenceKind.OnDisk); }
+  static unrestricted(): Persistence { return new Persistence(PersistenceKind.Unrestricted); }
 
   static any(): Capability { return new CapabilityRange(Persistence.unrestricted(), Persistence.none()); }
 }
 
-// TODO(b/157761106): use full names (minutes, hours, days) to be compatible
-// with the policies language.
 export enum TtlUnits {
   Millis = 'ms',
   Minutes = 'm',
@@ -307,7 +304,7 @@ export abstract class BooleanCapability extends Capability {
   }
 
   compare(other: Capability): CapabilityComparison {
-    assert(other instanceof BooleanCapability);
+    assert(this.isCompatible(other));
     const otherCapability = other as BooleanCapability;
     if (this.value === otherCapability.value) {
       return CapabilityComparison.Equivalent;
@@ -404,7 +401,7 @@ export class CapabilityRange extends Capability {
   }
 
   isEquivalent(other: Capability): boolean {
-    if (other instanceof CapabilityRange) {
+    if (other.tag === CapabilityRange.tag) {
       const range = other as CapabilityRange;
       return this.min.isEquivalent(range.min) && this.max.isEquivalent(range.max);
     }
@@ -412,14 +409,14 @@ export class CapabilityRange extends Capability {
   }
 
   isCompatible(other: Capability): boolean {
-    if (other instanceof CapabilityRange) {
+    if (other.tag === CapabilityRange.tag) {
       return this.min.isCompatible((other as CapabilityRange).min);
     }
     return this.min.isCompatible(other);
   }
 
   contains(other: Capability): boolean {
-    if (other instanceof CapabilityRange) {
+    if (other.tag === CapabilityRange.tag) {
       const range = other as CapabilityRange;
       return this.min.isSameOrLessStrict(range.min) && this.max.isSameOrStricter(range.max);
     }

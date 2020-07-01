@@ -12,8 +12,10 @@
 package arcs.core.storage.keys
 
 import arcs.core.data.Capabilities
+import arcs.core.data.Capability
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyFactory
 import arcs.core.storage.StorageKeyParser
 
 /** Protocol to be used with the ramdisk driver. */
@@ -27,6 +29,20 @@ data class RamDiskStorageKey(private val unique: String) : StorageKey(RAMDISK_DR
         RamDiskStorageKey("$unique/$component")
 
     override fun toString(): String = super.toString()
+
+    class RamDiskStorageKeyFactory : StorageKeyFactory(
+        RAMDISK_DRIVER_PROTOCOL,
+        Capabilities(
+            listOf(
+                Capability.Persistence.IN_MEMORY,
+                Capability.Shareable.ANY
+            )
+        )
+    ) {
+        override fun create(options: StorageKeyFactory.StorageKeyOptions): StorageKey {
+            return RamDiskStorageKey(options.location)
+        }
+    }
 
     companion object {
         private val RAMDISK_STORAGE_KEY_PATTERN = "^(.*)\$".toRegex()
@@ -44,10 +60,7 @@ data class RamDiskStorageKey(private val unique: String) : StorageKey(RAMDISK_DR
         }
 
         fun registerKeyCreator() {
-            CapabilitiesResolver.registerKeyCreator(
-                RAMDISK_DRIVER_PROTOCOL,
-                Capabilities.TiedToRuntime
-            ) { storageKeyOptions -> RamDiskStorageKey(storageKeyOptions.location) }
+            CapabilitiesResolver.registerStorageKeyFactory(RamDiskStorageKeyFactory())
         }
 
         private fun fromString(rawKeyString: String): RamDiskStorageKey {

@@ -14,6 +14,7 @@ package arcs.core.storage.api
 import arcs.core.common.ArcId
 import arcs.core.data.CreatableStorageKey
 import arcs.core.entity.SchemaRegistry
+import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.database.DatabaseManager
@@ -58,6 +59,7 @@ object DriverAndKeyConfigurator {
     fun configureKeyParsers() {
         // Start fresh.
         StorageKeyParser.reset()
+        CapabilitiesResolver.reset()
 
         VolatileStorageKey.registerParser()
         VolatileStorageKey.registerKeyCreator()

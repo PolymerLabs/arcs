@@ -1,6 +1,8 @@
 package arcs.core.allocator
 
 import arcs.core.common.ArcId
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.HandleMode
 import arcs.core.data.Plan
@@ -10,11 +12,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.entity.EntityBase
 import arcs.core.entity.EntityBaseSpec
-import arcs.core.entity.EntitySpec
-import arcs.core.entity.HandleContainerType
-import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
-import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
@@ -50,12 +48,8 @@ class CollectionHandlePartitionMap(
                 HandleSpec(
                     "partitions",
                     HandleMode.ReadWrite,
-                    toType(
-                        entitySpec,
-                        HandleDataType.Entity,
-                        HandleContainerType.Collection
-                    ),
-                    setOf<EntitySpec<*>>(entitySpec)
+                    CollectionType(EntityType(entitySpec.SCHEMA)),
+                    entitySpec
                 ),
                 STORAGE_KEY
             ) as ReadWriteCollectionHandle<EntityBase>

@@ -318,4 +318,21 @@ class AccessPathLabelsTest {
         assertThat(inputAgeIsABorAC join inputNameIsABorACAgeIsAB)
             .isEqualTo(inputNameIsABorACAgeIsABorAC)
     }
+
+    @Test
+    fun getLabels_matchesExactPaths() {
+        assertThat(inputNameIsABorACAgeIsAB.getLabels(inputName)).isEqualTo(setOfABorAC)
+        assertThat(inputNameIsABorACAgeIsAB.getLabels(inputAge)).isEqualTo(setOfAB)
+        assertThat(inputNameIsNoneAgeIsAB.getLabels(inputName)).isEqualTo(emptyLabels)
+        assertThat(inputNameIsNoneAgeIsAB.getLabels(inputAge)).isEqualTo(setOfAB)
+    }
+
+    @Test
+    fun getLabels_matchesPartialPaths() {
+        val input = AccessPath(particleName, inputSpec)
+        assertThat(inputNameIsABorACAgeIsAB.getLabels(input)).isEqualTo(setOfABorAC)
+
+        val setOfNoneAndAB = InformationFlowLabels(setOf(BitSet(labels.size), setAB))
+        assertThat(inputNameIsNoneAgeIsAB.getLabels(input)).isEqualTo(setOfNoneAndAB)
+    }
 }

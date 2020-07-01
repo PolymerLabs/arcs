@@ -3,7 +3,7 @@ package arcs.core.entity
 import arcs.core.common.Id
 import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
-import arcs.core.data.Ttl
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
@@ -16,6 +16,7 @@ import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.util.Scheduler
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertFailsWith
 import org.junit.Before
@@ -23,9 +24,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
+@ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class StorageAdapterTest {
-
     private val time = FakeTime()
     private val dereferencerFactory = EntityDereferencerFactory(Store.defaultFactory)
     private val idGenerator = Id.Generator.newForTest("session")

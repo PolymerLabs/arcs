@@ -93,6 +93,78 @@ recipes {
     connections {
       name: "products"
       handle: "handle0"
+      type: {
+        collection: {
+          collection_type: {
+            entity: {
+              schema: {
+                names: "Product"
+                names: "Thing"
+                fields: {
+                  key: "name"
+                  value: {
+                    primitive: TEXT
+                  }
+                }
+                fields: {
+                  key: "dimensions"
+                  value: {
+                    collection {
+                      collection_type: {
+                        primitive: NUMBER
+                      }
+                    }
+                  }
+                }
+                fields: {
+                  key: "reviews"
+                  value: {
+                    collection: {
+                      collection_type {
+                        reference {
+                          referred_type {
+                            entity {
+                              schema {
+                                names: "Review"
+                                fields {
+                                  key: "author"
+                                  value {
+                                    primitive: TEXT
+                                  }
+                                }
+                                fields {
+                                  key: "content"
+                                  value {
+                                    primitive: TEXT
+                                  }
+                                }
+                                fields {
+                                  key: "rating"
+                                  value {
+                                    primitive: NUMBER
+                                  }
+                                }
+                                hash: "929dde429125aa5082b067886b09aa078d901f7a"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                fields {
+                  key: "safeForKids"
+                  value: {
+                    primitive: BOOLEAN
+                  }
+                }
+                hash: "22d9f8af11889c2a062d6cd7ffb58eab1de3a4c7"
+              }
+            }
+          }
+        }
+      }
     }
   }
   annotations {
@@ -151,10 +223,42 @@ recipes {
     connections {
       name: "summary"
       handle: "handle0"
+      type {
+        entity {
+          schema {
+            fields {
+              key: "overallRating"
+              value {
+                primitive: NUMBER
+              }
+            }
+            hash: "984649bb276633d3f7b072533cf3202163eb239e"
+          }
+        }
+      }
     }
     connections {
       name: "things"
       handle: "handle1"
+      type {
+        collection {
+          collection_type {
+            entity {
+              schema {
+                names: "Thing"
+                fields {
+                  key: "name"
+                  value {
+                    primitive: TEXT
+                  }
+                }
+                hash: "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516"
+              }
+            }
+          }
+        }
+
+      }
     }
   }
 }

@@ -10,13 +10,13 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Modality} from './modality.js';
-import {Direction, SlotDirection, ParticleClaimStatement, ParticleCheckStatement} from './manifest-ast-nodes.js';
+import {Direction, SlotDirection, ClaimStatement, CheckStatement} from './manifest-ast-nodes.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {InterfaceType, SlotType, Type, TypeLiteral, TypeVariableInfo} from './type.js';
 import {Literal} from './hot.js';
-import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './particle-check.js';
-import {ParticleClaim, createParticleClaim} from './particle-claim.js';
+import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './check.js';
+import {Claim, createClaim} from './claim.js';
 import {ManifestStringBuilder} from './manifest-string-builder.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {AnnotationRef} from './recipe/annotation.js';
@@ -79,7 +79,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
   dependentConnections: HandleConnectionSpec[];
   pattern?: string;
   parentConnection: HandleConnectionSpec | null = null;
-  claims?: ParticleClaim[];
+  claims?: Claim[];
   checks?: Check[];
   _annotations: AnnotationRef[];
 
@@ -236,8 +236,8 @@ export interface SerializedParticleSpec extends Literal {
   implBlobUrl: string | null;
   modality: string[];
   slotConnections: SerializedSlotConnectionSpec[];
-  trustClaims?: ParticleClaimStatement[];
-  trustChecks?: ParticleCheckStatement[];
+  trustClaims?: ClaimStatement[];
+  trustChecks?: CheckStatement[];
   annotations?: AnnotationRef[];
 }
 
@@ -256,7 +256,7 @@ export class ParticleSpec {
   implBlobUrl: string | null;
   modality: Modality;
   slotConnections: Map<string, ConsumeSlotConnectionSpec>;
-  trustClaims: ParticleClaim[];
+  trustClaims: Claim[];
   trustChecks: Check[];
   _annotations: AnnotationRef[] = [];
 
@@ -555,8 +555,8 @@ export class ParticleSpec {
     return this.toManifestString();
   }
 
-  private validateTrustClaims(statements: ParticleClaimStatement[]): ParticleClaim[] {
-    const results: ParticleClaim[] = [];
+  private validateTrustClaims(statements: ClaimStatement[]): Claim[] {
+    const results: Claim[] = [];
     if (statements) {
       statements.forEach(statement => {
         const target = [statement.handle, ...statement.fieldPath].join('.');
@@ -573,7 +573,7 @@ export class ParticleSpec {
         } else if (handle.claims.some(claim => claim.target === target)) {
           throw new Error(`Can't make multiple claims on the same target (${target}).`);
         }
-        const particleClaim = createParticleClaim(handle, statement, this.handleConnectionMap);
+        const particleClaim = createClaim(handle, statement, this.handleConnectionMap);
         handle.claims.push(particleClaim);
         results.push(particleClaim);
       });
@@ -581,7 +581,7 @@ export class ParticleSpec {
     return results;
   }
 
-  private validateTrustChecks(checks: ParticleCheckStatement[]): Check[] {
+  private validateTrustChecks(checks: CheckStatement[]): Check[] {
     const results: Check[] = [];
     if (checks) {
       const providedSlotNames = this.getProvidedSlotsByName();

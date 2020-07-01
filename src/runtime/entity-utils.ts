@@ -110,6 +110,9 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
         validateFieldAndTypes(name, element, schema, fieldType.schema);
       }
       break;
+    case 'schema-nested':
+      // sanitizeEntry will check the nested fields, no need to do so here.
+      break;
     default:
       throw new Error(`Unknown kind '${fieldType.kind}' for field ${name} in schema ${schema.name}`);
   }
@@ -146,6 +149,14 @@ function sanitizeEntry(type, value, name, context: ChannelConstructor) {
       return new Set(value.map(v => sanitizeEntry(type.schema, v, name, context)));
     } else {
       throw new TypeError(`Cannot set collection ${name} with non-collection '${value}'`);
+    }
+  } else if (type.kind === 'schema-nested') {
+    if (value instanceof Entity) {
+      return value;
+    } else if (typeof value !== 'object') {
+      throw new TypeError(`Cannot set nested schema ${name} with non-object '${value}'`);
+    } else {
+      return new (Entity.createEntityClass(type.schema.model.entitySchema, null))(value);
     }
   } else {
     return value;

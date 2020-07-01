@@ -1,0 +1,25 @@
+meta
+  namespace: src.tools.tests
+
+particle Variable
+  h0: reads ~a
+  h1: writes ~a
+  h2: reads ~b with {num: Number}
+  h3: writes ~b with {flavor: Text}
+
+particle Ingest
+  action: writes [Action {sessionId: Text, action: Text, timestampInMs: Number}]
+
+particle Process in '.Process'
+  data: reads [~a]
+
+@arcId('overviewArc')
+recipe VariableIngestion
+  incomingAction: create 'action' @persistent @ttl('2d')
+
+  Ingest
+    action: incomingAction
+
+  Process
+    data: incomingAction
+

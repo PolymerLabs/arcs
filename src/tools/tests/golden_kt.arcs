@@ -19,5 +19,23 @@ particle KotlinPrimitivesGolden
     flt: Float,
     dbl: Double,
     txtlst: List<Text>,
-    lnglst: List<Long>
+    lnglst: List<Long>,
+    detail: inline Detail {
+      nested: inline Nested {
+        txt: Text,
+        num: Number
+      },
+      txt: Text,
+      num: Number
+    },
+    colors: [inline Color {
+      red: Char,
+      green: Char,
+      blue: Char
+    }],
+    products: List<inline Product {
+       name: Text,
+      price: Float,
+      stock: Int
+    }>
   }

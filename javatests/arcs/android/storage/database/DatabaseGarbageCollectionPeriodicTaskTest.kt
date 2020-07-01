@@ -4,13 +4,11 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.ListenableWorker.Result
 import androidx.work.testing.TestWorkerBuilder
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.entity.DummyEntity
-import arcs.core.entity.EntitySpec
-import arcs.core.entity.HandleContainerType
-import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
-import arcs.core.entity.HandleSpec.Companion.toType
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.SchemaRegistry
 import arcs.core.entity.awaitReady
@@ -18,13 +16,15 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.testutil.handles.dispatchCreateReference
+import arcs.core.testutil.handles.dispatchFetchAll
+import arcs.core.testutil.handles.dispatchRemove
+import arcs.core.testutil.handles.dispatchStore
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
-import kotlinx.coroutines.withContext
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.coroutines.EmptyCoroutineContext
@@ -63,16 +63,14 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
             num = 1.0
             texts = setOf("1", "one")
         }
-        handle.storeAndWait(entity)
+        handle.dispatchStore(entity)
 
         // Create a reference to entity1, so that we can check the value (but don't persist the
         // reference or the entity won't be garbage collected)
-        val ref1 = handle.createReference(entity)
+        val ref1 = handle.dispatchCreateReference(entity)
 
-        handle.removeAndWait(entity)
-        withContext(handle.dispatcher) {
-            assertThat(handle.fetchAll()).isEmpty()
-        }
+        handle.dispatchRemove(entity)
+        assertThat(handle.dispatchFetchAll()).isEmpty()
 
         // Trigger gc worker twice (entity are removed only after being orphan for two runs).
         assertThat(worker.doWork()).isEqualTo(Result.success())
@@ -82,9 +80,8 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
         assertThat(ref1.dereference()).isEqualTo(null)
     }
 
-
     @Suppress("UNCHECKED_CAST")
-    private suspend fun createCollectionHandle() = 
+    private suspend fun createCollectionHandle() =
         EntityHandleManager(
             time = fakeTime,
             scheduler = schedulerProvider("test")
@@ -92,30 +89,9 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
             HandleSpec(
                 "name",
                 HandleMode.ReadWrite,
-                toType(
-                    DummyEntity,
-                    HandleDataType.Entity,
-                    HandleContainerType.Collection
-                ),
-                setOf<EntitySpec<*>>(DummyEntity)
+                CollectionType(EntityType(DummyEntity.SCHEMA)),
+                DummyEntity
             ),
             collectionKey
         ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
-
-    private suspend fun ReadWriteCollectionHandle<DummyEntity>.storeAndWait(entity: DummyEntity) {
-        val deferred = CompletableDeferred<Unit>()
-        onUpdate { deferred.complete(Unit) }
-        runBlocking(dispatcher) {
-            store(entity).join()
-        }
-        deferred.await()
-    }
-    private suspend fun ReadWriteCollectionHandle<DummyEntity>.removeAndWait(entity: DummyEntity) {
-        val deferred = CompletableDeferred<Unit>()
-        onUpdate { deferred.complete(Unit) }
-        runBlocking(dispatcher) {
-            remove(entity).join()
-        }
-        deferred.await()
-    }
 }

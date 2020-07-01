@@ -12,8 +12,10 @@
 package arcs.core.storage.keys
 
 import arcs.core.data.Capabilities
+import arcs.core.data.Capability
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyFactory
 import arcs.core.storage.StorageKeyParser
 
 /** Protocol to be used with the database driver for persistent databases. */
@@ -60,6 +62,22 @@ sealed class DatabaseStorageKey(
         init { checkValidity() }
 
         override fun toString() = super.toString()
+
+        class Factory : StorageKeyFactory(
+            DATABASE_DRIVER_PROTOCOL,
+            Capabilities(
+                listOf(
+                    Capability.Persistence.ON_DISK,
+                    Capability.Ttl.ANY,
+                    Capability.Queryable.ANY,
+                    Capability.Shareable.ANY
+                )
+            )
+        ) {
+            override fun create(options: StorageKeyFactory.StorageKeyOptions): StorageKey {
+                return Persistent(options.location, options.entitySchema.hash)
+            }
+        }
     }
 
     /** [DatabaseStorageKey] for values to be stored in-memory. */
@@ -71,6 +89,22 @@ sealed class DatabaseStorageKey(
         init { checkValidity() }
 
         override fun toString() = super.toString()
+
+        class Factory : StorageKeyFactory(
+            MEMORY_DATABASE_DRIVER_PROTOCOL,
+            Capabilities(
+                listOf(
+                    Capability.Persistence.IN_MEMORY,
+                    Capability.Ttl.ANY,
+                    Capability.Queryable.ANY,
+                    Capability.Shareable.ANY
+                )
+            )
+        ) {
+            override fun create(options: StorageKeyFactory.StorageKeyOptions): StorageKey {
+                return Memory(options.location, options.entitySchema.hash)
+            }
+        }
     }
 
     companion object {
@@ -93,24 +127,8 @@ sealed class DatabaseStorageKey(
         }
 
         fun registerKeyCreator() {
-            CapabilitiesResolver.registerKeyCreator(
-                DATABASE_DRIVER_PROTOCOL,
-                Capabilities.PersistentQueryable
-            ) { storageKeyOptions ->
-                Persistent(
-                    storageKeyOptions.location,
-                    storageKeyOptions.entitySchema.hash
-                )
-            }
-            CapabilitiesResolver.registerKeyCreator(
-                MEMORY_DATABASE_DRIVER_PROTOCOL,
-                Capabilities.Queryable
-            ) { storageKeyOptions ->
-                Memory(
-                    storageKeyOptions.location,
-                    storageKeyOptions.entitySchema.hash
-                )
-            }
+            CapabilitiesResolver.registerStorageKeyFactory(Persistent.Factory())
+            CapabilitiesResolver.registerStorageKeyFactory(Memory.Factory())
         }
         /* internal */
         fun persistentFromString(rawKeyString: String): Persistent = fromString(rawKeyString)

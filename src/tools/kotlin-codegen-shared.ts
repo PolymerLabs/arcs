@@ -8,13 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {KotlinGenerationUtils, quote} from './kotlin-generation-utils.js';
+import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
 import {SchemaGraph, SchemaNode} from './schema2graph.js';
 import {HandleConnectionSpec} from '../runtime/particle-spec.js';
 import {Type, TypeVariable} from '../runtime/type.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {assert} from '../platform/assert-web.js';
 import {Dictionary} from '../runtime/hot.js';
+import {Schema} from '../runtime/schema.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -40,11 +41,15 @@ export function escapeIdentifier(name: string): string {
 /**
  * Generates a Kotlin type instance for the given handle connection.
  */
-export function generateConnectionType(connection: HandleConnection): string {
-  return generateConnectionSpecType(connection.spec, new SchemaGraph(connection.particle.spec).nodes);
+export function generateConnectionType(connection: HandleConnection,
+                                       schemaRegistry: {schema: Schema, generation: string}[] = []): string {
+  return generateConnectionSpecType(connection.spec, new SchemaGraph(connection.particle.spec).nodes, schemaRegistry);
 }
 
-export function generateConnectionSpecType(connection: HandleConnectionSpec, nodes: SchemaNode[]): string {
+export function generateConnectionSpecType(
+  connection: HandleConnectionSpec,
+  nodes: SchemaNode[],
+  schemaRegistry: {schema: Schema, generation: string}[] = []): string {
   let type = connection.type;
   if (type.isEntity || type.isReference) {
     // Moving to the new style types with explicit singleton.
@@ -52,11 +57,14 @@ export function generateConnectionSpecType(connection: HandleConnectionSpec, nod
   }
 
   return (function generateType(type: Type): string {
-    if (type.isEntity || type.isVariable) {
-      const node = type.isEntity
-        ? nodes.find(n => n.schema.equals(type.getEntitySchema()))
-        : nodes.find(n => n.variableName !== null && n.variableName.includes((type as TypeVariable).variable.name));
+    if (type.isEntity) {
+      const node = nodes.find(n => n.schema.equals(type.getEntitySchema()));
       return ktUtils.applyFun('EntityType', [`${node.fullName(connection)}.SCHEMA`]);
+    } else if (type.isVariable) {
+      const node = nodes.find(n => n.variableName === (type as TypeVariable).variable.name);
+      const schemaPair = schemaRegistry.find(pair => pair.schema.equals(type.getEntitySchema())) || {generation: 'Schema.EMPTY'};
+      const schema = node != null ? `${node.fullName(connection)}.SCHEMA` : schemaPair.generation;
+      return ktUtils.applyFun('EntityType', [schema]);
     } else if (type.isCollection) {
       return ktUtils.applyFun('CollectionType', [generateType(type.getContainedType())]);
     } else if (type.isSingleton) {
@@ -75,40 +83,59 @@ export interface KotlinTypeInfo {
   type: string;
   decodeFn: string;
   defaultVal: string;
-  schemaType: string;
 }
 
-export function getTypeInfo(opts: { name: string, isCollection?: boolean, refClassName?: string, listTypeName?: string, refSchemaHash?: string }): KotlinTypeInfo {
+type AddFieldOptions = Readonly<{
+  field: string;
+  typeName: string;
+  isOptional?: boolean;
+  refClassName?: string;
+  refSchemaHash?: string;
+  listTypeInfo?: AddFieldOptions;
+  isCollection?: boolean;
+  isInlineClass?: boolean;
+}>;
+
+export function getTypeInfo(opts: { name: string, isCollection?: boolean, refClassName?: string, listTypeInfo?: {name: string, isInlineClass?: boolean}, isInlineClass?: boolean }): KotlinTypeInfo {
   if (opts.name === 'List') {
-    assert(opts.listTypeName, 'listTypeName must be provided for Lists');
+    assert(opts.listTypeInfo, 'listTypeInfo must be provided for Lists');
     assert(!opts.isCollection, 'collections of Lists are not supported');
-    const itemTypeInfo = getTypeInfo({name: opts.listTypeName});
+    const itemTypeInfo = getTypeInfo(opts.listTypeInfo);
     return {
       type: `List<${itemTypeInfo.type}>`,
       decodeFn: `decodeList<${itemTypeInfo.type}>()`,
       defaultVal: `listOf<${itemTypeInfo.type}>()`,
-      schemaType: `FieldType.ListOf(${itemTypeInfo.schemaType})`
+    };
+  }
+
+  if (opts.isInlineClass) {
+    if (opts.isCollection) {
+      return {
+        type: `Set<${opts.name}>`,
+        decodeFn: `decodeInline<${opts.name}>()`,
+        defaultVal: `emptySet<${opts.name}>()`,
+      };
+    }
+    return {
+      type: opts.name,
+      decodeFn: `decodeInline<${opts.name}>()`,
+      defaultVal: `${opts.name}()`,
     };
   }
 
   const typeMap: Dictionary<KotlinTypeInfo> = {
-    'Text': {type: 'String', decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
-    'URL': {type: 'String', decodeFn: 'decodeText()', defaultVal: `""`, schemaType: 'FieldType.Text'},
-    'Number': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0', schemaType: 'FieldType.Number'},
-    'Boolean': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false', schemaType: 'FieldType.Boolean'},
-    'Byte': {type: 'Byte', decodeFn: 'decodeByte()', defaultVal: '0.toByte()', schemaType: 'FieldType.Byte'},
-    'Short': {type: 'Short', decodeFn: 'decodeShort()', defaultVal: '0.toShort()', schemaType: 'FieldType.Short'},
-    'Int': {type: 'Int', decodeFn: 'decodeInt()', defaultVal: '0', schemaType: 'FieldType.Int'},
-    'Long': {type: 'Long', decodeFn: 'decodeLong()', defaultVal: '0L', schemaType: 'FieldType.Long'},
-    'Char': {type: 'Char', decodeFn: 'decodeChar()', defaultVal: `'\u0000'`, schemaType: 'FieldType.Char'},
-    'Float': {type: 'Float', decodeFn: 'decodeFloat()', defaultVal: '0.0f', schemaType: 'FieldType.Float'},
-    'Double': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0', schemaType: 'FieldType.Double'},
-    'Reference': {
-      type: `Reference<${opts.refClassName}>`,
-      decodeFn: null,
-      defaultVal: 'null',
-      schemaType: `FieldType.EntityRef(${quote(opts.refSchemaHash)})`,
-    },
+    'Text': {type: 'String', decodeFn: 'decodeText()', defaultVal: `""`},
+    'URL': {type: 'String', decodeFn: 'decodeText()', defaultVal: `""`},
+    'Number': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0'},
+    'Boolean': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false'},
+    'Byte': {type: 'Byte', decodeFn: 'decodeByte()', defaultVal: '0.toByte()'},
+    'Short': {type: 'Short', decodeFn: 'decodeShort()', defaultVal: '0.toShort()'},
+    'Int': {type: 'Int', decodeFn: 'decodeInt()', defaultVal: '0'},
+    'Long': {type: 'Long', decodeFn: 'decodeLong()', defaultVal: '0L'},
+    'Char': {type: 'Char', decodeFn: 'decodeChar()', defaultVal: `'\u0000'`},
+    'Float': {type: 'Float', decodeFn: 'decodeFloat()', defaultVal: '0.0f'},
+    'Double': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0'},
+    'Reference': {type: `Reference<${opts.refClassName}>`, decodeFn: null, defaultVal: 'null'},
   };
 
   const info = typeMap[opts.name];
@@ -117,7 +144,6 @@ export function getTypeInfo(opts: { name: string, isCollection?: boolean, refCla
   }
   if (opts.name === 'Reference') {
     assert(opts.refClassName, 'refClassName must be provided for References');
-    assert(opts.refSchemaHash, 'refSchemaHash must be provided for References');
     if (!opts.isCollection) {
       // Singleton Reference fields are nullable.
       info.type += '?';

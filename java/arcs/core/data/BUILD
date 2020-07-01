@@ -5,7 +5,7 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 ENTITY_SRCS = [
     "FieldName.kt",
@@ -30,6 +30,7 @@ arcs_kt_library(
         ":schema_fields",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
+        "//java/arcs/core/data/expression",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
         "//java/arcs/core/util",

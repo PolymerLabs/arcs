@@ -105,18 +105,14 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     override fun off(callbackToken: Int) {
         synchronized(proxyManager) {
             proxyManager.unregister(callbackToken)
-            if (proxyManager.isEmpty()) {
-                closeInternal()
-            }
         }
     }
 
     /** Closes the store. Once closed, it cannot be re-opened. A new instance must be created. */
     fun close() {
         synchronized(proxyManager) {
-            if (proxyManager.isEmpty()) {
-                closeInternal()
-            }
+            proxyManager.callbacks.clear()
+            closeInternal()
         }
     }
 
@@ -260,7 +256,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 )
                 log.debug { "No driver side changes? $noDriverSideChanges" }
             } catch (e: Exception) {
-                log.error(e) { "Error while applying pending driver models." }
+                // TODO(b/160251910): Make logging detail more cleanly conditional.
+                log.debug(e) { "Error while applying pending driver models." }
+                log.info { "Error while applying pending driver models." }
                 idleDeferred.value.completeExceptionally(e)
                 throw e
             }
@@ -514,13 +512,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
                 ) as? Driver<Data>
             ) { "No driver exists to support storage key ${options.storageKey}" }
 
-            val localModel = crdtType.createCrdtModel().apply {
-                options.model?.let { merge(it) }
-            }
-
             return DirectStore(
                 options,
-                localModel = localModel,
+                localModel = crdtType.createCrdtModel(),
                 driver = driver
             ).also { store ->
                 driver.registerReceiver(options.versionToken) { data, version ->

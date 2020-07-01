@@ -14,6 +14,7 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.Store.Companion.defaultFactory
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
@@ -42,7 +43,6 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     options: StoreOptions<Data, Op, ConsumerData>
 ) : IStore<Data, Op, ConsumerData> {
     override val storageKey: StorageKey = options.storageKey
-    override val mode: StorageMode = options.mode
     override val type: Type = options.type
     private var activeStore: ActiveStore<Data, Op, ConsumerData>? = null
         get() = synchronized(this) { field }
@@ -52,7 +52,6 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
      * If there's a parsed model then it's stored here and provided to [activate] when
      * reconstituting an [ActiveStore].
      */
-    var model: Data? = options.model
     private val parsedVersionToken: String? = options.versionToken
     val versionToken: String?
         get() = activeStore?.versionToken ?: parsedVersionToken
@@ -71,10 +70,8 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         val options = StoreOptions(
             storageKey = storageKey,
             type = type,
-            mode = mode,
             baseStore = this,
-            versionToken = parsedVersionToken,
-            model = model
+            versionToken = parsedVersionToken
         )
         // If we were given a specific factory to use, use it; otherwise use the default factory.
         val activeStore = (activationFactory ?: defaultFactory).invoke(options)
@@ -97,10 +94,10 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         val defaultFactory = object : ActivationFactory {
             override suspend fun <Data : CrdtData, Op : CrdtOperation, T> invoke(
                 options: StoreOptions<Data, Op, T>
-            ): ActiveStore<Data, Op, T> = when (options.mode) {
-                StorageMode.Direct -> DirectStore.create(options)
-                StorageMode.ReferenceMode ->
+            ): ActiveStore<Data, Op, T> = when (options.storageKey) {
+                is ReferenceModeStorageKey ->
                     ReferenceModeStore.create(options) as ActiveStore<Data, Op, T>
+                else -> DirectStore.create(options)
             }
         }
     }

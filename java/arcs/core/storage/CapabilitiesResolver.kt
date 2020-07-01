@@ -20,159 +20,126 @@ import arcs.core.data.Schema
 import arcs.core.data.SingletonType
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
-import arcs.core.util.TaggedLog
 
 /**
  * [CapabilitiesResolver] is a factory class that creates [StorageKey]s based on the registered
  * providers and given [Capabilities].
  */
 class CapabilitiesResolver(
-    val options: CapabilitiesResolverOptions,
-    private val creators: List<StorageKeyCreatorInfo> = getAllCreators()
+    private val options: Options,
+    private val factories: Map<String, StorageKeyFactory>,
+    private val selector: FactorySelector = SimpleCapabilitiesSelector()
 ) {
-    private val log = TaggedLog { "CapabilitiesResolver" }
+    constructor(
+        options: Options,
+        factoriesList: List<StorageKeyFactory> = listOf(),
+        selector: FactorySelector = SimpleCapabilitiesSelector()
+    ) : this(options, CapabilitiesResolver.getFactoryMap(factoriesList), selector)
 
-    /* Options used to construct [CapabilitiesResolver] */
-    data class CapabilitiesResolverOptions(val arcId: ArcId)
+    /** Options used to construct [CapabilitiesResolver]. */
+    data class Options(val arcId: ArcId)
 
-    /**
-     * Options passed to registered [StorageKey] constructors.
-     * @property arcId An identifier of an Arc requesting the [StorageKey]
-     * @property entitySchema A schema of an entities that will be stored
-     * @property unique A unique component of the [StorageKey]
-     * @property location A memory location of the [StorageKey]
-     */
-    interface StorageKeyOptions {
-        val arcId: ArcId
-        val entitySchema: Schema
-        val unique: String
-        val location: String
+    fun createStorageKey(capabilities: Capabilities, type: Type, handleId: String): StorageKey {
+        val selectedFactories =
+            factories.filterValues { it.supports(capabilities) }
+
+        require(!selectedFactories.isEmpty()) {
+            "Cannot create storage key for handle '$handleId' with capabilities $capabilities"
+        }
+        val factory = selector.select(selectedFactories.values)
+        return createStorageKeyWithFactory(factory, type, handleId)
     }
 
-    data class ContainerStorageKeyOptions(
-        override val arcId: ArcId,
-        override val entitySchema: Schema
-    ) : StorageKeyOptions {
-        override val unique: String = ""
-        override val location: String = arcId.toString()
-    }
-
-    data class BackingStorageKeyOptions(
-        override val arcId: ArcId,
-        override val entitySchema: Schema
-    ) : StorageKeyOptions {
-        override val unique: String =
-            requireNotNull(entitySchema.name).name.ifEmpty { entitySchema.hash }
-        override val location: String = unique
-    }
-
-    /**
-     * Information mapping store capabilities to a corresponding storage protocol and creator
-     * method.
-     */
-    data class StorageKeyCreatorInfo(
-        val protocol: String,
-        val capabilities: Capabilities,
-        val create: StorageKeyCreator
-    )
-
-    /** Creates and returns a [StorageKey] corresponding to the given [Capabilities]. */
-    fun createStorageKey(
-        capabilities: Capabilities,
+    private fun createStorageKeyWithFactory(
+        factory: StorageKeyFactory,
         type: Type,
         handleId: String
-    ): StorageKey? {
-        // RamDisk is the default driver.
-        val capabilitiesToUse = if (capabilities.isEmpty())
-            Capabilities.TiedToRuntime else capabilities
-        // TODO: This is a naive and basic solution for picking the appropriate
-        // storage key creator for the given capabilities. As more capabilities are
-        // added the heuristics will become more robust.
-        val creators = findCreators(capabilitiesToUse)
-        require(creators.isNotEmpty()) {
-            "Cannot create a suitable storage key for $capabilities"
-        }
-        if (creators.size > 1) {
-            log.warning { "Multiple storage key creators for $capabilities" }
-        }
-        val create = creators.first().create
-        val storageKey = create(ContainerStorageKeyOptions(options.arcId, toEntitySchema(type)))
-        val childKey = storageKey.childKeyForHandle(handleId)
+    ): StorageKey {
+        val containerKey = factory.create(
+            StorageKeyFactory.ContainerStorageKeyOptions(options.arcId, toEntitySchema(type))
+        )
+        val containerChildKey = containerKey.childKeyForHandle(handleId)
         if (type is ReferenceType<*>) {
-            return childKey
+            return containerChildKey
         }
-        val backingKey = create(BackingStorageKeyOptions(options.arcId, toEntitySchema(type)))
-        return ReferenceModeStorageKey(backingKey, childKey)
+        val backingKey = factory.create(
+            StorageKeyFactory.BackingStorageKeyOptions(options.arcId, toEntitySchema(type))
+        )
+        // ReferenceModeStorageKeys in different drivers can cause problems with garbage collection.
+        require(backingKey.protocol == containerKey.protocol) {
+            "Backing and containers keys must use same protocol"
+        }
+        return ReferenceModeStorageKey(backingKey, containerChildKey)
     }
 
     /**
      * Retrieves [Schema] from the given [Type], if possible.
-     * TODO: declare a common interface.
      */
     private fun toEntitySchema(type: Type): Schema {
-        when (type) {
-            is SingletonType<*> -> if (type.containedType is EntityType) {
-                return (type.containedType as EntityType).entitySchema
-            }
-            is CollectionType<*> -> if (type.collectionType is EntityType) {
-                return (type.collectionType as EntityType).entitySchema
-            }
-            is ReferenceType<*> -> return type.entitySchema!!
-            is EntityType -> return type.entitySchema
+        return when {
+            type is SingletonType<*> && type.containedType is EntityType ->
+                (type.containedType as EntityType).entitySchema
+            type is CollectionType<*> && type.collectionType is EntityType ->
+                (type.collectionType as EntityType).entitySchema
+            type is ReferenceType<*> -> type.entitySchema!!
+            type is EntityType -> type.entitySchema
+            else -> throw IllegalArgumentException(
+                "Can't retrieve entitySchema of unknown type $type")
         }
-        throw IllegalArgumentException("Can't retrieve entitySchema of unknown type $type")
     }
 
-    /** Returns list of protocols corresponding to the given [Capabilities]. */
-    /* internal */ fun findStorageKeyProtocols(capabilities: Capabilities): List<String> {
-        return findCreators(capabilities).map { it.protocol }
+    /**
+     * An interface for selecting a factory, if more than one are available for [Capabilities].
+     */
+    interface FactorySelector {
+        fun select(factories: Collection<StorageKeyFactory>): StorageKeyFactory
     }
 
-    /** Returns list of creator info corresponding to the given [Capabilities]. */
-    /* internal */ fun findCreators(capabilities: Capabilities): List<StorageKeyCreatorInfo> {
-        val result = creators.filter { creator -> creator.capabilities == capabilities }
-        if (result.isNotEmpty()) return result
-        return creators.filter { creator -> capabilities in creator.capabilities }
+    /**
+     * An implementation of a [FactorySelector] choosing a factory with a least restrictive max
+     * [Capabilities] set.
+     */
+    class SimpleCapabilitiesSelector(
+        val sortedProtocols: Array<String> = arrayOf("volatile", "ramdisk", "memdb", "db")
+    ) : FactorySelector {
+        override fun select(factories: Collection<StorageKeyFactory>): StorageKeyFactory {
+            require(factories.isNotEmpty()) { "Cannot select from empty factories list" }
+            val compareProtocol = compareBy { protocol: String ->
+                val index = sortedProtocols.indexOf(protocol)
+                if (index >= 0) { index } else sortedProtocols.size
+            }
+
+            return factories.reduce { acc, factory ->
+                if (minOf(acc.protocol, factory.protocol, compareProtocol) == factory.protocol) {
+                    factory
+                } else acc
+            }
+        }
     }
 
     companion object {
-        /* internal */ val defaultCreators: MutableList<StorageKeyCreatorInfo> = mutableListOf()
-        /* internal */ val registeredCreators: MutableList<StorageKeyCreatorInfo> = mutableListOf()
+        private val defaultStorageKeyFactories = mutableMapOf<String, StorageKeyFactory>()
 
-        /** Registers a default [StorageKey] creator for the given protocol and [Capabilities]. */
-        fun registerDefaultKeyCreator(
-            protocol: String,
-            capabilities: Capabilities,
-            create: StorageKeyCreator
-        ) {
-            defaultCreators.add(
-                StorageKeyCreatorInfo(protocol, capabilities, create)
-            )
-        }
-
-        /** Registers a [StorageKey] creator for the given protocol and [Capabilities]. */
-        fun registerKeyCreator(
-            protocol: String,
-            capabilities: Capabilities,
-            create: StorageKeyCreator
-        ) {
-            registeredCreators.add(
-                StorageKeyCreatorInfo(protocol, capabilities, create)
-            )
-        }
-
-        private fun getAllCreators(): List<StorageKeyCreatorInfo> {
-            val creators: MutableList<StorageKeyCreatorInfo> = mutableListOf()
-            defaultCreators.forEach { creators.add(it) }
-            registeredCreators.forEach { creators.add(it) }
-            return creators
+        fun registerStorageKeyFactory(factory: StorageKeyFactory) {
+            require(defaultStorageKeyFactories[factory.protocol] == null) {
+                "Storage key factory for '$factory.protocol' already registered"
+            }
+            defaultStorageKeyFactories[factory.protocol] = factory
         }
 
         fun reset() {
-            registeredCreators.clear()
+            defaultStorageKeyFactories.clear()
+        }
+
+        fun getFactoryMap(factoriesList: List<StorageKeyFactory>): Map<String, StorageKeyFactory> {
+            require(factoriesList.distinctBy { it.protocol }.size == factoriesList.size) {
+                "Storage keys protocol must be unique $factoriesList."
+            }
+            val factories = factoriesList.associateBy { it.protocol }.toMutableMap()
+            CapabilitiesResolver.defaultStorageKeyFactories.forEach { (protocol, factory) ->
+                factories.getOrPut(protocol) { factory }
+            }
+            return factories
         }
     }
 }
-
-/** A method for generating [StorageKey] for the given parameters. */
-typealias StorageKeyCreator = (options: CapabilitiesResolver.StorageKeyOptions) -> StorageKey

@@ -9,7 +9,7 @@
  */
 
 import {HandleConnectionSpec} from './particle-spec.js';
-import {ParticleClaimIsTag, ParticleClaimDerivesFrom, ParticleClaimStatement, Direction} from './manifest-ast-nodes.js';
+import * as AstNode from './manifest-ast-nodes.js';
 import {resolveFieldPathType} from './field-path.js';
 
 /** The different types of trust claims that particles can make. */
@@ -22,11 +22,11 @@ export enum ClaimType {
  * A list of claims made by a particle on a specific handle (or on a field
  * inside a handle).
  */
-export class ParticleClaim {
+export class Claim {
   constructor(
       readonly handle: HandleConnectionSpec,
       readonly fieldPath: string[],
-      readonly claims: Claim[]) {}
+      readonly claims: ClaimExpression[]) {}
 
   toManifestString() {
     const manifestStrings = this.claims.map(claim => claim.toManifestString());
@@ -39,14 +39,14 @@ export class ParticleClaim {
 }
 
 /** A specific claim, either a single tag or a single handle derivation. */
-export type Claim = ClaimIsTag | ClaimDerivesFrom;
+export type ClaimExpression = ClaimIsTag | ClaimDerivesFrom;
 
 export class ClaimIsTag {
   readonly type: ClaimType.IsTag = ClaimType.IsTag;
 
   constructor(readonly isNot: boolean, readonly tag: string) {}
 
-  static fromASTNode(astNode: ParticleClaimIsTag) {
+  static fromASTNode(astNode: AstNode.ClaimIsTag) {
     return new ClaimIsTag(astNode.isNot, astNode.tag);
   }
 
@@ -63,7 +63,7 @@ export class ClaimDerivesFrom {
       readonly fieldPath: string[]) {}
 
   static fromASTNode(
-      astNode: ParticleClaimDerivesFrom,
+      astNode: AstNode.ClaimDerivesFrom,
       handleConnectionMap: Map<string, HandleConnectionSpec>) {
 
     // Convert handle names into HandleConnectionSpec objects.
@@ -86,11 +86,11 @@ export class ClaimDerivesFrom {
   }
 }
 
-export function createParticleClaim(
+export function createClaim(
     handle: HandleConnectionSpec,
-    astNode: ParticleClaimStatement,
-    handleConnectionMap: Map<string, HandleConnectionSpec>): ParticleClaim {
-  const claims: Claim[] = astNode.expression.map(claimNode => {
+    astNode: AstNode.ClaimStatement,
+    handleConnectionMap: Map<string, HandleConnectionSpec>): Claim {
+  const claims: ClaimExpression[] = astNode.expression.map(claimNode => {
     switch (claimNode.claimType) {
       case ClaimType.IsTag:
         return ClaimIsTag.fromASTNode(claimNode);
@@ -100,5 +100,5 @@ export function createParticleClaim(
         throw new Error('Unknown claim type.');
     }
   });
-  return new ParticleClaim(handle, astNode.fieldPath, claims);
+  return new Claim(handle, astNode.fieldPath, claims);
 }

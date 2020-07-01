@@ -11,17 +11,15 @@ import {Runtime} from '../runtime/runtime.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {Type, CollectionType, ReferenceType, SingletonType, TupleType, TypeVariable} from '../runtime/type.js';
+import {CollectionType, ReferenceType, SingletonType, TupleType, Type, TypeVariable} from '../runtime/type.js';
 import {Schema} from '../runtime/schema.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
-import {assert} from '../platform/assert-web.js';
-import {findLongRunningArcId} from './allocator-recipe-resolver.js';
 import {Manifest} from '../runtime/manifest.js';
 import {DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
 import {Refinement, RefinementExpressionLiteral} from '../runtime/refiner.js';
 import {Op} from '../runtime/manifest-ast-nodes.js';
-import {ClaimType} from '../runtime/particle-claim.js';
-import {CheckCondition, CheckExpression, CheckType} from '../runtime/particle-check.js';
+import {ClaimType} from '../runtime/claim.js';
+import {CheckCondition, CheckExpression, CheckType} from '../runtime/check.js';
 import {flatMap} from '../runtime/util.js';
 import {Policy} from '../runtime/policy/policy.js';
 import {policyToProtoPayload} from './policy2proto.js';
@@ -37,12 +35,19 @@ export async function manifestToProtoPayload(manifest: Manifest) {
   return makeManifestProtoPayload(manifest.allParticles, manifest.allRecipes, manifest.allPolicies);
 }
 
-export async function encodePlansToProto(plans: Recipe[]) {
-  const specMap = new Map<string, ParticleSpec>();
-  for (const spec of flatMap(plans, r => r.particles).map(p => p.spec)) {
-    specMap.set(spec.name, spec);
-  }
-  return encodePayload(await makeManifestProtoPayload([...specMap.values()], plans, /* policies= */ []));
+export async function encodePlansToProto(plans: Recipe[], manifest: Manifest) {
+  // In the recipe data structure every particle in a recipe currently has its own copy
+  // of a particle spec. This copy is used in type inference and gets mutated as recipe
+  // is type checked. As we need to encode particle specs without such mutations, below
+  // we reach for ParticleSpecs from manifest.particles, instead of the ones hanging from
+  // the recipe.particles.
+  // This should be cleaned-up in the recipe data structure and type infrence code,
+  // once that happens, we can remove the below hack.
+  const specToId = (spec: ParticleSpec) => `${spec.name}:${spec.implFile}`;
+  const planParticleIds = flatMap(plans, p => p.particles).map(p => specToId(p.spec));
+  const particleSpecs = manifest.allParticles.filter(p => planParticleIds.includes(specToId(p)));
+
+  return encodePayload(await makeManifestProtoPayload(particleSpecs, plans, /* policies= */ []));
 }
 
 async function makeManifestProtoPayload(particles: ParticleSpec[], recipes: Recipe[], policies: Policy[]) {
@@ -69,7 +74,8 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
     location: spec.implFile,
     connections,
     claims,
-    checks
+    checks,
+    isolated: spec.isolated,
   };
 }
 
@@ -236,18 +242,22 @@ async function recipeToProtoPayload(recipe: Recipe) {
 
   return {
     name: recipe.name,
-    particles: recipe.particles.map(p => recipeParticleToProtoPayload(p, handleToProtoPayload)),
+    particles: await Promise.all(recipe.particles.map(p => recipeParticleToProtoPayload(p, handleToProtoPayload))),
     handles: [...handleToProtoPayload.values()],
     annotations: recipe.annotations.map(a => annotationToProtoPayload(a))
   };
 }
 
-function recipeParticleToProtoPayload(particle: Particle, handleMap: Map<Handle, {name: string}>) {
+async function recipeParticleToProtoPayload(particle: Particle, handleMap: Map<Handle, {name: string}>) {
   return {
     specName: particle.name,
-    connections: Object.entries(particle.connections).map(
-      ([name, connection]) => ({name, handle: handleMap.get(connection.handle).name})
-    )
+    connections: await Promise.all(Object.entries(particle.connections).map(
+      async ([name, connection]) => ({
+        name,
+        handle: handleMap.get(connection.handle).name,
+        type: await typeToProtoPayload(connection.type)
+      })
+    ))
   };
 }
 
