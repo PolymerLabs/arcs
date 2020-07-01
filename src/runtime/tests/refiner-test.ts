@@ -761,6 +761,11 @@ describe('refiner', () => {
           triviallyTrue('num + 1n milliseconds > num', 'BigInt');
         });
         it.skip('handles simple polynomial solving', () => {
+          triviallyTrue('num >= 0n or num <= 0n', 'BigInt');
+          triviallyTrue('num >= 0n or num < 0n', 'BigInt');
+          triviallyTrue('num > 0n or num <= 0n', 'BigInt');
+        });
+        it.skip('handles simple polynomial solving', () => {
           triviallyTrue('num * num >= 0n', 'BigInt');
         });
       });
