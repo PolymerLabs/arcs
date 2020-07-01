@@ -1069,7 +1069,7 @@ export class NumberRange {
       return NumberRange.updateGivenOp(expr.operator.op, [rg]);
     }
     if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.BOOLEAN) {
-      return NumberRange.unit(1, Primitive.BOOLEAN); // TODO: Check this.
+      return NumberRange.unit(1, Primitive.BOOLEAN);
     }
     if (expr instanceof BooleanPrimitive && expr.evalType === Primitive.BOOLEAN) {
       return NumberRange.universal(Primitive.UNKNOWN);
@@ -1395,7 +1395,7 @@ export class BigIntRange {
       return BigIntRange.updateGivenOp(expr.operator.op, [rg]);
     }
     if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.BOOLEAN) {
-      return BigIntRange.unit(BigInt(1), Primitive.BOOLEAN); // TODO: Check this.
+      return BigIntRange.unit(BigInt(1), Primitive.BOOLEAN);
     }
     if (expr instanceof BooleanPrimitive && expr.evalType === Primitive.BOOLEAN) {
       return BigIntRange.universal(Primitive.UNKNOWN);
