@@ -1,5 +1,6 @@
 package arcs.core.data.proto
 
+import arcs.core.testutil.loadManifestBinaryProto
 import arcs.repoutils.runfilesDir
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
@@ -17,9 +18,9 @@ class ParseManifestProtoTest {
      */
     @Test
     fun parsesSerializedManifestProto() {
-        val binPath = runfilesDir() + "java/arcs/core/data/testdata/Manifest2ProtoTest.pb.bin"
-        val manifestBin = ManifestProto.parseFrom(File(binPath).readBytes())
-
+        val manifestBin = loadManifestBinaryProto(
+            "java/arcs/core/data/testdata/Manifest2ProtoTest.pb.bin"
+        )
         val txtPath = runfilesDir() + "java/arcs/core/data/testdata/Manifest2ProtoTest.textproto"
         val manifestTxt = ManifestProto.newBuilder()
         TextFormat.getParser().merge(File(txtPath).readText(), manifestTxt)
