@@ -57,6 +57,7 @@ arcs_ts_test(
 arcs_kt_gen(
     name = "variable_generation",
     srcs = ["Variable.arcs"],
+    test_harness = False,
 )
 
 arcs_kt_jvm_test_suite(

@@ -118,7 +118,7 @@ protected:
 `;
   }
 
-  generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): string {
+  async generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string> {
     throw new Error('Test Harness generation is not available for CPP');
   }
 }

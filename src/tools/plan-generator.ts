@@ -11,13 +11,11 @@ import {Recipe} from '../runtime/recipe/recipe.js';
 import {Type} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
 import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils.js';
-import {generateConnectionType} from './kotlin-codegen-shared.js';
+import {generateConnectionType, generateType} from './kotlin-type-generator.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {AnnotationRef} from '../runtime/recipe/annotation.js';
-import {generateSchema} from './kotlin-schema-generator.js';
-import {Schema} from '../runtime/schema.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -31,8 +29,7 @@ export class PlanGeneratorError extends Error {
 /** Generates plan objects from resolved recipes. */
 export class PlanGenerator {
 
-  constructor(private resolvedRecipes: Recipe[], private namespace: string) {
-  }
+  constructor(private resolvedRecipes: Recipe[], private namespace: string) {}
 
   /** Generates a Kotlin file with plan classes derived from resolved recipes. */
   async generate(): Promise<string> {
@@ -48,23 +45,45 @@ export class PlanGenerator {
 
   /** Converts a resolved recipe into a `Plan` object. */
   async createPlans(): Promise<string[]> {
-    const plans: string[] = [];
+    const declarations: string[] = [];
     for (const recipe of this.resolvedRecipes) {
-      const particles: string[] = [];
-      for (const particle of recipe.particles) {
-        particles.push(await this.createParticle(particle));
-      }
+      const planValInit = `val ${recipe.name}Plan = `;
+      const plan = planValInit + ktUtils.applyFun(`Plan`, [
+        ktUtils.listOf(await Promise.all(recipe.particles.map(p => this.createParticle(p)))),
+        ktUtils.listOf(recipe.handles.map(h => this.handleVariableName(h))),
+        PlanGenerator.createAnnotations(recipe.annotations)
+      ], {startIndent: planValInit.length});
 
-      const planArgs = [ktUtils.listOf(particles)];
-      if (recipe.annotations.length > 0) {
-        planArgs.push(PlanGenerator.createAnnotations(recipe.annotations));
-      }
+      const handles = await Promise.all(recipe.handles.map(h => this.createHandleVariable(h)));
 
-      const start = `object ${recipe.name}Plan : `;
-      const plan = `${start}${ktUtils.applyFun('Plan', planArgs, {startIndent: start.length})}`;
-      plans.push(plan);
+      declarations.push([
+        ...handles,
+        plan
+      ].join('\n'));
     }
-    return plans;
+    return declarations;
+  }
+
+  /**
+   * @returns a name of the generated Kotlin variable with a Plan.handle corresponding to the given handle.
+   */
+  handleVariableName(handle: Handle): string {
+    return `${handle.recipe.name}_Handle${handle.recipe.handles.indexOf(handle)}`;
+  }
+
+  /**
+   * Generates a variable for a handle to be places inside a `Plan.Particle` object.
+   * We generate a variable instead of a inlining a handle, as we want to reference
+   * a handle both in a list of all plan handles, as well as in individual handle connections.
+   */
+  async createHandleVariable(handle: Handle): Promise<string> {
+    handle.type.maybeEnsureResolved();
+    const valInit = `val ${this.handleVariableName(handle)} = `;
+    return valInit + ktUtils.applyFun(`Handle`, [
+      await this.createStorageKey(handle),
+      await generateType(handle.type.resolvedType()),
+      PlanGenerator.createAnnotations(handle.annotations)
+    ], {startIndent: valInit.length});
   }
 
   /** Generates a Kotlin `Plan.Particle` instantiation from a Particle. */
@@ -85,25 +104,14 @@ export class PlanGenerator {
 
   /** Generates a Kotlin `Plan.HandleConnection` from a HandleConnection. */
   async createHandleConnection(connection: HandleConnection): Promise<string> {
-    const schemaRegistry = [];
-    if (connection.type.hasVariable) {
-      schemaRegistry.push(await this.createSchemaForVariableHandleConnection(connection));
-    }
 
-    const storageKey = await this.createStorageKey(connection.handle);
+    const storageKey = `${this.handleVariableName(connection.handle)}.storageKey`;
     const mode = this.createHandleMode(connection.direction, connection.type);
-    const type = generateConnectionType(connection, schemaRegistry);
+    const type = await generateConnectionType(connection);
     const annotations = PlanGenerator.createAnnotations(connection.handle.annotations);
 
     return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, annotations],
         {startIndent: 24});
-  }
-
-  // Generate schemas for connections that have a type variable.
-  private async createSchemaForVariableHandleConnection(connection: HandleConnection): Promise<{schema: Schema, generation: string}> {
-      connection.type.maybeEnsureResolved();
-      const schema = connection.type.resolvedType().getEntitySchema();
-      return {schema, generation: await generateSchema(schema)};
   }
 
   /** Generates a Kotlin `HandleMode` from a Direction and Type. */
@@ -171,7 +179,9 @@ package ${this.namespace}
 //
 
 ${tryImport('arcs.core.data.*', this.namespace)}
+${tryImport('arcs.core.data.Plan.*', this.namespace)}
 ${tryImport('arcs.core.storage.StorageKeyParser', this.namespace)}
+${tryImport('arcs.core.entity.toPrimitiveValue', this.namespace)}
 `;
   }
 

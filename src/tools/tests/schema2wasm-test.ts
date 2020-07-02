@@ -49,7 +49,7 @@ class Schema2Mock extends Schema2Base {
     return '';
   }
 
-  generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): string {
+  async generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string> {
     return '';
   }
 }

@@ -380,7 +380,7 @@ class PTestHarness<P : AbstractP>(
       const schema2kotlin = new Schema2Kotlin({_: []});
       const generators = await schema2kotlin.calculateNodeAndGenerators(particle);
       const nodes = generators.map(g => g.node);
-      const actual = schema2kotlin.generateTestHarness(particle, nodes);
+      const actual = await schema2kotlin.generateTestHarness(particle, nodes);
       assert.equal(actual, expected);
     }
   });
