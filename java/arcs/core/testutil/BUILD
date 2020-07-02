@@ -11,6 +11,7 @@ arcs_kt_jvm_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/core/data/proto",
+        "//java/arcs/core/data/proto:manifest_java_proto_lite",
         "//java/arcs/repoutils",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
