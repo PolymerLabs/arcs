@@ -54,6 +54,7 @@ import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabasePerformanceStatistics
 import arcs.core.storage.database.ReferenceWithVersion
+import arcs.core.storage.embed
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.Counters
@@ -298,9 +299,6 @@ class DatabaseImpl(
         val lists = mutableMapOf<FieldName, MutableList<Referencable>>()
         val listTypes = mutableMapOf<FieldName, FieldType>()
 
-        val numeric_types = TYPES_IN_NUMBER_TABLE.joinToString(prefix = "(", postfix = ")")
-        val text_types = TYPES_IN_TEXT_TABLE.joinToString(prefix = "(", postfix = ")")
-
         db.rawQuery(
             """
                 SELECT
@@ -308,7 +306,7 @@ class DatabaseImpl(
                     fields.is_collection,
                     fields.type_id,
                     CASE
-                        WHEN fields.is_collection = 0 THEN field_values.value_id
+                        WHEN fields.is_collection IN $VALUE_TABLE_FIELDS THEN field_values.value_id
                         ELSE collection_entries.value_id
                     END AS field_value_id,
                     text_primitive_values.value,
@@ -324,9 +322,9 @@ class DatabaseImpl(
                     ON fields.is_collection > 0
                     AND collection_entries.collection_id = field_values.value_id
                 LEFT JOIN number_primitive_values
-                    ON fields.type_id IN $numeric_types AND number_primitive_values.id = field_value_id
+                    ON fields.type_id IN $NUMBER_TABLE_TYPES AND number_primitive_values.id = field_value_id
                 LEFT JOIN text_primitive_values
-                    ON fields.type_id IN $text_types AND text_primitive_values.id = field_value_id
+                    ON fields.type_id IN $TEXT_TABLE_TYPES AND text_primitive_values.id = field_value_id
                 LEFT JOIN entity_refs
                     ON fields.type_id > $LARGEST_PRIMITIVE_TYPE_ID AND entity_refs.id = field_value_id
                 WHERE field_values.entity_storage_key_id = ?
@@ -355,7 +353,21 @@ class DatabaseImpl(
                 } else {
                     BigInteger(it.getString(4)).toReferencable()
                 }
-                else -> if (it.isNull(6)) {
+                else -> if (isCollection == FieldClass.InlineEntity) {
+                    val rawSingletons = mutableMapOf<FieldName, Referencable?>()
+                    val rawCollections = mutableMapOf<FieldName, Set<Referencable>>()
+                    val (dbSingletons, dbCollections) =
+                        getEntityFields(it.getLong(3), counters, db)
+                    dbSingletons.forEach { (fieldName, value) -> rawSingletons[fieldName] = value }
+                    dbCollections.forEach {
+                        (fieldName, value) -> rawCollections[fieldName] = value
+                    }
+                    RawEntity(
+                        id = "",
+                        singletons = rawSingletons,
+                        collections = rawCollections
+                    )
+                } else if (it.isNull(6)) {
                     null
                 } else {
                     Reference(
@@ -389,6 +401,7 @@ class DatabaseImpl(
                     value?.let { list.add(it) }
                 }
                 FieldClass.Singleton -> singletons[fieldName] = value
+                FieldClass.InlineEntity -> singletons[fieldName] = value
             }
         }
         lists.entries.forEach {
@@ -496,6 +509,24 @@ class DatabaseImpl(
             counters
         ) ?: return@transaction false // Database has newer data. Don't apply the given op.
 
+        insertOrUpdateEntityByStorageKeyId(
+            storageKey,
+            storageKeyId,
+            entity,
+            schemaTypeId,
+            db,
+            counters
+        )
+    }
+
+    suspend fun insertOrUpdateEntityByStorageKeyId(
+        storageKey: StorageKey,
+        storageKeyId: StorageKeyId,
+        entity: RawEntity,
+        schemaTypeId: TypeId,
+        db: SQLiteDatabase,
+        counters: Counters? = null
+    ): Boolean = db.transaction {
         // Insert the entity's field types.
         counters?.increment(DatabaseCounters.GET_ENTITY_FIELDS)
         val fields = getSchemaFields(schemaTypeId, db)
@@ -526,6 +557,36 @@ class DatabaseImpl(
                                 db,
                                 counters
                             )
+                        }
+                        field.isCollection == FieldClass.InlineEntity -> {
+                            require(fieldValue is RawEntity) {
+                                "Expected field value to be a RawEntity but was $fieldValue."
+                            }
+
+                            val childKey = InlineStorageKey(storageKey, fieldName)
+                            require(fieldValue.id == "") {
+                                "Inline Entities should never have non-empty ids"
+                            }
+                            val childKeyId = createEntityStorageKeyId(
+                                childKey,
+                                "",
+                                fieldValue.creationTimestamp,
+                                fieldValue.expirationTimestamp,
+                                field.typeId,
+                                VersionMap(),
+                                0,
+                                db,
+                                counters
+                            ) ?: return@transaction false
+                            insertOrUpdateEntityByStorageKeyId(
+                                childKey,
+                                childKeyId,
+                                fieldValue,
+                                field.typeId,
+                                db,
+                                counters
+                            )
+                            childKeyId
                         }
                         field.isCollection == FieldClass.Collection -> {
                             if (fieldValue == null) return@forEach
@@ -567,7 +628,7 @@ class DatabaseImpl(
                     SQLiteDatabase.CONFLICT_REPLACE
                 )
             }
-            true
+        true
     }
 
     /**
@@ -967,7 +1028,7 @@ class DatabaseImpl(
      * for those entities and remove references pointing to them. It also notifies client listening
      * for any updated storage key.
      */
-    private suspend fun clearEntities(query: String) {
+    private suspend fun clearEntities(query: String, entitiesAreTopLevel: Boolean = true) {
         writableDatabase.transaction {
             val db = this
             // Find all expired entities.
@@ -978,7 +1039,41 @@ class DatabaseImpl(
             // List of question marks of the same length, to be used in queries.
             val questionMarks = questionMarks(storageKeyIds)
 
-            deleteFields(storageKeyIds, db)
+            /**
+             * We can't just return here if there are no storageKeyIds, because this code path
+             * is also used to clear expired references.
+             */
+            if (storageKeyIds.size > 0) {
+                val nestedEntityQuery =
+                    """
+                        SELECT
+                            field_values.value_id,
+                            storage_key
+                        FROM field_values
+                        INNER JOIN fields
+                            ON field_values.field_id = fields.id
+                            AND fields.is_collection = ${FieldClass.InlineEntity.ordinal}
+                            AND field_values.entity_storage_key_id IN (${storageKeyIds.joinToString()})
+                        INNER JOIN storage_keys
+                            ON field_values.value_id = storage_keys.id
+                    """.trimIndent()
+                clearEntities(nestedEntityQuery, false)
+
+                deleteFields(storageKeyIds, db)
+
+                if (!entitiesAreTopLevel) {
+                    delete(
+                        TABLE_ENTITIES,
+                        "storage_key_id IN (${storageKeyIds.joinToString()})",
+                        arrayOf()
+                    )
+                    delete(
+                        TABLE_STORAGE_KEYS,
+                        "id IN (${storageKeyIds.joinToString()})",
+                        arrayOf()
+                    )
+                }
+            }
 
             // Clean up unused values as they can contain sensitive data.
             // This query will return all field value ids being referenced by collection or 
@@ -987,14 +1082,14 @@ class DatabaseImpl(
                 """
                     SELECT
                         CASE
-                            WHEN fields.is_collection = 0 THEN field_values.value_id
+                            WHEN fields.is_collection IN $VALUE_TABLE_FIELDS THEN field_values.value_id
                             ELSE collection_entries.value_id
                         END AS field_value_id                        
                     FROM field_values
                     LEFT JOIN fields
                         ON field_values.field_id = fields.id
                     LEFT JOIN collection_entries
-                        ON fields.is_collection > 0
+                        ON fields.is_collection IN $COLLECTION_FIELDS
                         AND collection_entries.collection_id = field_values.value_id
                     WHERE fields.type_id in (${typeIds.map { it.toString() }.joinToString()})
                 """.trimIndent()
@@ -1017,35 +1112,40 @@ class DatabaseImpl(
                 storageKeys
             )
 
-            // Find all collections with missing entries (collections that were updated).
-            val updatedContainersStorageKeys = rawQuery(
-                """
-                    SELECT storage_keys.storage_key
-                    FROM storage_keys
-                    LEFT JOIN collection_entries
-                        ON storage_keys.value_id = collection_entries.collection_id
-                    WHERE storage_keys.data_type IN (?, ?)
-                    AND collection_entries.value_id NOT IN (SELECT id FROM entity_refs)
-                """.trimIndent(),
-                arrayOf(
-                    DataType.Singleton.ordinal.toString(),
-                    DataType.Collection.ordinal.toString()
-                )
-            ).map { it.getString(0) }.toSet()
+            if (entitiesAreTopLevel) {
+                // Find all collections with missing entries (collections that were updated).
+                val updatedContainersStorageKeys = rawQuery(
+                    """
+                        SELECT storage_keys.storage_key
+                        FROM storage_keys
+                        LEFT JOIN collection_entries
+                            ON storage_keys.value_id = collection_entries.collection_id
+                        WHERE storage_keys.data_type IN (?, ?)
+                        AND collection_entries.value_id NOT IN (SELECT id FROM entity_refs)
+                    """.trimIndent(),
+                    arrayOf(
+                        DataType.Singleton.ordinal.toString(),
+                        DataType.Collection.ordinal.toString()
+                    )
+                ).map { it.getString(0) }.toSet()
 
-            // Remove from collection_entries all references to the expired entities.
-            delete(
-                TABLE_COLLECTION_ENTRIES,
-                """
-                    collection_id IN (SELECT id FROM collections WHERE type_id > ?)
-                    AND value_id NOT IN (SELECT id FROM entity_refs)
-                """.trimIndent(),
-                arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only entity collections.
-            )
-            (storageKeys union updatedContainersStorageKeys).map { storageKey ->
-                notifyClients(StorageKeyParser.parse(storageKey)) {
-                    it.onDatabaseDelete(null)
+                // Remove from collection_entries all references to the expired entities.
+                delete(
+                    TABLE_COLLECTION_ENTRIES,
+                    """
+                        collection_id IN (SELECT id FROM collections WHERE type_id > ?)
+                        AND value_id NOT IN (SELECT id FROM entity_refs)
+                    """.trimIndent(),
+                    arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only entity collections.
+                )
+
+                (storageKeys union updatedContainersStorageKeys).map { storageKey ->
+                    notifyClients(StorageKeyParser.parse(storageKey)) {
+                        it.onDatabaseDelete(null)
+                    }
                 }
+            } else {
+                emptyList()
             }
         }
     }
@@ -1053,6 +1153,7 @@ class DatabaseImpl(
     private fun deleteFields(storageKeyIds: Array<String>, db: SQLiteDatabase) = db.transaction {
         // List of question marks of the same length, to be used in queries.
         val questionMarks = questionMarks(storageKeyIds)
+
         // Find collection ids for collection fields of the expired entities.
         val collectionIdsToDelete = rawQuery(
             """
@@ -1061,9 +1162,9 @@ class DatabaseImpl(
                 LEFT JOIN field_values
                     ON field_values.field_id = fields.id
                 LEFT JOIN collection_entries
-                    ON fields.is_collection > 0
+                    ON fields.is_collection IN $COLLECTION_FIELDS
                     AND collection_entries.collection_id = field_values.value_id
-                WHERE fields.is_collection > 0
+                WHERE fields.is_collection IN $COLLECTION_FIELDS
                     AND field_values.entity_storage_key_id IN ($questionMarks)
             """.trimIndent(),
             storageKeyIds
@@ -1164,10 +1265,10 @@ class DatabaseImpl(
             }
         }
         schema.fields.singletons.forEach { (fieldName, fieldType) ->
-            val fieldClass = if (fieldType.tag == FieldType.Tag.List) {
-                FieldClass.List
-            } else {
-                FieldClass.Singleton
+            val fieldClass = when (fieldType.tag) {
+                FieldType.Tag.List -> FieldClass.List
+                FieldType.Tag.InlineEntity -> FieldClass.InlineEntity
+                else -> FieldClass.Singleton
             }
             insertFieldBlock(fieldName, fieldType, fieldClass)
         }
@@ -1220,9 +1321,13 @@ class DatabaseImpl(
                 "Expected storage key $storageKey to have entity ID $entityId but was " +
                     "$storedEntityId."
             }
-            val storedVersion = it.getInt(2)
-            if (databaseVersion != storedVersion + 1) {
-                return@transaction null
+            // Inline entities are covered by the version stored with their
+            // parent entity and don't need to be separately gated by version.
+            if (!(storageKey is InlineStorageKey)) {
+                val storedVersion = it.getInt(2)
+                if (databaseVersion != storedVersion + 1) {
+                    return@transaction null
+                }
             }
 
             // Remove the existing entity.
@@ -1525,9 +1630,12 @@ class DatabaseImpl(
         is FieldType.Tuple ->
             throw NotImplementedError("[FieldType.Tuple]s not currently supported.")
         is FieldType.ListOf -> getTypeId(fieldType.primitiveType, database)
-        // TODO(b/144508181)
-        is FieldType.InlineEntity ->
-            throw NotImplementedError("[FieldType.InlineEntity]s not currently supported.")
+        is FieldType.InlineEntity -> {
+            var schema = requireNotNull(SchemaRegistry.getSchema(fieldType.schemaHash)) {
+                "Unknown Schema with hash: ${fieldType.schemaHash} in SchemaRegistry"
+            }
+            getSchemaTypeId(schema, database)
+        }
     }
 
     /** Test-only version of [getTypeId]. */
@@ -1620,13 +1728,15 @@ class DatabaseImpl(
     enum class FieldClass {
         Singleton,
         Collection,
-        List;
+        List,
+        InlineEntity;
 
         companion object {
             fun fromOrdinal(ordinal: Int) = when (ordinal) {
                 0 -> FieldClass.Singleton
                 1 -> FieldClass.Collection
                 2 -> FieldClass.List
+                3 -> FieldClass.InlineEntity
                 else -> throw IllegalStateException(
                     "Invalid value $ordinal for FieldClass stored in isCollection field."
                 )
@@ -1870,10 +1980,45 @@ class DatabaseImpl(
             PrimitiveType.Double.id
         )
 
+        /** A version of TYPES_IN_NUMBER_TABLE to use in SQL IN statements */
+        private val NUMBER_TABLE_TYPES =
+            TYPES_IN_NUMBER_TABLE.joinToString(prefix = "(", postfix = ")")
+
+        /** The primitive types that are stored in TABLE_TEXT_PRIMITIVES */
         private val TYPES_IN_TEXT_TABLE = listOf(
             PrimitiveType.Text.id,
             PrimitiveType.BigInt.id
         )
+
+        /** A version of TYPES_IN_TEXT_TABLE to use in SQL IN statements */
+        private val TEXT_TABLE_TYPES =
+            TYPES_IN_TEXT_TABLE.joinToString(prefix = "(", postfix = ")")
+
+        /**
+         * The field classes for which the value of the field is stored directly in
+         * TABLE_FIELD_VALUES
+         */
+        private val FIELD_CLASSES_IN_VALUE_TABLE = listOf(
+            FieldClass.Singleton.ordinal,
+            FieldClass.InlineEntity.ordinal
+        )
+
+        /** A version of FIELD_CLASSES_IN_VALUE_TABLE to use in SQL IN statements */
+        private val VALUE_TABLE_FIELDS =
+            FIELD_CLASSES_IN_VALUE_TABLE.joinToString(prefix = "(", postfix = ")")
+
+        /**
+         * The field classes for which the value in TABLE_FIELD_VALUES selects (0, N) rows in
+         * TABLE_COLLECTION_ENTRIES, which store the actual field values.
+         */
+        private val FIELD_CLASSES_IN_COLLECTION_TABLE = listOf(
+            FieldClass.Collection.ordinal,
+            FieldClass.List.ordinal
+        )
+
+        /** A version of FIELD_CLASSES_IN_COLLECTION_TABLE to use in SQL IN statements */
+        private val COLLECTION_FIELDS =
+            FIELD_CLASSES_IN_COLLECTION_TABLE.joinToString(prefix = "(", postfix = ")")
 
         /**
          * The id and name of a sentinel type, to ensure references are namespaced separately to
@@ -1882,5 +2027,17 @@ class DatabaseImpl(
         @VisibleForTesting
         const val REFERENCE_TYPE_SENTINEL = 1000000
         private const val REFERENCE_TYPE_SENTINEL_NAME = "SENTINEL TYPE FOR REFERENCES"
+
+        /**
+         * A StorageKey used internally by the DB for recording inline entities.
+         */
+        class InlineStorageKey(
+            val parentKey: StorageKey,
+            val fieldName: String
+        ) : StorageKey("inline") {
+            override fun toKeyString(): String = "{${parentKey.embed()}}/$fieldName"
+            override fun childKeyWithComponent(component: String): StorageKey =
+                InlineStorageKey(parentKey, "$fieldName/$component")
+        }
     }
 }
