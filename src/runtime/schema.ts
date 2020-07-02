@@ -133,9 +133,9 @@ export class Schema {
       case 'kotlin-primitive':
         return `${type.type}`;
       case 'schema-union':
-        return `(${type.types.map(t => t.type).join(' or ')})`;
+        return `(${type.types.map(t => Schema._typeString(t)).join(' or ')})`;
       case 'schema-tuple':
-        return `(${type.types.map(t => t.type).join(', ')})`;
+        return `(${type.types.map(t => Schema._typeString(t)).join(', ')})`;
       case 'schema-reference':
         return `&${Schema._typeString(type.schema)}`;
       case 'type-name':

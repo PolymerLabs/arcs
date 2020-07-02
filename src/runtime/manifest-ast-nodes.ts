@@ -666,12 +666,12 @@ export interface SchemaReferenceType extends BaseNodeWithRefinement {
 
 export interface SchemaUnionType extends BaseNodeWithRefinement {
   kind: 'schema-union';
-  types: SchemaPrimitiveType[];
+  types: SchemaType[];
 }
 
 export interface SchemaTupleType extends BaseNodeWithRefinement {
   kind: 'schema-tuple';
-  types: SchemaPrimitiveType[];
+  types: SchemaType[];
 }
 
 export interface RefinementNode extends BaseNode {
