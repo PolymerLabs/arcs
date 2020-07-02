@@ -280,11 +280,6 @@ class DatabaseImpl(
         val lists = mutableMapOf<FieldName, MutableList<Referencable>>()
         val listTypes = mutableMapOf<FieldName, FieldType>()
 
-        val numericTypes = TYPES_IN_NUMBER_TABLE.joinToString(prefix = "(", postfix = ")")
-        val textTypes = TYPES_IN_TEXT_TABLE.joinToString(prefix = "(", postfix = ")")
-        val localFieldTypes =
-            FIELD_CLASSES_IN_VALUE_TABLE.joinToString(prefix = "(", postfix = ")")
-
         db.rawQuery(
             """
                 SELECT
@@ -292,7 +287,7 @@ class DatabaseImpl(
                     fields.is_collection,
                     fields.type_id,
                     CASE
-                        WHEN fields.is_collection IN $localFieldTypes THEN field_values.value_id
+                        WHEN fields.is_collection IN $VALUE_TABLE_FIELDS THEN field_values.value_id
                         ELSE collection_entries.value_id
                     END AS field_value_id,
                     text_primitive_values.value,
@@ -308,9 +303,9 @@ class DatabaseImpl(
                     ON fields.is_collection > 0
                     AND collection_entries.collection_id = field_values.value_id
                 LEFT JOIN number_primitive_values
-                    ON fields.type_id IN $numericTypes AND number_primitive_values.id = field_value_id
+                    ON fields.type_id IN $NUMBER_TABLE_TYPES AND number_primitive_values.id = field_value_id
                 LEFT JOIN text_primitive_values
-                    ON fields.type_id IN $textTypes AND text_primitive_values.id = field_value_id
+                    ON fields.type_id IN $TEXT_TABLE_TYPES AND text_primitive_values.id = field_value_id
                 LEFT JOIN entity_refs
                     ON fields.type_id > $LARGEST_PRIMITIVE_TYPE_ID AND entity_refs.id = field_value_id
                 WHERE field_values.entity_storage_key_id = ?
@@ -550,9 +545,12 @@ class DatabaseImpl(
                             }
 
                             val childKey = InlineStorageKey(storageKey, fieldName)
+                            require(fieldValue.id == "") {
+                                "Inline Entities should never have non-empty ids"
+                            }
                             val childKeyId = createEntityStorageKeyId(
                                 childKey,
-                                fieldValue.id,
+                                "",
                                 fieldValue.creationTimestamp,
                                 fieldValue.expirationTimestamp,
                                 field.typeId,
@@ -1058,10 +1056,6 @@ class DatabaseImpl(
                 }
             }
 
-            val localFields = FIELD_CLASSES_IN_VALUE_TABLE.joinToString(prefix = "(", postfix = ")")
-            val collectionFields =
-                FIELD_CLASSES_IN_COLLECTION_TABLE.joinToString(prefix = "(", postfix = ")")
-
             // Clean up unused values as they can contain sensitive data.
             // This query will return all field value ids being referenced by collection or 
             // singleton fields.
@@ -1069,14 +1063,14 @@ class DatabaseImpl(
                 """
                     SELECT
                         CASE
-                            WHEN fields.is_collection IN $localFields THEN field_values.value_id
+                            WHEN fields.is_collection IN $VALUE_TABLE_FIELDS THEN field_values.value_id
                             ELSE collection_entries.value_id
                         END AS field_value_id                        
                     FROM field_values
                     LEFT JOIN fields
                         ON field_values.field_id = fields.id
                     LEFT JOIN collection_entries
-                        ON fields.is_collection IN $collectionFields
+                        ON fields.is_collection IN $COLLECTION_FIELDS
                         AND collection_entries.collection_id = field_values.value_id
                     WHERE fields.type_id in (${typeIds.map { it.toString() }.joinToString()})
                 """.trimIndent()
@@ -1126,9 +1120,6 @@ class DatabaseImpl(
                     arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only entity collections.
                 )
 
-                println("gotta notify")
-                println(storageKeys.joinToString())
-                println(updatedContainersStorageKeys.joinToString())
                 (storageKeys union updatedContainersStorageKeys).map { storageKey ->
                     notifyClients(StorageKeyParser.parse(storageKey)) {
                         it.onDatabaseDelete(null)
@@ -1144,9 +1135,6 @@ class DatabaseImpl(
         // List of question marks of the same length, to be used in queries.
         val questionMarks = questionMarks(storageKeyIds)
 
-        val collectionFields =
-            FIELD_CLASSES_IN_COLLECTION_TABLE.joinToString(prefix = "(", postfix = ")")
-
         // Find collection ids for collection fields of the expired entities.
         val collectionIdsToDelete = rawQuery(
             """
@@ -1155,9 +1143,9 @@ class DatabaseImpl(
                 LEFT JOIN field_values
                     ON field_values.field_id = fields.id
                 LEFT JOIN collection_entries
-                    ON fields.is_collection IN $collectionFields
+                    ON fields.is_collection IN $COLLECTION_FIELDS
                     AND collection_entries.collection_id = field_values.value_id
-                WHERE fields.is_collection IN $collectionFields
+                WHERE fields.is_collection IN $COLLECTION_FIELDS
                     AND field_values.entity_storage_key_id IN ($questionMarks)
             """.trimIndent(),
             storageKeyIds
@@ -1945,11 +1933,19 @@ class DatabaseImpl(
             PrimitiveType.Double.id
         )
 
+        /** A version of TYPES_IN_NUMBER_TABLE to use in SQL IN statements */
+        private val NUMBER_TABLE_TYPES =
+            TYPES_IN_NUMBER_TABLE.joinToString(prefix = "(", postfix = ")")
+
         /** The primitive types that are stored in TABLE_TEXT_PRIMITIVES */
         private val TYPES_IN_TEXT_TABLE = listOf(
             PrimitiveType.Text.id,
             PrimitiveType.BigInt.id
         )
+
+        /** A version of TYPES_IN_TEXT_TABLE to use in SQL IN statements */
+        private val TEXT_TABLE_TYPES =
+            TYPES_IN_TEXT_TABLE.joinToString(prefix = "(", postfix = ")")
 
         /**
          * The field classes for which the value of the field is stored directly in
@@ -1960,6 +1956,10 @@ class DatabaseImpl(
             FieldClass.InlineEntity.ordinal
         )
 
+        /** A version of FIELD_CLASSES_IN_VALUE_TABLE to use in SQL IN statements */
+        private val VALUE_TABLE_FIELDS =
+            FIELD_CLASSES_IN_VALUE_TABLE.joinToString(prefix = "(", postfix = ")")
+
         /**
          * The field classes for which the value in TABLE_FIELD_VALUES selects (0, N) rows in
          * TABLE_COLLECTION_ENTRIES, which store the actual field values.
@@ -1969,6 +1969,10 @@ class DatabaseImpl(
             FieldClass.List.ordinal
         )
 
+        /** A version of FIELD_CLASSES_IN_COLLECTION_TABLE to use in SQL IN statements */
+        private val COLLECTION_FIELDS =
+            FIELD_CLASSES_IN_COLLECTION_TABLE.joinToString(prefix = "(", postfix = ")")
+
         /**
          * The id and name of a sentinel type, to ensure references are namespaced separately to
          * primitive types. Changing this value will require a DB migration!
@@ -1977,6 +1981,9 @@ class DatabaseImpl(
         const val REFERENCE_TYPE_SENTINEL = 1000000
         private const val REFERENCE_TYPE_SENTINEL_NAME = "SENTINEL TYPE FOR REFERENCES"
 
+        /**
+         * A StorageKey used internally by the DB for recording inline entities.
+         */
         class InlineStorageKey(
             val parentKey: StorageKey,
             val fieldName: String

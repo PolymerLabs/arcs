@@ -412,7 +412,9 @@ class DatabaseImplTest {
                     "inlineText" to FieldType.Text,
                     "inlineNumber" to FieldType.Number
                 ),
-                collections = mapOf()
+                collections = mapOf(
+                    "inlineTextCollection" to FieldType.Text
+                )
             )
         )
 
@@ -457,7 +459,9 @@ class DatabaseImplTest {
                 "inlineText" to "inlineABC".toReferencable(),
                 "inlineNumber" to 131313.0.toReferencable()
             ),
-            mapOf()
+            mapOf(
+                "inlineTextCollection" to setOf("A".toReferencable(), "B".toReferencable())
+            )
         )
 
         val entity = DatabaseData.Entity(
@@ -1909,8 +1913,6 @@ class DatabaseImplTest {
                 collections = emptyMap()
             )
         )
-        val collectionKey = DummyStorageKey("collection")
-        val backingKey = DummyStorageKey("backing")
         val entityKey = DummyStorageKey("backing/entity")
 
         val inlineInlineEntity = RawEntity(
@@ -1925,7 +1927,9 @@ class DatabaseImplTest {
                 "text" to "this is some text".toReferencable(),
                 "num" to 42.0.toReferencable(),
                 "int" to 37.toReferencable(),
-                "textlist" to listOf("what", "does", "the", "fox", "say").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text)),
+                "textlist" to listOf("what", "does", "the", "fox", "say").map {
+                    it.toReferencable()
+                }.toReferencable(FieldType.ListOf(FieldType.Text)),
                 "inline" to inlineInlineEntity
             ),
             mapOf(
