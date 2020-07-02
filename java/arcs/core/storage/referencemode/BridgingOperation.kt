@@ -21,9 +21,9 @@ import arcs.core.data.RawEntity
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.referencemode.BridgingOperation.AddToSet
+import arcs.core.storage.referencemode.BridgingOperation.ClearSet
 import arcs.core.storage.referencemode.BridgingOperation.ClearSingleton
 import arcs.core.storage.referencemode.BridgingOperation.RemoveFromSet
-import arcs.core.storage.referencemode.BridgingOperation.ClearSet
 import arcs.core.storage.referencemode.BridgingOperation.UpdateSingleton
 import arcs.core.storage.toReference
 

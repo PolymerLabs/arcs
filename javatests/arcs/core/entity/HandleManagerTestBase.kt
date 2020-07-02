@@ -627,7 +627,6 @@ open class HandleManagerTestBase {
         handle2.onUpdate { if (it.size == 3) received1to2.complete(it) }
 
         // Verify that handle2 sees entities stored by handle1.
-
         handle1.dispatchStore(entity1, entity2, entity3)
         assertThat(received1to2.await()).containsExactly(entity1, entity2, entity3)
         assertThat(handle2.dispatchSize()).isEqualTo(3)
