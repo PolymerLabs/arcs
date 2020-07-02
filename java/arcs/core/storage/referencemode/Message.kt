@@ -136,7 +136,6 @@ private fun List<CrdtOperation>.toReferenceModeMessageOps(): List<CrdtOperationA
             is CrdtSet.Operation.Remove<*> ->
                 CrdtSet.Operation.Remove(op.actor, op.clock, op.removed)
             is CrdtSet.Operation.Clear<*> ->
-                // We have nothing from which to deduce T, so use Referencable.
                 CrdtSet.Operation.Clear<Referencable>(op.actor, op.clock)
             else -> throw CrdtException("Unsupported operation for ReferenceModeStore: $this")
         }

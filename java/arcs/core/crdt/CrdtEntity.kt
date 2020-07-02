@@ -182,12 +182,7 @@ class CrdtEntity(
                     it.applyOperation(CrdtSingleton.Operation.Clear(op.actor, versionMap))
                 }
                 _data.collections.values.forEach {
-                    collection ->
-                        collection.consumerView.forEach {
-                            collection.applyOperation(
-                                CrdtSet.Operation.Remove(op.actor, versionMap, it)
-                            )
-                        }
+                    it.applyOperation(CrdtSet.Operation.Clear(op.actor, versionMap))
                 }
                 _data.creationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
                 _data.expirationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP

@@ -263,24 +263,27 @@ class CrdtSet<T : Referencable>(
         }
 
         /**
-         * Represents the removal of all items from a [CrdtSet]. If an empty [clock] is given,
-         * all items in the set are removed; otherwise, only those items dominated by the clock
-         * are removed. This allow actors with write-only access to a model to operate without
-         * needing to synchronise the clock data.
+         * Represents the removal of all items from a [CrdtSet]. If an empty [clock] is given, all
+         * items in the set are removed unconditionally; otherwise, only those items dominated by
+         * the clock are removed. This allow actors with write-only access to a model to operate
+         * without needing to synchronise the clock data from other actors.
          */
         open class Clear<T : Referencable>(
             val actor: Actor,
-            override val clock: VersionMap = VersionMap()
+            override val clock: VersionMap
         ) : Operation<T>() {
             override fun applyTo(data: Data<T>, isDryRun: Boolean): Boolean {
                 if (isDryRun) return true
 
                 if (clock.isEmpty()) {
                     data.values.clear()
-                } else if (clock[actor] == data.versionMap[actor]) {
-                    data.values.entries.removeAll { clock dominates it.value.versionMap }
+                    return true
                 }
-                return true
+                if (clock[actor] == data.versionMap[actor]) {
+                    data.values.entries.removeAll { clock dominates it.value.versionMap }
+                    return true
+                }
+                return false
             }
 
             override fun equals(other: Any?): Boolean =
