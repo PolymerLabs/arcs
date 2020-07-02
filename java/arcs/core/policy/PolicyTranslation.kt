@@ -14,7 +14,7 @@ fun applyPolicy(policy: Policy, graph: RecipeGraph): RecipeGraph {
 
 private fun checkEgressParticles(policy: Policy, graph: RecipeGraph) {
     val invalidEgressParticles = graph.particleNodes
-        .map { it.particle.spec  }
+        .map { it.particle.spec }
         .filter { !it.isolated && it.name != policy.egressParticleName }
     if (invalidEgressParticles.isNotEmpty()) {
         throw PolicyViolation.InvalidEgressParticle(policy, invalidEgressParticles.map { it.name })
