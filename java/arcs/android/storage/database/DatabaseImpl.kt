@@ -1099,40 +1099,43 @@ class DatabaseImpl(
                 storageKeys
             )
 
-            // Find all collections with missing entries (collections that were updated).
-            val updatedContainersStorageKeys = rawQuery(
-                """
-                    SELECT storage_keys.storage_key
-                    FROM storage_keys
-                    LEFT JOIN collection_entries
-                        ON storage_keys.value_id = collection_entries.collection_id
-                    WHERE storage_keys.data_type IN (?, ?)
-                    AND collection_entries.value_id NOT IN (SELECT id FROM entity_refs)
-                """.trimIndent(),
-                arrayOf(
-                    DataType.Singleton.ordinal.toString(),
-                    DataType.Collection.ordinal.toString()
-                )
-            ).map { it.getString(0) }.toSet()
-
-            // Remove from collection_entries all references to the expired entities.
-            delete(
-                TABLE_COLLECTION_ENTRIES,
-                """
-                    collection_id IN (SELECT id FROM collections WHERE type_id > ?)
-                    AND value_id NOT IN (SELECT id FROM entity_refs)
-                """.trimIndent(),
-                arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only entity collections.
-            )
-
             if (entitiesAreTopLevel) {
+                // Find all collections with missing entries (collections that were updated).
+                val updatedContainersStorageKeys = rawQuery(
+                    """
+                        SELECT storage_keys.storage_key
+                        FROM storage_keys
+                        LEFT JOIN collection_entries
+                            ON storage_keys.value_id = collection_entries.collection_id
+                        WHERE storage_keys.data_type IN (?, ?)
+                        AND collection_entries.value_id NOT IN (SELECT id FROM entity_refs)
+                    """.trimIndent(),
+                    arrayOf(
+                        DataType.Singleton.ordinal.toString(),
+                        DataType.Collection.ordinal.toString()
+                    )
+                ).map { it.getString(0) }.toSet()
+
+                // Remove from collection_entries all references to the expired entities.
+                delete(
+                    TABLE_COLLECTION_ENTRIES,
+                    """
+                        collection_id IN (SELECT id FROM collections WHERE type_id > ?)
+                        AND value_id NOT IN (SELECT id FROM entity_refs)
+                    """.trimIndent(),
+                    arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only entity collections.
+                )
+
+                println("gotta notify")
+                println(storageKeys.joinToString())
+                println(updatedContainersStorageKeys.joinToString())
                 (storageKeys union updatedContainersStorageKeys).map { storageKey ->
                     notifyClients(StorageKeyParser.parse(storageKey)) {
                         it.onDatabaseDelete(null)
                     }
                 }
             } else {
-                true
+                emptyList()
             }
         }
     }
