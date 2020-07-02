@@ -317,8 +317,14 @@ class CrdtSet<T : Referencable>(
                 // Remove ops can't be replayed in order.
                 if (removed.isNotEmpty()) return listOf(this)
 
-                // This is just a version bump, since there are no additions and no removals.
-                if (added.isEmpty()) return listOf(this)
+                if (added.isEmpty()) {
+                    if (oldClock == newClock) {
+                        // No added, no removed, and no clock changes: op should be empty.
+                        return emptyList()
+                    }
+                    // This is just a version bump, since there are no additions and no removals.
+                    return listOf(this)
+                }
 
                 // Can only return a simplified list of ops if all additions come from a single
                 // actor.
