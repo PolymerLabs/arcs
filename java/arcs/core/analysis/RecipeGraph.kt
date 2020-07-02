@@ -18,61 +18,18 @@ import arcs.core.data.HandleMode
 import arcs.core.data.Recipe
 
 /**
- * A graph capturing the connections between particles and handles in [recipe].
+ * A graph capturing the connections between particles and handles in a [Recipe].
  *
  * Nodes in the graph are either a [Recipe.Handle] or [Recipe.Particle]. For every write connection
  * from a particle `p` to a handle `h` using a connection spec `s`, there is a labeled edge
  * `p -s-> h` in the graph. Similarly, for every read connection from a particle `p` to a handle `h`
  * using a connection spec `s`, there is a labeled edge `h -s-> p` in the graph.
 */
-class RecipeGraph(recipe: Recipe) {
-    val nodes: List<Node> = getNodesWithEdges(recipe)
-
-    val particleNodes = nodes.filterIsInstance<Node.Particle>()
-    val handleNodes = nodes.filterIsInstance<Node.Handle>()
-
-    /** Returns the nodes for the [Recipe.Handle] and [Recipe.Particle] instances in [recipe]. */
-    private fun getNodesWithEdges(recipe: Recipe): List<Node> {
-        val handleNodesMap: Map<String, Node.Handle> = recipe.handles
-            .map { (_, handle) -> Node.Handle(handle) }
-            .associateBy { it.handle.name }
-        val handleNodes = handleNodesMap.values.toList()
-        handleNodes.forEach { it.addJoinEdges(handleNodesMap) }
-        return handleNodes + recipe.particles.map { it.getNode(handleNodesMap) }
-    }
-
-    /**
-     * Adds edges between handles due to the JOINs.
-     *
-     * eg., if the recipe has `joined: join(a, b)`, we will have the following edges:
-     *    { a -> [joined], b -> [joined] }
-     */
-    private fun Node.Handle.addJoinEdges(handleNodesMap: Map<String, Node.Handle>) {
-        if (handle.fate != Recipe.Handle.Fate.JOIN) return
-        handle.associatedHandles.forEachIndexed { index, targetHandle ->
-            val joinHandleNode = requireNotNull(handleNodesMap[targetHandle.name])
-            joinHandleNode.addSuccessor(this, JoinSpec(index))
-        }
-    }
-
-    /** Returns a [Node.Particle] node with the edges associated with the handle connections. */
-    private fun Recipe.Particle.getNode(handleNodesMap: Map<String, Node.Handle>): Node {
-        val particleNode = Node.Particle(this)
-        handleConnections.forEach { connection ->
-            val handleNode = requireNotNull(handleNodesMap[connection.handle.name])
-            when (connection.spec.direction) {
-                HandleMode.Read, HandleMode.ReadQuery, HandleMode.Query ->
-                    handleNode.addSuccessor(particleNode, connection.spec)
-                HandleMode.Write, HandleMode.WriteQuery ->
-                    particleNode.addSuccessor(handleNode, connection.spec)
-                HandleMode.ReadWrite, HandleMode.ReadWriteQuery -> {
-                    handleNode.addSuccessor(particleNode, connection.spec)
-                    particleNode.addSuccessor(handleNode, connection.spec)
-                }
-            }
-        }
-        return particleNode
-    }
+data class RecipeGraph(
+    val particleNodes: List<Node.Particle>,
+    val handleNodes: List<Node.Handle>
+) {
+    val nodes: List<Node> = particleNodes + handleNodes
 
     /**
      * A class representing the properties of a join.
@@ -140,13 +97,13 @@ class RecipeGraph(recipe: Recipe) {
         /** A node representing a particle. */
         data class Particle(
             val particle: Recipe.Particle,
-            var claims: MutableList<Claim>,
-            var checks: MutableList<Check>
+            val claims: List<Claim>,
+            val checks: List<Check>
         ) : Node() {
             constructor(particle: Recipe.Particle) : this(
                 particle,
-                particle.spec.claims.toMutableList(),
-                particle.spec.checks.toMutableList()
+                particle.spec.claims,
+                particle.spec.checks
             )
 
             val particleName = particle.spec.name
@@ -161,6 +118,52 @@ class RecipeGraph(recipe: Recipe) {
             override val debugName = "h:${handle.name}"
 
             override fun toString() = "[$debugName]"
+        }
+    }
+
+    companion object {
+        /** Factory method to convert a [Recipe] into a [RecipeGraph]. */
+        operator fun invoke(recipe: Recipe): RecipeGraph {
+            val handleNodesMap = recipe.handles.mapValues { (_, handle) -> Node.Handle(handle) }
+            val handleNodes = handleNodesMap.values.toList()
+            handleNodes.forEach { it.addJoinEdges(handleNodesMap) }
+            val particleNodes = recipe.particles.map { it.getNode(handleNodesMap) as Node.Particle }
+            return RecipeGraph(particleNodes, handleNodes)
+        }
+
+        /**
+         * Adds edges between handles due to the JOINs.
+         *
+         * eg., if the recipe has `joined: join(a, b)`, we will have the following edges:
+         *    { a -> [joined], b -> [joined] }
+         */
+        private fun Node.Handle.addJoinEdges(handleNodesMap: Map<String, Node.Handle>) {
+            if (handle.fate != Recipe.Handle.Fate.JOIN) return
+            handle.associatedHandles.forEachIndexed { index, targetHandle ->
+                val joinHandleNode = requireNotNull(handleNodesMap[targetHandle.name])
+                joinHandleNode.addSuccessor(this, JoinSpec(index))
+            }
+        }
+
+        /**
+         * Returns a [Node.Particle] node with the edges associated with the handle connections.
+         */
+        private fun Recipe.Particle.getNode(handleNodesMap: Map<String, Node.Handle>): Node {
+            val particleNode = Node.Particle(this)
+            handleConnections.forEach { connection ->
+                val handleNode = requireNotNull(handleNodesMap[connection.handle.name])
+                when (connection.spec.direction) {
+                    HandleMode.Read, HandleMode.ReadQuery, HandleMode.Query ->
+                        handleNode.addSuccessor(particleNode, connection.spec)
+                    HandleMode.Write, HandleMode.WriteQuery ->
+                        particleNode.addSuccessor(handleNode, connection.spec)
+                    HandleMode.ReadWrite, HandleMode.ReadWriteQuery -> {
+                        handleNode.addSuccessor(particleNode, connection.spec)
+                        particleNode.addSuccessor(handleNode, connection.spec)
+                    }
+                }
+            }
+            return particleNode
         }
     }
 }
