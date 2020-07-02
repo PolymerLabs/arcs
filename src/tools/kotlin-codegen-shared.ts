@@ -85,17 +85,6 @@ export interface KotlinTypeInfo {
   defaultVal: string;
 }
 
-type AddFieldOptions = Readonly<{
-  field: string;
-  typeName: string;
-  isOptional?: boolean;
-  refClassName?: string;
-  refSchemaHash?: string;
-  listTypeInfo?: AddFieldOptions;
-  isCollection?: boolean;
-  isInlineClass?: boolean;
-}>;
-
 export function getTypeInfo(opts: { name: string, isCollection?: boolean, refClassName?: string, listTypeInfo?: {name: string, isInlineClass?: boolean}, isInlineClass?: boolean }): KotlinTypeInfo {
   if (opts.name === 'List') {
     assert(opts.listTypeInfo, 'listTypeInfo must be provided for Lists');
