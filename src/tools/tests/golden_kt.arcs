@@ -15,6 +15,7 @@ particle KotlinPrimitivesGolden
     shrt: Short,
     nt: Int,
     lng: Long,
+    big: BigInt,
     chr: Char,
     flt: Float,
     dbl: Double,
@@ -38,4 +39,4 @@ particle KotlinPrimitivesGolden
       price: Float,
       stock: Int
     }>
-  }
+  } [2n * big + 3n > 5n]

@@ -94,7 +94,7 @@ abstract class AbstractGold : WasmParticleImpl() {
     @Suppress("UNCHECKED_CAST")
     class Gold_AllPeople(
         name: String = "",
-        age: BigInteger = BigInteger.ZERO,
+        age: Double = 0.0,
         lastCall: Double = 0.0,
         address: String = "",
         favoriteColor: String = "",
@@ -142,7 +142,7 @@ abstract class AbstractGold : WasmParticleImpl() {
 
         fun copy(
             name: String = this.name,
-            age: BigInteger = this.age,
+            age: Double = this.age,
             lastCall: Double = this.lastCall,
             address: String = this.address,
             favoriteColor: String = this.favoriteColor,
@@ -161,7 +161,7 @@ abstract class AbstractGold : WasmParticleImpl() {
 
         fun reset() {
             name = ""
-            age = BigInteger.ZERO
+            age = 0.0
             lastCall = 0.0
             address = ""
             favoriteColor = ""
@@ -173,7 +173,7 @@ abstract class AbstractGold : WasmParticleImpl() {
             val encoder = StringEncoder()
             encoder.encode("", entityId)
             name.let { encoder.encode("name:T", name) }
-            age.let { encoder.encode("age:B", age) }
+            age.let { encoder.encode("age:N", age) }
             lastCall.let { encoder.encode("lastCall:N", lastCall) }
             address.let { encoder.encode("address:T", address) }
             favoriteColor.let { encoder.encode("favoriteColor:T", favoriteColor) }
@@ -196,7 +196,7 @@ abstract class AbstractGold : WasmParticleImpl() {
                 decoder.validate("|")
 
                 var name = ""
-            var age = BigInteger.ZERO
+            var age = 0.0
             var lastCall = 0.0
             var address = ""
             var favoriteColor = ""
@@ -211,8 +211,8 @@ abstract class AbstractGold : WasmParticleImpl() {
                         name = decoder.decodeText()
                     }
                     "age" -> {
-                        decoder.validate("B")
-                        age = decoder.decodeBigInt()
+                        decoder.validate("N")
+                        age = decoder.decodeNum()
                     }
                     "lastCall" -> {
                         decoder.validate("N")
@@ -451,7 +451,7 @@ abstract class AbstractGold : WasmParticleImpl() {
     @Suppress("UNCHECKED_CAST")
     class Gold_QCollection(
         name: String = "",
-        age: BigInteger = BigInteger.ZERO,
+        age: Double = 0.0,
         lastCall: Double = 0.0,
         address: String = "",
         favoriteColor: String = "",
@@ -499,7 +499,7 @@ abstract class AbstractGold : WasmParticleImpl() {
 
         fun copy(
             name: String = this.name,
-            age: BigInteger = this.age,
+            age: Double = this.age,
             lastCall: Double = this.lastCall,
             address: String = this.address,
             favoriteColor: String = this.favoriteColor,
@@ -518,7 +518,7 @@ abstract class AbstractGold : WasmParticleImpl() {
 
         fun reset() {
             name = ""
-            age = BigInteger.ZERO
+            age = 0.0
             lastCall = 0.0
             address = ""
             favoriteColor = ""
@@ -530,7 +530,7 @@ abstract class AbstractGold : WasmParticleImpl() {
             val encoder = StringEncoder()
             encoder.encode("", entityId)
             name.let { encoder.encode("name:T", name) }
-            age.let { encoder.encode("age:B", age) }
+            age.let { encoder.encode("age:N", age) }
             lastCall.let { encoder.encode("lastCall:N", lastCall) }
             address.let { encoder.encode("address:T", address) }
             favoriteColor.let { encoder.encode("favoriteColor:T", favoriteColor) }
@@ -553,7 +553,7 @@ abstract class AbstractGold : WasmParticleImpl() {
                 decoder.validate("|")
 
                 var name = ""
-            var age = BigInteger.ZERO
+            var age = 0.0
             var lastCall = 0.0
             var address = ""
             var favoriteColor = ""
@@ -568,8 +568,8 @@ abstract class AbstractGold : WasmParticleImpl() {
                         name = decoder.decodeText()
                     }
                     "age" -> {
-                        decoder.validate("B")
-                        age = decoder.decodeBigInt()
+                        decoder.validate("N")
+                        age = decoder.decodeNum()
                     }
                     "lastCall" -> {
                         decoder.validate("N")

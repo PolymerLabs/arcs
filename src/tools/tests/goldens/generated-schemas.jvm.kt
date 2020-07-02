@@ -94,7 +94,7 @@ abstract class AbstractGold : BaseParticle() {
     @Suppress("UNCHECKED_CAST")
     class Gold_AllPeople(
         name: String = "",
-        age: BigInteger = BigInteger.ZERO,
+        age: Double = 0.0,
         lastCall: Double = 0.0,
         address: String = "",
         favoriteColor: String = "",
@@ -108,8 +108,8 @@ abstract class AbstractGold : BaseParticle() {
         var name: String
             get() = super.getSingletonValue("name") as String? ?: ""
             private set(_value) = super.setSingletonValue("name", _value)
-        var age: BigInteger
-            get() = super.getSingletonValue("age") as BigInteger? ?: BigInteger.ZERO
+        var age: Double
+            get() = super.getSingletonValue("age") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("age", _value)
         var lastCall: Double
             get() = super.getSingletonValue("lastCall") as Double? ?: 0.0
@@ -143,7 +143,7 @@ abstract class AbstractGold : BaseParticle() {
          */
         fun copy(
             name: String = this.name,
-            age: BigInteger = this.age,
+            age: Double = this.age,
             lastCall: Double = this.lastCall,
             address: String = this.address,
             favoriteColor: String = this.favoriteColor,
@@ -164,7 +164,7 @@ abstract class AbstractGold : BaseParticle() {
          */
         fun mutate(
             name: String = this.name,
-            age: BigInteger = this.age,
+            age: Double = this.age,
             lastCall: Double = this.lastCall,
             address: String = this.address,
             favoriteColor: String = this.favoriteColor,
@@ -190,7 +190,7 @@ abstract class AbstractGold : BaseParticle() {
                 SchemaFields(
                     singletons = mapOf(
                         "name" to FieldType.Text,
-                        "age" to FieldType.BigInt,
+                        "age" to FieldType.Number,
                         "lastCall" to FieldType.Number,
                         "address" to FieldType.Text,
                         "favoriteColor" to FieldType.Text,
@@ -199,7 +199,7 @@ abstract class AbstractGold : BaseParticle() {
                     ),
                     collections = emptyMap()
                 ),
-                "4efb82316465d50ee3756a8639133c90158f57cc",
+                "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa",
                 refinement = { _ -> true },
                 query = null
             )
@@ -378,7 +378,7 @@ abstract class AbstractGold : BaseParticle() {
     @Suppress("UNCHECKED_CAST")
     class Gold_QCollection(
         name: String = "",
-        age: BigInteger = BigInteger.ZERO,
+        age: Double = 0.0,
         lastCall: Double = 0.0,
         address: String = "",
         favoriteColor: String = "",
@@ -392,8 +392,8 @@ abstract class AbstractGold : BaseParticle() {
         var name: String
             get() = super.getSingletonValue("name") as String? ?: ""
             private set(_value) = super.setSingletonValue("name", _value)
-        var age: BigInteger
-            get() = super.getSingletonValue("age") as BigInteger? ?: BigInteger.ZERO
+        var age: Double
+            get() = super.getSingletonValue("age") as Double? ?: 0.0
             private set(_value) = super.setSingletonValue("age", _value)
         var lastCall: Double
             get() = super.getSingletonValue("lastCall") as Double? ?: 0.0
@@ -427,7 +427,7 @@ abstract class AbstractGold : BaseParticle() {
          */
         fun copy(
             name: String = this.name,
-            age: BigInteger = this.age,
+            age: Double = this.age,
             lastCall: Double = this.lastCall,
             address: String = this.address,
             favoriteColor: String = this.favoriteColor,
@@ -448,7 +448,7 @@ abstract class AbstractGold : BaseParticle() {
          */
         fun mutate(
             name: String = this.name,
-            age: BigInteger = this.age,
+            age: Double = this.age,
             lastCall: Double = this.lastCall,
             address: String = this.address,
             favoriteColor: String = this.favoriteColor,
@@ -474,7 +474,7 @@ abstract class AbstractGold : BaseParticle() {
                 SchemaFields(
                     singletons = mapOf(
                         "name" to FieldType.Text,
-                        "age" to FieldType.BigInt,
+                        "age" to FieldType.Number,
                         "lastCall" to FieldType.Number,
                         "address" to FieldType.Text,
                         "favoriteColor" to FieldType.Text,
@@ -483,14 +483,13 @@ abstract class AbstractGold : BaseParticle() {
                     ),
                     collections = emptyMap()
                 ),
-                "4efb82316465d50ee3756a8639133c90158f57cc",
+                "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa",
                 refinement = { _ -> true },
                 query = { data, queryArgs ->
                     val name = data.singletons["name"].toPrimitiveValue(String::class, "")
                     val lastCall = data.singletons["lastCall"].toPrimitiveValue(Double::class, 0.0)
-                    val age = data.singletons["age"].toPrimitiveValue(BigInteger::class, BigInteger.ZERO)
                     val queryArgument = queryArgs as String
-                    ((name == queryArgument) && ((lastCall < 259200) && ((age > BigInteger("0")) || (age == BigInteger("0")))))
+                    ((name == queryArgument) && (lastCall < 259200))
                 }
             )
 
