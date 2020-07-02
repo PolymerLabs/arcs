@@ -39,4 +39,4 @@ particle KotlinPrimitivesGolden
       price: Float,
       stock: Int
     }>
-  } [2n * big + 3n > 5n]
+  } [(2n * big + 3n > 5n) and (num < 1000)]
