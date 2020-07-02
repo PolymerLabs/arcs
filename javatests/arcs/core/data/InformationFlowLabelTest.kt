@@ -17,6 +17,7 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.test.assertFailsWith
 
 @RunWith(JUnit4::class)
 class InformationFlowLabelTest {
@@ -55,6 +56,30 @@ class InformationFlowLabelTest {
             .isEqualTo(Predicate.Not(Labels.A.asPredicate))
         assertThat((Labels.A.asPredicate and Labels.B.asPredicate).not())
             .isEqualTo(Predicate.Not(Predicate.And(Labels.A.asPredicate, Labels.B.asPredicate)))
+    }
+
+    @Test
+    fun andSequence() {
+        assertThat(
+            Predicate.and(listOf(Labels.A.asPredicate, Labels.B.asPredicate, Labels.C.asPredicate))
+        ).isEqualTo((Labels.A.asPredicate and Labels.B.asPredicate) and Labels.C.asPredicate)
+    }
+
+    @Test
+    fun andSequence_tooShort() {
+        assertFailsWith<IllegalArgumentException> { Predicate.and(listOf(Labels.A.asPredicate)) }
+    }
+
+    @Test
+    fun orSequence() {
+        assertThat(
+            Predicate.or(listOf(Labels.A.asPredicate, Labels.B.asPredicate, Labels.C.asPredicate))
+        ).isEqualTo((Labels.A.asPredicate or Labels.B.asPredicate) or Labels.C.asPredicate)
+    }
+
+    @Test
+    fun orSequence_tooShort() {
+        assertFailsWith<IllegalArgumentException> { Predicate.or(listOf(Labels.A.asPredicate)) }
     }
 
     @Test

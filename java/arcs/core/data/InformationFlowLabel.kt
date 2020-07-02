@@ -42,8 +42,31 @@ sealed class InformationFlowLabel {
             override fun toString() = "($lhs and $rhs)"
         }
 
-        infix fun and(other: Predicate) = Predicate.And(this, other)
-        infix fun or(other: Predicate) = Predicate.Or(this, other)
-        fun not() = Predicate.Not(this)
+        infix fun and(other: Predicate) = And(this, other)
+        infix fun or(other: Predicate) = Or(this, other)
+        fun not() = Not(this)
+
+        companion object {
+            /** Combines a list of >= 2 predicates via the [And] operator. */
+            fun and(predicates: List<Predicate>): And = combine(predicates) { a, b -> a and b }
+
+            /** Combines a list of >= 2 predicates via the [Or] operator. */
+            fun or(predicates: List<Predicate>): Or = combine(predicates) { a, b -> a or b }
+
+            /** Combines a list of >= 2 predicates with the given accumulator. */
+            private fun <T : Predicate> combine(
+                predicates: List<Predicate>,
+                acc: (Predicate, Predicate) -> T
+            ): T {
+                require(predicates.size >= 2) {
+                    "Require at least 2 predicates, received ${predicates.size}."
+                }
+                val initial = acc(predicates[0], predicates[1])
+                if (predicates.size == 2) {
+                    return initial
+                }
+                return predicates.subList(2, predicates.size).fold(initial, acc)
+            }
+        }
     }
 }
