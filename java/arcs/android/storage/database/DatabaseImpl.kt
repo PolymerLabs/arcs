@@ -1135,23 +1135,6 @@ class DatabaseImpl(
                     """.trimIndent()
                 clearEntities(nestedEntityCollectionQuery, false)
 
-                val nestedEntityCollectionQuery =
-                    """
-                        SELECT
-                            collection_entries.value_id,
-                            storage_key
-                        FROM field_values
-                        INNER JOIN fields
-                            ON field_values.field_id = fields.id
-                            AND fields.is_collection = ${FieldClass.InlineEntityCollection.ordinal}
-                            AND field_values.entity_storage_key_id IN (${storageKeyIds.joinToString()})
-                        INNER JOIN collection_entries
-                            ON field_values.value_id = collection_entries.collection_id
-                        INNER JOIN storage_keys
-                            ON collection_entries.value_id = storage_keys.id
-                    """.trimIndent()
-                clearEntities(nestedEntityCollectionQuery, false)
-
                 deleteFields(storageKeyIds, db)
 
                 if (!entitiesAreTopLevel) {
