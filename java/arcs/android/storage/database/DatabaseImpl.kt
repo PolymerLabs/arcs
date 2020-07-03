@@ -65,6 +65,7 @@ import com.google.protobuf.InvalidProtocolBufferException
 import java.math.BigInteger
 import java.time.Duration
 import kotlin.coroutines.coroutineContext
+import kotlin.math.roundToLong
 import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.updateAndGet
@@ -353,7 +354,10 @@ class DatabaseImpl(
                 } else {
                     BigInteger(it.getString(4)).toReferencable()
                 }
-                else -> if (isCollection == FieldClass.InlineEntity) {
+                else -> if (
+                    isCollection == FieldClass.InlineEntity ||
+                    isCollection == FieldClass.InlineEntityCollection
+                ) {
                     val rawSingletons = mutableMapOf<FieldName, Referencable?>()
                     val rawCollections = mutableMapOf<FieldName, Set<Referencable>>()
                     val (dbSingletons, dbCollections) =
@@ -381,7 +385,7 @@ class DatabaseImpl(
             }
 
             when (isCollection) {
-                FieldClass.Collection -> {
+                FieldClass.Collection, FieldClass.InlineEntityCollection -> {
                 // Ensure we create the collection even if the element to add is null.
                     val collection = collections.getOrPut(fieldName) { mutableSetOf() }
                     value?.let { x -> collection.add(x) }
@@ -554,6 +558,9 @@ class DatabaseImpl(
                             insertFieldCollection(
                                 value,
                                 field.typeId,
+                                field.isCollection,
+                                fieldName,
+                                storageKey,
                                 db,
                                 counters
                             )
@@ -563,32 +570,17 @@ class DatabaseImpl(
                                 "Expected field value to be a RawEntity but was $fieldValue."
                             }
 
-                            val childKey = InlineStorageKey(storageKey, fieldName)
-                            require(fieldValue.id == "") {
-                                "Inline Entities should never have non-empty ids"
-                            }
-                            val childKeyId = createEntityStorageKeyId(
-                                childKey,
-                                "",
-                                fieldValue.creationTimestamp,
-                                fieldValue.expirationTimestamp,
-                                field.typeId,
-                                VersionMap(),
-                                0,
-                                db,
-                                counters
-                            ) ?: return@transaction false
-                            insertOrUpdateEntityByStorageKeyId(
-                                childKey,
-                                childKeyId,
+                            insertInlineEntity(
                                 fieldValue,
+                                fieldName,
                                 field.typeId,
+                                storageKey,
                                 db,
                                 counters
                             )
-                            childKeyId
                         }
-                        field.isCollection == FieldClass.Collection -> {
+                        field.isCollection == FieldClass.Collection ||
+                        field.isCollection == FieldClass.InlineEntityCollection -> {
                             if (fieldValue == null) return@forEach
                             require(fieldValue is Set<*>) {
                                 "Collection fields must be of type Set. Instead found " +
@@ -598,6 +590,9 @@ class DatabaseImpl(
                             insertFieldCollection(
                                 fieldValue,
                                 field.typeId,
+                                field.isCollection,
+                                fieldName,
+                                storageKey,
                                 db,
                                 counters
                             )
@@ -632,13 +627,54 @@ class DatabaseImpl(
     }
 
     /**
-     * Inserts a new collection into the database. Can contain primitives or references. Will create
-     * and return a new collection ID for the collection. For entity field collections only (handle
-     * collections should use [insertOrUpdateCollection]).
+     * Inserts an inline entity into the database. Will create and return a StorageKeyId
+     * for the entity. Will return null if creation of the storageKey fails.
      */
-    private fun insertFieldCollection(
+    private suspend fun insertInlineEntity(
+        entity: RawEntity,
+        fieldName: String,
+        typeId: TypeId,
+        parentStorageKey: StorageKey,
+        db: SQLiteDatabase,
+        counters: Counters? = null
+    ): StorageKeyId? = db.transaction {
+        val childKey = InlineStorageKey(parentStorageKey, fieldName)
+        require(entity.id == "") {
+            "Inline Entities should never have non-empty ids"
+        }
+        val childKeyId = createEntityStorageKeyId(
+            childKey,
+            "",
+            entity.creationTimestamp,
+            entity.expirationTimestamp,
+            typeId,
+            VersionMap(),
+            0,
+            db,
+            counters
+        ) ?: return@transaction null
+        insertOrUpdateEntityByStorageKeyId(
+            childKey,
+            childKeyId,
+            entity,
+            typeId,
+            db,
+            counters
+        )
+        childKeyId
+    }
+
+    /**
+     * Inserts a new collection into the database. Can contain primitives, inline entities, or
+     * references. Will create and return a new collection ID for the collection. For entity field
+     * collections only (handle collections should use [insertOrUpdateCollection]).
+     */
+    private suspend fun insertFieldCollection(
         elements: Iterable<*>,
         typeId: TypeId,
+        fieldClass: FieldClass,
+        fieldName: String,
+        parentStorageKey: StorageKey,
         db: SQLiteDatabase,
         counters: Counters?
     ): FieldValueId = db.transaction {
@@ -657,16 +693,25 @@ class DatabaseImpl(
             put("collection_id", collectionId)
         }
         // TODO(#4889): Don't do this one-by-one.
-        val valueIds = if (isPrimitiveType(typeId)) {
-            elements.map { getPrimitiveValueId(it as Referencable, typeId, db) }
-        } else {
-            elements.map {
-                require(it is Reference) {
-                    "Expected element in collection to be a Reference but was $it."
+        val valueIds = when {
+            isPrimitiveType(typeId) ->
+                elements.map { getPrimitiveValueId(it as Referencable, typeId, db) }
+            fieldClass == FieldClass.InlineEntityCollection ->
+                elements.map {
+                    require(it is RawEntity) {
+                        "Expected element in collection to be a RawEntity but was $it."
+                    }
+                    insertInlineEntity(it, fieldName, typeId, parentStorageKey, db, counters)
                 }
-                getEntityReferenceId(it, db, counters)
-            }
+            else ->
+                elements.map {
+                    require(it is Reference) {
+                        "Expected element in collection to be a Reference but was $it."
+                    }
+                    getEntityReferenceId(it, db, counters)
+                }
         }
+
         valueIds.forEach { valueId ->
             content.put("value_id", valueId)
             counters?.increment(DatabaseCounters.INSERT_COLLECTION_ENTRY)
@@ -1059,6 +1104,23 @@ class DatabaseImpl(
                     """.trimIndent()
                 clearEntities(nestedEntityQuery, false)
 
+                val nestedEntityCollectionQuery =
+                    """
+                        SELECT
+                            collection_entries.value_id,
+                            storage_key
+                        FROM field_values
+                        INNER JOIN fields
+                            ON field_values.field_id = fields.id
+                            AND fields.is_collection = ${FieldClass.InlineEntityCollection.ordinal}
+                            AND field_values.entity_storage_key_id IN (${storageKeyIds.joinToString()})
+                        INNER JOIN collection_entries
+                            ON field_values.value_id = collection_entries.collection_id
+                        INNER JOIN storage_keys
+                            ON collection_entries.value_id = storage_keys.id
+                    """.trimIndent()
+                clearEntities(nestedEntityCollectionQuery, false)
+
                 deleteFields(storageKeyIds, db)
 
                 if (!entitiesAreTopLevel) {
@@ -1273,7 +1335,11 @@ class DatabaseImpl(
             insertFieldBlock(fieldName, fieldType, fieldClass)
         }
         schema.fields.collections.forEach { (fieldName, fieldType) ->
-            insertFieldBlock(fieldName, fieldType, isCollection = FieldClass.Collection)
+            val fieldClass = when (fieldType.tag) {
+                FieldType.Tag.InlineEntity -> FieldClass.InlineEntityCollection
+                else -> FieldClass.Collection
+            }
+            insertFieldBlock(fieldName, fieldType, fieldClass)
         }
         schemaTypeId
     }
@@ -1729,7 +1795,8 @@ class DatabaseImpl(
         Singleton,
         Collection,
         List,
-        InlineEntity;
+        InlineEntity,
+        InlineEntityCollection;
 
         companion object {
             fun fromOrdinal(ordinal: Int) = when (ordinal) {
@@ -1737,6 +1804,7 @@ class DatabaseImpl(
                 1 -> FieldClass.Collection
                 2 -> FieldClass.List
                 3 -> FieldClass.InlineEntity
+                4 -> FieldClass.InlineEntityCollection
                 else -> throw IllegalStateException(
                     "Invalid value $ordinal for FieldClass stored in isCollection field."
                 )
@@ -2013,7 +2081,8 @@ class DatabaseImpl(
          */
         private val FIELD_CLASSES_IN_COLLECTION_TABLE = listOf(
             FieldClass.Collection.ordinal,
-            FieldClass.List.ordinal
+            FieldClass.List.ordinal,
+            FieldClass.InlineEntityCollection.ordinal
         )
 
         /** A version of FIELD_CLASSES_IN_COLLECTION_TABLE to use in SQL IN statements */
@@ -2035,7 +2104,13 @@ class DatabaseImpl(
             val parentKey: StorageKey,
             val fieldName: String
         ) : StorageKey("inline") {
-            override fun toKeyString(): String = "{${parentKey.embed()}}/$fieldName"
+            /**
+             * A unique component to the key. This is required because there may be multiple inline
+             * entities stored against a single fieldName (for collections and lists).
+             */
+
+            val unique = (Math.random() * Long.MAX_VALUE).roundToLong()
+            override fun toKeyString(): String = "{${parentKey.embed()}}!$unique/$fieldName"
             override fun childKeyWithComponent(component: String): StorageKey =
                 InlineStorageKey(parentKey, "$fieldName/$component")
         }
