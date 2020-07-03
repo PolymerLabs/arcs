@@ -124,66 +124,50 @@ describe('refiner', () => {
         }, `Refinement expression name has type Text. Expected Number or BigInt.`);
     }));
     it('Throws error when operators and operands are incompatible: BigInt', Flags.withFieldRefinementsAllowed(async () => {
-        assert.throws(() => {
-            const manifestAst = parse(`
-                particle Foo
-                    input: reads Something {num: BigInt [ (num < 5n) + 3n == 0n ]}
-            `);
-            const typeData = {'num': 'BigInt'};
-            const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
-            const data = {
-                num: BigInt(6),
-            };
-            ref.validateData(data);
-        }, `Refinement expression (num < 5n) has type Boolean. Expected BigInt.`);
-        assert.throws(() => {
-            const manifestAst = parse(`
-                particle Foo
-                    input: reads Something {num: BigInt [ (num + 3) == 0n ]}
-            `);
-            const typeData = {'num': 'BigInt'};
-            const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
-            const data = {
-                num: 6,
-            };
-            ref.validateData(data);
-        }, `Refinement expression num has type BigInt. Expected Number.`);
-        assert.throws(() => {
-            const manifestAst = parse(`
-                particle Foo
-                    input: reads Something {num: BigInt [ (num and 3) == 0 ]}
-            `);
-            const typeData = {'num': 'BigInt'};
-            const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
-            const data = {
-                num: 6,
-            };
-            ref.validateData(data);
-        }, `Refinement expression num has type BigInt. Expected Boolean.`);
+      const validate = (data, relation: string) => {
+        const manifest = `
+        particle Foo
+            input: reads Something {num: BigInt [ ${relation} ]}`;
+        const manifestAst = parse(manifest);
+        const typeData = {'num': 'BigInt'};
+        const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
+        return ref.validateData(data);
+      };
+      assert.isTrue(validate({num: BigInt(6)}, `(num - 6n) == 0n`), 'this should be valid');
+      assert.throws(() => {
+          validate({num: BigInt(6)}, `(num < 5n) + 3n == 0n`);
+      }, `Refinement expression (num < 5n) has type Boolean. Expected BigInt.`);
+      assert.throws(() => {
+          validate({num: BigInt(6)}, `(num + 3) == 0n`);
+      }, `Refinement expression num has type BigInt. Expected Number.`);
+      assert.throws(() => {
+          validate({num: 6}, `(num + 3) == 0n`);
+      }, `Refinement expression num has type BigInt. Expected Number.`);
+      assert.throws(() => {
+          validate({num: 6}, `(num + 3) == 0n`);
+      }, `Refinement expression num has type BigInt. Expected Number.`);
+      assert.throws(() => {
+          validate({num: 6}, `(num and 3) == 0`);
+      }, `Refinement expression num has type BigInt. Expected Boolean.`);
     }));
     it('tests simple expression to range conversion', Flags.withFieldRefinementsAllowed(async () => {
-        let manifestAst = parse(`
-            particle Foo
-                input: reads Something {num: Number [ (num < 3) ]}
-        `);
+      const validate = (refinement, segments: NumberSegment[]) => {
         const typeData = {'num': 'Number'};
+        const manifestAst = parse(`
+            particle Foo
+                input: reads Something {num: Number [ ${refinement} ]}
+        `);
         let ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
         let range = NumberRange.fromExpression(ref.expression);
-        assert.deepEqual(range, new NumberRange([NumberSegment.closedOpen(Number.NEGATIVE_INFINITY, 3)]));
-        manifestAst = parse(`
-            particle Foo
-                input: reads Something {num: Number [(num > 10)]}
-        `);
-        ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
-        range = NumberRange.fromExpression(ref.expression);
-        assert.deepEqual(range, new NumberRange([NumberSegment.openClosed(10, Number.POSITIVE_INFINITY)]));
-        manifestAst = parse(`
-            particle Foo
-                input: reads Something {num: Number [not (num != 10)]}
-        `);
-        ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
-        range = NumberRange.fromExpression(ref.expression);
-        assert.deepEqual(range, new NumberRange([NumberSegment.closedClosed(10, 10)]));
+        assert.deepEqual(range, new NumberRange(segments));
+      };
+        validate(`num < 3`, [NumberSegment.closedOpen(Number.NEGATIVE_INFINITY, 3)]);
+        validate(`num > 10`, [NumberSegment.openClosed(10, Number.POSITIVE_INFINITY)]);
+        validate(`not (num != 10)`, [NumberSegment.closedClosed(10, 10)]);
+        validate(`(num != 10)`, [
+          NumberSegment.closedOpen(Number.NEGATIVE_INFINITY, 10),
+          NumberSegment.openClosed(10, Number.POSITIVE_INFINITY)
+        ]);
     }));
     it('tests simple expression to range conversions using bigint 1', Flags.withFieldRefinementsAllowed(async () => {
         const typeData = {'num': 'BigInt'};
