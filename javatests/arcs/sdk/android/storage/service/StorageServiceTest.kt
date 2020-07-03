@@ -15,12 +15,17 @@ import android.app.Application
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.common.resurrection.ResurrectionRequest
 import arcs.android.crdt.ParcelableCrdtType
+import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
 import arcs.android.storage.service.BindingContext
 import arcs.android.storage.service.DeferredResult
 import arcs.android.storage.toParcelable
 import arcs.android.storage.toProto
+import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
 import arcs.core.storage.ProxyMessage
@@ -32,7 +37,6 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
@@ -43,10 +47,16 @@ import org.robolectric.Shadows.shadowOf
 class StorageServiceTest {
     private lateinit var app: Application
     private lateinit var storeOptions: StoreOptions<CrdtCount.Data, CrdtCount.Operation, Int>
+    private lateinit var workManager: WorkManager
+
+    private val ttlTag = PeriodicCleanupTask.WORKER_TAG
+    private val gcTag = DatabaseGarbageCollectionPeriodicTask.WORKER_TAG
 
     @Before
     fun setUp() {
         app = ApplicationProvider.getApplicationContext()
+        WorkManagerTestInitHelper.initializeTestWorkManager(app)
+        workManager = WorkManager.getInstance(app)
         storeOptions = StoreOptions(
             RamDiskStorageKey("count"),
             CountType()
@@ -54,7 +64,6 @@ class StorageServiceTest {
     }
 
     @Test
-    @Ignore("Travis seems to dislike this test. Be sure to run it locally, however.")
     fun sendingProxyMessage_resultsInResurrection() = lifecycle(storeOptions) { service, context ->
         // Setup:
         // Create a resurrection helper we'll use to collect updated storage keys coming from the
@@ -105,6 +114,92 @@ class StorageServiceTest {
         assertThat(receivedUpdates).hasSize(1)
         assertThat(receivedUpdates[0]).containsExactly(storeOptions.storageKey)
         assertThat(receivedIds[0]).isEqualTo("test")
+    }
+
+    @Test
+    fun testPeriodicJobsConfig_default() = runBlocking {
+        StorageService().onCreate()
+
+        assertEnqueued(ttlTag)
+        assertEnqueued(gcTag)
+    }
+
+    @Test
+    fun testPeriodicJobsConfig_subclass_disabled() = runBlocking {
+        class MyStorageService : StorageService() {
+            override val config = StorageServiceConfig(false, 1, false, 1)
+        }
+        MyStorageService().onCreate()
+
+        assertNotEnqueued(ttlTag)
+        assertNotEnqueued(gcTag)
+    }
+
+    @Test
+    fun testPeriodicJobsConfig_subclass_oneOnOneOff() = runBlocking {
+        class MyStorageService : StorageService() {
+            override val config = StorageServiceConfig(false, 1, true, 1)
+        }
+        MyStorageService().onCreate()
+
+        assertNotEnqueued(ttlTag)
+        assertEnqueued(gcTag)
+    }
+
+    @Test
+    fun testPeriodicJobsConfig_subclass_stopStart() = runBlocking {
+        class MyStorageService : StorageService() {
+            fun changeConfig(config: StorageServiceConfig) = schedulePeriodicJobs(config)
+        }
+        val sts = MyStorageService()
+        sts.onCreate()
+
+        assertEnqueued(ttlTag)
+        assertEnqueued(gcTag)
+
+        sts.changeConfig(StorageService.StorageServiceConfig(false, 2, false, 2))
+
+        assertCanceled(ttlTag)
+        assertCanceled(gcTag)
+
+        sts.changeConfig(StorageService.StorageServiceConfig(true, 2, false, 2))
+
+        assertEnqueued(ttlTag)
+        assertCanceled(gcTag)
+    }
+
+    @Test
+    fun testPeriodicJobsConfig_subclass_disableAll() = runBlocking {
+        class MyStorageService : StorageService() {
+            fun disableAll() = disableAllPeriodicJobs()
+        }
+        val sts = MyStorageService()
+        sts.onCreate()
+
+        assertEnqueued(ttlTag)
+        assertEnqueued(gcTag)
+
+        sts.disableAll()
+
+        assertCanceled(ttlTag)
+        assertCanceled(gcTag)
+    }
+
+    private fun assertEnqueued(tag: String) {
+        val jobs = workManager.getWorkInfosForUniqueWork(tag).get()
+        assertThat(jobs).hasSize(1)
+        assertThat(jobs.single().state).isEqualTo(WorkInfo.State.ENQUEUED)
+    }
+
+    private fun assertCanceled(tag: String) {
+        val jobs = workManager.getWorkInfosForUniqueWork(tag).get()
+        assertThat(jobs).hasSize(1)
+        assertThat(jobs.single().state).isEqualTo(WorkInfo.State.CANCELLED)
+    }
+
+    private fun assertNotEnqueued(tag: String) {
+        val jobs = workManager.getWorkInfosForUniqueWork(tag).get()
+        assertThat(jobs).isEmpty()
     }
 
     private fun lifecycle(
