@@ -18,6 +18,8 @@ export enum Primitive {
   BOOLEAN = 'Boolean',
   NUMBER = 'Number',
   BIGINT = 'BigInt',
+  LONG = 'Long',
+  INT = 'Int',
   TEXT = 'Text',
   UNKNOWN = '~query_arg_type',
 }
@@ -133,7 +135,8 @@ export class Refinement {
          idx += 1;
       }
       // Find the range of values for the field name over which the refinement is valid.
-      if (a.expression.evalType === Primitive.BIGINT || b.expression.evalType === Primitive.BIGINT) {
+      const integralTypes = [Primitive.BIGINT, Primitive.INT, Primitive.LONG];
+      if (integralTypes.includes(a.expression.evalType) || integralTypes.includes(b.expression.evalType)) {
         const rangeA = BigIntRange.fromExpression(a.expression, {});
         const rangeB = BigIntRange.fromExpression(b.expression, {});
         return rangeA.isSubsetOf(rangeB) ? AtLeastAsSpecific.YES : AtLeastAsSpecific.NO;
@@ -197,6 +200,7 @@ abstract class RefinementExpression {
     if (!expr) {
       return null;
     }
+    console.log('>>> ', expr.kind);
     switch (expr.kind) {
       case 'binary-expression-node': return BinaryExpression.fromAst(expr, typeData);
       case 'unary-expression-node': return UnaryExpression.fromAst(expr, typeData);
@@ -282,10 +286,9 @@ export class BinaryExpression extends RefinementExpression {
       const filename = loc.filename ? ` in ${loc.filename}` : '';
       throw new Error(`Unknown operator '${expression.operator}' at line ${loc.start.line}, col ${loc.start.column}${filename}`);
     }
-    return new BinaryExpression(
-            RefinementExpression.fromAst(expression.leftExpr, typeData),
-            RefinementExpression.fromAst(expression.rightExpr, typeData),
-            new RefinementOperator(expression.operator as Op));
+    const left = RefinementExpression.fromAst(expression.leftExpr, typeData);
+    const right = RefinementExpression.fromAst(expression.rightExpr, typeData);
+    return new BinaryExpression(left, right, new RefinementOperator(expression.operator as Op));
   }
 
   toLiteral(): RefinementExpressionLiteral {
@@ -1252,14 +1255,20 @@ export class BigIntRange {
   }
 
   static universal(type: Primitive): BigIntRange {
-    if (type === Primitive.BOOLEAN) {
-      // TODO: Support long, int etc.
-      const b0 = BigInt(0);
-      const b1 = BigInt(1);
-      return new BigIntRange([BigIntSegment.closedClosed(b0, b0), BigIntSegment.closedClosed(b1, b1)], type);
+    switch (type) {
+        // TODO: Support long, int etc.
+      case Primitive.BOOLEAN:
+        const b0 = BigInt(0);
+        const b1 = BigInt(1);
+        return new BigIntRange([BigIntSegment.closedClosed(b0, b0), BigIntSegment.closedClosed(b1, b1)], type);
+      case Primitive.INT:
+        return new BigIntRange([BigIntSegment.closedClosed(INT_MIN, INT_MAX)], type);
+      case Primitive.LONG:
+        return new BigIntRange([BigIntSegment.closedClosed(LONG_MIN, LONG_MAX)], type);
+      default:
+        // These are used to represent 'infinity'.
+        return new BigIntRange([BigIntSegment.closedClosed('NEGATIVE_INFINITY', 'POSITIVE_INFINITY')], type);
     }
-    // These are used to represent 'infinity'.
-    return new BigIntRange([BigIntSegment.closedClosed('NEGATIVE_INFINITY', 'POSITIVE_INFINITY')], type);
   }
 
   static unit(val: bigint, ty: Primitive): BigIntRange {
@@ -1326,7 +1335,7 @@ export class BigIntRange {
   }
 
   intersect(range: BigIntRange): BigIntRange {
-    const newRange = new BigIntRange();
+    const newRange = new BigIntRange([], this.type);
     for (const seg of range.segments) {
       const dup = this.intersectWithSeg(seg);
       newRange.union(dup);
@@ -1359,7 +1368,7 @@ export class BigIntRange {
   }
 
   intersectWithSeg(seg: BigIntSegment): BigIntRange {
-    const newRange = new BigIntRange();
+    const newRange = new BigIntRange([], this.type);
     for (const subRange of this.segments) {
       if (subRange.overlapsWith(seg)) {
         newRange.segments.push(BigIntSegment.overlap(seg, subRange));
@@ -1374,10 +1383,10 @@ export class BigIntRange {
   static fromExpression(expr: RefinementExpression, textToNum: Dictionary<bigint> = {}): BigIntRange {
     if (expr instanceof BinaryExpression) {
       if (expr.leftExpr instanceof FieldNamePrimitive && expr.rightExpr instanceof BigIntPrimitive) {
-        return BigIntRange.makeInitialGivenOp(expr.operator.op, expr.rightExpr.value);
+        return BigIntRange.makeInitialGivenOp(expr.rightExpr.evalType, expr.operator.op, expr.rightExpr.value);
       }
       if (expr.leftExpr instanceof FieldNamePrimitive && expr.rightExpr instanceof TextPrimitive) {
-        return BigIntRange.makeInitialGivenOp(expr.operator.op, textToNum[expr.rightExpr.value]);
+        return BigIntRange.makeInitialGivenOp(expr.rightExpr.evalType, expr.operator.op, textToNum[expr.rightExpr.value]);
       }
       const left = BigIntRange.fromExpression(expr.leftExpr, textToNum);
       const right = BigIntRange.fromExpression(expr.rightExpr, textToNum);
@@ -1398,16 +1407,19 @@ export class BigIntRange {
     return null;
   }
 
-  static makeInitialGivenOp(op: Op, val: ExpressionPrimitives): BigIntRange {
-    switch (op) {
-      case Op.LT: return new BigIntRange([BigIntSegment.closedOpen('NEGATIVE_INFINITY', val)]);
-      case Op.LTE: return new BigIntRange([BigIntSegment.closedClosed('NEGATIVE_INFINITY', val)]);
-      case Op.GT: return new BigIntRange([BigIntSegment.openClosed(val, 'POSITIVE_INFINITY')]);
-      case Op.GTE: return new BigIntRange([BigIntSegment.closedClosed(val, 'POSITIVE_INFINITY')]);
-      case Op.EQ: return new BigIntRange([BigIntSegment.closedClosed(val, val)]);
-      case Op.NEQ: return new BigIntRange([BigIntSegment.closedClosed(val, val)]).complement();
-      default: throw new Error(`Unsupported operator: field ${op} bigint`);
+  static makeInitialGivenOp(type: Primitive, op: Op, val: ExpressionPrimitives): BigIntRange {
+    const getRange = () => {
+      switch (op) {
+        case Op.LT:  return new BigIntRange([BigIntSegment.closedOpen('NEGATIVE_INFINITY', val)]);
+        case Op.LTE: return new BigIntRange([BigIntSegment.closedClosed('NEGATIVE_INFINITY', val)]);
+        case Op.GT:  return new BigIntRange([BigIntSegment.openClosed(val, 'POSITIVE_INFINITY')]);
+        case Op.GTE: return new BigIntRange([BigIntSegment.closedClosed(val, 'POSITIVE_INFINITY')]);
+        case Op.EQ:  return new BigIntRange([BigIntSegment.closedClosed(val, val)]);
+        case Op.NEQ: return new BigIntRange([BigIntSegment.closedClosed(val, val)]).complement();
+        default: throw new Error(`Unsupported operator: field ${op} bigint`);
+      }
     }
+    return BigIntRange.universal(type).intersect(getRange());
   }
 
   static updateGivenOp(op: Op, ranges: BigIntRange[]): BigIntRange {
@@ -1449,11 +1461,30 @@ export class BigIntSegment {
   to: Boundary<BigIntValue>;
 
   constructor(from: Boundary<BigIntValue>, to: Boundary<BigIntValue>) {
+    // BigInt's have a special property, that x < y -> x <= y-1.
+    // and x > z -> x >= z+1.
+    // Therefore
+    if (from.isOpen && typeof from.val === 'bigint') {
+      from.isOpen = false;
+      from.val += BigInt(1);
+    }
+    if (to.isOpen && typeof to.val === 'bigint') {
+      to.isOpen = false;
+      to.val -= BigInt(1);
+    }
     if (!BigIntSegment.isValid(from, to)) {
       throw new Error(`Invalid range from: ${from.val}, open:${from.isOpen}, to: ${to.val}, open:${to.isOpen}`);
     }
     this.from = {...from};
     this.to = {...to};
+  }
+
+  toString(): string {
+    const from_val = this.from.val === 'NEGATIVE_INFINITY' ? '-∞' : this.from.val;
+    const to_val = this.to.val === 'POSITIVE_INFINITY' ? '∞' : this.to.val;
+    const from_bound = this.from.isOpen ? '(' : '[';
+    const to_bound = this.to.isOpen ? ')' : ']';
+    return `${from_bound}${from_val}, ${to_val}${to_bound}`;
   }
 
   static isValid(from: Boundary<BigIntValue>, to: Boundary<BigIntValue>): boolean {
@@ -1584,7 +1615,19 @@ interface OperatorInfo {
   evalType: Primitive | 'same';
 }
 
-const numericTypes = [Primitive.NUMBER, Primitive.BIGINT];
+const bigIntTypes: Primitive[] = [
+  Primitive.BIGINT,
+  Primitive.LONG,
+  Primitive.INT
+];
+
+const numericTypes: Primitive[] = [Primitive.NUMBER].concat(bigIntTypes);
+
+// From https://kotlinlang.org/docs/reference/basic-types.html
+const INT_MIN = -(BigInt(2)**BigInt(31));
+const INT_MAX = (BigInt(2)**BigInt(31)) - BigInt(1);
+const LONG_MIN = -(BigInt(2)**BigInt(63));
+const LONG_MAX = (BigInt(2)**BigInt(63)) - BigInt(1);
 
 const operatorTable: Dictionary<OperatorInfo> = {
   // Booleans
@@ -1709,52 +1752,56 @@ export class RefinementOperator {
   }
 
   validateOperandCompatibility(operands: RefinementExpression[]): void {
+    // TODO(cypher1): Use the type checker here (with type variables) as this is not typesafe.
+    // E.g. if both arguments are unknown, the types will be unknown but not enforced to be equal.
+    // console.log(operands.map(op => `${op.toString()} : ${op.evalType}`).join(', '));
+    // console.log(`(${this.opInfo.argType}) -> ${this.opInfo.evalType}\n`);
     if (operands.length !== this.opInfo.nArgs) {
       throw new Error(`Expected ${this.opInfo.nArgs} operands. Got ${operands.length}.`);
     }
-    if (this.opInfo.argType === 'same') {
-      // If there is a type variable, apply the restriction.
-      if (operands[0].evalType === Primitive.UNKNOWN) {
-        operands[0].evalType = operands[1].evalType;
-        return;
-      }
-      if (operands[1].evalType === Primitive.UNKNOWN) {
-        operands[1].evalType = operands[0].evalType;
-        return;
-      }
-      if (operands[0].evalType !== operands[1].evalType) {
-        throw new Error(`Expected refinement expression ${operands[0]} and ${operands[1]} to have the same type. But found types ${operands[0].evalType} and ${operands[1].evalType}.`);
-      }
-      // TODO(cypher1): Use the type checker here (with type variables) as this is not typesafe.
-      // E.g. if both arguments are unknown, the types will be unknown but not enforced to be equal.
-    } else {
-      let argType: Primitive = Primitive.UNKNOWN;
-      // Discover the argument types.
-      if (this.opInfo.argType.length === 1) {
-        argType = this.opInfo.argType[0];
-      } else {
-        for (const operand of operands) {
-          if (this.opInfo.argType.includes(operand.evalType) && operand.evalType !== Primitive.UNKNOWN) {
-            argType = operand.evalType;
-          }
+    let argType: Primitive = Primitive.UNKNOWN;
+    // Discover the shared argument type.
+    for (const operand of operands) {
+      if (this.opInfo.argType === 'same') {
+        if (operand.evalType !== Primitive.UNKNOWN) {
+          argType = operand.evalType;
         }
-      }
-      // Check that the argument types are valid.
-      for (const operand of operands) {
-        if (operand.evalType === Primitive.UNKNOWN) {
-          operand.evalType = argType;
-        }
-        if (operand.evalType !== argType) {
-          let argString: string = argType;
-          if (argType === Primitive.UNKNOWN) {
-            argString = this.opInfo.argType.join(` or `);
-          }
-          throw new Error(
-            `Refinement expression ${operand} has type ${operand.evalType}. Expected ${argString}.`
-          );
-        }
+      } else if (this.opInfo.argType.includes(operand.evalType)) {
+        argType = operand.evalType;
       }
     }
+    // Set the query argument type.
+    for (const operand of operands) {
+      if (operand.evalType === Primitive.UNKNOWN) {
+        operand.evalType = argType;
+      }
+    }
+    // Update the eval type if necessary.
+    if (this.opInfo.evalType === 'same') {
+      this.opInfo.evalType = argType;
+    }
+    // Check that all args match the expected type.
+    for (const operand of operands) {
+      // Check that the argument types are valid.
+      if (this.opInfo.argType === 'same') {
+        const usesBigInts = bigIntTypes.includes(operand.evalType) && bigIntTypes.includes(argType);
+        if (operand.evalType !== argType && !usesBigInts) {
+          const operandStr = operands.join(' and ');
+          const operandTys = operands.map(op => op.evalType).join(' and ');
+          throw new Error(
+            `Expected refinement expression ${operandStr} to have the same types. But found types ${operandTys}.`
+          );
+        }
+      } else if (!this.opInfo.argType.includes(operand.evalType)) {
+        const last = this.opInfo.argType[this.opInfo.argType.length-1];
+        const front = this.opInfo.argType.slice(0, this.opInfo.argType.length-1);
+        let argString = `${front.join(`, `)} or ${last}`;
+        throw new Error(
+          `Refinement expression ${operand} has type ${operand.evalType}. Expected ${argString}.`
+        );
+      }
+    }
+    // Passed type checking.
   }
 }
 

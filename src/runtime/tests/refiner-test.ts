@@ -121,10 +121,10 @@ describe('refiner', () => {
               name: 'Josh',
           };
             ref.validateData(data);
-        }, `Refinement expression name has type Text. Expected Number or BigInt.`);
+        }, `Refinement expression name has type Text. Expected Number, BigInt, Long or Int.`);
     }));
     it('Throws error when operators and operands are incompatible: BigInt', Flags.withFieldRefinementsAllowed(async () => {
-      const validate = (data, relation: string) => {
+      const validate = (data: object, relation: string) => {
         const manifest = `
         particle Foo
             input: reads Something {num: BigInt [ ${relation} ]}`;
@@ -152,7 +152,7 @@ describe('refiner', () => {
     }));
     it('tests simple expression to range conversion', Flags.withFieldRefinementsAllowed(async () => {
       const validate = (refinement, segments: NumberSegment[]) => {
-        const typeData = {'num': 'Number'};
+        const typeData = {'num': `Number`};
         const manifestAst = parse(`
             particle Foo
                 input: reads Something {num: Number [ ${refinement} ]}
@@ -161,13 +161,52 @@ describe('refiner', () => {
         const range = NumberRange.fromExpression(ref.expression);
         assert.deepEqual(range, new NumberRange(segments));
       };
-        validate(`num < 3`, [NumberSegment.closedOpen(Number.NEGATIVE_INFINITY, 3)]);
-        validate(`num > 10`, [NumberSegment.openClosed(10, Number.POSITIVE_INFINITY)]);
-        validate(`not (num != 10)`, [NumberSegment.closedClosed(10, 10)]);
-        validate(`(num != 10)`, [
-          NumberSegment.closedOpen(Number.NEGATIVE_INFINITY, 10),
-          NumberSegment.openClosed(10, Number.POSITIVE_INFINITY)
-        ]);
+      validate(`num < 3`, [NumberSegment.closedOpen(Number.NEGATIVE_INFINITY, 3)]);
+      validate(`num > 10`, [NumberSegment.openClosed(10, Number.POSITIVE_INFINITY)]);
+      validate(`not (num != 10)`, [NumberSegment.closedClosed(10, 10)]);
+      validate(`(num != 10)`, [
+        NumberSegment.closedOpen(Number.NEGATIVE_INFINITY, 10),
+        NumberSegment.openClosed(10, Number.POSITIVE_INFINITY)
+      ]);
+    }));
+    describe.only('tests simple expression to range conversions using int', async () => {
+      const validate = (refinement: string, segments: BigIntSegment[]) => {
+        const typeData = {'num': `Int`};
+        const manifestAst = parse(`
+            particle Foo
+                input: reads Something {num: Int [ ${refinement} ]}
+        `);
+        const ref_ast = manifestAst[0].args[0].type.fields[0].type.refinement;
+        console.log(ref_ast);
+        const ref = Refinement.fromAst(ref_ast, typeData);
+        const range = BigIntRange.fromExpression(ref.expression);
+        assert.deepEqual(range, new BigIntRange(segments));
+      };
+      it.only('unbounded', Flags.withFieldRefinementsAllowed(async () => {
+        validate(`(num != 0n)`, [BigIntSegment.closedOpen(-(BigInt(2)**BigInt(31)), BigInt(0)), BigIntSegment.openClosed(BigInt(0), (BigInt(2)**BigInt(31)) - BigInt(1))]);
+      }));
+      it('with lower bound', Flags.withFieldRefinementsAllowed(async () => {
+        validate(`(num > 0n)`, [BigIntSegment.openClosed(BigInt(0), (BigInt(2)**BigInt(31)) - BigInt(1))]);
+      }));
+      it('with upper bound', Flags.withFieldRefinementsAllowed(async () => {
+        validate(`(num < 0n)`, [BigIntSegment.closedOpen(-(BigInt(2)**BigInt(31)), BigInt(0))]);
+      }));
+      it('with upper and lower bounds', Flags.withFieldRefinementsAllowed(async () => {
+        validate(`(num >= 2n) and (num < 3n)`, [BigIntSegment.closedClosed(BigInt(2), BigInt(2))]);
+      }));
+    });
+    it('tests simple expression to range conversions using long', Flags.withFieldRefinementsAllowed(async () => {
+      const validate = (refinement: string, segments: BigIntSegment[]) => {
+        const typeData = {'num': `Long`};
+        const manifestAst = parse(`
+            particle Foo
+                input: reads Something {num: Long [ ${refinement} ]}
+        `);
+        let ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
+        let range = BigIntRange.fromExpression(ref.expression);
+        assert.deepEqual(range, new BigIntRange(segments));
+      };
+      validate(`(num >= 2n) and (num < 3n)`, [BigIntSegment.closedClosed(BigInt(2), BigInt(2))]);
     }));
     it('tests simple expression to range conversions using bigint 1', Flags.withFieldRefinementsAllowed(async () => {
         const typeData = {'num': 'BigInt'};
@@ -199,8 +238,8 @@ describe('refiner', () => {
       const notNot10 = not10.complement();
       assert.deepEqual(singleValue, notNot10);
       assert.deepEqual(not10.segmentsForTesting(), [
-        {from: {val: 'NEGATIVE_INFINITY', isOpen: false}, to: {val: ten, isOpen: true}},
-        {from: {val: ten, isOpen: true}, to: {val: 'POSITIVE_INFINITY', isOpen: false}},
+        {from: {val: 'NEGATIVE_INFINITY', isOpen: false}, to: {val: BigInt(9), isOpen: false}},
+        {from: {val: BigInt(11), isOpen: false}, to: {val: 'POSITIVE_INFINITY', isOpen: false}},
       ]);
     }));
     it('tests simple expression to range conversions using bigint 3', Flags.withFieldRefinementsAllowed(async () => {
@@ -1182,7 +1221,7 @@ describe('refiner', () => {
               to: {isOpen: false, val: BigInt(10)},
             },
             {
-              from: {isOpen: true, val: BigInt(20)},
+              from: {isOpen: false, val: BigInt(21)},
               to: {isOpen: false, val: BigInt(30)},
             }
           ]);
