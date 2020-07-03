@@ -435,7 +435,8 @@ class DatabaseImplTest {
                     "txtlst" to FieldType.ListOf(FieldType.Text),
                     "lnglst" to FieldType.ListOf(FieldType.Long),
                     "bigint" to FieldType.BigInt,
-                    "inlined" to FieldType.InlineEntity("inlineHash")
+                    "inlined" to FieldType.InlineEntity("inlineHash"),
+                    "inlinelist" to FieldType.ListOf(FieldType.InlineEntity("inlineHash"))
                 ),
                 collections = mapOf(
                     "texts" to FieldType.Text,
@@ -485,7 +486,11 @@ class DatabaseImplTest {
                     "txtlst" to listOf("this", "is", "a", "list").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text)),
                     "lnglst" to listOf(1L, 2L, 4L, 4L, 3L).map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Long)),
                     "bigint" to BigInteger.valueOf(123).toReferencable(),
-                    "inlined" to inlineEntity
+                    "inlined" to inlineEntity,
+                    "inlinelist" to listOf(
+                        toInlineEntity("inlist", 3.0, setOf("A", "Z")),
+                        toInlineEntity("alsoinlist", 4.0, setOf("B", "Z"))
+                    ).toReferencable(FieldType.ListOf(FieldType.InlineEntity("inlineHash")))
                 ),
                 mapOf(
                     "texts" to setOf("abc".toReferencable(), "def".toReferencable()),

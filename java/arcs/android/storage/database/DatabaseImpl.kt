@@ -356,7 +356,8 @@ class DatabaseImpl(
                 }
                 else -> if (
                     isCollection == FieldClass.InlineEntity ||
-                    isCollection == FieldClass.InlineEntityCollection
+                    isCollection == FieldClass.InlineEntityCollection ||
+                    isCollection == FieldClass.InlineEntityList
                 ) {
                     val rawSingletons = mutableMapOf<FieldName, Referencable?>()
                     val rawCollections = mutableMapOf<FieldName, Set<Referencable>>()
@@ -401,6 +402,13 @@ class DatabaseImpl(
                             fieldName,
                             FieldType.Primitive(PrimitiveType.values()[typeId])
                         )
+                    }
+                    value?.let { list.add(it) }
+                }
+                FieldClass.InlineEntityList -> {
+                    val list = lists.getOrPut(fieldName) { mutableListOf() }
+                    listTypes.getOrPut(fieldName) {
+                        FieldType.InlineEntity(getSchemaHash(typeId, db))
                     }
                     value?.let { list.add(it) }
                 }
@@ -547,7 +555,8 @@ class DatabaseImpl(
                     val field = fields.getValue(fieldName)
                     put("field_id", field.fieldId)
                     val valueId = when {
-                        field.isCollection == FieldClass.List -> {
+                        field.isCollection == FieldClass.List ||
+                        field.isCollection == FieldClass.InlineEntityList -> {
                             if (fieldValue == null) return@forEach
                             require(fieldValue is ReferencableList<*>) {
                                 "Ordered List fields must be of type List. Instead found " +
@@ -583,7 +592,7 @@ class DatabaseImpl(
                         field.isCollection == FieldClass.InlineEntityCollection -> {
                             if (fieldValue == null) return@forEach
                             require(fieldValue is Set<*>) {
-                                "Collection fields must be of type Set. Instead found " +
+                                "Collection field $fieldName must be of type Set. Instead found " +
                                     "${fieldValue::class}."
                             }
                             if (fieldValue.isEmpty()) return@forEach
@@ -696,7 +705,8 @@ class DatabaseImpl(
         val valueIds = when {
             isPrimitiveType(typeId) ->
                 elements.map { getPrimitiveValueId(it as Referencable, typeId, db) }
-            fieldClass == FieldClass.InlineEntityCollection ->
+            fieldClass == FieldClass.InlineEntityCollection ||
+            fieldClass == FieldClass.InlineEntityList ->
                 elements.map {
                     require(it is RawEntity) {
                         "Expected element in collection to be a RawEntity but was $it."
@@ -1116,7 +1126,7 @@ class DatabaseImpl(
                         FROM field_values
                         INNER JOIN fields
                             ON field_values.field_id = fields.id
-                            AND fields.is_collection = ${FieldClass.InlineEntityCollection.ordinal}
+                            AND fields.is_collection IN $INLINE_ENTITY_COLLECTIONS
                             AND field_values.entity_storage_key_id IN (${storageKeyIds.joinToString()})
                         INNER JOIN collection_entries
                             ON field_values.value_id = collection_entries.collection_id
@@ -1332,7 +1342,15 @@ class DatabaseImpl(
         }
         schema.fields.singletons.forEach { (fieldName, fieldType) ->
             val fieldClass = when (fieldType.tag) {
-                FieldType.Tag.List -> FieldClass.List
+                FieldType.Tag.List -> {
+                    require (fieldType is FieldType.ListOf) {
+                        "FieldType with List tag is not a list!"
+                    }
+                    when (fieldType.primitiveType) {
+                        is FieldType.InlineEntity -> FieldClass.InlineEntityList
+                        else -> FieldClass.List
+                    }
+                }
                 FieldType.Tag.InlineEntity -> FieldClass.InlineEntity
                 else -> FieldClass.Singleton
             }
@@ -1800,7 +1818,8 @@ class DatabaseImpl(
         Collection,
         List,
         InlineEntity,
-        InlineEntityCollection;
+        InlineEntityCollection,
+        InlineEntityList;
 
         companion object {
             fun fromOrdinal(ordinal: Int) = when (ordinal) {
@@ -1809,6 +1828,7 @@ class DatabaseImpl(
                 2 -> FieldClass.List
                 3 -> FieldClass.InlineEntity
                 4 -> FieldClass.InlineEntityCollection
+                5 -> FieldClass.InlineEntityList
                 else -> throw IllegalStateException(
                     "Invalid value $ordinal for FieldClass stored in isCollection field."
                 )
@@ -2086,13 +2106,22 @@ class DatabaseImpl(
         private val FIELD_CLASSES_IN_COLLECTION_TABLE = listOf(
             FieldClass.Collection.ordinal,
             FieldClass.List.ordinal,
-            FieldClass.InlineEntityCollection.ordinal
+            FieldClass.InlineEntityCollection.ordinal,
+            FieldClass.InlineEntityList.ordinal
         )
 
         /** A version of FIELD_CLASSES_IN_COLLECTION_TABLE to use in SQL IN statements */
         private val COLLECTION_FIELDS =
             FIELD_CLASSES_IN_COLLECTION_TABLE.joinToString(prefix = "(", postfix = ")")
 
+
+        private val FIELD_CLASSES_FOR_ENTITY_COLLECTIONS = listOf(
+            FieldClass.InlineEntityCollection.ordinal,
+            FieldClass.InlineEntityList.ordinal
+        )
+
+        private val INLINE_ENTITY_COLLECTIONS =
+            FIELD_CLASSES_FOR_ENTITY_COLLECTIONS.joinToString(prefix = "(", postfix = ")")
         /**
          * The id and name of a sentinel type, to ensure references are namespaced separately to
          * primitive types. Changing this value will require a DB migration!
