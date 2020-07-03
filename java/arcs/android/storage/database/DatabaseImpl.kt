@@ -1089,7 +1089,11 @@ class DatabaseImpl(
              * is also used to clear expired references.
              */
             if (storageKeyIds.size > 0) {
-                val nestedEntityQuery =
+                /**
+                 * Entities can be nested either as singletons or as collections. The following
+                 * two clearEntities recursions cover each case respectively.
+                 */
+                val nestedEntitySingletonQuery =
                     """
                         SELECT
                             field_values.value_id,
@@ -1102,7 +1106,7 @@ class DatabaseImpl(
                         INNER JOIN storage_keys
                             ON field_values.value_id = storage_keys.id
                     """.trimIndent()
-                clearEntities(nestedEntityQuery, false)
+                clearEntities(nestedEntitySingletonQuery, false)
 
                 val nestedEntityCollectionQuery =
                     """
