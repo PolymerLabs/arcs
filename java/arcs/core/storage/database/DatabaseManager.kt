@@ -49,6 +49,13 @@ interface DatabaseManager {
     /** Clears all entities created in the given time range, in all known databases.  */
     suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long)
 
+    /**
+     * Reset all the databases: this is a full db wipe and all data is lost, including all
+     * metadata. The results of this operation do NOT propagate to handles, therefore it is safe to
+     * invoke only during a full system shutdown.
+     */
+    suspend fun resetAll()
+
     /** Garbage collection run: removes unused entities. */
     suspend fun runGarbageCollection(): Job
 }
