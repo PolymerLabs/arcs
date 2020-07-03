@@ -96,7 +96,7 @@ class AndroidSqliteDatabaseManager(
         dbCache.mapValues { it.value.snapshotStatistics() }
     }
 
-    suspend fun resetAll() {
+    override suspend fun resetAll() {
         registry.fetchAll()
             .map { getDatabase(it.name, it.isPersistent) as DatabaseImpl }
             .forEach { it.reset() }

@@ -122,7 +122,19 @@ class AndroidSqliteDatabaseManagerTest {
             1,
             VersionMap("me" to 1)
         )
-        assertThat(database.get(key,DatabaseData.Entity::class, schema)).isEqualTo(nulledEntity)
+        assertThat(database.get(key, DatabaseData.Entity::class, schema)).isEqualTo(nulledEntity)
+    }
+
+    @Test
+    fun resetDatabases() = runBlockingTest {
+        val database = manager.getDatabase("foo", true)
+        database.insertOrUpdate(key, entity)
+        assertThat(database.get(key,DatabaseData.Entity::class, schema)).isEqualTo(entity)
+
+        manager.resetAll()
+
+        // Entity is gone, no tombstone left.
+        assertThat(database.get(key, DatabaseData.Entity::class, schema)).isNull()
     }
 
     @Test
