@@ -1343,7 +1343,7 @@ class DatabaseImpl(
         schema.fields.singletons.forEach { (fieldName, fieldType) ->
             val fieldClass = when (fieldType.tag) {
                 FieldType.Tag.List -> {
-                    require (fieldType is FieldType.ListOf) {
+                    require(fieldType is FieldType.ListOf) {
                         "FieldType with List tag is not a list!"
                     }
                     when (fieldType.primitiveType) {
@@ -2113,7 +2113,6 @@ class DatabaseImpl(
         /** A version of FIELD_CLASSES_IN_COLLECTION_TABLE to use in SQL IN statements */
         private val COLLECTION_FIELDS =
             FIELD_CLASSES_IN_COLLECTION_TABLE.joinToString(prefix = "(", postfix = ")")
-
 
         private val FIELD_CLASSES_FOR_ENTITY_COLLECTIONS = listOf(
             FieldClass.InlineEntityCollection.ordinal,
