@@ -71,12 +71,7 @@ open class StorageService : ResurrectorService() {
     private val stats = BindingContextStatsImpl()
     private val log = TaggedLog { "StorageService" }
     // Can be overridden by subclasses.
-    open val config = StorageServiceConfig(
-        true, // ttlJobEnabled
-        TTL_JOB_INTERVAL_HOURS,
-        true, // garbageCollectionJobEnabled
-        GC_JOB_INTERVAL_HOURS
-    )
+    open val config = StorageServiceConfig(ttlJobEnabled = true, garbageCollectionJobEnabled = true)
     private val workManager: WorkManager by lazy { WorkManager.getInstance(this) }
 
     @ExperimentalCoroutinesApi
@@ -120,7 +115,8 @@ open class StorageService : ResurrectorService() {
                     .setRequiresDeviceIdle(true)
                     .setRequiresCharging(true)
                     .build()
-            ).build()
+            )
+            .build()
         workManager.enqueueUniquePeriodicWork(
             DatabaseGarbageCollectionPeriodicTask.WORKER_TAG,
             ExistingPeriodicWorkPolicy.REPLACE,
@@ -129,24 +125,21 @@ open class StorageService : ResurrectorService() {
     }
 
     protected fun schedulePeriodicJobs(config: StorageServiceConfig) {
-        if (!config.ttlJobEnabled) {
-            workManager.cancelAllWorkByTag(PeriodicCleanupTask.WORKER_TAG)
-        } else {
+        if (config.ttlJobEnabled) {
             scheduleTtlJob(config.ttlHoursInterval)
-        }
-        if (!config.garbageCollectionJobEnabled) {
-            workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
         } else {
+            workManager.cancelAllWorkByTag(PeriodicCleanupTask.WORKER_TAG)
+        }
+        if (config.garbageCollectionJobEnabled) {
             scheduleGcJob(config.garbageCollectionHoursInterval)
+        } else {
+            workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
         }
     }
 
-    protected fun disableAllPeriodicJobs() = schedulePeriodicJobs(StorageServiceConfig(
-        false, // ttlJobEnabled
-        TTL_JOB_INTERVAL_HOURS,
-        false, // garbageCollectionJobEnabled
-        GC_JOB_INTERVAL_HOURS
-    ))
+    protected fun disableAllPeriodicJobs() = schedulePeriodicJobs(
+        StorageServiceConfig(ttlJobEnabled = false, garbageCollectionJobEnabled = false)
+    )
 
     @ExperimentalCoroutinesApi
     override fun onBind(intent: Intent): IBinder? {
@@ -309,9 +302,9 @@ open class StorageService : ResurrectorService() {
 
     data class StorageServiceConfig(
         val ttlJobEnabled: Boolean,
-        val ttlHoursInterval: Long,
+        val ttlHoursInterval: Long = TTL_JOB_INTERVAL_HOURS,
         val garbageCollectionJobEnabled: Boolean,
-        val garbageCollectionHoursInterval: Long
+        val garbageCollectionHoursInterval: Long = GC_JOB_INTERVAL_HOURS
     )
 
     companion object {
