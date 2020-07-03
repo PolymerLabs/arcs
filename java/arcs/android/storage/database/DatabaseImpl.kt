@@ -2110,6 +2110,10 @@ class DatabaseImpl(
         private val COLLECTION_FIELDS =
             FIELD_CLASSES_IN_COLLECTION_TABLE.joinToString(prefix = "(", postfix = ")")
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> e8cd1c070... implementation + 1 test
         private val FIELD_CLASSES_FOR_ENTITY_COLLECTIONS = listOf(
             FieldClass.InlineEntityCollection.ordinal,
             FieldClass.InlineEntityList.ordinal
