@@ -368,7 +368,6 @@ export class BinaryExpression extends RefinementExpression {
       } catch (e) {
         // tslint:disable-next-line no-empty
         //TODO(cypher1): Report polynomial errors without using the console.
-        console.error(e);
       }
     } else {
       this.leftExpr = this.leftExpr.rearrange();
