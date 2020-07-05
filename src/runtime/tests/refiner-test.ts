@@ -157,8 +157,8 @@ describe('refiner', () => {
             particle Foo
                 input: reads Something {num: Number [ ${refinement} ]}
         `);
-        let ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
-        let range = NumberRange.fromExpression(ref.expression);
+        const ref = Refinement.fromAst(manifestAst[0].args[0].type.fields[0].type.refinement, typeData);
+        const range = NumberRange.fromExpression(ref.expression);
         assert.deepEqual(range, new NumberRange(segments));
       };
         validate(`num < 3`, [NumberSegment.closedOpen(Number.NEGATIVE_INFINITY, 3)]);
