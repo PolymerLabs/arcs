@@ -183,6 +183,8 @@ class EntityHandleManager(
     /** Close all [StorageProxy] instances in this [EntityHandleManager]. */
     suspend fun close() {
         proxyMutex.withLock {
+            // Needed to avoid receiving ModelUpdate after Proxy closed error
+            scheduler.waitForIdle()
             singletonStorageProxies.values.forEach { it.close() }
             collectionStorageProxies.values.forEach { it.close() }
             singletonStorageProxies.clear()
