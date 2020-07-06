@@ -650,6 +650,7 @@ class ReferenceModeStore private constructor(
         ) {
             when (it) {
                 is Reference -> it
+                is RawEntity -> CrdtEntity.Reference.wrapReferencable(it)
                 is ReferencableList<*> -> CrdtEntity.Reference.wrapReferencable(it)
                 else -> CrdtEntity.Reference.buildReference(it)
             }
