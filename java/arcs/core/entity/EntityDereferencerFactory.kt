@@ -37,8 +37,18 @@ class EntityDereferencerFactory(
 
     private fun injectDereferencers(schema: Schema, rawEntity: RawEntity) {
         fun injectField(fieldType: FieldType?, fieldValue: Any?) {
+            var schemaHash: String? = null
             if (fieldType is FieldType.EntityRef) {
-                val fieldSchema = SchemaRegistry.getSchema(fieldType.schemaHash)
+                schemaHash = fieldType.schemaHash
+            } else if (fieldType is FieldType.InlineEntity) {
+                schemaHash = fieldType.schemaHash
+            }
+            schemaHash?.let {
+                val fieldSchema = requireNotNull(
+                    SchemaRegistry.getSchema(it)
+                ) {
+                    "Unknown schema with hash ${it}."
+                }
                 injectDereferencers(fieldSchema, fieldValue)
             }
         }

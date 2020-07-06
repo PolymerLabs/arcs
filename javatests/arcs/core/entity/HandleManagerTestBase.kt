@@ -66,6 +66,7 @@ open class HandleManagerTestBase {
     init {
         SchemaRegistry.register(Person.SCHEMA)
         SchemaRegistry.register(Hat.SCHEMA)
+        SchemaRegistry.register(CoolnessIndex.SCHEMA)
     }
 
     private val backingKey = RamDiskStorageKey("entities")
@@ -76,19 +77,17 @@ open class HandleManagerTestBase {
         entityId = "entity1",
         name = "Jason",
         age = 21.0,
-        isCool = false,
         bestFriend = StorageReference("entity2", backingKey, null),
-        hat = null,
-        favoriteWords = listOf("coolio", "sasquatch", "indubitably")
+        favoriteWords = listOf("coolio", "sasquatch", "indubitably"),
+        coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 4, isCool = false, hat = null)
     )
     private val entity2 = Person(
         entityId = "entity2",
         name = "Jason",
         age = 22.0,
-        isCool = true,
         bestFriend = StorageReference("entity1", backingKey, null),
-        hat = null,
-        favoriteWords = listOf("wonderful", "exemplary", "yeet")
+        favoriteWords = listOf("wonderful", "exemplary", "yeet"),
+        coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 54, isCool = true, hat = null)
     )
 
     private val singletonRefKey = RamDiskStorageKey("single-ent")
@@ -341,10 +340,9 @@ open class HandleManagerTestBase {
             entityId = "a-hatted-individual",
             name = "Jason",
             age = 25.0,
-            isCool = true,
             bestFriend = null,
-            hat = fezStorageRef,
-            favoriteWords = listOf("Fez")
+            favoriteWords = listOf("Fez"),
+            coolnessIndex = CoolnessIndex(pairsOfShoesOwned =  555, isCool = true, hat = fezStorageRef)
         )
         val writeHandle = writeHandleManager.createSingletonHandle()
         val readHandle = readHandleManager.createSingletonHandle()
@@ -357,7 +355,7 @@ open class HandleManagerTestBase {
 
         // Read out the entity, and fetch its hat.
         val entityOut = readHandle.dispatchFetch()!!
-        val hatRef = entityOut.hat!!
+        val hatRef = entityOut.coolnessIndex.hat!!
         assertThat(hatRef).isEqualTo(fezStorageRef)
         val rawHat = hatRef.dereference(coroutineContext)!!
         val hat = Hat.deserialize(rawHat)
@@ -791,9 +789,8 @@ open class HandleManagerTestBase {
             entityId = "a-hatted-individual",
             name = "Jason",
             age = 25.0,
-            isCool = true,
             bestFriend = null,
-            hat = fezStorageRef
+            coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 10, isCool = true, hat = fezStorageRef)
         )
         val readHandleKnows = readHandle.onUpdateDeferred {
             it.find { person -> person.entityId == "a-hatted-individual" } != null
@@ -805,7 +802,7 @@ open class HandleManagerTestBase {
         val entityOut = readHandle.dispatchFetchAll().single {
             it.entityId == "a-hatted-individual"
         }
-        val hatRef = entityOut.hat!!
+        val hatRef = entityOut.coolnessIndex.hat!!
         assertThat(hatRef).isEqualTo(fezStorageRef)
 
         hatMonitorKnows.await()
@@ -911,7 +908,7 @@ open class HandleManagerTestBase {
 
     @Test
     fun collection_dataConsideredInvalidByRefinementThrows() = testRunner {
-        val timeTraveler = Person("doctor1", "the Doctor", -900.0, false, null, null)
+        val timeTraveler = Person("doctor1", "the Doctor", -900.0, coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 0, isCool = false))
         val handle = writeHandleManager.createCollectionHandle()
         handle.dispatchStore(entity1, entity2)
 
@@ -1112,10 +1109,9 @@ open class HandleManagerTestBase {
         singletons = mapOf(
             "name" to null,
             "age" to null,
-            "is_cool" to null,
             "best_friend" to null,
-            "hat" to null,
-            "favorite_words" to null
+            "favorite_words" to null,
+            "coolness_index" to null
         ),
         collections = emptyMap(),
         creationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP,
@@ -1123,7 +1119,7 @@ open class HandleManagerTestBase {
     )
 
     data class CoolnessIndex(
-        override val entityId: ReferenceId,
+        override val entityId: ReferenceId = "",
         val pairsOfShoesOwned: Int,
         val isCool: Boolean,
         val hat: StorageReference? = null
