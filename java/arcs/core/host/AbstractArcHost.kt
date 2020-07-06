@@ -104,7 +104,7 @@ abstract class AbstractArcHost(
 
     override suspend fun pause() {
         paused = true
-        runningArcs.forEach { (arcId, context) ->
+        runningArcs.toMap().forEach { (arcId, context) ->
             try {
                 val partition = contextToPartition(arcId, context)
                 stopArc(partition)
