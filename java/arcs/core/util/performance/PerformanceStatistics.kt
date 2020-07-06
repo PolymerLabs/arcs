@@ -11,12 +11,12 @@
 
 package arcs.core.util.performance
 
+import arcs.core.util.CoreDispatchers
 import arcs.core.util.RunningStatistics
 import arcs.core.util.guardedBy
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -79,7 +79,7 @@ class PerformanceStatistics private constructor(
 
     /** Asynchronously takes a [Snapshot] of the current performance statistics. */
     fun snapshotAsync(
-        coroutineContext: CoroutineContext = Dispatchers.Default
+        coroutineContext: CoroutineContext = CoreDispatchers.Default
     ): Deferred<Snapshot> = CoroutineScope(coroutineContext).async { snapshot() }
 
     /**
@@ -95,7 +95,7 @@ class PerformanceStatistics private constructor(
         }
         val (result, counts) = timedResult
 
-        CoroutineScope(Dispatchers.Default).launch {
+        CoroutineScope(CoreDispatchers.Default).launch {
             mutex.withLock {
                 runtimeStats.logStat(elapsed.toDouble())
                 counters.append(counts)

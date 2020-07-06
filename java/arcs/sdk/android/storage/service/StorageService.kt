@@ -39,6 +39,7 @@ import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.util.TaggedLog
 import arcs.core.util.performance.MemoryStats
 import arcs.core.util.performance.PerformanceStatistics
+import arcs.jvm.util.JvmDispatchers
 import java.io.FileDescriptor
 import java.io.PrintWriter
 import java.util.concurrent.ConcurrentHashMap
@@ -46,7 +47,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -58,7 +58,7 @@ import kotlinx.coroutines.runBlocking
  * the [IStorageService] interface when bound-to by a client.
  */
 open class StorageService : ResurrectorService() {
-    private val coroutineContext = Dispatchers.IO + CoroutineName("StorageService")
+    private val coroutineContext = JvmDispatchers.IO + CoroutineName("StorageService")
     private val scope = CoroutineScope(coroutineContext)
     open val writeBackScope = CoroutineScope(
         Executors.newCachedThreadPool {

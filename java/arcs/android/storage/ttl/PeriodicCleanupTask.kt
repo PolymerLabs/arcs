@@ -15,7 +15,7 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.util.TaggedLog
-import kotlinx.coroutines.Dispatchers
+import arcs.jvm.util.JvmDispatchers
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -29,7 +29,7 @@ class PeriodicCleanupTask(
     private val log = TaggedLog { WORKER_TAG }
     init { log.debug { "Created." } }
 
-    override fun doWork(): Result = runBlocking(Dispatchers.IO) {
+    override fun doWork(): Result = runBlocking(JvmDispatchers.IO) {
         log.debug { "Running." }
         // Use the DatabaseDriverProvider instance of the databaseManager to make sure changes by
         // TTL expiry are propagated to listening Stores.

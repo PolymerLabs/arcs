@@ -25,10 +25,10 @@ import arcs.core.host.ArcState
 import arcs.core.host.ArcStateChangeCallback
 import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.host.ParticleIdentifier
+import arcs.core.util.CoreDispatchers
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -96,7 +96,7 @@ class IntentArcHostAdapter(
     ) : ResultReceiver(Handler(Looper.getMainLooper())) {
         override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
             val scope = CoroutineScope(
-                EmptyCoroutineContext + Dispatchers.Default + Job() + CoroutineName(
+                EmptyCoroutineContext + CoreDispatchers.Default + Job() + CoroutineName(
                     "ArcStateChange"
                 )
             )

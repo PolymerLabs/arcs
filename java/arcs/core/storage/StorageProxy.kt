@@ -16,6 +16,7 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
+import arcs.core.util.CoreDispatchers
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
@@ -25,7 +26,6 @@ import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.coroutineScope
@@ -128,7 +128,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                     busySendingMessagesChannel.send(false)
                 }
             }
-            .flowOn(Dispatchers.Default)
+            .flowOn(CoreDispatchers.Default)
             .launchIn(scheduler.scope)
     }
 

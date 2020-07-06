@@ -14,9 +14,9 @@ package arcs.android.devtools
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import arcs.core.util.CoreDispatchers
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 
 /**
@@ -25,7 +25,7 @@ import kotlinx.coroutines.cancel
  */
 class DevToolsService : Service() {
 
-    private val coroutineContext = Dispatchers.Default + CoroutineName("DevtoolsService")
+    private val coroutineContext = CoreDispatchers.Default + CoroutineName("DevtoolsService")
     private val scope = CoroutineScope(coroutineContext)
     private val binder = DevToolsBinder(scope)
 

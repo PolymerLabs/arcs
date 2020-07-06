@@ -17,9 +17,9 @@ import arcs.core.crdt.VersionMap
 import arcs.core.data.Capability.Ttl
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
+import arcs.core.util.CoreDispatchers
 import arcs.core.util.Time
 import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.Dispatchers
 
 /**
  * [arcs.core.storage.ReferenceModeStore] uses an expanded notion of Reference that also includes a
@@ -84,7 +84,7 @@ data class Reference(
 interface Dereferencer<T> {
     suspend fun dereference(
         reference: Reference,
-        coroutineContext: CoroutineContext = Dispatchers.Default
+        coroutineContext: CoroutineContext = CoreDispatchers.Default
     ): T?
 
     /**

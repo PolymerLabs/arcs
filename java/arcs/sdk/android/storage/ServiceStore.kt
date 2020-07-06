@@ -35,6 +35,7 @@ import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StoreOptions
 import arcs.core.util.TaggedLog
+import arcs.jvm.util.JvmDispatchers
 import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.StorageServiceConnection
@@ -42,7 +43,6 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -69,7 +69,7 @@ import kotlinx.coroutines.withTimeout
 class ServiceStoreFactory(
     private val context: Context,
     private val lifecycle: Lifecycle,
-    private val coroutineContext: CoroutineContext = Dispatchers.IO,
+    private val coroutineContext: CoroutineContext = JvmDispatchers.IO,
     private val connectionFactory: ConnectionFactory? = null
 ) : ActivationFactory {
     override suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(

@@ -18,10 +18,10 @@ import androidx.annotation.VisibleForTesting
 import arcs.android.common.resurrection.ResurrectionRequest.UnregisterRequest
 import arcs.core.storage.StorageKey
 import arcs.core.util.guardedBy
+import arcs.jvm.util.JvmDispatchers
 import java.io.PrintWriter
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelChildren
@@ -40,7 +40,7 @@ abstract class ResurrectorService : Service() {
     protected open val resurrectionDatabaseName: String = DbHelper.RESURRECTION_DB_NAME
 
     protected open val job =
-        Job() + Dispatchers.IO + CoroutineName("ResurrectorService")
+        Job() + JvmDispatchers.IO + CoroutineName("ResurrectorService")
 
     private val dbHelper: DbHelper by lazy { DbHelper(this, resurrectionDatabaseName) }
 

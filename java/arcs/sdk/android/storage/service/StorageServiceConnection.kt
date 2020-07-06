@@ -19,12 +19,12 @@ import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.toParcelable
 import arcs.core.storage.StoreOptions
+import arcs.core.util.CoreDispatchers
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 
@@ -44,7 +44,7 @@ typealias ManagerConnectionFactory = () -> StorageServiceConnection
 fun DefaultConnectionFactory(
     context: Context,
     bindingDelegate: StorageServiceBindingDelegate = DefaultStorageServiceBindingDelegate(context),
-    coroutineContext: CoroutineContext = Dispatchers.Default
+    coroutineContext: CoroutineContext = CoreDispatchers.Default
 ): ConnectionFactory = { options, crdtType ->
     StorageServiceConnection(bindingDelegate, options.toParcelable(crdtType), coroutineContext)
 }
@@ -59,7 +59,7 @@ fun DefaultConnectionFactory(
 fun ManagerConnectionFactory(
     context: Context,
     bindingDelegate: StorageServiceBindingDelegate = StorageServiceManagerBindingDelegate(context),
-    coroutineContext: CoroutineContext = Dispatchers.Default
+    coroutineContext: CoroutineContext = CoreDispatchers.Default
 ): ManagerConnectionFactory = { StorageServiceConnection(bindingDelegate, null, coroutineContext) }
 
 /** Defines an object capable of binding-to and unbinding-from the [StorageService]. */
@@ -125,7 +125,7 @@ class StorageServiceConnection(
     /** Parcelable [StoreOptions] to pass to the [bindingDelegate] when connecting. */
     private val storeOptions: ParcelableStoreOptions?,
     /** Parent [CoroutineContext] for the [Deferred] returned by [connectAsync]. */
-    private val coroutineContext: CoroutineContext = Dispatchers.Default
+    private val coroutineContext: CoroutineContext = CoreDispatchers.Default
 ) : ServiceConnection {
     private var needsDisconnect = false
     private var service = atomic<CompletableDeferred<IBinder>?>(null)

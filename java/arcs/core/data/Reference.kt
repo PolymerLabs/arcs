@@ -12,8 +12,8 @@
 package arcs.core.data
 
 import arcs.core.common.Referencable
+import arcs.core.util.CoreDispatchers
 import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.Dispatchers
 
 /**
  * A reference to an [Entity] of type [T].
@@ -33,13 +33,13 @@ interface Reference<T : Referencable> : arcs.core.crdt.CrdtEntity.Reference {
      *
      * Returns `null` if this [Reference] is no longer alive.
      */
-    suspend fun dereference(coroutineContext: CoroutineContext = Dispatchers.Default): T?
+    suspend fun dereference(coroutineContext: CoroutineContext = CoreDispatchers.Default): T?
 
     /** Returns whether or not the [Entity] being referenced still exists. */
-    suspend fun isAlive(coroutineContext: CoroutineContext = Dispatchers.Default): Boolean =
+    suspend fun isAlive(coroutineContext: CoroutineContext = CoreDispatchers.Default): Boolean =
         dereference(coroutineContext) != null
 
     /** Returns whether or not the [Entity] being referenced has been removed from storage. */
-    suspend fun isDead(coroutineContext: CoroutineContext = Dispatchers.Default): Boolean =
+    suspend fun isDead(coroutineContext: CoroutineContext = CoreDispatchers.Default): Boolean =
         !isAlive(coroutineContext)
 }
