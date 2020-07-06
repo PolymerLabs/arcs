@@ -126,7 +126,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                     busySendingMessagesChannel.send(false)
                 }
             }
-            // TODO(jasonwyatt): this should probably be flown on a different scope.
+            // TODO(yuangu-google): this should probably be flown on a different scope.
             .launchIn(scheduler.scope)
     }
 
