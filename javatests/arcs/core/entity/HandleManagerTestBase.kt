@@ -116,8 +116,8 @@ open class HandleManagerTestBase {
         )
         runBlocking {
             withTimeout(testTimeout) { block() }
-            schedulerProvider.cancelAll()
             monitorHandleManager.close()
+            schedulerProvider.cancelAll()
         }
     }
 
@@ -144,12 +144,12 @@ open class HandleManagerTestBase {
 
     // Must call from subclasses
     open fun tearDown() = runBlocking<Unit> {
-        schedulerProvider.cancelAll()
         // TODO(b/151366899): this is less than ideal - we should investigate how to make the entire
         //  test process cancellable/stoppable, even when we cross scopes into a BindingContext or
         //  over to other RamDisk listeners.
         readHandleManager.close()
         writeHandleManager.close()
+        schedulerProvider.cancelAll()
         withTimeoutOrNull(5000) {
             ramDiskActivity.first()
         }
