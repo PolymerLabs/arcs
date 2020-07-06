@@ -25,7 +25,7 @@ class InformationFlowLabelTest {
         A, B, C, D;
 
         val asPredicate: Predicate.Label
-            get() = Predicate.Label(InformationFlowLabel.SemanticTag(name))
+            get() = Predicate.Label(SemanticTag(name))
     }
     private val labels = enumValues<Labels>().map { it.name }
     private val indicesMap: Map<InformationFlowLabel, Int> = enumValues<Labels>().map {
@@ -61,25 +61,25 @@ class InformationFlowLabelTest {
     @Test
     fun andSequence() {
         assertThat(
-            Predicate.and(listOf(Labels.A.asPredicate, Labels.B.asPredicate, Labels.C.asPredicate))
+            Predicate.and(Labels.A.asPredicate, Labels.B.asPredicate, Labels.C.asPredicate)
         ).isEqualTo((Labels.A.asPredicate and Labels.B.asPredicate) and Labels.C.asPredicate)
     }
 
     @Test
     fun andSequence_tooShort() {
-        assertFailsWith<IllegalArgumentException> { Predicate.and(listOf(Labels.A.asPredicate)) }
+        assertFailsWith<IllegalArgumentException> { Predicate.and(Labels.A.asPredicate) }
     }
 
     @Test
     fun orSequence() {
         assertThat(
-            Predicate.or(listOf(Labels.A.asPredicate, Labels.B.asPredicate, Labels.C.asPredicate))
+            Predicate.or(Labels.A.asPredicate, Labels.B.asPredicate, Labels.C.asPredicate)
         ).isEqualTo((Labels.A.asPredicate or Labels.B.asPredicate) or Labels.C.asPredicate)
     }
 
     @Test
     fun orSequence_tooShort() {
-        assertFailsWith<IllegalArgumentException> { Predicate.or(listOf(Labels.A.asPredicate)) }
+        assertFailsWith<IllegalArgumentException> { Predicate.or(Labels.A.asPredicate) }
     }
 
     @Test

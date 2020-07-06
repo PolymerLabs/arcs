@@ -47,15 +47,15 @@ sealed class InformationFlowLabel {
         fun not() = Not(this)
 
         companion object {
-            /** Combines a list of >= 2 predicates via the [And] operator. */
-            fun and(predicates: List<Predicate>): And = combine(predicates) { a, b -> a and b }
+            /** Combines predicates via the [And] operator (must supply at least two). */
+            fun and(vararg predicates: Predicate): And = combine(predicates) { a, b -> a and b }
 
-            /** Combines a list of >= 2 predicates via the [Or] operator. */
-            fun or(predicates: List<Predicate>): Or = combine(predicates) { a, b -> a or b }
+            /** Combines predicates via the [Or] operator (must supply at least two). */
+            fun or(vararg predicates: Predicate): Or = combine(predicates) { a, b -> a or b }
 
             /** Combines a list of >= 2 predicates with the given accumulator. */
             private fun <T : Predicate> combine(
-                predicates: List<Predicate>,
+                predicates: Array<out Predicate>,
                 acc: (Predicate, Predicate) -> T
             ): T {
                 require(predicates.size >= 2) {
@@ -65,7 +65,7 @@ sealed class InformationFlowLabel {
                 if (predicates.size == 2) {
                     return initial
                 }
-                return predicates.subList(2, predicates.size).fold(initial, acc)
+                return predicates.toList().subList(2, predicates.size).fold(initial, acc)
             }
         }
     }
