@@ -15,7 +15,6 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.util.TaggedLog
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 
 /**
