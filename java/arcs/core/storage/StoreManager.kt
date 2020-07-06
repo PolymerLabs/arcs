@@ -31,13 +31,13 @@ class StoreManager(
     private val storesMutex = Mutex()
     private val stores by guardedBy(storesMutex, mutableMapOf<StorageKey, ActiveStore<*, *, *>>())
 
-    @ExperimentalCoroutinesApi
     @Suppress("UNCHECKED_CAST")
+    @ExperimentalCoroutinesApi
     suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> get(
-        storeOptions: StoreOptions<Data, Op, T>
+        storeOptions: StoreOptions
     ) = storesMutex.withLock {
         stores.getOrPut(storeOptions.storageKey) {
-            (activationFactory ?: Store.defaultFactory).invoke(storeOptions)
+            (activationFactory ?: Store.defaultFactory).invoke<Data, Op, T>(storeOptions)
         } as ActiveStore<Data, Op, T>
     }
 

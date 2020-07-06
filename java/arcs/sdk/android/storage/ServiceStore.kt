@@ -73,7 +73,7 @@ class ServiceStoreFactory(
     private val connectionFactory: ConnectionFactory? = null
 ) : ActivationFactory {
     override suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(
-        options: StoreOptions<Data, Op, ConsumerData>
+        options: StoreOptions
     ): ServiceStore<Data, Op, ConsumerData> {
         val storeContext = coroutineContext + CoroutineName("ServiceStore(${options.storageKey})")
         val parcelableType = when (options.type) {
@@ -84,7 +84,7 @@ class ServiceStoreFactory(
             else ->
                 throw IllegalArgumentException("Service store can't handle type ${options.type}")
         }
-        return ServiceStore(
+        return ServiceStore<Data, Op, ConsumerData>(
             options = options,
             crdtType = parcelableType,
             lifecycle = lifecycle,
@@ -100,7 +100,7 @@ class ServiceStoreFactory(
 @OptIn(FlowPreview::class)
 @ExperimentalCoroutinesApi
 class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
-    private val options: StoreOptions<Data, Op, ConsumerData>,
+    private val options: StoreOptions,
     private val crdtType: ParcelableCrdtType,
     lifecycle: Lifecycle,
     private val connectionFactory: ConnectionFactory,

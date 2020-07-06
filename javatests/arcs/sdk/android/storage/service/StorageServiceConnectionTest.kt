@@ -140,7 +140,7 @@ class StorageServiceConnectionTest {
     }
 
     companion object {
-        private val OPTIONS = StoreOptions<CrdtCount.Data, CrdtCount.Operation, Int>(
+        private val OPTIONS = StoreOptions(
             RamDiskStorageKey("myData"),
             CountType()
         ).toParcelable(ParcelableCrdtType.Count)

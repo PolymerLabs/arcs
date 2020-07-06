@@ -46,7 +46,7 @@ import org.robolectric.Shadows.shadowOf
 @RunWith(AndroidJUnit4::class)
 class StorageServiceTest {
     private lateinit var app: Application
-    private lateinit var storeOptions: StoreOptions<CrdtCount.Data, CrdtCount.Operation, Int>
+    private lateinit var storeOptions: StoreOptions
     private lateinit var workManager: WorkManager
 
     private val ttlTag = PeriodicCleanupTask.WORKER_TAG
@@ -203,7 +203,7 @@ class StorageServiceTest {
     }
 
     private fun lifecycle(
-        storeOptions: StoreOptions<*, *, *>,
+        storeOptions: StoreOptions,
         block: (StorageService, BindingContext) -> Unit
     ) {
         val intent = StorageService.createBindIntent(

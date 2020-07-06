@@ -28,7 +28,7 @@ import org.junit.runner.RunWith
 class ParcelableStoreOptionsTest {
     @Test
     fun parcelableRoundtrip_works() {
-        val storeOptions = StoreOptions<CrdtCount.Data, CrdtCount.Operation, Int>(
+        val storeOptions = StoreOptions(
             RamDiskStorageKey("test"),
             CountType(),
             versionToken = "Foo"
@@ -50,7 +50,7 @@ class ParcelableStoreOptionsTest {
 
     @Test
     fun parcelableRoundtrip_works_withAllowableNullDefaults() {
-        val storeOptions = StoreOptions<CrdtCount.Data, CrdtCount.Operation, Int>(
+        val storeOptions = StoreOptions(
             ReferenceModeStorageKey(
                 RamDiskStorageKey("backing"),
                 RamDiskStorageKey("collection")

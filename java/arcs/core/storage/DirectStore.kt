@@ -45,7 +45,7 @@ import kotlinx.coroutines.runBlocking
  */
 @Suppress("EXPERIMENTAL_API_USAGE")
 class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constructor(
-    options: StoreOptions<Data, Op, T>,
+    options: StoreOptions,
     /* internal */
     val localModel: CrdtModel<Data, Op, T>,
     /* internal */
@@ -498,7 +498,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
         @Suppress("UNCHECKED_CAST")
         suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
-            options: StoreOptions<Data, Op, T>
+            options: StoreOptions
         ): DirectStore<Data, Op, T> {
             val crdtType = requireNotNull(options.type as CrdtModelType<Data, Op, T>) {
                 "Type not supported: ${options.type}"

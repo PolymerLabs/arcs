@@ -22,13 +22,11 @@ import arcs.core.type.Type
  * within the [StoreOptions].
  */
 abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
-    options: StoreOptions<Data, Op, ConsumerData>
+    options: StoreOptions
 ) : IStore<Data, Op, ConsumerData>, StorageCommunicationEndpointProvider<Data, Op, ConsumerData> {
     override val storageKey: StorageKey = options.storageKey
     override val type: Type = options.type
     open val versionToken: String? = options.versionToken
-    /** The [IStore] this instance is fronting. */
-    val baseStore: IStore<Data, Op, ConsumerData>? = options.baseStore
 
     /** Suspends until all pending operations are complete. */
     open suspend fun idle() = Unit

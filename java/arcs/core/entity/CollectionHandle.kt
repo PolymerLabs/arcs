@@ -14,12 +14,8 @@ import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSet
 import arcs.core.data.RawEntity
 import arcs.core.storage.StorageProxy
-import arcs.core.storage.StoreOptions
 import kotlinx.coroutines.Job
 
-typealias CollectionData<T> = CrdtSet.Data<T>
-typealias CollectionOp<T> = CrdtSet.IOperation<T>
-typealias CollectionStoreOptions<T> = StoreOptions<CollectionData<T>, CollectionOp<T>, Set<T>>
 typealias CollectionProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
 
 /**

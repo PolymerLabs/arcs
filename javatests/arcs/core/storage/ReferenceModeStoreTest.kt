@@ -683,7 +683,7 @@ class ReferenceModeStoreTest {
 
     private suspend fun createReferenceModeStore(): ReferenceModeStore {
         return ReferenceModeStore.create(
-            StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
+            StoreOptions(
                 testKey,
                 CollectionType(EntityType(schema))
             )
@@ -692,7 +692,7 @@ class ReferenceModeStoreTest {
 
     private suspend fun createSingletonReferenceModeStore(): ReferenceModeStore {
         return ReferenceModeStore.create(
-            StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
+            StoreOptions(
                 testKey,
                 SingletonType(EntityType(schema))
             )

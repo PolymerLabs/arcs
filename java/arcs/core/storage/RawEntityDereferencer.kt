@@ -23,6 +23,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+typealias EntityStore = ActiveStore<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>
+
 /**
  * [Dereferencer] to use when de-referencing a [Reference] to an [Entity].
  *
@@ -47,12 +49,13 @@ class RawEntityDereferencer(
 
         val storageKey = reference.referencedStorageKey()
 
-        val options = StoreOptions<CrdtEntity.Data, CrdtEntity.Operation, RawEntity>(
+        val options = StoreOptions(
             storageKey,
             EntityType(schema)
         )
 
-        val store = (entityActivationFactory ?: Store.defaultFactory).invoke(options)
+        val store: EntityStore = (entityActivationFactory ?: Store.defaultFactory).invoke(options)
+
         val deferred = CompletableDeferred<RawEntity?>()
         var token = -1
         token = store.on(

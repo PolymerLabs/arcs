@@ -28,6 +28,8 @@ import arcs.android.storage.service.BindingContextStatsImpl
 import arcs.android.storage.service.StorageServiceManager
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.Store
@@ -153,7 +155,9 @@ open class StorageService : ResurrectorService() {
 
         val options = parcelableOptions.actual
         return BindingContext(
-            stores.computeIfAbsent(options.storageKey) { Store(options) },
+            stores.computeIfAbsent(options.storageKey) {
+                Store<CrdtData, CrdtOperationAtTime, Any>(options)
+            },
             coroutineContext,
             stats
         ) { storageKey, message ->

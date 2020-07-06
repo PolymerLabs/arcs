@@ -27,11 +27,9 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
@@ -39,8 +37,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-typealias RefCollectionStore =
-    DirectStore<CrdtSet.Data<Reference>, CrdtSet.Operation<Reference>, Set<Reference>>
+typealias CollectionStore<T> = Store<CrdtSet.Data<T>, CrdtSet.Operation<T>, Set<T>>
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
@@ -56,11 +53,11 @@ class ReferenceTest {
         RamDiskDriverProvider()
         val refModeKey = ReferenceModeStorageKey(backingKey, collectionKey)
         val options =
-            StoreOptions<CrdtSet.Data<RawEntity>, CrdtSet.Operation<RawEntity>, Set<RawEntity>>(
+            StoreOptions(
                 storageKey = refModeKey,
                 type = CollectionType(EntityType(Person.SCHEMA))
             )
-        val store = Store(options).activate()
+        val store = CollectionStore<RawEntity>(options).activate()
 
         val addPeople = listOf(
             CrdtSet.Operation.Add(
@@ -83,13 +80,13 @@ class ReferenceTest {
 
         log("Setting up direct store to collection of references")
         val collectionOptions =
-            StoreOptions<CrdtSet.Data<Reference>, CrdtSet.Operation<Reference>, Set<Reference>>(
+            StoreOptions(
                 storageKey = collectionKey,
                 type = CollectionType(ReferenceType(EntityType(Person.SCHEMA)))
             )
 
         @Suppress("UNCHECKED_CAST")
-        val directCollection = Store(collectionOptions).activate() as RefCollectionStore
+        val directCollection = CollectionStore<Reference>(collectionOptions).activate()
 
         val job = Job()
         val me = directCollection.on(ProxyCallback {
@@ -100,7 +97,7 @@ class ReferenceTest {
         directCollection.idle()
         job.join()
 
-        val collectionItems = directCollection.getLocalData()
+        val collectionItems = (directCollection as DirectStore).getLocalData()
         assertThat(collectionItems.values).hasSize(3)
 
         val expectedPeople = listOf(

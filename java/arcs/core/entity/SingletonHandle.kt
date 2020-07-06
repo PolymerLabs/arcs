@@ -14,13 +14,11 @@ import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.data.RawEntity
 import arcs.core.storage.StorageProxy
-import arcs.core.storage.StoreOptions
 import kotlinx.coroutines.Job
 
-typealias SingletonProxy<T> = StorageProxy<SingletonData<T>, SingletonOp<T>, T?>
 typealias SingletonData<T> = CrdtSingleton.Data<T>
 typealias SingletonOp<T> = CrdtSingleton.IOperation<T>
-typealias SingletonStoreOptions<T> = StoreOptions<SingletonData<T>, SingletonOp<T>, T?>
+typealias SingletonProxy<T> = StorageProxy<SingletonData<T>, SingletonOp<T>, T?>
 
 /**
  * This class implements all of the methods that are needed by the various singleton [Handle]
