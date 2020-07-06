@@ -1,0 +1,24 @@
+meta
+  namespace: arcs.showcase.typevariables
+
+particle OrderIngestion in '.OrderIngestion'
+  data: writes [Product {sku: Text, name: Text, price: Number}]
+
+particle SkuRedactor in '.SkuRedactor'
+  input: reads [~a with {sku: Text}]
+  output: writes [~a]
+
+particle Consumer in '.Consumer'
+  data: reads [Product {sku: Text, name: Text, price: Number}]
+
+recipe
+  beforeRedaction: create
+  afterRedaction: create
+  OrderIngestion
+    data: beforeRedaction
+  SkuRedactor
+    input: beforeRedaction
+    output: afterRedaction
+  Consumer
+    data: afterRedaction
+

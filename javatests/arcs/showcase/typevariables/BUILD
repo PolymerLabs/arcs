@@ -11,7 +11,11 @@ arcs_kt_schema(
 
 arcs_kt_jvm_test_suite(
     name = "variable-tests",
-    srcs = glob(["*Test.kt"]),
+    srcs = glob(["*Test.kt"]) + [
+        "OrderIngestion.kt",
+        "SkuRedactor.kt",
+        "Consumer.kt",
+    ],
     package = "arcs.showcase.typevariables",
     deps = [
         ":var_generation",
