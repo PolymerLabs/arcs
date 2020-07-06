@@ -52,7 +52,7 @@ class RawEntityDereferencer(
         val options = StoreOptions(
             storageKey,
             EntityType(schema),
-            clearCoroutineContext = coroutineContext
+            coroutineContext = coroutineContext
         )
 
         val store: EntityStore = (entityActivationFactory ?: Store.defaultFactory).invoke(options)

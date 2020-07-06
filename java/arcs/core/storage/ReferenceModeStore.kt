@@ -731,7 +731,7 @@ class ReferenceModeStore private constructor(
                     storageKey = storageKey.storageKey,
                     type = refType,
                     versionToken = options.versionToken,
-                    clearCoroutineContext = options.clearCoroutineContext
+                    coroutineContext = options.coroutineContext
                 )
             )
 
@@ -739,7 +739,7 @@ class ReferenceModeStore private constructor(
                 refableOptions,
                 containerStore,
                 storageKey.backingKey,
-                options.clearCoroutineContext,
+                options.coroutineContext,
                 type.containedType
             )
         }

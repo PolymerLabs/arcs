@@ -45,7 +45,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 ) : IStore<Data, Op, ConsumerData> {
     override val storageKey: StorageKey = options.storageKey
     override val type: Type = options.type
-    private val coroutineContext: CoroutineContext = options.clearCoroutineContext
+    private val coroutineContext: CoroutineContext = options.coroutineContext
     private var activeStore: ActiveStore<Data, Op, ConsumerData>? = null
         get() = synchronized(this) { field }
         set(value) = synchronized(this) { field = value }
@@ -73,7 +73,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
             storageKey = storageKey,
             type = type,
             versionToken = parsedVersionToken,
-            clearCoroutineContext = coroutineContext
+            coroutineContext = coroutineContext
         )
         // If we were given a specific factory to use, use it; otherwise use the default factory.
         val activeStore =
