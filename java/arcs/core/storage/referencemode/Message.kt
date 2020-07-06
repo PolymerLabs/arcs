@@ -135,6 +135,8 @@ private fun List<CrdtOperation>.toReferenceModeMessageOps(): List<CrdtOperationA
                 CrdtSet.Operation.Add(op.actor, op.clock, op.added)
             is CrdtSet.Operation.Remove<*> ->
                 CrdtSet.Operation.Remove(op.actor, op.clock, op.removed)
+            is CrdtSet.Operation.Clear<*> ->
+                CrdtSet.Operation.Clear<Referencable>(op.actor, op.clock)
             else -> throw CrdtException("Unsupported operation for ReferenceModeStore: $this")
         }
     }

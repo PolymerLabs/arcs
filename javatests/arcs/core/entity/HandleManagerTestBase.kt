@@ -48,7 +48,9 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Rule
@@ -163,106 +165,120 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun singleton_initialState() = testRunner {
-        val handle = readHandleManager.createSingletonHandle()
-        assertThat(handle.dispatchFetch()).isNull()
+    fun singleton_initialStateAndSingleHandleOperations() = testRunner {
+        val handle = writeHandleManager.createSingletonHandle()
 
-        // Verify that clear works on an empty singleton (including the join op).
-        handle.dispatchClear()
+        // Don't use the dispatchX helpers so we can test the immediate effect of the handle ops.
+        withContext(handle.dispatcher) {
+            // Initial state.
+            assertThat(handle.fetch()).isNull()
+
+            // Verify that clear works on an empty singleton.
+            val jobs = mutableListOf<Job>()
+            jobs.add(handle.clear())
+            assertThat(handle.fetch()).isNull()
+
+            // All handle ops should be locally immediate (no joins needed).
+            jobs.add(handle.store(entity1))
+            assertThat(handle.fetch()).isEqualTo(entity1)
+            jobs.add(handle.clear())
+            assertThat(handle.fetch()).isNull()
+
+            // The joins should still work.
+            jobs.joinAll()
+        }
     }
 
     @Test
-    fun singleton_writeAndReadBackAndClear() = testRunner {
-        val writeHandle = writeHandleManager.createSingletonHandle()
-        val readHandle = readHandleManager.createSingletonHandle()
+    fun singleton_writeAndReadBack_unidirectional() = testRunner {
+        // Write-only handle -> read-only handle
+        val writeHandle = writeHandleManager.createHandle(
+            HandleSpec(
+                "writeOnlySingleton",
+                HandleMode.Write,
+                SingletonType(EntityType(Person.SCHEMA)),
+                Person
+            ),
+            singletonKey
+        ).awaitReady() as WriteSingletonHandle<Person>
 
-        var readHandleUpdated = readHandle.onUpdateDeferred()
+        val readHandle = readHandleManager.createHandle(
+            HandleSpec(
+                "readOnlySingleton",
+                HandleMode.Read,
+                SingletonType(EntityType(Person.SCHEMA)),
+                Person
+            ),
+            singletonKey
+        ).awaitReady() as ReadSingletonHandle<Person>
+
+        var received = CompletableDeferred<Person?>()
+        readHandle.onUpdate { received.complete(it) }
+
+        // Verify store against empty.
         writeHandle.dispatchStore(entity1)
+        assertThat(received.await()).isEqualTo(entity1)
+        assertThat(readHandle.dispatchFetch()).isEqualTo(entity1)
 
-        // Now read back from a different handle
-        readHandleUpdated.await()
-        val readBack = readHandle.dispatchFetch()
-        assertThat(readBack).isEqualTo(entity1)
-
-        readHandleUpdated = readHandle.onUpdateDeferred()
+        // Verify store overwrites existing.
+        received = CompletableDeferred()
         writeHandle.dispatchStore(entity2)
-        readHandleUpdated.await()
-        val readBack2 = readHandle.dispatchFetch()
-        assertThat(readBack2).isEqualTo(entity2)
+        assertThat(received.await()).isEqualTo(entity2)
+        assertThat(readHandle.dispatchFetch()).isEqualTo(entity2)
 
-        readHandleUpdated = readHandle.onUpdateDeferred()
+        // Verify clear.
+        received = CompletableDeferred()
         writeHandle.dispatchClear()
-        readHandleUpdated.await()
-        val readBack3 = readHandle.dispatchFetch()
-        assertThat(readBack3).isNull()
+        assertThat(received.await()).isNull()
+        assertThat(readHandle.dispatchFetch()).isNull()
     }
 
     @Test
-    fun singleton_writeAndReadBack() = testRunner {
-        val writeHandle = writeHandleManager.createSingletonHandle()
-        val readHandle = readHandleManager.createSingletonHandle()
-        val readHandleUpdated = readHandle.onUpdateDeferred()
-        writeHandle.dispatchStore(entity1)
+    fun singleton_writeAndReadBack_bidirectional() = testRunner {
+        // Read/write handle <-> read/write handle
+        val handle1 = writeHandleManager.createHandle(
+            HandleSpec(
+                "readWriteSingleton1",
+                HandleMode.ReadWrite,
+                SingletonType(EntityType(Person.SCHEMA)),
+                Person
+            ),
+            singletonKey
+        ).awaitReady() as ReadWriteSingletonHandle<Person>
 
-        // Now read back from a different handle
-        readHandleUpdated.await()
-        val readBack = readHandle.dispatchFetch()
-        assertThat(readBack).isEqualTo(entity1)
-    }
+        val handle2 = readHandleManager.createHandle(
+            HandleSpec(
+                "readWriteSingleton2",
+                HandleMode.ReadWrite,
+                SingletonType(EntityType(Person.SCHEMA)),
+                Person
+            ),
+            singletonKey
+        ).awaitReady() as ReadWriteSingletonHandle<Person>
 
-    @Test
-    fun singleton_clearOnAClearDataWrittenByA() = testRunner {
-        val handleA = writeHandleManager.createSingletonHandle()
-        val handleB = readHandleManager.createSingletonHandle()
+        // handle1 -> handle2
+        val received1to2 = CompletableDeferred<Person?>()
+        handle2.onUpdate { received1to2.complete(it) }
 
-        var handleBUpdated = handleB.onUpdateDeferred()
-        handleA.dispatchStore(entity1)
-        handleBUpdated.await()
+        // Verify that handle2 sees the entity stored by handle1.
+        handle1.dispatchStore(entity1)
+        assertThat(received1to2.await()).isEqualTo(entity1)
+        assertThat(handle2.dispatchFetch()).isEqualTo(entity1)
 
-        // Now read back from a different handle
-        assertThat(handleB.dispatchFetch()).isEqualTo(entity1)
+        // handle2 -> handle1
+        var received2to1 = CompletableDeferred<Person?>()
+        handle1.onUpdate { received2to1.complete(it) }
 
-        handleBUpdated = handleB.onUpdateDeferred {
-            log("handleB updated: $it")
-            it == null
-        }
-        handleA.dispatchClear()
-        handleBUpdated.await()
+        // Verify that handle2 can clear the entity stored by handle1.
+        handle2.dispatchClear()
+        assertThat(received2to1.await()).isNull()
+        assertThat(handle1.dispatchFetch()).isNull()
 
-        assertThat(handleB.dispatchFetch()).isNull()
-    }
-
-    @Test
-    fun singleton_clearOnAClearDataWrittenByB() = testRunner {
-        val handleA = writeHandleManager.createSingletonHandle()
-        val handleB = readHandleManager.createSingletonHandle()
-        val handleBUpdated = handleB.onUpdateDeferred { it != null }
-        handleA.dispatchStore(entity1)
-        handleBUpdated.await()
-
-        // Now read back from a different handle
-        val updateADeferred = handleA.onUpdateDeferred { it == null }
-        handleB.dispatchClear()
-        assertThat(handleB.dispatchFetch()).isNull()
-
-        updateADeferred.await()
-        assertThat(handleA.dispatchFetch()).isNull()
-    }
-
-    @Test
-    fun singleton_writeAndOnUpdate() = testRunner {
-        val writeHandle = writeHandleManager.createSingletonHandle()
-            as WriteSingletonHandle<Person>
-
-        // Now read back from a different handle
-        val readHandle = readHandleManager.createSingletonHandle()
-
-        val updateDeferred = CompletableDeferred<Person?>()
-        readHandle.onUpdate {
-            updateDeferred.complete(it)
-        }
-        writeHandle.dispatchStore(entity1)
-        assertThat(updateDeferred.await()).isEqualTo(entity1)
+        // Verify that handle1 sees the entity stored by handle2.
+        received2to1 = CompletableDeferred()
+        handle2.dispatchStore(entity2)
+        assertThat(received2to1.await()).isEqualTo(entity2)
+        assertThat(handle1.dispatchFetch()).isEqualTo(entity2)
     }
 
     @Test
@@ -489,67 +505,154 @@ open class HandleManagerTestBase {
     }
 
     @Test
-    fun collection_initialState() = testRunner {
+    fun collection_initialStateAndSingleHandleOperations() = testRunner {
         val handle = writeHandleManager.createCollectionHandle()
-        assertThat(handle.dispatchSize()).isEqualTo(0)
-        assertThat(handle.dispatchIsEmpty()).isEqualTo(true)
-        assertThat(handle.dispatchFetchAll()).isEmpty()
 
-        // Verify that clear works on an empty collection (including the join op),
-        // and that removing any entity is also safe.
-        handle.dispatchClear()
-        handle.dispatchRemove(entity1)
-    }
+        // Don't use the dispatchX helpers so we can test the immediate effect of the handle ops.
+        withContext(handle.dispatcher) {
+            // Initial state.
+            assertThat(handle.size()).isEqualTo(0)
+            assertThat(handle.isEmpty()).isEqualTo(true)
+            assertThat(handle.fetchAll()).isEmpty()
 
-    @Test
-    fun collection_addingToA_showsUpInB() = testRunner {
-        val handleA = writeHandleManager.createCollectionHandle()
-            as ReadWriteCollectionHandle<Person>
-        val handleB = readHandleManager.createCollectionHandle()
-        var gotUpdate = handleB.onUpdateDeferred()
-        handleA.dispatchStore(entity1)
-        assertThat(handleA.dispatchFetchAll()).containsExactly(entity1)
-        gotUpdate.await()
-        assertThat(handleB.dispatchFetchAll()).containsExactly(entity1)
+            // Verify that both clear and removing a random entity with an empty collection are ok.
+            val jobs = mutableListOf<Job>()
+            jobs.add(handle.clear())
+            jobs.add(handle.remove(entity1))
 
-        // Ensure we get update from A before checking.
-        // Since some test configurations may result in the handles
-        // operating on different threads.
-        gotUpdate = handleA.onUpdateDeferred()
-        handleB.dispatchStore(entity2)
-        assertThat(handleB.dispatchFetchAll()).containsExactly(entity1, entity2)
-        gotUpdate.await()
-        assertThat(handleA.dispatchFetchAll()).containsExactly(entity1, entity2)
-    }
+            // All handle ops should be locally immediate (no joins needed).
+            jobs.add(handle.store(entity1))
+            jobs.add(handle.store(entity2))
+            assertThat(handle.size()).isEqualTo(2)
+            assertThat(handle.isEmpty()).isEqualTo(false)
+            assertThat(handle.fetchAll()).containsExactly(entity1, entity2)
 
-    @Test
-    fun collection_writeAndReadBack() = testRunner {
-        val writeHandle = writeHandleManager.createCollectionHandle()
-        val readHandle = readHandleManager.createCollectionHandle()
-        val allHeard = Job()
-        readHandle.onUpdate {
-            if (it.size == 2) allHeard.complete()
+            jobs.add(handle.remove(entity1))
+            assertThat(handle.size()).isEqualTo(1)
+            assertThat(handle.isEmpty()).isEqualTo(false)
+            assertThat(handle.fetchAll()).containsExactly(entity2)
+
+            jobs.add(handle.clear())
+            assertThat(handle.size()).isEqualTo(0)
+            assertThat(handle.isEmpty()).isEqualTo(true)
+            assertThat(handle.fetchAll()).isEmpty()
+
+            // The joins should still work.
+            jobs.joinAll()
         }
-        writeHandle.dispatchStore(entity1, entity2)
-
-        // Now read back from a different handle, after hearing the updates.
-        allHeard.join()
-        val readBack = readHandle.dispatchFetchAll()
-        assertThat(readBack).containsExactly(entity1, entity2)
     }
 
     @Test
-    fun collection_writeAndOnUpdate() = testRunner {
-        val writeHandle = writeHandleManager.createCollectionHandle()
-            as WriteCollectionHandle<Person>
+    fun collection_writeAndReadBack_unidirectional() = testRunner {
+        // Write-only handle -> read-only handle
+        val writeHandle = writeHandleManager.createHandle(
+            HandleSpec(
+                "writeOnlyCollection",
+                HandleMode.Write,
+                CollectionType(EntityType(Person.SCHEMA)),
+                Person
+            ),
+            collectionKey
+        ).awaitReady() as WriteCollectionHandle<Person>
 
-        // Now read back from a different handle
-        val readHandle = readHandleManager.createCollectionHandle()
-            as ReadWriteCollectionHandle<Person>
+        val readHandle = readHandleManager.createHandle(
+            HandleSpec(
+                "readOnlyCollection",
+                HandleMode.Read,
+                CollectionType(EntityType(Person.SCHEMA)),
+                Person
+            ),
+            collectionKey
+        ).awaitReady() as ReadCollectionHandle<Person>
 
-        val updateDeferred = readHandle.onUpdateDeferred { it.size == 2 }
-        writeHandle.dispatchStore(entity1, entity2)
-        assertThat(updateDeferred.await()).containsExactly(entity1, entity2)
+        val entity3 = Person("entity3", "Wanda", 60.0, true)
+
+        var received = Job()
+        var size = 3
+        readHandle.onUpdate { if (it.size == size) received.complete() }
+
+        // Verify store.
+        writeHandle.dispatchStore(entity1, entity2, entity3)
+        received.join()
+        assertThat(readHandle.dispatchSize()).isEqualTo(3)
+        assertThat(readHandle.dispatchIsEmpty()).isEqualTo(false)
+        assertThat(readHandle.dispatchFetchAll()).containsExactly(entity1, entity2, entity3)
+
+        // Verify remove.
+        received = Job()
+        size = 2
+        writeHandle.dispatchRemove(entity2)
+        received.join()
+        assertThat(readHandle.dispatchSize()).isEqualTo(2)
+        assertThat(readHandle.dispatchIsEmpty()).isEqualTo(false)
+        assertThat(readHandle.dispatchFetchAll()).containsExactly(entity1, entity3)
+
+        // Verify clear.
+        received = Job()
+        size = 0
+        writeHandle.dispatchClear()
+        received.join()
+        assertThat(readHandle.dispatchSize()).isEqualTo(0)
+        assertThat(readHandle.dispatchIsEmpty()).isEqualTo(true)
+        assertThat(readHandle.dispatchFetchAll()).isEmpty()
+    }
+
+    @Test
+    fun collection_writeAndReadBack_bidirectional() = testRunner {
+        // Read/write handle <-> read/write handle
+        val handle1 = writeHandleManager.createHandle(
+            HandleSpec(
+                "readWriteCollection1",
+                HandleMode.ReadWrite,
+                CollectionType(EntityType(Person.SCHEMA)),
+                Person
+            ),
+            collectionKey
+        ).awaitReady() as ReadWriteCollectionHandle<Person>
+
+        val handle2 = readHandleManager.createHandle(
+            HandleSpec(
+                "readWriteCollection2",
+                HandleMode.ReadWrite,
+                CollectionType(EntityType(Person.SCHEMA)),
+                Person
+            ),
+            collectionKey
+        ).awaitReady() as ReadWriteCollectionHandle<Person>
+
+        val entity3 = Person("entity3", "William", 35.0, false)
+
+        // handle1 -> handle2
+        val received1to2 = CompletableDeferred<Set<Person>>()
+        handle2.onUpdate { if (it.size == 3) received1to2.complete(it) }
+
+        // Verify that handle2 sees entities stored by handle1.
+        handle1.dispatchStore(entity1, entity2, entity3)
+        assertThat(received1to2.await()).containsExactly(entity1, entity2, entity3)
+        assertThat(handle2.dispatchSize()).isEqualTo(3)
+        assertThat(handle2.dispatchIsEmpty()).isEqualTo(false)
+        assertThat(handle2.dispatchFetchAll()).containsExactly(entity1, entity2, entity3)
+
+        // handle2 -> handle1
+        var received2to1 = CompletableDeferred<Set<Person>>()
+        var size2to1 = 2
+        handle1.onUpdate { if (it.size == size2to1) received2to1.complete(it) }
+
+        // Verify that handle2 can remove entities stored by handle1.
+        handle2.dispatchRemove(entity2)
+        assertThat(received2to1.await()).containsExactly(entity1, entity3)
+        assertThat(handle1.dispatchSize()).isEqualTo(2)
+        assertThat(handle1.dispatchIsEmpty()).isEqualTo(false)
+        assertThat(handle1.dispatchFetchAll()).containsExactly(entity1, entity3)
+
+        // Verify that handle1 sees an empty collection after a clear op from handle2.
+        received2to1 = CompletableDeferred()
+        size2to1 = 0
+        handle2.dispatchClear()
+        assertThat(received2to1.await()).isEmpty()
+        assertThat(handle1.dispatchSize()).isEqualTo(0)
+        assertThat(handle1.dispatchIsEmpty()).isEqualTo(true)
+        assertThat(handle1.dispatchFetchAll()).isEmpty()
     }
 
     @Test
@@ -627,69 +730,6 @@ open class HandleManagerTestBase {
 
         assertThat(handle.dispatchFetchAll()).containsExactly(entity, entity2)
         assertThat(entity2.creationTimestamp).isEqualTo(20)
-    }
-
-    @Test
-    fun collection_removingFromA_isRemovedFromB() = testRunner {
-        val handleA = readHandleManager.createCollectionHandle()
-        val handleB = writeHandleManager.createCollectionHandle()
-
-        log("Handles ready")
-
-        val gotUpdateAtA = handleA.onUpdateDeferred {
-            log("Size of A: ${it.size}")
-            it.size == 2
-        }
-        log("storing in B")
-        handleB.dispatchStore(entity1, entity2)
-        assertThat(handleB.dispatchFetchAll()).containsExactly(entity1, entity2)
-
-        gotUpdateAtA.await()
-        log("checking a")
-        assertThat(handleA.dispatchFetchAll()).containsExactly(entity1, entity2)
-
-        val gotUpdateAtB = handleB.onUpdateDeferred {
-            log("B size later = ${it.size}")
-            it.size == 1
-        }
-        log("removing")
-        handleA.dispatchRemove(entity1)
-        assertThat(handleA.dispatchFetchAll()).containsExactly(entity2)
-
-        gotUpdateAtB.await()
-        log("checking after removal")
-        assertThat(handleB.dispatchFetchAll()).containsExactly(entity2)
-    }
-
-    @Test
-    fun collection_clearingElementsFromA_clearsThemFromB() = testRunner {
-        val handleA = readHandleManager.createCollectionHandle()
-        val handleB = writeHandleManager.createCollectionHandle()
-
-        val handleBGotAll7 = handleB.onUpdateDeferred { it.size == 7 }
-        handleA.dispatchStore(
-            Person("a", "a", 1.0, true),
-            Person("b", "b", 2.0, false),
-            Person("c", "c", 3.0, true),
-            Person("d", "d", 4.0, false, favoriteWords = listOf("uncool")),
-            Person("e", "e", 5.0, true, favoriteWords = listOf("waycool")),
-            Person("f", "f", 6.0, false, favoriteWords = listOf("salami", "wurst")),
-            Person("g", "g", 7.0, true)
-        )
-        assertThat(handleA.dispatchFetchAll()).hasSize(7)
-
-        handleBGotAll7.await()
-        assertThat(handleB.dispatchFetchAll()).hasSize(7)
-
-        // Ensure we get update from A before checking.
-        // Since some test configurations may result in the handles
-        // operating on different threads.
-        val gotUpdate = handleA.onUpdateDeferred { it.isEmpty() }
-        handleB.dispatchClear()
-        assertThat(handleB.dispatchFetchAll()).isEmpty()
-        gotUpdate.await()
-
-        assertThat(handleA.dispatchFetchAll()).isEmpty()
     }
 
     @Test

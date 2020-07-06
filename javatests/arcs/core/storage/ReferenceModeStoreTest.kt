@@ -263,6 +263,46 @@ class ReferenceModeStoreTest {
     }
 
     @Test
+    fun clearOpClearsBackingEntities() = runBlockingTest {
+        DriverFactory.register(MockDriverProvider())
+
+        val activeStore = createReferenceModeStore()
+        val actor = activeStore.crdtKey
+
+        // Add a couple of people.
+        val alice = createPersonEntity("id1", "alice", 10)
+        val addOp1 = listOf(RefModeStoreOp.SetAdd(actor, VersionMap(actor to 1), alice))
+        assertThat(activeStore.onProxyMessage(ProxyMessage.Operations(addOp1, id = 1))).isTrue()
+
+        val bob = createPersonEntity("id2", "bob", 20)
+        val addOp2 = listOf(RefModeStoreOp.SetAdd(actor, VersionMap(actor to 2), bob))
+        assertThat(activeStore.onProxyMessage(ProxyMessage.Operations(addOp2, id = 2))).isTrue()
+
+        // Verify that they've been stored.
+        val storedRefs = activeStore.containerStore.getLocalData() as CrdtSet.Data<Reference>
+        assertThat(storedRefs.values.keys).containsExactly("id1", "id2")
+
+        val storedAlice = activeStore.backingStore.getLocalData("id1") as CrdtEntity.Data
+        assertThat(storedAlice.toRawEntity("id1")).isEqualTo(alice)
+
+        val storedBob = activeStore.backingStore.getLocalData("id2") as CrdtEntity.Data
+        assertThat(storedBob.toRawEntity("id2")).isEqualTo(bob)
+
+        // Clear!
+        val clearOp = listOf(RefModeStoreOp.SetClear(actor, VersionMap(actor to 2)))
+        assertThat(activeStore.onProxyMessage(ProxyMessage.Operations(clearOp, null))).isTrue()
+
+        val clearedRefs = activeStore.containerStore.getLocalData() as CrdtSet.Data<Reference>
+        assertThat(clearedRefs.values.keys).isEmpty()
+
+        val clearedAlice = activeStore.backingStore.getLocalData("id1") as CrdtEntity.Data
+        assertThat(clearedAlice.toRawEntity("id1")).isEqualTo(createEmptyPersonEntity("id1"))
+
+        val clearedBob = activeStore.backingStore.getLocalData("id2") as CrdtEntity.Data
+        assertThat(clearedBob.toRawEntity("id2")).isEqualTo(createEmptyPersonEntity("id2"))
+    }
+
+    @Test
     fun singletonClearFreesBackingStoreCopy() = runBlockingTest {
         DriverFactory.register(MockDriverProvider())
 
@@ -291,7 +331,7 @@ class ReferenceModeStoreTest {
     @Test
     fun singletonUpdateFreesBackingStoreCopy() = runBlockingTest {
         DriverFactory.register(MockDriverProvider())
-        
+
         val activeStore = createSingletonReferenceModeStore()
         val actor = activeStore.crdtKey
         val alice = createPersonEntity("a-id", "alice", 41)

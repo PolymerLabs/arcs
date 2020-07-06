@@ -12,6 +12,7 @@
 package arcs.core.crdt
 
 import arcs.core.crdt.CrdtEntity.Operation.AddToSet
+import arcs.core.crdt.CrdtEntity.Operation.ClearAll
 import arcs.core.crdt.CrdtEntity.Operation.ClearSingleton
 import arcs.core.crdt.CrdtEntity.Operation.RemoveFromSet
 import arcs.core.crdt.CrdtEntity.Operation.SetSingleton
@@ -170,6 +171,32 @@ class CrdtEntityTest {
                     )
                 )
             )
+    }
+
+    @Test
+    fun clearAll() {
+        val rawEntity = RawEntity(
+            id = "an-id",
+            singletons = mapOf("foo" to Reference("fooRef")),
+            collections = mapOf(
+                "bar" to setOf(Reference("barRef1"), Reference("barRef2")),
+                "baz" to setOf(Reference("bazRef"))
+            ),
+            creationTimestamp = 10L,
+            expirationTimestamp = 20L
+        )
+        val entity = CrdtEntity(VersionMap(), rawEntity)
+
+        assertThat(entity.applyOperation(ClearAll("me", VersionMap()))).isTrue()
+        assertThat(entity.consumerView).isEqualTo(
+            RawEntity(
+                id = "an-id",
+                singletonFields = setOf("foo"),
+                collectionFields = setOf("bar", "baz"),
+                creationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP,
+                expirationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
+            )
+        )
     }
 
     @Test

@@ -250,27 +250,28 @@ class ReferenceModeStore private constructor(
 
         return@fn when (val proxyMessage = message.message) {
             is ProxyMessage.Operations -> {
-                proxyMessage.operations.toBridgingOps(backingStore.storageKey)
-                    .all { op ->
-                        if (op is BridgingOperation.ClearSingleton ||
-                            op is BridgingOperation.UpdateSingleton) {
+                proxyMessage.operations.toBridgingOps(backingStore.storageKey).all { op ->
+                    when (op) {
+                        is BridgingOperation.UpdateSingleton,
+                        is BridgingOperation.ClearSingleton -> {
                             // Free up the memory used by the previous instance (for a Singleton,
                             // there would be only one instance).
                             backingStore.clearStoresCache()
+                            op.entityValue?.let { updateBackingStore(it) }
                         }
-                        op.entityValue?.let {
-                            if (op is BridgingOperation.RemoveFromSet) {
-                                // If this is a removal, we clear the entity rather than updating it
-                                // to the given value.
-                                clearEntityInBackingStore(it)
-                            } else {
-                                updateBackingStore(it)
-                            }
-                        }
-                        containerStore.onProxyMessage(
-                            ProxyMessage.Operations(listOf(op.containerOp), proxyMessage.id)
-                        )
+
+                        is BridgingOperation.AddToSet ->
+                            op.entityValue?.let { updateBackingStore(it) }
+
+                        is BridgingOperation.RemoveFromSet ->
+                            op.entityValue?.let { clearEntityInBackingStore(it) }
+
+                        is BridgingOperation.ClearSet -> clearAllEntitiesInBackingStore()
                     }
+                    containerStore.onProxyMessage(
+                        ProxyMessage.Operations(listOf(op.containerOp), proxyMessage.id)
+                    )
+                }
             }
             is ProxyMessage.ModelUpdate -> {
                 val newModelsResult = proxyMessage.model.toBridgingData(
@@ -479,6 +480,18 @@ class ReferenceModeStore private constructor(
         return backingStore.onProxyMessage(ProxyMessage.Operations(op, id = null), referencable.id)
     }
 
+    /** Clear all entities from the backing store, using the container store to retrieve the ids. */
+    private suspend fun clearAllEntitiesInBackingStore(): Boolean {
+        val containerModel = containerStore.getLocalData()
+        if (containerModel !is CrdtSet.Data<*>) {
+            throw UnsupportedOperationException()
+        }
+        return containerModel.values.all { (refId, data) ->
+            val clearOp = listOf(CrdtEntity.Operation.ClearAll(crdtKey, data.versionMap))
+            backingStore.onProxyMessage(ProxyMessage.Operations(clearOp, id = null), refId)
+        }
+    }
+
     /**
      * Returns a function that can construct a [RefModeStoreData] object of a Container of Entities
      * based off the provided Container of References or a container of references from a provided
@@ -661,13 +674,13 @@ class ReferenceModeStore private constructor(
         val containerModel = containerStore.getLocalData()
         val actor = "ReferenceModeStore(${hashCode()})"
         val containerVersion = containerModel.versionMap.copy()
-        return if (containerModel is CrdtSet.Data<*>) {
-            containerModel.values.map { dataValue ->
-                CrdtSet.Operation.Remove(actor, containerVersion, dataValue.value.value)
-            }
-        } else if (containerModel is CrdtSingleton.Data<*>) {
-            listOf(CrdtSingleton.Operation.Clear<Reference>(actor, containerVersion))
-        } else throw UnsupportedOperationException()
+        return listOf(when (containerModel) {
+            is CrdtSet.Data<*> ->
+                CrdtSet.Operation.Clear<Reference>(actor, containerVersion)
+            is CrdtSingleton.Data<*> ->
+                CrdtSingleton.Operation.Clear<Reference>(actor, containerVersion)
+            else -> throw UnsupportedOperationException()
+        })
     }
 
     companion object {

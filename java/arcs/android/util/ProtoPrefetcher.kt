@@ -102,6 +102,8 @@ object ProtoPrefetcher {
         CrdtSetProto.Operation.Add.newBuilder()::build,
         CrdtSetProto.Operation.Remove::getDefaultInstance,
         CrdtSetProto.Operation.Remove.newBuilder()::build,
+        CrdtSetProto.Operation.Clear::getDefaultInstance,
+        CrdtSetProto.Operation.Clear.newBuilder()::build,
         CrdtSetProto.Operation.FastForward::getDefaultInstance,
         CrdtSetProto.Operation.FastForward.newBuilder()::build,
         CrdtSingletonProto::getDefaultInstance,
