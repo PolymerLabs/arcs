@@ -733,13 +733,11 @@ export class BuiltIn extends RefinementExpression {
 
 export class BigIntPrimitive extends RefinementExpression {
   evalType = Primitive.BIGINT;
-  value: bigint;
 
-  constructor(value: bigint, units: string[] = []) {
+  constructor(public value: bigint, units: string[] = []) {
     super('BigIntPrimitiveNode');
 
     // Convert to Si units.
-    this.value = value;
     // For time units, the base unit is milliseconds.
     for (const unit of units) {
       switch (unit) {
@@ -924,11 +922,9 @@ export class TextPrimitive extends RefinementExpression {
 }
 
 export class NumberRange {
-  private segments: NumberSegment[] = [];
-  private type: Primitive;
+  private readonly segments: NumberSegment[] = [];
 
-  constructor(segs: NumberSegment[] = [], type: Primitive = Primitive.NUMBER) {
-    this.type = type;
+  constructor(segs: NumberSegment[] = [], private readonly type: Primitive = Primitive.NUMBER) {
     for (const seg of segs) {
       this.unionWithSeg(seg);
     }
@@ -1243,14 +1239,12 @@ export class NumberSegment {
 }
 
 export class BigIntRange {
-  private segments: BigIntSegment[] = [];
-  private type: Primitive;
+  private readonly segments: BigIntSegment[] = [];
 
-  constructor(segs: BigIntSegment[] = [], type: Primitive = Primitive.BIGINT) {
+  constructor(segs: BigIntSegment[] = [], private readonly type: Primitive = Primitive.BIGINT) {
     for (const seg of segs) {
       this.unionWithSeg(seg);
     }
-    this.type = type;
   }
 
   segmentsForTesting(): {from: Boundary<BigIntValue>, to: Boundary<BigIntValue>}[] {
