@@ -25,7 +25,6 @@ import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.coroutineScope
@@ -35,7 +34,6 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -128,7 +126,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                     busySendingMessagesChannel.send(false)
                 }
             }
-            .flowOn(Dispatchers.Default)
+            // TODO(jasonwyatt): this should probably be flown on a different scope.
             .launchIn(scheduler.scope)
     }
 
