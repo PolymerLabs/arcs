@@ -1122,14 +1122,77 @@ open class HandleManagerTestBase {
         expirationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
     )
 
+    data class CoolnessIndex(
+        override val entityId: ReferenceId,
+        val pairsOfShoesOwned: Int,
+        val isCool: Boolean,
+        val hat: StorageReference? = null
+    ) : Entity {
+        var raw: RawEntity? = null
+        override var creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+        override var expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+
+        override fun ensureEntityFields(
+            idGenerator: Generator,
+            handleName: String,
+            time: Time,
+            ttl: Ttl
+        ) {
+            creationTimestamp = time.currentTimeMillis
+            if (ttl != Ttl.Infinite()) {
+                expirationTimestamp = ttl.calculateExpiration(time)
+            }
+        }
+
+        override fun serialize() = RawEntity(
+            entityId,
+            mapOf(
+                "pairs_of_shoes_owned" to pairsOfShoesOwned.toReferencable(),
+                "is_cool" to isCool.toReferencable(),
+                "hat" to hat
+            ),
+            emptyMap(),
+            creationTimestamp,
+            expirationTimestamp
+        )
+
+        override fun reset() = throw NotImplementedError()
+
+        companion object : EntitySpec<CoolnessIndex> {
+            @Suppress("UNCHECKED_CAST")
+            override fun deserialize(data: RawEntity) = CoolnessIndex(
+                entityId = data.id,
+                pairsOfShoesOwned = (data.singletons["pairs_of_shoes_owned"] as ReferencablePrimitive<Int>).value,
+                isCool = (data.singletons["is_cool"] as ReferencablePrimitive<Boolean>).value,
+                hat = data.singletons["hat"] as? StorageReference
+            ).apply {
+                raw = data
+                creationTimestamp = data.creationTimestamp
+                expirationTimestamp = data.expirationTimestamp
+            }
+
+            override val SCHEMA = Schema(
+                setOf(SchemaName("Person")),
+                SchemaFields(
+                    singletons = mapOf(
+                        "pairs_of_shoes_owned" to FieldType.Int,
+                        "is_cool" to FieldType.Boolean,
+                        "hat" to FieldType.EntityRef("hat-hash")
+                    ),
+                    collections = emptyMap()
+                ),
+                "coolness-index-hash"
+            )
+        }
+    }
+
     data class Person(
         override val entityId: ReferenceId,
         val name: String,
         val age: Double,
-        val isCool: Boolean,
         val bestFriend: StorageReference? = null,
-        val hat: StorageReference? = null,
-        val favoriteWords: List<String> = listOf()
+        val favoriteWords: List<String> = listOf(),
+        val coolnessIndex: CoolnessIndex
     ) : Entity {
 
         var raw: RawEntity? = null
@@ -1153,10 +1216,9 @@ open class HandleManagerTestBase {
             singletons = mapOf(
                 "name" to name.toReferencable(),
                 "age" to age.toReferencable(),
-                "is_cool" to isCool.toReferencable(),
                 "best_friend" to bestFriend,
-                "hat" to hat,
-                "favorite_words" to favoriteWords.map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text))
+                "favorite_words" to favoriteWords.map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text)),
+                "coolness_index" to coolnessIndex.serialize()
             ),
             collections = emptyMap(),
             creationTimestamp = creationTimestamp,
@@ -1180,12 +1242,11 @@ open class HandleManagerTestBase {
                 entityId = data.id,
                 name = (data.singletons["name"] as ReferencablePrimitive<String>).value,
                 age = (data.singletons["age"] as ReferencablePrimitive<Double>).value,
-                isCool = (data.singletons["is_cool"] as ReferencablePrimitive<Boolean>).value,
                 bestFriend = data.singletons["best_friend"] as? StorageReference,
-                hat = data.singletons["hat"] as? StorageReference,
                 favoriteWords = (data.singletons["favorite_words"] as ReferencableList<*>).value.map {
                     (it as ReferencablePrimitive<String>).value
-                }
+                },
+                coolnessIndex = CoolnessIndex.deserialize(data.singletons["coolness_index"] as RawEntity)
             ).apply {
                 raw = data
                 creationTimestamp = data.creationTimestamp
@@ -1198,10 +1259,9 @@ open class HandleManagerTestBase {
                     singletons = mapOf(
                         "name" to FieldType.Text,
                         "age" to FieldType.Number,
-                        "is_cool" to FieldType.Boolean,
                         "best_friend" to FieldType.EntityRef("person-hash"),
-                        "hat" to FieldType.EntityRef("hat-hash"),
-                        "favorite_words" to FieldType.ListOf(FieldType.Text)
+                        "favorite_words" to FieldType.ListOf(FieldType.Text),
+                        "coolness_index" to FieldType.InlineEntity("coolness-index-hash")
                     ),
                     collections = emptyMap()
                 ),
