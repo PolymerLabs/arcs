@@ -28,7 +28,6 @@ import arcs.android.storage.service.BindingContextStatsImpl
 import arcs.android.storage.service.StorageServiceManager
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
-import arcs.android.util.ProtoPrefetcher
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.Store
@@ -61,7 +60,7 @@ import kotlinx.coroutines.runBlocking
 open class StorageService : ResurrectorService() {
     private val coroutineContext = Dispatchers.IO + CoroutineName("StorageService")
     private val scope = CoroutineScope(coroutineContext)
-    private val writeBackScope = CoroutineScope(
+    open val writeBackScope = CoroutineScope(
         Executors.newCachedThreadPool {
             Thread(it).apply { name = "WriteBack #$id" }
         }.asCoroutineDispatcher() + SupervisorJob()
@@ -80,7 +79,6 @@ open class StorageService : ResurrectorService() {
         log.debug { "onCreate" }
         startTime = startTime ?: System.currentTimeMillis()
 
-        ProtoPrefetcher.prefetch()
         StoreWriteBack.init(writeBackScope)
 
         schedulePeriodicJobs(config)

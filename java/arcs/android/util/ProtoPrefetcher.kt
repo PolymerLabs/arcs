@@ -25,7 +25,7 @@ import arcs.android.crdt.ReferencableSetProto
 import arcs.android.crdt.ReferenceProto
 import arcs.android.crdt.VersionMapProto
 import arcs.android.storage.ProxyMessageProto
-import java.util.concurrent.Executors
+import java.util.concurrent.ExecutorService
 
 /**
  * Run asynchronously as a cache warmer to suffer from Arcs protos initialization
@@ -40,15 +40,6 @@ import java.util.concurrent.Executors
 object ProtoPrefetcher {
     /** Identify [ProtoPrefetcher] in thread lists and system traces. */
     private const val name = "ProtoPrefetcher"
-
-    /**
-     * Single-threaded executor.
-     *
-     * TODO(ianchang): tune background priority if needed.
-     */
-    private val executor = Executors.newFixedThreadPool(1) {
-        Thread(it).apply { name = this@ProtoPrefetcher.name }
-    }
 
     /** Procedures to be taken to warm up Arcs protos. */
     private val procedures = arrayOf<() -> Any>(
@@ -135,7 +126,7 @@ object ProtoPrefetcher {
     /**
      * Execute [procedures] to warm up Arcs protos ahead-of-time.
      */
-    fun prefetch() = executor.execute {
+    fun prefetch(executorService: ExecutorService) = executorService.execute {
         Trace.beginSection(name)
         procedures.forEach { it() }
         Trace.endSection()
