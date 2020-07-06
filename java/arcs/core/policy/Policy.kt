@@ -12,6 +12,8 @@
 package arcs.core.policy
 
 import arcs.core.data.Annotation
+import arcs.core.data.Capabilities
+import arcs.core.data.Capability
 
 /** Defines a data usage policy. See [PolicyProto] for the canonical definition of a policy. */
 data class Policy(
@@ -31,7 +33,23 @@ data class PolicyTarget(
     val retentions: List<PolicyRetention>,
     val fields: List<PolicyField>,
     val annotations: List<Annotation>
-)
+) {
+
+    fun toCapabilities(): List<Capabilities> {
+        return retentions.map {
+            val ranges = mutableListOf<Capability>()
+            ranges.add(when (it.medium) {
+                StorageMedium.DISK -> Capability.Persistence.ON_DISK
+                StorageMedium.RAM -> Capability.Persistence.IN_MEMORY
+            })
+            if (it.encryptionRequired) {
+                ranges.add(Capability.Encryption(true))
+            }
+            ranges.add(Capability.Ttl.Minutes((maxAgeMs / Capability.Ttl.MILLIS_IN_MIN).toInt()))
+            Capabilities(ranges)
+        }
+    }
+}
 
 /** Allowed usages for fields in a schema, see [PolicyFieldProto]. */
 data class PolicyField(

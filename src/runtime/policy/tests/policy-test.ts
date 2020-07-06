@@ -13,7 +13,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {PolicyEgressType, PolicyRetentionMedium, PolicyAllowedUsageType, Policy} from '../policy.js';
 import {assertThrowsAsync} from '../../../testing/test-util.js';
 import {mapToDictionary} from '../../util.js';
-import {TtlUnits} from '../../capabilities.js';
+import {TtlUnits, Persistence, Encryption, Capabilities, CapabilityRange, Ttl} from '../../capabilities.js';
 
 const customAnnotation = `
 annotation custom
@@ -338,5 +338,24 @@ policy MyPolicy {
   config Abc {}
   config Abc {}
 }`), `A definition for 'Abc' already exists.`);
+  });
+
+  it('converts to capabilities', async () => {
+    const target = (await parsePolicy(`
+policy MyPolicy {
+  @allowedRetention(medium: 'Disk', encryption: true)
+  @allowedRetention(medium: 'Ram', encryption: false)
+  @maxAge('2d')
+  @custom
+  from Person access {}
+}`)).targets[0];
+    const capabilities = target.toCapabilities();
+    assert.lengthOf(capabilities, 2);
+    assert.isTrue(capabilities[0].isEquivalent(Capabilities.create([
+      Persistence.onDisk(), new Encryption(true), Ttl.days(2)
+    ])));
+    assert.isTrue(capabilities[1].isEquivalent(
+      Capabilities.create([Persistence.inMemory(), Ttl.days(2)])
+    ));
   });
 });

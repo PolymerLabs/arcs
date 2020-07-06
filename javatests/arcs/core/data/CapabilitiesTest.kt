@@ -11,6 +11,8 @@
 
 package arcs.core.data
 
+import arcs.core.data.Capability.Encryption
+import arcs.core.data.Capability.Persistence
 import arcs.core.data.Capability.Ttl
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
@@ -24,10 +26,8 @@ class CapabilitiesTest {
     fun capabilities_empty() {
         assertThat(Capabilities().isEmpty).isTrue()
         assertThat(Capabilities.fromAnnotations(emptyList<Annotation>()).isEmpty).isTrue()
-        assertThat(Capabilities(Capability.Persistence.ON_DISK).isEmpty)
-            .isFalse()
-        assertThat(Capabilities(listOf(Capability.Persistence.ON_DISK)).isEmpty)
-            .isFalse()
+        assertThat(Capabilities(Persistence.ON_DISK).isEmpty).isFalse()
+        assertThat(Capabilities(listOf(Persistence.ON_DISK)).isEmpty).isFalse()
     }
 
     @Test
@@ -41,7 +41,7 @@ class CapabilitiesTest {
     fun capabilities_fromAnnotations_persistent() {
         val persistent =
             Capabilities.fromAnnotation(Annotation.createCapability("persistent"))
-        assertThat(persistent.persistence).isEqualTo(Capability.Persistence.ON_DISK)
+        assertThat(persistent.persistence).isEqualTo(Persistence.ON_DISK)
         assertThat(persistent.isEncrypted).isNull()
         assertThat(persistent.ttl).isNull()
         assertThat(persistent.isQueryable).isNull()
@@ -66,7 +66,7 @@ class CapabilitiesTest {
                 Annotation.createTtl("30d")
             )
         )
-        assertThat(persistentAndTtl30d.persistence).isEqualTo(Capability.Persistence.ON_DISK)
+        assertThat(persistentAndTtl30d.persistence).isEqualTo(Persistence.ON_DISK)
         assertThat(persistentAndTtl30d.isEncrypted).isNull()
         assertThat(persistentAndTtl30d.ttl).isEqualTo(Capability.Ttl.Days(30))
         assertThat(persistentAndTtl30d.isQueryable).isNull()
@@ -93,7 +93,7 @@ class CapabilitiesTest {
         val tiedToRuntime = Capabilities.fromAnnotation(
             Annotation.createCapability("tiedToRuntime")
         )
-        assertThat(tiedToRuntime.persistence).isEqualTo(Capability.Persistence.IN_MEMORY)
+        assertThat(tiedToRuntime.persistence).isEqualTo(Persistence.IN_MEMORY)
         assertThat(tiedToRuntime.isEncrypted).isNull()
         assertThat(tiedToRuntime.ttl).isNull()
         assertThat(tiedToRuntime.isQueryable).isNull()
@@ -104,14 +104,14 @@ class CapabilitiesTest {
     fun capabilities_contains() {
         val capabilities = Capabilities(
             listOf<Capability.Range>(
-                Capability.Persistence.ON_DISK.toRange(),
+                Persistence.ON_DISK.toRange(),
                 Capability.Range(Capability.Ttl.Days(30), Capability.Ttl.Hours(1)),
                 Capability.Queryable(true).toRange()
             )
         )
-        assertThat(capabilities.contains(Capability.Persistence.ON_DISK)).isTrue()
-        assertThat(capabilities.contains(Capability.Persistence.UNRESTRICTED)).isFalse()
-        assertThat(capabilities.contains(Capability.Persistence.IN_MEMORY)).isFalse()
+        assertThat(capabilities.contains(Persistence.ON_DISK)).isTrue()
+        assertThat(capabilities.contains(Persistence.UNRESTRICTED)).isFalse()
+        assertThat(capabilities.contains(Persistence.IN_MEMORY)).isFalse()
         assertThat(capabilities.contains(Capability.Ttl.Minutes(15))).isFalse()
         assertThat(capabilities.contains(Capability.Ttl.Hours(2))).isTrue()
         assertThat(capabilities.contains(Capability.Ttl.Days(30))).isTrue()
@@ -130,7 +130,7 @@ class CapabilitiesTest {
             capabilities.containsAll(
                 Capabilities(
                     listOf<Capability.Range>(
-                        Capability.Persistence.ON_DISK.toRange(),
+                        Persistence.ON_DISK.toRange(),
                         Capability.Ttl.Days(10).toRange()
                     )
                 )
@@ -151,5 +151,65 @@ class CapabilitiesTest {
                 Capabilities(listOf<Capability.Range>(Capability.Queryable.ANY))
             )
         ).isFalse()
+    }
+    @Test
+    fun capabilities_isEquivalent() {
+        val capabilities = Capabilities(listOf(Capability.Range(Ttl.Days(10), Ttl.Days(2))))
+        assertThat(capabilities.contains(Ttl.Days(5))).isTrue()
+        assertThat(capabilities.contains(Capability.Range(Ttl.Days(9), Ttl.Days(2)))).isTrue()
+        assertThat(capabilities.containsAll(Capabilities(listOf(Ttl.Days(5))))).isTrue()
+        assertThat(capabilities.containsAll(
+            Capabilities(listOf(Capability.Range(Ttl.Days(9), Ttl.Days(2))))
+        )).isTrue()
+        assertThat(capabilities.isEquivalent(Capabilities(listOf(Ttl.Days(5))))).isFalse()
+        assertThat(capabilities.isEquivalent(
+            Capabilities(
+                listOf(Capability.Range(Ttl.Days(9), Ttl.Days(2)))
+            )
+        )).isFalse()
+        assertThat(capabilities.hasEquivalent(Capability.Range(Ttl.Days(10), Ttl.Days(2))))
+            .isTrue()
+        assertThat(capabilities.isEquivalent(
+            Capabilities(listOf(Capability.Range(Ttl.Days(10), Ttl.Days(2))))
+        )).isTrue()
+
+    }
+    @Test
+    fun capabilities_isEquivalent_multipleRanges() {
+        val capabilities = Capabilities(
+            listOf(
+                Persistence.ON_DISK,
+                Capability.Range(Ttl.Days(10), Ttl.Days(2))
+            )
+        )
+        assertThat(capabilities.contains(Ttl.Days(5))).isTrue()
+        assertThat(capabilities.contains(Capability.Range(Ttl.Days(9), Ttl.Days(2)))).isTrue()
+        assertThat(capabilities.containsAll(Capabilities(listOf(Ttl.Days(5))))).isTrue()
+        assertThat(capabilities.containsAll(
+            Capabilities(listOf(Capability.Range(Ttl.Days(9), Ttl.Days(2))))
+        )).isTrue()
+        assertThat(capabilities.isEquivalent(Capabilities(listOf(Ttl.Days(5))))).isFalse()
+        assertThat(capabilities.isEquivalent(
+            Capabilities(listOf(Capability.Range(Ttl.Days(9), Ttl.Days(2))))
+        )).isFalse()
+        assertThat(capabilities.isEquivalent(
+            Capabilities(listOf(Capability.Range(Ttl.Days(10), Ttl.Days(2))))
+        )).isFalse()
+        assertThat(capabilities.hasEquivalent(Capability.Range(Ttl.Days(10), Ttl.Days(2))))
+            .isTrue()
+        assertThat(capabilities.hasEquivalent(Persistence.IN_MEMORY)).isFalse()
+        assertThat(capabilities.hasEquivalent(Persistence.ON_DISK)).isTrue()
+        assertThat(capabilities.containsAll(
+            Capabilities(listOf(Persistence.ON_DISK, Ttl.Days(10)))
+        )).isTrue()
+        assertThat(capabilities.containsAll(
+            Capabilities(listOf(Persistence.ON_DISK, Encryption(true)))
+        )).isFalse()
+        assertThat(capabilities.isEquivalent(
+              Capabilities(listOf(Persistence.ON_DISK, Ttl.Days(10)))
+        )).isFalse()
+        assertThat(capabilities.isEquivalent(
+            Capabilities(listOf(Persistence.ON_DISK, Capability.Range(Ttl.Days(10), Ttl.Days(2))))
+        )).isTrue()
     }
 }
