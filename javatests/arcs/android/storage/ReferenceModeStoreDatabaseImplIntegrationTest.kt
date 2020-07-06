@@ -289,7 +289,6 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         ).isTrue()
         // Bob was added to the backing store.
         val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
-        println(storedBob)
         assertThat(storedBob.toRawEntity("an-id")).isEqualTo(bob)
 
         // Remove Bob from the collection.
