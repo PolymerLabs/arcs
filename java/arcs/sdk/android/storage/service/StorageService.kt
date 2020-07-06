@@ -154,7 +154,7 @@ open class StorageService : ResurrectorService() {
         ) { "No StoreOptions found in Intent" }
 
         val options =
-            parcelableOptions.actual.copy(coroutineContext = coroutineContext)
+            parcelableOptions.actual.copy(clearCoroutineContext = coroutineContext)
         return BindingContext(
             stores.computeIfAbsent(options.storageKey) {
                 Store<CrdtData, CrdtOperationAtTime, Any>(options)

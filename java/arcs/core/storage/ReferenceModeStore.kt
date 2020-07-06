@@ -70,6 +70,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 
 /**
  * [ReferenceModeStore]s adapt between a collection ([CrdtSet] or [CrdtSingleton]) of entities from
@@ -95,8 +96,8 @@ class ReferenceModeStore private constructor(
     val containerStore: DirectStore<CrdtData, CrdtOperation, Any?>,
     /* internal */
     val backingKey: StorageKey,
-    val coroutineContext: CoroutineContext = Dispatchers.Default,
     /* internal */
+    clearCoroutineContext: CoroutineContext = Dispatchers.Default,
     backingType: Type
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
     // TODO(#5551): Consider including a hash of the storage key in log prefix.
@@ -463,7 +464,7 @@ class ReferenceModeStore private constructor(
                 callbacksStateChannel.close()
             }
         }
-        .launchIn(CoroutineScope(coroutineContext + Job()))
+        .launchIn(CoroutineScope(clearCoroutineContext + Job()))
 
     private fun newBackingInstance(): CrdtModel<CrdtData, CrdtOperationAtTime, Referencable> =
         crdtType.createCrdtModel()
@@ -730,7 +731,7 @@ class ReferenceModeStore private constructor(
                     storageKey = storageKey.storageKey,
                     type = refType,
                     versionToken = options.versionToken,
-                    coroutineContext = options.coroutineContext
+                    clearCoroutineContext = options.clearCoroutineContext
                 )
             )
 
@@ -738,7 +739,7 @@ class ReferenceModeStore private constructor(
                 refableOptions,
                 containerStore,
                 storageKey.backingKey,
-                options.coroutineContext,
+                options.clearCoroutineContext,
                 type.containedType
             )
         }
