@@ -1,14 +1,8 @@
 package arcs.core.data.proto
 
 import arcs.core.data.*
-import arcs.core.testutil.fail
-import arcs.repoutils.runfilesDir
 import com.google.common.truth.Truth.assertThat
-import com.google.protobuf.Message.Builder
-import com.google.protobuf.Message
 import com.google.protobuf.TextFormat
-import java.io.File
-import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -93,7 +87,7 @@ class SchemaProtoDecoderTest {
                   names: "Product"
                   fields: {
                     key: "name"
-                    value: { primitive: TEXT } 
+                    value: { primitive: TEXT }
                   }
                   hash: "a76bdd3a638fc17a5b3e023edb542c1e891c4c89"
                 }
@@ -110,7 +104,7 @@ class SchemaProtoDecoderTest {
                   names: "Review"
                   fields: {
                     key: "rating"
-                    value: { primitive: NUMBER } 
+                    value: { primitive: NUMBER }
                   }
                   hash: "2d3317e5ef54fbdf3fbc02ed481c2472ebe9ba66"
                 }

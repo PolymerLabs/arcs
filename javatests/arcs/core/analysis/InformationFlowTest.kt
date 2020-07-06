@@ -1,22 +1,12 @@
 package arcs.core.analysis
 
-import arcs.core.data.AccessPath
 import arcs.core.data.Check
-import arcs.core.data.Claim
-import arcs.core.data.InformationFlowLabel
-import arcs.core.data.InformationFlowLabel.Predicate
-import arcs.core.data.InformationFlowLabel.SemanticTag
 import arcs.core.data.Recipe
-import arcs.core.data.Recipe.Particle
-import arcs.core.data.proto.ManifestProto
 import arcs.core.data.proto.decodeRecipes
-import arcs.core.util.Log
+import arcs.core.testutil.protoloader.loadManifestBinaryProto
 import arcs.repoutils.runfilesDir
-import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import java.io.File
-import org.junit.Assert.assertTrue
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -32,21 +22,19 @@ class InformationFlowTest {
 
     /** Returns the path for the manifest proto binary file for the test. */
     private fun getManifestProtoBinPath(test: String): String {
-        return runfilesDir() + "javatests/arcs/core/analysis/testdata/${test}.pb.bin"
+        return "javatests/arcs/core/analysis/testdata/${test}.pb.bin"
     }
 
     /** A helper function to decode a RecipeProto in a [file] in the testdata directory. */
     private fun parseManifestWithSingleRecipe(file: String): Recipe {
-        val manifestProto = ManifestProto.parseFrom(
-            File(getManifestProtoBinPath(file)).readBytes()
-        )
+        val manifestProto = loadManifestBinaryProto(getManifestProtoBinPath(file))
         val recipes = manifestProto.decodeRecipes()
-        return requireNotNull(recipes.firstOrNull())
+        return recipes.single()
     }
 
     private fun Check.asString(): String {
         this as Check.Assert
-        return "${accessPath} is $predicate"
+        return "$accessPath is $predicate"
     }
 
     private fun verifyChecksInTestFile(test: String) {
