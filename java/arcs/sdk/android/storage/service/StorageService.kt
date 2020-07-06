@@ -60,7 +60,7 @@ import kotlinx.coroutines.runBlocking
  * the [IStorageService] interface when bound-to by a client.
  */
 open class StorageService : ResurrectorService() {
-    private val coroutineContext = Dispatchers.IO + CoroutineName("StorageService")
+    private val coroutineContext = Dispatchers.Default + CoroutineName("StorageService")
     private val scope = CoroutineScope(coroutineContext)
     open val writeBackScope = CoroutineScope(
         Executors.newCachedThreadPool {
@@ -153,7 +153,8 @@ open class StorageService : ResurrectorService() {
             intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
         ) { "No StoreOptions found in Intent" }
 
-        val options = parcelableOptions.actual
+        val options =
+            parcelableOptions.actual.copy(coroutineContext = coroutineContext)
         return BindingContext(
             stores.computeIfAbsent(options.storageKey) {
                 Store<CrdtData, CrdtOperationAtTime, Any>(options)

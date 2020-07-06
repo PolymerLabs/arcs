@@ -54,7 +54,6 @@ import arcs.core.util.Result
 import arcs.core.util.TaggedLog
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
-import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -70,6 +69,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import kotlin.coroutines.CoroutineContext
 
 /**
  * [ReferenceModeStore]s adapt between a collection ([CrdtSet] or [CrdtSingleton]) of entities from
@@ -95,6 +95,7 @@ class ReferenceModeStore private constructor(
     val containerStore: DirectStore<CrdtData, CrdtOperation, Any?>,
     /* internal */
     val backingKey: StorageKey,
+    val coroutineContext: CoroutineContext = Dispatchers.Default,
     /* internal */
     backingType: Type
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
@@ -462,7 +463,7 @@ class ReferenceModeStore private constructor(
                 callbacksStateChannel.close()
             }
         }
-        .launchIn(CoroutineScope(Dispatchers.Default + Job()))
+        .launchIn(CoroutineScope(coroutineContext + Job()))
 
     private fun newBackingInstance(): CrdtModel<CrdtData, CrdtOperationAtTime, Referencable> =
         crdtType.createCrdtModel()
@@ -728,7 +729,8 @@ class ReferenceModeStore private constructor(
                 StoreOptions(
                     storageKey = storageKey.storageKey,
                     type = refType,
-                    versionToken = options.versionToken
+                    versionToken = options.versionToken,
+                    coroutineContext = options.coroutineContext
                 )
             )
 
@@ -736,6 +738,7 @@ class ReferenceModeStore private constructor(
                 refableOptions,
                 containerStore,
                 storageKey.backingKey,
+                options.coroutineContext,
                 type.containedType
             )
         }
