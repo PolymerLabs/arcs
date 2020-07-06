@@ -54,7 +54,11 @@ class VariableEntityTest {
         val arcId = allocator.startArcForPlan(ShopPlan).waitForStart().id
 
         // Ensure that the shop recipe is fully processed.
-        withTimeout(1500) { Consumer.updated.join() }
+        withTimeout(1500) {
+            OrderIngestion.orderedOnce.join()
+            SkuRedactor.redacted.join()
+            Consumer.updated.join()
+        }
         allocator.stopArc(arcId)
     }
 }
