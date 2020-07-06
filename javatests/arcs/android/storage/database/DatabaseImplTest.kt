@@ -435,7 +435,8 @@ class DatabaseImplTest {
                     "txtlst" to FieldType.ListOf(FieldType.Text),
                     "lnglst" to FieldType.ListOf(FieldType.Long),
                     "bigint" to FieldType.BigInt,
-                    "inlined" to FieldType.InlineEntity("inlineHash")
+                    "inlined" to FieldType.InlineEntity("inlineHash"),
+                    "inlinelist" to FieldType.ListOf(FieldType.InlineEntity("inlineHash"))
                 ),
                 collections = mapOf(
                     "texts" to FieldType.Text,
@@ -485,7 +486,11 @@ class DatabaseImplTest {
                     "txtlst" to listOf("this", "is", "a", "list").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text)),
                     "lnglst" to listOf(1L, 2L, 4L, 4L, 3L).map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Long)),
                     "bigint" to BigInteger.valueOf(123).toReferencable(),
-                    "inlined" to inlineEntity
+                    "inlined" to inlineEntity,
+                    "inlinelist" to listOf(
+                        toInlineEntity("inlist", 3.0, setOf("A", "Z")),
+                        toInlineEntity("alsoinlist", 4.0, setOf("B", "Z"))
+                    ).toReferencable(FieldType.ListOf(FieldType.InlineEntity("inlineHash")))
                 ),
                 mapOf(
                     "texts" to setOf("abc".toReferencable(), "def".toReferencable()),
@@ -627,7 +632,8 @@ class DatabaseImplTest {
                     "bool" to FieldType.Boolean,
                     "num" to FieldType.Number,
                     "ref" to FieldType.EntityRef("child"),
-                    "inline" to FieldType.InlineEntity("inlineHash")
+                    "inline" to FieldType.InlineEntity("inlineHash"),
+                    "inlinelist" to FieldType.ListOf(FieldType.InlineEntity("inlineHash"))
                 ),
                 collections = mapOf(
                     "texts" to FieldType.Text,
@@ -665,7 +671,11 @@ class DatabaseImplTest {
                         DummyStorageKey("child-ref-1"),
                         VersionMap("child-1" to 1)
                     ),
-                    "inline" to inlineEntity
+                    "inline" to inlineEntity,
+                    "inlinelist" to listOf(
+                        toInlineEntity("list1", 1.0),
+                        toInlineEntity("list2", 2.0)
+                    ).toReferencable(FieldType.ListOf(FieldType.InlineEntity("inlineHash")))
                 ),
                 mapOf(
                     "texts" to setOf("aaa".toReferencable(), "bbb".toReferencable()),
@@ -709,7 +719,11 @@ class DatabaseImplTest {
                         DummyStorageKey("child-ref-9"),
                         VersionMap("child-9" to 9)
                     ),
-                    "inline" to inlineEntity2
+                    "inline" to inlineEntity2,
+                    "inlinelist" to listOf(
+                        toInlineEntity("list1", 1.0),
+                        toInlineEntity("list1", 1.0)
+                    ).toReferencable(FieldType.ListOf(FieldType.InlineEntity("inlineHash")))
                 ),
                 mapOf(
                     "texts" to setOf("zzz".toReferencable(), "yyy".toReferencable()),
@@ -1909,7 +1923,8 @@ class DatabaseImplTest {
                 singletons = mapOf(
                     "text" to FieldType.Text,
                     "textlist" to FieldType.ListOf(FieldType.Text),
-                    "inline" to FieldType.InlineEntity("inlineInlineHash")
+                    "inline" to FieldType.InlineEntity("inlineInlineHash"),
+                    "inlinelist" to FieldType.ListOf(FieldType.InlineEntity("inlineInlineHash"))
                 ),
                 collections = mapOf(
                     "texts" to FieldType.Text,
@@ -1921,7 +1936,8 @@ class DatabaseImplTest {
             "hash",
             SchemaFields(
                 singletons = mapOf(
-                    "inline" to FieldType.InlineEntity("inlineHash")
+                    "inline" to FieldType.InlineEntity("inlineHash"),
+                    "inlinelist" to FieldType.ListOf(FieldType.InlineEntity("inlineHash"))
                 ),
                 collections = mapOf(
                     "inlines" to FieldType.InlineEntity("inlineHash")
@@ -1935,14 +1951,17 @@ class DatabaseImplTest {
             textList: List<String>,
             textSet: Set<String>,
             inline: RawEntity,
-            inlineSet: Set<RawEntity>
+            inlineSet: Set<RawEntity>,
+            inlineList: List<RawEntity>
         ) = RawEntity(
             "",
             mapOf(
                 "text" to text.toReferencable(),
                 "textlist" to textList.map { it.toReferencable() }
                     .toReferencable(FieldType.ListOf(FieldType.Text)),
-                "inline" to inline
+                "inline" to inline,
+                "inlinelist" to inlineList
+                    .toReferencable(FieldType.ListOf(FieldType.InlineEntity("inlineInlineHash")))
             ),
             mapOf(
                 "texts" to textSet.map { it.toReferencable() }.toSet(),
@@ -1964,6 +1983,10 @@ class DatabaseImplTest {
             setOf(
                 toInlineInlineEntity("MORE INLINE"),
                 toInlineInlineEntity("VERY INLINE")
+            ),
+            listOf(
+                toInlineInlineEntity("LIST INLINE"),
+                toInlineInlineEntity("LIST INLINE")
             )
         )
         val inlineEntity2 = toInlineEntity(
@@ -1974,6 +1997,10 @@ class DatabaseImplTest {
             setOf(
                 toInlineInlineEntity("MANY INLINE"),
                 toInlineInlineEntity("VORACIOUSLY INLINE")
+            ),
+            listOf(
+                toInlineInlineEntity("LOTS INLINE"),
+                toInlineInlineEntity("LIST INLINE")
             )
         )
         val inlineEntity3 = toInlineEntity(
@@ -1984,6 +2011,24 @@ class DatabaseImplTest {
             setOf(
                 toInlineInlineEntity("MUST INLINE"),
                 toInlineInlineEntity("VALUABLE INLINE")
+            ),
+            listOf(
+                toInlineInlineEntity("LOADED INLINE"),
+                toInlineInlineEntity("LIST INLINE")
+            )
+        )
+        val inlineEntity4 = toInlineEntity(
+            "inline4",
+            listOf("U", "V", "V"),
+            setOf("J", "K", "L"),
+            toInlineInlineEntity("SORTA INLINE"),
+            setOf(
+                toInlineInlineEntity("MAYBE INLINE"),
+                toInlineInlineEntity("VALIDLY INLINE")
+            ),
+            listOf(
+                toInlineInlineEntity("LOOSELY INLINE"),
+                toInlineInlineEntity("LIST INLINE")
             )
         )
 
@@ -1993,7 +2038,9 @@ class DatabaseImplTest {
             RawEntity(
                 "entity",
                 mapOf(
-                    "inline" to inlineEntity1
+                    "inline" to inlineEntity1,
+                    "inlinelist" to listOf(inlineEntity3, inlineEntity4)
+                        .toReferencable(FieldType.ListOf(FieldType.InlineEntity("inlineSchema")))
                 ),
                 mapOf(
                     "inlines" to setOf(inlineEntity2, inlineEntity3)
@@ -2017,7 +2064,8 @@ class DatabaseImplTest {
                 RawEntity(
                     "entity",
                     mapOf(
-                        "inline" to null
+                        "inline" to null,
+                        "inlinelist" to null
                     ),
                     mapOf(
                         "inlines" to emptySet()
