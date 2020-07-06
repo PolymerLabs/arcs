@@ -193,8 +193,8 @@ class CrdtEntityTest {
                 id = "an-id",
                 singletonFields = setOf("foo"),
                 collectionFields = setOf("bar", "baz"),
-                creationTimestamp = -1L,
-                expirationTimestamp = -1L
+                creationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP,
+                expirationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
             )
         )
     }
