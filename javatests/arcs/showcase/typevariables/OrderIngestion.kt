@@ -1,7 +1,7 @@
 package arcs.showcase.typevariables
 
 class OrderIngestion : AbstractOrderIngestion() {
-    override fun onFirstStart() {
+    override fun onReady() {
         handles.data.store(
             Product(
                 sku="FN-9330",
