@@ -19,7 +19,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 @RunWith(JUnit4::class)
 @ExperimentalCoroutinesApi
-class VariableEntityTest {
+class VariableTest {
 
     class TestJvmProdHost(
         schedulerProvider: SchedulerProvider,
