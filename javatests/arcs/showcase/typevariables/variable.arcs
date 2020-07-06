@@ -11,7 +11,7 @@ particle SkuRedactor in '.SkuRedactor'
 particle Consumer in '.Consumer'
   data: reads [Product {sku: Text, name: Text, price: Number}]
 
-recipe
+recipe Shop
   beforeRedaction: create
   afterRedaction: create
   OrderIngestion

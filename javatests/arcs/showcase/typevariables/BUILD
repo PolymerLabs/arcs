@@ -1,10 +1,10 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_jvm_test_suite",
-    "arcs_kt_schema",
+    "arcs_kt_gen",
 )
 
-arcs_kt_schema(
+arcs_kt_gen(
     name = "var_generation",
     srcs = ["variable.arcs"],
 )
@@ -19,6 +19,7 @@ arcs_kt_jvm_test_suite(
     package = "arcs.showcase.typevariables",
     deps = [
         ":var_generation",
+        "//java/arcs/core/allocator",  # buildcleaner: keep
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
