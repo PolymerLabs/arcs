@@ -10,10 +10,12 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
+@Ignore("Flaky - b/156404564")
 @RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 open class ArcHostManagerTest {
