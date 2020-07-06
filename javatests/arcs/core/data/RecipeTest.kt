@@ -142,6 +142,26 @@ class RecipeTest {
         )
     }
 
+
+    @Test
+    fun handleToPlanHandle() {
+        val storageKey = "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}"
+        assertThat(
+            Recipe.Handle(
+                name = "people",
+                fate = Fate.MAP,
+                type = personCollectionType,
+                storageKey = storageKey
+            ).toPlanHandle()
+        ).isEqualTo(
+            Plan.Handle(
+                storageKey = StorageKeyParser.parse(storageKey),
+                type = personCollectionType,
+                annotations = emptyList()
+            )
+        )
+    }
+
     @Test
     fun recipeToPlan_empty() {
         assertThat(
@@ -194,7 +214,6 @@ class RecipeTest {
     fun recipeToPlan_fullExample() {
 
         val peopleStorageKey = "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}"
-
         val peopleHandle = Recipe.Handle(
             name = "people",
             fate = Fate.MAP,
@@ -202,10 +221,12 @@ class RecipeTest {
             storageKey = peopleStorageKey
         )
 
+        val contactsStorageKey = "create://contacts"
         val contactsHandle = Recipe.Handle(
             name = "contacts",
             fate = Fate.CREATE,
-            type = contactCollectionType
+            type = contactCollectionType,
+            storageKey = contactsStorageKey
         )
 
         val convertToContactsSpec = ParticleSpec(
@@ -287,6 +308,18 @@ class RecipeTest {
                                 type = contactCollectionType
                             )
                         )
+                    )
+                ),
+                handles = listOf(
+                    Plan.Handle(
+                        storageKey = StorageKeyParser.parse(peopleStorageKey),
+                        type = personCollectionType,
+                        annotations = emptyList()
+                    ),
+                    Plan.Handle(
+                        storageKey = CreatableStorageKey("contacts"),
+                        type = contactCollectionType,
+                        annotations = emptyList()
                     )
                 ),
                 annotations = listOf(Annotation.createArcId("egress-contacts"))

@@ -58,6 +58,14 @@ data class Recipe(
 /** Translates a [Recipe] into a [Plan] */
 fun Recipe.toPlan() = Plan(
     particles = particles.map { it.toPlanParticle() },
+    handles = handles.values.map { it.toPlanHandle() },
+    annotations = annotations
+)
+
+/** Translates a [Recipe.Handle] into a [Plan.Handle] */
+fun Recipe.Handle.toPlanHandle() = Plan.Handle(
+    type = type,
+    storageKey = StorageKeyParser.parse(requireNotNull(storageKey)),
     annotations = annotations
 )
 

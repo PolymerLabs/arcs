@@ -8,18 +8,39 @@ package arcs.core.data.testdata
 //
 
 import arcs.core.data.*
+import arcs.core.data.Plan.*
 import arcs.core.storage.StorageKeyParser
+import arcs.core.entity.toPrimitiveValue
 
-object IngestionPlan : Plan(
+val Ingestion_Handle0 = Handle(
+    StorageKeyParser.parse(
+        "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"
+    ),
+    EntityType(
+        Schema(
+            setOf(SchemaName("Thing")),
+            SchemaFields(
+                singletons = mapOf("name" to FieldType.Text),
+                collections = emptyMap()
+            ),
+            "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+            refinement = { _ -> true },
+            query = null
+        )
+    ),
+    listOf(
+        Annotation("persistent", emptyMap()),
+        Annotation("ttl", mapOf("value" to AnnotationParam.Str("20d")))
+    )
+)
+val IngestionPlan = Plan(
     listOf(
         Particle(
             "Reader",
             "arcs.core.data.testdata.Reader",
             mapOf(
                 "data" to HandleConnection(
-                    StorageKeyParser.parse(
-                        "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"
-                    ),
+                    Ingestion_Handle0.storageKey,
                     HandleMode.Read,
                     SingletonType(EntityType(Reader_Data.SCHEMA)),
                     listOf(
@@ -34,9 +55,7 @@ object IngestionPlan : Plan(
             "arcs.core.data.testdata.Writer",
             mapOf(
                 "data" to HandleConnection(
-                    StorageKeyParser.parse(
-                        "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"
-                    ),
+                    Ingestion_Handle0.storageKey,
                     HandleMode.Write,
                     SingletonType(EntityType(Writer_Data.SCHEMA)),
                     listOf(
@@ -47,18 +66,35 @@ object IngestionPlan : Plan(
             )
         )
     ),
+    listOf(Ingestion_Handle0),
     listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str("writingArcId"))))
 )
-object ConsumptionPlan : Plan(
+val Consumption_Handle0 = Handle(
+    StorageKeyParser.parse(
+        "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"
+    ),
+    EntityType(
+        Schema(
+            setOf(SchemaName("Thing")),
+            SchemaFields(
+                singletons = mapOf("name" to FieldType.Text),
+                collections = emptyMap()
+            ),
+            "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+            refinement = { _ -> true },
+            query = null
+        )
+    ),
+    emptyList()
+)
+val ConsumptionPlan = Plan(
     listOf(
         Particle(
             "Reader",
             "arcs.core.data.testdata.Reader",
             mapOf(
                 "data" to HandleConnection(
-                    StorageKeyParser.parse(
-                        "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"
-                    ),
+                    Consumption_Handle0.storageKey,
                     HandleMode.Read,
                     SingletonType(EntityType(Reader_Data.SCHEMA)),
                     emptyList()
@@ -66,60 +102,135 @@ object ConsumptionPlan : Plan(
             )
         )
     ),
+    listOf(Consumption_Handle0),
     listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str("readingArcId"))))
 )
-object EphemeralWritingPlan : Plan(
+val EphemeralWriting_Handle0 = Handle(
+    StorageKeyParser.parse("create://my-ephemeral-handle-id"),
+    EntityType(
+        Schema(
+            setOf(SchemaName("Thing")),
+            SchemaFields(
+                singletons = mapOf("name" to FieldType.Text),
+                collections = emptyMap()
+            ),
+            "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+            refinement = { _ -> true },
+            query = null
+        )
+    ),
+    emptyList()
+)
+val EphemeralWritingPlan = Plan(
     listOf(
         Particle(
             "Writer",
             "arcs.core.data.testdata.Writer",
             mapOf(
                 "data" to HandleConnection(
-                    StorageKeyParser.parse("create://my-ephemeral-handle-id"),
+                    EphemeralWriting_Handle0.storageKey,
                     HandleMode.Write,
                     SingletonType(EntityType(Writer_Data.SCHEMA)),
                     emptyList()
                 )
             )
         )
-    )
+    ),
+    listOf(EphemeralWriting_Handle0),
+    emptyList()
 )
-object EphemeralReadingPlan : Plan(
+val EphemeralReading_Handle0 = Handle(
+    StorageKeyParser.parse(
+        "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"
+    ),
+    EntityType(
+        Schema(
+            setOf(SchemaName("Thing")),
+            SchemaFields(
+                singletons = mapOf("name" to FieldType.Text),
+                collections = emptyMap()
+            ),
+            "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+            refinement = { _ -> true },
+            query = null
+        )
+    ),
+    emptyList()
+)
+val EphemeralReadingPlan = Plan(
     listOf(
         Particle(
             "Reader",
             "arcs.core.data.testdata.Reader",
             mapOf(
                 "data" to HandleConnection(
-                    StorageKeyParser.parse(
-                        "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"
-                    ),
+                    EphemeralReading_Handle0.storageKey,
                     HandleMode.Read,
                     SingletonType(EntityType(Reader_Data.SCHEMA)),
                     emptyList()
                 )
             )
         )
-    )
+    ),
+    listOf(EphemeralReading_Handle0),
+    emptyList()
 )
-object ReferencesRecipePlan : Plan(
+val ReferencesRecipe_Handle0 = Handle(
+    StorageKeyParser.parse(
+        "db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:referencesArcId/handle/my-refs-id"
+    ),
+    CollectionType(
+        ReferenceType(
+            EntityType(
+                Schema(
+                    setOf(SchemaName("Thing")),
+                    SchemaFields(
+                        singletons = mapOf("name" to FieldType.Text),
+                        collections = emptyMap()
+                    ),
+                    "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+                    refinement = { _ -> true },
+                    query = null
+                )
+            )
+        )
+    ),
+    listOf(Annotation("persistent", emptyMap()))
+)
+val ReferencesRecipe_Handle1 = Handle(
+    StorageKeyParser.parse(
+        "memdb://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:referencesArcId/handle/my-ref-id"
+    ),
+    ReferenceType(
+        EntityType(
+            Schema(
+                setOf(SchemaName("Thing")),
+                SchemaFields(
+                    singletons = mapOf("name" to FieldType.Text),
+                    collections = emptyMap()
+                ),
+                "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+                refinement = { _ -> true },
+                query = null
+            )
+        )
+    ),
+    listOf(Annotation("ttl", mapOf("value" to AnnotationParam.Str("1d"))))
+)
+val ReferencesRecipePlan = Plan(
     listOf(
         Particle(
             "ReadWriteReferences",
             "",
             mapOf(
                 "inThingRefs" to HandleConnection(
-                    StorageKeyParser.parse(
-                        "db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:referencesArcId/handle/my-refs-id"
-                    ),
+                    ReferencesRecipe_Handle0.storageKey,
                     HandleMode.Read,
                     CollectionType(ReferenceType(EntityType(ReadWriteReferences_InThingRefs.SCHEMA))),
                     listOf(Annotation("persistent", emptyMap()))
                 ),
                 "outThingRef" to HandleConnection(
-                    StorageKeyParser.parse(
-                        "memdb://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:referencesArcId/handle/my-ref-id"
-                    ),
+                    ReferencesRecipe_Handle1.storageKey,
                     HandleMode.Write,
                     SingletonType(ReferenceType(EntityType(ReadWriteReferences_OutThingRef.SCHEMA))),
                     listOf(Annotation("ttl", mapOf("value" to AnnotationParam.Str("1d"))))
@@ -127,5 +238,6 @@ object ReferencesRecipePlan : Plan(
             )
         )
     ),
+    listOf(ReferencesRecipe_Handle0, ReferencesRecipe_Handle1),
     listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str("referencesArcId"))))
 )

@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-node.js';
-import {generateConnectionSpecType} from '../kotlin-codegen-shared.js';
+import {generateConnectionSpecType, generateType} from '../kotlin-type-generator.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {SchemaGraph} from '../schema2graph.js';
 
@@ -55,7 +55,35 @@ describe('Kotlin Handle Connection Type Generation', () => {
     const [particle] = manifest.particles;
     const schemaGraph = new SchemaGraph(particle);
     const [connection] = particle.handleConnections;
-    const actual = generateConnectionSpecType(connection, schemaGraph.nodes);
+    const actual = await generateConnectionSpecType(connection, schemaGraph.nodes);
+    assert.equal(actual, expected);
+  }
+});
+
+describe('Kotlin Type Generation', () => {
+  it('generates a type with embedded schema', async () => await assertType(`
+    particle Module
+      data: reads [Thing {name: Text}]
+    `, `\
+CollectionType(
+    EntityType(
+        Schema(
+            setOf(SchemaName("Thing")),
+            SchemaFields(
+                singletons = mapOf("name" to FieldType.Text),
+                collections = emptyMap()
+            ),
+            "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+            refinement = { _ -> true },
+            query = null
+        )
+    )
+)`
+  ));
+
+  async function assertType(manifestString: string, expected: string) {
+    const manifest = await Manifest.parse(manifestString);
+    const actual = await generateType(manifest.particles[0].handleConnections[0].type);
     assert.equal(actual, expected);
   }
 });
