@@ -1,6 +1,7 @@
 package arcs.core.allocator
 
 import arcs.core.common.ArcId
+import arcs.core.common.SuspendableLazy
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
@@ -21,8 +22,6 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.TaggedLog
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -37,25 +36,20 @@ class CollectionHandlePartitionMap(
 
     private val log = TaggedLog { "CollectionHandlePartitionMap" }
 
-    private val collectionMutex = Mutex()
-    private lateinit var _collection: ReadWriteCollectionHandle<EntityBase>
-
     @Suppress("UNCHECKED_CAST")
-    private suspend fun collection() = collectionMutex.withLock {
-        if (!::_collection.isInitialized) {
-            val entitySpec = EntityBaseSpec(SCHEMA)
-            _collection = handleManager.createHandle(
-                HandleSpec(
-                    "partitions",
-                    HandleMode.ReadWrite,
-                    CollectionType(EntityType(entitySpec.SCHEMA)),
-                    entitySpec
-                ),
-                STORAGE_KEY
-            ) as ReadWriteCollectionHandle<EntityBase>
+    private val collection = SuspendableLazy {
+        val entitySpec = EntityBaseSpec(SCHEMA)
+        (handleManager.createHandle(
+            HandleSpec(
+                "partitions",
+                HandleMode.ReadWrite,
+                CollectionType(EntityType(entitySpec.SCHEMA)),
+                entitySpec
+            ),
+            STORAGE_KEY
+        ) as ReadWriteCollectionHandle<EntityBase>).also {
+            it.awaitReady()
         }
-        _collection.awaitReady()
-        _collection
     }
 
     /** Persists [ArcId] and associated [Plan.Partition]s */
@@ -63,13 +57,13 @@ class CollectionHandlePartitionMap(
         log.debug { "writePartitionMap(arcId=$arcId)" }
 
         val writes = withContext(collection().dispatcher) {
-            partitions.map { partition ->
+            partitions.map { (_, arcHost, particles) ->
                 val entity = EntityBase("EntityBase", SCHEMA)
                 entity.setSingletonValue("arc", arcId.toString())
-                entity.setSingletonValue("host", partition.arcHost)
+                entity.setSingletonValue("host", arcHost)
                 entity.setCollectionValue(
                     "particles",
-                    partition.particles.map { it.particleName }.toSet()
+                    particles.map { it.particleName }.toSet()
                 )
                 log.debug { "Writing $entity" }
                 collection().store(entity)
