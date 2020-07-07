@@ -15,6 +15,7 @@ import arcs.core.util.Scheduler.Companion.DEFAULT_AGENDA_PROCESSING_TIMEOUT_MS
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.TimeoutCancellationException
@@ -147,7 +148,8 @@ class Scheduler(
         val timeoutHandler = { throwable: Throwable ->
             if (throwable is TimeoutCancellationException) {
                 // TODO(b/160251910): Make logging detail more cleanly conditional.
-                log.debug(throwable) { "Scheduled tasks timed out." }
+                log.debug(throwable) { "Scheduled tasks timed out " +
+                    "[arcId=${scope.coroutineContext[CoroutineName]?.name}]." }
                 log.info { "Scheduled tasks timed out." }
             }
         }
