@@ -22,7 +22,8 @@ import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
-import arcs.core.storage.Store
+import arcs.core.storage.StoreOptions
+import arcs.core.storage.defaultFactory
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
@@ -32,7 +33,29 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
+
+/**
+ * This simple wrapper class will create a new [ActiveStore] for the provided [StoreOptions] the
+ * first time that [get] is invoked. Subsequent invocations of [get] will return the previous
+ * constructed store. It's safe to invoke [get] concurrently from different coroutines/threads.
+ */
+class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
+    private val options: StoreOptions
+) {
+    private val mutex = Mutex()
+    private lateinit var _store: ActiveStore<Data, Op, T>
+    @ExperimentalCoroutinesApi
+    @Suppress("UNCHECKED_CAST")
+    suspend fun get(): ActiveStore<Data, Op, T> = mutex.withLock {
+        if (!::_store.isInitialized) {
+            _store = defaultFactory(options)
+        }
+        _store
+    }
+}
 
 /**
  * A [BindingContext] is used by a client of the [StorageService] to facilitate communication with a
@@ -44,7 +67,7 @@ class BindingContext(
      * The [Store] this [BindingContext] provides bindings for, it may or may not be shared with
      * other instances of [BindingContext].
      */
-    private val store: Store<*, *, *>,
+    private val store: DeferredStore<*, *, *>,
     /** [CoroutineContext] on which to build one specific to this [BindingContext]. */
     parentCoroutineContext: CoroutineContext,
     /** Sink to use for recording statistics about accessing data. */
@@ -63,10 +86,9 @@ class BindingContext(
     override fun idle(timeoutMillis: Long, resultCallback: IResultCallback) {
         bindingContextStatisticsSink.traceTransaction("idle") {
             bindingContextStatisticsSink.measure(coroutineContext) {
-                val activeStore = store.activate()
                 try {
                     withTimeout(timeoutMillis) {
-                        activeStore.idle()
+                        store.get().idle()
                     }
                     resultCallback.onResult(null)
                 } catch (e: Throwable) {
@@ -93,9 +115,8 @@ class BindingContext(
             }
 
             callbackToken = runBlocking {
-                val token =
-                    (store.activate() as ActiveStore<CrdtData, CrdtOperation, Any?>)
-                        .on(proxyCallback)
+                val token = (store.get() as ActiveStore<CrdtData, CrdtOperation, Any?>)
+                    .on(proxyCallback)
 
                 // If the callback's binder dies, remove it from the callback collection.
                 callback.asBinder().linkToDeath({
@@ -117,11 +138,12 @@ class BindingContext(
             bindingContextStatisticsSink.measure(coroutineContext) {
                 resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
 
-                val activeStore = store.activate() as ActiveStore<CrdtData, CrdtOperation, Any?>
                 val actualMessage = proxyMessage.decodeProxyMessage()
 
-                if (activeStore.onProxyMessage(actualMessage)) {
-                    onProxyMessage(store.storageKey, actualMessage)
+                (store.get() as ActiveStore<CrdtData, CrdtOperation, Any?>).let { store ->
+                    if (store.onProxyMessage(actualMessage)) {
+                        onProxyMessage(store.storageKey, actualMessage)
+                    }
                 }
             }
         }
@@ -129,7 +151,7 @@ class BindingContext(
 
     override fun unregisterCallback(token: Int) {
         bindingContextStatisticsSink.traceTransaction("unregisterCallback") {
-            CoroutineScope(coroutineContext).launch { store.activate().off(token) }
+            CoroutineScope(coroutineContext).launch { store.get().off(token) }
         }
     }
 

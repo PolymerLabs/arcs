@@ -21,23 +21,23 @@ import kotlinx.coroutines.sync.withLock
  * Store manager provides a central holding places for the [Store] instances that a runtime will
  * use, so that only one instance of a [Store] can be created per [StorageKey].
  */
+@ExperimentalCoroutinesApi
 class StoreManager(
     /**
      * If a store doesn't yet exist in this [StoreManager] for a provided [StorageKey],
-     * it will be created using this [ActivationFactory].
+     * it will be created using this [ActivationFactory]
      */
-    val activationFactory: ActivationFactory? = null
+    val activationFactory: ActivationFactory = defaultFactory
 ) {
     private val storesMutex = Mutex()
     private val stores by guardedBy(storesMutex, mutableMapOf<StorageKey, ActiveStore<*, *, *>>())
 
     @Suppress("UNCHECKED_CAST")
-    @ExperimentalCoroutinesApi
     suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> get(
         storeOptions: StoreOptions
     ) = storesMutex.withLock {
         stores.getOrPut(storeOptions.storageKey) {
-            (activationFactory ?: Store.defaultFactory).invoke<Data, Op, T>(storeOptions)
+            activationFactory<Data, Op, T>(storeOptions)
         } as ActiveStore<Data, Op, T>
     }
 

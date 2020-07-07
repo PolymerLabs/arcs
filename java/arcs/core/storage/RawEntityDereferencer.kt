@@ -29,9 +29,10 @@ typealias EntityStore = ActiveStore<CrdtEntity.Data, CrdtEntity.Operation, CrdtE
  *
  * TODO(jasonwyatt): Use the [Scheduler] here when dereferencing.
  */
+@ExperimentalCoroutinesApi
 class RawEntityDereferencer(
     private val schema: Schema,
-    private val entityActivationFactory: ActivationFactory? = null,
+    private val entityActivationFactory: ActivationFactory = defaultFactory,
     private val referenceCheckFun: ((Schema, RawEntity?) -> Unit)? = null
 ) : Dereferencer<RawEntity> {
     // TODO(#5551): Consider including a hash of schema.names for easier tracking.
@@ -50,7 +51,7 @@ class RawEntityDereferencer(
             EntityType(schema)
         )
 
-        val store: EntityStore = (entityActivationFactory ?: Store.defaultFactory).invoke(options)
+        val store: EntityStore = entityActivationFactory.invoke(options)
 
         val deferred = CompletableDeferred<RawEntity?>()
         val token = store.on(

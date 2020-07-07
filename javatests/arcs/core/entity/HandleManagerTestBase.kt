@@ -23,6 +23,7 @@ import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
+import arcs.core.storage.defaultFactory
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.testutil.waitUntilSet
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -108,7 +109,7 @@ open class HandleManagerTestBase {
         storageKey = hatCollectionRefKey
     )
 
-    var activationFactory: ActivationFactory? = null
+    var activationFactory: ActivationFactory = defaultFactory
     lateinit var schedulerProvider: JvmSchedulerProvider
     lateinit var readHandleManager: EntityHandleManager
     lateinit var writeHandleManager: EntityHandleManager

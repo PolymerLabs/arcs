@@ -14,7 +14,6 @@ package arcs.android.storage.service
 import arcs.core.host.ArcHostManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
-import arcs.core.storage.Store
 import arcs.core.storage.driver.DatabaseDriverProvider
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
@@ -30,7 +29,7 @@ class StorageServiceManager(
     /** [CoroutineContext] on which to build one specific to this [StorageServiceManager]. */
     parentCoroutineContext: CoroutineContext,
     /** The stores managed by StorageService. */
-    val stores: ConcurrentHashMap<StorageKey, Store<*, *, *>>
+    val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>
 ) : IStorageServiceManager.Stub() {
 
     /** The local [CoroutineContext]. */

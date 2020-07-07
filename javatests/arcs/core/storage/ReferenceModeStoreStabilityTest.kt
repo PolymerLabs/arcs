@@ -41,6 +41,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
+typealias RefModeStore = ActiveStore<RefModeStoreData, RefModeStoreOp, RawEntity?>
+
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class ReferenceModeStoreStabilityTest {
@@ -79,12 +81,12 @@ class ReferenceModeStoreStabilityTest {
         )
         RamDisk.memory[containerKey] = VolatileEntry(singletonCrdt.data, 1)
 
-        val store = Store<RefModeStoreData, RefModeStoreOp, RawEntity?>(
+        val store: RefModeStore = defaultFactory(
             StoreOptions(
                 storageKey,
                 SingletonType(EntityType(schema))
             )
-        ).activate()
+        )
 
         val modelValue = CompletableDeferred<RefModeStoreData.Singleton>()
         val id = store.on(
@@ -118,12 +120,12 @@ class ReferenceModeStoreStabilityTest {
         )
         RamDisk.memory[containerKey] = VolatileEntry(setCrdt.data, 1)
 
-        val store = Store<RefModeStoreData, RefModeStoreOp, RawEntity?>(
+        val store: RefModeStore = defaultFactory(
             StoreOptions(
                 storageKey,
                 CollectionType(EntityType(schema))
             )
-        ).activate()
+        )
 
         val modelValue = CompletableDeferred<RefModeStoreData.Set>()
         val id = store.on(
@@ -180,12 +182,12 @@ class ReferenceModeStoreStabilityTest {
         RamDisk.memory[backingKey.childKeyWithComponent("foo_value")] =
             VolatileEntry(entityCrdt.data, 1)
 
-        val store = Store<RefModeStoreData, RefModeStoreOp, RawEntity?>(
+        val store: RefModeStore = defaultFactory(
             StoreOptions(
                 storageKey,
                 CollectionType(EntityType(schema))
             )
-        ).activate()
+        )
 
         val modelValue = CompletableDeferred<RefModeStoreData.Set>()
         val id = store.on(
@@ -242,12 +244,12 @@ class ReferenceModeStoreStabilityTest {
         RamDisk.memory[backingKey.childKeyWithComponent("foo_value")] =
             VolatileEntry(entityCrdt.data, 1)
 
-        val store = Store<RefModeStoreData, RefModeStoreOp, RawEntity?>(
+        val store: RefModeStore = defaultFactory(
             StoreOptions(
                 storageKey,
                 SingletonType(EntityType(schema))
             )
-        ).activate()
+        )
 
         val modelValue = CompletableDeferred<RefModeStoreData.Singleton>()
         val id = store.on(
@@ -304,12 +306,12 @@ class ReferenceModeStoreStabilityTest {
         RamDisk.memory[backingKey.childKeyWithComponent("foo_value")] =
             VolatileEntry(entityCrdt.data, 1)
 
-        val store = Store<RefModeStoreData, RefModeStoreOp, RawEntity?>(
+        val store: RefModeStore = defaultFactory(
             StoreOptions(
                 storageKey,
                 CollectionType(EntityType(schema))
             )
-        ).activate()
+        )
 
         val modelValue = CompletableDeferred<RefModeStoreData.Set>()
         val id = store.on(

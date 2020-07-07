@@ -50,6 +50,7 @@ import arcs.core.storage.ActiveStore
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreOptions
+import arcs.core.storage.defaultFactory
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
@@ -85,6 +86,7 @@ class EntityHandleManager(
     private val analytics: Analytics? = null
 ) {
 
+    @ExperimentalCoroutinesApi
     @Deprecated(
         message = "prefer primary constructor",
         /* ktlint-disable max-line-length */
@@ -103,7 +105,7 @@ class EntityHandleManager(
         hostId,
         time,
         scheduler,
-        StoreManager(activationFactory),
+        StoreManager(activationFactory ?: defaultFactory),
         idGenerator
     )
 

@@ -60,7 +60,6 @@ class ReferenceModeStoreTest {
     val log = LogRule()
 
     private lateinit var testKey: ReferenceModeStorageKey
-    private lateinit var baseStore: Store<CrdtCount.Data, CrdtCount.Operation, Int>
     private lateinit var schema: Schema
 
     @Before
@@ -69,7 +68,6 @@ class ReferenceModeStoreTest {
             MockHierarchicalStorageKey(),
             MockHierarchicalStorageKey()
         )
-        baseStore = Store(StoreOptions(testKey, CountType()))
         schema = Schema(
             setOf(SchemaName("person")),
             SchemaFields(
@@ -89,28 +87,28 @@ class ReferenceModeStoreTest {
 
     @Test
     fun throwsException_ifAppropriateDriverCantBeFound() = runBlockingTest {
-        val store = Store<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
-            StoreOptions(
-                testKey,
-                SingletonType(EntityType(schema))
+        assertSuspendingThrows(CrdtException::class) {
+            defaultFactory<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
+                StoreOptions(
+                    testKey,
+                    SingletonType(EntityType(schema))
+                )
             )
-        )
-        assertSuspendingThrows(CrdtException::class) { store.activate() }
+        }
     }
 
     @Test
     fun constructsReferenceModeStores_whenRequired() = runBlockingTest {
         DriverFactory.register(MockDriverProvider())
 
-        val store = Store<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
+        val store = defaultFactory<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
             StoreOptions(
                 testKey,
                 CollectionType(EntityType(schema))
             )
         )
-        val activeStore = store.activate()
 
-        assertThat(activeStore).isInstanceOf(ReferenceModeStore::class.java)
+        assertThat(store).isInstanceOf(ReferenceModeStore::class.java)
     }
 
     @Test
