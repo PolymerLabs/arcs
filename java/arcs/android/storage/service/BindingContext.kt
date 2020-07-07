@@ -151,6 +151,7 @@ class BindingContext(
 
     override fun unregisterCallback(token: Int) {
         bindingContextStatisticsSink.traceTransaction("unregisterCallback") {
+            // TODO(b/160706751) Clean up coroutine creation approach
             CoroutineScope(coroutineContext).launch { store.get().off(token) }
         }
     }
