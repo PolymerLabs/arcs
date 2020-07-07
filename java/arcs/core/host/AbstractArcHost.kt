@@ -144,7 +144,6 @@ abstract class AbstractArcHost(
     }
 
     override suspend fun unpause() {
-
         if (!paused.compareAndSet(true, false)) {
             return
         }
