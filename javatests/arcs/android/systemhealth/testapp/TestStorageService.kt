@@ -18,7 +18,7 @@ import kotlin.random.Random
  * Arcs system-health-test storage service. Supports crashing itself when needed.
  */
 class TestStorageService : StorageService() {
-    private val coroutineContext = Dispatchers.Main + CoroutineName("TestStorageService")
+    override val coroutineContext = Dispatchers.Main + CoroutineName("TestStorageService")
     private val scope = CoroutineScope(coroutineContext)
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
