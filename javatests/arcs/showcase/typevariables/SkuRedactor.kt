@@ -9,13 +9,13 @@ class SkuRedactor : AbstractSkuRedactor() {
     override fun onReady() {
         assertThat(handles.input.size()).isEqualTo(3)
         for (item in handles.input.fetchAll()) {
-            assertThat(item.sku).isNotEmpty()
-            handles.output.store(item.copy(sku=redactSku(item.sku)))
+            require(item.sku.isNotEmpty())
+            handles.output.store(item.copy(sku = redactSku(item.sku)))
         }
         redacted.complete()
     }
 
-    private fun redactSku(sku: String): String = sku.split('-').first() + "-*****"
+    private fun redactSku(sku: String) = sku.split('-').first() + "-*****"
 
     companion object {
         val redacted = Job()
