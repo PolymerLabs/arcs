@@ -27,7 +27,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
-import arcs.core.entity.SchemaRegistry
+import arcs.core.data.SchemaRegistry
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
@@ -42,7 +42,6 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
-import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.WriteBackForTesting
 import arcs.core.storage.toReference

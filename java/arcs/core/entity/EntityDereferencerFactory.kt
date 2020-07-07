@@ -3,6 +3,7 @@ package arcs.core.entity
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
+import arcs.core.data.SchemaRegistry
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Dereferencer
 import arcs.core.storage.RawEntityDereferencer
@@ -37,11 +38,7 @@ class EntityDereferencerFactory(
     private fun injectDereferencers(schema: Schema, rawEntity: RawEntity) {
         fun injectField(fieldType: FieldType?, fieldValue: Any?) {
             if (fieldType is FieldType.EntityRef) {
-                val fieldSchema = requireNotNull(
-                    SchemaRegistry.getSchema(fieldType.schemaHash)
-                ) {
-                    "Unknown schema with hash ${fieldType.schemaHash}."
-                }
+                val fieldSchema = SchemaRegistry.getSchema(fieldType.schemaHash)
                 injectDereferencers(fieldSchema, fieldValue)
             }
         }
