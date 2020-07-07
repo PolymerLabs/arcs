@@ -90,7 +90,6 @@ abstract class AbstractArcHost(
     // TODO: add lifecycle API for ArcHosts shutting down to cancel running coroutines
     private val scope = CoroutineScope(coroutineContext)
 
-
     init {
         initialParticles.toList().associateByTo(particleConstructors, { it.first }, { it.second })
     }
@@ -99,7 +98,7 @@ abstract class AbstractArcHost(
     private val runningMutex = Mutex()
 
     private suspend fun putContextCache(id: String, context: ArcHostContext) = cacheMutex.withLock {
-      contextCache[id] = context
+        contextCache[id] = context
     }
 
     private suspend fun clearContextCache() = cacheMutex.withLock {
@@ -248,11 +247,13 @@ abstract class AbstractArcHost(
      */
     protected suspend fun updateArcHostContext(arcId: String, context: ArcHostContext) {
         putContextCache(arcId, context)
-        writeContextToStorage(arcId, context)
-        if (context.arcState == ArcState.Running) {
-            runningMutex.withLock { runningArcs[arcId] = context }
-        } else {
-            runningMutex.withLock { runningArcs.remove(arcId) }
+        runningMutex.withLock {
+            writeContextToStorage(arcId, context)
+            if (context.arcState == ArcState.Running) {
+                runningArcs[arcId] = context
+            } else {
+                runningArcs.remove(arcId)
+            }
         }
     }
 
