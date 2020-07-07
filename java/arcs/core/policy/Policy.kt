@@ -27,22 +27,19 @@ data class Policy(
     /** The name of the egress particle that matches this policy. */
     val egressParticleName = "Egress_$name"
 
-    /** The set of all fields (included nested fields). */
+    /** The set of all fields (includes nested fields). */
     val allFields: Set<PolicyField> = computeAllFields()
 
     /** The set of all redaction labels mentioned in the policy. */
     val allRedactionLabels: Set<String> = allFields.flatMap { it.redactedUsages.keys }.toSet()
 
     private fun computeAllFields(): Set<PolicyField> {
-        val result = mutableSetOf<PolicyField>()
-        fun addField(field: PolicyField) {
-            result.add(field)
-            field.subfields.forEach { addField(it) }
+        fun getAllFields(field: PolicyField): List<PolicyField> {
+            return listOf(field) + field.subfields.flatMap { getAllFields(it) }
         }
-        targets.forEach { target ->
-            target.fields.forEach { addField(it) }
-        }
-        return result
+        return targets.flatMap { target ->
+            target.fields.flatMap { getAllFields(it) }
+        }.toSet()
     }
 }
 
