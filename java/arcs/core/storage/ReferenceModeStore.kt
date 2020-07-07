@@ -54,6 +54,7 @@ import arcs.core.util.Result
 import arcs.core.util.TaggedLog
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -96,6 +97,7 @@ class ReferenceModeStore private constructor(
     /* internal */
     val backingKey: StorageKey,
     /* internal */
+    clearCoroutineContext: CoroutineContext = Dispatchers.Default,
     backingType: Type
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
     // TODO(#5551): Consider including a hash of the storage key in log prefix.
@@ -462,7 +464,7 @@ class ReferenceModeStore private constructor(
                 callbacksStateChannel.close()
             }
         }
-        .launchIn(CoroutineScope(Dispatchers.Default + Job()))
+        .launchIn(CoroutineScope(clearCoroutineContext + Job()))
 
     private fun newBackingInstance(): CrdtModel<CrdtData, CrdtOperationAtTime, Referencable> =
         crdtType.createCrdtModel()
@@ -728,7 +730,8 @@ class ReferenceModeStore private constructor(
                 StoreOptions(
                     storageKey = storageKey.storageKey,
                     type = refType,
-                    versionToken = options.versionToken
+                    versionToken = options.versionToken,
+                    coroutineContext = options.coroutineContext
                 )
             )
 
@@ -736,6 +739,7 @@ class ReferenceModeStore private constructor(
                 refableOptions,
                 containerStore,
                 storageKey.backingKey,
+                options.coroutineContext,
                 type.containedType
             )
         }
