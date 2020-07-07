@@ -18,21 +18,39 @@ import arcs.core.data.Capability
 /** Defines a data usage policy. See [PolicyProto] for the canonical definition of a policy. */
 data class Policy(
     val name: String,
-    val description: String,
     val egressType: EgressType,
-    val targets: List<PolicyTarget>,
-    val configs: Map<String, PolicyConfig>,
-    val annotations: List<Annotation>
-)
+    val description: String = "",
+    val targets: List<PolicyTarget> = emptyList(),
+    val configs: Map<String, PolicyConfig> = emptyMap(),
+    val annotations: List<Annotation> = emptyList()
+) {
+    /** The name of the egress particle that matches this policy. */
+    val egressParticleName = "Egress_$name"
+
+    /** All fields mentioned the policy (includes nested fields). */
+    val allFields: List<PolicyField> = collectAllFields()
+
+    /** The set of all redaction labels mentioned in the policy. */
+    val allRedactionLabels: Set<String> = allFields.flatMap { it.redactedUsages.keys }.toSet()
+
+    private fun collectAllFields(): List<PolicyField> {
+        fun getAllFields(field: PolicyField): List<PolicyField> {
+            return listOf(field) + field.subfields.flatMap { getAllFields(it) }
+        }
+        return targets.flatMap { target ->
+            target.fields.flatMap { getAllFields(it) }
+        }
+    }
+}
 
 /** Target schema governed by a policy, see [PolicyTargetProto]. */
 data class PolicyTarget(
     // TODO(b/157605232): Resolve the schema name to a type.
     val schemaName: String,
-    val maxAgeMs: Long,
-    val retentions: List<PolicyRetention>,
-    val fields: List<PolicyField>,
-    val annotations: List<Annotation>
+    val maxAgeMs: Long = 0,
+    val retentions: List<PolicyRetention> = emptyList(),
+    val fields: List<PolicyField> = emptyList(),
+    val annotations: List<Annotation> = emptyList()
 ) {
 
     fun toCapabilities(): List<Capabilities> {
@@ -56,11 +74,11 @@ data class PolicyField(
     // TODO(b/157605232): Resolve the field name to a type.
     val fieldName: String,
     /** Valid usages of this field without redaction. */
-    val rawUsages: Set<UsageType>,
+    val rawUsages: Set<UsageType> = emptySet(),
     /** Valid usages of this field with redaction first. Maps from redaction label to usages. */
-    val redactedUsages: Map<String, Set<UsageType>>,
-    val subfields: List<PolicyField>,
-    val annotations: List<Annotation>
+    val redactedUsages: Map<String, Set<UsageType>> = emptyMap(),
+    val subfields: List<PolicyField> = emptyList(),
+    val annotations: List<Annotation> = emptyList()
 )
 
 /** Retention options for storing data, see [PolicyRetentionProto]. */
