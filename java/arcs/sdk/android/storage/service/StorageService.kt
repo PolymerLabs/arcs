@@ -28,7 +28,8 @@ import arcs.android.storage.service.BindingContextStatsImpl
 import arcs.android.storage.service.StorageServiceManager
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
-import arcs.android.util.ProtoPrefetcher
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.Store
@@ -59,9 +60,9 @@ import kotlinx.coroutines.runBlocking
  * the [IStorageService] interface when bound-to by a client.
  */
 open class StorageService : ResurrectorService() {
-    private val coroutineContext = Dispatchers.IO + CoroutineName("StorageService")
+    protected open val coroutineContext = Dispatchers.Default + CoroutineName("StorageService")
     private val scope = CoroutineScope(coroutineContext)
-    private val writeBackScope = CoroutineScope(
+    protected open val writeBackScope = CoroutineScope(
         Executors.newCachedThreadPool {
             Thread(it).apply { name = "WriteBack #$id" }
         }.asCoroutineDispatcher() + SupervisorJob()
@@ -70,6 +71,9 @@ open class StorageService : ResurrectorService() {
     private var startTime: Long? = null
     private val stats = BindingContextStatsImpl()
     private val log = TaggedLog { "StorageService" }
+    // Can be overridden by subclasses.
+    open val config = StorageServiceConfig(ttlJobEnabled = true, garbageCollectionJobEnabled = true)
+    private val workManager: WorkManager by lazy { WorkManager.getInstance(this) }
 
     @ExperimentalCoroutinesApi
     override fun onCreate() {
@@ -77,39 +81,65 @@ open class StorageService : ResurrectorService() {
         log.debug { "onCreate" }
         startTime = startTime ?: System.currentTimeMillis()
 
-        ProtoPrefetcher.prefetch()
         StoreWriteBack.init(writeBackScope)
 
+        schedulePeriodicJobs(config)
+    }
+
+    private fun scheduleTtlJob(ttlHoursInterval: Long) {
         val periodicCleanupTask =
-            PeriodicWorkRequest.Builder(PeriodicCleanupTask::class.java, 12, TimeUnit.HOURS)
-                .addTag(PeriodicCleanupTask.WORKER_TAG)
-                .build()
+            PeriodicWorkRequest.Builder(
+                PeriodicCleanupTask::class.java,
+                ttlHoursInterval,
+                TimeUnit.HOURS
+            )
+            .addTag(PeriodicCleanupTask.WORKER_TAG)
+            .build()
+        workManager.enqueueUniquePeriodicWork(
+            PeriodicCleanupTask.WORKER_TAG,
+            ExistingPeriodicWorkPolicy.REPLACE,
+            periodicCleanupTask
+        )
+    }
+
+    private fun scheduleGcJob(garbageCollectionHoursInterval: Long) {
         val garbageCollectionTask =
             PeriodicWorkRequest.Builder(
                 DatabaseGarbageCollectionPeriodicTask::class.java,
-                1,
-                TimeUnit.DAYS
+                garbageCollectionHoursInterval,
+                TimeUnit.HOURS
             )
-                .addTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
-                .setConstraints(
-                    Constraints.Builder()
-                        .setRequiresDeviceIdle(true)
-                        .setRequiresCharging(true)
-                        .build()
-                ).build()
-
-        val workManager = WorkManager.getInstance(this)
-        workManager.enqueueUniquePeriodicWork(
-            PeriodicCleanupTask.WORKER_TAG,
-            ExistingPeriodicWorkPolicy.KEEP,
-            periodicCleanupTask
-        )
+            .addTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiresDeviceIdle(true)
+                    .setRequiresCharging(true)
+                    .build()
+            )
+            .build()
         workManager.enqueueUniquePeriodicWork(
             DatabaseGarbageCollectionPeriodicTask.WORKER_TAG,
-            ExistingPeriodicWorkPolicy.KEEP,
+            ExistingPeriodicWorkPolicy.REPLACE,
             garbageCollectionTask
         )
     }
+
+    protected fun schedulePeriodicJobs(config: StorageServiceConfig) {
+        if (config.ttlJobEnabled) {
+            scheduleTtlJob(config.ttlHoursInterval)
+        } else {
+            workManager.cancelAllWorkByTag(PeriodicCleanupTask.WORKER_TAG)
+        }
+        if (config.garbageCollectionJobEnabled) {
+            scheduleGcJob(config.garbageCollectionHoursInterval)
+        } else {
+            workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+        }
+    }
+
+    protected fun disableAllPeriodicJobs() = schedulePeriodicJobs(
+        StorageServiceConfig(ttlJobEnabled = false, garbageCollectionJobEnabled = false)
+    )
 
     @ExperimentalCoroutinesApi
     override fun onBind(intent: Intent): IBinder? {
@@ -123,9 +153,12 @@ open class StorageService : ResurrectorService() {
             intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
         ) { "No StoreOptions found in Intent" }
 
-        val options = parcelableOptions.actual
+        val options =
+            parcelableOptions.actual.copy(coroutineContext = coroutineContext)
         return BindingContext(
-            stores.computeIfAbsent(options.storageKey) { Store(options) },
+            stores.computeIfAbsent(options.storageKey) {
+                Store<CrdtData, CrdtOperationAtTime, Any>(options)
+            },
             coroutineContext,
             stats
         ) { storageKey, message ->
@@ -270,7 +303,19 @@ open class StorageService : ResurrectorService() {
         writer.println()
     }
 
+    data class StorageServiceConfig(
+        val ttlJobEnabled: Boolean,
+        val ttlHoursInterval: Long = TTL_JOB_INTERVAL_HOURS,
+        val garbageCollectionJobEnabled: Boolean,
+        val garbageCollectionHoursInterval: Long = GC_JOB_INTERVAL_HOURS
+    )
+
     companion object {
+        // Default value for ttl periodic job interval.
+        const val TTL_JOB_INTERVAL_HOURS = 12L
+        // Default value for garbage collection periodic job interval.
+        const val GC_JOB_INTERVAL_HOURS = 24L
+
         const val EXTRA_OPTIONS = "storeOptions"
         const val MANAGER_ACTION = "arcs.sdk.android.storage.service.MANAGER"
 

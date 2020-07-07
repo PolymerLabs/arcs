@@ -30,7 +30,7 @@ import kotlinx.coroutines.Job
 
 /** A [ConnectionFactory] is capable of creating a [StorageServiceConnection]. */
 typealias ConnectionFactory =
-        (StoreOptions<*, *, *>, ParcelableCrdtType) -> StorageServiceConnection
+        (StoreOptions, ParcelableCrdtType) -> StorageServiceConnection
 
 typealias ManagerConnectionFactory = () -> StorageServiceConnection
 

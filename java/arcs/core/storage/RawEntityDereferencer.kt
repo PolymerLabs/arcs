@@ -23,6 +23,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+typealias EntityStore = ActiveStore<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>
+
 /**
  * [Dereferencer] to use when de-referencing a [Reference] to an [Entity].
  *
@@ -47,15 +49,16 @@ class RawEntityDereferencer(
 
         val storageKey = reference.referencedStorageKey()
 
-        val options = StoreOptions<CrdtEntity.Data, CrdtEntity.Operation, RawEntity>(
+        val options = StoreOptions(
             storageKey,
-            EntityType(schema)
+            EntityType(schema),
+            coroutineContext = coroutineContext
         )
 
-        val store = (entityActivationFactory ?: Store.defaultFactory).invoke(options)
+        val store: EntityStore = (entityActivationFactory ?: Store.defaultFactory).invoke(options)
+
         val deferred = CompletableDeferred<RawEntity?>()
-        var token = -1
-        token = store.on(
+        val token = store.on(
             ProxyCallback { message ->
                 when (message) {
                     is ProxyMessage.ModelUpdate<*, *, *> -> {
@@ -74,8 +77,8 @@ class RawEntityDereferencer(
             withContext(coroutineContext) {
                 launch { store.onProxyMessage(ProxyMessage.SyncRequest(token)) }
 
-                // Only return the item if we've actually managed to pull it out of storage, and that
-                // it matches the schema we wanted.
+                // Only return the item if we've actually managed to pull it out of storage, and
+                // that it matches the schema we wanted.
                 val entity = deferred.await()?.takeIf { it matches schema }?.copy(id = reference.id)
                 referenceCheckFun?.invoke(schema, entity)
                 entity

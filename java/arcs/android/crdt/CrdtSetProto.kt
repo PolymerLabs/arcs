@@ -33,6 +33,12 @@ fun CrdtSetProto.Operation.toOperation(): CrdtSet.Operation<Referencable> = when
             removed = removed.toReferencable()!!
         )
     }
+    CrdtSetProto.Operation.OperationCase.CLEAR -> with(clear) {
+        CrdtSet.Operation.Clear<Referencable>(
+            actor = actor,
+            clock = fromProto(versionMap)
+        )
+    }
     CrdtSetProto.Operation.OperationCase.FAST_FORWARD -> with(fastForward) {
         CrdtSet.Operation.FastForward<Referencable>(
             oldClock = fromProto(oldVersionMap),
@@ -63,6 +69,7 @@ fun CrdtSet.Operation<*>.toProto(): CrdtSetProto.Operation {
     when (this) {
         is CrdtSet.Operation.Add<*> -> proto.add = toProto()
         is CrdtSet.Operation.Remove<*> -> proto.remove = toProto()
+        is CrdtSet.Operation.Clear<*> -> proto.clear = toProto()
         is CrdtSet.Operation.FastForward<*> -> proto.fastForward = toProto()
     }
     return proto.build()
@@ -80,6 +87,12 @@ private fun CrdtSet.Operation.Remove<*>.toProto() = CrdtSetProto.Operation.Remov
     .setVersionMap(clock.toProto())
     .setActor(actor)
     .setRemoved(removed.toProto())
+    .build()
+
+/** Serializes a [CrdtSet.Operation.Clear] to its proto form. */
+private fun CrdtSet.Operation.Clear<*>.toProto() = CrdtSetProto.Operation.Clear.newBuilder()
+    .setVersionMap(clock.toProto())
+    .setActor(actor)
     .build()
 
 /** Serializes a [CrdtSet.Operation.FastForward] to its proto form. */

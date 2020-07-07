@@ -8,9 +8,7 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.core.entity
-
-import arcs.core.data.Schema
+package arcs.core.data
 
 typealias SchemaHash = String
 
@@ -25,8 +23,14 @@ object SchemaRegistry {
         schemas[schema.hash] = schema
     }
 
-    /** Given a [SchemaHash], return the [Schema] for that hash, if it exists. */
-    fun getSchema(hash: SchemaHash) = schemas[hash]
+    /**
+     * Returns the [Schema] stored in the registry for the given [SchemaHash].
+     *
+     * @throws NoSuchElementException if no schema has been registered for the requested schema hash
+     */
+    fun getSchema(hash: SchemaHash): Schema = schemas.getOrElse(hash) {
+        throw NoSuchElementException("Schema hash '$hash' not found in SchemaRegistry.")
+    }
 
     /** Clears the registry, for testing purposes. */
     fun clearForTest() {

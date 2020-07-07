@@ -9,7 +9,8 @@
  */
 import {EntityGenerator, NodeAndGenerator, Schema2Base} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
-import {generateConnectionSpecType, getTypeInfo} from './kotlin-codegen-shared.js';
+import {getTypeInfo} from './kotlin-codegen-shared.js';
+import {generateConnectionSpecType} from './kotlin-type-generator.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 import {CollectionType, EntityType, Type, TypeVariable} from '../runtime/type.js';
 import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
@@ -63,7 +64,7 @@ export class Schema2Kotlin extends Schema2Base {
         'import arcs.core.data.util.ReferencablePrimitive',
         'import arcs.core.entity.toPrimitiveValue',
         'import arcs.core.entity.Reference',
-        'import arcs.core.entity.SchemaRegistry',
+        'import arcs.core.data.SchemaRegistry',
         'import arcs.core.entity.Tuple1',
         'import arcs.core.entity.Tuple2',
         'import arcs.core.entity.Tuple3',
@@ -178,9 +179,9 @@ ${imports.join('\n')}
     return `${handleMode}${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, {startIndent: 4})}>`;
   }
 
-  private handleSpec(handleName: string, connection: HandleConnectionSpec, nodes: SchemaNode[]): string {
+  private async handleSpec(handleName: string, connection: HandleConnectionSpec, nodes: SchemaNode[]): Promise<string> {
     const mode = this.handleMode(connection);
-    const type = generateConnectionSpecType(connection, nodes);
+    const type = await generateConnectionSpecType(connection, nodes);
     // Using full names of entities, as these are aliases available outside the particle scope.
     const entityNames = SchemaNode.topLevelNodes(connection, nodes).map(node => node.fullName(connection));
     return ktUtils.applyFun(
@@ -252,7 +253,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
     }`;
   }
 
-  generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): string {
+  async generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string> {
     const particleName = particle.name;
     const handleDecls: string[] = [];
     const handleSpecs: string[] = [];
@@ -261,7 +262,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
       const handleName = connection.name;
 
       // Particle handles are set up with the read/write mode from the manifest.
-      handleSpecs.push(this.handleSpec(handleName, connection, nodes));
+      handleSpecs.push(await this.handleSpec(handleName, connection, nodes));
 
       // The harness has a "copy" of each handle with full read/write access.
       connection.direction = 'reads writes';

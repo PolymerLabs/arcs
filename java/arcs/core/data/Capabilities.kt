@@ -51,11 +51,7 @@ class Capabilities(capabilities: List<Capability> = emptyList()) {
      * For example, [Capabilities] with Ttl range of 1-5 days `contains` a Ttl of 3 days.
      */
     fun contains(capability: Capability): Boolean {
-        val otherTag = when (capability.tag) {
-            Capability.Range.TAG -> (capability as Capability.Range).min.tag
-            else -> capability.tag
-        }
-        return ranges.find { it.min.tag == otherTag }?.contains(capability) ?: false
+        return ranges.find { it.isCompatible(capability) }?.contains(capability) ?: false
     }
 
     /**
@@ -63,6 +59,14 @@ class Capabilities(capabilities: List<Capability> = emptyList()) {
      */
     fun containsAll(other: Capabilities): Boolean {
         return other.ranges.all { otherRange -> contains(otherRange) }
+    }
+
+    fun isEquivalent(other: Capabilities): Boolean {
+        return ranges.size == other.ranges.size && other.ranges.all { hasEquivalent(it) }
+    }
+
+    fun hasEquivalent(capability: Capability): Boolean {
+        return ranges.any { it.isCompatible(capability) && it.isEquivalent(capability) }
     }
 
     private inline fun <reified T : Capability> getCapability(): T? {

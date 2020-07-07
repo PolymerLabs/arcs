@@ -22,13 +22,16 @@ import arcs.core.entity.DummyEntity
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
-import arcs.core.entity.SchemaRegistry
+import arcs.core.data.SchemaRegistry
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.Store
 import arcs.core.storage.StoreWriteBack
+import arcs.core.storage.database.DatabaseData
+import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDisk
+import arcs.core.storage.keys.DATABASE_NAME_DEFAULT
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
@@ -122,6 +125,37 @@ class StorageServiceManagerTest {
         testClearDataBetweenForKey(volatileKey, allRemoved = true)
     }
 
+    @Test
+    fun resetDatabases() = runBlocking {
+        val handle = createCollectionHandle(databaseKey)
+        val entity = DummyEntity().apply {
+            num = 1.0
+            texts = setOf("1", "one")
+        }
+        handle.dispatchStore(entity)
+        log("Wrote entity")
+
+        val manager = buildManager()
+        val deferredResult = DeferredResult(coroutineContext)
+        log("Resetting databases")
+        manager.resetDatabases(deferredResult)
+
+        withTimeout(2000) {
+            assertThat(deferredResult.await()).isTrue()
+        }
+
+        val newHandle = createCollectionHandle(databaseKey)
+        assertThat(newHandle.dispatchFetchAll()).isEmpty()
+
+        // Double check that no tombstones are left.
+        val database = DatabaseDriverProvider.manager.getDatabase(DATABASE_NAME_DEFAULT, true)
+        val entityKey = databaseKey.backingKey.childKeyWithComponent(entity.entityId!!)
+        // Entity is gone, no tombstone left.
+        assertThat(database.get(entityKey, DatabaseData.Entity::class, DummyEntity.SCHEMA)).isNull()
+        // Collection is gone too.
+        assertThat(database.get(databaseKey.storageKey, DatabaseData.Collection::class, DummyEntity.SCHEMA)).isNull()
+    }
+
     private suspend fun testClearAllForKey(storageKey: StorageKey) {
         val handle = createSingletonHandle(storageKey)
         val entity = DummyEntity().apply {
@@ -177,6 +211,9 @@ class StorageServiceManagerTest {
         if (allRemoved) {
             assertThat(newHandle.dispatchFetchAll()).isEmpty()
         } else {
+            // In case there are remaining entities, the changes should be propagated to the
+            // original handle as well.
+            assertThat(handle.dispatchFetchAll()).containsExactly(entity1, entity3)
             assertThat(newHandle.dispatchFetchAll()).containsExactly(entity1, entity3)
         }
     }

@@ -20,9 +20,10 @@ import arcs.core.util.lens
  * A [Plan] is usually produced by running the build time Particle Accelerator tool, it consists
  * of a set of specs for handles, particles used in a recipe, and mappings between them.
  */
-open class Plan(
+data class Plan(
     // TODO(cromwellian): add more fields as needed (e.g. RecipeName, etc for debugging)
     val particles: List<Particle>,
+    val handles: List<Handle> = emptyList(),
     val annotations: List<Annotation> = emptyList()
 ) {
     val arcId: String?
@@ -48,6 +49,13 @@ open class Plan(
             val handlesLens = lens(Particle::handles) { t, f -> t.copy(handles = f) }
         }
     }
+
+    /** A [Handle] representation for the [Plan]. */
+    data class Handle(
+        val storageKey: StorageKey,
+        val type: Type,
+        val annotations: List<Annotation>
+    )
 
     /** Represents the expression to be evaluated to produce a new field. */
     data class AdapterField<T>(
@@ -105,18 +113,9 @@ open class Plan(
         }
     }
 
-    // Because Plan is not a data class to allow sub-classing, these are required.
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-
-        return (other as? Plan)?.particles == particles
-    }
-
-    override fun hashCode(): Int = particles.hashCode()
-
     companion object {
         val particleLens = lens(Plan::particles) { t, f ->
-            Plan(particles = f, annotations = t.annotations)
+            Plan(particles = f, handles = t.handles, annotations = t.annotations)
         }
     }
 }

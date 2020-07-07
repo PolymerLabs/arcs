@@ -79,8 +79,8 @@ class ReferenceModeStoreStabilityTest {
         )
         RamDisk.memory[containerKey] = VolatileEntry(singletonCrdt.data, 1)
 
-        val store = Store(
-            StoreOptions<RefModeStoreData, RefModeStoreOp, RawEntity?>(
+        val store = Store<RefModeStoreData, RefModeStoreOp, RawEntity?>(
+            StoreOptions(
                 storageKey,
                 SingletonType(EntityType(schema))
             )
@@ -118,8 +118,8 @@ class ReferenceModeStoreStabilityTest {
         )
         RamDisk.memory[containerKey] = VolatileEntry(setCrdt.data, 1)
 
-        val store = Store(
-            StoreOptions<RefModeStoreData, RefModeStoreOp, RawEntity?>(
+        val store = Store<RefModeStoreData, RefModeStoreOp, RawEntity?>(
+            StoreOptions(
                 storageKey,
                 CollectionType(EntityType(schema))
             )
@@ -180,8 +180,8 @@ class ReferenceModeStoreStabilityTest {
         RamDisk.memory[backingKey.childKeyWithComponent("foo_value")] =
             VolatileEntry(entityCrdt.data, 1)
 
-        val store = Store(
-            StoreOptions<RefModeStoreData, RefModeStoreOp, RawEntity?>(
+        val store = Store<RefModeStoreData, RefModeStoreOp, RawEntity?>(
+            StoreOptions(
                 storageKey,
                 CollectionType(EntityType(schema))
             )
@@ -242,8 +242,8 @@ class ReferenceModeStoreStabilityTest {
         RamDisk.memory[backingKey.childKeyWithComponent("foo_value")] =
             VolatileEntry(entityCrdt.data, 1)
 
-        val store = Store(
-            StoreOptions<RefModeStoreData, RefModeStoreOp, RawEntity?>(
+        val store = Store<RefModeStoreData, RefModeStoreOp, RawEntity?>(
+            StoreOptions(
                 storageKey,
                 SingletonType(EntityType(schema))
             )
@@ -304,8 +304,8 @@ class ReferenceModeStoreStabilityTest {
         RamDisk.memory[backingKey.childKeyWithComponent("foo_value")] =
             VolatileEntry(entityCrdt.data, 1)
 
-        val store = Store(
-            StoreOptions<RefModeStoreData, RefModeStoreOp, RawEntity?>(
+        val store = Store<RefModeStoreData, RefModeStoreOp, RawEntity?>(
+            StoreOptions(
                 storageKey,
                 CollectionType(EntityType(schema))
             )

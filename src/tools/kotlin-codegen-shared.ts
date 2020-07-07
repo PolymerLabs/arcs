@@ -9,15 +9,8 @@
  */
 
 import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
-import {SchemaGraph, SchemaNode} from './schema2graph.js';
-import {HandleConnectionSpec} from '../runtime/particle-spec.js';
-import {Type, TypeVariable} from '../runtime/type.js';
-import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {assert} from '../platform/assert-web.js';
 import {Dictionary} from '../runtime/hot.js';
-import {Schema} from '../runtime/schema.js';
-
-const ktUtils = new KotlinGenerationUtils();
 
 // Includes reserve words for Entity Interface
 // https://kotlinlang.org/docs/reference/keyword-reference.html
@@ -38,63 +31,11 @@ export function escapeIdentifier(name: string): string {
   return name + (keywords.includes(name) ? '_' : '');
 }
 
-/**
- * Generates a Kotlin type instance for the given handle connection.
- */
-export function generateConnectionType(connection: HandleConnection,
-                                       schemaRegistry: {schema: Schema, generation: string}[] = []): string {
-  return generateConnectionSpecType(connection.spec, new SchemaGraph(connection.particle.spec).nodes, schemaRegistry);
-}
-
-export function generateConnectionSpecType(
-  connection: HandleConnectionSpec,
-  nodes: SchemaNode[],
-  schemaRegistry: {schema: Schema, generation: string}[] = []): string {
-  let type = connection.type;
-  if (type.isEntity || type.isReference) {
-    // Moving to the new style types with explicit singleton.
-    type = type.singletonOf();
-  }
-
-  return (function generateType(type: Type): string {
-    if (type.isEntity) {
-      const node = nodes.find(n => n.schema.equals(type.getEntitySchema()));
-      return ktUtils.applyFun('EntityType', [`${node.fullName(connection)}.SCHEMA`]);
-    } else if (type.isVariable) {
-      const node = nodes.find(n => n.variableName === (type as TypeVariable).variable.name);
-      const schemaPair = schemaRegistry.find(pair => pair.schema.equals(type.getEntitySchema())) || {generation: 'Schema.EMPTY'};
-      const schema = node != null ? `${node.fullName(connection)}.SCHEMA` : schemaPair.generation;
-      return ktUtils.applyFun('EntityType', [schema]);
-    } else if (type.isCollection) {
-      return ktUtils.applyFun('CollectionType', [generateType(type.getContainedType())]);
-    } else if (type.isSingleton) {
-      return ktUtils.applyFun('SingletonType', [generateType(type.getContainedType())]);
-    } else if (type.isReference) {
-      return ktUtils.applyFun('ReferenceType', [generateType(type.getContainedType())]);
-    } else if (type.isTuple) {
-      return ktUtils.applyFun('TupleType.of', type.getContainedTypes().map(t => generateType(t)));
-    } else {
-      throw new Error(`Type '${type.tag}' not supported as code generated handle connection type.`);
-    }
-  })(type);
-}
-
 export interface KotlinTypeInfo {
   type: string;
   decodeFn: string;
   defaultVal: string;
 }
-
-type AddFieldOptions = Readonly<{
-  field: string;
-  typeName: string;
-  isOptional?: boolean;
-  refClassName?: string;
-  refSchemaHash?: string;
-  listTypeInfo?: AddFieldOptions;
-  isCollection?: boolean;
-  isInlineClass?: boolean;
-}>;
 
 export function getTypeInfo(opts: { name: string, isCollection?: boolean, refClassName?: string, listTypeInfo?: {name: string, isInlineClass?: boolean}, isInlineClass?: boolean }): KotlinTypeInfo {
   if (opts.name === 'List') {

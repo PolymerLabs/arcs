@@ -30,7 +30,7 @@ describe('recipe2plan', () => {
 
       assert.notInclude(actual, 'import arcs.core.data.*');
     });
-    it('uses the same identifier for created and mapped handle', async () => {
+    it('uses the same storage key for created and mapped handle', async () => {
       const {recipes, generator} = await process(`
         particle A
           data: writes Thing {num: Number}
@@ -76,7 +76,7 @@ describe('recipe2plan', () => {
       assert.equal(
         await generator.createHandleConnection(writer.connections['data']),
 `HandleConnection(
-    StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
+    R_Handle0.storageKey,
     HandleMode.Write,
     SingletonType(EntityType(A_Data.SCHEMA)),
     emptyList()
@@ -85,7 +85,7 @@ describe('recipe2plan', () => {
       assert.equal(
         await generator.createHandleConnection(reader.connections['data']),
 `HandleConnection(
-    StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
+    R_Handle0.storageKey,
     HandleMode.Read,
     SingletonType(EntityType(B_Data.SCHEMA)),
     emptyList()
@@ -132,7 +132,7 @@ describe('recipe2plan', () => {
     particle Writer in '.Writer'
       data: writes Thing {name: Text}
       
-    recipe Namespace
+    recipe Recipe
       data: create 'some-handle' @persistent
       Writer
         data: writes data`);
@@ -147,7 +147,7 @@ Particle(
     "arcs.core.data.testdata.Writer",
     mapOf(
         "data" to HandleConnection(
-            StorageKeyParser.parse("create://some-handle"),
+            Recipe_Handle0.storageKey,
             HandleMode.Write,
             SingletonType(EntityType(Writer_Data.SCHEMA)),
             listOf(Annotation("persistent", emptyMap()))
@@ -164,7 +164,7 @@ Particle(
     particle Intermediary in '.subdir.Intermediary'
       data: reads writes Thing {name: Text}
       
-    recipe Namespace
+    recipe Recipe
       data: create 'some-handle' @persistent
       Intermediary
         data: writes data`);
@@ -179,7 +179,7 @@ Particle(
     "arcs.core.data.testdata.subdir.Intermediary",
     mapOf(
         "data" to HandleConnection(
-            StorageKeyParser.parse("create://some-handle"),
+            Recipe_Handle0.storageKey,
             HandleMode.ReadWrite,
             SingletonType(EntityType(Intermediary_Data.SCHEMA)),
             listOf(Annotation("persistent", emptyMap()))
@@ -187,6 +187,26 @@ Particle(
     )
 )`
       );
+  });
+  it('reuses schemas generated for particles in handle connection types', async () => {
+    const {generator, recipes} = await process(`
+      particle A
+        data: writes [Person Friend {a: Text, b: Text, c: Text}]
+
+      recipe R
+        h: create
+        A
+          data: h
+    `);
+    const particle = recipes[0].particles[0];
+    const result = await generator.createHandleConnection(particle.connections['data']);
+    assert.deepStrictEqual(result, `\
+HandleConnection(
+    R_Handle0.storageKey,
+    HandleMode.Write,
+    CollectionType(EntityType(A_Data.SCHEMA)),
+    emptyList()
+)`);
   });
   it('generates schemas for resolved type variables', async () => {
     const {generator, recipes} = await process(`
@@ -197,7 +217,7 @@ Particle(
       particle C
         data: reads [~a]
 
-      recipe
+      recipe R
         h: create
         A
           data: h
@@ -210,7 +230,7 @@ Particle(
     const result = await generator.createHandleConnection(cParticle.connections['data']);
     assert.deepStrictEqual(result, `\
 HandleConnection(
-    StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
+    R_Handle0.storageKey,
     HandleMode.Read,
     CollectionType(
         EntityType(
@@ -224,6 +244,46 @@ HandleConnection(
                 refinement = { _ -> true },
                 query = null
             )
+        )
+    ),
+    emptyList()
+)`);
+  });
+  it('generates a handle of type being a union of read types', async () => {
+    const {generator, recipes} = await process(`
+      particle Writer
+        person: writes Person Employee {name: Text, phoneNumber: Number, age: Number}
+      particle Reader1
+        person: reads Person {name: Text}
+      particle Reader2
+        person: reads Person {age: Number}
+
+      recipe MyRecipe
+        h: create
+        Writer
+          person: h
+        Reader1
+          person: h
+        Reader2
+          person: h
+    `);
+
+    const handleObject = await generator.createHandleVariable(recipes[0].handles[0]);
+
+    // 'phoneNumber' field should not be included in the handle type - as it is not read.
+    assert.equal(handleObject, `\
+val MyRecipe_Handle0 = Handle(
+    StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
+    EntityType(
+        Schema(
+            setOf(SchemaName("Person")),
+            SchemaFields(
+                singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
+                collections = emptyMap()
+            ),
+            "edabcee36cb653ff468fb77804911ddfa9303d67",
+            refinement = { _ -> true },
+            query = null
         )
     ),
     emptyList()

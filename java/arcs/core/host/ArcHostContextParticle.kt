@@ -68,10 +68,7 @@ class ArcHostContextParticle(
             }
             // Write Plan.HandleConnection
             handles.handleConnections.clear()
-            connections.forEach { handles.handleConnections.store(it) }
-
-            // TODO(b/155320932): remove. Workaround for createReference precondition
-            val storedConnections = handles.handleConnections.fetchAll()
+            connections.map { handles.handleConnections.store(it) }.joinAll()
 
             val particles = context.particles.map {
                 ArcHostContextParticle_Particles(
@@ -79,7 +76,7 @@ class ArcHostContextParticle(
                     location = it.value.planParticle.location,
                     particleState = it.value.particleState.name,
                     consecutiveFailures = it.value.consecutiveFailureCount.toDouble(),
-                    handles = storedConnections.map { connection ->
+                    handles = connections.map { connection ->
                         handles.handleConnections.createReference(connection)
                     }.toSet()
                 )
@@ -87,17 +84,15 @@ class ArcHostContextParticle(
 
             // Write Plan.Particle + ParticleContext
             handles.particles.clear()
-            particles.forEach { handles.particles.store(it) }
-            // TODO(b/155320932): remove. Workaround for createReference precondition
-            val storedParticles = handles.particles.fetchAll()
+            particles.map { handles.particles.store(it) }.joinAll()
 
             val arcState = AbstractArcHostContextParticle.ArcHostContext(
                 arcId = arcId, hostId = hostId, arcState = context.arcState.name,
-                particles = storedParticles.map { handles.particles.createReference(it) }.toSet()
+                particles = particles.map { handles.particles.createReference(it) }.toSet()
             )
 
             handles.arcHostContext.clear()
-            handles.arcHostContext.store(arcState)
+            handles.arcHostContext.store(arcState).join()
         } catch (e: Exception) {
             // TODO: retry?
             throw IllegalStateException("Unable to serialize $arcId for $hostId", e)

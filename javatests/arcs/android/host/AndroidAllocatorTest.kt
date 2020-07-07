@@ -18,21 +18,23 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.host.prod.ProdArcHostService
 import arcs.android.sdk.host.toComponentName
 import arcs.core.allocator.AllocatorTestBase
-import arcs.core.host.TestingJvmProdHost
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Shareable
 import arcs.core.host.ArcHostException
-import arcs.core.host.ArcState
 import arcs.core.host.HostRegistry
 import arcs.core.host.PersonPlan
+import arcs.core.host.TestingJvmProdHost
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
-import com.google.common.truth.Truth
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
@@ -169,5 +171,32 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
     @Test
     override fun allocator_canStopArcInTwoExternalHosts() {
         super.allocator_canStopArcInTwoExternalHosts()
+    }
+
+    @Test
+    fun arc_testHandlerRegistrationRace() = runAllocatorTest {
+        val waitForIteration = CompletableDeferred<Unit>()
+        val arc = allocator.startArcForPlan(PersonPlan)
+        arc.waitForStart()
+        // Block the list iteration when firing
+        arc.onStopped {
+            runBlocking {
+                delay(1000)
+                waitForIteration.complete(Unit)
+            }
+        }
+
+        // Trigger the handler iteration
+        arc.stop()
+
+        // launch a new registration in parallel, causes ConcurrentModificationException
+        withContext(Dispatchers.IO) {
+            async {
+                waitForIteration.await()
+                arc.onStopped {
+
+                }
+            }
+        }
     }
 }

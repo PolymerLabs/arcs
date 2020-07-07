@@ -31,6 +31,8 @@ import arcs.core.type.Type
 import arcs.core.util.TaggedLog
 import arcs.core.util.plus
 import arcs.core.util.traverse
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
@@ -45,7 +47,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 class Allocator(
     private val hostRegistry: HostRegistry,
     /** Currently active Arcs and their associated [Plan.Partition]s. */
-    private val partitionMap: PartitionSerialization
+    private val partitionMap: PartitionSerialization,
+    private val coroutineContext: CoroutineContext = EmptyCoroutineContext
 ) {
     private val log = TaggedLog { "Allocator" }
 
@@ -87,7 +90,7 @@ class Allocator(
         plan.arcId?.toArcId()?.let { arcId ->
             val existingPartitions = partitionMap.readPartitions(arcId)
             if (existingPartitions.isNotEmpty()) {
-                return Arc(arcId, this, existingPartitions)
+                return Arc(arcId, this, existingPartitions, coroutineContext)
             }
         }
         val idGenerator = Id.Generator.newSession()
@@ -101,7 +104,7 @@ class Allocator(
         partitionMap.set(arcId, partitions)
         try {
             startPlanPartitionsOnHosts(partitions)
-            return Arc(arcId, this, partitions)
+            return Arc(arcId, this, partitions, coroutineContext)
         } catch (e: ArcHostException) {
             stopArc(arcId)
             throw e

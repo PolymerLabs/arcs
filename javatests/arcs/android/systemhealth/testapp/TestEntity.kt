@@ -16,7 +16,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.entity.SchemaRegistry
+import arcs.core.data.SchemaRegistry
 import arcs.core.storage.Reference
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey

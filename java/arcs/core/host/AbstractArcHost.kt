@@ -81,7 +81,7 @@ abstract class AbstractArcHost(
     override val hostId = "${this::class.className()}@${this.hashCode()}"
 
     // TODO: refactor to allow clients to supply this
-    private val coroutineContext = Dispatchers.Unconfined + CoroutineName("AbstractArcHost")
+    open val coroutineContext = Dispatchers.Unconfined + CoroutineName("AbstractArcHost")
     // TODO: add lifecycle API for ArcHosts shutting down to cancel running coroutines
     private val scope = CoroutineScope(coroutineContext)
 
@@ -104,7 +104,7 @@ abstract class AbstractArcHost(
 
     override suspend fun pause() {
         paused = true
-        runningArcs.forEach { (arcId, context) ->
+        runningArcs.toMap().forEach { (arcId, context) ->
             try {
                 val partition = contextToPartition(arcId, context)
                 stopArc(partition)
@@ -186,10 +186,13 @@ abstract class AbstractArcHost(
         block: ArcStateChangeCallback
     ): ArcStateChangeRegistration {
         val registration = ArcStateChangeRegistration(arcId, block)
-        return lookupOrCreateArcHostContext(arcId.toString()).addOnArcStateChange(
+        val context = lookupOrCreateArcHostContext(arcId.toString())
+        return context.addOnArcStateChange(
             registration,
             block
-        )
+        ).also {
+            block(arcId, context.arcState)
+        }
     }
 
     override suspend fun removeOnArcStateChange(registration: ArcStateChangeRegistration) {

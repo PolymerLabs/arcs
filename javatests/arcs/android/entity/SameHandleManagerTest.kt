@@ -9,20 +9,15 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.entity.HandleManagerTestBase
-import arcs.core.entity.SchemaRegistry
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
-import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
-import org.junit.Test
 import org.junit.runner.RunWith
 
 @Suppress("EXPERIMENTAL_API_USAGE")

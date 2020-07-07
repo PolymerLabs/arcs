@@ -118,7 +118,7 @@ protected:
 `;
   }
 
-  generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): string {
+  async generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string> {
     throw new Error('Test Harness generation is not available for CPP');
   }
 }
@@ -228,7 +228,6 @@ class CppGenerator implements EntityGenerator {
 
   generate(): string {
     const name = this.node.fullEntityClassName;
-    console.log(`name: ${name}`);
     const aliases = this.node.sources.map(s => s.fullName);
     // Template constructor allows implicit type slicing from appropriately matching entities.
     let templateCtor = '';

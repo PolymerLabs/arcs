@@ -54,6 +54,7 @@ import arcs.core.util.Result
 import arcs.core.util.TaggedLog
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -90,12 +91,13 @@ import kotlinx.coroutines.withTimeout
  */
 @ExperimentalCoroutinesApi
 class ReferenceModeStore private constructor(
-    options: StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>,
+    options: StoreOptions,
     /* internal */
     val containerStore: DirectStore<CrdtData, CrdtOperation, Any?>,
     /* internal */
     val backingKey: StorageKey,
     /* internal */
+    clearCoroutineContext: CoroutineContext = Dispatchers.Default,
     backingType: Type
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
     // TODO(#5551): Consider including a hash of the storage key in log prefix.
@@ -250,27 +252,28 @@ class ReferenceModeStore private constructor(
 
         return@fn when (val proxyMessage = message.message) {
             is ProxyMessage.Operations -> {
-                proxyMessage.operations.toBridgingOps(backingStore.storageKey)
-                    .all { op ->
-                        if (op is BridgingOperation.ClearSingleton ||
-                            op is BridgingOperation.UpdateSingleton) {
+                proxyMessage.operations.toBridgingOps(backingStore.storageKey).all { op ->
+                    when (op) {
+                        is BridgingOperation.UpdateSingleton,
+                        is BridgingOperation.ClearSingleton -> {
                             // Free up the memory used by the previous instance (for a Singleton,
                             // there would be only one instance).
                             backingStore.clearStoresCache()
+                            op.entityValue?.let { updateBackingStore(it) }
                         }
-                        op.entityValue?.let {
-                            if (op is BridgingOperation.RemoveFromSet) {
-                                // If this is a removal, we clear the entity rather than updating it
-                                // to the given value.
-                                clearEntityInBackingStore(it)
-                            } else {
-                                updateBackingStore(it)
-                            }
-                        }
-                        containerStore.onProxyMessage(
-                            ProxyMessage.Operations(listOf(op.containerOp), proxyMessage.id)
-                        )
+
+                        is BridgingOperation.AddToSet ->
+                            op.entityValue?.let { updateBackingStore(it) }
+
+                        is BridgingOperation.RemoveFromSet ->
+                            op.entityValue?.let { clearEntityInBackingStore(it) }
+
+                        is BridgingOperation.ClearSet -> clearAllEntitiesInBackingStore()
                     }
+                    containerStore.onProxyMessage(
+                        ProxyMessage.Operations(listOf(op.containerOp), proxyMessage.id)
+                    )
+                }
             }
             is ProxyMessage.ModelUpdate -> {
                 val newModelsResult = proxyMessage.model.toBridgingData(
@@ -461,7 +464,7 @@ class ReferenceModeStore private constructor(
                 callbacksStateChannel.close()
             }
         }
-        .launchIn(CoroutineScope(Dispatchers.Default + Job()))
+        .launchIn(CoroutineScope(clearCoroutineContext + Job()))
 
     private fun newBackingInstance(): CrdtModel<CrdtData, CrdtOperationAtTime, Referencable> =
         crdtType.createCrdtModel()
@@ -477,6 +480,18 @@ class ReferenceModeStore private constructor(
         val model = entityToModel(referencable)
         val op = listOf(CrdtEntity.Operation.ClearAll(crdtKey, model.versionMap))
         return backingStore.onProxyMessage(ProxyMessage.Operations(op, id = null), referencable.id)
+    }
+
+    /** Clear all entities from the backing store, using the container store to retrieve the ids. */
+    private suspend fun clearAllEntitiesInBackingStore(): Boolean {
+        val containerModel = containerStore.getLocalData()
+        if (containerModel !is CrdtSet.Data<*>) {
+            throw UnsupportedOperationException()
+        }
+        return containerModel.values.all { (refId, data) ->
+            val clearOp = listOf(CrdtEntity.Operation.ClearAll(crdtKey, data.versionMap))
+            backingStore.onProxyMessage(ProxyMessage.Operations(clearOp, id = null), refId)
+        }
     }
 
     /**
@@ -650,6 +665,7 @@ class ReferenceModeStore private constructor(
         ) {
             when (it) {
                 is Reference -> it
+                is RawEntity -> CrdtEntity.Reference.wrapReferencable(it)
                 is ReferencableList<*> -> CrdtEntity.Reference.wrapReferencable(it)
                 else -> CrdtEntity.Reference.buildReference(it)
             }
@@ -660,13 +676,13 @@ class ReferenceModeStore private constructor(
         val containerModel = containerStore.getLocalData()
         val actor = "ReferenceModeStore(${hashCode()})"
         val containerVersion = containerModel.versionMap.copy()
-        return if (containerModel is CrdtSet.Data<*>) {
-            containerModel.values.map { dataValue ->
-                CrdtSet.Operation.Remove(actor, containerVersion, dataValue.value.value)
-            }
-        } else if (containerModel is CrdtSingleton.Data<*>) {
-            listOf(CrdtSingleton.Operation.Clear<Reference>(actor, containerVersion))
-        } else throw UnsupportedOperationException()
+        return listOf(when (containerModel) {
+            is CrdtSet.Data<*> ->
+                CrdtSet.Operation.Clear<Reference>(actor, containerVersion)
+            is CrdtSingleton.Data<*> ->
+                CrdtSingleton.Operation.Clear<Reference>(actor, containerVersion)
+            else -> throw UnsupportedOperationException()
+        })
     }
 
     companion object {
@@ -684,13 +700,13 @@ class ReferenceModeStore private constructor(
         /* internal */ var BLOCKING_QUEUE_TIMEOUT_MILLIS = 30000L
 
         @Suppress("UNCHECKED_CAST")
-        suspend fun <Data : CrdtData, Op : CrdtOperation, T> create(
-            options: StoreOptions<Data, Op, T>
+        suspend fun create(
+            options: StoreOptions
         ): ReferenceModeStore {
             val refableOptions =
                 requireNotNull(
                     /* ktlint-disable max-line-length */
-                    options as? StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
+                    options as? StoreOptions
                     /* ktlint-enable max-line-length */
                 ) { "ReferenceMode stores only manage singletons/collections of Entities." }
 
@@ -714,7 +730,8 @@ class ReferenceModeStore private constructor(
                 StoreOptions(
                     storageKey = storageKey.storageKey,
                     type = refType,
-                    versionToken = options.versionToken
+                    versionToken = options.versionToken,
+                    coroutineContext = options.coroutineContext
                 )
             )
 
@@ -722,6 +739,7 @@ class ReferenceModeStore private constructor(
                 refableOptions,
                 containerStore,
                 storageKey.backingKey,
+                options.coroutineContext,
                 type.containedType
             )
         }

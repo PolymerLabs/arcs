@@ -613,7 +613,7 @@ CheckImplication
   }
 
 CheckHasTag
-  = 'is' isNot:(whiteSpace 'not')? whiteSpace tag:lowerIdent
+  = 'is' whiteSpace isNot:('not' whiteSpace)? tag:lowerIdent
   {
     return toAstNode<AstNode.CheckHasTag>({
       kind: 'check-has-tag',

@@ -14,6 +14,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.os.ResultReceiver
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcHostException
@@ -44,7 +45,7 @@ abstract class IntentHostAdapter(
     class ResultReceiverContinuation<T>(
         val continuation: CancellableContinuation<T?>,
         val block: (Any?) -> T?
-    ) : ResultReceiver(Handler()) {
+    ) : ResultReceiver(Handler(Looper.getMainLooper())) {
         override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
             val exception = resultData?.getString(ArcHostHelper.EXTRA_OPERATION_EXCEPTION)
             exception?.let {

@@ -15,6 +15,7 @@ import arcs.core.host.ArcHostManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.Store
+import arcs.core.storage.driver.DatabaseDriverProvider
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineName
@@ -53,6 +54,13 @@ class StorageServiceManager(
             ArcHostManager.pauseAllHostsFor {
                 DriverFactory.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis).join()
             }
+        }
+        resultCallback.onResult(null)
+    }
+
+    override fun resetDatabases(resultCallback: IResultCallback) {
+        runBlocking(coroutineContext) {
+            DatabaseDriverProvider.manager.resetAll()
         }
         resultCallback.onResult(null)
     }

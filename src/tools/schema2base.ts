@@ -154,7 +154,7 @@ export abstract class Schema2Base {
       classes.push(...nodes.map(ng => ng.generator.generate()));
 
       if (this.opts.test_harness) {
-        classes.push(this.generateTestHarness(particle, nodes.map(n => n.node)));
+        classes.push(await this.generateTestHarness(particle, nodes.map(n => n.node)));
         continue;
       }
 
@@ -189,5 +189,5 @@ export abstract class Schema2Base {
 
   abstract async generateParticleClass(particle: ParticleSpec, nodes: NodeAndGenerator[]): Promise<string>;
 
-  abstract generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): string;
+  abstract async generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string>;
 }

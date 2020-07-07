@@ -401,13 +401,13 @@ describe('Reference Mode Store', async () => {
     e3.id = 'e3';
     e3.creationTimestamp = now;
 
-    void activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
+    await activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
       {type: CollectionOpTypes.Add, actor: 'me', clock: {me: 1}, added: e1}
     ]});
-    void activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
+    await activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
       {type: CollectionOpTypes.Add, actor: 'me', clock: {me: 2}, added: e2}
     ]});
-    void activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
+    await activeStore.onProxyMessage({type: ProxyMessageType.Operations, id: 1, operations: [
       {type: CollectionOpTypes.Add, actor: 'me', clock: {me: 3}, added: e3}
     ]});
 

@@ -727,7 +727,7 @@ ${particleStr1}
 
       particle Q in 'b.js'
         reader: reads * {inner: inline {y: List<Number>}, z: Text}
-      
+
       recipe
         h0: create *
         P
@@ -3283,6 +3283,39 @@ resource SomeName
       assert.strictEqual(check2.target.name, 'input2');
       assert.isEmpty(check2.fieldPath);
       assert.deepEqual(check2.expression, new CheckHasTag('property2', /* isNot= */ true));
+    });
+
+    it('supports checks and claims with labels starting with "not"', async () => {
+      const manifest = await parseManifest(`
+        particle A
+          input1: reads T {}
+          input2: reads T {}
+          output1: writes T {}
+          output2: writes T {}
+          check input1 is noteworthy
+          check input2 is not noteworthy
+          claim output1 is noteworthy
+          claim output2 is not noteworthy
+      `);
+      const particle = manifest.particles[0];
+      assert.lengthOf(particle.trustClaims, 2);
+      assert.lengthOf(particle.trustChecks, 2);
+
+      const claim1 = checkDefined(particle.trustClaims[0]);
+      assert.strictEqual(claim1.toManifestString(), 'claim output1 is noteworthy');
+      assert.deepEqual(claim1.claims[0], new ClaimIsTag(/* isNot= */ false, 'noteworthy'));
+
+      const claim2 = checkDefined(particle.trustClaims[1]);
+      assert.strictEqual(claim2.toManifestString(), 'claim output2 is not noteworthy');
+      assert.deepEqual(claim2.claims[0], new ClaimIsTag(/* isNot= */ true, 'noteworthy'));
+
+      const check1 = checkDefined(particle.trustChecks[0]);
+      assert.strictEqual(check1.toManifestString(), 'check input1 is noteworthy');
+      assert.deepEqual(check1.expression, new CheckHasTag('noteworthy', /* isNot= */ false));
+
+      const check2 = checkDefined(particle.trustChecks[1]);
+      assert.strictEqual(check2.toManifestString(), 'check input2 is not noteworthy');
+      assert.deepEqual(check2.expression, new CheckHasTag('noteworthy', /* isNot= */ true));
     });
 
     it('supports field-level check statements', async () => {

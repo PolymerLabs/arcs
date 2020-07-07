@@ -27,7 +27,6 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -63,7 +62,7 @@ class BindingContext(
 
     override fun idle(timeoutMillis: Long, resultCallback: IResultCallback) {
         bindingContextStatisticsSink.traceTransaction("idle") {
-            bindingContextStatisticsSink.measure(coroutineContext + Dispatchers.IO) {
+            bindingContextStatisticsSink.measure(coroutineContext) {
                 val activeStore = store.activate()
                 try {
                     withTimeout(timeoutMillis) {

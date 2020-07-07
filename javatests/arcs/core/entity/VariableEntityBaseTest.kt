@@ -1,6 +1,7 @@
 package arcs.core.entity
 
 import arcs.core.crdt.VersionMap
+import arcs.core.data.SchemaRegistry
 import arcs.core.storage.testutil.DummyStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.After

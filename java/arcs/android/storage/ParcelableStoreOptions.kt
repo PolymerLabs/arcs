@@ -16,21 +16,18 @@ import android.os.Parcelable
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.type.readType
 import arcs.android.type.writeType
-import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.StoreOptions
 
 /** [Parcelable] variant for [StoreOptions]. */
 data class ParcelableStoreOptions(
-    val actual: StoreOptions<out CrdtData, out CrdtOperation, out Any?>,
+    val actual: StoreOptions,
     val crdtType: ParcelableCrdtType
 ) : Parcelable {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeInt(crdtType.ordinal)
         parcel.writeString(actual.storageKey.toString())
         parcel.writeType(actual.type, flags)
-        // Skip StoreOptions.baseStore.
         parcel.writeString(actual.versionToken)
     }
 
@@ -47,7 +44,6 @@ data class ParcelableStoreOptions(
                 StoreOptions(
                     storageKey = storageKey,
                     type = type,
-                    baseStore = null, // Skip baseStore.
                     versionToken = versionToken
                 ),
                 crdtType
@@ -61,17 +57,17 @@ data class ParcelableStoreOptions(
 /**
  * Wraps the [StoreOptions] in a [ParcelableStoreOptions], using the [ParcelableCrdtType] as a hint.
  */
-fun StoreOptions<out CrdtData, out CrdtOperation, out Any?>.toParcelable(
+fun StoreOptions.toParcelable(
     crdtType: ParcelableCrdtType
 ): ParcelableStoreOptions = ParcelableStoreOptions(this, crdtType)
 
 /** Writes [StoreOptions] to the [Parcel]. */
 fun Parcel.writeStoreOptions(
-    storeOptions: StoreOptions<out CrdtData, out CrdtOperation, out Any?>,
+    storeOptions: StoreOptions,
     representingCrdtType: ParcelableCrdtType,
     flags: Int
 ) = writeTypedObject(storeOptions.toParcelable(representingCrdtType), flags)
 
 /** Reads [StoreOptions] from the [Parcel]. */
-fun Parcel.readStoreOptions(): StoreOptions<out CrdtData, out CrdtOperation, out Any?>? =
+fun Parcel.readStoreOptions(): StoreOptions? =
     readTypedObject(ParcelableStoreOptions)?.actual

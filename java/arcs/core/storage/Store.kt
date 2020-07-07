@@ -16,6 +16,7 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.Store.Companion.defaultFactory
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
@@ -27,7 +28,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  */
 interface ActivationFactory {
     suspend operator fun <Data : CrdtData, Op : CrdtOperation, T> invoke(
-        options: StoreOptions<Data, Op, T>
+        options: StoreOptions
     ): ActiveStore<Data, Op, T>
 }
 
@@ -40,10 +41,11 @@ interface ActivationFactory {
  * Calling [activate] will generate an interactive store and return it.
  */
 class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
-    options: StoreOptions<Data, Op, ConsumerData>
+    options: StoreOptions
 ) : IStore<Data, Op, ConsumerData> {
     override val storageKey: StorageKey = options.storageKey
     override val type: Type = options.type
+    private val coroutineContext: CoroutineContext = options.coroutineContext
     private var activeStore: ActiveStore<Data, Op, ConsumerData>? = null
         get() = synchronized(this) { field }
         set(value) = synchronized(this) { field = value }
@@ -70,11 +72,12 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         val options = StoreOptions(
             storageKey = storageKey,
             type = type,
-            baseStore = this,
-            versionToken = parsedVersionToken
+            versionToken = parsedVersionToken,
+            coroutineContext = coroutineContext
         )
         // If we were given a specific factory to use, use it; otherwise use the default factory.
-        val activeStore = (activationFactory ?: defaultFactory).invoke(options)
+        val activeStore =
+            (activationFactory ?: defaultFactory).invoke<Data, Op, ConsumerData>(options)
 
         this.activeStore = activeStore
         return activeStore
@@ -93,7 +96,7 @@ class Store<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         @ExperimentalCoroutinesApi
         val defaultFactory = object : ActivationFactory {
             override suspend fun <Data : CrdtData, Op : CrdtOperation, T> invoke(
-                options: StoreOptions<Data, Op, T>
+                options: StoreOptions
             ): ActiveStore<Data, Op, T> = when (options.storageKey) {
                 is ReferenceModeStorageKey ->
                     ReferenceModeStore.create(options) as ActiveStore<Data, Op, T>

@@ -79,6 +79,10 @@ class FakeDatabaseManager : DatabaseManager {
     override suspend fun runGarbageCollection(): Job {
         throw UnsupportedOperationException("Fake database does not gargbage collect.")
     }
+
+    override suspend fun resetAll() {
+        throw UnsupportedOperationException("Fake database manager cannot resetAll.")
+    }
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE")
