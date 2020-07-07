@@ -8,7 +8,7 @@ class Consumer : AbstractConsumer() {
     /** Process an order. In this case, we ensure skus have been redacted and prices are fair. */
     override fun onUpdate() =
         handles.data.fetchAll()
-            .also { it.size == 3 }
+            .also { assertThat(it.size).isEqualTo(3) }
             .forEach {
                 assertThat(it.sku).endsWith("*****")
                 assertThat(it.name).isNotEmpty()
