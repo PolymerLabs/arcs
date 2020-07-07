@@ -81,7 +81,7 @@ abstract class AbstractArcHost(
     override val hostId = "${this::class.className()}@${this.hashCode()}"
 
     // TODO: refactor to allow clients to supply this
-    private val coroutineContext = Dispatchers.Unconfined + CoroutineName("AbstractArcHost")
+    open val coroutineContext = Dispatchers.Unconfined + CoroutineName("AbstractArcHost")
     // TODO: add lifecycle API for ArcHosts shutting down to cancel running coroutines
     private val scope = CoroutineScope(coroutineContext)
 
