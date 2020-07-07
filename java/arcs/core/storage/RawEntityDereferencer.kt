@@ -57,8 +57,7 @@ class RawEntityDereferencer(
         val store: EntityStore = (entityActivationFactory ?: Store.defaultFactory).invoke(options)
 
         val deferred = CompletableDeferred<RawEntity?>()
-        var token = -1
-        token = store.on(
+        val token = store.on(
             ProxyCallback { message ->
                 when (message) {
                     is ProxyMessage.ModelUpdate<*, *, *> -> {
@@ -77,8 +76,8 @@ class RawEntityDereferencer(
             withContext(coroutineContext) {
                 launch { store.onProxyMessage(ProxyMessage.SyncRequest(token)) }
 
-                // Only return the item if we've actually managed to pull it out of storage, and that
-                // it matches the schema we wanted.
+                // Only return the item if we've actually managed to pull it out of storage, and
+                // that it matches the schema we wanted.
                 val entity = deferred.await()?.takeIf { it matches schema }?.copy(id = reference.id)
                 referenceCheckFun?.invoke(schema, entity)
                 entity
