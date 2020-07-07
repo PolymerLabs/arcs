@@ -7,9 +7,11 @@ particle OrderIngestion in '.OrderIngestion'
 particle SkuRedactor in '.SkuRedactor'
   input: reads [~a with {sku: Text}]
   output: writes [~a]
+  claim output is skuRedacted
 
 particle Consumer in '.Consumer'
   data: reads [Product {sku: Text, name: Text, price: Number}]
+  check data is skuRedacted
 
 recipe Shop
   beforeRedaction: create
