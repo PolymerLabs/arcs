@@ -11,15 +11,15 @@ particle IngestAddress
 
 particle SensitiveInfo
   details: reads [(
-    &Person {name: Text, age: Number, education: Text},
-    &Address {name: Text, street: Text, city: Text}
+    Person {name: Text, age: Number, education: Text},
+    Address {name: Text, street: Text, city: Text}
   )]
   info: writes Info {info: Text}
 
 particle PublicInfo
   details: reads [(
-    &Person {name: Text, education: Text},
-    &Address {name: Text, city: Text}
+    Person {name: Text, education: Text},
+    Address {name: Text, city: Text}
   )]
   info: writes Info {info: Text}
 

@@ -375,8 +375,8 @@ Resolver generated 0 recipes`
 
   particle Reader
     data: reads [(
-      &Product {name: Text},
-      &Manufacturer {address: Text}
+      Product {name: Text},
+      Manufacturer {address: Text}
     )]
 
   @arcId('write-data-for-join')
