@@ -3,6 +3,8 @@ package arcs.showcase.typevariables
 import kotlinx.coroutines.Job
 
 class OrderIngestion : AbstractOrderIngestion() {
+
+    /** A user places an order of three items */
     override fun onReady() {
         if (!orderedOnce.isCompleted) {
             handles.data.store(

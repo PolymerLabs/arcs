@@ -4,14 +4,15 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Job
 
 class Consumer : AbstractConsumer() {
-    /** Assert that all items in the collection have been redacted. */
+
+    /** Process an order. In this case, we ensure that all items have been redacted. */
     override fun onUpdate() =
         handles.data.fetchAll()
             .also { it.size == 3 }
             .forEach {
                 assertThat(it.sku).endsWith("*****")
                 assertThat(it.name).isNotEmpty()
-                // Ensure that we have the best deals while making *some* profit.
+                // Ensure that we have the best prices while making *some* profit.
                 assertThat(it.price).isAtLeast(0.25)
                 assertThat(it.price).isAtMost(12.99)
             }
