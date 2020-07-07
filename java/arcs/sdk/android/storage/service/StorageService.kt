@@ -152,6 +152,7 @@ open class StorageService : ResurrectorService() {
         val options = parcelableOptions.actual.copy()
         return BindingContext(
             stores.computeIfAbsent(options.storageKey) {
+                @Suppress("UNCHECKED_CAST")
                 DeferredStore<CrdtData, CrdtOperation, Any>(options)
             },
             coroutineContext,

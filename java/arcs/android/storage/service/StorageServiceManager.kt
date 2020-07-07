@@ -20,11 +20,13 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
  * A [StorageServiceManager] is used by a client of the [StorageService] to manage
  * data stored within the [StorageService].
  */
+@ExperimentalCoroutinesApi
 class StorageServiceManager(
     /** [CoroutineContext] on which to build one specific to this [StorageServiceManager]. */
     parentCoroutineContext: CoroutineContext,

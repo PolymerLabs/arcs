@@ -15,6 +15,7 @@ import androidx.annotation.VisibleForTesting
 import arcs.android.crdt.toProto
 import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.toProto
+import arcs.core.common.SuspendableLazy
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
@@ -33,28 +34,16 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 
-/**
- * This simple wrapper class will create a new [ActiveStore] for the provided [StoreOptions] the
- * first time that [get] is invoked. Subsequent invocations of [get] will return the previous
- * constructed store. It's safe to invoke [get] concurrently from different coroutines/threads.
- */
+@ExperimentalCoroutinesApi
 class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
-    private val options: StoreOptions
+    options: StoreOptions
 ) {
-    private val mutex = Mutex()
-    private lateinit var _store: ActiveStore<Data, Op, T>
-    @ExperimentalCoroutinesApi
-    @Suppress("UNCHECKED_CAST")
-    suspend fun get(): ActiveStore<Data, Op, T> = mutex.withLock {
-        if (!::_store.isInitialized) {
-            _store = DefaultActivationFactory(options)
-        }
-        _store
+    private val store = SuspendableLazy<ActiveStore<Data, Op, T>> {
+        DefaultActivationFactory(options)
     }
+    suspend operator fun invoke() = store()
 }
 
 /**
@@ -88,7 +77,7 @@ class BindingContext(
             bindingContextStatisticsSink.measure(coroutineContext) {
                 try {
                     withTimeout(timeoutMillis) {
-                        store.get().idle()
+                        store().idle()
                     }
                     resultCallback.onResult(null)
                 } catch (e: Throwable) {
@@ -115,7 +104,7 @@ class BindingContext(
             }
 
             callbackToken = runBlocking {
-                val token = (store.get() as ActiveStore<CrdtData, CrdtOperation, Any?>)
+                val token = (store() as ActiveStore<CrdtData, CrdtOperation, Any?>)
                     .on(proxyCallback)
 
                 // If the callback's binder dies, remove it from the callback collection.
@@ -140,7 +129,7 @@ class BindingContext(
 
                 val actualMessage = proxyMessage.decodeProxyMessage()
 
-                (store.get() as ActiveStore<CrdtData, CrdtOperation, Any?>).let { store ->
+                (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).let { store ->
                     if (store.onProxyMessage(actualMessage)) {
                         onProxyMessage(store.storageKey, actualMessage)
                     }
@@ -152,7 +141,7 @@ class BindingContext(
     override fun unregisterCallback(token: Int) {
         bindingContextStatisticsSink.traceTransaction("unregisterCallback") {
             // TODO(b/160706751) Clean up coroutine creation approach
-            CoroutineScope(coroutineContext).launch { store.get().off(token) }
+            CoroutineScope(coroutineContext).launch { store().off(token) }
         }
     }
 

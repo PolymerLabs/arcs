@@ -98,7 +98,7 @@ class BindingContextTest {
             id = null
         )
 
-        val messageSend = launch(Dispatchers.IO) { store.get().onProxyMessage(message) }
+        val messageSend = launch(Dispatchers.IO) { store().onProxyMessage(message) }
 
         log("waiting for message-send to finish")
         withTimeout(5000) { messageSend.join() }
@@ -132,7 +132,7 @@ class BindingContextTest {
             ),
             id = null
         )
-        assertThat(store.get().onProxyMessage(message)).isTrue()
+        assertThat(store().onProxyMessage(message)).isTrue()
 
         assertThat(callback.isCompleted).isEqualTo(false)
     }
