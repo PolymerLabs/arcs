@@ -11,8 +11,8 @@ particle IngestAddress
 
 particle ReadJoinedData
   details: reads [(
-    &Person {name: Text, age: Number, education: Text},
-    &Address {name: Text, street: Text, city: Text}
+    Person {name: Text, age: Number, education: Text},
+    Address {name: Text, street: Text, city: Text}
   )]
   sensitiveInfo: writes Info {info: Text}
   publicInfo: writes Info {info: Text}

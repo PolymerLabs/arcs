@@ -290,7 +290,7 @@ export class Handle implements Comparable<Handle> {
       typeSet.push({
         // We forced the joined handles to be collections and resolve their type first,
         // so that we can pull out their collection type here.
-        type: new TupleType(this.joinedHandles.map(h => (h.type as CollectionType<Type>).collectionType.referenceTo())).collectionOf(),
+        type: new TupleType(this.joinedHandles.map(h => (h.type as CollectionType<Type>).collectionType)).collectionOf(),
         direction: 'writes'
       });
     }

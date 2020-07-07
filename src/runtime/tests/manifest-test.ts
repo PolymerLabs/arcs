@@ -370,8 +370,8 @@ ${particleStr1}
     const manifest = await parseManifest(`
       particle JoinReader
         data: reads [(
-          &Person {name: Text},
-          &Place {address: Text}
+          Person {name: Text},
+          Place {address: Text}
         )]
       recipe
         people: map 'people'
@@ -400,13 +400,13 @@ ${particleStr1}
         places: reads [Place {address: Text}]
       particle JoinReaderOne
         data: reads [(
-          &Person {name: Text},
-          &Place {address: Text}
+          Person {name: Text},
+          Place {address: Text}
         )]
       particle JoinReaderTwo
         data: reads [(
-          &Person {phoneNumber: Text},
-          &Place {latitude: Number, longitude: Number}
+          Person {phoneNumber: Text},
+          Place {latitude: Number, longitude: Number}
         )]
       recipe
         people: map 'people'
@@ -437,8 +437,8 @@ ${particleStr1}
     const manifest = await parseManifest(`
       particle JoinReader
         data: writes [(
-          &Person {name: Text},
-          &Place {address: Text}
+          Person {name: Text},
+          Place {address: Text}
         )]
       recipe
         people: map 'folks'
@@ -2919,18 +2919,6 @@ resource SomeName
     assert.lengthOf(tuple.innerTypes, 2);
     assert.strictEqual(tuple.innerTypes[0].tag, 'Reference');
     assert.strictEqual(tuple.innerTypes[1].tag, 'Reference');
-  });
-
-  it('parsing a particle with tuple of non reference fails', async () => {
-    try {
-      await parseManifest(`
-        particle P
-          foo: reads (Bar {photo: URL})
-      `);
-      assert.fail();
-    } catch (e) {
-      assert.include(e.message, 'Only tuples of references are supported');
-    }
   });
 
   it('can round-trip particles with tags', async () => {
