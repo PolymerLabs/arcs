@@ -16,8 +16,8 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.Store.Companion.defaultFactory
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.type.Type
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
  * An interface defining a method that will create a particular [ActiveStore] instance

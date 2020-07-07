@@ -14,8 +14,8 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.type.Type
-import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.Dispatchers
 
 /** Base interface which all store implementations must extend from. */
 interface IStore<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
