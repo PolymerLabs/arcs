@@ -34,6 +34,8 @@ import arcs.core.util.traverse
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * An [Allocator] is responsible for starting and stopping arcs via a distributed
@@ -51,6 +53,7 @@ class Allocator(
     private val coroutineContext: CoroutineContext = EmptyCoroutineContext
 ) {
     private val log = TaggedLog { "Allocator" }
+    private val mutex = Mutex()
 
     /**
      * A [PartitionSerialization] is an interface for storing the [Plan.Partition] items created when an
@@ -86,7 +89,7 @@ class Allocator(
     /**
      * Start a new Arc given a [Plan] and return an [Arc].
      */
-    private suspend fun startArcForPlan(plan: Plan, nameForTesting: String): Arc {
+    private suspend fun startArcForPlan(plan: Plan, nameForTesting: String): Arc = mutex.withLock {
         plan.arcId?.toArcId()?.let { arcId ->
             val existingPartitions = partitionMap.readPartitions(arcId)
             if (existingPartitions.isNotEmpty()) {
@@ -114,7 +117,7 @@ class Allocator(
     /**
      * Stop an Arc given its [ArcId].
      */
-    suspend fun stopArc(arcId: ArcId) {
+    suspend fun stopArc(arcId: ArcId) = mutex.withLock {
         val partitions = partitionMap.readAndClearPartitions(arcId)
         stopPlanPartitionsOnHosts(partitions)
     }
