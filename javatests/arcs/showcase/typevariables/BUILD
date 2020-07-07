@@ -5,6 +5,8 @@ load(
     "arcs_kt_library",
 )
 
+licenses(["notice"])
+
 arcs_kt_gen(
     name = "var_generation",
     srcs = ["variable.arcs"],
