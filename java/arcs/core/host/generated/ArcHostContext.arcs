@@ -16,7 +16,7 @@ schema HandleConnection
 schema ParticleSchema
   particleName: Text
   location: Text
-  // ParticleState enum name
+  // ParticleState enum name and exception info for errors
   particleState: Text
   consecutiveFailures: Number
   handles: [&HandleConnection]
@@ -25,7 +25,7 @@ particle ArcHostContextParticle
   arcHostContext: reads writes ArcHostContext {
     arcId: Text,
     hostId: Text,
-    // ArcState enum name
+    // ArcState enum name and exception info for errors
     arcState: Text,
     particles: [&ParticleSchema]
   }

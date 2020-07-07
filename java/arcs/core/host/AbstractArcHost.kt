@@ -186,7 +186,7 @@ abstract class AbstractArcHost(
     }
 
     // VisibleForTesting
-    protected fun clearCache() {
+    fun clearCache() {
         runBlocking {
             clearContextCache()
             runningMutex.withLock {
@@ -241,10 +241,6 @@ abstract class AbstractArcHost(
 
     override suspend fun removeOnArcStateChange(registration: ArcStateChangeRegistration) {
         lookupOrCreateArcHostContext(registration.arcId()).remoteOnArcStateChange(registration)
-    }
-
-    private fun setArcState(context: ArcHostContext, state: ArcState) {
-        context.arcState = state
     }
 
     /**
@@ -340,7 +336,7 @@ abstract class AbstractArcHost(
             val particleContext = setUpParticleAndHandles(particleSpec, context)
             context.particles[particleSpec.particleName] = particleContext
             if (particleContext.particleState.failed) {
-                context.arcState = ArcState.Error
+                context.arcState = ArcState.errorWith(particleContext.particleState.cause)
                 break
             }
         }
@@ -354,8 +350,7 @@ abstract class AbstractArcHost(
                 // If the platform supports resurrection, request it for this Arc's StorageKeys
                 maybeRequestResurrection(context)
             } catch (e: Exception) {
-                // TODO: capture the exception in context?
-                context.arcState = ArcState.Error
+                context.arcState = ArcState.errorWith(e)
                 // TODO(b/160251910): Make logging detail more cleanly conditional.
                 log.debug(e) { "Failure performing particle startup." }
                 log.info { "Failure performing particle startup." }

@@ -550,9 +550,13 @@ open class AllocatorTestBase {
         val arc = allocator.startArcForPlan(PersonPlan)
         arc.onError { deferred.complete(true) }
         deferred.await()
-        assertThat(writingExternalHost.arcHostContext(arc.id.toString())?.arcState).isEqualTo(
-            ArcState.Error
-        )
+
+        val arcState = writingExternalHost.arcHostContext(arc.id.toString())!!.arcState
+        assertThat(arcState).isEqualTo(ArcState.Error)
+        arcState.cause.let {
+            assertThat(it).isInstanceOf(IllegalArgumentException::class.java)
+            assertThat(it).hasMessageThat().isEqualTo("Boom!")
+        }
     }
 
     @Test
@@ -560,8 +564,14 @@ open class AllocatorTestBase {
         WritePerson.throws = true
         val arc = allocator.startArcForPlan(PersonPlan)
 
-        assertSuspendingThrows(Arc.ArcErrorException::class) {
+        val error = assertSuspendingThrows(Arc.ArcErrorException::class) {
             arc.waitForStart()
+        }
+        // TODO(b//160933123): the containing exception is somehow "duplicated",
+        //                     so the real cause is a second level down
+        error.cause!!.cause.let {
+            assertThat(it).isInstanceOf(IllegalArgumentException::class.java)
+            assertThat(it).hasMessageThat().isEqualTo("Boom!")
         }
     }
 }

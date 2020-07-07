@@ -15,12 +15,6 @@ import arcs.core.common.ArcId
 import arcs.core.data.Plan
 import arcs.core.host.ArcHost
 import arcs.core.host.ArcState
-import arcs.core.host.ArcState.Deleted
-import arcs.core.host.ArcState.Error
-import arcs.core.host.ArcState.Indeterminate
-import arcs.core.host.ArcState.NeverStarted
-import arcs.core.host.ArcState.Running
-import arcs.core.host.ArcState.Stopped
 import arcs.core.host.ArcStateChangeRegistration
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -58,7 +52,7 @@ class Arc internal constructor(
     val partitions: List<Plan.Partition>,
     private val coroutineContext: CoroutineContext = EmptyCoroutineContext
 ) {
-    private val arcStateInternal: AtomicRef<ArcState> = atomic(NeverStarted)
+    private val arcStateInternal: AtomicRef<ArcState> = atomic(ArcState.NeverStarted)
     private val arcStateChangeHandlers = atomic(listOf<(ArcState) -> Unit>())
     private lateinit var arcStatesByHostFlow: Flow<ArcState>
     private lateinit var closeFlow: () -> Unit
@@ -97,21 +91,29 @@ class Arc internal constructor(
     }
 
     /** Called whenever the [ArcState] changes to [Running]. */
-    fun onRunning(handler: () -> Unit) = onArcStateChangeFiltered(Running, handler)
+    fun onRunning(handler: () -> Unit) = onArcStateChangeFiltered(ArcState.Running, handler)
 
     /** Called whenever the [ArcState] changes to [Stopped]. */
-    fun onStopped(handler: () -> Unit) = onArcStateChangeFiltered(Stopped, handler)
+    fun onStopped(handler: () -> Unit) = onArcStateChangeFiltered(ArcState.Stopped, handler)
 
     /** Called whenever the [ArcState] changes to [Error]. */
-    fun onError(handler: () -> Unit) = onArcStateChangeFiltered(Error, handler)
+    fun onError(handler: () -> Unit) = onArcStateChangeFiltered(ArcState.Error, handler)
 
-    private fun recomputeArcState(states: Collection<ArcState>): ArcState = when {
-        states.any { it == Deleted } -> Deleted
-        states.any { it == Error } -> Error
-        states.all { it == Running } -> Running
-        states.all { it == Stopped } -> Stopped
-        states.all { it == NeverStarted } -> NeverStarted
-        else -> Indeterminate
+    private fun recomputeArcState(states: Collection<ArcState>): ArcState {
+        var commonState = ArcState.Indeterminate
+        for (state in states) {
+            if (state == ArcState.Deleted || state == ArcState.Error) {
+                // Error states may carry an exception that caused the error;
+                // ensure this is kept when recomputing.
+                return state
+            }
+            if (commonState == ArcState.Indeterminate) {
+                commonState = state
+            } else if (state != commonState) {
+                return ArcState.Indeterminate
+            }
+        }
+        return commonState
     }
 
     private fun maybeRegisterChangeHandlerWithArcHosts() {
@@ -135,7 +137,9 @@ class Arc internal constructor(
             closeFlow = { close() }
             awaitClose { unregisterChangeHandlerWithArcHosts(scope) }
         }.scan(
-            partitions.map { it.arcHost to NeverStarted }.associateBy({ it.first }, { it.second })
+            partitions
+                .map { it.arcHost to ArcState.NeverStarted }
+                .associateBy({ it.first }, { it.second })
         ) { states, (host, state) ->
             val newStates = states.toMutableMap()
             newStates[host] = state
@@ -159,7 +163,7 @@ class Arc internal constructor(
         val handler = { newState: ArcState ->
             when (newState) {
                 state -> deferred.complete(this@Arc)
-                Error -> deferred.completeExceptionally(ArcErrorException())
+                ArcState.Error -> deferred.completeExceptionally(ArcErrorException(newState.cause))
                 else -> Unit
             }
             Unit
@@ -172,14 +176,14 @@ class Arc internal constructor(
     }
 
     /** Wait for the current [Arc] to enter a [Stopped] state. */
-    suspend fun waitForStop() = waitFor(Stopped)
+    suspend fun waitForStop() = waitFor(ArcState.Stopped)
 
     /** Wait for the current [Arc] to enter a [Running] state. */
-    suspend fun waitForStart() = waitFor(Running)
+    suspend fun waitForStart() = waitFor(ArcState.Running)
 
     /** Stop the current [Arc]. */
     suspend fun stop() = allocator.stopArc(id).also {
-        onArcStateChangeFiltered(Stopped) { closeFlow() }
+        onArcStateChangeFiltered(ArcState.Stopped) { closeFlow() }
     }
 
     private fun unregisterChangeHandlerWithArcHosts(scope: CoroutineScope) = scope.launch {
@@ -190,8 +194,6 @@ class Arc internal constructor(
     }
 
     /** Used for signaling to listeners that an Arc has entered the Error state. */
-    class ArcErrorException(
-        msg: String = "Arc reached Error state",
-        cause: Throwable? = null
-    ) : RuntimeException(msg, cause)
+    class ArcErrorException(cause: Throwable? = null) :
+        RuntimeException("Arc reached Error state", cause)
 }

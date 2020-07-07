@@ -61,7 +61,8 @@ class LifecycleTest {
             ::SingleReadHandleParticle.toRegistration(),
             ::SingleWriteHandleParticle.toRegistration(),
             ::MultiHandleParticle.toRegistration(),
-            ::PausingParticle.toRegistration()
+            ::PausingParticle.toRegistration(),
+            ::ReadWriteAccessParticle.toRegistration()
         )
         hostRegistry = ExplicitHostRegistry().also { it.registerHost(testHost) }
         storeManager = StoreManager()
@@ -202,5 +203,13 @@ class LifecycleTest {
                 "onShutdown"
             )
         )
+    }
+
+    @Test
+    fun readWriteAccess() = runTest {
+        val name = "ReadWriteAccessParticle"
+        val arc = allocator.startArcForPlan(ReadWriteAccessTestPlan).waitForStart()
+        val particle: ReadWriteAccessParticle = testHost.getParticle(arc.id, name)
+        assertThat(particle.errors).isEmpty()
     }
 }

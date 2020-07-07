@@ -228,16 +228,17 @@ class ParticleContextTest {
 
     @Test
     fun errors_onFirstStart_firstInstantiation() = runTest {
-        whenever(particle.onFirstStart()).thenThrow(RuntimeException::class.java)
+        whenever(particle.onFirstStart()).thenThrow(RuntimeException("boom"))
 
         assertSuspendingThrows(RuntimeException::class) { context.initParticle() }
         verify(particle, only()).onFirstStart()
         assertThat(context.particleState).isEqualTo(ParticleState.Failed_NeverStarted)
+        assertThat(context.particleState.cause).hasMessageThat().isEqualTo("boom")
     }
 
     @Test
     fun errors_onStart_secondInstantiation() = runTest {
-        whenever(particle.onStart()).thenThrow(RuntimeException::class.java)
+        whenever(particle.onStart()).thenThrow(RuntimeException("boom"))
 
         assertSuspendingThrows(RuntimeException::class) { context.initParticle() }
         with(inOrder(particle)) {
@@ -246,11 +247,12 @@ class ParticleContextTest {
         }
         verifyNoMoreInteractions(particle, handles)
         assertThat(context.particleState).isEqualTo(ParticleState.Failed)
+        assertThat(context.particleState.cause).hasMessageThat().isEqualTo("boom")
     }
 
     @Test
     fun errors_onReady_runParticle() = runTest {
-        whenever(particle.onReady()).thenThrow(RuntimeException::class.java)
+        whenever(particle.onReady()).thenThrow(RuntimeException("boom"))
         context.initParticle()
 
         assertSuspendingThrows(RuntimeException::class) { context.runParticle(notifyReady) }
@@ -261,13 +263,14 @@ class ParticleContextTest {
         }
         verifyNoMoreInteractions(particle, handles)
         assertThat(context.particleState).isEqualTo(ParticleState.Failed)
+        assertThat(context.particleState.cause).hasMessageThat().isEqualTo("boom")
     }
 
     // TODO(b/158790341): test errors in StorageEvent-driven methods
 
     @Test
     fun errors_onShutdown() = runTest {
-        whenever(particle.onShutdown()).thenThrow(RuntimeException::class.java)
+        whenever(particle.onShutdown()).thenThrow(RuntimeException("boom"))
         context.initParticle()
         context.runParticle(notifyReady)
 
@@ -283,20 +286,23 @@ class ParticleContextTest {
         }
         verifyNoMoreInteractions(particle, handles)
         assertThat(context.particleState).isEqualTo(ParticleState.Failed)
+        assertThat(context.particleState.cause).hasMessageThat().isEqualTo("boom")
     }
 
     @Test
     fun errors_crashLoopingParticle() = runTest {
-        whenever(particle.onStart()).thenThrow(RuntimeException::class.java)
+        whenever(particle.onStart()).thenThrow(RuntimeException("boom"))
 
         for (i in 1..MAX_CONSECUTIVE_FAILURES) {
             assertSuspendingThrows(RuntimeException::class) { context.initParticle() }
             assertThat(context.consecutiveFailureCount).isEqualTo(i)
         }
         assertThat(context.particleState).isEqualTo(ParticleState.Failed)
+        assertThat(context.particleState.cause).hasMessageThat().isEqualTo("boom")
 
         assertSuspendingThrows(RuntimeException::class) { context.initParticle() }
         assertThat(context.particleState).isEqualTo(ParticleState.MaxFailed)
+        assertThat(context.particleState.cause).hasMessageThat().isEqualTo("boom")
     }
 
     private fun mockHandle(handleMode: HandleMode) =
