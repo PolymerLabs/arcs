@@ -685,6 +685,19 @@ open class HandleManagerTestBase {
     }
 
     @Test
+    fun inlineEntitiesWorkEndToEnd() = testRunner {
+        val inline = TestParticle_Entities_Inline(32L, "inlineString")
+        val entity = TestParticle_Entities("outline", 33.0, listOf(7L, 8L, 9L), inline)
+
+        val writeHandle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+        val readHandle = readHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+
+        val updateDeferred = readHandle.onUpdateDeferred { it.size == 1 }
+        writeHandle.dispatchStore(entity)
+        assertThat(updateDeferred.await()).containsExactly(entity)
+    }
+
+    @Test
     fun clientCanSetEntityId() = testRunner {
         fakeTime.millis = 0
         // Ask faketime to increment to test with changing timestamps.
