@@ -254,8 +254,8 @@ var ${escaped}: ${type}
             private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
                 ${ktUtils.mapOf(
                   this.entityDescriptor.fields
-                    .filter(f => f.typeName === 'Reference')
-                    .map(({refSchemaHash, refClassName}) => `"${refSchemaHash}" to ${refClassName}`),
+                    .filter(f => f.typeName === 'Reference' || f.isInlineClass)
+                    .map(({refSchemaHash, typeName, refClassName}) => `"${refSchemaHash}" to ${refClassName ? refClassName : typeName}`),
                   16
                 )}
 

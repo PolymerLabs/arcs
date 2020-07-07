@@ -5,9 +5,10 @@ schema TestEntity
   text: Text
   number: Number
   list: List<Long>
+  inline: inline InlineEntity {long: Long, text: Text}
 
 particle TestParticle
-  entities: reads writes [TestEntity {text, number, list} [text == ?]]
+  entities: reads writes [TestEntity {text, number, list, inline} [text == ?]]
 
 recipe TestRecipe
   entities: create
