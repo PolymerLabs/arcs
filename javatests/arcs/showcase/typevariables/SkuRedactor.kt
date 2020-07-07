@@ -10,9 +10,7 @@ class SkuRedactor : AbstractSkuRedactor() {
         handles.input.onUpdate {
             for (item in it.stream()) {
                 assertThat(item.sku).isNotEmpty()
-                handles.output.store(
-                    item.copy(sku=redactSku(item.sku))
-                )
+                handles.output.store(item.copy(sku=redactSku(item.sku)))
             }
         }
     }

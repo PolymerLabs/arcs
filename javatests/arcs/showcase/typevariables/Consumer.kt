@@ -5,7 +5,7 @@ import kotlinx.coroutines.Job
 
 class Consumer : AbstractConsumer() {
 
-    /** Process an order. In this case, we ensure that all items have been redacted. */
+    /** Process an order. In this case, we ensure skus have been redacted and prices are fair. */
     override fun onUpdate() =
         handles.data.fetchAll()
             .also { it.size == 3 }
