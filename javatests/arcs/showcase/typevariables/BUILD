@@ -14,6 +14,7 @@ arcs_kt_gen(
 
 arcs_kt_library(
     name = "shop_particles",
+    testonly = True,
     srcs = [
         "Consumer.kt",
         "OrderIngestion.kt",
