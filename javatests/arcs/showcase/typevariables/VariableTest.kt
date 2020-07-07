@@ -27,7 +27,7 @@ class VariableTest {
     ): JvmHost(schedulerProvider, *particles), ProdHost
 
     @Test
-    fun shop_redactsSkew() = runBlocking {
+    fun shop_redactsSku() = runBlocking {
         RamDisk.clear()
         DriverAndKeyConfigurator.configureKeyParsers()
         RamDiskDriverProvider()
