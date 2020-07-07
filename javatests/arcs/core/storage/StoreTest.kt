@@ -241,7 +241,7 @@ class StoreTest {
             SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
             "abc"
         )
-        val store: CollectionStore<RawEntity> = defaultFactory(
+        val store: CollectionStore<RawEntity> = DefaultActivationFactory(
             StoreOptions(
                 testKey,
                 CollectionType(EntityType(schema))
@@ -377,5 +377,5 @@ class StoreTest {
     }
 
     private suspend fun createStore() =
-        defaultFactory<CrdtData, CrdtOperation, Any?>(StoreOptions(testKey, CountType()))
+        DefaultActivationFactory<CrdtData, CrdtOperation, Any?>(StoreOptions(testKey, CountType()))
 }

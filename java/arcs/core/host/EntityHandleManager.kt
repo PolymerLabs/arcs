@@ -47,10 +47,10 @@ import arcs.core.entity.WriteQueryCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.ActiveStore
+import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreOptions
-import arcs.core.storage.defaultFactory
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
@@ -105,7 +105,7 @@ class EntityHandleManager(
         hostId,
         time,
         scheduler,
-        StoreManager(activationFactory ?: defaultFactory),
+        StoreManager(activationFactory ?: DefaultActivationFactory),
         idGenerator
     )
 

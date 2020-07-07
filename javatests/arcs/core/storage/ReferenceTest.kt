@@ -57,7 +57,7 @@ class ReferenceTest {
                 storageKey = refModeKey,
                 type = CollectionType(EntityType(Person.SCHEMA))
             )
-        val store: CollectionStore<RawEntity> = defaultFactory(options)
+        val store: CollectionStore<RawEntity> = DefaultActivationFactory(options)
 
         val addPeople = listOf(
             CrdtSet.Operation.Add(
@@ -86,7 +86,7 @@ class ReferenceTest {
             )
 
         @Suppress("UNCHECKED_CAST")
-        val directCollection: CollectionStore<Reference> = defaultFactory(collectionOptions)
+        val directCollection: CollectionStore<Reference> = DefaultActivationFactory(collectionOptions)
 
         val job = Job()
         val me = directCollection.on(ProxyCallback {

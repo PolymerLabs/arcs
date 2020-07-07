@@ -32,7 +32,7 @@ typealias EntityStore = ActiveStore<CrdtEntity.Data, CrdtEntity.Operation, CrdtE
 @ExperimentalCoroutinesApi
 class RawEntityDereferencer(
     private val schema: Schema,
-    private val entityActivationFactory: ActivationFactory = defaultFactory,
+    private val entityActivationFactory: ActivationFactory = DefaultActivationFactory,
     private val referenceCheckFun: ((Schema, RawEntity?) -> Unit)? = null
 ) : Dereferencer<RawEntity> {
     // TODO(#5551): Consider including a hash of schema.names for easier tracking.

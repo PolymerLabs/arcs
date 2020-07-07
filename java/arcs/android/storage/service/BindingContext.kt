@@ -19,11 +19,11 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
+import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
-import arcs.core.storage.defaultFactory
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
@@ -51,7 +51,7 @@ class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
     @Suppress("UNCHECKED_CAST")
     suspend fun get(): ActiveStore<Data, Op, T> = mutex.withLock {
         if (!::_store.isInitialized) {
-            _store = defaultFactory(options)
+            _store = DefaultActivationFactory(options)
         }
         _store
     }

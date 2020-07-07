@@ -22,7 +22,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  */
 @ExperimentalCoroutinesApi
 @Suppress("UNCHECKED_CAST")
-val defaultFactory = object : ActivationFactory {
+object DefaultActivationFactory : ActivationFactory {
     override suspend fun <Data : CrdtData, Op : CrdtOperation, T> invoke(
         options: StoreOptions
     ): ActiveStore<Data, Op, T> = when (options.storageKey) {

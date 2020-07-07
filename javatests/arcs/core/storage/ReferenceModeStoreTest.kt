@@ -12,7 +12,6 @@
 package arcs.core.storage
 
 import arcs.core.common.ReferenceId
-import arcs.core.crdt.CrdtCount
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtException
@@ -20,7 +19,6 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
 import arcs.core.data.CollectionType
-import arcs.core.data.CountType
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
@@ -88,7 +86,7 @@ class ReferenceModeStoreTest {
     @Test
     fun throwsException_ifAppropriateDriverCantBeFound() = runBlockingTest {
         assertSuspendingThrows(CrdtException::class) {
-            defaultFactory<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
+            DefaultActivationFactory<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
                 StoreOptions(
                     testKey,
                     SingletonType(EntityType(schema))
@@ -101,7 +99,7 @@ class ReferenceModeStoreTest {
     fun constructsReferenceModeStores_whenRequired() = runBlockingTest {
         DriverFactory.register(MockDriverProvider())
 
-        val store = defaultFactory<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
+        val store = DefaultActivationFactory<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
             StoreOptions(
                 testKey,
                 CollectionType(EntityType(schema))
