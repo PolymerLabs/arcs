@@ -18,13 +18,15 @@ particle OrderIngestion in '.OrderIngestion'
 particle SkuRedactor in '.SkuRedactor'
   input: reads [~a with {sku: Text}]
   output: writes [~a]
-  claim output is redactedSku
+  // TODO(b/160694452) support proper claims and checks
+  // claim output.sku is redacted
 
 // The shop processes orders in the consumer service. It has confidence that the sku
 // is redacted due to the check on the data handle.
 particle Consumer in '.Consumer'
   data: reads [Product {sku: Text, name: Text, price: Number}]
-  check data is redactedSku
+  // TODO(b/160694452) support proper claims and checks
+  // check data.sku is redacted
 
 recipe Shop
   beforeRedaction: create
