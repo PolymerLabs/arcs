@@ -25,10 +25,4 @@ class ParseManifestProtoTest {
         TextFormat.getParser().merge(File(txtPath).readText(), manifestTxt)
         assertThat(manifestTxt.build()).isEqualTo(manifestBin)
     }
-
-    @Test
-    fun decodesQueryExampleInTextFormat() {
-        val path = runfilesDir() + "java/arcs/core/data/testdata/query.textproto"
-        TextFormat.getParser().merge(File(path).readText(), ManifestProto.newBuilder())
-    }
 }

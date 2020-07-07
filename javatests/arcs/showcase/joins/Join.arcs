@@ -8,9 +8,9 @@ particle Writer
 
 particle Reader in 'arcs.showcase.joins.Reader'
   data: reads [(
-    &Product {name: Text, photo: URL},
-    &Review {author: Text, content: Text, rating: Number},
-    &Manufacturer {name: Text, address: Text}
+    Product {name: Text, photo: URL},
+    Review {author: Text, content: Text, rating: Number},
+    Manufacturer {name: Text, address: Text}
   )]
 
 @arcId('write-data-for-join')

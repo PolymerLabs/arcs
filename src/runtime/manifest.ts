@@ -713,9 +713,6 @@ ${e.message}
             node.model = new SingletonType(node.type.model);
             return;
           case 'tuple-type':
-            if (node.types.some(t => t.kind !== 'reference-type')) {
-              throw new ManifestError(node.location, 'Only tuples of references are supported.');
-            }
             node.model = new TupleType(node.types.map(t => t.model));
             return;
           default:
