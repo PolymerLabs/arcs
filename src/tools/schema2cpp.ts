@@ -228,7 +228,6 @@ class CppGenerator implements EntityGenerator {
 
   generate(): string {
     const name = this.node.fullEntityClassName;
-    console.log(`name: ${name}`);
     const aliases = this.node.sources.map(s => s.fullName);
     // Template constructor allows implicit type slicing from appropriately matching entities.
     let templateCtor = '';
