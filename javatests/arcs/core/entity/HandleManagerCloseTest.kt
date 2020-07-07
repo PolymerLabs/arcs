@@ -5,6 +5,7 @@ import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
 import arcs.core.data.Capability.Ttl
+import arcs.core.data.SchemaRegistry
 import arcs.core.entity.HandleManagerTestBase.Person
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageKey

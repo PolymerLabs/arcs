@@ -5,6 +5,7 @@ import arcs.core.data.FieldName
 import arcs.core.data.RawEntity
 import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.Schema
+import arcs.core.data.SchemaHash
 
 /**
  * A base [Entity] to access data from type variables.

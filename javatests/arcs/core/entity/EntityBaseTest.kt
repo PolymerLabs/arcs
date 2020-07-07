@@ -17,6 +17,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.Capability.Ttl
+import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.Reference as StorageReference

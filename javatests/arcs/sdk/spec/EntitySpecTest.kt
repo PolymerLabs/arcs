@@ -5,7 +5,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.data.Capability.Ttl
 import arcs.core.data.util.toReferencable
-import arcs.core.entity.SchemaRegistry
+import arcs.core.data.SchemaRegistry
 import arcs.core.testutil.handles.dispatchCreateReference
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.testutil.runTest

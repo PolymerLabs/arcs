@@ -64,7 +64,7 @@ export class Schema2Kotlin extends Schema2Base {
         'import arcs.core.data.util.ReferencablePrimitive',
         'import arcs.core.entity.toPrimitiveValue',
         'import arcs.core.entity.Reference',
-        'import arcs.core.entity.SchemaRegistry',
+        'import arcs.core.data.SchemaRegistry',
         'import arcs.core.entity.Tuple1',
         'import arcs.core.entity.Tuple2',
         'import arcs.core.entity.Tuple3',

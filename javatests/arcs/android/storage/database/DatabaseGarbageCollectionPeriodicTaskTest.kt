@@ -10,7 +10,7 @@ import arcs.core.data.HandleMode
 import arcs.core.entity.DummyEntity
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
-import arcs.core.entity.SchemaRegistry
+import arcs.core.data.SchemaRegistry
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.api.DriverAndKeyConfigurator

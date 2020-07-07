@@ -29,7 +29,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.entity.SchemaRegistry
+import arcs.core.data.SchemaRegistry
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
@@ -87,12 +87,12 @@ class DatabaseImplTest {
 
     @Test
     fun getTypeId_entity_throwsWhenMissing() = runBlockingTest {
-        val exception = assertSuspendingThrows(IllegalArgumentException::class) {
+        val exception = assertSuspendingThrows(NoSuchElementException::class) {
             database.getTypeIdForTest(FieldType.EntityRef("shouldnotexistanywhere"))
         }
-        assertThat(exception)
-            .hasMessageThat()
-            .contains("Unknown Schema with hash:")
+        assertThat(exception).hasMessageThat().isEqualTo(
+            "Schema hash 'shouldnotexistanywhere' not found in SchemaRegistry."
+        )
     }
 
     @Test
