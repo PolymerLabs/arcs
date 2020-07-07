@@ -2,6 +2,7 @@ load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_gen",
     "arcs_kt_jvm_test_suite",
+    "arcs_kt_library",
 )
 
 arcs_kt_gen(
@@ -9,15 +10,28 @@ arcs_kt_gen(
     srcs = ["variable.arcs"],
 )
 
-arcs_kt_jvm_test_suite(
-    name = "variable-tests",
-    srcs = glob(["*Test.kt"]) + [
+arcs_kt_library(
+    name = "shop_particles",
+    srcs = [
+        "Consumer.kt",
         "OrderIngestion.kt",
         "SkuRedactor.kt",
-        "Consumer.kt",
     ],
+    deps = [
+        ":var_generation",
+        "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlin:kotlin_test",
+        "//third_party/kotlin/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
+    ],
+)
+
+arcs_kt_jvm_test_suite(
+    name = "variable-tests",
+    srcs = glob(["*Test.kt"]),
     package = "arcs.showcase.typevariables",
     deps = [
+        ":shop_particles",
         ":var_generation",
         "//java/arcs/core/allocator",  # buildcleaner: keep
         "//java/arcs/core/common",
