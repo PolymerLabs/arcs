@@ -22,6 +22,7 @@ fun ReferencableProto.toReferencable(): Referencable? = when (referencableCase) 
     ReferencableProto.ReferencableCase.PRIMITIVE -> primitive.toReferencablePrimitive()
     ReferencableProto.ReferencableCase.PRIMITIVE_LIST -> primitiveList.toReferencableList()
     ReferencableProto.ReferencableCase.REFERENCE_LIST -> referenceList.toReferencableList()
+    ReferencableProto.ReferencableCase.INLINE_ENTITY_LIST -> inlineEntityList.toReferencableList()
     else -> throw UnsupportedOperationException(
         "Unknown ReferencableProto type: $referencableCase."
     )
@@ -45,6 +46,7 @@ fun Referencable.toProto(): ReferencableProto {
             when (itemType.primitiveType) {
                 is FieldType.Primitive -> proto.primitiveList = toPrimitiveListProto()
                 is FieldType.EntityRef -> proto.referenceList = toReferenceListProto()
+                is FieldType.InlineEntity -> proto.inlineEntityList = toInlineEntityListProto()
                 else -> throw UnsupportedOperationException("Unsupported Referencable: $this.")
             }
         }

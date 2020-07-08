@@ -16,6 +16,7 @@ message ReferencableProto {
     ReferencablePrimitiveListProto primitive_list = 5;
     ReferencableReferenceListProto reference_list = 6;
     ReferencableProto wrapped_referencable = 7;
+    ReferencableInlineEntityListProto inline_entity_list = 8;
   }
 }
 
@@ -55,4 +56,9 @@ message ReferencablePrimitiveListProto {
 message ReferencableReferenceListProto {
   string type = 1;
   repeated ReferenceProto value = 2;
+}
+
+message ReferencableInlineEntityListProto {
+  string type = 1;
+  repeated RawEntityProto value = 2;
 }

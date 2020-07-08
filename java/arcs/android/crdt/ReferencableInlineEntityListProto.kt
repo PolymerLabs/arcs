@@ -15,38 +15,40 @@ import android.os.Parcel
 import arcs.android.util.readProto
 import arcs.core.common.Referencable
 import arcs.core.data.FieldType
+import arcs.core.data.RawEntity
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.Reference
 
 /** Constructs a [ReferencableList] from the given [ReferencablePrimitiveListProto]. */
-fun ReferencableReferenceListProto.toReferencableList(): ReferencableList<Referencable> {
-    val fieldType = FieldType.EntityRef(type)
-    return valueList.mapTo(mutableListOf<Reference>()) {
-        it.toReference()
+fun ReferencableInlineEntityListProto.toReferencableList(): ReferencableList<Referencable> {
+    val fieldType = FieldType.InlineEntity(type)
+    return valueList.mapTo(mutableListOf<RawEntity>()) {
+        it.toRawEntity()
     }.toReferencable(FieldType.ListOf(fieldType))
 }
 
 /** Serializes a [ReferencablePrimitive] to its proto form. */
-fun ReferencableList<*>.toReferenceListProto(): ReferencableReferenceListProto {
+fun ReferencableList<*>.toInlineEntityListProto(): ReferencableInlineEntityListProto {
     val type = (itemType as FieldType.ListOf).primitiveType
     return when (type) {
-        is FieldType.EntityRef -> {
-            ReferencableReferenceListProto
+        is FieldType.InlineEntity -> {
+            ReferencableInlineEntityListProto
                 .newBuilder()
                 .setType(type.schemaHash)
                 .addAllValue(value.map {
-                    require(it is Reference) {
-                        "Non-reference found in reference list"
+                    require(it is RawEntity) {
+                        "Non-entity found in entity list"
                     }
                     it.toProto()
                 })
                 .build()
         }
-        else -> throw IllegalStateException("Invalid FieldType for ReferencableList of references")
+        else -> throw IllegalStateException(
+            "Invalid FieldType $type for ReferencableList of references"
+        )
     }
 }
 
 /** Reads a [ReferencableRefenceList] out of a [Parcel]. */
-fun Parcel.readOrderedReferenceList(): ReferencableList<*>? =
-    readProto(ReferencableReferenceListProto.getDefaultInstance())?.toReferencableList()
+fun Parcel.readOrderedInlineEntityList(): ReferencableList<*>? =
+    readProto(ReferencableInlineEntityListProto.getDefaultInstance())?.toReferencableList()
