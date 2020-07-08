@@ -38,9 +38,13 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private var hasEverSetCallback = false
 
     /** Adds a [ProxyCallback] to the collection, and returns its token. */
-    fun register(proxyCallback: ProxyCallback<Data, Op, ConsumerData>): Int {
+    fun register(
+        proxyCallback: ProxyCallback<Data, Op, ConsumerData>,
+        callbackToken: Int? = null
+    ): Int {
         while (!mutex.tryLock()) { /* Wait. */ }
-        val token = tokenGenerator(callbacks.keys)
+        val token = callbackToken ?: tokenGenerator(callbacks.keys)
+        check(!callbacks.containsKey(token)) { "The provided callbackToken was already registered" }
         callbacks[token] = proxyCallback
         hasEverSetCallback = true
         mutex.unlock()

@@ -61,13 +61,14 @@ class RamDiskDirectStoreMuxerIntegrationTest {
         val storageKey = RamDiskStorageKey("unique")
         val store = DirectStoreMuxer<CrdtData, CrdtOperation, Any?>(
             storageKey = storageKey,
-            backingType = CountType(),
-            callbackFactory = { eventId ->
-                ProxyCallback { m ->
-                    message.value = m as ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>
-                    muxId.value = eventId
-                    job.complete()
-                }
+            backingType = CountType()
+        )
+
+        val callbackId = store.on(
+            ProxyCallback { m ->
+                message.value = m as ProxyMessage<CrdtCount.Data, CrdtCount.Operation, Int>
+                muxId.value = m.muxId
+                job.complete()
             }
         )
 
@@ -78,15 +79,15 @@ class RamDiskDirectStoreMuxerIntegrationTest {
         count2.applyOperation(MultiIncrement("them", version = 0 to 10, delta = 15))
 
         assertThat(
-            store.onProxyMessage(ProxyMessage.ModelUpdate(count1.data, null), "thing0")
+            store.onProxyMessage(ProxyMessage.ModelUpdate(count1.data, id = callbackId, muxId = "thing0"))
         ).isTrue()
         assertThat(
-            store.onProxyMessage(ProxyMessage.ModelUpdate(count2.data, null), "thing1")
+            store.onProxyMessage(ProxyMessage.ModelUpdate(count2.data, id = callbackId, muxId = "thing1"))
         ).isTrue()
 
         store.idle()
 
-        store.onProxyMessage(ProxyMessage.SyncRequest(null), "thing0")
+        store.onProxyMessage(ProxyMessage.SyncRequest(id = callbackId, muxId = "thing0"))
         job.join()
         message.value.assertHasData(count1)
         assertThat(muxId.value ?: "huh, it was null.").isEqualTo("thing0")
@@ -94,7 +95,7 @@ class RamDiskDirectStoreMuxerIntegrationTest {
         message.value = null
         muxId.value = null
         job = Job()
-        store.onProxyMessage(ProxyMessage.SyncRequest(null), "thing1")
+        store.onProxyMessage(ProxyMessage.SyncRequest(id = callbackId, muxId = "thing1"))
         job.join()
         message.value.assertHasData(count2)
         assertThat(muxId.value ?: "huh, it was null.").isEqualTo("thing1")
@@ -102,7 +103,7 @@ class RamDiskDirectStoreMuxerIntegrationTest {
         message.value = null
         muxId.value = null
         job = Job()
-        store.onProxyMessage(ProxyMessage.SyncRequest(null), "not-a-thing")
+        store.onProxyMessage(ProxyMessage.SyncRequest(id = callbackId, muxId ="not-a-thing"))
         job.join()
         message.value.assertHasData(CrdtCount())
         assertThat(muxId.value ?: "huh, it was null.").isEqualTo("not-a-thing")

@@ -220,7 +220,10 @@ class ReferenceModeStoreTest {
 
         val capturedPeople = containerDriver.sentData.first()
         assertThat(capturedPeople).isEqualTo(referenceCollection.data)
-        val storedBob = activeStore.backingStore.getLocalData("an-id")
+        val storedBob = activeStore.backingStore.getLocalData(
+            "an-id",
+            activeStore.backingStoreId
+        )
         // Check that the stored bob's singleton data is equal to the expected bob's singleton data
         assertThat(storedBob.singletons.mapValues { it.value.data })
             .isEqualTo(bobEntity.data.singletons.mapValues { it.value.data })
@@ -244,7 +247,10 @@ class ReferenceModeStoreTest {
             activeStore.onProxyMessage(ProxyMessage.Operations(listOf(addOp), id = 1))
         ).isTrue()
         // Bob was added to the backing store.
-        val storedBob = activeStore.backingStore.getLocalData("an-id")
+        val storedBob = activeStore.backingStore.getLocalData(
+            "an-id",
+            activeStore.backingStoreId
+        )
         assertThat(storedBob.toRawEntity("an-id")).isEqualTo(bob)
 
         // Remove Bob from the collection.
@@ -254,7 +260,10 @@ class ReferenceModeStoreTest {
         ).isTrue()
 
         // Check the backing store Bob has been cleared.
-        val storedBob2 = activeStore.backingStore.getLocalData("an-id")
+        val storedBob2 = activeStore.backingStore.getLocalData(
+            "an-id",
+            activeStore.backingStoreId
+        )
         assertThat(storedBob2.toRawEntity("an-id")).isEqualTo(createEmptyPersonEntity("an-id"))
     }
 
@@ -278,10 +287,16 @@ class ReferenceModeStoreTest {
         val storedRefs = activeStore.containerStore.getLocalData() as CrdtSet.Data<Reference>
         assertThat(storedRefs.values.keys).containsExactly("id1", "id2")
 
-        val storedAlice = activeStore.backingStore.getLocalData("id1")
+        val storedAlice = activeStore.backingStore.getLocalData(
+            "id1",
+            activeStore.backingStoreId
+        )
         assertThat(storedAlice.toRawEntity("id1")).isEqualTo(alice)
 
-        val storedBob = activeStore.backingStore.getLocalData("id2")
+        val storedBob = activeStore.backingStore.getLocalData(
+            "id2",
+            activeStore.backingStoreId
+        )
         assertThat(storedBob.toRawEntity("id2")).isEqualTo(bob)
 
         // Clear!
@@ -291,10 +306,15 @@ class ReferenceModeStoreTest {
         val clearedRefs = activeStore.containerStore.getLocalData() as CrdtSet.Data<Reference>
         assertThat(clearedRefs.values.keys).isEmpty()
 
-        val clearedAlice = activeStore.backingStore.getLocalData("id1")
+        val clearedAlice = activeStore.backingStore.getLocalData("id1",
+            activeStore.backingStoreId
+        )
         assertThat(clearedAlice.toRawEntity("id1")).isEqualTo(createEmptyPersonEntity("id1"))
 
-        val clearedBob = activeStore.backingStore.getLocalData("id2")
+        val clearedBob = activeStore.backingStore.getLocalData(
+            "id2",
+            activeStore.backingStoreId
+        )
         assertThat(clearedBob.toRawEntity("id2")).isEqualTo(createEmptyPersonEntity("id2"))
     }
 
@@ -451,7 +471,7 @@ class ReferenceModeStoreTest {
         )
 
         activeStore.backingStore
-            .onProxyMessage(ProxyMessage.ModelUpdate(bobCrdt.data, id = 1), "an-id")
+            .onProxyMessage(ProxyMessage.ModelUpdate(bobCrdt.data, id = 1, muxId = "an-id"))
 
         val job = Job(coroutineContext[Job.Key])
         activeStore.on(ProxyCallback {
@@ -509,8 +529,7 @@ class ReferenceModeStoreTest {
 
         // Ensure remote entity is stored in backing store.
         activeStore.backingStore.onProxyMessage(
-            ProxyMessage.ModelUpdate(createPersonEntityCrdt().data, id = 2),
-            "another-id"
+            ProxyMessage.ModelUpdate(createPersonEntityCrdt().data, id = 2, muxId = "another-id")
         )
 
         val driver = activeStore.containerStore.driver as MockDriver<CrdtSet.Data<Reference>>

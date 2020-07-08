@@ -20,7 +20,9 @@ sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     /** Identifier for the sender of the [ProxyMessage]. */
     open val id: Int?,
     /** [Type] of the message. */
-    internal open val type: Type
+    internal open val type: Type,
+    /** Reference Id used by multiplexers to redirect the [ProxyMessage] */
+    open val muxId: String?
 ) {
 
     fun withId(id: Int): ProxyMessage<Data, Op, ConsumerData> = when (this) {
@@ -29,11 +31,18 @@ sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         is Operations -> copy(id = id)
     }
 
+    fun withMuxId(muxId: String): ProxyMessage<Data, Op, ConsumerData> = when (this) {
+        is SyncRequest -> copy(muxId = muxId)
+        is ModelUpdate -> copy(muxId = muxId)
+        is Operations -> copy(muxId = muxId)
+    }
+
     /** A request to sync data with the store. */
     data class SyncRequest<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         override val id: Int?,
-        override val type: Type = Type.SyncRequest
-    ) : ProxyMessage<Data, Op, ConsumerData>(id, type)
+        override val type: Type = Type.SyncRequest,
+        override val muxId: String? = null
+    ) : ProxyMessage<Data, Op, ConsumerData>(id, type, muxId)
 
     /**
      * A message requesting an update of the backing data in the store using a state-based CRDT
@@ -43,16 +52,18 @@ sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         /** The new model data. */
         val model: Data,
         override val id: Int?,
-        override val type: Type = Type.ModelUpdate
-    ) : ProxyMessage<Data, Op, ConsumerData>(id, type)
+        override val type: Type = Type.ModelUpdate,
+        override val muxId: String? = null
+    ) : ProxyMessage<Data, Op, ConsumerData>(id, type, muxId)
 
     /** A message requesting an update of the backing data in the store using [CrdtOperation]s. */
     data class Operations<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         /** Operations required to update the backing data. */
         val operations: List<Op>,
         override val id: Int?,
-        override val type: Type = Type.Operations
-    ) : ProxyMessage<Data, Op, ConsumerData>(id, type)
+        override val type: Type = Type.Operations,
+        override val muxId: String? = null
+    ) : ProxyMessage<Data, Op, ConsumerData>(id, type, muxId)
 
     /** Type of message coming from the Storage Proxy. */
     enum class Type {

@@ -35,7 +35,10 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
      * Registers a [ProxyCallback] with the store and returns a token which can be used to
      * unregister the callback using [off].
      */
-    abstract fun on(callback: ProxyCallback<Data, Op, ConsumerData>): Int
+    abstract fun on(
+        callback: ProxyCallback<Data, Op, ConsumerData>,
+        callbackToken: Int? = null
+    ): Int
 
     /** Unregisters a callback associated with the given [callbackToken]. */
     abstract fun off(callbackToken: Int)

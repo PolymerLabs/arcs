@@ -270,7 +270,10 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
                     VersionMap("me" to 1)
                 )
             )
-        val storedBob = activeStore.backingStore.getLocalData("an-id")
+        val storedBob = activeStore.backingStore.getLocalData(
+            "an-id",
+            activeStore.backingStoreId
+        ) as CrdtEntity.Data
         // Check that the stored bob's singleton data is equal to the expected bob's singleton data
         assertThat(storedBob.singletons).isEqualTo(bobEntity.data.singletons)
         // Check that the stored bob's collection data is equal to the expected bob's collection
@@ -290,7 +293,10 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
             activeStore.onProxyMessage(ProxyMessage.Operations(listOf(addOp), id = 1))
         ).isTrue()
         // Bob was added to the backing store.
-        val storedBob = activeStore.backingStore.getLocalData("an-id")
+        val storedBob = activeStore.backingStore.getLocalData(
+            "an-id",
+            activeStore.backingStoreId
+        ) as CrdtEntity.Data
         assertThat(storedBob.toRawEntity("an-id")).isEqualTo(bob)
 
         // Remove Bob from the collection.
@@ -300,7 +306,10 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         ).isTrue()
 
         // Check the backing store Bob has been cleared.
-        val storedBob2 = activeStore.backingStore.getLocalData("an-id")
+        val storedBob2 = activeStore.backingStore.getLocalData(
+            "an-id",
+            activeStore.backingStoreId
+        ) as CrdtEntity.Data
         assertThat(storedBob2.toRawEntity("an-id")).isEqualTo(createEmptyPersonEntity("an-id"))
 
         // Check the DB.
@@ -402,7 +411,10 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         activeStore.idle()
 
         // Check Bob from backing store.
-        val storedBob = activeStore.backingStore.getLocalData("an-id")
+        val storedBob = activeStore.backingStore.getLocalData(
+            "an-id",
+            activeStore.backingStoreId
+        ) as CrdtEntity.Data
         assertThat(storedBob.toRawEntity()).isEqualTo(bob)
         assertThat(storedBob.toRawEntity().creationTimestamp).isEqualTo(10)
         assertThat(storedBob.toRawEntity().expirationTimestamp).isEqualTo(20)
@@ -536,7 +548,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         )
 
         activeStore.backingStore
-            .onProxyMessage(ProxyMessage.ModelUpdate(bobCrdt.data, id = 1), "an-id")
+            .onProxyMessage(ProxyMessage.ModelUpdate(bobCrdt.data, id = 1, muxId = "an-id"))
 
         val job = Job(coroutineContext[Job])
         activeStore.on(

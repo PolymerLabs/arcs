@@ -101,9 +101,9 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
 
     fun getLocalData(): Data = synchronized(this) { localModel.data }
 
-    override fun on(callback: ProxyCallback<Data, Op, T>): Int {
+    override fun on(callback: ProxyCallback<Data, Op, T>, callbackToken: Int?): Int {
         synchronized(proxyManager) {
-            return proxyManager.register(callback)
+            return proxyManager.register(callback, callbackToken)
         }
     }
 
