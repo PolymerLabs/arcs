@@ -27,8 +27,8 @@ import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
+import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -59,6 +59,7 @@ typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
  */
 @ExperimentalCoroutinesApi
 abstract class AbstractArcHost(
+    protected val coroutineContext: CoroutineContext = Dispatchers.Default,
     protected val schedulerProvider: SchedulerProvider,
     open val activationFactory: ActivationFactory? = null,
     vararg initialParticles: ParticleRegistration
@@ -67,7 +68,7 @@ abstract class AbstractArcHost(
     constructor(
         schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : this(schedulerProvider, null, *initialParticles)
+    ) : this(Dispatchers.Default, schedulerProvider, null, *initialParticles)
 
     private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
@@ -95,8 +96,6 @@ abstract class AbstractArcHost(
     // There can be more then one instance of a host, hashCode is used to disambiguate them
     override val hostId = "${this::class.className()}@${this.hashCode()}"
 
-    // TODO: refactor to allow clients to supply this
-    open val coroutineContext = Dispatchers.Unconfined + CoroutineName("AbstractArcHost")
     // TODO: add lifecycle API for ArcHosts shutting down to cancel running coroutines
     private val scope = CoroutineScope(coroutineContext)
 
@@ -565,7 +564,8 @@ abstract class AbstractArcHost(
         hostId,
         platformTime,
         schedulerProvider(arcId),
-        stores
+        stores,
+        coroutineContext = coroutineContext
     )
 
     /**
