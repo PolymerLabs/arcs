@@ -61,7 +61,6 @@ import kotlinx.coroutines.runBlocking
  */
 open class StorageService : ResurrectorService() {
     protected open val coroutineContext = Dispatchers.Default + CoroutineName("StorageService")
-    private val scope = CoroutineScope(coroutineContext)
     protected open val writeBackScope = CoroutineScope(
         Executors.newCachedThreadPool {
             Thread(it).apply { name = "WriteBack #$id" }
@@ -169,7 +168,6 @@ open class StorageService : ResurrectorService() {
     override fun onDestroy() {
         super.onDestroy()
         writeBackScope.cancel()
-        scope.cancel()
     }
 
     override fun dump(fd: FileDescriptor, writer: PrintWriter, args: Array<out String>) {
