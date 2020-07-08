@@ -464,7 +464,7 @@ def arcs_kt_plan(name, srcs = [], data = [], deps = [], platforms = ["jvm"], vis
             srcs = [src],
             outs = [out],
             progress_message = "Generating Kotlin Plans",
-            sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
+            sigh_cmd = "recipe2plan --quiet --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
             deps = deps + data + rest,
         )
 
