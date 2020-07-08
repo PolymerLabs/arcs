@@ -26,13 +26,18 @@ import arcs.core.util.LruCacheMap
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
-import kotlinx.coroutines.CoroutineName
+import arcs.core.util.guardedBy
+import kotlin.coroutines.CoroutineContext
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 
 /** Time limit in milliseconds for all particles to reach the Running state during startup. */
@@ -54,6 +59,7 @@ typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
  */
 @ExperimentalCoroutinesApi
 abstract class AbstractArcHost(
+    protected val coroutineContext: CoroutineContext = Dispatchers.Default,
     protected val schedulerProvider: SchedulerProvider,
     open val activationFactory: ActivationFactory? = null,
     vararg initialParticles: ParticleRegistration
@@ -62,26 +68,34 @@ abstract class AbstractArcHost(
     constructor(
         schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : this(schedulerProvider, null, *initialParticles)
+    ) : this(Dispatchers.Default, schedulerProvider, null, *initialParticles)
 
     private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
+
+    private val cacheMutex = Mutex()
     /** In memory cache of [ArcHostContext] state. */
-    private val contextCache: MutableMap<String, ArcHostContext> = LruCacheMap()
+    private val contextCache: MutableMap<String, ArcHostContext> by guardedBy(
+        cacheMutex,
+        LruCacheMap()
+    )
 
+    private val runningMutex = Mutex()
     /** Arcs currently running in memory. */
-    private val runningArcs: MutableMap<String, ArcHostContext> = mutableMapOf()
+    private val runningArcs: MutableMap<String, ArcHostContext> by guardedBy(
+        runningMutex,
+        mutableMapOf()
+    )
 
-    private var paused = false
+    private var paused = atomic(false)
+
     /** Arcs to be started after unpausing. */
     private val pausedArcs: MutableList<Plan.Partition> = mutableListOf()
 
     // There can be more then one instance of a host, hashCode is used to disambiguate them
     override val hostId = "${this::class.className()}@${this.hashCode()}"
 
-    // TODO: refactor to allow clients to supply this
-    open val coroutineContext = Dispatchers.Unconfined + CoroutineName("AbstractArcHost")
     // TODO: add lifecycle API for ArcHosts shutting down to cancel running coroutines
     private val scope = CoroutineScope(coroutineContext)
 
@@ -89,11 +103,25 @@ abstract class AbstractArcHost(
         initialParticles.toList().associateByTo(particleConstructors, { it.first }, { it.second })
     }
 
+    private suspend fun putContextCache(id: String, context: ArcHostContext) = cacheMutex.withLock {
+        contextCache[id] = context
+    }
+
+    private suspend fun clearContextCache() = cacheMutex.withLock {
+        contextCache.clear()
+    }
+
+    private suspend fun getContextCache(arcId: String) = cacheMutex.withLock {
+        contextCache[arcId]
+    }
+
     /**
      * Determines if [arcId] is currently running. It's state must be [ArcState.Running] and
      * it must be memory resident (not serialized and dormant).
      */
-    protected fun isRunning(arcId: String) = runningArcs[arcId]?.arcState == ArcState.Running
+    protected fun isRunning(arcId: String) = runBlocking {
+        runningMutex.withLock { runningArcs[arcId]?.arcState == ArcState.Running }
+    }
 
     /**
      * Lookup the [ArcHostContext] associated with the [ArcId] in [partition] and return its
@@ -103,8 +131,12 @@ abstract class AbstractArcHost(
         lookupOrCreateArcHostContext(partition.arcId).arcState
 
     override suspend fun pause() {
-        paused = true
-        runningArcs.toMap().forEach { (arcId, context) ->
+        if (!paused.compareAndSet(false, true)) {
+            return
+        }
+
+        val running = runningMutex.withLock { runningArcs.toMap() }
+        running.forEach { (arcId, context) ->
             try {
                 val partition = contextToPartition(arcId, context)
                 stopArc(partition)
@@ -118,8 +150,12 @@ abstract class AbstractArcHost(
     }
 
     override suspend fun unpause() {
+        if (!paused.compareAndSet(true, false)) {
+            return
+        }
+
         stores.reset()
-        paused = false
+
         pausedArcs.forEach {
             try {
                 startArc(it)
@@ -134,8 +170,8 @@ abstract class AbstractArcHost(
 
     override suspend fun shutdown() {
         pause()
-        runningArcs.clear()
-        contextCache.clear()
+        runningMutex.withLock { runningArcs.clear() }
+        clearContextCache()
         pausedArcs.clear()
         scope.cancel()
         schedulerProvider.cancelAll()
@@ -145,12 +181,18 @@ abstract class AbstractArcHost(
      * This property is true if this [ArcHost] has no running, memory resident arcs, e.g.
      * running [Particle]s with active connected [Handle]s.
      */
-    protected val isArcHostIdle = runningArcs.isEmpty()
+    protected val isArcHostIdle = runBlocking {
+        runningMutex.withLock { runningArcs.isEmpty() }
+    }
 
     // VisibleForTesting
     protected fun clearCache() {
-        contextCache.clear()
-        runningArcs.clear()
+        runBlocking {
+            clearContextCache()
+            runningMutex.withLock {
+                runningArcs.clear()
+            }
+        }
     }
 
     /** Used by subclasses to register particles dynamically after [ArcHost] construction */
@@ -168,11 +210,13 @@ abstract class AbstractArcHost(
         particleConstructors.keys.toList()
 
     // VisibleForTesting
-    protected fun getArcHostContext(arcId: String) = contextCache[arcId]
+    protected fun getArcHostContext(arcId: String) = runBlocking {
+        getContextCache(arcId)
+    }
 
     protected suspend fun lookupOrCreateArcHostContext(
         arcId: String
-    ): ArcHostContext = contextCache[arcId] ?: readContextFromStorage(
+    ): ArcHostContext = getContextCache(arcId) ?: readContextFromStorage(
         createArcHostContext(arcId)
     )
 
@@ -207,12 +251,14 @@ abstract class AbstractArcHost(
      * Called to persist [ArcHostContext] after [context] for [arcId] has been modified.
      */
     protected suspend fun updateArcHostContext(arcId: String, context: ArcHostContext) {
-        contextCache[arcId] = context
-        writeContextToStorage(arcId, context)
-        if (context.arcState == ArcState.Running) {
-            runningArcs[arcId] = context
-        } else {
-            runningArcs.remove(arcId)
+        putContextCache(arcId, context)
+        runningMutex.withLock {
+            writeContextToStorage(arcId, context)
+            if (context.arcState == ArcState.Running) {
+                runningArcs[arcId] = context
+            } else {
+                runningArcs.remove(arcId)
+            }
         }
     }
 
@@ -255,7 +301,7 @@ abstract class AbstractArcHost(
     ): ArcHostContext =
         createArcHostContextParticle(arcHostContext)
             .readArcHostContext(arcHostContext)
-            ?.also { contextCache[arcHostContext.arcId] = it } ?: arcHostContext
+            ?.also { putContextCache(arcHostContext.arcId, it) } ?: arcHostContext
 
     /**
      * Serializes [ArcHostContext] into [Entity] types generated by 'schema2kotlin', and
@@ -271,7 +317,7 @@ abstract class AbstractArcHost(
     override suspend fun startArc(partition: Plan.Partition) {
         val context = lookupOrCreateArcHostContext(partition.arcId)
 
-        if (paused) {
+        if (paused.value) {
             pausedArcs.add(partition)
             return
         }
@@ -463,7 +509,7 @@ abstract class AbstractArcHost(
 
     override suspend fun stopArc(partition: Plan.Partition) {
         val arcId = partition.arcId
-        contextCache[partition.arcId]?.let { context ->
+        getContextCache(partition.arcId)?.let { context ->
             when (context.arcState) {
                 ArcState.Running, ArcState.Indeterminate -> stopArcInternal(arcId, context)
                 ArcState.NeverStarted -> stopArcError(context, "Arc $arcId was never started")
@@ -518,7 +564,8 @@ abstract class AbstractArcHost(
         hostId,
         platformTime,
         schedulerProvider(arcId),
-        stores
+        stores,
+        coroutineContext = coroutineContext
     )
 
     /**
