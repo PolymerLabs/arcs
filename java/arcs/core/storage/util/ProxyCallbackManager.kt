@@ -44,6 +44,18 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         return token
     }
 
+    /** Adds a [ProxyCallback] to the collection. Assigns the provided callbackToken to the [ProxyCallback]*/
+    fun registerWithToken(proxyCallback: ProxyCallback<Data, Op, ConsumerData>, callbackToken: Int): Int {
+        while(!mutex.tryLock()) { /* Wait. */ }
+
+        if (callbackToken in callbacks.keys) {
+            /* Error */
+        }
+        callbacks[callbackToken] = proxyCallback
+        mutex.unlock()
+        return callbackToken
+    }
+
     /** Removes the callback with the given [callbackToken] from the collection. */
     fun unregister(callbackToken: Int) {
         while (!mutex.tryLock()) { /* Wait. */ }
