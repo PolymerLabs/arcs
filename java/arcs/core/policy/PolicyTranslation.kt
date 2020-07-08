@@ -22,7 +22,11 @@ fun applyPolicy(policy: Policy, graph: RecipeGraph): RecipeGraph {
     val additionalChecks = egressParticleNodes.associateWith { node ->
         // Each handle connection needs its own check statement.
         node.particle.spec.connections.values
-            .filter { it.direction.canRead }
+            .filter {
+                // TODO(b/157605232): Also check canQuery -- but first, need to add QUERY to the
+                // Direction enum in the manifest proto.
+                it.direction.canRead
+            }
             .map { connectionSpec ->
                 Check.Assert(AccessPath(node.particle, connectionSpec), egressCheckPredicate)
             }
