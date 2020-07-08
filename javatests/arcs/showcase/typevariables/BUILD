@@ -10,6 +10,7 @@ licenses(["notice"])
 arcs_kt_gen(
     name = "var_generation",
     srcs = ["variable.arcs"],
+    test_harness = False,
 )
 
 arcs_kt_android_library(
