@@ -53,6 +53,13 @@ export abstract class Capability {
         .includes(this.compare(other));
   }
 
+  /**
+   * Returns true, if the given capability is not null and stricter than this.
+   */
+  isAllowedForIngress(other: Capability|null): boolean {
+    return other && this.isSameOrLessStrict(other);
+  }
+
   static fromAnnotations(annotations: AnnotationRef[] = []): Capability {
     throw new Error('not implemented');
   }
@@ -303,6 +310,14 @@ export abstract class BooleanCapability extends Capability {
     return true;
   }
 
+  /**
+   * Returns true, if the value is false and the given capability is null.
+   * Otherwise, calls the superclass implementation.
+   */
+  isAllowedForIngress(other: Capability|null): boolean {
+    return (!this.value && !other) || super.isAllowedForIngress(other);
+  }
+
   compare(other: Capability): CapabilityComparison {
     assert(this.isCompatible(other));
     const otherCapability = other as BooleanCapability;
@@ -437,6 +452,14 @@ export class CapabilityRange extends Capability {
 
   toRange(): CapabilityRange { return this; }
 
+  /**
+   * Returns true if the minimum of this range allows ingress of the given `other` capability.
+   */
+  isAllowedForIngress(other: Capability|null) {
+    return this.min.isAllowedForIngress(other && other.isCompatible(this)
+        ? (other as CapabilityRange).min : other);
+  }
+
   toDebugString(): string {
     if (this.min.isEquivalent(this.max)) {
       return this.min.toDebugString();
@@ -534,21 +557,40 @@ export class Capabilities {
   }
 
   contains(capability: Capability): boolean {
-    return this.ranges.some(range => {
-      return range.isCompatible(capability) && range.contains(capability);
-    });
+    const range = this.findCompatible(capability);
+    return range && range.contains(capability);
   }
 
   containsAll(other: Capabilities): boolean {
-    return other.ranges.every(otherRange => {
-      const range = this.ranges.find(r => r.isCompatible(otherRange));
-      return range && range.contains(otherRange);
+    return other.ranges.every(otherRange => this.contains(otherRange));
+  }
+
+  private findCompatible(capability: Capability): CapabilityRange|null {
+    return this.ranges.find(range => range.isCompatible(capability));
+  }
+
+  /**
+   * Returns true, if all ranges of capabilities are equally or less
+   * restrictive as the given handle's capabilities. The errors list will
+   * contain messages on non complying ranges.
+   */
+  // TODO(b/160820832): Consider introducing `unspecified` Capability for each
+  // subclass and have Capabilities always contain all ranges.
+  isAllowedForIngress(handleCapabilities: Capabilities, errors: string[] = undefined): boolean {
+    return this.ranges.every(range => {
+      const handleRange = handleCapabilities.findCompatible(range.min);
+      const result = range.isAllowedForIngress(handleRange);
+      if (!result && errors) {
+        errors.push(`${range.min.toDebugString()} is stricter than ` +
+            `${handleRange ? handleRange.toDebugString() : 'unspecified'}`);
+      }
+      return result;
     });
   }
 
   toDebugString(): string {
-    return this.ranges.map(({min, max}) => min.isEquivalent(max)
+    return `{${this.ranges.map(({min, max}) => min.isEquivalent(max)
         ? min.toDebugString() : `${min.toDebugString()} - ${max.toDebugString()}`
-    ).join(' /// ');
+    ).join(', ')}}`;
   }
 }

@@ -14,6 +14,7 @@ import {ManifestStringBuilder} from '../manifest-string-builder.js';
 import {Ttl, Capabilities, Capability, Persistence, CapabilityRange, Encryption} from '../capabilities.js';
 import {EntityType, InterfaceType, Type} from '../type.js';
 import {FieldPathType, resolveFieldPathType} from '../field-path.js';
+import {Handle} from '../recipe/handle.js';
 
 export enum PolicyEgressType {
   Logging = 'Logging',
@@ -36,6 +37,8 @@ const egressTypeAnnotationName = 'egressType';
 const allowedRetentionAnnotationName = 'allowedRetention';
 const allowedUsageAnnotationName = 'allowedUsage';
 const maxAgeAnnotationName = 'maxAge';
+
+export type IsValidOptions = {errors?: Map<PolicyTarget | Policy, string>, typeErrors?: string[]};
 
 /**
  * Definition of a dataflow policy.
@@ -106,6 +109,30 @@ export class Policy {
     const egressType = annotation.params['type'] as string;
     checkValueInEnum(egressType, PolicyEgressType);
     return egressType as PolicyEgressType;
+  }
+
+  /**
+   * Returns true, if the Policy permits ingress of the data in the given
+   * handle, i.e. contains a policy target with a matching type and suitable
+   * capabilities (less or equally restrictive to ones in the handle).
+   */
+  validateHandle(handle: Handle, options: IsValidOptions = undefined): boolean {
+    // TODO(b/160820832): examine particles @ingress annotations and propagate policy capabilities.
+    // TODO(b/160820832): target's type doesn't reflect field allowed usage information.
+    const targets = this.targets.filter(target => target.type.isAtLeastAsSpecificAs(
+        handle.type.resolvedType()));
+    if (targets.length === 0) {
+      if (options && options.errors) {
+        options.errors.set(this,
+            `Policy ${this.name} has no matching target types for ${handle.type.resolvedType()}`);
+      }
+      return false;
+    }
+    const result = targets.some(target => target.validateHandleCapabilities(handle, options));
+    if (result && options && options.errors) {
+      options.errors.clear();
+    }
+    return result;
   }
 }
 
@@ -199,11 +226,20 @@ export class PolicyTarget {
         default:
           throw new Error(`Unsupported retention medium ${retention.medium}`);
       }
-      if (retention.encryptionRequired) {
-        ranges.push(new Encryption(true));
-      }
+      ranges.push(new Encryption(retention.encryptionRequired));
       ranges.push(this.maxAge);
       return Capabilities.create(ranges);
+    });
+  }
+
+  validateHandleCapabilities(handle: Handle, options: IsValidOptions): boolean {
+    return this.toCapabilities().some(capabilities => {
+      const errors =  options && options.errors ? [] : undefined;
+      const result = capabilities.isAllowedForIngress(handle.capabilities, errors);
+      if (!result && options && options.errors) {
+        options.errors.set(this, `Policy target '${this.schemaName}' with capabilities ${capabilities.toDebugString()} is too strict for capabilities ${handle.capabilities.toDebugString()} (${errors.join(', ')})`);
+      }
+      return result;
     });
   }
 }

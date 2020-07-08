@@ -20,7 +20,7 @@ import {TypeChecker, TypeListInfo} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Fate, Direction} from '../manifest-ast-nodes.js';
 import {StorageKey} from '../storageNG/storage-key.js';
-import {Capabilities, Ttl, Queryable, Shareable} from '../capabilities.js';
+import {Capabilities, Ttl, Queryable} from '../capabilities.js';
 import {AnnotationRef} from './annotation.js';
 import {StoreClaims} from '../storageNG/abstract-store.js';
 
@@ -249,7 +249,7 @@ export class Handle implements Comparable<Handle> {
     return this._capabilities;
   }
 
-  updateCapabilities(): void {
+  private updateCapabilities(): void {
     // Combines capabilities extracted from annotations with implicit
     // capabilities derived from the recipe.
     this._capabilities = Capabilities.fromAnnotations(this.annotations);
