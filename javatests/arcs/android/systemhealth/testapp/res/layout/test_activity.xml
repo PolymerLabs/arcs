@@ -240,6 +240,28 @@
         android:layout_height="wrap_content"
         android:layout_width="0dp"
         android:layout_weight="1"
+        android:text="@string/cleared_entities" />
+
+      <EditText
+        android:id="@+id/cleared_entities"
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:ems="10"
+        android:hint="@string/cleared_entities_hint"
+        android:importantForAutofill="no"
+        android:inputType="numberDecimal"
+        android:textSize="14sp" />
+    </LinearLayout>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal">
+      <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:text="@string/delayed_start_ms" />
 
       <EditText
