@@ -101,8 +101,8 @@ private fun RecipeGraph.copyWith(
         particleNodes.map { node ->
             RecipeGraph.Node.Particle(
                 node.particle,
-                node.claims + additionalClaims.getOrDefault(node, emptyList()),
-                node.checks + additionalChecks.getOrDefault(node, emptyList())
+                node.claims + (additionalClaims[node] ?: emptyList()),
+                node.checks + (additionalChecks[node] ?: emptyList())
             )
         },
         handleNodes
