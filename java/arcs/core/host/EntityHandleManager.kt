@@ -54,9 +54,11 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.coroutines.CoroutineContext
 
 typealias SingletonStore<T> = ActiveStore<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
 typealias CollectionStore<T> = ActiveStore<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
@@ -79,6 +81,7 @@ class EntityHandleManager(
     private val scheduler: Scheduler,
     private val stores: StoreManager = StoreManager(),
     private val idGenerator: Id.Generator = Id.Generator.newSession(),
+    private val coroutineContext: CoroutineContext = Dispatchers.Default,
     private val analytics: Analytics? = null
 ) {
 
@@ -274,7 +277,8 @@ class EntityHandleManager(
             val store: SingletonStore<Referencable> = stores.get(
                 StoreOptions(
                     storageKey = storageKey,
-                    type = SingletonType(EntityType(schema))
+                    type = SingletonType(EntityType(schema)),
+                    coroutineContext = coroutineContext
                 )
             )
             SingletonProxy(store, CrdtSingleton(), scheduler, time, analytics)
@@ -291,7 +295,8 @@ class EntityHandleManager(
             val store: CollectionStore<Referencable> = stores.get(
                 StoreOptions(
                     storageKey = storageKey,
-                    type = CollectionType(EntityType(schema))
+                    type = CollectionType(EntityType(schema)),
+                    coroutineContext = coroutineContext
                 )
             )
             CollectionProxy(store, CrdtSet(), scheduler, time, analytics)

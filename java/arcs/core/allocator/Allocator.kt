@@ -231,11 +231,13 @@ class Allocator(
         @ExperimentalCoroutinesApi
         fun create(
             hostRegistry: HostRegistry,
-            handleManager: EntityHandleManager
+            handleManager: EntityHandleManager,
+            coroutineContext: CoroutineContext
         ): Allocator {
             return Allocator(
                 hostRegistry,
-                CollectionHandlePartitionMap(handleManager)
+                CollectionHandlePartitionMap(handleManager),
+                coroutineContext
             )
         }
     }
