@@ -52,9 +52,8 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
         if (!storeRecord.store.closed) {
             log.debug { "close the store(${storeRecord.id})" }
 
-            // The store will be actually closed as soon as there are no connected proxies.
             try {
-                storeRecord.store.off(storeRecord.id)
+                storeRecord.store.close()
             } catch (e: Exception) {
                 // TODO(b/160251910): Make logging detail more cleanly conditional.
                 log.debug(e) { "failed to close the store(${storeRecord.id})" }
