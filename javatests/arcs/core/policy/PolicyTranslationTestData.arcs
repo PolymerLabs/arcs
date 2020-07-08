@@ -9,7 +9,6 @@ schema Foo
   b: Number
   c: Boolean
 
-
 // Particle with a single input.
 particle Egress_SingleInput
   input: reads Foo {a, b, c}

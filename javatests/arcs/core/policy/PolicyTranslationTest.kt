@@ -71,6 +71,19 @@ class PolicyTranslationTest {
     }
 
     @Test
+    fun applyPolicy_checksEgressParticles_rejectsMultipleEgressParticles() {
+        val graph = createRecipeGraph(
+            createParticle(BLANK_EGRESS_PARTICLE_NAME, isolated = false),
+            createParticle(BLANK_EGRESS_PARTICLE_NAME, isolated = false)
+        )
+
+        val e = assertFailsWith<PolicyViolation.MultipleEgressParticles> {
+            applyPolicy(BLANK_POLICY, graph)
+        }
+        assertThat(e.policy).isEqualTo(BLANK_POLICY)
+    }
+
+    @Test
     fun applyPolicy_egressCheck_withoutRedactionLabels() {
         val policy = BLANK_POLICY.copy(name = "SingleInput")
         val recipe = recipes.getValue("SingleInput")

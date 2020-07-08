@@ -18,13 +18,13 @@ fun applyPolicy(policy: Policy, graph: RecipeGraph): RecipeGraph {
     checkEgressParticles(policy, egressParticleNodes)
 
     // Add check statements to every egress particle node.
-    val checkPredicate = createCheckPredicate(policy)
+    val egressCheckPredicate = createEgressCheckPredicate(policy)
     val additionalChecks = egressParticleNodes.associateWith { node ->
         // Each handle connection needs its own check statement.
         node.particle.spec.connections.values
             .filter { it.direction.canRead }
             .map { connectionSpec ->
-                Check.Assert(AccessPath(node.particle, connectionSpec), checkPredicate)
+                Check.Assert(AccessPath(node.particle, connectionSpec), egressCheckPredicate)
             }
     }
 
@@ -42,6 +42,12 @@ private fun checkEgressParticles(
     policy: Policy,
     egressParticleNodes: List<RecipeGraph.Node.Particle>
 ) {
+    val numValidEgressParticles = egressParticleNodes.count {
+        it.particle.spec.name == policy.egressParticleName
+    }
+    if (numValidEgressParticles > 1) {
+        throw PolicyViolation.MultipleEgressParticles(policy)
+    }
     val invalidEgressParticles = egressParticleNodes
         .map { it.particle.spec }
         .filter { it.name != policy.egressParticleName }
@@ -65,14 +71,14 @@ private fun checkEgressParticles(
  *   or (is allowedForEgress_label3 and is label3)
  * ```
  */
-private fun createCheckPredicate(policy: Policy): Predicate {
-    val allowedForEgress = labelPredicate("allowedForEgress")
+private fun createEgressCheckPredicate(policy: Policy): Predicate {
+    val allowedForEgress = labelPredicate(ALLOWED_FOR_EGRESS_LABEL)
     if (policy.allRedactionLabels.isEmpty()) {
         return allowedForEgress
     }
     // List of predicates of the form: allowedForEgress_X AND X.
     val labelPredicates = policy.allRedactionLabels.sorted().map { label ->
-        labelPredicate("allowedForEgress_$label") and labelPredicate(label)
+        labelPredicate("${ALLOWED_FOR_EGRESS_LABEL}_$label") and labelPredicate(label)
     }
     // OR the predicates for each redaction label together.
     return Predicate.or(allowedForEgress, *labelPredicates.toTypedArray())
@@ -97,6 +103,8 @@ private fun RecipeGraph.copyWith(
 
 private fun labelPredicate(label: String) = Predicate.Label(SemanticTag(label))
 
+const val ALLOWED_FOR_EGRESS_LABEL = "allowedForEgress"
+
 /** Indicates that a policy was violated by a recipe. */
 sealed class PolicyViolation(val policy: Policy, message: String) : Exception(
     "Policy ${policy.name} violated: $message"
@@ -109,5 +117,11 @@ sealed class PolicyViolation(val policy: Policy, message: String) : Exception(
         policy,
         "Egress particle allowed by policy is ${policy.egressParticleName} but found: " +
             particleNames.joinToString()
+    )
+
+    /** Thrown when multiple egress particles were found in the recipe. */
+    class MultipleEgressParticles(policy: Policy) : PolicyViolation(
+        policy,
+        "Multiple egress particles named ${policy.egressParticleName} found for policy"
     )
 }
