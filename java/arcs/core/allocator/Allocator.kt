@@ -31,6 +31,7 @@ import arcs.core.type.Type
 import arcs.core.util.TaggedLog
 import arcs.core.util.plus
 import arcs.core.util.traverse
+import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -232,7 +233,7 @@ class Allocator(
         fun create(
             hostRegistry: HostRegistry,
             handleManager: EntityHandleManager,
-            coroutineContext: CoroutineContext
+            coroutineContext: CoroutineContext = Dispatchers.Default
         ): Allocator {
             return Allocator(
                 hostRegistry,
