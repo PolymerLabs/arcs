@@ -169,17 +169,13 @@ class StorageServiceTest {
     }
 
     @Test
-    fun testPeriodicJobsConfig_subclass_disableAll() = runBlocking {
-        class MyStorageService : StorageService() {
-            fun disableAll() = disableAllPeriodicJobs()
-        }
-        val sts = MyStorageService()
-        sts.onCreate()
+    fun testPeriodicJobsConfig_subclass_cancelAll() = runBlocking {
+        StorageService().onCreate()
 
         assertEnqueued(ttlTag)
         assertEnqueued(gcTag)
 
-        sts.disableAll()
+        StorageService.cancelAllPeriodicJobs(app)
 
         assertCanceled(ttlTag)
         assertCanceled(gcTag)

@@ -137,10 +137,6 @@ open class StorageService : ResurrectorService() {
         }
     }
 
-    protected fun disableAllPeriodicJobs() = schedulePeriodicJobs(
-        StorageServiceConfig(ttlJobEnabled = false, garbageCollectionJobEnabled = false)
-    )
-
     @ExperimentalCoroutinesApi
     override fun onBind(intent: Intent): IBinder? {
         log.debug { "onBind: $intent" }
@@ -341,5 +337,12 @@ open class StorageService : ResurrectorService() {
             Intent(context, StorageService::class.java).apply {
                 action = MANAGER_ACTION
             }
+
+        // Can be used to cancel all periodic jobs when the service is not running.
+        fun cancelAllPeriodicJobs(context: Context) {
+            val workManager = WorkManager.getInstance(context)
+            workManager.cancelAllWorkByTag(PeriodicCleanupTask.WORKER_TAG)
+            workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+        }
     }
 }
