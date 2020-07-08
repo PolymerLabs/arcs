@@ -18,7 +18,7 @@ status "Testing all of the things."
 set -x
 
 ./tools/sigh webpack
-./tools/bazelisk ${BAZELRC_OPTS} test //java/... //javatests/... //src/... //particles/... -- -Werror
+./tools/bazelisk ${BAZELRC_OPTS} test //java/... //javatests/... //src/... //particles/... --worker_extra_flag=kotlin=-Werror
 ./tools/sigh testShells
 ./tools/sigh lint
 ./tools/sigh test --all
