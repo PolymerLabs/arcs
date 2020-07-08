@@ -5,6 +5,8 @@ import arcs.core.analysis.RecipeGraph
 /**
  * Translates the given [policy] into dataflow analysis checks and claims on the given [graph],
  * returning a modified copy of the graph.
+ *
+ * @throws PolicyViolation if the [graph] violates the [policy]
  */
 fun applyPolicy(policy: Policy, graph: RecipeGraph): RecipeGraph {
     checkEgressParticles(policy, graph)
