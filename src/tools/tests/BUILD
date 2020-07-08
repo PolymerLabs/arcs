@@ -4,6 +4,7 @@ load(
     "arcs_kt_gen",
     "arcs_kt_jvm_test_suite",
     "arcs_kt_schema",
+    "arcs_proto_plan",
     "arcs_ts_test",
 )
 
@@ -60,15 +61,23 @@ arcs_kt_gen(
     test_harness = False,
 )
 
+arcs_proto_plan(
+    name = "variable_proto",
+    src = "Variable.arcs",
+)
+
 arcs_kt_jvm_test_suite(
     name = "behavior-tests",
     srcs = glob(["*Test.kt"]),
+    data = [":variable_proto.pb.bin"],
     package = "src.tools.tests",
     deps = [
         ":variable_generation",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
+        "//java/arcs/core/data/proto:manifest_java_proto",
+        "//java/arcs/core/data/proto:proto_for_test",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
@@ -84,6 +93,8 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
+        "//java/arcs/repoutils",
+        "//third_party/java/arcs/deps:protobuf_java",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlin:kotlin_test",
