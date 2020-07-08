@@ -28,6 +28,7 @@ import arcs.core.util.TaggedLog
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
 import kotlinx.atomicfu.atomic
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -38,7 +39,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
-import kotlin.coroutines.CoroutineContext
 
 /** Time limit in milliseconds for all particles to reach the Running state during startup. */
 const val PARTICLE_STARTUP_TIMEOUT_MS = 60_000L
