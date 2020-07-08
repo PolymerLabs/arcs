@@ -11,7 +11,6 @@ arcs_kt_library(
     name = "policy",
     srcs = glob(["*.kt"]),
     deps = [
-        "//java/arcs/core/analysis",
         "//java/arcs/core/data",
     ],
 )

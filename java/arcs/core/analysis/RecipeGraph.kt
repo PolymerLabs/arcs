@@ -11,8 +11,6 @@
 
 package arcs.core.analysis
 
-import arcs.core.data.Check
-import arcs.core.data.Claim
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.Recipe
@@ -95,17 +93,7 @@ data class RecipeGraph(
         }
 
         /** A node representing a particle. */
-        data class Particle(
-            val particle: Recipe.Particle,
-            val claims: List<Claim>,
-            val checks: List<Check>
-        ) : Node() {
-            constructor(particle: Recipe.Particle) : this(
-                particle,
-                particle.spec.claims,
-                particle.spec.checks
-            )
-
+        data class Particle(val particle: Recipe.Particle) : Node() {
             val particleName = particle.spec.name
 
             override val debugName = "p:$particleName"

@@ -1,6 +1,5 @@
 package arcs.core.policy
 
-import arcs.core.analysis.RecipeGraph
 import arcs.core.data.AccessPath
 import arcs.core.data.Check
 import arcs.core.data.HandleConnectionSpec
@@ -19,7 +18,7 @@ import org.junit.runners.JUnit4
 import kotlin.test.assertFailsWith
 
 @RunWith(JUnit4::class)
-class PolicyTranslationTest {
+class PolicyConstraintsTest {
     // Loaded from binary proto, maps all keyed by name.
     private lateinit var recipes: Map<String, Recipe>
     private lateinit var policies: Map<String, Policy>
@@ -35,36 +34,36 @@ class PolicyTranslationTest {
 
     @Test
     fun applyPolicy_checksEgressParticles_acceptsIsolatedParticles() {
-        val graph = createRecipeGraph(
+        val recipe = createRecipe(
             createParticle("Isolated1", isolated = true),
             createParticle("Isolated2", isolated = true)
         )
 
-        val result = applyPolicy(BLANK_POLICY, graph)
+        val result = translatePolicy(BLANK_POLICY, recipe)
 
-        assertThat(result).isEqualTo(graph)
+        assertThat(result).isEqualTo(
+            PolicyConstraints(BLANK_POLICY, recipe, emptyMap())
+        )
     }
 
     @Test
     fun applyPolicy_checksEgressParticles_acceptsValidEgressParticles() {
-        val graph = createRecipeGraph(
+        val recipe = createRecipe(
             createParticle(BLANK_EGRESS_PARTICLE_NAME, isolated = false)
         )
 
-        val result = applyPolicy(BLANK_POLICY, graph)
-
-        assertThat(result).isEqualTo(graph)
+        translatePolicy(BLANK_POLICY, recipe)
     }
 
     @Test
     fun applyPolicy_checksEgressParticles_rejectsInvalidEgressParticles() {
-        val graph = createRecipeGraph(
+        val recipe = createRecipe(
             createParticle("Egress1", isolated = false),
             createParticle("Egress2", isolated = false)
         )
 
         val e = assertFailsWith<PolicyViolation.InvalidEgressParticle> {
-            applyPolicy(BLANK_POLICY, graph)
+            translatePolicy(BLANK_POLICY, recipe)
         }
         assertThat(e.policy).isEqualTo(BLANK_POLICY)
         assertThat(e.particleNames).containsExactly("Egress1", "Egress2")
@@ -72,13 +71,13 @@ class PolicyTranslationTest {
 
     @Test
     fun applyPolicy_checksEgressParticles_rejectsMultipleEgressParticles() {
-        val graph = createRecipeGraph(
+        val recipe = createRecipe(
             createParticle(BLANK_EGRESS_PARTICLE_NAME, isolated = false),
             createParticle(BLANK_EGRESS_PARTICLE_NAME, isolated = false)
         )
 
         val e = assertFailsWith<PolicyViolation.MultipleEgressParticles> {
-            applyPolicy(BLANK_POLICY, graph)
+            translatePolicy(BLANK_POLICY, recipe)
         }
         assertThat(e.policy).isEqualTo(BLANK_POLICY)
     }
@@ -88,18 +87,19 @@ class PolicyTranslationTest {
         val policy = BLANK_POLICY.copy(name = "SingleInput")
         val recipe = recipes.getValue("SingleInput")
         val particle = recipe.particles.single()
-        val graph = RecipeGraph(recipe)
 
-        val result = applyPolicy(policy, graph)
+        val result = translatePolicy(policy, recipe)
 
-        val particleNode = result.particleNodes.single()
-        assertThat(particleNode.checks).containsExactly(
-            Check.Assert(
-                AccessPath(AccessPath.Root.HandleConnection(
-                    particle,
-                    particle.spec.connections.values.single())
-                ),
-                labelPredicate("allowedForEgress")
+        assertThat(result.egressChecks).containsExactly(
+            particle,
+            listOf(
+                Check.Assert(
+                    AccessPath(AccessPath.Root.HandleConnection(
+                        particle,
+                        particle.spec.connections.values.single())
+                    ),
+                    labelPredicate("allowedForEgress")
+                )
             )
         )
     }
@@ -108,12 +108,10 @@ class PolicyTranslationTest {
     fun applyPolicy_egressCheck_withRedactionLabels() {
         val policy = policies.getValue("FooRedactions")
         val recipe = recipes.getValue("SingleInput").forceMatchPolicyName("FooRedactions")
-        val graph = RecipeGraph(recipe)
 
-        val result = applyPolicy(policy, graph)
-
-        val particleNode = result.particleNodes.single()
-        val check = particleNode.checks.single() as Check.Assert
+        val result = translatePolicy(policy, recipe)
+        
+        val check = result.egressChecks.values.single().single() as Check.Assert
         assertThat(check.predicate).isEqualTo(
             Predicate.or(
                 labelPredicate("allowedForEgress"),
@@ -125,28 +123,14 @@ class PolicyTranslationTest {
     }
 
     @Test
-    fun applyPolicy_egressCheck_preservesExistingChecks() {
-        val policy = BLANK_POLICY.copy(name = "ExistingChecks")
-        val recipe = recipes.getValue("ExistingChecks")
-        val graph = RecipeGraph(recipe)
-
-        val result = applyPolicy(policy, graph)
-
-        val particleNode = result.particleNodes.single()
-        val checkPredicates = particleNode.checks.map { (it as Check.Assert).predicate }
-        assertThat(checkPredicates).contains(labelPredicate("existing"))
-    }
-
-    @Test
     fun applyPolicy_egressCheck_ignoresWriteOnlyConnections() {
         val policy = BLANK_POLICY.copy(name = "SingleOutput")
         val recipe = recipes.getValue("SingleOutput")
-        val graph = RecipeGraph(recipe)
 
-        val result = applyPolicy(policy, graph)
+        val result = translatePolicy(policy, recipe)
 
-        val particleNode = result.particleNodes.single()
-        assertThat(particleNode.checks).isEmpty()
+        val particle = recipe.particles.single()
+        assertThat(result.egressChecks).containsExactly(particle, emptyList<Check>())
     }
 
     companion object {
@@ -171,13 +155,11 @@ class PolicyTranslationTest {
             )
         }
 
-        private fun createRecipeGraph(vararg particles: Recipe.Particle): RecipeGraph {
-            return RecipeGraph(
-                Recipe(
-                    name = "Recipe",
-                    handles = emptyMap(),
-                    particles = particles.toList()
-                )
+        private fun createRecipe(vararg particles: Recipe.Particle): Recipe {
+            return Recipe(
+                name = "Recipe",
+                handles = emptyMap(),
+                particles = particles.toList()
             )
         }
 

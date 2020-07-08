@@ -408,12 +408,12 @@ class InformationFlow private constructor(
 
 /** Returns the instantiated [List<Claim>] for this particle. */
 private fun RecipeGraph.Node.Particle.instantiatedClaims(): List<Claim> {
-    return claims.map { it.instantiateFor(particle) }
+    return particle.spec.claims.map { it.instantiateFor(particle) }
 }
 
 /** Returns the instantiated [List<Check>] for this particle. */
 private fun RecipeGraph.Node.Particle.instantiatedChecks(): List<Check> {
-    return checks.map { it.instantiateFor(particle) }
+    return particle.spec.checks.map { it.instantiateFor(particle) }
 }
 
 /** Return the [InformationFlowLabel] occurrences in the predicate. */
