@@ -1,0 +1,41 @@
+// An online shop needs a service to process orders. However, the order item SKU is
+// considered sensitive information and needs to be redacted.
+// In this recipe, we demonstrate how one can use type variables to build a redactor
+// particle.
+meta
+  namespace: arcs.showcase.typevariables
+
+// This is an ingress particle. It brings order data into the system.
+particle OrderIngestion in '.OrderIngestion'
+  data: writes [Product {sku: Text, name: Text, price: Number}]
+
+// Type variables are used here to ensure that only need-to-know data is passed to
+// the particle. `SkuRedactor` only has knowledge of the input handle's `sku` field
+// (any schema after `with` clause we call a "constraint"). Yet, all of the rest of
+// the fields will flow through the particle into the output handle. The input and
+// output handles of the same variable name can be of any type as long as
+// constraints are met.
+particle SkuRedactor in '.SkuRedactor'
+  input: reads [~a with {sku: Text}]
+  output: writes [~a]
+  // TODO(b/160694452) support proper claims and checks
+  // claim output.sku is redacted
+
+// The shop processes orders in the consumer service. It has confidence that the sku
+// is redacted due to the check on the data handle.
+particle Consumer in '.Consumer'
+  data: reads [Product {sku: Text, name: Text, price: Number}]
+  // TODO(b/160694452) support proper claims and checks
+  // check data.sku is redacted
+
+recipe Shop
+  beforeRedaction: create
+  afterRedaction: create
+  OrderIngestion
+    data: beforeRedaction
+  SkuRedactor
+    input: beforeRedaction
+    output: afterRedaction
+  Consumer
+    data: afterRedaction
+

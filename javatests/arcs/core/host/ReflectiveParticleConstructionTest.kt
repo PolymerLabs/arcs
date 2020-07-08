@@ -6,9 +6,6 @@ import arcs.core.data.Plan
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.VolatileDriverProvider
-import arcs.core.storage.keys.RamDiskStorageKey
-import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.util.TaggedLog
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.ExplicitHostRegistry
