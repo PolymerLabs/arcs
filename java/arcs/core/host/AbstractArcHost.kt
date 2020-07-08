@@ -26,6 +26,7 @@ import arcs.core.util.LruCacheMap
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
+import arcs.core.util.guardedBy
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -71,11 +72,20 @@ abstract class AbstractArcHost(
     private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
-    /** In memory cache of [ArcHostContext] state. */
-    private val contextCache: MutableMap<String, ArcHostContext> = LruCacheMap()
 
+    private val cacheMutex = Mutex()
+    /** In memory cache of [ArcHostContext] state. */
+    private val contextCache: MutableMap<String, ArcHostContext> by guardedBy(
+        cacheMutex,
+        LruCacheMap()
+    )
+
+    private val runningMutex = Mutex()
     /** Arcs currently running in memory. */
-    private val runningArcs: MutableMap<String, ArcHostContext> = mutableMapOf()
+    private val runningArcs: MutableMap<String, ArcHostContext> by guardedBy(
+        runningMutex,
+        mutableMapOf()
+    )
 
     private var paused = atomic(false)
 
@@ -93,9 +103,6 @@ abstract class AbstractArcHost(
     init {
         initialParticles.toList().associateByTo(particleConstructors, { it.first }, { it.second })
     }
-
-    private val cacheMutex = Mutex()
-    private val runningMutex = Mutex()
 
     private suspend fun putContextCache(id: String, context: ArcHostContext) = cacheMutex.withLock {
         contextCache[id] = context
