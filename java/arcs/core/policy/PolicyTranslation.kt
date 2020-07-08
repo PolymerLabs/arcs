@@ -31,6 +31,14 @@ fun applyPolicy(policy: Policy, graph: RecipeGraph): RecipeGraph {
     // TODO(b/157605232): Add additional claims.
     val additionalClaims = emptyMap<RecipeGraph.Node.Particle, List<Claim>>()
 
+    // TODO(b/157605232): This doesn't work! The edges between the nodes aren't updated correctly.
+    // Delete the copyWith method, and update the API for applyPolicy to instead look roughly like
+    // so:
+    //
+    // fun applyPolicy(
+    //     policy: Policy,
+    //     particles: List<ParticleSpec>
+    // ): Map<ParticleSpec, Pair<Claims, Checks>>
     return graph.copyWith(additionalClaims, additionalChecks)
 }
 
