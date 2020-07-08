@@ -31,9 +31,8 @@ import arcs.core.type.Type
 import arcs.core.util.TaggedLog
 import arcs.core.util.plus
 import arcs.core.util.traverse
-import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -51,7 +50,7 @@ class Allocator(
     private val hostRegistry: HostRegistry,
     /** Currently active Arcs and their associated [Plan.Partition]s. */
     private val partitionMap: PartitionSerialization,
-    private val coroutineContext: CoroutineContext = EmptyCoroutineContext
+    private val coroutineContext: CoroutineContext = Dispatchers.Default
 ) {
     private val log = TaggedLog { "Allocator" }
     private val mutex = Mutex()
