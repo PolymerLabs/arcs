@@ -253,7 +253,14 @@ abstract class AbstractArcHost(
     protected suspend fun updateArcHostContext(arcId: String, context: ArcHostContext) {
         putContextCache(arcId, context)
         runningMutex.withLock {
-            writeContextToStorage(arcId, context)
+            try {
+                writeContextToStorage(arcId, context)
+            } catch (e: Exception) {
+                log.info { "Error serializing Arc" }
+                log.debug(e) {
+                    """Error serializing $arcId, restart will reinvoke Particle.onFirstStart()"""
+                }
+            }
             if (context.arcState == ArcState.Running) {
                 runningArcs[arcId] = context
             } else {
