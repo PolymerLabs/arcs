@@ -46,6 +46,9 @@ sealed class Expression<T> {
         /** Called when [FieldExpression] encountered. */
         fun <E : Scope, T> visit(expr: FieldExpression<E, T>): Result
 
+        /** Called when [CurrentScopeExpression] encountered. */
+        fun <T : Scope> visit(expr: CurrentScopeExpression<T>): Result
+
         /** Called when [QueryParameterExpression] encountered. */
         fun <T> visit(expr: QueryParameterExpression<T>): Result
 
@@ -252,6 +255,16 @@ sealed class Expression<T> {
      */
     class QueryParameterExpression<T>(val paramIdentifier: String) : Expression<T>() {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+    }
+
+    /**
+     * The implicit scope used by the left most qualifier in a field lookup expression, e.g.
+     * `[num > 100]` in a refinement is actually `[currentScope.num > 100]` where
+     * `currentScope` would be bound during evaluation to an entity.
+     * @param T the type of the resulting lookup
+     */
+    class CurrentScopeExpression<T : Scope> : Expression<T>() {
+        override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
     }
 
     /**

@@ -10,7 +10,8 @@
  */
 @file:Suppress("UNCHECKED_CAST")
 
-/** Extension, infix, and operator overload functions for constructing Expression DSL. */
+/** Extension, infix, and operator overload functions for constructing Expression DSL. These
+ * are mostly used for testing. */
 package arcs.core.data.expression
 
 /** Constructs a [Expression.NumberLiteralExpression] */
@@ -24,6 +25,9 @@ fun String.asExpr() = Expression.TextLiteralExpression(this)
 
 /** Constructs a [Expression.BooleanLiteralExpression] */
 fun Boolean.asExpr() = Expression.BooleanLiteralExpression(this)
+
+/** Constructs a [Expression.Scope] for looking up currentScope references. */
+fun <T> CurrentScope() = CurrentScope<T>(mutableMapOf<String, T>())
 
 /** Constructs a [Expression.Scope] for looking up query parameter references. */
 fun ParameterScope() = mutableMapOf<String, Any>().asScope()
@@ -121,13 +125,38 @@ infix fun Expression<out Any>.neq(other: Expression<out Any>) = Expression.Binar
 
 /** Constructs a [Expression.FieldExpression] given a [Expression.Scope] and [field]. */
 operator fun <E : Expression.Scope, T> E.get(field: String) = Expression.FieldExpression<E, T>(
-    Expression.ObjectLiteralExpression(this), field)
+    when (this) {
+        is CurrentScope<*> -> Expression.CurrentScopeExpression()
+        is MapScope<*> -> Expression.ObjectLiteralExpression(this as E)
+        else -> this as Expression<E>
+    }, field)
+
+/** Constructs a [Expression.FieldExpression] given an [Expression] and [field]. */
+operator fun <E : Expression.Scope, T> Expression<E>.get(field: String) =
+    Expression.FieldExpression<E, T>(this, field)
+
+/** Constructs a [Expression.FieldExpression] given a [CurrentScope] and [field]. */
+operator fun <T> CurrentScope<T>.get(field: String) =
+    Expression.FieldExpression<CurrentScope<T>, T>(Expression.CurrentScopeExpression(), field)
+
+/** Cast a Field lookup expression to return a Number. */
+fun <E : Expression.Scope, T> Expression.FieldExpression<E, T>.asNumber() =
+    this as Expression.FieldExpression<E, Number>
+
+/** Cast a Field lookup expression to return another [Scope]. */
+fun <E : Expression.Scope, T> Expression.FieldExpression<E, T>.asScope() =
+    this as Expression.FieldExpression<E, Expression.Scope>
+
+/** Constructs a reference to a current scope object for test purposes */
+class CurrentScope<V>(map: Map<String, V>) : MapScope<V>("<this>", map)
+
+/** A scope with a simple map backing it, mostly for test purposes. */
+open class MapScope<V>(override val scopeName: String, val map: Map<String, V>) : Expression.Scope {
+    override fun <V> lookup(param: String): V = map[param] as V
+}
 
 /** Constructs a [Expression.Scope] from a [Map]. */
-fun <T> Map<String, T>.asScope(scopeName: String = "<object>") = object : Expression.Scope {
-    override val scopeName: String = scopeName
-    override fun <T> lookup(param: String): T = this@asScope[param] as T
-}
+fun <T> Map<String, T>.asScope(scopeName: String = "<object>") = MapScope<T>(scopeName, this)
 
 /** Constructs a [Expression.QueryParameterExpression] with the given [queryArgName]. */
 fun <T> query(queryArgName: String) = Expression.QueryParameterExpression<T>(queryArgName)

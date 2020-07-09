@@ -54,6 +54,13 @@ class ExpressionSerializer() :
             )
         )
 
+    override fun <E : Expression.Scope> visit(expr: Expression.CurrentScopeExpression<E>) =
+        JsonObject(
+            mapOf(
+                "op" to JsonString("this")
+            )
+        )
+
     override fun <T> visit(expr: Expression.QueryParameterExpression<T>) =
         JsonObject(
             mapOf(
@@ -103,6 +110,7 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                     visit(value["expr"]) as Expression<Any>
                 )
             }
+            type == "this" -> Expression.CurrentScopeExpression<Expression.Scope>()
             type == "?" -> Expression.QueryParameterExpression<Any>(value["identifier"].string()!!)
             else -> throw IllegalArgumentException("Unknown type $type during deserialization")
         }

@@ -24,6 +24,7 @@ arcs_kt_library(
     ),
     exports = [
         ":rawentity",
+        ":reference",
     ],
     deps = [
         ":rawentity",
@@ -31,6 +32,7 @@ arcs_kt_library(
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data/expression",
+        "//java/arcs/core/data/expression:scopes",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
@@ -43,6 +45,15 @@ arcs_kt_library(
     srcs = ENTITY_SRCS,
     deps = [
         "//java/arcs/core/common",
+    ],
+)
+
+arcs_kt_library(
+    name = "reference",
+    srcs = ["Reference.kt"],
+    deps = [
+        "//java/arcs/core/common",
+        "//java/arcs/core/crdt",
     ],
 )
 

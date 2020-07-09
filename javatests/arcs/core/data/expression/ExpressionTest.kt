@@ -20,8 +20,21 @@ import org.junit.runners.JUnit4
 /** Tests for [Expression]. */
 @RunWith(JUnit4::class)
 class ExpressionTest {
-    fun <T> evalBool(expression: Expression<T>) = evalExpression<T, Boolean>(expression)
-    fun <T> evalNum(expression: Expression<T>) = evalExpression<T, Number>(expression)
+    fun <T> evalBool(expression: Expression<T>) = evalExpression<T, Boolean>(
+        expression,
+        currentScope
+    )
+
+    fun <T> evalNum(expression: Expression<T>) = evalExpression<T, Number>(
+        expression = expression, currentScope = currentScope
+    )
+
+    val currentScope = CurrentScope<Any>(
+        mapOf(
+            "blah" to 10,
+            "baz" to mapOf("x" to 24).asScope()
+        )
+    )
 
     @Test
     fun testEvaluator() {
@@ -33,9 +46,16 @@ class ExpressionTest {
 
         // field ops
         assertThat(evalNum<Number>(mapOf("foo" to 42).asScope()["foo"])).isEqualTo(42)
+        assertThat(evalNum<Number>(currentScope["blah"].asNumber())).isEqualTo(10)
+        val baz = currentScope["baz"].asScope()
+        assertThat(evalNum<Number>(baz["x"])).isEqualTo(24)
 
         // query ops
-        assertThat(evalExpression<Number, Number>(query("arg"), "arg" to 42)).isEqualTo(42)
+        assertThat(evalExpression<Number, Number>(
+            query("arg"),
+            currentScope,
+            "arg" to 42
+        )).isEqualTo(42)
 
         // Boolean ops
         assertThat(evalBool(1.asExpr() lt 2.asExpr())).isTrue()
@@ -76,7 +96,7 @@ class ExpressionTest {
             "arg"
         ) - 1.asExpr()) / 2.asExpr()
 
-        assertThat(evalExpression<Number, Number>(expr, "arg" to 1)).isEqualTo(28)
+        assertThat(evalExpression<Number, Number>(expr, currentScope, "arg" to 1)).isEqualTo(28)
     }
 
     @Test
@@ -111,13 +131,16 @@ class ExpressionTest {
     @Suppress("UNCHECKED_CAST")
     fun testJsonSerialization() {
         val q = query<Expression.Scope>("arg")
-        val field = Expression.FieldExpression<Expression.Scope, Number>(q, "bar")
-        val expr = (2.0.asExpr() + (3.asExpr() * 4.asExpr()) + field - 1.asExpr()) / 2.asExpr()
+        val field = Expression.FieldExpression<Expression.Scope, Number>(q , "bar")
+        val baz = currentScope.get("baz") as Expression.FieldExpression<CurrentScope<Any>, Expression.Scope>
+        val x: Expression<Number> = baz["x"]
+        val expr = (x + 2.0.asExpr() + (3.asExpr() * 4.asExpr()) + field - 1.asExpr()) / 2.asExpr()
         val json = expr.serialize()
         val parsed = json.deserializeExpression() as Expression<Number>
         assertThat(evalExpression<Number, Number>(
             parsed,
+            currentScope,
             "arg" to mapOf("bar" to 5).asScope()
-        )).isEqualTo(9.0)
+        )).isEqualTo(21.0)
     }
 }

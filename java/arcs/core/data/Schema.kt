@@ -14,12 +14,15 @@ package arcs.core.data
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.VersionMap
 import arcs.core.data.Schema.Companion.hashCode
+import arcs.core.data.expression.Expression
+import arcs.core.data.expression.asScope
+import arcs.core.data.expression.evalExpression
 import arcs.core.type.Type
 
 /** Returns true if the RawEntity data matches the refinement predicate */
 typealias Refinement = (data: RawEntity) -> Boolean
 
-/** Returns true if the RawEntity data matches the query predicate (given a query argument)*/
+/** Returns true if the RawEntity data matches the query predicate (given a query argument) */
 typealias Query = (data: RawEntity, queryArgs: Any) -> Boolean
 
 data class Schema(
@@ -30,20 +33,17 @@ data class Schema(
      * method.
      */
     val hash: String,
-    val refinement: Refinement = { _ -> true },
-    val query: Query? = null
+    val refinementExpression: Expression<Boolean> = Expression.BooleanLiteralExpression(true),
+    val queryExpression: Expression<Boolean> = Expression.BooleanLiteralExpression(true),
+    val refinement: Refinement = { rawEntity ->
+        evalExpression(refinementExpression, rawEntity.asScope())
+    },
+    val query: Query? = { data, args ->
+        evalExpression(queryExpression, data.asScope(), "1" to args)
+    }
 ) {
     val name: SchemaName?
         get() = names.firstOrNull()
-
-    @Deprecated("Use the primary constructor")
-    constructor(
-        names: List<SchemaName>,
-        fields: SchemaFields,
-        hash: String,
-        refinement: Refinement = { _ -> true },
-        query: Query? = null
-    ) : this(names.toSet(), fields, hash, refinement, query)
 
     private val emptyRawEntity: RawEntity
         get() = RawEntity(
