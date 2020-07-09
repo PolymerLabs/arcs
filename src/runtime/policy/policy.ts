@@ -15,6 +15,7 @@ import {Ttl, Capabilities, Capability, Persistence, CapabilityRange, Encryption}
 import {EntityType, InterfaceType, Type} from '../type.js';
 import {FieldPathType, resolveFieldPathType} from '../field-path.js';
 import {Handle} from '../recipe/handle.js';
+import {IngressValidationResult} from './ingress-validation.js';
 
 export enum PolicyEgressType {
   Logging = 'Logging',
@@ -37,8 +38,6 @@ const egressTypeAnnotationName = 'egressType';
 const allowedRetentionAnnotationName = 'allowedRetention';
 const allowedUsageAnnotationName = 'allowedUsage';
 const maxAgeAnnotationName = 'maxAge';
-
-export type IsValidOptions = {errors?: Map<PolicyTarget | Policy, string>, typeErrors?: string[]};
 
 /**
  * Definition of a dataflow policy.
@@ -116,21 +115,22 @@ export class Policy {
    * handle, i.e. contains a policy target with a matching type and suitable
    * capabilities (less or equally restrictive to ones in the handle).
    */
-  validateHandle(handle: Handle, options: IsValidOptions = undefined): boolean {
+  isHandleIngressAllowed(handle: Handle): IngressValidationResult {
     // TODO(b/160820832): examine particles @ingress annotations and propagate policy capabilities.
     // TODO(b/160820832): target's type doesn't reflect field allowed usage information.
     const targets = this.targets.filter(target => target.type.isAtLeastAsSpecificAs(
         handle.type.resolvedType()));
     if (targets.length === 0) {
-      if (options && options.errors) {
-        options.errors.set(this,
+        return IngressValidationResult.failWith(this,
             `Policy ${this.name} has no matching target types for ${handle.type.resolvedType()}`);
-      }
-      return false;
     }
-    const result = targets.some(target => target.validateHandleCapabilities(handle, options));
-    if (result && options && options.errors) {
-      options.errors.clear();
+    const result = new IngressValidationResult();
+    for (const target of targets) {
+      const targetResult = target.isHandleIngressAllowed(handle);
+      if (targetResult.success) {
+        return targetResult;
+      }
+      result.addResult(targetResult);
     }
     return result;
   }
@@ -232,15 +232,18 @@ export class PolicyTarget {
     });
   }
 
-  validateHandleCapabilities(handle: Handle, options: IsValidOptions): boolean {
-    return this.toCapabilities().some(capabilities => {
-      const errors =  options && options.errors ? [] : undefined;
-      const result = capabilities.isAllowedForIngress(handle.capabilities, errors);
-      if (!result && options && options.errors) {
-        options.errors.set(this, `Policy target '${this.schemaName}' with capabilities ${capabilities.toDebugString()} is too strict for capabilities ${handle.capabilities.toDebugString()} (${errors.join(', ')})`);
+  isHandleIngressAllowed(handle: Handle): IngressValidationResult {
+    const result = new IngressValidationResult();
+    for (const capabilities of this.toCapabilities()) {
+      const capabilityResult = capabilities.isAllowedForIngress(handle.capabilities);
+      if (capabilityResult.success) {
+        return capabilityResult;
       }
-      return result;
-    });
+      result.addError(this, `Policy target '${this.schemaName}' with capabilities` +
+          `${capabilities.toDebugString()} is too strict for capabilities ` +
+          `${handle.capabilities.toDebugString()} (${capabilityResult.toString()})`);
+    }
+    return result;
   }
 }
 

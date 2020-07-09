@@ -387,35 +387,39 @@ recipe
   P1
     foo: fooHandle
     `)).recipes[0];
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
-    assert.isFalse(policy.validateHandle(recipe.handles[0]));
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+    const result = policy.isHandleIngressAllowed(recipe.handles[0]);
+    assert.isFalse(result.success);
+    assert.isTrue(result.toString().includes(
+        `Policy MyPolicy has no matching target types for Foo {value: Text}`));
   });
 
-  const failHandleWithPolicy = async (manifestString, policy, expectedError) => {
+  const assertHandleIngressNotAllowed = async (manifestString, policy, expectedError) => {
     const recipe = (await Manifest.parse(manifestString)).recipes[0];
     assert.isTrue(recipe.normalize() && recipe.isResolved());
-    const options = {errors: new Map()};
-    assert.isFalse(policy.validateHandle(recipe.handles[0], options));
-    assert.isTrue([...options.errors.values()].join(' ').includes(expectedError),
-      `Expected "${[...options.errors.values()].join(' ')}"\n to contain: "${expectedError}"`);
+    const result = policy.isHandleIngressAllowed(recipe.handles[0]);
+    assert.isFalse(result.success);
+    assert.isTrue(result.toString().includes(expectedError),
+        `Expected ${result.toString()} to include ${expectedError}`);
   };
-  const successfulValidation = async (manifestString, policy) => {
+  const assertHandleIngressAllowed = async (manifestString, policy) => {
     const recipe = (await Manifest.parse(manifestString)).recipes[0];
     assert.isTrue(recipe.normalize() && recipe.isResolved());
     const options = {errors: new Map()};
-    assert.isTrue(policy.validateHandle(recipe.handles[0], options),
-        `Validation failed with: ${[...options.errors.values()].join(' ')}`);
+    const result = policy.isHandleIngressAllowed(recipe.handles[0]);
+    assert.isTrue(result.success, `Validation failed with: ${result.toString()}`);
   };
 
   it('fails validates missing handle capability persistence', async () => {
-    const policy = (await parsePolicy(`
+    const policy = await parsePolicy(`
 policy MyPolicy {
   @allowedRetention(medium: 'Ram', encryption: false)
   @maxAge('2d')
   from Person access {}
 }
-    `));
-    await failHandleWithPolicy(manifestString(), policy, 'inMemory is stricter than unspecified');
+    `);
+    await assertHandleIngressNotAllowed(manifestString(), policy, 'inMemory is stricter than unspecified');
   });
 
   it('fails validates missing handle capability ttls', async () => {
@@ -426,7 +430,7 @@ policy MyPolicy {
   from Person access {}
 }
     `));
-    await failHandleWithPolicy(manifestString(`@inMemory`), policy, '2d is stricter than unspecified');
+    await assertHandleIngressNotAllowed(manifestString(`@inMemory`), policy, '2d is stricter than unspecified');
   });
 
   it('fails validating missing handle capability encryption', async () => {
@@ -437,7 +441,7 @@ policy MyPolicy {
   from Person access {}
 }
     `));
-    await failHandleWithPolicy(manifestString(`@inMemory @ttl('48h')`), policy, 'encrypted is stricter than unspecified');
+    await assertHandleIngressNotAllowed(manifestString(`@inMemory @ttl('48h')`), policy, 'encrypted is stricter than unspecified');
   });
 
   it('successfully validates default persistence', async () => {
@@ -448,7 +452,7 @@ policy MyPolicy {
   from Person access {}
 }
     `));
-    await successfulValidation(manifestString(`@inMemory @ttl('48h')`), policy);
+    await assertHandleIngressAllowed(manifestString(`@inMemory @ttl('48h')`), policy);
   });
 
   it('successfully validates default encryption', async () => {
@@ -459,8 +463,8 @@ policy MyPolicy {
   from Person access {}
 }
     `));
-    await successfulValidation(manifestString(`@persistent @ttl('10h')`), policy);
-    await successfulValidation(manifestString(`@tiedToArc @ttl('10h')`), policy);
+    await assertHandleIngressAllowed(manifestString(`@persistent @ttl('10h')`), policy);
+    await assertHandleIngressAllowed(manifestString(`@tiedToArc @ttl('10h')`), policy);
   });
 
   it('fails validating non restrictive enough handle capabilities', async () => {
@@ -471,11 +475,11 @@ policy MyPolicy {
   from Person access {}
 }
     `));
-    await failHandleWithPolicy(
+    await assertHandleIngressNotAllowed(
         manifestString(`@persistent @encrypted @ttl('1d')`), policy, 'inMemory is stricter than onDisk');
-    await failHandleWithPolicy(
+    await assertHandleIngressNotAllowed(
         manifestString(`@tiedToArc @ttl('1d')`), policy, 'encrypted is stricter than unspecified');
-    await failHandleWithPolicy(
+    await assertHandleIngressNotAllowed(
         manifestString(`@tiedToArc @encrypted @ttl('10d')`), policy, '2d is stricter than 10d');
   });
 
@@ -490,6 +494,6 @@ policy MyPolicy {
     const recipe = (await Manifest.parse(
         manifestString(`@persistent @encrypted @ttl('1d')`))).recipes[0];
     assert.isTrue(recipe.normalize() && recipe.isResolved());
-    assert.isTrue(policy.validateHandle(recipe.handles[0]));
+    assert.isTrue(policy.isHandleIngressAllowed(recipe.handles[0]).success);
   });
 });

@@ -11,6 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 import {AnnotationRef} from './recipe/annotation.js';
 import {Literal} from './hot.js';
+import {IngressValidationResult} from './policy/ingress-validation.js';
 
 export enum CapabilityComparison {
   LessStrict, Equivalent, Stricter
@@ -315,7 +316,7 @@ export abstract class BooleanCapability extends Capability {
    * Otherwise, calls the superclass implementation.
    */
   isAllowedForIngress(other: Capability|null): boolean {
-    return (!this.value && !other) || super.isAllowedForIngress(other);
+    return !this.value || super.isAllowedForIngress(other);
   }
 
   compare(other: Capability): CapabilityComparison {
@@ -576,21 +577,19 @@ export class Capabilities {
    */
   // TODO(b/160820832): Consider introducing `unspecified` Capability for each
   // subclass and have Capabilities always contain all ranges.
-  isAllowedForIngress(handleCapabilities: Capabilities, errors: string[] = undefined): boolean {
-    return this.ranges.every(range => {
+  isAllowedForIngress(handleCapabilities: Capabilities): IngressValidationResult {
+    for (const range of this.ranges) {
       const handleRange = handleCapabilities.findCompatible(range.min);
-      const result = range.isAllowedForIngress(handleRange);
-      if (!result && errors) {
-        errors.push(`${range.min.toDebugString()} is stricter than ` +
+      if (!range.isAllowedForIngress(handleRange)) {
+        return IngressValidationResult.failWith(range,
+            `${range.min.toDebugString()} is stricter than ` +
             `${handleRange ? handleRange.toDebugString() : 'unspecified'}`);
       }
-      return result;
-    });
+    }
+    return IngressValidationResult.success();
   }
 
   toDebugString(): string {
-    return `{${this.ranges.map(({min, max}) => min.isEquivalent(max)
-        ? min.toDebugString() : `${min.toDebugString()} - ${max.toDebugString()}`
-    ).join(', ')}}`;
+    return `{${this.ranges.map(range => range.toDebugString()).join(', ')}}`;
   }
 }
