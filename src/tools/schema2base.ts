@@ -45,7 +45,7 @@ export abstract class EntityDescriptorBase {
   process() {
     for (const [field, descriptor] of Object.entries(this.node.schema.fields)) {
       if (descriptor.kind === 'schema-primitive') {
-        if (['Text', 'URL', 'Number', 'Boolean'].includes(descriptor.type)) {
+        if (['Text', 'URL', 'Number', 'BigInt', 'Boolean'].includes(descriptor.type)) {
           this.addField({field, typeName: descriptor.type});
         } else {
           throw new Error(`Schema type '${descriptor.type}' for field '${field}' is not supported`);

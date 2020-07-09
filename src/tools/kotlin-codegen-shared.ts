@@ -68,6 +68,7 @@ export function getTypeInfo(opts: { name: string, isCollection?: boolean, refCla
     'Text': {type: 'String', decodeFn: 'decodeText()', defaultVal: `""`},
     'URL': {type: 'String', decodeFn: 'decodeText()', defaultVal: `""`},
     'Number': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0'},
+    'BigInt': {type: 'BigInteger', decodeFn: 'decodeBigInt()', defaultVal: 'BigInteger.ZERO'},
     'Boolean': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false'},
     'Byte': {type: 'Byte', decodeFn: 'decodeByte()', defaultVal: '0.toByte()'},
     'Short': {type: 'Short', decodeFn: 'decodeShort()', defaultVal: '0.toShort()'},

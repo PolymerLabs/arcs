@@ -633,9 +633,9 @@ export interface SchemaField extends BaseNode {
 }
 
 export type SchemaType = SchemaReferenceType|SchemaCollectionType|
-    SchemaPrimitiveType|KotlinPrimitiveType|SchemaUnionType|SchemaTupleType;
+    SchemaPrimitiveType|KotlinPrimitiveType|SchemaUnionType|SchemaTupleType|TypeName|SchemaInline|SchemaOrderedListType|NestedSchema|KotlinPrimitiveType;
 
-export type SchemaPrimitiveTypeValue = 'Text'|'URL'|'Number'|'Boolean'|'Bytes'|'Object';
+export type SchemaPrimitiveTypeValue = 'Text'|'URL'|'Number'|'BigInteger'|'Boolean'|'Bytes'|'Object';
 
 export interface SchemaPrimitiveType extends BaseNodeWithRefinement {
   kind: 'schema-primitive';
@@ -666,12 +666,12 @@ export interface SchemaReferenceType extends BaseNodeWithRefinement {
 
 export interface SchemaUnionType extends BaseNodeWithRefinement {
   kind: 'schema-union';
-  types: string[];
+  types: SchemaType[];
 }
 
 export interface SchemaTupleType extends BaseNodeWithRefinement {
   kind: 'schema-tuple';
-  types: string[];
+  types: SchemaType[];
 }
 
 export interface RefinementNode extends BaseNode {
@@ -679,7 +679,7 @@ export interface RefinementNode extends BaseNode {
   expression: RefinementExpressionNode;
 }
 
-export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode | QueryNode | BuiltInNode | NumberNode | BooleanNode | TextNode;
+export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode | QueryNode | BuiltInNode | NumberNode | BigIntNode | BooleanNode | TextNode;
 
 export enum Op {
   AND = 'and',
@@ -730,7 +730,13 @@ export interface BuiltInNode extends BaseNode {
 
 export interface NumberNode extends BaseNode {
   kind: 'number-node';
-  value: number;
+  value: number ;
+  units?: string[];
+}
+
+export interface BigIntNode extends BaseNode {
+  kind: 'bigint-node';
+  value: bigint ;
   units?: string[];
 }
 
@@ -850,7 +856,7 @@ export interface SlotFormFactor extends BaseNode {
 
 export type ParticleSlotConnectionItem = SlotFormFactor | ParticleProvidedSlot;
 
-export interface TypeName extends BaseNode {
+export interface TypeName extends BaseNodeWithRefinement {
   kind: 'type-name';
   name: string;
 }

@@ -56,6 +56,9 @@ class StringDecoder(private var bytes: ByteArray) {
 
     fun decodeNum(): Double = upTo(':').toUtf8String().toDouble()
 
+    fun decodeBigInt(): String =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin BigInteger")
+
     fun decodeBool(): Boolean = chomp(1).toUtf8String() == "1"
 
     fun decodeByte(): Byte =

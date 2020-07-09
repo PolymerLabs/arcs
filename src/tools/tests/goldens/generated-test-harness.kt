@@ -24,6 +24,7 @@ import arcs.core.entity.Tuple4
 import arcs.core.entity.Tuple5
 import arcs.sdk.*
 import arcs.sdk.testing.*
+import java.math.BigInteger
 import kotlinx.coroutines.CoroutineScope
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)

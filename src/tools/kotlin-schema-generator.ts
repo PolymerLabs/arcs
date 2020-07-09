@@ -78,6 +78,7 @@ async function getSchemaType(field: string, {kind, schema, type, innerType}): Pr
       case 'Text': return 'FieldType.Text';
       case 'URL': return 'FieldType.Text';
       case 'Number': return 'FieldType.Number';
+      case 'BigInt': return 'FieldType.BigInt';
       case 'Boolean': return 'FieldType.Boolean';
       default: break;
     }
@@ -101,7 +102,7 @@ async function getSchemaType(field: string, {kind, schema, type, innerType}): Pr
     return `FieldType.ListOf(${innerType})`;
   }
 
-  throw new Error(`Schema kind '${kind}' for field '${field}' is not supported`);
+  throw new Error(`Schema kind '${kind}' for field '${field}' and type '${type}' is not supported`);
 }
 
 function generatePredicates(schema: Schema): {query: string, refinement: string} {

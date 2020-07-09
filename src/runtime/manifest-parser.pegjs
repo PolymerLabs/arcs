@@ -51,7 +51,7 @@
   }
 
   function checkNormal(result, path: string = '') {
-    if (['string', 'number', 'boolean'].includes(typeof result) || result === null) {
+    if (['string', 'number', 'bigint', 'boolean'].includes(typeof result) || result === null) {
       return;
     }
     if (result === undefined) {
@@ -325,6 +325,10 @@ ManifestStorageInlineData
   / '-'? [0-9]+ ('.' [0-9]+)?
   {
     return Number(text());
+  }
+  / '-'? [0-9]+ ('.' [0-9]+)? 'n'
+  {
+    return BigInt(text());
   }
   / bool:('true'i / 'false'i)
   {
@@ -1599,7 +1603,7 @@ SchemaReferenceType = 'Reference<' whiteSpace? schema:(SchemaInline / TypeName) 
   }
 
 SchemaPrimitiveType
-  = type:('Text' / 'URL' / 'Number' / 'Boolean' / 'Bytes')
+  = type:('Text' / 'URL' / 'Number' / 'BigInt' / 'Boolean' / 'Bytes')
   {
     return toAstNode<AstNode.SchemaPrimitiveType>({
       kind: 'schema-primitive',
@@ -1811,6 +1815,10 @@ PrimaryExpression
     const operator = op[0];
     return toAstNode<AstNode.UnaryExpressionNode>({kind: 'unary-expression-node', expr, operator});
   }
+  / num: BigIntType units:Units?
+  {
+    return toAstNode<AstNode.BigIntNode>({kind: 'bigint-node', value: num, units});
+  }
   / num: NumberType units:Units?
   {
     return toAstNode<AstNode.NumberNode>({kind: 'number-node', value: num, units});
@@ -1864,6 +1872,12 @@ NumberType
   = whole:[0-9]+ fractional:('.' [0-9]+)?
   {
     return Number(text());
+  }
+
+BigIntType
+  = whole:[0-9]+ 'n'
+  {
+    return BigInt(whole.join(''));
   }
 
 Version "a version number (e.g. @012)"

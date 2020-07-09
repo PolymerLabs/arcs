@@ -79,7 +79,7 @@ export class ManifestWarning extends ManifestError {
  */
 class ManifestVisitor {
   traverse(ast: AstNode.BaseNode) {
-    if (['string', 'number', 'boolean'].includes(typeof ast) || ast === null) {
+    if (['string', 'number', 'bigint', 'boolean'].includes(typeof ast) || ast === null) {
       return;
     }
     if (ast instanceof Array) {

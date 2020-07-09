@@ -427,9 +427,9 @@ describe('manifest2proto', () => {
               leftExpr: {
                 field: 'num',
               },
-              operator: 'LESS_THAN',
+              operator: 'GREATER_THAN',
               rightExpr: {
-                number: 12
+                number: -1
               }
             }
           },
@@ -439,9 +439,9 @@ describe('manifest2proto', () => {
               leftExpr: {
                 field: 'num'
               },
-              operator: 'GREATER_THAN',
+              operator: 'LESS_THAN',
               rightExpr: {
-                number: -1
+                number: 12
               }
             }
           },
@@ -717,7 +717,8 @@ describe('manifest2proto', () => {
           b: Number,
           c: Boolean,
           d: [Text],
-          e: [Number]
+          e: [Number],
+          f: BigInt,
         }
     `);
     const schema = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type.entity.schema;
@@ -728,7 +729,8 @@ describe('manifest2proto', () => {
       b: {primitive: 'NUMBER'},
       c: {primitive: 'BOOLEAN'},
       d: {collection: {collectionType: {primitive: 'TEXT'}}},
-      e: {collection: {collectionType: {primitive: 'NUMBER'}}}
+      e: {collection: {collectionType: {primitive: 'NUMBER'}}},
+      f: {primitive: 'BIGINT'}
     });
   });
 
