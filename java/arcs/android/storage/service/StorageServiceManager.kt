@@ -19,7 +19,8 @@ import arcs.core.storage.driver.DatabaseDriverProvider
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 /**
  * A [StorageServiceManager] is used by a client of the [StorageService] to manage
@@ -36,7 +37,7 @@ class StorageServiceManager(
     private val coroutineContext = parentCoroutineContext + CoroutineName("StorageServiceManager")
 
     override fun clearAll(resultCallback: IResultCallback) {
-        runBlocking(coroutineContext) {
+        CoroutineScope(coroutineContext).launch {
             ArcHostManager.pauseAllHostsFor {
                 DriverFactory.removeAllEntities().join()
                 stores.clear()
@@ -50,7 +51,7 @@ class StorageServiceManager(
         endTimeMillis: Long,
         resultCallback: IResultCallback
     ) {
-        runBlocking(coroutineContext) {
+        CoroutineScope(coroutineContext).launch {
             ArcHostManager.pauseAllHostsFor {
                 DriverFactory.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis).join()
             }
@@ -59,7 +60,7 @@ class StorageServiceManager(
     }
 
     override fun resetDatabases(resultCallback: IResultCallback) {
-        runBlocking(coroutineContext) {
+        CoroutineScope(coroutineContext).launch {
             DatabaseDriverProvider.manager.resetAll()
         }
         resultCallback.onResult(null)
