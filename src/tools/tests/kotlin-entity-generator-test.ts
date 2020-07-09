@@ -24,7 +24,7 @@ describe('kotlin-class-generator', () => {
         entityId: String? = null,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Thing", SCHEMA, entityId, creationTimestamp, expirationTimestamp)`
+    ) : EntityBase("Thing", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false)`
   ));
   it('generates variable entity with private constructor', async () => await assertClassDefinition(
     `particle T
@@ -36,7 +36,7 @@ describe('kotlin-class-generator', () => {
         entityId: String? = null,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : VariableEntityBase("T_H1", SCHEMA, entityId, creationTimestamp, expirationTimestamp)`
+    ) : VariableEntityBase("T_H1", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false)`
   ));
   it('generates copy and mutate by entity fields', async () => await assertCopyMethods(
     `particle T
