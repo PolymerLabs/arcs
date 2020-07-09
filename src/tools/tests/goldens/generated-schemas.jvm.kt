@@ -39,7 +39,7 @@ abstract class AbstractGold : BaseParticle() {
         entityId: String? = null,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("GoldInternal1", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
+    ) : EntityBase("GoldInternal1", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
 
         var val_: String
             get() = super.getSingletonValue("val") as String? ?: ""
@@ -103,7 +103,7 @@ abstract class AbstractGold : BaseParticle() {
         entityId: String? = null,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Gold_AllPeople", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
+    ) : EntityBase("Gold_AllPeople", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
 
         var name: String
             get() = super.getSingletonValue("name") as String? ?: ""
@@ -223,7 +223,7 @@ abstract class AbstractGold : BaseParticle() {
         entityId: String? = null,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Foo", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
+    ) : EntityBase("Foo", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
 
         var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
@@ -285,7 +285,7 @@ abstract class AbstractGold : BaseParticle() {
         entityId: String? = null,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Gold_Data", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
+    ) : EntityBase("Gold_Data", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
 
         var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
@@ -387,7 +387,7 @@ abstract class AbstractGold : BaseParticle() {
         entityId: String? = null,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Gold_QCollection", SCHEMA, entityId, creationTimestamp, expirationTimestamp) {
+    ) : EntityBase("Gold_QCollection", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
 
         var name: String
             get() = super.getSingletonValue("name") as String? ?: ""
