@@ -70,7 +70,7 @@ def arcs_manifest_proto(name, src, deps = [], out = None, visibility = None):
         outs = outs,
         deps = deps,
         progress_message = "Serializing manifest",
-        sigh_cmd = "manifest2proto --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
+        sigh_cmd = "manifest2proto --quiet --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
     )
 
 def arcs_proto_plan(name, src, recipe = None, deps = []):
@@ -98,7 +98,7 @@ def arcs_proto_plan(name, src, recipe = None, deps = []):
       deps: list of dependencies - other manifests that are imported by src manifest
     """
 
-    sigh_cmd = "recipe2plan --outdir $(dirname {OUT}) --outfile $(basename {OUT}) --format proto {SRC}"
+    sigh_cmd = "recipe2plan --quiet --outdir $(dirname {OUT}) --outfile $(basename {OUT}) --format proto {SRC}"
     if recipe:
         sigh_cmd += " --recipe %s" % (recipe)
 
