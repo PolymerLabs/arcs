@@ -3587,6 +3587,27 @@ resource SomeName
       assert.deepStrictEqual(claim.fieldPath, ['foo']);
     });
 
+    it.only('case study', async () => {
+      // This parses just fine:
+      const manifest = await parseManifest(`
+        particle SkuRedactor in '.SkuRedactor'
+          input: reads [~a with {sku: Text}]
+          output: writes [~a]
+          claim output.sku is redacted
+      `);
+      const particleSpec = manifest.particles[0];
+      particleSpec.clone();
+      particleSpec.cloneWithResolutions(new Map());
+
+      // This (rightly) fails:
+      // await parseManifest(`
+      //   particle SkuRedactor in '.SkuRedactor'
+      //     input: reads [~a with {sku: Text}]
+      //     output: writes [~a]
+      //     claim output.notAValidField is redacted
+      // `);
+    });
+
     it('rejects unknown fields in type variables', async () => {
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
