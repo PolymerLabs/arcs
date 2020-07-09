@@ -54,7 +54,7 @@ data class Reference(
 
     override suspend fun dereference(coroutineContext: CoroutineContext): RawEntity? =
         requireNotNull(dereferencer) {
-            "Boom"
+            "No dereferencer installed on Reference object"
         }.dereference(this, coroutineContext)
 
     fun referencedStorageKey() = storageKey.childKeyWithComponent(id)

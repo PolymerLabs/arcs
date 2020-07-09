@@ -7,6 +7,7 @@ import arcs.core.data.SingletonType
 import arcs.core.data.Capability.Ttl
 import arcs.core.data.SchemaRegistry
 import arcs.core.entity.HandleManagerTestBase.Person
+import arcs.core.entity.HandleManagerTestBase.CoolnessIndex
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -64,6 +65,7 @@ class HandleManagerCloseTest {
         DriverAndKeyConfigurator.configure(null)
         SchemaRegistry.register(Person.SCHEMA)
         SchemaRegistry.register(HandleManagerTestBase.Hat.SCHEMA)
+        SchemaRegistry.register(CoolnessIndex.SCHEMA)
     }
 
     @After
@@ -88,14 +90,14 @@ class HandleManagerCloseTest {
             updateCalled.complete()
         }
 
-        handleA.dispatchStore(Person("e1", "p1", 1.0, true))
+        handleA.dispatchStore(Person("e1", "p1", 1.0, coolnessIndex = CoolnessIndex("", 1, true)))
         updateCalled.join()
         assertThat(updates).isEqualTo(1)
 
         handleManagerB.close()
 
         updateCalled = Job()
-        handleA.dispatchStore(Person("e2", "p2", 2.0, true))
+        handleA.dispatchStore(Person("e2", "p2", 2.0, coolnessIndex = CoolnessIndex("", 1, true)))
         assertSuspendingThrows(TimeoutCancellationException::class) {
             withTimeout(100) { updateCalled.join() }
         }
@@ -113,7 +115,7 @@ class HandleManagerCloseTest {
 
         handleManager.close()
 
-        val person = Person("1","p",1.0,true)
+        val person = Person("1","p",1.0, coolnessIndex = CoolnessIndex("", 1, true))
 
         withContext(handle.dispatcher) {
             listOf(
@@ -140,7 +142,7 @@ class HandleManagerCloseTest {
 
         handleManager.close()
 
-        val person = Person("1","p",1.0,true)
+        val person = Person("1","p",1.0,coolnessIndex = CoolnessIndex("", 1, true))
 
         withContext(handle.dispatcher) {
             listOf(

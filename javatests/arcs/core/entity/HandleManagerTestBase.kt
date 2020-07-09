@@ -66,6 +66,7 @@ open class HandleManagerTestBase {
     init {
         SchemaRegistry.register(Person.SCHEMA)
         SchemaRegistry.register(Hat.SCHEMA)
+        SchemaRegistry.register(CoolnessIndex.SCHEMA)
     }
 
     private val backingKey = RamDiskStorageKey("entities")
@@ -76,19 +77,17 @@ open class HandleManagerTestBase {
         entityId = "entity1",
         name = "Jason",
         age = 21.0,
-        isCool = false,
         bestFriend = StorageReference("entity2", backingKey, null),
-        hat = null,
-        favoriteWords = listOf("coolio", "sasquatch", "indubitably")
+        favoriteWords = listOf("coolio", "sasquatch", "indubitably"),
+        coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 4, isCool = false, hat = null)
     )
     private val entity2 = Person(
         entityId = "entity2",
         name = "Jason",
         age = 22.0,
-        isCool = true,
         bestFriend = StorageReference("entity1", backingKey, null),
-        hat = null,
-        favoriteWords = listOf("wonderful", "exemplary", "yeet")
+        favoriteWords = listOf("wonderful", "exemplary", "yeet"),
+        coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 54, isCool = true, hat = null)
     )
 
     private val singletonRefKey = RamDiskStorageKey("single-ent")
@@ -341,10 +340,9 @@ open class HandleManagerTestBase {
             entityId = "a-hatted-individual",
             name = "Jason",
             age = 25.0,
-            isCool = true,
             bestFriend = null,
-            hat = fezStorageRef,
-            favoriteWords = listOf("Fez")
+            favoriteWords = listOf("Fez"),
+            coolnessIndex = CoolnessIndex(pairsOfShoesOwned =  555, isCool = true, hat = fezStorageRef)
         )
         val writeHandle = writeHandleManager.createSingletonHandle()
         val readHandle = readHandleManager.createSingletonHandle()
@@ -357,7 +355,7 @@ open class HandleManagerTestBase {
 
         // Read out the entity, and fetch its hat.
         val entityOut = readHandle.dispatchFetch()!!
-        val hatRef = entityOut.hat!!
+        val hatRef = entityOut.coolnessIndex.hat!!
         assertThat(hatRef).isEqualTo(fezStorageRef)
         val rawHat = hatRef.dereference(coroutineContext)!!
         val hat = Hat.deserialize(rawHat)
@@ -566,7 +564,7 @@ open class HandleManagerTestBase {
             collectionKey
         ).awaitReady() as ReadCollectionHandle<Person>
 
-        val entity3 = Person("entity3", "Wanda", 60.0, true)
+        val entity3 = Person("entity3", "Wanda", 60.0, coolnessIndex = CoolnessIndex("", 100, true))
 
         var received = Job()
         var size = 3
@@ -621,7 +619,7 @@ open class HandleManagerTestBase {
             collectionKey
         ).awaitReady() as ReadWriteCollectionHandle<Person>
 
-        val entity3 = Person("entity3", "William", 35.0, false)
+        val entity3 = Person("entity3", "William", 35.0, coolnessIndex = CoolnessIndex("", 1, false))
 
         // handle1 -> handle2
         val received1to2 = CompletableDeferred<Set<Person>>()
@@ -791,9 +789,8 @@ open class HandleManagerTestBase {
             entityId = "a-hatted-individual",
             name = "Jason",
             age = 25.0,
-            isCool = true,
             bestFriend = null,
-            hat = fezStorageRef
+            coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 10, isCool = true, hat = fezStorageRef)
         )
         val readHandleKnows = readHandle.onUpdateDeferred {
             it.find { person -> person.entityId == "a-hatted-individual" } != null
@@ -805,7 +802,7 @@ open class HandleManagerTestBase {
         val entityOut = readHandle.dispatchFetchAll().single {
             it.entityId == "a-hatted-individual"
         }
-        val hatRef = entityOut.hat!!
+        val hatRef = entityOut.coolnessIndex.hat!!
         assertThat(hatRef).isEqualTo(fezStorageRef)
 
         hatMonitorKnows.await()
@@ -911,7 +908,7 @@ open class HandleManagerTestBase {
 
     @Test
     fun collection_dataConsideredInvalidByRefinementThrows() = testRunner {
-        val timeTraveler = Person("doctor1", "the Doctor", -900.0, false, null, null)
+        val timeTraveler = Person("doctor1", "the Doctor", -900.0, coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 0, isCool = false))
         val handle = writeHandleManager.createCollectionHandle()
         handle.dispatchStore(entity1, entity2)
 
@@ -1112,24 +1109,86 @@ open class HandleManagerTestBase {
         singletons = mapOf(
             "name" to null,
             "age" to null,
-            "is_cool" to null,
             "best_friend" to null,
-            "hat" to null,
-            "favorite_words" to null
+            "favorite_words" to null,
+            "coolness_index" to null
         ),
         collections = emptyMap(),
         creationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
     )
 
+    data class CoolnessIndex(
+        override val entityId: ReferenceId = "",
+        val pairsOfShoesOwned: Int,
+        val isCool: Boolean,
+        val hat: StorageReference? = null
+    ) : Entity {
+        var raw: RawEntity? = null
+        override var creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+        override var expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+
+        override fun ensureEntityFields(
+            idGenerator: Generator,
+            handleName: String,
+            time: Time,
+            ttl: Ttl
+        ) {
+            creationTimestamp = time.currentTimeMillis
+            if (ttl != Ttl.Infinite()) {
+                expirationTimestamp = ttl.calculateExpiration(time)
+            }
+        }
+
+        override fun serialize() = RawEntity(
+            entityId,
+            mapOf(
+                "pairs_of_shoes_owned" to pairsOfShoesOwned.toReferencable(),
+                "is_cool" to isCool.toReferencable(),
+                "hat" to hat
+            ),
+            emptyMap(),
+            creationTimestamp,
+            expirationTimestamp
+        )
+
+        override fun reset() = throw NotImplementedError()
+
+        companion object : EntitySpec<CoolnessIndex> {
+            @Suppress("UNCHECKED_CAST")
+            override fun deserialize(data: RawEntity) = CoolnessIndex(
+                entityId = data.id,
+                pairsOfShoesOwned = (data.singletons["pairs_of_shoes_owned"] as ReferencablePrimitive<Int>).value,
+                isCool = (data.singletons["is_cool"] as ReferencablePrimitive<Boolean>).value,
+                hat = data.singletons["hat"] as? StorageReference
+            ).apply {
+                raw = data
+                creationTimestamp = data.creationTimestamp
+                expirationTimestamp = data.expirationTimestamp
+            }
+
+            override val SCHEMA = Schema(
+                setOf(SchemaName("Person")),
+                SchemaFields(
+                    singletons = mapOf(
+                        "pairs_of_shoes_owned" to FieldType.Int,
+                        "is_cool" to FieldType.Boolean,
+                        "hat" to FieldType.EntityRef("hat-hash")
+                    ),
+                    collections = emptyMap()
+                ),
+                "coolness-index-hash"
+            )
+        }
+    }
+
     data class Person(
         override val entityId: ReferenceId,
         val name: String,
         val age: Double,
-        val isCool: Boolean,
         val bestFriend: StorageReference? = null,
-        val hat: StorageReference? = null,
-        val favoriteWords: List<String> = listOf()
+        val favoriteWords: List<String> = listOf(),
+        val coolnessIndex: CoolnessIndex
     ) : Entity {
 
         var raw: RawEntity? = null
@@ -1153,10 +1212,9 @@ open class HandleManagerTestBase {
             singletons = mapOf(
                 "name" to name.toReferencable(),
                 "age" to age.toReferencable(),
-                "is_cool" to isCool.toReferencable(),
                 "best_friend" to bestFriend,
-                "hat" to hat,
-                "favorite_words" to favoriteWords.map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text))
+                "favorite_words" to favoriteWords.map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text)),
+                "coolness_index" to coolnessIndex.serialize()
             ),
             collections = emptyMap(),
             creationTimestamp = creationTimestamp,
@@ -1180,12 +1238,11 @@ open class HandleManagerTestBase {
                 entityId = data.id,
                 name = (data.singletons["name"] as ReferencablePrimitive<String>).value,
                 age = (data.singletons["age"] as ReferencablePrimitive<Double>).value,
-                isCool = (data.singletons["is_cool"] as ReferencablePrimitive<Boolean>).value,
                 bestFriend = data.singletons["best_friend"] as? StorageReference,
-                hat = data.singletons["hat"] as? StorageReference,
                 favoriteWords = (data.singletons["favorite_words"] as ReferencableList<*>).value.map {
                     (it as ReferencablePrimitive<String>).value
-                }
+                },
+                coolnessIndex = CoolnessIndex.deserialize(data.singletons["coolness_index"] as RawEntity)
             ).apply {
                 raw = data
                 creationTimestamp = data.creationTimestamp
@@ -1198,10 +1255,9 @@ open class HandleManagerTestBase {
                     singletons = mapOf(
                         "name" to FieldType.Text,
                         "age" to FieldType.Number,
-                        "is_cool" to FieldType.Boolean,
                         "best_friend" to FieldType.EntityRef("person-hash"),
-                        "hat" to FieldType.EntityRef("hat-hash"),
-                        "favorite_words" to FieldType.ListOf(FieldType.Text)
+                        "favorite_words" to FieldType.ListOf(FieldType.Text),
+                        "coolness_index" to FieldType.InlineEntity("coolness-index-hash")
                     ),
                     collections = emptyMap()
                 ),
