@@ -36,24 +36,12 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     /* internal */ val callbacks = mutableMapOf<Int, ProxyCallback<Data, Op, ConsumerData>>()
 
     /** Adds a [ProxyCallback] to the collection, and returns its token. */
-    fun register(proxyCallback: ProxyCallback<Data, Op, ConsumerData>): Int {
+    fun register(proxyCallback: ProxyCallback<Data, Op, ConsumerData>, callbackToken: Int? = null): Int {
         while (!mutex.tryLock()) { /* Wait. */ }
-        val token = tokenGenerator(callbacks.keys)
+        val token = callbackToken ?: tokenGenerator(callbacks.keys)
         callbacks[token] = proxyCallback
         mutex.unlock()
         return token
-    }
-
-    /** Adds a [ProxyCallback] to the collection. Assigns the provided callbackToken to the [ProxyCallback]*/
-    fun registerWithToken(proxyCallback: ProxyCallback<Data, Op, ConsumerData>, callbackToken: Int): Int {
-        while(!mutex.tryLock()) { /* Wait. */ }
-
-        if (callbackToken in callbacks.keys) {
-            /* Error */
-        }
-        callbacks[callbackToken] = proxyCallback
-        mutex.unlock()
-        return callbackToken
     }
 
     /** Removes the callback with the given [callbackToken] from the collection. */

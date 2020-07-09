@@ -102,6 +102,12 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         }
     }
 
+    fun onWithToken(callback: ProxyCallback<Data, Op, T>, callbackToken: Int): Int {
+        synchronized(proxyManager) {
+            return proxyManager.register(callback, callbackToken)
+        }
+    }
+
     override fun off(callbackToken: Int) {
         synchronized(proxyManager) {
             proxyManager.unregister(callbackToken)
