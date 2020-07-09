@@ -42,6 +42,11 @@ annotation encrypted
   retention: Runtime
   doc: 'storage capability: encrypted'
 
+annotation inMemory
+  targets: [Handle]
+  retention: Runtime
+  doc: 'storage capability mapped to in-memory persistence'
+
 annotation tiedToArc
   targets: [Handle]
   retention: Runtime

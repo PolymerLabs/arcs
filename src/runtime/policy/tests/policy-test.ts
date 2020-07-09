@@ -352,10 +352,148 @@ policy MyPolicy {
     const capabilities = target.toCapabilities();
     assert.lengthOf(capabilities, 2);
     assert.isTrue(capabilities[0].isEquivalent(Capabilities.create([
-      Persistence.onDisk(), new Encryption(true), Ttl.days(2)
-    ])));
+        Persistence.onDisk(), new Encryption(true), Ttl.days(2)])),
+        `Unexpected capabilities: ${capabilities[0].toDebugString()}`);
     assert.isTrue(capabilities[1].isEquivalent(
-      Capabilities.create([Persistence.inMemory(), Ttl.days(2)])
-    ));
+        Capabilities.create([Persistence.inMemory(), new Encryption(false), Ttl.days(2)])),
+        `Unexpected capabilities: ${capabilities[1].toDebugString()}`);
+  });
+
+  const manifestString = (annotations = '') => {
+    return `
+${personSchema}
+particle P1
+  person: reads writes Person {name, age}
+recipe
+  personHandle: create ${annotations}
+  P1
+    person: personHandle
+    `;
+  };
+
+  it('fails validating handle with no policy target', async () => {
+    const policy = (await parsePolicy(`
+policy MyPolicy {
+  @allowedRetention(medium: 'Disk', encryption: true)
+  @maxAge('2d')
+  from Person access {}
+}
+    `));
+    const recipe = (await Manifest.parse(`
+particle P1
+  foo: reads writes Foo {value: Text}
+recipe
+  fooHandle: create @persistent @ttl('2d')
+  P1
+    foo: fooHandle
+    `)).recipes[0];
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+    const result = policy.isHandleIngressAllowed(recipe.handles[0]);
+    assert.isFalse(result.success);
+    assert.isTrue(result.toString().includes(
+        `Policy MyPolicy has no matching target types for Foo {value: Text}`));
+  });
+
+  const assertHandleIngressNotAllowed = async (manifestString, policy, expectedError) => {
+    const recipe = (await Manifest.parse(manifestString)).recipes[0];
+    assert.isTrue(recipe.normalize() && recipe.isResolved());
+    const result = policy.isHandleIngressAllowed(recipe.handles[0]);
+    assert.isFalse(result.success);
+    assert.isTrue(result.toString().includes(expectedError),
+        `Expected ${result.toString()} to include ${expectedError}`);
+  };
+  const assertHandleIngressAllowed = async (manifestString, policy) => {
+    const recipe = (await Manifest.parse(manifestString)).recipes[0];
+    assert.isTrue(recipe.normalize() && recipe.isResolved());
+    const options = {errors: new Map()};
+    const result = policy.isHandleIngressAllowed(recipe.handles[0]);
+    assert.isTrue(result.success, `Validation failed with: ${result.toString()}`);
+  };
+
+  it('fails validates missing handle capability persistence', async () => {
+    const policy = await parsePolicy(`
+policy MyPolicy {
+  @allowedRetention(medium: 'Ram', encryption: false)
+  @maxAge('2d')
+  from Person access {}
+}
+    `);
+    await assertHandleIngressNotAllowed(manifestString(), policy, 'inMemory is stricter than unspecified');
+  });
+
+  it('fails validates missing handle capability ttls', async () => {
+    const policy = (await parsePolicy(`
+policy MyPolicy {
+  @allowedRetention(medium: 'Ram', encryption: false)
+  @maxAge('2d')
+  from Person access {}
+}
+    `));
+    await assertHandleIngressNotAllowed(manifestString(`@inMemory`), policy, '2d is stricter than unspecified');
+  });
+
+  it('fails validating missing handle capability encryption', async () => {
+    const policy = (await parsePolicy(`
+policy MyPolicy {
+  @allowedRetention(medium: 'Disk', encryption: true)
+  @maxAge('2d')
+  from Person access {}
+}
+    `));
+    await assertHandleIngressNotAllowed(manifestString(`@inMemory @ttl('48h')`), policy, 'encrypted is stricter than unspecified');
+  });
+
+  it('successfully validates default persistence', async () => {
+    const policy = (await parsePolicy(`
+policy MyPolicy {
+  @allowedRetention(medium: 'Ram', encryption: false)
+  @maxAge('2d')
+  from Person access {}
+}
+    `));
+    await assertHandleIngressAllowed(manifestString(`@inMemory @ttl('48h')`), policy);
+  });
+
+  it('successfully validates default encryption', async () => {
+    const policy = (await parsePolicy(`
+policy MyPolicy {
+  @allowedRetention(medium: 'Disk', encryption: false)
+  @maxAge('2d')
+  from Person access {}
+}
+    `));
+    await assertHandleIngressAllowed(manifestString(`@persistent @ttl('10h')`), policy);
+    await assertHandleIngressAllowed(manifestString(`@tiedToArc @ttl('10h')`), policy);
+  });
+
+  it('fails validating non restrictive enough handle capabilities', async () => {
+    const policy = (await parsePolicy(`
+policy MyPolicy {
+  @allowedRetention(medium: 'Ram', encryption: true)
+  @maxAge('2d')
+  from Person access {}
+}
+    `));
+    await assertHandleIngressNotAllowed(
+        manifestString(`@persistent @encrypted @ttl('1d')`), policy, 'inMemory is stricter than onDisk');
+    await assertHandleIngressNotAllowed(
+        manifestString(`@tiedToArc @ttl('1d')`), policy, 'encrypted is stricter than unspecified');
+    await assertHandleIngressNotAllowed(
+        manifestString(`@tiedToArc @encrypted @ttl('10d')`), policy, '2d is stricter than 10d');
+  });
+
+  it('validates handle capabilities', async () => {
+    const policy = (await parsePolicy(`
+policy MyPolicy {
+  @allowedRetention(medium: 'Disk', encryption: true)
+  @maxAge('2d')
+  from Person access {}
+}
+    `));
+    const recipe = (await Manifest.parse(
+        manifestString(`@persistent @encrypted @ttl('1d')`))).recipes[0];
+    assert.isTrue(recipe.normalize() && recipe.isResolved());
+    assert.isTrue(policy.isHandleIngressAllowed(recipe.handles[0]).success);
   });
 });
