@@ -35,15 +35,16 @@ class StorageServiceManager(
 
     /** The local [CoroutineContext]. */
     private val coroutineContext = parentCoroutineContext + CoroutineName("StorageServiceManager")
+    private val scope = CoroutineScope(coroutineContext)
 
     override fun clearAll(resultCallback: IResultCallback) {
-        CoroutineScope(coroutineContext).launch {
+        scope.launch {
             ArcHostManager.pauseAllHostsFor {
                 DriverFactory.removeAllEntities().join()
                 stores.clear()
             }
+            resultCallback.onResult(null)
         }
-        resultCallback.onResult(null)
     }
 
     override fun clearDataBetween(
@@ -51,18 +52,18 @@ class StorageServiceManager(
         endTimeMillis: Long,
         resultCallback: IResultCallback
     ) {
-        CoroutineScope(coroutineContext).launch {
+        scope.launch {
             ArcHostManager.pauseAllHostsFor {
                 DriverFactory.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis).join()
             }
+            resultCallback.onResult(null)
         }
-        resultCallback.onResult(null)
     }
 
     override fun resetDatabases(resultCallback: IResultCallback) {
-        CoroutineScope(coroutineContext).launch {
+        scope.launch {
             DatabaseDriverProvider.manager.resetAll()
+            resultCallback.onResult(null)
         }
-        resultCallback.onResult(null)
     }
 }
