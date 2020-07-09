@@ -564,7 +564,7 @@ open class HandleManagerTestBase {
             collectionKey
         ).awaitReady() as ReadCollectionHandle<Person>
 
-        val entity3 = Person("entity3", "Wanda", 60.0, true)
+        val entity3 = Person("entity3", "Wanda", 60.0, coolnessIndex = CoolnessIndex("", 100, true))
 
         var received = Job()
         var size = 3
@@ -619,7 +619,7 @@ open class HandleManagerTestBase {
             collectionKey
         ).awaitReady() as ReadWriteCollectionHandle<Person>
 
-        val entity3 = Person("entity3", "William", 35.0, false)
+        val entity3 = Person("entity3", "William", 35.0, coolnessIndex = CoolnessIndex("", 1, false))
 
         // handle1 -> handle2
         val received1to2 = CompletableDeferred<Set<Person>>()
