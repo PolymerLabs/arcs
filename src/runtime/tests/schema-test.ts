@@ -686,4 +686,21 @@ describe('schema', () => {
     const refWarning = ConCap.capture(() => assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2)));
     assert.match(refWarning.warn[0], /Unable to ascertain if/);
   });
+  it('tests to inline schema string for kt types', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        ld: List<Number>
+        lI: List<Int>
+        lL: List<Long>
+        i: Int
+        t: Text
+        l: Long
+    `);
+    const schema = manifest.schemas['Foo'];
+    const schema_str = schema.toInlineSchemaString();
+    assert.strictEqual(
+      schema_str,
+      'Foo {ld: List<Number>, lI: List<Int>, lL: List<Long>, i: Int, t: Text, l: Long}'
+    );
+  });
 });

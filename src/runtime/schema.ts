@@ -127,6 +127,7 @@ export class Schema {
 
   static _typeString(type): string {
     switch (type.kind) {
+      case 'kotlin-primitive':
       case 'schema-primitive':
         return type.type;
       case 'schema-union':
