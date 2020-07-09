@@ -21,7 +21,8 @@ open class VariableEntityBase(
     schema: Schema,
     entityId: String? = null,
     creationTimestamp: Long = UNINITIALIZED_TIMESTAMP,
-    expirationTimestamp: Long = UNINITIALIZED_TIMESTAMP
+    expirationTimestamp: Long = UNINITIALIZED_TIMESTAMP,
+    isInlineEntity: Boolean = false
 ) : EntityBase(entityClassName, schema, entityId, creationTimestamp, expirationTimestamp) {
     private val rawSingletons = mutableMapOf<FieldName, Referencable?>()
     private val rawCollections = mutableMapOf<FieldName, Set<Referencable>>()
