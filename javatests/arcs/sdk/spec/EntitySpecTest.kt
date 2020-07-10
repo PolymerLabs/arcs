@@ -156,7 +156,7 @@ class EntitySpecTest {
         entity.ensureEntityFields(idGenerator, "handle", FakeTime(currentTime), Ttl.Minutes(1))
 
         val expirationTimestamp = entity.serialize().expirationTimestamp
-        assertThat(expirationTimestamp).isEqualTo(currentTime + 60000)
+        assertThat(expirationTimestamp).isEqualTo(currentTime + 60000) // 1 minute = 60,000 ms.
     }
 
     @Test
