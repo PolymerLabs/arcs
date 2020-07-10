@@ -127,7 +127,7 @@ class PolicyProtoTest {
         val policy = proto.decode()
 
         val expected = PolicyField(
-            fieldName = "field",
+            fieldPath = listOf("field"),
             rawUsages = setOf(UsageType.JOIN),
             redactedUsages = mapOf("label" to setOf(UsageType.EGRESS, UsageType.JOIN)),
             subfields = emptyList(),
@@ -157,12 +157,12 @@ class PolicyProtoTest {
         val policy = proto.decode()
 
         val expected = PolicyField(
-            fieldName = "parent",
+            fieldPath = listOf("parent"),
             rawUsages = emptySet(),
             redactedUsages = emptyMap(),
             subfields = listOf(
                 PolicyField(
-                    fieldName = "child",
+                    fieldPath = listOf("parent", "child"),
                     rawUsages = emptySet(),
                     redactedUsages = emptyMap(),
                     subfields = emptyList(),

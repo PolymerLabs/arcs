@@ -48,7 +48,7 @@ private fun PolicyTargetProto.decode(): PolicyTarget {
     )
 }
 
-private fun PolicyFieldProto.decode(): PolicyField {
+private fun PolicyFieldProto.decode(parentFieldPath: List<String> = emptyList()): PolicyField {
     val rawUsages = mutableSetOf<UsageType>()
     val redactedUsages = mutableMapOf<String, MutableSet<UsageType>>()
     for (usage in usagesList) {
@@ -60,11 +60,12 @@ private fun PolicyFieldProto.decode(): PolicyField {
             }.add(usage.usage.decode())
         }
     }
+    val fieldPath = parentFieldPath + name
     return PolicyField(
-        fieldName = name,
+        fieldPath = fieldPath,
         rawUsages = rawUsages,
         redactedUsages = redactedUsages,
-        subfields = subfieldsList.map { it.decode() },
+        subfields = subfieldsList.map { it.decode(fieldPath) },
         annotations = annotationsList.map { it.decode() }
     )
 }
