@@ -371,7 +371,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         val handle = taskHandle.handleManager.createHandle(
             HandleSpec(
                 "CleanerHandle",
-                HandleMode.ReadWrite,
+                HandleMode.Write,
                 CollectionType(EntityType(TestEntity.SCHEMA)),
                 TestEntity
             ),
@@ -602,6 +602,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         }
 
         val elapsedTime = measureTimeMillis {
+            // Wait until all client side jobs get done i.e. the op gets sent to
+            // outgoing channel and handled at ServiceStore's onProxyMessage.
             withContext(handle.dispatcher) { handle.clear() }.join()
         }
 
