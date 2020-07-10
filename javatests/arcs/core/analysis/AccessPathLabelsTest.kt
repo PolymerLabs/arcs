@@ -14,9 +14,11 @@ import org.junit.runners.JUnit4
 class AccessPathLabelsTest {
     private val bottom = AccessPathLabels.getBottom()
     private val top = AccessPathLabels.getTop()
+
     // Information Flow Labels
     //
     enum class Labels { A, B, C }
+
     private val labels = enumValues<Labels>().map { it.name }
     private val setA = BitSet(labels.size).apply { set(Labels.A.ordinal) }
     private val setAB = BitSet(labels.size).apply {
@@ -33,6 +35,7 @@ class AccessPathLabelsTest {
     private val setOfAC = InformationFlowLabels(setOf(setAC))
     private val setOfABorAC = InformationFlowLabels(setOf(setAB, setAC))
     private val emptyLabels = InformationFlowLabels(setOf(BitSet(labels.size)))
+
     // AccessPaths
     //
     private val particleName = "TestParticle"
@@ -59,33 +62,42 @@ class AccessPathLabelsTest {
         outputSpec,
         listOf(AccessPath.Selector.Field("age"))
     )
+
     // AccessPathLabels values.
     //
     // input.age: { () }
     private val inputAgeIsNone = AccessPathLabels.makeValue(mapOf(inputAge to emptyLabels))
+
     // input.age: { (A) }
     private val inputAgeIsA = AccessPathLabels.makeValue(mapOf(inputAge to setOfA))
+
     // input.age: { (A,B) }
     private val inputAgeIsAB = AccessPathLabels.makeValue(mapOf(inputAge to setOfAB))
+
     // input.age: { (A,C) }
     private val inputAgeIsAC = AccessPathLabels.makeValue(mapOf(inputAge to setOfAC))
+
     // input.age: { (A,B), (A,C) }
     private val inputAgeIsABorAC = AccessPathLabels.makeValue(mapOf(inputAge to setOfABorAC))
+
     // input.name -> { (A,B), (A,C) }
     // input.age -> { (A,B) }
     private val inputNameIsABorACAgeIsAB = AccessPathLabels.makeValue(
         mapOf(inputName to setOfABorAC, inputAge to setOfAB)
     )
+
     // input.name -> { (A,B), (A,C) }
     // input.age -> { (A,B), (A,C) }
     private val inputNameIsABorACAgeIsABorAC = AccessPathLabels.makeValue(
         mapOf(inputName to setOfABorAC, inputAge to setOfABorAC)
     )
+
     // input.name -> { (A,B) }
     // input.age -> { (A,B) }
     private val inputNameIsABAgeIsAB = AccessPathLabels.makeValue(
         mapOf(inputName to setOfAB, inputAge to setOfAB)
     )
+
     // input.name -> { () }
     // input.age -> { (A,B) }
     private val inputNameIsNoneAgeIsAB = AccessPathLabels.makeValue(

@@ -14,7 +14,8 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ReadWriteTest {
 
-    @get:Rule val env = ShowcaseEnvironment(
+    @get:Rule
+    val env = ShowcaseEnvironment(
         ::Reader0.toRegistration(),
         ::Writer0.toRegistration(),
         ::Reader1.toRegistration(),

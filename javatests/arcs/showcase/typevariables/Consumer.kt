@@ -19,6 +19,6 @@ class Consumer : AbstractConsumer() {
             .also { updated.complete() }
 
     companion object {
-       val updated = Job()
+        val updated = Job()
     }
 }

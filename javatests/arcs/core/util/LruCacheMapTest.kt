@@ -12,8 +12,8 @@ class LruCacheMapTest {
     @Test
     fun lruCache_get_works() {
         val cache = LruCacheMap<String, String>(5)
-        cache.put("foo", "bar")
-        assertThat(cache.get("foo")).isEqualTo("bar")
+        cache["foo"] = "bar"
+        assertThat(cache["foo"]).isEqualTo("bar")
     }
 
     @Test
@@ -21,7 +21,7 @@ class LruCacheMapTest {
         val cache = LruCacheMap<String, String>(5)
 
         for (x in 1..10) {
-            cache.put("key$x", "value$x")
+            cache["key$x"] = "value$x"
             assertThat(cache.size).isAtMost(10)
         }
     }
@@ -31,7 +31,7 @@ class LruCacheMapTest {
         val cache = LruCacheMap<String, String>(5)
 
         for (x in 1..10) {
-            cache.put("key$x", "value$x")
+            cache["key$x"] = "value$x"
         }
 
         for (x in 1..5) {
@@ -54,15 +54,15 @@ class LruCacheMapTest {
         }
 
         val cache = LruCacheMap<Int, String>(livenessPredicate = { k, _ -> k % 2 == 0 }) { k, _ ->
-           assertThat(k).isIn(shouldBeEvicted)
+            assertThat(k).isIn(shouldBeEvicted)
         }
 
         for (x in 1..5) {
-            cache.put(x, "value$x")
+            cache[x] = "value$x"
         }
 
         shouldBeEvicted.forEach {
-            assertThat(cache.get(it)).isNull()
+            assertThat(cache[it]).isNull()
         }
     }
 
@@ -71,7 +71,7 @@ class LruCacheMapTest {
         val shouldBeEvicted: MutableMap<String, String> = mutableMapOf()
 
         for (x in 1..5) {
-            shouldBeEvicted.put("key$x", "value$x")
+            shouldBeEvicted["key$x"] = "value$x"
         }
 
         val cache = LruCacheMap<String, String>(5) { key, value ->
@@ -80,7 +80,7 @@ class LruCacheMapTest {
         }
 
         for (x in 1..10) {
-            cache.put("key$x", "value$x")
+            cache["key$x"] = "value$x"
         }
 
         for (x in 6..10) {

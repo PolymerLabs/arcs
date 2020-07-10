@@ -192,6 +192,7 @@ class StoreWriteBackTest {
                     versions.add(version)
                     Unit
                 }
+
                 override suspend fun onDatabaseDelete(originatingClientId: Int?) = Unit
             }
         )

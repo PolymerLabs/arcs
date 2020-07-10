@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -47,9 +48,9 @@ public class ArcDataTest {
     String recipe = "TestRecipe";
     String particleName = "TestParticle";
     ArcData arcData = new ArcData.Builder()
-        .addParticleData(new ArcData.ParticleData().setName(particleName))
-        .setRecipe(recipe)
-        .build();
+      .addParticleData(new ArcData.ParticleData().setName(particleName))
+      .setRecipe(recipe)
+      .build();
     assertEquals(recipe, arcData.getRecipe());
     assertEquals(1, arcData.getParticleList().size());
     ArcData.ParticleData particleData = arcData.getParticleList().get(0);
@@ -64,8 +65,8 @@ public class ArcDataTest {
     String particleName = "TestParticle";
     String particleId = "test-particle-id";
     ArcData arcData = new ArcData.Builder()
-        .addParticleData(new ArcData.ParticleData().setName(particleName).setId(particleId))
-        .build();
+      .addParticleData(new ArcData.ParticleData().setName(particleName).setId(particleId))
+      .build();
     assertEquals(1, arcData.getParticleList().size());
     ArcData.ParticleData particleData = arcData.getParticleList().get(0);
     assertEquals(particleName, particleData.getName());
@@ -79,11 +80,18 @@ public class ArcDataTest {
     String particleName = "TestParticle";
     String particleId = "test-particle-id";
     ArcData arcData = new ArcData.Builder()
-        .addParticleData(new ArcData.ParticleData().setParticle(new ParticleBase() {
-            @Override public String getId() { return particleId; }
-            @Override public String getName() { return particleName; }
-        }))
-        .build();
+      .addParticleData(new ArcData.ParticleData().setParticle(new ParticleBase() {
+        @Override
+        public String getId() {
+          return particleId;
+        }
+
+        @Override
+        public String getName() {
+          return particleName;
+        }
+      }))
+      .build();
     assertEquals(1, arcData.getParticleList().size());
     ArcData.ParticleData particleData = arcData.getParticleList().get(0);
     assertEquals(particleName, particleData.getName());
@@ -97,12 +105,19 @@ public class ArcDataTest {
     String arcId = "test-arc";
     String particleName = "TestParticle";
     ArcData arcData = new ArcData.Builder()
-        .setArcId(arcId)
-        .addParticleData(new ArcData.ParticleData().setParticle(new ParticleBase() {
-            @Override public String getName() { return particleName; }
-            @Override public boolean providesSlot() { return true; }
-        }))
-        .build();
+      .setArcId(arcId)
+      .addParticleData(new ArcData.ParticleData().setParticle(new ParticleBase() {
+        @Override
+        public String getName() {
+          return particleName;
+        }
+
+        @Override
+        public boolean providesSlot() {
+          return true;
+        }
+      }))
+      .build();
     assertEquals(1, arcData.getParticleList().size());
     ArcData.ParticleData particleData = arcData.getParticleList().get(0);
     assertEquals(particleName, particleData.getName());
@@ -118,13 +133,20 @@ public class ArcDataTest {
     String particleName0 = "TestParticle0";
     String particleName1 = "TestParticle1";
     ArcData arcData = new ArcData.Builder()
-        .setArcId(arcId)
-        .addParticleData(new ArcData.ParticleData().setName(particleName0))
-        .addParticleData(new ArcData.ParticleData().setParticle(new ParticleBase() {
-            @Override public String getName() { return particleName1; }
-            @Override public boolean providesSlot() { return true; }
-        }))
-        .build();
+      .setArcId(arcId)
+      .addParticleData(new ArcData.ParticleData().setName(particleName0))
+      .addParticleData(new ArcData.ParticleData().setParticle(new ParticleBase() {
+        @Override
+        public String getName() {
+          return particleName1;
+        }
+
+        @Override
+        public boolean providesSlot() {
+          return true;
+        }
+      }))
+      .build();
     assertNotNull(arcData.getArcId());
     assertEquals(2, arcData.getParticleList().size());
 
@@ -145,7 +167,8 @@ public class ArcDataTest {
   public void testIllegalParticleInfo() {
     ArcData.ParticleData particleData1 = new ArcData.ParticleData().setName("P");
     try {
-      particleData1.setParticle(new ParticleBase() {});
+      particleData1.setParticle(new ParticleBase() {
+      });
       fail();
     } catch (IllegalArgumentException e) {
       // expected exception;
@@ -153,12 +176,14 @@ public class ArcDataTest {
 
     ArcData.ParticleData particleData2 = new ArcData.ParticleData().setId("id0");
     try {
-      particleData2.setParticle(new ParticleBase() {});
+      particleData2.setParticle(new ParticleBase() {
+      });
       fail();
     } catch (IllegalArgumentException e) {
       // expected exception;
     }
-    ArcData.ParticleData particleData3 = new ArcData.ParticleData().setParticle(new ParticleBase() {});
+    ArcData.ParticleData particleData3 = new ArcData.ParticleData().setParticle(new ParticleBase() {
+    });
     try {
       particleData3.setName("P");
       fail();

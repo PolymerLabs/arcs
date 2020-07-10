@@ -1483,6 +1483,7 @@ class DatabaseImplTest {
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
+
         suspend fun updateCollection(vararg entities: DatabaseData.Entity) {
             val values = entities.map {
                 ReferenceWithVersion(
@@ -1576,11 +1577,14 @@ class DatabaseImplTest {
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
+
         suspend fun updateCollection(vararg entities: DatabaseData.Entity) {
-            val values = entities.map { ReferenceWithVersion(
-                Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
-                VersionMap("actor" to 1)
-            ) }
+            val values = entities.map {
+                ReferenceWithVersion(
+                    Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
+                    VersionMap("actor" to 1)
+                )
+            }
             val collection = DatabaseData.Collection(
                 values = values.toSet(),
                 schema = schema,
@@ -1651,11 +1655,14 @@ class DatabaseImplTest {
             FIRST_VERSION_NUMBER,
             VERSION_MAP
         )
+
         suspend fun updateSingleton(entity: DatabaseData.Entity?) {
-            val ref = entity?.let { ReferenceWithVersion(
-                Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
-                VersionMap("actor" to 1)
-            ) }
+            val ref = entity?.let {
+                ReferenceWithVersion(
+                    Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
+                    VersionMap("actor" to 1)
+                )
+            }
             val singleton = DatabaseData.Singleton(
                 value = ref,
                 schema = schema,

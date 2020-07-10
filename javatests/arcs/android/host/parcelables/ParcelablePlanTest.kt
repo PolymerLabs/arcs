@@ -52,7 +52,7 @@ class ParcelablePlanTest {
         val particle2 = Plan.Particle(
             "Foobar2",
             "foo.bar.Foobar2",
-             mapOf("foo" to handleConnection2)
+            mapOf("foo" to handleConnection2)
         )
 
         val plan = Plan(listOf(particle, particle2))

@@ -45,6 +45,7 @@ class TypeConstraintsTest {
     val textCnxnSpec = HandleConnectionSpec("text_cnxn", HandleMode.Read, TypeVariable("text_cnxn"))
     val wordCnxnSpec = HandleConnectionSpec("word_cnxn", HandleMode.Read, TypeVariable("word_cnxn"))
     val numCnxnSpec = HandleConnectionSpec("num_cnxn", HandleMode.Read, TypeVariable("num_type"))
+
     // numCnxnSpec has the same type variable name as [numCnxnSpec]
     val intCnxnSpec = HandleConnectionSpec("int_cnxn", HandleMode.Write, TypeVariable("num_type"))
 

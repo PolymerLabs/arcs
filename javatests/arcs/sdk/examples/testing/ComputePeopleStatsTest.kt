@@ -22,8 +22,10 @@ import org.junit.runners.JUnit4
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class ComputePeopleStatsTest {
-    @get:Rule val log = LogRule()
-    @get:Rule val harness = ComputePeopleStatsTestHarness { ComputePeopleStats() }
+    @get:Rule
+    val log = LogRule()
+    @get:Rule
+    val harness = ComputePeopleStatsTestHarness { ComputePeopleStats() }
 
     @Test
     fun emptyInput() = runTest {

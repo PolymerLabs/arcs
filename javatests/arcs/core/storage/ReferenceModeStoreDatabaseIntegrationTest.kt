@@ -528,8 +528,9 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
         activeStore.idle()
 
-        assertThat(activeStore.containerStore.getLocalData())
-           .isEqualTo(driver.getDatabaseData().first)
+        assertThat(activeStore.containerStore.getLocalData()).isEqualTo(
+            driver.getDatabaseData().first
+        )
     }
 
     @Test
@@ -539,7 +540,9 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
         val referenceCollection = CrdtSet<Reference>()
         val ref = Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
-        referenceCollection.applyOperation(CrdtSet.Operation.Add(actor, VersionMap(actor to 1), ref))
+        referenceCollection.applyOperation(
+            CrdtSet.Operation.Add(actor, VersionMap(actor to 1), ref)
+        )
 
         val job = Job(coroutineContext[Job])
         var backingStoreSent = false

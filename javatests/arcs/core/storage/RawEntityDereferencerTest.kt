@@ -50,6 +50,7 @@ class RawEntityDereferencerTest {
     private val backingKey = RamDiskStorageKey("people")
     private lateinit var aliceDriver: Driver<CrdtEntity.Data>
     private lateinit var bobDriver: Driver<CrdtEntity.Data>
+
     // TODO: Test with an activation factory in android-specific tests.
     private val dereferencer = RawEntityDereferencer(schema)
     private val referenceBuilder = { refable: Referencable ->
@@ -81,8 +82,14 @@ class RawEntityDereferencerTest {
         RamDiskDriverProvider()
         RamDisk.clear()
 
-        aliceDriver = DriverFactory.getDriver(backingKey.childKeyWithComponent("aliceId"), EntityType(schema))!!
-        bobDriver = DriverFactory.getDriver(backingKey.childKeyWithComponent("bobId"), EntityType(schema))!!
+        aliceDriver = DriverFactory.getDriver(
+            backingKey.childKeyWithComponent("aliceId"),
+            EntityType(schema)
+        )!!
+        bobDriver = DriverFactory.getDriver(
+            backingKey.childKeyWithComponent("bobId"),
+            EntityType(schema)
+        )!!
 
         aliceDriver.send(CrdtEntity.Data(VersionMap("alice" to 1), alice, referenceBuilder), 1)
         bobDriver.send(CrdtEntity.Data(VersionMap("bob" to 1), bob, referenceBuilder), 1)

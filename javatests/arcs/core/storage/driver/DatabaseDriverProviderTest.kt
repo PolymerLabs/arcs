@@ -53,7 +53,8 @@ class DatabaseDriverProviderTest {
 
     @Test
     fun registersSelfWithDriverFactory() = runBlockingTest {
-        DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get) // Constructor registers self.
+        // Constructor registers self.
+        DatabaseDriverProvider.configure(databaseFactory(), schemaHashLookup::get)
         schemaHashLookup["1234a"] = DUMMY_SCHEMA
 
         assertThat(

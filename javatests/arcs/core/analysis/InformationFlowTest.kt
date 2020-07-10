@@ -138,9 +138,9 @@ class InformationFlowTest {
         )
         val tests = (
             okTests + failingTests +
-            okFieldTests + failingFieldTests +
-            okCycleTests + failingCycleTests
-        )
+                okFieldTests + failingFieldTests +
+                okCycleTests + failingCycleTests
+            )
         tests.forEach { verifyChecksInTestFile(it) }
     }
 

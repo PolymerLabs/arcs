@@ -293,7 +293,10 @@ open class HandleManagerTestBase {
         // Create a second handle for the second entity, so we can store it.
         val storageKey = ReferenceModeStorageKey(backingKey, RamDiskStorageKey("entity2"))
         val monitorRefHandle = monitorHandleManager.createSingletonHandle(storageKey, "monitor")
-        val refWriteHandle = writeHandleManager.createSingletonHandle(storageKey, "otherWriteHandle")
+        val refWriteHandle = writeHandleManager.createSingletonHandle(
+            storageKey,
+            "otherWriteHandle"
+        )
         val refReadHandle = readHandleManager.createSingletonHandle(storageKey, "otherReadHandle")
         val monitorKnows = monitorRefHandle.onUpdateDeferred()
         val refReadKnows = refReadHandle.onUpdateDeferred()
@@ -342,7 +345,11 @@ open class HandleManagerTestBase {
             age = 25.0,
             bestFriend = null,
             favoriteWords = listOf("Fez"),
-            coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 555, isCool = true, hat = fezStorageRef)
+            coolnessIndex = CoolnessIndex(
+                pairsOfShoesOwned = 555,
+                isCool = true,
+                hat = fezStorageRef
+            )
         )
         val writeHandle = writeHandleManager.createSingletonHandle()
         val readHandle = readHandleManager.createSingletonHandle()
@@ -619,7 +626,12 @@ open class HandleManagerTestBase {
             collectionKey
         ).awaitReady() as ReadWriteCollectionHandle<Person>
 
-        val entity3 = Person("entity3", "William", 35.0, coolnessIndex = CoolnessIndex("", 1, false))
+        val entity3 = Person(
+            "entity3",
+            "William",
+            35.0,
+            coolnessIndex = CoolnessIndex("", 1, false)
+        )
 
         // handle1 -> handle2
         val received1to2 = CompletableDeferred<Set<Person>>()
@@ -675,9 +687,17 @@ open class HandleManagerTestBase {
 
     @Test
     fun listsWorkEndToEnd() = testRunner {
-        val entity = TestParticle_Entities(text = "Hello", number = 1.0, list = listOf(1L, 2L, 4L, 2L))
-        val writeHandle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
-        val readHandle = readHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
+        val entity = TestParticle_Entities(
+            text = "Hello",
+            number = 1.0,
+            list = listOf(1L, 2L, 4L, 2L)
+        )
+        val writeHandle = writeHandleManager.createCollectionHandle(
+            entitySpec = TestParticle_Entities
+        )
+        val readHandle = readHandleManager.createCollectionHandle(
+            entitySpec = TestParticle_Entities
+        )
 
         val updateDeferred = readHandle.onUpdateDeferred { it.size == 1 }
         writeHandle.dispatchStore(entity)
@@ -704,8 +724,12 @@ open class HandleManagerTestBase {
         )
         val entity = TestInlineParticle_Entities(inline, inlineSet, inlineList)
 
-        val writeHandle = writeHandleManager.createCollectionHandle(entitySpec = TestInlineParticle_Entities)
-        val readHandle = readHandleManager.createCollectionHandle(entitySpec = TestInlineParticle_Entities)
+        val writeHandle = writeHandleManager.createCollectionHandle(
+            entitySpec = TestInlineParticle_Entities
+        )
+        val readHandle = readHandleManager.createCollectionHandle(
+            entitySpec = TestInlineParticle_Entities
+        )
 
         val updateDeferred = readHandle.onUpdateDeferred { it.size == 1 }
         writeHandle.dispatchStore(entity)
@@ -741,7 +765,11 @@ open class HandleManagerTestBase {
     fun clientCanSetCreationTimestamp() = testRunner {
         fakeTime.millis = 100
         val creationTime = 20L
-        val entity = TestParticle_Entities(text = "Hello", number = 1.0, creationTimestamp = creationTime)
+        val entity = TestParticle_Entities(
+            text = "Hello",
+            number = 1.0,
+            creationTimestamp = creationTime
+        )
         val handle = writeHandleManager.createCollectionHandle(entitySpec = TestParticle_Entities)
         handle.dispatchStore(entity)
 
@@ -819,7 +847,11 @@ open class HandleManagerTestBase {
             name = "Jason",
             age = 25.0,
             bestFriend = null,
-            coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 10, isCool = true, hat = fezStorageRef)
+            coolnessIndex = CoolnessIndex(
+                pairsOfShoesOwned = 10,
+                isCool = true,
+                hat = fezStorageRef
+            )
         )
         val readHandleKnows = readHandle.onUpdateDeferred {
             it.find { person -> person.entityId == "a-hatted-individual" } != null
@@ -937,7 +969,12 @@ open class HandleManagerTestBase {
 
     @Test
     fun collection_dataConsideredInvalidByRefinementThrows() = testRunner {
-        val timeTraveler = Person("doctor1", "the Doctor", -900.0, coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 0, isCool = false))
+        val timeTraveler = Person(
+            "doctor1",
+            "the Doctor",
+            -900.0,
+            coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 0, isCool = false)
+        )
         val handle = writeHandleManager.createCollectionHandle()
         handle.dispatchStore(entity1, entity2)
 
@@ -1187,7 +1224,8 @@ open class HandleManagerTestBase {
             @Suppress("UNCHECKED_CAST")
             override fun deserialize(data: RawEntity) = CoolnessIndex(
                 entityId = data.id,
-                pairsOfShoesOwned = (data.singletons["pairs_of_shoes_owned"] as ReferencablePrimitive<Int>).value,
+                pairsOfShoesOwned =
+                (data.singletons["pairs_of_shoes_owned"] as ReferencablePrimitive<Int>).value,
                 isCool = (data.singletons["is_cool"] as ReferencablePrimitive<Boolean>).value,
                 hat = data.singletons["hat"] as? StorageReference
             ).apply {
@@ -1242,7 +1280,9 @@ open class HandleManagerTestBase {
                 "name" to name.toReferencable(),
                 "age" to age.toReferencable(),
                 "best_friend" to bestFriend,
-                "favorite_words" to favoriteWords.map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text)),
+                "favorite_words" to favoriteWords.map {
+                    it.toReferencable()
+                }.toReferencable(FieldType.ListOf(FieldType.Text)),
                 "coolness_index" to coolnessIndex.serialize()
             ),
             collections = emptyMap(),
@@ -1268,10 +1308,13 @@ open class HandleManagerTestBase {
                 name = (data.singletons["name"] as ReferencablePrimitive<String>).value,
                 age = (data.singletons["age"] as ReferencablePrimitive<Double>).value,
                 bestFriend = data.singletons["best_friend"] as? StorageReference,
-                favoriteWords = (data.singletons["favorite_words"] as ReferencableList<*>).value.map {
+                favoriteWords =
+                (data.singletons["favorite_words"] as ReferencableList<*>).value.map {
                     (it as ReferencablePrimitive<String>).value
                 },
-                coolnessIndex = CoolnessIndex.deserialize(data.singletons["coolness_index"] as RawEntity)
+                coolnessIndex = CoolnessIndex.deserialize(
+                    data.singletons["coolness_index"] as RawEntity
+                )
             ).apply {
                 raw = data
                 creationTimestamp = data.creationTimestamp

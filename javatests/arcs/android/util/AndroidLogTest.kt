@@ -20,60 +20,60 @@ import org.junit.runner.RunWith
 /** Tests for [AndroidLog]. */
 @RunWith(AndroidJUnit4::class)
 class AndroidLogTest {
-  @Suppress("UNUSED_PARAMETER")
-  private class FakeWriter {
-    var level: Log.Level? = null
-    var message = ""
+    @Suppress("UNUSED_PARAMETER")
+    private class FakeWriter {
+        var level: Log.Level? = null
+        var message = ""
 
-    fun write(level: Log.Level, message: String, throwable: Throwable?) {
-      this.level = level
-      this.message = message
+        fun write(level: Log.Level, message: String, throwable: Throwable?) {
+            this.level = level
+            this.message = message
+        }
     }
-  }
 
-  @Test
-  fun log_verbose() {
-    initLogForAndroid(Log.Level.Verbose)
-    val writer = FakeWriter()
-    Log.writer = writer::write
-    Log.verbose { "Foo" }
-    assertThat(writer.level).isEqualTo(Log.Level.Verbose)
-    assertThat(writer.message).isEqualTo("Foo")
-  }
+    @Test
+    fun log_verbose() {
+        initLogForAndroid(Log.Level.Verbose)
+        val writer = FakeWriter()
+        Log.writer = writer::write
+        Log.verbose { "Foo" }
+        assertThat(writer.level).isEqualTo(Log.Level.Verbose)
+        assertThat(writer.message).isEqualTo("Foo")
+    }
 
-  @Test
-  fun log_debug() {
-    initLogForAndroid(Log.Level.Debug)
-    val writer = FakeWriter()
-    Log.writer = writer::write
-    Log.debug { "Foo" }
-    assertThat(writer.level).isEqualTo(Log.Level.Debug)
-    assertThat(writer.message).isEqualTo("Foo")
-  }
+    @Test
+    fun log_debug() {
+        initLogForAndroid(Log.Level.Debug)
+        val writer = FakeWriter()
+        Log.writer = writer::write
+        Log.debug { "Foo" }
+        assertThat(writer.level).isEqualTo(Log.Level.Debug)
+        assertThat(writer.message).isEqualTo("Foo")
+    }
 
-  @Test
-  fun log_verboseAndDebug() {
-    initLogForAndroid(Log.Level.Verbose)
-    val writer = FakeWriter()
-    Log.writer = writer::write
-    Log.verbose { "Foo" }
-    assertThat(writer.level).isEqualTo(Log.Level.Verbose)
-    assertThat(writer.message).isEqualTo("Foo")
-    Log.debug { "Bar" }
-    assertThat(writer.level).isEqualTo(Log.Level.Debug)
-    assertThat(writer.message).isEqualTo("Bar")
-  }
+    @Test
+    fun log_verboseAndDebug() {
+        initLogForAndroid(Log.Level.Verbose)
+        val writer = FakeWriter()
+        Log.writer = writer::write
+        Log.verbose { "Foo" }
+        assertThat(writer.level).isEqualTo(Log.Level.Verbose)
+        assertThat(writer.message).isEqualTo("Foo")
+        Log.debug { "Bar" }
+        assertThat(writer.level).isEqualTo(Log.Level.Debug)
+        assertThat(writer.message).isEqualTo("Bar")
+    }
 
-  @Test
-  fun log_verboseSkippedAtDebugLevel() {
-    initLogForAndroid(Log.Level.Debug)
-    val writer = FakeWriter()
-    Log.writer = writer::write
-    Log.verbose { "Foo" }
-    assertThat(writer.level).isNull()
-    assertThat(writer.message).isEmpty()
-    Log.debug { "Bar" }
-    assertThat(writer.level).isEqualTo(Log.Level.Debug)
-    assertThat(writer.message).isEqualTo("Bar")
-  }
+    @Test
+    fun log_verboseSkippedAtDebugLevel() {
+        initLogForAndroid(Log.Level.Debug)
+        val writer = FakeWriter()
+        Log.writer = writer::write
+        Log.verbose { "Foo" }
+        assertThat(writer.level).isNull()
+        assertThat(writer.message).isEmpty()
+        Log.debug { "Bar" }
+        assertThat(writer.level).isEqualTo(Log.Level.Debug)
+        assertThat(writer.message).isEqualTo("Bar")
+    }
 }

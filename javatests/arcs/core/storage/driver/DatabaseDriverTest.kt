@@ -88,7 +88,12 @@ class DatabaseDriverTest {
                 )
             )
         )
-        database.data[driver.storageKey] = DatabaseData.Entity(entity, DEFAULT_SCHEMA, 1, VersionMap())
+        database.data[driver.storageKey] = DatabaseData.Entity(
+            entity,
+            DEFAULT_SCHEMA,
+            1,
+            VersionMap()
+        )
 
         var calledWithData: CrdtEntity.Data? = null
         var calledWithVersion: Int? = null
@@ -146,7 +151,11 @@ class DatabaseDriverTest {
     @Test
     fun send_singleton_withValue() = runBlockingTest {
         val driver = buildDriver<CrdtSingleton.DataImpl<Reference>>(database)
-        val entity = createPersonCrdt("jason", setOf("555-5555", "555-5556"), VersionMap("foo" to 1))
+        val entity = createPersonCrdt(
+            "jason",
+            setOf("555-5555", "555-5556"),
+            VersionMap("foo" to 1)
+        )
         val singleton = entity.toCrdtSingleton(driver.storageKey, VersionMap("bar" to 2))
 
         driver.send(singleton, 1)
@@ -356,7 +365,9 @@ class DatabaseDriverTest {
     ) {
         var schema: Schema?
             get() = schemaLookup("whatever")
-            set(value) { schemaLookup = createSchemaLookup(value) }
+            set(value) {
+                schemaLookup = createSchemaLookup(value)
+            }
 
         suspend fun build(): DatabaseDriver<Data> =
             DatabaseDriver(storageKey, dataClass, schemaLookup, database)

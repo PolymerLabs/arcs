@@ -240,7 +240,7 @@ class TestActivity : AppCompatActivity() {
             SystemHealthTextWatch {
                 dataSizeInBytes = it.toIntOrNull()?.takeIf {
                     it >= SystemHealthTestEntity.BASE_BOOLEAN.toString().length +
-                    SystemHealthTestEntity.BASE_SEQNO.toString().length
+                        SystemHealthTestEntity.BASE_SEQNO.toString().length
                 } ?: dataSizeInBytes
             }
         )

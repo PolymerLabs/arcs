@@ -63,14 +63,21 @@ class StorageProxyTest {
 
     private lateinit var fakeStoreEndpoint: StoreEndpointFake<CrdtData, CrdtOperationAtTime, String>
 
-    @Mock private lateinit var mockStorageEndpointProvider:
+    @Mock
+    private lateinit var mockStorageEndpointProvider:
         StorageCommunicationEndpointProvider<CrdtData, CrdtOperationAtTime, String>
-    @Mock private lateinit var mockCrdtOperation: CrdtOperationAtTime
-    @Mock private lateinit var mockCrdtModel: CrdtModel<CrdtData, CrdtOperationAtTime, String>
-    @Mock private lateinit var mockCrdtData: CrdtData
-    @Mock private lateinit var mockTime: Time
-    @Mock private lateinit var mockAnalytics: Analytics
-    @Mock private lateinit var mockStorageKey: StorageKey
+    @Mock
+    private lateinit var mockCrdtOperation: CrdtOperationAtTime
+    @Mock
+    private lateinit var mockCrdtModel: CrdtModel<CrdtData, CrdtOperationAtTime, String>
+    @Mock
+    private lateinit var mockCrdtData: CrdtData
+    @Mock
+    private lateinit var mockTime: Time
+    @Mock
+    private lateinit var mockAnalytics: Analytics
+    @Mock
+    private lateinit var mockStorageKey: StorageKey
 
     private lateinit var scheduler: Scheduler
     private val callbackId = StorageProxy.CallbackIdentifier("test")
@@ -724,6 +731,7 @@ class StorageProxyTest {
                 override fun toKeyString(): String {
                     return Protocols.VOLATILE_DRIVER
                 }
+
                 override fun childKeyWithComponent(component: String): StorageKey {
                     return mockStorageKey
                 }
@@ -767,6 +775,7 @@ class StorageProxyTest {
                 override fun toKeyString(): String {
                     return Protocols.DATABASE_DRIVER
                 }
+
                 override fun childKeyWithComponent(component: String): StorageKey {
                     return mockStorageKey
                 }
@@ -777,6 +786,7 @@ class StorageProxyTest {
                 override fun toKeyString(): String {
                     return Protocols.DATABASE_DRIVER
                 }
+
                 override fun childKeyWithComponent(component: String): StorageKey {
                     return mockStorageKey
                 }

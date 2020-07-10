@@ -72,7 +72,8 @@ class VariableEntityBaseTest {
             variableEntity.getSingletonValue("num")
         }
         assertThat(e).hasMessageThat().isEqualTo(
-            "${DummyVariableEntity.ENTITY_CLASS_NAME} does not have a singleton field called \"num\"."
+            "${DummyVariableEntity.ENTITY_CLASS_NAME} does not have a singleton field " +
+                "called \"num\"."
         )
     }
 

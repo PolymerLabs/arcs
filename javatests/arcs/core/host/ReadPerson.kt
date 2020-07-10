@@ -29,6 +29,6 @@ class ReadPerson : AbstractReadPerson() {
     }
 
     suspend fun await() {
-       deferred.await()
+        deferred.await()
     }
 }

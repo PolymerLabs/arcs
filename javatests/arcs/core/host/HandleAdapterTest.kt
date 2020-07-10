@@ -157,15 +157,15 @@ class HandleAdapterTest {
 
     @Test
     fun singleton_noOpsAfterClose() = runTest {
-       val handle = manager.createHandle(
-           HandleSpec(
-               READ_WRITE_HANDLE,
-               HandleMode.ReadWrite,
-               SingletonType(EntityType(Person.SCHEMA)),
-               Person
-           ),
-           STORAGE_KEY
-       ) as ReadWriteSingletonHandle<Person>
+        val handle = manager.createHandle(
+            HandleSpec(
+                READ_WRITE_HANDLE,
+                HandleMode.ReadWrite,
+                SingletonType(EntityType(Person.SCHEMA)),
+                Person
+            ),
+            STORAGE_KEY
+        ) as ReadWriteSingletonHandle<Person>
 
         handle.dispatchStore(Person("test"))
         handle.dispatchClose()

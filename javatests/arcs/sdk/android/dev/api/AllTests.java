@@ -8,4 +8,6 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({
   ArcDataTest.class,
 })
-public class AllTests {}
+public class AllTests {
+
+}

@@ -152,6 +152,7 @@ class CapabilitiesTest {
             )
         ).isFalse()
     }
+
     @Test
     fun capabilities_isEquivalent() {
         val capabilities = Capabilities(listOf(Capability.Range(Ttl.Days(10), Ttl.Days(2))))
@@ -173,6 +174,7 @@ class CapabilitiesTest {
             Capabilities(listOf(Capability.Range(Ttl.Days(10), Ttl.Days(2))))
         )).isTrue()
     }
+
     @Test
     fun capabilities_isEquivalent_multipleRanges() {
         val capabilities = Capabilities(
@@ -205,7 +207,7 @@ class CapabilitiesTest {
             Capabilities(listOf(Persistence.ON_DISK, Encryption(true)))
         )).isFalse()
         assertThat(capabilities.isEquivalent(
-              Capabilities(listOf(Persistence.ON_DISK, Ttl.Days(10)))
+            Capabilities(listOf(Persistence.ON_DISK, Ttl.Days(10)))
         )).isFalse()
         assertThat(capabilities.isEquivalent(
             Capabilities(listOf(Persistence.ON_DISK, Capability.Range(Ttl.Days(10), Ttl.Days(2))))

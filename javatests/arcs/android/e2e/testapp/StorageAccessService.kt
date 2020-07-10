@@ -48,6 +48,7 @@ class StorageAccessService : LifecycleService() {
                     )
                 )
             )
+
             @Suppress("UNCHECKED_CAST")
             val singletonHandle = handleManager.createHandle(
                 HandleSpec(

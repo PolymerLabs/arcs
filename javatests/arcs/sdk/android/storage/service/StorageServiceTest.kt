@@ -151,6 +151,7 @@ class StorageServiceTest {
         class MyStorageService : StorageService() {
             fun changeConfig(config: StorageServiceConfig) = schedulePeriodicJobs(config)
         }
+
         val sts = MyStorageService()
         sts.onCreate()
 

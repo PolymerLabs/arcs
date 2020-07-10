@@ -168,8 +168,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
 
         val numOfTasks =
             settings.numOfListenerThreads +
-            settings.numOfWriterThreads +
-            if (settings.clearedEntities >= 0) 1 else 0
+                settings.numOfWriterThreads +
+                if (settings.clearedEntities >= 0) 1 else 0
         if (settings.function != Function.STOP && settings.timesOfIterations > 0) {
             notify { "Preparing data and tests..." }
             tasks = Array(numOfTasks) { id ->
@@ -258,8 +258,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         earlyExit = false
         val numOfTasks =
             settings.numOfListenerThreads +
-            settings.numOfWriterThreads +
-            if (settings.clearedEntities >= 0) 1 else 0
+                settings.numOfWriterThreads +
+                if (settings.clearedEntities >= 0) 1 else 0
         val watchdog = Watchdog(settings)
 
         // Task and handle manager assignments
@@ -268,11 +268,11 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             // Per-task single-threaded execution context with Watchdog monitoring instabilities
             val taskCoroutineContext =
                 task.asCoroutineDispatcher() +
-                if (settings.function == Function.STABILITY_TEST) {
-                    stabilityExceptionHandler(id)
-                } else {
-                    performanceExceptionHandler(id)
-                }
+                    if (settings.function == Function.STABILITY_TEST) {
+                        stabilityExceptionHandler(id)
+                    } else {
+                        performanceExceptionHandler(id)
+                    }
 
             TaskHandle(
                 EntityHandleManager(
@@ -308,7 +308,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                     id,
                     taskType,
                     settings.function == Function.STABILITY_TEST &&
-                    Random.nextInt(0, 100) < settings.storageClientCrashRate,
+                        Random.nextInt(0, 100) < settings.storageClientCrashRate,
                     Random.nextInt(0, settings.timesOfIterations),
                     settings.timesOfIterations
                 )
@@ -352,7 +352,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                             delay(Random.nextLong(0, storageClientCrashDelayMs))
                             // Randomly crash StorageService if we are testing stability.
                             job.cancel("causing troubles on a client",
-                                       StorageClientCrashException())
+                                StorageClientCrashException())
                         }
                     }
                 },
@@ -418,8 +418,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 }
             }
 
-            handle.onUpdate {
-                entity ->
+            handle.onUpdate { entity ->
                 if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
                     val time = System.currentTimeMillis()
                     tasksEvents[taskId]?.writer?.withLock {
@@ -469,8 +468,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 }
             }
 
-            handle.onUpdate {
-                entity ->
+            handle.onUpdate { entity ->
                 if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
                     val time = System.currentTimeMillis()
                     tasksEvents[taskId]?.writer?.withLock {
@@ -773,7 +771,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 events.reader.withLock {
                     calculator.addAll(
                         events.queue.filter {
-                            it.eventId == TaskEventId.HANDLE_FETCH_LATENCY }.map { it.timeMs }
+                            it.eventId == TaskEventId.HANDLE_FETCH_LATENCY
+                        }.map { it.timeMs }
                     )
                 }
             }
@@ -845,7 +844,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 events.reader.withLock {
                     calculator.addAll(
                         events.queue.filter {
-                            it.eventId == TaskEventId.HANDLE_CLEAR_LATENCY }.map { it.timeMs }
+                            it.eventId == TaskEventId.HANDLE_CLEAR_LATENCY
+                        }.map { it.timeMs }
                     )
                 }
             }
@@ -886,7 +886,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 }
             }
 
-            historyMap.filterValues { (writers, _) -> writers.size == 1
+            historyMap.filterValues { (writers, _) ->
+                writers.size == 1
             }.forEach { _, (writers, readers) ->
                 calculator.addAll(readers.map { it - writers[0] })
             }
@@ -1012,17 +1013,17 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                     """
                     |[Memory Stats]
                     |Private-dirty dalvik heap (before GC): ${
-                        formatter.format(appJvmHeapBeforeGc - it[0]) } KB
+                    formatter.format(appJvmHeapBeforeGc - it[0])} KB
                     |Private-dirty dalvik heap (after GC): ${
-                        formatter.format(appJvmHeapAfterGc - it[0]) } KB
+                    formatter.format(appJvmHeapAfterGc - it[0])} KB
                     |Private-dirty native heap (before GC): ${
-                        formatter.format(appNativeHeapBeforeGc - it[1]) } KB
+                    formatter.format(appNativeHeapBeforeGc - it[1])} KB
                     |Private-dirty native heap (after GC): ${
-                        formatter.format(appNativeHeapAfterGc - it[1]) } KB
+                    formatter.format(appNativeHeapAfterGc - it[1])} KB
                     |All(dalvik+native) heaps (before GC): ${
-                        formatter.format(allHeapsBeforeGc - it[2]) } KB
+                    formatter.format(allHeapsBeforeGc - it[2])} KB
                     |All(dalvik+native) heaps (after GC): ${
-                        formatter.format(allHeapsAfterGc - it[2]) } KB
+                    formatter.format(allHeapsAfterGc - it[2])} KB
                     |Heap dump: $hprofFilePath
                     ${platformNewline.repeat(1)}
                     """.trimMargin("|")
@@ -1116,11 +1117,13 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         var countDown: Int,
         var future: ScheduledFuture<*>? = null
     )
+
     private data class TaskHandle(
         val handleManager: EntityHandleManager,
         val coroutineContext: CoroutineContext,
         var handle: Any? = null
     )
+
     private data class TaskEvent(
         val eventId: TaskEventId,
         val timeMs: Long,
