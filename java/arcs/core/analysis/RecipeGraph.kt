@@ -11,8 +11,6 @@
 
 package arcs.core.analysis
 
-import arcs.core.data.Check
-import arcs.core.data.Claim
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.Recipe
@@ -25,11 +23,10 @@ import arcs.core.data.Recipe
  * `p -s-> h` in the graph. Similarly, for every read connection from a particle `p` to a handle `h`
  * using a connection spec `s`, there is a labeled edge `h -s-> p` in the graph.
 */
-data class RecipeGraph(
-    val particleNodes: List<Node.Particle>,
-    val handleNodes: List<Node.Handle>
-) {
-    val nodes: List<Node> = particleNodes + handleNodes
+data class RecipeGraph(val recipe: Recipe) {
+    val nodes: List<Node> = convertRecipeToNodes(recipe)
+    val particleNodes: List<Node.Particle> = nodes.filterIsInstance<Node.Particle>()
+    val handleNodes: List<Node.Handle> = nodes.filterIsInstance<Node.Handle>()
 
     /**
      * A class representing the properties of a join.
@@ -95,17 +92,7 @@ data class RecipeGraph(
         }
 
         /** A node representing a particle. */
-        data class Particle(
-            val particle: Recipe.Particle,
-            val claims: List<Claim>,
-            val checks: List<Check>
-        ) : Node() {
-            constructor(particle: Recipe.Particle) : this(
-                particle,
-                particle.spec.claims,
-                particle.spec.checks
-            )
-
+        data class Particle(val particle: Recipe.Particle) : Node() {
             val particleName = particle.spec.name
 
             override val debugName = "p:$particleName"
@@ -122,13 +109,13 @@ data class RecipeGraph(
     }
 
     companion object {
-        /** Factory method to convert a [Recipe] into a [RecipeGraph]. */
-        operator fun invoke(recipe: Recipe): RecipeGraph {
+        /** Converts the given [recipe] to [Node]s. */
+        fun convertRecipeToNodes(recipe: Recipe): List<Node> {
             val handleNodesMap = recipe.handles.mapValues { (_, handle) -> Node.Handle(handle) }
             val handleNodes = handleNodesMap.values.toList()
             handleNodes.forEach { it.addJoinEdges(handleNodesMap) }
             val particleNodes = recipe.particles.map { it.getNode(handleNodesMap) as Node.Particle }
-            return RecipeGraph(particleNodes, handleNodes)
+            return particleNodes + handleNodes
         }
 
         /**

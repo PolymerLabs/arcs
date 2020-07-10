@@ -1,67 +1,65 @@
 package arcs.core.policy
 
-import arcs.core.analysis.RecipeGraph
 import arcs.core.data.AccessPath
 import arcs.core.data.Check
-import arcs.core.data.Claim
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.InformationFlowLabel.SemanticTag
+import arcs.core.data.Recipe
 
 /**
- * Translates the given [policy] into dataflow analysis checks and claims on the given [graph],
- * returning a modified copy of the graph.
- *
- * @throws PolicyViolation if the [graph] violates the [policy]
+ * Additional checks and claims that should be added to the particles in a recipe, which together
+ * are used to enforce that it complies with a policy.
  */
-fun applyPolicy(policy: Policy, graph: RecipeGraph): RecipeGraph {
-    val egressParticleNodes = graph.particleNodes.filterNot { it.particle.spec.isolated }
-    checkEgressParticles(policy, egressParticleNodes)
+data class PolicyConstraints(
+    val policy: Policy,
+    val recipe: Recipe,
+    val egressChecks: Map<Recipe.Particle, List<Check>>
+    // TODO(b/157605232): Add store claims.
+)
+
+/**
+ * Translates the given [policy] into dataflow analysis checks and claims, which are to be added to
+ * the particles from the given [recipe].
+ *
+ * @return additional checks and claims for the particles as a [PolicyConstraints] object
+ * @throws PolicyViolation if the [particles] violate the [policy]
+ */
+fun translatePolicy(policy: Policy, recipe: Recipe): PolicyConstraints {
+    val egressParticles = recipe.particles.filterNot { it.spec.isolated }
+    checkEgressParticles(policy, egressParticles)
 
     // Add check statements to every egress particle node.
     val egressCheckPredicate = createEgressCheckPredicate(policy)
-    val additionalChecks = egressParticleNodes.associateWith { node ->
+    val egressChecks = egressParticles.associateWith { particle ->
         // Each handle connection needs its own check statement.
-        node.particle.spec.connections.values
+        particle.spec.connections.values
             .filter {
                 // TODO(b/157605232): Also check canQuery -- but first, need to add QUERY to the
                 // Direction enum in the manifest proto.
                 it.direction.canRead
             }
             .map { connectionSpec ->
-                Check.Assert(AccessPath(node.particle, connectionSpec), egressCheckPredicate)
+                Check.Assert(AccessPath(particle, connectionSpec), egressCheckPredicate)
             }
     }
 
-    // TODO(b/157605232): Add additional claims.
-    val additionalClaims = emptyMap<RecipeGraph.Node.Particle, List<Claim>>()
-
-    // TODO(b/157605232): This doesn't work! The edges between the nodes aren't updated correctly.
-    // Delete the copyWith method, and update the API for applyPolicy to instead look roughly like
-    // so:
-    //
-    // fun applyPolicy(
-    //     policy: Policy,
-    //     particles: List<ParticleSpec>
-    // ): Map<ParticleSpec, Pair<Claims, Checks>>
-    return graph.copyWith(additionalClaims, additionalChecks)
+    // TODO(b/157605232): Add store claims.
+    return PolicyConstraints(policy, recipe, egressChecks)
 }
 
 /**
  * Verifies that the given egress particle nodes match the policy. The only egress particle allowed
  * to be used with a policy named `Foo` is an egress particle named `Egress_Foo`.
  */
-private fun checkEgressParticles(
-    policy: Policy,
-    egressParticleNodes: List<RecipeGraph.Node.Particle>
-) {
-    val numValidEgressParticles = egressParticleNodes.count {
-        it.particle.spec.name == policy.egressParticleName
+private fun checkEgressParticles(policy: Policy, egressParticles: List<Recipe.Particle>) {
+    val numValidEgressParticles = egressParticles.count {
+        it.spec.name == policy.egressParticleName
     }
     if (numValidEgressParticles > 1) {
         throw PolicyViolation.MultipleEgressParticles(policy)
     }
-    val invalidEgressParticles = egressParticleNodes
-        .map { it.particle.spec }
+    val invalidEgressParticles = egressParticles
+        .map { it.spec }
         .filter { it.name != policy.egressParticleName }
     if (invalidEgressParticles.isNotEmpty()) {
         throw PolicyViolation.InvalidEgressParticle(policy, invalidEgressParticles.map { it.name })
@@ -94,23 +92,6 @@ private fun createEgressCheckPredicate(policy: Policy): Predicate {
     }
     // OR the predicates for each redaction label together.
     return Predicate.or(allowedForEgress, *labelPredicates.toTypedArray())
-}
-
-/** Returns a copy of the [RecipeGraph] with extra checks and claims added to particle nodes. */
-private fun RecipeGraph.copyWith(
-    additionalClaims: Map<RecipeGraph.Node.Particle, List<Claim>>,
-    additionalChecks: Map<RecipeGraph.Node.Particle, List<Check>>
-): RecipeGraph {
-    return RecipeGraph(
-        particleNodes.map { node ->
-            RecipeGraph.Node.Particle(
-                node.particle,
-                node.claims + (additionalClaims[node] ?: emptyList()),
-                node.checks + (additionalChecks[node] ?: emptyList())
-            )
-        },
-        handleNodes
-    )
 }
 
 private fun labelPredicate(label: String) = Predicate.Label(SemanticTag(label))
