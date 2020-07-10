@@ -15,12 +15,18 @@ import arcs.core.storage.StorageKeyParser
 import arcs.core.testutil.fail
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class DatabaseStorageKeyTest {
+    @Before
+    fun setUp() {
+        DatabaseStorageKey.registerParser()
+    }
+
     @Test
     fun toString_renders_correctly_persistent() {
         val key = DatabaseStorageKey.Persistent("foo", "1234a", dbName = "myDb")
