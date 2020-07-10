@@ -25,6 +25,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.VolatileDriverProvider
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.testutil.fail
 import arcs.core.util.Log
 import arcs.core.util.plus
 import arcs.core.util.testutil.LogRule
@@ -569,9 +570,14 @@ open class AllocatorTestBase {
         }
         // TODO(b//160933123): the containing exception is somehow "duplicated",
         //                     so the real cause is a second level down
-        error.cause!!.cause.let {
-            assertThat(it).isInstanceOf(IllegalArgumentException::class.java)
-            assertThat(it).hasMessageThat().isEqualTo("Boom!")
+        val cause = error.cause!!.cause
+        when (cause) {
+            // For CoreAllocatorTest
+            is IllegalArgumentException -> assertThat(cause.message).isEqualTo("Boom!")
+            // For AndroidAllocatorTest
+            is DeserializedException ->
+                assertThat(cause.message).isEqualTo("java.lang.IllegalArgumentException: Boom!")
+            else -> fail("Expected IllegalArgumentException or DeserializedException; got $cause")
         }
     }
 }
