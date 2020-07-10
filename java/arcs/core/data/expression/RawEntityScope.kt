@@ -36,7 +36,7 @@ class RawEntityScope(val rawEntity: RawEntity) : Expression.Scope {
                     RawEntityScope(value.dereference() as RawEntity) as T
                 }
             }
-            else -> throw IllegalArgumentException("Unknown lookup result ${value}")
+            else -> throw IllegalArgumentException("Unknown lookup result $value")
         }
     }
 }
