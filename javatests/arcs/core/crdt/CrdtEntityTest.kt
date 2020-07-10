@@ -290,13 +290,13 @@ class CrdtEntityTest {
         creation: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
         expiration: Long = RawEntity.UNINITIALIZED_TIMESTAMP
     ) =
-            CrdtEntity(VersionMap(), RawEntity(
-                id = "an-id",
-                singletons = mapOf(),
-                collections = mapOf(),
-                creationTimestamp = creation,
-                expirationTimestamp = expiration
-            ))
+        CrdtEntity(VersionMap(), RawEntity(
+            id = "an-id",
+            singletons = mapOf(),
+            collections = mapOf(),
+            creationTimestamp = creation,
+            expirationTimestamp = expiration
+        ))
 
     @Test
     fun mergeCreationTimestampCorrectly() {

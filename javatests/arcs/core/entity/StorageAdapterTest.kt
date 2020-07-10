@@ -153,13 +153,19 @@ class StorageAdapterTest {
         refAdapterWithKey(dummyKey).storableToReferencable(referenceWithKey(ramdiskKey))
 
         // Storing in ramdisk a reference to the db.
-        assertFails { refAdapterWithKey(ramdiskKey).storableToReferencable(referenceWithKey(dbKey)) }
+        assertFails {
+            refAdapterWithKey(ramdiskKey).storableToReferencable(referenceWithKey(dbKey))
+        }
 
         // Storing in dummy a reference to the db.
         assertFails { refAdapterWithKey(dummyKey).storableToReferencable(referenceWithKey(dbKey)) }
 
         // Storing the reference in a different db.
-        val dbKey2 = DatabaseStorageKey.Persistent("db", DummyEntity.SCHEMA_HASH, dbName = "different")
+        val dbKey2 = DatabaseStorageKey.Persistent(
+            "db",
+            DummyEntity.SCHEMA_HASH,
+            dbName = "different"
+        )
         assertFails { refAdapterWithKey(dbKey2).storableToReferencable(referenceWithKey(dbKey)) }
 
         // Illegal reference (points to refmode key).
@@ -187,15 +193,27 @@ class StorageAdapterTest {
         entityStorageAdapterWithKey(dbRefMode).storableToReferencable(entityWithKey(dbKey))
 
         // Storing in ramdisk a reference to the db.
-        assertFails { entityStorageAdapterWithKey(ramdiskKey).storableToReferencable(entityWithKey(dbKey)) }
-        assertFails { entityStorageAdapterWithKey(ramdiskRefMode).storableToReferencable(entityWithKey(dbKey)) }
+        assertFails {
+            entityStorageAdapterWithKey(ramdiskKey).storableToReferencable(entityWithKey(dbKey))
+        }
+        assertFails {
+            entityStorageAdapterWithKey(ramdiskRefMode).storableToReferencable(entityWithKey(dbKey))
+        }
 
         // Storing in dummy a reference to the db.
-        assertFails { entityStorageAdapterWithKey(dummyKey).storableToReferencable(entityWithKey(dbKey)) }
+        assertFails {
+            entityStorageAdapterWithKey(dummyKey).storableToReferencable(entityWithKey(dbKey))
+        }
 
         // Storing the reference in a different db.
-        val dbKey2 = DatabaseStorageKey.Persistent("db", DummyEntity.SCHEMA_HASH, dbName = "different")
-        assertFails { entityStorageAdapterWithKey(dbKey2).storableToReferencable(entityWithKey(dbKey)) }
+        val dbKey2 = DatabaseStorageKey.Persistent(
+            "db",
+            DummyEntity.SCHEMA_HASH,
+            dbName = "different"
+        )
+        assertFails {
+            entityStorageAdapterWithKey(dbKey2).storableToReferencable(entityWithKey(dbKey))
+        }
 
         // Illegal reference (points to refmode key).
         assertFailsWith<IllegalStateException> {
@@ -204,7 +222,9 @@ class StorageAdapterTest {
 
         // Invalid refmode key, the container and backing store are in different dbs.
         val invalidKey = ReferenceModeStorageKey(dbKey2, dbKey)
-        assertFails { entityStorageAdapterWithKey(invalidKey).storableToReferencable(entityWithKey(dbKey)) }
+        assertFails {
+            entityStorageAdapterWithKey(invalidKey).storableToReferencable(entityWithKey(dbKey))
+        }
     }
 
     private fun refAdapterWithKey(key: StorageKey) =

@@ -65,6 +65,7 @@ class StorageServiceManagerTest {
 
     private suspend fun buildManager() =
         StorageServiceManager(coroutineContext, ConcurrentHashMap<StorageKey, Store<*, *, *>>())
+
     private val time = FakeTime()
     private val scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
     private val ramdiskKey = ReferenceModeStorageKey(

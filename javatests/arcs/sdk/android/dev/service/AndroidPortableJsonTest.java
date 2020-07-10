@@ -14,6 +14,7 @@ import static org.junit.Assert.assertNotSame;
 
 @RunWith(JUnit4.class)
 public class AndroidPortableJsonTest {
+
   // TODO(cromwellian): use dependendency injection to make these tests run on all platforms
   @Test
   public void testEmpty() {
@@ -40,8 +41,8 @@ public class AndroidPortableJsonTest {
     obj.put("obj", innerObj);
 
     assertEquals(
-        new HashSet<>(Arrays.asList("str", "int", "num", "bool", "obj")),
-        new HashSet<>(Arrays.asList(obj.keys().toArray())));
+      new HashSet<>(Arrays.asList("str", "int", "num", "bool", "obj")),
+      new HashSet<>(Arrays.asList(obj.keys().toArray())));
 
     assertEquals(str, obj.getString("str"));
     System.err.println("int is " + obj.getInt("int") + " vs " + i);
@@ -53,8 +54,8 @@ public class AndroidPortableJsonTest {
 
     assertEquals(obj, parser.parse(parser.stringify(obj)));
     assertEquals(
-        parser.stringify(obj),
-        parser.stringify(parser.parse(parser.stringify(obj))));
+      parser.stringify(obj),
+      parser.stringify(parser.parse(parser.stringify(obj))));
 
     assertNotSame(obj, innerObj);
     assertNotSame(innerObj, obj);
@@ -82,11 +83,11 @@ public class AndroidPortableJsonTest {
     assertEquals(bool, obj.getBool(3));
     assertEquals(parser.stringify(innerObj), parser.stringify(obj.getObject(4)));
     assertEquals(
-        parser.stringify(obj),
-        parser.stringify(parser.parse(parser.stringify(obj))));
+      parser.stringify(obj),
+      parser.stringify(parser.parse(parser.stringify(obj))));
     assertEquals(
-        parser.parse(parser.stringify(obj)),
-        parser.parse(parser.stringify(parser.parse(parser.stringify(obj)))));
+      parser.parse(parser.stringify(obj)),
+      parser.parse(parser.stringify(parser.parse(parser.stringify(obj)))));
     assertEquals(obj, parser.parse(parser.stringify(obj)));
     assertNotSame(obj, innerObj);
     assertNotSame(innerObj, obj);

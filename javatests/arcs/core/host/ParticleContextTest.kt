@@ -41,10 +41,14 @@ import org.mockito.MockitoAnnotations
 @OptIn(ExperimentalCoroutinesApi::class)
 class ParticleContextTest {
 
-    @Mock lateinit var particle: Particle
-    @Mock lateinit var handles: HandleHolder
-    @Mock lateinit var notifyReady: (Particle) -> Unit
-    @Mock lateinit var mark: (String) -> Unit
+    @Mock
+    lateinit var particle: Particle
+    @Mock
+    lateinit var handles: HandleHolder
+    @Mock
+    lateinit var notifyReady: (Particle) -> Unit
+    @Mock
+    lateinit var mark: (String) -> Unit
     lateinit var context: ParticleContext
 
     @Before

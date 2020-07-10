@@ -80,6 +80,7 @@ class RecipeGraphTest {
                 Recipe.Particle.HandleConnection(rwConnectionSpec, thingHandle, TypeVariable("thing"))
             )
         )
+
         /**
          * Defines the following recipe (similarly for query modes):
          *    recipe PassThrough

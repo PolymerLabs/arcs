@@ -67,6 +67,7 @@ class GuardTest {
     @Test
     fun lazyInitializer_neverCalled_whenSetHappensFisrst_andIsNull() = runBlockingTest {
         var initializerCalled = false
+
         class NullableValue {
             val mutex = Mutex()
             var value: Int? by guardedBy(mutex) {
@@ -74,6 +75,7 @@ class GuardTest {
                 1
             }
         }
+
         val obj = NullableValue()
 
         assertThat(initializerCalled).isFalse()

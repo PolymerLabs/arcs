@@ -115,57 +115,89 @@ class CombineUpdatesTest : AbstractCombineUpdatesTest() {
             "checkEvents" -> {
                 if (singleHandleCount == 1) {
                     handles.errors.store(
-                        CombineUpdatesTest_Errors(msg = "Single Handle OnUpdate called $singleHandleCount times.")
+                        CombineUpdatesTest_Errors(
+                            msg = "Single Handle OnUpdate called $singleHandleCount times."
+                        )
                     )
                 }
                 if (doubleHandleCount == 2) {
                     handles.errors.store(
-                        CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 2 Handles called $doubleHandleCount times.")
+                        CombineUpdatesTest_Errors(
+                            msg = "Calling combineUpdates with 2 Handles called " +
+                                "$doubleHandleCount times."
+                        )
                     )
                 }
                 if (doubleHandleCount == 2) {
                     handles.errors.store(
-                        CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 2 Handles called $doubleHandleCount times.")
+                        CombineUpdatesTest_Errors(
+                            msg = "Calling combineUpdates with 2 Handles called " +
+                                "$doubleHandleCount times."
+                        )
                     )
                 }
                 if (tripleHandleCount == 3) {
                     handles.errors.store(
-                        CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 3 Handles called $tripleHandleCount times.")
+                        CombineUpdatesTest_Errors(
+                            msg = "Calling combineUpdates with 3 Handles called " +
+                                "$tripleHandleCount times."
+                        )
                     )
                 }
                 if (quadHandleCount == 4) {
                     handles.errors.store(
-                        CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 4 Handles called $quadHandleCount times.")
+                        CombineUpdatesTest_Errors(
+                            msg = "Calling combineUpdates with 4 Handles called " +
+                                "$quadHandleCount times."
+                        )
                     )
                 }
                 if (quinHandleCount == 5) {
                     handles.errors.store(
-                        CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 5 Handles called $quinHandleCount times.")
+                        CombineUpdatesTest_Errors(
+                            msg = "Calling combineUpdates with 5 Handles called " +
+                                "$quinHandleCount times."
+                        )
                     )
                 }
                 if (sixHandleCount == 6) {
                     handles.errors.store(
-                        CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 6 Handles called $sixHandleCount times.")
+                        CombineUpdatesTest_Errors(
+                            msg = "Calling combineUpdates with 6 Handles called " +
+                                "$sixHandleCount times."
+                        )
                     )
                 }
                 if (septHandleCount == 7) {
                     handles.errors.store(
-                        CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 7 Handles called $septHandleCount times.")
+                        CombineUpdatesTest_Errors(
+                            msg = "Calling combineUpdates with 7 Handles called " +
+                                "$septHandleCount times."
+                        )
                     )
                 }
                 if (octHandleCount == 8) {
                     handles.errors.store(
-                        CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 8 Handles called $octHandleCount times.")
+                        CombineUpdatesTest_Errors(
+                            msg = "Calling combineUpdates with 8 Handles called " +
+                                "$octHandleCount times."
+                        )
                     )
                 }
                 if (novHandleCount == 9) {
                     handles.errors.store(
-                        CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 9 Handles called $novHandleCount times.")
+                        CombineUpdatesTest_Errors(
+                            msg = "Calling combineUpdates with 9 Handles called " +
+                                "$novHandleCount times."
+                        )
                     )
                 }
                 if (decHandleCount == 10) {
                     handles.errors.store(
-                        CombineUpdatesTest_Errors(msg = "Calling combineUpdates with 10 Handles called $decHandleCount times.")
+                        CombineUpdatesTest_Errors(
+                            msg = "Calling combineUpdates with 10 Handles called " +
+                                "$decHandleCount times."
+                        )
                     )
                 }
             }

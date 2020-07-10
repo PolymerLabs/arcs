@@ -13,10 +13,14 @@ package arcs.sdk.wasm
 
 class HandleSyncUpdateTest : AbstractHandleSyncUpdateTest() {
     override fun onHandleSync(handle: WasmHandle, allSynced: Boolean) {
-        handles.res.store(HandleSyncUpdateTest_Res(txt = "sync:${handle.name}:$allSynced", num = 0.0))
+        handles.res.store(
+            HandleSyncUpdateTest_Res(txt = "sync:${handle.name}:$allSynced", num = 0.0)
+        )
         if (allSynced) {
-            var ptr = HandleSyncUpdateTest_Res()
-            handles.res.store(ptr.copy(txt = if (handles.sng.fetch() != null) "sng:populated" else "sng:null"))
+            val ptr = HandleSyncUpdateTest_Res()
+            handles.res.store(
+                ptr.copy(txt = if (handles.sng.fetch() != null) "sng:populated" else "sng:null")
+            )
         }
     }
 

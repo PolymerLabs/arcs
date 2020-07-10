@@ -14,7 +14,8 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class VariableTest {
 
-    @get:Rule val env = ShowcaseEnvironment(
+    @get:Rule
+    val env = ShowcaseEnvironment(
         ::OrderIngestion.toRegistration(),
         ::SkuRedactor.toRegistration(),
         ::Consumer.toRegistration()

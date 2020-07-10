@@ -165,7 +165,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
             "name", "bob".toReferencable(),
             "age", 42.0.toReferencable(),
             "list", listOf(1L, 1L, 2L).map { it.toReferencable() }
-                .toReferencable(FieldType.ListOf(FieldType.Long)),
+            .toReferencable(FieldType.ListOf(FieldType.Long)),
             "inline", RawEntity("", mapOf("inlineName" to "inline".toReferencable()))
         )
         assertThat(capturedBob.rawEntity.collections).isEmpty()

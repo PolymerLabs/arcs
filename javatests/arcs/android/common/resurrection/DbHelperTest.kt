@@ -35,16 +35,16 @@ class DbHelperTest {
             putBoolean("foo", true)
             putInt("bar", 1)
         }, "requestB", listOf(
-            RamDiskStorageKey("bThing")
-        )
+        RamDiskStorageKey("bThing")
+    )
     )
     private val requestC = ResurrectionRequest(
         ComponentName("c", "C"), ResurrectionRequest.ComponentType.Activity,
         ResurrectionRequest.ACTION_RESURRECT, PersistableBundle.EMPTY, "requestC", listOf(
-            RamDiskStorageKey("bThing"),
-            RamDiskStorageKey("cThing"),
-            RamDiskStorageKey("somethingElse")
-        )
+        RamDiskStorageKey("bThing"),
+        RamDiskStorageKey("cThing"),
+        RamDiskStorageKey("somethingElse")
+    )
     )
 
     @Before

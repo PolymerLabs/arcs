@@ -49,5 +49,5 @@ class TimeRangeTest {
         assertThat(range.inRange(1)).isTrue()
         assertThat(range.inRange(100)).isFalse()
         assertThat(range.inRange(RawEntity.UNINITIALIZED_TIMESTAMP)).isFalse()
-  }
+    }
 }

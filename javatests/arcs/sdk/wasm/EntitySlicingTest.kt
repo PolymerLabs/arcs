@@ -19,7 +19,9 @@ class EntitySlicingTest : AbstractEntitySlicingTest() {
 
         handles.s1.fetch()?.let { handles.res.store(Res("s1:${it.num.toInt()}")) }
         handles.s2.fetch()?.let { handles.res.store(Res("s2:${it.num.toInt()},${it.txt}")) }
-        handles.s3.fetch()?.let { handles.res.store(Res("s3:${it.num.toInt()},${it.txt},${it.flg}")) }
+        handles.s3.fetch()?.let {
+            handles.res.store(Res("s3:${it.num.toInt()},${it.txt},${it.flg}"))
+        }
 
         for (e in handles.c1.fetchAll()) {
             handles.res.store(Res("c1:${e.num.toInt()}"))

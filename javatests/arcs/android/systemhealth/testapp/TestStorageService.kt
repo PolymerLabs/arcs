@@ -66,7 +66,7 @@ class TestStorageServiceBindingDelegate(
     ): Boolean {
         val options = requireNotNull(options) {
             "ParcelableStoreOptions are required when binding to " +
-            "the TestStorageService from a ServiceStore."
+                "the TestStorageService from a ServiceStore."
         }
         return context.bindService(
             TestStorageService.createBindIntent(context, options), conn, flags)

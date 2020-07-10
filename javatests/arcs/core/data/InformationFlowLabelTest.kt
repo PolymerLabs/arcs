@@ -27,6 +27,7 @@ class InformationFlowLabelTest {
         val asPredicate: Predicate.Label
             get() = Predicate.Label(SemanticTag(name))
     }
+
     private val labels = enumValues<Labels>().map { it.name }
     private val indicesMap: Map<InformationFlowLabel, Int> = enumValues<Labels>().map {
         it.asPredicate.label to it.ordinal

@@ -156,7 +156,7 @@ class EntitySpecTest {
         entity.ensureEntityFields(idGenerator, "handle", FakeTime(currentTime), Ttl.Minutes(1))
 
         val expirationTimestamp = entity.serialize().expirationTimestamp
-        assertThat(expirationTimestamp).isEqualTo(currentTime + 60000) // 1 minute = 60'000 milliseconds
+        assertThat(expirationTimestamp).isEqualTo(currentTime + 60000)
     }
 
     @Test
@@ -307,10 +307,18 @@ class EntitySpecTest {
                     "texts" to setOf("def".toReferencable(), "ghi".toReferencable()),
                     "refs" to setOf(ref2.toReferencable(), ref3.toReferencable()),
                     "bts" to setOf(23.toByte().toReferencable(), 34.toByte().toReferencable()),
-                    "shrts" to setOf(234.toShort().toReferencable(), 345.toShort().toReferencable()),
+                    "shrts" to setOf(
+                        234.toShort().toReferencable(),
+                        345.toShort().toReferencable()
+                    ),
                     "nts" to setOf(234567.toReferencable(), 345678.toReferencable()),
                     "lngs" to setOf(1L.toReferencable(), 1234567890123L.toReferencable()),
-                    "chrs" to setOf('A'.toReferencable(), 'R'.toReferencable(), 'C'.toReferencable(), 'S'.toReferencable()),
+                    "chrs" to setOf(
+                        'A'.toReferencable(),
+                        'R'.toReferencable(),
+                        'C'.toReferencable(),
+                        'S'.toReferencable()
+                    ),
                     "flts" to setOf(2.3f.toReferencable(), 3.4f.toReferencable()),
                     "dbls" to setOf(2.3E200.toReferencable(), 3.4E100.toReferencable())
                 ),

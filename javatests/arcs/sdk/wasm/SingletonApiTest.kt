@@ -30,7 +30,9 @@ class SingletonApiTest : AbstractSingletonApiTest() {
                 }
                 if (x == 1) {
                     handles.errors.store(
-                      SingletonApiTest_Errors(msg = "case1: handle.onUpdate should not have been called yet.")
+                        SingletonApiTest_Errors(
+                            msg = "case1: handle.onUpdate should not have been called yet."
+                        )
                     )
                 }
                 handles.outHandle.clear()
@@ -44,7 +46,9 @@ class SingletonApiTest : AbstractSingletonApiTest() {
             "case2" -> {
                 if (x == 0) {
                     handles.errors.store(
-                      SingletonApiTest_Errors(msg = "case1: handle.onUpdate should have been called.")
+                        SingletonApiTest_Errors(
+                            msg = "case1: handle.onUpdate should have been called."
+                        )
                     )
                 }
                 val input = handles.inHandle.fetch()

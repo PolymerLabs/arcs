@@ -147,7 +147,9 @@ class JvmSchedulerProviderTest {
         schedulerProvider.cancelAll()
     }
 
-    private class SimpleProc(val name: String, block: () -> Unit) : Scheduler.Task.Processor(block) {
+    private class SimpleProc(
+        val name: String, block: () -> Unit
+    ) : Scheduler.Task.Processor(block) {
         override fun toString() = "SimpleProc($name)"
     }
 }

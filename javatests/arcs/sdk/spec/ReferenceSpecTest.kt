@@ -26,6 +26,7 @@ class ReferenceSpecTest {
 
     @get:Rule
     val log = LogRule()
+
     @get:Rule
     val harness = ReferenceSpecParticleTestHarness { ReferenceSpecParticle() }
 

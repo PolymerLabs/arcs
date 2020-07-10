@@ -286,9 +286,9 @@ open class AllocatorTestBase {
 
         val testKeys = listOf(inputPerson, outputPerson)
 
-        arc.partitions.flatMap { it.particles }.forEach {
-            particle -> particle.handles.forEach { (_, connection) ->
-               assertThat(connection.storageKey).isIn(testKeys)
+        arc.partitions.flatMap { it.particles }.forEach { particle ->
+            particle.handles.forEach { (_, connection) ->
+                assertThat(connection.storageKey).isIn(testKeys)
             }
         }
     }

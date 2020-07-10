@@ -9,6 +9,7 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class InformationFlowLabelsTest {
     enum class Labels { A, B, C }
+
     private val labels = enumValues<Labels>().map { it.name }
     private val bottom = InformationFlowLabels.getBottom()
     private val top = InformationFlowLabels.getTop()
