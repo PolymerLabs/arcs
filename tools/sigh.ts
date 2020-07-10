@@ -495,11 +495,22 @@ function ktlint(args: string[]): boolean {
   });
 
   const fixArgs = options.fix ? ['-F'] : [];
-  const result = saneSpawnSyncWithOutput('ktlint', [...fixArgs, 'java/**/*.kt', 'javatests/**/*.kt', 'particles/**/*.kt']);
-  if (result.stdout) {
-    sighLog(result.stdout);
+  const pathGlobs = [
+    'java/**/*.kt',
+    'javatests/**/*.kt',
+    'particles/**/*.kt'
+  ];
+  let success = true;
+  for (const pathGlob of pathGlobs) {
+    // Do one glob at a time. Apparently ktlint can't handle more than one glob,
+    // dunno why.
+    const result = saneSpawnSyncWithOutput('ktlint', [...fixArgs, pathGlob]);
+    if (result.stdout) {
+      sighLog(result.stdout);
+    }
+    success = success && result.success;
   }
-  return result.success;
+  return success;
 }
 
 function lint(args: string[]): boolean {
