@@ -67,17 +67,41 @@ class RecipeGraphTest {
         val readerParticle = Recipe.Particle(
             readerSpec,
             listOf(
-                Recipe.Particle.HandleConnection(readConnectionSpec, thingHandle, TypeVariable("thing")),
-                Recipe.Particle.HandleConnection(readSomeConnectionSpec, someHandle, TypeVariable("some")),
-                Recipe.Particle.HandleConnection(readJoinConnectionSpec, joinedHandle, TypeVariable("joined"))
+                Recipe.Particle.HandleConnection(
+                    readConnectionSpec,
+                    thingHandle,
+                    TypeVariable("thing")
+                ),
+                Recipe.Particle.HandleConnection(
+                    readSomeConnectionSpec,
+                    someHandle,
+                    TypeVariable("some")
+                ),
+                Recipe.Particle.HandleConnection(
+                    readJoinConnectionSpec,
+                    joinedHandle,
+                    TypeVariable("joined")
+                )
             )
         )
         val writerParticle = Recipe.Particle(
             writerSpec,
             listOf(
-                Recipe.Particle.HandleConnection(writeConnectionSpec, thingHandle, TypeVariable("thing")),
-                Recipe.Particle.HandleConnection(readConnectionSpec, thingHandle, TypeVariable("thing")),
-                Recipe.Particle.HandleConnection(rwConnectionSpec, thingHandle, TypeVariable("thing"))
+                Recipe.Particle.HandleConnection(
+                    writeConnectionSpec,
+                    thingHandle,
+                    TypeVariable("thing")
+                ),
+                Recipe.Particle.HandleConnection(
+                    readConnectionSpec,
+                    thingHandle,
+                    TypeVariable("thing")
+                ),
+                Recipe.Particle.HandleConnection(
+                    rwConnectionSpec,
+                    thingHandle,
+                    TypeVariable("thing")
+                )
             )
         )
 

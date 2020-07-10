@@ -152,9 +152,9 @@ class DatabaseImplTest {
         // Creates new IDs for each field.
         val fields1 = database.getSchemaFields(schemaTypeId1, db)
         assertThat(fields1).containsExactly(
-            "text", DatabaseImpl.SchemaField("text", 1L, TEXT_TYPE_ID, isCollection = FieldClass.Singleton),
-            "bool", DatabaseImpl.SchemaField("bool", 2L, BOOLEAN_TYPE_ID, isCollection = FieldClass.Singleton),
-            "num", DatabaseImpl.SchemaField("num", 3L, NUMBER_TYPE_ID, isCollection = FieldClass.Collection)
+            "text", DatabaseImpl.SchemaField("text", 1L, TEXT_TYPE_ID, FieldClass.Singleton),
+            "bool", DatabaseImpl.SchemaField("bool", 2L, BOOLEAN_TYPE_ID, FieldClass.Singleton),
+            "num", DatabaseImpl.SchemaField("num", 3L, NUMBER_TYPE_ID, FieldClass.Collection)
         )
 
         // Re-running with the same schema doesn't create new field IDs
@@ -165,9 +165,9 @@ class DatabaseImplTest {
         val schemaTypeId2 = database.getSchemaTypeId(schema2, db)
         val fields2 = database.getSchemaFields(schemaTypeId2, db)
         assertThat(fields2).containsExactly(
-            "text", DatabaseImpl.SchemaField("text", 4L, TEXT_TYPE_ID, isCollection = FieldClass.Singleton),
-            "bool", DatabaseImpl.SchemaField("bool", 5L, BOOLEAN_TYPE_ID, isCollection = FieldClass.Singleton),
-            "num", DatabaseImpl.SchemaField("num", 6L, NUMBER_TYPE_ID, isCollection = FieldClass.Collection)
+            "text", DatabaseImpl.SchemaField("text", 4L, TEXT_TYPE_ID, FieldClass.Singleton),
+            "bool", DatabaseImpl.SchemaField("bool", 5L, BOOLEAN_TYPE_ID, FieldClass.Singleton),
+            "num", DatabaseImpl.SchemaField("num", 6L, NUMBER_TYPE_ID, FieldClass.Collection)
         )
     }
 
@@ -483,8 +483,12 @@ class DatabaseImplTest {
                     "char" to 'A'.toReferencable(),
                     "float" to 34.567f.toReferencable(),
                     "double" to 4e100.toReferencable(),
-                    "txtlst" to listOf("this", "is", "a", "list").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text)),
-                    "lnglst" to listOf(1L, 2L, 4L, 4L, 3L).map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Long)),
+                    "txtlst" to listOf("this", "is", "a", "list").map {
+                        it.toReferencable()
+                    }.toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "lnglst" to listOf(1L, 2L, 4L, 4L, 3L).map {
+                        it.toReferencable()
+                    }.toReferencable(FieldType.ListOf(FieldType.Long)),
                     "bigint" to BigInteger.valueOf(123).toReferencable(),
                     "inlined" to inlineEntity,
                     "inlinelist" to listOf(
@@ -497,13 +501,22 @@ class DatabaseImplTest {
                     "bools" to setOf(true.toReferencable(), false.toReferencable()),
                     "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable()),
                     "bytes" to setOf(100.toByte().toReferencable(), 27.toByte().toReferencable()),
-                    "shorts" to setOf(129.toShort().toReferencable(), 30000.toShort().toReferencable()),
+                    "shorts" to setOf(
+                        129.toShort().toReferencable(),
+                        30000.toShort().toReferencable()
+                    ),
                     "ints" to setOf(1000000000.toReferencable(), 28.toReferencable()),
-                    "longs" to setOf(1000000000000000002L.toReferencable(), 1000000000000000003L.toReferencable()),
+                    "longs" to setOf(
+                        1000000000000000002L.toReferencable(),
+                        1000000000000000003L.toReferencable()
+                    ),
                     "chars" to listOf('a', 'r', 'c', 's').map { it.toReferencable() }.toSet(),
                     "floats" to setOf(1.1f.toReferencable(), 100.101f.toReferencable()),
                     "doubles" to setOf(1.0.toReferencable(), 2e80.toReferencable()),
-                    "bigints" to setOf(BigInteger.valueOf(123).toReferencable(), BigInteger.valueOf(678).toReferencable()),
+                    "bigints" to setOf(
+                        BigInteger.valueOf(123).toReferencable(),
+                        BigInteger.valueOf(678).toReferencable()
+                    ),
                     "inlines" to setOf(
                         toInlineEntity("inline1", 1.0, setOf("Q", "E", "D")),
                         toInlineEntity("inline2", 2.0, setOf("R", "F", "E"))
@@ -1477,7 +1490,8 @@ class DatabaseImplTest {
                 id,
                 singletons = mapOf(),
                 collections = mapOf(),
-                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(creationDaysAgo).toMillis()
+                creationTimestamp = JvmTime.currentTimeMillis -
+                    Duration.ofDays(creationDaysAgo).toMillis()
             ),
             schema,
             FIRST_VERSION_NUMBER,
@@ -1732,13 +1746,18 @@ class DatabaseImplTest {
                     "text" to "abc".toReferencable(),
                     "long" to 1000000000000000001L.toReferencable(),
                     "float" to 3.412f.toReferencable(),
-                    "textlist" to listOf("abc", "abcd", "def", "ghi").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "textlist" to listOf("abc", "abcd", "def", "ghi").map {
+                        it.toReferencable()
+                    }.toReferencable(FieldType.ListOf(FieldType.Text)),
                     "bigint" to BigInteger.valueOf(1000).toReferencable()
                 ),
                 mapOf(
                     "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable()),
                     "chars" to listOf('A', 'R', 'C', 'S', '!').map { it.toReferencable() }.toSet(),
-                    "bigints" to setOf(BigInteger("12345678901234567890").toReferencable(), BigInteger.valueOf(3).toReferencable())
+                    "bigints" to setOf(
+                        BigInteger("12345678901234567890").toReferencable(),
+                        BigInteger.valueOf(3).toReferencable()
+                    )
                 ),
                 11L,
                 timeInPast // expirationTimestamp, in the past.
@@ -1755,13 +1774,18 @@ class DatabaseImplTest {
                     "text" to "def".toReferencable(),
                     "long" to 1L.toReferencable(),
                     "float" to 42.0f.toReferencable(),
-                    "textlist" to listOf("abcd", "abcd").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "textlist" to listOf("abcd", "abcd").map {
+                        it.toReferencable()
+                    }.toReferencable(FieldType.ListOf(FieldType.Text)),
                     "bigint" to BigInteger.valueOf(2000).toReferencable()
                 ),
                 mapOf(
                     "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
                     "chars" to listOf('R', 'O', 'C', 'K', 'S').map { it.toReferencable() }.toSet(),
-                    "bigints" to setOf(BigInteger("44412345678901234567890").toReferencable(), BigInteger.valueOf(5).toReferencable())
+                    "bigints" to setOf(
+                        BigInteger("44412345678901234567890").toReferencable(),
+                        BigInteger.valueOf(5).toReferencable()
+                    )
                 ),
                 11L,
                 JvmTime.currentTimeMillis + 10000 // expirationTimestamp, in the future.
@@ -1778,13 +1802,18 @@ class DatabaseImplTest {
                     "text" to "def".toReferencable(),
                     "long" to 10L.toReferencable(),
                     "float" to 37.5f.toReferencable(),
-                    "textlist" to listOf("def", "def").map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "textlist" to listOf("def", "def").map {
+                        it.toReferencable()
+                    }.toReferencable(FieldType.ListOf(FieldType.Text)),
                     "bigint" to BigInteger.valueOf(3000).toReferencable()
                 ),
                 mapOf(
                     "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
                     "chars" to listOf('H', 'e', 'l', 'L', 'o').map { it.toReferencable() }.toSet(),
-                    "bigints" to setOf(BigInteger("33344412345678901234567890").toReferencable(), BigInteger.valueOf(7).toReferencable())
+                    "bigints" to setOf(
+                        BigInteger("33344412345678901234567890").toReferencable(),
+                        BigInteger.valueOf(7).toReferencable()
+                    )
                 ),
                 11L,
                 UNINITIALIZED_TIMESTAMP // no expirationTimestamp
@@ -2678,7 +2707,8 @@ class DatabaseImplTest {
             .toSet()
 
     private fun readNumberPrimitiveValues(): Set<Double> =
-        database.readableDatabase.rawQuery("SELECT value FROM number_primitive_values", emptyArray())
+        database.readableDatabase
+            .rawQuery("SELECT value FROM number_primitive_values", emptyArray())
             .map { it.getDouble(0) }
             .toSet()
 
@@ -2689,9 +2719,9 @@ class DatabaseImplTest {
 
     private fun assertTableIsSize(tableName: String, size: Int) {
         database.readableDatabase.rawQuery("SELECT * FROM $tableName", arrayOf()).use {
-            assertWithMessage("Expected table $tableName to be of size $size, but found ${it.count} rows.")
-                .that(it.count)
-                .isEqualTo(size)
+            assertWithMessage(
+                "Expected table $tableName to be of size $size, but found ${it.count} rows."
+            ).that(it.count).isEqualTo(size)
         }
     }
 

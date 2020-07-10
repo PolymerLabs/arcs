@@ -85,7 +85,10 @@ class StorageServiceManagerTest {
     @Before
     fun setUp() {
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
-        AndroidDriverAndKeyConfigurator.configure(ApplicationProvider.getApplicationContext(), arcId)
+        AndroidDriverAndKeyConfigurator.configure(
+            ApplicationProvider.getApplicationContext(),
+            arcId
+        )
         SchemaRegistry.register(DummyEntity.SCHEMA)
     }
 
@@ -154,7 +157,9 @@ class StorageServiceManagerTest {
         // Entity is gone, no tombstone left.
         assertThat(database.get(entityKey, DatabaseData.Entity::class, DummyEntity.SCHEMA)).isNull()
         // Collection is gone too.
-        assertThat(database.get(databaseKey.storageKey, DatabaseData.Collection::class, DummyEntity.SCHEMA)).isNull()
+        assertThat(
+            database.get(databaseKey.storageKey, DatabaseData.Collection::class, DummyEntity.SCHEMA)
+        ).isNull()
     }
 
     private suspend fun testClearAllForKey(storageKey: StorageKey) {

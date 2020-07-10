@@ -104,7 +104,8 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
     )
 
     private val collectionKey = ReferenceModeStorageKey(
-        backingKey = RamDiskStorageKey("collection-back"), storageKey = RamDiskStorageKey("collection-ent")
+        backingKey = RamDiskStorageKey("collection-back"),
+        storageKey = RamDiskStorageKey("collection-ent")
     )
 
     private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)

@@ -383,7 +383,9 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
             singletons = mapOf(
                 "name" to "bob".toReferencable(),
                 "age" to 42.0.toReferencable(),
-                "list" to listOf(1L, 2L, 1L).map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Long)),
+                "list" to listOf(1L, 2L, 1L).map {
+                    it.toReferencable()
+                }.toReferencable(FieldType.ListOf(FieldType.Long)),
                 "inline" to RawEntity("", mapOf("inlineName" to "inline".toReferencable()))
             ),
             creationTimestamp = 10,
@@ -629,7 +631,9 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
 
         val referenceCollection = CrdtSet<Reference>()
         val ref = Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
-        referenceCollection.applyOperation(CrdtSet.Operation.Add(actor, VersionMap(actor to 1), ref))
+        referenceCollection.applyOperation(
+            CrdtSet.Operation.Add(actor, VersionMap(actor to 1), ref)
+        )
 
         val job = Job(coroutineContext[Job])
         var backingStoreSent = false
@@ -727,7 +731,9 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
             singletons = mapOf(
                 "name" to name.toReferencable(),
                 "age" to age.toDouble().toReferencable(),
-                "list" to list.map { it.toReferencable() }.toReferencable(FieldType.ListOf(FieldType.Long)),
+                "list" to list.map {
+                    it.toReferencable()
+                }.toReferencable(FieldType.ListOf(FieldType.Long)),
                 "inline" to inlineEntity
             )
         )

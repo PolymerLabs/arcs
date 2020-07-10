@@ -27,9 +27,7 @@ import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * E2e test cases for Arcs.
- */
+/** E2e test cases for Arcs. */
 @RunWith(AndroidJUnit4::class)
 class ArcsTest {
 

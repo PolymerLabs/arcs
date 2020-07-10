@@ -73,7 +73,10 @@ class TypeProtoDecodersTest {
         val entityType = parseTypeProtoText(entityTypeProto).decode()
         val expectedSchema = Schema(
             names = setOf(SchemaName("Person")),
-            fields = SchemaFields(singletons = mapOf("name" to FieldType.Text), collections = mapOf()),
+            fields = SchemaFields(
+                singletons = mapOf("name" to FieldType.Text),
+                collections = mapOf()
+            ),
             hash = ""
         )
         when (entityType) {
@@ -102,7 +105,10 @@ class TypeProtoDecodersTest {
         val singletonType = parseTypeProtoText(singletonTypeProto).decode()
         val expectedSchema = Schema(
             names = setOf(SchemaName("Foo")),
-            fields = SchemaFields(singletons = mapOf("value" to FieldType.Text), collections = mapOf()),
+            fields = SchemaFields(
+                singletons = mapOf("value" to FieldType.Text),
+                collections = mapOf()
+            ),
             hash = ""
         )
         when (singletonType) {
@@ -132,7 +138,10 @@ class TypeProtoDecodersTest {
         val collectionType = parseTypeProtoText(collectionTypeProto).decode()
         val expectedSchema = Schema(
             names = setOf(SchemaName("Person")),
-            fields = SchemaFields(singletons = mapOf("name" to FieldType.Text), collections = mapOf()),
+            fields = SchemaFields(
+                singletons = mapOf("name" to FieldType.Text),
+                collections = mapOf()
+            ),
             hash = ""
         )
         when (collectionType) {
@@ -163,7 +172,10 @@ class TypeProtoDecodersTest {
         val referenceType = parseTypeProtoText(referenceTypeProto).decode()
         val expectedSchema = Schema(
             names = setOf(SchemaName("Person")),
-            fields = SchemaFields(singletons = mapOf("name" to FieldType.Text), collections = mapOf()),
+            fields = SchemaFields(
+                singletons = mapOf("name" to FieldType.Text),
+                collections = mapOf()
+            ),
             hash = ""
         )
         when (referenceType) {
@@ -212,7 +224,10 @@ class TypeProtoDecodersTest {
         val tupleType = parseTypeProtoText(tupleTypeProto).decode()
         val personSchema = Schema(
             names = setOf(SchemaName("Person")),
-            fields = SchemaFields(singletons = mapOf("name" to FieldType.Text), collections = mapOf()),
+            fields = SchemaFields(
+                singletons = mapOf("name" to FieldType.Text),
+                collections = mapOf()
+            ),
             hash = ""
         )
         val ageSchema = Schema(
@@ -254,7 +269,10 @@ class TypeProtoDecodersTest {
         val variableType = parseTypeProtoText(variableTypeProto).decode()
         val expectedSchema = Schema(
             names = setOf(SchemaName("Person")),
-            fields = SchemaFields(singletons = mapOf("name" to FieldType.Text), collections = mapOf()),
+            fields = SchemaFields(
+                singletons = mapOf("name" to FieldType.Text),
+                collections = mapOf()
+            ),
             hash = ""
         )
         when (variableType) {

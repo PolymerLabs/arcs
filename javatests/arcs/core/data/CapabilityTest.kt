@@ -143,7 +143,9 @@ class CapabilityTest {
     fun capabilityRange_ttl_isEquivalent() {
         assertThat(Capability.Ttl.ANY.isEquivalent(Capability.Ttl.ANY)).isTrue()
         assertThat(Capability.Ttl.ANY.isEquivalent(Capability.Ttl.Infinite())).isFalse()
-        assertThat(Capability.Ttl.Infinite().toRange().isEquivalent(Capability.Ttl.Infinite())).isTrue()
+        assertThat(
+            Capability.Ttl.Infinite().toRange().isEquivalent(Capability.Ttl.Infinite())
+        ).isTrue()
     }
 
     @Test
@@ -185,8 +187,12 @@ class CapabilityTest {
     fun capabilityRange_persistence_isEquivalent() {
         assertThat(Persistence.ANY.isEquivalent(Persistence.ANY)).isTrue()
         assertThat(Persistence.ANY.isEquivalent(Persistence.UNRESTRICTED)).isFalse()
-        assertThat(Persistence.UNRESTRICTED.toRange().isEquivalent(Persistence.UNRESTRICTED)).isTrue()
-        assertThat(Persistence.ON_DISK.toRange().isEquivalent(Persistence.ON_DISK.toRange())).isTrue()
+        assertThat(
+            Persistence.UNRESTRICTED.toRange().isEquivalent(Persistence.UNRESTRICTED)
+        ).isTrue()
+        assertThat(
+            Persistence.ON_DISK.toRange().isEquivalent(Persistence.ON_DISK.toRange())
+        ).isTrue()
     }
 
     @Test

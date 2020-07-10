@@ -61,7 +61,9 @@ class ReferencableListProtoTest {
             70 // expirationTimestamp
         )
 
-        val list = listOf(expected1, expected2, expected2).toReferencable(FieldType.EntityRef("foobarbaz"))
+        val list = listOf(expected1, expected2, expected2).toReferencable(
+            FieldType.EntityRef("foobarbaz")
+        )
 
         val marshalled = with(Parcel.obtain()) {
             writeProto(list.toReferenceListProto())

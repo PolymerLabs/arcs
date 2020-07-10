@@ -197,9 +197,10 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                         super.afterExecute(r, t)
 
                         t?.let { exception ->
-                            // This is the outermost thread-wise exception watcher monitoring all unknown
-                            // or unhandled exceptions against the innermost one which is Watchdog Exception
-                            // Handler monitoring exceptions that happened in coroutine context.
+                            // This is the outermost thread-wise exception watcher monitoring all
+                            // unknown or unhandled exceptions against the innermost one which is
+                            // Watchdog Exception Handler monitoring exceptions that happened in
+                            // coroutine context.
                             val timestamp = System.currentTimeMillis()
                             val taskType = controllers.getOrNull(id)?.taskType?.name ?: ""
                             val msg = "$taskType #$id: $exception"
@@ -245,7 +246,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                         e.printStackTrace()
                         notify { msg }
                     } finally {
-                        // Gracefully shut all tasks down which in turns calls all tasks' terminated().
+                        // Gracefully shut all tasks down which in turn calls all tasks'
+                        // terminated().
                         tasks.forEach { it.shutdown() }
                     }
                 }
@@ -300,7 +302,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             ).apply {
                 val taskType = when {
                     id < settings.numOfListenerThreads -> TaskType.LISTENER
-                    id < settings.numOfListenerThreads + settings.numOfWriterThreads -> TaskType.WRITER
+                    id < settings.numOfListenerThreads + settings.numOfWriterThreads ->
+                        TaskType.WRITER
                     else -> TaskType.CLEANER
                 }
                 tasksEvents[id] = TaskEventQueue(ReentrantReadWriteLock(), mutableListOf())
@@ -791,17 +794,20 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         fun generateHandleStoreLatencyStats(): Stats = also {
             val calculator = StatsAccumulator()
 
-            tasksEvents.forEach { id, events ->
+            tasksEvents.forEach { (id, events) ->
                 val (s, e) = events.reader.withLock {
                     Pair(
-                        events.queue.filter { it.eventId == TaskEventId.HANDLE_STORE_BEGIN }.toMutableList(),
+                        events.queue.filter {
+                            it.eventId == TaskEventId.HANDLE_STORE_BEGIN
+                        }.toMutableList(),
                         events.queue.filter { it.eventId == TaskEventId.HANDLE_STORE_WRITER_END }
                     )
                 }
 
                 // Oops! There are unfinished task(s).
                 if (s.size > e.size) {
-                    val msg = "thread #$id: HANDLE_STORE_BEGIN(${s.size}) > HANDLE_STORE_END(${e.size})"
+                    val msg = "thread #$id: HANDLE_STORE_BEGIN(${s.size}) > " +
+                        "HANDLE_STORE_END(${e.size})"
                     taskManagerEvents.writer.withLock {
                         taskManagerEvents.queue.add(TaskEvent(TaskEventId.ANOMALY, 0, desc = msg))
                     }
@@ -818,7 +824,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                             }
                             when (eInstance) {
                                 is Double -> eInstance == (sInstance as? Double)
-                                is Set<*> -> eInstance.filterIsInstance<Double>().contains(sInstance as? Double)
+                                is Set<*> -> eInstance.filterIsInstance<Double>()
+                                    .contains(sInstance as? Double)
                                 else -> false
                             }
                         }?.let { calculator.addAll(it.timeMs - sTimeMs) }
@@ -1050,16 +1057,22 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                                     StorageMode.PERSISTENT -> {
                                         ReferenceModeStorageKey(
                                             backingKey = DatabaseStorageKey.Persistent(
-                                                "singleton${id}_reference", entitySchemaHash, "arcs_test"
+                                                "singleton${id}_reference",
+                                                entitySchemaHash,
+                                                "arcs_test"
                                             ),
                                             storageKey = DatabaseStorageKey.Persistent(
-                                                "singleton$id", entitySchemaHash, "arcs_test"
+                                                "singleton$id",
+                                                entitySchemaHash,
+                                                "arcs_test"
                                             )
                                         )
                                     }
                                     else -> {
                                         ReferenceModeStorageKey(
-                                            backingKey = RamDiskStorageKey("singleton${id}_reference"),
+                                            backingKey = RamDiskStorageKey(
+                                                "singleton${id}_reference"
+                                            ),
                                             storageKey = RamDiskStorageKey("singleton$id")
                                         )
                                     }
@@ -1070,16 +1083,22 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                                     StorageMode.PERSISTENT -> {
                                         ReferenceModeStorageKey(
                                             backingKey = DatabaseStorageKey.Persistent(
-                                                "collection${id}_reference", entitySchemaHash, "arcs_test"
+                                                "collection${id}_reference",
+                                                entitySchemaHash,
+                                                "arcs_test"
                                             ),
                                             storageKey = DatabaseStorageKey.Persistent(
-                                                "collection$id", entitySchemaHash, "arcs_test"
+                                                "collection$id",
+                                                entitySchemaHash,
+                                                "arcs_test"
                                             )
                                         )
                                     }
                                     else -> {
                                         ReferenceModeStorageKey(
-                                            backingKey = RamDiskStorageKey("collection${id}_reference"),
+                                            backingKey = RamDiskStorageKey(
+                                                "collection${id}_reference"
+                                            ),
                                             storageKey = RamDiskStorageKey("collection$id")
                                         )
                                     }
@@ -1092,13 +1111,15 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                         when (settings.handleType) {
                             HandleType.SINGLETON -> {
                                 when (settings.storageMode) {
-                                    StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
+                                    StorageMode.PERSISTENT ->
+                                        TestEntity.singletonPersistentStorageKey
                                     else -> TestEntity.singletonInMemoryStorageKey
                                 }
                             }
                             else -> {
                                 when (settings.storageMode) {
-                                    StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
+                                    StorageMode.PERSISTENT ->
+                                        TestEntity.collectionPersistentStorageKey
                                     else -> TestEntity.collectionInMemoryStorageKey
                                 }
                             }

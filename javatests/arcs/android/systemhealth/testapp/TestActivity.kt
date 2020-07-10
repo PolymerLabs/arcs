@@ -84,7 +84,9 @@ class TestActivity : AppCompatActivity() {
     private var intentReceiver: BroadcastReceiver? = null
     private var bound = atomic(false)
     private val connection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName, service: IBinder) = bound.update { true }
+        override fun onServiceConnected(name: ComponentName, service: IBinder) = bound.update {
+            true
+        }
         override fun onServiceDisconnected(name: ComponentName) = bound.update { false }
     }
 
@@ -313,8 +315,8 @@ class TestActivity : AppCompatActivity() {
         // so as to display the enclosing messages on UI.
         intentReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                intent.getStringExtra(SystemHealthEnums.Function.SHOW_RESULTS.name)?.let { results ->
-                    resultTextView.text = results
+                intent.getStringExtra(SystemHealthEnums.Function.SHOW_RESULTS.name)?.let { result ->
+                    resultTextView.text = result
                 }
             }
         }.also {
@@ -335,7 +337,10 @@ class TestActivity : AppCompatActivity() {
                         else -> LocalService::class.java
                     }
                 )
-                intent.putExtra(it.function, SystemHealthEnums.Function.LATENCY_BACKPRESSURE_TEST.name)
+                intent.putExtra(
+                    it.function,
+                    SystemHealthEnums.Function.LATENCY_BACKPRESSURE_TEST.name
+                )
                 intent.putExtra(it.handleType, handleType.name)
                 intent.putExtra(it.storage_mode, storageMode.name)
                 intent.putExtra(it.numOfListenerThreads, numOfListenerThreads)
@@ -423,7 +428,8 @@ class TestActivity : AppCompatActivity() {
                                 TestEntity
                             ),
                             when (storageMode) {
-                                TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
+                                TestEntity.StorageMode.PERSISTENT ->
+                                    TestEntity.singletonPersistentStorageKey
                                 else -> TestEntity.singletonInMemoryStorageKey
                             }
                         ).awaitReady() as ReadWriteSingletonHandle<TestEntity>
@@ -458,7 +464,8 @@ class TestActivity : AppCompatActivity() {
                                 TestEntity
                             ),
                             when (storageMode) {
-                                TestEntity.StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
+                                TestEntity.StorageMode.PERSISTENT ->
+                                    TestEntity.collectionPersistentStorageKey
                                 else -> TestEntity.collectionInMemoryStorageKey
                             }
                         ).awaitReady() as ReadWriteCollectionHandle<TestEntity>

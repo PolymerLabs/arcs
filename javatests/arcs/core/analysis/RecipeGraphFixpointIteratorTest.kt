@@ -65,13 +65,19 @@ class RecipeGraphFixpointIteratorTest {
     private val thing = Recipe.Handle("thing", Recipe.Handle.Fate.CREATE, TypeVariable("thing"))
     private val thingType = EntityType(Schema(
         names = setOf(SchemaName("Thing")),
-        fields = SchemaFields(singletons = mapOf("name" to FieldType.Text), collections = emptyMap()),
+        fields = SchemaFields(
+            singletons = mapOf("name" to FieldType.Text),
+            collections = emptyMap()
+        ),
         hash = ""
     ))
     private val name = Recipe.Handle("name", Recipe.Handle.Fate.CREATE, TypeVariable("name"))
     private val nameType = EntityType(Schema(
         names = setOf(SchemaName("Name")),
-        fields = SchemaFields(singletons = mapOf("fullname" to FieldType.Text), collections = emptyMap()),
+        fields = SchemaFields(
+            singletons = mapOf("fullname" to FieldType.Text),
+            collections = emptyMap()
+        ),
         hash = ""
     ))
     private val readConnection = HandleConnectionSpec("r", HandleMode.Read, TypeVariable("r"))
