@@ -563,7 +563,6 @@ class DatabaseImpl(
                                     "${fieldValue::class}."
                             }
                             val value = fieldValue.value
-                            if (value.isEmpty()) return@forEach
                             insertFieldCollection(
                                 value,
                                 field.typeId,
