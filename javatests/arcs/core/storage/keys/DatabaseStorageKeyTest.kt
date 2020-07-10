@@ -14,8 +14,8 @@ package arcs.core.storage.keys
 import arcs.core.storage.StorageKeyParser
 import arcs.core.testutil.fail
 import com.google.common.truth.Truth.assertThat
-import org.junit.Before
 import kotlin.test.assertFailsWith
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
