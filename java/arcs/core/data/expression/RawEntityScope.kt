@@ -16,6 +16,10 @@ import arcs.core.data.Reference
 import arcs.core.data.util.ReferencablePrimitive
 import kotlinx.coroutines.runBlocking
 
+/**
+ * Provides a [Expression.Scope] capable of looking up fields in a [RawEntity], optionally
+ * dereferencing an entity by reference.
+ */
 class RawEntityScope(val rawEntity: RawEntity) : Expression.Scope {
     override val scopeName: String = "<RawEntity>"
 
@@ -27,6 +31,7 @@ class RawEntityScope(val rawEntity: RawEntity) : Expression.Scope {
                 value.value as T
             }
             is Reference<*> -> {
+                // TODO: Make expression evaluation suspendable?
                 runBlocking {
                     RawEntityScope(value.dereference() as RawEntity) as T
                 }
@@ -36,4 +41,5 @@ class RawEntityScope(val rawEntity: RawEntity) : Expression.Scope {
     }
 }
 
+/** Turn a [RawEntity] into a [Expression.Scope]. */
 fun RawEntity.asScope() = RawEntityScope(this)
