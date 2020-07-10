@@ -25,12 +25,12 @@ import arcs.jvm.util.JvmTime
 import arcs.sdk.Particle
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
-import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * A JUnit rule setting up an Arcs environment for showcasing features.
@@ -79,7 +79,7 @@ class ShowcaseEnvironment(
     /**
      * Retrieves a [Particle] instance from a given [Arc].
      */
-    suspend inline fun <reified T: Particle> getParticle(plan: Plan) : T {
+    suspend inline fun <reified T : Particle> getParticle(plan: Plan): T {
         require(plan.arcId != null) {
             "retrieving a particle for non-singleton plans is not supported"
         }
@@ -90,7 +90,7 @@ class ShowcaseEnvironment(
     /**
      * Retrieves a [Particle] instance from a given [Arc].
      */
-    inline fun <reified T: Particle> getParticle(arc: Arc) : T {
+    inline fun <reified T : Particle> getParticle(arc: Arc): T {
         return arcHost.getParticle(arc.id.toString(), T::class.simpleName!!)
     }
 
@@ -188,4 +188,3 @@ class ShowcaseHost(
         return particleContext.particle as T
     }
 }
-

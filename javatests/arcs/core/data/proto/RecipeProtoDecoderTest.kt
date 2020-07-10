@@ -17,7 +17,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-
 /** Creates and [arcId] [AnnotationProto]. */
 fun arcIdAnnotationProto(id: String): AnnotationProto {
     return AnnotationProto.newBuilder()

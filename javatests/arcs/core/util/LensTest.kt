@@ -5,7 +5,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-
 /** Tests for [Lens]. */
 @RunWith(JUnit4::class)
 class LensTest {
@@ -65,8 +64,8 @@ class LensTest {
 
         // We could probably compose these two better and pull off the mutations without making
         // extra copies. 
-        val moddedMotherNames  = (peopleLens.traverse() + deepMotherName).mod(people) { "$it!" }
-        val moddedAges =  (peopleLens.traverse() + ageLens).mod(moddedMotherNames) { it + 2 }
+        val moddedMotherNames = (peopleLens.traverse() + deepMotherName).mod(people) { "$it!" }
+        val moddedAges = (peopleLens.traverse() + ageLens).mod(moddedMotherNames) { it + 2 }
 
         val expected = People(
             listOf(

@@ -3,10 +3,10 @@ package arcs.core.util
 import arcs.core.util.ParseResult.Failure
 import arcs.core.util.ParseResult.Success
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.fail
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.test.fail
 
 /** Tests for [Parser]. */
 @RunWith(JUnit4::class)

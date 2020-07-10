@@ -20,9 +20,7 @@ import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
-import arcs.core.storage.StoreManager
 import arcs.jvm.host.JvmSchedulerProvider
-import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -52,7 +50,7 @@ class ReadAnimalHostService : ArcHostService() {
         vararg initialParticles: ParticleRegistration
     ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles)
 
-    inner class ReadAnimal: AbstractReadAnimal() {
+    inner class ReadAnimal : AbstractReadAnimal() {
         override fun onStart() {
             handles.animal.onUpdate {
                 val name = handles.animal.fetch()?.name ?: ""

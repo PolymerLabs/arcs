@@ -51,7 +51,7 @@ class RecipeTest {
 
     @Test
     fun handleToStorageKey_withStorageKey() {
-        val storageKey = "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}";
+        val storageKey = "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}"
 
         assertThat(
             Recipe.Handle(
@@ -67,7 +67,7 @@ class RecipeTest {
 
     @Test
     fun handleToStorageKey_withStorageKeyAndCapabilities() {
-        val storageKey = "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}";
+        val storageKey = "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}"
 
         assertWithMessage("Existing storage key should be used whenever available").that(
             Recipe.Handle(
@@ -141,7 +141,6 @@ class RecipeTest {
             )
         )
     }
-
 
     @Test
     fun handleToPlanHandle() {

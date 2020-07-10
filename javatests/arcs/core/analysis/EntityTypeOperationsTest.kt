@@ -7,8 +7,6 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
-import org.junit.Assert.assertTrue
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -145,7 +143,6 @@ class EntityTypeOperationsTest {
 
         assertThat(result.names).containsExactly(SchemaName("Thing"))
     }
-
 
     @Test
     fun schemaIntersect_intersectsSingletons() {

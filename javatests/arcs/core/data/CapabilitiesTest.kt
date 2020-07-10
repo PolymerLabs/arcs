@@ -15,10 +15,10 @@ import arcs.core.data.Capability.Encryption
 import arcs.core.data.Capability.Persistence
 import arcs.core.data.Capability.Ttl
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.test.assertFailsWith
 
 @RunWith(JUnit4::class)
 class CapabilitiesTest {
@@ -172,7 +172,6 @@ class CapabilitiesTest {
         assertThat(capabilities.isEquivalent(
             Capabilities(listOf(Capability.Range(Ttl.Days(10), Ttl.Days(2))))
         )).isTrue()
-
     }
     @Test
     fun capabilities_isEquivalent_multipleRanges() {

@@ -2,6 +2,7 @@ package arcs.core.entity
 
 import arcs.core.common.Id.Generator
 import arcs.core.common.ReferenceId
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
@@ -11,14 +12,14 @@ import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.data.SingletonType
-import arcs.core.data.Capability.Ttl
 import arcs.core.data.SchemaRegistry
+import arcs.core.data.SingletonType
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.ActivationFactory
+import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -37,9 +38,9 @@ import arcs.core.testutil.handles.dispatchRemove
 import arcs.core.testutil.handles.dispatchSize
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.Time
-import arcs.jvm.util.testutil.FakeTime
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
+import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -56,7 +57,6 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Rule
 import org.junit.Test
-import arcs.core.storage.Reference as StorageReference
 
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 open class HandleManagerTestBase {
@@ -342,7 +342,7 @@ open class HandleManagerTestBase {
             age = 25.0,
             bestFriend = null,
             favoriteWords = listOf("Fez"),
-            coolnessIndex = CoolnessIndex(pairsOfShoesOwned =  555, isCool = true, hat = fezStorageRef)
+            coolnessIndex = CoolnessIndex(pairsOfShoesOwned = 555, isCool = true, hat = fezStorageRef)
         )
         val writeHandle = writeHandleManager.createSingletonHandle()
         val readHandle = readHandleManager.createSingletonHandle()
@@ -391,7 +391,7 @@ open class HandleManagerTestBase {
 
         val readBack = handleB.dispatchFetch()!!
         assertThat(readBack.creationTimestamp).isEqualTo(0)
-        assertThat(readBack.expirationTimestamp).isEqualTo(2*24*3600*1000)
+        assertThat(readBack.expirationTimestamp).isEqualTo(2 * 24 * 3600 * 1000)
 
         val handleC = readHandleManager.createSingletonHandle(ttl = Ttl.Minutes(2))
         handleBUpdated = handleB.onUpdateDeferred()
@@ -400,10 +400,10 @@ open class HandleManagerTestBase {
 
         val readBack2 = handleB.dispatchFetch()!!
         assertThat(readBack2.creationTimestamp).isEqualTo(0)
-        assertThat(readBack2.expirationTimestamp).isEqualTo(2*60*1000)
+        assertThat(readBack2.expirationTimestamp).isEqualTo(2 * 60 * 1000)
 
         // Fast forward time to 5 minutes later, so entity2 expires.
-        fakeTime.millis += 5*60*1000
+        fakeTime.millis += 5 * 60 * 1000
         assertThat(handleB.dispatchFetch()).isNull()
     }
 
@@ -871,7 +871,7 @@ open class HandleManagerTestBase {
 
         val readBack = handleB.dispatchFetchAll().first { it.entityId == entity1.entityId }
         assertThat(readBack.creationTimestamp).isEqualTo(0)
-        assertThat(readBack.expirationTimestamp).isEqualTo(2*24*3600*1000)
+        assertThat(readBack.expirationTimestamp).isEqualTo(2 * 24 * 3600 * 1000)
 
         val handleC = readHandleManager.createCollectionHandle(ttl = Ttl.Minutes(2))
         handleBChanged = handleB.onUpdateDeferred()
@@ -879,10 +879,10 @@ open class HandleManagerTestBase {
         handleBChanged.await()
         val readBack2 = handleB.dispatchFetchAll().first { it.entityId == entity2.entityId }
         assertThat(readBack2.creationTimestamp).isEqualTo(0)
-        assertThat(readBack2.expirationTimestamp).isEqualTo(2*60*1000)
+        assertThat(readBack2.expirationTimestamp).isEqualTo(2 * 60 * 1000)
 
         // Fast forward time to 5 minutes later, so entity2 expires, entity1 doesn't.
-        fakeTime.millis += 5*60*1000
+        fakeTime.millis += 5 * 60 * 1000
         assertThat(handleB.dispatchSize()).isEqualTo(1)
         assertThat(handleB.dispatchFetchAll()).containsExactly(entity1)
     }
@@ -974,7 +974,7 @@ open class HandleManagerTestBase {
             log("First batch of entities - so far: $it")
             it.size == 2
         }
-        writeEntityHandle.dispatchStore(entity1,entity2)
+        writeEntityHandle.dispatchStore(entity1, entity2)
 
         // Wait for the monitor to see the entities (monitor handle is on a separate storage proxy
         // with a separate stores-cache, so it requires the entities to have made it to the storage
@@ -1302,7 +1302,7 @@ open class HandleManagerTestBase {
         val style: String
     ) : Entity {
         override var creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-        override var expirationTimestamp : Long = RawEntity.UNINITIALIZED_TIMESTAMP
+        override var expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
 
         override fun ensureEntityFields(
             idGenerator: Generator,

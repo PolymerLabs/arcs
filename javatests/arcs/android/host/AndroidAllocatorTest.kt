@@ -89,7 +89,7 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
     @Before
     override fun setUp() = runBlocking {
         context = ApplicationProvider.getApplicationContext()
-        context.setTheme(R.style.Theme_AppCompat);
+        context.setTheme(R.style.Theme_AppCompat)
 
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(context)
@@ -194,7 +194,6 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
             async {
                 waitForIteration.await()
                 arc.onStopped {
-
                 }
             }
         }

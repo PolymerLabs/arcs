@@ -4,13 +4,12 @@ import arcs.core.crdt.VersionMap
 import arcs.core.data.SchemaRegistry
 import arcs.core.storage.testutil.DummyStorageKey
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.test.assertFailsWith
-
 
 @RunWith(JUnit4::class)
 @Suppress("UNCHECKED_CAST")
@@ -35,7 +34,6 @@ class VariableEntityBaseTest {
                 bools = setOf(true, false)
                 refs = setOf(createDummyReference("ref1"), createDummyReference("ref2"))
             }
-
     }
 
     @After
@@ -86,7 +84,7 @@ class VariableEntityBaseTest {
         variableEntity.deserializeForTest(biggerRaw)
 
         val copy = DummyVariableEntity()
-        with (copy) {
+        with(copy) {
             bools = variableEntity.bools
             nums = variableEntity.nums
             ref = variableEntity.ref

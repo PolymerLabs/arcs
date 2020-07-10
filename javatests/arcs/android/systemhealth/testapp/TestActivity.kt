@@ -267,9 +267,11 @@ class TestActivity : AppCompatActivity() {
         }.also {
             it.setOnSeekBarChangeListener(
                 object : SeekBar.OnSeekBarChangeListener {
-                    override fun onProgressChanged(seekBar: SeekBar?,
-                                                   progress: Int,
-                                                   fromUser: Boolean) {
+                    override fun onProgressChanged(
+                        seekBar: SeekBar?,
+                        progress: Int,
+                        fromUser: Boolean
+                    ) {
                         storageServiceCrashRate = progress
                         serviceProbabilityLabel.text = getString(
                             R.string.storage_service_crash_rate, progress)
@@ -290,9 +292,11 @@ class TestActivity : AppCompatActivity() {
         }.also {
             it.setOnSeekBarChangeListener(
                 object : SeekBar.OnSeekBarChangeListener {
-                    override fun onProgressChanged(seekBar: SeekBar?,
-                                                   progress: Int,
-                                                   fromUser: Boolean) {
+                    override fun onProgressChanged(
+                        seekBar: SeekBar?,
+                        progress: Int,
+                        fromUser: Boolean
+                    ) {
                         storageClientCrashRate = progress
                         clientProbabilityLabel.text = getString(
                             R.string.storage_client_crash_rate, progress)

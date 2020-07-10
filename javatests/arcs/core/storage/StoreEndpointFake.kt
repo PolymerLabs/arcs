@@ -40,7 +40,7 @@ class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> :
         return onProxyMessageReturn
     }
 
-    suspend fun getProxyMessages() : List<ProxyMessage<Data, Op, T>> = targetMutex.withLock {
+    suspend fun getProxyMessages(): List<ProxyMessage<Data, Op, T>> = targetMutex.withLock {
         proxyMessages
     }
 

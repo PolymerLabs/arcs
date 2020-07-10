@@ -17,7 +17,6 @@ import arcs.android.storage.service.IResultCallback
 import arcs.android.storage.service.IStorageService
 import arcs.android.storage.service.IStorageServiceCallback
 import arcs.android.storage.toParcelable
-import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.keys.RamDiskStorageKey

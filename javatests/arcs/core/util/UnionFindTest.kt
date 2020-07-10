@@ -11,8 +11,6 @@
 package arcs.core.util
 
 import com.google.common.truth.Truth.assertThat
-import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

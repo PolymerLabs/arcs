@@ -35,8 +35,9 @@ import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import com.nhaarman.mockitokotlin2.whenever
-import kotlinx.coroutines.CoroutineScope
+import java.util.concurrent.Executors
 import kotlin.test.assertFailsWith
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -53,7 +54,6 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
-import java.util.concurrent.Executors
 
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
@@ -182,7 +182,7 @@ class StorageProxyTest {
 
         // DESYNC: addOnDesync should invoke its callback immediately.
         whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(false)
-        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation),null))
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
         channels3.onDesync.receiveOrTimeout()
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.DESYNC)
 
@@ -225,7 +225,7 @@ class StorageProxyTest {
         assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.UPDATE)
 
         // Failing model ops should notify DESYNC.
-        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation),null))
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
         assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.DESYNC)
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.DESYNC)
 
@@ -364,7 +364,7 @@ class StorageProxyTest {
         proxy.awaitOutgoingMessageQueueDrain()
         fakeStoreEndpoint.clearProxyMessages()
         val threeOps = listOf(mockCrdtOperation, mockCrdtOperation, mockCrdtOperation)
-        proxy.onMessage(ProxyMessage.Operations(threeOps,null))
+        proxy.onMessage(ProxyMessage.Operations(threeOps, null))
 
         channels.onDesync.receiveOrTimeout()
         proxy.awaitOutgoingMessageQueueDrain()
@@ -423,9 +423,9 @@ class StorageProxyTest {
         val (onReady2, onUpdate2, onDesync2, onResync2) = addAllActions(callbackId, proxy)
         scheduler.waitForIdle()
 
-        verify(onReady2).invoke()  // immediate callback when synced
+        verify(onReady2).invoke() // immediate callback when synced
         proxy.removeCallbacksForName(callbackId)
-        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation),null))
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
         scheduler.waitForIdle()
 
         assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.UPDATE)
@@ -436,9 +436,9 @@ class StorageProxyTest {
         val (onReady3, onUpdate3, onDesync3, onResync3) = addAllActions(callbackId, proxy)
         scheduler.waitForIdle()
 
-        verify(onReady3).invoke()  // immediate callback when synced
+        verify(onReady3).invoke() // immediate callback when synced
         proxy.removeCallbacksForName(callbackId)
-        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation),null))
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
         scheduler.waitForIdle()
 
         assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.DESYNC)
@@ -450,7 +450,7 @@ class StorageProxyTest {
         scheduler.waitForIdle()
 
         channels.onDesync.receiveOrTimeout()
-        verify(onDesync4).invoke()  // immediate callback when desynced
+        verify(onDesync4).invoke() // immediate callback when desynced
         proxy.removeCallbacksForName(callbackId)
         proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
         scheduler.waitForIdle()
@@ -594,7 +594,7 @@ class StorageProxyTest {
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
 
         whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(false)
-        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation),null))
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
         assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.DESYNC)
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.DESYNC)
 
@@ -691,7 +691,7 @@ class StorageProxyTest {
         // Now de-sync it.
         setupMockModel()
         whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(false)
-        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation),null))
+        proxy.onMessage(ProxyMessage.Operations(listOf(mockCrdtOperation), null))
         assertThat(notifyChannel.receiveOrTimeout()).isEqualTo(StorageEvent.DESYNC)
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.DESYNC)
         proxy.awaitOutgoingMessageQueueDrain()

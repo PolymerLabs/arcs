@@ -1247,4 +1247,4 @@ class SystemHealthData {
     )
 }
 
-private class StorageClientCrashException: IllegalStateException()
+private class StorageClientCrashException : IllegalStateException()

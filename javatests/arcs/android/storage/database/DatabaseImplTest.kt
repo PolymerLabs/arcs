@@ -27,9 +27,9 @@ import arcs.core.data.RawEntity
 import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.data.SchemaRegistry
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
@@ -479,7 +479,7 @@ class DatabaseImplTest {
                     "short" to 382.toShort().toReferencable(),
                     "int" to 1000000000.toReferencable(),
                     // This number is not representable as a double
-                    "long" to  1000000000000000001L.toReferencable(),
+                    "long" to 1000000000000000001L.toReferencable(),
                     "char" to 'A'.toReferencable(),
                     "float" to 34.567f.toReferencable(),
                     "double" to 4e100.toReferencable(),
@@ -1009,7 +1009,7 @@ class DatabaseImplTest {
         // Test addition of new elements.
         values.add(ReferenceWithVersion(
             Reference("new-ref", backingKey, VersionMap("new-ref" to 3)),
-            VersionMap( "actor" to 3)
+            VersionMap("actor" to 3)
         ))
         val inputCollection3 = inputCollection2.copy(values = values, databaseVersion = 3)
         database.insertOrUpdate(collectionKey, inputCollection3)
@@ -1378,7 +1378,7 @@ class DatabaseImplTest {
                 "entity1",
                 mapOf("text" to "abc".toReferencable()),
                 mapOf("nums" to setOf(123.0.toReferencable(), 456.0.toReferencable())),
-                1L, //Creation time
+                1L, // Creation time
                 12L
             ),
             schema,
@@ -1390,7 +1390,7 @@ class DatabaseImplTest {
                 "entity2",
                 mapOf("text" to "def".toReferencable()),
                 mapOf("nums" to setOf(123.0.toReferencable(), 789.0.toReferencable())),
-                3L, //Creation time
+                3L, // Creation time
                 12L
             ),
             schema,
@@ -1402,7 +1402,7 @@ class DatabaseImplTest {
                 "entity3",
                 mapOf("text" to "ghi".toReferencable()),
                 mapOf("nums" to setOf(111.0.toReferencable(), 789.0.toReferencable())),
-                5L, //Creation time
+                5L, // Creation time
                 12L
             ),
             schema,
@@ -1484,7 +1484,7 @@ class DatabaseImplTest {
             VERSION_MAP
         )
         suspend fun updateCollection(vararg entities: DatabaseData.Entity) {
-            val values = entities.map { 
+            val values = entities.map {
                 ReferenceWithVersion(
                     Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
                     VersionMap("actor" to 1))
@@ -1652,10 +1652,10 @@ class DatabaseImplTest {
             VERSION_MAP
         )
         suspend fun updateSingleton(entity: DatabaseData.Entity?) {
-            val ref = entity?.let{ReferenceWithVersion(
+            val ref = entity?.let { ReferenceWithVersion(
                 Reference(it.rawEntity.id, backingKey, VersionMap("ref" to 1)),
                 VersionMap("actor" to 1)
-            )}
+            ) }
             val singleton = DatabaseData.Singleton(
                 value = ref,
                 schema = schema,
@@ -1891,7 +1891,7 @@ class DatabaseImplTest {
             "33344412345678901234567890",
             "7"
         )
-        
+
         assertThat(readNumberPrimitiveValues()).containsExactly(123.0, 789.0, 42.0, 37.5)
 
         // Check the corrent clients were notified.
@@ -2199,7 +2199,7 @@ class DatabaseImplTest {
                 Reference("entity", backingKey, VersionMap("ref" to 1)),
                 VersionMap("actor" to 2)
             ),
-            databaseVersion = FIRST_VERSION_NUMBER+1
+            databaseVersion = FIRST_VERSION_NUMBER + 1
         )
         database.insertOrUpdate(singletonKey, singleton)
 
@@ -2682,7 +2682,7 @@ class DatabaseImplTest {
 
     private fun assertTableIsSize(tableName: String, size: Int) {
         database.readableDatabase.rawQuery("SELECT * FROM $tableName", arrayOf()).use {
-            assertWithMessage("Expected table $tableName to be of size ${size}, but found ${it.count} rows.")
+            assertWithMessage("Expected table $tableName to be of size $size, but found ${it.count} rows.")
                 .that(it.count)
                 .isEqualTo(size)
         }

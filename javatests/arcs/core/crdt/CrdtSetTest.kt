@@ -626,7 +626,7 @@ class CrdtSetTest {
     fun returnsEmptyOtherChange_whenMergingIntoEmptyModel() {
         // Alice is empty, Bob has an item.
         bob.add("a", VersionMap("a" to 1), "foo")
-        
+
         val (modelChange, otherChange) = alice.merge(bob.data)
         assertThat(modelChange.isEmpty()).isFalse()
         assertThat(otherChange.isEmpty()).isTrue()

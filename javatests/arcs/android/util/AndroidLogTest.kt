@@ -12,19 +12,17 @@
 package arcs.android.util
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.core.util.Log
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
-
-import arcs.android.util.initLogForAndroid
-import arcs.core.util.Log
 
 /** Tests for [AndroidLog]. */
 @RunWith(AndroidJUnit4::class)
 class AndroidLogTest {
   @Suppress("UNUSED_PARAMETER")
   private class FakeWriter {
-    var level : Log.Level? = null
+    var level: Log.Level? = null
     var message = ""
 
     fun write(level: Log.Level, message: String, throwable: Throwable?) {

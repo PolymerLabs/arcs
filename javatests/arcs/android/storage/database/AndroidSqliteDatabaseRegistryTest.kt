@@ -17,10 +17,10 @@ import arcs.android.common.forSingleResult
 import arcs.core.storage.database.DatabaseRegistration
 import arcs.core.util.Time
 import com.google.common.truth.Truth.assertThat
+import java.time.Instant
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.time.Instant
 
 @RunWith(AndroidJUnit4::class)
 class AndroidSqliteDatabaseRegistryTest {

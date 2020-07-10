@@ -11,11 +11,11 @@ import arcs.core.data.proto.decodeRecipes
 import arcs.core.policy.proto.decode
 import arcs.core.testutil.protoloader.loadManifestBinaryProto
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.test.assertFailsWith
 
 @RunWith(JUnit4::class)
 class PolicyConstraintsTest {
@@ -110,7 +110,7 @@ class PolicyConstraintsTest {
         val recipe = recipes.getValue("SingleInput").forceMatchPolicyName("FooRedactions")
 
         val result = translatePolicy(policy, recipe)
-        
+
         val check = result.egressChecks.values.single().single() as Check.Assert
         assertThat(check.predicate).isEqualTo(
             Predicate.or(
@@ -178,4 +178,3 @@ class PolicyConstraintsTest {
         }
     }
 }
-

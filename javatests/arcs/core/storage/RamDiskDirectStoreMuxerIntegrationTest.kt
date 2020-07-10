@@ -71,7 +71,6 @@ class RamDiskDirectStoreMuxerIntegrationTest {
             }
         )
 
-
         val count1 = CrdtCount()
         count1.applyOperation(Increment("me", version = 0 to 1))
 

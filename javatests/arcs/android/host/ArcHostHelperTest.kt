@@ -29,12 +29,12 @@ import arcs.android.sdk.host.toComponentName
 import arcs.core.common.ArcId
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType.Companion.Text
+import arcs.core.data.HandleMode
 import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.host.ArcHost
-import arcs.core.data.HandleMode
 import arcs.core.host.ArcHostException
 import arcs.core.host.ArcState
 import arcs.core.host.ArcStateChangeCallback
@@ -119,7 +119,8 @@ class ArcHostHelperTest {
         }
 
         override suspend fun addOnArcStateChange(
-            arcId: ArcId, block: ArcStateChangeCallback
+            arcId: ArcId,
+            block: ArcStateChangeCallback
         ): ArcStateChangeRegistration {
             TODO("Not yet implemented")
         }

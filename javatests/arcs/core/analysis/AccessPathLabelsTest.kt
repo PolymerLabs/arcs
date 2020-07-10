@@ -4,7 +4,6 @@ import arcs.core.data.AccessPath
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.TypeVariable
-import com.google.common.truth.Subject
 import com.google.common.truth.Truth.assertThat
 import java.util.BitSet
 import org.junit.Test

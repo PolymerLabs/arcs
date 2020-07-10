@@ -226,6 +226,5 @@ class ResurrectionRequestTest {
 
         assertThat(unregisterRequest?.componentName).isEqualTo(request.componentName)
         assertThat(unregisterRequest?.targetId).isEqualTo("test")
-
     }
 }

@@ -24,9 +24,7 @@ import arcs.core.storage.database.DatabaseClient
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.keys.DatabaseStorageKey.Persistent
-import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
-import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
@@ -187,7 +185,9 @@ class StoreWriteBackTest {
             object : DatabaseClient {
                 override val storageKey = testKey.storageKey
                 override suspend fun onDatabaseUpdate(
-                    data: DatabaseData, version: Int, originatingClientId: Int?
+                    data: DatabaseData,
+                    version: Int,
+                    originatingClientId: Int?
                 ) = synchronized(versions) {
                     versions.add(version)
                     Unit

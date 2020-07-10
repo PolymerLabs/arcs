@@ -11,17 +11,16 @@
 
 package arcs.core.data
 
-import arcs.core.data.Capability.Persistence
 import arcs.core.data.Capability.Encryption
+import arcs.core.data.Capability.Persistence
 import arcs.core.data.Capability.Queryable
-import arcs.core.data.Capability.Shareable
 import arcs.core.data.Capability.Range
+import arcs.core.data.Capability.Shareable
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.test.assertFailsWith
-
 
 @RunWith(JUnit4::class)
 class CapabilityTest {
@@ -65,14 +64,14 @@ class CapabilityTest {
         assertThat(ttl3Days.isEquivalent(ttl10Hours)).isFalse()
         assertThat(ttl10Hours.isStricter(ttl3Days)).isTrue()
         assertThat(ttl10Hours.isEquivalent(Capability.Ttl.Minutes(600))).isTrue()
-    
+
         val ttlInfinite = Capability.Ttl.Infinite()
         assertThat(ttlInfinite.isEquivalent(ttlInfinite)).isTrue()
         assertThat(ttlInfinite.isSameOrLessStrict(ttlInfinite)).isTrue()
         assertThat(ttlInfinite.isSameOrStricter(ttlInfinite)).isTrue()
         assertThat(ttlInfinite.isStricter(ttlInfinite)).isFalse()
         assertThat(ttlInfinite.isLessStrict(ttlInfinite)).isFalse()
-    
+
         assertThat(ttl3Days.isStricter(ttlInfinite)).isTrue()
         assertThat(ttlInfinite.isStricter(ttl3Days)).isFalse()
         assertThat(ttlInfinite.isLessStrict(ttl3Days)).isTrue()

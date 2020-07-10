@@ -15,10 +15,10 @@ import arcs.core.policy.PolicyTarget
 import arcs.core.policy.StorageMedium
 import arcs.core.policy.UsageType
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.test.assertFailsWith
 
 @RunWith(JUnit4::class)
 class PolicyProtoTest {

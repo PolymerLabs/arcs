@@ -45,7 +45,7 @@ class WriteAnimalHostService : ArcHostService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val arcId = intent?.getStringExtra(ARC_ID_EXTRA)
         val context = arcId?.let { arcHost.arcHostContext(it) }
-        val writeAnimalParticle=
+        val writeAnimalParticle =
             context?.particles?.get("WriteAnimal")?.particle as? WriteAnimal
         writeAnimalParticle?.apply {
             scope.launch(handles.dispatcher) {

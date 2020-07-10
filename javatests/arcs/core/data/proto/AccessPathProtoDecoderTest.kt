@@ -4,7 +4,6 @@ import arcs.core.data.AccessPath
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.TypeVariable
-import arcs.core.testutil.fail
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
 import kotlin.test.assertFailsWith

@@ -10,9 +10,9 @@ import arcs.sdk.Handle
 import arcs.sdk.HandleHolderBase
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
+import java.lang.IllegalArgumentException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import java.lang.IllegalArgumentException
 
 @ExperimentalCoroutinesApi
 open class TestingHost(

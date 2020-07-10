@@ -23,6 +23,7 @@ import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.testutil.DummyStorageKey
 import com.google.common.truth.Truth.assertThat
+import java.util.Random
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -30,7 +31,6 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.Random
 
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
@@ -111,7 +111,7 @@ class AndroidSqliteDatabaseManagerTest {
             AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext(), null, 5)
         val database = manager.getDatabase("foo", true)
         database.insertOrUpdate(key, entity)
-        assertThat(database.get(key,DatabaseData.Entity::class, schema)).isEqualTo(entity)
+        assertThat(database.get(key, DatabaseData.Entity::class, schema)).isEqualTo(entity)
 
         manager.removeExpiredEntities()
 
@@ -129,7 +129,7 @@ class AndroidSqliteDatabaseManagerTest {
     fun resetDatabases() = runBlockingTest {
         val database = manager.getDatabase("foo", true)
         database.insertOrUpdate(key, entity)
-        assertThat(database.get(key,DatabaseData.Entity::class, schema)).isEqualTo(entity)
+        assertThat(database.get(key, DatabaseData.Entity::class, schema)).isEqualTo(entity)
 
         manager.resetAll()
 
@@ -144,11 +144,11 @@ class AndroidSqliteDatabaseManagerTest {
             AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext(), null, 50000)
         val database = manager.getDatabase("foo", true)
         database.insertOrUpdate(key, entity)
-        assertThat(database.get(key,DatabaseData.Entity::class, schema)).isEqualTo(entity)
+        assertThat(database.get(key, DatabaseData.Entity::class, schema)).isEqualTo(entity)
 
         manager.removeExpiredEntities()
 
         // The database has NOT been reset.
-        assertThat(database.get(key,DatabaseData.Entity::class, schema)).isEqualTo(entity)
+        assertThat(database.get(key, DatabaseData.Entity::class, schema)).isEqualTo(entity)
     }
 }

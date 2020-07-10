@@ -34,7 +34,7 @@ class DirectStoreMuxerTest {
                 singletons = mapOf(
                     "field" to FieldType.Text
                 ),
-                collections =emptyMap()
+                collections = emptyMap()
             ),
             "abc"
         )
@@ -80,8 +80,8 @@ class DirectStoreMuxerTest {
         )
 
         val newValue = CrdtSingleton(
-            initialVersion= VersionMap("other" to 2),
-            initialData =  CrdtEntity.Reference.buildReference("asdfadf".toReferencable())
+            initialVersion = VersionMap("other" to 2),
+            initialData = CrdtEntity.Reference.buildReference("asdfadf".toReferencable())
         )
         val newData = CrdtEntity.Data(
             versionMap = VersionMap("other" to 2),

@@ -12,10 +12,10 @@
 package arcs.core.data.expression
 
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.test.assertFailsWith
 
 /** Tests for [Expression]. */
 @RunWith(JUnit4::class)
@@ -110,7 +110,7 @@ class ExpressionTest {
     @Test
     fun testJsonSerialization() {
         val q = query<Expression.Scope>("arg")
-        val field = Expression.FieldExpression<Expression.Scope, Number>(q , "bar")
+        val field = Expression.FieldExpression<Expression.Scope, Number>(q, "bar")
         val expr = (2.0.asExpr() + (3.asExpr() * 4.asExpr()) + field - 1.asExpr()) / 2.asExpr()
         val json = expr.serialize()
         val parsed = json.deserializeExpression() as Expression<Number>

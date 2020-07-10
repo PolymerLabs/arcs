@@ -1,7 +1,7 @@
 package arcs.core.host
 
-import kotlinx.coroutines.CompletableDeferred
 import java.lang.IllegalArgumentException
+import kotlinx.coroutines.CompletableDeferred
 
 class WritePerson : AbstractWritePerson() {
     var wrote = false

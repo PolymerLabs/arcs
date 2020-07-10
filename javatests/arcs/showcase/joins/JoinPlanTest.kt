@@ -12,7 +12,7 @@ import org.junit.runners.JUnit4
 class JoinPlanTest {
     @Test
     fun canParseJoinStorageKey() {
-        DriverAndKeyConfigurator.configure(null);
+        DriverAndKeyConfigurator.configure(null)
         val particle = ReadJoinPlan.particles.single()
         val connection = particle.handles.values.single()
 

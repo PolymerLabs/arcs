@@ -25,9 +25,9 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
-import arcs.core.data.SchemaRegistry
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
@@ -708,7 +708,13 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         )
     }
 
-    private fun createPersonEntity(id: ReferenceId, name: String, age: Int, list: List<Long>, inline: String): RawEntity {
+    private fun createPersonEntity(
+        id: ReferenceId,
+        name: String,
+        age: Int,
+        list: List<Long>,
+        inline: String
+    ): RawEntity {
         val inlineEntity = RawEntity(
             "",
             singletons = mapOf(
