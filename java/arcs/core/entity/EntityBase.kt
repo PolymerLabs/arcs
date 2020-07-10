@@ -35,7 +35,8 @@ open class EntityBase(
     private val schema: Schema,
     entityId: String? = null,
     creationTimestamp: Long = UNINITIALIZED_TIMESTAMP,
-    expirationTimestamp: Long = UNINITIALIZED_TIMESTAMP
+    expirationTimestamp: Long = UNINITIALIZED_TIMESTAMP,
+    private val isInlineEntity: Boolean = false
 ) : Entity {
     /**
      * Only this class should be able to change these fields (in the [deserialize] and
@@ -241,19 +242,28 @@ open class EntityBase(
         schema.fields.collections.keys.forEach { collections[it] = emptySet() }
     }
 
-    override fun serialize() = RawEntity(
-        id = entityId ?: NO_REFERENCE_ID,
-        singletons = singletons.mapValues { (field, value) ->
-            value?.let { toReferencable(it, getSingletonType(field)) }
-        },
-        collections = collections.mapValues { (field, values) ->
-            val type = getCollectionType(field)
-            values.map { toReferencable(it, type) }.toSet()
-        },
-        creationTimestamp = creationTimestamp,
-        expirationTimestamp = expirationTimestamp
-    )
-
+    override fun serialize(): RawEntity {
+        val serialization = RawEntity(
+            id = entityId ?: NO_REFERENCE_ID,
+            singletons = singletons.mapValues { (field, value) ->
+                value?.let { toReferencable(it, getSingletonType(field)) }
+            },
+            collections = collections.mapValues { (field, values) ->
+                val type = getCollectionType(field)
+                values.map { toReferencable(it, type) }.toSet()
+            },
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
+        )
+        /**
+         * Inline entities should have value equality, but we use the id to determine
+         * equality when adding entities to CRDT collections/singletons.
+         */
+        if (isInlineEntity) {
+            return serialization.copy(id = serialization.hashCode().toString())
+        }
+        return serialization
+    }
     /**
      * Populates the entity from the given [RawEntity] serialization. Must only be called on a
      * fresh, empty instance.
@@ -268,7 +278,7 @@ open class EntityBase(
         rawEntity: RawEntity,
         nestedEntitySpecs: Map<SchemaHash, EntitySpec<out Entity>> = mapOf()
     ) {
-        entityId = if (rawEntity.id == NO_REFERENCE_ID) null else rawEntity.id
+        entityId = if (rawEntity.id == NO_REFERENCE_ID || isInlineEntity) null else rawEntity.id
         rawEntity.singletons.forEach { (field, value) ->
             getSingletonTypeOrNull(field)?.let { type ->
                 setSingletonValue(

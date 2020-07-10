@@ -102,7 +102,7 @@ export class KotlinEntityGenerator implements EntityGenerator {
     } else {
       const concreteOrVariableEntity = this.node.variableName == null ? 'EntityBase' : 'VariableEntityBase';
       baseClass = ktUtils.applyFun(concreteOrVariableEntity, [
-        quote(this.className), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp'
+        quote(this.className), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp', this.entityDescriptor.node.isNested + ''
       ]);
 
       constructorFields = constructorFields.concat([
@@ -245,6 +245,21 @@ var ${escaped}: ${type}
 `;
   }
 
+  private extractUnderlyingField(field: KotlinSchemaField): KotlinSchemaField {
+    if (field.typeName === 'List') {
+      return {
+        typeName: field.listTypeInfo.name,
+        refSchemaHash: field.listTypeInfo.refSchemaHash,
+        isInlineClass: field.listTypeInfo.isInlineClass
+      } as KotlinSchemaField;
+    }
+    return field;
+  }
+
+  private mapFieldToSchemaMapEntry({refSchemaHash, typeName, refClassName}: KotlinSchemaField): string {
+    return `"${refSchemaHash}" to ${refClassName ? refClassName : typeName}`;
+  }
+
   private async generateEntitySpec() {
     const fieldCount = Object.keys(this.node.schema.fields).length;
     return `companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${this.className}> {
@@ -254,8 +269,9 @@ var ${escaped}: ${type}
             private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
                 ${ktUtils.mapOf(
                   this.entityDescriptor.fields
-                    .filter(f => f.typeName === 'Reference')
-                    .map(({refSchemaHash, refClassName}) => `"${refSchemaHash}" to ${refClassName}`),
+                    .map(this.extractUnderlyingField)
+                    .filter(f => f.typeName === 'Reference' || f.isInlineClass)
+                    .map(this.mapFieldToSchemaMapEntry),
                   16
                 )}
 

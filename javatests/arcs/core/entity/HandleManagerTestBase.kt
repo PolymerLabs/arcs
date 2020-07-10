@@ -685,6 +685,35 @@ open class HandleManagerTestBase {
     }
 
     @Test
+    fun inlineEntitiesWorkEndToEnd() = testRunner {
+        val inline = TestInlineParticle_Entities_Inline(32L, "inlineString")
+        val inlineSet = setOf(
+            TestInlineParticle_Entities_Inlines(10),
+            TestInlineParticle_Entities_Inlines(20),
+            TestInlineParticle_Entities_Inlines(30)
+        )
+        val inlineList = listOf(
+            TestInlineParticle_Entities_InlineList(setOf(
+                TestInlineParticle_Entities_InlineList_MostInline("so inline"),
+                TestInlineParticle_Entities_InlineList_MostInline("like")
+            )),
+            TestInlineParticle_Entities_InlineList(setOf(
+                TestInlineParticle_Entities_InlineList_MostInline("very"),
+                TestInlineParticle_Entities_InlineList_MostInline("very inline")
+            ))
+        )
+        val entity = TestInlineParticle_Entities(inline, inlineSet, inlineList)
+
+        val writeHandle = writeHandleManager.createCollectionHandle(entitySpec = TestInlineParticle_Entities)
+        val readHandle = readHandleManager.createCollectionHandle(entitySpec = TestInlineParticle_Entities)
+
+        val updateDeferred = readHandle.onUpdateDeferred { it.size == 1 }
+        writeHandle.dispatchStore(entity)
+        val entityOut = updateDeferred.await()
+        assertThat(updateDeferred.await()).containsExactly(entity)
+    }
+
+    @Test
     fun clientCanSetEntityId() = testRunner {
         fakeTime.millis = 0
         // Ask faketime to increment to test with changing timestamps.

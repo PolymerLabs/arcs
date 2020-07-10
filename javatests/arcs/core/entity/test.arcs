@@ -6,8 +6,16 @@ schema TestEntity
   number: Number
   list: List<Long>
 
+schema TestInline
+  inline: inline InlineEntity {long: Long, text: Text}
+  inlines: [inline AnotherInlineEntity {int: Int}]
+  inlineList: List<inline MoreInline {mostInline: [inline MostInline {text: Text}]}>
+
 particle TestParticle
   entities: reads writes [TestEntity {text, number, list} [text == ?]]
+
+particle TestInlineParticle
+  entities: reads writes [TestInline {inline, inlines, inlineList}]
 
 recipe TestRecipe
   entities: create

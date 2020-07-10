@@ -51,7 +51,8 @@ export class SchemaNode {
     readonly particleSpec: ParticleSpec,
     readonly allSchemaNodes: SchemaNode[],
     // Type variable associated with the schema node.
-    readonly variableName: string | null = null
+    readonly variableName: string | null = null,
+    readonly isNested: boolean
   ) {}
 
   readonly sources: SchemaSource[] = [];
@@ -177,7 +178,8 @@ export class SchemaGraph {
           schema,
           this.particleSpec,
           new SchemaSource(this.particleSpec, connection, path),
-          variableName
+          variableName,
+          false
         );
       }
     }
@@ -193,7 +195,7 @@ export class SchemaGraph {
   }
 
   private createNodes(schema: Schema, particleSpec: ParticleSpec, source: SchemaSource,
-                      variableName: string | null) {
+                      variableName: string | null, isNested: boolean) {
     let node = this.nodes.find((candidate: SchemaNode) => {
       // Aggregate type variable nodes of the same name together.
       if (variableName) {
@@ -202,7 +204,7 @@ export class SchemaGraph {
 
       // Aggregate nodes with the same schema together.
       if (!candidate.variableName) {
-        return schema.equals(candidate.schema);
+        return schema.equals(candidate.schema) && candidate.isNested === isNested;
       }
 
       return false;
@@ -213,7 +215,7 @@ export class SchemaGraph {
     } else {
       // This is a new schema. Check for slicability against all previous schemas
       // (in both directions) to establish the descendancy mappings.
-      node = new SchemaNode(schema, particleSpec, this.nodes, variableName);
+      node = new SchemaNode(schema, particleSpec, this.nodes, variableName, isNested);
       node.sources.push(source);
       for (const previous of this.nodes) {
         for (const [a, b] of [[node, previous], [previous, node]]) {
@@ -252,7 +254,7 @@ export class SchemaGraph {
         const nestedVar = variableName && `${variableName}.${field}`;
         // We have a reference field. Generate a node for its nested schema and connect it into the
         // refs map to indicate that this node requires nestedNode's class to be generated first.
-        const nestedNode = this.createNodes(nestedSchema, particleSpec, source.child(field), nestedVar);
+        const nestedNode = this.createNodes(nestedSchema, particleSpec, source.child(field), nestedVar, descriptor.schema.kind === 'schema-nested');
         node.refs.set(field, nestedNode);
       }
     }
