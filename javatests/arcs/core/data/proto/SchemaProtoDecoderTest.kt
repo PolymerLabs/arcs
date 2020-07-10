@@ -1,6 +1,8 @@
 package arcs.core.data.proto
 
-import arcs.core.data.*
+import arcs.core.data.FieldType
+import arcs.core.data.Schema
+import arcs.core.data.SchemaName
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
 import org.junit.Test

@@ -1,6 +1,17 @@
 package arcs.core.data.proto
 
-import arcs.core.data.*
+import arcs.core.data.CollectionType
+import arcs.core.data.CountType
+import arcs.core.data.EntityType
+import arcs.core.data.FieldType
+import arcs.core.data.PrimitiveType
+import arcs.core.data.ReferenceType
+import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
+import arcs.core.data.SingletonType
+import arcs.core.data.TupleType
+import arcs.core.data.TypeVariable
 import arcs.core.testutil.fail
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat

@@ -1,6 +1,10 @@
 package arcs.core.entity
 
-import arcs.core.data.*
+import arcs.core.data.FieldType
+import arcs.core.data.RawEntity
+import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
 
 /**
  * An [Entity] similar to [DummyEntity], except with only a subset of its properties.
