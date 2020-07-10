@@ -212,7 +212,8 @@ class RecipeTest {
     @Test
     fun recipeToPlan_fullExample() {
 
-        val peopleStorageKey = "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}"
+        val peopleStorageKey =
+            "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}"
         val peopleHandle = Recipe.Handle(
             name = "people",
             fate = Fate.MAP,

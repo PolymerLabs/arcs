@@ -42,7 +42,10 @@ class ParticleProtoDecoderTest {
     )
     val thingType = EntityType(Schema(
         names = setOf(SchemaName("Thing")),
-        fields = SchemaFields(singletons = mapOf("name" to FieldType.Text), collections = emptyMap()),
+        fields = SchemaFields(
+            singletons = mapOf("name" to FieldType.Text),
+            collections = emptyMap()
+        ),
         hash = ""
     ))
     val readConnectionSpec = HandleConnectionSpec("data", HandleMode.Read, TypeVariable("data"))

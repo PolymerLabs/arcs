@@ -93,7 +93,9 @@ class HandleProtoDecoderTest {
             assertThat(id).isEqualTo("")
             assertThat(fate).isEqualTo(Handle.Fate.JOIN)
             assertThat(storageKey).isEqualTo("ramdisk://b")
-            assertThat(associatedHandles).isEqualTo(listOf(handles["handle1"], handles["handle_join"]))
+            assertThat(associatedHandles).isEqualTo(
+                listOf(handles["handle1"], handles["handle_join"])
+            )
             assertThat(type).isEqualTo(entityType)
             assertThat(tags).isEmpty()
             assertThat(annotations).isEqualTo(listOf(
@@ -149,7 +151,9 @@ class HandleProtoDecoderTest {
             assertThat(id).isEqualTo("")
             assertThat(fate).isEqualTo(Handle.Fate.JOIN)
             assertThat(storageKey).isEqualTo("ramdisk://b")
-            assertThat(associatedHandles).isEqualTo(listOf(handles["handle1"], handles["handle_join"]))
+            assertThat(associatedHandles).isEqualTo(
+                listOf(handles["handle1"], handles["handle_join"])
+            )
             assertThat(type).isEqualTo(entityType)
             assertThat(tags).containsExactly("foo", "bar", "baz")
             assertThat(annotations).isEqualTo(listOf(

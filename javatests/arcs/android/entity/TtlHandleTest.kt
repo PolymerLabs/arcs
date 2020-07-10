@@ -47,7 +47,10 @@ class TtlHandleTest {
     val log = LogRule()
 
     private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
-    private val backingKey = DatabaseStorageKey.Persistent("entities-backing", DummyEntity.SCHEMA_HASH)
+    private val backingKey = DatabaseStorageKey.Persistent(
+        "entities-backing",
+        DummyEntity.SCHEMA_HASH
+    )
     private val collectionKey = ReferenceModeStorageKey(
         backingKey = backingKey,
         storageKey = DatabaseStorageKey.Persistent("collection", DummyEntity.SCHEMA_HASH)

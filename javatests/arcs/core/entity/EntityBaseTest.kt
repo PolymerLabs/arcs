@@ -378,7 +378,12 @@ class EntityBaseTest {
         assertThat(entity.entityId).isNull()
 
         // Calling once generates a new ID.
-        entity.ensureEntityFields(Id.Generator.newForTest("session1"), "handle2", FakeTime(10), Ttl.Minutes(1))
+        entity.ensureEntityFields(
+            Id.Generator.newForTest("session1"),
+            "handle2",
+            FakeTime(10),
+            Ttl.Minutes(1)
+        )
         val id = entity.entityId
         assertThat(id).isNotNull()
         assertThat(id).isNotEmpty()
@@ -426,7 +431,8 @@ class EntityBaseTest {
         }
         assertThat(entity.toString()).isEqualTo(
             "DummyEntity(bool = true, bools = [true, false], num = 12.0, nums = [1.0, 2.0], " +
-                "primList = [1.0, 1.0], ref = null, refList = null, refs = [], text = abc, texts = [aa, bb])"
+                "primList = [1.0, 1.0], ref = null, refList = null, refs = [], text = abc, " +
+                "texts = [aa, bb])"
         )
     }
 

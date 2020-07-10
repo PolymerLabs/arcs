@@ -37,8 +37,12 @@ class CrdtEntityTest {
 
         assertThat(entity.consumerView.singletons).isEqualTo(mapOf("foo" to null))
         assertThat(entity.consumerView.collections).isEqualTo(mapOf("bar" to emptySet<Reference>()))
-        assertThat(entity.consumerView.creationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
-        assertThat(entity.consumerView.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+        assertThat(entity.consumerView.creationTimestamp).isEqualTo(
+            RawEntity.UNINITIALIZED_TIMESTAMP
+        )
+        assertThat(entity.consumerView.expirationTimestamp).isEqualTo(
+            RawEntity.UNINITIALIZED_TIMESTAMP
+        )
         assertThat(entity.consumerView.id).isEqualTo(RawEntity.NO_REFERENCE_ID)
     }
 
