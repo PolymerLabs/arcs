@@ -461,4 +461,61 @@ Resolver generated 0 recipes`
       ['@ttl(value: \'1d\')']
     ]);
   });
+  it.only('resolves recipe with claims on type variables', async () => {
+    // This passes fine:
+    const manifest0 = await Manifest.parse(`
+particle OrderIngestion in '.OrderIngestion'
+  data: writes [Product {sku: Text, name: Text, price: Number}]
+
+particle SkuRedactor in '.SkuRedactor'
+  input: reads [~a with {sku: Text}]
+  output: writes [~a]
+  claim output.sku is redacted
+
+particle Consumer in '.Consumer'
+  data: reads [Product {sku: Text, name: Text, price: Number}]
+  //check data.sku is redacted
+
+recipe Shop
+  beforeRedaction: create
+  afterRedaction: create
+  OrderIngestion
+    data: beforeRedaction
+  SkuRedactor
+    input: beforeRedaction
+    output: afterRedaction
+  // Consumer
+  //   data: afterRedaction
+      `);
+
+    // This fails:
+    const manifest1 = await Manifest.parse(`
+particle OrderIngestion in '.OrderIngestion'
+  data: writes [Product {sku: Text, name: Text, price: Number}]
+
+particle SkuRedactor in '.SkuRedactor'
+  input: reads [~a with {sku: Text}]
+  output: writes [~a]
+  claim output.sku is redacted
+
+particle Consumer in '.Consumer'
+  data: reads [Product {sku: Text, name: Text, price: Number}]
+  //check data.sku is redacted
+
+recipe Shop
+  beforeRedaction: create
+  afterRedaction: create
+  OrderIngestion
+    data: beforeRedaction
+  SkuRedactor
+    input: beforeRedaction
+    output: afterRedaction
+  Consumer
+    data: afterRedaction
+  `);
+
+    // const resolver = new AllocatorRecipeResolver(manifest0, randomSalt);
+    const resolver = new AllocatorRecipeResolver(manifest1, randomSalt);
+    const [recipe] = await resolver.resolve();
+  });
 });
