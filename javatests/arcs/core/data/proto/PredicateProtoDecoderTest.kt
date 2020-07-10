@@ -2,7 +2,6 @@ package arcs.core.data.proto
 
 import arcs.core.data.InformationFlowLabel
 import arcs.core.data.InformationFlowLabel.Predicate
-import arcs.core.testutil.fail
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
 import org.junit.Test
@@ -124,4 +123,3 @@ class PredicateProtoDecoderTest {
         )
     }
 }
-

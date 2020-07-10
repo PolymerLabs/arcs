@@ -4,13 +4,11 @@ import arcs.core.data.AccessPath
 import arcs.core.data.Claim
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
-import arcs.core.data.TypeVariable
 import arcs.core.data.InformationFlowLabel
 import arcs.core.data.InformationFlowLabel.Predicate
-import arcs.core.testutil.fail
+import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
-import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -92,4 +90,3 @@ class ClaimProtoDecoderTest {
         )
     }
 }
-

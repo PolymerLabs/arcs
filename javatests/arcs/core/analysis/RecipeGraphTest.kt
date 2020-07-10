@@ -1,12 +1,8 @@
 package arcs.core.analysis
 
-import arcs.core.data.AccessPath
 import arcs.core.data.Annotation
-import arcs.core.data.Check
-import arcs.core.data.Claim
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
-import arcs.core.data.InformationFlowLabel
 import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe
 import arcs.core.data.TypeVariable
@@ -30,7 +26,7 @@ class RecipeGraphTest {
             name = "joined",
             fate = Recipe.Handle.Fate.JOIN,
             type = TypeVariable("joined"),
-            associatedHandles=listOf(thingHandle, someHandle)
+            associatedHandles = listOf(thingHandle, someHandle)
         )
         val readConnectionSpec = HandleConnectionSpec(
             "r",
@@ -109,7 +105,7 @@ class RecipeGraphTest {
 
     @Test
     fun addSuccessorUpdatesPredecessorOfSuccessor() {
-        with (TestRecipe()) {
+        with(TestRecipe()) {
             val particleNode = RecipeGraph.Node.Particle(readerParticle)
             val handleNode = RecipeGraph.Node.Handle(thingHandle)
             particleNode.addSuccessor(handleNode, readConnectionSpec)
@@ -121,7 +117,7 @@ class RecipeGraphTest {
 
     @Test
     fun prettyPrintNodes() {
-        with (TestRecipe()) {
+        with(TestRecipe()) {
             val particleNode = RecipeGraph.Node.Particle(readerParticle)
             val handleNode = RecipeGraph.Node.Handle(thingHandle)
 
@@ -131,7 +127,7 @@ class RecipeGraphTest {
     }
 
     private fun testAllConnections(testRecipe: TestRecipe) {
-        with (testRecipe) {
+        with(testRecipe) {
             val graph = RecipeGraph(recipe)
             val readerNode = RecipeGraph.Node.Particle(readerParticle)
             val writerNode = RecipeGraph.Node.Particle(writerParticle)
@@ -191,10 +187,10 @@ class RecipeGraphTest {
             assertThat(graph.nodes)
                 .containsExactly(readerNode, writerNode, thingNode, joinedNode, someNode)
             graph.nodes.forEach {
-                assertWithMessage("Checking successors of ${it}:")
+                assertWithMessage("Checking successors of $it:")
                     .that(it.successors)
                     .containsExactlyElementsIn(requireNotNull(expectedSuccessors[it]))
-                assertWithMessage("Checking predecessors of ${it}:")
+                assertWithMessage("Checking predecessors of $it:")
                     .that(it.predecessors)
                     .containsExactlyElementsIn(requireNotNull(expectedPredecessors[it]))
             }
@@ -210,7 +206,7 @@ class RecipeGraphTest {
 
     @Test
     fun particleNodes() {
-        with (TestRecipe()) {
+        with(TestRecipe()) {
             val graph = RecipeGraph(recipe)
             assertThat(graph.particleNodes.map { it.particle }).containsExactly(
                 readerParticle,
@@ -221,7 +217,7 @@ class RecipeGraphTest {
 
     @Test
     fun handleNodes() {
-        with (TestRecipe()) {
+        with(TestRecipe()) {
             val graph = RecipeGraph(recipe)
             assertThat(graph.handleNodes.map { it.handle }).containsExactly(
                 thingHandle,

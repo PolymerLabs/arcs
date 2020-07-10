@@ -1,6 +1,5 @@
 package arcs.core.allocator
 
-import arcs.core.common.ArcId
 import arcs.core.common.Id
 import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
@@ -23,6 +22,9 @@ import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import java.lang.IllegalArgumentException
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,9 +34,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.lang.IllegalArgumentException
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 @RunWith(JUnit4::class)
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -132,7 +131,7 @@ open class AllocatorTestBase {
         arc: Arc,
         arcState: ArcState
     ) {
-        check(arc.partitions.isNotEmpty()) { "No partitions for ${arc.id}"}
+        check(arc.partitions.isNotEmpty()) { "No partitions for ${arc.id}" }
         arc.partitions.forEach { partition ->
             val hostId = partition.arcHost
             val status = when {

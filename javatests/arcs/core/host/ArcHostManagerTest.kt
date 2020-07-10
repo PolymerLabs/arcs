@@ -10,7 +10,6 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -29,7 +28,7 @@ open class ArcHostManagerTest {
     @Test
     fun pauseAllHostsFor() = runBlocking {
         val schedulerProvider = JvmSchedulerProvider(coroutineContext)
-        val host  = TestHost(schedulerProvider("arcId"))
+        val host = TestHost(schedulerProvider("arcId"))
         val hostRegistry = ExplicitHostRegistry()
         hostRegistry.registerHost(host)
 

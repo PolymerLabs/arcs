@@ -15,7 +15,7 @@ typealias Res = EntitySlicingTest_Res
 
 class EntitySlicingTest : AbstractEntitySlicingTest() {
     override fun onHandleSync(handle: WasmHandle, allSynced: Boolean) {
-        if (!allSynced) return;
+        if (!allSynced) return
 
         handles.s1.fetch()?.let { handles.res.store(Res("s1:${it.num.toInt()}")) }
         handles.s2.fetch()?.let { handles.res.store(Res("s2:${it.num.toInt()},${it.txt}")) }

@@ -58,7 +58,6 @@ class TestAnalyzer(
     ) = input.set?.let {
         AbstractSet<String>(it + "h:${fromHandle.name} -> h:${toHandle.name}")
     } ?: input
-
 }
 
 @RunWith(JUnit4::class)
@@ -291,7 +290,7 @@ class RecipeGraphFixpointIteratorTest {
             name = "joined",
             fate = Recipe.Handle.Fate.JOIN,
             type = TypeVariable("joined"),
-            associatedHandles=listOf(name, thing)
+            associatedHandles = listOf(name, thing)
         )
         val joinReaderParticle = Recipe.Particle(
             readerSpec,

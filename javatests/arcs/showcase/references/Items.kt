@@ -13,4 +13,3 @@ data class MyLevel2(
     val name: String,
     val children: Set<MyLevel1>
 )
-

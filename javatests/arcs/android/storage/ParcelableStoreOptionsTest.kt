@@ -14,7 +14,6 @@ package arcs.android.storage
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.ParcelableCrdtType
-import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.keys.RamDiskStorageKey

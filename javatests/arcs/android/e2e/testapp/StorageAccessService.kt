@@ -83,7 +83,6 @@ class StorageAccessService : LifecycleService() {
                     handleManager.close()
                 }
             }
-
         }
 
         return Service.START_NOT_STICKY

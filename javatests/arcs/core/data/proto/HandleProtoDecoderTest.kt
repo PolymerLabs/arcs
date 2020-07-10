@@ -77,7 +77,7 @@ class HandleProtoDecoderTest {
         val handleText = buildHandleProtoText(
             name = "thing",
             fate = "JOIN",
-            type = "type { ${entityTypeProto} }",
+            type = "type { $entityTypeProto }",
             storageKey = storageKey,
             associatedHandle = "handle_join",
             annotations = "[{name: \"persistent\"}, {name: \"queryable\"}]"
@@ -122,7 +122,7 @@ class HandleProtoDecoderTest {
         val handleText = buildHandleProtoText(
             name = "thing",
             fate = "JOIN",
-            type = "type { ${entityTypeProto} }",
+            type = "type { $entityTypeProto }",
             storageKey = storageKey,
             associatedHandle = "handle_join",
             annotations = "[{name: \"persistent\"}, {name: \"queryable\"}]",
@@ -210,14 +210,14 @@ class HandleProtoDecoderTest {
         id: String = ""
     ) =
         """
-          name: "${name}"
-          id: "${id}"
-          fate: ${fate}
+          name: "$name"
+          id: "$id"
+          fate: $fate
           storage_key: "$storageKey"
           associated_handles: "handle1"
-          associated_handles: "${associatedHandle}"
-          ${type}
-          annotations: ${annotations}
+          associated_handles: "$associatedHandle"
+          $type
+          annotations: $annotations
           ${tags.joinToString { """tags: "$it"""" }}
         """.trimIndent()
 }

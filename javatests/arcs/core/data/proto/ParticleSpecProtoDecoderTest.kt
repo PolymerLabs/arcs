@@ -87,7 +87,7 @@ class ParticleSpecProtoDecoderTest {
         val fields = SchemaFields(singletons, mapOf())
         // TODO: Hash.
         val handleConnectionSpecProto = getHandleConnectionSpecProto("data", "READS", "Thing")
-        val schema = Schema(setOf(SchemaName("Thing")), fields, hash="")
+        val schema = Schema(setOf(SchemaName("Thing")), fields, hash = "")
         val connectionSpec = decodeHandleConnectionSpecProto(handleConnectionSpecProto)
         assertThat(connectionSpec.name).isEqualTo("data")
         assertThat(connectionSpec.direction).isEqualTo(HandleMode.Read)

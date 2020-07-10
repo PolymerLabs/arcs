@@ -13,14 +13,14 @@ package arcs.core.entity
 
 import arcs.core.common.Id
 import arcs.core.crdt.VersionMap
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
-import arcs.core.data.Capability.Ttl
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.storage.Reference as StorageReference
+import arcs.core.storage.testutil.DummyStorageKey
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
@@ -247,7 +247,7 @@ class EntityBaseTest {
 
     @Test
     fun serializeRoundTrip() {
-        with (entity) {
+        with(entity) {
             text = "abc"
             num = 12.0
             bool = true
@@ -358,7 +358,7 @@ class EntityBaseTest {
 
     @Test
     fun reset() {
-        with (entity) {
+        with(entity) {
             text = "abc"
             num = 12.0
             bool = true
@@ -415,7 +415,7 @@ class EntityBaseTest {
 
     @Test
     fun testToString() {
-        with (entity) {
+        with(entity) {
             text = "abc"
             num = 12.0
             bool = true

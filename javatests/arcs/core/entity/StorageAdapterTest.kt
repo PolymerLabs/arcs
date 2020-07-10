@@ -2,8 +2,8 @@ package arcs.core.entity
 
 import arcs.core.common.Id
 import arcs.core.crdt.VersionMap
-import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.data.Capability.Ttl
+import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference as StorageReference
@@ -15,8 +15,8 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.test.assertFailsWith
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

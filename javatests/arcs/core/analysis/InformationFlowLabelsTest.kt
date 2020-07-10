@@ -143,5 +143,4 @@ class InformationFlowLabelsTest {
         assertThat(setOfABandAC join setOfAB).isEqualTo(setOfABandAC)
         assertThat(setOfAB join setOfABandAC).isEqualTo(setOfABandAC)
     }
-
 }

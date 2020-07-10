@@ -12,10 +12,10 @@
 package arcs.sdk.wasm
 
 class SingletonApiTest : AbstractSingletonApiTest() {
-    var x = 0;
+    var x = 0
 
-    init{
-        handles.inHandle.onUpdate{
+    init {
+        handles.inHandle.onUpdate {
             x = 1
         }
     }
@@ -28,7 +28,7 @@ class SingletonApiTest : AbstractSingletonApiTest() {
                         SingletonApiTest_Errors(msg = "case1: populated handle should not be null")
                     )
                 }
-                if(x == 1) {
+                if (x == 1) {
                     handles.errors.store(
                       SingletonApiTest_Errors(msg = "case1: handle.onUpdate should not have been called yet.")
                     )
@@ -40,10 +40,9 @@ class SingletonApiTest : AbstractSingletonApiTest() {
                         SingletonApiTest_Errors(msg = "case1: cleared handle should be null")
                     )
                 }
-
             }
             "case2" -> {
-                if(x == 0) {
+                if (x == 0) {
                     handles.errors.store(
                       SingletonApiTest_Errors(msg = "case1: handle.onUpdate should have been called.")
                     )

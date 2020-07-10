@@ -17,12 +17,12 @@ class InformationFlowTest {
     /** Returns the path for the manifest proto binary file for the test. */
     private fun getManifestProtoTextPath(test: String): String {
         val testText = test.replace("-", "_")
-        return runfilesDir() + "javatests/arcs/core/analysis/testdata/${testText}.arcs"
+        return runfilesDir() + "javatests/arcs/core/analysis/testdata/$testText.arcs"
     }
 
     /** Returns the path for the manifest proto binary file for the test. */
     private fun getManifestProtoBinPath(test: String): String {
-        return "javatests/arcs/core/analysis/testdata/${test}.pb.bin"
+        return "javatests/arcs/core/analysis/testdata/$test.pb.bin"
     }
 
     /** A helper function to decode a RecipeProto in a [file] in the testdata directory. */

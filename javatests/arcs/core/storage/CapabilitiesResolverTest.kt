@@ -14,8 +14,8 @@ package arcs.core.storage
 import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Persistence
-import arcs.core.data.Capability.Ttl
 import arcs.core.data.Capability.Shareable
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.ReferenceType
@@ -31,7 +31,6 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -54,7 +53,7 @@ class CapabilitiesResolverTest {
     private val inMemoryWithTtls = Capabilities(listOf(Persistence.IN_MEMORY, Ttl.Days(1)))
     private val onDisk = Capabilities(Persistence.ON_DISK)
     private val onDiskWithTtl = Capabilities(listOf(Persistence.ON_DISK, Ttl.Days(1)))
-  
+
     @After
     fun tearDown() {
         CapabilitiesResolver.reset()

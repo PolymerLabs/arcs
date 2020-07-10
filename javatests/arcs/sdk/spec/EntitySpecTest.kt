@@ -1,11 +1,11 @@
 package arcs.sdk.spec
 
 import arcs.core.common.Id
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.RawEntity
 import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
-import arcs.core.data.Capability.Ttl
-import arcs.core.data.util.toReferencable
 import arcs.core.data.SchemaRegistry
+import arcs.core.data.util.toReferencable
 import arcs.core.testutil.handles.dispatchCreateReference
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.testutil.runTest
@@ -144,7 +144,7 @@ class EntitySpecTest {
         assertThat(creationTimestamp).isEqualTo(currentTime)
 
         // Calling it again doesn't overwrite id and timestamp.
-        entity.ensureEntityFields(idGenerator, "something-else", FakeTime(currentTime+10))
+        entity.ensureEntityFields(idGenerator, "something-else", FakeTime(currentTime + 10))
         assertThat(entity.entityId).isEqualTo(entityId)
         assertThat(entity.serialize().creationTimestamp).isEqualTo(creationTimestamp)
     }

@@ -24,10 +24,10 @@ import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
+import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
-import arcs.core.storage.database.DatabaseManager
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
@@ -156,7 +156,7 @@ class DatabaseDriverProviderTest {
     }
 
     private fun databaseFactory(): DatabaseManager =
-        databaseManager ?: FakeDatabaseManager().also { databaseManager = it}
+        databaseManager ?: FakeDatabaseManager().also { databaseManager = it }
 
     companion object {
         private val DUMMY_SCHEMA = Schema(

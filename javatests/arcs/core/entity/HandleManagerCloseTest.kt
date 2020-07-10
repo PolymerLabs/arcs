@@ -1,13 +1,13 @@
 package arcs.core.entity
 
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
-import arcs.core.data.SingletonType
-import arcs.core.data.Capability.Ttl
 import arcs.core.data.SchemaRegistry
-import arcs.core.entity.HandleManagerTestBase.Person
+import arcs.core.data.SingletonType
 import arcs.core.entity.HandleManagerTestBase.CoolnessIndex
+import arcs.core.entity.HandleManagerTestBase.Person
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -20,6 +20,8 @@ import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import java.lang.IllegalStateException
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
@@ -31,8 +33,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.lang.IllegalStateException
-import kotlin.coroutines.EmptyCoroutineContext
 
 @Suppress("UNCHECKED_CAST")
 @RunWith(JUnit4::class)
@@ -115,7 +115,7 @@ class HandleManagerCloseTest {
 
         handleManager.close()
 
-        val person = Person("1","p",1.0, coolnessIndex = CoolnessIndex("", 1, true))
+        val person = Person("1", "p", 1.0, coolnessIndex = CoolnessIndex("", 1, true))
 
         withContext(handle.dispatcher) {
             listOf(
@@ -142,7 +142,7 @@ class HandleManagerCloseTest {
 
         handleManager.close()
 
-        val person = Person("1","p",1.0,coolnessIndex = CoolnessIndex("", 1, true))
+        val person = Person("1", "p", 1.0, coolnessIndex = CoolnessIndex("", 1, true))
 
         withContext(handle.dispatcher) {
             listOf(

@@ -12,8 +12,8 @@
 package arcs.core.storage.util
 
 import arcs.core.crdt.VersionMap
-import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.Reference
+import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executors

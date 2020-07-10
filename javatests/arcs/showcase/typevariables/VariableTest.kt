@@ -1,6 +1,5 @@
 package arcs.showcase.typevariables
 
-
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.host.*
 import arcs.core.testutil.runTest

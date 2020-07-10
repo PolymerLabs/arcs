@@ -1,18 +1,13 @@
 package arcs.core.policy
 
-import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Encryption
 import arcs.core.data.Capability.Persistence
 import arcs.core.data.Capability.Ttl
-import arcs.core.policy.PolicyRetention
-import arcs.core.policy.PolicyTarget
-import arcs.core.policy.StorageMedium
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.test.assertFailsWith
 
 @RunWith(JUnit4::class)
 class PolicyTest {

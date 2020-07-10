@@ -231,7 +231,7 @@ class ArcsTest {
             .that(text2Appeared).isTrue()
     }
 
-    private fun createTestAppIntent(packageName: String, className: String) : Intent {
+    private fun createTestAppIntent(packageName: String, className: String): Intent {
         var intent = Intent()
         intent.setClassName(packageName, className)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

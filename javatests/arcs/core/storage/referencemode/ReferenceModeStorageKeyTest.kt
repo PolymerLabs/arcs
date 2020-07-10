@@ -10,15 +10,15 @@
  */
 package arcs.core.storage.referencemode
 
-import arcs.core.storage.embed
 import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.embed
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.test.assertFailsWith
 
 /** Tests for [ReferenceModeStorageKey]. */
 @RunWith(JUnit4::class)
@@ -27,8 +27,8 @@ class ReferenceModeStorageKeyTest {
     fun differentProtocolsThrows() {
         val backing = DatabaseStorageKey.Persistent("db", "abcdef")
         val direct = RamDiskStorageKey("direct")
-        val exception = assertFailsWith<IllegalArgumentException> { 
-            ReferenceModeStorageKey(backing, direct) 
+        val exception = assertFailsWith<IllegalArgumentException> {
+            ReferenceModeStorageKey(backing, direct)
         }
         assertThat(exception).hasMessageThat().startsWith(
             "Different protocols (db and ramdisk) in a ReferenceModeStorageKey can cause problems"

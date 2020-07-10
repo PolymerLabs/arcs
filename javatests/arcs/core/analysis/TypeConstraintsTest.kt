@@ -2,15 +2,13 @@ package arcs.core.analysis
 
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
+import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe
 import arcs.core.data.Recipe.Handle
 import arcs.core.data.Recipe.Particle
 import arcs.core.data.Recipe.Particle.HandleConnection
-import arcs.core.data.ParticleSpec
 import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
-import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -46,7 +44,7 @@ class TypeConstraintsTest {
     )
     val textCnxnSpec = HandleConnectionSpec("text_cnxn", HandleMode.Read, TypeVariable("text_cnxn"))
     val wordCnxnSpec = HandleConnectionSpec("word_cnxn", HandleMode.Read, TypeVariable("word_cnxn"))
-    val numCnxnSpec = HandleConnectionSpec("num_cnxn",  HandleMode.Read, TypeVariable("num_type"))
+    val numCnxnSpec = HandleConnectionSpec("num_cnxn", HandleMode.Read, TypeVariable("num_type"))
     // numCnxnSpec has the same type variable name as [numCnxnSpec]
     val intCnxnSpec = HandleConnectionSpec("int_cnxn", HandleMode.Write, TypeVariable("num_type"))
 
