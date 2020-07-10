@@ -359,18 +359,6 @@ policy MyPolicy {
         `Unexpected capabilities: ${capabilities[1].toDebugString()}`);
   });
 
-  const manifestString = (annotations = '') => {
-    return `
-${personSchema}
-particle P1
-  person: reads writes Person {name, age}
-recipe
-  personHandle: create ${annotations}
-  P1
-    person: personHandle
-    `;
-  };
-
   it('fails validating handle with no policy target', async () => {
     const policy = (await parsePolicy(`
 policy MyPolicy {
@@ -395,9 +383,22 @@ recipe
         `Policy MyPolicy has no matching target types for Foo {value: Text}`));
   });
 
+  const manifestString = (annotations = '') => {
+    return `
+${personSchema}
+particle P1
+  person: reads writes Person {name, age}
+recipe
+  personHandle: create ${annotations}
+  P1
+    person: personHandle
+    `;
+  };
+
   const assertHandleIngressNotAllowed = async (manifestString, policy, expectedError) => {
     const recipe = (await Manifest.parse(manifestString)).recipes[0];
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
     const result = policy.isHandleIngressAllowed(recipe.handles[0]);
     assert.isFalse(result.success);
     assert.isTrue(result.toString().includes(expectedError),
@@ -405,7 +406,9 @@ recipe
   };
   const assertHandleIngressAllowed = async (manifestString, policy) => {
     const recipe = (await Manifest.parse(manifestString)).recipes[0];
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+    debugger;
     const options = {errors: new Map()};
     const result = policy.isHandleIngressAllowed(recipe.handles[0]);
     assert.isTrue(result.success, `Validation failed with: ${result.toString()}`);
@@ -444,7 +447,7 @@ policy MyPolicy {
     await assertHandleIngressNotAllowed(manifestString(`@inMemory @ttl('48h')`), policy, 'encrypted is stricter than unspecified');
   });
 
-  it('successfully validates default persistence', async () => {
+  it.only('successfully validates default persistence', async () => {
     const policy = (await parsePolicy(`
 policy MyPolicy {
   @allowedRetention(medium: 'Ram', encryption: false)
