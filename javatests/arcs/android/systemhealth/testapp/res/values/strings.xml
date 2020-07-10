@@ -39,6 +39,8 @@
   <string name="iteration_interval_ms_hint" translatable="false">The waiting time (ms) between test runs</string>
   <string name="data_size" translatable="false">Data Size (bytes)</string>
   <string name="data_size_hint" translatable="false">The size of data (bytes) to write</string>
+  <string name="cleared_entities" translatable="false">Cleared Entities</string>
+  <string name="cleared_entities_hint" translatable="false">The number of entities to be cleared</string>
   <string name="delayed_start_ms" translatable="false">Delayed Start (ms)</string>
   <string name="delayed_start_ms_hint" translatable="false">Delay (ms) before starting test</string>
   <string name="storage_service_crash_rate" translatable="false">Storage service crash rate: %1$d%%</string>

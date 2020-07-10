@@ -77,6 +77,7 @@ class TestActivity : AppCompatActivity() {
     private var iterationIntervalMs: Int
     private var timesOfIterations: Int
     private var dataSizeInBytes: Int
+    private var clearedEntities: Int
     private var delayedStartMs: Int
     private var storageServiceCrashRate: Int
     private var storageClientCrashRate: Int
@@ -95,6 +96,7 @@ class TestActivity : AppCompatActivity() {
             iterationIntervalMs = it.iterationIntervalMs
             timesOfIterations = it.timesOfIterations
             dataSizeInBytes = it.dataSizeInBytes
+            clearedEntities = it.clearedEntities
             delayedStartMs = it.delayedStartMs
             storageServiceCrashRate = it.storageServiceCrashRate
             storageClientCrashRate = it.storageClientCrashRate
@@ -242,6 +244,13 @@ class TestActivity : AppCompatActivity() {
                 } ?: dataSizeInBytes
             }
         )
+        findViewById<TextView>(R.id.cleared_entities).also {
+            it.text = clearedEntities.toString()
+        }.addTextChangedListener(
+            SystemHealthTextWatch {
+                clearedEntities = it.toIntOrNull() ?: clearedEntities
+            }
+        )
         findViewById<TextView>(R.id.delayed_start_ms).also {
             it.text = delayedStartMs.toString()
         }.addTextChangedListener(
@@ -330,6 +339,7 @@ class TestActivity : AppCompatActivity() {
                 intent.putExtra(it.iterationIntervalMs, iterationIntervalMs)
                 intent.putExtra(it.timesOfIterations, timesOfIterations)
                 intent.putExtra(it.dataSizeInBytes, dataSizeInBytes)
+                intent.putExtra(it.clearedEntities, clearedEntities)
                 intent.putExtra(it.delayedStartMs, delayedStartMs)
                 intent.putExtra(it.storageServiceCrashRate, storageServiceCrashRate)
                 intent.putExtra(it.storageClientCrashRate, storageClientCrashRate)
@@ -356,6 +366,7 @@ class TestActivity : AppCompatActivity() {
                 intent.putExtra(it.iterationIntervalMs, iterationIntervalMs)
                 intent.putExtra(it.timesOfIterations, timesOfIterations)
                 intent.putExtra(it.dataSizeInBytes, dataSizeInBytes)
+                intent.putExtra(it.clearedEntities, clearedEntities)
                 intent.putExtra(it.delayedStartMs, delayedStartMs)
                 intent.putExtra(it.storageServiceCrashRate, storageServiceCrashRate)
                 intent.putExtra(it.storageClientCrashRate, storageClientCrashRate)

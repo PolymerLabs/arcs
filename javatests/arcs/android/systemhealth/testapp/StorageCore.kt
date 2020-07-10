@@ -82,6 +82,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -115,6 +116,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
     private var tasksEvents: MutableMap<Int, TaskEventQueue<TaskEvent>> = mutableMapOf()
     private var controllers: Array<TaskController?> = emptyArray()
     private var handles: Array<TaskHandle> = emptyArray()
+    private lateinit var settings: Settings
 
     private var earlyExit = false
 
@@ -138,6 +140,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
      * This should only be called by remote/local system health test service's onStartCommand.
      */
     fun accept(settings: Settings) {
+        this.settings = settings
+
         // The last one always wins!
         // It must be in the cancelling order of taskManager then tasks to prevent tasks from
         // being queued after tasks' shutdownNow() but before taskManager.shutdownNow() completes.
@@ -162,9 +166,13 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         tasksEvents.clear()
         _statsBulletin.update { "" }
 
+        val numOfTasks =
+            settings.numOfListenerThreads +
+            settings.numOfWriterThreads +
+            if (settings.clearedEntities >= 0) 1 else 0
         if (settings.function != Function.STOP && settings.timesOfIterations > 0) {
             notify { "Preparing data and tests..." }
-            tasks = Array(settings.numOfListenerThreads + settings.numOfWriterThreads) { id ->
+            tasks = Array(numOfTasks) { id ->
                 object : ScheduledThreadPoolExecutor(
                     if (settings.function == Function.STABILITY_TEST) 2 else 1) {
                     override fun terminated() {
@@ -248,7 +256,10 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
     @ExperimentalCoroutinesApi
     private fun execute(settings: Settings) {
         earlyExit = false
-        val numOfTasks = settings.numOfListenerThreads + settings.numOfWriterThreads
+        val numOfTasks =
+            settings.numOfListenerThreads +
+            settings.numOfWriterThreads +
+            if (settings.clearedEntities >= 0) 1 else 0
         val watchdog = Watchdog(settings)
 
         // Task and handle manager assignments
@@ -287,9 +298,10 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 ),
                 taskCoroutineContext
             ).apply {
-                val taskType = when (id) {
-                    in 0 until settings.numOfListenerThreads -> TaskType.LISTENER
-                    else -> TaskType.WRITER
+                val taskType = when {
+                    id < settings.numOfListenerThreads -> TaskType.LISTENER
+                    id < settings.numOfListenerThreads + settings.numOfWriterThreads -> TaskType.WRITER
+                    else -> TaskType.CLEANER
                 }
                 tasksEvents[id] = TaskEventQueue(ReentrantReadWriteLock(), mutableListOf())
                 controllers[id] = TaskController(
@@ -301,7 +313,10 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                     settings.timesOfIterations
                 )
                 runBlocking {
-                    setUpHandle(this@apply, id, taskType, settings)
+                    if (taskType == TaskType.CLEANER)
+                        setUpCleanerHandle(this@apply, settings)
+                    else
+                        setUpHandle(this@apply, id, taskType, settings)
                 }
             }
         }.toTypedArray()
@@ -325,7 +340,8 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                     val job = GlobalScope.launch(taskHandle.coroutineContext) {
                         when (ctrl.taskType) {
                             TaskType.LISTENER -> listenerTask(taskHandle, ctrl, settings)
-                            else -> writerTask(taskHandle, ctrl, settings)
+                            TaskType.WRITER -> writerTask(taskHandle, ctrl, settings)
+                            TaskType.CLEANER -> cleanerTask(taskHandle, ctrl, settings)
                         }
                     }
 
@@ -348,6 +364,29 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
 
         // WatchDog: summarize stats or bark/bite w.r.t latency, stability, etc.
         watchdog.monitor()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private suspend fun setUpCleanerHandle(taskHandle: TaskHandle, settings: Settings) {
+        val handle = taskHandle.handleManager.createHandle(
+            HandleSpec(
+                "CleanerHandle",
+                HandleMode.Write,
+                CollectionType(EntityType(TestEntity.SCHEMA)),
+                TestEntity
+            ),
+            TestEntity.clearEntitiesTestStorageKey
+        ) as ReadWriteCollectionHandle<TestEntity>
+
+        val elapsedTime = measureTimeMillis { handle.awaitReady() }
+        if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
+            taskManagerEvents.writer.withLock {
+                taskManagerEvents.queue.add(
+                    TaskEvent(TaskEventId.HANDLE_AWAIT_READY_TIME, elapsedTime))
+            }
+        }
+
+        taskHandle.handle = handle
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -545,6 +584,38 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
+    private suspend fun cleanerTask(
+        taskHandle: TaskHandle,
+        taskController: TaskController,
+        settings: Settings
+    ) = (taskHandle.handle as? ReadWriteCollectionHandle<TestEntity>)?.let { handle ->
+        val entities = List(settings.clearedEntities) {
+            SystemHealthTestEntity(settings.dataSizeInBytes)
+        }
+
+        if (entities.isNotEmpty()) {
+            withContext(handle.dispatcher) {
+                entities.map { handle.store(it) }
+            }.joinAll()
+            handle.getProxy().waitForIdle()
+        }
+
+        val elapsedTime = measureTimeMillis {
+            // Wait until all client side jobs get done i.e. the op gets sent to
+            // outgoing channel and handled at ServiceStore's onProxyMessage.
+            withContext(handle.dispatcher) { handle.clear() }.join()
+        }
+
+        if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
+            tasksEvents[taskController.taskId]?.writer?.withLock {
+                tasksEvents[taskController.taskId]?.queue?.add(
+                    TaskEvent(TaskEventId.HANDLE_CLEAR_LATENCY, elapsedTime)
+                )
+            }
+        }
+    }
+
     private fun performanceExceptionHandler(taskId: Int) =
         CoroutineExceptionHandler { _, exception ->
             // This is the innermost thread-wise exception handler monitoring all exceptions
@@ -662,6 +733,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         val stats = Stats()
             .generateHandleFetchLatencyStats()
             .generateHandleStoreLatencyStats()
+            .generateHandleClearLatencyStats()
             .generateWriteToReadTripLatencyStats()
             .generateDereferenceLatencyStats()
             .generateHandleAwaitReadyTimeStats()
@@ -759,6 +831,29 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 bulletin +=
                     """
                     [store() latency]
+                    ${calculator.snapshot()}
+                    ${platformNewline.repeat(1)}
+                    """.trimIndent()
+            }
+        }
+
+        @Suppress("UnstableApiUsage")
+        fun generateHandleClearLatencyStats(): Stats = also {
+            val calculator = StatsAccumulator()
+
+            tasksEvents.forEach { _, events ->
+                events.reader.withLock {
+                    calculator.addAll(
+                        events.queue.filter {
+                            it.eventId == TaskEventId.HANDLE_CLEAR_LATENCY }.map { it.timeMs }
+                    )
+                }
+            }
+
+            calculator.takeIf { it.count() > 0 }?.let {
+                bulletin +=
+                    """
+                    [clear() latency on ${settings.clearedEntities} entities]
                     ${calculator.snapshot()}
                     ${platformNewline.repeat(1)}
                     """.trimIndent()
@@ -1036,6 +1131,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
     private enum class TaskType {
         LISTENER,
         WRITER,
+        CLEANER,
     }
 
     private enum class TaskEventId {
@@ -1043,6 +1139,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         HANDLE_STORE_WRITER_END,
         HANDLE_STORE_READER_END,
         HANDLE_FETCH_LATENCY,
+        HANDLE_CLEAR_LATENCY,
         HANDLE_AWAIT_READY_TIME,
         DEREFERENCE_LATENCY,
         MEMORY_STATS,
@@ -1126,6 +1223,7 @@ class SystemHealthData {
         val timesOfIterations: String = "times_of_iterations",
         val iterationIntervalMs: String = "iteration_interval_ms",
         val dataSizeInBytes: String = "data_size_bytes",
+        val clearedEntities: String = "cleared_entities",
         val delayedStartMs: String = "delayed_start_ms",
         val storageServiceCrashRate: String = "storage_service_crash_rate",
         val storageClientCrashRate: String = "storage_client_crash_rate",
@@ -1141,6 +1239,7 @@ class SystemHealthData {
         val timesOfIterations: Int = 1,
         val iterationIntervalMs: Int = 1000,
         val dataSizeInBytes: Int = 64,
+        val clearedEntities: Int = 0,
         val delayedStartMs: Int = 0,
         val storageServiceCrashRate: Int = 10,
         val storageClientCrashRate: Int = 10,

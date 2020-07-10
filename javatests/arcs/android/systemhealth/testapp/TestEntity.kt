@@ -88,6 +88,11 @@ class TestEntity(
             storageKey = DatabaseStorageKey.Persistent("collection", schemaHash, "arcs_test")
         )
 
+        val clearEntitiesTestStorageKey = ReferenceModeStorageKey(
+            backingKey = DatabaseStorageKey.Persistent("cleared_entities_backing", schemaHash, "arcs_test"),
+            storageKey = DatabaseStorageKey.Persistent("cleared_entities_container", schemaHash, "arcs_test")
+        )
+
         const val text = "Test Text"
         const val number = 1234.0
         const val boolean = true
