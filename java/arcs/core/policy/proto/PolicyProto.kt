@@ -11,6 +11,7 @@
 
 package arcs.core.policy.proto
 
+import arcs.core.data.FieldName
 import arcs.core.data.proto.PolicyFieldProto
 import arcs.core.data.proto.PolicyProto
 import arcs.core.data.proto.PolicyRetentionProto
@@ -48,7 +49,7 @@ private fun PolicyTargetProto.decode(): PolicyTarget {
     )
 }
 
-private fun PolicyFieldProto.decode(parentFieldPath: List<String> = emptyList()): PolicyField {
+private fun PolicyFieldProto.decode(parentFieldPath: List<FieldName> = emptyList()): PolicyField {
     val rawUsages = mutableSetOf<UsageType>()
     val redactedUsages = mutableMapOf<String, MutableSet<UsageType>>()
     for (usage in usagesList) {

@@ -14,6 +14,7 @@ package arcs.core.policy
 import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability
+import arcs.core.data.FieldName
 
 /** Defines a data usage policy. See [PolicyProto] for the canonical definition of a policy. */
 data class Policy(
@@ -72,7 +73,7 @@ data class PolicyTarget(
 /** Allowed usages for fields in a schema, see [PolicyFieldProto]. */
 data class PolicyField(
     /** List of field names leading from the [PolicyTarget] to this nested field. */
-    val fieldPath: List<String>,
+    val fieldPath: List<FieldName>,
     /** Valid usages of this field without redaction. */
     val rawUsages: Set<UsageType> = emptySet(),
     /** Valid usages of this field with redaction first. Maps from redaction label to usages. */
