@@ -113,7 +113,15 @@ enum class EgressType {
 enum class UsageType {
     ANY,
     EGRESS,
-    JOIN,
+    JOIN;
+
+    val canEgress
+        get() = this == ANY || this == EGRESS
+}
+
+/** Convenience method for checking if any usage in a set allows egress. */
+fun Set<UsageType>.canEgress(): Boolean {
+    return any { it.canEgress }
 }
 
 /** Target schema governed by a policy, see [PolicyRetentionProto.Medium]. */
