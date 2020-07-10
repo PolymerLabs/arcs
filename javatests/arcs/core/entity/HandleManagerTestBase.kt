@@ -19,11 +19,11 @@ import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.ActivationFactory
+import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
-import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.testutil.waitUntilSet
 import arcs.core.storage.keys.RamDiskStorageKey

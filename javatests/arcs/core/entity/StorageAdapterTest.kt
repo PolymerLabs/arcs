@@ -6,9 +6,9 @@ import arcs.core.data.Capability.Ttl
 import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
-import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey

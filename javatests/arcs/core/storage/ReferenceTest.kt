@@ -86,7 +86,8 @@ class ReferenceTest {
             )
 
         @Suppress("UNCHECKED_CAST")
-        val directCollection: CollectionStore<Reference> = DefaultActivationFactory(collectionOptions)
+        val directCollection: CollectionStore<Reference> =
+            DefaultActivationFactory(collectionOptions)
 
         val job = Job()
         val me = directCollection.on(ProxyCallback {

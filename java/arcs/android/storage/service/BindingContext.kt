@@ -36,6 +36,13 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
 
+/**
+ * This class wraps an [ActiveStore] constructor. The first time an instance of this class is
+ * invoked, the store instance is created.
+ *
+ * This allows us to create a [BindingContext] without blocking the thread that the bind call
+ * occurs on.
+ */
 @ExperimentalCoroutinesApi
 class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
     options: StoreOptions

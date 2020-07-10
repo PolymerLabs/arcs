@@ -99,7 +99,7 @@ class StoreTest {
     fun appliesAndPropagatesOperations_fromProxies_toDrivers() = runBlockingTest {
         val (driver, _) = setupMocks()
 
-        val store = createStore()  as DirectStore<CrdtData, CrdtOperation, Any?>
+        val store = createStore() as DirectStore<CrdtData, CrdtOperation, Any?>
 
         val modelCaptor = argumentCaptor<CrdtCount.Data>()
         whenever(driver.send(modelCaptor.capture(), any())).thenReturn(true)
