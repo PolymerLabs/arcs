@@ -402,6 +402,48 @@ class DatabaseImplTest {
     }
 
     @Test
+    fun insertAndGet_entity_newEntityWithEmptyLists() = runBlockingTest {
+        val key = DummyStorageKey("key")
+
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf(
+                    "textlist" to FieldType.ListOf(FieldType.Text),
+                    "longlist" to FieldType.ListOf(FieldType.Long),
+                    "nulltextlist" to FieldType.ListOf(FieldType.Text),
+                    "nulllonglist" to FieldType.ListOf(FieldType.Long)
+                ),
+                collections = emptyMap()
+            )
+        )
+
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity",
+                mapOf(
+                    "textlist" to
+                        emptyList<ReferencablePrimitive<String>>()
+                            .toReferencable(FieldType.ListOf(FieldType.Text)),
+                    "longlist" to
+                        emptyList<ReferencablePrimitive<Long>>()
+                            .toReferencable(FieldType.ListOf(FieldType.Long)),
+                    "nulltextlist" to null,
+                    "nulllonglist" to null
+                ),
+                emptyMap()
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        database.insertOrUpdateEntity(key, entity)
+        val entityOut = database.getEntity(key, schema)
+        assertThat(entityOut).isEqualTo(entity)
+    }
+
+    @Test
     fun insertAndGet_entity_newEntityWithPrimitiveFields() = runBlockingTest {
         val key = DummyStorageKey("key")
 
