@@ -2,9 +2,12 @@ package arcs.core.policy
 
 import arcs.core.data.AccessPath
 import arcs.core.data.Check
+import arcs.core.data.Claim
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.InformationFlowLabel.SemanticTag
 import arcs.core.data.Recipe
+
+typealias StoreId = String
 
 /**
  * Additional checks and claims that should be added to the particles in a recipe, which together
@@ -13,18 +16,24 @@ import arcs.core.data.Recipe
 data class PolicyConstraints(
     val policy: Policy,
     val recipe: Recipe,
-    val egressChecks: Map<Recipe.Particle, List<Check>>
-    // TODO(b/157605232): Add store claims.
+    val egressChecks: Map<Recipe.Particle, List<Check>>,
+    val storeClaims: Map<StoreId, List<Claim>>
 )
 
 /**
  * Translates the given [policy] into dataflow analysis checks and claims, which are to be added to
  * the particles from the given [recipe].
  *
+ * @param storeMap Maps from store ID to the schema name of the type it stores.
+ *
  * @return additional checks and claims for the particles as a [PolicyConstraints] object
  * @throws PolicyViolation if the [particles] violate the [policy]
  */
-fun translatePolicy(policy: Policy, recipe: Recipe): PolicyConstraints {
+fun translatePolicy(
+    policy: Policy,
+    recipe: Recipe,
+    storeMap: Map<StoreId, String>
+): PolicyConstraints {
     val egressParticles = recipe.particles.filterNot { it.spec.isolated }
     checkEgressParticles(policy, egressParticles)
 
@@ -43,8 +52,68 @@ fun translatePolicy(policy: Policy, recipe: Recipe): PolicyConstraints {
             }
     }
 
-    // TODO(b/157605232): Add store claims.
-    return PolicyConstraints(policy, recipe, egressChecks)
+    // Add claim statements for stores.
+    val targetBySchemaName = policy.targets.associateBy { it.schemaName }
+    val storeClaims = recipe.handles.values.filter { storeMap.containsKey(it.id) }
+        .associate { handle ->
+            val storeId = handle.id
+            val claims = storeMap[storeId]?.let { schemaName ->
+                targetBySchemaName[schemaName]?.let { target ->
+                    createClaims(handle, target)
+                }
+            }
+            handle.id to (claims ?: emptyList())
+        }
+        .filterValues { it.isNotEmpty() }
+
+    return PolicyConstraints(policy, recipe, egressChecks, storeClaims)
+}
+
+/** Returns a list of store [Claim]s for the given [handle] and corresponding [target]. */
+private fun createClaims(handle: Recipe.Handle, target: PolicyTarget): List<Claim> {
+    return target.fields.flatMap { field -> createClaims(handle, field) }
+}
+
+/**
+ * Returns a list of claims for the given [field] (and all subfields), using the given [handle]
+ * as the root for the claims.
+ */
+private fun createClaims(handle: Recipe.Handle, field: PolicyField): List<Claim> {
+    val claims = mutableListOf<Claim>()
+
+    // Create claim for this field.
+    createStoreClaimPredicate(field)?.let { predicate ->
+        val selectors = field.fieldPath.map { AccessPath.Selector.Field(it) }
+        // TODO(b/157605232): This AccessPath is rooted by the handle's name in the recipe. The name
+        // might not be the same across different recipes, so this needs to be store ID instead.
+        val accessPath = AccessPath(handle, selectors)
+        claims.add(Claim.Assume(accessPath, predicate))
+    }
+
+    // Add claims for subfields.
+    field.subfields.flatMapTo(claims) { subfield -> createClaims(handle, subfield) }
+
+    return claims
+}
+
+/**
+ * Constructs the [Predicate] for the given [field] in a [Policy], to be used in constructing
+ * [Claim]s on the corresponding handles for the field in a recipe.
+ */
+private fun createStoreClaimPredicate(field: PolicyField): Predicate? {
+    val predicates = mutableListOf<Predicate>()
+    if (field.rawUsages.canEgress()) {
+        predicates.add(labelPredicate(ALLOWED_FOR_EGRESS_LABEL))
+    }
+    val egressRedactionLabels = field.redactedUsages.filterValues { it.canEgress() }.keys
+    egressRedactionLabels.forEach { label ->
+        predicates.add(labelPredicate("${ALLOWED_FOR_EGRESS_LABEL}_$label"))
+    }
+    return when (predicates.size) {
+        0 -> null
+        1 -> predicates.single()
+        else -> Predicate.and(*predicates.toTypedArray())
+    }
 }
 
 /**

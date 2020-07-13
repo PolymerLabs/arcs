@@ -2,6 +2,7 @@ package arcs.core.policy
 
 import arcs.core.data.AccessPath
 import arcs.core.data.Check
+import arcs.core.data.Claim
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.InformationFlowLabel
 import arcs.core.data.InformationFlowLabel.Predicate
@@ -39,10 +40,10 @@ class PolicyConstraintsTest {
             createParticle("Isolated2", isolated = true)
         )
 
-        val result = translatePolicy(BLANK_POLICY, recipe)
+        val result = translatePolicy(BLANK_POLICY, recipe, emptyMap())
 
         assertThat(result).isEqualTo(
-            PolicyConstraints(BLANK_POLICY, recipe, emptyMap())
+            PolicyConstraints(BLANK_POLICY, recipe, emptyMap(), emptyMap())
         )
     }
 
@@ -52,7 +53,7 @@ class PolicyConstraintsTest {
             createParticle(BLANK_EGRESS_PARTICLE_NAME, isolated = false)
         )
 
-        translatePolicy(BLANK_POLICY, recipe)
+        translatePolicy(BLANK_POLICY, recipe, emptyMap())
     }
 
     @Test
@@ -63,7 +64,7 @@ class PolicyConstraintsTest {
         )
 
         val e = assertFailsWith<PolicyViolation.InvalidEgressParticle> {
-            translatePolicy(BLANK_POLICY, recipe)
+            translatePolicy(BLANK_POLICY, recipe, emptyMap())
         }
         assertThat(e.policy).isEqualTo(BLANK_POLICY)
         assertThat(e.particleNames).containsExactly("Egress1", "Egress2")
@@ -77,7 +78,7 @@ class PolicyConstraintsTest {
         )
 
         val e = assertFailsWith<PolicyViolation.MultipleEgressParticles> {
-            translatePolicy(BLANK_POLICY, recipe)
+            translatePolicy(BLANK_POLICY, recipe, emptyMap())
         }
         assertThat(e.policy).isEqualTo(BLANK_POLICY)
     }
@@ -88,7 +89,7 @@ class PolicyConstraintsTest {
         val recipe = recipes.getValue("SingleInput")
         val particle = recipe.particles.single()
 
-        val result = translatePolicy(policy, recipe)
+        val result = translatePolicy(policy, recipe, emptyMap())
 
         assertThat(result.egressChecks).containsExactly(
             particle,
@@ -107,9 +108,9 @@ class PolicyConstraintsTest {
     @Test
     fun applyPolicy_egressCheck_withRedactionLabels() {
         val policy = policies.getValue("FooRedactions")
-        val recipe = recipes.getValue("SingleInput").forceMatchPolicyName("FooRedactions")
+        val recipe = recipes.getValue("SingleInput").forceMatchPolicyName(policy.name)
 
-        val result = translatePolicy(policy, recipe)
+        val result = translatePolicy(policy, recipe, emptyMap())
 
         val check = result.egressChecks.values.single().single() as Check.Assert
         assertThat(check.predicate).isEqualTo(
@@ -127,10 +128,124 @@ class PolicyConstraintsTest {
         val policy = BLANK_POLICY.copy(name = "SingleOutput")
         val recipe = recipes.getValue("SingleOutput")
 
-        val result = translatePolicy(policy, recipe)
+        val result = translatePolicy(policy, recipe, emptyMap())
 
         val particle = recipe.particles.single()
         assertThat(result.egressChecks).containsExactly(particle, emptyList<Check>())
+    }
+
+    @Test
+    fun applyPolicy_storeClaims_fieldClaim() {
+        val policy = policies.getValue("FooRedactions")
+        val recipe = recipes.getValue("SingleMappedInput").forceMatchPolicyName(policy.name)
+        val storeMap = mapOf("my_store_id" to "Foo")
+
+        val result = translatePolicy(policy, recipe, storeMap)
+
+        val handle = recipe.handles.values.single()
+        assertThat(result.storeClaims).containsExactly(
+            "my_store_id",
+            listOf(
+                Claim.Assume(
+                    AccessPath(handle, selectors("a")),
+                    labelPredicate("allowedForEgress_redaction1")
+                ),
+                Claim.Assume(
+                    AccessPath(handle, selectors("b")),
+                    labelPredicate("allowedForEgress_redaction2")
+                ),
+                Claim.Assume(
+                    AccessPath(handle, selectors("c")),
+                    labelPredicate("allowedForEgress_redaction3")
+                )
+            )
+        )
+    }
+
+    @Test
+    fun applyPolicy_storeClaims_fieldsNotInPolicyDoNotHaveClaims() {
+        val policy = policies.getValue("SingleFooRedaction")
+        val recipe = recipes.getValue("SingleMappedInput").forceMatchPolicyName(policy.name)
+        val storeMap = mapOf("my_store_id" to "Foo")
+
+        val result = translatePolicy(policy, recipe, storeMap)
+
+        val handle = recipe.handles.values.single()
+        assertThat(result.storeClaims).containsExactly(
+            "my_store_id",
+            listOf(
+                Claim.Assume(
+                    AccessPath(handle, selectors("a")),
+                    labelPredicate("allowedForEgress_redaction1")
+                )
+            )
+        )
+    }
+
+    @Test
+    fun applyPolicy_storeClaims_missingFromStoresMap() {
+        val policy = policies.getValue("FooRedactions")
+        val recipe = recipes.getValue("SingleMappedInput").forceMatchPolicyName(policy.name)
+        val storeMap = mapOf("some_other_store" to "Foo")
+
+        val result = translatePolicy(policy, recipe, storeMap)
+
+        assertThat(result.storeClaims).isEmpty()
+    }
+
+    @Test
+    fun applyPolicy_storeClaims_differentType() {
+        val policy = policies.getValue("SingleBarRedaction")
+        val recipe = recipes.getValue("SingleMappedInput").forceMatchPolicyName(policy.name)
+        val storeMap = mapOf("my_store_id" to "Foo")
+
+        val result = translatePolicy(policy, recipe, storeMap)
+
+        assertThat(result.storeClaims).isEmpty()
+    }
+
+    @Test
+    fun applyPolicy_storeClaims_emptyPolicy() {
+        val recipe = recipes.getValue("SingleMappedInput").forceMatchPolicyName(BLANK_POLICY_NAME)
+        val storeMap = mapOf("my_store_id" to "Foo")
+
+        val result = translatePolicy(BLANK_POLICY, recipe, storeMap)
+
+        assertThat(result.storeClaims).isEmpty()
+    }
+
+    @Test
+    fun applyPolicy_storeClaims_joinUsageType() {
+        val policy = policies.getValue("FooJoinPolicy")
+        val recipe = recipes.getValue("SingleMappedInput").forceMatchPolicyName(policy.name)
+        val storeMap = mapOf("my_store_id" to "Foo")
+
+        val result = translatePolicy(policy, recipe, storeMap)
+
+        assertThat(result.storeClaims).isEmpty()
+    }
+
+    @Test
+    fun applyPolicy_storeClaims_nestedSubfields() {
+        val policy = policies.getValue("NestedFooBarPolicy")
+        val recipe = recipes.getValue("SingleMappedInput").forceMatchPolicyName(policy.name)
+        val storeMap = mapOf("my_store_id" to "NestedFooBar")
+
+        val result = translatePolicy(policy, recipe, storeMap)
+
+        val handle = recipe.handles.values.single()
+        val predicate = labelPredicate("allowedForEgress")
+        assertThat(result.storeClaims).containsExactly(
+            "my_store_id",
+            listOf(
+                Claim.Assume(AccessPath(handle, selectors("foo")), predicate),
+                Claim.Assume(AccessPath(handle, selectors("foo", "a")), predicate),
+                Claim.Assume(AccessPath(handle, selectors("foo", "b")), predicate),
+                Claim.Assume(AccessPath(handle, selectors("foo", "c")), predicate),
+                Claim.Assume(AccessPath(handle, selectors("bar")), predicate),
+                Claim.Assume(AccessPath(handle, selectors("bar", "a")), predicate)
+            )
+        )
     }
 
     companion object {
@@ -165,6 +280,10 @@ class PolicyConstraintsTest {
 
         private fun labelPredicate(label: String): Predicate.Label {
             return Predicate.Label(InformationFlowLabel.SemanticTag(label))
+        }
+
+        private fun selectors(vararg fields: String): List<AccessPath.Selector> {
+            return fields.toList().map { AccessPath.Selector.Field(it) }
         }
 
         private fun Recipe.forceMatchPolicyName(policyName: String): Recipe {

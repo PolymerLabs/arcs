@@ -1,13 +1,16 @@
 // Test data for PolicyTranslationTest.
 
-// An empty policy.
-@egressType('Logging')
-policy BlankPolicy {}
-
 schema Foo
   a: Text
   b: Number
   c: Boolean
+
+schema Bar
+  a: Text
+
+schema NestedFooBar
+  foo: &Foo {a, b, c}
+  bar: &Bar {a}
 
 // Particle with a single input.
 particle Egress_SingleInput
@@ -30,6 +33,42 @@ policy FooRedactions {
   }
 }
 
+// Policy allows access only to field a with redactions redaction1.
+@egressType('Logging')
+policy SingleFooRedaction {
+  from Foo access {
+    @allowedUsage(label: 'redaction1', usageType: 'egress')
+    a,
+  }
+}
+
+// Policy allows access only to field a by joins.
+@egressType('Logging')
+policy FooJoinPolicy {
+  from Foo access {
+    @allowedUsage(label: 'raw', usageType: 'join')
+    a,
+  }
+}
+
+// Policy allows access only to field a with redactions redaction1.
+@egressType('Logging')
+policy SingleBarRedaction {
+  from Bar access {
+    @allowedUsage(label: 'redaction1', usageType: 'egress')
+    a,
+  }
+}
+
+// Policy allows access to fields a, b, c with redactions redaction1, redaction2, redaction3.
+@egressType('Logging')
+policy NestedFooBarPolicy {
+  from NestedFooBar access {
+    foo { a, b, c }
+    bar { a }
+  }
+}
+
 // Particle with existing checks.
 particle Egress_ExistingChecks
   input: reads Foo {}
@@ -46,3 +85,9 @@ recipe SingleOutput
   output: create
   Egress_SingleOutput
     output: output
+
+// Recipe with a single mapped input.
+recipe SingleMappedInput
+  input: map 'my_store_id'
+  Egress_SingleInput
+    input: input
