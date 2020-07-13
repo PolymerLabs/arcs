@@ -8,6 +8,7 @@ import arcs.core.data.CreatableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.host.ArcState
+import arcs.core.host.DeserializedException
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
