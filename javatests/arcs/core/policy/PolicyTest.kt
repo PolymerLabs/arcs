@@ -5,6 +5,7 @@ import arcs.core.data.Capability.Encryption
 import arcs.core.data.Capability.Persistence
 import arcs.core.data.Capability.Ttl
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -37,10 +38,11 @@ class PolicyTest {
         ).isTrue()
     }
 
+    @Test
     fun policy_allFields() {
-        val child = PolicyField("child")
-        val parent = PolicyField("parent", subfields = listOf(child))
-        val other = PolicyField("other")
+        val child = PolicyField(listOf("parent", "child"))
+        val parent = PolicyField(listOf("parent"), subfields = listOf(child))
+        val other = PolicyField(listOf("other"))
         val policy = Policy(
             name = "MyPolicy",
             targets = listOf(
@@ -56,14 +58,14 @@ class PolicyTest {
     @Test
     fun policy_allRedactionLabels() {
         val child = PolicyField(
-            fieldName = "child",
+            fieldPath = listOf("parent", "child"),
             redactedUsages = mapOf(
                 "label1" to setOf(UsageType.EGRESS),
                 "label2" to setOf(UsageType.JOIN)
             )
         )
         val parent = PolicyField(
-            fieldName = "parent",
+            fieldPath = listOf("parent"),
             subfields = listOf(child),
             redactedUsages = mapOf(
                 "label2" to setOf(UsageType.EGRESS),
@@ -71,7 +73,7 @@ class PolicyTest {
             )
         )
         val other = PolicyField(
-            fieldName = "other",
+            fieldPath = listOf("other"),
             redactedUsages = mapOf("label4" to setOf(UsageType.EGRESS))
         )
         val policy = Policy(
@@ -89,5 +91,29 @@ class PolicyTest {
             "label3",
             "label4"
         )
+    }
+
+    @Test
+    fun policyField_fieldPathMustBeNestedInsideParent() {
+        val childWithRightParent = PolicyField(
+            fieldPath = listOf("correct", "child")
+        )
+        val childWithWrongParent = PolicyField(
+            fieldPath = listOf("incorrect", "child")
+        )
+
+        // Passes:
+        PolicyField(
+            fieldPath = listOf("correct"),
+            subfields = listOf(childWithRightParent)
+        )
+
+        // Fails:
+        assertFailsWith<IllegalArgumentException> {
+            PolicyField(
+                fieldPath = listOf("correct"),
+                subfields = listOf(childWithWrongParent)
+            )
+        }
     }
 }

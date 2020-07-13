@@ -14,6 +14,7 @@ package arcs.core.policy
 import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability
+import arcs.core.data.FieldName
 
 /** Defines a data usage policy. See [PolicyProto] for the canonical definition of a policy. */
 data class Policy(
@@ -71,15 +72,24 @@ data class PolicyTarget(
 
 /** Allowed usages for fields in a schema, see [PolicyFieldProto]. */
 data class PolicyField(
-    // TODO(b/157605232): Resolve the field name to a type.
-    val fieldName: String,
+    /** List of field names leading from the [PolicyTarget] to this nested field. */
+    val fieldPath: List<FieldName>,
     /** Valid usages of this field without redaction. */
     val rawUsages: Set<UsageType> = emptySet(),
     /** Valid usages of this field with redaction first. Maps from redaction label to usages. */
     val redactedUsages: Map<String, Set<UsageType>> = emptyMap(),
     val subfields: List<PolicyField> = emptyList(),
     val annotations: List<Annotation> = emptyList()
-)
+) {
+    init {
+        subfields.forEach { subfield ->
+            require(subfield.fieldPath.subList(0, subfield.fieldPath.size - 1) == fieldPath) {
+                "Subfield's field path must be nested inside parent's field path, " +
+                    "but got parent: '$fieldPath', child: '${subfield.fieldPath}'."
+            }
+        }
+    }
+}
 
 /** Retention options for storing data, see [PolicyRetentionProto]. */
 data class PolicyRetention(
