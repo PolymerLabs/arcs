@@ -8,6 +8,7 @@ import arcs.core.data.CreatableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.host.ArcState
+import arcs.core.host.DeserializedException
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
@@ -25,6 +26,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.VolatileDriverProvider
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.testutil.fail
 import arcs.core.util.Log
 import arcs.core.util.plus
 import arcs.core.util.testutil.LogRule
@@ -550,9 +552,13 @@ open class AllocatorTestBase {
         val arc = allocator.startArcForPlan(PersonPlan)
         arc.onError { deferred.complete(true) }
         deferred.await()
-        assertThat(writingExternalHost.arcHostContext(arc.id.toString())?.arcState).isEqualTo(
-            ArcState.Error
-        )
+
+        val arcState = writingExternalHost.arcHostContext(arc.id.toString())!!.arcState
+        assertThat(arcState).isEqualTo(ArcState.Error)
+        arcState.cause.let {
+            assertThat(it).isInstanceOf(IllegalArgumentException::class.java)
+            assertThat(it).hasMessageThat().isEqualTo("Boom!")
+        }
     }
 
     @Test
@@ -560,8 +566,19 @@ open class AllocatorTestBase {
         WritePerson.throws = true
         val arc = allocator.startArcForPlan(PersonPlan)
 
-        assertSuspendingThrows(Arc.ArcErrorException::class) {
+        val error = assertSuspendingThrows(Arc.ArcErrorException::class) {
             arc.waitForStart()
+        }
+        // TODO(b//160933123): the containing exception is somehow "duplicated",
+        //                     so the real cause is a second level down
+        val cause = error.cause!!.cause
+        when (cause) {
+            // For CoreAllocatorTest
+            is IllegalArgumentException -> assertThat(cause.message).isEqualTo("Boom!")
+            // For AndroidAllocatorTest
+            is DeserializedException ->
+                assertThat(cause.message).isEqualTo("java.lang.IllegalArgumentException: Boom!")
+            else -> fail("Expected IllegalArgumentException or DeserializedException; got $cause")
         }
     }
 }

@@ -317,12 +317,9 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         checkNotClosed()
         log.debug { "Getting particle view (lifecycle)" }
 
-        check(
-            stateHolder.value.state == ProxyState.SYNC ||
-                stateHolder.value.state == ProxyState.DESYNC
-        ) {
-            "Cannot get particle view directly while the storage proxy is unsynced; " +
-                "current state is ${stateHolder.value.state}"
+        check(stateHolder.value.state in arrayOf(ProxyState.SYNC, ProxyState.DESYNC)) {
+            "Read operations are not valid before onReady (storage proxy state is " +
+                    "${stateHolder.value.state})"
         }
 
         return crdt.consumerView

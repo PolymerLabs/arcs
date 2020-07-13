@@ -81,9 +81,9 @@ class IntentArcHostAdapter(
             partition.createLookupArcStatusIntent(hostComponentName, hostId)
         ) {
             try {
-                ArcState.valueOf(it.toString())
+                ArcState.fromString(it.toString())
             } catch (e: IllegalArgumentException) {
-                ArcState.Error
+                ArcState.errorWith(e)
             }
         } ?: ArcState.Error
     }
@@ -111,7 +111,7 @@ class IntentArcHostAdapter(
                 ) {
                     "Missing state in Intent for onArcStateChangeHandler callback."
                 }.let {
-                    ArcState.valueOf(it)
+                    ArcState.fromString(it)
                 }
                 block(arcId, arcState)
             }

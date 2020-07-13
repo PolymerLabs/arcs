@@ -44,3 +44,26 @@ recipe PausingTest
   PausingParticle
     data: reads h1
     list: reads h2
+
+// -----------------------------------------------------------------------------
+
+particle ReadWriteAccessParticle in 'arcs.core.host.ReadWriteAccessParticle'
+  sngRead: reads Value {txt: Text}
+  sngWrite: writes Value {txt: Text}
+  sngReadWrite: reads writes Value {txt: Text}
+  colRead: reads [Value {txt: Text}]
+  colWrite: writes [Value {txt: Text}]
+  colReadWrite: reads writes [Value {txt: Text}]
+  sngPersist: reads writes Value {txt: Text}
+  colPersist: reads writes [Value {txt: Text}]
+
+recipe ReadWriteAccessTest
+  ReadWriteAccessParticle
+    sngRead: reads h1
+    sngWrite: writes h1
+    sngReadWrite: reads writes h1
+    colRead: reads h2
+    colWrite: writes h2
+    colReadWrite: reads writes h2
+    sngPersist: reads writes h3
+    colPersist: reads writes h4

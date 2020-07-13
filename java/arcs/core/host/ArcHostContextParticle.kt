@@ -74,7 +74,7 @@ class ArcHostContextParticle(
                 ArcHostContextParticle_Particles(
                     particleName = it.key,
                     location = it.value.planParticle.location,
-                    particleState = it.value.particleState.name,
+                    particleState = it.value.particleState.toString(),
                     consecutiveFailures = it.value.consecutiveFailureCount.toDouble(),
                     handles = connections.map { connection ->
                         handles.handleConnections.createReference(connection)
@@ -86,13 +86,13 @@ class ArcHostContextParticle(
             handles.particles.clear()
             particles.map { handles.particles.store(it) }.joinAll()
 
-            val arcState = AbstractArcHostContextParticle.ArcHostContext(
-                arcId = arcId, hostId = hostId, arcState = context.arcState.name,
+            val arcHostContext = AbstractArcHostContextParticle.ArcHostContext(
+                arcId = arcId, hostId = hostId, arcState = context.arcState.toString(),
                 particles = particles.map { handles.particles.createReference(it) }.toSet()
             )
 
             handles.arcHostContext.clear()
-            handles.arcHostContext.store(arcState).join()
+            handles.arcHostContext.store(arcHostContext).join()
         } catch (e: Exception) {
             // TODO: retry?
             throw IllegalStateException("Unable to serialize $arcId for $hostId", e)
@@ -135,7 +135,7 @@ class ArcHostContextParticle(
             return@onHandlesReady ArcHostContext(
                 arcId,
                 particles.toMutableMap(),
-                ArcState.valueOf(arcStateEntity.arcState),
+                ArcState.fromString(arcStateEntity.arcState),
                 entityHandleManager = arcHostContext.entityHandleManager
             )
         } catch (e: Exception) {

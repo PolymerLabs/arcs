@@ -103,10 +103,10 @@ class ParticleContext(
     suspend fun initParticle() {
         withContext(requireNotNull(dispatcher)) {
             check(
-                particleState == ParticleState.Instantiated ||
-                particleState == ParticleState.Stopped ||
-                particleState == ParticleState.Failed ||
-                particleState == ParticleState.Failed_NeverStarted
+                particleState in arrayOf(
+                    ParticleState.Instantiated, ParticleState.Stopped,
+                    ParticleState.Failed, ParticleState.Failed_NeverStarted
+                )
             ) {
                 "${planParticle.particleName}: initParticle can only be called for newly " +
                         "created or restarted particles"
@@ -191,9 +191,9 @@ class ParticleContext(
      */
     fun notify(event: StorageEvent, handle: Handle) {
         check(
-            particleState == ParticleState.Waiting ||
-            particleState == ParticleState.Running ||
-            particleState == ParticleState.Desynced
+            particleState in arrayOf(
+                ParticleState.Waiting, ParticleState.Running, ParticleState.Desynced
+            )
         ) {
             "${planParticle.particleName}: storage events should not be received " +
                     "in state $particleState"
@@ -240,15 +240,12 @@ class ParticleContext(
         log.info { "Failure in particle." }
 
         if (particleState != ParticleState.MaxFailed) {
-            particleState = if (particleState.hasBeenStarted) {
-                ParticleState.Failed
-            } else {
-                ParticleState.Failed_NeverStarted
-            }
-
             consecutiveFailureCount++
-            if (consecutiveFailureCount > MAX_CONSECUTIVE_FAILURES) {
-                particleState = ParticleState.MaxFailed
+            particleState = when {
+                consecutiveFailureCount > MAX_CONSECUTIVE_FAILURES ->
+                    ParticleState.maxFailedWith(error)
+                particleState.hasBeenStarted -> ParticleState.failedWith(error)
+                else -> ParticleState.failedNeverStartedWith(error)
             }
         }
         return error
