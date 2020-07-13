@@ -298,3 +298,15 @@ message CheckProto {
   AccessPathProto access_path = 1;
   InformationFlowLabelProto.Predicate predicate = 2;
 }
+
+message PolicyConstraintsProto {
+  PolicyProto policy = 1;
+
+  InformationFlowLabelProto.Predicate egress_check = 2;
+
+  message StoreConstraints {
+    string store_id = 1;
+    repeated ClaimProto claims = 2;
+  }
+  repeated StoreConstraints store_constraints = 3;
+}

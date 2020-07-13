@@ -26,7 +26,7 @@ sealed class InformationFlowLabel {
 
     /** Represents a boolean expression of [InformationFlowLabel] constants. */
     sealed class Predicate {
-        data class Label(val label: InformationFlowLabel) : Predicate() {
+        data class Label(val label: SemanticTag) : Predicate() {
             override fun toString() = "$label"
         }
 
