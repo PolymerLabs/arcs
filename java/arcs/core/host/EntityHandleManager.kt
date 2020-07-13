@@ -51,11 +51,11 @@ import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.Dispatchers as ArcsDispatchers
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
 import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -81,7 +81,7 @@ class EntityHandleManager(
     private val scheduler: Scheduler,
     private val stores: StoreManager = StoreManager(),
     private val idGenerator: Id.Generator = Id.Generator.newSession(),
-    private val coroutineContext: CoroutineContext = Dispatchers.Default,
+    private val coroutineContext: CoroutineContext = ArcsDispatchers.client,
     private val analytics: Analytics? = null
 ) {
 

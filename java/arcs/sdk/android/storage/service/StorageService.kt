@@ -38,17 +38,17 @@ import arcs.core.storage.database.name
 import arcs.core.storage.database.persistent
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDiskDriverProvider
+import arcs.core.util.Dispatchers as ArcsDispatchers
 import arcs.core.util.TaggedLog
 import arcs.core.util.performance.MemoryStats
 import arcs.core.util.performance.PerformanceStatistics
+import arcs.jvm.util.Executors as ArcsExecutors
 import java.io.FileDescriptor
 import java.io.PrintWriter
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -60,11 +60,10 @@ import kotlinx.coroutines.runBlocking
  * the [IStorageService] interface when bound-to by a client.
  */
 open class StorageService : ResurrectorService() {
-    protected open val coroutineContext = Dispatchers.Default + CoroutineName("StorageService")
+    protected open val coroutineContext =
+        ArcsDispatchers.server + CoroutineName("StorageService")
     protected open val writeBackScope = CoroutineScope(
-        Executors.newCachedThreadPool {
-            Thread(it).apply { name = "WriteBack #$id" }
-        }.asCoroutineDispatcher() + SupervisorJob()
+        ArcsExecutors.io.asCoroutineDispatcher() + SupervisorJob()
     )
     private val stores = ConcurrentHashMap<StorageKey, Store<*, *, *>>()
     private var startTime: Long? = null

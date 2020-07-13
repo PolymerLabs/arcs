@@ -14,6 +14,7 @@ package arcs.jvm.host
 import arcs.core.host.SchedulerProvider
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
+import arcs.jvm.util.Executors as ArcsExecutors
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -56,7 +57,7 @@ class JvmSchedulerProvider(
             dispatchers[providedSoFar.getAndIncrement() % maxThreadCount]
         } else {
             val threadIndex = providedSoFar.getAndIncrement()
-            Executors
+            (ArcsExecutors.schedulers?.next() ?: Executors
                 .newSingleThreadExecutor {
                     val thread = threads[threadIndex % maxThreadCount]
                     if (thread != null && thread.isAlive) return@newSingleThreadExecutor thread
@@ -71,7 +72,7 @@ class JvmSchedulerProvider(
                         name = "Scheduler-Thread#${threadIndex % maxThreadCount}"
                         threads[threadIndex % maxThreadCount] = this
                     }
-                }
+                })
                 .also { executors.add(it) }
                 .asCoroutineDispatcher()
                 .also { dispatchers.add(it) }

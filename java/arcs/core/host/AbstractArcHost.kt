@@ -22,6 +22,7 @@ import arcs.core.host.api.Particle
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
+import arcs.core.util.Dispatchers as ArcsDispatchers
 import arcs.core.util.LruCacheMap
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
@@ -30,7 +31,6 @@ import arcs.core.util.guardedBy
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -59,7 +59,7 @@ typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
  */
 @ExperimentalCoroutinesApi
 abstract class AbstractArcHost(
-    protected val coroutineContext: CoroutineContext = Dispatchers.Default,
+    protected val coroutineContext: CoroutineContext = ArcsDispatchers.client,
     protected val schedulerProvider: SchedulerProvider,
     open val activationFactory: ActivationFactory? = null,
     vararg initialParticles: ParticleRegistration
@@ -68,7 +68,7 @@ abstract class AbstractArcHost(
     constructor(
         schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : this(Dispatchers.Default, schedulerProvider, null, *initialParticles)
+    ) : this(ArcsDispatchers.client, schedulerProvider, null, *initialParticles)
 
     private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
