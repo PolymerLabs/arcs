@@ -10,6 +10,7 @@
 
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable, TupleType, MuxType} from '../type.js';
 import {Direction} from '../manifest-ast-nodes.js';
+import {when} from '../hot.js';
 
 export interface TypeListInfo {
   type: Type;
@@ -122,37 +123,41 @@ export class TypeChecker {
   static _tryMergeTypeVariable(base: Type, onto: Type, options: {typeErrors?: string[]} = {}): Type {
     const [primitiveBase, primitiveOnto] = Type.unwrapPair(base.resolvedType(), onto.resolvedType());
 
-    if (primitiveBase instanceof TypeVariable) {
-      if (primitiveOnto instanceof TypeVariable) {
+    switch(when(primitiveBase instanceof TypeVariable, primitiveOnto instanceof TypeVariable)) {
+      case when(true, true):
         // base, onto both variables.
-        const result = primitiveBase.variable.maybeMergeConstraints(primitiveOnto.variable);
+        const result = (primitiveBase as TypeVariable).variable.maybeMergeConstraints((primitiveOnto as TypeVariable).variable);
         if (result === false) {
           return null;
         }
-        primitiveOnto.variable.resolution = primitiveBase;
-      } else {
+        (primitiveOnto as TypeVariable).variable.resolution = primitiveBase;
+        return base;
+      case when(true, false):
         // base variable, onto not.
-        if (!primitiveBase.variable.isValidResolutionCandidate(primitiveOnto).result) {
+        if (!(primitiveBase as TypeVariable).variable.isValidResolutionCandidate(primitiveOnto).result) {
           return null;
         }
-        primitiveBase.variable.resolution = primitiveOnto;
-      }
-      return base;
-    } else if (primitiveOnto instanceof TypeVariable) {
-      // onto variable, base not.
-      if (!primitiveOnto.variable.isValidResolutionCandidate(primitiveBase).result) {
-        return null;
-      }
-      primitiveOnto.variable.resolution = primitiveBase;
-      return onto;
-    } else if (primitiveBase instanceof InterfaceType && primitiveOnto instanceof InterfaceType) {
+        (primitiveBase as TypeVariable).variable.resolution = primitiveOnto;
+        return base;
+      case when(false, true):
+        // onto variable, base not.
+        if (!(primitiveOnto as TypeVariable).variable.isValidResolutionCandidate(primitiveBase).result) {
+          return null;
+        }
+        (primitiveOnto as TypeVariable).variable.resolution = primitiveBase;
+        return onto;
+      default:
+        break;
+    }
+
+    if (primitiveBase instanceof InterfaceType && primitiveOnto instanceof InterfaceType) {
       const result = primitiveBase.interfaceInfo.tryMergeTypeVariablesWith(primitiveOnto.interfaceInfo);
       if (result == null) {
         return null;
       }
       return new InterfaceType(result);
     } else if ((primitiveBase.isTypeContainer() && primitiveBase.hasVariable)
-               || (primitiveOnto.isTypeContainer() && primitiveOnto.hasVariable)) {
+      || (primitiveOnto.isTypeContainer() && primitiveOnto.hasVariable)) {
       // Cannot merge [~a] with a type that is not a variable and not a collection.
       return null;
     }
