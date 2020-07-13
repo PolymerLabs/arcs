@@ -18,18 +18,17 @@ import java.util.concurrent.TimeUnit
 
 /** Collection of Arcs JVM executors. */
 object Executors {
-
     /**
-     * per-arc-per-archost single-threaded
-     * Each of them is managed directly by JvmSchedulerProvider.
-     * Can be quickly overridden as single-threaded pattern:
+     * A [Scheduler] is per-arc-per-archost single-threaded.
+     * Each of them is managed directly by the [JvmSchedulerProvider] on JVM builds.
+     * Can be overridden as the globally-single-threaded design by:
      *     iterator { while (true) yield(someExecutor) }
      */
     var schedulers: Iterator<ExecutorService>? = null
 
     /**
-     * i/o (dynamic-sizing thread pool)
-     * on WAL, three dbs: main, wal and wal-index
+     * I/O (dynamic-sizing thread pool)
+     * On sqlite WAL there are three databases: main, wal and wal-index
      */
     var io: ExecutorService = ThreadPoolExecutor(
         0, 2, 10L, TimeUnit.SECONDS, SynchronousQueue()
