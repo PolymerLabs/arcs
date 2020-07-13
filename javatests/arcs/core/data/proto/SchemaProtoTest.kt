@@ -1,10 +1,14 @@
 package arcs.core.data.proto
 
+import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.data.SchemaRegistry
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
+import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -17,7 +21,11 @@ fun decodeSchemaProtoText(protoText: String): Schema {
 }
 
 @RunWith(JUnit4::class)
-class SchemaProtoDecoderTest {
+class SchemaProtoTest {
+    @After
+    fun tearDown() {
+        SchemaRegistry.clearForTest()
+    }
 
     @Test
     fun decodesNamesInSchemaProto() {
@@ -171,6 +179,91 @@ class SchemaProtoDecoderTest {
             mapOf(
                 "tuples" to FieldType.Tuple(listOf(FieldType.Text, FieldType.Number))
             )
+        )
+    }
+
+    @Test
+    fun encode_schema() {
+        val schema = Schema(
+            names = setOf(SchemaName("a"), SchemaName("b")),
+            fields = SchemaFields(
+                singletons = mapOf("txt" to FieldType.Text),
+                collections = mapOf("nums" to FieldType.Number)
+            ),
+            hash = "myHash"
+        )
+
+        assertThat(schema.encode()).isEqualTo(
+            SchemaProto.newBuilder()
+                .addNames("a")
+                .addNames("b")
+                .putFields(
+                    "txt",
+                    SingletonTypeProto.newBuilder()
+                        .setSingletonType(FieldType.Text.encode())
+                        .build()
+                        .asTypeProto()
+                )
+                .putFields(
+                    "nums",
+                    CollectionTypeProto.newBuilder()
+                        .setCollectionType(FieldType.Number.encode())
+                        .build()
+                        .asTypeProto()
+                )
+                .setHash("myHash")
+                .build()
+        )
+    }
+
+    @Test
+    fun encode_fieldType_primitives() {
+        assertThat(FieldType.Boolean.encode().primitive).isEqualTo(PrimitiveTypeProto.BOOLEAN)
+        assertThat(FieldType.Number.encode().primitive).isEqualTo(PrimitiveTypeProto.NUMBER)
+        assertThat(FieldType.Text.encode().primitive).isEqualTo(PrimitiveTypeProto.TEXT)
+        assertThat(FieldType.BigInt.encode().primitive).isEqualTo(PrimitiveTypeProto.BIGINT)
+    }
+
+    @Test
+    fun encode_fieldType_entityRef() {
+        val schema = Schema.EMPTY
+        SchemaRegistry.register(schema)
+        val entityRef = FieldType.EntityRef(schema.hash)
+
+        assertThat(entityRef.encode().reference).isEqualTo(
+            ReferenceTypeProto.newBuilder().setReferredType(EntityType(schema).encode()).build()
+        )
+    }
+
+    @Test
+    fun encode_fieldType_tuple() {
+        val tuple = FieldType.Tuple(listOf(FieldType.Boolean, FieldType.Text))
+
+        assertThat(tuple.encode().tuple).isEqualTo(
+            TupleTypeProto.newBuilder()
+                .addElements(FieldType.Boolean.encode())
+                .addElements(FieldType.Text.encode())
+                .build()
+        )
+    }
+
+    @Test
+    fun encode_fieldType_list() {
+        val list = FieldType.ListOf(FieldType.Text)
+
+        assertThat(list.encode().list).isEqualTo(
+            ListTypeProto.newBuilder().setElementType(FieldType.Text.encode()).build()
+        )
+    }
+
+    @Test
+    fun encode_fieldType_inlineEntity() {
+        val schema = Schema.EMPTY
+        SchemaRegistry.register(schema)
+        val inlineEntity = FieldType.InlineEntity(schema.hash)
+
+        assertThat(inlineEntity.encode().entity).isEqualTo(
+            EntityTypeProto.newBuilder().setSchema(schema.encode()).setInlineEntity(true).build()
         )
     }
 }

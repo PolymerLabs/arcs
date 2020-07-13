@@ -135,3 +135,56 @@ fun TypeProto.decode(): Type = when (dataCase) {
         throw IllegalArgumentException(
             "Cannot decode a ${dataCase.name} type to a [Type].")
 }
+
+/** Encodes a [Type] as a [TypeProto]. */
+fun Type.encode(): TypeProto = when (this) {
+    is TypeVariable -> {
+        val proto = TypeVariableProto.newBuilder().setName(name)
+        constraint?.let {
+            proto.constraint = ConstraintInfo.newBuilder().setConstraintType(it.encode()).build()
+        }
+        proto.build().asTypeProto()
+    }
+    is EntityType -> EntityTypeProto.newBuilder()
+        .setSchema(entitySchema.encode())
+        .build()
+        .asTypeProto()
+    is SingletonType<*> -> SingletonTypeProto.newBuilder()
+        .setSingletonType(containedType.encode())
+        .build()
+        .asTypeProto()
+    is CollectionType<*> -> CollectionTypeProto.newBuilder()
+        .setCollectionType(containedType.encode())
+        .build()
+        .asTypeProto()
+    is ReferenceType<*> -> ReferenceTypeProto.newBuilder()
+        .setReferredType(containedType.encode())
+        .build()
+        .asTypeProto()
+    is TupleType -> TupleTypeProto.newBuilder()
+        .addAllElements(elementTypes.map { it.encode() })
+        .build()
+        .asTypeProto()
+    is CountType -> CountTypeProto.getDefaultInstance().asTypeProto()
+    else -> throw UnsupportedOperationException("Unsupported Type: $this")
+}
+
+// Convenience methods for wrapping specific subtypes in a TypeProto.
+
+fun SingletonTypeProto.asTypeProto() = TypeProto.newBuilder().setSingleton(this).build()
+
+fun CollectionTypeProto.asTypeProto() = TypeProto.newBuilder().setCollection(this).build()
+
+fun PrimitiveTypeProto.asTypeProto() = TypeProto.newBuilder().setPrimitive(this).build()
+
+fun ReferenceTypeProto.asTypeProto() = TypeProto.newBuilder().setReference(this).build()
+
+fun TupleTypeProto.asTypeProto() = TypeProto.newBuilder().setTuple(this).build()
+
+fun ListTypeProto.asTypeProto() = TypeProto.newBuilder().setList(this).build()
+
+fun EntityTypeProto.asTypeProto() = TypeProto.newBuilder().setEntity(this).build()
+
+fun TypeVariableProto.asTypeProto() = TypeProto.newBuilder().setVariable(this).build()
+
+fun CountTypeProto.asTypeProto() = TypeProto.newBuilder().setCount(this).build()
