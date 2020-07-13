@@ -5,6 +5,7 @@ import arcs.core.data.Capability.Encryption
 import arcs.core.data.Capability.Persistence
 import arcs.core.data.Capability.Ttl
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
