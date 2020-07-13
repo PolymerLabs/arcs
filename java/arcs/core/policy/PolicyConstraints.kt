@@ -82,8 +82,7 @@ private fun createClaims(handle: Recipe.Handle, field: PolicyField): List<Claim>
     val claims = mutableListOf<Claim>()
 
     // Create claim for this field.
-    val predicate = createStoreClaimPredicate(field)
-    if (predicate != null) {
+    createStoreClaimPredicate(field)?.let { predicate ->
         val selectors = field.fieldPath.map { AccessPath.Selector.Field(it) }
         // TODO(b/157605232): This AccessPath is rooted by the handle's name in the recipe. The name
         // might not be the same across different recipes, so this needs to be store ID instead.

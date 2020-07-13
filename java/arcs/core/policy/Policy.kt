@@ -120,9 +120,7 @@ enum class UsageType {
 }
 
 /** Convenience method for checking if any usage in a set allows egress. */
-fun Set<UsageType>.canEgress(): Boolean {
-    return any { it.canEgress }
-}
+fun Set<UsageType>.canEgress(): Boolean = any { it.canEgress }
 
 /** Target schema governed by a policy, see [PolicyRetentionProto.Medium]. */
 enum class StorageMedium {
