@@ -101,7 +101,7 @@ class Arc internal constructor(
 
     private fun recomputeArcState(states: Collection<ArcState>): ArcState {
         var commonState = ArcState.Indeterminate
-        for (state in states) {
+        states.forEach { state ->
             if (state == ArcState.Deleted || state == ArcState.Error) {
                 // Error states may carry an exception that caused the error;
                 // ensure this is kept when recomputing.
