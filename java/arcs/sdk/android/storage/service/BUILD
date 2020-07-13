@@ -23,6 +23,7 @@ arcs_kt_android_library(
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/util",
         "//java/arcs/core/util/performance",
+        "//java/arcs/jvm/util",
         "//third_party/java/androidx/annotation",
         "//third_party/java/androidx/work",
         "//third_party/kotlin/kotlinx_atomicfu",
