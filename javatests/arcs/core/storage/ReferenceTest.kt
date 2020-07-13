@@ -110,7 +110,7 @@ class ReferenceTest {
             val ref = it.value
             ref.dereferencer = dereferencer
             val expectedPerson = expectedPeople[ref.id] ?: error("Bad reference: $ref")
-            val dereferenced = ref.dereference(coroutineContext)
+            val dereferenced = ref.dereference()
             val actualPerson = requireNotNull(dereferenced).toPerson()
 
             assertThat(actualPerson).isEqualTo(expectedPerson)

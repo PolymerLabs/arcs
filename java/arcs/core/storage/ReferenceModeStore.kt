@@ -57,7 +57,6 @@ import arcs.core.util.nextSafeRandomLong
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -96,9 +95,8 @@ class ReferenceModeStore private constructor(
     val containerStore: DirectStore<CrdtData, CrdtOperation, Any?>,
     /* internal */
     val backingKey: StorageKey,
-    /* internal */
-    clearCoroutineContext: CoroutineContext = Dispatchers.Default,
-    backingType: Type
+    backingType: Type,
+    cleanupCoroutineContext: CoroutineContext
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
     // TODO(#5551): Consider including a hash of the storage key in log prefix.
     private val log = TaggedLog { "ReferenceModeStore" }
@@ -451,20 +449,31 @@ class ReferenceModeStore private constructor(
         return@fn true
     }
 
+    // The launched flow cleans up backingStore entries whenever the receive queue becomes empty.
+    // This method is called by the `create` constructor, and so cleanup will occur on the
+    // coroutine that constructed the store.
     @FlowPreview
-    private val clearStoreCachesFlow = combine(
-        callbacksStateChannel.asFlow(),
-        receiveQueue.sizeChannel.asFlow()
-    ) { callbacksState, queueSize -> queueSize + if (callbacksState) 1 else 0 }
-        .filter { it == 0 }
-        .onEach {
-            if (receiveQueue.size.value == 0) {
-                backingStore.clearStoresCache()
-                receiveQueue.sizeChannel.close()
-                callbacksStateChannel.close()
+    private val backingStoreCleanupJob: Job = combine(
+            callbacksStateChannel.asFlow(),
+            receiveQueue.sizeChannel.asFlow()
+        ) { callbacksState, queueSize -> queueSize + if (callbacksState) 1 else 0 }
+            .filter { it == 0 }
+            .onEach {
+                if (receiveQueue.size.value == 0) {
+                    backingStore.clearStoresCache()
+                    receiveQueue.sizeChannel.close()
+                    callbacksStateChannel.close()
+                }
             }
-        }
-        .launchIn(CoroutineScope(clearCoroutineContext + Job()))
+            .launchIn(CoroutineScope(cleanupCoroutineContext + Job()))
+
+    /**
+     * This method will suspend until conditions lead to internal backing store cleanup to occur.
+     */
+    @FlowPreview
+    suspend fun awaitCleanup() {
+        backingStoreCleanupJob.join()
+    }
 
     private fun newBackingInstance(): CrdtModel<CrdtData, CrdtOperationAtTime, Referencable> =
         crdtType.createCrdtModel()
@@ -730,8 +739,7 @@ class ReferenceModeStore private constructor(
                 StoreOptions(
                     storageKey = storageKey.storageKey,
                     type = refType,
-                    versionToken = options.versionToken,
-                    coroutineContext = options.coroutineContext
+                    versionToken = options.versionToken
                 )
             )
 
@@ -739,8 +747,8 @@ class ReferenceModeStore private constructor(
                 refableOptions,
                 containerStore,
                 storageKey.backingKey,
-                options.coroutineContext,
-                type.containedType
+                type.containedType,
+                coroutineContext
             )
         }
     }
