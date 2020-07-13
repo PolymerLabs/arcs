@@ -32,5 +32,5 @@ object Executors {
      */
     var io: ExecutorService = ThreadPoolExecutor(
         0, 2, 10L, TimeUnit.SECONDS, SynchronousQueue()
-    ) { runnable -> Thread(runnable).apply { name = "arcs-io #$id" } }
+    ) { runnable -> Thread(runnable).apply { name = "arcs-io" } }
 }
