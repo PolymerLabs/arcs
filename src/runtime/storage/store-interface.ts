@@ -19,12 +19,12 @@ import {ChannelConstructor} from '../channel-constructor.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {noAwait} from '../util.js';
 import {AbstractStore} from './abstract-store.js';
-import {CRDTTypeRecordToType, CRDTMuxEntity} from './storage-ng.js';
+import {CRDTTypeRecordToType, CRDTMuxEntity} from './storage.js';
 import {StoreRecord} from './direct-store-muxer.js';
 
 /**
  * This file exists to break a circular dependency between Store and the ActiveStore implementations.
- * Source code outside of the storageNG directory should not import this file directly; instead use
+ * Source code outside of the storage directory should not import this file directly; instead use
  * store.ts, which re-exports all the useful symbols.
  */
 

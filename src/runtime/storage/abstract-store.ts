@@ -13,7 +13,7 @@ import {Type} from '../type.js';
 import {StorageKey} from './storage-key.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {ClaimIsTag} from '../claim.js';
-import {SingletonInterfaceStore, SingletonEntityStore, SingletonReferenceStore, CollectionEntityStore, CollectionReferenceStore, MuxEntityStore} from './storage-ng.js';
+import {SingletonInterfaceStore, SingletonEntityStore, SingletonReferenceStore, CollectionEntityStore, CollectionReferenceStore, MuxEntityStore} from './storage.js';
 import {AbstractActiveStore} from './store-interface.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {AnnotationRef} from '../recipe/annotation.js';
@@ -49,14 +49,15 @@ export function entityHasName(name: string) {
 }
 
 /**
- * This is a temporary interface used to unify old-style stores (storage/StorageProviderBase) and new-style stores (storageNG/Store).
- * We should be able to remove this once we've switched across to the NG stack.
+ * This is a temporary interface used to unify old-style stores (previously storage/StorageProviderBase) and
+ * new-style stores (previously storage/Store). We should look into removing this as we've switched
+ * to the NG stack.
  *
  * Note that for old-style stores, StorageStubs are used *sometimes* to represent storage which isn't activated. For new-style stores,
  * Store itself represents an inactive store, and needs to be activated using activate(). This will present some integration
  * challenges :)
  *
- * Note also that old-style stores use strings for Storage Keys, while NG storage uses storageNG/StorageKey subclasses. This provides
+ * Note also that old-style stores use strings for Storage Keys, while NG storage uses storage/StorageKey subclasses. This provides
  * a simple test for determining whether a store is old or new.
  *
  * Common functionality between old- and new-style stores goes in this class.

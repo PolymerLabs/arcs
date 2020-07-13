@@ -15,7 +15,7 @@ import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {checkDefined} from '../testing/preconditions.js';
 import {SlotComposer} from '../slot-composer.js';
-import {handleForStore} from '../storageNG/storage-ng.js';
+import {handleForStore} from '../storage/storage.js';
 import {EntityType} from '../type.js';
 
 describe('Multiplexer', () => {

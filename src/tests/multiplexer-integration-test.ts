@@ -17,10 +17,10 @@ import {Loader} from '../platform/loader.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
 import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
-import {RamDiskStorageDriverProvider} from '../runtime/storageNG/drivers/ramdisk.js';
-import {DriverFactory} from '../runtime/storageNG/drivers/driver-factory.js';
-import {CollectionEntityStore, handleForStore} from '../runtime/storageNG/storage-ng.js';
-import {isCollectionEntityStore} from '../runtime/storageNG/abstract-store.js';
+import {RamDiskStorageDriverProvider} from '../runtime/storage/drivers/ramdisk.js';
+import {DriverFactory} from '../runtime/storage/drivers/driver-factory.js';
+import {CollectionEntityStore, handleForStore} from '../runtime/storage/storage.js';
+import {isCollectionEntityStore} from '../runtime/storage/abstract-store.js';
 
 describe('Multiplexer', () => {
   it('renders polymorphic multiplexed slots', async () => {

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {VolatileMemory, VolatileMemoryProvider} from '../storageNG/drivers/volatile.js';
+import {VolatileMemory, VolatileMemoryProvider} from '../storage/drivers/volatile.js';
 
 export class TestVolatileMemoryProvider implements VolatileMemoryProvider {
   private readonly memory: VolatileMemory = new VolatileMemory();

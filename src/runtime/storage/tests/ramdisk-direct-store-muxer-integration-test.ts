@@ -17,7 +17,7 @@ import {Runtime} from '../../runtime.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {EntityType, MuxType} from '../../type.js';
 import {Manifest} from '../../manifest.js';
-import {CRDTMuxEntity} from '../storage-ng.js';
+import {CRDTMuxEntity} from '../storage.js';
 import {Identified, CRDTEntity, EntityOpTypes} from '../../crdt/crdt-entity.js';
 import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
 

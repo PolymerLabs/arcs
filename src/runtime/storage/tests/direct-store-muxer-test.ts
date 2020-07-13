@@ -16,7 +16,7 @@ import {StoreMuxer} from '../store.js';
 import {Exists} from '../drivers/driver.js';
 import {ProxyMessageType} from '../store-interface.js';
 import {Identified, CRDTEntityTypeRecord, CRDTEntity, EntityOpTypes} from '../../crdt/crdt-entity.js';
-import {CRDTMuxEntity} from '../storage-ng.js';
+import {CRDTMuxEntity} from '../storage.js';
 import {assert} from '../../../platform/chai-web.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {DirectStore} from '../direct-store.js';

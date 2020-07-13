@@ -23,7 +23,7 @@ import {Store} from './store.js';
 import {noAwait} from '../util.js';
 import {SerializedEntity} from '../entity.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
-import {CRDTTypeRecordToType} from './storage-ng.js';
+import {CRDTTypeRecordToType} from './storage.js';
 
 // ReferenceMode store uses an expanded notion of Reference that also includes a version. This allows stores to block on
 // receiving an update to contained Entities, which keeps remote versions of the store in sync with each other.

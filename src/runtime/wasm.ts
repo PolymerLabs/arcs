@@ -21,7 +21,7 @@ import {PECInnerPort} from './api-channel.js';
 import {UserException} from './arc-exceptions.js';
 import {ParticleExecutionContext} from './particle-execution-context.js';
 import {BiMap} from './bimap.js';
-import {CollectionHandle, SingletonHandle, Handle} from './storageNG/handle.js';
+import {CollectionHandle, SingletonHandle, Handle} from './storage/handle.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 
 type EntityTypeMap = BiMap<string, EntityType>;

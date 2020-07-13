@@ -17,8 +17,8 @@ import {Schema} from '../schema.js';
 import {EntityType} from '../type.js';
 import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
-import {handleForStore} from '../storageNG/storage-ng.js';
-import {isCollectionEntityStore, entityHasName} from '../storageNG/abstract-store.js';
+import {handleForStore} from '../storage/storage.js';
+import {isCollectionEntityStore, entityHasName} from '../storage/abstract-store.js';
 
 describe('entity', () => {
   it('can be created, stored, and restored', async () => {

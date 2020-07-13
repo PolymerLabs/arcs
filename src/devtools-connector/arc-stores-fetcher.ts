@@ -12,9 +12,9 @@ import {Arc} from '../runtime/arc.js';
 import {ArcDevtoolsChannel} from './abstract-devtools-channel.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Type} from '../runtime/type.js';
-import {StorageKey} from '../runtime/storageNG/storage-key.js';
-import {Store, ActiveStore} from '../runtime/storageNG/store.js';
-import {AbstractStore} from '../runtime/storageNG/abstract-store.js';
+import {StorageKey} from '../runtime/storage/storage-key.js';
+import {Store, ActiveStore} from '../runtime/storage/store.js';
+import {AbstractStore} from '../runtime/storage/abstract-store.js';
 
 type Result = {
   name: string,

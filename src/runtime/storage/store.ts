@@ -14,7 +14,7 @@ import {StorageKey} from './storage-key.js';
 import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider, StoreConstructor, ActiveMuxer} from './store-interface.js';
 import {AbstractStore, StoreInfo} from './abstract-store.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
-import {CRDTTypeRecordToType, CRDTMuxEntity} from './storage-ng.js';
+import {CRDTTypeRecordToType, CRDTMuxEntity} from './storage.js';
 
 export {
   ActiveStore,
