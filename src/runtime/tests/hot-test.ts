@@ -22,4 +22,15 @@ describe('hot', () => {
     assert.notEqual(when(true, true), when(true, false));
     assert.strictEqual(when(true, true), when(true, true));
   });
+  it('when works within switch cases', () => {
+    const x = 10;
+    const isOdd = x % 2 == 1;
+    const isDoubleDigit = x > 9;
+    switch (when(isOdd, isDoubleDigit)) {
+      case when(true, true): assert.fail(); break;
+      case when(true, false): assert.fail(); break;
+      case when(false, true): assert.isOk(true); break;
+      case when(false, false): assert.fail(); break;
+    }
+  });
 });
