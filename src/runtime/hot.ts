@@ -87,5 +87,5 @@ export interface Dictionary<T> {
  *
  */
 export function when(...conditions: boolean[]): number {
-  return conditions.reduce((acc: number, x: boolean, idx: number) => Number(x) << idx || acc, 0);
+  return conditions.reduce((acc: number, x: boolean, idx: number) => Number(x) << idx | acc, 0) + conditions.length;
 }
