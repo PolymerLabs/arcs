@@ -67,7 +67,7 @@ class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> :
         }.join()
     }
 
-    override fun close() {
+    override suspend fun close() {
         closed = true
     }
 

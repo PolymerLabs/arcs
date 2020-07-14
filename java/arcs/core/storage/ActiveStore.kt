@@ -38,7 +38,7 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     abstract fun on(callback: ProxyCallback<Data, Op, ConsumerData>): Int
 
     /** Unregisters a callback associated with the given [callbackToken]. */
-    abstract fun off(callbackToken: Int)
+    abstract suspend fun off(callbackToken: Int)
 
     /** Handles a message from the storage proxy. */
     abstract suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean
@@ -58,6 +58,6 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
             message: ProxyMessage<Data, Op, ConsumerData>
         ) = this@ActiveStore.onProxyMessage(message.withId(id))
 
-        override fun close() = off(id)
+        override suspend fun close() = off(id)
     }
 }

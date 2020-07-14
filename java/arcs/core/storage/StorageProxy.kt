@@ -264,7 +264,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      * Attempting to perform an operation on a closed [StorageProxy] will result in an exception
      * being thrown.
      */
-    fun close() {
+    suspend fun close() {
         if (stateHolder.value.state == ProxyState.CLOSED) return
         scheduler.scope.launch {
             _crdt = null

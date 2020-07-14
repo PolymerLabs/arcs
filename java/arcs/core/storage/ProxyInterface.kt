@@ -105,7 +105,7 @@ interface StorageCommunicationEndpoint<Data : CrdtData, Op : CrdtOperation, Cons
     suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean
 
     /** Signal to the endpoint provider that the client is finished using this endpoint. */
-    fun close()
+    suspend fun close()
 }
 
 /** Provider of a [StorageCommunicationEndpoint]. */

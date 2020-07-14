@@ -57,7 +57,6 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 
 /**
@@ -157,13 +156,11 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         })
     }
 
-    override fun off(callbackToken: Int) {
+    override suspend fun off(callbackToken: Int) {
         val service = checkNotNull(storageService)
-        runBlocking {
-            send {
-                service.unregisterCallback(callbackToken)
-                initChannel()
-            }
+        send {
+            service.unregisterCallback(callbackToken)
+            initChannel()
         }
     }
 

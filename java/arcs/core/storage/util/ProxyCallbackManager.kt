@@ -17,8 +17,6 @@ import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 /**
  * Thread-safe base manager for [ProxyCallback]s.
@@ -32,39 +30,38 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     /* internal */
     val tokenGenerator: (currentlyUsedTokens: Set<Int>) -> Int
 ) {
-    private val mutex = Mutex()
+
     /* internal */ val callbacks = mutableMapOf<Int, ProxyCallback<Data, Op, ConsumerData>>()
 
     /** Adds a [ProxyCallback] to the collection, and returns its token. */
-    fun register(proxyCallback: ProxyCallback<Data, Op, ConsumerData>): Int {
-        while (!mutex.tryLock()) { /* Wait. */ }
+    fun register(
+        proxyCallback: ProxyCallback<Data, Op, ConsumerData>
+    ): Int = synchronized(callbacks) {
         val token = tokenGenerator(callbacks.keys)
         callbacks[token] = proxyCallback
-        mutex.unlock()
-        return token
+        token
     }
 
-    /** Removes the callback with the given [callbackToken] from the collection. */
-    fun unregister(callbackToken: Int) {
-        while (!mutex.tryLock()) { /* Wait. */ }
+    /**
+     * Removes the callback with the given [callbackToken] from the collection.
+     *
+     * Returns the number of callbacks still attached.
+     */
+    fun unregister(callbackToken: Int): Int = synchronized(callbacks) {
         callbacks.remove(callbackToken)
-        mutex.unlock()
+        return callbacks.size
     }
 
     /** Gets a particular [ProxyCallback] by its [callbackToken]. */
-    fun getCallback(callbackToken: Int?): ProxyCallback<Data, Op, ConsumerData>? {
-        while (!mutex.tryLock()) { /* Wait. */ }
-        val res = callbacks[callbackToken]
-        mutex.unlock()
-        return res
+    fun getCallback(
+        callbackToken: Int?
+    ): ProxyCallback<Data, Op, ConsumerData>? = synchronized(callbacks) {
+        callbacks[callbackToken]
     }
 
     /** True if no callbacks are registered. */
-    fun isEmpty(): Boolean {
-        while (!mutex.tryLock()) { /* Wait. */ }
-        val isEmpty = callbacks.isEmpty()
-        mutex.unlock()
-        return isEmpty
+    fun isEmpty(): Boolean = synchronized(callbacks) {
+        callbacks.isEmpty()
     }
 
     /**
@@ -77,7 +74,7 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         message: ProxyMessage<Data, Op, ConsumerData>,
         exceptTo: Int? = null
     ) {
-        val targets = mutex.withLock {
+        val targets = synchronized(callbacks) {
             if (exceptTo == null) {
                 callbacks.values.toList()
             } else {

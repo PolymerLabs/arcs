@@ -35,7 +35,6 @@ import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.type.Type
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.Dispatchers
 import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -672,7 +671,6 @@ class ReferenceModeStoreTest {
         job.join()
     }
 
-
     @Test
     fun backingStoresCleanedUpWhenLastCallbackRemoved() = runBlocking {
         DriverFactory.register(MockDriverProvider())
@@ -683,7 +681,6 @@ class ReferenceModeStoreTest {
         val collection = CrdtSet<RawEntity>()
         val entity = createPersonEntity("an-id", "bob", 42)
 
-        println("DO STUFF")
         collection.applyOperation(
             CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
         )
@@ -694,7 +691,6 @@ class ReferenceModeStoreTest {
 
         store.off(token)
         store.idle()
-        store.awaitCleanup()
         assertThat(store.backingStore.stores.size).isEqualTo(0)
     }
 
@@ -705,7 +701,7 @@ class ReferenceModeStoreTest {
 
         val preToken = store.on(ProxyCallback {})
         store.off(preToken)
-        store.awaitCleanup()
+        store.idle()
 
         val token = store.on(ProxyCallback {})
         val collection = CrdtSet<RawEntity>()
