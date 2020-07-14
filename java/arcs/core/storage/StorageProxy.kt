@@ -291,8 +291,12 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         val result = CompletableDeferred<Boolean>()
         sendMessageToStore(ProxyMessage.Operations(listOf(op), null), result)
 
-        // TODO: the returned Deferred doesn't account for this update propagation; should it?
-        notifyUpdate(value)
+        // Don't send update notifications for local writes that occur prior to sync (these should
+        // only be in onFirstStart and onStart, and as such particles aren't ready for updates yet).
+        if (stateHolder.value.state in arrayOf(ProxyState.SYNC, ProxyState.DESYNC)) {
+            // TODO: the returned Deferred doesn't account for this update propagation; should it?
+            notifyUpdate(value)
+        }
         return result
     }
 

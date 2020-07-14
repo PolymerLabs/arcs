@@ -67,3 +67,32 @@ recipe ReadWriteAccessTest
     colReadWrite: reads writes h2
     sngPersist: reads writes h3
     colPersist: reads writes h4
+
+// -----------------------------------------------------------------------------
+
+particle PipelineProducerParticle in 'arcs.core.host.PipelineProducerParticle'
+  sngWrite: writes Value {txt: Text}
+  colWrite: writes [Value {txt: Text}]
+
+particle PipelineTransportParticle in 'arcs.core.host.PipelineTransportParticle'
+  sngRead: reads Value {txt: Text}
+  sngWrite: writes Value {txt: Text}
+  colRead: reads [Value {txt: Text}]
+  colWrite: writes [Value {txt: Text}]
+
+particle PipelineConsumerParticle in 'arcs.core.host.PipelineConsumerParticle'
+  sngRead: reads Value {txt: Text}
+  colRead: reads [Value {txt: Text}]
+
+recipe PipelineTest
+  PipelineProducerParticle
+    sngWrite: writes s1
+    colWrite: writes c1
+  PipelineTransportParticle
+    sngRead: reads s1
+    sngWrite: writes s2
+    colRead: reads c1
+    colWrite: writes c2
+  PipelineConsumerParticle
+    sngRead: reads s2
+    colRead: reads c2
