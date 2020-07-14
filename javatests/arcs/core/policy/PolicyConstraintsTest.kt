@@ -43,7 +43,7 @@ class PolicyConstraintsTest {
         val result = translatePolicy(BLANK_POLICY, recipe, emptyMap())
 
         assertThat(result).isEqualTo(
-            PolicyConstraints(BLANK_POLICY, recipe, emptyMap(), emptyMap())
+            PolicyConstraints(BLANK_POLICY, emptyMap(), emptyMap())
         )
     }
 
@@ -92,7 +92,7 @@ class PolicyConstraintsTest {
         val result = translatePolicy(policy, recipe, emptyMap())
 
         assertThat(result.egressChecks).containsExactly(
-            particle,
+            particle.spec,
             listOf(
                 Check.Assert(
                     AccessPath(AccessPath.Root.HandleConnection(
@@ -131,7 +131,7 @@ class PolicyConstraintsTest {
         val result = translatePolicy(policy, recipe, emptyMap())
 
         val particle = recipe.particles.single()
-        assertThat(result.egressChecks).containsExactly(particle, emptyList<Check>())
+        assertThat(result.egressChecks).containsExactly(particle.spec, emptyList<Check>())
     }
 
     @Test

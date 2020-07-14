@@ -5,6 +5,7 @@ import arcs.core.data.Check
 import arcs.core.data.Claim
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.InformationFlowLabel.SemanticTag
+import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe
 
 typealias StoreId = String
@@ -15,8 +16,7 @@ typealias StoreId = String
  */
 data class PolicyConstraints(
     val policy: Policy,
-    val recipe: Recipe,
-    val egressChecks: Map<Recipe.Particle, List<Check>>,
+    val egressChecks: Map<ParticleSpec, List<Check>>,
     val storeClaims: Map<StoreId, List<Claim>>
 )
 
@@ -39,9 +39,9 @@ fun translatePolicy(
 
     // Add check statements to every egress particle node.
     val egressCheckPredicate = createEgressCheckPredicate(policy)
-    val egressChecks = egressParticles.associateWith { particle ->
+    val egressChecks = egressParticles.associate { particle ->
         // Each handle connection needs its own check statement.
-        particle.spec.connections.values
+        val checks = particle.spec.connections.values
             .filter {
                 // TODO(b/157605232): Also check canQuery -- but first, need to add QUERY to the
                 // Direction enum in the manifest proto.
@@ -50,6 +50,7 @@ fun translatePolicy(
             .map { connectionSpec ->
                 Check.Assert(AccessPath(particle, connectionSpec), egressCheckPredicate)
             }
+        particle.spec to checks
     }
 
     // Add claim statements for stores.
@@ -66,7 +67,7 @@ fun translatePolicy(
         }
         .filterValues { it.isNotEmpty() }
 
-    return PolicyConstraints(policy, recipe, egressChecks, storeClaims)
+    return PolicyConstraints(policy, egressChecks, storeClaims)
 }
 
 /** Returns a list of store [Claim]s for the given [handle] and corresponding [target]. */
