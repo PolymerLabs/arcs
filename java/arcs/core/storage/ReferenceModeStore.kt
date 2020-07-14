@@ -488,6 +488,11 @@ class ReferenceModeStore private constructor(
         backingStoreCleanupJob.join()
     }
 
+    @FlowPreview
+    suspend fun awaitCleanup() {
+        clearStoreCachesFlow.join()
+    }
+
     private fun newBackingInstance(): CrdtModel<CrdtData, CrdtOperationAtTime, Referencable> =
         crdtType.createCrdtModel()
 

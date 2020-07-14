@@ -35,9 +35,11 @@ import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.type.Type
 import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.Dispatchers
 import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
@@ -670,6 +672,7 @@ class ReferenceModeStoreTest {
         job.join()
     }
 
+
     @Test
     fun backingStoresCleanedUpWhenLastCallbackRemoved() = runBlocking {
         DriverFactory.register(MockDriverProvider())
@@ -677,6 +680,34 @@ class ReferenceModeStoreTest {
 
         val token = store.on(ProxyCallback {})
 
+        val collection = CrdtSet<RawEntity>()
+        val entity = createPersonEntity("an-id", "bob", 42)
+
+        println("DO STUFF")
+        collection.applyOperation(
+            CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
+        )
+
+        store.onProxyMessage(
+            ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
+        )
+
+        store.off(token)
+        store.idle()
+        store.awaitCleanup()
+        assertThat(store.backingStore.stores.size).isEqualTo(0)
+    }
+
+    @Test
+    fun backingStoresCleanedUpWhenLastCallbackRemovedTwice() = runBlocking {
+        DriverFactory.register(MockDriverProvider())
+        val store = createReferenceModeStore()
+
+        val preToken = store.on(ProxyCallback {})
+        store.off(preToken)
+        store.awaitCleanup()
+
+        val token = store.on(ProxyCallback {})
         val collection = CrdtSet<RawEntity>()
         val entity = createPersonEntity("an-id", "bob", 42)
 
@@ -690,7 +721,41 @@ class ReferenceModeStoreTest {
 
         store.off(token)
         store.idle()
-        store.awaitCleanup()
+        assertThat(store.backingStore.stores.size).isEqualTo(0)
+    }
+
+    @Test
+    fun backingStoresCleanedUpWhenLastCallbackRemovedRaces() = runBlocking {
+        DriverFactory.register(MockDriverProvider())
+        val store = createReferenceModeStore()
+
+        val cbJob = launch {
+            for (i in 0..100) {
+                val preToken = store.on(ProxyCallback {})
+                delay(1)
+                store.off(preToken)
+            }
+        }
+
+        val dataJob = launch {
+            for (i in 0..100) {
+                val collection = CrdtSet<RawEntity>()
+                val entity = createPersonEntity("an-id", "bob-$i", 42)
+
+                collection.applyOperation(
+                    CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
+                )
+
+                store.onProxyMessage(
+                    ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
+                )
+            }
+        }
+
+        cbJob.join()
+        dataJob.join()
+
+        store.idle()
         assertThat(store.backingStore.stores.size).isEqualTo(0)
     }
 
