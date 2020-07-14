@@ -53,6 +53,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -66,6 +67,9 @@ open class StorageService : ResurrectorService() {
             Thread(it).apply { name = "WriteBack #$id" }
         }.asCoroutineDispatcher() + SupervisorJob()
     )
+
+    private val cleanupScope by lazy { CoroutineScope(coroutineContext) }
+
     private val stores = ConcurrentHashMap<StorageKey, Store<*, *, *>>()
     private var startTime: Long? = null
     private val stats = BindingContextStatsImpl()
@@ -165,9 +169,32 @@ open class StorageService : ResurrectorService() {
         }
     }
 
+    @ExperimentalCoroutinesApi
+    override fun onUnbind(intent: Intent): Boolean {
+        if (intent.action == MANAGER_ACTION) {
+            return super.onUnbind(intent)
+        }
+
+        val parcelableOptions = requireNotNull(
+            intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
+        ) { "No StoreOptions found in Intent" }
+
+        val options =
+            parcelableOptions.actual.copy(coroutineContext = coroutineContext)
+
+        val store = stores.remove(options.storageKey)
+
+        cleanupScope.launch {
+            store?.activate()?.close()
+        }
+
+        return super.onUnbind(intent)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         writeBackScope.cancel()
+        cleanupScope.cancel()
     }
 
     override fun dump(fd: FileDescriptor, writer: PrintWriter, args: Array<out String>) {

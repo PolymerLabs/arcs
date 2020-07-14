@@ -23,6 +23,7 @@ import arcs.core.util.TaggedLog
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -53,7 +54,9 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
             log.debug { "close the store(${storeRecord.id})" }
 
             try {
-                storeRecord.store.close()
+                runBlocking {
+                    storeRecord.store.close()
+                }
             } catch (e: Exception) {
                 // TODO(b/160251910): Make logging detail more cleanly conditional.
                 log.debug(e) { "failed to close the store(${storeRecord.id})" }

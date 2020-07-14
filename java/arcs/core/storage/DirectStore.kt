@@ -32,7 +32,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.runBlocking
 
 // import kotlinx.coroutines.flow.debounce
 // import kotlinx.coroutines.flow.filter
@@ -109,23 +108,21 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     }
 
     /** Closes the store. Once closed, it cannot be re-opened. A new instance must be created. */
-    fun close() {
+    override suspend fun close() {
         synchronized(proxyManager) {
             proxyManager.callbacks.clear()
-            closeInternal()
         }
+        closeInternal()
     }
 
-    private fun closeInternal() {
+    private suspend fun closeInternal() {
         if (!closed) {
             closed = true
             stateChannel.offer(State.Closed())
             stateChannel.close()
             state.value = State.Closed()
             closeWriteBack()
-            runBlocking {
-                driver.close()
-            }
+            driver.close()
         }
     }
 

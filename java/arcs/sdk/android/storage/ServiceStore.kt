@@ -217,6 +217,12 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     fun onLifecycleDestroyed() {
+        runBlocking {
+            close()
+        }
+    }
+
+    override suspend fun close() {
         serviceConnection?.disconnect()
         storageService = null
         channel?.cancel()

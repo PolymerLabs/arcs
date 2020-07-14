@@ -54,21 +54,12 @@ import arcs.core.util.Result
 import arcs.core.util.TaggedLog
 import arcs.core.util.computeNotNull
 import arcs.core.util.nextSafeRandomLong
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
@@ -97,7 +88,6 @@ class ReferenceModeStore private constructor(
     /* internal */
     val backingKey: StorageKey,
     /* internal */
-    clearCoroutineContext: CoroutineContext = Dispatchers.Default,
     backingType: Type
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
     // TODO(#5551): Consider including a hash of the storage key in log prefix.
@@ -451,21 +441,6 @@ class ReferenceModeStore private constructor(
         return@fn true
     }
 
-    @FlowPreview
-    private val clearStoreCachesFlow = combine(
-        callbacksStateChannel.asFlow(),
-        receiveQueue.sizeChannel.asFlow()
-    ) { callbacksState, queueSize -> queueSize + if (callbacksState) 1 else 0 }
-        .filter { it == 0 }
-        .onEach {
-            if (receiveQueue.size.value == 0) {
-                backingStore.clearStoresCache()
-                receiveQueue.sizeChannel.close()
-                callbacksStateChannel.close()
-            }
-        }
-        .launchIn(CoroutineScope(clearCoroutineContext + Job()))
-
     private fun newBackingInstance(): CrdtModel<CrdtData, CrdtOperationAtTime, Referencable> =
         crdtType.createCrdtModel()
 
@@ -685,6 +660,10 @@ class ReferenceModeStore private constructor(
         })
     }
 
+    override suspend fun close() {
+        backingStore.clearStoresCache()
+    }
+
     companion object {
         /**
          * Timeout duration in milliseconds we are allowed to wait for results from the
@@ -739,7 +718,6 @@ class ReferenceModeStore private constructor(
                 refableOptions,
                 containerStore,
                 storageKey.backingKey,
-                options.coroutineContext,
                 type.containedType
             )
         }

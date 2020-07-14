@@ -50,5 +50,12 @@ class StoreManager(
     /**
      * Drops all [Store] instances.
      */
-    suspend fun reset() = storesMutex.withLock { stores.clear() }
+    suspend fun reset() {
+        val toClose = storesMutex.withLock {
+            stores.values.also {
+                stores.clear()
+            }
+        }
+        toClose.forEach { it.close() }
+    }
 }

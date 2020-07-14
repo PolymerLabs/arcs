@@ -40,6 +40,9 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     /** Unregisters a callback associated with the given [callbackToken]. */
     abstract fun off(callbackToken: Int)
 
+    /** Releases any resources this store was using. */
+    abstract suspend fun close()
+
     /** Handles a message from the storage proxy. */
     abstract suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean
 
