@@ -8,8 +8,60 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {PolicyTarget, Policy} from './policy.js';
-import {Capability} from '../capabilities.js';
+import {assert} from '../../platform/assert-web.js';
+import {PolicyTarget, Policy, PolicyField} from './policy.js';
+import {Capability, Capabilities} from '../capabilities.js';
+import {Type, EntityType} from '../type.js';
+import {Refinement} from '../refiner.js';
+import {Schema} from '../schema.js';
+
+// Helper class for validating ingress fields and capabilities.
+export class IngressValidation {
+  // Returns a type by the given name, combined from all corresponding type
+  // restrictions provided by the given list of policies.
+  static getRestrictedType(typeName: string, policies: Policy[]): Type|null {
+    const fields = {};
+    let type: Type|null = null;
+    for (const policy of policies) {
+      for (const target of policy.targets) {
+        if (typeName === target.schemaName) {
+          type = target.type;
+          IngressValidation.mergeFields(fields, target.getRestrictedFields());
+          break;
+        }
+      }
+    }
+    return type ? EntityType.make([typeName], fields, type.getEntitySchema()) : null;
+  }
+
+  private static mergeFields(fields: {}, newFields: {}) {
+    for (const newFieldName of Object.keys(newFields)) {
+      if (fields[newFieldName]) {
+        IngressValidation.mergeField(fields[newFieldName], newFields[newFieldName]);
+      } else {
+        fields[newFieldName] = newFields[newFieldName];
+      }
+    }
+  }
+
+  private static mergeField(field, newField) {
+    assert(field.kind === newField.kind);
+    switch (field.kind) {
+      case 'schema-collection': {
+        this.mergeFields(field.schema.schema.model.entitySchema.fields,
+            newField.schema.schema.model.entitySchema.fields);
+        break;
+      }
+      case 'schema-reference': {
+        this.mergeFields(field.schema.model.entitySchema.fields,
+            newField.schema.model.entitySchema.fields);
+        break;
+      }
+      default:
+        return;
+    }
+  }
+}
 
 export class IngressValidationResult {
   readonly errors = new Map<PolicyTarget | Policy | Capability, string>();
