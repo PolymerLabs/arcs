@@ -108,6 +108,12 @@ class ShowcaseEnvironment(
                 DriverAndKeyConfigurator.configure(dbManager)
                 WorkManagerTestInitHelper.initializeTestWorkManager(context)
                 val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+                val handleManager = EntityHandleManager(
+                    arcId = "allocator",
+                    hostId = "allocator",
+                    time = JvmTime,
+                    scheduler = schedulerProvider.invoke("allocator")
+                )
 
                 arcHost = ShowcaseHost(
                     schedulerProvider,
@@ -124,16 +130,9 @@ class ShowcaseEnvironment(
 
                 allocator = Allocator.create(
                     ExplicitHostRegistry().apply {
-                        runBlocking {
-                            registerHost(arcHost)
-                        }
+                        runBlocking { registerHost(arcHost) }
                     },
-                    EntityHandleManager(
-                        arcId = "allocator",
-                        hostId = "allocator",
-                        time = JvmTime,
-                        scheduler = schedulerProvider.invoke("allocator")
-                    )
+                    handleManager
                 )
 
                 // Running the test...
@@ -142,6 +141,9 @@ class ShowcaseEnvironment(
                 // Shutting down...
                 runBlocking {
                     startedArcs.forEach { stopArc(it) }
+
+                    handleManager.close()
+                    schedulerProvider.cancelAll()
 
                     // Attempt a resetAll().
                     // Rarely, this fails with "attempt to re-open an already-closed object"

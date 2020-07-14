@@ -31,14 +31,12 @@ class ReadWriteTest {
     private val l2 = MyLevel2("l2-1", setOf(l1))
 
     @Test
-    @Ignore("b/156993103 - Deflake")
     fun writeAndReadBack0() {
         storage.put0(l0)
         assertThat(storage.all0()).containsExactly(l0)
     }
 
     @Test
-    @Ignore("b/157088298 - Deflake")
     fun writeAndReadBack1() {
         storage.put1(l1)
         assertThat(storage.all1()).containsExactly(l1)
