@@ -253,7 +253,6 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         assertThat(updatedEntity).isEqualTo(entity2)
     }
 
-    @Ignore("b/156993444 - Deflake")
     @Test
     fun collectionHandle_writeFollowedByReadWithOnUpdate() = runBlocking<Unit> {
         val writeCollectionHandle = createCollectionHandle(
