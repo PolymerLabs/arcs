@@ -591,7 +591,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         taskHandle: TaskHandle,
         taskController: TaskController,
         settings: Settings
-    ) = (taskHandle.handle as? ReadWriteCollectionHandle<TestEntity>)?.let { handle ->
+    ) = (taskHandle.handle as? WriteCollectionHandle<TestEntity>)?.let { handle ->
         val entities = List(settings.clearedEntities) {
             SystemHealthTestEntity(settings.dataSizeInBytes)
         }
