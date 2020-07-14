@@ -16,6 +16,7 @@ import android.content.Intent
 import android.os.Debug
 import android.os.Trace
 import androidx.lifecycle.Lifecycle
+import arcs.android.systemhealth.testapp.Dispatchers as ArcsDispatchers
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
@@ -37,7 +38,6 @@ import arcs.sdk.ReadWriteSingletonHandle
 import arcs.sdk.WriteCollectionHandle
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
-import arcs.sdk.android.storage.service.DefaultStorageServiceBindingDelegate
 import com.google.common.math.StatsAccumulator
 import java.text.DateFormat
 import java.text.DecimalFormat
@@ -270,7 +270,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         handles = tasks.mapIndexed { id, task ->
             // Per-task single-threaded execution context with Watchdog monitoring instabilities
             val taskCoroutineContext =
-                task.asCoroutineDispatcher() +
+                (ArcsDispatchers.clients ?: task.asCoroutineDispatcher()) +
                     if (settings.function == Function.STABILITY_TEST) {
                         stabilityExceptionHandler(id)
                     } else {
@@ -287,17 +287,13 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                             taskCoroutineContext,
                             DefaultConnectionFactory(
                                 context,
-                                if (settings.function == Function.STABILITY_TEST) {
-                                    TestStorageServiceBindingDelegate(context)
-                                } else {
-                                    DefaultStorageServiceBindingDelegate(context)
-                                },
+                                TestStorageServiceBindingDelegate(context),
                                 taskCoroutineContext
                             )
                         )
                     ),
                     // Per-task single-threaded Scheduler being cascaded with Watchdog capabilities
-                    scheduler = JvmSchedulerProvider(taskCoroutineContext)("sysHealthStorageCore")
+                    scheduler = TestSchedulerProvider(taskCoroutineContext)("sysHealthStorageCore")
                 ),
                 taskCoroutineContext
             ).apply {

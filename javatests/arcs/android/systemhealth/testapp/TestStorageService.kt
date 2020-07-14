@@ -4,12 +4,15 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import arcs.android.storage.ParcelableStoreOptions
+import arcs.android.systemhealth.testapp.Dispatchers as ArcsDispatchers
+import arcs.android.systemhealth.testapp.Executors as ArcsExecutors
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -18,7 +21,11 @@ import kotlinx.coroutines.launch
  * Arcs system-health-test storage service. Supports crashing itself when needed.
  */
 class TestStorageService : StorageService() {
-    override val coroutineContext = Dispatchers.Main + CoroutineName("TestStorageService")
+    override val coroutineContext =
+        ArcsDispatchers.server + CoroutineName("TestStorageService")
+    override val writeBackScope: CoroutineScope = CoroutineScope(
+        ArcsExecutors.io.asCoroutineDispatcher() + SupervisorJob()
+    )
     private val scope = CoroutineScope(coroutineContext)
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
