@@ -34,6 +34,7 @@ import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
+import arcs.sdk.WriteCollectionHandle
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.DefaultStorageServiceBindingDelegate
@@ -379,7 +380,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 TestEntity
             ),
             TestEntity.clearEntitiesTestStorageKey
-        ) as ReadWriteCollectionHandle<TestEntity>
+        ) as WriteCollectionHandle<TestEntity>
 
         val elapsedTime = measureTimeMillis { handle.awaitReady() }
         if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
