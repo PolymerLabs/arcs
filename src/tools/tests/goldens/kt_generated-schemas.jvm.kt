@@ -8,18 +8,8 @@ package arcs.golden
 //
 // Current implementation doesn't support optional field detection
 
-import arcs.core.data.*
-import arcs.core.data.SchemaRegistry
-import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.entity.Reference
-import arcs.core.entity.Tuple1
-import arcs.core.entity.Tuple2
-import arcs.core.entity.Tuple3
-import arcs.core.entity.Tuple4
-import arcs.core.entity.Tuple5
 import arcs.core.entity.toPrimitiveValue
-import arcs.sdk.*
 import java.math.BigInteger
 
 typealias KotlinPrimitivesGolden_Data_Ref = AbstractKotlinPrimitivesGolden.KotlinPrimitivesGolden_Data_Ref
@@ -30,7 +20,7 @@ typealias KotlinPrimitivesGolden_Data_Products = AbstractKotlinPrimitivesGolden.
 typealias KotlinPrimitivesGolden_Data_Detail = AbstractKotlinPrimitivesGolden.Detail
 typealias KotlinPrimitivesGolden_Data = AbstractKotlinPrimitivesGolden.KotlinPrimitivesGolden_Data
 
-abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
+abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
     override val handles: Handles = Handles()
 
 
@@ -38,16 +28,16 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
     class KotlinPrimitivesGolden_Data_Ref(
         val_: String = "",
         entityId: String? = null,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase(
-    "KotlinPrimitivesGolden_Data_Ref",
-    SCHEMA,
-    entityId,
-    creationTimestamp,
-    expirationTimestamp,
-    false
-) {
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase(
+        "KotlinPrimitivesGolden_Data_Ref",
+        SCHEMA,
+        entityId,
+        creationTimestamp,
+        expirationTimestamp,
+        false
+    ) {
 
         var val_: String
             get() = super.getSingletonValue("val") as String? ?: ""
@@ -62,6 +52,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
          * Storing the copy will result in a new copy of the data being stored.
          */
         fun copy(val_: String = this.val_) = KotlinPrimitivesGolden_Data_Ref(val_ = val_)
+
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -73,12 +64,12 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             expirationTimestamp = expirationTimestamp
         )
 
-        companion object : EntitySpec<KotlinPrimitivesGolden_Data_Ref> {
+        companion object : arcs.sdk.EntitySpec<KotlinPrimitivesGolden_Data_Ref> {
 
-            override val SCHEMA = Schema(
+            override val SCHEMA = arcs.core.data.Schema(
                 setOf(),
-                SchemaFields(
-                    singletons = mapOf("val" to FieldType.Text),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf("val" to arcs.core.data.FieldType.Text),
                     collections = emptyMap()
                 ),
                 "485712110d89359a3e539dac987329cd2649d889",
@@ -86,14 +77,14 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
                 emptyMap()
 
             init {
-                SchemaRegistry.register(SCHEMA)
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = KotlinPrimitivesGolden_Data_Ref().apply {
+            override fun deserialize(data: arcs.core.data.RawEntity) = KotlinPrimitivesGolden_Data_Ref().apply {
                 deserialize(data, nestedEntitySpecs)
             }
         }
@@ -103,9 +94,9 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
     class Thing(
         name: String = "",
         entityId: String? = null,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Thing", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase("Thing", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
 
         var name: String
             get() = super.getSingletonValue("name") as String? ?: ""
@@ -120,6 +111,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
          * Storing the copy will result in a new copy of the data being stored.
          */
         fun copy(name: String = this.name) = Thing(name = name)
+
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -131,12 +123,12 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             expirationTimestamp = expirationTimestamp
         )
 
-        companion object : EntitySpec<Thing> {
+        companion object : arcs.sdk.EntitySpec<Thing> {
 
-            override val SCHEMA = Schema(
-                setOf(SchemaName("Thing")),
-                SchemaFields(
-                    singletons = mapOf("name" to FieldType.Text),
+            override val SCHEMA = arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Thing")),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf("name" to arcs.core.data.FieldType.Text),
                     collections = emptyMap()
                 ),
                 "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
@@ -144,14 +136,14 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
                 emptyMap()
 
             init {
-                SchemaRegistry.register(SCHEMA)
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = Thing().apply {
+            override fun deserialize(data: arcs.core.data.RawEntity) = Thing().apply {
                 deserialize(data, nestedEntitySpecs)
             }
         }
@@ -162,9 +154,9 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
         txt: String = "",
         num: Double = 0.0,
         entityId: String? = null,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Nested", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase("Nested", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
 
         var txt: String
             get() = super.getSingletonValue("txt") as String? ?: ""
@@ -183,6 +175,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
          * Storing the copy will result in a new copy of the data being stored.
          */
         fun copy(txt: String = this.txt, num: Double = this.num) = Nested(txt = txt, num = num)
+
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -195,12 +188,15 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             expirationTimestamp = expirationTimestamp
         )
 
-        companion object : EntitySpec<Nested> {
+        companion object : arcs.sdk.EntitySpec<Nested> {
 
-            override val SCHEMA = Schema(
-                setOf(SchemaName("Nested")),
-                SchemaFields(
-                    singletons = mapOf("txt" to FieldType.Text, "num" to FieldType.Number),
+            override val SCHEMA = arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Nested")),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf(
+                        "txt" to arcs.core.data.FieldType.Text,
+                        "num" to arcs.core.data.FieldType.Number
+                    ),
                     collections = emptyMap()
                 ),
                 "e8b8d30e041174ca9104dfba453615c934af27b3",
@@ -208,14 +204,14 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
                 emptyMap()
 
             init {
-                SchemaRegistry.register(SCHEMA)
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = Nested().apply {
+            override fun deserialize(data: arcs.core.data.RawEntity) = Nested().apply {
                 deserialize(data, nestedEntitySpecs)
             }
         }
@@ -227,9 +223,9 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
         green: Char = '\u0000',
         blue: Char = '\u0000',
         entityId: String? = null,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Color", SCHEMA, entityId, creationTimestamp, expirationTimestamp, true) {
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase("Color", SCHEMA, entityId, creationTimestamp, expirationTimestamp, true) {
 
         var red: Char
             get() = super.getSingletonValue("red") as Char? ?: '\u0000'
@@ -252,6 +248,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
          * Storing the copy will result in a new copy of the data being stored.
          */
         fun copy(red: Char = this.red, green: Char = this.green, blue: Char = this.blue) = Color(red = red, green = green, blue = blue)
+
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -265,15 +262,15 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             expirationTimestamp = expirationTimestamp
         )
 
-        companion object : EntitySpec<Color> {
+        companion object : arcs.sdk.EntitySpec<Color> {
 
-            override val SCHEMA = Schema(
-                setOf(SchemaName("Color")),
-                SchemaFields(
+            override val SCHEMA = arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Color")),
+                arcs.core.data.SchemaFields(
                     singletons = mapOf(
-                        "red" to FieldType.Char,
-                        "green" to FieldType.Char,
-                        "blue" to FieldType.Char
+                        "red" to arcs.core.data.FieldType.Char,
+                        "green" to arcs.core.data.FieldType.Char,
+                        "blue" to arcs.core.data.FieldType.Char
                     ),
                     collections = emptyMap()
                 ),
@@ -282,14 +279,14 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
                 emptyMap()
 
             init {
-                SchemaRegistry.register(SCHEMA)
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = Color().apply {
+            override fun deserialize(data: arcs.core.data.RawEntity) = Color().apply {
                 deserialize(data, nestedEntitySpecs)
             }
         }
@@ -301,9 +298,9 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
         price: Float = 0.0f,
         stock: Int = 0,
         entityId: String? = null,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Product", SCHEMA, entityId, creationTimestamp, expirationTimestamp, true) {
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase("Product", SCHEMA, entityId, creationTimestamp, expirationTimestamp, true) {
 
         var name: String
             get() = super.getSingletonValue("name") as String? ?: ""
@@ -326,6 +323,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
          * Storing the copy will result in a new copy of the data being stored.
          */
         fun copy(name: String = this.name, price: Float = this.price, stock: Int = this.stock) = Product(name = name, price = price, stock = stock)
+
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -339,15 +337,15 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             expirationTimestamp = expirationTimestamp
         )
 
-        companion object : EntitySpec<Product> {
+        companion object : arcs.sdk.EntitySpec<Product> {
 
-            override val SCHEMA = Schema(
-                setOf(SchemaName("Product")),
-                SchemaFields(
+            override val SCHEMA = arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Product")),
+                arcs.core.data.SchemaFields(
                     singletons = mapOf(
-                        "name" to FieldType.Text,
-                        "price" to FieldType.Float,
-                        "stock" to FieldType.Int
+                        "name" to arcs.core.data.FieldType.Text,
+                        "price" to arcs.core.data.FieldType.Float,
+                        "stock" to arcs.core.data.FieldType.Int
                     ),
                     collections = emptyMap()
                 ),
@@ -356,14 +354,14 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
                 emptyMap()
 
             init {
-                SchemaRegistry.register(SCHEMA)
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = Product().apply {
+            override fun deserialize(data: arcs.core.data.RawEntity) = Product().apply {
                 deserialize(data, nestedEntitySpecs)
             }
         }
@@ -375,9 +373,9 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
         txt: String = "",
         num: Double = 0.0,
         entityId: String? = null,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Detail", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase("Detail", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
 
         var nested: Nested
             get() = super.getSingletonValue("nested") as Nested? ?: Nested()
@@ -400,6 +398,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
          * Storing the copy will result in a new copy of the data being stored.
          */
         fun copy(nested: Nested = this.nested, txt: String = this.txt, num: Double = this.num) = Detail(nested = nested, txt = txt, num = num)
+
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -413,15 +412,15 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             expirationTimestamp = expirationTimestamp
         )
 
-        companion object : EntitySpec<Detail> {
+        companion object : arcs.sdk.EntitySpec<Detail> {
 
-            override val SCHEMA = Schema(
-                setOf(SchemaName("Detail")),
-                SchemaFields(
+            override val SCHEMA = arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Detail")),
+                arcs.core.data.SchemaFields(
                     singletons = mapOf(
-                        "nested" to FieldType.InlineEntity("e8b8d30e041174ca9104dfba453615c934af27b3"),
-                        "txt" to FieldType.Text,
-                        "num" to FieldType.Number
+                        "nested" to arcs.core.data.FieldType.InlineEntity("e8b8d30e041174ca9104dfba453615c934af27b3"),
+                        "txt" to arcs.core.data.FieldType.Text,
+                        "num" to arcs.core.data.FieldType.Number
                     ),
                     collections = emptyMap()
                 ),
@@ -430,14 +429,14 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
                 mapOf("e8b8d30e041174ca9104dfba453615c934af27b3" to Nested)
 
             init {
-                SchemaRegistry.register(SCHEMA)
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = Detail().apply {
+            override fun deserialize(data: arcs.core.data.RawEntity) = Detail().apply {
                 deserialize(data, nestedEntitySpecs)
             }
         }
@@ -449,7 +448,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
         txt: String = "",
         lnk: String = "",
         flg: Boolean = false,
-        ref: Reference<KotlinPrimitivesGolden_Data_Ref>? = null,
+        ref: arcs.sdk.Reference<KotlinPrimitivesGolden_Data_Ref>? = null,
         bt: Byte = 0.toByte(),
         shrt: Short = 0.toShort(),
         nt: Int = 0,
@@ -460,21 +459,21 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
         dbl: Double = 0.0,
         txtlst: List<String> = emptyList(),
         lnglst: List<Long> = emptyList(),
-        thinglst: List<Reference<Thing>> = emptyList(),
+        thinglst: List<arcs.sdk.Reference<Thing>> = emptyList(),
         detail: Detail = Detail(),
         colors: Set<Color> = emptySet(),
         products: List<Product> = emptyList(),
         entityId: String? = null,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase(
-    "KotlinPrimitivesGolden_Data",
-    SCHEMA,
-    entityId,
-    creationTimestamp,
-    expirationTimestamp,
-    false
-) {
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase(
+        "KotlinPrimitivesGolden_Data",
+        SCHEMA,
+        entityId,
+        creationTimestamp,
+        expirationTimestamp,
+        false
+    ) {
 
         var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
@@ -488,8 +487,8 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
         var flg: Boolean
             get() = super.getSingletonValue("flg") as Boolean? ?: false
             private set(_value) = super.setSingletonValue("flg", _value)
-        var ref: Reference<KotlinPrimitivesGolden_Data_Ref>?
-            get() = super.getSingletonValue("ref") as Reference<KotlinPrimitivesGolden_Data_Ref>?
+        var ref: arcs.sdk.Reference<KotlinPrimitivesGolden_Data_Ref>?
+            get() = super.getSingletonValue("ref") as arcs.sdk.Reference<KotlinPrimitivesGolden_Data_Ref>?
             private set(_value) = super.setSingletonValue("ref", _value)
         var bt: Byte
             get() = super.getSingletonValue("bt") as Byte? ?: 0.toByte()
@@ -521,8 +520,8 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
         var lnglst: List<Long>
             get() = super.getSingletonValue("lnglst") as List<Long>? ?: emptyList()
             private set(_value) = super.setSingletonValue("lnglst", _value)
-        var thinglst: List<Reference<Thing>>
-            get() = super.getSingletonValue("thinglst") as List<Reference<Thing>>? ?: emptyList()
+        var thinglst: List<arcs.sdk.Reference<Thing>>
+            get() = super.getSingletonValue("thinglst") as List<arcs.sdk.Reference<Thing>>? ?: emptyList()
             private set(_value) = super.setSingletonValue("thinglst", _value)
         var detail: Detail
             get() = super.getSingletonValue("detail") as Detail? ?: Detail()
@@ -565,7 +564,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             txt: String = this.txt,
             lnk: String = this.lnk,
             flg: Boolean = this.flg,
-            ref: Reference<KotlinPrimitivesGolden_Data_Ref>? = this.ref,
+            ref: arcs.sdk.Reference<KotlinPrimitivesGolden_Data_Ref>? = this.ref,
             bt: Byte = this.bt,
             shrt: Short = this.shrt,
             nt: Int = this.nt,
@@ -576,7 +575,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             dbl: Double = this.dbl,
             txtlst: List<String> = this.txtlst,
             lnglst: List<Long> = this.lnglst,
-            thinglst: List<Reference<Thing>> = this.thinglst,
+            thinglst: List<arcs.sdk.Reference<Thing>> = this.thinglst,
             detail: Detail = this.detail,
             colors: Set<Color> = this.colors,
             products: List<Product> = this.products
@@ -601,6 +600,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             colors = colors,
             products = products
         )
+
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -610,7 +610,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             txt: String = this.txt,
             lnk: String = this.lnk,
             flg: Boolean = this.flg,
-            ref: Reference<KotlinPrimitivesGolden_Data_Ref>? = this.ref,
+            ref: arcs.sdk.Reference<KotlinPrimitivesGolden_Data_Ref>? = this.ref,
             bt: Byte = this.bt,
             shrt: Short = this.shrt,
             nt: Int = this.nt,
@@ -621,7 +621,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             dbl: Double = this.dbl,
             txtlst: List<String> = this.txtlst,
             lnglst: List<Long> = this.lnglst,
-            thinglst: List<Reference<Thing>> = this.thinglst,
+            thinglst: List<arcs.sdk.Reference<Thing>> = this.thinglst,
             detail: Detail = this.detail,
             colors: Set<Color> = this.colors,
             products: List<Product> = this.products
@@ -650,33 +650,33 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             expirationTimestamp = expirationTimestamp
         )
 
-        companion object : EntitySpec<KotlinPrimitivesGolden_Data> {
+        companion object : arcs.sdk.EntitySpec<KotlinPrimitivesGolden_Data> {
 
-            override val SCHEMA = Schema(
+            override val SCHEMA = arcs.core.data.Schema(
                 setOf(),
-                SchemaFields(
+                arcs.core.data.SchemaFields(
                     singletons = mapOf(
-                        "num" to FieldType.Number,
-                        "txt" to FieldType.Text,
-                        "lnk" to FieldType.Text,
-                        "flg" to FieldType.Boolean,
-                        "ref" to FieldType.EntityRef("485712110d89359a3e539dac987329cd2649d889"),
-                        "bt" to FieldType.Byte,
-                        "shrt" to FieldType.Short,
-                        "nt" to FieldType.Int,
-                        "lng" to FieldType.Long,
-                        "big" to FieldType.BigInt,
-                        "chr" to FieldType.Char,
-                        "flt" to FieldType.Float,
-                        "dbl" to FieldType.Double,
-                        "txtlst" to FieldType.ListOf(FieldType.Text),
-                        "lnglst" to FieldType.ListOf(FieldType.Long),
-                        "thinglst" to FieldType.ListOf(FieldType.EntityRef("25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516")),
-                        "detail" to FieldType.InlineEntity("efcc87f84735b2f83b285e0f2768ff577611a68c"),
-                        "products" to FieldType.ListOf(FieldType.InlineEntity("e84265ec7993502eb817dcff9f34dec4d164db05"))
+                        "num" to arcs.core.data.FieldType.Number,
+                        "txt" to arcs.core.data.FieldType.Text,
+                        "lnk" to arcs.core.data.FieldType.Text,
+                        "flg" to arcs.core.data.FieldType.Boolean,
+                        "ref" to arcs.core.data.FieldType.EntityRef("485712110d89359a3e539dac987329cd2649d889"),
+                        "bt" to arcs.core.data.FieldType.Byte,
+                        "shrt" to arcs.core.data.FieldType.Short,
+                        "nt" to arcs.core.data.FieldType.Int,
+                        "lng" to arcs.core.data.FieldType.Long,
+                        "big" to arcs.core.data.FieldType.BigInt,
+                        "chr" to arcs.core.data.FieldType.Char,
+                        "flt" to arcs.core.data.FieldType.Float,
+                        "dbl" to arcs.core.data.FieldType.Double,
+                        "txtlst" to arcs.core.data.FieldType.ListOf(arcs.core.data.FieldType.Text),
+                        "lnglst" to arcs.core.data.FieldType.ListOf(arcs.core.data.FieldType.Long),
+                        "thinglst" to arcs.core.data.FieldType.ListOf(arcs.core.data.FieldType.EntityRef("25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516")),
+                        "detail" to arcs.core.data.FieldType.InlineEntity("efcc87f84735b2f83b285e0f2768ff577611a68c"),
+                        "products" to arcs.core.data.FieldType.ListOf(arcs.core.data.FieldType.InlineEntity("e84265ec7993502eb817dcff9f34dec4d164db05"))
                     ),
                     collections = mapOf(
-                        "colors" to FieldType.InlineEntity("e9ba6d9fa458ec35a966e462bb30a082e3f0d2f8")
+                        "colors" to arcs.core.data.FieldType.InlineEntity("e9ba6d9fa458ec35a966e462bb30a082e3f0d2f8")
                     )
                 ),
                 "44b8dccc1ae0cf6fa00a7dfeef0b0e6b1d565e24",
@@ -688,7 +688,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
                 mapOf(
     "485712110d89359a3e539dac987329cd2649d889" to KotlinPrimitivesGolden_Data_Ref,
     "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516" to Thing,
@@ -698,19 +698,19 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
 )
 
             init {
-                SchemaRegistry.register(SCHEMA)
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = KotlinPrimitivesGolden_Data().apply {
+            override fun deserialize(data: arcs.core.data.RawEntity) = KotlinPrimitivesGolden_Data().apply {
                 deserialize(data, nestedEntitySpecs)
             }
         }
     }
 
-    class Handles : HandleHolderBase(
+    class Handles : arcs.sdk.HandleHolderBase(
         "KotlinPrimitivesGolden",
         mapOf("data" to setOf(KotlinPrimitivesGolden_Data))
     ) {
-        val data: ReadSingletonHandle<KotlinPrimitivesGolden_Data> by handles
+        val data: arcs.sdk.ReadSingletonHandle<KotlinPrimitivesGolden_Data> by handles
     }
 }

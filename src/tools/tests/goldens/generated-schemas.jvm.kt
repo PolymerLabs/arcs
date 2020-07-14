@@ -8,18 +8,8 @@ package arcs.golden
 //
 // Current implementation doesn't support optional field detection
 
-import arcs.core.data.*
-import arcs.core.data.SchemaRegistry
-import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.entity.Reference
-import arcs.core.entity.Tuple1
-import arcs.core.entity.Tuple2
-import arcs.core.entity.Tuple3
-import arcs.core.entity.Tuple4
-import arcs.core.entity.Tuple5
 import arcs.core.entity.toPrimitiveValue
-import arcs.sdk.*
 import java.math.BigInteger
 
 typealias Gold_Data_Ref = AbstractGold.GoldInternal1
@@ -29,7 +19,7 @@ typealias Gold_Collection = AbstractGold.Foo
 typealias Gold_Data = AbstractGold.Gold_Data
 typealias Gold_QCollection = AbstractGold.Gold_QCollection
 
-abstract class AbstractGold : BaseParticle() {
+abstract class AbstractGold : arcs.sdk.BaseParticle() {
     override val handles: Handles = Handles()
 
 
@@ -37,9 +27,16 @@ abstract class AbstractGold : BaseParticle() {
     class GoldInternal1(
         val_: String = "",
         entityId: String? = null,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("GoldInternal1", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase(
+        "GoldInternal1",
+        SCHEMA,
+        entityId,
+        creationTimestamp,
+        expirationTimestamp,
+        false
+    ) {
 
         var val_: String
             get() = super.getSingletonValue("val") as String? ?: ""
@@ -54,6 +51,7 @@ abstract class AbstractGold : BaseParticle() {
          * Storing the copy will result in a new copy of the data being stored.
          */
         fun copy(val_: String = this.val_) = GoldInternal1(val_ = val_)
+
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -65,12 +63,12 @@ abstract class AbstractGold : BaseParticle() {
             expirationTimestamp = expirationTimestamp
         )
 
-        companion object : EntitySpec<GoldInternal1> {
+        companion object : arcs.sdk.EntitySpec<GoldInternal1> {
 
-            override val SCHEMA = Schema(
+            override val SCHEMA = arcs.core.data.Schema(
                 setOf(),
-                SchemaFields(
-                    singletons = mapOf("val" to FieldType.Text),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf("val" to arcs.core.data.FieldType.Text),
                     collections = emptyMap()
                 ),
                 "485712110d89359a3e539dac987329cd2649d889",
@@ -78,14 +76,14 @@ abstract class AbstractGold : BaseParticle() {
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
                 emptyMap()
 
             init {
-                SchemaRegistry.register(SCHEMA)
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = GoldInternal1().apply {
+            override fun deserialize(data: arcs.core.data.RawEntity) = GoldInternal1().apply {
                 deserialize(data, nestedEntitySpecs)
             }
         }
@@ -101,9 +99,16 @@ abstract class AbstractGold : BaseParticle() {
         birthDayMonth: Double = 0.0,
         birthDayDOM: Double = 0.0,
         entityId: String? = null,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Gold_AllPeople", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase(
+        "Gold_AllPeople",
+        SCHEMA,
+        entityId,
+        creationTimestamp,
+        expirationTimestamp,
+        false
+    ) {
 
         var name: String
             get() = super.getSingletonValue("name") as String? ?: ""
@@ -158,6 +163,7 @@ abstract class AbstractGold : BaseParticle() {
             birthDayMonth = birthDayMonth,
             birthDayDOM = birthDayDOM
         )
+
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -183,19 +189,19 @@ abstract class AbstractGold : BaseParticle() {
             expirationTimestamp = expirationTimestamp
         )
 
-        companion object : EntitySpec<Gold_AllPeople> {
+        companion object : arcs.sdk.EntitySpec<Gold_AllPeople> {
 
-            override val SCHEMA = Schema(
-                setOf(SchemaName("People")),
-                SchemaFields(
+            override val SCHEMA = arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("People")),
+                arcs.core.data.SchemaFields(
                     singletons = mapOf(
-                        "name" to FieldType.Text,
-                        "age" to FieldType.Number,
-                        "lastCall" to FieldType.Number,
-                        "address" to FieldType.Text,
-                        "favoriteColor" to FieldType.Text,
-                        "birthDayMonth" to FieldType.Number,
-                        "birthDayDOM" to FieldType.Number
+                        "name" to arcs.core.data.FieldType.Text,
+                        "age" to arcs.core.data.FieldType.Number,
+                        "lastCall" to arcs.core.data.FieldType.Number,
+                        "address" to arcs.core.data.FieldType.Text,
+                        "favoriteColor" to arcs.core.data.FieldType.Text,
+                        "birthDayMonth" to arcs.core.data.FieldType.Number,
+                        "birthDayDOM" to arcs.core.data.FieldType.Number
                     ),
                     collections = emptyMap()
                 ),
@@ -204,14 +210,14 @@ abstract class AbstractGold : BaseParticle() {
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
                 emptyMap()
 
             init {
-                SchemaRegistry.register(SCHEMA)
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = Gold_AllPeople().apply {
+            override fun deserialize(data: arcs.core.data.RawEntity) = Gold_AllPeople().apply {
                 deserialize(data, nestedEntitySpecs)
             }
         }
@@ -221,9 +227,9 @@ abstract class AbstractGold : BaseParticle() {
     class Foo(
         num: Double = 0.0,
         entityId: String? = null,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Foo", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase("Foo", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
 
         var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
@@ -238,6 +244,7 @@ abstract class AbstractGold : BaseParticle() {
          * Storing the copy will result in a new copy of the data being stored.
          */
         fun copy(num: Double = this.num) = Foo(num = num)
+
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -249,12 +256,12 @@ abstract class AbstractGold : BaseParticle() {
             expirationTimestamp = expirationTimestamp
         )
 
-        companion object : EntitySpec<Foo> {
+        companion object : arcs.sdk.EntitySpec<Foo> {
 
-            override val SCHEMA = Schema(
-                setOf(SchemaName("Foo")),
-                SchemaFields(
-                    singletons = mapOf("num" to FieldType.Number),
+            override val SCHEMA = arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Foo")),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf("num" to arcs.core.data.FieldType.Number),
                     collections = emptyMap()
                 ),
                 "9d5720cea6e06f5c3b1abff0a9af95dfe476fd3f",
@@ -262,14 +269,14 @@ abstract class AbstractGold : BaseParticle() {
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
                 emptyMap()
 
             init {
-                SchemaRegistry.register(SCHEMA)
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = Foo().apply {
+            override fun deserialize(data: arcs.core.data.RawEntity) = Foo().apply {
                 deserialize(data, nestedEntitySpecs)
             }
         }
@@ -281,11 +288,11 @@ abstract class AbstractGold : BaseParticle() {
         txt: String = "",
         lnk: String = "",
         flg: Boolean = false,
-        ref: Reference<GoldInternal1>? = null,
+        ref: arcs.sdk.Reference<GoldInternal1>? = null,
         entityId: String? = null,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Gold_Data", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase("Gold_Data", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
 
         var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
@@ -299,8 +306,8 @@ abstract class AbstractGold : BaseParticle() {
         var flg: Boolean
             get() = super.getSingletonValue("flg") as Boolean? ?: false
             private set(_value) = super.setSingletonValue("flg", _value)
-        var ref: Reference<GoldInternal1>?
-            get() = super.getSingletonValue("ref") as Reference<GoldInternal1>?
+        var ref: arcs.sdk.Reference<GoldInternal1>?
+            get() = super.getSingletonValue("ref") as arcs.sdk.Reference<GoldInternal1>?
             private set(_value) = super.setSingletonValue("ref", _value)
 
         init {
@@ -320,8 +327,9 @@ abstract class AbstractGold : BaseParticle() {
             txt: String = this.txt,
             lnk: String = this.lnk,
             flg: Boolean = this.flg,
-            ref: Reference<GoldInternal1>? = this.ref
+            ref: arcs.sdk.Reference<GoldInternal1>? = this.ref
         ) = Gold_Data(num = num, txt = txt, lnk = lnk, flg = flg, ref = ref)
+
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -331,7 +339,7 @@ abstract class AbstractGold : BaseParticle() {
             txt: String = this.txt,
             lnk: String = this.lnk,
             flg: Boolean = this.flg,
-            ref: Reference<GoldInternal1>? = this.ref
+            ref: arcs.sdk.Reference<GoldInternal1>? = this.ref
         ) = Gold_Data(
             num = num,
             txt = txt,
@@ -343,17 +351,17 @@ abstract class AbstractGold : BaseParticle() {
             expirationTimestamp = expirationTimestamp
         )
 
-        companion object : EntitySpec<Gold_Data> {
+        companion object : arcs.sdk.EntitySpec<Gold_Data> {
 
-            override val SCHEMA = Schema(
+            override val SCHEMA = arcs.core.data.Schema(
                 setOf(),
-                SchemaFields(
+                arcs.core.data.SchemaFields(
                     singletons = mapOf(
-                        "num" to FieldType.Number,
-                        "txt" to FieldType.Text,
-                        "lnk" to FieldType.Text,
-                        "flg" to FieldType.Boolean,
-                        "ref" to FieldType.EntityRef("485712110d89359a3e539dac987329cd2649d889")
+                        "num" to arcs.core.data.FieldType.Number,
+                        "txt" to arcs.core.data.FieldType.Text,
+                        "lnk" to arcs.core.data.FieldType.Text,
+                        "flg" to arcs.core.data.FieldType.Boolean,
+                        "ref" to arcs.core.data.FieldType.EntityRef("485712110d89359a3e539dac987329cd2649d889")
                     ),
                     collections = emptyMap()
                 ),
@@ -362,14 +370,14 @@ abstract class AbstractGold : BaseParticle() {
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
                 mapOf("485712110d89359a3e539dac987329cd2649d889" to GoldInternal1)
 
             init {
-                SchemaRegistry.register(SCHEMA)
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = Gold_Data().apply {
+            override fun deserialize(data: arcs.core.data.RawEntity) = Gold_Data().apply {
                 deserialize(data, nestedEntitySpecs)
             }
         }
@@ -385,9 +393,16 @@ abstract class AbstractGold : BaseParticle() {
         birthDayMonth: Double = 0.0,
         birthDayDOM: Double = 0.0,
         entityId: String? = null,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Gold_QCollection", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase(
+        "Gold_QCollection",
+        SCHEMA,
+        entityId,
+        creationTimestamp,
+        expirationTimestamp,
+        false
+    ) {
 
         var name: String
             get() = super.getSingletonValue("name") as String? ?: ""
@@ -442,6 +457,7 @@ abstract class AbstractGold : BaseParticle() {
             birthDayMonth = birthDayMonth,
             birthDayDOM = birthDayDOM
         )
+
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -467,19 +483,19 @@ abstract class AbstractGold : BaseParticle() {
             expirationTimestamp = expirationTimestamp
         )
 
-        companion object : EntitySpec<Gold_QCollection> {
+        companion object : arcs.sdk.EntitySpec<Gold_QCollection> {
 
-            override val SCHEMA = Schema(
-                setOf(SchemaName("People")),
-                SchemaFields(
+            override val SCHEMA = arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("People")),
+                arcs.core.data.SchemaFields(
                     singletons = mapOf(
-                        "name" to FieldType.Text,
-                        "age" to FieldType.Number,
-                        "lastCall" to FieldType.Number,
-                        "address" to FieldType.Text,
-                        "favoriteColor" to FieldType.Text,
-                        "birthDayMonth" to FieldType.Number,
-                        "birthDayDOM" to FieldType.Number
+                        "name" to arcs.core.data.FieldType.Text,
+                        "age" to arcs.core.data.FieldType.Number,
+                        "lastCall" to arcs.core.data.FieldType.Number,
+                        "address" to arcs.core.data.FieldType.Text,
+                        "favoriteColor" to arcs.core.data.FieldType.Text,
+                        "birthDayMonth" to arcs.core.data.FieldType.Number,
+                        "birthDayDOM" to arcs.core.data.FieldType.Number
                     ),
                     collections = emptyMap()
                 ),
@@ -493,20 +509,20 @@ abstract class AbstractGold : BaseParticle() {
                 }
             )
 
-            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
                 emptyMap()
 
             init {
-                SchemaRegistry.register(SCHEMA)
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
             }
 
-            override fun deserialize(data: RawEntity) = Gold_QCollection().apply {
+            override fun deserialize(data: arcs.core.data.RawEntity) = Gold_QCollection().apply {
                 deserialize(data, nestedEntitySpecs)
             }
         }
     }
 
-    class Handles : HandleHolderBase(
+    class Handles : arcs.sdk.HandleHolderBase(
         "Gold",
         mapOf(
             "data" to setOf(Gold_Data),
@@ -516,10 +532,10 @@ abstract class AbstractGold : BaseParticle() {
             "collection" to setOf(Foo)
         )
     ) {
-        val data: ReadSingletonHandle<Gold_Data> by handles
-        val allPeople: ReadCollectionHandle<Gold_AllPeople> by handles
-        val qCollection: ReadQueryCollectionHandle<Gold_QCollection, String> by handles
-        val alias: WriteSingletonHandle<Gold_Alias> by handles
-        val collection: ReadCollectionHandle<Foo> by handles
+        val data: arcs.sdk.ReadSingletonHandle<Gold_Data> by handles
+        val allPeople: arcs.sdk.ReadCollectionHandle<Gold_AllPeople> by handles
+        val qCollection: arcs.sdk.ReadQueryCollectionHandle<Gold_QCollection, String> by handles
+        val alias: arcs.sdk.WriteSingletonHandle<Gold_Alias> by handles
+        val collection: arcs.sdk.ReadCollectionHandle<Foo> by handles
     }
 }

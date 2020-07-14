@@ -11,7 +11,7 @@ generates type for singleton entity
 particle Module
   data: reads Thing {name: Text}
 [results]
-SingletonType(EntityType(Module_Data.SCHEMA))
+arcs.core.data.SingletonType(arcs.core.data.EntityType(Module_Data.SCHEMA))
 [end]
 
 [name]
@@ -20,7 +20,9 @@ generates type for singleton reference
 particle Module
   data: reads &Thing {name: Text}
 [results]
-SingletonType(ReferenceType(EntityType(Module_Data.SCHEMA)))
+arcs.core.data.SingletonType(
+    arcs.core.data.ReferenceType(arcs.core.data.EntityType(Module_Data.SCHEMA))
+)
 [end]
 
 [name]
@@ -29,7 +31,7 @@ generates type for collection of entities
 particle Module
   data: reads [Thing {name: Text}]
 [results]
-CollectionType(EntityType(Module_Data.SCHEMA))
+arcs.core.data.CollectionType(arcs.core.data.EntityType(Module_Data.SCHEMA))
 [end]
 
 [name]
@@ -38,7 +40,9 @@ generates type for collection of references
 particle Module
   data: reads [&Thing {name: Text}]
 [results]
-CollectionType(ReferenceType(EntityType(Module_Data.SCHEMA)))
+arcs.core.data.CollectionType(
+    arcs.core.data.ReferenceType(arcs.core.data.EntityType(Module_Data.SCHEMA))
+)
 [end]
 
 [name]
@@ -47,10 +51,10 @@ generates type for collection of tuples
 particle Module
   data: reads [(&Thing {name: Text}, &Other {age: Number})]
 [results]
-CollectionType(
-    TupleType.of(
-        ReferenceType(EntityType(Module_Data_0.SCHEMA)),
-        ReferenceType(EntityType(Module_Data_1.SCHEMA))
+arcs.core.data.CollectionType(
+    arcs.core.data.TupleType.of(
+        arcs.core.data.ReferenceType(arcs.core.data.EntityType(Module_Data_0.SCHEMA)),
+        arcs.core.data.ReferenceType(arcs.core.data.EntityType(Module_Data_1.SCHEMA))
     )
 )
 [end]

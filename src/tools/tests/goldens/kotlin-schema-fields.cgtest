@@ -49,9 +49,9 @@ List<String>
 Other1
 Set<Other2>
 List<Other3>
-Reference<Ref1>?
-Set<Reference<Ref2>>
-List<Reference<Ref3>>
+arcs.sdk.Reference<Ref1>?
+Set<arcs.sdk.Reference<Ref2>>
+List<arcs.sdk.Reference<Ref3>>
 [end]
 
 [name]
@@ -62,5 +62,5 @@ schema Ref
 particle Foo
   num: reads Thing {ref: &Ref}
 [results]
-Reference<Ref>?
+arcs.sdk.Reference<Ref>?
 [end]

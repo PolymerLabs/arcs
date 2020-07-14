@@ -11,11 +11,11 @@ generates an entity type
 particle Module
   data: reads {count: Number}
 [results]
-EntityType(
-    Schema(
+arcs.core.data.EntityType(
+    arcs.core.data.Schema(
         setOf(),
-        SchemaFields(
-            singletons = mapOf("count" to FieldType.Number),
+        arcs.core.data.SchemaFields(
+            singletons = mapOf("count" to arcs.core.data.FieldType.Number),
             collections = emptyMap()
         ),
         "4c768720e83eca0f85355674ca87181718e8da9c",
@@ -31,12 +31,12 @@ generates a collection of entities
 particle Module
   data: reads [Thing {name: Text}]
 [results]
-CollectionType(
-    EntityType(
-        Schema(
-            setOf(SchemaName("Thing")),
-            SchemaFields(
-                singletons = mapOf("name" to FieldType.Text),
+arcs.core.data.CollectionType(
+    arcs.core.data.EntityType(
+        arcs.core.data.Schema(
+            setOf(arcs.core.data.SchemaName("Thing")),
+            arcs.core.data.SchemaFields(
+                singletons = mapOf("name" to arcs.core.data.FieldType.Text),
                 collections = emptyMap()
             ),
             "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
@@ -53,12 +53,12 @@ generates a reference type
 particle Module
   data: reads &Thing {name: Text}
 [results]
-ReferenceType(
-    EntityType(
-        Schema(
-            setOf(SchemaName("Thing")),
-            SchemaFields(
-                singletons = mapOf("name" to FieldType.Text),
+arcs.core.data.ReferenceType(
+    arcs.core.data.EntityType(
+        arcs.core.data.Schema(
+            setOf(arcs.core.data.SchemaName("Thing")),
+            arcs.core.data.SchemaFields(
+                singletons = mapOf("name" to arcs.core.data.FieldType.Text),
                 collections = emptyMap()
             ),
             "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",

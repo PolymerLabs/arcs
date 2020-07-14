@@ -48,8 +48,8 @@ particle T
   h1: reads Thing {other: &Other {name: Text}}
 [results]
 
-        var other: Reference<Other>?
-            get() = super.getSingletonValue("other") as Reference<Other>?
+        var other: arcs.sdk.Reference<Other>?
+            get() = super.getSingletonValue("other") as arcs.sdk.Reference<Other>?
             private set(_value) = super.setSingletonValue("other", _value)
         
         init {
@@ -67,8 +67,8 @@ particle T
   h1: reads Thing {other: List<&Other {name: Text}>}
 [results]
 
-        var other: List<Reference<Other>>
-            get() = super.getSingletonValue("other") as List<Reference<Other>>? ?: emptyList()
+        var other: List<arcs.sdk.Reference<Other>>
+            get() = super.getSingletonValue("other") as List<arcs.sdk.Reference<Other>>? ?: emptyList()
             private set(_value) = super.setSingletonValue("other", _value)
         
         init {
