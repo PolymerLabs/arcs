@@ -20,7 +20,7 @@ import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
-import {RamDiskStorageDriverProvider} from '../runtime/storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../runtime/storage/drivers/ramdisk.js';
 
 async function initSlotComposer(recipeStr) {
   const manifest = await Manifest.parse(recipeStr);

@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {manifestTestSetup} from '../testing/manifest-integration-test-setup.js';
-import {SingletonEntityStore, handleForStore} from '../storageNG/storage-ng.js';
+import {SingletonEntityStore, handleForStore} from '../storage/storage.js';
 
 describe('runtime manifest integration', () => {
   it('can produce a recipe that can be instantiated in an arc', async () => {

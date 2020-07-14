@@ -11,7 +11,7 @@
 import minimist from 'minimist';
 import {Manifest, ManifestWarning} from '../runtime/manifest.js';
 import {Loader} from '../platform/loader-node.js';
-import {SimpleVolatileMemoryProvider} from '../runtime/storageNG/drivers/volatile.js';
+import {SimpleVolatileMemoryProvider} from '../runtime/storage/drivers/volatile.js';
 
 // Script to check that a bundle of Arcs manifest files, particle
 // implementations and JSON data files is complete (i.e. no explicitly mentioned

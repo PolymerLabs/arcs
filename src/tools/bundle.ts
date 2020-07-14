@@ -14,7 +14,7 @@ import JSZip from 'jszip';
 
 import {Loader} from '../platform/loader.js';
 import {Manifest} from '../runtime/manifest.js';
-import {SimpleVolatileMemoryProvider} from '../runtime/storageNG/drivers/volatile.js';
+import {SimpleVolatileMemoryProvider} from '../runtime/storage/drivers/volatile.js';
 
 export type BundleEntry = {
   filePath: string,

@@ -14,7 +14,7 @@ import {DriverFactory} from '../drivers/driver-factory.js';
 import {Runtime} from '../../runtime.js';
 import {EntityType} from '../../type.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
-import {newHandle, handleForStore, newStore} from '../storage-ng.js';
+import {newHandle, handleForStore, newStore} from '../storage.js';
 import {Schema} from '../../schema.js';
 import {Particle} from '../../particle.js';
 import {Exists} from '../drivers/driver.js';

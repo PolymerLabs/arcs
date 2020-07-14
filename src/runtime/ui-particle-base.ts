@@ -9,7 +9,7 @@
  */
 
 import {Entity, EntityClass} from './entity.js';
-import {Handle, CollectionHandle, SingletonHandle} from './storageNG/handle.js';
+import {Handle, CollectionHandle, SingletonHandle} from './storage/handle.js';
 import {Particle} from './particle.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 

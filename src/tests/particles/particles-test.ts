@@ -12,7 +12,7 @@ import {Manifest} from '../../runtime/manifest.js';
 import glob from 'glob';
 import {Loader} from '../../platform/loader.js';
 import {assert} from '../../platform/chai-web.js';
-import {RamDiskStorageDriverProvider} from '../../runtime/storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../../runtime/storage/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 
 /** Tests that all .schema, .recipe(s) and .manifest files in the particles folder compile successfully. */

@@ -25,7 +25,7 @@ import {VolatileStorageKey} from '../drivers/volatile.js';
 import {Loader} from '../../../platform/loader.js';
 import {TestVolatileMemoryProvider} from '../../testing/test-volatile-memory-provider.js';
 import {Runtime} from '../../runtime.js';
-import {CRDTMuxEntity, handleForStore, storeType, CRDTReferenceSingleton, CRDTEntitySingleton} from '../storage-ng.js';
+import {CRDTMuxEntity, handleForStore, storeType, CRDTReferenceSingleton, CRDTEntitySingleton} from '../storage.js';
 import {Reference} from '../../reference.js';
 
 

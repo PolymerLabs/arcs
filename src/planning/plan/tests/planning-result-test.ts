@@ -15,7 +15,7 @@ import {Relevance} from '../../../runtime/relevance.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
-import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';
 import {Loader} from '../../../platform/loader.js';

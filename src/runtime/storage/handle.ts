@@ -23,7 +23,7 @@ import {ParticleSpec} from '../particle-spec.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {Producer} from '../hot.js';
 import {EntityOperation, RawEntity, Identified} from '../crdt/crdt-entity.js';
-import {CRDTMuxEntity} from './storage-ng.js';
+import {CRDTMuxEntity} from './storage.js';
 
 export interface HandleOptions {
   keepSynced: boolean;

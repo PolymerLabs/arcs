@@ -20,7 +20,7 @@ import {StorageKey} from '../storage-key.js';
 import {StorageProxy} from '../storage-proxy.js';
 import {ActiveStore, ProxyCallback, ProxyMessage, StorageMode, ProxyMessageType} from '../store.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
-import {CRDTMuxEntity} from '../storage-ng.js';
+import {CRDTMuxEntity} from '../storage.js';
 import {Identified} from '../../crdt/crdt-entity.js';
 
 

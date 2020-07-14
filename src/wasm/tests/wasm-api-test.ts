@@ -16,13 +16,13 @@ import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js';
 import {ReferenceType, SingletonType, EntityType, CollectionType} from '../../runtime/type.js';
 import {Entity} from '../../runtime/entity.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
-import {VolatileStorageKey} from '../../runtime/storageNG/drivers/volatile.js';
-import {Exists} from '../../runtime/storageNG/drivers/driver.js';
+import {VolatileStorageKey} from '../../runtime/storage/drivers/volatile.js';
+import {Exists} from '../../runtime/storage/drivers/driver.js';
 import {Reference} from '../../runtime/reference.js';
 import {Arc} from '../../runtime/arc.js';
-import {SingletonEntityStore, CollectionEntityStore, SingletonReferenceStore, CollectionReferenceStore, newStore, handleForStore} from '../../runtime/storageNG/storage-ng.js';
-import {isSingletonEntityStore} from '../../runtime/storageNG/abstract-store.js';
-import {ReferenceModeStorageKey} from '../../runtime/storageNG/reference-mode-storage-key.js';
+import {SingletonEntityStore, CollectionEntityStore, SingletonReferenceStore, CollectionReferenceStore, newStore, handleForStore} from '../../runtime/storage/storage.js';
+import {isSingletonEntityStore} from '../../runtime/storage/abstract-store.js';
+import {ReferenceModeStorageKey} from '../../runtime/storage/reference-mode-storage-key.js';
 
 // Import some service definition files for their side-effects (the services get
 // registered automatically).
@@ -373,7 +373,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     // TODO: writing to reference-typed handles
-    it('reference-typed handles - storageNG', async function() {
+    it('reference-typed handles - storage', async function() {
       if (isKotlin) {
         // TODO(alxr, #4763): Enable this test.
         this.skip();
@@ -427,7 +427,7 @@ Object.entries(testMap).forEach(([testLabel, testDir]) => {
     });
 
     // TODO: nested references
-    it('reference-typed schema fields - storageNG', async function() {
+    it('reference-typed schema fields - storage', async function() {
       if (isKotlin) {
         // TODO(alxr, #4763): Enable this test.
         this.skip();

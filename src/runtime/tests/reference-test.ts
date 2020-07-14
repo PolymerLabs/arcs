@@ -14,12 +14,12 @@ import {Loader} from '../../platform/loader.js';
 import {EntityType, ReferenceType, CollectionType, SingletonType} from '../type.js';
 import {Id, ArcId} from '../id.js';
 import {Entity} from '../entity.js';
-import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
-import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.js';
+import {VolatileStorageKey} from '../storage/drivers/volatile.js';
+import {ReferenceModeStorageKey} from '../storage/reference-mode-storage-key.js';
 import {Reference} from '../reference.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {Runtime} from '../runtime.js';
-import {storeType, handleForStore} from '../storageNG/storage-ng.js';
+import {storeType, handleForStore} from '../storage/storage.js';
 
 describe('reference', () => {
   it('can parse & validate a recipe containing references', async () => {

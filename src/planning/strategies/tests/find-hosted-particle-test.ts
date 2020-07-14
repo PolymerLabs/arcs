@@ -17,8 +17,8 @@ import {InterfaceType} from '../../../runtime/type.js';
 import {FindHostedParticle} from '../../strategies/find-hosted-particle.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {ArcId} from '../../../runtime/id.js';
-import {SingletonInterfaceHandle, handleForStore} from '../../../runtime/storageNG/storage-ng.js';
-import {isSingletonInterfaceStore} from '../../../runtime/storageNG/abstract-store.js';
+import {SingletonInterfaceHandle, handleForStore} from '../../../runtime/storage/storage.js';
+import {isSingletonInterfaceStore} from '../../../runtime/storage/abstract-store.js';
 
 async function runStrategy(manifestStr) {
   const manifest = await Manifest.parse(manifestStr);

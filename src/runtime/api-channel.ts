@@ -10,26 +10,26 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Arc} from './arc.js';
-import {AbstractStore} from './storageNG/abstract-store.js';
+import {AbstractStore} from './storage/abstract-store.js';
 import {ArcInspector} from './arc-inspector.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle} from './particle.js';
 import * as recipeHandle from './recipe/handle.js';
 import * as recipeParticle from './recipe/particle.js';
-import {StorageProxy as StorageProxyNG} from './storageNG/storage-proxy.js';
+import {StorageProxy as StorageProxyNG} from './storage/storage-proxy.js';
 import {Type} from './type.js';
 import {PropagatedException, reportGlobalException} from './arc-exceptions.js';
 import {Consumer, Literal, Literalizable} from './hot.js';
 import {floatingPromiseToAudit} from './util.js';
 import {MessagePort} from './message-channel.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
-import {ProxyCallback, ProxyMessage, Store, StoreMuxer} from './storageNG/store.js';
+import {ProxyCallback, ProxyMessage, Store, StoreMuxer} from './storage/store.js';
 import {NoTraceWithReason, SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
 import {Ttl} from './capabilities.js';
-import {Handle} from './storageNG/handle.js';
-import {StorageProxyMuxer} from './storageNG/storage-proxy-muxer.js';
-import {CRDTMuxEntity} from './storageNG/storage-ng.js';
+import {Handle} from './storage/handle.js';
+import {StorageProxyMuxer} from './storage/storage-proxy-muxer.js';
+import {CRDTMuxEntity} from './storage/storage.js';
 
 type StorageProxy = StorageProxyNG<CRDTTypeRecord>;
 

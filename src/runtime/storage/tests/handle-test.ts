@@ -23,7 +23,7 @@ import {MockParticle, MockStore} from '../testing/test-storage.js';
 import {Manifest} from '../../manifest.js';
 import {EntityClass, Entity, SerializedEntity} from '../../entity.js';
 import {SYMBOL_INTERNALS} from '../../symbols.js';
-import {CRDTEntityCollection, CollectionEntityStore} from '../storage-ng.js';
+import {CRDTEntityCollection, CollectionEntityStore} from '../storage.js';
 import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes} from '../../crdt/crdt-entity.js';
 import {Schema} from '../../schema.js';
 import {Reference} from '../../reference.js';

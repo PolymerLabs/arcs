@@ -20,9 +20,9 @@ import {EntityType, CollectionType, SingletonType} from '../type.js';
 import {Entity} from '../entity.js';
 import {Runtime} from '../runtime.js';
 import {Speculator} from '../../planning/speculator.js';
-import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../storage/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
-import {CollectionEntityStore, handleForStore} from '../storageNG/storage-ng.js';
+import {CollectionEntityStore, handleForStore} from '../storage/storage.js';
 
 class ResultInspector {
   private readonly _arc: Arc;

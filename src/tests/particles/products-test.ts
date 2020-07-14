@@ -16,11 +16,11 @@ import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {SlotComposer} from '../../runtime/slot-composer.js';
 import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js';
-import {DriverFactory} from '../../runtime/storageNG/drivers/driver-factory.js';
-import {RamDiskStorageDriverProvider} from '../../runtime/storageNG/drivers/ramdisk.js';
+import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
+import {RamDiskStorageDriverProvider} from '../../runtime/storage/drivers/ramdisk.js';
 import {storageKeyForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
-import {CollectionEntityStore, CollectionEntityHandle, handleForStore} from '../../runtime/storageNG/storage-ng.js';
+import {CollectionEntityStore, CollectionEntityHandle, handleForStore} from '../../runtime/storage/storage.js';
 
 describe('products test', () => {
 

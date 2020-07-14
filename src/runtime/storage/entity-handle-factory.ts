@@ -11,7 +11,7 @@
 import {EntityHandle} from './handle.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 import {Entity} from '../entity.js';
-import {CRDTMuxEntity} from './storage-ng.js';
+import {CRDTMuxEntity} from './storage.js';
 
 export class EntityHandleFactory<T extends CRDTMuxEntity> {
 

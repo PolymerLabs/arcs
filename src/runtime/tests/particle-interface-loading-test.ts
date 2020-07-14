@@ -16,10 +16,10 @@ import {Recipe} from '../recipe/recipe.js';
 import {EntityType, InterfaceType, SingletonType} from '../type.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {ArcId} from '../id.js';
-import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
+import {VolatileStorageKey} from '../storage/drivers/volatile.js';
 import {Entity} from '../entity.js';
-import {handleForStore} from '../storageNG/storage-ng.js';
-import {isSingletonEntityStore} from '../storageNG/abstract-store.js';
+import {handleForStore} from '../storage/storage.js';
+import {isSingletonEntityStore} from '../storage/abstract-store.js';
 
 async function mapHandleToStore(arc: Arc, recipe, classType: {type: EntityType}, id) {
   const store = await arc.createStore(new SingletonType(classType.type), undefined, `test:${id}`);
