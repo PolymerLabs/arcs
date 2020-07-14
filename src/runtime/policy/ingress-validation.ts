@@ -15,15 +15,19 @@ import {Type, EntityType} from '../type.js';
 import {Refinement} from '../refiner.js';
 import {Schema} from '../schema.js';
 
+// Helper class for validating ingress fields and capabilities.
 export class IngressValidation {
+  // Returns a type by the given name, combined from all corresponding type
+  // restrictions provided by the given list of policies.
   static getRestrictedType(typeName: string, policies: Policy[]): Type|null {
     const fields = {};
-    let type = null;
+    let type: Type|null = null;
     for (const policy of policies) {
       for (const target of policy.targets) {
         if (typeName === target.schemaName) {
           type = target.type;
           IngressValidation.mergeFields(fields, target.getRestrictedFields());
+          break;
         }
       }
     }

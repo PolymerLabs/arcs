@@ -233,11 +233,15 @@ export class PolicyTarget {
     });
   }
 
+  // Returns a map of schema fields by name limited only to fields covered by
+  // the policy target.
   getRestrictedFields() {
     return this.fields.map(f => f.getRestrictedFields(this.type))
-          .reduce((fields, field) => ({...fields, [field[0]]: field[1]}), {});
+          .reduce((fields, {name, restrictedField}) => ({...fields, [name]: restrictedField}), {});
   }
 
+  // Returns an EntityType with a schema restricted to the fields covered by
+  // the policy target.
   getRestrictedType() {
     return EntityType.make(this.type.getEntitySchema().names,
         this.getRestrictedFields(), this.type.getEntitySchema());
@@ -339,9 +343,10 @@ export class PolicyField {
     };
   }
 
+  // Returns a name and field restricted to the policy field.
   getRestrictedFields(parentType: Type) {
     const field = parentType.getEntitySchema().fields[this.name];
-    return [this.name, this.restrictField(field)];
+    return {name: this.name, restrictedField: this.restrictField(field)};
   }
 
   private restrictField(field) {
