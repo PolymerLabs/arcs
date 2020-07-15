@@ -228,6 +228,10 @@ class Allocator(
             ?: throw ParticleNotFoundException(particle)
 
     companion object {
+        /**
+         * Creates an [Allocator] which serializes Arc/Particle state to the storage system backing
+         * the provided [handleManager].
+         */
         @ExperimentalCoroutinesApi
         fun create(
             hostRegistry: HostRegistry,
@@ -241,6 +245,12 @@ class Allocator(
             )
         }
 
+        /**
+         * Creates an [Allocator] which does not attempt to serialize Arc/Particle state to storage.
+         *
+         * This is primarily useful for tests, but also may be of limited use in production if Arc
+         * serialization and resurrection is not a requirement for your environment.
+         */
         @ExperimentalCoroutinesApi
         fun createNonSerializing(
             hostRegistry: HostRegistry,

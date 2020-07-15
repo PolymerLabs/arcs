@@ -13,9 +13,7 @@ class ArcsStorage(private val env: ShowcaseEnvironment) {
     // wait for the result, and to wrap the suspend methods in a timeout, converting a potential
     // test timeout into a more specific test failure.
     private inline fun <T> run(crossinline block: suspend () -> T) = runBlocking {
-        withTimeout(15000) {
-            block()
-        }
+        withTimeout(30000) { block() }
     }
 
     fun all0(): List<MyLevel0> = run {
