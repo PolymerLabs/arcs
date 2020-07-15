@@ -12,9 +12,7 @@
 package arcs.android.systemhealth.testapp
 
 import java.util.concurrent.ExecutorService
-import java.util.concurrent.SynchronousQueue
-import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.Executors
 
 /** Collection of Arcs JVM executors. */
 object Executors {
@@ -31,10 +29,11 @@ object Executors {
      * On Arcs there are two sorts of databases: data and metadata.
      * On sqlite WAL there are three databases: main journal, wal and wal-index.
      *
-     * Taking size two as default as one feature is updating metadata and another
-     * is updating data.
+     * Recommending taking max size two as default as
+     * one can be updating metadata and another one is writing data, i.e.
+     * ThreadPoolExecutor(0, 2, 10L, TimeUnit.SECONDS, ...)
      */
-    var io: ExecutorService = ThreadPoolExecutor(
-        0, 2, 10L, TimeUnit.SECONDS, SynchronousQueue()
-    ) { runnable -> Thread(runnable).apply { name = "arcs-io" } }
+    var io: ExecutorService = Executors.newCachedThreadPool {
+        Thread(it).apply { name = "arcs-io" }
+    }
 }

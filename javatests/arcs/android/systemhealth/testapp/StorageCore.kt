@@ -64,6 +64,7 @@ import kotlin.apply
 import kotlin.arrayOfNulls
 import kotlin.concurrent.withLock
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 import kotlin.emptyArray
 import kotlin.let
 import kotlin.math.ceil
@@ -544,7 +545,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             }
 
             SystemHealthTestEntity.entityReference?.let {
-                val elapsedTime = measureTimeMillis { it.dereference() }
+                val elapsedTime = measureTimeMillis { it.dereference(coroutineContext) }
                 tasksEvents[taskController.taskId]?.writer?.withLock {
                     tasksEvents[taskController.taskId]?.queue?.add(
                         TaskEvent(TaskEventId.DEREFERENCE_LATENCY, elapsedTime)
