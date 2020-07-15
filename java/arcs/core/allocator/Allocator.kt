@@ -240,5 +240,40 @@ class Allocator(
                 coroutineContext
             )
         }
+
+        @ExperimentalCoroutinesApi
+        fun createNonSerializing(
+            hostRegistry: HostRegistry,
+            coroutineContext: CoroutineContext = Dispatchers.Default
+        ): Allocator {
+            return Allocator(
+                hostRegistry,
+                object : PartitionSerialization {
+                    private val mutex = Mutex()
+                    private val partitions = mutableMapOf<ArcId, List<Plan.Partition>>()
+
+                    override suspend fun set(arcId: ArcId, partitions: List<Plan.Partition>) {
+                        mutex.withLock {
+                            this.partitions[arcId] = partitions
+                        }
+                    }
+
+                    override suspend fun readPartitions(arcId: ArcId): List<Plan.Partition> {
+                        return mutex.withLock {
+                            this.partitions[arcId] ?: emptyList()
+                        }
+                    }
+
+                    override suspend fun readAndClearPartitions(arcId: ArcId): List<Plan.Partition> {
+                        return mutex.withLock {
+                            val oldPartitions = this.partitions[arcId] ?: emptyList()
+                            this.partitions[arcId] = emptyList()
+                            oldPartitions
+                        }
+                    }
+                },
+                coroutineContext
+            )
+        }
     }
 }

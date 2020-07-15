@@ -149,22 +149,12 @@ class ShowcaseEnvironment(
                     *particleRegistrations
                 )
 
-                // Create our allocator, capturing its StoreManager for the same reason we captured
-                // the ArcHost's - so we can wait for it to become idle before we do our
-                // database/ramdisk cleanup after the test.
-                val allocatorStoreManager = StoreManager(activationFactory)
-                val allocatorHandleManager = EntityHandleManager(
-                    arcId = "allocator",
-                    hostId = "allocator",
-                    time = JvmTime,
-                    scheduler = schedulerProvider.invoke("allocator"),
-                    stores = allocatorStoreManager
-                )
-                allocator = Allocator.create(
+                // Create our allocator, and no need to have it support arc serialization for the
+                // showcase.
+                allocator = Allocator.createNonSerializing(
                     ExplicitHostRegistry().apply {
                         runBlocking { registerHost(arcHost) }
-                    },
-                    allocatorHandleManager
+                    }
                 )
 
                 try {
@@ -180,10 +170,6 @@ class ShowcaseEnvironment(
 
                         // Wait for our stores to become idle.
                         arcHostStoreManager.waitForIdle()
-                        allocatorStoreManager.waitForIdle()
-
-                        // Clean up after our allocator.
-                        allocatorHandleManager.close()
 
                         // Tell the ServiceStores that they should unbind.
                         lifecycleOwner.lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
