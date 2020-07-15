@@ -286,7 +286,11 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                             taskCoroutineContext,
                             DefaultConnectionFactory(
                                 context,
-                                TestStorageServiceBindingDelegate(context),
+                                if (settings.function == Function.STABILITY_TEST) {
+                                    StabilityStorageServiceBindingDelegate(context)
+                                } else {
+                                    PerformanceStorageServiceBindingDelegate(context)
+                                },
                                 taskCoroutineContext
                             )
                         )
@@ -722,7 +726,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
 
     private fun maybeCrashStorageService(rate: Int) {
         if (Random.nextInt(0, 100) < rate) {
-            context.startService(TestStorageService.createCrashIntent(context))
+            context.startService(StabilityStorageService.createCrashIntent(context))
         }
     }
 
