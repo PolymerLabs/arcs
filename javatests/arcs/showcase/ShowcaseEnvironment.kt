@@ -127,9 +127,9 @@ class ShowcaseEnvironment(
                     override fun getLifecycle() = lifecycle
                 }
                 // Initialize it to started.
-                lifecycleOwner.lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
-                lifecycleOwner.lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START)
-                lifecycleOwner.lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+                lifecycleOwner.lifecycle.currentState = Lifecycle.State.INITIALIZED
+                lifecycleOwner.lifecycle.currentState = Lifecycle.State.CREATED
+                lifecycleOwner.lifecycle.currentState = Lifecycle.State.STARTED
 
                 // Create a single scheduler provider for both the ArcHost as well as the Allocator.
                 val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
@@ -176,12 +176,8 @@ class ShowcaseEnvironment(
 
                         // Tell the ServiceStores that they should unbind.
                         withContext(Dispatchers.Main.immediate) {
-                            lifecycleOwner.lifecycle
-                                .handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-                            lifecycleOwner.lifecycle
-                                .handleLifecycleEvent(Lifecycle.Event.ON_STOP)
-                            lifecycleOwner.lifecycle
-                                .handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+                            lifecycleOwner.lifecycle.currentState = Lifecycle.State.CREATED
+                            lifecycleOwner.lifecycle.currentState = Lifecycle.State.DESTROYED
                         }
 
                         // Reset the Databases and close them.
