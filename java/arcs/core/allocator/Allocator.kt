@@ -262,24 +262,25 @@ class Allocator(
                     private val mutex = Mutex()
                     private val partitions = mutableMapOf<ArcId, List<Plan.Partition>>()
 
-                    override suspend fun set(arcId: ArcId, partitions: List<Plan.Partition>) {
-                        mutex.withLock {
-                            this.partitions[arcId] = partitions
-                        }
+                    override suspend fun set(
+                        arcId: ArcId,
+                        partitions: List<Plan.Partition>
+                    ) = mutex.withLock {
+                        this.partitions[arcId] = partitions
                     }
 
-                    override suspend fun readPartitions(arcId: ArcId): List<Plan.Partition> {
-                        return mutex.withLock {
-                            this.partitions[arcId] ?: emptyList()
-                        }
+                    override suspend fun readPartitions(
+                        arcId: ArcId
+                    ): List<Plan.Partition> = mutex.withLock {
+                        this.partitions[arcId] ?: emptyList()
                     }
 
-                    override suspend fun readAndClearPartitions(arcId: ArcId): List<Plan.Partition> {
-                        return mutex.withLock {
-                            val oldPartitions = this.partitions[arcId] ?: emptyList()
-                            this.partitions[arcId] = emptyList()
-                            oldPartitions
-                        }
+                    override suspend fun readAndClearPartitions(
+                        arcId: ArcId
+                    ): List<Plan.Partition> = mutex.withLock {
+                        val oldPartitions = this.partitions[arcId] ?: emptyList()
+                        this.partitions[arcId] = emptyList()
+                        oldPartitions
                     }
                 },
                 coroutineContext

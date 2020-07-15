@@ -4,10 +4,8 @@ package arcs.showcase
 
 import android.app.Application
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
-import androidx.lifecycle.OnLifecycleEvent
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
@@ -16,14 +14,12 @@ import arcs.core.allocator.Arc
 import arcs.core.data.Plan
 import arcs.core.host.AbstractArcHost
 import arcs.core.host.ArcHost
-import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ParticleState
 import arcs.core.host.SchedulerProvider
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
-import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.driver.RamDisk
 import arcs.core.util.TaggedLog
 import arcs.jvm.host.ExplicitHostRegistry
