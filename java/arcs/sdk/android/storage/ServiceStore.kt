@@ -158,7 +158,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     }
 
     override fun off(callbackToken: Int) {
-        val service = checkNotNull(storageService)
+        val service = storageService ?: return
         runBlocking {
             send {
                 service.unregisterCallback(callbackToken)
