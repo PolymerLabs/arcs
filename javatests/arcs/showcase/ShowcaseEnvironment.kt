@@ -216,9 +216,7 @@ class ShowcaseEnvironment(
         startedArcs.forEach { it.stop() }
         components.arcHost.shutdown()
 
-        // Wait for our stores to become idle.
-        components.arcHostStoreManager.waitForIdle()
-
+        /*
         // Tell the ServiceStores that they should unbind.
         withContext(Dispatchers.Main.immediate) {
             try {
@@ -228,6 +226,7 @@ class ShowcaseEnvironment(
                 // the lifecycles messed up, let's just ignore.
             }
         }
+         */
 
         // Reset the Databases and close them.
         components.dbManager.resetAll()
