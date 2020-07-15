@@ -21,7 +21,7 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 
 /** Application class for Arcs System Health measures. */
-class TestApplication : Application(), Configuration.Provider {
+open class TestApplication : Application(), Configuration.Provider {
 
     override fun getWorkManagerConfiguration() =
         Configuration.Builder()

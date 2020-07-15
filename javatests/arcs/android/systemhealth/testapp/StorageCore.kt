@@ -16,6 +16,7 @@ import android.content.Intent
 import android.os.Debug
 import android.os.Trace
 import androidx.lifecycle.Lifecycle
+import arcs.android.systemhealth.testapp.Dispatchers as ArcsDispatchers
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
@@ -30,14 +31,12 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.TaggedLog
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
 import arcs.sdk.WriteCollectionHandle
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
-import arcs.sdk.android.storage.service.DefaultStorageServiceBindingDelegate
 import com.google.common.math.StatsAccumulator
 import java.text.DateFormat
 import java.text.DecimalFormat
@@ -65,6 +64,7 @@ import kotlin.apply
 import kotlin.arrayOfNulls
 import kotlin.concurrent.withLock
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 import kotlin.emptyArray
 import kotlin.let
 import kotlin.math.ceil
@@ -270,7 +270,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         handles = tasks.mapIndexed { id, task ->
             // Per-task single-threaded execution context with Watchdog monitoring instabilities
             val taskCoroutineContext =
-                task.asCoroutineDispatcher() +
+                (ArcsDispatchers.clients ?: task.asCoroutineDispatcher()) +
                     if (settings.function == Function.STABILITY_TEST) {
                         stabilityExceptionHandler(id)
                     } else {
@@ -288,16 +288,16 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                             DefaultConnectionFactory(
                                 context,
                                 if (settings.function == Function.STABILITY_TEST) {
-                                    TestStorageServiceBindingDelegate(context)
+                                    StabilityStorageServiceBindingDelegate(context)
                                 } else {
-                                    DefaultStorageServiceBindingDelegate(context)
+                                    PerformanceStorageServiceBindingDelegate(context)
                                 },
                                 taskCoroutineContext
                             )
                         )
                     ),
                     // Per-task single-threaded Scheduler being cascaded with Watchdog capabilities
-                    scheduler = JvmSchedulerProvider(taskCoroutineContext)("sysHealthStorageCore")
+                    scheduler = TestSchedulerProvider(taskCoroutineContext)("sysHealthStorageCore")
                 ),
                 taskCoroutineContext
             ).apply {
@@ -545,7 +545,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             }
 
             SystemHealthTestEntity.entityReference?.let {
-                val elapsedTime = measureTimeMillis { it.dereference() }
+                val elapsedTime = measureTimeMillis { it.dereference(coroutineContext) }
                 tasksEvents[taskController.taskId]?.writer?.withLock {
                     tasksEvents[taskController.taskId]?.queue?.add(
                         TaskEvent(TaskEventId.DEREFERENCE_LATENCY, elapsedTime)
@@ -727,7 +727,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
 
     private fun maybeCrashStorageService(rate: Int) {
         if (Random.nextInt(0, 100) < rate) {
-            context.startService(TestStorageService.createCrashIntent(context))
+            context.startService(StabilityStorageService.createCrashIntent(context))
         }
     }
 
