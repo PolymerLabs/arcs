@@ -49,9 +49,13 @@ recipes {
                             schema {
                               names: "Review"
                               fields {
-                                key: "author"
+                                key: "authors"
                                 value {
-                                  primitive: TEXT
+                                  list: {
+                                    element_type: {
+                                      primitive: TEXT
+                                    }
+                                  }
                                 }
                               }
                               fields {
@@ -66,7 +70,7 @@ recipes {
                                   primitive: NUMBER
                                 }
                               }
-                              hash: "929dde429125aa5082b067886b09aa078d901f7a"
+                              hash: "305545964954fba46cfa591c6aa49c14651326b0"
                             }
                           }
                         }
@@ -81,7 +85,7 @@ recipes {
                   primitive: BOOLEAN
                 }
               }
-              hash: "22d9f8af11889c2a062d6cd7ffb58eab1de3a4c7"
+              hash: "cb527bdcc47fb828d9d75bdffa67a0951fb559ee"
             }
           }
         }
@@ -127,9 +131,13 @@ recipes {
                               schema {
                                 names: "Review"
                                 fields {
-                                  key: "author"
+                                  key: "authors"
                                   value {
-                                    primitive: TEXT
+                                    list: {
+                                      element_type: {
+                                        primitive: TEXT
+                                      }
+                                    }
                                   }
                                 }
                                 fields {
@@ -144,7 +152,7 @@ recipes {
                                     primitive: NUMBER
                                   }
                                 }
-                                hash: "929dde429125aa5082b067886b09aa078d901f7a"
+                                hash: "305545964954fba46cfa591c6aa49c14651326b0"
                               }
                             }
                           }
@@ -159,7 +167,7 @@ recipes {
                     primitive: BOOLEAN
                   }
                 }
-                hash: "22d9f8af11889c2a062d6cd7ffb58eab1de3a4c7"
+                hash: "cb527bdcc47fb828d9d75bdffa67a0951fb559ee"
               }
             }
           }
@@ -301,9 +309,13 @@ particle_specs {
                             schema {
                               names: "Review"
                               fields {
-                                key: "author"
+                                key: "authors"
                                 value {
-                                  primitive: TEXT
+                                  list: {
+                                    element_type: {
+                                      primitive: TEXT
+                                    }
+                                  }
                                 }
                               }
                               fields {
@@ -318,7 +330,7 @@ particle_specs {
                                   primitive: NUMBER
                                 }
                               }
-                              hash: "929dde429125aa5082b067886b09aa078d901f7a"
+                              hash: "305545964954fba46cfa591c6aa49c14651326b0"
                             }
                           }
                         }
@@ -333,7 +345,7 @@ particle_specs {
                   primitive: BOOLEAN
                 }
               }
-              hash: "22d9f8af11889c2a062d6cd7ffb58eab1de3a4c7"
+              hash: "cb527bdcc47fb828d9d75bdffa67a0951fb559ee"
             }
           }
         }
