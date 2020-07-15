@@ -133,10 +133,10 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         }
     }
 
-    override suspend fun idle() = coroutineScope<Unit> {
+    override suspend fun idle() = coroutineScope {
         log.debug { "Waiting for service store to be idle" }
         while (outgoingMessages.value > 0) delay(10)
-        val service = checkNotNull(storageService)
+        val service = storageService ?: return@coroutineScope
         val callback = DeferredResult(this@coroutineScope.coroutineContext)
         service.idle(TIMEOUT_IDLE_WAIT_MILLIS, callback)
         withTimeout(TIMEOUT_IDLE_WAIT_MILLIS) { callback.await() }
