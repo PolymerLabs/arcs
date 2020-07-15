@@ -112,7 +112,10 @@ class ShowcaseEnvironment(
 
     override fun apply(statement: Statement, description: Description): Statement {
         return object : Statement() {
-            override fun evaluate() {
+            override fun evaluate() = runBlocking {
+                // Reset the RamDisk.
+                RamDisk.clear()
+
                 // Initializing the environment...
                 val context = ApplicationProvider.getApplicationContext<Application>()
 
@@ -127,9 +130,9 @@ class ShowcaseEnvironment(
                     override fun getLifecycle() = lifecycle
                 }
                 // Initialize it to started.
-                lifecycleOwner.lifecycle.currentState = Lifecycle.State.INITIALIZED
-                lifecycleOwner.lifecycle.currentState = Lifecycle.State.CREATED
-                lifecycleOwner.lifecycle.currentState = Lifecycle.State.STARTED
+                withContext(Dispatchers.Main.immediate) {
+                    lifecycleOwner.lifecycle.currentState = Lifecycle.State.RESUMED
+                }
 
                 // Create a single scheduler provider for both the ArcHost as well as the Allocator.
                 val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
@@ -156,7 +159,7 @@ class ShowcaseEnvironment(
                 // showcase.
                 allocator = Allocator.createNonSerializing(
                     ExplicitHostRegistry().apply {
-                        runBlocking { registerHost(arcHost) }
+                        registerHost(arcHost)
                     }
                 )
 
@@ -166,27 +169,22 @@ class ShowcaseEnvironment(
                     statement.evaluate()
                 } finally {
                     // Shutting down/cleaning-up...
-                    runBlocking {
-                        // Stop all the arcs and shut down the arcHost.
-                        startedArcs.forEach { it.stop() }
-                        arcHost.shutdown()
 
-                        // Wait for our stores to become idle.
-                        arcHostStoreManager.waitForIdle()
+                    // Stop all the arcs and shut down the arcHost.
+                    startedArcs.forEach { it.stop() }
+                    arcHost.shutdown()
 
-                        // Tell the ServiceStores that they should unbind.
-                        withContext(Dispatchers.Main.immediate) {
-                            lifecycleOwner.lifecycle.currentState = Lifecycle.State.CREATED
-                            lifecycleOwner.lifecycle.currentState = Lifecycle.State.DESTROYED
-                        }
+                    // Wait for our stores to become idle.
+                    arcHostStoreManager.waitForIdle()
 
-                        // Reset the Databases and close them.
-                        dbManager.resetAll()
-                        dbManager.close()
-
-                        // Reset the RamDisk.
-                        RamDisk.clear()
+                    // Tell the ServiceStores that they should unbind.
+                    withContext(Dispatchers.Main.immediate) {
+                        lifecycleOwner.lifecycle.currentState = Lifecycle.State.DESTROYED
                     }
+
+                    // Reset the Databases and close them.
+                    dbManager.resetAll()
+                    dbManager.close()
                 }
             }
         }
