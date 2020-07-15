@@ -48,6 +48,20 @@ fun TupleTypeProto.decodeAsFieldType(): FieldType.Tuple = FieldType.Tuple(
     elementsList.map { it.decodeAsFieldType() }
 )
 
+/** Converts a [ListTypeProto] to a [FieldType.ListOf] instance. */
+fun ListTypeProto.decodeAsFieldType(): FieldType.ListOf {
+    return FieldType.ListOf(elementType.decodeAsFieldType())
+}
+
+/**
+ * Converts a [ListTypeProto] to a [FieldType.InlineEntity] instance. Only works for inline
+ * entities.
+ */
+fun EntityTypeProto.decodeAsFieldType(): FieldType.InlineEntity {
+    require(inline) { "Cannot decode non-inline entities to FieldType.InlineEntity" }
+    return FieldType.InlineEntity(schema.hash)
+}
+
 /**
  * Converts a [TypeProto] protobuf instance into a Kotlin [FieldType] instance.
  *
@@ -57,6 +71,8 @@ fun TypeProto.decodeAsFieldType() = when (dataCase) {
     TypeProto.DataCase.PRIMITIVE -> primitive.decodeAsFieldType()
     TypeProto.DataCase.REFERENCE -> reference.decodeAsFieldType()
     TypeProto.DataCase.TUPLE -> tuple.decodeAsFieldType()
+    TypeProto.DataCase.LIST -> list.decodeAsFieldType()
+    TypeProto.DataCase.ENTITY -> entity.decodeAsFieldType()
     TypeProto.DataCase.COLLECTION ->
         throw IllegalArgumentException("Cannot have nested collections in a Schema")
     TypeProto.DataCase.DATA_NOT_SET ->
@@ -66,8 +82,14 @@ fun TypeProto.decodeAsFieldType() = when (dataCase) {
             "Cannot decode a ${dataCase.name} type to a [FieldType].")
 }
 
-/** Converts a [EntityTypeProto] protobuf instance into a Kotlin [EntityType] instance. */
-fun EntityTypeProto.decode() = EntityType(schema.decode())
+/**
+ * Converts a [EntityTypeProto] protobuf instance into a Kotlin [EntityType] instance. Does not work
+ * for inline entities.
+ */
+fun EntityTypeProto.decode(): EntityType {
+    require(!inline) { "Cannot decode inline entities to EntityType" }
+    return EntityType(schema.decode())
+}
 
 /** Converts a [SingletonTypeProto] protobuf instance into a Kotlin [SingletonType] instance. */
 fun SingletonTypeProto.decode() = SingletonType(singletonType.decode())
