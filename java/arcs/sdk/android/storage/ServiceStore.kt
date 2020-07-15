@@ -136,7 +136,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     override suspend fun idle() = coroutineScope {
         log.debug { "Waiting for service store to be idle" }
         while (outgoingMessages.value > 0) delay(10)
-        val service = storageService ?: return@coroutineScope
+        val service = checkNotNull(storageService)
         val callback = DeferredResult(this@coroutineScope.coroutineContext)
         service.idle(TIMEOUT_IDLE_WAIT_MILLIS, callback)
         withTimeout(TIMEOUT_IDLE_WAIT_MILLIS) { callback.await() }
@@ -158,7 +158,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     }
 
     override fun off(callbackToken: Int) {
-        val service = storageService ?: return
+        val service = checkNotNull(storageService)
         runBlocking {
             send {
                 service.unregisterCallback(callbackToken)
@@ -178,11 +178,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     }
 
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean {
-        val service = storageService
-        if (service == null) {
-            log.info { "onProxyMessage called when reference to StorageService was null" }
-            return true
-        }
+        val service = checkNotNull(storageService)
         val result = DeferredResult(coroutineContext)
         // Trick: make an indirect access to the message to keep kotlin flow
         // from holding the entire message that might encapsulate a large size data.
@@ -221,7 +217,6 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     fun onLifecycleDestroyed() {
-        log.debug { "onLifecycleDestroyed - disconnecting" }
         serviceConnection?.disconnect()
         storageService = null
         channel?.cancel()
