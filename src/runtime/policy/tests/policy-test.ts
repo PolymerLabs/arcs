@@ -15,7 +15,6 @@ import {assertThrowsAsync} from '../../../testing/test-util.js';
 import {mapToDictionary} from '../../util.js';
 import {TtlUnits, Persistence, Encryption, Capabilities, CapabilityRange, Ttl} from '../../capabilities.js';
 import {Schema} from '../../schema.js';
-import {IngressValidation} from '../ingress-validation.js';
 
 const customAnnotation = `
 annotation custom
@@ -532,60 +531,6 @@ policy MyPolicy {
     assert.deepEqual(Object.keys(schema.fields['address'].schema.model.entitySchema.fields),
         ['number', 'street', 'city']);
     assert.deepEqual(Object.keys(schema.fields['otherAddresses'].schema.schema.model.entitySchema.fields),
-        ['city', 'country']);
-  });
-
-  it('restricts types according to multiple policies', async () => {
-    const [policy0, policy1, policy2] = (await Manifest.parse(`
-schema Address
-  number: Number
-  street: Text
-  city: Text
-  country: Text
-schema Person
-  name: Text
-  phone: Text
-  address: &Address
-  otherAddresses: [&Address {street, city, country}]
-policy PolicyOne {
-  from Person access {
-    name,
-    address {
-      number,
-      street
-    }
-  }
-}
-policy PolicyTwo {
-  from Person access {
-    address {
-      street,
-      city
-    },
-    otherAddresses {city}
-  }
-}
-policy PolicyThree {
-  from Person access {
-    name,
-    otherAddresses {country}
-  }
-}
-    `)).policies;
-    assert.deepEqual(Object.keys(policy0.targets[0].getRestrictedType().getEntitySchema().fields),
-        ['name', 'address']);
-    assert.deepEqual(Object.keys(policy1.targets[0].getRestrictedType().getEntitySchema().fields),
-        ['address', 'otherAddresses']);
-    assert.deepEqual(Object.keys(policy2.targets[0].getRestrictedType().getEntitySchema().fields),
-        ['name', 'otherAddresses']);
-
-    const restrictedType = IngressValidation.getRestrictedType('Person', [policy0, policy1, policy2]);
-    const restrictedSchema = restrictedType.getEntitySchema();
-    assert.equal(restrictedSchema.name, 'Person');
-    assert.deepEqual(Object.keys(restrictedSchema.fields), ['name', 'address', 'otherAddresses']);
-    assert.deepEqual(Object.keys(restrictedSchema.fields['address'].schema.model.entitySchema.fields),
-        ['number', 'street', 'city']);
-    assert.deepEqual(Object.keys(restrictedSchema.fields['otherAddresses'].schema.schema.model.entitySchema.fields),
         ['city', 'country']);
   });
 });
