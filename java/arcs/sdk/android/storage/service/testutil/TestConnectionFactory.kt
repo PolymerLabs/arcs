@@ -18,9 +18,9 @@ import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.ManagerConnectionFactory
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.robolectric.Robolectric
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Create a [ConnectionFactory] that creates service bindings using a [Robolectric] service
