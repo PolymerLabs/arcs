@@ -18,7 +18,6 @@ import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
-import arcs.core.storage.Store
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.driver.RamDisk
@@ -52,7 +51,7 @@ class BindingContextTest {
     val log = LogRule()
 
     private lateinit var bindingContextScope: CoroutineScope
-    private lateinit var store: Store<CrdtCount.Data, CrdtCount.Operation, Int>
+    private lateinit var store: DeferredStore<CrdtCount.Data, CrdtCount.Operation, Int>
     private lateinit var storageKey: StorageKey
 
     @Before
@@ -62,7 +61,7 @@ class BindingContextTest {
         RamDisk.clear()
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         storageKey = RamDiskStorageKey("myCount")
-        store = Store(
+        store = DeferredStore(
             StoreOptions(
                 storageKey,
                 CountType()
@@ -99,7 +98,7 @@ class BindingContextTest {
             id = null
         )
 
-        val messageSend = launch(Dispatchers.IO) { store.activate().onProxyMessage(message) }
+        val messageSend = launch(Dispatchers.IO) { store().onProxyMessage(message) }
 
         log("waiting for message-send to finish")
         withTimeout(5000) { messageSend.join() }
@@ -133,7 +132,7 @@ class BindingContextTest {
             ),
             id = null
         )
-        assertThat(store.activate().onProxyMessage(message)).isTrue()
+        assertThat(store().onProxyMessage(message)).isTrue()
 
         assertThat(callback.isCompleted).isEqualTo(false)
     }

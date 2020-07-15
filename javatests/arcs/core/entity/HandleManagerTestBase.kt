@@ -19,6 +19,7 @@ import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.ActivationFactory
+import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
@@ -108,7 +109,7 @@ open class HandleManagerTestBase {
         storageKey = hatCollectionRefKey
     )
 
-    var activationFactory: ActivationFactory? = null
+    var activationFactory: ActivationFactory = DefaultActivationFactory
     lateinit var schedulerProvider: JvmSchedulerProvider
     lateinit var readHandleManager: EntityHandleManager
     lateinit var writeHandleManager: EntityHandleManager

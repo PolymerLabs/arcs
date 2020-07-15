@@ -47,6 +47,7 @@ import arcs.core.entity.WriteQueryCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.ActiveStore
+import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreOptions
@@ -85,6 +86,7 @@ class EntityHandleManager(
     private val analytics: Analytics? = null
 ) {
 
+    @ExperimentalCoroutinesApi
     @Deprecated(
         message = "prefer primary constructor",
         /* ktlint-disable max-line-length */
@@ -103,7 +105,7 @@ class EntityHandleManager(
         hostId,
         time,
         scheduler,
-        StoreManager(activationFactory),
+        StoreManager(activationFactory ?: DefaultActivationFactory),
         idGenerator
     )
 

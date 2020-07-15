@@ -37,7 +37,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-typealias CollectionStore<T> = Store<CrdtSet.Data<T>, CrdtSet.Operation<T>, Set<T>>
+typealias CollectionStore<T> = ActiveStore<CrdtSet.Data<T>, CrdtSet.Operation<T>, Set<T>>
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
@@ -57,7 +57,7 @@ class ReferenceTest {
                 storageKey = refModeKey,
                 type = CollectionType(EntityType(Person.SCHEMA))
             )
-        val store = CollectionStore<RawEntity>(options).activate()
+        val store: CollectionStore<RawEntity> = DefaultActivationFactory(options)
 
         val addPeople = listOf(
             CrdtSet.Operation.Add(
@@ -86,7 +86,8 @@ class ReferenceTest {
             )
 
         @Suppress("UNCHECKED_CAST")
-        val directCollection = CollectionStore<Reference>(collectionOptions).activate()
+        val directCollection: CollectionStore<Reference> =
+            DefaultActivationFactory(collectionOptions)
 
         val job = Job()
         val me = directCollection.on(ProxyCallback {

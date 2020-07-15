@@ -22,6 +22,7 @@ arcs_kt_android_library(
         "//java/arcs/android/storage",
         "//java/arcs/android/storage:proxy_message_android_proto",
         "//java/arcs/android/util",
+        "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/host",
         "//java/arcs/core/storage",
