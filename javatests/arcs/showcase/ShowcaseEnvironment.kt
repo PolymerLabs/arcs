@@ -150,11 +150,15 @@ class ShowcaseEnvironment(
 
         // Initializing the environment...
         val context = ApplicationProvider.getApplicationContext<Application>()
+        WorkManagerTestInitHelper.initializeTestWorkManager(context)
 
         // Set up the Database manager, drivers, and keys/key-parsers.
-        val dbManager = AndroidSqliteDatabaseManager(context)
+        val dbManager = AndroidSqliteDatabaseManager(context).also {
+            // Be sure we always start with a fresh, empty database.
+            it.resetAll()
+        }
+
         DriverAndKeyConfigurator.configure(dbManager)
-        WorkManagerTestInitHelper.initializeTestWorkManager(context)
 
         // Set up an android lifecycle for our arc host and store managers.
         val lifecycleOwner = object : LifecycleOwner {
