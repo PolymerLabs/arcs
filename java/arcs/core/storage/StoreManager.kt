@@ -27,8 +27,10 @@ class StoreManager(
      * If a store doesn't yet exist in this [StoreManager] for a provided [StorageKey],
      * it will be created using this [ActivationFactory]
      */
-    val activationFactory: ActivationFactory = DefaultActivationFactory
+    activationFactory: ActivationFactory? = null
 ) {
+    val activationFactory = activationFactory ?: DefaultActivationFactory
+
     private val storesMutex = Mutex()
     private val stores by guardedBy(storesMutex, mutableMapOf<StorageKey, ActiveStore<*, *, *>>())
 
