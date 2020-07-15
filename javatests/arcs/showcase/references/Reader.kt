@@ -1,4 +1,4 @@
-@file:Suppress("EXPERIMENTAL_FEATURE_WARNING")
+@file:Suppress("EXPERIMENTAL_FEATURE_WARNING", "EXPERIMENTAL_API_USAGE")
 
 package arcs.showcase.references
 
