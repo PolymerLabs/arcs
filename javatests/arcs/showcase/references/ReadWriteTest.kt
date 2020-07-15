@@ -2,10 +2,10 @@ package arcs.showcase.references
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.host.toRegistration
+import arcs.core.util.testutil.LogRule
 import arcs.showcase.ShowcaseEnvironment
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -13,6 +13,9 @@ import org.junit.runner.RunWith
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
 class ReadWriteTest {
+
+    @get:Rule
+    val log = LogRule()
 
     @get:Rule
     val env = ShowcaseEnvironment(
