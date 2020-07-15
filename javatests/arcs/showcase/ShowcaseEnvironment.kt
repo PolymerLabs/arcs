@@ -34,6 +34,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -126,7 +127,9 @@ class ShowcaseEnvironment(
                     override fun getLifecycle() = lifecycle
                 }
                 // Initialize it to started.
+                lifecycleOwner.lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
                 lifecycleOwner.lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START)
+                lifecycleOwner.lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
 
                 // Create a single scheduler provider for both the ArcHost as well as the Allocator.
                 val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
@@ -172,7 +175,14 @@ class ShowcaseEnvironment(
                         arcHostStoreManager.waitForIdle()
 
                         // Tell the ServiceStores that they should unbind.
-                        lifecycleOwner.lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+                        withContext(Dispatchers.Main) {
+                            lifecycleOwner.lifecycle
+                                .handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+                            lifecycleOwner.lifecycle
+                                .handleLifecycleEvent(Lifecycle.Event.ON_STOP)
+                            lifecycleOwner.lifecycle
+                                .handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+                        }
 
                         // Reset the Databases and close them.
                         dbManager.resetAll()
