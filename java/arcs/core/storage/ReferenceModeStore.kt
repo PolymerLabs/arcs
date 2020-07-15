@@ -145,7 +145,10 @@ class ReferenceModeStore private constructor(
      */
     private val versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
 
-    /** Tracks the state of callback: true: active callbacks, false: no callbacks registered. */
+    /** Tracks the state of callback:
+     *    true: active callbacks, no callbacks have ever been registered.
+     *    false: at least one callback has been registered in the past, but now there are none.
+     */
     private val callbacksStateChannel = ConflatedBroadcastChannel(true)
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
@@ -449,9 +452,18 @@ class ReferenceModeStore private constructor(
         return@fn true
     }
 
-    // The launched flow cleans up backingStore entries whenever the receive queue becomes empty.
-    // This method is called by the `create` constructor, and so cleanup will occur on the
-    // coroutine that constructed the store.
+    /**
+     * The initialization of this property launches a flow that monitors the callback state (via
+     * the [callbacksStateChannel] and the [receiveQueue] size (via the [receiveQueue.sizeChannel].
+     * The first time all of these conditions are true:
+     * - callback count has transitioned to greater than 0 at least once
+     * - callback count is currently 0
+     * - [receiveQueue] size is empty
+     *
+     * then the backingStore entries will be cleaned up. The cleanup will occur on the
+     * [cleanupCoroutineContext] passed in the constructor. Currently, this is simply the
+     * [coroutineContext] used to construct the [ReferenceModeStore] via the [create] method.
+     */
     @FlowPreview
     private val backingStoreCleanupJob: Job = combine(
             callbacksStateChannel.asFlow(),
