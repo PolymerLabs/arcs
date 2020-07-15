@@ -40,6 +40,11 @@
     </activity>
 
     <service
+      android:name="arcs.sdk.android.storage.service.StorageService"
+      android:exported="false"
+      tools:node="replace"/>
+
+    <service
       android:name=".PerformanceStorageService"
       android:exported="false"/>
 
