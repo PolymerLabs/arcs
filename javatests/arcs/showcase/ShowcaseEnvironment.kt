@@ -179,7 +179,15 @@ class ShowcaseEnvironment(
 
                     // Tell the ServiceStores that they should unbind.
                     withContext(Dispatchers.Main.immediate) {
-                        lifecycleOwner.lifecycle.currentState = Lifecycle.State.DESTROYED
+                        try {
+                            lifecycleOwner.lifecycle.currentState = Lifecycle.State.DESTROYED
+                        } catch (e: IllegalStateException) {
+                            // There is a bug in LifecycleRegistry where occasionally we seem to get
+                            // the lifecycles messed up.
+                            if (e.message?.contains("no event down") != true) {
+                                throw e
+                            }
+                        }
                     }
 
                     // Reset the Databases and close them.
