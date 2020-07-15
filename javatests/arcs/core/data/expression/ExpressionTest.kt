@@ -16,6 +16,8 @@ import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import arcs.core.data.expression.Expression.*
+import arcs.core.data.expression.Expression.BinaryOp.*
 
 /** Tests for [Expression]. */
 @RunWith(JUnit4::class)
@@ -142,5 +144,9 @@ class ExpressionTest {
             currentScope,
             "arg" to mapOf("bar" to 5).asScope()
         )).isEqualTo(21.0)
+    }
+
+    fun foo() {
+        val expr = (CurrentScope<Number>(mapOf())["name"] eq query("queryArgument")) and (CurrentScope<Number>(mapOf())["lastCall"] lt 259200.0.asExpr())
     }
 }

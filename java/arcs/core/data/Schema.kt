@@ -39,7 +39,7 @@ data class Schema(
         evalExpression(refinementExpression, rawEntity.asScope())
     },
     val query: Query? = { data, args ->
-        evalExpression(queryExpression, data.asScope(), "1" to args)
+        evalExpression(queryExpression, data.asScope(), "queryArgument" to args)
     }
 ) {
     val name: SchemaName?
