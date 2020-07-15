@@ -226,7 +226,6 @@ class ShowcaseEnvironment(
             } catch (e: IllegalStateException) {
                 // There is a bug in LifecycleRegistry where occasionally we seem to get
                 // the lifecycles messed up, let's just ignore.
-                throw e
             }
         }
 
