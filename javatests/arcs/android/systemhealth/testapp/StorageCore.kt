@@ -545,7 +545,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             }
 
             SystemHealthTestEntity.entityReference?.let {
-                val elapsedTime = measureTimeMillis { it.dereference(coroutineContext) }
+                val elapsedTime = measureTimeMillis { it.dereference() }
                 tasksEvents[taskController.taskId]?.writer?.withLock {
                     tasksEvents[taskController.taskId]?.queue?.add(
                         TaskEvent(TaskEventId.DEREFERENCE_LATENCY, elapsedTime)

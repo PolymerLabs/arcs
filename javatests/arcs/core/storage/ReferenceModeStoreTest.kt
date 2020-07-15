@@ -674,6 +674,30 @@ class ReferenceModeStoreTest {
         job.join()
     }
 
+    @Test
+    fun backingStoresCleanedUpWhenLastCallbackRemoved() = runBlocking {
+        DriverFactory.register(MockDriverProvider())
+        val store = createReferenceModeStore()
+
+        val token = store.on(ProxyCallback {})
+
+        val collection = CrdtSet<RawEntity>()
+        val entity = createPersonEntity("an-id", "bob", 42)
+
+        collection.applyOperation(
+            CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
+        )
+
+        store.onProxyMessage(
+            ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
+        )
+
+        store.off(token)
+        store.idle()
+        store.awaitCleanup()
+        assertThat(store.backingStore.stores.size).isEqualTo(0)
+    }
+
     // region Helpers
 
     private fun DirectStoreMuxer<CrdtData, CrdtOperation, Any?>.getEntityDriver(

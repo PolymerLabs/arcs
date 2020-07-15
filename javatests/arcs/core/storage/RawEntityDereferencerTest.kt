@@ -99,7 +99,7 @@ class RawEntityDereferencerTest {
     @Test
     fun dereference_canDereference_friend() = runBlockingTest {
         val dereferencedBob = (alice.singletons["sibling"] as Reference)
-            .dereference(this.coroutineContext)
+            .dereference()
         assertThat(dereferencedBob!!.id).isEqualTo(bob.id)
         assertThat(dereferencedBob.singletons["name"]!!.unwrap())
             .isEqualTo(bob.singletons["name"]!!.unwrap())
@@ -110,15 +110,15 @@ class RawEntityDereferencerTest {
     @Test
     fun dereference_canDereference_sibling_of_sibling_of_sibling() = runBlockingTest {
         val dereferencedBob =
-            (alice.singletons["sibling"] as Reference).dereference(this.coroutineContext)!!
+            (alice.singletons["sibling"] as Reference).dereference()!!
         val dereferencedAliceFromBob =
             (dereferencedBob.singletons["sibling"] as Reference)
                 .also { it.dereferencer = dereferencer }
-                .dereference(this.coroutineContext)!!
+                .dereference()!!
         val dereferencedBobFromAliceFromBob =
             (dereferencedAliceFromBob.singletons["sibling"] as Reference)
                 .also { it.dereferencer = dereferencer }
-                .dereference(this.coroutineContext)!!
+                .dereference()!!
 
         assertThat(dereferencedAliceFromBob.id).isEqualTo(alice.id)
         assertThat(dereferencedAliceFromBob.singletons["name"]!!.unwrap())

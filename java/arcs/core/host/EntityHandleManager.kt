@@ -277,8 +277,7 @@ class EntityHandleManager(
             val store: SingletonStore<Referencable> = stores.get(
                 StoreOptions(
                     storageKey = storageKey,
-                    type = SingletonType(EntityType(schema)),
-                    coroutineContext = coroutineContext
+                    type = SingletonType(EntityType(schema))
                 )
             )
             SingletonProxy(store, CrdtSingleton(), scheduler, time, analytics)
@@ -295,8 +294,7 @@ class EntityHandleManager(
             val store: CollectionStore<Referencable> = stores.get(
                 StoreOptions(
                     storageKey = storageKey,
-                    type = CollectionType(EntityType(schema)),
-                    coroutineContext = coroutineContext
+                    type = CollectionType(EntityType(schema))
                 )
             )
             CollectionProxy(store, CrdtSet(), scheduler, time, analytics)
