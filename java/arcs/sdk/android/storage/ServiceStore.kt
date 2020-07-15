@@ -178,7 +178,11 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     }
 
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean {
-        val service = checkNotNull(storageService)
+        val service = storageService
+        if (service == null) {
+            log.info { "onProxyMessage called when reference to StorageService was null" }
+            return true
+        }
         val result = DeferredResult(coroutineContext)
         // Trick: make an indirect access to the message to keep kotlin flow
         // from holding the entire message that might encapsulate a large size data.
@@ -217,6 +221,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     fun onLifecycleDestroyed() {
+        log.debug { "onLifecycleDestroyed - disconnecting" }
         serviceConnection?.disconnect()
         storageService = null
         channel?.cancel()
