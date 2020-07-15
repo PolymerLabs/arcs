@@ -4,8 +4,10 @@ package arcs.showcase
 
 import android.app.Application
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.OnLifecycleEvent
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
@@ -76,6 +78,9 @@ class ShowcaseEnvironment(
     lateinit var arcHost: ShowcaseHost
 
     private val startedArcs = mutableListOf<Arc>()
+
+    constructor(vararg particleRegistrations: ParticleRegistration) :
+        this(60000, *particleRegistrations)
 
     /**
      * Starts an [Arc] for a given [Plan] and waits for it to be ready.
@@ -161,10 +166,12 @@ class ShowcaseEnvironment(
         DriverAndKeyConfigurator.configure(dbManager)
 
         // Set up an android lifecycle for our arc host and store managers.
-        val lifecycleOwner = object : LifecycleOwner {
-            private val lifecycle = LifecycleRegistry(this)
-            override fun getLifecycle() = lifecycle
+        val lifecycleOwner = FakeLifecycleOwner()
+        val observer = object : LifecycleObserver {
+            @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+            fun onDestroy() = Unit
         }
+        lifecycleOwner.lifecycle.addObserver(observer)
         // Initialize it to started.
         withContext(Dispatchers.Main.immediate) {
             lifecycleOwner.lifecycle.currentState = Lifecycle.State.RESUMED
@@ -199,7 +206,7 @@ class ShowcaseEnvironment(
             }
         )
 
-        return ShowcaseArcsComponents(dbManager, arcHostStoreManager, lifecycleOwner.lifecycle, arcHost)
+        return ShowcaseArcsComponents(dbManager, arcHostStoreManager, lifecycleOwner, arcHost)
     }
 
     private suspend fun teardownArcs(components: ShowcaseArcsComponents) {
@@ -215,13 +222,11 @@ class ShowcaseEnvironment(
         // Tell the ServiceStores that they should unbind.
         withContext(Dispatchers.Main.immediate) {
             try {
-                components.arcHostLifecycleRegistry.currentState = Lifecycle.State.DESTROYED
+                components.arcHostLifecycle.lifecycle.currentState = Lifecycle.State.DESTROYED
             } catch (e: IllegalStateException) {
                 // There is a bug in LifecycleRegistry where occasionally we seem to get
-                // the lifecycles messed up.
-                if (e.message?.contains("no event down") != true) {
-                    throw e
-                }
+                // the lifecycles messed up, let's just ignore.
+                throw e
             }
         }
 
@@ -233,9 +238,14 @@ class ShowcaseEnvironment(
     private data class ShowcaseArcsComponents(
         val dbManager: AndroidSqliteDatabaseManager,
         val arcHostStoreManager: StoreManager,
-        val arcHostLifecycleRegistry: LifecycleRegistry,
+        val arcHostLifecycle: FakeLifecycleOwner,
         val arcHost: ArcHost
     )
+
+    private class FakeLifecycleOwner : LifecycleOwner {
+        private val lifecycle = LifecycleRegistry(this)
+        override fun getLifecycle() = lifecycle
+    }
 }
 
 /**
