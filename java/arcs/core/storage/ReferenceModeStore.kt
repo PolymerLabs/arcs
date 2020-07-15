@@ -145,7 +145,8 @@ class ReferenceModeStore private constructor(
      */
     private val versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
 
-    /** Tracks the state of callback:
+    /**
+     *  Tracks the state of callback:
      *    true: active callbacks, no callbacks have ever been registered.
      *    false: at least one callback has been registered in the past, but now there are none.
      */
