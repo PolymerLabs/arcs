@@ -167,12 +167,6 @@ class ShowcaseEnvironment(
 
         // Set up an android lifecycle for our arc host and store managers.
         val lifecycleOwner = FakeLifecycleOwner()
-        val observer = object : LifecycleObserver {
-            @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-            fun onDestroy() = Unit
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        // Initialize it to started.
         withContext(Dispatchers.Main.immediate) {
             lifecycleOwner.lifecycle.currentState = Lifecycle.State.RESUMED
         }
@@ -210,23 +204,9 @@ class ShowcaseEnvironment(
     }
 
     private suspend fun teardownArcs(components: ShowcaseArcsComponents) {
-        // Shutting down/cleaning-up...
-
         // Stop all the arcs and shut down the arcHost.
         startedArcs.forEach { it.stop() }
         components.arcHost.shutdown()
-
-        /*
-        // Tell the ServiceStores that they should unbind.
-        withContext(Dispatchers.Main.immediate) {
-            try {
-                components.arcHostLifecycle.lifecycle.currentState = Lifecycle.State.DESTROYED
-            } catch (e: IllegalStateException) {
-                // There is a bug in LifecycleRegistry where occasionally we seem to get
-                // the lifecycles messed up, let's just ignore.
-            }
-        }
-         */
 
         // Reset the Databases and close them.
         components.dbManager.resetAll()
