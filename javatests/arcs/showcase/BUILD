@@ -33,5 +33,6 @@ arcs_kt_android_library(
         "//third_party/java/androidx/work:testing",
         "//third_party/java/junit:junit-android",
         "//third_party/kotlin/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_android",
     ],
 )

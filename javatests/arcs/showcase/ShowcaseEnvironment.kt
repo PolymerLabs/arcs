@@ -175,7 +175,7 @@ class ShowcaseEnvironment(
                         arcHostStoreManager.waitForIdle()
 
                         // Tell the ServiceStores that they should unbind.
-                        withContext(Dispatchers.Main) {
+                        withContext(Dispatchers.Main.immediate) {
                             lifecycleOwner.lifecycle
                                 .handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
                             lifecycleOwner.lifecycle
