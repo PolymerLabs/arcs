@@ -27,7 +27,7 @@ fun parseTypeProtoText(protoText: String): TypeProto {
 }
 
 @RunWith(JUnit4::class)
-class TypeProtoDecodersTest {
+class TypeProtoTest {
     @Test
     fun decode_primitiveType() {
         assertThat(PrimitiveTypeProto.TEXT.decode()).isEqualTo(PrimitiveType.Text)
