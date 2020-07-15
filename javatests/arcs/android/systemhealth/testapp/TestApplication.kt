@@ -39,9 +39,9 @@ open class TestApplication : Application(), Configuration.Provider {
         // will be destroyed after 1-second idleness.
         ProtoPrefetcher.prefetch(
             ThreadPoolExecutor(
-                0,
-                1,
-                1L,
+                /*corePoolSize=*/0,
+                /*maximumPoolSize=*/1,
+                /*keepAliveTime=*/1L,
                 TimeUnit.SECONDS,
                 SynchronousQueue<Runnable>()
             )
