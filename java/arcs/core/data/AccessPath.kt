@@ -11,6 +11,8 @@
 
 package arcs.core.data
 
+typealias StoreId = String
+
 /**
  * Specifies an access path in a claim or a check.
  *
@@ -65,7 +67,10 @@ data class AccessPath(val root: Root, val selectors: List<Selector> = emptyList(
         ) : Root() {
             override fun toString() = "hcs:$particleSpecName.${connectionSpec.name}"
         }
-        // TODO(bgogul): Store, etc.
+
+        data class Store(val storeId: StoreId) : Root() {
+            override fun toString() = "s:$storeId"
+        }
     }
 
     /** Represents an access to a part of the data (like a field). */
