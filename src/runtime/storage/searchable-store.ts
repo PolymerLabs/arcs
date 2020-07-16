@@ -16,5 +16,5 @@ import {AbstractStore} from './abstract-store.js';
 export interface SearchableStore {
   context: Manifest;
   findStoresByType<T extends Type>(type: T, options?: { tags: string[] }): ToStore<T>[];
-  findStoreById(id: String): AbstractStore;
+  findStoreById(id: string): AbstractStore;
 }
