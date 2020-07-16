@@ -11,7 +11,8 @@
 import {Op} from '../runtime/manifest-ast-nodes.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Schema} from '../runtime/schema.js';
-import {escapeIdentifier, getTypeInfo} from './kotlin-codegen-shared.js';
+import {escapeIdentifier} from './kotlin-codegen-shared.js';
+import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
 import {RefinementExpressionVisitor, BinaryExpression, UnaryExpression, FieldNamePrimitive, QueryArgumentPrimitive, BuiltIn, NumberPrimitive, BooleanPrimitive, TextPrimitive, BigIntPrimitive} from '../runtime/refiner.js';
 
 // The variable name used for the query argument in generated Kotlin code.
@@ -100,11 +101,12 @@ export class KTExtracter {
     const genFieldAsLocal = (fieldName: string) => {
       const type = schema.fields[fieldName].type;
       const fixed = escapeIdentifier(fieldName);
-      return `val ${fixed} = data.singletons["${fieldName}"].toPrimitiveValue(${typeFor(type)}::class, ${getTypeInfo({name: type}).defaultVal})`;
+      const typeInfo = getPrimitiveTypeInfo(type);
+      return `val ${fixed} = data.singletons["${fieldName}"].toPrimitiveValue(${typeInfo.type}::class, ${typeInfo.defaultVal})`;
     };
 
     const genQueryArgAsLocal = ([_, type]: [string, string]) => {
-        return `val ${KOTLIN_QUERY_ARGUMENT_NAME} = queryArgs as ${typeFor(type)}`;
+        return `val ${KOTLIN_QUERY_ARGUMENT_NAME} = queryArgs as ${getPrimitiveTypeInfo(type).type}`;
     };
 
     const fieldNames = new Set<string>();
@@ -129,8 +131,4 @@ export class KTExtracter {
 
     return `${locals.map(x => `${x}\n`).join('')}${expr}`;
   }
-}
-
-function typeFor(name: string) {
-  return getTypeInfo({name}).type;
 }
