@@ -17,8 +17,9 @@ import android.os.Trace
  * Harness [android.os.Trace] trace points identified by
  * the trace [tag] to the entry and the exit of the [block].
  */
-inline fun scopedTrace(tag: String, block: () -> Unit) {
+inline fun <T> scopedTrace(tag: String, block: () -> T): T {
     Trace.beginSection(tag)
-    block()
+    val result = block()
     Trace.endSection()
+    return result
 }
