@@ -123,8 +123,8 @@ export class TypeChecker {
   static _tryMergeTypeVariable(base: Type, onto: Type, options: {typeErrors?: string[]} = {}): Type {
     const [primitiveBase, primitiveOnto] = Type.unwrapPair(base.resolvedType(), onto.resolvedType());
 
-    switch(when(primitiveBase instanceof TypeVariable, primitiveOnto instanceof TypeVariable)) {
-      case when(true, true):
+    switch (when(primitiveBase instanceof TypeVariable, primitiveOnto instanceof TypeVariable)) {
+      case when(true, true): {
         // base, onto both variables.
         const result = (primitiveBase as TypeVariable).variable.maybeMergeConstraints((primitiveOnto as TypeVariable).variable);
         if (result === false) {
@@ -132,6 +132,7 @@ export class TypeChecker {
         }
         (primitiveOnto as TypeVariable).variable.resolution = primitiveBase;
         return base;
+      }
       case when(true, false):
         // base variable, onto not.
         if (!(primitiveBase as TypeVariable).variable.isValidResolutionCandidate(primitiveOnto).result) {
