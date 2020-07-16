@@ -290,7 +290,7 @@ class Scheduler(
         ) : Scheduler.Task.Listener("dispatcher", "non-particle", block)
     }
 
-    private val currentDispatcherThreadLocal = ThreadLocal<CoroutineDispatcher?>()
+    private val currentDispatcherThreadLocal = CommonThreadLocal<CoroutineDispatcher?>()
 
     /** The [Scheduler] dispatcher that the current thread is running in, or null. */
     val currentDispatcher get() = currentDispatcherThreadLocal.get()
