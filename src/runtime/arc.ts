@@ -654,7 +654,7 @@ export class Arc implements ArcInterface, SearchableStore {
   // Convert a type to a normalized key that we can use for
   // equality testing.
   //
-  // TODO: we should be testing the schemas for compatiblity instead of using just the name.
+  // TODO: we should be testing the schemas for compatibility instead of using just the name.
   // TODO: now that this is only used to implement findStoresByType we can probably replace
   // the check there with a type system equality check or similar.
   static _typeToKey(type: Type): string | InterfaceInfo | null {
