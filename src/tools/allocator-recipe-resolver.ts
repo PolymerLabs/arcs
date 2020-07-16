@@ -31,19 +31,6 @@ export class AllocatorRecipeResolverError extends Error {
   }
 }
 
-class StoreHolder implements SearchableStore {
-  constructor(readonly context: Manifest) {}
-
-  findStoreById(id: string): AbstractStore {
-    return this.context.findStoreById(id);
-  }
-
-  findStoresByType<T extends Type>(type: T, options?: { tags: string[] }): ToStore<T>[] {
-    return [];
-  }
-
-}
-
 /**
  * Resolves recipes in preparation for the Allocator.
  *
@@ -220,4 +207,17 @@ export function isLongRunning(recipe: Recipe): boolean {
 export function findLongRunningArcId(recipe: Recipe): string | null {
   const arcIdAnnotation = recipe.getAnnotation('arcId');
   return arcIdAnnotation ? Object.values(arcIdAnnotation.params)[0].toString() : null;
+}
+
+/** Intermediary in the recipe resolution process that holds stores. */
+class StoreHolder implements SearchableStore {
+  constructor(readonly context: Manifest) {}
+
+  findStoreById(id: string): AbstractStore {
+    return this.context.findStoreById(id);
+  }
+
+  findStoresByType<T extends Type>(type: T, options?: { tags: string[] }): ToStore<T>[] {
+    return [];
+  }
 }
