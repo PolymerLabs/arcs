@@ -45,6 +45,7 @@ import {SystemTrace} from '../tracelib/systrace.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {SingletonInterfaceHandle, handleForStore, ToStore, newStore} from './storage/storage.js';
 import {AnnotationRef} from './recipe/annotation.js';
+import {SearchableStore} from './storage/searchable-store.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -73,7 +74,7 @@ type DeserializeArcOptions = Readonly<{
 }>;
 
 @SystemTrace
-export class Arc implements ArcInterface {
+export class Arc implements ArcInterface, SearchableStore {
   private readonly _context: Manifest;
   private readonly pecFactories: PecFactory[];
   public readonly isSpeculative: boolean;
