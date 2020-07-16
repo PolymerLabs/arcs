@@ -16,7 +16,7 @@ schema NestedFooBar
 particle Egress_SingleInput
   input: reads Foo {a, b, c}
 recipe SingleInput
-  input: create
+  input: create 'my_store_id'
   Egress_SingleInput
     input: input
 
