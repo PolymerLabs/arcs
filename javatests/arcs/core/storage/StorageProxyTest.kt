@@ -17,7 +17,6 @@ import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
-import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.storage.StorageProxy.ProxyState
 import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.storage.keys.Protocols
