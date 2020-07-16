@@ -209,56 +209,6 @@ class HandleAdapterTest {
         assertThat(writeOnlyHandle).isNotInstanceOf(ReadWriteCollectionHandle::class.java)
     }
 
-    @Test
-    fun singletonHandleAdapter_onUpdateTest() = runTest {
-        val handle = manager.createHandle(
-            HandleSpec(
-                READ_WRITE_HANDLE,
-                HandleMode.ReadWrite,
-                SingletonType(EntityType(Person.SCHEMA)),
-                Person
-            ),
-            STORAGE_KEY
-        ) as ReadWriteSingletonHandle<Person>
-
-        var x = 0
-        handle.onUpdate { p ->
-            if (p?.name == "Eliza Hamilton") {
-                x++
-            }
-        }
-
-        handle.dispatchStore(Person("Eliza Hamilton"))
-        scheduler.waitForIdle()
-
-        assertThat(x).isEqualTo(1)
-    }
-
-    @Test
-    fun collectionHandleAdapter_onUpdateTest() = runTest {
-        val handle = manager.createHandle(
-            HandleSpec(
-                READ_WRITE_HANDLE,
-                HandleMode.ReadWrite,
-                CollectionType(EntityType(Person.SCHEMA)),
-                Person
-            ),
-            STORAGE_KEY
-        ) as ReadWriteCollectionHandle<Person>
-
-        var x = 0
-        handle.onUpdate { people ->
-            if (people.elementAtOrNull(0)?.name == "Elder Price") {
-                x += people.size
-            }
-        }
-
-        handle.dispatchStore(Person("Elder Price"))
-        scheduler.waitForIdle()
-
-        assertThat(x).isEqualTo(1)
-    }
-
     @Ignore("b/157390221 - Deflake")
     @Test
     fun collectionHandleAdapter_createReference() = runTest {

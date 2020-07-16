@@ -474,12 +474,14 @@ class StorageProxyTest {
         proxy.maybeInitiateSync()
 
         val (onReady, onUpdate, onDesync, onResync, channels) = addAllActions(callbackId, proxy)
-        whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(true)
-
-        scheduler.waitForIdle() // Let the initial SyncRequest go through
+        proxy.onMessage(ProxyMessage.ModelUpdate(mockCrdtData, null))
+        scheduler.waitForIdle()
         fakeStoreEndpoint.waitFor(ProxyMessage.SyncRequest(null))
-        fakeStoreEndpoint.clearProxyMessages() // Clear that SyncRequest out.
+        fakeStoreEndpoint.clearProxyMessages()
+        channels.onReady.receiveOrTimeout()
+        verify(onReady).invoke()
 
+        whenever(mockCrdtModel.applyOperation(mockCrdtOperation)).thenReturn(true)
         assertThat(proxy.applyOp(mockCrdtOperation).await()).isTrue()
         assertThat(fakeStoreEndpoint.getProxyMessages()).containsExactly(
             ProxyMessage.Operations<CrdtData, CrdtOperation, String>(
