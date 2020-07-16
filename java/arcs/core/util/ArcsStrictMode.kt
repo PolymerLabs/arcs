@@ -28,12 +28,25 @@ object ArcsStrictMode {
         }
 
     /**
-     * Temporarily enable [strictHandles] during test code block execution.
+     * [Handle] operations not executed within a [Scheduler] dispatcher
+     * will throw an error.
      */
-    // VisibleForTesting
-    fun enableStrictHandlesForTest(block: () -> Unit) {
-        val old = strictHandles_
+    fun enableStrictHandles() {
         strictHandles_ = true
+    }
+
+    /** [Handle] operations can be executed from any context (but may silently fail) */
+    fun disableStrictHandles() {
+        strictHandles_ = false
+    }
+
+    /**
+     * Temporarily enable/disable [strictHandles] during test code block execution and restore previous
+     * settings when done.
+     */
+    fun enableStrictHandlesForTest(enabled: Boolean = true, block: () -> Unit) {
+        val old = strictHandles_
+        strictHandles_ = enabled
         try {
             block()
         } finally {

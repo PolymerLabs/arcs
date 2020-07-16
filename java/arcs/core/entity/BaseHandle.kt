@@ -13,8 +13,6 @@ package arcs.core.entity
 import arcs.core.storage.StorageProxy
 import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
-import arcs.core.util.ArcsStrictMode
-import arcs.core.util.currentlyRunningInDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 
 /** Base functionality common to all read/write singleton and collection handles. */
@@ -54,9 +52,6 @@ abstract class BaseHandle<T : Storable>(config: BaseHandleConfig) : Handle {
         storageProxy.addOnReady(callbackIdentifier, action)
 
     protected inline fun <T> checkPreconditions(block: () -> T): T {
-        check(!ArcsStrictMode.strictHandles || currentlyRunningInDispatcher(dispatcher)) {
-            "Handle $name can only be used in Scheduler's Dispatcher"
-        }
         check(!closed) { "Handle $name is closed" }
         return block()
     }

@@ -12,8 +12,11 @@
 package arcs.core.util
 
 /**
- * This package provides a class ThreadLocal<T> with get(): T and set(value: T) methods
+ * This package provides a class CommonThreadLocal<T> with get(): T and set(value: T) methods
  * depending on JS, JVM, and Native platforms.
  */
-
-// Also, arcs_kt_library needs dummy srcs to be used as a fan-out target
+class CommonThreadLocal<T>() {
+    private val platformThreadLocal = ThreadLocal<T>()
+    fun get() = platformThreadLocal.get()
+    fun set(value: T) = platformThreadLocal.set(value)
+}

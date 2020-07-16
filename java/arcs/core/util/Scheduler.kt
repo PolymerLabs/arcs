@@ -157,10 +157,10 @@ class Scheduler(
             suspendCancellableCoroutine<Unit> {
                 log.debug { "Starting $task" }
                 try {
-                    setCurrentDispatcher(dispatcher)
+                    currentDispatcherThreadLocal.set(dispatcher)
                     it.resume(task(), timeoutHandler)
                 } finally {
-                    setCurrentDispatcher(null)
+                    currentDispatcherThreadLocal.set(null)
                 }
                 log.debug { "Finished $task" }
             }
@@ -288,6 +288,16 @@ class Scheduler(
         private class DispatchedTask(
             block: () -> Unit
         ) : Scheduler.Task.Listener("dispatcher", "non-particle", block)
+    }
+
+    private val currentDispatcherThreadLocal = ThreadLocal<CoroutineDispatcher?>()
+
+    /** The [Scheduler] dispatcher that the current thread is running in, or null. */
+    val currentDispatcher get() = currentDispatcherThreadLocal.get()
+
+    /** Returns true if the current thread is executing within the given [dispatcher]. */
+    fun currentlyRunningInSchedulerDispatcher(dispatcher: CoroutineDispatcher): Boolean {
+        return currentDispatcher === dispatcher
     }
 
     companion object {

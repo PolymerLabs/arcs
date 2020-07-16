@@ -12,7 +12,7 @@ package(default_visibility = ["//java/arcs:allowed-packages"])
 
 COMMON_PLATFORM_SRCS = [
     "ArcsStrictMode.kt",
-    "ThreadLocal.kt",
+    "CommonThreadLocal.kt",
 ]
 
 JS_PLATFORM_SRCS = glob(["platform/js/*.kt"])

@@ -17,10 +17,12 @@ import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
+import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.storage.StorageProxy.ProxyState
 import arcs.core.storage.StorageProxy.StorageEvent
 import arcs.core.storage.keys.Protocols
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.util.ArcsStrictMode
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
@@ -873,6 +875,7 @@ class StorageProxyTest {
         withTimeout(timeout) { receive() }
 
     private fun runTest(block: suspend CoroutineScope.() -> Unit) = runBlocking {
+        ArcsStrictMode.disableStrictHandles()
         withTimeout(5000) { this.block() }
     }
 }
