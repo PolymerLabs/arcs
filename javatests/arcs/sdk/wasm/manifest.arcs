@@ -2,8 +2,8 @@ meta
   namespace: arcs.sdk.wasm
 
 particle HandleSyncUpdateTest in '$module.wasm'
-  sng: reads {num: Number, txt: Text, lnk: URL, flg: Boolean, ref: &Foo {val: Text}}
-  col: reads [{num: Number, txt: Text, lnk: URL, flg: Boolean, ref: &Foo {val: Text}}]
+  sng: reads {num: Number, txt: Text, lnk: URL, flg: Boolean}
+  col: reads [{num: Number, txt: Text, lnk: URL, flg: Boolean}]
   res: writes [{txt: Text, num: Number}]
 
 recipe HandleSyncUpdateTest
@@ -66,7 +66,7 @@ recipe ServicesTest
 // -----------------------------------------------------------------------------------------------
 
 particle EntityClassApiTest in '$module.wasm'
-  data: reads {num: Number, txt: Text, lnk: URL, flg: Boolean, ref: &Foo {val: Text}}
+  data: reads {num: Number, txt: Text, lnk: URL, flg: Boolean}
   empty: reads {}
   errors: writes [{msg: Text}]
 
@@ -132,32 +132,6 @@ recipe CollectionApiTest
     inHandle: reads h1
     outHandle: writes h2
     ioHandle: reads writes h3
-
-// -----------------------------------------------------------------------------------------------
-
-particle ReferenceHandlesTest in '$module.wasm'
-  sng: reads writes &{num: Number, txt: Text}
-  col: reads writes [&{num: Number, txt: Text}]
-  res: writes [{txt: Text}]
-
-recipe ReferenceHandlesTest
-  ReferenceHandlesTest
-    sng: reads writes h1
-    col: reads writes h2
-    res: writes h3
-
-// -----------------------------------------------------------------------------------------------
-
-particle SchemaReferenceFieldsTest in '$module.wasm'
-  input: reads {num: Number, txt: Text, ref: &{val: Text}}
-  output: writes {num: Number, txt: Text, ref: &{val: Text}}
-  res: writes [{txt: Text}]
-
-recipe SchemaReferenceFieldsTest
-  SchemaReferenceFieldsTest
-    input: reads h1
-    output: writes h2
-    res: writes h3
 
 // -----------------------------------------------------------------------------------------------
 
