@@ -24,7 +24,7 @@ const testData = [
   },
   {
     label: 'Kotlin (wasm)',
-    generated: 'src/tools/tests/golden_GeneratedSchemas.wasm.kt',
+    generated: 'src/tools/tests/golden-wasm_GeneratedSchemas.wasm.kt',
     golden: 'src/tools/tests/goldens/generated-schemas.wasm.kt',
   },
   {
