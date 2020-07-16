@@ -64,6 +64,10 @@ class ParticleContext(
 
     private val dispatcher = scheduler?.asCoroutineDispatcher()
 
+    override fun toString() = "ParticleContext(particle=$particle, particleState=$particleState, " +
+            "consecutiveFailureCount=$consecutiveFailureCount, isWriteOnly=$isWriteOnly, " +
+            "awaitingReady=$awaitingReady, desyncedHandles=$desyncedHandles)"
+
     /** Create a copy of [ParticleContext] with a new [particle]. */
     fun copyWith(newParticle: Particle) = ParticleContext(
         newParticle,

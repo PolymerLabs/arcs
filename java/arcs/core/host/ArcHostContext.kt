@@ -48,6 +48,9 @@ data class ArcHostContext(
         _arcState = arcState
     }
 
+    override fun toString() = "ArcHostContext(arcId=$arcId, arcState=$arcState, " +
+            "particles=$particles, entityHandleManager=$entityHandleManager)"
+
     internal fun addOnArcStateChange(
         registration: ArcStateChangeRegistration,
         block: ArcStateChangeCallback
