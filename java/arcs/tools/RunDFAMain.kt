@@ -45,7 +45,6 @@ class DFARunner(val sighCmd: String) {
 
     private fun manifestToProto(manifestFile: String): ManifestProto {
         val WORKING_DIR = System.getProperty("user.dir")
-        // File("/usr/local/google/home/bgogul/workspace/cerebra/arcs")
         val manifestFileAbsolutePath = if (manifestFile.startsWith('/')) {
             manifestFile
         } else {
