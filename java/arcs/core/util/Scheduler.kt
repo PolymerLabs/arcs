@@ -156,7 +156,12 @@ class Scheduler(
         agenda.forEach { task ->
             suspendCancellableCoroutine<Unit> {
                 log.debug { "Starting $task" }
-                it.resume(task(), timeoutHandler)
+                try {
+                    setCurrentDispatcher(dispatcher)
+                    it.resume(task(), timeoutHandler)
+                } finally {
+                    setCurrentDispatcher(null)
+                }
                 log.debug { "Finished $task" }
             }
         }
