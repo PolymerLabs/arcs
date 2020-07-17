@@ -47,13 +47,7 @@ sealed class Message(
     interface PreEnqueued
     /** Denotes a [Message] after being enqueued. */
     interface Enqueued {
-        /**
-         * Deferred which  will be completed with the result of the processed message when the
-         * message is drained.
-         */
-        val deferred: CompletableDeferred<Boolean>
     }
-
     /*
      * Messages coming from the storage proxy.
      */
@@ -63,12 +57,11 @@ sealed class Message(
         override val source: UpdateSource = UpdateSource.StorageProxy
     ) : Message(message, source), PreEnqueued {
         override fun toEnqueued(deferred: CompletableDeferred<Boolean>) =
-            EnqueuedFromStorageProxy(message, deferred)
+            EnqueuedFromStorageProxy(message)
     }
 
     data class EnqueuedFromStorageProxy(
         override val message: ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>,
-        override val deferred: CompletableDeferred<Boolean>,
         override val source: UpdateSource = UpdateSource.StorageProxy
     ) : Message(message, source), Enqueued
 
@@ -82,13 +75,12 @@ sealed class Message(
         override val source: UpdateSource = UpdateSource.BackingStore
     ) : Message(message, source), PreEnqueued {
         override fun toEnqueued(deferred: CompletableDeferred<Boolean>) =
-            EnqueuedFromBackingStore(message, muxId, deferred)
+            EnqueuedFromBackingStore(message, muxId)
     }
 
     data class EnqueuedFromBackingStore(
         override val message: ProxyMessage<CrdtData, CrdtOperationAtTime, Referencable>,
         val muxId: String,
-        override val deferred: CompletableDeferred<Boolean>,
         override val source: UpdateSource = UpdateSource.BackingStore
     ) : Message(message, source), Enqueued
 
@@ -101,12 +93,11 @@ sealed class Message(
         override val source: UpdateSource = UpdateSource.Container
     ) : Message(message, source), PreEnqueued {
         override fun toEnqueued(deferred: CompletableDeferred<Boolean>) =
-            EnqueuedFromContainer(message, deferred)
+            EnqueuedFromContainer(message)
     }
 
     data class EnqueuedFromContainer(
         override val message: ProxyMessage<CrdtData, CrdtOperationAtTime, Referencable>,
-        override val deferred: CompletableDeferred<Boolean>,
         override val source: UpdateSource = UpdateSource.Container
     ) : Message(message, source), Enqueued
 }
