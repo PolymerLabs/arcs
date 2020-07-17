@@ -113,7 +113,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
             "Entity must have an ID before it can be referenced."
         }
 
-        adaptValues(storageProxy.getParticleView()).let { data ->
+        adaptValues(storageProxy.getParticleViewUnsafe()).let { data ->
             data.firstOrNull()?.let {
                 require(it is Entity) {
                     "Handle must contain Entity-typed elements in order to create references."
