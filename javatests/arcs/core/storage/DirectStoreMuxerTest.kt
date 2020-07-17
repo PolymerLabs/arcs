@@ -12,21 +12,31 @@
 package arcs.core.storage
 
 import arcs.core.common.ReferenceId
-import arcs.core.crdt.*
-import arcs.core.data.*
+import arcs.core.crdt.CrdtEntity
+import arcs.core.crdt.CrdtSingleton
+import arcs.core.crdt.VersionMap
+import arcs.core.data.EntityType
+import arcs.core.data.FieldType
+import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.*
+import kotlin.reflect.KClass
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.reflect.KClass
 
 @RunWith(JUnit4::class)
 @ExperimentalCoroutinesApi
@@ -45,7 +55,7 @@ class DirectStoreMuxerTest {
                     "name" to FieldType.Text,
                     "age" to FieldType.Int
                 ),
-                collections =emptyMap()
+                collections = emptyMap()
             ),
             "abc"
         )
@@ -96,12 +106,30 @@ class DirectStoreMuxerTest {
 
         // Attempt to trigger a child store setup race
         coroutineScope {
-            launch { directStoreMuxer.getLocalData("a", callbackId) }
-            launch { directStoreMuxer.onProxyMessage(ProxyMessage.ModelUpdate(data, id = callbackId, muxId = "a")) }
-            launch { directStoreMuxer.getLocalData("a", callbackId) }
-            launch { directStoreMuxer.onProxyMessage(ProxyMessage.ModelUpdate(data, id = callbackId, muxId = "a")) }
-            launch { directStoreMuxer.getLocalData("a", callbackId) }
-            launch { directStoreMuxer.onProxyMessage(ProxyMessage.ModelUpdate(data, id = callbackId, muxId = "a")) }
+            launch {
+                directStoreMuxer.getLocalData("a", callbackId)
+            }
+            launch {
+                directStoreMuxer.onProxyMessage(
+                    ProxyMessage.ModelUpdate(data, id = callbackId, muxId = "a")
+                )
+            }
+            launch {
+                directStoreMuxer.getLocalData("a", callbackId)
+            }
+            launch {
+                directStoreMuxer.onProxyMessage(
+                    ProxyMessage.ModelUpdate(data, id = callbackId, muxId = "a")
+                )
+            }
+            launch {
+                directStoreMuxer.getLocalData("a", callbackId)
+            }
+            launch {
+                directStoreMuxer.onProxyMessage(
+                    ProxyMessage.ModelUpdate(data, id = callbackId, muxId = "a")
+                )
+            }
         }
 
         val otherStore = DirectStore.create<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
@@ -183,8 +211,7 @@ class DirectStoreMuxerTest {
 
         val directStoreMuxer = createDirectStoreMuxer()
 
-
-        val job = Job(coroutineContext[Job.Key])
+        val job = Job(coroutineContext[Job])
 
         // proxy muxer that sends a model update to direct store muxer
         var callbackInvoked = false
@@ -282,8 +309,8 @@ class DirectStoreMuxerTest {
     }
 
     // region Helpers
-    private fun createDirectStoreMuxer()
-        : DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity> {
+    private fun createDirectStoreMuxer():
+        DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity> {
         return DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
             storageKey,
             backingType = EntityType(schema)
@@ -300,8 +327,8 @@ class DirectStoreMuxerTest {
             versionMap = VersionMap("me" to 1),
             singletons = mapOf(
                 "name" to CrdtSingleton(
-                    initialVersion= VersionMap("me" to 1),
-                    initialData =  CrdtEntity.Reference.buildReference(name.toReferencable())
+                    initialVersion = VersionMap("me" to 1),
+                    initialData = CrdtEntity.Reference.buildReference(name.toReferencable())
                 ),
                 "age" to CrdtSingleton(
                     initialVersion = VersionMap("me" to 1),

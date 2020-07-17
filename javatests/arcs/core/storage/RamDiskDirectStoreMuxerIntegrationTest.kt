@@ -79,10 +79,14 @@ class RamDiskDirectStoreMuxerIntegrationTest {
         count2.applyOperation(MultiIncrement("them", version = 0 to 10, delta = 15))
 
         assertThat(
-            store.onProxyMessage(ProxyMessage.ModelUpdate(count1.data, id = callbackId, muxId = "thing0"))
+            store.onProxyMessage(
+                ProxyMessage.ModelUpdate(count1.data, id = callbackId, muxId = "thing0")
+            )
         ).isTrue()
         assertThat(
-            store.onProxyMessage(ProxyMessage.ModelUpdate(count2.data, id = callbackId, muxId = "thing1"))
+            store.onProxyMessage(
+                ProxyMessage.ModelUpdate(count2.data, id = callbackId, muxId = "thing1")
+            )
         ).isTrue()
 
         store.idle()
@@ -103,7 +107,7 @@ class RamDiskDirectStoreMuxerIntegrationTest {
         message.value = null
         muxId.value = null
         job = Job()
-        store.onProxyMessage(ProxyMessage.SyncRequest(id = callbackId, muxId ="not-a-thing"))
+        store.onProxyMessage(ProxyMessage.SyncRequest(id = callbackId, muxId = "not-a-thing"))
         job.join()
         message.value.assertHasData(CrdtCount())
         assertThat(muxId.value ?: "huh, it was null.").isEqualTo("not-a-thing")
