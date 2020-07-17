@@ -27,4 +27,3 @@ arcs_manifest_json(
     name = "manifest_data",
     srcs = ["manifest.arcs"],
 )
-

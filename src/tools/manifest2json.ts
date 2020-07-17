@@ -12,18 +12,12 @@ import fs from 'fs';
 import path from 'path';
 import {Runtime} from '../runtime/runtime.js';
 import {ErrorSeverity, Manifest, ManifestError} from '../runtime/manifest.js';
-import {ParticleSpec} from "../runtime/particle-spec";
-import {Dictionary} from "../runtime/hot";
-import {Schema} from "../runtime/schema";
-import {Recipe} from "../runtime/recipe/recipe";
 
 class Serialization {
-  recipes: object[] = [];
   particles: object[] = [];
   schemas: object[] = [];
 
   merge(other: Serialization) {
-    this.recipes = this.recipes.concat(other.recipes);
     this.particles = this.particles.concat(other.particles);
     this.schemas = this.schemas.concat(other.schemas);
   }
@@ -62,82 +56,11 @@ if (opts._.some((file) => !file.endsWith('.arcs'))) {
 }
 
 /** Extract JSON serializations from manifest. */
-async function toLiteral(manifest: Manifest): Promise<Serialization> {
+function toLiteral(manifest: Manifest): Serialization {
   const lit = new Serialization();
-  lit.recipes = manifest.recipes.map(toRecipeLiteral);
-  lit.particles = manifest.particles.map(toParticleLiteral);
-  lit.schemas = await Promise.all(Object.values(manifest.schemas).map(toSchemaLiteral));
+  lit.particles = manifest.particles.map(p => p.toLiteral());
+  lit.schemas = Object.values(manifest.schemas).map(s => s.toLiteral());
   return lit;
-}
-
-function toRecipeLiteral(r: Recipe) {
-  return {
-    name: r.name,
-    particles: r.particles.map(p => p.spec).map(toParticleLiteral),
-  };
-}
-
-function toParticleLiteral(p: ParticleSpec) {
-  const lit = p.toLiteral();
-  return {
-    particleName: p.name,
-    location: p.implFile,
-    handles: lit.args,
-  };
-}
-
-async function toFieldsLiteral(fields: Dictionary<any>) {
-  const schemaFields = {
-    singletons: {},
-    collections: {},
-  };
-
-  const updateField = async field => {
-    let out = {};
-    let isSingleton = true;
-
-    switch (field.kind) {
-      case 'schema-reference':
-        out['tag'] = 'EntityRef';
-        out['schemaHash'] = await field.schema.hash();
-        break;
-
-      case 'schema-collection':
-        out = (await updateField(field.schema))[1];
-        isSingleton = false;
-        break;
-
-      default: // schema-singleton
-        out['tag'] = 'Primitive';
-        out['primitiveType'] = field;
-        break;
-    }
-    return [isSingleton, out];
-  };
-
-  for (const [key, field] of Object.entries(fields)) {
-    const [isSingleton, fieldType] = await updateField(field);
-    if (isSingleton) {
-      schemaFields.singletons[key] = fieldType;
-    } else {
-      schemaFields.collections[key] = fieldType;
-    }
-  }
-
-  return schemaFields;
-}
-
-async function toSchemaLiteral(s: Schema) {
-  const lit = s.toLiteral();
-
-  const toSchemaName = (name: string) => ({name});
-
-  return {
-    names: lit.names.map(toSchemaName),
-    fields: await toFieldsLiteral(s.fields),
-    description: s.description,
-    hash: await s.hash(),
-  }
 }
 
 /** Write literals to a file. */
@@ -169,10 +92,10 @@ async function aggregateLiterals(srcs: string[]): Promise<Serialization> {
 
     if (errMsgs.length) {
       throw new Error(`Problems found in manifest '${src}':\n` +
-        `${errMsgs.join('\n')}`);
+                      `${errMsgs.join('\n')}`);
     }
 
-    aggregate.merge(await toLiteral(manifest));
+    aggregate.merge(toLiteral(manifest));
   }
   return aggregate;
 }
