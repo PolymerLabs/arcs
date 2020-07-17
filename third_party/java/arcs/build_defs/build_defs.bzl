@@ -74,7 +74,9 @@ arcs_manifest_parse_test = _arcs_manifest_parse_test
 
 arcs_manifest_proto = _arcs_manifest_proto
 
-arcs_proto_plan = _recipe2plan
+arcs_proto_plan = _arcs_proto_plan
+
+arcs_plan_generation = _recipe2plan
 
 kt_js_library = _kt_js_library
 

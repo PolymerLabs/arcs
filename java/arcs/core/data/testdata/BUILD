@@ -3,6 +3,7 @@ load(
     "arcs_kt_gen",
     "arcs_manifest",
     "arcs_proto_plan",
+    "arcs_plan_generation",
 )
 
 package(default_visibility = ["//java/arcs:allowed-packages"])
@@ -49,7 +50,12 @@ arcs_kt_gen(
 )
 
 arcs_proto_plan(
-    name = "test_rule",
-    srcs = [":example"],
+    name = "example-proto",
+    src = "WriterReaderExample.arcs",
+)
+
+arcs_plan_generation(
+    name = "plan_from_proto",
+    srcs = [":example-proto"],
     package = "arcs.core.data.testdata",
 )
