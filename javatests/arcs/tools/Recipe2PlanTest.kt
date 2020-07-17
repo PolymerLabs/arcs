@@ -1,13 +1,15 @@
 package javatests.arcs.core.tools
 
-import arcs.core.data.*
-import arcs.core.tools.Recipe2Plan
+import arcs.core.data.CollectionType
+import arcs.core.data.EntityType
+import arcs.core.data.FieldType
+import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
+import arcs.tools.Recipe2Plan
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import com.google.common.truth.Truth.assertThat
-import org.junit.Assert.assertThat
-
 
 @RunWith(JUnit4::class)
 class Recipe2PlanTest {
@@ -15,7 +17,7 @@ class Recipe2PlanTest {
     fun schemaGeneration_singleProperty() {
 
         val testSchema = Schema(
-            listOf(SchemaName("Slice")),
+            setOf(SchemaName("Slice")),
             SchemaFields(
                 singletons = mapOf(
                     "num" to FieldType.Number,
@@ -28,10 +30,7 @@ class Recipe2PlanTest {
         )
 
         val r2p = Recipe2Plan()
-        val schemaProperty = r2p.generateSchemas(listOf(testSchema)).first()
-
         // TODO(alxr): Add asserts
-
     }
 
     @Test
@@ -52,27 +51,25 @@ class Recipe2PlanTest {
         val sliceEntity = EntityType(sliceSchema)
         val sliceCollection = CollectionType(sliceEntity)
 
-        val x = Recipe2Plan.Recipe(
-            "EntitySlicingTest",
-            listOf(
-                Plan.Particle(
-                    "EntitySlicingTest",
-                    "src/wasm/tests/\$module.wasm",
-                    mapOf(
-                        "s1" to Plan.HandleConnection(null, sliceEntity),
-                        "s2" to Plan.HandleConnection(null, sliceEntity),
-                        "c1" to Plan.HandleConnection(null, sliceCollection)
-                    )
-
-                )
-            )
-        )
+//        val x = Recipe2Plan.Recipe(
+//            "EntitySlicingTest",
+//            listOf(
+//                Plan.Particle(
+//                    "EntitySlicingTest",
+//                    "src/wasm/tests/\$module.wasm",
+//                    mapOf(
+//                        "s1" to Plan.HandleConnection(null, sliceEntity),
+//                        "s2" to Plan.HandleConnection(null, sliceEntity),
+//                        "c1" to Plan.HandleConnection(null, sliceCollection)
+//                    )
+//
+//                )
+//            )
+//        )
 
         val r2p = Recipe2Plan()
 
-        val typeBuilder = r2p.generatePlans(listOf(x)).first()
-
-        val str = typeBuilder.toString()
+//        val typeBuilder = r2p.generatePlans(listOf(x)).first()
 
         // TODO(alxr): Finish assert
         // assertThat(str).isEqualTo()

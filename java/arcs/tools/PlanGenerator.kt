@@ -1,20 +1,25 @@
-package arcs.core.tools
+package arcs.tools
 
-import arcs.core.data.ParticleProto
 import arcs.core.data.Plan
-import arcs.core.data.RecipeEnvelopeProto
-import arcs.core.data.RecipeProto
-import com.squareup.kotlinpoet.*
+import arcs.core.data.proto.ManifestProto
+import arcs.core.data.proto.ParticleProto
+import arcs.core.data.proto.RecipeProto
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeSpec
 
 class PlanGenerator(private val fileBuilder: FileSpec.Builder) {
 
     /** Generate code from a Recipe proto. */
-    fun generate(recipeEnvelopeProto: RecipeEnvelopeProto) {
-        fileBuilder.addType(
-            generatePlan(recipeEnvelopeProto.recipe)
-                .build()
-        )
+    fun generate(manifestProto: ManifestProto) {
+        manifestProto.recipesList.forEach {
+            fileBuilder.addType(
+                generatePlan(it)
+                    .build())
+        }
     }
 
     /** Generate a Plan class from a recipe. */

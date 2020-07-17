@@ -1,6 +1,6 @@
-package arcs.core.tools
+package arcs.tools
 
-import arcs.core.data.RecipeEnvelopeProto
+import arcs.core.data.proto.ManifestProto
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
@@ -9,7 +9,6 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import com.squareup.kotlinpoet.FileSpec
 import java.io.File
-
 
 /** Generates plans from recipes. */
 class Recipe2Plan : CliktCommand(
@@ -24,13 +23,12 @@ class Recipe2Plan : CliktCommand(
     val manifests by argument(help = "paths to protobuf-serialized manifests")
         .file(exists = true).multiple()
 
-
     /** Execute: Generate a plan per input manifest proto */
     override fun run() = manifests.forEach { manifest ->
         val outputFile = outputFile(manifest)
         echo("$manifest --> $outputFile")
 
-        val recipeEnvelopeProto = RecipeEnvelopeProto.parseFrom(manifest.readBytes())
+        val recipeEnvelopeProto = ManifestProto.parseFrom(manifest.readBytes())
         val fileBuilder = FileSpec.builder(packageName, "")
 
         val generator = PlanGenerator(fileBuilder)
