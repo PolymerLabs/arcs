@@ -29,7 +29,7 @@ fun RecipeGraph.toDotGraph(
         val name = particle.spec.name
         val index = nextParticleIndex[name] ?: 0
         nextParticleIndex[name] = index + 1
-        "${name}_${index}"
+        "${name}_$index"
     }
     // We use [IdentityHashMap] instead of a [MutableMap] or [associateBy] because a [Recipe] can
     // have multiple instances of the same [Recipe.Particle].
@@ -44,12 +44,12 @@ fun RecipeGraph.toDotGraph(
         when (node) {
             is RecipeGraph.Node.Particle -> {
                 val nodeLabel = "$name: ${nodeLabeler(node)}"
-                """  ${name}[shape="box", label="$nodeLabel"];"""
+                """  $name[shape="box", label="$nodeLabel"];"""
             }
             is RecipeGraph.Node.Handle -> {
                 val typeText = node.handle.type.toString(toStringOptions)
                 val nodeLabel = "$name: $typeText ${nodeLabeler(node)}"
-                """  ${name}[label="$name: ${nodeLabel}"];"""
+                """  $name[label="$name: $nodeLabel"];"""
             }
         }
     }.joinToString(separator = "\n")
@@ -58,13 +58,12 @@ fun RecipeGraph.toDotGraph(
             when (kind) {
                 is RecipeGraph.EdgeKind.HandleConnection -> {
                     val typeText = kind.spec.type.toString(toStringOptions)
-                    """  ${nodeNames[node]} -> ${nodeNames[succ]}[label="${typeText}"];"""
+                    """  ${nodeNames[node]} -> ${nodeNames[succ]}[label="$typeText"];"""
                 }
                 is RecipeGraph.EdgeKind.JoinConnection -> {
                     val componentText = "${kind.spec.component}"
-                    """  ${nodeNames[node]} -> ${nodeNames[succ]}[label="${componentText}"];"""
+                    """  ${nodeNames[node]} -> ${nodeNames[succ]}[label="$componentText"];"""
                 }
-
             }
         }
     }.joinToString(separator = "\n")
