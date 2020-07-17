@@ -874,6 +874,7 @@ class StorageProxyTest {
         withTimeout(timeout) { receive() }
 
     private fun runTest(block: suspend CoroutineScope.() -> Unit) = runBlocking {
+        // TODO(b/161494972): remove this and fix the tests
         ArcsStrictMode.disableStrictHandles()
         withTimeout(5000) { this.block() }
     }
