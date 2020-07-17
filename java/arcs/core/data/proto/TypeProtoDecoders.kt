@@ -28,6 +28,13 @@ fun PrimitiveTypeProto.decode() = when (this) {
     PrimitiveTypeProto.NUMBER -> PrimitiveType.Number
     PrimitiveTypeProto.BOOLEAN -> PrimitiveType.Boolean
     PrimitiveTypeProto.BIGINT -> PrimitiveType.BigInt
+    PrimitiveTypeProto.BYTE -> PrimitiveType.Byte
+    PrimitiveTypeProto.SHORT -> PrimitiveType.Short
+    PrimitiveTypeProto.INT -> PrimitiveType.Int
+    PrimitiveTypeProto.LONG -> PrimitiveType.Long
+    PrimitiveTypeProto.CHAR -> PrimitiveType.Char
+    PrimitiveTypeProto.FLOAT -> PrimitiveType.Float
+    PrimitiveTypeProto.DOUBLE -> PrimitiveType.Double
     PrimitiveTypeProto.UNRECOGNIZED ->
         throw IllegalArgumentException("Unknown PrimitiveTypeProto value.")
 }
