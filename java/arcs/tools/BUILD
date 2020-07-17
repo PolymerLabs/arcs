@@ -36,6 +36,9 @@ kt_jvm_library(
     ],
     deps = [
         "//java/arcs/core/data",
+        "//java/arcs/core/data/proto",
+        "//java/arcs/core/storage",
+        "//java/arcs/core/storage/api",
         "//java/arcs/core/data/proto:manifest_java_proto",
         "//third_party/kotlin/clikt",
         "//third_party/kotlin/kotlinpoet",

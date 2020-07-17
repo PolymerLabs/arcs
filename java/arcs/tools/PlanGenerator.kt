@@ -1,47 +1,54 @@
 package arcs.tools
 
 import arcs.core.data.Plan
-import arcs.core.data.proto.ManifestProto
-import arcs.core.data.proto.ParticleProto
-import arcs.core.data.proto.RecipeProto
-import com.squareup.kotlinpoet.ClassName
+import arcs.core.data.Recipe
+import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyParser
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.buildCodeBlock
 
-class PlanGenerator(private val fileBuilder: FileSpec.Builder) {
-
-    /** Generate code from a Recipe proto. */
-    fun generate(manifestProto: ManifestProto) {
-        manifestProto.recipesList.forEach {
-            fileBuilder.addType(
-                generatePlan(it)
-                    .build())
-        }
+fun listFromProperties(properties: List<PropertySpec>) = buildCodeBlock {
+    if (properties.isEmpty()) {
+        add("emptyList()")
+        return build()
     }
-
-    /** Generate a Plan class from a recipe. */
-    private fun generatePlan(recipe: RecipeProto): TypeSpec.Builder {
-        val particleSpecClass = ClassName("arcs.core.data.Plan", "Particle")
-        val list = ClassName("kotlin.collections", "List")
-        val listOfParticleSpecs = list.parameterizedBy(particleSpecClass)
-
-        val particleSpecProperty = PropertySpec.builder("particles", listOfParticleSpecs)
-            .initializer(generateParticles(recipe.particlesList).build())
-            .build()
-
-        val planBuilder = TypeSpec.objectBuilder("${recipe.name}Plan")
-            .addProperty(particleSpecProperty)
-            .superclass(Plan::class)
-            .addSuperclassConstructorParameter("%N", particleSpecProperty)
-
-        return planBuilder
-    }
-
-    /** Generate a List of Particle Literals. */
-    private fun generateParticles(particles: List<ParticleProto>): CodeBlock.Builder {
-        return CodeBlock.builder().add("listOf()")
-    }
+    add("listOf(")
+    properties.forEach { add("%N", it) }
+    add(")")
 }
+
+fun Recipe.toGeneration(builder: FileSpec.Builder) {
+    val handles = this.handles.values.map { it.toGeneration() }
+    val plan = PropertySpec.builder("${name}Plan", Plan::class)
+        .initializer(buildCodeBlock {
+            add("%T(", Plan::class)
+            indent()
+            add("particles = emptyList(), ")
+            add("handles = ")
+            add(listFromProperties(handles))
+            add(", ")
+            add("annotations = emptyList()")
+            unindent()
+            add(")")
+        })
+        .build()
+
+    handles.forEach { builder.addProperty(it) }
+
+    builder.addProperty(plan)
+}
+
+fun Recipe.Particle.toGeneration() {}
+
+fun Recipe.Handle.toGeneration() = PropertySpec.builder(name, Plan.Handle::class)
+    .initializer(buildCodeBlock {
+        add("%T(", Plan.Handle::class)
+        add("storageKey = ")
+        add("""%T.parse("%L")""", StorageKeyParser::class, storageKey)
+        add(")")
+    })
+    .build()
+
+fun Annotation.toGeneration() {}

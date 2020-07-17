@@ -1,10 +1,13 @@
 package arcs.tools
 
 import arcs.core.data.proto.ManifestProto
+import arcs.core.data.proto.decodeRecipes
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import com.squareup.kotlinpoet.FileSpec
@@ -22,17 +25,23 @@ class Recipe2Plan : CliktCommand(
     val packageName by option(help = "scope to specified package; default: 'arcs'").default("arcs")
     val manifests by argument(help = "paths to protobuf-serialized manifests")
         .file(exists = true).multiple()
+    val verbose by option("--verbose", "-v", help = "Print logs").flag(default = false)
 
     /** Execute: Generate a plan per input manifest proto */
     override fun run() = manifests.forEach { manifest ->
-        val outputFile = outputFile(manifest)
-        echo("$manifest --> $outputFile")
+        DriverAndKeyConfigurator.configure(null)
 
-        val recipeEnvelopeProto = ManifestProto.parseFrom(manifest.readBytes())
+        val outputFile = outputFile(manifest)
+        if (verbose) {
+            echo("$manifest --> $outputFile")
+        }
+
+        val manifestProto = ManifestProto.parseFrom(manifest.readBytes())
         val fileBuilder = FileSpec.builder(packageName, "")
 
-        val generator = PlanGenerator(fileBuilder)
-        generator.generate(recipeEnvelopeProto)
+        manifestProto.decodeRecipes()
+            .filter { it.name != null }
+            .forEach { it.toGeneration(fileBuilder) }
 
         outputFile.writeText(fileBuilder.build().toString())
     }
