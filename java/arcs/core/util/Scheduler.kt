@@ -74,6 +74,8 @@ class Scheduler(
      */
     val idlenessFlow: Flow<Boolean> = idlenessChannel.asFlow()
 
+    private val currentDispatcherThreadLocal = CommonThreadLocal<Int?>()
+
     init {
         // Consume the agenda channel:
         // 1. Wait until the latest pause-value is false,
@@ -157,7 +159,7 @@ class Scheduler(
             suspendCancellableCoroutine<Unit> {
                 log.debug { "Starting $task" }
                 try {
-                    currentDispatcherThreadLocal.set(dispatcher)
+                    currentDispatcherThreadLocal.set(dispatcher.hashCode())
                     it.resume(task(), timeoutHandler)
                 } finally {
                     currentDispatcherThreadLocal.set(null)
@@ -290,10 +292,10 @@ class Scheduler(
         ) : Scheduler.Task.Listener("dispatcher", "non-particle", block)
     }
 
-    private val currentDispatcherThreadLocal = CommonThreadLocal<CoroutineDispatcher?>()
 
     /** Returns true if the current thread is executing within the given [dispatcher]. */
-    fun isCurrentDispatcher() = currentDispatcherThreadLocal.get() === asCoroutineDispatcher()
+    fun isCurrentDispatcher() =
+        currentDispatcherThreadLocal.get() == asCoroutineDispatcher().hashCode()
 
     companion object {
         /**
