@@ -15,29 +15,24 @@ package arcs.core.util
  * Global configuration for ArcsStrictMode flags.
  */
 object ArcsStrictMode {
-    private var strictHandles_ = ArcsStrictModeProvider.strictHandles()
-
     /**
      * If true, [Handle] operations not executed within a [Scheduler] dispatcher
      * will throw an error.
      */
-    var strictHandles
-        get() = strictHandles_
-        internal set(value) {
-            strictHandles_ = value
-        }
+    var strictHandles: Boolean = ArcsStrictModeProvider.strictHandles
+        internal set
 
     /**
      * [Handle] operations not executed within a [Scheduler] dispatcher
      * will throw an error.
      */
     fun enableStrictHandles() {
-        strictHandles_ = true
+        strictHandles = true
     }
 
     /** [Handle] operations can be executed from any context (but may silently fail) */
     fun disableStrictHandles() {
-        strictHandles_ = false
+        strictHandles = false
     }
 
     /**
@@ -45,12 +40,12 @@ object ArcsStrictMode {
      * settings when done.
      */
     fun enableStrictHandlesForTest(enabled: Boolean = true, block: () -> Unit) {
-        val old = strictHandles_
-        strictHandles_ = enabled
+        val old = strictHandles
+        strictHandles = enabled
         try {
             block()
         } finally {
-            strictHandles_ = old
+            strictHandles = old
         }
     }
 }

@@ -15,6 +15,6 @@ package arcs.core.util
  * Set [ArcsStrictMode] flags from the JS environment.
  */
 object ArcsStrictModeProvider {
-    fun strictHandles() = false
+    val strictHandles = false
     // TODO: take strictMode flags from URL params
 }

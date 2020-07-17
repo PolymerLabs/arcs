@@ -333,7 +333,6 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         check(stateHolder.value.state != ProxyState.NO_SYNC) {
             "getParticleView not valid on non-readable StorageProxy"
         }
-        checkInDispatcher()
 
         log.debug { "Getting particle view" }
         val future = CompletableDeferred<T>()
@@ -580,7 +579,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     }
 
     private fun checkInDispatcher() = check(
-        !ArcsStrictMode.strictHandles || scheduler.currentlyRunningInSchedulerDispatcher(dispatcher)
+        !ArcsStrictMode.strictHandles || scheduler.isCurrentDispatcher()
     ) {
         "Operations can only be used performed Scheduler's Dispatcher"
     }

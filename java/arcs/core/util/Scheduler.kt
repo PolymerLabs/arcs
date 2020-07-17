@@ -292,13 +292,8 @@ class Scheduler(
 
     private val currentDispatcherThreadLocal = CommonThreadLocal<CoroutineDispatcher?>()
 
-    /** The [Scheduler] dispatcher that the current thread is running in, or null. */
-    val currentDispatcher get() = currentDispatcherThreadLocal.get()
-
     /** Returns true if the current thread is executing within the given [dispatcher]. */
-    fun currentlyRunningInSchedulerDispatcher(dispatcher: CoroutineDispatcher): Boolean {
-        return currentDispatcher === dispatcher
-    }
+    fun isCurrentDispatcher() = currentDispatcherThreadLocal.get() === asCoroutineDispatcher()
 
     companion object {
         /**

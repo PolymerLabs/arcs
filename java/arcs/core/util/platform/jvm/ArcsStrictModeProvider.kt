@@ -15,7 +15,7 @@ package arcs.core.util
  * Set [ArcsStrictMode] flags from the JVM environment.
  */
 object ArcsStrictModeProvider {
-    fun strictHandles() = System.getProperty("ArcsStrictMode.strictHandles", "false") == "true"
+    val strictHandles = System.getProperty("ArcsStrictMode.strictHandles", "false") == "true"
 }
 
 // Other options: look local bazel/blaze flags
