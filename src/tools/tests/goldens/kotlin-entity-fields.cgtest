@@ -1,0 +1,96 @@
+[header]
+Kotlin Entity Fields Generation
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+[end_header]
+
+[name]
+generates fields for entity when available
+[input]
+particle T
+  h1: reads Thing {num: Number}
+[results]
+
+        var num: Double
+            get() = super.getSingletonValue("num") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("num", _value)
+        
+        init {
+            this.num = num
+        }
+        
+[end]
+
+[name]
+generates field for a list of primitives
+[input]
+particle T
+  h1: reads Thing {num: List<Number>}
+[results]
+
+        var num: List<Double>
+            get() = super.getSingletonValue("num") as List<Double>? ?: emptyList()
+            private set(_value) = super.setSingletonValue("num", _value)
+        
+        init {
+            this.num = num
+        }
+        
+[end]
+
+[name]
+generates field for a reference
+[opts]
+{"assertedSchema":"Thing"}
+[input]
+particle T
+  h1: reads Thing {other: &Other {name: Text}}
+[results]
+
+        var other: Reference<Other>?
+            get() = super.getSingletonValue("other") as Reference<Other>?
+            private set(_value) = super.setSingletonValue("other", _value)
+        
+        init {
+            this.other = other
+        }
+        
+[end]
+
+[name]
+generates field for a list of references
+[opts]
+{"assertedSchema":"Thing"}
+[input]
+particle T
+  h1: reads Thing {other: List<&Other {name: Text}>}
+[results]
+
+        var other: List<Reference<Other>>
+            get() = super.getSingletonValue("other") as List<Reference<Other>>? ?: emptyList()
+            private set(_value) = super.setSingletonValue("other", _value)
+        
+        init {
+            this.other = other
+        }
+        
+[end]
+
+[name]
+generates an entityId property with Wasm
+[opts]
+{"wasm":true}
+[input]
+particle T
+  h1: reads Thing {num: Number}
+[results]
+
+        var num = num
+            get() = field
+            private set(_value) {
+                field = _value
+            }
+        
+        override var entityId = ""
+[end]

@@ -1,0 +1,70 @@
+[header]
+Kotlin Type Generation
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+[end_header]
+
+[name]
+generates an entity type
+[input]
+particle Module
+  data: reads {count: Number}
+[results]
+EntityType(
+    Schema(
+        setOf(),
+        SchemaFields(
+            singletons = mapOf("count" to FieldType.Number),
+            collections = emptyMap()
+        ),
+        "4c768720e83eca0f85355674ca87181718e8da9c",
+        refinement = { _ -> true },
+        query = null
+    )
+)
+[end]
+
+[name]
+generates a collection of entities
+[input]
+particle Module
+  data: reads [Thing {name: Text}]
+[results]
+CollectionType(
+    EntityType(
+        Schema(
+            setOf(SchemaName("Thing")),
+            SchemaFields(
+                singletons = mapOf("name" to FieldType.Text),
+                collections = emptyMap()
+            ),
+            "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+            refinement = { _ -> true },
+            query = null
+        )
+    )
+)
+[end]
+
+[name]
+generates a reference type
+[input]
+particle Module
+  data: reads &Thing {name: Text}
+[results]
+ReferenceType(
+    EntityType(
+        Schema(
+            setOf(SchemaName("Thing")),
+            SchemaFields(
+                singletons = mapOf("name" to FieldType.Text),
+                collections = emptyMap()
+            ),
+            "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+            refinement = { _ -> true },
+            query = null
+        )
+    )
+)
+[end]
