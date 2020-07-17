@@ -291,8 +291,7 @@ class Scheduler(
             block: () -> Unit
         ) : Scheduler.Task.Listener("dispatcher", "non-particle", block)
     }
-
-
+    
     /** Returns true if the current thread is executing within the given [dispatcher]. */
     fun isCurrentDispatcher() =
         currentDispatcherThreadLocal.get() == asCoroutineDispatcher().hashCode()
