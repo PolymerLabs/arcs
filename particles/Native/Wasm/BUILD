@@ -32,13 +32,13 @@ arcs_kt_schema(
         "Harness.arcs",
         "Services.arcs",
     ],
-    package = "arcs.test",
+    platforms = ["wasm"],
 )
 
 arcs_kt_particles(
     name = "service_particle",
     srcs = ["source/ServiceParticle.kt"],
-    package = "arcs.test",
+    package = "arcs",
     platforms = ["wasm"],
     deps = [":wasm_schemas"],
 )
@@ -46,7 +46,7 @@ arcs_kt_particles(
 arcs_kt_particles(
     name = "test_particle",
     srcs = ["source/TestParticle.kt"],
-    package = "arcs.test",
+    package = "arcs",
     platforms = ["wasm"],
     deps = [":wasm_schemas"],
 )

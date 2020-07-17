@@ -9,6 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
+import {Dictionary} from './hot.js';
 
 /**
  * Returns the set delta between two lists based on direct object comparison.
@@ -85,3 +86,37 @@ export function floatingPromiseToAudit<T>(promise: Promise<T>) {}
  *   }
  */
 export function noAwait(result: {then: Function}) {}
+
+/**
+ * Flat map. Maps every element of the given array using the mapping function
+ * provided, then joins all elements together into a single list.
+ *
+ * Polyfill, replace with native Array.flatMap() once we upgrade to a sufficient
+ * version of Nodejs.
+ */
+export function flatMap<T, U>(array: T[], mapper: (element: T) => U) {
+  return [].concat(...array.map(mapper));
+}
+
+/** Converts a Map to a Dictionary. */
+export function mapToDictionary<T>(map: Map<string, T>): Dictionary<T> {
+  const dict = {};
+  for (const [k, v] of map) {
+    dict[k] = v;
+  }
+  return dict;
+}
+
+/** Recursively delete all fields with the given name. */
+// tslint:disable-next-line: no-any
+export function deleteFieldRecursively(node: any, field: string) {
+  if (node == null || typeof node !== 'object') {
+    return;
+  }
+  if (field in node) {
+    delete node[field];
+  }
+  for (const value of Object.values(node)) {
+    deleteFieldRecursively(value, field);
+  }
+}

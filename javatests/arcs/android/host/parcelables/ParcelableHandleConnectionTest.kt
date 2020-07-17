@@ -16,11 +16,12 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.common.ArcId
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType.Companion.Text
+import arcs.core.data.HandleMode
 import arcs.core.data.Plan.HandleConnection
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.storage.driver.VolatileStorageKey
+import arcs.core.storage.keys.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,7 +31,7 @@ import org.junit.runner.RunWith
 class ParcelableHandleConnectionTest {
 
     private val personSchema = Schema(
-        listOf(SchemaName("Person")),
+        setOf(SchemaName("Person")),
         SchemaFields(mapOf("name" to Text), emptyMap()),
         "42"
     )
@@ -39,6 +40,7 @@ class ParcelableHandleConnectionTest {
     fun handleConnection_parcelableRoundTrip_works() {
         val handleConnection = HandleConnection(
             VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
+            HandleMode.ReadWrite,
             EntityType(personSchema)
         )
 

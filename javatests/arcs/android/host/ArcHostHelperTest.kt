@@ -20,21 +20,31 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import arcs.android.sdk.host.ArcHostHelper
 import arcs.android.sdk.host.createGetRegisteredParticlesIntent
+import arcs.android.sdk.host.createLookupArcStatusIntent
+import arcs.android.sdk.host.createPauseArcHostIntent
 import arcs.android.sdk.host.createStartArcHostIntent
 import arcs.android.sdk.host.createStopArcHostIntent
+import arcs.android.sdk.host.createUnpauseArcHostIntent
 import arcs.android.sdk.host.toComponentName
 import arcs.core.common.ArcId
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType.Companion.Text
+import arcs.core.data.HandleMode
 import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.host.ArcHost
+import arcs.core.host.ArcHostException
+import arcs.core.host.ArcState
+import arcs.core.host.ArcStateChangeCallback
+import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.host.ParticleIdentifier
-import arcs.core.storage.driver.VolatileStorageKey
+import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.util.guardedBy
 import com.google.common.truth.Truth.assertThat
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -44,23 +54,44 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
-import kotlin.coroutines.experimental.suspendCoroutine
 
 @RunWith(AndroidJUnit4::class)
-@UseExperimental(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class ArcHostHelperTest {
     private lateinit var context: Context
     private lateinit var helper: ArcHostHelper
     private lateinit var service: TestAndroidArcHostService
     private lateinit var arcHost: TestArcHost
 
-    class TestArcHost : ArcHost {
+    val personSchema = Schema(
+        setOf(SchemaName("Person")),
+        SchemaFields(mapOf("name" to Text), emptyMap()),
+        "42"
+    )
+
+    val connection = Plan.HandleConnection(
+        VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
+        HandleMode.ReadWrite,
+        EntityType(personSchema)
+    )
+
+    val particleSpec = Plan.Particle(
+        "FooParticle",
+        "foo.bar.FooParticle",
+        mapOf("foo" to connection)
+    )
+
+    val planPartition = Plan.Partition("id", "FooHost", listOf(particleSpec))
+
+    open class TestArcHost : ArcHost {
         private val hostMutex = Mutex()
+
         var startArcCalls: MutableList<Plan.Partition> by guardedBy(hostMutex, mutableListOf())
         var stopArcCalls: MutableList<Plan.Partition> by guardedBy(hostMutex, mutableListOf())
         var registeredParticles: MutableList<ParticleIdentifier> by guardedBy(
             hostMutex, mutableListOf()
         )
+        var paused = false
 
         suspend fun startCalls() = hostMutex.withLock { startArcCalls }
         suspend fun stopCalls() = hostMutex.withLock { stopArcCalls }
@@ -74,21 +105,48 @@ class ArcHostHelperTest {
 
         override suspend fun startArc(partition: Plan.Partition): Unit = hostMutex.withLock {
             startArcCalls.add(partition)
+            if (throws) {
+                throw IllegalArgumentException("Boom!")
+            }
+        }
+
+        override suspend fun pause() {
+            paused = true
+        }
+
+        override suspend fun unpause() {
+            paused = false
+        }
+
+        override suspend fun addOnArcStateChange(
+            arcId: ArcId,
+            block: ArcStateChangeCallback
+        ): ArcStateChangeRegistration {
+            TODO("Not yet implemented")
         }
 
         override suspend fun stopArc(partition: Plan.Partition): Unit = hostMutex.withLock {
             stopArcCalls.add(partition)
         }
 
+        override suspend fun lookupArcHostStatus(partition: Plan.Partition) = status
+
         override suspend fun isHostForParticle(particle: Plan.Particle) =
             registeredParticles.contains(ParticleIdentifier.from(particle.location))
 
         suspend fun registerParticle(particleIdentifier: ParticleIdentifier) =
             hostMutex.withLock { registeredParticles.add(particleIdentifier) }
+
+        companion object {
+            var throws = false
+            var status = ArcState.Stopped
+        }
     }
 
     @Before
     fun setUp() {
+        TestArcHost.throws = false
+        TestArcHost.status = ArcState.Stopped
         context = InstrumentationRegistry.getInstrumentation().targetContext
         service = Robolectric.setupService(TestAndroidArcHostService::class.java)
         arcHost = TestArcHost()
@@ -120,30 +178,56 @@ class ArcHostHelperTest {
     }
 
     @Test
-    fun onStartCommand_callsOnStartArcStopArc_whenStarsAlign() = runBlockingTest {
-        val personSchema = Schema(
-            listOf(SchemaName("Person")),
-            SchemaFields(mapOf("name" to Text), emptyMap()),
-            "42"
+    fun onStartCommand_lookupArcHostStatus_returnsValue() = runBlockingTest {
+        val lookupIntent = planPartition.createLookupArcStatusIntent(
+            TestAndroidArcHostService::class.toComponentName(context),
+            arcHost.hostId
         )
 
-        val connection = Plan.HandleConnection(
-            VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
-            EntityType(personSchema)
+        val actual = runWithResult(lookupIntent) { bundle ->
+            ArcHostHelper.getStringResult(bundle)
+        }
+        assertThat(actual).isEqualTo("Stopped")
+    }
+
+    @Test
+    fun onStartCommand_lookupArcHostStatus_returnsErrorWithExceptionInfo() = runBlockingTest {
+        TestArcHost.status = ArcState.errorWith(IllegalStateException("oops"))
+        val lookupIntent = planPartition.createLookupArcStatusIntent(
+            TestAndroidArcHostService::class.toComponentName(context),
+            arcHost.hostId
         )
 
-        val particleSpec = Plan.Particle(
-            "FooParticle",
-            "foo.bar.FooParticle",
-            mapOf("foo" to connection)
-        )
+        val actual = runWithResult(lookupIntent) { bundle ->
+            ArcHostHelper.getStringResult(bundle)
+        }
+        assertThat(actual).isEqualTo("Error|java.lang.IllegalStateException: oops")
+    }
 
-        val planPartition = Plan.Partition("id", "FooHost", listOf(particleSpec))
+    @Test
+    fun onStartCommand_callsOnStart_throwsException_returnsException() = runBlockingTest {
+        TestArcHost.throws = true
         val startIntent = planPartition.createStartArcHostIntent(
-            TestAndroidArcHostService::class.toComponentName(context)
+            TestAndroidArcHostService::class.toComponentName(context),
+            arcHost.hostId
+        )
+        val exception = runWithResult(startIntent) { bundle ->
+            ArcHostHelper.getExceptionResult(bundle)
+        }
+        assertThat(exception).isInstanceOf(ArcHostException::class.java)
+        assertThat(exception).hasMessageThat().isEqualTo("Boom!")
+        assertThat(exception.stackTrace).contains("TestArcHost")
+    }
+
+    @Test
+    fun onStartCommand_callsOnStartArcStopArc_whenStarsAlign() = runBlockingTest {
+        val startIntent = planPartition.createStartArcHostIntent(
+            TestAndroidArcHostService::class.toComponentName(context),
+            arcHost.hostId
         )
         val stopIntent = planPartition.createStopArcHostIntent(
-            TestAndroidArcHostService::class.toComponentName(context)
+            TestAndroidArcHostService::class.toComponentName(context),
+            arcHost.hostId
         )
         helper.onStartCommandSuspendable(startIntent)
         assertThat(arcHost.startCalls()).containsExactly(planPartition)
@@ -161,27 +245,43 @@ class ArcHostHelperTest {
         arcHost.registerParticle(particleIdentifier2)
 
         val getParticlesIntent = TestAndroidArcHostService::class.toComponentName(context)
-            .createGetRegisteredParticlesIntent()
+            .createGetRegisteredParticlesIntent(arcHost.hostId)
 
-        // Wait for async result
-        runBlocking {
-            suspendCoroutine<List<ParticleIdentifier>?> { coroutine ->
-                ArcHostHelper.setResultReceiver(
-                    getParticlesIntent,
-                    object : ResultReceiver(Handler()) {
-                        override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
-                            val particles =
-                                ArcHostHelper.getParticleIdentifierListResult(resultData)
+        val particles = runWithResult(getParticlesIntent) { bundle ->
+            ArcHostHelper.getParticleIdentifierListResult(bundle)
+        }
 
-                            assertThat(particles).containsExactly(
-                                particleIdentifier, particleIdentifier2
-                            )
-                            coroutine.resume(particles)
-                        }
+        assertThat(particles).containsExactly(particleIdentifier, particleIdentifier2)
+    }
+
+    @Test
+    fun onPauseUnpause() = runBlockingTest {
+        val pauseIntent = TestAndroidArcHostService::class.toComponentName(context)
+            .createPauseArcHostIntent(arcHost.hostId)
+        val unpauseIntent = TestAndroidArcHostService::class.toComponentName(context)
+            .createUnpauseArcHostIntent(arcHost.hostId)
+        helper.onStartCommandSuspendable(pauseIntent)
+        assertThat(arcHost.paused).isTrue()
+
+        helper.onStartCommandSuspendable(unpauseIntent)
+        assertThat(arcHost.paused).isFalse()
+    }
+
+    private fun <T> runWithResult(
+        intent: Intent,
+        transformer: (Bundle?) -> T
+    ): T = runBlocking {
+        suspendCoroutine<T> { coroutine ->
+            ArcHostHelper.setResultReceiver(
+                intent,
+                object : ResultReceiver(Handler()) {
+                    override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
+                        val state = transformer(resultData)
+                        coroutine.resume(state!!)
                     }
-                )
-                helper.onStartCommand(getParticlesIntent)
-            }
+                }
+            )
+            helper.onStartCommand(intent)
         }
     }
 }

@@ -22,8 +22,9 @@ enum class Tag {
     // Handle,
     // Interface,
     Reference,
-    // Relation,
+    Mux,
+    Tuple,
     Singleton,
     // Slot,
-    // TypeVariable,
+    TypeVariable,
 }

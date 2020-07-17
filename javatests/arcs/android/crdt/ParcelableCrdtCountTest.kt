@@ -33,17 +33,17 @@ class ParcelableCrdtCountTest {
         )
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(data.toParcelable(), 0)
+            writeModelData(data)
             marshall()
         }
 
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableCrdtType.Count.crdtDataCreator))
+            readModelData()
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(data)
+        assertThat(unmarshalled).isEqualTo(data)
     }
 
     @Test
@@ -51,17 +51,17 @@ class ParcelableCrdtCountTest {
         val op = CrdtCount.Operation.Increment("alice", 0 to 1)
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(op.toParcelable(), 0)
+            writeOperation(op)
             marshall()
         }
 
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableCrdtType.Count.crdtOperationCreator))
+            readOperation()
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(op)
+        assertThat(unmarshalled).isEqualTo(op)
     }
 
     @Test
@@ -69,16 +69,16 @@ class ParcelableCrdtCountTest {
         val op = CrdtCount.Operation.MultiIncrement("alice", 0 to 1000, delta = 1000)
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(op.toParcelable(), 0)
+            writeOperation(op)
             marshall()
         }
 
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableCrdtType.Count.crdtOperationCreator))
+            readOperation()
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(op)
+        assertThat(unmarshalled).isEqualTo(op)
     }
 }

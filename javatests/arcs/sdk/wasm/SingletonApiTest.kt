@@ -12,10 +12,11 @@
 package arcs.sdk.wasm
 
 class SingletonApiTest : AbstractSingletonApiTest() {
-    var x = 0;
-    init{
-        handles.inHandle.onUpdate{
-            x = 1;
+    var x = 0
+
+    init {
+        handles.inHandle.onUpdate {
+            x = 1
         }
     }
 
@@ -27,9 +28,11 @@ class SingletonApiTest : AbstractSingletonApiTest() {
                         SingletonApiTest_Errors(msg = "case1: populated handle should not be null")
                     )
                 }
-                if(x == 1) {
+                if (x == 1) {
                     handles.errors.store(
-                      SingletonApiTest_Errors(msg = "case1: handle.onUpdate should not have been called yet.")
+                        SingletonApiTest_Errors(
+                            msg = "case1: handle.onUpdate should not have been called yet."
+                        )
                     )
                 }
                 handles.outHandle.clear()
@@ -39,12 +42,13 @@ class SingletonApiTest : AbstractSingletonApiTest() {
                         SingletonApiTest_Errors(msg = "case1: cleared handle should be null")
                     )
                 }
-
             }
             "case2" -> {
-                if(x == 0) {
+                if (x == 0) {
                     handles.errors.store(
-                      SingletonApiTest_Errors(msg = "case1: handle.onUpdate should have been called.")
+                        SingletonApiTest_Errors(
+                            msg = "case1: handle.onUpdate should have been called."
+                        )
                     )
                 }
                 val input = handles.inHandle.fetch()
@@ -52,7 +56,7 @@ class SingletonApiTest : AbstractSingletonApiTest() {
                     num = input?.num ?: 0.0,
                     txt = input?.txt ?: ""
                 )
-                handles.outHandle.set(d.copy(num = d.num.times(2)))
+                handles.outHandle.store(d.copy(num = d.num.times(2)))
             }
             "case3" -> {
                 val input = handles.inHandle.fetch()
@@ -60,7 +64,7 @@ class SingletonApiTest : AbstractSingletonApiTest() {
                     num = input?.num ?: 0.0,
                     txt = input?.txt ?: ""
                 )
-                handles.ioHandle.set(d.copy(d.num.times(3)))
+                handles.ioHandle.store(d.copy(d.num.times(3)))
             }
             "case4" -> {
                 if (handles.ioHandle.fetch() != null) {
@@ -68,8 +72,8 @@ class SingletonApiTest : AbstractSingletonApiTest() {
                         SingletonApiTest_Errors(msg = "case4: cleared handle should be null")
                     )
                 }
-                handles.outHandle.set(SingletonApiTest_OutHandle(txt = "out", num = 0.0))
-                handles.ioHandle.set(SingletonApiTest_IoHandle(txt = "io", num = 0.0))
+                handles.outHandle.store(SingletonApiTest_OutHandle(txt = "out", num = 0.0))
+                handles.ioHandle.store(SingletonApiTest_IoHandle(txt = "io", num = 0.0))
                 if (handles.ioHandle.fetch() == null) {
                     handles.errors.store(
                         SingletonApiTest_Errors(msg = "case4: populated handle should not be null")

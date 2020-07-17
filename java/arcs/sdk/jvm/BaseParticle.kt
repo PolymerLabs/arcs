@@ -14,8 +14,8 @@ package arcs.sdk
 /** Implementation of [Particle] for the JVM. */
 abstract class BaseParticle : Particle {
     /**
-     * This field contains a reference to all of the [Particle]'s handles that were declared in
-     * the manifest.
+     * Default behaviour is to automatically invoke onUpdate; override this if you want
+     * resync-specific behaviour. When overriding, do not call super.onResync.
      */
-    abstract val handles: HandleHolder
+    override fun onResync() = onUpdate()
 }

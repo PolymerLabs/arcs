@@ -21,8 +21,8 @@ import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {Suggestion} from '../../plan/suggestion.js';
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
-import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
-import {singletonHandle, ActiveSingletonEntityStore} from '../../../runtime/storageNG/storage-ng.js';
+import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ramdisk.js';
+import {ActiveSingletonEntityStore, handleForActiveStore} from '../../../runtime/storage/storage.js';
 
 class TestPlanProducer extends PlanProducer {
   options;
@@ -161,7 +161,7 @@ describe('plan producer - search', () => {
     }
 
     async setNextSearch(search: string) {
-      const handle = singletonHandle(this.searchStore, this.arc);
+      const handle = handleForActiveStore(this.searchStore, this.arc);
       await handle.setFromData({current: JSON.stringify([{arc: this.arc.id.idTreeAsString(), search}])});
       return this.onSearchChanged();
     }

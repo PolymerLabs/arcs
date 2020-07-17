@@ -1,6 +1,8 @@
+meta
+  namespace: arcs.tutorials
+
 // Imports contents of another manifest via a relative path from this manifest.
 import 'PeopleSchemas.arcs'
-
 
 // The GetPerson particle allows the user to input their name, then writes
 // the input to the Person handle.

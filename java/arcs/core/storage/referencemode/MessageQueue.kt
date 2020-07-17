@@ -12,8 +12,13 @@
 package arcs.core.storage.referencemode
 
 import kotlin.coroutines.coroutineContext
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -29,18 +34,28 @@ class MessageQueue(
 ) {
     private val mutex = Mutex()
     private val queue = mutableListOf<Message>()
+    val size = atomic(0)
+    @ExperimentalCoroutinesApi
+    val sizeChannel = ConflatedBroadcastChannel(0)
 
     /**
      * Enqueues an incoming [Message] onto the queue and awaits the return value of processing that
      * [Message].
      */
+    @ExperimentalCoroutinesApi
     suspend fun enqueue(message: Message): Boolean {
         require(message !is Message.Enqueued) { "Cannot enqueue an already-enqueued message." }
-
+        size.incrementAndGet().let {
+            if (!sizeChannel.isClosedForSend) sizeChannel.send(it)
+        }
         val deferred = CompletableDeferred<Boolean>(coroutineContext[Job.Key])
         mutex.withLock { queue += message.toEnqueued(deferred) }
-        drainQueue()
-        return deferred.await()
+        CoroutineScope(coroutineContext).launch { drainQueue() }
+        return deferred.await().also {
+            size.decrementAndGet().let {
+                if (!sizeChannel.isClosedForSend) sizeChannel.send(it)
+            }
+        }
     }
 
     private suspend fun drainQueue() {

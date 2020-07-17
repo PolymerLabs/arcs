@@ -11,14 +11,13 @@
 
 package arcs.android.storage.service;
 
-import arcs.android.crdt.ParcelableCrdtException;
-
 /** Mechanism allowing an asynchronous response from the StorageService. */
 interface IResultCallback {
     /**
      * Called to signal a successful/erroneous result from the StorageService or ServiceStore.
      *
-     * @param exception will be {@code null} when the result indicates success.
+     * @param exception will be {@code null} when the result indicates success. Otherwise, will be
+     *     a {@link arcs.android.crdt.CrdtExceptionProto} serialized to bytes.
      */
-    void onResult(in ParcelableCrdtException exception);
+    oneway void onResult(in byte[] exception);
 }

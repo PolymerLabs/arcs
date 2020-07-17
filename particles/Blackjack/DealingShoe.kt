@@ -19,7 +19,7 @@ class DealingShoe : AbstractDealingShoe() {
         if (handle.name != "cardRequest") return
         val request = handles.cardRequest.fetch() ?: return
         val card = pickACard() ?: return
-        handles.nextCard.set(
+        handles.nextCard.store(
             DealingShoe_NextCard(
                 player = request.player,
                 card = card.value.toDouble()
@@ -47,7 +47,7 @@ class DealingShoe : AbstractDealingShoe() {
             choice = (choice + 1) % totalCards
             ++readCards
         }
-        handles.decks.set(localDecks.copy(
+        handles.decks.store(localDecks.copy(
             cards = cards.replaceRange(choice, choice + 1, cardAbsent)
         ))
         return Card(choice % 52)

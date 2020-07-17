@@ -5,7 +5,7 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_android_test_suite(
     name = "service",
@@ -13,14 +13,28 @@ arcs_kt_android_test_suite(
     package = "arcs.android.storage.service",
     deps = [
         "//java/arcs/android/crdt",
+        "//java/arcs/android/crdt:crdt_exception_android_proto",
         "//java/arcs/android/storage",
+        "//java/arcs/android/storage:proxy_message_android_proto",
         "//java/arcs/android/storage/service",
-        "//java/arcs/android/storage/service:aidl",
+        "//java/arcs/core/common",
         "//java/arcs/core/crdt",
         "//java/arcs/core/data",
+        "//java/arcs/core/entity",
+        "//java/arcs/core/host",
         "//java/arcs/core/storage",
+        "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/driver",
-        "//java/arcs/core/testutil",
+        "//java/arcs/core/storage/keys",
+        "//java/arcs/core/storage/referencemode",
+        "//java/arcs/core/storage/testutil",
+        "//java/arcs/core/testutil/handles",
+        "//java/arcs/core/util",
+        "//java/arcs/core/util/testutil",
+        "//java/arcs/jvm/host",
+        "//java/arcs/jvm/util/testutil",
+        "//java/arcs/sdk/android/storage",
+        "//javatests/arcs/core/entity:lib",
         "//third_party/android/androidx_test/ext/junit",
         "//third_party/java/junit:junit-android",
         "//third_party/java/robolectric",

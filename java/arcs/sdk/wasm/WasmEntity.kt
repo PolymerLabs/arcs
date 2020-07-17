@@ -13,16 +13,12 @@ package arcs.sdk.wasm
 
 /** Wasm-specific extensions to the base [Entity] interface. */
 interface WasmEntity {
-    var internalId: String
-    fun schemaHash(): String
+    var entityId: String
     fun encodeEntity(): NullTermByteArray
 }
 
 /** Wasm-specific extensions to the base [EntitySpec] interface. */
 interface WasmEntitySpec<T : WasmEntity> {
-    /** Returns an empty new instance of [T]. */
-    fun create(): T
-
     /** Decodes the given byte array into an instance of [T]. */
     fun decode(encoded: ByteArray): T?
 }

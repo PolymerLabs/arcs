@@ -17,7 +17,8 @@ import {Schema} from '../schema.js';
 import {EntityType} from '../type.js';
 import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
-import {collectionHandleForTest} from '../testing/handle-for-test.js';
+import {handleForStore} from '../storage/storage.js';
+import {isCollectionEntityStore, entityHasName} from '../storage/abstract-store.js';
 
 describe('entity', () => {
   it('can be created, stored, and restored', async () => {
@@ -32,14 +33,15 @@ describe('entity', () => {
     const collectionType = new EntityType(schema).collectionOf();
 
     const storage = await arc.createStore(collectionType);
-    const handle = await collectionHandleForTest(arc, storage);
+    const handle = await handleForStore(storage, arc);
     await handle.add(entity);
 
-    const collection = await collectionHandleForTest(arc, arc.findStoresByType(collectionType)[0]);
+    const store = arc._stores.filter(isCollectionEntityStore).find(entityHasName('TestSchema'));
+    const collection = await handleForStore(store, arc);
     const list = await collection.toList();
     const clone = list[0];
     assert.isDefined(clone);
-    assert.deepEqual(clone, {value: 'hello world'});
+    assert.deepEqual(clone as {}, {value: 'hello world'});
 
     // TODO(https://github.com/PolymerLabs/arcs/pull/2916#discussion_r277793505)
     // Test that clone/entity are not deeply equal.  Revisit once we

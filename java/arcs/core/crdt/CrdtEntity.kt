@@ -80,6 +80,36 @@ class CrdtEntity(
                 allOps = false
             }
         }
+
+        if (_data.creationTimestamp != other.creationTimestamp) {
+            allOps = false
+            if (_data.creationTimestamp == RawEntity.UNINITIALIZED_TIMESTAMP) {
+                _data.creationTimestamp = other.creationTimestamp
+            } else if (other.creationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP) {
+                // Two different values, take minimum.
+                _data.creationTimestamp = minOf(_data.creationTimestamp, other.creationTimestamp)
+            }
+        }
+        if (_data.expirationTimestamp != other.expirationTimestamp) {
+            allOps = false
+            if (_data.expirationTimestamp == RawEntity.UNINITIALIZED_TIMESTAMP) {
+                _data.expirationTimestamp = other.expirationTimestamp
+            } else if (other.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP) {
+                // Two different values, take minimum.
+                _data.expirationTimestamp =
+                    minOf(_data.expirationTimestamp, other.expirationTimestamp)
+            }
+        }
+        if (_data.id != other.id) {
+            allOps = false
+            if (_data.id == RawEntity.NO_REFERENCE_ID) {
+                _data.id = other.id
+            } else if (other.id != RawEntity.NO_REFERENCE_ID) {
+                // Two different ids, this cannot be as this crdts are keyed by id in the backing store.
+                throw CrdtException("Found two different values for id, this should be impossible.")
+            }
+        }
+
         val oldVersionMap = _data.versionMap.copy()
         _data.versionMap = _data.versionMap mergeWith other.versionMap
 
@@ -147,15 +177,22 @@ class CrdtEntity(
                 _data.collections[op.field]?.applyOperation(op.toSetOp())
             is Operation.RemoveFromSet ->
                 _data.collections[op.field]?.applyOperation(op.toSetOp())
+            is Operation.ClearAll -> {
+                _data.singletons.values.forEach {
+                    it.applyOperation(CrdtSingleton.Operation.Clear(op.actor, versionMap))
+                }
+                _data.collections.values.forEach {
+                    it.applyOperation(CrdtSet.Operation.Clear(op.actor, versionMap))
+                }
+                _data.creationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
+                _data.expirationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
+                return true
+            }
         }?.also { success ->
             if (success) {
                 _data.versionMap = _data.versionMap mergeWith op.clock
             }
-        } ?: throw CrdtException("Invalid field: ${op.field} does not exist")
-    }
-
-    override fun updateData(newData: Data) {
-        _data = newData.copy()
+        } ?: throw CrdtException("Invalid op: $op.")
     }
 
     private fun ISingletonOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
@@ -167,7 +204,7 @@ class CrdtEntity(
     private fun ISetOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
         is SetOp.Add -> Operation.AddToSet(actor, clock, fieldName, added)
         is SetOp.Remove -> Operation.RemoveFromSet(actor, clock, fieldName, removed)
-        else -> throw CrdtException("Cannot convert FastForward to CrdtEntity Operation")
+        else -> throw CrdtException("Cannot convert FastForward or Clear to CrdtEntity Operation")
     }
 
     /** Defines the type of data managed by [CrdtEntity] for its singletons and collections. */
@@ -176,15 +213,25 @@ class CrdtEntity(
             /** Simple converter from [Referencable] to [Reference]. */
             fun buildReference(referencable: Referencable): Reference =
                 ReferenceImpl(referencable.id)
+
+            fun wrapReferencable(referencable: Referencable): Reference =
+                WrappedReferencable(referencable)
         }
+    }
+
+    data class WrappedReferencable(val referencable: Referencable) : Reference {
+        override fun unwrap(): Referencable = referencable
+
+        override val id: String
+            get() = referencable.id
     }
 
     /** Minimal [Reference] for contents of a singletons/collections in [Data]. */
     data class ReferenceImpl(override val id: ReferenceId) : Reference {
-        override fun tryDereference(): Referencable =
-            ReferencablePrimitive.tryDereference(id) ?: this
+        override fun unwrap(): Referencable =
+            ReferencablePrimitive.unwrap(id) ?: this
 
-        override fun toString(): String = when (val deref = tryDereference()) {
+        override fun toString(): String = when (val deref = unwrap()) {
             this -> "Reference($id)"
             else -> "Reference($deref)"
         }
@@ -197,7 +244,10 @@ class CrdtEntity(
         /** Singleton fields. */
         val singletons: Map<FieldName, CrdtSingleton<Reference>> = emptyMap(),
         /** Collection fields. */
-        val collections: Map<FieldName, CrdtSet<Reference>> = emptyMap()
+        val collections: Map<FieldName, CrdtSet<Reference>> = emptyMap(),
+        var creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        var expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        var id: ReferenceId = RawEntity.NO_REFERENCE_ID
     ) : CrdtData {
         /** Builds a [CrdtEntity.Data] object from an initial version and a [RawEntity]. */
         constructor(
@@ -207,7 +257,10 @@ class CrdtEntity(
         ) : this(
             versionMap,
             rawEntity.buildCrdtSingletonMap({ versionMap }, referenceBuilder),
-            rawEntity.buildCrdtSetMap({ versionMap }, referenceBuilder)
+            rawEntity.buildCrdtSetMap({ versionMap }, referenceBuilder),
+            rawEntity.creationTimestamp,
+            rawEntity.expirationTimestamp,
+            rawEntity.id
         )
 
         constructor(
@@ -218,22 +271,30 @@ class CrdtEntity(
         ) : this(
             entityVersion,
             rawEntity.buildCrdtSingletonMap(versionProvider, referenceBuilder),
-            rawEntity.buildCrdtSetMap(versionProvider, referenceBuilder)
+            rawEntity.buildCrdtSetMap(versionProvider, referenceBuilder),
+            rawEntity.creationTimestamp,
+            rawEntity.expirationTimestamp,
+            rawEntity.id
         )
 
         fun toRawEntity() = RawEntity(
-            singletons = singletons.mapValues { it.value.consumerView?.tryDereference() },
-            collections = collections.mapValues {
-                it.value.consumerView.map { item -> item.tryDereference() }.toSet()
-            }
+            id,
+            singletons.mapValues { it.value.consumerView?.unwrap() },
+            collections.mapValues {
+                it.value.consumerView.map { item -> item.unwrap() }.toSet()
+            },
+            creationTimestamp,
+            expirationTimestamp
         )
 
-        fun toRawEntity(id: ReferenceId) = RawEntity(
-            id = id,
-            singletons = singletons.mapValues { it.value.consumerView?.tryDereference() },
-            collections = collections.mapValues {
-                it.value.consumerView.map { item -> item.tryDereference() }.toSet()
-            }
+        fun toRawEntity(refId: ReferenceId) = RawEntity(
+            refId,
+            singletons.mapValues { it.value.consumerView?.unwrap() },
+            collections.mapValues {
+                it.value.consumerView.map { item -> item.unwrap() }.toSet()
+            },
+            creationTimestamp,
+            expirationTimestamp
         )
 
         /** Makes a deep copy of this [CrdtEntity.Data] object. */
@@ -242,7 +303,10 @@ class CrdtEntity(
         /* internal */ fun copy(): Data = Data(
             versionMap.copy(),
             HashMap(singletons.mapValues { it.value.copy() }),
-            HashMap(collections.mapValues { it.value.copy() })
+            HashMap(collections.mapValues { it.value.copy() }),
+            creationTimestamp,
+            expirationTimestamp,
+            id
         )
 
         companion object {
@@ -277,8 +341,7 @@ class CrdtEntity(
     /** Valid [CrdtOperation]s for [CrdtEntity]. */
     sealed class Operation(
         open val actor: Actor,
-        override val clock: VersionMap,
-        open val field: FieldName
+        override val clock: VersionMap
     ) : CrdtOperationAtTime {
         /**
          * Represents an [actor] having set the value of a member [CrdtSingleton] [field] to the
@@ -287,9 +350,9 @@ class CrdtEntity(
         data class SetSingleton(
             override val actor: Actor,
             override val clock: VersionMap,
-            override val field: FieldName,
+            val field: FieldName,
             val value: Reference
-        ) : Operation(actor, clock, field) {
+        ) : Operation(actor, clock) {
             /**
              * Converts the [CrdtEntity.Operation] into its corresponding [CrdtSingleton.Operation].
              */
@@ -304,8 +367,8 @@ class CrdtEntity(
         data class ClearSingleton(
             override val actor: Actor,
             override val clock: VersionMap,
-            override val field: FieldName
-        ) : Operation(actor, clock, field) {
+            val field: FieldName
+        ) : Operation(actor, clock) {
             /**
              * Converts the [CrdtEntity.Operation] into its corresponding [CrdtSingleton.Operation].
              */
@@ -320,9 +383,9 @@ class CrdtEntity(
         data class AddToSet(
             override val actor: Actor,
             override val clock: VersionMap,
-            override val field: FieldName,
+            val field: FieldName,
             val added: Reference
-        ) : Operation(actor, clock, field) {
+        ) : Operation(actor, clock) {
             /**
              * Converts the [CrdtEntity.Operation] into its corresponding [CrdtSet.Operation].
              */
@@ -336,13 +399,18 @@ class CrdtEntity(
         data class RemoveFromSet(
             override val actor: Actor,
             override val clock: VersionMap,
-            override val field: FieldName,
+            val field: FieldName,
             val removed: Reference
-        ) : Operation(actor, clock, field) {
+        ) : Operation(actor, clock) {
             /**
              * Converts the [CrdtEntity.Operation] into its corresponding [CrdtSet.Operation].
              */
             fun toSetOp(): SetOp.Remove<Reference> = CrdtSet.Operation.Remove(actor, clock, removed)
         }
+
+        data class ClearAll(
+            override val actor: Actor,
+            override val clock: VersionMap
+        ) : Operation(actor, clock)
     }
 }

@@ -1,0 +1,15 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  package="arcs.android.e2e">
+
+  <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="29"/>
+
+  <application
+    android:allowBackup="false"
+    android:label="Arcs e2e test">
+  </application>
+
+  <instrumentation
+    android:targetPackage="arcs.android.e2e.testapp"
+    android:name="androidx.test.runner.AndroidJUnitRunner"/>
+</manifest>

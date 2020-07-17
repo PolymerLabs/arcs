@@ -147,5 +147,11 @@ class CrdtSingletonTest {
         assertThat(alice.consumerView).isNull()
     }
 
+    @Test
+    fun crdtSingletonData_isDifferentFromCrdtSetData() {
+        // Regression test for b/154181519.
+        assertThat(alice.data is CrdtSet.Data<*>).isFalse()
+    }
+
     private data class Reference(override val id: ReferenceId) : Referencable
 }

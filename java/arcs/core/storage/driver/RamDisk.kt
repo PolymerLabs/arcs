@@ -11,51 +11,13 @@
 
 package arcs.core.storage.driver
 
-import arcs.core.data.Capabilities
-import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.Driver
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.DriverProvider
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.type.Type
 import kotlin.reflect.KClass
-
-/** Protocol to be used with the ramdisk driver. */
-const val RAMDISK_DRIVER_PROTOCOL = "ramdisk"
-
-/** Storage key for a piece of data managed by the ramdisk driver. */
-data class RamDiskStorageKey(private val unique: String) : StorageKey(RAMDISK_DRIVER_PROTOCOL) {
-    override fun toKeyString(): String = unique
-
-    override fun childKeyWithComponent(component: String): StorageKey =
-        RamDiskStorageKey("$unique/$component")
-
-    override fun toString(): String = super.toString()
-
-    companion object {
-        private val RAMDISK_STORAGE_KEY_PATTERN = "^(.*)\$".toRegex()
-
-        init {
-            // When RamDiskStorageKey is imported, this will register its parser with the storage
-            // key parsers.
-            StorageKeyParser.addParser(RAMDISK_DRIVER_PROTOCOL, ::fromString)
-        }
-
-        fun registerParser() {
-            StorageKeyParser.addParser(RAMDISK_DRIVER_PROTOCOL, ::fromString)
-        }
-
-        private fun fromString(rawKeyString: String): RamDiskStorageKey {
-            val match =
-                requireNotNull(RAMDISK_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
-                    "Not a valid VolatileStorageKey: $rawKeyString"
-                }
-
-            return RamDiskStorageKey(match.groupValues[1])
-        }
-    }
-}
 
 /**
  * Provides RamDisk storage drivers.
@@ -75,13 +37,13 @@ class RamDiskDriverProvider : DriverProvider {
 
     override suspend fun <Data : Any> getDriver(
         storageKey: StorageKey,
-        existenceCriteria: ExistenceCriteria,
-        dataClass: KClass<Data>
+        dataClass: KClass<Data>,
+        type: Type
     ): Driver<Data> {
         require(willSupport(storageKey)) {
             "This provider does not support StorageKey: $storageKey"
         }
-        return VolatileDriver(storageKey, existenceCriteria, RamDisk.memory)
+        return VolatileDriver(storageKey, RamDisk.memory)
     }
 
     /*
@@ -91,18 +53,24 @@ class RamDiskDriverProvider : DriverProvider {
 
     override fun equals(other: Any?): Boolean = other is RamDiskDriverProvider
     override fun hashCode(): Int = this::class.hashCode()
+
+    override suspend fun removeAllEntities() = RamDisk.clear()
+
+    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
+        // RamDisk storage is opaque, so remove all entities.
+        removeAllEntities()
 }
 
 /** Singleton, for maintaining a single [VolatileMemory] reference to be shared across all arcs. */
 object RamDisk {
     /* internal */ val memory = VolatileMemory()
 
-    init {
-        CapabilitiesResolver.registerKeyCreator(
-            RAMDISK_DRIVER_PROTOCOL,
-            Capabilities.TiedToRuntime
-        ) { _, _ -> RamDiskStorageKey("") }
-    }
+    /* internal */ fun addListener(listener: (StorageKey, Any?) -> Unit) =
+        memory.addListener(listener)
+
+    /* internal */ fun removeListener(listener: (StorageKey, Any?) -> Unit) =
+        memory.removeListener(listener)
+
     /** Clears every piece of data from the [RamDisk] memory. */
     fun clear() = memory.clear()
 }

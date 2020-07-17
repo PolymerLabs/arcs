@@ -12,10 +12,10 @@ import {Schema2Cpp} from './schema2cpp.js';
 import {Schema2Kotlin} from './schema2kotlin.js';
 
 const opts = minimist(process.argv.slice(2), {
-  string: ['outdir', 'outfile', 'package'],
-  boolean: ['cpp', 'kotlin', 'update', 'wasm', 'help'],
-  alias: {c: 'cpp', k: 'kotlin', d: 'outdir', f: 'outfile', u: 'update', p: 'package'},
-  default: {outdir: '.', package: 'arcs'}
+  string: ['outdir', 'outfile'],
+  boolean: ['cpp', 'kotlin', 'update', 'wasm', 'test_harness', 'help'],
+  alias: {c: 'cpp', k: 'kotlin', d: 'outdir', f: 'outfile', u: 'update'},
+  default: {outdir: '.'}
 });
 
 if (opts.help || opts._.length === 0) {
@@ -30,9 +30,9 @@ Options
   --cpp, -c      generate C++ code
   --kotlin, -k   generate Kotlin code
   --wasm         whether to output wasm-specific code (applies to Kotlin only)
+  --test_harness whether to output a particle test harness only (applies to Kotlin only)
   --outdir, -d   output directory; defaults to '.'
   --outfile, -f  output filename; if omitted, generated from the manifest name
-  --package, -p  scope generated code to the specified package or namespace
   --update, -u   only generate if the source file is newer than the destination
   --help         usage info
 `);

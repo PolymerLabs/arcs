@@ -11,7 +11,21 @@
 
 package arcs.core.host
 
+import arcs.core.common.ArcId
 import arcs.core.data.Plan
+
+/**
+ * Represents a registered callback listenenr and the [ArcId] it's registered to compactly.
+ * Primarily used to remove callbacks.
+ */
+@Suppress("EXPERIMENTAL_FEATURE_WARNING")
+inline class ArcStateChangeRegistration(private val callbackId: String) {
+    constructor(arcId: ArcId, block: Any) : this("$arcId:${block.hashCode()}")
+
+    fun arcId() = callbackId.substringBefore(":", "").also { check(it.isNotEmpty()) }
+}
+
+typealias ArcStateChangeCallback = (ArcId, ArcState) -> Unit
 
 /**
  * An [ArcHost] manages the instantiation and execution of particles participating in an Arc by
@@ -37,10 +51,48 @@ interface ArcHost {
      * resurrection, and notifying particles they are at the end of their lifecycle.
      */
     suspend fun stopArc(partition: Plan.Partition)
-    // TODO: HandleMessage
+
+    /** Returns [ArcState] for a given [Plan.Partition]. */
+    suspend fun lookupArcHostStatus(partition: Plan.Partition): ArcState
 
     /**
      * Returns true if the provided [Plan.Particle] can be loaded by this [ArcHost].
      */
     suspend fun isHostForParticle(particle: Plan.Particle): Boolean
+
+    /**
+     * Pauses the Host: the host will stop every running arc, and stop starting new arcs until
+     * unpause() is called. Requests to start arc received while in pause will be started once
+     * unpause is called. This may be an expensive and disruptive operation, should be used with
+     * care.
+     */
+    suspend fun pause()
+
+    /**
+     * Unpause the Host: should only be called after pause(). After unpausing, the host will start
+     * any pending arc, and will be able to respond to new startArc calls.
+     */
+    suspend fun unpause()
+
+    /**
+     * Shutdown the [ArcHost]. Implies [pause()] but goes further, releasing all resources held
+     * by the [ArcHost]. This may be called, for example, by Android lifecycle methods in low
+     * memory situations, user initiated shutdown, page navigation on the Web, or cloud DevOps.
+     */
+    suspend fun shutdown() = Unit
+
+    /**
+     * Registers a callback to monitor [ArcState] changes for [arcId].
+     * Callbacks are not guaranteed to persist across [ArcHost] restarts.
+     **/
+    suspend fun addOnArcStateChange(
+        arcId: ArcId,
+        block: ArcStateChangeCallback
+    ): ArcStateChangeRegistration
+
+    /**
+     * Remove a callback used to monitor [ArcState] changes for [arcId].
+     * Callbacks are not guaranteed to persist across [ArcHost] restarts.
+     **/
+    suspend fun removeOnArcStateChange(registration: ArcStateChangeRegistration) = Unit
 }

@@ -15,6 +15,8 @@ import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.CrdtSet.Data
 import arcs.core.crdt.CrdtSet.IOperation
+import arcs.core.data.RawEntity
+import arcs.core.data.util.toReferencable
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.Before
@@ -56,6 +58,27 @@ class CrdtSetTest {
         alice.add("bob", VersionMap("bob" to 1), "one")
 
         assertThat(alice.consumerView).containsExactly(Reference("one"))
+    }
+
+    @Test
+    fun supportsAddingSameValueAgain_keepsNewValue() {
+        val alice: CrdtSet<ReferenceWithValue> = CrdtSet()
+        alice.applyOperation(
+            CrdtSet.Operation.Add(
+                "alice",
+                VersionMap("alice" to 1),
+                ReferenceWithValue("one", 1)
+            )
+        )
+        alice.applyOperation(
+            CrdtSet.Operation.Add(
+                "alice",
+                VersionMap("alice" to 2),
+                ReferenceWithValue("one", 2)
+            )
+        )
+
+        assertThat(alice.consumerView).containsExactly(ReferenceWithValue("one", 2))
     }
 
     @Test
@@ -133,6 +156,68 @@ class CrdtSetTest {
                 Remove("charlie", VersionMap("alice" to 1), "two")
             )
         ).isFalse()
+    }
+
+    @Test
+    fun clear_matchingVersionMap() {
+        alice.add("alice", VersionMap("alice" to 1), "one")
+        alice.add("bob", VersionMap("bob" to 1), "two")
+        alice.add("bob", VersionMap("bob" to 2), "one")
+        alice.add("charlie", VersionMap("charlie" to 1), "three")
+
+        // Non-actor counts can be larger the store's clock, but the actor's count must match.
+        assertThat(alice.versionMap).isEqualTo(VersionMap("alice" to 1, "bob" to 2, "charlie" to 1))
+        assertThat(
+            alice.applyOperation(
+                Clear("charlie", VersionMap("alice" to 2, "bob" to 2, "charlie" to 1))
+            )
+        ).isTrue()
+        assertThat(alice.consumerView).isEmpty()
+    }
+
+    @Test
+    fun clear_laggingVersionMap() {
+        alice.add("alice", VersionMap("alice" to 1), "one")
+        alice.add("bob", VersionMap("bob" to 1), "two")
+        alice.add("bob", VersionMap("bob" to 2), "three")
+        alice.add("charlie", VersionMap("charlie" to 1), "four")
+
+        // Charlie's view of Bob's clock is behind Alice's, so one of Bob's entries isn't removed.
+        assertThat(alice.versionMap).isEqualTo(VersionMap("alice" to 1, "bob" to 2, "charlie" to 1))
+        assertThat(
+            alice.applyOperation(
+                Clear("charlie", VersionMap("alice" to 1, "bob" to 1, "charlie" to 1))
+            )
+        ).isTrue()
+        assertThat(alice.consumerView).containsExactly(Reference("three"))
+    }
+
+    @Test
+    fun clear_noVersionMap() {
+        alice.add("alice", VersionMap("alice" to 1), "one")
+        alice.add("bob", VersionMap("bob" to 1), "two")
+        alice.add("bob", VersionMap("bob" to 2), "one")
+        alice.add("charlie", VersionMap("charlie" to 1), "three")
+
+        assertThat(alice.applyOperation(Clear("charlie", VersionMap()))).isTrue()
+        assertThat(alice.consumerView).isEmpty()
+    }
+
+    @Test
+    fun clear_invalidVersionMap() {
+        alice.add("alice", VersionMap("alice" to 1), "one")
+        alice.add("charlie", VersionMap("charlie" to 1), "two")
+        alice.add("charlie", VersionMap("charlie" to 2), "three")
+
+        // Charlie's count must match for any items to be removed.
+        assertThat(alice.versionMap).isEqualTo(VersionMap("alice" to 1, "charlie" to 2))
+        assertThat(
+            alice.applyOperation(
+                Clear("charlie", VersionMap("alice" to 1, "charlie" to 1))
+            )
+        ).isFalse()
+        assertThat(alice.consumerView)
+            .containsExactly(Reference("one"), Reference("two"), Reference("three"))
     }
 
     @Test
@@ -241,6 +326,30 @@ class CrdtSetTest {
 
         assertThat(alice.data.versionMap).isEqualTo(bob.data.versionMap)
         assertThat(alice.data.values).containsExactlyEntriesIn(bob.data.values)
+    }
+
+    @Test
+    fun merge_canMergeAdditionsByTwoActors() {
+        assertThat(alice.applyOperation(Add("alice", VersionMap("alice" to 1), "a"))).isTrue()
+        assertThat(bob.applyOperation(Add("bob", VersionMap("bob" to 1), "b"))).isTrue()
+
+        val changes = alice.merge(bob.data)
+
+        val modelChanges = requireNotNull(
+            changes.modelChange as? CrdtChange.Data<Data<Reference>, IOperation<Reference>>
+        )
+        val otherChanges = requireNotNull(
+            changes.otherChange as? CrdtChange.Operations<Data<Reference>, IOperation<Reference>>
+        )
+        val expectedVersionMap = VersionMap("alice" to 1, "bob" to 1)
+        assertThat(modelChanges.data.versionMap).isEqualTo(expectedVersionMap)
+        assertThat(modelChanges.data.values).containsExactly(
+            "a", CrdtSet.DataValue(VersionMap("alice" to 1), Reference("a")),
+            "b", CrdtSet.DataValue(VersionMap("bob" to 1), Reference("b"))
+        )
+        assertThat(otherChanges.ops).containsExactly(
+            Add("alice", VersionMap("alice" to 1), "a")
+        )
     }
 
     @Test
@@ -525,7 +634,100 @@ class CrdtSetTest {
         assertThat(otherChange3.isEmpty()).isFalse()
     }
 
+    @Test
+    fun returnsEmptyOtherChange_whenMergingIntoEmptyModel() {
+        // Alice is empty, Bob has an item.
+        bob.add("a", VersionMap("a" to 1), "foo")
+
+        val (modelChange, otherChange) = alice.merge(bob.data)
+        assertThat(modelChange.isEmpty()).isFalse()
+        assertThat(otherChange.isEmpty()).isTrue()
+    }
+
+    @Test
+    fun merge_handlesRawEntityChange() {
+        val new = CrdtSet(
+            CrdtSet.DataImpl(
+                VersionMap(
+                    "collectionReadHandle1" to 4,
+                    "referenceCollectionReadHandle3" to 2
+                ),
+                mutableMapOf(
+                    "entity1" to CrdtSet.DataValue(
+                        VersionMap(
+                            "collectionReadHandle1" to 3,
+                            "referenceCollectionReadHandle3" to 1
+                        ),
+                        RawEntity(
+                            id = "entity1",
+                            singletons = mapOf("name" to "Jason".toReferencable()),
+                            collections = emptyMap()
+                        )
+                    ),
+                    "entity2" to CrdtSet.DataValue(
+                        VersionMap(
+                            "collectionReadHandle1" to 4,
+                            "referenceCollectionReadHandle3" to 2
+                        ),
+                        RawEntity(
+                            id = "entity2",
+                            singletons = mapOf("name" to "Bob".toReferencable()),
+                            collections = emptyMap()
+                        )
+                    )
+                )
+            )
+        )
+        val old = CrdtSet(
+            CrdtSet.DataImpl(
+                VersionMap(
+                    "collectionReadHandle1" to 3,
+                    "referenceCollectionReadHandle3" to 2
+                ),
+                mutableMapOf(
+                    "entity1" to CrdtSet.DataValue(
+                        VersionMap(
+                            "collectionReadHandle1" to 3,
+                            "referenceCollectionReadHandle3" to 1
+                        ),
+                        RawEntity(
+                            id = "entity1",
+                            singletons = mapOf("name" to "Jason".toReferencable()),
+                            collections = emptyMap()
+                        )
+                    ),
+                    "entity2" to CrdtSet.DataValue(
+                        VersionMap(
+                            "collectionReadHandle1" to 2,
+                            "referenceCollectionReadHandle3" to 2
+                        ),
+                        RawEntity(
+                            id = "entity2",
+                            singletons = mapOf("name" to "NotBobYet".toReferencable()),
+                            collections = emptyMap()
+                        )
+                    )
+                )
+            )
+        )
+
+        // NotBobYet should've been overwritten with Bob, given that the "new" entry for entity2 has
+        // a name of "Bob" and a newer VersionMap.
+        old.merge(new.data)
+        assertThat(old.consumerView).contains(
+            RawEntity(
+                id = "entity2",
+                singletons = mapOf("name" to "Bob".toReferencable()),
+                collections = emptyMap()
+            )
+        )
+    }
+
     private data class Reference(override val id: ReferenceId) : Referencable
+    private data class ReferenceWithValue(
+        override val id: ReferenceId,
+        val value: Int
+    ) : Referencable
 
     /** Pseudo-constructor for [CrdtSet.Operation.Add]. */
     private fun Add(actor: Actor, versions: VersionMap, id: ReferenceId) =
@@ -534,6 +736,10 @@ class CrdtSetTest {
     /** Pseudo-constructor for [CrdtSet.Operation.Remove]. */
     private fun Remove(actor: Actor, versions: VersionMap, id: ReferenceId) =
         CrdtSet.Operation.Remove(actor, versions, Reference(id))
+
+    /** Pseudo-constructor for [CrdtSet.Operation.Remove]. */
+    private fun Clear(actor: Actor, versions: VersionMap) =
+        CrdtSet.Operation.Clear<Reference>(actor, versions)
 
     private fun CrdtSet<Reference>.add(
         actor: Actor,

@@ -15,9 +15,8 @@ import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
-import {RamDiskStorageDriverProvider} from '../runtime/storageNG/drivers/ramdisk.js';
-import {Flags} from '../runtime/flags.js';
-import {VolatileStorageKey} from '../runtime/storageNG/drivers/volatile.js';
+import {RamDiskStorageDriverProvider} from '../runtime/storage/drivers/ramdisk.js';
+import {VolatileStorageKey} from '../runtime/storage/drivers/volatile.js';
 import {ArcId} from '../runtime/id.js';
 import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 
@@ -40,46 +39,6 @@ describe('recipe descriptions test', () => {
 
   function createManifestString(options) {
     options = options || {};
-
-    const myBoxType = Flags.useNewStorageStack ? '![Box]' : 'Box';
-    const myBoxData = Flags.useNewStorageStack ?
-`  {
-    "root": {
-      "values": {
-        "anid": {
-          "value": {"id": "anid", "rawData": {"height": 3, "width": 5${options.includeEntityName ? ', "name": "favorite-box"': ''}}},
-          "version": {"u": 1}
-        }
-      },
-      "version": {"u": 1}
-    },
-    "locations": {}
-  }` :
-`  [
-    {"height": 3, "width": 5${options.includeEntityName ? ', "name": "favorite-box"' : ''}}
-  ]`;
-
-    const allBoxData = Flags.useNewStorageStack ?
-`  {
-    "root": {
-      "values": {
-        "anid": {
-          "value": {"id": "anid", "rawData": {"height": 1, "width": 2}},
-          "version": {"u": 1}
-        },
-        "atwoid": {
-          "value": {"id": "atwoid", "rawData": {"height": 2, "width": 3}},
-          "version": {"u": 1}
-        }
-      },
-      "version": {"u": 1}
-    },
-    "locations": {}
-  }` :
-`  [
-    {"height": 1, "width": 2},
-    {"height": 2, "width": 3}
-  ]`;
 
     return `
 schema Box
@@ -118,13 +77,39 @@ recipe
 ${options.includeStore ? `
 resource MyBox
   start
-${myBoxData}
+  {
+    "root": {
+      "values": {
+        "anid": {
+          "value": {"id": "anid", "rawData": {"height": 3, "width": 5${options.includeEntityName ? ', "name": "favorite-box"': ''}}},
+          "version": {"u": 1}
+        }
+      },
+      "version": {"u": 1}
+    },
+    "locations": {}
+  }
 
-store BoxStore of ${myBoxType} 'mybox' in MyBox` : ''}
+store BoxStore of ![Box] 'mybox' in MyBox` : ''}
 ${options.includeAllStore ? `
 resource AllBoxes
   start
-${allBoxData}
+  {
+    "root": {
+      "values": {
+        "anid": {
+          "value": {"id": "anid", "rawData": {"height": 1, "width": 2}},
+          "version": {"u": 1}
+        },
+        "atwoid": {
+          "value": {"id": "atwoid", "rawData": {"height": 2, "width": 3}},
+          "version": {"u": 1}
+        }
+      },
+      "version": {"u": 1}
+    },
+    "locations": {}
+  }
 
 store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
 `;

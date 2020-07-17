@@ -319,8 +319,8 @@ arcs_manifest(
 arcs_kt_schema(
     name = "handles_schemas",
     srcs = ["Handles.arcs"],
-    package = "arcs.tutorials",
     deps = [":shared_people_schemas"],
+    platforms = ["wasm"],
 )
 
 arcs_kt_particles(
@@ -457,6 +457,7 @@ arcs_kt_schema(
     name = "collections_schemas",
     srcs = ["Collections.arcs"],
     deps = [":shared_people_schemas"]
+    platforms = ["wasm"],
 )
 
 arcs_kt_particles(

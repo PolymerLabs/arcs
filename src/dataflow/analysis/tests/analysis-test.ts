@@ -445,23 +445,6 @@ describe('FlowGraph validation', () => {
     assertGraphFailures(graph, [`'check bar is trusted' failed: no data ingress.`]);
   });
 
-  it('fails when the edge has no ingress', async () => {
-    const graph = await buildFlowGraph(`
-      particle P1
-        foo: writes Foo {}
-        claim foo is trusted
-      particle P2
-        bar: reads Foo {}
-        check bar is trusted
-      recipe R
-        P1
-          foo: writes h
-        P2
-          bar: reads h
-    `);
-    assertGraphFailures(graph, [`'check bar is trusted' failed: no data ingress.`]);
-  });
-
   it('fails when a different tag is claimed', async () => {
     const graph = await buildFlowGraph(`
       particle P1
@@ -1433,6 +1416,123 @@ describe('FlowGraph validation', () => {
       assert.isFalse(await validateCondition('is trusted and is somethingElse'));
       assert.isFalse(await validateCondition('is trusted and (is somethingElse or is someOtherThing)'));
       assert.isFalse(await validateCondition('(is trusted and is somethingElse) or (is trusted and is someOtherThing)'));
+    });
+  });
+
+  describe(`checks using the 'implies' operator`, () => {
+    it('succeeds when antecedent is not met', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          output: writes Foo {}
+          claim output is t2
+        particle P2
+          inputToCheck: reads Foo {}
+          check inputToCheck (is t1 => is t2)
+        recipe R
+          P1
+            output: writes h
+          P2
+            inputToCheck: reads h
+      `);
+      markParticlesWithIngress(graph, 'P1');
+      assert.isTrue(validateGraph(graph).isValid);
+    });
+
+    it('fails when antecedent is met but consequent is not', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          output: writes Foo {}
+          claim output is t1
+        particle P2
+          inputToCheck: reads Foo {}
+          check inputToCheck (is t1 => is t2)
+        recipe R
+          P1
+            output: writes h
+          P2
+            inputToCheck: reads h
+      `);
+      markParticlesWithIngress(graph, 'P1');
+      assertGraphFailures(graph, [
+        `'check inputToCheck (is t1 => is t2)' failed for path: P1.output -> P2.inputToCheck`,
+      ]);
+    });
+
+    it('succeeds when both antecedent and consequent are met', async () => {
+      const graph = await buildFlowGraph(`
+        particle P1
+          output: writes Foo {}
+          claim output is t1 and is t2
+        particle P2
+          inputToCheck: reads Foo {}
+          check inputToCheck (is t1 => is t2)
+        recipe R
+          P1
+            output: writes h
+          P2
+            inputToCheck: reads h
+      `);
+      markParticlesWithIngress(graph, 'P1');
+      assert.isTrue(validateGraph(graph).isValid);
+    });
+
+    it(`handles complex nesting`, async () => {
+      const validateCondition = async (checkCondition: string) => {
+        const graph = await buildFlowGraph(`
+          particle P1
+            output: writes Foo {}
+            claim output is trusted and is private
+          particle P2
+            trustedSource: reads Foo {}
+            inputToCheck: reads Foo {}
+            check inputToCheck ${checkCondition}
+          recipe R
+            P1
+              output: writes h
+            P2
+              trustedSource: reads h
+              inputToCheck: reads h
+        `);
+        markParticlesWithIngress(graph, 'P1');
+        return validateGraph(graph).isValid;
+      };
+
+      // Basic implications of form A => B, in lots of different permutations.
+      assert.isTrue(await validateCondition('is from handle trustedSource'));
+      assert.isTrue(await validateCondition('(is from handle trustedSource => is trusted)'));
+      assert.isTrue(await validateCondition('(is trusted => is from handle trustedSource)'));
+      assert.isTrue(await validateCondition('(is not from handle trustedSource => is trusted)'));
+      assert.isTrue(await validateCondition('(is not trusted => is from handle trustedSource)'));
+      assert.isTrue(await validateCondition('(is not from handle trustedSource => is not trusted)'));
+      assert.isTrue(await validateCondition('(is not trusted => is not from handle trustedSource)'));
+      assert.isFalse(await validateCondition('(is from handle trustedSource => is someOtherTag)'));
+      assert.isTrue(await validateCondition('(is someOtherTag => is not from handle trustedSource)'));
+
+      // Implications of form A => (B op C).
+      assert.isTrue(await validateCondition('(is from handle trustedSource => (is trusted and is private))'));
+      assert.isTrue(await validateCondition('(is from handle trustedSource => (is trusted or is someOtherTag))'));
+      assert.isFalse(await validateCondition('(is from handle trustedSource => (is trusted and is someOtherTag))'));
+
+      // Implications of form (A or B) => C.
+      assert.isTrue(await validateCondition('((is from handle trustedSource and is trusted) => is private)'));
+      assert.isFalse(await validateCondition('((is from handle trustedSource and is trusted) => is someOtherTag)'));
+      assert.isTrue(await validateCondition('((is from handle trustedSource and is someOtherTag) => is yetAnotherTag)'));
+      assert.isTrue(await validateCondition('((is from handle trustedSource or is someOtherTag) => is private)'));
+      assert.isFalse(await validateCondition('((is from handle trustedSource or is someOtherTag) => is yetAnotherTag)'));
+
+      // Implications of form (A => B) => C.
+      assert.isTrue(await validateCondition('((is from handle trustedSource => is trusted) => is private)'));
+      assert.isFalse(await validateCondition('((is from handle trustedSource => is trusted) => is someOtherTag)'));
+      assert.isTrue(await validateCondition('((is from handle trustedSource => is someOtherTag) => is yetAnotherTag)'));
+      assert.isTrue(await validateCondition('((is someOtherTag => is yetAnotherTag) => is private)'));
+      assert.isFalse(await validateCondition('((is someOtherTag => is yetAnotherTag) => is stillOneMoreTag)'));
+
+      // Implications of form A => (B => C).
+      assert.isTrue(await validateCondition('(is from handle trustedSource => (is trusted => is private))'));
+      assert.isFalse(await validateCondition('(is from handle trustedSource => (is trusted => is someOtherTag))'));
+      assert.isTrue(await validateCondition('(is from handle trustedSource => (is someOtherTag => is yetAnotherTag))'));
+      assert.isTrue(await validateCondition('(is someOtherTag => (is trusted => is private))'));
+      assert.isTrue(await validateCondition('(is someOtherTag => (is yetAnotherTag => is stillOneMoreTag))'));
     });
   });
 

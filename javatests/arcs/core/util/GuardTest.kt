@@ -1,7 +1,7 @@
 package arcs.core.util
 
-import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -67,6 +67,7 @@ class GuardTest {
     @Test
     fun lazyInitializer_neverCalled_whenSetHappensFisrst_andIsNull() = runBlockingTest {
         var initializerCalled = false
+
         class NullableValue {
             val mutex = Mutex()
             var value: Int? by guardedBy(mutex) {
@@ -74,6 +75,7 @@ class GuardTest {
                 1
             }
         }
+
         val obj = NullableValue()
 
         assertThat(initializerCalled).isFalse()
@@ -89,7 +91,7 @@ class GuardTest {
     fun accessingGuardedValue_outsideOfLock_throws() {
         val obj = RequiresLocking()
 
-        assertThrows(IllegalStateException::class) { println(obj.value) }
+        assertFailsWith<IllegalStateException> { println(obj.value) }
     }
 
     @Test
@@ -105,7 +107,7 @@ class GuardTest {
     fun mutatingGuardedValue_outsideOfLock_throws() {
         val obj = RequiresLocking()
 
-        assertThrows(IllegalStateException::class) { obj.value = 25 }
+        assertFailsWith<IllegalStateException> { obj.value = 25 }
     }
 
     @Test

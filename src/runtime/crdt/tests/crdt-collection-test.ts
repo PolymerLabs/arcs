@@ -59,6 +59,22 @@ describe('CRDTCollection', () => {
     });
     assert.sameMembers([...set.getParticleView()].map(a => a.id), ['one']);
   });
+  it('can add the same id twice keeping the first value', () => {
+    const set = new CRDTCollection<{id: string, value: number}>();
+    set.applyOperation({
+      type: CollectionOpTypes.Add,
+      added: {id: 'one', value: 1},
+      clock: {me: 1},
+      actor: 'me'
+    });
+    assert.isTrue(set.applyOperation({
+      type: CollectionOpTypes.Add,
+      added: {id: 'one', value: 2},
+      clock: {me: 2},
+      actor: 'me'
+    }));
+    assert.sameMembers([...set.getParticleView()].map(a => a.value), [1]);
+  });
   it('rejects add operations not in sequence', () => {
     const set = new CRDTCollection<{id: string}>();
     set.applyOperation({
@@ -332,6 +348,36 @@ describe('CRDTCollection', () => {
     }
   });
 
+  it('can merge additions by two actors', () => {
+    const set1 = new CRDTCollection<{id: string}>();
+    const set2 = new CRDTCollection<{id: string}>();
+    assert.isTrue(set1.applyOperation(addOp('added by a', 'a', {a: 1})));
+    assert.isTrue(set2.applyOperation(addOp('added by b', 'b', {b: 1})));
+
+    const {modelChange, otherChange} = set1.merge(set2.getData());
+
+    const expectedVersion = {a: 1, b: 1};
+    assert.deepEqual(modelChange, {
+      changeType: ChangeType.Model,
+      modelPostChange: {
+        values: {
+          'added by a': {value: {id: 'added by a'}, version: {a: 1}},
+          'added by b': {value: {id: 'added by b'}, version: {b: 1}}
+        },
+        version: expectedVersion
+      },
+    });
+    assert.deepEqual(otherChange, {
+      changeType: ChangeType.Operations,
+      operations: [{
+        type: CollectionOpTypes.Add,
+        added: {id: 'added by a'},
+        actor: 'a',
+        clock: {a: 1}
+      }]
+    });
+  });
+
   it('can simplify single-actor add ops in merges', () => {
     const set1 = new CRDTCollection<{id: string}>();
     const set2 = new CRDTCollection<{id: string}>();
@@ -349,6 +395,33 @@ describe('CRDTCollection', () => {
       addOp('three', 'b', {a: 1, b: 3}),
       addOp('four', 'b', {a: 1, b: 4}),
       addOp('five', 'b', {a: 1, b: 5}),
+    ];
+    set2AddOps.forEach(op => assert.isTrue(set2.applyOperation(op)));
+
+    const {modelChange, otherChange} = set2.merge(set1.getData());
+
+    // Check that add ops are produced (not a fast-forward op).
+    assert.deepEqual(otherChange, {
+      changeType: ChangeType.Operations,
+      operations: set2AddOps,
+    });
+  });
+
+  it('can simplify single-actor add ops in merges for previously unseen actors', () => {
+    const set1 = new CRDTCollection<{id: string}>();
+    const set2 = new CRDTCollection<{id: string}>();
+
+    const originalOps = [
+      addOp('zero', 'a', {a: 1})
+    ];
+    originalOps.forEach(op => assert.isTrue(set1.applyOperation(op)));
+    originalOps.forEach(op => assert.isTrue(set2.applyOperation(op)));
+
+    // Add a bunch of things to set2.
+    const set2AddOps = [
+      addOp('one', 'b', {b: 1}),
+      addOp('two', 'b', {b: 2}),
+      addOp('three', 'b', {b: 3}),
     ];
     set2AddOps.forEach(op => assert.isTrue(set2.applyOperation(op)));
 
@@ -597,7 +670,17 @@ describe('CRDTCollection', () => {
       assert.isFalse(isEmptyChange(modelChange3));
       assert.isFalse(isEmptyChange(otherChange3));
     });
+
+    it('returns empty other change when merging into empty model', () => {
+      const set = new CRDTCollection<{id: string}>();
+      const set2 = new CRDTCollection<{id: string}>();
+      set2.applyOperation({type: CollectionOpTypes.Add, actor: 'a', added: {id: 'foo'}, clock: {'a': 1}});
+
+      const {modelChange: modelChange, otherChange: otherChange} = set.merge(set2.getData());
+      assert.isFalse(isEmptyChange(modelChange));
+      assert.isTrue(isEmptyChange(otherChange));
+    });
   });
 });
 
-// Note: if/when adding more tests to this file, please, also update CrdtTest.java
+// Note: if/when adding more tests to this file, please, also update CrdtSetTest.kt

@@ -16,8 +16,11 @@ import android.os.Parcelable
 import arcs.core.data.CollectionType
 import arcs.core.data.CountType
 import arcs.core.data.EntityType
+import arcs.core.data.MuxType
 import arcs.core.data.ReferenceType
 import arcs.core.data.SingletonType
+import arcs.core.data.TupleType
+import arcs.core.data.TypeVariable
 import arcs.core.type.Tag
 import arcs.core.type.Type
 
@@ -76,6 +79,23 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
         }
     }
 
+    /** [Parcelable] variant of [arcs.core.data.MuxType]. */
+    data class MuxType(
+        override val actual: arcs.core.data.MuxType<*>
+    ) : ParcelableType(actual) {
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            super.writeToParcel(parcel, flags)
+            parcel.writeType(actual.containedType, flags)
+        }
+
+        companion object CREATOR : Parcelable.Creator<MuxType> {
+            override fun createFromParcel(parcel: Parcel): MuxType =
+                MuxType(actual = MuxType(requireNotNull(parcel.readType())))
+
+            override fun newArray(size: Int): Array<MuxType?> = arrayOfNulls(size)
+        }
+    }
+
     /** [Parcelable] variant of [arcs.core.data.ReferenceType]. */
     class ReferenceType(
         override val actual: arcs.core.data.ReferenceType<*>
@@ -112,14 +132,60 @@ sealed class ParcelableType(open val actual: Type) : Parcelable {
         }
     }
 
+    /** [Parcelable] variant of [arcs.core.data.TupleType]. */
+    class TupleType(
+        override val actual: arcs.core.data.TupleType
+    ) : ParcelableType(actual) {
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            super.writeToParcel(parcel, flags)
+            parcel.writeInt(actual.elementTypes.size)
+            for (element in actual.elementTypes) {
+                parcel.writeType(element, flags)
+            }
+        }
+
+        companion object CREATOR : Parcelable.Creator<TupleType> {
+            override fun createFromParcel(parcel: Parcel): TupleType {
+                val elements = mutableListOf<Type>()
+                repeat(parcel.readInt()) {
+                    elements.add(requireNotNull(parcel.readType()))
+                }
+                return TupleType(actual = TupleType(elements))
+            }
+
+            override fun newArray(size: Int): Array<TupleType?> = arrayOfNulls(size)
+        }
+    }
+
+    /** [Parcelable] variant of [arcs.core.data.TypeVariable]. */
+    data class TypeVariable(
+        override val actual: arcs.core.data.TypeVariable
+    ) : ParcelableType(actual) {
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            super.writeToParcel(parcel, flags)
+            parcel.writeString(actual.name)
+        }
+
+        companion object CREATOR : Parcelable.Creator<TypeVariable> {
+            override fun createFromParcel(parcel: Parcel) = TypeVariable(
+                actual = TypeVariable(requireNotNull(parcel.readString()))
+            )
+
+            override fun newArray(size: Int): Array<TypeVariable?> = arrayOfNulls(size)
+        }
+    }
+
     companion object CREATOR : Parcelable.Creator<ParcelableType> {
         override fun createFromParcel(parcel: Parcel): ParcelableType =
             when (Tag.values()[parcel.readInt()]) {
                 Tag.Collection -> CollectionType.createFromParcel(parcel)
                 Tag.Count -> CountType.createFromParcel(parcel)
                 Tag.Entity -> EntityType.createFromParcel(parcel)
+                Tag.Mux -> MuxType.createFromParcel(parcel)
                 Tag.Reference -> ReferenceType.createFromParcel(parcel)
                 Tag.Singleton -> SingletonType.createFromParcel(parcel)
+                Tag.Tuple -> TupleType.createFromParcel(parcel)
+                Tag.TypeVariable -> TypeVariable.createFromParcel(parcel)
             }
 
         override fun newArray(size: Int): Array<ParcelableType?> = arrayOfNulls(size)
@@ -131,8 +197,11 @@ fun Type.toParcelable(): ParcelableType = when (tag) {
     Tag.Collection -> ParcelableType.CollectionType(this as CollectionType<*>)
     Tag.Count -> ParcelableType.CountType(this as CountType)
     Tag.Entity -> ParcelableType.EntityType(this as EntityType)
+    Tag.Mux -> ParcelableType.MuxType(this as MuxType<*>)
     Tag.Reference -> ParcelableType.ReferenceType(this as ReferenceType<*>)
     Tag.Singleton -> ParcelableType.SingletonType(this as SingletonType<*>)
+    Tag.Tuple -> ParcelableType.TupleType(this as TupleType)
+    Tag.TypeVariable -> ParcelableType.TypeVariable(this as TypeVariable)
 }
 
 /** Writes a [Type] to the [Parcel]. */

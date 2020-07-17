@@ -1,0 +1,74 @@
+<!--
+  ~ Copyright 2020 Google LLC.
+  ~
+  ~ This code may only be used under the BSD style license found at
+  ~ http://polymer.github.io/LICENSE.txt
+  ~
+  ~ Code distributed by Google as part of this project is also subject to an additional IP rights
+  ~ grant found at
+  ~ http://polymer.github.io/PATENTS.txt
+  -->
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  package="arcs.android.e2e.testapp">
+  <uses-permission android:name="android.permission.INTERNET"/>
+  <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="29"/>
+
+  <application
+    android:label="@string/app_name"
+    android:name=".TestApplication">
+
+    <provider
+      android:name="androidx.work.impl.WorkManagerInitializer"
+      android:authorities="${applicationId}.workmanager-init"
+      android:directBootAware="false"
+      android:exported="false"
+      android:multiprocess="true"
+      tools:node="remove"
+      tools:targetApi="n" />
+
+    <activity
+      android:name=".TestActivity"
+      android:launchMode="singleTask"
+      android:theme="@style/Theme.AppCompat.Light">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+    </activity>
+
+    <service
+      android:name=".PersonHostService"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="arcs.android.host.ARC_HOST"/>
+      </intent-filter>
+    </service>
+
+    <service
+      android:name=".WriteAnimalHostService"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="arcs.android.host.ARC_HOST"/>
+      </intent-filter>
+    </service>
+
+    <service
+      android:name=".ReadAnimalHostService"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="arcs.android.host.ARC_HOST"/>
+      </intent-filter>
+    </service>
+
+    <service
+      android:name=".StorageAccessService"
+      android:exported="false"
+      android:process=":test"/>
+
+    <service
+      android:name="arcs.android.devtools.DevToolsService"
+      android:exported="false"/>
+  </application>
+</manifest>

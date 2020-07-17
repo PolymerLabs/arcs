@@ -22,18 +22,11 @@ import arcs.core.type.Type
  * within the [StoreOptions].
  */
 abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
-    options: StoreOptions<Data, Op, ConsumerData>
+    options: StoreOptions
 ) : IStore<Data, Op, ConsumerData>, StorageCommunicationEndpointProvider<Data, Op, ConsumerData> {
-    override val existenceCriteria: ExistenceCriteria = options.existenceCriteria
-    override val mode: StorageMode = options.mode
     override val storageKey: StorageKey = options.storageKey
     override val type: Type = options.type
     open val versionToken: String? = options.versionToken
-    /** The [IStore] this instance is fronting. */
-    val baseStore: IStore<Data, Op, ConsumerData>? = options.baseStore
-
-    /** Returns the model [Data]. */
-    abstract suspend fun getLocalData(): Data
 
     /** Suspends until all pending operations are complete. */
     open suspend fun idle() = Unit
@@ -50,29 +43,21 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     /** Handles a message from the storage proxy. */
     abstract suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean
 
-    override fun getStorageEndpoint(): StorageCommunicationEndpoint<Data, Op, ConsumerData> {
-        return object : StorageCommunicationEndpoint<Data, Op, ConsumerData> {
-            var id: Int? = null
+    /**
+     * Return a storage endpoint that will receive messages from the store via the
+     * provided callback
+     */
+    override fun getStorageEndpoint(
+        callback: ProxyCallback<Data, Op, ConsumerData>
+    ) = object : StorageCommunicationEndpoint<Data, Op, ConsumerData> {
+        val id = on(callback)
 
-            override fun setCallback(callback: ProxyCallback<Data, Op, ConsumerData>) {
-                id = on(callback)
-            }
+        override suspend fun idle() = this@ActiveStore.idle()
 
-            override suspend fun onProxyMessage(
-                message: ProxyMessage<Data, Op, ConsumerData>
-            ): Boolean {
-                val messageCopy: ProxyMessage<Data, Op, ConsumerData> = when (message) {
-                    is ProxyMessage.SyncRequest -> ProxyMessage.SyncRequest(id)
-                    is ProxyMessage.ModelUpdate -> ProxyMessage.ModelUpdate(message.model, id)
-                    is ProxyMessage.Operations -> ProxyMessage.Operations(message.operations, id)
-                }
-                return this@ActiveStore.onProxyMessage(messageCopy)
-            }
-        }
-    }
+        override suspend fun onProxyMessage(
+            message: ProxyMessage<Data, Op, ConsumerData>
+        ) = this@ActiveStore.onProxyMessage(message.withId(id))
 
-    /** Clones data from the given store into this one. */
-    suspend fun cloneFrom(store: ActiveStore<Data, Op, ConsumerData>) {
-        onProxyMessage(ProxyMessage.ModelUpdate(store.getLocalData(), id = null))
+        override fun close() = off(id)
     }
 }

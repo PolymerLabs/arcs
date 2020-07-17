@@ -1,0 +1,44 @@
+meta
+  namespace: arcs.core.data.testdata
+
+particle Reader in 'arcs.core.data.testdata.Reader'
+  data: reads Thing {name: Text}
+
+particle Writer in 'arcs.core.data.testdata.Writer'
+   data: writes Thing {name: Text}
+
+@arcId('writingArcId')
+recipe Ingestion
+  thing: create 'my-handle-id' @persistent @ttl('20d')
+  Writer
+    data: writes thing
+  Reader
+    data: reads thing
+
+@arcId('readingArcId')
+recipe Consumption
+  data: map 'my-handle-id'
+  Reader
+    data: reads data
+
+recipe EphemeralWriting
+  thing: create 'my-ephemeral-handle-id'
+  Writer
+    data: writes thing
+
+recipe EphemeralReading
+  data: map 'my-handle-id'
+  Reader
+    data: reads data
+
+particle ReadWriteReferences
+  inThingRefs: reads [&Thing {name: Text}]
+  outThingRef: writes &Thing {name: Text}
+
+@arcId('referencesArcId')
+recipe ReferencesRecipe
+  things: create 'my-refs-id' @persistent
+  thing: create 'my-ref-id' @ttl('1d')
+  ReadWriteReferences
+    inThingRefs: things
+    outThingRef: thing

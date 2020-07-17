@@ -7,10 +7,14 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base, ClassGenerator} from './schema2base.js';
+import {Schema2Base, EntityGenerator} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {Type} from '../runtime/type.js';
+import {Dictionary} from '../runtime/hot.js';
+
+// TODO(cypher1): Generate refinements and predicates for cpp
+// https://github.com/PolymerLabs/arcs/issues/4884
 
 // https://en.cppreference.com/w/cpp/keyword
 // [...document.getElementsByClassName('wikitable')[0].getElementsByTagName('code')].map(x => x.innerHTML);
@@ -28,13 +32,34 @@ const keywords = [
   'xor', 'xor_eq'
 ];
 
-const typeMap = {
-  'T': {type: 'std::string', defaultVal: ' = ""',    isString: true},
-  'U': {type: 'URL',         defaultVal: ' = ""',    isString: true},
-  'N': {type: 'double',      defaultVal: ' = 0',     isString: false},
-  'B': {type: 'bool',        defaultVal: ' = false', isString: false},
-  'R': {type: '',            defaultVal: ' = {}',    isString: false},
+function escapeIdentifier(name: string): string {
+  // TODO(cypher1): Check for complex keywords (e.g. cases where both 'final' and '_final' are keywords).
+  // TODO(cypher1): Check for name overlaps (e.g. 'final' and '_final' should not be escaped to the same identifier.
+  return (keywords.includes(name) ? '_' : '') + name;
+}
+
+export interface CppTypeInfo {
+  type: string;
+  defaultVal: string;
+  isString: boolean;
+}
+
+const typeMap: Dictionary<CppTypeInfo> = {
+'Text': {type: 'std::string', defaultVal: ' = ""',    isString: true},
+'URL': {type: 'URL',          defaultVal: ' = ""',    isString: true},
+'Number': {type: 'double',    defaultVal: ' = 0',     isString: false},
+'BigInt': {type: 'long long', defaultVal: ' = 0',     isString: false},
+'Boolean': {type: 'bool',     defaultVal: ' = false', isString: false},
+'Reference': {type: '',       defaultVal: ' = {}',    isString: false},
 };
+
+function getTypeInfo(name: string): CppTypeInfo {
+  const info = typeMap[name];
+  if (!info) {
+    throw new Error(`Unhandled type '${name}' for cpp.`);
+  }
+  return info;
+}
 
 export class Schema2Cpp extends Schema2Base {
   // test-CPP.file_Name.arcs -> test-cpp-file-name.h
@@ -59,11 +84,11 @@ export class Schema2Cpp extends Schema2Base {
     return '\n#endif\n';
   }
 
-  getClassGenerator(node: SchemaNode): ClassGenerator {
-    return new CppGenerator(node, this.scope.replace(/\./g, '::'));
+  getEntityGenerator(node: SchemaNode): EntityGenerator {
+    return new CppGenerator(node, this.namespace.replace(/\./g, '::'));
   }
 
-  generateParticleClass(particle: ParticleSpec): string {
+  async generateParticleClass(particle: ParticleSpec): Promise<string> {
     const particleName = particle.name;
     const handleDecls: string[] = [];
 
@@ -93,13 +118,57 @@ protected:
 };
 `;
   }
+
+  async generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string> {
+    throw new Error('Test Harness generation is not available for CPP');
+  }
 }
 
-function fixName(field: string): string {
-  return (keywords.includes(field) ? '_' : '') + field;
-}
+type AddFieldOptions = Readonly<{
+  field: string;
+  typeName: string;
+  isOptional?: boolean;
+  refClassName?: string;
+  refSchemaHash?: string;
+  listTypeInfo?: {name: string, refSchemaHash?: string, isInlineClass?: boolean};
+  isCollection?: boolean;
+  isInlineClass?: boolean;
+}>;
 
-class CppGenerator implements ClassGenerator {
+class CppEntityDescriptor {
+
+  constructor(readonly node: SchemaNode) {
+    for (const [field, descriptor] of Object.entries(this.node.schema.fields)) {
+      if (descriptor.kind === 'schema-primitive') {
+        if (['Text', 'URL', 'Number', 'BigInt', 'Boolean'].includes(descriptor.type)) {
+          this.addField({field, typeName: descriptor.type});
+        } else {
+          throw new Error(`Schema type '${descriptor.type}' for field '${field}' is not supported`);
+        }
+      } else if (descriptor.kind === 'schema-reference' || (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference')) {
+        const isCollection = descriptor.kind === 'schema-collection';
+        const schemaNode = this.node.refs.get(field);
+        this.addField({
+          field,
+          typeName: 'Reference',
+          isCollection,
+          refClassName: schemaNode.entityClassName,
+          refSchemaHash: schemaNode.hash,
+        });
+      } else if (descriptor.kind === 'schema-collection') {
+        const schema = descriptor.schema;
+        if (schema.kind === 'schema-primitive') {
+          this.addField({field, typeName: schema.type, isCollection: true});
+        } else {
+          throw new Error(`Schema kind '${schema.kind}' for field '${field}' is not supported`);
+        }
+      }
+      else {
+        throw new Error(`Schema kind '${descriptor.kind}' for field '${field}' is not supported`);
+      }
+    }
+  }
+
   fields: string[] = [];
   api: string[] = [];
   ctor: string[] = [];
@@ -111,13 +180,15 @@ class CppGenerator implements ClassGenerator {
   encode: string[] = [];
   stringify: string[] = [];
 
-  constructor(readonly node: SchemaNode, readonly namespace: string) {}
-
-  addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null) {
-    const fixed = fixName(field);
+  addField({field, typeName, refClassName, isOptional = false, isCollection = false}: AddFieldOptions) {
+    // Work around for schema2graph giving the Kotlin RefClassName.
+    if (refClassName !== undefined) {
+      refClassName = `${this.node.sources[0].fullName}_Ref`;
+    }
+    const fixed = escapeIdentifier(field);
     const valid = `${field}_valid_`;
-    let {type, defaultVal, isString} = typeMap[typeChar];
-    if (typeChar === 'R') {
+    let {type, defaultVal, isString} = getTypeInfo(typeName);
+    if (typeName === 'Reference') {
       type = `Ref<${refClassName}>`;
     }
 
@@ -125,7 +196,7 @@ class CppGenerator implements ClassGenerator {
                      `bool ${valid} = false;`,
                      ``);
 
-    if (typeChar === 'R') {
+    if (typeName === 'Reference') {
       this.api.push(`const ${type}& ${fixed}() const { return ${field}_; }`,
                     `void set_${field}(const ${refClassName}& value) { internal::Accessor::bind(&${field}_, value); }`);
     } else {
@@ -145,7 +216,7 @@ class CppGenerator implements ClassGenerator {
                     `clone.${valid} = entity.${valid};`);
 
     this.decode.push(`} else if (name == "${field}") {`,
-                     `  decoder.validate("${typeChar}");`,
+                     `  decoder.validate("${typeName[0]}");`,
                      `  decoder.decode(entity->${field}_);`,
                      `  entity->${valid} = true;`);
 
@@ -171,22 +242,39 @@ class CppGenerator implements ClassGenerator {
 
     const ifValid = isOptional ? `if (entity.${valid}) ` : '';
     this.hash.push(`${ifValid}internal::hash_combine(h, entity.${field}_);`);
-    this.encode.push(`${ifValid}encoder.encode("${field}:${typeChar}", entity.${field}_);`);
+    this.encode.push(`${ifValid}encoder.encode("${field}:${typeName[0]}", entity.${field}_);`);
 
     // For convenience, don't include unset required fields in the entity_to_str output.
     this.stringify.push(`if (entity.${valid}) printer.add("${field}: ", entity.${field}_);`);
   }
+}
 
-  generate(schemaHash: string, fieldCount: number): string {
-    const {name, aliases} = this.node;
+class CppGenerator implements EntityGenerator {
 
+  private descriptor: CppEntityDescriptor;
+
+  constructor(readonly node: SchemaNode, readonly namespace: string) {
+    this.descriptor = new CppEntityDescriptor(node);
+  }
+
+  typeFor(name: string): string {
+    return getTypeInfo(name).type;
+  }
+
+  defaultValFor(name: string): string {
+    return getTypeInfo(name).defaultVal;
+  }
+
+  generate(): string {
+    const name = this.node.fullEntityClassName;
+    const aliases = this.node.sources.map(s => s.fullName);
     // Template constructor allows implicit type slicing from appropriately matching entities.
     let templateCtor = '';
-    if (this.ctor.length) {
+    if (this.descriptor.ctor.length) {
       templateCtor = `\
   template<typename T>
   ${name}(const T& other) :
-    ${this.ctor.join(',\n    ')}
+    ${this.descriptor.ctor.join(',\n    ')}
   {}
   `;
     }
@@ -194,14 +282,14 @@ class CppGenerator implements ClassGenerator {
     // 'using' declarations for equivalent entity types.
     let aliasComment = '';
     let usingDecls = '';
-    if (aliases.length) {
+    if (aliases.length > 1) {
       aliasComment = `\n// Aliased as ${aliases.join(', ')}`;
       usingDecls = '\n' + aliases.map(a => `using ${a} = ${name};`).join('\n') + '\n';
     }
 
     // Schemas with no fields will always be equal.
-    if (fieldCount === 0) {
-      this.equals.push('true');
+    if (this.descriptor.fields.length === 0) {
+      this.descriptor.equals.push('true');
     }
 
     return `\
@@ -217,7 +305,7 @@ public:
   ${name}& operator=(${name}&&) = default;
 
 ${templateCtor}
-  ${this.api.join('\n  ')}
+  ${this.descriptor.api.join('\n  ')}
   // Equality ops compare internal ids and all data fields.
   // Use arcs::fields_equal() to compare only the data fields.
   bool operator==(const ${name}& other) const;
@@ -228,7 +316,7 @@ ${templateCtor}
     if (int cmp = a._internal_id_.compare(b._internal_id_)) {
       return cmp < 0;
     }
-    ${this.less.join('\n    ')}
+    ${this.descriptor.less.join('\n    ')}
     return false;
   }
 
@@ -237,10 +325,10 @@ protected:
   ${name}(const ${name}&) = default;
   ${name}& operator=(const ${name}&) = default;
 
-  static const char* _schema_hash() { return "${schemaHash}"; }
-  static const int _field_count = ${fieldCount};
+  static const char* _schema_hash() { return "${this.node.hash}"; }
+  static const int _field_count = ${Object.entries(this.descriptor.node.schema.fields).length};
 
-  ${this.fields.join('\n  ')}
+  ${this.descriptor.fields.join('\n  ')}
   std::string _internal_id_;
 
   friend class Singleton<${name}>;
@@ -252,7 +340,7 @@ ${usingDecls}
 template<>
 inline ${name} internal::Accessor::clone_entity(const ${name}& entity) {
   ${name} clone;
-  ${this.clone.join('\n  ')}
+  ${this.descriptor.clone.join('\n  ')}
   return clone;
 }
 
@@ -260,13 +348,13 @@ template<>
 inline size_t internal::Accessor::hash_entity(const ${name}& entity) {
   size_t h = 0;
   internal::hash_combine(h, entity._internal_id_);
-  ${this.hash.join('\n  ')}
+  ${this.descriptor.hash.join('\n  ')}
   return h;
 }
 
 template<>
 inline bool internal::Accessor::fields_equal(const ${name}& a, const ${name}& b) {
-  return ${this.equals.join(' && \n         ')};
+  return ${this.descriptor.equals.join(' && \n         ')};
 }
 
 inline bool ${name}::operator==(const ${name}& other) const {
@@ -279,7 +367,7 @@ inline std::string internal::Accessor::entity_to_str(const ${name}& entity, cons
   if (with_id) {
     printer.addId(entity._internal_id_);
   }
-  ${this.stringify.join('\n  ')}
+  ${this.descriptor.stringify.join('\n  ')}
   return printer.result(join);
 }
 
@@ -292,7 +380,7 @@ inline void internal::Accessor::decode_entity(${name}* entity, const char* str) 
   for (int i = 0; !decoder.done() && i < ${name}::_field_count; i++) {
     std::string name = decoder.upTo(':');
     if (0) {
-    ${this.decode.join('\n    ')}
+    ${this.descriptor.decode.join('\n    ')}
     } else {
       // Ignore unknown fields until type slicing is fully implemented.
       std::string typeChar = decoder.chomp(1);
@@ -316,7 +404,7 @@ template<>
 inline std::string internal::Accessor::encode_entity(const ${name}& entity) {
   internal::StringEncoder encoder;
   encoder.encode("", entity._internal_id_);
-  ${this.encode.join('\n  ')}
+  ${this.descriptor.encode.join('\n  ')}
   return encoder.result();
 }
 

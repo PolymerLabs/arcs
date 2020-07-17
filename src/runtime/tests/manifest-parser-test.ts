@@ -13,7 +13,7 @@ import {assert} from '../../platform/chai-web.js';
 import {Flags} from '../flags.js';
 
 describe('manifest parser', () => {
-  it('parses an empy manifest', () => {
+  it('parses an empty manifest', () => {
     parse('');
   });
   it('parses a trivial recipe', () => {
@@ -53,16 +53,96 @@ describe('manifest parser', () => {
   it('parses recipes that creates handles with ttls', () => {
     parse(`
       recipe Thing
-        h0: create #myTag @ttl(20d)
-        h1: create 'my-id' #anotherTag @ttl(1h)
-        h2: create @ttl ( 30m )`);
+        h0: create #myTag @ttl('20d')
+        h1: create 'my-id' #anotherTag @ttl('1h')
+        h2: create @ttl (  '30m'  )`);
+  });
+  it('parses recipes with a synthetic join handles', () => {
+    parse(`
+      recipe
+        people: map #folks
+        places: map #locations
+        pairs: join (people, places)`);
+  });
+  // Semantically, adapter params are actually a Tuple of inputs
+  // so join(a,b) apply Foo(a,b) is semantically equivalent to this=(a,b), apply Foo(this)
+  // For non-join handles, this is just Foo(this) where this=a
+  // 'this' represents current handle the adapter is attached to as a tuple of 1 or more handles.
+  // When an adapter is applied, the tuple is 'destructured' to the parameter names in the adapter declaration
+  it('parses recipes with adapted handles', () => {
+    parse(`
+      recipe
+        people: map #folks apply Foo(this)
+        places: map #locations apply Bar(this)`);
+  });
+  it('parses recipes with a synthetic join handles and applied adapter', () => {
+    parse(`
+      adapter PairPerson( 
+        person: Person { name: Text, age: Number },
+        place: ~a with { name: Text, address: Text },
+        data: (Person {name: Text, age: Number }, Company { name: Text, address: Text })
+      ) => PairedPerson { name: person.name, address: place.address, place: place.name }     
+      recipe
+        people: map #folks
+        places: map #locations
+        pairs: join (people, places) apply PairPerson(people, places)`);
+  });
+  it('parses adapter declarations with inline schema', () => {
+    parse(`
+      adapter ToFriend( 
+        person: Person { name: Text, age: Number },
+        company: ~a with { name: Text, address: Text },
+        data: (Person {name: Text, age: Number }, Company { name: Text, address: Text })
+      ) => Friend { nickName: person.name, work: company.name, newdata: data.first }     
+    `);
+  });
+  it('parses adapter declarations with inline schema with no identifier', () => {
+    parse(`
+      adapter ToFriend( 
+        person: Person { name: Text, age: Number },
+        company: ~a with { name: Text, address: Text },
+        data: (Person {name: Text, age: Number }, Company { name: Text, address: Text })
+      ) => { nickName: person.name, work: company.name, newdata: data.first }     
+    `);
+  });
+  it('parses adapter declarations with inline schema with multiple identifier', () => {
+    parse(`
+      adapter ToFriend( 
+        person: Person { name: Text, age: Number },
+        company: ~a with { name: Text, address: Text },
+        data: (Person {name: Text, age: Number }, Company { name: Text, address: Text })
+      ) => Product Thing { nickName: person.name, work: company.name, newdata: data.first }     
+    `);
+  });
+  it('parses adapter declarations with inline schema with nested addresing', () => {
+    parse(`
+      adapter Inline(person: Person { 
+        name: Text,
+        address: &Address { address: Text }
+      }) => Person {
+        name: person.name,
+        address: person.address.address
+      }`);
+  });
+  it('fails to parse adapter declarations with with duplicate param names', () => {
+    try {
+      parse(`
+      adapter ToFriend( 
+        person: Person { name: Text, age: Number },
+        person: Company { name: Text, address: Text }
+      ) => Friend { nickName: person.name, work: person.name }     
+    `);
+      assert.fail('this parse should have failed, adapter params cannot contain duplicates');
+    } catch (e) {
+      assert.include(e.message, 'Duplicate adapter param names person');
+    }
   });
   it('parses recipe handles with capabilities', () => {
     parse(`
       recipe Thing
-        h0: create persistent
-        h1: create tied-to-runtime 'my-id'
-        h2: create tied-to-arc #mytag`);
+        h0: create @persistent
+        h1: create 'my-id' @tiedToRuntime
+        h2: create #mytag @tiedToArc`);
   });
   it('parses recipes with particles', () => {
     parse(`
@@ -262,6 +342,19 @@ describe('manifest parser', () => {
         optionalType: reads * {value}
     `);
   });
+  it('parses inline schemas with a trailing comma', () => {
+    parse(`
+      particle Foo
+        input: reads [{value: Text, num: Number,}]
+    `);
+    parse(`
+      particle Foo
+        input: reads [{
+          value: Text,
+          num: Number,
+        }]
+    `);
+  });
   it('parses inline schemas with no name', () => {
     parse(`
       particle Foo
@@ -355,6 +448,76 @@ describe('manifest parser', () => {
         productReviews: reads Product {review: [&Review {reviewText: Text}]}
     `);
   });
+  it('parses a schema with kotlin types', () => {
+    parse(`
+      schema KotlinThings
+        aByte: Byte
+        aShort: Short
+        anInt: Int
+        aLong: Long
+        aChar: Char
+        aFloat: Float
+        aDouble: Double
+    `);
+  });
+  it('parses an inline schema with kotlin types', () => {
+    parse(`
+      particle Foo
+        kotlinThings: reads KotlinThings {aByte: Byte, aShort: Short, anInt: Int, aLong: Long, aChar: Char, aFloat: Float, aDouble: Double}
+    `);
+  });
+  it('parses a schema with a nested schema', () => {
+    parse(`
+      schema ContainsNested
+        fieldBefore: Double
+        nestedField: inline * {someNums: List<Number>, aString: Text}
+        fieldAfter: List<Long>
+    `);
+  });
+  it('parses an inline schema with a nested schema', () => {
+    parse(`
+      particle Foo
+        containsNested: reads ContainsNested {
+          fieldBefore: Double,
+          nestedField: inline Thing {someNums: List<Number>, aString: Text},
+          fieldAfter: Long
+        }
+    `);
+  });
+  it('parses a schema with a list of nested schemas', () => {
+    parse(`
+      schema ContainsNested
+        fieldBefore: Double
+        nestedField: List<inline * {someNums: List<Number>, aString: Text}>
+        fieldAfter: List<Long>
+    `);
+  });
+  it('parses an inline schema with a list of nested schemas', () => {
+    parse(`
+      particle Foo
+        containsNested: reads ContainsNested {
+          fieldBefore: Double,
+          nestedField: List<inline Thing {someNums: List<Number>, aString: Text}>,
+          fieldAfter: Long
+        }
+    `);
+  });
+  it('parses a schema with ordered list types', () => {
+    parse(`
+      schema OrderedLists
+        someNums: List<Number>
+        someLongs: List<Long>
+        someStrings: List<Text>
+        someReferences: List<&{}>
+        someUnions: List<(Number or Text)>
+    `);
+  });
+  it('parses an inline schema with ordered list types', () => {
+    parse(`
+      particle Foo
+        orderedThings: reads OrderedLists {someNums: List<Number>, someLongs: List<Long>, someStrings: List<Text>, someReferences: List<&{}>, someUnions: List<(Number or Text)>}
+    `);
+  });
   it('parses typenames with reserved type names as a prefix (Boolean)', () => {
     parse(`
       particle Foo
@@ -389,6 +552,53 @@ describe('manifest parser', () => {
       particle Foo
         inRef: reads &Foo
         outRef: writes &Bar
+    `);
+  });
+  it('fails to parse an empty tuple', () => {
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          data: reads ()
+      `);
+    });
+  });
+  it('parses tuple with one type', () => {
+    parse(`
+      particle Foo
+        data: reads (Foo)
+    `);
+  });
+  it('parses tuple with two types', () => {
+    parse(`
+      particle Foo
+        data: writes ([Foo], &Bar {name: Text})
+    `);
+  });
+  it('fails to parse a tuple without separator between elements', () => {
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          data: reads (Foo{}Bar{})
+      `);
+    });
+  });
+  it('parses tuple with indented types and comments', () => {
+    parse(`
+      particle Foo
+        data: reads (
+          Foo, // First type
+          &Bar {name: Text}, // Second type
+          [Baz {photo: URL}] // Third type
+        )
+    `);
+  });
+  it('parses tuple with indented types and trailing comma', () => {
+    parse(`
+      particle Foo
+        data: reads (
+          &Foo,
+          &Bar,
+        )
     `);
   });
   it('parses refinement types in a schema', Flags.withFieldRefinementsAllowed(async () => {
@@ -593,5 +803,262 @@ describe('manifest parser', () => {
       JSON.stringify(JSON.parse(manifestAst[1].data)),
       '[{"type":"artist","name":"in this moment"}]'
     );
+  });
+
+  describe('inline data stores', () => {
+    // Store AST nodes have an entities field holding an array of objects formatted as:
+    //   { kind: 'entity-inline', location: {...}, fields: {<name>: <descriptor>, ...}
+    function extractEntities(storeAst) {
+      return storeAst.entities.map(item => {
+        assert.strictEqual(item.kind, 'entity-inline');
+        assert.containsAllKeys(item, ['location', 'fields']);
+        return item.fields;
+      });
+    }
+
+    it('parses text fields', () => {
+      const manifestAst = parse(`
+        store A of [{txt: Text}] with {
+          {txt: ''},
+          {txt: 'test string'},
+          {txt: '\\'quotes\\''},
+          {txt: 'more \\\\ escaping \\' here'},
+          {txt: '\\tabs and \\newlines are translated'},
+          {txt: '\\other \\chars are\\ n\\ot'},
+        }
+      `);
+      assert.deepStrictEqual(extractEntities(manifestAst[0]), [
+        {txt: {kind: 'entity-value', value: ''}},
+        {txt: {kind: 'entity-value', value: 'test string'}},
+        {txt: {kind: 'entity-value', value: '\'quotes\''}},
+        {txt: {kind: 'entity-value', value: 'more \\ escaping \' here'}},
+        {txt: {kind: 'entity-value', value: '\tabs and \newlines are translated'}},
+        {txt: {kind: 'entity-value', value: 'other chars are not'}},
+      ]);
+    });
+    it('parses url fields', () => {
+      const manifestAst = parse(`
+        store A of [{u: URL}] with {
+          {u: ''}, {u: 'http://www.foo.com/go?q=%27hi?=%25'},
+        }
+      `);
+      assert.deepStrictEqual(extractEntities(manifestAst[0]), [
+        {u: {kind: 'entity-value', value: ''}},
+        {u: {kind: 'entity-value', value: 'http://www.foo.com/go?q=%27hi?=%25'}},
+      ]);
+    });
+    it('parses number fields', () => {
+      const manifestAst = parse(`
+        store A of [{num: Number}] with {
+          {num: 0},
+          {num: 0.8},
+          {num: 51},
+          {num: -6},
+          {num: -120.5}
+        }
+      `);
+      assert.deepStrictEqual(extractEntities(manifestAst[0]), [
+        {num: {kind: 'entity-value', value: 0}},
+        {num: {kind: 'entity-value', value: 0.8}},
+        {num: {kind: 'entity-value', value: 51}},
+        {num: {kind: 'entity-value', value: -6}},
+        {num: {kind: 'entity-value', value: -120.5}},
+      ]);
+    });
+    it('parses boolean fields', () => {
+      const manifestAst = parse(`
+        store A of [{flg: Boolean}] with { {flg: true}, {flg: false} }
+      `);
+      assert.deepStrictEqual(extractEntities(manifestAst[0]), [
+        {flg: {kind: 'entity-value', value: true}},
+        {flg: {kind: 'entity-value', value: false}},
+      ]);
+    });
+    it('parses bytes fields', () => {
+      const manifestAst = parse(`
+        store A of [{buf: Bytes}] with {
+          {buf: ||},
+          {buf: |0|},
+          {buf: |23,|},
+          {buf: |7, ff, 4d|},
+          {buf: |7, ff, 4d,|},
+        }
+      `);
+      assert.deepStrictEqual(extractEntities(manifestAst[0]), [
+        {buf: {kind: 'entity-value', value: new Uint8Array()}},
+        {buf: {kind: 'entity-value', value: new Uint8Array([0])}},
+        {buf: {kind: 'entity-value', value: new Uint8Array([0x23])}},
+        {buf: {kind: 'entity-value', value: new Uint8Array([0x07, 0xff, 0x4d])}},
+        {buf: {kind: 'entity-value', value: new Uint8Array([0x07, 0xff, 0x4d])}},
+      ]);
+    });
+    it('parses reference fields', () => {
+      const manifestAst = parse(`
+        store A of {ref: &{z: Text}} with { {ref: <'id1', 'key1'>} }
+      `);
+      assert.deepStrictEqual(extractEntities(manifestAst[0]), [
+        {ref: {kind: 'entity-value', value: {id: 'id1', entityStorageKey: 'key1'}}}
+      ]);
+    });
+    it('parses collection fields', () => {
+      const manifestAst = parse(`
+        store S0 of [{col: [Text]}] with {
+          {col: []},
+          {col: ['a', 'b\\'c']},
+        }
+
+        store S1 of [{col: [Number]}] with {
+          {col: [12]},
+          {col: [-5, 23.7, 0, ]},
+        }
+
+        store S2 of {col: [Boolean]} with {
+          {col: [true, true, false]}
+        }
+
+        store S3 of {col: [Bytes]} with {
+          {col: [|a2|, |0, 50|, ||]}
+        }
+
+        store S4 of {col: [&{n: Number}]} with {
+          {col: [<'i0', 'k0'>, <'i1', 'k1'>]}
+        }
+      `);
+      assert.deepStrictEqual(extractEntities(manifestAst[0]), [
+        {col: {kind: 'entity-collection', value: []}},
+        {col: {kind: 'entity-collection', value: ['a', 'b\'c']}},
+      ]);
+      assert.deepStrictEqual(extractEntities(manifestAst[1]), [
+        {col: {kind: 'entity-collection', value: [12]}},
+        {col: {kind: 'entity-collection', value: [-5, 23.7, 0]}},
+      ]);
+      assert.deepStrictEqual(extractEntities(manifestAst[2]), [
+        {col: {kind: 'entity-collection', value: [true, true, false]}},
+      ]);
+      assert.deepStrictEqual(extractEntities(manifestAst[3]), [
+        {col: {kind: 'entity-collection', value: [
+          new Uint8Array([0xa2]),
+          new Uint8Array([0, 0x50]),
+          new Uint8Array(),
+        ]}},
+      ]);
+      assert.deepStrictEqual(extractEntities(manifestAst[4]), [
+        {col: {kind: 'entity-collection', value: [
+          {id: 'i0', entityStorageKey: 'k0'},
+          {id: 'i1', entityStorageKey: 'k1'},
+        ]}},
+      ]);
+    });
+    it('parses tuple fields', () => {
+      const manifestAst = parse(`
+        store A of [{t: (Text, Number, Boolean, Bytes)}] with {
+          {t: ('a\\tb', -7.9, false, |7e, 46,|)},
+          {t: ('', 0, true, ||)}
+        }
+      `);
+      assert.deepStrictEqual(extractEntities(manifestAst[0]), [
+        {t: {kind: 'entity-tuple', value: [
+          'a\tb', -7.9, false, new Uint8Array([0x7e, 0x46])
+        ]}},
+        {t: {kind: 'entity-tuple', value: [
+          '', 0, true, new Uint8Array()
+        ]}},
+      ]);
+    });
+    it('parses standard components of store expressions', () => {
+      const manifestAst = parse(`
+        store S0 of {n: Number} with { {n: 1} }
+
+        store S1 of {t: Text} 'id'!!'orig' @3 #tag with
+          {
+            {t: 'a'}
+          }
+          description \`inline store\`
+          claim is foo
+      `);
+      assert.deepInclude(manifestAst[0], {
+        kind: 'store',
+        name: 'S0',
+        id: null,
+        originalId: null,
+        version: null,
+        tags: null,
+        source: 'inline',
+        origin: 'inline',
+        storageKey: null,
+        description: null,
+        claims: [],
+      });
+      delete manifestAst[1].claims[0].location;
+      assert.deepInclude(manifestAst[1], {
+        kind: 'store',
+        name: 'S1',
+        id: 'id',
+        originalId: 'orig',
+        version: '3',
+        tags: ['tag'],
+        source: 'inline',
+        origin: 'inline',
+        storageKey: null,
+        description: 'inline store',
+        claims: [{kind: 'manifest-storage-claim', tags: ['foo'], fieldPath: []}],
+      });
+    });
+    it('parses complex schemas with variable spacing and comments', () => {
+      const manifestAst = parse(`
+        store A of [{n: Number, c: [Text], t: (Boolean, Bytes), r: &{z: URL}}]  with  { // comment
+          {n:4.5,c:['abc'],t:(true,|0|),r:<'i1','k1'>},
+             {
+             n:
+               0.0,//comment
+        c:   [ '\\'',
+        '\\t'  ,'',]   ,    t:  (  FALSE  , |   22,
+                d3  ,
+             |),
+              // full line comment
+             r:  <    'i2'    ,
+
+
+                  'k2'    >}}
+      `);
+      assert.deepStrictEqual(extractEntities(manifestAst[0]), [
+        {
+          n: {kind: 'entity-value', value: 4.5},
+          c: {kind: 'entity-collection', value: ['abc']},
+          t: {kind: 'entity-tuple', value: [true, new Uint8Array([0])]},
+          r: {kind: 'entity-value', value: {id: 'i1', entityStorageKey: 'k1'}},
+        },
+        {
+          n: {kind: 'entity-value', value: 0},
+          c: {kind: 'entity-collection', value: ['\'', '\t', '']},
+          t: {kind: 'entity-tuple', value: [false, new Uint8Array([0x22, 0xd3])]},
+          r: {kind: 'entity-value', value: {id: 'i2', entityStorageKey: 'k2'}},
+        }
+      ]);
+    });
+    it('requires consistent value types for collection fields', () => {
+      const msg = 'Collection fields for inline entities must have a consistent value type';
+      assert.throws(() => { parse(`
+        store A of {txt: [Text]} with { {txt: ['aa', true, 'bb']} }`);
+      }, msg);
+      assert.throws(() => { parse(`
+        store A of {num: [Number]} with { {num: [5, 'x']} }`);
+      }, msg);
+      assert.throws(() => { parse(`
+        store A of {flg: [Boolean]} with { {flg: [true, |83|]} }`);
+      }, msg);
+      assert.throws(() => { parse(`
+        store A of {z: [Bytes]} with { {z: [|5|, |0, aa|, <'id', 'key'>, |4d|]} }`);
+      }, msg);
+    });
+    it('requires the id and storage key to be present in references', () => {
+      const msg = 'Reference fields for inline entities must have both an id and a storage key';
+      assert.throws(() => { parse(`
+        store A of {ref: &{t: Text}} with { {ref: <'', 'key'>} }`);
+      }, msg);
+      assert.throws(() => { parse(`
+        store A of {ref: &{t: Text}} with { {ref: <'id', ''>} }`);
+      }, msg);
+    });
   });
 });

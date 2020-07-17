@@ -15,10 +15,8 @@ import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtEntity.Reference.Companion.buildReference
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
-import arcs.core.crdt.extension.toCrdtEntityData
-import arcs.core.crdt.extension.toEntity
 import arcs.core.crdt.VersionMap
-import arcs.core.data.Entity
+import arcs.core.crdt.extension.toCrdtEntityData
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
@@ -26,17 +24,18 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseData
-import arcs.core.storage.driver.DatabaseDriverTest.DriverBuilder.Companion.buildDriver
+import arcs.core.storage.database.ReferenceWithVersion
+import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.util.testutil.LogRule
-import arcs.jvm.storage.database.testutil.MockDatabase
+import arcs.jvm.storage.database.testutil.FakeDatabase
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import kotlin.reflect.KClass
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Assert.fail
 import org.junit.Before
@@ -44,7 +43,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.reflect.KClass
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
@@ -52,11 +50,11 @@ class DatabaseDriverTest {
     @get:Rule
     val logRule = LogRule()
 
-    private lateinit var database: MockDatabase
+    private lateinit var database: FakeDatabase
 
     @Before
     fun setUp() {
-        database = MockDatabase()
+        database = FakeDatabase()
     }
 
     @Test
@@ -77,11 +75,10 @@ class DatabaseDriverTest {
     @Test
     fun registerReceiver_withData_triggersReceiver() = runBlockingTest {
         val driver = buildDriver<CrdtEntity.Data>(database)
-        val entity = Entity(
+        val entity = RawEntity(
             "jason",
-            DEFAULT_SCHEMA,
-            mutableMapOf(
-                "name" to "Jason",
+            singletons = mapOf("name" to "Jason".toReferencable()),
+            collections = mapOf(
                 "phone_numbers" to setOf(
                     Reference(
                         ReferencablePrimitive(String::class, "555-5555").id,
@@ -91,7 +88,12 @@ class DatabaseDriverTest {
                 )
             )
         )
-        database.data[driver.storageKey] = DatabaseData.Entity(entity, 1, VersionMap())
+        database.data[driver.storageKey] = DatabaseData.Entity(
+            entity,
+            DEFAULT_SCHEMA,
+            1,
+            VersionMap()
+        )
 
         var calledWithData: CrdtEntity.Data? = null
         var calledWithVersion: Int? = null
@@ -100,7 +102,12 @@ class DatabaseDriverTest {
             calledWithVersion = version
         }
 
-        assertThat(calledWithData).isEqualTo(entity.toCrdtEntityData(VersionMap()))
+        assertThat(calledWithData).isEqualTo(
+            entity.toCrdtEntityData(VersionMap()) {
+                if (it is Reference) it
+                else buildReference(it)
+            }
+        )
         assertThat(calledWithVersion).isEqualTo(1)
     }
 
@@ -127,7 +134,7 @@ class DatabaseDriverTest {
 
         val databaseValue = checkNotNull(database.data[driver.storageKey] as? DatabaseData.Entity)
 
-        assertThat(databaseValue.entity).isEqualTo(entity.toEntity(DEFAULT_SCHEMA))
+        assertThat(databaseValue.rawEntity).isEqualTo(entity.toRawEntity())
         assertThat(databaseValue.databaseVersion).isEqualTo(1)
         assertThat(databaseValue.versionMap).isEqualTo(entity.versionMap)
 
@@ -144,8 +151,12 @@ class DatabaseDriverTest {
     @Test
     fun send_singleton_withValue() = runBlockingTest {
         val driver = buildDriver<CrdtSingleton.DataImpl<Reference>>(database)
-        val entity = createPersonCrdt("jason", setOf("555-5555", "555-5556"))
-        val singleton = entity.toCrdtSingleton(driver.storageKey)
+        val entity = createPersonCrdt(
+            "jason",
+            setOf("555-5555", "555-5556"),
+            VersionMap("foo" to 1)
+        )
+        val singleton = entity.toCrdtSingleton(driver.storageKey, VersionMap("bar" to 2))
 
         driver.send(singleton, 1)
 
@@ -153,7 +164,8 @@ class DatabaseDriverTest {
             database.data[driver.storageKey] as? DatabaseData.Singleton
         )
 
-        assertThat(databaseValue.reference).isEqualTo(entity.toReference(driver.storageKey))
+        assertThat(databaseValue.value).isEqualTo(
+            ReferenceWithVersion(entity.toReference(driver.storageKey), VersionMap("bar" to 2)))
         assertThat(databaseValue.databaseVersion).isEqualTo(1)
         assertThat(databaseValue.versionMap).isEqualTo(singleton.versionMap)
 
@@ -179,7 +191,7 @@ class DatabaseDriverTest {
             database.data[driver.storageKey] as? DatabaseData.Singleton
         )
 
-        assertThat(databaseValue.reference).isNull()
+        assertThat(databaseValue.value).isNull()
         assertThat(databaseValue.databaseVersion).isEqualTo(1)
         assertThat(databaseValue.versionMap).isEqualTo(singleton.versionMap)
 
@@ -205,7 +217,7 @@ class DatabaseDriverTest {
                 VersionMap("bar" to 1)
             )
         )
-        val set = entities.toCrdtSet(driver.storageKey, VersionMap("foo" to 1, "bar" to 1))
+        val set = entities.toCrdtSet(driver.storageKey, VersionMap("other" to 2))
 
         driver.send(set, 1)
 
@@ -213,7 +225,8 @@ class DatabaseDriverTest {
             database.data[driver.storageKey] as? DatabaseData.Collection
         )
 
-        assertThat(databaseValue.values).isEqualTo(set.values.map { it.value.value }.toSet())
+        assertThat(databaseValue.values).isEqualTo(
+            set.values.map { ReferenceWithVersion(it.value.value, it.value.versionMap) }.toSet())
         assertThat(databaseValue.databaseVersion).isEqualTo(1)
         assertThat(databaseValue.versionMap).isEqualTo(set.versionMap)
 
@@ -239,7 +252,7 @@ class DatabaseDriverTest {
             database.data[driver.storageKey] as? DatabaseData.Collection
         )
 
-        assertThat(databaseValue.values).isEqualTo(set.values.map { it.value.value }.toSet())
+        assertThat(databaseValue.values).isEqualTo(emptySet<ReferenceWithVersion>())
         assertThat(databaseValue.databaseVersion).isEqualTo(1)
         assertThat(databaseValue.versionMap).isEqualTo(set.versionMap)
 
@@ -333,56 +346,57 @@ class DatabaseDriverTest {
     @Test
     fun deletedAtDatabase_heardByDriver() = runBlockingTest {
         val driver = buildDriver<CrdtEntity.Data>(database)
-        val entity = createPersonCrdt("jason",  setOf("555-5555"))
+        val entity = createPersonCrdt("jason", setOf("555-5555"))
 
         driver.send(entity, 1)
 
-        assertThat(driver.getLocalData()).isNotNull()
+        assertThat(driver.getDatabaseData().first).isNotNull()
 
         database.delete(driver.storageKey)
 
-        assertThat(driver.getLocalData()).isNull()
+        assertThat(driver.getDatabaseData().first).isNull()
     }
 
-    private class DriverBuilder<Data : Any> private constructor(
+    class DriverBuilder<Data : Any>(
         var dataClass: KClass<Data>,
         var database: Database,
-        var existenceCriteria: ExistenceCriteria = ExistenceCriteria.MayExist,
         var storageKey: DatabaseStorageKey = DEFAULT_STORAGE_KEY,
         var schemaLookup: (String) -> Schema? = { DEFAULT_SCHEMA }
     ) {
         var schema: Schema?
             get() = schemaLookup("whatever")
-            set(value) { schemaLookup = createSchemaLookup(value) }
+            set(value) {
+                schemaLookup = createSchemaLookup(value)
+            }
 
-        fun build(): DatabaseDriver<Data> =
-            DatabaseDriver(storageKey, existenceCriteria, dataClass, schemaLookup, database)
+        suspend fun build(): DatabaseDriver<Data> =
+            DatabaseDriver(storageKey, dataClass, schemaLookup, database)
+                .register()
 
         companion object {
-            inline fun <reified Data : Any> buildDriver(
-                database: Database,
-                noinline block: DriverBuilder<Data>.() -> Unit = {}
-            ) = buildDriver(database, Data::class, block)
-
-            fun <Data : Any> buildDriver(
-                database: Database,
-                dataClass: KClass<Data>,
-                block: DriverBuilder<Data>.() -> Unit = {}
-            ) = DriverBuilder(dataClass, database).apply(block).build()
-
             private fun createSchemaLookup(schema: Schema?): (String) -> Schema? = { schema }
         }
     }
 
+    suspend inline fun <reified Data : Any> buildDriver(
+        database: Database,
+        crossinline block: DriverBuilder<Data>.() -> Unit = {}
+    ) = buildDriver(database, Data::class) { this.block() }
+
+    suspend fun <Data : Any> buildDriver(
+        database: Database,
+        dataClass: KClass<Data>,
+        block: DriverBuilder<Data>.() -> Unit = {}
+    ) = DriverBuilder(dataClass, database).apply(block).build()
+
     companion object {
-        private val DEFAULT_STORAGE_KEY = DatabaseStorageKey(
+        private val DEFAULT_STORAGE_KEY = DatabaseStorageKey.Persistent(
             unique = "foo",
             entitySchemaHash = "a1234",
-            persistent = true,
             dbName = "testdb"
         )
         private val DEFAULT_SCHEMA = Schema(
-            listOf(SchemaName("foo")),
+            setOf(SchemaName("foo")),
             SchemaFields(
                 singletons = mapOf("name" to FieldType.Text),
                 collections = mapOf("phone_numbers" to FieldType.Text)
@@ -412,7 +426,7 @@ class DatabaseDriverTest {
         ): CrdtSet.DataImpl<Reference> = CrdtSet.DataImpl(
             versionMap,
             this.map { it.toReference(baseKey) }
-                .associate { it.id to CrdtSet.DataValue(it.version, it) }
+                .associate { it.id to CrdtSet.DataValue(versionMap, it) }
                 .toMutableMap()
         )
 
@@ -423,7 +437,9 @@ class DatabaseDriverTest {
             versionMap,
             this?.let {
                 val reference = it.toReference(baseKey)
-                mutableMapOf(reference.id to CrdtSet.DataValue(reference.version, reference))
+                mutableMapOf(
+                    reference.id to CrdtSet.DataValue(versionMap, reference)
+                )
             } ?: mutableMapOf()
         )
 

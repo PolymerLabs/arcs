@@ -10,8 +10,9 @@
 
 import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
 import {UiParticleBase} from './ui-particle-base.js';
-import {Handle} from './handle.js';
+import {Handle} from './storage/handle.js';
 import {Runnable} from './hot.js';
+import {CRDTTypeRecord} from './crdt/crdt.js';
 
 export interface UiStatefulParticle extends UiParticleBase {
   // add type info for XenState members here
@@ -97,21 +98,21 @@ export class UiParticle extends XenStateMixin(UiParticleBase) {
         this.doneBusy();
       }
     };
-    // TODO(sjmiles): superclass uses Promise.resolve(),
-    // but here use a short timeout for a wider debounce
+    // superclass uses Promise.resolve(), we use a short timeout here for a wider debounce
     return setTimeout(done, 10);
   }
 
-  ready() {
+  onReady() : void {
     // ensure we `update()` at least once
     this._invalidate();
+    super.onReady();
   }
 
-  async onHandleSync(handle: Handle, model): Promise<void> {
+  async onHandleSync(handle: Handle<CRDTTypeRecord>, model): Promise<void> {
     this._setProperty(handle.name, model);
   }
 
-  async onHandleUpdate({name}: Handle, {data, added, removed}): Promise<void> {
+  async onHandleUpdate({name}: Handle<CRDTTypeRecord>, {data, added, removed}): Promise<void> {
     if (data !== undefined) {
       //console.log('update.data:', JSON.stringify(data, null, '  '));
       this._setProps({[name]: data});
@@ -119,7 +120,7 @@ export class UiParticle extends XenStateMixin(UiParticleBase) {
     if (added) {
       //console.log('update.added:', JSON.stringify(added, null, '  '));
       const prop = (this.props[name] || []).concat(added);
-      // TODO(sjmiles): generally improper to set `this._props` directly, this is a special case
+      // generally improper to set `this._props` directly, this is a special case
       this._props[name] = prop;
       this._setProps({[name]: prop});
     }
@@ -129,7 +130,7 @@ export class UiParticle extends XenStateMixin(UiParticleBase) {
       if (Array.isArray(prop)) {
         const removedList = Array.isArray(removed) ? removed : [removed];
         removedList.forEach(removed => {
-          // TODO(sjmiles): linear search is inefficient
+          // linear search is inefficient
           const index = prop.findIndex(entry => this.idFor(entry) === this.idFor(removed));
           if (index >= 0) {
             prop.splice(index, 1);

@@ -1,0 +1,62 @@
+// This files is a part of 3 files suite of testdata:
+// - Manifest2ProtoTest.arcs (this file)
+// - Manifest2ProtoTest.pb.bin
+// - Manifest2ProtoTest.textproto
+//
+// On the TypeScript side we serialize .arcs file and validate it equals the .pb.bin file.
+// On the Kotlin side we deserialize .pb.bin and validate it equals parsed .textproto file.
+// This provides an additional guarantee beyond unit tests that at least all the constructs used
+// in the .arcs file can be serialized in TS and deserialized in Kotlin to the extent that they
+// are present in the .textproto file.
+meta
+  namespace: arcs.core.data.testdata
+
+particle Writer in 'Writer'
+  products: writes [Product Thing {
+    name: Text,
+    dimensions: [Number],
+    reviews: [&Review {
+      authors: List<Text>,
+      content: Text,
+      rating: Number
+    }],
+    safeForKids: Boolean
+  }]
+
+particle Reader in 'Reader'
+  things: reads [Thing {
+    name: Text
+  }]
+  summary: reads writes {
+    overallRating: Number
+  }
+  friends: reads [&Person {
+    name: Text
+  }]
+
+@arcId('writingArcId')
+recipe Ingestion
+  products: create 'products' @persistent
+  Writer
+    products: products
+
+recipe Consumption
+  data: map 'products'
+  summary: use #summary
+  Reader
+    things: reads data
+    summary: summary
+
+schema RestrictedThing
+  name: Text
+
+@intendedPurpose('check that policies can be serialized to proto')
+@egressType('Logging')
+policy MyPolicy {
+  @allowedRetention(medium: 'Ram', encryption: false)
+  @maxAge('10m')
+  from RestrictedThing access {
+    @allowedUsage(label: 'redacted', usageType: '*')
+    name,
+  }
+}

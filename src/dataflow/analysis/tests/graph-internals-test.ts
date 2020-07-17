@@ -11,7 +11,7 @@
 import {Flow, FlowModifier, TagOperation, FlowCheck, FlowSet} from '../graph-internals.js';
 import {assert} from '../../../platform/chai-web.js';
 import {TestEdge, TestNode} from '../testing/flow-graph-testing.js';
-import {ClaimIsTag} from '../../../runtime/particle-claim.js';
+import {ClaimIsTag} from '../../../runtime/claim.js';
 
 describe('Flow', () => {
   it('starts empty', () => {
@@ -186,6 +186,56 @@ describe('Flow', () => {
       assert.isTrue(checkWithTags('t1', 't2'));
       assert.isTrue(checkWithTags('t1', 't3'));
       assert.isFalse(checkWithTags('t2', 't3'));
+    });
+
+    it(`handles 'implies' operators`, () => {
+      const check: FlowCheck = {operator: 'implies', children: [
+        {type: 'tag', value: 't1', negated: false},
+        {type: 'tag', value: 't2', negated: false},
+      ]};
+      const flow = new Flow();
+      assert.isTrue(flow.evaluateCheck(check));
+
+      flow.tags.add('t1');
+      assert.isFalse(flow.evaluateCheck(check));
+
+      flow.tags.add('t2');
+      assert.isTrue(flow.evaluateCheck(check));
+    });
+
+    it(`handles nested 'implies' operators`, () => {
+      const check: FlowCheck = {operator: 'implies', children: [
+        {type: 'tag', value: 't1', negated: false},
+        {operator: 'implies', children: [
+          {type: 'tag', value: 't2', negated: false},
+          {type: 'tag', value: 't3', negated: false},
+        ]},
+      ]};
+      const flow = new Flow();
+      assert.isTrue(flow.evaluateCheck(check));
+
+      flow.tags.add('t1');
+      assert.isTrue(flow.evaluateCheck(check));
+
+      flow.tags.add('t2');
+      assert.isFalse(flow.evaluateCheck(check));
+
+      flow.tags.add('t3');
+      assert.isTrue(flow.evaluateCheck(check));
+    });
+
+    it(`rejects 'implies' operations that don't have 2 children`, () => {
+      const flow = new Flow();
+
+      assert.throws(() => flow.evaluateCheck({operator: 'implies', children: [
+        {type: 'tag', value: 't1', negated: false},
+      ]}), `Implications must have exactly 2 children.`);
+
+      assert.throws(() => flow.evaluateCheck({operator: 'implies', children: [
+        {type: 'tag', value: 't1', negated: false},
+        {type: 'tag', value: 't2', negated: false},
+        {type: 'tag', value: 't3', negated: false},
+      ]}), `Implications must have exactly 2 children.`);
     });
   });
 

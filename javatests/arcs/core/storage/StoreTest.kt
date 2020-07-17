@@ -16,8 +16,16 @@ import arcs.core.crdt.CrdtCount.Operation.Increment
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
+import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
+import arcs.core.data.CollectionType
 import arcs.core.data.CountType
+import arcs.core.data.EntityType
+import arcs.core.data.FieldType
+import arcs.core.data.RawEntity
+import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
+import arcs.core.data.util.toReferencable
 import arcs.core.storage.testutil.DummyStorageKey
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
@@ -47,18 +55,17 @@ class StoreTest {
 
     @Before
     fun setup() {
-        DriverFactory.clearRegistrationsForTesting()
+        DriverFactory.clearRegistrations()
     }
 
     @After
     fun teardown() {
-        DriverFactory.clearRegistrationsForTesting()
+        DriverFactory.clearRegistrations()
     }
 
     @Test(expected = CrdtException::class)
     fun throws_ifAppropriateDriverCantBeFound() = runBlockingTest {
-        val store = createStore()
-        store.activate()
+        createStore()
     }
 
     @Test
@@ -66,17 +73,15 @@ class StoreTest {
         setupMocks()
 
         val store = createStore()
-        val activeStore = store.activate()
 
-        assertThat(activeStore).isInstanceOf(DirectStore::class.java)
+        assertThat(store).isInstanceOf(DirectStore::class.java)
     }
 
     @Test
     fun propagatesModelUpdates_fromProxies_toDrivers() = runBlockingTest {
         val (driver, _) = setupMocks()
 
-        val store = createStore()
-        val activeStore = store.activate() as DirectStore<CrdtData, CrdtOperation, Any?>
+        val store = createStore() as DirectStore<CrdtData, CrdtOperation, Any?>
 
         val modelCaptor = argumentCaptor<CrdtCount.Data>()
         whenever(driver.send(modelCaptor.capture(), any())).thenReturn(true)
@@ -84,7 +89,7 @@ class StoreTest {
         val count = CrdtCount()
         count.applyOperation(Increment("me", 0 to 1))
 
-        assertThat(activeStore.onProxyMessage(ProxyMessage.ModelUpdate(count.data, 1)))
+        assertThat(store.onProxyMessage(ProxyMessage.ModelUpdate(count.data, 1)))
             .isTrue()
 
         assertThat(modelCaptor.lastValue).isEqualTo(count.data)
@@ -94,8 +99,7 @@ class StoreTest {
     fun appliesAndPropagatesOperations_fromProxies_toDrivers() = runBlockingTest {
         val (driver, _) = setupMocks()
 
-        val store = createStore()
-        val activeStore = store.activate() as DirectStore<CrdtData, CrdtOperation, Any?>
+        val store = createStore() as DirectStore<CrdtData, CrdtOperation, Any?>
 
         val modelCaptor = argumentCaptor<CrdtCount.Data>()
         whenever(driver.send(modelCaptor.capture(), any())).thenReturn(true)
@@ -103,7 +107,7 @@ class StoreTest {
         val count = CrdtCount()
         val op = Increment("me", 0 to 1)
 
-        assertThat(activeStore.onProxyMessage(ProxyMessage.Operations(listOf(op), 1))).isTrue()
+        assertThat(store.onProxyMessage(ProxyMessage.Operations(listOf(op), 1))).isTrue()
 
         count.applyOperation(op)
 
@@ -114,8 +118,7 @@ class StoreTest {
     fun responds_toModelRequest_fromProxyWithModel() = runBlockingTest {
         val (driver, _) = setupMocks()
 
-        val store = createStore()
-        val activeStore = store.activate() as DirectStore<CrdtData, CrdtOperation, Any?>
+        val store = createStore() as DirectStore<CrdtData, CrdtOperation, Any?>
 
         whenever(driver.send(any(), any())).thenReturn(true)
 
@@ -125,30 +128,29 @@ class StoreTest {
 
         val sentSyncRequest = atomic(false)
         val deferred = CompletableDeferred<Unit>(coroutineContext[Job.Key])
+        var cbid = 0
         val callback = ProxyCallback<CrdtData, CrdtOperation, Any?> { message ->
-            return@ProxyCallback when (message) {
+            when (message) {
                 is ProxyMessage.Operations -> {
                     assertThat(sentSyncRequest.getAndSet(true)).isFalse()
-                    activeStore.onProxyMessage(ProxyMessage.SyncRequest(message.id))
-                    true
+                    // Make sure to request sync on this callback ID
+                    store.onProxyMessage(ProxyMessage.SyncRequest(cbid))
                 }
                 is ProxyMessage.ModelUpdate -> {
                     assertThat(sentSyncRequest.value).isTrue()
                     assertThat(message.model).isEqualTo(count.data)
                     deferred.complete(Unit)
-                    true
                 }
                 is ProxyMessage.SyncRequest -> {
                     deferred.completeExceptionally(AssertionError("Shouldn't ever get here."))
-                    false
                 }
             }
         }
 
         // Set up the callback
-        activeStore.on(callback)
+        cbid = store.on(callback)
         // Send our op.
-        activeStore.onProxyMessage(ProxyMessage.Operations(listOf(op), 2))
+        store.onProxyMessage(ProxyMessage.Operations(listOf(op), 2))
 
         // Wait for our deferred to be completed.
         deferred.await()
@@ -160,20 +162,17 @@ class StoreTest {
         setupMocks()
 
         val store = createStore()
-        val activeStore = store.activate()
 
         val listener1Finished = CompletableDeferred<Unit>(coroutineContext[Job.Key])
-        val id1 = activeStore.on(ProxyCallback { message ->
+        val id1 = store.on(ProxyCallback { message ->
             assertThat(message).isInstanceOf(ProxyMessage.ModelUpdate::class.java)
             listener1Finished.complete(Unit)
-            true
         })
-        val id2 = activeStore.on(ProxyCallback {
+        val id2 = store.on(ProxyCallback {
             fail("This callback should not be called.")
-            true
         })
 
-        activeStore.onProxyMessage(ProxyMessage.SyncRequest(id1))
+        store.onProxyMessage(ProxyMessage.SyncRequest(id1))
 
         listener1Finished.await()
     }
@@ -185,22 +184,19 @@ class StoreTest {
         whenever(driver.registerReceiver(anyOrNull(), receiverCaptor.capture())).thenReturn(Unit)
 
         val store = createStore()
-        val activeStore = store.activate()
 
         val count = CrdtCount()
         count.applyOperation(Increment("me", 0 to 1))
 
         val listenerFinished = CompletableDeferred<Unit>(coroutineContext[Job.Key])
 
-        var id: Int = -1
-        id = activeStore.on(ProxyCallback { message ->
+        store.on(ProxyCallback { message ->
             if (message is ProxyMessage.Operations) {
                 assertThat(message.operations.size).isEqualTo(1)
-                assertThat(message.id).isEqualTo(id)
                 assertThat(message.operations[0])
                     .isEqualTo(CrdtCount.Operation.MultiIncrement("me", 0 to 1, delta = 1))
                 listenerFinished.complete(Unit)
-                return@ProxyCallback true
+                return@ProxyCallback
             }
             listenerFinished.completeExceptionally(
                 IllegalStateException("Should be an operations message.")
@@ -213,24 +209,6 @@ class StoreTest {
     }
 
     @Test
-    fun clonesData_fromAnotherStore() = runBlockingTest {
-        setupMocks()
-
-        val activeStore = createStore().activate()
-
-        // Write some data.
-        val count = CrdtCount()
-        count.applyOperation(Increment("me", 0 to 1))
-        activeStore.onProxyMessage(ProxyMessage.ModelUpdate(count.data, 1))
-        assertThat(activeStore.getLocalData()).isEqualTo(count.data)
-
-        // Clone into another store.
-        val activeStore2 = createStore().activate()
-        activeStore2.cloneFrom(activeStore)
-        assertThat(activeStore2.getLocalData()).isEqualTo(count.data)
-    }
-
-    @Test
     fun doesntSendUpdateToDriver_afterDriverOriginatedMessages() = runBlockingTest {
         val (driver, _) = setupMocks()
         val receiverCaptor = argumentCaptor<suspend (CrdtCount.Data, Int) -> Unit>()
@@ -239,7 +217,7 @@ class StoreTest {
             IllegalStateException("Should not be invoked")
         )
 
-        val store = createStore().activate()
+        val store = createStore()
 
         val remoteCount = CrdtCount()
         remoteCount.applyOperation(Increment("them", 0 to 1))
@@ -247,6 +225,43 @@ class StoreTest {
         // Note that this assumes no asynchrony inside store.ts. This is guarded by the following
         // test, which will fail if driver.receiver() doesn't synchronously invoke driver.send().
         receiverCaptor.lastValue(remoteCount.data, 1)
+    }
+
+    @Test
+    fun doesntSendUpdateToDriver_afterDriverOriginatedMessages_CrdtSet() = runBlockingTest {
+        val (driver, _) = setupSetMocks()
+        val receiverCaptor = argumentCaptor<suspend (CrdtSet.Data<*>, Int) -> Unit>()
+        whenever(driver.registerReceiver(anyOrNull(), receiverCaptor.capture())).thenReturn(Unit)
+        whenever(driver.send(any(), any())).thenThrow(
+            IllegalStateException("Should not be invoked")
+        )
+
+        val schema = Schema(
+            emptySet(),
+            SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
+            "abc"
+        )
+        val store: CollectionStore<RawEntity> = DefaultActivationFactory(
+            StoreOptions(
+                testKey,
+                CollectionType(EntityType(schema))
+            ))
+
+        val remoteSet = CrdtSet<RawEntity>()
+        val entity = RawEntity(
+            id = "id",
+            singletons = mapOf("name" to "a".toReferencable()),
+            collections = emptyMap()
+        )
+        remoteSet.applyOperation(CrdtSet.Operation.Add(
+            "bob",
+            VersionMap("bob" to 1),
+            entity
+        ))
+
+        // Note that this assumes no asynchrony inside store.ts. This is guarded by the following
+        // test, which will fail if driver.receiver() doesn't synchronously invoke driver.send().
+        receiverCaptor.lastValue(remoteSet.data, 1)
     }
 
     @Test
@@ -262,7 +277,7 @@ class StoreTest {
             return@then false
         }
 
-        val activeStore = createStore().activate()
+        val activeStore = createStore()
 
         // local count from proxy
         val count = CrdtCount()
@@ -304,7 +319,7 @@ class StoreTest {
         whenever(driver.registerReceiver(anyOrNull(), receiverCaptor.capture())).thenReturn(Unit)
         whenever(driver.send(driverModelCaptor.capture(), any())).thenReturn(true)
 
-        val activeStore = createStore().activate() as DirectStore<CrdtData, CrdtOperation, Any?>
+        val activeStore = createStore() as DirectStore<CrdtData, CrdtOperation, Any?>
 
         activeStore.onProxyMessage(ProxyMessage.Operations(listOf(Increment("me", 0 to 1)), id = 1))
         activeStore.onProxyMessage(ProxyMessage.Operations(listOf(Increment("me", 1 to 2)), id = 1))
@@ -334,19 +349,33 @@ class StoreTest {
     private suspend fun setupMocks(): Pair<Driver<CrdtCount.Data>, DriverProvider> {
         val driver = mock<Driver<CrdtCount.Data>> {
             on { storageKey }.thenReturn(testKey)
-            on { existenceCriteria }.thenReturn(ExistenceCriteria.ShouldCreate)
         }
         whenever(driver.send(any(), any())).thenReturn(true)
         val provider = mock<DriverProvider> {
             on { willSupport(testKey) }.thenReturn(true)
         }
-        whenever(provider.getDriver(any(), any(), eq(CrdtCount.Data::class))).thenReturn(driver)
+        whenever(provider.getDriver(any(), eq(CrdtCount.Data::class), any())).thenReturn(driver)
 
         DriverFactory.register(provider)
 
         return driver to provider
     }
 
-    private fun createStore(): Store<CrdtData, CrdtOperation, Any?> =
-        Store(StoreOptions(testKey, ExistenceCriteria.ShouldCreate, CountType()))
+    private suspend fun setupSetMocks(): Pair<Driver<CrdtSet.DataImpl<*>>, DriverProvider> {
+        val driver = mock<Driver<CrdtSet.DataImpl<*>>> {
+            on { storageKey }.thenReturn(testKey)
+        }
+        whenever(driver.send(any(), any())).thenReturn(true)
+        val provider = mock<DriverProvider> {
+            on { willSupport(testKey) }.thenReturn(true)
+        }
+        whenever(provider.getDriver(any(), eq(CrdtSet.DataImpl::class), any())).thenReturn(driver)
+
+        DriverFactory.register(provider)
+
+        return driver to provider
+    }
+
+    private suspend fun createStore() =
+        DefaultActivationFactory<CrdtData, CrdtOperation, Any?>(StoreOptions(testKey, CountType()))
 }

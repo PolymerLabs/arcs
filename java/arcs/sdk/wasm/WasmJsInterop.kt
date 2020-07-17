@@ -157,6 +157,11 @@ fun updateHandle(
 }
 
 @Retain
+@ExportForCppRuntime("_onFirstStart")
+fun onFirstStart(particlePtr: WasmAddress) =
+    particlePtr.toObject<WasmParticleImpl>()?.onFirstStart()
+
+@Retain
 @ExportForCppRuntime("_fireEvent")
 fun fireEvent(
     particlePtr: WasmAddress,

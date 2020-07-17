@@ -17,11 +17,13 @@ import {Runtime} from '../../runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 
 import {Entity} from '../../runtime/entity.js';
+import {Flags} from '../../runtime/flags.js';
+import {SingletonType} from '../../runtime/type.js';
 
 describe('DevtoolsArcInspector', () => {
   before(() => DevtoolsForTests.ensureStub());
   after(() => DevtoolsForTests.reset());
-  it('produces PEC Log messages on devtools channel', async () => {
+  it('produces PEC Log messages on devtools channel', Flags.withDefaultReferenceMode(async () => {
     const loader = new Loader(null, {
       'p.js': `defineParticle(({Particle}) => class P extends Particle {
         async setHandles(handles) {
@@ -43,7 +45,7 @@ describe('DevtoolsArcInspector', () => {
     const arc = runtime.newArc('demo', storageKeyPrefixForTest(), {inspectorFactory: devtoolsArcInspectorFactory});
 
     const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
-    const fooStore = await arc.createStore(foo.type, undefined, 'fooStore');
+    const fooStore = await arc.createStore(new SingletonType(foo.type), undefined, 'fooStore');
 
     const recipe = arc.context.recipes[0];
     recipe.handles[0].mapToStorage(fooStore);
@@ -60,9 +62,10 @@ describe('DevtoolsArcInspector', () => {
     const sessionId = arc.idGenerator.currentSessionIdForTesting;
 
     assert.deepEqual(pecMsgBody, {
-      id: `!${sessionId}:demo:particle1`,
-      identifier: `!${sessionId}:demo:particle1`,
+      id: `!${sessionId}:demo:particle3`,
+      identifier: `!${sessionId}:demo:particle3`,
       reinstantiate: false,
+      storeMuxers: {},
       stores: {
         foo: 'fooStore'
       },
@@ -76,7 +79,9 @@ describe('DevtoolsArcInspector', () => {
         verbs: [],
         trustClaims: [],
         trustChecks: [],
+        annotations: [],
         args: [{
+          annotations: [],
           dependentConnections: [],
           direction: 'reads writes',
           isOptional: false,
@@ -84,5 +89,5 @@ describe('DevtoolsArcInspector', () => {
         }]
       }
     });
-  });
+  }));
 });

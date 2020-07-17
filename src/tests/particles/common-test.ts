@@ -11,17 +11,12 @@
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
-import {VolatileCollection} from '../../runtime/storage/volatile-storage.js';
-import {SlotComposer} from '../../runtime/slot-composer.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {Loader} from '../../platform/loader.js';
 import {StrategyTestHelper} from '../../planning/testing/strategy-test-helper.js';
-import {RamDiskStorageDriverProvider} from '../../runtime/storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../../runtime/storage/drivers/ramdisk.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
-import {Flags} from '../../runtime/flags.js';
-import {handleNGFor, CollectionHandle} from '../../runtime/storageNG/handle.js';
-import {StorageProxy} from '../../runtime/storageNG/storage-proxy.js';
-import {Referenceable} from '../../runtime/crdt/crdt-collection.js';
+import {ActiveCollectionEntityStore, handleForActiveStore} from '../../runtime/storage/storage.js';
 
 describe('common particles test', () => {
   it('resolves after cloning', async () => {
@@ -76,26 +71,7 @@ describe('common particles test', () => {
   });
 
 
-  it('copy handle test', async function() {
-    // TODO: enable this test after migration. At the moment it fails because inline data is given
-    // in the old (incompatible format). It should be substituted with something like this:
-    //   resource BigThings
-    //   start
-    //   {"root": {"values": {"ida": {"value": {"id": "ida", "rawData":{"name": "house"}}, "version": {"u": 1}},
-    //                        "idb": {"value": {"id": "idb", "rawData":{"name": "car"}}, "version": {"u": 1}}},
-    //             "version":{"u": 1}}, "locations": {}}
-    // store Store0 of [Thing] 'bigthings' in BigThings
-
-    // resource SmallThings
-    //   start
-    //   {"root": {"values": {"idc": {"value": {"id": "idc", "rawData":{"name": "pen"}}, "version": {"u": 1}},
-    //                        "idd": {"value": {"id": "idd", "rawData":{"name": "spoon"}}, "version": {"u": 1}},
-    //                        "ide": {"value": {"id": "ide", "rawData":{"name": "ball"}}, "version": {"u": 1}}},
-    //             "version":{"u": 1}}, "locations": {}}
-    // store Store1 of [Thing] 'smallthings' in SmallThings
-    if (Flags.useNewStorageStack) {
-      this.skip();
-    }
+  it('copy handle test', async () => {
     const loader = new Loader();
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
@@ -113,15 +89,8 @@ describe('common particles test', () => {
     await suggestion.instantiate(arc);
     await arc.idle;
 
-    if (Flags.useNewStorageStack) {
-      const endpointProvider = await arc._stores[2].activate();
-      const storageProxy = new StorageProxy('aid', endpointProvider, arc._stores[2].type, null);
-      const handle = await handleNGFor('crdt-key', storageProxy, arc.idGenerator, null, true, true) as CollectionHandle<Referenceable>;
-      assert.strictEqual((await handle.toList()).length, 5);
-    } else {
-      // Copied 2 and 3 entities from two collections.
-      const collection = arc._stores[2] as VolatileCollection;
-      assert.strictEqual(collection._model.size, 5);
-    }
+    const endpointProvider = await arc._stores[2].activate() as ActiveCollectionEntityStore;
+    const handle = handleForActiveStore(endpointProvider, arc);
+    assert.strictEqual((await handle.toList()).length, 5);
   });
 });

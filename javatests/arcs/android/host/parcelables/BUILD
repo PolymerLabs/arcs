@@ -5,7 +5,7 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_android_test_suite(
     name = "parcelables",
@@ -13,10 +13,12 @@ arcs_kt_android_test_suite(
     package = "arcs.android.host.parcelables",
     deps = [
         "//java/arcs/android/host",
+        "//java/arcs/android/host/parcelables",
         "//java/arcs/core/common",
         "//java/arcs/core/data",
         "//java/arcs/core/host",
         "//java/arcs/core/storage/driver",
+        "//java/arcs/core/storage/keys",
         "//java/arcs/core/type",
         "//java/arcs/sdk",
         "//third_party/android/androidx_test/core",

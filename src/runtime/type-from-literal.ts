@@ -9,8 +9,8 @@
  */
 
 import {TypeLiteral, Type, EntityType, TypeVariable, CollectionType,
-        BigCollectionType, RelationType, InterfaceType, SlotType, ReferenceType,
-        ArcType, HandleType, SingletonType, TypeVariableInfo, InterfaceInfo} from './type.js';
+        BigCollectionType, TupleType, InterfaceType, SlotType, ReferenceType,
+        HandleType, SingletonType, TypeVariableInfo, InterfaceInfo, MuxType} from './type.js';
 import {Schema} from './schema.js';
 import {SlotInfo} from './slot-info.js';
 
@@ -24,16 +24,16 @@ function fromLiteral(literal: TypeLiteral) : Type {
       return new CollectionType(Type.fromLiteral(literal.data));
     case 'BigCollection':
       return new BigCollectionType(Type.fromLiteral(literal.data));
-    case 'Relation':
-      return new RelationType(literal.data.map(t => Type.fromLiteral(t)));
+    case 'Tuple':
+      return new TupleType(literal.data.map(t => Type.fromLiteral(t)));
     case 'Interface':
       return new InterfaceType(InterfaceInfo.fromLiteral(literal.data));
     case 'Slot':
       return new SlotType(SlotInfo.fromLiteral(literal.data));
     case 'Reference':
       return new ReferenceType(Type.fromLiteral(literal.data));
-    case 'Arc':
-      return new ArcType();
+    case 'Mux':
+      return new MuxType(Type.fromLiteral(literal.data));
     case 'Handle':
       return new HandleType();
     case 'Singleton':

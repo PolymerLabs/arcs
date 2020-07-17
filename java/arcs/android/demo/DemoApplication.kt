@@ -12,13 +12,32 @@
 package arcs.android.demo
 
 import android.app.Application
+import androidx.work.Configuration
 import arcs.android.util.initLogForAndroid
+import arcs.core.storage.api.DriverAndKeyConfigurator
+import arcs.core.storage.driver.RamDisk
+import arcs.core.storage.driver.RamDiskDriverProvider
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Log
 
 /** Application class for Arcs Demo. */
-class DemoApplication : Application() {
+class DemoApplication : Application(), Configuration.Provider {
+
+    override fun getWorkManagerConfiguration() =
+        Configuration.Builder()
+            .setMinimumLoggingLevel(android.util.Log.DEBUG)
+            .build()
+
     override fun onCreate() {
         super.onCreate()
+
+        RamDisk.clear()
+        RamDiskDriverProvider()
+
+        DriverAndKeyConfigurator.configureKeyParsers()
+
+        ReferenceModeStorageKey.registerParser()
+
         initLogForAndroid(Log.Level.Debug)
     }
 }

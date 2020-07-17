@@ -16,13 +16,17 @@ import {Recipe} from '../recipe/recipe.js';
 import {EntityType, InterfaceType, SingletonType} from '../type.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {ArcId} from '../id.js';
-import {SingletonStorageProvider} from '../storage/storage-provider-base.js';
-import {singletonHandleForTest} from '../testing/handle-for-test.js';
-import {Flags} from '../flags.js';
-import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
-import {StorageProxy} from '../storageNG/storage-proxy.js';
-import {handleNGFor, SingletonHandle} from '../storageNG/handle.js';
+import {VolatileStorageKey} from '../storage/drivers/volatile.js';
 import {Entity} from '../entity.js';
+import {handleForStore} from '../storage/storage.js';
+import {isSingletonEntityStore} from '../storage/abstract-store.js';
+
+async function mapHandleToStore(arc: Arc, recipe, classType: {type: EntityType}, id) {
+  const store = await arc.createStore(new SingletonType(classType.type), undefined, `test:${id}`);
+  const handle = await handleForStore(store, arc);
+  recipe.handles[id].mapToStorage(store);
+  return handle;
+}
 
 describe('particle interface loading', () => {
 
@@ -82,24 +86,19 @@ describe('particle interface loading', () => {
       verbs: [],
       implFile: 'outer-particle.js',
       args: [
-        {direction: 'hosts', relaxed: false, type: ifaceType, name: 'particle0', dependentConnections: [], isOptional: false},
-        {direction: 'reads', relaxed: false, type: fooType, name: 'input', dependentConnections: [], isOptional: false},
-        {direction: 'writes', relaxed: false, type: barType, name: 'output', dependentConnections: [], isOptional: false}
+        {direction: 'hosts', relaxed: false, type: ifaceType, name: 'particle0', dependentConnections: [], isOptional: false, annotations: []},
+        {direction: 'reads', relaxed: false, type: fooType, name: 'input', dependentConnections: [], isOptional: false, annotations: []},
+        {direction: 'writes', relaxed: false, type: barType, name: 'output', dependentConnections: [], isOptional: false, annotations: []}
       ],
     });
 
-    const ifaceStore = await arc.createStore(ifaceType) as SingletonStorageProvider;
-    const outStore = await arc.createStore(barType);
-    const inStore = await arc.createStore(fooType) as SingletonStorageProvider;
-    if (Flags.useNewStorageStack) {
-      const ifaceHandle = await singletonHandleForTest(arc, ifaceStore);
-      await ifaceHandle.set(manifest.particles[0]);
-      const inHandle = await singletonHandleForTest(arc, inStore);
-      await inHandle.set(new inHandle.entityClass({value: 'a foo'}));
-    } else {
-      await ifaceStore.set(manifest.particles[0].toLiteral());
-      await inStore.set({id: 'id', rawData: {value: 'a foo'}});
-    }
+    const ifaceStore = await arc.createStore(new SingletonType(ifaceType));
+    const outStore = await arc.createStore(new SingletonType(barType));
+    const inStore = await arc.createStore(new SingletonType(fooType));
+    const ifaceHandle = await handleForStore(ifaceStore, arc);
+    await ifaceHandle.set(manifest.particles[0]);
+    const inHandle = await handleForStore(inStore, arc);
+    await inHandle.set(new inHandle.entityClass({value: 'a foo'}));
 
     const recipe = new Recipe();
     const particle = recipe.newParticle('outerParticle');
@@ -125,8 +124,8 @@ describe('particle interface loading', () => {
 
     await arc.instantiate(recipe);
     await arc.idle;
-    const outHandle = await singletonHandleForTest(arc, outStore);
-    assert.deepStrictEqual(await outHandle.fetch(), {value: 'a foo1'});
+    const outHandle = await handleForStore(outStore, arc);
+    assert.deepStrictEqual(await outHandle.fetch() as {}, {value: 'a foo1'});
   });
 
   it('loads interfaces into particles declaratively', async () => {
@@ -145,8 +144,8 @@ describe('particle interface loading', () => {
 
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
 
-    const fooType = manifest.findTypeByName('Foo');
-    const barType = manifest.findTypeByName('Bar');
+    const fooType = manifest.findTypeByName('Foo') as EntityType;
+    const barType = manifest.findTypeByName('Bar') as EntityType;
 
     const recipe = manifest.recipes[0];
 
@@ -155,15 +154,15 @@ describe('particle interface loading', () => {
 
     await arc.instantiate(recipe);
 
-    const fooStore = arc.findStoresByType(fooType)[0];
-    const fooHandle = await singletonHandleForTest(arc, fooStore);
-    await fooHandle.set(new fooHandle.entityClass({value: 'a foo'}));
+    const fooStore = arc.findStoresByType(new SingletonType(fooType))[0];
+    const fooHandle = await handleForStore(fooStore, arc);
+    await fooHandle.setFromData({value: 'a foo'});
 
     await arc.idle;
 
-    const barStore = arc.findStoresByType(barType)[0];
-    const barHandle = await singletonHandleForTest(arc, barStore);
-    assert.deepEqual(await barHandle.fetch(), {value: 'a foo1'});
+    const barStore = arc.findStoresByType(new SingletonType(barType))[0];
+    const barHandle = await handleForStore(barStore, arc);
+    assert.deepEqual(await barHandle.fetch() as {}, {value: 'a foo1'});
   });
 
   it('updates transformation particle on inner handle', async () => {
@@ -227,8 +226,8 @@ describe('particle interface loading', () => {
       `
     });
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, loader});
-    const fooType = manifest.findTypeByName('Foo');
-    const fooStore = await arc.createStore(fooType);
+    const fooType = manifest.findTypeByName('Foo') as EntityType;
+    const fooStore = await arc.createStore(new SingletonType(fooType));
     recipe.handles[0].mapToStorage(fooStore);
 
     assert.isTrue(recipe.normalize());
@@ -236,11 +235,11 @@ describe('particle interface loading', () => {
 
     await arc.instantiate(recipe);
     await arc.idle;
-    const fooHandle = await singletonHandleForTest(arc, fooStore);
-    assert.deepStrictEqual(await fooHandle.fetch(), {value: 'hello world!!!'});
+    const fooHandle = await handleForStore(fooStore, arc);
+    assert.deepStrictEqual(await fooHandle.fetch() as {}, {value: 'hello world!!!'});
   });
 
-  it('onCreate only runs for initialization and not reinstantiation', async () => {
+  it('onFirstStart only runs for initialization and not reinstantiation', async () => {
     const manifest = await Manifest.parse(`
       schema Foo
         value: Text
@@ -253,20 +252,22 @@ describe('particle interface loading', () => {
     `);
     assert.lengthOf(manifest.recipes, 1);
     const recipe = manifest.recipes[0];
-    // TODO(shans): Fix storage stack bug so 'this.innerFooHandle.fetch();' can be removed.
     const loader = new Loader(null, {
       'updating-particle.js': `
         'use strict';
         defineParticle(({Particle}) => {
-          var str = "Not created!";
+          var created = false;
           return class extends Particle {
-            onCreate() {
-              str = "Created!";
+            onFirstStart() {
+              this.innerFooHandle = this.handles.get('innerFoo');
+              this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Created!"}));
+              created = true;
             }
             async onHandleSync(handle, model) {
-              this.innerFooHandle = this.handles.get('innerFoo');
-              await this.innerFooHandle.fetch();
-              await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: str}));
+              if (!created) {
+                this.innerFooHandle = this.handles.get('innerFoo');
+                await this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Not created!"}));
+              }
             }
           };
         });
@@ -278,8 +279,7 @@ describe('particle interface loading', () => {
     const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
 
     const fooStore = await arc.createStore(new SingletonType(fooClass.type), undefined, 'test:0');
-    const varStorageProxy = new StorageProxy('id', await fooStore.activate(), new SingletonType(fooClass.type), fooStore.storageKey.toString());
-    const fooHandle = await handleNGFor('crdt-key', varStorageProxy, arc.idGenerator, null, true, true, 'fooHandle') as SingletonHandle<Entity>;
+    const fooHandle = await handleForStore(fooStore, arc);
     recipe.handles[0].mapToStorage(fooStore);
 
     recipe.normalize();
@@ -293,8 +293,177 @@ describe('particle interface loading', () => {
     const arc2 = await Arc.deserialize({serialization, loader, fileName: '', context: manifest});
     await arc2.idle;
 
-    const varStorageProxy2 = new StorageProxy('id', await arc2._stores[0].activate(), new SingletonType(fooClass.type), arc2._stores[0].storageKey.toString());
-    const fooHandle2 = await handleNGFor('crdt-key', varStorageProxy2, arc2.idGenerator, null, true, true, 'varHandle') as SingletonHandle<Entity>;
+    const fooHandle2 = await handleForStore(arc2._stores.find(isSingletonEntityStore), arc2);
     assert.deepStrictEqual(await fooHandle2.fetch(), new fooClass({value: 'Not created!'}));
+  });
+
+  it('onReady sees overriden values in onFirstStart', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        value: Text
+
+      particle UpdatingParticle in 'updating-particle.js'
+        bar: reads writes Foo
+      recipe
+        h1: use *
+        UpdatingParticle
+          bar: h1
+    `);
+    assert.lengthOf(manifest.recipes, 1);
+    const recipe = manifest.recipes[0];
+    const loader = new Loader(null, {
+      'updating-particle.js': `
+        'use strict';
+        defineParticle(({Particle}) => {
+          var handlesSynced = 0;
+          return class extends Particle {
+            onFirstStart() {
+              this.barHandle = this.handles.get('bar');
+              this.barHandle.set(new this.barHandle.entityClass({value: "Created!"}));
+            }
+
+            async onReady() {
+              this.barHandle = this.handles.get('bar');
+              this.bar = await this.barHandle.fetch();
+
+              if(this.bar.value == "Created!") {
+                await this.barHandle.set(new this.barHandle.entityClass({value: "Ready!"}))
+              } else {
+                await this.barHandle.set(new this.barHandle.entityClass({value: "Handle not overriden by onFirstStart!"}))
+              }
+            }
+          };
+        });
+      `
+    });
+    const id = ArcId.newForTest('test');
+    const storageKey = new VolatileStorageKey(id, 'unique');
+    const arc = new Arc({id, storageKey, loader, context: manifest});
+    const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
+
+    const barHandle = await mapHandleToStore(arc, recipe, fooClass, 0);
+    await barHandle.set(new fooClass({value: 'Set!'}));
+
+    recipe.normalize();
+    await arc.instantiate(recipe);
+    await arc.idle;
+    assert.deepStrictEqual(await barHandle.fetch(), new fooClass({value: 'Ready!'}));
+  });
+
+  it('onReady runs when handles are first synced', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        value: Text
+
+      particle UpdatingParticle in 'updating-particle.js'
+        innerFoo: reads writes Foo
+        bar: reads Foo
+      recipe
+        h0: use *
+        h1: use *
+        UpdatingParticle
+          innerFoo: h0
+          bar: h1
+    `);
+    assert.lengthOf(manifest.recipes, 1);
+    const recipe = manifest.recipes[0];
+    const loader = new Loader(null, {
+      'updating-particle.js': `
+        'use strict';
+        defineParticle(({Particle}) => {
+          var handlesSynced = 0;
+          return class extends Particle {
+            onFirstStart() {
+              this.innerFooHandle = this.handles.get('innerFoo');
+              this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Created!"}));
+            }
+            onHandleSync(handle, model) {
+              handlesSynced += 1;
+            }
+            async onReady() {
+              this.innerFooHandle = this.handles.get('innerFoo');
+              this.foo = await this.innerFooHandle.fetch()
+
+              this.barHandle = this.handles.get('bar');
+              this.bar = await this.barHandle.fetch();
+
+              var s = "Ready!";
+              if(this.foo.value != "Created!") {
+                s = s + " onFirstStart was not called before onReady.";
+              }
+              if (this.bar.value != "Set!") {
+                s = s + " Read only handles not initialised in onReady";
+              }
+              if (handlesSynced != 2) {
+                s = s + " Not all handles were synced before onReady was called.";
+              }
+
+              this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: s}))
+            }
+          };
+        });
+      `
+    });
+    const id = ArcId.newForTest('test');
+    const storageKey = new VolatileStorageKey(id, 'unique');
+    const arc = new Arc({id, storageKey, loader, context: manifest});
+    const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
+
+    const fooHandle = await mapHandleToStore(arc, recipe, fooClass, 0);
+    const barHandle = await mapHandleToStore(arc, recipe, fooClass, 1);
+
+    await barHandle.set(new fooClass({value: 'Set!'}));
+
+    recipe.normalize();
+    await arc.instantiate(recipe);
+    await arc.idle;
+    assert.deepStrictEqual(await fooHandle.fetch(), new fooClass({value: 'Ready!'}));
+  });
+
+  it('onReady runs when there are no handles to sync', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        value: Text
+      particle UpdatingParticle in 'updating-particle.js'
+        innerFoo: writes Foo
+      recipe
+        h0: use *
+        UpdatingParticle
+          innerFoo: h0
+    `);
+    assert.lengthOf(manifest.recipes, 1);
+    const recipe = manifest.recipes[0];
+    const loader = new Loader(null, {
+      'updating-particle.js': `
+        'use strict';
+        defineParticle(({Particle}) => {
+          var created = false;
+          return class extends Particle {
+            onFirstStart() {
+              created = true;
+            }
+            onReady(handle, model) {
+              this.innerFooHandle = this.handles.get('innerFoo');
+              if (created) {
+                this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Created!"}));
+              } else {
+                this.innerFooHandle.set(new this.innerFooHandle.entityClass({value: "Not created!"}));
+              }
+            }
+          };
+        });
+      `
+    });
+    const id = ArcId.newForTest('test');
+    const storageKey = new VolatileStorageKey(id, 'unique');
+    const arc = new Arc({id, storageKey, loader, context: manifest});
+    const fooClass = Entity.createEntityClass(manifest.findSchemaByName('Foo'), null);
+
+    const fooHandle = await mapHandleToStore(arc, recipe, fooClass, 0);
+
+    recipe.normalize();
+    await arc.instantiate(recipe);
+    await arc.idle;
+    assert.deepStrictEqual(await fooHandle.fetch(), new fooClass({value: 'Created!'}));
   });
 });

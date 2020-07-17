@@ -1,0 +1,444 @@
+# This files is a part of 3 files suite of testdata:
+# - Manifest2ProtoTest.arcs
+# - Manifest2ProtoTest.pb.bin
+# - Manifest2ProtoTest.textproto (this file)
+#
+# On the TypeScript side we serialize .arcs file and validate it equals the .pb.bin file.
+# On the Kotlin side we deserialize .pb.bin and validate it equals parsed .textproto file.
+# This provides an additional guarantee beyond unit tests that at least all the constructs used
+# in the .arcs file can be serialized in TS and deserialized in Kotlin to the extent that they
+# are present in the .textproto file.
+recipes {
+  name: "Ingestion"
+  handles {
+    name: "handle0"
+    id: "products"
+    fate: CREATE
+    annotations: [{name: "persistent"}]
+    type {
+      collection {
+        collection_type {
+          entity {
+            schema {
+              names: "Product"
+              names: "Thing"
+              fields {
+                key: "name"
+                value {
+                  primitive: TEXT
+                }
+              }
+              fields {
+                key: "dimensions"
+                value {
+                  collection {
+                    collection_type {
+                      primitive: NUMBER
+                    }
+                  }
+                }
+              }
+              fields {
+                key: "reviews"
+                value {
+                  collection {
+                    collection_type {
+                      reference {
+                        referred_type {
+                          entity {
+                            schema {
+                              names: "Review"
+                              fields {
+                                key: "authors"
+                                value {
+                                  list: {
+                                    element_type: {
+                                      primitive: TEXT
+                                    }
+                                  }
+                                }
+                              }
+                              fields {
+                                key: "content"
+                                value {
+                                  primitive: TEXT
+                                }
+                              }
+                              fields {
+                                key: "rating"
+                                value {
+                                  primitive: NUMBER
+                                }
+                              }
+                              hash: "305545964954fba46cfa591c6aa49c14651326b0"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              fields {
+                key: "safeForKids"
+                value {
+                  primitive: BOOLEAN
+                }
+              }
+              hash: "cb527bdcc47fb828d9d75bdffa67a0951fb559ee"
+            }
+          }
+        }
+      }
+    }
+  }
+  particles {
+    spec_name: "Writer"
+    connections {
+      name: "products"
+      handle: "handle0"
+      type: {
+        collection: {
+          collection_type: {
+            entity: {
+              schema: {
+                names: "Product"
+                names: "Thing"
+                fields: {
+                  key: "name"
+                  value: {
+                    primitive: TEXT
+                  }
+                }
+                fields: {
+                  key: "dimensions"
+                  value: {
+                    collection {
+                      collection_type: {
+                        primitive: NUMBER
+                      }
+                    }
+                  }
+                }
+                fields: {
+                  key: "reviews"
+                  value: {
+                    collection: {
+                      collection_type {
+                        reference {
+                          referred_type {
+                            entity {
+                              schema {
+                                names: "Review"
+                                fields {
+                                  key: "authors"
+                                  value {
+                                    list: {
+                                      element_type: {
+                                        primitive: TEXT
+                                      }
+                                    }
+                                  }
+                                }
+                                fields {
+                                  key: "content"
+                                  value {
+                                    primitive: TEXT
+                                  }
+                                }
+                                fields {
+                                  key: "rating"
+                                  value {
+                                    primitive: NUMBER
+                                  }
+                                }
+                                hash: "305545964954fba46cfa591c6aa49c14651326b0"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                fields {
+                  key: "safeForKids"
+                  value: {
+                    primitive: BOOLEAN
+                  }
+                }
+                hash: "cb527bdcc47fb828d9d75bdffa67a0951fb559ee"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  annotations {
+    name: "arcId"
+    params {
+      name: "id"
+      str_value: "writingArcId"
+    }
+  }
+}
+recipes {
+  name: "Consumption"
+  handles {
+    name: "handle0"
+    fate: USE
+    tags: "summary"
+    type {
+      entity {
+        schema {
+          fields {
+            key: "overallRating"
+            value {
+              primitive: NUMBER
+            }
+          }
+          hash: "984649bb276633d3f7b072533cf3202163eb239e"
+        }
+      }
+    }
+  }
+  handles {
+    name: "handle1"
+    id: "products"
+    fate: MAP
+    type {
+      collection {
+        collection_type {
+          entity {
+            schema {
+              names: "Thing"
+              fields {
+                key: "name"
+                value {
+                  primitive: TEXT
+                }
+              }
+              hash: "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516"
+            }
+          }
+        }
+      }
+    }
+  }
+  particles {
+    spec_name: "Reader"
+    connections {
+      name: "summary"
+      handle: "handle0"
+      type {
+        entity {
+          schema {
+            fields {
+              key: "overallRating"
+              value {
+                primitive: NUMBER
+              }
+            }
+            hash: "984649bb276633d3f7b072533cf3202163eb239e"
+          }
+        }
+      }
+    }
+    connections {
+      name: "things"
+      handle: "handle1"
+      type {
+        collection {
+          collection_type {
+            entity {
+              schema {
+                names: "Thing"
+                fields {
+                  key: "name"
+                  value {
+                    primitive: TEXT
+                  }
+                }
+                hash: "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516"
+              }
+            }
+          }
+        }
+
+      }
+    }
+  }
+}
+particle_specs {
+  name: "Writer"
+  connections {
+    name: "products"
+    direction: WRITES
+    type {
+      collection {
+        collection_type {
+          entity {
+            schema {
+              names: "Product"
+              names: "Thing"
+              fields {
+                key: "name"
+                value {
+                  primitive: TEXT
+                }
+              }
+              fields {
+                key: "dimensions"
+                value {
+                  collection {
+                    collection_type {
+                      primitive: NUMBER
+                    }
+                  }
+                }
+              }
+              fields {
+                key: "reviews"
+                value {
+                  collection {
+                    collection_type {
+                      reference {
+                        referred_type {
+                          entity {
+                            schema {
+                              names: "Review"
+                              fields {
+                                key: "authors"
+                                value {
+                                  list: {
+                                    element_type: {
+                                      primitive: TEXT
+                                    }
+                                  }
+                                }
+                              }
+                              fields {
+                                key: "content"
+                                value {
+                                  primitive: TEXT
+                                }
+                              }
+                              fields {
+                                key: "rating"
+                                value {
+                                  primitive: NUMBER
+                                }
+                              }
+                              hash: "305545964954fba46cfa591c6aa49c14651326b0"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              fields {
+                key: "safeForKids"
+                value {
+                  primitive: BOOLEAN
+                }
+              }
+              hash: "cb527bdcc47fb828d9d75bdffa67a0951fb559ee"
+            }
+          }
+        }
+      }
+    }
+  }
+  location: "Writer"
+}
+particle_specs {
+  name: "Reader"
+  connections {
+    name: "things"
+    direction: READS
+    type {
+      collection {
+        collection_type {
+          entity {
+            schema {
+              names: "Thing"
+              fields {
+                key: "name"
+                value {
+                  primitive: TEXT
+                }
+              }
+              hash: "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516"
+            }
+          }
+        }
+      }
+    }
+  }
+  connections {
+    name: "summary"
+    direction: READS_WRITES
+    type {
+      entity {
+        schema {
+          fields {
+            key: "overallRating"
+            value {
+              primitive: NUMBER
+            }
+          }
+          hash: "984649bb276633d3f7b072533cf3202163eb239e"
+        }
+      }
+    }
+  }
+  connections {
+    name: "friends"
+    direction: READS
+    type {
+      collection {
+        collection_type {
+          reference {
+            referred_type {
+              entity {
+                schema {
+                  names: "Person"
+                  fields {
+                    key: "name"
+                    value {
+                      primitive: TEXT
+                    }
+                  }
+                  hash: "0149326a894f2d81705e1a08480330826f919cf0"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  location: "Reader"
+}
+policies {
+  name: "MyPolicy"
+  targets {
+    schema_type: "RestrictedThing"
+    max_age_ms: 600000
+    retentions {
+      medium: RAM
+    }
+    fields {
+      name: "name"
+      usages {
+        usage: ANY
+        redaction_label: "redacted"
+      }
+    }
+  }
+  description: "check that policies can be serialized to proto"
+  egress_type: LOGGING
+}

@@ -15,17 +15,20 @@ import {Runtime} from '../runtime/runtime.js';
 import {SchemaGraph, SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 
-export interface ClassGenerator {
-  addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null): void;
-  generate(schemaHash: string, fieldCount: number): string;
+export interface EntityGenerator {
+  generate(): string;
+}
+
+export class NodeAndGenerator {
+  node: SchemaNode;
+  generator: EntityGenerator;
 }
 
 export abstract class Schema2Base {
-  scope: string;
+  namespace: string;
 
   constructor(readonly opts: minimist.ParsedArgs) {
     Runtime.init('../..');
-    this.scope = this.opts.package || 'arcs.sdk';
   }
 
   async call() {
@@ -50,6 +53,12 @@ export abstract class Schema2Base {
     if (manifest.errors.some(e => e.severity !== 'warning')) {
       return;
     }
+
+    this.namespace = manifest.meta.namespace;
+    if (!this.namespace) {
+      throw new Error(`Namespace is required in '${src}' for code generation.`);
+    }
+
     const classes = await this.processManifest(manifest);
     if (classes.length === 0) {
       console.warn(`Could not find any particle connections with schemas in '${src}'`);
@@ -69,33 +78,30 @@ export abstract class Schema2Base {
     // TODO: consider an option to generate one file per particle
     const classes: string[] = [];
     for (const particle of manifest.particles) {
-      const graph = new SchemaGraph(particle);
-      // Generate one class definition per node in the graph.
-      for (const node of graph.walk()) {
-        const generator = this.getClassGenerator(node);
-        const fields = Object.entries(node.schema.fields);
+      const nodes = await this.calculateNodeAndGenerators(particle);
 
-        for (const [field, descriptor] of fields) {
-          if (descriptor.kind === 'schema-primitive') {
-            if (['Text', 'URL', 'Number', 'Boolean'].includes(descriptor.type)) {
-              generator.addField(field, descriptor.type[0], false, null);
-            } else {
-              throw new Error(`Schema type '${descriptor.type}' for field '${field}' is not supported`);
-            }
-          } else if (descriptor.kind === 'schema-reference') {
-            generator.addField(field, 'R', false, node.refs.get(field).name);
-          } else if (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference') {
-            // TODO: support collections of references
-          } else {
-            throw new Error(`Schema kind '${descriptor.kind}' for field '${field}' is not supported`);
-          }
-        }
-        classes.push(generator.generate(await node.schema.hash(), fields.length));
+      classes.push(...nodes.map(ng => ng.generator.generate()));
+
+      if (this.opts.test_harness) {
+        classes.push(await this.generateTestHarness(particle, nodes.map(n => n.node)));
+        continue;
       }
 
-      classes.push(this.generateParticleClass(particle));
+      classes.push(await this.generateParticleClass(particle, nodes));
     }
     return classes;
+  }
+
+  async calculateNodeAndGenerators(particle: ParticleSpec): Promise<NodeAndGenerator[]> {
+    const graph = new SchemaGraph(particle);
+    const nodes: NodeAndGenerator[] = [];
+    for (const node of graph.walk()) {
+      const generator = this.getEntityGenerator(node);
+      await node.calculateHash();
+      nodes.push({node, generator});
+    }
+
+    return nodes;
   }
 
   upperFirst(s: string): string {
@@ -108,7 +114,9 @@ export abstract class Schema2Base {
 
   fileFooter(): string { return ''; }
 
-  abstract getClassGenerator(node: SchemaNode): ClassGenerator;
+  abstract getEntityGenerator(node: SchemaNode): EntityGenerator;
 
-  abstract generateParticleClass(particle: ParticleSpec): string;
+  abstract async generateParticleClass(particle: ParticleSpec, nodes: NodeAndGenerator[]): Promise<string>;
+
+  abstract async generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string>;
 }

@@ -14,8 +14,11 @@ package arcs.core.storage.driver
 import arcs.core.common.ArcId
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.DriverFactory
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
+import arcs.core.storage.keys.RamDiskStorageKey
+import arcs.core.storage.keys.VolatileStorageKey
+import arcs.core.type.Tag
+import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -28,8 +31,9 @@ import org.junit.runners.JUnit4
 class RamDiskDriverProviderTest {
     @After
     fun teardown() {
-        DriverFactory.clearRegistrationsForTesting()
+        DriverFactory.clearRegistrations()
         CapabilitiesResolver.reset()
+        RamDisk.clear()
     }
 
     @Test
@@ -73,7 +77,7 @@ class RamDiskDriverProviderTest {
         val provider = RamDiskDriverProvider()
         val volatile = VolatileStorageKey(ArcId.newForTest("myarc"), "foo")
 
-        provider.getDriver(volatile, ExistenceCriteria.ShouldCreate, Int::class)
+        provider.getDriver(volatile, Int::class, DummyType)
         Unit
     }
 
@@ -84,9 +88,9 @@ class RamDiskDriverProviderTest {
 
         val key = RamDiskStorageKey("foo")
 
-        val driver1 = provider1.getDriver(key, ExistenceCriteria.MayExist, Int::class)
-        val driver2 = provider1.getDriver(key, ExistenceCriteria.MayExist, Int::class)
-        val driver3 = provider2.getDriver(key, ExistenceCriteria.MayExist, Int::class)
+        val driver1 = provider1.getDriver(key, Int::class, DummyType)
+        val driver2 = provider1.getDriver(key, Int::class, DummyType)
+        val driver3 = provider2.getDriver(key, Int::class, DummyType)
 
         var driver2Value: Int? = null
         var driver2Version: Int? = null
@@ -108,5 +112,38 @@ class RamDiskDriverProviderTest {
         assertThat(driver2Version).isEqualTo(1)
         assertThat(driver3Value).isEqualTo(42)
         assertThat(driver3Version).isEqualTo(1)
+    }
+
+    @Test
+    fun removeAllEntities() = runBlocking {
+        val provider = RamDiskDriverProvider()
+        val key = RamDiskStorageKey("foo")
+        val driver = provider.getDriver(key, Int::class, DummyType)
+        driver.send(42, 1)
+
+        provider.removeAllEntities()
+
+        // Receiver are not updated, so check memory directly.
+        assertThat(key !in RamDisk.memory).isTrue()
+    }
+
+    @Test
+    fun removeEntitiesBetween() = runBlocking {
+        val provider = RamDiskDriverProvider()
+        val key = RamDiskStorageKey("foo")
+        val driver = provider.getDriver(key, Int::class, DummyType)
+        driver.send(42, 1)
+
+        provider.removeEntitiesCreatedBetween(1, 2)
+
+        // Receiver are not updated, so check memory directly.
+        assertThat(key !in RamDisk.memory).isTrue()
+    }
+
+    companion object {
+        object DummyType : Type {
+            override val tag = Tag.Count
+            override fun toLiteral() = throw UnsupportedOperationException("")
+        }
     }
 }

@@ -11,57 +11,51 @@
 
 package arcs.sdk
 
+import arcs.core.entity.Handle
+import arcs.core.entity.QueryCollectionHandle
+import arcs.core.entity.ReadCollectionHandle
+import arcs.core.entity.ReadQueryCollectionHandle
+import arcs.core.entity.ReadSingletonHandle
+import arcs.core.entity.ReadWriteCollectionHandle
+import arcs.core.entity.ReadWriteQueryCollectionHandle
+import arcs.core.entity.ReadWriteSingletonHandle
+import arcs.core.entity.WriteCollectionHandle
+import arcs.core.entity.WriteQueryCollectionHandle
+import arcs.core.entity.WriteSingletonHandle
+
 /** Base interface for all handle classes. */
-interface Handle {
-    val name: String
-}
+typealias Handle = Handle
 
 /** A singleton handle with read access. */
-interface ReadableSingleton<T : Entity> : Handle {
-    /** Returns the value of the singleton. */
-    suspend fun fetch(): T?
-
-    fun onUpdate(action: (T?) -> Unit)
-}
+typealias ReadSingletonHandle<T> = ReadSingletonHandle<T>
 
 /** A singleton handle with write access. */
-interface WritableSingleton<T : Entity> : Handle {
-    /** Sets the value of the singleton. */
-    suspend fun set(entity: T)
-
-    /** Clears the value of the singleton. */
-    suspend fun clear()
-}
+typealias WriteSingletonHandle<T> = WriteSingletonHandle<T>
 
 /** A singleton handle with read and write access. */
-interface ReadWriteSingleton<T : Entity> : ReadableSingleton<T>, WritableSingleton<T>
+typealias ReadWriteSingletonHandle<T> = ReadWriteSingletonHandle<T>
 
 /** A collection handle with read access. */
-interface ReadableCollection<T : Entity> : Handle {
-    /** The number of elements in the collection. */
-    suspend fun size(): Int
-
-    /** Returns true if the collection is empty. */
-    suspend fun isEmpty(): Boolean
-
-    /** Assign a callback when the collection is Updated. */
-    fun onUpdate(action: (Set<T>) -> Unit)
-
-    /** Returns a set with all the entities in the collection. */
-    suspend fun fetchAll(): Set<T>
-}
+typealias ReadCollectionHandle<T> = ReadCollectionHandle<T>
 
 /** A collection handle with write access. */
-interface WritableCollection<T : Entity> : Handle {
-    /** Adds the given [entity] to the collection. */
-    suspend fun store(entity: T)
+typealias WriteCollectionHandle<T> = WriteCollectionHandle<T>
 
-    /** Removes everything from the collection. */
-    suspend fun clear()
-
-    /** Removes the given [entity] from the collection. */
-    suspend fun remove(entity: T)
-}
+/** A collection handle with query access. */
+typealias QueryCollectionHandle<T, QueryArgs> =
+    QueryCollectionHandle<T, QueryArgs>
 
 /** A collection handle with read and write access. */
-interface ReadWriteCollection<T : Entity> : ReadableCollection<T>, WritableCollection<T>
+typealias ReadWriteCollectionHandle<T> = ReadWriteCollectionHandle<T>
+
+/** A collection handle with read and query access. */
+typealias ReadQueryCollectionHandle<T, QueryArgs> =
+    ReadQueryCollectionHandle<T, QueryArgs>
+
+/** A collection handle with write and query access. */
+typealias WriteQueryCollectionHandle<T, QueryArgs> =
+    WriteQueryCollectionHandle<T, QueryArgs>
+
+/** A collection handle with read, write and query access. */
+typealias ReadWriteQueryCollectionHandle<T, QueryArgs> =
+    ReadWriteQueryCollectionHandle<T, QueryArgs>

@@ -1,0 +1,288 @@
+syntax = "proto3";
+
+package arcs;
+
+option java_package = "arcs.core.data.proto";
+option java_multiple_files = true;
+
+import "java/arcs/core/data/proto/annotation.proto";
+import "java/arcs/core/data/proto/policy.proto";
+
+// A manifest containing multiple recipes and particle specs.
+message ManifestProto {
+  repeated RecipeProto recipes = 1;
+  repeated ParticleSpecProto particle_specs = 2;
+  repeated PolicyProto policies = 3;
+}
+
+// Plan: A resolved recipe that can be instantiated.
+message RecipeProto {
+  // Optional recipe name.
+  string name = 1;
+  repeated HandleProto handles = 2;
+  repeated ParticleProto particles = 3;
+  repeated AnnotationProto annotations = 5;
+}
+
+// Recipe-level representation of a store.
+message HandleProto {
+  // Next Id: 5
+  enum Fate {
+    UNSPECIFIED = 0;
+    CREATE = 1;
+    USE = 2;
+    MAP = 3;
+    COPY = 4;
+    JOIN = 5;
+  }
+
+  // Identifies a handle in a recipe.
+  string name = 1;
+  string id = 2;
+  Fate fate = 3;
+  repeated string tags = 4;
+  TypeProto type = 5;
+  string storage_key = 7;
+  // Only present for fate = JOIN handles.
+  repeated string associated_handles = 8;
+  repeated AnnotationProto annotations = 9;
+}
+
+// A single particle instance in a recipe.
+message ParticleProto {
+  // Refers to envelope.particle_specs.name
+  string spec_name = 1;
+  repeated HandleConnectionProto connections = 2;
+}
+
+// A connection between a handle instance and a particle instance.
+message HandleConnectionProto {
+  // Refers to envelope.particle_specs.connections.name
+  string name = 1;
+  // Refers to envelope.recipe.handles.name
+  string handle = 2;
+  // The type of the handle connection instance.
+  TypeProto type = 3;
+}
+
+// Defines a particle contract and links it with implementation.
+// A single spec can be instantiated multiple times in a recipe.
+message ParticleSpecProto {
+  // Identifies a particle spec in an envelope.
+  string name = 1;
+  repeated HandleConnectionSpecProto connections = 2;
+  // Location of the implementation.
+  string location = 3;
+  // Conjunction of all claims.
+  repeated ClaimProto claims = 4;
+  // Conjunction of all checks.
+  repeated CheckProto checks = 5;
+  // Indicates whether the particle is an isolated (non-egress) particle.
+  bool isolated = 6;
+}
+
+// Defines a single connection of a particle spec.
+message HandleConnectionSpecProto {
+  enum Direction {
+    UNSPECIFIED = 0;
+    READS = 1;
+    WRITES = 2;
+    READS_WRITES = 3;
+  }
+  // Identifies a connection in a particle spec.
+  string name = 1;
+  Direction direction = 2;
+  TypeProto type = 3;
+}
+
+// Representation of a type in Arcs.
+message TypeProto {
+  oneof data {
+    PrimitiveTypeProto primitive = 1;
+    EntityTypeProto entity = 2;
+    CollectionTypeProto collection = 3;
+    ReferenceTypeProto reference = 4;
+    TupleTypeProto tuple = 5;
+    TypeVariableProto variable = 6;
+    SingletonTypeProto singleton = 7;
+    CountTypeProto count = 8;
+    ListTypeProto list = 9;
+  }
+  bool optional = 10;
+  RefinementExpressionProto refinement = 11;
+}
+
+enum PrimitiveTypeProto {
+  TEXT = 0;
+  NUMBER = 1;
+  BOOLEAN = 2;
+  BIGINT = 3;
+}
+
+message EntityTypeProto {
+  SchemaProto schema = 1;
+
+  // Whether the EntityType is inlined or not.
+  bool inline = 2;
+}
+
+message CollectionTypeProto {
+  TypeProto collection_type = 1;
+}
+
+message SingletonTypeProto {
+  TypeProto singleton_type = 1;
+}
+
+message CountTypeProto {}
+
+message TupleTypeProto {
+  repeated TypeProto elements = 1;
+}
+
+message ReferenceTypeProto {
+  TypeProto referred_type = 1;
+}
+
+message TypeVariableProto {
+  string name = 1;
+  ConstraintInfo constraint = 2;
+}
+
+message ListTypeProto {
+  TypeProto element_type = 1;
+}
+
+message InlineEntityTypeProto {
+  string schema_hash = 1;
+}
+
+// These are constraints expressed by the particle author,
+// not those resulting from type inference.
+message ConstraintInfo {
+  TypeProto constraint_type = 1;
+}
+
+message SchemaProto {
+  repeated string names = 1;
+  map<string, TypeProto> fields = 2;
+  string hash = 3;
+}
+
+enum OPERATOR {
+  AND = 0;
+  OR = 1;
+  LESS_THAN = 2;
+  GREATER_THAN = 3;
+  LESS_THAN_OR_EQUALS = 4;
+  GREATER_THAN_OR_EQUALS = 5;
+  ADD = 6;
+  SUBTRACT = 7;
+  MULTIPLY = 8;
+  DIVIDE = 9;
+  NOT = 10;
+  NEGATE = 11;
+  EQUALS = 12;
+  NOT_EQUALS = 13;
+}
+
+message RefinementExpressionProto {
+  oneof expression {
+    // E.g. "age > 18"
+    BinaryExpressionProto binary = 1;
+    // E.g. "-duration"
+    UnaryExpressionProto unary = 2;
+    // Name of a schema field.
+    string field = 3;
+    // Value to be substituted at query time.
+    // String value identifies a query argument in a refinement.
+    string query_argument = 4;
+    // E.g. 18
+    double number = 5;
+    // E.g. true
+    bool boolean = 6;
+    // E.g. "Sydney"
+    string text = 7;
+  }
+}
+
+message BinaryExpressionProto {
+  RefinementExpressionProto left_expr = 1;
+  RefinementExpressionProto right_expr = 2;
+  OPERATOR operator = 3;
+}
+
+message UnaryExpressionProto {
+  RefinementExpressionProto expr = 1;
+  OPERATOR operator = 2;
+}
+
+// Note that this proto only allows encoding access paths where the root is
+// a `HandleConnectionSpec`. This should be sufficient as the root of an access
+// path in a claim or check can only refer to a `HandleConnectionSpec`.
+message AccessPathProto {
+  message Selector {
+    oneof selector {
+      string field = 1;
+      // TODO(bgogul): Other selectors like dereferencing, index, etc.
+    }
+  }
+  // (particle_spec, handle_connection) identifies a `HandleConnectionSpec`.
+  string particle_spec = 1;
+  string handle_connection = 2;
+  repeated Selector selectors = 3;
+}
+
+message InformationFlowLabelProto {
+  message Predicate {
+    message And {
+      Predicate conjunct0 = 1;
+      Predicate conjunct1 = 2;
+    }
+    message Or {
+      Predicate disjunct0 = 1;
+      Predicate disjunct1 = 2;
+    }
+    message Not {
+      Predicate predicate = 1;
+    }
+    message Implies {
+      Predicate antecedent = 1;
+      Predicate consequent = 2;
+    }
+    oneof predicate {
+      InformationFlowLabelProto label = 1;
+      And and = 2;
+      Or or = 3;
+      Not not = 4;
+      Implies implies = 5;
+    }
+  }
+
+  oneof label {
+    string semantic_tag = 1;
+    // TODO(bgogul): Other kinds of labels: stores, handles, etc.
+  }
+};
+
+message ClaimProto {
+  message DerivesFrom {
+    AccessPathProto target = 1;
+    AccessPathProto source = 2;
+  }
+
+  message Assume {
+    AccessPathProto access_path = 1;
+    InformationFlowLabelProto.Predicate predicate = 2;
+  }
+
+  oneof claim {
+    DerivesFrom derives_from = 1;
+    Assume assume = 2;
+  }
+}
+
+message CheckProto {
+  AccessPathProto access_path = 1;
+  InformationFlowLabelProto.Predicate predicate = 2;
+}

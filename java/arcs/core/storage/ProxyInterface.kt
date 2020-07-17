@@ -22,6 +22,13 @@ sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     /** [Type] of the message. */
     internal open val type: Type
 ) {
+
+    fun withId(id: Int): ProxyMessage<Data, Op, ConsumerData> = when (this) {
+        is SyncRequest -> copy(id = id)
+        is ModelUpdate -> copy(id = id)
+        is Operations -> copy(id = id)
+    }
+
     /** A request to sync data with the store. */
     data class SyncRequest<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         override val id: Int?,
@@ -71,40 +78,46 @@ sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
  * ```
  */
 interface ProxyCallback<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
-    val singleCallback: suspend (ProxyMessage<Data, Op, ConsumerData>) -> Boolean
-        get() = throw UnsupportedOperationException("Single callback not supported.")
-    val multiCallback: suspend (ProxyMessage<Data, Op, ConsumerData>, String) -> Boolean
-        get() = throw UnsupportedOperationException("Multiplexed callback not supported")
-
     suspend operator fun invoke(
-        message: ProxyMessage<Data, Op, ConsumerData>,
-        muxId: String? = null
-    ): Boolean {
-        return muxId?.let { multiCallback(message, muxId) } ?: singleCallback(message)
-    }
+        message: ProxyMessage<Data, Op, ConsumerData>
+    )
 }
 
-/** Pseudo-constructor for a [ProxyCallback] capable of receiving direct messages. */
 fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> ProxyCallback(
-    callback: suspend (message: ProxyMessage<Data, Op, ConsumerData>) -> Boolean
-): ProxyCallback<Data, Op, ConsumerData> = object : ProxyCallback<Data, Op, ConsumerData> {
-    override val singleCallback = callback
-}
-
-/** Pseudo-constructor for a [ProxyCallback] capable of receiving multiplexed messages. */
-fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> MultiplexedProxyCallback(
-    callback: suspend (message: ProxyMessage<Data, Op, ConsumerData>, muxId: String) -> Boolean
-): ProxyCallback<Data, Op, ConsumerData> = object : ProxyCallback<Data, Op, ConsumerData> {
-    override val multiCallback = callback
+    callback: suspend (ProxyMessage<Data, Op, ConsumerData>) -> Unit
+) = object : ProxyCallback<Data, Op, ConsumerData> {
+    override suspend operator fun invoke(
+        message: ProxyMessage<Data, Op, ConsumerData>
+    ) = callback(message)
 }
 
 /** Interface common to an [ActiveStore] and the PEC, used by the Storage Proxy. */
 interface StorageCommunicationEndpoint<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
-    fun setCallback(callback: ProxyCallback<Data, Op, ConsumerData>)
+    /**
+     * Suspends until the endpoint has become idle (typically: when it is finished flushing data to
+     * storage media.
+     */
+    suspend fun idle()
+
+    /**
+     * Sends the storage layer a message from a [StorageProxy].
+     */
     suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean
+
+    /** Signal to the endpoint provider that the client is finished using this endpoint. */
+    fun close()
 }
 
 /** Provider of a [StorageCommunicationEndpoint]. */
 interface StorageCommunicationEndpointProvider<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
-    fun getStorageEndpoint(): StorageCommunicationEndpoint<Data, Op, ConsumerData>
+    /**
+     * Implementers should return a [StorageCommunicationEndpoint] that signals information back to
+     * the agent using the provided [callback].
+     */
+    fun getStorageEndpoint(
+        callback: ProxyCallback<Data, Op, ConsumerData>
+    ): StorageCommunicationEndpoint<Data, Op, ConsumerData>
+
+    /** Return the [StorageKey] that the store behind this implementation is representing. */
+    val storageKey: StorageKey
 }

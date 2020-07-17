@@ -1,3 +1,13 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 package arcs.core.util
 
 /**
@@ -8,6 +18,10 @@ class TaggedLog(private val tagBuilder: () -> String) {
     private fun taggedMessageBuilder(messageBuilder: () -> String): () -> String {
         return { "${tagBuilder()}: ${messageBuilder()}" }
     }
+
+    /** Logs at a verbose-level. */
+    fun verbose(throwable: Throwable? = null, messageBuilder: () -> String) =
+        Log.verbose(throwable, taggedMessageBuilder(messageBuilder))
 
     /** Logs at a debug-level. */
     fun debug(throwable: Throwable? = null, messageBuilder: () -> String) =

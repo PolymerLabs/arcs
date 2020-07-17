@@ -10,7 +10,7 @@
 
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
-import {UnifiedStore} from '../../runtime/storageNG/unified-store.js';
+import {AbstractStore} from '../../runtime/storage/abstract-store.js';
 
 export class SearchTokensToHandles extends Strategy {
 
@@ -20,7 +20,7 @@ export class SearchTokensToHandles extends Strategy {
     // which are not already mapped into the provided handle's recipe
     const findMatchingStores = (token, handle) => {
       const counts = RecipeUtil.directionCounts(handle);
-      let stores: UnifiedStore[];
+      let stores: AbstractStore[];
       stores = arc.findStoresByType(handle.type, {tags: [`${token}`]});
       let fate = 'use';
       if (stores.length === 0) {

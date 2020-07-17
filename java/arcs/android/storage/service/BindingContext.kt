@@ -12,78 +12,87 @@
 package arcs.android.storage.service
 
 import androidx.annotation.VisibleForTesting
-import arcs.android.crdt.ParcelableCrdtType
-import arcs.android.crdt.toParcelable
-import arcs.android.storage.ParcelableProxyMessage
-import arcs.android.storage.toParcelable
+import arcs.android.crdt.toProto
+import arcs.android.storage.decodeProxyMessage
+import arcs.android.storage.toProto
+import arcs.core.common.SuspendableLazy
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
+import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
-import arcs.core.storage.Store
-import arcs.core.storage.util.SendQueue
+import arcs.core.storage.StoreOptions
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withTimeout
+
+/**
+ * This class wraps an [ActiveStore] constructor. The first time an instance of this class is
+ * invoked, the store instance is created.
+ *
+ * This allows us to create a [BindingContext] without blocking the thread that the bind call
+ * occurs on.
+ */
+@ExperimentalCoroutinesApi
+class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
+    options: StoreOptions
+) {
+    private val store = SuspendableLazy<ActiveStore<Data, Op, T>> {
+        DefaultActivationFactory(options)
+    }
+    suspend operator fun invoke() = store()
+}
 
 /**
  * A [BindingContext] is used by a client of the [StorageService] to facilitate communication with a
  * [Store] residing within the [StorageService] from elsewhere in an application.
  */
+@ExperimentalCoroutinesApi
 class BindingContext(
     /**
      * The [Store] this [BindingContext] provides bindings for, it may or may not be shared with
      * other instances of [BindingContext].
      */
-    private val store: Store<*, *, *>,
-    /**
-     * A hint used to facilitate translations between usable Crdt types and [Parcelable]s required
-     * for transmission via IBinder interfaces.
-     */
-    private val crdtType: ParcelableCrdtType,
+    private val store: DeferredStore<*, *, *>,
     /** [CoroutineContext] on which to build one specific to this [BindingContext]. */
     parentCoroutineContext: CoroutineContext,
     /** Sink to use for recording statistics about accessing data. */
     private val bindingContextStatisticsSink: BindingContextStatisticsSink,
-    /** Callback to trigger when a proxy message has been received and send to the store. */
+    /** Callback to trigger when a proxy message has been received and sent to the store. */
     private val onProxyMessage: suspend (StorageKey, ProxyMessage<*, *, *>) -> Unit = { _, _ -> }
 ) : IStorageService.Stub() {
     @VisibleForTesting
     val id = nextId.incrementAndGet()
 
-    /**
-     * The [SendQueue] ensures that all [ProxyMessage]s are handled in the order in which they were
-     * received.
-     */
-    private val sendQueue = SendQueue()
-
     /** The local [CoroutineContext]. */
-    private val coroutineContext = parentCoroutineContext + CoroutineName("BindingContext-$id")
+    private val job = Job(parentCoroutineContext[Job])
+    private val coroutineContext =
+        parentCoroutineContext + job + CoroutineName("BindingContext-$id")
 
-    override fun getLocalData(callback: IStorageServiceCallback) {
-        bindingContextStatisticsSink.traceTransaction("getLocalData") {
+    override fun idle(timeoutMillis: Long, resultCallback: IResultCallback) {
+        bindingContextStatisticsSink.traceTransaction("idle") {
             bindingContextStatisticsSink.measure(coroutineContext) {
-                val activeStore = store.activate()
-
-                val deferredResult = DeferredResult(coroutineContext)
-                sendQueue.enqueue {
-                    callback.onProxyMessage(
-                        ProxyMessage.ModelUpdate<CrdtData, CrdtOperation, Any?>(
-                            model = activeStore.getLocalData(),
-                            id = null
-                        ).toParcelable(crdtType),
-                        deferredResult
+                try {
+                    withTimeout(timeoutMillis) {
+                        store().idle()
+                    }
+                    resultCallback.onResult(null)
+                } catch (e: Throwable) {
+                    resultCallback.onResult(
+                        CrdtException("Exception occurred while awaiting idle", e).toProto()
+                            .toByteArray()
                     )
                 }
-
-                deferredResult.await()
             }
         }
     }
@@ -97,16 +106,13 @@ class BindingContext(
                 // so that we catch any exceptions thrown within and re-throw on the same coroutine
                 // as the callback-caller.
                 supervisorScope {
-                    val deferredResult = DeferredResult(coroutineContext)
-                    callback.onProxyMessage(message.toParcelable(crdtType), deferredResult)
-                    deferredResult.await()
+                    callback.onProxyMessage(message.toProto().toByteArray())
                 }
             }
 
             callbackToken = runBlocking {
-                val token =
-                    (store.activate() as ActiveStore<CrdtData, CrdtOperation, Any?>)
-                        .on(proxyCallback)
+                val token = (store() as ActiveStore<CrdtData, CrdtOperation, Any?>)
+                    .on(proxyCallback)
 
                 // If the callback's binder dies, remove it from the callback collection.
                 callback.asBinder().linkToDeath({
@@ -121,21 +127,19 @@ class BindingContext(
 
     @Suppress("UNCHECKED_CAST")
     override fun sendProxyMessage(
-        message: ParcelableProxyMessage,
+        proxyMessage: ByteArray,
         resultCallback: IResultCallback
     ) {
         bindingContextStatisticsSink.traceTransaction("sendProxyMessage") {
             bindingContextStatisticsSink.measure(coroutineContext) {
-                val activeStore = store.activate() as ActiveStore<CrdtData, CrdtOperation, Any?>
-                val actualMessage = message.actual as ProxyMessage<CrdtData, CrdtOperation, Any?>
-                try {
-                    if (activeStore.onProxyMessage(actualMessage)) {
-                        resultCallback.onResult(null)
+                resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
 
+                val actualMessage = proxyMessage.decodeProxyMessage()
+
+                (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).let { store ->
+                    if (store.onProxyMessage(actualMessage)) {
                         onProxyMessage(store.storageKey, actualMessage)
-                    } else throw CrdtException("Failed to process message")
-                } catch (e: CrdtException) {
-                    resultCallback.onResult(e.toParcelable())
+                    }
                 }
             }
         }
@@ -143,7 +147,8 @@ class BindingContext(
 
     override fun unregisterCallback(token: Int) {
         bindingContextStatisticsSink.traceTransaction("unregisterCallback") {
-            CoroutineScope(coroutineContext).launch { store.activate().off(token) }
+            // TODO(b/160706751) Clean up coroutine creation approach
+            CoroutineScope(coroutineContext).launch { store().off(token) }
         }
     }
 

@@ -15,7 +15,7 @@ import android.content.ComponentName
 import android.os.PersistableBundle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
@@ -26,10 +26,8 @@ import org.junit.runner.RunWith
 class DbHelperTest {
     private lateinit var dbHelper: DbHelper
     private val requestA = ResurrectionRequest(
-        ComponentName("a", "A"),
-        ResurrectionRequest.ComponentType.Service,
-        ResurrectionRequest.ACTION_RESURRECT,
-        null
+        ComponentName("a", "A"), ResurrectionRequest.ComponentType.Service,
+        ResurrectionRequest.ACTION_RESURRECT, null, "requestA", emptyList()
     )
     private val requestB = ResurrectionRequest(
         ComponentName("b", "B"),
@@ -39,6 +37,7 @@ class DbHelperTest {
             putBoolean("foo", true)
             putInt("bar", 1)
         },
+        "requestB",
         listOf(
             RamDiskStorageKey("bThing")
         )
@@ -48,6 +47,7 @@ class DbHelperTest {
         ResurrectionRequest.ComponentType.Activity,
         ResurrectionRequest.ACTION_RESURRECT,
         PersistableBundle.EMPTY,
+        "requestC",
         listOf(
             RamDiskStorageKey("bThing"),
             RamDiskStorageKey("cThing"),
@@ -83,7 +83,7 @@ class DbHelperTest {
         dbHelper.registerRequest(requestB)
         dbHelper.registerRequest(requestC)
 
-        dbHelper.unregisterRequest(requestB.componentName)
+        dbHelper.unregisterRequest(requestB.componentName, "requestB")
 
         assertThat(dbHelper.getRegistrations()).containsExactly(requestA, requestC)
     }

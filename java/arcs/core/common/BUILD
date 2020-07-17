@@ -5,12 +5,13 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_library(
     name = "common",
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/core/util",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

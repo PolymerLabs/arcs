@@ -7,85 +7,81 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
 import {assert} from '../platform/assert-web.js';
-
-import {ArcId} from './id.js';
+import {Dictionary} from './hot.js';
+import {StorageKey} from './storage/storage-key.js';
+import {Type} from './type.js';
 import {Capabilities} from './capabilities.js';
-import {StorageKey} from './storageNG/storage-key.js';
-import {DriverFactory} from './storageNG/drivers/driver-factory.js';
+import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
+import {Flags} from './flags.js';
+import {StorageKeyFactory, FactorySelector, ContainerStorageKeyOptions, BackingStorageKeyOptions, SimpleCapabilitiesSelector} from './storage-key-factory.js';
+import {ArcId} from './id.js';
 
-export type StorageKeyOptions = Readonly<{
+export type CapabilitiesResolverOptions = Readonly<{
   arcId: ArcId;
 }>;
 
-export type StorageKeyCreator = (options: StorageKeyOptions) => StorageKey;
-export type StorageKeyCreatorsMap =
-    Map<string, {capabilities: Capabilities, create: StorageKeyCreator}>;
-
 export class CapabilitiesResolver {
-  private static defaultCreators: StorageKeyCreatorsMap = new Map();
-  private static registeredCreators: StorageKeyCreatorsMap = new Map();
+  private static defaultStorageKeyFactories: Dictionary<StorageKeyFactory> = {};
+  private static readonly defaultSelector = new SimpleCapabilitiesSelector();
 
-  private creators: StorageKeyCreatorsMap;
+  private readonly factories: Dictionary<StorageKeyFactory> = {};
 
-  constructor(public readonly options: StorageKeyOptions,
-              creators?: StorageKeyCreatorsMap) {
-    if (creators) {
-      // TBD: should defaultCreators be included as well here or not?
-      this.creators = new Map(creators);
-    } else {
-      this.creators = CapabilitiesResolver.getDefaultCreators();
-      for (const [protocol, {capabilities, create}] of CapabilitiesResolver.registeredCreators.entries()) {
-        this.creators.set(protocol, {capabilities, create});
+  constructor(public readonly options: CapabilitiesResolverOptions & {
+    factories?: StorageKeyFactory[], selector? : FactorySelector}) {
+    for (const factory of (options.factories || [])) {
+      assert(!this.factories[factory.protocol], `Duplicated factory for '${factory.protocol}'.`);
+      this.factories[factory.protocol] = factory;
+    }
+    for (const factory of Object.values(CapabilitiesResolver.defaultStorageKeyFactories)) {
+      if (!this.factories[factory.protocol]) {
+        this.factories[factory.protocol] = factory;
       }
     }
   }
 
-  static getDefaultCreators(): StorageKeyCreatorsMap {
-    return new Map(CapabilitiesResolver.defaultCreators);
-  }
+  get selector() { return this.options.selector || CapabilitiesResolver.defaultSelector; }
 
-  static registerDefaultKeyCreator(
-      protocol: string,
-      capabilities: Capabilities,
-      create: StorageKeyCreator): void {
-        CapabilitiesResolver.defaultCreators.set(protocol, {capabilities, create});
-  }
-
-  static registerKeyCreator(
-      protocol: string,
-      capabilities: Capabilities,
-      create: StorageKeyCreator): void {
-    if (CapabilitiesResolver.registeredCreators.get(protocol)) {
-      throw new Error(`Key creator for protocol ${protocol} already registered.`);
+  async createStorageKey(capabilities: Capabilities, type: Type, handleId: string): Promise<StorageKey> {
+    const selectedFactories = Object.values(this.factories).filter(factory => {
+        return factory.supports(capabilities);
+    });
+    if (selectedFactories.length === 0) {
+      throw new Error(`Cannot create a suitable storage key for handle '${handleId}' with capabilities ${capabilities.toDebugString()}`);
     }
-    CapabilitiesResolver.registeredCreators.set(protocol, {capabilities, create});
+    const factory = this.selector.select(selectedFactories);
+    return this.createStorageKeyWithFactory(factory, type, handleId);
+  }
+
+  private async createStorageKeyWithFactory(factory: StorageKeyFactory, type: Type, handleId: string): Promise<StorageKey> {
+    const schemaHash = await type.getEntitySchema().hash();
+    const containerKey = factory.create(new ContainerStorageKeyOptions(
+        this.options.arcId, schemaHash, type.getEntitySchema().name));
+    const containerChildKey = containerKey.childKeyForHandle(handleId);
+    if (!Flags.defaultReferenceMode) {
+      return containerChildKey;
+    }
+    if (type.isReference ||
+        (type.getContainedType() && type.getContainedType().isReference)) {
+      return containerChildKey;
+    }
+    const backingKey = factory.create(new BackingStorageKeyOptions(
+        this.options.arcId, schemaHash, type.getEntitySchema().name));
+
+    // ReferenceModeStorageKeys in different drivers can cause problems with garbage collection.
+    assert(backingKey.protocol === containerKey.protocol);
+
+    return new ReferenceModeStorageKey(backingKey, containerChildKey);
+  }
+
+  static registerStorageKeyFactory(factory: StorageKeyFactory) {
+    assert(!CapabilitiesResolver.defaultStorageKeyFactories[factory.protocol],
+        `Storage key factory for '${factory.protocol}' already registered`);
+    CapabilitiesResolver.defaultStorageKeyFactories[factory.protocol] = factory;
   }
 
   static reset() {
-    CapabilitiesResolver.registeredCreators = new Map();
-  }
-
-  createStorageKey(capabilities: Capabilities): StorageKey {
-    // TODO: This is a naive and basic solution for picking the appropriate
-    // storage key creator for the given capabilities. As more capabilities are
-    // added the heuristics is to become more robust.
-    const protocols = this.findStorageKeyProtocols(capabilities);
-    if (protocols.size === 0) {
-      throw new Error(`Cannot create a suitable storage key for ${capabilities.toString()}`);
-    } else if (protocols.size > 1) {
-      console.warn(`Multiple storage key creators for ${capabilities.toString()}`);
-    }
-    return this.creators.get([...protocols][0]).create(this.options);
-  }
-
-  findStorageKeyProtocols(capabilities: Capabilities): Set<string> {
-    const protocols: Set<string> = new Set();
-    for (const protocol of this.creators.keys()) {
-      if (this.creators.get(protocol).capabilities.contains(capabilities)) {
-        protocols.add(protocol);
-      }
-    }
-    return protocols;
+    CapabilitiesResolver.defaultStorageKeyFactories = {};
   }
 }

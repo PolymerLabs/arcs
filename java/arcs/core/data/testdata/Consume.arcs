@@ -1,0 +1,18 @@
+// Big example for recipe2plan generation.
+
+meta
+  namespace: arcs.core.data.testdata.gen
+
+import './Schemas.arcs'
+import './ConsumeProduce.arcs'
+
+particle ResponseCalculator
+  request: reads OverallSentiment {sentimentCohortBreakdown: [Number]}
+  response: writes SentimentResponse {sentimentValue: Number}
+
+recipe RequestHandler
+  request: map 'processed-events'
+  response: create @tiedToArc
+  ResponseCalculator
+    request: reads request
+    response: writes response

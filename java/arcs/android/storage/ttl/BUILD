@@ -1,14 +1,18 @@
-load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_android_library")
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
-kt_android_library(
+arcs_kt_android_library(
     name = "ttl",
     srcs = glob(["*.kt"]),
     deps = [
+        "//java/arcs/android/storage/database",
+        "//java/arcs/core/storage/database",
+        "//java/arcs/core/storage/driver",
         "//java/arcs/core/util",
         "//third_party/java/androidx/work",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

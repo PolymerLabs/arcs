@@ -43,7 +43,6 @@ defineParticle(({UiParticle, html}) => {
       return template;
     }
     willReceiveProps(props) {
-      // TODO(sjmiles): best way to translate entity data into POJO?
       const people = props.people.map((a, i) => {
         return {
           index: i,

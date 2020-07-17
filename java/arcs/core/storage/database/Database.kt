@@ -12,6 +12,7 @@
 package arcs.core.storage.database
 
 import arcs.core.crdt.VersionMap
+import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
@@ -27,13 +28,13 @@ import kotlin.reflect.KClass
 interface Database {
     /**
      * Inserts or updates the data at [storageKey] in the database, returns the new version [Int]
-     * when successful.
+     * when successful, or the current version when the update could not be applied.
      */
     suspend fun insertOrUpdate(
         storageKey: StorageKey,
         data: DatabaseData,
         originatingClientId: Int? = null
-    ): Int
+    ): Boolean
 
     /** Fetches the data at [storageKey] from the database. */
     suspend fun get(
@@ -45,6 +46,20 @@ interface Database {
     /** Removes everything associated with the given [storageKey] from the database. */
     suspend fun delete(storageKey: StorageKey, originatingClientId: Int? = null)
 
+    /** Clears all expired entities, leaving only a tombstone with the version map. */
+    suspend fun removeExpiredEntities()
+
+    /** Clears all entities, leaving only a tombstone with the version map. */
+    suspend fun removeAllEntities()
+
+    /** Clears all entities created in between the two times, leaving only a tombstone with the
+     * version map.
+     */
+    suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long)
+
+    /** Garbage collection run: will remove unused entities. */
+    suspend fun runGarbageCollection()
+
     /** Takes a snapshot of the current [DatabasePerformanceStatistics] for the database. */
     suspend fun snapshotStatistics(): DatabasePerformanceStatistics.Snapshot
 
@@ -53,13 +68,16 @@ interface Database {
      * [DatabaseClient.storageKey] is created, updated, or deleted. Returns a unique identifier for
      * the listener, which can be used to unregister it later, with [removeClient].
      */
-    fun addClient(client: DatabaseClient): Int
+    suspend fun addClient(client: DatabaseClient): Int
 
     /**
      * Unregisters a [DatabaseClient] by the unique [identifier] received via the return value of
      * [addClient]
      */
-    fun removeClient(identifier: Int)
+    suspend fun removeClient(identifier: Int)
+
+    /** Deletes everything from the database. */
+    fun reset()
 }
 
 /** A client interested in changes to a specific [StorageKey] in the database. */
@@ -85,22 +103,28 @@ sealed class DatabaseData(
     open val versionMap: VersionMap
 ) {
     data class Singleton(
-        val reference: Reference?,
+        val value: ReferenceWithVersion?,
         override val schema: Schema,
         override val databaseVersion: Int,
         override val versionMap: VersionMap
     ) : DatabaseData(schema, databaseVersion, versionMap)
 
     data class Collection(
-        val values: Set<Reference>,
+        val values: Set<ReferenceWithVersion>,
         override val schema: Schema,
         override val databaseVersion: Int,
         override val versionMap: VersionMap
     ) : DatabaseData(schema, databaseVersion, versionMap)
 
     data class Entity(
-        val entity: arcs.core.data.Entity,
+        val rawEntity: RawEntity,
+        override val schema: Schema,
         override val databaseVersion: Int,
         override val versionMap: VersionMap
-    ) : DatabaseData(entity.schema, databaseVersion, versionMap)
+    ) : DatabaseData(schema, databaseVersion, versionMap)
 }
+
+data class ReferenceWithVersion(
+    val reference: Reference,
+    val versionMap: VersionMap
+)

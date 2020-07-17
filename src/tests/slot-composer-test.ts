@@ -11,7 +11,6 @@
 import {Planner} from '../planning/arcs-planning.js';
 import {assert} from '../platform/chai-web.js';
 import {Arc} from '../runtime/arc.js';
-import {Flags} from '../runtime/flags.js';
 import {Loader} from '../platform/loader.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
 import {SlotTestObserver} from '../runtime/testing/slot-test-observer.js';
@@ -21,7 +20,7 @@ import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
-import {RamDiskStorageDriverProvider} from '../runtime/storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../runtime/storage/drivers/ramdisk.js';
 
 async function initSlotComposer(recipeStr) {
   const manifest = await Manifest.parse(recipeStr);
@@ -118,7 +117,7 @@ recipe
     const memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
     const loader = new Loader();
-    const file = Flags.useNewStorageStack ? 'ProductsTestNg.arcs' : 'products-test.recipes';
+    const file = 'ProductsTestNg.arcs';
     const manifest = `./src/tests/particles/artifacts/${file}`;
     const context = await Manifest.load(manifest, loader, {memoryProvider});
     const runtime = new Runtime({loader, context, memoryProvider});

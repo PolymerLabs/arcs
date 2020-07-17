@@ -38,14 +38,14 @@ export class ResolveWalker extends RecipeWalker {
       }
       return [];
     };
-    if (handle.fate === '`slot') {
+    if (handle.fate === '`slot' || handle.fate === 'join') {
       return [];
     }
     if (handle.type.slandleType()) {
       return [];
     }
     const arc = this.arc;
-    if (handle.connections.length === 0 ||
+    if ((handle.connections.length === 0 && !handle.isJoined) ||
         (handle.id && handle.storageKey) || (!handle.type) ||
         (!handle.fate)) {
       return error('No connections to handle or missing handle information');
@@ -90,7 +90,7 @@ export class ResolveWalker extends RecipeWalker {
       if (storeById) {
         mappable = [storeById];
       } else {
-        return error('cannot find associated store');
+        return error(`cannot find associated store with handle id '${handle.id}'`);
       }
     }
 
@@ -211,7 +211,7 @@ export class RecipeResolver {
   // Attempts to run basic resolution on the given recipe. Returns a new
   // instance of the recipe normalized and resolved if possible. Returns null if
   // normalization or attempting to resolve slot connection fails.
-  async resolve(recipe: Recipe, options?: IsValidOptions) {
+  async resolve(recipe: Recipe, options?: IsValidOptions): Promise<Recipe | null> {
     recipe = recipe.clone();
     if (!recipe.normalize(options)) {
       console.warn(`could not normalize a recipe: ${

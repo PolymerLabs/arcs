@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2020 Google LLC.
+  ~
+  ~ This code may only be used under the BSD style license found at
+  ~ http://polymer.github.io/LICENSE.txt
+  ~
+  ~ Code distributed by Google as part of this project is also subject to an additional IP rights
+  ~ grant found at
+  ~ http://polymer.github.io/PATENTS.txt
+  -->
+
+<resources>
+  <string name="app_name">Arcs Test</string>
+  <string name="result_prompt" translatable="false">Result will be shown here.</string>
+  <string name="waiting_for_result" translatable="false">Waiting for result.</string>
+  <string name="start_resurrection_arc_btn" translatable="false">StartResurrectionArc</string>
+  <string name="stop_resurrection_arc_btn" translatable="false">StopResurrectionArc</string>
+  <string name="stop_read_service_btn" translatable="false">StopReadService</string>
+  <string name="trigger_write_btn" translatable="false">TriggerWrite</string>
+  <string name="read_write_test_btn" translatable="false">RunReadWriteArc</string>
+  <string name="persistent_read_write_test_btn" translatable="false">RunPersistentReadWriteArc</string>
+  <string name="handles_test_btn" translatable="false">HandlesTest</string>
+  <string name="create" translatable="false">Create</string>
+  <string name="fetch" translatable="false">Fetch</string>
+  <string name="set" translatable="false">Set</string>
+  <string name="clear" translatable="false">Clear</string>
+  <string name="readwrite_test" translatable="false">ReadWrite Test</string>
+  <string name="resurrection_test" translatable="false">Resurrection Test</string>
+  <string name="storage_test" translatable="false">Storage Test</string>
+  <string name="singleton" translatable="false">Singleton</string>
+  <string name="collection" translatable="false">Collection</string>
+  <string name="in_memory" translatable="false">In Memory</string>
+  <string name="persistent" translatable="false">Persistent</string>
+  <string name="local_activity" translatable="false">Local Activity</string>
+  <string name="remote_service" translatable="false">Remote Service</string>
+</resources>

@@ -12,10 +12,10 @@
 package arcs.android.common.resurrection
 
 import android.app.Service
-import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import androidx.annotation.VisibleForTesting
+import arcs.android.common.resurrection.ResurrectionRequest.UnregisterRequest
 import arcs.core.storage.StorageKey
 import arcs.core.util.guardedBy
 import java.io.PrintWriter
@@ -39,7 +39,9 @@ abstract class ResurrectorService : Service() {
      */
     protected open val resurrectionDatabaseName: String = DbHelper.RESURRECTION_DB_NAME
 
-    private val job = Job() + Dispatchers.IO + CoroutineName("ResurrectorService")
+    protected open val job =
+        Job() + Dispatchers.IO + CoroutineName("ResurrectorService")
+
     private val dbHelper: DbHelper by lazy { DbHelper(this, resurrectionDatabaseName) }
 
     private val mutex = Mutex()
@@ -54,7 +56,7 @@ abstract class ResurrectorService : Service() {
             loadJob = CoroutineScope(job).resetRequests()
         } ?: ResurrectionRequest.createFromIntent(intent)?.let {
             loadJob = CoroutineScope(job).registerRequest(it)
-        } ?: ResurrectionRequest.componentNameFromUnrequestIntent(intent)?.let {
+        } ?: ResurrectionRequest.unregisterRequestFromUnrequestIntent(intent)?.let {
             loadJob = CoroutineScope(job).unregisterRequest(it)
         } ?: {
             loadJob = CoroutineScope(job).launch {
@@ -68,6 +70,7 @@ abstract class ResurrectorService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        dbHelper.close()
         job.cancelChildren()
     }
 
@@ -167,8 +170,8 @@ abstract class ResurrectorService : Service() {
         loadRequests().join()
     }
 
-    private fun CoroutineScope.unregisterRequest(componentName: ComponentName) = launch {
-        dbHelper.unregisterRequest(componentName)
+    private fun CoroutineScope.unregisterRequest(unregisterRequest: UnregisterRequest) = launch {
+        dbHelper.unregisterRequest(unregisterRequest.componentName, unregisterRequest.targetId)
         loadRequests().join()
     }
 
@@ -191,6 +194,8 @@ abstract class ResurrectorService : Service() {
             ResurrectionRequest.EXTRA_RESURRECT_NOTIFIER,
             ArrayList(events.toSet().map(StorageKey::toString))
         )
+
+        intent.putExtra(ResurrectionRequest.EXTRA_REGISTRATION_TARGET_ID, this.targetId)
 
         when (this.componentType) {
             ResurrectionRequest.ComponentType.Activity -> startActivity(intent)

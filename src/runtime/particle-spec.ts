@@ -10,14 +10,17 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Modality} from './modality.js';
-import {Direction, SlotDirection, ParticleClaimStatement, ParticleCheckStatement} from './manifest-ast-nodes.js';
+import {Direction, SlotDirection, ClaimStatement, CheckStatement} from './manifest-ast-nodes.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {InterfaceType, SlotType, Type, TypeLiteral, TypeVariableInfo} from './type.js';
 import {Literal} from './hot.js';
-import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './particle-check.js';
-import {ParticleClaim, Claim, createParticleClaim} from './particle-claim.js';
+import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './check.js';
+import {Claim, createClaim} from './claim.js';
+import {ManifestStringBuilder} from './manifest-string-builder.js';
 import * as AstNode from './manifest-ast-nodes.js';
+import {AnnotationRef} from './recipe/annotation.js';
+import {resolveFieldPathType} from './field-path.js';
 
 // TODO: clean up the real vs. literal separation in this file
 
@@ -30,6 +33,7 @@ type SerializedHandleConnectionSpec = {
   tags?: string[],
   dependentConnections: SerializedHandleConnectionSpec[],
   check?: string,
+  annotations: AnnotationRef[];
 };
 
 function asType(t: Type | TypeLiteral) : Type {
@@ -76,7 +80,8 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
   pattern?: string;
   parentConnection: HandleConnectionSpec | null = null;
   claims?: Claim[];
-  check?: Check;
+  checks?: Check[];
+  _annotations: AnnotationRef[];
 
   constructor(rawData: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
     this.discriminator = 'HCS';
@@ -88,6 +93,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
     this.isOptional = rawData.isOptional;
     this.tags = rawData.tags || [];
     this.dependentConnections = [];
+    this.annotations = rawData.annotations || [];
   }
 
   instantiateDependentConnections(particle, typeVarMap: Map<string, Type>): void {
@@ -138,6 +144,22 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
 
   isCompatibleType(type: Type) {
     return TypeChecker.compareTypes({type}, {type: this.type, direction: this.direction});
+  }
+
+  get annotations(): AnnotationRef[] { return this._annotations; }
+  set annotations(annotations: AnnotationRef[]) {
+    annotations.every(a => assert(a.isValidForTarget('HandleConnection'),
+        `Annotation '${a.name}' is invalid for HandleConnection`));
+    this._annotations = annotations;
+  }
+  getAnnotation(name: string): AnnotationRef | null {
+    const annotations = this.findAnnotations(name);
+    assert(annotations.length <= 1,
+        `Multiple annotations found for '${name}'. Use findAnnotations instead.`);
+    return annotations.length === 0 ? null : annotations[0];
+  }
+  findAnnotations(name: string): AnnotationRef[] {
+    return this.annotations.filter(a => a.name === name);
   }
 }
 
@@ -214,8 +236,9 @@ export interface SerializedParticleSpec extends Literal {
   implBlobUrl: string | null;
   modality: string[];
   slotConnections: SerializedSlotConnectionSpec[];
-  trustClaims?: ParticleClaimStatement[];
-  trustChecks?: ParticleCheckStatement[];
+  trustClaims?: ClaimStatement[];
+  trustChecks?: CheckStatement[];
+  annotations?: AnnotationRef[];
 }
 
 export interface StorableSerializedParticleSpec extends SerializedParticleSpec {
@@ -233,8 +256,9 @@ export class ParticleSpec {
   implBlobUrl: string | null;
   modality: Modality;
   slotConnections: Map<string, ConsumeSlotConnectionSpec>;
-  trustClaims: ParticleClaim[];
+  trustClaims: Claim[];
   trustChecks: Check[];
+  _annotations: AnnotationRef[] = [];
 
   constructor(model: SerializedParticleSpec) {
     this.model = model;
@@ -269,6 +293,7 @@ export class ParticleSpec {
 
     this.trustClaims = this.validateTrustClaims(model.trustClaims);
     this.trustChecks = this.validateTrustChecks(model.trustChecks);
+    this.annotations = model.annotations || [];
   }
 
   createConnection(arg: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>): HandleConnectionSpec {
@@ -337,6 +362,44 @@ export class ParticleSpec {
     return (this.verbs.length > 0) ? this.verbs[0] : undefined;
   }
 
+  get annotations(): AnnotationRef[] { return this._annotations; }
+  set annotations(annotations: AnnotationRef[]) {
+    annotations.every(a => assert(a.isValidForTarget('Particle'),
+        `Annotation '${a.name}' is invalid for Particle`));
+    this._annotations = annotations;
+  }
+  getAnnotation(name: string): AnnotationRef | null {
+    const annotations = this.findAnnotations(name);
+    assert(annotations.length <= 1,
+        `Multiple annotations found for '${name}'. Use findAnnotations instead.`);
+    return annotations.length === 0 ? null : annotations[0];
+  }
+  findAnnotations(name: string): AnnotationRef[] {
+    return this.annotations.filter(a => a.name === name);
+  }
+
+  /**
+   * Indicates whether the particle is an isolated (non-egress) particle.
+   *
+   * Particles are considered egress particles by default, must have an explicit
+   * `@isolated` annotation to be considered isolated.
+   */
+  get isolated(): boolean {
+    const isolated = !!this.getAnnotation('isolated');
+    const egress = !!this.getAnnotation('egress');
+    assert(!(isolated && egress), 'Particle cannot be tagged with both @isolated and @egress.');
+    return isolated;
+  }
+
+  /**
+   * Indicates whether the particle is an egress (non-isolated) particle.
+   *
+   * Particles are considered egress particles by default.
+   */
+  get egress(): boolean {
+    return !this.isolated;
+  }
+
   isCompatible(modality: Modality): boolean {
     return this.slandleConnectionNames().length === 0 || this.modality.intersection(modality).isResolved();
   }
@@ -346,19 +409,19 @@ export class ParticleSpec {
   }
 
   toLiteral(): SerializedParticleSpec {
-    const {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks} = this.model;
+    const {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations} = this.model;
     const connectionToLiteral : (input: SerializedHandleConnectionSpec) => SerializedHandleConnectionSpec =
-      ({type, direction, relaxed, name, isOptional, dependentConnections}) => ({type: asTypeLiteral(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral)});
+      ({type, direction, relaxed, name, isOptional, dependentConnections, annotations}) => ({type: asTypeLiteral(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral), annotations: annotations || []});
     const argsLiteral = args.map(a => connectionToLiteral(a));
-    return {args: argsLiteral, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks};
+    return {args: argsLiteral, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations};
   }
 
   static fromLiteral(literal: SerializedParticleSpec): ParticleSpec {
-    let {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks} = literal;
+    let {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations} = literal;
     const connectionFromLiteral = ({type, direction, relaxed, name, isOptional, dependentConnections}) =>
-      ({type: asType(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : []});
+      ({type: asType(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : [], annotations: /*annotations ||*/ []});
     args = args.map(connectionFromLiteral);
-    return new ParticleSpec({args, name, verbs: verbs || [], description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks});
+    return new ParticleSpec({args, name, verbs: verbs || [], description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations});
   }
 
   // Note: this method shouldn't be called directly.
@@ -393,8 +456,10 @@ export class ParticleSpec {
     return InterfaceType.make(this.name, handles, slots);
   }
 
-  toString(): string {
-    const results: string[] = [];
+  toManifestString(builder = new ManifestStringBuilder()): string {
+    for (const annotation of this.annotations) {
+      builder.push(annotation.toString());
+    }
     let verbs = '';
     if (this.verbs.length > 0) {
       verbs = ' ' + this.verbs.map(verb => `&${verb}`).join(' ');
@@ -407,10 +472,11 @@ export class ParticleSpec {
     if (this.implFile) {
       line += ` in '${this.implFile}'`;
     }
-    results.push(line);
-    const indent = '  ';
+    builder.push(line);
 
-    const writeConnection = (connection: HandleConnectionSpec, indent: string) => {
+    const indentedBuilder = builder.withIndent();
+
+    const writeConnection = (connection: HandleConnectionSpec, builder: ManifestStringBuilder) => {
       const dir = connection.direction === 'any' ? '' : `${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)}`;
 
       const subresults = [
@@ -418,12 +484,13 @@ export class ParticleSpec {
         dir,
         connection.relaxed ? AstNode.RELAXATION_KEYWORD : '',
         connection.type.toString(),
+        ...connection.annotations.map(a => a.toString()),
         ...connection.tags.map((tag: string) => `#${tag}`)
       ];
 
-      results.push(indent+subresults.filter(s => s !== '').join(' '));
+      builder.push(subresults.filter(s => s !== '').join(' '));
       for (const dependent of connection.dependentConnections) {
-        writeConnection(dependent, indent + '  ');
+        writeConnection(dependent, builder.withIndent());
       }
     };
 
@@ -431,14 +498,15 @@ export class ParticleSpec {
       if (connection.parentConnection) {
         continue;
       }
-      writeConnection(connection, indent);
+      writeConnection(connection, indentedBuilder);
     }
 
-    this.trustClaims.forEach(claim => results.push(`  ${claim.toManifestString()}`));
-    this.trustChecks.forEach(check => results.push(`  ${check.toManifestString()}`));
+    indentedBuilder.push(
+        ...this.trustClaims.map(claim => claim.toManifestString()),
+        ...this.trustChecks.map(check => check.toManifestString()));
 
-    this.modality.names.forEach(a => results.push(`  modality ${a}`));
-    const slotToString = (s: SerializedSlotConnectionSpec | ProvideSlotConnectionSpec, direction: SlotDirection, indent: string):void => {
+    this.modality.names.forEach(a => indentedBuilder.push(`modality ${a}`));
+    const slotToString = (s: SerializedSlotConnectionSpec | ProvideSlotConnectionSpec, direction: SlotDirection, builder: ManifestStringBuilder):void => {
       const tokens: string[] = [];
       tokens.push(`${s.name}:`);
       tokens.push(`${direction}${s.isRequired ? '' : '?'}`);
@@ -460,36 +528,38 @@ export class ParticleSpec {
       if (s.tags.length > 0) {
         tokens.push(s.tags.map(a => `#${a}`).join(' '));
       }
-      results.push(`${indent}${tokens.join(' ')}`);
+      builder.push(`${tokens.join(' ')}`);
       if (s.provideSlotConnections) {
         // Provided slots.
-        s.provideSlotConnections.forEach(p => slotToString(p, 'provides', indent+'  '));
+        s.provideSlotConnections.forEach(p => slotToString(p, 'provides', builder.withIndent()));
       }
     };
 
-    this.slotConnections.forEach(
-      s => slotToString(s, 'consumes', '  ')
-    );
+    this.slotConnections.forEach(s => slotToString(s, 'consumes', indentedBuilder));
+
     // Description
     if (this.pattern) {
-      results.push(`  description \`${this.pattern}\``);
-      this.handleConnectionMap.forEach(cs => {
-        if (cs.pattern) {
-          results.push(`    ${cs.name} \`${cs.pattern}\``);
-        }
+      indentedBuilder.push(`description \`${this.pattern}\``);
+      indentedBuilder.withIndent(indentedBuilder => {
+        this.handleConnectionMap.forEach(cs => {
+          if (cs.pattern) {
+            indentedBuilder.push(`${cs.name} \`${cs.pattern}\``);
+          }
+        });
       });
     }
-    return results.join('\n');
+    return builder.toString();
   }
 
-  toManifestString(): string {
-    return this.toString();
+  toString(): string {
+    return this.toManifestString();
   }
 
-  private validateTrustClaims(statements: ParticleClaimStatement[]): ParticleClaim[] {
-    const results: ParticleClaim[] = [];
+  private validateTrustClaims(statements: ClaimStatement[]): Claim[] {
+    const results: Claim[] = [];
     if (statements) {
       statements.forEach(statement => {
+        const target = [statement.handle, ...statement.fieldPath].join('.');
         const handle = this.handleConnectionMap.get(statement.handle);
         if (!handle) {
           throw new Error(`Can't make a claim on unknown handle ${statement.handle}.`);
@@ -497,18 +567,21 @@ export class ParticleSpec {
         if (!handle.isOutput) {
           throw new Error(`Can't make a claim on handle ${statement.handle} (not an output handle).`);
         }
-        if (handle.claims) {
-          throw new Error(`Can't make multiple claims on the same output (${statement.handle}).`);
+        resolveFieldPathType(statement.fieldPath, handle.type);
+        if (!handle.claims) {
+          handle.claims = [];
+        } else if (handle.claims.some(claim => claim.target === target)) {
+          throw new Error(`Can't make multiple claims on the same target (${target}).`);
         }
-        const particleClaim = createParticleClaim(handle, statement, this.handleConnectionMap);
-        handle.claims = particleClaim.claims;
+        const particleClaim = createClaim(handle, statement, this.handleConnectionMap);
+        handle.claims.push(particleClaim);
         results.push(particleClaim);
       });
     }
     return results;
   }
 
-  private validateTrustChecks(checks: ParticleCheckStatement[]): Check[] {
+  private validateTrustChecks(checks: CheckStatement[]): Check[] {
     const results: Check[] = [];
     if (checks) {
       const providedSlotNames = this.getProvidedSlotsByName();
@@ -523,18 +596,20 @@ export class ParticleSpec {
             if (handle.direction === '`consumes' || handle.direction === '`provides') {
               // Do slandles versions of slots checks and claims.
               if (handle.direction === '`consumes') {
-                  throw new Error(`Can't make a check on handle ${handleName}. Can only make checks on input and provided handles.`);
-
+                throw new Error(`Can't make a check on handle ${handleName}. Can only make checks on input and provided handles.`);
               }
             } else if (!handle.isInput) {
               throw new Error(`Can't make a check on handle ${handleName} with direction ${handle.direction} (not an input handle).`);
             }
-            if (handle.check) {
-              throw new Error(`Can't make multiple checks on the same input (${handleName}).`);
+            resolveFieldPathType(check.target.fieldPath, handle.type);
+            const checkObject = createCheck(handle, check, this.handleConnectionMap);
+            if (!handle.checks) {
+              handle.checks = [];
+            } else if (handle.checks.some(c => c.targetString === checkObject.targetString)) {
+              throw new Error(`Can't make multiple checks on the same target (${checkObject.targetString}).`);
             }
-
-            handle.check = createCheck(handle, check, this.handleConnectionMap);
-            results.push(handle.check);
+            handle.checks.push(checkObject);
+            results.push(checkObject);
             break;
           }
           case 'slot': {

@@ -9,9 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Id} from './id.js';
 import {SlotInfo} from './slot-info.js';
-import {ArcInfo} from './synthetic-types.js';
 import {Predicate, Literal} from './hot.js';
 import {CRDTTypeRecord, CRDTModel} from './crdt/crdt.js';
 import {CRDTCount} from './crdt/crdt-count.js';
@@ -21,6 +19,8 @@ import {Schema} from './schema.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Refinement} from './refiner.js';
+import {AnnotationRef} from './recipe/annotation.js';
+import {ManifestStringBuilder} from './manifest-string-builder.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -28,8 +28,8 @@ export interface TypeLiteral extends Literal {
   data?: any;
 }
 
-export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Relation' |
-  'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle' | 'Count' | 'Singleton';
+export type Tag = 'Entity' | 'TypeVariable' | 'Collection' | 'BigCollection' | 'Tuple' |
+  'Interface' | 'Slot' | 'Reference' | 'Arc' | 'Handle' | 'Count' | 'Singleton' | 'Mux';
 
 type TypeFromLiteral = (literal: TypeLiteral) => Type;
 
@@ -52,6 +52,17 @@ export abstract class Type {
       }
     }
     return [type1, type2];
+  }
+
+  static tryUnwrapMulti(type1: Type, type2: Type): [Type[], Type[]] {
+    [type1, type2] = this.unwrapPair(type1, type2);
+    if (type1.tag === type2.tag) {
+      const contained1 = type1.getContainedTypes();
+      if (contained1 !== null) {
+        return [contained1, type2.getContainedTypes()];
+      }
+    }
+    return [null, null];
   }
 
   /** Tests whether two types' constraints are compatible with each other. */
@@ -113,6 +124,18 @@ export abstract class Type {
     return this instanceof BigCollectionType;
   }
 
+  isReferenceType(): this is ReferenceType<Type> {
+    return this instanceof ReferenceType;
+  }
+
+  isMuxType(): this is MuxType<EntityType> {
+    return this instanceof MuxType && this.innerType instanceof  EntityType;
+  }
+
+  isTupleType(): this is TupleType {
+    return this instanceof TupleType;
+  }
+
   isResolved(): boolean {
     // TODO: one of these should not exist.
     return !this.hasUnresolvedVariable;
@@ -138,11 +161,19 @@ export abstract class Type {
     return null;
   }
 
+  getContainedTypes(): Type[]|null {
+    return null;
+  }
+
   isTypeContainer(): boolean {
     return false;
   }
 
   get isReference(): boolean {
+    return false;
+  }
+
+  get isMux(): boolean {
     return false;
   }
 
@@ -162,6 +193,14 @@ export abstract class Type {
     return false;
   }
 
+  get isTuple(): boolean {
+    return false;
+  }
+
+  get isVariable(): boolean {
+    return false;
+  }
+
   collectionOf() {
     return new CollectionType(this);
   }
@@ -172,6 +211,14 @@ export abstract class Type {
 
   bigCollectionOf() {
     return new BigCollectionType(this);
+  }
+
+  referenceTo() {
+    return new ReferenceType(this);
+  }
+
+  muxTypeOf() {
+    return new MuxType(this);
   }
 
   resolvedType(): Type {
@@ -198,12 +245,12 @@ export abstract class Type {
     throw new Error(`canReadSubset not implemented for ${this}`);
   }
 
-  isAtleastAsSpecificAs(type: Type): boolean {
-    return this.tag === type.tag && this._isAtleastAsSpecificAs(type);
+  isAtLeastAsSpecificAs(type: Type): boolean {
+    return this.tag === type.tag && this._isAtLeastAsSpecificAs(type);
   }
 
-  protected _isAtleastAsSpecificAs(type: Type): boolean {
-    throw new Error(`isAtleastAsSpecificAs not implemented for ${this}`);
+  protected _isAtLeastAsSpecificAs(type: Type): boolean {
+    throw new Error(`isAtLeastAsSpecificAs not implemented for ${this}`);
   }
 
   /**
@@ -330,7 +377,7 @@ export class EntityType extends Type {
   static make(
     names: string[],
     fields: {},
-    options: {description?, refinement?: Refinement} = {}
+    options: {description?, refinement?: Refinement, annotations?: AnnotationRef[]} = {}
   ): EntityType {
     return new EntityType(new Schema(names, fields, options));
   }
@@ -348,8 +395,8 @@ export class EntityType extends Type {
     return this;
   }
 
-  _isAtleastAsSpecificAs(type: EntityType): boolean {
-    return this.entitySchema.isAtleastAsSpecificAs(type.entitySchema);
+  _isAtLeastAsSpecificAs(type: EntityType): boolean {
+    return this.entitySchema.isAtLeastAsSpecificAs(type.entitySchema);
   }
 
   toLiteral(): TypeLiteral {
@@ -398,7 +445,6 @@ export class EntityType extends Type {
     throw new Error(`Entity handle not yet implemented - you probably want to use a SingletonType`);
   }
 }
-
 
 export class TypeVariable extends Type {
   readonly variable: TypeVariableInfo;
@@ -683,25 +729,77 @@ export class BigCollectionType<T extends Type> extends Type {
   }
 }
 
+export class TupleType extends Type {
+  readonly innerTypes: Type[];
 
-export class RelationType extends Type {
-  private readonly relationEntities: Type[];
-
-  constructor(relation: Type[]) {
-    super('Relation');
-    this.relationEntities = relation;
+  constructor(tuple: Type[]) {
+    super('Tuple');
+    this.innerTypes = tuple;
   }
 
-  get isRelation() {
+  get isTuple(): boolean {
     return true;
   }
 
+  isTypeContainer(): boolean {
+    return true;
+  }
+
+  getContainedTypes(): Type[]|null {
+    return this.innerTypes;
+  }
+
+  get canWriteSuperset() {
+    return new TupleType(this.innerTypes.map(t => t.canWriteSuperset));
+  }
+
+  get canReadSubset() {
+    return new TupleType(this.innerTypes.map(t => t.canReadSubset));
+  }
+
+  resolvedType() {
+    let returnSelf = true;
+    const resolvedinnerTypes = [];
+    for (const t of this.innerTypes) {
+      const resolved = t.resolvedType();
+      if (resolved !== t) returnSelf = false;
+      resolvedinnerTypes.push(resolved);
+    }
+    if (returnSelf) return this;
+    return new TupleType(resolvedinnerTypes);
+  }
+
+  _canEnsureResolved(): boolean {
+    return this.innerTypesSatisfy((type) => type.canEnsureResolved());
+  }
+
+  maybeEnsureResolved(): boolean {
+    return this.innerTypesSatisfy((type) => type.maybeEnsureResolved());
+  }
+
+  _isAtLeastAsSpecificAs(other: TupleType): boolean {
+    if (this.innerTypes.length !== other.innerTypes.length) return false;
+    return this.innerTypesSatisfy((type, idx) => type.isAtLeastAsSpecificAs(other.innerTypes[idx]));
+  }
+
+  private innerTypesSatisfy(predicate: ((type: Type, idx: number) => boolean)): boolean {
+    return this.innerTypes.reduce((result: boolean, type: Type, idx: number) => result && predicate(type, idx), true);
+  }
+
+  _applyExistenceTypeTest(test: Predicate<Type>): boolean {
+    return this.innerTypes.reduce((result: boolean, type: Type) => result || type._applyExistenceTypeTest(test), false);
+  }
+
   toLiteral(): TypeLiteral {
-    return {tag: this.tag, data: this.relationEntities.map(t => t.toLiteral())};
+    return {tag: this.tag, data: this.innerTypes.map(t => t.toLiteral())};
+  }
+
+  toString(options = undefined ): string {
+    return `(${this.innerTypes.map(t => t.toString(options)).join(', ')})`;
   }
 
   toPrettyString(): string {
-    return JSON.stringify(this.relationEntities);
+    return 'Tuple of ' + this.innerTypes.map(t => t.toPrettyString()).join(', ');
   }
 }
 
@@ -766,8 +864,8 @@ export class InterfaceType extends Type {
     return new InterfaceType(this.interfaceInfo.canReadSubset);
   }
 
-  _isAtleastAsSpecificAs(type: InterfaceType) {
-    return this.interfaceInfo.isAtleastAsSpecificAs(type.interfaceInfo);
+  _isAtLeastAsSpecificAs(type: InterfaceType) {
+    return this.interfaceInfo.isAtLeastAsSpecificAs(type.interfaceInfo);
   }
 
   _clone(variableMap: Map<string, Type>) {
@@ -817,7 +915,7 @@ export class SlotType extends Type {
     return this;
   }
 
-  _isAtleastAsSpecificAs(type: SlotType) {
+  _isAtLeastAsSpecificAs(type: SlotType) {
     // TODO: formFactor checking, etc.
     return true;
   }
@@ -856,10 +954,10 @@ export class SlotType extends Type {
 }
 
 
-export class ReferenceType extends Type {
-  readonly referredType: Type;
+export class ReferenceType<T extends Type> extends Type {
+  readonly referredType: T;
 
-  constructor(reference: Type) {
+  constructor(reference: T) {
     super('Reference');
     if (reference == null) {
       throw new Error('invalid type! Reference types must include a referenced type declaration');
@@ -871,7 +969,7 @@ export class ReferenceType extends Type {
     return true;
   }
 
-  getContainedType(): Type {
+  getContainedType(): T {
     return this.referredType;
   }
 
@@ -907,8 +1005,12 @@ export class ReferenceType extends Type {
     return Type.fromLiteral({tag: this.tag, data});
   }
 
-  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): ReferenceType {
-    return new ReferenceType(this.referredType._cloneWithResolutions(variableMap));
+  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): ReferenceType<T> {
+    return new ReferenceType<T>(this.referredType._cloneWithResolutions(variableMap) as T);
+  }
+
+  _applyExistenceTypeTest(test: Predicate<Type>): boolean {
+    return this.referredType._applyExistenceTypeTest(test);
   }
 
   toLiteral(): TypeLiteral {
@@ -932,25 +1034,85 @@ export class ReferenceType extends Type {
   }
 }
 
+export class MuxType<T extends Type> extends Type {
+  readonly innerType: T;
+  static handleClass = null;
 
-export class ArcType extends Type {
-  constructor() {
-    super('Arc');
+  constructor(type: T) {
+    super('Mux');
+    if (type == null) {
+      throw new Error('invalid type! Mux types must include an inner type declaration');
+    }
+    this.innerType = type;
   }
 
-  get isArc(): boolean {
+  get isMux(): boolean {
     return true;
   }
 
-  newInstance(arcId: Id, serialization: string): ArcInfo {
-    return new ArcInfo(arcId, serialization);
+  getContainedType(): T {
+    return this.innerType;
+  }
+
+  isTypeContainer(): boolean {
+    return true;
+  }
+
+  resolvedType() {
+    const innerType = this.innerType;
+    const resolvedInnerType = innerType.resolvedType();
+    return (innerType !== resolvedInnerType) ? new MuxType(resolvedInnerType) : this;
+  }
+
+  _canEnsureResolved(): boolean {
+    return this.innerType.canEnsureResolved();
+  }
+
+  maybeEnsureResolved(): boolean {
+    return this.innerType.maybeEnsureResolved();
+  }
+
+  get canWriteSuperset() {
+    return this.innerType.canWriteSuperset;
+  }
+
+  get canReadSubset() {
+    return this.innerType.canReadSubset;
+  }
+
+  _clone(variableMap: Map<string, Type>) {
+    const data = this.innerType.clone(variableMap).toLiteral();
+    return Type.fromLiteral({tag: this.tag, data});
+  }
+
+  _cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): MuxType<T> {
+    return new MuxType<T>(this.innerType._cloneWithResolutions(variableMap) as T);
   }
 
   toLiteral(): TypeLiteral {
-    return {tag: this.tag};
+    return {tag: this.tag, data: this.innerType.toLiteral()};
+  }
+
+  toString(options = undefined): string {
+    return '#' + this.innerType.toString();
+  }
+
+  toPrettyString(): string {
+    return 'Mux Type of ' + this.innerType.toPrettyString();
+  }
+
+  getEntitySchema(): Schema {
+    return this.innerType.getEntitySchema();
+  }
+
+  crdtInstanceConstructor<T extends CRDTTypeRecord>(): new () => CRDTModel<T> {
+    return this.innerType.crdtInstanceConstructor();
+  }
+
+  handleConstructor<T>() {
+    return MuxType.handleClass;
   }
 }
-
 
 export class HandleType extends Type {
   constructor() {
@@ -1066,7 +1228,7 @@ export class TypeVariableInfo {
     if (!(constraint instanceof EntityType) || !(type instanceof EntityType)) {
       throw new Error(`constraint checking not implemented for ${this} and ${type}`);
     }
-    return type.getEntitySchema().isAtleastAsSpecificAs(constraint.getEntitySchema());
+    return type.getEntitySchema().isAtLeastAsSpecificAs(constraint.getEntitySchema());
   }
 
   get resolution(): Type|null {
@@ -1254,11 +1416,11 @@ export abstract class InterfaceInfo {
 
   abstract readonly  canWriteSuperset : InterfaceInfo;
 
-  abstract isAtleastAsSpecificAs(other: InterfaceInfo) : boolean;
+  abstract isAtLeastAsSpecificAs(other: InterfaceInfo) : boolean;
 
   abstract _applyExistenceTypeTest(test: Predicate<TypeVarReference>) : boolean;
 
-  abstract toString() : string;
+  abstract toManifestString(builder?: ManifestStringBuilder) : string;
 
   static make : Maker = null;
 

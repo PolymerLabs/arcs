@@ -15,7 +15,7 @@ import {SlotNode, createSlotNodes, addSlotConnection} from './slot-node.js';
 import {Node, Edge, FlowCondition, FlowCheck} from './graph-internals.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {assert} from '../../platform/assert-web.js';
-import {HandleConnectionSpecInterface, StoreReference, CheckIsFromHandle, CheckIsFromOutput, CheckIsFromStore, CheckType, CheckCondition, CheckExpression, Check} from '../../runtime/particle-check.js';
+import {HandleConnectionSpecInterface, StoreReference, CheckIsFromHandle, CheckIsFromOutput, CheckIsFromStore, CheckType, CheckCondition, CheckExpression, Check} from '../../runtime/check.js';
 
 /**
  * Data structure for representing the connectivity graph of a recipe. Used to perform static analysis on a resolved recipe.
@@ -104,8 +104,13 @@ export class FlowGraph {
       // Attach check objects to particle in-edges. Must be done in a separate
       // pass after all edges have been created, since checks can reference
       // other nodes/edges.
-      if (edge instanceof ParticleInput && edge.connectionSpec.check) {
-        edge.check = this.createFlowCheck(edge.connectionSpec.check);
+      if (edge instanceof ParticleInput && edge.connectionSpec.checks && edge.connectionSpec.checks.length) {
+        // TODO(b/153354605): Add support for field-level checks.
+        assert(
+          edge.connectionSpec.checks.length === 1 && edge.connectionSpec.checks[0].fieldPath.length === 0,
+          'Field-level checks yet not supported by DFA yet.');
+
+        edge.check = this.createFlowCheck(edge.connectionSpec.checks[0]);
       }
 
       // Compute the list of 'derived from' edges for all out-edges. This must
@@ -176,14 +181,28 @@ export class FlowGraph {
   /** Converts a particle Check object into a FlowCheck object (the internal representation used by FlowGraph). */
   createFlowCheck(originalCheck: Check, expression?: CheckExpression): FlowCheck {
     expression = expression || originalCheck.expression;
-    if (expression.type === 'and' || expression.type === 'or') {
-      return {
-        originalCheck,
-        operator: expression.type,
-        children: expression.children.map(child => this.createFlowCheck(originalCheck, child)),
-      };
-    } else {
-      return {...this.createFlowCondition(expression as CheckCondition), originalCheck};
+    switch (expression.type) {
+      case 'and':
+      case 'or':
+        return {
+          originalCheck,
+          operator: expression.type,
+          children: expression.children.map(child => this.createFlowCheck(originalCheck, child)),
+        };
+      case CheckType.Implication:
+        // Implications represented as a FlowExpression with 2 children in the
+        // order [antecedent, consequent].
+        return {
+          originalCheck,
+          operator: 'implies',
+          children: [
+            this.createFlowCheck(originalCheck, expression.antecedent),
+            this.createFlowCheck(originalCheck, expression.consequent),
+          ],
+        };
+      default:
+        // All other CheckTypes get converted to a FlowCondition.
+        return {...this.createFlowCondition(expression as CheckCondition), originalCheck};
     }
   }
 

@@ -12,17 +12,17 @@
 package arcs.sdk.wasm
 
 class EntityClassApiTest : TestBase<EntityClassApiTest_Errors>(
-    ::EntityClassApiTest_Errors,
-    EntityClassApiTest_Errors_Spec()
+    AbstractEntityClassApiTest::EntityClassApiTest_Errors,
+    EntityClassApiTest_Errors
 ) {
-    private val unused1 = WasmSingletonImpl(this, "data", EntityClassApiTest_Data_Spec())
-    private val unused2 = WasmSingletonImpl(this, "empty", EntityClassApiTest_Empty_Spec())
+    private val unused1 = WasmSingletonImpl(this, "data", EntityClassApiTest_Data)
+    private val unused2 = WasmSingletonImpl(this, "empty", EntityClassApiTest_Empty)
 
     @Test
     fun testEncodingDecoding() {
         val empty = EntityClassApiTest_Data()
         val encodedEmpty = empty.encodeEntity()
-        val decodedEmpty = EntityClassApiTest_Data_Spec().decode(encodedEmpty.bytes)
+        val decodedEmpty = EntityClassApiTest_Data.decode(encodedEmpty.bytes)
         assertEquals(
             "Encoding and Decoding an empty entity results in the same entity",
             empty,
@@ -36,7 +36,7 @@ class EntityClassApiTest : TestBase<EntityClassApiTest_Errors>(
             flg = true
         )
         val encodedFull = full.encodeEntity()
-        val decodedFull = EntityClassApiTest_Data_Spec().decode(encodedFull.bytes)
+        val decodedFull = EntityClassApiTest_Data.decode(encodedFull.bytes)
         assertEquals(
             "Encoding and Decoding an full entity results in the same entity",
             full,

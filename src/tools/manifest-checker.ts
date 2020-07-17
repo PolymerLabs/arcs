@@ -10,10 +10,8 @@
 
 import minimist from 'minimist';
 import {Manifest, ManifestWarning} from '../runtime/manifest.js';
-import {Loader} from '../platform/loader.js';
-import {RuntimeCacheService} from '../runtime/runtime-cache.js';
-import {VolatileStorage} from '../runtime/storage/volatile-storage.js';
-import {SimpleVolatileMemoryProvider} from '../runtime/storageNG/drivers/volatile.js';
+import {Loader} from '../platform/loader-node.js';
+import {SimpleVolatileMemoryProvider} from '../runtime/storage/drivers/volatile.js';
 
 // Script to check that a bundle of Arcs manifest files, particle
 // implementations and JSON data files is complete (i.e. no explicitly mentioned
@@ -27,7 +25,6 @@ import {SimpleVolatileMemoryProvider} from '../runtime/storageNG/drivers/volatil
  */
 async function checkManifest(src: string) {
   const loader = new Loader({});
-  VolatileStorage.setStorageCache(new RuntimeCacheService());
   const manifest = await Manifest.load(src, loader, {memoryProvider: new SimpleVolatileMemoryProvider()});
 
   // Look for errors from parsing the manifest (ignore warnings). This covers
@@ -42,20 +39,44 @@ async function checkManifest(src: string) {
 
   // Check particle impls can be loaded.
   for (const particle of manifest.particles) {
-    if (!particle.external) {
-      if (particle.implFile) {
-        await loader.loadResource(particle.implFile);
-      } else {
-        throw new Error(`Particle ${particle.name} does not have an implementation file and is not marked external.`);
+    if (particle.external) {
+      continue;
+    }
+    if (!particle.implFile) {
+      throw new Error(`Particle ${particle.name} does not have an implementation file and is not marked external.`);
+    }
+    if (Loader.isJvmClasspath(particle.implFile)) {
+      if (!loader.jvmClassExists(particle.implFile)) {
+        throw new Error(`Particle ${particle.name} does not have a valid classpath: '${particle.implFile}'.`);
       }
+    } else {
+      await loader.loadResource(particle.implFile);
     }
   }
 }
+
 
 async function main() {
   const opts = minimist(process.argv.slice(2), {
     string: ['src'],
   });
+
+  if (opts.help || !opts.src) {
+    console.log(`
+Usage
+  $ tools/sigh run manifestChecker --src path/to/target.arcs [--src other/other.arcs] ...
+
+Description
+  Loads the given .arcs manifest file and checks it for errors.
+  Errors are thrown as an exception.
+  
+Options
+  --src         manifest (*.arcs) files(s); required.
+  --help        usage info
+`);
+    process.exit(0);
+  }
+
   const srcs: string[] = typeof opts.src === 'string' ? [opts.src] : opts.src;
 
   let foundError = false;

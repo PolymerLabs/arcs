@@ -23,10 +23,6 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
 RUN curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add
 RUN echo "deb [arch=amd64]  http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
 RUN apt-get -y update && apt-get -y install google-chrome-stable
-# Install Selenium
-RUN curl https://chromedriver.storage.googleapis.com/2.41/chromedriver_linux64.zip -o  /usr/bin/chromedriver_linux64.zip
-RUN unzip /usr/bin/chromedriver_linux64.zip -d /usr/bin/chromedriver
-RUN chmod +x /usr/bin/chromedriver
 
 # Set up workspace
 ENV WORKSPACE /usr/src/app
@@ -51,7 +47,10 @@ ENV ANDROID_HOME "/sdk"
 COPY tools/android-sdk-packages.txt tools/android-sdk-packages.txt
 COPY tools/install-android-sdk tools/install-android-sdk
 COPY tools/logging.sh tools/logging.sh
-RUN tools/install-android-sdk ${ANDROID_HOME}
+# Android sdkmanager does not have a quiet option and outputs highly
+# verbose progress to stdout, so we forcibly silence it at risk of
+# missing insight into failure modes.
+RUN tools/install-android-sdk ${ANDROID_HOME} > /dev/null
 
 # Install npm packages
 COPY concrete-storage/package.json concrete-storage/package.json
@@ -62,6 +61,22 @@ COPY config config
 COPY devtools devtools
 RUN npm install
 
+# Fetch external Bazel artifacts.
+# Copy over the WORKSPACE file, everything it imports, and bazelisk.
+COPY tools/bazelisk* tools/
+COPY build_defs/emscripten build_defs/emscripten
+COPY build_defs/kotlin_native build_defs/kotlin_native
+COPY .bazelignore \
+     .bazelversion \
+     WORKSPACE \
+     BUILD.bazel \
+     maven_install.json \
+     ./
+RUN ./tools/bazelisk fetch @maven//...
+
+RUN ./tools/bazelisk fetch @kotlin_native_compiler//...
+
+RUN ./tools/bazelisk fetch @emsdk//...
 # Copy the contents of the working dir. After this the image should be ready for
 # use.
 COPY . .

@@ -10,10 +10,10 @@
 
 import {Arc} from '../../runtime/arc.js';
 import {Runnable} from '../../runtime/hot.js';
-import {Exists} from '../../runtime/storageNG/drivers/driver.js';
-import {StorageKey} from '../../runtime/storageNG/storage-key.js';
-import {Store} from '../../runtime/storageNG/store.js';
-import {UnifiedStore} from '../../runtime/storageNG/unified-store.js';
+import {Exists} from '../../runtime/storage/drivers/driver.js';
+import {StorageKey} from '../../runtime/storage/storage-key.js';
+import {Store} from '../../runtime/storage/store.js';
+import {AbstractStore} from '../../runtime/storage/abstract-store.js';
 import {checkDefined} from '../../runtime/testing/preconditions.js';
 import {EntityType, SingletonType, Type} from '../../runtime/type.js';
 import {PlannerInspector, PlannerInspectorFactory} from '../planner-inspector.js';
@@ -21,7 +21,7 @@ import {PlanConsumer} from './plan-consumer.js';
 import {PlanProducer, Trigger} from './plan-producer.js';
 import {PlanningResult} from './planning-result.js';
 import {ReplanQueue} from './replan-queue.js';
-import {ActiveSingletonEntityStore, CRDTEntitySingleton, singletonHandle, SingletonEntityHandle} from '../../runtime/storageNG/storage-ng.js';
+import {ActiveSingletonEntityStore, CRDTEntitySingleton, handleForActiveStore} from '../../runtime/storage/storage.js';
 
 const planificatorId = 'plans';
 
@@ -64,7 +64,7 @@ export class Planificator {
   producer?: PlanProducer;
   replanQueue?: ReplanQueue;
   dataChangeCallback: Runnable;
-  storeCallbackIds: Map<UnifiedStore, number>;
+  storeCallbackIds: Map<AbstractStore, number>;
   search: string|null = null;
   searchStore: ActiveSingletonEntityStore;
   inspector: PlannerInspector|undefined;
@@ -151,10 +151,7 @@ export class Planificator {
     this.arc.onDataChange(this.dataChangeCallback, this);
     this.storeCallbackIds = new Map();
     this.arc.context.allStores.forEach(async store => {
-      const callbackId = (await store.activate()).on(async () => {
-        this.replanQueue.addChange();
-        return true;
-      });
+      const callbackId = (await store.activate()).on(async () => this.replanQueue.addChange());
       this.storeCallbackIds.set(store, callbackId);
     });
   }
@@ -186,12 +183,12 @@ export class Planificator {
     return Planificator._initStore(arc, 'search-id', PlanningResult.suggestionEntityType, storageKey);
   }
 
-  private static async _initStore(arc: Arc, id: string, type: Type, storageKey: StorageKey): Promise<ActiveSingletonEntityStore> {
-    return new Store<CRDTEntitySingleton>({storageKey, exists: Exists.MayExist, type: new SingletonType(type), id}).activate();
+  private static async _initStore(arc: Arc, id: string, type: EntityType, storageKey: StorageKey): Promise<ActiveSingletonEntityStore> {
+    return new Store<CRDTEntitySingleton>(new SingletonType(type), {storageKey, exists: Exists.MayExist, id}).activate();
   }
 
   async _storeSearch(): Promise<void> {
-    const handleNG: SingletonEntityHandle = singletonHandle(this.searchStore, this.arc);
+    const handleNG = handleForActiveStore(this.searchStore, this.arc);
     const handleValue = await handleNG.fetch();
     const values = handleValue ? JSON.parse(handleValue.current) : [];
 

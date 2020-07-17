@@ -1,3 +1,6 @@
+meta
+  namespace: arcs
+
 particle HandleSyncUpdateTest in '$module.wasm'
   sng: reads {num: Number, txt: Text, lnk: URL, flg: Boolean, ref: &Foo {val: Text}}
   col: reads [{num: Number, txt: Text, lnk: URL, flg: Boolean, ref: &Foo {val: Text}}]
@@ -197,3 +200,50 @@ recipe EntitySlicingTest
     c2: reads colHandle
     c3: reads colHandle
     res: writes resHandle
+
+// -----------------------------------------------------------------------------------------------
+
+schema FooHandle
+  txt: Text
+
+particle OnFirstStartTest in '$module.wasm'
+  root: consumes Slot
+  fooHandle: reads writes FooHandle {txt}
+
+recipe OnFirstStartTest
+  s1: slot 'rootslotid-root'
+  OnFirstStartTest
+    root: consumes s1
+    fooHandle: reads writes h3
+
+// -----------------------------------------------------------------------------------------------
+
+particle CombineUpdatesTest in '$module.wasm'
+  root: consumes Slot
+  handle1: reads writes {num: Number}
+  handle2: reads writes [{num: Number}]
+  handle3: reads writes {num3: Number}
+  handle4: reads writes {num4: Number}
+  handle5: reads writes {num5: Number}
+  handle6: reads writes {num6: Number}
+  handle7: reads writes {num7: Number}
+  handle8: reads writes {num8: Number}
+  handle9: reads writes {num9: Number}
+  handle10: reads writes {num10: Number}
+  errors: writes [{msg: Text}]
+
+recipe CombineUpdatesTest
+  s1: slot 'rootslotid-root'
+  CombineUpdatesTest
+    root: consumes s1
+    handle1: reads writes h1
+    handle2: reads writes h2
+    handle3: reads writes h3
+    handle4: reads writes h4
+    handle5: reads writes h5
+    handle6: reads writes h6
+    handle7: reads writes h7
+    handle8: reads writes h8
+    handle9: reads writes h9
+    handle10: reads writes h10
+    errors: writes h11

@@ -1,7 +1,8 @@
 package arcs.core.host
 
 import arcs.jvm.host.ExplicitHostRegistry
-import arcs.jvm.host.JvmProdHost
+import arcs.jvm.host.JvmHost
+import arcs.jvm.host.JvmSchedulerProvider
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -10,22 +11,41 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-@UseExperimental(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class ParticleRegistrationTest {
+    class JvmProdHost(
+        schedulerProvider: SchedulerProvider,
+        vararg particles: ParticleRegistration
+    ) : JvmHost(schedulerProvider, *particles), ProdHost
+
     @Test
     fun explicit_allParticlesAreRegistered() = runBlockingTest {
         var foundProdHost = false
         var foundTestHost = false
 
         val hostRegistry = ExplicitHostRegistry()
-        hostRegistry.registerHost(JvmProdHost(TestProdParticle::class))
-        hostRegistry.registerHost(TestHost(TestHostParticle::class))
+        val schedulerProvider = JvmSchedulerProvider(coroutineContext)
+
+        hostRegistry.registerHost(
+            JvmProdHost(
+                schedulerProvider,
+                ::TestProdParticle.toRegistration(),
+                ::TestReflectiveParticle.toRegistration()
+            )
+        )
+
+        hostRegistry.registerHost(
+            TestHost(schedulerProvider("foo"), ::TestHostParticle.toRegistration())
+        )
 
         hostRegistry.availableArcHosts().forEach { host: ArcHost ->
             when (host) {
                 is ProdHost -> {
                     assertThat(host.registeredParticles()).contains(
                         TestProdParticle::class.toParticleIdentifier()
+                    )
+                    assertThat(host.registeredParticles()).contains(
+                        TestReflectiveParticle::class.toParticleIdentifier()
                     )
                     foundProdHost = true
                 }
@@ -39,5 +59,7 @@ class ParticleRegistrationTest {
         }
         assertThat(foundProdHost).isTrue()
         assertThat(foundTestHost).isTrue()
+
+        schedulerProvider.cancelAll()
     }
 }

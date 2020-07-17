@@ -1,0 +1,43 @@
+// Example manifest file, serving as a test for the schema2kotlin and schema2cpp
+// code generators. This example tests the kotlin-specific types, which are not included
+// in the default example as they are not valid for wasm or C++ conversion.
+meta
+  namespace: arcs.golden
+
+particle KotlinPrimitivesGolden
+  data: reads {
+    num: Number,
+    txt: Text,
+    lnk: URL,
+    flg: Boolean,
+    ref: &{val: Text},
+    bt: Byte,
+    shrt: Short,
+    nt: Int,
+    lng: Long,
+    big: BigInt,
+    chr: Char,
+    flt: Float,
+    dbl: Double,
+    txtlst: List<Text>,
+    lnglst: List<Long>,
+    lnglst: List<&Thing {name: Text}>,
+    detail: inline Detail {
+      nested: inline Nested {
+        txt: Text,
+        num: Number
+      },
+      txt: Text,
+      num: Number
+    },
+    colors: [inline Color {
+      red: Char,
+      green: Char,
+      blue: Char
+    }],
+    products: List<inline Product {
+       name: Text,
+      price: Float,
+      stock: Int
+    }>
+  } [(2n * big + 3n > 5n) and (num < 1000)]

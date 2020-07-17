@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.test
+package arcs
 
 import arcs.sdk.wasm.WasmHandle
 import arcs.sdk.Utils.abort
@@ -110,7 +110,7 @@ class TestParticle : AbstractTestParticle() {
                 flg = false
             )
             
-            handles.data.set(newData.copy(
+            handles.data.store(newData.copy(
                 num = newData.num.let { it + 2 },
                 txt = "${newData.txt}!!!!!!"
             ))
@@ -125,7 +125,6 @@ class TestParticle : AbstractTestParticle() {
                 for_ = "",
                 val_ = 0.0
             )
-            info.internalId = "wasm" + (++storeCount)
             handles.info.store(info.copy(
                 val_ = (handles.info.size + storeCount).toDouble()
             ))

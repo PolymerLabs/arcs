@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package arcs.android.crdt;
+
+option java_package = "arcs.android.crdt";
+option java_multiple_files = true;
+
+import "java/arcs/android/crdt/referencable.proto";
+import "java/arcs/android/crdt/version_map.proto";
+
+message CrdtSetProto {
+  message DataValue {
+    VersionMapProto version_map = 1;
+    ReferencableProto value = 2;
+  }
+
+  message Data {
+    VersionMapProto version_map = 1;
+    // Maps from actor to DataValue.
+    map<string, DataValue> values = 2;
+  }
+
+  message Operation {
+    message Add {
+      VersionMapProto version_map = 1;
+      string actor = 2;
+      ReferencableProto added = 3;
+    }
+
+    message Remove {
+      VersionMapProto version_map = 1;
+      string actor = 2;
+      ReferencableProto removed = 3;
+    }
+
+    message Clear {
+      VersionMapProto version_map = 1;
+      string actor = 2;
+    }
+
+    message FastForward {
+      VersionMapProto old_version_map = 1;
+      VersionMapProto new_version_map = 2;
+      repeated DataValue added = 3;
+      repeated ReferencableProto removed = 4;
+    }
+
+    oneof operation {
+      Add add = 1;
+      Remove remove = 2;
+      Clear clear = 4;
+      FastForward fast_forward = 3;
+    }
+  }
+}

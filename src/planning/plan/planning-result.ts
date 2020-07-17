@@ -14,9 +14,8 @@ import {Arc} from '../../runtime/arc.js';
 import {Runnable} from '../../runtime/hot.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {EnvOptions, Suggestion} from './suggestion.js';
-import {UnifiedActiveStore} from '../../runtime/storageNG/unified-store.js';
 import {EntityType} from '../../runtime/type.js';
-import {singletonHandle, ActiveSingletonEntityStore, SingletonEntityHandle} from '../../runtime/storageNG/storage-ng.js';
+import {ActiveSingletonEntityStore, SingletonEntityHandle, handleForActiveStore} from '../../runtime/storage/storage.js';
 
 const {error} = logsFactory('PlanningResult', '#ff0090');
 
@@ -40,7 +39,7 @@ export class PlanningResult {
   lastUpdated: Date = new Date();
   generations: SerializableGeneration[] = [];
   contextual = true;
-  store?: UnifiedActiveStore;
+  store?: ActiveSingletonEntityStore;
   handle?: SingletonEntityHandle;
   private storeCallbackId: number;
   private changeCallbacks: Runnable[] = [];
@@ -52,7 +51,7 @@ export class PlanningResult {
     assert(envOptions.loader, `loader cannot be null`);
     this.store = store;
     if (this.store) {
-      this.handle = singletonHandle(store, envOptions.context);
+      this.handle = handleForActiveStore(store, envOptions.context);
       this.storeCallbackId = this.store.on(() => this.load());
     }
   }
@@ -67,18 +66,15 @@ export class PlanningResult {
     }
   }
 
-  async load(): Promise<boolean> {
+  async load(): Promise<void> {
     const handleValue = await this.handle.fetch();
     if (!handleValue) {
-      return false;
+      return;
     }
     const value = JSON.parse(handleValue.current);
     if (value.suggestions) {
-      if (await this.fromLiteral(value)) {
-        return true;
-      }
+      await this.fromLiteral(value);
     }
-    return false;
   }
 
   async flush() {

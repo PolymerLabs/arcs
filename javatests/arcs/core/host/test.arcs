@@ -1,0 +1,13 @@
+meta
+  namespace: arcs.core.host
+
+particle TestProdParticle in 'arcs.core.host.TestProdParticle'
+
+particle TestHostParticle in 'arcs.core.host.TestHostParticle'
+
+recipe TestRecipe
+  testHandle: create
+
+  TestProdParticle
+
+  TestHostParticle

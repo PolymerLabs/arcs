@@ -12,7 +12,8 @@ import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
 import {Handle} from '../recipe/handle.js';
 import {TypeChecker, TypeListInfo} from '../recipe/type-checker.js';
-import {EntityType, SlotType, TypeVariable, CollectionType, BigCollectionType} from '../type.js';
+import {EntityType, SlotType, TypeVariable, CollectionType, BigCollectionType, TupleType, Type} from '../type.js';
+import {Schema} from '../schema.js';
 
 describe('TypeChecker', () => {
   it('resolves a trio of in [~a], out [~b], in [Product]', async () => {
@@ -358,7 +359,7 @@ describe('TypeChecker', () => {
     const baseType = TypeVariable.make('a');
     const newType = Handle.effectiveType(baseType, [
       {type: EntityType.make(['Thing'], {}), direction: 'reads writes'}]);
-    assert.notStrictEqual(baseType, newType);
+    assert.notStrictEqual(baseType as Type, newType);
     assert.isNull(baseType.variable.resolution);
     assert.isNotNull(newType instanceof TypeVariable && newType.variable.resolution);
   });
@@ -393,6 +394,93 @@ describe('TypeChecker', () => {
     assert.isFalse(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
   });
 
+  it('can compare a type variable with a tuple', async () => {
+    const leftType = TypeVariable.make('a');
+    const rightType = new TupleType([TypeVariable.make('b'), TypeVariable.make('c')]);
+    assert.isTrue(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isTrue(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+
+  it('can compare a type variable with a tuple (with constraints)', async () => {
+    const canWrite = EntityType.make(['Product', 'Thing'], {});
+    const leftType = TypeVariable.make('a', canWrite);
+    const rightType = new TupleType([TypeVariable.make('b'), TypeVariable.make('c')]);
+    assert.isFalse(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isFalse(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+
+  it('can compare a collection with a tuple', async () => {
+    const leftType = TypeVariable.make('a').collectionOf();
+    const rightType = new TupleType([TypeVariable.make('b'), TypeVariable.make('c')]);
+    assert.isFalse(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isFalse(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+
+  it('can compare a tuple of references with a tuple of variables', async () => {
+    const leftType = new TupleType([
+      EntityType.make(['Thing'], {}).referenceTo(),
+      EntityType.make(['Product'], {}).referenceTo()
+    ]);
+    const rightType = new TupleType([
+      TypeVariable.make('a'),
+      TypeVariable.make('b')
+    ]);
+    assert.isTrue(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isTrue(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+
+  it('can compare equal tuples of entity references', async () => {
+    const leftType = new TupleType([
+      EntityType.make(['Thing'], {}).referenceTo(),
+      EntityType.make(['Product'], {}).referenceTo()
+    ]);
+    const rightType = new TupleType([
+      EntityType.make(['Thing'], {}).referenceTo(),
+      EntityType.make(['Product'], {}).referenceTo()
+    ]);
+    assert.isTrue(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isTrue(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+
+  it('can compare different tuples of entity references', async () => {
+    const leftType = new TupleType([
+      EntityType.make(['Thing'], {}).referenceTo(),
+      EntityType.make(['Product'], {}).referenceTo()
+    ]);
+    const rightType = new TupleType([
+      EntityType.make(['Person'], {}).referenceTo(),
+      EntityType.make(['Friend'], {}).referenceTo()
+    ]);
+    assert.isFalse(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isFalse(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+
+  it('can compare tuples of entity references, one strictly smaller than the other', async () => {
+    const leftType = new TupleType([
+      EntityType.make(['Thing', 'Product'], {}).referenceTo(),
+      EntityType.make(['Person', 'Friend'], {}).referenceTo()
+    ]);
+    const rightType = new TupleType([
+      EntityType.make(['Product'], {}).referenceTo(),
+      EntityType.make(['Friend'], {}).referenceTo()
+    ]);
+    assert.isTrue(TypeChecker.compareTypes(
+      {type: leftType, direction: 'writes'},
+      {type: rightType, direction: 'reads'}
+    ));
+    assert.isFalse(TypeChecker.compareTypes(
+      {type: leftType, direction: 'reads'},
+      {type: rightType, direction: 'writes'}
+    ));
+  });
+
+  it('can compare tuples of different arities', async () => {
+    const leftType = new TupleType([TypeVariable.make('a'), TypeVariable.make('b')]);
+    const rightType = new TupleType([TypeVariable.make('c')]);
+    assert.isFalse(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isFalse(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+
   it(`doesn't mutate types provided to effectiveType calls`, () => {
     const a = TypeVariable.make('a');
     assert.isNull(a.variable._resolution);
@@ -407,5 +495,130 @@ describe('TypeChecker', () => {
     result.maybeEnsureResolved();
     assert(result.isResolved());
     assert(result.resolvedType() instanceof SlotType);
+  });
+
+  it('resolves a less restrictive inline entity write against a more restrictive inline entity read', () => {
+    const innerWriteSchema = new EntityType(new Schema(['Inner'], {a: 'Text', b: 'Number'}));
+    const outerWriteSchema = new Schema(['Outer'], {inner: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerWriteSchema}}});
+    const writeType = new EntityType(outerWriteSchema);
+
+    const innerReadSchema = new EntityType(new Schema(['Inner'], {a: 'Text'}));
+    const outerReadSchema = new Schema(['Outer'], {inner: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerReadSchema}}});
+    const readType = new EntityType(outerReadSchema);
+
+    const result = TypeChecker.processTypeList(null, [{type: writeType, direction: 'writes'}, {type: readType, direction: 'reads'}]);
+    assert(result.canEnsureResolved());
+    result.maybeEnsureResolved();
+    assert(result.isResolved());
+    assert.deepEqual(result.getEntitySchema().fields['inner'], outerReadSchema.fields['inner']);
+  });
+
+  it('does not resolve a more restrictive inline entity write against a less restrictive inline entity read', () => {
+    const innerWriteSchema = new EntityType(new Schema(['Inner'], {a: 'Text'}));
+    const outerWriteSchema = new Schema(['Outer'], {inner: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerWriteSchema}}});
+    const writeType = new EntityType(outerWriteSchema);
+
+    const innerReadSchema = new EntityType(new Schema(['Inner'], {a: 'Text', b: 'Number'}));
+    const outerReadSchema = new Schema(['Outer'], {inner: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerReadSchema}}});
+    const readType = new EntityType(outerReadSchema);
+
+    const result = TypeChecker.processTypeList(null, [{type: writeType, direction: 'writes'}, {type: readType, direction: 'reads'}]);
+    assert.isNull(result);
+  });
+
+  describe('Tuples', () => {
+    it('does not resolve tuple reads of different arities', () => {
+      assert.isNull(TypeChecker.processTypeList(null, [
+        {
+          direction: 'reads',
+          type: new TupleType([
+            EntityType.make([], {}),
+            EntityType.make([], {}),
+          ]),
+        },
+        {
+          direction: 'reads',
+          type: new TupleType([
+            EntityType.make([], {}),
+          ]),
+        },
+      ]));
+    });
+
+    it('does not resolve conflicting entities in tuple read and write', () => {
+      assert.isNull(TypeChecker.processTypeList(null, [
+        {
+          direction: 'reads',
+          type: new TupleType([EntityType.make(['Product'], {})]),
+        },
+        {
+          direction: 'writes',
+          type: new TupleType([EntityType.make(['Thing'], {})]),
+        },
+      ]));
+    });
+
+    it('does not resolve conflicting types in tuple read and write', () => {
+      assert.isNull(TypeChecker.processTypeList(null, [
+        {
+          direction: 'reads',
+          type: new TupleType([EntityType.make(['Product'], {})]),
+        },
+        {
+          direction: 'writes',
+          type: new TupleType([EntityType.make(['Product'], {}).referenceTo()]),
+        },
+      ]));
+    });
+
+    it('can resolve multiple tuple reads', () => {
+      const result = TypeChecker.processTypeList(null, [
+        {
+          direction: 'reads',
+          type: new TupleType([
+            EntityType.make(['Product'], {}),
+            EntityType.make(['Place'], {}),
+          ]),
+        },
+        {
+          direction: 'reads',
+          type: new TupleType([
+            EntityType.make(['Object'], {}),
+            EntityType.make(['Location'], {}),
+          ]),
+        },
+      ]);
+      // We only have read constraints, so we need to force the type variable to resolve.
+      assert(result.maybeEnsureResolved());
+      assert.deepEqual(result.resolvedType(), new TupleType([
+        EntityType.make(['Product', 'Object'], {}),
+        EntityType.make(['Place', 'Location'], {})
+      ]));
+    });
+
+    const ENTITY_TUPLE_CONNECTION_LIST: TypeListInfo[] = [
+      {direction: 'reads', type: new TupleType([EntityType.make(['Product'], {}), EntityType.make([], {})])},
+      {direction: 'reads', type: new TupleType([EntityType.make([], {}), EntityType.make(['Location'], {})])},
+      {direction: 'writes', type: new TupleType([EntityType.make(['Product'], {}), EntityType.make(['Place', 'Location'], {})])},
+      {direction: 'writes', type: new TupleType([EntityType.make(['Product', 'Object'], {}), EntityType.make(['Location'], {})])},
+    ];
+    const ENTITY_TUPLE_CONNECTION_LIST_RESULT = new TupleType([EntityType.make(['Product'], {}), EntityType.make(['Location'], {})]);
+
+    it('can resolve tuple of entities with read and write', () => {
+      assert.deepEqual(
+        TypeChecker.processTypeList(null, ENTITY_TUPLE_CONNECTION_LIST).resolvedType(),
+        ENTITY_TUPLE_CONNECTION_LIST_RESULT
+      );
+    });
+
+    it('can resolve collections of tuple of entities with read and write', () => {
+      assert.deepEqual(
+        TypeChecker.processTypeList(null, ENTITY_TUPLE_CONNECTION_LIST.map(({type, direction}) => ({
+          type: type.collectionOf(),
+          direction
+        }))).resolvedType(),
+        ENTITY_TUPLE_CONNECTION_LIST_RESULT.collectionOf()
+      );
+    });
   });
 });

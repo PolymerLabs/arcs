@@ -5,7 +5,7 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_android_test_suite(
     name = "type",
@@ -14,6 +14,7 @@ arcs_kt_android_test_suite(
     deps = [
         "//java/arcs/android/type",
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/type",
         "//third_party/android/androidx_test/core",
         "//third_party/android/androidx_test/ext/junit",

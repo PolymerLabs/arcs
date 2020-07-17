@@ -14,15 +14,13 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtCount
 import arcs.core.crdt.CrdtCount.Operation.Increment
 import arcs.core.crdt.CrdtCount.Operation.MultiIncrement
-import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtOperation
 import arcs.core.data.CountType
 import arcs.core.storage.ProxyMessage.ModelUpdate
 import arcs.core.storage.ProxyMessage.Operations
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.RamDiskStorageKey
 import arcs.core.storage.driver.VolatileEntry
+import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineStart
@@ -52,16 +50,14 @@ class RamDiskStoreIntegrationTest {
 
     @After
     fun teardown() {
-        DriverFactory.clearRegistrationsForTesting()
-        CapabilitiesResolver.reset()
+        DriverFactory.clearRegistrations()
         RamDisk.clear()
     }
 
     @Test
     fun stores_sequenceOfModelAndOperationUpdates_asModels() = runBlockingTest {
         val storageKey = RamDiskStorageKey("unique")
-        val store = createStore(storageKey, ExistenceCriteria.ShouldCreate)
-        val activeStore = store.activate()
+        val activeStore = createStore(storageKey)
 
         val count = CrdtCount()
         count.applyOperation(MultiIncrement(actor = "me", version = 0 to 27, delta = 42))
@@ -99,10 +95,8 @@ class RamDiskStoreIntegrationTest {
     @Test
     fun stores_operationUpdates_fromMultipleSources() = runBlockingTest {
         val storageKey = RamDiskStorageKey("unique")
-        val store1 = createStore(storageKey, ExistenceCriteria.ShouldCreate)
-        val activeStore1 = store1.activate()
-        val store2 = createStore(storageKey, ExistenceCriteria.ShouldExist)
-        val activeStore2 = store2.activate()
+        val activeStore1 = createStore(storageKey)
+        val activeStore2 = createStore(storageKey)
 
         val count1 = CrdtCount()
         count1.applyOperation(MultiIncrement("me", version = 0 to 27, delta = 42))
@@ -176,10 +170,8 @@ class RamDiskStoreIntegrationTest {
     @Suppress("UNCHECKED_CAST")
     fun store_operationUpdates_fromMultipleSources_withTimingDelays() = runBlockingTest {
         val storageKey = RamDiskStorageKey("unique")
-        val store1 = createStore(storageKey, ExistenceCriteria.ShouldCreate)
-        val activeStore1 = store1.activate() as DirectStore<CrdtData, CrdtOperation, Any>
-        val store2 = createStore(storageKey, ExistenceCriteria.ShouldExist)
-        val activeStore2 = store2.activate() as DirectStore<CrdtData, CrdtOperation, Any>
+        val activeStore1 = createStore(storageKey)
+        val activeStore2 = createStore(storageKey)
 
         assertThat(
             activeStore1.onProxyMessage(Operations(listOf(Increment("me", 0 to 1)), 1))
@@ -224,14 +216,12 @@ class RamDiskStoreIntegrationTest {
     }
 
     companion object {
-        private fun createStore(
-            storageKey: StorageKey,
-            existenceCriteria: ExistenceCriteria
-        ): Store<CrdtCount.Data, CrdtCount.Operation, Int> {
-            return Store(
+        private suspend fun createStore(
+            storageKey: StorageKey
+        ): DirectStore<CrdtCount.Data, CrdtCount.Operation, Int> {
+            return DirectStore.create(
                 StoreOptions(
                     storageKey,
-                    existenceCriteria,
                     type = CountType()
                 )
             )

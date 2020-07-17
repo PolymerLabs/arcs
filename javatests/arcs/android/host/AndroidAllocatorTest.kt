@@ -12,111 +12,196 @@
 package arcs.android.host
 
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
+import androidx.work.testing.WorkManagerTestInitHelper
+import arcs.android.host.prod.ProdArcHostService
 import arcs.android.sdk.host.toComponentName
-import arcs.core.allocator.Allocator
-import arcs.core.common.ArcId
-import arcs.core.data.EntityType
-import arcs.core.data.FieldType
-import arcs.core.data.Plan
-import arcs.core.data.Schema
-import arcs.core.data.SchemaFields
-import arcs.core.data.SchemaName
-import arcs.core.storage.StorageKey
-import arcs.core.storage.driver.VolatileStorageKey
-import arcs.core.type.Type
-import com.google.common.truth.Truth.assertThat
+import arcs.core.allocator.AllocatorTestBase
+import arcs.core.data.Capabilities
+import arcs.core.data.Capability.Shareable
+import arcs.core.host.ArcHostException
+import arcs.core.host.HostRegistry
+import arcs.core.host.PersonPlan
+import arcs.core.host.TestingJvmProdHost
+import arcs.core.testutil.assertSuspendingThrows
+import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 
+/**
+ * These tests are the same as [AllocatorTestBase] but run with Android Services,
+ * the real [ServiceStore], and a ramdisk.
+ *
+ */
 @RunWith(AndroidJUnit4::class)
-@UseExperimental(ExperimentalCoroutinesApi::class)
-class AndroidAllocatorTest {
-    private lateinit var recipePersonStorageKey: StorageKey
-    private lateinit var context: Context
+@OptIn(ExperimentalCoroutinesApi::class)
+open class AndroidAllocatorTest : AllocatorTestBase() {
+
+    protected lateinit var context: Context
     private lateinit var readingService: TestReadingExternalHostService
+    private lateinit var testProdService: ProdArcHostService
+    private lateinit var prodService: ProdArcHostService
+
     private lateinit var writingService: TestWritingExternalHostService
-    private lateinit var allocator: Allocator
-    private lateinit var hostRegistry: AndroidManifestHostRegistry
-    private lateinit var readPersonHandleConnection: Plan.HandleConnection
-    private lateinit var writePersonHandleConnection: Plan.HandleConnection
-    private lateinit var writePersonParticle: Plan.Particle
-    private lateinit var readPersonParticle: Plan.Particle
-    private lateinit var writeAndReadPersonPlan: Plan
-    private val personSchema = Schema(
-        listOf(SchemaName("Person")),
-        SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
-        "42"
-    )
-    private var personEntityType: Type = EntityType(personSchema)
 
-    @Before
-    fun setUp() = runBlocking {
-        readingService = Robolectric.setupService(TestReadingExternalHostService::class.java)
-        writingService = Robolectric.setupService(TestWritingExternalHostService::class.java)
-
-        context = InstrumentationRegistry.getInstrumentation().targetContext
-        hostRegistry =
-            AndroidManifestHostRegistry.createForTest(context) {
+    override suspend fun hostRegistry(): HostRegistry {
+        return AndroidManifestHostRegistry.createForTest(context) {
+            GlobalScope.launch(Dispatchers.Unconfined) {
                 val readingComponentName =
                     TestReadingExternalHostService::class.toComponentName(context)
-                if (it.component?.equals(readingComponentName) == true) {
-                    readingService.onStartCommand(it, 0, 0)
-                } else {
-                    val writingComponentName =
-                        TestWritingExternalHostService::class.toComponentName(context)
-                    if (it.component?.equals(writingComponentName) == true) {
-                        writingService.onStartCommand(it, 0, 0)
-                    }
-                }
+                val testProdComponentName =
+                    TestProdArcHostService::class.toComponentName(context)
+                val prodComponentName =
+                    ProdArcHostService::class.toComponentName(context)
+                val writingComponentName =
+                    TestWritingExternalHostService::class.toComponentName(context)
+                when (it.component) {
+                    readingComponentName -> readingService
+                    testProdComponentName -> testProdService
+                    prodComponentName -> prodService
+                    writingComponentName -> writingService
+                    else -> throw IllegalArgumentException("Unknown ${it.component}")
+                }.onStartCommand(it, 0, 0)
             }
-        allocator = Allocator(hostRegistry)
+        }
+    }
 
-        recipePersonStorageKey = VolatileStorageKey(ArcId.newForTest("foo"), "foo")
-        writePersonHandleConnection =
-            Plan.HandleConnection(recipePersonStorageKey, personEntityType)
+    override fun readingHost() = readingService.arcHost
+    override fun writingHost() = writingService.arcHost
+    override fun pureHost() = testProdService.arcHost as TestingJvmProdHost
 
-        writePersonParticle =
-            Plan.Particle(
-                "WritePerson",
-                TestWritingExternalHostService.WritePerson::class.java.getCanonicalName()!!,
-                mapOf("person" to writePersonHandleConnection)
-            )
+    // TODO: wire up some kind of mock persistent database?
+    override val storageCapability = Capabilities(Shareable(true))
 
-        readPersonHandleConnection =
-            Plan.HandleConnection(recipePersonStorageKey, personEntityType)
+    @Before
+    override fun setUp() = runBlocking {
+        context = ApplicationProvider.getApplicationContext()
+        context.setTheme(R.style.Theme_AppCompat)
 
-        readPersonParticle =
-            Plan.Particle(
-                "ReadPerson",
-                TestReadingExternalHostService.ReadPerson::class.java.getCanonicalName()!!,
-                mapOf("person" to readPersonHandleConnection)
-            )
+        // Initialize WorkManager for instrumentation tests.
+        WorkManagerTestInitHelper.initializeTestWorkManager(context)
 
-        writeAndReadPersonPlan = Plan(
-            listOf(writePersonParticle, readPersonParticle)
-        )
+        TestExternalArcHostService.testConnectionFactory = TestConnectionFactory(context)
+        readingService = Robolectric.setupService(TestReadingExternalHostService::class.java)
+        writingService = Robolectric.setupService(TestWritingExternalHostService::class.java)
+        testProdService = Robolectric.setupService(TestProdArcHostService::class.java)
+        prodService = Robolectric.setupService(ProdArcHostService::class.java)
 
-        TestReadingExternalHostService.ReadingExternalHost.reset()
-        TestWritingExternalHostService.WritingExternalHost.reset()
+        super.setUp()
+    }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    fun allocator_startArc_throwsException() = runAllocatorTest {
+        writingHost().throws = true
+
+        assertSuspendingThrows(ArcHostException::class) {
+            allocator.startArcForPlan(PersonPlan).waitForStart()
+        }
+    }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_doesntCreateArcsOnDuplicateStartArc() {
+        super.allocator_doesntCreateArcsOnDuplicateStartArc()
+    }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_startFromOneAllocatorAndStopInAnother() {
+        super.allocator_startFromOneAllocatorAndStopInAnother()
+    }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_verifyStorageKeysNotOverwritten() {
+        super.allocator_verifyStorageKeysNotOverwritten()
+    }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_verifyArcHostStartCalled() {
+        super.allocator_verifyArcHostStartCalled()
+    }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_restartArcInTwoExternalHosts() {
+        super.allocator_restartArcInTwoExternalHosts()
+    }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_canStartArcInTwoExternalHosts() {
+        super.allocator_canStartArcInTwoExternalHosts()
+    }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_computePartitions() {
+        super.allocator_computePartitions()
+    }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_verifyStorageKeysCreated() {
+        super.allocator_verifyStorageKeysCreated()
+    }
+
+    @Ignore("b/154947390 - Deflake")
+    @Test
+    override fun allocator_startArc_particleException_isErrorState() {
+        super.allocator_startArc_particleException_isErrorState()
+    }
+
+    @Ignore("b/157266444 - Deflake")
+    @Test
+    override fun allocator_canStopArcInTwoExternalHosts() {
+        super.allocator_canStopArcInTwoExternalHosts()
+    }
+
+    @Ignore("b/157266444 - Deflake")
+    @Test
+    override fun allocator_startArc_particleException_failsWaitForStart() {
+        super.allocator_startArc_particleException_failsWaitForStart()
     }
 
     @Test
-    fun allocator_canStartArcInTwoExternalHosts() = runBlocking {
-        val arcId = allocator.startArcForPlan("test", writeAndReadPersonPlan)
-        assertThat(TestReadingExternalHostService.ReadingExternalHost.started.size).isEqualTo(1)
-        assertThat(TestWritingExternalHostService.WritingExternalHost.started.size).isEqualTo(1)
+    fun arc_testHandlerRegistrationRace() = runAllocatorTest {
+        val waitForIteration = CompletableDeferred<Unit>()
+        val arc = allocator.startArcForPlan(PersonPlan)
+        arc.waitForStart()
+        // Block the list iteration when firing
+        arc.onStopped {
+            runBlocking {
+                delay(1000)
+                waitForIteration.complete(Unit)
+            }
+        }
 
-        assertThat(allocator.getPartitionsFor(arcId)).contains(
-            TestReadingExternalHostService.ReadingExternalHost.started.first()
-        )
-        assertThat(allocator.getPartitionsFor(arcId)).contains(
-            TestWritingExternalHostService.WritingExternalHost.started.first()
-        )
+        // Trigger the handler iteration
+        arc.stop()
+
+        // launch a new registration in parallel, causes ConcurrentModificationException
+        withContext(Dispatchers.IO) {
+            async {
+                waitForIteration.await()
+                arc.onStopped {
+                }
+            }
+        }
     }
 }

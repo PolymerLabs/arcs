@@ -11,11 +11,13 @@
 
 package arcs.android.storage.service;
 
-import arcs.android.storage.ParcelableProxyMessage;
-import arcs.android.storage.service.IResultCallback;
-
 /** Variant of ProxyCallback intended for StorageService communications. */
 interface IStorageServiceCallback {
-    /** Handles an incoming ProxyMessage. */
-    void onProxyMessage(in ParcelableProxyMessage message, IResultCallback resultCallback);
+    /**
+     * Handles an incoming ProxyMessage.
+     *
+     * @param proxyMessage {@link arcs.android.storage.ProxyMessageProto},
+     *     serialized to bytes.
+     */
+    oneway void onProxyMessage(in byte[] proxyMessage);
 }

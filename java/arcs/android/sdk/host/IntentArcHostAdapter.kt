@@ -1,35 +1,54 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 package arcs.android.sdk.host
 
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.os.ResultReceiver
 import arcs.android.host.parcelables.ParcelableParticleIdentifier
+import arcs.core.common.ArcId
+import arcs.core.common.toArcId
 import arcs.core.data.Plan
 import arcs.core.host.ArcHost
+import arcs.core.host.ArcState
+import arcs.core.host.ArcStateChangeCallback
+import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.host.ParticleIdentifier
-import kotlinx.coroutines.CancellableContinuation
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 /**
- * An [ArcHost] stub that translates API calls to [Intent]s directed at a [Service] using
- * [ArcHostHelper] to handle them.
+ * An [ArcHost] stub that translates API calls into [Intent]s directed at a [Service] using
+ * [ArcHostHelper] to dispatch them to corresponding [ArcHost] methods.
  *
- * @property arcHostComponentName the [ComponentName] of the [Service]
- * @property sender a callback used to fire the [Intent], overridable to allow testing.
+ * @param arcHostComponentName the [ComponentName] of the [Service]
+ * @property hostId the hostId of the remote [ArcHost] instance
+ * @param sender a callback used to fire the [Intent], overridable to allow testing
  */
 class IntentArcHostAdapter(
-    private val arcHostComponentName: ComponentName,
-    private val sender: (Intent) -> Unit
-) : ArcHost {
-
-    override val hostId = arcHostComponentName.flattenToString()
+    arcHostComponentName: ComponentName,
+    override val hostId: String,
+    sender: (Intent) -> Unit
+) : IntentHostAdapter(arcHostComponentName, sender), ArcHost {
 
     override suspend fun registeredParticles(): List<ParticleIdentifier> {
-        return sendIntentToArcHostServiceForResult(
-            arcHostComponentName.createGetRegisteredParticlesIntent()
+        return sendIntentToHostServiceForResult(
+            hostComponentName.createGetRegisteredParticlesIntent(hostId)
         ) {
             (it as? List<*>)?.map { identifier ->
                 (identifier as ParcelableParticleIdentifier).actual
@@ -38,72 +57,83 @@ class IntentArcHostAdapter(
     }
 
     override suspend fun startArc(partition: Plan.Partition) {
-        sendIntentToArcHostServiceForResult(
-            partition.createStartArcHostIntent(
-                arcHostComponentName
-            )
+        sendIntentToHostServiceForResult(
+            partition.createStartArcHostIntent(hostComponentName, hostId)
         )
     }
 
     override suspend fun stopArc(partition: Plan.Partition) {
-        sendIntentToArcHostServiceForResult(
-            partition.createStopArcHostIntent(
-                arcHostComponentName
-            )
+        sendIntentToHostService(
+            partition.createStopArcHostIntent(hostComponentName, hostId)
         )
     }
 
-    override suspend fun isHostForParticle(particle: Plan.Particle): Boolean {
-        return registeredParticles().contains(ParticleIdentifier.from(particle.location))
+    override suspend fun pause() {
+        sendIntentToHostServiceForResult(hostComponentName.createPauseArcHostIntent(hostId))
     }
 
-    /**
-     * Asynchronously send an [ArcHost] command via [Intent] without waiting for return result.
-     */
-    private fun sendIntentToArcHostService(intent: Intent) {
-        sender(intent)
+    override suspend fun unpause() {
+        sendIntentToHostServiceForResult(hostComponentName.createUnpauseArcHostIntent(hostId))
     }
 
-    @UseExperimental(ExperimentalCoroutinesApi::class)
-    class ResultReceiverContinuation<T>(
-        val continuation: CancellableContinuation<T?>,
-        val block: (Any?) -> T?
-    ) : ResultReceiver(Handler()) {
-        override fun onReceiveResult(resultCode: Int, resultData: Bundle?) =
-            continuation.resume(
-                block(
-                    resultData?.get(
-                        ArcHostHelper.EXTRA_OPERATION_RESULT
-                    )
+    override suspend fun lookupArcHostStatus(partition: Plan.Partition): ArcState {
+        return sendIntentToHostServiceForResult(
+            partition.createLookupArcStatusIntent(hostComponentName, hostId)
+        ) {
+            try {
+                ArcState.fromString(it.toString())
+            } catch (e: IllegalArgumentException) {
+                ArcState.errorWith(e)
+            }
+        } ?: ArcState.Error
+    }
+
+    override suspend fun isHostForParticle(particle: Plan.Particle) =
+        registeredParticles().contains(ParticleIdentifier.from(particle.location))
+
+    private class ResultReceiverStateChangeHandler(
+        val block: (ArcId, ArcState) -> Unit
+    ) : ResultReceiver(Handler(Looper.getMainLooper())) {
+        override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
+            val scope = CoroutineScope(
+                EmptyCoroutineContext + Dispatchers.Default + Job() + CoroutineName(
+                    "ArcStateChange"
                 )
-            ) {}
+            )
+            scope.launch {
+                val arcId = requireNotNull(
+                    resultData?.getString(ArcHostHelper.EXTRA_ARCSTATE_CHANGED_ARCID)
+                ) {
+                    "Missing arcId in Intent for onArcStateChangeHandler callback."
+                }.toArcId()
+                val arcState = requireNotNull(
+                    resultData?.getString(ArcHostHelper.EXTRA_ARCSTATE_CHANGED_ARCSTATE)
+                ) {
+                    "Missing state in Intent for onArcStateChangeHandler callback."
+                }.let {
+                    ArcState.fromString(it)
+                }
+                block(arcId, arcState)
+            }
+        }
     }
 
-    /**
-     * Sends an asynchronous [ArcHost] command via [Intent] to a [Service] and waits for a
-     * result using a suspendable coroutine.
-     *
-     * @property intent the [ArcHost] command, usually from [ArcHostHelper]
-     * @property transformer a lambda to map return values from a [Bundle] into other types.
-     */
-    private suspend fun <T> sendIntentToArcHostServiceForResult(
-        intent: Intent,
-        transformer: (Any?) -> T?
-    ): T? = suspendCancellableCoroutine { cancelableContinuation ->
-        ArcHostHelper.setResultReceiver(
-            intent,
-            ResultReceiverContinuation(cancelableContinuation, transformer)
-        )
-        sendIntentToArcHostService(intent)
+    override suspend fun addOnArcStateChange(
+        arcId: ArcId,
+        block: ArcStateChangeCallback
+    ): ArcStateChangeRegistration {
+        return sendIntentToHostServiceForResult(
+            hostComponentName.createAddOnArcStateChangeIntent(
+                hostId,
+                arcId,
+                ResultReceiverStateChangeHandler(block)
+            )
+        ) {
+            ArcStateChangeRegistration(requireNotNull(it) {
+                "No callbackId supplied from addOnStateChangeCallback"
+            }.toString())
+        } ?: throw IllegalArgumentException("Unable to register state change listener")
     }
-
-    /**
-     * Sends an asynchronous [ArcHost] command via [Intent] and waits for it to complete
-     * with no return value.
-     */
-    private suspend fun sendIntentToArcHostServiceForResult(
-        intent: Intent
-    ): Unit? = sendIntentToArcHostServiceForResult(intent) {}
 
     override fun hashCode(): Int = hostId.hashCode()
 

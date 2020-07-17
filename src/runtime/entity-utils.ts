@@ -23,6 +23,8 @@ function convertToJsType(primitiveType, schemaName: string) {
       return 'string';
     case 'Number':
       return 'number';
+    case 'BigInt':
+      return 'bigint';
     case 'Boolean':
       return 'boolean';
     case 'Bytes':
@@ -30,6 +32,10 @@ function convertToJsType(primitiveType, schemaName: string) {
     default:
       throw new Error(`Unknown field type ${primitiveType.type} in schema ${schemaName}`);
   }
+}
+
+function valueType(value) {
+  return value.constructor.name === 'Uint8Array' ? 'Uint8Array' : typeof(value);
 }
 
 // tslint:disable-next-line: no-any
@@ -44,22 +50,24 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
 
   switch (fieldType.kind) {
     case 'schema-primitive': {
-      const valueType = value.constructor.name === 'Uint8Array' ? 'Uint8Array' : typeof(value);
-      if (valueType !== convertToJsType(fieldType, schema.name)) {
+      if (valueType(value) !== convertToJsType(fieldType, schema.name)) {
         throw new TypeError(`Type mismatch setting field ${name} (type ${fieldType.type}); ` +
-                            `value '${value}' is type ${typeof(value)}`);
+                            `value '${value}' is type ${valueType(value)}`);
       }
       break;
+    }
+    case 'kotlin-primitive': {
+      throw new Error(`Kotlin primitive values can't yet be used in TS`);
     }
     case 'schema-union':
       // Value must be a primitive that matches one of the union types.
       for (const innerType of fieldType.types) {
-        if (typeof(value) === convertToJsType(innerType, schema.name)) {
+        if (valueType(value) === convertToJsType(innerType, schema.name)) {
           return;
         }
       }
-      throw new TypeError(`Type mismatch setting field ${name} (union [${fieldType.types}]); ` +
-                          `value '${value}' is type ${typeof(value)}`);
+      throw new TypeError(`Type mismatch setting field ${name} (union [${fieldType.types.map(d => d.type)}]); ` +
+                          `value '${value}' is type ${valueType(value)}`);
 
     case 'schema-tuple':
       // Value must be an array whose contents match each of the tuple types.
@@ -68,13 +76,12 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
       }
       if (value.length !== fieldType.types.length) {
         throw new TypeError(`Length mismatch setting tuple ${name} ` +
-                            `[${fieldType.types}] with value '${value}'`);
+                            `[${fieldType.types.map(d => d.type)}] with value '${value}'`);
       }
       fieldType.types.map((innerType, i) => {
-        if (value[i] !== undefined && value[i] !== null &&
-            typeof(value[i]) !== convertToJsType(innerType, schema.name)) {
-          throw new TypeError(`Type mismatch setting field ${name} (tuple [${fieldType.types}]); ` +
-                              `value '${value}' has type ${typeof(value[i])} at index ${i}`);
+        if (value[i] != null && valueType(value[i]) !== convertToJsType(innerType, schema.name)) {
+          throw new TypeError(`Type mismatch setting field ${name} (tuple [${fieldType.types.map(d => d.type)}]); ` +
+                              `value '${value}' has type ${valueType(value[i])} at index ${i}`);
         }
       });
       break;
@@ -97,6 +104,17 @@ function validateFieldAndTypes(name: string, value: any, schema: Schema, fieldTy
         validateFieldAndTypes(name, element, schema, fieldType.schema);
       }
       break;
+    case 'schema-ordered-list':
+      if (typeof value.length !== 'number') {
+        throw new TypeError(`Cannot set ordered list ${name} with non-list '${value}'`);
+      }
+      for (const element of value) {
+        validateFieldAndTypes(name, element, schema, fieldType.schema);
+      }
+      break;
+    case 'schema-nested':
+      // sanitizeEntry will check the nested fields, no need to do so here.
+      break;
     default:
       throw new Error(`Unknown kind '${fieldType.kind}' for field ${name} in schema ${schema.name}`);
   }
@@ -113,11 +131,13 @@ function sanitizeEntry(type, value, name, context: ChannelConstructor) {
       // Setting value as Reference (Particle side). This will enforce that the type provided for
       // the handle matches the type of the reference.
       return value;
-    } else if ((value as {id}).id && (value as {entityStorageKey}).entityStorageKey) {
+    } else if ((value as {id}).id &&
+               (!value['creationTimestamp'] || (value as {creationTimestamp}).creationTimestamp) &&
+               (value as {entityStorageKey}).entityStorageKey) {
       // Setting value from raw data (Channel side).
       // TODO(shans): This can't enforce type safety here as there isn't any type data available.
       // Maybe this is OK because there's type checking on the other side of the channel?
-      return new Reference(value as {id, entityStorageKey}, new ReferenceType(type.schema.model), context);
+      return new Reference(value as {id, creationTimestamp, entityStorageKey}, new ReferenceType(type.schema.model), context);
     } else {
       throw new TypeError(`Cannot set reference ${name} with non-reference '${value}'`);
     }
@@ -127,10 +147,18 @@ function sanitizeEntry(type, value, name, context: ChannelConstructor) {
     // has been constructed with (another native code constructor)...
     if (value.constructor.name === 'Set') {
       return value;
-    } else if (value.length && value instanceof Object) {
+    } else if (value instanceof Object && 'length' in value) {
       return new Set(value.map(v => sanitizeEntry(type.schema, v, name, context)));
     } else {
       throw new TypeError(`Cannot set collection ${name} with non-collection '${value}'`);
+    }
+  } else if (type.kind === 'schema-nested') {
+    if (value instanceof Entity) {
+      return value;
+    } else if (typeof value !== 'object') {
+      throw new TypeError(`Cannot set nested schema ${name} with non-object '${value}'`);
+    } else {
+      return new (Entity.createEntityClass(type.schema.model.entitySchema, null))(value);
     }
   } else {
     return value;

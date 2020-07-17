@@ -45,6 +45,9 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
     // toMutableMap is documented to copy the data.
     fun copy(): VersionMap = VersionMap(this.backingMap.toMutableMap())
 
+    /** Increment the version for the provided `name` */
+    fun increment(name: String) = this.also { it[name]++ }
+
     /**
      * Gets a the current [Version] for a given [Actor], or [DEFAULT_VERSION] if no value has been
      * set.
@@ -71,12 +74,7 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
     infix fun dominates(other: VersionMap): Boolean =
         other.backingMap.all { this[it.key] >= it.value }
 
-    /**
-     * Determines whether or not this [VersionMap] is 'dominated by' another.
-     *
-     * See [dominates] for more details.
-     */
-    infix fun isDominatedBy(other: VersionMap): Boolean = !(this dominates other)
+    infix fun doesNotDominate(other: VersionMap): Boolean = !(this dominates other)
 
     /**
      * Merges this [VersionMap] with another [VersionMap] by taking the maximum version values for
@@ -92,11 +90,11 @@ class VersionMap(initialData: Map<Actor, Version> = emptyMap()) {
 
     /**
      * Subtracts the other [VersionMap] from the receiver and returns the actor-by-actor difference
-     * in a new [VersionMap].
+     * in a new [VersionMap]. Only greater-than-zero differences will be returned.
      */
     operator fun minus(other: VersionMap): VersionMap {
         // Return an empty result if the other map is newer than this one.
-        if (this isDominatedBy other) return VersionMap()
+        if (other dominates this) return VersionMap()
 
         return VersionMap(
             backingMap.mapValues { (actor, version) -> version - other[actor] }

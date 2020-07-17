@@ -15,7 +15,8 @@ import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {checkDefined} from '../testing/preconditions.js';
 import {SlotComposer} from '../slot-composer.js';
-import {collectionHandleForTest} from '../testing/handle-for-test.js';
+import {handleForStore} from '../storage/storage.js';
+import {EntityType} from '../type.js';
 
 describe('Multiplexer', () => {
   it('processes multiple inputs', async () => {
@@ -33,12 +34,12 @@ describe('Multiplexer', () => {
     `, {loader: new Loader(), fileName: ''});
 
     const recipe = manifest.recipes[0];
-    const barType = checkDefined(manifest.findTypeByName('Bar'));
+    const barType = checkDefined(manifest.findTypeByName('Bar')) as EntityType;
     const slotComposer = new SlotComposer();
 
     const arc = new Arc({id: ArcId.newForTest('test'), context: manifest, slotComposer, loader: new Loader()});
     const barStore = await arc.createStore(barType.collectionOf(), null, 'test:1');
-    const barHandle = await collectionHandleForTest(arc, barStore);
+    const barHandle = await handleForStore(barStore, arc);
     recipe.handles[0].mapToStorage(barStore);
     assert(recipe.normalize(), 'normalize');
     assert(recipe.isResolved());

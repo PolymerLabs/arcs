@@ -11,6 +11,8 @@
 import {Xen} from '../../lib/components/xen.js';
 import {Planificator} from '../../../build/planning/arcs-planning.js';
 import {devtoolsPlannerInspectorFactory} from '../../../build/devtools-connector/devtools-planner-inspector.js';
+//import {StorageKeyParser} from '../../../build/runtime/storage/storage-key-parser.js';
+import {RamDiskStorageKey} from '../../../build/runtime/storage/drivers/ramdisk.js';
 
 const log = Xen.logFactory('WebPlanner', '#104a91');
 //const error = Xen.logFactory('WebPlanner', '#104a91', 'error');
@@ -44,7 +46,8 @@ class WebPlanner extends Xen.Debug(Xen.Async, log) {
   async _createPlanificator(config, arc) {
     const options = {
       userid: 'user',
-      storageKeyBase: config.plannerStorage,
+      storageKeyBase: new RamDiskStorageKey(''),
+      //storageKeyBase: StorageKeyParser.parse(config.plannerStorage),
       onlyConsumer: config.plannerOnlyConsumer,
       debug: config.plannerDebug,
       inspectorFactory: devtoolsPlannerInspectorFactory

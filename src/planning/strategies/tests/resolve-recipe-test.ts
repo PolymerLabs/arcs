@@ -13,8 +13,9 @@ import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
 
 import {StrategyTestHelper} from '../../testing/strategy-test-helper.js';
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
-import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ramdisk.js';
 import {Entity} from '../../../runtime/entity.js';
+import {SingletonType} from '../../../runtime/type.js';
 
 const {createTestArc, onlyResult, theResults, noResult} = StrategyTestHelper;
 
@@ -232,7 +233,7 @@ describe('resolve recipe', () => {
     const arc = createTestArc(manifest);
 
     const car = Entity.createEntityClass(manifest.findSchemaByName('Car'), null);
-    await arc.createStore(car.type, /* name= */ null, 'batmobile');
+    await arc.createStore(new SingletonType(car.type), /* name= */ null, 'batmobile');
 
     const recipe = manifest.recipes[0];
 

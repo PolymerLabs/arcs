@@ -1,8 +1,21 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 package arcs.core.storage.referencemode
 
 import arcs.core.storage.StorageKeyParser
-import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.storage.embed
+import arcs.core.storage.keys.DatabaseStorageKey
+import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -10,6 +23,18 @@ import org.junit.runners.JUnit4
 /** Tests for [ReferenceModeStorageKey]. */
 @RunWith(JUnit4::class)
 class ReferenceModeStorageKeyTest {
+    @Test
+    fun differentProtocolsThrows() {
+        val backing = DatabaseStorageKey.Persistent("db", "abcdef")
+        val direct = RamDiskStorageKey("direct")
+        val exception = assertFailsWith<IllegalArgumentException> {
+            ReferenceModeStorageKey(backing, direct)
+        }
+        assertThat(exception).hasMessageThat().startsWith(
+            "Different protocols (db and ramdisk) in a ReferenceModeStorageKey can cause problems"
+        )
+    }
+
     @Test
     fun toString_rendersCorrectly() {
         val backing = RamDiskStorageKey("backing")

@@ -13,8 +13,10 @@ package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
 import arcs.core.storage.DriverFactory
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
+import arcs.core.storage.keys.VolatileStorageKey
+import arcs.core.type.Tag
+import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -41,7 +43,7 @@ class VolatileDriverProviderTest {
 
     @After
     fun tearDown() {
-        DriverFactory.clearRegistrationsForTesting()
+        DriverFactory.clearRegistrations()
     }
 
     @Test
@@ -72,16 +74,22 @@ class VolatileDriverProviderTest {
     }
 
     @Test
-    fun getDriver_getsDriverForExistenceCriteria() = runBlocking {
+    fun getDriver_getsDriverForStorageKey() = runBlocking {
         val driver =
             fooProvider.getDriver(
                 VolatileStorageKey(arcIdFoo, "myfoo"),
-                ExistenceCriteria.ShouldCreate,
-                Int::class
+                Int::class,
+                DummyType
             )
 
         assertThat(driver).isNotNull()
         assertThat(driver.storageKey).isEqualTo(VolatileStorageKey(arcIdFoo, "myfoo"))
-        assertThat(driver.existenceCriteria).isEqualTo(ExistenceCriteria.ShouldCreate)
+    }
+
+    companion object {
+        object DummyType : Type {
+            override val tag = Tag.Count
+            override fun toLiteral() = throw UnsupportedOperationException("")
+        }
     }
 }

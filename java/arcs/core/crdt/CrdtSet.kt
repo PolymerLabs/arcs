@@ -19,19 +19,21 @@ import arcs.core.crdt.CrdtChange.Operations
 import arcs.core.crdt.CrdtSet.Data
 import arcs.core.data.util.ReferencablePrimitive
 
-/** A [CrdtModel] capable of managing a set of items [T]. */
+/**
+ * A [CrdtModel] capable of managing a set of items [T].
+ *
+ * The implementation is based on the optimized OR-Set as described in:
+ *
+ * Annette Bieniusa, Marek Zawirski, Nuno Preguiça, Marc Shapiro,
+ * Carlos Baquero, Valter Balegas, Sérgio Duarte,
+ * "An Optimized Conflict-free Replicated Set" (2012)
+ *
+ * https://arxiv.org/abs/1210.3368
+ */
 class CrdtSet<T : Referencable>(
     /** Initial data. */
-    /* internal */ var _data: Data<T> = DataImpl(),
-    /** Function to construct a new, empty [Data] object with a given [VersionMap]. */
-    private val dataBuilder: (VersionMap) -> Data<T> = { DataImpl(it) }
+    /* internal */ var _data: Data<T> = DataImpl()
 ) : CrdtModel<Data<T>, CrdtSet.IOperation<T>, Set<T>> {
-
-    // TODO(mmandlis): get rid of the secondary constructors, once Java code has migrated to Kotlin
-    // and there is no more need for @JvmOverloads annotation, that fails to compile to JS.
-    constructor() : this(DataImpl())
-
-    constructor(data: Data<T>) : this(data, { DataImpl(it) })
 
     override val versionMap: VersionMap
         get() = _data.versionMap.copy()
@@ -44,7 +46,7 @@ class CrdtSet<T : Referencable>(
     override fun merge(other: Data<T>): MergeChanges<Data<T>, IOperation<T>> {
         val oldClock = _data.versionMap.copy()
         val newClock = _data.versionMap mergeWith other.versionMap
-        val mergedData = dataBuilder(newClock)
+        val mergedData = DataImpl<T>(newClock)
         val fastForwardOp = Operation.FastForward<T>(other.versionMap, newClock)
 
         other.values.values.forEach { (otherVersion: VersionMap, otherValue: T) ->
@@ -58,11 +60,17 @@ class CrdtSet<T : Referencable>(
                     // Both models have the same value at the same version. Add it to the merge.
                     mergedData.values[id] = myEntry
                 } else {
-                    // Models have different versions for the same value. Merge the versions,
-                    // and update other.
+                    // Models have different versions for the value with the same id.
+                    // Merge the versions, and update the value to whichever is newer.
                     DataValue(
                         myVersion mergeWith otherVersion,
-                        myValue
+                        if (myVersion dominates otherVersion) myValue
+                        else if (otherVersion dominates myVersion) otherValue
+                        else {
+                            // Concurrent changes. Pick value with smaller hashcode.
+                            if (myValue.hashCode() <= otherValue.hashCode()) myValue
+                            else otherValue
+                        }
                     ).also {
                         mergedData.values[id] = it
                         fastForwardOp.added += it
@@ -78,29 +86,33 @@ class CrdtSet<T : Referencable>(
         }
 
         _data.values.forEach { (id, myEntry) ->
-            if (id !in other.values && other.versionMap isDominatedBy myEntry.versionMap) {
+            if (id !in other.values && other.versionMap doesNotDominate myEntry.versionMap) {
                 // Value was added by this model.
                 mergedData.values[id] = myEntry
                 fastForwardOp.added += myEntry
             }
         }
 
-        this._data = mergedData
-
-        val (myOperations, otherOperations) = if (
+        val otherOperations = if (
             fastForwardOp.added.isNotEmpty() ||
             fastForwardOp.removed.isNotEmpty() ||
-            oldClock isDominatedBy newClock
+            oldClock doesNotDominate newClock
         ) {
-            CrdtChange.Data<Data<T>, IOperation<T>>(mergedData) to
-                Operations<Data<T>, IOperation<T>>(fastForwardOp.simplify().toMutableList())
+            Operations<Data<T>, IOperation<T>>(fastForwardOp.simplify().toMutableList())
         } else {
-            Operations<Data<T>, IOperation<T>>(mutableListOf()) to
-                Operations<Data<T>, IOperation<T>>(mutableListOf())
+            Operations<Data<T>, IOperation<T>>(mutableListOf())
         }
 
+        val myChange = if (mergedData == this._data) {
+            Operations<Data<T>, IOperation<T>>(mutableListOf())
+        } else {
+            CrdtChange.Data<Data<T>, IOperation<T>>(mergedData)
+        }
+
+        this._data = mergedData
+
         return MergeChanges(
-            modelChange = myOperations, otherChange = otherOperations
+            modelChange = myChange, otherChange = otherOperations
         )
     }
 
@@ -110,14 +122,9 @@ class CrdtSet<T : Referencable>(
     @Suppress("unused")
     fun canApplyOperation(op: Operation<T>): Boolean = op.applyTo(_data, isDryRun = true)
 
-    override fun updateData(newData: Data<T>) {
-        _data = DataImpl(newData.versionMap, newData.values.toMutableMap())
-    }
-
     /** Makes a deep copy of this [CrdtSet]. */
     /* internal */ fun copy(): CrdtSet<T> = CrdtSet(
-        DataImpl(_data.versionMap.copy(), HashMap(_data.values)),
-        dataBuilder
+        DataImpl(_data.versionMap.copy(), HashMap(_data.values))
     )
 
     override fun toString(): String = "CrdtSet($_data)"
@@ -140,7 +147,7 @@ class CrdtSet<T : Referencable>(
     interface Data<T : Referencable> : CrdtData {
         val values: MutableMap<ReferenceId, DataValue<T>>
 
-        /** Constructs a deep copy of this [DataImpl]. */
+        /** Constructs a deep copy of this [Data]. */
         fun copy(): Data<T>
     }
 
@@ -150,15 +157,17 @@ class CrdtSet<T : Referencable>(
         /** Map of values by their [ReferenceId]s. */
         override val values: MutableMap<ReferenceId, DataValue<T>> = mutableMapOf()
     ) : Data<T> {
-        override fun copy(): Data<T> =
-            DataImpl(versionMap = VersionMap(versionMap), values = HashMap(values))
+        override fun copy() = DataImpl(
+            versionMap = VersionMap(versionMap),
+            values = HashMap(values)
+        )
 
         override fun toString(): String =
-            "Data(versionMap=$versionMap, values=${values.toStringRepr()})"
+            "CrdtSet.Data(versionMap=$versionMap, values=${values.toStringRepr()})"
 
         private fun <T : Referencable> Map<ReferenceId, DataValue<T>>.toStringRepr(): String =
             entries.joinToString(prefix = "{", postfix = "}") { (id, value) ->
-                "${ReferencablePrimitive.tryDereference(id) ?: id}=$value"
+                "${ReferencablePrimitive.unwrap(id) ?: id}=$value"
             }
     }
 
@@ -228,7 +237,7 @@ class CrdtSet<T : Referencable>(
 
                 // Can't remove the item unless the clock value dominates that of the item already
                 // in the set.
-                if (clock isDominatedBy existingDatum.versionMap) return false
+                if (clock doesNotDominate existingDatum.versionMap) return false
 
                 // No need to edit actual data during a dry run.
                 if (isDryRun) return true
@@ -249,6 +258,40 @@ class CrdtSet<T : Referencable>(
             override fun toString(): String = "CrdtSet.Operation.Remove($clock, $actor, $removed)"
         }
 
+        /**
+         * Represents the removal of all items from a [CrdtSet]. If an empty [clock] is given, all
+         * items in the set are removed unconditionally; otherwise, only those items dominated by
+         * the clock are removed. This allow actors with write-only access to a model to operate
+         * without needing to synchronise the clock data from other actors.
+         */
+        open class Clear<T : Referencable>(
+            val actor: Actor,
+            override val clock: VersionMap
+        ) : Operation<T>() {
+            override fun applyTo(data: Data<T>, isDryRun: Boolean): Boolean {
+                if (isDryRun) return true
+
+                if (clock.isEmpty()) {
+                    data.values.clear()
+                    return true
+                }
+                if (clock[actor] == data.versionMap[actor]) {
+                    data.values.entries.removeAll { clock dominates it.value.versionMap }
+                    return true
+                }
+                return false
+            }
+
+            override fun equals(other: Any?): Boolean =
+                other is Clear<*> &&
+                    other.clock == clock &&
+                    other.actor == actor
+
+            override fun hashCode(): Int = toString().hashCode()
+
+            override fun toString(): String = "CrdtSet.Operation.Clear($clock, $actor)"
+        }
+
         /** Represents a batch operation to catch one [CrdtSet] up with another. */
         data class FastForward<T : Referencable>(
             val oldClock: VersionMap,
@@ -260,7 +303,7 @@ class CrdtSet<T : Referencable>(
 
             override fun applyTo(data: Data<T>, isDryRun: Boolean): Boolean {
                 // Can't fast-forward when current data's clock is behind oldClock.
-                if (data.versionMap isDominatedBy oldClock) return false
+                if (data.versionMap doesNotDominate oldClock) return false
 
                 // If the current data already knows about everything in the fast-forward op, we
                 // don't have to do anything.
@@ -276,7 +319,7 @@ class CrdtSet<T : Referencable>(
                             DataValue(
                                 addedClock mergeWith existingValue.versionMap, existingValue.value
                             )
-                    } else if (data.versionMap isDominatedBy addedClock) {
+                    } else if (data.versionMap doesNotDominate addedClock) {
                         data.values[addedValue.id] = DataValue(addedClock, addedValue)
                     }
                 }
@@ -304,8 +347,14 @@ class CrdtSet<T : Referencable>(
                 // Remove ops can't be replayed in order.
                 if (removed.isNotEmpty()) return listOf(this)
 
-                // This is just a version bump, since there are no additions and no removals.
-                if (added.isEmpty()) return listOf(this)
+                if (added.isEmpty()) {
+                    if (oldClock == newClock) {
+                        // No added, no removed, and no clock changes: op should be empty.
+                        return emptyList()
+                    }
+                    // This is just a version bump, since there are no additions and no removals.
+                    return listOf(this)
+                }
 
                 // Can only return a simplified list of ops if all additions come from a single
                 // actor.
@@ -334,9 +383,6 @@ class CrdtSet<T : Referencable>(
 
     companion object {
         /** Creates a [CrdtSet] from pre-existing data. */
-        fun <T : Referencable> createWithData(
-            data: Data<T>,
-            dataBuilder: (VersionMap) -> Data<T> = { DataImpl(it) }
-        ) = CrdtSet(data, dataBuilder)
+        fun <T : Referencable> createWithData(data: Data<T>) = CrdtSet(data)
     }
 }

@@ -37,7 +37,7 @@ interface Type {
     fun maybeEnsureResolved(): Boolean = true
 
     /** Checks whether or not this [Type] is at least as specific as the given [other] [Type]. */
-    fun isAtleastAsSpecificAs(other: Type): Boolean {
+    fun isAtLeastAsSpecificAs(other: Type): Boolean {
         if (tag != other.tag) return false
 
         // Throw if they are the same tag but the implementation class hasn't overridden this
@@ -81,12 +81,6 @@ interface Type {
     interface TypeContainer<T : Type> : Type {
         /** The [Type] of data contained by this [Type]. Think: kotlin's `typeParameter`. */
         val containedType: T
-    }
-
-    /** Provides capability to merge internal type data with a given variableMap. */
-    interface TypeVariableMerger : Type {
-        /** Merges internal type data with a given [variableMap]. */
-        fun mergeTypeVariablesByName(variableMap: MutableMap<Any, Any>): Type
     }
 
     companion object {

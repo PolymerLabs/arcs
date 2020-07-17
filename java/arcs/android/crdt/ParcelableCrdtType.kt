@@ -11,20 +11,12 @@
 
 package arcs.android.crdt
 
-import android.os.Parcelable
-import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
-import arcs.core.crdt.CrdtOperation
 
 /** Enumeration of the parcelable [CrdtModel] types. */
-enum class ParcelableCrdtType(
-    /** [Parcelable.Creator] for the type's [ParcelableCrdtData] class. */
-    val crdtDataCreator: Parcelable.Creator<out ParcelableCrdtData<out CrdtData>>,
-    /** [Parcelable.Creator] for the type's [ParcelableCrdtOperation] classes. */
-    val crdtOperationCreator: Parcelable.Creator<out ParcelableCrdtOperation<out CrdtOperation>>
-) {
-    Count(ParcelableCrdtCount.Data.CREATOR, ParcelableCrdtCount.Operation.CREATOR),
-    Set(ParcelableCrdtSet.Data, ParcelableCrdtSet.Operation),
-    Singleton(ParcelableCrdtSingleton.Data, ParcelableCrdtSingleton.Operation),
-    Entity(ParcelableCrdtEntity.Data, ParcelableCrdtEntity.Operation),
+enum class ParcelableCrdtType {
+    Count,
+    Set,
+    Singleton,
+    Entity,
 }

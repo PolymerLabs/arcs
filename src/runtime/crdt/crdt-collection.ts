@@ -11,7 +11,6 @@
 import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap, createEmptyChange} from './crdt.js';
 import {Dictionary} from '../hot.js';
 import {assert} from '../../platform/assert-web.js';
-import {Entity} from '../entity.js';
 
 type RawCollection<T> = Set<T>;
 
@@ -162,7 +161,8 @@ export class CRDTCollection<T extends Referenceable> implements CollectionModel<
     }
     this.model.version[key] = version[key];
     const previousVersion = this.model.values[value.id] ? this.model.values[value.id].version : {};
-    this.model.values[value.id] = {value, version: mergeVersions(version, previousVersion)};
+    const newValue = this.model.values[value.id] ? this.model.values[value.id].value : value;
+    this.model.values[value.id] = {value: newValue, version: mergeVersions(version, previousVersion)};
     return true;
   }
 
@@ -267,6 +267,10 @@ export function simplifyFastForwardOp<T>(fastForwardOp: CollectionFastForwardOp<
     return null;
   }
   if (fastForwardOp.added.length === 0) {
+    if (sameVersions(fastForwardOp.oldClock, fastForwardOp.newClock)) {
+      // No added, no removed, and no clock changes: op should be empty.
+      return [];
+    }
     // Just a version bump, no add ops to replay.
     return null;
   }
@@ -276,7 +280,7 @@ export function simplifyFastForwardOp<T>(fastForwardOp: CollectionFastForwardOp<
   }
   // Sort the add ops in increasing order by the actor's version.
   const addOps = [...fastForwardOp.added].sort(([elem1, v1], [elem2, v2]) => (v1[actor] || 0) - (v2[actor] || 0));
-  let expectedVersion = fastForwardOp.oldClock[actor];
+  let expectedVersion = fastForwardOp.oldClock[actor] || 0;
   for (const [elem, version] of addOps) {
     if (++expectedVersion !== version[actor]) {
       // The add op didn't match the expected increment-by-one pattern. Can't
@@ -304,9 +308,6 @@ export function simplifyFastForwardOp<T>(fastForwardOp: CollectionFastForwardOp<
  * there's more than one such actor, returns null.
  */
 function getSingleActorIncrement(oldVersion: VersionMap, newVersion: VersionMap): string | null {
-  if (Object.keys(oldVersion).length !== Object.keys(newVersion).length) {
-    return null;
-  }
-  const incrementedActors = Object.entries(oldVersion).filter(([k, v]) => newVersion[k] > v);
+  const incrementedActors = Object.entries(newVersion).filter(([k, v]) => v > (oldVersion[k] || 0));
   return incrementedActors.length === 1 ? incrementedActors[0][0] : null;
 }

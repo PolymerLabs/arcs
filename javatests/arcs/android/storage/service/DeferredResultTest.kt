@@ -12,9 +12,8 @@
 package arcs.android.storage.service
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.android.crdt.toParcelable
+import arcs.android.crdt.toProto
 import arcs.core.crdt.CrdtException
-import arcs.core.testutil.assertSuspendingThrows
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -25,7 +24,7 @@ import org.junit.runner.RunWith
 
 /** Tests for [DeferredResult]. */
 @RunWith(AndroidJUnit4::class)
-@UseExperimental(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class DeferredResultTest {
     @Test
     fun test_nullException_resolvesToTrue() = runBlockingTest {
@@ -45,11 +44,9 @@ class DeferredResultTest {
 
         launch {
             delay(1000)
-            deferredResult.onResult(CrdtException("Uh oh!").toParcelable())
+            deferredResult.onResult(CrdtException("Uh oh!").toProto().toByteArray())
         }
 
-        assertSuspendingThrows(CrdtException::class) {
-            deferredResult.await()
-        }
+        assertThat(deferredResult.await()).isFalse()
     }
 }

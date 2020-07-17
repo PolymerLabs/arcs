@@ -23,16 +23,46 @@ steps:
   args: ['push', 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}:head']
   waitFor: ['build-image']
 
-- id: 'local-presubmit'
+# Run non-integration tests.
+- id: 'presubmit'
   name: 'gcr.io/cloud-builders/docker'
   args: [
     'run',
     '--network=cloudbuild',
     '--rm', 'arcs-base',
-    'tools/local-presubmit',
+    'tools/cloud-presubmit',
     '--bazelrc=tools/gcb.bazelrc',
   ]
   waitFor: ['build-image']
+
+# Build Android integration test apks.
+- id: 'build-test-apks'
+  name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'run',
+    '--network=cloudbuild',
+    '--volume', '/workspace:/workspace',
+    '--rm', 'arcs-base',
+    'tools/build-test-apks',
+    '--bazelrc=tools/gcb.bazelrc',
+  ]
+  waitFor: ['build-image']
+
+# Run Android integration test in Firebase Test Lab.
+- id: 'android-firebase-test-lab'
+  name: 'gcr.io/cloud-builders/gcloud'
+  args: [
+    'firebase',
+    'test',
+    'android',
+    'run',
+    '--type', 'instrumentation',
+    '--app', '/workspace/testapp.apk',
+    '--test', '/workspace/e2e.apk',
+    '--device', 'model=Pixel2,version=29,locale=en,orientation=portrait',
+    '--use-orchestrator',
+  ]
+  waitFor: ['build-test-apks']
 
 images:
 - 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}'

@@ -13,8 +13,9 @@ package arcs.android.host.parcelables
 
 import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import arcs.core.host.ParticleIdentifier
+import arcs.core.host.api.HandleHolder
 import arcs.core.host.toParticleIdentifier
+import arcs.sdk.HandleHolderBase
 import arcs.sdk.Particle
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
@@ -23,7 +24,9 @@ import org.junit.runner.RunWith
 /** Tests for [ParcelableParticleIdentifier]'s classes. */
 @RunWith(AndroidJUnit4::class)
 class ParcelableParticleIdentifierTest {
-    class TestParticle : Particle
+    class TestParticle : Particle {
+        override val handles: HandleHolder = HandleHolderBase("TestParticle", emptyMap())
+    }
 
     @Test
     fun data_parcelableRoundTrip_works() {

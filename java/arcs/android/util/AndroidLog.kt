@@ -12,29 +12,30 @@
 package arcs.android.util
 
 import arcs.core.util.Log
-import java.io.PrintWriter
-import java.io.StringWriter
-import java.util.Locale
+
+private val TAG = "Arcs"
 
 /** Initializes [Log] for tests on the JVM. */
-fun initLogForAndroid(level: Log.Level) {
+fun initLogForAndroid(level: Log.Level = mapAndroidLogLevel(TAG)) {
     Log.level = level
-    Log.writer = { lvl, renderedMessage ->
+    Log.writer = { lvl, renderedMessage, throwable ->
         when (lvl) {
-            Log.Level.Debug -> android.util.Log.d("Arcs", renderedMessage)
-            Log.Level.Info -> android.util.Log.i("Arcs", renderedMessage)
-            Log.Level.Warning -> android.util.Log.w("Arcs", renderedMessage)
-            Log.Level.Error -> android.util.Log.e("Arcs", renderedMessage)
-            Log.Level.Wtf -> android.util.Log.wtf("Arcs", renderedMessage)
+            Log.Level.Verbose -> android.util.Log.v(TAG, renderedMessage, throwable)
+            Log.Level.Debug -> android.util.Log.d(TAG, renderedMessage, throwable)
+            Log.Level.Info -> android.util.Log.i(TAG, renderedMessage, throwable)
+            Log.Level.Warning -> android.util.Log.w(TAG, renderedMessage, throwable)
+            Log.Level.Error -> android.util.Log.e(TAG, renderedMessage, throwable)
+            Log.Level.Wtf -> android.util.Log.wtf(TAG, renderedMessage, throwable)
         }
     }
-    Log.formatter = { _, _, throwable, rawMessage ->
-        val stackTrace = throwable?.let {
-            val writer = StringWriter()
-            throwable.printStackTrace(PrintWriter(writer))
-            "\n$writer"
-        } ?: ""
-
-        String.format(Locale.ENGLISH, "%s%s", rawMessage, stackTrace)
-    }
+    Log.formatter = { _, _, _, rawMessage -> rawMessage }
 }
+
+private fun mapAndroidLogLevel(tag: String): Log.Level = arrayOf(
+    android.util.Log.VERBOSE to Log.Level.Verbose,
+    android.util.Log.DEBUG to Log.Level.Debug,
+    android.util.Log.INFO to Log.Level.Info,
+    android.util.Log.WARN to Log.Level.Warning,
+    android.util.Log.ERROR to Log.Level.Error,
+    android.util.Log.ASSERT to Log.Level.Wtf
+).find { android.util.Log.isLoggable(tag, it.first) }?.second ?: Log.Level.Error

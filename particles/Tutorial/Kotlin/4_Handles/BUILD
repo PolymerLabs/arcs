@@ -15,7 +15,7 @@ arcs_manifest(
 arcs_kt_schema(
     name = "handles_schemas",
     srcs = ["Handles.arcs"],
-    package = "arcs.tutorials",
+    platforms = ["wasm"],
     deps = [":shared_people_schemas"],
 )
 

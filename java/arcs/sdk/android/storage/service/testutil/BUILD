@@ -1,10 +1,10 @@
-load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_android_library")
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
-kt_android_library(
+arcs_kt_android_library(
     name = "testutil",
     testonly = 1,
     srcs = glob(["*.kt"]),
@@ -12,5 +12,6 @@ kt_android_library(
         "//java/arcs/android/storage",
         "//java/arcs/sdk/android/storage/service",
         "//third_party/java/robolectric",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

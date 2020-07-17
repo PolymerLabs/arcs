@@ -11,7 +11,6 @@
 
 package arcs.core.storage.referencemode
 
-import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperationAtTime
@@ -21,6 +20,7 @@ import arcs.core.crdt.VersionMap
 import arcs.core.data.RawEntity
 import arcs.core.storage.Reference
 import arcs.core.storage.StorageKey
+import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.util.resultOfSuspend
 
 /**
@@ -29,7 +29,7 @@ import arcs.core.util.resultOfSuspend
  */
 data class BridgingData(
     val backingModels: Collection<RawEntity>,
-    val collectionModel: CrdtModel<out CrdtSet.Data<Reference>, out CrdtOperationAtTime, out Any?>
+    val collectionModel: CrdtModel<out CrdtData, out CrdtOperationAtTime, out Any?>
 )
 
 /**
@@ -64,7 +64,7 @@ private suspend fun RefModeStoreData.Set.toReferenceData(
 ): CrdtSet.Data<Reference> = CrdtSet.DataImpl(
     versionMap.copy(),
     values.mapValues {
-        it.value.toReferenceDataValue(storageKey, versionMap, itemVersionGetter)
+        it.value.toReferenceDataValue(storageKey, itemVersionGetter)
     }.toMutableMap()
 )
 
@@ -79,48 +79,42 @@ private suspend fun RefModeStoreData.Singleton.toReferenceData(
 ): CrdtSingleton.Data<Reference> = CrdtSingleton.DataImpl(
     versionMap.copy(),
     values.mapValues {
-        it.value.toReferenceDataValue(storageKey, versionMap, itemVersionGetter)
+        it.value.toReferenceDataValue(storageKey, itemVersionGetter)
     }.toMutableMap()
 )
 
 /** Converts a [CrdtSet.DataValue] based on [RawEntity] into one based on [Reference]. */
 private suspend fun CrdtSet.DataValue<RawEntity>.toReferenceDataValue(
     storageKey: StorageKey,
-    valueVersion: VersionMap,
     itemVersionGetter: suspend (RawEntity) -> VersionMap
 ): CrdtSet.DataValue<Reference> = CrdtSet.DataValue(
-    valueVersion.copy(),
-    Reference(value.id, storageKey, itemVersionGetter(value))
+    versionMap,
+    Reference(
+        value.id,
+        storageKey,
+        itemVersionGetter(value),
+        value.creationTimestamp,
+        value.expirationTimestamp
+    )
 )
 
-/** Converts a [CrdtSet.Data] of [Reference]s into a [Set] of those [Reference]s. */
-inline fun <reified T : Referencable> CrdtSet.Data<T>.toReferenceSet(): Set<Reference> {
-    require(T::class == Reference::class) { "CrdtSet.Data<Reference> is required" }
-    return values.values.map { it.value as Reference }.toSet()
-}
-
 /** Converts a [Set] of [Reference]s into a [CrdtSet.Data] of those [Reference]s. */
-fun Set<Reference>.toCrdtSetData(versionMap: VersionMap): CrdtSet.Data<Reference> {
+fun Set<ReferenceWithVersion>.toCrdtSetData(versionMap: VersionMap): CrdtSet.Data<Reference> {
     return CrdtSet.DataImpl(
         versionMap.copy(),
-        this.associateBy { it.id }
-            .mapValues { CrdtSet.DataValue(versionMap.copy(), it.value) }
+        this.associateBy { it.reference.id }
+            .mapValues { CrdtSet.DataValue(it.value.versionMap, it.value.reference) }
             .toMutableMap()
     )
 }
 
-/** Converts a [CrdtSingleton.Data] into a nullable [Reference]. */
-inline fun <reified T : Referencable> CrdtSingleton.Data<T>.toReferenceSingleton(): Reference? {
-    require(T::class == Reference::class) { "CrdtSingleton.Data<Reference> is required" }
-    // Eerily-similar to the implementation of CrdtSingleton.consumerView.
-    return values.values.maxBy { it.value.id }?.value as? Reference
-}
-
 /** Converts a nullable [Reference] into a [CrdtSingleton.Data]. */
-fun Reference?.toCrdtSingletonData(versionMap: VersionMap): CrdtSingleton.Data<Reference> {
+fun ReferenceWithVersion?.toCrdtSingletonData(
+    versionMap: VersionMap
+): CrdtSingleton.Data<Reference> {
     if (this == null) return CrdtSingleton.DataImpl(versionMap.copy())
     return CrdtSingleton.DataImpl(
         versionMap.copy(),
-        mutableMapOf(this.id to CrdtSet.DataValue(versionMap.copy(), this))
+        mutableMapOf(this.reference.id to CrdtSet.DataValue(this.versionMap, this.reference))
     )
 }

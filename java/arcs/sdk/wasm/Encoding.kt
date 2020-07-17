@@ -56,7 +56,31 @@ class StringDecoder(private var bytes: ByteArray) {
 
     fun decodeNum(): Double = upTo(':').toUtf8String().toDouble()
 
+    fun decodeBigInt(): String =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin BigInteger")
+
     fun decodeBool(): Boolean = chomp(1).toUtf8String() == "1"
+
+    fun decodeByte(): Byte =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Bytes")
+
+    fun decodeShort(): Short =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Shorts")
+
+    fun decodeInt(): Int =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Ints")
+
+    fun decodeLong(): Long =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Longs")
+
+    fun decodeChar(): Char =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Chars")
+
+    fun decodeFloat(): Float =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Floats")
+
+    fun decodeDouble(): Double =
+        throw NotImplementedError("No JS to Kotlin encoding exists for Kotlin Doubles")
 
     companion object {
         fun decodeDictionary(bytes: ByteArray): Map<String, String> {
@@ -129,6 +153,42 @@ class StringEncoder(
 
     fun encode(prefix: String, flag: Boolean) {
         addStr("$prefix${if (flag) "1" else "0"}|")
+    }
+
+    @Suppress("UNUSED_PARAMETER") fun encode(prefix: String, bt: Byte) {
+        throwNoJsEncoding("Kotlin Bytes")
+    }
+
+    @Suppress("UNUSED_PARAMETER") fun encode(prefix: String, shrt: Short) {
+        throwNoJsEncoding("Kotlin Shorts")
+    }
+
+    @Suppress("UNUSED_PARAMETER") fun encode(prefix: String, nt: Int) {
+        throwNoJsEncoding("Kotlin Ints")
+    }
+
+    @Suppress("UNUSED_PARAMETER") fun encode(prefix: String, lng: Long) {
+        throwNoJsEncoding("Kotlin Longs")
+    }
+
+    @Suppress("UNUSED_PARAMETER") fun encode(prefix: String, chr: Char) {
+        throwNoJsEncoding("Kotlin Chars")
+    }
+
+    @Suppress("UNUSED_PARAMETER") fun encode(prefix: String, flt: Float) {
+        throwNoJsEncoding("Kotlin Floats")
+    }
+
+    @Suppress("UNUSED_PARAMETER") fun <T> encode(prefix: String, lst: List<T>) {
+        throwNoJsEncoding("Lists")
+    }
+
+    @Suppress("UNUSED_PARAMETER") fun <T> encode(prefix: String, inline: T) {
+        throwNoJsEncoding("Inline")
+    }
+
+    private fun throwNoJsEncoding(typeName: String) {
+        throw NotImplementedError("No Kotlin to JS encoding exists for $typeName")
     }
 
     private fun addStr(str: String) {

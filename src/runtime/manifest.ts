@@ -13,7 +13,7 @@ import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
 
 import {Id, IdGenerator} from './id.js';
-import {HandleConnection as InterfaceInfoHandleConnection} from './type.js';
+import {HandleConnection as InterfaceInfoHandleConnection, MuxType} from './type.js';
 import {Slot as InterfaceInfoSlot} from './type.js';
 import {Runnable} from './hot.js';
 import {Loader} from '../platform/loader.js';
@@ -31,25 +31,26 @@ import {connectionMatchesHandleDirection} from './recipe/direction-util.js';
 import {Recipe, RequireSection} from './recipe/recipe.js';
 import {Search} from './recipe/search.js';
 import {TypeChecker} from './recipe/type-checker.js';
-import {Ttl} from './recipe/ttl.js';
-import {StorageProviderFactory} from './storage/storage-provider-factory.js';
-import {HandleRetriever} from './storage/handle-retriever.js';
 import {Schema} from './schema.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
-        ReferenceType, SlotType, Type, TypeVariable, SingletonType} from './type.js';
+        ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType} from './type.js';
 import {Dictionary} from './hot.js';
-import {ClaimIsTag} from './particle-claim.js';
-import {VolatileStorage} from './storage/volatile-storage.js';
-import {UnifiedStore} from './storageNG/unified-store.js';
-import {Flags} from './flags.js';
-import {Store} from './storageNG/store.js';
-import {StorageKey} from './storageNG/storage-key.js';
-import {Exists} from './storageNG/drivers/driver.js';
-import {StorageKeyParser} from './storageNG/storage-key-parser.js';
-import {VolatileMemoryProvider} from './storageNG/drivers/volatile.js';
-import {RamDiskStorageKey} from './storageNG/drivers/ramdisk.js';
+import {ClaimIsTag} from './claim.js';
+import {AbstractStore, StoreClaims} from './storage/abstract-store.js';
+import {Store} from './storage/store.js';
+import {StorageKey} from './storage/storage-key.js';
+import {Exists} from './storage/drivers/driver.js';
+import {StorageKeyParser} from './storage/storage-key-parser.js';
+import {VolatileMemoryProvider, VolatileStorageKey} from './storage/drivers/volatile.js';
+import {RamDiskStorageKey} from './storage/drivers/ramdisk.js';
 import {Refinement} from './refiner.js';
-import {Capabilities} from './capabilities.js';
+import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
+import {LoaderBase} from '../platform/loader-base.js';
+import {Annotation, AnnotationRef} from './recipe/annotation.js';
+import {SchemaPrimitiveTypeValue} from './manifest-ast-nodes.js';
+import {canonicalManifest} from './canonical-manifest.js';
+import {Policy} from './policy/policy.js';
+import {resolveFieldPathType} from './field-path.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -78,7 +79,7 @@ export class ManifestWarning extends ManifestError {
  */
 class ManifestVisitor {
   traverse(ast: AstNode.BaseNode) {
-    if (['string', 'number', 'boolean'].includes(typeof ast) || ast === null) {
+    if (['string', 'number', 'bigint', 'boolean'].includes(typeof ast) || ast === null) {
       return;
     }
     if (ast instanceof Array) {
@@ -87,8 +88,18 @@ class ManifestVisitor {
       }
       return;
     }
+    if (ast instanceof Map) {
+      for (const value of ast.values()) {
+        this.traverse(value);
+      }
+      return;
+    }
     assert(ast.location, 'expected manifest node to have `location`');
     assert(ast.kind, 'expected manifest node to have `kind`');
+    if (ast.kind === 'entity-inline') {
+      // This node holds an inline entity and will be handled by _processStore().
+      return;
+    }
     let childrenVisited = false;
     const visitChildren = () => {
       if (childrenVisited) {
@@ -119,7 +130,7 @@ type ManifestFinderGenerator<a> = ((manifest: Manifest) => IterableIterator<a>) 
 
 export interface ManifestParseOptions {
   fileName?: string;
-  loader?: Loader;
+  loader?: LoaderBase;
   registry?: Dictionary<Promise<Manifest>>;
   memoryProvider?: VolatileMemoryProvider;
   context?: Manifest;
@@ -131,34 +142,26 @@ interface ManifestLoadOptions {
   memoryProvider?: VolatileMemoryProvider;
 }
 
-export class ManifestHandleRetriever implements HandleRetriever {
-  async getHandlesFromManifest(content: string) : Promise<Handle[]> {
-    const manifest = await Manifest.parse(content, {});
-    if (!manifest.activeRecipe) {
-      return null;
-    }
-    return manifest.activeRecipe.handles || [];
-  }
-}
-
 export class Manifest {
   private _recipes: Recipe[] = [];
   private _imports: Manifest[] = [];
+  private _canonicalImports: Manifest[] = [];
   // TODO: These should be lists, possibly with a separate flattened map.
   private _particles: Dictionary<ParticleSpec> = {};
   private _schemas: Dictionary<Schema> = {};
-  private _stores: UnifiedStore[] = [];
+  private _stores: AbstractStore[] = [];
   private _interfaces = <InterfaceInfo[]>[];
-  storeTags: Map<UnifiedStore, string[]> = new Map();
+  private _policies: Policy[] = [];
+  storeTags: Map<AbstractStore, string[]> = new Map();
   private _fileName: string|null = null;
   private readonly _id: Id;
   // TODO(csilvestrini): Inject an IdGenerator instance instead of creating a new one.
   readonly idGenerator: IdGenerator = IdGenerator.newSession();
-  private _storageProviderFactory: StorageProviderFactory | undefined = undefined;
   private _meta = new ManifestMeta();
-  private _resources = {};
+  private _resources: Dictionary<string> = {};
   private storeManifestUrls: Map<string, string> = new Map();
   readonly errors: ManifestError[] = [];
+  private _annotations: Dictionary<Annotation> = {};
   // readonly warnings: ManifestError[] = [];
 
   constructor({id}: {id: Id | string}) {
@@ -182,24 +185,18 @@ export class Manifest {
     return this._id;
   }
 
-  get storageProviderFactory() {
-    if (Flags.useNewStorageStack) {
-      throw new Error('Not present in the new storage stack.');
-    }
-    if (this._storageProviderFactory == undefined) {
-      this._storageProviderFactory = new StorageProviderFactory(this.id, new ManifestHandleRetriever());
-    }
-    return this._storageProviderFactory;
-  }
   get recipes() {
     return this._recipes;
   }
   get allRecipes() {
     return [...new Set(this._findAll(manifest => manifest._recipes))];
   }
-
+  get allHandles() {
+    // TODO(#4820) Update `reduce` to use flatMap
+    return this.allRecipes.reduce((acc, x) => acc.concat(x.handles), []);
+  }
   get activeRecipe() {
-    return this._recipes.find(recipe => recipe.annotation === 'active');
+    return this._recipes.find(recipe => recipe.getAnnotation('active'));
   }
   get particles() {
     return Object.values(this._particles);
@@ -209,6 +206,9 @@ export class Manifest {
   }
   get imports() {
     return this._imports;
+  }
+  get canonicalImports(): Manifest[] {
+    return this._canonicalImports;
   }
   get schemas(): Dictionary<Schema> {
     return this._schemas;
@@ -221,7 +221,7 @@ export class Manifest {
   get fileName() {
     return this._fileName;
   }
-  get stores(): UnifiedStore[] {
+  get stores(): AbstractStore[] {
     return this._stores;
   }
   get allStores() {
@@ -230,24 +230,39 @@ export class Manifest {
   get interfaces() {
     return this._interfaces;
   }
+  get policies() {
+    return this._policies;
+  }
+  get allPolicies() {
+    return [...new Set(this._findAll(manifest => manifest._policies))];
+  }
   get meta() {
     return this._meta;
   }
   get resources() {
     return this._resources;
   }
+  get allResources(): {name: string, resource: string}[] {
+    return [...new Set(this._findAll(manifest => Object.entries(manifest.resources).map(([name, resource]) => ({name, resource}))))];
+  }
+  get annotations() {
+    return this._annotations;
+  }
+  get allAnnotations() {
+    return [...new Set(this._findAll(manifest => Object.values(manifest.annotations)))];
+  }
+  findAnnotationByName(name: string) : Annotation|null {
+    return this.allAnnotations.find(a => a.name === name);
+  }
+
+
   applyMeta(section: {name: string} & {key: string, value: string}[]) {
-    if (this._storageProviderFactory !== undefined) {
-      assert(
-        section.name === this._meta.name || section.name == undefined,
-        `can't change manifest ID after storage is constructed`);
-    }
     this._meta.apply(section);
   }
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
 
-  _addStore(store: UnifiedStore, tags: string[]) {
+  _addStore(store: AbstractStore, tags: string[]) {
     this._stores.push(store);
     this.storeTags.set(store, tags ? tags : []);
     return store;
@@ -259,14 +274,15 @@ export class Manifest {
       id: string,
       storageKey: string | StorageKey,
       tags: string[],
-      claims?: ClaimIsTag[],
+      claims?: StoreClaims,
       originalId?: string,
       description?: string,
       version?: string,
       source?: string,
-      origin?: 'file' | 'resource' | 'storage',
+      origin?: 'file' | 'resource' | 'storage' | 'inline',
       referenceMode?: boolean,
       model?: {}[],
+      annotations?: AnnotationRef[]
   }) {
     if (opts.source) {
       this.storeManifestUrls.set(opts.id, this.fileName);
@@ -276,7 +292,7 @@ export class Manifest {
     if (typeof storageKey === 'string') {
       storageKey = StorageKeyParser.parse(storageKey);
     }
-    const store = new Store({...opts, storageKey, exists: Exists.MayExist});
+    const store = new Store(opts.type, {...opts, storageKey, exists: Exists.MayExist});
     return this._addStore(store, opts.tags);
   }
 
@@ -294,7 +310,7 @@ export class Manifest {
   }
   * _findAll<a>(manifestFinder: ManifestFinderGenerator<a>): IterableIterator<a> {
     yield* manifestFinder(this);
-    for (const importedManifest of this._imports) {
+    for (const importedManifest of [...this._imports, ...this._canonicalImports]) {
       yield* importedManifest._findAll(manifestFinder);
     }
   }
@@ -325,56 +341,76 @@ export class Manifest {
   findStoreById(id: string) {
     return this._find(manifest => manifest._stores.find(store => store.id === id));
   }
-  findStoreTags(store: UnifiedStore) : Set<string> {
+  findStoreTags(store: AbstractStore) : Set<string> {
     return new Set(this._find(manifest => manifest.storeTags.get(store)));
   }
   findManifestUrlForHandleId(id: string) {
     return this._find(manifest => manifest.storeManifestUrls.get(id));
   }
-  findStoresByType(type: Type, options = {tags: <string[]>[], subtype: false}): UnifiedStore[] {
+  findStoresByType(type: Type, options = {tags: <string[]>[], subtype: false}): AbstractStore[] {
     const tags = options.tags || [];
     const subtype = options.subtype || false;
-    function typePredicate(store: UnifiedStore) {
-      const resolvedType = type.resolvedType();
-      if (!resolvedType.isResolved()) {
-        return (type instanceof CollectionType) === (store.type instanceof CollectionType) &&
-          (type instanceof BigCollectionType) === (store.type instanceof BigCollectionType);
-      }
-
-      if (subtype) {
-        const [left, right] = Type.unwrapPair(store.type, resolvedType);
-        if (left instanceof EntityType && right instanceof EntityType) {
-          return left.entitySchema.isAtleastAsSpecificAs(right.entitySchema);
-        }
-        return false;
-      }
-
-      return TypeChecker.compareTypes({type: store.type}, {type});
-    }
-    function tagPredicate(manifest: Manifest, store: UnifiedStore) {
+    function tagPredicate(manifest: Manifest, store: AbstractStore) {
       return tags.filter(tag => !manifest.storeTags.get(store).includes(tag)).length === 0;
     }
-
-    const stores = [...this._findAll(manifest => manifest._stores.filter(store => typePredicate(store) && tagPredicate(manifest, store)))];
+    const stores = [...this._findAll(manifest =>
+      manifest._stores.filter(store => this.typesMatch(store, type, subtype) && tagPredicate(manifest, store)))];
 
     // Quick check that a new handle can fulfill the type contract.
     // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
     return stores.filter(s => !!Handle.effectiveType(
       type, [{type: s.type, direction: (s.type instanceof InterfaceType) ? 'hosts' : 'reads writes'}]));
   }
+  findHandlesByType(type: Type, options = {tags: <string[]>[], fates: <string[]>[], subtype: false}): Handle[] {
+    const tags = options.tags || [];
+    const subtype = options.subtype || false;
+    const fates = options.fates || [];
+    function hasAllTags(handle: Handle) {
+      return tags.every(tag => handle.tags.includes(tag));
+    }
+    function matchesFate(handle: Handle) {
+      return fates === [] || fates.includes(handle.fate);
+    }
+    // TODO(#4820) Update `reduce` to use flatMap
+    return [...this.allRecipes
+      .reduce((acc, r) => acc.concat(r.handles), [])
+      .filter(h => this.typesMatch(h, type, subtype) && hasAllTags(h) && matchesFate(h))];
+  }
+  findHandlesById(id: string): Handle[] {
+    return this.allHandles.filter(h => h.id === id);
+  }
   findInterfaceByName(name: string) {
     return this._find(manifest => manifest._interfaces.find(iface => iface.name === name));
   }
-
+  findPolicyByName(name: string) {
+    return this._find(manifest => manifest._policies.find(policy => policy.name === name));
+  }
   findRecipesByVerb(verb: string) {
     return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
+  }
+  private typesMatch(candidate: {type: Type}, type: Type, checkSubtype: boolean) {
+    const resolvedType = type.resolvedType();
+    if (!resolvedType.isResolved()) {
+      return (type instanceof CollectionType) === (candidate.type instanceof CollectionType) &&
+        (type instanceof BigCollectionType) === (candidate.type instanceof BigCollectionType);
+    }
+
+    if (checkSubtype) {
+      const [left, right] = Type.unwrapPair(candidate.type, resolvedType);
+      if (left instanceof EntityType && right instanceof EntityType) {
+        return left.entitySchema.isAtLeastAsSpecificAs(right.entitySchema);
+      }
+      return false;
+    }
+
+    return TypeChecker.compareTypes({type: candidate.type}, {type});
   }
 
   generateID(subcomponent?: string): Id {
     return this.idGenerator.newChildId(this.id, subcomponent);
   }
 
-  static async load(fileName: string, loader: Loader, options: ManifestLoadOptions = {}): Promise<Manifest> {
+  static async load(fileName: string, loader: LoaderBase, options: ManifestLoadOptions = {}): Promise<Manifest> {
     let {registry, memoryProvider} = options;
     registry = registry || {};
     if (registry && registry[fileName]) {
@@ -399,7 +435,7 @@ export class Manifest {
   }
 
   static async parse(content: string, options: ManifestParseOptions = {}): Promise<Manifest> {
-    // TODO(sjmiles): allow `context` for including an existing manifest in the import list
+    // allow `context` for including an existing manifest in the import list
     let {fileName, loader, registry, context, memoryProvider} = options;
     registry = registry || {};
     const id = `manifest:${fileName}:`;
@@ -476,12 +512,20 @@ ${e.message}
     const manifest = new Manifest({id});
     manifest._fileName = fileName;
 
-    // TODO(sjmiles): optionally include pre-existing context
+    // include (optional) pre-existing context
     if (context) {
       manifest._imports.push(context);
     }
 
     try {
+      if (content !== canonicalManifest) {
+        try {
+          manifest._canonicalImports.push(await Manifest.parse(canonicalManifest, options));
+        } catch (e) {
+          manifest.errors.push(e);
+        }
+      }
+
       // Loading of imported manifests is triggered in parallel to avoid a serial loading
       // of resources over the network.
       await Promise.all(items.map(async (item: AstNode.All) => {
@@ -501,13 +545,36 @@ ${e.message}
         }
       }));
 
+      // The items to process may refer to items defined later on. We should do a pass over all
+      // definitions first, and then resolve all the references to external definitions, but that
+      // would require serious refactoring. As a short term fix we're doing multiple passes over
+      // the list as long as we see progress.
+      // TODO(b/156427820): Improve this with 2 pass schema resolution and support cycles.
       const processItems = async (kind: string, f: Function) => {
-        for (const item of items) {
-          if (item.kind === kind) {
-            Manifest._augmentAstWithTypes(manifest, item);
-            await f(item);  // TODO(cypher1): Use Promise.all here.
+        let firstError: boolean;
+        let itemsToProcess = [...items.filter(i => i.kind === kind)];
+        let thisRound = [];
+
+        do {
+          thisRound = itemsToProcess;
+          itemsToProcess = [];
+          firstError = null;
+          for (const item of thisRound) {
+            try {
+              Manifest._augmentAstWithTypes(manifest, item);
+              await f(item);
+            } catch (err) {
+              if (!firstError) firstError = err;
+              itemsToProcess.push(item);
+              continue;
+            }
           }
-        }
+          // As long as we're making progress we're trying again.
+        } while (itemsToProcess.length < thisRound.length);
+
+        // If we didn't make any progress and still have items to process,
+        // rethrow the first error we saw in this round.
+        if (itemsToProcess.length > 0) throw firstError;
       };
       // processing meta sections should come first as this contains identifying
       // information that might need to be used in other sections. For example,
@@ -516,11 +583,13 @@ ${e.message}
       await processItems('meta', meta => manifest.applyMeta(meta.items));
       // similarly, resources may be referenced from other parts of the manifest.
       await processItems('resource', item => Manifest._processResource(manifest, item));
+      await processItems('annotation-node', item => Manifest._processAnnotation(manifest, item));
       await processItems('schema', item => Manifest._processSchema(manifest, item));
       await processItems('interface', item => Manifest._processInterface(manifest, item));
       await processItems('particle', item => Manifest._processParticle(manifest, item, loader));
       await processItems('store', item => Manifest._processStore(manifest, item, loader, memoryProvider));
       await processItems('recipe', item => Manifest._processRecipe(manifest, item));
+      await processItems('policy', item => Manifest._processPolicy(manifest, item));
     } catch (e) {
       dumpErrors(manifest);
       throw processError(e, false);
@@ -637,8 +706,14 @@ ${e.message}
           case 'reference-type':
             node.model = new ReferenceType(node.type.model);
             return;
+          case 'mux-type':
+            node.model = new MuxType(node.type.model);
+            return;
           case 'singleton-type':
             node.model = new SingletonType(node.type.model);
+            return;
+          case 'tuple-type':
+            node.model = new TupleType(node.types.map(t => t.model));
             return;
           default:
             return;
@@ -662,6 +737,9 @@ ${e.message}
           fields[field.name] = field.type;
           if (fields[field.name].refinement) {
             fields[field.name].refinement = Refinement.fromAst(fields[field.name].refinement, {[field.name]: field.type.type});
+          }
+          if (fields[field.name].annotations) {
+            fields[field.name].annotations = Manifest._buildAnnotationRefs(manifest, fields[field.name].annotations);
           }
           break;
         }
@@ -700,7 +778,8 @@ ${e.message}
         schemaItem.location,
         `Schema defined without name or alias`);
     }
-    const schema = new Schema(names, fields, {description});
+    const annotations: AnnotationRef[] = Manifest._buildAnnotationRefs(manifest, schemaItem.annotationRefs);
+    const schema = new Schema(names, fields, {description, annotations});
     if (schemaItem.alias) {
       schema.isAlias = true;
     }
@@ -711,7 +790,17 @@ ${e.message}
     manifest._resources[schemaItem.name] = schemaItem.data;
   }
 
-  private static _processParticle(manifest: Manifest, particleItem, loader?: Loader) {
+  private static _processAnnotation(manifest: Manifest, annotationItem: AstNode.AnnotationNode) {
+    const params: Dictionary<SchemaPrimitiveTypeValue> = {};
+    for (const param of annotationItem.params) {
+      params[param.name] = param.type;
+    }
+    manifest._annotations[annotationItem.name] = new Annotation(
+      annotationItem.name, params, annotationItem.targets, annotationItem.retention,
+      annotationItem.allowMultiple, annotationItem.doc);
+  }
+
+  private static _processParticle(manifest: Manifest, particleItem, loader?: LoaderBase) {
     // TODO: we should be producing a new particleSpec, not mutating
     //       particleItem directly.
     // TODO: we should require both of these and update failing tests...
@@ -726,9 +815,20 @@ ${e.message}
       manifest.errors.push(warning);
     }
 
+    if (particleItem.implFile
+        && particleItem.implFile.startsWith('.')
+        && manifest.meta.namespace) {
+      const classpath = manifest.meta.namespace + particleItem.implFile;
+      if (Loader.isJvmClasspath(classpath)) {
+        particleItem.implFile = classpath;
+      }
+    }
+
     // TODO: loader should not be optional.
     if (particleItem.implFile && loader) {
-      particleItem.implFile = loader.join(manifest.fileName, particleItem.implFile);
+      if (!Loader.isJvmClasspath(particleItem.implFile)) {
+        particleItem.implFile = loader.join(manifest.fileName, particleItem.implFile);
+      }
     }
 
     const processArgTypes = args => {
@@ -741,11 +841,18 @@ ${e.message}
           manifest.errors.push(warning);
         }
         arg.type = arg.type.model;
+        if (arg.type.getEntitySchema()) {
+          const fields = arg.type.getEntitySchema().fields;
+          for (const name of Object.keys(fields)) {
+            fields[name].annotations = Manifest._buildAnnotationRefs(manifest, fields[name].annotations);
+          }
+        }
         processArgTypes(arg.dependentConnections);
+        arg.annotations = Manifest._buildAnnotationRefs(manifest, arg.annotations);
       }
     };
     processArgTypes(particleItem.args);
-
+    particleItem.annotations = Manifest._buildAnnotationRefs(manifest, particleItem.annotationRefs);
     manifest._particles[particleItem.name] = new ParticleSpec(particleItem);
   }
 
@@ -776,15 +883,21 @@ ${e.message}
     manifest._interfaces.push(ifaceInfo);
   }
 
+  private static _processPolicy(manifest: Manifest, policyItem: AstNode.Policy) {
+    const buildAnnotationRefs = (refs: AstNode.AnnotationRef[]) => Manifest._buildAnnotationRefs(manifest, refs);
+    const findTypeByName = (name: string) => manifest.findTypeByName(name);
+    const policy = Policy.fromAstNode(policyItem, buildAnnotationRefs, findTypeByName);
+    if (manifest._policies.some(p => p.name === policy.name)) {
+      throw new ManifestError(policyItem.location, `A policy named ${policy.name} already exists.`);
+    }
+    manifest._policies.push(policy);
+  }
+
   private static _processRecipe(manifest: Manifest, recipeItem: AstNode.RecipeNode) {
     const recipe = manifest._newRecipe(recipeItem.name);
 
-    if (recipeItem.annotation) {
-      recipe.annotation = recipeItem.annotation;
-    }
-    if (recipeItem.triggers) {
-      recipe.triggers = recipeItem.triggers;
-    }
+    recipe.annotations = Manifest._buildAnnotationRefs(manifest, recipeItem.annotationRefs);
+
     if (recipeItem.verbs) {
       recipe.verbs = recipeItem.verbs;
     }
@@ -795,9 +908,10 @@ ${e.message}
     const items = {
       require: recipeItems.filter(item => item.kind === 'require') as AstNode.RecipeRequire[],
       handles: recipeItems.filter(item => item.kind === 'handle') as AstNode.RecipeHandle[],
-      byHandle: new Map<Handle, AstNode.RecipeHandle | AstNode.RequireHandleSection>(),
+      syntheticHandles: recipeItems.filter(item => item.kind === 'synthetic-handle') as AstNode.RecipeSyntheticHandle[],
+      byHandle: new Map<Handle, AstNode.RecipeHandle | AstNode.RecipeSyntheticHandle | AstNode.RequireHandleSection>(),
       // requireHandles are handles constructed by the 'handle' keyword. This is intended to replace handles.
-      requireHandles: recipeItems.filter(item => item.kind === 'requireHandle') as AstNode.RequireHandleSection[],
+      requireHandles: recipeItems.filter(item => item.kind === 'require-handle') as AstNode.RequireHandleSection[],
       particles: recipeItems.filter(item => item.kind === 'recipe-particle') as AstNode.RecipeParticle[],
       byParticle: new Map<Particle, AstNode.RecipeParticle>(),
       slots: recipeItems.filter(item => item.kind === 'slot') as AstNode.RecipeSlot[],
@@ -835,16 +949,32 @@ ${e.message}
         items.byName.set(item.name, {item, handle});
       }
       handle.fate = item.kind === 'handle' && item.fate ? item.fate : null;
-      if (item.kind === 'handle' && item.capabilities) {
-        handle.capabilities = new Capabilities(item.capabilities);
+      if (item.kind === 'handle') {
+        if (item.annotations) {
+          handle.annotations = Manifest._buildAnnotationRefs(manifest, item.annotations);
+        }
       }
-      if (item.kind === 'handle' && item.annotation) {
-        assert(item.annotation.simpleAnnotation === 'ttl',
-               `unsupported recipe handle annotation ${item.annotation.simpleAnnotation}`);
-        handle.ttl = new Ttl(
-            item.annotation.parameter.count,
-            Ttl.ttlUnitsFromString(item.annotation.parameter.units));
+      items.byHandle.set(handle, item);
+    }
+
+    for (const item of items.syntheticHandles) {
+      const handle = recipe.newHandle();
+      handle.fate = 'join';
+
+      if (item.name) {
+        assert(!items.byName.has(item.name), `duplicate handle name: ${item.name}`);
+        handle.localName = item.name;
+        items.byName.set(item.name, {item, handle});
       }
+
+      for (const association of item.associations) {
+        const associatedItem = items.byName.get(association);
+        assert(associatedItem, `unrecognized name: ${association}`);
+        const associatedHandle = associatedItem && associatedItem.handle;
+        assert(associatedHandle, `only handles allowed to be joined: "${association}" is not a handle`);
+        handle.joinDataFromHandle(associatedHandle);
+      }
+
       items.byHandle.set(handle, item);
     }
 
@@ -1071,7 +1201,9 @@ ${e.message}
             throw new ManifestError(connectionItem.location, `did not expect '${entry}' expected handle or particle`);
           }
 
-          if (entry.item.kind === 'handle' || entry.item.kind === 'requireHandle') {
+          if (entry.item.kind === 'handle'
+              || entry.item.kind === 'synthetic-handle'
+              || entry.item.kind === 'require-handle') {
             targetHandle = entry.handle;
           } else if (entry.item.kind === 'particle') {
             targetParticle = entry.particle;
@@ -1202,18 +1334,53 @@ ${e.message}
    * Creates a new storage key for data local to the manifest itself (e.g.
    * from embedded JSON data, or an external JSON file).
    */
-  private createLocalDataStorageKey(): string | RamDiskStorageKey {
-    if (Flags.useNewStorageStack) {
-      return new RamDiskStorageKey(this.generateID('local-data').toString());
-    } else {
-      return (this.storageProviderFactory._storageForKey('volatile') as VolatileStorage).constructKey('volatile');
-    }
+  private createLocalDataStorageKey(): RamDiskStorageKey {
+    return new RamDiskStorageKey(this.generateID('local-data').toString());
   }
 
-  private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: Loader, memoryProvider?: VolatileMemoryProvider) {
-    const name = item.name;
+  private static _buildAnnotationRefs(manifest: Manifest, annotationRefItems: AstNode.AnnotationRef[]): AnnotationRef[] {
+    const annotationRefs: AnnotationRef[] = [];
+    for (const aRefItem of annotationRefItems) {
+      const annotation = manifest.findAnnotationByName(aRefItem.name);
+      if (!annotation) {
+        throw new ManifestError(
+            aRefItem.location, `annotation not found: '${aRefItem.name}'`);
+      }
+      if (!annotation.allowMultiple) {
+        if (annotationRefs.some(a => a.name === aRefItem.name)) {
+          throw new ManifestError(
+              aRefItem.location, `annotation '${aRefItem.name}' already exists.`);
+        }
+      }
+      const params: Dictionary<string|number|boolean|{}> = {};
+      for (const param of aRefItem.params) {
+        if (param.kind === 'annotation-named-param') {
+          if (params[param.name]) {
+            throw new ManifestError(
+                aRefItem.location, `annotation '${annotation.name}' can only have one value for: '${param.name}'`);
+          }
+          const aParam = annotation.params[param.name];
+          if (!aParam) {
+            throw new ManifestError(
+                aRefItem.location, `unexpected annotation param: '${param.name}'`);
+          }
+          params[param.name] = param.value;
+        } else {
+          if (Object.keys(annotation.params).length !== 1) {
+            throw new ManifestError(
+              aRefItem.location, `annotation '${annotation.name}' has unexpected unnamed param '${param.value}'`);
+          }
+          params[Object.keys(annotation.params)[0]] = param.value;
+        }
+      }
+      annotationRefs.push(new AnnotationRef(annotation, params));
+    }
+    return annotationRefs;
+  }
+
+  private static async _processStore(manifest: Manifest, item: AstNode.ManifestStorage, loader?: LoaderBase, memoryProvider?: VolatileMemoryProvider) {
+    const {name, originalId, description, version, origin} = item;
     let id = item.id;
-    const originalId = item.originalId;
     let type = item.type['model'];  // Model added in _augmentAstWithTypes.
     if (id == null) {
       id = `${manifest._id}store${manifest._stores.length}`;
@@ -1223,155 +1390,91 @@ ${e.message}
       tags = [];
     }
 
-    const claims: ClaimIsTag[] = [];
-    if (item.claim) {
-      item.claim.tags.forEach(tag => claims.push(new ClaimIsTag(/* isNot= */ false, tag)));
-    }
+    const claims: Map<string, ClaimIsTag[]> = new Map();
+    item.claims.forEach(claim => {
+      resolveFieldPathType(claim.fieldPath, type);
+      const target = claim.fieldPath.join('.');
+      if (claims.has(target)) {
+        throw new ManifestError(claim.location, `A claim for target ${target} already exists in store ${name}`);
+      }
+      const tags = claim.tags.map(tag => new ClaimIsTag(/* isNot= */ false, tag));
+      claims.set(target, tags);
+    });
 
     // Instead of creating links to remote firebase during manifest parsing,
     // we generate storage stubs that contain the relevant information.
     if (item.origin === 'storage') {
       return manifest.newStore({
-        type,
-        name,
-        id,
-        storageKey: item.source,
-        tags,
-        originalId,
-        claims,
-        description: item.description,
-        version: item.version,
-        origin: item.origin,
+        type, name, id, storageKey: item.source, tags,
+        originalId, claims, description, version, origin
       });
     }
 
     let json: string;
-    let source;
+    let entities;
     if (item.origin === 'file') {
       if (!loader) {
         throw new ManifestError(item.location, 'No loader available for file');
       }
       item.source = loader.join(manifest.fileName, item.source);
-      // TODO: json5?
       json = await loader.loadResource(item.source);
+      entities = this.parseJson(json, item);
     } else if (item.origin === 'resource') {
-      source = item.source;
-      json = manifest.resources[source];
+      json = manifest.resources[item.source];
       if (json == undefined) {
-        throw new ManifestError(item.location, `Resource '${source}' referenced by store '${id}' is not defined in this manifest`);
+        throw new ManifestError(item.location, `Resource '${item.source}' referenced by store '${id}' is not defined in this manifest`);
       }
+      entities = this.parseJson(json, item);
+    } else if (item.origin === 'inline') {
+      entities = this.inlineEntitiesToSerialisedFormat(manifest, item);
     }
 
-    let entities;
-    try {
-      entities = JSON.parse(json);
-    } catch (e) {
-      throw new ManifestError(item.location, `Error parsing JSON from '${source}' (${e.message})'`);
-    }
-
-    if (Flags.useNewStorageStack) {
-      const storageKey = item['storageKey'] || manifest.createLocalDataStorageKey();
-      if (storageKey instanceof RamDiskStorageKey) {
-        if (!memoryProvider) {
-          throw new ManifestError(item.location, `Creating ram disk stores requires having a memory provider.`);
-        }
-        memoryProvider.getVolatileMemory().deserialize(entities, storageKey.unique);
+    const storageKey = item['storageKey'] || manifest.createLocalDataStorageKey();
+    if (storageKey instanceof RamDiskStorageKey) {
+      if (!memoryProvider) {
+        throw new ManifestError(item.location, `Creating ram disk stores requires having a memory provider.`);
       }
-      // Note that we used to use a singleton entity ID (if present) instead of the hash. It seems
-      // cleaner not to rely on that.
-      if (!item.id) {
-        const entityHash = await digest(json);
-        id = `${id}:${entityHash}`;
-      }
-      if (!type.isSingleton && !type.isCollectionType()) {
-        type = new SingletonType(type);
-      }
-      return manifest.newStore({type, name, id, storageKey, tags, originalId, claims,
-        description: item.description, version: item.version || null, source: item.source,
-        origin: item.origin, referenceMode: false, model: entities});
+      memoryProvider.getVolatileMemory().deserialize(entities, storageKey.unique);
     }
-
-    // TODO: clean this up
-    let unitType: Type = null;
-    let referenceMode = true;
-    if (type instanceof CollectionType) {
-      unitType = type.collectionType;
-    } else if (type instanceof BigCollectionType) {
-      unitType = type.bigCollectionType;
-    } else {
-      if (entities.length === 0) {
-        referenceMode = false;
-      } else {
-        entities = entities.slice(entities.length - 1);
-        unitType = type;
-      }
+    // Note that we used to use a singleton entity ID (if present) instead of the hash. It seems
+    // cleaner not to rely on that.
+    if (!item.id) {
+      const entityHash = await digest(json || JSON.stringify(entities));
+      id = `${id}:${entityHash}`;
     }
-
-    if (unitType && unitType instanceof EntityType) {
-      let hasSerializedId = false;
-      entities = entities.map(entity => {
-        if (entity == null) {
-          // FIXME: perhaps this happens when we have an empty singleton?
-          // we should just generate an empty list in that case.
-          return null;
-        }
-        hasSerializedId = hasSerializedId || entity.$id;
-        const id = entity.$id || manifest.generateID().toString();
-        delete entity.$id;
-        return {id, rawData: entity};
-      });
-      // TODO(wkorman): Efficiency improvement opportunities: (1) We could build
-      // array of entities in above map rather than mapping again below, (2) we
-      // could hash the object tree data directly rather than stringifying.
-      if (!item.id && !hasSerializedId) {
-        const entityHash = await digest(JSON.stringify(entities.map(entity => entity.rawData)));
-        id = `${id}:${entityHash}`;
-      }
+    if (!type.isSingleton && !type.isCollectionType()) {
+      type = new SingletonType(type);
     }
-
-    // While the referenceMode hack exists, we need to look at the entities being stored to
-    // determine whether this store should be in referenceMode or not.
-    // TODO(shans): Eventually the actual type will need to be part of the determination too.
-    // TODO(shans): Need to take into account the possibility of multiple storage key mappings
-    // at some point.
-    if (entities.length > 0 && entities[0].rawData && entities[0].rawData.storageKey) {
-      let storageKey = entities[0].rawData.storageKey;
-      storageKey = manifest.findStoreByName(storageKey).storageKey;
-      entities = entities.map(({id, rawData}) => ({id, storageKey}));
-    } else if (entities.length > 0) {
-      referenceMode = false;
-    }
-
-    // For this store to be able to be treated as a CRDT, each item needs a key.
-    // Using id as key seems safe, nothing else should do this.
-    let model;
-    if (type instanceof CollectionType) {
-      model = entities.map(value => ({id: value.id, value, keys: new Set([value.id])}));
-    } else if (type instanceof BigCollectionType) {
-      model = entities.map(value => {
-        const index = value.rawData.$index;
-        delete value.rawData.$index;
-        return {id: value.id, index, value, keys: new Set([value.id])};
-      });
-    } else {
-      model = entities.map(value => ({id: value.id, value}));
-    }
-    const version = item.version || null;
     return manifest.newStore({
-        type,
-        name,
-        id,
-        storageKey: manifest.createLocalDataStorageKey(),
-        tags,
-        originalId,
-        claims,
-        description: item.description,
-        version,
-        source: item.source,
-        origin: item.origin,
-        referenceMode,
-        model,
+      type, name, id, storageKey, tags, originalId, claims, description, version,
+      source: item.source, origin, referenceMode: false, model: entities,
+      annotations: Manifest._buildAnnotationRefs(manifest, item.annotationRefs)
     });
+  }
+
+  private static parseJson(json, item) {
+    try {
+      return JSON.parse(json);
+    } catch (e) {
+      throw new ManifestError(item.location, `Error parsing JSON from '${item.source}' (${e.message})'`);
+    }
+  }
+
+  private static inlineEntitiesToSerialisedFormat(manifest: Manifest, item: AstNode.ManifestStorage) {
+    const values = {};
+    const version = {inline: 1};
+    for (const entityAst of item.entities) {
+      const rawData = {};
+      for (const [name, descriptor] of Object.entries(entityAst.fields)) {
+        rawData[name] = descriptor.value;
+      }
+      const id = manifest.generateID('inline').toString();
+      values[id] = {
+        value: {id, creationTimestamp: 0, rawData},
+        version
+      };
+    }
+    return {root: {values, version}, locations: {}};
   }
 
   private _newRecipe(name: string): Recipe {
@@ -1381,16 +1484,47 @@ ${e.message}
   }
 
   // TODO: This is a temporary method to allow sharing stores with other Arcs.
-  registerStore(store: UnifiedStore, tags: string[]): void {
+  registerStore(store: AbstractStore, tags: string[]): void {
     // Only register stores that have non-volatile storage key and don't have a
     // #volatile tag.
-    if (!this.findStoreById(store.id) &&
-        (Flags.useNewStorageStack
-            ? (store.storageKey as StorageKey).protocol !== 'volatile'
-            : !store.storageKey.toString().startsWith('volatile'))
-        && !tags.includes('volatile')) {
+    if (!this.findStoreById(store.id) && !this.isVolatileStore(store, tags)) {
       this._addStore(store, tags);
     }
+  }
+
+  isVolatileStore(store: AbstractStore, tags: string[]): boolean {
+    if (store.storageKey.protocol === VolatileStorageKey.protocol) return true;
+    if (store.storageKey.protocol === ReferenceModeStorageKey.protocol &&
+        (store.storageKey as ReferenceModeStorageKey).backingKey.protocol === VolatileStorageKey.protocol &&
+        (store.storageKey as ReferenceModeStorageKey).storageKey.protocol === VolatileStorageKey.protocol) {
+      return true;
+    }
+    if (tags.includes('volatile')) return true;
+    return false;
+  }
+
+  /**
+   * Verifies that all definitions in the manifest (including all other
+   * manifests that it imports) have unique names.
+   */
+  validateUniqueDefinitions() {
+    function checkUnique(type: string, items: {name: string}[]) {
+      const names: Set<string> = new Set();
+      for (const item of items) {
+        if (names.has(item.name)) {
+          throw new Error(`Duplicate definition of ${type} named '${item.name}'.`);
+        }
+        names.add(item.name);
+      }
+    }
+    // TODO: Validate annotations as well. They're tricky because of canonical
+    // annotations.
+    checkUnique('particle', this.allParticles);
+    checkUnique('policy', this.allPolicies);
+    checkUnique('recipe', this.allRecipes);
+    checkUnique('resource', this.allResources);
+    checkUnique('schema', this.allSchemas);
+    checkUnique('store', this.allStores);
   }
 
   toString(options: {recursive?: boolean, showUnresolved?: boolean, hideFields?: boolean} = {}): string {
@@ -1405,6 +1539,10 @@ ${e.message}
       } else {
         results.push(`import '${i.fileName}'`);
       }
+    });
+
+    Object.values(this._annotations).forEach(a => {
+      results.push(a.toManifestString());
     });
 
     Object.values(this._schemas).forEach(s => {
@@ -1422,6 +1560,10 @@ ${e.message}
     const stores = [...this.stores].sort(compareComparables);
     stores.forEach(store => {
       results.push(store.toManifestString({handleTags: this.storeTags.get(store)}));
+    });
+
+    this._policies.forEach(policy => {
+      results.push(policy.toManifestString());
     });
 
     return results.join('\n');

@@ -17,6 +17,7 @@ import arcs.core.data.FieldName
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.SchemaFields
+import kotlin.IllegalStateException
 
 data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -49,10 +50,48 @@ data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
 
         override fun newArray(size: Int): Array<ParcelableSchemaFields?> = arrayOfNulls(size)
 
+        private fun Parcel.readListFieldType(): FieldType =
+            when (FieldType.Tag.values()[readInt()]) {
+                FieldType.Tag.Primitive ->
+                    FieldType.ListOf(FieldType.Primitive(PrimitiveType.values()[readInt()]))
+                FieldType.Tag.EntityRef ->
+                    FieldType.ListOf(FieldType.EntityRef(requireNotNull(readString())))
+                FieldType.Tag.InlineEntity ->
+                    FieldType.ListOf(FieldType.InlineEntity(requireNotNull(readString())))
+                else -> throw IllegalStateException("List of unexpected type encountered")
+            }
+
         private fun Parcel.readFieldType(): FieldType =
             when (FieldType.Tag.values()[readInt()]) {
                 FieldType.Tag.Primitive -> FieldType.Primitive(PrimitiveType.values()[readInt()])
+                FieldType.Tag.List -> readListFieldType()
                 FieldType.Tag.EntityRef -> FieldType.EntityRef(requireNotNull(readString()))
+                FieldType.Tag.Tuple -> {
+                    val collector = mutableListOf<FieldType>()
+                    while (readByte() != ')'.toByte()) {
+                        when (FieldType.Tag.values()[readInt()]) {
+                            FieldType.Tag.Primitive ->
+                                collector.add(
+                                    FieldType.Primitive(PrimitiveType.values()[readInt()])
+                                )
+                            FieldType.Tag.EntityRef ->
+                                collector.add(
+                                    FieldType.EntityRef(requireNotNull(readString()))
+                                )
+                            FieldType.Tag.Tuple ->
+                                throw IllegalStateException(
+                                    "Nested [FieldType.Tuple]s are not allowed."
+                                )
+                            FieldType.Tag.List -> collector.add(readListFieldType())
+                            FieldType.Tag.InlineEntity ->
+                                collector.add(
+                                    FieldType.InlineEntity(requireNotNull(readString()))
+                                )
+                        }
+                    }
+                    FieldType.Tuple(collector.toList())
+                }
+                FieldType.Tag.InlineEntity -> FieldType.InlineEntity(requireNotNull(readString()))
             }
     }
 
@@ -61,7 +100,42 @@ data class ParcelableSchemaFields(val actual: SchemaFields) : Parcelable {
         // Return Unit to force match to be exhaustive.
         return when (type) {
             is FieldType.Primitive -> writeInt(type.primitiveType.ordinal)
+            is FieldType.ListOf -> {
+                val wrappedType = type.primitiveType
+                when (wrappedType) {
+                    is FieldType.Primitive -> {
+                        writeInt(FieldType.Tag.Primitive.ordinal)
+                        writeInt(wrappedType.primitiveType.ordinal)
+                    }
+                    is FieldType.EntityRef -> {
+                        writeInt(FieldType.Tag.EntityRef.ordinal)
+                        writeString(wrappedType.schemaHash)
+                    }
+                    is FieldType.InlineEntity -> {
+                        writeInt(FieldType.Tag.InlineEntity.ordinal)
+                        writeString(wrappedType.schemaHash)
+                    }
+                    else -> {
+                        throw IllegalStateException(
+                            "Parcelables for lists of type $wrappedType not yet implemented."
+                        )
+                    }
+                }
+            }
             is FieldType.EntityRef -> writeString(type.schemaHash)
+            is FieldType.Tuple -> {
+                writeByte('('.toByte())
+                type.types.forEachIndexed { idx, elem ->
+                    writeFieldType(elem)
+                    if (idx != type.types.size - 1) {
+                        writeByte('|'.toByte())
+                    }
+                }
+                writeByte(')'.toByte())
+            }
+            is FieldType.InlineEntity -> {
+                writeString(type.schemaHash)
+            }
         }
     }
 }

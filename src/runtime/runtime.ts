@@ -12,17 +12,15 @@ import {assert} from '../platform/assert-web.js';
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
-import {CapabilitiesResolver, StorageKeyCreatorsMap} from './capabilities-resolver.js';
+import {CapabilitiesResolver} from './capabilities-resolver.js';
 import {RuntimeCacheService} from './runtime-cache.js';
-import {IdGenerator, ArcId} from './id.js';
+import {IdGenerator, ArcId, Id} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
 import {SlotComposer} from './slot-composer.js';
-import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
-import {RamDiskStorageDriverProvider} from './storageNG/drivers/ramdisk.js';
-import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
-import {VolatileStorage} from './storage/volatile-storage.js';
-import {StorageKey} from './storageNG/storage-key.js';
+import {RamDiskStorageDriverProvider} from './storage/drivers/ramdisk.js';
+import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey, VolatileStorageKeyFactory} from './storage/drivers/volatile.js';
+import {StorageKey} from './storage/storage-key.js';
 import {Recipe} from './recipe/recipe.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {Loader} from '../platform/loader.js';
@@ -30,6 +28,8 @@ import {pecIndustry} from '../platform/pec-industry.js';
 import {logsFactory} from '../platform/logs-factory.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
+import {Modality} from './modality.js';
+import {StorageKeyFactory} from './storage-key-factory.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
@@ -42,14 +42,15 @@ export type RuntimeOptions = Readonly<{
 }>;
 
 export type RuntimeArcOptions = Readonly<{
+  id?: Id;
   pecFactories?: PecFactory[];
-  storageProviderFactory?: StorageProviderFactory;
   speculative?: boolean;
   innerArc?: boolean;
   stub?: boolean;
   listenerClasses?: ArcInspectorFactory[];
   inspectorFactory?: ArcInspectorFactory;
-  storageKeyCreators?: StorageKeyCreatorsMap;
+  storargeKeyFactories?: StorageKeyFactory[];
+  modality?: Modality;
 }>;
 
 type SpawnArgs = {
@@ -114,9 +115,6 @@ export class Runtime {
     const loader = new Loader(map);
     const pecFactory = pecIndustry(loader);
     const memoryProvider = new SimpleVolatileMemoryProvider();
-    // TODO(sjmiles): SlotComposer type shenanigans are temporary pending complete replacement
-    // of SlotComposer by SlotComposer. Also it's weird that `new Runtime(..., SlotComposer, ...)`
-    // doesn't bother tslint at all when done in other modules.
     const runtime = new Runtime({
       loader,
       composerClass: SlotComposer,
@@ -124,6 +122,7 @@ export class Runtime {
       memoryProvider
     });
     RamDiskStorageDriverProvider.register(memoryProvider);
+    VolatileStorageKey.register();
     return runtime;
   }
 
@@ -147,10 +146,6 @@ export class Runtime {
 
   constructor({loader, composerClass, context, pecFactory, memoryProvider}: RuntimeOptions = {}) {
     this.cacheService = new RuntimeCacheService();
-    // We have to do this here based on a vast swathe of tests that just create
-    // a Runtime instance and forge ahead. This is only temporary until we move
-    // to the new storage stack.
-    VolatileStorage.setStorageCache(this.cacheService);
     this.loader = loader || new Loader();
     this.pecFactory = pecFactory;
     this.composerClass = composerClass || SlotComposer;
@@ -183,15 +178,16 @@ export class Runtime {
   // How best to provide default storage to an arc given whatever we decide?
   newArc(name: string, storageKeyPrefix?: ((arcId: ArcId) => StorageKey), options?: RuntimeArcOptions): Arc {
     const {loader, context} = this;
-    const id = IdGenerator.newSession().newArcId(name);
+    const id = (options && options.id) || IdGenerator.newSession().newArcId(name);
     const slotComposer = this.composerClass ? new this.composerClass() : null;
-    const capabilitiesResolver = new CapabilitiesResolver({arcId: id}, options ? options.storageKeyCreators : undefined);
     let storageKey : StorageKey;
     if (storageKeyPrefix == null) {
       storageKey = new VolatileStorageKey(id, '');
     } else {
       storageKey = storageKeyPrefix(id);
     }
+    const factories = (options && options.storargeKeyFactories) || [new VolatileStorageKeyFactory()];
+    const capabilitiesResolver = new CapabilitiesResolver({arcId: id, factories});
     return new Arc({id, storageKey, capabilitiesResolver, loader, slotComposer, context, ...options});
   }
 

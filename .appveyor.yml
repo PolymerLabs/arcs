@@ -17,10 +17,10 @@ install:
 
 build: off
 
-# The following test suite should be the same as on travis.
+# The following test suite should be the same as on parker.
 test_script:
   - node --version
   - npm --version
-  - npm list --depth=0
+  #- npm list --depth=0
   - tools\sigh test
   - npm run test-extension

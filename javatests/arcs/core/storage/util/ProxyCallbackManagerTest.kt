@@ -14,7 +14,6 @@ package arcs.core.storage.util
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.VersionMap
-import arcs.core.storage.MultiplexedProxyCallback
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import com.google.common.truth.Truth.assertThat
@@ -52,13 +51,10 @@ class ProxyCallbackManagerTest {
         0.until(200).map {
             launch {
                 Thread.sleep(random.nextLong(0, 1000))
-                manager.register(ProxyCallback { true })
+                manager.register(ProxyCallback { })
             }
         }.joinAll()
 
-        // Now check that the nextCallbackToken is correct (should be 201 if we didn't erroneously
-        // attempt to increment outside of a lock.
-        assertThat(manager.nextCallbackToken.value).isEqualTo(201)
         assertThat(manager.callbacks.size).isEqualTo(200)
     }
 
@@ -67,14 +63,12 @@ class ProxyCallbackManagerTest {
         val registeredMessage = atomic<ProxyMessage<DummyData, DummyOp, String>?>(null)
         val registeredCallback = ProxyCallback<DummyData, DummyOp, String> {
             registeredMessage.value = it
-            true
         }
         val registeringCallback = ProxyCallback<DummyData, DummyOp, String> {
             manager.register(registeredCallback)
-            true
         }
 
-        val shouldBeReceivedByRegistered = makeMessage("bar", 1)
+        val shouldBeReceivedByRegistered = makeMessage("bar", 2)
 
         manager.register(registeringCallback)
 
@@ -82,31 +76,6 @@ class ProxyCallbackManagerTest {
         assertThat(registeredMessage.value).isNull()
 
         manager.send(shouldBeReceivedByRegistered)
-        assertThat(registeredMessage.value).isEqualTo(shouldBeReceivedByRegistered)
-    }
-
-    @Test
-    fun sendMultiplexedWhichCausesARegistration_doesntDeadlock() = runBlockingTest {
-        val registeredMessage = atomic<ProxyMessage<DummyData, DummyOp, String>?>(null)
-        val registeredCallback =
-            MultiplexedProxyCallback<DummyData, DummyOp, String> { message, _ ->
-                registeredMessage.value = message
-                true
-            }
-        val registeringCallback =
-            MultiplexedProxyCallback<DummyData, DummyOp, String> { _, _ ->
-                manager.register(registeredCallback)
-                true
-            }
-
-        val shouldBeReceivedByRegistered = makeMessage("bar", 1)
-
-        manager.register(registeringCallback)
-
-        manager.sendMultiplexed(makeMessage("foo", 1), "mux1")
-        assertThat(registeredMessage.value).isNull()
-
-        manager.sendMultiplexed(shouldBeReceivedByRegistered, "mux1")
         assertThat(registeredMessage.value).isEqualTo(shouldBeReceivedByRegistered)
     }
 

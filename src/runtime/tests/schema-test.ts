@@ -71,16 +71,16 @@ describe('schema', () => {
 
     const kind = 'schema-primitive';
     const expected = {
-      description: {kind, refinement: null, type: 'Text'},
-      image: {kind, refinement: null, type: 'URL'},
-      category: {kind, refinement: null, type: 'Text'},
-      price: {kind, refinement: null, type: 'Text'},
-      seller: {kind, refinement: null, type: 'Text'},
-      shipDays: {kind, refinement: null, type: 'Number'},
-      url: {kind, refinement: null, type: 'URL'},
-      identifier: {kind, refinement: null, type: 'Text'},
-      isReal: {kind, refinement: null, type: 'Boolean'},
-      name: {kind, refinement: null, type: 'Text'}
+      description: {kind, refinement: null, type: 'Text', annotations: []},
+      image: {kind, refinement: null, type: 'URL', annotations: []},
+      category: {kind, refinement: null, type: 'Text', annotations: []},
+      price: {kind, refinement: null, type: 'Text', annotations: []},
+      seller: {kind, refinement: null, type: 'Text', annotations: []},
+      shipDays: {kind, refinement: null, type: 'Number', annotations: []},
+      url: {kind, refinement: null, type: 'URL', annotations: []},
+      identifier: {kind, refinement: null, type: 'Text', annotations: []},
+      isReal: {kind, refinement: null, type: 'Boolean', annotations: []},
+      name: {kind, refinement: null, type: 'Text', annotations: []}
     };
     assert.deepEqual(deleteLocations(schema).fields, expected);
   });
@@ -244,9 +244,11 @@ describe('schema', () => {
     const References = Entity.createEntityClass(manifest.findSchemaByName('References'), null);
 
     const ReferencedOneSchema = manifest.findSchemaByName('ReferencedOne');
+    const now = new Date();
+    const storageKey = 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}';
     assert.doesNotThrow(() => {
       new References({
-        one: new Reference({id: 'test', entityStorageKey: 'test'}, new ReferenceType(new EntityType(ReferencedOneSchema)), null),
+        one: new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(new EntityType(ReferencedOneSchema)), null),
         two: null
       });
     });
@@ -254,7 +256,7 @@ describe('schema', () => {
     assert.throws(() => {
       new References({
         one: null,
-        two: new Reference({id: 'test', entityStorageKey: 'test'}, new ReferenceType(new EntityType(ReferencedOneSchema)), null)
+        two: new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(new EntityType(ReferencedOneSchema)), null)
       });
     }, TypeError, `Cannot set reference two with value '[object Object]' of mismatched type`);
     assert.throws(() => {
@@ -272,12 +274,14 @@ describe('schema', () => {
     const FooType = EntityType.make(['Foo'], {value: 'Text'});
     const BarType = EntityType.make(['Bar'], {value: 'Text'});
     new Collections({collection: new Set()});
+    const now = new Date();
+    const storageKey = 'reference-mode://{volatile://!1:test/backing@}{volatile://!2:test/container@}';
     new Collections({
-      collection: new Set([new Reference({id: 'test', entityStorageKey: 'test'}, new ReferenceType(FooType), null)])
+      collection: new Set([new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(FooType), null)])
     });
     assert.throws(() => {
       new Collections({collection:
-        new Set([new Reference({id: 'test', entityStorageKey: 'test'}, new ReferenceType(BarType), null)])
+        new Set([new Reference({id: 'test', creationTimestamp: now, entityStorageKey: storageKey}, new ReferenceType(BarType), null)])
       });
     }, TypeError, `Cannot set reference collection with value '[object Object]' of mismatched type`);
   });
@@ -506,6 +510,8 @@ describe('schema', () => {
 
         nestedRefs: reads Foo {num: Number, ref: &Bar {str: Text, inner: &* {val: Boolean}}}
         refCollection: reads * {rc: [&Wiz {str: Text}], z: Number}
+        primitiveCollection: reads * {x: [Number], f: [Boolean], s: [Text]}
+        tuples: reads Tup {x: (Number, Text)}
     `);
     const getHash = handleName => {
       return manifest.particles[0].getConnectionByName(handleName).type.getEntitySchema().normalizeForHash();
@@ -518,8 +524,10 @@ describe('schema', () => {
     assert.strictEqual(getHash('orderedA'), 'Bar Foo Wiz/f:Boolean|s:Text|x:Number|');
     assert.strictEqual(getHash('orderedA'), getHash('orderedB'));
 
-    assert.strictEqual(getHash('nestedRefs'), 'Foo/num:Number|ref&[Bar/inner&[/val:Boolean|]str:Text|]');
-    assert.strictEqual(getHash('refCollection'), '/rc@[Wiz/str:Text|]z:Number|');
+    assert.strictEqual(getHash('nestedRefs'), 'Foo/num:Number|ref:&(Bar/inner:&(/val:Boolean|)str:Text|)');
+    assert.strictEqual(getHash('refCollection'), '/rc:[&(Wiz/str:Text|)]z:Number|');
+    assert.strictEqual(getHash('primitiveCollection'), '/f:[Boolean]s:[Text]x:[Number]');
+    assert.strictEqual(getHash('tuples'), 'Tup/x:(Number|Text)');
   });
   it('tests univariate schema level refinements are propagated to field level', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
@@ -597,7 +605,7 @@ describe('schema', () => {
     assert.deepEqual(intersection.fields, schema3.fields);
     assert.deepEqual(intersection.refinement, schema3.refinement);
   }));
-  it('tests schema.isAtleastAsSpecificAs, case 1', Flags.withFieldRefinementsAllowed(async () => {
+  it('tests schema.isAtLeastAsSpecificAs, case 1', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number [a > 20], b: Number, c: Number} [a + c > 10]
@@ -605,9 +613,9 @@ describe('schema', () => {
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
-    assert.isTrue(schema1.isAtleastAsSpecificAs(schema2));
+    assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2));
   }));
-  it('tests schema.isAtleastAsSpecificAs, case 2', Flags.withFieldRefinementsAllowed(async () => {
+  it('tests schema.isAtLeastAsSpecificAs, case 2', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number [a > 20], b: Number, c: Number}
@@ -615,9 +623,9 @@ describe('schema', () => {
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
-    assert.isFalse(schema1.isAtleastAsSpecificAs(schema2));
+    assert.isFalse(schema1.isAtLeastAsSpecificAs(schema2));
   }));
-  it('tests schema.isAtleastAsSpecificAs, case 3', Flags.withFieldRefinementsAllowed(async () => {
+  it('tests schema.isAtLeastAsSpecificAs, case 3', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number [a > 20], b: Boolean [not b]} [a < 100]
@@ -625,9 +633,9 @@ describe('schema', () => {
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
-    assert.isTrue(schema1.isAtleastAsSpecificAs(schema2));
+    assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2));
   }));
-  it('tests schema.isAtleastAsSpecificAs, case 4', Flags.withFieldRefinementsAllowed(async () => {
+  it('tests schema.isAtLeastAsSpecificAs, case 4', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Number [a > 20], b: Boolean [not b]} [a < 100]
@@ -635,9 +643,9 @@ describe('schema', () => {
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
-    assert.isFalse(schema1.isAtleastAsSpecificAs(schema2));
+    assert.isFalse(schema1.isAtLeastAsSpecificAs(schema2));
   }));
-  it('tests schema.isAtleastAsSpecificAs, case 5', Flags.withFieldRefinementsAllowed(async () => {
+  it('tests schema.isAtLeastAsSpecificAs, case 5', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Text [a == 'abc']}
@@ -645,9 +653,9 @@ describe('schema', () => {
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
-    assert.isTrue(schema1.isAtleastAsSpecificAs(schema2));
+    assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2));
   }));
-  it('tests schema.isAtleastAsSpecificAs, case 6', async () => {
+  it('tests schema.isAtLeastAsSpecificAs, case 6', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Text} [a == 'abc' or a == 'josh']
@@ -655,9 +663,9 @@ describe('schema', () => {
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
-    assert.isFalse(schema1.isAtleastAsSpecificAs(schema2));
+    assert.isFalse(schema1.isAtLeastAsSpecificAs(schema2));
   });
-  it('tests schema.isAtleastAsSpecificAs, case 7', async () => {
+  it('tests schema.isAtLeastAsSpecificAs, case 7', async () => {
     const manifest = await Manifest.parse(`
       particle Foo
         schema1: reads X {a: Text} [a != 'abc']
@@ -665,7 +673,7 @@ describe('schema', () => {
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
-    assert.isTrue(schema1.isAtleastAsSpecificAs(schema2));
+    assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2));
   });
   it('tests warning when refinement specificity is unknown', async () => {
     const manifest = await Manifest.parse(`
@@ -675,7 +683,24 @@ describe('schema', () => {
     `);
     const schema1 = getSchemaFromManifest(manifest, 'schema1');
     const schema2 = getSchemaFromManifest(manifest, 'schema2');
-    const refWarning = ConCap.capture(() => assert.isTrue(schema1.isAtleastAsSpecificAs(schema2)));
+    const refWarning = ConCap.capture(() => assert.isTrue(schema1.isAtLeastAsSpecificAs(schema2)));
     assert.match(refWarning.warn[0], /Unable to ascertain if/);
+  });
+  it('tests to inline schema string for kt types', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        ld: List<Number>
+        lI: List<Int>
+        lL: List<Long>
+        i: Int
+        t: Text
+        l: Long
+    `);
+    const schema = manifest.schemas['Foo'];
+    const schema_str = schema.toInlineSchemaString();
+    assert.strictEqual(
+      schema_str,
+      'Foo {ld: List<Number>, lI: List<Int>, lL: List<Long>, i: Int, t: Text, l: Long}'
+    );
   });
 });

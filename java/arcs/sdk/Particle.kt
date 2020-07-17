@@ -11,47 +11,82 @@
 
 package arcs.sdk
 
+import arcs.core.entity.awaitReady
+import arcs.core.host.api.Particle
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.runBlocking
+
 /**
  * Interface used by [ArcHost]s to interact dynamically with code-generated [Handle] fields
  * used by [Particle]s.
- *
- * @property map Key is a handle name, value is the corresponding [Handle].
- * @property entitySpecs Key is a handle name, value is the corresponding [EntitySpec].
  */
-interface HandleHolder {
-    val map: Map<String, Handle>
-    val entitySpecs: Map<String, EntitySpec<out Entity>>
-}
+typealias HandleHolder = arcs.core.host.api.HandleHolder
+
+/** Base interface for all particles. */
+typealias Particle = Particle
 
 /**
  * Base class used by `schema2kotlin` code-generator tool to generate a class containing all
  * declared handles.
  */
-abstract class HandleHolderBase(
-    override val map: Map<String, Handle>,
-    override val entitySpecs: Map<String, EntitySpec<out Entity>>
-) : HandleHolder
+open class HandleHolderBase(
+    private val particleName: String,
+    private val entitySpecs: Map<String, Set<EntitySpec<out Entity>>>
+) : HandleHolder {
+    val handles = mutableMapOf<String, Handle>().withDefault { handleName ->
+        checkHandleIsValid(handleName)
+        throw NoSuchElementException(
+            "Handle $handleName has not been initialized in $particleName yet."
+        )
+    }
 
-/** Base interface for all particles. */
-interface Particle {
+    override val dispatcher: CoroutineDispatcher
+        get() {
+            val handle = checkNotNull(handles.values.firstOrNull()) {
+                "No dispatcher available for a HandleHolder with no handles."
+            }
+            return handle.dispatcher
+        }
 
-    /**
-     * React to handle updates.
-     *
-     * Called for handles when change events are received from the backing store.
-     *
-     * @param handle Singleton or Collection handle
-     */
-    fun onHandleUpdate(handle: Handle) = Unit
+    override fun getEntitySpecs(handleName: String): Set<EntitySpec<out Entity>> {
+        checkHandleIsValid(handleName)
+        return entitySpecs.getValue(handleName)
+    }
 
-    /**
-     * React to handle synchronization.
-     *
-     * Called for handles that are marked for synchronization at connection, when they are updated with the full model
-     * of their data. This will occur once after setHandles() and any time thereafter if the handle is resynchronized.
-     *
-     * @param handle Singleton or Collection handle
-     * @param allSynced flag indicating if all handles are synchronized
-     */
-    fun onHandleSync(handle: Handle, allSynced: Boolean) = Unit
+    override fun getHandle(handleName: String): Handle {
+        checkHandleIsValid(handleName)
+        return handles.getValue(handleName)
+    }
+
+    override fun setHandle(handleName: String, handle: Handle) {
+        checkHandleIsValid(handleName)
+        require(!handles.containsKey(handleName)) {
+            "$particleName.$handleName has already been initialized."
+        }
+        handles[handleName] = handle
+    }
+
+    override fun reset() {
+        runBlocking {
+            handles.forEach { (_, handle) -> handle.close() }
+        }
+        handles.clear()
+    }
+
+    override fun isEmpty() = handles.isEmpty()
+
+    private fun checkHandleIsValid(handleName: String) {
+        // entitySpecs is passed in the constructor with the full set of specs, so it can be
+        // considered an authoritative list of which handles are valid and which aren't.
+        if (!entitySpecs.containsKey(handleName)) {
+            throw NoSuchElementException(
+                "Particle $particleName does not have a handle with name $handleName."
+            )
+        }
+    }
+
+    // TODO(b/158233725) - Temp workaround until Arc.waitForStart implies particles are started.
+    suspend fun awaitReady() {
+        handles.forEach { (_, handle) -> handle.awaitReady() }
+    }
 }

@@ -25,8 +25,7 @@ import {Dictionary} from '../runtime/hot.js';
 import '../runtime/schema-from-literal.js';
 import '../runtime/type-from-literal.js';
 import '../runtime/handle-constructors.js';
-import '../runtime/noop-proxy.js';
-import '../runtime/storageNG/store-constructors.js';
+import '../runtime/storage/store-constructors.js';
 import '../runtime/entity-utils.js';
 import '../runtime/reference.js';
 import '../runtime/interface-info-impl.js';
@@ -57,7 +56,7 @@ const isQualifiedUrl = (s: string) =>/^https?:\/\//.test(s);
 export abstract class LoaderBase {
   public pec?: ParticleExecutionContext;
   protected readonly urlMap: UrlMap;
-  // TODO(sjmiles): fix needed in hotreload-integration-test to restore specifiers
+  // TODO(sjmiles): fix needed in hotreload-integration-test to restore access specifiers
   /*protected readonly*/ staticMap: {};
   constructor(urlMap: UrlMap = {}, staticMap: {} = {}) {
     // ensure urlMap is valued if user passed in something nullish
@@ -65,13 +64,14 @@ export abstract class LoaderBase {
     this.staticMap = staticMap;
     this.compileRegExp(this.urlMap);
   }
+  abstract clone(): LoaderBase;
   setParticleExecutionContext(pec: ParticleExecutionContext): void {
     this.pec = pec;
   }
   flushCaches(): void {
     // as needed
   }
-  // TODO(sjmiles): XXX and XXXBinary methods are forked for type-safety (is there a way to be more DRY?)
+  // load[Resource|Static] and loadBinary[Resource|Static] methods are forked for type-safety (can we DRY?)
   async loadResource(file: string): Promise<string> {
     const content = this.loadStatic(file);
     if (content) {
@@ -82,6 +82,40 @@ export abstract class LoaderBase {
       return this.loadUrl(path);
     }
     return this.loadFile(path);
+  }
+
+  /**
+   * Test to determine if string matches JVM package / class naming convention:
+   * https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html
+   */
+  static isJvmClasspath(candidate: string): boolean {
+    if (!candidate) return false;
+
+    const isCapitalized = (s: string) => s[0] === s[0].toUpperCase();
+    const startsWithLetter = (s: string) => /[a-zA-Z]/.test(s[0]);
+
+    let capitalGate = false;
+    for (const it of candidate.split('.')) {
+      if (!it) return false;
+      if (!/\w+/.test(it)) return false;
+      if (!startsWithLetter(it)) return false;
+
+      // Switch from lower to upper
+      if (isCapitalized(it) && !capitalGate) {
+        capitalGate = true;
+      }
+
+      // Reject invalid capitalization -- switch from upper to lower case
+      if (!isCapitalized(it) && capitalGate) {
+        return false;
+      }
+    }
+
+    // Should end with capitals
+    return capitalGate;
+  }
+  jvmClassExists(classPath: string): boolean {
+    return false;
   }
   async loadBinaryResource(file: string): Promise<ArrayBuffer> {
     const content = this.loadStaticBinary(file);
@@ -165,8 +199,8 @@ export abstract class LoaderBase {
     // remove './'
     path = path.replace(/\/\.\//g, '/');
     // remove 'foo/..'
-    const norm = s => s.replace(/(?:^|\/)[^./]*\/\.\./g, '');
-    // keep removing `<name>/..` until there are no more
+    const norm = (s: string) => s.replace(/[^./]+\/\.\.\//g, '');
+    // keep removing `<name>/../` until there are no more
     for (let n = norm(path); n !== path; path = n, n = norm(path));
     // remove '//' except after `:`
     path = path.replace(/([^:])(\/\/)/g, '$1/');
@@ -179,8 +213,6 @@ export abstract class LoaderBase {
   }
   private resolvePath(path: string) {
     let resolved: string = path;
-    // TODO(sjmiles): inefficient
-    // find longest key in urlMap that is a prefix of path
     const macro = this.findUrlMapMacro(path);
     if (macro) {
       const config = this.urlMap[macro];
@@ -193,9 +225,11 @@ export abstract class LoaderBase {
     return resolved;
   }
   private findUrlMapMacro(path: string): string {
-    // TODO(sjmiles): inefficient
     // find longest key in urlMap that is a prefix of path
-    return Object.keys(this.urlMap).sort((a, b) => b.length - a.length).find(k => isString(path) && (path.slice(0, k.length) === k));
+    return Object.keys(this.urlMap)
+        .sort((a, b) => b.length - a.length)
+        .find(k => isString(path) && (path.slice(0, k.length) === k))
+        ;
   }
   private resolveConfiguredPath(path: string, macro: string, config) {
     return [

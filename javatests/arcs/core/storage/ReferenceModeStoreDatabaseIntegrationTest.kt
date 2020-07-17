@@ -22,22 +22,23 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.data.SingletonType
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.database.DatabaseData
+import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.driver.DatabaseDriver
 import arcs.core.storage.driver.DatabaseDriverProvider
-import arcs.core.storage.driver.DatabaseStorageKey
+import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.RefModeStoreData
 import arcs.core.storage.referencemode.RefModeStoreOp
-import arcs.core.storage.referencemode.RefModeStoreOutput
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.storage.testutil.WriteBackForTesting
 import arcs.core.util.testutil.LogRule
-import arcs.jvm.storage.database.testutil.MockDatabaseManager
+import arcs.jvm.storage.database.testutil.FakeDatabaseManager
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.After
 import org.junit.Before
@@ -47,42 +48,39 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @Suppress("UNCHECKED_CAST")
-@UseExperimental(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(JUnit4::class)
 class ReferenceModeStoreDatabaseIntegrationTest {
     @get:Rule
     val logRule = LogRule()
 
-    private lateinit var hash: String
-    private lateinit var testKey: ReferenceModeStorageKey
-    private lateinit var databaseFactory: MockDatabaseManager
-    private lateinit var schema: Schema
+    private var hash = "123456abcdef"
+    private var testKey = ReferenceModeStorageKey(
+        DatabaseStorageKey.Persistent("entities", hash),
+        DatabaseStorageKey.Persistent("set", hash)
+    )
+    private var schema = Schema(
+        setOf(SchemaName("person")),
+        SchemaFields(
+            singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
+            collections = emptyMap()
+        ),
+        hash
+    )
+    private lateinit var databaseFactory: FakeDatabaseManager
 
     @Before
-    fun setup() = runBlockingTest {
-        hash = "123456abcdef"
-
-        schema = Schema(
-            listOf(SchemaName("person")),
-            SchemaFields(
-                singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
-                collections = emptyMap()
-            ),
-            hash
-        )
-
-        testKey = ReferenceModeStorageKey(
-            DatabaseStorageKey("entities", hash),
-            DatabaseStorageKey("set", hash)
-        )
-
-        DriverFactory.clearRegistrationsForTesting()
-        databaseFactory = MockDatabaseManager()
+    fun setUp() = runBlockingTest {
+        DriverFactory.clearRegistrations()
+        databaseFactory = FakeDatabaseManager()
+        StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         DatabaseDriverProvider.configure(databaseFactory) { schema }
     }
 
     @After
-    fun teardown() = CapabilitiesResolver.reset()
+    fun tearDown() {
+        WriteBackForTesting.clear()
+    }
 
     @Test
     fun propagatesModelUpdates_fromProxies_toDrivers() = runBlockingTest {
@@ -106,7 +104,10 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
         val actor = activeStore.crdtKey
         val containerKey = activeStore.containerStore.storageKey as DatabaseStorageKey
-        val database = databaseFactory.getDatabase(containerKey.dbName, containerKey.persistent)
+        val database = databaseFactory.getDatabase(
+            containerKey.dbName,
+            containerKey is DatabaseStorageKey.Persistent
+        )
 
         val capturedCollection = requireNotNull(
             database.get(containerKey, DatabaseData.Collection::class, schema)
@@ -114,7 +115,10 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
         assertThat(capturedCollection.values)
             .containsExactly(
-                Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
+                ReferenceWithVersion(
+                    Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1)),
+                    VersionMap("me" to 1)
+                )
             )
 
         val bobKey = activeStore.backingStore.storageKey.childKeyWithComponent("an-id")
@@ -122,32 +126,54 @@ class ReferenceModeStoreDatabaseIntegrationTest {
             database.get(bobKey, DatabaseData.Entity::class, schema) as? DatabaseData.Entity
         )
 
-        assertThat(capturedBob.entity.data).containsExactly(
-            "name", "bob",
-            "age", 42.0
+        assertThat(capturedBob.rawEntity.singletons).containsExactly(
+            "name", "bob".toReferencable(),
+            "age", 42.toReferencable()
         )
+        assertThat(capturedBob.rawEntity.collections).isEmpty()
     }
 
     @Test
-    fun canCloneData_fromAnotherStore() = runBlockingTest {
+    fun databaseRoundtrip() = runBlockingTest {
         val activeStore = createReferenceModeStore()
 
-        // Add some data.
-        val collection = CrdtSet<RawEntity>()
-        val entity = createPersonEntity("an-id", "bob", 42)
-        collection.applyOperation(
-            CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
+        val e1 = createPersonEntity("e1", "e1", 1)
+        val e2 = createPersonEntity("e2", "e2", 2)
+        activeStore.onProxyMessage(
+            ProxyMessage.Operations(
+                listOf(RefModeStoreOp.SetAdd("me", VersionMap("me" to 1), e1)),
+                id = 1
+            )
         )
         activeStore.onProxyMessage(
-            ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
+            ProxyMessage.Operations(
+                listOf(RefModeStoreOp.SetAdd("me", VersionMap("me" to 2), e2)),
+                id = 1
+            )
         )
 
-        // Clone
+        // Read data (using a new store ensures we read from the db instead of using cached values).
         val activeStore2 = createReferenceModeStore()
-        activeStore2.cloneFrom(activeStore)
+        val e1Ref = CrdtSet.DataValue(
+            VersionMap("me" to 1),
+            Reference("e1", activeStore2.backingStore.storageKey, VersionMap("me" to 1))
+        )
+        val e2Ref = CrdtSet.DataValue(
+            VersionMap("me" to 2),
+            Reference("e2", activeStore2.backingStore.storageKey, VersionMap("me" to 2))
+        )
 
-        assertThat(activeStore2.getLocalData()).isEqualTo(activeStore.getLocalData())
-        assertThat(activeStore2.getLocalData()).isNotSameInstanceAs(activeStore.getLocalData())
+        assertThat(activeStore2.containerStore.getLocalData()).isEqualTo(CrdtSet.DataImpl(
+            VersionMap("me" to 2),
+            mutableMapOf(
+                "e1" to e1Ref,
+                "e2" to e2Ref
+            )
+        ))
+        assertThat((activeStore2.backingStore.getLocalData("e1") as CrdtEntity.Data).toRawEntity())
+            .isEqualTo(e1)
+        assertThat((activeStore2.backingStore.getLocalData("e2") as CrdtEntity.Data).toRawEntity())
+            .isEqualTo(e2)
     }
 
     @Test
@@ -165,7 +191,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
             activeStore.backingStore.storageKey,
             VersionMap(actor to 1)
         )
-        val refOperation = CrdtSet.Operation.Add(actor, VersionMap(actor to 1), bobRef)
+        val refOperation = CrdtSet.Operation.Add("me", VersionMap("me" to 1), bobRef)
 
         val bobEntity = createPersonEntityCrdt()
 
@@ -173,7 +199,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         assertThat(
             activeStore.onProxyMessage(
                 ProxyMessage.Operations(
-                    listOf(RefModeStoreOp.SetAdd(actor, VersionMap(actor to 1), bob)),
+                    listOf(RefModeStoreOp.SetAdd("me", VersionMap("me" to 1), bob)),
                     id = 1
                 )
             )
@@ -207,20 +233,116 @@ class ReferenceModeStoreDatabaseIntegrationTest {
 
         val containerKey = activeStore.containerStore.storageKey as DatabaseStorageKey
         val capturedPeople =
-            databaseFactory.getDatabase(containerKey.dbName, containerKey.persistent)
-                .get(
-                    containerKey,
-                    DatabaseData.Collection::class,
-                    schema
-                ) as DatabaseData.Collection
+            databaseFactory.getDatabase(
+                containerKey.dbName,
+                containerKey is DatabaseStorageKey.Persistent
+            ).get(
+                containerKey,
+                DatabaseData.Collection::class,
+                schema
+            ) as DatabaseData.Collection
 
-        assertThat(capturedPeople.values).isEqualTo(referenceCollection.consumerView)
+        assertThat(capturedPeople.values)
+            .containsExactly(
+                ReferenceWithVersion(
+                    Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1)),
+                    VersionMap("me" to 1)
+                )
+            )
         val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
         // Check that the stored bob's singleton data is equal to the expected bob's singleton data
         assertThat(storedBob.singletons).isEqualTo(bobEntity.data.singletons)
         // Check that the stored bob's collection data is equal to the expected bob's collection
         // data (empty)
         assertThat(storedBob.collections).isEqualTo(bobEntity.data.collections)
+    }
+
+    @Test
+    fun removeOpClearsBackingEntity() = runBlockingTest {
+        val activeStore = createReferenceModeStore()
+        val actor = activeStore.crdtKey
+        val bob = createPersonEntity("an-id", "bob", 42)
+
+        // Add Bob to collection.
+        val addOp = RefModeStoreOp.SetAdd(actor, VersionMap(actor to 1), bob)
+        assertThat(
+            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(addOp), id = 1))
+        ).isTrue()
+        // Bob was added to the backing store.
+        val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
+        assertThat(storedBob.toRawEntity("an-id")).isEqualTo(bob)
+
+        // Remove Bob from the collection.
+        val deleteOp = RefModeStoreOp.SetRemove(actor, VersionMap(actor to 1), bob)
+        assertThat(
+            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(deleteOp), id = 1))
+        ).isTrue()
+
+        // Check the backing store Bob has been cleared.
+        val storedBob2 = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
+        assertThat(storedBob2.toRawEntity("an-id")).isEqualTo(createEmptyPersonEntity("an-id"))
+
+        // Check the DB.
+        val backingKey = activeStore.backingStore.storageKey as DatabaseStorageKey
+        val database = databaseFactory.getDatabase(
+            backingKey.dbName,
+            backingKey is DatabaseStorageKey.Persistent
+        )
+        val bobKey = backingKey.childKeyWithComponent("an-id")
+        val capturedBob = requireNotNull(
+            database.get(bobKey, DatabaseData.Entity::class, schema) as? DatabaseData.Entity
+        )
+
+        assertThat(capturedBob.rawEntity).isEqualTo(createEmptyPersonEntity("an-id"))
+    }
+
+    @Test
+    fun singletonClearFreesBackingStoreCopy() = runBlockingTest {
+        val activeStore = createSingletonReferenceModeStore()
+        val actor = activeStore.crdtKey
+        val bob = createPersonEntity("an-id", "bob", 42)
+
+        // Set singleton to Bob.
+        val updateOp = RefModeStoreOp.SingletonUpdate(actor, VersionMap(actor to 1), bob)
+        assertThat(
+            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp), id = 1))
+        ).isTrue()
+        // Bob was added to the backing store.
+        assertThat(activeStore.backingStore.stores.keys).containsExactly("an-id")
+
+        // Remove Bob from the collection.
+        val clearOp = RefModeStoreOp.SingletonClear(actor, VersionMap(actor to 1))
+        assertThat(
+            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(clearOp), id = 1))
+        ).isTrue()
+
+        // Check memory copy has been freed.
+        assertThat(activeStore.backingStore.stores.keys).isEmpty()
+    }
+
+    @Test
+    fun singletonUpdateFreesBackingStoreCopy() = runBlockingTest {
+        val activeStore = createSingletonReferenceModeStore()
+        val actor = activeStore.crdtKey
+        val alice = createPersonEntity("a-id", "alice", 41)
+        val bob = createPersonEntity("b-id", "bob", 42)
+
+        // Set singleton to Bob.
+        val updateOp = RefModeStoreOp.SingletonUpdate(actor, VersionMap(actor to 1), bob)
+        assertThat(
+            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp), id = 1))
+        ).isTrue()
+        // Bob was added to the backing store.
+        assertThat(activeStore.backingStore.stores.keys).containsExactly("b-id")
+
+        // Set singleton to Alice.
+        val updateOp2 = RefModeStoreOp.SingletonUpdate(actor, VersionMap(actor to 2), alice)
+        assertThat(
+            activeStore.onProxyMessage(ProxyMessage.Operations(listOf(updateOp2), id = 1))
+        ).isTrue()
+
+        // Check Bob's memory copy has been freed.
+        assertThat(activeStore.backingStore.stores.keys).containsExactly("a-id")
     }
 
     @Test
@@ -239,16 +361,16 @@ class ReferenceModeStoreDatabaseIntegrationTest {
                 assertThat(sentSyncRequest).isFalse()
                 sentSyncRequest = true
                 activeStore.onProxyMessage(ProxyMessage.SyncRequest(id))
-                return@ProxyCallback true
+                return@ProxyCallback
             }
 
             assertThat(sentSyncRequest).isTrue()
             if (it is ProxyMessage.ModelUpdate) {
                 it.model.values.assertEquals(entityCollection.data.values)
                 job.complete()
-                return@ProxyCallback true
+                return@ProxyCallback
             }
-            return@ProxyCallback false
+            return@ProxyCallback
         })
 
         activeStore.onProxyMessage(
@@ -271,7 +393,6 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         val id1 = activeStore.on(ProxyCallback {
             assertThat(it is ProxyMessage.ModelUpdate).isTrue()
             job.complete()
-            true
         })
 
         // another store
@@ -279,7 +400,6 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         activeStore.on(
             ProxyCallback {
                 calledStore2 = true
-                true
             }
         )
 
@@ -324,15 +444,13 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         activeStore.backingStore
             .onProxyMessage(ProxyMessage.ModelUpdate(bobCrdt.data, id = 1), "an-id")
 
-        var id = -1
         val job = Job(coroutineContext[Job])
-        id = activeStore.on(
+        activeStore.on(
             ProxyCallback {
                 if (it is ProxyMessage.ModelUpdate) {
-                    assertThat(it.id).isEqualTo(id)
                     it.model.values.assertEquals(bobCollection.data.values)
                     job.complete()
-                    return@ProxyCallback true
+                    return@ProxyCallback
                 }
                 job.completeExceptionally(AssertionError("Should have received model update."))
             }
@@ -379,11 +497,11 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         )
         val t1Ref = CrdtSet.DataValue(
             VersionMap("me" to 1, "them" to 1),
-            Reference("t1", activeStore.backingStore.storageKey, VersionMap())
+            Reference("t1", activeStore.backingStore.storageKey, VersionMap("me" to 1, "them" to 1))
         )
         val t2Ref = CrdtSet.DataValue(
             VersionMap("me" to 1, "them" to 2),
-            Reference("t2", activeStore.backingStore.storageKey, VersionMap())
+            Reference("t2", activeStore.backingStore.storageKey, VersionMap("me" to 1, "them" to 2))
         )
 
         driver.receiver!!(
@@ -394,7 +512,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
                     "t1" to t1Ref
                 )
             ),
-            1
+            3
         )
         driver.receiver!!(
             CrdtSet.DataImpl(
@@ -405,23 +523,26 @@ class ReferenceModeStoreDatabaseIntegrationTest {
                     "t2" to t2Ref
                 )
             ),
-            2
+            4
         )
 
         activeStore.idle()
 
-        assertThat(activeStore.containerStore.getLocalData())
-            .isEqualTo(driver.getLocalData())
+        assertThat(activeStore.containerStore.getLocalData()).isEqualTo(
+            driver.getDatabaseData().first
+        )
     }
 
     @Test
-    fun holdsOnto_containerUpdate_untilBackingDataArrives() = runBlocking {
+    fun holdsOnto_containerUpdate_untilBackingDataArrives() = runBlockingTest {
         val activeStore = createReferenceModeStore()
         val actor = activeStore.crdtKey
 
         val referenceCollection = CrdtSet<Reference>()
         val ref = Reference("an-id", activeStore.backingStore.storageKey, VersionMap(actor to 1))
-        referenceCollection.applyOperation(CrdtSet.Operation.Add("me", VersionMap("me" to 1), ref))
+        referenceCollection.applyOperation(
+            CrdtSet.Operation.Add(actor, VersionMap(actor to 1), ref)
+        )
 
         val job = Job(coroutineContext[Job])
         var backingStoreSent = false
@@ -437,16 +558,16 @@ class ReferenceModeStoreDatabaseIntegrationTest {
                     assertThat(entityRecord.singletons["name"]?.id)
                         .isEqualTo("bob".toReferencable().id)
                     val age = requireNotNull(entityRecord.singletons["age"])
-                    assertThat(age.tryDereference()).isEqualTo(42.0.toReferencable())
+                    assertThat(age.unwrap()).isEqualTo(42.0.toReferencable())
                     job.complete()
                 } else {
                     job.completeExceptionally(AssertionError("Invalid ProxyMessage type received"))
                 }
-                true
             }
         )
 
         val containerJob = launch {
+            logRule("Sending to containerStore.onReceive")
             activeStore.containerStore.onReceive(referenceCollection.data, id + 1)
         }
 
@@ -473,6 +594,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         val backingJob = launch {
             val backingStore = activeStore.backingStore.stores["an-id"]
                 ?: activeStore.backingStore.setupStore("an-id")
+            logRule("Sending to backingStore.onReceive")
             backingStore.store.onReceive(entityCrdt.data, id + 2)
         }
 
@@ -484,15 +606,21 @@ class ReferenceModeStoreDatabaseIntegrationTest {
     }
 
     private suspend fun createReferenceModeStore(): ReferenceModeStore {
-        return ReferenceModeStore.CONSTRUCTOR(
-            StoreOptions<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
+        return ReferenceModeStore.create(
+            StoreOptions(
                 testKey,
-                ExistenceCriteria.MayExist,
-                CollectionType(EntityType(schema)),
-                StorageMode.ReferenceMode
-            ),
-            CrdtSet.Data::class
-        ) as ReferenceModeStore
+                CollectionType(EntityType(schema))
+            )
+        )
+    }
+
+    private suspend fun createSingletonReferenceModeStore(): ReferenceModeStore {
+        return ReferenceModeStore.create(
+            StoreOptions(
+                testKey,
+                SingletonType(EntityType(schema))
+            )
+        )
     }
 
     private fun createPersonEntity(id: ReferenceId, name: String, age: Int): RawEntity = RawEntity(
@@ -500,6 +628,14 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         singletons = mapOf(
             "name" to name.toReferencable(),
             "age" to age.toReferencable()
+        )
+    )
+
+    private fun createEmptyPersonEntity(id: ReferenceId): RawEntity = RawEntity(
+        id = id,
+        singletons = mapOf(
+            "name" to null,
+            "age" to null
         )
     )
 

@@ -7,6 +7,11 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
+import {handleForActiveStore} from '../../build/runtime/storage/storage-ng.js';
+import {CollectionHandle} from '../../build/runtime/storage/handle.js';
+import {Entity} from '../../build/runtime/entity.js';
+
 const storeTemplate = `
   <style>
     #save {
@@ -21,7 +26,7 @@ const storeTemplate = `
     #header {
       min-width: 540px;
     }
-    #store-name {
+    #store-label {
       display: inline;
       color: green;
       font-size: 12px;
@@ -81,7 +86,7 @@ const storeTemplate = `
   </style>
   <div id="header">
     <span id="save">💾</span>
-    <span id="store-name"></span>
+    <span id="store-label"></span>
     <span class="buttons">
       <span id="schema-btn">S</span>
       <span id="collapse-btn">⮝</span>
@@ -102,7 +107,7 @@ export class StorePanel extends HTMLElement {
 
     this.header = shadowRoot.getElementById('header');
     this.saveBtn = shadowRoot.getElementById('save');
-    this.storeName = shadowRoot.getElementById('store-name');
+    this.storeLabel = shadowRoot.getElementById('store-label');
     this.schemaBtn = shadowRoot.getElementById('schema-btn');
     this.collapseBtn = shadowRoot.getElementById('collapse-btn');
     this.container = shadowRoot.getElementById('container');
@@ -110,6 +115,7 @@ export class StorePanel extends HTMLElement {
     this.schema = shadowRoot.getElementById('schema');
     this.error = shadowRoot.getElementById('error');
     this.store = null;
+    this.handle = null;
     this.updateCallback = null;
     this.data = null;
 
@@ -122,18 +128,14 @@ export class StorePanel extends HTMLElement {
     this.contents.addEventListener('keypress', this.interceptCtrlEnter.bind(this));
   }
 
-  async attach(store) {
+  async attach(store, arc) {
     this.store = store;
-    this.storeName.textContent = store.name || store.id;
-    const schema = this.store.backingType().entitySchema;
-    if (schema) {
-      this.schema.textContent = schema.toManifestString();
-    } else {
-      this.schema.textContent = '// Unknown schema';
-    }
-    await this.update(true);
+    this.handle = await handleForActiveStore(store, arc);
+    this.storeLabel.textContent = store.storageKey;
+    const schema = store.type.getEntitySchema();
+    this.schema.textContent = schema ? schema.toManifestString() : '// Unknown schema';
     this.updateCallback = () => this.update(false);
-    store.on(this.updateCallback);
+    this.store.on(this.updateCallback);
   }
 
   interceptCtrlEnter(event) {
@@ -168,15 +170,15 @@ export class StorePanel extends HTMLElement {
 
   async update(local) {
     let items;
-    if (this.store.toList) {
-      items = await this.store.toList();
+    if (this.handle instanceof CollectionHandle) {
+      items = [...await this.handle.fetchAll()];
     } else {
-      const item = await this.store.get();
+      const item = await this.handle.fetch();
       items = item ? [item] : [];
     }
     this.data = {};
     if (items.length > 0) {
-      items.forEach(({id, rawData}) => this.data[id] = rawData);
+      items.forEach(e => this.data[Entity.id(e)] = Entity.toLiteral(e));
       // Strip enclosing brackets and remove indent before displaying.
       const json = JSON.stringify(this.data, null, 2).slice(4, -1).replace(/\n {2}/g, '\n');
       this.contents.value = json;
@@ -210,35 +212,53 @@ export class StorePanel extends HTMLElement {
   }
 
   async writeToStore(value) {
-    if (this.store.toList) {
+    if (this.handle instanceof CollectionHandle) {
       // Collections; we need to manually determine the update ops
       const json = (value.length > 0) ? this.parse(value) : [];
       if (json === null) {
         return false;
       }
       const curIds = new Set([...Object.keys(this.data)]);
-      for (const [id, rawData] of Object.entries(json)) {
-        if (!curIds.delete(id) || JSON.stringify(this.data[id]) !== JSON.stringify(rawData)) {
-          await this.store.store({id, rawData}, [String(Math.random()).slice(2)]);
+      for (const [id, data] of Object.entries(json)) {
+        let entity = null;
+        if (curIds.delete(id)) {
+          if (JSON.stringify(this.data[id]) !== JSON.stringify(data)) {
+            // Existing entity data has been changed.
+            entity = this.makeEntity(id, data);
+            await this.handle.remove(entity);
+          }
+        } else {
+          // A new entity has been added.
+          entity = this.makeEntity(id, data);
+        }
+        if (entity) {
+          await this.handle.add(entity, [String(Math.random()).slice(2)]);
         }
       }
       for (const id of curIds.values()) {
-        await this.store.remove(id);
+        await this.handle.remove(this.makeEntity(id, {}));
       }
     } else {
       // Singletons
       if (value.length === 0) {
-        await this.store.clear();
+        await this.handle.clear();
       } else {
         const json = this.parse(value);
         if (json === null) {
           return false;
         }
-        const [id, rawData] = Object.entries(json)[0];
-        await this.store.set({id, rawData});
+        const [id, data] = Object.entries(json)[0];
+        await this.handle.set(this.makeEntity(id, data));
       }
     }
     return true;
+  }
+
+  // TODO: use entity mutation when implemented
+  makeEntity(id, data) {
+    const entity = new this.handle.entityClass(data);
+    Entity.identify(entity, id, null);
+    return entity;
   }
 
   parse(value) {

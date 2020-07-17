@@ -1,0 +1,49 @@
+// #Ingress: TrustedTextWriter
+// #Ingress: TrustedNumberWriter
+// #OK
+particle TrustedTextWriter
+  foo: writes Foo {a: Text, b: Number}
+  claim foo.a is trusted
+  claim foo.b is untrusted
+particle TrustedNumberWriter
+  foo: writes Foo {a: Text, b: Number}
+  claim foo.a is untrusted
+  claim foo.b is trusted
+particle TrustedNumberReader
+  foo: reads Foo {b: Number}
+  baz: writes Baz {a: Text}
+particle TrustedTextReader
+  foo: reads Foo {a: Text}
+  baz: writes Baz {a: Text}
+particle UntrustedTextReader
+  foo: reads Foo {a: Text}
+  baz: writes Baz {a: Text}
+particle UntrustedNumberReader
+  foo: reads Foo {b: Number}
+  baz: writes Baz {a: Text}
+particle BazReader
+  t: reads Baz {a: Text}
+  u: reads Baz {a: Text}
+  check t.a is trusted
+  check u.a is untrusted
+
+recipe R
+  TrustedTextWriter
+    foo: writes trustedTextHandle
+  TrustedNumberWriter
+    foo: writes trustedNumberHandle
+  UntrustedTextReader
+    foo: reads trustedNumberHandle
+    baz: writes untrustedHandle
+  TrustedTextReader
+    foo: reads trustedTextHandle
+    baz: writes trustedHandle
+  UntrustedNumberReader
+    foo: reads trustedTextHandle
+    baz: writes untrustedHandle
+  TrustedNumberReader
+    foo: reads trustedNumberHandle
+    baz: writes trustedHandle
+  BazReader
+    t: reads trustedHandle
+    u: reads untrustedHandle

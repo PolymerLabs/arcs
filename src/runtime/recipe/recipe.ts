@@ -27,6 +27,7 @@ import {Slot} from './slot.js';
 import {compareComparables} from './comparable.js';
 import {Cloneable} from './walker.js';
 import {Dictionary} from '../hot.js';
+import {AnnotationRef} from './annotation.js';
 
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;
 export type CloneMap = Map<RecipeComponent, RecipeComponent>;
@@ -45,8 +46,7 @@ export class Recipe implements Cloneable<Recipe> {
   private _localName: string | undefined = undefined;
   private _cloneMap: CloneMap;
 
-  annotation: string | undefined = undefined;
-  triggers: [string, string][][] = [];
+  private _annotations: AnnotationRef[] = [];
 
   // TODO: Recipes should be collections of records that are tagged
   // with a type. Strategies should register the record types they
@@ -310,20 +310,27 @@ export class Recipe implements Cloneable<Recipe> {
     return handleConnections;
   }
 
+  get annotations(): AnnotationRef[] { return this._annotations; }
+  set annotations(annotations: AnnotationRef[]) {
+    annotations.every(a => assert(a.isValidForTarget('Recipe'),
+        `Annotation '${a.name}' is invalid for Recipe`));
+    this._annotations = annotations;
+  }
+  getAnnotation(name: string): AnnotationRef | null {
+    const annotations = this.findAnnotations(name);
+    assert(annotations.length <= 1,
+        `Multiple annotations found for '${name}'. Use findAnnotations instead.`);
+    return annotations.length === 0 ? null : annotations[0];
+  }
+  findAnnotations(name: string): AnnotationRef[] {
+    return this.annotations.filter(a => a.name === name);
+  }
+
   isEmpty(): boolean {
     return this.particles.length === 0 &&
            this.handles.length === 0 &&
            this.slots.length === 0 &&
            this._connectionConstraints.length === 0;
-  }
-
-  findHandle(id: string): Handle {
-    for (const handle of this.handles) {
-      if (handle.id === id) {
-        return handle;
-      }
-    }
-    return null;
   }
 
   findSlot(id: string): Slot {
@@ -381,7 +388,10 @@ export class Recipe implements Cloneable<Recipe> {
       this._findDuplicate(this._handles, options);
       this._findDuplicate(this._slots, options);
       const checkForInvalid = (list) => list.forEach(item => !item._isValid(options));
-      checkForInvalid(this._handles);
+      // We resolve the type of the regular handles first,
+      // so that we can use it to resolve the type of synethetic handles later.
+      checkForInvalid(this._handles.filter(h => !h.isSynthetic));
+      checkForInvalid(this._handles.filter(h => h.isSynthetic));
       checkForInvalid(this._particles);
       checkForInvalid(this._slots);
       checkForInvalid(this.handleConnections);
@@ -539,8 +549,13 @@ export class Recipe implements Cloneable<Recipe> {
     };
 
     recipe._name = this.name;
+    recipe.annotations = this.annotations;
+
     recipe._verbs = recipe._verbs.concat(...this._verbs);
-    this._handles.forEach(cloneTheThing);
+
+    // Clone regular handles first, then synthetic ones, as synthetic depend on regular.
+    this._handles.filter(h => !h.isSynthetic).forEach(cloneTheThing);
+    this._handles.filter(h => h.isSynthetic).forEach(cloneTheThing);
     this._particles.forEach(cloneTheThing);
     this._slots.forEach(cloneTheThing);
     this._connectionConstraints.forEach(cloneTheThing);
@@ -602,6 +617,9 @@ export class Recipe implements Cloneable<Recipe> {
   toString(options?: ToStringOptions): string {
     const nameMap = this._makeLocalNameMap();
     const result: string[] = [];
+    for (const annotation of this.annotations) {
+      result.push(annotation.toString());
+    }
     const verbs = this.verbs.length > 0 ? ` ${this.verbs.map(verb => `&${verb}`).join(' ')}` : '';
     result.push(`recipe${this.name ? ` ${this.name}` : ''}${verbs}`);
     if (options && options.showUnresolved) {

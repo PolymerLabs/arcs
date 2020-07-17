@@ -2,7 +2,7 @@ load("//third_party/java/arcs/build_defs/internal:kotlin.bzl", "arcs_kt_jvm_libr
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 arcs_kt_jvm_library(
     name = "testutil",
@@ -10,5 +10,10 @@ arcs_kt_jvm_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//java/arcs/core/storage:storage_key",
+        "//java/arcs/core/storage:writeback",
+        "//java/arcs/core/storage/keys:protocols",
+        "//java/arcs/core/util",
+        "//third_party/kotlin/kotlinx_coroutines",
+        "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",
     ],
 )

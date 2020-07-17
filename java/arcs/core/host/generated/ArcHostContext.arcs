@@ -1,0 +1,44 @@
+meta
+  namespace: arcs.core.host.generated
+
+// Represents a Plan.HandleConnection
+schema HandleConnection
+  handleName: Text
+  storageKey: Text
+  // HandleMode enum name
+  mode: Text
+  // Type.Tag enum name
+  type: Text
+  // Ttl object's count field in minutes
+  ttl: Number
+
+// Represents a ParticleContext and Plan.Particle
+schema ParticleSchema
+  particleName: Text
+  location: Text
+  // ParticleState enum name and exception info for errors
+  particleState: Text
+  consecutiveFailures: Number
+  handles: [&HandleConnection]
+
+particle ArcHostContextParticle
+  arcHostContext: reads writes ArcHostContext {
+    arcId: Text,
+    hostId: Text,
+    // ArcState enum name and exception info for errors
+    arcState: Text,
+    particles: [&ParticleSchema]
+  }
+  particles: reads writes [ParticleSchema]
+  handleConnections: reads writes [HandleConnection]
+
+recipe ArcHostContext
+  arcHostContext: create 'arcHostContext'
+  particles: create 'particles'
+  handleConnections: create 'handleConnections'
+
+  ArcHostContextParticle
+    arcHostContext: reads writes arcHostContext
+    particles: reads writes particles
+    handleConnections: reads writes handleConnections
+

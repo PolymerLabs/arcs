@@ -62,6 +62,8 @@ sealed class RefModeStoreData : CrdtData {
                 values.mapValues { CrdtSet.DataValue(it.value.versionMap, it.value.value) }
                     .toMutableMap()
             )
+
+        override fun asCrdtSetData() = Set(versionMap, values)
     }
 
     data class Set(
@@ -112,6 +114,13 @@ interface RefModeStoreOp : CrdtOperationAtTime {
         RefModeSet,
         CrdtSet.Operation.Remove<RawEntity>(actor, clock, removed) {
         constructor(setOp: Remove<RawEntity>) : this(setOp.actor, setOp.clock, setOp.removed)
+    }
+
+    class SetClear(actor: Actor, clock: VersionMap) :
+        Set,
+        RefModeSet,
+        CrdtSet.Operation.Clear<RawEntity>(actor, clock) {
+        constructor(setOp: Clear<RawEntity>) : this(setOp.actor, setOp.clock)
     }
 }
 
@@ -249,6 +258,8 @@ private fun CrdtOperation.toRefModeStoreSetOp(): RefModeStoreOp =
             RefModeStoreOp.SetAdd(this as CrdtSet.Operation.Add<RawEntity>)
         is CrdtSet.Operation.Remove<*> ->
             RefModeStoreOp.SetRemove(this as CrdtSet.Operation.Remove<RawEntity>)
+        is CrdtSet.Operation.Clear<*> ->
+            RefModeStoreOp.SetClear(this as CrdtSet.Operation.Clear<RawEntity>)
         is CrdtSet.Operation.FastForward<*> ->
             throw IllegalArgumentException(
                 "ReferenceModeStore does not support FastForward"

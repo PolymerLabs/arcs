@@ -16,10 +16,9 @@ class WasmCollectionImpl<T : WasmEntity>(
     particle: WasmParticleImpl,
     name: String,
     private val entitySpec: WasmEntitySpec<T>
-) : WasmHandle(name, particle) {
+) : WasmHandleEvents<Set<T>>(particle, name) {
 
     private val entities: MutableMap<String, T> = mutableMapOf()
-    private val onUpdateActions: MutableList<(Set<T>) -> Unit> = mutableListOf()
 
     val size: Int
         get() = entities.size
@@ -40,28 +39,24 @@ class WasmCollectionImpl<T : WasmEntity>(
                 val chunk = chomp(len)
                 // TODO: just get the id, no need to decode the full entity
                 val entity = requireNotNull(entitySpec.decode(chunk))
-                entities.remove(entity.internalId)
+                entities.remove(entity.entityId)
             }
         }
         notifyOnUpdateActions()
-    }
-
-    fun onUpdate(action: (Set<T>) -> Unit) {
-        onUpdateActions.add(action)
     }
 
     fun isEmpty() = entities.isEmpty()
 
     fun store(entity: T) {
         val encoded = entity.encodeEntity()
-        WasmRuntimeClient.collectionStore(particle, this, encoded)?.let { entity.internalId = it }
-        entities[entity.internalId] = entity
+        WasmRuntimeClient.collectionStore(particle, this, encoded)?.let { entity.entityId = it }
+        entities[entity.entityId] = entity
     }
 
     fun remove(entity: T) {
-        entities[entity.internalId]?.let {
+        entities[entity.entityId]?.let {
             val encoded = it.encodeEntity()
-            entities.remove(entity.internalId)
+            entities.remove(entity.entityId)
             WasmRuntimeClient.collectionRemove(particle, this, encoded)
         }
         notifyOnUpdateActions()
@@ -73,7 +68,7 @@ class WasmCollectionImpl<T : WasmEntity>(
                 val len = getInt(':')
                 val chunk = chomp(len)
                 val entity = requireNotNull(entitySpec.decode(chunk))
-                entities[entity.internalId] = entity
+                entities[entity.entityId] = entity
             }
         }
     }

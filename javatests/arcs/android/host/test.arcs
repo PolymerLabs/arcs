@@ -1,0 +1,35 @@
+meta
+  namespace: arcs.android.host
+
+schema Person
+  name: Text
+  age: Number
+  is_cool: Boolean
+
+particle TestParticle in 'arcs.android.host.AndroidSdkHandlesTest.TestParticle'
+  readHandle: reads Person {name, age, is_cool}
+  writeHandle: writes Person {name, age, is_cool}
+  readWriteHandle: reads writes Person {name, age, is_cool}
+  readCollectionHandle: reads [Person {name, age, is_cool}]
+  writeCollectionHandle: writes [Person {name, age, is_cool}]
+  // TODO: Add tests for deletion handle using query.
+  queryCollectionHandle: reads [Person {name, age, is_cool} [age > ?]]
+  readWriteCollectionHandle: reads writes [Person]
+  readQueryCollectionHandle: reads [Person {name, age, is_cool} [age > ?]]
+  writeQueryCollectionHandle: writes [Person {name, age, is_cool} [age > ?]]
+  readWriteQueryCollectionHandle: reads writes [Person {name, age, is_cool} [age > ?]]
+
+recipe TestRecipe
+  data: create
+  dataSet: create
+
+  TestParticle
+    readHandle: reads data
+    writeHandle: writes data
+    queryCollectionHandle: reads dataSet
+    readWriteHandle: reads writes data
+    writeCollectionHandle: writes dataSet
+    readWriteCollectionHandle: reads dataSet
+    readQueryCollectionHandle: reads dataSet
+    writeQueryCollectionHandle: writes dataSet
+    readWriteQueryCollectionHandle: reads dataSet

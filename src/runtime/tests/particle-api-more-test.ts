@@ -9,30 +9,30 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {SlotComposer} from '../slot-composer.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {Arc} from '../arc.js';
-import {singletonHandleForTest, collectionHandleForTest, storageKeyPrefixForTest} from '../testing/handle-for-test.js';
+import {storageKeyPrefixForTest} from '../testing/handle-for-test.js';
+import {SingletonEntityStore, CollectionEntityStore, SingletonEntityHandle, CollectionEntityHandle, handleForStore} from '../storage/storage.js';
 
 //
 // TODO(sjmiles): deref'ing stores by index is brittle, but `id` provided to create syntax
 // doesn't end up on the store, and searching by type or tags is hard (?)
 //
 const getSingletonData = async (arc: Arc, index: number) => {
-  const store = arc._stores[index];
+  const store = arc._stores[index] as SingletonEntityStore;
   assert.ok(store, `failed to find store[${index}]`);
-  const handle = await singletonHandleForTest(arc, store);
+  const handle: SingletonEntityHandle = await handleForStore(store, arc);
   const data = await handle.fetch();
   assert.ok(data, `store[${index}] was empty`);
   return data;
 };
 
 const getCollectionData = async (arc: Arc, index: number) => {
-  const store = arc._stores[index];
+  const store = arc._stores[index] as CollectionEntityStore;
   assert.ok(store, `failed to find store[${index}]`);
-  const handle = await collectionHandleForTest(arc, store);
+  const handle: CollectionEntityHandle = await handleForStore(store, arc);
   const data = await handle.toList();
   assert.ok(data, `store[${index}] was empty`);
   return data;
@@ -64,7 +64,7 @@ describe('ui-particle-api', () => {
               result: result
         `,
         './test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
-          // TODO(sjmiles): normally update should never be async
+          // normally update should never be async
           async update() {
             try {
               // set a non-existent handle
@@ -122,7 +122,7 @@ describe('ui-particle-api', () => {
               result2: result2
         `,
         './test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
-          // TODO(sjmiles): normally update should never be async
+          // normally update should never be async
           async update() {
             // set a Singleton with a POJO
             this.set('thing', {value: 'FooBar'});
@@ -131,8 +131,6 @@ describe('ui-particle-api', () => {
             this.set('thing2', new entityClass({value: 'FooBar'}));
             // try to set a Collection to a value (expect exception)
             try {
-              // TODO(sjmiles): await here because in spite of note above because
-              // otherwise I couldn't figure out how to capture the exception
               await this.set('stuff', {value: 'OopsStuffIsCollection'});
             } catch(x) {
               this.set('result', {ok: true});
@@ -176,7 +174,7 @@ describe('ui-particle-api', () => {
               thing: thing
         `,
         './test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
-          // TODO(sjmiles): normally update should never be async
+          // normally update should never be async
           async update() {
             // add an Entity to a Collection
             this.add('stuff', new (this.handles.get('stuff').entityClass)({value: 'FooBarEntity'}));
@@ -187,8 +185,6 @@ describe('ui-particle-api', () => {
             ]);
             // try to add to a Singleton (expect exception)
             try {
-              // TODO(sjmiles): await here because in spite of note above because
-              // otherwise I couldn't figure out how to capture the exception
               await this.add(
                   'thing',
                   new (this.handles.get('thing').entityClass)({value: 'OopsStuffIsCollection'}));
@@ -227,7 +223,7 @@ describe('ui-particle-api', () => {
               thing: thing
         `,
         './test-particle.js': `defineParticle(({SimpleParticle}) => class extends SimpleParticle {
-          // TODO(sjmiles): normally update should never be async
+          // normally update should never be async
           async update(inputs, state) {
             if (!state.tested) {
               state.tested = true;

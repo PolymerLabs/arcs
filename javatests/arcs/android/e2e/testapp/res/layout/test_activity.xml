@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2020 Google LLC.
+  ~
+  ~ This code may only be used under the BSD style license found at
+  ~ http://polymer.github.io/LICENSE.txt
+  ~
+  ~ Code distributed by Google as part of this project is also subject to an additional IP rights
+  ~ grant found at
+  ~ http://polymer.github.io/PATENTS.txt
+  -->
+<ScrollView
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent">
+
+  <LinearLayout
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+      android:id="@+id/result1"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:textAllCaps="false"
+      android:text="@string/result_prompt"
+      android:fontFamily="sans-serif-black"
+      android:padding="8dp"
+      android:layout_marginTop="8dp"/>
+
+    <TextView
+      android:id="@+id/result2"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:textAllCaps="false"
+      android:text="@string/result_prompt"
+      android:fontFamily="sans-serif-black"
+      android:padding="8dp"
+      android:layout_marginBottom="8dp"/>
+
+    <LinearLayout
+      android:orientation="vertical"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_margin="8dp">
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-medium"
+        android:text="@string/readwrite_test"/>
+
+      <Button
+        android:id="@+id/read_write_test"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAllCaps="false"
+        android:text="@string/read_write_test_btn"
+        style="?android:attr/buttonBarButtonStyle"/>
+
+      <Button
+        android:id="@+id/persistent_read_write_test"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAllCaps="false"
+        android:text="@string/persistent_read_write_test_btn"
+        style="?android:attr/buttonBarButtonStyle"/>
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-medium"
+        android:text="@string/resurrection_test"/>
+
+      <Button
+        android:id="@+id/start_resurrection_arc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAllCaps="false"
+        android:text="@string/start_resurrection_arc_btn"
+        style="?android:attr/buttonBarButtonStyle"/>
+
+      <Button
+        android:id="@+id/stop_read_service"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAllCaps="false"
+        android:text="@string/stop_read_service_btn"
+        style="?android:attr/buttonBarButtonStyle"/>
+
+      <Button
+        android:id="@+id/trigger_write"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAllCaps="false"
+        android:text="@string/trigger_write_btn"
+        style="?android:attr/buttonBarButtonStyle"/>
+
+      <Button
+        android:id="@+id/stop_resurrection_arc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAllCaps="false"
+        android:text="@string/stop_resurrection_arc_btn"
+        style="?android:attr/buttonBarButtonStyle"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+      android:orientation="vertical"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_margin="8dp">
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-medium"
+        android:text="@string/storage_test"/>
+
+      <RadioGroup
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <RadioButton
+          android:id="@+id/singleton"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/singleton"
+          android:checked="true"/>
+        <RadioButton
+          android:id="@+id/collection"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/collection"/>
+      </RadioGroup>
+
+      <RadioGroup
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <RadioButton
+          android:id="@+id/in_memory"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/in_memory"
+          android:checked="true"/>
+        <RadioButton
+          android:id="@+id/persistent"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/persistent"/>
+      </RadioGroup>
+
+      <RadioGroup
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <RadioButton
+          android:id="@+id/local"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/local_activity"
+          android:checked="true"/>
+        <RadioButton
+          android:id="@+id/remote"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/remote_service"/>
+      </RadioGroup>
+
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        style="?android:attr/buttonBarStyle">
+        <Button
+          android:id="@+id/create"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:textAllCaps="false"
+          android:text="@string/create"
+          style="?android:attr/buttonBarButtonStyle"/>
+        <Button
+          android:id="@+id/fetch"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:textAllCaps="false"
+          android:text="@string/fetch"
+          style="?android:attr/buttonBarButtonStyle"/>
+        <Button
+          android:id="@+id/set"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:textAllCaps="false"
+          android:text="@string/set"
+          style="?android:attr/buttonBarButtonStyle"/>
+        <Button
+          android:id="@+id/clear"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:textAllCaps="false"
+          android:text="@string/clear"
+          style="?android:attr/buttonBarButtonStyle"/>
+      </LinearLayout>
+    </LinearLayout>
+  </LinearLayout>
+</ScrollView>

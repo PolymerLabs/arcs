@@ -9,18 +9,18 @@
  */
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Schema} from '../../runtime/schema.js';
 import {Dictionary} from '../../runtime/hot.js';
-import {Schema2Base, ClassGenerator} from '../schema2base.js';
+import {Schema2Base, EntityGenerator} from '../schema2base.js';
 import {SchemaNode} from '../schema2graph.js';
 import {Schema2Cpp} from '../schema2cpp.js';
 import {Schema2Kotlin} from '../schema2kotlin.js';
 import {ParticleSpec} from '../../runtime/particle-spec.js';
+import {generateFields} from '../kotlin-schema-field.js';
 
 /* eslint key-spacing: ["error", {"mode": "minimum"}] */
 
 class Schema2Mock extends Schema2Base {
-  res: Dictionary<{count: number, adds: string[]}> = {};
+  res: Dictionary<string[]> = {};
 
   static async create(manifest: Manifest): Promise<Schema2Mock> {
     const mock = new Schema2Mock({'_': []});
@@ -28,23 +28,21 @@ class Schema2Mock extends Schema2Base {
     return mock;
   }
 
-  getClassGenerator(node: SchemaNode): ClassGenerator {
-    const collector = {count: 0, adds: []};
-    this.res[node.name] = collector;
-    return {
-      addField(field: string, typeChar: string, isOptional: boolean, refClassName: string|null) {
-        const refInfo = refClassName ? `<${refClassName}>` : '';
-        collector.adds.push(field + ':' + typeChar + refInfo + (isOptional ? '?' : ''));
-      },
+  getEntityGenerator(node: SchemaNode): EntityGenerator {
+    this.res[node.entityClassName] = generateFields(node).map(f => `${f.name}:${f.type.kotlinType}`);
 
-      generate(schemaHash: string, fieldCount: number): string {
-        collector.count = fieldCount;
+    return {
+      generate() {
         return '';
       }
     };
   }
 
-  generateParticleClass(particle: ParticleSpec) {
+  async generateParticleClass(particle: ParticleSpec) {
+    return '';
+  }
+
+  async generateTestHarness(particle: ParticleSpec, nodes: SchemaNode[]): Promise<string> {
     return '';
   }
 }
@@ -59,9 +57,9 @@ describe('schema2wasm', () => {
     `);
     const mock = await Schema2Mock.create(manifest);
     assert.deepStrictEqual(mock.res, {
-      'FooInternal1': {count: 1, adds: ['txt:T']},
-      'Foo_Input3':   {count: 2, adds: ['url:U', 'ref:R<FooInternal1>']},
-      'Foo_Input2':   {count: 2, adds: ['txt:T', 'num:N']},
+      'FooInternal1': ['txt:String'],
+      'Site':         ['url:String', 'ref:Reference<FooInternal1>?'],
+      'Foo_Input2':   ['txt:String', 'num:Double'],
     });
   });
 
@@ -73,7 +71,7 @@ describe('schema2wasm', () => {
     `);
     const mock = await Schema2Mock.create(manifest);
     assert.deepStrictEqual(mock.res, {
-      'Foo_Input': {count: 4, adds: ['txt:T', 'url:U', 'num:N', 'flg:B']}
+      'Foo_Input': ['txt:String', 'url:String', 'num:Double', 'flg:Boolean']
     });
   });
 
@@ -85,11 +83,11 @@ describe('schema2wasm', () => {
     `);
     const mock = await Schema2Mock.create(manifest);
     assert.deepStrictEqual(mock.res, {
-      'Foo_H1':     {count: 2, adds: ['a:T', 'r:R<Foo_H1_R>']},
-      'Foo_H1_R':   {count: 1, adds: ['b:T']},
-      'Foo_H2':     {count: 1, adds: ['s:R<Foo_H2_S>']},
-      'Foo_H2_S':   {count: 2, adds: ['f:B', 't:R<Foo_H2_S_T>']},
-      'Foo_H2_S_T': {count: 1, adds: ['x:N']},
+      'Foo_H1':     ['a:String', 'r:Reference<Foo_H1_R>?'],
+      'Foo_H1_R':   ['b:String'],
+      'Foo_H2':     ['s:Reference<Foo_H2_S>?'],
+      'Foo_H2_S':   ['f:Boolean', 't:Reference<Foo_H2_S_T>?'],
+      'Foo_H2_S_T': ['x:Double'],
     });
   });
 

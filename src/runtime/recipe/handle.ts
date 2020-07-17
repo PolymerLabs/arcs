@@ -11,18 +11,18 @@
 import {assert} from '../../platform/assert-web.js';
 import {ParticleSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
-import {Type, TypeVariable, TypeVariableInfo} from '../type.js';
+import {Type, TypeVariable, TypeVariableInfo, TupleType, CollectionType} from '../type.js';
 import {Slot} from './slot.js';
 import {HandleConnection} from './handle-connection.js';
 import {SlotConnection} from './slot-connection.js';
-import {Ttl} from './ttl.js';
 import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, ToStringOptions, VariableMap} from './recipe.js';
 import {TypeChecker, TypeListInfo} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Fate, Direction} from '../manifest-ast-nodes.js';
-import {ClaimIsTag, Claim} from '../particle-claim.js';
-import {StorageKey} from '../storageNG/storage-key.js';
-import {Capabilities} from '../capabilities.js';
+import {StorageKey} from '../storage/storage-key.js';
+import {Capabilities, Ttl, Queryable} from '../capabilities.js';
+import {AnnotationRef} from './annotation.js';
+import {StoreClaims} from '../storage/abstract-store.js';
 
 export class Handle implements Comparable<Handle> {
   private readonly _recipe: Recipe;
@@ -36,15 +36,21 @@ export class Handle implements Comparable<Handle> {
   private _originalFate: Fate | null = null;
   private _originalId: string | null = null;
   private _connections: HandleConnection[] = [];
+  // Handles being joined by this handle.
+  // E.g. for `x: join (a, b, c)`, this field on x has references to a, b, c.
+  private _joinedHandles: Handle[] = [];
+  // Whether this handle is being joined by other handles.
+  // E.g. for `x: join (a, b, c)`, this field is true on a, b and c.
+  private _isJoined = false;
   private _mappedType: Type | undefined = undefined;
   private _storageKey: StorageKey | undefined = undefined;
-  capabilities: Capabilities;
   private _pattern: string | undefined = undefined;
   // Value assigned in the immediate mode, E.g. hostedParticle = ShowProduct
   // Currently only supports ParticleSpec.
   private _immediateValue: ParticleSpec | undefined = undefined;
-  claims: Claim[] | undefined = undefined;
-  private _ttl = Ttl.infinite;
+  claims: StoreClaims | undefined = undefined;
+  private _annotations: AnnotationRef[] = [];
+  private _capabilities = Capabilities.create();
 
   constructor(recipe: Recipe) {
     assert(recipe);
@@ -82,7 +88,7 @@ export class Handle implements Comparable<Handle> {
   _copyInto(recipe: Recipe, cloneMap: CloneMap, variableMap: VariableMap) {
     let handle: Handle = undefined;
     if (this._id !== null && ['map', 'use', 'copy'].includes(this.fate)) {
-      handle = recipe.findHandle(this._id);
+      handle = recipe.findHandleByID(this._id);
     }
 
     if (handle == undefined) {
@@ -96,12 +102,14 @@ export class Handle implements Comparable<Handle> {
       handle._mappedType = this._mappedType;
       handle._storageKey = this._storageKey;
       handle._immediateValue = this._immediateValue;
-      handle.capabilities = this.capabilities ? this.capabilities.clone() : undefined;
-      handle._ttl = this._ttl;
+      handle.annotations = this.annotations.map(a => a.clone());
       // the connections are re-established when Particles clone their
       // attached HandleConnection objects.
       handle._connections = [];
       handle._pattern = this._pattern;
+      for (const joined of this.joinedHandles) {
+        handle.joinDataFromHandle(cloneMap.get(joined) as Handle);
+      }
     }
     return handle;
   }
@@ -118,12 +126,13 @@ export class Handle implements Comparable<Handle> {
     handle.tags = handle.tags.concat(this.tags);
     handle.recipe.removeHandle(this);
     handle.fate = this._mergedFate([this.fate, handle.fate]);
+    handle.annotations = handle.annotations.concat(this.annotations);
   }
 
   _mergedFate(fates: Fate[]) {
     assert(fates.length > 0, `Cannot merge empty fates list`);
     // Merging handles only used in coalesce-recipe strategy, which is only done for use/create/? fates.
-    assert(!fates.includes('map') && !fates.includes('copy'), `Merging map/copy not supported yet`);
+    assert(!fates.some(f => f === 'map' || f === 'copy' || f === 'join'), `Merging map/copy/join not supported yet`);
 
     // If all fates were `use` keep their fate, otherwise set to `create`.
     return fates.every(fate => fate === 'use') ? 'use' : 'create';
@@ -143,6 +152,7 @@ export class Handle implements Comparable<Handle> {
     if (isSlotType(resolvedType) || isSlotType(collectionType)) {
       this._fate = '`slot';
     }
+    this.updateCapabilities();
   }
 
   _finishNormalize() {
@@ -187,7 +197,7 @@ export class Handle implements Comparable<Handle> {
     }
     this._id = id;
   }
-  mapToStorage(storage: {id: string, type: Type, originalId?: string, storageKey?: StorageKey, claims?: ClaimIsTag[]}) {
+  mapToStorage(storage: {id: string, type: Type, originalId?: string, storageKey?: StorageKey, claims?: StoreClaims}) {
     if (!storage) {
       throw new Error(`Cannot map to undefined storage`);
     }
@@ -214,8 +224,45 @@ export class Handle implements Comparable<Handle> {
   set mappedType(mappedType: Type) { this._mappedType = mappedType; }
   get immediateValue() { return this._immediateValue; }
   set immediateValue(value: ParticleSpec) { this._immediateValue = value; }
-  get ttl() { return this._ttl; }
-  set ttl(ttl: Ttl) { this._ttl = ttl; }
+  get isSynthetic() { return this.fate === 'join'; } // Join handles are the first type of synthetic handles, other may come.
+  get joinedHandles() { return this._joinedHandles; }
+  get isJoined() { return this._isJoined; }
+
+  get annotations(): AnnotationRef[] { return this._annotations; }
+  set annotations(annotations: AnnotationRef[]) {
+    annotations.every(a => assert(a.isValidForTarget('Handle'),
+        `Annotation '${a.name}' is invalid for Handle`));
+    this._annotations = annotations;
+    this.updateCapabilities();
+  }
+  getAnnotation(name: string): AnnotationRef | null {
+    const annotations = this.findAnnotations(name);
+    assert(annotations.length <= 1,
+        `Multiple annotations found for '${name}'. Use findAnnotations instead.`);
+    return annotations.length === 0 ? null : annotations[0];
+  }
+  findAnnotations(name: string): AnnotationRef[] {
+    return this.annotations.filter(a => a.name === name);
+  }
+
+  get capabilities(): Capabilities {
+    return this._capabilities;
+  }
+
+  private updateCapabilities(): void {
+    // Combines capabilities extracted from annotations with implicit
+    // capabilities derived from the recipe.
+    this._capabilities = Capabilities.fromAnnotations(this.annotations);
+    if (this._connections.some(c => c.type && c.type.getEntitySchema()
+        && c.type.getEntitySchema().refinement)) {
+      this._capabilities.setCapability(new Queryable(true));
+    }
+    // Note: Consider adding `Shareable` if handle has an id, or used in other recipes.
+  }
+
+  getTtl(): Ttl {
+    return this.capabilities.getTtl() || Ttl.infinite();
+  }
 
   static effectiveType(handleType: Type, connections: {type?: Type, direction?: Direction, relaxed?: boolean}[]) {
     const variableMap = new Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>();
@@ -225,18 +272,37 @@ export class Handle implements Comparable<Handle> {
     return TypeChecker.processTypeList(handleType ? handleType._cloneWithResolutions(variableMap) : null, typeSet);
   }
 
-  static resolveEffectiveType(handleType: Type, connections: HandleConnection[], options: IsValidOptions): Type {
-    const typeSet: TypeListInfo[] = connections
+  private resolveEffectiveType(options: IsValidOptions) {
+    const typeSet: TypeListInfo[] = this.connections
       .filter(connection => connection.type != null)
       .map(connection => ({type: connection.type, direction: connection.direction, relaxed: connection.relaxed}));
-    return TypeChecker.processTypeList(handleType, typeSet, options);
+
+    // If a handle is joined, it needs to be a collection (at least for now).
+    if (this._isJoined) {
+      typeSet.push({
+        type: TypeVariable.make('').collectionOf(),
+        direction: 'reads'
+      });
+    }
+
+    // Joining a list of handles is a kin to writing from joined handle into a joining handle.
+    if (this.fate === 'join') {
+      typeSet.push({
+        // We forced the joined handles to be collections and resolve their type first,
+        // so that we can pull out their collection type here.
+        type: new TupleType(this.joinedHandles.map(h => (h.type as CollectionType<Type>).collectionType)).collectionOf(),
+        direction: 'writes'
+      });
+    }
+
+    return TypeChecker.processTypeList(this._mappedType, typeSet, options);
   }
 
   _isValid(options: IsValidOptions): boolean {
     const tags = new Set<string>();
     for (const connection of this._connections) {
       // A remote handle cannot be connected to an output param.
-      if (this.fate === 'map' && ['writes', 'reads writes'].includes(connection.direction)) {
+      if (['map', 'join'].includes(this.fate) && ['writes', 'reads writes'].includes(connection.direction)) {
         if (options && options.errors) {
           options.errors.set(this, `Invalid fate '${this.fate}' for handle '${this}'; it is used for '${connection.direction}' ${connection.getQualifiedName()} connection`);
         }
@@ -250,7 +316,7 @@ export class Handle implements Comparable<Handle> {
     if (options && options.errors) {
       options.typeErrors = [];
     }
-    const type = Handle.resolveEffectiveType(this._mappedType, this._connections, options);
+    const type = this.resolveEffectiveType(options);
     if (!type) {
       if (options && options.errors) {
         const errs = options.typeErrors;
@@ -315,6 +381,7 @@ export class Handle implements Comparable<Handle> {
       }
       case '`slot':
       case 'create':
+      case 'join':
         break;
       default: {
         if (options) {
@@ -332,20 +399,24 @@ export class Handle implements Comparable<Handle> {
       // E.g. hostedParticle = ShowProduct
       return undefined;
     }
+    const getName = (h:Handle) => ((nameMap && nameMap.get(h)) || h.localName);
     // TODO: type? maybe output in a comment
     const result: string[] = [];
-    const name = (nameMap && nameMap.get(this)) || this.localName;
+    const name = getName(this);
     if (name) {
       result.push(`${name}:`);
     }
     result.push(this.fate);
-    if (this.capabilities && !this.capabilities.isEmpty()) {
-      result.push(this.capabilities.toString());
+    if (this.fate === 'join') {
+      result.push(`(${this.joinedHandles.map(h => getName(h)).join(', ')})`);
     }
     if (this.id) {
       result.push(`'${this.id}'`);
     }
     result.push(...this.tags.map(a => `#${a}`));
+    if (this.annotations && this.annotations.length > 0) {
+      result.push(this.annotations.map(a => a.toString()).join(' '));
+    }
 
     // Debug information etc.
     if (this.type) {
@@ -375,5 +446,11 @@ export class Handle implements Comparable<Handle> {
 
   findConnectionByDirection(dir: Direction): HandleConnection|undefined {
     return this._connections.find(conn => conn.direction === dir);
+  }
+
+  joinDataFromHandle(handle: Handle) {
+    assert(this.fate === 'join');
+    this._joinedHandles.push(handle);
+    handle._isJoined = true;
   }
 }

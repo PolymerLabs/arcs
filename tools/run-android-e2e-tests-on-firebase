@@ -1,0 +1,20 @@
+#!/bin/bash
+#
+# A basic script to run Android e2e tests on Firebase Test Lab.
+set -e
+
+source $(dirname $0)/logging.sh
+
+cd $ROOT
+status "Testing on Firebase Test Lab."
+
+set -x
+
+./tools/bazelisk build javatests/arcs/android/e2e/testapp && \
+    ./tools/bazelisk build javatests/arcs/android/e2e && \
+    gcloud firebase test android run \
+    --type instrumentation \
+    --app bazel-bin/javatests/arcs/android/e2e/testapp/testapp.apk \
+    --test bazel-bin/javatests/arcs/android/e2e/e2e.apk \
+    --device model=Pixel2,version=29,locale=en,orientation=portrait \
+    --use-orchestrator

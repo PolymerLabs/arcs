@@ -12,13 +12,11 @@ import {assert} from '../../platform/chai-web.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
 import {Modality} from '../modality.js';
-import {Type} from '../type.js';
-import {Capabilities} from '../capabilities.js';
-import {Flags} from '../flags.js';
+import {Capabilities, Ttl, Persistence, Queryable} from '../capabilities.js';
 import {Entity} from '../entity.js';
-import {TtlUnits, Ttl} from '../recipe/ttl.js';
+import {Recipe} from '../recipe/recipe.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
-import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../storage/drivers/ramdisk.js';
 
 describe('recipe', () => {
   let memoryProvider;
@@ -786,35 +784,107 @@ describe('recipe', () => {
   it('parses recipe handle ttls', async () => {
     const recipe = (await Manifest.parse(`
       recipe
-        h0: create @ttl(20d)
-        h1: create @ttl(5m)
+        h0: create @ttl('20d')
+        h1: create @ttl('5m')
         h2: create
     `)).recipes[0];
     assert.lengthOf(recipe.handles, 3);
-    assert.equal(recipe.handles[0].ttl.count, 20);
-    assert.equal(recipe.handles[0].ttl.units, TtlUnits.Day);
-    assert.equal(recipe.handles[1].ttl.count, 5);
-    assert.equal(recipe.handles[1].ttl.units, TtlUnits.Minute);
-    assert.equal(Ttl.infinite, recipe.handles[2].ttl);
+    assert.isTrue(recipe.handles[0].capabilities.getTtl().isEquivalent(Ttl.days(20)));
+    assert.isTrue(recipe.handles[0].getTtl().isEquivalent(Ttl.days(20)));
+    assert.isTrue(recipe.handles[0].capabilities.hasEquivalent(Ttl.days(20)));
+    assert.isTrue(recipe.handles[1].capabilities.getTtl().isEquivalent(Ttl.minutes(5)));
+    assert.isTrue(recipe.handles[1].getTtl().isEquivalent(Ttl.minutes(5)));
+    assert.isTrue(recipe.handles[1].capabilities.hasEquivalent(Ttl.minutes(5)));
+    assert.isUndefined(recipe.handles[2].capabilities.getTtl());
+    assert.isTrue(recipe.handles[2].getTtl().isInfinite);
   });
   it('parses recipe handle capabilities', async () => {
     const recipe = (await Manifest.parse(`
       recipe Thing
-        h0: create persistent
-        h1: create tied-to-runtime 'my-id'
-        h2: create persistent tied-to-arc #myTag
-        h3: create #otherTag`)).recipes[0];
+        h0: create @persistent
+        h1: create 'my-id' @tiedToRuntime
+        h2: create #myTag @persistent @queryable
+        h3: create @persistent @ttl('20d')
+        h4: create @ttl('20d')
+        h5: create #otherTag`)).recipes[0];
     const verifyRecipeHandleCapabilities = (recipe) => {
-      assert.lengthOf(recipe.handles, 4);
+      assert.lengthOf(recipe.handles, 6);
       assert.isTrue(
-          recipe.handles[0].capabilities.isSame(new Capabilities(['persistent'])));
+        recipe.handles[0].capabilities.isEquivalent(Capabilities.create([Persistence.onDisk()])));
+      assert.isTrue(recipe.handles[1].capabilities.isShareable());
+      assert.isTrue(recipe.handles[2].capabilities.isEquivalent(
+            Capabilities.create([Persistence.onDisk(), new Queryable(true)])));
+      assert.isTrue(recipe.handles[3].capabilities.isEquivalent(
+            Capabilities.create([Persistence.onDisk(), Ttl.days(20)])));
       assert.isTrue(
-          recipe.handles[1].capabilities.isSame(new Capabilities(['tied-to-runtime'])));
-      assert.isTrue(
-          recipe.handles[2].capabilities.isSame(new Capabilities(['persistent', 'tied-to-arc'])));
-      assert.isTrue(recipe.handles[3].capabilities.isEmpty());
+          recipe.handles[4].capabilities.getTtl().isEquivalent(Ttl.days(20)));
+      assert.isTrue(recipe.handles[5].capabilities.isEmpty());
     };
     verifyRecipeHandleCapabilities(recipe);
     verifyRecipeHandleCapabilities((await Manifest.parse(recipe.toString())).recipes[0]);
+  });
+  it('adds queryable capability to handles with refinements', async () => {
+    const recipe = (await Manifest.parse(`
+      schema Thing
+        t1: Number
+        t2: Number
+      particle MyParticle
+        a: writes Thing {t1}
+        b: writes ThingB {b1: Number, b2: Text}
+        c: writes ThingC {a1: Number, a2: Text} [a1 > 0]
+        d: writes Thing {t1} [t1 > 5]
+        e: writes Thing {t1} [t1 < 100]
+      recipe Thing
+        hA: create
+        hB: create
+        hC: create
+        hD: create
+        hE: create @persistent @queryable
+        MyParticle
+          a: hA
+          b: hB
+          c: hC
+          d: hD
+          e: hE
+    `)).recipes[0];
+    assert.isTrue(recipe.normalize());
+    const particle = recipe.particles[0];
+    assert.isTrue(particle.connections['a'].handle.capabilities.isEmpty());
+    assert.isTrue(particle.connections['b'].handle.capabilities.isEmpty());
+    assert.isTrue(particle.connections['c'].handle.capabilities.isEquivalent(
+        Capabilities.create([new Queryable(true)])));
+    assert.isTrue(particle.connections['d'].handle.capabilities.isEquivalent(
+        Capabilities.create([new Queryable(true)])));
+    assert.isTrue(particle.connections['e'].handle.capabilities.isEquivalent(
+        Capabilities.create([Persistence.onDisk(), new Queryable(true)])));
+  });
+  it('can normalize and clone a recipe with a synthetic join handle', async () => {
+    const [recipe] = (await Manifest.parse(`
+      recipe
+        people: map #folks
+        other: map #products
+        pairs: join (people, places)
+        places: map #locations`)).recipes;
+
+    const verify = (recipe: Recipe) => {
+      assert.lengthOf(recipe.handles, 4);
+      const people = recipe.handles.find(h => h.tags.includes('folks'));
+      assert.equal(people.fate, 'map');
+      const places = recipe.handles.find(h => h.tags.includes('locations'));
+      assert.equal(places.fate, 'map');
+
+      const pairs = recipe.handles.find(h => h.fate === 'join');
+      assert.equal(pairs.fate, 'join');
+      assert.lengthOf(pairs.joinedHandles, 2);
+      assert.include(pairs.joinedHandles, people);
+      assert.include(pairs.joinedHandles, places);
+    };
+
+    verify(recipe);
+
+    recipe.normalize();
+    verify(recipe);
+
+    verify(recipe.clone());
   });
 });

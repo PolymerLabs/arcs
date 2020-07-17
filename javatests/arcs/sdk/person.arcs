@@ -1,0 +1,14 @@
+meta
+  namespace: arcs.sdk
+
+schema Person
+  name: Text
+
+particle ReadSdkPerson in 'arcs.sdk.ReadSdkPerson'
+  person: reads Person {name}
+
+recipe Person
+  recipePerson: create 'recipePerson'
+
+  ReadSdkPerson
+    person: reads recipePerson

@@ -11,18 +11,24 @@
 import {assert} from '../platform/assert-web.js';
 import {Schema} from './schema.js';
 import {Type, EntityType} from './type.js';
-import {Storable} from './handle.js';
 import {Id, IdGenerator} from './id.js';
 import {Dictionary, Consumer} from './hot.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
 import {Refinement} from './refiner.js';
 import {Flags} from './flags.js';
 import {ChannelConstructor} from './channel-constructor.js';
-import {Ttl} from './recipe/ttl.js';
+import {Ttl} from './capabilities.js';
+import {Storable} from './storable.js';
 
 export type EntityRawData = {};
 
-export type SerializedEntity = {id: string, expirationTimestamp?: string, rawData: EntityRawData};
+export type SerializedEntity = {
+  id: string,
+  // TODO(#4861): creationTimestamp shouldn't be optional
+  creationTimestamp?: number,
+  expirationTimestamp?: number,
+  rawData: EntityRawData
+};
 
 /**
  * Represents mutable entity data. Instances will have mutable properties defined on them for all
@@ -40,7 +46,7 @@ export type MutableEntityData = Dictionary<any>;
  * @see https://stackoverflow.com/a/13955591
  */
 export interface EntityStaticInterface {
-  readonly type: Type;
+  readonly type: EntityType;
   readonly key: {tag: string, schema: Schema};
   readonly schema: Schema;
 }
@@ -61,7 +67,8 @@ class EntityInternals {
   private id?: string;
   private storageKey?: string;
   private userIDComponent?: string;
-  private expirationTimestamp: string;
+  private creationTimestamp: Date;
+  private expirationTimestamp: Date;
 
   // TODO: Only the Arc that "owns" this Entity should be allowed to mutate it.
   private mutable = true;
@@ -96,18 +103,40 @@ class EntityInternals {
     return this.entityClass;
   }
 
+  getCreationTimestamp(): Date {
+    if (this.id === undefined) {
+      throw new Error('entity has not yet been stored!');
+    }
+    if (this.creationTimestamp === undefined) {
+      throw new Error('entity has been stored but creation timestamp was not recorded against entity');
+    }
+    return this.creationTimestamp;
+  }
+
+  getExpirationTimestamp(): Date {
+    if (this.id === undefined) {
+      throw new Error('entity has not yet been stored!');
+    }
+    return this.expirationTimestamp;
+  }
+
   isIdentified(): boolean {
     return this.id !== undefined;
   }
 
+  hasCreationTimestamp(): boolean {
+    return this.creationTimestamp !== undefined;
+  }
   hasExpirationTimestamp(): boolean {
     return this.expirationTimestamp !== undefined;
   }
 
-  identify(identifier: string, storageKey: string) {
+  identify(identifier: string, storageKey: string, creationTimestamp?: Date, expirationTimestamp?: Date) {
     assert(!this.isIdentified(), 'identify() called on already identified entity');
     this.id = identifier;
     this.storageKey = storageKey;
+    this.creationTimestamp = creationTimestamp;
+    this.expirationTimestamp = expirationTimestamp;
     const components = identifier.split(':');
     const uid = components.lastIndexOf('uid');
     this.userIDComponent = uid > 0 ? components.slice(uid+1).join(':') : '';
@@ -125,11 +154,15 @@ class EntityInternals {
     }
     this.storageKey = storageKey;
     this.id = id;
-    if (Flags.useNewStorageStack) {
-      assert(ttl, `ttl cannot be null`);
-      if (!ttl.isInfinite) {
-        this.expirationTimestamp = ttl.calculateExpiration().getTime().toString();
-      }
+    this.setExpiration(ttl);
+  }
+
+  private setExpiration(ttl: Ttl) {
+    assert(ttl, `ttl cannot be null`);
+    const now = new Date();
+    this.creationTimestamp = now;
+    if (!ttl.isInfinite) {
+      this.expirationTimestamp = ttl.calculateExpiration(now);
     }
   }
 
@@ -180,29 +213,51 @@ class EntityInternals {
 
   dataClone(): EntityRawData {
     const clone = {};
-    const fieldTypes = this.schema.fields;
-    for (const name of Object.keys(fieldTypes)) {
-      if (this.entity[name] !== undefined) {
-        if (fieldTypes[name] && fieldTypes[name].kind === 'schema-reference') {
-          if (this.entity[name]) {
-            clone[name] = this.entity[name].dataClone();
+    for (const [name, desc] of Object.entries(this.schema.fields)) {
+      const value = this.entity[name];
+      if (value !== undefined) {
+        if (desc && desc.kind === 'schema-reference') {
+          if (value) {
+            clone[name] = value.dataClone();
           }
-        } else if (fieldTypes[name] && fieldTypes[name].kind === 'schema-collection') {
-          if (this.entity[name]) {
-            clone[name] = [...this.entity[name]].map(a => a.dataClone());
+        } else if (desc && ['schema-collection', 'schema-tuple'].includes(desc.kind)) {
+          if (value) {
+            clone[name] = [...value].map(a => this.cloneValue(a));
           }
+        } else if (desc && desc.kind === 'schema-nested') {
+            const data = getInternals(value).dataClone();
+            clone[name] = new (value.constructor)(data);
         } else {
-          clone[name] = this.entity[name];
+          clone[name] = this.cloneValue(value);
         }
       }
     }
     return clone;
   }
 
+  private cloneValue(value) {
+    if (value == null || ['string', 'boolean', 'number'].includes(typeof(value))) {
+      return value;
+    }
+    if (value.constructor.name === 'Uint8Array') {
+      return Uint8Array.from(value);
+    }
+    if (typeof value.length === 'number') {
+      return value.slice().map(this.cloneValue);
+    }
+    return value.dataClone();
+  }
+
   serialize(): SerializedEntity {
-    const serializedEntity: SerializedEntity = {id: this.id, rawData: this.dataClone()};
+    const serializedEntity: SerializedEntity = {
+      id: this.id,
+      rawData: this.dataClone()
+    };
+    if (this.hasCreationTimestamp()) {
+      serializedEntity.creationTimestamp = this.creationTimestamp.getTime();
+    }
     if (this.hasExpirationTimestamp()) {
-      serializedEntity.expirationTimestamp = this.expirationTimestamp;
+      serializedEntity.expirationTimestamp = this.expirationTimestamp.getTime();
     }
     return serializedEntity;
   }
@@ -295,7 +350,7 @@ export abstract class Entity implements Storable {
         });
       }
 
-      static get type(): Type {
+      static get type(): EntityType {
         // TODO: should the entity's key just be its type?
         // Should it just be called type in that case?
         return new EntityType(schema);
@@ -308,6 +363,21 @@ export abstract class Entity implements Storable {
       static get schema() {
         return schema;
       }
+
+      toString() {
+        const entry2field = (name, value) => `${name}: ${JSON.stringify(value)}`;
+        const object2string = (object, schema) => {
+          const fields = Object.entries(object).map(([name, value]) => {
+            if (schema.fields[name].kind === 'schema-nested') {
+              return `${name}: ${object2string(value, schema.fields[name].schema.model.entitySchema)}`;
+            }
+            return entry2field(name, value);
+          });
+          return `{ ${fields.join(', ')} }`;
+        };
+
+        return `${this.constructor.name} ${object2string(this, schema)}`;
+      }
     };
 
     // Override the name property to use the name of the entity given in the schema.
@@ -317,6 +387,16 @@ export abstract class Entity implements Storable {
 
   static id(entity: Entity): string {
     return getInternals(entity).getId();
+  }
+
+  static creationTimestamp(entity: Entity): Date | null {
+    return getInternals(entity).hasCreationTimestamp()
+        ? getInternals(entity).getCreationTimestamp() : null;
+  }
+
+  static expirationTimestamp(entity: Entity): Date | null {
+    return getInternals(entity).hasExpirationTimestamp()
+        ? getInternals(entity).getExpirationTimestamp() : null;
   }
 
   static storageKey(entity: Entity): string {
@@ -331,8 +411,10 @@ export abstract class Entity implements Storable {
     return getInternals(entity).isIdentified();
   }
 
-  static identify(entity: Entity, identifier: string, storageKey: string) {
-    getInternals(entity).identify(identifier, storageKey);
+  static identify(entity: Entity, identifier: string, storageKey: string, creationTimestamp?: number, expirationTimestamp?: number) {
+    getInternals(entity).identify(identifier, storageKey,
+        creationTimestamp ? new Date(creationTimestamp) : undefined,
+        expirationTimestamp ? new Date(expirationTimestamp) : undefined);
     return entity;
   }
 

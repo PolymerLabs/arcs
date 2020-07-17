@@ -1,16 +1,17 @@
-load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_android_library")
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
-kt_android_library(
+arcs_kt_android_library(
     name = "resurrection",
     srcs = glob(["*.kt"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
         "//java/arcs/android/common",  # buildcleaner: keep
         "//java/arcs/core/storage:storage_key",
+        "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/referencemode",
         "//java/arcs/core/util",

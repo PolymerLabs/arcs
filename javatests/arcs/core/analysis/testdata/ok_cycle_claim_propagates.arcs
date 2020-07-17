@@ -1,0 +1,33 @@
+// A simple cycle doesn't prevent claims from propagating
+// This test is a simple chain of particles, where the start of the chain
+// makes a claim and the end of the chain checks it, but with a cycle in
+// the middle of it. The cycle shouldn't stop the claim from propagating.
+// #Ingress: P1
+// #OK
+particle P1
+  output: writes Foo {}
+  claim output is trusted
+particle P2
+  input1: reads Foo {}
+  input2: reads Foo {}
+  output: writes Foo {}
+particle P3
+  input: reads Foo {}
+  output1: writes Foo {}
+  output2: writes Foo {}
+particle P4
+  input: reads Foo {}
+  check input is trusted
+recipe R
+  P1
+    output: writes h1
+  P2
+    input1: reads h1
+    input2: reads h4
+    output: writes h2
+  P3
+    input: reads h2
+    output1: writes h3
+    output2: writes h4
+  P4
+   input: reads h3

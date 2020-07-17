@@ -16,10 +16,9 @@ class WasmSingletonImpl<T : WasmEntity>(
     particle: WasmParticleImpl,
     name: String,
     private val entitySpec: WasmEntitySpec<T>
-) : WasmHandle(name, particle) {
+) : WasmHandleEvents<T?>(particle, name) {
 
     private var entity: T? = null
-    private val onUpdateActions: MutableList<(T?) -> Unit> = mutableListOf()
 
     override fun sync(encoded: ByteArray) {
         entity = if (encoded.size > 0) entitySpec.decode(encoded) else null
@@ -32,13 +31,9 @@ class WasmSingletonImpl<T : WasmEntity>(
         }
     }
 
-    fun onUpdate(action: (T?) -> Unit) {
-        onUpdateActions.add(action)
-    }
-
     fun fetch() = entity
 
-    fun set(entity: T) {
+    fun store(entity: T) {
         this.entity = entity
         val encoded = entity.encodeEntity()
         WasmRuntimeClient.singletonSet(particle, this, encoded)

@@ -11,11 +11,12 @@ import minimist from 'minimist';
 import fs from 'fs';
 import path from 'path';
 import {Runtime} from '../runtime/runtime.js';
-import {serialize2proto} from './manifest2proto.js';
+import {encodeManifestToProto} from './manifest2proto.js';
 
 const opts = minimist(process.argv.slice(2), {
   string: ['outdir', 'outfile'],
-  alias: {d: 'outdir', f: 'outfile'},
+  boolean: ['quiet'],
+  alias: {d: 'outdir', f: 'outfile', q: 'quiet'},
   default: {outdir: '.'}
 });
 
@@ -30,6 +31,7 @@ Description
 Options
   --outfile, -f output filename; required
   --outdir, -d  output directory; defaults to '.'
+  --quiet, -q   suppress log output
   --help        usage info
 `);
   process.exit(0);
@@ -56,10 +58,12 @@ async function main() {
     Runtime.init('../..');
     fs.mkdirSync(opts.outdir, {recursive: true});
 
-    const buffer = await serialize2proto(opts._[0]);
+    const buffer = await encodeManifestToProto(opts._[0]);
 
     const outPath = path.join(opts.outdir, opts.outfile);
-    console.log(outPath);
+    if (!opts.quiet) {
+      console.log(outPath);
+    }
 
     const outFile = fs.openSync(outPath, 'w');
     fs.writeSync(outFile, Buffer.from(buffer));

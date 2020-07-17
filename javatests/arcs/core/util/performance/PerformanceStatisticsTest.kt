@@ -12,6 +12,7 @@
 package arcs.core.util.performance
 
 import arcs.core.util.RunningStatistics
+import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -23,7 +24,7 @@ import org.junit.runners.JUnit4
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(JUnit4::class)
 class PerformanceStatisticsTest {
-    private val timer = TimerImpl()
+    private val timer = Timer(JvmTime)
 
     @Test
     fun constructor_noInitialStats() = runBlockingTest {
@@ -113,10 +114,5 @@ class PerformanceStatisticsTest {
         assertThat(snapshot.countStatistics["foo"].mean).isEqualTo(1)
         assertThat(snapshot.countStatistics["foo"].min).isEqualTo(1)
         assertThat(snapshot.countStatistics["foo"].max).isEqualTo(1)
-    }
-
-    private class TimerImpl : Timer() {
-        override val currentTimeNanos: Long
-            get() = System.nanoTime()
     }
 }

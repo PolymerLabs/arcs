@@ -14,6 +14,8 @@ package arcs.core.storage.util
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
 import arcs.core.crdt.VersionMap
+import arcs.core.storage.util.HoldQueue.Entity
+import arcs.core.storage.util.HoldQueue.Record
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -31,8 +33,11 @@ class HoldQueue {
     /**
      * Enqueues a collection of [Entities] into the [HoldQueue]. When they are ready, [onRelease]
      * will be called.
+     *
+     * @return an identifier for the hold record which can be used to remove a hold using
+     * [removeFromQueue].
      */
-    suspend fun enqueue(entities: Collection<Entity>, onRelease: suspend () -> Unit) {
+    suspend fun enqueue(entities: Collection<Entity>, onRelease: suspend () -> Unit): Int {
         val holdRecord = Record(
             entities.associateByTo(mutableMapOf(), Entity::id, Entity::version),
             onRelease
@@ -45,6 +50,17 @@ class HoldQueue {
                 list += holdRecord
                 queue[it.id] = list
             }
+        }
+
+        return holdRecord.hashCode()
+    }
+
+    /**
+     * Removes a pending item from the [HoldQueue] by the [enqueueId] returned from [enqueue].
+     */
+    suspend fun removeFromQueue(enqueueId: Int) = mutex.withLock {
+        queue.values.forEach { records ->
+            records.removeAll { it.hashCode() == enqueueId }
         }
     }
 
@@ -75,11 +91,11 @@ class HoldQueue {
     }
 
     /** Simple alias for an entity being referenced. */
-    data class Entity(val id: ReferenceId, val version: VersionMap)
+    data class Entity(val id: ReferenceId, val version: VersionMap?)
 
     // Internal for testing.
     /* internal */ data class Record(
-        val ids: MutableMap<ReferenceId, VersionMap>,
+        val ids: MutableMap<ReferenceId, VersionMap?>,
         val onRelease: suspend () -> Unit
     )
 }
@@ -98,5 +114,5 @@ suspend fun <T : Referencable> Collection<T>.enqueueAll(
  * Converts an object implementing [Referencable] to a [HoldQueue.Entity] with the specified
  * [version].
  */
-fun <T : Referencable> T.toHoldQueueEntity(version: VersionMap): HoldQueue.Entity =
-    HoldQueue.Entity(this.id, version.copy()) // TODO: maybe we shouldn't copy the version map?
+fun <T : Referencable> T.toHoldQueueEntity(version: VersionMap): Entity =
+    Entity(this.id, version.copy()) // TODO: maybe we shouldn't copy the version map?

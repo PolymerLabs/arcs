@@ -1,8 +1,12 @@
-[![Build Status](https://travis-ci.org/PolymerLabs/arcs.svg?branch=master)](https://travis-ci.org/PolymerLabs/arcs)
+[![Cloud Build Status](https://storage.googleapis.com/arcs-github-gcb-badges/builds/arcs/branches/master.svg)](https://console.cloud.google.com/cloud-build/builds?query=trigger_id%3D%22bdf768b5-8901-43e5-814c-f3adffff2eab%22&project=arcs-265404)
 [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/rswlpkq2vtp9cns0/branch/master?svg=true)](https://ci.appveyor.com/project/arcs/arcs-3i77k/branch/master)
 
-
 # Arcs
+
+Note: Arcs is transitioning to Cloud Build and the live.arcs.dev hosted pages
+referenced below may not be operational currently.
+
+TODO(bgogul): Edit above when we've restored/reconfirmed live.arcs.dev publishing and operation.
 
 A hosted version of Arcs is available at https://live.arcs.dev.
 
@@ -10,14 +14,6 @@ A hosted version of Arcs is available at https://live.arcs.dev.
 generated documentation is available for Arcs Runtime.
 
 ## Install
-
-Arcs is developed with a recent version of Node. You can check our [Travis
-config](https://github.com/PolymerLabs/arcs/blob/master/.travis.yml) to see what
-version is used for automated build status. More recent versions should work,
-but if for example you see test errors on a version that's a full release later
-you may want to try rolling back to an earlier version. We welcome
-patches that will allow more recent versions to operate, ideally without
-requiring an upgrade to our current version.
 
 ### Installing the easy way
 
@@ -27,7 +23,17 @@ requiring an upgrade to our current version.
    $ ./tools/setup
    ```
 
-2) That's it! (You can skip the next section.)
+2) The script may have issues with the NVM installation. If so, follow the prompts to manually install NVM and they run the setup script again.
+
+3) For MacOS, You will need to have Xcode installed. The script will fail at this point, and prompt you to install Xcode.
+
+4) You'll need to run either `$ source ~/.profile` or `$ source ~/.bashrc` to update all the environment variables.
+
+5) Run `$ ./tools/sigh test` to ensure everything is properly installed.
+
+6) If you'll be working with Kotlin, you'll need to install bazel to build your projects.
+
+7) That's it! (You can skip the next section.)
 
 
 ### Installing from scratch
@@ -235,8 +241,7 @@ Through npm: `npm run test-wdio-shells --wdio-debug=true` (or `npm test
 --wdio-debug=true shell/test/wdio.conf.js`.
 
 Webdriver takes screenshots of failures, which are saved to the
-`./shells/test/errorShots/` directory. When running on Travis, the screenshots
-are uploaded to the `Arcs Webdriver Screenshots` team drive.
+`./shells/test/errorShots/` directory.
 
 #### Graphical (non-headless)
 

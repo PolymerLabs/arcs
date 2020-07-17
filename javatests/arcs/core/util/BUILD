@@ -5,7 +5,7 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 PERFORMANCE_SRCS = [
     "Base64PerformanceTest.kt",
@@ -21,8 +21,11 @@ arcs_kt_jvm_test_suite(
     deps = [
         "//java/arcs/core/testutil",
         "//java/arcs/core/util",
+        "//java/arcs/core/util/testutil",
+        "//java/arcs/jvm/util",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
+        "//third_party/kotlin/kotlin:kotlin_test",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
         "//third_party/kotlin/kotlinx_coroutines:kotlinx_coroutines_test",

@@ -10,8 +10,8 @@
 
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';
-import {ArcType, BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
-        ReferenceType, RelationType, SlotType, Type, TypeVariable, TypeVariableInfo} from '../type.js';
+import {BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType,
+        ReferenceType, TupleType, SlotType, Type, TypeVariable, TypeVariableInfo, MuxType} from '../type.js';
 import {Entity} from '../entity.js';
 import {Refinement} from '../refiner.js';
 import {UnaryExpressionNode, FieldNode, Op} from '../manifest-ast-nodes.js';
@@ -21,10 +21,11 @@ import {UnaryExpressionNode, FieldNode, Op} from '../manifest-ast-nodes.js';
 //   TypeVariable      : TypeVariableInfo
 //   CollectionType    : Type
 //   BigCollectionType : Type
-//   RelationType      : [Type]
+//   TupleType         : [Type]
 //   InterfaceType     : InterfaceInfo
 //   SlotType          : SlotInfo
 //   ReferenceType     : Type
+//   MuxType           : Type
 //   ArcType           : none
 //   HandleType        : none
 
@@ -39,7 +40,7 @@ describe('types', () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
       deepEqual(entity.toLiteral(), {
         tag: 'Entity',
-        data: {names: ['Foo'], fields: {value: {kind: 'schema-primitive', refinement: null, type: 'Text'}}, refinement: null, description: {}}
+        data: {names: ['Foo'], fields: {value: {kind: 'schema-primitive', refinement: null, type: 'Text', annotations: []}}, refinement: null, annotations: [], description: {}}
       });
       deepEqual(entity, Type.fromLiteral(entity.toLiteral()));
       deepEqual(entity, entity.clone(new Map()));
@@ -82,7 +83,8 @@ describe('types', () => {
             } as UnaryExpressionNode,
             location: null
           }, {'value': 'Boolean'}),
-          type: 'Text'
+          type: 'Text',
+          annotations: [],
         }},
         {refinement: ref}
       );
@@ -104,20 +106,13 @@ describe('types', () => {
                 value: 'b',
                 evalType: 'Boolean'
               },
-              operator: {
-                op: Op.AND,
-                opInfo: {
-                  argType: 'Boolean',
-                  evalType: 'Boolean',
-                  nArgs: 2,
-                  sqlOp: 'AND',
-                }
-              },
+              operator: Op.AND,
               evalType: 'Boolean'
             }
           },
           fields: {
             value: {
+              annotations: [],
               kind: 'schema-primitive',
               refinement: {
                 kind: 'refinement',
@@ -128,21 +123,14 @@ describe('types', () => {
                     value: 'value',
                     evalType: 'Boolean'
                   },
-                  operator: {
-                    op: Op.NOT,
-                    opInfo: {
-                      argType: 'Boolean',
-                      evalType: 'Boolean',
-                      nArgs: 1,
-                      sqlOp: 'NOT',
-                    }
-                  },
+                  operator: Op.NOT,
                   evalType: 'Boolean'
                 }
               },
               type: 'Text'
             }
           },
+          annotations: [],
           description: {}
         }
       });
@@ -182,10 +170,10 @@ describe('types', () => {
       // Collection of references to slots
       const slot      = SlotType.make('f', 'h');
       const reference = new ReferenceType(slot);
-      const col3      = new CollectionType(reference);
-      deepEqual(col3.toLiteral(), {tag: 'Collection', data: reference.toLiteral()});
-      deepEqual(col3, Type.fromLiteral(col3.toLiteral()));
-      deepEqual(col3, col3.clone(new Map()));
+      const col4      = new CollectionType(reference);
+      deepEqual(col4.toLiteral(), {tag: 'Collection', data: reference.toLiteral()});
+      deepEqual(col4, Type.fromLiteral(col4.toLiteral()));
+      deepEqual(col4, col4.clone(new Map()));
     });
 
     it('BigCollection', async () => {
@@ -216,17 +204,17 @@ describe('types', () => {
       deepEqual(big3, big3.clone(new Map()));
     });
 
-    it('Relation', async () => {
+    it('Tuple', async () => {
       const entity   = EntityType.make(['Foo'], {value: 'Text'});
       const variable = TypeVariable.make('a');
       const col      = new CollectionType(entity);
-      const relation = new RelationType([entity, variable, col]);
-      deepEqual(relation.toLiteral(), {
-        tag: 'Relation',
+      const tuple = new TupleType([entity, variable, col]);
+      deepEqual(tuple.toLiteral(), {
+        tag: 'Tuple',
         data: [entity.toLiteral(), variable.toLiteral(), col.toLiteral()]
       });
-      deepEqual(relation, Type.fromLiteral(relation.toLiteral()));
-      deepEqual(relation, relation.clone(new Map()));
+      deepEqual(tuple, Type.fromLiteral(tuple.toLiteral()));
+      deepEqual(tuple, tuple.clone(new Map()));
     });
 
     it('Interface', async () => {
@@ -281,11 +269,32 @@ describe('types', () => {
       deepEqual(ref3, ref3.clone(new Map()));
     });
 
-    it('ArcInfo', async () => {
-      const arcInfo = new ArcType();
-      deepEqual(arcInfo.toLiteral(), {tag: 'Arc'});
-      deepEqual(arcInfo, Type.fromLiteral(arcInfo.toLiteral()));
-      deepEqual(arcInfo, arcInfo.clone(new Map()));
+    it('Mux', async () => {
+      // MuxType of an entity
+      const entity = EntityType.make(['Foo'], {value: 'Text'});
+      const mux1 = new MuxType(entity);
+      deepEqual(mux1.toLiteral(), {tag: 'Mux', data: entity.toLiteral()});
+      deepEqual(mux1, Type.fromLiteral(mux1.toLiteral()));
+      deepEqual(mux1, mux1.clone(new Map()));
+
+      // MuxType of a reference variable
+      const variable = TypeVariable.make('a');
+      const inner = new ReferenceType(variable);
+      const mux2 = new MuxType(inner);
+      deepEqual(mux2.toLiteral(), {
+        tag: 'Mux',
+        data: {tag: 'Reference', data: variable.toLiteral()}
+      });
+      deepEqual(mux2, Type.fromLiteral(mux2.toLiteral()));
+      deepEqual(mux2, mux2.clone(new Map()));
+
+      // MuxType of a collection of slots
+      const slot = SlotType.make('f', 'h');
+      const col = new CollectionType(slot);
+      const mux3 = new MuxType(col);
+      deepEqual(mux3.toLiteral(), {tag: 'Mux', data: col.toLiteral()});
+      deepEqual(mux3, Type.fromLiteral(mux3.toLiteral()));
+      deepEqual(mux3, mux3.clone(new Map()));
     });
 
     it('HandleInfo', async () => {
@@ -299,16 +308,16 @@ describe('types', () => {
       const slot       = SlotType.make('f', 'h');
       const bigCol     = new BigCollectionType(slot);
       const reference  = new ReferenceType(bigCol);
+      const muxType = new MuxType(reference);
 
       const entity     = EntityType.make(['Foo'], {value: 'Text'});
       const variable   = TypeVariable.make('a');
-      const arcInfo    = new ArcType();
-      const iface      = InterfaceType.make('i', [{type: entity, direction: 'any'}, {type: variable, direction: 'any'}, {type: arcInfo, direction: 'any'}], []);
+      const iface      = InterfaceType.make('i', [{type: entity, direction: 'any'}, {type: variable, direction: 'any'}], []);
 
       const handleInfo = new HandleType();
 
-      const relation   = new RelationType([reference, iface, handleInfo]);
-      const collection = new CollectionType(relation);
+      const tuple   = new TupleType([muxType, iface, handleInfo]);
+      const collection = new CollectionType(tuple);
 
       deepEqual(collection, Type.fromLiteral(collection.toLiteral()));
       deepEqual(collection, collection.clone(new Map()));
@@ -406,7 +415,7 @@ describe('types', () => {
       const entity = EntityType.make(['Foo'], {value: 'Text'});
       const variable = TypeVariable.make('a');
       const iface = InterfaceType.make('i', [{type: entity, name: 'foo'}, {type: variable}], [{name: 'x', direction: 'consumes'}]);
-      assert.strictEqual(iface.interfaceInfo.toString(),
+      assert.strictEqual(iface.interfaceInfo.toManifestString(),
 `interface i
   foo: Foo {value: Text}
   ~a
@@ -418,10 +427,9 @@ describe('types', () => {
       const variable = TypeVariable.make('a');
       variable.variable.resolution = EntityType.make(['Foo'], {value: 'Text'});
       const iface = InterfaceType.make('i', [{type: variable}], []);
-      assert.strictEqual(iface.interfaceInfo.toString(),
+      assert.strictEqual(iface.interfaceInfo.toManifestString(),
 `interface i
-  ~a
-`);
+  ~a`);
     });
   });
 

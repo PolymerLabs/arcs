@@ -209,13 +209,9 @@ class ArcPanel extends HTMLElement {
     if (this.linkedArc._stores.length > 0) {
       this.storesControl.style.display = 'inline-block';
       for (const store of this.linkedArc._stores) {
-        if (store.stream) {
-          console.warn(`BigCollection stores not supported: '${store.id}'`);
-          continue;
-        }
         const storePanel = document.createElement('store-panel');
         this.stores.appendChild(storePanel);
-        await storePanel.attach(store);
+        await storePanel.attach(await store.activate(), this.linkedArc);
       }
       this.storesCollapseAll.enabled = (this.linkedArc._stores.length > 1);
     }

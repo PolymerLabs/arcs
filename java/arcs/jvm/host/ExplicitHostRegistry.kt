@@ -12,14 +12,14 @@ package arcs.jvm.host
 
 import arcs.core.host.ArcHost
 import arcs.core.host.HostRegistry
-import arcs.sdk.Particle
+import arcs.core.host.api.Particle
 
 /**
  * A [HostRegistry] that discovers the available [ArcHost]s available on this platform by using
  * explicitly registered [ArcHost]s and [Particle]s invoked by [HostRegistry.registerHost] and
  * [ExplicitHostRegistry.registerParticles].
  */
-class ExplicitHostRegistry : HostRegistry {
+class ExplicitHostRegistry : HostRegistry() {
     private val arcHosts = mutableListOf<ArcHost>()
 
     override suspend fun availableArcHosts() = arcHosts

@@ -12,11 +12,11 @@
 package arcs.sdk.wasm
 
 class SpecialSchemaFieldsTest : TestBase<SpecialSchemaFieldsTest_Errors>(
-    ::SpecialSchemaFieldsTest_Errors,
-    SpecialSchemaFieldsTest_Errors_Spec()
+    AbstractSpecialSchemaFieldsTest::SpecialSchemaFieldsTest_Errors,
+    SpecialSchemaFieldsTest_Errors
 ) {
     private val unused = WasmSingletonImpl(
-        this, "fields", SpecialSchemaFieldsTest_Fields_Spec()
+        this, "fields", SpecialSchemaFieldsTest_Fields
     )
 
     /** Run tests on particle initialization */
@@ -40,7 +40,7 @@ class SpecialSchemaFieldsTest : TestBase<SpecialSchemaFieldsTest_Errors>(
         val s = SpecialSchemaFieldsTest_Fields(
             for_ = "test",
             internal_id = 0.0,
-            internalId_ = 0.0
+            entityId_ = 0.0
         )
         val encoding = s.encodeEntity().bytes.toUtf8String()
         assertTrue("The encoding uses the language keyword", encoding.contains("|for:"))
@@ -50,15 +50,15 @@ class SpecialSchemaFieldsTest : TestBase<SpecialSchemaFieldsTest_Errors>(
     fun testInternalIdField() {
         val s = SpecialSchemaFieldsTest_Fields()
         assertEquals(
-            "Keyword field `internalId_` should start as assigned value",
+            "Keyword field `entityId_` should start as assigned value",
             0.0,
-            s.internalId_)
-        val s2 = s.copy(internalId_ = 10.0)
-        assertEquals("language keyword field copy works", 10.0, s2.internalId_)
+            s.entityId_)
+        val s2 = s.copy(entityId_ = 10.0)
+        assertEquals("language keyword field copy works", 10.0, s2.entityId_)
         assertNotEquals(
-            "The internalId field should be different from the internal identifier",
-            s2.internalId_,
-            s2.internalId
+            "The entityId field should be different from the internal identifier",
+            s2.entityId_,
+            s2.entityId
         )
     }
 
@@ -67,9 +67,9 @@ class SpecialSchemaFieldsTest : TestBase<SpecialSchemaFieldsTest_Errors>(
         val s = SpecialSchemaFieldsTest_Fields(
             for_ = "",
             internal_id = 0.0,
-            internalId_ = 10.0
+            entityId_ = 10.0
         )
         val encoding = s.encodeEntity().bytes.toUtf8String()
-        assertTrue("The encoding uses the keyword 'internalId'", encoding.contains("|internalId:"))
+        assertTrue("The encoding uses the keyword 'entityId'", encoding.contains("|entityId:"))
     }
 }

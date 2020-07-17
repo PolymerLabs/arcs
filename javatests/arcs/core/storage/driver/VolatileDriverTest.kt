@@ -12,12 +12,11 @@
 package arcs.core.storage.driver
 
 import arcs.core.common.ArcId
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StorageKey
+import arcs.core.storage.keys.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
-import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -41,7 +40,7 @@ class VolatileDriverTest {
 
     @Test
     fun constructor_addsEntryToMemory() {
-        val driver = VolatileDriver<Int>(key, ExistenceCriteria.ShouldCreate, memory)
+        val driver = VolatileDriver<Int>(key, memory)
 
         val expected = VolatileEntry(null, 0, driver)
         val actual: VolatileEntry<Int>? = memory[key]
@@ -50,8 +49,8 @@ class VolatileDriverTest {
 
     @Test
     fun constructor_addsEntryToMemory_andAppendsItselfToEntryDrivers() {
-        val driver1 = VolatileDriver<Int>(key, ExistenceCriteria.ShouldCreate, memory)
-        val driver2 = VolatileDriver<Int>(key, ExistenceCriteria.MayExist, memory)
+        val driver1 = VolatileDriver<Int>(key, memory)
+        val driver2 = VolatileDriver<Int>(key, memory)
 
         val expected = VolatileEntry(null, 0, driver1, driver2)
         val actual: VolatileEntry<Int>? = memory[key]
@@ -65,89 +64,12 @@ class VolatileDriverTest {
             override fun childKeyWithComponent(component: String): StorageKey = NotVolatileKey()
         }
 
-        VolatileDriver<Int>(NotVolatileKey(), ExistenceCriteria.ShouldExist, memory)
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun constructorThrows_whenShouldCreate_butAlreadyCreated() {
-        memory[key] = VolatileEntry(42)
-
-        VolatileDriver<Int>(key, ExistenceCriteria.ShouldCreate, memory)
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun constructorThrows_whenShouldExist_butDoesntExist() {
-        VolatileDriver<Int>(key, ExistenceCriteria.ShouldExist, memory)
-    }
-
-    @Test
-    fun firstRegisterReceiver_whenShouldExist_receivesExistingValue() = runBlockingTest {
-        memory[key] = VolatileEntry(42, version = 1337)
-
-        val driver = VolatileDriver<Int>(key, ExistenceCriteria.ShouldExist, memory)
-
-        var calledWithData: Int? = null
-        var calledWithVersion: Int? = null
-        suspend fun receiver(data: Int, version: Int) {
-            calledWithData = data
-            calledWithVersion = version
-        }
-
-        driver.registerReceiver(receiver = ::receiver)
-
-        assertThat(calledWithData).isEqualTo(42)
-        assertThat(calledWithVersion).isEqualTo(1337)
-    }
-
-    @Test
-    fun firstRegReceiver_whenShouldExist_doesntReceiveExisting_whenTokenMatches() =
-        runBlockingTest {
-            memory[key] = VolatileEntry(42, version = 1337)
-
-            val driver = VolatileDriver<Int>(key, ExistenceCriteria.ShouldExist, memory)
-
-            @Suppress("UNUSED_PARAMETER")
-            suspend fun receiver(data: Int, version: Int) {
-                fail("Should not be called.")
-            }
-
-            driver.registerReceiver(token = driver.token, receiver = ::receiver)
-        }
-
-    @Test
-    fun firstRegisterReceiver_whenMayExist_receivesExistingValue() = runBlockingTest {
-        memory[key] = VolatileEntry(42, version = 1337)
-
-        val driver = VolatileDriver<Int>(key, ExistenceCriteria.MayExist, memory)
-
-        var calledWithData: Int? = null
-        var calledWithVersion: Int? = null
-        suspend fun receiver(data: Int, version: Int) {
-            calledWithData = data
-            calledWithVersion = version
-        }
-
-        driver.registerReceiver(receiver = ::receiver)
-
-        assertThat(calledWithData).isEqualTo(42)
-        assertThat(calledWithVersion).isEqualTo(1337)
-    }
-
-    @Test
-    fun firstRegisterReceiver_whenMayExist_doesNotReceiveValue_whenDoesntExist() = runBlockingTest {
-        val driver = VolatileDriver<Int>(key, ExistenceCriteria.MayExist, memory)
-
-        @Suppress("UNUSED_PARAMETER")
-        suspend fun receiver(data: Int, version: Int) {
-            fail("Should not be called.")
-        }
-
-        driver.registerReceiver(receiver = ::receiver)
+        VolatileDriver<Int>(NotVolatileKey(), memory)
     }
 
     @Test
     fun send_updatesMemory_whenVersion_isCorrect() = runBlockingTest {
-        val driver = VolatileDriver<Int>(key, ExistenceCriteria.ShouldCreate, memory)
+        val driver = VolatileDriver<Int>(key, memory)
 
         assertThat(driver.send(data = 1, version = 1)).isTrue()
 
@@ -164,7 +86,7 @@ class VolatileDriverTest {
 
     @Test
     fun send_doesNotUpdateMemory_whenVersion_isIncorrect() = runBlockingTest {
-        val driver = VolatileDriver<Int>(key, ExistenceCriteria.ShouldCreate, memory)
+        val driver = VolatileDriver<Int>(key, memory)
 
         assertThat(driver.send(data = 1, version = 0)).isFalse()
 
@@ -181,8 +103,8 @@ class VolatileDriverTest {
 
     @Test
     fun send_canSendToOtherDriverReceiver() = runBlockingTest {
-        val driver1 = VolatileDriver<Int>(key, ExistenceCriteria.ShouldCreate, memory)
-        val driver2 = VolatileDriver<Int>(key, ExistenceCriteria.ShouldExist, memory)
+        val driver1 = VolatileDriver<Int>(key, memory)
+        val driver2 = VolatileDriver<Int>(key, memory)
 
         var receivedDataAt1: Int? = null
         var receivedVersionAt1: Int? = null

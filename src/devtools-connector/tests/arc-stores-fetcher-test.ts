@@ -15,9 +15,10 @@ import {devtoolsArcInspectorFactory} from '../devtools-arc-inspector.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {SingletonType} from '../../runtime/type.js';
-import {singletonHandleForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
+import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 
 import {Entity} from '../../runtime/entity.js';
+import {SingletonEntityStore, ActiveSingletonEntityStore, handleForStore} from '../../runtime/storage/storage.js';
 
 describe('ArcStoresFetcher', () => {
   before(() => DevtoolsForTests.ensureStub());
@@ -32,8 +33,9 @@ describe('ArcStoresFetcher', () => {
 
     const foo = Entity.createEntityClass(arc.context.findSchemaByName('Foo'), null);
     const fooStore = await arc.createStore(new SingletonType(foo.type), 'fooStoreName', 'fooStoreId', ['awesome', 'arcs']);
-    const fooHandle = await singletonHandleForTest(arc, fooStore);
-    await fooHandle.set(new foo({value: 'persistence is useful'}));
+    const fooHandle = await handleForStore(fooStore, arc);
+    const fooEntity = new foo({value: 'persistence is useful'});
+    await fooHandle.set(fooEntity);
 
     assert.isEmpty(DevtoolsForTests.channel.messages.filter(
         m => m.messageType === 'fetch-stores-result'));
@@ -52,7 +54,8 @@ describe('ArcStoresFetcher', () => {
     delete results[0].messageBody.arcStores[0].type.innerType.entitySchema.fields.value.location;
 
     const sessionId = arc.idGenerator.currentSessionIdForTesting;
-    const entityId = '!' + sessionId + ':demo:test-proxy2:3';
+    const entityId = '!' + sessionId + ':fooStoreId:2';
+    const creationTimestamp = Entity.creationTimestamp(fooEntity);
 
     assert.deepEqual(results[0].messageBody, {
       arcStores: [{
@@ -64,15 +67,17 @@ describe('ArcStoresFetcher', () => {
           innerType: {
             tag: 'Entity',
             entitySchema: {
+              _annotations: [],
               description: {},
               fields: {
                 value: {
+                  annotations: [],
                   kind: 'schema-primitive',
                   refinement: null,
                   type: 'Text'
                 }
               },
-              hashStr: null,
+              hashStr: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
               names: ['Foo'],
               refinement: null,
             },
@@ -80,7 +85,7 @@ describe('ArcStoresFetcher', () => {
           tag: 'Singleton',
         },
         description: undefined,
-        value: {id: entityId, rawData: {value: 'persistence is useful'}}
+        value: {id: entityId, creationTimestamp: creationTimestamp.getTime(), rawData: {value: 'persistence is useful'}}
       }],
       // Context stores from manifests have been moved to a temporary StorageStub implementation,
       // StorageStub does not allow for fetching value. Let's add a test for context store after
@@ -126,10 +131,14 @@ describe('ArcStoresFetcher', () => {
     assert.lengthOf(results, 1);
 
     const sessionId = arc.idGenerator.currentSessionIdForTesting;
+    const store = await arc.findStoreById(arc.activeRecipe.handles[0].id).activate() as ActiveSingletonEntityStore;
+    // TODO(mmandlis): there should be a better way!
+    const creationTimestamp = Object.values((await store.serializeContents()).values)[0]['value']['creationTimestamp'];
     assert.deepEqual(results[0].messageBody, {
       id: `!${sessionId}:demo:1`,
       value: {
         id: `!${sessionId}:demo:1:3`,
+        creationTimestamp,
         rawData: {
           value: 'FooBar'
         }

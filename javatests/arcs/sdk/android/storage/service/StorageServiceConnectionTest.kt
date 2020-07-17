@@ -13,16 +13,13 @@ package arcs.sdk.android.storage.service
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.ParcelableCrdtType
-import arcs.android.storage.ParcelableProxyMessage
 import arcs.android.storage.service.IResultCallback
 import arcs.android.storage.service.IStorageService
 import arcs.android.storage.service.IStorageServiceCallback
 import arcs.android.storage.toParcelable
-import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
-import arcs.core.storage.ExistenceCriteria
 import arcs.core.storage.StoreOptions
-import arcs.core.storage.driver.RamDiskStorageKey
+import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.testutil.assertSuspendingThrows
 import com.google.common.truth.Truth.assertThat
 import com.nhaarman.mockitokotlin2.any
@@ -40,7 +37,7 @@ import org.junit.runner.RunWith
 
 /** Tests for [StorageServiceConnection]. */
 @RunWith(AndroidJUnit4::class)
-@UseExperimental(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class StorageServiceConnectionTest {
     private lateinit var delegateMock: StorageServiceBindingDelegate
     private lateinit var serviceMock: IStorageService
@@ -51,14 +48,16 @@ class StorageServiceConnectionTest {
             on { bindStorageService(any(), any(), any()) }.doReturn(true)
         }
         serviceMock = object : IStorageService.Stub() {
+            override fun idle(timeoutMillis: Long, resultCallback: IResultCallback) {
+                resultCallback.onResult(null)
+            }
+
             override fun registerCallback(callback: IStorageServiceCallback?): Int = 1
 
             override fun sendProxyMessage(
-                message: ParcelableProxyMessage?,
+                message: ByteArray,
                 resultCallback: IResultCallback?
             ) = Unit
-
-            override fun getLocalData(callback: IStorageServiceCallback?) = Unit
 
             override fun unregisterCallback(token: Int) = Unit
         }
@@ -81,7 +80,7 @@ class StorageServiceConnectionTest {
         assertThat(connection.isConnected).isFalse()
 
         // Resolve the deferred, so we don't have a dangling job.
-        (deferred as CompletableDeferred).complete(serviceMock)
+        (deferred as CompletableDeferred).complete(serviceMock.asBinder())
     }
 
     @Test
@@ -140,9 +139,8 @@ class StorageServiceConnectionTest {
     }
 
     companion object {
-        private val OPTIONS = StoreOptions<CrdtCount.Data, CrdtCount.Operation, Int>(
+        private val OPTIONS = StoreOptions(
             RamDiskStorageKey("myData"),
-            ExistenceCriteria.ShouldCreate,
             CountType()
         ).toParcelable(ParcelableCrdtType.Count)
     }

@@ -12,13 +12,14 @@
 package arcs.core.crdt
 
 import arcs.core.crdt.CrdtEntity.Operation.AddToSet
+import arcs.core.crdt.CrdtEntity.Operation.ClearAll
 import arcs.core.crdt.CrdtEntity.Operation.ClearSingleton
 import arcs.core.crdt.CrdtEntity.Operation.RemoveFromSet
 import arcs.core.crdt.CrdtEntity.Operation.SetSingleton
 import arcs.core.crdt.CrdtEntity.ReferenceImpl as Reference
 import arcs.core.data.RawEntity
-import arcs.core.testutil.assertThrows
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -36,6 +37,13 @@ class CrdtEntityTest {
 
         assertThat(entity.consumerView.singletons).isEqualTo(mapOf("foo" to null))
         assertThat(entity.consumerView.collections).isEqualTo(mapOf("bar" to emptySet<Reference>()))
+        assertThat(entity.consumerView.creationTimestamp).isEqualTo(
+            RawEntity.UNINITIALIZED_TIMESTAMP
+        )
+        assertThat(entity.consumerView.expirationTimestamp).isEqualTo(
+            RawEntity.UNINITIALIZED_TIMESTAMP
+        )
+        assertThat(entity.consumerView.id).isEqualTo(RawEntity.NO_REFERENCE_ID)
     }
 
     @Test
@@ -58,11 +66,14 @@ class CrdtEntityTest {
     @Test
     fun initializesFromRawData() {
         val rawEntity = RawEntity(
+            id = "an-id",
             singletons = mapOf("foo" to Reference("fooRef")),
             collections = mapOf(
                 "bar" to setOf(Reference("barRef1"), Reference("barRef2")),
                 "baz" to setOf(Reference("bazRef"))
-            )
+            ),
+            creationTimestamp = 1L,
+            expirationTimestamp = 2L
         )
         val entity = CrdtEntity(VersionMap(), rawEntity)
 
@@ -74,6 +85,10 @@ class CrdtEntityTest {
             )
         assertThat(entity.data.collections["baz"]?.consumerView)
             .containsExactly(Reference("bazRef"))
+
+        assertThat(entity.data.creationTimestamp).isEqualTo(1)
+        assertThat(entity.data.expirationTimestamp).isEqualTo(2)
+        assertThat(entity.data.id).isEqualTo("an-id")
     }
 
     @Test
@@ -91,6 +106,7 @@ class CrdtEntityTest {
     @Test
     fun canApply_anAddOperation_toASingleField() {
         val rawEntity = RawEntity(
+            singletonFields = setOf(),
             collectionFields = setOf("foo")
         )
         val entity = CrdtEntity(VersionMap(), rawEntity)
@@ -162,6 +178,32 @@ class CrdtEntityTest {
     }
 
     @Test
+    fun clearAll() {
+        val rawEntity = RawEntity(
+            id = "an-id",
+            singletons = mapOf("foo" to Reference("fooRef")),
+            collections = mapOf(
+                "bar" to setOf(Reference("barRef1"), Reference("barRef2")),
+                "baz" to setOf(Reference("bazRef"))
+            ),
+            creationTimestamp = 10L,
+            expirationTimestamp = 20L
+        )
+        val entity = CrdtEntity(VersionMap(), rawEntity)
+
+        assertThat(entity.applyOperation(ClearAll("me", VersionMap()))).isTrue()
+        assertThat(entity.consumerView).isEqualTo(
+            RawEntity(
+                id = "an-id",
+                singletonFields = setOf("foo"),
+                collectionFields = setOf("bar", "baz"),
+                creationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP,
+                expirationTimestamp = RawEntity.UNINITIALIZED_TIMESTAMP
+            )
+        )
+    }
+
+    @Test
     fun keepsSeparateClocks_forSeparateFields() {
         val rawEntity = RawEntity(
             singletonFields = setOf("name", "age")
@@ -193,22 +235,22 @@ class CrdtEntityTest {
     fun failsWhen_anInvalidFieldName_isProvided() {
         val entity = CrdtEntity(VersionMap(), RawEntity("", emptySet(), emptySet()))
 
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.applyOperation(
                 SetSingleton("me", VersionMap("me" to 1), "invalid", Reference("foo"))
             )
         }
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.applyOperation(
                 ClearSingleton("me", VersionMap("me" to 1), "invalid")
             )
         }
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.applyOperation(
                 AddToSet("me", VersionMap("me" to 1), "invalid", Reference("foo"))
             )
         }
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.applyOperation(
                 RemoveFromSet("me", VersionMap("me" to 1), "invalid", Reference("foo"))
             )
@@ -217,14 +259,17 @@ class CrdtEntityTest {
 
     @Test
     fun failsWhen_singletonOperations_areProvidedTo_collectionFields() {
-        val entity = CrdtEntity(VersionMap(), RawEntity(collectionFields = setOf("things")))
+        val entity = CrdtEntity(VersionMap(), RawEntity(
+            singletonFields = setOf(),
+            collectionFields = setOf("things"))
+        )
 
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.applyOperation(
                 SetSingleton("me", VersionMap("me" to 1), "things", Reference("foo"))
             )
         }
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.applyOperation(
                 ClearSingleton("me", VersionMap("me" to 1), "things")
             )
@@ -235,13 +280,109 @@ class CrdtEntityTest {
     fun failsWhen_collectionOperations_areProvidedTo_singletonFields() {
         val entity = CrdtEntity(VersionMap(), RawEntity(singletonFields = setOf("thing")))
 
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.applyOperation(AddToSet("me", VersionMap("me" to 1), "thing", Reference("foo")))
         }
-        assertThrows(CrdtException::class) {
+        assertFailsWith<CrdtException> {
             entity.applyOperation(
                 RemoveFromSet("me", VersionMap("me" to 1), "thing", Reference("foo"))
             )
+        }
+    }
+
+    fun entity(
+        creation: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        expiration: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) =
+        CrdtEntity(VersionMap(), RawEntity(
+            id = "an-id",
+            singletons = mapOf(),
+            collections = mapOf(),
+            creationTimestamp = creation,
+            expirationTimestamp = expiration
+        ))
+
+    @Test
+    fun mergeCreationTimestampCorrectly() {
+        var entity = entity()
+        var entity2 = entity()
+        entity.merge(entity2.data)
+        assertThat(entity.data.creationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+
+        entity = entity(creation = 5)
+        entity2 = entity()
+        entity.merge(entity2.data)
+        assertThat(entity.data.creationTimestamp).isEqualTo(5)
+
+        entity = entity()
+        entity2 = entity(creation = 5)
+        entity.merge(entity2.data)
+        assertThat(entity.data.creationTimestamp).isEqualTo(5)
+
+        entity = entity(creation = 5)
+        entity2 = entity(creation = 5)
+        entity.merge(entity2.data)
+        assertThat(entity.data.creationTimestamp).isEqualTo(5)
+
+        entity = entity(creation = 5)
+        entity2 = entity(creation = 1)
+        entity.merge(entity2.data)
+        assertThat(entity.data.creationTimestamp).isEqualTo(1)
+    }
+
+    @Test
+    fun mergeExpirationTimestampCorrectly() {
+        var entity = entity()
+        var entity2 = entity()
+        entity.merge(entity2.data)
+        assertThat(entity.data.expirationTimestamp).isEqualTo(RawEntity.UNINITIALIZED_TIMESTAMP)
+
+        entity = entity(expiration = 5)
+        entity2 = entity()
+        entity.merge(entity2.data)
+        assertThat(entity.data.expirationTimestamp).isEqualTo(5)
+
+        entity = entity()
+        entity2 = entity(expiration = 5)
+        entity.merge(entity2.data)
+        assertThat(entity.data.expirationTimestamp).isEqualTo(5)
+
+        entity = entity(expiration = 5)
+        entity2 = entity(expiration = 5)
+        entity.merge(entity2.data)
+        assertThat(entity.data.expirationTimestamp).isEqualTo(5)
+
+        entity = entity(expiration = 5)
+        entity2 = entity(expiration = 1)
+        entity.merge(entity2.data)
+        assertThat(entity.data.expirationTimestamp).isEqualTo(1)
+    }
+
+    @Test
+    fun mergeIdCorrectly() {
+        var entity = CrdtEntity(VersionMap(), RawEntity())
+        var entity2 = CrdtEntity(VersionMap(), RawEntity())
+        entity.merge(entity2.data)
+        assertThat(entity.data.id).isEqualTo(RawEntity.NO_REFERENCE_ID)
+
+        entity = CrdtEntity(VersionMap(), RawEntity(id = "id"))
+        entity2 = CrdtEntity(VersionMap(), RawEntity())
+        entity.merge(entity2.data)
+        assertThat(entity.data.id).isEqualTo("id")
+
+        entity = CrdtEntity(VersionMap(), RawEntity())
+        entity2 = CrdtEntity(VersionMap(), RawEntity(id = "id"))
+        entity.merge(entity2.data)
+        assertThat(entity.data.id).isEqualTo("id")
+
+        entity = CrdtEntity(VersionMap(), RawEntity(id = "id"))
+        entity2 = CrdtEntity(VersionMap(), RawEntity(id = "id"))
+        assertThat(entity.data.id).isEqualTo("id")
+
+        entity = CrdtEntity(VersionMap(), RawEntity(id = "id"))
+        entity2 = CrdtEntity(VersionMap(), RawEntity(id = "id2"))
+        assertFailsWith<CrdtException> {
+            entity.merge(entity2.data)
         }
     }
 }

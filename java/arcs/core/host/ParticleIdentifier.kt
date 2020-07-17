@@ -1,6 +1,16 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 package arcs.core.host
 
-import arcs.sdk.Particle
+import arcs.core.host.api.Particle
 import kotlin.reflect.KClass
 
 /**
@@ -17,3 +27,9 @@ data class ParticleIdentifier(val id: String) {
 
 /** Creates a [ParticleIdenfifier] from a [KClass] */
 fun KClass<out Particle>.toParticleIdentifier() = ParticleIdentifier.from(className())
+
+/**
+ * Creates a [ParticleIdentifier] from a [Class]. Older versions of Kotlin required kotlin-reflect
+ * to use KClass, so this method can be used instead.
+ */
+fun Class<out Particle>.toParticleIdentifier() = ParticleIdentifier.from(name)

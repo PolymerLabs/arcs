@@ -20,20 +20,16 @@ recipe
     output: writes things
   description `copy all things!`
 
-
 resource BigThings
   start
-  [
-    {"name": "house"},
-    {"name": "car"}
-  ]
+  {"root": {"values": {"ida": {"value": {"id": "ida", "rawData":{"name": "house"}}, "version": {"u": 1}},
+                       "idb": {"value": {"id": "idb", "rawData":{"name": "car"}}, "version": {"u": 1}}},
+            "version":{"u": 1}}, "locations": {}}
 store Store0 of [Thing] 'bigthings' in BigThings
-
 resource SmallThings
   start
-  [
-    {"name": "pen"},
-    {"name": "spoon"},
-    {"name": "ball"}
-  ]
+  {"root": {"values": {"idc": {"value": {"id": "idc", "rawData":{"name": "pen"}}, "version": {"u": 1}},
+                       "idd": {"value": {"id": "idd", "rawData":{"name": "spoon"}}, "version": {"u": 1}},
+                       "ide": {"value": {"id": "ide", "rawData":{"name": "ball"}}, "version": {"u": 1}}},
+            "version":{"u": 1}}, "locations": {}}
 store Store1 of [Thing] 'smallthings' in SmallThings

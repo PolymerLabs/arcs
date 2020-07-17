@@ -1,12 +1,12 @@
-load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_android_library")
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
 exports_files(["AndroidManifest.xml"])
 
-kt_android_library(
+arcs_kt_android_library(
     name = "common",
     srcs = glob(["*.kt"]),
     manifest = "AndroidManifest.xml",

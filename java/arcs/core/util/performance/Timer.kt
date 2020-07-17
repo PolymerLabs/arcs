@@ -11,19 +11,18 @@
 
 package arcs.core.util.performance
 
-/** A [Timer] times the execution of an operation. */
-abstract class Timer {
-    /** The current time, in milliseconds past the Epoch. Implementations will vary by platform. */
-    abstract val currentTimeNanos: Long
+import arcs.core.util.Time
 
+/** A [Timer] times the execution of an operation. */
+class Timer(val time: Time) {
     /** Times the execution of the given [block]. */
     inline fun <T> time(crossinline block: () -> T): TimedResult<T> {
-        val startTime = currentTimeNanos
+        val startTime = time.nanoTime
         val endTime: Long
         val result = try {
             block()
         } finally {
-            endTime = currentTimeNanos
+            endTime = time.nanoTime
         }
         return TimedResult(
             result,
@@ -34,12 +33,12 @@ abstract class Timer {
     /** Times the exeuction of the given suspending [block]. */
     @Suppress("REDUNDANT_INLINE_SUSPEND_FUNCTION_TYPE") // It's not redundant.
     suspend inline fun <T> timeSuspending(block: suspend () -> T): TimedResult<T> {
-        val startTime = currentTimeNanos
+        val startTime = time.nanoTime
         val endTime: Long
         val result = try {
             block()
         } finally {
-            endTime = currentTimeNanos
+            endTime = time.nanoTime
         }
         return TimedResult(
             result,

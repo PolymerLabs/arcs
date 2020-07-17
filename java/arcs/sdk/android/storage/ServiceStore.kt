@@ -17,25 +17,29 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import arcs.android.crdt.ParcelableCrdtType
+import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.service.DeferredResult
 import arcs.android.storage.service.IStorageService
-import arcs.android.storage.service.ParcelableProxyMessageChannel
-import arcs.android.storage.service.ParcelableProxyMessageChannel.MessageAndResult
-import arcs.android.storage.toParcelable
+import arcs.android.storage.service.IStorageServiceCallback
+import arcs.android.storage.toProto
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
+import arcs.core.data.CollectionType
+import arcs.core.data.CountType
+import arcs.core.data.EntityType
+import arcs.core.data.SingletonType
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.ActiveStore
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StoreOptions
-import arcs.core.storage.util.ProxyCallbackManager
-import arcs.core.storage.util.SendQueue
+import arcs.core.util.TaggedLog
 import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.StorageServiceConnection
 import kotlin.coroutines.CoroutineContext
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,34 +47,46 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.channels.ClosedSendChannelException
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 
 /**
  * Factory which can be supplied to [Store.activate] to force store creation to use the
  * [ServiceStore].
  */
 @ExperimentalCoroutinesApi
-@UseExperimental(FlowPreview::class)
-class ServiceStoreFactory<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
+@OptIn(FlowPreview::class)
+class ServiceStoreFactory(
     private val context: Context,
     private val lifecycle: Lifecycle,
-    private val crdtType: ParcelableCrdtType,
     private val coroutineContext: CoroutineContext = Dispatchers.IO,
     private val connectionFactory: ConnectionFactory? = null
-) : ActivationFactory<Data, Op, ConsumerData> {
-    override suspend operator fun invoke(
-        options: StoreOptions<Data, Op, ConsumerData>
+) : ActivationFactory {
+    override suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(
+        options: StoreOptions
     ): ServiceStore<Data, Op, ConsumerData> {
         val storeContext = coroutineContext + CoroutineName("ServiceStore(${options.storageKey})")
-        return ServiceStore(
+        val parcelableType = when (options.type) {
+            is CountType -> ParcelableCrdtType.Count
+            is CollectionType<*> -> ParcelableCrdtType.Set
+            is SingletonType<*> -> ParcelableCrdtType.Singleton
+            is EntityType -> ParcelableCrdtType.Entity
+            else ->
+                throw IllegalArgumentException("Service store can't handle type ${options.type}")
+        }
+        return ServiceStore<Data, Op, ConsumerData>(
             options = options,
-            crdtType = crdtType,
+            crdtType = parcelableType,
             lifecycle = lifecycle,
             connectionFactory = connectionFactory
                 ?: DefaultConnectionFactory(context, coroutineContext = storeContext),
@@ -80,56 +96,107 @@ class ServiceStoreFactory<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
 }
 
 /** Implementation of [ActiveStore] which pipes [ProxyMessage]s to and from the [StorageService]. */
-@UseExperimental(FlowPreview::class)
+@Suppress("EXPERIMENTAL_API_USAGE")
+@OptIn(FlowPreview::class)
 @ExperimentalCoroutinesApi
 class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
-    private val options: StoreOptions<Data, Op, ConsumerData>,
+    private val options: StoreOptions,
     private val crdtType: ParcelableCrdtType,
     lifecycle: Lifecycle,
     private val connectionFactory: ConnectionFactory,
     private val coroutineContext: CoroutineContext
 ) : ActiveStore<Data, Op, ConsumerData>(options), LifecycleObserver {
+    // TODO(#5551): Consider including hash of options.storageKey for tracking.
+    private val log = TaggedLog { "ServiceStore" }
     private val scope = CoroutineScope(coroutineContext)
     private var storageService: IStorageService? = null
     private var serviceConnection: StorageServiceConnection? = null
-    private val proxyCallbacks = ProxyCallbackManager<Data, Op, ConsumerData>()
-    private var serviceCallbackToken: Int = -1
-    private val sendQueue = SendQueue()
+    private var channel: BroadcastChannel<suspend () -> Unit>? = null
+    private var channelConsumptionJob: Job? = null
+    private val outgoingMessages = atomic(0)
 
     init {
         lifecycle.addObserver(this)
+        initChannel()
     }
 
-    @Suppress("UNCHECKED_CAST")
-    override suspend fun getLocalData(): Data {
+    // Channel has an internal queue which can retain work if stopped
+    // So we need to create fresh instances when off() invoked
+    private fun initChannel() {
+        synchronized(this) {
+            channel?.takeIf { !it.isClosedForSend }?.cancel()
+            channel = ConflatedBroadcastChannel<suspend () -> Unit>().also {
+                channelConsumptionJob = it.asFlow().buffer()
+                    .onEach { it() }
+                    .launchIn(scope)
+            }
+        }
+    }
+
+    override suspend fun idle() = coroutineScope {
+        log.debug { "Waiting for service store to be idle" }
+        while (outgoingMessages.value > 0) delay(10)
         val service = checkNotNull(storageService)
-        val channel = ParcelableProxyMessageChannel(
-            coroutineContext
-        )
-        service.getLocalData(channel)
-        val flow = channel.asFlow()
-        val modelUpdate =
-            flow.onEach { it.result.complete(true) }
-                .mapNotNull {
-                    it.message.actual as? ProxyMessage.ModelUpdate<Data, Op, ConsumerData>
-                }
-                .first()
-        channel.cancel()
-        return modelUpdate.model
+        val callback = DeferredResult(this@coroutineScope.coroutineContext)
+        service.idle(TIMEOUT_IDLE_WAIT_MILLIS, callback)
+        withTimeout(TIMEOUT_IDLE_WAIT_MILLIS) { callback.await() }
+        log.debug { "ServiceStore is idle" }
     }
 
-    override fun on(callback: ProxyCallback<Data, Op, ConsumerData>): Int =
-        proxyCallbacks.register(callback)
+    override fun on(callback: ProxyCallback<Data, Op, ConsumerData>): Int {
+        val service = checkNotNull(storageService)
+        return service.registerCallback(object : IStorageServiceCallback.Stub() {
+            override fun onProxyMessage(proxyMessage: ByteArray) {
+                scope.launch {
+                    @Suppress("UNCHECKED_CAST")
+                    callback.invoke(
+                        proxyMessage.decodeProxyMessage() as ProxyMessage<Data, Op, ConsumerData>
+                    )
+                }
+            }
+        })
+    }
 
-    override fun off(callbackToken: Int) = proxyCallbacks.unregister(callbackToken)
+    override fun off(callbackToken: Int) {
+        val service = checkNotNull(storageService)
+        runBlocking {
+            send {
+                service.unregisterCallback(callbackToken)
+                initChannel()
+            }
+        }
+    }
+
+    private suspend fun send(block: suspend () -> Unit) = requireNotNull(channel) {
+        "Channel is not initialized"
+    }.apply {
+        try {
+            send(block)
+        } catch (e: ClosedSendChannelException) {
+            log.debug { "Channel is closed, ignoring" }
+        }
+    }
 
     override suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean {
         val service = checkNotNull(storageService)
         val result = DeferredResult(coroutineContext)
-        sendQueue.enqueue {
-            service.sendProxyMessage(message.toParcelable(crdtType), result)
+        // Trick: make an indirect access to the message to keep kotlin flow
+        // from holding the entire message that might encapsulate a large size data.
+        var messageRef: ProxyMessage<Data, Op, ConsumerData>? = message
+        outgoingMessages.incrementAndGet()
+        send {
+            service.sendProxyMessage(messageRef!!.toProto().toByteArray(), result)
+            messageRef = null
         }
-        return result.await()
+        // Just return false if the message couldn't be applied.
+        return try {
+            result.await()
+        } catch (e: CrdtException) {
+            log.debug(e) { "CrdtException occurred in onProxyMessage" }
+            false
+        } finally {
+            outgoingMessages.decrementAndGet()
+        }
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
@@ -140,19 +207,8 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
             "Connection to StorageService is already alive."
         }
         val connection = connectionFactory(options, crdtType)
-        val service = connection.connectAsync().await()
-
-        val messageChannel =
-            ParcelableProxyMessageChannel(
-                coroutineContext
-            )
-        serviceCallbackToken = withContext(coroutineContext) {
-            service.registerCallback(messageChannel)
-        }
-
-        scope.launch {
-            messageChannel.openSubscription().consumeEach { handleMessageAndResultFromService(it) }
-        }
+        // Need to initiate the connection on the main thread.
+        val service = IStorageService.Stub.asInterface(connection.connectAsync().await())
 
         this.serviceConnection = connection
         this.storageService = service
@@ -162,23 +218,13 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     fun onLifecycleDestroyed() {
         serviceConnection?.disconnect()
-        storageService?.unregisterCallback(serviceCallbackToken)
         storageService = null
+        channel?.cancel()
+        channel = null
         scope.coroutineContext[Job.Key]?.cancelChildren()
     }
 
-    @Suppress("UNCHECKED_CAST")
-    private suspend fun handleMessageAndResultFromService(messageAndResult: MessageAndResult) {
-        try {
-            val actualMessage = CrdtException.requireNotNull(
-                messageAndResult.message.actual as? ProxyMessage<Data, Op, ConsumerData>
-            ) { "Could not cast ProxyMessage to required type." }
-
-            sendQueue.enqueue {
-                messageAndResult.result.complete(proxyCallbacks.send(actualMessage))
-            }
-        } catch (e: Exception) {
-            messageAndResult.result.completeExceptionally(e)
-        }
+    companion object {
+        private const val TIMEOUT_IDLE_WAIT_MILLIS = 10000L
     }
 }

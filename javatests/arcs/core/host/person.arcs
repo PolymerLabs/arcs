@@ -1,0 +1,44 @@
+meta
+  namespace: arcs.core.host
+
+schema Person
+  name: Text
+
+particle ReadPerson in 'arcs.core.host.ReadPerson'
+  person: reads Person
+
+particle PurePerson in 'arcs.core.host.PurePerson'
+  inputPerson: reads Person
+  outputPerson: writes Person
+
+particle WritePerson in 'arcs.core.host.WritePerson'
+  person: writes Person
+
+particle QueryPerson in 'arcs.core.host.QueryPerson'
+  person: reads [Person {name: Text}[name == ?]]
+
+particle WritePeople in 'arcs.core.host.WritePeople'
+  people: writes [Person {name: Text}]
+
+recipe Person
+  inputPerson: create 'inputPerson'
+  outputPerson: create 'outputPerson'
+
+  WritePerson
+    person: writes inputPerson
+
+  PurePerson
+    inputPerson: reads inputPerson
+    outputPerson: writes outputPerson
+
+  ReadPerson
+    person: reads outputPerson
+
+recipe People
+  people: create 'people'
+
+  QueryPerson
+    person: reads people
+
+  WritePeople
+    people: writes people

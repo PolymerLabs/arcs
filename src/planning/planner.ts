@@ -212,7 +212,7 @@ export class Planner implements InspectablePlanner {
     })));
     const suggestionResults = ([] as Suggestion[]).concat(...results);
 
-    // TODO(sjmiles): debugging helper for diagnosing test failures
+    // debugging helper for diagnosing test failures
     const shouldlogStrategyResults = false;
     if (shouldlogStrategyResults) {
       Planner.logStrategyResults(generations);

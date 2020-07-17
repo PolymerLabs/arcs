@@ -1,9 +1,20 @@
+/*
+ * Copyright 2020 Google LLC.
+ *
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ *
+ * Code distributed by Google as part of this project is also subject to an additional IP rights
+ * grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 package arcs.core.util
 
 import arcs.core.util.Log.formatter
 import arcs.core.util.Log.toString
 import arcs.core.util.Log.writer
 import kotlinx.atomicfu.atomic
+
 /**
  * Arcs-specific logging utility.
  *
@@ -30,13 +41,18 @@ object Log {
      *
      * Default implementation uses [println].
      */
-    var writer: (level: Level, renderedMessage: String) -> Unit = DEFAULT_WRITER
+    var writer: (level: Level, renderedMessage: String, throwable: Throwable?) -> Unit =
+        DEFAULT_WRITER
 
     /** Defines available logging-levels. */
     enum class Level {
         // Order matters here.
-        Debug, Info, Warning, Error, Wtf
+        Verbose, Debug, Info, Warning, Error, Wtf
     }
+
+    /** Logs at a verbose-level. */
+    fun verbose(throwable: Throwable? = null, messageBuilder: () -> String) =
+        maybeLog(Level.Verbose, throwable, messageBuilder)
 
     /** Logs at a debug-level. */
     fun debug(throwable: Throwable? = null, messageBuilder: () -> String) =
@@ -68,7 +84,11 @@ object Log {
 
     private fun maybeLog(level: Level, throwable: Throwable? = null, messageBuilder: () -> String) {
         if (this.level <= level) {
-            writer(level, formatter(logIndex.incrementAndGet(), level, throwable, messageBuilder()))
+            writer(
+                level,
+                formatter(logIndex.incrementAndGet(), level, throwable, messageBuilder()),
+                throwable
+            )
         }
     }
 }
@@ -96,5 +116,7 @@ private val DEFAULT_FORMATTER: (
             } else ""
     }
 
-private val DEFAULT_WRITER: (level: Log.Level, renderedMessage: String) -> Unit =
-    { _, msg -> println(msg) }
+/* ktlint-disable max-line-length */
+private val DEFAULT_WRITER: (level: Log.Level, renderedMessage: String, throwable: Throwable?) -> Unit =
+    { _, msg, _ -> println(msg) }
+/* ktlint-enable max-line-length */

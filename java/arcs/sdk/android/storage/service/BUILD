@@ -1,10 +1,10 @@
-load("//tools/build_defs/kotlin:rules.bzl", "kt_android_library")
+load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_kt_android_library")
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//java/arcs:allowed-packages"])
 
-kt_android_library(
+arcs_kt_android_library(
     name = "service",
     srcs = glob(["*.kt"]),
     manifest = "AndroidManifest.xml",
@@ -12,9 +12,12 @@ kt_android_library(
         "//java/arcs/android/common/resurrection",
         "//java/arcs/android/crdt",
         "//java/arcs/android/storage",
+        "//java/arcs/android/storage/database",
         "//java/arcs/android/storage/service",
         "//java/arcs/android/storage/service:aidl",
         "//java/arcs/android/storage/ttl",
+        "//java/arcs/android/util",
+        "//java/arcs/core/crdt",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/driver",

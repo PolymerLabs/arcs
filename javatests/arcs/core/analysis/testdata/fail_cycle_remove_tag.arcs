@@ -1,0 +1,19 @@
+// tags can be removed in a simple cycle
+// #Ingress: P1
+// #Fail: hc:P1.input is trusted
+particle P1
+  input: reads Foo {}
+  output: writes Foo {}
+  check input is trusted
+  claim output is trusted
+particle P2
+  input: reads Foo {}
+  output: writes Foo {}
+  claim output is not trusted
+recipe R
+  P1
+    input: reads h1
+    output: writes h2
+  P2
+    input: reads h2
+    output: writes h1

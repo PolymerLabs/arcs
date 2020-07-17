@@ -11,35 +11,29 @@
 import {assert} from '../../platform/chai-web.js';
 import {Loader} from '../../platform/loader.js';
 import {Arc} from '../../runtime/arc.js';
-import {Flags} from '../../runtime/flags.js';
 import {IdGenerator} from '../../runtime/id.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {SlotComposer} from '../../runtime/slot-composer.js';
 import {SlotTestObserver} from '../../runtime/testing/slot-test-observer.js';
-import {DriverFactory} from '../../runtime/storageNG/drivers/driver-factory.js';
-import {RamDiskStorageDriverProvider} from '../../runtime/storageNG/drivers/ramdisk.js';
-import {collectionHandleForTest, storageKeyForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
+import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
+import {RamDiskStorageDriverProvider} from '../../runtime/storage/drivers/ramdisk.js';
+import {storageKeyForTest, storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
+import {CollectionEntityStore, CollectionEntityHandle, handleForStore} from '../../runtime/storage/storage.js';
 
 describe('products test', () => {
-
-  beforeEach(() => {
-    manifestFilename = Flags.useNewStorageStack ?
-      './src/tests/particles/artifacts/ProductsTestNg.arcs' :
-      './src/tests/particles/artifacts/products-test.recipes';
-  });
 
   afterEach(() => {
     DriverFactory.clearRegistrationsForTesting();
   });
 
-  let manifestFilename: string;
+  const manifestFilename = './src/tests/particles/artifacts/ProductsTestNg.arcs';
 
   const verifyFilteredBook = async (arc: Arc) => {
     const booksHandle = arc.activeRecipe.handleConnections.find(hc => hc.isOutput).handle;
-    const store = arc.findStoreById(booksHandle.id);
-    const handle = await collectionHandleForTest(arc, store);
+    const store = arc.findStoreById(booksHandle.id) as CollectionEntityStore;
+    const handle: CollectionEntityHandle = await handleForStore(store, arc);
     const list = await handle.toList();
     assert.lengthOf(list, 1);
     assert.strictEqual('Harry Potter', list[0].name);

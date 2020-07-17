@@ -16,11 +16,12 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.common.ArcId
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
+import arcs.core.data.HandleMode
+import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.data.Plan
-import arcs.core.storage.driver.VolatileStorageKey
+import arcs.core.storage.keys.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,7 +31,7 @@ import org.junit.runner.RunWith
 class ParcelablePlanTest {
 
     private val personSchema = Schema(
-        listOf(SchemaName("Person")),
+        setOf(SchemaName("Person")),
         SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
         "42"
     )
@@ -40,8 +41,8 @@ class ParcelablePlanTest {
     @Test
     fun plan_parcelableRoundTrip_works() {
         val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
-        val handleConnection = Plan.HandleConnection(storageKey, personType)
-        val handleConnection2 = Plan.HandleConnection(storageKey, personType)
+        val handleConnection = Plan.HandleConnection(storageKey, HandleMode.ReadWrite, personType)
+        val handleConnection2 = Plan.HandleConnection(storageKey, HandleMode.ReadWrite, personType)
         val particle = Plan.Particle(
             "Foobar",
             "foo.bar.Foobar",
@@ -51,7 +52,7 @@ class ParcelablePlanTest {
         val particle2 = Plan.Particle(
             "Foobar2",
             "foo.bar.Foobar2",
-             mapOf("foo" to handleConnection2)
+            mapOf("foo" to handleConnection2)
         )
 
         val plan = Plan(listOf(particle, particle2))

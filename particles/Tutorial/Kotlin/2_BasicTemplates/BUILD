@@ -9,7 +9,7 @@ licenses(["notice"])
 arcs_kt_schema(
     name = "schemas",
     srcs = ["BasicTemplates.arcs"],
-    package = "arcs.tutorials",
+    platforms = ["wasm"],
 )
 
 arcs_kt_particles(

@@ -16,11 +16,12 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.common.ArcId
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
+import arcs.core.data.HandleMode
 import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.storage.driver.VolatileStorageKey
+import arcs.core.storage.keys.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,7 +31,7 @@ import org.junit.runner.RunWith
 class ParcelablePlanPartitionTest {
 
     private val personSchema = Schema(
-        listOf(SchemaName("Person")),
+        setOf(SchemaName("Person")),
         SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
         "42"
     )
@@ -39,11 +40,13 @@ class ParcelablePlanPartitionTest {
     fun PlanPartition_parcelableRoundTrip_works() {
         val handleConnection = Plan.HandleConnection(
             VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
+            HandleMode.ReadWrite,
             EntityType(personSchema)
         )
 
         val handleConnection2 = Plan.HandleConnection(
             VolatileStorageKey(ArcId.newForTest("foo"), "bar2"),
+            HandleMode.ReadWrite,
             EntityType(personSchema)
         )
 
@@ -59,7 +62,6 @@ class ParcelablePlanPartitionTest {
         )
 
         val planPartition = Plan.Partition("arcId", "arcHost", listOf(particle, particle2))
-
 
         val marshalled = with(Parcel.obtain()) {
             writeTypedObject(planPartition.toParcelable(), 0)

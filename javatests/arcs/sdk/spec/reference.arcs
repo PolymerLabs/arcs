@@ -1,0 +1,18 @@
+meta
+  namespace: arcs.sdk.spec
+
+schema Child
+  age: Number
+
+schema Parent
+  age: Number
+  favorite: &Child
+  children: [&Child]
+
+particle ReferenceSpecParticle
+  singletonChild: reads writes Child {age}
+  collectionChild: reads writes [Child {age}]
+  parents: reads writes [Parent {age, favorite, children}]
+
+  singletonChildRef: reads writes &Child
+  collectionChildRef: reads writes [&Child]

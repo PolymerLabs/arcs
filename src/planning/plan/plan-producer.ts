@@ -20,7 +20,7 @@ import {StrategyDerived} from '../strategizer.js';
 import {PlanningResult} from './planning-result.js';
 import {Suggestion} from './suggestion.js';
 import {PlannerInspector} from '../planner-inspector.js';
-import {singletonHandle, ActiveSingletonEntityStore, SingletonEntityHandle} from '../../runtime/storageNG/storage-ng.js';
+import {ActiveSingletonEntityStore, SingletonEntityHandle, handleForActiveStore} from '../../runtime/storage/storage.js';
 
 const defaultTimeoutMs = 5000;
 
@@ -65,7 +65,7 @@ export class PlanProducer {
     this.searchStore = searchStore;
     this.inspector = inspector;
     if (this.searchStore) {
-      this.handle = singletonHandle(this.searchStore, this.arc);
+      this.handle = handleForActiveStore(this.searchStore, this.arc);
       this.searchStoreCallbackId = this.searchStore.on(() => this.onSearchChanged());
     }
     this.debug = debug;
@@ -85,21 +85,21 @@ export class PlanProducer {
     this.stateChangedCallbacks.push(callback);
   }
 
-  async onSearchChanged(): Promise<boolean> {
+  async onSearchChanged(): Promise<void> {
     const values = JSON.parse((await this.handle.fetch()).current) || [];
 
     const arcId = this.arc.id.idTreeAsString();
     const value = values.find(value => value.arc === arcId);
     if (!value) {
-      return false;
+      return;
     }
     if (value.search === this.search) {
-      return false;
+      return;
     }
     this.search = value.search;
     if (!this.search) {
       // search string turned empty, no need to replan, going back to contextual suggestions.
-      return false;
+      return;
     }
     const  options: SuggestionOptions = {
         // If we're searching but currently only have contextual suggestions,
@@ -119,7 +119,6 @@ export class PlanProducer {
       }
     }
     await this.produceSuggestions(options);
-    return true;
   }
 
   dispose() {

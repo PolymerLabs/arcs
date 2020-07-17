@@ -16,30 +16,42 @@ import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import android.text.format.DateUtils
+import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import arcs.android.common.resurrection.ResurrectorService
 import arcs.android.storage.ParcelableStoreOptions
+import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
 import arcs.android.storage.service.BindingContext
 import arcs.android.storage.service.BindingContextStatsImpl
+import arcs.android.storage.service.DeferredStore
+import arcs.android.storage.service.StorageServiceManager
 import arcs.android.storage.ttl.PeriodicCleanupTask
+import arcs.android.util.AndroidBinderStats
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
-import arcs.core.storage.Store
-import arcs.core.storage.StoreOptions
+import arcs.core.storage.StorageKey
+import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.database.name
 import arcs.core.storage.database.persistent
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.util.TaggedLog
+import arcs.core.util.performance.MemoryStats
 import arcs.core.util.performance.PerformanceStatistics
 import java.io.FileDescriptor
 import java.io.PrintWriter
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 
@@ -47,40 +59,102 @@ import kotlinx.coroutines.runBlocking
  * Implementation of a [Service] which manages [Store]s and exposes the ability to access them via
  * the [IStorageService] interface when bound-to by a client.
  */
-class StorageService : ResurrectorService() {
-    private val coroutineContext = Dispatchers.IO + CoroutineName("StorageService")
-    private val scope = CoroutineScope(coroutineContext)
-    private val stores = ConcurrentHashMap<StoreOptions<*, *, *>, Store<*, *, *>>()
+open class StorageService : ResurrectorService() {
+    protected open val coroutineContext = Dispatchers.Default + CoroutineName("StorageService")
+    protected open val writeBackScope = CoroutineScope(
+        Executors.newCachedThreadPool {
+            Thread(it).apply { name = "WriteBack #$id" }
+        }.asCoroutineDispatcher() + SupervisorJob()
+    )
+    @ExperimentalCoroutinesApi
+    private val stores = ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>()
     private var startTime: Long? = null
     private val stats = BindingContextStatsImpl()
     private val log = TaggedLog { "StorageService" }
+    // Can be overridden by subclasses.
+    open val config = StorageServiceConfig(ttlJobEnabled = true, garbageCollectionJobEnabled = true)
+    private val workManager: WorkManager by lazy { WorkManager.getInstance(this) }
 
+    @ExperimentalCoroutinesApi
     override fun onCreate() {
         super.onCreate()
         log.debug { "onCreate" }
         startTime = startTime ?: System.currentTimeMillis()
 
-        val periodicCleanupTask =
-            PeriodicWorkRequest.Builder(PeriodicCleanupTask::class.java, 1, TimeUnit.HOURS)
-                .addTag(PeriodicCleanupTask.WORKER_TAG)
-                .build()
+        StoreWriteBack.init(writeBackScope)
 
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+        schedulePeriodicJobs(config)
+    }
+
+    private fun scheduleTtlJob(ttlHoursInterval: Long) {
+        val periodicCleanupTask =
+            PeriodicWorkRequest.Builder(
+                PeriodicCleanupTask::class.java,
+                ttlHoursInterval,
+                TimeUnit.HOURS
+            )
+            .addTag(PeriodicCleanupTask.WORKER_TAG)
+            .build()
+        workManager.enqueueUniquePeriodicWork(
             PeriodicCleanupTask.WORKER_TAG,
-            ExistingPeriodicWorkPolicy.KEEP,
+            ExistingPeriodicWorkPolicy.REPLACE,
             periodicCleanupTask
         )
     }
 
+    private fun scheduleGcJob(garbageCollectionHoursInterval: Long) {
+        val garbageCollectionTask =
+            PeriodicWorkRequest.Builder(
+                DatabaseGarbageCollectionPeriodicTask::class.java,
+                garbageCollectionHoursInterval,
+                TimeUnit.HOURS
+            )
+            .addTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiresDeviceIdle(true)
+                    .setRequiresCharging(true)
+                    .build()
+            )
+            .build()
+        workManager.enqueueUniquePeriodicWork(
+            DatabaseGarbageCollectionPeriodicTask.WORKER_TAG,
+            ExistingPeriodicWorkPolicy.REPLACE,
+            garbageCollectionTask
+        )
+    }
+
+    protected fun schedulePeriodicJobs(config: StorageServiceConfig) {
+        if (config.ttlJobEnabled) {
+            scheduleTtlJob(config.ttlHoursInterval)
+        } else {
+            workManager.cancelAllWorkByTag(PeriodicCleanupTask.WORKER_TAG)
+        }
+        if (config.garbageCollectionJobEnabled) {
+            scheduleGcJob(config.garbageCollectionHoursInterval)
+        } else {
+            workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+        }
+    }
+
+    @ExperimentalCoroutinesApi
     override fun onBind(intent: Intent): IBinder? {
         log.debug { "onBind: $intent" }
+
+        if (intent.action == MANAGER_ACTION) {
+            return StorageServiceManager(coroutineContext, stores)
+        }
+
         val parcelableOptions = requireNotNull(
             intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
         ) { "No StoreOptions found in Intent" }
 
+        val options = parcelableOptions.actual.copy()
         return BindingContext(
-            stores.computeIfAbsent(parcelableOptions.actual) { Store(it) },
-            parcelableOptions.crdtType,
+            stores.computeIfAbsent(options.storageKey) {
+                @Suppress("UNCHECKED_CAST")
+                DeferredStore<CrdtData, CrdtOperation, Any>(options)
+            },
             coroutineContext,
             stats
         ) { storageKey, message ->
@@ -94,12 +168,13 @@ class StorageService : ResurrectorService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        scope.cancel()
+        writeBackScope.cancel()
     }
 
+    @ExperimentalCoroutinesApi
     override fun dump(fd: FileDescriptor, writer: PrintWriter, args: Array<out String>) {
         val elapsedTime = System.currentTimeMillis() - (startTime ?: System.currentTimeMillis())
-        val storageKeys = stores.keys.map { it.storageKey }.toSet()
+        val storageKeys = stores.keys.map { it }.toSet()
 
         val statsPercentiles = stats.roundtripPercentiles
 
@@ -122,6 +197,36 @@ class StorageService : ResurrectorService() {
                 |  - Peak: ${stats.transactions.peak}
             """.trimMargin("|")
         )
+
+        // Dump current process global binder stats to understand contention in the thread pool,
+        // peak usage of shared binder memory, the number of pending transactions, etc.
+        // Hide the dump when failing to fetch the stats from the kernel binder driver.
+        mapOf(
+            "Memory high watermark (pages)" to "pages high watermark",
+            "Pending transactions" to "pending transactions",
+            "Requested threads" to "requested threads",
+            "Ready threads" to "ready threads"
+        ).run {
+            AndroidBinderStats.query(*values.toTypedArray()).iterator().let { stats ->
+                mapValues { stats.next() }
+            }
+        }.takeIf { it.any { (_, v) -> v.isNotEmpty() } }?.run {
+            writer.println(
+                """
+                    |Current Process Binder Stats:
+                    |  - ${map { (k, v) -> "$k: $v" }.joinToString("\n|  - ")}
+                """.trimMargin("|")
+            )
+        }
+
+        MemoryStats.snapshot().run {
+            writer.println(
+                """
+                    |Process Memory Stats (KB):
+                    |  - ${map { (k, v) -> "${k.name}: $v" }.joinToString("\n|  - ")}
+                """.trimMargin("|")
+            )
+        }
 
         writer.println()
 
@@ -172,7 +277,7 @@ class StorageService : ResurrectorService() {
                 |$pad    Min: %.3f
                 |$pad    Max: %.3f
                 |
-                |${pad}Counts per measurement (name: average, standard deviation, min, max):
+                |$pad  Counts per measurement (name: average, standard deviation, min, max):
             """.trimMargin()
                 .format(
                     runtime.measurements,
@@ -186,16 +291,29 @@ class StorageService : ResurrectorService() {
             val stats = counters[counter]
             writer.println(
                 """
-                    |$pad  $counter:
-                    |$pad    %.2f, %.2f, %.2f, %.2f
+                    |$pad    ${counter.padEnd(35)}%.2f, %.2f, %.2f, %.2f
                 """.trimMargin("|")
-                    .format(stats.mean, stats.standardDeviation, stats.min ?: 0, stats.max ?: 0)
+                    .format(stats.mean, stats.standardDeviation, stats.min ?: 0.0, stats.max ?: 0.0)
             )
         }
+        writer.println()
     }
 
+    data class StorageServiceConfig(
+        val ttlJobEnabled: Boolean,
+        val ttlHoursInterval: Long = TTL_JOB_INTERVAL_HOURS,
+        val garbageCollectionJobEnabled: Boolean,
+        val garbageCollectionHoursInterval: Long = GC_JOB_INTERVAL_HOURS
+    )
+
     companion object {
-        private const val EXTRA_OPTIONS = "storeOptions"
+        // Default value for ttl periodic job interval.
+        const val TTL_JOB_INTERVAL_HOURS = 12L
+        // Default value for garbage collection periodic job interval.
+        const val GC_JOB_INTERVAL_HOURS = 24L
+
+        const val EXTRA_OPTIONS = "storeOptions"
+        const val MANAGER_ACTION = "arcs.sdk.android.storage.service.MANAGER"
 
         init {
             // TODO: Remove this, the Allocator should be responsible for setting up providers.
@@ -207,7 +325,24 @@ class StorageService : ResurrectorService() {
          */
         fun createBindIntent(context: Context, storeOptions: ParcelableStoreOptions): Intent =
             Intent(context, StorageService::class.java).apply {
+                action = storeOptions.actual.storageKey.toString()
                 putExtra(EXTRA_OPTIONS, storeOptions)
             }
+
+        /**
+         * Creates an [Intent] to use to get a [IStorageServiceManager] binding to the
+         * [StorageService].
+         */
+        fun createStorageManagerBindIntent(context: Context): Intent =
+            Intent(context, StorageService::class.java).apply {
+                action = MANAGER_ACTION
+            }
+
+        // Can be used to cancel all periodic jobs when the service is not running.
+        fun cancelAllPeriodicJobs(context: Context) {
+            val workManager = WorkManager.getInstance(context)
+            workManager.cancelAllWorkByTag(PeriodicCleanupTask.WORKER_TAG)
+            workManager.cancelAllWorkByTag(DatabaseGarbageCollectionPeriodicTask.WORKER_TAG)
+        }
     }
 }
