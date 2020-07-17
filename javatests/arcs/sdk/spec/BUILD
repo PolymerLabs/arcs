@@ -31,4 +31,5 @@ arcs_kt_jvm_test_suite(
 arcs_kt_schema(
     name = "schemas",
     srcs = glob(["*.arcs"]),
+    test_harness = True,
 )
