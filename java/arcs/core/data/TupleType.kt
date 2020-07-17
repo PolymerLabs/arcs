@@ -9,6 +9,8 @@ import arcs.core.type.TypeLiteral
 /** [Type] representation of a tuple. */
 data class TupleType(val elementTypes: List<Type>) : Type {
 
+    constructor(vararg types: Type) : this(types.toList())
+
     override val tag = Tag.Tuple
 
     override fun copy(variableMap: MutableMap<Any, Any>): Type =

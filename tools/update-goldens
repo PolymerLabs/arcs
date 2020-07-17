@@ -7,7 +7,7 @@ cd $ROOT
 
 status "[ 1 / 5 ] Kotlin Goldens for Jvm and Wasm"
 tools/sigh schema2wasm --quiet --kotlin src/tools/tests/golden.arcs --outdir src/tools/tests/goldens/ --outfile generated-schemas.jvm.kt
-tools/sigh schema2wasm --quiet --kotlin src/tools/tests/golden.arcs --outdir src/tools/tests/goldens/ --outfile generated-schemas.wasm.kt --wasm
+tools/sigh schema2wasm --quiet --kotlin src/tools/tests/golden_wasm.arcs --outdir src/tools/tests/goldens/ --outfile generated-schemas.wasm.kt --wasm
 
 status "[ 2 / 5 ] C++ Golden"
 tools/sigh schema2wasm --quiet --cpp src/tools/tests/golden.arcs --outdir src/tools/tests/goldens/

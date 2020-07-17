@@ -11,12 +11,14 @@
 package arcs.sdk.android.storage.service.testutil
 
 import android.content.Context
+import android.content.Intent
 import android.content.ServiceConnection
 import arcs.android.storage.ParcelableStoreOptions
 import arcs.sdk.android.storage.service.DefaultConnectionFactory
 import arcs.sdk.android.storage.service.ManagerConnectionFactory
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceBindingDelegate
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.robolectric.Robolectric
 
@@ -46,6 +48,7 @@ class TestBindingDelegate(private val context: Context) : StorageServiceBindingD
     private val serviceController by lazy {
         Robolectric.buildService(StorageService::class.java, null).create()
     }
+    private val bindings = ConcurrentHashMap<ServiceConnection, Intent>()
 
     @ExperimentalCoroutinesApi
     override fun bindStorageService(
@@ -55,12 +58,17 @@ class TestBindingDelegate(private val context: Context) : StorageServiceBindingD
     ): Boolean {
         val intent = StorageService.createBindIntent(context, options!!)
         val binder = serviceController.get().onBind(intent)
+        bindings[conn] = intent
         conn.onServiceConnected(null, binder)
         return true
     }
 
     override fun unbindStorageService(conn: ServiceConnection) {
-        serviceController.destroy()
+        val intent = bindings.remove(conn)
+        serviceController.get().onUnbind(intent)
+        if (bindings.isEmpty()) {
+            serviceController.destroy()
+        }
     }
 }
 

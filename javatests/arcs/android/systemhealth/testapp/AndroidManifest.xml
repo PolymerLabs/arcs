@@ -45,7 +45,11 @@
       tools:node="replace"/>
 
     <service
-      android:name=".TestStorageService"
+      android:name=".PerformanceStorageService"
+      android:exported="false"/>
+
+    <service
+      android:name=".StabilityStorageService"
       android:exported="false"
       android:process=":storage_remote"/>
 

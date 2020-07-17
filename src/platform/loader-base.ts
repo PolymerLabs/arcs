@@ -25,7 +25,7 @@ import {Dictionary} from '../runtime/hot.js';
 import '../runtime/schema-from-literal.js';
 import '../runtime/type-from-literal.js';
 import '../runtime/handle-constructors.js';
-import '../runtime/storageNG/store-constructors.js';
+import '../runtime/storage/store-constructors.js';
 import '../runtime/entity-utils.js';
 import '../runtime/reference.js';
 import '../runtime/interface-info-impl.js';

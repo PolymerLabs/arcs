@@ -16,7 +16,7 @@ import {Capabilities, Ttl, Persistence, Queryable} from '../capabilities.js';
 import {Entity} from '../entity.js';
 import {Recipe} from '../recipe/recipe.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
-import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../storage/drivers/ramdisk.js';
 
 describe('recipe', () => {
   let memoryProvider;

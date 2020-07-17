@@ -16,7 +16,7 @@ import {Manifest} from '../manifest.js';
 import {Runtime} from '../runtime.js';
 import {SlotComposer} from '../slot-composer.js';
 import {ArcId} from '../id.js';
-import {RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../storage/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
 import {Flags} from '../flags.js';

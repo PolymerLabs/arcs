@@ -195,10 +195,6 @@ class CrdtEntity(
         } ?: throw CrdtException("Invalid op: $op.")
     }
 
-    override fun updateData(newData: Data) {
-        _data = newData.copy()
-    }
-
     private fun ISingletonOp<Reference>.toEntityOp(fieldName: FieldName): Operation = when (this) {
         is SingletonOp.Update -> Operation.SetSingleton(actor, clock, fieldName, value)
         is SingletonOp.Clear -> Operation.ClearSingleton(actor, clock, fieldName)

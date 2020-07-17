@@ -10,11 +10,12 @@
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Dictionary} from '../../runtime/hot.js';
-import {Schema2Base, EntityGenerator, AddFieldOptions, EntityDescriptorBase} from '../schema2base.js';
+import {Schema2Base, EntityGenerator} from '../schema2base.js';
 import {SchemaNode} from '../schema2graph.js';
 import {Schema2Cpp} from '../schema2cpp.js';
 import {Schema2Kotlin} from '../schema2kotlin.js';
 import {ParticleSpec} from '../../runtime/particle-spec.js';
+import {generateFields} from '../kotlin-schema-field.js';
 
 /* eslint key-spacing: ["error", {"mode": "minimum"}] */
 
@@ -28,15 +29,7 @@ class Schema2Mock extends Schema2Base {
   }
 
   getEntityGenerator(node: SchemaNode): EntityGenerator {
-    const collector = [];
-    this.res[node.entityClassName] = collector;
-
-    new class extends EntityDescriptorBase {
-      addField({field, typeName, isOptional, refClassName}: AddFieldOptions) {
-        const refInfo = refClassName ? `<${refClassName}>` : '';
-        collector.push(field + ':' + typeName[0] + refInfo + (isOptional ? '?' : ''));
-      }
-    }(node).process();
+    this.res[node.entityClassName] = generateFields(node).map(f => `${f.name}:${f.type.kotlinType}`);
 
     return {
       generate() {
@@ -64,9 +57,9 @@ describe('schema2wasm', () => {
     `);
     const mock = await Schema2Mock.create(manifest);
     assert.deepStrictEqual(mock.res, {
-      'FooInternal1': ['txt:T'],
-      'Site':         ['url:U', 'ref:R<FooInternal1>'],
-      'Foo_Input2':   ['txt:T', 'num:N'],
+      'FooInternal1': ['txt:String'],
+      'Site':         ['url:String', 'ref:Reference<FooInternal1>?'],
+      'Foo_Input2':   ['txt:String', 'num:Double'],
     });
   });
 
@@ -78,7 +71,7 @@ describe('schema2wasm', () => {
     `);
     const mock = await Schema2Mock.create(manifest);
     assert.deepStrictEqual(mock.res, {
-      'Foo_Input': ['txt:T', 'url:U', 'num:N', 'flg:B']
+      'Foo_Input': ['txt:String', 'url:String', 'num:Double', 'flg:Boolean']
     });
   });
 
@@ -90,11 +83,11 @@ describe('schema2wasm', () => {
     `);
     const mock = await Schema2Mock.create(manifest);
     assert.deepStrictEqual(mock.res, {
-      'Foo_H1':     ['a:T', 'r:R<Foo_H1_R>'],
-      'Foo_H1_R':   ['b:T'],
-      'Foo_H2':     ['s:R<Foo_H2_S>'],
-      'Foo_H2_S':   ['f:B', 't:R<Foo_H2_S_T>'],
-      'Foo_H2_S_T': ['x:N'],
+      'Foo_H1':     ['a:String', 'r:Reference<Foo_H1_R>?'],
+      'Foo_H1_R':   ['b:String'],
+      'Foo_H2':     ['s:Reference<Foo_H2_S>?'],
+      'Foo_H2_S':   ['f:Boolean', 't:Reference<Foo_H2_S_T>?'],
+      'Foo_H2_S_T': ['x:Double'],
     });
   });
 

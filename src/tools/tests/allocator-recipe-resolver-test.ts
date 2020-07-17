@@ -18,8 +18,8 @@ import {
 } from '../allocator-recipe-resolver.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
 import {Flags} from '../../runtime/flags.js';
-import {DriverFactory} from '../../runtime/storageNG/drivers/driver-factory.js';
-import {VolatileStorageKey} from '../../runtime/storageNG/drivers/volatile.js';
+import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
+import {VolatileStorageKey} from '../../runtime/storage/drivers/volatile.js';
 
 const randomSalt = 'random_salt';
 

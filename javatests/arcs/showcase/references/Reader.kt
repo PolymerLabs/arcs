@@ -1,4 +1,4 @@
-@file:Suppress("EXPERIMENTAL_FEATURE_WARNING")
+@file:Suppress("EXPERIMENTAL_FEATURE_WARNING", "EXPERIMENTAL_API_USAGE")
 
 package arcs.showcase.references
 
@@ -14,6 +14,7 @@ fun <T : Entity> Reference<T>.dereferenceViaHandle(handle: ReadCollectionHandle<
     return handle.fetchAll().firstOrNull { it.entityId == entityId }
 }
 
+@ExperimentalCoroutinesApi
 @TargetHost(ShowcaseHost::class)
 class Reader0 : AbstractReader0() {
     private fun Level0.fromArcs() = MyLevel0(name)

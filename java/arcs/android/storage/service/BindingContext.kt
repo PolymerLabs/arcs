@@ -15,14 +15,16 @@ import androidx.annotation.VisibleForTesting
 import arcs.android.crdt.toProto
 import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.toProto
+import arcs.core.common.SuspendableLazy
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtException
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ActiveStore
+import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
-import arcs.core.storage.Store
+import arcs.core.storage.StoreOptions
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
@@ -35,6 +37,23 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
 
 /**
+ * This class wraps an [ActiveStore] constructor. The first time an instance of this class is
+ * invoked, the store instance is created.
+ *
+ * This allows us to create a [BindingContext] without blocking the thread that the bind call
+ * occurs on.
+ */
+@ExperimentalCoroutinesApi
+class DeferredStore<Data : CrdtData, Op : CrdtOperation, T>(
+    options: StoreOptions
+) {
+    private val store = SuspendableLazy<ActiveStore<Data, Op, T>> {
+        DefaultActivationFactory(options)
+    }
+    suspend operator fun invoke() = store()
+}
+
+/**
  * A [BindingContext] is used by a client of the [StorageService] to facilitate communication with a
  * [Store] residing within the [StorageService] from elsewhere in an application.
  */
@@ -44,7 +63,7 @@ class BindingContext(
      * The [Store] this [BindingContext] provides bindings for, it may or may not be shared with
      * other instances of [BindingContext].
      */
-    private val store: Store<*, *, *>,
+    private val store: DeferredStore<*, *, *>,
     /** [CoroutineContext] on which to build one specific to this [BindingContext]. */
     parentCoroutineContext: CoroutineContext,
     /** Sink to use for recording statistics about accessing data. */
@@ -63,10 +82,9 @@ class BindingContext(
     override fun idle(timeoutMillis: Long, resultCallback: IResultCallback) {
         bindingContextStatisticsSink.traceTransaction("idle") {
             bindingContextStatisticsSink.measure(coroutineContext) {
-                val activeStore = store.activate()
                 try {
                     withTimeout(timeoutMillis) {
-                        activeStore.idle()
+                        store().idle()
                     }
                     resultCallback.onResult(null)
                 } catch (e: Throwable) {
@@ -93,9 +111,8 @@ class BindingContext(
             }
 
             callbackToken = runBlocking {
-                val token =
-                    (store.activate() as ActiveStore<CrdtData, CrdtOperation, Any?>)
-                        .on(proxyCallback)
+                val token = (store() as ActiveStore<CrdtData, CrdtOperation, Any?>)
+                    .on(proxyCallback)
 
                 // If the callback's binder dies, remove it from the callback collection.
                 callback.asBinder().linkToDeath({
@@ -117,11 +134,12 @@ class BindingContext(
             bindingContextStatisticsSink.measure(coroutineContext) {
                 resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
 
-                val activeStore = store.activate() as ActiveStore<CrdtData, CrdtOperation, Any?>
                 val actualMessage = proxyMessage.decodeProxyMessage()
 
-                if (activeStore.onProxyMessage(actualMessage)) {
-                    onProxyMessage(store.storageKey, actualMessage)
+                (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).let { store ->
+                    if (store.onProxyMessage(actualMessage)) {
+                        onProxyMessage(store.storageKey, actualMessage)
+                    }
                 }
             }
         }
@@ -129,7 +147,8 @@ class BindingContext(
 
     override fun unregisterCallback(token: Int) {
         bindingContextStatisticsSink.traceTransaction("unregisterCallback") {
-            CoroutineScope(coroutineContext).launch { store.activate().off(token) }
+            // TODO(b/160706751) Clean up coroutine creation approach
+            CoroutineScope(coroutineContext).launch { store().off(token) }
         }
     }
 

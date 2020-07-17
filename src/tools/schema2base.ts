@@ -15,17 +15,6 @@ import {Runtime} from '../runtime/runtime.js';
 import {SchemaGraph, SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 
-export type AddFieldOptions = Readonly<{
-  field: string;
-  typeName: string;
-  isOptional?: boolean;
-  refClassName?: string;
-  refSchemaHash?: string;
-  listTypeInfo?: {name: string, refSchemaHash?: string, isInlineClass?: boolean};
-  isCollection?: boolean;
-  isInlineClass?: boolean;
-}>;
-
 export interface EntityGenerator {
   generate(): string;
 }
@@ -33,66 +22,6 @@ export interface EntityGenerator {
 export class NodeAndGenerator {
   node: SchemaNode;
   generator: EntityGenerator;
-}
-
-/**
- * Iterates over schema fields and composes metadata useful for entity codegen.
- */
-export abstract class EntityDescriptorBase {
-
-  constructor(readonly node: SchemaNode) {}
-
-  process() {
-    for (const [field, descriptor] of Object.entries(this.node.schema.fields)) {
-      if (descriptor.kind === 'schema-primitive') {
-        if (['Text', 'URL', 'Number', 'BigInt', 'Boolean'].includes(descriptor.type)) {
-          this.addField({field, typeName: descriptor.type});
-        } else {
-          throw new Error(`Schema type '${descriptor.type}' for field '${field}' is not supported`);
-        }
-      } else if (descriptor.kind === 'schema-reference' || (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference')) {
-        const isCollection = descriptor.kind === 'schema-collection';
-        const schemaNode = this.node.refs.get(field);
-        this.addField({
-          field,
-          typeName: 'Reference',
-          isCollection,
-          refClassName: schemaNode.entityClassName,
-          refSchemaHash: schemaNode.hash,
-        });
-      } else if (descriptor.kind === 'schema-collection') {
-        const schema = descriptor.schema;
-        if (schema.kind === 'kotlin-primitive' || schema.kind === 'schema-primitive') {
-          this.addField({field, typeName: schema.type, isCollection: true});
-        } else if (schema.kind === 'schema-nested') {
-          const schemaNode = this.node.refs.get(field);
-          this.addField({field, typeName: schemaNode.entityClassName, refSchemaHash: schemaNode.hash, isCollection: true, isInlineClass: true});
-        } else {
-          throw new Error(`Schema kind '${schema.kind}' for field '${field}' is not supported`);
-        }
-      } else if (descriptor.kind === 'kotlin-primitive') {
-        this.addField({field, typeName: descriptor.type});
-      } else if (descriptor.kind === 'schema-ordered-list') {
-        const schema = descriptor.schema;
-        if (schema.kind === 'kotlin-primitive' || schema.kind === 'schema-primitive') {
-          this.addField({field, typeName: 'List', listTypeInfo: {name: schema.type}});
-        } else if (schema.kind === 'schema-nested') {
-          const schemaNode = this.node.refs.get(field);
-          this.addField({field, typeName: 'List', listTypeInfo: {name: schemaNode.entityClassName, refSchemaHash: schemaNode.hash, isInlineClass: true}});
-        } else {
-          throw new Error(`Schema kind '${schema.kind}' for field '${field}' is not supported`);
-        }
-      } else if (descriptor.kind === 'schema-nested') {
-        const schemaNode = this.node.refs.get(field);
-        this.addField({field, typeName: schemaNode.entityClassName, refSchemaHash: schemaNode.hash, isInlineClass: true});
-      }
-      else {
-        throw new Error(`Schema kind '${descriptor.kind}' for field '${field}' is not supported`);
-      }
-    }
-  }
-
-  abstract addField(opts: AddFieldOptions): void;
 }
 
 export abstract class Schema2Base {

@@ -229,3 +229,34 @@ class ReadWriteAccessParticle : AbstractReadWriteAccessParticle() {
         }
     }
 }
+
+class PipelineProducerParticle : AbstractPipelineProducerParticle() {
+    override fun onFirstStart() {
+        handles.sngWrite.store(Value("sng"))
+        handles.colWrite.store(Value("col"))
+    }
+}
+
+class PipelineTransportParticle : AbstractPipelineTransportParticle() {
+    override fun onReady() {
+        handles.sngRead.fetch()!!.let {
+            handles.sngWrite.store(it.copy(txt = it.txt + "_mod"))
+        }
+        handles.colRead.fetchAll().forEach {
+            handles.colWrite.store(it.copy(txt = it.txt + "_mod"))
+        }
+    }
+}
+
+class PipelineConsumerParticle : AbstractPipelineConsumerParticle() {
+    val values = mutableListOf<String>()
+
+    override fun onStart() {
+        handles.sngRead.onUpdate {
+            values.add("${it?.txt}")
+        }
+        handles.colRead.onUpdate { set ->
+            values.add("${set.map { it.txt }}")
+        }
+    }
+}

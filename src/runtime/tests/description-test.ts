@@ -20,7 +20,7 @@ import {EntityType, SingletonType, InterfaceType} from '../type.js';
 import {Entity} from '../entity.js';
 import {ArcId} from '../id.js';
 import {ConCap} from '../../testing/test-util.js';
-import {handleForStore, handleType} from '../storageNG/storage-ng.js';
+import {handleForStore, handleType} from '../storage/storage.js';
 
 function createTestArc(recipe: Recipe, manifest: Manifest) {
   const slotComposer = new SlotComposer();

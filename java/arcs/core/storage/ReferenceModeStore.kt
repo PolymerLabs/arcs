@@ -57,7 +57,6 @@ import arcs.core.util.nextSafeRandomLong
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -96,9 +95,8 @@ class ReferenceModeStore private constructor(
     val containerStore: DirectStore<CrdtData, CrdtOperation, Any?>,
     /* internal */
     val backingKey: StorageKey,
-    /* internal */
-    clearCoroutineContext: CoroutineContext = Dispatchers.Default,
-    backingType: Type
+    backingType: Type,
+    cleanupCoroutineContext: CoroutineContext
 ) : ActiveStore<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(options) {
     // TODO(#5551): Consider including a hash of the storage key in log prefix.
     private val log = TaggedLog { "ReferenceModeStore" }
@@ -147,7 +145,11 @@ class ReferenceModeStore private constructor(
      */
     private val versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
 
-    /** Tracks the state of callback: true: active callbacks, false: no callbacks registered. */
+    /**
+     *  Tracks the state of callback:
+     *    true: active callbacks, no callbacks have ever been registered.
+     *    false: at least one callback has been registered in the past, but now there are none.
+     */
     private val callbacksStateChannel = ConflatedBroadcastChannel(true)
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
@@ -451,20 +453,40 @@ class ReferenceModeStore private constructor(
         return@fn true
     }
 
+    /**
+     * The initialization of this property launches a flow that monitors the callback state (via
+     * the [callbacksStateChannel] and the [receiveQueue] size (via the [receiveQueue.sizeChannel].
+     * The first time all of these conditions are true:
+     * - callback count has transitioned to greater than 0 at least once
+     * - callback count is currently 0
+     * - [receiveQueue] size is empty
+     *
+     * then the backingStore entries will be cleaned up. The cleanup will occur on the
+     * [cleanupCoroutineContext] passed in the constructor. Currently, this is simply the
+     * [coroutineContext] used to construct the [ReferenceModeStore] via the [create] method.
+     */
     @FlowPreview
-    private val clearStoreCachesFlow = combine(
-        callbacksStateChannel.asFlow(),
-        receiveQueue.sizeChannel.asFlow()
-    ) { callbacksState, queueSize -> queueSize + if (callbacksState) 1 else 0 }
-        .filter { it == 0 }
-        .onEach {
-            if (receiveQueue.size.value == 0) {
-                backingStore.clearStoresCache()
-                receiveQueue.sizeChannel.close()
-                callbacksStateChannel.close()
+    private val backingStoreCleanupJob: Job = combine(
+            callbacksStateChannel.asFlow(),
+            receiveQueue.sizeChannel.asFlow()
+        ) { callbacksState, queueSize -> queueSize + if (callbacksState) 1 else 0 }
+            .filter { it == 0 }
+            .onEach {
+                if (receiveQueue.size.value == 0) {
+                    backingStore.clearStoresCache()
+                    receiveQueue.sizeChannel.close()
+                    callbacksStateChannel.close()
+                }
             }
-        }
-        .launchIn(CoroutineScope(clearCoroutineContext + Job()))
+            .launchIn(CoroutineScope(cleanupCoroutineContext + Job()))
+
+    /**
+     * This method will suspend until conditions lead to internal backing store cleanup to occur.
+     */
+    @FlowPreview
+    suspend fun awaitCleanup() {
+        backingStoreCleanupJob.join()
+    }
 
     private fun newBackingInstance(): CrdtModel<CrdtData, CrdtOperationAtTime, Referencable> =
         crdtType.createCrdtModel()
@@ -730,8 +752,7 @@ class ReferenceModeStore private constructor(
                 StoreOptions(
                     storageKey = storageKey.storageKey,
                     type = refType,
-                    versionToken = options.versionToken,
-                    coroutineContext = options.coroutineContext
+                    versionToken = options.versionToken
                 )
             )
 
@@ -739,8 +760,8 @@ class ReferenceModeStore private constructor(
                 refableOptions,
                 containerStore,
                 storageKey.backingKey,
-                options.coroutineContext,
-                type.containedType
+                type.containedType,
+                coroutineContext
             )
         }
     }

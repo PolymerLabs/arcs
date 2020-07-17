@@ -64,7 +64,7 @@ export class Schema {
         this.fields[name] = field;
       }
     }
-    if (options.description) {
+    if (options.description && options.description.description) {
       options.description.description.forEach(desc => this.description[desc.name] = desc.pattern || desc.patterns[0]);
     }
     this.annotations = options.annotations || [];

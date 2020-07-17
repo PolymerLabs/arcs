@@ -13,55 +13,29 @@ import {SchemaNode} from './schema2graph.js';
 import minimist from 'minimist';
 import {generateSchema} from './kotlin-schema-generator.js';
 import {assert} from '../platform/assert-web.js';
-import {AddFieldOptions, EntityDescriptorBase} from './schema2base.js';
-import {escapeIdentifier, getTypeInfo} from './kotlin-codegen-shared.js';
+import {escapeIdentifier} from './kotlin-codegen-shared.js';
+import {generateFields, KotlinSchemaField} from './kotlin-schema-field.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
-/**
- * Metadata about a field in a schema.
- */
-export type KotlinSchemaField = AddFieldOptions & {
-  type: string,
-  decodeFn: string,
-  defaultVal: string,
+type ExtendedSchemaField = KotlinSchemaField & {
   escaped: string,
-  nullableType: string
+  nullableType: string,
 };
-
-/**
- * Composes and holds a list of KotlinSchemaField for a SchemaNode.
- */
-export class KotlinEntityDescriptor extends EntityDescriptorBase {
-
-  readonly fields: KotlinSchemaField[] = [];
-
-  constructor(node: SchemaNode, private forWasm: boolean) {
-    super(node);
-    this.process();
-  }
-
-  addField(opts: AddFieldOptions) {
-    if (opts.typeName === 'Reference' && this.forWasm) return;
-
-    const typeInfo = getTypeInfo({name: opts.typeName, ...opts});
-    const type = typeInfo.type;
-
-    this.fields.push({
-      ...opts,
-      ...typeInfo,
-      escaped: escapeIdentifier(opts.field),
-      nullableType: type.endsWith('?') ? type : `${type}?`
-    });
-  }
-}
 
 export class KotlinEntityGenerator implements EntityGenerator {
 
-  private entityDescriptor: KotlinEntityDescriptor;
+  private fields: ExtendedSchemaField[];
 
   constructor(readonly node: SchemaNode, private readonly opts: minimist.ParsedArgs) {
-    this.entityDescriptor = new KotlinEntityDescriptor(node, opts.wasm);
+    this.fields = generateFields(node).map(field => {
+      const type = field.type.kotlinType;
+      return {
+        ...field,
+        escaped: escapeIdentifier(field.name),
+        nullableType: type.endsWith('?') ? type : `${type}?`
+      };
+    });
   }
 
   async generateClasses(): Promise<string> {
@@ -96,13 +70,13 @@ export class KotlinEntityGenerator implements EntityGenerator {
     const classDef = '@Suppress("UNCHECKED_CAST")' + '\n' + classDecl;
 
     let baseClass: string;
-    let constructorFields = this.mapFields(({escaped, type, defaultVal}) => `${escaped}: ${type} = ${defaultVal}`);
+    let constructorFields = this.fields.map(({escaped, type}) => `${escaped}: ${type.kotlinType} = ${type.defaultVal}`);
     if (this.opts.wasm) {
       baseClass = 'WasmEntity';
     } else {
       const concreteOrVariableEntity = this.node.variableName == null ? 'EntityBase' : 'VariableEntityBase';
       baseClass = ktUtils.applyFun(concreteOrVariableEntity, [
-        quote(this.className), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp', this.entityDescriptor.node.isNested + ''
+        quote(this.className), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp', this.node.isNested + ''
       ]);
 
       constructorFields = constructorFields.concat([
@@ -124,12 +98,12 @@ export class KotlinEntityGenerator implements EntityGenerator {
 
   generateCopyMethods(): string {
     const fieldArgs = ktUtils.joinWithIndents(
-      this.mapFields(({escaped, type}) => `${escaped}: ${type} = this.${escaped}`),
+      this.fields.map(({escaped, type}) => `${escaped}: ${type.kotlinType} = this.${escaped}`),
       {startIndent: 14, numberOfIndents: 3}
     );
 
     const indentOpts = {startIndent: 8 + this.className.length, numberOfIndents: 3};
-    const fieldsForCopy = this.mapFields(({escaped}) => `${escaped} = ${escaped}`);
+    const fieldsForCopy = this.fields.map(({escaped}) => `${escaped} = ${escaped}`);
     const copyMethod = `fun copy(${fieldArgs}) = ${this.className}(${
       ktUtils.joinWithIndents(fieldsForCopy, indentOpts)
     })`;
@@ -172,10 +146,10 @@ export class KotlinEntityGenerator implements EntityGenerator {
     const blocks: string[] = [];
 
     const fieldVals: string[] = [];
-    for (const {field, type, isCollection, escaped, defaultVal, nullableType} of this.entityDescriptor.fields) {
+    for (const {name, type, escaped, nullableType} of this.fields) {
       if (this.opts.wasm) {
         // TODO: Add support for collections in wasm.
-        assert(!isCollection, 'Collection fields not supported in Kotlin wasm yet.');
+        assert(!type.isCollection, 'Collection fields not supported in Kotlin wasm yet.');
         fieldVals.push(`\
 var ${escaped} = ${escaped}
     get() = field
@@ -183,18 +157,18 @@ var ${escaped} = ${escaped}
         field = _value
     }`
         );
-      } else if (isCollection) {
+      } else if (type.isCollection) {
         fieldVals.push(`\
-var ${escaped}: ${type}
-    get() = super.getCollectionValue("${field}") as ${type}
-    private set(_value) = super.setCollectionValue("${field}", _value)`
+var ${escaped}: ${type.kotlinType}
+    get() = super.getCollectionValue("${name}") as ${type.kotlinType}
+    private set(_value) = super.setCollectionValue("${name}", _value)`
         );
       } else {
-        const defaultFallback = defaultVal === 'null' ? '' : ` ?: ${defaultVal}`;
+        const defaultFallback = type.defaultVal === 'null' ? '' : ` ?: ${type.defaultVal}`;
         fieldVals.push(`\
-var ${escaped}: ${type}
-    get() = super.getSingletonValue("${field}") as ${nullableType}${defaultFallback}
-    private set(_value) = super.setSingletonValue("${field}", _value)`
+var ${escaped}: ${type.kotlinType}
+    get() = super.getSingletonValue("${name}") as ${nullableType}${defaultFallback}
+    private set(_value) = super.setSingletonValue("${name}", _value)`
         );
       }
     }
@@ -207,7 +181,7 @@ var ${escaped}: ${type}
     if (this.opts.wasm) {
       blocks.push(`override var entityId = ""`);
     } else if (fieldCount !== 0) {
-      const initBody = this.mapFields(({escaped}) => `this.${escaped} = ${escaped}`).join('\n');
+      const initBody = this.fields.map(({escaped}) => `this.${escaped} = ${escaped}`).join('\n');
       const initBlock = ['init {', ktUtils.indent(initBody), '}'].join('\n');
       blocks.push(initBlock);
       blocks.push('');
@@ -225,7 +199,7 @@ var ${escaped}: ${type}
     return `
         fun reset() {
             ${ktUtils.indentFollowing(
-              this.mapFields(({escaped, defaultVal}) => `${escaped} = ${defaultVal}`), 3
+              this.fields.map(({escaped, type}) => `${escaped} = ${type.defaultVal}`), 3
             )}
         }
 
@@ -233,31 +207,16 @@ var ${escaped}: ${type}
             val encoder = StringEncoder()
             encoder.encode("", entityId)
             ${ktUtils.indentFollowing(
-              this.mapFields(({field, escaped, typeName}) =>
-                `${escaped}.let { encoder.encode("${field}:${typeName[0]}", ${escaped}) }`),
+              this.fields.map(({name, escaped, type}) =>
+                `${escaped}.let { encoder.encode("${name}:${type.arcsTypeName[0]}", ${escaped}) }`),
               3
             )}
             return encoder.toNullTermByteArray()
         }
 
         override fun toString() =
-            "${this.className}(${this.mapFields(({escaped}) => `${escaped} = $${escaped}`).join(', ')})"
+            "${this.className}(${this.fields.map(({escaped}) => `${escaped} = $${escaped}`).join(', ')})"
 `;
-  }
-
-  private extractUnderlyingField(field: KotlinSchemaField): KotlinSchemaField {
-    if (field.typeName === 'List') {
-      return {
-        typeName: field.listTypeInfo.name,
-        refSchemaHash: field.listTypeInfo.refSchemaHash,
-        isInlineClass: field.listTypeInfo.isInlineClass
-      } as KotlinSchemaField;
-    }
-    return field;
-  }
-
-  private mapFieldToSchemaMapEntry({refSchemaHash, typeName, refClassName}: KotlinSchemaField): string {
-    return `"${refSchemaHash}" to ${refClassName ? refClassName : typeName}`;
   }
 
   private async generateEntitySpec() {
@@ -268,10 +227,10 @@ var ${escaped}: ${type}
 
             private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
                 ${ktUtils.mapOf(
-                  this.entityDescriptor.fields
-                    .map(this.extractUnderlyingField)
-                    .filter(f => f.typeName === 'Reference' || f.isInlineClass)
-                    .map(this.mapFieldToSchemaMapEntry),
+                  this.fields
+                    .map(field => field.type.unwrap())
+                    .filter(type => type.isSchema)
+                    .map(type => `"${type.schemaHash}" to ${type.kotlinType}`),
                   16
                 )}
 
@@ -289,14 +248,14 @@ var ${escaped}: ${type}
                 val entityId = decoder.decodeText()
                 decoder.validate("|")
                 ${fieldCount > 0 ? (`
-                ${ktUtils.indentFollowing(this.mapFields(({escaped, defaultVal}) => `var ${escaped} = ${defaultVal}`), 3)}
+                ${ktUtils.indentFollowing(this.fields.map(({escaped, type}) => `var ${escaped} = ${type.defaultVal}`), 3)}
                 var i = 0
                 while (i < ${fieldCount} && !decoder.done()) {
                     val _name = decoder.upTo(':').toUtf8String()
                     when (_name) {
-                        ${ktUtils.indentFollowing(this.mapFields(({field, escaped, typeName, decodeFn}) => `"${field}" -> {
-                        decoder.validate("${typeName[0]}")
-                        ${escaped} = decoder.${decodeFn}
+                        ${ktUtils.indentFollowing(this.fields.map(({name, type, escaped}) => `"${name}" -> {
+                        decoder.validate("${type.arcsTypeName[0]}")
+                        ${escaped} = decoder.${type.decodeFn}
                     }`), 5)}
                         else -> {
                             // Ignore unknown fields until type slicing is fully implemented.
@@ -313,7 +272,7 @@ var ${escaped}: ${type}
                 }`) : ''}
                 val _rtn = ${this.className}().copy(
                     ${ktUtils.joinWithIndents(
-                      this.mapFields(({escaped}) => `${escaped} = ${escaped}`),
+                      this.fields.map(({escaped}) => `${escaped} = ${escaped}`),
                       {startIndent: 33, numberOfIndents: 3}
                     )}
                 )
@@ -321,10 +280,6 @@ var ${escaped}: ${type}
                 return _rtn
             }`}
         }`;
-  }
-
-  private mapFields(mapper: (arg: KotlinSchemaField) => string): string[] {
-    return this.entityDescriptor.fields.map(mapper);
   }
 
   private prefixTypeForRuntime(type: string): string {

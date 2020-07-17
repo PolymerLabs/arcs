@@ -12,7 +12,6 @@
 package arcs.core.storage
 
 import arcs.core.common.ReferenceId
-import arcs.core.crdt.CrdtCount
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtException
@@ -20,7 +19,6 @@ import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
 import arcs.core.data.CollectionType
-import arcs.core.data.CountType
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
@@ -60,7 +58,6 @@ class ReferenceModeStoreTest {
     val log = LogRule()
 
     private lateinit var testKey: ReferenceModeStorageKey
-    private lateinit var baseStore: Store<CrdtCount.Data, CrdtCount.Operation, Int>
     private lateinit var schema: Schema
 
     @Before
@@ -69,7 +66,6 @@ class ReferenceModeStoreTest {
             MockHierarchicalStorageKey(),
             MockHierarchicalStorageKey()
         )
-        baseStore = Store(StoreOptions(testKey, CountType()))
         schema = Schema(
             setOf(SchemaName("person")),
             SchemaFields(
@@ -89,28 +85,28 @@ class ReferenceModeStoreTest {
 
     @Test
     fun throwsException_ifAppropriateDriverCantBeFound() = runBlockingTest {
-        val store = Store<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
-            StoreOptions(
-                testKey,
-                SingletonType(EntityType(schema))
+        assertSuspendingThrows(CrdtException::class) {
+            DefaultActivationFactory<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
+                StoreOptions(
+                    testKey,
+                    SingletonType(EntityType(schema))
+                )
             )
-        )
-        assertSuspendingThrows(CrdtException::class) { store.activate() }
+        }
     }
 
     @Test
     fun constructsReferenceModeStores_whenRequired() = runBlockingTest {
         DriverFactory.register(MockDriverProvider())
 
-        val store = Store<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
+        val store = DefaultActivationFactory<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>(
             StoreOptions(
                 testKey,
                 CollectionType(EntityType(schema))
             )
         )
-        val activeStore = store.activate()
 
-        assertThat(activeStore).isInstanceOf(ReferenceModeStore::class.java)
+        assertThat(store).isInstanceOf(ReferenceModeStore::class.java)
     }
 
     @Test
@@ -672,6 +668,30 @@ class ReferenceModeStoreTest {
         activeStore.idle()
 
         job.join()
+    }
+
+    @Test
+    fun backingStoresCleanedUpWhenLastCallbackRemoved() = runBlocking {
+        DriverFactory.register(MockDriverProvider())
+        val store = createReferenceModeStore()
+
+        val token = store.on(ProxyCallback {})
+
+        val collection = CrdtSet<RawEntity>()
+        val entity = createPersonEntity("an-id", "bob", 42)
+
+        collection.applyOperation(
+            CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
+        )
+
+        store.onProxyMessage(
+            ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
+        )
+
+        store.off(token)
+        store.idle()
+        store.awaitCleanup()
+        assertThat(store.backingStore.stores.size).isEqualTo(0)
     }
 
     // region Helpers

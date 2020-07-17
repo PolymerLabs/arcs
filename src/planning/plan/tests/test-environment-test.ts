@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {registerSystemExceptionHandler, removeSystemExceptionHandler, defaultSystemExceptionHandler} from '../../../runtime/arc-exceptions.js';
-import {DriverFactory} from '../../../runtime/storageNG/drivers/driver-factory.js';
+import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 
 let exceptions: Error[] = [];
 

@@ -26,7 +26,6 @@ import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StorageKey
-import arcs.core.storage.Store
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.driver.DatabaseDriverProvider
@@ -64,8 +63,7 @@ class StorageServiceManagerTest {
     val log = LogRule()
 
     private suspend fun buildManager() =
-        StorageServiceManager(coroutineContext, ConcurrentHashMap<StorageKey, Store<*, *, *>>())
-
+        StorageServiceManager(coroutineContext, ConcurrentHashMap())
     private val time = FakeTime()
     private val scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
     private val ramdiskKey = ReferenceModeStorageKey(

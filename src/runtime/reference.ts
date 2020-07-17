@@ -12,14 +12,14 @@ import {assert} from '../platform/assert-web.js';
 import {Storable} from './storable.js';
 import {ReferenceType, EntityType} from './type.js';
 import {Entity, SerializedEntity} from './entity.js';
-import {StorageProxy} from './storageNG/storage-proxy.js';
+import {StorageProxy} from './storage/storage-proxy.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
 import {ChannelConstructor} from './channel-constructor.js';
 import {CRDTEntityTypeRecord, Identified} from './crdt/crdt-entity.js';
-import {EntityHandle, Handle} from './storageNG/handle.js';
-import {StorageProxyMuxer} from './storageNG/storage-proxy-muxer.js';
-import {StorageKeyParser} from './storageNG/storage-key-parser.js';
-import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
+import {EntityHandle, Handle} from './storage/handle.js';
+import {StorageProxyMuxer} from './storage/storage-proxy-muxer.js';
+import {StorageKeyParser} from './storage/storage-key-parser.js';
+import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 
 enum ReferenceMode {Unstored, Stored}
 

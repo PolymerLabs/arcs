@@ -74,3 +74,18 @@ export interface Dictionary<T> {
   [key: string]: T;
 }
 
+/**
+ * Combines boolean expressions into a single value for use in switch cases.
+ *
+ * For example:
+ *   switch(when(condition1, condition2)) {
+ *     case when(true, true): break;
+ *     case when(true, false): break;
+ *     case when(false, true): break;
+ *     case when(false, false): break;
+ *   }
+ *
+ */
+export function when(...conditions: boolean[]): number {
+  return conditions.reduce((acc: number, x: boolean, idx: number) => Number(x) << idx | acc, 0) + conditions.length;
+}

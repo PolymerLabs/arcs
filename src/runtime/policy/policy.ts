@@ -16,6 +16,7 @@ import {EntityType, InterfaceType, Type} from '../type.js';
 import {FieldPathType, resolveFieldPathType} from '../field-path.js';
 import {Handle} from '../recipe/handle.js';
 import {IngressValidationResult} from './ingress-validation.js';
+import {Schema} from '../schema.js';
 
 export enum PolicyEgressType {
   Logging = 'Logging',
@@ -232,6 +233,20 @@ export class PolicyTarget {
     });
   }
 
+  // Returns a map of schema fields by name limited only to fields covered by
+  // the policy target.
+  getRestrictedFields() {
+    return this.fields.map(f => f.getRestrictedFields(this.type))
+          .reduce((fields, {name, restrictedField}) => ({...fields, [name]: restrictedField}), {});
+  }
+
+  // Returns an EntityType with a schema restricted to the fields covered by
+  // the policy target.
+  getRestrictedType() {
+    return EntityType.make(this.type.getEntitySchema().names,
+        this.getRestrictedFields(), this.type.getEntitySchema());
+  }
+
   isHandleIngressAllowed(handle: Handle): IngressValidationResult {
     const result = new IngressValidationResult();
     for (const capabilities of this.toCapabilities()) {
@@ -266,7 +281,7 @@ export class PolicyField {
     if (this.subfields.length) {
       builder.push(`${this.name} {`);
       this.subfields.forEach(field => field.toManifestString(builder.withIndent()));
-      builder.push('}');
+      builder.push('},');
     } else {
       builder.push(`${this.name},`);
     }
@@ -326,6 +341,40 @@ export class PolicyField {
       usage: usageType as PolicyAllowedUsageType,
       label: label === 'raw' ? '' : label,
     };
+  }
+
+  // Returns a name and field restricted to the policy field.
+  getRestrictedFields(parentType: Type) {
+    const field = parentType.getEntitySchema().fields[this.name];
+    return {name: this.name, restrictedField: this.restrictField(field)};
+  }
+
+  private restrictField(field) {
+    switch (field.kind) {
+      case 'kotlin-primitive':
+      case 'schema-primitive': {
+        assert(this.subfields.length === 0);
+        return field;
+      }
+      case 'schema-collection': {
+        return {kind: 'schema-collection', schema: this.restrictField(field.schema)};
+      }
+      case 'schema-reference': {
+        const restrictedFields = {};
+        for (const subfield of this.subfields) {
+          restrictedFields[subfield.name] = field.schema.model.entitySchema.fields[subfield.name];
+        }
+        return {kind: 'schema-reference', schema: {
+            ...field.schema,
+            model: {
+              entitySchema: new Schema(field.schema.model.entitySchema.names, restrictedFields)
+            }
+          }};
+      }
+      default:
+        assert(`Unsupported field kind: ${field.kind}`);
+    }
+    return [this.name, field];
   }
 }
 

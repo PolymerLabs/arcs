@@ -16,13 +16,13 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteProgram
 
 inline fun <T : Any?> SQLiteDatabase.transaction(block: SQLiteDatabase.() -> T): T {
-    beginTransaction()
+    scopedTrace("beginTransaction", ::beginTransaction)
     return try {
         block().also {
             setTransactionSuccessful()
         }
     } finally {
-        endTransaction()
+        scopedTrace("endTransaction", ::endTransaction)
     }
 }
 

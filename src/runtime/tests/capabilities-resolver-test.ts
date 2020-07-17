@@ -9,18 +9,18 @@
  */
 import {assert} from '../../platform/chai-web.js';
 import {Flags} from '../flags.js';
-import {VolatileStorageKey} from '../storageNG/drivers/volatile.js';
-import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../storageNG/drivers/ramdisk.js';
-import {DatabaseStorageKey, MemoryDatabaseStorageKey, PersistentDatabaseStorageKey, MemoryDatabaseStorageKeyFactory} from '../storageNG/database-storage-key.js';
-import {StorageKey} from '../storageNG/storage-key.js';
-import {ReferenceModeStorageKey} from '../storageNG/reference-mode-storage-key.js';
+import {VolatileStorageKey} from '../storage/drivers/volatile.js';
+import {RamDiskStorageKey, RamDiskStorageDriverProvider} from '../storage/drivers/ramdisk.js';
+import {DatabaseStorageKey, MemoryDatabaseStorageKey, PersistentDatabaseStorageKey, MemoryDatabaseStorageKeyFactory} from '../storage/database-storage-key.js';
+import {StorageKey} from '../storage/storage-key.js';
+import {ReferenceModeStorageKey} from '../storage/reference-mode-storage-key.js';
 import {EntityType, ReferenceType} from '../type.js';
 import {CapabilitiesResolver} from '../capabilities-resolver.js';
 import {ArcId} from '../id.js';
 import {Capabilities, Persistence, Ttl, Shareable} from '../capabilities.js';
 import {Schema} from '../schema.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
-import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
+import {DriverFactory} from '../storage/drivers/driver-factory.js';
 import {Manifest} from '../manifest.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 

@@ -33,17 +33,17 @@ import {CollectionType, EntityType, InterfaceInfo, InterfaceType,
 import {PecFactory} from './particle-execution-context.js';
 import {Mutex} from './mutex.js';
 import {Dictionary} from './hot.js';
-import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from './storageNG/drivers/volatile.js';
-import {DriverFactory} from './storageNG/drivers/driver-factory.js';
-import {Exists} from './storageNG/drivers/driver.js';
-import {StorageKey} from './storageNG/storage-key.js';
-import {Store} from './storageNG/store.js';
-import {AbstractStore, isSingletonInterfaceStore, isMuxEntityStore} from './storageNG/abstract-store.js';
+import {VolatileMemory, VolatileStorageDriverProvider, VolatileStorageKey} from './storage/drivers/volatile.js';
+import {DriverFactory} from './storage/drivers/driver-factory.js';
+import {Exists} from './storage/drivers/driver.js';
+import {StorageKey} from './storage/storage-key.js';
+import {Store} from './storage/store.js';
+import {AbstractStore, isSingletonInterfaceStore, isMuxEntityStore} from './storage/abstract-store.js';
 import {ArcSerializer, ArcInterface} from './arc-serializer.js';
-import {ReferenceModeStorageKey} from './storageNG/reference-mode-storage-key.js';
+import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {SystemTrace} from '../tracelib/systrace.js';
-import {StorageKeyParser} from './storageNG/storage-key-parser.js';
-import {SingletonInterfaceHandle, handleForStore, ToStore, newStore} from './storageNG/storage-ng.js';
+import {StorageKeyParser} from './storage/storage-key-parser.js';
+import {SingletonInterfaceHandle, handleForStore, ToStore, newStore} from './storage/storage.js';
 import {AnnotationRef} from './recipe/annotation.js';
 
 export type ArcOptions = Readonly<{

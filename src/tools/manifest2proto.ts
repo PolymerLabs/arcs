@@ -11,7 +11,7 @@ import {Runtime} from '../runtime/runtime.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {CollectionType, ReferenceType, SingletonType, TupleType, Type, TypeVariable} from '../runtime/type.js';
+import {CollectionType, ReferenceType, SingletonType, TupleType, Type, TypeVariable, EntityType} from '../runtime/type.js';
 import {Schema} from '../runtime/schema.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 import {Manifest} from '../runtime/manifest.js';
@@ -300,7 +300,7 @@ export async function typeToProtoPayload(type: Type) {
       const entity = {
         entity: {
           schema: await schemaToProtoPayload(type.getEntitySchema()),
-        }
+        },
       };
       if (type.getEntitySchema().refinement) {
         entity['refinement'] = refinementToProtoPayload(type.getEntitySchema().refinement);
@@ -387,8 +387,22 @@ async function schemaFieldToProtoPayload(fieldType: SchemaField) {
         }
       };
     }
+    case 'schema-nested': {
+      // Nested inlined entity. Wraps a 'schema-inline' object. Mark it as an
+      // inline entity.
+      const entityType = await schemaFieldToProtoPayload(fieldType.schema);
+      entityType.entity.inline = true;
+      return entityType;
+    }
     case 'schema-inline': {
+      // Not actually a nested inline entity (if it were, it would be wrapped in
+      // a schema-nested object), so just encode as a regular entity.
       return typeToProtoPayload(fieldType.model);
+    }
+    case 'schema-ordered-list': {
+      return {
+        list: {elementType: await schemaFieldToProtoPayload(fieldType.schema)}
+      };
     }
     // TODO(b/154947220) support schema-unions
     case 'schema-union':

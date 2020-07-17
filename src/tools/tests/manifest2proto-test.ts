@@ -15,6 +15,7 @@ import {fs} from '../../platform/fs-web.js';
 import {ManifestProto, TypeProto} from '../manifest-proto.js';
 import {Loader} from '../../platform/loader.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
+import {deleteFieldRecursively} from '../../runtime/util.js';
 
 describe('manifest2proto', () => {
 
@@ -256,10 +257,10 @@ describe('manifest2proto', () => {
       particle Reader2
         first: reads [Foo {}]
         second: reads [~b]
-      
+
       recipe
-        h0: create 
-        h2: create 
+        h0: create
+        h2: create
         Writer1
           first: h0
           second: h1
@@ -772,6 +773,49 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(schema.names, ['Foo']);
     assert.deepStrictEqual(schema.fields, {
       t: {tuple: {elements: [{primitive: 'TEXT'}, {primitive: 'NUMBER'}]}}
+    });
+  });
+
+  it('encodes schemas with ordered list fields', async () => {
+    const manifest = await Manifest.parse(`
+      particle Abc in 'a/b/c.js'
+        input: reads Foo {l: List<Number>}
+    `);
+    const schema = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type.entity.schema;
+
+    assert.deepStrictEqual(schema.names, ['Foo']);
+    assert.deepStrictEqual(schema.fields, {
+      l: {list: {elementType: {primitive: 'NUMBER'}}}
+    });
+  });
+
+  it('encodes EntityType with inlined entity fields', async () => {
+    const manifest = await Manifest.parse(`
+      particle Abc in 'a/b/c.js'
+        input: reads Foo {e: inline Bar {name: Text}}
+    `);
+    const type = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type;
+
+    deleteFieldRecursively(type, 'hash');
+    assert.deepStrictEqual(type, {
+      entity: {
+        schema: {
+          names: ['Foo'],
+          fields: {
+            e: {
+              entity: {
+                inline: true,
+                schema: {
+                  names: ['Bar'],
+                  fields: {
+                    name: {primitive: 'TEXT'},
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     });
   });
 

@@ -108,7 +108,7 @@ interface Sensor {
  * (b) set its value with sequenceTest.setVariable()
  * (C) query the current value with sequenceTest.getVariable()
  *
- * See storageNG/tests/store-sequence-test.ts for some fairly comprehensive examples of sequence testing
+ * See storage/tests/store-sequence-test.ts for some fairly comprehensive examples of sequence testing
  * in practise.
  */
 export class SequenceTest<T> {

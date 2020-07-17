@@ -10,10 +10,12 @@
 
 import {Manifest} from '../../manifest.js';
 import {assert} from '../../../platform/chai-web.js';
-import {PolicyEgressType, PolicyRetentionMedium, PolicyAllowedUsageType, Policy} from '../policy.js';
+import {PolicyEgressType, PolicyRetentionMedium, PolicyAllowedUsageType, Policy, PolicyTarget} from '../policy.js';
 import {assertThrowsAsync} from '../../../testing/test-util.js';
 import {mapToDictionary} from '../../util.js';
 import {TtlUnits, Persistence, Encryption, Capabilities, CapabilityRange, Ttl} from '../../capabilities.js';
+import {Schema} from '../../schema.js';
+import {IngressValidation} from '../ingress-validation.js';
 
 const customAnnotation = `
 annotation custom
@@ -55,7 +57,7 @@ policy MyPolicy {
       @allowedUsage(label: 'redacted', usageType: '*')
       @custom
       age,
-    }
+    },
     @custom
     name,
   }
@@ -359,18 +361,6 @@ policy MyPolicy {
         `Unexpected capabilities: ${capabilities[1].toDebugString()}`);
   });
 
-  const manifestString = (annotations = '') => {
-    return `
-${personSchema}
-particle P1
-  person: reads writes Person {name, age}
-recipe
-  personHandle: create ${annotations}
-  P1
-    person: personHandle
-    `;
-  };
-
   it('fails validating handle with no policy target', async () => {
     const policy = (await parsePolicy(`
 policy MyPolicy {
@@ -395,9 +385,22 @@ recipe
         `Policy MyPolicy has no matching target types for Foo {value: Text}`));
   });
 
+  const manifestString = (annotations = '') => {
+    return `
+${personSchema}
+particle P1
+  person: reads writes Person {name, age}
+recipe
+  personHandle: create ${annotations}
+  P1
+    person: personHandle
+    `;
+  };
+
   const assertHandleIngressNotAllowed = async (manifestString, policy, expectedError) => {
     const recipe = (await Manifest.parse(manifestString)).recipes[0];
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
     const result = policy.isHandleIngressAllowed(recipe.handles[0]);
     assert.isFalse(result.success);
     assert.isTrue(result.toString().includes(expectedError),
@@ -405,7 +408,8 @@ recipe
   };
   const assertHandleIngressAllowed = async (manifestString, policy) => {
     const recipe = (await Manifest.parse(manifestString)).recipes[0];
-    assert.isTrue(recipe.normalize() && recipe.isResolved());
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
     const options = {errors: new Map()};
     const result = policy.isHandleIngressAllowed(recipe.handles[0]);
     assert.isTrue(result.success, `Validation failed with: ${result.toString()}`);
@@ -495,5 +499,93 @@ policy MyPolicy {
         manifestString(`@persistent @encrypted @ttl('1d')`))).recipes[0];
     assert.isTrue(recipe.normalize() && recipe.isResolved());
     assert.isTrue(policy.isHandleIngressAllowed(recipe.handles[0]).success);
+  });
+
+  it('restricts types according to policy', async () => {
+    const manifest = await Manifest.parse(`
+schema Address
+  number: Number
+  street: Text
+  city: Text
+  country: Text
+schema Person
+  name: Text
+  phone: Text
+  address: &Address
+  otherAddresses: [&Address {street, city, country}]
+policy MyPolicy {
+  from Person access {
+    name,
+    address {
+      number
+      street,
+      city
+    },
+    otherAddresses {city, country}
+  }
+}
+    `);
+    const policy = manifest.policies[0];
+    const schema = policy.targets[0].getRestrictedType().getEntitySchema();
+    assert.equal(schema.name, 'Person');
+    assert.deepEqual(Object.keys(schema.fields), ['name', 'address', 'otherAddresses']);
+    assert.deepEqual(Object.keys(schema.fields['address'].schema.model.entitySchema.fields),
+        ['number', 'street', 'city']);
+    assert.deepEqual(Object.keys(schema.fields['otherAddresses'].schema.schema.model.entitySchema.fields),
+        ['city', 'country']);
+  });
+
+  it('restricts types according to multiple policies', async () => {
+    const [policy0, policy1, policy2] = (await Manifest.parse(`
+schema Address
+  number: Number
+  street: Text
+  city: Text
+  country: Text
+schema Person
+  name: Text
+  phone: Text
+  address: &Address
+  otherAddresses: [&Address {street, city, country}]
+policy PolicyOne {
+  from Person access {
+    name,
+    address {
+      number,
+      street
+    }
+  }
+}
+policy PolicyTwo {
+  from Person access {
+    address {
+      street,
+      city
+    },
+    otherAddresses {city}
+  }
+}
+policy PolicyThree {
+  from Person access {
+    name,
+    otherAddresses {country}
+  }
+}
+    `)).policies;
+    assert.deepEqual(Object.keys(policy0.targets[0].getRestrictedType().getEntitySchema().fields),
+        ['name', 'address']);
+    assert.deepEqual(Object.keys(policy1.targets[0].getRestrictedType().getEntitySchema().fields),
+        ['address', 'otherAddresses']);
+    assert.deepEqual(Object.keys(policy2.targets[0].getRestrictedType().getEntitySchema().fields),
+        ['name', 'otherAddresses']);
+
+    const restrictedType = IngressValidation.getRestrictedType('Person', [policy0, policy1, policy2]);
+    const restrictedSchema = restrictedType.getEntitySchema();
+    assert.equal(restrictedSchema.name, 'Person');
+    assert.deepEqual(Object.keys(restrictedSchema.fields), ['name', 'address', 'otherAddresses']);
+    assert.deepEqual(Object.keys(restrictedSchema.fields['address'].schema.model.entitySchema.fields),
+        ['number', 'street', 'city']);
+    assert.deepEqual(Object.keys(restrictedSchema.fields['otherAddresses'].schema.schema.model.entitySchema.fields),
+        ['city', 'country']);
   });
 });

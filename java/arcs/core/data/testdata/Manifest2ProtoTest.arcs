@@ -16,7 +16,7 @@ particle Writer in 'Writer'
     name: Text,
     dimensions: [Number],
     reviews: [&Review {
-      author: Text,
+      authors: List<Text>,
       content: Text,
       rating: Number
     }],

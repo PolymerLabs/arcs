@@ -62,7 +62,10 @@ class LifecycleTest {
             ::SingleWriteHandleParticle.toRegistration(),
             ::MultiHandleParticle.toRegistration(),
             ::PausingParticle.toRegistration(),
-            ::ReadWriteAccessParticle.toRegistration()
+            ::ReadWriteAccessParticle.toRegistration(),
+            ::PipelineProducerParticle.toRegistration(),
+            ::PipelineTransportParticle.toRegistration(),
+            ::PipelineConsumerParticle.toRegistration()
         )
         hostRegistry = ExplicitHostRegistry().also { it.registerHost(testHost) }
         storeManager = StoreManager()
@@ -211,5 +214,15 @@ class LifecycleTest {
         val arc = allocator.startArcForPlan(ReadWriteAccessTestPlan).waitForStart()
         val particle: ReadWriteAccessParticle = testHost.getParticle(arc.id, name)
         assertThat(particle.errors).isEmpty()
+    }
+
+    @Test
+    fun pipeline() = runTest {
+        val name = "PipelineConsumerParticle"
+        val arc = allocator.startArcForPlan(PipelineTestPlan).waitForStart()
+        val particle: PipelineConsumerParticle = testHost.getParticle(arc.id, name)
+        arc.stop()
+        arc.waitForStop()
+        assertThat(particle.values).containsExactly("sng_mod", "[col_mod]")
     }
 }
