@@ -11,6 +11,7 @@ package(default_visibility = ["//java/arcs:allowed-packages"])
 arcs_kt_schema(
     name = "codegen",
     srcs = ["ComputePeopleStats.arcs"],
+    test_harness = True,
 )
 
 arcs_kt_jvm_library(
