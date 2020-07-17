@@ -121,14 +121,14 @@ export class ResolveWalker extends RecipeWalker {
       }
       return [];
     };
-    const arc = this.storeHolder;
+    const storeHolder = this.storeHolder;
     if (slotConnection.isConnected()) {
       return error('Slot connection is already connected');
     }
 
     const slotSpec = slotConnection.getSlotSpec();
     const particle = slotConnection.particle;
-    const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, arc);
+    const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, storeHolder);
 
     const allSlots = [...local, ...remote];
 
