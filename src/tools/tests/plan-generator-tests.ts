@@ -76,7 +76,7 @@ describe('recipe2plan', () => {
       assert.equal(
         await generator.createHandleConnection(writer.connections['data']),
 `HandleConnection(
-    R_Handle0.storageKey,
+    R_Handle0,
     HandleMode.Write,
     SingletonType(EntityType(A_Data.SCHEMA)),
     emptyList()
@@ -85,7 +85,7 @@ describe('recipe2plan', () => {
       assert.equal(
         await generator.createHandleConnection(reader.connections['data']),
 `HandleConnection(
-    R_Handle0.storageKey,
+    R_Handle0,
     HandleMode.Read,
     SingletonType(EntityType(B_Data.SCHEMA)),
     emptyList()
@@ -147,7 +147,7 @@ Particle(
     "arcs.core.data.testdata.Writer",
     mapOf(
         "data" to HandleConnection(
-            Recipe_Handle0.storageKey,
+            Recipe_Handle0,
             HandleMode.Write,
             SingletonType(EntityType(Writer_Data.SCHEMA)),
             listOf(Annotation("persistent", emptyMap()))
@@ -179,7 +179,7 @@ Particle(
     "arcs.core.data.testdata.subdir.Intermediary",
     mapOf(
         "data" to HandleConnection(
-            Recipe_Handle0.storageKey,
+            Recipe_Handle0,
             HandleMode.ReadWrite,
             SingletonType(EntityType(Intermediary_Data.SCHEMA)),
             listOf(Annotation("persistent", emptyMap()))
@@ -202,7 +202,7 @@ Particle(
     const result = await generator.createHandleConnection(particle.connections['data']);
     assert.deepStrictEqual(result, `\
 HandleConnection(
-    R_Handle0.storageKey,
+    R_Handle0,
     HandleMode.Write,
     CollectionType(EntityType(A_Data.SCHEMA)),
     emptyList()
@@ -230,7 +230,7 @@ HandleConnection(
     const result = await generator.createHandleConnection(cParticle.connections['data']);
     assert.deepStrictEqual(result, `\
 HandleConnection(
-    R_Handle0.storageKey,
+    R_Handle0,
     HandleMode.Read,
     CollectionType(
         EntityType(

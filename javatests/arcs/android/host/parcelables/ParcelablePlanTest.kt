@@ -41,8 +41,9 @@ class ParcelablePlanTest {
     @Test
     fun plan_parcelableRoundTrip_works() {
         val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
-        val handleConnection = Plan.HandleConnection(storageKey, HandleMode.ReadWrite, personType)
-        val handleConnection2 = Plan.HandleConnection(storageKey, HandleMode.ReadWrite, personType)
+        val handle = Plan.Handle(storageKey, personType, emptyList())
+        val handleConnection = Plan.HandleConnection(handle, HandleMode.ReadWrite, personType)
+        val handleConnection2 = Plan.HandleConnection(handle, HandleMode.ReadWrite, personType)
         val particle = Plan.Particle(
             "Foobar",
             "foo.bar.Foobar",
@@ -55,7 +56,7 @@ class ParcelablePlanTest {
             mapOf("foo" to handleConnection2)
         )
 
-        val plan = Plan(listOf(particle, particle2))
+        val plan = Plan(listOf(particle, particle2), listOf(handle))
 
         val marshalled = with(Parcel.obtain()) {
             writeTypedObject(plan.toParcelable(), 0)

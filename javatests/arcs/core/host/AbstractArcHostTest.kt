@@ -99,10 +99,16 @@ open class AbstractArcHostTest {
     fun ttlUsed() = runBlocking {
         val schedulerProvider = JvmSchedulerProvider(coroutineContext)
         val host = MyTestHost(schedulerProvider, ::TestParticle.toRegistration())
+        val handleStorageKey = ReferenceModeStorageKey(
+            backingKey = RamDiskStorageKey("backing"),
+            storageKey = RamDiskStorageKey("container")
+        )
+
         val handleConnection = Plan.HandleConnection(
-            ReferenceModeStorageKey(
-                backingKey = RamDiskStorageKey("backing"),
-                storageKey = RamDiskStorageKey("container")
+            Plan.Handle(
+                handleStorageKey,
+                SingletonType(EntityType(DummyEntity.SCHEMA)),
+                emptyList()
             ),
             HandleMode.ReadWrite,
             SingletonType(EntityType(DummyEntity.SCHEMA)),

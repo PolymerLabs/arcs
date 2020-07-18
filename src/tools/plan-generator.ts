@@ -105,12 +105,12 @@ export class PlanGenerator {
   /** Generates a Kotlin `Plan.HandleConnection` from a HandleConnection. */
   async createHandleConnection(connection: HandleConnection): Promise<string> {
 
-    const storageKey = `${this.handleVariableName(connection.handle)}.storageKey`;
+    const handle = this.handleVariableName(connection.handle);
     const mode = this.createHandleMode(connection.direction, connection.type);
     const type = await generateConnectionType(connection);
     const annotations = PlanGenerator.createAnnotations(connection.handle.annotations);
 
-    return ktUtils.applyFun('HandleConnection', [storageKey, mode, type, annotations],
+    return ktUtils.applyFun('HandleConnection', [handle, mode, type, annotations],
         {startIndent: 24});
   }
 

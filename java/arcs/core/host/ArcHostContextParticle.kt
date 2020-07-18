@@ -35,6 +35,7 @@ import kotlinx.coroutines.withContext
 
 typealias ArcHostContextParticle_HandleConnections = AbstractArcHostContextParticle.HandleConnection
 typealias ArcHostContextParticle_Particles = AbstractArcHostContextParticle.ParticleSchema
+typealias ArcHostContextParticle_PlanHandle = AbstractArcHostContextParticle.PlanHandle
 
 /**
  * An implicit [Particle] that lives within the [ArcHost] and used as a utility class to
@@ -57,10 +58,19 @@ class ArcHostContextParticle(
         context: arcs.core.host.ArcHostContext
     ) = onHandlesReady {
         try {
+            handles.planHandles.clear()
             val connections = context.particles.flatMap {
                 it.value.planParticle.handles.map { handle ->
+                    val planHandle = ArcHostContextParticle_PlanHandle(
+                        storageKey = handle.value.handle.storageKey.toString(),
+                        type = handle.value.handle.type.tag.name
+                    )
+                    // Write Plan.Handle
+                    handles.planHandles.store(planHandle)
                     ArcHostContextParticle_HandleConnections(
-                        handleName = handle.key, storageKey = handle.value.storageKey.toString(),
+                        connectionName = handle.key,
+                        planHandle = handles.planHandles.createReference(planHandle),
+                        storageKey = handle.value.storageKey.toString(),
                         mode = handle.value.mode.name, type = handle.value.type.tag.name,
                         ttl = handle.value.ttl.minutes.toDouble()
                     )
@@ -177,9 +187,18 @@ class ArcHostContextParticle(
             "HandleConnection couldn't be dereferenced for arcId $arcId, particle $particleName"
         }
     }.map { handle ->
-        handle.handleName to Plan.HandleConnection(
-            StorageKeyParser.parse(handle.storageKey), HandleMode.valueOf(handle.mode),
-            fromTag(arcId, particle, handle.type, handle.handleName),
+        val planHandle = requireNotNull(requireNotNull(handle.planHandle).dereference()) {
+            "PlanHandle couldn't be dereferenced for arcId $arcId, particle $handle.connectionName"
+        }
+        handle.connectionName to Plan.HandleConnection(
+            Plan.Handle(
+                StorageKeyParser.parse(planHandle.storageKey),
+                // TODO(b/161818462): Properly serialize serialize Handle Type's schema.
+                fromTag(arcId, particle, planHandle.type, handle.connectionName),
+                emptyList()
+            ),
+            HandleMode.valueOf(handle.mode),
+            fromTag(arcId, particle, handle.type, handle.connectionName),
             if (handle.ttl != Ttl.TTL_INFINITE.toDouble()) {
                 listOf(Annotation.createTtl("$handle.ttl minutes"))
             } else {
@@ -192,9 +211,9 @@ class ArcHostContextParticle(
      * Using instantiated particle to obtain [Schema] objects through their
      * associated [EntitySpec], reconstruct an associated [Type] object.
      */
-    fun fromTag(arcId: String, particle: Particle, tag: String, handleName: String): Type {
+    fun fromTag(arcId: String, particle: Particle, tag: String, connectionName: String): Type {
         try {
-            val schema = particle.handles.getEntitySpecs(handleName).single().SCHEMA
+            val schema = particle.handles.getEntitySpecs(connectionName).single().SCHEMA
             return when (Tag.valueOf(tag)) {
                 Tag.Singleton -> SingletonType(EntityType(schema))
                 Tag.Collection -> CollectionType(EntityType(schema))
@@ -206,7 +225,7 @@ class ArcHostContextParticle(
         } catch (e: NoSuchElementException) {
             throw IllegalStateException(
                 """
-                Can't create Type $tag for Handle $handleName and ${particle::class}. This usually
+                Can't create Type $tag for Handle $connectionName and ${particle::class}. This usually
                 occurs because the Particle or ArcHost implementation has changed since
                 the last time this arc was serialized.
             """.trimIndent(), e
@@ -258,16 +277,25 @@ class ArcHostContextParticle(
         ) {
             "Can't create handleConnectionsKey $arcId and $hostId"
         }
+        val planHandlesKey = requireNotNull(
+            resolver.createStorageKey(
+                capability, EntityType(ArcHostContextParticle_PlanHandle.SCHEMA),
+                "${hostId}_arcState_planHandles"
+            )
+        ) {
+            "Can't create handlesKey $arcId and $hostId"
+        }
 
         // replace keys with per-arc created ones.
-        val allStorageKeyLens =
-            Plan.Particle.handlesLens.traverse() + Plan.HandleConnection.storageKeyLens
+        val allStorageKeyLens = Plan.Particle.handlesLens.traverse() +
+            Plan.HandleConnection.handleLens + Plan.Handle.storageKeyLens
         val particle = allStorageKeyLens.mod(ArcHostContextPlan.particles.first()) { storageKey ->
             val keyString = storageKey.toKeyString()
             when {
                 "arcHostContext" in keyString -> arcHostContextKey
                 "particles" in keyString -> particlesKey
                 "handleConnections" in keyString -> handleConnectionsKey
+                "planHandles" in keyString -> planHandlesKey
                 else -> storageKey
             }
         }

@@ -17,6 +17,7 @@ import arcs.core.common.ArcId
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType.Companion.Text
 import arcs.core.data.HandleMode
+import arcs.core.data.Plan.Handle
 import arcs.core.data.Plan.HandleConnection
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
@@ -38,10 +39,12 @@ class ParcelableHandleConnectionTest {
 
     @Test
     fun handleConnection_parcelableRoundTrip_works() {
+        val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
+        val personType = EntityType(personSchema)
         val handleConnection = HandleConnection(
-            VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
+            Handle(storageKey, personType, emptyList()),
             HandleMode.ReadWrite,
-            EntityType(personSchema)
+            personType
         )
 
         val marshalled = with(Parcel.obtain()) {
