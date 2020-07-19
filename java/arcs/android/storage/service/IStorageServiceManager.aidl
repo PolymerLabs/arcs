@@ -16,7 +16,7 @@ import arcs.android.storage.service.IResultCallback;
 /**
  * Exposed API to manage storage via the StorageService.
  */
-interface IStorageServiceManager {
+oneway interface IStorageServiceManager {
 
     /** Clear all arcs data. */
     void clearAll(IResultCallback resultCallback);
