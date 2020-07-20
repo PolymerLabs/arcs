@@ -28,7 +28,6 @@ import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
 import com.nhaarman.mockitokotlin2.whenever
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
@@ -38,7 +37,6 @@ import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 
 @RunWith(JUnit4::class)
-@OptIn(ExperimentalCoroutinesApi::class)
 class ParticleContextTest {
 
     @Mock

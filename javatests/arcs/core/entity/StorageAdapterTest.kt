@@ -16,13 +16,11 @@ import arcs.core.storage.testutil.DummyStorageKey
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-@ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class StorageAdapterTest {
     private val time = FakeTime()

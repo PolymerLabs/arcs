@@ -37,6 +37,7 @@ import arcs.core.util.testutil.LogRule
 import com.google.common.truth.Truth.assertThat
 import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -671,6 +672,7 @@ class ReferenceModeStoreTest {
     }
 
     @Test
+    @FlowPreview
     fun backingStoresCleanedUpWhenLastCallbackRemoved() = runBlocking {
         DriverFactory.register(MockDriverProvider())
         val store = createReferenceModeStore()
