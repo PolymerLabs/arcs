@@ -53,7 +53,7 @@ abstract class StorageKeyFactory(val protocol: String, val capabilities: Capabil
         override val entitySchema: Schema
     ) : StorageKeyOptions {
         override val unique: String =
-        requireNotNull(entitySchema.name).name.ifEmpty { entitySchema.hash }
+        requireNotNull(entitySchema).name?.name ?: entitySchema.hash
         override val location: String = unique
     }
 }
