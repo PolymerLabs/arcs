@@ -183,7 +183,11 @@ class Arc internal constructor(
 
     /** Stop the current [Arc]. */
     suspend fun stop() = allocator.stopArc(id).also {
-        onArcStateChangeFiltered(ArcState.Stopped) { closeFlow() }
+        onArcStateChangeFiltered(ArcState.Stopped) {
+            if (::closeFlow.isInitialized) {
+                closeFlow()
+            }
+        }
     }
 
     private fun unregisterChangeHandlerWithArcHosts(scope: CoroutineScope) = scope.launch {
