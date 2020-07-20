@@ -28,7 +28,7 @@ class VariableTest {
         // Ensure that the shop recipe is fully processed.
         withTimeout(1500) {
             SkuRedactor.redacted.join()
-            Consumer.updated.join()
+//            Consumer.updated.join()
         }
 
         env.stopArc(arc)

@@ -36,6 +36,4 @@ recipe Shop
   SkuRedactor
     input: beforeRedaction
     output: afterRedaction
-  Consumer
-    data: afterRedaction
 
