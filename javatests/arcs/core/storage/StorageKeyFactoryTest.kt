@@ -14,8 +14,26 @@ import org.junit.runners.JUnit4
 class StorageKeyFactoryTest {
 
     @Test
+    fun backingStore_namedEntity() {
+        val namedSchema = Schema(setOf(SchemaName("Foo")),
+            SchemaFields(emptyMap(), emptyMap()),
+            "SomeHash"
+        )
+        val arcId = ArcId.newForTest("myId")
+
+        val storeOptionsEmptyName = StorageKeyFactory.BackingStorageKeyOptions(
+            arcId, namedSchema
+        )
+
+        assertThat(storeOptionsEmptyName.unique).isEqualTo(namedSchema.name?.name)
+    }
+
+    @Test
     fun backingStore_namelessEntity() {
-        val emptySchema = Schema.EMPTY
+        val emptySchema = Schema(emptySet(),
+            SchemaFields(emptyMap(), emptyMap()),
+            "EmptyHash"
+        )
         val emptyNamedSchema = Schema(setOf(SchemaName("")),
             SchemaFields(emptyMap(), emptyMap()),
             "SomeHash"
