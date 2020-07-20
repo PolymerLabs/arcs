@@ -734,8 +734,50 @@ open class HandleManagerTestBase {
 
         val updateDeferred = readHandle.onUpdateDeferred { it.size == 1 }
         writeHandle.dispatchStore(entity)
-        val entityOut = updateDeferred.await()
         assertThat(updateDeferred.await()).containsExactly(entity)
+    }
+
+    @Test
+    fun collectionsOfReferencesWorkEndToEnd() = testRunner {
+        fun toReferencedEntity(value: Int) = TestReferencesParticle_Entities_References(value)
+
+        val referencedEntitiesKey = ReferenceModeStorageKey(
+            backingKey = RamDiskStorageKey("referencedEntities"),
+            storageKey = RamDiskStorageKey("set-referencedEntities")
+        )
+
+        val referencedEntityHandle = writeHandleManager.createCollectionHandle(
+            referencedEntitiesKey,
+            entitySpec = TestReferencesParticle_Entities_References
+        )
+
+        suspend fun toReferences(values: Set<Int>) = values
+            .map { toReferencedEntity(it) }
+            .map {
+                referencedEntityHandle.dispatchStore(it) 
+                referencedEntityHandle.dispatchCreateReference(it)
+            }.toSet()
+
+        suspend fun toEntity(values: Set<Int>) = 
+            TestReferencesParticle_Entities(toReferences(values))
+
+        val entities = setOf(
+            toEntity(setOf(1, 2, 3)),
+            toEntity(setOf(200, 100, 300)),
+            toEntity(setOf(34, 2145, 1, 11))
+        )
+
+        val writeHandle = writeHandleManager.createCollectionHandle(
+            entitySpec = TestReferencesParticle_Entities
+        )
+        val readHandle = readHandleManager.createCollectionHandle(
+            entitySpec = TestReferencesParticle_Entities
+        )
+        
+        val updateDeferred = readHandle.onUpdateDeferred { it.size == 3 }
+        entities.forEach { writeHandle.dispatchStore(it) }
+        println(entities)
+        assertThat(updateDeferred.await()).containsExactly(*entities.toTypedArray())
     }
 
     @Test
