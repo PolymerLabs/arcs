@@ -33,6 +33,13 @@ class TypeProtoDecodersTest {
         assertThat(PrimitiveTypeProto.TEXT.decode()).isEqualTo(PrimitiveType.Text)
         assertThat(PrimitiveTypeProto.BOOLEAN.decode()).isEqualTo(PrimitiveType.Boolean)
         assertThat(PrimitiveTypeProto.NUMBER.decode()).isEqualTo(PrimitiveType.Number)
+        assertThat(PrimitiveTypeProto.BYTE.decode()).isEqualTo(PrimitiveType.Byte)
+        assertThat(PrimitiveTypeProto.SHORT.decode()).isEqualTo(PrimitiveType.Short)
+        assertThat(PrimitiveTypeProto.INT.decode()).isEqualTo(PrimitiveType.Int)
+        assertThat(PrimitiveTypeProto.LONG.decode()).isEqualTo(PrimitiveType.Long)
+        assertThat(PrimitiveTypeProto.CHAR.decode()).isEqualTo(PrimitiveType.Char)
+        assertThat(PrimitiveTypeProto.FLOAT.decode()).isEqualTo(PrimitiveType.Float)
+        assertThat(PrimitiveTypeProto.DOUBLE.decode()).isEqualTo(PrimitiveType.Double)
         assertFailsWith<IllegalArgumentException> {
             PrimitiveTypeProto.UNRECOGNIZED.decode()
         }
