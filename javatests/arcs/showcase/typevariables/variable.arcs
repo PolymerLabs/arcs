@@ -29,8 +29,8 @@ particle Consumer in '.Consumer'
   // check data.sku is redacted
 
 recipe Shop
-  beforeRedaction: create
-  afterRedaction: create
+  beforeRedaction: create @ttl('30m')
+  afterRedaction: create @ttl('20m')
   OrderIngestion
     data: beforeRedaction
   SkuRedactor
