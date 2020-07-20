@@ -15,7 +15,8 @@ class StorageKeyFactoryTest {
 
     @Test
     fun backingStore_namedEntity() {
-        val namedSchema = Schema(setOf(SchemaName("Foo")),
+        val namedSchema = Schema(
+            setOf(SchemaName("Foo")),
             SchemaFields(emptyMap(), emptyMap()),
             "SomeHash"
         )
@@ -25,16 +26,18 @@ class StorageKeyFactoryTest {
             arcId, namedSchema
         )
 
-        assertThat(storeOptionsEmptyName.unique).isEqualTo(namedSchema.name?.name)
+        assertThat(storeOptionsEmptyName.unique).isEqualTo("Foo")
     }
 
     @Test
     fun backingStore_namelessEntity() {
-        val emptySchema = Schema(emptySet(),
+        val emptySchema = Schema(
+            emptySet(),
             SchemaFields(emptyMap(), emptyMap()),
             "EmptyHash"
         )
-        val emptyNamedSchema = Schema(setOf(SchemaName("")),
+        val emptyNamedSchema = Schema(
+            setOf(SchemaName("")),
             SchemaFields(emptyMap(), emptyMap()),
             "SomeHash"
         )
