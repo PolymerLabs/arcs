@@ -18,11 +18,12 @@ import arcs.core.data.SingletonType
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
-import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteQueryCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
+import arcs.core.entity.awaitReady
+import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -42,7 +43,9 @@ import arcs.core.testutil.runTest
 import arcs.core.util.Scheduler
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
+import arcs.sdk.ReadWriteCollectionHandle
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CompletableDeferred
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -62,26 +65,38 @@ private typealias QueryPerson = QueryPerson_Person
 @Suppress("UNCHECKED_CAST")
 class HandleAdapterTest {
     private lateinit var manager: EntityHandleManager
+    private lateinit var monitorManager: EntityHandleManager
     private val idGenerator = Id.Generator.newForTest("session")
-    private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+    private lateinit var schedulerProvider: JvmSchedulerProvider
     private lateinit var scheduler: Scheduler
 
     @Before
     fun setUp() = runBlocking {
         DriverAndKeyConfigurator.configure(null)
+        schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
         scheduler = schedulerProvider("tests")
         manager = EntityHandleManager(
             "testArc",
             "",
             FakeTime(),
-            scheduler = scheduler
+            scheduler = scheduler,
+            stores = StoreManager()
+        )
+        monitorManager = EntityHandleManager(
+            "testArc",
+            "",
+            FakeTime(),
+            scheduler = schedulerProvider("monitor"),
+            stores = StoreManager()
         )
     }
 
     @After
-    fun tearDown() {
+    fun tearDown() = runBlocking {
         RamDisk.clear()
-        scheduler.cancel()
+        schedulerProvider.cancelAll()
+        manager.close()
+        monitorManager.close()
     }
 
     @Test
@@ -209,7 +224,6 @@ class HandleAdapterTest {
         assertThat(writeOnlyHandle).isNotInstanceOf(ReadWriteCollectionHandle::class.java)
     }
 
-    @Ignore("b/157390221 - Deflake")
     @Test
     fun collectionHandleAdapter_createReference() = runTest {
         val handle = manager.createHandle(
@@ -221,6 +235,19 @@ class HandleAdapterTest {
             ),
             STORAGE_KEY
         ) as ReadWriteCollectionHandle<Person>
+        val monitorHandle = monitorManager.createHandle(
+            HandleSpec(
+                READ_ONLY_HANDLE,
+                HandleMode.ReadWrite,
+                CollectionType(EntityType(Person.SCHEMA)),
+                Person
+            ),
+            STORAGE_KEY
+        ) as arcs.core.entity.ReadWriteCollectionHandle<Person>
+
+        handle.awaitReady()
+        monitorHandle.awaitReady()
+
         val entity = Person("Watson")
 
         // Fails when there's no entityId.
@@ -241,10 +268,13 @@ class HandleAdapterTest {
             "Entity is not stored in the Collection."
         )
 
+        val monitorKnows = CompletableDeferred<Unit>()
+        monitorHandle.onUpdate {
+            if (it.contains(entity)) monitorKnows.complete(Unit)
+        }
         handle.dispatchStore(entity)
 
-        // Wait for the storage to make it down to the driver, so dereferencing works.
-        delay(150)
+        monitorKnows.await()
 
         val reference = handle.dispatchCreateReference(entity)
         assertThat(reference.schemaHash).isEqualTo(Person.SCHEMA.hash)
