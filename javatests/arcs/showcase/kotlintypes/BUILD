@@ -16,8 +16,8 @@ arcs_kt_android_library(
     name = "example_particles",
     testonly = 1,
     srcs = [
-        "TypeWriter.kt",
         "Readers.kt",
+        "TypeWriter.kt",
         "UseUpExtraRegisterSpace.kt",
     ],
     deps = [

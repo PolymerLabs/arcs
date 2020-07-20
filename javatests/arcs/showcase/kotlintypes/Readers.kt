@@ -5,8 +5,7 @@ import kotlinx.coroutines.Job
 
 class IntegralReader : AbstractIntegralReader() {
     override fun onReady() {
-        val entity = requireNotNull(handles.inputs.fetch())
-        {
+        val entity = requireNotNull(handles.inputs.fetch()) {
             "Failed to read entity from input handle!"
         }
         assertThat(entity.aByte).isEqualTo(42.toByte())
@@ -23,8 +22,7 @@ class IntegralReader : AbstractIntegralReader() {
 
 class FloatingReader : AbstractFloatingReader() {
     override fun onReady() {
-        val entity = requireNotNull(handles.inputs.fetch())
-        {
+        val entity = requireNotNull(handles.inputs.fetch()) {
             "Failed to read entity from input handle!"
         }
 
@@ -36,13 +34,11 @@ class FloatingReader : AbstractFloatingReader() {
     companion object {
         val updated = Job()
     }
-
 }
 
 class CharReader : AbstractCharReader() {
     override fun onReady() {
-        val entity = requireNotNull(handles.inputs.fetch())
-        {
+        val entity = requireNotNull(handles.inputs.fetch()) {
             "Failed to read entity from input handle!"
         }
 
@@ -53,13 +49,11 @@ class CharReader : AbstractCharReader() {
     companion object {
         val updated = Job()
     }
-
 }
 
 class IntegralSetReader : AbstractIntegralSetReader() {
     override fun onUpdate() {
-        val entity = requireNotNull(handles.inputs.fetch())
-        {
+        val entity = requireNotNull(handles.inputs.fetch()) {
             "Failed to read entity from input handle!"
         }
 
@@ -73,13 +67,11 @@ class IntegralSetReader : AbstractIntegralSetReader() {
     companion object {
         val updated = Job()
     }
-
 }
 
 class FloatingSetReader : AbstractFloatingSetReader() {
     override fun onUpdate() {
-        val entity = requireNotNull(handles.inputs.fetch())
-        {
+        val entity = requireNotNull(handles.inputs.fetch()) {
             "Failed to read entity from input handle!"
         }
 
@@ -91,13 +83,11 @@ class FloatingSetReader : AbstractFloatingSetReader() {
     companion object {
         val updated = Job()
     }
-
 }
 
 class CharSetReader : AbstractCharSetReader() {
     override fun onUpdate() {
-        val entity = requireNotNull(handles.inputs.fetch())
-        {
+        val entity = requireNotNull(handles.inputs.fetch()) {
             "Failed to read entity from input handle!"
         }
 
@@ -108,5 +98,4 @@ class CharSetReader : AbstractCharSetReader() {
     companion object {
         val updated = Job()
     }
-
 }
