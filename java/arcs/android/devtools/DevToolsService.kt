@@ -12,8 +12,14 @@
 package arcs.android.devtools
 
 import android.app.Service
+import android.content.ComponentName
 import android.content.Intent
+import android.content.ServiceConnection
 import android.os.IBinder
+import arcs.android.storage.service.IDevToolsStorageManager
+import arcs.sdk.android.storage.service.DevToolsConnectionFactory
+import arcs.sdk.android.storage.service.StorageService
+import arcs.sdk.android.storage.service.StorageServiceConnection
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +37,11 @@ class DevToolsService : Service() {
     private val scope = CoroutineScope(coroutineContext)
     private lateinit var binder: DevToolsBinder
     private val devToolsServer = DevWebServerImpl
+    private val connectionFactory = DevToolsConnectionFactory(this@DevToolsService)
+    private var storageService: IDevToolsStorageManager? = null
+    private var serviceConnection: StorageServiceConnection? = null
+    //private val connection = DevToolsConnectionFactory(this@DevToolsService)
+
 
     override fun onCreate() {
         binder = DevToolsBinder(scope, devToolsServer)
@@ -43,9 +54,12 @@ class DevToolsService : Service() {
                 cont.resume(Unit) {}
             }
         }
+        scope.launch { initialize() }
+
     }
 
     override fun onBind(intent: Intent): IBinder? {
+        binder.send(storageService?.getStorageKeys() ?: "")
         return binder
     }
 
@@ -53,5 +67,20 @@ class DevToolsService : Service() {
         super.onDestroy()
         devToolsServer.close()
         scope.cancel()
+    }
+
+    suspend fun initialize() = apply {
+        check(serviceConnection == null ||
+            storageService == null ||
+            storageService?.asBinder()?.isBinderAlive != true) {
+            "Connection to StorageService is already alive."
+        }
+        val connection = connectionFactory()
+        // Need to initiate the connection on the main thread.
+        val service = IDevToolsStorageManager.Stub.asInterface(connection.connectAsync().await())
+
+        this.serviceConnection = connection
+        this.storageService = service
+
     }
 }

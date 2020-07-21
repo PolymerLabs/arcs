@@ -11,6 +11,10 @@
 
 package arcs.android.devtools
 
+import android.content.Context
+import arcs.core.util.TaggedLog
+import arcs.sdk.android.storage.service.DevToolsConnectionFactory
+import arcs.sdk.android.storage.service.StorageServiceConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -22,9 +26,12 @@ class DevToolsBinder(
     private val webServer: DevWebServer
 ) : IDevToolsService.Stub() {
 
+    private val log = TaggedLog { "DevWebSocket" }
+
     override fun send(str: String) {
         scope.launch {
             webServer.send(str)
+            log.debug { "KOALA: $str" }
         }
     }
 }

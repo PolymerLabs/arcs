@@ -34,6 +34,8 @@ typealias ConnectionFactory =
 
 typealias ManagerConnectionFactory = () -> StorageServiceConnection
 
+typealias DevToolsConnectionFactory = () -> StorageServiceConnection
+
 /**
  * Returns a default [ConnectionFactory] implementation which uses the provided [context] to bind to
  * the [StorageService] and the provided [coroutineContext] as the parent for
@@ -61,6 +63,19 @@ fun ManagerConnectionFactory(
     bindingDelegate: StorageServiceBindingDelegate = StorageServiceManagerBindingDelegate(context),
     coroutineContext: CoroutineContext = Dispatchers.Default
 ): ManagerConnectionFactory = { StorageServiceConnection(bindingDelegate, null, coroutineContext) }
+
+/**
+ * Returns a [DevToolsConnectionFactory] implementation which uses the provided [context] to bind to
+ * the [StorageService] and the provided [coroutineContext] as the parent for
+ * [StorageServiceConnection.connectAsync]'s [Deferred] return value.
+ */
+@Suppress("FunctionName")
+@ExperimentalCoroutinesApi
+fun DevToolsConnectionFactory(
+    context: Context,
+    bindingDelegate: StorageServiceBindingDelegate = DevToolsStorageManagerBindingDelegate(context),
+    coroutineContext: CoroutineContext = Dispatchers.Default
+): DevToolsConnectionFactory = { StorageServiceConnection(bindingDelegate, null, coroutineContext) }
 
 /** Defines an object capable of binding-to and unbinding-from the [StorageService]. */
 interface StorageServiceBindingDelegate {
@@ -106,6 +121,27 @@ class StorageServiceManagerBindingDelegate(
     ): Boolean {
         return context.bindService(
             StorageService.createStorageManagerBindIntent(context),
+            conn,
+            flags
+        )
+    }
+
+    override fun unbindStorageService(conn: ServiceConnection) = context.unbindService(conn)
+}
+
+/** Implementation of the [StorageServiceBindingDelegate] that creates a [IDevToolsStorageManager]
+ * binding to the [StorageService].
+ */
+class DevToolsStorageManagerBindingDelegate(
+    private val context: Context
+) : StorageServiceBindingDelegate {
+    override fun bindStorageService(
+        conn: ServiceConnection,
+        flags: Int,
+        options: ParcelableStoreOptions?
+    ): Boolean {
+        return context.bindService(
+            StorageService.createDevToolsStorageManagerBindIntent(context),
             conn,
             flags
         )

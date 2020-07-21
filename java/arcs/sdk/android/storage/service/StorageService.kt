@@ -23,10 +23,7 @@ import androidx.work.WorkManager
 import arcs.android.common.resurrection.ResurrectorService
 import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
-import arcs.android.storage.service.BindingContext
-import arcs.android.storage.service.BindingContextStatsImpl
-import arcs.android.storage.service.DeferredStore
-import arcs.android.storage.service.StorageServiceManager
+import arcs.android.storage.service.*
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
 import arcs.core.crdt.CrdtData
@@ -143,6 +140,10 @@ open class StorageService : ResurrectorService() {
 
         if (intent.action == MANAGER_ACTION) {
             return StorageServiceManager(coroutineContext, stores)
+        }
+
+        if(intent.action == DEVTOOLS_ACTION) {
+            return DevToolsStorageManager(coroutineContext, stores)
         }
 
         val parcelableOptions = requireNotNull(
@@ -314,6 +315,7 @@ open class StorageService : ResurrectorService() {
 
         const val EXTRA_OPTIONS = "storeOptions"
         const val MANAGER_ACTION = "arcs.sdk.android.storage.service.MANAGER"
+        const val DEVTOOLS_ACTION = "DevTools_Action"
 
         init {
             // TODO: Remove this, the Allocator should be responsible for setting up providers.
@@ -336,6 +338,15 @@ open class StorageService : ResurrectorService() {
         fun createStorageManagerBindIntent(context: Context): Intent =
             Intent(context, StorageService::class.java).apply {
                 action = MANAGER_ACTION
+            }
+
+        /**
+         * Creates an [Intent] to use to get a [IDevToolsStorageManager] binding to the
+         * [StorageService].
+         */
+        fun createDevToolsStorageManagerBindIntent(context: Context): Intent =
+            Intent(context, StorageService::class.java).apply {
+                action = DEVTOOLS_ACTION
             }
 
         // Can be used to cancel all periodic jobs when the service is not running.

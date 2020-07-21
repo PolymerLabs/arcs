@@ -9,15 +9,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.android.devtools;
+package arcs.android.storage.service;
 
+import arcs.android.storage.service.IResultCallback;
 
 /**
- * Exposed API for the DevToolsService.
- *
- * TODO: subject to change.
+ * Exposed API to manage storage for DevTools
  */
-interface IDevToolsService {
-    /** Sends the [str] to the remote device */
-    oneway void send(String str);
+interface IDevToolsStorageManager {
+
+  String getStorageKeys();
+
 }
