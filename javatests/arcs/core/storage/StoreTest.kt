@@ -27,13 +27,8 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.testutil.DummyStorageKey
+import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
-import com.nhaarman.mockitokotlin2.any
-import com.nhaarman.mockitokotlin2.anyOrNull
-import com.nhaarman.mockitokotlin2.argumentCaptor
-import com.nhaarman.mockitokotlin2.eq
-import com.nhaarman.mockitokotlin2.mock
-import com.nhaarman.mockitokotlin2.whenever
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,6 +40,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import kotlin.reflect.KClass
 
 /** Tests for [Store]. */
 @Suppress("UNCHECKED_CAST", "UNUSED_VARIABLE")
@@ -70,7 +66,7 @@ class StoreTest {
 
     @Test
     fun constructsDirectStores_whenRequired() = runBlockingTest {
-        setupMocks()
+        setupFakes()
 
         val store = createStore()
 
@@ -79,12 +75,9 @@ class StoreTest {
 
     @Test
     fun propagatesModelUpdates_fromProxies_toDrivers() = runBlockingTest {
-        val (driver, _) = setupMocks()
+        val (driver, _) = setupFakes()
 
         val store = createStore() as DirectStore<CrdtData, CrdtOperation, Any?>
-
-        val modelCaptor = argumentCaptor<CrdtCount.Data>()
-        whenever(driver.send(modelCaptor.capture(), any())).thenReturn(true)
 
         val count = CrdtCount()
         count.applyOperation(Increment("me", 0 to 1))
@@ -92,17 +85,14 @@ class StoreTest {
         assertThat(store.onProxyMessage(ProxyMessage.ModelUpdate(count.data, 1)))
             .isTrue()
 
-        assertThat(modelCaptor.lastValue).isEqualTo(count.data)
+        assertThat(driver.lastData).isEqualTo(count.data)
     }
 
     @Test
     fun appliesAndPropagatesOperations_fromProxies_toDrivers() = runBlockingTest {
-        val (driver, _) = setupMocks()
+        val (driver, _) = setupFakes()
 
         val store = createStore() as DirectStore<CrdtData, CrdtOperation, Any?>
-
-        val modelCaptor = argumentCaptor<CrdtCount.Data>()
-        whenever(driver.send(modelCaptor.capture(), any())).thenReturn(true)
 
         val count = CrdtCount()
         val op = Increment("me", 0 to 1)
@@ -111,16 +101,14 @@ class StoreTest {
 
         count.applyOperation(op)
 
-        assertThat(modelCaptor.lastValue).isEqualTo(count.data)
+        assertThat(driver.lastData).isEqualTo(count.data)
     }
 
     @Test
     fun responds_toModelRequest_fromProxyWithModel() = runBlockingTest {
-        val (driver, _) = setupMocks()
+        val (driver, _) = setupFakes()
 
         val store = createStore() as DirectStore<CrdtData, CrdtOperation, Any?>
-
-        whenever(driver.send(any(), any())).thenReturn(true)
 
         val count = CrdtCount()
         val op = Increment("me", 0 to 1)
@@ -159,7 +147,7 @@ class StoreTest {
 
     @Test
     fun sendsAModelResponse_onlyTo_theRequestingProxy() = runBlockingTest {
-        setupMocks()
+        setupFakes()
 
         val store = createStore()
 
@@ -179,9 +167,7 @@ class StoreTest {
 
     @Test
     fun propagatesUpdates_fromDrivers_toProxies() = runBlockingTest {
-        val (driver, _) = setupMocks()
-        val receiverCaptor = argumentCaptor<suspend (CrdtCount.Data, Int) -> Unit>()
-        whenever(driver.registerReceiver(anyOrNull(), receiverCaptor.capture())).thenReturn(Unit)
+        val (driver, _) = setupFakes()
 
         val store = createStore()
 
@@ -203,19 +189,15 @@ class StoreTest {
             )
         })
 
-        receiverCaptor.lastValue(count.data, 1)
+        driver.lastReceiver!!.invoke(count.data, 1)
 
         listenerFinished.await()
     }
 
     @Test
     fun doesntSendUpdateToDriver_afterDriverOriginatedMessages() = runBlockingTest {
-        val (driver, _) = setupMocks()
-        val receiverCaptor = argumentCaptor<suspend (CrdtCount.Data, Int) -> Unit>()
-        whenever(driver.registerReceiver(anyOrNull(), receiverCaptor.capture())).thenReturn(Unit)
-        whenever(driver.send(any(), any())).thenThrow(
-            IllegalStateException("Should not be invoked")
-        )
+        val (driver, _) = setupFakes()
+        driver.throwOnSend = true
 
         val store = createStore()
 
@@ -224,17 +206,13 @@ class StoreTest {
 
         // Note that this assumes no asynchrony inside store.ts. This is guarded by the following
         // test, which will fail if driver.receiver() doesn't synchronously invoke driver.send().
-        receiverCaptor.lastValue(remoteCount.data, 1)
+        driver.lastReceiver!!.invoke(remoteCount.data, 1)
     }
 
     @Test
     fun doesntSendUpdateToDriver_afterDriverOriginatedMessages_CrdtSet() = runBlockingTest {
         val (driver, _) = setupSetMocks()
-        val receiverCaptor = argumentCaptor<suspend (CrdtSet.Data<*>, Int) -> Unit>()
-        whenever(driver.registerReceiver(anyOrNull(), receiverCaptor.capture())).thenReturn(Unit)
-        whenever(driver.send(any(), any())).thenThrow(
-            IllegalStateException("Should not be invoked")
-        )
+        driver.throwOnSend = true
 
         val schema = Schema(
             emptySet(),
@@ -245,7 +223,8 @@ class StoreTest {
             StoreOptions(
                 testKey,
                 CollectionType(EntityType(schema))
-            ))
+            )
+        )
 
         val remoteSet = CrdtSet<RawEntity>()
         val entity = RawEntity(
@@ -261,20 +240,18 @@ class StoreTest {
 
         // Note that this assumes no asynchrony inside store.ts. This is guarded by the following
         // test, which will fail if driver.receiver() doesn't synchronously invoke driver.send().
-        receiverCaptor.lastValue(remoteSet.data, 1)
+        driver.lastReceiver!!.invoke(remoteSet.data, 1)
     }
 
     @Test
     fun resendsFailedDriverUpdates_afterMerging() = runBlockingTest {
-        val (driver, _) = setupMocks()
-        val receiverCaptor = argumentCaptor<suspend (CrdtCount.Data, Int) -> Unit>()
+        val (driver, _) = setupFakes()
         val firstCallComplete = CompletableDeferred<Unit>(coroutineContext[Job.Key])
         val secondCallComplete = CompletableDeferred<Unit>(coroutineContext[Job.Key])
 
-        whenever(driver.registerReceiver(anyOrNull(), receiverCaptor.capture())).thenReturn(Unit)
-        whenever(driver.send(any(), any())).then {
+        driver.doOnSend = { _, _ ->
             firstCallComplete.complete(Unit)
-            return@then false
+            false
         }
 
         val activeStore = createStore()
@@ -295,29 +272,24 @@ class StoreTest {
 
         println("Setting up for round two")
         // Reset, this time we'll capture the model it receives.
-        val modelCaptor = argumentCaptor<CrdtCount.Data>()
-        whenever(driver.send(modelCaptor.capture(), any())).then {
+        driver.doOnSend = { _, _ ->
             secondCallComplete.complete(Unit)
-            return@then true
+            true
         }
 
-        println("Calling receiver: ${receiverCaptor.lastValue}")
-        receiverCaptor.lastValue(remoteCount.data, 1)
+        println("Calling receiver: ${driver.lastReceiver}")
+        driver.lastReceiver!!.invoke(remoteCount.data, 1)
         println("Called captor")
 
         secondCallComplete.await()
 
         count.merge(remoteCount.data)
-        assertThat(modelCaptor.lastValue).isEqualTo(count.data)
+        assertThat(driver.lastData).isEqualTo(count.data)
     }
 
     @Test
     fun resolves_combinationOfMessages_fromProxyAndDriver() = runBlockingTest {
-        val (driver, _) = setupMocks()
-        val receiverCaptor = argumentCaptor<suspend (CrdtCount.Data, Int) -> Unit>()
-        val driverModelCaptor = argumentCaptor<CrdtCount.Data>()
-        whenever(driver.registerReceiver(anyOrNull(), receiverCaptor.capture())).thenReturn(Unit)
-        whenever(driver.send(driverModelCaptor.capture(), any())).thenReturn(true)
+        val (driver, _) = setupFakes()
 
         val activeStore = createStore() as DirectStore<CrdtData, CrdtOperation, Any?>
 
@@ -326,14 +298,14 @@ class StoreTest {
         activeStore.onProxyMessage(ProxyMessage.Operations(listOf(Increment("me", 2 to 3)), id = 1))
 
         CrdtCount.Data()
-        receiverCaptor.lastValue(
+        driver.lastReceiver!!.invoke(
             CrdtCount.Data(
                 mutableMapOf("me" to 1, "them" to 1),
                 VersionMap("me" to 1, "them" to 1)
             ),
             1
         )
-        receiverCaptor.lastValue(
+        driver.lastReceiver!!.invoke(
             CrdtCount.Data(
                 mutableMapOf("me" to 1, "them" to 2),
                 VersionMap("me" to 1, "them" to 2)
@@ -343,39 +315,61 @@ class StoreTest {
 
         activeStore.idle()
 
-        assertThat(activeStore.getLocalData()).isEqualTo(driverModelCaptor.lastValue)
+        assertThat(activeStore.getLocalData()).isEqualTo(driver.lastData)
     }
 
-    private suspend fun setupMocks(): Pair<Driver<CrdtCount.Data>, DriverProvider> {
-        val driver = mock<Driver<CrdtCount.Data>> {
-            on { storageKey }.thenReturn(testKey)
-        }
-        whenever(driver.send(any(), any())).thenReturn(true)
-        val provider = mock<DriverProvider> {
-            on { willSupport(testKey) }.thenReturn(true)
-        }
-        whenever(provider.getDriver(any(), eq(CrdtCount.Data::class), any())).thenReturn(driver)
-
-        DriverFactory.register(provider)
-
-        return driver to provider
+    private fun setupFakes(): Pair<FakeDriver<CrdtCount.Data>, FakeProvider> {
+        val fakeDriver = FakeDriver<CrdtCount.Data>()
+        val fakeProvider = FakeProvider(fakeDriver)
+        DriverFactory.register(fakeProvider)
+        return fakeDriver to fakeProvider
     }
 
-    private suspend fun setupSetMocks(): Pair<Driver<CrdtSet.DataImpl<*>>, DriverProvider> {
-        val driver = mock<Driver<CrdtSet.DataImpl<*>>> {
-            on { storageKey }.thenReturn(testKey)
-        }
-        whenever(driver.send(any(), any())).thenReturn(true)
-        val provider = mock<DriverProvider> {
-            on { willSupport(testKey) }.thenReturn(true)
-        }
-        whenever(provider.getDriver(any(), eq(CrdtSet.DataImpl::class), any())).thenReturn(driver)
-
-        DriverFactory.register(provider)
-
-        return driver to provider
+    private fun setupSetMocks(): Pair<FakeDriver<CrdtSet.Data<*>>, FakeProvider> {
+        val fakeDriver = FakeDriver<CrdtSet.Data<*>>()
+        val fakeProvider = FakeProvider(fakeDriver)
+        DriverFactory.register(fakeProvider)
+        return fakeDriver to fakeProvider
     }
 
     private suspend fun createStore() =
         DefaultActivationFactory<CrdtData, CrdtOperation, Any?>(StoreOptions(testKey, CountType()))
+
+    private inner class FakeDriver<T : CrdtData> : Driver<T> {
+        override val storageKey: StorageKey = testKey
+        override var token: String? = null
+
+        var throwOnSend: Boolean = false
+        var doOnSend: ((data: T, version: Int) -> Boolean)? = null
+        var sendReturnValue: Boolean = true
+        var lastReceiver: (suspend (data: T, version: Int) -> Unit)? = null
+        var lastData: T? = null
+        var lastVersion: Int? = null
+
+        override suspend fun registerReceiver(
+            token: String?,
+            receiver: suspend (data: T, version: Int) -> Unit
+        ) {
+            lastReceiver = receiver
+        }
+
+        override suspend fun send(data: T, version: Int): Boolean {
+            if (throwOnSend) throw UnsupportedOperationException("Not supposed to be called")
+            lastData = data
+            lastVersion = version
+            return doOnSend?.invoke(data, version) ?: sendReturnValue
+        }
+    }
+
+    private inner class FakeProvider(val fakeDriver: FakeDriver<*>) : DriverProvider {
+        override fun willSupport(storageKey: StorageKey): Boolean {
+            return storageKey == testKey
+        }
+
+        override suspend fun <Data : Any> getDriver(
+            storageKey: StorageKey,
+            dataClass: KClass<Data>,
+            type: Type
+        ): Driver<Data> = fakeDriver as Driver<Data>
+    }
 }
