@@ -46,8 +46,8 @@ import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.ReadWriteCollectionHandle
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.CompletableDeferred
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.After
