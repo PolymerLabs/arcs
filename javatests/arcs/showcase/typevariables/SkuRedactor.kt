@@ -11,6 +11,11 @@ class SkuRedactor : AbstractSkuRedactor() {
             require(item.sku.isNotEmpty())
             handles.output.store(item.copy(sku = redactSku(item.sku)))
         }
+//        redacted.complete()
+    }
+
+    override fun onShutdown() {
+        require(handles.output.size() == 3)
         redacted.complete()
     }
 
