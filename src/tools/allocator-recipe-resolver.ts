@@ -22,7 +22,6 @@ import {digest} from '../platform/digest-web.js';
 import {StoreContext} from '../runtime/storage/store-context.js';
 import {AbstractStore} from '../runtime/storage/abstract-store.js';
 import {Type} from '../runtime/type.js';
-import {ToStore} from '../runtime/storage/storage.js';
 
 export class AllocatorRecipeResolverError extends Error {
   constructor(message: string) {
@@ -38,13 +37,13 @@ export class AllocatorRecipeResolverError extends Error {
  * distributed to the proper ArcHost) and  lifecycle management (for arcs within ArcHosts).
  */
 export class AllocatorRecipeResolver {
-  private readonly storeHolder: StoreHolder;
+  private readonly storeHolder: ManifestStoreContext;
   private readonly createHandleRegistry: Map<Handle, string> = new Map<Handle, string>();
   private createHandleIndex = 0;
 
 
   constructor(context: Manifest, private randomSalt: string) {
-    this.storeHolder = new StoreHolder(context);
+    this.storeHolder = new ManifestStoreContext(context);
     DatabaseStorageKey.register();
   }
 
@@ -210,14 +209,14 @@ export function findLongRunningArcId(recipe: Recipe): string | null {
 }
 
 /** Intermediary in the recipe resolution process that holds stores. */
-class StoreHolder implements StoreContext {
+class ManifestStoreContext implements StoreContext {
   constructor(readonly context: Manifest) {}
 
   findStoreById(id: string): AbstractStore {
     return this.context.findStoreById(id);
   }
 
-  findStoresByType<T extends Type>(type: T, options?: { tags: string[] }): ToStore<T>[] {
+  findStoresByType<T extends Type>(type: T, options?: { tags: string[], subtype?: boolean }): AbstractStore[] {
     return [];
   }
 }
