@@ -12,7 +12,7 @@ import {assert} from '../platform/assert-web.js';
 
 import {PECOuterPort} from './api-channel.js';
 import {reportSystemException, PropagatedException, SystemException} from './arc-exceptions.js';
-import {AbstractStore} from './storageNG/abstract-store.js';
+import {AbstractStore} from './storage/abstract-store.js';
 import {Runnable} from './hot.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
@@ -25,13 +25,13 @@ import {Services} from './services.js';
 import {floatingPromiseToAudit, noAwait} from './util.js';
 import {Arc} from './arc.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
-import {ProxyMessage, Store, StoreMuxer} from './storageNG/store.js';
-import {VolatileStorageKey} from './storageNG/drivers/volatile.js';
+import {ProxyMessage, Store, StoreMuxer} from './storage/store.js';
+import {VolatileStorageKey} from './storage/drivers/volatile.js';
 import {NoTrace, SystemTrace} from '../tracelib/systrace.js';
 import {Client, getClientClass} from '../tracelib/systrace-clients.js';
-import {Exists} from './storageNG/drivers/driver.js';
-import {StorageKeyParser} from './storageNG/storage-key-parser.js';
-import {CRDTMuxEntity} from './storageNG/storage-ng.js';
+import {Exists} from './storage/drivers/driver.js';
+import {StorageKeyParser} from './storage/storage-key-parser.js';
+import {CRDTMuxEntity} from './storage/storage.js';
 
 export type ParticleExecutionHostOptions = Readonly<{
   slotComposer: SlotComposer;

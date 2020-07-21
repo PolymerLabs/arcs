@@ -92,10 +92,6 @@ class CrdtCount : CrdtModel<CrdtCount.Data, CrdtCount.Operation, Int> {
         return true
     }
 
-    override fun updateData(newData: Data) {
-        _data = newData
-    }
-
     /** Scoped access to this [CrdtCount], where all ops will be marked as performed by [actor]. */
     inner class Scoped(private val actor: Actor) {
         private var currentVersion = _data.versionMap[actor]

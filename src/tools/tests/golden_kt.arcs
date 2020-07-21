@@ -21,6 +21,7 @@ particle KotlinPrimitivesGolden
     dbl: Double,
     txtlst: List<Text>,
     lnglst: List<Long>,
+    thinglst: List<&Thing {name: Text}>,
     detail: inline Detail {
       nested: inline Nested {
         txt: Text,

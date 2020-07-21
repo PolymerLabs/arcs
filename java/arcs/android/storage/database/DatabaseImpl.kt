@@ -1019,18 +1019,7 @@ class DatabaseImpl(
 
     /** Deletes everything from the database. */
     override fun reset() {
-        writableDatabase.transaction {
-            execSQL("DELETE FROM collection_entries")
-            execSQL("DELETE FROM collections")
-            execSQL("DELETE FROM entities")
-            execSQL("DELETE FROM entity_refs")
-            execSQL("DELETE FROM field_values")
-            execSQL("DELETE FROM fields")
-            execSQL("DELETE FROM number_primitive_values")
-            execSQL("DELETE FROM storage_keys")
-            execSQL("DELETE FROM text_primitive_values")
-            execSQL("DELETE FROM types")
-        }
+        writableDatabase.transaction { TABLES.forEach { execSQL("DELETE FROM $it") } }
     }
 
     override suspend fun removeAllEntities() {

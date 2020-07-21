@@ -18,8 +18,8 @@ filegroup(
     srcs = [
         ":golden.h",
         ":golden-kt_GeneratedSchemas.jvm.kt",
+        ":golden-wasm_GeneratedSchemas.wasm.kt",
         ":golden_GeneratedSchemas.jvm.kt",
-        ":golden_GeneratedSchemas.wasm.kt",
         ":golden_TestHarness.kt",
     ],
 )
@@ -40,10 +40,13 @@ arcs_kt_schema(
 arcs_kt_schema(
     name = "kt_schemas",
     srcs = ["golden.arcs"],
-    platforms = [
-        "jvm",
-        "wasm",
-    ],
+    test_harness = True,
+)
+
+arcs_kt_schema(
+    name = "kt_wasm_schemas",
+    srcs = ["golden_wasm.arcs"],
+    platforms = ["wasm"],
 )
 
 arcs_ts_test(

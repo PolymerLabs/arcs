@@ -12,7 +12,7 @@ import {KotlinEntityGenerator} from '../kotlin-entity-generator.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {assert} from '../../platform/chai-web.js';
 import {Schema2Kotlin} from '../schema2kotlin.js';
-import minimist from 'minimist';
+import {NodeAndGenerator} from '../schema2base.js';
 
 describe('kotlin-class-generator', () => {
   it('generates entity with public constructor', async () => await assertClassDefinition(
@@ -106,6 +106,50 @@ describe('kotlin-class-generator', () => {
         }
         `
   ));
+  it('generates field for a list of primitives', async () => await assertFieldsDefinition(
+    `particle T
+         h1: reads Thing {num: List<Number>}`,
+    `\
+
+        var num: List<Double>
+            get() = super.getSingletonValue("num") as List<Double>? ?: emptyList()
+            private set(_value) = super.setSingletonValue("num", _value)
+        
+        init {
+            this.num = num
+        }
+        `
+  ));
+  it('generates field for a reference', async () => await assertFieldsDefinition(
+    `particle T
+         h1: reads Thing {other: &Other {name: Text}}`,
+    `\
+
+        var other: Reference<Other>?
+            get() = super.getSingletonValue("other") as Reference<Other>?
+            private set(_value) = super.setSingletonValue("other", _value)
+        
+        init {
+            this.other = other
+        }
+        `,
+    {selector: generators => generators.find(g => g.node.schema.name === 'Thing')}
+  ));
+  it('generates field for a list of references', async () => await assertFieldsDefinition(
+    `particle T
+         h1: reads Thing {other: List<&Other {name: Text}>}`,
+    `\
+
+        var other: List<Reference<Other>>
+            get() = super.getSingletonValue("other") as List<Reference<Other>>? ?: emptyList()
+            private set(_value) = super.setSingletonValue("other", _value)
+        
+        init {
+            this.other = other
+        }
+        `,
+    {selector: generators => generators.find(g => g.node.schema.name === 'Thing')}
+  ));
   it('generates an entityId property with Wasm', async () => await assertFieldsDefinitionForWasm(
     `particle T
          h1: reads Thing {num: Number}`,
@@ -132,7 +176,7 @@ describe('kotlin-class-generator', () => {
       manifestString,
       generator => generator.generateCopyMethods(),
       expectedValue,
-      {_: [], wasm: true});
+      {wasm: true});
   }
 
   async function assertCopyMethods(manifestString: string, expectedValue: string) {
@@ -142,11 +186,12 @@ describe('kotlin-class-generator', () => {
       expectedValue);
   }
 
-  async function assertFieldsDefinition(manifestString: string, expectedValue: string) {
+  async function assertFieldsDefinition(manifestString: string, expectedValue: string, opts?: Opts) {
     await assertGeneratorComponents<string>(
       manifestString,
       generator => generator.generateFieldsDefinitions(),
-      expectedValue);
+      expectedValue,
+      opts);
   }
 
   async function assertFieldsDefinitionForWasm(manifestString: string, expectedValue: string) {
@@ -154,7 +199,12 @@ describe('kotlin-class-generator', () => {
       manifestString,
       generator => generator.generateFieldsDefinitions(),
       expectedValue,
-      {_: [], wasm: true});
+      {wasm: true});
+  }
+
+  interface Opts {
+    wasm?: boolean;
+    selector?: (generators: NodeAndGenerator[]) => NodeAndGenerator;
   }
 
   // Asserts that a certain component from the Kotlin Generator, equals the
@@ -163,13 +213,17 @@ describe('kotlin-class-generator', () => {
     manifestString: string,
     extractor: (generator: KotlinEntityGenerator) => T,
     expectedValue: T,
-    opts: minimist.ParsedArgs = {_: []}) {
+    {
+      wasm = false,
+      selector = (generators: NodeAndGenerator[]) => generators[0]
+    }: Opts = {}) {
     const manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
     const [particle] = manifest.particles;
 
-    const schema2kotlin = new Schema2Kotlin(opts);
-    const generator = (await schema2kotlin.calculateNodeAndGenerators(particle))[0];
+    const schema2kotlin = new Schema2Kotlin({_: [], wasm});
+    const generators = (await schema2kotlin.calculateNodeAndGenerators(particle));
+    const generator = selector(generators);
     const actualValue = extractor(generator.generator as KotlinEntityGenerator);
 
     assert.deepEqual(actualValue, expectedValue);

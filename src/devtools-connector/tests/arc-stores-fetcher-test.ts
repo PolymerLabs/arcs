@@ -18,7 +18,7 @@ import {SingletonType} from '../../runtime/type.js';
 import {storageKeyPrefixForTest} from '../../runtime/testing/handle-for-test.js';
 
 import {Entity} from '../../runtime/entity.js';
-import {SingletonEntityStore, ActiveSingletonEntityStore, handleForStore} from '../../runtime/storageNG/storage-ng.js';
+import {SingletonEntityStore, ActiveSingletonEntityStore, handleForStore} from '../../runtime/storage/storage.js';
 
 describe('ArcStoresFetcher', () => {
   before(() => DevtoolsForTests.ensureStub());

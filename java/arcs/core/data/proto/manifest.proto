@@ -106,6 +106,7 @@ message TypeProto {
     TypeVariableProto variable = 6;
     SingletonTypeProto singleton = 7;
     CountTypeProto count = 8;
+    ListTypeProto list = 9;
   }
   bool optional = 10;
   RefinementExpressionProto refinement = 11;
@@ -116,10 +117,20 @@ enum PrimitiveTypeProto {
   NUMBER = 1;
   BOOLEAN = 2;
   BIGINT = 3;
+  BYTE = 4;
+  SHORT = 5;
+  INT = 6;
+  LONG = 7;
+  CHAR = 8;
+  FLOAT = 9;
+  DOUBLE = 10;
 }
 
 message EntityTypeProto {
   SchemaProto schema = 1;
+
+  // Whether the EntityType is inlined or not.
+  bool inline = 2;
 }
 
 message CollectionTypeProto {
@@ -143,6 +154,14 @@ message ReferenceTypeProto {
 message TypeVariableProto {
   string name = 1;
   ConstraintInfo constraint = 2;
+}
+
+message ListTypeProto {
+  TypeProto element_type = 1;
+}
+
+message InlineEntityTypeProto {
+  string schema_hash = 1;
 }
 
 // These are constraints expressed by the particle author,

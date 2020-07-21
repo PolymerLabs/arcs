@@ -52,17 +52,13 @@ class ParticleContext(
     private val desyncedHandles: MutableSet<Handle> = mutableSetOf()
 
     // One-shot callback used to notify the arc host that the particle is in the Running state.
-    // If the particle is already in the running state, the method will be called, but not set.
     private var notifyReady: ((Particle) -> Unit)? = null
-        set(value) {
-            if (particleState == ParticleState.Running) {
-                value?.invoke(this.particle)
-            } else {
-                field = value
-            }
-        }
 
     private val dispatcher = scheduler?.asCoroutineDispatcher()
+
+    override fun toString() = "ParticleContext(particle=$particle, particleState=$particleState, " +
+            "consecutiveFailureCount=$consecutiveFailureCount, isWriteOnly=$isWriteOnly, " +
+            "awaitingReady=$awaitingReady, desyncedHandles=$desyncedHandles)"
 
     /** Create a copy of [ParticleContext] with a new [particle]. */
     fun copyWith(newParticle: Particle) = ParticleContext(
@@ -138,10 +134,22 @@ class ParticleContext(
      */
     suspend fun runParticle(notifyReady: (Particle) -> Unit) {
         withContext(requireNotNull(dispatcher)) {
-            check(particleState in arrayOf(ParticleState.Waiting, ParticleState.Running)) {
-                // TODO(b/159834053) - Clarify messaging here
-                "${planParticle.particleName}: runParticle can only be called after " +
-                        "a successful call to initParticle"
+            when (particleState) {
+                ParticleState.Running -> {
+                    // If multiple particles read from the same StorageProxy, it is possible that
+                    // the proxy syncs and notifies READY before all the calls to runParticle are
+                    // invoked. In this case, the remaining particles may already be running.
+                    check(awaitingReady.isEmpty()) {
+                        "${planParticle.particleName}: runParticle called on an already running " +
+                                "particle; awaitingReady should be empty but still has " +
+                                "${awaitingReady.size} handles"
+                    }
+                    notifyReady(particle)
+                    return@withContext
+                }
+                ParticleState.Waiting -> Unit
+                else -> throw IllegalStateException("${planParticle.particleName}: runParticle " +
+                        "should not be called on a particle in state $particleState")
             }
 
             this@ParticleContext.notifyReady = notifyReady

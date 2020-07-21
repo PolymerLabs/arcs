@@ -9,12 +9,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
-import arcs.core.data.FieldType
 import arcs.core.data.HandleMode
-import arcs.core.data.RawEntity
-import arcs.core.data.Schema
-import arcs.core.data.SchemaFields
-import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
@@ -26,7 +21,6 @@ import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.entity.awaitReady
-import arcs.core.entity.toPrimitiveValue
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
@@ -52,7 +46,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -78,26 +71,8 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
 
     val entity1 = Person("Jason", 21.0, false)
     val entity2 = Person("Jason", 22.0, true)
-    lateinit var handleHolder: AbstractTestParticle.Handles
+    private lateinit var handleHolder: AbstractTestParticle.Handles
     private lateinit var handleManager: EntityHandleManager
-
-    private val queryByMinAge = { value: RawEntity, args: Any ->
-        value.singletons["age"].toPrimitiveValue<Double>(Double::class, 0.0) > (args as Double)
-    }
-
-    private val schema = Schema(
-        setOf(SchemaName("Person")),
-        SchemaFields(
-            singletons = mapOf(
-                "name" to FieldType.Text,
-                "age" to FieldType.Number,
-                "is_cool" to FieldType.Boolean
-            ),
-            collections = emptyMap()
-        ),
-        "1234acf",
-        query = queryByMinAge
-    )
 
     private val singletonKey = ReferenceModeStorageKey(
         backingKey = RamDiskStorageKey("single-back"), storageKey = RamDiskStorageKey("single-ent")
@@ -116,9 +91,9 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         DriverAndKeyConfigurator.configure(null)
         app = ApplicationProvider.getApplicationContext()
         lifecycle = LifecycleRegistry(this@AndroidEntityHandleManagerTest).apply {
-            setCurrentState(Lifecycle.State.CREATED)
-            setCurrentState(Lifecycle.State.STARTED)
-            setCurrentState(Lifecycle.State.RESUMED)
+            currentState = Lifecycle.State.CREATED
+            currentState = Lifecycle.State.STARTED
+            currentState = Lifecycle.State.RESUMED
         }
 
         // Initialize WorkManager for instrumentation tests.
@@ -253,7 +228,6 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         assertThat(updatedEntity).isEqualTo(entity2)
     }
 
-    @Ignore("b/156993444 - Deflake")
     @Test
     fun collectionHandle_writeFollowedByReadWithOnUpdate() = runBlocking<Unit> {
         val writeCollectionHandle = createCollectionHandle(
@@ -335,7 +309,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
     }
 
     @Test
-    fun handle_nameIsGloballyUnique() = runBlocking<Unit> {
+    fun handle_nameIsGloballyUnique() = runBlocking {
         val shandle1 = createSingletonHandle(
             handleManager,
             "writeHandle",

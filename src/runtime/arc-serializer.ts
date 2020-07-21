@@ -8,14 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {AbstractStore} from './storageNG/abstract-store.js';
+import {AbstractStore} from './storage/abstract-store.js';
 import {InterfaceType} from './type.js';
-import {StorageKey} from './storageNG/storage-key.js';
+import {StorageKey} from './storage/storage-key.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Recipe} from './recipe/recipe.js';
 import {Manifest} from './manifest.js';
 import {Id} from './id.js';
-import {VolatileMemory, VolatileStorageKey} from './storageNG/drivers/volatile.js';
+import {VolatileMemory, VolatileStorageKey} from './storage/drivers/volatile.js';
 import {ManifestStringBuilder} from './manifest-string-builder.js';
 
 /**

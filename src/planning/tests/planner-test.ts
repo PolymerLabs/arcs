@@ -20,11 +20,11 @@ import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {StrategyTestHelper} from '../testing/strategy-test-helper.js';
 import {ArcId} from '../../runtime/id.js';
 
-import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../../runtime/storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../../runtime/storage/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../../runtime/testing/test-volatile-memory-provider.js';
 import {EntityType, SingletonType} from '../../runtime/type.js';
 import {Entity} from '../../runtime/entity.js';
-import {DriverFactory} from '../../runtime/storageNG/drivers/driver-factory.js';
+import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
 
 async function planFromManifest(manifest, {arcFactory, testSteps}: {arcFactory?, testSteps?} = {}) {
   const loader = new Loader();

@@ -15,8 +15,8 @@ import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
 import {StrategyTestHelper} from '../planning/testing/strategy-test-helper.js';
 import {TestVolatileMemoryProvider} from '../runtime/testing/test-volatile-memory-provider.js';
-import {RamDiskStorageDriverProvider} from '../runtime/storageNG/drivers/ramdisk.js';
-import {VolatileStorageKey} from '../runtime/storageNG/drivers/volatile.js';
+import {RamDiskStorageDriverProvider} from '../runtime/storage/drivers/ramdisk.js';
+import {VolatileStorageKey} from '../runtime/storage/drivers/volatile.js';
 import {ArcId} from '../runtime/id.js';
 import {storageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 

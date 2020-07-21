@@ -47,6 +47,7 @@ import arcs.core.entity.WriteQueryCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.ActiveStore
+import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreOptions
@@ -85,6 +86,7 @@ class EntityHandleManager(
     private val analytics: Analytics? = null
 ) {
 
+    @ExperimentalCoroutinesApi
     @Deprecated(
         message = "prefer primary constructor",
         /* ktlint-disable max-line-length */
@@ -103,7 +105,7 @@ class EntityHandleManager(
         hostId,
         time,
         scheduler,
-        StoreManager(activationFactory),
+        StoreManager(activationFactory ?: DefaultActivationFactory),
         idGenerator
     )
 
@@ -277,8 +279,7 @@ class EntityHandleManager(
             val store: SingletonStore<Referencable> = stores.get(
                 StoreOptions(
                     storageKey = storageKey,
-                    type = SingletonType(EntityType(schema)),
-                    coroutineContext = coroutineContext
+                    type = SingletonType(EntityType(schema))
                 )
             )
             SingletonProxy(store, CrdtSingleton(), scheduler, time, analytics)
@@ -295,8 +296,7 @@ class EntityHandleManager(
             val store: CollectionStore<Referencable> = stores.get(
                 StoreOptions(
                     storageKey = storageKey,
-                    type = CollectionType(EntityType(schema)),
-                    coroutineContext = coroutineContext
+                    type = CollectionType(EntityType(schema))
                 )
             )
             CollectionProxy(store, CrdtSet(), scheduler, time, analytics)

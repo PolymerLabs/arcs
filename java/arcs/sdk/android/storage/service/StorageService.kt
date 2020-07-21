@@ -25,14 +25,14 @@ import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
 import arcs.android.storage.service.BindingContext
 import arcs.android.storage.service.BindingContextStatsImpl
+import arcs.android.storage.service.DeferredStore
 import arcs.android.storage.service.StorageServiceManager
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
 import arcs.core.crdt.CrdtData
-import arcs.core.crdt.CrdtOperationAtTime
+import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
-import arcs.core.storage.Store
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.database.name
 import arcs.core.storage.database.persistent
@@ -66,7 +66,8 @@ open class StorageService : ResurrectorService() {
             Thread(it).apply { name = "WriteBack #$id" }
         }.asCoroutineDispatcher() + SupervisorJob()
     )
-    private val stores = ConcurrentHashMap<StorageKey, Store<*, *, *>>()
+    @ExperimentalCoroutinesApi
+    private val stores = ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>()
     private var startTime: Long? = null
     private val stats = BindingContextStatsImpl()
     private val log = TaggedLog { "StorageService" }
@@ -148,11 +149,11 @@ open class StorageService : ResurrectorService() {
             intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
         ) { "No StoreOptions found in Intent" }
 
-        val options =
-            parcelableOptions.actual.copy(coroutineContext = coroutineContext)
+        val options = parcelableOptions.actual.copy()
         return BindingContext(
             stores.computeIfAbsent(options.storageKey) {
-                Store<CrdtData, CrdtOperationAtTime, Any>(options)
+                @Suppress("UNCHECKED_CAST")
+                DeferredStore<CrdtData, CrdtOperation, Any>(options)
             },
             coroutineContext,
             stats
@@ -170,6 +171,7 @@ open class StorageService : ResurrectorService() {
         writeBackScope.cancel()
     }
 
+    @ExperimentalCoroutinesApi
     override fun dump(fd: FileDescriptor, writer: PrintWriter, args: Array<out String>) {
         val elapsedTime = System.currentTimeMillis() - (startTime ?: System.currentTimeMillis())
         val storageKeys = stores.keys.map { it }.toSet()

@@ -19,10 +19,10 @@ import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, To
 import {TypeChecker, TypeListInfo} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Fate, Direction} from '../manifest-ast-nodes.js';
-import {StorageKey} from '../storageNG/storage-key.js';
+import {StorageKey} from '../storage/storage-key.js';
 import {Capabilities, Ttl, Queryable} from '../capabilities.js';
 import {AnnotationRef} from './annotation.js';
-import {StoreClaims} from '../storageNG/abstract-store.js';
+import {StoreClaims} from '../storage/abstract-store.js';
 
 export class Handle implements Comparable<Handle> {
   private readonly _recipe: Recipe;

@@ -15,10 +15,10 @@ import {IsValidOptions, Recipe, RecipeComponent} from '../runtime/recipe/recipe.
 import {volatileStorageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
 import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
-import {CreatableStorageKey} from '../runtime/storageNG/creatable-storage-key.js';
-import {Store} from '../runtime/storageNG/store.js';
-import {Exists} from '../runtime/storageNG/drivers/driver.js';
-import {DatabaseStorageKey} from '../runtime/storageNG/database-storage-key.js';
+import {CreatableStorageKey} from '../runtime/storage/creatable-storage-key.js';
+import {Store} from '../runtime/storage/store.js';
+import {Exists} from '../runtime/storage/drivers/driver.js';
+import {DatabaseStorageKey} from '../runtime/storage/database-storage-key.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {digest} from '../platform/digest-web.js';
 

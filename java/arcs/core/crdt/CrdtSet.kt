@@ -122,10 +122,6 @@ class CrdtSet<T : Referencable>(
     @Suppress("unused")
     fun canApplyOperation(op: Operation<T>): Boolean = op.applyTo(_data, isDryRun = true)
 
-    override fun updateData(newData: Data<T>) {
-        _data = DataImpl(newData.versionMap, newData.values.toMutableMap())
-    }
-
     /** Makes a deep copy of this [CrdtSet]. */
     /* internal */ fun copy(): CrdtSet<T> = CrdtSet(
         DataImpl(_data.versionMap.copy(), HashMap(_data.values))

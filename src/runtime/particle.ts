@@ -8,15 +8,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Handle} from './storageNG/handle.js';
+import {Handle} from './storage/handle.js';
 import {Runnable, Consumer} from './hot.js';
 import {InnerArcHandle} from './particle-execution-context.js';
 import {HandleConnectionSpec, ParticleSpec} from './particle-spec.js';
 import {Relevance} from './relevance.js';
 import {Entity, EntityRawData, MutableEntityData} from './entity.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
-import {EntityHandleFactory} from './storageNG/entity-handle-factory.js';
-import {CRDTMuxEntity} from './storageNG/storage-ng.js';
+import {EntityHandleFactory} from './storage/entity-handle-factory.js';
+import {CRDTMuxEntity} from './storage/storage.js';
 
 export interface Capabilities {
   constructInnerArc?: (particle: Particle) => Promise<InnerArcHandle>;

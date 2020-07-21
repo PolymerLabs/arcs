@@ -19,6 +19,7 @@ import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.ActivationFactory
+import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
@@ -37,11 +38,13 @@ import arcs.core.testutil.handles.dispatchQuery
 import arcs.core.testutil.handles.dispatchRemove
 import arcs.core.testutil.handles.dispatchSize
 import arcs.core.testutil.handles.dispatchStore
+import arcs.core.util.ArcsStrictMode
 import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -108,7 +111,7 @@ open class HandleManagerTestBase {
         storageKey = hatCollectionRefKey
     )
 
-    var activationFactory: ActivationFactory? = null
+    var activationFactory: ActivationFactory = DefaultActivationFactory
     lateinit var schedulerProvider: JvmSchedulerProvider
     lateinit var readHandleManager: EntityHandleManager
     lateinit var writeHandleManager: EntityHandleManager
@@ -308,14 +311,14 @@ open class HandleManagerTestBase {
         // Now read back entity1, and dereference its best_friend.
         log("Checking entity1's best friend")
         val dereferencedRawEntity2 =
-            readHandle.dispatchFetch()!!.bestFriend!!.dereference(coroutineContext)!!
+            readHandle.dispatchFetch()!!.bestFriend!!.dereference()!!
         val dereferencedEntity2 = Person.deserialize(dereferencedRawEntity2)
         assertThat(dereferencedEntity2).isEqualTo(entity2)
 
         // Do the same for entity2's best_friend
         log("Checking entity2's best friend")
         val dereferencedRawEntity1 =
-            refReadHandle.dispatchFetch()!!.bestFriend!!.dereference(coroutineContext)!!
+            refReadHandle.dispatchFetch()!!.bestFriend!!.dereference()!!
         val dereferencedEntity1 = Person.deserialize(dereferencedRawEntity1)
         assertThat(dereferencedEntity1).isEqualTo(entity1)
     }
@@ -364,7 +367,7 @@ open class HandleManagerTestBase {
         val entityOut = readHandle.dispatchFetch()!!
         val hatRef = entityOut.coolnessIndex.hat!!
         assertThat(hatRef).isEqualTo(fezStorageRef)
-        val rawHat = hatRef.dereference(coroutineContext)!!
+        val rawHat = hatRef.dereference()!!
         val hat = Hat.deserialize(rawHat)
         assertThat(hat).isEqualTo(fez)
     }
@@ -464,8 +467,8 @@ open class HandleManagerTestBase {
         // Reference should be alive.
         assertThat(reference.dereference()).isEqualTo(entity1)
         var storageReference = reference.toReferencable()
-        assertThat(storageReference.isAlive(coroutineContext)).isTrue()
-        assertThat(storageReference.isDead(coroutineContext)).isFalse()
+        assertThat(storageReference.isAlive()).isTrue()
+        assertThat(storageReference.isDead()).isFalse()
 
         // Modify the entity.
         val modEntity1 = entity1.copy(name = "Ben")
@@ -482,8 +485,8 @@ open class HandleManagerTestBase {
         log("Dereferenced: $dereferenced")
         assertThat(dereferenced).isEqualTo(modEntity1)
         storageReference = reference.toReferencable()
-        assertThat(storageReference.isAlive(coroutineContext)).isTrue()
-        assertThat(storageReference.isDead(coroutineContext)).isFalse()
+        assertThat(storageReference.isAlive()).isTrue()
+        assertThat(storageReference.isDead()).isFalse()
 
         // Remove the entity from the collection.
         val heardTheDelete = monitorHandle.onUpdateDeferred { it.isEmpty() }
@@ -807,7 +810,7 @@ open class HandleManagerTestBase {
             .also { assertThat(it).hasSize(2) }
             .forEach { entity ->
                 val expectedBestFriend = if (entity.entityId == "entity1") entity2 else entity1
-                val actualRawBestFriend = entity.bestFriend!!.dereference(coroutineContext)!!
+                val actualRawBestFriend = entity.bestFriend!!.dereference()!!
                 val actualBestFriend = Person.deserialize(actualRawBestFriend)
                 assertThat(actualBestFriend).isEqualTo(expectedBestFriend)
             }
@@ -867,7 +870,7 @@ open class HandleManagerTestBase {
         assertThat(hatRef).isEqualTo(fezStorageRef)
 
         hatMonitorKnows.await()
-        val rawHat = hatRef.dereference(coroutineContext)!!
+        val rawHat = hatRef.dereference()!!
         val hat = Hat.deserialize(rawHat)
         assertThat(hat).isEqualTo(fez)
     }
@@ -1038,8 +1041,8 @@ open class HandleManagerTestBase {
         assertThat(references.map { it.dereference() }).containsExactly(entity1, entity2)
         references.forEach {
             val storageReference = it.toReferencable()
-            assertThat(storageReference.isAlive(coroutineContext)).isTrue()
-            assertThat(storageReference.isDead(coroutineContext)).isFalse()
+            assertThat(storageReference.isAlive()).isTrue()
+            assertThat(storageReference.isDead()).isFalse()
         }
 
         // Modify the entities.
@@ -1057,8 +1060,8 @@ open class HandleManagerTestBase {
         assertThat(references.map { it.dereference() }).containsExactly(modEntity1, modEntity2)
         references.forEach {
             val storageReference = it.toReferencable()
-            assertThat(storageReference.isAlive(coroutineContext)).isTrue()
-            assertThat(storageReference.isDead(coroutineContext)).isFalse()
+            assertThat(storageReference.isAlive()).isTrue()
+            assertThat(storageReference.isDead()).isFalse()
         }
 
         log("Removing the entities")
@@ -1091,6 +1094,16 @@ open class HandleManagerTestBase {
         assertThat(e).hasMessageThat().isEqualTo(
             "Reference-mode storage keys are not supported for reference-typed handles."
         )
+    }
+
+    @Test
+    fun arcsStrictMode_handle_operation_fails() = testRunner {
+        val handle = writeHandleManager.createCollectionHandle()
+        ArcsStrictMode.enableStrictHandlesForTest {
+            assertFailsWith<IllegalStateException> {
+                handle.clear()
+            }
+        }
     }
 
     private suspend fun EntityHandleManager.createSingletonHandle(

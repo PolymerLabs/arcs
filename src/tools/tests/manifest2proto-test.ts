@@ -15,6 +15,7 @@ import {fs} from '../../platform/fs-web.js';
 import {ManifestProto, TypeProto} from '../manifest-proto.js';
 import {Loader} from '../../platform/loader.js';
 import {assertThrowsAsync} from '../../testing/test-util.js';
+import {deleteFieldRecursively} from '../../runtime/util.js';
 
 describe('manifest2proto', () => {
 
@@ -256,10 +257,10 @@ describe('manifest2proto', () => {
       particle Reader2
         first: reads [Foo {}]
         second: reads [~b]
-      
+
       recipe
-        h0: create 
-        h2: create 
+        h0: create
+        h2: create
         Writer1
           first: h0
           second: h1
@@ -713,24 +714,38 @@ describe('manifest2proto', () => {
     const manifest = await Manifest.parse(`
       particle Abc in 'a/b/c.js'
         input: reads X Y Z {
-          a: Text,
-          b: Number,
-          c: Boolean,
-          d: [Text],
-          e: [Number],
-          f: BigInt,
+          txt: Text,
+          num: Number,
+          bool: Boolean,
+          bigInt: BigInt,
+          bt: Byte,
+          shrt: Short,
+          nt: Int,
+          lng: Long,
+          chr: Char,
+          flt: Float,
+          dbl: Double,
+          txtSet: [Text],
+          numSet: [Number],
         }
     `);
     const schema = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type.entity.schema;
 
     assert.deepStrictEqual(schema.names, ['X', 'Y', 'Z']);
     assert.deepStrictEqual(schema.fields, {
-      a: {primitive: 'TEXT'},
-      b: {primitive: 'NUMBER'},
-      c: {primitive: 'BOOLEAN'},
-      d: {collection: {collectionType: {primitive: 'TEXT'}}},
-      e: {collection: {collectionType: {primitive: 'NUMBER'}}},
-      f: {primitive: 'BIGINT'}
+      txt: {primitive: 'TEXT'},
+      num: {primitive: 'NUMBER'},
+      bool: {primitive: 'BOOLEAN'},
+      bigInt: {primitive: 'BIGINT'},
+      bt: {primitive: 'BYTE'},
+      shrt: {primitive: 'SHORT'},
+      nt: {primitive: 'INT'},
+      lng: {primitive: 'LONG'},
+      chr: {primitive: 'CHAR'},
+      flt: {primitive: 'FLOAT'},
+      dbl: {primitive: 'DOUBLE'},
+      txtSet: {collection: {collectionType: {primitive: 'TEXT'}}},
+      numSet: {collection: {collectionType: {primitive: 'NUMBER'}}},
     });
   });
 
@@ -772,6 +787,49 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(schema.names, ['Foo']);
     assert.deepStrictEqual(schema.fields, {
       t: {tuple: {elements: [{primitive: 'TEXT'}, {primitive: 'NUMBER'}]}}
+    });
+  });
+
+  it('encodes schemas with ordered list fields', async () => {
+    const manifest = await Manifest.parse(`
+      particle Abc in 'a/b/c.js'
+        input: reads Foo {l: List<Number>}
+    `);
+    const schema = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type.entity.schema;
+
+    assert.deepStrictEqual(schema.names, ['Foo']);
+    assert.deepStrictEqual(schema.fields, {
+      l: {list: {elementType: {primitive: 'NUMBER'}}}
+    });
+  });
+
+  it('encodes EntityType with inlined entity fields', async () => {
+    const manifest = await Manifest.parse(`
+      particle Abc in 'a/b/c.js'
+        input: reads Foo {e: inline Bar {name: Text}}
+    `);
+    const type = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type;
+
+    deleteFieldRecursively(type, 'hash');
+    assert.deepStrictEqual(type, {
+      entity: {
+        schema: {
+          names: ['Foo'],
+          fields: {
+            e: {
+              entity: {
+                inline: true,
+                schema: {
+                  names: ['Bar'],
+                  fields: {
+                    name: {primitive: 'TEXT'},
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     });
   });
 

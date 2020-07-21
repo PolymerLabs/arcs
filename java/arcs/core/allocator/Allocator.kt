@@ -228,6 +228,10 @@ class Allocator(
             ?: throw ParticleNotFoundException(particle)
 
     companion object {
+        /**
+         * Creates an [Allocator] which serializes Arc/Particle state to the storage system backing
+         * the provided [handleManager].
+         */
         @ExperimentalCoroutinesApi
         fun create(
             hostRegistry: HostRegistry,
@@ -237,6 +241,48 @@ class Allocator(
             return Allocator(
                 hostRegistry,
                 CollectionHandlePartitionMap(handleManager),
+                coroutineContext
+            )
+        }
+
+        /**
+         * Creates an [Allocator] which does not attempt to serialize Arc/Particle state to storage.
+         *
+         * This is primarily useful for tests, but also may be of limited use in production if Arc
+         * serialization and resurrection is not a requirement for your environment.
+         */
+        @ExperimentalCoroutinesApi
+        fun createNonSerializing(
+            hostRegistry: HostRegistry,
+            coroutineContext: CoroutineContext = Dispatchers.Default
+        ): Allocator {
+            return Allocator(
+                hostRegistry,
+                object : PartitionSerialization {
+                    private val mutex = Mutex()
+                    private val partitions = mutableMapOf<ArcId, List<Plan.Partition>>()
+
+                    override suspend fun set(
+                        arcId: ArcId,
+                        partitions: List<Plan.Partition>
+                    ) = mutex.withLock {
+                        this.partitions[arcId] = partitions
+                    }
+
+                    override suspend fun readPartitions(
+                        arcId: ArcId
+                    ): List<Plan.Partition> = mutex.withLock {
+                        this.partitions[arcId] ?: emptyList()
+                    }
+
+                    override suspend fun readAndClearPartitions(
+                        arcId: ArcId
+                    ): List<Plan.Partition> = mutex.withLock {
+                        val oldPartitions = this.partitions[arcId] ?: emptyList()
+                        this.partitions[arcId] = emptyList()
+                        oldPartitions
+                    }
+                },
                 coroutineContext
             )
         }

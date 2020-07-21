@@ -15,7 +15,7 @@ import {ArcId} from '../runtime/id.js';
 import {Loader} from '../platform/loader.js';
 import {SlotComposer} from '../runtime/slot-composer.js';
 import {FakePecFactory} from '../runtime/fake-pec-factory.js';
-import {handleForStore} from '../runtime/storageNG/storage-ng.js';
+import {handleForStore} from '../runtime/storage/storage.js';
 import {SingletonType, EntityType} from '../runtime/type.js';
 
 const manifestFile = 'src/tests/source/schemas.arcs';

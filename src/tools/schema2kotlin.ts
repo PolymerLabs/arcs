@@ -9,7 +9,7 @@
  */
 import {EntityGenerator, NodeAndGenerator, Schema2Base} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
-import {getTypeInfo} from './kotlin-codegen-shared.js';
+import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
 import {generateConnectionSpecType} from './kotlin-type-generator.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 import {CollectionType, EntityType, Type, TypeVariable} from '../runtime/type.js';
@@ -300,6 +300,6 @@ class ${particleName}TestHarness<P : Abstract${particleName}>(
     if (!type) {
       return null;
     }
-    return getTypeInfo({name: type}).type;
+    return getPrimitiveTypeInfo(type).type;
   }
 }

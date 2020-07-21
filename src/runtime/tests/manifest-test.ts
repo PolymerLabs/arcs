@@ -21,19 +21,19 @@ import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../claim.js';
 import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore, CheckImplication} from '../check.js';
 import {ProvideSlotConnectionSpec} from '../particle-spec.js';
 import {Schema} from '../schema.js';
-import {Store} from '../storageNG/store.js';
+import {Store} from '../storage/store.js';
 import {Entity} from '../entity.js';
-import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider, RamDiskStorageKey} from '../storage/drivers/ramdisk.js';
 import {digest} from '../../platform/digest-web.js';
-import {DriverFactory} from '../storageNG/drivers/driver-factory.js';
+import {DriverFactory} from '../storage/drivers/driver-factory.js';
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
-import {FirebaseStorageDriverProvider} from '../storageNG/drivers/firebase.js';
+import {FirebaseStorageDriverProvider} from '../storage/drivers/firebase.js';
 import {Runtime} from '../runtime.js';
 import {BinaryExpression, FieldNamePrimitive, NumberPrimitive} from '../refiner.js';
-import {mockFirebaseStorageKeyOptions} from '../storageNG/testing/mock-firebase.js';
+import {mockFirebaseStorageKeyOptions} from '../storage/testing/mock-firebase.js';
 import {Flags} from '../flags.js';
 import {TupleType, CollectionType, EntityType} from '../type.js';
-import {ActiveCollectionEntityStore, handleForActiveStore} from '../storageNG/storage-ng.js';
+import {ActiveCollectionEntityStore, handleForActiveStore} from '../storage/storage.js';
 import {Ttl} from '../capabilities.js';
 
 function verifyPrimitiveType(field, type) {

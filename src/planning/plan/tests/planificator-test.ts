@@ -13,14 +13,14 @@ import {Manifest} from '../../../runtime/manifest.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
 import {Loader} from '../../../platform/loader.js';
-import {RamDiskStorageDriverProvider} from '../../../runtime/storageNG/drivers/ramdisk.js';
+import {RamDiskStorageDriverProvider} from '../../../runtime/storage/drivers/ramdisk.js';
 import {TestVolatileMemoryProvider} from '../../../runtime/testing/test-volatile-memory-provider.js';
 import {Planificator} from '../../plan/planificator.js';
 import {PlanningResult} from '../../plan/planning-result.js';
 import {floatingPromiseToAudit} from '../../../runtime/util.js';
-import {DriverFactory} from '../../../runtime/storageNG/drivers/driver-factory.js';
+import {DriverFactory} from '../../../runtime/storage/drivers/driver-factory.js';
 import {storageKeyPrefixForTest, storageKeyForTest} from '../../../runtime/testing/handle-for-test.js';
-import {MockFirebaseStorageKey} from '../../../runtime/storageNG/testing/mock-firebase.js';
+import {MockFirebaseStorageKey} from '../../../runtime/storage/testing/mock-firebase.js';
 
 describe('planificator', () => {
   it('constructs suggestion and search storage keys for fb arc', async () => {

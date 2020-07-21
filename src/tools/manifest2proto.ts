@@ -300,7 +300,7 @@ export async function typeToProtoPayload(type: Type) {
       const entity = {
         entity: {
           schema: await schemaToProtoPayload(type.getEntitySchema()),
-        }
+        },
       };
       if (type.getEntitySchema().refinement) {
         entity['refinement'] = refinementToProtoPayload(type.getEntitySchema().refinement);
@@ -359,7 +359,8 @@ type SchemaField = {
 
 async function schemaFieldToProtoPayload(fieldType: SchemaField) {
   switch (fieldType.kind) {
-    case 'schema-primitive': {
+    case 'schema-primitive':
+    case 'kotlin-primitive':  {
       const primitive = PrimitiveTypeEnum.values[fieldType.type.toUpperCase()];
       if (primitive === undefined) {
         throw new Error(`Primitive field type ${fieldType.type} is not supported.`);
@@ -387,8 +388,22 @@ async function schemaFieldToProtoPayload(fieldType: SchemaField) {
         }
       };
     }
+    case 'schema-nested': {
+      // Nested inlined entity. Wraps a 'schema-inline' object. Mark it as an
+      // inline entity.
+      const entityType = await schemaFieldToProtoPayload(fieldType.schema);
+      entityType.entity.inline = true;
+      return entityType;
+    }
     case 'schema-inline': {
+      // Not actually a nested inline entity (if it were, it would be wrapped in
+      // a schema-nested object), so just encode as a regular entity.
       return typeToProtoPayload(fieldType.model);
+    }
+    case 'schema-ordered-list': {
+      return {
+        list: {elementType: await schemaFieldToProtoPayload(fieldType.schema)}
+      };
     }
     // TODO(b/154947220) support schema-unions
     case 'schema-union':

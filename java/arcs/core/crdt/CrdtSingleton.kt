@@ -81,8 +81,6 @@ class CrdtSingleton<T : Referencable>(
 
     override fun applyOperation(op: IOperation<T>): Boolean = op.applyTo(set)
 
-    override fun updateData(newData: Data<T>) = set.updateData(newData.asCrdtSetData())
-
     /** Makes a deep copy of this [CrdtSingleton]. */
     /* internal */ fun copy(): CrdtSingleton<T> = CrdtSingleton(singletonToCopy = this)
 

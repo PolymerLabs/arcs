@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Schema2Base, EntityGenerator, AddFieldOptions, EntityDescriptorBase} from './schema2base.js';
+import {Schema2Base, EntityGenerator} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 import {Type} from '../runtime/type.js';
@@ -124,11 +124,49 @@ protected:
   }
 }
 
-class CppEntityDescriptor extends EntityDescriptorBase {
+type AddFieldOptions = Readonly<{
+  field: string;
+  typeName: string;
+  isOptional?: boolean;
+  refClassName?: string;
+  refSchemaHash?: string;
+  listTypeInfo?: {name: string, refSchemaHash?: string, isInlineClass?: boolean};
+  isCollection?: boolean;
+  isInlineClass?: boolean;
+}>;
 
-  constructor(node: SchemaNode) {
-    super(node);
-    this.process();
+class CppEntityDescriptor {
+
+  constructor(readonly node: SchemaNode) {
+    for (const [field, descriptor] of Object.entries(this.node.schema.fields)) {
+      if (descriptor.kind === 'schema-primitive') {
+        if (['Text', 'URL', 'Number', 'BigInt', 'Boolean'].includes(descriptor.type)) {
+          this.addField({field, typeName: descriptor.type});
+        } else {
+          throw new Error(`Schema type '${descriptor.type}' for field '${field}' is not supported`);
+        }
+      } else if (descriptor.kind === 'schema-reference' || (descriptor.kind === 'schema-collection' && descriptor.schema.kind === 'schema-reference')) {
+        const isCollection = descriptor.kind === 'schema-collection';
+        const schemaNode = this.node.refs.get(field);
+        this.addField({
+          field,
+          typeName: 'Reference',
+          isCollection,
+          refClassName: schemaNode.entityClassName,
+          refSchemaHash: schemaNode.hash,
+        });
+      } else if (descriptor.kind === 'schema-collection') {
+        const schema = descriptor.schema;
+        if (schema.kind === 'schema-primitive') {
+          this.addField({field, typeName: schema.type, isCollection: true});
+        } else {
+          throw new Error(`Schema kind '${schema.kind}' for field '${field}' is not supported`);
+        }
+      }
+      else {
+        throw new Error(`Schema kind '${descriptor.kind}' for field '${field}' is not supported`);
+      }
+    }
   }
 
   fields: string[] = [];

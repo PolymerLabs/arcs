@@ -11,8 +11,8 @@
 import {Xen} from '../../lib/components/xen.js';
 import {Planificator} from '../../../build/planning/arcs-planning.js';
 import {devtoolsPlannerInspectorFactory} from '../../../build/devtools-connector/devtools-planner-inspector.js';
-//import {StorageKeyParser} from '../../../build/runtime/storageNG/storage-key-parser.js';
-import {RamDiskStorageKey} from '../../../build/runtime/storageNG/drivers/ramdisk.js';
+//import {StorageKeyParser} from '../../../build/runtime/storage/storage-key-parser.js';
+import {RamDiskStorageKey} from '../../../build/runtime/storage/drivers/ramdisk.js';
 
 const log = Xen.logFactory('WebPlanner', '#104a91');
 //const error = Xen.logFactory('WebPlanner', '#104a91', 'error');

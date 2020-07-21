@@ -312,8 +312,9 @@ export abstract class BooleanCapability extends Capability {
   }
 
   /**
-   * Returns true, if the value is false and the given capability is null.
-   * Otherwise, calls the superclass implementation.
+   * Returns true, if the value is `false`, meaning that the policies don't
+   * enforce this capability, hence it may or may not be specified in the
+   * Handle's capabilities set. Otherwise calls the superclass implementation.
    */
   isAllowedForIngress(other: Capability|null): boolean {
     return !this.value || super.isAllowedForIngress(other);

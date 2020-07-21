@@ -17,11 +17,8 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 typealias EntityStore = ActiveStore<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>
 
@@ -32,9 +29,10 @@ typealias EntityStore = ActiveStore<CrdtEntity.Data, CrdtEntity.Operation, CrdtE
  *
  * TODO(jasonwyatt): Use the [Scheduler] here when dereferencing.
  */
+@ExperimentalCoroutinesApi
 class RawEntityDereferencer(
     private val schema: Schema,
-    private val entityActivationFactory: ActivationFactory? = null,
+    private val entityActivationFactory: ActivationFactory = DefaultActivationFactory,
     private val referenceCheckFun: ((Schema, RawEntity?) -> Unit)? = null
 ) : Dereferencer<RawEntity> {
     // TODO(#5551): Consider including a hash of schema.names for easier tracking.
@@ -42,8 +40,7 @@ class RawEntityDereferencer(
 
     @ExperimentalCoroutinesApi
     override suspend fun dereference(
-        reference: Reference,
-        coroutineContext: CoroutineContext
+        reference: Reference
     ): RawEntity? {
         log.verbose { "De-referencing $reference" }
 
@@ -51,11 +48,10 @@ class RawEntityDereferencer(
 
         val options = StoreOptions(
             storageKey,
-            EntityType(schema),
-            coroutineContext = coroutineContext
+            EntityType(schema)
         )
 
-        val store: EntityStore = (entityActivationFactory ?: Store.defaultFactory).invoke(options)
+        val store: EntityStore = entityActivationFactory.invoke(options)
 
         val deferred = CompletableDeferred<RawEntity?>()
         val token = store.on(
@@ -74,15 +70,13 @@ class RawEntityDereferencer(
         )
 
         return try {
-            withContext(coroutineContext) {
-                launch { store.onProxyMessage(ProxyMessage.SyncRequest(token)) }
+            store.onProxyMessage(ProxyMessage.SyncRequest(token))
 
-                // Only return the item if we've actually managed to pull it out of storage, and
-                // that it matches the schema we wanted.
-                val entity = deferred.await()?.takeIf { it matches schema }?.copy(id = reference.id)
-                referenceCheckFun?.invoke(schema, entity)
-                entity
-            }
+            // Only return the item if we've actually managed to pull it out of storage, and
+            // that it matches the schema we wanted.
+            val entity = deferred.await()?.takeIf { it matches schema }?.copy(id = reference.id)
+            referenceCheckFun?.invoke(schema, entity)
+            entity
         } finally {
             store.off(token)
         }

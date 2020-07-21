@@ -27,7 +27,6 @@ class VariableTest {
 
         // Ensure that the shop recipe is fully processed.
         withTimeout(1500) {
-            OrderIngestion.orderedOnce.join()
             SkuRedactor.redacted.join()
             Consumer.updated.join()
         }

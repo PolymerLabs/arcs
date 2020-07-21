@@ -16,9 +16,9 @@ import {Runnable} from './hot.js';
 import {Loader} from '../platform/loader.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Particle, Capabilities} from './particle.js';
-import {StorageProxy} from './storageNG/storage-proxy.js';
+import {StorageProxy} from './storage/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
-import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storageNG/store.js';
+import {ProxyCallback, ProxyMessage, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider} from './storage/store.js';
 import {PropagatedException} from './arc-exceptions.js';
 import {Type, MuxType} from './type.js';
 import {MessagePort} from './message-channel.js';
@@ -29,10 +29,10 @@ import {SystemTrace} from '../tracelib/systrace.js';
 import {delegateSystemTraceApis} from '../tracelib/systrace-helpers.js';
 import {ChannelConstructor} from './channel-constructor.js';
 import {Ttl} from './capabilities.js';
-import {Handle} from './storageNG/handle.js';
-import {StorageProxyMuxer} from './storageNG/storage-proxy-muxer.js';
-import {EntityHandleFactory} from './storageNG/entity-handle-factory.js';
-import {CRDTMuxEntity} from './storageNG/storage-ng.js';
+import {Handle} from './storage/handle.js';
+import {StorageProxyMuxer} from './storage/storage-proxy-muxer.js';
+import {EntityHandleFactory} from './storage/entity-handle-factory.js';
+import {CRDTMuxEntity} from './storage/storage.js';
 
 export type PecFactory = (pecId: Id, idGenerator: IdGenerator) => MessagePort;
 
