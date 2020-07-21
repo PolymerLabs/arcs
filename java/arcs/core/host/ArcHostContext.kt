@@ -64,7 +64,7 @@ data class ArcHostContext(
     }
 
     private fun fireArcStateChanged() {
-        stateChangeCallbacks.values.forEach { callback ->
+        stateChangeCallbacks.values.toList().forEach { callback ->
             try {
                 callback(arcId.toArcId(), _arcState)
             } catch (e: Exception) {
