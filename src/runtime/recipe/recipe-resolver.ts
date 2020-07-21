@@ -8,22 +8,21 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Action, GenerateParams} from './walker.js';
+import {Action, Continuation, GenerateParams} from './walker.js';
 import {ConsumeSlotConnectionSpec} from '../particle-spec.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {RecipeUtil} from './recipe-util.js';
 import {RecipeWalker} from './recipe-walker.js';
-import {Recipe, IsValidOptions} from './recipe.js';
+import {IsValidOptions, Recipe} from './recipe.js';
 import {ConnectionConstraint, InstanceEndPoint} from './connection-constraint.js';
 import {SlotConnection} from './slot-connection.js';
 import {SlotUtils} from './slot-utils.js';
-import {Continuation} from './walker.js';
-import {SearchableStore} from '../storage/searchable-store.js';
+import {StoreContext} from '../storage/store-context.js';
 
 export class ResolveWalker extends RecipeWalker {
 
-  constructor(tactic, private readonly storeHolder: SearchableStore, private options?: IsValidOptions) {
+  constructor(tactic, private readonly storeHolder: StoreContext, private options?: IsValidOptions) {
     super(tactic);
   }
 
@@ -151,8 +150,7 @@ export class ResolveWalker extends RecipeWalker {
       }
       return [];
     };
-    const arc = this.storeHolder;
-    const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, arc);
+    const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, this.storeHolder);
     const allSlots = [...local, ...remote];
 
     // SlotUtils handles a multi-slot case.
@@ -187,10 +185,10 @@ export class ResolveWalker extends RecipeWalker {
 }
 
 export class ResolveRecipeAction extends Action<Recipe> {
-  searchableStore: SearchableStore;
-  constructor(searchableStore: SearchableStore, args?) {
+  storeContext: StoreContext;
+  constructor(searchableStore: StoreContext, args?) {
     super(null, args);
-    this.searchableStore = searchableStore;
+    this.storeContext = searchableStore;
   }
   private options: IsValidOptions;
   withOptions(options: IsValidOptions) {
@@ -198,14 +196,14 @@ export class ResolveRecipeAction extends Action<Recipe> {
   }
   async generate(inputParams: GenerateParams<Recipe>) {
     return ResolveWalker.walk(this.getResults(inputParams),
-      new ResolveWalker(ResolveWalker.Permuted, this.searchableStore, this.options), this);
+      new ResolveWalker(ResolveWalker.Permuted, this.storeContext, this.options), this);
   }
 }
 
 // Provides basic recipe resolution for recipes against a particular arc.
 export class RecipeResolver {
   private resolver: ResolveRecipeAction;
-  constructor(storeHolder: SearchableStore) {
+  constructor(storeHolder: StoreContext) {
     this.resolver = new ResolveRecipeAction(storeHolder);
   }
 

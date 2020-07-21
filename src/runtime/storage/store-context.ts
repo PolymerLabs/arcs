@@ -12,7 +12,7 @@ import {Manifest} from '../manifest.js';
 import {ToStore} from './storage.js';
 import {AbstractStore} from './abstract-store.js';
 
-export interface SearchableStore {
+export interface StoreContext {
   context: Manifest;
   findStoresByType<T extends Type>(type: T, options?: { tags: string[] }): ToStore<T>[];
   findStoreById(id: string): AbstractStore;

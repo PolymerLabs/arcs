@@ -19,7 +19,7 @@ import {Exists} from '../runtime/storage/drivers/driver.js';
 import {DatabaseStorageKey} from '../runtime/storage/database-storage-key.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {digest} from '../platform/digest-web.js';
-import {SearchableStore} from '../runtime/storage/searchable-store.js';
+import {StoreContext} from '../runtime/storage/store-context.js';
 import {AbstractStore} from '../runtime/storage/abstract-store.js';
 import {Type} from '../runtime/type.js';
 import {ToStore} from '../runtime/storage/storage.js';
@@ -210,7 +210,7 @@ export function findLongRunningArcId(recipe: Recipe): string | null {
 }
 
 /** Intermediary in the recipe resolution process that holds stores. */
-class StoreHolder implements SearchableStore {
+class StoreHolder implements StoreContext {
   constructor(readonly context: Manifest) {}
 
   findStoreById(id: string): AbstractStore {
