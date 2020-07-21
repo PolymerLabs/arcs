@@ -1,12 +1,9 @@
 package arcs.core.policy
 
 import arcs.core.data.AccessPath
-import arcs.core.data.Check
 import arcs.core.data.Claim
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.InformationFlowLabel.SemanticTag
-import arcs.core.data.ParticleSpec
-import arcs.core.data.Recipe
 import arcs.core.data.StoreId
 
 /**
@@ -15,7 +12,7 @@ import arcs.core.data.StoreId
  */
 data class PolicyConstraints(
     val policy: Policy,
-    val egressChecks: Map<ParticleSpec, List<Check>>,
+    val egressCheck: Predicate,
     val storeClaims: Map<StoreId, List<Claim>>
 )
 
@@ -26,25 +23,9 @@ data class PolicyConstraints(
  * @return additional checks and claims for the particles as a [PolicyConstraints] object
  * @throws PolicyViolation if the [particles] violate the [policy]
  */
-fun translatePolicy(policy: Policy, recipe: Recipe, options: PolicyOptions): PolicyConstraints {
-    val egressParticles = recipe.particles.filterNot { it.spec.isolated }
-    checkEgressParticles(policy, egressParticles)
-
-    // Add check statements to every egress particle node.
+fun translatePolicy(policy: Policy, options: PolicyOptions): PolicyConstraints {
+    // Compute the predicate that will enforce the policy at an egress.
     val egressCheckPredicate = createEgressCheckPredicate(policy)
-    val egressChecks = egressParticles.associate { particle ->
-        // Each handle connection needs its own check statement.
-        val checks = particle.spec.connections.values
-            .filter {
-                // TODO(b/157605232): Also check canQuery -- but first, need to add QUERY to the
-                // Direction enum in the manifest proto.
-                it.direction.canRead
-            }
-            .map { connectionSpec ->
-                Check.Assert(AccessPath(particle, connectionSpec), egressCheckPredicate)
-            }
-        particle.spec to checks
-    }
 
     // Add claim statements for stores.
     val storeClaims = mutableMapOf<StoreId, List<Claim>>()
@@ -63,7 +44,7 @@ fun translatePolicy(policy: Policy, recipe: Recipe, options: PolicyOptions): Pol
 
     return PolicyConstraints(
         policy,
-        egressChecks,
+        egressCheckPredicate,
         storeClaims.filterValues { it.isNotEmpty() }
     )
 }
@@ -110,25 +91,6 @@ private fun PolicyField.createStoreClaimPredicate(): Predicate? {
         0 -> null
         1 -> predicates.single()
         else -> Predicate.and(*predicates.toTypedArray())
-    }
-}
-
-/**
- * Verifies that the given egress particle nodes match the policy. The only egress particle allowed
- * to be used with a policy named `Foo` is an egress particle named `Egress_Foo`.
- */
-private fun checkEgressParticles(policy: Policy, egressParticles: List<Recipe.Particle>) {
-    val numValidEgressParticles = egressParticles.count {
-        it.spec.name == policy.egressParticleName
-    }
-    if (numValidEgressParticles > 1) {
-        throw PolicyViolation.MultipleEgressParticles(policy)
-    }
-    val invalidEgressParticles = egressParticles
-        .map { it.spec }
-        .filter { it.name != policy.egressParticleName }
-    if (invalidEgressParticles.isNotEmpty()) {
-        throw PolicyViolation.InvalidEgressParticle(policy, invalidEgressParticles.map { it.name })
     }
 }
 
