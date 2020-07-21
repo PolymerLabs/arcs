@@ -8,12 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Type} from '../type.js';
-import {Manifest} from '../manifest.js';
-import {ToStore} from './storage.js';
 import {AbstractStore} from './abstract-store.js';
 
 export interface StoreContext {
-  context: Manifest;
-  findStoresByType<T extends Type>(type: T, options?: { tags: string[] }): ToStore<T>[];
+  context?: StoreContext;
+  findStoresByType<T extends Type>(type: T, options?: { tags: string[], subtype?: boolean }): AbstractStore[];
   findStoreById(id: string): AbstractStore;
 }

@@ -51,6 +51,7 @@ import {SchemaPrimitiveTypeValue} from './manifest-ast-nodes.js';
 import {canonicalManifest} from './canonical-manifest.js';
 import {Policy} from './policy/policy.js';
 import {resolveFieldPathType} from './field-path.js';
+import {StoreContext} from './storage/store-context.js';
 
 export enum ErrorSeverity {
   Error = 'error',
@@ -142,7 +143,7 @@ interface ManifestLoadOptions {
   memoryProvider?: VolatileMemoryProvider;
 }
 
-export class Manifest {
+export class Manifest implements StoreContext {
   private _recipes: Recipe[] = [];
   private _imports: Manifest[] = [];
   private _canonicalImports: Manifest[] = [];
