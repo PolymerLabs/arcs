@@ -7,8 +7,7 @@ import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.InformationFlowLabel.SemanticTag
 import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe
-
-typealias StoreId = String
+import arcs.core.data.StoreId
 
 /**
  * Additional checks and claims that should be added to the particles in a recipe, which together
