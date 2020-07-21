@@ -204,14 +204,14 @@ class StoreTest {
         val remoteCount = CrdtCount()
         remoteCount.applyOperation(Increment("them", 0 to 1))
 
-        // Note that this assumes no asynchrony inside store.ts. This is guarded by the following
+        // Note that this assumes no asynchrony inside Store.kt. This is guarded by the following
         // test, which will fail if driver.receiver() doesn't synchronously invoke driver.send().
         driver.lastReceiver!!.invoke(remoteCount.data, 1)
     }
 
     @Test
     fun doesntSendUpdateToDriver_afterDriverOriginatedMessages_CrdtSet() = runBlockingTest {
-        val (driver, _) = setupSetMocks()
+        val (driver, _) = setupSetFakes()
         driver.throwOnSend = true
 
         val schema = Schema(
@@ -238,7 +238,7 @@ class StoreTest {
             entity
         ))
 
-        // Note that this assumes no asynchrony inside store.ts. This is guarded by the following
+        // Note that this assumes no asynchrony inside Store.kt. This is guarded by the following
         // test, which will fail if driver.receiver() doesn't synchronously invoke driver.send().
         driver.lastReceiver!!.invoke(remoteSet.data, 1)
     }
@@ -325,7 +325,7 @@ class StoreTest {
         return fakeDriver to fakeProvider
     }
 
-    private fun setupSetMocks(): Pair<FakeDriver<CrdtSet.Data<*>>, FakeProvider> {
+    private fun setupSetFakes(): Pair<FakeDriver<CrdtSet.Data<*>>, FakeProvider> {
         val fakeDriver = FakeDriver<CrdtSet.Data<*>>()
         val fakeProvider = FakeProvider(fakeDriver)
         DriverFactory.register(fakeProvider)
