@@ -44,7 +44,6 @@ import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {SingletonInterfaceHandle, handleForStore, ToStore, newStore} from './storage/storage.js';
-import {StoreContext} from './storage/store-context.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -73,7 +72,7 @@ type DeserializeArcOptions = Readonly<{
 }>;
 
 @SystemTrace
-export class Arc implements ArcInterface, StoreContext {
+export class Arc implements ArcInterface {
   private readonly _context: Manifest;
   private readonly pecFactories: PecFactory[];
   public readonly isSpeculative: boolean;
