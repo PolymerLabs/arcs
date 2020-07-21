@@ -41,6 +41,7 @@ import arcs.core.testutil.handles.dispatchSize
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.testutil.runTest
 import arcs.core.util.Scheduler
+import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.ReadWriteCollectionHandle
@@ -48,11 +49,10 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -64,6 +64,9 @@ private typealias QueryPerson = QueryPerson_Person
 @OptIn(ExperimentalCoroutinesApi::class)
 @Suppress("UNCHECKED_CAST")
 class HandleAdapterTest {
+    @get:Rule
+    val log = LogRule()
+
     private lateinit var manager: EntityHandleManager
     private lateinit var monitorManager: EntityHandleManager
     private val idGenerator = Id.Generator.newForTest("session")
@@ -72,6 +75,7 @@ class HandleAdapterTest {
 
     @Before
     fun setUp() = runBlocking {
+        RamDisk.clear()
         DriverAndKeyConfigurator.configure(null)
         schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
         scheduler = schedulerProvider("tests")
@@ -93,10 +97,9 @@ class HandleAdapterTest {
 
     @After
     fun tearDown() = runBlocking {
-        RamDisk.clear()
-        schedulerProvider.cancelAll()
         manager.close()
         monitorManager.close()
+        schedulerProvider.cancelAll()
     }
 
     @Test
