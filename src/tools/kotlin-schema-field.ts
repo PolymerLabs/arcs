@@ -262,7 +262,7 @@ const primitiveTypeMap: Dictionary<KotlinTypeInfo> = {
   'Short': {type: 'Short', decodeFn: 'decodeShort()', defaultVal: '0.toShort()'},
   'Int': {type: 'Int', decodeFn: 'decodeInt()', defaultVal: '0'},
   'Long': {type: 'Long', decodeFn: 'decodeLong()', defaultVal: '0L'},
-  'Char': {type: 'Char', decodeFn: 'decodeChar()', defaultVal: `'\u0000'`},
+  'Char': {type: 'Char', decodeFn: 'decodeChar()', defaultVal: `'\\u0000'`},
   'Float': {type: 'Float', decodeFn: 'decodeFloat()', defaultVal: '0.0f'},
   'Double': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0'},
 };

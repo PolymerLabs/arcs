@@ -714,24 +714,38 @@ describe('manifest2proto', () => {
     const manifest = await Manifest.parse(`
       particle Abc in 'a/b/c.js'
         input: reads X Y Z {
-          a: Text,
-          b: Number,
-          c: Boolean,
-          d: [Text],
-          e: [Number],
-          f: BigInt,
+          txt: Text,
+          num: Number,
+          bool: Boolean,
+          bigInt: BigInt,
+          bt: Byte,
+          shrt: Short,
+          nt: Int,
+          lng: Long,
+          chr: Char,
+          flt: Float,
+          dbl: Double,
+          txtSet: [Text],
+          numSet: [Number],
         }
     `);
     const schema = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type.entity.schema;
 
     assert.deepStrictEqual(schema.names, ['X', 'Y', 'Z']);
     assert.deepStrictEqual(schema.fields, {
-      a: {primitive: 'TEXT'},
-      b: {primitive: 'NUMBER'},
-      c: {primitive: 'BOOLEAN'},
-      d: {collection: {collectionType: {primitive: 'TEXT'}}},
-      e: {collection: {collectionType: {primitive: 'NUMBER'}}},
-      f: {primitive: 'BIGINT'}
+      txt: {primitive: 'TEXT'},
+      num: {primitive: 'NUMBER'},
+      bool: {primitive: 'BOOLEAN'},
+      bigInt: {primitive: 'BIGINT'},
+      bt: {primitive: 'BYTE'},
+      shrt: {primitive: 'SHORT'},
+      nt: {primitive: 'INT'},
+      lng: {primitive: 'LONG'},
+      chr: {primitive: 'CHAR'},
+      flt: {primitive: 'FLOAT'},
+      dbl: {primitive: 'DOUBLE'},
+      txtSet: {collection: {collectionType: {primitive: 'TEXT'}}},
+      numSet: {collection: {collectionType: {primitive: 'NUMBER'}}},
     });
   });
 

@@ -40,6 +40,7 @@ arcs_kt_schema(
 arcs_kt_schema(
     name = "kt_schemas",
     srcs = ["golden.arcs"],
+    test_harness = True,
 )
 
 arcs_kt_schema(

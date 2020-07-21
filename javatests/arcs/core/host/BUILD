@@ -58,6 +58,7 @@ arcs_kt_schema(
         "reflective.arcs",
         "test.arcs",
     ],
+    test_harness = True,
 )
 
 arcs_kt_plan(

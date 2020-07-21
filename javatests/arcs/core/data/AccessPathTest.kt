@@ -40,6 +40,8 @@ class AccessPathTest {
             .isEqualTo("hc:Reader.data")
         assertThat("${AccessPath.Root.HandleConnectionSpec("Reader", connectionSpec)}")
             .isEqualTo("hcs:Reader.data")
+        assertThat("${AccessPath.Root.Store("MySecretStore")}")
+            .isEqualTo("s:MySecretStore")
     }
 
     @Test
@@ -51,6 +53,8 @@ class AccessPathTest {
     fun prettyPrintAccessPathNoSelectors() {
         assertThat("${AccessPath(handle)}").isEqualTo("h:thing")
         assertThat("${AccessPath(particle, connectionSpec)}").isEqualTo("hc:Reader.data")
+        assertThat("${AccessPath(AccessPath.Root.Store("MySecretStore"))}")
+            .isEqualTo("s:MySecretStore")
     }
 
     @Test
@@ -65,6 +69,10 @@ class AccessPathTest {
             .isEqualTo("hcs:Reader.data.foo")
         assertThat("${AccessPath("Reader", connectionSpec, multipleSelectors)}")
             .isEqualTo("hcs:Reader.data.foo.bar")
+        assertThat("${AccessPath(AccessPath.Root.Store("MySecretStore"), oneSelector)}")
+            .isEqualTo("s:MySecretStore.foo")
+        assertThat("${AccessPath(AccessPath.Root.Store("MySecretStore"), multipleSelectors)}")
+            .isEqualTo("s:MySecretStore.foo.bar")
     }
 
     @Test
@@ -85,13 +93,44 @@ class AccessPathTest {
     fun isPrefixOf_comparesRoots() {
         val handleAccessPath = AccessPath(handle, oneSelector)
         val particleAccessPath = AccessPath(particle, connectionSpec, oneSelector)
-        assertThat(handleAccessPath.isPrefixOf(particleAccessPath)).isFalse()
-        assertThat(particleAccessPath.isPrefixOf(handleAccessPath)).isFalse()
+        val storeAccessPath = AccessPath(AccessPath.Root.Store("MySecretStore"), oneSelector)
+        with(particleAccessPath) {
+            assertThat(isPrefixOf(particleAccessPath)).isTrue()
+            assertThat(isPrefixOf(handleAccessPath)).isFalse()
+            assertThat(isPrefixOf(storeAccessPath)).isFalse()
+        }
+        with(handleAccessPath) {
+            assertThat(isPrefixOf(particleAccessPath)).isFalse()
+            assertThat(isPrefixOf(handleAccessPath)).isTrue()
+            assertThat(isPrefixOf(storeAccessPath)).isFalse()
+        }
+        with(storeAccessPath) {
+            assertThat(isPrefixOf(particleAccessPath)).isFalse()
+            assertThat(isPrefixOf(handleAccessPath)).isFalse()
+            assertThat(isPrefixOf(storeAccessPath)).isTrue()
+        }
 
         val handleAccessPathMultiple = AccessPath(handle, multipleSelectors)
         val particleAccessPathMultiple = AccessPath(particle, connectionSpec, multipleSelectors)
-        assertThat(handleAccessPathMultiple.isPrefixOf(particleAccessPathMultiple)).isFalse()
-        assertThat(particleAccessPathMultiple.isPrefixOf(handleAccessPathMultiple)).isFalse()
+        val storeAccessPathMultiple = AccessPath(
+            AccessPath.Root.Store("MySecretStore"),
+            multipleSelectors
+        )
+        with(particleAccessPathMultiple) {
+            assertThat(isPrefixOf(particleAccessPathMultiple)).isTrue()
+            assertThat(isPrefixOf(handleAccessPathMultiple)).isFalse()
+            assertThat(isPrefixOf(storeAccessPathMultiple)).isFalse()
+        }
+        with(handleAccessPathMultiple) {
+            assertThat(isPrefixOf(particleAccessPathMultiple)).isFalse()
+            assertThat(isPrefixOf(handleAccessPathMultiple)).isTrue()
+            assertThat(isPrefixOf(storeAccessPathMultiple)).isFalse()
+        }
+        with(storeAccessPathMultiple) {
+            assertThat(isPrefixOf(particleAccessPathMultiple)).isFalse()
+            assertThat(isPrefixOf(handleAccessPathMultiple)).isFalse()
+            assertThat(isPrefixOf(storeAccessPathMultiple)).isTrue()
+        }
     }
 
     @Test

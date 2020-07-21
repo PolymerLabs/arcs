@@ -23,7 +23,7 @@ import arcs.sdk.*
 import java.math.BigInteger
 
 typealias KotlinPrimitivesGolden_Data_Ref = AbstractKotlinPrimitivesGolden.KotlinPrimitivesGolden_Data_Ref
-typealias KotlinPrimitivesGolden_Data_Lnglst = AbstractKotlinPrimitivesGolden.Thing
+typealias KotlinPrimitivesGolden_Data_Thinglst = AbstractKotlinPrimitivesGolden.Thing
 typealias KotlinPrimitivesGolden_Data_Detail_Nested = AbstractKotlinPrimitivesGolden.Nested
 typealias KotlinPrimitivesGolden_Data_Colors = AbstractKotlinPrimitivesGolden.Color
 typealias KotlinPrimitivesGolden_Data_Products = AbstractKotlinPrimitivesGolden.Product
@@ -223,22 +223,22 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
 
     @Suppress("UNCHECKED_CAST")
     class Color(
-        red: Char = ' ',
-        green: Char = ' ',
-        blue: Char = ' ',
+        red: Char = '\u0000',
+        green: Char = '\u0000',
+        blue: Char = '\u0000',
         entityId: String? = null,
         creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
         expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
     ) : EntityBase("Color", SCHEMA, entityId, creationTimestamp, expirationTimestamp, true) {
 
         var red: Char
-            get() = super.getSingletonValue("red") as Char? ?: ' '
+            get() = super.getSingletonValue("red") as Char? ?: '\u0000'
             private set(_value) = super.setSingletonValue("red", _value)
         var green: Char
-            get() = super.getSingletonValue("green") as Char? ?: ' '
+            get() = super.getSingletonValue("green") as Char? ?: '\u0000'
             private set(_value) = super.setSingletonValue("green", _value)
         var blue: Char
-            get() = super.getSingletonValue("blue") as Char? ?: ' '
+            get() = super.getSingletonValue("blue") as Char? ?: '\u0000'
             private set(_value) = super.setSingletonValue("blue", _value)
 
         init {
@@ -455,11 +455,12 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
         nt: Int = 0,
         lng: Long = 0L,
         big: BigInteger = BigInteger.ZERO,
-        chr: Char = ' ',
+        chr: Char = '\u0000',
         flt: Float = 0.0f,
         dbl: Double = 0.0,
         txtlst: List<String> = emptyList(),
-        lnglst: List<Reference<Thing>> = emptyList(),
+        lnglst: List<Long> = emptyList(),
+        thinglst: List<Reference<Thing>> = emptyList(),
         detail: Detail = Detail(),
         colors: Set<Color> = emptySet(),
         products: List<Product> = emptyList(),
@@ -506,7 +507,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             get() = super.getSingletonValue("big") as BigInteger? ?: BigInteger.ZERO
             private set(_value) = super.setSingletonValue("big", _value)
         var chr: Char
-            get() = super.getSingletonValue("chr") as Char? ?: ' '
+            get() = super.getSingletonValue("chr") as Char? ?: '\u0000'
             private set(_value) = super.setSingletonValue("chr", _value)
         var flt: Float
             get() = super.getSingletonValue("flt") as Float? ?: 0.0f
@@ -517,9 +518,12 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
         var txtlst: List<String>
             get() = super.getSingletonValue("txtlst") as List<String>? ?: emptyList()
             private set(_value) = super.setSingletonValue("txtlst", _value)
-        var lnglst: List<Reference<Thing>>
-            get() = super.getSingletonValue("lnglst") as List<Reference<Thing>>? ?: emptyList()
+        var lnglst: List<Long>
+            get() = super.getSingletonValue("lnglst") as List<Long>? ?: emptyList()
             private set(_value) = super.setSingletonValue("lnglst", _value)
+        var thinglst: List<Reference<Thing>>
+            get() = super.getSingletonValue("thinglst") as List<Reference<Thing>>? ?: emptyList()
+            private set(_value) = super.setSingletonValue("thinglst", _value)
         var detail: Detail
             get() = super.getSingletonValue("detail") as Detail? ?: Detail()
             private set(_value) = super.setSingletonValue("detail", _value)
@@ -546,6 +550,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             this.dbl = dbl
             this.txtlst = txtlst
             this.lnglst = lnglst
+            this.thinglst = thinglst
             this.detail = detail
             this.colors = colors
             this.products = products
@@ -570,7 +575,8 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             flt: Float = this.flt,
             dbl: Double = this.dbl,
             txtlst: List<String> = this.txtlst,
-            lnglst: List<Reference<Thing>> = this.lnglst,
+            lnglst: List<Long> = this.lnglst,
+            thinglst: List<Reference<Thing>> = this.thinglst,
             detail: Detail = this.detail,
             colors: Set<Color> = this.colors,
             products: List<Product> = this.products
@@ -590,6 +596,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             dbl = dbl,
             txtlst = txtlst,
             lnglst = lnglst,
+            thinglst = thinglst,
             detail = detail,
             colors = colors,
             products = products
@@ -613,7 +620,8 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             flt: Float = this.flt,
             dbl: Double = this.dbl,
             txtlst: List<String> = this.txtlst,
-            lnglst: List<Reference<Thing>> = this.lnglst,
+            lnglst: List<Long> = this.lnglst,
+            thinglst: List<Reference<Thing>> = this.thinglst,
             detail: Detail = this.detail,
             colors: Set<Color> = this.colors,
             products: List<Product> = this.products
@@ -633,6 +641,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
             dbl = dbl,
             txtlst = txtlst,
             lnglst = lnglst,
+            thinglst = thinglst,
             detail = detail,
             colors = colors,
             products = products,
@@ -661,7 +670,8 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
                         "flt" to FieldType.Float,
                         "dbl" to FieldType.Double,
                         "txtlst" to FieldType.ListOf(FieldType.Text),
-                        "lnglst" to FieldType.ListOf(FieldType.EntityRef("25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516")),
+                        "lnglst" to FieldType.ListOf(FieldType.Long),
+                        "thinglst" to FieldType.ListOf(FieldType.EntityRef("25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516")),
                         "detail" to FieldType.InlineEntity("efcc87f84735b2f83b285e0f2768ff577611a68c"),
                         "products" to FieldType.ListOf(FieldType.InlineEntity("e84265ec7993502eb817dcff9f34dec4d164db05"))
                     ),
@@ -669,7 +679,7 @@ abstract class AbstractKotlinPrimitivesGolden : BaseParticle() {
                         "colors" to FieldType.InlineEntity("e9ba6d9fa458ec35a966e462bb30a082e3f0d2f8")
                     )
                 ),
-                "4c3afdeb1bc5b03981b2460d5936ca305af4ea54",
+                "44b8dccc1ae0cf6fa00a7dfeef0b0e6b1d565e24",
                 refinement = { data ->
                     val big = data.singletons["big"].toPrimitiveValue(BigInteger::class, BigInteger.ZERO)
                     val num = data.singletons["num"].toPrimitiveValue(Double::class, 0.0)

@@ -65,7 +65,7 @@ def arcs_kt_schema(
         data = [],
         deps = [],
         platforms = ["jvm"],
-        test_harness = True,
+        test_harness = False,
         visibility = None):
     """Generates a Kotlin schemas, entities, specs, handle holders, and base particles for input .arcs manifest files.
 
@@ -170,7 +170,7 @@ def arcs_kt_gen(
         data = [],
         deps = [],
         platforms = ["jvm"],
-        test_harness = True,
+        test_harness = False,
         visibility = None):
     """Generates Kotlin files for the given .arcs files.
 
