@@ -29,6 +29,7 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.type.Type
 import com.google.common.truth.Truth.assertThat
+import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,7 +41,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import kotlin.reflect.KClass
 
 /** Tests for [Store]. */
 @Suppress("UNCHECKED_CAST", "UNUSED_VARIABLE")
