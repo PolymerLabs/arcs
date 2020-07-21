@@ -14,6 +14,7 @@ package arcs.android.devtools
 import arcs.core.util.TaggedLog
 import fi.iki.elonen.NanoHTTPD
 import fi.iki.elonen.NanoWSD
+import fi.iki.elonen.NanoWSD.WebSocketFrame.CloseCode
 import java.io.IOException
 
 /**
@@ -37,6 +38,10 @@ class DevWebSocket : NanoWSD(12345) {
     override fun openWebSocket(ihttpSession: NanoHTTPD.IHTTPSession?): WebSocket {
         wsdSocket = WsdSocket(ihttpSession, log)
         return wsdSocket!!
+    }
+
+    fun close() {
+        wsdSocket?.close(CloseCode.NormalClosure, "Closing WebSocket", false)
     }
 
     // TODO: This is a WIP for DevTools, still in flux.

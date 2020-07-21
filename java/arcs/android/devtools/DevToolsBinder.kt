@@ -11,6 +11,8 @@
 
 package arcs.android.devtools
 
+import arcs.core.util.TaggedLog
+import java.lang.Exception
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -19,6 +21,7 @@ import kotlinx.coroutines.launch
  */
 class DevToolsBinder(val scope: CoroutineScope) : IDevToolsService.Stub() {
     private var webSocket: DevWebSocket? = null
+    private val log = TaggedLog { "DevToolsBinder" }
 
     override fun send(str: String) {
         scope.launch {
@@ -28,8 +31,17 @@ class DevToolsBinder(val scope: CoroutineScope) : IDevToolsService.Stub() {
 
     override fun start() {
         scope.launch {
-            webSocket = DevWebSocket()
-            webSocket?.start()
+            try {
+                webSocket = DevWebSocket()
+                webSocket?.start()
+            } catch (e: Exception) {
+                log.debug { "Can't open Websocket. Error: [$e]." }
+            }
         }
+    }
+
+    fun destroy() {
+        webSocket?.close()
+        webSocket = null
     }
 }

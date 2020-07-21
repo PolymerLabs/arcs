@@ -36,6 +36,7 @@ class DevToolsService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        binder.destroy()
         scope.cancel()
     }
 }
