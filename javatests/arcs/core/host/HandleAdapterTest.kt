@@ -137,15 +137,17 @@ class HandleAdapterTest {
 
     @Test
     fun singletonHandleAdapter_createReference() = runTest {
-        val handle = manager.createHandle(
-            HandleSpec(
-                READ_WRITE_HANDLE,
-                HandleMode.ReadWrite,
-                SingletonType(EntityType(Person.SCHEMA)),
-                Person
-            ),
-            STORAGE_KEY
-        ) as ReadWriteSingletonHandle<Person>
+        val handle = (
+                manager.createHandle(
+                    HandleSpec(
+                        READ_WRITE_HANDLE,
+                        HandleMode.ReadWrite,
+                        SingletonType(EntityType(Person.SCHEMA)),
+                        Person
+                    ),
+                    STORAGE_KEY
+                ) as ReadWriteSingletonHandle<Person>
+            ).awaitReady()
         val entity = Person("Watson")
 
         // Fails when there's no entityId.
