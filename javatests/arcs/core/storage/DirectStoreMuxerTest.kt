@@ -42,24 +42,18 @@ import org.junit.runners.JUnit4
 @ExperimentalCoroutinesApi
 class DirectStoreMuxerTest {
 
-    private lateinit var storageKey: RamDiskStorageKey
-    private lateinit var schema: Schema
-
-    @Before
-    fun setup() = runBlockingTest {
-        storageKey = RamDiskStorageKey("test")
-        schema = Schema(
-            emptySet(),
-            SchemaFields(
-                singletons = mapOf(
-                    "name" to FieldType.Text,
-                    "age" to FieldType.Int
-                ),
-                collections = emptyMap()
+    private val storageKey: RamDiskStorageKey = RamDiskStorageKey("test")
+    private val schema = Schema(
+        emptySet(),
+        SchemaFields(
+            singletons = mapOf(
+                "name" to FieldType.Text,
+                "age" to FieldType.Int
             ),
-            "abc"
-        )
-    }
+            collections = emptyMap()
+        ),
+        "abc"
+    )
 
     @After
     fun teardown() {
@@ -213,23 +207,23 @@ class DirectStoreMuxerTest {
 
         val job = Job(coroutineContext[Job])
 
-        // proxy muxer that sends a model update to direct store muxer
+        // Client that sends a model update to direct store muxer.
         var callbackInvoked = false
         val callbackId1 = directStoreMuxer.on(ProxyCallback {
             callbackInvoked = true
         })
 
-        // proxy muxer that receives a model update from direct store muxer
+        // Client that receives a model update from direct store muxer.
         val callbackId2 = directStoreMuxer.on(ProxyCallback {
             assertThat(it is ProxyMessage.ModelUpdate).isTrue()
             job.complete()
         })
 
-        // set up store for muxId "a" and register for each proxy muxer
+        // Set up store for muxId "a" and register for each client.
         val muxIdA = "a"
-        val (idSet, store) = directStoreMuxer.store(muxIdA)
-        directStoreMuxer.registerToStore(callbackId1, muxIdA, idSet, store)
-        directStoreMuxer.registerToStore(callbackId2, muxIdA, idSet, store)
+        directStoreMuxer.store(muxIdA)
+        directStoreMuxer.getLocalData(muxIdA, callbackId1)
+        directStoreMuxer.getLocalData(muxIdA, callbackId2)
 
         val entityCrdtA = createPersonEntityCrdt("bob", 42)
 
@@ -259,27 +253,27 @@ class DirectStoreMuxerTest {
 
         val job = Job(coroutineContext[Job.Key])
 
-        // proxy muxer that sends a sync request
+        // Client that sends a sync request.
         val callbackId1 = directStoreMuxer.on(ProxyCallback {
             assertThat(it is ProxyMessage.ModelUpdate).isTrue()
             job.complete()
         })
 
-        // other proxy muxer
-        var callbackInvoked = false
+        // Other client.
+        var callback2Invoked = false
         val callbackId2 = directStoreMuxer.on(ProxyCallback {
-            callbackInvoked = true
+            callback2Invoked = true
         })
 
-        // set up store for muxId "a" and register for each proxy muxer
+        // Set up store for muxId "a" and register for each client.
         val muxIdA = "a"
-        val (idSet, store) = directStoreMuxer.store(muxIdA)
-        directStoreMuxer.registerToStore(callbackId1, muxIdA, idSet, store)
-        directStoreMuxer.registerToStore(callbackId2, muxIdA, idSet, store)
+        directStoreMuxer.store(muxIdA)
+        directStoreMuxer.getLocalData(muxIdA, callbackId1)
+        directStoreMuxer.getLocalData(muxIdA, callbackId2)
 
         directStoreMuxer.onProxyMessage(ProxyMessage.SyncRequest(id = callbackId1, muxId = muxIdA))
         job.join()
-        assertThat(callbackInvoked).isFalse()
+        assertThat(callback2Invoked).isFalse()
     }
 
     @Test
@@ -292,12 +286,12 @@ class DirectStoreMuxerTest {
         val callbackId1 = directStoreMuxer.on(ProxyCallback {})
 
         val muxIdA = "a"
-        val (idSetA, storeA) = directStoreMuxer.store(muxIdA)
-        directStoreMuxer.registerToStore(callbackId1, muxIdA, idSetA, storeA)
+        val (idSetA, _) = directStoreMuxer.store(muxIdA)
+        directStoreMuxer.getLocalData(muxIdA, callbackId1)
 
         val muxIdB = "b"
-        val (idSetB, storeB) = directStoreMuxer.store(muxIdB)
-        directStoreMuxer.registerToStore(callbackId1, muxIdB, idSetB, storeB)
+        val (idSetB, _) = directStoreMuxer.store(muxIdB)
+        directStoreMuxer.getLocalData(muxIdB, callbackId1)
 
         assertThat(idSetA.size).isEqualTo(1)
         assertThat(idSetB.size).isEqualTo(1)
@@ -342,7 +336,7 @@ class DirectStoreMuxerTest {
     // endregion
 
     // region Mocks
-
+    // TODO: Refactor Mocks into it's own file (as they are reused in ReferenceModeStoreTest).
     private class MockDriverProvider : DriverProvider {
         override fun willSupport(storageKey: StorageKey): Boolean = true
 

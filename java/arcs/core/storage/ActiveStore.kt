@@ -32,8 +32,12 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     open suspend fun idle() = Unit
 
     /**
-     * Registers a [ProxyCallback] with the store and returns a token which can be used to
-     * unregister the callback using [off].
+     * Registers a [ProxyCallback] with the store. A token will either be provided or generated
+     * and returned. The token can be used to unregister the callback using [off].
+     *
+     * A callbackToken will only be provided by a storage component that wraps a store (as is the
+     * case of a Direct Store Muxer wrapping a Direct Store). It is otherwise expected for the store
+     * to generate the callbackToken.
      */
     abstract fun on(
         callback: ProxyCallback<Data, Op, ConsumerData>,
