@@ -16,10 +16,14 @@ import arcs.core.data.InformationFlowLabel.Predicate
 /** Describes a claim in a trusted particle. */
 sealed class Claim {
     /** A claim to specify that [target] is only derived from [source]. */
-    data class DerivesFrom(val target: AccessPath, val source: AccessPath) : Claim()
+    data class DerivesFrom(val target: AccessPath, val source: AccessPath) : Claim() {
+        override fun toString() = "$target derives-from $source"
+    }
 
     /** A claim to specify that labels on [accessPath] satisfy [predicate]. */
-    data class Assume(val accessPath: AccessPath, val predicate: Predicate) : Claim()
+    data class Assume(val accessPath: AccessPath, val predicate: Predicate) : Claim() {
+        override fun toString() = "$accessPath is $predicate"
+    }
 
     /** Returns a new claim with [AccessPath] in the claim instantiated for the given [particle]. */
     fun instantiateFor(particle: Recipe.Particle): Claim {
