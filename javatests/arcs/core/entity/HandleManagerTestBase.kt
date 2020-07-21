@@ -38,11 +38,13 @@ import arcs.core.testutil.handles.dispatchQuery
 import arcs.core.testutil.handles.dispatchRemove
 import arcs.core.testutil.handles.dispatchSize
 import arcs.core.testutil.handles.dispatchStore
+import arcs.core.util.ArcsStrictMode
 import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -1092,6 +1094,16 @@ open class HandleManagerTestBase {
         assertThat(e).hasMessageThat().isEqualTo(
             "Reference-mode storage keys are not supported for reference-typed handles."
         )
+    }
+
+    @Test
+    fun arcsStrictMode_handle_operation_fails() = testRunner {
+        val handle = writeHandleManager.createCollectionHandle()
+        ArcsStrictMode.enableStrictHandlesForTest {
+            assertFailsWith<IllegalStateException> {
+                handle.clear()
+            }
+        }
     }
 
     private suspend fun EntityHandleManager.createSingletonHandle(

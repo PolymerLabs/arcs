@@ -16,6 +16,7 @@ import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.crdt.VersionMap
+import arcs.core.util.ArcsStrictMode
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
 import arcs.core.util.Time
@@ -280,6 +281,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     @Suppress("DeferredIsResult")
     fun applyOp(op: Op): Deferred<Boolean> {
         checkNotClosed()
+        checkInDispatcher()
         log.verbose { "Applying operation: $op" }
 
         if (!crdt.applyOperation(op)) {
@@ -319,6 +321,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
      */
     fun getParticleViewUnsafe(): T {
         checkNotClosed()
+        checkInDispatcher()
         log.debug { "Getting particle view (lifecycle)" }
 
         check(stateHolder.value.state in arrayOf(ProxyState.SYNC, ProxyState.DESYNC)) {
@@ -577,6 +580,12 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                 }
             }
         }
+    }
+
+    private fun checkInDispatcher() = check(
+        !ArcsStrictMode.strictHandles || scheduler.isCurrentDispatcher()
+    ) {
+        "Operations can only be used performed Scheduler's Dispatcher"
     }
 
     private fun checkNotClosed() = check(stateHolder.value.state != ProxyState.CLOSED) {
