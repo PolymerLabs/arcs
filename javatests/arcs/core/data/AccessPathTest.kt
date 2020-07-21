@@ -94,17 +94,17 @@ class AccessPathTest {
         val handleAccessPath = AccessPath(handle, oneSelector)
         val particleAccessPath = AccessPath(particle, connectionSpec, oneSelector)
         val storeAccessPath = AccessPath(AccessPath.Root.Store("MySecretStore"), oneSelector)
-        with (particleAccessPath) {
+        with(particleAccessPath) {
             assertThat(isPrefixOf(particleAccessPath)).isTrue()
             assertThat(isPrefixOf(handleAccessPath)).isFalse()
             assertThat(isPrefixOf(storeAccessPath)).isFalse()
         }
-        with (handleAccessPath) {
+        with(handleAccessPath) {
             assertThat(isPrefixOf(particleAccessPath)).isFalse()
             assertThat(isPrefixOf(handleAccessPath)).isTrue()
             assertThat(isPrefixOf(storeAccessPath)).isFalse()
         }
-        with (storeAccessPath) {
+        with(storeAccessPath) {
             assertThat(isPrefixOf(particleAccessPath)).isFalse()
             assertThat(isPrefixOf(handleAccessPath)).isFalse()
             assertThat(isPrefixOf(storeAccessPath)).isTrue()
