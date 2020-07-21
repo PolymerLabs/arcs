@@ -55,7 +55,7 @@ class Arc internal constructor(
     private val arcStateInternal: AtomicRef<ArcState> = atomic(ArcState.NeverStarted)
     private val arcStateChangeHandlers = atomic(listOf<(ArcState) -> Unit>())
     private lateinit var arcStatesByHostFlow: Flow<ArcState>
-    private lateinit var closeFlow: () -> Unit
+    private var closeFlow: () -> Unit = { }
     private val registered = atomic(false)
     private val registrations = mutableMapOf<String, ArcStateChangeRegistration>()
 
@@ -183,11 +183,7 @@ class Arc internal constructor(
 
     /** Stop the current [Arc]. */
     suspend fun stop() = allocator.stopArc(id).also {
-        onArcStateChangeFiltered(ArcState.Stopped) {
-            if (::closeFlow.isInitialized) {
-                closeFlow()
-            }
-        }
+        onArcStateChangeFiltered(ArcState.Stopped) { closeFlow() }
     }
 
     private fun unregisterChangeHandlerWithArcHosts(scope: CoroutineScope) = scope.launch {
