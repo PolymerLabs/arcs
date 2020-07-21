@@ -14,7 +14,6 @@ arcs_kt_jvm_test_suite(
     package = "arcs.core.tools",
     deps = [
         "//java/arcs/core/data",
-        "//java/arcs/core/data:manifest_android_proto",
         "//java/arcs/core/testutil",
         "//java/arcs/core/tools:generator",
         "//third_party/java/junit:junit-android",
