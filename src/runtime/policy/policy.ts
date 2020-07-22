@@ -15,7 +15,6 @@ import {Ttl, Capabilities, Capability, Persistence, CapabilityRange, Encryption}
 import {EntityType, InterfaceType, Type} from '../type.js';
 import {FieldPathType, resolveFieldPathType} from '../field-path.js';
 import {Handle} from '../recipe/handle.js';
-// import {IngressValidationResult} from './ingress-validation.js';
 import {Schema} from '../schema.js';
 
 export enum PolicyEgressType {

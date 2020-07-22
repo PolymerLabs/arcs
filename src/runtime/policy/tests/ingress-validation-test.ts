@@ -141,7 +141,6 @@ recipe
     assert.isTrue(recipe.normalize());
     assert.isTrue(recipe.isResolved());
     const options = {errors: new Map()};
-    // const result = policy.isHandleIngressAllowed(recipe.handles[0]);
     const result = new IngressValidation([policy]).validateIngressCapabilities(recipe);
     assert.isTrue(result.success, `Validation failed with: ${result.toString()}`);
   };

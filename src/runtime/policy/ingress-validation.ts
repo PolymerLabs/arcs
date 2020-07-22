@@ -73,7 +73,8 @@ export class IngressValidation {
     if (restrictedType) {
       const fieldPaths = [];
       for (const [fieldName, field] of Object.entries(restrictedType.getEntitySchema().fields)) {
-        this.collectFieldPaths(restrictedType.getEntitySchema().name, fieldPaths, fieldName, field);
+        fieldPaths.push(
+            ...this.collectFieldPaths(restrictedType.getEntitySchema().name, fieldName, field));
       }
 
       for (const fieldPath of fieldPaths) {
@@ -84,7 +85,7 @@ export class IngressValidation {
         if (!fieldResults.some(r => r.success)) {
           result.addResult(IngressValidationResult.failWith(handle,
               `Failed validating ingress for field '${fieldPath}'` +
-              ` of '${handle.id ? handle.id : handle.connections[0].getQualifiedName()}`,
+              ` of '${handle.id || handle.connections[0].getQualifiedName()}`,
               fieldResults.filter(r => !r.success)));
         }
       }
@@ -96,7 +97,8 @@ export class IngressValidation {
     return result;
   }
 
-  private collectFieldPaths(fieldPrefix: string, fieldPaths: string[], fieldName: string, field) {
+  private collectFieldPaths(fieldPrefix: string, fieldName: string, field) {
+    const fieldPaths = [];
     switch (field.kind) {
       case 'kotlin-primitive':
       case 'schema-primitive':
@@ -104,20 +106,23 @@ export class IngressValidation {
         break;
       case 'schema-collection':
         for (const [subfieldName, subfield] of Object.entries(field.schema.schema.model.entitySchema.fields)) {
-          this.collectFieldPaths([fieldPrefix, fieldName].join('.'), fieldPaths, subfieldName, subfield);
+          fieldPaths.push(...this.collectFieldPaths([fieldPrefix, fieldName].join('.'), subfieldName, subfield));
         }
         break;
       case 'schema-reference': {
         for (const [subfieldName, subfield] of Object.entries(field.schema.model.entitySchema.fields)) {
-          this.collectFieldPaths([fieldPrefix, fieldName].join('.'), fieldPaths, subfieldName, subfield);
+          fieldPaths.push(...this.collectFieldPaths([fieldPrefix, fieldName].join('.'), subfieldName, subfield));
         }
         break;
       }
       default:
         assert(`Unsupported field kind: ${field.kind}`);
     }
+    return fieldPaths;
   }
 
+  // Returns an EntityType containing fields from the given `type` stripped
+  // down to a subset of fields covered by the set of policies.
   restrictType(type: Type): Type|null {
     const fields = {};
     const restrictedType = this.getRestrictedType(type.getEntitySchema().name);
@@ -131,6 +136,7 @@ export class IngressValidation {
     return EntityType.make([type.getEntitySchema().name], fields, type.getEntitySchema());
   }
 
+  // Returns the given schema field striped down according to the set of policies.
   private restrictField(field, policyField) {
     assert(field.kind === policyField.kind);
     switch (field.kind) {
