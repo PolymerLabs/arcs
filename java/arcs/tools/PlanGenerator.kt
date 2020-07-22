@@ -126,11 +126,15 @@ fun FieldType.toGeneration(): CodeBlock = buildCodeBlock {
             FieldType::class,
             field.primitiveType
         )
-        is FieldType.InlineEntity,
         is FieldType.EntityRef -> add(
             "%T(%S)",
             field::class,
-            (field as FieldType.EntityRef).schemaHash
+            field.schemaHash
+        )
+        is FieldType.InlineEntity -> add(
+            "%T(%S)",
+            field::class,
+            field.schemaHash
         )
         is FieldType.Tuple -> add(
             "%T(%L)",
@@ -142,7 +146,7 @@ fun FieldType.toGeneration(): CodeBlock = buildCodeBlock {
         is FieldType.ListOf -> add(
             "%T(%L)",
             FieldType.ListOf::class,
-            field.toGeneration()
+            field.primitiveType.toGeneration()
         )
     }
 }
