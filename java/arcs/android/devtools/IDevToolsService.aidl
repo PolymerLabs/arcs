@@ -23,4 +23,7 @@ interface IDevToolsService {
 
     /** Start the [DevWebSocket]. */
     void start();
+
+  /** Close the [DevWebSocket] to free up the port. */
+    void close();
 }
