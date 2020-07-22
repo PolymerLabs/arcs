@@ -2,9 +2,13 @@ package arcs.core.data.proto
 
 import arcs.core.data.FieldType
 import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.data.SchemaRegistry
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -18,159 +22,106 @@ fun decodeSchemaProtoText(protoText: String): Schema {
 
 @RunWith(JUnit4::class)
 class SchemaProtoDecoderTest {
+    @Before
+    fun setUp() {
+        SchemaRegistry.register(Schema.EMPTY)
+    }
 
-    @Test
-    fun decodesNamesInSchemaProto() {
-        // schema Thing, Object
-        val schemaProtoText = """
-        names:  "Thing"
-        names:  "Object"
-        """.trimIndent()
-        val schema = decodeSchemaProtoText(schemaProtoText)
-        assertThat(schema.names).containsExactly(SchemaName("Thing"), SchemaName("Object"))
+    @After
+    fun tearDown() {
+        SchemaRegistry.clearForTest()
     }
 
     @Test
-    fun decodesSingletonsInSchemaProto() {
-        // schema
-        //   text: Text
-        //   bool: Boolean
-        val schemaProtoText = """
-        fields {
-          key: "text"
-          value: { primitive: TEXT }
-        }
-        fields {
-          key: "bool"
-          value: { primitive: BOOLEAN }
-        }
-        """.trimIndent()
-        val schema = decodeSchemaProtoText(schemaProtoText)
-        assertThat(schema.fields.singletons).isEqualTo(
-            mapOf("text" to FieldType.Text, "bool" to FieldType.Boolean))
-    }
-
-    @Test
-    fun decodesCollectionsInSchemaProto() {
-        // schema
-        //   text: [ Text ]
-        //   bool: [ Boolean ]
-        val schemaProtoText = """
-        fields {
-          key: "text"
-          value: {
-            collection { collection_type: { primitive: TEXT } }
-          }
-        }
-        fields {
-          key: "bool"
-          value: {
-            collection { collection_type: { primitive: BOOLEAN } }
-          }
-        }
-        """.trimIndent()
-        val schema = decodeSchemaProtoText(schemaProtoText)
-        assertThat(schema.fields.collections).isEqualTo(
-            mapOf("text" to FieldType.Text, "bool" to FieldType.Boolean))
-    }
-
-    @Test
-    fun decodesCollectionsOfReferencesInSchemaProto() {
-        // schema
-        //   text: [&Product {name: Text}]
-        //   num: [&Review {rating: Number}]
-        val schemaProtoText = """
-        fields {
-          key: "text"
-          value: {
-            collection { collection_type: { reference { referred_type {
-              entity: {
-                schema: {
-                  names: "Product"
-                  fields: {
-                    key: "name"
-                    value: { primitive: TEXT }
-                  }
-                  hash: "a76bdd3a638fc17a5b3e023edb542c1e891c4c89"
-                }
-              }
-            } } } }
-          }
-        }
-        fields {
-          key: "num"
-          value: {
-            collection { collection_type: { reference { referred_type {
-              entity: {
-                schema: {
-                  names: "Review"
-                  fields: {
-                    key: "rating"
-                    value: { primitive: NUMBER }
-                  }
-                  hash: "2d3317e5ef54fbdf3fbc02ed481c2472ebe9ba66"
-                }
-              }
-            } } } }
-          }
-        }
-        """.trimIndent()
-        val schema = decodeSchemaProtoText(schemaProtoText)
-        assertThat(schema.fields.collections).isEqualTo(
-            mapOf(
-                "text" to FieldType.EntityRef("a76bdd3a638fc17a5b3e023edb542c1e891c4c89"),
-                "num" to FieldType.EntityRef("2d3317e5ef54fbdf3fbc02ed481c2472ebe9ba66")
-            )
+    fun roundTrip_schemaNames() {
+        // schema Thing Object {}
+        val schema = Schema(
+            names = setOf(SchemaName("Thing"), SchemaName("Object")),
+            fields = SchemaFields.EMPTY,
+            hash = "myHash"
         )
+        assertThat(schema.encode().decode()).isEqualTo(schema)
     }
 
     @Test
-    fun decodesSingletonsOfTuplesInSchemaProto() {
-        // schema
-        //   tuple: (Text, Number)
-        val schemaProtoText = """
-        fields {
-          key: "tuple"
-          value: {
-            tuple: {
-              elements: { primitive: TEXT }
-              elements: { primitive: NUMBER }
-            }
-          }
-        }
-        """.trimIndent()
-        val schema = decodeSchemaProtoText(schemaProtoText)
-        assertThat(schema.fields.singletons).isEqualTo(
-            mapOf(
-                "tuple" to FieldType.Tuple(listOf(FieldType.Text, FieldType.Number))
-            )
+    fun roundTrip_singletonFields() {
+        // {text: Text, bool: Bool}
+        val schema = Schema(
+            names = emptySet(),
+            fields = SchemaFields(
+                singletons = mapOf(
+                    "text" to FieldType.Text,
+                    "bool" to FieldType.Boolean
+                ),
+                collections = emptyMap()
+            ),
+            hash = "myHash"
         )
+        assertThat(schema.encode().decode()).isEqualTo(schema)
     }
 
     @Test
-    fun decodesCollectionsOfTuplesInSchemaProto() {
-        // schema
-        //   tuples: [(Text, Number)]
-        val schemaProtoText = """
-        fields {
-          key: "tuples"
-          value: {
-            collection: {
-              collection_type: {
-                tuple: {
-                  elements: { primitive: TEXT }
-                  elements: { primitive: NUMBER }
-                }
-              }
-            }
-          }
-        }
-        """.trimIndent()
-        val schema = decodeSchemaProtoText(schemaProtoText)
-        assertThat(schema.fields.collections).isEqualTo(
-            mapOf(
-                "tuples" to FieldType.Tuple(listOf(FieldType.Text, FieldType.Number))
-            )
+    fun roundTrip_collectionFields() {
+        // {texts: [Text], bools: [Bool]}
+        val schema = Schema(
+            names = emptySet(),
+            fields = SchemaFields(
+                singletons = emptyMap(),
+                collections = mapOf(
+                    "texts" to FieldType.Text,
+                    "bools" to FieldType.Boolean
+                )
+            ),
+            hash = "myHash"
         )
+        assertThat(schema.encode().decode()).isEqualTo(schema)
+    }
+
+    @Test
+    fun roundTrip_collectionReferenceFields() {
+        // {refs: &{}}
+        val schema = Schema(
+            names = emptySet(),
+            fields = SchemaFields(
+                singletons = emptyMap(),
+                collections = mapOf(
+                    "refs" to FieldType.EntityRef(Schema.EMPTY.hash)
+                )
+            ),
+            hash = "myHash"
+        )
+        assertThat(schema.encode().decode()).isEqualTo(schema)
+    }
+
+    @Test
+    fun roundTrip_singletonTupleFields() {
+        // {tuple: (Text, Number)}
+        val schema = Schema(
+            names = emptySet(),
+            fields = SchemaFields(
+                singletons = mapOf(
+                    "tuple" to FieldType.Tuple(FieldType.Text, FieldType.Number)
+                ),
+                collections = emptyMap()
+            ),
+            hash = "myHash"
+        )
+        assertThat(schema.encode().decode()).isEqualTo(schema)
+    }
+
+    @Test
+    fun roundTrip_collectionTupleFields() {
+        // {tuples: [(Text, Number)]}
+        val schema = Schema(
+            names = emptySet(),
+            fields = SchemaFields(
+                singletons = emptyMap(),
+                collections = mapOf(
+                    "tuples" to FieldType.Tuple(FieldType.Text, FieldType.Number)
+                )
+            ),
+            hash = "myHash"
+        )
+        assertThat(schema.encode().decode()).isEqualTo(schema)
     }
 }

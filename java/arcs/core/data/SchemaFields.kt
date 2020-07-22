@@ -29,6 +29,8 @@ sealed class FieldType(
 
     /** A tuple of [FieldType]s */
     data class Tuple(val types: List<FieldType>) : FieldType(Tag.Tuple) {
+        constructor(vararg types: FieldType) : this(types.toList())
+
         override fun toString() = "(${types.joinToString()})"
     }
 
@@ -110,5 +112,9 @@ data class SchemaFields(
             ).flatten().joinToString()
         }
         return "{$fields}"
+    }
+
+    companion object {
+        val EMPTY = SchemaFields(singletons = emptyMap(), collections = emptyMap())
     }
 }
