@@ -41,6 +41,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
@@ -579,6 +580,14 @@ open class AllocatorTestBase {
             is DeserializedException ->
                 assertThat(cause.message).isEqualTo("java.lang.IllegalArgumentException: Boom!")
             else -> fail("Expected IllegalArgumentException or DeserializedException; got $cause")
+        }
+    }
+
+    @Test
+    fun allocator_stressTest_run100() = runAllocatorTest {
+        for (i in 0..100) {
+            val arc = allocator.startArcForPlan(PersonPlan)
+            arc.stop()
         }
     }
 }
