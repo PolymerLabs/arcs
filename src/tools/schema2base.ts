@@ -15,6 +15,8 @@ import {Runtime} from '../runtime/runtime.js';
 import {SchemaGraph, SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/particle-spec.js';
 
+Runtime.init('../..');
+
 export interface EntityGenerator {
   generate(): string;
 }
@@ -27,9 +29,7 @@ export class NodeAndGenerator {
 export abstract class Schema2Base {
   namespace: string;
 
-  constructor(readonly opts: minimist.ParsedArgs) {
-    Runtime.init('../..');
-  }
+  constructor(readonly opts: minimist.ParsedArgs) {}
 
   async call() {
     fs.mkdirSync(this.opts.outdir, {recursive: true});
