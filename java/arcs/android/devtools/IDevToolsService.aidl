@@ -21,9 +21,4 @@ interface IDevToolsService {
     /** Sends the [str] to the remote device */
     oneway void send(String str);
 
-    /** Start the [DevWebSocket]. */
-    void start();
-
-  /** Close the [DevWebSocket] to free up the port. */
-    void close();
 }

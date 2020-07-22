@@ -11,49 +11,20 @@
 
 package arcs.android.devtools
 
-import arcs.core.util.TaggedLog
-import java.lang.Exception
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 
 /**
  * Implementation of [IDevToolsService].
  */
-class DevToolsBinder(val scope: CoroutineScope) : IDevToolsService.Stub() {
-    private var webSocket: DevWebSocketFactory.devWebSocket? = null
-    private val log = TaggedLog { "DevToolsBinder" }
+class DevToolsBinder(
+    val scope: CoroutineScope,
+    private val webServer: DevWebServer
+) : IDevToolsService.Stub() {
 
     override fun send(str: String) {
         scope.launch {
-            webSocket?.send(str)
+            webServer.send(str)
         }
-    }
-
-    @kotlinx.coroutines.ExperimentalCoroutinesApi
-    override fun start() {
-        scope.launch {
-            try {
-                suspendCancellableCoroutine { cont ->
-                    webSocket = webSocket ?: DevWebSocketFactory().getDevWebSocket()
-                    cont.invokeOnCancellation {
-                        webSocket?.close()
-                    }
-                    webSocket?.startIfNeeded()
-                    cont.resume(Unit) {}
-                }
-            } catch (e: Exception) {
-                log.debug(e) { "Can't open Websocket. Error: [$e]." }
-            }
-        }
-    }
-
-    override fun close() {
-        webSocket?.close()
-        webSocket = null
-    }
-
-    fun destroy() {
-        close()
     }
 }
