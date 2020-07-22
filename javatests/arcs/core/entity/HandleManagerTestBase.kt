@@ -736,7 +736,6 @@ open class HandleManagerTestBase {
 
         val updateDeferred = readHandle.onUpdateDeferred { it.size == 1 }
         writeHandle.dispatchStore(entity)
-        val entityOut = updateDeferred.await()
         assertThat(updateDeferred.await()).containsExactly(entity)
     }
 

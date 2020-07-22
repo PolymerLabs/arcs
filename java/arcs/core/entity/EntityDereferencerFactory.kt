@@ -8,10 +8,8 @@ import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Dereferencer
 import arcs.core.storage.RawEntityDereferencer
 import arcs.core.storage.Reference
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /** A [Dereferencer.Factory] for [Reference] and [RawEntity] classes. */
-@ExperimentalCoroutinesApi
 class EntityDereferencerFactory(
     private val activationFactory: ActivationFactory
 ) : Dereferencer.Factory<RawEntity> {
