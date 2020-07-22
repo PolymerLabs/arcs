@@ -109,3 +109,9 @@ message PolicyConfigProto {
   // name.
   map<string, string> metadata = 2;
 }
+
+// General options for policy enforcement.
+message PolicyOptionsProto {
+  // Maps from store ID to type name.
+  map<string, string> store_id_to_type = 1;
+}

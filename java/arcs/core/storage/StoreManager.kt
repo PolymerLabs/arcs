@@ -13,7 +13,6 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.util.guardedBy
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -21,7 +20,6 @@ import kotlinx.coroutines.sync.withLock
  * Store manager provides a central holding places for the [Store] instances that a runtime will
  * use, so that only one instance of a [Store] can be created per [StorageKey].
  */
-@ExperimentalCoroutinesApi
 class StoreManager(
     /**
      * If a store doesn't yet exist in this [StoreManager] for a provided [StorageKey],

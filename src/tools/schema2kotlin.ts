@@ -242,7 +242,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
 
   private getHandlesClassDecl(particleName: string, entitySpecs: string[], handleDecls: string[]): string {
     const header = this.opts.wasm
-      ? `class Handles(
+      ? `${handleDecls.length ? '' : '@Suppress("UNUSED_PARAMETER")\n    '}class Handles(
         particle: WasmParticleImpl
     )`
       : `class Handles : HandleHolderBase(

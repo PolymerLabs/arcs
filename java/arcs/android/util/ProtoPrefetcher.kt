@@ -124,9 +124,14 @@ object ProtoPrefetcher {
     )
 
     /**
+     * Execute [procedures] to warm up Arcs protos ahead-of-time at the specified [executorService].
+     */
+    fun prefetch(executorService: ExecutorService) = executorService.execute { prefetch() }
+
+    /**
      * Execute [procedures] to warm up Arcs protos ahead-of-time.
      */
-    fun prefetch(executorService: ExecutorService) = executorService.execute {
+    fun prefetch() {
         Trace.beginSection(name)
         procedures.forEach { it() }
         Trace.endSection()

@@ -1,0 +1,79 @@
+[header]
+Kotlin Refinement Generator
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+[end_header]
+
+[name]
+creates queries from refinement expressions involving math expressions
+[input]
+particle Foo
+  input: reads Something {a: Number [ a > 3 and a != 100 ], b: Number [b > 20 and b < 100] } [a + b/3 > 100]
+[results]
+val a = data.singletons["a"].toPrimitiveValue(Double::class, 0.0)
+val b = data.singletons["b"].toPrimitiveValue(Double::class, 0.0)
+(300 < (b + (a * 3))) && ((a > 3) && (a != 100)) && ((b > 20) && (b < 100))
+[end]
+
+[name]
+creates queries from refinement expressions involving boolean expressions
+[input]
+particle Foo
+  input: reads Something {uuid: Text, value: Number} [uuid == 'test-uuid']
+[results]
+val uuid = data.singletons["uuid"].toPrimitiveValue(String::class, "")
+(uuid == "test-uuid")
+[end]
+
+[name]
+creates queries from refinement expressions involving text expressions
+[input]
+particle Foo
+  input: reads Something {a: Number [ a > 3 and a != 100 ], b: Number [b > 20 and b < 100] } [a + b/3 > 100]
+[results]
+val a = data.singletons["a"].toPrimitiveValue(Double::class, 0.0)
+val b = data.singletons["b"].toPrimitiveValue(Double::class, 0.0)
+(300 < (b + (a * 3))) && ((a > 3) && (a != 100)) && ((b > 20) && (b < 100))
+[end]
+
+[name]
+creates queries where field refinement is null
+[input]
+particle Foo
+  input: reads Something {a: Boolean, b: Boolean} [a and b]
+[results]
+val a = data.singletons["a"].toPrimitiveValue(Boolean::class, false)
+val b = data.singletons["b"].toPrimitiveValue(Boolean::class, false)
+(b && a)
+[end]
+
+[name]
+creates queries where schema refinement is null
+[input]
+particle Foo
+  input: reads Something {a: Boolean [not a], b: Boolean [b]}
+[results]
+val a = data.singletons["a"].toPrimitiveValue(Boolean::class, false)
+val b = data.singletons["b"].toPrimitiveValue(Boolean::class, false)
+(!a) && b
+[end]
+
+[name]
+creates queries where there is no refinement
+[input]
+particle Foo
+  input: reads Something {a: Boolean, b: Boolean}
+[results]
+true
+[end]
+
+[name]
+escapes text in queries from refinement expressions
+[input]
+particle Foo
+  input: reads Something {str: Text} [str == '\t\b\n\r\'\"$']
+[results]
+val str = data.singletons["str"].toPrimitiveValue(String::class, "")
+(str == "\t\b\n\r\'\"\$")
+[end]

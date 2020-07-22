@@ -17,14 +17,15 @@ import arcs.android.type.readType
 import arcs.android.type.writeType
 import arcs.core.data.HandleMode
 import arcs.core.data.Plan
-import arcs.core.storage.StorageKeyParser
 
 /** [Parcelable] variant of [Plan.HandleConnection]. */
 data class ParcelableHandleConnection(
     override val actual: Plan.HandleConnection
 ) : ActualParcelable<Plan.HandleConnection> {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeString(actual.storageKey.toString())
+        // TODO(b/161819104): Avoid duplicate serialization, Handles are serialized as part of the
+        // Plan object.
+        parcel.writeHandle(actual.handle, flags)
         parcel.writeType(actual.type, flags)
         parcel.writeInt(actual.mode.ordinal)
     }
@@ -33,8 +34,9 @@ data class ParcelableHandleConnection(
 
     companion object CREATOR : Parcelable.Creator<ParcelableHandleConnection> {
         override fun createFromParcel(parcel: Parcel): ParcelableHandleConnection {
-            val storageKeyString = requireNotNull(parcel.readString()) {
-                "No storageKey found in Parcel"
+            // TODO(b/161819104): Use Handle from Plan, instead of creating a new Handle object.
+            val handle = requireNotNull(parcel.readHandle()) {
+                "No Handle found in Parcel"
             }
             val type = requireNotNull(parcel.readType()) {
                 "No name found in Parcel"
@@ -49,7 +51,11 @@ data class ParcelableHandleConnection(
             }
 
             return ParcelableHandleConnection(
-                Plan.HandleConnection(StorageKeyParser.parse(storageKeyString), handleMode, type)
+                Plan.HandleConnection(
+                    handle,
+                    handleMode,
+                    type
+                )
             )
         }
 

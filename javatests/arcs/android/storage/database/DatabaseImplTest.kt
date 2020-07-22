@@ -447,7 +447,7 @@ class DatabaseImplTest {
     fun insertAndGet_entity_newEntityWithPrimitiveFields() = runBlockingTest {
         val key = DummyStorageKey("key")
 
-        val inlineSchema = newSchema(
+        newSchema(
             "inlineHash",
             SchemaFields(
                 singletons = mapOf(
@@ -669,7 +669,7 @@ class DatabaseImplTest {
         val key = DummyStorageKey("key")
         val childSchema = newSchema("child")
         database.getSchemaTypeId(childSchema, db)
-        val inlineSchema = newSchema(
+        newSchema(
             "inlineHash",
             SchemaFields(
                 singletons = mapOf(
@@ -1946,7 +1946,7 @@ class DatabaseImplTest {
         assertTableIsSize("field_values", 16)
 
         // Check collection entries have been cleared. For each remaining entity there should only
-        // be twelve values (two for the nums collection, five for the chars collection, 
+        // be twelve values (two for the nums collection, five for the chars collection,
         // two for the text list, two for the bigint list, one for the membership of the entity).
         assertTableIsSize("collection_entries", 24)
 
@@ -1986,7 +1986,7 @@ class DatabaseImplTest {
 
     @Test
     fun removeExpiredEntities_inlineDataIsRemoved() = runBlockingTest {
-        val inlineInlineSchema = newSchema(
+        newSchema(
             "inlineInlineHash",
             SchemaFields(
                 singletons = mapOf(
@@ -1995,7 +1995,7 @@ class DatabaseImplTest {
                 collections = emptyMap()
             )
         )
-        val inlineSchema = newSchema(
+        newSchema(
             "inlineHash",
             SchemaFields(
                 singletons = mapOf(

@@ -22,18 +22,19 @@ data class ParcelablePlan(override val actual: Plan) : ActualParcelable<Plan> {
         actual.particles.forEach {
             parcel.writeParticle(it, 0)
         }
+        // TODO(161818630): write Plan's annotations.
     }
 
     override fun describeContents(): Int = 0
 
     companion object CREATOR : Parcelable.Creator<ParcelablePlan> {
         override fun createFromParcel(parcel: Parcel): ParcelablePlan {
-            val size = requireNotNull(parcel.readInt()) {
+            val particlesSize = requireNotNull(parcel.readInt()) {
                 "No size of ParticleSpecs found in Parcel"
             }
             val particles = mutableListOf<Plan.Particle>()
 
-            repeat(size) {
+            repeat(particlesSize) {
                 particles.add(
                     requireNotNull(parcel.readParticle()) {
                         "No ParticleSpec found in list position $it of parcel when reading Plan"
@@ -41,7 +42,15 @@ data class ParcelablePlan(override val actual: Plan) : ActualParcelable<Plan> {
                 )
             }
 
-            return ParcelablePlan(Plan(particles))
+            val planHandles = mutableMapOf<String, Plan.Handle>()
+            particles.forEach {
+                it.handles.forEach { (_, handle) ->
+                    planHandles[handle.storageKey.toString()] = handle.handle
+                }
+            }
+
+            // TODO(161818630): read Plan's annotations.
+            return ParcelablePlan(Plan(particles, planHandles.values.toList()))
         }
 
         override fun newArray(size: Int): Array<ParcelablePlan?> = arrayOfNulls(size)
