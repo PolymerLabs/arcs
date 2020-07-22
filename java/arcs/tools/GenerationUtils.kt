@@ -3,7 +3,7 @@ package arcs.tools
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.buildCodeBlock
 
-fun List<*>.toGeneration(template: String = "%N") =
+fun List<*>.toGeneration(template: String = "%L") =
     toGeneration { builder, item -> builder.add(template, item) }
 
 fun <T> List<T>.toGeneration(
@@ -22,8 +22,7 @@ fun <T> List<T>.toGeneration(
     add(")")
 }
 
-// TODO(alxr) Dedupe repeated logic via HOF
-fun Set<*>.toGeneration(template: String = "%N") =
+fun Set<*>.toGeneration(template: String = "%L") =
     toGeneration { builder, item -> builder.add(template, item) }
 
 fun <T> Set<T>.toGeneration(

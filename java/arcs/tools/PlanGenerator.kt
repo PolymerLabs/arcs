@@ -22,7 +22,7 @@ fun Recipe.toGeneration(builder: FileSpec.Builder) {
     val handles = this.handles.values.map { it.toGeneration(name.orEmpty()) }
     val ctx = mapOf<String, Any>(
         "plan" to Plan::class,
-        "handles" to handles.toGeneration(),
+        "handles" to handles.toGeneration("%N"),
         // TODO(alxr) Generate particles
         "particles" to listOf<Recipe.Particle>().toGeneration(),
         // TODO(alxr) Generate Annotations
