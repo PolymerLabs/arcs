@@ -1,5 +1,3 @@
-load("//third_party/java/arcs/build_defs/internal:manifest.bzl", "arcs_manifest_json")
-
 def _recipe2plan_impl(ctx):
     output_name = ctx.label.name + ".kt"
     out = ctx.actions.declare_file(output_name)

@@ -1,6 +1,5 @@
-load("//third_party/java/arcs/build_defs:native.oss.bzl", "java_test")
-load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
 load("@rules_java//java:defs.bzl", "java_binary")
+load("//third_party/java/arcs/build_defs:native.oss.bzl", "java_test")
 load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
 
 licenses(["notice"])
