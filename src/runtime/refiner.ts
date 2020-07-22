@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {RefinementNode, Op, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, QueryNode, BuiltInNode, DiscreteNode, NumberNode, BooleanNode, TextNode, Primitive, BigIntType, bigIntTypes} from './manifest-ast-nodes.js';
+import {RefinementNode, Op, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, QueryNode, BuiltInNode, DiscreteNode, NumberNode, BooleanNode, TextNode, Primitive, DiscreteType, discreteTypes} from './manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
 import {Schema} from './schema.js';
 import {Entity} from './entity.js';
@@ -728,7 +728,7 @@ export class DiscretePrimitive extends RefinementExpression {
   constructor(
     public value: bigint,
     units: string[] = [],
-    public evalType: BigIntType,
+    public evalType: DiscreteType,
   ) {
     super('DiscretePrimitiveNode');
 
@@ -1619,7 +1619,7 @@ interface OperatorInfo {
   evalType: Primitive | 'same';
 }
 
-const numericTypes: Primitive[] = [Primitive.NUMBER].concat(bigIntTypes);
+const numericTypes: Primitive[] = [Primitive.NUMBER].concat(discreteTypes);
 
 // From https://kotlinlang.org/docs/reference/basic-types.html
 const INT_MIN = -(BigInt(2)**BigInt(31));
@@ -1952,7 +1952,7 @@ export class BigIntFraction {
   num: BigIntMultinomial;
   den: BigIntMultinomial;
 
-  constructor(n: BigIntMultinomial, d: BigIntMultinomial, public type: BigIntType) {
+  constructor(n: BigIntMultinomial, d: BigIntMultinomial, public type: DiscreteType) {
     this.num = BigIntMultinomial.copyOf(n);
     this.den = BigIntMultinomial.copyOf(d);
     if (this.den.isZero()) {
@@ -1961,11 +1961,11 @@ export class BigIntFraction {
     this.reduce();
   }
 
-  static onOne(n: BigIntMultinomial, type: BigIntType): BigIntFraction {
+  static onOne(n: BigIntMultinomial, type: DiscreteType): BigIntFraction {
     return new BigIntFraction(n, BigIntMultinomial.one(), type);
   }
 
-  static one(type: BigIntType): BigIntFraction {
+  static one(type: DiscreteType): BigIntFraction {
     return BigIntFraction.onOne(BigIntMultinomial.one(), type);
   }
 
@@ -2067,11 +2067,11 @@ export class BigIntFraction {
       const fn = BigIntFraction.fromExpression(expr.expr);
       return BigIntFraction.updateGivenOp(expr.operator.op, [fn]);
     } else if (expr instanceof FieldNamePrimitive) {
-      if (bigIntTypes.includes(expr.evalType)) {
+      if (discreteTypes.includes(expr.evalType)) {
         const term = new BigIntTerm({[expr.value]: BigInt(1)});
         return BigIntFraction.onOne(
           new BigIntMultinomial({[term.toKey()]: BigInt(1)}),
-          expr.evalType as BigIntType // Safe due to manual check of bigIntTypes list.
+          expr.evalType as DiscreteType // Safe due to manual check of bigIntTypes list.
         );
       } else {
         throw new Error(`Cannot model expression as BigIntFraction: ${expr.toString()}, wrong type: ${expr.evalType}`);
@@ -2493,7 +2493,7 @@ export class BigIntMultinomial {
   }
 
   // returns <multinomial> <op> CONSTANT
-  toExpression(op: Op, type: BigIntType): RefinementExpression {
+  toExpression(op: Op, type: DiscreteType): RefinementExpression {
     if (this.isConstant()) {
       return new BinaryExpression(
         new DiscretePrimitive(this.isZero() ? BigInt(0) : this.terms[CONSTANT], [], type),

@@ -744,8 +744,8 @@ export interface NumberNode extends BaseNode {
   units?: string[];
 }
 
-export type BigIntType = Primitive.BIGINT | Primitive.INT | Primitive.LONG | Primitive.BOOLEAN;
-export const bigIntTypes: Primitive[] = [
+export type DiscreteType = Primitive.BIGINT | Primitive.INT | Primitive.LONG | Primitive.BOOLEAN;
+export const discreteTypes: Primitive[] = [
   Primitive.BIGINT,
   Primitive.LONG,
   Primitive.INT
@@ -754,7 +754,7 @@ export const bigIntTypes: Primitive[] = [
 export interface DiscreteNode extends BaseNode {
   kind: 'discrete-node';
   value: bigint;
-  type: BigIntType;
+  type: DiscreteType;
   units?: string[];
 }
 
