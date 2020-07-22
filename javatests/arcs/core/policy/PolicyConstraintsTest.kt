@@ -40,7 +40,7 @@ class PolicyConstraintsTest {
             createParticle("Isolated2", isolated = true)
         )
 
-        val result = translatePolicy(BLANK_POLICY, recipe, emptyMap())
+        val result = translatePolicy(BLANK_POLICY, recipe, EMPTY_OPTIONS)
 
         assertThat(result).isEqualTo(
             PolicyConstraints(BLANK_POLICY, emptyMap(), emptyMap())
@@ -53,7 +53,7 @@ class PolicyConstraintsTest {
             createParticle(BLANK_EGRESS_PARTICLE_NAME, isolated = false)
         )
 
-        translatePolicy(BLANK_POLICY, recipe, emptyMap())
+        translatePolicy(BLANK_POLICY, recipe, EMPTY_OPTIONS)
     }
 
     @Test
@@ -64,7 +64,7 @@ class PolicyConstraintsTest {
         )
 
         val e = assertFailsWith<PolicyViolation.InvalidEgressParticle> {
-            translatePolicy(BLANK_POLICY, recipe, emptyMap())
+            translatePolicy(BLANK_POLICY, recipe, EMPTY_OPTIONS)
         }
         assertThat(e.policy).isEqualTo(BLANK_POLICY)
         assertThat(e.particleNames).containsExactly("Egress1", "Egress2")
@@ -78,7 +78,7 @@ class PolicyConstraintsTest {
         )
 
         val e = assertFailsWith<PolicyViolation.MultipleEgressParticles> {
-            translatePolicy(BLANK_POLICY, recipe, emptyMap())
+            translatePolicy(BLANK_POLICY, recipe, EMPTY_OPTIONS)
         }
         assertThat(e.policy).isEqualTo(BLANK_POLICY)
     }
@@ -89,7 +89,7 @@ class PolicyConstraintsTest {
         val recipe = recipes.getValue("SingleInput")
         val particle = recipe.particles.single()
 
-        val result = translatePolicy(policy, recipe, emptyMap())
+        val result = translatePolicy(policy, recipe, EMPTY_OPTIONS)
 
         assertThat(result.egressChecks).containsExactly(
             particle.spec,
@@ -113,7 +113,7 @@ class PolicyConstraintsTest {
         val result = translatePolicy(
             policy,
             recipe,
-            mapOf("my_store_id" to "Foo")
+            PolicyOptions(mapOf("my_store_id" to "Foo"))
         )
 
         val check = result.egressChecks.values.single().single() as Check.Assert
@@ -132,7 +132,7 @@ class PolicyConstraintsTest {
         val policy = BLANK_POLICY.copy(name = "SingleOutput")
         val recipe = recipes.getValue("SingleOutput")
 
-        val result = translatePolicy(policy, recipe, emptyMap())
+        val result = translatePolicy(policy, recipe, EMPTY_OPTIONS)
 
         val particle = recipe.particles.single()
         assertThat(result.egressChecks).containsExactly(particle.spec, emptyList<Check>())
@@ -144,7 +144,7 @@ class PolicyConstraintsTest {
         val recipe = recipes.getValue("SingleMappedInput").forceMatchPolicyName(policy.name)
         val storeMap = mapOf("my_store_id" to "Foo")
 
-        val result = translatePolicy(policy, recipe, storeMap)
+        val result = translatePolicy(policy, recipe, PolicyOptions(storeMap))
 
         val store = AccessPath.Root.Store("my_store_id")
         assertThat(result.storeClaims).containsExactly(
@@ -172,7 +172,7 @@ class PolicyConstraintsTest {
         val recipe = recipes.getValue("SingleMappedInput").forceMatchPolicyName(policy.name)
         val storeMap = mapOf("my_store_id" to "Foo")
 
-        val result = translatePolicy(policy, recipe, storeMap)
+        val result = translatePolicy(policy, recipe, PolicyOptions(storeMap))
 
         val store = AccessPath.Root.Store("my_store_id")
         assertThat(result.storeClaims).containsExactly(
@@ -193,7 +193,7 @@ class PolicyConstraintsTest {
         val storeMap = mapOf("some_other_store" to "Bar")
 
         assertFailsWith<PolicyViolation.NoStoreForPolicyTarget> {
-            translatePolicy(policy, recipe, storeMap)
+            translatePolicy(policy, recipe, PolicyOptions(storeMap))
         }
     }
 
@@ -202,7 +202,7 @@ class PolicyConstraintsTest {
         val recipe = recipes.getValue("SingleMappedInput").forceMatchPolicyName(BLANK_POLICY_NAME)
         val storeMap = mapOf("my_store_id" to "Foo")
 
-        val result = translatePolicy(BLANK_POLICY, recipe, storeMap)
+        val result = translatePolicy(BLANK_POLICY, recipe, PolicyOptions(storeMap))
 
         assertThat(result.storeClaims).isEmpty()
     }
@@ -213,7 +213,7 @@ class PolicyConstraintsTest {
         val recipe = recipes.getValue("SingleMappedInput").forceMatchPolicyName(policy.name)
         val storeMap = mapOf("my_store_id" to "Foo")
 
-        val result = translatePolicy(policy, recipe, storeMap)
+        val result = translatePolicy(policy, recipe, PolicyOptions(storeMap))
 
         assertThat(result.storeClaims).isEmpty()
     }
@@ -224,7 +224,7 @@ class PolicyConstraintsTest {
         val recipe = recipes.getValue("SingleMappedInput").forceMatchPolicyName(policy.name)
         val storeMap = mapOf("my_store_id" to "NestedFooBar")
 
-        val result = translatePolicy(policy, recipe, storeMap)
+        val result = translatePolicy(policy, recipe, PolicyOptions(storeMap))
 
         val store = AccessPath.Root.Store("my_store_id")
         val predicate = labelPredicate("allowedForEgress")
@@ -244,6 +244,8 @@ class PolicyConstraintsTest {
     companion object {
         private const val BLANK_POLICY_NAME = "BlankPolicy"
         private const val BLANK_EGRESS_PARTICLE_NAME = "Egress_BlankPolicy"
+
+        private val EMPTY_OPTIONS = PolicyOptions(storeMap = emptyMap())
 
         private val BLANK_POLICY = Policy(name = BLANK_POLICY_NAME, egressType = EgressType.LOGGING)
 
