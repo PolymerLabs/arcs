@@ -20,6 +20,17 @@ fun decodeSchemaProtoText(protoText: String): Schema {
 class SchemaProtoDecoderTest {
 
     @Test
+    fun testEncode() {
+        val schemaProtoText = """
+        names:  "Thing"
+        names:  "Object"
+        """.trimIndent()
+        val schema = decodeSchemaProtoText(schemaProtoText)
+        val encoded = schema.encode()
+        assertThat(encoded.namesList).containsExactly("Thing", "Object")
+    }
+
+    @Test
     fun decodesNamesInSchemaProto() {
         // schema Thing, Object
         val schemaProtoText = """
