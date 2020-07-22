@@ -103,7 +103,8 @@ class RecipeTest {
         val handle = Recipe.Handle(
             name = "contacts",
             fate = Fate.CREATE,
-            type = contactCollectionType
+            type = contactCollectionType,
+            storageKey = "create://contacts"
         )
 
         val spec = ParticleSpec(
@@ -133,7 +134,7 @@ class RecipeTest {
                 location = "com.Particle",
                 handles = mapOf(
                     "data" to Plan.HandleConnection(
-                        storageKey = CreatableStorageKey("contacts"),
+                        handle = handle.toPlanHandle(),
                         mode = HandleMode.Read,
                         type = contactCollectionType
                     )
@@ -246,6 +247,17 @@ class RecipeTest {
             ).associateBy { it.name }
         )
 
+        val peoplePlanHandle = Plan.Handle(
+            storageKey = StorageKeyParser.parse(peopleStorageKey),
+            type = personCollectionType,
+            annotations = emptyList()
+        )
+        val contactsPlanHandle = Plan.Handle(
+            storageKey = CreatableStorageKey("contacts"),
+            type = contactCollectionType,
+            annotations = emptyList()
+        )
+
         assertThat(
             Recipe(
                 name = "EgressContacts",
@@ -287,12 +299,12 @@ class RecipeTest {
                         location = "com.ConvertToContacts",
                         handles = mapOf(
                             "input" to Plan.HandleConnection(
-                                storageKey = StorageKeyParser.parse(peopleStorageKey),
+                                handle = peoplePlanHandle,
                                 mode = HandleMode.Read,
                                 type = personCollectionType
                             ),
                             "output" to Plan.HandleConnection(
-                                storageKey = CreatableStorageKey("contacts"),
+                                handle = contactsPlanHandle,
                                 mode = HandleMode.Write,
                                 type = contactCollectionType
                             )
@@ -303,7 +315,7 @@ class RecipeTest {
                         location = "com.EgressContacts",
                         handles = mapOf(
                             "data" to Plan.HandleConnection(
-                                storageKey = CreatableStorageKey("contacts"),
+                                handle = contactsPlanHandle,
                                 mode = HandleMode.Read,
                                 type = contactCollectionType
                             )
@@ -311,16 +323,8 @@ class RecipeTest {
                     )
                 ),
                 handles = listOf(
-                    Plan.Handle(
-                        storageKey = StorageKeyParser.parse(peopleStorageKey),
-                        type = personCollectionType,
-                        annotations = emptyList()
-                    ),
-                    Plan.Handle(
-                        storageKey = CreatableStorageKey("contacts"),
-                        type = contactCollectionType,
-                        annotations = emptyList()
-                    )
+                    peoplePlanHandle,
+                    contactsPlanHandle
                 ),
                 annotations = listOf(Annotation.createArcId("egress-contacts"))
             )

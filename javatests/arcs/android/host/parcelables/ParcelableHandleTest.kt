@@ -16,8 +16,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.common.ArcId
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType.Companion.Text
-import arcs.core.data.HandleMode
-import arcs.core.data.Plan
+import arcs.core.data.Plan.Handle
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
@@ -26,39 +25,33 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Tests for [ParcelableParticle]'s classes. */
+/** Tests for [ParcelableHandle]'s classes. */
 @RunWith(AndroidJUnit4::class)
-class ParcelableParticleTest {
+class ParcelableHandleTest {
+
+    private val personSchema = Schema(
+        setOf(SchemaName("Person")),
+        SchemaFields(mapOf("name" to Text), emptyMap()),
+        "42"
+    )
 
     @Test
-    fun particle_parcelableRoundTrip_works() {
-        val personSchema = Schema(
-            setOf(SchemaName("Person")),
-            SchemaFields(mapOf("name" to Text), emptyMap()),
-            "42"
-        )
-
+    fun handle_parcelableRoundTrip_works() {
         val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
         val personType = EntityType(personSchema)
-        val connection = Plan.HandleConnection(
-            Plan.Handle(storageKey, personType, emptyList()),
-            HandleMode.ReadWrite,
-            personType
-        )
-
-        val particle = Plan.Particle("Foobar", "foo.bar.Foobar", mapOf("foo" to connection))
+        val handle = Handle(storageKey, personType, emptyList())
 
         val marshalled = with(Parcel.obtain()) {
-            writeTypedObject(particle.toParcelable(), 0)
+            writeTypedObject(handle.toParcelable(), 0)
             marshall()
         }
 
         val unmarshalled = with(Parcel.obtain()) {
             unmarshall(marshalled, 0, marshalled.size)
             setDataPosition(0)
-            readTypedObject(requireNotNull(ParcelableParticle.CREATOR))
+            readTypedObject(requireNotNull(ParcelableHandle.CREATOR))
         }
 
-        assertThat(unmarshalled?.actual).isEqualTo(particle)
+        assertThat(unmarshalled?.actual).isEqualTo(handle)
     }
 }

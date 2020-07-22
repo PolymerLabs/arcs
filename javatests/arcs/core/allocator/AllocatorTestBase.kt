@@ -179,7 +179,8 @@ open class AllocatorTestBase {
         )
 
         val allStorageKeyLens =
-            Plan.Particle.handlesLens.traverse() + Plan.HandleConnection.storageKeyLens
+            Plan.Particle.handlesLens.traverse() + Plan.HandleConnection.handleLens +
+                Plan.Handle.storageKeyLens
 
         // fetch the allocator replaced key
         val readPersonKey = findPartitionFor(
@@ -192,7 +193,7 @@ open class AllocatorTestBase {
 
         val purePartition = findPartitionFor(arc.partitions, "PurePerson")
 
-        val storageKeyLens = Plan.HandleConnection.storageKeyLens
+        val storageKeyLens = Plan.HandleConnection.handleLens + Plan.Handle.storageKeyLens
 
         assertThat(arc.partitions).containsExactly(
             Plan.Partition(
@@ -284,7 +285,7 @@ open class AllocatorTestBase {
 
         val allStorageKeyLens =
             Plan.particleLens.traverse() + Plan.Particle.handlesLens.traverse() +
-                Plan.HandleConnection.storageKeyLens
+                Plan.HandleConnection.handleLens + Plan.Handle.storageKeyLens
 
         val testPlan = allStorageKeyLens.mod(PersonPlan) { storageKey ->
             storageKey as CreatableStorageKey
