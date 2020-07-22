@@ -30,6 +30,7 @@ arcs_kt_android_library(
 
 arcs_kt_android_test_suite(
     name = "variable-tests",
+    size = "medium",
     srcs = glob(["*Test.kt"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.showcase.typevariables",
