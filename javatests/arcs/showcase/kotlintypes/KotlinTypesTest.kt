@@ -2,9 +2,9 @@ package arcs.showcase.kotlintypes
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.host.toRegistration
-import arcs.core.testutil.runTest
 import arcs.showcase.ShowcaseEnvironment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.Rule
 import org.junit.Test
@@ -27,7 +27,7 @@ class KotlinTypesTest {
     )
 
     @Test
-    fun kotlinTypes_runArc() = runTest {
+    fun kotlinTypes_runArc() = runBlocking {
         val arc = env.startArc(UseKotlinTypesPlan)
 
         withTimeout(1500) {
