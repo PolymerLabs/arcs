@@ -28,25 +28,25 @@ data class ParcelableHandle(
         // TODO(161818630): write Handle's annotations.
     }
 
-override fun describeContents(): Int = 0
+    override fun describeContents(): Int = 0
 
-companion object CREATOR : Parcelable.Creator<ParcelableHandle> {
-    override fun createFromParcel(parcel: Parcel): ParcelableHandle {
-        val storageKeyString = requireNotNull(parcel.readString()) {
-            "No storageKey found in Parcel"
+    companion object CREATOR : Parcelable.Creator<ParcelableHandle> {
+        override fun createFromParcel(parcel: Parcel): ParcelableHandle {
+            val storageKeyString = requireNotNull(parcel.readString()) {
+                "No storageKey found in Parcel"
+            }
+            val type = requireNotNull(parcel.readType()) {
+                "No name found in Parcel"
+            }
+            // TODO(161818630): read Handle's annotations.
+            return ParcelableHandle(
+                Plan.Handle(StorageKeyParser.parse(storageKeyString), type, emptyList())
+            )
         }
-        val type = requireNotNull(parcel.readType()) {
-            "No name found in Parcel"
-        }
-        // TODO(161818630): read Handle's annotations.
-        return ParcelableHandle(
-            Plan.Handle(StorageKeyParser.parse(storageKeyString), type, emptyList())
-        )
+
+        override fun newArray(size: Int): Array<ParcelableHandle?> =
+            arrayOfNulls(size)
     }
-
-    override fun newArray(size: Int): Array<ParcelableHandle?> =
-        arrayOfNulls(size)
-}
 }
 
 /** Wraps a [Plan.HandleConnection] as a [ParcelableHandle]. */
