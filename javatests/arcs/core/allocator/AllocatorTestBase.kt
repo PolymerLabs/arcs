@@ -43,7 +43,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -518,7 +517,6 @@ open class AllocatorTestBase {
     }
 
     @Test
-    @Ignore("Flaking: b/161926251")
     open fun allocator_doesntCreateArcsOnDuplicateStartArc() = runAllocatorTest {
         val arc = allocator.startArcForPlan(PersonPlan).waitForStart()
 
