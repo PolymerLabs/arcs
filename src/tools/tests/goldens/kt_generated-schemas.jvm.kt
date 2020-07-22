@@ -682,8 +682,10 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                 "44b8dccc1ae0cf6fa00a7dfeef0b0e6b1d565e24",
                 refinement = { data ->
                     val big = data.singletons["big"].toPrimitiveValue(BigInteger::class, BigInteger.ZERO)
+                    val nt = data.singletons["nt"].toPrimitiveValue(Int::class, 0)
+                    val lng = data.singletons["lng"].toPrimitiveValue(Long::class, 0L)
                     val num = data.singletons["num"].toPrimitiveValue(Double::class, 0.0)
-                    ((num < 1000) && (big > BigInteger("1")))
+                    ((num < 1000) && (((big > BigInteger("1")) && (30 < ((nt * 5) + (nt * 10)))) && ((1000000L > (lng * 10L)) && ((100000L == (lng * 10L)) || (100000L < (lng * 10L))))))
                 },
                 query = null
             )
