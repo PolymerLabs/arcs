@@ -84,9 +84,7 @@ class StorageServiceManagerTest {
     @Before
     fun setUp() {
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
-        AndroidDriverAndKeyConfigurator.configure(
-            ApplicationProvider.getApplicationContext()
-        )
+        AndroidDriverAndKeyConfigurator.configure(ApplicationProvider.getApplicationContext())
         SchemaRegistry.register(DummyEntity.SCHEMA)
     }
 

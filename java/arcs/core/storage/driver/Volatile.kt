@@ -49,8 +49,13 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
         removeAllEntities()
 }
 
+/** [DriverProvider] that creates an instance of [VolatileDriverProvider] per arc on demand. */
 class VolatileDriverProviderFactory : DriverProvider {
     private val driverProvidersByArcId = mutableMapOf<ArcId, VolatileDriverProvider>()
+
+    /** Returns a set of all known [ArcId]s. */
+    val arcIds: Set<ArcId>
+        get() = driverProvidersByArcId.keys
 
     init {
         DriverFactory.register(this)
@@ -89,9 +94,6 @@ class VolatileDriverProviderFactory : DriverProvider {
             it.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
         }
     }
-
-    val arcIds: Set<ArcId>
-        get() = driverProvidersByArcId.keys
 }
 
 /** [Driver] implementation for an in-memory store of data. */
