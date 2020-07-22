@@ -22,7 +22,7 @@ import {StoreContext} from '../storage/store-context.js';
 
 export class ResolveWalker extends RecipeWalker {
 
-  constructor(tactic, private readonly storeHolder: StoreContext, private options?: IsValidOptions) {
+  constructor(tactic, private readonly storeContext: StoreContext, private options?: IsValidOptions) {
     super(tactic);
   }
 
@@ -39,7 +39,7 @@ export class ResolveWalker extends RecipeWalker {
     if (handle.type.slandleType()) {
       return [];
     }
-    const storeHolder = this.storeHolder;
+    const storeContext = this.storeContext;
     if ((handle.connections.length === 0 && !handle.isJoined) ||
         (handle.id && handle.storageKey) || (!handle.type) ||
         (!handle.fate)) {
@@ -52,11 +52,11 @@ export class ResolveWalker extends RecipeWalker {
       const counts = RecipeUtil.directionCounts(handle);
       switch (handle.fate) {
         case 'use':
-          mappable = storeHolder.findStoresByType(handle.type, {tags: handle.tags});
+          mappable = storeContext.findStoresByType(handle.type, {tags: handle.tags});
           break;
         case 'map':
         case 'copy':
-          mappable = storeHolder.context.findStoresByType(handle.type, {tags: handle.tags, subtype: true});
+          mappable = storeContext.context.findStoresByType(handle.type, {tags: handle.tags, subtype: true});
           break;
         case 'create':
         case '?':
@@ -70,11 +70,11 @@ export class ResolveWalker extends RecipeWalker {
       let storeById;
       switch (handle.fate) {
         case 'use':
-          storeById = storeHolder.findStoreById(handle.id);
+          storeById = storeContext.findStoreById(handle.id);
           break;
         case 'map':
         case 'copy':
-          storeById = storeHolder.context.findStoreById(handle.id);
+          storeById = storeContext.context.findStoreById(handle.id);
           break;
         case 'create':
         case '?':
@@ -120,14 +120,14 @@ export class ResolveWalker extends RecipeWalker {
       }
       return [];
     };
-    const storeHolder = this.storeHolder;
+    const storeContext = this.storeContext;
     if (slotConnection.isConnected()) {
       return error('Slot connection is already connected');
     }
 
     const slotSpec = slotConnection.getSlotSpec();
     const particle = slotConnection.particle;
-    const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, storeHolder);
+    const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, storeContext);
 
     const allSlots = [...local, ...remote];
 
@@ -150,7 +150,7 @@ export class ResolveWalker extends RecipeWalker {
       }
       return [];
     };
-    const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, this.storeHolder);
+    const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, this.storeContext);
     const allSlots = [...local, ...remote];
 
     // SlotUtils handles a multi-slot case.
@@ -203,8 +203,8 @@ export class ResolveRecipeAction extends Action<Recipe> {
 // Provides basic recipe resolution for recipes against a particular arc.
 export class RecipeResolver {
   private resolver: ResolveRecipeAction;
-  constructor(storeHolder: StoreContext) {
-    this.resolver = new ResolveRecipeAction(storeHolder);
+  constructor(storeContext: StoreContext) {
+    this.resolver = new ResolveRecipeAction(storeContext);
   }
 
   // Attempts to run basic resolution on the given recipe. Returns a new

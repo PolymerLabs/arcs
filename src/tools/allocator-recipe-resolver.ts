@@ -37,13 +37,13 @@ export class AllocatorRecipeResolverError extends Error {
  * distributed to the proper ArcHost) and  lifecycle management (for arcs within ArcHosts).
  */
 export class AllocatorRecipeResolver {
-  private readonly storeHolder: ManifestStoreContext;
+  private readonly storeContext: ManifestStoreContext;
   private readonly createHandleRegistry: Map<Handle, string> = new Map<Handle, string>();
   private createHandleIndex = 0;
 
 
   constructor(context: Manifest, private randomSalt: string) {
-    this.storeHolder = new ManifestStoreContext(context);
+    this.storeContext = new ManifestStoreContext(context);
     DatabaseStorageKey.register();
   }
 
@@ -58,7 +58,7 @@ export class AllocatorRecipeResolver {
 
     // First pass: validate recipes and create stores
     const firstPass = [];
-    for (const recipe of this.storeHolder.context.allRecipes) {
+    for (const recipe of this.storeContext.context.allRecipes) {
       this.validateHandles(recipe);
 
       if (!recipe.normalize(opts)) {
@@ -78,7 +78,7 @@ export class AllocatorRecipeResolver {
     const recipes = [];
     for (let recipe of firstPass) {
       // Only include recipes from primary (non-imported) manifest
-      if (!this.storeHolder.context.recipes.map(r => r.name).includes(recipe.name)) continue;
+      if (!this.storeContext.context.recipes.map(r => r.name).includes(recipe.name)) continue;
 
       recipe = await this.tryResolve(recipe, opts);
       recipe = await this.assignCreatableStorageKeys(recipe);
@@ -99,7 +99,7 @@ export class AllocatorRecipeResolver {
 
     if (recipe.isResolved()) return recipe;
 
-    const resolvedRecipe = await (new RecipeResolver(this.storeHolder).resolve(recipe, opts));
+    const resolvedRecipe = await (new RecipeResolver(this.storeContext).resolve(recipe, opts));
     if (!resolvedRecipe) {
       throw new AllocatorRecipeResolverError(
         `Recipe ${recipe.name} failed to resolve:\n${[...opts.errors.values()].join('\n')}`);
@@ -161,7 +161,7 @@ export class AllocatorRecipeResolver {
         exists: Exists.MayExist,
         id: createHandle.id
       });
-      this.storeHolder.context.registerStore(store, createHandle.tags);
+      this.storeContext.context.registerStore(store, createHandle.tags);
       createHandle.storageKey = storageKey;
     }
     assert(cloneRecipe.normalize());
@@ -178,7 +178,7 @@ export class AllocatorRecipeResolver {
    */
   validateHandles(recipe: Recipe) {
     for (const handle of recipe.handles.filter(handle => handle.fate === 'map' || handle.fate === 'copy')) {
-      const matches = this.storeHolder.context.findHandlesById(handle.id)
+      const matches = this.storeContext.context.findHandlesById(handle.id)
         .filter(h => h.fate === 'create');
 
       if (matches.length === 0) {
