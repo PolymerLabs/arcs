@@ -22,13 +22,41 @@ fun AccessPathProto.decode(
     requireNotNull(connectionSpec) {
         "Connection '$handleConnection' not found in connection specs!"
     }
-    val selectors = selectorsList.map {
-        when (it.selectorCase) {
-            AccessPathProto.Selector.SelectorCase.FIELD -> AccessPath.Selector.Field(it.field)
-            else -> throw IllegalArgumentException(
-                "Cannot decode a ${it.selectorCase.name} type to a [AccessPath.Selector]."
-            )
-        }
-    }
+    val selectors = selectorsList.map { it.decode() }
     return AccessPath(particleSpec, connectionSpec, selectors)
+}
+
+fun AccessPath.encode(): AccessPathProto {
+    val proto = AccessPathProto.newBuilder()
+        .addAllSelectors(selectors.map { it.encode() })
+    when (root) {
+        is AccessPath.Root.Handle -> {
+            val handleRoot = root as AccessPath.Root.Handle
+            proto.handleConnection = handleRoot.handle.name
+        }
+        is AccessPath.Root.HandleConnection -> {
+            val connectionRoot = root as AccessPath.Root.HandleConnection
+            proto.particleSpec = connectionRoot.particle.spec.name
+            proto.handleConnection = connectionRoot.connectionSpec.name
+        }
+        is AccessPath.Root.HandleConnectionSpec -> {
+            val connectionSpecRoot = root as AccessPath.Root.HandleConnectionSpec
+            proto.particleSpec = connectionSpecRoot.particleSpecName
+            proto.handleConnection = connectionSpecRoot.connectionSpec.name
+        }
+        else -> throw UnsupportedOperationException("Unsupported AccessPath.Root type: $this")
+    }
+    return proto.build()
+}
+
+private fun AccessPathProto.Selector.decode(): AccessPath.Selector = when (selectorCase) {
+    AccessPathProto.Selector.SelectorCase.FIELD -> AccessPath.Selector.Field(field)
+    else -> throw UnsupportedOperationException("Unsupported AccessPathProto.Selector: $this")
+}
+
+private fun AccessPath.Selector.encode(): AccessPathProto.Selector {
+    if (this !is AccessPath.Selector.Field) {
+        throw UnsupportedOperationException("Unsupported Selector type: $this")
+    }
+    return AccessPathProto.Selector.newBuilder().setField(field).build()
 }

@@ -23,6 +23,37 @@ fun InformationFlowLabelProto.decode() = when (labelCase) {
     else -> throw IllegalArgumentException("Cannot decode a [InformationLabelProto].")
 }
 
+/** Encodes an [InformationFlowLabel.SemanticTag] into [InformationFlowLabelProto]. */
+fun InformationFlowLabel.SemanticTag.encode(): InformationFlowLabelProto {
+    return InformationFlowLabelProto.newBuilder().setSemanticTag(name).build()
+}
+
+/** Encodes an [InformationFlowLabel.Predicate] into [InformationFlowLabelProto.Predicate]. */
+fun Predicate.encode(): InformationFlowLabelProto.Predicate {
+    val proto = InformationFlowLabelProto.Predicate.newBuilder()
+    when (this) {
+        is Predicate.Label -> {
+            val label = requireNotNull(label as? InformationFlowLabel.SemanticTag) {
+                "Unsupported label type: $label"
+            }
+            proto.label = InformationFlowLabelProto.newBuilder().setSemanticTag(label.name).build()
+        }
+        is Predicate.Not -> proto.not = InformationFlowLabelProto.Predicate.Not.newBuilder()
+            .setPredicate(predicate.encode())
+            .build()
+        is Predicate.Or -> proto.or = InformationFlowLabelProto.Predicate.Or.newBuilder()
+            .setDisjunct0(lhs.encode())
+            .setDisjunct1(rhs.encode())
+            .build()
+        is Predicate.And -> proto.and = InformationFlowLabelProto.Predicate.And.newBuilder()
+            .setConjunct0(lhs.encode())
+            .setConjunct1(rhs.encode())
+            .build()
+        else -> throw UnsupportedOperationException("Unsupported Predicate type: $this")
+    }
+    return proto.build()
+}
+
 /** Decodes an [InformationFlowLabelProto.Predicate] into [InformationFlowLabel.Predicate]. */
 fun InformationFlowLabelProto.Predicate.decode(): Predicate = when (predicateCase) {
     InformationFlowLabelProto.Predicate.PredicateCase.LABEL ->
