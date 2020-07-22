@@ -20,7 +20,7 @@ import com.squareup.kotlinpoet.buildCodeBlock
 
 fun Recipe.toGeneration(builder: FileSpec.Builder) {
     val handles = this.handles.values.map { it.toGeneration(name.orEmpty()) }
-    val ctx = mapOf<String, Any>(
+    val ctx = mapOf(
         "plan" to Plan::class,
         "handles" to handles.toGeneration("%N"),
         // TODO(alxr) Generate particles
@@ -47,7 +47,7 @@ fun Recipe.toGeneration(builder: FileSpec.Builder) {
 fun Recipe.Handle.toGeneration(planName: String) = PropertySpec
     .builder("${planName}_$name", Plan.Handle::class)
     .initializer(buildCodeBlock {
-        val ctx = mapOf<String, Any>(
+        val ctx = mapOf(
             "handle" to Plan.Handle::class,
             // TODO(alxr) verify join handles work
             "storageParser" to StorageKeyParser::class,
@@ -83,7 +83,7 @@ fun Type.toGeneration(): CodeBlock = buildCodeBlock {
 
 fun Schema.toGeneration() = buildCodeBlock {
     val schema = this@toGeneration
-    val ctx = mapOf<String, Any>(
+    val ctx = mapOf(
         "schema" to Schema::class,
         "names" to schema.names.toGeneration { builder, item ->
             builder.add("%T(%S)", SchemaName::class, item.name)
@@ -106,7 +106,7 @@ fun SchemaFields.toGeneration() = buildCodeBlock {
         builder.add("%S to %L", entry.key, entry.value.toGeneration())
         Unit
     }
-    val ctx = mapOf<String, Any>(
+    val ctx = mapOf(
         "fields" to SchemaFields::class,
         "singletons" to fields.singletons.toGeneration(toSchemaField),
         "collections" to fields.collections.toGeneration(toSchemaField)
