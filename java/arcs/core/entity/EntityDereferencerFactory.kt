@@ -31,13 +31,11 @@ class EntityDereferencerFactory(
      */
     override fun injectDereferencers(schema: Schema, value: Any?) {
         if (value == null) return
-        println("inject $value")
         when (value) {
             is Reference -> value.dereferencer = create(schema)
             is RawEntity -> injectDereferencersIntoRawEntity(schema, value)
             is Set<*> -> value.forEach { injectDereferencers(schema, it) }
             is ReferencableList<*> -> value.value.forEach { injectDereferencers(schema, it) }
-            else -> println("skipping $value")
         }
     }
 
