@@ -169,8 +169,18 @@ http_archive(
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
+    name = "io_bazel_stardoc",
+    remote = "https://github.com/bazelbuild/stardoc.git",
+    tag = "0.4.0",
+)
+
+load("@io_bazel_stardoc//:setup.bzl", "stardoc_repositories")
+
+stardoc_repositories()
+
+git_repository(
     name = "io_bazel_rules_kotlin",
-    commit = "eb353b2d3ed3a6634e9028ffb0e8af8321a12c9c",
+    commit = "b21971bfdfd7e0d56a7b176c6ad28896cd8dfec5",
     remote = "https://github.com/cromwellian/rules_kotlin.git",
     shallow_since = "1585186427 -0700",
 )

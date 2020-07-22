@@ -1,6 +1,6 @@
 build --strategy=KotlinCompile=worker
 build --remote_cache=https://storage.googleapis.com/arcs-github-gcb-bazel-cache --google_default_credentials
-build --verbose_failures --spawn_strategy=sandboxed --jobs=32 --local_ram_resources=HOST_RAM*.3
+build --verbose_failures --spawn_strategy=sandboxed --jobs=32 --local_ram_resources=HOST_RAM*.45
 build --nostamp --noshow_progress --show_result 0
-test --spawn_strategy=sandboxed --nocache_test_results --test_output=errors --jobs=32 --local_ram_resources=HOST_RAM*.3
+test --spawn_strategy=sandboxed --nocache_test_results --test_output=errors --jobs=32 --local_ram_resources=HOST_RAM*.45
 test --nostamp --noshow_progress --show_result 0
