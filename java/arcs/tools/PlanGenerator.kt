@@ -5,7 +5,6 @@ import arcs.core.data.EntityType
 import arcs.core.data.FieldName
 import arcs.core.data.FieldType
 import arcs.core.data.Plan
-import arcs.core.data.PrimitiveType
 import arcs.core.data.Recipe
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
@@ -23,8 +22,10 @@ fun Recipe.toGeneration(builder: FileSpec.Builder) {
     val handles = this.handles.values.map { it.toGeneration(name.orEmpty()) }
     val ctx = mapOf<String, Any>(
         "plan" to Plan::class,
-        "particles" to listOf<Recipe.Particle>().toGeneration(),
         "handles" to handles.toGeneration(),
+        // TODO(alxr) Generate particles
+        "particles" to listOf<Recipe.Particle>().toGeneration(),
+        // TODO(alxr) Generate Annotations
         "annotations" to listOf<Annotation>().toGeneration()
     )
     val plan = PropertySpec.builder("${name}Plan", Plan::class)
@@ -43,9 +44,8 @@ fun Recipe.toGeneration(builder: FileSpec.Builder) {
     builder.addProperty(plan)
 }
 
-fun Recipe.Particle.toGeneration() {}
-
-fun Recipe.Handle.toGeneration(planName: String) = PropertySpec.builder("${planName}_$name", Plan.Handle::class)
+fun Recipe.Handle.toGeneration(planName: String) = PropertySpec
+    .builder("${planName}_$name", Plan.Handle::class)
     .initializer(buildCodeBlock {
         val ctx = mapOf<String, Any>(
             "handle" to Plan.Handle::class,
@@ -53,7 +53,7 @@ fun Recipe.Handle.toGeneration(planName: String) = PropertySpec.builder("${planN
             "storageParser" to StorageKeyParser::class,
             "key" to storageKey.orEmpty(),
             "type" to type.toGeneration(),
-            "annotations" to "emptyList()"
+            "annotations" to emptyList<Annotation>().toGeneration()
         )
         addNamed("""
             %handle:T(
@@ -71,7 +71,12 @@ fun Type.toGeneration(): CodeBlock = buildCodeBlock {
         is Type.TypeContainer<*> -> add("%T(%L)", type::class, type.containedType.toGeneration())
         is CountType -> add("%T()", CountType::class)
         is TupleType -> add("%T(%L)", TupleType::class, type.elementTypes.toGeneration("%L"))
-        is TypeVariable -> add("%T(%S, %L)", TypeVariable::class, type.name, type.constraint?.toGeneration())
+        is TypeVariable -> add(
+            "%T(%S, %L)",
+            TypeVariable::class,
+            type.name,
+            type.constraint?.toGeneration()
+        )
         else -> throw IllegalArgumentException("[Type] $type is not supported.")
     }
 }
@@ -97,7 +102,7 @@ fun Schema.toGeneration() = buildCodeBlock {
 
 fun SchemaFields.toGeneration() = buildCodeBlock {
     val fields = this@toGeneration
-    val toSchemaField  = { builder: CodeBlock.Builder, entry: Map.Entry<FieldName, FieldType> ->
+    val toSchemaField = { builder: CodeBlock.Builder, entry: Map.Entry<FieldName, FieldType> ->
         builder.add("%S to %L", entry.key, entry.value.toGeneration())
         Unit
     }
@@ -141,5 +146,3 @@ fun FieldType.toGeneration(): CodeBlock = buildCodeBlock {
         )
     }
 }
-
-fun Annotation.toGeneration() {}
