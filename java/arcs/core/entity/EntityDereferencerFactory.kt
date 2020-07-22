@@ -4,6 +4,7 @@ import arcs.core.data.FieldType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaRegistry
+import arcs.core.data.util.ReferencableList
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Dereferencer
 import arcs.core.storage.RawEntityDereferencer
@@ -30,18 +31,25 @@ class EntityDereferencerFactory(
      */
     override fun injectDereferencers(schema: Schema, value: Any?) {
         if (value == null) return
+        println("inject $value")
         when (value) {
             is Reference -> value.dereferencer = create(schema)
-            is RawEntity -> injectDereferencers(schema, value)
+            is RawEntity -> injectDereferencersIntoRawEntity(schema, value)
             is Set<*> -> value.forEach { injectDereferencers(schema, it) }
+            is ReferencableList<*> -> value.value.forEach { injectDereferencers(schema, it) }
+            else -> println("skipping $value")
         }
     }
 
-    private fun injectDereferencers(schema: Schema, rawEntity: RawEntity) {
+    private fun injectDereferencersIntoRawEntity(schema: Schema, rawEntity: RawEntity) {
         fun injectField(fieldType: FieldType?, fieldValue: Any?) {
             val schemaHash = when (fieldType) {
                 is FieldType.EntityRef -> fieldType.schemaHash
                 is FieldType.InlineEntity -> fieldType.schemaHash
+                is FieldType.ListOf -> {
+                    injectField(fieldType.primitiveType, fieldValue)
+                    null
+                }
                 else -> null
             }
             schemaHash?.let {

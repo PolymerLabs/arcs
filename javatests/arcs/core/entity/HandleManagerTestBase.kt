@@ -751,20 +751,23 @@ open class HandleManagerTestBase {
             entitySpec = TestReferencesParticle_Entities_References
         )
 
-        suspend fun toReferences(values: Set<Int>) = values
+        suspend fun toReferences(values: Iterable<Int>) = values
             .map { toReferencedEntity(it) }
             .map {
-                referencedEntityHandle.dispatchStore(it) 
+                referencedEntityHandle.dispatchStore(it)
                 referencedEntityHandle.dispatchCreateReference(it)
-            }.toSet()
+            }
 
-        suspend fun toEntity(values: Set<Int>) = 
-            TestReferencesParticle_Entities(toReferences(values))
+        suspend fun toEntity(values: Set<Int>, valueList: List<Int>) =
+            TestReferencesParticle_Entities(
+                toReferences(values).toSet(),
+                toReferences(valueList)
+            )
 
         val entities = setOf(
-            toEntity(setOf(1, 2, 3)),
-            toEntity(setOf(200, 100, 300)),
-            toEntity(setOf(34, 2145, 1, 11))
+            toEntity(setOf(1, 2, 3), listOf(3, 3, 4)),
+            toEntity(setOf(200, 100, 300), listOf(2, 10, 2)),
+            toEntity(setOf(34, 2145, 1, 11), listOf(3, 4, 5))
         )
 
         val writeHandle = writeHandleManager.createCollectionHandle(
@@ -773,11 +776,15 @@ open class HandleManagerTestBase {
         val readHandle = readHandleManager.createCollectionHandle(
             entitySpec = TestReferencesParticle_Entities
         )
-        
+
         val updateDeferred = readHandle.onUpdateDeferred { it.size == 3 }
         entities.forEach { writeHandle.dispatchStore(it) }
-        println(entities)
-        assertThat(updateDeferred.await()).containsExactly(*entities.toTypedArray())
+        val entitiesOut = updateDeferred.await()
+        assertThat(entitiesOut).containsExactly(*entities.toTypedArray())
+        entitiesOut.forEach { entity ->
+            entity.references.forEach { it.dereference() }
+            entity.referenceList.forEach { it.dereference() }
+        }
     }
 
     @Test
