@@ -1,7 +1,14 @@
 package arcs.tools
 
+import arcs.core.data.CountType
+import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.data.Recipe
+import arcs.core.data.Schema
+import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
+import arcs.core.data.TupleType
+import arcs.core.data.TypeVariable
 import arcs.core.storage.StorageKeyParser
 import arcs.core.type.Type
 import com.squareup.kotlinpoet.CodeBlock
@@ -19,6 +26,24 @@ fun <T> List<T>.toGeneration(template: (builder: CodeBlock.Builder, item: T) -> 
     }
 
     add("listOf(")
+    this@toGeneration.forEachIndexed { idx, it ->
+        template(this, it)
+        if (idx != size - 1) { add(", ") }
+    }
+    add(")")
+}
+
+// TODO(alxr) Dedupe repeated logic via HOF
+fun <T> Set<T>.toGeneration(template: String = "%N") =
+    toGeneration { builder, item -> builder.add(template, item) }
+
+fun <T> Set<T>.toGeneration(template: (builder: CodeBlock.Builder, item: T) -> Unit) = buildCodeBlock {
+    if (this@toGeneration.isEmpty()) {
+        add("emptySet()")
+        return build()
+    }
+
+    add("setOf(")
     this@toGeneration.forEachIndexed { idx, it ->
         template(this, it)
         if (idx != size - 1) { add(", ") }
@@ -57,8 +82,8 @@ fun Recipe.Handle.toGeneration(planName: String) = PropertySpec.builder("${planN
     .initializer(buildCodeBlock {
         val ctx = mapOf<String, Any>(
             "handle" to Plan.Handle::class,
-            "storageParser" to StorageKeyParser::class,
             // TODO(alxr) verify join handles work
+            "storageParser" to StorageKeyParser::class,
             "key" to storageKey.orEmpty(),
             "type" to type.toGeneration(),
             "annotations" to "emptyList()"
@@ -74,7 +99,39 @@ fun Recipe.Handle.toGeneration(planName: String) = PropertySpec.builder("${planN
     .build()
 
 fun Type.toGeneration() = buildCodeBlock {
-    add("%T()", Type::class)
+    val type = this@toGeneration
+    when (type) {
+        is EntityType -> add("%T(%L)", EntityType::class, type.entitySchema.toGeneration())
+        is Type.TypeContainer<*> -> add("%T(%L)", type::class, type.containedType.toGeneration())
+        is CountType -> add("%T()", CountType::class)
+        is TupleType -> add("%T(%L)", TupleType::class, type.elementTypes.toGeneration("%L"))
+        is TypeVariable -> add("%T(%S, %L)", TypeVariable::class, type.name, type.constraint?.toGeneration())
+        else -> throw IllegalArgumentException("[Type] $type is not supported.")
+    }
+}
+
+fun Schema.toGeneration() = buildCodeBlock {
+    val schema = this@toGeneration
+    val ctx = mapOf<String, Any>(
+        "schema" to Schema::class,
+        "names" to schema.names.toGeneration { builder, item ->
+            builder.add("%T(%S)", SchemaName::class, item)
+        },
+        "fields" to schema.fields.toGeneration(),
+        "hash" to schema.hash
+    )
+    addNamed("""
+    %schema:T(
+        names = %names:L,
+        fields = %fields:L,
+        hash = %hash:S
+    )
+    """.trimIndent(), ctx)
+}
+
+fun SchemaFields.toGeneration() = buildCodeBlock {
+    // TODO(alxr) Implement
+    add("null")
 }
 
 fun Annotation.toGeneration() {}
