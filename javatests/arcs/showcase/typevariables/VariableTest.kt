@@ -2,7 +2,6 @@ package arcs.showcase.typevariables
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.host.toRegistration
-import arcs.core.testutil.runTest
 import arcs.showcase.ShowcaseEnvironment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
