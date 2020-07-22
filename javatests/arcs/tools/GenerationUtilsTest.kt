@@ -77,7 +77,6 @@ class GenerationUtilsTest {
         ).isEqualTo("""setOf("1", "2")""")
     }
 
-
     @Test
     fun map_empty() {
         assertThat(emptyMap<String, Any>().toGeneration().toString())
