@@ -24,6 +24,10 @@ load(
     _arcs_proto_plan = "arcs_proto_plan",
 )
 load(
+    "//third_party/java/arcs/build_defs/internal:plan.bzl",
+    _arcs_plan_generation = "recipe2plan",
+)
+load(
     "//third_party/java/arcs/build_defs/internal:schemas.bzl",
     _arcs_cc_schema = "arcs_cc_schema",
     _arcs_kt_gen = "arcs_kt_gen",
