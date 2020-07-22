@@ -1,6 +1,7 @@
 package arcs.tools
 
 import arcs.core.data.FieldType
+import arcs.core.data.SchemaFields
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -8,6 +9,45 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class PlanGeneratorTest {
+
+    @Test
+    fun schemaFields_empty() {
+        assertThat(SchemaFields(emptyMap(), emptyMap()).toGeneration().toString())
+            .isEqualTo("""
+                arcs.core.data.SchemaFields(
+                    singletons = emptyMap(),
+                    collections = emptyMap()
+                )
+            """.trimIndent())
+    }
+
+    @Test
+    fun schemaFields_singletons() {
+        assertThat(
+            SchemaFields(singletons = mapOf("sku" to FieldType.Int), collections = emptyMap())
+                .toGeneration().toString()
+        )
+            .isEqualTo("""
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf("sku" to arcs.core.data.FieldType.Int),
+                    collections = emptyMap()
+                )
+            """.trimIndent())
+    }
+
+    @Test
+    fun schemaFields_collections() {
+        assertThat(
+            SchemaFields(emptyMap(), collections = mapOf("bananas" to FieldType.Text))
+                .toGeneration().toString()
+        )
+            .isEqualTo("""
+                arcs.core.data.SchemaFields(
+                    singletons = emptyMap(),
+                    collections = mapOf("bananas" to arcs.core.data.FieldType.Text)
+                )
+            """.trimIndent())
+    }
 
     @Test
     fun fieldType_primitives() {
