@@ -69,10 +69,12 @@ class ArcHostHelperTest {
         "42"
     )
 
+    val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
+    val personType = EntityType(personSchema)
     val connection = Plan.HandleConnection(
-        VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
+        Plan.Handle(storageKey, personType, emptyList()),
         HandleMode.ReadWrite,
-        EntityType(personSchema)
+        personType
     )
 
     val particleSpec = Plan.Particle(

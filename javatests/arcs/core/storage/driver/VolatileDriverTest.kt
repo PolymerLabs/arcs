@@ -23,7 +23,6 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 /** Tests for [VolatileDriver]. */
-@Suppress("RedundantSuspendModifier")
 @ExperimentalCoroutinesApi
 @RunWith(JUnit4::class)
 class VolatileDriverTest {

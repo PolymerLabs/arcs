@@ -38,16 +38,19 @@ class ParcelablePlanPartitionTest {
 
     @Test
     fun PlanPartition_parcelableRoundTrip_works() {
+        val barStorageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
+        val personType = EntityType(personSchema)
         val handleConnection = Plan.HandleConnection(
-            VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
+            Plan.Handle(barStorageKey, personType, emptyList()),
             HandleMode.ReadWrite,
-            EntityType(personSchema)
+            personType
         )
 
+        var bar2StorageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar2")
         val handleConnection2 = Plan.HandleConnection(
-            VolatileStorageKey(ArcId.newForTest("foo"), "bar2"),
+            Plan.Handle(bar2StorageKey, personType, emptyList()),
             HandleMode.ReadWrite,
-            EntityType(personSchema)
+            personType
         )
 
         val particle = Plan.Particle(

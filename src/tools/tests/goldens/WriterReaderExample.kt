@@ -40,7 +40,7 @@ val IngestionPlan = Plan(
             "arcs.core.data.testdata.Reader",
             mapOf(
                 "data" to HandleConnection(
-                    Ingestion_Handle0.storageKey,
+                    Ingestion_Handle0,
                     HandleMode.Read,
                     SingletonType(EntityType(Reader_Data.SCHEMA)),
                     listOf(
@@ -55,7 +55,7 @@ val IngestionPlan = Plan(
             "arcs.core.data.testdata.Writer",
             mapOf(
                 "data" to HandleConnection(
-                    Ingestion_Handle0.storageKey,
+                    Ingestion_Handle0,
                     HandleMode.Write,
                     SingletonType(EntityType(Writer_Data.SCHEMA)),
                     listOf(
@@ -94,7 +94,7 @@ val ConsumptionPlan = Plan(
             "arcs.core.data.testdata.Reader",
             mapOf(
                 "data" to HandleConnection(
-                    Consumption_Handle0.storageKey,
+                    Consumption_Handle0,
                     HandleMode.Read,
                     SingletonType(EntityType(Reader_Data.SCHEMA)),
                     emptyList()
@@ -128,7 +128,7 @@ val EphemeralWritingPlan = Plan(
             "arcs.core.data.testdata.Writer",
             mapOf(
                 "data" to HandleConnection(
-                    EphemeralWriting_Handle0.storageKey,
+                    EphemeralWriting_Handle0,
                     HandleMode.Write,
                     SingletonType(EntityType(Writer_Data.SCHEMA)),
                     emptyList()
@@ -164,7 +164,7 @@ val EphemeralReadingPlan = Plan(
             "arcs.core.data.testdata.Reader",
             mapOf(
                 "data" to HandleConnection(
-                    EphemeralReading_Handle0.storageKey,
+                    EphemeralReading_Handle0,
                     HandleMode.Read,
                     SingletonType(EntityType(Reader_Data.SCHEMA)),
                     emptyList()
@@ -224,13 +224,13 @@ val ReferencesRecipePlan = Plan(
             "",
             mapOf(
                 "inThingRefs" to HandleConnection(
-                    ReferencesRecipe_Handle0.storageKey,
+                    ReferencesRecipe_Handle0,
                     HandleMode.Read,
                     CollectionType(ReferenceType(EntityType(ReadWriteReferences_InThingRefs.SCHEMA))),
                     listOf(Annotation("persistent", emptyMap()))
                 ),
                 "outThingRef" to HandleConnection(
-                    ReferencesRecipe_Handle1.storageKey,
+                    ReferencesRecipe_Handle1,
                     HandleMode.Write,
                     SingletonType(ReferenceType(EntityType(ReadWriteReferences_OutThingRef.SCHEMA))),
                     listOf(Annotation("ttl", mapOf("value" to AnnotationParam.Str("1d"))))

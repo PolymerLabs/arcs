@@ -1,0 +1,56 @@
+[header]
+Kotlin Connection Type Generation
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+[end_header]
+
+[name]
+generates type for singleton entity
+[input]
+particle Module
+  data: reads Thing {name: Text}
+[results]
+SingletonType(EntityType(Module_Data.SCHEMA))
+[end]
+
+[name]
+generates type for singleton reference
+[input]
+particle Module
+  data: reads &Thing {name: Text}
+[results]
+SingletonType(ReferenceType(EntityType(Module_Data.SCHEMA)))
+[end]
+
+[name]
+generates type for collection of entities
+[input]
+particle Module
+  data: reads [Thing {name: Text}]
+[results]
+CollectionType(EntityType(Module_Data.SCHEMA))
+[end]
+
+[name]
+generates type for collection of references
+[input]
+particle Module
+  data: reads [&Thing {name: Text}]
+[results]
+CollectionType(ReferenceType(EntityType(Module_Data.SCHEMA)))
+[end]
+
+[name]
+generates type for collection of tuples
+[input]
+particle Module
+  data: reads [(&Thing {name: Text}, &Other {age: Number})]
+[results]
+CollectionType(
+    TupleType.of(
+        ReferenceType(EntityType(Module_Data_0.SCHEMA)),
+        ReferenceType(EntityType(Module_Data_1.SCHEMA))
+    )
+)
+[end]

@@ -925,7 +925,7 @@ class DatabaseImpl(
      */
     private fun removeUnusedRefs(db: SQLiteDatabase) {
         db.transaction {
-            // Find all refs used in singleton fields.
+            // Find all entity_refs.ids used in singleton fields.
             val singletonFieldRefs = rawQuery(
                 """
                     SELECT field_values.value_id
@@ -937,7 +937,8 @@ class DatabaseImpl(
                 arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only references.
             ).map { it.getLong(0).toString() }.toSet()
 
-            // Find all refs used in top level collections/singletons or collection fields.
+            // Find all entity_refs.ids used in top level collections/singletons or collection
+            // fields.
             val collectionRefs = rawQuery(
                 """
                     SELECT entity_refs.id
@@ -1797,6 +1798,7 @@ class DatabaseImpl(
         Collection
     }
 
+    /** The class of a non-primitive field.*/
     enum class FieldClass {
         Singleton,
         Collection,
@@ -1970,7 +1972,7 @@ class DatabaseImpl(
                     parent_type_id INTEGER NOT NULL,
                     -- Name of the field.
                     name TEXT NOT NULL,
-                    -- Boolean indicating if the field is a collection or singleton.
+                    -- The class of this field: see FieldClass enum for values.
                     is_collection INTEGER NOT NULL
                 );
 
@@ -1983,7 +1985,8 @@ class DatabaseImpl(
                     -- For singleton primitive fields: id in primitive value table (the type_id in 
                     -- the corresponding fields table determine which primitive value table to use).
                     -- For booleans this is the boolean value as 0/1.
-                    -- For singleton entity references: storage_key_id of entity.
+                    -- For singleton entity references: id in entity_refs table.
+                    -- for singleton inline entities: storage_key_id of entity.
                     -- For collections of anything: collection_id.
                     value_id INTEGER
                 );

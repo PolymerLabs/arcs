@@ -153,7 +153,7 @@ class Allocator(
         val allHandles = Plan.particleLens.traverse() + Plan.Particle.handlesLens.traverse()
 
         return allHandles.mod(plan) { handle ->
-            Plan.HandleConnection.storageKeyLens.mod(handle) {
+            (Plan.HandleConnection.handleLens + Plan.Handle.storageKeyLens).mod(handle) {
                 replaceCreateKey(
                     createdKeys,
                     arcId,

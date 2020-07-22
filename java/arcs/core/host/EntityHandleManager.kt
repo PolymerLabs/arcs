@@ -86,7 +86,6 @@ class EntityHandleManager(
     private val analytics: Analytics? = null
 ) {
 
-    @ExperimentalCoroutinesApi
     @Deprecated(
         message = "prefer primary constructor",
         /* ktlint-disable max-line-length */

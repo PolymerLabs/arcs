@@ -34,13 +34,17 @@ import java.util.BitSet
 
 /**
  * Information flow analysis of a [Recipe] using the labels in the particle checks and claims.
- *
- * TODO(bgogul): For the time being, we pass in the ingress handles.
-*/
+ */
 class InformationFlow private constructor(
     private val graph: RecipeGraph,
-    private val ingresses: List<String> = emptyList()
+    private val ingresses: List<IngressInfo>
 ) : RecipeGraphFixpointIterator<AccessPathLabels>(AccessPathLabels.getBottom()) {
+
+    /**
+     * Information about an ingress [handleNode] in the recipe graph, where [claims] represents the
+     * initial set of claims on the ingress handle.
+     */
+    data class IngressInfo(val handleNode: RecipeGraph.Node.Handle, val claims: List<Claim>)
 
     private val log = TaggedLog { "InformationFlow" }
 
@@ -54,16 +58,22 @@ class InformationFlow private constructor(
         valueTransform = { it.instantiatedChecks() }
     )
 
+    /** Returns all the labels in the given list of [Claim] instances. */
+    private fun List<Claim>.getLabels(): List<InformationFlowLabel> {
+        return flatMap { claim ->
+            when (claim) {
+                is Claim.Assume -> claim.predicate.labels()
+                else -> emptyList()
+            }
+        }
+    }
+
+    /** Represents all the labels mentioned in the ingress claims. */
+    private val labelsInIngressClaims = ingresses.flatMap { it.claims.getLabels() }.toSet()
+
     /** Represents all the labels mentioned in the particle claims. */
     private val labelsInClaims: Set<InformationFlowLabel> =
-        particleClaims.values.flatMap { claims ->
-            claims.flatMap { claim ->
-                when (claim) {
-                    is Claim.Assume -> claim.predicate.labels()
-                    else -> emptyList()
-                }
-            }
-        }.toSet()
+        particleClaims.values.flatMap { claims -> claims.getLabels() }.toSet()
 
     /** Represents all the labels mentioned in the particle checks. */
     private val labelsInChecks: Set<InformationFlowLabel> =
@@ -77,7 +87,7 @@ class InformationFlow private constructor(
         }.toSet()
 
     /** The universe of labels is the union of the labels from the checks and claims. */
-    private val labels = ArrayList(labelsInClaims union labelsInChecks)
+    private val labels = ArrayList(labelsInClaims union labelsInIngressClaims union labelsInChecks)
 
     /** Index assigned to the labels for use in bitsets. */
     private val labelIndices: Map<InformationFlowLabel, Int> = labels.mapIndexed {
@@ -85,63 +95,19 @@ class InformationFlow private constructor(
     }.toMap()
 
     override fun getInitialValues(graph: RecipeGraph): Map<RecipeGraph.Node, AccessPathLabels> {
-        // TODO(bgogul): This is where we get initial value from the mapped stores.
-        // TODO(bgogul): Ensure that ingress particles do not have input connections.
-        val nodeValues = mutableMapOf<RecipeGraph.Node, AccessPathLabels>()
-        ingresses.forEach { ingressSpec ->
-            getInitialValueForIngress(graph, ingressSpec)?.let {
-                (node, initialValues) -> nodeValues[node] = initialValues
+        return ingresses
+            .map { (it.handleNode as RecipeGraph.Node) to getInitialValues(it) }
+            .toMap()
+            .also {
+                log.debug { "Initial Values For Ingress Nodes:\n $it" }
             }
-        }
-        log.debug { "Initial Values For Ingress Nodes:\n $nodeValues" }
-        return nodeValues.toMap()
     }
 
-    /**
-     * Returns the initial abstract value to be used for the given [ingressSpec]. An [ingressSpec]
-     * is of the form "<particle-name>.<connection-name>".
-     */
-    private fun getInitialValueForIngress(
-        graph: RecipeGraph,
-        ingressSpec: String
-    ): Pair<RecipeGraph.Node, AccessPathLabels>? {
-        val specParts = ingressSpec.split(".")
-        require(specParts.size <= 2) { "Unsupported ingress specification." }
-        val particleName = specParts[0]
-        val connectionName = if (specParts.size == 2) specParts[1] else null
-        val particleNode = graph.nodes.asSequence()
-            .filterIsInstance<RecipeGraph.Node.Particle>()
-            .find { it.particleName == particleName }
-        val initialValues = mutableMapOf<AccessPath, InformationFlowLabels>()
-
-        val particle = particleNode?.particle ?: return null
-
-        // If a connection is specified, set it to empty labels.
-        // Otherwise, set all write connections to empty labels.
-        particle.handleConnections
-            .filter { connectionName?.equals(it.spec.name) ?: it.spec.isWrite() }
-            .forEach {
-                val accessPath = AccessPath(particle, it.spec)
-                initialValues[accessPath] = getEmptyLabels()
-            }
-
-        // For read-write connections, apply any claims that are present. This is necessary as
-        // the claim on a read-write connection immediately manifests on the read connection.
-        particleClaims[particle]?.let { claims ->
-            initialValues.applyAssumes(
-                claims.filterIsInstance<Claim.Assume>()
-                    .filter {
-                        val accessPathRoot =
-                            it.accessPath.root as? AccessPath.Root.HandleConnection
-                        accessPathRoot?.connectionSpec?.isReadWrite() == true
-                    }
-            )
-        }
-
-        return Pair<RecipeGraph.Node, AccessPathLabels>(
-            particleNode as RecipeGraph.Node,
-            AccessPathLabels.makeValue(initialValues)
-        )
+    private fun getInitialValues(ingresses: IngressInfo): AccessPathLabels {
+        // The initial value is (accessPath -> emptyLabels) followed by applying all the claims.
+        return mutableMapOf(AccessPath(ingresses.handleNode.handle) to getEmptyLabels())
+            .apply { applyAssumes(ingresses.claims) }
+            .let { AccessPathLabels.makeValue(it.toMap()) }
     }
 
     override fun nodeTransfer(
@@ -355,20 +321,6 @@ class InformationFlow private constructor(
         else -> throw IllegalArgumentException("Unsupported claim predicates!")
     }
 
-    /** Returns true if the [HandleConnectionSpec] is a write. */
-    private fun HandleConnectionSpec.isWrite() = when (direction) {
-        HandleMode.Write,
-        HandleMode.ReadWrite,
-        HandleMode.WriteQuery,
-        HandleMode.ReadWriteQuery -> true
-        HandleMode.Read, HandleMode.ReadQuery, HandleMode.Query -> false
-    }
-
-    private fun HandleConnectionSpec.isReadWrite() = when (direction) {
-        HandleMode.ReadWrite, HandleMode.ReadWriteQuery -> true
-        else -> false
-    }
-
     /** Represents the result of information flow analysis on the given recipe. */
     data class AnalysisResult(
         val recipe: Recipe,
@@ -389,10 +341,15 @@ class InformationFlow private constructor(
             return AccessPath.Selector.Field(tupleIndexNames[component])
         }
 
-        /** Computes the labels for [recipe] when [ingress] is used as the ingress handles. */
-        public fun computeLabels(recipe: Recipe, ingress: List<String>): AnalysisResult {
+        /**
+         * Computes the labels for [recipe] when [ingressSpecs] is used as the ingress handles.
+         *
+         * An [ingressSpec] is of the form "<particle-name>.<connection-name>".
+         */
+        public fun computeLabels(recipe: Recipe, ingressSpecs: List<String>): AnalysisResult {
             val graph = RecipeGraph(recipe)
-            val analysis = InformationFlow(graph, ingress)
+            val ingresses = ingressSpecs.flatMap { getIngressInfo(graph, it) }
+            val analysis = InformationFlow(graph, ingresses)
             return AnalysisResult(
                 recipe = recipe,
                 fixpoint = analysis.computeFixpoint(graph) { value, prefix ->
@@ -403,8 +360,65 @@ class InformationFlow private constructor(
                 labelIndices = analysis.labelIndices
             )
         }
+
+        /**
+         * Returns a list of [IngressInfo] for the given [ingressSpec] in the corresponding [graph].
+         *
+         * An [ingressSpec] is of the form "<particle-name>.<connection-name>".
+         */
+        private fun getIngressInfo(graph: RecipeGraph, ingressSpec: String): List<IngressInfo> {
+            val specParts = ingressSpec.split(".")
+            require(specParts.size <= 2) { "Unsupported ingress specification." }
+            val particleName = specParts[0]
+            val connectionName = if (specParts.size == 2) specParts[1] else null
+            val particleNode = graph.nodes.asSequence()
+                .filterIsInstance<RecipeGraph.Node.Particle>()
+                .find { it.particleName == particleName }
+
+            val particle = particleNode?.particle ?: return emptyList()
+
+            // If a connection is specified, extract ingress information for that alone.
+            // Otherwise, extract ingress information for all the write connections.
+            // (See filter below.)
+            return particle.handleConnections
+                .filter { connectionName?.equals(it.spec.name) ?: it.spec.isWrite() }
+                .map { handleConnection -> getIngressInfo(particleNode, handleConnection) }
+        }
+
+        /** Returns the [IngressInfo] for the given [handleConnection] in [particleNode]. */
+        private fun getIngressInfo(
+            particleNode: RecipeGraph.Node.Particle,
+            handleConnection: Recipe.Particle.HandleConnection
+        ): IngressInfo {
+            val particle = particleNode.particle
+            val neighbors = if (handleConnection.spec.isWrite()) {
+                particleNode.successors
+            } else {
+                particleNode.predecessors
+            }
+            val handleNode = neighbors.asSequence()
+                .map { neighbor -> neighbor.node }
+                .filterIsInstance<RecipeGraph.Node.Handle>()
+                .find { it.handle == handleConnection.handle }
+
+            // Extract the claims on access paths based off of the given handleConnection.
+            val accessPath = AccessPath(particle.spec.name, handleConnection.spec)
+            val claims = particle.spec.claims.asSequence()
+                .filterIsInstance<Claim.Assume>()
+                .filter { assume -> assume.accessPath.root == accessPath.root }
+                .map { assume ->
+                    // Remap claim to an access path based on the corresponding handle.
+                    Claim.Assume(
+                        AccessPath(handleConnection.handle, assume.accessPath.selectors),
+                        assume.predicate
+                    )
+                }.toList()
+            return IngressInfo(requireNotNull(handleNode), claims)
+        }
     }
 }
+
+// TODO(b/158526199): Factor these functions out into their respective classes.
 
 /** Returns the instantiated [List<Claim>] for this particle. */
 private fun RecipeGraph.Node.Particle.instantiatedClaims(): List<Claim> {
@@ -422,6 +436,20 @@ private fun Predicate.labels(): List<InformationFlowLabel> = when (this) {
     is Predicate.Not -> predicate.labels()
     is Predicate.Or -> lhs.labels() + rhs.labels()
     is Predicate.And -> lhs.labels() + rhs.labels()
+}
+
+/** Returns true if the [HandleConnectionSpec] is a write. */
+private fun HandleConnectionSpec.isWrite() = when (direction) {
+    HandleMode.Write,
+    HandleMode.ReadWrite,
+    HandleMode.WriteQuery,
+    HandleMode.ReadWriteQuery -> true
+    HandleMode.Read, HandleMode.ReadQuery, HandleMode.Query -> false
+}
+
+private fun HandleConnectionSpec.isReadWrite() = when (direction) {
+    HandleMode.ReadWrite, HandleMode.ReadWriteQuery -> true
+    else -> false
 }
 
 /** Returns true if the [check] is satisfied by the labels computed for [particle]. */

@@ -88,6 +88,7 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   manifest2proto: runNodeScriptSteps('manifest2proto'),
   recipe2plan: runNodeScriptSteps('recipe2plan'),
   flowcheck: runNodeScriptSteps('flowcheck'),
+  updateCodegenUnitTests: runNodeScriptSteps('updateCodegenUnitTests'),
   devServer: [peg, build, webpack, devServer],
   languageServer: [peg, build, buildLS, webpackLS],
   run: [peg, build, runNodeScript],
@@ -123,6 +124,8 @@ const scripts: {[index: string]: string} = {
 
   /** Converts recipes in manifests into Kotlin Plans */
   recipe2plan: 'build/tools/recipe2plan-cli.js',
+
+  updateCodegenUnitTests: 'build/tools/tests/codegen-unit-tests-updater.js',
 };
 
 const eslintCache = '.eslint_sigh_cache';

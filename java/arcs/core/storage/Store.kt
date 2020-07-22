@@ -20,9 +20,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  * when invoked with [StoreOptions] where [options.storageKey] is of type [ReferenceModeStorageKey],
  * otherwise a [DirectStore] will be created.
  */
-@ExperimentalCoroutinesApi
 @Suppress("UNCHECKED_CAST")
 object DefaultActivationFactory : ActivationFactory {
+    @ExperimentalCoroutinesApi
     override suspend fun <Data : CrdtData, Op : CrdtOperation, T> invoke(
         options: StoreOptions
     ): ActiveStore<Data, Op, T> = when (options.storageKey) {

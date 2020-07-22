@@ -31,6 +31,18 @@ class CheckTest {
     private val particle = Recipe.Particle(particleSpec, listOf(connection))
 
     @Test
+    fun prettyPrintAssertCheck() {
+        val check = Claim.Assume(
+            AccessPath(
+                AccessPath.Root.Store("store"),
+                listOf(AccessPath.Selector.Field("field"))
+            ),
+            Predicate.Label(SemanticTag("packageName"))
+        )
+        assertThat("$check").isEqualTo("s:store.field is packageName")
+    }
+
+    @Test
     fun instantiateForParticle() {
         val oneSelector = listOf(AccessPath.Selector.Field("bar"))
         val readerConnectionSpec = AccessPath("Reader", connectionSpec, oneSelector)

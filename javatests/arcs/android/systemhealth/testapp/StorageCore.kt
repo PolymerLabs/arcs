@@ -64,7 +64,6 @@ import kotlin.apply
 import kotlin.arrayOfNulls
 import kotlin.concurrent.withLock
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
 import kotlin.emptyArray
 import kotlin.let
 import kotlin.math.ceil
@@ -76,6 +75,7 @@ import kotlin.takeIf
 import kotlin.toString
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -314,6 +314,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                     settings.function == Function.STABILITY_TEST &&
                         Random.nextInt(0, 100) < settings.storageClientCrashRate,
                     Random.nextInt(0, settings.timesOfIterations),
+                    CompletableDeferred(),
                     settings.timesOfIterations
                 )
                 runBlocking {
@@ -347,6 +348,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                             TaskType.WRITER -> writerTask(taskHandle, ctrl, settings)
                             TaskType.CLEANER -> cleanerTask(taskHandle, ctrl, settings)
                         }
+                        if (thisCountDown == 0) ctrl.jobDone.complete(true)
                     }
 
                     if (ctrl.shouldCrash && ctrl.crashAtCountDown == thisCountDown) {
@@ -689,6 +691,11 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
 
                 // Dump and system-trace memory footprint.
                 memoryFootprint
+            }
+
+            // Wait until all tasks completed from api perspectives.
+            runBlocking {
+                controllers.filterNotNull().forEach { it.jobDone.await() }
             }
 
             // Yield an extra time for tasks completing their final round trips i.e. until onXxx().
@@ -1136,6 +1143,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
         val taskType: TaskType,
         val shouldCrash: Boolean,
         val crashAtCountDown: Int,
+        val jobDone: CompletableDeferred<Boolean>,
         var countDown: Int,
         var future: ScheduledFuture<*>? = null
     )
@@ -1264,7 +1272,7 @@ class SystemHealthData {
         val timesOfIterations: Int = 1,
         val iterationIntervalMs: Int = 1000,
         val dataSizeInBytes: Int = 64,
-        val clearedEntities: Int = 0,
+        val clearedEntities: Int = -1,
         val delayedStartMs: Int = 0,
         val storageServiceCrashRate: Int = 10,
         val storageClientCrashRate: Int = 10,

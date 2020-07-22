@@ -29,7 +29,6 @@ typealias EntityStore = ActiveStore<CrdtEntity.Data, CrdtEntity.Operation, CrdtE
  *
  * TODO(jasonwyatt): Use the [Scheduler] here when dereferencing.
  */
-@ExperimentalCoroutinesApi
 class RawEntityDereferencer(
     private val schema: Schema,
     private val entityActivationFactory: ActivationFactory = DefaultActivationFactory,
@@ -39,9 +38,7 @@ class RawEntityDereferencer(
     private val log = TaggedLog { "RawEntityDereferencer" }
 
     @ExperimentalCoroutinesApi
-    override suspend fun dereference(
-        reference: Reference
-    ): RawEntity? {
+    override suspend fun dereference(reference: Reference): RawEntity? {
         log.verbose { "De-referencing $reference" }
 
         val storageKey = reference.referencedStorageKey()
