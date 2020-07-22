@@ -111,6 +111,7 @@ open class AllocatorTestBase {
         RamDisk.clear()
         DriverAndKeyConfigurator.configureKeyParsers()
         RamDiskDriverProvider()
+        VolatileDriverProviderFactory()
 
         readingExternalHost = readingHost()
         writingExternalHost = writingHost()
@@ -268,7 +269,6 @@ open class AllocatorTestBase {
 
     @Test
     open fun allocator_verifyStorageKeysNotOverwritten() = runAllocatorTest {
-        VolatileDriverProviderFactory()
         val idGenerator = Id.Generator.newSession()
         val testArcId = idGenerator.newArcId("Test")
 
