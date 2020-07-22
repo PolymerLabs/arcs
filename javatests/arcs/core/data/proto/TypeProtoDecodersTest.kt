@@ -29,7 +29,7 @@ fun parseTypeProtoText(protoText: String): TypeProto {
 }
 
 @RunWith(JUnit4::class)
-class TypeProtoTest {
+class TypeProtoDecodersTest {
     @Before
     fun setUp() {
         SchemaRegistry.register(DUMMY_ENTITY_TYPE.entitySchema)

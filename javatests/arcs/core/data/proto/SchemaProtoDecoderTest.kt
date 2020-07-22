@@ -21,7 +21,7 @@ fun decodeSchemaProtoText(protoText: String): Schema {
 }
 
 @RunWith(JUnit4::class)
-class SchemaProtoTest {
+class SchemaProtoDecoderTest {
     @Before
     fun setUp() {
         SchemaRegistry.register(Schema.EMPTY)
