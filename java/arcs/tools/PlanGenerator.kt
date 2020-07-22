@@ -11,46 +11,9 @@ import arcs.core.data.TupleType
 import arcs.core.data.TypeVariable
 import arcs.core.storage.StorageKeyParser
 import arcs.core.type.Type
-import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.buildCodeBlock
-
-fun <T> List<T>.toGeneration(template: String = "%N") =
-    toGeneration { builder, item -> builder.add(template, item) }
-
-fun <T> List<T>.toGeneration(template: (builder: CodeBlock.Builder, item: T) -> Unit) = buildCodeBlock {
-    if (this@toGeneration.isEmpty()) {
-        add("emptyList()")
-        return build()
-    }
-
-    add("listOf(")
-    this@toGeneration.forEachIndexed { idx, it ->
-        template(this, it)
-        if (idx != size - 1) { add(", ") }
-    }
-    add(")")
-}
-
-// TODO(alxr) Dedupe repeated logic via HOF
-fun <T> Set<T>.toGeneration(template: String = "%N") =
-    toGeneration { builder, item -> builder.add(template, item) }
-
-fun <T> Set<T>.toGeneration(template: (builder: CodeBlock.Builder, item: T) -> Unit) = buildCodeBlock {
-    if (this@toGeneration.isEmpty()) {
-        add("emptySet()")
-        return build()
-    }
-
-    add("setOf(")
-    this@toGeneration.forEachIndexed { idx, it ->
-        template(this, it)
-        if (idx != size - 1) { add(", ") }
-    }
-    add(")")
-}
-
 
 fun Recipe.toGeneration(builder: FileSpec.Builder) {
     val handles = this.handles.values.map { it.toGeneration(name.orEmpty()) }
