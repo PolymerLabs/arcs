@@ -40,30 +40,31 @@ class EntityDereferencerFactory(
     }
 
     private fun injectDereferencersIntoRawEntity(schema: Schema, rawEntity: RawEntity) {
-        fun injectField(fieldType: FieldType?, fieldValue: Any?) {
-            val schemaHash = when (fieldType) {
-                is FieldType.EntityRef -> fieldType.schemaHash
-                is FieldType.InlineEntity -> fieldType.schemaHash
-                is FieldType.ListOf -> {
-                    injectField(fieldType.primitiveType, fieldValue)
-                    null
-                }
-                else -> null
-            }
-            schemaHash?.let {
-                val fieldSchema = requireNotNull(
-                    SchemaRegistry.getSchema(it)
-                ) {
-                    "Unknown schema with hash $it."
-                }
-                injectDereferencers(fieldSchema, fieldValue)
-            }
-        }
         rawEntity.singletons.forEach { (field, value) ->
             injectField(schema.fields.singletons[field], value)
         }
         rawEntity.collections.forEach { (field, value) ->
             injectField(schema.fields.collections[field], value)
+        }
+    }
+
+    private fun injectField(fieldType: FieldType?, fieldValue: Any?) {
+        val schemaHash = when (fieldType) {
+            is FieldType.EntityRef -> fieldType.schemaHash
+            is FieldType.InlineEntity -> fieldType.schemaHash
+            is FieldType.ListOf -> {
+                injectField(fieldType.primitiveType, fieldValue)
+                null
+            }
+            else -> null
+        }
+        schemaHash?.let {
+            val fieldSchema = requireNotNull(
+                SchemaRegistry.getSchema(it)
+            ) {
+                "Unknown schema with hash $it."
+            }
+            injectDereferencers(fieldSchema, fieldValue)
         }
     }
 }

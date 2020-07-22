@@ -780,7 +780,7 @@ open class HandleManagerTestBase {
         val updateDeferred = readHandle.onUpdateDeferred { it.size == 3 }
         entities.forEach { writeHandle.dispatchStore(it) }
         val entitiesOut = updateDeferred.await()
-        assertThat(entitiesOut).containsExactly(*entities.toTypedArray())
+        assertThat(entitiesOut).containsExactlyElementsIn(entities)
         entitiesOut.forEach { entity ->
             entity.references.forEach { it.dereference() }
             entity.referenceList.forEach { it.dereference() }
