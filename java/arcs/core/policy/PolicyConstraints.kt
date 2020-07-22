@@ -47,45 +47,48 @@ fun translatePolicy(policy: Policy, recipe: Recipe, options: PolicyOptions): Pol
     }
 
     // Add claim statements for stores.
-    val targetBySchemaName = policy.targets.associateBy { it.schemaName }
-    val storeClaims = recipe.handles.values.filter { options.storeMap.containsKey(it.id) }
-        .associate { handle ->
-            val storeId = handle.id
-            val claims = options.storeMap[storeId]?.let { schemaName ->
-                targetBySchemaName[schemaName]?.let { target ->
-                    createClaims(handle, target)
-                }
-            }
-            handle.id to (claims ?: emptyList())
+    val storeClaims = mutableMapOf<StoreId, List<Claim>>()
+    policy.targets.forEach { target ->
+        val stores = options.storeMap.mapNotNull { (storeId, schemaName) ->
+            if (schemaName == target.schemaName) storeId else null
         }
-        .filterValues { it.isNotEmpty() }
+        if (stores.isEmpty()) {
+            throw PolicyViolation.NoStoreForPolicyTarget(policy, target)
+        }
+        stores.forEach { storeId ->
+            val storeRoot = AccessPath.Root.Store(storeId)
+            storeClaims[storeId] = target.createClaims(storeRoot)
+        }
+    }
 
-    return PolicyConstraints(policy, egressChecks, storeClaims)
+    return PolicyConstraints(
+        policy,
+        egressChecks,
+        storeClaims.filterValues { it.isNotEmpty() }
+    )
 }
 
 /** Returns a list of store [Claim]s for the given [handle] and corresponding [target]. */
-private fun createClaims(handle: Recipe.Handle, target: PolicyTarget): List<Claim> {
-    return target.fields.flatMap { field -> createClaims(handle, field) }
+private fun PolicyTarget.createClaims(store: AccessPath.Root.Store): List<Claim> {
+    return fields.flatMap { field -> field.createClaims(store) }
 }
 
 /**
  * Returns a list of claims for the given [field] (and all subfields), using the given [handle]
  * as the root for the claims.
  */
-private fun createClaims(handle: Recipe.Handle, field: PolicyField): List<Claim> {
+private fun PolicyField.createClaims(store: AccessPath.Root.Store): List<Claim> {
     val claims = mutableListOf<Claim>()
 
     // Create claim for this field.
-    createStoreClaimPredicate(field)?.let { predicate ->
-        val selectors = field.fieldPath.map { AccessPath.Selector.Field(it) }
-        // TODO(b/157605232): This AccessPath is rooted by the handle's name in the recipe. The name
-        // might not be the same across different recipes, so this needs to be store ID instead.
-        val accessPath = AccessPath(handle, selectors)
+    createStoreClaimPredicate()?.let { predicate ->
+        val selectors = fieldPath.map { AccessPath.Selector.Field(it) }
+        val accessPath = AccessPath(store, selectors)
         claims.add(Claim.Assume(accessPath, predicate))
     }
 
     // Add claims for subfields.
-    field.subfields.flatMapTo(claims) { subfield -> createClaims(handle, subfield) }
+    subfields.flatMapTo(claims) { subfield -> subfield.createClaims(store) }
 
     return claims
 }
@@ -94,12 +97,12 @@ private fun createClaims(handle: Recipe.Handle, field: PolicyField): List<Claim>
  * Constructs the [Predicate] for the given [field] in a [Policy], to be used in constructing
  * [Claim]s on the corresponding handles for the field in a recipe.
  */
-private fun createStoreClaimPredicate(field: PolicyField): Predicate? {
+private fun PolicyField.createStoreClaimPredicate(): Predicate? {
     val predicates = mutableListOf<Predicate>()
-    if (field.rawUsages.canEgress()) {
+    if (rawUsages.canEgress()) {
         predicates.add(labelPredicate(ALLOWED_FOR_EGRESS_LABEL))
     }
-    val egressRedactionLabels = field.redactedUsages.filterValues { it.canEgress() }.keys
+    val egressRedactionLabels = redactedUsages.filterValues { it.canEgress() }.keys
     egressRedactionLabels.forEach { label ->
         predicates.add(labelPredicate("${ALLOWED_FOR_EGRESS_LABEL}_$label"))
     }
@@ -179,5 +182,13 @@ sealed class PolicyViolation(val policy: Policy, message: String) : Exception(
     class MultipleEgressParticles(policy: Policy) : PolicyViolation(
         policy,
         "Multiple egress particles named ${policy.egressParticleName} found for policy"
+    )
+
+    class NoStoreForPolicyTarget(
+        policy: Policy,
+        target: PolicyTarget
+    ) : PolicyViolation(
+        policy,
+        "No store found for policy target $target mentioned in ${policy.name}"
     )
 }

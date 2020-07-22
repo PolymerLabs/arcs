@@ -250,7 +250,7 @@
         android:ems="10"
         android:hint="@string/cleared_entities_hint"
         android:importantForAutofill="no"
-        android:inputType="numberDecimal"
+        android:inputType="numberDecimal|numberSigned"
         android:textSize="14sp" />
     </LinearLayout>
 

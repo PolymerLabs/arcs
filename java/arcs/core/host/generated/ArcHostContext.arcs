@@ -1,9 +1,15 @@
 meta
   namespace: arcs.core.host.generated
 
+schema PlanHandle
+  storageKey: Text
+  type: Text
+  // TODO(b/161818630): add annotations to serialization.
+
 // Represents a Plan.HandleConnection
 schema HandleConnection
-  handleName: Text
+  connectionName: Text
+  planHandle: &PlanHandle
   storageKey: Text
   // HandleMode enum name
   mode: Text
@@ -31,14 +37,17 @@ particle ArcHostContextParticle
   }
   particles: reads writes [ParticleSchema]
   handleConnections: reads writes [HandleConnection]
+  planHandles: reads writes [PlanHandle]
 
 recipe ArcHostContext
   arcHostContext: create 'arcHostContext'
   particles: create 'particles'
   handleConnections: create 'handleConnections'
+  planHandles: create 'planHandles'
 
   ArcHostContextParticle
     arcHostContext: reads writes arcHostContext
     particles: reads writes particles
     handleConnections: reads writes handleConnections
+    planHandles: reads writes planHandles
 

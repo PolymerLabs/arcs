@@ -110,7 +110,11 @@ class PolicyConstraintsTest {
         val policy = policies.getValue("FooRedactions")
         val recipe = recipes.getValue("SingleInput").forceMatchPolicyName(policy.name)
 
-        val result = translatePolicy(policy, recipe, EMPTY_OPTIONS)
+        val result = translatePolicy(
+            policy,
+            recipe,
+            PolicyOptions(mapOf("my_store_id" to "Foo"))
+        )
 
         val check = result.egressChecks.values.single().single() as Check.Assert
         assertThat(check.predicate).isEqualTo(
@@ -142,20 +146,20 @@ class PolicyConstraintsTest {
 
         val result = translatePolicy(policy, recipe, PolicyOptions(storeMap))
 
-        val handle = recipe.handles.values.single()
+        val store = AccessPath.Root.Store("my_store_id")
         assertThat(result.storeClaims).containsExactly(
             "my_store_id",
             listOf(
                 Claim.Assume(
-                    AccessPath(handle, selectors("a")),
+                    AccessPath(store, selectors("a")),
                     labelPredicate("allowedForEgress_redaction1")
                 ),
                 Claim.Assume(
-                    AccessPath(handle, selectors("b")),
+                    AccessPath(store, selectors("b")),
                     labelPredicate("allowedForEgress_redaction2")
                 ),
                 Claim.Assume(
-                    AccessPath(handle, selectors("c")),
+                    AccessPath(store, selectors("c")),
                     labelPredicate("allowedForEgress_redaction3")
                 )
             )
@@ -170,12 +174,12 @@ class PolicyConstraintsTest {
 
         val result = translatePolicy(policy, recipe, PolicyOptions(storeMap))
 
-        val handle = recipe.handles.values.single()
+        val store = AccessPath.Root.Store("my_store_id")
         assertThat(result.storeClaims).containsExactly(
             "my_store_id",
             listOf(
                 Claim.Assume(
-                    AccessPath(handle, selectors("a")),
+                    AccessPath(store, selectors("a")),
                     labelPredicate("allowedForEgress_redaction1")
                 )
             )
@@ -186,22 +190,11 @@ class PolicyConstraintsTest {
     fun applyPolicy_storeClaims_missingFromStoresMap() {
         val policy = policies.getValue("FooRedactions")
         val recipe = recipes.getValue("SingleMappedInput").forceMatchPolicyName(policy.name)
-        val storeMap = mapOf("some_other_store" to "Foo")
+        val storeMap = mapOf("some_other_store" to "Bar")
 
-        val result = translatePolicy(policy, recipe, PolicyOptions(storeMap))
-
-        assertThat(result.storeClaims).isEmpty()
-    }
-
-    @Test
-    fun applyPolicy_storeClaims_differentType() {
-        val policy = policies.getValue("SingleBarRedaction")
-        val recipe = recipes.getValue("SingleMappedInput").forceMatchPolicyName(policy.name)
-        val storeMap = mapOf("my_store_id" to "Foo")
-
-        val result = translatePolicy(policy, recipe, PolicyOptions(storeMap))
-
-        assertThat(result.storeClaims).isEmpty()
+        assertFailsWith<PolicyViolation.NoStoreForPolicyTarget> {
+            translatePolicy(policy, recipe, PolicyOptions(storeMap))
+        }
     }
 
     @Test
@@ -233,17 +226,17 @@ class PolicyConstraintsTest {
 
         val result = translatePolicy(policy, recipe, PolicyOptions(storeMap))
 
-        val handle = recipe.handles.values.single()
+        val store = AccessPath.Root.Store("my_store_id")
         val predicate = labelPredicate("allowedForEgress")
         assertThat(result.storeClaims).containsExactly(
             "my_store_id",
             listOf(
-                Claim.Assume(AccessPath(handle, selectors("foo")), predicate),
-                Claim.Assume(AccessPath(handle, selectors("foo", "a")), predicate),
-                Claim.Assume(AccessPath(handle, selectors("foo", "b")), predicate),
-                Claim.Assume(AccessPath(handle, selectors("foo", "c")), predicate),
-                Claim.Assume(AccessPath(handle, selectors("bar")), predicate),
-                Claim.Assume(AccessPath(handle, selectors("bar", "a")), predicate)
+                Claim.Assume(AccessPath(store, selectors("foo")), predicate),
+                Claim.Assume(AccessPath(store, selectors("foo", "a")), predicate),
+                Claim.Assume(AccessPath(store, selectors("foo", "b")), predicate),
+                Claim.Assume(AccessPath(store, selectors("foo", "c")), predicate),
+                Claim.Assume(AccessPath(store, selectors("bar")), predicate),
+                Claim.Assume(AccessPath(store, selectors("bar", "a")), predicate)
             )
         )
     }

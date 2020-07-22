@@ -55,7 +55,12 @@ data class Plan(
         val storageKey: StorageKey,
         val type: Type,
         val annotations: List<Annotation>
-    )
+    ) {
+        companion object {
+            val storageKeyLens =
+                lens(Handle::storageKey) { t, f -> t.copy(storageKey = f) }
+        }
+    }
 
     /** Represents the expression to be evaluated to produce a new field. */
     data class AdapterField<T>(
@@ -80,12 +85,15 @@ data class Plan(
 
     /** Represents a use of a [Handle] by a [Particle]. */
     data class HandleConnection(
-        val storageKey: StorageKey,
+        val handle: Handle,
         val mode: HandleMode,
         val type: Type,
         val annotations: List<Annotation> = emptyList(),
         val adapter: Adapter? = null
     ) {
+        val storageKey: StorageKey
+            get() = handle.storageKey
+
         val ttl: Ttl
             get() {
                 return annotations.find { it.name == "ttl" }?.let {
@@ -94,8 +102,7 @@ data class Plan(
             }
 
         companion object {
-            val storageKeyLens =
-                lens(HandleConnection::storageKey) { t, f -> t.copy(storageKey = f) }
+            val handleLens = lens(HandleConnection::handle) { t, f -> t.copy(handle = f) }
         }
     }
 

@@ -740,6 +740,56 @@ open class HandleManagerTestBase {
     }
 
     @Test
+    fun collectionsOfReferencesWorkEndToEnd() = testRunner {
+        fun toReferencedEntity(value: Int) = TestReferencesParticle_Entities_References(value)
+
+        val referencedEntitiesKey = ReferenceModeStorageKey(
+            backingKey = RamDiskStorageKey("referencedEntities"),
+            storageKey = RamDiskStorageKey("set-referencedEntities")
+        )
+
+        val referencedEntityHandle = writeHandleManager.createCollectionHandle(
+            referencedEntitiesKey,
+            entitySpec = TestReferencesParticle_Entities_References
+        )
+
+        suspend fun toReferences(values: Iterable<Int>) = values
+            .map { toReferencedEntity(it) }
+            .map {
+                referencedEntityHandle.dispatchStore(it)
+                referencedEntityHandle.dispatchCreateReference(it)
+            }
+
+        suspend fun toEntity(values: Set<Int>, valueList: List<Int>) =
+            TestReferencesParticle_Entities(
+                toReferences(values).toSet(),
+                toReferences(valueList)
+            )
+
+        val entities = setOf(
+            toEntity(setOf(1, 2, 3), listOf(3, 3, 4)),
+            toEntity(setOf(200, 100, 300), listOf(2, 10, 2)),
+            toEntity(setOf(34, 2145, 1, 11), listOf(3, 4, 5))
+        )
+
+        val writeHandle = writeHandleManager.createCollectionHandle(
+            entitySpec = TestReferencesParticle_Entities
+        )
+        val readHandle = readHandleManager.createCollectionHandle(
+            entitySpec = TestReferencesParticle_Entities
+        )
+
+        val updateDeferred = readHandle.onUpdateDeferred { it.size == 3 }
+        entities.forEach { writeHandle.dispatchStore(it) }
+        val entitiesOut = updateDeferred.await()
+        assertThat(entitiesOut).containsExactlyElementsIn(entities)
+        entitiesOut.forEach { entity ->
+            entity.references.forEach { it.dereference() }
+            entity.referenceList.forEach { it.dereference() }
+        }
+    }
+
+    @Test
     fun clientCanSetEntityId() = testRunner {
         fakeTime.millis = 0
         // Ask faketime to increment to test with changing timestamps.
