@@ -18,12 +18,13 @@ class Recipe2Plan : CliktCommand(
     This script reads serialized manifests and generates Kotlin files with [Plan] classes.""",
     printHelpOnEmptyArgs = true
 ) {
-    val outdir by option(help = "output directory; defaults to '.'").file(fileOkay = false)
-    // TODO(161994250): Package should be derived from proto
-    val packageName by option(help = "scope to specified package; default: 'arcs'").default("arcs")
-    val manifests by argument(help = "paths to protobuf-serialized manifests")
+    private val outdir by option(help = "output directory; defaults to '.'").file(fileOkay = false)
+    // TODO(b/161994250): Package should be derived from proto
+    private val packageName by option(help = "scope to specified package; default: 'arcs'")
+        .default("arcs")
+    private val manifests by argument(help = "paths to protobuf-serialized manifests")
         .file(exists = true).multiple()
-    val verbose by option("--verbose", "-v", help = "Print logs").flag(default = false)
+    private val verbose by option("--verbose", "-v", help = "Print logs").flag(default = false)
 
     /** Execute: Generate a plan per input manifest proto */
     override fun run() = manifests.forEach { manifest ->

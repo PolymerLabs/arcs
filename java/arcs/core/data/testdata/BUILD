@@ -1,8 +1,8 @@
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_gen",
+    "arcs_kt_plan_2",
     "arcs_manifest",
-    "arcs_plan_generation",
     "arcs_proto_plan",
 )
 
@@ -54,7 +54,7 @@ arcs_proto_plan(
     src = "WriterReaderExample.arcs",
 )
 
-arcs_plan_generation(
+arcs_kt_plan_2(
     name = "plan_from_proto",
     srcs = [":example-proto"],
     package = "arcs.core.data.testdata",

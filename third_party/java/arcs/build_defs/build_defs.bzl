@@ -26,7 +26,7 @@ load(
 )
 load(
     "//third_party/java/arcs/build_defs/internal:plan.bzl",
-    _arcs_plan_generation = "arcs_plan_generation",
+    _arcs_kt_plan_2 = "arcs_kt_plan_2",
 )
 load(
     "//third_party/java/arcs/build_defs/internal:schemas.bzl",
@@ -78,7 +78,7 @@ arcs_manifest_proto = _arcs_manifest_proto
 
 arcs_proto_plan = _arcs_proto_plan
 
-arcs_plan_generation = _arcs_plan_generation
+arcs_kt_plan_2 = _arcs_kt_plan_2
 
 kt_js_library = _kt_js_library
 

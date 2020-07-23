@@ -7,7 +7,7 @@ load(
 )
 
 # Note: Once this is mature, it will replace arcs_kt_plan
-def arcs_plan_generation(name, package, srcs = [], deps = [], visibility = None):
+def arcs_kt_plan_2(name, package, srcs = [], deps = [], visibility = None):
     """Generates Plans Jar from protos.
 
     Example:
