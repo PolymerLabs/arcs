@@ -199,6 +199,42 @@ Schema(
 [end]
 
 [name]
+generates schemas for a nested entity referencing an external schema
+[input]
+schema External
+  name: Text
+
+particle P
+  h1: reads Thing {
+    other: inline External
+  }
+[results]
+Schema(
+    setOf(SchemaName("Thing")),
+    SchemaFields(
+        singletons = mapOf(
+            "other" to FieldType.InlineEntity("dde7385227a50a4a4654027dba6feefccd1a7a39")
+        ),
+        collections = emptyMap()
+    ),
+    "0e998e43c23c1ae55fe4c7d9c819669aa4ee9681",
+    refinement = { _ -> true },
+    query = null
+)
+[next]
+Schema(
+    setOf(SchemaName("External")),
+    SchemaFields(
+        singletons = mapOf("name" to FieldType.Text),
+        collections = emptyMap()
+    ),
+    "dde7385227a50a4a4654027dba6feefccd1a7a39",
+    refinement = { _ -> true },
+    query = null
+)
+[end]
+
+[name]
 generates schemas for a double nested entity
 [input]
 particle P

@@ -6,6 +6,7 @@ import arcs.core.data.Plan
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
+import arcs.core.storage.driver.VolatileDriverProviderFactory
 import arcs.core.util.TaggedLog
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.ExplicitHostRegistry
@@ -56,6 +57,7 @@ class ReflectiveParticleConstructionTest {
         RamDisk.clear()
         DriverAndKeyConfigurator.configureKeyParsers()
         RamDiskDriverProvider()
+        VolatileDriverProviderFactory()
 
         val hostRegistry = ExplicitHostRegistry()
         val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)

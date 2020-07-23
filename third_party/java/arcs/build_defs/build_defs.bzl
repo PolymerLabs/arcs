@@ -20,12 +20,13 @@ load(
     "//third_party/java/arcs/build_defs/internal:manifest.bzl",
     _arcs_manifest = "arcs_manifest",
     _arcs_manifest_bundle = "arcs_manifest_bundle",
+    _arcs_manifest_json = "arcs_manifest_json",
     _arcs_manifest_proto = "arcs_manifest_proto",
     _arcs_proto_plan = "arcs_proto_plan",
 )
 load(
     "//third_party/java/arcs/build_defs/internal:plan.bzl",
-    _arcs_plan_generation = "recipe2plan",
+    _arcs_plan_generation = "arcs_plan_generation",
 )
 load(
     "//third_party/java/arcs/build_defs/internal:schemas.bzl",

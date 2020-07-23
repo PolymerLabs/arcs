@@ -14,35 +14,46 @@ package arcs.android.devtools
 import arcs.core.util.TaggedLog
 import fi.iki.elonen.NanoHTTPD
 import fi.iki.elonen.NanoWSD
+import fi.iki.elonen.NanoWSD.WebSocketFrame.CloseCode
 import java.io.IOException
 
 /**
- * An extension of [NanoWSD] for devtools to connect Arcs to a remote device for debugging.
+ * An extension of [NanoWSD] and implementaiton of [DevWebServer] for devtools to connect Arcs to a
+ * remote device for debugging.
  */
-class DevWebSocket : NanoWSD(12345) {
-    private var wsdSocket: WsdSocket? = null
+object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
+
+    private val wsdSockets = mutableSetOf<WsdSocket>()
     private val log = TaggedLog { "DevWebSocket" }
 
     /**
      * Send a string to the client.
      */
-    fun send(msg: String) {
-        if (wsdSocket?.open ?: false) {
-            wsdSocket?.send(msg)
-        } else {
-            log.debug { "WebSocket Closed, can't send message [message=$msg]." }
+    override fun send(msg: String) {
+        wsdSockets.forEach { socket ->
+            socket.send(msg)
         }
     }
 
     override fun openWebSocket(ihttpSession: NanoHTTPD.IHTTPSession?): WebSocket {
-        wsdSocket = WsdSocket(ihttpSession, log)
-        return wsdSocket!!
+        val socket = WsdSocket(ihttpSession, log) { wsdSockets.remove(it) }
+        wsdSockets.add(socket)
+        return socket
+    }
+
+    fun close() {
+        wsdSockets.forEach { socket ->
+            socket.close(CloseCode.NormalClosure, "Closing WebSocket", false)
+        }
+        wsdSockets.clear()
+        super.closeAllConnections()
     }
 
     // TODO: This is a WIP for DevTools, still in flux.
     private class WsdSocket(
         handshakeRequest: NanoHTTPD.IHTTPSession?,
-        val log: TaggedLog
+        val log: TaggedLog,
+        val removeCallback: (WsdSocket) -> Unit
     ) : WebSocket(handshakeRequest) {
         private val PING_PAYLOAD = "1337DEADBEEFC001".toByteArray()
         var open = false
@@ -64,13 +75,16 @@ class DevWebSocket : NanoWSD(12345) {
         ) {
             log.debug { "Websocket closed. [reason=$reason]." }
             open = false
+            removeCallback(this)
         }
 
         protected override fun onMessage(webSocketFrame: WebSocketFrame) {
             try {
                 send(webSocketFrame.getTextPayload().toString() + " to you")
             } catch (e: IOException) {
-                log.error(e) { "Error receiving message from WebSocket [message=${e.message}]." }
+                log.error(e) {
+                    "Error receiving message from WebSocket [message=${e.message}]."
+                }
             }
         }
 

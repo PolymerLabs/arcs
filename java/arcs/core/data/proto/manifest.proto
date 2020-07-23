@@ -160,10 +160,6 @@ message ListTypeProto {
   TypeProto element_type = 1;
 }
 
-message InlineEntityTypeProto {
-  string schema_hash = 1;
-}
-
 // These are constraints expressed by the particle author,
 // not those resulting from type inference.
 message ConstraintInfo {

@@ -21,7 +21,7 @@ class Recipe2Plan : CliktCommand(
     printHelpOnEmptyArgs = true
 ) {
     val outdir by option(help = "output directory; defaults to '.'").file(fileOkay = false)
-    val outfile by option(help = "output filename; if omitted")
+    // TODO(161994250): Package should be derived from proto
     val packageName by option(help = "scope to specified package; default: 'arcs'").default("arcs")
     val manifests by argument(help = "paths to protobuf-serialized manifests")
         .file(exists = true).multiple()
@@ -39,6 +39,7 @@ class Recipe2Plan : CliktCommand(
         val manifestProto = ManifestProto.parseFrom(manifest.readBytes())
         val fileBuilder = FileSpec.builder(packageName, "")
 
+        fileBuilder.addComment("GENERATED CODE -- DO NOT EDIT")
         manifestProto.decodeRecipes()
             .filter { it.name != null }
             .forEach { it.toGeneration(fileBuilder) }
@@ -47,8 +48,8 @@ class Recipe2Plan : CliktCommand(
     }
 
     /** Produces a File object per user specification, or with default values. */
-    fun outputFile(manifest: File): File {
-        val outputName = outfile ?: manifest.nameWithoutExtension + ".kt"
+    private fun outputFile(manifest: File): File {
+        val outputName = manifest.name.replace(".pb.bin", ".jvm.kt")
         val outputPath = outdir ?: System.getProperty("user.dir")
         return File("$outputPath/$outputName")
     }

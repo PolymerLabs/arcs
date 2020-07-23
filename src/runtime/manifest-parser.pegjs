@@ -1613,7 +1613,7 @@ SchemaPrimitiveType
     });
   }
 
-NestedSchemaType = 'inline' whiteSpace? schema:SchemaInline
+NestedSchemaType = 'inline' whiteSpace? schema:(SchemaInline / TypeName)
   {
     return toAstNode<AstNode.NestedSchema>({
       kind: 'schema-nested',
