@@ -95,6 +95,7 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
      * Gets data from the store corresponding to the given [muxId].
      */
     suspend fun getLocalData(muxId: String, id: Int): Data {
+        // registerToStore will only register to the store if the id is not already registered
         registerToStore(id, muxId)
         val (_, store) = store(muxId)
 
@@ -129,6 +130,7 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
         val muxId = requireNotNull(message.muxId) {
             "messages sent to Direct Store Muxer must have a muxId"
         }
+        // registerToStore will only register to the store if the id is not already registered
         registerToStore(message.id!!, muxId)
         val (_, store) = store(muxId)
         return store.onProxyMessage(message)
