@@ -2,6 +2,8 @@ load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_kt_gen",
     "arcs_manifest",
+    "arcs_plan_generation",
+    "arcs_proto_plan",
 )
 
 package(default_visibility = ["//java/arcs:allowed-packages"])
@@ -45,4 +47,16 @@ arcs_kt_gen(
         "Produce.arcs",
     ],
     data = [":shared_schemas"],
+)
+
+arcs_proto_plan(
+    name = "example-proto",
+    src = "WriterReaderExample.arcs",
+)
+
+arcs_plan_generation(
+    name = "plan_from_proto",
+    srcs = [":example-proto"],
+    package = "arcs.core.data.testdata",
+    visibility = ["//visibility:public"],
 )
