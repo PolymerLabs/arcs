@@ -388,6 +388,9 @@ async function schemaFieldToProtoPayload(fieldType: SchemaField) {
         }
       };
     }
+    case 'type-name': {
+      return typeToProtoPayload(fieldType.model);
+    }
     case 'schema-nested': {
       // Nested inlined entity. Wraps a 'schema-inline' object. Mark it as an
       // inline entity.
