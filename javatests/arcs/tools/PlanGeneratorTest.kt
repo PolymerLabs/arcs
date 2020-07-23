@@ -14,6 +14,33 @@ class PlanGeneratorTest {
     @Test
     fun schema_empty() {
         assertThat(Schema.EMPTY.toGeneration().toString())
+            .isEqualTo("""arcs.core.data.Schema.EMPTY""")
+    }
+
+    @Test
+    fun schema_nameOnly() {
+        val schemaGen = Schema(setOf(SchemaName("Foo")), SchemaFields(emptyMap(), emptyMap()), "fooHash")
+            .toGeneration()
+            .toString()
+
+//        // TODO(alxr): Figure out how to get indentation right so the test can be written like so
+//        assertThat(schemaGen).isEqualTo("""
+//            arcs.core.data.Schema(
+//                names = setOf(arcs.core.data.SchemaName("Foo")),
+//                fields = arcs.core.data.SchemaFields(
+//                    singletons = emptyMap(),
+//                    collections = emptyMap()
+//                ),
+//                hash = "fooHash"
+//            )
+//        """.trimIndent())
+        assertThat(schemaGen).contains("SchemaName(\"Foo\")")
+        assertThat(schemaGen).contains("hash = \"fooHash\"")
+    }
+
+    @Test
+    fun schema_empty() {
+        assertThat(Schema.EMPTY.toGeneration().toString())
             .isEqualTo("""Schema.EMPTY""")
     }
 
