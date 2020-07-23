@@ -44,6 +44,7 @@ fun AccessPath.encode(): AccessPathProto {
             proto.particleSpec = connectionSpecRoot.particleSpecName
             proto.handleConnection = connectionSpecRoot.connectionSpec.name
         }
+        is AccessPath.Root.Store -> TODO("b/161947321")
         else -> throw UnsupportedOperationException("Unsupported AccessPath.Root type: $this")
     }
     return proto.build()
