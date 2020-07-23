@@ -50,7 +50,7 @@ data class ParcelableHandle(
 }
 
 /** Wraps a [Plan.Handle] as a [ParcelableHandle]. */
-fun Plan.Handle.toParcelable(): ParcelableHandle = ParcelableHandle(this)
+fun Plan.Handle.toParcelable() = ParcelableHandle(this)
 
 /** Writes a [Plan.Handle] to a [Parcel]. */
 fun Parcel.writeHandle(handle: Plan.Handle, flags: Int) =

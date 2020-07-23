@@ -51,18 +51,19 @@ data class ParcelableAnnotationParam(
             }
         }
 
-        override fun newArray(size: Int): Array<ParcelableAnnotationParam?> =
-            arrayOfNulls(size)
+        override fun newArray(size: Int): Array<ParcelableAnnotationParam?> = arrayOfNulls(size)
     }
 }
 
 /** Wraps a [AnnotationParam] as a [ParcelableAnnotationParam]. */
-fun AnnotationParam.toParcelable(): ParcelableAnnotationParam = ParcelableAnnotationParam(this)
+fun AnnotationParam.toParcelable() = ParcelableAnnotationParam(this)
 
 /** Writes a [AnnotationParam] to a [Parcel]. */
-fun Parcel.writeAnnotationParam(param: AnnotationParam, flags: Int) =
+fun Parcel.writeAnnotationParam(param: AnnotationParam, flags: Int) {
     writeTypedObject(param.toParcelable(), flags)
+}
 
 /** Reads a [AnnotationParam] from a [Parcel]. */
-fun Parcel.readAnnotationParam(): AnnotationParam? =
-    readTypedObject(ParcelableAnnotationParam)?.actual
+fun Parcel.readAnnotationParam(): AnnotationParam? {
+    return readTypedObject(ParcelableAnnotationParam)?.actual
+}

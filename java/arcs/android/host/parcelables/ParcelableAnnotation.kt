@@ -36,17 +36,17 @@ data class ParcelableAnnotation(override val actual: Annotation) : ActualParcela
             return ParcelableAnnotation(Annotation(name, params.mapValues { it.value.actual }))
         }
 
-        override fun newArray(size: Int): Array<ParcelableAnnotation?> =
-            arrayOfNulls(size)
+        override fun newArray(size: Int): Array<ParcelableAnnotation?> = arrayOfNulls(size)
     }
 }
 
 /** Wraps a [Annotation] as a [ParcelableAnnotation]. */
-fun Annotation.toParcelable(): ParcelableAnnotation = ParcelableAnnotation(this)
+fun Annotation.toParcelable() = ParcelableAnnotation(this)
 
 /** Writes a [Annotation] to a [Parcel]. */
-fun Parcel.writeAnnotation(annotation: Annotation, flags: Int) =
+fun Parcel.writeAnnotation(annotation: Annotation, flags: Int) {
     writeTypedObject(annotation.toParcelable(), flags)
+}
 
 /** Writes a [Annotation] to a [Parcel]. */
 fun Parcel.writeAnnotations(annotations: List<Annotation>, flags: Int) {
@@ -55,8 +55,9 @@ fun Parcel.writeAnnotations(annotations: List<Annotation>, flags: Int) {
 }
 
 /** Reads a [Annotation] from a [Parcel]. */
-fun Parcel.readAnnotation(): Annotation? =
-    readTypedObject(ParcelableAnnotation)?.actual
+fun Parcel.readAnnotation(): Annotation? {
+    return readTypedObject(ParcelableAnnotation)?.actual
+}
 
 /** Reads a [Annotation] from a [Parcel]. */
 fun Parcel.readAnnotations(): List<Annotation> {
@@ -65,10 +66,10 @@ fun Parcel.readAnnotations(): List<Annotation> {
     }
     val annotations = mutableListOf<Annotation>()
 
-    repeat(size) {
+    repeat(size) { index ->
         annotations.add(
             requireNotNull(readAnnotation()) {
-                "No Annotation found in list position $it of parcel."
+                "No Annotation found at index $index in Parcel, expected length: $size."
             }
         )
     }
