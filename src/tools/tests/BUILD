@@ -21,6 +21,7 @@ filegroup(
         ":golden-wasm_GeneratedSchemas.wasm.kt",
         ":golden_GeneratedSchemas.jvm.kt",
         ":golden_TestHarness.kt",
+        "//java/arcs/core/data/testdata:plan_from_proto",
     ],
 )
 

@@ -36,6 +36,11 @@ const testData = [
     label: 'Kotlin (Kotlin-specific features)',
     generated: 'src/tools/tests/golden-kt_GeneratedSchemas.jvm.kt',
     golden: 'src/tools/tests/goldens/kt_generated-schemas.jvm.kt',
+  },
+  {
+    label: 'Kotlin via Kotlin',
+    generated: 'java/arcs/core/data/testdata/plan_from_proto.kt',
+    golden: 'src/tools/tests/goldens/generated-from-kotlin.jvm.kt',
   }
 ];
 

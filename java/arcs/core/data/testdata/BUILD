@@ -58,4 +58,5 @@ arcs_plan_generation(
     name = "plan_from_proto",
     srcs = [":example-proto"],
     package = "arcs.core.data.testdata",
+    visibility = ["//visibility:public"],
 )
