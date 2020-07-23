@@ -22,7 +22,7 @@ data class ParcelablePlan(override val actual: Plan) : ActualParcelable<Plan> {
         actual.particles.forEach {
             parcel.writeParticle(it, 0)
         }
-        // TODO(161818630): write Plan's annotations.
+        parcel.writeAnnotations(actual.annotations, flags)
     }
 
     override fun describeContents(): Int = 0
@@ -49,8 +49,8 @@ data class ParcelablePlan(override val actual: Plan) : ActualParcelable<Plan> {
                 }
             }
 
-            // TODO(161818630): read Plan's annotations.
-            return ParcelablePlan(Plan(particles, planHandles.values.toList()))
+            val annotations = parcel.readAnnotations()
+            return ParcelablePlan(Plan(particles, planHandles.values.toList(), annotations))
         }
 
         override fun newArray(size: Int): Array<ParcelablePlan?> = arrayOfNulls(size)

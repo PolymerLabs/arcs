@@ -25,7 +25,7 @@ data class ParcelableHandle(
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(actual.storageKey.toString())
         parcel.writeType(actual.type, flags)
-        // TODO(161818630): write Handle's annotations.
+        parcel.writeAnnotations(actual.annotations, flags)
     }
 
     override fun describeContents(): Int = 0
@@ -36,11 +36,11 @@ data class ParcelableHandle(
                 "No storageKey found in Parcel"
             }
             val type = requireNotNull(parcel.readType()) {
-                "No name found in Parcel"
+                "No type found in Parcel"
             }
-            // TODO(161818630): read Handle's annotations.
+            val annotations = parcel.readAnnotations()
             return ParcelableHandle(
-                Plan.Handle(StorageKeyParser.parse(storageKeyString), type, emptyList())
+                Plan.Handle(StorageKeyParser.parse(storageKeyString), type, annotations)
             )
         }
 
@@ -49,9 +49,8 @@ data class ParcelableHandle(
     }
 }
 
-/** Wraps a [Plan.HandleConnection] as a [ParcelableHandle]. */
-fun Plan.Handle.toParcelable(): ParcelableHandle =
-    ParcelableHandle(this)
+/** Wraps a [Plan.Handle] as a [ParcelableHandle]. */
+fun Plan.Handle.toParcelable(): ParcelableHandle = ParcelableHandle(this)
 
 /** Writes a [Plan.Handle] to a [Parcel]. */
 fun Parcel.writeHandle(handle: Plan.Handle, flags: Int) =
