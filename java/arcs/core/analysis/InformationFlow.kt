@@ -103,10 +103,18 @@ class InformationFlow private constructor(
             }
     }
 
-    private fun getInitialValues(ingresses: IngressInfo): AccessPathLabels {
-        // The initial value is (accessPath -> emptyLabels) followed by applying all the claims.
-        return mutableMapOf(AccessPath(ingresses.handleNode.handle) to getEmptyLabels())
-            .apply { applyAssumes(ingresses.claims) }
+    private fun getInitialValues(ingress: IngressInfo): AccessPathLabels {
+        // The initial value is (accessPaths -> emptyLabels) followed by applying all the claims.
+        val handle = ingress.handleNode.handle
+        val root = AccessPath.Root.Handle(handle)
+        // 1. accessPaths -> emptyLabels
+        val emptyLabelsMap = mutableMapOf<AccessPath, InformationFlowLabels>()
+        for (accessPath in handle.type.getAccessPaths(root)) {
+            emptyLabelsMap[accessPath] = getEmptyLabels()
+        }
+        // 2. Apply any initial claims.
+        return emptyLabelsMap
+            .apply { applyAssumes(ingress.claims) }
             .let { AccessPathLabels.makeValue(it.toMap()) }
     }
 
