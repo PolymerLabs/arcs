@@ -89,15 +89,24 @@ class PlanGeneratorTest {
 
     @Test
     fun fieldType_tuple() {
-        assertThat(FieldType.Tuple(listOf(FieldType.Number, FieldType.BigInt)).toGeneration().toString())
+        assertThat(
+            FieldType.Tuple(listOf(FieldType.Number, FieldType.BigInt))
+                .toGeneration()
+                .toString()
+        )
             .isEqualTo(
                 "arcs.core.data.FieldType.Tuple(" +
                     "listOf(arcs.core.data.FieldType.Number, arcs.core.data.FieldType.BigInt))"
             )
-        assertThat(FieldType.Tuple(listOf(FieldType.Char, FieldType.EntityRef("anotherHash"))).toGeneration().toString())
+        assertThat(
+            FieldType.Tuple(listOf(FieldType.Char, FieldType.EntityRef("anotherHash")))
+                .toGeneration()
+                .toString()
+        )
             .isEqualTo(
                 "arcs.core.data.FieldType.Tuple(" +
-                    "listOf(arcs.core.data.FieldType.Char, arcs.core.data.FieldType.EntityRef(\"anotherHash\")))"
+                    "listOf(arcs.core.data.FieldType.Char, " +
+                    "arcs.core.data.FieldType.EntityRef(\"anotherHash\")))"
             )
         assertThat(
             FieldType.Tuple(
@@ -119,9 +128,13 @@ class PlanGeneratorTest {
     fun fieldType_listOf() {
         assertThat(FieldType.ListOf(FieldType.Boolean).toGeneration().toString())
             .isEqualTo("arcs.core.data.FieldType.ListOf(arcs.core.data.FieldType.Boolean)")
-        assertThat(FieldType.ListOf(FieldType.EntityRef("yetAnotherHash")).toGeneration().toString())
+        assertThat(
+            FieldType.ListOf(FieldType.EntityRef("yetAnotherHash"))
+                .toGeneration()
+                .toString())
             .isEqualTo(
-                "arcs.core.data.FieldType.ListOf(arcs.core.data.FieldType.EntityRef(\"yetAnotherHash\"))"
+                "arcs.core.data.FieldType.ListOf(" +
+                    "arcs.core.data.FieldType.EntityRef(\"yetAnotherHash\"))"
             )
     }
 }
