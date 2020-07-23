@@ -777,6 +777,22 @@ describe('manifest2proto', () => {
     });
   });
 
+  it.only('encodes schemas with references to other schemas', async () => {
+    const manifest = await Manifest.parse(`
+      schema Base
+        key: Text
+        value: Number
+      
+      schema Recurse
+        key: Text
+        ref: [&Base]
+        
+      particle Abc 
+        input: writes [Recurse]
+    `);
+    const schema = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type.entity.schema;
+  });
+
   it('encodes schemas with tuple fields', async () => {
     const manifest = await Manifest.parse(`
       particle Abc in 'a/b/c.js'
