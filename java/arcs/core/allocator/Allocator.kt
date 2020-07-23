@@ -15,7 +15,6 @@ import arcs.core.common.Id
 import arcs.core.common.toArcId
 import arcs.core.data.Annotation
 import arcs.core.data.Capabilities
-import arcs.core.data.Capability.Shareable
 import arcs.core.data.CreatableStorageKey
 import arcs.core.data.Plan
 import arcs.core.entity.HandleSpec
@@ -194,11 +193,7 @@ class Allocator(
     ): StorageKey {
         val capabilities = Capabilities.fromAnnotations(annotations)
         return CapabilitiesResolver(CapabilitiesResolver.Options(arcId))
-            .createStorageKey(
-                if (capabilities.isEmpty) Capabilities(Shareable(true)) else capabilities,
-                type,
-                idGenerator.newChildId(arcId, "").toString()
-        )
+            .createStorageKey(capabilities, type, idGenerator.newChildId(arcId, "").toString())
     }
 
     /**

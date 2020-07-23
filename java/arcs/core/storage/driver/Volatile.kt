@@ -28,10 +28,6 @@ import kotlinx.atomicfu.atomic
 data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
     private val arcMemory = VolatileMemory()
 
-    init {
-        DriverFactory.register(this)
-    }
-
     override fun willSupport(storageKey: StorageKey): Boolean =
         storageKey is VolatileStorageKey && storageKey.arcId == arcId
 
@@ -51,6 +47,53 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
     override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
         // Volatile storage is opaque, so remove all entities.
         removeAllEntities()
+}
+
+/** [DriverProvider] that creates an instance of [VolatileDriverProvider] per arc on demand. */
+class VolatileDriverProviderFactory : DriverProvider {
+    private val driverProvidersByArcId = mutableMapOf<ArcId, VolatileDriverProvider>()
+
+    /** Returns a set of all known [ArcId]s. */
+    val arcIds: Set<ArcId>
+        get() = driverProvidersByArcId.keys
+
+    init {
+        DriverFactory.register(this)
+    }
+
+    override fun willSupport(storageKey: StorageKey): Boolean {
+        if (storageKey !is VolatileStorageKey) return false
+        // Register a new VolatileDriverProvider, if the arcId hasn't been seen before.
+        if (storageKey.arcId !in driverProvidersByArcId) {
+            driverProvidersByArcId[storageKey.arcId] = VolatileDriverProvider(storageKey.arcId)
+        }
+        return true
+    }
+
+    /** Gets a [Driver] for the given [storageKey] and type [Data] (declared by [dataClass]). */
+    override suspend fun <Data : Any> getDriver(
+        storageKey: StorageKey,
+        dataClass: KClass<Data>,
+        type: Type
+    ): Driver<Data> {
+        require(storageKey is VolatileStorageKey) {
+            "Unexpected non-volatile storageKey: $storageKey"
+        }
+        require(willSupport(storageKey)) {
+            "This provider does not support storageKey: $storageKey"
+        }
+        return driverProvidersByArcId[storageKey.arcId]!!.getDriver(storageKey, dataClass, type)
+    }
+
+    override suspend fun removeAllEntities() {
+        driverProvidersByArcId.values.forEach { it.removeAllEntities() }
+    }
+
+    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
+        driverProvidersByArcId.values.forEach {
+            it.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
+        }
+    }
 }
 
 /** [Driver] implementation for an in-memory store of data. */
