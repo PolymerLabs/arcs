@@ -23,52 +23,25 @@ fun parseClaimProto(protoText: String): ClaimProto {
 @RunWith(JUnit4::class)
 class ClaimProtoDecoderTest {
     @Test
-    fun decodesAssumeClaim() {
-        val protoText = """
-          assume {
-            access_path {
-              particle_spec: "TestSpec"
-              handle_connection: "output"
-            }
-            predicate {
-              label {
-                semantic_tag: "public"
-              }
-            }
-          }
-        """.trimIndent()
+    fun roundTrip_assumeClaim() {
         val handleConnectionSpec = HandleConnectionSpec(
             "output",
             HandleMode.Write,
             TypeVariable("output")
         )
-        val connectionSpecs = listOf(handleConnectionSpec).associateBy { it.name }
-        val claim = parseClaimProto(protoText).decode(connectionSpecs)
-        val assume = requireNotNull(claim as Claim.Assume)
-        assertThat(assume).isEqualTo(
-            Claim.Assume(
-                AccessPath("TestSpec", handleConnectionSpec),
-                Predicate.Label(
-                    InformationFlowLabel.SemanticTag("public")
-                )
-            )
+        val claim = Claim.Assume(
+            AccessPath("TestSpec", handleConnectionSpec),
+            Predicate.Label(InformationFlowLabel.SemanticTag("public"))
         )
+
+        val encoded = claim.encode()
+        val decoded = encoded.decode(mapOf("output" to handleConnectionSpec))
+
+        assertThat(decoded).isEqualTo(claim)
     }
 
     @Test
-    fun decodesDerivesFromClaim() {
-        val protoText = """
-          derives_from {
-            target {
-              particle_spec: "TestSpec"
-              handle_connection: "output"
-            }
-            source {
-              particle_spec: "TestSpec"
-              handle_connection: "input"
-            }
-          }
-        """.trimIndent()
+    fun roundTrip_derivesFromClaim() {
         val outputSpec = HandleConnectionSpec(
             "output",
             HandleMode.Write,
@@ -80,13 +53,14 @@ class ClaimProtoDecoderTest {
             TypeVariable("output")
         )
         val connectionSpecs = listOf(inputSpec, outputSpec).associateBy { it.name }
-        val claim = parseClaimProto(protoText).decode(connectionSpecs)
-        val derivesFrom = requireNotNull(claim as Claim.DerivesFrom)
-        assertThat(derivesFrom).isEqualTo(
-            Claim.DerivesFrom(
-                target = AccessPath("TestSpec", outputSpec),
-                source = AccessPath("TestSpec", inputSpec)
-            )
+        val claim = Claim.DerivesFrom(
+            AccessPath("TestSpec", outputSpec),
+            AccessPath("TestSpec", inputSpec)
         )
+
+        val encoded = claim.encode()
+        val decoded = encoded.decode(connectionSpecs)
+
+        assertThat(decoded).isEqualTo(claim)
     }
 }

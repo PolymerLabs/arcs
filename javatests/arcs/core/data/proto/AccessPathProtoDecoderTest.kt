@@ -5,73 +5,55 @@ import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
-import com.google.protobuf.TextFormat
 import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-/** Parses a given proto text as [AccessPathProto]. */
-fun parseAccessPathProto(protoText: String): AccessPathProto {
-    val builder = AccessPathProto.newBuilder()
-    TextFormat.getParser().merge(protoText, builder)
-    return builder.build()
-}
-
 @RunWith(JUnit4::class)
 class AccessPathProtoDecoderTest {
     @Test
-    fun decodesAccessPathNoSelectors() {
-        val protoText = """
-            particle_spec: "TestSpec"
-            handle_connection: "input"
-        """.trimIndent()
+    fun roundTrip_withoutSelectors() {
         val handleConnectionSpec = HandleConnectionSpec(
             "input",
             HandleMode.Write,
             TypeVariable("input")
         )
-        val connectionSpecs = listOf(handleConnectionSpec).associateBy { it.name }
-        val accessPath = parseAccessPathProto(protoText).decode(connectionSpecs)
-        val root = accessPath.root as AccessPath.Root.HandleConnectionSpec
-        assertThat(root.particleSpecName).isEqualTo("TestSpec")
-        assertThat(root.connectionSpec).isEqualTo(handleConnectionSpec)
+        val accessPath = AccessPath("TestSpec", handleConnectionSpec)
+
+        val encoded = accessPath.encode()
+        val decoded = encoded.decode(mapOf("input" to handleConnectionSpec))
+
+        assertThat(decoded).isEqualTo(accessPath)
     }
 
     @Test
-    fun decodesAccessPathWithSelectors() {
-        val protoText = """
-            particle_spec: "TestSpec"
-            handle_connection: "input"
-            selectors {
-                field: "address"
-            }
-            selectors {
-                field: "street"
-            }
-        """.trimIndent()
+    fun roundTrip_withSelectors() {
         val handleConnectionSpec = HandleConnectionSpec(
             "input",
             HandleMode.Write,
             TypeVariable("input")
         )
-        val connectionSpecs = listOf(handleConnectionSpec).associateBy { it.name }
-        val accessPath = parseAccessPathProto(protoText).decode(connectionSpecs)
-        val root = accessPath.root as AccessPath.Root.HandleConnectionSpec
-        assertThat(root.particleSpecName).isEqualTo("TestSpec")
-        assertThat(root.connectionSpec).isEqualTo(handleConnectionSpec)
-        assertThat(accessPath.selectors).isEqualTo(
-            listOf(AccessPath.Selector.Field("address"), AccessPath.Selector.Field("street"))
+        val accessPath = AccessPath(
+            "TestSpec",
+            handleConnectionSpec,
+            selectors = listOf(
+                AccessPath.Selector.Field("address"),
+                AccessPath.Selector.Field("street")
+            )
         )
+
+        val encoded = accessPath.encode()
+        val decoded = encoded.decode(mapOf("input" to handleConnectionSpec))
+
+        assertThat(decoded).isEqualTo(accessPath)
     }
 
     @Test
-    fun detectsMissingConnections() {
-        val protoText = """
-        handle_connection: "input"
-        """.trimIndent()
+    fun decode_detectsMissingConnections() {
+        val proto = AccessPathProto.newBuilder().setHandleConnection("input").build()
         val exception = assertFailsWith<IllegalArgumentException> {
-            parseAccessPathProto(protoText).decode(emptyMap())
+            proto.decode(emptyMap())
         }
         assertThat(exception)
             .hasMessageThat()
