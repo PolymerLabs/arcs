@@ -49,7 +49,7 @@ fun Recipe.Handle.toGeneration(planName: String) = PropertySpec
     .initializer(buildCodeBlock {
         val ctx = mapOf(
             "handle" to Plan.Handle::class,
-            // TODO(alxr) verify join handles work
+            // TODO(161941222) verify join handles work
             "storageParser" to StorageKeyParser::class,
             "key" to storageKey.orEmpty(),
             "type" to type.toGeneration(),

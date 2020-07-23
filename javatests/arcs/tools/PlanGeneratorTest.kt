@@ -13,6 +13,52 @@ import org.junit.runners.JUnit4
 class PlanGeneratorTest {
 
     @Test
+    fun handle_storageKey() {
+        // TODO(161940706) Write tests
+    }
+
+    @Test
+    fun handle_joinStorageKeys() {
+        // TODO(161940706) Write tests
+        // TODO(161941222) verify join handles work
+    }
+
+    @Test
+    fun type_entity() {
+        // TODO(161940706) Write tests
+    }
+
+    @Test
+    fun type_singleton() {
+        // TODO(161940706) Write tests
+    }
+
+    @Test
+    fun type_collection() {
+        // TODO(161940706) Write tests
+    }
+
+    @Test
+    fun type_reference() {
+        // TODO(161940706) Write tests
+    }
+
+    @Test
+    fun type_tuple() {
+        // TODO(161940706) Write tests
+    }
+
+    @Test
+    fun type_variable() {
+        // TODO(161940706) Write tests
+    }
+
+    @Test
+    fun type_complex() {
+        // TODO(161940706) Write tests
+    }
+
+    @Test
     fun schema_empty() {
         assertThat(Schema.EMPTY.toGeneration().toString())
             .isEqualTo("""arcs.core.data.Schema.EMPTY""")
