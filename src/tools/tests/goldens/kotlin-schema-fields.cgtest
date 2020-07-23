@@ -1,0 +1,66 @@
+[header]
+Kotlin Schema Fields
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+[end_header]
+
+[name]
+generates Kotlin Types
+[input]
+particle Foo
+  thing: reads Thing {
+    field01: Number,
+    field02: Text,
+    field03: URL,
+    field04: Boolean,
+    field05: Byte,
+    field06: Short,
+    field07: Int,
+    field08: Long,
+    field09: BigInt,
+    field10: Char,
+    field11: Float,
+    field12: Double,
+    field13: [Text],
+    field14: List<Text>,
+    field15: inline Other1 {name: Text},
+    field16: [inline Other2 {name: Text}],
+    field17: List<inline Other3 {name: Text}>,
+    field18: &Ref1 {name: Text},
+    field19: [&Ref2 {name: Text}],
+    field20: List<&Ref3 {name: Text}>,
+  }
+[results:per-line]
+Double
+String
+String
+Boolean
+Byte
+Short
+Int
+Long
+BigInteger
+Char
+Float
+Double
+Set<String>
+List<String>
+Other1
+Set<Other2>
+List<Other3>
+Reference<Ref1>?
+Set<Reference<Ref2>>
+List<Reference<Ref3>>
+[end]
+
+[name]
+generates Kotlin Types for reference to external schema
+[input]
+schema Ref
+  name: Text
+particle Foo
+  num: reads Thing {ref: &Ref}
+[results]
+Reference<Ref>?
+[end]

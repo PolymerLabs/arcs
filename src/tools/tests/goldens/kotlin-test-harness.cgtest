@@ -1,0 +1,87 @@
+[header]
+Kotlin Test Harness
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+[end_header]
+
+[name]
+exposes harness handles as a read write handle regardless of particle spec direction
+[input]
+particle P
+  h1: reads Person {name: Text}
+  h2: writes Address {streetAddress: Text}
+[results]
+
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+class PTestHarness<P : AbstractP>(
+    factory : (CoroutineScope) -> P
+) : BaseTestHarness<P>(factory, listOf(
+    HandleSpec("h1", HandleMode.Read, SingletonType(EntityType(P_H1.SCHEMA)), setOf(P_H1)),
+    HandleSpec("h2", HandleMode.Write, SingletonType(EntityType(P_H2.SCHEMA)), setOf(P_H2))
+)) {
+    val h1: ReadWriteSingletonHandle<P_H1> by handleMap
+    val h2: ReadWriteSingletonHandle<P_H2> by handleMap
+}
+
+[end]
+
+[name]
+specifies handle type correctly - singleton, collection, entity, reference, tuples
+[input]
+particle P
+  singletonEntity: reads Person {name: Text}
+  singletonReference: writes &Person {name: Text}
+  collectionEntity: writes [Person {name: Text}]
+  collectionReference: reads [&Person {name: Text}]
+  collectionTuples: reads writes [(&Product {name: Text}, &Manufacturer {name: Text})]
+[results]
+
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+class PTestHarness<P : AbstractP>(
+    factory : (CoroutineScope) -> P
+) : BaseTestHarness<P>(factory, listOf(
+    HandleSpec(
+        "singletonEntity",
+        HandleMode.Read,
+        SingletonType(EntityType(P_SingletonEntity.SCHEMA)),
+        setOf(P_SingletonEntity)
+    ),
+    HandleSpec(
+        "singletonReference",
+        HandleMode.Write,
+        SingletonType(ReferenceType(EntityType(P_SingletonReference.SCHEMA))),
+        setOf(P_SingletonReference)
+    ),
+    HandleSpec(
+        "collectionEntity",
+        HandleMode.Write,
+        CollectionType(EntityType(P_CollectionEntity.SCHEMA)),
+        setOf(P_CollectionEntity)
+    ),
+    HandleSpec(
+        "collectionReference",
+        HandleMode.Read,
+        CollectionType(ReferenceType(EntityType(P_CollectionReference.SCHEMA))),
+        setOf(P_CollectionReference)
+    ),
+    HandleSpec(
+        "collectionTuples",
+        HandleMode.ReadWrite,
+        CollectionType(
+            TupleType.of(
+                ReferenceType(EntityType(P_CollectionTuples_0.SCHEMA)),
+                ReferenceType(EntityType(P_CollectionTuples_1.SCHEMA))
+            )
+        ),
+        setOf(P_CollectionTuples_0, P_CollectionTuples_1)
+    )
+)) {
+    val singletonEntity: ReadWriteSingletonHandle<P_SingletonEntity> by handleMap
+    val singletonReference: ReadWriteSingletonHandle<Reference<P_SingletonReference>> by handleMap
+    val collectionEntity: ReadWriteCollectionHandle<P_CollectionEntity> by handleMap
+    val collectionReference: ReadWriteCollectionHandle<Reference<P_CollectionReference>> by handleMap
+    val collectionTuples: ReadWriteCollectionHandle<Tuple2<Reference<P_CollectionTuples_0>, Reference<P_CollectionTuples_1>>> by handleMap
+}
+
+[end]
