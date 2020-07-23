@@ -23,7 +23,11 @@ import androidx.work.WorkManager
 import arcs.android.common.resurrection.ResurrectorService
 import arcs.android.storage.ParcelableStoreOptions
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
-import arcs.android.storage.service.*
+import arcs.android.storage.service.BindingContext
+import arcs.android.storage.service.BindingContextStatsImpl
+import arcs.android.storage.service.DeferredStore
+import arcs.android.storage.service.DevToolsStorageManager
+import arcs.android.storage.service.StorageServiceManager
 import arcs.android.storage.ttl.PeriodicCleanupTask
 import arcs.android.util.AndroidBinderStats
 import arcs.core.crdt.CrdtData
@@ -142,7 +146,7 @@ open class StorageService : ResurrectorService() {
             return StorageServiceManager(coroutineContext, stores)
         }
 
-        if(intent.action == DEVTOOLS_ACTION) {
+        if (intent.action == DEVTOOLS_ACTION) {
             return DevToolsStorageManager(coroutineContext, stores)
         }
 

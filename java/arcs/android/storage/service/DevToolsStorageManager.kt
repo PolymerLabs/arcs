@@ -11,16 +11,10 @@
 
 package arcs.android.storage.service
 
-import arcs.core.host.ArcHostManager
-import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
-import arcs.core.storage.driver.DatabaseDriverProvider
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
 
 /**
  * A [StorageServiceManager] is used by a client of the [StorageService] to manage
@@ -34,7 +28,7 @@ class DevToolsStorageManager(
     val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>
 ) : IDevToolsStorageManager.Stub() {
 
-    override fun getStorageKeys() : String {
+    override fun getStorageKeys(): String {
         var rtn = ""
         stores.forEach() { key, store ->
             rtn = rtn + key.toKeyString() + ", "

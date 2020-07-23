@@ -72,7 +72,7 @@ class StorageProxyTest {
     @Mock
     private lateinit var mockCrdtModel: CrdtModel<CrdtData, CrdtOperationAtTime, String>
     @Mock
-    private lateinit var  mockCrdtData: CrdtData
+    private lateinit var mockCrdtData: CrdtData
     @Mock
     private lateinit var mockTime: Time
     @Mock

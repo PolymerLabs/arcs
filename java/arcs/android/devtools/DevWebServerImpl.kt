@@ -25,6 +25,7 @@ object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
 
     private val wsdSockets = mutableSetOf<WsdSocket>()
     private val log = TaggedLog { "DevWebSocket" }
+    private val onOpenSocketCallbacks = mutableListOf<() -> String>()
 
     /**
      * Send a string to the client.
@@ -36,8 +37,11 @@ object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
     }
 
     override fun openWebSocket(ihttpSession: NanoHTTPD.IHTTPSession?): WebSocket {
-        val socket = WsdSocket(ihttpSession, log) { wsdSockets.remove(it) }
+        val socket = WsdSocket(ihttpSession, log) { socket ->
+            wsdSockets.remove(socket)
+        }
         wsdSockets.add(socket)
+
         return socket
     }
 
@@ -47,6 +51,10 @@ object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
         }
         wsdSockets.clear()
         super.closeAllConnections()
+    }
+
+    fun addOnOpenWebsocketCallback(callback: () -> String) {
+        onOpenSocketCallbacks.add(callback)
     }
 
     // TODO: This is a WIP for DevTools, still in flux.
@@ -63,6 +71,9 @@ object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
                 send("Socket Open")
                 ping(PING_PAYLOAD)
                 open = true
+                onOpenSocketCallbacks.forEach { callback ->
+                    send(callback())
+                }
             } catch (e: IOException) {
                 log.error(e) { "Error opening WebSocket [message=${e.message}]." }
             }
