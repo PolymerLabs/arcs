@@ -502,6 +502,16 @@ describe('manifest parser', () => {
         }
     `);
   });
+  it('parses an schema that inlines another schema', () => {
+    parse(`
+      schema GetsNested
+        num: Number
+
+      schema ContainsExternalNested
+        nestyMcNestFace: inline GetsNested
+        text: Text
+    `)
+  });
   it('parses a schema with ordered list types', () => {
     parse(`
       schema OrderedLists
