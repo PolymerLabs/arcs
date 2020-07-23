@@ -1,0 +1,97 @@
+// Some simple examples demonstrating the use of inline entities in Arcs
+meta
+  namespace: arcs.showcase.inlines
+
+schema ChildEntity
+  isReferenced: Boolean
+  trackingValue: Number
+
+// inline entities can either reference external schemas or directly
+// declare them inline.
+schema ParentEntity
+  child: inline ChildEntity
+  direct: inline DirectInformation {
+    message: String
+    code: Int
+  }
+  reference: &ChildEntity
+
+// on creation of an entity, referenced sub-entities either need to exist already, or
+// need to be written out separately, but inline sub-entities are part of the parent
+// entity and don't need to independently exist.
+particle Generator in '.Generator'  
+  child: writes ChildEntity {isReferenced, trackingValue} [isReferenced == true]
+  parent: writes ParentEntity {child, direct, reference}
+
+// Extracting an inline entity creates a copy.
+particle CopyInlineComponent
+  input: reads ParentEntity {child}
+  output: writes ChildEntity {isReferenced, trackingValue} [isReferenced == false]
+
+// Extracting a referenced entity does not copy that entity.
+particle ExtractReferencedComponent
+  input: reads ParentEntity {reference}
+  output: writes ChildEntity {isReferenced, trackingValue} [isReferenced == true]
+
+particle ChildModifier
+  child: reads writes ChildEntity {trackingValue}
+
+// Therefore, changes to a copy of an inline entity don't show up in the parent,
+// but changes to an extracted referenced entity do.
+particle ConfirmFinalValue
+  input: reads ParentEntity {child, reference}
+
+particle RemoveEntity
+  thingToRemove: reads ~a
+  collectionToRemoveItWith: writes [~a]
+
+// and consume different subsets
+particle IntegralReader in '.IntegralReader'
+  inputs: reads KotlinTypes {aByte, aShort, anInt, aLong}
+
+particle FloatingReader in '.FloatingReader'
+  inputs: reads KotlinTypes {aFloat, aDouble}
+
+particle CharReader in '.CharReader'
+  inputs: reads KotlinTypes {aChar}
+
+// and we'll also accumulate all the values where we can perform safe casts
+particle UseUpExtraRegisterSpace in '.UseUpExtraRegisterSpace'
+  inputs: reads KotlinTypes {aByte, aShort, anInt, aLong, aChar, aFloat, aDouble}
+  outputs: writes KotlinTypeSets {someBytes, someShorts, someInts, someLongs, someChars, someFloats, someDoubles}
+
+// we'll take a look at those too
+particle IntegralSetReader in '.IntegralSetReader'
+  inputs: reads KotlinTypeSets {someBytes, someShorts, someInts, someLongs}
+
+particle FloatingSetReader in '.FloatingSetReader'
+  inputs: reads KotlinTypeSets {someFloats, someDoubles}
+
+particle CharSetReader in '.CharSetReader'
+  inputs: reads KotlinTypeSets {someChars}
+
+// Where the magic happens
+recipe UseKotlinTypes
+  singletons: create
+  sets: create
+
+  TypeWriter
+    outputs: singletons
+
+  IntegralReader
+    inputs: singletons
+  FloatingReader
+    inputs: singletons
+  CharReader
+    inputs: singletons
+
+  UseUpExtraRegisterSpace
+    inputs: singletons
+    outputs: sets
+
+  IntegralSetReader
+    inputs: sets
+  FloatingSetReader
+    inputs: sets
+  CharSetReader
+    inputs: sets
