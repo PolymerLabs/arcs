@@ -66,7 +66,7 @@ class ArcHostContextParticle(
                         type = handle.value.handle.type.tag.name
                     )
                     // Write Plan.Handle
-                    handles.planHandles.store(planHandle)
+                    handles.planHandles.store(planHandle).join()
                     ArcHostContextParticle_HandleConnections(
                         connectionName = handle.key,
                         planHandle = handles.planHandles.createReference(planHandle),
