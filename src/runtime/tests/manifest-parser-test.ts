@@ -510,7 +510,7 @@ describe('manifest parser', () => {
       schema ContainsExternalNested
         nestyMcNestFace: inline GetsNested
         text: Text
-    `)
+    `);
   });
   it('parses a schema with ordered list types', () => {
     parse(`

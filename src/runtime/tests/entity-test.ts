@@ -17,7 +17,7 @@ import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ConCap} from '../../testing/test-util.js';
 import {Ttl} from '../capabilities.js';
 
-describe.only('Entity', () => {
+describe('Entity', () => {
 
   let schema: Schema;
   let entityClass: EntityClass;
