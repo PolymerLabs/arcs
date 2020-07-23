@@ -3,6 +3,7 @@ package arcs.tools
 import arcs.core.data.FieldType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
+import arcs.core.data.SchemaName
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -36,12 +37,6 @@ class PlanGeneratorTest {
 //        """.trimIndent())
         assertThat(schemaGen).contains("SchemaName(\"Foo\")")
         assertThat(schemaGen).contains("hash = \"fooHash\"")
-    }
-
-    @Test
-    fun schema_empty() {
-        assertThat(Schema.EMPTY.toGeneration().toString())
-            .isEqualTo("""Schema.EMPTY""")
     }
 
     @Test

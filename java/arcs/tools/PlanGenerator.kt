@@ -84,7 +84,7 @@ fun Type.toGeneration(): CodeBlock = buildCodeBlock {
 fun Schema.toGeneration() = buildCodeBlock {
     val schema = this@toGeneration
     if (schema.equals(Schema.EMPTY)) {
-        add("Schema.EMPTY")
+        add("%T.EMPTY", Schema::class)
         return build()
     }
     val ctx = mapOf(
