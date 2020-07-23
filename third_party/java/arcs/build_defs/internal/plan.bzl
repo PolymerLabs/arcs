@@ -18,6 +18,7 @@ def _recipe2plan_impl(ctx):
 
     return [DefaultInfo(files = depset([out]))]
 
+# TODO(161941859) Integrate this rule into a macro s.t. it returns a jar.
 recipe2plan = rule(
     implementation = _recipe2plan_impl,
     attrs = {
