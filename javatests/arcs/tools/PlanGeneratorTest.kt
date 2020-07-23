@@ -20,11 +20,13 @@ class PlanGeneratorTest {
 
     @Test
     fun schema_nameOnly() {
-        val schemaGen = Schema(setOf(SchemaName("Foo")), SchemaFields(emptyMap(), emptyMap()), "fooHash")
-            .toGeneration()
-            .toString()
+        val schemaGen = Schema(
+            setOf(SchemaName("Foo")),
+            SchemaFields(emptyMap(), emptyMap()),
+            "fooHash"
+        ).toGeneration().toString()
 
-//        // TODO(alxr): Figure out how to get indentation right so the test can be written like so
+//        // TODO(161941018): Figure out how to get indentation right so the test can be written like so
 //        assertThat(schemaGen).isEqualTo("""
 //            arcs.core.data.Schema(
 //                names = setOf(arcs.core.data.SchemaName("Foo")),

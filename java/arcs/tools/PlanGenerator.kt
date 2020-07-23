@@ -23,9 +23,9 @@ fun Recipe.toGeneration(builder: FileSpec.Builder) {
     val ctx = mapOf(
         "plan" to Plan::class,
         "handles" to handles.toGeneration("%N"),
-        // TODO(alxr) Generate particles
+        // TODO(161940699) Generate particles
         "particles" to listOf<Recipe.Particle>().toGeneration(),
-        // TODO(alxr) Generate Annotations
+        // TODO(161940729) Generate Annotations
         "annotations" to listOf<Annotation>().toGeneration()
     )
     val plan = PropertySpec.builder("${name}Plan", Plan::class)
