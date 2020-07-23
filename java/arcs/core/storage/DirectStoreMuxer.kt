@@ -64,13 +64,13 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
     }
 
     fun off(callbackToken: Int) {
-        for (muxId in callbackIdToMuxIdMap.getOrElse(callbackToken, { mutableSetOf() })) {
-            val (idSet, store) = checkNotNull(stores[muxId]) { "store not found" }
-            store.off(callbackToken)
-            idSet.remove(callbackToken)
-        }
-        callbackIdToMuxIdMap.remove(callbackToken)
         synchronized(proxyManager) {
+            for (muxId in callbackIdToMuxIdMap.getOrElse(callbackToken, { mutableSetOf() })) {
+                val (idSet, store) = checkNotNull(stores[muxId]) { "store not found" }
+                store.off(callbackToken)
+                idSet.remove(callbackToken)
+            }
+            callbackIdToMuxIdMap.remove(callbackToken)
             proxyManager.unregister(callbackToken)
         }
     }
@@ -99,7 +99,7 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
      */
     suspend fun getLocalData(muxId: String, id: Int): Data {
         val (idSet, store) = store(muxId)
-        if (!idSet.contains(id)) registerToStore(id, muxId, idSet, store)
+        if (!idSet.contains(id)) registerToStore(id, muxId)
 
         return store.getLocalData()
     }
@@ -134,16 +134,9 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
         }
         val (idSet, store) = store(muxId)
 
-        if (!idSet.contains(message.id)) registerToStore(message.id!!, muxId, idSet, store)
+        if (!idSet.contains(message.id)) registerToStore(message.id!!, muxId)
 
-        val deMuxedMessage: ProxyMessage<Data, Op, T> = when (message) {
-            is SyncRequest -> SyncRequest(message.id)
-            is ModelUpdate -> ModelUpdate(message.model, message.id)
-            is Operations -> if (message.operations.isNotEmpty()) {
-                Operations(message.operations, message.id)
-            } else return true
-        }
-        return store.onProxyMessage(deMuxedMessage)
+        return store.onProxyMessage(message)
     }
 
     /* internal */ suspend fun setupStore(muxId: String): StoreRecord<Data, Op, T> {
@@ -159,25 +152,26 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
         return StoreRecord(mutableSetOf<Int>(), store)
     }
 
-    suspend fun registerToStore(
+    private suspend fun registerToStore(
         id: Int,
-        muxId: String,
-        idSet: MutableSet<Int>,
-        store: DirectStore<Data, Op, T>
-    ) = storeMutex.withLock {
+        muxId: String
+    ) {
         // The Direct Store Muxer can register several callbacks to the same store.
         // When the Direct Store Muxer receives a message from a Direct Store, it utilizes the
         // message id (determined by which callback the Direct Store invoked) to determine which
         // observer to redirect the message to.
-        if (!idSet.contains(id)) {
-            store.on(
-                ProxyCallback { message ->
-                    proxyManager.getCallback(id)?.invoke(message.withMuxId(muxId))
-                },
-                id
-            )
-            idSet.add(id)
-            callbackIdToMuxIdMap.getOrPut(id, { mutableSetOf() }).add(muxId)
+        val (idSet, store) = store(muxId)
+        storeMutex.withLock {
+            if (!idSet.contains(id)) {
+                store.on(
+                    ProxyCallback { message ->
+                        proxyManager.getCallback(id)?.invoke(message.withMuxId(muxId))
+                    },
+                    id
+                )
+                idSet.add(id)
+                callbackIdToMuxIdMap.getOrPut(id, { mutableSetOf() }).add(muxId)
+            }
         }
     }
 

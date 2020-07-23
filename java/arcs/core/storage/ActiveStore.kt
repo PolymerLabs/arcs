@@ -38,6 +38,9 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
      * A callbackToken will only be provided by a storage component that wraps a store (as is the
      * case of a Direct Store Muxer wrapping a Direct Store). It is otherwise expected for the store
      * to generate the callbackToken.
+     *
+     * A single active store should not be both generating tokens and accepting provided tokens.
+     * This could lead to duplicates.
      */
     abstract fun on(
         callback: ProxyCallback<Data, Op, ConsumerData>,
