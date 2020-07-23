@@ -170,8 +170,9 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
     name = "io_bazel_stardoc",
+    commit = "4378e9b6bb2831de7143580594782f538f461180",  # tag = "0.4.0"
     remote = "https://github.com/bazelbuild/stardoc.git",
-    tag = "0.4.0",
+    shallow_since = "1570829166 -0400",
 )
 
 load("@io_bazel_stardoc//:setup.bzl", "stardoc_repositories")
@@ -182,7 +183,7 @@ git_repository(
     name = "io_bazel_rules_kotlin",
     commit = "b21971bfdfd7e0d56a7b176c6ad28896cd8dfec5",
     remote = "https://github.com/cromwellian/rules_kotlin.git",
-    shallow_since = "1585186427 -0700",
+    shallow_since = "1595152046 -0700",
 )
 
 load("@io_bazel_rules_kotlin//kotlin:dependencies.bzl", "kt_download_local_dev_dependencies")
