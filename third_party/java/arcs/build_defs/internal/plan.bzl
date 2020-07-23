@@ -1,6 +1,10 @@
 """Arcs Plan Generation Rules"""
 
-load("//third_party/java/arcs/build_defs/internal:kotlin.bzl", "arcs_kt_library")
+load(
+    "//third_party/java/arcs/build_defs/internal:kotlin.bzl",
+    "ARCS_SDK_DEPS",
+    "arcs_kt_library",
+)
 
 # Note: Once this is mature, it will replace arcs_kt_plan
 def arcs_plan_generation(name, package, srcs = [], deps = [], visibility = None):
@@ -41,7 +45,7 @@ def arcs_plan_generation(name, package, srcs = [], deps = [], visibility = None)
         srcs = [":" + gen_name],
         platforms = ["jvm"],
         visibility = visibility,
-        deps = deps,
+        deps = ARCS_SDK_DEPS + deps,
     )
 
 def _recipe2plan_impl(ctx):
