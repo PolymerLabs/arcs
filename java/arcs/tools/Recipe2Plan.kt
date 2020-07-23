@@ -15,7 +15,7 @@ import java.io.File
 class Recipe2Plan : CliktCommand(
     help = """Generate plans from recipes.
     
-    This script reads recipes from a serialized manifest and generates Kotlin `Plan` classes.""",
+    This script reads serialized manifests and generates Kotlin files with [Plan] classes.""",
     printHelpOnEmptyArgs = true
 ) {
     val outdir by option(help = "output directory; defaults to '.'").file(fileOkay = false)

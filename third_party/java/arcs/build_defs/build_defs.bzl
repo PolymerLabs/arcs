@@ -70,11 +70,11 @@ arcs_manifest = _arcs_manifest
 
 arcs_manifest_bundle = _arcs_manifest_bundle
 
+arcs_manifest_json = _arcs_manifest_json
+
 arcs_manifest_parse_test = _arcs_manifest_parse_test
 
 arcs_manifest_proto = _arcs_manifest_proto
-
-arcs_manifest_json = _arcs_manifest_json
 
 arcs_proto_plan = _arcs_proto_plan
 

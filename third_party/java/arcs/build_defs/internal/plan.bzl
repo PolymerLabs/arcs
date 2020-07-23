@@ -51,7 +51,7 @@ def arcs_plan_generation(name, package, srcs = [], deps = [], visibility = None)
 def _recipe2plan_impl(ctx):
     args = ctx.actions.args()
 
-    outputs = [ctx.actions.declare_file(src.basename.replace(".pb.bin", "") + ".jvm.kt") for src in ctx.files.srcs]
+    outputs = [ctx.actions.declare_file(src.basename.replace(".pb.bin", ".jvm.kt")) for src in ctx.files.srcs]
 
     args.add_all("--outdir", [outputs[0].dirname])
     args.add_all("--package-name", [ctx.attr.package])
