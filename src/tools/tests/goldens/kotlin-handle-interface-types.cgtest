@@ -1,0 +1,168 @@
+[header]
+Kotlin Handle Interface Types
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+[end_header]
+
+[name]
+read singleton entity
+[input]
+particle P
+  h: reads Thing {name: Text}
+[results]
+ReadSingletonHandle<Thing>
+[end]
+
+[name]
+write singleton entity
+[input]
+particle P
+  h: writes Thing {name: Text}
+[results]
+WriteSingletonHandle<Thing>
+[end]
+
+[name]
+read write singleton entity
+[input]
+particle P
+  h: reads writes Thing {name: Text}
+[results]
+ReadWriteSingletonHandle<Thing>
+[end]
+
+[name]
+read write anonymous entity
+[input]
+particle P
+  h: reads writes * {name: Text}
+[results]
+ReadWriteSingletonHandle<P_H>
+[end]
+
+[name]
+read collection of entities
+[input]
+particle P
+  h: reads [Thing {name: Text}]
+[results]
+ReadCollectionHandle<Thing>
+[end]
+
+[name]
+write collection of entities
+[input]
+particle P
+  h: writes [Thing {name: Text}]
+[results]
+WriteCollectionHandle<Thing>
+[end]
+
+[name]
+read write collection of entities
+[input]
+particle P
+  h: reads writes [Thing {name: Text}]
+[results]
+ReadWriteCollectionHandle<Thing>
+[end]
+
+[name]
+read collection of entities and query by string
+[input]
+particle P
+  h: reads [Thing {name: Text} [name == ?]]
+[results]
+ReadQueryCollectionHandle<Thing, String>
+[end]
+
+[name]
+read write collection of entities and query by number
+[input]
+particle P
+  h: reads writes [Thing {age: Number} [age > ?]]
+[results]
+ReadWriteQueryCollectionHandle<Thing, Double>
+[end]
+
+[name]
+read reference singleton
+[input]
+particle P
+  h: reads &Thing {name: Text}
+[results]
+ReadSingletonHandle<Reference<Thing>>
+[end]
+
+[name]
+write reference singleton
+[input]
+particle P
+  h: writes &Thing {name: Text}
+[results]
+WriteSingletonHandle<Reference<Thing>>
+[end]
+
+[name]
+read collection of references
+[input]
+particle P
+  h: reads [&Thing {name: Text}]
+[results]
+ReadCollectionHandle<Reference<Thing>>
+[end]
+
+[name]
+write collection of references
+[input]
+particle P
+  h: writes [&Thing {name: Text}]
+[results]
+WriteCollectionHandle<Reference<Thing>>
+[end]
+
+[name]
+read tuple of 2 references
+[input]
+particle P
+  h: reads (&Foo {name: Text}, &Bar {age: Number})
+[results]
+ReadSingletonHandle<Tuple2<Reference<Foo>, Reference<Bar>>>
+[end]
+
+[name]
+write collection of tuples of 3 references
+[input]
+particle P
+  h: writes [(&Foo {name: Text}, &Bar {age: Number}, &Baz {isThisIt: Boolean})]
+[results]
+WriteCollectionHandle<Tuple3<Reference<Foo>, Reference<Bar>, Reference<Baz>>>
+[end]
+
+[name]
+read singleton variable entity
+[input]
+particle T
+  h: reads ~a with {name: Text}
+[results]
+ReadSingletonHandle<T_H>
+[end]
+
+[name]
+write singleton variable entity
+[input]
+particle T
+  h: writes ~a with {name: Text}
+[results]
+WriteSingletonHandle<T_H>
+[end]
+
+[name]
+read write singleton unconstrained variable entity
+[input]
+particle T
+  h: reads writes ~a
+[results]
+ReadWriteSingletonHandle<T_H>
+[end]

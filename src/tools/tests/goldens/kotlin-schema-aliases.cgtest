@@ -1,0 +1,102 @@
+[header]
+Kotlin Schema Aliases
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+[end_header]
+
+[name]
+single entity
+[input]
+particle P
+  h1: reads Person {name: Text}
+[results]
+typealias P_H1 = AbstractP.Person
+[end]
+
+[name]
+multiple connections with the same schema
+[input]
+particle P
+  h1: reads Person {name: Text}
+  h2: reads [Person {name: Text}]
+  h3: reads [&Person {name: Text}]
+[results:per-line]
+typealias P_H1 = AbstractP.Person
+typealias P_H2 = AbstractP.Person
+typealias P_H3 = AbstractP.Person
+[end]
+
+[name]
+handle with references
+[input]
+particle P
+  h1: reads Person {
+    name: Text,
+    home: &Accommodation {
+      squareFootage: Number,
+      address: &Address {
+        streetAddress: Text,
+        postCode: Text
+      }
+    }
+  }
+[results:per-line]
+typealias P_H1 = AbstractP.Person
+typealias P_H1_Home = AbstractP.Accommodation
+typealias P_H1_Home_Address = AbstractP.Address
+[end]
+
+[name]
+handle with a tuple
+[input]
+particle P
+  h1: reads (
+    &Person {name: Text},
+    &Accommodation {squareFootage: Number},
+    &Address {streetAddress: Text, postCode: Text}
+  )
+[results:per-line]
+typealias P_H1_0 = AbstractP.Person
+typealias P_H1_1 = AbstractP.Accommodation
+typealias P_H1_2 = AbstractP.Address
+[end]
+
+[name]
+unconstrained variables
+[input]
+particle T
+  h1: reads ~a
+  h2: writes ~a
+[results:per-line]
+typealias T_H1 = AbstractT.TInternal1
+typealias T_H2 = AbstractT.TInternal1
+[end]
+
+[name]
+variable constrained at multiple connections
+[input]
+particle T
+  h1: reads ~a
+  h2: writes ~a with {amt: Number}
+  h3: reads writes ~a with {name: Text, age: Number}
+[results:per-line]
+typealias T_H1 = AbstractT.TInternal1
+typealias T_H2 = AbstractT.TInternal1
+typealias T_H3 = AbstractT.TInternal1
+[end]
+
+[name]
+different internal entities for distinct aliases
+[input]
+particle T
+  h1: reads ~a
+  h2: writes &~a with {x: Number}
+  h3: reads ~b
+  h4: reads [~b with {a: Text}]
+[results:per-line]
+typealias T_H1 = AbstractT.TInternal1
+typealias T_H2 = AbstractT.TInternal1
+typealias T_H3 = AbstractT.TInternal2
+typealias T_H4 = AbstractT.TInternal2
+[end]
