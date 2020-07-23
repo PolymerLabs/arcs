@@ -17,6 +17,7 @@ type Test = {
   options: object;
   input: string;
   results: string[];
+  perLine: boolean;
 };
 
 /**
@@ -110,11 +111,13 @@ export function readTests(unitTest: CodegenUnitTest): Test[] {
       throw Error(`Cound not parse a test case: ${caseString}`);
     }
 
+    const perLine = matches[4] === ':per-line';
     tests.push({
       name: matches[1].trim(),
       options: JSON.parse(matches[2] || '{}'),
       input: matches[3],
-      results: matches[5].split(matches[4] ? '\n' : '\n[next]\n')
+      results: matches[5].split(perLine ? '\n' : '\n[next]\n'),
+      perLine
     });
   }
 
@@ -146,8 +149,8 @@ ${JSON.stringify(test.options)}
 ${test.name}
 ${optionsString}[input]
 ${test.input}
-[results]
-${results.join('\n[next]\n')}
+[results${test.perLine ? ':per-line' : ''}]
+${results.join(test.perLine ? '\n' : '\n[next]\n')}
 [end]
 `;
   }));
