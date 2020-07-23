@@ -146,8 +146,10 @@ class ParticleSpecProtoDecoderTest {
           claims {
             assume {
               access_path {
-                particle_spec: "ReaderWriter"
-                handle_connection: "write"
+                handle {
+                  particle_spec: "ReaderWriter"
+                  handle_connection: "write"
+                }
               }
               predicate {
                 label {
@@ -159,12 +161,16 @@ class ParticleSpecProtoDecoderTest {
           claims {
             derives_from {
               target {
-                particle_spec: "ReaderWriter"
-                handle_connection: "write"
+                handle {
+                  particle_spec: "ReaderWriter"
+                  handle_connection: "write"
+                }
               }
               source {
-                particle_spec: "ReaderWriter"
-                handle_connection: "read"
+                handle {
+                  particle_spec: "ReaderWriter"
+                  handle_connection: "read"
+                }
               }
             }
           }
@@ -193,8 +199,10 @@ class ParticleSpecProtoDecoderTest {
           location: "Nowhere"
           checks {
             access_path {
-              particle_spec: "ReaderWriter"
-              handle_connection: "read"
+              handle {
+                particle_spec: "ReaderWriter"
+                handle_connection: "read"
+              }
             }
             predicate {
               label {
@@ -204,8 +212,10 @@ class ParticleSpecProtoDecoderTest {
           }
           checks {
             access_path {
-              particle_spec: "ReaderWriter"
-              handle_connection: "read"
+              handle {
+                particle_spec: "ReaderWriter"
+                handle_connection: "read"
+              }
             }
             predicate {
               label {

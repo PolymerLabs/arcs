@@ -224,16 +224,25 @@ message UnaryExpressionProto {
 // a `HandleConnectionSpec`. This should be sufficient as the root of an access
 // path in a claim or check can only refer to a `HandleConnectionSpec`.
 message AccessPathProto {
+  message HandleRoot {
+    // (particle_spec, handle_connection) identifies a `HandleConnectionSpec`.
+    string particle_spec = 1;
+    string handle_connection = 2;
+  }
+  oneof root {
+    HandleRoot handle = 4;
+    string store_id = 5;
+  }
+
   message Selector {
     oneof selector {
       string field = 1;
       // TODO(bgogul): Other selectors like dereferencing, index, etc.
     }
   }
-  // (particle_spec, handle_connection) identifies a `HandleConnectionSpec`.
-  string particle_spec = 1;
-  string handle_connection = 2;
   repeated Selector selectors = 3;
+
+  reserved 1, 2;
 }
 
 message InformationFlowLabelProto {

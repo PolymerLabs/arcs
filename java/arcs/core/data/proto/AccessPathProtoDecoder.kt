@@ -18,12 +18,22 @@ import arcs.core.data.HandleConnectionSpec
 fun AccessPathProto.decode(
     connectionSpecs: Map<String, HandleConnectionSpec>
 ): AccessPath {
-    val connectionSpec = connectionSpecs[handleConnection]
-    requireNotNull(connectionSpec) {
-        "Connection '$handleConnection' not found in connection specs!"
-    }
     val selectors = selectorsList.map { it.decode() }
-    return AccessPath(particleSpec, connectionSpec, selectors)
+    return when (rootCase) {
+        AccessPathProto.RootCase.HANDLE -> {
+            val handleConnection = handle.handleConnection
+            val connectionSpec = connectionSpecs[handleConnection]
+            requireNotNull(connectionSpec) {
+                "Connection '$handleConnection' not found in connection specs!"
+            }
+            AccessPath(handle.particleSpec, connectionSpec, selectors)
+        }
+        AccessPathProto.RootCase.STORE_ID -> AccessPath(
+            AccessPath.Root.Store(storeId),
+            selectors
+        )
+        else -> throw UnsupportedOperationException("Unsupported AccessPathProto.Root: $this")
+    }
 }
 
 fun AccessPath.encode(): AccessPathProto {
@@ -32,20 +42,29 @@ fun AccessPath.encode(): AccessPathProto {
     when (root) {
         is AccessPath.Root.Handle -> {
             val handleRoot = root as AccessPath.Root.Handle
-            proto.handleConnection = handleRoot.handle.name
+            proto.handle = AccessPathProto.HandleRoot.newBuilder()
+                .setHandleConnection(handleRoot.handle.name)
+                .build()
         }
         is AccessPath.Root.HandleConnection -> {
             val connectionRoot = root as AccessPath.Root.HandleConnection
-            proto.particleSpec = connectionRoot.particle.spec.name
-            proto.handleConnection = connectionRoot.connectionSpec.name
+            proto.handle = AccessPathProto.HandleRoot.newBuilder()
+                .setHandleConnection(connectionRoot.connectionSpec.name)
+                .setParticleSpec(connectionRoot.particle.spec.name)
+                .build()
         }
         is AccessPath.Root.HandleConnectionSpec -> {
             val connectionSpecRoot = root as AccessPath.Root.HandleConnectionSpec
-            proto.particleSpec = connectionSpecRoot.particleSpecName
-            proto.handleConnection = connectionSpecRoot.connectionSpec.name
+            proto.handle = AccessPathProto.HandleRoot.newBuilder()
+                .setHandleConnection(connectionSpecRoot.connectionSpec.name)
+                .setParticleSpec(connectionSpecRoot.particleSpecName)
+                .build()
         }
-        is AccessPath.Root.Store -> TODO("b/161947321")
-        else -> throw UnsupportedOperationException("Unsupported AccessPath.Root type: $this")
+        is AccessPath.Root.Store -> {
+            val storeRoot = root as AccessPath.Root.Store
+            proto.storeId = storeRoot.storeId
+        }
+        else -> throw UnsupportedOperationException("Unsupported AccessPath.Root: $this")
     }
     return proto.build()
 }

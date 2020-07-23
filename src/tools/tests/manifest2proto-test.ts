@@ -846,8 +846,10 @@ describe('manifest2proto', () => {
       {
         assume: {
           accessPath: {
-            particleSpec: 'Test',
-            handleConnection: 'private'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'private'
+            }
           },
           predicate: {
             label: {
@@ -859,8 +861,10 @@ describe('manifest2proto', () => {
       {
         assume: {
           accessPath: {
-            particleSpec: 'Test',
-            handleConnection: 'public'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'public'
+            }
           },
           predicate: {
             not: {
@@ -888,12 +892,16 @@ describe('manifest2proto', () => {
       {
         derivesFrom: {
           source: {
-            particleSpec: 'Test',
-            handleConnection: 'input'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'input'
+            },
           },
           target: {
-            particleSpec: 'Test',
-            handleConnection: 'output'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'output'
+            },
           }
         }
       }
@@ -913,20 +921,26 @@ describe('manifest2proto', () => {
       {
         derivesFrom: {
           source: {
-            particleSpec: 'Test',
-            handleConnection: 'input'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'input'
+            },
           },
           target: {
-            particleSpec: 'Test',
-            handleConnection: 'output'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'output'
+            },
           }
         }
       },
       {
         assume: {
           accessPath: {
-            particleSpec: 'Test',
-            handleConnection: 'output'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'output'
+            }
           },
           predicate: {
             label: {
@@ -952,8 +966,10 @@ describe('manifest2proto', () => {
       {
         assume: {
           accessPath: {
-            particleSpec: 'Test',
-            handleConnection: 'private',
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'private',
+            }
           },
           predicate: {
             label: {
@@ -965,8 +981,10 @@ describe('manifest2proto', () => {
       {
         assume: {
           accessPath: {
-            particleSpec: 'Test',
-            handleConnection: 'private',
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'private',
+            },
             selectors: [{field: 'ref'}, {field: 'foo'}],
           },
           predicate: {
@@ -983,13 +1001,17 @@ describe('manifest2proto', () => {
       {
         derivesFrom: {
           source: {
-            particleSpec: 'Test',
-            handleConnection: 'input',
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'input',
+            },
             selectors: [{field: 'bar'}],
           },
           target: {
-            particleSpec: 'Test',
-            handleConnection: 'private',
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'private',
+            },
             selectors: [{field: 'ref'}],
           },
         },
@@ -1009,8 +1031,10 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(spec.particleSpecs[0].checks, [
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'private'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'private'
+          }
         },
         predicate: {
           label: {
@@ -1020,8 +1044,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'public'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'public'
+          }
         },
         predicate: {
           not: {
@@ -1048,8 +1074,10 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(spec.particleSpecs[0].checks, [
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'private'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'private'
+          },
         },
         predicate: {
           label: {
@@ -1059,8 +1087,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'private',
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'private',
+          },
           selectors: [{field: 'ref'}, {field: 'foo'}],
         },
         predicate: {
@@ -1075,8 +1105,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'public',
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'public',
+          },
           selectors: [{field: 'ref'}],
         },
         predicate: {
@@ -1099,8 +1131,10 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(spec.particleSpecs[0].checks, [
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'private'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'private'
+          }
         },
         predicate: {
           and: {
@@ -1119,8 +1153,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'public'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'public'
+          }
         },
         predicate: {
           or: {
@@ -1155,8 +1191,10 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(spec.particleSpecs[0].checks, [
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'private'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'private'
+          }
         },
         predicate: {
           and: {
@@ -1184,8 +1222,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'public'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'public'
+          }
         },
         predicate: {
           or: {
@@ -1227,8 +1267,10 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(spec.particleSpecs[0].checks, [
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'input1'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'input1'
+          }
         },
         predicate: {
           implies: {
@@ -1239,8 +1281,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'input2'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'input2'
+          }
         },
         predicate: {
           implies: {
@@ -1256,8 +1300,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'input3'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'input3'
+          }
         },
         predicate: {
           implies: {
