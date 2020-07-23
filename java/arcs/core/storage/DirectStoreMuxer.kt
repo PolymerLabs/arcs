@@ -14,9 +14,6 @@ package arcs.core.storage
 import androidx.annotation.VisibleForTesting
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
-import arcs.core.storage.ProxyMessage.ModelUpdate
-import arcs.core.storage.ProxyMessage.Operations
-import arcs.core.storage.ProxyMessage.SyncRequest
 import arcs.core.storage.util.RandomProxyCallbackManager
 import arcs.core.type.Type
 import arcs.core.util.LruCacheMap
