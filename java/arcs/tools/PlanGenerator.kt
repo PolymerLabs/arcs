@@ -83,6 +83,10 @@ fun Type.toGeneration(): CodeBlock = buildCodeBlock {
 
 fun Schema.toGeneration() = buildCodeBlock {
     val schema = this@toGeneration
+    if (schema.equals(Schema.EMPTY)) {
+        add("Schema.EMPTY")
+        return build()
+    }
     val ctx = mapOf(
         "schema" to Schema::class,
         "names" to schema.names.toGeneration { builder, item ->

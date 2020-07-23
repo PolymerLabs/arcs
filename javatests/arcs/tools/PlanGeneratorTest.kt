@@ -1,6 +1,7 @@
 package arcs.tools
 
 import arcs.core.data.FieldType
+import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
@@ -9,6 +10,12 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class PlanGeneratorTest {
+
+    @Test
+    fun schema_empty() {
+        assertThat(Schema.EMPTY.toGeneration().toString())
+            .isEqualTo("""Schema.EMPTY""")
+    }
 
     @Test
     fun schemaFields_empty() {
