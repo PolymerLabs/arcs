@@ -16,6 +16,7 @@ import {CodegenUnitTest} from './codegen-unit-test-base.js';
 import {KotlinEntityGenerator} from '../kotlin-entity-generator.js';
 import {Schema2Kotlin} from '../schema2kotlin.js';
 import {generateConnectionSpecType, generateType} from '../kotlin-type-generator.js';
+import {generateFields} from '../kotlin-schema-field.js';
 
 /**
  * A Suite of unit tests for Kotlin Codegen.
@@ -101,6 +102,72 @@ export const testSuite: CodegenUnitTest[] = [
       const schemaGraph = new SchemaGraph(particles[0]);
       const [connection] = particles[0].handleConnections;
       return generateConnectionSpecType(connection, schemaGraph.nodes);
+    }
+  }(),
+  new class extends ManifestCodegenUnitTest {
+    constructor() {
+      super(
+        'Kotlin Handle Interface Types',
+        'kotlin-handle-interface-types.cgtest'
+      );
+    }
+    async computeFromManifest({particles}) {
+      const graph = new SchemaGraph(particles[0]);
+      const schema2kotlin = new Schema2Kotlin({_: []});
+      return particles[0].connections.map(c => schema2kotlin.handleInterfaceType(c, graph.nodes, true));
+    }
+  }(),
+  new class extends ManifestCodegenUnitTest {
+    constructor() {
+      super(
+        'Kotlin Handles Class Declarations',
+        'kotlin-handles-class-declarations.cgtest'
+      );
+    }
+    async computeFromManifest({particles}) {
+      const schema2kotlin = new Schema2Kotlin({_: []});
+      const generators = await schema2kotlin.calculateNodeAndGenerators(particles[0]);
+      const components = await schema2kotlin.generateParticleClassComponents(particles[0], generators);
+      return components.handleClassDecl;
+    }
+  }(),
+  new class extends ManifestCodegenUnitTest {
+    constructor() {
+      super(
+        'Kotlin Schema Aliases',
+        'kotlin-schema-aliases.cgtest'
+      );
+    }
+    async computeFromManifest({particles}) {
+      const schema2kotlin = new Schema2Kotlin({_: []});
+      const generators = await schema2kotlin.calculateNodeAndGenerators(particles[0]);
+      const components = await schema2kotlin.generateParticleClassComponents(particles[0], generators);
+      return components.typeAliases.sort();
+    }
+  }(),
+  new class extends ManifestCodegenUnitTest {
+    constructor() {
+      super(
+        'Kotlin Test Harness',
+        'kotlin-test-harness.cgtest'
+      );
+    }
+    async computeFromManifest({particles}) {
+      const schema2kotlin = new Schema2Kotlin({_: []});
+      const generators = await schema2kotlin.calculateNodeAndGenerators(particles[0]);
+      return schema2kotlin.generateTestHarness(particles[0], generators.map(g => g.node));
+    }
+  }(),
+  new class extends ManifestCodegenUnitTest {
+    constructor() {
+      super(
+        'Kotlin Schema Fields',
+        'kotlin-schema-fields.cgtest'
+      );
+    }
+    async computeFromManifest({particles}) {
+      const graph = new SchemaGraph(particles[0]);
+      return generateFields(graph.nodes[0]).map(field => field.type.kotlinType);
     }
   }(),
 ];
