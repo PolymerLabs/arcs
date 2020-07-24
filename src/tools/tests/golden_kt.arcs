@@ -13,8 +13,8 @@ particle KotlinPrimitivesGolden
     ref: &{val: Text},
     bt: Byte,
     shrt: Short,
-    nt: Int,
-    lng: Long,
+    integer: Int,
+    long_val: Long,
     big: BigInt,
     chr: Char,
     flt: Float,
@@ -40,4 +40,4 @@ particle KotlinPrimitivesGolden
       price: Float,
       stock: Int
     }>
-  } [(2n * big + 3n > 5n) and (5i*nt + 10i*nt > 30i) and (10l*lng >= 100000l and 10l*lng < 1000000l) and (num < 1000)]
+  } [(2n * big + 3n > 5n) and (5i*integer + 10i*integer > 30i) and (10l*long_val >= 100000l and 10l*long_val < 1000000l) and (num < 1000)]
