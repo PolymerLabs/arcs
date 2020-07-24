@@ -1376,6 +1376,51 @@ describe('manifest2proto', () => {
         `Duplicate definition of particle named 'Dupe'.`);
   });
 
+  it('encodes externally defined schemas', async () => {
+    const manifest = await Manifest.parse(`
+      schema Manufacturer
+        address: Text
+
+      schema Size
+        length: Number
+
+      schema Product
+        name: Text
+        manufacturer: &Manufacturer
+        size: inline Size
+
+      particle Abc in 'a/b/c.js'
+        input: reads Product
+    `);
+    const type = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type;
+
+    assert.deepStrictEqual(type, {
+      entity: {schema: {
+        names: ['Product'],
+        fields: {
+          name: {primitive: 'TEXT'},
+          manufacturer: {reference: {referredType: {entity: {schema: {
+            names: ['Manufacturer'],
+            fields: {
+                address: {primitive: 'TEXT'}
+              },
+              hash: 'd61bcba2419ded8a1b497fc6d905b372baafce01',
+            }}}}
+          },
+          size: {entity: {
+            schema: {
+              names: ['Size'],
+              fields: {length: {primitive: 'NUMBER'}},
+              hash: '597828c0a7769319fb9a468b599da4fd3b01ee4d',
+            },
+            inline: true,
+          }}
+        },
+        hash: 'd229c2b1aa361873e50d050705e47aa33bd1891b',
+      }}
+    });
+  });
+
   // On the TypeScript side we serialize .arcs file and validate it equals the .pb.bin file.
   // On the Kotlin side we deserialize .pb.bin and validate it equals deserialized .textproto file.
   // This ensures that at least all the constructs used in the .arcs file can be serialized in TS
