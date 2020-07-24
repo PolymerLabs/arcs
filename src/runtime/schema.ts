@@ -131,8 +131,7 @@ export class Schema {
       case 'schema-reference':
         return fieldType1.schema.model.isAtLeastAsSpecificAs(fieldType2.schema.model);
       case 'schema-collection':
-        return fieldType1.schema.schema.model.isAtLeastAsSpecificAs(
-            fieldType2.schema.schema.model);
+        return Schema.isAtLeastAsSpecificAs(fieldType1.schema, fieldType2.schema);
       // TODO(mmandlis): implement for other schema kinds.
       default:
         return Schema.typesEqual(fieldType1, fieldType2);
@@ -225,15 +224,12 @@ export class Schema {
       if (fields[name] == undefined) {
         return AtLeastAsSpecific.NO;
       }
-      if (type.kind && ['schema-nested', 'schema-reference', 'schema-collection'].includes(type.kind)) {
+      if (type.kind && ['schema-nested', 'schema-reference'].includes(type.kind)) {
         if (!(fields[name].kind && fields[name].kind === type.kind)) {
           return AtLeastAsSpecific.NO;
         }
-        const subResult = type.kind === 'schema-collection'
-          ? fields[name].schema.schema.model.entitySchema.isEquivalentOrMoreSpecific(
-                type.schema.schema.model.entitySchema)
-          : fields[name].schema.model.entitySchema.isEquivalentOrMoreSpecific(
-                type.schema.model.entitySchema);
+        const subResult = fields[name].schema.model.entitySchema.isEquivalentOrMoreSpecific(
+            type.schema.model.entitySchema);
         switch (subResult) {
           case AtLeastAsSpecific.NO:
             return AtLeastAsSpecific.NO;
@@ -244,7 +240,7 @@ export class Schema {
             break;
         }
       }
-      else if (!Schema.typesEqual(fields[name], type)) {
+      else if (!Schema.isAtLeastAsSpecificAs(fields[name], type)) {
         return AtLeastAsSpecific.NO;
       }
       const fieldRes = Refinement.isAtLeastAsSpecificAs(fields[name].refinement, type.refinement);

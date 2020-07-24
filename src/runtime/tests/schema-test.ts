@@ -712,8 +712,10 @@ describe('schema', () => {
         bar1: Text
         bar2: &Foo
         bar3: [&Foo]
+        bar4: [Text]
+        bar5: [Float]
       particle WriteBar
-        bar: writes Bar {bar1, bar2: &Foo {foo1}}
+        bar: writes Bar {bar1, bar2: &Foo {foo1}, bar4, bar5}
         barz: writes [&Bar {bar1, bar2: &Foo {foo1}}]
         barzz: writes Bar {bar1, bar3: [&Foo {foo1}]}
     `);
