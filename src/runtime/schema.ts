@@ -125,6 +125,20 @@ export class Schema {
     return Schema._typeString(fieldType1) === Schema._typeString(fieldType2);
   }
 
+  static isAtLeastAsSpecificAs(fieldType1, fieldType2): boolean {
+    assert(fieldType1.kind === fieldType2.kind);
+    switch (fieldType1.kind) {
+      case 'schema-reference':
+        return fieldType1.schema.model.isAtLeastAsSpecificAs(fieldType2.schema.model);
+      case 'schema-collection':
+        return fieldType1.schema.schema.model.isAtLeastAsSpecificAs(
+            fieldType2.schema.schema.model);
+      // TODO(mmandlis): implement for other schema kinds.
+      default:
+        return Schema.typesEqual(fieldType1, fieldType2);
+    }
+  }
+
   static _typeString(type: SchemaType): string {
     switch (type.kind) {
       case 'kotlin-primitive':
@@ -211,11 +225,15 @@ export class Schema {
       if (fields[name] == undefined) {
         return AtLeastAsSpecific.NO;
       }
-      if (type.kind && type.kind === 'schema-nested') {
-        if (!(fields[name].kind && fields[name].kind === 'schema-nested')) {
+      if (type.kind && ['schema-nested', 'schema-reference', 'schema-collection'].includes(type.kind)) {
+        if (!(fields[name].kind && fields[name].kind === type.kind)) {
           return AtLeastAsSpecific.NO;
         }
-        const subResult = fields[name].schema.model.entitySchema.isEquivalentOrMoreSpecific(type.schema.model.entitySchema);
+        const subResult = type.kind === 'schema-collection'
+          ? fields[name].schema.schema.model.entitySchema.isEquivalentOrMoreSpecific(
+                type.schema.schema.model.entitySchema)
+          : fields[name].schema.model.entitySchema.isEquivalentOrMoreSpecific(
+                type.schema.model.entitySchema);
         switch (subResult) {
           case AtLeastAsSpecific.NO:
             return AtLeastAsSpecific.NO;

@@ -320,6 +320,7 @@ policy PolicyTwo {
 
   const parseAndResolveRecipe = async (inlineSchema: string, annotations: string = '') => {
     const recipe = (await Manifest.parse(`
+${personSchema}
 particle WritePerson
   person: writes Person {${inlineSchema}}
 recipe
@@ -384,9 +385,9 @@ policy Policy1 {
     // Validation for recipe with inline schema handle.
     const inlineSchema = `
 name: Text,
-phone: Text,
-address: &Address {street: Text, city: Text},
-otherAddresses: [&Address {city: Text, country: Text}],
+phone,
+address: &Address {street: Text, city},
+otherAddresses: [&Address {city: Text, country}],
 anotherField: Text    
     `;
     // Verify handle's restricted type.

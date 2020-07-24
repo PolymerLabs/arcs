@@ -703,4 +703,24 @@ describe('schema', () => {
       'Foo {ld: List<Number>, lI: List<Int>, lL: List<Long>, i: Int, t: Text, l: Long}'
     );
   });
+  it('tests restricting reference field', async () => {
+    const manifest = await Manifest.parse(`
+      schema Foo
+        foo1: Text
+        foo2: Text
+      schema Bar
+        bar1: Text
+        bar2: &Foo
+        bar3: [&Foo]
+      particle WriteBar
+        bar: writes Bar {bar1, bar2: &Foo {foo1}}
+        barz: writes [&Bar {bar1, bar2: &Foo {foo1}}]
+        barzz: writes Bar {bar1, bar3: [&Foo {foo1}]}
+    `);
+    const barSchema = manifest.schemas['Bar'];
+    const barConnSchema = manifest.particles[0].getConnectionByName('bar').type.getEntitySchema();
+    assert.isTrue(barSchema.isAtLeastAsSpecificAs(barConnSchema));
+    const barzzConnSchema = manifest.particles[0].getConnectionByName('barzz').type.getEntitySchema();
+    assert.isTrue(barSchema.isAtLeastAsSpecificAs(barzzConnSchema));
+  });
 });
