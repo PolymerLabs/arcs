@@ -89,7 +89,8 @@ class InformationFlowTest {
             "fail-derives-from-cycle",
             "fail-derives-from-multiple",
             "fail-join-tuple-components",
-            "fail-check-on-subpaths"
+            "fail-check-on-subpaths",
+            "fail-no-claim-is-empty-labels"
         )
         val okTests = listOf(
             "ok-directly-satisfied",
