@@ -73,7 +73,7 @@ async function visitSchemaFields(schema: Schema, visitor: (field: SchemaField) =
 }
 
 async function getSchemaType(field: string, {kind, schema, type, innerType}): Promise<string> {
-  const fieldType = 'arcs.core.data.FieldType'
+  const fieldType = 'arcs.core.data.FieldType';
   if (kind === 'schema-primitive') {
     switch (type) {
       case 'Text': return `${fieldType}.Text`;
