@@ -13,6 +13,7 @@ import {assert} from '../../platform/chai-node.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {AllocatorRecipeResolver} from '../allocator-recipe-resolver.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
+import {IngressValidation} from '../../runtime/policy/ingress-validation.js';
 
 describe('plan generator', () => {
   it('imports arcs.core.data when the package is different', () => {
@@ -293,14 +294,75 @@ val MyRecipe_Handle0 = Handle(
     emptyList()
 )`);
   });
-  async function process(manifestString: string): Promise<{
+
+  it('restricts handle types according to policies', async () => {
+    const schemaString = `
+schema Thing
+  a: Text
+  b: Text
+  c: Text
+    `;
+    const policiesManifest = `
+${schemaString}
+policy Policy0 {
+  @allowedRetention(medium: 'Ram', encryption: false)
+  @maxAge('10d')
+  from Thing access { a }
+}
+policy Policy1 {
+  @allowedRetention(medium: 'Ram', encryption: false)
+  @maxAge('10d')
+  from Thing access { b }
+}
+    `;
+    const {generator, recipes} = await process(`
+${schemaString}
+particle Writer
+  things: writes [Thing {a, b, c}]
+recipe ThingWriter
+  handle0: create 'my-things' @ttl('3d')
+  Writer
+    things: handle0
+    `, policiesManifest);
+    const handle = recipes[0].handles[0];
+    assert.deepEqual(Object.keys(handle.type.getEntitySchema().fields), ['a', 'b', 'c']);
+
+    // Verify field `c` is dropped, because it is not allowed by the policies.
+    const handleObject = await generator.createHandleVariable(handle);
+    assert.equal(handleObject, `\
+val ThingWriter_Handle0 = Handle(
+    StorageKeyParser.parse("create://my-things"),
+    arcs.core.data.CollectionType(
+        arcs.core.data.EntityType(
+            arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Thing")),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf(
+                        "a" to arcs.core.data.FieldType.Text,
+                        "b" to arcs.core.data.FieldType.Text
+                    ),
+                    collections = emptyMap()
+                ),
+                "451b4c23ec9bf2d1973079fd0732539297806b3c",
+                refinement = { _ -> true },
+                query = null
+            )
+        )
+    ),
+    listOf(Annotation("ttl", mapOf("value" to AnnotationParam.Str("3d"))))
+)`);
+  });
+
+  async function process(manifestString: string, policiesManifestString?: string): Promise<{
       recipes: Recipe[],
       generator: PlanGenerator,
       plan: string
   }> {
     const manifest = await Manifest.parse(manifestString);
+    const ingressValidation = policiesManifestString
+        ? new IngressValidation((await Manifest.parse(policiesManifestString)).policies) : null;
     const recipes = await new AllocatorRecipeResolver(manifest, 'random_salt').resolve();
-    const generator = new PlanGenerator(recipes, manifest.meta.namespace || 'test.namespace');
+    const generator = new PlanGenerator(recipes, manifest.meta.namespace || 'test.namespace', ingressValidation);
     const plan = await generator.generate();
     return {recipes, generator, plan};
   }

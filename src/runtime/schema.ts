@@ -406,4 +406,32 @@ export class Schema {
         `${field}:${this.normalizeTypeForHash(this.fields[field])}`
       ).join('');
   }
+
+  static restrictField(field, restrictedField) {
+    assert(field.kind === restrictedField.kind);
+    switch (field.kind) {
+      case 'kotlin-primitive':
+      case 'schema-primitive':
+        return field;
+      case 'schema-collection':
+        return {kind: 'schema-collection', schema: this.restrictField(field.schema, restrictedField.schema)};
+      case 'schema-reference': {
+        const restrictedFields = {};
+        for (const [subfieldName, subfield] of Object.entries(field.schema.model.entitySchema.fields)) {
+          const policySubfield = restrictedField.schema.model.entitySchema.fields[subfieldName];
+          if (policySubfield) {
+            restrictedFields[subfieldName] = this.restrictField(subfield, policySubfield);
+          }
+        }
+        return {kind: 'schema-reference', schema: {
+            ...field.schema,
+            model: {
+              entitySchema: new Schema(field.schema.model.entitySchema.names, restrictedFields)
+            }
+        }};
+      }
+      default:
+        assert(`Unsupported field kind: ${field.kind}`);
+    }
+  }
 }
