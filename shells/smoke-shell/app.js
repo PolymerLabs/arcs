@@ -9,26 +9,31 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Runtime} from '../../build/runtime/runtime.js';
+import {Modality} from '../../build/runtime/modality.js';
 
-export const App = async (composer) => {
+export const App = async (composer, path) => {
   const arc = await Runtime.spawnArc({id: 'smoke-arc', composer});
+  arc.modality = Modality.dom;
   console.log(`arc [${arc.id}]`);
-
-  const manifest = await Runtime.parse(`import 'https://$particles/Arcs/Login.arcs'`);
+  //
+  const manifest = await Runtime.parse(`import 'https://$particles/${path}'`);
   console.log(`manifest [${manifest.id}]`);
-
-  const recipe = manifest.findRecipesByVerb('login')[0];
-  console.log(`recipe [${recipe.name}]`);
-
-  const plan = await Runtime.resolveRecipe(arc, recipe);
-  await arc.instantiate(plan);
-
-  console.log(`store [${arc._stores[0].id}]`);
-
+  //
+  //const recipe = manifest.findRecipesByVerb('login')[0];
+  // paramterize?
+  const recipe = manifest.allRecipes[0];
+  //
+  console.log(`recipe [${recipe?.name}]`);
+  if (recipe) {
+    const plan = await Runtime.resolveRecipe(arc, recipe);
+    if (plan) {
+      await arc.instantiate(plan);
+    }
+  }
   console.log(`\narc serialization`);
   console.log(`=============================================================================`);
   console.log(await arc.serialize());
   console.log(`=============================================================================`);
-
+  //
   return arc;
 };
