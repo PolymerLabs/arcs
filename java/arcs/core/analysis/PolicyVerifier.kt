@@ -26,12 +26,12 @@ import arcs.core.policy.translatePolicy
 /** A class to verify that recipes are compliant with a policy. */
 class PolicyVerifier(val options: PolicyOptions) {
     /**
-     * Verifies that the recipe is compliant with the given policy.
+     * Returns true if the recipe is compliant with the given policy.
      *
-     * @throws [arcs.core.policy.PolicyViolation] if policy is violated by the recipe.
+     * @throws [PolicyViolation] if policy is violated by the recipe.
      */
     public fun verifyPolicy(recipe: Recipe, policy: Policy): Boolean {
-        // TODO(bgogul): This should be moved to the compilation step.
+        // TODO(b/162083814): This should be moved to the compilation step.
         val policyConstraints = translatePolicy(policy, options)
         val graph = RecipeGraph(recipe)
 
@@ -92,7 +92,7 @@ class PolicyVerifier(val options: PolicyOptions) {
     /**
      * Returns the egress checks.
      *
-     * @throws [arcs.core.policy.PolicyViolation] if recipe violates egress requirements.
+     * @throws [PolicyViolation] if recipe violates egress requirements.
      */
     private fun getEgressChecks(
         policy: Policy,
