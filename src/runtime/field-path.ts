@@ -58,7 +58,8 @@ function resolveForField(fieldPath: string[], field): FieldPathType {
         throw new FieldPathError(`Field path '${fieldPath.join('.')}' could not be resolved because '${fieldPath[1]}' is a primitive.`);
       }
     }
-    case 'schema-collection': {
+    case 'schema-collection':
+    case 'schema-ordered-list': {
       // Check inner type.
       return resolveForField(fieldPath, field.schema);
     }
