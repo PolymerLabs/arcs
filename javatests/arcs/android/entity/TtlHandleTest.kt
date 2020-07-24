@@ -124,7 +124,7 @@ class TtlHandleTest {
 
         // Simulate periodic job triggering.
         log("Removing Expired Entities")
-        databaseManager.removeExpiredEntities().join()
+        databaseManager.removeExpiredEntities()
         updateJob.join()
         assertThat(handle.dispatchFetch()).isEqualTo(null)
 
@@ -227,7 +227,7 @@ class TtlHandleTest {
 
         // Simulate periodic job triggering.
         log("removing expired entities")
-        databaseManager.removeExpiredEntities().join()
+        databaseManager.removeExpiredEntities()
         deferred.await()
         activeWrites.joinAll()
         activeWrites.clear()
@@ -301,7 +301,7 @@ class TtlHandleTest {
         }
 
         // Simulate periodic job triggering.
-        databaseManager.removeExpiredEntities().join()
+        databaseManager.removeExpiredEntities()
 
         deferred1.await()
         deferred2.await()
@@ -361,7 +361,7 @@ class TtlHandleTest {
 
         // Simulate periodic job triggering.
         log("Removing Expired Entities")
-        databaseManager.removeExpiredEntities().join()
+        databaseManager.removeExpiredEntities()
         updateJob.join()
 
         assertThat(handle.dispatchFetchAll()).isEmpty()
