@@ -50,8 +50,20 @@ class AccessPathProtoDecoderTest {
     }
 
     @Test
+    fun roundTrip_storeRoot() {
+        val accessPath = AccessPath(
+            AccessPath.Root.Store("store_id"),
+            listOf(AccessPath.Selector.Field("some_field"))
+        )
+
+        assertThat(accessPath.encode().decode(emptyMap())).isEqualTo(accessPath)
+    }
+
+    @Test
     fun decode_detectsMissingConnections() {
-        val proto = AccessPathProto.newBuilder().setHandleConnection("input").build()
+        val proto = AccessPathProto.newBuilder()
+            .setHandle(AccessPathProto.HandleRoot.newBuilder().setHandleConnection("input"))
+            .build()
         val exception = assertFailsWith<IllegalArgumentException> {
             proto.decode(emptyMap())
         }

@@ -217,9 +217,11 @@ function accessPathProtoPayload(
     connectionSpec: HandleConnectionSpec,
     fieldPath: string[]
 ) {
-  const accessPath: {particleSpec: string, handleConnection: string, selectors?: {field: string}[]} = {
-    particleSpec: spec.name,
-    handleConnection: connectionSpec.name
+  const accessPath: {handle: {particleSpec: string, handleConnection: string}, selectors?: {field: string}[]} = {
+    handle: {
+      particleSpec: spec.name,
+      handleConnection: connectionSpec.name
+    }
   };
   if (fieldPath.length) {
     accessPath.selectors = fieldPath.map(field => ({field}));
