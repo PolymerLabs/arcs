@@ -77,7 +77,7 @@ describe('plan generator', () => {
 `HandleConnection(
     R_Handle0,
     HandleMode.Write,
-    SingletonType(EntityType(A_Data.SCHEMA)),
+    arcs.core.data.SingletonType(arcs.core.data.EntityType(A_Data.SCHEMA)),
     emptyList()
 )`
     );
@@ -86,7 +86,7 @@ describe('plan generator', () => {
 `HandleConnection(
     R_Handle0,
     HandleMode.Read,
-    SingletonType(EntityType(B_Data.SCHEMA)),
+    arcs.core.data.SingletonType(arcs.core.data.EntityType(B_Data.SCHEMA)),
     emptyList()
 )`
     );
@@ -147,7 +147,7 @@ Particle(
         "data" to HandleConnection(
             Recipe_Handle0,
             HandleMode.Write,
-            SingletonType(EntityType(Writer_Data.SCHEMA)),
+            arcs.core.data.SingletonType(arcs.core.data.EntityType(Writer_Data.SCHEMA)),
             listOf(Annotation("persistent", emptyMap()))
         )
     )
@@ -179,7 +179,7 @@ Particle(
         "data" to HandleConnection(
             Recipe_Handle0,
             HandleMode.ReadWrite,
-            SingletonType(EntityType(Intermediary_Data.SCHEMA)),
+            arcs.core.data.SingletonType(arcs.core.data.EntityType(Intermediary_Data.SCHEMA)),
             listOf(Annotation("persistent", emptyMap()))
         )
     )
@@ -202,7 +202,7 @@ Particle(
 HandleConnection(
     R_Handle0,
     HandleMode.Write,
-    CollectionType(EntityType(A_Data.SCHEMA)),
+    arcs.core.data.CollectionType(arcs.core.data.EntityType(A_Data.SCHEMA)),
     emptyList()
 )`);
   });
@@ -230,12 +230,15 @@ HandleConnection(
 HandleConnection(
     R_Handle0,
     HandleMode.Read,
-    CollectionType(
-        EntityType(
-            Schema(
-                setOf(SchemaName("Person")),
-                SchemaFields(
-                    singletons = mapOf("a" to FieldType.Text, "b" to FieldType.Text),
+    arcs.core.data.CollectionType(
+        arcs.core.data.EntityType(
+            arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Person")),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf(
+                        "a" to arcs.core.data.FieldType.Text,
+                        "b" to arcs.core.data.FieldType.Text
+                    ),
                     collections = emptyMap()
                 ),
                 "f33d42dee457673f13e166b4644b0eb42f37a156",
@@ -272,11 +275,14 @@ HandleConnection(
     assert.equal(handleObject, `\
 val MyRecipe_Handle0 = Handle(
     StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
-    EntityType(
-        Schema(
-            setOf(SchemaName("Person")),
-            SchemaFields(
-                singletons = mapOf("name" to FieldType.Text, "age" to FieldType.Number),
+    arcs.core.data.EntityType(
+        arcs.core.data.Schema(
+            setOf(arcs.core.data.SchemaName("Person")),
+            arcs.core.data.SchemaFields(
+                singletons = mapOf(
+                    "name" to arcs.core.data.FieldType.Text,
+                    "age" to arcs.core.data.FieldType.Number
+                ),
                 collections = emptyMap()
             ),
             "edabcee36cb653ff468fb77804911ddfa9303d67",

@@ -8,7 +8,6 @@ package arcs.golden
 //
 // Current implementation doesn't support optional field detection
 
-import arcs.sdk.*
 import arcs.sdk.wasm.*
 
 typealias Gold_Data = AbstractGold.Gold_Data
@@ -58,6 +57,7 @@ abstract class AbstractGold : WasmParticleImpl() {
             lnk: String = this.lnk,
             flg: Boolean = this.flg
         ) = Gold_Data(num = num, txt = txt, lnk = lnk, flg = flg)
+
 
 
         fun reset() {
@@ -204,6 +204,7 @@ abstract class AbstractGold : WasmParticleImpl() {
         )
 
 
+
         fun reset() {
             name = ""
             age = 0.0
@@ -323,6 +324,7 @@ abstract class AbstractGold : WasmParticleImpl() {
         fun copy(val_: String = this.val_) = Gold_Alias(val_ = val_)
 
 
+
         fun reset() {
             val_ = ""
         }
@@ -390,6 +392,7 @@ abstract class AbstractGold : WasmParticleImpl() {
         override var entityId = ""
 
         fun copy(num: Double = this.num) = Foo(num = num)
+
 
 
         fun reset() {
@@ -513,6 +516,7 @@ abstract class AbstractGold : WasmParticleImpl() {
             birthDayMonth = birthDayMonth,
             birthDayDOM = birthDayDOM
         )
+
 
 
         fun reset() {

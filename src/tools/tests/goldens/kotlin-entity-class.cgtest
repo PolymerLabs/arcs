@@ -16,9 +16,9 @@ particle T
     class Thing(
         num: Double = 0.0,
         entityId: String? = null,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Thing", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase("Thing", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
         
         var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
@@ -33,6 +33,7 @@ particle T
          * Storing the copy will result in a new copy of the data being stored.
          */
         fun copy(num: Double = this.num) = Thing(num = num)
+
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -44,12 +45,12 @@ particle T
             expirationTimestamp = expirationTimestamp
         )
         
-        companion object : EntitySpec<Thing> {
+        companion object : arcs.sdk.EntitySpec<Thing> {
             
-            override val SCHEMA = Schema(
-                setOf(SchemaName("Thing")),
-                SchemaFields(
-                    singletons = mapOf("num" to FieldType.Number),
+            override val SCHEMA = arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Thing")),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf("num" to arcs.core.data.FieldType.Number),
                     collections = emptyMap()
                 ),
                 "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
@@ -57,14 +58,14 @@ particle T
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
                 emptyMap()
 
             init {
-                SchemaRegistry.register(SCHEMA)
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
             }
             
-            override fun deserialize(data: RawEntity) = Thing().apply {
+            override fun deserialize(data: arcs.core.data.RawEntity) = Thing().apply {
                 deserialize(data, nestedEntitySpecs)
             }
         }
@@ -92,6 +93,7 @@ particle T
         override var entityId = ""
         
         fun copy(num: Double = this.num) = Thing(num = num)
+
         
         
         fun reset() {
@@ -161,9 +163,16 @@ particle T
     class T_H1 private constructor(
         num: Double = 0.0,
         entityId: String? = null,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : VariableEntityBase("T_H1", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.core.entity.VariableEntityBase(
+        "T_H1",
+        SCHEMA,
+        entityId,
+        creationTimestamp,
+        expirationTimestamp,
+        false
+    ) {
         
         var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
@@ -179,6 +188,7 @@ particle T
          */
         fun copy(num: Double = this.num) = T_H1(num = num)
             .also { this.copyLatentDataInto(it) }
+
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -190,12 +200,12 @@ particle T
             expirationTimestamp = expirationTimestamp
         ).also { this.copyLatentDataInto(it) }
         
-        companion object : EntitySpec<T_H1> {
+        companion object : arcs.sdk.EntitySpec<T_H1> {
             
-            override val SCHEMA = Schema(
+            override val SCHEMA = arcs.core.data.Schema(
                 setOf(),
-                SchemaFields(
-                    singletons = mapOf("num" to FieldType.Number),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf("num" to arcs.core.data.FieldType.Number),
                     collections = emptyMap()
                 ),
                 "1032e45209f910286cfb898c43a1c3ca7d07aea6",
@@ -203,14 +213,14 @@ particle T
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
                 emptyMap()
 
             init {
-                SchemaRegistry.register(SCHEMA)
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
             }
             
-            override fun deserialize(data: RawEntity) = T_H1().apply {
+            override fun deserialize(data: arcs.core.data.RawEntity) = T_H1().apply {
                 deserialize(data, nestedEntitySpecs)
             }
         }

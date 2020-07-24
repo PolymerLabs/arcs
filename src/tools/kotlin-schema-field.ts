@@ -153,7 +153,7 @@ class ReferenceType extends TypeContainer {
   }
 
   getKotlinType(contained: boolean) {
-    return `Reference<${this.innerKotlinType}>${contained ? '' : '?'}`;
+    return `arcs.sdk.Reference<${this.innerKotlinType}>${contained ? '' : '?'}`;
   }
 
   get defaultVal() {

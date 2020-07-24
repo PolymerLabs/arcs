@@ -11,7 +11,7 @@ read singleton entity
 particle P
   h: reads Thing {name: Text}
 [results]
-ReadSingletonHandle<Thing>
+arcs.sdk.ReadSingletonHandle<Thing>
 [end]
 
 [name]
@@ -20,7 +20,7 @@ write singleton entity
 particle P
   h: writes Thing {name: Text}
 [results]
-WriteSingletonHandle<Thing>
+arcs.sdk.WriteSingletonHandle<Thing>
 [end]
 
 [name]
@@ -29,7 +29,7 @@ read write singleton entity
 particle P
   h: reads writes Thing {name: Text}
 [results]
-ReadWriteSingletonHandle<Thing>
+arcs.sdk.ReadWriteSingletonHandle<Thing>
 [end]
 
 [name]
@@ -38,7 +38,7 @@ read write anonymous entity
 particle P
   h: reads writes * {name: Text}
 [results]
-ReadWriteSingletonHandle<P_H>
+arcs.sdk.ReadWriteSingletonHandle<P_H>
 [end]
 
 [name]
@@ -47,7 +47,7 @@ read collection of entities
 particle P
   h: reads [Thing {name: Text}]
 [results]
-ReadCollectionHandle<Thing>
+arcs.sdk.ReadCollectionHandle<Thing>
 [end]
 
 [name]
@@ -56,7 +56,7 @@ write collection of entities
 particle P
   h: writes [Thing {name: Text}]
 [results]
-WriteCollectionHandle<Thing>
+arcs.sdk.WriteCollectionHandle<Thing>
 [end]
 
 [name]
@@ -65,7 +65,7 @@ read write collection of entities
 particle P
   h: reads writes [Thing {name: Text}]
 [results]
-ReadWriteCollectionHandle<Thing>
+arcs.sdk.ReadWriteCollectionHandle<Thing>
 [end]
 
 [name]
@@ -74,7 +74,7 @@ read collection of entities and query by string
 particle P
   h: reads [Thing {name: Text} [name == ?]]
 [results]
-ReadQueryCollectionHandle<Thing, String>
+arcs.sdk.ReadQueryCollectionHandle<Thing, String>
 [end]
 
 [name]
@@ -83,7 +83,7 @@ read write collection of entities and query by number
 particle P
   h: reads writes [Thing {age: Number} [age > ?]]
 [results]
-ReadWriteQueryCollectionHandle<Thing, Double>
+arcs.sdk.ReadWriteQueryCollectionHandle<Thing, Double>
 [end]
 
 [name]
@@ -92,7 +92,7 @@ read reference singleton
 particle P
   h: reads &Thing {name: Text}
 [results]
-ReadSingletonHandle<Reference<Thing>>
+arcs.sdk.ReadSingletonHandle<arcs.sdk.Reference<Thing>>
 [end]
 
 [name]
@@ -101,7 +101,7 @@ write reference singleton
 particle P
   h: writes &Thing {name: Text}
 [results]
-WriteSingletonHandle<Reference<Thing>>
+arcs.sdk.WriteSingletonHandle<arcs.sdk.Reference<Thing>>
 [end]
 
 [name]
@@ -110,7 +110,7 @@ read collection of references
 particle P
   h: reads [&Thing {name: Text}]
 [results]
-ReadCollectionHandle<Reference<Thing>>
+arcs.sdk.ReadCollectionHandle<arcs.sdk.Reference<Thing>>
 [end]
 
 [name]
@@ -119,7 +119,7 @@ write collection of references
 particle P
   h: writes [&Thing {name: Text}]
 [results]
-WriteCollectionHandle<Reference<Thing>>
+arcs.sdk.WriteCollectionHandle<arcs.sdk.Reference<Thing>>
 [end]
 
 [name]
@@ -128,7 +128,7 @@ read tuple of 2 references
 particle P
   h: reads (&Foo {name: Text}, &Bar {age: Number})
 [results]
-ReadSingletonHandle<Tuple2<Reference<Foo>, Reference<Bar>>>
+arcs.sdk.ReadSingletonHandle<arcs.core.entity.Tuple2<arcs.sdk.Reference<Foo>, arcs.sdk.Reference<Bar>>>
 [end]
 
 [name]
@@ -137,7 +137,9 @@ write collection of tuples of 3 references
 particle P
   h: writes [(&Foo {name: Text}, &Bar {age: Number}, &Baz {isThisIt: Boolean})]
 [results]
-WriteCollectionHandle<Tuple3<Reference<Foo>, Reference<Bar>, Reference<Baz>>>
+arcs.sdk.WriteCollectionHandle<
+    arcs.core.entity.Tuple3<arcs.sdk.Reference<Foo>, arcs.sdk.Reference<Bar>, arcs.sdk.Reference<Baz>>
+>
 [end]
 
 [name]
@@ -146,7 +148,7 @@ read singleton variable entity
 particle T
   h: reads ~a with {name: Text}
 [results]
-ReadSingletonHandle<T_H>
+arcs.sdk.ReadSingletonHandle<T_H>
 [end]
 
 [name]
@@ -155,7 +157,7 @@ write singleton variable entity
 particle T
   h: writes ~a with {name: Text}
 [results]
-WriteSingletonHandle<T_H>
+arcs.sdk.WriteSingletonHandle<T_H>
 [end]
 
 [name]
@@ -164,5 +166,5 @@ read write singleton unconstrained variable entity
 particle T
   h: reads writes ~a
 [results]
-ReadWriteSingletonHandle<T_H>
+arcs.sdk.ReadWriteSingletonHandle<T_H>
 [end]
