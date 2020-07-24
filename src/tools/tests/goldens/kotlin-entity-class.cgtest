@@ -226,3 +226,59 @@ particle T
         }
     }
 [end]
+
+[name]
+generates an empty class for entities with no fields
+[input]
+particle T
+  h1: reads Trigger {}
+[results]
+
+    @Suppress("UNCHECKED_CAST")
+    class Trigger(
+        entityId: String? = null,
+        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : EntityBase("Trigger", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+        
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
+        fun copy() = Trigger()
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate() = Trigger(
+            entityId = entityId,
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
+        )
+        
+        companion object : EntitySpec<Trigger> {
+            
+            override val SCHEMA = Schema(
+                setOf(SchemaName("Trigger")),
+                SchemaFields(
+                    singletons = emptyMap(),
+                    collections = emptyMap()
+                ),
+                "7f09dd4391c447c32711577bd37c06e4136b23da",
+                refinement = { _ -> true },
+                query = null
+            )
+
+            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+                emptyMap()
+
+            init {
+                SchemaRegistry.register(SCHEMA)
+            }
+            
+            override fun deserialize(data: RawEntity) = Trigger().apply {
+                deserialize(data, nestedEntitySpecs)
+            }
+        }
+    }
+[end]

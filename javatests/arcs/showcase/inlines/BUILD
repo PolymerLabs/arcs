@@ -16,9 +16,12 @@ arcs_kt_android_library(
     name = "example_particles",
     testonly = 1,
     srcs = [
-        "Readers.kt",
-        "TypeWriter.kt",
-        "UseUpExtraRegisterSpace.kt",
+        "Generator.kt",
+        "CopyChildren.kt",
+        "ChildModifier.kt",
+        "ConfirmFinalValue.kt",
+        "RemoveEntity.kt",
+        "Trigger.kt",
     ],
     deps = [
         ":inlines_generation",

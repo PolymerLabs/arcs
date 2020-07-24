@@ -16,27 +16,21 @@ class InlinesTest {
 
     @get:Rule
     val env = ShowcaseEnvironment(
-        ::TypeWriter.toRegistration(),
-        ::IntegralReader.toRegistration(),
-        ::FloatingReader.toRegistration(),
-        ::CharReader.toRegistration(),
-        ::IntegralSetReader.toRegistration(),
-        ::FloatingSetReader.toRegistration(),
-        ::CharSetReader.toRegistration(),
-        ::UseUpExtraRegisterSpace.toRegistration()
+        ::Generator.toRegistration(),
+        ::CopyInlineComponent.toRegistration(),
+        ::ExractReferencedComponent.toRegistration(),
+        ::ChildModifier.toRegistration(),
+        ::ConfirmFinalValue.toRegistration(),
+        ::RemoveEntity.toRegistration(),
+        ::Trigger.toRegistration(),
     )
 
     @Test
     fun kotlinTypes_runArc() = runBlocking {
-        val arc = env.startArc(UseKotlinTypesPlan)
+        val arc = env.startArc(UseInlineEntitiesPlan)
 
         withTimeout(1500) {
-            IntegralReader.updated.join()
-            FloatingReader.updated.join()
-            CharReader.updated.join()
-            IntegralSetReader.updated.join()
-            FloatingSetReader.updated.join()
-            CharSetReader.updated.join()
+            ConfirmFinalValue.updated.join()
         }
 
         env.stopArc(arc)

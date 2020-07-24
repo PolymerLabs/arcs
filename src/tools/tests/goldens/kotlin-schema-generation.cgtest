@@ -368,3 +368,21 @@ arcs.core.data.Schema(
     query = null
 )
 [end]
+
+[name]
+generates a schema for an empty object
+[input]
+particle P
+  h1: reads Person {}
+[results]
+Schema(
+    setOf(SchemaName("Person")),
+    SchemaFields(
+        singletons = emptyMap(),
+        collections = emptyMap()
+    ),
+    "da3d58f11a1238f77f7145c4691220832701b401",
+    refinement = { _ -> true },
+    query = null
+)
+[end]
