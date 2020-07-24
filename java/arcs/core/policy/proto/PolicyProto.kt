@@ -12,11 +12,13 @@
 package arcs.core.policy.proto
 
 import arcs.core.data.FieldName
+import arcs.core.data.proto.PolicyConfigProto
 import arcs.core.data.proto.PolicyFieldProto
 import arcs.core.data.proto.PolicyProto
 import arcs.core.data.proto.PolicyRetentionProto
 import arcs.core.data.proto.PolicyTargetProto
 import arcs.core.data.proto.decode
+import arcs.core.data.proto.encode
 import arcs.core.policy.EgressType
 import arcs.core.policy.Policy
 import arcs.core.policy.PolicyField
@@ -39,6 +41,21 @@ fun PolicyProto.decode(): Policy {
     )
 }
 
+fun Policy.encode(): PolicyProto {
+    return PolicyProto.newBuilder()
+        .setName(name)
+        .setDescription(description)
+        .setEgressType(egressType.encode())
+        .addAllTargets(targets.map { it.encode() })
+        .addAllConfigs(
+            configs.map { (name, metadata) ->
+                PolicyConfigProto.newBuilder().setName(name).putAllMetadata(metadata).build()
+            }
+        )
+        .addAllAnnotations(annotations.map { it.encode() })
+        .build()
+}
+
 private fun PolicyTargetProto.decode(): PolicyTarget {
     return PolicyTarget(
         schemaName = schemaType,
@@ -47,6 +64,16 @@ private fun PolicyTargetProto.decode(): PolicyTarget {
         fields = fieldsList.map { it.decode() },
         annotations = annotationsList.map { it.decode() }
     )
+}
+
+fun PolicyTarget.encode(): PolicyTargetProto {
+    return PolicyTargetProto.newBuilder()
+        .setSchemaType(schemaName)
+        .setMaxAgeMs(maxAgeMs)
+        .addAllRetentions(retentions.map { it.encode() })
+        .addAllFields(fields.map { it.encode() })
+        .addAllAnnotations(annotations.map { it.encode() })
+        .build()
 }
 
 private fun PolicyFieldProto.decode(parentFieldPath: List<FieldName> = emptyList()): PolicyField {
@@ -71,6 +98,27 @@ private fun PolicyFieldProto.decode(parentFieldPath: List<FieldName> = emptyList
     )
 }
 
+fun PolicyField.encode(): PolicyFieldProto {
+    val rawUsages = rawUsages.map { usage ->
+        PolicyFieldProto.AllowedUsage.newBuilder().setUsage(usage.encode()).build()
+    }
+    val redactedUsages = redactedUsages.flatMap { (label, usages) ->
+        usages.map { usage ->
+            PolicyFieldProto.AllowedUsage.newBuilder()
+                .setRedactionLabel(label)
+                .setUsage(usage.encode())
+                .build()
+        }
+    }
+    val allUsages = rawUsages + redactedUsages
+    return PolicyFieldProto.newBuilder()
+        .setName(fieldPath.last())
+        .addAllUsages(allUsages)
+        .addAllSubfields(subfields.map { it.encode() })
+        .addAllAnnotations(annotations.map { it.encode() })
+        .build()
+}
+
 private fun PolicyRetentionProto.decode(): PolicyRetention {
     return PolicyRetention(
         medium = medium.decode(),
@@ -78,11 +126,23 @@ private fun PolicyRetentionProto.decode(): PolicyRetention {
     )
 }
 
+private fun PolicyRetention.encode(): PolicyRetentionProto {
+    return PolicyRetentionProto.newBuilder()
+        .setMedium(medium.encode())
+        .setEncryptionRequired(encryptionRequired)
+        .build()
+}
+
 private fun PolicyProto.EgressType.decode() = when (this) {
     PolicyProto.EgressType.LOGGING -> EgressType.LOGGING
     PolicyProto.EgressType.FEDERATED_AGGREGATION -> EgressType.FEDERATED_AGGREGATION
     PolicyProto.EgressType.EGRESS_TYPE_UNSPECIFIED, PolicyProto.EgressType.UNRECOGNIZED ->
         throw UnsupportedOperationException("Unknown egress type: $this")
+}
+
+private fun EgressType.encode() = when (this) {
+    EgressType.LOGGING -> PolicyProto.EgressType.LOGGING
+    EgressType.FEDERATED_AGGREGATION -> PolicyProto.EgressType.FEDERATED_AGGREGATION
 }
 
 private fun PolicyFieldProto.UsageType.decode() = when (this) {
@@ -93,9 +153,20 @@ private fun PolicyFieldProto.UsageType.decode() = when (this) {
         throw UnsupportedOperationException("Unknown usage type: $this")
 }
 
+private fun UsageType.encode() = when (this) {
+    UsageType.ANY -> PolicyFieldProto.UsageType.ANY
+    UsageType.EGRESS -> PolicyFieldProto.UsageType.EGRESS
+    UsageType.JOIN -> PolicyFieldProto.UsageType.JOIN
+}
+
 private fun PolicyRetentionProto.Medium.decode() = when (this) {
     PolicyRetentionProto.Medium.RAM -> StorageMedium.RAM
     PolicyRetentionProto.Medium.DISK -> StorageMedium.DISK
     PolicyRetentionProto.Medium.MEDIUM_UNSPECIFIED, PolicyRetentionProto.Medium.UNRECOGNIZED ->
         throw UnsupportedOperationException("Unknown retention medium: $this")
+}
+
+private fun StorageMedium.encode() = when (this) {
+    StorageMedium.RAM -> PolicyRetentionProto.Medium.RAM
+    StorageMedium.DISK -> PolicyRetentionProto.Medium.DISK
 }
