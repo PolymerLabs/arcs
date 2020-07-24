@@ -21,6 +21,7 @@ import arcs.core.data.HandleMode
 import arcs.core.data.InformationFlowLabel
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.MuxType
+import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe
 import arcs.core.data.Recipe.Particle
 import arcs.core.data.ReferenceType
@@ -37,7 +38,8 @@ import java.util.BitSet
  */
 class InformationFlow private constructor(
     private val graph: RecipeGraph,
-    private val ingresses: List<IngressInfo>
+    private val ingresses: List<IngressInfo>,
+    private val egressChecks: Map<ParticleSpec, List<Check>>
 ) : RecipeGraphFixpointIterator<AccessPathLabels>(AccessPathLabels.getBottom()) {
 
     /**
@@ -55,7 +57,12 @@ class InformationFlow private constructor(
 
     private val particleChecks = graph.particleNodes.associateBy(
         keySelector = { it.particle },
-        valueTransform = { it.instantiatedChecks() }
+        valueTransform = { node ->
+            val instantiatedExtraChecks = egressChecks[node.particle.spec]?.map { check ->
+                check.instantiateFor(node.particle)
+            }
+            node.instantiatedChecks() + (instantiatedExtraChecks ?: emptyList())
+        }
     )
 
     /** Returns all the labels in the given list of [Claim] instances. */
@@ -357,9 +364,21 @@ class InformationFlow private constructor(
         public fun computeLabels(recipe: Recipe, ingressSpecs: List<String>): AnalysisResult {
             val graph = RecipeGraph(recipe)
             val ingresses = ingressSpecs.flatMap { getIngressInfo(graph, it) }
-            val analysis = InformationFlow(graph, ingresses)
+            return computeLabels(graph, ingresses, emptyMap())
+        }
+
+        /**
+         * Computes the labels for [recipe] using the given [ingresses] and additional
+         * checks for the particles provided in [egressChecks].
+         */
+        public fun computeLabels(
+            graph: RecipeGraph,
+            ingresses: List<IngressInfo>,
+            egressChecks: Map<ParticleSpec, List<Check>>
+        ): AnalysisResult {
+            val analysis = InformationFlow(graph, ingresses, egressChecks)
             return AnalysisResult(
-                recipe = recipe,
+                recipe = graph.recipe,
                 fixpoint = analysis.computeFixpoint(graph) { value, prefix ->
                     value.toString(prefix) { i -> "${analysis.labels[i]}" }
                 },

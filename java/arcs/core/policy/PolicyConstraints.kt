@@ -1,6 +1,7 @@
 package arcs.core.policy
 
 import arcs.core.data.AccessPath
+import arcs.core.data.Check
 import arcs.core.data.Claim
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.InformationFlowLabel.SemanticTag
@@ -146,11 +147,18 @@ sealed class PolicyViolation(val policy: Policy, message: String) : Exception(
         "Multiple egress particles named ${policy.egressParticleName} found for policy"
     )
 
+    /** Thrown when there is no store associated with schema. */
     class NoStoreForPolicyTarget(
         policy: Policy,
         target: PolicyTarget
     ) : PolicyViolation(
         policy,
-        "No store found for policy target $target mentioned in ${policy.name}"
+        "No store found for policy target `${target.schemaName}` mentioned in ${policy.name}"
     )
+
+    /** Thrown when policy checks are violated by a recipe. */
+    class ChecksViolated(
+        policy: Policy,
+        checks: List<Check>
+    ) : PolicyViolation(policy, "Recipe violates egress checks: $checks")
 }
