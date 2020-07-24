@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {handleForActiveStore} from '../../build/runtime/storage/storage-ng.js';
+import {handleForActiveStore} from '../../build/runtime/storage/storage.js';
 import {CollectionHandle} from '../../build/runtime/storage/handle.js';
 import {Entity} from '../../build/runtime/entity.js';
 
