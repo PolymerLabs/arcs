@@ -32,6 +32,7 @@ export interface SourceLocation {
   filename?: string;
   start: SourcePosition;
   end: SourcePosition;
+  text?: string; // Optionally keeps a copy of the raw/unparsed text.
 }
 
 /**

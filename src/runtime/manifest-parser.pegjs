@@ -94,9 +94,7 @@
 
   function toAstNode<T extends {location: IFileRange} & Omit<T, 'location'>>(data: Omit<T, 'location'>): T {
     const loc = location();
-    // For debugging:
-    // const txt = text();
-    // loc['text'] = txt;
+    loc['text'] = text();
     return {...data, location: loc} as T;
   }
 
