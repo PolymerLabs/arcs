@@ -89,6 +89,7 @@ class Allocator(
      * Start a new Arc given a [Plan] and return an [Arc].
      */
     private suspend fun startArcForPlan(plan: Plan, nameForTesting: String): Arc = mutex.withLock {
+        plan.init()
         plan.arcId?.toArcId()?.let { arcId ->
             val existingPartitions = partitionMap.readPartitions(arcId)
             if (existingPartitions.isNotEmpty()) {

@@ -33,6 +33,25 @@ data class Plan(
             }
         }
 
+
+    /** Initialize the [Plan]. */
+    fun init() {
+        // Register all Schemas
+        val allTypes = handles.map { it.type } + particles
+            .flatMap { it.handles.values }
+            .map { it.type }
+
+        allTypes.forEach { registerSchema(it) }
+    }
+
+    /** Add contained [Schema]s to the [SchemaRegistry] */
+    private fun registerSchema(type: Type?): Unit = when(type) {
+        null -> Unit
+        is EntitySchemaProviderType -> type.entitySchema?.let { SchemaRegistry.register(it) } ?: Unit
+        is Type.TypeContainer<*> -> registerSchema(type.containedType)
+        else -> registerSchema(type.resolvedType)
+    }
+
     /**
      * A [Particle] consists of the information necessary to instantiate a particle
      * when starting an arc.
