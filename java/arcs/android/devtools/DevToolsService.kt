@@ -14,8 +14,9 @@ package arcs.android.devtools
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import arcs.android.devtools.storage.DevToolsConnectionFactory
 import arcs.android.storage.service.IDevToolsStorageManager
-import arcs.sdk.android.storage.service.DevToolsConnectionFactory
+import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceConnection
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -34,10 +35,12 @@ class DevToolsService : Service() {
     private val scope = CoroutineScope(coroutineContext)
     private lateinit var binder: DevToolsBinder
     private val devToolsServer = DevWebServerImpl
-    private val connectionFactory = DevToolsConnectionFactory(this@DevToolsService)
+    private val connectionFactory = DevToolsConnectionFactory(
+        this@DevToolsService,
+        StorageService::class.java)
+
     private var storageService: IDevToolsStorageManager? = null
     private var serviceConnection: StorageServiceConnection? = null
-    // private val connection = DevToolsConnectionFactory(this@DevToolsService)
 
     override fun onCreate() {
         binder = DevToolsBinder(scope, devToolsServer)
@@ -71,11 +74,10 @@ class DevToolsService : Service() {
             storageService?.asBinder()?.isBinderAlive != true) {
             "Connection to StorageService is already alive."
         }
-        val connection = connectionFactory()
+        this.serviceConnection = connectionFactory()
         // Need to initiate the connection on the main thread.
-        val service = IDevToolsStorageManager.Stub.asInterface(connection.connectAsync().await())
-
-        this.serviceConnection = connection
-        this.storageService = service
+        this.storageService = IDevToolsStorageManager.Stub.asInterface(
+            serviceConnection?.connectAsync()?.await()
+        )
     }
 }

@@ -21,6 +21,7 @@ arcs_kt_android_library(
     manifest = "AndroidManifest.xml",
     deps = [
         ":aidl",
+        "//java/arcs/android/devtools/storage:devtools",
         "//java/arcs/android/storage/service",
         "//java/arcs/core/util",
         "//java/arcs/sdk/android/storage/service",

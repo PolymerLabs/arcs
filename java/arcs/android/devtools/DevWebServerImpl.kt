@@ -41,7 +41,7 @@ object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
             wsdSockets.remove(socket)
         }
         wsdSockets.add(socket)
-
+        log.debug { "Opening Websocket" }
         return socket
     }
 

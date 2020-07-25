@@ -17,22 +17,16 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
- * A [StorageServiceManager] is used by a client of the [StorageService] to manage
+ * A [DevToolsStorageManager] is used by a client of the [StorageService] to manage
  * data stored within the [StorageService].
  */
 @ExperimentalCoroutinesApi
 class DevToolsStorageManager(
-    /** [CoroutineContext] on which to build one specific to this [StorageServiceManager]. */
+    /** [CoroutineContext] on which to build one specific to this [DevToolsStoragemanage]. */
     parentCoroutineContext: CoroutineContext,
     /** The stores managed by StorageService. */
     val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>
 ) : IDevToolsStorageManager.Stub() {
 
-    override fun getStorageKeys(): String {
-        var rtn = ""
-        stores.forEach() { key, store ->
-            rtn = rtn + key.toKeyString() + ", "
-        }
-        return rtn
-    }
+    override fun getStorageKeys() = stores.keys().toList().joinToString { it.toKeyString() }
 }

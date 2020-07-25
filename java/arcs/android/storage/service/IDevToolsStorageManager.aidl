@@ -11,13 +11,15 @@
 
 package arcs.android.storage.service;
 
-import arcs.android.storage.service.IResultCallback;
-
 /**
  * Exposed API to manage storage for DevTools
  */
 interface IDevToolsStorageManager {
 
+  /**
+  * Return the storage keys for active stores in csv format. Placeholder function to demonstrate
+  * storage -> devtoolsService -> client cycle.
+  */
   String getStorageKeys();
 
 }

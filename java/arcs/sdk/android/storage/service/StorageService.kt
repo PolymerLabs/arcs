@@ -344,15 +344,6 @@ open class StorageService : ResurrectorService() {
                 action = MANAGER_ACTION
             }
 
-        /**
-         * Creates an [Intent] to use to get a [IDevToolsStorageManager] binding to the
-         * [StorageService].
-         */
-        fun createDevToolsStorageManagerBindIntent(context: Context): Intent =
-            Intent(context, StorageService::class.java).apply {
-                action = DEVTOOLS_ACTION
-            }
-
         // Can be used to cancel all periodic jobs when the service is not running.
         fun cancelAllPeriodicJobs(context: Context) {
             val workManager = WorkManager.getInstance(context)
