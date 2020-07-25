@@ -18,9 +18,9 @@ const ktUtils = new KotlinGenerationUtils();
  * Generates a Kotlin schema instance.
  */
 export async function generateSchema(schema: Schema): Promise<string> {
-  if (schema.equals(Schema.EMPTY)) return `Schema.EMPTY`;
+  if (schema.equals(Schema.EMPTY)) return `arcs.core.data.Schema.EMPTY`;
 
-  const schemaNames = schema.names.map(n => `SchemaName("${n}")`);
+  const schemaNames = schema.names.map(n => `arcs.core.data.SchemaName("${n}")`);
   const {refinement, query} = generatePredicates(schema);
 
   const singletons: string[] = [];
@@ -30,9 +30,9 @@ export async function generateSchema(schema: Schema): Promise<string> {
       (isCollection ? collections : singletons).push(`"${field}" to ${schemaType}`));
 
   return `\
-Schema(
+arcs.core.data.Schema(
     setOf(${ktUtils.joinWithIndents(schemaNames, {startIndent: 8})}),
-    SchemaFields(
+    arcs.core.data.SchemaFields(
         singletons = ${leftPad(ktUtils.mapOf(singletons, 30), 8, true)},
         collections = ${leftPad(ktUtils.mapOf(collections, 30), 8, true)}
     ),
@@ -73,33 +73,34 @@ async function visitSchemaFields(schema: Schema, visitor: (field: SchemaField) =
 }
 
 async function getSchemaType(field: string, {kind, schema, type, innerType}): Promise<string> {
+  const fieldType = 'arcs.core.data.FieldType';
   if (kind === 'schema-primitive') {
     switch (type) {
-      case 'Text': return 'FieldType.Text';
-      case 'URL': return 'FieldType.Text';
-      case 'Number': return 'FieldType.Number';
-      case 'BigInt': return 'FieldType.BigInt';
-      case 'Boolean': return 'FieldType.Boolean';
+      case 'Text': return `${fieldType}.Text`;
+      case 'URL': return `${fieldType}.Text`;
+      case 'Number': return `${fieldType}.Number`;
+      case 'BigInt': return `${fieldType}.BigInt`;
+      case 'Boolean': return `${fieldType}.Boolean`;
       default: break;
     }
   } else if (kind === 'kotlin-primitive') {
     switch (type) {
-      case 'Byte': return 'FieldType.Byte';
-      case 'Short': return 'FieldType.Short';
-      case 'Int': return 'FieldType.Int';
-      case 'Long': return 'FieldType.Long';
-      case 'Char': return 'FieldType.Char';
-      case 'Float': return 'FieldType.Float';
-      case 'Double': return 'FieldType.Double';
+      case 'Byte': return `${fieldType}.Byte`;
+      case 'Short': return `${fieldType}.Short`;
+      case 'Int': return `${fieldType}.Int`;
+      case 'Long': return `${fieldType}.Long`;
+      case 'Char': return `${fieldType}.Char`;
+      case 'Float': return `${fieldType}.Float`;
+      case 'Double': return `${fieldType}.Double`;
       default: break;
     }
   } else if (kind === 'schema-reference') {
-    return `FieldType.EntityRef(${quote(await schema.model.getEntitySchema().hash())})`;
+    return `${fieldType}.EntityRef(${quote(await schema.model.getEntitySchema().hash())})`;
   } else if (kind === 'schema-nested') {
-    return `FieldType.InlineEntity(${quote(await schema.model.getEntitySchema().hash())})`;
+    return `${fieldType}.InlineEntity(${quote(await schema.model.getEntitySchema().hash())})`;
   } else if (kind === 'schema-ordered-list') {
     assert(innerType, 'innerType must be provided for Lists');
-    return `FieldType.ListOf(${innerType})`;
+    return `${fieldType}.ListOf(${innerType})`;
   }
 
   throw new Error(`Schema kind '${kind}' for field '${field}' and type '${type}' is not supported`);

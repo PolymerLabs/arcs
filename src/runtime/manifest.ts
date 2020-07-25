@@ -645,7 +645,7 @@ ${e.message}
                 } else {
                   // Validate that the specified or inferred type matches the schema.
                   const externalType = schema.fields[name];
-                  if (externalType && !Schema.typesEqual(externalType, type)) {
+                  if (externalType && !Schema.isAtLeastAsSpecificAs(externalType, type)) {
                     throw new ManifestError(node.location, `Type of '${name}' does not match schema (${type} vs ${externalType})`);
                   }
                 }

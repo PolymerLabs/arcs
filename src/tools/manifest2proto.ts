@@ -11,7 +11,7 @@ import {Runtime} from '../runtime/runtime.js';
 import {Recipe} from '../runtime/recipe/recipe.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Particle} from '../runtime/recipe/particle.js';
-import {CollectionType, ReferenceType, SingletonType, TupleType, Type, TypeVariable, EntityType} from '../runtime/type.js';
+import {CollectionType, ReferenceType, SingletonType, TupleType, Type, TypeVariable} from '../runtime/type.js';
 import {Schema} from '../runtime/schema.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 import {Manifest} from '../runtime/manifest.js';
@@ -217,9 +217,11 @@ function accessPathProtoPayload(
     connectionSpec: HandleConnectionSpec,
     fieldPath: string[]
 ) {
-  const accessPath: {particleSpec: string, handleConnection: string, selectors?: {field: string}[]} = {
-    particleSpec: spec.name,
-    handleConnection: connectionSpec.name
+  const accessPath: {handle: {particleSpec: string, handleConnection: string}, selectors?: {field: string}[]} = {
+    handle: {
+      particleSpec: spec.name,
+      handleConnection: connectionSpec.name
+    }
   };
   if (fieldPath.length) {
     accessPath.selectors = fieldPath.map(field => ({field}));
@@ -359,7 +361,8 @@ type SchemaField = {
 
 async function schemaFieldToProtoPayload(fieldType: SchemaField) {
   switch (fieldType.kind) {
-    case 'schema-primitive': {
+    case 'schema-primitive':
+    case 'kotlin-primitive':  {
       const primitive = PrimitiveTypeEnum.values[fieldType.type.toUpperCase()];
       if (primitive === undefined) {
         throw new Error(`Primitive field type ${fieldType.type} is not supported.`);
@@ -386,6 +389,9 @@ async function schemaFieldToProtoPayload(fieldType: SchemaField) {
           referredType: await schemaFieldToProtoPayload(fieldType.schema)
         }
       };
+    }
+    case 'type-name': {
+      return typeToProtoPayload(fieldType.model);
     }
     case 'schema-nested': {
       // Nested inlined entity. Wraps a 'schema-inline' object. Mark it as an

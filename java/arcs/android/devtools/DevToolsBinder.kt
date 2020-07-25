@@ -17,19 +17,14 @@ import kotlinx.coroutines.launch
 /**
  * Implementation of [IDevToolsService].
  */
-class DevToolsBinder(val scope: CoroutineScope) : IDevToolsService.Stub() {
-    private var webSocket: DevWebSocket? = null
+class DevToolsBinder(
+    val scope: CoroutineScope,
+    private val webServer: DevWebServer
+) : IDevToolsService.Stub() {
 
     override fun send(str: String) {
         scope.launch {
-            webSocket?.send(str)
-        }
-    }
-
-    override fun start() {
-        scope.launch {
-            webSocket = DevWebSocket()
-            webSocket?.start()
+            webServer.send(str)
         }
     }
 }

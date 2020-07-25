@@ -576,18 +576,17 @@ export class Capabilities {
    * restrictive as the given handle's capabilities. The errors list will
    * contain messages on non complying ranges.
    */
-  // TODO(b/160820832): Consider introducing `unspecified` Capability for each
-  // subclass and have Capabilities always contain all ranges.
   isAllowedForIngress(handleCapabilities: Capabilities): IngressValidationResult {
     for (const range of this.ranges) {
       const handleRange = handleCapabilities.findCompatible(range.min);
       if (!range.isAllowedForIngress(handleRange)) {
-        return IngressValidationResult.failWith(range,
+        return IngressValidationResult.failWith(this,
+            `Capabilities ${this.toDebugString()} failed to validate ingress: ` +
             `${range.min.toDebugString()} is stricter than ` +
             `${handleRange ? handleRange.toDebugString() : 'unspecified'}`);
       }
     }
-    return IngressValidationResult.success();
+    return IngressValidationResult.success(this);
   }
 
   toDebugString(): string {

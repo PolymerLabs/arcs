@@ -11,11 +11,21 @@ schema TestInline
   inlines: [inline AnotherInlineEntity {int: Int}]
   inlineList: List<inline MoreInline {mostInline: [inline MostInline {text: Text}]}>
 
+schema ReferencedSchema
+  number: Int
+
+schema TestReferences
+  references: [&ReferencedSchema]
+  referenceList: List<&ReferencedSchema>
+
 particle TestParticle
   entities: reads writes [TestEntity {text, number, list} [text == ?]]
 
 particle TestInlineParticle
   entities: reads writes [TestInline {inline, inlines, inlineList}]
+
+particle TestReferencesParticle
+  entities: reads writes [TestReferences {references, referenceList}]
 
 recipe TestRecipe
   entities: create

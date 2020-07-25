@@ -1,0 +1,103 @@
+[header]
+Kotlin Test Harness
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+[end_header]
+
+[name]
+exposes harness handles as a read write handle regardless of particle spec direction
+[input]
+particle P
+  h1: reads Person {name: Text}
+  h2: writes Address {streetAddress: Text}
+[results]
+
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+class PTestHarness<P : AbstractP>(
+    factory : (CoroutineScope) -> P
+) : BaseTestHarness<P>(factory, listOf(
+    arcs.core.entity.HandleSpec(
+        "h1",
+        arcs.core.data.HandleMode.Read,
+        arcs.core.data.SingletonType(arcs.core.data.EntityType(P_H1.SCHEMA)),
+        setOf(P_H1)
+    ),
+    arcs.core.entity.HandleSpec(
+        "h2",
+        arcs.core.data.HandleMode.Write,
+        arcs.core.data.SingletonType(arcs.core.data.EntityType(P_H2.SCHEMA)),
+        setOf(P_H2)
+    )
+)) {
+    val h1: arcs.sdk.ReadWriteSingletonHandle<P_H1> by handleMap
+    val h2: arcs.sdk.ReadWriteSingletonHandle<P_H2> by handleMap
+}
+
+[end]
+
+[name]
+specifies handle type correctly - singleton, collection, entity, reference, tuples
+[input]
+particle P
+  singletonEntity: reads Person {name: Text}
+  singletonReference: writes &Person {name: Text}
+  collectionEntity: writes [Person {name: Text}]
+  collectionReference: reads [&Person {name: Text}]
+  collectionTuples: reads writes [(&Product {name: Text}, &Manufacturer {name: Text})]
+[results]
+
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+class PTestHarness<P : AbstractP>(
+    factory : (CoroutineScope) -> P
+) : BaseTestHarness<P>(factory, listOf(
+    arcs.core.entity.HandleSpec(
+        "singletonEntity",
+        arcs.core.data.HandleMode.Read,
+        arcs.core.data.SingletonType(arcs.core.data.EntityType(P_SingletonEntity.SCHEMA)),
+        setOf(P_SingletonEntity)
+    ),
+    arcs.core.entity.HandleSpec(
+        "singletonReference",
+        arcs.core.data.HandleMode.Write,
+        arcs.core.data.SingletonType(
+            arcs.core.data.ReferenceType(arcs.core.data.EntityType(P_SingletonReference.SCHEMA))
+        ),
+        setOf(P_SingletonReference)
+    ),
+    arcs.core.entity.HandleSpec(
+        "collectionEntity",
+        arcs.core.data.HandleMode.Write,
+        arcs.core.data.CollectionType(arcs.core.data.EntityType(P_CollectionEntity.SCHEMA)),
+        setOf(P_CollectionEntity)
+    ),
+    arcs.core.entity.HandleSpec(
+        "collectionReference",
+        arcs.core.data.HandleMode.Read,
+        arcs.core.data.CollectionType(
+            arcs.core.data.ReferenceType(arcs.core.data.EntityType(P_CollectionReference.SCHEMA))
+        ),
+        setOf(P_CollectionReference)
+    ),
+    arcs.core.entity.HandleSpec(
+        "collectionTuples",
+        arcs.core.data.HandleMode.ReadWrite,
+        arcs.core.data.CollectionType(
+            arcs.core.data.TupleType.of(
+                arcs.core.data.ReferenceType(arcs.core.data.EntityType(P_CollectionTuples_0.SCHEMA)),
+                arcs.core.data.ReferenceType(arcs.core.data.EntityType(P_CollectionTuples_1.SCHEMA))
+            )
+        ),
+        setOf(P_CollectionTuples_0, P_CollectionTuples_1)
+    )
+)) {
+    val singletonEntity: arcs.sdk.ReadWriteSingletonHandle<P_SingletonEntity> by handleMap
+    val singletonReference: arcs.sdk.ReadWriteSingletonHandle<arcs.sdk.Reference<P_SingletonReference>> by handleMap
+    val collectionEntity: arcs.sdk.ReadWriteCollectionHandle<P_CollectionEntity> by handleMap
+    val collectionReference: arcs.sdk.ReadWriteCollectionHandle<arcs.sdk.Reference<P_CollectionReference>> by handleMap
+    val collectionTuples: arcs.sdk.ReadWriteCollectionHandle<
+    arcs.core.entity.Tuple2<arcs.sdk.Reference<P_CollectionTuples_0>, arcs.sdk.Reference<P_CollectionTuples_1>>
+> by handleMap
+}
+
+[end]

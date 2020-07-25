@@ -24,7 +24,7 @@ import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.VolatileDriverProvider
+import arcs.core.storage.driver.VolatileDriverProviderFactory
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.fail
 import arcs.core.util.Log
@@ -110,6 +110,7 @@ open class AllocatorTestBase {
         RamDisk.clear()
         DriverAndKeyConfigurator.configureKeyParsers()
         RamDiskDriverProvider()
+        VolatileDriverProviderFactory()
 
         readingExternalHost = readingHost()
         writingExternalHost = writingHost()
@@ -179,7 +180,8 @@ open class AllocatorTestBase {
         )
 
         val allStorageKeyLens =
-            Plan.Particle.handlesLens.traverse() + Plan.HandleConnection.storageKeyLens
+            Plan.Particle.handlesLens.traverse() + Plan.HandleConnection.handleLens +
+                Plan.Handle.storageKeyLens
 
         // fetch the allocator replaced key
         val readPersonKey = findPartitionFor(
@@ -192,7 +194,7 @@ open class AllocatorTestBase {
 
         val purePartition = findPartitionFor(arc.partitions, "PurePerson")
 
-        val storageKeyLens = Plan.HandleConnection.storageKeyLens
+        val storageKeyLens = Plan.HandleConnection.handleLens + Plan.Handle.storageKeyLens
 
         assertThat(arc.partitions).containsExactly(
             Plan.Partition(
@@ -268,7 +270,6 @@ open class AllocatorTestBase {
     open fun allocator_verifyStorageKeysNotOverwritten() = runAllocatorTest {
         val idGenerator = Id.Generator.newSession()
         val testArcId = idGenerator.newArcId("Test")
-        VolatileDriverProvider(testArcId)
 
         val resolver = CapabilitiesResolver(CapabilitiesResolver.Options(testArcId))
         val inputPerson = resolver.createStorageKey(
@@ -284,7 +285,7 @@ open class AllocatorTestBase {
 
         val allStorageKeyLens =
             Plan.particleLens.traverse() + Plan.Particle.handlesLens.traverse() +
-                Plan.HandleConnection.storageKeyLens
+                Plan.HandleConnection.handleLens + Plan.Handle.storageKeyLens
 
         val testPlan = allStorageKeyLens.mod(PersonPlan) { storageKey ->
             storageKey as CreatableStorageKey

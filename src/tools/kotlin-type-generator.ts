@@ -36,7 +36,7 @@ export async function generateConnectionSpecType(connection: HandleConnectionSpe
     if (!type.isEntity) return null;
     if (connection.type.hasVariable) return null;
     const node = nodes.find(n => n.schema.equals(type.getEntitySchema()));
-    return ktUtils.applyFun('EntityType', [`${node.fullName(connection)}.SCHEMA`]);
+    return ktUtils.applyFun('arcs.core.data.EntityType', [`${node.fullName(connection)}.SCHEMA`]);
   });
 }
 
@@ -47,22 +47,23 @@ export async function generateConnectionSpecType(connection: HandleConnectionSpe
  */
 export async function generateType(type: Type, overrideFunction: (type: Type) => string | null = _ => null): Promise<string> {
   return (async function generate(type: Type): Promise<string> {
+    const pkg = 'arcs.core.data';
     const override = overrideFunction(type);
     if (override != null) {
       return override;
     } else if (type.isEntity) {
-      return ktUtils.applyFun('EntityType', [await generateSchema(type.getEntitySchema())]);
+      return ktUtils.applyFun(`${pkg}.EntityType`, [await generateSchema(type.getEntitySchema())]);
     } else if (type.isVariable) {
       assert(type.maybeEnsureResolved(), 'Unresolved type variables are not currently supported');
       return generate(type.resolvedType());
     } else if (type.isCollection) {
-      return ktUtils.applyFun('CollectionType', [await generate(type.getContainedType())]);
+      return ktUtils.applyFun(`${pkg}.CollectionType`, [await generate(type.getContainedType())]);
     } else if (type.isSingleton) {
-      return ktUtils.applyFun('SingletonType', [await generate(type.getContainedType())]);
+      return ktUtils.applyFun(`${pkg}.SingletonType`, [await generate(type.getContainedType())]);
     } else if (type.isReference) {
-      return ktUtils.applyFun('ReferenceType', [await generate(type.getContainedType())]);
+      return ktUtils.applyFun(`${pkg}.ReferenceType`, [await generate(type.getContainedType())]);
     } else if (type.isTuple) {
-      return ktUtils.applyFun('TupleType.of', await Promise.all(type.getContainedTypes().map(t => generate(t))));
+      return ktUtils.applyFun(`${pkg}.TupleType.of`, await Promise.all(type.getContainedTypes().map(t => generate(t))));
     } else {
       throw new Error(`Type '${type.tag}' not supported as code generated handle connection type.`);
     }

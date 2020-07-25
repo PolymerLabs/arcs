@@ -1,0 +1,370 @@
+[header]
+Kotlin Schema Generation
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+[end_header]
+
+[name]
+generates empty schema
+[input]
+particle P
+  h1: reads {}
+[results]
+arcs.core.data.Schema.EMPTY
+[end]
+
+[name]
+generates a schema with multiple names
+[input]
+particle P
+  h1: reads Person Friend Parent {}
+[results]
+arcs.core.data.Schema(
+    setOf(
+    arcs.core.data.SchemaName("Person"),
+    arcs.core.data.SchemaName("Friend"),
+    arcs.core.data.SchemaName("Parent")
+),
+    arcs.core.data.SchemaFields(
+        singletons = emptyMap(),
+        collections = emptyMap()
+    ),
+    "cd956ff7d2d4a14f434aa1427b84097d5c47037b",
+    refinement = { _ -> true },
+    query = null
+)
+[end]
+
+[name]
+generates a schema with primitive fields
+[input]
+particle P
+  h1: reads Person {name: Text, age: Number, friendNames: [Text]}
+[results]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Person")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf(
+            "name" to arcs.core.data.FieldType.Text,
+            "age" to arcs.core.data.FieldType.Number
+        ),
+        collections = mapOf("friendNames" to arcs.core.data.FieldType.Text)
+    ),
+    "accd28212161fc896d658e8c22c06051d1239e18",
+    refinement = { _ -> true },
+    query = null
+)
+[end]
+
+[name]
+generates a schema with Kotlin types
+[input]
+particle P
+  h1: reads Data {
+    bt: Byte,
+    shrt: Short,
+    nt: Int,
+    lng: Long,
+    chr: Char,
+    flt: Float,
+    dbl: Double,
+  }
+[results]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Data")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf(
+            "bt" to arcs.core.data.FieldType.Byte,
+            "shrt" to arcs.core.data.FieldType.Short,
+            "nt" to arcs.core.data.FieldType.Int,
+            "lng" to arcs.core.data.FieldType.Long,
+            "chr" to arcs.core.data.FieldType.Char,
+            "flt" to arcs.core.data.FieldType.Float,
+            "dbl" to arcs.core.data.FieldType.Double
+        ),
+        collections = emptyMap()
+    ),
+    "e444f20e280c14494a71cc6838bb97a18a14ea49",
+    refinement = { _ -> true },
+    query = null
+)
+[end]
+
+[name]
+generates a schema with lists of primitive fields
+[input]
+particle P
+  h1: reads Person {names: List<Text>, favNumbers: List<Number>}
+[results]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Person")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf(
+            "names" to arcs.core.data.FieldType.ListOf(arcs.core.data.FieldType.Text),
+            "favNumbers" to arcs.core.data.FieldType.ListOf(arcs.core.data.FieldType.Number)
+        ),
+        collections = emptyMap()
+    ),
+    "601707171fccbedc3f8d2506c326d6f0fddaaa04",
+    refinement = { _ -> true },
+    query = null
+)
+[end]
+
+[name]
+generates schemas for a reference
+[input]
+particle P
+  h1: reads Person {address: &Address {streetAddress: Text}}
+[results]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Person")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf(
+            "address" to arcs.core.data.FieldType.EntityRef("41a3bd27b7c53f1c5846754291653d13f49e3e8d")
+        ),
+        collections = emptyMap()
+    ),
+    "d44c98a544cbbdd187a7e0529046166ed6a4bcb0",
+    refinement = { _ -> true },
+    query = null
+)
+[next]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Address")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf("streetAddress" to arcs.core.data.FieldType.Text),
+        collections = emptyMap()
+    ),
+    "41a3bd27b7c53f1c5846754291653d13f49e3e8d",
+    refinement = { _ -> true },
+    query = null
+)
+[end]
+
+[name]
+generates schemas for a collection of references
+[input]
+particle P
+  h1: reads Person {address: [&Address {streetAddress: Text}]}
+[results]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Person")),
+    arcs.core.data.SchemaFields(
+        singletons = emptyMap(),
+        collections = mapOf(
+            "address" to arcs.core.data.FieldType.EntityRef("41a3bd27b7c53f1c5846754291653d13f49e3e8d")
+        )
+    ),
+    "e386e5e1ae663a3b491008c6e931d81a5166ce20",
+    refinement = { _ -> true },
+    query = null
+)
+[next]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Address")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf("streetAddress" to arcs.core.data.FieldType.Text),
+        collections = emptyMap()
+    ),
+    "41a3bd27b7c53f1c5846754291653d13f49e3e8d",
+    refinement = { _ -> true },
+    query = null
+)
+[end]
+
+[name]
+generates schemas for a nested entity
+[input]
+particle P
+  h1: reads Person {address: inline Address {streetAddress: Text}}
+[results]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Person")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf(
+            "address" to arcs.core.data.FieldType.InlineEntity("41a3bd27b7c53f1c5846754291653d13f49e3e8d")
+        ),
+        collections = emptyMap()
+    ),
+    "0c8f412660e502d17b310fadf8e950083965e3d5",
+    refinement = { _ -> true },
+    query = null
+)
+[next]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Address")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf("streetAddress" to arcs.core.data.FieldType.Text),
+        collections = emptyMap()
+    ),
+    "41a3bd27b7c53f1c5846754291653d13f49e3e8d",
+    refinement = { _ -> true },
+    query = null
+)
+[end]
+
+[name]
+generates schemas for a nested entity referencing an external schema
+[input]
+schema External
+  name: Text
+
+particle P
+  h1: reads Thing {
+    other: inline External
+  }
+[results]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Thing")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf(
+            "other" to arcs.core.data.FieldType.InlineEntity("dde7385227a50a4a4654027dba6feefccd1a7a39")
+        ),
+        collections = emptyMap()
+    ),
+    "0e998e43c23c1ae55fe4c7d9c819669aa4ee9681",
+    refinement = { _ -> true },
+    query = null
+)
+[next]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("External")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf("name" to arcs.core.data.FieldType.Text),
+        collections = emptyMap()
+    ),
+    "dde7385227a50a4a4654027dba6feefccd1a7a39",
+    refinement = { _ -> true },
+    query = null
+)
+[end]
+
+[name]
+generates schemas for a double nested entity
+[input]
+particle P
+  h1: reads Person {
+    address: inline Address {
+      streetAddress: Text,
+      city: inline City {name: Text}
+    }
+  }
+[results]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Person")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf(
+            "address" to arcs.core.data.FieldType.InlineEntity("357fa6d61d95ea4234984c2341bf1eb4664cc534")
+        ),
+        collections = emptyMap()
+    ),
+    "3932685180303cb50fc7493ab5ca4543ac176866",
+    refinement = { _ -> true },
+    query = null
+)
+[next]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Address")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf(
+            "streetAddress" to arcs.core.data.FieldType.Text,
+            "city" to arcs.core.data.FieldType.InlineEntity("783a4126e47d586196d9e80810b67199edcb04da")
+        ),
+        collections = emptyMap()
+    ),
+    "357fa6d61d95ea4234984c2341bf1eb4664cc534",
+    refinement = { _ -> true },
+    query = null
+)
+[next]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("City")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf("name" to arcs.core.data.FieldType.Text),
+        collections = emptyMap()
+    ),
+    "783a4126e47d586196d9e80810b67199edcb04da",
+    refinement = { _ -> true },
+    query = null
+)
+[end]
+
+[name]
+generates a schema with a refinement
+[input]
+particle P
+  h1: reads Person {name: Text, age: Number} [age >= 21]
+[results]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Person")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf(
+            "name" to arcs.core.data.FieldType.Text,
+            "age" to arcs.core.data.FieldType.Number
+        ),
+        collections = emptyMap()
+    ),
+    "edabcee36cb653ff468fb77804911ddfa9303d67",
+    refinement = { data ->
+        val age = data.singletons["age"].toPrimitiveValue(Double::class, 0.0)
+        ((age > 21) || (age == 21))
+    },
+    query = null
+)
+[end]
+
+[name]
+generates a schema with a query
+[input]
+particle P
+  h1: reads Person {name: Text, age: Number} [age >= ?]
+[results]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Person")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf(
+            "name" to arcs.core.data.FieldType.Text,
+            "age" to arcs.core.data.FieldType.Number
+        ),
+        collections = emptyMap()
+    ),
+    "edabcee36cb653ff468fb77804911ddfa9303d67",
+    refinement = { _ -> true },
+    query = { data, queryArgs ->
+        val age = data.singletons["age"].toPrimitiveValue(Double::class, 0.0)
+        val queryArgument = queryArgs as Double
+        ((age > queryArgument) || (age == queryArgument))
+    }
+)
+[end]
+
+[name]
+generates schemas for a tuple connection
+[input]
+particle P
+  h1: reads (&Person {name: Text}, &Product {sku: Text})
+[results]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Person")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf("name" to arcs.core.data.FieldType.Text),
+        collections = emptyMap()
+    ),
+    "0149326a894f2d81705e1a08480330826f919cf0",
+    refinement = { _ -> true },
+    query = null
+)
+[next]
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Product")),
+    arcs.core.data.SchemaFields(
+        singletons = mapOf("sku" to arcs.core.data.FieldType.Text),
+        collections = emptyMap()
+    ),
+    "32bcfc983b9ea6145aa42fbc525abb96baafbc1f",
+    refinement = { _ -> true },
+    query = null
+)
+[end]

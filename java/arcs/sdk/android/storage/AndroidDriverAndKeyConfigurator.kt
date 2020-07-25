@@ -13,7 +13,6 @@ package arcs.sdk.android.storage
 
 import android.content.Context
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
-import arcs.core.common.ArcId
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator.configure
 
@@ -26,12 +25,7 @@ import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator.configure
  *
  * ```kotlin
  * override fun onCreate() {
- *     DriverAndKeyConfigurator.configure(
- *         this,
- *         "myArcId1",
- *         "myArcId2",
- *         // ...
- *     )
+ *     DriverAndKeyConfigurator.configure(this)
  * }
  * ```
  *
@@ -44,8 +38,8 @@ object AndroidDriverAndKeyConfigurator {
      * Allows the caller to configure & register [DriverProvider]s for the [StorageService].
      */
     // TODO: make the set of drivers/keyparsers configurable.
-    fun configure(context: Context, vararg arcIds: ArcId) {
-        DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(context), *arcIds)
+    fun configure(context: Context) {
+        DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(context))
     }
 
     /**

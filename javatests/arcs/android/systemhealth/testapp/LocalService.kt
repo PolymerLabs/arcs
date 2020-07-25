@@ -89,6 +89,10 @@ class LocalService : LifecycleService() {
                 ),
                 0
             ),
+            intent.getIntExtra(
+                intentExtras.clearedEntities,
+                defaultSettings.clearedEntities
+            ),
             maxOf(
                 intent.getIntExtra(
                     intentExtras.delayedStartMs,

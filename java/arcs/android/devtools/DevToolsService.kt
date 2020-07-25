@@ -18,6 +18,8 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 /**
  * Implementation of [Service] for devtools to enable a [DevWebSocket] connection to a remote
@@ -27,15 +29,29 @@ class DevToolsService : Service() {
 
     private val coroutineContext = Dispatchers.Default + CoroutineName("DevtoolsService")
     private val scope = CoroutineScope(coroutineContext)
-    private val binder = DevToolsBinder(scope)
+    private lateinit var binder: DevToolsBinder
+    private val devToolsServer = DevWebServerImpl
+
+    override fun onCreate() {
+        binder = DevToolsBinder(scope, devToolsServer)
+        scope.launch {
+            suspendCancellableCoroutine { cont ->
+                cont.invokeOnCancellation {
+                    devToolsServer.close()
+                }
+                devToolsServer.start()
+                cont.resume(Unit) {}
+            }
+        }
+    }
 
     override fun onBind(intent: Intent): IBinder? {
-        binder.start()
         return binder
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        devToolsServer.close()
         scope.cancel()
     }
 }

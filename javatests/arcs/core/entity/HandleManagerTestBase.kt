@@ -38,11 +38,13 @@ import arcs.core.testutil.handles.dispatchQuery
 import arcs.core.testutil.handles.dispatchRemove
 import arcs.core.testutil.handles.dispatchSize
 import arcs.core.testutil.handles.dispatchStore
+import arcs.core.util.ArcsStrictMode
 import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -734,8 +736,57 @@ open class HandleManagerTestBase {
 
         val updateDeferred = readHandle.onUpdateDeferred { it.size == 1 }
         writeHandle.dispatchStore(entity)
-        val entityOut = updateDeferred.await()
         assertThat(updateDeferred.await()).containsExactly(entity)
+    }
+
+    @Test
+    fun collectionsOfReferencesWorkEndToEnd() = testRunner {
+        fun toReferencedEntity(value: Int) = TestReferencesParticle_Entities_References(value)
+
+        val referencedEntitiesKey = ReferenceModeStorageKey(
+            backingKey = RamDiskStorageKey("referencedEntities"),
+            storageKey = RamDiskStorageKey("set-referencedEntities")
+        )
+
+        val referencedEntityHandle = writeHandleManager.createCollectionHandle(
+            referencedEntitiesKey,
+            entitySpec = TestReferencesParticle_Entities_References
+        )
+
+        suspend fun toReferences(values: Iterable<Int>) = values
+            .map { toReferencedEntity(it) }
+            .map {
+                referencedEntityHandle.dispatchStore(it)
+                referencedEntityHandle.dispatchCreateReference(it)
+            }
+
+        suspend fun toEntity(values: Set<Int>, valueList: List<Int>) =
+            TestReferencesParticle_Entities(
+                toReferences(values).toSet(),
+                toReferences(valueList)
+            )
+
+        val entities = setOf(
+            toEntity(setOf(1, 2, 3), listOf(3, 3, 4)),
+            toEntity(setOf(200, 100, 300), listOf(2, 10, 2)),
+            toEntity(setOf(34, 2145, 1, 11), listOf(3, 4, 5))
+        )
+
+        val writeHandle = writeHandleManager.createCollectionHandle(
+            entitySpec = TestReferencesParticle_Entities
+        )
+        val readHandle = readHandleManager.createCollectionHandle(
+            entitySpec = TestReferencesParticle_Entities
+        )
+
+        val updateDeferred = readHandle.onUpdateDeferred { it.size == 3 }
+        entities.forEach { writeHandle.dispatchStore(it) }
+        val entitiesOut = updateDeferred.await()
+        assertThat(entitiesOut).containsExactlyElementsIn(entities)
+        entitiesOut.forEach { entity ->
+            entity.references.forEach { it.dereference() }
+            entity.referenceList.forEach { it.dereference() }
+        }
     }
 
     @Test
@@ -1092,6 +1143,16 @@ open class HandleManagerTestBase {
         assertThat(e).hasMessageThat().isEqualTo(
             "Reference-mode storage keys are not supported for reference-typed handles."
         )
+    }
+
+    @Test
+    fun arcsStrictMode_handle_operation_fails() = testRunner {
+        val handle = writeHandleManager.createCollectionHandle()
+        ArcsStrictMode.enableStrictHandlesForTest {
+            assertFailsWith<IllegalStateException> {
+                handle.clear()
+            }
+        }
     }
 
     private suspend fun EntityHandleManager.createSingletonHandle(

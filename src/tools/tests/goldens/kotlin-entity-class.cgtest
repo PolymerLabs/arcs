@@ -1,0 +1,228 @@
+[header]
+Kotlin Entity Class Generation
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+[end_header]
+
+[name]
+generates entity with a public constructor
+[input]
+particle T
+  h1: reads Thing {num: Number}
+[results]
+
+    @Suppress("UNCHECKED_CAST")
+    class Thing(
+        num: Double = 0.0,
+        entityId: String? = null,
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase("Thing", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+        
+        var num: Double
+            get() = super.getSingletonValue("num") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("num", _value)
+        
+        init {
+            this.num = num
+        }
+        
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
+        fun copy(num: Double = this.num) = Thing(num = num)
+
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(num: Double = this.num) = Thing(
+            num = num,
+            entityId = entityId,
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
+        )
+        
+        companion object : arcs.sdk.EntitySpec<Thing> {
+            
+            override val SCHEMA = arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Thing")),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                    collections = emptyMap()
+                ),
+                "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+                refinement = { _ -> true },
+                query = null
+            )
+
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
+                emptyMap()
+
+            init {
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
+            }
+            
+            override fun deserialize(data: arcs.core.data.RawEntity) = Thing().apply {
+                deserialize(data, nestedEntitySpecs)
+            }
+        }
+    }
+[end]
+
+[name]
+generates entity for WASM
+[opts]
+{"wasm":true}
+[input]
+particle T
+  h1: reads Thing {num: Number}
+[results]
+
+    @Suppress("UNCHECKED_CAST")
+    class Thing(num: Double = 0.0) : WasmEntity {
+        
+        var num = num
+            get() = field
+            private set(_value) {
+                field = _value
+            }
+        
+        override var entityId = ""
+        
+        fun copy(num: Double = this.num) = Thing(num = num)
+
+        
+        
+        fun reset() {
+            num = 0.0
+        }
+
+        override fun encodeEntity(): NullTermByteArray {
+            val encoder = StringEncoder()
+            encoder.encode("", entityId)
+            num.let { encoder.encode("num:N", num) }
+            return encoder.toNullTermByteArray()
+        }
+
+        override fun toString() =
+            "Thing(num = $num)"
+
+        companion object : WasmEntitySpec<Thing> {
+            
+            
+            override fun decode(encoded: ByteArray): Thing? {
+                if (encoded.isEmpty()) return null
+
+                val decoder = StringDecoder(encoded)
+                val entityId = decoder.decodeText()
+                decoder.validate("|")
+                
+                var num = 0.0
+                var i = 0
+                while (i < 1 && !decoder.done()) {
+                    val _name = decoder.upTo(':').toUtf8String()
+                    when (_name) {
+                        "num" -> {
+                        decoder.validate("N")
+                        num = decoder.decodeNum()
+                    }
+                        else -> {
+                            // Ignore unknown fields until type slicing is fully implemented.
+                            when (decoder.chomp(1).toUtf8String()) {
+                                "T", "U" -> decoder.decodeText()
+                                "N" -> decoder.decodeNum()
+                                "B" -> decoder.decodeBool()
+                            }
+                            i--
+                        }
+                    }
+                    decoder.validate("|")
+                    i++
+                }
+                val _rtn = Thing().copy(
+                    num = num
+                )
+               _rtn.entityId = entityId
+                return _rtn
+            }
+        }
+    }
+[end]
+
+[name]
+generates variable entity with private constructor
+[input]
+particle T
+  h1: reads ~a with {num: Number}
+[results]
+
+    @Suppress("UNCHECKED_CAST")
+    class T_H1 private constructor(
+        num: Double = 0.0,
+        entityId: String? = null,
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.core.entity.VariableEntityBase(
+        "T_H1",
+        SCHEMA,
+        entityId,
+        creationTimestamp,
+        expirationTimestamp,
+        false
+    ) {
+        
+        var num: Double
+            get() = super.getSingletonValue("num") as Double? ?: 0.0
+            private set(_value) = super.setSingletonValue("num", _value)
+        
+        init {
+            this.num = num
+        }
+        
+        /**
+         * Use this method to create a new, distinctly identified copy of the entity.
+         * Storing the copy will result in a new copy of the data being stored.
+         */
+        fun copy(num: Double = this.num) = T_H1(num = num)
+            .also { this.copyLatentDataInto(it) }
+
+        /**
+         * Use this method to create a new version of an existing entity.
+         * Storing the mutation will overwrite the existing entity in the set, if it exists.
+         */
+        fun mutate(num: Double = this.num) = T_H1(
+            num = num,
+            entityId = entityId,
+            creationTimestamp = creationTimestamp,
+            expirationTimestamp = expirationTimestamp
+        ).also { this.copyLatentDataInto(it) }
+        
+        companion object : arcs.sdk.EntitySpec<T_H1> {
+            
+            override val SCHEMA = arcs.core.data.Schema(
+                setOf(),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                    collections = emptyMap()
+                ),
+                "1032e45209f910286cfb898c43a1c3ca7d07aea6",
+                refinement = { _ -> true },
+                query = null
+            )
+
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
+                emptyMap()
+
+            init {
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
+            }
+            
+            override fun deserialize(data: arcs.core.data.RawEntity) = T_H1().apply {
+                deserialize(data, nestedEntitySpecs)
+            }
+        }
+    }
+[end]

@@ -714,24 +714,38 @@ describe('manifest2proto', () => {
     const manifest = await Manifest.parse(`
       particle Abc in 'a/b/c.js'
         input: reads X Y Z {
-          a: Text,
-          b: Number,
-          c: Boolean,
-          d: [Text],
-          e: [Number],
-          f: BigInt,
+          txt: Text,
+          num: Number,
+          bool: Boolean,
+          bigInt: BigInt,
+          bt: Byte,
+          shrt: Short,
+          nt: Int,
+          lng: Long,
+          chr: Char,
+          flt: Float,
+          dbl: Double,
+          txtSet: [Text],
+          numSet: [Number],
         }
     `);
     const schema = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type.entity.schema;
 
     assert.deepStrictEqual(schema.names, ['X', 'Y', 'Z']);
     assert.deepStrictEqual(schema.fields, {
-      a: {primitive: 'TEXT'},
-      b: {primitive: 'NUMBER'},
-      c: {primitive: 'BOOLEAN'},
-      d: {collection: {collectionType: {primitive: 'TEXT'}}},
-      e: {collection: {collectionType: {primitive: 'NUMBER'}}},
-      f: {primitive: 'BIGINT'}
+      txt: {primitive: 'TEXT'},
+      num: {primitive: 'NUMBER'},
+      bool: {primitive: 'BOOLEAN'},
+      bigInt: {primitive: 'BIGINT'},
+      bt: {primitive: 'BYTE'},
+      shrt: {primitive: 'SHORT'},
+      nt: {primitive: 'INT'},
+      lng: {primitive: 'LONG'},
+      chr: {primitive: 'CHAR'},
+      flt: {primitive: 'FLOAT'},
+      dbl: {primitive: 'DOUBLE'},
+      txtSet: {collection: {collectionType: {primitive: 'TEXT'}}},
+      numSet: {collection: {collectionType: {primitive: 'NUMBER'}}},
     });
   });
 
@@ -832,8 +846,10 @@ describe('manifest2proto', () => {
       {
         assume: {
           accessPath: {
-            particleSpec: 'Test',
-            handleConnection: 'private'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'private'
+            }
           },
           predicate: {
             label: {
@@ -845,8 +861,10 @@ describe('manifest2proto', () => {
       {
         assume: {
           accessPath: {
-            particleSpec: 'Test',
-            handleConnection: 'public'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'public'
+            }
           },
           predicate: {
             not: {
@@ -874,12 +892,16 @@ describe('manifest2proto', () => {
       {
         derivesFrom: {
           source: {
-            particleSpec: 'Test',
-            handleConnection: 'input'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'input'
+            },
           },
           target: {
-            particleSpec: 'Test',
-            handleConnection: 'output'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'output'
+            },
           }
         }
       }
@@ -899,20 +921,26 @@ describe('manifest2proto', () => {
       {
         derivesFrom: {
           source: {
-            particleSpec: 'Test',
-            handleConnection: 'input'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'input'
+            },
           },
           target: {
-            particleSpec: 'Test',
-            handleConnection: 'output'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'output'
+            },
           }
         }
       },
       {
         assume: {
           accessPath: {
-            particleSpec: 'Test',
-            handleConnection: 'output'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'output'
+            }
           },
           predicate: {
             label: {
@@ -938,8 +966,10 @@ describe('manifest2proto', () => {
       {
         assume: {
           accessPath: {
-            particleSpec: 'Test',
-            handleConnection: 'private',
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'private',
+            }
           },
           predicate: {
             label: {
@@ -951,8 +981,10 @@ describe('manifest2proto', () => {
       {
         assume: {
           accessPath: {
-            particleSpec: 'Test',
-            handleConnection: 'private',
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'private',
+            },
             selectors: [{field: 'ref'}, {field: 'foo'}],
           },
           predicate: {
@@ -969,13 +1001,17 @@ describe('manifest2proto', () => {
       {
         derivesFrom: {
           source: {
-            particleSpec: 'Test',
-            handleConnection: 'input',
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'input',
+            },
             selectors: [{field: 'bar'}],
           },
           target: {
-            particleSpec: 'Test',
-            handleConnection: 'private',
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'private',
+            },
             selectors: [{field: 'ref'}],
           },
         },
@@ -995,8 +1031,10 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(spec.particleSpecs[0].checks, [
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'private'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'private'
+          }
         },
         predicate: {
           label: {
@@ -1006,8 +1044,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'public'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'public'
+          }
         },
         predicate: {
           not: {
@@ -1034,8 +1074,10 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(spec.particleSpecs[0].checks, [
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'private'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'private'
+          },
         },
         predicate: {
           label: {
@@ -1045,8 +1087,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'private',
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'private',
+          },
           selectors: [{field: 'ref'}, {field: 'foo'}],
         },
         predicate: {
@@ -1061,8 +1105,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'public',
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'public',
+          },
           selectors: [{field: 'ref'}],
         },
         predicate: {
@@ -1085,8 +1131,10 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(spec.particleSpecs[0].checks, [
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'private'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'private'
+          }
         },
         predicate: {
           and: {
@@ -1105,8 +1153,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'public'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'public'
+          }
         },
         predicate: {
           or: {
@@ -1141,8 +1191,10 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(spec.particleSpecs[0].checks, [
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'private'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'private'
+          }
         },
         predicate: {
           and: {
@@ -1170,8 +1222,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'public'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'public'
+          }
         },
         predicate: {
           or: {
@@ -1213,8 +1267,10 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(spec.particleSpecs[0].checks, [
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'input1'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'input1'
+          }
         },
         predicate: {
           implies: {
@@ -1225,8 +1281,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'input2'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'input2'
+          }
         },
         predicate: {
           implies: {
@@ -1242,8 +1300,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'input3'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'input3'
+          }
         },
         predicate: {
           implies: {
@@ -1314,6 +1374,51 @@ describe('manifest2proto', () => {
     await assertThrowsAsync(
         async () => toProtoAndBack(manifest),
         `Duplicate definition of particle named 'Dupe'.`);
+  });
+
+  it('encodes externally defined schemas', async () => {
+    const manifest = await Manifest.parse(`
+      schema Manufacturer
+        address: Text
+
+      schema Size
+        length: Number
+
+      schema Product
+        name: Text
+        manufacturer: &Manufacturer
+        size: inline Size
+
+      particle Abc in 'a/b/c.js'
+        input: reads Product
+    `);
+    const type = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type;
+
+    assert.deepStrictEqual(type, {
+      entity: {schema: {
+        names: ['Product'],
+        fields: {
+          name: {primitive: 'TEXT'},
+          manufacturer: {reference: {referredType: {entity: {schema: {
+            names: ['Manufacturer'],
+            fields: {
+                address: {primitive: 'TEXT'}
+              },
+              hash: 'd61bcba2419ded8a1b497fc6d905b372baafce01',
+            }}}}
+          },
+          size: {entity: {
+            schema: {
+              names: ['Size'],
+              fields: {length: {primitive: 'NUMBER'}},
+              hash: '597828c0a7769319fb9a468b599da4fd3b01ee4d',
+            },
+            inline: true,
+          }}
+        },
+        hash: 'd229c2b1aa361873e50d050705e47aa33bd1891b',
+      }}
+    });
   });
 
   // On the TypeScript side we serialize .arcs file and validate it equals the .pb.bin file.

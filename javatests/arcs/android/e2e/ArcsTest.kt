@@ -27,7 +27,19 @@ import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** E2e test cases for Arcs. */
+/**
+ * E2e test cases for Arcs.
+ *
+ * Run locally with:
+ *
+ * ```bash
+ * tools/bazelisk build javatests/arcs/android/e2e/testapp && \
+ *     tools/bazelisk build javatests/arcs/android/e2e && \
+ *     adb install bazel-bin/javatests/arcs/android/e2e/testapp/testapp.apk && \
+ *     adb install bazel-bin/javatests/arcs/android/e2e/e2e.apk && \
+ *     adb shell am instrument -w arcs.android.e2e/androidx.test.runner.AndroidJUnitRunner
+ * ```
+ */
 @RunWith(AndroidJUnit4::class)
 class ArcsTest {
 
@@ -73,7 +85,6 @@ class ArcsTest {
     }
 
     @Test
-    @Ignore("Broken")
     fun testSingleton_inMemoryRemoteService() {
         // Configure handle options.
         clickOnTextIfPresent(SINGLETON_BTN_TEXT)

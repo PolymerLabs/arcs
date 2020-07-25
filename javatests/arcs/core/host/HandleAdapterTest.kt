@@ -18,11 +18,12 @@ import arcs.core.data.SingletonType
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadCollectionHandle
 import arcs.core.entity.ReadSingletonHandle
-import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteQueryCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
+import arcs.core.entity.awaitReady
+import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -40,16 +41,18 @@ import arcs.core.testutil.handles.dispatchSize
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.testutil.runTest
 import arcs.core.util.Scheduler
+import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
+import arcs.sdk.ReadWriteCollectionHandle
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -61,27 +64,42 @@ private typealias QueryPerson = QueryPerson_Person
 @OptIn(ExperimentalCoroutinesApi::class)
 @Suppress("UNCHECKED_CAST")
 class HandleAdapterTest {
+    @get:Rule
+    val log = LogRule()
+
     private lateinit var manager: EntityHandleManager
+    private lateinit var monitorManager: EntityHandleManager
     private val idGenerator = Id.Generator.newForTest("session")
-    private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+    private lateinit var schedulerProvider: JvmSchedulerProvider
     private lateinit var scheduler: Scheduler
 
     @Before
     fun setUp() = runBlocking {
+        RamDisk.clear()
         DriverAndKeyConfigurator.configure(null)
+        schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
         scheduler = schedulerProvider("tests")
         manager = EntityHandleManager(
             "testArc",
             "",
             FakeTime(),
-            scheduler = scheduler
+            scheduler = scheduler,
+            stores = StoreManager()
+        )
+        monitorManager = EntityHandleManager(
+            "testArc",
+            "",
+            FakeTime(),
+            scheduler = schedulerProvider("monitor"),
+            stores = StoreManager()
         )
     }
 
     @After
-    fun tearDown() {
-        RamDisk.clear()
-        scheduler.cancel()
+    fun tearDown() = runBlocking {
+        manager.close()
+        monitorManager.close()
+        schedulerProvider.cancelAll()
     }
 
     @Test
@@ -119,15 +137,17 @@ class HandleAdapterTest {
 
     @Test
     fun singletonHandleAdapter_createReference() = runTest {
-        val handle = manager.createHandle(
-            HandleSpec(
-                READ_WRITE_HANDLE,
-                HandleMode.ReadWrite,
-                SingletonType(EntityType(Person.SCHEMA)),
-                Person
-            ),
-            STORAGE_KEY
-        ) as ReadWriteSingletonHandle<Person>
+        val handle = (
+                manager.createHandle(
+                    HandleSpec(
+                        READ_WRITE_HANDLE,
+                        HandleMode.ReadWrite,
+                        SingletonType(EntityType(Person.SCHEMA)),
+                        Person
+                    ),
+                    STORAGE_KEY
+                ) as ReadWriteSingletonHandle<Person>
+            ).awaitReady()
         val entity = Person("Watson")
 
         // Fails when there's no entityId.
@@ -210,57 +230,6 @@ class HandleAdapterTest {
     }
 
     @Test
-    fun singletonHandleAdapter_onUpdateTest() = runTest {
-        val handle = manager.createHandle(
-            HandleSpec(
-                READ_WRITE_HANDLE,
-                HandleMode.ReadWrite,
-                SingletonType(EntityType(Person.SCHEMA)),
-                Person
-            ),
-            STORAGE_KEY
-        ) as ReadWriteSingletonHandle<Person>
-
-        var x = 0
-        handle.onUpdate { p ->
-            if (p?.name == "Eliza Hamilton") {
-                x++
-            }
-        }
-
-        handle.dispatchStore(Person("Eliza Hamilton"))
-        scheduler.waitForIdle()
-
-        assertThat(x).isEqualTo(1)
-    }
-
-    @Test
-    fun collectionHandleAdapter_onUpdateTest() = runTest {
-        val handle = manager.createHandle(
-            HandleSpec(
-                READ_WRITE_HANDLE,
-                HandleMode.ReadWrite,
-                CollectionType(EntityType(Person.SCHEMA)),
-                Person
-            ),
-            STORAGE_KEY
-        ) as ReadWriteCollectionHandle<Person>
-
-        var x = 0
-        handle.onUpdate { people ->
-            if (people.elementAtOrNull(0)?.name == "Elder Price") {
-                x += people.size
-            }
-        }
-
-        handle.dispatchStore(Person("Elder Price"))
-        scheduler.waitForIdle()
-
-        assertThat(x).isEqualTo(1)
-    }
-
-    @Ignore("b/157390221 - Deflake")
-    @Test
     fun collectionHandleAdapter_createReference() = runTest {
         val handle = manager.createHandle(
             HandleSpec(
@@ -271,6 +240,19 @@ class HandleAdapterTest {
             ),
             STORAGE_KEY
         ) as ReadWriteCollectionHandle<Person>
+        val monitorHandle = monitorManager.createHandle(
+            HandleSpec(
+                READ_ONLY_HANDLE,
+                HandleMode.ReadWrite,
+                CollectionType(EntityType(Person.SCHEMA)),
+                Person
+            ),
+            STORAGE_KEY
+        ) as arcs.core.entity.ReadWriteCollectionHandle<Person>
+
+        handle.awaitReady()
+        monitorHandle.awaitReady()
+
         val entity = Person("Watson")
 
         // Fails when there's no entityId.
@@ -291,10 +273,13 @@ class HandleAdapterTest {
             "Entity is not stored in the Collection."
         )
 
+        val monitorKnows = CompletableDeferred<Unit>()
+        monitorHandle.onUpdate {
+            if (it.contains(entity)) monitorKnows.complete(Unit)
+        }
         handle.dispatchStore(entity)
 
-        // Wait for the storage to make it down to the driver, so dereferencing works.
-        delay(150)
+        monitorKnows.await()
 
         val reference = handle.dispatchCreateReference(entity)
         assertThat(reference.schemaHash).isEqualTo(Person.SCHEMA.hash)

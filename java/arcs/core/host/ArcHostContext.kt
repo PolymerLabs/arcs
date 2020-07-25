@@ -48,6 +48,9 @@ data class ArcHostContext(
         _arcState = arcState
     }
 
+    override fun toString() = "ArcHostContext(arcId=$arcId, arcState=$arcState, " +
+            "particles=$particles, entityHandleManager=$entityHandleManager)"
+
     internal fun addOnArcStateChange(
         registration: ArcStateChangeRegistration,
         block: ArcStateChangeCallback
@@ -61,7 +64,7 @@ data class ArcHostContext(
     }
 
     private fun fireArcStateChanged() {
-        stateChangeCallbacks.values.forEach { callback ->
+        stateChangeCallbacks.values.toList().forEach { callback ->
             try {
                 callback(arcId.toArcId(), _arcState)
             } catch (e: Exception) {

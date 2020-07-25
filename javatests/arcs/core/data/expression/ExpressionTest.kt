@@ -108,6 +108,7 @@ class ExpressionTest {
     }
 
     @Test
+    @Suppress("UNCHECKED_CAST")
     fun testJsonSerialization() {
         val q = query<Expression.Scope>("arg")
         val field = Expression.FieldExpression<Expression.Scope, Number>(q, "bar")

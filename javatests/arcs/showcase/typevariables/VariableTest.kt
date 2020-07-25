@@ -2,9 +2,9 @@ package arcs.showcase.typevariables
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.core.host.toRegistration
-import arcs.core.testutil.runTest
 import arcs.showcase.ShowcaseEnvironment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.Rule
 import org.junit.Test
@@ -22,12 +22,11 @@ class VariableTest {
     )
 
     @Test
-    fun shop_redactsSku() = runTest {
+    fun shop_redactsSku() = runBlocking {
         val arc = env.startArc(ShopPlan)
 
         // Ensure that the shop recipe is fully processed.
-        withTimeout(1500) {
-            OrderIngestion.orderedOnce.join()
+        withTimeout(30000) {
             SkuRedactor.redacted.join()
             Consumer.updated.join()
         }

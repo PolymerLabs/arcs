@@ -9,7 +9,7 @@
  */
 import {EntityGenerator, NodeAndGenerator, Schema2Base} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
-import {getTypeInfo} from './kotlin-codegen-shared.js';
+import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
 import {generateConnectionSpecType} from './kotlin-type-generator.js';
 import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
 import {CollectionType, EntityType, Type, TypeVariable} from '../runtime/type.js';
@@ -29,26 +29,10 @@ export class Schema2Kotlin extends Schema2Base {
   }
 
   fileHeader(_outName: string): string {
-    const imports = [
-      'import arcs.sdk.*',
-    ];
+    const imports = [];
 
     if (this.opts.test_harness) {
       imports.push(
-        'import arcs.core.data.EntityType',
-        'import arcs.core.data.CollectionType',
-        'import arcs.core.data.ReferenceType',
-        'import arcs.core.data.SingletonType',
-        'import arcs.core.data.TupleType',
-        'import arcs.core.entity.HandleContainerType',
-        'import arcs.core.entity.HandleDataType',
-        'import arcs.core.entity.HandleMode',
-        'import arcs.core.entity.HandleSpec',
-        'import arcs.core.entity.Tuple1',
-        'import arcs.core.entity.Tuple2',
-        'import arcs.core.entity.Tuple3',
-        'import arcs.core.entity.Tuple4',
-        'import arcs.core.entity.Tuple5',
         'import arcs.sdk.testing.*',
         'import java.math.BigInteger',
         'import kotlinx.coroutines.CoroutineScope',
@@ -60,17 +44,8 @@ export class Schema2Kotlin extends Schema2Base {
     } else {
       // Imports for jvm.
       imports.push(
-        'import arcs.core.data.*',
         'import arcs.core.data.util.toReferencable',
-        'import arcs.core.data.util.ReferencablePrimitive',
         'import arcs.core.entity.toPrimitiveValue',
-        'import arcs.core.entity.Reference',
-        'import arcs.core.data.SchemaRegistry',
-        'import arcs.core.entity.Tuple1',
-        'import arcs.core.entity.Tuple2',
-        'import arcs.core.entity.Tuple3',
-        'import arcs.core.entity.Tuple4',
-        'import arcs.core.entity.Tuple5',
         'import java.math.BigInteger',
       );
     }
@@ -117,13 +92,13 @@ ${imports.join('\n')}
       if (type.isEntity || type.isVariable) {
           const node = type.isEntity
             ? nodes.find(n => n.variableName === null && n.schema.equals(type.getEntitySchema()))
-            : nodes.find(n => n.variableName.includes((type as TypeVariable).variable.name));
+            : nodes.find(n => n.variableName && n.variableName.includes((type as TypeVariable).variable.name));
           return particleScope ? node.humanName(connection) : node.fullName(connection);
       } else if (type.isReference) {
-        return `Reference<${generateInnerType(type.getContainedType())}>`;
+        return `arcs.sdk.Reference<${generateInnerType(type.getContainedType())}>`;
       } else if (type.isTuple) {
         const innerTypes = type.getContainedTypes();
-        return `Tuple${innerTypes.length}<${innerTypes.map(t => generateInnerType(t)).join(', ')}>`;
+        return `arcs.core.entity.Tuple${innerTypes.length}<${innerTypes.map(t => generateInnerType(t)).join(', ')}>`;
       } else {
         throw new Error(`Type '${type.tag}' not supported on code generated particle handle connections.`);
       }
@@ -178,7 +153,7 @@ ${imports.join('\n')}
     if (queryType) {
       typeArguments.push(queryType);
     }
-    return `${handleMode}${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, {startIndent: 4})}>`;
+    return `arcs.sdk.${handleMode}${containerType}Handle<${ktUtils.joinWithIndents(typeArguments, {startIndent: 4})}>`;
   }
 
   private async handleSpec(handleName: string, connection: HandleConnectionSpec, nodes: SchemaNode[]): Promise<string> {
@@ -187,8 +162,8 @@ ${imports.join('\n')}
     // Using full names of entities, as these are aliases available outside the particle scope.
     const entityNames = SchemaNode.topLevelNodes(connection, nodes).map(node => node.fullName(connection));
     return ktUtils.applyFun(
-        'HandleSpec',
-        [`"${handleName}"`, `HandleMode.${mode}`, type, ktUtils.setOf(entityNames)],
+        'arcs.core.entity.HandleSpec',
+        [`"${handleName}"`, `arcs.core.data.HandleMode.${mode}`, type, ktUtils.setOf(entityNames)],
         {numberOfIndents: 1}
     );
   }
@@ -198,7 +173,7 @@ ${imports.join('\n')}
     return `
 ${typeAliases.join(`\n`)}
 
-abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' : 'BaseParticle'}() {
+abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' : 'arcs.sdk.BaseParticle'}() {
     ${this.opts.wasm ? '' : 'override '}val handles: Handles = Handles(${this.opts.wasm ? 'this' : ''})
 
     ${ktUtils.indentFollowing(classes, 1)}
@@ -242,10 +217,10 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
 
   private getHandlesClassDecl(particleName: string, entitySpecs: string[], handleDecls: string[]): string {
     const header = this.opts.wasm
-      ? `class Handles(
+      ? `${handleDecls.length ? '' : '@Suppress("UNUSED_PARAMETER")\n    '}class Handles(
         particle: WasmParticleImpl
     )`
-      : `class Handles : HandleHolderBase(
+      : `class Handles : arcs.sdk.HandleHolderBase(
         "${particleName}",
         mapOf(${ktUtils.joinWithIndents(entitySpecs, {startIndent: 4, numberOfIndents: 3})})
     )`;
@@ -300,6 +275,6 @@ class ${particleName}TestHarness<P : Abstract${particleName}>(
     if (!type) {
       return null;
     }
-    return getTypeInfo({name: type}).type;
+    return getPrimitiveTypeInfo(type).type;
   }
 }

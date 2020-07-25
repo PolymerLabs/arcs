@@ -38,10 +38,12 @@ class ParcelableParticleTest {
             "42"
         )
 
+        val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
+        val personType = EntityType(personSchema)
         val connection = Plan.HandleConnection(
-            VolatileStorageKey(ArcId.newForTest("foo"), "bar"),
+            Plan.Handle(storageKey, personType, emptyList()),
             HandleMode.ReadWrite,
-            EntityType(personSchema)
+            personType
         )
 
         val particle = Plan.Particle("Foobar", "foo.bar.Foobar", mapOf("foo" to connection))
