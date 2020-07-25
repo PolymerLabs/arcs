@@ -44,7 +44,7 @@ data class Plan(
         allTypes.forEach { registerSchema(it) }
     }
 
-    /** Add contained [Schema]s to the [SchemaRegistry] */
+    /** Add contained [Schema] to the [SchemaRegistry] */
     private fun registerSchema(type: Type?): Unit = when(type) {
         null -> Unit
         is EntitySchemaProviderType -> type.entitySchema?.let { SchemaRegistry.register(it) } ?: Unit
