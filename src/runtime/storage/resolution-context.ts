@@ -10,8 +10,8 @@
 import {Type} from '../type.js';
 import {AbstractStore} from './abstract-store.js';
 
-export interface StoreContext {
-  context?: StoreContext;
+export interface ResolutionContext {
+  context?: ResolutionContext;
   findStoresByType<T extends Type>(type: T, options?: { tags: string[], subtype?: boolean }): AbstractStore[];
-  findStoreById(id: string): AbstractStore;
+  findStoreById(id: string): AbstractStore | null;
 }

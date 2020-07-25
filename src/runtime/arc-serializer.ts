@@ -17,9 +17,9 @@ import {Manifest} from './manifest.js';
 import {Id} from './id.js';
 import {VolatileMemory, VolatileStorageKey} from './storage/drivers/volatile.js';
 import {ManifestStringBuilder} from './manifest-string-builder.js';
-import {StoreContext} from './storage/store-context.js';
+import {ResolutionContext} from './storage/resolution-context.js';
 
-export interface ArcInterface extends StoreContext {
+export interface ArcInterface extends ResolutionContext {
   activeRecipe: Recipe;
   id: Id;
   storeTags: Map<AbstractStore, Set<string>>;
