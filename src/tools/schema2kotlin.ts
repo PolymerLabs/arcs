@@ -92,7 +92,7 @@ ${imports.join('\n')}
       if (type.isEntity || type.isVariable) {
           const node = type.isEntity
             ? nodes.find(n => n.variableName === null && n.schema.equals(type.getEntitySchema()))
-            : nodes.find(n => n.variableName && n.variableName.includes((type as TypeVariable).variable.name));
+            : nodes.find(n => n.variableName === (type as TypeVariable).variable.name);
           return particleScope ? node.humanName(connection) : node.fullName(connection);
       } else if (type.isReference) {
         return `arcs.sdk.Reference<${generateInnerType(type.getContainedType())}>`;
