@@ -20,17 +20,19 @@ data class PolicyConstraints(
  * Translates the given [policy] into dataflow analysis checks and claims, which are to be added to
  * the particles from the given [recipe].
  *
+ * @param storeMap Maps from store ID to the schema name of the type it stores.
+ *
  * @return additional checks and claims for the particles as a [PolicyConstraints] object
  * @throws PolicyViolation if the [particles] violate the [policy]
  */
-fun translatePolicy(policy: Policy, options: PolicyOptions): PolicyConstraints {
+fun translatePolicy(policy: Policy, storeMap: Map<StoreId, String>): PolicyConstraints {
     // Compute the predicate that will enforce the policy at an egress.
     val egressCheckPredicate = createEgressCheckPredicate(policy)
 
     // Add claim statements for stores.
     val storeClaims = mutableMapOf<StoreId, List<Claim>>()
     policy.targets.forEach { target ->
-        val stores = options.storeMap.mapNotNull { (storeId, schemaName) ->
+        val stores = storeMap.mapNotNull { (storeId, schemaName) ->
             if (schemaName == target.schemaName) storeId else null
         }
         if (stores.isEmpty()) {

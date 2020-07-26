@@ -25,7 +25,7 @@ class PolicyConstraintsTest {
     fun applyPolicy_egressCheck_withoutRedactionLabels() {
         val policy = BLANK_POLICY.copy(name = "SingleInput")
 
-        val result = translatePolicy(policy, EMPTY_OPTIONS)
+        val result = translatePolicy(policy, emptyMap())
 
         assertThat(result.egressCheck).isEqualTo(labelPredicate("allowedForEgress"))
     }
@@ -34,10 +34,7 @@ class PolicyConstraintsTest {
     fun applyPolicy_egressCheck_withRedactionLabels() {
         val policy = policies.getValue("FooRedactions")
 
-        val result = translatePolicy(
-            policy,
-            PolicyOptions(mapOf("my_store_id" to "Foo"))
-        )
+        val result = translatePolicy(policy, mapOf("my_store_id" to "Foo"))
 
         assertThat(result.egressCheck).isEqualTo(
             Predicate.or(
@@ -53,7 +50,7 @@ class PolicyConstraintsTest {
     fun applyPolicy_egressCheck_ignoresWriteOnlyConnections() {
         val policy = BLANK_POLICY.copy(name = "SingleOutput")
 
-        val result = translatePolicy(policy, EMPTY_OPTIONS)
+        val result = translatePolicy(policy, emptyMap())
 
         assertThat(result.egressCheck).isEqualTo(labelPredicate("allowedForEgress"))
     }
@@ -63,7 +60,7 @@ class PolicyConstraintsTest {
         val policy = policies.getValue("FooRedactions")
         val storeMap = mapOf("my_store_id" to "Foo")
 
-        val result = translatePolicy(policy, PolicyOptions(storeMap))
+        val result = translatePolicy(policy, storeMap)
 
         val store = AccessPath.Root.Store("my_store_id")
         assertThat(result.storeClaims).containsExactly(
@@ -90,7 +87,7 @@ class PolicyConstraintsTest {
         val policy = policies.getValue("SingleFooRedaction")
         val storeMap = mapOf("my_store_id" to "Foo")
 
-        val result = translatePolicy(policy, PolicyOptions(storeMap))
+        val result = translatePolicy(policy, storeMap)
 
         val store = AccessPath.Root.Store("my_store_id")
         assertThat(result.storeClaims).containsExactly(
@@ -110,7 +107,7 @@ class PolicyConstraintsTest {
         val storeMap = mapOf("some_other_store" to "Bar")
 
         assertFailsWith<PolicyViolation.NoStoreForPolicyTarget> {
-            translatePolicy(policy, PolicyOptions(storeMap))
+            translatePolicy(policy, storeMap)
         }
     }
 
@@ -118,7 +115,7 @@ class PolicyConstraintsTest {
     fun applyPolicy_storeClaims_emptyPolicy() {
         val storeMap = mapOf("my_store_id" to "Foo")
 
-        val result = translatePolicy(BLANK_POLICY, PolicyOptions(storeMap))
+        val result = translatePolicy(BLANK_POLICY, storeMap)
 
         assertThat(result.storeClaims).isEmpty()
     }
@@ -128,7 +125,7 @@ class PolicyConstraintsTest {
         val policy = policies.getValue("FooJoinPolicy")
         val storeMap = mapOf("my_store_id" to "Foo")
 
-        val result = translatePolicy(policy, PolicyOptions(storeMap))
+        val result = translatePolicy(policy, storeMap)
 
         assertThat(result.storeClaims).isEmpty()
     }
@@ -138,7 +135,7 @@ class PolicyConstraintsTest {
         val policy = policies.getValue("NestedFooBarPolicy")
         val storeMap = mapOf("my_store_id" to "NestedFooBar")
 
-        val result = translatePolicy(policy, PolicyOptions(storeMap))
+        val result = translatePolicy(policy, storeMap)
 
         val store = AccessPath.Root.Store("my_store_id")
         val predicate = labelPredicate("allowedForEgress")
@@ -158,8 +155,6 @@ class PolicyConstraintsTest {
     companion object {
         private const val BLANK_POLICY_NAME = "BlankPolicy"
         private const val BLANK_EGRESS_PARTICLE_NAME = "Egress_BlankPolicy"
-
-        private val EMPTY_OPTIONS = PolicyOptions(storeMap = emptyMap())
 
         private val BLANK_POLICY = Policy(name = BLANK_POLICY_NAME, egressType = EgressType.LOGGING)
 
