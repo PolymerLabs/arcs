@@ -26,8 +26,8 @@ export enum OutputFormat { Kotlin, Proto }
  */
 export async function recipe2plan(
   manifest: Manifest,
-  policiesManifest: Manifest,
   format: OutputFormat,
+  policiesManifest?: Manifest,
   recipeFilter?: string,
   salt = `salt_${Math.random()}`): Promise<string | Uint8Array> {
   let plans = await (new AllocatorRecipeResolver(manifest, salt)).resolve();
@@ -37,8 +37,7 @@ export async function recipe2plan(
     if (plans.length === 0) throw Error(`Recipe '${recipeFilter}' not found.`);
   }
 
-  // TODO(b/159142859): Ingress validation shouldn't be optional.
-  const ingressValidation = policiesManifest.policies.length > 0
+  const ingressValidation = policiesManifest
       ? new IngressValidation(policiesManifest.policies) : null;
 
   switch (format) {

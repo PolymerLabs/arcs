@@ -73,10 +73,9 @@ void Flags.withDefaultReferenceMode(async () => {
     fs.mkdirSync(opts.outdir, {recursive: true});
 
     const manifest = await Runtime.parseFile(opts._[0]);
-    // TODO(b/159144612): Make policies manifest parameter mandatory.
-    const policiesManifest = opts.policies
-        ? await Runtime.parseFile(opts.policies) : await Runtime.parse(``);
-    const plans = await recipe2plan(manifest, policiesManifest, outFormat, opts.recipe);
+    const policiesManifest =
+        opts.policies ? await Runtime.parseFile(opts.policies) : null;
+    const plans = await recipe2plan(manifest, outFormat, policiesManifest, opts.recipe);
 
     const outPath = path.join(opts.outdir, opts.outfile);
     if (!opts.quiet) {

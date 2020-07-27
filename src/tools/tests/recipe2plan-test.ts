@@ -22,14 +22,14 @@ const readManifest = async (manifestPath) => await Runtime.parseFile(manifestPat
 describe('recipe2plan', () => {
   it('generates Kotlin plans from recipes in a manifest', Flags.withDefaultReferenceMode(async () => {
     assert.deepStrictEqual(
-      await recipe2plan(await readManifest(inputManifestPath), await readManifest(policiesManifestPath), OutputFormat.Kotlin),
+      await recipe2plan(await readManifest(inputManifestPath), OutputFormat.Kotlin, await readManifest(policiesManifestPath)),
       fs.readFileSync('src/tools/tests/goldens/WriterReaderExample.kt', 'utf8'),
       `Golden is out of date! Make sure the new script is correct. If it is, update the goldens with:
 $ tools/update-goldens \n\n`
     );
   }));
   it('generates Proto plans for multiple recipes in a manifest', Flags.withDefaultReferenceMode(async () => {
-    const encoded = await recipe2plan(await readManifest(inputManifestPath), await readManifest(policiesManifestPath), OutputFormat.Proto) as Uint8Array;
+    const encoded = await recipe2plan(await readManifest(inputManifestPath), OutputFormat.Proto, await readManifest(policiesManifestPath)) as Uint8Array;
     const decoded = ManifestProto.decode(encoded);
 
     // Only validating that the output can be can be decoded as a ManifestProto and right counts.
@@ -38,7 +38,7 @@ $ tools/update-goldens \n\n`
     assert.lengthOf(decoded['particleSpecs'], 3);
   }));
   it('filters generated plans by provided name', Flags.withDefaultReferenceMode(async () => {
-    const encoded = await recipe2plan(await readManifest(inputManifestPath), await readManifest(policiesManifestPath), OutputFormat.Proto, 'Consumption') as Uint8Array;
+    const encoded = await recipe2plan(await readManifest(inputManifestPath), OutputFormat.Proto, await readManifest(policiesManifestPath), 'Consumption') as Uint8Array;
     const decoded = ManifestProto.decode(encoded);
     assert.lengthOf(decoded['recipes'], 1);
     assert.lengthOf(decoded['particleSpecs'], 1);
@@ -282,7 +282,7 @@ $ tools/update-goldens \n\n`
   async function protoPayloadFor(manifestString: string) {
     const manifest = await Manifest.parse(manifestString);
     // We encode and decode back to ensure that data can be serialized to proto and deserialized back.
-    const encoded = await recipe2plan(manifest, await readManifest(policiesManifestPath), OutputFormat.Proto, /* recipeFilter= */ null, 'random_salt') as Uint8Array;
+    const encoded = await recipe2plan(manifest, OutputFormat.Proto, await readManifest(policiesManifestPath), /* recipeFilter= */ null, 'random_salt') as Uint8Array;
     return ManifestProto.decode(encoded).toJSON();
   }
 });
