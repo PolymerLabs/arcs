@@ -4,8 +4,8 @@ class Trigger : AbstractTrigger() {
   
     override fun onUpdate() {
       val trigger = handles.signal.fetch()
-      if (trigger) {
-        handles.output.store(handles.input.fetch())
+      trigger?.let {
+        handles.output.store(handles.input.fetch()!!)
       }
     }
 }

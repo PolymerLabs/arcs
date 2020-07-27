@@ -375,9 +375,9 @@ generates a schema for an empty object
 particle P
   h1: reads Person {}
 [results]
-Schema(
-    setOf(SchemaName("Person")),
-    SchemaFields(
+arcs.core.data.Schema(
+    setOf(arcs.core.data.SchemaName("Person")),
+    arcs.core.data.SchemaFields(
         singletons = emptyMap(),
         collections = emptyMap()
     ),

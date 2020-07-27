@@ -204,7 +204,7 @@ class ParticleContext(
             )
         ) {
             "${planParticle.particleName}: storage events should not be received " +
-                    "in state $particleState"
+                    "in state $particleState. Context: event=$event, handle=$handle"
         }
 
         when (event) {

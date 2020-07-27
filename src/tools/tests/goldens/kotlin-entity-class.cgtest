@@ -237,15 +237,16 @@ particle T
     @Suppress("UNCHECKED_CAST")
     class Trigger(
         entityId: String? = null,
-        creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP,
-        expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP
-    ) : EntityBase("Trigger", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
+        creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP,
+        expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP
+    ) : arcs.sdk.EntityBase("Trigger", SCHEMA, entityId, creationTimestamp, expirationTimestamp, false) {
         
         /**
          * Use this method to create a new, distinctly identified copy of the entity.
          * Storing the copy will result in a new copy of the data being stored.
          */
         fun copy() = Trigger()
+
         /**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -256,11 +257,11 @@ particle T
             expirationTimestamp = expirationTimestamp
         )
         
-        companion object : EntitySpec<Trigger> {
+        companion object : arcs.sdk.EntitySpec<Trigger> {
             
-            override val SCHEMA = Schema(
-                setOf(SchemaName("Trigger")),
-                SchemaFields(
+            override val SCHEMA = arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Trigger")),
+                arcs.core.data.SchemaFields(
                     singletons = emptyMap(),
                     collections = emptyMap()
                 ),
@@ -269,14 +270,14 @@ particle T
                 query = null
             )
 
-            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
                 emptyMap()
 
             init {
-                SchemaRegistry.register(SCHEMA)
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
             }
             
-            override fun deserialize(data: RawEntity) = Trigger().apply {
+            override fun deserialize(data: arcs.core.data.RawEntity) = Trigger().apply {
                 deserialize(data, nestedEntitySpecs)
             }
         }

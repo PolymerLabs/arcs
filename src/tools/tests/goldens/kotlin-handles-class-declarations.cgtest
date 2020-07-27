@@ -20,6 +20,36 @@ class Handles : arcs.sdk.HandleHolderBase(
 [end]
 
 [name]
+read/writes handles of variable type
+[input]
+particle P
+  h1: reads ~a
+  h2: writes ~a
+[results]
+class Handles : arcs.sdk.HandleHolderBase(
+        "P",
+        mapOf("h1" to setOf(P_H1), "h2" to setOf(P_H2))
+    ) {
+        val h1: arcs.sdk.ReadSingletonHandle<P_H1> by handles
+        val h2: arcs.sdk.WriteSingletonHandle<P_H2> by handles
+    }
+[end]
+
+[name]
+reading an empty entity
+[input]
+particle P
+  h1: reads Trigger {}
+[results]
+class Handles : arcs.sdk.HandleHolderBase(
+        "P",
+        mapOf("h1" to setOf(Trigger))
+    ) {
+        val h1: arcs.sdk.ReadSingletonHandle<Trigger> by handles
+    }
+[end]
+
+[name]
 conflicting schema names
 [input]
 particle P

@@ -1,25 +1,28 @@
 package arcs.showcase.inlines
 
+import kotlinx.coroutines.runBlocking
+
 class Generator : AbstractGenerator() {
 
     override fun onReady() {
-        val childEntity = ChildEntity(
-            isReferenced = True,
+        println("Generator::onReady")
+        val childEntity = Generator_Child(
+            isReferenced = true,
             trackingValue = "Created by Generator [reference]"
         )
         handles.child.store(childEntity)
 
         handles.parent.store(
-            ParentEntity(
-                child = ChildEntity(
-                    isReferenced = False,
+            Generator_Parent(
+                child = Generator_Parent_Child(
+                    isReferenced = false,
                     trackingValue = "Created by Generator [inline]"
                 ),
-                direct = DirectInformation(
+                direct = Generator_Parent_Direct(
                     message = "Direct information inside an inline entity",
                     code = 42
-                )
-                reference = handles.child.createReference(childEntity)
+                ),
+                reference = runBlocking { handles.child.createReference(childEntity) }
             )
         )
     }

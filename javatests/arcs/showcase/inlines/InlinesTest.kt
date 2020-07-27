@@ -16,13 +16,13 @@ class InlinesTest {
 
     @get:Rule
     val env = ShowcaseEnvironment(
-        ::Generator.toRegistration(),
         ::CopyInlineComponent.toRegistration(),
-        ::ExractReferencedComponent.toRegistration(),
+        ::Generator.toRegistration(),
+        ::ExtractReferencedComponent.toRegistration(),
         ::ChildModifier.toRegistration(),
         ::ConfirmFinalValue.toRegistration(),
         ::RemoveEntity.toRegistration(),
-        ::Trigger.toRegistration(),
+        ::Trigger.toRegistration()
     )
 
     @Test
@@ -31,6 +31,7 @@ class InlinesTest {
 
         withTimeout(1500) {
             ConfirmFinalValue.updated.join()
+            CopyInlineComponent.updated.join()
         }
 
         env.stopArc(arc)

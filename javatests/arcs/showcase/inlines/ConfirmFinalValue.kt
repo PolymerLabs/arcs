@@ -2,6 +2,7 @@ package arcs.showcase.inlines
 
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.runBlocking
 
 class ConfirmFinalValue : AbstractConfirmFinalValue() {
 
@@ -12,7 +13,7 @@ class ConfirmFinalValue : AbstractConfirmFinalValue() {
         CheckedDeletedState
     }
 
-    val state = State.NoEntityReceived
+    var state = State.NoEntityReceived
 
     override fun onUpdate() {
         when (state) {
@@ -21,13 +22,13 @@ class ConfirmFinalValue : AbstractConfirmFinalValue() {
                     "Failed to read entity from child handle!"
                 }
                 
-                assertThat(entity.child.isReferenced).isEqualTo(False)
+                assertThat(entity.child.isReferenced).isEqualTo(false)
                 assertThat(entity.child.trackingValue).isEqualTo("Created by Generator [inline]")
                 assertThat(entity.direct.message).isEqualTo("Direct information inside an inline entity")
                 assertThat(entity.direct.code).isEqualTo(42)
-                val child = entity.reference.dereference()
-                assertThat(child.isReferenced).isEqualTo(True)
-                asserThat(child.trackingValue).isEqualTo("Created by Generator [reference]")
+                val child = runBlocking { entity.reference!!.dereference() }
+                assertThat(child!!.isReferenced).isEqualTo(true)
+                assertThat(child!!.trackingValue).isEqualTo("Created by Generator [reference]")
 
                 state = State.CheckedInitialState
                 handles.signalA.store(Trigger())
@@ -39,8 +40,8 @@ class ConfirmFinalValue : AbstractConfirmFinalValue() {
                 }
                 
                 assertThat(entity.child.trackingValue).isEqualTo("Created by Generator [inline]")
-                val child = entity.reference.dereference()
-                assertThat(child.trackingValue).isEqualTo("modified by ChildModifier")
+                val child = runBlocking { entity.reference!!.dereference() }
+                assertThat(child!!.trackingValue).isEqualTo("modified by ChildModifier")
 
                 state = State.CheckedModifiedState
                 handles.signalB.store(Trigger())
@@ -52,7 +53,7 @@ class ConfirmFinalValue : AbstractConfirmFinalValue() {
                 }
                 
                 assertThat(entity.child.trackingValue).isEqualTo("Created by Generator [inline]")
-                val child = entity.reference.dereference()
+                val child = runBlocking { entity.reference!!.dereference() }
                 assertThat(child).isEqualTo(null)
 
                 state = State.CheckedDeletedState

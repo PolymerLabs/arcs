@@ -19,19 +19,23 @@ schema ParentEntity
 // on creation of an entity, referenced sub-entities either need to exist already, or
 // need to be written out separately, but inline sub-entities are part of the parent
 // entity and don't need to independently exist.
+// TODO: I need to spell out the type of reference or it won't match with child
+// (I can't do reference {isReferenced, trackingValue})
+// TODO: I can't specify a refinement on child because then it won't match with reference.
+// Also I can't specify a refinement on reference.
 particle Generator in '.Generator'  
-  child: writes ChildEntity {isReferenced, trackingValue} [isReferenced == true]
-  parent: writes ParentEntity {child, direct, reference}
+  child: reads writes ChildEntity {isReferenced, trackingValue} // [isReferenced == true]
+  parent: writes ParentEntity {child, direct, reference: &ChildEntity {isReferenced, trackingValue}}
 
 // Extracting an inline entity creates a copy.
-particle CopyInlineComponent in '.CopyChildren'
-  input: reads ParentEntity {child}
-  output: writes ChildEntity {isReferenced, trackingValue} [isReferenced == false]
+particle CopyInlineComponent in '.CopyInlineComponent'
+  input: reads ParentEntity {child: inline ChildEntity {isReferenced, trackingValue}}
+  output: writes ChildEntity {isReferenced, trackingValue} // [isReferenced == false]
 
 // Extracting a referenced entity does not copy that entity.
-particle ExtractReferencedComponent in '.CopyChildren'
-  input: reads ParentEntity {reference}
-  output: writes ChildEntity {isReferenced, trackingValue} [isReferenced == true]
+particle ExtractReferencedComponent in '.ExtractReferencedComponent'
+  input: reads ParentEntity {reference: &ChildEntity {isReferenced, trackingValue}}
+  output: writes ChildEntity {isReferenced, trackingValue} // [isReferenced == true]
 
 particle ChildModifier in '.ChildModifier'
   child: reads writes ChildEntity {trackingValue}
@@ -39,15 +43,17 @@ particle ChildModifier in '.ChildModifier'
 // Therefore, changes to a copy of an inline entity don't show up in the parent,
 // but changes to an extracted referenced entity do.
 particle ConfirmFinalValue in '.ConfirmFinalValue'
-  input: reads ParentEntity {child, reference}
+  input: reads ParentEntity {child, direct, reference}
   signalA: writes Trigger {}
   signalB: writes Trigger {}
 
 // Likewise, removal of the copy doesn't impact the original inline entity, but
 // removal of the referenced entity is evident from the parent.
+// TODO: I can't seem to use generic ~a for thingToRemove as HandleSpec complains
+// about having a type that isn't a Singleton or Collection
 particle RemoveEntity in '.RemoveEntity'
-  thingToRemove: reads ~a
-  collectionToRemoveItWith: writes [~a]
+  thingToRemove: reads ChildEntity {}
+  collectionToRemoveItWith: writes [ChildEntity {}]
 
 particle Trigger in '.Trigger'
   signal: reads Trigger {}

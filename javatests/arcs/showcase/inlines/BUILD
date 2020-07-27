@@ -17,7 +17,8 @@ arcs_kt_android_library(
     testonly = 1,
     srcs = [
         "Generator.kt",
-        "CopyChildren.kt",
+        "ExtractReferencedComponent.kt",
+        "CopyInlineComponent.kt",
         "ChildModifier.kt",
         "ConfirmFinalValue.kt",
         "RemoveEntity.kt",
@@ -36,7 +37,7 @@ arcs_kt_android_test_suite(
     size = "medium",
     srcs = glob(["*Test.kt"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
-    package = "arcs.showcase.kotlintypes",
+    package = "arcs.showcase.inlines",
     deps = [
         ":example_particles",
         ":inlines_generation",

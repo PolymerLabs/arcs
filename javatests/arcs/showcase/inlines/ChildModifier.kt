@@ -6,7 +6,7 @@ class ChildModifier : AbstractChildModifier() {
         val entity = requireNotNull(handles.child.fetch()) {
             "Failed to read entity from child handle!"
         }
-        entity.trackingValue = "modified by ChildModifier"
+        entity.mutate(trackingValue = "modified by ChildModifier")
         handles.child.store(entity)
     }
 }
