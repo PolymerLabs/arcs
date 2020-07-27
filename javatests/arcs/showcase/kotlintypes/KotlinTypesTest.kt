@@ -6,10 +6,12 @@ import arcs.showcase.ShowcaseEnvironment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+@Ignore("Flaky - b/162193478")
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
 class KotlinTypesTest {
