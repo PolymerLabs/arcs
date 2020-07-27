@@ -34,8 +34,8 @@ data class Plan(
         }
 
 
-    /** Initialize the [Plan]. */
-    fun init() {
+    /** Adds all [Schema]s from the [Plan] to the [SchemaRegistry]. */
+    fun registerSchemas() {
         // Register all Schemas
         val allTypes = handles.map { it.type } + particles
             .flatMap { it.handles.values }
