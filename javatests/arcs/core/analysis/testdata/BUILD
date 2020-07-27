@@ -8,7 +8,9 @@ INVALID_MANIFESTS = glob(["fail_*.arcs"])
 
 VALID_MANIFESTS = glob(["ok_*.arcs"])
 
-ALL_MANIFESTS = VALID_MANIFESTS + INVALID_MANIFESTS
+POLICY_MANIFESTS = glob(["policy_*.arcs"])
+
+ALL_MANIFESTS = VALID_MANIFESTS + INVALID_MANIFESTS + POLICY_MANIFESTS
 
 filegroup(
     name = "example_manifest_protos",
