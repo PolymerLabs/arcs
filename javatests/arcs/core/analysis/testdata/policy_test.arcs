@@ -57,24 +57,16 @@ particle ActionTimestampToDays
   claim output.action derives from input.action
 
 particle Egress_TestPolicy
-  joinData: reads [ActionAtSelection {
-    id,
-    actionDetails}]
+  joinData: reads [~a]
 
 particle LoggingEgress_TestPolicy
-  joinData: reads [ActionAtSelection {
-    id,
-    actionDetails}]
+  joinData: reads [~a]
 
 particle Egress_AnotherPolicy
-  joinData: reads [ActionAtSelection {
-    id,
-    actionDetails}]
+  joinData: reads [~a]
 
 particle Egress_YetAnotherPolicy
-  joinData: reads [ActionAtSelection {
-    id,
-    actionDetails}]
+  joinData: reads [~a]
 
 //-----------------------------------------------------------
 // Complying by not egressing restricted fields.
