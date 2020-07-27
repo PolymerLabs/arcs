@@ -11,7 +11,6 @@
 
 package arcs.core.storage
 
-import androidx.annotation.VisibleForTesting
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.storage.util.RandomProxyCallbackManager
@@ -78,11 +77,13 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
             log.debug { "close the store($muxId)" }
 
             try {
-                for (id in storeRecord.idSet) {
-                    storeRecord.store.off(id)
-                    callbackIdToMuxIdMap[id]?.remove(muxId)
+                synchronized(proxyManager) {
+                    for (id in storeRecord.idSet) {
+                        storeRecord.store.off(id)
+                        callbackIdToMuxIdMap[id]?.remove(muxId)
+                    }
+                    storeRecord.store.close()
                 }
-                storeRecord.store.close()
             } catch (e: Exception) {
                 // TODO(b/160251910): Make logging detail more cleanly conditional.
                 log.debug(e) { "failed to close the store($muxId)" }
@@ -162,14 +163,16 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
             // Direct Store, it utilizes the message id to determine which observer to redirect
             // the message to.
             if (id != null && !storeRecord.idSet.contains(id)) {
-                storeRecord.store.on(
-                    ProxyCallback {message ->
-                        proxyManager.getCallback(id)?.invoke(message.withMuxId(muxId))
-                    },
-                    id
-                )
-                storeRecord.idSet.add(id)
-                callbackIdToMuxIdMap.getOrPut(id, { mutableSetOf() }).add(muxId)
+                synchronized(proxyManager) {
+                    storeRecord.store.on(
+                        ProxyCallback { message ->
+                            proxyManager.getCallback(id)?.invoke(message.withMuxId(muxId))
+                        },
+                        id
+                    )
+                    storeRecord.idSet.add(id)
+                    callbackIdToMuxIdMap.getOrPut(id, { mutableSetOf() }).add(muxId)
+                }
             }
             return storeRecord
         }
