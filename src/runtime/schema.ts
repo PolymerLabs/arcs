@@ -260,7 +260,7 @@ export class Schema {
   }
 
   isAtLeastAsSpecificAs(otherSchema: Schema): boolean {
-    // Implementation moved to isEquivalentOrMoreSpecific to allow handling 'unknowns' in code gen.
+    // ImplementatioN moved to isEquivalentOrMoreSpecific to allow handling 'unknowns' in code gen.
     return this.isEquivalentOrMoreSpecific(otherSchema) !== AtLeastAsSpecific.NO;
   }
 
