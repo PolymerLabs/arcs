@@ -25,9 +25,6 @@ data class Policy(
     val configs: Map<String, PolicyConfig> = emptyMap(),
     val annotations: List<Annotation> = emptyList()
 ) {
-    /** The name of the egress particle that matches this policy. */
-    val egressParticleName = "Egress_$name"
-
     /** All fields mentioned the policy (includes nested fields). */
     val allFields: List<PolicyField> = collectAllFields()
 

@@ -61,6 +61,11 @@ particle Egress_TestPolicy
     id,
     actionDetails}]
 
+particle LoggingEgress_TestPolicy
+  joinData: reads [ActionAtSelection {
+    id,
+    actionDetails}]
+
 particle Egress_AnotherPolicy
   joinData: reads [ActionAtSelection {
     id,
@@ -72,7 +77,7 @@ particle Egress_YetAnotherPolicy
     actionDetails}]
 
 //-----------------------------------------------------------
-// Complying by not accessing restricted fields.
+// Complying by not egressing restricted fields.
 //-----------------------------------------------------------
 @isolated
 particle JoinActionSelection_EgressUnrestrictedFields
@@ -89,6 +94,20 @@ recipe EgressUnrestrictedFields
     selection: selection
     joinData: joinData
   Egress_TestPolicy
+    joinData: joinData
+
+// Recipe that complies with policy even with multiple egresses.
+recipe EgressAndLogUnrestrictedFields
+  action: create 'action'
+  selection: create 'selection'
+  joinData: create @ttl('30m')
+  JoinActionSelection_EgressUnrestrictedFields
+    action: action
+    selection: selection
+    joinData: joinData
+  Egress_TestPolicy
+    joinData: joinData
+  LoggingEgress_TestPolicy
     joinData: joinData
 
 //-----------------------------------------------------------
@@ -112,6 +131,28 @@ recipe EgressRedactedField
     selection: selection
     joinData: joinData
   Egress_TestPolicy
+    joinData: joinData
+
+//-----------------------------------------------------------------------
+// No policy violation if data is not egressed even if accessing
+// `sensitiveSelection` in `Selection`.
+//-----------------------------------------------------------------------
+@isolated
+particle JoinActionSelection_EgressRestrictedFields
+  action: reads [Action {id, action, timestampInMs}]
+  selection: reads [Selection {id, selection, sensitiveSelection}]
+  joinData: writes [ActionAtSelection {id, actionDetails}]
+
+recipe AccessRestrictedFieldsNoEgress
+  action: create 'action'
+  selection: create 'selection'
+  joinData: create @ttl('30m')
+  ActionTimestampToDays
+    input: action
+    output: actionRedacted
+  JoinActionSelection_EgressRestrictedFields
+    action: actionRedacted
+    selection: selection
     joinData: joinData
 
 //-----------------------------------------------------------------------
@@ -176,27 +217,7 @@ recipe EgressUnredactedField
     joinData: joinData
 
 //-----------------------------------------------------------------------
-// Policy violation by having multiple egress particles.
-//-----------------------------------------------------------------------
-recipe MultipleEgressParticles
-  action: create 'action'
-  selection: create 'selection'
-  joinData: create @ttl('30m')
-  JoinActionSelection_EgressRedactedField
-    action: action
-    selection: selection
-    joinData: joinData
-  // Egress_AnotherPolicy
-  //   joinData: joinData
-  // Egress_YetAnotherPolicy
-  //   joinData: joinData
-  Egress_TestPolicy
-    joinData: joinData
-  Egress_TestPolicy
-    joinData: joinData
-
-//-----------------------------------------------------------------------
-// Policy violation due to invalid egress particle `Egress_AnotherPolicy`.
+// Policy violation by having invalid egress particles.
 //-----------------------------------------------------------------------
 recipe InvalidEgressParticles
   action: create 'action'
@@ -207,4 +228,10 @@ recipe InvalidEgressParticles
     selection: selection
     joinData: joinData
   Egress_AnotherPolicy
+    joinData: joinData
+  Egress_YetAnotherPolicy
+    joinData: joinData
+  Egress_TestPolicy
+    joinData: joinData
+  LoggingEgress_TestPolicy
     joinData: joinData
