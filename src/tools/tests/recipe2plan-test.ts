@@ -44,6 +44,29 @@ $ tools/update-goldens \n\n`
     assert.lengthOf(decoded['recipes'], 1);
     assert.lengthOf(decoded['particleSpecs'], 1);
   }));
+
+  const policiesJson = [{
+    'name': 'WriterReaderExamplePolicy',
+    'targets': [{
+      'fields': [{
+        'name': 'name',
+        'usages': [{
+          'redactionLabel': '',
+          'usage': 'ANY'
+        }]
+      }],
+      'maxAgeMs': '8640000000',
+      'retentions': [{
+        'encryptionRequired': false,
+        'medium': 'DISK'
+      },
+      {
+        'encryptionRequired': false,
+        'medium': 'RAM'
+      }],
+      'schemaType': 'Thing'
+    }]
+  }];
   it('outputs a valid protocol buffer for resolved recipes', Flags.withDefaultReferenceMode(async () => {
     assert.deepEqual(
       await protoPayloadFor(`
@@ -96,6 +119,7 @@ $ tools/update-goldens \n\n`
           }}}
         }]
       }],
+      policies: policiesJson,
       recipes: [{
         name: 'WritingRecipe',
         annotations: [{
@@ -219,6 +243,77 @@ $ tools/update-goldens \n\n`
       }]
     });
   }));
+  it('outputs a valid protocol buffer for resolved recipes with type restriction', Flags.withDefaultReferenceMode(async () => {
+    assert.deepEqual(
+      await protoPayloadFor(`
+        particle Writer
+          data: writes Thing {name: Text, secret: Text}
+
+        @arcId('writeArcId')
+        recipe WritingRecipe
+          thing: create 'my-handle-id' @persistent @ttl('30d')
+          Writer
+            data: writes thing
+      `), {
+      particleSpecs: [{
+        name: 'Writer',
+        isolated: false,
+        connections: [{
+          name: 'data',
+          direction: 'WRITES',
+          type: {entity: {schema: {
+            names: ['Thing'],
+            fields: {name: {primitive: 'TEXT'}, secret: {primitive: 'TEXT'}},
+            hash: 'a5856a63a2459ad6e9bcfd7ff50e23d0ed803801',
+          }}}
+        }]
+      }],
+      policies: policiesJson,
+      recipes: [{
+        name: 'WritingRecipe',
+        annotations: [{
+          name: 'arcId',
+          params: [{
+            name: 'id',
+            strValue: 'writeArcId'
+          }]
+        }],
+        handles: [{
+          fate: 'CREATE',
+          name: 'handle0',
+          id: 'my-handle-id',
+          annotations: [{
+            name: 'persistent'
+          },
+          {
+            'name': 'ttl',
+            'params': [{
+              'name': 'value',
+              'strValue': '30d'
+            }]
+          }],
+          storageKey: 'reference-mode://{db://a5856a63a2459ad6e9bcfd7ff50e23d0ed803801@arcs/Thing}{db://a5856a63a2459ad6e9bcfd7ff50e23d0ed803801@arcs/!:writeArcId/handle/my-handle-id}',
+          type: {entity: {schema: {
+            names: ['Thing'],
+            fields: {name: {primitive: 'TEXT'}},
+            hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
+          }}}
+        }],
+        particles: [{
+          specName: 'Writer',
+          connections: [{
+            name: 'data',
+            handle: 'handle0',
+            type: {entity: {schema: {
+              names: ['Thing'],
+              fields: {name: {primitive: 'TEXT'}, secret: {primitive: 'TEXT'}},
+              hash: 'a5856a63a2459ad6e9bcfd7ff50e23d0ed803801',
+            }}}
+          }]
+        }]
+      }]
+    });
+  }));
   it('outputs a valid protocol buffer for resolved recipes with type variables', Flags.withDefaultReferenceMode(async () => {
     assert.deepEqual(
       await protoPayloadFor(`
@@ -259,6 +354,7 @@ $ tools/update-goldens \n\n`
           type: {collection: {collectionType: {variable: {name: 'a'}}}}
         }]
       }],
+      policies: policiesJson,
       recipes: [{
         name: 'ReadWriteRecipe',
         handles: [{

@@ -1459,7 +1459,7 @@ describe('manifest2proto', () => {
   // and deserialized in Kotlin to the extent that they are present in the .textproto file.
   it('encodes the Manifest2ProtoTest manifest', async () => {
     assert.deepStrictEqual(
-      await encodeManifestToProto('java/arcs/core/data/testdata/Manifest2ProtoTest.arcs'),
+      await encodeManifestToProto('java/arcs/core/data/testdata/Manifest2ProtoTest.arcs', 'java/arcs/core/data/testdata/Manifest2ProtoTest.arcs'),
       fs.readFileSync('java/arcs/core/data/testdata/Manifest2ProtoTest.pb.bin'),
       `The output of manifest2proto for Manifest2ProtoTest.arcs does not match the expectation.\n
 If you want to update the expected output please run:\n

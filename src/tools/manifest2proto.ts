@@ -24,18 +24,20 @@ import {flatMap} from '../runtime/util.js';
 import {Policy} from '../runtime/policy/policy.js';
 import {policyToProtoPayload} from './policy2proto.js';
 import {annotationToProtoPayload} from './annotation2proto.js';
+import {IngressValidation} from '../runtime/policy/ingress-validation.js';
 
-export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
+export async function encodeManifestToProto(path: string, policiesPath?: string): Promise<Uint8Array> {
   const manifest = await Runtime.parseFile(path);
-  return encodePayload(await manifestToProtoPayload(manifest));
+  const policiesManifest = policiesPath ? await Runtime.parseFile(policiesPath) : null;
+  return encodePayload(await manifestToProtoPayload(manifest, policiesManifest));
 }
 
-export async function manifestToProtoPayload(manifest: Manifest) {
+export async function manifestToProtoPayload(manifest: Manifest, policiesManifest?: Manifest) {
   manifest.validateUniqueDefinitions();
-  return makeManifestProtoPayload(manifest.allParticles, manifest.allRecipes, manifest.allPolicies);
+  return makeManifestProtoPayload(manifest.allParticles, manifest.allRecipes, policiesManifest ? policiesManifest.allPolicies: null);
 }
 
-export async function encodePlansToProto(plans: Recipe[], manifest: Manifest) {
+export async function encodePlansToProto(plans: Recipe[], manifest: Manifest, policies: Policy[]|null) {
   // In the recipe data structure every particle in a recipe currently has its own copy
   // of a particle spec. This copy is used in type inference and gets mutated as recipe
   // is type checked. As we need to encode particle specs without such mutations, below
@@ -47,14 +49,15 @@ export async function encodePlansToProto(plans: Recipe[], manifest: Manifest) {
   const planParticleIds = flatMap(plans, p => p.particles).map(p => specToId(p.spec));
   const particleSpecs = manifest.allParticles.filter(p => planParticleIds.includes(specToId(p)));
 
-  return encodePayload(await makeManifestProtoPayload(particleSpecs, plans, /* policies= */ []));
+  return encodePayload(await makeManifestProtoPayload(particleSpecs, plans, policies));
 }
 
-async function makeManifestProtoPayload(particles: ParticleSpec[], recipes: Recipe[], policies: Policy[]) {
+async function makeManifestProtoPayload(particles: ParticleSpec[], recipes: Recipe[], policies: Policy[]|null) {
+  const ingressValidation = policies ? new IngressValidation(policies) : null;
   return {
     particleSpecs: await Promise.all(particles.map(p => particleSpecToProtoPayload(p))),
-    recipes: await Promise.all(recipes.map(r => recipeToProtoPayload(r))),
-    policies: policies.map(policyToProtoPayload),
+    recipes: await Promise.all(recipes.map(r => recipeToProtoPayload(r, ingressValidation))),
+    policies: (policies || []).map(policyToProtoPayload),
   };
 }
 
@@ -230,7 +233,7 @@ function accessPathProtoPayload(
   return accessPath;
 }
 
-async function recipeToProtoPayload(recipe: Recipe) {
+async function recipeToProtoPayload(recipe: Recipe, ingressValidation: IngressValidation|null) {
   recipe.normalize();
 
   const handleToProtoPayload = new Map<Handle, {name: string}>();
@@ -240,9 +243,8 @@ async function recipeToProtoPayload(recipe: Recipe) {
     // to their resolution by called maybeEnsureResolved(), so that handle types
     // are encoded with concrete types, instead of variables.
     h.type.maybeEnsureResolved();
-    handleToProtoPayload.set(h, await recipeHandleToProtoPayload(h));
+    handleToProtoPayload.set(h, await recipeHandleToProtoPayload(h, ingressValidation));
   }
-
   return {
     name: recipe.name,
     particles: await Promise.all(recipe.particles.map(p => recipeParticleToProtoPayload(p, handleToProtoPayload))),
@@ -264,10 +266,19 @@ async function recipeParticleToProtoPayload(particle: Particle, handleMap: Map<H
   };
 }
 
-async function recipeHandleToProtoPayload(handle: Handle) {
+async function recipeHandleToProtoPayload(handle: Handle, ingressValidation: IngressValidation|null) {
   const fateOrdinal = FateEnum.values[handle.fate.toUpperCase()];
   if (fateOrdinal === undefined) {
     throw new Error(`Handle fate ${handle.fate} is not supported`);
+  }
+  let handleType = handle.type || handle.mappedType;
+  if (ingressValidation) {
+    const skippedFields = [];
+    handleType = ingressValidation.restrictType(handleType, skippedFields);
+    if (skippedFields.length > 0) {
+      console.warn(`Handle '${handle.id}' of Type ${handle.type.resolvedType().toString()} ` +
+        `is skipping fields: [${skippedFields.join(', ')}] that are not covered by Policies.`);
+    }
   }
   const toName = handle => handle.localName || `handle${handle.recipe.handles.indexOf(handle)}`;
   const handleData = {
@@ -275,7 +286,7 @@ async function recipeHandleToProtoPayload(handle: Handle) {
     id: handle.id,
     tags: handle.tags,
     fate: fateOrdinal,
-    type: await typeToProtoPayload(handle.type || handle.mappedType),
+    type: await typeToProtoPayload(handleType),
     annotations: handle.annotations.map(annotationToProtoPayload)
   };
 

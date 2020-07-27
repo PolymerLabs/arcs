@@ -96,7 +96,7 @@ export class PlanGenerator {
       handleRestrictedType = handle.type.resolvedType();
     }
     return valInit + ktUtils.applyFun(`Handle`, [
-      await this.createStorageKey(handle),
+      this.createStorageKey(handle),
       await generateType(handleRestrictedType),
       PlanGenerator.createAnnotations(handle.annotations)
     ], {startIndent: valInit.length});
@@ -148,7 +148,7 @@ export class PlanGenerator {
   }
 
   /** Generates a Kotlin `StorageKey` from a recipe Handle. */
-  async createStorageKey(handle: Handle): Promise<string> {
+  createStorageKey(handle: Handle): string {
     if (handle.storageKey) {
       return ktUtils.applyFun('StorageKeyParser.parse', [quote(handle.storageKey.toString())]);
     }

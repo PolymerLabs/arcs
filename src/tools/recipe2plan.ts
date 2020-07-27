@@ -54,7 +54,7 @@ export async function recipe2plan(
       return new PlanGenerator(plans, manifest.meta.namespace, ingressValidation).generate();
     case OutputFormat.Proto:
       // TODO(b/161818898): pass ingress validation to protos too.
-      return Buffer.from(await encodePlansToProto(plans, manifest));
+      return Buffer.from(await encodePlansToProto(plans, manifest, policiesManifest ? policiesManifest.policies : null));
     default: throw new Error('Output Format should be Kotlin or Proto');
   }
 }
