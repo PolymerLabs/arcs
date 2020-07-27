@@ -316,4 +316,69 @@ describe('field path validation', () => {
           `Schema 'Foo {foo: Text}' does not contain field 'missing'.`);
     });
   });
+
+  describe('inline schemas', () => {
+    it('can refer to inline schemas', async () => {
+      const type = await parseTypeFromSchema(`
+        schema Bar
+          inlined: inline Foo {name: Text}
+      `);
+      resolveFieldPathType(['inlined'], type);
+    });
+
+    it('can refer to fields nested inside inline schemas', async () => {
+      const type = await parseTypeFromSchema(`
+        schema Bar
+          inlined: inline Foo {name: Text}
+        `);
+      resolveFieldPathType(['inlined', 'name'], type);
+    });
+
+    it('rejects missing fields nested inside inline schemas', async () => {
+      const type = await parseTypeFromSchema(`
+        schema Bar
+          inlined: inline Foo {name: Text}
+        `);
+      assert.throws(
+          () => resolveFieldPathType(['inlined', 'missing'], type),
+          `Schema 'Foo {name: Text}' does not contain field 'missing'.`);
+    });
+  });
+
+  describe('ordered lists', () => {
+    it('can refer to ordered lists', async () => {
+      const type = await parseTypeFromSchema(`
+        schema Bar
+          list: List<Number>
+      `);
+      resolveFieldPathType(['list'], type);
+    });
+
+    it('can refer to fields nested inside ordered lists', async () => {
+      const type = await parseTypeFromSchema(`
+        schema Bar
+          list: List<&Bar {inner: Number}>
+      `);
+      resolveFieldPathType(['list', 'inner'], type);
+    });
+
+    it('rejects missing fields nested inside ordered lists', async () => {
+      const type = await parseTypeFromSchema(`
+        schema Bar
+          list: List<&Bar {inner: Number}>
+      `);
+      assert.throws(
+          () => resolveFieldPathType(['list', 'missing'], type),
+          `Schema 'Bar {inner: Number}' does not contain field 'missing'.`);
+    });
+
+    it('works with inlined schemas inside ordered lists', async () => {
+      const type = await parseTypeFromSchema(`
+        schema Bar
+          list: List<inline Bar {inner: Number}>
+      `);
+      resolveFieldPathType(['list'], type);
+      resolveFieldPathType(['list', 'inner'], type);
+    });
+  });
 });
