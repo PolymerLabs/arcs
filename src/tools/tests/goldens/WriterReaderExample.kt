@@ -12,6 +12,48 @@ import arcs.core.data.Plan.*
 import arcs.core.storage.StorageKeyParser
 import arcs.core.entity.toPrimitiveValue
 
+val IngestionOnly_Handle0 = Handle(
+    StorageKeyParser.parse(
+        "reference-mode://{db://9ca32bb55138c5efc3b107bcd9d60a73e2428160@arcs/Thing}{db://9ca32bb55138c5efc3b107bcd9d60a73e2428160@arcs/!:writingOnlyArcId/handle/my-handle-id-www}"
+    ),
+    arcs.core.data.EntityType(
+        arcs.core.data.Schema(
+            setOf(arcs.core.data.SchemaName("Thing")),
+            arcs.core.data.SchemaFields(
+                singletons = mapOf("name" to arcs.core.data.FieldType.Text),
+                collections = emptyMap()
+            ),
+            "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
+            refinement = { _ -> true },
+            query = null
+        )
+    ),
+    listOf(
+        Annotation("persistent", emptyMap()),
+        Annotation("ttl", mapOf("value" to AnnotationParam.Str("20d")))
+    )
+)
+val IngestionOnlyPlan = Plan(
+    listOf(
+        Particle(
+            "Writer",
+            "arcs.core.data.testdata.Writer",
+            mapOf(
+                "data" to HandleConnection(
+                    IngestionOnly_Handle0,
+                    HandleMode.Write,
+                    arcs.core.data.SingletonType(arcs.core.data.EntityType(Writer_Data.SCHEMA)),
+                    listOf(
+                        Annotation("persistent", emptyMap()),
+                        Annotation("ttl", mapOf("value" to AnnotationParam.Str("20d")))
+                    )
+                )
+            )
+        )
+    ),
+    listOf(IngestionOnly_Handle0),
+    listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str("writingOnlyArcId"))))
+)
 val Ingestion_Handle0 = Handle(
     StorageKeyParser.parse(
         "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"

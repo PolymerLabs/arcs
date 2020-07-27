@@ -127,47 +127,12 @@ export class IngressValidation {
     const fields = {};
     const restrictedType = this.getRestrictedType(type.getEntitySchema().name);
     if (!restrictedType) return null;
-    for (const [fieldName, field] of Object.entries(type.getEntitySchema().fields)) {
-      const policyField = restrictedType.getEntitySchema().fields[fieldName];
-      if (policyField) {
-        fields[fieldName] = this.restrictField(field, policyField);
-      }
-    }
-    return EntityType.make([type.getEntitySchema().name], fields, type.getEntitySchema());
-  }
-
-  // Returns the given schema field striped down according to the set of policies.
-  private restrictField(field, policyField) {
-    assert(field.kind === policyField.kind);
-    switch (field.kind) {
-      case 'kotlin-primitive':
-      case 'schema-primitive':
-        return field;
-      case 'schema-collection':
-        return {kind: 'schema-collection', schema: this.restrictField(field.schema, policyField.schema)};
-      case 'schema-reference': {
-        const restrictedFields = {};
-        for (const [subfieldName, subfield] of Object.entries(field.schema.model.entitySchema.fields)) {
-          const policySubfield = policyField.schema.model.entitySchema.fields[subfieldName];
-          if (policySubfield) {
-            restrictedFields[subfieldName] = this.restrictField(subfield, policySubfield);
-          }
-        }
-        return {kind: 'schema-reference', schema: {
-            ...field.schema,
-            model: {
-              entitySchema: new Schema(field.schema.model.entitySchema.names, restrictedFields)
-            }
-        }};
-      }
-      default:
-        assert(`Unsupported field kind: ${field.kind}`);
-    }
+    return type.restrictToType(restrictedType);
   }
 
   // Returns a type by the given name, combined from all corresponding type
   // restrictions provided by the given list of policies.
-  getRestrictedType(typeName: string) {
+  getRestrictedType(typeName: string): EntityType|null {
     const fields = {};
     let type: Type|null = null;
     for (const policy of this.policies) {

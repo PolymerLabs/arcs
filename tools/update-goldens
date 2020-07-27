@@ -20,5 +20,5 @@ status "[ 4 / 5 ] Golden for Schema generation"
 tools/sigh schema2wasm --quiet --kotlin src/tools/tests/golden_kt.arcs --outdir src/tools/tests/goldens/ --outfile kt_generated-schemas.jvm.kt
 
 status "[ 5 / 5 ] Recipe2Plan Golden"
-tools/sigh recipe2plan --quiet --format kotlin java/arcs/core/data/testdata/WriterReaderExample.arcs --outdir src/tools/tests/goldens/ --outfile WriterReaderExample.kt
+tools/sigh recipe2plan --quiet --format kotlin java/arcs/core/data/testdata/WriterReaderExample.arcs --policies=java/arcs/core/data/testdata/WriterReaderPoliciesExample.arcs  --outdir src/tools/tests/goldens/ --outfile WriterReaderExample.kt
 

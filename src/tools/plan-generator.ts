@@ -16,6 +16,7 @@ import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {AnnotationRef} from '../runtime/recipe/annotation.js';
+import {IngressValidation} from '../runtime/policy/ingress-validation.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -29,7 +30,10 @@ export class PlanGeneratorError extends Error {
 /** Generates plan objects from resolved recipes. */
 export class PlanGenerator {
 
-  constructor(private resolvedRecipes: Recipe[], private namespace: string) {}
+  constructor(private resolvedRecipes: Recipe[],
+              private namespace: string,
+              // TODO(b/159142859): Ingress validation shouldn't be optional.
+              private readonly ingressValidation: IngressValidation = null) {}
 
   /** Generates a Kotlin file with plan classes derived from resolved recipes. */
   async generate(): Promise<string> {
@@ -79,9 +83,11 @@ export class PlanGenerator {
   async createHandleVariable(handle: Handle): Promise<string> {
     handle.type.maybeEnsureResolved();
     const valInit = `val ${this.handleVariableName(handle)} = `;
+    const handleRestrictedType = this.ingressValidation
+        ? this.ingressValidation.restrictType(handle.type) : handle.type.resolvedType();
     return valInit + ktUtils.applyFun(`Handle`, [
       await this.createStorageKey(handle),
-      await generateType(handle.type.resolvedType()),
+      await generateType(handleRestrictedType),
       PlanGenerator.createAnnotations(handle.annotations)
     ], {startIndent: valInit.length});
   }

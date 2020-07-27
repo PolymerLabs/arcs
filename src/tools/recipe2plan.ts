@@ -12,6 +12,7 @@ import {PlanGenerator} from './plan-generator.js';
 import {assert} from '../platform/assert-node.js';
 import {encodePlansToProto} from './manifest2proto.js';
 import {Manifest} from '../runtime/manifest.js';
+import {IngressValidation} from '../runtime/policy/ingress-validation.js';
 
 export enum OutputFormat { Kotlin, Proto }
 
@@ -26,6 +27,7 @@ export enum OutputFormat { Kotlin, Proto }
 export async function recipe2plan(
   manifest: Manifest,
   format: OutputFormat,
+  policiesManifest?: Manifest,
   recipeFilter?: string,
   salt = `salt_${Math.random()}`): Promise<string | Uint8Array> {
   let plans = await (new AllocatorRecipeResolver(manifest, salt)).resolve();
@@ -35,10 +37,13 @@ export async function recipe2plan(
     if (plans.length === 0) throw Error(`Recipe '${recipeFilter}' not found.`);
   }
 
+  const ingressValidation = policiesManifest
+      ? new IngressValidation(policiesManifest.policies) : null;
+
   switch (format) {
     case OutputFormat.Kotlin:
       assert(manifest.meta.namespace, `Namespace is required in '${manifest.fileName}' for Kotlin code generation.`);
-      return new PlanGenerator(plans, manifest.meta.namespace).generate();
+      return new PlanGenerator(plans, manifest.meta.namespace, ingressValidation).generate();
     case OutputFormat.Proto:
       return Buffer.from(await encodePlansToProto(plans, manifest));
     default: throw new Error('Output Format should be Kotlin or Proto');
