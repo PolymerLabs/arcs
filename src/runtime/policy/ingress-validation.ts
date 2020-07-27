@@ -62,39 +62,84 @@ export class IngressValidation {
             .map(h => this.validateHandleCapabilities(h)));
   }
 
+  // For the given handle's type, returns a map of all allowed Capabilities by
+  // field name:
+  // - If Handle's type is covered by the policy, all fields in the Handle's
+  // type schema must be included in the policy.
+  // - Otherwise the capabilities will be determined by capabilities of all the
+  // Handles its data is derived from.
+  private findHandleCapabilities(handle: Handle, capabilitiesByField: Map<string, Capabilities[]>, seenHandles = new Set<Handle>()): IngressValidationResult {
+    assert(handle.type.maybeEnsureResolved());
+    seenHandles.add(handle);
+    const restrictedType = this.restrictType(handle.type.resolvedType());
+    if (restrictedType) {
+      const fieldPaths = this.collectSchemaFieldPaths(restrictedType.getEntitySchema());
+      for (const fieldPath of fieldPaths) {
+        const fieldCapabilities = this.getFieldCapabilities(fieldPath);
+        assert(fieldCapabilities, `Missing capabilities for ${fieldPath}`);
+        if (!capabilitiesByField.has(fieldPath)) {
+          capabilitiesByField.set(fieldPath, []);
+        }
+        capabilitiesByField.get(fieldPath).push(...fieldCapabilities);
+      }
+    } else {
+      // All input connections of all particles writing into this handle.
+      const sourceParticles = handle.connections.filter(conn => conn.isOutput)
+          .map(conn => conn.particle);
+      if (sourceParticles.length === 0) {
+        return IngressValidationResult.failWith(handle,
+            `Handle '${handle.id}' has no matching target type ` +
+            `${handle.type.resolvedType().toString()} in policies, and no source particles.`);
+      }
+      const sourceConnections = [];
+      for (const sourceParticle of sourceParticles) {
+        const particleInputs = Object.values(sourceParticle.connections)
+            .filter(conn => conn.isInput && !seenHandles.has(conn.handle));
+        if (particleInputs.length === 0) {
+          return IngressValidationResult.failWith(handle,
+              `Handle '${handle.id}' has no matching target type ` +
+              `${handle.type.resolvedType().toString()} in policies, and ` +
+              `contributing Particle ${sourceParticle.name} has no inputs.`);
+        }
+        sourceConnections.push(...particleInputs);
+      }
+      for (const sourceConn of sourceConnections) {
+        const result = this.findHandleCapabilities(sourceConn.handle, capabilitiesByField);
+        if (!result.success) {
+          return result;
+        }
+      }
+    }
+    return IngressValidationResult.success(handle);
+  }
+
   // Returns success, if the type of the handle, restricted according with the
   // set of policies, has capabilities that are compliant with the policies'
   // retention and maxAge permissions. Otherwise, returns a combination of all
   // encountered errors.
   private validateHandleCapabilities(handle: Handle): IngressValidationResult {
-    assert(handle.type.maybeEnsureResolved());
-    const result = IngressValidationResult.success(handle);
-    const restrictedType = this.restrictType(handle.type.resolvedType());
-    if (restrictedType) {
-      const fieldPaths = [];
-      for (const [fieldName, field] of Object.entries(restrictedType.getEntitySchema().fields)) {
-        fieldPaths.push(
-            ...this.collectFieldPaths(restrictedType.getEntitySchema().name, fieldName, field));
+    const capabilitiesByField = new Map<string, Capabilities[]>();
+    const result = this.findHandleCapabilities(handle, capabilitiesByField);
+    if (!result.success) return result;
+    for (const [fieldPath, fieldCapabilities] of capabilitiesByField.entries()) {
+      const fieldResults = fieldCapabilities.map(
+          fc => fc.isAllowedForIngress(handle.capabilities));
+      if (!fieldResults.some(r => r.success)) {
+        result.addResult(IngressValidationResult.failWith(handle,
+            `Failed validating ingress for field '${fieldPath}' of Handle ` +
+            `'${handle.id || handle.connections[0].getQualifiedName()}'`,
+            fieldResults.filter(r => !r.success)));
       }
-
-      for (const fieldPath of fieldPaths) {
-        const fieldCapabilities = this.getFieldCapabilities(fieldPath);
-        assert(fieldCapabilities, `Missing capabilities for ${fieldPath}`);
-        const fieldResults = fieldCapabilities.map(
-            fc => fc.isAllowedForIngress(handle.capabilities));
-        if (!fieldResults.some(r => r.success)) {
-          result.addResult(IngressValidationResult.failWith(handle,
-              `Failed validating ingress for field '${fieldPath}'` +
-              ` of '${handle.id || handle.connections[0].getQualifiedName()}`,
-              fieldResults.filter(r => !r.success)));
-        }
-      }
-    } else {
-      result.addError(
-        `Handle '${handle.id}' has no matching target type ` +
-            `${handle.type.resolvedType().toString()} in policies`);
     }
     return result;
+  }
+
+  private collectSchemaFieldPaths(schema: Schema) {
+    const fieldPaths = [];
+    for (const [fieldName, field] of Object.entries(schema.fields)) {
+      fieldPaths.push(...this.collectFieldPaths(schema.name, fieldName, field));
+    }
+    return fieldPaths;
   }
 
   private collectFieldPaths(fieldPrefix: string, fieldName: string, field) {
