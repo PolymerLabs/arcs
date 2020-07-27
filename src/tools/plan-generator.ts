@@ -85,7 +85,12 @@ export class PlanGenerator {
     const valInit = `val ${this.handleVariableName(handle)} = `;
     let handleRestrictedType: Type = null;
     if (this.ingressValidation) {
-      handleRestrictedType = this.ingressValidation.restrictType(handle.type);
+      const skippedFields = [];
+      handleRestrictedType = this.ingressValidation.restrictType(handle.type, skippedFields);
+      if (skippedFields.length > 0) {
+        console.warn(`Handle '${handle.id}' of Type ${handle.type.resolvedType().toString()} ` +
+            `is skipping fields: [${skippedFields.join(', ')}] that are not covered by Policies.`);
+      }
     }
     if (!handleRestrictedType) {
       handleRestrictedType = handle.type.resolvedType();

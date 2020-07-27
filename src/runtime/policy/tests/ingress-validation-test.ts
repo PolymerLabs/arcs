@@ -336,7 +336,40 @@ recipe
       return recipe;
   };
 
-  it('validate recipe handle capabilities', async () => {
+  it('validates skipped fields in restricted type', async () => {
+    const ingressValidation = new IngressValidation((await Manifest.parse(`
+${personSchema}
+  friends: [&Friend {name: Text, hobby: &Hobby {name: Text, description: Text}}]
+policy Policy0 {
+  @allowedRetention(medium: 'Disk', encryption: true)
+  @allowedRetention(medium: 'Ram', encryption: false)
+  @maxAge('10d')
+  from Person access { name, birthday, address {city}, friends { hobby {name} } }
+}
+    `)).policies);
+    const schema = [
+        'name: Text',
+        'address: &Address {city: Text, country: Text}',
+        'phone: Text',
+        'friends: [&Friend {name: Text, email: Text, hobby: &Hobby {name: Text, description: Text}}]',
+        'favoriteFoods: [&Food {name: Text, recipe: Text}]'
+    ].join(', ');
+    const recipe = await parseAndResolveRecipe(schema);
+    assert.isTrue(recipe.handles[0].type.maybeEnsureResolved());
+    const skippedFields = [];
+    assert.equal(ingressValidation.restrictType(recipe.handles[0].type.resolvedType(), skippedFields).toString(),
+        `Person {name: Text, address: &Address {city: Text}, friends: [&Friend {hobby: &Hobby {name: Text}}]}`);
+    assert.deepEqual(skippedFields, [
+        'address.country',
+        'phone',
+        'friends.name',
+        'friends.email',
+        'friends.hobby.description',
+        'favoriteFoods'
+    ]);
+  });
+
+  it('validates recipe handle capabilities', async () => {
     const ingressValidation = new IngressValidation((await Manifest.parse(`
 ${personSchema}
 policy Policy0 {
@@ -346,7 +379,6 @@ policy Policy0 {
   from Person access { name, birthday, address {city} }
 }
     `)).policies);
-
     // Validation for recipe that writes only Person's name.
     const schema = `name: Text`;
     const recipe = await parseAndResolveRecipe(schema);
