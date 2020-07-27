@@ -155,9 +155,8 @@ class ReferenceModeStore private constructor(
         backingType = backingType
     )
 
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     val backingStoreId: Int
-    val containerStoreId: Int
+    private val containerStoreId: Int
 
     init {
         @Suppress("UNCHECKED_CAST")
@@ -397,12 +396,16 @@ class ReferenceModeStore private constructor(
                     }
                     val getEntity = if (reference != null) {
                         val entityCrdt = backingStore.getLocalData(
-                            reference.id, backingStoreId) as? CrdtEntity.Data
+                            reference.id,
+                            backingStoreId
+                        ) as? CrdtEntity.Data
                         if (entityCrdt == null) {
                             addToHoldQueueFromReferences(listOf(reference)) {
                                 val updated =
                                     backingStore.getLocalData(
-                                        reference.id, backingStoreId) as? CrdtEntity.Data
+                                        reference.id,
+                                        backingStoreId
+                                    ) as? CrdtEntity.Data
 
                                 // Bridge the op from the collection using the RawEntity from the
                                 // backing store, and use the refModeOp for sending back to the
@@ -489,7 +492,8 @@ class ReferenceModeStore private constructor(
         return containerModel.values.all { (muxId, data) ->
             val clearOp = listOf(CrdtEntity.Operation.ClearAll(crdtKey, data.versionMap))
             backingStore.onProxyMessage(
-                ProxyMessage.Operations(clearOp, id = backingStoreId, muxId = muxId))
+                ProxyMessage.Operations(clearOp, id = backingStoreId, muxId = muxId)
+            )
         }
     }
 

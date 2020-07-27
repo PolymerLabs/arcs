@@ -220,7 +220,6 @@ class DirectStoreMuxerTest {
 
         // Set up store for muxId "a" and register for each client.
         val muxIdA = "a"
-        directStoreMuxer.store(muxIdA)
         directStoreMuxer.getLocalData(muxIdA, callbackId1)
         directStoreMuxer.getLocalData(muxIdA, callbackId2)
 
@@ -266,7 +265,6 @@ class DirectStoreMuxerTest {
 
         // Set up store for muxId "a" and register for each client.
         val muxIdA = "a"
-        directStoreMuxer.store(muxIdA)
         directStoreMuxer.getLocalData(muxIdA, callbackId1)
         directStoreMuxer.getLocalData(muxIdA, callbackId2)
 
@@ -285,11 +283,11 @@ class DirectStoreMuxerTest {
         val callbackId1 = directStoreMuxer.on(ProxyCallback {})
 
         val muxIdA = "a"
-        val (idSetA, _) = directStoreMuxer.store(muxIdA)
+        val (idSetA, _) = directStoreMuxer.getStore(muxIdA)
         directStoreMuxer.getLocalData(muxIdA, callbackId1)
 
         val muxIdB = "b"
-        val (idSetB, _) = directStoreMuxer.store(muxIdB)
+        val (idSetB, _) = directStoreMuxer.getStore(muxIdB)
         directStoreMuxer.getLocalData(muxIdB, callbackId1)
 
         assertThat(idSetA.size).isEqualTo(1)

@@ -96,8 +96,7 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
      */
     suspend fun getLocalData(muxId: String, id: Int): Data {
         // registerToStore will only register to the store if the id is not already registered
-        registerToStore(id, muxId)
-        val (_, store) = store(muxId)
+        val (_, store) = getStore(muxId, id)
 
         return store.getLocalData()
     }
@@ -130,9 +129,7 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
         val muxId = requireNotNull(message.muxId) {
             "messages sent to Direct Store Muxer must have a muxId"
         }
-        // registerToStore will only register to the store if the id is not already registered
-        registerToStore(message.id!!, muxId)
-        val (_, store) = store(muxId)
+        val (_, store) = getStore(muxId, message.id!!)
         return store.onProxyMessage(message)
     }
 
@@ -149,33 +146,32 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
         return StoreRecord(mutableSetOf<Int>(), store)
     }
 
-    private suspend fun registerToStore(
-        id: Int,
-        muxId: String
-    ) {
-        // The Direct Store Muxer can register several callbacks to the same store.
-        // When the Direct Store Muxer receives a message from a Direct Store, it utilizes the
-        // message id (determined by which callback the Direct Store invoked) to determine which
-        // observer to redirect the message to.
-        val (idSet, store) = store(muxId)
+    /**
+     * Return the [StoreRecord] for a given muxId.
+     *
+     * If an id is provided, ensures that the id is registered to the [Store] of the [StoreRecord]
+     */
+    suspend fun getStore(muxId: String, id: Int? = null): StoreRecord<Data, Op, T> {
         storeMutex.withLock {
-            if (!idSet.contains(id)) {
-                store.on(
-                    ProxyCallback { message ->
+            val storeRecord = stores.getOrPut(muxId) {
+                setupStore(muxId)
+            }
+
+            // Register `id` with store if it is not already registered. It is necessary to register
+            // a callback per id because wehn teh Direct Store Muxer receives a message from the
+            // Direct Store, it utilizes the message id to determine which observer to redirect
+            // the message to.
+            if (id != null && !storeRecord.idSet.contains(id)) {
+                storeRecord.store.on(
+                    ProxyCallback {message ->
                         proxyManager.getCallback(id)?.invoke(message.withMuxId(muxId))
                     },
                     id
                 )
-                idSet.add(id)
+                storeRecord.idSet.add(id)
                 callbackIdToMuxIdMap.getOrPut(id, { mutableSetOf() }).add(muxId)
             }
-        }
-    }
-
-    @VisibleForTesting
-    suspend fun store(muxId: String) = storeMutex.withLock {
-        stores.getOrPut(muxId) {
-            setupStore(muxId)
+            return storeRecord
         }
     }
 

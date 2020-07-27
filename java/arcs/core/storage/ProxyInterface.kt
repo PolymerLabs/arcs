@@ -25,12 +25,14 @@ sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     open val muxId: String?
 ) {
 
+    /** Creates a copy of the proxy message with the provided id. */
     fun withId(id: Int): ProxyMessage<Data, Op, ConsumerData> = when (this) {
         is SyncRequest -> copy(id = id)
         is ModelUpdate -> copy(id = id)
         is Operations -> copy(id = id)
     }
 
+    /** Creates a copy of the proxy message with the provided muxId. */
     fun withMuxId(muxId: String): ProxyMessage<Data, Op, ConsumerData> = when (this) {
         is SyncRequest -> copy(muxId = muxId)
         is ModelUpdate -> copy(muxId = muxId)
