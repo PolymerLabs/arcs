@@ -126,6 +126,6 @@ export class KTExtracter {
 }
 
 function typeFor(name: string) {
-  const typeInfo = getPrimitiveTypeInfo({name})
+  const typeInfo = getPrimitiveTypeInfo(name)
   return typeInfo.isNumber ? 'Number' : typeInfo.type
 }

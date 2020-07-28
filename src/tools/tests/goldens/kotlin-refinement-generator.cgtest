@@ -11,9 +11,7 @@ creates queries from refinement expressions involving math expressions
 particle Foo
   input: reads Something {a: Number [ a > 3 and a != 100 ], b: Number [b > 20 and b < 100] } [a + b/3 > 100]
 [results]
-val a = data.singletons["a"].toPrimitiveValue(Double::class, 0.0)
-val b = data.singletons["b"].toPrimitiveValue(Double::class, 0.0)
-(300 < (b + (a * 3))) && ((a > 3) && (a != 100)) && ((b > 20) && (b < 100))
+(300.asExpr() lt (CurrentScope<Number>(mapOf())["b"] + (CurrentScope<Number>(mapOf())["a"] * 3.asExpr()))) and ((CurrentScope<Number>(mapOf())["a"] gt 3.asExpr()) and (CurrentScope<Number>(mapOf())["a"] neq 100.asExpr())) and ((CurrentScope<Number>(mapOf())["b"] gt 20.asExpr()) and (CurrentScope<Number>(mapOf())["b"] lt 100.asExpr()))
 [end]
 
 [name]
@@ -22,8 +20,7 @@ creates queries from refinement expressions involving boolean expressions
 particle Foo
   input: reads Something {uuid: Text, value: Number} [uuid == 'test-uuid']
 [results]
-val uuid = data.singletons["uuid"].toPrimitiveValue(String::class, "")
-(uuid == "test-uuid")
+(CurrentScope<String>(mapOf())["uuid"] eq "test-uuid".asExpr())
 [end]
 
 [name]
@@ -32,9 +29,7 @@ creates queries from refinement expressions involving text expressions
 particle Foo
   input: reads Something {a: Number [ a > 3 and a != 100 ], b: Number [b > 20 and b < 100] } [a + b/3 > 100]
 [results]
-val a = data.singletons["a"].toPrimitiveValue(Double::class, 0.0)
-val b = data.singletons["b"].toPrimitiveValue(Double::class, 0.0)
-(300 < (b + (a * 3))) && ((a > 3) && (a != 100)) && ((b > 20) && (b < 100))
+(300.asExpr() lt (CurrentScope<Number>(mapOf())["b"] + (CurrentScope<Number>(mapOf())["a"] * 3.asExpr()))) and ((CurrentScope<Number>(mapOf())["a"] gt 3.asExpr()) and (CurrentScope<Number>(mapOf())["a"] neq 100.asExpr())) and ((CurrentScope<Number>(mapOf())["b"] gt 20.asExpr()) and (CurrentScope<Number>(mapOf())["b"] lt 100.asExpr()))
 [end]
 
 [name]
@@ -43,9 +38,7 @@ creates queries where field refinement is null
 particle Foo
   input: reads Something {a: Boolean, b: Boolean} [a and b]
 [results]
-val a = data.singletons["a"].toPrimitiveValue(Boolean::class, false)
-val b = data.singletons["b"].toPrimitiveValue(Boolean::class, false)
-(b && a)
+(CurrentScope<Boolean>(mapOf())["b"] and CurrentScope<Boolean>(mapOf())["a"])
 [end]
 
 [name]
@@ -54,9 +47,7 @@ creates queries where schema refinement is null
 particle Foo
   input: reads Something {a: Boolean [not a], b: Boolean [b]}
 [results]
-val a = data.singletons["a"].toPrimitiveValue(Boolean::class, false)
-val b = data.singletons["b"].toPrimitiveValue(Boolean::class, false)
-(!a) && b
+(!CurrentScope<Boolean>(mapOf())["a"]) and CurrentScope<Boolean>(mapOf())["b"]
 [end]
 
 [name]
@@ -65,7 +56,7 @@ creates queries where there is no refinement
 particle Foo
   input: reads Something {a: Boolean, b: Boolean}
 [results]
-true
+true.asExpr()
 [end]
 
 [name]
@@ -74,6 +65,5 @@ escapes text in queries from refinement expressions
 particle Foo
   input: reads Something {str: Text} [str == '\t\b\n\r\'\"$']
 [results]
-val str = data.singletons["str"].toPrimitiveValue(String::class, "")
-(str == "\t\b\n\r\'\"\$")
+(CurrentScope<String>(mapOf())["str"] eq "\t\b\n\r\'\"\$".asExpr())
 [end]
