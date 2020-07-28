@@ -32,7 +32,7 @@ import {Runtime} from '../runtime.js';
 import {BinaryExpression, FieldNamePrimitive, NumberPrimitive} from '../refiner.js';
 import {mockFirebaseStorageKeyOptions} from '../storage/testing/mock-firebase.js';
 import {Flags} from '../flags.js';
-import {TupleType, CollectionType, EntityType} from '../type.js';
+import {TupleType, CollectionType, EntityType, TypeVariable} from '../type.js';
 import {ActiveCollectionEntityStore, handleForActiveStore} from '../storage/storage.js';
 import {Ttl} from '../capabilities.js';
 
@@ -46,6 +46,7 @@ describe('manifest', async () => {
 
   let memoryProvider;
   beforeEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
@@ -3585,6 +3586,56 @@ resource SomeName
       const claim = particle.trustClaims[0];
       assert.strictEqual(claim.handle.name, 'output');
       assert.deepStrictEqual(claim.fieldPath, ['foo']);
+    });
+
+    it('supports field-level checks and claims with resolved type variables', async () => {
+      const manifest = await parseManifest(`
+        particle OrderIngestion in '.OrderIngestion'
+          data: writes [Product {sku: Text, name: Text, price: Number}]
+
+        particle SkuRedactor in '.SkuRedactor'
+          input: reads [~a with {sku: Text}]
+          output: writes [~a]
+          claim output.sku is redacted
+
+        particle Consumer in '.Consumer'
+          data: reads [Product {sku: Text, name: Text, price: Number}]
+          check data.sku is redacted
+
+        recipe Shop
+          beforeRedaction: create
+          afterRedaction: create
+          OrderIngestion
+            data: beforeRedaction
+          SkuRedactor
+            input: beforeRedaction
+            output: afterRedaction
+          Consumer
+            data: afterRedaction
+      `);
+      const recipe = manifest.recipes[0];
+
+      // Normalize and clone the recipe. This resolves the type variables, and
+      // exercises code paths to validate the checks and claims.
+      // Should not crash.
+      recipe.normalize();
+      const clonedRecipe = recipe.clone();
+
+      // Verify claim on redactor particle.
+      const redactorParticle = clonedRecipe.particles.find(p => p.name === 'SkuRedactor').spec;
+      const outputType = redactorParticle.connections.find(c => c.name === 'output').type as TypeVariable;
+      assert.isTrue(outputType.isResolved());
+      assert.lengthOf(redactorParticle.trustClaims, 1);
+      const claim = redactorParticle.trustClaims[0];
+      assert.deepStrictEqual(claim.fieldPath, ['sku']);
+
+      // Verify check on consumer particle.
+      const consumerParticle = clonedRecipe.particles.find(p => p.name === 'Consumer').spec;
+      const dataType = consumerParticle.connections.find(c => c.name === 'data').type as TypeVariable;
+      assert.isTrue(dataType.isResolved());
+      assert.lengthOf(consumerParticle.trustChecks, 1);
+      const check = consumerParticle.trustChecks[0];
+      assert.deepStrictEqual(check.fieldPath, ['sku']);
     });
 
     it('rejects unknown fields in type variables', async () => {
