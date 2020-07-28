@@ -245,7 +245,9 @@ class ShowcaseHost(
         val arcHostContext = requireNotNull(getArcHostContext(arcId)) {
             "ArcHost: No arc host context found for $arcId"
         }
-        val particleContext = requireNotNull(arcHostContext.particles[particleName]) {
+        val particleContext = requireNotNull(arcHostContext.particles.first {
+            it.planParticle.particleName == particleName
+        }) {
             "ArcHost: No particle named $particleName found in $arcId"
         }
         val allowableStartStates = arrayOf(ParticleState.Running, ParticleState.Waiting)

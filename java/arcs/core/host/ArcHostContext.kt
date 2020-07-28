@@ -22,7 +22,7 @@ import arcs.core.util.TaggedLog
  */
 data class ArcHostContext(
     var arcId: String,
-    var particles: MutableMap<String, ParticleContext> = mutableMapOf(),
+    var particles: MutableList<ParticleContext> = mutableListOf(),
     var entityHandleManager: EntityHandleManager
 ) {
     private val stateChangeCallbacks: MutableMap<ArcStateChangeRegistration,
@@ -41,7 +41,7 @@ data class ArcHostContext(
 
     constructor(
         arcId: String,
-        particles: MutableMap<String, ParticleContext> = mutableMapOf(),
+        particles: MutableList<ParticleContext> = mutableListOf(),
         arcState: ArcState = ArcState.NeverStarted,
         entityHandleManager: EntityHandleManager
     ) : this(arcId, particles, entityHandleManager) {
@@ -79,7 +79,7 @@ data class ArcHostContext(
      * Traverse every handle and return a distinct collection of all [StorageKey]s
      * that are readable by this arc.
      */
-    fun allReadableStorageKeys() = particles.flatMap { (_, particleContext) ->
+    fun allReadableStorageKeys() = particles.flatMap { particleContext ->
         particleContext.planParticle.handles.filter {
             it.value.mode.canRead
         }.map { it.value.storageKey }

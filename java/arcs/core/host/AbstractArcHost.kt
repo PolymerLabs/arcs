@@ -318,6 +318,7 @@ abstract class AbstractArcHost(
         }
 
     override suspend fun startArc(partition: Plan.Partition) {
+        println(partition)
         val context = lookupOrCreateArcHostContext(partition.arcId)
 
         if (paused.value) {
@@ -334,7 +335,7 @@ abstract class AbstractArcHost(
         // Instantiate each particle and its handles in a ParticleContext.
         for (particleSpec in partition.particles) {
             val particleContext = setUpParticleAndHandles(particleSpec, context)
-            context.particles[particleSpec.particleName] = particleContext
+            context.particles.add(particleContext)
             if (particleContext.particleState.failed) {
                 context.arcState = ArcState.errorWith(particleContext.particleState.cause)
                 break
@@ -344,7 +345,7 @@ abstract class AbstractArcHost(
         // Get each particle running.
         if (context.arcState != ArcState.Error) {
             try {
-                performParticleStartup(context.particles.values)
+                performParticleStartup(context.particles)
                 context.arcState = ArcState.Running
 
                 // If the platform supports resurrection, request it for this Arc's StorageKeys
@@ -369,6 +370,7 @@ abstract class AbstractArcHost(
         spec: Plan.Particle,
         context: ArcHostContext
     ): ParticleContext {
+        println("setup ${spec.particleName}")
         val particle = instantiateParticle(ParticleIdentifier.from(spec.location), spec)
 
         val particleContext = lookupParticleContextOrCreate(
@@ -412,8 +414,7 @@ abstract class AbstractArcHost(
         spec: Plan.Particle,
         particle: Particle,
         scheduler: Scheduler
-    ) = context.particles[spec.particleName]?.copyWith(particle)
-            ?: ParticleContext(particle, spec, scheduler)
+    ) = ParticleContext(particle, spec, scheduler)
 
     /**
      * Invokes the [Particle] startup lifecycle methods and waits until all particles
@@ -421,6 +422,9 @@ abstract class AbstractArcHost(
      */
     private suspend fun performParticleStartup(particleContexts: Collection<ParticleContext>) {
         if (particleContexts.isEmpty()) return
+
+        println("performParticleStartup")
+        particleContexts.forEach { println(it) }
 
         // Call the lifecycle startup methods.
         particleContexts.forEach { it.initParticle() }
@@ -474,9 +478,7 @@ abstract class AbstractArcHost(
         Plan.Partition(
             arcId,
             hostId,
-            context.particles.map { (_, particleContext) ->
-                particleContext.planParticle
-            }
+            context.particles.map { it.planParticle }
         )
 
     /**
@@ -538,7 +540,7 @@ abstract class AbstractArcHost(
      */
     private suspend fun stopArcInternal(arcId: String, context: ArcHostContext) {
         try {
-            context.particles.values.forEach { it.stopParticle() }
+            context.particles.forEach { it.stopParticle() }
             maybeCancelResurrection(context)
             context.arcState = ArcState.Stopped
             updateArcHostContext(arcId, context)
