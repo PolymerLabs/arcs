@@ -11,7 +11,6 @@
 import {Op} from '../runtime/manifest-ast-nodes.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Schema} from '../runtime/schema.js';
-import {escapeIdentifier} from './kotlin-codegen-shared.js';
 import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
 import {
   RefinementExpressionVisitor,
@@ -21,9 +20,8 @@ import {
   QueryArgumentPrimitive,
   BuiltIn,
   NumberPrimitive,
-  BooleanPrimitive,
   TextPrimitive,
-  BigIntPrimitive,
+  DiscretePrimitive
 } from '../runtime/refiner.js';
 
 // The variable name used for the query argument in generated Kotlin code.
@@ -69,7 +67,7 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
     // TODO: Implement KT getter for 'creationTimeStamp'
     throw new Error(`Unhandled BuiltInNode '${expr.value}' in toKTExpression`);
   }
-  visitBigIntPrimitive(expr: BigIntPrimitive): string {
+  visitDiscretePrimitive(expr: DiscretePrimitive): string {
     // This assumes that the associated Kotlin type will be `Java.math.BigInteger` and constructs
     // the BigInteger via String as there is no support for a literal form.
     return `NumberLiteralExpression(BigInteger("${expr.value}"))`;
@@ -83,9 +81,6 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
         return 'NumberLiteralExpression(Double.NEGATIVE_INFINITY)';
     }
     return `${expr.value.toString()}.asExpr()`;
-  }
-  visitBooleanPrimitive(expr: BooleanPrimitive): string {
-    return `${expr.value}`;
   }
   visitTextPrimitive(expr: TextPrimitive): string {
     const escapeForKotlin = (value: string) => {
