@@ -408,6 +408,28 @@ describe('types', () => {
       assert.notExists(a.canReadSubset);
       assert.strictEqual(a.resolution, b);
     });
+    it(`maybeEnsureResolved prefers canReadSubset when resolveToMaxType is true`, () => {
+      const sup = EntityType.make(['Super'], {});
+      const sub = EntityType.make(['Sub'], {});
+      const a = new TypeVariableInfo('x', sup, sub, true);
+
+      a.maybeEnsureResolved();
+
+      assert.notExists(a.canWriteSuperset);
+      assert.notExists(a.canReadSubset);
+      assert.strictEqual(a.resolution, sub);
+    });
+    it(`maybeEnsureResolved prefers canWriteSuperset when resolveToMaxType is false`, () => {
+      const sup = EntityType.make(['Super'], {});
+      const sub = EntityType.make(['Sub'], {});
+      const a = new TypeVariableInfo('x', sup, sub, false);
+
+      a.maybeEnsureResolved();
+
+      assert.notExists(a.canWriteSuperset);
+      assert.notExists(a.canReadSubset);
+      assert.strictEqual(a.resolution, sup);
+    });
   });
 
   describe('serialization', () => {

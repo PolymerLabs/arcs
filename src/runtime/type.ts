@@ -1202,12 +1202,14 @@ export class TypeVariableInfo {
   _canWriteSuperset?: Type|null;
   _canReadSubset?: Type|null;
   _resolution?: Type|null;
+  _resolveToMaxType: boolean;
 
-  constructor(name: string, canWriteSuperset?: Type, canReadSubset?: Type) {
+  constructor(name: string, canWriteSuperset?: Type, canReadSubset?: Type, resolveToMaxType: boolean = false) {
     this.name = name;
     this._canWriteSuperset = canWriteSuperset;
     this._canReadSubset = canReadSubset;
     this._resolution = null;
+    this._resolveToMaxType = resolveToMaxType;
   }
 
   /**
@@ -1380,6 +1382,17 @@ export class TypeVariableInfo {
   maybeEnsureResolved() {
     if (this._resolution) {
       return this._resolution.maybeEnsureResolved();
+    }
+    if (this._resolveToMaxType) {
+      if (this._canReadSubset) {
+        this.resolution = this._canReadSubset;
+        return true;
+      }
+      if (this._canWriteSuperset) {
+        this.resolution = this._canWriteSuperset;
+        return true;
+      }
+      return false;
     }
     if (this._canWriteSuperset) {
       this.resolution = this._canWriteSuperset;
