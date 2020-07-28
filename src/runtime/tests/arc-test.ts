@@ -1138,6 +1138,5 @@ describe('Arc storage migration', () => {
     // `foo` was added at the same time as `bar`, `bar` has a >1d longer ttl than `foo`.
     assert.isTrue(barThing2.expirationTimestamp - fooThing1.expirationTimestamp >
         24 * 60 * 60 * 1000);
-
   });
 });
