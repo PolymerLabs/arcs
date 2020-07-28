@@ -478,8 +478,8 @@ export class TypeVariable extends Type {
     this.variable = variable;
   }
 
-  static make(name: string, canWriteSuperset: Type = null, canReadSubset: Type = null): TypeVariable {
-    return new TypeVariable(new TypeVariableInfo(name, canWriteSuperset, canReadSubset));
+  static make(name: string, canWriteSuperset: Type = null, canReadSubset: Type = null, resolvesToMaxType = false): TypeVariable {
+    return new TypeVariable(new TypeVariableInfo(name, canWriteSuperset, canReadSubset, resolvesToMaxType));
   }
 
   get isVariable(): boolean {
@@ -1229,29 +1229,13 @@ export class TypeVariableInfo {
    * This is used to accumulate read constraints when resolving a handle's type.
    */
   maybeMergeCanReadSubset(constraint: Type): boolean {
-    if (constraint == null) {
-      return true;
-    }
-
-    if (this.canReadSubset == null) {
-      this.canReadSubset = constraint;
-      return true;
-    }
-
-    if (this.canReadSubset instanceof SlotType && constraint instanceof SlotType) {
-      // TODO: formFactor compatibility, etc.
-      return true;
-    }
-    if (this.canReadSubset instanceof EntityType && constraint instanceof EntityType) {
-      const mergedSchema = Schema.intersect(this.canReadSubset.entitySchema, constraint.entitySchema);
-      if (!mergedSchema) {
-        return false;
-      }
-
-      this.canReadSubset = new EntityType(mergedSchema);
-      return true;
-    }
-    return false;
+    const {result, success} = this._maybeMerge(
+      this.canReadSubset,
+      constraint,
+      this._resolveToMaxType ? Schema.union : Schema.intersect,
+    );
+    this.canReadSubset = result;
+    return success;
   }
 
   /**
@@ -1259,30 +1243,37 @@ export class TypeVariableInfo {
    * This is used to accumulate write constraints when resolving a handle's type.
    */
   maybeMergeCanWriteSuperset(constraint: Type): boolean {
+    const {result, success} = this._maybeMerge(this.canWriteSuperset, constraint, Schema.union);
+    this.canWriteSuperset = result;
+    return success;
+  }
+
+  // Helper to generalize canReadSubset and canWriteSuperset merging
+  private _maybeMerge(target: Type, constraint: Type,
+                      merger: (left: Schema, right: Schema) => Schema): { success: boolean; result: Type } {
     if (constraint == null) {
-      return true;
+      return {success: true, result: target};
     }
 
-    if (this.canWriteSuperset == null) {
-      this.canWriteSuperset = constraint;
-      return true;
+    if (target == null) {
+      return {success: true, result: constraint};
     }
 
-    if (this.canWriteSuperset instanceof SlotType && constraint instanceof SlotType) {
+    if (target instanceof SlotType && constraint instanceof SlotType) {
       // TODO: formFactor compatibility, etc.
-      return true;
+      return {success: true, result: target};
     }
 
-    if (this.canWriteSuperset instanceof EntityType && constraint instanceof EntityType) {
-      const mergedSchema = Schema.union(this.canWriteSuperset.entitySchema, constraint.entitySchema);
+    if (target instanceof EntityType && constraint instanceof EntityType) {
+      const mergedSchema = merger(target.entitySchema, constraint.entitySchema);
       if (!mergedSchema) {
-        return false;
+        return {success: false, result: target};
       }
 
-      this.canWriteSuperset = new EntityType(mergedSchema);
-      return true;
+      return {success: true, result: new EntityType(mergedSchema)};
     }
-    return false;
+
+    return {success: false, result: target};
   }
 
   isSatisfiedBy(type: Type): boolean {
