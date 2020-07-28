@@ -32,6 +32,7 @@ export interface SourceLocation {
   filename?: string;
   start: SourcePosition;
   end: SourcePosition;
+  text?: string; // Optionally keeps a copy of the raw/unparsed text.
 }
 
 /**
@@ -679,7 +680,7 @@ export interface RefinementNode extends BaseNode {
   expression: RefinementExpressionNode;
 }
 
-export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode | QueryNode | BuiltInNode | NumberNode | BigIntNode | BooleanNode | TextNode;
+export type RefinementExpressionNode = BinaryExpressionNode | UnaryExpressionNode | FieldNode | QueryNode | BuiltInNode | NumberNode | DiscreteNode | BooleanNode | TextNode;
 
 export enum Op {
   AND = 'and',
@@ -728,15 +729,33 @@ export interface BuiltInNode extends BaseNode {
   value: string;
 }
 
+export enum Primitive {
+  BOOLEAN = 'Boolean',
+  NUMBER = 'Number',
+  BIGINT = 'BigInt',
+  LONG = 'Long',
+  INT = 'Int',
+  TEXT = 'Text',
+  UNKNOWN = '~query_arg_type',
+}
+
 export interface NumberNode extends BaseNode {
   kind: 'number-node';
-  value: number ;
+  value: number;
   units?: string[];
 }
 
-export interface BigIntNode extends BaseNode {
-  kind: 'bigint-node';
-  value: bigint ;
+export type DiscreteType = Primitive.BIGINT | Primitive.INT | Primitive.LONG | Primitive.BOOLEAN;
+export const discreteTypes: Primitive[] = [
+  Primitive.BIGINT,
+  Primitive.LONG,
+  Primitive.INT
+];
+
+export interface DiscreteNode extends BaseNode {
+  kind: 'discrete-node';
+  value: bigint;
+  type: DiscreteType;
   units?: string[];
 }
 
@@ -977,3 +996,18 @@ export type All = Import|Meta|MetaName|MetaStorageKey|MetaNamespace|Particle|Par
 
 export type ManifestItem =
     RecipeNode|Particle|Import|Schema|ManifestStorage|Interface|Meta|Resource;
+
+export function viewAst(ast: unknown, viewLocation = false) {
+  // Helper function useful for viewing ast information while working on the parser and test code:
+  // Optionally, strips location information.
+  console.log(
+    JSON.stringify(ast, (_key, value) => {
+    if (!viewLocation && value != null && value['location']) {
+      delete value['location'];
+    }
+    return typeof value === 'bigint'
+      ? value.toString() // Workaround for JSON not supporting bigint.
+      : value;
+  }, // return everything else unchanged
+  2));
+}
