@@ -6,10 +6,13 @@ particle P1
   claim foo.b is untrusted
 particle P2
   foo: reads ~a with {a: Text}  // Constraints
-  bar: writes ~b
+  bar: writes Bar {b: Text}
+particle PassThrough
+  input: reads ~a
+  output: writes ~a
 particle P3
   baz: reads Bar {b: Text}
-  foo: writes [~a]
+  foo: writes [Foo {b: Number}]
   check baz.b is trusted
 particle P4
   foo: reads [Foo {b: Number}]
@@ -19,7 +22,10 @@ recipe R
     foo: writes h1
   P2
     foo: reads h1
-    bar: writes h2
+    bar: writes passThrough
+  PassThrough
+    input: passThrough
+    output: h2
   P3
     baz: reads h2
     foo: writes h3
