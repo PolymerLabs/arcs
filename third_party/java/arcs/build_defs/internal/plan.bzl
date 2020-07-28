@@ -77,6 +77,7 @@ recipe2plan = rule(
             allow_files = True,
             executable = True,
         ),
+        # TODO(b/162273478) recipe2plan should accept `policies` argument
     },
     doc = """Generates plans from recipes.
 

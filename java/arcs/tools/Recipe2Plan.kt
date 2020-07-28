@@ -25,6 +25,7 @@ class Recipe2Plan : CliktCommand(
     private val manifests by argument(help = "paths to protobuf-serialized manifests")
         .file(exists = true).multiple()
     private val verbose by option("--verbose", "-v", help = "Print logs").flag(default = false)
+    // TODO(b/162273478) CLI should accept `policies` argument
 
     /** Execute: Generate a plan per input manifest proto */
     override fun run() = manifests.forEach { manifest ->
