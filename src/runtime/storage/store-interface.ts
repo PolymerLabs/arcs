@@ -56,7 +56,7 @@ export type StoreConstructorOptions<T extends CRDTTypeRecord> = {
 };
 
 export type StoreConstructor = {
-  construct<T extends CRDTTypeRecord>(options: StoreConstructorOptions<T>): Promise<AbstractActiveStore<T>>;
+  construct<T extends CRDTTypeRecord>(options: StoreConstructorOptions<T>): Promise<ActiveStore<T>>;
 };
 
 // Interface common to an ActiveStore and the PEC, used by the StorageProxy.
@@ -71,28 +71,14 @@ export interface StorageCommunicationEndpointProvider<T extends CRDTTypeRecord> 
   getStorageEndpoint(storageProxy: StorageProxy<T> | StorageProxyMuxer<T>): StorageCommunicationEndpoint<T>;
 }
 
-export interface AbstractActiveStore<T extends CRDTTypeRecord> {
-  versionToken: string;
-  baseStore: AbstractStore;
-  on(callback: ProxyCallback<T>): number;
-  off(callback: number): void;
-  onProxyMessage(message: ProxyMessage<T>): Promise<void>;
-  reportExceptionInHost(exception: PropagatedException): void;
-  cloneFrom(store: AbstractActiveStore<T>): Promise<void>;
-}
-
-export function isActiveStore(abstractActiveStore: AbstractActiveStore<CRDTTypeRecord>): abstractActiveStore is ActiveStore<CRDTTypeRecord> {
-  return (!abstractActiveStore.baseStore.type.isMux);
-}
-
-export function isActiveMuxer(abstractActiveStore: AbstractActiveStore<CRDTTypeRecord>): abstractActiveStore is ActiveMuxer<CRDTMuxEntity> {
-  return (abstractActiveStore.baseStore.type.isMux);
+export function isActiveMuxer(activeStore: ActiveStore<CRDTTypeRecord>): activeStore is ActiveMuxer<CRDTMuxEntity> {
+  return (activeStore.baseStore.type.isMux);
 }
 
 // A representation of an active store. Subclasses of this class provide specific
 // behaviour as controlled by the provided StorageMode.
 export abstract class ActiveStore<T extends CRDTTypeRecord>
-    implements StoreInterface<T>, StorageCommunicationEndpointProvider<T>, AbstractActiveStore<T> {
+    implements StoreInterface<T>, StorageCommunicationEndpointProvider<T> {
   readonly storageKey: StorageKey;
   exists: Exists;
   readonly type: CRDTTypeRecordToType<T>;
@@ -171,13 +157,21 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
     };
   }
 }
-export abstract class ActiveMuxer<T extends CRDTTypeRecord> implements StorageCommunicationEndpointProvider<T>, AbstractActiveStore<T> {
+export abstract class ActiveMuxer<T extends CRDTTypeRecord> implements StorageCommunicationEndpointProvider<T>, ActiveStore<T> {
+  readonly storageKey: StorageKey;
+  exists: Exists;
+  readonly type: CRDTTypeRecordToType<T>;
+  readonly mode: StorageMode;
   abstract versionToken: string;
   readonly baseStore: AbstractStore;
   abstract readonly stores: Dictionary<StoreRecord<T>>;
 
   // TODO: Lots of these params can be pulled from baseStore.
   constructor(options: StoreConstructorOptions<T>) {
+    this.storageKey = options.storageKey;
+    this.exists = options.exists;
+    this.type = options.type;
+    this.mode = StorageMode.Backing;
     this.baseStore = options.baseStore;
   }
 
@@ -188,9 +182,9 @@ export abstract class ActiveMuxer<T extends CRDTTypeRecord> implements StorageCo
 
   abstract getLocalModel(muxId: string, id: number): CRDTModel<T>;
 
-  async cloneFrom(store: ActiveMuxer<T>): Promise<void> {
+  async cloneFrom(store: ActiveStore<T>): Promise<void> {
     assert(store instanceof ActiveMuxer);
-    const activeMuxer : ActiveMuxer<T> = store as ActiveMuxer<T>;
+    const activeMuxer : ActiveMuxer<T> = store as unknown as ActiveMuxer<T>;
     for (const muxId of Object.keys(activeMuxer.stores)) {
       await this.onProxyMessage({
         type: ProxyMessageType.ModelUpdate,
@@ -198,6 +192,17 @@ export abstract class ActiveMuxer<T extends CRDTTypeRecord> implements StorageCo
         id: 0
       });
     }
+  }
+
+  async idle(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  async serializeContents(): Promise<T['data']> {
+    throw new Error('Method not implemented.');
+  }
+  async modelForSynchronization(): Promise<{}> {
+    return this.serializeContents();
   }
 
   getStorageEndpoint() {
