@@ -245,6 +245,12 @@ export interface StorableSerializedParticleSpec extends SerializedParticleSpec {
   id: string;
 }
 
+type ParticleSpecOptions = {
+  // Map from handle name to type. Used when constructing a ParticleSpec to
+  // override the handle types deserialized from the model.
+  handleTypeOverrides?: Map<string, Type>,
+};
+
 export class ParticleSpec {
   private readonly model: SerializedParticleSpec;
   name: string;
@@ -260,7 +266,7 @@ export class ParticleSpec {
   trustChecks: Check[];
   _annotations: AnnotationRef[] = [];
 
-  constructor(model: SerializedParticleSpec) {
+  constructor(model: SerializedParticleSpec, options?: ParticleSpecOptions) {
     this.model = model;
     this.name = model.name;
     this.verbs = model.verbs;
@@ -275,6 +281,15 @@ export class ParticleSpec {
     this.handleConnectionMap.forEach((connectionSpec, name) => {
       connectionSpec.pattern = model.description[name];
     });
+
+    // Override handle types with ones provided from the override map. Type
+    // variables with resolutions don't survive the cloning process, so they can
+    // be added in here.
+    if (options && options.handleTypeOverrides) {
+      options.handleTypeOverrides.forEach((type, name) => {
+        this.handleConnectionMap.get(name).type = type;
+      });
+    }
 
     this.external = model.external;
     this.implFile = model.implFile;
@@ -416,26 +431,26 @@ export class ParticleSpec {
     return {args: argsLiteral, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations};
   }
 
-  static fromLiteral(literal: SerializedParticleSpec): ParticleSpec {
+  static fromLiteral(literal: SerializedParticleSpec, options?: ParticleSpecOptions): ParticleSpec {
     let {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations} = literal;
     const connectionFromLiteral = ({type, direction, relaxed, name, isOptional, dependentConnections}) =>
       ({type: asType(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : [], annotations: /*annotations ||*/ []});
     args = args.map(connectionFromLiteral);
-    return new ParticleSpec({args, name, verbs: verbs || [], description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations});
+    return new ParticleSpec({args, name, verbs: verbs || [], description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations}, options);
   }
 
   // Note: this method shouldn't be called directly.
-  clone(): ParticleSpec {
-    return ParticleSpec.fromLiteral(this.toLiteral());
+  clone(options?: ParticleSpecOptions): ParticleSpec {
+    return ParticleSpec.fromLiteral(this.toLiteral(), options);
   }
 
   // Note: this method shouldn't be called directly (only as part of particle copying).
   cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): ParticleSpec {
-    const spec = this.clone();
+    const handleTypeOverrides: Map<string, Type> = new Map();
     this.handleConnectionMap.forEach((conn, name) => {
-      spec.handleConnectionMap.get(name).type = conn.type._cloneWithResolutions(variableMap);
+      handleTypeOverrides.set(name, conn.type._cloneWithResolutions(variableMap));
     });
-    return spec;
+    return this.clone({handleTypeOverrides});
   }
 
   equals(other): boolean {
