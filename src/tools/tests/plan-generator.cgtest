@@ -1,0 +1,27 @@
+[header]
+Plan Generation
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+[end_header]
+
+[name]
+uses the same storage key for created and mapped handles
+[input]
+particle A
+  data: writes Thing {num: Number}
+particle B
+  data: reads Thing {num: Number}
+
+@arcId('ingestion')
+recipe Ingest
+  h: create 'data' @persistent
+  A
+    data: writes h
+
+recipe Retrieve
+  h: map 'data'
+  B
+    data: reads h`);
+[results]
+[end]
