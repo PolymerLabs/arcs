@@ -412,9 +412,6 @@ abstract class AbstractArcHost(
     private suspend fun performParticleStartup(particleContexts: Collection<ParticleContext>) {
         if (particleContexts.isEmpty()) return
 
-        println("performParticleStartup")
-        particleContexts.forEach { println(it) }
-
         // Call the lifecycle startup methods.
         particleContexts.forEach { it.initParticle() }
 
