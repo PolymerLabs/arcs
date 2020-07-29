@@ -1622,10 +1622,10 @@ interface OperatorInfo {
 const numericTypes: Primitive[] = [Primitive.NUMBER].concat(discreteTypes);
 
 // From https://kotlinlang.org/docs/reference/basic-types.html
-const INT_MIN: bigint = BigInt("-2147483648");
-const INT_MAX: bigint = BigInt("2147483647");
-const LONG_MIN: bigint = BigInt("-9223372036854775808");
-const LONG_MAX: bigint = BigInt("9223372036854775807");
+const INT_MIN: bigint = BigInt("-2147483648"); // -2**31
+const INT_MAX: bigint = BigInt("2147483647"); // 2**31 - 1
+const LONG_MIN: bigint = BigInt("-9223372036854775808"); // -2**63
+const LONG_MAX: bigint = BigInt("9223372036854775807"); // 2**63 - 1
 
 const operatorTable: Dictionary<OperatorInfo> = {
   // Booleans
