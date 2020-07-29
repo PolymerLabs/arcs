@@ -28,5 +28,5 @@ class DevToolsStorageManager(
     val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>
 ) : IDevToolsStorageManager.Stub() {
 
-    override fun getStorageKeys() = stores.keys().toList().joinToString { it.toKeyString() }
+    override fun getStorageKeys() = stores.keys.joinToString { it.toKeyString() }
 }

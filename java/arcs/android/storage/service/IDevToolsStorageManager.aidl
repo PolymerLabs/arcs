@@ -16,10 +16,10 @@ package arcs.android.storage.service;
  */
 interface IDevToolsStorageManager {
 
-  /**
-  * Return the storage keys for active stores in csv format. Placeholder function to demonstrate
-  * storage -> devtoolsService -> client cycle.
-  */
-  String getStorageKeys();
+    /**
+     * Return the storage keys for active stores in csv format. Placeholder function to demonstrate
+     * storage -> devtoolsService -> client cycle.
+     */
+    String getStorageKeys();
 
 }

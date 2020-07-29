@@ -37,7 +37,8 @@ class DevToolsService : Service() {
     private val devToolsServer = DevWebServerImpl
     private val connectionFactory = DevToolsConnectionFactory(
         this@DevToolsService,
-        StorageService::class.java)
+        StorageService::class.java
+    )
 
     private var storageService: IDevToolsStorageManager? = null
     private var serviceConnection: StorageServiceConnection? = null
@@ -58,7 +59,9 @@ class DevToolsService : Service() {
 
     override fun onBind(intent: Intent): IBinder? {
         binder.send(storageService?.getStorageKeys() ?: "")
-        devToolsServer.addOnOpenWebsocketCallback { storageService?.getStorageKeys() ?: "" }
+        devToolsServer.addOnOpenWebsocketCallback {
+            devToolsServer.send(storageService?.getStorageKeys() ?: "")
+        }
         return binder
     }
 
@@ -68,10 +71,12 @@ class DevToolsService : Service() {
         scope.cancel()
     }
 
-    suspend fun initialize() = apply {
-        check(serviceConnection == null ||
+    suspend fun initialize() {
+        check(
+            serviceConnection == null ||
             storageService == null ||
-            storageService?.asBinder()?.isBinderAlive != true) {
+            storageService?.asBinder()?.isBinderAlive != true
+        ) {
             "Connection to StorageService is already alive."
         }
         this.serviceConnection = connectionFactory()
