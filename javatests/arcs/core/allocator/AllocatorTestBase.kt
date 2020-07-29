@@ -7,6 +7,7 @@ import arcs.core.data.Capability.Shareable
 import arcs.core.data.CreatableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
+import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
 import arcs.core.host.DeserializedException
 import arcs.core.host.EntityHandleManager
@@ -354,6 +355,11 @@ open class AllocatorTestBase {
         }
     }
 
+    private fun particleToContext(context: ArcHostContext, particle: Plan.Particle) =
+        context.particles.first {
+            it.planParticle.particleName == particle.particleName
+        }
+
     @Test
     open fun allocator_canStartArcInTwoExternalHosts() = runAllocatorTest {
         val arc = allocator.startArcForPlan(PersonPlan)
@@ -380,13 +386,9 @@ open class AllocatorTestBase {
 
         assertAllStatus(arc, ArcState.Running)
 
-        val readPersonContext = requireNotNull(
-            readingContext.particles[readPersonParticle.particleName]
-        )
+        val readPersonContext = particleToContext(readingContext, readPersonParticle)
 
-        val writePersonContext = requireNotNull(
-            writingContext.particles[writePersonParticle.particleName]
-        )
+        val writePersonContext = particleToContext(writingContext, writePersonParticle)
 
         assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Running)
         assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Running)
@@ -424,13 +426,9 @@ open class AllocatorTestBase {
 
         assertAllStatus(arc, ArcState.Stopped)
 
-        val readPersonContext = requireNotNull(
-            readingContext.particles[readPersonParticle.particleName]
-        )
+        val readPersonContext = particleToContext(readingContext, readPersonParticle)
 
-        val writePersonContext = requireNotNull(
-            writingContext.particles[writePersonParticle.particleName]
-        )
+        val writePersonContext = particleToContext(writingContext, writePersonParticle)
 
         assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Stopped)
         assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Stopped)
@@ -472,13 +470,9 @@ open class AllocatorTestBase {
 
         assertAllStatus(arc, ArcState.Running)
 
-        val readPersonContext = requireNotNull(
-            readingContextAfter.particles[readPersonParticle.particleName]
-        )
+        val readPersonContext = particleToContext(readingContextAfter, readPersonParticle)
 
-        val writePersonContext = requireNotNull(
-            writingContextAfter.particles[writePersonParticle.particleName]
-        )
+        val writePersonContext = particleToContext(writingContextAfter, writePersonParticle)
 
         assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Running)
         assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Running)
