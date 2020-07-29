@@ -275,7 +275,7 @@ class HandleAdapterTest {
 
         val monitorKnows = CompletableDeferred<Unit>()
         monitorHandle.onUpdate {
-            if (it.contains(entity)) monitorKnows.complete(Unit)
+            if (it.added.contains(entity)) monitorKnows.complete(Unit)
         }
         handle.dispatchStore(entity)
 

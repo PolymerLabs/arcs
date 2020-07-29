@@ -96,3 +96,14 @@ recipe PipelineTest
   PipelineConsumerParticle
     sngRead: reads s2
     colRead: reads c2
+
+// -----------------------------------------------------------------------------
+
+particle UpdateDeltasParticle in '.UpdateDeltasParticle'
+  sng: reads Data {num: Int}
+  col: reads [Data {num: Int}]
+
+recipe UpdateDeltasTest
+  UpdateDeltasParticle
+    sng: reads h1
+    col: reads h2

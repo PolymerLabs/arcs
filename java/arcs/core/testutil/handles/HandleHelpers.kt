@@ -28,7 +28,7 @@ import kotlinx.coroutines.withContext
 suspend fun <H : Handle> H.dispatchClose() = withContext(dispatcher) { close() }
 
 /** Calls [ReadableHandle.createReference] with the handle's dispatcher context. */
-suspend fun <H : ReadableHandle<U>, U, E : Entity>
+suspend fun <H : ReadableHandle<T, U>, T, U, E : Entity>
             H.dispatchCreateReference(entity: E): Reference<E> =
     withContext(dispatcher) { createReference(entity) }
 

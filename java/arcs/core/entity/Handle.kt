@@ -120,7 +120,11 @@ enum class HandleDataType {
     Reference
 }
 
-interface ReadableHandle<UpdateType> : Handle {
+/**
+ * Base class for all readable handle types. [ValueType] is not required for this interface itself,
+ * but allows generic processing of multiple handles (e.g. [arcs.sdk.combineUpdates]).
+ */
+interface ReadableHandle<ValueType, UpdateType> : Handle {
     /** Assign a callback when the handle's data changes. */
     fun onUpdate(action: (UpdateType) -> Unit)
 
@@ -141,8 +145,20 @@ interface ReadableHandle<UpdateType> : Handle {
     suspend fun <E : Entity> createReference(entity: E): Reference<E>
 }
 
+/** The UpdateType for ReadSingletonHandle; reports the change for a single value in onUpdate. */
+data class SingletonDelta<T : Storable>(
+    val old: T? = null,
+    val new: T? = null
+)
+
+/** The UpdateType for ReadCollectionHandle; reports the items added and removed in onUpdate. */
+data class CollectionDelta<T : Storable>(
+    val added: Set<T> = setOf(),
+    val removed: Set<T> = setOf()
+)
+
 /** A singleton handle with read access. */
-interface ReadSingletonHandle<T : Storable> : ReadableHandle<T?> {
+interface ReadSingletonHandle<T : Storable> : ReadableHandle<T?, SingletonDelta<T>> {
     /** Returns the value of the singleton. */
     fun fetch(): T?
 }
@@ -160,7 +176,7 @@ interface WriteSingletonHandle<T : Storable> : Handle {
 interface ReadWriteSingletonHandle<T : Storable> : ReadSingletonHandle<T>, WriteSingletonHandle<T>
 
 /** A collection handle with read access. */
-interface ReadCollectionHandle<T : Storable> : ReadableHandle<Set<T>> {
+interface ReadCollectionHandle<T : Storable> : ReadableHandle<Set<T>, CollectionDelta<T>> {
     /** The number of elements in the collection. */
     fun size(): Int
 
