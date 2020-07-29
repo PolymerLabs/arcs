@@ -1621,27 +1621,11 @@ interface OperatorInfo {
 
 const numericTypes: Primitive[] = [Primitive.NUMBER].concat(discreteTypes);
 
-function powBigInt(x: bigint, n: bigint): bigint {
-  if (n < 0) {
-    throw new Error(`RangeError: Exponent must be non-negative`);
-  }
-  switch (n) {
-    case BigInt(0): return BigInt(1);
-    case BigInt(1): return x;
-    default: break;
-  }
-  const k = n/BigInt(2);
-  const d = n%BigInt(2);
-  const x_k = powBigInt(x, k);
-  const x_d = powBigInt(x, d);
-  return x_k*x_k*x_d;
-}
-
 // From https://kotlinlang.org/docs/reference/basic-types.html
-const INT_MIN: bigint = -powBigInt(BigInt(2), BigInt(31));
-const INT_MAX: bigint = powBigInt(BigInt(2), BigInt(31)) - BigInt(1);
-const LONG_MIN: bigint = -powBigInt(BigInt(2), BigInt(63));
-const LONG_MAX: bigint = powBigInt(BigInt(2), BigInt(63)) - BigInt(1);
+const INT_MIN: bigint = BigInt("-2147483648");
+const INT_MAX: bigint = BigInt("2147483647");
+const LONG_MIN: bigint = BigInt("-9223372036854775808");
+const LONG_MAX: bigint = BigInt("9223372036854775807");
 
 const operatorTable: Dictionary<OperatorInfo> = {
   // Booleans
