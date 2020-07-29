@@ -1584,7 +1584,26 @@ interface OperatorInfo {
   evalType: Primitive | 'same';
 }
 
-const numericTypes = [Primitive.NUMBER, Primitive.BIGINT];
+const numericTypes: Primitive[] = [Primitive.NUMBER].concat(discreteTypes);
+
+function powBigInt(x: bigint, n: bigint): bigint {
+  switch (n) {
+    case BigInt(0): return BigInt(1);
+    case BigInt(1): return x;
+    default: break;
+  }
+  const k = n/BigInt(2);
+  const d = n%BigInt(2);
+  const x_k = powBigInt(x, k);
+  const x_d = powBigInt(x, d);
+  return x_k*x_k*x_d;
+}
+
+// From https://kotlinlang.org/docs/reference/basic-types.html
+const INT_MIN: bigint = -powBigInt(BigInt(2), BigInt(31))
+const INT_MAX: bigint = powBigInt(BigInt(2), BigInt(31)) - BigInt(1);
+const LONG_MIN: bigint = -powBigInt(BigInt(2), BigInt(63));
+const LONG_MAX: bigint = powBigInt(BigInt(2), BigInt(63)) - BigInt(1);
 
 const operatorTable: Dictionary<OperatorInfo> = {
   // Booleans
