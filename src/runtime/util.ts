@@ -94,7 +94,7 @@ export function noAwait(result: {then: Function}) {}
  * Polyfill, replace with native Array.flatMap() once we upgrade to a sufficient
  * version of Nodejs.
  */
-export function flatMap<T, U>(array: T[], mapper: (element: T) => U) {
+export function flatMap<T, U>(array: T[], mapper: (element: T) => U[]): U[] {
   return [].concat(...array.map(mapper));
 }
 
