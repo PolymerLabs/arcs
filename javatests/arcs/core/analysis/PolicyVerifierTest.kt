@@ -90,9 +90,9 @@ class PolicyVerifierTest {
             )
         }.also {
             assertThat(it).hasMessageThat().contains(
-                "Egress particles allowed by policy are " +
-                "{Egress_TestPolicy, LoggingEgress_TestPolicy}, " +
-                "but found: {Egress_AnotherPolicy, Egress_YetAnotherPolicy}"
+                "Invalid egress particles found: " +
+                "{Egress_AnotherPolicy, Egress_YetAnotherPolicy}, " +
+                "allowed egress particles: {Egress_TestPolicy, LoggingEgress_TestPolicy}"
             )
         }
     }
@@ -107,7 +107,7 @@ class PolicyVerifierTest {
             )
         }.also {
             assertThat(it).hasMessageThat()
-                .contains("No egress particles specified for policy `TestPolicy`")
+                .contains("No egress particles specified for policy")
         }
     }
 

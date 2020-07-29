@@ -138,16 +138,16 @@ sealed class PolicyViolation(val policy: Policy, message: String) : Exception(
         val invalidEgresses: List<String>
     ) : PolicyViolation(
         policy,
-        "Egress particles allowed by policy are " +
-        allowedEgresses.toSortedSet().joinToString(prefix = "{", postfix = "}") +
-        ", but found: " +
-        invalidEgresses.toSortedSet().joinToString(prefix = "{", postfix = "}")
+        "Invalid egress particles found: " +
+        invalidEgresses.toSortedSet().joinToString(prefix = "{", postfix = "}, ") +
+        "allowed egress particles: " +
+        allowedEgresses.toSortedSet().joinToString(prefix = "{", postfix = "}")
     )
 
     /** Thrown when policy has no egress particles associated with it. */
     class PolicyHasNoEgressParticles(policy: Policy) : PolicyViolation(
         policy,
-        "No egress particles specified for policy `${policy.name}`"
+        "No egress particles specified for policy"
     )
 
     /** Thrown when there is no store associated with schema. */
@@ -156,7 +156,7 @@ sealed class PolicyViolation(val policy: Policy, message: String) : Exception(
         target: PolicyTarget
     ) : PolicyViolation(
         policy,
-        "No store found for policy target `${target.schemaName}` mentioned in `${policy.name}`"
+        "No store found for policy target `${target.schemaName}`"
     )
 
     /** Thrown when policy checks are violated by a recipe. */
