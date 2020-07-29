@@ -8,12 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Op, Primitive} from '../runtime/manifest-ast-nodes.js';
+import {Op} from '../runtime/manifest-ast-nodes.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Schema} from '../runtime/schema.js';
-import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
-import {RefinementExpressionVisitor, BinaryExpression, UnaryExpression, FieldNamePrimitive, QueryArgumentPrimitive, BuiltIn, NumberPrimitive, TextPrimitive, DiscretePrimitive} from '../runtime/refiner.js';
 import {escapeIdentifier} from './kotlin-codegen-shared.js';
+import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
+import {RefinementExpressionVisitor, BinaryExpression, UnaryExpression, FieldNamePrimitive, QueryArgumentPrimitive, BuiltIn, NumberPrimitive, BooleanPrimitive, TextPrimitive, BigIntPrimitive} from '../runtime/refiner.js';
 
 // The variable name used for the query argument in generated Kotlin code.
 const KOTLIN_QUERY_ARGUMENT_NAME = 'queryArgument';
@@ -58,20 +58,10 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
     // TODO: Implement KT getter for 'creationTimeStamp'
     throw new Error(`Unhandled BuiltInNode '${expr.value}' in toKTExpression`);
   }
-  visitDiscretePrimitive(expr: DiscretePrimitive): string {
+  visitBigIntPrimitive(expr: BigIntPrimitive): string {
     // This assumes that the associated Kotlin type will be `Java.math.BigInteger` and constructs
     // the BigInteger via String as there is no support for a literal form.
-    switch (expr.evalType) {
-      case Primitive.INT:
-        return `${expr.value}`;
-      case Primitive.LONG:
-        return `${expr.value}L`;
-      case Primitive.BIGINT:
-        return `BigInteger("${expr.value}")`;
-      case Primitive.BOOLEAN:
-        return `${expr.value}`;
-      default: throw new Error(`unexpected type ${expr.evalType}`);
-    }
+    return `BigInteger("${expr.value}")`;
   }
   visitNumberPrimitive(expr: NumberPrimitive): string {
     // This assumes that the associated Kotlin type will be `double`.
@@ -82,6 +72,9 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
         return 'Double.NEGATIVE_INFINITY';
     }
     return expr.value.toString();
+  }
+  visitBooleanPrimitive(expr: BooleanPrimitive): string {
+    return `${expr.value}`;
   }
   visitTextPrimitive(expr: TextPrimitive): string {
     const escapeForKotlin = (value: string) => {

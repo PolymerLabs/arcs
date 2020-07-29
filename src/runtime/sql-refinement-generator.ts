@@ -8,10 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Op, Primitive} from './manifest-ast-nodes.js';
+import {Op} from './manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
 import {Schema} from './schema.js';
-import {RefinementExpressionVisitor, BinaryExpression, UnaryExpression, FieldNamePrimitive, QueryArgumentPrimitive, BuiltIn, NumberPrimitive, DiscretePrimitive, TextPrimitive} from './refiner.js';
+import {RefinementExpressionVisitor, BinaryExpression, UnaryExpression, FieldNamePrimitive, QueryArgumentPrimitive, BuiltIn, NumberPrimitive, BigIntPrimitive, BooleanPrimitive, TextPrimitive, Primitive} from './refiner.js';
 
 const sqlOperator: Dictionary<string> = {
   [Op.AND]: 'AND',
@@ -61,16 +61,14 @@ class SqlRefinementGenerator extends RefinementExpressionVisitor<string> {
     // TODO: Implement SQL getter for 'creationTimeStamp'
     throw new Error(`Unhandled BuiltInNode '${expr.value}' in toSQLExpression`);
   }
-  visitDiscretePrimitive(expr: DiscretePrimitive): string {
-    switch (expr.evalType) {
-      case Primitive.BOOLEAN:
-        throw new Error('BooleanPrimitive.toSQLExpression should never be called. The expression is assumed to be normalized.');
-      default:
-        return expr.value.toString();
-    }
+  visitBigIntPrimitive(expr: BigIntPrimitive): string {
+    return expr.value.toString();
   }
   visitNumberPrimitive(expr: NumberPrimitive): string {
     return expr.value.toString();
+  }
+  visitBooleanPrimitive(_: BooleanPrimitive): string {
+    throw new Error('BooleanPrimitive.toSQLExpression should never be called. The expression is assumed to be normalized.');
   }
   visitTextPrimitive(expr: TextPrimitive): string {
     // TODO(cypher1): Consider escaping this for SQL code generation.
