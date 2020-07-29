@@ -318,7 +318,6 @@ abstract class AbstractArcHost(
         }
 
     override suspend fun startArc(partition: Plan.Partition) {
-        println(partition)
         val context = lookupOrCreateArcHostContext(partition.arcId)
 
         if (paused.value) {
@@ -332,10 +331,16 @@ abstract class AbstractArcHost(
             return
         }
 
-        // Instantiate each particle and its handles in a ParticleContext.
-        for (particleSpec in partition.particles) {
-            val particleContext = setUpParticleAndHandles(particleSpec, context)
-            context.particles.add(particleContext)
+        for (idx in 0 until partition.particles.size) {
+            val particleSpec = partition.particles[idx]
+            val existingParticleContext = context.particles.elementAtOrNull(idx)
+            val particleContext =
+                setUpParticleAndHandles(particleSpec, existingParticleContext, context)
+            if (context.particles.size > idx) {
+                context.particles[idx] = particleContext
+            } else {
+                context.particles.add(particleContext)
+            }
             if (particleContext.particleState.failed) {
                 context.arcState = ArcState.errorWith(particleContext.particleState.cause)
                 break
@@ -368,17 +373,13 @@ abstract class AbstractArcHost(
      */
     protected suspend fun setUpParticleAndHandles(
         spec: Plan.Particle,
+        existingParticleContext: ParticleContext?,
         context: ArcHostContext
     ): ParticleContext {
-        println("setup ${spec.particleName}")
         val particle = instantiateParticle(ParticleIdentifier.from(spec.location), spec)
 
-        val particleContext = lookupParticleContextOrCreate(
-            context,
-            spec,
-            particle,
-            schedulerProvider(context.arcId)
-        )
+        val particleContext = existingParticleContext?.copyWith(particle)
+            ?: ParticleContext(particle, spec, schedulerProvider(context.arcId))
 
         if (particleContext.particleState == ParticleState.MaxFailed) {
             // Don't try recreating the particle anymore.
@@ -403,18 +404,6 @@ abstract class AbstractArcHost(
 
         return particleContext
     }
-
-    /**
-     * Look up an existing [ParticleContext] in the current [ArcHostContext] if it exists for
-     * the specified [Plan.Particle] and [Particle], otherwise create and initialize a new
-     * [ParticleContext].
-     */
-    protected fun lookupParticleContextOrCreate(
-        context: ArcHostContext,
-        spec: Plan.Particle,
-        particle: Particle,
-        scheduler: Scheduler
-    ) = ParticleContext(particle, spec, scheduler)
 
     /**
      * Invokes the [Particle] startup lifecycle methods and waits until all particles
