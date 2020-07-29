@@ -16,6 +16,8 @@ import arcs.core.data.Check
 import arcs.core.data.Claim
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
+import arcs.core.data.FieldName
+import arcs.core.data.FieldType
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.InformationFlowLabel
 import arcs.core.data.InformationFlowLabel.Predicate
@@ -25,6 +27,7 @@ import arcs.core.data.Recipe
 import arcs.core.data.Recipe.Particle
 import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
+import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
 import arcs.core.data.TupleType
 import arcs.core.type.Tag
@@ -253,10 +256,9 @@ class InformationFlow private constructor(
 
     /** Returns the [AccessPath.Selector] part of the [AccessPath] instances for this [Type]. */
     private fun Type.accessPathSelectors(): Set<List<AccessPath.Selector>> = when (tag) {
-        // TODO(bgogul): For fields, we are only going one level deep. Do we need to go further?
         Tag.Collection -> (this as CollectionType<*>).collectionType.accessPathSelectors()
         Tag.Count -> emptySet<List<AccessPath.Selector>>()
-        Tag.Entity -> (this as EntityType).entitySchema.accessPathSelectors()
+        Tag.Entity -> (this as EntityType).entitySchema.accessPathSelectors(emptyList())
         // TODO(b/154234733): This only supports simple use cases of references.
         Tag.Reference -> (this as ReferenceType<*>).containedType.accessPathSelectors()
         Tag.Mux -> (this as MuxType<*>).containedType.accessPathSelectors()
@@ -269,11 +271,35 @@ class InformationFlow private constructor(
     }
 
     /** Returns the [AccessPath.Selector] part of [AccessPath] instances for this [Schema]. */
-    private fun Schema.accessPathSelectors(): Set<List<AccessPath.Selector>> {
-        return (
-            fields.singletons.keys.map { listOf(AccessPath.Selector.Field(it)) } +
-            fields.collections.keys.map { listOf(AccessPath.Selector.Field(it)) }
-        ).toSet()
+    private fun Schema.accessPathSelectors(
+        prefix: List<AccessPath.Selector>
+    ): Set<List<AccessPath.Selector>> {
+        return fields.singletons.accessPathSelectors(prefix) +
+        fields.collections.accessPathSelectors(prefix)
+    }
+
+    private fun Map<FieldName, FieldType>.accessPathSelectors(
+        prefix: List<AccessPath.Selector>
+    ): Set<List<AccessPath.Selector>> {
+        return asSequence().fold(emptySet<List<AccessPath.Selector>>()) { acc, (name, type) ->
+            acc + type.accessPathSelectors(prefix + listOf(AccessPath.Selector.Field(name)))
+        }.toSet()
+    }
+
+    private fun FieldType.accessPathSelectors(
+        prefix: List<AccessPath.Selector>
+    ): Set<List<AccessPath.Selector>> {
+        return when (tag) {
+            // For primitives and references we don't go down to collect access paths.
+            FieldType.Tag.Primitive,
+            FieldType.Tag.EntityRef -> setOf(prefix)
+            FieldType.Tag.Tuple,
+            FieldType.Tag.List -> setOf(prefix)
+            FieldType.Tag.InlineEntity -> {
+                val schema = SchemaRegistry.getSchema((this as FieldType.InlineEntity).schemaHash)
+                setOf(prefix) + schema.accessPathSelectors(prefix)
+            }
+        }
     }
 
     /** Returns true if the selectors of the given [AccessPath] match any of the [prefixes]. */
