@@ -176,6 +176,18 @@ Follow [these steps](https://github.com/PolymerLabs/arcs/blob/master/docs/IDE-Se
 
 Follow [these steps](https://github.com/PolymerLabs/arcs/blob/master/docs/IDE-Setup.md#bazel-cannot-read-environment-variable).
 
+#### Robolectric Errors in Android JUnit Tests
+
+The likely culprit is an incompatability between the [version of Robolectric](https://github.com/PolymerLabs/arcs/blob/master/WORKSPACE#L48) and the version of Java on your machine. 
+
+We recommend that you use Java 8 or 11. Other Java versions have be associated with errors at the time of writing.
+
+To check the Java versions installed on your machine (for MacOS or Linux), run: `/usr/libexec/java_home -V`. `java -version` will show which one is in use.
+
+To choose a new version of Java, update your `JAVA_HOME` variable:
+- MacOS / Linux: add `export JAVA_HOME=<path/to/JDK11/or/JDK1.8>` to the appropriate `~/.profile` file (i.e. `~/.bash_profile` or `~/.bashrc`). Thereafter, restart your IDE.
+- Windows: See [this documentation](https://www.java.com/en/download/help/path.xml).
+
 
 ## References
 
