@@ -35,16 +35,21 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private val mutex = Mutex()
     /* internal */ val callbacks = mutableMapOf<Int, ProxyCallback<Data, Op, ConsumerData>>()
 
+    private var hasEverSetCallback = false
+
     /** Adds a [ProxyCallback] to the collection, and returns its token. */
     fun register(proxyCallback: ProxyCallback<Data, Op, ConsumerData>): Int {
         while (!mutex.tryLock()) { /* Wait. */ }
         val token = tokenGenerator(callbacks.keys)
         callbacks[token] = proxyCallback
+        hasEverSetCallback = true
         mutex.unlock()
         return token
     }
 
-    /** Removes the callback with the given [callbackToken] from the collection. */
+    /**
+     * Removes the callback with the given [callbackToken] from the collection.
+     */
     fun unregister(callbackToken: Int) {
         while (!mutex.tryLock()) { /* Wait. */ }
         callbacks.remove(callbackToken)
@@ -63,6 +68,14 @@ class ProxyCallbackManager<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     fun isEmpty(): Boolean {
         while (!mutex.tryLock()) { /* Wait. */ }
         val isEmpty = callbacks.isEmpty()
+        mutex.unlock()
+        return isEmpty
+    }
+
+    /** True if no callbacks are registered, and at least one has been registered before. */
+    fun hasBecomeEmpty(): Boolean {
+        while (!mutex.tryLock()) { /* Wait. */ }
+        val isEmpty = hasEverSetCallback && callbacks.isEmpty()
         mutex.unlock()
         return isEmpty
     }

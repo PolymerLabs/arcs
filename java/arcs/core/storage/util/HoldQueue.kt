@@ -26,7 +26,10 @@ import kotlinx.coroutines.sync.withLock
  * dominated-by the incoming [VersionMap], it is considered ready for processing. (by calling its
  * [Record]'s [Record.onRelease] method)
  */
-class HoldQueue {
+class HoldQueue(
+    /** An [OperationQueue] that will run the blocks for released [Record]s. */
+    private val operationQueue: OperationQueue
+) {
     private val mutex = Mutex()
     /* internal */ val queue = mutableMapOf<ReferenceId, MutableList<Record>>()
 
@@ -87,7 +90,9 @@ class HoldQueue {
             queue.remove(id)
         }
 
-        recordsToRelease.forEach { it.onRelease() }
+        operationQueue.enqueue {
+            recordsToRelease.forEach { it.onRelease() }
+        }
     }
 
     /** Simple alias for an entity being referenced. */
