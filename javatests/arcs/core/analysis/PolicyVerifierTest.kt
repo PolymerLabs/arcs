@@ -15,16 +15,27 @@ import org.junit.runners.JUnit4
 class PolicyVerifierTest {
     // Test context.
     val storeMap = mapOf("action" to "Action", "selection" to "Selection")
+    val egressMap = mapOf("TestPolicy" to listOf("Egress_TestPolicy", "LoggingEgress_TestPolicy"))
     val manifestProto = loadManifestBinaryProto(getManifestProtoBinPath("policy-test"))
     val recipes = manifestProto.decodeRecipes().associateBy { it.name!! }
     val policy = manifestProto.policiesList.map { it.decode() }.single()
-    val verifier = PolicyVerifier(PolicyOptions(storeMap))
+    val verifier = PolicyVerifier(PolicyOptions(storeMap, egressMap))
 
     @Test
     fun egressingUnrestrictedFieldsIsAllowed() {
         assertThat(
             verifier.verifyPolicy(
                 recipes.getValue("EgressUnrestrictedFields"),
+                policy
+            )
+        ).isTrue()
+    }
+
+    @Test
+    fun accessingRestrictedFieldsIsAllowedIfNotEgressed() {
+        assertThat(
+            verifier.verifyPolicy(
+                recipes.getValue("AccessRestrictedFieldsNoEgress"),
                 policy
             )
         ).isTrue()
@@ -71,38 +82,39 @@ class PolicyVerifierTest {
     }
 
     @Test
-    fun multipleEgressIsDisallowed() {
-        assertFailsWith<PolicyViolation.MultipleEgressParticles> {
-            verifier.verifyPolicy(
-                recipes.getValue("MultipleEgressParticles"),
-                policy
-            )
-        }.also {
-            assertThat(it).hasMessageThat()
-                .contains("Multiple egress particles named Egress_TestPolicy found for policy")
-        }
-    }
-
-    @Test
-    fun invalidEgressIsDisallowed() {
-        assertFailsWith<PolicyViolation.InvalidEgressParticle> {
+    fun invalidEgressesAreDisallowed() {
+        assertFailsWith<PolicyViolation.InvalidEgressParticles> {
             verifier.verifyPolicy(
                 recipes.getValue("InvalidEgressParticles"),
                 policy
             )
         }.also {
+            assertThat(it).hasMessageThat().contains(
+                "Invalid egress particles found: " +
+                "{Egress_AnotherPolicy, Egress_YetAnotherPolicy}, " +
+                "allowed egress particles: {Egress_TestPolicy, LoggingEgress_TestPolicy}"
+            )
+        }
+    }
+
+    @Test
+    fun policyWithNoEgressIsDetected() {
+        val testVerifier = PolicyVerifier(PolicyOptions(storeMap, emptyMap()))
+        assertFailsWith<PolicyViolation.PolicyHasNoEgressParticles> {
+            testVerifier.verifyPolicy(
+                recipes.getValue("InvalidEgressParticles"),
+                policy
+            )
+        }.also {
             assertThat(it).hasMessageThat()
-                .contains(
-                    "Egress particle allowed by policy is Egress_TestPolicy but " +
-                    "found: Egress_AnotherPolicy"
-                )
+                .contains("No egress particles specified for policy")
         }
     }
 
     @Test
     fun missingStoreIsDetected() {
         val incompleteStoreMap = mapOf("action" to "Action")
-        val testVerifier = PolicyVerifier(PolicyOptions(incompleteStoreMap))
+        val testVerifier = PolicyVerifier(PolicyOptions(incompleteStoreMap, egressMap))
         assertFailsWith<PolicyViolation.NoStoreForPolicyTarget> {
             testVerifier.verifyPolicy(
                 recipes.getValue("InvalidEgressParticles"),

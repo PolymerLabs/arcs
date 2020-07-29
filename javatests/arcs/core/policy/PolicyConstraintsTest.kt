@@ -4,6 +4,7 @@ import arcs.core.data.AccessPath
 import arcs.core.data.Claim
 import arcs.core.data.InformationFlowLabel
 import arcs.core.data.InformationFlowLabel.Predicate
+import arcs.core.data.StoreId
 import arcs.core.policy.proto.decode
 import arcs.core.testutil.protoloader.loadManifestBinaryProto
 import com.google.common.truth.Truth.assertThat
@@ -14,13 +15,6 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class PolicyConstraintsTest {
-    // Loaded from binary proto, maps all keyed by name.
-    private val policies: Map<String, Policy> = loadManifestBinaryProto(
-        "javatests/arcs/core/policy/PolicyTranslationTestData.pb.bin"
-    ).policiesList
-        .map { it.decode() }
-        .associateBy { it.name }
-
     @Test
     fun applyPolicy_egressCheck_withoutRedactionLabels() {
         val policy = BLANK_POLICY.copy(name = "SingleInput")
@@ -36,7 +30,7 @@ class PolicyConstraintsTest {
 
         val result = translatePolicy(
             policy,
-            PolicyOptions(mapOf("my_store_id" to "Foo"))
+            makePolicyOptions(mapOf("my_store_id" to "Foo"))
         )
 
         assertThat(result.egressCheck).isEqualTo(
@@ -63,7 +57,7 @@ class PolicyConstraintsTest {
         val policy = policies.getValue("FooRedactions")
         val storeMap = mapOf("my_store_id" to "Foo")
 
-        val result = translatePolicy(policy, PolicyOptions(storeMap))
+        val result = translatePolicy(policy, makePolicyOptions(storeMap))
 
         val store = AccessPath.Root.Store("my_store_id")
         assertThat(result.storeClaims).containsExactly(
@@ -90,7 +84,7 @@ class PolicyConstraintsTest {
         val policy = policies.getValue("SingleFooRedaction")
         val storeMap = mapOf("my_store_id" to "Foo")
 
-        val result = translatePolicy(policy, PolicyOptions(storeMap))
+        val result = translatePolicy(policy, makePolicyOptions(storeMap))
 
         val store = AccessPath.Root.Store("my_store_id")
         assertThat(result.storeClaims).containsExactly(
@@ -110,7 +104,7 @@ class PolicyConstraintsTest {
         val storeMap = mapOf("some_other_store" to "Bar")
 
         assertFailsWith<PolicyViolation.NoStoreForPolicyTarget> {
-            translatePolicy(policy, PolicyOptions(storeMap))
+            translatePolicy(policy, makePolicyOptions(storeMap))
         }
     }
 
@@ -118,7 +112,7 @@ class PolicyConstraintsTest {
     fun applyPolicy_storeClaims_emptyPolicy() {
         val storeMap = mapOf("my_store_id" to "Foo")
 
-        val result = translatePolicy(BLANK_POLICY, PolicyOptions(storeMap))
+        val result = translatePolicy(BLANK_POLICY, makePolicyOptions(storeMap))
 
         assertThat(result.storeClaims).isEmpty()
     }
@@ -128,7 +122,7 @@ class PolicyConstraintsTest {
         val policy = policies.getValue("FooJoinPolicy")
         val storeMap = mapOf("my_store_id" to "Foo")
 
-        val result = translatePolicy(policy, PolicyOptions(storeMap))
+        val result = translatePolicy(policy, makePolicyOptions(storeMap))
 
         assertThat(result.storeClaims).isEmpty()
     }
@@ -138,7 +132,7 @@ class PolicyConstraintsTest {
         val policy = policies.getValue("NestedFooBarPolicy")
         val storeMap = mapOf("my_store_id" to "NestedFooBar")
 
-        val result = translatePolicy(policy, PolicyOptions(storeMap))
+        val result = translatePolicy(policy, makePolicyOptions(storeMap))
 
         val store = AccessPath.Root.Store("my_store_id")
         val predicate = labelPredicate("allowedForEgress")
@@ -159,7 +153,10 @@ class PolicyConstraintsTest {
         private const val BLANK_POLICY_NAME = "BlankPolicy"
         private const val BLANK_EGRESS_PARTICLE_NAME = "Egress_BlankPolicy"
 
-        private val EMPTY_OPTIONS = PolicyOptions(storeMap = emptyMap())
+        private val EMPTY_OPTIONS = PolicyOptions(
+            storeMap = emptyMap(),
+            policyEgresses = emptyMap()
+        )
 
         private val BLANK_POLICY = Policy(name = BLANK_POLICY_NAME, egressType = EgressType.LOGGING)
 
@@ -169,6 +166,22 @@ class PolicyConstraintsTest {
 
         private fun selectors(vararg fields: String): List<AccessPath.Selector> {
             return fields.toList().map { AccessPath.Selector.Field(it) }
+        }
+
+        // Loaded from binary proto, maps all keyed by name.
+        private val policies: Map<String, Policy> = loadManifestBinaryProto(
+            "javatests/arcs/core/policy/PolicyTranslationTestData.pb.bin"
+        ).policiesList
+            .map { it.decode() }
+            .associateBy { it.name }
+
+        private val defaultPolicyEgresses = policies.keys.associate { it to listOf("Egress_$it") }
+
+        private fun makePolicyOptions(storeMap: Map<StoreId, String>): PolicyOptions {
+            return PolicyOptions(
+                storeMap = storeMap,
+                policyEgresses = defaultPolicyEgresses
+            )
         }
     }
 }
