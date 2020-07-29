@@ -1622,6 +1622,9 @@ interface OperatorInfo {
 const numericTypes: Primitive[] = [Primitive.NUMBER].concat(discreteTypes);
 
 function powBigInt(x: bigint, n: bigint): bigint {
+  if (n < 0) {
+    throw new Error(`RangeError: Exponent must be non-negative`);
+  }
   switch (n) {
     case BigInt(0): return BigInt(1);
     case BigInt(1): return x;
