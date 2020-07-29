@@ -15,24 +15,6 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class PolicyConstraintsTest {
-    // Loaded from binary proto, maps all keyed by name.
-    private val policies: Map<String, Policy> = loadManifestBinaryProto(
-        "javatests/arcs/core/policy/PolicyTranslationTestData.pb.bin"
-    ).policiesList
-        .map { it.decode() }
-        .associateBy { it.name }
-
-    private val defaultPolicyEgresses = policies.keys.associate { name ->
-        name to listOf("Egress_$name")
-    }
-
-    private fun makePolicyOptions(storeMap: Map<StoreId, String>): PolicyOptions {
-        return PolicyOptions(
-            storeMap = storeMap,
-            policyEgresses = defaultPolicyEgresses
-        )
-    }
-
     @Test
     fun applyPolicy_egressCheck_withoutRedactionLabels() {
         val policy = BLANK_POLICY.copy(name = "SingleInput")
@@ -184,6 +166,22 @@ class PolicyConstraintsTest {
 
         private fun selectors(vararg fields: String): List<AccessPath.Selector> {
             return fields.toList().map { AccessPath.Selector.Field(it) }
+        }
+
+        // Loaded from binary proto, maps all keyed by name.
+        private val policies: Map<String, Policy> = loadManifestBinaryProto(
+            "javatests/arcs/core/policy/PolicyTranslationTestData.pb.bin"
+        ).policiesList
+            .map { it.decode() }
+            .associateBy { it.name }
+
+        private val defaultPolicyEgresses = policies.keys.associate { it to listOf("Egress_$it") }
+
+        private fun makePolicyOptions(storeMap: Map<StoreId, String>): PolicyOptions {
+            return PolicyOptions(
+                storeMap = storeMap,
+                policyEgresses = defaultPolicyEgresses
+            )
         }
     }
 }
