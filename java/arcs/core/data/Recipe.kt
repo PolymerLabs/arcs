@@ -81,7 +81,8 @@ fun Recipe.Particle.HandleConnection.toPlanHandleConnection() = Plan.HandleConne
     handle = handle.toPlanHandle(),
     mode = spec.direction,
     type = type,
-    annotations = handle.annotations
+    annotations = handle.annotations,
+    expression = spec.expression
 )
 
 /** Translates a [Recipe.Handle] into a [StorageKey] */

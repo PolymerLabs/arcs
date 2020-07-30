@@ -87,7 +87,8 @@ data class Plan(
         val handle: Handle,
         val mode: HandleMode,
         val type: Type,
-        val annotations: List<Annotation> = emptyList()
+        val annotations: List<Annotation> = emptyList(),
+        val expression: String? = null
     ) {
         val storageKey: StorageKey
             get() = handle.storageKey

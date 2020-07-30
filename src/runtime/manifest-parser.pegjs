@@ -688,6 +688,7 @@ ParticleHandleConnectionBody
       name: name || (maybeTags && maybeTags[0]) || expected(`either a name or tags to be supplied ${name} ${maybeTags}`),
       tags: maybeTags || [],
       annotations: annotations || [],
+      expression: expression && expression[2]
     });
   }
 

@@ -4897,3 +4897,35 @@ recipe
     });
   });
 });
+describe('expressions', () => {
+  it('does not allow mixing implementation and result expressions', async () => {
+    try {
+      const manifest = await Manifest.parse(`
+        particle Converter in 'converter.js'
+          foo: reads Foo {x: Number}
+          bar: writes Bar {y: Number} =
+            new Bar {y: foo.x}`, {fileName: 'manifest.arcs'});
+      assert(false);
+    } catch (e) {
+      assert.deepEqual(e.message, `Post-parse processing error caused by 'manifest.arcs' line 5.
+A particle with implementation cannot use result expressions.
+              new Bar {y: foo.x}
+              ^^^^^^^^^^^^^^^^^^`);
+    }
+  });
+  it('saves result expressions on handle connection specs', async () => {
+    const manifest = await Manifest.parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} =
+          new Bar {y: foo.x}`);
+    const particle = manifest.particles[0];
+
+    const readConnection = particle.connections.find(hc => hc.direction === 'reads');
+    assert.isNull(readConnection.expression);
+
+    const writeConnection = particle.connections.find(hc => hc.direction === 'writes');
+    // TODO: A stop-gap for now, we need to serialize the expression AST.
+    assert.equal(writeConnection.expression, 'expression-entity');
+  });
+});

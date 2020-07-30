@@ -34,6 +34,7 @@ type SerializedHandleConnectionSpec = {
   dependentConnections: SerializedHandleConnectionSpec[],
   check?: string,
   annotations: AnnotationRef[];
+  expression?: string;
 };
 
 function asType(t: Type | TypeLiteral) : Type {
@@ -82,6 +83,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
   claims?: Claim[];
   checks?: Check[];
   _annotations: AnnotationRef[];
+  expression: string;
 
   constructor(rawData: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
     this.discriminator = 'HCS';
@@ -94,6 +96,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
     this.tags = rawData.tags || [];
     this.dependentConnections = [];
     this.annotations = rawData.annotations || [];
+    this.expression = rawData.expression;
   }
 
   instantiateDependentConnections(particle, typeVarMap: Map<string, Type>): void {
@@ -172,6 +175,7 @@ type SerializedSlotConnectionSpec = {
   handles?: string[],
   provideSlotConnections?: SerializedSlotConnectionSpec[],
   check?: Check,
+  expression?: string,
 };
 
 export class ConsumeSlotConnectionSpec implements ConsumeSlotConnectionSpecInterface {
@@ -426,15 +430,15 @@ export class ParticleSpec {
   toLiteral(): SerializedParticleSpec {
     const {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations} = this.model;
     const connectionToLiteral : (input: SerializedHandleConnectionSpec) => SerializedHandleConnectionSpec =
-      ({type, direction, relaxed, name, isOptional, dependentConnections, annotations}) => ({type: asTypeLiteral(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral), annotations: annotations || []});
+      ({type, direction, relaxed, name, isOptional, dependentConnections, annotations, expression}) => ({type: asTypeLiteral(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral), annotations: annotations || [], expression});
     const argsLiteral = args.map(a => connectionToLiteral(a));
     return {args: argsLiteral, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations};
   }
 
   static fromLiteral(literal: SerializedParticleSpec, options?: ParticleSpecOptions): ParticleSpec {
     let {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations} = literal;
-    const connectionFromLiteral = ({type, direction, relaxed, name, isOptional, dependentConnections}) =>
-      ({type: asType(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : [], annotations: /*annotations ||*/ []});
+    const connectionFromLiteral = ({type, direction, relaxed, name, isOptional, dependentConnections, expression}: SerializedHandleConnectionSpec) =>
+      ({type: asType(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : [], annotations: /*annotations ||*/ [], expression});
     args = args.map(connectionFromLiteral);
     return new ParticleSpec({args, name, verbs: verbs || [], description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations}, options);
   }

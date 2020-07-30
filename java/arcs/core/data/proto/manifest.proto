@@ -93,6 +93,7 @@ message HandleConnectionSpecProto {
   string name = 1;
   Direction direction = 2;
   TypeProto type = 3;
+  string expression = 4;
 }
 
 // Representation of a type in Arcs.

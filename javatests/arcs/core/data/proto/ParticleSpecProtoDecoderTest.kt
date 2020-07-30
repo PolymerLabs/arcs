@@ -59,10 +59,20 @@ class ParticleSpecProtoDecoderTest {
         }
     }
 
+    private val schema = Schema(
+        names = setOf(SchemaName("Thing")),
+        fields = SchemaFields(
+            mapOf<FieldName, FieldType>("name" to FieldType.Text),
+            mapOf()),
+        // TODO: Hash.
+        hash = ""
+    )
+
     private fun getHandleConnectionSpecProto(
         name: String,
         direction: String,
-        schemaName: String
+        schemaName: String,
+        expression: String? = null
     ): String {
         return """
         name: "$name"
@@ -78,20 +88,30 @@ class ParticleSpecProtoDecoderTest {
             }
           }
         }
+        ${expression?.let { "expression: \"$it\"" } ?: ""}
         """.trimIndent()
     }
 
     @Test
     fun decodesHandleConnectionSpecProto() {
-        val singletons = mapOf<FieldName, FieldType>("name" to FieldType.Text)
-        val fields = SchemaFields(singletons, mapOf())
-        // TODO: Hash.
         val handleConnectionSpecProto = getHandleConnectionSpecProto("data", "READS", "Thing")
-        val schema = Schema(setOf(SchemaName("Thing")), fields, hash = "")
         val connectionSpec = decodeHandleConnectionSpecProto(handleConnectionSpecProto)
         assertThat(connectionSpec.name).isEqualTo("data")
         assertThat(connectionSpec.direction).isEqualTo(HandleMode.Read)
         assertThat(connectionSpec.type).isEqualTo(EntityType(schema))
+        assertThat(connectionSpec.expression).isNull()
+    }
+
+    @Test
+    fun decodesHandleConnectionSpecProto_withExpression() {
+        val handleConnectionSpecProto = getHandleConnectionSpecProto(
+            "data", "READS", "Thing", "expression-literal"
+        )
+        val connectionSpec = decodeHandleConnectionSpecProto(handleConnectionSpecProto)
+        assertThat(connectionSpec.name).isEqualTo("data")
+        assertThat(connectionSpec.direction).isEqualTo(HandleMode.Read)
+        assertThat(connectionSpec.type).isEqualTo(EntityType(schema))
+        assertThat(connectionSpec.expression).isEqualTo("expression-literal")
     }
 
     @Test

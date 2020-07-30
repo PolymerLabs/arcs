@@ -87,7 +87,8 @@ async function handleConnectionSpecToProtoPayload(spec: HandleConnectionSpec) {
   return {
     name: spec.name,
     direction: directionOrdinal,
-    type: await typeToProtoPayload(spec.type)
+    type: await typeToProtoPayload(spec.type),
+    expression: spec.expression
   };
 }
 
