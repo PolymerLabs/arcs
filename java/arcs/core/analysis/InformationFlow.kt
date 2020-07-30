@@ -293,7 +293,17 @@ class InformationFlow private constructor(
             // For primitives and references we don't go down to collect access paths.
             FieldType.Tag.Primitive,
             FieldType.Tag.EntityRef -> setOf(prefix)
-            FieldType.Tag.Tuple -> setOf(prefix)
+            FieldType.Tag.Tuple -> {
+                // Access path selectors of all components.
+                val componentSelectors = (this as FieldType.Tuple).types
+                    .foldIndexed(emptySet<List<AccessPath.Selector>>()) { index, result, cur ->
+                        result + cur.accessPathSelectors(prefix).map {
+                            // Prepend the component selector to the component's access paths.
+                            listOf(getTupleField(index)) + it
+                        }
+                    }
+                setOf(prefix) + componentSelectors
+            }
             FieldType.Tag.List -> {
                 setOf(prefix) + (this as FieldType.ListOf).primitiveType.accessPathSelectors(prefix)
             }
