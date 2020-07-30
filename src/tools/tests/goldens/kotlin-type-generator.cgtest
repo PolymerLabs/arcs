@@ -19,8 +19,8 @@ arcs.core.data.EntityType(
             collections = emptyMap()
         ),
         "4c768720e83eca0f85355674ca87181718e8da9c",
-        refinement = { _ -> true },
-        query = null
+        refinementExpression = true.asExpr(),
+        queryExpression = true.asExpr()
     )
 )
 [end]
@@ -40,8 +40,8 @@ arcs.core.data.CollectionType(
                 collections = emptyMap()
             ),
             "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
-            refinement = { _ -> true },
-            query = null
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
         )
     )
 )
@@ -62,8 +62,8 @@ arcs.core.data.ReferenceType(
                 collections = emptyMap()
             ),
             "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
-            refinement = { _ -> true },
-            query = null
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
         )
     )
 )

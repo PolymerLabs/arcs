@@ -8,6 +8,9 @@ package arcs.golden
 //
 // Current implementation doesn't support optional field detection
 
+import arcs.core.data.expression.*
+import arcs.core.data.expression.Expression.*
+import arcs.core.data.expression.Expression.BinaryOp.*
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.toPrimitiveValue
 import java.math.BigInteger
@@ -73,8 +76,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     collections = emptyMap()
                 ),
                 "485712110d89359a3e539dac987329cd2649d889",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
@@ -132,8 +135,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     collections = emptyMap()
                 ),
                 "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
@@ -200,8 +203,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     collections = emptyMap()
                 ),
                 "e8b8d30e041174ca9104dfba453615c934af27b3",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
@@ -275,8 +278,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     collections = emptyMap()
                 ),
                 "e9ba6d9fa458ec35a966e462bb30a082e3f0d2f8",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
@@ -350,8 +353,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     collections = emptyMap()
                 ),
                 "e84265ec7993502eb817dcff9f34dec4d164db05",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
@@ -425,8 +428,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     collections = emptyMap()
                 ),
                 "efcc87f84735b2f83b285e0f2768ff577611a68c",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
@@ -680,12 +683,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     )
                 ),
                 "44b8dccc1ae0cf6fa00a7dfeef0b0e6b1d565e24",
-                refinement = { data ->
-                    val big = data.singletons["big"].toPrimitiveValue(BigInteger::class, BigInteger.ZERO)
-                    val num = data.singletons["num"].toPrimitiveValue(Double::class, 0.0)
-                    ((num < 1000) && (big > BigInteger("1")))
-                },
-                query = null
+                refinementExpression =         ((CurrentScope<Number>(mapOf())["num"] lt 1000.asExpr()) and (CurrentScope<Number>(mapOf())["big"] gt NumberLiteralExpression(BigInteger("1")))),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =

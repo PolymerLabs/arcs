@@ -18,7 +18,10 @@ package arcs.core.data.expression
  * type cast errors and field or parameter errors to occur during evaluation. These will be
  * reflected as exceptions.
  */
-class ExpressionEvaluator(val parameterScope: Expression.Scope = ParameterScope()) :
+class ExpressionEvaluator(
+    val currentScope: Expression.Scope = CurrentScope<Any>(),
+    val parameterScope: Expression.Scope = ParameterScope()
+) :
     Expression.Visitor<Any> {
     override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>): Any {
         return expr.op(expr.expr.accept(this) as E) as Any
@@ -46,15 +49,25 @@ class ExpressionEvaluator(val parameterScope: Expression.Scope = ParameterScope(
 
     override fun visit(expr: Expression.BooleanLiteralExpression): Boolean = expr.value
 
+    override fun <T : Expression.Scope> visit(expr: Expression.CurrentScopeExpression<T>) =
+        currentScope
+
     override fun <T> visit(expr: Expression.ObjectLiteralExpression<T>): Any = expr.value as Any
 }
 
 /**
  * Given an expression, and a list of parameter mappings, evaluate the expression and return
  * the result using an [ExpressionEvaluator].
+ * @param expression the expression to be evaluated
+ * @param currentScope a [Scope] object for lookups in [Expression.CurrentScopeExpression]
+ * @param params mappings of query-args by name for [Expression.QueryParameterExpression]
  */
-fun <T, R> evalExpression(expression: Expression<T>, vararg params: Pair<String, Any>): R {
+fun <T, R> evalExpression(
+    expression: Expression<T>,
+    currentScope: Expression.Scope = mapOf<String, Any>().asScope(),
+    vararg params: Pair<String, Any>
+): R {
     val parameterScope = mapOf(*params)
-    val evaluator = ExpressionEvaluator(parameterScope.asScope())
+    val evaluator = ExpressionEvaluator(currentScope, parameterScope.asScope())
     return expression.accept(evaluator) as R
 }

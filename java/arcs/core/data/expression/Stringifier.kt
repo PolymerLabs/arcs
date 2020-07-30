@@ -33,6 +33,8 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
     override fun <E : Expression.Scope, T> visit(expr: Expression.FieldExpression<E, T>) =
         expr.qualifier.accept(this) + ".${expr.field}"
 
+    override fun <T : Expression.Scope> visit(expr: Expression.CurrentScopeExpression<T>) = "this"
+
     override fun <T> visit(expr: Expression.QueryParameterExpression<T>) =
         "?${expr.paramIdentifier}"
 

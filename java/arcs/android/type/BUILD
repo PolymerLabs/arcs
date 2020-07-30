@@ -12,6 +12,7 @@ arcs_kt_android_library(
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
+        "//java/arcs/core/data/expression",
         "//java/arcs/core/type",
     ],
 )

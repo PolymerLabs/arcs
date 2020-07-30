@@ -188,6 +188,9 @@ package ${this.namespace}
 //
 
 ${tryImport('arcs.core.data.*', this.namespace)}
+${tryImport('arcs.core.data.expression.*', this.namespace)}
+${tryImport('arcs.core.data.expression.Expression.*', this.namespace)}
+${tryImport('arcs.core.data.expression.Expression.BinaryOp.*', this.namespace)}
 ${tryImport('arcs.core.data.Plan.*', this.namespace)}
 ${tryImport('arcs.core.storage.StorageKeyParser', this.namespace)}
 ${tryImport('arcs.core.entity.toPrimitiveValue', this.namespace)}

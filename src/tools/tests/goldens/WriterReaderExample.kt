@@ -8,6 +8,9 @@ package arcs.core.data.testdata
 //
 
 import arcs.core.data.*
+import arcs.core.data.expression.*
+import arcs.core.data.expression.Expression.*
+import arcs.core.data.expression.Expression.BinaryOp.*
 import arcs.core.data.Plan.*
 import arcs.core.storage.StorageKeyParser
 import arcs.core.entity.toPrimitiveValue
@@ -24,8 +27,8 @@ val IngestionOnly_Handle0 = Handle(
                 collections = emptyMap()
             ),
             "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
-            refinement = { _ -> true },
-            query = null
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
         )
     ),
     listOf(
@@ -66,8 +69,8 @@ val Ingestion_Handle0 = Handle(
                 collections = emptyMap()
             ),
             "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
-            refinement = { _ -> true },
-            query = null
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
         )
     ),
     listOf(
@@ -123,8 +126,8 @@ val Consumption_Handle0 = Handle(
                 collections = emptyMap()
             ),
             "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
-            refinement = { _ -> true },
-            query = null
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
         )
     ),
     emptyList()
@@ -157,8 +160,8 @@ val EphemeralWriting_Handle0 = Handle(
                 collections = emptyMap()
             ),
             "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
-            refinement = { _ -> true },
-            query = null
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
         )
     ),
     emptyList()
@@ -193,8 +196,8 @@ val EphemeralReading_Handle0 = Handle(
                 collections = emptyMap()
             ),
             "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
-            refinement = { _ -> true },
-            query = null
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
         )
     ),
     emptyList()
@@ -231,8 +234,8 @@ val ReferencesRecipe_Handle0 = Handle(
                         collections = emptyMap()
                     ),
                     "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
-                    refinement = { _ -> true },
-                    query = null
+                    refinementExpression = true.asExpr(),
+                    queryExpression = true.asExpr()
                 )
             )
         )
@@ -252,8 +255,8 @@ val ReferencesRecipe_Handle1 = Handle(
                     collections = emptyMap()
                 ),
                 "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
         )
     ),

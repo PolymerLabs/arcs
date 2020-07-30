@@ -20,22 +20,60 @@ import org.junit.runners.JUnit4
 /** Tests for [Expression]. */
 @RunWith(JUnit4::class)
 class ExpressionTest {
-    fun <T> evalBool(expression: Expression<T>) = evalExpression<T, Boolean>(expression)
-    fun <T> evalNum(expression: Expression<T>) = evalExpression<T, Number>(expression)
+    fun <T> evalBool(expression: Expression<T>) = evalExpression<T, Boolean>(
+        expression,
+        currentScope
+    )
+
+    fun <T> evalNum(expression: Expression<T>) = evalExpression<T, Number>(
+        expression = expression, currentScope = currentScope
+    )
+
+    val currentScope = CurrentScope<Any>(
+        mapOf(
+            "blah" to 10,
+            "baz" to mapOf("x" to 24).asScope()
+        )
+    )
 
     @Test
     fun testEvaluator() {
-        // numeric binary ops
+        // numeric binary ops (ints)
         assertThat(evalNum(2.asExpr() + 1.asExpr())).isEqualTo(3)
         assertThat(evalNum(2.asExpr() - 1.asExpr())).isEqualTo(1)
         assertThat(evalNum(2.asExpr() * 2.asExpr())).isEqualTo(4)
         assertThat(evalNum(6.asExpr() / 3.asExpr())).isEqualTo(2)
 
+        // floats
+        assertThat(evalNum(2f.asExpr() + 1.asExpr())).isEqualTo(3)
+        assertThat(evalNum(2f.asExpr() - 1.asExpr())).isEqualTo(1)
+        assertThat(evalNum(2f.asExpr() * 2.asExpr())).isEqualTo(4)
+        assertThat(evalNum(6f.asExpr() / 3.asExpr())).isEqualTo(2)
+
+        // longs
+        assertThat(evalNum(2L.asExpr() + 1.asExpr())).isEqualTo(3)
+        assertThat(evalNum(2L.asExpr() - 1.asExpr())).isEqualTo(1)
+        assertThat(evalNum(2L.asExpr() * 2.asExpr())).isEqualTo(4)
+        assertThat(evalNum(6L.asExpr() / 3.asExpr())).isEqualTo(2)
+
+        // big ints
+        assertThat(evalNum(2.toBigInteger().asExpr() + 1.asExpr())).isEqualTo(3.toBigInteger())
+        assertThat(evalNum(2.toBigInteger().asExpr() - 1.asExpr())).isEqualTo(1.toBigInteger())
+        assertThat(evalNum(2.toBigInteger().asExpr() * 2.asExpr())).isEqualTo(4.toBigInteger())
+        assertThat(evalNum(6.toBigInteger().asExpr() / 3.asExpr())).isEqualTo(2.toBigInteger())
+
         // field ops
         assertThat(evalNum<Number>(mapOf("foo" to 42).asScope()["foo"])).isEqualTo(42)
+        assertThat(evalNum<Number>(currentScope["blah"].asNumber())).isEqualTo(10)
+        val baz = currentScope["baz"].asScope()
+        assertThat(evalNum<Number>(baz["x"])).isEqualTo(24)
 
         // query ops
-        assertThat(evalExpression<Number, Number>(query("arg"), "arg" to 42)).isEqualTo(42)
+        assertThat(evalExpression<Number, Number>(
+            query("arg"),
+            currentScope,
+            "arg" to 42
+        )).isEqualTo(42)
 
         // Boolean ops
         assertThat(evalBool(1.asExpr() lt 2.asExpr())).isTrue()
@@ -50,10 +88,47 @@ class ExpressionTest {
         assertThat(evalBool((1.asExpr() lt 2.asExpr()) or (2.asExpr() lt 1.asExpr()))).isTrue()
         assertThat(evalBool((1.asExpr() gt 2.asExpr()) or (2.asExpr() lt 1.asExpr()))).isFalse()
 
+        // Sanity check longs and widening
+        assertThat(evalBool(1L.asExpr() lt 2.asExpr())).isTrue()
+        assertThat(evalBool(2L.asExpr() lt 1.asExpr())).isFalse()
+        assertThat(evalBool(2L.asExpr() lte 2.asExpr())).isTrue()
+        assertThat(evalBool(3L.asExpr() lte 2.asExpr())).isFalse()
+        assertThat(evalBool(2L.asExpr() gt 1.asExpr())).isTrue()
+        assertThat(evalBool(1L.asExpr() gt 2.asExpr())).isFalse()
+        assertThat(evalBool(1L.asExpr() gte 2.asExpr())).isFalse()
+        assertThat(evalBool((1L.asExpr() lt 2.asExpr()) and (2L.asExpr() gt 1.asExpr()))).isTrue()
+        assertThat(evalBool((2L.asExpr() lt 1.asExpr()) and (2L.asExpr() gt 1.asExpr()))).isFalse()
+        assertThat(evalBool((1L.asExpr() lt 2.asExpr()) or (2L.asExpr() lt 1.asExpr()))).isTrue()
+        assertThat(evalBool((1L.asExpr() gt 2.asExpr()) or (2L.asExpr() lt 1.asExpr()))).isFalse()
+
+        // Sanity check BigInteger
+        assertThat(evalBool(1.toBigInteger().asExpr() lt 2.asExpr())).isTrue()
+        assertThat(evalBool(2.toBigInteger().asExpr() lt 1.asExpr())).isFalse()
+        assertThat(evalBool(2.toBigInteger().asExpr() lte 2.asExpr())).isTrue()
+        assertThat(evalBool(3.toBigInteger().asExpr() lte 2.asExpr())).isFalse()
+        assertThat(evalBool(2.toBigInteger().asExpr() gt 1.asExpr())).isTrue()
+        assertThat(evalBool(1.toBigInteger().asExpr() gt 2.asExpr())).isFalse()
+        assertThat(evalBool(1.toBigInteger().asExpr() gte 2.asExpr())).isFalse()
+        assertThat(evalBool((1.toBigInteger().asExpr() lt 2.asExpr()) and
+            (2.toBigInteger().asExpr() gt 1.toBigInteger().asExpr()))).isTrue()
+        assertThat(evalBool((2.toBigInteger().asExpr() lt 1.asExpr()) and
+            (2.toBigInteger().asExpr() gt 1.toBigInteger().asExpr()))).isFalse()
+        assertThat(evalBool((1.toBigInteger().asExpr() lt 2.asExpr()) or
+            (2.toBigInteger().asExpr() lt 1.toBigInteger().asExpr()))).isTrue()
+        assertThat(evalBool((1.toBigInteger().asExpr() gt 2.asExpr()) or
+            (2.toBigInteger().asExpr() lt 1.toBigInteger().asExpr()))).isFalse()
         // Unary ops
         assertThat(evalNum(-2.asExpr())).isEqualTo(-2)
         assertThat(evalBool(!(2.asExpr() lt 1.asExpr()))).isTrue()
         assertThat(evalBool(!(2.asExpr() gt 1.asExpr()))).isFalse()
+
+        assertThat(evalNum(-2L.asExpr())).isEqualTo(-2)
+        assertThat(evalBool(!(2L.asExpr() lt 1.asExpr()))).isTrue()
+        assertThat(evalBool(!(2L.asExpr() gt 1.asExpr()))).isFalse()
+
+        assertThat(evalNum(-2.toBigInteger().asExpr())).isEqualTo(-2.toBigInteger())
+        assertThat(evalBool(!(2.toBigInteger().asExpr() lt 1.asExpr()))).isTrue()
+        assertThat(evalBool(!(2.toBigInteger().asExpr() gt 1.asExpr()))).isFalse()
 
         // Equality ops
         assertThat(evalBool(2.asExpr() eq 2.asExpr())).isTrue()
@@ -76,7 +151,7 @@ class ExpressionTest {
             "arg"
         ) - 1.asExpr()) / 2.asExpr()
 
-        assertThat(evalExpression<Number, Number>(expr, "arg" to 1)).isEqualTo(28)
+        assertThat(evalExpression<Number, Number>(expr, currentScope, "arg" to 1)).isEqualTo(28)
     }
 
     @Test
@@ -112,12 +187,18 @@ class ExpressionTest {
     fun testJsonSerialization() {
         val q = query<Expression.Scope>("arg")
         val field = Expression.FieldExpression<Expression.Scope, Number>(q, "bar")
-        val expr = (2.0.asExpr() + (3.asExpr() * 4.asExpr()) + field - 1.asExpr()) / 2.asExpr()
+        val baz = currentScope.get(
+            "baz"
+        ) as Expression.FieldExpression<CurrentScope<Any>, Expression.Scope>
+        val x: Expression<Number> = baz["x"]
+        val expr = (x + 2.0.asExpr() + (3f.asExpr() * 4L.asExpr()) + field - 1.toByte().asExpr()) /
+            2.toBigInteger().asExpr()
         val json = expr.serialize()
         val parsed = json.deserializeExpression() as Expression<Number>
         assertThat(evalExpression<Number, Number>(
             parsed,
+            currentScope,
             "arg" to mapOf("bar" to 5).asScope()
-        )).isEqualTo(9.0)
+        )).isEqualTo(21.0)
     }
 }

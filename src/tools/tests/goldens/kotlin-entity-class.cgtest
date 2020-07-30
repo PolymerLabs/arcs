@@ -54,8 +54,8 @@ particle T
                     collections = emptyMap()
                 ),
                 "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
@@ -209,8 +209,8 @@ particle T
                     collections = emptyMap()
                 ),
                 "1032e45209f910286cfb898c43a1c3ca7d07aea6",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
