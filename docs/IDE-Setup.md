@@ -178,11 +178,20 @@ Follow [these steps](https://github.com/PolymerLabs/arcs/blob/master/docs/IDE-Se
 
 #### Robolectric Errors in Android JUnit Tests
 
-The likely culprit is an incompatability between the [version of Robolectric](https://github.com/PolymerLabs/arcs/blob/master/WORKSPACE#L48) and the version of Java on your machine. 
+Examples:
+- `Can not set static final org.robolectric.internal.IShadow field org.robolectric.shadow.api.Shadow.SHADOW_IMPL to org.robolectric.internal.bytecode.ShadowImpl`
+- `java.lang.NoClassDefFoundError: Could not initialize class org.robolectric.util.reflector.UnsafeAccess`
 
-We recommend that you use Java 8 or 11. Other Java versions have be associated with errors at the time of writing.
+The likely culprit is an incompatibility between the [version of Robolectric](https://github.com/PolymerLabs/arcs/blob/master/WORKSPACE#L48) and the version of Java on your machine. 
 
-To check the Java versions installed on your machine (for MacOS or Linux), run: `/usr/libexec/java_home -V`. `java -version` will show which one is in use.
+We recommend that you use Java 8 or 11. Other Java versions have been associated with errors at the time of writing (2020-07).
+
+To check the Java versions installed on your machine, run:
+- MacOS: `/usr/libexec/java_home -V`.
+- Linux: `sudo update-alternatives --config java`
+- Windows: Consult [this documentation](https://www.java.com/en/download/help/version_manual.xml).
+
+`java -version` will show which one is in use.
 
 To choose a new version of Java, update your `JAVA_HOME` variable:
 - MacOS / Linux: add `export JAVA_HOME=<path/to/JDK11/or/JDK1.8>` to the appropriate `~/.profile` file (i.e. `~/.bash_profile` or `~/.bashrc`). Thereafter, restart your IDE.
