@@ -356,10 +356,18 @@ private fun widenAndApply(
 
 private fun Number.toBigInteger(): BigInteger = when (this) {
     is BigInteger -> this
-    else -> this.toLong().toBigInteger()
+    else -> BigInteger.valueOf(this.toLong())
 }
 
-private operator fun Number.compareTo(other: Number) = (this as Comparable<Number>).compareTo(other)
+@Suppress("UNCHECKED_CAST")
+private operator fun Number.compareTo(other: Number) = widenAndApply(
+    this,
+    other,
+    { l, r -> l.compareTo(r) },
+    { l, r -> l.compareTo(r) },
+    { l, r -> l.compareTo(r) },
+    { l, r -> l.compareTo(r) }
+).toInt()
 
 private operator fun Number.plus(other: Number): Number {
     return widenAndApply(this, other,
