@@ -83,8 +83,13 @@ export class PlanGenerator {
   async createHandleVariable(handle: Handle): Promise<string> {
     handle.type.maybeEnsureResolved();
     const valInit = `val ${this.handleVariableName(handle)} = `;
-    const handleRestrictedType = this.ingressValidation
-        ? this.ingressValidation.restrictType(handle.type) : handle.type.resolvedType();
+    let handleRestrictedType: Type = null;
+    if (this.ingressValidation) {
+      handleRestrictedType = this.ingressValidation.restrictType(handle.type);
+    }
+    if (!handleRestrictedType) {
+      handleRestrictedType = handle.type.resolvedType();
+    }
     return valInit + ktUtils.applyFun(`Handle`, [
       await this.createStorageKey(handle),
       await generateType(handleRestrictedType),

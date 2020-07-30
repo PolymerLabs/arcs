@@ -42,6 +42,11 @@ annotation encrypted
   retention: Runtime
   doc: 'storage capability: encrypted'
 
+annotation shareable
+  targets: [Handle, Store, HandleConnection]
+  retention: Runtime
+  doc: 'storage capability: shareable'
+
 annotation inMemory
   targets: [Handle]
   retention: Runtime

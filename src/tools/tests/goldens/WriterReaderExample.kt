@@ -17,7 +17,7 @@ import arcs.core.entity.toPrimitiveValue
 
 val IngestionOnly_Handle0 = Handle(
     StorageKeyParser.parse(
-        "reference-mode://{db://9ca32bb55138c5efc3b107bcd9d60a73e2428160@arcs/Thing}{db://9ca32bb55138c5efc3b107bcd9d60a73e2428160@arcs/!:writingOnlyArcId/handle/my-handle-id-www}"
+        "reference-mode://{db://9ca32bb55138c5efc3b107bcd9d60a73e2428160@arcs/Thing}{db://9ca32bb55138c5efc3b107bcd9d60a73e2428160@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"
     ),
     arcs.core.data.EntityType(
         arcs.core.data.Schema(
@@ -164,7 +164,10 @@ val EphemeralWriting_Handle0 = Handle(
             queryExpression = true.asExpr()
         )
     ),
-    emptyList()
+    listOf(
+        Annotation("inMemory", emptyMap()),
+        Annotation("ttl", mapOf("value" to AnnotationParam.Str("99d")))
+    )
 )
 val EphemeralWritingPlan = Plan(
     listOf(
@@ -176,7 +179,10 @@ val EphemeralWritingPlan = Plan(
                     EphemeralWriting_Handle0,
                     HandleMode.Write,
                     arcs.core.data.SingletonType(arcs.core.data.EntityType(Writer_Data.SCHEMA)),
-                    emptyList()
+                    listOf(
+                        Annotation("inMemory", emptyMap()),
+                        Annotation("ttl", mapOf("value" to AnnotationParam.Str("99d")))
+                    )
                 )
             )
         )
@@ -240,7 +246,10 @@ val ReferencesRecipe_Handle0 = Handle(
             )
         )
     ),
-    listOf(Annotation("persistent", emptyMap()))
+    listOf(
+        Annotation("persistent", emptyMap()),
+        Annotation("ttl", mapOf("value" to AnnotationParam.Str("99d")))
+    )
 )
 val ReferencesRecipe_Handle1 = Handle(
     StorageKeyParser.parse(
@@ -260,7 +269,10 @@ val ReferencesRecipe_Handle1 = Handle(
             )
         )
     ),
-    listOf(Annotation("ttl", mapOf("value" to AnnotationParam.Str("1d"))))
+    listOf(
+        Annotation("inMemory", emptyMap()),
+        Annotation("ttl", mapOf("value" to AnnotationParam.Str("1d")))
+    )
 )
 val ReferencesRecipePlan = Plan(
     listOf(
@@ -274,7 +286,10 @@ val ReferencesRecipePlan = Plan(
                     arcs.core.data.CollectionType(
                         arcs.core.data.ReferenceType(arcs.core.data.EntityType(ReadWriteReferences_InThingRefs.SCHEMA))
                     ),
-                    listOf(Annotation("persistent", emptyMap()))
+                    listOf(
+                        Annotation("persistent", emptyMap()),
+                        Annotation("ttl", mapOf("value" to AnnotationParam.Str("99d")))
+                    )
                 ),
                 "outThingRef" to HandleConnection(
                     ReferencesRecipe_Handle1,
@@ -282,7 +297,10 @@ val ReferencesRecipePlan = Plan(
                     arcs.core.data.SingletonType(
                         arcs.core.data.ReferenceType(arcs.core.data.EntityType(ReadWriteReferences_OutThingRef.SCHEMA))
                     ),
-                    listOf(Annotation("ttl", mapOf("value" to AnnotationParam.Str("1d"))))
+                    listOf(
+                        Annotation("inMemory", emptyMap()),
+                        Annotation("ttl", mapOf("value" to AnnotationParam.Str("1d")))
+                    )
                 )
             )
         )
