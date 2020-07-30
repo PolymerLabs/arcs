@@ -16,11 +16,15 @@ SCHEMA_FIELDS_SRCS = [
     "SchemaFields.kt",
 ]
 
+REFERENCE_SRCS = [
+    "Reference.kt",
+]
+
 arcs_kt_library(
     name = "data",
     srcs = glob(
         ["*.kt"],
-        exclude = ENTITY_SRCS + SCHEMA_FIELDS_SRCS,
+        exclude = ENTITY_SRCS + SCHEMA_FIELDS_SRCS + REFERENCE_SRCS,
     ),
     exports = [
         ":rawentity",
