@@ -58,3 +58,31 @@ arcs.core.data.CollectionType(
     )
 )
 [end]
+
+[name]
+does not use fully qualified name when in the same package
+[opts]
+{"namespace": "my.own.namespace"}
+[input]
+meta
+  namespace: my.own.namespace
+
+particle Module
+  data: reads Thing {name: Text}
+[results]
+arcs.core.data.SingletonType(arcs.core.data.EntityType(Module_Data.SCHEMA))
+[end]
+
+[name]
+uses fully qualified name when in different package
+[opts]
+{"namespace": "my.own.namespace"}
+[input]
+meta
+  namespace: foo.bar.baz
+
+particle Module
+  data: reads Thing {name: Text}
+[results]
+arcs.core.data.SingletonType(arcs.core.data.EntityType(foo.bar.baz.Module_Data.SCHEMA))
+[end]
