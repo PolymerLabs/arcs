@@ -478,8 +478,8 @@ export class TypeVariable extends Type {
     this.variable = variable;
   }
 
-  static make(name: string, canWriteSuperset: Type = null, canReadSubset: Type = null): TypeVariable {
-    return new TypeVariable(new TypeVariableInfo(name, canWriteSuperset, canReadSubset));
+  static make(name: string, canWriteSuperset: Type = null, canReadSubset: Type = null, resolvesToMaxType = false): TypeVariable {
+    return new TypeVariable(new TypeVariableInfo(name, canWriteSuperset, canReadSubset, resolvesToMaxType));
   }
 
   get isVariable(): boolean {
@@ -1202,12 +1202,14 @@ export class TypeVariableInfo {
   _canWriteSuperset?: Type|null;
   _canReadSubset?: Type|null;
   _resolution?: Type|null;
+  _resolveToMaxType: boolean;
 
-  constructor(name: string, canWriteSuperset?: Type, canReadSubset?: Type) {
+  constructor(name: string, canWriteSuperset?: Type, canReadSubset?: Type, resolveToMaxType: boolean = false) {
     this.name = name;
     this._canWriteSuperset = canWriteSuperset;
     this._canReadSubset = canReadSubset;
     this._resolution = null;
+    this._resolveToMaxType = resolveToMaxType;
   }
 
   /**
@@ -1216,7 +1218,7 @@ export class TypeVariableInfo {
    * to the same value.
    */
   maybeMergeConstraints(variable: TypeVariableInfo): boolean {
-    if (!this.maybeMergeCanReadSubset(variable.canReadSubset)) {
+    if (!this.maybeMergeCanReadSubset(variable.canReadSubset, variable._resolveToMaxType)) {
       return false;
     }
     return this.maybeMergeCanWriteSuperset(variable.canWriteSuperset);
@@ -1226,30 +1228,14 @@ export class TypeVariableInfo {
    * Merge a type variable's read subset (upper bound) constraints into this variable.
    * This is used to accumulate read constraints when resolving a handle's type.
    */
-  maybeMergeCanReadSubset(constraint: Type): boolean {
-    if (constraint == null) {
-      return true;
-    }
-
-    if (this.canReadSubset == null) {
-      this.canReadSubset = constraint;
-      return true;
-    }
-
-    if (this.canReadSubset instanceof SlotType && constraint instanceof SlotType) {
-      // TODO: formFactor compatibility, etc.
-      return true;
-    }
-    if (this.canReadSubset instanceof EntityType && constraint instanceof EntityType) {
-      const mergedSchema = Schema.intersect(this.canReadSubset.entitySchema, constraint.entitySchema);
-      if (!mergedSchema) {
-        return false;
-      }
-
-      this.canReadSubset = new EntityType(mergedSchema);
-      return true;
-    }
-    return false;
+  maybeMergeCanReadSubset(constraint: Type, resolveToMaxType: boolean = false): boolean {
+    const {result, success} = this._maybeMerge(
+      this.canReadSubset,
+      constraint,
+      (this._resolveToMaxType  || resolveToMaxType) ? Schema.union : Schema.intersect,
+    );
+    this.canReadSubset = result;
+    return success;
   }
 
   /**
@@ -1257,30 +1243,37 @@ export class TypeVariableInfo {
    * This is used to accumulate write constraints when resolving a handle's type.
    */
   maybeMergeCanWriteSuperset(constraint: Type): boolean {
+    const {result, success} = this._maybeMerge(this.canWriteSuperset, constraint, Schema.union);
+    this.canWriteSuperset = result;
+    return success;
+  }
+
+  // Helper to generalize canReadSubset and canWriteSuperset merging
+  private _maybeMerge(target: Type, constraint: Type,
+                      merger: (left: Schema, right: Schema) => Schema): { success: boolean; result: Type } {
     if (constraint == null) {
-      return true;
+      return {success: true, result: target};
     }
 
-    if (this.canWriteSuperset == null) {
-      this.canWriteSuperset = constraint;
-      return true;
+    if (target == null) {
+      return {success: true, result: constraint};
     }
 
-    if (this.canWriteSuperset instanceof SlotType && constraint instanceof SlotType) {
+    if (target instanceof SlotType && constraint instanceof SlotType) {
       // TODO: formFactor compatibility, etc.
-      return true;
+      return {success: true, result: target};
     }
 
-    if (this.canWriteSuperset instanceof EntityType && constraint instanceof EntityType) {
-      const mergedSchema = Schema.union(this.canWriteSuperset.entitySchema, constraint.entitySchema);
+    if (target instanceof EntityType && constraint instanceof EntityType) {
+      const mergedSchema = merger(target.entitySchema, constraint.entitySchema);
       if (!mergedSchema) {
-        return false;
+        return {success: false, result: target};
       }
 
-      this.canWriteSuperset = new EntityType(mergedSchema);
-      return true;
+      return {success: true, result: new EntityType(mergedSchema)};
     }
-    return false;
+
+    return {success: false, result: target};
   }
 
   isSatisfiedBy(type: Type): boolean {
@@ -1319,6 +1312,9 @@ export class TypeVariableInfo {
     while (probe) {
       if (!(probe instanceof TypeVariable)) {
         break;
+      }
+      if (this._resolveToMaxType) {
+        probe.variable._resolveToMaxType = true;
       }
       if (probe.variable === this) {
         return;
@@ -1380,6 +1376,17 @@ export class TypeVariableInfo {
   maybeEnsureResolved() {
     if (this._resolution) {
       return this._resolution.maybeEnsureResolved();
+    }
+    if (this._resolveToMaxType) {
+      if (this._canReadSubset) {
+        this.resolution = this._canReadSubset;
+        return true;
+      }
+      if (this._canWriteSuperset) {
+        this.resolution = this._canWriteSuperset;
+        return true;
+      }
+      return false;
     }
     if (this._canWriteSuperset) {
       this.resolution = this._canWriteSuperset;
