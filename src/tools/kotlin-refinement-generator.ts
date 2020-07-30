@@ -13,7 +13,18 @@ import {Dictionary} from '../runtime/hot.js';
 import {Schema} from '../runtime/schema.js';
 import {escapeIdentifier} from './kotlin-codegen-shared.js';
 import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
-import {RefinementExpressionVisitor, BinaryExpression, UnaryExpression, FieldNamePrimitive, QueryArgumentPrimitive, BuiltIn, NumberPrimitive, BooleanPrimitive, TextPrimitive, BigIntPrimitive} from '../runtime/refiner.js';
+import {
+  RefinementExpressionVisitor,
+  BinaryExpression,
+  UnaryExpression,
+  FieldNamePrimitive,
+  QueryArgumentPrimitive,
+  BuiltIn,
+  NumberPrimitive,
+  BooleanPrimitive,
+  TextPrimitive,
+  BigIntPrimitive,
+} from '../runtime/refiner.js';
 
 // The variable name used for the query argument in generated Kotlin code.
 const KOTLIN_QUERY_ARGUMENT_NAME = 'queryArgument';
@@ -61,17 +72,7 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
   visitBigIntPrimitive(expr: BigIntPrimitive): string {
     // This assumes that the associated Kotlin type will be `Java.math.BigInteger` and constructs
     // the BigInteger via String as there is no support for a literal form.
-    switch (expr.evalType) {
-      case Primitive.INT:
-        return `${expr.value.toString()}.asExpr()`;
-      case Primitive.LONG:
-        return `${expr.value.toString()}L.asExpr()`;
-      case Primitive.BIGINT:
-        return `NumberLiteralExpression(BigInteger("${expr.value}"))`;
-      case Primitive.BOOLEAN:
-        return `${expr.value}.asExpr()`;
-      default: throw new Error(`unexpected type ${expr.evalType}`);
-    }
+    return `NumberLiteralExpression(BigInteger("${expr.value}"))`;
   }
   visitNumberPrimitive(expr: NumberPrimitive): string {
     // This assumes that the associated Kotlin type will be `double`.

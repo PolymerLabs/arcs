@@ -38,22 +38,25 @@ class ExpressionTest {
 
     @Test
     fun testEvaluator() {
-        // numeric binary ops
+        // numeric binary ops (ints)
         assertThat(evalNum(2.asExpr() + 1.asExpr())).isEqualTo(3)
         assertThat(evalNum(2.asExpr() - 1.asExpr())).isEqualTo(1)
         assertThat(evalNum(2.asExpr() * 2.asExpr())).isEqualTo(4)
         assertThat(evalNum(6.asExpr() / 3.asExpr())).isEqualTo(2)
 
+        // floats
         assertThat(evalNum(2f.asExpr() + 1.asExpr())).isEqualTo(3)
         assertThat(evalNum(2f.asExpr() - 1.asExpr())).isEqualTo(1)
         assertThat(evalNum(2f.asExpr() * 2.asExpr())).isEqualTo(4)
         assertThat(evalNum(6f.asExpr() / 3.asExpr())).isEqualTo(2)
 
+        // longs
         assertThat(evalNum(2L.asExpr() + 1.asExpr())).isEqualTo(3)
         assertThat(evalNum(2L.asExpr() - 1.asExpr())).isEqualTo(1)
         assertThat(evalNum(2L.asExpr() * 2.asExpr())).isEqualTo(4)
         assertThat(evalNum(6L.asExpr() / 3.asExpr())).isEqualTo(2)
 
+        // big ints
         assertThat(evalNum(2.toBigInteger().asExpr() + 1.asExpr())).isEqualTo(3.toBigInteger())
         assertThat(evalNum(2.toBigInteger().asExpr() - 1.asExpr())).isEqualTo(1.toBigInteger())
         assertThat(evalNum(2.toBigInteger().asExpr() * 2.asExpr())).isEqualTo(4.toBigInteger())
