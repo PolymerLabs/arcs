@@ -15,6 +15,7 @@ import {Type, EntityType} from '../type.js';
 import {Refinement} from '../refiner.js';
 import {Schema} from '../schema.js';
 import {Handle} from '../recipe/handle.js';
+import {HandleConnection} from '../recipe/handle-connection.js';
 import {Recipe} from '../recipe/recipe.js';
 
 // Helper class for validating ingress fields and capabilities.
@@ -91,7 +92,7 @@ export class IngressValidation {
             `Handle '${handle.id}' has no matching target type ` +
             `${handle.type.resolvedType().toString()} in policies, and no source particles.`);
       }
-      const sourceConnections = [];
+      const sourceConnections: HandleConnection[] = [];
       for (const sourceParticle of sourceParticles) {
         const particleInputs = Object.values(sourceParticle.connections)
             .filter(conn => conn.isInput && !seenHandles.has(conn.handle));
@@ -121,6 +122,9 @@ export class IngressValidation {
     const capabilitiesByField = new Map<string, Capabilities[]>();
     const result = this.findHandleCapabilities(handle, capabilitiesByField);
     if (!result.success) return result;
+    // Iterate over all fields of the `handle` restricted type, and for each field
+    // verify that at least one of the field's Capabilities (according to the
+    // set of policies) allows ingress with the given `handle` Capabilities.
     for (const [fieldPath, fieldCapabilities] of capabilitiesByField.entries()) {
       const fieldResults = fieldCapabilities.map(
           fc => fc.isAllowedForIngress(handle.capabilities));
@@ -134,15 +138,15 @@ export class IngressValidation {
     return result;
   }
 
-  private collectSchemaFieldPaths(schema: Schema) {
-    const fieldPaths = [];
+  private collectSchemaFieldPaths(schema: Schema): string[] {
+    const fieldPaths: string[] = [];
     for (const [fieldName, field] of Object.entries(schema.fields)) {
       fieldPaths.push(...this.collectFieldPaths(schema.name, fieldName, field));
     }
     return fieldPaths;
   }
 
-  private collectFieldPaths(fieldPrefix: string, fieldName: string, field) {
+  private collectFieldPaths(fieldPrefix: string, fieldName: string, field): string[] {
     const fieldPaths = [];
     switch (field.kind) {
       case 'kotlin-primitive':

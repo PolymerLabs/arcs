@@ -83,7 +83,7 @@ export class PlanGenerator {
   async createHandleVariable(handle: Handle): Promise<string> {
     handle.type.maybeEnsureResolved();
     const valInit = `val ${this.handleVariableName(handle)} = `;
-    let handleRestrictedType = null;
+    let handleRestrictedType: Type = null;
     if (this.ingressValidation) {
       handleRestrictedType = this.ingressValidation.restrictType(handle.type);
     }
