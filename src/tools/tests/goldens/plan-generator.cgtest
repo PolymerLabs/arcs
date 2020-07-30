@@ -1,13 +1,13 @@
-[header]
+-----[header]-----
 Kotlin Plan Generation
 
 Expectations can be updated with:
 $ ./tools/sigh updateCodegenUnitTests
-[end_header]
+-----[end_header]-----
 
-[name]
+-----[name]-----
 uses the same storage key for created and mapped handles
-[input]
+-----[input]-----
 particle A
   data: writes Thing {num: Number}
 particle B
@@ -23,7 +23,7 @@ recipe Retrieve
   h: map 'data'
   B
     data: reads h
-[results]
+-----[results]-----
 /* ktlint-disable */
 @file:Suppress("PackageName", "TopLevelName")
 
@@ -110,6 +110,87 @@ val RetrievePlan = Plan(
     emptyList()
 )
 
-[require]
+-----[require]-----
 storageKeys.Ingest.Handle0 == storageKeys.Retrieve.Handle0
-[end]
+-----[end]-----
+
+-----[name]-----
+generated handle connections pertaining to the same handle use the same storage key
+-----[input]-----
+particle A
+  data: writes Thing {num: Number}
+particle B
+  data: reads Thing {num: Number}
+
+recipe R
+  h: create
+  A
+    data: writes h
+  B
+    data: reads h
+-----[results]-----
+/* ktlint-disable */
+@file:Suppress("PackageName", "TopLevelName")
+
+package test.namespace
+
+//
+// GENERATED CODE -- DO NOT EDIT
+//
+
+import arcs.core.data.*
+import arcs.core.data.expression.*
+import arcs.core.data.expression.Expression.*
+import arcs.core.data.expression.Expression.BinaryOp.*
+import arcs.core.data.Plan.*
+import arcs.core.storage.StorageKeyParser
+import arcs.core.entity.toPrimitiveValue
+
+val R_Handle0 = Handle(
+    StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
+    arcs.core.data.EntityType(
+        arcs.core.data.Schema(
+            setOf(arcs.core.data.SchemaName("Thing")),
+            arcs.core.data.SchemaFields(
+                singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                collections = emptyMap()
+            ),
+            "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
+        )
+    ),
+    emptyList()
+)
+val RPlan = Plan(
+    listOf(
+        Particle(
+            "A",
+            "",
+            mapOf(
+                "data" to HandleConnection(
+                    R_Handle0,
+                    HandleMode.Write,
+                    arcs.core.data.SingletonType(arcs.core.data.EntityType(A_Data.SCHEMA)),
+                    emptyList()
+                )
+            )
+        ),
+        Particle(
+            "B",
+            "",
+            mapOf(
+                "data" to HandleConnection(
+                    R_Handle0,
+                    HandleMode.Read,
+                    arcs.core.data.SingletonType(arcs.core.data.EntityType(B_Data.SCHEMA)),
+                    emptyList()
+                )
+            )
+        )
+    ),
+    listOf(R_Handle0),
+    emptyList()
+)
+
+-----[end]-----

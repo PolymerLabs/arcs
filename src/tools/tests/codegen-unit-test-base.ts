@@ -11,6 +11,7 @@
 import fs from 'fs';
 import {Manifest} from '../../runtime/manifest.js';
 import {Flags} from '../../runtime/flags.js';
+import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
 
 type Test = {
   name: string;
@@ -94,7 +95,8 @@ export abstract class ManifestCodegenUnitTest extends CodegenUnitTest {
  */
 export async function runCompute(testCase: CodegenUnitTest, test: Test): Promise<string[]> {
   Flags.reset();
-  const result = await testCase.compute(test.input, test.options, test);
+DriverFactory.clearRegistrationsForTesting();
+const result = await testCase.compute(test.input, test.options, test);
   return Array.isArray(result) ? result : [result];
 }
 
@@ -143,13 +145,16 @@ export async function regenerateInputFile(unit: CodegenUnitTest): Promise<number
   const tests = readTests(unit);
 
   let updatedCount = 0;
+  const newTests = [];
 
   // Separator.
   function sep(name: string, extra = '') {
     return `-----[${name}${extra}]-----`;
   }
 
-  const newTests = await Promise.all(tests.map(async test => {
+  // It's important to sequence these (rather than e.g. using Promise.all) because each
+  // can interfere with the others (specifically via flags and storage registrations).
+  for (const test of tests) {
     const results = await runCompute(unit, test);
 
     if (JSON.stringify(results) !== JSON.stringify(test.results)) {
@@ -161,7 +166,7 @@ ${sep('opts')}
 ${JSON.stringify(test.options)}
 `;
 
-    return `\
+    const result = `\
 ${sep('name')}
 ${test.name}
 ${optionsString}${sep('input')}
@@ -172,7 +177,8 @@ ${sep('require')}
 ${test.require}`}
 ${sep('end')}
 `;
-  }));
+    newTests.push(result);
+  }
 
   const content = `\
 ${sep('header')}

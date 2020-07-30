@@ -25,7 +25,8 @@ export const recipe2PlanTestSuite: CodegenUnitTest[] = [
     async computeFromManifest(manifest: Manifest) {
       const recipes = await new AllocatorRecipeResolver(manifest, 'random_salt').resolve();
       const generator = new PlanGenerator(recipes, manifest.meta.namespace || 'test.namespace', null);
-      return generator.generate();
+      const plan = generator.generate();
+      return plan;
     }
   }()
 ];
