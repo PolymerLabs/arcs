@@ -424,7 +424,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 }
             }
 
-            handle.onUpdate { entity ->
+            handle.onUpdate { delta ->
                 if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
                     val time = System.currentTimeMillis()
                     tasksEvents[taskId]?.writer?.withLock {
@@ -435,7 +435,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                                 else
                                     TaskEventId.HANDLE_STORE_READER_END,
                                 time,
-                                entity?.number
+                                delta.new?.number
                             )
                         )
                     }
@@ -474,7 +474,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 }
             }
 
-            handle.onUpdate { entity ->
+            handle.onUpdate {
                 if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
                     val time = System.currentTimeMillis()
                     tasksEvents[taskId]?.writer?.withLock {
@@ -485,7 +485,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                                 else
                                     TaskEventId.HANDLE_STORE_READER_END,
                                 time,
-                                entity.map { it.number }.toSet()
+                                handle.fetchAll().mapTo(mutableSetOf(), TestEntity::number)
                             )
                         )
                     }

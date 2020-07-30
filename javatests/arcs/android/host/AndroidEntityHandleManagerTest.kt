@@ -11,6 +11,7 @@ import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
+import arcs.core.entity.CollectionDelta
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadCollectionHandle
@@ -18,6 +19,7 @@ import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteQueryCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
+import arcs.core.entity.SingletonDelta
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.entity.awaitReady
@@ -215,7 +217,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
 
         assertThat(handleHolder.readWriteHandle.dispatchFetch()).isEqualTo(entity1)
 
-        val updatedEntity: Person? = suspendCoroutine { continuation ->
+        val updatedEntity: SingletonDelta<Person> = suspendCoroutine { continuation ->
             // Verify callbacks work
             launch {
                 handleHolder.readWriteHandle.onUpdate {
@@ -225,7 +227,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             }
         }
 
-        assertThat(updatedEntity).isEqualTo(entity2)
+        assertThat(updatedEntity).isEqualTo(SingletonDelta(old = entity1, new = entity2))
     }
 
     @Test
@@ -265,7 +267,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
 
         val entity3 = entity2.copy(name = "Ray")
 
-        val updatedEntities: Set<Person> = suspendCoroutine { continuation ->
+        val updatedEntities: CollectionDelta<Person> = suspendCoroutine { continuation ->
             // Verify callbacks work
             launch {
                 handleHolder.readWriteCollectionHandle.onUpdate {
@@ -274,7 +276,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
                 handleHolder.writeCollectionHandle.dispatchStore(entity3)
             }
         }
-        assertThat(updatedEntities).containsExactly(entity1, entity2, entity3)
+        assertThat(updatedEntities).isEqualTo(CollectionDelta(added = setOf(entity3)))
     }
 
     @Test

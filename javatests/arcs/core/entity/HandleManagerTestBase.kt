@@ -51,9 +51,7 @@ import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
@@ -222,24 +220,24 @@ open class HandleManagerTestBase {
             singletonKey
         ).awaitReady() as ReadSingletonHandle<Person>
 
-        var received = CompletableDeferred<Person?>()
-        readHandle.onUpdate { received.complete(it) }
+        var received = Job()
+        readHandle.onUpdate { received.complete() }
 
         // Verify store against empty.
         writeHandle.dispatchStore(entity1)
-        assertThat(received.await()).isEqualTo(entity1)
+        received.join()
         assertThat(readHandle.dispatchFetch()).isEqualTo(entity1)
 
         // Verify store overwrites existing.
-        received = CompletableDeferred()
+        received = Job()
         writeHandle.dispatchStore(entity2)
-        assertThat(received.await()).isEqualTo(entity2)
+        received.join()
         assertThat(readHandle.dispatchFetch()).isEqualTo(entity2)
 
         // Verify clear.
-        received = CompletableDeferred()
+        received = Job()
         writeHandle.dispatchClear()
-        assertThat(received.await()).isNull()
+        received.join()
         assertThat(readHandle.dispatchFetch()).isNull()
     }
 
@@ -267,27 +265,27 @@ open class HandleManagerTestBase {
         ).awaitReady() as ReadWriteSingletonHandle<Person>
 
         // handle1 -> handle2
-        val received1to2 = CompletableDeferred<Person?>()
-        handle2.onUpdate { received1to2.complete(it) }
+        val received1to2 = Job()
+        handle2.onUpdate { received1to2.complete() }
 
         // Verify that handle2 sees the entity stored by handle1.
         handle1.dispatchStore(entity1)
-        assertThat(received1to2.await()).isEqualTo(entity1)
+        received1to2.join()
         assertThat(handle2.dispatchFetch()).isEqualTo(entity1)
 
         // handle2 -> handle1
-        var received2to1 = CompletableDeferred<Person?>()
-        handle1.onUpdate { received2to1.complete(it) }
+        var received2to1 = Job()
+        handle1.onUpdate { received2to1.complete() }
 
         // Verify that handle2 can clear the entity stored by handle1.
         handle2.dispatchClear()
-        assertThat(received2to1.await()).isNull()
+        received2to1.join()
         assertThat(handle1.dispatchFetch()).isNull()
 
         // Verify that handle1 sees the entity stored by handle2.
-        received2to1 = CompletableDeferred()
+        received2to1 = Job()
         handle2.dispatchStore(entity2)
-        assertThat(received2to1.await()).isEqualTo(entity2)
+        received2to1.join()
         assertThat(handle1.dispatchFetch()).isEqualTo(entity2)
     }
 
@@ -297,7 +295,7 @@ open class HandleManagerTestBase {
         val readHandle = readHandleManager.createSingletonHandle()
         val readHandleUpdated = readHandle.onUpdateDeferred()
         writeHandle.dispatchStore(entity1)
-        readHandleUpdated.await()
+        readHandleUpdated.join()
         log("Wrote entity1 to writeHandle")
 
         // Create a second handle for the second entity, so we can store it.
@@ -312,8 +310,8 @@ open class HandleManagerTestBase {
         val refReadKnows = refReadHandle.onUpdateDeferred()
 
         refWriteHandle.dispatchStore(entity2)
-        monitorKnows.await()
-        refReadKnows.await()
+        monitorKnows.join()
+        refReadKnows.join()
 
         // Now read back entity1, and dereference its best_friend.
         log("Checking entity1's best friend")
@@ -368,7 +366,7 @@ open class HandleManagerTestBase {
         writeHandle.dispatchStore(personWithHat)
 
         RamDisk.waitUntilSet(fezStorageRef.referencedStorageKey())
-        readOnUpdate.await()
+        readOnUpdate.join()
 
         // Read out the entity, and fetch its hat.
         val entityOut = readHandle.dispatchFetch()!!
@@ -389,7 +387,7 @@ open class HandleManagerTestBase {
         fakeTime.millis = expectedCreateTime
 
         handle.dispatchStore(entity1)
-        handleBUpdated.await()
+        handleBUpdated.join()
 
         val readBack = handleB.dispatchFetch()!!
         assertThat(readBack.creationTimestamp).isEqualTo(expectedCreateTime)
@@ -404,7 +402,7 @@ open class HandleManagerTestBase {
 
         var handleBUpdated = handleB.onUpdateDeferred()
         handle.dispatchStore(entity1)
-        handleBUpdated.await()
+        handleBUpdated.join()
 
         val readBack = handleB.dispatchFetch()!!
         assertThat(readBack.creationTimestamp).isEqualTo(0)
@@ -413,7 +411,7 @@ open class HandleManagerTestBase {
         val handleC = readHandleManager.createSingletonHandle(ttl = Ttl.Minutes(2))
         handleBUpdated = handleB.onUpdateDeferred()
         handleC.dispatchStore(entity2)
-        handleBUpdated.await()
+        handleBUpdated.join()
 
         val readBack2 = handleB.dispatchFetch()!!
         assertThat(readBack2.creationTimestamp).isEqualTo(0)
@@ -432,7 +430,7 @@ open class HandleManagerTestBase {
         val refHandle = writeHandleManager.createReferenceSingletonHandle(ttl = Ttl.Minutes(2))
         val updated = entityHandle.onUpdateDeferred()
         entityHandle.dispatchStore(entity1)
-        updated.await()
+        updated.join()
 
         // Create and store a reference with TTL.
         val entity1Ref = entityHandle.dispatchCreateReference(entity1)
@@ -451,9 +449,9 @@ open class HandleManagerTestBase {
         // Create and store an entity.
         val writeEntityHandle = writeHandleManager.createCollectionHandle()
         val monitorHandle = monitorHandleManager.createCollectionHandle()
-        val initialEntityStored = monitorHandle.onUpdateDeferred { it.size == 1 }
+        val initialEntityStored = monitorHandle.onUpdateDeferred { it.size() == 1 }
         writeEntityHandle.dispatchStore(entity1)
-        initialEntityStored.await()
+        initialEntityStored.join()
         log("Created and stored an entity")
 
         // Create and store a reference to the entity.
@@ -465,7 +463,7 @@ open class HandleManagerTestBase {
         log("Created and stored a reference")
 
         RamDisk.waitUntilSet(entity1Ref.toReferencable().referencedStorageKey())
-        refHeard.await()
+        refHeard.join()
 
         // Now read back the reference from a different handle.
         var reference = readRefHandle.dispatchFetch()!!
@@ -480,11 +478,11 @@ open class HandleManagerTestBase {
         // Modify the entity.
         val modEntity1 = entity1.copy(name = "Ben")
         val entityModified = monitorHandle.onUpdateDeferred {
-            it.all { person -> person.name == "Ben" }
+            it.fetchAll().all { person -> person.name == "Ben" }
         }
         writeEntityHandle.dispatchStore(modEntity1)
         assertThat(writeEntityHandle.dispatchSize()).isEqualTo(1)
-        entityModified.await()
+        entityModified.join()
 
         // Reference should still be alive.
         reference = readRefHandle.dispatchFetch()!!
@@ -498,7 +496,7 @@ open class HandleManagerTestBase {
         // Remove the entity from the collection.
         val heardTheDelete = monitorHandle.onUpdateDeferred { it.isEmpty() }
         writeEntityHandle.dispatchRemove(entity1)
-        heardTheDelete.await()
+        heardTheDelete.join()
 
         // Reference should be dead. (Removed entities currently aren't actually deleted, but
         // instead are "nulled out".)
@@ -585,7 +583,7 @@ open class HandleManagerTestBase {
 
         var received = Job()
         var size = 3
-        readHandle.onUpdate { if (it.size == size) received.complete() }
+        readHandle.onUpdate { if (readHandle.size() == size) received.complete() }
 
         // Verify store.
         writeHandle.dispatchStore(entity1, entity2, entity3)
@@ -644,33 +642,33 @@ open class HandleManagerTestBase {
         )
 
         // handle1 -> handle2
-        val received1to2 = CompletableDeferred<Set<Person>>()
-        handle2.onUpdate { if (it.size == 3) received1to2.complete(it) }
+        val received1to2 = Job()
+        handle2.onUpdate { if (handle2.size() == 3) received1to2.complete() }
 
         // Verify that handle2 sees entities stored by handle1.
         handle1.dispatchStore(entity1, entity2, entity3)
-        assertThat(received1to2.await()).containsExactly(entity1, entity2, entity3)
+        received1to2.join()
         assertThat(handle2.dispatchSize()).isEqualTo(3)
         assertThat(handle2.dispatchIsEmpty()).isEqualTo(false)
         assertThat(handle2.dispatchFetchAll()).containsExactly(entity1, entity2, entity3)
 
         // handle2 -> handle1
-        var received2to1 = CompletableDeferred<Set<Person>>()
+        var received2to1 = Job()
         var size2to1 = 2
-        handle1.onUpdate { if (it.size == size2to1) received2to1.complete(it) }
+        handle1.onUpdate { if (handle1.size() == size2to1) received2to1.complete() }
 
         // Verify that handle2 can remove entities stored by handle1.
         handle2.dispatchRemove(entity2)
-        assertThat(received2to1.await()).containsExactly(entity1, entity3)
+        received2to1.join()
         assertThat(handle1.dispatchSize()).isEqualTo(2)
         assertThat(handle1.dispatchIsEmpty()).isEqualTo(false)
         assertThat(handle1.dispatchFetchAll()).containsExactly(entity1, entity3)
 
         // Verify that handle1 sees an empty collection after a clear op from handle2.
-        received2to1 = CompletableDeferred()
+        received2to1 = Job()
         size2to1 = 0
         handle2.dispatchClear()
-        assertThat(received2to1.await()).isEmpty()
+        received2to1.join()
         assertThat(handle1.dispatchSize()).isEqualTo(0)
         assertThat(handle1.dispatchIsEmpty()).isEqualTo(true)
         assertThat(handle1.dispatchFetchAll()).isEmpty()
@@ -709,9 +707,10 @@ open class HandleManagerTestBase {
             entitySpec = TestParticle_Entities
         )
 
-        val updateDeferred = readHandle.onUpdateDeferred { it.size == 1 }
+        val updateDeferred = readHandle.onUpdateDeferred { it.size() == 1 }
         writeHandle.dispatchStore(entity)
-        assertThat(updateDeferred.await()).containsExactly(entity)
+        updateDeferred.join()
+        assertThat(readHandle.dispatchFetchAll()).containsExactly(entity)
     }
 
     @Test
@@ -741,9 +740,10 @@ open class HandleManagerTestBase {
             entitySpec = TestInlineParticle_Entities
         )
 
-        val updateDeferred = readHandle.onUpdateDeferred { it.size == 1 }
+        val updateDeferred = readHandle.onUpdateDeferred { it.size() == 1 }
         writeHandle.dispatchStore(entity)
-        assertThat(updateDeferred.await()).containsExactly(entity)
+        updateDeferred.join()
+        assertThat(readHandle.dispatchFetchAll()).containsExactly(entity)
     }
 
     @Test
@@ -786,9 +786,10 @@ open class HandleManagerTestBase {
             entitySpec = TestReferencesParticle_Entities
         )
 
-        val updateDeferred = readHandle.onUpdateDeferred { it.size == 3 }
+        val updateDeferred = readHandle.onUpdateDeferred { it.size() == 3 }
         entities.forEach { writeHandle.dispatchStore(it) }
-        val entitiesOut = updateDeferred.await()
+        updateDeferred.join()
+        val entitiesOut = readHandle.dispatchFetchAll()
         assertThat(entitiesOut).containsExactlyElementsIn(entities)
         entitiesOut.forEach { entity ->
             entity.references.forEach { it.dereference() }
@@ -852,14 +853,14 @@ open class HandleManagerTestBase {
         val writeHandle = writeHandleManager.createCollectionHandle()
         val readHandle = readHandleManager.createCollectionHandle()
         val monitorHandle = monitorHandleManager.createCollectionHandle()
-        val monitorInitialized = monitorHandle.onUpdateDeferred { it.size == 2 }
-        val readUpdated = readHandle.onUpdateDeferred { it.size == 2 }
+        val monitorInitialized = monitorHandle.onUpdateDeferred { it.size() == 2 }
+        val readUpdated = readHandle.onUpdateDeferred { it.size() == 2 }
 
         writeHandle.dispatchStore(entity1, entity2)
         log("wrote entity1 and entity2 to writeHandle")
 
-        monitorInitialized.await()
-        readUpdated.await()
+        monitorInitialized.join()
+        readUpdated.join()
         log("readHandle and the ramDisk have heard of the update")
 
         readHandle.dispatchFetchAll()
@@ -894,7 +895,7 @@ open class HandleManagerTestBase {
 
         val fez = Hat(entityId = "fez-id", style = "fez")
         val hatMonitorKnows = hatMonitor.onUpdateDeferred {
-            it.find { hat -> hat.entityId == "fez-id" } != null
+            it.fetchAll().find { hat -> hat.entityId == "fez-id" } != null
         }
         hatCollection.dispatchStore(fez)
         val fezRef = hatCollection.dispatchCreateReference(fez)
@@ -913,19 +914,19 @@ open class HandleManagerTestBase {
             )
         )
         val readHandleKnows = readHandle.onUpdateDeferred {
-            it.find { person -> person.entityId == "a-hatted-individual" } != null
+            it.fetchAll().find { person -> person.entityId == "a-hatted-individual" } != null
         }
         writeHandle.dispatchStore(personWithHat)
 
         // Read out the entity, and fetch its hat.
-        readHandleKnows.await()
+        readHandleKnows.join()
         val entityOut = readHandle.dispatchFetchAll().single {
             it.entityId == "a-hatted-individual"
         }
         val hatRef = entityOut.coolnessIndex.hat!!
         assertThat(hatRef).isEqualTo(fezStorageRef)
 
-        hatMonitorKnows.await()
+        hatMonitorKnows.join()
         val rawHat = hatRef.dereference()!!
         val hat = Hat.deserialize(rawHat)
         assertThat(hat).isEqualTo(fez)
@@ -943,8 +944,8 @@ open class HandleManagerTestBase {
         fakeTime.millis = expectedCreateTime
 
         handle.dispatchStore(entity1)
-        monitorNotified.await()
-        handleBChanged.await()
+        monitorNotified.join()
+        handleBChanged.join()
 
         val readBack = handleB.dispatchFetchAll().first { it.entityId == entity1.entityId }
         assertThat(readBack.creationTimestamp).isEqualTo(expectedCreateTime)
@@ -958,7 +959,7 @@ open class HandleManagerTestBase {
         val handleB = readHandleManager.createCollectionHandle()
         var handleBChanged = handleB.onUpdateDeferred()
         handle.dispatchStore(entity1)
-        handleBChanged.await()
+        handleBChanged.join()
 
         val readBack = handleB.dispatchFetchAll().first { it.entityId == entity1.entityId }
         assertThat(readBack.creationTimestamp).isEqualTo(0)
@@ -967,7 +968,7 @@ open class HandleManagerTestBase {
         val handleC = readHandleManager.createCollectionHandle(ttl = Ttl.Minutes(2))
         handleBChanged = handleB.onUpdateDeferred()
         handleC.dispatchStore(entity2)
-        handleBChanged.await()
+        handleBChanged.join()
         val readBack2 = handleB.dispatchFetchAll().first { it.entityId == entity2.entityId }
         assertThat(readBack2.creationTimestamp).isEqualTo(0)
         assertThat(readBack2.expirationTimestamp).isEqualTo(2 * 60 * 1000)
@@ -987,7 +988,7 @@ open class HandleManagerTestBase {
         // Create and store an entity with no TTL.
         val updated = entityHandle.onUpdateDeferred()
         entityHandle.dispatchStore(entity1)
-        updated.await()
+        updated.join()
 
         // Create and store a reference with TTL.
         val entity1Ref = entityHandle.dispatchCreateReference(entity1)
@@ -1007,16 +1008,9 @@ open class HandleManagerTestBase {
         val writeHandle = writeHandleManager.createCollectionHandle()
         val readHandle = readHandleManager.createCollectionHandle()
 
-        val readUpdatedTwice = readHandle.onUpdateDeferred {
-            log("B.onUpdate(${it.map(Person::entityId)})")
-            it.size == 2
-        }
-
-        log("Writing entities to A")
+        val readUpdatedTwice = readHandle.onUpdateDeferred { it.size() == 2 }
         writeHandle.dispatchStore(entity1, entity2)
-
-        log("Waiting for entities on B")
-        readUpdatedTwice.await()
+        readUpdatedTwice.join()
 
         // Ensure that the query argument is being used.
         assertThat(readHandle.dispatchQuery(21.0)).containsExactly(entity1)
@@ -1069,14 +1063,14 @@ open class HandleManagerTestBase {
         }
         val monitorSawEntities = monitorHandle.onUpdateDeferred {
             log("First batch of entities - so far: $it")
-            it.size == 2
+            it.size() == 2
         }
         writeEntityHandle.dispatchStore(entity1, entity2)
 
         // Wait for the monitor to see the entities (monitor handle is on a separate storage proxy
         // with a separate stores-cache, so it requires the entities to have made it to the storage
         // media.
-        monitorSawEntities.await()
+        monitorSawEntities.join()
 
         // Create a store a reference to the entity.
         val entity1Ref = writeEntityHandle.dispatchCreateReference(entity1)
@@ -1085,12 +1079,12 @@ open class HandleManagerTestBase {
         val readRefHandle = readHandleManager.createReferenceCollectionHandle()
         val refWritesHappened = readRefHandle.onUpdateDeferred {
             log("References created so far: $it")
-            it.size == 2
+            it.size() == 2
         }
         writeRefHandle.dispatchStore(entity1Ref, entity2Ref)
 
         // Now read back the references from a different handle.
-        refWritesHappened.await()
+        refWritesHappened.join()
         var references = readRefHandle.dispatchFetchAll()
         assertThat(references).containsExactly(entity1Ref, entity2Ref)
 
@@ -1107,10 +1101,10 @@ open class HandleManagerTestBase {
         val modEntity2 = entity2.copy(name = "Ben")
         val entitiesWritten = monitorHandle.onUpdateDeferred {
             log("Heard update with $it")
-            it.all { person -> person.name == "Ben" }
+            it.fetchAll().all { person -> person.name == "Ben" }
         }
         writeEntityHandle.dispatchStore(modEntity1, modEntity2)
-        entitiesWritten.await()
+        entitiesWritten.join()
 
         // Reference should still be alive.
         references = readRefHandle.dispatchFetchAll()
@@ -1126,7 +1120,7 @@ open class HandleManagerTestBase {
         // Remove the entities from the collection.
         val entitiesDeleted = monitorHandle.onUpdateDeferred { it.isEmpty() }
         writeEntityHandle.dispatchRemove(entity1, entity2)
-        entitiesDeleted.await()
+        entitiesDeleted.join()
 
         log("Checking that they are empty when de-referencing.")
 
@@ -1230,12 +1224,13 @@ open class HandleManagerTestBase {
         ttl
     ).also { it.awaitReady() } as ReadWriteQueryCollectionHandle<Reference<Person>, Any>
 
-    private fun <T> ReadableHandle<T>.onUpdateDeferred(
-        predicate: (T) -> Boolean = { true }
-    ): Deferred<T> = CompletableDeferred<T>().also { deferred ->
+    // Note the predicate receives the *handle*, not onUpdate's delta argument.
+    private fun <H : ReadableHandle<T, U>, T, U> H.onUpdateDeferred(
+        predicate: (H) -> Boolean = { true }
+    ) = Job().also { deferred ->
         onUpdate {
-            if (deferred.isActive && predicate(it)) {
-                deferred.complete(it)
+            if (deferred.isActive && predicate(this)) {
+                deferred.complete()
             }
         }
     }
