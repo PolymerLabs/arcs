@@ -11,6 +11,8 @@
 
 package arcs.core.data.expression
 
+import java.math.BigInteger
+
 /**
  * A DSL for expressions used by queries, refinements, and adapters. Instances can be constructed
  * directly, from protos or deserialization, and eventually, from a Kotlin implementation of
@@ -95,53 +97,49 @@ sealed class Expression<T> {
 
         /** Numeric 'less than' comparison of two numeric arguments, returning Boolean. */
         object LessThan : BinaryOp<Number, Number, Boolean>() {
-            override operator fun invoke(l: Number, r: Number): Boolean =
-                l.toDouble() < r.toDouble()
+            override operator fun invoke(l: Number, r: Number): Boolean = l < r
             override val token = "<"
         }
 
         /** Numeric 'greater than' comparison of two numeric arguments, returning Boolean. */
         object GreaterThan : BinaryOp<Number, Number, Boolean>() {
-            override operator fun invoke(l: Number, r: Number): Boolean =
-                l.toDouble() > r.toDouble()
+            override operator fun invoke(l: Number, r: Number): Boolean = l > r
             override val token = ">"
         }
 
         /** Numeric 'less than equals' comparison of two numeric arguments, returning Boolean. */
         object LessThanOrEquals : BinaryOp<Number, Number, Boolean>() {
-            override operator fun invoke(l: Number, r: Number): Boolean =
-                l.toDouble() <= r.toDouble()
+            override operator fun invoke(l: Number, r: Number): Boolean = l <= r
             override val token = "<="
         }
 
         /** Numeric 'greater than equals' comparison of two numeric arguments, returning Boolean. */
         object GreaterThanOrEquals : BinaryOp<Number, Number, Boolean>() {
-            override operator fun invoke(l: Number, r: Number): Boolean =
-                l.toDouble() >= r.toDouble()
+            override operator fun invoke(l: Number, r: Number): Boolean = l >= r
             override val token = ">="
         }
 
         /** Numeric addition (Double Precision). */
         object Add : BinaryOp<Number, Number, Number>() {
-            override operator fun invoke(l: Number, r: Number): Number = l.toDouble() + r.toDouble()
+            override operator fun invoke(l: Number, r: Number): Number = l + r
             override val token = "+"
         }
 
         /** Numeric subtraction (Double Precision). */
         object Subtract : BinaryOp<Number, Number, Number>() {
-            override operator fun invoke(l: Number, r: Number): Number = l.toDouble() - r.toDouble()
+            override operator fun invoke(l: Number, r: Number): Number = l - r
             override val token = "-"
         }
 
         /** Numeric multiplication (Double Precision). */
         object Multiply : BinaryOp<Number, Number, Number>() {
-            override operator fun invoke(l: Number, r: Number): Number = l.toDouble() * r.toDouble()
+            override operator fun invoke(l: Number, r: Number): Number = l * r
             override val token = "*"
         }
 
         /** Numeric division (Double Precision). */
         object Divide : BinaryOp<Number, Number, Number>() {
-            override operator fun invoke(l: Number, r: Number): Number = l.toDouble() / r.toDouble()
+            override operator fun invoke(l: Number, r: Number): Number = l / r
             override val token = "/"
         }
 
@@ -202,7 +200,7 @@ sealed class Expression<T> {
 
         /** Numeric negation. */
         object Negate : UnaryOp<Number, Number>() {
-            override operator fun invoke(expression: Number): Number = -expression.toDouble()
+            override operator fun invoke(expression: Number): Number = -expression
             override val token = "-"
         }
 
@@ -222,12 +220,13 @@ sealed class Expression<T> {
      * @param R the type of the right side expression
      * @param T the resulting type of the expression
      */
-    class BinaryExpression<L, R, T>(
+    data class BinaryExpression<L, R, T>(
         val op: BinaryOp<L, R, T>,
         val left: Expression<L>,
         val right: Expression<R>
     ) : Expression<T>() {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+        override fun toString() = this.stringify()
     }
 
     /**
@@ -235,8 +234,12 @@ sealed class Expression<T> {
      * @param E the type of the expression to apply the [UnaryOp] to
      * @param T the result type of the expression after applying the [UnaryOp]
      */
-    class UnaryExpression<E, T>(val op: UnaryOp<E, T>, val expr: Expression<E>) : Expression<T>() {
+    data class UnaryExpression<E, T>(
+        val op: UnaryOp<E, T>,
+        val expr: Expression<E>
+    ) : Expression<T>() {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+        override fun toString() = this.stringify()
     }
 
     /**
@@ -244,17 +247,19 @@ sealed class Expression<T> {
      * @param E the type of the qualifying expression
      * @param T the type of the expression yielded by looking up the field
      */
-    class FieldExpression<E : Scope, T>(val qualifier: Expression<E>, val field: String) :
+    data class FieldExpression<E : Scope, T>(val qualifier: Expression<E>, val field: String) :
         Expression<T>() {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+        override fun toString() = this.stringify()
     }
 
     /**
      *  Represents a query parameter (supplied during execution) identified by [paramIdentifier].
      *  @param T the type of the resulting query parameter
      */
-    class QueryParameterExpression<T>(val paramIdentifier: String) : Expression<T>() {
+    data class QueryParameterExpression<T>(val paramIdentifier: String) : Expression<T>() {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+        override fun toString() = this.stringify()
     }
 
     /**
@@ -264,14 +269,38 @@ sealed class Expression<T> {
      * @param T the type of the resulting lookup
      */
     class CurrentScopeExpression<T : Scope> : Expression<T>() {
+
         override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is CurrentScopeExpression<*>) return false
+            return true
+        }
+
+        override fun hashCode(): Int {
+            return javaClass.hashCode()
+        }
     }
 
     /**
      * Base class for all simple immutable values in an expression.
      * @param T the type of the literal value
      */
-    abstract class LiteralExpression<T>(val value: T) : Expression<T>()
+    abstract class LiteralExpression<T>(val value: T) : Expression<T>() {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is LiteralExpression<*>) return false
+
+            if (value != other.value) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            return value?.hashCode() ?: 0
+        }
+    }
 
     /**
      * A reference to an object (typically implementing [Scope].
@@ -296,3 +325,76 @@ sealed class Expression<T> {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
     }
 }
+
+/**
+ * Although this function looks weird, it exists to overcoem a shortcoming in Kotlin's numeric
+ * type hierarchy, namely that operator overloads don't exist on [Number], and [BigInteger]
+ * doesn't have them either. This function also widens types to the nearest compatible type
+ * for the operation (e.g. Double, Long, Int, or BigInteger) and then narrows the type afterwards.
+ * Currently, Double + BigInteger and Float + BigInteger will not return the right answer, unless
+ * we either round the Double, or truncate the BigInteger, at least until we perhaps support
+ * [BigDecimal].
+ * TODO: Write out own BigInt facade that is multiplatform and works on JS/JVM/WASM.
+ */
+private fun widenAndApply(
+    l: Number,
+    r: Number,
+    floatBlock: (Double, Double) -> Number,
+    longBlock: (Long, Long) -> Number,
+    intBlock: (Int, Int) -> Number,
+    bigBlock: (BigInteger, BigInteger) -> Number
+): Number {
+    if (l is Double || r is Double) return floatBlock(l.toDouble(), r.toDouble())
+    if (l is Float || r is Float) return floatBlock(l.toDouble(), r.toDouble()).toFloat()
+    if (l is BigInteger || r is BigInteger) return bigBlock(l.toBigInteger(), r.toBigInteger())
+    if (l is Long || r is Long) return longBlock(l.toLong(), r.toLong())
+    if (l is Int || r is Int) return intBlock(l.toInt(), r.toInt())
+    if (l is Short || r is Short) return intBlock(l.toInt(), r.toInt()).toShort()
+    if (l is Byte || r is Byte) return intBlock(l.toInt(), r.toInt()).toByte()
+    throw IllegalArgumentException("Unable to widenType for ${l::class}, ${r::class}")
+}
+
+private fun Number.toBigInteger(): BigInteger = when (this) {
+    is BigInteger -> this
+    else -> this.toLong().toBigInteger()
+}
+
+private operator fun Number.compareTo(other: Number) = (this as Comparable<Number>).compareTo(other)
+
+private operator fun Number.plus(other: Number): Number {
+    return widenAndApply(this, other,
+        { l, r -> l + r },
+        { l, r -> l + r },
+        { l, r -> l + r },
+        { l, r -> l.add(r) }
+    )
+}
+
+private operator fun Number.minus(other: Number): Number {
+    return widenAndApply(this, other,
+        { l, r -> l - r },
+        { l, r -> l - r },
+        { l, r -> l - r },
+        { l, r -> l.subtract(r) }
+    )
+}
+
+private operator fun Number.times(other: Number): Number {
+    return widenAndApply(this, other,
+        { l, r -> l * r },
+        { l, r -> l * r },
+        { l, r -> l * r },
+        { l, r -> l.multiply(r) }
+    )
+}
+
+private operator fun Number.div(other: Number): Number {
+    return widenAndApply(this, other,
+        { l, r -> l / r },
+        { l, r -> l / r },
+        { l, r -> l / r },
+        { l, r -> l.divide(r) }
+    )
+}
+
+private operator fun Number.unaryMinus() = this * -1

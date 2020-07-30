@@ -14,11 +14,28 @@
  * are mostly used for testing. */
 package arcs.core.data.expression
 
+import java.math.BigInteger
+
 /** Constructs a [Expression.NumberLiteralExpression] */
 fun Double.asExpr() = Expression.NumberLiteralExpression(this)
 
 /** Constructs a [Expression.NumberLiteralExpression] */
+fun Float.asExpr() = Expression.NumberLiteralExpression(this)
+
+/** Constructs a [Expression.NumberLiteralExpression] */
 fun Int.asExpr() = Expression.NumberLiteralExpression(this)
+
+/** Constructs a [Expression.NumberLiteralExpression] */
+fun Long.asExpr() = Expression.NumberLiteralExpression(this)
+
+/** Constructs a [Expression.NumberLiteralExpression] */
+fun Short.asExpr() = Expression.NumberLiteralExpression(this)
+
+/** Constructs a [Expression.NumberLiteralExpression] */
+fun Byte.asExpr() = Expression.NumberLiteralExpression(this)
+
+/** Constructs a [Expression.NumberLiteralExpression] */
+fun BigInteger.asExpr() = Expression.NumberLiteralExpression(this)
 
 /** Constructs a [Expression.TextLiteralExpression] */
 fun String.asExpr() = Expression.TextLiteralExpression(this)

@@ -15,6 +15,7 @@ import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.VersionMap
 import arcs.core.data.Schema.Companion.hashCode
 import arcs.core.data.expression.Expression
+import arcs.core.data.expression.asExpr
 import arcs.core.data.expression.asScope
 import arcs.core.data.expression.evalExpression
 import arcs.core.type.Type
@@ -33,14 +34,8 @@ data class Schema(
      * method.
      */
     val hash: String,
-    val refinementExpression: Expression<Boolean> = Expression.BooleanLiteralExpression(true),
-    val queryExpression: Expression<Boolean> = Expression.BooleanLiteralExpression(true),
-    val refinement: Refinement = { rawEntity ->
-        evalExpression(refinementExpression, rawEntity.asScope())
-    },
-    val query: Query? = { data, args ->
-        evalExpression(queryExpression, data.asScope(), "queryArgument" to args)
-    }
+    val refinementExpression: Expression<Boolean> = true.asExpr(),
+    val queryExpression: Expression<Boolean> = true.asExpr()
 ) {
     val name: SchemaName?
         get() = names.firstOrNull()
@@ -50,6 +45,14 @@ data class Schema(
             singletonFields = fields.singletons.keys,
             collectionFields = fields.collections.keys
         )
+
+    val refinement: Refinement = { rawEntity ->
+        evalExpression(refinementExpression, rawEntity.asScope())
+    }
+
+    val query: Query? = { data, args ->
+        evalExpression(queryExpression, data.asScope(), "queryArgument" to args)
+    }
 
     fun toLiteral(): Literal = Literal(names, fields, hash)
 

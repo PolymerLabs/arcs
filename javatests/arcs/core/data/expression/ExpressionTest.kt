@@ -16,8 +16,6 @@ import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import arcs.core.data.expression.Expression.*
-import arcs.core.data.expression.Expression.BinaryOp.*
 
 /** Tests for [Expression]. */
 @RunWith(JUnit4::class)
@@ -133,10 +131,13 @@ class ExpressionTest {
     @Suppress("UNCHECKED_CAST")
     fun testJsonSerialization() {
         val q = query<Expression.Scope>("arg")
-        val field = Expression.FieldExpression<Expression.Scope, Number>(q , "bar")
-        val baz = currentScope.get("baz") as Expression.FieldExpression<CurrentScope<Any>, Expression.Scope>
+        val field = Expression.FieldExpression<Expression.Scope, Number>(q, "bar")
+        val baz = currentScope.get(
+            "baz"
+        ) as Expression.FieldExpression<CurrentScope<Any>, Expression.Scope>
         val x: Expression<Number> = baz["x"]
-        val expr = (x + 2.0.asExpr() + (3.asExpr() * 4.asExpr()) + field - 1.asExpr()) / 2.asExpr()
+        val expr = (x + 2.0.asExpr() + (3f.asExpr() * 4L.asExpr()) + field - 1.toByte().asExpr()) /
+            2.toBigInteger().asExpr()
         val json = expr.serialize()
         val parsed = json.deserializeExpression() as Expression<Number>
         assertThat(evalExpression<Number, Number>(
@@ -144,9 +145,5 @@ class ExpressionTest {
             currentScope,
             "arg" to mapOf("bar" to 5).asScope()
         )).isEqualTo(21.0)
-    }
-
-    fun foo() {
-        val expr = (CurrentScope<Number>(mapOf())["name"] eq query("queryArgument")) and (CurrentScope<Number>(mapOf())["lastCall"] lt 259200.0.asExpr())
     }
 }

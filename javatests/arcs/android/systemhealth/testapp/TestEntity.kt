@@ -57,9 +57,7 @@ class TestEntity(
                 ),
                 collections = emptyMap()
             ),
-            schemaHash,
-            refinement = { _ -> true },
-            query = null
+            schemaHash
         )
 
         init {

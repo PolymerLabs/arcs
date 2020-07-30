@@ -13,13 +13,13 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SchemaRegistry
+import arcs.core.data.SingletonType
 import arcs.core.data.expression.CurrentScope
 import arcs.core.data.expression.asExpr
 import arcs.core.data.expression.eq
-import arcs.core.data.expression.gt
 import arcs.core.data.expression.get
+import arcs.core.data.expression.gt
 import arcs.core.data.expression.query
-import arcs.core.data.SingletonType
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
@@ -1364,7 +1364,7 @@ open class HandleManagerTestBase {
 
         companion object : EntitySpec<Person> {
 
-            private val queryByAge = CurrentScope<Number>(mapOf())["age"] eq query("1")
+            private val queryByAge = CurrentScope<Number>(mapOf())["age"] eq query("queryArgument")
             private val refinementAgeGtZero = CurrentScope<Number>(mapOf())["age"] gt 0.asExpr()
 
             @Suppress("UNCHECKED_CAST")

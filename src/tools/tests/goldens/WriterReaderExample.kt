@@ -27,8 +27,8 @@ val IngestionOnly_Handle0 = Handle(
                 collections = emptyMap()
             ),
             "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
-            refinement = { _ -> true },
-            query = null
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
         )
     ),
     listOf(

@@ -25,8 +25,12 @@ class RawEntityScope(val rawEntity: RawEntity) : Expression.Scope {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> lookup(param: String): T {
-        val referencable = rawEntity.allData.find { (name, _) -> name == param }
-        return when (val value = referencable?.value) {
+        val referencable =
+            rawEntity.allData.find { (name, _) -> name == param } ?: throw IllegalArgumentException(
+                "Unknown field $param"
+            )
+
+        return when (val value = referencable.value) {
             is ReferencablePrimitive<*> -> {
                 value.value as T
             }
