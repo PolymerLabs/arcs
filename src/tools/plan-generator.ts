@@ -115,9 +115,12 @@ export class PlanGenerator {
     const mode = this.createHandleMode(connection.direction, connection.type);
     const type = await generateConnectionType(connection);
     const annotations = PlanGenerator.createAnnotations(connection.handle.annotations);
+    const args = [handle, mode, type, annotations];
+    if (connection.spec.expression) {
+      args.push(quote(connection.spec.expression));
+    }
 
-    return ktUtils.applyFun('HandleConnection', [handle, mode, type, annotations],
-        {startIndent: 24});
+    return ktUtils.applyFun('HandleConnection', args, {startIndent: 24});
   }
 
   /** Generates a Kotlin `HandleMode` from a Direction and Type. */

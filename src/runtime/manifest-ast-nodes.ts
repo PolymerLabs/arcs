@@ -350,6 +350,7 @@ export interface ParticleHandleConnection extends BaseNode {
   name: string;
   tags: TagList;
   annotations: AnnotationRef[];
+  expression: Expression;
 }
 
 export type ParticleItem = ParticleModality | ParticleSlotConnection | Description | ParticleHandleConnection;
@@ -778,6 +779,8 @@ export interface SchemaAlias extends BaseNode {
   items: SchemaItem[];
   alias: string;
 }
+
+export type Expression = ExpressionEntity;
 
 export interface ExpressionEntity extends BaseNode {
   kind: 'expression-entity';

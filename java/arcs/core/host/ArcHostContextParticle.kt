@@ -72,7 +72,8 @@ class ArcHostContextParticle(
                         planHandle = handles.planHandles.createReference(planHandle),
                         storageKey = handle.value.storageKey.toString(),
                         mode = handle.value.mode.name, type = handle.value.type.tag.name,
-                        ttl = handle.value.ttl.minutes.toDouble()
+                        ttl = handle.value.ttl.minutes.toDouble(),
+                        expression = handle.value.expression ?: ""
                     )
                 }
             }
@@ -203,7 +204,8 @@ class ArcHostContextParticle(
                 listOf(Annotation.createTtl("$handle.ttl minutes"))
             } else {
                 emptyList()
-            }
+            },
+            handle.expression.ifEmpty { null }
         )
     }.toSet().associateBy({ it.first }, { it.second })
 
