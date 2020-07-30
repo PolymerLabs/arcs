@@ -1195,6 +1195,7 @@ interface TypeVariableInfoLiteral {
   name: string;
   canWriteSuperset?: TypeLiteral;
   canReadSubset?: TypeLiteral;
+  resolveToMaxType: boolean;
 }
 
 export class TypeVariableInfo {
@@ -1408,7 +1409,8 @@ export class TypeVariableInfo {
     return {
       name: this.name,
       canWriteSuperset: this._canWriteSuperset && this._canWriteSuperset.toLiteral(),
-      canReadSubset: this._canReadSubset && this._canReadSubset.toLiteral()
+      canReadSubset: this._canReadSubset && this._canReadSubset.toLiteral(),
+      resolveToMaxType: this._resolveToMaxType
     };
   }
 
@@ -1416,7 +1418,9 @@ export class TypeVariableInfo {
     return new TypeVariableInfo(
         data.name,
         data.canWriteSuperset ? Type.fromLiteral(data.canWriteSuperset) : null,
-        data.canReadSubset ? Type.fromLiteral(data.canReadSubset) : null);
+        data.canReadSubset ? Type.fromLiteral(data.canReadSubset) : null,
+        data.resolveToMaxType
+    );
   }
 
   isResolved(): boolean {
