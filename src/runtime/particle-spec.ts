@@ -424,6 +424,20 @@ export class ParticleSpec {
     return !this.isolated;
   }
 
+  /**
+   * Returns the egress type of this particle, according to the `@egress`
+   * annotation on it. Returns null if no egress type was supplied, or if the
+   * particle is not an egress particle.
+   */
+  get egressType(): string | null {
+    const egressAnnotation = this.getAnnotation('egress');
+    if (!egressAnnotation) {
+      return null;
+    }
+    const egressType = egressAnnotation.params['type'];
+    return egressType == null ? null : egressType as string;
+  }
+
   isCompatible(modality: Modality): boolean {
     return this.slandleConnectionNames().length === 0 || this.modality.intersection(modality).isResolved();
   }

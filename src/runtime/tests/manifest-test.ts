@@ -4566,6 +4566,9 @@ recipe
 
       @egress
       particle EgressingParticle
+
+      @egress('SpecialEgressType')
+      particle SpecialEgressingParticle
     `));
     const recipe = manifest.recipes[0];
     const recipeAnnotations = recipe.annotations;
@@ -4589,6 +4592,11 @@ recipe
     assert.lengthOf(egressParticleAnnotations, 1);
     assert.equal(egressParticleAnnotations[0].name, 'egress');
     assert.lengthOf(Object.entries(egressParticleAnnotations[0].params), 0);
+
+    const specialEgressParticleAnnotations = manifest.findParticleByName('SpecialEgressingParticle').annotations;
+    assert.lengthOf(specialEgressParticleAnnotations, 1);
+    assert.equal(specialEgressParticleAnnotations[0].name, 'egress');
+    assert.deepEqual(specialEgressParticleAnnotations[0].params, {type: 'SpecialEgressType'});
   });
 
   describe('isolated and egress particles', () => {
@@ -4607,6 +4615,17 @@ recipe
       `);
       assert.isTrue(manifest.particles[0].egress);
       assert.isFalse(manifest.particles[0].isolated);
+      assert.isNull(manifest.particles[0].egressType);
+    });
+
+    it('egress annotation with type works', async () => {
+      const manifest = await Manifest.parse(`
+        @egress('MyEgressType')
+        particle P
+      `);
+      assert.isTrue(manifest.particles[0].egress);
+      assert.isFalse(manifest.particles[0].isolated);
+      assert.strictEqual(manifest.particles[0].egressType, 'MyEgressType');
     });
 
     it('isolated annotation works', async () => {

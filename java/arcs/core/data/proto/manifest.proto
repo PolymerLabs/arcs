@@ -79,6 +79,8 @@ message ParticleSpecProto {
   repeated CheckProto checks = 5;
   // Indicates whether the particle is an isolated (non-egress) particle.
   bool isolated = 6;
+  // Egress type of the particle. Optional, even if it is an egress particle.
+  string egress_type = 7;
 }
 
 // Defines a single connection of a particle spec.

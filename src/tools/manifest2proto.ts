@@ -76,6 +76,7 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
     claims,
     checks,
     isolated: spec.isolated,
+    egressType: spec.egressType,
   };
 }
 

@@ -214,6 +214,20 @@ describe('manifest2proto', () => {
     });
   });
 
+  it('encodes egress type in particle spec', async () => {
+    const manifest = await Manifest.parse(`
+      @egress('MyEgressType')
+      particle Abc
+    `);
+    assert.deepStrictEqual(await toProtoAndBack(manifest), {
+      particleSpecs: [{
+        name: 'Abc',
+        isolated: false,
+        egressType: 'MyEgressType'
+      }]
+    });
+  });
+
   it('encodes handle connection reads, writes and reads-writes', async () => {
     const manifest = await Manifest.parse(`
       particle Abc in 'a/b/c.js'
