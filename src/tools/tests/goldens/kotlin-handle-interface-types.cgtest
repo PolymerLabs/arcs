@@ -1,170 +1,170 @@
-[header]
+-----[header]-----
 Kotlin Handle Interface Types
 
 Expectations can be updated with:
 $ ./tools/sigh updateCodegenUnitTests
-[end_header]
+-----[end_header]-----
 
-[name]
+-----[name]-----
 read singleton entity
-[input]
+-----[input]-----
 particle P
   h: reads Thing {name: Text}
-[results]
+-----[results]-----
 arcs.sdk.ReadSingletonHandle<Thing>
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 write singleton entity
-[input]
+-----[input]-----
 particle P
   h: writes Thing {name: Text}
-[results]
+-----[results]-----
 arcs.sdk.WriteSingletonHandle<Thing>
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 read write singleton entity
-[input]
+-----[input]-----
 particle P
   h: reads writes Thing {name: Text}
-[results]
+-----[results]-----
 arcs.sdk.ReadWriteSingletonHandle<Thing>
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 read write anonymous entity
-[input]
+-----[input]-----
 particle P
   h: reads writes * {name: Text}
-[results]
+-----[results]-----
 arcs.sdk.ReadWriteSingletonHandle<P_H>
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 read collection of entities
-[input]
+-----[input]-----
 particle P
   h: reads [Thing {name: Text}]
-[results]
+-----[results]-----
 arcs.sdk.ReadCollectionHandle<Thing>
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 write collection of entities
-[input]
+-----[input]-----
 particle P
   h: writes [Thing {name: Text}]
-[results]
+-----[results]-----
 arcs.sdk.WriteCollectionHandle<Thing>
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 read write collection of entities
-[input]
+-----[input]-----
 particle P
   h: reads writes [Thing {name: Text}]
-[results]
+-----[results]-----
 arcs.sdk.ReadWriteCollectionHandle<Thing>
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 read collection of entities and query by string
-[input]
+-----[input]-----
 particle P
   h: reads [Thing {name: Text} [name == ?]]
-[results]
+-----[results]-----
 arcs.sdk.ReadQueryCollectionHandle<Thing, String>
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 read write collection of entities and query by number
-[input]
+-----[input]-----
 particle P
   h: reads writes [Thing {age: Number} [age > ?]]
-[results]
+-----[results]-----
 arcs.sdk.ReadWriteQueryCollectionHandle<Thing, Double>
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 read reference singleton
-[input]
+-----[input]-----
 particle P
   h: reads &Thing {name: Text}
-[results]
+-----[results]-----
 arcs.sdk.ReadSingletonHandle<arcs.sdk.Reference<Thing>>
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 write reference singleton
-[input]
+-----[input]-----
 particle P
   h: writes &Thing {name: Text}
-[results]
+-----[results]-----
 arcs.sdk.WriteSingletonHandle<arcs.sdk.Reference<Thing>>
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 read collection of references
-[input]
+-----[input]-----
 particle P
   h: reads [&Thing {name: Text}]
-[results]
+-----[results]-----
 arcs.sdk.ReadCollectionHandle<arcs.sdk.Reference<Thing>>
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 write collection of references
-[input]
+-----[input]-----
 particle P
   h: writes [&Thing {name: Text}]
-[results]
+-----[results]-----
 arcs.sdk.WriteCollectionHandle<arcs.sdk.Reference<Thing>>
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 read tuple of 2 references
-[input]
+-----[input]-----
 particle P
   h: reads (&Foo {name: Text}, &Bar {age: Number})
-[results]
+-----[results]-----
 arcs.sdk.ReadSingletonHandle<arcs.core.entity.Tuple2<arcs.sdk.Reference<Foo>, arcs.sdk.Reference<Bar>>>
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 write collection of tuples of 3 references
-[input]
+-----[input]-----
 particle P
   h: writes [(&Foo {name: Text}, &Bar {age: Number}, &Baz {isThisIt: Boolean})]
-[results]
+-----[results]-----
 arcs.sdk.WriteCollectionHandle<
     arcs.core.entity.Tuple3<arcs.sdk.Reference<Foo>, arcs.sdk.Reference<Bar>, arcs.sdk.Reference<Baz>>
 >
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 read singleton variable entity
-[input]
+-----[input]-----
 particle T
   h: reads ~a with {name: Text}
-[results]
+-----[results]-----
 arcs.sdk.ReadSingletonHandle<T_H>
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 write singleton variable entity
-[input]
+-----[input]-----
 particle T
   h: writes ~a with {name: Text}
-[results]
+-----[results]-----
 arcs.sdk.WriteSingletonHandle<T_H>
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 read write singleton unconstrained variable entity
-[input]
+-----[input]-----
 particle T
   h: reads writes ~a
-[results]
+-----[results]-----
 arcs.sdk.ReadWriteSingletonHandle<T_H>
-[end]
+-----[end]-----

@@ -1,16 +1,16 @@
-[header]
+-----[header]-----
 Kotlin Type Generation
 
 Expectations can be updated with:
 $ ./tools/sigh updateCodegenUnitTests
-[end_header]
+-----[end_header]-----
 
-[name]
+-----[name]-----
 generates an entity type
-[input]
+-----[input]-----
 particle Module
   data: reads {count: Number}
-[results]
+-----[results]-----
 arcs.core.data.EntityType(
     arcs.core.data.Schema(
         setOf(),
@@ -23,14 +23,14 @@ arcs.core.data.EntityType(
         queryExpression = true.asExpr()
     )
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates a collection of entities
-[input]
+-----[input]-----
 particle Module
   data: reads [Thing {name: Text}]
-[results]
+-----[results]-----
 arcs.core.data.CollectionType(
     arcs.core.data.EntityType(
         arcs.core.data.Schema(
@@ -45,14 +45,14 @@ arcs.core.data.CollectionType(
         )
     )
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates a reference type
-[input]
+-----[input]-----
 particle Module
   data: reads &Thing {name: Text}
-[results]
+-----[results]-----
 arcs.core.data.ReferenceType(
     arcs.core.data.EntityType(
         arcs.core.data.Schema(
@@ -67,4 +67,4 @@ arcs.core.data.ReferenceType(
         )
     )
 )
-[end]
+-----[end]-----

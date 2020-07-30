@@ -59,7 +59,7 @@ export abstract class CodegenUnitTest {
   /**
    * Calculates the codegen result for the given input.
    */
-  abstract async compute(input: string, opts: object): Promise<string | string[]>;
+  abstract async compute(input: string, opts: object, test: Test): Promise<string | string[]>;
 }
 
 /**
@@ -75,11 +75,14 @@ export abstract class ManifestCodegenUnitTest extends CodegenUnitTest {
     super(title, inputFileName);
   }
 
-  async compute(input: string, opts: object): Promise<string | string[]> {
-    return Flags.withFlags(this.flags, async () => this.computeFromManifest(await Manifest.parse(input), opts))();
+  async compute(input: string, opts: object, test: Test): Promise<string | string[]> {
+    return Flags.withFlags(this.flags, async () => {
+      const manifest = await Manifest.parse(input, {fileName: `${this.inputFileName}: ${test.name}`});
+      return this.computeFromManifest(manifest, opts, test);
+    })();
   }
 
-  abstract async computeFromManifest(manifest: Manifest, opts: object): Promise<string | string[]>;
+  abstract async computeFromManifest(manifest: Manifest, opts: object, test: Test): Promise<string | string[]>;
 }
 
 // Internal utilities below
@@ -89,7 +92,7 @@ export abstract class ManifestCodegenUnitTest extends CodegenUnitTest {
  */
 export async function runCompute(testCase: CodegenUnitTest, test: Test): Promise<string[]> {
   Flags.reset();
-  const result = await testCase.compute(test.input, test.options);
+  const result = await testCase.compute(test.input, test.options, test);
   return Array.isArray(result) ? result : [result];
 }
 
@@ -100,17 +103,19 @@ export function readTests(unitTest: CodegenUnitTest): Test[] {
   let fileData = fs.readFileSync(unitTest.inputFilePath, 'utf-8');
   const tests: Test[] = [];
 
-  fileData = fileData.replace(/\[header\].*\[end_header\]\n*/sm, '');
+  // Separator.
+  const sep = (name: string, extra = '') => `-*\\[${name}${extra}\\]-*`;
 
-  const caseStrings = (fileData).split('\n[end]');
+  fileData = fileData.replace(new RegExp(`${sep('header')}.*${sep('end_header')}\n*`, 'sm'), '');
+  const caseStrings = (fileData).split(new RegExp(`\\n${sep('end')}`));
   for (const caseString of caseStrings) {
-    const caseAndRequire = caseString.match(/(.*)\n\[require\]\n(.*)/sm);
+    const caseAndRequire = caseString.match(new RegExp(`(.*)\\n${sep('require')}\\n(.*)`, 'sm'));
     const cases = caseAndRequire == null ? caseString : caseAndRequire[1];
     const require = caseAndRequire == null ? null : caseAndRequire[2].trim();
     if (cases.trim().length === 0) continue;
-    const matches = cases.match(
-      /\w*^\[name\]\n([^\n]*)(?:\n\[opts\]\n(.*))?\n\[input\]\n(.*)\n\[results(:per-line)?\]\n?(.*)/sm
-    );
+    const matches = cases.match(new RegExp(
+      `\\w*^${sep('name')}\\n([^\\n]*)(?:\\n${sep('opts')}\\n(.*))?\\n${sep('input')}\\n(.*)\\n${sep('results', '(:per-line)?')}\\n?(.*)`, 'sm'
+    ));
     if (!matches) {
       throw Error(`Cound not parse a test case: ${caseString}`);
     }
@@ -120,7 +125,7 @@ export function readTests(unitTest: CodegenUnitTest): Test[] {
       name: matches[1].trim(),
       options: JSON.parse(matches[2] || '{}'),
       input: matches[3],
-      results: matches[5].split(perLine ? '\n' : '\n[next]\n'),
+      results: matches[5].split(perLine ? '\n' : new RegExp(`\\n${sep('next')}\\n`)),
       require,
       perLine
     });
@@ -137,6 +142,11 @@ export async function regenerateInputFile(unit: CodegenUnitTest): Promise<number
 
   let updatedCount = 0;
 
+  // Separator.
+  function sep(name: string, extra = '') {
+    return `-----[${name}${extra}]-----`;
+  }
+
   const newTests = await Promise.all(tests.map(async test => {
     const results = await runCompute(unit, test);
 
@@ -145,30 +155,30 @@ export async function regenerateInputFile(unit: CodegenUnitTest): Promise<number
     }
 
     const optionsString = Object.entries(test.options).length === 0 ? '' : `\
-[opts]
+${sep('opts')}
 ${JSON.stringify(test.options)}
 `;
 
     return `\
-[name]
+${sep('name')}
 ${test.name}
-${optionsString}[input]
+${optionsString}${sep('input')}
 ${test.input}
-[results${test.perLine ? ':per-line' : ''}]
-${results.join(test.perLine ? '\n' : '\n[next]\n')}${test.require == null ? '' : `
-[require]
+${sep('results', test.perLine ? ':per-line' : '')}
+${results.join(test.perLine ? '\n' : `\n${sep('next')}\n`)}${test.require == null ? '' : `
+${sep('require')}
 ${test.require}`}
-[end]
+${sep('end')}
 `;
   }));
 
   const content = `\
-[header]
+${sep('header')}
 ${unit.title}
 
 Expectations can be updated with:
 $ ./tools/sigh updateCodegenUnitTests
-[end_header]
+${sep('end_header')}
 
 ${newTests.join('\n')}`;
 

@@ -1,16 +1,16 @@
-[header]
+-----[header]-----
 Kotlin Entity Class Generation
 
 Expectations can be updated with:
 $ ./tools/sigh updateCodegenUnitTests
-[end_header]
+-----[end_header]-----
 
-[name]
+-----[name]-----
 generates entity with a public constructor
-[input]
+-----[input]-----
 particle T
   h1: reads Thing {num: Number}
-[results]
+-----[results]-----
 
     @Suppress("UNCHECKED_CAST")
     class Thing(
@@ -70,16 +70,16 @@ particle T
             }
         }
     }
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates entity for WASM
-[opts]
+-----[opts]-----
 {"wasm":true}
-[input]
+-----[input]-----
 particle T
   h1: reads Thing {num: Number}
-[results]
+-----[results]-----
 
     @Suppress("UNCHECKED_CAST")
     class Thing(num: Double = 0.0) : WasmEntity {
@@ -150,14 +150,14 @@ particle T
             }
         }
     }
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates variable entity with private constructor
-[input]
+-----[input]-----
 particle T
   h1: reads ~a with {num: Number}
-[results]
+-----[results]-----
 
     @Suppress("UNCHECKED_CAST")
     class T_H1 private constructor(
@@ -225,4 +225,4 @@ particle T
             }
         }
     }
-[end]
+-----[end]-----

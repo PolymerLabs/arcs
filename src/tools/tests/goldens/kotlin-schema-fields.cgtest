@@ -1,13 +1,13 @@
-[header]
+-----[header]-----
 Kotlin Schema Fields
 
 Expectations can be updated with:
 $ ./tools/sigh updateCodegenUnitTests
-[end_header]
+-----[end_header]-----
 
-[name]
+-----[name]-----
 generates Kotlin Types
-[input]
+-----[input]-----
 particle Foo
   thing: reads Thing {
     field01: Number,
@@ -31,7 +31,7 @@ particle Foo
     field19: [&Ref2 {name: Text}],
     field20: List<&Ref3 {name: Text}>,
   }
-[results:per-line]
+-----[results:per-line]-----
 Double
 String
 String
@@ -52,15 +52,15 @@ List<Other3>
 arcs.sdk.Reference<Ref1>?
 Set<arcs.sdk.Reference<Ref2>>
 List<arcs.sdk.Reference<Ref3>>
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates Kotlin Types for reference to external schema
-[input]
+-----[input]-----
 schema Ref
   name: Text
 particle Foo
   num: reads Thing {ref: &Ref}
-[results]
+-----[results]-----
 arcs.sdk.Reference<Ref>?
-[end]
+-----[end]-----

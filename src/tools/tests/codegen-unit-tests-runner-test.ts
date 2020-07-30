@@ -24,6 +24,7 @@ for (const unit of testSuite) {
       it(test.name, async () => {
         assert.deepEqual(await runCompute(unit, test), test.results);
         if (test.require) {
+          // "results" is exposed for the eval'ed require expression.
           const results = test.results;
           test.require.split('\n').forEach(requireCase => assert.isTrue(eval(requireCase)));
         }
