@@ -118,7 +118,7 @@ export class PlanGenerator {
 
     const handle = this.handleVariableName(connection.handle);
     const mode = this.createHandleMode(connection.direction, connection.type);
-    const type = await generateConnectionType(connection);
+    const type = await generateConnectionType(connection, {namespace: this.namespace});
     const annotations = PlanGenerator.createAnnotations(connection.handle.annotations);
     const args = [handle, mode, type, annotations];
     if (connection.spec.expression) {

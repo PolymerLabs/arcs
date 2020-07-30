@@ -14,6 +14,7 @@ import {Manifest} from '../../runtime/manifest.js';
 import {AllocatorRecipeResolver} from '../allocator-recipe-resolver.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {IngressValidation} from '../../runtime/policy/ingress-validation.js';
+import {Loader} from '../../platform/loader.js';
 
 describe('plan generator', () => {
   it('imports arcs.core.data when the package is different', () => {
@@ -352,13 +353,60 @@ val ThingWriter_Handle0 = Handle(
     listOf(Annotation("ttl", mapOf("value" to AnnotationParam.Str("3d"))))
 )`);
   });
+  it('fully qualifies particle schemas when in different package name', async () => {
+    const loader = new Loader(null, {
+      '/particle.arcs': `
+        meta
+          namespace: foo.bar
+
+        particle ParticleFoo in '.ParticleFoo'
+          foo: writes Person {name: Text}
+      `,
+      '/recipe.arcs': `
+        meta
+          namespace: baz.foo
+        import './particle.arcs'
+
+        recipe R
+          h: create
+          ParticleFoo
+            foo: h
+      `,
+    });
+
+    const {generator, recipes} = await processManifest(await Manifest.load('/recipe.arcs', loader));
+
+    assert.deepStrictEqual(
+      await generator.createParticle(recipes[0].particles[0]),
+      `\
+Particle(
+    "ParticleFoo",
+    "foo.bar.ParticleFoo",
+    mapOf(
+        "foo" to HandleConnection(
+            R_Handle0,
+            HandleMode.Write,
+            arcs.core.data.SingletonType(arcs.core.data.EntityType(foo.bar.ParticleFoo_Foo.SCHEMA)),
+            emptyList()
+        )
+    )
+)`
+    );
+  });
 
   async function process(manifestString: string, policiesManifestString?: string): Promise<{
+    recipes: Recipe[],
+    generator: PlanGenerator,
+    plan: string
+  }> {
+    return processManifest(await Manifest.parse(manifestString), policiesManifestString);
+  }
+
+  async function processManifest(manifest: Manifest, policiesManifestString?: string): Promise<{
       recipes: Recipe[],
       generator: PlanGenerator,
       plan: string
   }> {
-    const manifest = await Manifest.parse(manifestString);
     const ingressValidation = policiesManifestString
         ? new IngressValidation((await Manifest.parse(policiesManifestString)).policies) : null;
     const recipes = await new AllocatorRecipeResolver(manifest, 'random_salt').resolve();
