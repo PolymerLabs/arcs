@@ -204,7 +204,7 @@ arcs.core.data.Schema(
     query = null
 )
 [require]
-test.results[0].match(/InlineEntity\("([a-f0-9]+)"\)/)[1] == test.results[1].match(/\n *"([a-f0-9]+)",\n/m)[1];
+results[0].match(/InlineEntity\("([a-f0-9]+)"\)/)[1] == results[1].match(/\n *"([a-f0-9]+)",\n/m)[1];
 [end]
 
 [name]
@@ -242,7 +242,7 @@ arcs.core.data.Schema(
     query = null
 )
 [require]
-test.results[0].match(/InlineEntity\("([a-f0-9]+)"\)/)[1] == test.results[1].match(/\n *"([a-f0-9]+)",\n/m)[1];
+results[0].match(/InlineEntity\("([a-f0-9]+)"\)/)[1] == results[1].match(/\n *"([a-f0-9]+)",\n/m)[1];
 [end]
 
 [name]
@@ -294,8 +294,8 @@ arcs.core.data.Schema(
     query = null
 )
 [require]
-test.results[0].match(/InlineEntity\("([a-f0-9]+)"\)/)[1] == test.results[1].match(/\n *"([a-f0-9]+)",\n/m)[1];
-test.results[1].match(/InlineEntity\("([a-f0-9]+)"\)/)[1] == test.results[2].match(/\n *"([a-f0-9]+)",\n/m)[1];
+results[0].match(/InlineEntity\("([a-f0-9]+)"\)/)[1] == results[1].match(/\n *"([a-f0-9]+)",\n/m)[1];
+results[1].match(/InlineEntity\("([a-f0-9]+)"\)/)[1] == results[2].match(/\n *"([a-f0-9]+)",\n/m)[1];
 [end]
 
 [name]
