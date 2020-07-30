@@ -574,7 +574,7 @@ describe('manifest parser', () => {
         data: reads ~a with {name: Text, age: Number, *}
     `);
   });
-  it.only('fails to parse max type variables with oddly-ordered constraints', () => {
+  it('fails to parse max type variables with oddly-ordered constraints', () => {
     assert.throws(() => {
       parse(`
         particle Foo
