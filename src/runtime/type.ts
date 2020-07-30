@@ -1219,7 +1219,7 @@ export class TypeVariableInfo {
    * to the same value.
    */
   maybeMergeConstraints(variable: TypeVariableInfo): boolean {
-    if (!this.maybeMergeCanReadSubset(variable.canReadSubset, variable._resolveToMaxType)) {
+    if (!this.maybeMergeCanReadSubset(variable.canReadSubset)) {
       return false;
     }
     return this.maybeMergeCanWriteSuperset(variable.canWriteSuperset);
@@ -1229,11 +1229,11 @@ export class TypeVariableInfo {
    * Merge a type variable's read subset (upper bound) constraints into this variable.
    * This is used to accumulate read constraints when resolving a handle's type.
    */
-  maybeMergeCanReadSubset(constraint: Type, resolveToMaxType: boolean = false): boolean {
+  maybeMergeCanReadSubset(constraint: Type): boolean {
     const {result, success} = this._maybeMerge(
       this.canReadSubset,
       constraint,
-      (this._resolveToMaxType  || resolveToMaxType) ? Schema.union : Schema.intersect,
+      Schema.intersect
     );
     this.canReadSubset = result;
     return success;
