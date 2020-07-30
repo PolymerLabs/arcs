@@ -53,5 +53,6 @@ fun ParticleSpecProto.decode(): Result<ParticleSpec> = resultOf {
     val checks = checksList.map {
         Check.Assert(it.accessPath.decode(connections), it.predicate.decode())
     }
-    ParticleSpec(name, connections, location, claims, checks, isolated)
+    val egressType = if (egressType.isEmpty()) null else egressType
+    ParticleSpec(name, connections, location, claims, checks, isolated, egressType)
 }

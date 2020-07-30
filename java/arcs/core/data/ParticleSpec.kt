@@ -22,5 +22,13 @@ data class ParticleSpec(
     val claims: List<Claim> = emptyList(),
     val checks: List<Check> = emptyList(),
     /** Indicates whether the particle is an isolated (non-egress) particle. */
-    val isolated: Boolean = false
-)
+    val isolated: Boolean = false,
+    /** Optional egress type of the particle. Must be null for isolated particles. */
+    val egressType: String? = null
+) {
+    init {
+        require(!isolated || egressType == null) {
+            "Isolated particles cannot have an egress type."
+        }
+    }
+}

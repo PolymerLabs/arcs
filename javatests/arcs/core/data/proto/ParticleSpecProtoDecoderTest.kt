@@ -131,7 +131,8 @@ class ParticleSpecProtoDecoderTest {
                 name = "Reader",
                 location = "Everywhere",
                 connections = mapOf("read" to readConnectionSpec),
-                isolated = true
+                isolated = true,
+                egressType = null
             )
         )
 
@@ -141,6 +142,7 @@ class ParticleSpecProtoDecoderTest {
           connections { $writeConnectionSpecProto }
           location: "Nowhere"
           isolated: false
+          egress_type: "MyEgressType"
         """.trimIndent()
         val readerWriterSpec = decodeParticleSpecProto(readerWriterSpecProto)
         val writeConnectionSpec = decodeHandleConnectionSpecProto(writeConnectionSpecProto)
@@ -149,7 +151,8 @@ class ParticleSpecProtoDecoderTest {
                 name = "ReaderWriter",
                 location = "Nowhere",
                 connections = mapOf("read" to readConnectionSpec, "write" to writeConnectionSpec),
-                isolated = false
+                isolated = false,
+                egressType = "MyEgressType"
             )
         )
     }
