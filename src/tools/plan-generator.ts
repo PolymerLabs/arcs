@@ -117,6 +117,7 @@ export class PlanGenerator {
     const annotations = PlanGenerator.createAnnotations(connection.handle.annotations);
     const args = [handle, mode, type, annotations];
     if (connection.spec.expression) {
+      // TODO: Add a test for an expression once recipe2plan tests move to .cgtest
       args.push(quote(connection.spec.expression));
     }
 
