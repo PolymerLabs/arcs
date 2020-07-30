@@ -51,6 +51,7 @@ arcs_kt_library(
         ":manifest_java_proto",
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",
+        "//java/arcs/core/data/expression",
         "//java/arcs/core/storage:storage_key",
         "//java/arcs/core/type",
         "//java/arcs/core/util",
