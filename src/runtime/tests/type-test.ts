@@ -408,7 +408,7 @@ describe('types', () => {
       assert.notExists(a.canReadSubset);
       assert.strictEqual(a.resolution, b);
     });
-    it(`maybeEnsureResolved prefers canReadSubset when resolveToMaxType is true`, () => {
+    it(`maybeEnsureResolved prefers canReadSubset for resolution when resolveToMaxType is true`, () => {
       const sup = EntityType.make(['Super'], {});
       const sub = EntityType.make(['Sub'], {});
       const a = new TypeVariableInfo('x', sup, sub, true);
@@ -419,7 +419,7 @@ describe('types', () => {
       assert.notExists(a.canReadSubset);
       assert.strictEqual(a.resolution, sub);
     });
-    it(`maybeEnsureResolved prefers canWriteSuperset when resolveToMaxType is false`, () => {
+    it(`maybeEnsureResolved prefers canWriteSuperset for resolution when resolveToMaxType is false`, () => {
       const sup = EntityType.make(['Super'], {});
       const sub = EntityType.make(['Sub'], {});
       const a = new TypeVariableInfo('x', sup, sub, false);
