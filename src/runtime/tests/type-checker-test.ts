@@ -367,16 +367,39 @@ describe('TypeChecker', () => {
   it('can resolve a type variable to its max type', () => {
     const concreteType = EntityType.make(['Product'], {name: 'Text', phone: 'Number'}).collectionOf();
     const constraint = EntityType.make([], {name: 'Text'});
-    const redactorInputType = TypeVariable.make('a', null, constraint).collectionOf();
-    const redactorOutputType = TypeVariable.make('a').collectionOf();
+    const variable = TypeVariable.make('a', constraint, null);
+    const redactorInputType = new TypeVariable(variable.variable).collectionOf();
+    const redactorOutputType = variable.collectionOf();
     const egressType = TypeVariable.make('x', null, null, true).collectionOf();
-    const result = TypeChecker.processTypeList(egressType, [
-      {type: concreteType, direction: 'reads writes'},
+    TypeChecker.processTypeList(null, [
+      {type: concreteType, direction: 'writes'},
       {type: redactorInputType, direction: 'reads'},
+    ]);
+    TypeChecker.processTypeList(null, [
       {type: redactorOutputType, direction: 'writes'},
       {type: egressType, direction: 'reads'},
     ]);
-    assert.deepStrictEqual(result.getEntitySchema(), concreteType.getEntitySchema());
+    egressType.maybeEnsureResolved();
+    assert.deepStrictEqual(egressType.getEntitySchema(), concreteType.getEntitySchema());
+  });
+
+  it('can resolve a type variable to its max type through an intermediary variable', () => {
+    const concreteType = EntityType.make(['Product'], {name: 'Text', phone: 'Number'}).collectionOf();
+    const constraint = EntityType.make([], {name: 'Text'});
+    const variable = TypeVariable.make('a', constraint, null);
+    const redactorInputType = new TypeVariable(variable.variable).collectionOf();
+    const redactorOutputType = variable.collectionOf();
+    const egressType = TypeVariable.make('x', null, null, true).collectionOf();
+    TypeChecker.processTypeList(null, [
+      {type: concreteType, direction: 'writes'},
+      {type: redactorInputType, direction: 'reads'},
+    ]);
+    TypeChecker.processTypeList(null, [
+      {type: redactorOutputType, direction: 'writes'},
+      {type: egressType, direction: 'reads'},
+    ]);
+    egressType.maybeEnsureResolved();
+    assert.deepStrictEqual(egressType.getEntitySchema(), concreteType.getEntitySchema());
   });
 
   it('can compare a type variable with a Collection handle', async () => {
