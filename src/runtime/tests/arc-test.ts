@@ -1106,7 +1106,6 @@ describe('Arc storage migration', () => {
     };
 
     const things0Store = await getStoreByConnectionName('things0');
-
     if (isActiveMuxer(things0Store)) {
       assert.fail('things0 store can not be an active muxer');
     }
