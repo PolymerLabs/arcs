@@ -117,7 +117,6 @@ class ExpressionTest {
             (2.toBigInteger().asExpr() lt 1.toBigInteger().asExpr()))).isTrue()
         assertThat(evalBool((1.toBigInteger().asExpr() gt 2.asExpr()) or
             (2.toBigInteger().asExpr() lt 1.toBigInteger().asExpr()))).isFalse()
--gene
         // Unary ops
         assertThat(evalNum(-2.asExpr())).isEqualTo(-2)
         assertThat(evalBool(!(2.asExpr() lt 1.asExpr()))).isTrue()
