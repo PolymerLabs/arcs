@@ -28,6 +28,7 @@ arcs_kt_library(
     ],
     deps = [
         ":rawentity",
+        ":reference",
         ":schema_fields",
         "//java/arcs/core/common",
         "//java/arcs/core/crdt",
