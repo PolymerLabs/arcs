@@ -111,7 +111,7 @@ class RecipeTest {
             name = "ParticleName",
             location = "com.Particle",
             connections = listOf(
-                HandleConnectionSpec("data", HandleMode.Read, personCollectionType)
+                HandleConnectionSpec("data", HandleMode.Read, personCollectionType, "expression")
             ).associateBy { it.name }
         )
 
@@ -136,7 +136,8 @@ class RecipeTest {
                     "data" to Plan.HandleConnection(
                         handle = handle.toPlanHandle(),
                         mode = HandleMode.Read,
-                        type = contactCollectionType
+                        type = contactCollectionType,
+                        expression = "expression"
                     )
                 )
             )

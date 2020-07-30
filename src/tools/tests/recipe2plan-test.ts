@@ -14,6 +14,7 @@ import {Flags} from '../../runtime/flags.js';
 import {ManifestProto} from '../manifest-proto.js';
 import {Runtime} from '../../runtime/runtime.js';
 import {Manifest} from '../../runtime/manifest.js';
+import {DriverFactory} from '../../runtime/storage/drivers/driver-factory.js';
 
 const inputManifestPath = 'java/arcs/core/data/testdata/WriterReaderExample.arcs';
 const policiesManifestPath = 'java/arcs/core/data/testdata/WriterReaderPoliciesExample.arcs';
@@ -53,7 +54,7 @@ $ tools/update-goldens \n\n`
 
         @arcId('writeArcId')
         recipe WritingRecipe
-          thing: create 'my-handle-id' @persistent
+          thing: create 'my-handle-id' @persistent @ttl('30d')
           Writer
             data: writes thing
 
@@ -64,7 +65,7 @@ $ tools/update-goldens \n\n`
             data: reads data
 
         recipe ReadWriteRecipe
-          thing: create
+          thing: create @inMemory @ttl('10d')
           Writer
             data: writes thing
           Reader
@@ -108,7 +109,16 @@ $ tools/update-goldens \n\n`
           fate: 'CREATE',
           name: 'handle0',
           id: 'my-handle-id',
-          annotations: [{name: 'persistent'}],
+          annotations: [{
+            name: 'persistent'
+          },
+          {
+            'name': 'ttl',
+            'params': [{
+              'name': 'value',
+              'strValue': '30d'
+            }]
+          }],
           storageKey: 'reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writeArcId/handle/my-handle-id}',
           type: {entity: {schema: {
             names: ['Thing'],
@@ -171,7 +181,17 @@ $ tools/update-goldens \n\n`
             names: ['Thing'],
             fields: {name: {primitive: 'TEXT'}},
             hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
-          }}}
+          }}},
+          annotations: [{
+            name: 'inMemory'
+          },
+          {
+            'name': 'ttl',
+            'params': [{
+              'name': 'value',
+              'strValue': '10d'
+            }]
+          }],
         }],
         particles: [{
           specName: 'Reader',
@@ -208,7 +228,7 @@ $ tools/update-goldens \n\n`
           data: reads [~a]
 
         recipe ReadWriteRecipe
-          thing: create
+          thing: create @inMemory @ttl('12d')
           Writer
             data: writes thing
           Reader
@@ -226,7 +246,7 @@ $ tools/update-goldens \n\n`
               fields: {name: {primitive: 'TEXT'}},
               hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
             }}}
-          }}
+          }},
         }]
       }, {
         name: 'Reader',
@@ -251,7 +271,18 @@ $ tools/update-goldens \n\n`
               fields: {name: {primitive: 'TEXT'}},
               hash: '25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516',
             }}}
-          }}
+          }},
+          annotations: [{
+            name: 'inMemory'
+          },
+          {
+            'name': 'ttl',
+            'params': [{
+              'name': 'value',
+              'strValue': '12d'
+            }]
+          }],
+
         }],
         particles: [{
           specName: 'Reader',
@@ -285,4 +316,133 @@ $ tools/update-goldens \n\n`
     const encoded = await recipe2plan(manifest, OutputFormat.Proto, await readManifest(policiesManifestPath), /* recipeFilter= */ null, 'random_salt') as Uint8Array;
     return ManifestProto.decode(encoded).toJSON();
   }
+  const manifestMetaAndParticleSpecs = `
+meta
+  namespace: arcs.core.data.testdata
+particle WriteFoo
+  foo: writes [Foo {f1: Text, f2: Text, f3: Text}]
+particle WriteBar
+  bar: writes Bar {br1: Text, br2: Text}
+particle ReadFooWriteBaz
+  foo: reads [Foo {f1: Text, f2: Text}]
+  baz: writes Baz {bz1: Text}
+particle ReadFooBarWriteBazzz
+  foo: reads [Foo {f1: Text}]
+  bar: reads Bar {br1: Text}
+  bazzz: writes [Baz {bz1: Text}]
+particle ReadQuxWriteBazzz
+  qux: reads Qux {q1: Text}
+  bazzz: writes [Baz {bz1: Text}]
+  `;
+  const policiesManifestStr = `
+schema Foo
+  f1: Text
+  f2: Text
+  f3: Text
+schema Bar
+  br1: Text
+  br2: Text
+  br3: Text
+schema Qux
+  q: Text
+policy PolicyFooF1BarBr1Br2 {
+  @allowedRetention(medium: 'Disk', encryption: false)
+  @maxAge('1d')
+  from Foo access { f1 }
+
+  @allowedRetention(medium: 'Disk', encryption: false)
+  @maxAge('2d')
+  from Bar access { br1, br2 }
+
+  @allowedRetention(medium: 'Disk', encryption: false)
+  @maxAge('20h')
+  from Qux access { q }
+}
+policy PolicyFooF1F2 {
+  @allowedRetention(medium: 'Ram', encryption: false)
+  @maxAge('10h')
+  from Foo access { f1, f2 }
+}
+policy PolicyBarBr2Br3 {
+  @allowedRetention(medium: 'Ram', encryption: true)
+  @maxAge('10m')
+  from Bar access { br2, br3 }
+}
+  `;
+  const assertSuccess = async (recipeStr) => await verifyRecipeIngress(recipeStr, true);
+  const assertFailure = async (recipeStr) => await verifyRecipeIngress(recipeStr, false);
+  const verifyRecipeIngress = async (recipeStr: string, expectedSuccess: boolean) => {
+    DriverFactory.clearRegistrationsForTesting();
+    const recipesManifest = await Manifest.parse(`
+${manifestMetaAndParticleSpecs}
+${recipeStr}
+    `);
+    const policiesManifest = await Manifest.parse(policiesManifestStr);
+    const result = await recipe2plan(recipesManifest, OutputFormat.Kotlin, policiesManifest);
+    assert.equal(result.toString().includes(`val MyRecipePlan = Plan(`), expectedSuccess);
+  };
+  it('generates kotlin plans with derived data capabilities persistence verification', Flags.withDefaultReferenceMode(async () => {
+    const bazRecipeStr = (bazPersistence) => `
+recipe MyRecipe
+  fooHandle: create 'foos' @inMemory @ttl('10h')
+  barHandle: create 'bar' @persistent @ttl('2d')
+  bazHandle: create 'baz' @ttl('10h') ${bazPersistence}
+  WriteFoo
+    foo: fooHandle
+  WriteBar
+    bar: barHandle
+  ReadFooWriteBaz
+    foo: fooHandle
+    baz: bazHandle`;
+    await assertFailure(bazRecipeStr('@persistent'));
+    await assertSuccess(bazRecipeStr('@inMemory'));
+  }));
+
+  it('generates kotlin plans with derived data capabilities ttl verification', Flags.withDefaultReferenceMode(async () => {
+    const bazzzRecipeStr = (bazzzTtl) => `
+recipe MyRecipe
+  fooHandle: create 'foos' @inMemory @ttl('10h')
+  barHandle: create 'bar' @persistent @ttl('2d')
+  quxHandle: create 'qux' @persistent @ttl('20h')
+  bazzzHandle: create 'bazzz' @persistent @ttl('${bazzzTtl}') 
+  WriteFoo
+    foo: fooHandle
+  WriteBar
+    bar: barHandle
+  ReadFooBarWriteBazzz
+    foo: fooHandle
+    bar: barHandle
+    bazzz: bazzzHandle
+  ReadQuxWriteBazzz
+    qux: quxHandle
+    bazzz: bazzzHandle
+    `;
+    await assertFailure(bazzzRecipeStr('2d'));  // f1's maxAge is 1 day.
+    await assertSuccess(bazzzRecipeStr('20h'));
+  }));
+
+  it('generates kotlin plans with derived data capabilities verification', Flags.withDefaultReferenceMode(async () => {
+      const recipeStr = (bazzzPersistence) => `
+recipe MyRecipe
+  fooHandle: create 'foos' @inMemory @ttl('10h')
+  barHandle: create 'bar' @persistent @ttl('2d')
+  bazHandle: create 'baz' @inMemory @ttl('10h')
+  bazzzHandle: create 'bazzz' @persistent @ttl('10h')
+  WriteFoo
+    foo: fooHandle
+  WriteBar
+    bar: barHandle
+  ReadFooWriteBaz
+    foo: fooHandle
+    baz: bazHandle
+  ReadFooBarWriteBazzz
+    foo: fooHandle
+    bar: barHandle
+    bazzz: bazzzHandle
+      `;
+      // Foo.f2 'inMemory' is not compatible for ingress with 'onDisk'
+      await assertFailure(recipeStr('persistent'));
+      // Bar.br1 'onDisk' is not compatible for ingress with 'inMemory'
+      await assertFailure(recipeStr('inMemory'));
+  }));
 });

@@ -459,4 +459,29 @@ Resolver generated 0 recipes`
       ['@ttl(value: \'1d\')']
     ]);
   });
+  it('resoves the type for a generic read from a mapped store', async () => {
+    const manifest = await Manifest.parse(`
+      particle Writer
+        data: writes [Thing {name: Text}]
+
+      particle Reader
+        data: reads [~a]
+    
+      @arcId('writeArcId')
+      recipe WritingRecipe
+        thing: create 'my-handle-id' @persistent
+        Writer
+          data: writes thing
+
+      recipe ReadingRecipe
+        data: map 'my-handle-id'
+        Reader
+          data: reads data`);
+
+    const resolver = new AllocatorRecipeResolver(manifest, randomSalt);
+    const recipes = await resolver.resolve();
+    const readingRecipe = recipes.find(r => r.name === 'ReadingRecipe');
+    const readingConnection = readingRecipe.particles[0].connections['data'];
+    assert.equal(readingConnection.type.resolvedType().toString(), '[Thing {name: Text}]');
+  });
 });

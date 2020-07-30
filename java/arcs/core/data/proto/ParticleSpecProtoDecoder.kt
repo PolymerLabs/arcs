@@ -36,7 +36,8 @@ fun DirectionProto.decode() =
 fun HandleConnectionSpecProto.decode() = HandleConnectionSpec(
     name = name,
     direction = direction.decode(),
-    type = type.decode()
+    type = type.decode(),
+    expression = expression.ifEmpty { null }
 )
 
 /** Converts a [ParticleSpecProto] to the corresponding [ParticleSpec] instance. */

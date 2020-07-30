@@ -98,10 +98,10 @@ export const testSuite: CodegenUnitTest[] = [
         'kotlin-connection-type-generator.cgtest'
       );
     }
-    async computeFromManifest({particles}) {
+    async computeFromManifest({particles}, opts) {
       const schemaGraph = new SchemaGraph(particles[0]);
       const [connection] = particles[0].handleConnections;
-      return generateConnectionSpecType(connection, schemaGraph.nodes);
+      return generateConnectionSpecType(connection, schemaGraph.nodes, opts);
     }
   }(),
   new class extends ManifestCodegenUnitTest {

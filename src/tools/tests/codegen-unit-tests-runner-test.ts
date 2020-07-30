@@ -21,7 +21,14 @@ import {assert} from '../../platform/chai-web.js';
 for (const unit of testSuite) {
   describe(unit.title, async () => {
     for (const test of readTests(unit)) {
-      it(test.name, async () => assert.deepEqual(await runCompute(unit, test), test.results));
+      it(test.name, async () => {
+        assert.deepEqual(await runCompute(unit, test), test.results);
+        if (test.require) {
+          // "results" is exposed for the eval'ed require expression.
+          const results = test.results;
+          test.require.split('\n').forEach(requireCase => assert.isTrue(eval(requireCase)));
+        }
+      });
     }
   });
 }

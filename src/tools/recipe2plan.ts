@@ -39,12 +39,21 @@ export async function recipe2plan(
 
   const ingressValidation = policiesManifest
       ? new IngressValidation(policiesManifest.policies) : null;
+  plans = plans.filter(plan => {
+    if (!ingressValidation) return true;
+    const result = ingressValidation.validateIngressCapabilities(plan);
+    if (!result.success) {
+      console.log(`Failed ingress validation for plan ${plan.name}: ${result.toString()}`);
+    }
+    return result.success;
+  });
 
   switch (format) {
     case OutputFormat.Kotlin:
       assert(manifest.meta.namespace, `Namespace is required in '${manifest.fileName}' for Kotlin code generation.`);
       return new PlanGenerator(plans, manifest.meta.namespace, ingressValidation).generate();
     case OutputFormat.Proto:
+      // TODO(b/161818898): pass ingress validation to protos too.
       return Buffer.from(await encodePlansToProto(plans, manifest));
     default: throw new Error('Output Format should be Kotlin or Proto');
   }

@@ -22,13 +22,13 @@ typealias CollectionProxy<T> = StorageProxy<CrdtSet.Data<T>, CrdtSet.IOperation<
  * This class implements all of the methods that are needed by the various collection [Handle]
  * interfaces:
  * * [Handle]
- * * [ReadableHandle<T>]
- * * [ReadCollectionHandle<T>]
- * * [WriteCollectionHandle<T>]
- * * [ReadWriteCollectionHandle<T>]
- * * [QueryCollectionHandle<T>]
- * * [ReadQueryCollectionHandle<T>]
- * * [ReadWriteQueryCollectionHandle<T>]
+ * * [ReadableHandle]
+ * * [ReadCollectionHandle]
+ * * [WriteCollectionHandle]
+ * * [ReadWriteCollectionHandle]
+ * * [QueryCollectionHandle]
+ * * [ReadQueryCollectionHandle]
+ * * [ReadWriteQueryCollectionHandle]
  *
  * It manages the storage and retrieval of items of the specified [Entity] type, including
  * their conversion to and from the backing [RawEntity] type that the storage layer requires.
@@ -99,8 +99,14 @@ class CollectionHandle<T : Storable, R : Referencable>(
     // endregion
 
     // region implement ReadableHandle<T>
-    override fun onUpdate(action: (Set<T>) -> Unit) =
-        storageProxy.addOnUpdate(callbackIdentifier) { action(adaptValues(it)) }
+    override fun onUpdate(action: (CollectionDelta<T>) -> Unit) =
+        storageProxy.addOnUpdate(callbackIdentifier) { oldValue, newValue ->
+            val oldIds = oldValue.mapTo(mutableSetOf()) { it.id }
+            val newIds = newValue.mapTo(mutableSetOf()) { it.id }
+            val added = newValue.filterTo(mutableSetOf()) { it.id !in oldIds }
+            val removed = oldValue.filterTo(mutableSetOf()) { it.id !in newIds }
+            action(CollectionDelta(adaptValues(added), adaptValues(removed)))
+        }
 
     override fun onDesync(action: () -> Unit) =
         storageProxy.addOnDesync(callbackIdentifier, action)

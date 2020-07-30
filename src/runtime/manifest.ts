@@ -849,10 +849,19 @@ ${e.message}
         }
         processArgTypes(arg.dependentConnections);
         arg.annotations = Manifest._buildAnnotationRefs(manifest, arg.annotations);
+
+        // TODO: Validate that the type of the expression matches the declared type.
+        // TODO: Transform the expression AST into a cross-platform text format.
+        arg.expression = arg.expression && arg.expression.kind;
       }
     };
+    if (particleItem.implFile && particleItem.args.some(arg => !!arg.expression)) {
+      const arg = particleItem.args.find(arg => !!arg.expression);
+      throw new ManifestError(arg.expression.location, `A particle with implementation cannot use result expressions.`);
+    }
     processArgTypes(particleItem.args);
     particleItem.annotations = Manifest._buildAnnotationRefs(manifest, particleItem.annotationRefs);
+    particleItem.manifestNamespace = manifest.meta.namespace;
     manifest._particles[particleItem.name] = new ParticleSpec(particleItem);
   }
 

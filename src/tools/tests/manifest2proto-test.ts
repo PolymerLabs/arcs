@@ -182,6 +182,38 @@ describe('manifest2proto', () => {
     });
   });
 
+  it('encodes particle spec with expressions', async () => {
+    const manifest = await Manifest.parse(`
+      particle FooBar
+        bar: reads Y {b: Text}
+        foo: writes X {a: Text} = new X {a: bar.b}
+    `);
+    assert.deepStrictEqual(await toProtoAndBack(manifest), {
+      particleSpecs: [{
+        connections: [{
+          name: 'bar',
+          direction: 'READS',
+          type: {entity: {schema: {
+            names: ['Y'],
+            fields: {b: {primitive: 'TEXT'}},
+            hash: '555c20b532deda21eb146d1909b9fb372ba583b2',
+          }}}
+        }, {
+          name: 'foo',
+          direction: 'WRITES',
+          type: {entity: {schema: {
+            names: ['X'],
+            fields: {a: {primitive: 'TEXT'}},
+            hash: 'eb8597be8b72862d5580f567ab563cefe192508d',
+          }}},
+          expression: 'expression-entity' // This is a temporary stop-gap.
+        }],
+        name: 'FooBar',
+        isolated: false,
+      }]
+    });
+  });
+
   it('encodes handle connection reads, writes and reads-writes', async () => {
     const manifest = await Manifest.parse(`
       particle Abc in 'a/b/c.js'

@@ -93,6 +93,7 @@ message HandleConnectionSpecProto {
   string name = 1;
   Direction direction = 2;
   TypeProto type = 3;
+  string expression = 4;
 }
 
 // Representation of a type in Arcs.
@@ -170,6 +171,8 @@ message SchemaProto {
   repeated string names = 1;
   map<string, TypeProto> fields = 2;
   string hash = 3;
+  string refinement = 4;
+  string query = 5;
 }
 
 enum OPERATOR {

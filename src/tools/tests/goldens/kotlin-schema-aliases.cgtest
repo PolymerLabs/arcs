@@ -1,35 +1,35 @@
-[header]
+-----[header]-----
 Kotlin Schema Aliases
 
 Expectations can be updated with:
 $ ./tools/sigh updateCodegenUnitTests
-[end_header]
+-----[end_header]-----
 
-[name]
+-----[name]-----
 single entity
-[input]
+-----[input]-----
 particle P
   h1: reads Person {name: Text}
-[results]
+-----[results]-----
 typealias P_H1 = AbstractP.Person
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 multiple connections with the same schema
-[input]
+-----[input]-----
 particle P
   h1: reads Person {name: Text}
   h2: reads [Person {name: Text}]
   h3: reads [&Person {name: Text}]
-[results:per-line]
+-----[results:per-line]-----
 typealias P_H1 = AbstractP.Person
 typealias P_H2 = AbstractP.Person
 typealias P_H3 = AbstractP.Person
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 handle with references
-[input]
+-----[input]-----
 particle P
   h1: reads Person {
     name: Text,
@@ -41,62 +41,62 @@ particle P
       }
     }
   }
-[results:per-line]
+-----[results:per-line]-----
 typealias P_H1 = AbstractP.Person
 typealias P_H1_Home = AbstractP.Accommodation
 typealias P_H1_Home_Address = AbstractP.Address
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 handle with a tuple
-[input]
+-----[input]-----
 particle P
   h1: reads (
     &Person {name: Text},
     &Accommodation {squareFootage: Number},
     &Address {streetAddress: Text, postCode: Text}
   )
-[results:per-line]
+-----[results:per-line]-----
 typealias P_H1_0 = AbstractP.Person
 typealias P_H1_1 = AbstractP.Accommodation
 typealias P_H1_2 = AbstractP.Address
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 unconstrained variables
-[input]
+-----[input]-----
 particle T
   h1: reads ~a
   h2: writes ~a
-[results:per-line]
+-----[results:per-line]-----
 typealias T_H1 = AbstractT.TInternal1
 typealias T_H2 = AbstractT.TInternal1
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 variable constrained at multiple connections
-[input]
+-----[input]-----
 particle T
   h1: reads ~a
   h2: writes ~a with {amt: Number}
   h3: reads writes ~a with {name: Text, age: Number}
-[results:per-line]
+-----[results:per-line]-----
 typealias T_H1 = AbstractT.TInternal1
 typealias T_H2 = AbstractT.TInternal1
 typealias T_H3 = AbstractT.TInternal1
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 different internal entities for distinct aliases
-[input]
+-----[input]-----
 particle T
   h1: reads ~a
   h2: writes &~a with {x: Number}
   h3: reads ~b
   h4: reads [~b with {a: Text}]
-[results:per-line]
+-----[results:per-line]-----
 typealias T_H1 = AbstractT.TInternal1
 typealias T_H2 = AbstractT.TInternal1
 typealias T_H3 = AbstractT.TInternal2
 typealias T_H4 = AbstractT.TInternal2
-[end]
+-----[end]-----

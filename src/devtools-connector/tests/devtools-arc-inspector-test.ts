@@ -85,6 +85,7 @@ describe('DevtoolsArcInspector', () => {
           dependentConnections: [],
           direction: 'reads writes',
           isOptional: false,
+          expression: null,
           name: 'foo'
         }]
       }

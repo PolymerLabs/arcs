@@ -37,8 +37,8 @@ arcs.core.data.Schema(
         collections = ${leftPad(ktUtils.mapOf(collections, 30), 8, true)}
     ),
     ${quote(await schema.hash())},
-    refinement = ${refinement},
-    query = ${query}
+    refinementExpression = ${refinement},
+    queryExpression = ${query}
 )`;
 }
 
@@ -113,11 +113,7 @@ function generatePredicates(schema: Schema): {query: string, refinement: string}
 
   return {
     // TODO(cypher1): Support multiple queries.
-    query: hasQuery ? `{ data, queryArgs ->
-${expression}
-    }` : 'null',
-    refinement: (hasRefinement && !hasQuery) ? `{ data ->
-${expression}
-    }` : `{ _ -> true }`
+    query: hasQuery ? `${expression}` : 'true.asExpr()',
+    refinement: (hasRefinement && !hasQuery) ? `${expression}` : `true.asExpr()`
   };
 }

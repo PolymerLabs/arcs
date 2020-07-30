@@ -32,7 +32,7 @@ import {Runtime} from '../runtime.js';
 import {BinaryExpression, FieldNamePrimitive, NumberPrimitive} from '../refiner.js';
 import {mockFirebaseStorageKeyOptions} from '../storage/testing/mock-firebase.js';
 import {Flags} from '../flags.js';
-import {TupleType, CollectionType, EntityType} from '../type.js';
+import {TupleType, CollectionType, EntityType, TypeVariable} from '../type.js';
 import {ActiveCollectionEntityStore, handleForActiveStore} from '../storage/storage.js';
 import {Ttl} from '../capabilities.js';
 
@@ -46,6 +46,7 @@ describe('manifest', async () => {
 
   let memoryProvider;
   beforeEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
@@ -3587,6 +3588,56 @@ resource SomeName
       assert.deepStrictEqual(claim.fieldPath, ['foo']);
     });
 
+    it('supports field-level checks and claims with resolved type variables', async () => {
+      const manifest = await parseManifest(`
+        particle OrderIngestion in '.OrderIngestion'
+          data: writes [Product {sku: Text, name: Text, price: Number}]
+
+        particle SkuRedactor in '.SkuRedactor'
+          input: reads [~a with {sku: Text}]
+          output: writes [~a]
+          claim output.sku is redacted
+
+        particle Consumer in '.Consumer'
+          data: reads [Product {sku: Text, name: Text, price: Number}]
+          check data.sku is redacted
+
+        recipe Shop
+          beforeRedaction: create
+          afterRedaction: create
+          OrderIngestion
+            data: beforeRedaction
+          SkuRedactor
+            input: beforeRedaction
+            output: afterRedaction
+          Consumer
+            data: afterRedaction
+      `);
+      const recipe = manifest.recipes[0];
+
+      // Normalize and clone the recipe. This resolves the type variables, and
+      // exercises code paths to validate the checks and claims.
+      // Should not crash.
+      recipe.normalize();
+      const clonedRecipe = recipe.clone();
+
+      // Verify claim on redactor particle.
+      const redactorParticle = clonedRecipe.particles.find(p => p.name === 'SkuRedactor').spec;
+      const outputType = redactorParticle.connections.find(c => c.name === 'output').type as TypeVariable;
+      assert.isTrue(outputType.isResolved());
+      assert.lengthOf(redactorParticle.trustClaims, 1);
+      const claim = redactorParticle.trustClaims[0];
+      assert.deepStrictEqual(claim.fieldPath, ['sku']);
+
+      // Verify check on consumer particle.
+      const consumerParticle = clonedRecipe.particles.find(p => p.name === 'Consumer').spec;
+      const dataType = consumerParticle.connections.find(c => c.name === 'data').type as TypeVariable;
+      assert.isTrue(dataType.isResolved());
+      assert.lengthOf(consumerParticle.trustChecks, 1);
+      const check = consumerParticle.trustChecks[0];
+      assert.deepStrictEqual(check.fieldPath, ['sku']);
+    });
+
     it('rejects unknown fields in type variables', async () => {
       await assertThrowsAsync(async () => await parseManifest(`
         particle A
@@ -4844,5 +4895,37 @@ recipe
           () => manifest.validateUniqueDefinitions(),
           `Duplicate definition of store named 'Dupe'.`);
     });
+  });
+});
+describe('expressions', () => {
+  it('does not allow mixing implementation and result expressions', async () => {
+    try {
+      const manifest = await Manifest.parse(`
+        particle Converter in 'converter.js'
+          foo: reads Foo {x: Number}
+          bar: writes Bar {y: Number} =
+            new Bar {y: foo.x}`, {fileName: 'manifest.arcs'});
+      assert(false);
+    } catch (e) {
+      assert.deepEqual(e.message, `Post-parse processing error caused by 'manifest.arcs' line 5.
+A particle with implementation cannot use result expressions.
+              new Bar {y: foo.x}
+              ^^^^^^^^^^^^^^^^^^`);
+    }
+  });
+  it('saves result expressions on handle connection specs', async () => {
+    const manifest = await Manifest.parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} =
+          new Bar {y: foo.x}`);
+    const particle = manifest.particles[0];
+
+    const readConnection = particle.connections.find(hc => hc.direction === 'reads');
+    assert.isNull(readConnection.expression);
+
+    const writeConnection = particle.connections.find(hc => hc.direction === 'writes');
+    // TODO: A stop-gap for now, we need to serialize the expression AST.
+    assert.equal(writeConnection.expression, 'expression-entity');
   });
 });
