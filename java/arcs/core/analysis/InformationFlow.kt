@@ -293,8 +293,10 @@ class InformationFlow private constructor(
             // For primitives and references we don't go down to collect access paths.
             FieldType.Tag.Primitive,
             FieldType.Tag.EntityRef -> setOf(prefix)
-            FieldType.Tag.Tuple,
-            FieldType.Tag.List -> setOf(prefix)
+            FieldType.Tag.Tuple -> setOf(prefix)
+            FieldType.Tag.List -> {
+                setOf(prefix) + (this as FieldType.ListOf).primitiveType.accessPathSelectors(prefix)
+            }
             FieldType.Tag.InlineEntity -> {
                 val schema = SchemaRegistry.getSchema((this as FieldType.InlineEntity).schemaHash)
                 setOf(prefix) + schema.accessPathSelectors(prefix)
