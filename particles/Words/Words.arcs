@@ -8,6 +8,7 @@
 import 'GamePane.arcs'
 import 'schemas/Stats.arcs'
 
+// Does this generate a CL?
 recipe Words
   //person: use #user
   board: create #board
