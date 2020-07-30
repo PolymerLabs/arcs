@@ -286,19 +286,6 @@ class InformationFlow private constructor(
         }
     }
 
-    /** Apply the [claims] to the given map. */
-    private fun MutableMap<AccessPath, InformationFlowLabels>.applyClaims(claims: List<Claim>) {
-        claims.forEach { claim ->
-            when (claim) {
-                is Claim.Assume -> applyAssume(claim)
-                is Claim.DerivesFrom -> {
-                    // TODO(bgogul): Deal with derivesFrom claims.
-                    TODO("DerivesFrom claims are not yet handled!")
-                }
-            }
-        }
-    }
-
     /** Apply the [Claim.Assume] [claims] to the given map. */
     private fun MutableMap<AccessPath, InformationFlowLabels>.applyAssumes(claims: List<Claim>) {
         claims.asSequence().filterIsInstance<Claim.Assume>().forEach { applyAssume(it) }
