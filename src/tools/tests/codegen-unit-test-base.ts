@@ -18,6 +18,7 @@ type Test = {
   input: string;
   results: string[];
   perLine: boolean;
+  require?: string;
 };
 
 /**
@@ -103,8 +104,11 @@ export function readTests(unitTest: CodegenUnitTest): Test[] {
 
   const caseStrings = (fileData).split('\n[end]');
   for (const caseString of caseStrings) {
-    if (caseString.trim().length === 0) continue;
-    const matches = caseString.match(
+    const caseAndRequire = caseString.match(/(.*)\n\[require\]\n(.*)/sm);
+    const cases = caseAndRequire == null ? caseString : caseAndRequire[1];
+    const require = caseAndRequire == null ? null : caseAndRequire[2].trim();
+    if (cases.trim().length === 0) continue;
+    const matches = cases.match(
       /\w*^\[name\]\n([^\n]*)(?:\n\[opts\]\n(.*))?\n\[input\]\n(.*)\n\[results(:per-line)?\]\n?(.*)/sm
     );
     if (!matches) {
@@ -117,6 +121,7 @@ export function readTests(unitTest: CodegenUnitTest): Test[] {
       options: JSON.parse(matches[2] || '{}'),
       input: matches[3],
       results: matches[5].split(perLine ? '\n' : '\n[next]\n'),
+      require,
       perLine
     });
   }
@@ -150,7 +155,9 @@ ${test.name}
 ${optionsString}[input]
 ${test.input}
 [results${test.perLine ? ':per-line' : ''}]
-${results.join(test.perLine ? '\n' : '\n[next]\n')}
+${results.join(test.perLine ? '\n' : '\n[next]\n')}${test.require == null ? '' : `
+[require]
+${test.require}`}
 [end]
 `;
   }));
