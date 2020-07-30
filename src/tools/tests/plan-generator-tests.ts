@@ -242,7 +242,9 @@ HandleConnection(
                     ),
                     collections = emptyMap()
                 ),
-                "f33d42dee457673f13e166b4644b0eb42f37a156"
+                "f33d42dee457673f13e166b4644b0eb42f37a156",
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
         )
     ),
@@ -284,7 +286,9 @@ val MyRecipe_Handle0 = Handle(
                 ),
                 collections = emptyMap()
             ),
-            "edabcee36cb653ff468fb77804911ddfa9303d67"
+            "edabcee36cb653ff468fb77804911ddfa9303d67",
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
         )
     ),
     emptyList()
@@ -339,7 +343,9 @@ val ThingWriter_Handle0 = Handle(
                     ),
                     collections = emptyMap()
                 ),
-                "451b4c23ec9bf2d1973079fd0732539297806b3c"
+                "451b4c23ec9bf2d1973079fd0732539297806b3c",
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
         )
     ),
