@@ -1,25 +1,25 @@
-[header]
+-----[header]-----
 Kotlin Schema Generation
 
 Expectations can be updated with:
 $ ./tools/sigh updateCodegenUnitTests
-[end_header]
+-----[end_header]-----
 
-[name]
+-----[name]-----
 generates empty schema
-[input]
+-----[input]-----
 particle P
   h1: reads {}
-[results]
+-----[results]-----
 arcs.core.data.Schema.EMPTY
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates a schema with multiple names
-[input]
+-----[input]-----
 particle P
   h1: reads Person Friend Parent {}
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(
     arcs.core.data.SchemaName("Person"),
@@ -34,14 +34,14 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates a schema with primitive fields
-[input]
+-----[input]-----
 particle P
   h1: reads Person {name: Text, age: Number, friendNames: [Text]}
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -55,11 +55,11 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates a schema with Kotlin types
-[input]
+-----[input]-----
 particle P
   h1: reads Data {
     bt: Byte,
@@ -70,7 +70,7 @@ particle P
     flt: Float,
     dbl: Double,
   }
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Data")),
     arcs.core.data.SchemaFields(
@@ -89,14 +89,14 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates a schema with lists of primitive fields
-[input]
+-----[input]-----
 particle P
   h1: reads Person {names: List<Text>, favNumbers: List<Number>}
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -110,14 +110,14 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates schemas for a reference
-[input]
+-----[input]-----
 particle P
   h1: reads Person {address: &Address {streetAddress: Text}}
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -130,7 +130,7 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
-[next]
+-----[next]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Address")),
     arcs.core.data.SchemaFields(
@@ -141,14 +141,14 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates schemas for a collection of references
-[input]
+-----[input]-----
 particle P
   h1: reads Person {address: [&Address {streetAddress: Text}]}
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -161,7 +161,7 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
-[next]
+-----[next]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Address")),
     arcs.core.data.SchemaFields(
@@ -172,14 +172,14 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates schemas for a nested entity
-[input]
+-----[input]-----
 particle P
   h1: reads Person {address: inline Address {streetAddress: Text}}
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -192,7 +192,7 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
-[next]
+-----[next]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Address")),
     arcs.core.data.SchemaFields(
@@ -203,13 +203,13 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
-[require]
+-----[require]-----
 results[0].match(/InlineEntity\("([a-f0-9]+)"\)/)[1] == results[1].match(/\n *"([a-f0-9]+)",\n/m)[1];
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates schemas for a nested entity referencing an external schema
-[input]
+-----[input]-----
 schema External
   name: Text
 
@@ -217,7 +217,7 @@ particle P
   h1: reads Thing {
     other: inline External
   }
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Thing")),
     arcs.core.data.SchemaFields(
@@ -230,7 +230,7 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
-[next]
+-----[next]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("External")),
     arcs.core.data.SchemaFields(
@@ -241,13 +241,13 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
-[require]
+-----[require]-----
 results[0].match(/InlineEntity\("([a-f0-9]+)"\)/)[1] == results[1].match(/\n *"([a-f0-9]+)",\n/m)[1];
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates schemas for a double nested entity
-[input]
+-----[input]-----
 particle P
   h1: reads Person {
     address: inline Address {
@@ -255,7 +255,7 @@ particle P
       city: inline City {name: Text}
     }
   }
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -268,7 +268,7 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
-[next]
+-----[next]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Address")),
     arcs.core.data.SchemaFields(
@@ -282,7 +282,7 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
-[next]
+-----[next]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("City")),
     arcs.core.data.SchemaFields(
@@ -293,17 +293,17 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
-[require]
+-----[require]-----
 results[0].match(/InlineEntity\("([a-f0-9]+)"\)/)[1] == results[1].match(/\n *"([a-f0-9]+)",\n/m)[1];
 results[1].match(/InlineEntity\("([a-f0-9]+)"\)/)[1] == results[2].match(/\n *"([a-f0-9]+)",\n/m)[1];
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates a schema with a refinement
-[input]
+-----[input]-----
 particle P
   h1: reads Person {name: Text, age: Number} [age >= 21]
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -317,14 +317,14 @@ arcs.core.data.Schema(
     refinementExpression =         ((CurrentScope<Number>(mapOf())["age"] gt 21.asExpr()) or (CurrentScope<Number>(mapOf())["age"] eq 21.asExpr())),
     queryExpression = true.asExpr()
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates a schema with a query
-[input]
+-----[input]-----
 particle P
   h1: reads Person {name: Text, age: Number} [age >= ?]
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -338,14 +338,14 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression =         ((CurrentScope<Number>(mapOf())["age"] gt query<Number>("queryArgument")) or (CurrentScope<Number>(mapOf())["age"] eq query<Number>("queryArgument")))
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates schemas for a tuple connection
-[input]
+-----[input]-----
 particle P
   h1: reads (&Person {name: Text}, &Product {sku: Text})
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -356,7 +356,7 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
-[next]
+-----[next]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Product")),
     arcs.core.data.SchemaFields(
@@ -367,4 +367,4 @@ arcs.core.data.Schema(
     refinementExpression = true.asExpr(),
     queryExpression = true.asExpr()
 )
-[end]
+-----[end]-----
