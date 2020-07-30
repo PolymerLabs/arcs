@@ -1113,6 +1113,7 @@ describe('Arc storage migration', () => {
     assert.equal(helloThing0.rawData.name, 'hello');
     const worldThing0 = await getStoreValue(await things0Store.serializeContents(), 1, 2);
     assert.equal(worldThing0.rawData.name, 'world');
+
     // `world` entity was added 1s after `hello`.
     // This also verifies `hello` wasn't update when being re-added.
     if (worldThing0.expirationTimestamp - helloThing0.expirationTimestamp < 1000) {
