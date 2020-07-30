@@ -90,6 +90,13 @@ class TestActivity : AppCompatActivity() {
         override fun onServiceDisconnected(name: ComponentName) = bound.update { false }
     }
 
+    private val stores = StoreManager(
+        activationFactory = ServiceStoreFactory(
+            this,
+            coroutineContext
+        )
+    )
+
     init {
         // Supply the default settings being displayed on UI at app. startup.
         SystemHealthData.Settings().let {
@@ -113,13 +120,8 @@ class TestActivity : AppCompatActivity() {
         handleManager = EntityHandleManager(
             time = JvmTime,
             scheduler = schedulerProvider("sysHealthTestActivity"),
-            stores = StoreManager(
-                activationFactory = ServiceStoreFactory(
-                    this,
-                    lifecycle,
-                    coroutineContext
-                )
-            )
+            stores = stores
+
         )
 
         resultTextView = findViewById(R.id.result)
@@ -394,6 +396,7 @@ class TestActivity : AppCompatActivity() {
         runBlocking(coroutineContext) {
             singletonHandle?.close()
             collectionHandle?.close()
+            stores.reset()
         }
 
         scope.cancel()

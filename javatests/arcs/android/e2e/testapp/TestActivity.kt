@@ -75,6 +75,10 @@ class TestActivity : AppCompatActivity() {
 
     private var devToolsService: IDevToolsService? = null
 
+    private val stores = StoreManager(
+        activationFactory = ServiceStoreFactory(context = this@TestActivity)
+    )
+
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             devToolsService = IDevToolsService.Stub.asInterface(service)
@@ -162,6 +166,9 @@ class TestActivity : AppCompatActivity() {
         )
         stopService(intent)
         scope.cancel()
+        runBlocking {
+            stores.reset()
+        }
         super.onDestroy()
     }
 
@@ -172,12 +179,8 @@ class TestActivity : AppCompatActivity() {
             EntityHandleManager(
                 time = JvmTime,
                 scheduler = schedulerProvider("readWriteArc"),
-                stores = StoreManager(
-                    activationFactory = ServiceStoreFactory(
-                        context = this@TestActivity,
-                        lifecycle = this@TestActivity.lifecycle
-                    )
-                )
+                stores = stores
+
             )
         )
         allocator?.startArcForPlan(PersonRecipePlan)
@@ -192,10 +195,7 @@ class TestActivity : AppCompatActivity() {
                 time = JvmTime,
                 scheduler = schedulerProvider("resurrectionArc"),
                 stores = StoreManager(
-                    activationFactory = ServiceStoreFactory(
-                        context = this@TestActivity,
-                        lifecycle = this@TestActivity.lifecycle
-                    )
+                    activationFactory = ServiceStoreFactory(context = this@TestActivity)
                 )
             )
         )
@@ -231,10 +231,7 @@ class TestActivity : AppCompatActivity() {
                 time = JvmTime,
                 scheduler = schedulerProvider("allocator"),
                 stores = StoreManager(
-                    activationFactory = ServiceStoreFactory(
-                        context = this@TestActivity,
-                        lifecycle = this@TestActivity.lifecycle
-                    )
+                    activationFactory = ServiceStoreFactory(context = this@TestActivity)
                 )
             )
         )
@@ -269,10 +266,7 @@ class TestActivity : AppCompatActivity() {
             time = JvmTime,
             scheduler = schedulerProvider("handle"),
             stores = StoreManager(
-                activationFactory = ServiceStoreFactory(
-                    this,
-                    lifecycle
-                )
+                activationFactory = ServiceStoreFactory(this)
             )
         )
         if (isCollection) {
