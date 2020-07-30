@@ -140,7 +140,7 @@ class InformationFlow private constructor(
         // Update all the outputs with the mixed label value.
         // TODO(bgogul): For fields, we are only going one level deep. Do we need to go further?
         val resultAccessPathLabels = mutableMapOf<AccessPath, InformationFlowLabels>()
-        particle.handleConnections.filter { it.spec.isWrite() }
+        particle.handleConnections.filter { it.spec.direction.canWrite }
             .flatMap { handleConnection ->
                 val root = AccessPath.Root.HandleConnection(particle, handleConnection.spec)
                 val resolvedType = particle.getResolvedType(handleConnection.spec)
@@ -418,7 +418,7 @@ class InformationFlow private constructor(
             // Otherwise, extract ingress information for all the write connections.
             // (See filter below.)
             return particle.handleConnections
-                .filter { connectionName?.equals(it.spec.name) ?: it.spec.isWrite() }
+                .filter { connectionName?.equals(it.spec.name) ?: it.spec.direction.canWrite }
                 .map { handleConnection -> getIngressInfo(particleNode, handleConnection) }
         }
 
@@ -428,7 +428,7 @@ class InformationFlow private constructor(
             handleConnection: Recipe.Particle.HandleConnection
         ): IngressInfo {
             val particle = particleNode.particle
-            val neighbors = if (handleConnection.spec.isWrite()) {
+            val neighbors = if (handleConnection.spec.direction.canWrite) {
                 particleNode.successors
             } else {
                 particleNode.predecessors
@@ -473,20 +473,6 @@ private fun Predicate.labels(): List<InformationFlowLabel> = when (this) {
     is Predicate.Not -> predicate.labels()
     is Predicate.Or -> lhs.labels() + rhs.labels()
     is Predicate.And -> lhs.labels() + rhs.labels()
-}
-
-/** Returns true if the [HandleConnectionSpec] is a write. */
-private fun HandleConnectionSpec.isWrite() = when (direction) {
-    HandleMode.Write,
-    HandleMode.ReadWrite,
-    HandleMode.WriteQuery,
-    HandleMode.ReadWriteQuery -> true
-    HandleMode.Read, HandleMode.ReadQuery, HandleMode.Query -> false
-}
-
-private fun HandleConnectionSpec.isReadWrite() = when (direction) {
-    HandleMode.ReadWrite, HandleMode.ReadWriteQuery -> true
-    else -> false
 }
 
 /** Returns true if the [check] is satisfied by the labels computed for [particle]. */
