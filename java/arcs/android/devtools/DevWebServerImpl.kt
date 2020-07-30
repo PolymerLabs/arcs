@@ -57,6 +57,10 @@ object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
         onOpenSocketCallbacks.add(callback)
     }
 
+    internal fun removeOnOpenWebsocketCallback(callback: () -> Unit) {
+        onOpenSocketCallbacks.remove(callback)
+    }
+
     // TODO: This is a WIP for DevTools, still in flux.
     private class WsdSocket(
         handshakeRequest: NanoHTTPD.IHTTPSession?,

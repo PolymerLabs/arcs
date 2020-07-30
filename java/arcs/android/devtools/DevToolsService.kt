@@ -13,6 +13,9 @@ package arcs.android.devtools
 
 import android.app.Service
 import android.content.Intent
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.os.IBinder
 import arcs.android.devtools.storage.DevToolsConnectionFactory
 import arcs.android.storage.service.IDevToolsStorageManager
@@ -35,10 +38,6 @@ class DevToolsService : Service() {
     private val scope = CoroutineScope(coroutineContext)
     private lateinit var binder: DevToolsBinder
     private val devToolsServer = DevWebServerImpl
-    private val connectionFactory = DevToolsConnectionFactory(
-        this@DevToolsService,
-        StorageService::class.java
-    )
 
     private var storageService: IDevToolsStorageManager? = null
     private var serviceConnection: StorageServiceConnection? = null
@@ -79,10 +78,30 @@ class DevToolsService : Service() {
         ) {
             "Connection to StorageService is already alive."
         }
+        val connectionFactory = DevToolsConnectionFactory(
+            this@DevToolsService,
+            getStorageClass()
+        )
         this.serviceConnection = connectionFactory()
         // Need to initiate the connection on the main thread.
         this.storageService = IDevToolsStorageManager.Stub.asInterface(
             serviceConnection?.connectAsync()?.await()
         )
+    }
+
+    private fun getStorageClass(): Class<StorageService> {
+        val storageClass: Class<StorageService> = StorageService::class.java
+        val packageManager: PackageManager = packageManager
+        val installedPackages: List<PackageInfo> = packageManager
+            .getInstalledPackages(PackageManager.GET_SERVICES)
+        for (packageInfo in installedPackages) {
+            val services: Array<ServiceInfo>? = packageInfo.services
+            services?.forEach { service ->
+                if (service.javaClass.superclass == storageClass) {
+                    service.javaClass
+                }
+            }
+        }
+        return storageClass
     }
 }
