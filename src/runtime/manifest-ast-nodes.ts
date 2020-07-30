@@ -87,6 +87,7 @@ export interface TypeVariable extends BaseNode {
   kind: 'variable-type';
   name: string;
   constraint: ParticleHandleConnection;
+  resolveToMaxType: boolean;
 }
 export function isTypeVariable(node: BaseNode): node is TypeVariable {
   return node.kind === 'variable-type';
@@ -753,6 +754,7 @@ export interface SchemaInline extends BaseNodeWithRefinement {
   kind: 'schema-inline';
   names: string[];
   fields: SchemaInlineField[];
+  allFields: boolean;
 }
 
 export interface NestedSchema extends BaseNodeWithRefinement {

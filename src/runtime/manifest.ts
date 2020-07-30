@@ -669,7 +669,7 @@ ${e.message}
           }
           case 'variable-type': {
             const constraint = node.constraint && node.constraint.model;
-            node.model = TypeVariable.make(node.name, constraint, null);
+            node.model = TypeVariable.make(node.name, constraint, null, node.resolveToMaxType || false);
             return;
           }
           case 'slot-type': {

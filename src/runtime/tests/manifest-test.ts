@@ -3659,6 +3659,66 @@ resource SomeName
       `), `Type variable ~a does not contain field 'foo'`);
     });
 
+    it('supports field-level checks and claims with max type variables', async () => {
+      const manifest = await parseManifest(`
+        particle OrderIngestion in '.OrderIngestion'
+          data: writes [Product {sku: Text, name: Text, price: Number}]
+
+        particle SkuRedactor in '.SkuRedactor'
+          input: reads [~a with {sku: Text}]
+          output: writes [~a]
+          claim output.sku is redacted
+
+        particle Egress in '.Egress'
+          data: reads [~x with {sku: Text, *}]
+          check data.sku is redacted
+
+        recipe Shop
+          beforeRedaction: create
+          afterRedaction: create
+          OrderIngestion
+            data: beforeRedaction
+          SkuRedactor
+            input: beforeRedaction
+            output: afterRedaction
+          Egress 
+            data: afterRedaction
+      `);
+      const recipe = manifest.recipes[0];
+
+      // Normalize and clone the recipe. This resolves the type variables, and
+      // exercises code paths to validate the checks and claims.
+      // Should not crash.
+      recipe.normalize();
+      const clonedRecipe = recipe.clone();
+
+      const orderParticle = clonedRecipe.particles.find(p => p.name === 'OrderIngestion').spec;
+      const targetType = orderParticle.connections.find(c => c.name === 'data').type as CollectionType<EntityType>;
+
+      // Verify claim on redactor particle.
+      const redactorParticle = clonedRecipe.particles.find(p => p.name === 'SkuRedactor').spec;
+      const outputType = redactorParticle.connections.find(c => c.name === 'output').type as TypeVariable;
+      outputType.maybeEnsureResolved();
+      assert.isTrue(outputType.isResolved());
+      assert.lengthOf(redactorParticle.trustClaims, 1);
+      const claim = redactorParticle.trustClaims[0];
+      assert.deepStrictEqual(claim.fieldPath, ['sku']);
+
+      // Verify claim and type on egress particle.
+      const egressParticle = clonedRecipe.particles.find(p => p.name === 'Egress').spec;
+      const dataType = egressParticle.connections.find(c => c.name === 'data').type as TypeVariable;
+      dataType.maybeEnsureResolved();
+      assert.isTrue(dataType.isResolved());
+      assert.deepStrictEqual(
+        dataType.getEntitySchema(),
+        targetType.getEntitySchema()
+      );
+
+      assert.lengthOf(egressParticle.trustChecks, 1);
+      const check = egressParticle.trustChecks[0];
+      assert.deepStrictEqual(check.fieldPath, ['sku']);
+    });
+
     it('data stores can make claims', async () => {
       const data = '{"root": {}, "locations": {}}';
 
