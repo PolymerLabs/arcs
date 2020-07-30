@@ -55,7 +55,7 @@ class Arc internal constructor(
     private val arcStateInternal: AtomicRef<ArcState> = atomic(ArcState.NeverStarted)
     private val arcStateChangeHandlers = atomic(listOf<(ArcState) -> Unit>())
     private lateinit var arcStatesByHostFlow: Flow<ArcState>
-    private lateinit var closeFlow: () -> Unit
+    private var closeFlow: () -> Unit = { }
     private val registered = atomic(false)
     private val registrations = mutableMapOf<String, ArcStateChangeRegistration>()
 
