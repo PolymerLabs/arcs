@@ -31,33 +31,6 @@ describe('plan generator', () => {
 
     assert.notInclude(actual, 'import arcs.core.data.*');
   });
-  it('uses the same storage key for created and mapped handle', async () => {
-    const {recipes, generator} = await process(`
-      particle A
-        data: writes Thing {num: Number}
-      particle B
-        data: reads Thing {num: Number}
-
-      @arcId('ingestion')
-      recipe Ingest
-        h: create 'data' @persistent
-        A
-          data: writes h
-
-      recipe Retrieve
-        h: map 'data'
-        B
-          data: reads h`);
-
-    assert.equal(
-      await generator.createStorageKey(recipes.find(r => r.name === 'Ingest').handles[0]),
-      'StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data")'
-    );
-    assert.equal(
-      await generator.createStorageKey(recipes.find(r => r.name === 'Retrieve').handles[0]),
-      'StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data")'
-    );
-  });
   it('generated handle connections pertaining to the same handle use the same storage key', async () => {
     const {recipes, generator} = await process(`
       particle A

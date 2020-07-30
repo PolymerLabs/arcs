@@ -22,7 +22,7 @@ import {generateFields} from '../kotlin-schema-field.js';
  * A Suite of unit tests for Kotlin Codegen.
  * The test data is inside .cgtest files.
  */
-export const testSuite: CodegenUnitTest[] = [
+export const schema2KotlinTestSuite: CodegenUnitTest[] = [
   new class extends ManifestCodegenUnitTest {
     constructor() {
       super(
