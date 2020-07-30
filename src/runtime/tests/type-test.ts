@@ -142,7 +142,7 @@ describe('types', () => {
       const variable = TypeVariable.make('a');
       deepEqual(variable.toLiteral(), {
         tag: 'TypeVariable',
-        data: {name: 'a', canWriteSuperset: null, canReadSubset: null}
+        data: {name: 'a', canWriteSuperset: null, canReadSubset: null, resolveToMaxType: false}
       });
       deepEqual(variable, Type.fromLiteral(variable.toLiteral()));
       deepEqual(variable, variable.clone(new Map()));
