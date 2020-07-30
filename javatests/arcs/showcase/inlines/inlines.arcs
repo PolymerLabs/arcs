@@ -1,0 +1,117 @@
+// Some simple examples demonstrating the use of inline entities in Arcs
+meta
+  namespace: arcs.showcase.inlines
+
+schema ChildEntity
+  isReferenced: Boolean
+  trackingValue: Text
+
+// inline entities can either reference external schemas or directly
+// declare them inline.
+schema ParentEntity
+  child: inline ChildEntity
+  direct: inline DirectInformation {
+    message: Text,
+    code: Int
+  }
+  reference: &ChildEntity
+
+// on creation of an entity, referenced sub-entities either need to exist already, or
+// need to be written out separately, but inline sub-entities are part of the parent
+// entity and don't need to independently exist.
+// TODO: I need to spell out the type of reference or it won't match with child
+// (I can't do reference {isReferenced, trackingValue})
+// TODO: I can't specify a refinement on child because then it won't match with reference.
+// Also I can't specify a refinement on reference.
+particle Generator in '.Generator'  
+  child: reads writes ChildEntity {isReferenced, trackingValue} // [isReferenced == true]
+  parent: writes ParentEntity {child, direct, reference: &ChildEntity {isReferenced, trackingValue}}
+
+// Extracting an inline entity creates a copy.
+particle CopyInlineComponent in '.CopyInlineComponent'
+  input: reads ParentEntity {child: inline ChildEntity {isReferenced, trackingValue}}
+  output: writes ChildEntity {isReferenced, trackingValue} // [isReferenced == false]
+
+// Extracting a referenced entity does not copy that entity.
+particle ExtractReferencedComponent in '.ExtractReferencedComponent'
+  input: reads ParentEntity {reference: &ChildEntity {isReferenced, trackingValue}}
+  output: writes ChildEntity {isReferenced, trackingValue} // [isReferenced == true]
+
+particle ChildModifier in '.ChildModifier'
+  child: reads writes ChildEntity {trackingValue}
+
+// Therefore, changes to a copy of an inline entity don't show up in the parent,
+// but changes to an extracted referenced entity do.
+particle ConfirmFinalValue in '.ConfirmFinalValue'
+  input: reads ParentEntity {child, direct, reference}
+  signalA: writes Trigger {}
+  signalB: writes Trigger {}
+
+// Likewise, removal of the copy doesn't impact the original inline entity, but
+// removal of the referenced entity is evident from the parent.
+// TODO: I can't seem to use generic ~a for thingToRemove as HandleSpec complains
+// about having a type that isn't a Singleton or Collection
+particle RemoveEntity in '.RemoveEntity'
+  thingToRemove: reads ChildEntity {}
+  collectionToRemoveItWith: writes [ChildEntity {}]
+
+particle Trigger in '.Trigger'
+  signal: reads Trigger {}
+  input: reads ~a
+  output: writes ~a
+
+// Where the magic happens
+recipe UseInlineEntities
+  storeForReferenceCreation: create
+  storeForEntityDeletion: create
+  parent: create
+  parentAfterA: create
+  inlineChild: create
+  inlineChildAfterB: create
+  referenceChild: create
+  referenceChildAfterB: create
+  signalA: create
+  signalB: create
+
+  Generator
+    child: storeForReferenceCreation
+    parent: parent
+  
+  Trigger
+    signal: signalA
+    input: parent
+    output: parentAfterA
+
+  CopyInlineComponent
+    input: parentAfterA
+    output: inlineChild
+  ExtractReferencedComponent
+    input: parent
+    output: referenceChild 
+
+  ChildModifier
+    child: inlineChild
+  ChildModifier
+    child: referenceChild
+
+  Trigger
+    signal: signalB
+    input: inlineChild
+    output: inlineChildAfterB
+
+  Trigger
+    signal: signalB
+    input: referenceChild
+    output: referenceChildAfterB
+
+  RemoveEntity
+    thingToRemove: inlineChildAfterB
+    collectionToRemoveItWith: storeForEntityDeletion
+  RemoveEntity
+    thingToRemove: referenceChildAfterB
+    collectionToRemoveItWith: storeForEntityDeletion
+
+  ConfirmFinalValue
+    input: parent 
+    signalA: signalA
+    signalB: signalB

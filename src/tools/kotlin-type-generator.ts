@@ -27,7 +27,7 @@ export async function generateConnectionType(connection: HandleConnection): Prom
 
 export async function generateConnectionSpecType(connection: HandleConnectionSpec, nodes: SchemaNode[]): Promise<string> {
   let type = connection.type;
-  if (type.isEntity || type.isReference) {
+  if (type.isEntity || type.isReference || type.isVariable) {
     // Moving to the new style types with explicit singleton.
     type = type.singletonOf();
   }

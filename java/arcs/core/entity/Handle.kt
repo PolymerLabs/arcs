@@ -102,7 +102,7 @@ data class HandleSpec(
         get() = when (type) {
             is CollectionType<*> -> type.collectionType
             is SingletonType<*> -> type.containedType
-            else -> throw IllegalStateException("Handle type should be a Collection or a Singleton")
+            else -> throw IllegalStateException("Handle type $type for handle $baseName should be a Collection or a Singleton")
         }
 }
 
