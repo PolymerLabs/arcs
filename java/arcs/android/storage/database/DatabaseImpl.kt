@@ -65,6 +65,7 @@ import arcs.jvm.util.JvmTime
 import com.google.protobuf.InvalidProtocolBufferException
 import java.math.BigInteger
 import java.time.Duration
+import java.time.Instant
 import kotlin.coroutines.coroutineContext
 import kotlin.math.roundToLong
 import kotlin.reflect.KClass
@@ -389,6 +390,11 @@ class DatabaseImpl(
                     null
                 } else {
                     BigInteger(it.getString(4)).toReferencable()
+                }
+                PrimitiveType.Instant.id -> if (it.isNull(4)) {
+                    null
+                } else {
+                    Instant.parse(it.getString(4)).toReferencable()
                 }
                 else -> if (
                     isCollection == FieldClass.InlineEntity ||
@@ -1729,6 +1735,11 @@ class DatabaseImpl(
                     counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
                     TABLE_TEXT_PRIMITIVES to value.toString()
                 }
+                PrimitiveType.Instant.id -> {
+                    require(value is Instant) { "Expected value to be a Instant, got $value" }
+                    counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
+                    TABLE_TEXT_PRIMITIVES to value.toString() // TODO: XXXXXXXXXX
+                }
                 PrimitiveType.Number.id -> {
                     require(value is Double) { "Expected value to be a Double." }
                     counters?.increment(DatabaseCounters.GET_NUMBER_VALUE_ID)
@@ -2261,6 +2272,9 @@ class DatabaseImpl(
         val VERSION_6_MIGRATION = arrayOf(
             "ALTER TABLE entity_refs ADD COLUMN is_hard_ref INTEGER;"
         )
+        val VERSION_7_MIGRATION = arrayOf(
+            "INSERT INTO types (id, name, is_primitive) VALUES (11, \"Instant\", 1)"
+        )
 
         private val MIGRATION_STEPS = mapOf(
             2 to VERSION_2_MIGRATION,
@@ -2268,6 +2282,7 @@ class DatabaseImpl(
             4 to VERSION_4_MIGRATION,
             5 to VERSION_5_MIGRATION,
             6 to VERSION_6_MIGRATION
+            7 to VERSION_7_MIGRATION
         )
 
         /** The primitive types that are stored in TABLE_NUMBER_PRIMITIVES */
@@ -2284,7 +2299,8 @@ class DatabaseImpl(
         /** The primitive types that are stored in TABLE_TEXT_PRIMITIVES */
         private val TYPES_IN_TEXT_TABLE = listOf(
             PrimitiveType.Text.id,
-            PrimitiveType.BigInt.id
+            PrimitiveType.BigInt.id,
+            PrimitiveType.Instant.id
         )
 
         /** A version of TYPES_IN_TEXT_TABLE to use in SQL IN statements */

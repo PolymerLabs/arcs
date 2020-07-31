@@ -44,6 +44,7 @@ import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import java.math.BigInteger
 import java.time.Duration
+import java.time.Instant
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
@@ -471,6 +472,8 @@ class DatabaseImplTest {
                     "short" to FieldType.Short,
                     "int" to FieldType.Int,
                     "long" to FieldType.Long,
+                    "bigint" to FieldType.BigInt,
+                    "instant" to FieldType.Instant,
                     "char" to FieldType.Char,
                     "float" to FieldType.Float,
                     "double" to FieldType.Double,
@@ -488,6 +491,8 @@ class DatabaseImplTest {
                     "shorts" to FieldType.Short,
                     "ints" to FieldType.Int,
                     "longs" to FieldType.Long,
+                    "bigints" to FieldType.BigInt,
+                    "instants" to FieldType.Instant,
                     "chars" to FieldType.Char,
                     "floats" to FieldType.Float,
                     "doubles" to FieldType.Double,
@@ -522,6 +527,8 @@ class DatabaseImplTest {
                     "int" to 1000000000.toReferencable(),
                     // This number is not representable as a double
                     "long" to 1000000000000000001L.toReferencable(),
+                    "bigint" to BigInteger("10000000000000000000000000000001").toReferencable(),
+                    "instant" to Instant.ofEpochMilli(1000000000000000001L).toReferencable(),
                     "char" to 'A'.toReferencable(),
                     "float" to 34.567f.toReferencable(),
                     "double" to 4e100.toReferencable(),
@@ -552,6 +559,14 @@ class DatabaseImplTest {
                         1000000000000000002L.toReferencable(),
                         1000000000000000003L.toReferencable()
                     ),
+                    "bigints" to setOf(
+                        BigInteger("10000000000000000000000000000002").toReferencable(),
+                        BigInteger("10000000000000000000000000000003").toReferencable()
+                    ),
+                    "instants" to listOf(
+                        Instant.ofEpochMilli(1000000000000000002L),
+                        Instant.ofEpochMilli(1000000000000000003L)
+                    ).map { it.toReferencable() }.toSet(),
                     "chars" to listOf('a', 'r', 'c', 's').map { it.toReferencable() }.toSet(),
                     "floats" to setOf(1.1f.toReferencable(), 100.101f.toReferencable()),
                     "doubles" to setOf(1.0.toReferencable(), 2e80.toReferencable()),

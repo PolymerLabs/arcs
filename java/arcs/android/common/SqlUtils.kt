@@ -14,6 +14,8 @@ package arcs.android.common
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteProgram
+import java.math.BigInteger
+import java.time.Instant
 
 inline fun <T : Any?> SQLiteDatabase.transaction(block: SQLiteDatabase.() -> T): T {
     scopedTrace("beginTransaction", ::beginTransaction)
@@ -100,7 +102,14 @@ fun Cursor.getNullableShort(i: Int) = if (isNull(i)) null else getShort(i)
 fun Cursor.getNullableInt(i: Int) = if (isNull(i)) null else getInt(i)
 
 /** Returns a nullable [Long] from the requested column. */
-fun Cursor.getNullableLong(i: Int) = if (isNull(i)) null else getLong(i)
+fun Cursor.getNullableLong(i: Int) = if (isNull(i)) null else getString(i).toLong()
+
+/** Returns a nullable [BigInteger] from the requested column. */
+fun Cursor.getNullableBigInteger(i: Int) = if (isNull(i)) null else BigInteger(getString(i))
+
+/** Returns a nullable [Instant] from the requested column. */
+fun Cursor.getNullableInstant(i: Int) =
+    if (isNull(i)) null else Instant.ofEpochMilli(getString(i).toLong())
 
 /** Returns a nullable [Float] from the requested column. */
 fun Cursor.getNullableFloat(i: Int) = if (isNull(i)) null else getFloat(i)

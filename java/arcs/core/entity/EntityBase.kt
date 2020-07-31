@@ -28,6 +28,7 @@ import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.util.Time
 import java.math.BigInteger
+import java.time.Instant
 import kotlin.reflect.KProperty
 
 open class EntityBase(
@@ -186,6 +187,9 @@ open class EntityBase(
                 }
                 PrimitiveType.Long -> require(value is Long) {
                     "Expected Long for $context$entityClassName.$field, but received $value."
+                }
+                PrimitiveType.Instant -> require(value is Instant) {
+                    "Expected Instant for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Char -> require(value is Char) {
                     "Expected Char for $context$entityClassName.$field, but received $value."
@@ -392,6 +396,7 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
         PrimitiveType.Short -> (value as Short).toReferencable()
         PrimitiveType.Int -> (value as Int).toReferencable()
         PrimitiveType.Long -> (value as Long).toReferencable()
+        PrimitiveType.Instant -> (value as Instant).toReferencable()
         PrimitiveType.Char -> (value as Char).toReferencable()
         PrimitiveType.Float -> (value as Float).toReferencable()
         PrimitiveType.Double -> (value as Double).toReferencable()
