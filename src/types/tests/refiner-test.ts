@@ -12,7 +12,7 @@ import {NumberRange, NumberSegment, Refinement, BinaryExpression, NumberMultinom
         NumberFraction, NumberTerm, BigIntTerm, BigIntRange, BigIntFraction, BigIntMultinomial,
         BigIntSegment, Normalizer} from '../internal/refiner.js';
 import {Schema} from '../lib-types.js';
-import {Primitive, viewAst} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
+import {viewAst} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../../runtime/manifest.js';
@@ -100,7 +100,7 @@ describe('refiner', () => {
                 num: 6,
             };
             ref.validateData(data);
-        }, `Refinement expression (num < 5) has type Boolean. Expected Number, BigInt, Long or Int`);
+        }, `Refinement expression (num < 5) has type Boolean. Expected Number, BigInt, Long, Int or Instant`);
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
@@ -122,7 +122,7 @@ describe('refiner', () => {
           const ref = Refinement.fromAst(manifestAst[0].args[0].type.refinement, typeData);
           const data = {name: 'Josh'};
           ref.validateData(data);
-        }, `Refinement expression name has type Text. Expected Number, BigInt, Long or Int`);
+        }, `Refinement expression name has type Text. Expected Number, BigInt, Long, Int or Instant`);
     });
     describe('Throws error when operators and operands are incompatible: BigInt', async () => {
       const validate = (data: {num: bigint | number }, relation: string) => {
@@ -141,7 +141,7 @@ describe('refiner', () => {
       it('comparisons produce a boolean that cannot be added to a bigint', async () =>
         assert.throws(
           () => validate({num: BigInt(6)}, `(num < 5n) + 3n == 0n`),
-          `Refinement expression (num < 5n) has type Boolean. Expected Number, BigInt, Long or Int`
+          `Refinement expression (num < 5n) has type Boolean. Expected Number, BigInt, Long, Int or Instant`
       ));
       it('bigint and explicitly floating point number cannot be added (to ensure correctness)', async () =>
         assert.throws(
@@ -188,7 +188,7 @@ describe('refiner', () => {
         const refAst = manifestAst[0].args[0].type.refinement;
         const ref = Refinement.fromAst(refAst, typeData);
         const range = BigIntRange.fromExpression(ref.expression);
-        assert.deepEqual(range, new BigIntRange(segments, Primitive.INT));
+        assert.deepEqual(range, new BigIntRange(segments, 'Int'));
       };
       it('unbounded', () => {
         validate(`(num != 0i)`, [BigIntSegment.closedOpen(-(BigInt(2)**BigInt(31)), BigInt(0)), BigIntSegment.openClosed(BigInt(0), (BigInt(2)**BigInt(31)) - BigInt(1))]);
@@ -213,16 +213,19 @@ describe('refiner', () => {
         const ast = manifestAst[0].args[0].type.refinement;
         const ref = Refinement.fromAst(ast, typeData);
         const range = BigIntRange.fromExpression(ref.expression);
-        assert.deepEqual(range, new BigIntRange(segments, Primitive.LONG));
+        assert.deepEqual(range, new BigIntRange(segments, 'Long'));
       };
       validate(`(num >= 2l) and (num < 3l)`, [BigIntSegment.closedClosed(BigInt(2), BigInt(2))]);
+      validate(`(num >= 2i) and (num < 3i)`, [BigIntSegment.closedClosed(BigInt(2), BigInt(2))]);
+      validate(`(num >= 2n) and (num < 3n)`, [BigIntSegment.closedClosed(BigInt(2), BigInt(2))]);
       assert.throws(
-        () => validate(`(num >= 2i) and (num < 3i)`, []),
-        'Expected refinement expressions num and 2i to have the same types. Found types Long and Int'
+        () => validate(`(num >= 2) and (num < 3)`, []),
+        'Refinement expressions num and 2 have types Long and Number in (num >= 2). Expected arguments to be of the same type'
       );
-      assert.throws(
-        () => validate(`(num >= 2n) and (num < 3n)`, []),
-        'Expected refinement expressions num and 2n to have the same types. Found types Long and BigInt'
+      // Ensure that numbers containing underscores are pased correctly (for readability).
+      validate(
+        `(num >= 2_000_000l) and (num < 3_000_000l)`,
+        [BigIntSegment.closedClosed(BigInt(2000000), BigInt(2999999))]
       );
     });
     it('tests simple expression to range conversions using bigint 1', () => {
@@ -237,13 +240,11 @@ describe('refiner', () => {
         assert.deepEqual(range, new BigIntRange(segments));
       };
       validate('num < 3n', [BigIntSegment.closedOpen('NEGATIVE_INFINITY', BigInt(3))]);
+      validate('num < 3i', [BigIntSegment.closedOpen('NEGATIVE_INFINITY', BigInt(3))]);
+      validate('num < 3l', [BigIntSegment.closedOpen('NEGATIVE_INFINITY', BigInt(3))]);
       assert.throws(
-        () => validate(`(num >= 2i) and (num < 3i)`, []),
-        'Expected refinement expressions num and 2i to have the same types. Found types BigInt and Int'
-      );
-      assert.throws(
-        () => validate(`(num >= 2l) and (num < 3l)`, []),
-        'Expected refinement expressions num and 2l to have the same types. Found types BigInt and Long'
+        () => validate(`(num >= 2) and (num < 3)`, []),
+        'Refinement expressions num and 2 have types BigInt and Number in (num >= 2). Expected arguments to be of the same type'
       );
     });
     it('tests simple expression to range conversions using bigint 2', () => {
@@ -724,15 +725,21 @@ describe('refiner', () => {
       assert.strictEqual(ref1.toString(), ref2.toString());
     });
 
-    const evaluatesToTrue = (expr: string, data: object = {}) => {
-        const manifestAst1 = parse(`
-            particle Foo
-                input: reads Something {num: Number} [ ${expr} ]
-        `);
-        const typeData = {'num': 'Number'};
-        const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.refinement, typeData);
-        // normalized version of ref1 should be the same as ref2
-        assert.isTrue(ref1.validateData(data), `expected expression (${expr}) to evaluate to true`);
+    const evaluatesToTrue = async (expr: string) => {
+      const manifestAst1 = parse(`
+        particle Foo
+          input: reads Something {num: Number} [ ${expr} ]
+      `);
+      const typeData = {'num': 'Number'};
+      const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.refinement, typeData);
+      const schema = new Schema(['Something'], {num: 'Number'});
+      const entityClass = Entity.createEntityClass(schema, null);
+      const data = new entityClass({'num': 2});
+      const idGenerator = IdGenerator.newSession();
+      Entity.createIdentity(data, idGenerator.newArcId('testing'), idGenerator, null, Ttl.minutes(10));
+      // normalized version of ref1 should be the same as ref2
+      await new Promise(resolve => setTimeout(resolve, 10)); // Ensure that 'now' has progressed.
+      assert.isTrue(ref1.validateData(data), `expected expression (${expr}) to evaluate to true`);
     };
     const triviallyTrue = (expr: string, type: string = 'Number') => {
         const manifestAst1 = parse(`
@@ -751,12 +758,26 @@ describe('refiner', () => {
           triviallyTrue('1 == 1');
           triviallyTrue('1 != 2');
         });
-        it('uses millseconds by default', () => {
-          triviallyTrue('1 == 1 milliseconds');
+        it(`can't compare Number with Instant`, () => {
+          assert.throws(() => {
+            triviallyTrue('1 == 1 milliseconds');
+          },
+          'Expected refinement expressions 1 and 1 millisecond to have the same types. Found types Number and Instant.');
         });
+        it('handles simple linear solving', () => {
+          triviallyTrue('num + 1 > num');
+          triviallyTrue('num - 1 < num');
+        });
+        it.skip('handles simple polynomial solving', () => {
+          triviallyTrue('num * num >= 0');
+          triviallyTrue('2 * num * num > num * num');
+          triviallyTrue('num * num >= 0n', 'BigInt');
+        });
+      });
+      describe('for Instant + Duration', () => {
         it('seconds to milliseconds', () => {
-          triviallyTrue('1000 == 1 seconds');
-          triviallyTrue('2000 == 2 seconds');
+          triviallyTrue('1000 milliseconds == 1 seconds');
+          triviallyTrue('2000 milliseconds == 2 seconds');
         });
         it('minutes to seconds', () => {
           triviallyTrue('1 minutes == 60 seconds');
@@ -770,13 +791,28 @@ describe('refiner', () => {
           triviallyTrue('1 days == 24 hours');
           triviallyTrue('2 days == 2880 minutes');
         });
-        it('handles singular and plural forms', () => {
+        it.skip('handles multiplication of durations', () => {
+          // TODO(cypher1): Durations should actually be a different type to Instant.
+          // The following uperations
+          // (+) :: Duration -> Duration -> Duration
+          // (+) :: Duration -> Instant -> Instant
+          // (-) :: Duration -> Duration -> Duration
+          // (-) :: Instant -> Duration -> Instant
+          // (*) :: Duration -> scalar -> Duration
+          triviallyTrue('2 * 1 day == (1 day + 1 day)');
           triviallyTrue('2 * 1 day == 2 days');
+          triviallyTrue('now() - 1 day < now()');
+          triviallyTrue('now() + 1 day > now()');
+          assert.throws(() => triviallyTrue('2 days * 1 day == 2 days'));
+          assert.throws(() => triviallyTrue('now() + now() == 2 * now()'));
+        });
+        it('handles singular and plural forms', () => {
           triviallyTrue('1 day == 24 hours');
           triviallyTrue('1 day != 24 hours + 1 second');
         });
         it('handles simple linear solving', () => {
-          triviallyTrue('num + 1 milliseconds > num');
+          triviallyTrue('num + 1 > num', 'Number');
+          triviallyTrue('num + 1 millisecond > num', 'Instant');
         });
       });
       describe('for BigInt', () => {
@@ -816,16 +852,28 @@ describe('refiner', () => {
           triviallyTrue('num >= 0n or num < 0n', 'BigInt');
           triviallyTrue('num > 0n or num <= 0n', 'BigInt');
         });
-        it.skip('handles simple polynomial solving', () => {
-          triviallyTrue('num * num >= 0n', 'BigInt');
-        });
       });
     });
     describe('Correctly handles date time using now()', () => {
       it('now() is after time of writing', () => {
-        // Checks that 'now' is after 04/22/2020 @ 7:19am (UTC).
-        evaluatesToTrue('now() > 1587539956');
-        evaluatesToTrue('not (now() < 1587539956)');
+        // Checks that 'now' is after 2020-04-22 @ 7:19am (UTC).
+        evaluatesToTrue('now() > 1587539956 milliseconds');
+        evaluatesToTrue('not (now() < 1587539956 milliseconds)');
+      });
+      it('creationTime() is before now', () => {
+        evaluatesToTrue('creationTime() < now()');
+        evaluatesToTrue('not (creationTime() > now())');
+        // Checks that 'creationTime' is before 2020-07-31 12:40:41 AM (GMT)
+        // Note: Update this when this test starts failing :P
+        evaluatesToTrue('creationTime() < 33153064841000 milliseconds');
+        evaluatesToTrue('not (creationTime() > 33153064841000 milliseconds)');
+      });
+      it('expirationTime() is after now', () => {
+        // Checks that 'expirationTime' is after 2020-04-22 @ 7:19am (UTC).
+        evaluatesToTrue('expirationTime() > now()');
+        evaluatesToTrue('not (expirationTime() < now())');
+        evaluatesToTrue('expirationTime() > 1587539956 milliseconds');
+        evaluatesToTrue('not (expirationTime() < 1587539956 milliseconds)');
       });
     });
   });
@@ -879,14 +927,14 @@ describe('refiner', () => {
           assert.deepEqual(range3, new NumberRange([NumberSegment.openOpen(5, 10)]));
       });
       it('tests if a range is a subset of another 0', () => {
-          const range1 = NumberRange.universal(Primitive.NUMBER);
+          const range1 = NumberRange.universal('Number');
           // range1 = (-inf, +inf)
           const range2 = new NumberRange([NumberSegment.closedClosed(0, 10), NumberSegment.closedClosed(20, 30)]);
           // range2 = [0, 10] U [20,30];
           assert.isTrue(range2.isSubsetOf(range1));
       });
       it('tests if a range is a subset of another 1', () => {
-          const range1 = NumberRange.universal(Primitive.NUMBER);
+          const range1 = NumberRange.universal('Number');
           // range1 = (-inf, +inf)
           const range2 = new NumberRange([NumberSegment.closedClosed(0, 10), NumberSegment.closedClosed(20, 30)]);
           // range2 = [0, 10] U [20,30];
@@ -917,7 +965,7 @@ describe('refiner', () => {
           assert.isTrue(range1.isSubsetOf(range2));
       });
       it('tests the difference of ranges 1', () => {
-          const range1 = NumberRange.universal(Primitive.NUMBER);
+          const range1 = NumberRange.universal('Number');
           // range1 = (-inf, +inf)
           const range2 = new NumberRange([NumberSegment.closedClosed(0, 10), NumberSegment.closedClosed(20, 30)]);
           // range2 = [0, 10] U [20,30];
@@ -935,18 +983,18 @@ describe('refiner', () => {
           assert.deepEqual(diff, new NumberRange([NumberSegment.closedClosed(0, 0), NumberSegment.closedOpen(5, 7), NumberSegment.closedOpen(12, 15), NumberSegment.openClosed(43, 45)]));
       });
       it('tests the complement of number ranges', () => {
-        const range = new NumberRange([NumberSegment.closedClosed(0, 10)], Primitive.NUMBER);
+        const range = new NumberRange([NumberSegment.closedClosed(0, 10)], 'Number');
         // range =  [0,10]
         const complement = range.complement();
         // complement = (-inf, 0) U (10, inf)
-        assert.deepEqual(complement, new NumberRange([NumberSegment.closedOpen(Number.NEGATIVE_INFINITY, 0), NumberSegment.openClosed(10, Number.POSITIVE_INFINITY)], Primitive.NUMBER));
+        assert.deepEqual(complement, new NumberRange([NumberSegment.closedOpen(Number.NEGATIVE_INFINITY, 0), NumberSegment.openClosed(10, Number.POSITIVE_INFINITY)], 'Number'));
       });
       it('tests the complement of boolean ranges', () => {
-        const range = NumberRange.unit(0, Primitive.BOOLEAN);
+        const range = NumberRange.unit(0, 'Boolean');
         // range = [0,0]
         const complement = range.complement();
         // complement = [1,1]
-        assert.deepEqual(complement, NumberRange.unit(1, Primitive.BOOLEAN));
+        assert.deepEqual(complement, NumberRange.unit(1, 'Boolean'));
       });
   });
 
@@ -1303,7 +1351,7 @@ describe('refiner', () => {
           assert.deepEqual(range3, new BigIntRange([BigIntSegment.openOpen(BigInt(5), BigInt(10))]));
       });
       it('tests if a range is a subset of another 1', () => {
-          const range1 = BigIntRange.universal(Primitive.BIGINT);
+          const range1 = BigIntRange.universal('BigInt');
           // range1 = (-inf, +inf)
           const range2 = new BigIntRange([BigIntSegment.closedClosed(BigInt(0), BigInt(10)), BigIntSegment.closedClosed(BigInt(20), BigInt(30))]);
           // range2 = [0, 10] U [20,30];
@@ -1334,7 +1382,7 @@ describe('refiner', () => {
           assert.isTrue(range1.isSubsetOf(range2));
       });
       it('tests the difference of ranges 1', () => {
-          const range1 = BigIntRange.universal(Primitive.BIGINT);
+          const range1 = BigIntRange.universal('BigInt');
           // range1 = (-inf, +inf)
           const range2 = new BigIntRange([BigIntSegment.closedClosed(BigInt(0), BigInt(10)), BigIntSegment.closedClosed(BigInt(20), BigInt(30))]);
           // range2 = [0, 10] U [20,30];
@@ -1359,11 +1407,11 @@ describe('refiner', () => {
         assert.deepEqual(complement, new BigIntRange([BigIntSegment.closedOpen('NEGATIVE_INFINITY', BigInt(0)), BigIntSegment.openClosed(BigInt(10), 'POSITIVE_INFINITY')]));
       });
       it('tests the complement of ranges 2', () => {
-        const range = BigIntRange.unit(BigInt(0), Primitive.BOOLEAN);
+        const range = BigIntRange.unit(BigInt(0), 'Boolean');
         // range = [0,0]
         const complement = range.complement();
         // complement = [1,1]
-        assert.deepEqual(complement, BigIntRange.unit(BigInt(1), Primitive.BOOLEAN));
+        assert.deepEqual(complement, BigIntRange.unit(BigInt(1), 'Boolean'));
       });
   });
 
@@ -1380,7 +1428,7 @@ describe('refiner', () => {
       const den1 = new BigIntMultinomial({
         [a.toKey()]: BigInt(2),                     // 2a
       }); // 2a
-      const frac1 = new BigIntFraction(num1, den1, Primitive.BIGINT); // (a^2+a+9)/2a
+      const frac1 = new BigIntFraction(num1, den1, 'BigInt'); // (a^2+a+9)/2a
       const num2 = new BigIntMultinomial({
         [a.toKey()]: BigInt(1),                     // a
         [cnst.toKey()]: BigInt(5)                   // 5
@@ -1388,7 +1436,7 @@ describe('refiner', () => {
       const den2 = new BigIntMultinomial({
         [cnst.toKey()]: BigInt(3)                   // 3
       }); // 3
-      const frac2 = new BigIntFraction(num2, den2, Primitive.BIGINT); // (a+5)/3
+      const frac2 = new BigIntFraction(num2, den2, 'BigInt'); // (a+5)/3
       const sum = BigIntFraction.add(frac1, frac2); // (5a^2+13a+27)/6a
       assert.deepEqual(sum.num.terms, {
         [a2.toKey()]: BigInt(5),                    // 5a^2
@@ -1403,14 +1451,14 @@ describe('refiner', () => {
       const num1 = new BigIntMultinomial({
         [a.toKey()]: BigInt(1),                     // a
       }); // a
-      const frac1 = BigIntFraction.onOne(num1, Primitive.BIGINT);           // a/1
+      const frac1 = BigIntFraction.onOne(num1, 'BigInt');           // a/1
       const num2 = new BigIntMultinomial({
         [cnst.toKey()]: BigInt(5)                   // 5
       }); // 5
       const den2 = new BigIntMultinomial({
         [cnst.toKey()]: BigInt(9)                   // 9
       }); // 9
-      const frac2 = new BigIntFraction(num2, den2, Primitive.BIGINT);     // 5/9
+      const frac2 = new BigIntFraction(num2, den2, 'BigInt');     // 5/9
       const sum = BigIntFraction.add(frac1, frac2);     // (9a+5)/9
       assert.deepEqual(sum.num.terms, {
         [a.toKey()]: BigInt(9),                     // 9a
@@ -1429,7 +1477,7 @@ describe('refiner', () => {
       const den1 = new BigIntMultinomial({
         [a.toKey()]: BigInt(2),                             // 2a
       }); // 2a
-      const frac1 = new BigIntFraction(num1, den1, Primitive.BIGINT);       // (a^2+a+9)/2a
+      const frac1 = new BigIntFraction(num1, den1, 'BigInt');       // (a^2+a+9)/2a
       const num2 = new BigIntMultinomial({
         [a.toKey()]: BigInt(1),                             // a
         [cnst.toKey()]: BigInt(5)                           // 5
@@ -1437,7 +1485,7 @@ describe('refiner', () => {
       const den2 = new BigIntMultinomial({
         [cnst.toKey()]: BigInt(3)                           // 3
       }); // 3
-      const frac2 = new BigIntFraction(num2, den2, Primitive.BIGINT);       // (a+5)/3
+      const frac2 = new BigIntFraction(num2, den2, 'BigInt');       // (a+5)/3
       const sum = BigIntFraction.subtract(frac1, frac2);  // (a^2-7a+27)/6a
       assert.deepEqual(sum.num.terms, {
         [a2.toKey()]: BigInt(1),                            // a^2
@@ -1457,7 +1505,7 @@ describe('refiner', () => {
       const den1 = new BigIntMultinomial({
         [a.toKey()]: BigInt(2),                             // 2a
       }); // 2a
-      const frac1 = new BigIntFraction(num1, den1, Primitive.BIGINT);       // (a^2+a+9)/2a
+      const frac1 = new BigIntFraction(num1, den1, 'BigInt');       // (a^2+a+9)/2a
       const neg = BigIntFraction.negate(frac1);           // (-a^2-a+-9)/2a
       assert.deepEqual(neg.num.terms, {
           [a2.toKey()]: -BigInt(1),                         // a^2
@@ -1476,7 +1524,7 @@ describe('refiner', () => {
       const den1 = new BigIntMultinomial({
         [a.toKey()]: BigInt(2),                             // 2a
       }); // 2a
-      const frac1 = new BigIntFraction(num1, den1, Primitive.BIGINT);         // (a+9)/2a
+      const frac1 = new BigIntFraction(num1, den1, 'BigInt');         // (a+9)/2a
       const num2 = new BigIntMultinomial({
         [a.toKey()]: BigInt(1),                             // a
         [cnst.toKey()]: BigInt(5)                           // 5
@@ -1484,7 +1532,7 @@ describe('refiner', () => {
       const den2 = new BigIntMultinomial({
         [cnst.toKey()]: BigInt(3)                           // 9
       }); // a + 9
-      const frac2 = new BigIntFraction(num2, den2, Primitive.BIGINT);         // (a+5)/3
+      const frac2 = new BigIntFraction(num2, den2, 'BigInt');         // (a+5)/3
       const sum = BigIntFraction.multiply(frac1, frac2);    // (a^2+14a+45)/6a
       assert.deepEqual(sum.num.terms, {
         [a2.toKey()]: BigInt(1),                            // a^2
@@ -1498,8 +1546,8 @@ describe('refiner', () => {
         [a2.toKey()]: BigInt(1),                            // a^2
         [a.toKey()]: BigInt(1),                             // a
       });
-      const frac3 = BigIntFraction.onOne(num3, Primitive.BIGINT);                   // (a^2+a)/1
-      const frac4 = BigIntFraction.onOne(new BigIntMultinomial(), Primitive.BIGINT);                       // 0 / 1
+      const frac3 = BigIntFraction.onOne(num3, 'BigInt');                   // (a^2+a)/1
+      const frac4 = BigIntFraction.onOne(new BigIntMultinomial(), 'BigInt');                       // 0 / 1
       const sum2 = BigIntFraction.multiply(frac3, frac4);        // 0/1
       assert.deepEqual(sum2.num.terms, {});
       assert.deepEqual(sum2.den.terms, {
@@ -1514,7 +1562,7 @@ describe('refiner', () => {
       const den1 = new BigIntMultinomial({
         [a.toKey()]: BigInt(2),                             // 2a
       }); // 2a
-      const frac1 = new BigIntFraction(num1, den1, Primitive.BIGINT);       // (a+9)/2a
+      const frac1 = new BigIntFraction(num1, den1, 'BigInt');       // (a+9)/2a
       const num2 = new BigIntMultinomial({
         [a.toKey()]: BigInt(1),                             // a
         [cnst.toKey()]: BigInt(5)                           // 5
@@ -1522,7 +1570,7 @@ describe('refiner', () => {
       const den2 = new BigIntMultinomial({
         [cnst.toKey()]: BigInt(3)                           // 9
       }); // a + 9
-      const frac2 = new BigIntFraction(num2, den2, Primitive.BIGINT);       // (a+5)/3
+      const frac2 = new BigIntFraction(num2, den2, 'BigInt');       // (a+5)/3
       const sum = BigIntFraction.divide(frac1, frac2);    // (3a+27)/(2a^2+10a)
       assert.deepEqual(sum.num.terms, {
         [a.toKey()]: BigInt(3),                             // 3a
