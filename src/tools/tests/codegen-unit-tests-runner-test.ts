@@ -34,7 +34,7 @@ function extractResultTo2LayerDict(regexp: RegExp, result: string, dict: Diction
   extractAllByRE(RegExp(regexp, 'mg'), result).forEach(r => into2LayerDict(dict, r));
 }
 
-function extractTo2LayerDict(regexp: RegExp, results: string[]): Dictionary<Dictionary<String>> {
+function extractTo2LayerDict(regexp: RegExp, results: string[]): Dictionary<Dictionary<string>> {
   const dict = {};
   results.forEach(result => extractResultTo2LayerDict(regexp, result, dict));
   return dict;
@@ -50,7 +50,7 @@ const handleForParticleRE = /"([^\n"]+)".*\n.*\n.*\n *"([^"]+)" to HandleConnect
  * in the CLI tool performing updating, where describe(...) and it(...) are not defined.
  */
 for (const unit of schema2KotlinTestSuite.concat(recipe2PlanTestSuite)) {
-  describe.only(unit.title, async () => {
+  describe(unit.title, async () => {
     for (const test of readTests(unit)) {
       it(test.name, async () => {
         assert.deepEqual(await runCompute(unit, test), test.results);
