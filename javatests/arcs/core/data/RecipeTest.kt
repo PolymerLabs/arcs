@@ -50,6 +50,27 @@ class RecipeTest {
     }
 
     @Test
+    fun policyName() {
+        assertThat(
+            Recipe(
+                name = "Foo",
+                handles = emptyMap(),
+                particles = emptyList(),
+                annotations = emptyList()
+            ).policyName
+        ).isNull()
+
+        assertThat(
+            Recipe(
+                name = "Foo",
+                handles = emptyMap(),
+                particles = emptyList(),
+                annotations = listOf(Annotation.createPolicy("MyPolicy"))
+            ).policyName
+        ).isEqualTo("MyPolicy")
+    }
+
+    @Test
     fun handleToStorageKey_withStorageKey() {
         val storageKey = "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}"
 
