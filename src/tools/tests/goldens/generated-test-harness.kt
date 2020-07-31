@@ -10,6 +10,7 @@ package arcs.golden
 
 import arcs.sdk.testing.*
 import java.math.BigInteger
+import java.time.Instant
 import kotlinx.coroutines.CoroutineScope
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
