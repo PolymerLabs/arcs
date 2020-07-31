@@ -93,7 +93,9 @@
   }
 
   function toAstNode<T extends {location: IFileRange} & Omit<T, 'location'>>(data: Omit<T, 'location'>): T {
-    return {...data, location: location()} as T;
+    const loc = location();
+    loc['text'] = text();
+    return {...data, location: loc} as T;
   }
 
   function buildInterfaceArgument(name: string, direction: AstNode.Direction | AstNode.SlotDirection, isOptional: boolean, type: AstNode.ParticleHandleConnectionType) {
@@ -1772,14 +1774,8 @@ PrimaryExpression
     const operator = op[0];
     return toAstNode<AstNode.UnaryExpressionNode>({kind: 'unary-expression-node', expr, operator});
   }
-  / num: BigIntType units:Units?
-  {
-    return toAstNode<AstNode.BigIntNode>({kind: 'bigint-node', value: num, units});
-  }
-  / num: NumberType units:Units?
-  {
-    return toAstNode<AstNode.NumberNode>({kind: 'number-node', value: num, units});
-  }
+  / DiscreteValue
+  / NumberValue
   / bool:('true'i / 'false'i)
   {
     return toAstNode<AstNode.BooleanNode>({kind: 'boolean-node', value: bool.toLowerCase() === 'true'});
@@ -1825,16 +1821,26 @@ UnitName
     return unit+'s';
   }
 
-NumberType
-  = whole:[0-9]+ fractional:('.' [0-9]+)?
+NumberValue
+  = neg:'-'? whole:[0-9]+ decimal:('.' [0-9]*)? units:Units?
   {
-    return Number(text());
+    const value = Number(`${neg || ''}${whole.join('')}.${decimal ? decimal[1].join('') : ''}`);
+    return toAstNode<AstNode.NumberNode>({kind: 'number-node', value, units});
   }
 
-BigIntType
-  = whole:[0-9]+ 'n'
+DiscreteValue
+  = neg:'-'? val:[0-9]+ typeIdentifier:('n'/'i'/'l') units:Units?
   {
-    return BigInt(whole.join(''));
+    const type = () => {
+      switch (typeIdentifier) {
+        case 'n': return AstNode.Primitive.BIGINT;
+        case 'i': return AstNode.Primitive.INT;
+        case 'l': return AstNode.Primitive.LONG;
+      }
+      throw new Error(`Unexpected type identifier ${typeIdentifier} (expected one of n, i or l)`);
+    };
+    const value = BigInt(`${neg || ''}${val.join('')}`);
+    return toAstNode<AstNode.DiscreteNode>({kind: 'discrete-node', value, units, type: type()});
   }
 
 Version "a version number (e.g. @012)"
