@@ -823,7 +823,7 @@ describe('manifest parser', () => {
     });
     it('parses new entity expression', () => {
       parse(`
-      particle Converter in 'lol.js'
+      particle Converter
         foo: reads Foo {x: Number}
         bar: writes Bar {y: Number} = new Bar {y: foo.x}
       `);

@@ -14,6 +14,7 @@ import {Manifest} from '../../runtime/manifest.js';
 import {AllocatorRecipeResolver} from '../allocator-recipe-resolver.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {IngressValidation} from '../../runtime/policy/ingress-validation.js';
+import {Loader} from '../../platform/loader.js';
 
 describe('plan generator', () => {
   it('imports arcs.core.data when the package is different', () => {
@@ -29,33 +30,6 @@ describe('plan generator', () => {
     const actual = generator.fileHeader();
 
     assert.notInclude(actual, 'import arcs.core.data.*');
-  });
-  it('uses the same storage key for created and mapped handle', async () => {
-    const {recipes, generator} = await process(`
-      particle A
-        data: writes Thing {num: Number}
-      particle B
-        data: reads Thing {num: Number}
-
-      @arcId('ingestion')
-      recipe Ingest
-        h: create 'data' @persistent
-        A
-          data: writes h
-
-      recipe Retrieve
-        h: map 'data'
-        B
-          data: reads h`);
-
-    assert.equal(
-      await generator.createStorageKey(recipes.find(r => r.name === 'Ingest').handles[0]),
-      'StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data")'
-    );
-    assert.equal(
-      await generator.createStorageKey(recipes.find(r => r.name === 'Retrieve').handles[0]),
-      'StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data")'
-    );
   });
   it('generated handle connections pertaining to the same handle use the same storage key', async () => {
     const {recipes, generator} = await process(`
@@ -243,8 +217,8 @@ HandleConnection(
                     collections = emptyMap()
                 ),
                 "f33d42dee457673f13e166b4644b0eb42f37a156",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
         )
     ),
@@ -287,8 +261,8 @@ val MyRecipe_Handle0 = Handle(
                 collections = emptyMap()
             ),
             "edabcee36cb653ff468fb77804911ddfa9303d67",
-            refinement = { _ -> true },
-            query = null
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
         )
     ),
     emptyList()
@@ -344,21 +318,68 @@ val ThingWriter_Handle0 = Handle(
                     collections = emptyMap()
                 ),
                 "451b4c23ec9bf2d1973079fd0732539297806b3c",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
         )
     ),
     listOf(Annotation("ttl", mapOf("value" to AnnotationParam.Str("3d"))))
 )`);
   });
+  it('fully qualifies particle schemas when in different package name', async () => {
+    const loader = new Loader(null, {
+      '/particle.arcs': `
+        meta
+          namespace: foo.bar
+
+        particle ParticleFoo in '.ParticleFoo'
+          foo: writes Person {name: Text}
+      `,
+      '/recipe.arcs': `
+        meta
+          namespace: baz.foo
+        import './particle.arcs'
+
+        recipe R
+          h: create
+          ParticleFoo
+            foo: h
+      `,
+    });
+
+    const {generator, recipes} = await processManifest(await Manifest.load('/recipe.arcs', loader));
+
+    assert.deepStrictEqual(
+      await generator.createParticle(recipes[0].particles[0]),
+      `\
+Particle(
+    "ParticleFoo",
+    "foo.bar.ParticleFoo",
+    mapOf(
+        "foo" to HandleConnection(
+            R_Handle0,
+            HandleMode.Write,
+            arcs.core.data.SingletonType(arcs.core.data.EntityType(foo.bar.ParticleFoo_Foo.SCHEMA)),
+            emptyList()
+        )
+    )
+)`
+    );
+  });
 
   async function process(manifestString: string, policiesManifestString?: string): Promise<{
+    recipes: Recipe[],
+    generator: PlanGenerator,
+    plan: string
+  }> {
+    return processManifest(await Manifest.parse(manifestString), policiesManifestString);
+  }
+
+  async function processManifest(manifest: Manifest, policiesManifestString?: string): Promise<{
       recipes: Recipe[],
       generator: PlanGenerator,
       plan: string
   }> {
-    const manifest = await Manifest.parse(manifestString);
     const ingressValidation = policiesManifestString
         ? new IngressValidation((await Manifest.parse(policiesManifestString)).policies) : null;
     const recipes = await new AllocatorRecipeResolver(manifest, 'random_salt').resolve();

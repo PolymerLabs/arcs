@@ -25,11 +25,14 @@ data class Annotation(val name: String, val params: Map<String, AnnotationParam>
 
     fun getStringParam(paramName: String): String {
         val paramValue = getParam(paramName)
-        return when (paramValue) {
-            is AnnotationParam.Str -> paramValue.value
-            else -> throw IllegalStateException(
-                "Annotation param $paramName must be string, instead got $paramValue")
+        require(paramValue is AnnotationParam.Str) {
+            "Annotation param $paramName must be string, instead got $paramValue"
         }
+        return paramValue.value
+    }
+
+    fun getOptionalStringParam(paramName: String): String? {
+        return if (params.containsKey(paramName)) getStringParam(paramName) else null
     }
 
     companion object {
@@ -43,5 +46,22 @@ data class Annotation(val name: String, val params: Map<String, AnnotationParam>
         )
 
         fun createCapability(name: String) = Annotation(name)
+
+        /**
+         * Returns an annotation indicating that a particle is an egress particle.
+         *
+         * @param egressType optional egress type for the particle
+         */
+
+        fun createEgress(egressType: String? = null): Annotation {
+            val params = mutableMapOf<String, AnnotationParam>()
+            if (egressType != null) {
+                params["type"] = AnnotationParam.Str(egressType)
+            }
+            return Annotation("egress", params)
+        }
+
+        /** Annotation indicating that a particle is isolated. */
+        val isolated = Annotation("isolated")
     }
 }

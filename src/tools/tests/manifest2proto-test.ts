@@ -177,7 +177,7 @@ describe('manifest2proto', () => {
         }],
         location: 'a/b/c.js',
         name: 'Abc',
-        isolated: true,
+        annotations: [{name: 'isolated'}],
       }]
     });
   });
@@ -206,10 +206,28 @@ describe('manifest2proto', () => {
             fields: {a: {primitive: 'TEXT'}},
             hash: 'eb8597be8b72862d5580f567ab563cefe192508d',
           }}},
-          expression: 'expression-entity' // This is temporary stop-gap.
+          expression: 'expression-entity' // This is a temporary stop-gap.
         }],
         name: 'FooBar',
-        isolated: false,
+      }]
+    });
+  });
+
+  it('encodes egress type in particle spec', async () => {
+    const manifest = await Manifest.parse(`
+      @egress('MyEgressType')
+      particle Abc
+    `);
+    assert.deepStrictEqual(await toProtoAndBack(manifest), {
+      particleSpecs: [{
+        name: 'Abc',
+        annotations: [{
+          name: 'egress',
+          params: [{
+            name: 'type',
+            strValue: 'MyEgressType',
+          }]
+        }],
       }]
     });
   });

@@ -63,8 +63,8 @@ class PersonHostService : ArcHostService() {
 
     inner class ReadPerson : AbstractReadPerson() {
         override fun onStart() {
-            handles.person.onUpdate { person ->
-                person?.name?.let { sendResult(it) }
+            handles.person.onUpdate { delta ->
+                delta.new?.name?.let { sendResult(it) }
             }
         }
 

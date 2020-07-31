@@ -243,6 +243,7 @@ export interface SerializedParticleSpec extends Literal {
   trustClaims?: ClaimStatement[];
   trustChecks?: CheckStatement[];
   annotations?: AnnotationRef[];
+  manifestNamespace?: string;
 }
 
 export interface StorableSerializedParticleSpec extends SerializedParticleSpec {
@@ -341,6 +342,10 @@ export class ParticleSpec {
     return this.connections.filter(a => a.isOutput);
   }
 
+  get manifestNamespace(): string | null {
+    return this.model.manifestNamespace;
+  }
+
   isInput(param: string): boolean {
     const connection = this.handleConnectionMap.get(param);
     return connection && connection.isInput;
@@ -403,7 +408,7 @@ export class ParticleSpec {
    * Particles are considered egress particles by default, must have an explicit
    * `@isolated` annotation to be considered isolated.
    */
-  get isolated(): boolean {
+  get isIsolated(): boolean {
     const isolated = !!this.getAnnotation('isolated');
     const egress = !!this.getAnnotation('egress');
     assert(!(isolated && egress), 'Particle cannot be tagged with both @isolated and @egress.');
@@ -415,8 +420,22 @@ export class ParticleSpec {
    *
    * Particles are considered egress particles by default.
    */
-  get egress(): boolean {
-    return !this.isolated;
+  get isEgress(): boolean {
+    return !this.isIsolated;
+  }
+
+  /**
+   * Returns the egress type of this particle, according to the `@egress`
+   * annotation on it. Returns null if no egress type was supplied, or if the
+   * particle is not an egress particle.
+   */
+  get egressType(): string | null {
+    const egressAnnotation = this.getAnnotation('egress');
+    if (!egressAnnotation) {
+      return null;
+    }
+    const egressType = egressAnnotation.params['type'];
+    return egressType == null ? null : egressType as string;
   }
 
   isCompatible(modality: Modality): boolean {
@@ -428,19 +447,19 @@ export class ParticleSpec {
   }
 
   toLiteral(): SerializedParticleSpec {
-    const {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations} = this.model;
+    const {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations, manifestNamespace} = this.model;
     const connectionToLiteral : (input: SerializedHandleConnectionSpec) => SerializedHandleConnectionSpec =
       ({type, direction, relaxed, name, isOptional, dependentConnections, annotations, expression}) => ({type: asTypeLiteral(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral), annotations: annotations || [], expression});
     const argsLiteral = args.map(a => connectionToLiteral(a));
-    return {args: argsLiteral, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations};
+    return {args: argsLiteral, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations, manifestNamespace};
   }
 
   static fromLiteral(literal: SerializedParticleSpec, options?: ParticleSpecOptions): ParticleSpec {
-    let {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations} = literal;
+    let {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations, manifestNamespace} = literal;
     const connectionFromLiteral = ({type, direction, relaxed, name, isOptional, dependentConnections, expression}: SerializedHandleConnectionSpec) =>
       ({type: asType(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : [], annotations: /*annotations ||*/ [], expression});
     args = args.map(connectionFromLiteral);
-    return new ParticleSpec({args, name, verbs: verbs || [], description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations}, options);
+    return new ParticleSpec({args, name, verbs: verbs || [], description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations, manifestNamespace}, options);
   }
 
   // Note: this method shouldn't be called directly.

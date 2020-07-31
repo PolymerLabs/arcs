@@ -1,17 +1,17 @@
-[header]
+-----[header]-----
 Kotlin Test Harness
 
 Expectations can be updated with:
 $ ./tools/sigh updateCodegenUnitTests
-[end_header]
+-----[end_header]-----
 
-[name]
+-----[name]-----
 exposes harness handles as a read write handle regardless of particle spec direction
-[input]
+-----[input]-----
 particle P
   h1: reads Person {name: Text}
   h2: writes Address {streetAddress: Text}
-[results]
+-----[results]-----
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class PTestHarness<P : AbstractP>(
@@ -34,18 +34,18 @@ class PTestHarness<P : AbstractP>(
     val h2: arcs.sdk.ReadWriteSingletonHandle<P_H2> by handleMap
 }
 
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 specifies handle type correctly - singleton, collection, entity, reference, tuples
-[input]
+-----[input]-----
 particle P
   singletonEntity: reads Person {name: Text}
   singletonReference: writes &Person {name: Text}
   collectionEntity: writes [Person {name: Text}]
   collectionReference: reads [&Person {name: Text}]
   collectionTuples: reads writes [(&Product {name: Text}, &Manufacturer {name: Text})]
-[results]
+-----[results]-----
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class PTestHarness<P : AbstractP>(
@@ -100,4 +100,4 @@ class PTestHarness<P : AbstractP>(
 > by handleMap
 }
 
-[end]
+-----[end]-----

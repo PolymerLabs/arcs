@@ -42,6 +42,11 @@ annotation encrypted
   retention: Runtime
   doc: 'storage capability: encrypted'
 
+annotation shareable
+  targets: [Handle, Store, HandleConnection]
+  retention: Runtime
+  doc: 'storage capability: shareable'
+
 annotation inMemory
   targets: [Handle]
   retention: Runtime
@@ -62,10 +67,10 @@ annotation isolated
   retention: Source
   doc: 'Indicates that the given particle is an isolated particle, and does not egress data.'
 
-annotation egress
+annotation egress(type: Text)
   targets: [Particle]
   retention: Source
-  doc: 'Indicates that the given particle can egress data out of the system (i.e. is not isolated).'
+  doc: 'Indicates that the given particle can egress data out of the system (i.e. is not isolated). Optionally supply an egress type.'
 
 ${canonicalPolicyAnnotations}
 `;

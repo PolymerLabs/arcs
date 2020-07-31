@@ -83,8 +83,18 @@ export class PlanGenerator {
   async createHandleVariable(handle: Handle): Promise<string> {
     handle.type.maybeEnsureResolved();
     const valInit = `val ${this.handleVariableName(handle)} = `;
-    const handleRestrictedType = this.ingressValidation
-        ? this.ingressValidation.restrictType(handle.type) : handle.type.resolvedType();
+    let handleRestrictedType: Type = null;
+    if (this.ingressValidation) {
+      const skippedFields = [];
+      handleRestrictedType = this.ingressValidation.restrictType(handle.type, skippedFields);
+      if (skippedFields.length > 0) {
+        console.warn(`Handle '${handle.id}' of Type ${handle.type.resolvedType().toString()} ` +
+            `is skipping fields: [${skippedFields.join(', ')}] that are not covered by Policies.`);
+      }
+    }
+    if (!handleRestrictedType) {
+      handleRestrictedType = handle.type.resolvedType();
+    }
     return valInit + ktUtils.applyFun(`Handle`, [
       await this.createStorageKey(handle),
       await generateType(handleRestrictedType),
@@ -113,10 +123,11 @@ export class PlanGenerator {
 
     const handle = this.handleVariableName(connection.handle);
     const mode = this.createHandleMode(connection.direction, connection.type);
-    const type = await generateConnectionType(connection);
+    const type = await generateConnectionType(connection, {namespace: this.namespace});
     const annotations = PlanGenerator.createAnnotations(connection.handle.annotations);
     const args = [handle, mode, type, annotations];
     if (connection.spec.expression) {
+      // TODO: Add a test for an expression once recipe2plan tests move to .cgtest
       args.push(quote(connection.spec.expression));
     }
 
@@ -188,6 +199,9 @@ package ${this.namespace}
 //
 
 ${tryImport('arcs.core.data.*', this.namespace)}
+${tryImport('arcs.core.data.expression.*', this.namespace)}
+${tryImport('arcs.core.data.expression.Expression.*', this.namespace)}
+${tryImport('arcs.core.data.expression.Expression.BinaryOp.*', this.namespace)}
 ${tryImport('arcs.core.data.Plan.*', this.namespace)}
 ${tryImport('arcs.core.storage.StorageKeyParser', this.namespace)}
 ${tryImport('arcs.core.entity.toPrimitiveValue', this.namespace)}

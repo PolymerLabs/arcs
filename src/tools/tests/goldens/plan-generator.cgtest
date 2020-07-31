@@ -1,0 +1,115 @@
+[header]
+Kotlin Plan Generation
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+[end_header]
+
+[name]
+uses the same storage key for created and mapped handles
+[input]
+particle A
+  data: writes Thing {num: Number}
+particle B
+  data: reads Thing {num: Number}
+
+@arcId('ingestion')
+recipe Ingest
+  h: create 'data' @persistent
+  A
+    data: writes h
+
+recipe Retrieve
+  h: map 'data'
+  B
+    data: reads h
+[results]
+/* ktlint-disable */
+@file:Suppress("PackageName", "TopLevelName")
+
+package test.namespace
+
+//
+// GENERATED CODE -- DO NOT EDIT
+//
+
+import arcs.core.data.*
+import arcs.core.data.expression.*
+import arcs.core.data.expression.Expression.*
+import arcs.core.data.expression.Expression.BinaryOp.*
+import arcs.core.data.Plan.*
+import arcs.core.storage.StorageKeyParser
+import arcs.core.entity.toPrimitiveValue
+
+val Ingest_Handle0 = Handle(
+    StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data"),
+    arcs.core.data.EntityType(
+        arcs.core.data.Schema(
+            setOf(arcs.core.data.SchemaName("Thing")),
+            arcs.core.data.SchemaFields(
+                singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                collections = emptyMap()
+            ),
+            "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
+        )
+    ),
+    listOf(Annotation("persistent", emptyMap()))
+)
+val IngestPlan = Plan(
+    listOf(
+        Particle(
+            "A",
+            "",
+            mapOf(
+                "data" to HandleConnection(
+                    Ingest_Handle0,
+                    HandleMode.Write,
+                    arcs.core.data.SingletonType(arcs.core.data.EntityType(A_Data.SCHEMA)),
+                    listOf(Annotation("persistent", emptyMap()))
+                )
+            )
+        )
+    ),
+    listOf(Ingest_Handle0),
+    listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str("ingestion"))))
+)
+val Retrieve_Handle0 = Handle(
+    StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data"),
+    arcs.core.data.EntityType(
+        arcs.core.data.Schema(
+            setOf(arcs.core.data.SchemaName("Thing")),
+            arcs.core.data.SchemaFields(
+                singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                collections = emptyMap()
+            ),
+            "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
+        )
+    ),
+    emptyList()
+)
+val RetrievePlan = Plan(
+    listOf(
+        Particle(
+            "B",
+            "",
+            mapOf(
+                "data" to HandleConnection(
+                    Retrieve_Handle0,
+                    HandleMode.Read,
+                    arcs.core.data.SingletonType(arcs.core.data.EntityType(B_Data.SCHEMA)),
+                    emptyList()
+                )
+            )
+        )
+    ),
+    listOf(Retrieve_Handle0),
+    emptyList()
+)
+
+[require]
+storageKeys.Ingest.Handle0 == storageKeys.Retrieve.Handle0
+[end]

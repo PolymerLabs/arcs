@@ -154,7 +154,7 @@ class StorageProxyTest {
             assertThat(exception).hasMessageThat().startsWith("Action handlers are not valid")
         }
         check { proxy.addOnReady(callbackId) {} }
-        check { proxy.addOnUpdate(callbackId) {} }
+        check { proxy.addOnUpdate(callbackId) { _, _ -> Unit } }
         check { proxy.addOnDesync(callbackId) {} }
         check { proxy.addOnResync(callbackId) {} }
     }
@@ -345,7 +345,7 @@ class StorageProxyTest {
         channels.onResync.receiveOrTimeout()
         assertThat(proxy.getStateForTesting()).isEqualTo(ProxyState.SYNC)
         verify(onResync).invoke()
-        verify(onUpdate).invoke(any())
+        verify(onUpdate).invoke("data")
         verifyNoMoreInteractions(onReady, onDesync)
     }
 
@@ -840,7 +840,7 @@ class StorageProxyTest {
 
     private data class ActionChannels(
         val onReady: Channel<Unit> = Channel(Channel.BUFFERED),
-        val onUpdate: Channel<String> = Channel(Channel.BUFFERED),
+        val onUpdate: Channel<Unit> = Channel(Channel.BUFFERED),
         val onDesync: Channel<Unit> = Channel(Channel.BUFFERED),
         val onResync: Channel<Unit> = Channel(Channel.BUFFERED)
     )
@@ -855,9 +855,9 @@ class StorageProxyTest {
                 mocks.onReady()
                 channels.onReady.offer(Unit)
             }
-            proxy.addOnUpdate(id) {
-                mocks.onUpdate(it)
-                channels.onUpdate.offer(it)
+            proxy.addOnUpdate(id) { _, new ->
+                mocks.onUpdate(new)
+                channels.onUpdate.offer(Unit)
             }
             proxy.addOnDesync(id) {
                 mocks.onDesync()

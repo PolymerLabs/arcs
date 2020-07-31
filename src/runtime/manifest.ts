@@ -861,6 +861,7 @@ ${e.message}
     }
     processArgTypes(particleItem.args);
     particleItem.annotations = Manifest._buildAnnotationRefs(manifest, particleItem.annotationRefs);
+    particleItem.manifestNamespace = manifest.meta.namespace;
     manifest._particles[particleItem.name] = new ParticleSpec(particleItem);
   }
 

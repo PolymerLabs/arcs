@@ -18,14 +18,18 @@ import {generateSchema} from './kotlin-schema-generator.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
+export type CodeGenContext = {
+  namespace?: string
+};
+
 /**
  * Generates a Kotlin type instance for the given handle connection.
  */
-export async function generateConnectionType(connection: HandleConnection): Promise<string> {
-  return generateConnectionSpecType(connection.spec, new SchemaGraph(connection.particle.spec).nodes);
+export async function generateConnectionType(connection: HandleConnection, context: CodeGenContext = {}): Promise<string> {
+  return generateConnectionSpecType(connection.spec, new SchemaGraph(connection.particle.spec).nodes, context);
 }
 
-export async function generateConnectionSpecType(connection: HandleConnectionSpec, nodes: SchemaNode[]): Promise<string> {
+export async function generateConnectionSpecType(connection: HandleConnectionSpec, nodes: SchemaNode[], context: CodeGenContext = {}): Promise<string> {
   let type = connection.type;
   if (type.isEntity || type.isReference) {
     // Moving to the new style types with explicit singleton.
@@ -36,7 +40,11 @@ export async function generateConnectionSpecType(connection: HandleConnectionSpe
     if (!type.isEntity) return null;
     if (connection.type.hasVariable) return null;
     const node = nodes.find(n => n.schema.equals(type.getEntitySchema()));
-    return ktUtils.applyFun('arcs.core.data.EntityType', [`${node.fullName(connection)}.SCHEMA`]);
+    let schemaReference = `${node.fullName(connection)}.SCHEMA`;
+    if (node.particleSpec.manifestNamespace && node.particleSpec.manifestNamespace !== context.namespace) {
+      schemaReference = `${node.particleSpec.manifestNamespace}.${schemaReference}`;
+    }
+    return ktUtils.applyFun('arcs.core.data.EntityType', [schemaReference]);
   });
 }
 
