@@ -161,7 +161,9 @@ class DatabaseImpl(
     }
 
     override fun onUpgrade(
-        db: SQLiteDatabase, oldVersion: Int, newVersion: Int
+        db: SQLiteDatabase,
+        oldVersion: Int,
+        newVersion: Int
     ) = synchronized(db) {
         if (initialized) return
         db.transaction {
@@ -173,7 +175,9 @@ class DatabaseImpl(
     }
 
     override fun onDowngrade(
-        db: SQLiteDatabase, oldVersion: Int, newVersion: Int
+        db: SQLiteDatabase,
+        oldVersion: Int,
+        newVersion: Int
     ) = synchronized(db) {
         if (initialized) return
         db.transaction {
