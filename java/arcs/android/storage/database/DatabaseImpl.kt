@@ -138,7 +138,7 @@ class DatabaseImpl(
             clients.values.toList()
         }.forEach { emit(it) }
     }
-    private var isInitialized = false
+    private var initialized = false
 
     override fun onConfigure(db: SQLiteDatabase?) {
         super.onConfigure(db)
@@ -155,23 +155,23 @@ class DatabaseImpl(
     }
 
     override fun onCreate(db: SQLiteDatabase) = synchronized(db) {
-        if (isInitialized) return
+        if (initialized) return
         db.transaction { initializeDatabase(this) }
-        isInitialized = true
+        initialized = true
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = synchronized(db) {
-        if (isInitialized) return
+        if (initialized) return
         db.transaction {
             ((oldVersion + 1)..newVersion).forEach {
                 nextVersion -> MIGRATION_STEPS[nextVersion]?.forEach(db::execSQL)
             }
         }
-        isInitialized = true
+        initialized = true
     }
 
     override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = synchronized(db) {
-        if (isInitialized) return
+        if (initialized) return
         db.transaction {
             // Select all of the tables from the database, not just the ones we know about given
             // our version, then generate DROP TABLE statements and execute them.
@@ -183,7 +183,7 @@ class DatabaseImpl(
             initializeDatabase(this)
             Unit
         }
-        isInitialized = true
+        initialized = true
     }
 
     /**
