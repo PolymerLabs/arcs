@@ -31,6 +31,9 @@ sealed class Expression<T> {
 
         /** Lookup an entry in a given scope. */
         fun <T> lookup(param: String): T
+
+        /** Put an entry into a given scope. */
+        fun set(param: String, value: Any)
     }
 
     /**
@@ -65,6 +68,21 @@ sealed class Expression<T> {
 
         /** Called when [ObjectLiteralExpression] encountered. */
         fun <T> visit(expr: ObjectLiteralExpression<T>): Result
+
+        /** Called when [FromExpression] encountered. */
+        fun <T, R> visit(expr: FromExpression<T, R>): Result
+
+        /** Called when [ComposeExpression] encountered. */
+        fun <T, R> visit(expr: ComposeExpression<T, R>): Result
+
+        /** Called when [WhereExpression] encountered. */
+        fun <T> visit(expr: WhereExpression<T>): Result
+
+        /** Called when [SelectExpression] encountered. */
+        fun <T> visit(expr: SelectExpression<T>): Result
+
+        /** Called when [NewExpression] encountered. */
+        fun <T> visit(expr: NewExpression<T>): Result
     }
 
     /** Accepts a visitor and invokes the appropriate [Visitor.visit] method. */
@@ -323,6 +341,60 @@ sealed class Expression<T> {
     /** A reference to a literal boolean value, e.g. true/false */
     class BooleanLiteralExpression(boolean: Boolean) : LiteralExpression<Boolean>(boolean) {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+    }
+
+    /**
+     * Represents an iteration over a [Sequence] in the current scope under the identifier [source],
+     * placing each member of the sequence in a scope under [iterationVar] and evaluating
+     * [iterationExpr], returning a new sequence.
+     */
+    data class FromExpression<T, R>(
+        val source: String,
+        val iterationVar: String,
+        val iterationExpr: Expression<Sequence<R>> =
+            FieldExpression(CurrentScopeExpression<CurrentScope<T>>(), iterationVar)
+    ) : Expression<Sequence<R>>() {
+        override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)
+    }
+
+    /**
+     * Represents the composition of two expressions, [leftExpr] evaluated first, followed by
+     * [rightExpr].
+     */
+    data class ComposeExpression<T, R>(
+        val leftExpr: Expression<Sequence<T>>,
+        val rightExpr: Expression<Sequence<R>>
+    ) : Expression<Sequence<R>>() {
+        override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
+    }
+
+    /**
+     * Represents a filter expression that returns true or false.
+     */
+    data class WhereExpression<T>(
+        val expr: Expression<Boolean>
+    ) : Expression<Sequence<T>>() {
+        override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
+    }
+
+    /**
+     * Represents an expression that outputs a value.
+     */
+    data class SelectExpression<T>(
+        val expr: Expression<Sequence<T>>
+    ) : Expression<Sequence<T>>() {
+        override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
+    }
+
+    /**
+     * Represents an expression that constructs a new value corresponding to the given
+     * [schemaName] with a field for each declared (name, expression) in [fields].
+     */
+    data class NewExpression<T>(
+        val schemaName: Set<String>,
+        val fields: List<Pair<String, Expression<*>>>
+    ) : Expression<Sequence<T>>() {
+        override fun <Result> accept(visitor: Visitor<Result>): Result = visitor.visit(this)
     }
 }
 

@@ -165,15 +165,21 @@ fun <E : Expression.Scope, T> Expression.FieldExpression<E, T>.asScope() =
     this as Expression.FieldExpression<E, Expression.Scope>
 
 /** Constructs a reference to a current scope object for test purposes */
-class CurrentScope<V>(map: Map<String, V>) : MapScope<V>("<this>", map)
+class CurrentScope<V>(map: MutableMap<String, V>) : MapScope<V>("<this>", map)
 
 /** A scope with a simple map backing it, mostly for test purposes. */
-open class MapScope<V>(override val scopeName: String, val map: Map<String, V>) : Expression.Scope {
+open class MapScope<V>(
+    override val scopeName: String, val map: MutableMap<String, V>
+) : Expression.Scope {
     override fun <V> lookup(param: String): V = map[param] as V
+    override fun set(param: String, value: Any) {
+        map[param] = value as V
+    }
+    override fun toString() = map.toString()
 }
 
 /** Constructs a [Expression.Scope] from a [Map]. */
-fun <T> Map<String, T>.asScope(scopeName: String = "<object>") = MapScope<T>(scopeName, this)
+fun <T> Map<String, T>.asScope(scopeName: String = "<object>") = MapScope<T>(scopeName, this.toMutableMap())
 
 /** Constructs a [Expression.QueryParameterExpression] with the given [queryArgName]. */
 fun <T> query(queryArgName: String) = Expression.QueryParameterExpression<T>(queryArgName)

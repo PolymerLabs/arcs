@@ -46,6 +46,27 @@ class ExpressionStringifier(val parameterScope: Expression.Scope = ParameterScop
 
     override fun <T> visit(expr: Expression.ObjectLiteralExpression<T>) =
         (expr.value as? Expression.Scope)?.scopeName ?: "<object>"
+
+    override fun <T, R> visit(expr: Expression.FromExpression<T, R>): String =
+        "from ${expr.iterationVar} in ${expr.source}\n" + expr.iterationExpr.accept(this)
+
+    override fun <T> visit(expr: Expression.WhereExpression<T>): String =
+        "where " + expr.expr.accept(this) + "\n"
+
+    override fun <T, R> visit(expr: Expression.ComposeExpression<T, R>): String =
+        expr.leftExpr.accept(this) + " " + expr.rightExpr.accept(this)
+
+    override fun <T> visit(expr: Expression.SelectExpression<T>): String =
+        "select " + expr.expr.accept(this) + "\n"
+
+    override fun <T> visit(expr: Expression.NewExpression<T>): String =
+        "new " + expr.schemaName.joinToString(" ") +  expr.fields.joinToString(
+            ", \n",
+            "{\n",
+            "\n}", transform = { (name, fieldExpr) ->
+                "$name: " + fieldExpr.accept(this)
+            }
+        )
 }
 
 /** Given an expression, return a string representation. */

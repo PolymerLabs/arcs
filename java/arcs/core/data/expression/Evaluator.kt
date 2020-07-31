@@ -17,12 +17,34 @@ package arcs.core.data.expression
  * result. Note that types cannot be enforced statically, so it is possible for both
  * type cast errors and field or parameter errors to occur during evaluation. These will be
  * reflected as exceptions.
+ *
+ * Non-primitive [Sequence] expressions are wrapped arguments are return values in another
+ * [Sequence] because Kotlin lacks a Maybe/Option monad. Expressions are chained together via
+ * composition, and arguments are passed between composed functions using an explicit stack.
+ * Composition happens by [flatMap] semantics, so an [emptySequence] terminates the output of the
+ * expression and it will not make it into the final result.
+ *
+ * As an example in ```FROM p in x WHERE p < 5 SELECT p```, [WhereExpression] returns
+ * [emptySequence] for false conditions, thus `SELECT` isn't executed, and the output is
+ * suppressed.
  */
 class ExpressionEvaluator(
     val currentScope: Expression.Scope = CurrentScope<Any>(),
-    val parameterScope: Expression.Scope = ParameterScope()
-) :
-    Expression.Visitor<Any> {
+    val parameterScope: Expression.Scope = ParameterScope(),
+    val scopeCreator: (String) -> Expression.Scope = { name -> MapScope<Any>(name, mutableMapOf()) }
+) : Expression.Visitor<Any> {
+    // Hold arguments to be passed to next "function" (e.g. SELECT, WHERE, NEW, etc)
+    private val callStack = mutableListOf<Sequence<Any>>()
+
+    // Push argument
+    private fun push(value: Sequence<Any>) {
+        callStack.add(value)
+    }
+
+    // Pop Argument
+    @OptIn(ExperimentalStdlibApi::class)
+    private fun pop(): Sequence<Any> = callStack.removeLast()
+
     override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>): Any {
         return expr.op(expr.expr.accept(this) as E) as Any
     }
@@ -53,6 +75,57 @@ class ExpressionEvaluator(
         currentScope
 
     override fun <T> visit(expr: Expression.ObjectLiteralExpression<T>): Any = expr.value as Any
+
+    override fun <T, R> visit(expr: Expression.FromExpression<T, R>): Any {
+        var sequence = requireNotNull(currentScope.lookup<Any>(expr.source)) {
+            "${expr.source} is null in current scope."
+        }
+
+        if (sequence is List<*>) {
+           sequence = sequence.asSequence()
+        }
+
+        require(sequence is Sequence<*>) {
+            "${expr.source} of type ${sequence::class} cannot be converted to a Sequence"
+        }
+
+        return sequence.flatMap { value ->
+            currentScope.set(expr.iterationVar, value as Any)
+            push(sequenceOf(value))
+            expr.iterationExpr.accept(this) as Sequence<T>
+        }
+    }
+
+    override fun <T, R> visit(expr: Expression.ComposeExpression<T, R>): Any {
+        return when (val result = expr.leftExpr.accept(this)) {
+            emptySequence<Any>() -> emptySequence<Any>()
+            else -> {
+                push(result as Sequence<Any>)
+                expr.rightExpr.accept(this)
+            }
+        }
+    }
+
+    override fun <T> visit(expr: Expression.WhereExpression<T>): Any {
+        val current = pop()
+        if (expr.expr.accept(this) == true) {
+            return current
+        }
+        return emptySequence<T>()
+    }
+
+    override fun <T> visit(expr: Expression.SelectExpression<T>): Any {
+        return expr.expr.accept(this)
+    }
+
+    override fun <T> visit(expr: Expression.NewExpression<T>): Any {
+        pop()
+        val newScope = scopeCreator(expr.schemaName.firstOrNull() ?: "")
+        expr.fields.forEach { (fieldName, fieldExpr) ->
+            newScope.set(fieldName, fieldExpr.accept(this))
+        }
+        return sequenceOf(newScope)
+    }
 }
 
 /**

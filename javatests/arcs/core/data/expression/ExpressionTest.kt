@@ -11,6 +11,7 @@
 
 package arcs.core.data.expression
 
+import arcs.core.data.expression.Expression.Scope
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.Test
@@ -30,9 +31,10 @@ class ExpressionTest {
     )
 
     val currentScope = CurrentScope<Any>(
-        mapOf(
+        mutableMapOf(
             "blah" to 10,
-            "baz" to mapOf("x" to 24).asScope()
+            "baz" to mapOf("x" to 24).asScope(),
+            "numbers" to listOf(1, 2, 3, 4, 5, 6 , 7, 8, 9, 10)
         )
     )
 
@@ -152,6 +154,31 @@ class ExpressionTest {
         ) - 1.asExpr()) / 2.asExpr()
 
         assertThat(evalExpression<Number, Number>(expr, currentScope, "arg" to 1)).isEqualTo(28)
+
+        // Test From p in numbers where p < 5
+        val whereExpr = Expression.WhereExpression<Number>(currentScope["p"].asNumber() lt 5.asExpr())
+        val selectExpr = Expression.SelectExpression<Scope>(
+            Expression.NewExpression<Scope>(
+                setOf("Example"),
+                listOf(
+                    "x" to currentScope["p"].asNumber() + 1.asExpr(),
+                    "y" to currentScope["p"].asNumber() + 2.asExpr()
+                )
+            )
+        )
+        val composeExpr = Expression.ComposeExpression(whereExpr, selectExpr)
+        val fromExpr = Expression.FromExpression<Number, Scope>("numbers", "p", composeExpr)
+
+        assertThat(
+            evalExpression<Sequence<Scope>, Sequence<Scope>>(fromExpr, currentScope).toList().map {
+                (it as MapScope<*>).map
+            }
+        ).containsExactly(
+            mapOf("x" to 2, "y" to 3),
+            mapOf("x" to 3, "y" to 4),
+            mapOf("x" to 4, "y" to 5),
+            mapOf("x" to 5, "y" to 6)
+        )
     }
 
     @Test
@@ -185,11 +212,11 @@ class ExpressionTest {
     @Test
     @Suppress("UNCHECKED_CAST")
     fun testJsonSerialization() {
-        val q = query<Expression.Scope>("arg")
-        val field = Expression.FieldExpression<Expression.Scope, Number>(q, "bar")
+        val q = query<Scope>("arg")
+        val field = Expression.FieldExpression<Scope, Number>(q, "bar")
         val baz = currentScope.get(
             "baz"
-        ) as Expression.FieldExpression<CurrentScope<Any>, Expression.Scope>
+        ) as Expression.FieldExpression<CurrentScope<Any>, Scope>
         val x: Expression<Number> = baz["x"]
         val expr = (x + 2.0.asExpr() + (3f.asExpr() * 4L.asExpr()) + field - 1.toByte().asExpr()) /
             2.toBigInteger().asExpr()
