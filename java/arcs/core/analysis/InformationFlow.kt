@@ -140,7 +140,6 @@ class InformationFlow private constructor(
             .fold(InformationFlowLabels(emptySet())) { acc, cur -> acc join cur }
 
         // Update all the outputs with the mixed label value.
-        // TODO(bgogul): For fields, we are only going one level deep. Do we need to go further?
         val resultAccessPathLabels = mutableMapOf<AccessPath, InformationFlowLabels>()
         particle.handleConnections.filter { it.spec.direction.canWrite }
             .flatMap { handleConnection ->
@@ -304,9 +303,16 @@ class InformationFlow private constructor(
         partial: Boolean
     ): Set<List<AccessPath.Selector>> {
         return when (tag) {
-            // For primitives and references we don't go down to collect access paths.
-            FieldType.Tag.Primitive,
-            FieldType.Tag.EntityRef -> setOf(prefix)
+            // For primitives, we don't go down to collect access paths.
+            FieldType.Tag.Primitive -> setOf(prefix)
+            // TODO(b/154234733): For references, we should go down, but it gets a bit tricky
+            // as there can be cycles in the access paths. Right now, we don't support cyclic
+            // references. So, it is OK to go down. Eventually we should detect cycles here.
+            FieldType.Tag.EntityRef -> {
+                val schema = SchemaRegistry.getSchema((this as FieldType.EntityRef).schemaHash)
+                (if (partial) setOf(prefix) else emptySet()) +
+                schema.accessPathSelectors(prefix, partial)
+            }
             FieldType.Tag.Tuple -> {
                 // Access path selectors of all components.
                 val componentSelectors = (this as FieldType.Tuple).types
