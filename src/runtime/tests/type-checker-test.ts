@@ -364,6 +364,68 @@ describe('TypeChecker', () => {
     assert.isNotNull(newType instanceof TypeVariable && newType.variable.resolution);
   });
 
+  it('resolves a type variable to its min type by default', () => {
+    const concreteType = EntityType.make(['Product'], {name: 'Text', phone: 'Number'}).collectionOf();
+    const constraint = EntityType.make([], {name: 'Text'});
+    const variableType = TypeVariable.make('a', constraint, null).collectionOf();
+    TypeChecker.processTypeList(null, [
+      {type: concreteType, direction: 'writes'},
+      {type: variableType, direction: 'reads'},
+    ]);
+    variableType.maybeEnsureResolved();
+    assert.deepStrictEqual(variableType.getEntitySchema(), constraint.getEntitySchema());
+  });
+
+  it('can resolve a type variable to its max type', () => {
+    const concreteType = EntityType.make(['Product'], {name: 'Text', phone: 'Number'}).collectionOf();
+    const constraint = EntityType.make([], {name: 'Text'});
+    const variableType = TypeVariable.make('a', constraint, null, true).collectionOf();
+    TypeChecker.processTypeList(null, [
+      {type: concreteType, direction: 'writes'},
+      {type: variableType, direction: 'reads'},
+    ]);
+    variableType.maybeEnsureResolved();
+    assert.deepStrictEqual(variableType.getEntitySchema(), concreteType.getEntitySchema());
+  });
+
+  it('resolves a type variable to its min type through an intermediary variable by default', () => {
+    const concreteType = EntityType.make(['Product'], {name: 'Text', phone: 'Number'}).collectionOf();
+    const constraint = EntityType.make([], {name: 'Text'});
+    const variable = TypeVariable.make('a', constraint, null);
+    const redactorInputType = new TypeVariable(variable.variable).collectionOf();
+    const redactorOutputType = variable.collectionOf();
+    const egressType = TypeVariable.make('x', null, null, false).collectionOf();
+    TypeChecker.processTypeList(null, [
+      {type: concreteType, direction: 'writes'},
+      {type: redactorInputType, direction: 'reads'},
+    ]);
+    TypeChecker.processTypeList(null, [
+      {type: redactorOutputType, direction: 'writes'},
+      {type: egressType, direction: 'reads'},
+    ]);
+    egressType.maybeEnsureResolved();
+    assert.deepStrictEqual(egressType.getEntitySchema(), constraint.getEntitySchema());
+  });
+
+  it('can resolve a type variable to its max type through an intermediary variable', () => {
+    const concreteType = EntityType.make(['Product'], {name: 'Text', phone: 'Number'}).collectionOf();
+    const constraint = EntityType.make([], {name: 'Text'});
+    const variable = TypeVariable.make('a', constraint, null);
+    const redactorInputType = new TypeVariable(variable.variable).collectionOf();
+    const redactorOutputType = variable.collectionOf();
+    const egressType = TypeVariable.make('x', null, null, true).collectionOf();
+    TypeChecker.processTypeList(null, [
+      {type: concreteType, direction: 'writes'},
+      {type: redactorInputType, direction: 'reads'},
+    ]);
+    TypeChecker.processTypeList(null, [
+      {type: redactorOutputType, direction: 'writes'},
+      {type: egressType, direction: 'reads'},
+    ]);
+    egressType.maybeEnsureResolved();
+    assert.deepStrictEqual(egressType.getEntitySchema(), concreteType.getEntitySchema());
+  });
+
   it('can compare a type variable with a Collection handle', async () => {
     const leftType = TypeVariable.make('a').collectionOf();
     const rightType = TypeVariable.make('b');
