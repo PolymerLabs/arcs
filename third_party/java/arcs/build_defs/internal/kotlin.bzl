@@ -33,8 +33,6 @@ load(":kotlin_serviceloader_registry.bzl", "kotlin_serviceloader_registry")
 load(":kotlin_wasm_annotations.bzl", "kotlin_wasm_annotations")
 load(":util.bzl", "manifest_only", "merge_lists", "replace_arcs_suffix")
 
-ARCS_SDK_DEPS = ["//third_party/java/arcs"]
-
 _WASM_SUFFIX = "-wasm"
 
 _JS_SUFFIX = "-js"
@@ -229,6 +227,7 @@ def _extract_particle_name(src):
 def arcs_kt_particles(
         name,
         package,
+        arcs_sdk_deps,
         srcs = [],
         deps = [],
         platforms = DEFAULT_PARTICLE_PLATFORMS,
@@ -240,6 +239,7 @@ def arcs_kt_particles(
     Args:
       name: name of the target to create
       package: Kotlin package for the particles
+      arcs_sdk_deps: build targets for the Arcs SDK to be included
       srcs: List of source files to include. Each file must contain a Kotlin
         class of the same name, which must match the name of a particle defined
         in a .arcs file.
@@ -252,7 +252,7 @@ def arcs_kt_particles(
     """
     _check_platforms(platforms)
 
-    deps = ARCS_SDK_DEPS + deps
+    deps = arcs_sdk_deps + deps
 
     if "jvm" in platforms and "wasm" in platforms:
         fail("Particles can only depend on one of jvm or wasm")
@@ -413,7 +413,14 @@ def arcs_kt_android_test_suite(
             deps = android_local_test_deps,
         )
 
-def arcs_kt_plan(name, srcs = [], data = [], deps = [], platforms = ["jvm"], visibility = None):
+def arcs_kt_plan(
+        name,
+        arcs_sdk_deps,
+        srcs = [],
+        data = [],
+        deps = [],
+        platforms = ["jvm"],
+        visibility = None):
     """Converts recipes from manifests into Kotlin plans.
 
     Example:
@@ -441,6 +448,7 @@ def arcs_kt_plan(name, srcs = [], data = [], deps = [], platforms = ["jvm"], vis
 
     Args:
       name: the name of the target to create
+      arcs_sdk_deps: build targets for the Arcs SDK to be included
       srcs: list of Arcs manifest files
       data: list of Arcs manifests needed at runtime
       deps: list of dependencies (jars)
@@ -475,9 +483,9 @@ def arcs_kt_plan(name, srcs = [], data = [], deps = [], platforms = ["jvm"], vis
         srcs = outs,
         platforms = platforms,
         visibility = visibility,
-        deps = ARCS_SDK_DEPS + deps,
+        deps = arcs_sdk_deps + deps,
     )
-    return {"outs": outs, "deps": ARCS_SDK_DEPS}
+    return {"outs": outs, "deps": arcs_sdk_deps}
 
 def arcs_kt_jvm_test_suite(
         name,
