@@ -37,6 +37,8 @@ data class Annotation(val name: String, val params: Map<String, AnnotationParam>
 
     companion object {
         fun createArcId(id: String) = Annotation("arcId", mapOf("id" to AnnotationParam.Str(id)))
+        // Deprecated: use createArcId instead.
+        fun arcId(id: String) = createArcId(id)
 
         fun createTtl(value: String) = Annotation(
             "ttl",
