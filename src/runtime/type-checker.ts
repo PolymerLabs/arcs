@@ -56,7 +56,7 @@ export class TypeChecker {
       return candidate;
     }
     if (candidate.canReadSubset.isAtLeastAsSpecificAs(candidate.canWriteSuperset)) {
-      // The resolution is still possible, but we may not have more information then the current candidate.
+      // The resolution is still possible, but we may not have more information than the current candidate.
       if (candidate.canWriteSuperset.isAtLeastAsSpecificAs(candidate.canReadSubset)) {
         // The type bounds have 'met', they are equivalent and are the resolution.
         candidate.variable.resolution = candidate.canReadSubset;

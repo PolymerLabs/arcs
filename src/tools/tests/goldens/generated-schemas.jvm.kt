@@ -14,6 +14,7 @@ import arcs.core.data.expression.Expression.BinaryOp.*
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.toPrimitiveValue
 import java.math.BigInteger
+import java.time.Instant
 
 typealias Gold_Data_Ref = AbstractGold.GoldInternal1
 typealias Gold_Alias = AbstractGold.GoldInternal1
