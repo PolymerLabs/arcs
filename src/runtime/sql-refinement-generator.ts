@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Op, Primitive} from './manifest-ast-types/manifest-ast-nodes.js';
+import {Op} from './manifest-ast-types/manifest-ast-nodes.js';
 import {Dictionary} from '../utils/lib-utils.js';
 import {Schema, RefinementExpressionVisitor, BinaryExpression, UnaryExpression, FieldNamePrimitive,
         QueryArgumentPrimitive, BuiltIn, NumberPrimitive, DiscretePrimitive, TextPrimitive} from '../types/lib-types.js';
@@ -46,7 +46,7 @@ class SqlRefinementGenerator extends RefinementExpressionVisitor<string> {
   }
   visitFieldNamePrimitive(expr: FieldNamePrimitive): string {
     const fixed = (expr.value.toString());
-    if (expr.evalType === Primitive.BOOLEAN) {
+    if (expr.evalType === 'Boolean') {
       return `(${fixed} = 1)`;
     }
     return fixed;
@@ -55,18 +55,27 @@ class SqlRefinementGenerator extends RefinementExpressionVisitor<string> {
     return expr.value.toString();
   }
   visitBuiltIn(expr: BuiltIn): string {
-    if (expr.value === 'now()') {
-      return expr.value;
+    // TODO: Double check that millis are the correct default units.
+    switch (expr.value) {
+      case 'now': return `(STRFTIME('%s','now') || SUBSTR(STRFTIME('%f','now'),4))`;
+      case 'creationTime': return `creation_timestamp`;
+      case 'expirationTime': return 'expiration_timestamp';
+      default: throw new Error(
+        `Unhandled BuiltInNode '${expr.value}' in toSQLExpression`
+      );
     }
-    // TODO: Implement SQL getter for 'creationTimeStamp'
-    throw new Error(`Unhandled BuiltInNode '${expr.value}' in toSQLExpression`);
   }
   visitDiscretePrimitive(expr: DiscretePrimitive): string {
     switch (expr.evalType) {
-      case Primitive.BOOLEAN:
-        throw new Error('BooleanPrimitive.toSQLExpression should never be called. The expression is assumed to be normalized.');
-      default:
-        return expr.value.toString();
+      case 'Instant':
+        return `DATETIME(${expr.value}/1000, 'unixepoch')`;
+      case 'Int':
+      case 'Long':
+      case 'BigInt':
+        return `${expr.value}`;
+      case 'Boolean':
+        return `${expr.value ? '1' : '0'}`;
+      default: throw new Error(`unexpected type ${expr.evalType}`);
     }
   }
   visitNumberPrimitive(expr: NumberPrimitive): string {
