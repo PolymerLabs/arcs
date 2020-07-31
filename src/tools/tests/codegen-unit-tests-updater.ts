@@ -8,7 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {testSuite} from './kotlin-codegen-test-suite.js';
+import {schema2KotlinTestSuite} from './schema2kotlin-codegen-test-suite.js';
+import {recipe2PlanTestSuite} from './recipe2plan-codegen-test-suite.js';
 import {regenerateInputFile} from './codegen-unit-test-base.js';
 
 /**
@@ -17,7 +18,7 @@ import {regenerateInputFile} from './codegen-unit-test-base.js';
  * ./tools/sigh updateCodegenUnitTests
  */
 let totalUpdateCount = 0;
-void Promise.all(testSuite.map(async testCase => {
+void Promise.all(schema2KotlinTestSuite.concat(recipe2PlanTestSuite).map(async testCase => {
   const updateCount = await regenerateInputFile(testCase);
   if (updateCount > 0) {
     console.info(`${testCase.inputFileName}: ${updateCount} tests updated`);

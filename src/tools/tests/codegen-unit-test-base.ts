@@ -43,6 +43,8 @@ type Test = {
  * expected output goes here
  * [next] // <- this is optional, only use for multiple outputs; not needed with 'per-line'
  * another expected output
+ * [require] // <- this is optional, use when you want to assert additional properties of the output
+ * test-specific formatted requirements
  * [end]
  */
 export abstract class CodegenUnitTest {
