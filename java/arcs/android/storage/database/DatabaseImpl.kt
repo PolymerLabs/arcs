@@ -138,16 +138,40 @@ class DatabaseImpl(
             clients.values.toList()
         }.forEach { emit(it) }
     }
+    private var isInitialized = false
 
-    override fun onCreate(db: SQLiteDatabase) = db.transaction { initializeDatabase(this) }
+    override fun onConfigure(db: SQLiteDatabase?) {
+        super.onConfigure(db)
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = db.transaction {
-        ((oldVersion + 1)..newVersion).forEach {
-            nextVersion -> MIGRATION_STEPS[nextVersion]?.forEach(db::execSQL)
-        }
+        /**
+         * After enabling WAL, multiple sqlite connections are established at db open,
+         * onCreate/onUpgrade/onDowngrade may be called concurrently per connections,
+         * either using "IF EXISTS"/"IF NOT EXISTS" option to create/drop table/index
+         * or protecting onCreate/onUpgrade/onDowngrade with a lock, otherwise a
+         * [SQLiteException] might be thrown during executing SQL statements complaining
+         * tables/indice already (not) existed.
+         */
+        db?.enableWriteAheadLogging()
     }
 
-    override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) =
+    override fun onCreate(db: SQLiteDatabase) = synchronized(db) {
+        if (isInitialized) return
+        db.transaction { initializeDatabase(this) }
+        isInitialized = true
+    }
+
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = synchronized(db) {
+        if (isInitialized) return
+        db.transaction {
+            ((oldVersion + 1)..newVersion).forEach {
+                nextVersion -> MIGRATION_STEPS[nextVersion]?.forEach(db::execSQL)
+            }
+        }
+        isInitialized = true
+    }
+
+    override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = synchronized(db) {
+        if (isInitialized) return
         db.transaction {
             // Select all of the tables from the database, not just the ones we know about given
             // our version, then generate DROP TABLE statements and execute them.
@@ -159,6 +183,8 @@ class DatabaseImpl(
             initializeDatabase(this)
             Unit
         }
+        isInitialized = true
+    }
 
     /**
      * Creates the tables for the database and initializes the [PrimitiveType] values.
@@ -1141,7 +1167,7 @@ class DatabaseImpl(
             }
 
             // Clean up unused values as they can contain sensitive data.
-            // This query will return all field value ids being referenced by collection or 
+            // This query will return all field value ids being referenced by collection or
             // singleton fields.
             fun usedFieldIdsQuery(typeIds: List<Int>) =
                 """
