@@ -20,6 +20,8 @@ import {Refinement, AtLeastAsSpecific} from './refiner.js';
 import {Reference} from './reference.js';
 import {AnnotationRef} from './recipe/annotation.js';
 import {ManifestStringBuilder} from './manifest-string-builder.js';
+import {AuditException} from './arc-exceptions.js';
+import {Storable} from './storable.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
@@ -123,6 +125,21 @@ export class Schema {
   static typesEqual(fieldType1, fieldType2): boolean {
     // TODO(cypher1): structural check instead of stringification.
     return Schema._typeString(fieldType1) === Schema._typeString(fieldType2);
+  }
+
+  refineData(entity: Storable): AuditException {
+    for (const [name, value] of Object.entries(entity)) {
+      const refDict = {[name]: value};
+      const ref = this.fields[name].refinement;
+      if (ref && !ref.validateData(refDict)) {
+        return new AuditException(new Error(`Entity schema field '${name}' does not conform to the refinement ${ref}`), 'Refinement:refineData');
+      }
+    }
+    const ref = this.refinement;
+    if (ref && !ref.validateData(entity)) {
+      return new AuditException(new Error(`Entity data does not conform to the refinement ${ref}`), 'Refinement:refineData');
+    }
+    return null;
   }
 
   // TODO(shans): output AtLeastAsSpecific here. This is necessary to support

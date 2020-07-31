@@ -48,21 +48,6 @@ export class Refinement {
     return new Refinement(RefinementExpression.fromLiteral(ref.expression));
   }
 
-  static refineData(entity: Entity, schema: Schema): AuditException {
-    for (const [name, value] of Object.entries(entity)) {
-      const refDict = {[name]: value};
-      const ref = schema.fields[name].refinement;
-      if (ref && !ref.validateData(refDict)) {
-        return new AuditException(new Error(`Entity schema field '${name}' does not conform to the refinement ${ref}`), 'Refinement:refineData');
-      }
-    }
-    const ref = schema.refinement;
-    if (ref && !ref.validateData(entity)) {
-      return new AuditException(new Error(`Entity data does not conform to the refinement ${ref}`), 'Refinement:refineData');
-    }
-    return null;
-  }
-
   static unionOf(ref1: Refinement, ref2: Refinement): Refinement {
     const expr1 = ref1 && ref1.expression;
     const expr2 = ref2 && ref2.expression;
