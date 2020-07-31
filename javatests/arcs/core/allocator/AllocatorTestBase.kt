@@ -11,6 +11,7 @@ import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
 import arcs.core.host.DeserializedException
 import arcs.core.host.EntityHandleManager
+import arcs.core.host.HelloHelloPlan
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.host.ParticleState
@@ -359,6 +360,39 @@ open class AllocatorTestBase {
         context.particles.first {
             it.planParticle.particleName == particle.particleName
         }
+
+    @Test
+    open fun allocator_canRunArcWithSameParticleTwice() = runAllocatorTest {
+        val arc = allocator.startArcForPlan(HelloHelloPlan)
+        val arcId = arc.id
+        
+        arc.waitForStart()
+
+        val readingContext = requireNotNull(
+            readingExternalHost.arcHostContext(arcId.toString())
+        )
+        val writingContext = requireNotNull(
+            writingExternalHost.arcHostContext(arcId.toString())
+        )
+
+        val readPersonContext = particleToContext(readingContext, readPersonParticle)
+
+        val writePersonContext = particleToContext(writingContext, writePersonParticle)
+
+        writePersonContext.particle.let { particle ->
+            particle as WritePerson
+            particle.await()
+            assertThat(particle.firstStartCalled).isTrue()
+            assertThat(particle.wrote).isTrue()
+        }
+
+        readPersonContext.particle.let { particle ->
+            particle as ReadPerson
+            particle.await()
+            assertThat(particle.firstStartCalled).isTrue()
+            assertThat(particle.name).isEqualTo("Hello Hello John Wick")
+        }
+    }
 
     @Test
     open fun allocator_canStartArcInTwoExternalHosts() = runAllocatorTest {
