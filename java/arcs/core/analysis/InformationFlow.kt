@@ -169,7 +169,7 @@ class InformationFlow private constructor(
         val accessPathLabels = input.accessPathLabels ?: return input
         val handleConnection = AccessPath.Root.HandleConnection(fromParticle, spec)
         val handle = AccessPath.Root.Handle(toHandle)
-        val targetSelectors = toHandle.type.accessPathSelectors()
+        val targetSelectors = toHandle.type.accessPathSelectors(partial = true)
 
         // Filter out the information pertaining to the given handle-connection -> handle edge.
         // Also, convert the root of the access path from handle-connection to handle.
@@ -177,7 +177,7 @@ class InformationFlow private constructor(
             accessPathLabels
                 .filterKeys { accessPath ->
                     accessPath.root == handleConnection &&
-                    accessPath.selectorsMatchAnyPrefix(targetSelectors)
+                    accessPath.isCompatibleWith(targetSelectors)
                 }
                 .map { (accessPath, labels) -> AccessPath(handle, accessPath.selectors) to labels }
                 .toMap()
@@ -194,7 +194,7 @@ class InformationFlow private constructor(
         val handleConnection = AccessPath.Root.HandleConnection(toParticle, spec)
         val handle = AccessPath.Root.Handle(fromHandle)
         val resolvedType = toParticle.getResolvedType(spec)
-        val targetSelectors = resolvedType.accessPathSelectors()
+        val targetSelectors = resolvedType.accessPathSelectors(partial = true)
 
         // Filter out the information pertaining to the given handle -> handle-connection edge.
         // Also, convert the root of the access path from handle to handle-connection.
@@ -202,7 +202,7 @@ class InformationFlow private constructor(
             accessPathLabels
                 .filterKeys { accessPath ->
                     accessPath.root == handle &&
-                    accessPath.selectorsMatchAnyPrefix(targetSelectors)
+                    accessPath.isCompatibleWith(targetSelectors)
                 }
                 .map { (accessPath, labels) ->
                     AccessPath(handleConnection, accessPath.selectors) to labels
@@ -219,7 +219,7 @@ class InformationFlow private constructor(
         val accessPathLabels = input.accessPathLabels ?: return input
         val toHandleRoot = AccessPath.Root.Handle(toHandle)
         val handle = AccessPath.Root.Handle(fromHandle)
-        val sourceSelectors = fromHandle.type.accessPathSelectors()
+        val sourceSelectors = fromHandle.type.accessPathSelectors(partial = true)
 
         // Filter out the information pertaining to the given handle -> join-handle edge.
         // Also, convert the root of the access path from handle to join-handle.
@@ -228,7 +228,7 @@ class InformationFlow private constructor(
             accessPathLabels
                 .filterKeys { accessPath ->
                     accessPath.root == handle &&
-                    accessPath.selectorsMatchAnyPrefix(sourceSelectors)
+                    accessPath.isCompatibleWith(sourceSelectors)
                 }
                 .map { (accessPath, labels) ->
                     AccessPath(toHandleRoot, component + accessPath.selectors) to labels
@@ -246,7 +246,7 @@ class InformationFlow private constructor(
 
     /** Returns all the [AccessPath] instances for this [Type] with the given [root]. */
     private fun Type.getAccessPaths(root: AccessPath.Root): List<AccessPath> {
-        val selectorsList = accessPathSelectors()
+        val selectorsList = accessPathSelectors(partial = false)
         if (selectorsList.isEmpty()) {
             return listOf(AccessPath(root))
         } else {
@@ -254,40 +254,54 @@ class InformationFlow private constructor(
         }
     }
 
-    /** Returns the [AccessPath.Selector] part of the [AccessPath] instances for this [Type]. */
-    private fun Type.accessPathSelectors(): Set<List<AccessPath.Selector>> = when (tag) {
-        Tag.Collection -> (this as CollectionType<*>).collectionType.accessPathSelectors()
+    /**
+     * Returns the [AccessPath.Selector] part of the [AccessPath] instances for this [Type].
+     *
+     * If [partial] is true, returns intermedate paths as well. e.g., `foo.a` and `foo.a.b`
+     * are both returned if [partial] is true, otherwise only `foo.a.b` is returned.
+     */
+    private fun Type.accessPathSelectors(
+        partial: Boolean
+    ): Set<List<AccessPath.Selector>> = when (tag) {
+        Tag.Collection -> (this as CollectionType<*>).collectionType.accessPathSelectors(partial)
         Tag.Count -> emptySet<List<AccessPath.Selector>>()
-        Tag.Entity -> (this as EntityType).entitySchema.accessPathSelectors(emptyList())
+        Tag.Entity -> (this as EntityType).entitySchema.accessPathSelectors(emptyList(), partial)
         // TODO(b/154234733): This only supports simple use cases of references.
-        Tag.Reference -> (this as ReferenceType<*>).containedType.accessPathSelectors()
-        Tag.Mux -> (this as MuxType<*>).containedType.accessPathSelectors()
+        Tag.Reference -> (this as ReferenceType<*>).containedType.accessPathSelectors(partial)
+        Tag.Mux -> (this as MuxType<*>).containedType.accessPathSelectors(partial)
         Tag.Tuple -> (this as TupleType).elementTypes
             .foldIndexed(emptySet<List<AccessPath.Selector>>()) { index, acc, cur ->
-                acc + cur.accessPathSelectors().map { listOf(getTupleField(index)) + it }
+                acc + cur.accessPathSelectors(partial).map { listOf(getTupleField(index)) + it }
             }
-        Tag.Singleton -> (this as SingletonType<*>).containedType.accessPathSelectors()
+        Tag.Singleton -> (this as SingletonType<*>).containedType.accessPathSelectors(partial)
         Tag.TypeVariable -> throw IllegalArgumentException("TypeVariable should be resolved!")
     }
 
-    /** Returns the [AccessPath.Selector] part of [AccessPath] instances for this [Schema]. */
+    /**
+     * Returns the [AccessPath.Selector] part of [AccessPath] instances for this [Schema].
+     * If [partial] is true, returns intermedate paths as well.
+     */
     private fun Schema.accessPathSelectors(
-        prefix: List<AccessPath.Selector>
+        prefix: List<AccessPath.Selector>,
+        partial: Boolean
     ): Set<List<AccessPath.Selector>> {
-        return fields.singletons.accessPathSelectors(prefix) +
-        fields.collections.accessPathSelectors(prefix)
+        return fields.singletons.accessPathSelectors(prefix, partial) +
+        fields.collections.accessPathSelectors(prefix, partial)
     }
 
     private fun Map<FieldName, FieldType>.accessPathSelectors(
-        prefix: List<AccessPath.Selector>
+        prefix: List<AccessPath.Selector>,
+        partial: Boolean
     ): Set<List<AccessPath.Selector>> {
         return asSequence().fold(emptySet<List<AccessPath.Selector>>()) { acc, (name, type) ->
-            acc + type.accessPathSelectors(prefix + listOf(AccessPath.Selector.Field(name)))
+            acc +
+            type.accessPathSelectors(prefix + listOf(AccessPath.Selector.Field(name)), partial)
         }.toSet()
     }
 
     private fun FieldType.accessPathSelectors(
-        prefix: List<AccessPath.Selector>
+        prefix: List<AccessPath.Selector>,
+        partial: Boolean
     ): Set<List<AccessPath.Selector>> {
         return when (tag) {
             // For primitives and references we don't go down to collect access paths.
@@ -297,31 +311,29 @@ class InformationFlow private constructor(
                 // Access path selectors of all components.
                 val componentSelectors = (this as FieldType.Tuple).types
                     .foldIndexed(emptySet<List<AccessPath.Selector>>()) { index, result, cur ->
-                        result + cur.accessPathSelectors(prefix).map {
+                        result + cur.accessPathSelectors(prefix, partial).map {
                             // Prepend the component selector to the component's access paths.
                             listOf(getTupleField(index)) + it
                         }
                     }
-                setOf(prefix) + componentSelectors
+                (if (partial) setOf(prefix) else emptySet()) + componentSelectors
             }
             FieldType.Tag.List -> {
-                setOf(prefix) + (this as FieldType.ListOf).primitiveType.accessPathSelectors(prefix)
+                (if (partial) setOf(prefix) else emptySet()) +
+                (this as FieldType.ListOf).primitiveType.accessPathSelectors(prefix, partial)
             }
             FieldType.Tag.InlineEntity -> {
                 val schema = SchemaRegistry.getSchema((this as FieldType.InlineEntity).schemaHash)
-                setOf(prefix) + schema.accessPathSelectors(prefix)
+                (if (partial) setOf(prefix) else emptySet()) +
+                schema.accessPathSelectors(prefix, partial)
             }
         }
     }
 
-    /** Returns true if the selectors of the given [AccessPath] match any of the [prefixes]. */
-    private fun AccessPath.selectorsMatchAnyPrefix(
-        prefixes: Set<List<AccessPath.Selector>>
-    ): Boolean {
-        return (prefixes.isEmpty() && selectors.isEmpty()) || prefixes.any { prefix ->
-            prefix.size <= selectors.size && selectors.subList(0, prefix.size) == prefix
-        }
-    }
+    /** Returns true if the selectors of the given [AccessPath] is present in [targetSelectors]. */
+    private fun AccessPath.isCompatibleWith(
+        targetSelectors: Set<List<AccessPath.Selector>>
+    ) = (targetSelectors.isEmpty() && selectors.isEmpty()) || targetSelectors.contains(selectors)
 
     /** Apply the [Claim.Assume] [claims] to the given map. */
     private fun MutableMap<AccessPath, InformationFlowLabels>.applyAssumes(claims: List<Claim>) {
