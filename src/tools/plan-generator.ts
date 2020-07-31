@@ -11,7 +11,7 @@ import {Recipe} from '../runtime/recipe/recipe.js';
 import {Type} from '../runtime/type.js';
 import {Particle} from '../runtime/recipe/particle.js';
 import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils.js';
-import {generateConnectionType, generateType} from './kotlin-type-generator.js';
+import {generateConnectionType, generateHandleType} from './kotlin-type-generator.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Handle} from '../runtime/recipe/handle.js';
@@ -97,7 +97,7 @@ export class PlanGenerator {
     }
     return valInit + ktUtils.applyFun(`Handle`, [
       await this.createStorageKey(handle),
-      await generateType(handleRestrictedType),
+      await generateHandleType(handleRestrictedType),
       PlanGenerator.createAnnotations(handle.annotations)
     ], {startIndent: valInit.length});
   }
