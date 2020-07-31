@@ -12,6 +12,7 @@ import {RefinementNode, Op, RefinementExpressionNode, BinaryExpressionNode, Unar
         FieldNode, QueryNode, BuiltInNode, DiscreteNode, NumberNode, BooleanNode, TextNode, Primitive,
         DiscreteType, discreteTypes} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {Dictionary} from '../../utils/lib-utils.js';
+import {Storable} from '../../runtime/storable.js';
 
 export enum AtLeastAsSpecific {
   YES = 'YES',
@@ -118,8 +119,8 @@ export class Refinement {
          idx += 1;
       }
       // Find the range of values for the field name over which the refinement is valid.
-      const integralTypes = ['BigInt', 'Int', 'Long'];
-      if (integralTypes.includes(a.expression.evalType) || integralTypes.includes(b.expression.evalType)) {
+      if (discreteTypes.includes(a.expression.evalType as DiscreteType) || discreteTypes.includes(b.expression.evalType as DiscreteType)) {
+        // the 'as DiscreteType' here works around the definition of .includes's type being too narrow.
         const rangeA = BigIntRange.fromExpression(a.expression, {});
         const rangeB = BigIntRange.fromExpression(b.expression, {});
         return rangeA.isSubsetOf(rangeB) ? AtLeastAsSpecific.YES : AtLeastAsSpecific.NO;
@@ -147,6 +148,7 @@ export class Refinement {
     } catch (e) {
       // tslint:disable-next-line no-empty
       //TODO(cypher1): Report polynomial errors without using the console.
+      console.log(`Normalisation failed for ${this}`);
     }
     this.expression = this.expression.normalize();
   }
@@ -162,8 +164,11 @@ export class Refinement {
 
   validateData(data: Dictionary<ExpressionPrimitives>): boolean {
     const res = this.expression.evaluate(data);
+    if (res === null && this.expression.getQueryParams().has('?')) {
+      return true;
+    }
     if (typeof res !== 'boolean') {
-      throw new Error(`Refinement expression ${this.expression} evaluated to a non-boolean type.`);
+      throw new Error(`Refinement expression ${this.expression} evaluated to a non-boolean type: ${typeof res}. ${res}`);
     }
     return res;
   }
@@ -247,6 +252,7 @@ abstract class RefinementExpression {
       case 'Int':
       case 'Long':
       case 'BigInt':
+      case 'Instant':
         return new DiscretePrimitive(value, [], this.evalType);
       case 'Number':
         return new NumberPrimitive(value, []);
@@ -267,16 +273,29 @@ abstract class RefinementExpression {
   }
 
   static validateOperandCompatibility(op: RefinementOperator, operands: RefinementExpression[]): Primitive {
+    const getWiderTypes = (type: Primitive): Primitive[] => {
+      switch (type) {
+        case 'Long': return ['Instant', 'BigInt'];
+        case 'Instant': return ['Long', 'BigInt'];
+        case 'Int': return ['Long', 'Instant', 'BigInt'];
+        case 'Float': return ['Double'];
+        case '~query_arg_type': return primitiveTypes;
+      }
+      return [];
+    };
     const operandStr = operands.map(x => x.toString()).join(' and ');
     const operandTys = operands.map(op => op.evalType).join(' and ');
     const opInfo = operatorTable[op.op];
     const expected = () => {
       if (opInfo.argType === 'same') {
         return 'arguments to be of the same type';
-      } else if (opInfo.argType.length > 1) {
-        const front = opInfo.argType.slice(0, opInfo.argType.length-1);
-        const last = opInfo.argType[opInfo.argType.length-1];
-        return `${front.join(', ')} or ${last}`;
+      } else {
+        const typeOptions = opInfo.argType.filter(x => x !== '~query_arg_type');
+        if (typeOptions.length > 1) {
+          const front = typeOptions.slice(0, typeOptions.length-1);
+          const last = typeOptions[typeOptions.length-1];
+          return `${front.join(', ')} or ${last}`;
+        }
       }
       return opInfo.argType[0];
     };
@@ -285,49 +304,42 @@ abstract class RefinementExpression {
     if (operands.length !== opInfo.nArgs) {
       throw new Error(`Expected ${opInfo.nArgs} operands. Got ${operands.length}.`);
     }
+    const unary = operands.length === 1;
+    const pluralise = unary ? '' : 's';
+    const repr = unary ? `${op.op} ${operands[0]}` : `(${operands[0]} ${op.op} ${operands[1]})`;
     const getArgType = () => {
       let argType: Primitive = '~query_arg_type';
       // Discover the shared argument type.
       for (const operand of operands) {
-        if (opInfo.argType === 'same') {
-          // The type's validity depends on the other arguments.
-          if (operand.evalType !== '~query_arg_type') {
-            argType = operand.evalType;
-            break;
-          }
-        } else if (opInfo.argType.includes(operand.evalType)) {
-          // A possible, valid type.
-          argType = operand.evalType;
-          break;
-        } else {
-          // This type is not valid, no matter the other arguments.
-          throw new Error(
-            `Refinement expression ${operand.toString()} has type ${operand.evalType}. Expected ${expected()}`
-          );
+        if (operand.evalType == argType) {
+          continue;
         }
+        if (opInfo.argType === 'same' || opInfo.argType.includes(operand.evalType)) {
+          if (getWiderTypes(operand.evalType).includes(argType)) {
+            // The current argType already assumes that the operand can be safely up-cast.
+            continue;
+          }
+          if (getWiderTypes(argType).includes(operand.evalType)) {
+            // Can safely up-cast the left.
+            argType = operand.evalType;
+            continue;
+          }
+        }
+        // This type is not valid, no matter the other arguments.
+        throw new Error(
+          `Operands of refinement expression ${repr} have type${pluralise} ${operandTys}. Expected ${expected()}`
+        );
       }
       return argType;
     };
+    if (operands.length !== opInfo.nArgs) {
+      throw new Error(`Expected ${opInfo.nArgs} operands. Got ${operands.length}.`);
+    }
     const argType = getArgType();
     // Set the query argument type.
     for (const operand of operands) {
       if (operand instanceof QueryArgumentPrimitive && operand.evalType === '~query_arg_type') {
         operand.evalType = argType;
-      }
-    }
-    // Check that all args match the expected type.
-    for (const operand of operands) {
-      // Check that the argument types are valid.
-      if (opInfo.argType === 'same') {
-        if (operand.evalType !== argType) {
-          throw new Error(
-            `Expected refinement expressions ${operandStr} to have the same types. Found types ${operandTys}.`
-          );
-        }
-      } else if (operand.evalType !== argType) {
-        throw new Error(
-          `Expected refinement expressions ${operandStr} to have the same types. Found types ${operandTys}.`
-        );
       }
     }
     // Passed type checking.
@@ -351,8 +363,7 @@ export class BinaryExpression extends RefinementExpression {
   static fromAst(expression: BinaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
     if (operatorTable[expression.operator] === undefined) {
       const loc = expression.location;
-      const filename = loc.filename ? ` in ${loc.filename}` : '';
-      throw new Error(`Unknown operator '${expression.operator}' at line ${loc.start.line}, col ${loc.start.column}${filename}`);
+      throw new Error(`Unknown operator '${expression.operator}' at ${viewLoc(loc)}`);
     }
     const left = RefinementExpression.fromAst(expression.leftExpr, typeData);
     const right = RefinementExpression.fromAst(expression.rightExpr, typeData);
@@ -388,7 +399,7 @@ export class BinaryExpression extends RefinementExpression {
     return `(${this.leftExpr.toString()} ${this.operator.op} ${this.rightExpr.toString()})`;
   }
 
-  evaluate(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
+  evaluate(data: Storable): ExpressionPrimitives {
     const left = this.leftExpr.evaluate(data);
     const right = this.rightExpr.evaluate(data);
     return this.operator.eval([left, right]);
@@ -432,9 +443,8 @@ export class BinaryExpression extends RefinementExpression {
   }
 
   rearrange(): RefinementExpression {
-    const numberTypes = ['Number', 'BigInt'];
-    const leftNumeric = numberTypes.includes(this.leftExpr.evalType);
-    const rightNumeric = numberTypes.includes(this.rightExpr.evalType);
+    const leftNumeric = numericTypes.includes(this.leftExpr.evalType);
+    const rightNumeric = numericTypes.includes(this.rightExpr.evalType);
     if (this.evalType === 'Boolean' && leftNumeric && rightNumeric) {
       try {
         Normalizer.rearrangeNumericalExpression(this);
@@ -598,8 +608,11 @@ export class UnaryExpression extends RefinementExpression {
     return `(${this.operator.op === Op.NEG ? '-' : this.operator.op} ${this.expr.toString()})`;
   }
 
-  evaluate(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
+  evaluate(data: Storable = null): ExpressionPrimitives {
     const expression = this.expr.evaluate(data);
+    if (expression === null) {
+      return null;
+    }
     return this.operator.eval([expression]);
   }
 
@@ -696,7 +709,7 @@ export class FieldNamePrimitive extends RefinementExpression {
     return this.value.toString();
   }
 
-  evaluate(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
+  evaluate(data: Storable = null): ExpressionPrimitives {
     if (data[this.value] == undefined) {
       throw new Error(`Unresolved field value '${this.value}' in the refinement expression.`);
     }
@@ -740,7 +753,7 @@ export class QueryArgumentPrimitive extends RefinementExpression {
     return this.value.toString();
   }
 
-  evaluate(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
+  evaluate(data: Storable = null): ExpressionPrimitives {
     if (data[this.value] == undefined) {
       throw new Error(`Unresolved query value '${this.value}' in the refinement expression.`);
     }
@@ -762,9 +775,9 @@ export class QueryArgumentPrimitive extends RefinementExpression {
 
 export class BuiltIn extends RefinementExpression {
   // TODO(cypher1): support arguments (e.g. floor(expr))
-  value: string;
+  value: BuiltInFuncs;
 
-  constructor(value: string, evalType: Primitive) {
+  constructor(value: BuiltInFuncs, evalType: Primitive) {
     super('BuiltInNode', evalType);
     this.value = value;
   }
@@ -796,16 +809,18 @@ export class BuiltIn extends RefinementExpression {
   }
 
   toString(): string {
-    return this.value.toString();
+    return `${this.value}()`;
   }
 
-  evaluate(data: Dictionary<ExpressionPrimitives> = {}): ExpressionPrimitives {
-    if (this.value === 'now()') {
-      return new Date().getTime(); // milliseconds since epoch;
+  evaluate(data: Storable = null): ExpressionPrimitives {
+    switch (this.value) {
+      case 'now': return new Date().getTime();
+      case 'creationTime': return Storable.creationTimestamp(data).getTime();
+      case 'expirationTime': return Storable.expirationTimestamp(data).getTime();
+      default: throw new Error(
+        `Unhandled BuiltInNode '${this.value}' in evaluate`
+      );
     }
-
-    // TODO(cypher1): Implement TS getter for 'creationTimeStamp'
-    throw new Error(`Unhandled BuiltInNode '${this.value}' in evaluate`);
   }
 
   getFieldParams(): Map<string, Primitive> {
@@ -1711,7 +1726,7 @@ interface OperatorInfo {
   evalType: Primitive | 'same';
 }
 
-const numericTypes: Primitive[] = ['Number', ...discreteTypes];
+const numericTypes: Primitive[] = ['~query_arg_type', 'Number', ...discreteTypes];
 
 // From https://kotlinlang.org/docs/reference/basic-types.html
 const INT_MIN: bigint = BigInt('-2147483648'); // -2**31
@@ -1800,7 +1815,6 @@ const evalTable: Dictionary<(exprs: ExpressionPrimitives[]) => ExpressionPrimiti
 };
 
 export class RefinementOperator {
-  opInfo: OperatorInfo;
   op: Op;
 
   constructor(operator: Op) {
@@ -1827,18 +1841,13 @@ export class RefinementOperator {
 
   updateOp(operator: Op) {
     this.op = operator;
-    this.opInfo = operatorTable[operator];
-    if (!this.opInfo) {
+    if (!operatorTable[this.op]) {
       throw new Error(`Invalid refinement operator ${operator}`);
     }
   }
 
   eval(exprs: ExpressionPrimitives[]): ExpressionPrimitives {
     return evalTable[this.op](exprs);
-  }
-
-  evalType(): Primitive | 'same' {
-    return this.opInfo.evalType;
   }
 }
 
