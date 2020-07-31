@@ -472,7 +472,7 @@ function sanitizeAndApply(target: Entity, data: EntityRawData, schema: Schema, c
     temp[name] = sanitizedValue;
   }
   if (Flags.enforceRefinements) {
-    const exception = Refinement.refineData(temp, schema);
+    const exception = schema.refineData(temp);
     if (exception) {
       context.reportExceptionInHost(exception);
       return;
