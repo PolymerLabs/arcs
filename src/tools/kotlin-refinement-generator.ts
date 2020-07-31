@@ -21,7 +21,7 @@ import {
   BuiltIn,
   NumberPrimitive,
   TextPrimitive,
-  DiscretePrimitive
+  DiscretePrimitive,
 } from '../runtime/refiner.js';
 
 // The variable name used for the query argument in generated Kotlin code.
@@ -47,6 +47,10 @@ const kotlinOperator: Dictionary<string> = {
 class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
 
   visitBinaryExpression(expr: BinaryExpression): string {
+    if (expr.evalType === 'Instant') {
+      // Instant does not use infix operators in Kotlin, look up the appropriate member function.
+      return `Instant.ofEpochMilli(${this.visit(expr.leftExpr)}.toEpochMilli() ${kotlinOperator[expr.operator.op]} ${this.visit(expr.rightExpr)}.toEpochMilli())`;
+    }
     return `(${this.visit(expr.leftExpr)} ${kotlinOperator[expr.operator.op]} ${this.visit(expr.rightExpr)})`;
   }
   visitUnaryExpression(expr: UnaryExpression): string {
@@ -60,17 +64,28 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
   }
   visitBuiltIn(expr: BuiltIn): string {
     // TODO: Double check that millis are the correct default units.
-    if (expr.value === 'now()') {
-      return `now()`;
+    switch (expr.value) {
+      case 'now': return `now()`;
+      case 'creationTime': return `CurrentScope<Long>(mapOf())["creationTime()"]`;
+      case 'expirationTime': return `CurrentScope<Long>(mapOf())["expirationTime()"]`;
+      default: throw new Error(
+        `Unhandled BuiltInNode '${expr.value}' in toKTExpression`
+      );
     }
-
-    // TODO: Implement KT getter for 'creationTimeStamp'
-    throw new Error(`Unhandled BuiltInNode '${expr.value}' in toKTExpression`);
   }
   visitDiscretePrimitive(expr: DiscretePrimitive): string {
     // This assumes that the associated Kotlin type will be `Java.math.BigInteger` and constructs
     // the BigInteger via String as there is no support for a literal form.
-    return `NumberLiteralExpression(BigInteger("${expr.value}"))`;
+    switch (expr.evalType) {
+      case 'Boolean':
+        return `NumberLiteralExpression(BigInteger("${expr.value ? '1' : '0'}"))`;
+      case 'Int':
+      case 'Long':
+      case 'Instant':
+      case 'BigInt':
+        return `NumberLiteralExpression(BigInteger("${expr.value}"))`;
+      default: throw new Error(`unexpected type ${expr.evalType}`);
+    }
   }
   visitNumberPrimitive(expr: NumberPrimitive): string {
     // This assumes that the associated Kotlin type will be `double`.

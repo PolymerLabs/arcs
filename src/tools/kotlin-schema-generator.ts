@@ -81,6 +81,7 @@ async function getSchemaType(field: string, {kind, schema, type, innerType}): Pr
       case 'Number': return `${fieldType}.Number`;
       case 'BigInt': return `${fieldType}.BigInt`;
       case 'Boolean': return `${fieldType}.Boolean`;
+      case 'Instant': return `${fieldType}.Instant`;
       default: break;
     }
   } else if (kind === 'kotlin-primitive') {

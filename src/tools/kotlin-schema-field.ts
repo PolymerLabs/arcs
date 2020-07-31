@@ -258,6 +258,7 @@ const primitiveTypeMap: Dictionary<KotlinTypeInfo> = {
   'URL': {type: 'String', decodeFn: 'decodeText()', defaultVal: `""`},
   'Number': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0', isNumber: true},
   'BigInt': {type: 'BigInteger', decodeFn: 'decodeBigInt()', defaultVal: 'BigInteger.ZERO', isNumber: true},
+  'Instant': {type: 'Instant', decodeFn: 'decodeInstant()', defaultVal: 'Instant.ofEpochMilli(-1L)', isNumber: true},
   'Boolean': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false'},
   'Byte': {type: 'Byte', decodeFn: 'decodeByte()', defaultVal: '0.toByte()', isNumber: true},
   'Short': {type: 'Short', decodeFn: 'decodeShort()', defaultVal: '0.toShort()', isNumber: true},

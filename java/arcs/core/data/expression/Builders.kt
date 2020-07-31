@@ -243,6 +243,12 @@ fun first(expr: Expression<*>) = FunctionExpression<Number>(First, listOf(expr))
 /** Constructs a [FunctionExpression] to invoke [Now]. */
 fun now() = FunctionExpression<Long>(Now, listOf())
 
+/** Constructs a [FunctionExpression] to invoke [CreationTimestamp]. */
+fun creationTimestamp() = FunctionExpression<Long>(CreationTimestamp, listOf())
+
+/** Constructs a [FunctionExpression] to invoke [ExpirationTimestamp]. */
+fun expirationTimestamp() = FunctionExpression<Long>(ExpirationTimestamp, listOf())
+
 /** Constructs a [FunctionExpression] to invoke [Union]. */
 fun <T> union(expr: Expression<T>, other: Expression<T>) =
     FunctionExpression<T>(GlobalFunction.Union, listOf(expr, other))
