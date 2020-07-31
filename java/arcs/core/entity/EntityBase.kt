@@ -242,15 +242,21 @@ open class EntityBase(
         schema.fields.collections.keys.forEach { collections[it] = emptySet() }
     }
 
-    override fun serialize(): RawEntity {
+    override fun serialize(restrictedSchema: Schema?): RawEntity {
+        val singletonFields = if (restrictedSchema != null) {
+            restrictedSchema.fields.singletons
+        } else schema.fields.singletons
+        val collectionFields = if (restrictedSchema != null) {
+            restrictedSchema.fields.collections
+        } else schema.fields.collections
         val serialization = RawEntity(
             id = entityId ?: NO_REFERENCE_ID,
-            singletons = singletons.mapValues { (field, value) ->
-                value?.let { toReferencable(it, getSingletonType(field)) }
+            singletons = singletonFields.mapValues { (field, _) ->
+                getSingletonValue(field)?.let { toReferencable(it, getSingletonType(field)) }
             },
-            collections = collections.mapValues { (field, values) ->
+            collections = collectionFields.mapValues { (field, _) ->
                 val type = getCollectionType(field)
-                values.map { toReferencable(it, type) }.toSet()
+                getCollectionValue(field).map { toReferencable(it, type) }.toSet()
             },
             creationTimestamp = creationTimestamp,
             expirationTimestamp = expirationTimestamp
