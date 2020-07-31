@@ -209,7 +209,6 @@ describe('manifest2proto', () => {
           expression: 'expression-entity' // This is a temporary stop-gap.
         }],
         name: 'FooBar',
-        isolated: false,
       }]
     });
   });
