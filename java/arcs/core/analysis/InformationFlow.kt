@@ -17,7 +17,6 @@ import arcs.core.data.Claim
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleConnectionSpec
-import arcs.core.data.HandleMode
 import arcs.core.data.InformationFlowLabel
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.MuxType
