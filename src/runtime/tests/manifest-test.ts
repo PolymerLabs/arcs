@@ -4604,8 +4604,8 @@ recipe
       const manifest = await Manifest.parse(`
         particle P
       `);
-      assert.isTrue(manifest.particles[0].egress);
-      assert.isFalse(manifest.particles[0].isolated);
+      assert.isTrue(manifest.particles[0].isEgress);
+      assert.isFalse(manifest.particles[0].isIsolated);
     });
 
     it('egress annotation works', async () => {
@@ -4613,8 +4613,8 @@ recipe
         @egress
         particle P
       `);
-      assert.isTrue(manifest.particles[0].egress);
-      assert.isFalse(manifest.particles[0].isolated);
+      assert.isTrue(manifest.particles[0].isEgress);
+      assert.isFalse(manifest.particles[0].isIsolated);
       assert.isNull(manifest.particles[0].egressType);
     });
 
@@ -4623,8 +4623,8 @@ recipe
         @egress('MyEgressType')
         particle P
       `);
-      assert.isTrue(manifest.particles[0].egress);
-      assert.isFalse(manifest.particles[0].isolated);
+      assert.isTrue(manifest.particles[0].isEgress);
+      assert.isFalse(manifest.particles[0].isIsolated);
       assert.strictEqual(manifest.particles[0].egressType, 'MyEgressType');
     });
 
@@ -4633,8 +4633,8 @@ recipe
         @isolated
         particle P
       `);
-      assert.isFalse(manifest.particles[0].egress);
-      assert.isTrue(manifest.particles[0].isolated);
+      assert.isFalse(manifest.particles[0].isEgress);
+      assert.isTrue(manifest.particles[0].isIsolated);
     });
 
     it('throws if both isolated and egress annotations are applied', async () => {
@@ -4644,7 +4644,7 @@ recipe
         particle P
       `);
       assert.throws(
-        () => manifest.particles[0].isolated,
+        () => manifest.particles[0].isIsolated,
         `Particle cannot be tagged with both @isolated and @egress.`);
     });
 

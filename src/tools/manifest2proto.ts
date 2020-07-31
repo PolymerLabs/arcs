@@ -75,8 +75,7 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
     connections,
     claims,
     checks,
-    isolated: spec.isolated,
-    egressType: spec.egressType,
+    annotations: spec.annotations.map(a => annotationToProtoPayload(a)),
   };
 }
 

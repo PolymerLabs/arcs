@@ -177,7 +177,7 @@ describe('manifest2proto', () => {
         }],
         location: 'a/b/c.js',
         name: 'Abc',
-        isolated: true,
+        annotations: [{name: 'isolated'}],
       }]
     });
   });
@@ -222,8 +222,13 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(await toProtoAndBack(manifest), {
       particleSpecs: [{
         name: 'Abc',
-        isolated: false,
-        egressType: 'MyEgressType'
+        annotations: [{
+          name: 'egress',
+          params: [{
+            name: 'type',
+            strValue: 'MyEgressType',
+          }]
+        }],
       }]
     });
   });
