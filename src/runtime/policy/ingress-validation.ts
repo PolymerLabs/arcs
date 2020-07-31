@@ -172,11 +172,11 @@ export class IngressValidation {
 
   // Returns an EntityType containing fields from the given `type` stripped
   // down to a subset of fields covered by the set of policies.
-  restrictType(type: Type): Type|null {
+  restrictType(type: Type, skippedFields?: string[]): Type|null {
     const fields = {};
     const restrictedType = this.getRestrictedType(type.getEntitySchema().name);
     if (!restrictedType) return null;
-    return type.restrictToType(restrictedType);
+    return type.restrictToType(restrictedType, skippedFields);
   }
 
   // Returns a type by the given name, combined from all corresponding type

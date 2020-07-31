@@ -315,7 +315,8 @@ export class PolicyField {
       case 'schema-reference': {
         const restrictedFields = {};
         for (const subfield of this.subfields) {
-          restrictedFields[subfield.name] = field.schema.model.entitySchema.fields[subfield.name];
+          restrictedFields[subfield.name] =
+              subfield.restrictField(field.schema.model.entitySchema.fields[subfield.name]);
         }
         return {kind: 'schema-reference', schema: {
             ...field.schema,
