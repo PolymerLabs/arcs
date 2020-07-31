@@ -36,6 +36,7 @@ export class Schema2Kotlin extends Schema2Base {
         'import arcs.sdk.Particle',
         'import arcs.sdk.testing.*',
         'import java.math.BigInteger',
+        'import java.time.Instant',
         'import kotlinx.coroutines.CoroutineScope',
       );
     } else if (this.opts.wasm) {
@@ -52,6 +53,7 @@ export class Schema2Kotlin extends Schema2Base {
         'import arcs.core.data.util.toReferencable',
         'import arcs.core.entity.toPrimitiveValue',
         'import java.math.BigInteger',
+        'import java.time.Instant',
       );
     }
     imports.sort();
