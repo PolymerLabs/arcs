@@ -1,0 +1,62 @@
+-----[header]-----
+Kotlin Plan Generation - Particles
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+-----[end_header]-----
+
+-----[name]-----
+can prefix namespaces for particle classes
+-----[input]-----
+meta
+  namespace: arcs.core.data.testdata
+
+particle Writer in '.Writer'
+  data: writes Thing {name: Text}
+
+recipe Recipe
+  data: create 'some-handle' @persistent
+  Writer
+    data: writes data
+-----[results]-----
+Particle(
+    "Writer",
+    "arcs.core.data.testdata.Writer",
+    mapOf(
+        "data" to HandleConnection(
+            Recipe_Handle0,
+            HandleMode.Write,
+            arcs.core.data.SingletonType(arcs.core.data.EntityType(Writer_Data.SCHEMA)),
+            listOf(Annotation("persistent", emptyMap()))
+        )
+    )
+)
+-----[end]-----
+
+-----[name]-----
+can prefix namespaces for particle class subpaths
+-----[input]-----
+meta
+  namespace: arcs.core.data.testdata
+
+particle Intermediary in '.subdir.Intermediary'
+  data: reads writes Thing {name: Text}
+
+recipe Recipe
+  data: create 'some-handle' @persistent
+  Intermediary
+    data: writes data
+-----[results]-----
+Particle(
+    "Intermediary",
+    "arcs.core.data.testdata.subdir.Intermediary",
+    mapOf(
+        "data" to HandleConnection(
+            Recipe_Handle0,
+            HandleMode.ReadWrite,
+            arcs.core.data.SingletonType(arcs.core.data.EntityType(Intermediary_Data.SCHEMA)),
+            listOf(Annotation("persistent", emptyMap()))
+        )
+    )
+)
+-----[end]-----

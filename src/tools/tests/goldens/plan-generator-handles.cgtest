@@ -1,0 +1,46 @@
+-----[header]-----
+Kotlin Plan Generation - Particles
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+-----[end_header]-----
+
+-----[name]-----
+generates a handle of type being a union of read types
+-----[input]-----
+particle Writer
+  person: writes Person Employee {name: Text, phoneNumber: Number, age: Number}
+particle Reader1
+  person: reads Person {name: Text}
+particle Reader2
+  person: reads Person {age: Number}
+
+recipe MyRecipe
+  h: create
+  Writer
+    person: h
+  Reader1
+    person: h
+  Reader2
+    person: h
+-----[results]-----
+val MyRecipe_Handle0 = Handle(
+    StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
+    arcs.core.data.EntityType(
+        arcs.core.data.Schema(
+            setOf(arcs.core.data.SchemaName("Person")),
+            arcs.core.data.SchemaFields(
+                singletons = mapOf(
+                    "name" to arcs.core.data.FieldType.Text,
+                    "age" to arcs.core.data.FieldType.Number
+                ),
+                collections = emptyMap()
+            ),
+            "edabcee36cb653ff468fb77804911ddfa9303d67",
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
+        )
+    ),
+    emptyList()
+)
+-----[end]-----
