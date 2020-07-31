@@ -1,6 +1,7 @@
 package arcs.core.data.proto
 
 import arcs.core.data.AccessPath
+import arcs.core.data.Annotation
 import arcs.core.data.Check
 import arcs.core.data.Claim
 import arcs.core.data.EntityType
@@ -122,7 +123,9 @@ class ParticleSpecProtoDecoderTest {
           name: "Reader"
           connections { $readConnectionSpecProto }
           location: "Everywhere"
-          isolated: true
+          annotations {
+            name: "isolated"
+          }
         """.trimIndent()
         val readerSpec = decodeParticleSpecProto(readerSpecProto)
         val readConnectionSpec = decodeHandleConnectionSpecProto(readConnectionSpecProto)
@@ -131,7 +134,7 @@ class ParticleSpecProtoDecoderTest {
                 name = "Reader",
                 location = "Everywhere",
                 connections = mapOf("read" to readConnectionSpec),
-                isolated = true
+                annotations = listOf(Annotation.isolated)
             )
         )
 
@@ -140,7 +143,13 @@ class ParticleSpecProtoDecoderTest {
           connections { $readConnectionSpecProto }
           connections { $writeConnectionSpecProto }
           location: "Nowhere"
-          isolated: false
+          annotations {
+            name: "egress"
+            params {
+              name: "type"
+              str_value: "MyEgressType"
+            }
+          }
         """.trimIndent()
         val readerWriterSpec = decodeParticleSpecProto(readerWriterSpecProto)
         val writeConnectionSpec = decodeHandleConnectionSpecProto(writeConnectionSpecProto)
@@ -149,7 +158,7 @@ class ParticleSpecProtoDecoderTest {
                 name = "ReaderWriter",
                 location = "Nowhere",
                 connections = mapOf("read" to readConnectionSpec, "write" to writeConnectionSpec),
-                isolated = false
+                annotations = listOf(Annotation.createEgress("MyEgressType"))
             )
         )
     }

@@ -73,7 +73,6 @@ $ tools/update-goldens \n\n`
       `), {
       particleSpecs: [{
         name: 'Reader',
-        isolated: false,
         connections: [{
           name: 'data',
           direction: 'READS',
@@ -85,7 +84,6 @@ $ tools/update-goldens \n\n`
         }]
       }, {
         name: 'Writer',
-        isolated: false,
         connections: [{
           name: 'data',
           direction: 'WRITES',
@@ -236,7 +234,6 @@ $ tools/update-goldens \n\n`
       `), {
       particleSpecs: [{
         name: 'Writer',
-        isolated: false,
         connections: [{
           name: 'data',
           direction: 'WRITES',
@@ -250,7 +247,6 @@ $ tools/update-goldens \n\n`
         }]
       }, {
         name: 'Reader',
-        isolated: false,
         connections: [{
           name: 'data',
           direction: 'READS',

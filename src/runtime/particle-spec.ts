@@ -408,7 +408,7 @@ export class ParticleSpec {
    * Particles are considered egress particles by default, must have an explicit
    * `@isolated` annotation to be considered isolated.
    */
-  get isolated(): boolean {
+  get isIsolated(): boolean {
     const isolated = !!this.getAnnotation('isolated');
     const egress = !!this.getAnnotation('egress');
     assert(!(isolated && egress), 'Particle cannot be tagged with both @isolated and @egress.');
@@ -420,8 +420,22 @@ export class ParticleSpec {
    *
    * Particles are considered egress particles by default.
    */
-  get egress(): boolean {
-    return !this.isolated;
+  get isEgress(): boolean {
+    return !this.isIsolated;
+  }
+
+  /**
+   * Returns the egress type of this particle, according to the `@egress`
+   * annotation on it. Returns null if no egress type was supplied, or if the
+   * particle is not an egress particle.
+   */
+  get egressType(): string | null {
+    const egressAnnotation = this.getAnnotation('egress');
+    if (!egressAnnotation) {
+      return null;
+    }
+    const egressType = egressAnnotation.params['type'];
+    return egressType == null ? null : egressType as string;
   }
 
   isCompatible(modality: Modality): boolean {
