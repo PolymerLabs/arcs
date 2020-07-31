@@ -755,7 +755,6 @@ export const discreteTypes: DiscreteType[] = [
   'Long',
   'Int',
   'Instant',
-  'Boolean',
 ];
 
 export const primitiveTypes: Primitive[] = [

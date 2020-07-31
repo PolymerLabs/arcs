@@ -764,21 +764,23 @@ export class BuiltIn extends RefinementExpression {
   // TODO(cypher1): support arguments (e.g. floor(expr))
   value: string;
 
-  constructor(value: string, evalType: 'Number' | 'Boolean' | 'Text') {
+  constructor(value: string, evalType: Primitive) {
     super('BuiltInNode', evalType);
     this.value = value;
   }
 
   static fromAst(expression: BuiltInNode, _typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
-    let type = undefined;
+    const type = (): Primitive  => {
       switch (expression.value) {
         case 'now':
-          type = 'Number';
-          break;
+        case 'creationTime':
+        case 'expirationTime':
+          return 'Instant';
         default:
           throw new Error(`Unresolved built in name '${expression.value}' in the refinement expression.`);
       }
-    return new BuiltIn(expression.value, type);
+    };
+    return new BuiltIn(expression.value, type());
   }
 
   toLiteral() {
