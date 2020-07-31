@@ -8,7 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Schema} from './schema.js';
 import {RefinementNode, Op, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode,
         FieldNode, QueryNode, BuiltInNode, DiscreteNode, NumberNode, BooleanNode, TextNode, Primitive,
         DiscreteType, discreteTypes} from '../../runtime/manifest-ast-types/manifest-ast-nodes.js';
@@ -119,7 +118,7 @@ export class Refinement {
          idx += 1;
       }
       // Find the range of values for the field name over which the refinement is valid.
-      const integralTypes = [Primitive.BIGINT, Primitive.INT, Primitive.LONG];
+      const integralTypes = ['BigInt', 'Int', 'Long'];
       if (integralTypes.includes(a.expression.evalType) || integralTypes.includes(b.expression.evalType)) {
         const rangeA = BigIntRange.fromExpression(a.expression, {});
         const rangeB = BigIntRange.fromExpression(b.expression, {});
@@ -179,9 +178,7 @@ export interface RefinementExpressionLiteral {
 export type RefinementExpressionNodeType = 'BinaryExpressionNode' | 'UnaryExpressionNode' | 'FieldNamePrimitiveNode' | 'QueryArgumentPrimitiveNode' | 'NumberPrimitiveNode' | 'DiscretePrimitiveNode' | 'BooleanPrimitiveNode' | 'TextPrimitiveNode' | 'BuiltInNode';
 
 abstract class RefinementExpression {
-  evalType: Primitive;
-
-  constructor(readonly kind: RefinementExpressionNodeType) {}
+  constructor(public readonly kind: RefinementExpressionNodeType, public evalType: Primitive) {}
   static fromAst(expr: RefinementExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
     if (!expr) {
       return null;
@@ -246,12 +243,12 @@ abstract class RefinementExpression {
   getValue(): RefinementExpression {
     const value = this.evaluate({});
     switch (this.evalType) {
-      case Primitive.BOOLEAN: return new BooleanPrimitive(value);
-      case Primitive.INT:
-      case Primitive.LONG:
-      case Primitive.BIGINT:
+      case 'Boolean': return new BooleanPrimitive(value);
+      case 'Int':
+      case 'Long':
+      case 'BigInt':
         return new DiscretePrimitive(value, [], this.evalType);
-      case Primitive.NUMBER:
+      case 'Number':
         return new NumberPrimitive(value, []);
       default: throw new Error('Couldn\'t force evaluation of ${this.toString()}');
     }
@@ -268,6 +265,74 @@ abstract class RefinementExpression {
   getTextPrimitives(): Set<string> {
     return new Set<string>();
   }
+
+  static validateOperandCompatibility(op: RefinementOperator, operands: RefinementExpression[]): Primitive {
+    const operandStr = operands.map(x => x.toString()).join(' and ');
+    const operandTys = operands.map(op => op.evalType).join(' and ');
+    const opInfo = operatorTable[op.op];
+    const expected = () => {
+      if (opInfo.argType === 'same') {
+        return 'arguments to be of the same type';
+      } else if (opInfo.argType.length > 1) {
+        const front = opInfo.argType.slice(0, opInfo.argType.length-1);
+        const last = opInfo.argType[opInfo.argType.length-1];
+        return `${front.join(', ')} or ${last}`;
+      }
+      return opInfo.argType[0];
+    };
+    // TODO(cypher1): Use the type checker here (with type variables) as this is not typesafe.
+    // E.g. if both arguments are unknown, the types will be unknown but not enforced to be equal.
+    if (operands.length !== opInfo.nArgs) {
+      throw new Error(`Expected ${opInfo.nArgs} operands. Got ${operands.length}.`);
+    }
+    const getArgType = () => {
+      let argType: Primitive = '~query_arg_type';
+      // Discover the shared argument type.
+      for (const operand of operands) {
+        if (opInfo.argType === 'same') {
+          // The type's validity depends on the other arguments.
+          if (operand.evalType !== '~query_arg_type') {
+            argType = operand.evalType;
+            break;
+          }
+        } else if (opInfo.argType.includes(operand.evalType)) {
+          // A possible, valid type.
+          argType = operand.evalType;
+          break;
+        } else {
+          // This type is not valid, no matter the other arguments.
+          throw new Error(
+            `Refinement expression ${operand.toString()} has type ${operand.evalType}. Expected ${expected()}`
+          );
+        }
+      }
+      return argType;
+    };
+    const argType = getArgType();
+    // Set the query argument type.
+    for (const operand of operands) {
+      if (operand instanceof QueryArgumentPrimitive && operand.evalType === '~query_arg_type') {
+        operand.evalType = argType;
+      }
+    }
+    // Check that all args match the expected type.
+    for (const operand of operands) {
+      // Check that the argument types are valid.
+      if (opInfo.argType === 'same') {
+        if (operand.evalType !== argType) {
+          throw new Error(
+            `Expected refinement expressions ${operandStr} to have the same types. Found types ${operandTys}.`
+          );
+        }
+      } else if (operand.evalType !== argType) {
+        throw new Error(
+          `Expected refinement expressions ${operandStr} to have the same types. Found types ${operandTys}.`
+        );
+      }
+    }
+    // Passed type checking.
+    return (opInfo.evalType === 'same') ? argType : opInfo.evalType;
+  }
 }
 
 export class BinaryExpression extends RefinementExpression {
@@ -277,11 +342,10 @@ export class BinaryExpression extends RefinementExpression {
   operator: RefinementOperator;
 
   constructor(leftExpr: RefinementExpression, rightExpr: RefinementExpression, op: RefinementOperator) {
-    super('BinaryExpressionNode');
+    super('BinaryExpressionNode', RefinementExpression.validateOperandCompatibility(op, [leftExpr, rightExpr]));
     this.leftExpr = leftExpr;
     this.rightExpr = rightExpr;
     this.operator = op;
-    this.evalType = this.operator.validateOperandCompatibility([this.leftExpr, this.rightExpr]);
   }
 
   static fromAst(expression: BinaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
@@ -368,10 +432,10 @@ export class BinaryExpression extends RefinementExpression {
   }
 
   rearrange(): RefinementExpression {
-    const numberTypes = [Primitive.NUMBER, Primitive.BIGINT];
+    const numberTypes = ['Number', 'BigInt'];
     const leftNumeric = numberTypes.includes(this.leftExpr.evalType);
     const rightNumeric = numberTypes.includes(this.rightExpr.evalType);
-    if (this.evalType === Primitive.BOOLEAN && leftNumeric && rightNumeric) {
+    if (this.evalType === 'Boolean' && leftNumeric && rightNumeric) {
       try {
         Normalizer.rearrangeNumericalExpression(this);
       } catch (e) {
@@ -499,15 +563,13 @@ export class BinaryExpression extends RefinementExpression {
 }
 
 export class UnaryExpression extends RefinementExpression {
-  evalType: Primitive;
   expr: RefinementExpression;
   operator: RefinementOperator;
 
   constructor(expr: RefinementExpression, op: RefinementOperator) {
-    super('UnaryExpressionNode');
+    super('UnaryExpressionNode', RefinementExpression.validateOperandCompatibility(op, [expr]));
     this.expr = expr;
     this.operator = op;
-    this.evalType = this.operator.validateOperandCompatibility([this.expr]);
   }
 
   static fromAst(expression: UnaryExpressionNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
@@ -604,13 +666,11 @@ export class UnaryExpression extends RefinementExpression {
 }
 
 export class FieldNamePrimitive extends RefinementExpression {
-  evalType: Primitive;
   value: string;
 
   constructor(value: string, evalType: Primitive) {
-    super('FieldNamePrimitiveNode');
+    super('FieldNamePrimitiveNode', evalType);
     this.value = value;
-    this.evalType = evalType;
   }
 
   static fromAst(expression: FieldNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
@@ -654,16 +714,14 @@ export class FieldNamePrimitive extends RefinementExpression {
 
 export class QueryArgumentPrimitive extends RefinementExpression {
   value: string;
-  evalType: Primitive;
 
   constructor(value: string, evalType: Primitive) {
-    super('QueryArgumentPrimitiveNode');
+    super('QueryArgumentPrimitiveNode', evalType);
     this.value = value;
-    this.evalType = evalType;
   }
 
   static fromAst(expression: QueryNode, typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
-    return new QueryArgumentPrimitive(expression.value, typeData[expression.value] || Primitive.UNKNOWN);
+    return new QueryArgumentPrimitive(expression.value, typeData[expression.value] || '~query_arg_type');
   }
 
   toLiteral() {
@@ -703,21 +761,19 @@ export class QueryArgumentPrimitive extends RefinementExpression {
 }
 
 export class BuiltIn extends RefinementExpression {
-  evalType: Primitive;
   // TODO(cypher1): support arguments (e.g. floor(expr))
   value: string;
 
-  constructor(value: string, evalType: Primitive.NUMBER | Primitive.BOOLEAN | Primitive.TEXT) {
-    super('BuiltInNode');
+  constructor(value: string, evalType: 'Number' | 'Boolean' | 'Text') {
+    super('BuiltInNode', evalType);
     this.value = value;
-    this.evalType = evalType;
   }
 
   static fromAst(expression: BuiltInNode, _typeData: Dictionary<ExpressionPrimitives>): RefinementExpression {
     let type = undefined;
       switch (expression.value) {
-        case 'now()':
-          type = Primitive.NUMBER;
+        case 'now':
+          type = 'Number';
           break;
         default:
           throw new Error(`Unresolved built in name '${expression.value}' in the refinement expression.`);
@@ -763,9 +819,9 @@ export class DiscretePrimitive extends RefinementExpression {
   constructor(
     public value: bigint,
     units: string[] = [],
-    public evalType: DiscreteType,
+    evalType: DiscreteType,
   ) {
-    super('DiscretePrimitiveNode');
+    super('DiscretePrimitiveNode', evalType);
 
     // Convert to Si units.
     // For time units, the base unit is milliseconds.
@@ -809,10 +865,12 @@ export class DiscretePrimitive extends RefinementExpression {
 
   toString(): string {
     const typeIndicator = () => {
+      const pluralize = (this.value === BigInt(1) || this.value === BigInt(-1)) ? '' : 's';
       switch (this.evalType) {
-        case Primitive.BIGINT: return 'n';
-        case Primitive.INT: return 'i';
-        case Primitive.LONG: return 'l';
+        case 'BigInt': return 'n';
+        case 'Int': return 'i';
+        case 'Long': return 'l';
+        case 'Instant': return ` millisecond${pluralize}`;
         default: throw new Error(`unexpected type ${this.evalType}`);
       }
     };
@@ -825,11 +883,10 @@ export class DiscretePrimitive extends RefinementExpression {
 }
 
 export class NumberPrimitive extends RefinementExpression {
-  evalType = Primitive.NUMBER;
   value: number;
 
   constructor(value: number, units: string[] = []) {
-    super('NumberPrimitiveNode');
+    super('NumberPrimitiveNode', 'Number');
 
     // Convert to Si units.
     this.value = value;
@@ -888,12 +945,11 @@ export class NumberPrimitive extends RefinementExpression {
 }
 
 export class BooleanPrimitive extends RefinementExpression {
-  // TODO: Deprecate in favour of DiscretePrimitiveNode with type BOOLEAN.
-  evalType = Primitive.BOOLEAN;
+  // TODO: Deprecate in favour of DiscretePrimitiveNode with type 'Boolean'.
   value: boolean;
 
   constructor(value: boolean) {
-    super('BooleanPrimitiveNode');
+    super('BooleanPrimitiveNode', 'Boolean');
     this.value = value;
   }
 
@@ -923,11 +979,10 @@ export class BooleanPrimitive extends RefinementExpression {
 }
 
 export class TextPrimitive extends RefinementExpression {
-  evalType = Primitive.TEXT;
   value: string;
 
   constructor(value: string) {
-    super('TextPrimitiveNode');
+    super('TextPrimitiveNode', 'Text');
     this.value = value;
   }
 
@@ -963,14 +1018,14 @@ export class TextPrimitive extends RefinementExpression {
 export class NumberRange {
   private readonly segments: NumberSegment[] = [];
 
-  constructor(segs: NumberSegment[] = [], private readonly type: Primitive = Primitive.NUMBER) {
+  constructor(segs: NumberSegment[] = [], private readonly type: Primitive = 'Number') {
     for (const seg of segs) {
       this.unionWithSeg(seg);
     }
   }
 
   static universal(type: Primitive): NumberRange {
-    if (type === Primitive.BOOLEAN) {
+    if (type === 'Boolean') {
       return new NumberRange([NumberSegment.closedClosed(0, 0), NumberSegment.closedClosed(1, 1)], type);
     }
     return new NumberRange([NumberSegment.closedClosed(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY)], type);
@@ -1101,11 +1156,11 @@ export class NumberRange {
       const rg = NumberRange.fromExpression(expr.expr, textToNum);
       return NumberRange.updateGivenOp(expr.operator.op, [rg]);
     }
-    if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.BOOLEAN) {
-      return NumberRange.unit(1, Primitive.BOOLEAN);
+    if (expr instanceof FieldNamePrimitive && expr.evalType === 'Boolean') {
+      return NumberRange.unit(1, 'Boolean');
     }
-    if (expr instanceof BooleanPrimitive && expr.evalType === Primitive.BOOLEAN) {
-      return NumberRange.universal(Primitive.UNKNOWN);
+    if (expr instanceof BooleanPrimitive && expr.evalType === 'Boolean') {
+      return NumberRange.universal('~query_arg_type');
     }
 
     // This represents cases that the refinement system cannot solve statically.
@@ -1279,7 +1334,7 @@ export class NumberSegment {
 export class BigIntRange {
   private readonly segments: BigIntSegment[] = [];
 
-  constructor(segs: BigIntSegment[] = [], private readonly type: Primitive = Primitive.BIGINT) {
+  constructor(segs: BigIntSegment[] = [], private readonly type: Primitive = 'BigInt') {
     for (const seg of segs) {
       this.unionWithSeg(seg);
     }
@@ -1293,11 +1348,11 @@ export class BigIntRange {
     const b0 = BigInt(0);
     const b1 = BigInt(1);
     switch (type) {
-      case Primitive.BOOLEAN:
+      case 'Boolean':
         return new BigIntRange([BigIntSegment.closedClosed(b0, b0), BigIntSegment.closedClosed(b1, b1)], type);
-      case Primitive.INT:
+      case 'Int':
         return new BigIntRange([BigIntSegment.closedClosed(INT_MIN, INT_MAX)], type);
-      case Primitive.LONG:
+      case 'Long':
         return new BigIntRange([BigIntSegment.closedClosed(LONG_MIN, LONG_MAX)], type);
       default:
         // These are used to represent 'infinity'.
@@ -1432,11 +1487,11 @@ export class BigIntRange {
       const rg = BigIntRange.fromExpression(expr.expr, textToNum);
       return BigIntRange.updateGivenOp(expr.operator.op, [rg]);
     }
-    if (expr instanceof FieldNamePrimitive && expr.evalType === Primitive.BOOLEAN) {
-      return BigIntRange.unit(BigInt(1), Primitive.BOOLEAN);
+    if (expr instanceof FieldNamePrimitive && expr.evalType === 'Boolean') {
+      return BigIntRange.unit(BigInt(1), 'Boolean');
     }
-    if (expr instanceof BooleanPrimitive && expr.evalType === Primitive.BOOLEAN) {
-      return BigIntRange.universal(Primitive.UNKNOWN);
+    if (expr instanceof BooleanPrimitive && expr.evalType === 'Boolean') {
+      return BigIntRange.universal('~query_arg_type');
     }
 
     // This represents cases that the refinement system cannot solve statically.
@@ -1654,7 +1709,7 @@ interface OperatorInfo {
   evalType: Primitive | 'same';
 }
 
-const numericTypes: Primitive[] = [Primitive.NUMBER].concat(discreteTypes);
+const numericTypes: Primitive[] = ['Number', ...discreteTypes];
 
 // From https://kotlinlang.org/docs/reference/basic-types.html
 const INT_MIN: bigint = BigInt('-2147483648'); // -2**31
@@ -1664,9 +1719,9 @@ const LONG_MAX: bigint = BigInt('9223372036854775807'); // 2**63 - 1
 
 const operatorTable: Dictionary<OperatorInfo> = {
   // Booleans
-  [Op.NOT]: {nArgs: 1, argType: [Primitive.BOOLEAN],  evalType: Primitive.BOOLEAN},
-  [Op.AND]: {nArgs: 2, argType: [Primitive.BOOLEAN], evalType: Primitive.BOOLEAN},
-  [Op.OR]: {nArgs: 2, argType: [Primitive.BOOLEAN], evalType: Primitive.BOOLEAN},
+  [Op.NOT]: {nArgs: 1, argType: ['Boolean'],  evalType: 'Boolean'},
+  [Op.AND]: {nArgs: 2, argType: ['Boolean'], evalType: 'Boolean'},
+  [Op.OR]: {nArgs: 2, argType: ['Boolean'], evalType: 'Boolean'},
 
   // Numerics
   [Op.ADD]: {nArgs: 2, argType: numericTypes,  evalType: 'same'},
@@ -1676,14 +1731,14 @@ const operatorTable: Dictionary<OperatorInfo> = {
   [Op.NEG]: {nArgs: 1, argType: numericTypes,  evalType: 'same'},
 
   // Numeric Comparisons
-  [Op.LT]: {nArgs: 2, argType: numericTypes,  evalType: Primitive.BOOLEAN},
-  [Op.GT]: {nArgs: 2, argType: numericTypes,  evalType: Primitive.BOOLEAN},
-  [Op.LTE]: {nArgs: 2, argType: numericTypes,  evalType: Primitive.BOOLEAN},
-  [Op.GTE]: {nArgs: 2, argType: numericTypes,  evalType: Primitive.BOOLEAN},
+  [Op.LT]: {nArgs: 2, argType: numericTypes,  evalType: 'Boolean'},
+  [Op.GT]: {nArgs: 2, argType: numericTypes,  evalType: 'Boolean'},
+  [Op.LTE]: {nArgs: 2, argType: numericTypes,  evalType: 'Boolean'},
+  [Op.GTE]: {nArgs: 2, argType: numericTypes,  evalType: 'Boolean'},
 
   // Comparisons
-  [Op.EQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN},
-  [Op.NEQ]: {nArgs: 2, argType: 'same', evalType: Primitive.BOOLEAN},
+  [Op.EQ]: {nArgs: 2, argType: 'same', evalType: 'Boolean'},
+  [Op.NEQ]: {nArgs: 2, argType: 'same', evalType: 'Boolean'},
 };
 
 const evalTable: Dictionary<(exprs: ExpressionPrimitives[]) => ExpressionPrimitives> = {
@@ -1783,73 +1838,6 @@ export class RefinementOperator {
   evalType(): Primitive | 'same' {
     return this.opInfo.evalType;
   }
-
-  validateOperandCompatibility(operands: RefinementExpression[]): Primitive {
-    const operandStr = operands.map(x => x.toString()).join(' and ');
-    const operandTys = operands.map(op => op.evalType).join(' and ');
-    const expected = () => {
-      if (this.opInfo.argType === 'same') {
-        return 'arguments to be of the same type';
-      } else if (this.opInfo.argType.length > 1) {
-        const front = this.opInfo.argType.slice(0, this.opInfo.argType.length-1);
-        const last = this.opInfo.argType[this.opInfo.argType.length-1];
-        return `${front.join(', ')} or ${last}`;
-      }
-      return this.opInfo.argType[0];
-    };
-    // TODO(cypher1): Use the type checker here (with type variables) as this is not typesafe.
-    // E.g. if both arguments are unknown, the types will be unknown but not enforced to be equal.
-    if (operands.length !== this.opInfo.nArgs) {
-      throw new Error(`Expected ${this.opInfo.nArgs} operands. Got ${operands.length}.`);
-    }
-    const getArgType = () => {
-      let argType: Primitive = Primitive.UNKNOWN;
-      // Discover the shared argument type.
-      for (const operand of operands) {
-        if (this.opInfo.argType === 'same') {
-          // The type's validity depends on the other arguments.
-          if (operand.evalType !== Primitive.UNKNOWN) {
-            argType = operand.evalType;
-            break;
-          }
-        } else if (this.opInfo.argType.includes(operand.evalType)) {
-          // A possible, valid type.
-          argType = operand.evalType;
-          break;
-        } else {
-          // This type is not valid, no matter the other arguments.
-          throw new Error(
-            `Refinement expression ${operand.toString()} has type ${operand.evalType}. Expected ${expected()}`
-          );
-        }
-      }
-      return argType;
-    };
-    const argType = getArgType();
-    // Set the query argument type.
-    for (const operand of operands) {
-      if (operand instanceof QueryArgumentPrimitive && operand.evalType === Primitive.UNKNOWN) {
-        operand.evalType = argType;
-      }
-    }
-    // Check that all args match the expected type.
-    for (const operand of operands) {
-      // Check that the argument types are valid.
-      if (this.opInfo.argType === 'same') {
-        if (operand.evalType !== argType) {
-          throw new Error(
-            `Expected refinement expressions ${operandStr} to have the same types. Found types ${operandTys}.`
-          );
-        }
-      } else if (operand.evalType !== argType) {
-        throw new Error(
-          `Expected refinement expressions ${operandStr} to have the same types. Found types ${operandTys}.`
-        );
-      }
-    }
-    // Passed type checking.
-    return (this.opInfo.evalType === 'same') ? argType : this.opInfo.evalType;
-  }
 }
 
 // A constant is represented by an empty Term object, where there is no indeterminate.
@@ -1858,7 +1846,7 @@ const CONSTANT = '{}';
 export class NumberFraction {
   num: NumberMultinomial;
   den: NumberMultinomial;
-  type = Primitive.NUMBER;
+  type = 'Number';
 
   constructor(n?: NumberMultinomial, d?: NumberMultinomial) {
     this.num = n ? NumberMultinomial.copyOf(n) : new NumberMultinomial();
@@ -1948,7 +1936,7 @@ export class NumberFraction {
     // points, the precision and computation cost of gcd function will be a trade-off to consider.
   }
 
-  // assumes the expression received has an evalType of Primitive.NUMBER
+  // assumes the expression received has an evalType of 'Number'
   static fromExpression(expr: RefinementExpression): NumberFraction {
     if (expr instanceof BinaryExpression) {
       const left = NumberFraction.fromExpression(expr.leftExpr);
@@ -1958,7 +1946,7 @@ export class NumberFraction {
       const fn = NumberFraction.fromExpression(expr.expr);
       return NumberFraction.updateGivenOp(expr.operator.op, [fn]);
     } else if (expr instanceof FieldNamePrimitive) {
-      if (expr.evalType === Primitive.NUMBER) {
+      if (expr.evalType === 'Number') {
         const term = new NumberTerm({[expr.value]: 1});
         return new NumberFraction(new NumberMultinomial({[term.toKey()]: 1}));
       } else {
@@ -2092,7 +2080,7 @@ export class BigIntFraction {
     // points, the precision and computation cost of gcd function will be a trade-off to consider.
   }
 
-  // assumes the expression received has an evalType of Primitive.NUMBER
+  // assumes the expression received has an evalType of 'Number'
   static fromExpression(expr: RefinementExpression): BigIntFraction {
     if (expr instanceof BinaryExpression) {
       const left = BigIntFraction.fromExpression(expr.leftExpr);
@@ -2102,7 +2090,7 @@ export class BigIntFraction {
       const fn = BigIntFraction.fromExpression(expr.expr);
       return BigIntFraction.updateGivenOp(expr.operator.op, [fn]);
     } else if (expr instanceof FieldNamePrimitive) {
-      if (discreteTypes.includes(expr.evalType)) {
+      if (discreteTypes.includes(expr.evalType as DiscreteType)) {
         const term = new BigIntTerm({[expr.value]: BigInt(1)});
         return BigIntFraction.onOne(
           new BigIntMultinomial({[term.toKey()]: BigInt(1)}),
@@ -2112,7 +2100,7 @@ export class BigIntFraction {
         throw new Error(`Cannot model expression as BigIntFraction: ${expr.toString()}, wrong type: ${expr.evalType}`);
       }
     } else if (expr instanceof DiscretePrimitive) {
-      return BigIntFraction.onOne(new BigIntMultinomial({[CONSTANT]: expr.value}), expr.evalType);
+      return BigIntFraction.onOne(new BigIntMultinomial({[CONSTANT]: expr.value}), expr.evalType as DiscreteType);
     }
     throw new Error(`Cannot model expression as BigIntFraction: ${expr.toString()}`);
   }
@@ -2177,7 +2165,7 @@ export class NumberTerm {
       throw new Error('Pow should be >= 0');
     }
     if (pow === 1) {
-      return new FieldNamePrimitive(fn, Primitive.NUMBER);
+      return new FieldNamePrimitive(fn, 'Number');
     }
     const n = Math.floor(pow/2);
     return new BinaryExpression(
@@ -2319,7 +2307,7 @@ export class NumberMultinomial {
       }
       const scaledCnst = cnst/leadingCoeff;
       return new BinaryExpression(
-        new FieldNamePrimitive(indeterminate, Primitive.NUMBER),
+        new FieldNamePrimitive(indeterminate, 'Number'),
         new NumberPrimitive(-scaledCnst),
         operator);
     }
@@ -2399,7 +2387,7 @@ export class BigIntTerm {
       throw new Error('Pow should be >= 0');
     }
     if (pow === BigInt(1)) {
-      return new FieldNamePrimitive(fn, Primitive.BIGINT);
+      return new FieldNamePrimitive(fn, 'BigInt');
     }
     const n = pow/BigInt(2);
     return new BinaryExpression(
@@ -2546,7 +2534,7 @@ export class BigIntMultinomial {
       }
       const scaledCnst: bigint = cnst/leadingCoeff;
       return new BinaryExpression(
-        new FieldNamePrimitive(indeterminate, Primitive.BIGINT),
+        new FieldNamePrimitive(indeterminate, 'BigInt'),
         new DiscretePrimitive(-scaledCnst, [], type),
         operator);
     }
