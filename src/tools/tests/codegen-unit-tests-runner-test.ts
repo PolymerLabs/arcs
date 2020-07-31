@@ -50,7 +50,7 @@ const handleForParticleRE = /"([^\n"]+)".*\n.*\n.*\n *"([^"]+)" to HandleConnect
  * in the CLI tool performing updating, where describe(...) and it(...) are not defined.
  */
 for (const unit of schema2KotlinTestSuite.concat(recipe2PlanTestSuite)) {
-  describe.only(unit.title, async () => {
+  describe(unit.title, async () => {
     for (const test of readTests(unit)) {
       it(test.name, async () => {
         assert.deepEqual(await runCompute(unit, test), test.results);
