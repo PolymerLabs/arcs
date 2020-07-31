@@ -160,7 +160,9 @@ class DatabaseImpl(
         initialized = true
     }
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = synchronized(db) {
+    override fun onUpgrade(
+        db: SQLiteDatabase, oldVersion: Int, newVersion: Int
+    ) = synchronized(db) {
         if (initialized) return
         db.transaction {
             ((oldVersion + 1)..newVersion).forEach {
@@ -170,7 +172,9 @@ class DatabaseImpl(
         initialized = true
     }
 
-    override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = synchronized(db) {
+    override fun onDowngrade(
+        db: SQLiteDatabase, oldVersion: Int, newVersion: Int
+    ) = synchronized(db) {
         if (initialized) return
         db.transaction {
             // Select all of the tables from the database, not just the ones we know about given
