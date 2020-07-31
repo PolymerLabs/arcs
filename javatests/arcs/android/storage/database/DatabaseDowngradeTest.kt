@@ -74,13 +74,24 @@ class DatabaseDowngradeTest {
         name: String,
         version: Int
     ) : SQLiteOpenHelper(context, name, /* cursorFactory = */ null, version) {
-        override fun onCreate(db: SQLiteDatabase) = db.transaction {
-            db.execSQL("CREATE TABLE foo (field TEXT)")
-            db.execSQL("CREATE TABLE bar (field TEXT)")
-            db.execSQL("CREATE TABLE baz (field TEXT)")
-            db.execSQL("CREATE TABLE not_an_arcs_table_either (field TEXT)")
-            db.execSQL("CREATE INDEX foos ON foo (field)")
-            db.execSQL("CREATE INDEX bars ON bar (field)")
+        private var initialized = false
+
+        override fun onConfigure(db: SQLiteDatabase?) {
+            super.onConfigure(db)
+            db?.enableWriteAheadLogging()
+        }
+
+        override fun onCreate(db: SQLiteDatabase) = synchronized(db) {
+            if (initialized) return
+            db.transaction {
+                db.execSQL("CREATE TABLE foo (field TEXT)")
+                db.execSQL("CREATE TABLE bar (field TEXT)")
+                db.execSQL("CREATE TABLE baz (field TEXT)")
+                db.execSQL("CREATE TABLE not_an_arcs_table_either (field TEXT)")
+                db.execSQL("CREATE INDEX foos ON foo (field)")
+                db.execSQL("CREATE INDEX bars ON bar (field)")
+            }
+            initialized = true
         }
 
         override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
