@@ -265,7 +265,7 @@ class DatabaseImpl(
         storageKey: StorageKey,
         schema: Schema,
         counters: Counters? = null
-    ): DatabaseData.Entity? = readableDatabase.transaction {
+    ): DatabaseData.Entity? = with(readableDatabase) {
         val db = this
         // Fetch the entity's type by storage key.
         counters?.increment(DatabaseCounters.GET_ENTITY_TYPE_BY_STORAGEKEY)
