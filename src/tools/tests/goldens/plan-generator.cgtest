@@ -34,6 +34,9 @@ package test.namespace
 //
 
 import arcs.core.data.*
+import arcs.core.data.expression.*
+import arcs.core.data.expression.Expression.*
+import arcs.core.data.expression.Expression.BinaryOp.*
 import arcs.core.data.Plan.*
 import arcs.core.storage.StorageKeyParser
 import arcs.core.entity.toPrimitiveValue
@@ -48,8 +51,8 @@ val Ingest_Handle0 = Handle(
                 collections = emptyMap()
             ),
             "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
-            refinement = { _ -> true },
-            query = null
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
         )
     ),
     listOf(Annotation("persistent", emptyMap()))
@@ -82,8 +85,8 @@ val Retrieve_Handle0 = Handle(
                 collections = emptyMap()
             ),
             "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
-            refinement = { _ -> true },
-            query = null
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
         )
     ),
     emptyList()
