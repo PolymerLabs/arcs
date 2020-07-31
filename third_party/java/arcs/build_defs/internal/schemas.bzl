@@ -218,7 +218,7 @@ def arcs_kt_gen(
         name = name,
         srcs = depset(schema["outs"] + plan["outs"]).to_list(),
         platforms = platforms,
-        deps = depset(schema["deps"] + plan["deps"]).to_list(),
+        deps = depset(schema["deps"] + plan["deps"] + deps).to_list(),
         visibility = visibility,
     )
 
