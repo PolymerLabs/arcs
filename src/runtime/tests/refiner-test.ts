@@ -100,7 +100,7 @@ describe('refiner', () => {
                 num: 6,
             };
             ref.validateData(data);
-        }, `Refinement expression (num < 5) has type Boolean. Expected Number, BigInt, Long, Int or Instant`);
+        }, `Expected refinement expressions (num < 5) and 3 to have the same types. Found types Boolean and Number.`);
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
@@ -122,7 +122,7 @@ describe('refiner', () => {
           const ref = Refinement.fromAst(manifestAst[0].args[0].type.refinement, typeData);
           const data = {name: 'Josh'};
           ref.validateData(data);
-        }, `Refinement expression name has type Text. Expected Number, BigInt, Long, Int or Instant`);
+        }, `Refinement expression name has type Text. Expected Number, BigInt, Long, Int, Instant or Boolean`);
     });
     describe('Throws error when operators and operands are incompatible: BigInt', async () => {
       const validate = (data: {num: bigint | number }, relation: string) => {
