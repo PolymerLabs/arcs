@@ -36,7 +36,8 @@ open class EntityBase(
     entityId: String? = null,
     creationTimestamp: Long = UNINITIALIZED_TIMESTAMP,
     expirationTimestamp: Long = UNINITIALIZED_TIMESTAMP,
-    private val isInlineEntity: Boolean = false
+    private val isInlineEntity: Boolean = false,
+    private val restrictedEntitySchema: Schema? = null
 ) : Entity {
     /**
      * Only this class should be able to change these fields (in the [deserialize] and
@@ -242,19 +243,14 @@ open class EntityBase(
         schema.fields.collections.keys.forEach { collections[it] = emptySet() }
     }
 
-    override fun serialize(restrictedSchema: Schema?): RawEntity {
-        val singletonFields = if (restrictedSchema != null) {
-            restrictedSchema.fields.singletons
-        } else schema.fields.singletons
-        val collectionFields = if (restrictedSchema != null) {
-            restrictedSchema.fields.collections
-        } else schema.fields.collections
+    override fun serialize(): RawEntity {
+        val serializationFields = restrictedEntitySchema?.fields ?: schema.fields
         val serialization = RawEntity(
             id = entityId ?: NO_REFERENCE_ID,
-            singletons = singletonFields.mapValues { (field, _) ->
+            singletons = serializationFields.singletons.mapValues { (field, _) ->
                 getSingletonValue(field)?.let { toReferencable(it, getSingletonType(field)) }
             },
-            collections = collectionFields.mapValues { (field, _) ->
+            collections = serializationFields.collections.mapValues { (field, _) ->
                 val type = getCollectionType(field)
                 getCollectionValue(field).map { toReferencable(it, type) }.toSet()
             },

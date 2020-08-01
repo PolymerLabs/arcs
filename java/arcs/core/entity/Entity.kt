@@ -42,7 +42,7 @@ interface Entity : Storable {
         ttl: Ttl = Ttl.Infinite()
     )
 
-    fun serialize(restrictedSchema: Schema? = null): RawEntity
+    fun serialize(): RawEntity
 
     /** Resets all fields to the default value. */
     fun reset()

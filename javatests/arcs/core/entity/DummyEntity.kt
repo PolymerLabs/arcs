@@ -11,7 +11,11 @@ import arcs.core.data.SchemaName
  * in the test. Also adds convenient getters and setters for entity fields, similar to what a
  * code-generated subclass would do.
  */
-class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
+class DummyEntity(restrictedEntitySchema: Schema? = null) : EntityBase(
+    entityClassName = ENTITY_CLASS_NAME,
+    schema = SCHEMA,
+    restrictedEntitySchema = restrictedEntitySchema
+), Storable {
     var bool: Boolean? by SingletonProperty()
     var num: Double? by SingletonProperty()
     var text: String? by SingletonProperty()

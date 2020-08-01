@@ -1271,7 +1271,7 @@ open class HandleManagerTestBase {
             }
         }
 
-        override fun serialize(restrictedSchema: Schema?) = RawEntity(
+        override fun serialize() = RawEntity(
             entityId,
             mapOf(
                 "pairs_of_shoes_owned" to pairsOfShoesOwned.toReferencable(),
@@ -1339,7 +1339,7 @@ open class HandleManagerTestBase {
             }
         }
 
-        override fun serialize(restrictedSchema: Schema?) = RawEntity(
+        override fun serialize() = RawEntity(
             entityId,
             singletons = mapOf(
                 "name" to name.toReferencable(),
@@ -1418,7 +1418,7 @@ open class HandleManagerTestBase {
             ttl: Ttl
         ) = Unit
 
-        override fun serialize(restrictedSchema: Schema?) = RawEntity(
+        override fun serialize() = RawEntity(
             entityId,
             singletons = mapOf(
                 "style" to style.toReferencable()

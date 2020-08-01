@@ -4,7 +4,6 @@ import arcs.core.common.Id
 import arcs.core.crdt.VersionMap
 import arcs.core.data.Capability.Ttl
 import arcs.core.data.FieldType
-import arcs.core.data.RawEntity
 import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
@@ -65,34 +64,6 @@ class StorageAdapterTest {
         assertThat(adapter.referencableToStorable(rawEntity)).isEqualTo(entity)
     }
 
-    // A restricted version of DummyEntity with less fields.
-    class RestrictedDummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
-        // var num: Double? by SingletonProperty()
-        var text: String? by SingletonProperty()
-
-        companion object : EntitySpec<RestrictedDummyEntity> {
-            override fun deserialize(data: RawEntity) =
-                RestrictedDummyEntity().apply {
-                    deserialize(data, mapOf(SCHEMA_HASH to RestrictedDummyEntity))
-                }
-
-            const val ENTITY_CLASS_NAME = "RestrictedDummyEntity"
-
-            const val SCHEMA_HASH = "klmnop"
-
-            override val SCHEMA = Schema(
-                names = setOf(SchemaName(ENTITY_CLASS_NAME)),
-                fields = SchemaFields(
-                    singletons = mapOf(
-                        "text" to FieldType.Text
-                    ),
-                    collections = emptyMap()
-                ),
-                hash = SCHEMA_HASH
-            )
-        }
-    }
-
     @Test
     fun entityStorageAdapterNew() {
         val adapter = EntityStorageAdapter(
@@ -102,13 +73,23 @@ class StorageAdapterTest {
             Ttl.Minutes(1),
             time,
             dereferencerFactory,
-            storageKey,
-            RestrictedDummyEntity.SCHEMA
+            storageKey
         )
-        var entity = DummyEntity()
-            .apply { text = "Watson" }
-            .apply { num = 42.0 }
-            .apply { bool = true }
+        val restrictedSchema = Schema(
+            names = setOf(SchemaName(DummyEntity.ENTITY_CLASS_NAME)),
+            fields = SchemaFields(
+                singletons = mapOf(
+                    "text" to FieldType.Text
+                ),
+                collections = emptyMap()
+            ),
+            hash = "wxyzzyxw"
+        )
+        var entity = DummyEntity(restrictedSchema).apply {
+            text = "Watson"
+            num = 42.0
+            bool = true
+        }
 
         // Convert to storage format (RawEntity).
         val rawEntity = adapter.storableToReferencable(entity)
@@ -119,7 +100,7 @@ class StorageAdapterTest {
         assertThat(rawEntity.expirationTimestamp).isEqualTo(time.currentTimeMillis + 60000)
         assertThat(rawEntity.singletons.size).isEqualTo(1)
         assertThat(rawEntity.singletons).containsEntry("text", "Watson".toReferencable())
-        assertThat(entity.serialize(RestrictedDummyEntity.SCHEMA)).isEqualTo(rawEntity)
+        assertThat(entity.serialize()).isEqualTo(rawEntity)
 
         // Convert back from storage format again.
         entity = entity.apply { num = null }.apply { bool = null }
