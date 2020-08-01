@@ -46,11 +46,11 @@ import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteQueryCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.storage.ActivationFactory
-import arcs.core.storage.ActiveStore
 import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreOptions
+import arcs.core.storage.asStoreEndpointProvider
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
@@ -61,8 +61,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-typealias SingletonStore<T> = ActiveStore<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
-typealias CollectionStore<T> = ActiveStore<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
 /**
  * Creates [Entity] handles based on [HandleMode], such as
  * [ReadSingletonHandle] for [HandleMode.Read]. To obtain a [HandleHolder], use
@@ -80,11 +78,13 @@ class EntityHandleManager(
     private val hostId: String = "nohost",
     private val time: Time,
     private val scheduler: Scheduler,
-    private val stores: StoreManager = StoreManager(),
+    stores: StoreManager = StoreManager(),
     private val idGenerator: Id.Generator = Id.Generator.newSession(),
     private val coroutineContext: CoroutineContext = Dispatchers.Default,
     private val analytics: Analytics? = null
 ) : HandleManager {
+
+    private val storageEndpointProvider = stores.asStoreEndpointProvider()
 
     @Deprecated(
         message = "prefer primary constructor",
@@ -276,13 +276,17 @@ class EntityHandleManager(
         schema: Schema
     ): SingletonProxy<R> = proxyMutex.withLock {
         singletonStorageProxies.getOrPut(storageKey) {
-            val store: SingletonStore<Referencable> = stores.get(
-                StoreOptions(
+            SingletonProxy(
+                storeOptions = StoreOptions(
                     storageKey = storageKey,
                     type = SingletonType(EntityType(schema))
-                )
+                ),
+                storeEndpointProvider = storageEndpointProvider,
+                crdt = CrdtSingleton(),
+                scheduler = scheduler,
+                time = time,
+                analytics = analytics
             )
-            SingletonProxy(store, CrdtSingleton(), scheduler, time, analytics)
         } as SingletonProxy<R>
     }
 
@@ -293,13 +297,17 @@ class EntityHandleManager(
         schema: Schema
     ): CollectionProxy<R> = proxyMutex.withLock {
         collectionStorageProxies.getOrPut(storageKey) {
-            val store: CollectionStore<Referencable> = stores.get(
-                StoreOptions(
+            CollectionProxy(
+                storeOptions = StoreOptions(
                     storageKey = storageKey,
                     type = CollectionType(EntityType(schema))
-                )
+                ),
+                storeEndpointProvider = storageEndpointProvider,
+                crdt = CrdtSet(),
+                scheduler = scheduler,
+                time = time,
+                analytics = analytics
             )
-            CollectionProxy(store, CrdtSet(), scheduler, time, analytics)
         } as CollectionProxy<R>
     }
 }

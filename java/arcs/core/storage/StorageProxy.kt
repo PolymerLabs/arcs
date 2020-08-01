@@ -51,7 +51,8 @@ import kotlinx.coroutines.withTimeoutOrNull
  */
 @Suppress("EXPERIMENTAL_API_USAGE")
 class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
-    storeEndpointProvider: StorageCommunicationEndpointProvider<Data, Op, T>,
+    storeOptions: StoreOptions,
+    storeEndpointProvider: StorageEndpointProvider,
     crdt: CrdtModel<Data, Op, T>,
     private val scheduler: Scheduler,
     private val time: Time,
@@ -63,6 +64,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private val crdt: CrdtModel<Data, Op, T>
         get() = _crdt ?: throw IllegalStateException("StorageProxy closed")
 
+    val storageKey = storeOptions.storageKey
+
     /**
      * If you need to interact with the data managed by this [StorageProxy], and you're not a
      * [Store], you must either be performing your interactions within a handle callback or on this
@@ -71,14 +74,13 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     val dispatcher: CoroutineDispatcher
         get() = scheduler.asCoroutineDispatcher()
 
-    /** Identifier of the data this [StorageProxy] is managing. */
-    val storageKey: StorageKey = storeEndpointProvider.storageKey
-
     private val log = TaggedLog { "StorageProxy" }
     private val handleCallbacks = atomic(HandleCallbacks<T>())
     private val stateHolder = atomic(StateHolder<T>(ProxyState.NO_SYNC))
-    private val store: StorageCommunicationEndpoint<Data, Op, T> =
-        storeEndpointProvider.getStorageEndpoint(ProxyCallback(::onMessage))
+    private val store: StorageEndpoint<Data, Op, T> = storeEndpointProvider.getStorageEndpoint(
+        storeOptions,
+        ProxyCallback(::onMessage)
+    )
 
     // Stash of operations to apply to the CRDT after we are synced with the store. These are
     // operations which have come in either before we were synced or while we were de-synced.

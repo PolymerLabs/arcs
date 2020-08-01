@@ -13,6 +13,7 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.util.guardedBy
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -57,6 +58,35 @@ class StoreManager(
             }
         }.forEach {
             it.close()
+        }
+    }
+}
+
+/**
+ * This is a temporary facade that adapts the provided [StoreManager] to be a
+ * [StorageEndpointProvider], with the goal of reducing the scope of change in a single PR.
+ *
+ * Eventually, we will remove this in favor of a [StorageEndpointProvider] passed directly to
+ * [EntityHandleManager].
+ */
+fun StoreManager.asStoreEndpointProvider() = object : StorageEndpointProvider {
+    override fun <Data : CrdtData, Op : CrdtOperationAtTime, ConsumerData> getStorageEndpoint(
+        storeOptions: StoreOptions,
+        callback: ProxyCallback<Data, Op, ConsumerData>
+    ): StorageEndpoint<Data, Op, ConsumerData> {
+        val store = runBlocking {
+            get<Data, Op, ConsumerData>(storeOptions)
+        }
+
+        return object : StorageEndpoint<Data, Op, ConsumerData> {
+            private val id = store.on(callback)
+            override suspend fun idle() = store.idle()
+
+            override suspend fun onProxyMessage(
+                message: ProxyMessage<Data, Op, ConsumerData>
+            ) = store.onProxyMessage(message.withId(id))
+
+            override fun close() = store.off(id)
         }
     }
 }

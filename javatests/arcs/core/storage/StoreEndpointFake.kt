@@ -14,7 +14,7 @@ import kotlinx.coroutines.sync.withLock
  */
 @Suppress("EXPERIMENTAL_API_USAGE")
 class StoreEndpointFake<Data : CrdtData, Op : CrdtOperation, T> :
-    StorageCommunicationEndpoint<Data, Op, T> {
+    StorageEndpoint<Data, Op, T> {
     private val log = TaggedLog { "StoreEndpointFake" }
     private var proxyMessages = emptyList<ProxyMessage<Data, Op, T>>()
     private val targetMutex = Mutex()

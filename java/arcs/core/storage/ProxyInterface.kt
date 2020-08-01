@@ -13,7 +13,7 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
-import arcs.core.storage.ProxyMessage.Type
+import arcs.core.crdt.CrdtOperationAtTime
 
 /** A message coming from the storage proxy into one of the [IStore] implementations. */
 sealed class ProxyMessage<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
@@ -92,7 +92,7 @@ fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> ProxyCallback(
 }
 
 /** Interface common to an [ActiveStore] and the PEC, used by the Storage Proxy. */
-interface StorageCommunicationEndpoint<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
+interface StorageEndpoint<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
     /**
      * Suspends until the endpoint has become idle (typically: when it is finished flushing data to
      * storage media.
@@ -108,16 +108,15 @@ interface StorageCommunicationEndpoint<Data : CrdtData, Op : CrdtOperation, Cons
     fun close()
 }
 
-/** Provider of a [StorageCommunicationEndpoint]. */
-interface StorageCommunicationEndpointProvider<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
+/** Provider of a [StorageCommunicationEndpoint]s. */
+interface StorageEndpointProvider {
     /**
-     * Implementers should return a [StorageCommunicationEndpoint] that signals information back to
-     * the agent using the provided [callback].
+     * Returns a communications channel to an [ActiveStore] that reflects the provided
+     * [StoreOptions]. This is not necessarily an [ActiveStore] implementation, though a basic
+     * implementation may provide a simple wrapper around an in-process instance of [ActiveStore].
      */
-    fun getStorageEndpoint(
+    fun <Data : CrdtData, Op : CrdtOperationAtTime, ConsumerData> getStorageEndpoint(
+        storeOptions: StoreOptions,
         callback: ProxyCallback<Data, Op, ConsumerData>
-    ): StorageCommunicationEndpoint<Data, Op, ConsumerData>
-
-    /** Return the [StorageKey] that the store behind this implementation is representing. */
-    val storageKey: StorageKey
+    ): StorageEndpoint<Data, Op, ConsumerData>
 }
