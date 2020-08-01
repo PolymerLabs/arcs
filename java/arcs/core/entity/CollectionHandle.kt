@@ -123,11 +123,8 @@ class CollectionHandle<T : Storable, R : Referencable>(
             /**
              * [referencableToStorable] deserialization is expensive.
              * Traverse and match in order is much cheaper than deserialize all then look up.
-             *
-             * Reverse traversal can further expedite some use-cases i.e.
-             * store-then-createReference-immediately from time complexity O(N) to O(1).
              */
-            storageProxy.getParticleViewUnsafe().reversed().firstOrNull {
+            storageProxy.getParticleViewUnsafe().firstOrNull {
                 when (val maybeEntity = storageAdapter.referencableToStorable(it)) {
                     is Entity -> !storageAdapter.isExpired(maybeEntity) && entityId == entityId
                     else -> false
