@@ -276,7 +276,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
             this.version.value = theVersion
             return
         }
-        
+
         updateStateAndAct(noDriverSideChanges, theVersion, messageFromDriver = true)
     }
 
