@@ -119,16 +119,22 @@ class CollectionHandle<T : Storable, R : Referencable>(
             "Entity must have an ID before it can be referenced."
         }
 
-        adaptValues(storageProxy.getParticleViewUnsafe()).let { data ->
-            data.firstOrNull()?.let {
-                require(it is Entity) {
-                    "Handle must contain Entity-typed elements in order to create references."
+        requireNotNull(
+            /**
+             * [referencableToStorable] deserialization is expensive.
+             * Traverse and match in order is much cheaper than deserialize all then look up.
+             *
+             * Reverse traversal can further expedite some use-cases i.e.
+             * store-then-createReference-immediately from time complexity O(N) to O(1).
+             */
+            storageProxy.getParticleViewUnsafe().reversed().firstOrNull {
+                when (val maybeEntity = storageAdapter.referencableToStorable(it)) {
+                    is Entity -> !storageAdapter.isExpired(maybeEntity) && entityId == entityId
+                    else -> false
                 }
             }
-            require(data.any { it is Entity && it.entityId == entityId }) {
-                "Entity is not stored in the Collection."
-            }
-        }
+        ) { "Entity is not stored in the Collection." }
+
         return createReferenceInternal(entity)
     }
     // endregion
