@@ -44,7 +44,7 @@ typealias ArcHostContextParticle_PlanHandle = AbstractArcHostContextParticle.Pla
  */
 class ArcHostContextParticle(
     private val hostId: String,
-    private val handleManager: EntityHandleManager,
+    private val handleManager: HandleManager,
     private val instantiateParticle: suspend (ParticleIdentifier, Plan.Particle?) -> Particle,
     private val instantiatedParticles: MutableMap<String, Particle> = mutableMapOf()
 ) : AbstractArcHostContextParticle() {
@@ -146,8 +146,8 @@ class ArcHostContextParticle(
             return@onHandlesReady ArcHostContext(
                 arcId,
                 particles.toMutableList(),
-                ArcState.fromString(arcStateEntity.arcState),
-                entityHandleManager = arcHostContext.entityHandleManager
+                handleManager = arcHostContext.handleManager,
+                initialArcState = ArcState.fromString(arcStateEntity.arcState)
             )
         } catch (e: Exception) {
             throw IllegalStateException("Unable to deserialize $arcId for $hostId", e)
