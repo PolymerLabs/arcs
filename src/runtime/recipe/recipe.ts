@@ -334,7 +334,9 @@ export class Recipe implements Cloneable<Recipe> {
     if (policyAnnotation == null) {
       return null;
     }
-    return policyAnnotation.params['name'] as string;
+    const policyName = policyAnnotation.params['name'];
+    assert(policyName, `You must provide a policy name in the @policy annotation.`);
+    return policyName as string;
   }
 
   set policy(policy: Policy) {
@@ -343,15 +345,10 @@ export class Recipe implements Cloneable<Recipe> {
     this._policy = policy;
   }
   get policy(): Policy | null {
-    const policyName = this.policyName;
-    const policy = this._policy;
-    if (policyName == null) {
-      assert(policy == null, `No policy expected, but found policy named '${policy.name}'.`);
-    } else {
-      assert(policy != null, `Expected policy with name '${policyName}' but policy was null.`);
-      assert(policy.name === policyName, `Expected policy with name '${policyName}' but policy was named '${policy.name}'.`);
+    if (this.policyName != null) {
+      assert(this._policy != null, `Expected policy with name '${this.policyName}' but policy was null.`);
     }
-    return policy;
+    return this._policy;
   }
 
   isEmpty(): boolean {

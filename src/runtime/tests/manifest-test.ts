@@ -4627,6 +4627,14 @@ recipe
     `), `No policy named 'ThisPolicyDoesNotExist' was found in the manifest.`);
   });
 
+  it('fails when the @policy annotation is missing its argument', async () => {
+    assertThrowsAsync(async () => await Manifest.parse(`
+      @policy
+      recipe
+        foo: create
+    `), `You must provide a policy name in the @policy annotation.`);
+  });
+
   describe('isolated and egress particles', () => {
     it('particles are egress by default', async () => {
       const manifest = await Manifest.parse(`
