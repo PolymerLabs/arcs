@@ -1,5 +1,5 @@
 -----[header]-----
-Kotlin Plan Generation - Particles
+Kotlin Plan Generation - Handles
 
 Expectations can be updated with:
 $ ./tools/sigh updateCodegenUnitTests
