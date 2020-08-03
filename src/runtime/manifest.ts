@@ -617,6 +617,10 @@ ${e.message}
         this._checkStarFields(node);
         switch (node.kind) {
           case 'schema-inline': {
+            // Flag used to determine if type variables should resolve to max type
+            if (node.fields.includes('*')) {
+              node.allFields = true;
+            }
             // Warn user if there are multiple '*'s.
             if (node.fields.reduce((acc, x) => acc + Number(x === '*'), 0) > 1) {
               const warning = new ManifestWarning(node.location, `Only one '*' is needed.`);
@@ -676,7 +680,9 @@ ${e.message}
           }
           case 'variable-type': {
             const constraint = node.constraint && node.constraint.model;
-            node.model = TypeVariable.make(node.name, constraint, null, node.resolveToMaxType || false);
+            // If true, type variable should resolve to max type (i.e. `~a with {*}` syntax support)
+            const toMaxType = node.constraint && node.constraint.kind === 'schema-inline' && !!node.constraint.allFields;
+            node.model = TypeVariable.make(node.name, constraint, null, toMaxType);
             return;
           }
           case 'slot-type': {

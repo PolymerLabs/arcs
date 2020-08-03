@@ -790,7 +790,6 @@ TypeVariable "a type variable (e.g. ~foo)"
       kind: 'variable-type',
       name,
       constraint: optional(constraint, constraint => constraint[3], null),
-      resolveToMaxType: optional(constraint && constraint[3], type => type && !!type.allFields, false),
     });
   }
 
@@ -1479,12 +1478,10 @@ RecipeSlot
 SchemaInline
   = names:((upperIdent / '*') whiteSpace?)* '{' multiLineSpace fields:(SchemaInlineField (',' multiLineSpace SchemaInlineField)*)? ','? multiLineSpace '}'
   {
-    const fieldsVal = optional(fields, fields => [fields[0], ...fields[1].map(tail => tail[2])], []);
     return toAstNode<AstNode.SchemaInline>({
       kind: 'schema-inline',
       names: optional(names, names => names.map(name => name[0]).filter(name => name !== '*'), ['*']),
-      fields: fieldsVal,
-      allFields: optional(fieldsVal, fields => fields.some(f => f === '*'), false),
+      fields: optional(fields, fields => [fields[0], ...fields[1].map(tail => tail[2])], [])
     });
   }
 
