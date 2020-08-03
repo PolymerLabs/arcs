@@ -617,16 +617,16 @@ ${e.message}
         this._checkStarFields(node);
         switch (node.kind) {
           case 'schema-inline': {
-            // Flag used to determine if type variables should resolve to max type
-            if (node.fields.includes('*')) {
-              node.allFields = true;
-              node.fields = node.fields.filter(f => f !== '*');
-            }
             // Warn user if there are multiple '*'s.
             if (node.fields.reduce((acc, x) => acc + Number(x === '*'), 0) > 1) {
               const warning = new ManifestWarning(node.location, `Only one '*' is needed.`);
               warning.key = 'multiStarFields';
               manifest.errors.push(warning);
+            }
+            // Flag used to determine if type variables should resolve to max type
+            if (node.fields.includes('*')) {
+              node.allFields = true;
+              node.fields = node.fields.filter(f => f !== '*');
             }
             const schemas: Schema[] = [];
             const aliases: Schema[] = [];
