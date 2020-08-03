@@ -4,8 +4,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
 import arcs.android.sdk.host.ArcHostHelper
 import arcs.android.sdk.host.ResurrectableHost
 import arcs.core.data.Capabilities
@@ -46,12 +44,6 @@ abstract class TestExternalArcHostService : Service() {
         scope.cancel()
     }
 
-    class FakeLifecycle : Lifecycle() {
-        override fun addObserver(p0: LifecycleObserver) = Unit
-        override fun removeObserver(p0: LifecycleObserver) = Unit
-        override fun getCurrentState(): State = State.CREATED
-    }
-
     @ExperimentalCoroutinesApi
     abstract class TestingAndroidHost(
         context: Context,
@@ -62,9 +54,8 @@ abstract class TestExternalArcHostService : Service() {
         override val stores = StoreManager(
             activationFactory = ServiceStoreFactory(
                 context,
-                FakeLifecycle(),
-                Dispatchers.Default,
-                testConnectionFactory
+                coroutineContext = Dispatchers.Default,
+                connectionFactory = testConnectionFactory
             )
         )
 

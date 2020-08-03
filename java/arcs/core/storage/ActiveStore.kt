@@ -43,6 +43,9 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     /** Handles a message from the storage proxy. */
     abstract suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean
 
+    /** Performs any operations that are needed to release resources held by this [ActiveStore]. */
+    open fun close() = Unit
+
     /**
      * Return a storage endpoint that will receive messages from the store via the
      * provided callback
