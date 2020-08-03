@@ -23,7 +23,25 @@ function extractAllByRE(regexp: RegExp, result: string): string[][] {
   return results;
 }
 
+function into2LayerDict(dict: Dictionary<Dictionary<string>>, result: string[]) {
+  if (dict[result[1]] == undefined) {
+    dict[result[1]] = {};
+  }
+  dict[result[1]][result[2]] = result[3];
+}
+
+function extractResultTo2LayerDict(regexp: RegExp, result: string, dict: Dictionary<Dictionary<string>>)  {
+  extractAllByRE(RegExp(regexp, 'mg'), result).forEach(r => into2LayerDict(dict, r));
+}
+
+function extractTo2LayerDict(regexp: RegExp, results: string[]): Dictionary<Dictionary<string>> {
+  const dict = {};
+  results.forEach(result => extractResultTo2LayerDict(regexp, result, dict));
+  return dict;
+}
+
 const handleStorageKeyRE = /([^_ ]+)_([^ ]+) = Handle\(\n *StorageKeyParser.parse\("([^"]*")\)/;
+const handleForParticleRE = /"([^\n"]+)".*\n.*\n.*\n *"([^"]+)" to HandleConnection\(\n *([^,]+),/;
 
 /**
  * Runs all the CodegenUnitTests.
@@ -39,16 +57,8 @@ for (const unit of schema2KotlinTestSuite.concat(recipe2PlanTestSuite)) {
         if (test.require) {
           // "results" is exposed for the eval'ed require expression.
           const results = test.results;
-
-          const storageKeys: Dictionary<Dictionary<string>> = {};
-          results.forEach(result => {
-            extractAllByRE(RegExp(handleStorageKeyRE, 'mg'), result).forEach(result => {
-                if (storageKeys[result[1]] == undefined) {
-                  storageKeys[result[1]] = {};
-                }
-                storageKeys[result[1]][result[2]] = result[3];
-            });
-          });
+          const storageKeys = extractTo2LayerDict(handleStorageKeyRE, results);
+          const handleForParticle = extractTo2LayerDict(handleForParticleRE, results);
 
           test.require.split('\n').forEach(requireCase => assert.isTrue(eval(requireCase), requireCase));
         }

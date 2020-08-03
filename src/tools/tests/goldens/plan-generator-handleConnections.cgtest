@@ -1,0 +1,137 @@
+-----[header]-----
+Kotlin Plan Generation - Handle Connections
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+-----[end_header]-----
+
+-----[name]-----
+reuses schemas generated for particles in handle connection types
+-----[input]-----
+particle A
+  data: writes [Person Friend {a: Text, b: Text, c: Text}]
+
+recipe R
+  h: create
+  A
+    data: h
+-----[results]-----
+HandleConnection(
+    R_Handle0,
+    HandleMode.Write,
+    arcs.core.data.CollectionType(arcs.core.data.EntityType(A_Data.SCHEMA)),
+    emptyList()
+)
+-----[end]-----
+
+-----[name]-----
+generates schemas for resolved type variable collections
+-----[input]-----
+particle A
+  data: writes [Person Friend {a: Text, b: Text, c: Text}]
+particle B
+  data: writes [Employer Person {a: Text, b: Text, d: Text}]
+particle C
+  data: reads [~a]
+
+recipe R
+  h: create
+  A
+    data: h
+  B
+    data: h
+  C
+    data: h
+-----[results]-----
+HandleConnection(
+    R_Handle0,
+    HandleMode.Write,
+    arcs.core.data.CollectionType(arcs.core.data.EntityType(A_Data.SCHEMA)),
+    emptyList()
+)
+-----[next]-----
+HandleConnection(
+    R_Handle0,
+    HandleMode.Write,
+    arcs.core.data.CollectionType(arcs.core.data.EntityType(B_Data.SCHEMA)),
+    emptyList()
+)
+-----[next]-----
+HandleConnection(
+    R_Handle0,
+    HandleMode.Read,
+    arcs.core.data.CollectionType(
+        arcs.core.data.EntityType(
+            arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Person")),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf(
+                        "a" to arcs.core.data.FieldType.Text,
+                        "b" to arcs.core.data.FieldType.Text
+                    ),
+                    collections = emptyMap()
+                ),
+                "f33d42dee457673f13e166b4644b0eb42f37a156",
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
+            )
+        )
+    ),
+    emptyList()
+)
+-----[end]-----
+
+-----[name]-----
+generates schemas for resolved type variable singletons
+-----[input]-----
+particle A
+  data: writes Person Friend {a: Text, b: Text, c: Text}
+particle B
+  data: writes Employer Person {a: Text, b: Text, d: Text}
+particle C
+  data: reads ~a
+
+recipe R
+  h: create
+  A
+    data: h
+  B
+    data: h
+  C
+    data: h
+-----[results]-----
+HandleConnection(
+    R_Handle0,
+    HandleMode.Write,
+    arcs.core.data.SingletonType(arcs.core.data.EntityType(A_Data.SCHEMA)),
+    emptyList()
+)
+-----[next]-----
+HandleConnection(
+    R_Handle0,
+    HandleMode.Write,
+    arcs.core.data.SingletonType(arcs.core.data.EntityType(B_Data.SCHEMA)),
+    emptyList()
+)
+-----[next]-----
+HandleConnection(
+    R_Handle0,
+    HandleMode.Read,
+    arcs.core.data.EntityType(
+        arcs.core.data.Schema(
+            setOf(arcs.core.data.SchemaName("Person")),
+            arcs.core.data.SchemaFields(
+                singletons = mapOf(
+                    "a" to arcs.core.data.FieldType.Text,
+                    "b" to arcs.core.data.FieldType.Text
+                ),
+                collections = emptyMap()
+            ),
+            "f33d42dee457673f13e166b4644b0eb42f37a156",
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
+        )
+    ),
+    emptyList()
+)
+-----[end]-----

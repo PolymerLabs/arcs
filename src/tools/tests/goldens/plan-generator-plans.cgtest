@@ -1,0 +1,336 @@
+-----[header]-----
+Kotlin Plan Generation - Plans
+
+Expectations can be updated with:
+$ ./tools/sigh updateCodegenUnitTests
+-----[end_header]-----
+
+-----[name]-----
+uses the same storage key for created and mapped handles
+-----[input]-----
+particle A
+  data: writes Thing {num: Number}
+particle B
+  data: reads Thing {num: Number}
+
+@arcId('ingestion')
+recipe Ingest
+  h: create 'data' @persistent
+  A
+    data: writes h
+
+recipe Retrieve
+  h: map 'data'
+  B
+    data: reads h
+-----[results]-----
+/* ktlint-disable */
+@file:Suppress("PackageName", "TopLevelName")
+
+package test.namespace
+
+//
+// GENERATED CODE -- DO NOT EDIT
+//
+
+import arcs.core.data.*
+import arcs.core.data.expression.*
+import arcs.core.data.expression.Expression.*
+import arcs.core.data.expression.Expression.BinaryOp.*
+import arcs.core.data.Plan.*
+import arcs.core.storage.StorageKeyParser
+import arcs.core.entity.toPrimitiveValue
+
+val Ingest_Handle0 = Handle(
+    StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data"),
+    arcs.core.data.EntityType(
+        arcs.core.data.Schema(
+            setOf(arcs.core.data.SchemaName("Thing")),
+            arcs.core.data.SchemaFields(
+                singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                collections = emptyMap()
+            ),
+            "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
+        )
+    ),
+    listOf(Annotation("persistent", emptyMap()))
+)
+val IngestPlan = Plan(
+    listOf(
+        Particle(
+            "A",
+            "",
+            mapOf(
+                "data" to HandleConnection(
+                    Ingest_Handle0,
+                    HandleMode.Write,
+                    arcs.core.data.SingletonType(arcs.core.data.EntityType(A_Data.SCHEMA)),
+                    listOf(Annotation("persistent", emptyMap()))
+                )
+            )
+        )
+    ),
+    listOf(Ingest_Handle0),
+    listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str("ingestion"))))
+)
+val Retrieve_Handle0 = Handle(
+    StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data"),
+    arcs.core.data.EntityType(
+        arcs.core.data.Schema(
+            setOf(arcs.core.data.SchemaName("Thing")),
+            arcs.core.data.SchemaFields(
+                singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                collections = emptyMap()
+            ),
+            "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
+        )
+    ),
+    emptyList()
+)
+val RetrievePlan = Plan(
+    listOf(
+        Particle(
+            "B",
+            "",
+            mapOf(
+                "data" to HandleConnection(
+                    Retrieve_Handle0,
+                    HandleMode.Read,
+                    arcs.core.data.SingletonType(arcs.core.data.EntityType(B_Data.SCHEMA)),
+                    emptyList()
+                )
+            )
+        )
+    ),
+    listOf(Retrieve_Handle0),
+    emptyList()
+)
+
+-----[require]-----
+storageKeys.Ingest.Handle0 == storageKeys.Retrieve.Handle0
+-----[end]-----
+
+-----[name]-----
+generated handle connections pertaining to the same handle use the same storage key
+-----[input]-----
+particle A
+  data: writes Thing {num: Number}
+particle B
+  data: reads Thing {num: Number}
+
+recipe R
+  h: create
+  A
+    data: writes h
+  B
+    data: reads h
+-----[results]-----
+/* ktlint-disable */
+@file:Suppress("PackageName", "TopLevelName")
+
+package test.namespace
+
+//
+// GENERATED CODE -- DO NOT EDIT
+//
+
+import arcs.core.data.*
+import arcs.core.data.expression.*
+import arcs.core.data.expression.Expression.*
+import arcs.core.data.expression.Expression.BinaryOp.*
+import arcs.core.data.Plan.*
+import arcs.core.storage.StorageKeyParser
+import arcs.core.entity.toPrimitiveValue
+
+val R_Handle0 = Handle(
+    StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
+    arcs.core.data.EntityType(
+        arcs.core.data.Schema(
+            setOf(arcs.core.data.SchemaName("Thing")),
+            arcs.core.data.SchemaFields(
+                singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                collections = emptyMap()
+            ),
+            "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
+        )
+    ),
+    emptyList()
+)
+val RPlan = Plan(
+    listOf(
+        Particle(
+            "A",
+            "",
+            mapOf(
+                "data" to HandleConnection(
+                    R_Handle0,
+                    HandleMode.Write,
+                    arcs.core.data.SingletonType(arcs.core.data.EntityType(A_Data.SCHEMA)),
+                    emptyList()
+                )
+            )
+        ),
+        Particle(
+            "B",
+            "",
+            mapOf(
+                "data" to HandleConnection(
+                    R_Handle0,
+                    HandleMode.Read,
+                    arcs.core.data.SingletonType(arcs.core.data.EntityType(B_Data.SCHEMA)),
+                    emptyList()
+                )
+            )
+        )
+    ),
+    listOf(R_Handle0),
+    emptyList()
+)
+
+-----[require]-----
+handleForParticle.A.data == handleForParticle.B.data
+-----[end]-----
+
+-----[name]-----
+creates particles in the same order as the recipe and not the manifest
+-----[input]-----
+particle D in 'particle.D'
+  data: reads Thing {num: Number}
+particle C in 'particle.C'
+  data: writes Thing {num: Number}
+particle B in 'particle.B'
+  data: reads Thing {num: Number}
+particle A in 'particle.A'
+  data: writes Thing {num: Number}
+
+recipe R
+  h1: create 'id-1' @persistent
+  h2: create 'id-2' @persistent
+  A
+    data: writes h2
+  B
+    data: reads h2
+  C
+    data: writes h1
+  D
+    data: reads h1
+-----[results]-----
+/* ktlint-disable */
+@file:Suppress("PackageName", "TopLevelName")
+
+package test.namespace
+
+//
+// GENERATED CODE -- DO NOT EDIT
+//
+
+import arcs.core.data.*
+import arcs.core.data.expression.*
+import arcs.core.data.expression.Expression.*
+import arcs.core.data.expression.Expression.BinaryOp.*
+import arcs.core.data.Plan.*
+import arcs.core.storage.StorageKeyParser
+import arcs.core.entity.toPrimitiveValue
+
+val R_Handle0 = Handle(
+    StorageKeyParser.parse("create://id-2"),
+    arcs.core.data.EntityType(
+        arcs.core.data.Schema(
+            setOf(arcs.core.data.SchemaName("Thing")),
+            arcs.core.data.SchemaFields(
+                singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                collections = emptyMap()
+            ),
+            "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
+        )
+    ),
+    listOf(Annotation("persistent", emptyMap()))
+)
+val R_Handle1 = Handle(
+    StorageKeyParser.parse("create://id-1"),
+    arcs.core.data.EntityType(
+        arcs.core.data.Schema(
+            setOf(arcs.core.data.SchemaName("Thing")),
+            arcs.core.data.SchemaFields(
+                singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                collections = emptyMap()
+            ),
+            "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+            refinementExpression = true.asExpr(),
+            queryExpression = true.asExpr()
+        )
+    ),
+    listOf(Annotation("persistent", emptyMap()))
+)
+val RPlan = Plan(
+    listOf(
+        Particle(
+            "A",
+            "particle.A",
+            mapOf(
+                "data" to HandleConnection(
+                    R_Handle0,
+                    HandleMode.Write,
+                    arcs.core.data.SingletonType(arcs.core.data.EntityType(A_Data.SCHEMA)),
+                    listOf(Annotation("persistent", emptyMap()))
+                )
+            )
+        ),
+        Particle(
+            "B",
+            "particle.B",
+            mapOf(
+                "data" to HandleConnection(
+                    R_Handle0,
+                    HandleMode.Read,
+                    arcs.core.data.SingletonType(arcs.core.data.EntityType(B_Data.SCHEMA)),
+                    listOf(Annotation("persistent", emptyMap()))
+                )
+            )
+        ),
+        Particle(
+            "C",
+            "particle.C",
+            mapOf(
+                "data" to HandleConnection(
+                    R_Handle1,
+                    HandleMode.Write,
+                    arcs.core.data.SingletonType(arcs.core.data.EntityType(C_Data.SCHEMA)),
+                    listOf(Annotation("persistent", emptyMap()))
+                )
+            )
+        ),
+        Particle(
+            "D",
+            "particle.D",
+            mapOf(
+                "data" to HandleConnection(
+                    R_Handle1,
+                    HandleMode.Read,
+                    arcs.core.data.SingletonType(arcs.core.data.EntityType(D_Data.SCHEMA)),
+                    listOf(Annotation("persistent", emptyMap()))
+                )
+            )
+        )
+    ),
+    listOf(R_Handle0, R_Handle1),
+    emptyList()
+)
+
+-----[require]-----
+results[0].includes('particle.A')
+results[0].includes('particle.B')
+results[0].includes('particle.C')
+results[0].includes('particle.D')
+results[0].indexOf('particle.A') < results[0].indexOf('particle.B')
+results[0].indexOf('particle.B') < results[0].indexOf('particle.C')
+results[0].indexOf('particle.C') < results[0].indexOf('particle.D')
+-----[end]-----
