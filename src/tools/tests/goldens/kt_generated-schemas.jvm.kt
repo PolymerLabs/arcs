@@ -693,8 +693,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                         "colors" to arcs.core.data.FieldType.InlineEntity("e9ba6d9fa458ec35a966e462bb30a082e3f0d2f8")
                     )
                 ),
-                "1b1cb0b0d53a8af5158ea9b532e73ab2f9b31add",
-                refinementExpression =         ((CurrentScope<Number>(mutableMapOf())["num"] lt 1000.asExpr()) and (((CurrentScope<Number>(mutableMapOf())["big"] gt NumberLiteralExpression(BigInteger("1"))) and (NumberLiteralExpression(BigInteger("30")) lt ((CurrentScope<Number>(mutableMapOf())["integer"] * NumberLiteralExpression(BigInteger("5"))) + (CurrentScope<Number>(mutableMapOf())["integer"] * NumberLiteralExpression(BigInteger("10")))))) and ((NumberLiteralExpression(BigInteger("1000000")) gt (CurrentScope<Number>(mutableMapOf())["long_val"] * NumberLiteralExpression(BigInteger("10")))) and ((NumberLiteralExpression(BigInteger("100000")) eq (CurrentScope<Number>(mutableMapOf())["long_val"] * NumberLiteralExpression(BigInteger("10")))) or (NumberLiteralExpression(BigInteger("100000")) lt (CurrentScope<Number>(mutableMapOf())["long_val"] * NumberLiteralExpression(BigInteger("10")))))))),
+                "a76c4b72c140b1129547242869c41803720c5de9",
+                refinementExpression =         ((CurrentScope<Number>(mutableMapOf())["instant"] lt Instant.ofEpochMilli(System.currentTimeMillis().toEpochMilli() - NumberLiteralExpression(BigInteger("259200000")).toEpochMilli())) and ((CurrentScope<Number>(mutableMapOf())["num"] lt 1000.asExpr()) and (((CurrentScope<Number>(mutableMapOf())["long_val"] lt NumberLiteralExpression(BigInteger("100000"))) and ((CurrentScope<Number>(mutableMapOf())["long_val"] gt NumberLiteralExpression(BigInteger("10000"))) or (CurrentScope<Number>(mutableMapOf())["long_val"] eq NumberLiteralExpression(BigInteger("10000"))))) and ((CurrentScope<Number>(mutableMapOf())["integer"] gt NumberLiteralExpression(BigInteger("2"))) and (CurrentScope<Number>(mutableMapOf())["big"] gt NumberLiteralExpression(BigInteger("1"))))))),
                 queryExpression = true.asExpr()
             )
 
