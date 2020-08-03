@@ -391,11 +391,7 @@ class DatabaseImpl(
                 } else {
                     BigInteger(it.getString(4)).toReferencable()
                 }
-                PrimitiveType.Instant.id -> if (it.isNull(4)) {
-                    null
-                } else {
-                    Instant.parse(it.getString(4)).toReferencable()
-                }
+                PrimitiveType.Instant.id -> it.getNullableInstant(4)?.toReferencable()
                 else -> if (
                     isCollection == FieldClass.InlineEntity ||
                     isCollection == FieldClass.InlineEntityCollection ||
@@ -1731,14 +1727,20 @@ class DatabaseImpl(
                     TABLE_TEXT_PRIMITIVES to value
                 }
                 PrimitiveType.BigInt.id -> {
+                    // TODO(https://github.com/PolymerLabs/arcs/issues/5867): To avoid
+                    // lexicographic ordering, Instant and BigInt should be compared as numeric
+                    // values rather than strings.
                     require(value is BigInteger) { "Expected value to be a BigInteger" }
                     counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
                     TABLE_TEXT_PRIMITIVES to value.toString()
                 }
                 PrimitiveType.Instant.id -> {
+                    // TODO(https://github.com/PolymerLabs/arcs/issues/5867): To avoid
+                    // lexicographic ordering, Instant and BigInt should be compared as numeric
+                    // values rather than strings.
                     require(value is Instant) { "Expected value to be a Instant, got $value" }
                     counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
-                    TABLE_TEXT_PRIMITIVES to value.toString() // TODO: XXXXXXXXXX
+                    TABLE_TEXT_PRIMITIVES to value.toEpochMilli().toString()
                 }
                 PrimitiveType.Number.id -> {
                     require(value is Double) { "Expected value to be a Double." }

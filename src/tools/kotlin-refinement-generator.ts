@@ -59,7 +59,7 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
       case 'creationTime': return `CurrentScope<Long>(mapOf())["creationTime()"]`;
       case 'expirationTime': return `CurrentScope<Long>(mapOf())["expirationTime()"]`;
       default: throw new Error(
-        `Unhandled BuiltInNode '${expr.value}' in toKTExpression`
+        `Unhandled BuiltInNode '${expr.value}' in KotlinRefinementGenerator`
       );
     }
   }
