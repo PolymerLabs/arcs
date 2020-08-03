@@ -47,10 +47,6 @@ const kotlinOperator: Dictionary<string> = {
 class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
 
   visitBinaryExpression(expr: BinaryExpression): string {
-    if (expr.evalType === 'Instant') {
-      // Instant does not use infix operators in Kotlin, look up the appropriate member function.
-      return `Instant.ofEpochMilli(${this.visit(expr.leftExpr)}.toEpochMilli() ${kotlinOperator[expr.operator.op]} ${this.visit(expr.rightExpr)}.toEpochMilli())`;
-    }
     return `(${this.visit(expr.leftExpr)} ${kotlinOperator[expr.operator.op]} ${this.visit(expr.rightExpr)})`;
   }
   visitUnaryExpression(expr: UnaryExpression): string {

@@ -108,7 +108,7 @@ export class Refinement {
   // checks if a is at least as specific as b
   static isAtLeastAsSpecificAs(a: Refinement, b: Refinement): AtLeastAsSpecific {
     // Ensure there is a refinement to check with.
-    if (b == null) {
+    if (b === null) {
       // All refinements are more specific than this.
       return AtLeastAsSpecific.YES;
     }
@@ -279,8 +279,8 @@ abstract class RefinementExpression {
         case 'Int': return ['Long', 'Instant', 'BigInt'];
         case 'Float': return ['Double'];
         case '~query_arg_type': return primitiveTypes;
+        default: return [];
       }
-      return [];
     };
     const operandStr = operands.map(x => x.toString()).join(' and ');
     const operandTys = operands.map(op => op.evalType).join(' and ');
@@ -310,7 +310,7 @@ abstract class RefinementExpression {
       let argType: Primitive = '~query_arg_type';
       // Discover the shared argument type.
       for (const operand of operands) {
-        if (operand.evalType == argType) {
+        if (operand.evalType === argType) {
           continue;
         }
         if (opInfo.argType === 'same' || opInfo.argType.includes(operand.evalType)) {
@@ -674,7 +674,7 @@ export class FieldNamePrimitive extends RefinementExpression {
   }
 
   evaluate(data: Storable): ExpressionPrimitives {
-    if (data[this.value] != undefined) {
+    if (data[this.value] !== undefined) {
       return data[this.value];
     }
     throw new Error(`Unresolved field name '${this.value}' in the refinement expression.`);
@@ -718,7 +718,7 @@ export class QueryArgumentPrimitive extends RefinementExpression {
   }
 
   evaluate(data: Storable): ExpressionPrimitives {
-    if (data[this.value] != undefined) {
+    if (data[this.value] !== undefined) {
       return data[this.value];
     }
     // This is an 'explicit' unknown value which should not restrict data.
