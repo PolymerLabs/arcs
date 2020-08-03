@@ -100,7 +100,7 @@ export class Refinement {
   // checks if a is at least as specific as b
   static isAtLeastAsSpecificAs(a: Refinement, b: Refinement): AtLeastAsSpecific {
     // Ensure there is a refinement to check with.
-    if (b === null) {
+    if (b === null || b === undefined) {
       // All refinements are more specific than this.
       return AtLeastAsSpecific.YES;
     }
