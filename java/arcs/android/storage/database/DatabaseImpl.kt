@@ -26,6 +26,7 @@ import arcs.android.common.getNullableBoolean
 import arcs.android.common.getNullableByte
 import arcs.android.common.getNullableDouble
 import arcs.android.common.getNullableFloat
+import arcs.android.common.getNullableInstant
 import arcs.android.common.getNullableInt
 import arcs.android.common.getNullableLong
 import arcs.android.common.getNullableShort
