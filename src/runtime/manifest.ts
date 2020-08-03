@@ -588,8 +588,8 @@ ${e.message}
       await processItems('interface', item => Manifest._processInterface(manifest, item));
       await processItems('particle', item => Manifest._processParticle(manifest, item, loader));
       await processItems('store', item => Manifest._processStore(manifest, item, loader, memoryProvider));
-      await processItems('recipe', item => Manifest._processRecipe(manifest, item));
       await processItems('policy', item => Manifest._processPolicy(manifest, item));
+      await processItems('recipe', item => Manifest._processRecipe(manifest, item));
     } catch (e) {
       dumpErrors(manifest);
       throw processError(e, false);
@@ -1324,6 +1324,15 @@ ${e.message}
         const requireSection = recipe.newRequireSection();
         Manifest._buildRecipe(manifest, requireSection, item.items);
       }
+    }
+
+    const policyName = recipe.policyName;
+    if (policyName != null) {
+      const policy = manifest.policies.find(p => p.name === policyName);
+      if (policy == null) {
+        throw new Error(`No policy named '${policyName}' was found in the manifest.`);
+      }
+      recipe.policy = policy;
     }
   }
 
