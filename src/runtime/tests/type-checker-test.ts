@@ -526,6 +526,35 @@ describe('TypeChecker', () => {
     assert.isNull(result);
   });
 
+  it('resolves a list of less restrictive inline entities written against a list of more restrictive inline entities read', () => {
+    const innerWriteSchema = new EntityType(new Schema(['Inner'], {a: 'Text', b: 'Number'}));
+    const outerWriteSchema = new Schema(['Outer'], {inner: {kind: 'schema-ordered-list', schema: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerWriteSchema}}}});
+    const writeType = new EntityType(outerWriteSchema);
+
+    const innerReadSchema = new EntityType(new Schema(['Inner'], {a: 'Text'}));
+    const outerReadSchema = new Schema(['Outer'], {inner: {kind: 'schema-ordered-list', schema: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerReadSchema}}}});
+    const readType = new EntityType(outerReadSchema);
+
+    const result = TypeChecker.processTypeList(null, [{type: writeType, direction: 'writes'}, {type: readType, direction: 'reads'}]);
+    assert(result.canEnsureResolved());
+    result.maybeEnsureResolved();
+    assert(result.isResolved());
+    assert.deepEqual(result.getEntitySchema().fields['inner'], outerReadSchema.fields['inner']);
+  });
+
+  it('does not resolve a list of more restrictive inline entities written against a list of less restrictive inline entities read', () => {
+    const innerWriteSchema = new EntityType(new Schema(['Inner'], {a: 'Text'}));
+    const outerWriteSchema = new Schema(['Outer'], {inner: {kind: 'schema-ordered-list', schema: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerWriteSchema}}}});
+    const writeType = new EntityType(outerWriteSchema);
+
+    const innerReadSchema = new EntityType(new Schema(['Inner'], {a: 'Text', b: 'Number'}));
+    const outerReadSchema = new Schema(['Outer'], {inner: {kind: 'schema-ordered-list', schema: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerReadSchema}}}});
+    const readType = new EntityType(outerReadSchema);
+
+    const result = TypeChecker.processTypeList(null, [{type: writeType, direction: 'writes'}, {type: readType, direction: 'reads'}]);
+    assert.isNull(result);
+  });
+
   describe('Tuples', () => {
     it('does not resolve tuple reads of different arities', () => {
       assert.isNull(TypeChecker.processTypeList(null, [
