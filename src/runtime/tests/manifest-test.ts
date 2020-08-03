@@ -3670,7 +3670,7 @@ resource SomeName
       `));
     });
 
-    it('warns about using multiple `*` in a single variable constraint', async() => {
+    it('warns about using multiple `*` in a single variable constraint', async () => {
       const manifest = await parseManifest(`
           particle Foo
             data: reads ~a with {*, *}
