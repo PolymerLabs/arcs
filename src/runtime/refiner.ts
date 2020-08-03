@@ -300,32 +300,28 @@ abstract class RefinementExpression {
     if (operands.length !== opInfo.nArgs) {
       throw new Error(`Expected ${opInfo.nArgs} operands. Got ${operands.length}.`);
     }
+    const unary = operands.length === 1;
+    const pluralise = unary ? '' : 's';
+    const repr = unary ? `${op.op} ${operands[0]}` : `${operands[0]} ${op.op} ${operands[1]}`;
     const getArgType = () => {
       let argType: Primitive = '~query_arg_type';
       // Discover the shared argument type.
       for (const operand of operands) {
-        if (opInfo.argType === 'same') {
-          if (operand.evalType === argType) {
-            continue;
-          }
-          if (getWiderTypes(operand.evalType).includes(argType)) {
-            // The current argType already assumes that the operand can be safely up-cast.
-            continue;
-          }
-          if (getWiderTypes(argType).includes(operand.evalType)) {
-            // Can safely up-cast the left.
-            argType = operand.evalType;
-            continue;
-          }
-        } else if (opInfo.argType.includes(operand.evalType)) {
-          // A possible, valid type.
+        if (operand.evalType == argType) {
+          continue;
+        }
+        if (getWiderTypes(operand.evalType).includes(argType)) {
+          // The current argType already assumes that the operand can be safely up-cast.
+          continue;
+        }
+        if (getWiderTypes(argType).includes(operand.evalType)) {
+          // Can safely up-cast the left.
           argType = operand.evalType;
           continue;
         }
         // This type is not valid, no matter the other arguments.
-        const pluralise = operands.length == 1 ? '' : 's';
         throw new Error(
-          `Refinement expression${pluralise} ${operandStr} have type${pluralise} ${operandTys} in ${this}. Expected ${expected()}`
+          `Operands of refinement expression ${repr} have type${pluralise} ${operandTys}. Expected ${expected()}`
         );
       }
       return argType;
@@ -334,25 +330,17 @@ abstract class RefinementExpression {
       throw new Error(`Expected ${opInfo.nArgs} operands. Got ${operands.length}.`);
     }
     const argType = getArgType();
+    for (const operand of operands) {
+      if (opInfo.argType !== 'same' && !opInfo.argType.includes(operand.evalType)) {
+        throw new Error(
+          `Operand of refinement expression ${repr} has type ${operand.evalType}. Expected ${expected()}`
+        );
+      }
+    }
     // Set the query argument type.
     for (const operand of operands) {
       if (operand instanceof QueryArgumentPrimitive && operand.evalType === '~query_arg_type') {
         operand.evalType = argType;
-      }
-    }
-    // Check that all args match the expected type.
-    for (const operand of operands) {
-      // Check that the argument types are valid.
-      if (opInfo.argType === 'same') {
-        if (operand.evalType !== argType) {
-          throw new Error(
-            `Expected refinement expressions ${operandStr} to have the same types. Found types ${operandTys}.`
-          );
-        }
-      } else if (operand.evalType !== argType) {
-        throw new Error(
-          `Expected refinement expressions ${operandStr} to have the same types. Found types ${operandTys}.`
-        );
       }
     }
     // Passed type checking.
@@ -1717,17 +1705,17 @@ const operatorTable: Dictionary<OperatorInfo> = {
   [Op.OR]: {nArgs: 2, argType: ['Boolean'], evalType: 'Boolean'},
 
   // Numerics
-  [Op.ADD]: {nArgs: 2, argType: 'same',  evalType: 'same'},
-  [Op.SUB]: {nArgs: 2, argType: 'same',  evalType: 'same'},
-  [Op.MUL]: {nArgs: 2, argType: 'same',  evalType: 'same'},
-  [Op.DIV]: {nArgs: 2, argType: 'same',  evalType: 'same'},
-  [Op.NEG]: {nArgs: 1, argType: 'same',  evalType: 'same'},
+  [Op.ADD]: {nArgs: 2, argType: numericTypes,  evalType: 'same'},
+  [Op.SUB]: {nArgs: 2, argType: numericTypes,  evalType: 'same'},
+  [Op.MUL]: {nArgs: 2, argType: numericTypes,  evalType: 'same'},
+  [Op.DIV]: {nArgs: 2, argType: numericTypes,  evalType: 'same'},
+  [Op.NEG]: {nArgs: 1, argType: numericTypes,  evalType: 'same'},
 
   // Numeric Comparisons
-  [Op.LT]: {nArgs: 2, argType: 'same',  evalType: 'Boolean'},
-  [Op.GT]: {nArgs: 2, argType: 'same',  evalType: 'Boolean'},
-  [Op.LTE]: {nArgs: 2, argType: 'same',  evalType: 'Boolean'},
-  [Op.GTE]: {nArgs: 2, argType: 'same',  evalType: 'Boolean'},
+  [Op.LT]: {nArgs: 2, argType: numericTypes,  evalType: 'Boolean'},
+  [Op.GT]: {nArgs: 2, argType: numericTypes,  evalType: 'Boolean'},
+  [Op.LTE]: {nArgs: 2, argType: numericTypes,  evalType: 'Boolean'},
+  [Op.GTE]: {nArgs: 2, argType: numericTypes,  evalType: 'Boolean'},
 
   // Comparisons
   [Op.EQ]: {nArgs: 2, argType: 'same', evalType: 'Boolean'},

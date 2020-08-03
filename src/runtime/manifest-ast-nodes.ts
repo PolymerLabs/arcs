@@ -762,6 +762,7 @@ export const primitiveTypes: Primitive[] = [
   'Float',
   'Double',
   'Text',
+  'Boolean',
   '~query_arg_type',
   ...discreteTypes
 ];
