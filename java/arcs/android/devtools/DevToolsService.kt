@@ -13,9 +13,6 @@ package arcs.android.devtools
 
 import android.app.Service
 import android.content.Intent
-import android.content.pm.PackageInfo
-import android.content.pm.PackageManager
-import android.content.pm.ServiceInfo
 import android.os.IBinder
 import arcs.android.devtools.storage.DevToolsConnectionFactory
 import arcs.android.storage.service.IDevToolsStorageManager
@@ -41,6 +38,7 @@ class DevToolsService : Service() {
 
     private var storageService: IDevToolsStorageManager? = null
     private var serviceConnection: StorageServiceConnection? = null
+    private var storageClass: Class<StorageService> = StorageService::class.java
 
     override fun onCreate() {
         binder = DevToolsBinder(scope, devToolsServer)
@@ -53,13 +51,19 @@ class DevToolsService : Service() {
                 cont.resume(Unit) {}
             }
         }
-        scope.launch { initialize() }
     }
 
     override fun onBind(intent: Intent): IBinder? {
-        binder.send(storageService?.getStorageKeys() ?: "")
-        devToolsServer.addOnOpenWebsocketCallback {
-            devToolsServer.send(storageService?.getStorageKeys() ?: "")
+        scope.launch {
+            val extras = intent.extras
+            if (extras != null) {
+                storageClass = extras.getSerializable("STORAGE_CLASS") as Class<StorageService>
+            }
+            initialize()
+            binder.send(storageService?.getStorageKeys() ?: "")
+            devToolsServer.addOnOpenWebsocketCallback {
+                devToolsServer.send(storageService?.getStorageKeys() ?: "")
+            }
         }
         return binder
     }
@@ -70,7 +74,7 @@ class DevToolsService : Service() {
         scope.cancel()
     }
 
-    suspend fun initialize() {
+    private suspend fun initialize() {
         check(
             serviceConnection == null ||
             storageService == null ||
@@ -80,28 +84,12 @@ class DevToolsService : Service() {
         }
         val connectionFactory = DevToolsConnectionFactory(
             this@DevToolsService,
-            getStorageClass()
+            storageClass
         )
         this.serviceConnection = connectionFactory()
         // Need to initiate the connection on the main thread.
         this.storageService = IDevToolsStorageManager.Stub.asInterface(
             serviceConnection?.connectAsync()?.await()
         )
-    }
-
-    private fun getStorageClass(): Class<StorageService> {
-        val storageClass: Class<StorageService> = StorageService::class.java
-        val packageManager: PackageManager = packageManager
-        val installedPackages: List<PackageInfo> = packageManager
-            .getInstalledPackages(PackageManager.GET_SERVICES)
-        for (packageInfo in installedPackages) {
-            val services: Array<ServiceInfo>? = packageInfo.services
-            services?.forEach { service ->
-                if (service.javaClass.superclass == storageClass) {
-                    service.javaClass
-                }
-            }
-        }
-        return storageClass
     }
 }

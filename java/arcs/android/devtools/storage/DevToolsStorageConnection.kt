@@ -31,7 +31,8 @@ fun DevToolsConnectionFactory(
     coroutineContext: CoroutineContext = Dispatchers.Default
 ): DevToolsConnectionFactory = { StorageServiceConnection(bindingDelegate, null, coroutineContext) }
 
-/** Implementation of the [StorageServiceBindingDelegate] that creates a [IDevToolsStorageManager]
+/**
+ * Implementation of the [StorageServiceBindingDelegate] that creates a [IDevToolsStorageManager]
  * binding to the [StorageService].
  */
 class DevToolsStorageManagerBindingDelegate(
@@ -46,11 +47,7 @@ class DevToolsStorageManagerBindingDelegate(
         val intent = Intent(context, storageClass).apply {
             action = StorageService.DEVTOOLS_ACTION
         }
-        return context.bindService(
-            intent,
-            conn,
-            flags
-        )
+        return context.bindService(intent, conn, flags)
     }
 
     override fun unbindStorageService(conn: ServiceConnection) = context.unbindService(conn)
