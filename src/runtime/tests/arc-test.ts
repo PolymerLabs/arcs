@@ -23,7 +23,7 @@ import {RecipeResolver} from '../recipe-resolver.js';
 import {DriverFactory} from '../storage/drivers/driver-factory.js';
 import {VolatileStorageKey, VolatileDriver, VolatileStorageKeyFactory} from '../storage/drivers/volatile.js';
 import {StorageKey} from '../storage/storage-key.js';
-import {Store, ActiveStore} from '../storage/store.js';
+import {Store} from '../storage/store.js';
 import {ReferenceModeStore} from '../storage/reference-mode-store.js';
 import {DirectStoreMuxer} from '../storage/direct-store-muxer.js';
 import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
@@ -35,7 +35,6 @@ import {ReferenceModeStorageKey} from '../storage/reference-mode-storage-key.js'
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {SingletonEntityStore, CollectionEntityStore, handleForStore} from '../storage/storage.js';
 import {Capabilities, Ttl, Queryable, Persistence} from '../capabilities.js';
-import {isActiveMuxer} from '../storage/store-interface.js';
 import {StorageServiceImpl} from '../storage/storage-service.js';
 
 async function setup(storageKeyPrefix:  (arcId: ArcId) => StorageKey) {
@@ -1107,8 +1106,8 @@ describe('Arc storage migration', () => {
     };
 
     const things0Store = await getStoreByConnectionName('things0');
-    if (isActiveMuxer(things0Store)) {
-      assert.fail('things0 store can not be an active muxer');
+    if (things0Store instanceof DirectStoreMuxer) {
+      assert.fail('things0 store can not be a direct store muxer');
     }
     const helloThing0 = await getStoreValue(await things0Store.serializeContents(), 0, 2);
     assert.equal(helloThing0.rawData.name, 'hello');
@@ -1124,15 +1123,15 @@ describe('Arc storage migration', () => {
     assert.isTrue(worldThing0.expirationTimestamp - helloThing0.expirationTimestamp >= 1000);
 
     const things1Store = await getStoreByConnectionName('things1');
-    if (isActiveMuxer(things1Store)) {
-      assert.fail('things1 store can not be an active muxer');
+    if (things1Store instanceof DirectStoreMuxer) {
+      assert.fail('things1 store can not be a direct store muxer');
     }
     const fooThing1 = await getStoreValue(await things1Store.serializeContents(), 0, 1);
     assert.equal(fooThing1.rawData.name, 'foo');
 
     const things2Store = await getStoreByConnectionName('things2');
-    if (isActiveMuxer(things2Store)) {
-      assert.fail('things2 store can not be an active muxer');
+    if (things2Store instanceof DirectStoreMuxer) {
+      assert.fail('things2 store can not be a direct store muxer');
     }
     const barThing2 = await getStoreValue(await things2Store.serializeContents(), 0, 1);
     assert.equal(barThing2.rawData.name, 'bar');

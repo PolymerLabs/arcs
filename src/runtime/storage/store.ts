@@ -11,7 +11,7 @@
 import {CRDTModel, CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {Exists} from './drivers/driver.js';
 import {StorageKey} from './storage-key.js';
-import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider, StoreConstructor, ActiveMuxer} from './store-interface.js';
+import {StoreInterface, StorageMode, ActiveStore, ProxyMessageType, ProxyMessage, ProxyCallback, StorageCommunicationEndpoint, StorageCommunicationEndpointProvider, StoreConstructor} from './store-interface.js';
 import {AbstractStore, StoreInfo} from './abstract-store.js';
 import {ReferenceModeStorageKey} from './reference-mode-storage-key.js';
 import {CRDTTypeRecordToType, CRDTMuxEntity} from './storage.js';
@@ -118,7 +118,7 @@ export class StoreMuxer<T extends CRDTMuxEntity> extends AbstractStore implement
   // reconstituting an ActiveStore.
   model: T['data'] | null;
 
-  private activeStore: ActiveMuxer<T> | null;
+  private activeStore: ActiveStore<T> | null;
 
   // This map creates a cyclic dependency, so it is inject from store-constructors
   // instead of being defined here.
@@ -141,7 +141,7 @@ export class StoreMuxer<T extends CRDTMuxEntity> extends AbstractStore implement
     return this.parsedVersionToken;
   }
 
-  async activate(): Promise<ActiveMuxer<T>> {
+  async activate(): Promise<ActiveStore<T>> {
     if (this.activeStore) {
       return this.activeStore;
     }
@@ -161,7 +161,7 @@ export class StoreMuxer<T extends CRDTMuxEntity> extends AbstractStore implement
       mode: this.mode,
       baseStore: this,
       versionToken: this.parsedVersionToken
-    }) as ActiveMuxer<T>;
+    }) as ActiveStore<T>;
     this.exists = Exists.ShouldExist;
     this.activeStore = activeStore;
     return activeStore;

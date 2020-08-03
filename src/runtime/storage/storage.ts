@@ -22,9 +22,9 @@ import {SerializedReference, Reference} from '../reference.js';
 import {StoreInfo, AbstractStore, isMuxEntityStore} from './abstract-store.js';
 import {StorageKey} from './storage-key.js';
 import {Exists} from './drivers/driver.js';
-import {ActiveMuxer, isActiveMuxer} from './store-interface.js';
 import {EntityHandleFactory} from './entity-handle-factory.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
+import {DirectStoreMuxer} from './direct-store-muxer.js';
 
 type HandleOptions = {
   type?: Type;
@@ -73,7 +73,7 @@ export type SingletonInterfaceHandle = SingletonHandle<ParticleSpec>;
 export type MuxEntityType = MuxType<EntityType>;
 export type CRDTMuxEntity = CRDTEntityTypeRecord<Identified, Identified>;
 export type MuxEntityStore = StoreMuxer<CRDTMuxEntity>;
-export type ActiveMuxEntityStore = ActiveMuxer<CRDTMuxEntity>;
+export type ActiveMuxEntityStore = ActiveStore<CRDTMuxEntity>;
 export type MuxEntityHandle = EntityHandleFactory<CRDTMuxEntity>;
 
 export type ToStore<T extends Type>
@@ -176,7 +176,7 @@ export function handleForActiveStore<T extends CRDTTypeRecord>(
   const canWrite = (options.canWrite != undefined) ? options.canWrite : true;
   const name = options.name || null;
   const generateID = arc.generateID ? () => arc.generateID().toString() : () => '';
-  if (isActiveMuxer(store)) {
+  if (store instanceof DirectStoreMuxer) {
     const proxyMuxer = new StorageProxyMuxer<CRDTMuxEntity>(store, type, storageKey);
     return new EntityHandleFactory(proxyMuxer) as ToHandle<T>;
   } else {
