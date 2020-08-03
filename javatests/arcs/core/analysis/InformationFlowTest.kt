@@ -117,6 +117,7 @@ class InformationFlowTest {
             "fail-field-inline-entity-direct",
             "fail-field-list-direct",
             "fail-field-tuple-direct",
+            "fail-field-inline-entity-slicing",
             "fail-field-claim-propagates",
             "fail-field-claim-propagates-type-variables",
             "fail-field-merge-multiple-paths"
@@ -128,6 +129,7 @@ class InformationFlowTest {
             "ok-field-inline-entity-direct",
             "ok-field-list-direct",
             "ok-field-tuple-direct",
+            "ok-field-inline-entity-slicing",
             "ok-field-claim-propagates",
             "ok-field-claim-propagates-type-variables",
             "ok-field-merge-multiple-paths"

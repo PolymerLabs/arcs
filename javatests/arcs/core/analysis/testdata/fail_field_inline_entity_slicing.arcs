@@ -1,0 +1,32 @@
+// #Ingress: P1
+// #FAIL: hc:P2.foo is trusted
+particle P1
+  foo: writes FooList {
+    elements: List<inline Foo {
+      ok: Text,
+      notOk: Number,
+      mixed: inline Baz {
+        ok: Text,
+        notOk: Number,
+      }
+    }> 
+  }
+  claim foo.elements.ok is trusted
+  claim foo.elements.notOk is untrusted
+  claim foo.elements.mixed.ok is trusted
+  claim foo.elements.mixed.notOk is untrusted
+
+particle P2
+  foo: reads FooList {
+    elements: List<inline Foo {
+      ok: Text,
+      mixed: inline Baz { notOk: Number }
+    }>
+  }
+  check foo is trusted
+
+recipe R
+  P1
+    foo: writes h
+  P2
+    foo: reads h
