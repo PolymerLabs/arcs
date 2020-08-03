@@ -288,10 +288,13 @@ abstract class RefinementExpression {
     const expected = () => {
       if (opInfo.argType === 'same') {
         return 'arguments to be of the same type';
-      } else if (opInfo.argType.length > 1) {
-        const front = opInfo.argType.slice(0, opInfo.argType.length-1);
-        const last = opInfo.argType[opInfo.argType.length-1];
-        return `${front.join(', ')} or ${last}`;
+      } else {
+        const typeOptions = opInfo.argType.filter(x => x !== '~query_arg_type');
+        if (typeOptions.length > 1) {
+          const front = typeOptions.slice(0, typeOptions.length-1);
+          const last = typeOptions[typeOptions.length-1];
+          return `${front.join(', ')} or ${last}`;
+        }
       }
       return opInfo.argType[0];
     };
@@ -302,7 +305,7 @@ abstract class RefinementExpression {
     }
     const unary = operands.length === 1;
     const pluralise = unary ? '' : 's';
-    const repr = unary ? `${op.op} ${operands[0]}` : `${operands[0]} ${op.op} ${operands[1]}`;
+    const repr = unary ? `${op.op} ${operands[0]}` : `(${operands[0]} ${op.op} ${operands[1]})`;
     const getArgType = () => {
       let argType: Primitive = '~query_arg_type';
       // Discover the shared argument type.
@@ -310,14 +313,16 @@ abstract class RefinementExpression {
         if (operand.evalType == argType) {
           continue;
         }
-        if (getWiderTypes(operand.evalType).includes(argType)) {
-          // The current argType already assumes that the operand can be safely up-cast.
-          continue;
-        }
-        if (getWiderTypes(argType).includes(operand.evalType)) {
-          // Can safely up-cast the left.
-          argType = operand.evalType;
-          continue;
+        if (opInfo.argType === 'same' || opInfo.argType.includes(operand.evalType)) {
+          if (getWiderTypes(operand.evalType).includes(argType)) {
+            // The current argType already assumes that the operand can be safely up-cast.
+            continue;
+          }
+          if (getWiderTypes(argType).includes(operand.evalType)) {
+            // Can safely up-cast the left.
+            argType = operand.evalType;
+            continue;
+          }
         }
         // This type is not valid, no matter the other arguments.
         throw new Error(
@@ -330,13 +335,6 @@ abstract class RefinementExpression {
       throw new Error(`Expected ${opInfo.nArgs} operands. Got ${operands.length}.`);
     }
     const argType = getArgType();
-    for (const operand of operands) {
-      if (opInfo.argType !== 'same' && !opInfo.argType.includes(operand.evalType)) {
-        throw new Error(
-          `Operand of refinement expression ${repr} has type ${operand.evalType}. Expected ${expected()}`
-        );
-      }
-    }
     // Set the query argument type.
     for (const operand of operands) {
       if (operand instanceof QueryArgumentPrimitive && operand.evalType === '~query_arg_type') {
@@ -434,7 +432,6 @@ export class BinaryExpression extends RefinementExpression {
       } catch (e) {
         // tslint:disable-next-line no-empty
         //TODO(cypher1): Report polynomial errors without using the console.
-        console.log(`Rearrange failed for ${this}`);
       }
     } else {
       this.leftExpr = this.leftExpr.rearrange();
