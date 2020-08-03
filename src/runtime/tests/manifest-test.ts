@@ -4341,6 +4341,7 @@ describe('annotations', async () => {
     '*': '{"root": {}, "locations": {}}'
   });
   beforeEach(() => {
+    DriverFactory.clearRegistrationsForTesting();
     memoryProvider = new TestVolatileMemoryProvider();
     RamDiskStorageDriverProvider.register(memoryProvider);
   });
@@ -4678,6 +4679,41 @@ recipe
     assert.lengthOf(specialEgressParticleAnnotations, 1);
     assert.equal(specialEgressParticleAnnotations[0].name, 'egress');
     assert.deepEqual(specialEgressParticleAnnotations[0].params, {type: 'SpecialEgressType'});
+  });
+
+  it('parses @policy annotation', async () => {
+    const manifest = (await Manifest.parse(`
+      policy MyPolicy {}
+
+      @policy('MyPolicy')
+      recipe
+        foo: create
+    `));
+    const policy = manifest.policies[0];
+    assert.strictEqual(policy.name, 'MyPolicy');
+    const recipe = manifest.recipes[0];
+    const recipeAnnotations = recipe.annotations;
+    assert.lengthOf(recipeAnnotations, 1);
+    assert.strictEqual(recipeAnnotations[0].name, 'policy');
+    assert.strictEqual(recipeAnnotations[0].params['name'], 'MyPolicy');
+    assert.strictEqual(recipe.policyName, 'MyPolicy');
+    assert.deepEqual(recipe.policy, policy);
+  });
+
+  it('fails when the @policy annotation mentions an unknown policy name', async () => {
+    await assertThrowsAsync(async () => await Manifest.parse(`
+      @policy('ThisPolicyDoesNotExist')
+      recipe
+        foo: create
+    `), `No policy named 'ThisPolicyDoesNotExist' was found in the manifest.`);
+  });
+
+  it('fails when the @policy annotation is missing its argument', async () => {
+    assertThrowsAsync(async () => await Manifest.parse(`
+      @policy
+      recipe
+        foo: create
+    `), `You must provide a policy name in the @policy annotation.`);
   });
 
   describe('isolated and egress particles', () => {

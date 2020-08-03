@@ -292,6 +292,26 @@ describe('manifest2proto', () => {
     ]);
   });
 
+  it('encodes recipe annotations', async () => {
+    const manifest = await Manifest.parse(`
+      policy MyPolicy {}
+
+      @policy('MyPolicy')
+      recipe Foo
+    `);
+    const recipe = (await toProtoAndBack(manifest)).recipes[0];
+
+    assert.deepStrictEqual(recipe, {
+      name: 'Foo',
+      annotations: [{
+        name: 'policy',
+        params: [{
+          name: 'name',
+          strValue: 'MyPolicy',
+        }]
+      }]
+    });
+  });
 
   it('encodes variable particle instance types', async () => {
     const manifest = await Manifest.parse(`

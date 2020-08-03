@@ -18,17 +18,23 @@ import {regenerateInputFile} from './codegen-unit-test-base.js';
  * ./tools/sigh updateCodegenUnitTests
  */
 let totalUpdateCount = 0;
-void Promise.all(schema2KotlinTestSuite.concat(recipe2PlanTestSuite).map(async testCase => {
-  const updateCount = await regenerateInputFile(testCase);
-  if (updateCount > 0) {
-    console.info(`${testCase.inputFileName}: ${updateCount} tests updated`);
+
+async function update() {
+  // It's important that these execute in sequence rather than in parallel,
+  // otherwise they get in each other's way (flags, storage registrations, etc.)
+  for (const testCase of schema2KotlinTestSuite.concat(recipe2PlanTestSuite)) {
+    const updateCount = await regenerateInputFile(testCase);
+    if (updateCount > 0) {
+      console.info(`${testCase.inputFileName}: ${updateCount} tests updated`);
+    }
+    totalUpdateCount += updateCount;
   }
-  totalUpdateCount += updateCount;
-})).then(() => {
   if (totalUpdateCount === 0) {
     console.info(`All tests up to date!`);
   }
-}).catch(e => {
+}
+
+void update().catch(e => {
   console.error(e.message);
   process.exit(1);
 });

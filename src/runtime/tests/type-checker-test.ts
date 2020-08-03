@@ -388,6 +388,25 @@ describe('TypeChecker', () => {
     assert.deepStrictEqual(variableType.getEntitySchema(), concreteType.getEntitySchema());
   });
 
+  it('resolves a type variable to its min type through an intermediary variable by default', () => {
+    const concreteType = EntityType.make(['Product'], {name: 'Text', phone: 'Number'}).collectionOf();
+    const constraint = EntityType.make([], {name: 'Text'});
+    const variable = TypeVariable.make('a', constraint, null);
+    const redactorInputType = new TypeVariable(variable.variable).collectionOf();
+    const redactorOutputType = variable.collectionOf();
+    const egressType = TypeVariable.make('x', null, null, false).collectionOf();
+    TypeChecker.processTypeList(null, [
+      {type: concreteType, direction: 'writes'},
+      {type: redactorInputType, direction: 'reads'},
+    ]);
+    TypeChecker.processTypeList(null, [
+      {type: redactorOutputType, direction: 'writes'},
+      {type: egressType, direction: 'reads'},
+    ]);
+    egressType.maybeEnsureResolved();
+    assert.deepStrictEqual(egressType.getEntitySchema(), constraint.getEntitySchema());
+  });
+
   it('can resolve a type variable to its max type through an intermediary variable', () => {
     const concreteType = EntityType.make(['Product'], {name: 'Text', phone: 'Number'}).collectionOf();
     const constraint = EntityType.make([], {name: 'Text'});

@@ -14,10 +14,10 @@ import {StorageKey} from './storage-key.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {ClaimIsTag} from '../claim.js';
 import {SingletonInterfaceStore, SingletonEntityStore, SingletonReferenceStore, CollectionEntityStore, CollectionReferenceStore, MuxEntityStore} from './storage.js';
-import {AbstractActiveStore} from './store-interface.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {AnnotationRef} from '../recipe/annotation.js';
 import {ManifestStringBuilder} from '../manifest-string-builder.js';
+import {ActiveStore} from './store.js';
 
 export function isSingletonInterfaceStore(store: AbstractStore): store is SingletonInterfaceStore {
   return (store.type.isSingleton && store.type.getContainedType().isInterface);
@@ -87,7 +87,7 @@ export abstract class AbstractStore implements Comparable<AbstractStore> {
   get description() { return this.storeInfo.description; }
   get claims() { return this.storeInfo.claims; }
 
-  abstract activate(): Promise<AbstractActiveStore<CRDTTypeRecord>>;
+  abstract activate(): Promise<ActiveStore<CRDTTypeRecord>>;
 
   // TODO: Delete this method when the old-style storage is deleted.
   reportExceptionInHost(exception: PropagatedException): void {

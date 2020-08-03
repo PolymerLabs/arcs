@@ -1200,14 +1200,14 @@ export class TypeVariableInfo {
   _canWriteSuperset?: Type|null;
   _canReadSubset?: Type|null;
   _resolution?: Type|null;
-  _resolveToMaxType: boolean;
+  resolveToMaxType: boolean;
 
   constructor(name: string, canWriteSuperset?: Type, canReadSubset?: Type, resolveToMaxType: boolean = false) {
     this.name = name;
     this._canWriteSuperset = canWriteSuperset;
     this._canReadSubset = canReadSubset;
     this._resolution = null;
-    this._resolveToMaxType = resolveToMaxType;
+    this.resolveToMaxType = resolveToMaxType;
   }
 
   /**
@@ -1216,7 +1216,7 @@ export class TypeVariableInfo {
    * to the same value.
    */
   maybeMergeConstraints(variable: TypeVariableInfo): boolean {
-    if (!this.maybeMergeCanReadSubset(variable.canReadSubset, variable._resolveToMaxType)) {
+    if (!this.maybeMergeCanReadSubset(variable.canReadSubset)) {
       return false;
     }
     return this.maybeMergeCanWriteSuperset(variable.canWriteSuperset);
@@ -1226,11 +1226,11 @@ export class TypeVariableInfo {
    * Merge a type variable's read subset (upper bound) constraints into this variable.
    * This is used to accumulate read constraints when resolving a handle's type.
    */
-  maybeMergeCanReadSubset(constraint: Type, resolveToMaxType: boolean = false): boolean {
+  maybeMergeCanReadSubset(constraint: Type): boolean {
     const {result, success} = this._maybeMerge(
       this.canReadSubset,
       constraint,
-      (this._resolveToMaxType  || resolveToMaxType) ? Schema.union : Schema.intersect,
+      Schema.intersect
     );
     this.canReadSubset = result;
     return success;
@@ -1311,8 +1311,8 @@ export class TypeVariableInfo {
       if (!(probe instanceof TypeVariable)) {
         break;
       }
-      if (this._resolveToMaxType) {
-        probe.variable._resolveToMaxType = true;
+      if (this.resolveToMaxType) {
+        probe.variable.resolveToMaxType = true;
       }
       if (probe.variable === this) {
         return;
@@ -1375,16 +1375,9 @@ export class TypeVariableInfo {
     if (this._resolution) {
       return this._resolution.maybeEnsureResolved();
     }
-    if (this._resolveToMaxType) {
-      if (this._canReadSubset) {
-        this.resolution = this._canReadSubset;
-        return true;
-      }
-      if (this._canWriteSuperset) {
-        this.resolution = this._canWriteSuperset;
-        return true;
-      }
-      return false;
+    if (this.resolveToMaxType && this._canReadSubset) {
+      this.resolution = this._canReadSubset;
+      return true;
     }
     if (this._canWriteSuperset) {
       this.resolution = this._canWriteSuperset;
@@ -1407,7 +1400,7 @@ export class TypeVariableInfo {
       name: this.name,
       canWriteSuperset: this._canWriteSuperset && this._canWriteSuperset.toLiteral(),
       canReadSubset: this._canReadSubset && this._canReadSubset.toLiteral(),
-      resolveToMaxType: this._resolveToMaxType
+      resolveToMaxType: this.resolveToMaxType
     };
   }
 

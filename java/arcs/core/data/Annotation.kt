@@ -52,13 +52,17 @@ data class Annotation(val name: String, val params: Map<String, AnnotationParam>
          *
          * @param egressType optional egress type for the particle
          */
-
         fun createEgress(egressType: String? = null): Annotation {
             val params = mutableMapOf<String, AnnotationParam>()
             if (egressType != null) {
                 params["type"] = AnnotationParam.Str(egressType)
             }
             return Annotation("egress", params)
+        }
+
+        /** Returns an annotation indicating the name of the policy which governs a recipe. */
+        fun createPolicy(policyName: String): Annotation {
+            return Annotation("policy", mapOf("name" to AnnotationParam.Str(policyName)))
         }
 
         /** Annotation indicating that a particle is isolated. */
