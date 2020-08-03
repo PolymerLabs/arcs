@@ -152,10 +152,7 @@ class PolicyConstraintsTest {
     companion object {
         private const val BLANK_POLICY_NAME = "BlankPolicy"
 
-        private val EMPTY_OPTIONS = PolicyOptions(
-            storeMap = emptyMap(),
-            policyEgresses = emptyMap()
-        )
+        private val EMPTY_OPTIONS = PolicyOptions(storeMap = emptyMap())
 
         private val BLANK_POLICY = Policy(name = BLANK_POLICY_NAME, egressType = "Logging")
 
@@ -174,13 +171,8 @@ class PolicyConstraintsTest {
             .map { it.decode() }
             .associateBy { it.name }
 
-        private val defaultPolicyEgresses = policies.keys.associateWith { listOf("Egress_$it") }
-
         private fun makePolicyOptions(storeMap: Map<StoreId, String>): PolicyOptions {
-            return PolicyOptions(
-                storeMap = storeMap,
-                policyEgresses = defaultPolicyEgresses
-            )
+            return PolicyOptions(storeMap = storeMap)
         }
     }
 }

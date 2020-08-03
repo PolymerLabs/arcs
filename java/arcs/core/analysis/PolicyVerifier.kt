@@ -14,8 +14,6 @@ package arcs.core.analysis
 import arcs.core.data.AccessPath
 import arcs.core.data.Check
 import arcs.core.data.Claim
-import arcs.core.data.InformationFlowLabel.Predicate
-import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe
 import arcs.core.policy.Policy
 import arcs.core.policy.PolicyConstraints
@@ -30,7 +28,9 @@ class PolicyVerifier(val options: PolicyOptions) {
      *
      * @throws [PolicyViolation] if policy is violated by the recipe.
      */
-    public fun verifyPolicy(recipe: Recipe, policy: Policy): Boolean {
+    fun verifyPolicy(recipe: Recipe, policy: Policy): Boolean {
+        checkPolicyName(recipe, policy)
+
         // TODO(b/162083814): This should be moved to the compilation step.
         val policyConstraints = translatePolicy(policy, options)
         val graph = RecipeGraph(recipe)
@@ -90,51 +90,28 @@ class PolicyVerifier(val options: PolicyOptions) {
     }
 
     /**
-     * Returns the egress checks.
-     *
-     * @throws [PolicyViolation] if recipe violates egress requirements.
-     */
-    private fun getEgressChecks(
-        policy: Policy,
-        recipe: Recipe,
-        egressCheck: Predicate
-    ): Map<ParticleSpec, List<Check>> {
-        // Check that egress particles are compliant with policy.
-        val egressParticles = recipe.particles.filterNot { it.spec.isolated }
-        checkEgressParticles(policy, egressParticles)
-
-        // Create a check for each handle connection needs in the egress particles.
-        return egressParticles.associate { particle ->
-            val checks = particle.spec.connections.values
-                .filter {
-                    // TODO(b/157605232): Also check canQuery -- but first, need to add QUERY to
-                    // the Direction enum in the manifest proto.
-                    it.direction.canRead
-                }
-                .map { connectionSpec ->
-                    Check.Assert(AccessPath(particle, connectionSpec), egressCheck)
-                }
-            particle.spec to checks
-        }
-    }
-
-    /**
      * Verifies that the given egress particle nodes match the policy. The only egress particles
      * allowed to be used with a policy are in [options.policyEgresses] map.
      */
     private fun checkEgressParticles(policy: Policy, egressParticles: List<Recipe.Particle>) {
-        val allowedEgresses = options.policyEgresses.getOrElse(policy.name) {
-            throw PolicyViolation.PolicyHasNoEgressParticles(policy)
-        }
         val invalidEgressParticles = egressParticles
             .map { it.spec }
-            .filterNot { allowedEgresses.contains(it.name) }
+            .filter { it.egress && it.egressType != policy.egressType }
         if (invalidEgressParticles.isNotEmpty()) {
-            throw PolicyViolation.InvalidEgressParticles(
+            throw PolicyViolation.InvalidEgressTypeForParticles(
                 policy = policy,
-                allowedEgresses = allowedEgresses,
-                invalidEgresses = invalidEgressParticles.map { it.name }
+                invalidEgresses = invalidEgressParticles.associate { it.name to it.egressType }
             )
+        }
+    }
+
+    /** Checks that the given [policy] matches the recipe's `@policy` annotation. */
+    private fun checkPolicyName(recipe: Recipe, policy: Policy) {
+        val policyName = recipe.policyName
+        if (policyName == null) {
+            throw PolicyViolation.MissingPolicyAnnotation(recipe, policy)
+        } else if (policyName != policy.name) {
+            throw PolicyViolation.MismatchedPolicyName(policyName, policy)
         }
     }
 }

@@ -5,6 +5,7 @@ import arcs.core.data.Check
 import arcs.core.data.Claim
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.InformationFlowLabel.SemanticTag
+import arcs.core.data.Recipe
 import arcs.core.data.StoreId
 
 /**
@@ -132,22 +133,17 @@ sealed class PolicyViolation(val policy: Policy, message: String) : Exception(
     "Policy ${policy.name} violated: $message"
 ) {
     /** Thrown when egress particles were found in the recipe that are not allowed by policy. */
-    class InvalidEgressParticles(
+    class InvalidEgressTypeForParticles(
         policy: Policy,
-        val allowedEgresses: List<String>,
-        val invalidEgresses: List<String>
+        /** Maps from particle name to egress type. */
+        val invalidEgresses: Map<String, String?>
     ) : PolicyViolation(
         policy,
-        "Invalid egress particles found: " +
-        invalidEgresses.toSortedSet().joinToString(prefix = "{", postfix = "}, ") +
-        "allowed egress particles: " +
-        allowedEgresses.toSortedSet().joinToString(prefix = "{", postfix = "}")
-    )
-
-    /** Thrown when policy has no egress particles associated with it. */
-    class PolicyHasNoEgressParticles(policy: Policy) : PolicyViolation(
-        policy,
-        "No egress particles specified for policy"
+        "Invalid egress types found for particles: ${invalidEgresses.toSortedMap().entries
+            .joinToString(prefix = "{", postfix = "}") { (name, egressType) ->
+                "$name ($egressType)"
+            }
+        }. Egress type allowed by policy: ${policy.egressType}."
     )
 
     /** Thrown when there is no store associated with schema. */
@@ -164,4 +160,16 @@ sealed class PolicyViolation(val policy: Policy, message: String) : Exception(
         policy: Policy,
         checks: List<Check>
     ) : PolicyViolation(policy, "Recipe violates egress checks: $checks")
+
+    /** Thrown when a recipe is missing the `@policy` annotation. */
+    class MissingPolicyAnnotation(recipe: Recipe, policy: Policy) : PolicyViolation(
+        policy,
+        "Recipe '${recipe.name}' does not have an @policy annotation."
+    )
+
+    /** Thrown when a recipe was checked against a mismatched policy. */
+    class MismatchedPolicyName(electedPolicyName: String, policy: Policy) : PolicyViolation(
+        policy,
+        "Recipe elected a policy named '$electedPolicyName'."
+    )
 }
