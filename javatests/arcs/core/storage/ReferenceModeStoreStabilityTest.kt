@@ -35,7 +35,6 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -98,14 +97,11 @@ class ReferenceModeStoreStabilityTest {
             }
         )
 
-        withTimeout(10000) {
-            store.onProxyMessage(ProxyMessage.SyncRequest(id))
+        store.onProxyMessage(ProxyMessage.SyncRequest(id))
 
-            assertThat(modelValue.await().values).isEmpty()
-            assertThat(
-                RamDisk.memory.get<CrdtSingleton.Data<RawEntity>>(containerKey)?.data?.values
-            ).isEmpty()
-        }
+        assertThat(modelValue.await().values).isEmpty()
+        assertThat(RamDisk.memory.get<CrdtSingleton.Data<RawEntity>>(containerKey)?.data?.values)
+            .isEmpty()
     }
 
     @Test
@@ -140,13 +136,11 @@ class ReferenceModeStoreStabilityTest {
             }
         )
 
-        withTimeout(10000) {
-            store.onProxyMessage(ProxyMessage.SyncRequest(id))
+        store.onProxyMessage(ProxyMessage.SyncRequest(id))
 
-            assertThat(modelValue.await().values).isEmpty()
-            assertThat(RamDisk.memory.get<CrdtSet.Data<RawEntity>>(containerKey)?.data?.values)
-                .isEmpty()
-        }
+        assertThat(modelValue.await().values).isEmpty()
+        assertThat(RamDisk.memory.get<CrdtSet.Data<RawEntity>>(containerKey)?.data?.values)
+            .isEmpty()
     }
 
     @Test

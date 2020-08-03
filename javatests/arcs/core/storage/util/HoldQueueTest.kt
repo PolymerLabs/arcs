@@ -22,10 +22,9 @@ import org.junit.Test
 /** Tests for the [HoldQueue]. */
 @ExperimentalCoroutinesApi
 class HoldQueueTest {
-    private val holdQueue = HoldQueue(SimpleQueue())
-
     @Test
     fun enqueue_enqueuesSingleEntity() = runBlockingTest {
+        val holdQueue = HoldQueue()
         val versions = VersionMap("alice" to 1, "bob" to 1)
         val callback = suspend { }
 
@@ -45,6 +44,7 @@ class HoldQueueTest {
 
     @Test
     fun enqueue_enqueuesMultipleEntities() = runBlockingTest {
+        val holdQueue = HoldQueue()
         val versions = VersionMap("alice" to 1, "bob" to 2)
         val callback = suspend { }
 
@@ -74,6 +74,7 @@ class HoldQueueTest {
 
     @Test
     fun enqueue_appendsToExistingReferenceRecordList() = runBlockingTest {
+        val holdQueue = HoldQueue()
         val versions1 = VersionMap("alice" to 1, "bob" to 2)
         val versions2 = VersionMap("alice" to 2, "bob" to 2)
         val callback = suspend { }
@@ -98,6 +99,7 @@ class HoldQueueTest {
 
     @Test
     fun processReferenceId_callsOnRelease_forSingleEntity() = runBlockingTest {
+        val holdQueue = HoldQueue()
         val versions = VersionMap("alice" to 1, "bob" to 2)
         var called = false
         val callback = suspend {
@@ -116,6 +118,7 @@ class HoldQueueTest {
 
     @Test
     fun processReferenceId_doesNotCallOnRelease_forOlderVersions() = runBlockingTest {
+        val holdQueue = HoldQueue()
         val versions = VersionMap("alice" to 1, "bob" to 2)
         var called = false
         val callback = suspend {
@@ -134,6 +137,7 @@ class HoldQueueTest {
 
     @Test
     fun processReferenceId_onlyCallsOnRelease_whenRecordIsEmpty() = runBlockingTest {
+        val holdQueue = HoldQueue()
         val versions = VersionMap("alice" to 1, "bob" to 2)
         var called = false
         val callback = suspend {
