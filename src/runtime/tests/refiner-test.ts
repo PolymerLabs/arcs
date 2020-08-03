@@ -100,7 +100,7 @@ describe('refiner', () => {
                 num: 6,
             };
             ref.validateData(data);
-        }, `Expected refinement expressions (num < 5) and 3 to have the same types. Found types Boolean and Number.`);
+        }, `Operands of refinement expression ((num < 5) + 3) have types Boolean and Number. Expected Number, BigInt, Long, Int or Instant`);
         assert.throws(() => {
             const manifestAst = parse(`
                 particle Foo
@@ -112,7 +112,7 @@ describe('refiner', () => {
                 num: 6,
             };
             ref.validateData(data);
-        }, `Refinement expression num has type Number. Expected Boolean`);
+        }, `Operands of refinement expression (num and 3) have types Number and Number. Expected Boolean`);
         assert.throws(() => {
           const manifestAst = parse(`
               particle Foo
@@ -122,7 +122,7 @@ describe('refiner', () => {
           const ref = Refinement.fromAst(manifestAst[0].args[0].type.refinement, typeData);
           const data = {name: 'Josh'};
           ref.validateData(data);
-        }, `Refinement expression name has type Text. Expected Number, BigInt, Long, Int, Instant or Boolean`);
+        }, `Operands of refinement expression (name > 'Ragav') have types Text and Text. Expected Number, BigInt, Long, Int or Instant`);
     });
     describe('Throws error when operators and operands are incompatible: BigInt', async () => {
       const validate = (data: {num: bigint | number }, relation: string) => {
@@ -141,22 +141,22 @@ describe('refiner', () => {
       it('comparisons produce a boolean that cannot be added to a bigint', async () =>
         assert.throws(
           () => validate({num: BigInt(6)}, `(num < 5n) + 3n == 0n`),
-          `Refinement expression (num < 5n) has type Boolean. Expected Number, BigInt, Long, Int or Instant`
+          `Operands of refinement expression ((num < 5n) + 3n) have types Boolean and BigInt. Expected Number, BigInt, Long, Int or Instant`
       ));
       it('bigint and explicitly floating point number cannot be added (to ensure correctness)', async () =>
         assert.throws(
           () => validate({num: BigInt(6)}, `(num + 3.0) == 0n`),
-          `Expected refinement expressions num and 3 to have the same types. Found types BigInt and Number`
+          `Operands of refinement expression (num + 3) have types BigInt and Number. Expected Number, BigInt, Long, Int or Instant`
       ));
       it('bigint and implicit floating point number cannot be added (to ensure correctness)', async () =>
         assert.throws(
           () => validate({num: BigInt(6)}, `(num + 3) == 0`),
-          `Expected refinement expressions num and 3 to have the same types. Found types BigInt and Number`
+          `Operands of refinement expression (num + 3) have types BigInt and Number. Expected Number, BigInt, Long, Int or Instant`
       ));
       it('incorrectly typed data fails at runtime', async () =>
         assert.throws(() =>
             validate({num: 6}, `(num and 3) == 0n`)
-        , `Refinement expression num has type BigInt. Expected Boolean`)
+        , `Operands of refinement expression (num and 3) have types BigInt and Number. Expected Boolean`)
       );
     });
     it('tests simple expression to range conversion', () => {
@@ -220,7 +220,7 @@ describe('refiner', () => {
       validate(`(num >= 2n) and (num < 3n)`, [BigIntSegment.closedClosed(BigInt(2), BigInt(2))]);
       assert.throws(
         () => validate(`(num >= 2) and (num < 3)`, []),
-        'Refinement expressions num and 2 have types Long and Number in (num >= 2). Expected arguments to be of the same type'
+        'Operands of refinement expression (num >= 2) have types Long and Number. Expected Number, BigInt, Long, Int or Instant'
       );
       // Ensure that numbers containing underscores are pased correctly (for readability).
       validate(
@@ -244,7 +244,7 @@ describe('refiner', () => {
       validate('num < 3l', [BigIntSegment.closedOpen('NEGATIVE_INFINITY', BigInt(3))]);
       assert.throws(
         () => validate(`(num >= 2) and (num < 3)`, []),
-        'Refinement expressions num and 2 have types BigInt and Number in (num >= 2). Expected arguments to be of the same type'
+        'Operands of refinement expression (num >= 2) have types BigInt and Number. Expected Number, BigInt, Long, Int or Instant'
       );
     });
     it('tests simple expression to range conversions using bigint 2', () => {
@@ -763,7 +763,7 @@ describe('refiner', () => {
           assert.throws(() => {
             triviallyTrue('1 == 1 milliseconds');
           },
-          'Expected refinement expressions 1 and 1 millisecond to have the same types. Found types Number and Instant.');
+          'Operands of refinement expression (1 == 1 millisecond) have types Number and Instant. Expected arguments to be of the same type');
         });
         it('handles simple linear solving', () => {
           triviallyTrue('num + 1 > num');
