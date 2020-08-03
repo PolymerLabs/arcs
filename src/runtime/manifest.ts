@@ -620,6 +620,7 @@ ${e.message}
             // Flag used to determine if type variables should resolve to max type
             if (node.fields.includes('*')) {
               node.allFields = true;
+              node.fields = node.fields.filter(f => f !== '*');
             }
             // Warn user if there are multiple '*'s.
             if (node.fields.reduce((acc, x) => acc + Number(x === '*'), 0) > 1) {
@@ -644,7 +645,7 @@ ${e.message}
             // tslint:disable-next-line: no-any
             const fields: Dictionary<any> = {};
             const typeData = {};
-            for (let {name, type} of node.fields.filter(f => f !== '*')) {
+            for (let {name, type} of node.fields) {
               if (type && type.refinement) {
                 type.refinement = Refinement.fromAst(type.refinement, {[name]: type.type});
               }
@@ -687,7 +688,7 @@ ${e.message}
           }
           case 'slot-type': {
             const fields = {};
-            for (const fieldIndex of Object.keys(node.fields.filter(f => f !== '*'))) {
+            for (const fieldIndex of Object.keys(node.fields)) {
               const field = node.fields[fieldIndex];
               fields[field.name] = field.value;
             }
