@@ -855,25 +855,25 @@ describe('refiner', () => {
       });
     });
     describe('Correctly handles date time using now()', () => {
-      it('now() is after time of writing', () => {
+      it('now() is after time of writing', async () => {
         // Checks that 'now' is after 2020-04-22 @ 7:19am (UTC).
-        evaluatesToTrue('now() > 1587539956 milliseconds');
-        evaluatesToTrue('not (now() < 1587539956 milliseconds)');
+        await evaluatesToTrue('now() > 1587539956 milliseconds');
+        await evaluatesToTrue('not (now() < 1587539956 milliseconds)');
       });
-      it('creationTime() is before now', () => {
-        evaluatesToTrue('creationTime() < now()');
-        evaluatesToTrue('not (creationTime() > now())');
+      it('creationTime() is before now', async () => {
+        await evaluatesToTrue('creationTime() < now()');
+        await evaluatesToTrue('not (creationTime() > now())');
         // Checks that 'creationTime' is before 2020-07-31 12:40:41 AM (GMT)
         // Note: Update this when this test starts failing :P
-        evaluatesToTrue('creationTime() < 33153064841000 milliseconds');
-        evaluatesToTrue('not (creationTime() > 33153064841000 milliseconds)');
+        await evaluatesToTrue('creationTime() < 33153064841000 milliseconds');
+        await evaluatesToTrue('not (creationTime() > 33153064841000 milliseconds)');
       });
-      it('expirationTime() is after now', () => {
+      it('expirationTime() is after now', async () => {
         // Checks that 'expirationTime' is after 2020-04-22 @ 7:19am (UTC).
-        evaluatesToTrue('expirationTime() > now()');
-        evaluatesToTrue('not (expirationTime() < now())');
-        evaluatesToTrue('expirationTime() > 1587539956 milliseconds');
-        evaluatesToTrue('not (expirationTime() < 1587539956 milliseconds)');
+        await evaluatesToTrue('expirationTime() > now()');
+        await evaluatesToTrue('not (expirationTime() < now())');
+        await evaluatesToTrue('expirationTime() > 1587539956 milliseconds');
+        await evaluatesToTrue('not (expirationTime() < 1587539956 milliseconds)');
       });
     });
   });
