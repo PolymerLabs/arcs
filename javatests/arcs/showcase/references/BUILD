@@ -39,7 +39,6 @@ arcs_kt_android_library(
         "//java/arcs/sdk/android/storage",
         "//java/arcs/sdk/android/storage/service",
         "//javatests/arcs/showcase",
-        "//third_party/java/androidx/lifecycle",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

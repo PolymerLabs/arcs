@@ -20,11 +20,18 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class StorageAccessService : LifecycleService() {
 
     private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
     private val scope: CoroutineScope = CoroutineScope(coroutineContext)
+
+    private val stores = StoreManager(
+        activationFactory = ServiceStoreFactory(
+            this@StorageAccessService
+        )
+    )
 
     @ExperimentalCoroutinesApi
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -41,12 +48,7 @@ class StorageAccessService : LifecycleService() {
             val handleManager = EntityHandleManager(
                 time = JvmTime,
                 scheduler = Scheduler(coroutineContext),
-                stores = StoreManager(
-                    activationFactory = ServiceStoreFactory(
-                        this@StorageAccessService,
-                        lifecycle
-                    )
-                )
+                stores = stores
             )
 
             @Suppress("UNCHECKED_CAST")
@@ -91,6 +93,9 @@ class StorageAccessService : LifecycleService() {
 
     override fun onDestroy() {
         scope.cancel()
+        runBlocking {
+            stores.reset()
+        }
         super.onDestroy()
     }
 
