@@ -88,6 +88,7 @@ export interface TypeVariable extends BaseNode {
   kind: 'variable-type';
   name: string;
   constraint: ParticleHandleConnection;
+  // Indicates that type variable should resolve to max type (i.e. `~a with {*}` syntax support)
   resolveToMaxType: boolean;
 }
 export function isTypeVariable(node: BaseNode): node is TypeVariable {
@@ -773,6 +774,7 @@ export interface SchemaInline extends BaseNodeWithRefinement {
   kind: 'schema-inline';
   names: string[];
   fields: SchemaInlineField[];
+  // Helper field that indicates if `*` appears in `fields` array.
   allFields: boolean;
 }
 
