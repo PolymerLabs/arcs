@@ -617,6 +617,12 @@ ${e.message}
         this._checkStarFields(node);
         switch (node.kind) {
           case 'schema-inline': {
+            // Warn user if there are multiple '*'s.
+            if (node.fields.reduce((acc, x) => acc + Number(x === '*'), 0) > 1) {
+              const warning = new ManifestWarning(node.location, `Only one '*' is needed.`);
+              warning.key = 'multiStarFields';
+              manifest.errors.push(warning);
+            }
             const schemas: Schema[] = [];
             const aliases: Schema[] = [];
             const names: string[] = [];

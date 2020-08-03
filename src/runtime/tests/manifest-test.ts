@@ -3670,6 +3670,16 @@ resource SomeName
       `));
     });
 
+    it('warns about using multiple `*` in a single variable constraint', async() => {
+      const manifest = await parseManifest(`
+          particle Foo
+            data: reads ~a with {*, *}
+      `);
+
+      assert.lengthOf(manifest.errors, 1);
+      assert.equal(manifest.errors[0].key, 'multiStarFields');
+    });
+
     it('supports field-level checks and claims with max type variables', async () => {
       const manifest = await parseManifest(`
         particle OrderIngestion in '.OrderIngestion'
