@@ -3663,11 +3663,19 @@ resource SomeName
       await assertThrowsAsync(async () => await parseManifest(`
           particle Foo
             data: reads {*}
-      `));
+      `), `\
+Post-parse processing error caused by 'undefined' line 3.
+Only type variables may have '*' fields.
+              data: reads {*}
+                          ^^^`);
       await assertThrowsAsync(async () => await parseManifest(`
           particle Foo
             data: reads {name: Text, *}
-      `));
+      `), `\
+Post-parse processing error caused by 'undefined' line 3.
+Only type variables may have '*' fields.
+              data: reads {name: Text, *}
+                          ^^^^^^^^^^^^^^^`);
     });
 
     it('warns about using multiple `*` in a single variable constraint', async () => {

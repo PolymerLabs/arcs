@@ -739,7 +739,7 @@ ${e.message}
       private _checkStarFields(node) {
         if (node.kind === 'variable-type') return;
         if (node.type && node.type.kind === 'schema-inline' && node.type.allFields) {
-          throw new ManifestError(node.location, `Only type variables may have '*' fields.`);
+          throw new ManifestError(node.type.location, `Only type variables may have '*' fields.`);
         }
       }
 
