@@ -1477,13 +1477,14 @@ RecipeSlot
   }
 
 SchemaInline
-  = names:((upperIdent / '*') whiteSpace?)* '{' multiLineSpace fields:(SchemaInlineField (',' multiLineSpace SchemaInlineField)*)? ','? multiLineSpace allFields:('*'?) multiLineSpace '}'
+  = names:((upperIdent / '*') whiteSpace?)* '{' multiLineSpace fields:(SchemaInlineField (',' multiLineSpace SchemaInlineField)*)? ','? multiLineSpace '}'
   {
+    const fieldsVal = optional(fields, fields => [fields[0], ...fields[1].map(tail => tail[2])], []);
     return toAstNode<AstNode.SchemaInline>({
       kind: 'schema-inline',
       names: optional(names, names => names.map(name => name[0]).filter(name => name !== '*'), ['*']),
-      fields: optional(fields, fields => [fields[0], ...fields[1].map(tail => tail[2])], []),
-      allFields: optional(allFields, allFields => allFields === '*', false),
+      fields: fieldsVal,
+      allFields: optional(fieldsVal, fields => fields.some(f => f === '*'), false),
     });
   }
 
@@ -1499,6 +1500,7 @@ SchemaInlineField
       type
     });
   }
+  / '*'
 
 SchemaSpec
   = 'schema' names:(whiteSpace ('*' / upperIdent))+ parents:SchemaExtends?

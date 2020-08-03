@@ -614,6 +614,7 @@ ${e.message}
         //     errors relating to failed merges can reference the manifest source.
         visitChildren();
 
+        this._checkStarFields(node);
         switch (node.kind) {
           case 'schema-inline': {
             const schemas: Schema[] = [];
@@ -633,7 +634,7 @@ ${e.message}
             // tslint:disable-next-line: no-any
             const fields: Dictionary<any> = {};
             const typeData = {};
-            for (let {name, type} of node.fields) {
+            for (let {name, type} of node.fields.filter(f => f !== '*')) {
               if (type && type.refinement) {
                 type.refinement = Refinement.fromAst(type.refinement, {[name]: type.type});
               }
@@ -674,7 +675,7 @@ ${e.message}
           }
           case 'slot-type': {
             const fields = {};
-            for (const fieldIndex of Object.keys(node.fields)) {
+            for (const fieldIndex of Object.keys(node.fields.filter(f => f !== '*'))) {
               const field = node.fields[fieldIndex];
               fields[field.name] = field.value;
             }
@@ -713,12 +714,22 @@ ${e.message}
             node.model = new SingletonType(node.type.model);
             return;
           case 'tuple-type':
+            node.types.forEach(this._checkStarFields);
             node.model = new TupleType(node.types.map(t => t.model));
             return;
           default:
             return;
         }
       }
+
+      // Asserts that '*' inline fields can only appear on type variable constraints.
+      private _checkStarFields(node) {
+        if (node.kind === 'variable-type') return;
+        if (node.type && node.type.kind === 'schema-inline' && node.type.allFields) {
+          throw new ManifestError(node.location, `Only type variables may have '*' fields.`);
+        }
+      }
+
     }();
     visitor.traverse(items);
   }

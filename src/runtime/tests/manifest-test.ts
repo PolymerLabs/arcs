@@ -3659,6 +3659,17 @@ resource SomeName
       `), `Type variable ~a does not contain field 'foo'`);
     });
 
+    it('fails to parse concrete types with inline schema field of `*`', async () => {
+      await assertThrowsAsync(async () => await parseManifest(`
+          particle Foo
+            data: reads {*}
+      `));
+      await assertThrowsAsync(async () => await parseManifest(`
+          particle Foo
+            data: reads {name: Text, *}
+      `));
+    });
+
     it('supports field-level checks and claims with max type variables', async () => {
       const manifest = await parseManifest(`
         particle OrderIngestion in '.OrderIngestion'

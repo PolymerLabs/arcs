@@ -574,27 +574,21 @@ describe('manifest parser', () => {
         data: reads ~a with {name: Text, age: Number, *}
     `);
   });
-  it('fails to parse max type variables with oddly-ordered constraints', () => {
-    assert.throws(() => {
-      parse(`
-        particle Foo
-          data: reads ~a with {name: Text, *, age: Number}
-      `);
-    });
-    assert.throws(() => {
-      parse(`
-        particle Foo
-          data: reads ~a with {*, age: Number}
-      `);
-    });
+  it('parses max type variables with oddly-ordered constraints', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text, *, age: Number}
+    `);
+    parse(`
+      particle Foo
+        data: reads ~a with {*, age: Number}
+    `);
   });
-  it('fails to parse max type variables with multiple `*`s', () => {
-    assert.throws(() => {
-      parse(`
-        particle Foo
-          data: reads ~a with {name: Text, *, *}
-      `);
-    });
+  it('parses max type variables with multiple `*`s', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text, *, *}
+    `);
     assert.throws(() => {
       parse(`
         particle Foo
