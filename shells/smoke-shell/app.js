@@ -23,13 +23,14 @@ export const App = async (composer, path) => {
   // paramterize?
   const recipe = manifest.allRecipes[0];
   //
-  console.log(`recipe [${recipe?.name}]`);
   if (recipe) {
+    console.log(`recipe [${recipe.name}]`);
     const plan = await Runtime.resolveRecipe(arc, recipe);
     if (plan) {
       await arc.instantiate(plan);
     }
   }
+  //
   console.log(`\narc serialization`);
   console.log(`=============================================================================`);
   console.log(await arc.serialize());
