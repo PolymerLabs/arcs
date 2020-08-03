@@ -365,7 +365,7 @@ open class AllocatorTestBase {
     open fun allocator_canRunArcWithSameParticleTwice() = runAllocatorTest {
         val arc = allocator.startArcForPlan(HelloHelloPlan)
         val arcId = arc.id
-        
+
         arc.waitForStart()
 
         val readingContext = requireNotNull(
