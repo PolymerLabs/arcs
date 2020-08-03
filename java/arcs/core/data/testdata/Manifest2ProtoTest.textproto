@@ -440,5 +440,5 @@ policies {
     }
   }
   description: "check that policies can be serialized to proto"
-  egress_type: LOGGING
+  egress_type: 'Logging'
 }

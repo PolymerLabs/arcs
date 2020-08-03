@@ -10,11 +10,10 @@
 
 import {Manifest} from '../../manifest.js';
 import {assert} from '../../../platform/chai-web.js';
-import {PolicyEgressType, PolicyRetentionMedium, PolicyAllowedUsageType, Policy, PolicyTarget} from '../policy.js';
+import {PolicyRetentionMedium, PolicyAllowedUsageType} from '../policy.js';
 import {assertThrowsAsync} from '../../../testing/test-util.js';
 import {mapToDictionary} from '../../util.js';
-import {TtlUnits, Persistence, Encryption, Capabilities, CapabilityRange, Ttl} from '../../capabilities.js';
-import {Schema} from '../../schema.js';
+import {TtlUnits, Persistence, Encryption, Capabilities, Ttl} from '../../capabilities.js';
 
 const customAnnotation = `
 annotation custom
@@ -85,7 +84,7 @@ policy MyPolicy {}
 `);
     assert.strictEqual(policy.name, 'MyPolicy');
     assert.strictEqual(policy.description, 'test');
-    assert.strictEqual(policy.egressType, PolicyEgressType.Logging);
+    assert.strictEqual(policy.egressType, 'Logging');
     assert.lengthOf(policy.customAnnotations, 1);
     assert.strictEqual(policy.customAnnotations[0].name, 'custom');
   });
@@ -98,11 +97,12 @@ policy MyPolicy {}
     assert.isNull(policy.egressType);
   });
 
-  it('rejects unknown egress types', async () => {
-    await assertThrowsAsync(async () => parsePolicy(`
-@egressType('SomethingElse')
+  it('allows arbitrary egress types', async () => {
+    const policy = await parsePolicy(`
+@egressType('SomeInventedEgressType')
 policy MyPolicy {}
-`), 'Expected one of: Logging, FederatedAggregation. Found: SomethingElse.');
+`);
+    assert.strictEqual(policy.egressType, 'SomeInventedEgressType');
   });
 
   it('policy target annotations work', async () => {
