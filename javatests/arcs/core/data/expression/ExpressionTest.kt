@@ -30,16 +30,18 @@ class ExpressionTest {
         expression = expression, currentScope = currentScope
     )
 
+    val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+
     val currentScope = CurrentScope<Any>(
         mutableMapOf(
             "blah" to 10,
             "baz" to mapOf("x" to 24).asScope(),
-            "numbers" to listOf(1, 2, 3, 4, 5, 6 , 7, 8, 9, 10)
+            "numbers" to numbers
         )
     )
 
     @Test
-    fun testEvaluator() {
+    fun test_evaluator_binaryOps() {
         // numeric binary ops (ints)
         assertThat(evalNum(2.asExpr() + 1.asExpr())).isEqualTo(3)
         assertThat(evalNum(2.asExpr() - 1.asExpr())).isEqualTo(1)
@@ -63,20 +65,28 @@ class ExpressionTest {
         assertThat(evalNum(2.toBigInteger().asExpr() - 1.asExpr())).isEqualTo(1.toBigInteger())
         assertThat(evalNum(2.toBigInteger().asExpr() * 2.asExpr())).isEqualTo(4.toBigInteger())
         assertThat(evalNum(6.toBigInteger().asExpr() / 3.asExpr())).isEqualTo(2.toBigInteger())
-
+    }
+    @Test
+    fun test_evaluator_fieldOps() {
         // field ops
         assertThat(evalNum<Number>(mapOf("foo" to 42).asScope()["foo"])).isEqualTo(42)
         assertThat(evalNum<Number>(currentScope["blah"].asNumber())).isEqualTo(10)
         val baz = currentScope["baz"].asScope()
         assertThat(evalNum<Number>(baz["x"])).isEqualTo(24)
+    }
 
+    @Test
+    fun test_evaluator_queryOps() {
         // query ops
-        assertThat(evalExpression<Number, Number>(
-            query("arg"),
-            currentScope,
-            "arg" to 42
-        )).isEqualTo(42)
+        assertThat(
+            evalExpression<Number, Number>(
+                query("arg"), currentScope, "arg" to 42
+            )
+        ).isEqualTo(42)
+    }
 
+    @Test
+    fun test_evaluator_booleanOps() {
         // Boolean ops
         assertThat(evalBool(1.asExpr() lt 2.asExpr())).isTrue()
         assertThat(evalBool(2.asExpr() lt 1.asExpr())).isFalse()
@@ -119,6 +129,10 @@ class ExpressionTest {
             (2.toBigInteger().asExpr() lt 1.toBigInteger().asExpr()))).isTrue()
         assertThat(evalBool((1.toBigInteger().asExpr() gt 2.asExpr()) or
             (2.toBigInteger().asExpr() lt 1.toBigInteger().asExpr()))).isFalse()
+    }
+
+    @Test
+    fun test_evaluator_unaryOps() {
         // Unary ops
         assertThat(evalNum(-2.asExpr())).isEqualTo(-2)
         assertThat(evalBool(!(2.asExpr() lt 1.asExpr()))).isTrue()
@@ -131,7 +145,10 @@ class ExpressionTest {
         assertThat(evalNum(-2.toBigInteger().asExpr())).isEqualTo(-2.toBigInteger())
         assertThat(evalBool(!(2.toBigInteger().asExpr() lt 1.asExpr()))).isTrue()
         assertThat(evalBool(!(2.toBigInteger().asExpr() gt 1.asExpr()))).isFalse()
+    }
 
+    @Test
+    fun test_evaluator_equalityOps() {
         // Equality ops
         assertThat(evalBool(2.asExpr() eq 2.asExpr())).isTrue()
         assertThat(evalBool(2.asExpr() eq 1.asExpr())).isFalse()
@@ -145,7 +162,10 @@ class ExpressionTest {
         assertThat(evalBool("Hello".asExpr() neq "Hello".asExpr())).isFalse()
         assertThat(evalBool(true.asExpr() neq false.asExpr())).isTrue()
         assertThat(evalBool(true.asExpr() neq true.asExpr())).isFalse()
+    }
 
+    @Test
+    fun test_evaluator_complexExpression() {
         // Test complex expression
         // (2 + (3 * 4) + scope.foo + ?arg - 1) / 2
         val obj = mapOf("foo" to 42).asScope("handle")
@@ -154,30 +174,112 @@ class ExpressionTest {
         ) - 1.asExpr()) / 2.asExpr()
 
         assertThat(evalExpression<Number, Number>(expr, currentScope, "arg" to 1)).isEqualTo(28)
+    }
 
-        // Test From p in numbers where p < 5
-        val whereExpr = Expression.WhereExpression<Number>(currentScope["p"].asNumber() lt 5.asExpr())
-        val selectExpr = Expression.SelectExpression<Scope>(
-            Expression.NewExpression<Scope>(
-                setOf("Example"),
-                listOf(
-                    "x" to currentScope["p"].asNumber() + 1.asExpr(),
-                    "y" to currentScope["p"].asNumber() + 2.asExpr()
-                )
-            )
-        )
-        val composeExpr = Expression.ComposeExpression(whereExpr, selectExpr)
-        val fromExpr = Expression.FromExpression<Number, Scope>("numbers", "p", composeExpr)
+    @Test
+    fun test_evalutor_paxel_from() {
+        val fromExpr = from<Number>("p") on "numbers"
+        assertThat(
+            evalExpression<Sequence<Number>, Sequence<Number>>(fromExpr, currentScope).toList()
+        ).isEqualTo(numbers)
+    }
+
+    @Test
+    fun test_evalutor_paxel_select() {
+        val selectExpr = from<Number>("p") on "numbers" select 1.asExpr()
+        assertThat(
+            evalExpression<Sequence<Number>, Sequence<Number>>(selectExpr, currentScope).toList()
+        ).isEqualTo(numbers.map { 1 })
+    }
+
+    @Test
+    fun test_evalutor_paxel_where() {
+        val whereExpr = from<Number>("p") on "numbers" where (currentScope["p"] eq 5.asExpr())
+        assertThat(
+            evalExpression<Sequence<Number>, Sequence<Number>>(whereExpr, currentScope).toList()
+        ).isEqualTo(listOf(5))
+    }
+
+    @Test
+    fun test_evalutor_paxel_max() {
+        val selectMaxExpr = from<Number>("p") on "numbers" select max(currentScope["numbers"])
 
         assertThat(
-            evalExpression<Sequence<Scope>, Sequence<Scope>>(fromExpr, currentScope).toList().map {
+            evalExpression<Sequence<Number>, Sequence<Number>>(selectMaxExpr, currentScope).toList()
+        ).isEqualTo(numbers.map { numbers.size })
+    }
+
+    @Test
+    fun test_evalutor_paxel_count() {
+        val selectCountExpr = from<Number>("p") on "numbers" select count(currentScope["numbers"])
+
+        assertThat(
+            evalExpression<Sequence<Number>, Sequence<Number>>(
+                selectCountExpr,
+                currentScope
+            ).toList()
+        ).isEqualTo(numbers.map { numbers.size })
+    }
+
+    @Test
+    fun test_evalutor_paxel_min() {
+        val selectMinExpr = from<Number>("p") on "numbers" select min(currentScope["numbers"])
+
+        assertThat(
+            evalExpression<Sequence<Number>, Sequence<Number>>(selectMinExpr, currentScope).toList()
+        ).isEqualTo(numbers.map { 1 })
+    }
+
+    @Test
+    fun test_evalutor_paxel_average() {
+        val selectAvgExpr = from<Number>("p") on "numbers" select average(currentScope["numbers"])
+
+        assertThat(
+            evalExpression<Sequence<Number>, Sequence<Number>>(selectAvgExpr, currentScope).toList()
+        ).isEqualTo(numbers.map { 5.5 })
+    }
+
+    @Test
+    fun test_evalutor_paxel_union() {
+        val lessThan8 = from<Number>("p") on "numbers" where
+            (currentScope["p"].asNumber() lt 8.asExpr())
+        val greaterThan6 = from<Number>("p") on "numbers" where
+            (currentScope["p"].asNumber() gt 6.asExpr())
+        val unionExpr = union(lessThan8, greaterThan6)
+
+        assertThat(
+            evalExpression<Sequence<Number>, Sequence<Number>>(unionExpr, currentScope).toList()
+        ).isEqualTo(numbers)
+    }
+
+    @Test
+    fun test_evaluator_paxel_expression() {
+        // Test Expression:
+        // FROM p IN numbers
+        // WHERE p < 5
+        // SELECT new Example {
+        //   x: p + 1
+        //   y: p + 2
+        //   z: COUNT(numbers)
+        // }
+        val paxelExpr = from<Number>("p") on "numbers" where
+            (currentScope["p"].asNumber() lt 5.asExpr()) select new<Number, Scope>("Example")() {
+            listOf(
+                "x" to currentScope["p"].asNumber() + 1.asExpr(),
+                "y" to currentScope["p"].asNumber() + 2.asExpr(),
+                "z" to count(currentScope["numbers"])
+            )
+        }
+
+        assertThat(
+            evalExpression<Sequence<Scope>, Sequence<Scope>>(paxelExpr, currentScope).toList().map {
                 (it as MapScope<*>).map
             }
         ).containsExactly(
-            mapOf("x" to 2, "y" to 3),
-            mapOf("x" to 3, "y" to 4),
-            mapOf("x" to 4, "y" to 5),
-            mapOf("x" to 5, "y" to 6)
+            mapOf("x" to 2, "y" to 3, "z" to 10),
+            mapOf("x" to 3, "y" to 4, "z" to 10),
+            mapOf("x" to 4, "y" to 5, "z" to 10),
+            mapOf("x" to 5, "y" to 6, "z" to 10)
         )
     }
 

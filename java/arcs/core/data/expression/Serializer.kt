@@ -18,7 +18,12 @@ import arcs.core.data.expression.Expression.UnaryExpression
 import arcs.core.data.expression.Expression.UnaryOp
 import arcs.core.util.Json
 import arcs.core.util.JsonValue
-import arcs.core.util.JsonValue.*
+import arcs.core.util.JsonValue.JsonArray
+import arcs.core.util.JsonValue.JsonBoolean
+import arcs.core.util.JsonValue.JsonNull
+import arcs.core.util.JsonValue.JsonNumber
+import arcs.core.util.JsonValue.JsonObject
+import arcs.core.util.JsonValue.JsonString
 import arcs.core.util.JsonVisitor
 import java.math.BigInteger
 
@@ -81,16 +86,7 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
                 "op" to JsonString("from"),
                 "source" to JsonString(expr.source),
                 "var" to JsonString(expr.iterationVar),
-                "expr" to expr.iterationExpr.accept(this)
-            )
-        )
-
-    override fun <T, R> visit(expr: Expression.ComposeExpression<T, R>) =
-        JsonObject(
-            mapOf(
-                "op" to JsonString("compose"),
-                "leftExpr" to expr.leftExpr.accept(this),
-                "rightExpr" to expr.rightExpr.accept(this)
+                "qualifier" to (expr.qualifier?.accept(this) ?: JsonNull)
             )
         )
 
@@ -98,15 +94,17 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
         JsonObject(
             mapOf(
                 "op" to JsonString("where"),
-                "expr" to expr.expr.accept(this)
+                "expr" to expr.expr.accept(this),
+                "qualifier" to expr.qualifier.accept(this)
             )
         )
 
-    override fun <T> visit(expr: Expression.SelectExpression<T>) =
+    override fun <E, T> visit(expr: Expression.SelectExpression<E, T>) =
         JsonObject(
             mapOf(
                 "op" to JsonString("select"),
-                "expr" to expr.expr.accept(this)
+                "expr" to expr.expr.accept(this),
+                "qualifier" to expr.qualifier.accept(this)
             )
         )
 
@@ -120,6 +118,16 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
                 )
             )
         )
+
+    override fun <T> visit(expr: Expression.FunctionExpression<T>) =
+        JsonObject(
+            mapOf(
+                "op" to JsonString("function"),
+                "functionName" to JsonString(expr.function.name),
+                "arguments" to JsonArray(
+                    expr.arguments.map { it.accept(this) })
+                )
+            )
 }
 
 /** Traverses a parsed [JsonValue] representation and returns decoded [Expression] */
@@ -141,14 +149,14 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                 visit(value["qualifier"]) as Expression<Expression.Scope>, value["field"].string()!!
             )
             BinaryOp.fromToken(type) != null -> {
-                BinaryExpression<Any, Any, Any>(
+                BinaryExpression(
                     BinaryOp.fromToken(type) as BinaryOp<Any, Any, Any>,
                     visit(value["left"]) as Expression<Any>,
                     visit(value["right"]) as Expression<Any>
                 )
             }
             UnaryOp.fromToken(type) != null -> {
-                UnaryExpression<Any, Any>(
+                UnaryExpression(
                     UnaryOp.fromToken(type)!! as UnaryOp<Any, Any>,
                     visit(value["expr"]) as Expression<Any>
                 )
@@ -158,29 +166,35 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
             type == "?" -> Expression.QueryParameterExpression<Any>(value["identifier"].string()!!)
             type == "from" ->
                 Expression.FromExpression<Any, Any>(
+                    if (value["qualifier"] == JsonNull) {
+                        null
+                    } else {
+                        visit(value["qualfier"].obj()!!) as Expression<Sequence<Any>>
+                    },
                     value["source"].string()!!,
-                    value["var"].string()!!,
-                    visit(value["expr"]) as Expression<Sequence<Any>>
-                )
-            type == "compose" ->
-                Expression.ComposeExpression<Any, Any>(
-                    visit(value["leftExpr"]) as Expression<Sequence<Any>>,
-                    visit(value["rightExpr"]) as Expression<Sequence<Any>>
+                    value["var"].string()!!
                 )
             type == "where" ->
-                Expression.WhereExpression<Any>(
+                Expression.WhereExpression(
+                    visit(value["qualfier"].obj()!!) as Expression<Sequence<Any>>,
                     visit(value["expr"]) as Expression<Boolean>
                 )
             type == "select" ->
                 Expression.SelectExpression(
+                    visit(value["qualfier"].obj()!!) as Expression<Sequence<Any>>,
                     visit(value["expr"]) as Expression<Sequence<Any>>
                 )
             type == "new" ->
                 Expression.NewExpression<Any>(
                     value["schemaName"].array()!!.value.map { it.string()!! }.toSet(),
                     value["expr"].obj()!!.value.map { (name, expr) ->
-                       name to visit(expr)
+                        name to visit(expr)
                     }.toList()
+                )
+            type == "function" ->
+                Expression.FunctionExpression<Any>(
+                    GlobalFunction.of(value["functionName"].string()!!),
+                    value["arguments"].array()!!.value.map { visit(it) }.toList()
                 )
             else -> throw IllegalArgumentException("Unknown type $type during deserialization")
         }
