@@ -628,6 +628,10 @@ ${e.message}
             if (starCount > 0) {
               node.allFields = true;
               node.fields = node.fields.filter(f => f.name !== '*');
+              // Avoid creating an empty schema in response to `{*}`.
+              if (node.fields.length === 0) {
+                return;
+              }
             }
             const schemas: Schema[] = [];
             const aliases: Schema[] = [];

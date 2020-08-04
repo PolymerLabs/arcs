@@ -3588,6 +3588,36 @@ resource SomeName
       assert.deepStrictEqual(claim.fieldPath, ['foo']);
     });
 
+    it('parses max type variables into the appropriate data structure', async () => {
+      const manifest = await parseManifest(`
+        particle Foo
+          data: reads ~a with {age: Number, *}
+          
+        particle Bar
+          data: reads ~b with {*}
+      `);
+
+      const foo = manifest.particles[0];
+      const bar = manifest.particles[1];
+
+      const fooConnType = foo.connections[0].type as TypeVariable;
+      const barConnType = bar.connections[0].type as TypeVariable;
+
+      assert.isTrue(fooConnType.variable.resolveToMaxType);
+      assert.isTrue(barConnType.variable.resolveToMaxType);
+
+      // Foo has one constraint
+      assert.isNull(fooConnType.variable._canReadSubset);
+      assert.deepStrictEqual(Object.keys(fooConnType.variable._canWriteSuperset.getEntitySchema().fields), ['age']);
+      assert.isNull(fooConnType.variable._resolution);
+
+      // Bar is unconstrained
+      assert.isNull(barConnType.variable._canReadSubset);
+      assert.isNull(barConnType.variable._canWriteSuperset);
+      assert.isNull(barConnType.variable._resolution);
+
+    });
+
     it('supports field-level checks and claims with resolved type variables', async () => {
       const manifest = await parseManifest(`
         particle OrderIngestion in '.OrderIngestion'
@@ -3696,6 +3726,7 @@ Only type variables may have '*' fields.
         particle SkuRedactor in '.SkuRedactor'
           input: reads [~a with {sku: Text}]
           output: writes [~a]
+          check input.sku is great
           claim output.sku is redacted
 
         particle Egress in '.Egress'
