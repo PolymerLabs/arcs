@@ -20,5 +20,4 @@ package arcs.android.devtools;
 interface IDevToolsService {
     /** Sends the [str] to the remote device */
     oneway void send(String str);
-
 }
