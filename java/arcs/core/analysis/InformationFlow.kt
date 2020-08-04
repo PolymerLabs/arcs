@@ -30,6 +30,7 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
 import arcs.core.data.TupleType
+import arcs.core.data.TypeVariable
 import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.util.TaggedLog
@@ -52,9 +53,16 @@ class InformationFlow private constructor(
 
     private val log = TaggedLog { "InformationFlow" }
 
+    private val typeVariableSemantics = graph.particleNodes.associateBy(
+        keySelector = { it.particle },
+        valueTransform = { it.particle.semanticsOfTypeVariables() }
+    )
+
     private val particleClaims = graph.particleNodes.associateBy(
         keySelector = { it.particle },
-        valueTransform = { it.instantiatedClaims() }
+        valueTransform = {
+            it.instantiatedClaims() + (typeVariableSemantics[it.particle]?.claims ?: emptyList())
+        }
     )
 
     private val particleChecks = graph.particleNodes.associateBy(
@@ -135,8 +143,11 @@ class InformationFlow private constructor(
         // This takes care of `TOP` and `BOTTOM`.
         val inputLabelsMap = input.accessPathLabels ?: return input
 
+        val inaccessiblePaths = typeVariableSemantics[particle]?.inaccessiblePaths
         // Compute the label that is obtained by combining labels on all inputs.
-        val mixedLabels = inputLabelsMap.values
+        val mixedLabels = inputLabelsMap.asSequence()
+            .filterNot { (accessPath, _) -> inaccessiblePaths?.contains(accessPath) ?: false }
+            .map { (_, labels) -> labels }
             .fold(InformationFlowLabels(emptySet())) { acc, cur -> acc join cur }
 
         // Update all the outputs with the mixed label value.
@@ -233,6 +244,166 @@ class InformationFlow private constructor(
                     AccessPath(toHandleRoot, component + accessPath.selectors) to labels
                 }.toMap()
         )
+    }
+
+    /** Semantics of a [TypeVariable] in a particle. */
+    data class TypeVariableSemantics(
+        val claims: List<Claim>,
+        val inaccessiblePaths: List<AccessPath>
+    )
+
+    /** Information about restrictions on [AccessPath] induced by a [TypeVariable]. */
+    data class AccessPathRestrictions(
+        val typeVariable: TypeVariable,
+        val prefix: AccessPath,
+        val accessibleSelectors: Set<List<AccessPath.Selector>>,
+        val inaccessibleSelectors: Set<List<AccessPath.Selector>>
+    )
+
+    /** Returns the restrictions induced by [TypeVariable]s in the type. */
+    private fun getAccessPathRestrictions(
+        specType: Type,
+        resolvedType: Type,
+        prefix: AccessPath
+    ): List<AccessPathRestrictions> {
+        if (specType.tag == Tag.TypeVariable) {
+            specType as TypeVariable
+            val resolvedTypeSelectors = resolvedType.accessPathSelectors(partial = true)
+            val accessibleSelectors =
+                specType.constraint?.accessPathSelectors(partial = true) ?: resolvedTypeSelectors
+            val inaccessibleSelectors = resolvedTypeSelectors.minus(accessibleSelectors)
+            return listOf(
+                AccessPathRestrictions(
+                    specType,
+                    prefix,
+                    accessibleSelectors,
+                    inaccessibleSelectors
+                )
+            )
+        }
+        require(specType.tag == resolvedType.tag) {
+            "Type of a connection in particle spec is incompatible with " +
+            "the type of the corresponding connection in a particle."
+        }
+        return when (specType.tag) {
+            Tag.Collection -> getAccessPathRestrictions(
+                (specType as CollectionType<*>).collectionType,
+                (resolvedType as CollectionType<*>).collectionType,
+                prefix
+            )
+            Tag.Count,
+            Tag.Entity -> emptyList<AccessPathRestrictions>()
+            Tag.Reference -> getAccessPathRestrictions(
+                (specType as ReferenceType<*>).containedType,
+                (resolvedType as ReferenceType<*>).containedType,
+                prefix
+            )
+            Tag.Mux -> getAccessPathRestrictions(
+                (specType as MuxType<*>).containedType,
+                (resolvedType as MuxType<*>).containedType,
+                prefix
+            )
+            Tag.Tuple -> (specType as TupleType).elementTypes
+                .foldIndexed(emptyList<AccessPathRestrictions>()) { index, acc, cur ->
+                    val newPrefix = AccessPath(prefix.root, prefix.selectors + getTupleField(index))
+                    acc + getAccessPathRestrictions(
+                        cur,
+                        (resolvedType as TupleType).elementTypes[index],
+                        newPrefix
+                    )
+                }
+            Tag.Singleton -> getAccessPathRestrictions(
+                (specType as SingletonType<*>).containedType,
+                (resolvedType as SingletonType<*>).containedType,
+                prefix
+            )
+            Tag.TypeVariable -> throw IllegalArgumentException(
+                "TypeVariable should already be handled!"
+            )
+        }
+    }
+
+    private fun Type.typeVariableClaims(
+        prefix: AccessPath,
+        restrictions: Map<String, List<AccessPathRestrictions>>
+    ): List<Claim> = when (tag) {
+        Tag.Collection -> {
+            (this as CollectionType<*>).collectionType.typeVariableClaims(prefix, restrictions)
+        }
+        Tag.Count,
+        Tag.Entity -> emptyList<Claim>()
+        Tag.Reference -> {
+            (this as ReferenceType<*>).containedType.typeVariableClaims(prefix, restrictions)
+        }
+        Tag.Mux -> {
+            (this as MuxType<*>).containedType.typeVariableClaims(prefix, restrictions)
+        }
+        Tag.Tuple -> (this as TupleType).elementTypes
+            .foldIndexed(emptyList<Claim>()) { index, acc, cur ->
+                val newPrefix = AccessPath(prefix.root, prefix.selectors + getTupleField(index))
+                acc + cur.typeVariableClaims(newPrefix, restrictions)
+            }
+        Tag.Singleton -> {
+            (this as SingletonType<*>).containedType.typeVariableClaims(prefix, restrictions)
+        }
+        Tag.TypeVariable -> {
+            this as TypeVariable
+            restrictions[name]?.flatMap { restriction ->
+                restriction.inaccessibleSelectors.map { selector ->
+                    val source = AccessPath(
+                        restriction.prefix.root,
+                        restriction.prefix.selectors + selector
+                    )
+                    val target = AccessPath(prefix.root, prefix.selectors + selector)
+                    Claim.DerivesFrom(target = target, source = source)
+                }
+            } ?: emptyList()
+        }
+    }
+
+    /** Returns the claims induced by type variables in the particle spec. */
+    private fun Particle.semanticsOfTypeVariables(): TypeVariableSemantics {
+        // Collect restrictions induced by type variables for all input connections.
+        val restrictions = spec.connections.values
+            .filter {
+                it.direction.canRead || (it.direction.canQuery && !it.direction.canWrite)
+            }
+            .flatMap {
+                getAccessPathRestrictions(
+                    specType = it.type,
+                    resolvedType = getResolvedType(it),
+                    prefix = AccessPath(this, it)
+                )
+            }
+            .groupBy { it.typeVariable.name }
+
+        val claims = spec.connections.values
+            .filter { it.direction.canWrite }
+            .flatMap { connectionSpec ->
+                connectionSpec.type.typeVariableClaims(
+                    AccessPath(this, connectionSpec),
+                    restrictions
+                )
+            }
+
+        val inaccessiblePaths = restrictions.values.flatMap { restrictionList ->
+            restrictionList.flatMap { restriction ->
+                restriction.inaccessibleSelectors.map { selector ->
+                    AccessPath(restriction.prefix.root, restriction.prefix.selectors + selector)
+                }
+            }
+        }
+
+        log.debug {
+            if (restrictions.isNotEmpty()) {
+                "TypeVariable Semantics for ${spec.name}\n" +
+                claims.joinToString(prefix = "  ", separator = "\n  ", postfix = "\n") +
+                inaccessiblePaths.joinToString(prefix = "Inaccessible:\n  ", separator = "\n  ")
+            } else {
+                "No type variables in ${spec.name}"
+            }
+        }
+        return TypeVariableSemantics(claims = claims, inaccessiblePaths = inaccessiblePaths)
     }
 
     /** Returns the resolved type for the given handle connection spec in the particle. */
