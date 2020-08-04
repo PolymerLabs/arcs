@@ -37,14 +37,14 @@ describe('policy2proto', () => {
   it('encodes policies', async () => {
     const proto = await parsePolicyToProto(`
 @intendedPurpose('test')
-@egressType('Logging')
+@egressType('MyEgressType')
 @custom
 policy MyPolicy {}
 `);
     assert.deepStrictEqual(proto, {
       name: 'MyPolicy',
       description: 'test',
-      egressType: 'LOGGING',
+      egressType: 'MyEgressType',
       annotations: [{name: 'custom'}],
     });
   });

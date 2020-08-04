@@ -151,14 +151,13 @@ class PolicyConstraintsTest {
 
     companion object {
         private const val BLANK_POLICY_NAME = "BlankPolicy"
-        private const val BLANK_EGRESS_PARTICLE_NAME = "Egress_BlankPolicy"
 
         private val EMPTY_OPTIONS = PolicyOptions(
             storeMap = emptyMap(),
             policyEgresses = emptyMap()
         )
 
-        private val BLANK_POLICY = Policy(name = BLANK_POLICY_NAME, egressType = EgressType.LOGGING)
+        private val BLANK_POLICY = Policy(name = BLANK_POLICY_NAME, egressType = "Logging")
 
         private fun labelPredicate(label: String): Predicate.Label {
             return Predicate.Label(InformationFlowLabel.SemanticTag(label))
@@ -175,7 +174,7 @@ class PolicyConstraintsTest {
             .map { it.decode() }
             .associateBy { it.name }
 
-        private val defaultPolicyEgresses = policies.keys.associate { it to listOf("Egress_$it") }
+        private val defaultPolicyEgresses = policies.keys.associateWith { listOf("Egress_$it") }
 
         private fun makePolicyOptions(storeMap: Map<StoreId, String>): PolicyOptions {
             return PolicyOptions(

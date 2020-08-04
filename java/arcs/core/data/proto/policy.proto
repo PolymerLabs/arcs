@@ -21,16 +21,13 @@ message PolicyProto {
   // Human readable description for the policy.
   string description = 4;
 
-  enum EgressType {
-    EGRESS_TYPE_UNSPECIFIED = 0;
-    LOGGING = 1;
-    FEDERATED_AGGREGATION = 2;
-  }
   // Egress type permitted by the policy.
-  EgressType egress_type = 5;
+  string egress_type = 7;
 
   // Annotations on the policy.
   repeated AnnotationProto annotations = 6;
+
+  reserved 5;
 }
 
 message PolicyTargetProto {

@@ -49,7 +49,7 @@ class PolicyTest {
                 PolicyTarget("target1", fields = listOf(parent)),
                 PolicyTarget("target2", fields = listOf(other))
             ),
-            egressType = EgressType.LOGGING
+            egressType = "Logging"
         )
 
         assertThat(policy.allFields).containsExactly(child, parent, other)
@@ -82,7 +82,7 @@ class PolicyTest {
                 PolicyTarget("target1", fields = listOf(parent)),
                 PolicyTarget("target2", fields = listOf(other))
             ),
-            egressType = EgressType.LOGGING
+            egressType = "Logging"
         )
 
         assertThat(policy.allRedactionLabels).containsExactly(
