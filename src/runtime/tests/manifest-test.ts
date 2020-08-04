@@ -3777,7 +3777,6 @@ Only type variables may have '*' fields.
       const dataType = egressParticle.connections.find(c => c.name === 'data').type as TypeVariable;
       dataType.maybeEnsureResolved();
       assert.isTrue(dataType.isResolved());
-      assert.isTrue(dataType.variable.resolveToMaxType);
       assert.deepStrictEqual(
         dataType.getEntitySchema(),
         targetType.getEntitySchema()
