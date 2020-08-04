@@ -524,7 +524,9 @@ function lint(args: string[]): boolean {
     string: ['format']
   });
 
-  if (!saneSpawnSync('git', ['--no-pager', 'grep', '"\\(describe\\.only(\\|it\\.only(\\)"', '*.ts'], {logCmd: true})) {
+  const result = saneSpawnSyncWithOutput('git', ['--no-pager', 'grep', '"\\(describe\\.only(\\|it\\.only(\\)"', '*.ts'], {logCmd: true});
+  if (result.stdout !== '') {
+    console.error(result.stdout);
     console.error('Please do not commit tests using .only (as it disables all other tests).');
     return false;
   }
