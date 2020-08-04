@@ -17,25 +17,12 @@ package arcs.core.data.expression
  * result. Note that types cannot be enforced statically, so it is possible for both
  * type cast errors and field or parameter errors to occur during evaluation. These will be
  * reflected as exceptions.
- *
- * Non-primitive [Sequence] expressions are wrapped arguments are return values in another
- * [Sequence] because Kotlin lacks a Maybe/Option monad. Expressions are chained together via
- * composition, and arguments are passed between composed functions using an explicit stack.
- * Composition happens by [flatMap] semantics, so an [emptySequence] terminates the output of the
- * expression and it will not make it into the final result.
- *
- * As an example in ```FROM p in x WHERE p < 5 SELECT p```, [WhereExpression] returns
- * [emptySequence] for false conditions, thus `SELECT` isn't executed, and the output is
- * suppressed.
  */
 class ExpressionEvaluator(
     val currentScope: Expression.Scope = CurrentScope<Any>(),
     val parameterScope: Expression.Scope = ParameterScope(),
     val scopeCreator: (String) -> Expression.Scope = { name -> MapScope<Any>(name, mutableMapOf()) }
 ) : Expression.Visitor<Any> {
-    // Hold arguments to be passed to next "function" (e.g. SELECT, WHERE, NEW, etc)
-    private val callStack = mutableListOf<Sequence<Any>>()
-
     override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>): Any {
         return expr.op(expr.expr.accept(this) as E) as Any
     }
