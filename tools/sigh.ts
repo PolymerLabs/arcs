@@ -524,6 +524,11 @@ function lint(args: string[]): boolean {
     string: ['format']
   });
 
+  if (!saneSpawnSync('git', ['--no-pager', 'grep', '"\\(describe\\.only(\\|it\\.only(\\)"', '*.ts'], {logCmd: true})) {
+    console.error('Please do not commit tests using .only (as it disables all other tests).');
+    return false;
+  }
+
   const jsSources = [...findProjectFiles(process.cwd(), srcExclude, /\.[jt]s$/)];
   const cli = new CLIEngine({
     useEsLintRc: false,
