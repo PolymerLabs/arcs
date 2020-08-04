@@ -60,7 +60,7 @@ class ArcHostContextParticle(
         try {
             handles.planHandles.clear()
             val connections = context.particles.flatMap {
-                it.value.planParticle.handles.map { handle ->
+                it.planParticle.handles.map { handle ->
                     val planHandle = ArcHostContextParticle_PlanHandle(
                         storageKey = handle.value.handle.storageKey.toString(),
                         type = handle.value.handle.type.tag.name
@@ -83,10 +83,10 @@ class ArcHostContextParticle(
 
             val particles = context.particles.map {
                 ArcHostContextParticle_Particles(
-                    particleName = it.key,
-                    location = it.value.planParticle.location,
-                    particleState = it.value.particleState.toString(),
-                    consecutiveFailures = it.value.consecutiveFailureCount.toDouble(),
+                    particleName = it.planParticle.particleName,
+                    location = it.planParticle.location,
+                    particleState = it.particleState.toString(),
+                    consecutiveFailures = it.consecutiveFailureCount.toDouble(),
                     handles = connections.map { connection ->
                         handles.handleConnections.createReference(connection)
                     }.toSet()
@@ -137,15 +137,15 @@ class ArcHostContextParticle(
                     arcId, particleEntity.particleName, particle, particleEntity.handles
                 )
 
-                particleEntity.particleName to ParticleContext(
+                ParticleContext(
                     particle,
                     Plan.Particle(particleEntity.particleName, particleEntity.location, handlesMap)
                 )
-            }.toSet().associateBy({ it.first }, { it.second })
+            }
 
             return@onHandlesReady ArcHostContext(
                 arcId,
-                particles.toMutableMap(),
+                particles.toMutableList(),
                 ArcState.fromString(arcStateEntity.arcState),
                 entityHandleManager = arcHostContext.entityHandleManager
             )
