@@ -464,6 +464,7 @@ describe('TypeChecker', () => {
 
     assert.isTrue(egressType.maybeEnsureResolved());
     assert.deepStrictEqual(egressType.getEntitySchema(), concreteType.getEntitySchema());
+    assert.deepStrictEqual(Object.keys(egressType.getEntitySchema().fields), ['sku', 'name', 'price']);
   });
 
 
