@@ -21,6 +21,10 @@ data class Recipe(
     val particles: List<Particle>,
     val annotations: List<Annotation> = emptyList()
 ) {
+    /** The name of the policy with which this recipe must comply. */
+    val policyName: String?
+        get() = annotations.find { it.name === "policy" }?.getStringParam("name")
+
     /** Representation of a particle in a recipe. */
     data class Particle(
         val spec: ParticleSpec,
@@ -81,7 +85,8 @@ fun Recipe.Particle.HandleConnection.toPlanHandleConnection() = Plan.HandleConne
     handle = handle.toPlanHandle(),
     mode = spec.direction,
     type = type,
-    annotations = handle.annotations
+    annotations = handle.annotations,
+    expression = spec.expression
 )
 
 /** Translates a [Recipe.Handle] into a [StorageKey] */

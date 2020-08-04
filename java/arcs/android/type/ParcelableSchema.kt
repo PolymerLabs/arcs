@@ -15,6 +15,9 @@ import android.os.Parcel
 import android.os.Parcelable
 import arcs.core.data.Schema
 import arcs.core.data.SchemaName
+import arcs.core.data.expression.Expression
+import arcs.core.data.expression.deserializeExpression
+import arcs.core.data.expression.serialize
 
 /** [Parcelable] variant of [Schema]. */
 data class ParcelableSchema(val actual: Schema) : Parcelable {
@@ -24,11 +27,14 @@ data class ParcelableSchema(val actual: Schema) : Parcelable {
         )
         parcel.writeSchemaFields(actual.fields, flags)
         parcel.writeString(actual.hash)
+        parcel.writeString(actual.refinementExpression.serialize())
+        parcel.writeString(actual.queryExpression.serialize())
     }
 
     override fun describeContents(): Int = 0
 
     companion object CREATOR : Parcelable.Creator<ParcelableSchema> {
+        @Suppress("UNCHECKED_CAST")
         override fun createFromParcel(parcel: Parcel): ParcelableSchema {
             val names = mutableListOf<String>()
                 .also { parcel.readStringList(it) }
@@ -43,7 +49,23 @@ data class ParcelableSchema(val actual: Schema) : Parcelable {
                 "No schema hash found in Parcel"
             }
 
-            return ParcelableSchema(Schema(names, fields, hash))
+            val refinement = requireNotNull(parcel.readString()) {
+                "No refinementExpression found in Parcel"
+            }
+
+            val query = requireNotNull(parcel.readString()) {
+                "No queryExpression found in Parcel"
+            }
+
+            return ParcelableSchema(
+                Schema(
+                    names,
+                    fields,
+                    hash,
+                    refinement.deserializeExpression() as Expression<Boolean>,
+                    query.deserializeExpression() as Expression<Boolean>
+                )
+            )
         }
 
         override fun newArray(size: Int): Array<ParcelableSchema?> = arrayOfNulls(size)

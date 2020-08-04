@@ -11,28 +11,37 @@
 import {Op} from '../runtime/manifest-ast-nodes.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Schema} from '../runtime/schema.js';
-import {escapeIdentifier} from './kotlin-codegen-shared.js';
 import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
-import {RefinementExpressionVisitor, BinaryExpression, UnaryExpression, FieldNamePrimitive, QueryArgumentPrimitive, BuiltIn, NumberPrimitive, BooleanPrimitive, TextPrimitive, BigIntPrimitive} from '../runtime/refiner.js';
+import {
+  RefinementExpressionVisitor,
+  BinaryExpression,
+  UnaryExpression,
+  FieldNamePrimitive,
+  QueryArgumentPrimitive,
+  BuiltIn,
+  NumberPrimitive,
+  TextPrimitive,
+  DiscretePrimitive
+} from '../runtime/refiner.js';
 
 // The variable name used for the query argument in generated Kotlin code.
 const KOTLIN_QUERY_ARGUMENT_NAME = 'queryArgument';
 
 const kotlinOperator: Dictionary<string> = {
-  [Op.AND]: '&&',
-  [Op.OR]: '||',
-  [Op.LT]: '<',
-  [Op.GT]: '>',
-  [Op.LTE]: '<=',
-  [Op.GTE]: '>=',
+  [Op.AND]: 'and',
+  [Op.OR]: 'or',
+  [Op.LT]: 'lt',
+  [Op.GT]: 'gt',
+  [Op.LTE]: 'lte',
+  [Op.GTE]: 'gte',
   [Op.ADD]: '+',
   [Op.SUB]: '-',
   [Op.MUL]: '*',
   [Op.DIV]: '/',
   [Op.NOT]: '!',
   [Op.NEG]: '-',
-  [Op.EQ]: '==',
-  [Op.NEQ]: '!=',
+  [Op.EQ]: 'eq',
+  [Op.NEQ]: 'neq',
 };
 
 class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
@@ -44,10 +53,10 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
     return `(${kotlinOperator[expr.operator.op]}${this.visit(expr.expr)})`;
   }
   visitFieldNamePrimitive(expr: FieldNamePrimitive): string {
-    return (expr.value.toString());
+    return `CurrentScope<${typeFor(expr.evalType)}>(mapOf())["${expr.value.toString()}"]`;
   }
-  visitQueryArgumentPrimitive(_: QueryArgumentPrimitive): string {
-    return KOTLIN_QUERY_ARGUMENT_NAME;
+  visitQueryArgumentPrimitive(arg: QueryArgumentPrimitive): string {
+    return `query<${typeFor(arg.evalType)}>("${KOTLIN_QUERY_ARGUMENT_NAME}")`;
   }
   visitBuiltIn(expr: BuiltIn): string {
     // TODO: Double check that millis are the correct default units.
@@ -58,23 +67,20 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
     // TODO: Implement KT getter for 'creationTimeStamp'
     throw new Error(`Unhandled BuiltInNode '${expr.value}' in toKTExpression`);
   }
-  visitBigIntPrimitive(expr: BigIntPrimitive): string {
+  visitDiscretePrimitive(expr: DiscretePrimitive): string {
     // This assumes that the associated Kotlin type will be `Java.math.BigInteger` and constructs
     // the BigInteger via String as there is no support for a literal form.
-    return `BigInteger("${expr.value}")`;
+    return `NumberLiteralExpression(BigInteger("${expr.value}"))`;
   }
   visitNumberPrimitive(expr: NumberPrimitive): string {
     // This assumes that the associated Kotlin type will be `double`.
     if (expr.value === Infinity) {
-      return 'Double.POSITIVE_INFINITY';
+      return 'NumberLiteralExpression(Double.POSITIVE_INFINITY)';
     }
     if (expr.value === -Infinity) {
-        return 'Double.NEGATIVE_INFINITY';
+        return 'NumberLiteralExpression(Double.NEGATIVE_INFINITY)';
     }
-    return expr.value.toString();
-  }
-  visitBooleanPrimitive(expr: BooleanPrimitive): string {
-    return `${expr.value}`;
+    return `${expr.value.toString()}.asExpr()`;
   }
   visitTextPrimitive(expr: TextPrimitive): string {
     const escapeForKotlin = (value: string) => {
@@ -90,7 +96,7 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
         .replace('"', '\\"')
         .replace('$', '\\$');
     };
-    return `"${escapeForKotlin(expr.value)}"`;
+    return `"${escapeForKotlin(expr.value)}".asExpr()`;
   }
 }
 
@@ -98,37 +104,24 @@ export class KTExtracter {
   private static generator = new KotlinRefinementGenerator();
 
   static fromSchema(schema: Schema): string {
-    const genFieldAsLocal = (fieldName: string) => {
-      const type = schema.fields[fieldName].type;
-      const fixed = escapeIdentifier(fieldName);
-      const typeInfo = getPrimitiveTypeInfo(type);
-      return `val ${fixed} = data.singletons["${fieldName}"].toPrimitiveValue(${typeInfo.type}::class, ${typeInfo.defaultVal})`;
-    };
 
-    const genQueryArgAsLocal = ([_, type]: [string, string]) => {
-        return `val ${KOTLIN_QUERY_ARGUMENT_NAME} = queryArgs as ${getPrimitiveTypeInfo(type).type}`;
-    };
 
-    const fieldNames = new Set<string>();
     const filterTerms = [];
     if (schema.refinement) {
-      [...schema.refinement.getFieldParams().keys()].forEach(name => fieldNames.add(name));
       filterTerms.push(this.generator.generate(schema.refinement));
     }
     for (const field of Object.values(schema.fields)) {
       if (field.refinement) {
-        [...field.refinement.getFieldParams().keys()].forEach(name => fieldNames.add(name));
         filterTerms.push(this.generator.generate(field.refinement));
       }
     }
+    const expr = filterTerms.length > 0 ? `${filterTerms.join(' and ')}` : 'true.asExpr()';
 
-    const locals = [...fieldNames].map(genFieldAsLocal);
-    if (schema.refinement) {
-      const querysArgs = [...schema.refinement.getQueryParams()].map(genQueryArgAsLocal);
-      locals.push(...querysArgs);
-    }
-    const expr = filterTerms.length > 0 ? `${filterTerms.join(' && ')}` : 'true';
-
-    return `${locals.map(x => `${x}\n`).join('')}${expr}`;
+    return `${expr}`;
   }
+}
+
+function typeFor(name: string) {
+  const typeInfo = getPrimitiveTypeInfo(name);
+  return typeInfo.isNumber ? 'Number' : typeInfo.type;
 }

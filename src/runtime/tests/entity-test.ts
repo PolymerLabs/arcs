@@ -23,6 +23,9 @@ describe('Entity', () => {
   let entityClass: EntityClass;
   before(async () => {
     const manifest = await Manifest.parse(`
+      schema ExternalInline
+        txt: Text
+
       schema Foo
         txt: Text
         lnk: URL
@@ -35,13 +38,14 @@ describe('Entity', () => {
         kt: Long
         lst: List<Number>
         inner: inline { txt: Text, num: Number }
+        inner2: inline ExternalInline
     `);
     schema = manifest.findSchemaByName('Foo');
     entityClass = Entity.createEntityClass(schema, null);
   });
 
   it('behaves like a regular object except writing to any field fails', () => {
-    const e = new entityClass({txt: 'abc', num: 56, lst: [1, 2, 5, 4, 3], inner: {txt: 'def', num: 78}});
+    const e = new entityClass({txt: 'abc', num: 56, lst: [1, 2, 5, 4, 3], inner: {txt: 'def', num: 78}, inner2: {txt: 'ghi'}});
 
     assert.strictEqual(e.txt, 'abc');
     assert.strictEqual(e.num, 56);
@@ -58,13 +62,13 @@ describe('Entity', () => {
     assert.throws(() => { e.notInSchema = 3; }, `Tried to modify entity field 'notInSchema'`);
     assert.throws(() => {e['lst'] = []; }, `Tried to modify entity field 'lst'`);
 
-    assert.strictEqual(JSON.stringify(e), '{"txt":"abc","num":56,"lst":[1,2,5,4,3],"inner":{"txt":"def","num":78}}');
-    assert.strictEqual(e.toString(), 'Foo { txt: "abc", num: 56, lst: [1,2,5,4,3], inner: { txt: "def", num: 78 } }');
-    assert.strictEqual(`${e}`, 'Foo { txt: "abc", num: 56, lst: [1,2,5,4,3], inner: { txt: "def", num: 78 } }');
+    assert.strictEqual(JSON.stringify(e), '{"txt":"abc","num":56,"lst":[1,2,5,4,3],"inner":{"txt":"def","num":78},"inner2":{"txt":"ghi"}}');
+    assert.strictEqual(e.toString(), 'Foo { txt: "abc", num: 56, lst: [1,2,5,4,3], inner: { txt: "def", num: 78 }, inner2: { txt: "ghi" } }');
+    assert.strictEqual(`${e}`, 'Foo { txt: "abc", num: 56, lst: [1,2,5,4,3], inner: { txt: "def", num: 78 }, inner2: { txt: "ghi" } }');
 
-    assert.deepEqual(Object.entries(e), [['txt', 'abc'], ['num', 56], ['lst', [1, 2, 5, 4, 3]], ['inner', {txt: 'def', num: 78}]]);
-    assert.deepEqual(Object.keys(e), ['txt', 'num', 'lst', 'inner']);
-    assert.deepEqual(Object.values(e), ['abc', 56, [1, 2, 5, 4, 3], {txt: 'def', num: 78}]);
+    assert.deepEqual(Object.entries(e), [['txt', 'abc'], ['num', 56], ['lst', [1, 2, 5, 4, 3]], ['inner', {txt: 'def', num: 78}], ['inner2', {txt: 'ghi'}]]);
+    assert.deepEqual(Object.keys(e), ['txt', 'num', 'lst', 'inner', 'inner2']);
+    assert.deepEqual(Object.values(e), ['abc', 56, [1, 2, 5, 4, 3], {txt: 'def', num: 78}, {txt: 'ghi'}]);
   });
 
   it('static Entity API maps onto EntityInternals methods', () => {
@@ -201,6 +205,11 @@ describe('Entity', () => {
     const e = new entityClass({});
     assert.throws(() => Entity.mutate(e, {inner: 77}), 'Cannot set nested schema inner with non-object');
     assert.throws(() => Entity.mutate(e, {inner: {txt: 3}}), 'Type mismatch setting field txt');
+    assert.throws(() => Entity.mutate(e, {inner: {blah: 77}}), 'not in schema undefined');
+
+    assert.throws(() => Entity.mutate(e, {inner2: 77}), 'Cannot set nested schema inner2 with non-object');
+    assert.throws(() => Entity.mutate(e, {inner2: {txt: 3}}), 'Type mismatch setting field txt');
+    assert.throws(() => Entity.mutate(e, {inner2: {num: 77}}), 'not in schema ExternalInline');
   });
 
   it('prevents mutations of Kotlin types', () => {

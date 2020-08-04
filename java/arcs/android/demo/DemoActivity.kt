@@ -30,6 +30,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 /** Entry UI to launch Arcs demo. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -45,6 +46,12 @@ class DemoActivity : AppCompatActivity() {
     private lateinit var allocator: Allocator
     private lateinit var hostRegistry: HostRegistry
 
+    private val stores = StoreManager(
+        activationFactory = ServiceStoreFactory(
+            context = this@DemoActivity
+        )
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -52,17 +59,14 @@ class DemoActivity : AppCompatActivity() {
 
         scope.launch {
             hostRegistry = AndroidManifestHostRegistry.create(this@DemoActivity)
+
             allocator = Allocator.create(
                 hostRegistry,
                 EntityHandleManager(
                     time = JvmTime,
                     scheduler = schedulerProvider("personArc"),
-                    stores = StoreManager(
-                        activationFactory = ServiceStoreFactory(
-                            context = this@DemoActivity,
-                            lifecycle = this@DemoActivity.lifecycle
-                        )
-                    )
+                    stores = stores
+
                 )
             )
 
@@ -74,6 +78,9 @@ class DemoActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         scope.cancel()
+        runBlocking {
+            stores.reset()
+        }
         super.onDestroy()
     }
 

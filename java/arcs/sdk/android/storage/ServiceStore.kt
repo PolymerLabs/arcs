@@ -14,8 +14,6 @@ package arcs.sdk.android.storage
 import android.content.Context
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.service.DeferredResult
@@ -68,10 +66,21 @@ import kotlinx.coroutines.withTimeout
 @OptIn(FlowPreview::class)
 class ServiceStoreFactory(
     private val context: Context,
-    private val lifecycle: Lifecycle,
     private val coroutineContext: CoroutineContext = Dispatchers.IO,
     private val connectionFactory: ConnectionFactory? = null
 ) : ActivationFactory {
+
+    @Deprecated(
+        "Lifecycle parameter is no longer used. Switch to using primary construct, " +
+        "and ensure created stores are cleaned up by the owning host."
+    )
+    constructor(
+        context: Context,
+        @Suppress("UNUSED_PARAMETER") lifecycle: Lifecycle? = null,
+        coroutineContext: CoroutineContext = Dispatchers.IO,
+        connectionFactory: ConnectionFactory? = null
+    ) : this(context, coroutineContext, connectionFactory)
+
     override suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(
         options: StoreOptions
     ): ServiceStore<Data, Op, ConsumerData> {
@@ -87,7 +96,6 @@ class ServiceStoreFactory(
         return ServiceStore<Data, Op, ConsumerData>(
             options = options,
             crdtType = parcelableType,
-            lifecycle = lifecycle,
             connectionFactory = connectionFactory
                 ?: DefaultConnectionFactory(context, coroutineContext = storeContext),
             coroutineContext = storeContext
@@ -102,10 +110,9 @@ class ServiceStoreFactory(
 class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private val options: StoreOptions,
     private val crdtType: ParcelableCrdtType,
-    lifecycle: Lifecycle,
     private val connectionFactory: ConnectionFactory,
     private val coroutineContext: CoroutineContext
-) : ActiveStore<Data, Op, ConsumerData>(options), LifecycleObserver {
+) : ActiveStore<Data, Op, ConsumerData>(options) {
     // TODO(#5551): Consider including hash of options.storageKey for tracking.
     private val log = TaggedLog { "ServiceStore" }
     private val scope = CoroutineScope(coroutineContext)
@@ -116,7 +123,6 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     private val outgoingMessages = atomic(0)
 
     init {
-        lifecycle.addObserver(this)
         initChannel()
     }
 
@@ -214,9 +220,8 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
         this.storageService = service
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-    fun onLifecycleDestroyed() {
+    override fun close() {
         serviceConnection?.disconnect()
         storageService = null
         channel?.cancel()

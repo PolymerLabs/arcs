@@ -18,16 +18,20 @@ import {generateSchema} from './kotlin-schema-generator.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
+export type CodeGenContext = {
+  namespace?: string
+};
+
 /**
  * Generates a Kotlin type instance for the given handle connection.
  */
-export async function generateConnectionType(connection: HandleConnection): Promise<string> {
-  return generateConnectionSpecType(connection.spec, new SchemaGraph(connection.particle.spec).nodes);
+export async function generateConnectionType(connection: HandleConnection, context: CodeGenContext = {}): Promise<string> {
+  return generateConnectionSpecType(connection.spec, new SchemaGraph(connection.particle.spec).nodes, context);
 }
 
-export async function generateConnectionSpecType(connection: HandleConnectionSpec, nodes: SchemaNode[]): Promise<string> {
+export async function generateConnectionSpecType(connection: HandleConnectionSpec, nodes: SchemaNode[], context: CodeGenContext = {}): Promise<string> {
   let type = connection.type;
-  if (type.isEntity || type.isReference) {
+  if (type.isEntity || type.isReference || type.isVariable) {
     // Moving to the new style types with explicit singleton.
     type = type.singletonOf();
   }
@@ -36,7 +40,11 @@ export async function generateConnectionSpecType(connection: HandleConnectionSpe
     if (!type.isEntity) return null;
     if (connection.type.hasVariable) return null;
     const node = nodes.find(n => n.schema.equals(type.getEntitySchema()));
-    return ktUtils.applyFun('EntityType', [`${node.fullName(connection)}.SCHEMA`]);
+    let schemaReference = `${node.fullName(connection)}.SCHEMA`;
+    if (node.particleSpec.manifestNamespace && node.particleSpec.manifestNamespace !== context.namespace) {
+      schemaReference = `${node.particleSpec.manifestNamespace}.${schemaReference}`;
+    }
+    return ktUtils.applyFun('arcs.core.data.EntityType', [schemaReference]);
   });
 }
 
@@ -47,22 +55,23 @@ export async function generateConnectionSpecType(connection: HandleConnectionSpe
  */
 export async function generateType(type: Type, overrideFunction: (type: Type) => string | null = _ => null): Promise<string> {
   return (async function generate(type: Type): Promise<string> {
+    const pkg = 'arcs.core.data';
     const override = overrideFunction(type);
     if (override != null) {
       return override;
     } else if (type.isEntity) {
-      return ktUtils.applyFun('EntityType', [await generateSchema(type.getEntitySchema())]);
+      return ktUtils.applyFun(`${pkg}.EntityType`, [await generateSchema(type.getEntitySchema())]);
     } else if (type.isVariable) {
       assert(type.maybeEnsureResolved(), 'Unresolved type variables are not currently supported');
       return generate(type.resolvedType());
     } else if (type.isCollection) {
-      return ktUtils.applyFun('CollectionType', [await generate(type.getContainedType())]);
+      return ktUtils.applyFun(`${pkg}.CollectionType`, [await generate(type.getContainedType())]);
     } else if (type.isSingleton) {
-      return ktUtils.applyFun('SingletonType', [await generate(type.getContainedType())]);
+      return ktUtils.applyFun(`${pkg}.SingletonType`, [await generate(type.getContainedType())]);
     } else if (type.isReference) {
-      return ktUtils.applyFun('ReferenceType', [await generate(type.getContainedType())]);
+      return ktUtils.applyFun(`${pkg}.ReferenceType`, [await generate(type.getContainedType())]);
     } else if (type.isTuple) {
-      return ktUtils.applyFun('TupleType.of', await Promise.all(type.getContainedTypes().map(t => generate(t))));
+      return ktUtils.applyFun(`${pkg}.TupleType.of`, await Promise.all(type.getContainedTypes().map(t => generate(t))));
     } else {
       throw new Error(`Type '${type.tag}' not supported as code generated handle connection type.`);
     }

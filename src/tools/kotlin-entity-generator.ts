@@ -74,15 +74,18 @@ export class KotlinEntityGenerator implements EntityGenerator {
     if (this.opts.wasm) {
       baseClass = 'WasmEntity';
     } else {
-      const concreteOrVariableEntity = this.node.variableName == null ? 'EntityBase' : 'VariableEntityBase';
-      baseClass = ktUtils.applyFun(concreteOrVariableEntity, [
-        quote(this.className), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp', this.node.isNested + ''
-      ]);
+      const concreteOrVariableEntity =
+        this.node.variableName == null ? 'arcs.sdk.EntityBase' : 'arcs.core.entity.VariableEntityBase';
+      baseClass = ktUtils.applyFun(
+        concreteOrVariableEntity,
+        [quote(this.className), 'SCHEMA', 'entityId', 'creationTimestamp', 'expirationTimestamp', this.node.isNested + ''],
+        {numberOfIndents: 1}
+      );
 
       constructorFields = constructorFields.concat([
         'entityId: String? = null',
-        'creationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP',
-        'expirationTimestamp: Long = RawEntity.UNINITIALIZED_TIMESTAMP',
+        'creationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP',
+        'expirationTimestamp: Long = arcs.core.data.RawEntity.UNINITIALIZED_TIMESTAMP',
       ]);
     }
 
@@ -134,6 +137,7 @@ export class KotlinEntityGenerator implements EntityGenerator {
          * Storing the copy will result in a new copy of the data being stored.
          */`}
         ${copy}
+
         ${this.opts.wasm ? `` : `/**
          * Use this method to create a new version of an existing entity.
          * Storing the mutation will overwrite the existing entity in the set, if it exists.
@@ -221,11 +225,11 @@ var ${escaped}: ${type.kotlinType}
 
   private async generateEntitySpec() {
     const fieldCount = Object.keys(this.node.schema.fields).length;
-    return `companion object : ${this.prefixTypeForRuntime('EntitySpec')}<${this.className}> {
+    return `companion object : ${this.opts.wasm ? 'WasmEntitySpec' : 'arcs.sdk.EntitySpec'}<${this.className}> {
             ${this.opts.wasm ? '' : `
             override val SCHEMA = ${leftPad(await generateSchema(this.node.schema), 12, true)}
 
-            private val nestedEntitySpecs: Map<String, EntitySpec<out Entity>> =
+            private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
                 ${ktUtils.mapOf(
                   this.fields
                     .map(field => field.type.unwrap())
@@ -235,10 +239,10 @@ var ${escaped}: ${type.kotlinType}
                 )}
 
             init {
-                SchemaRegistry.register(SCHEMA)
+                arcs.core.data.SchemaRegistry.register(SCHEMA)
             }`}
             ${!this.opts.wasm ? `
-            override fun deserialize(data: RawEntity) = ${this.className}().apply {
+            override fun deserialize(data: arcs.core.data.RawEntity) = ${this.className}().apply {
                 deserialize(data, nestedEntitySpecs)
             }` : `
             override fun decode(encoded: ByteArray): ${this.className}? {
@@ -280,9 +284,5 @@ var ${escaped}: ${type.kotlinType}
                 return _rtn
             }`}
         }`;
-  }
-
-  private prefixTypeForRuntime(type: string): string {
-    return this.opts.wasm ? `Wasm${type}` : `${type}`;
   }
 }

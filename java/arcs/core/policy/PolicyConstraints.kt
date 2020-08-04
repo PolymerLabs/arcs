@@ -5,8 +5,6 @@ import arcs.core.data.Check
 import arcs.core.data.Claim
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.InformationFlowLabel.SemanticTag
-import arcs.core.data.ParticleSpec
-import arcs.core.data.Recipe
 import arcs.core.data.StoreId
 
 /**
@@ -15,7 +13,7 @@ import arcs.core.data.StoreId
  */
 data class PolicyConstraints(
     val policy: Policy,
-    val egressChecks: Map<ParticleSpec, List<Check>>,
+    val egressCheck: Predicate,
     val storeClaims: Map<StoreId, List<Claim>>
 )
 
@@ -26,25 +24,9 @@ data class PolicyConstraints(
  * @return additional checks and claims for the particles as a [PolicyConstraints] object
  * @throws PolicyViolation if the [particles] violate the [policy]
  */
-fun translatePolicy(policy: Policy, recipe: Recipe, options: PolicyOptions): PolicyConstraints {
-    val egressParticles = recipe.particles.filterNot { it.spec.isolated }
-    checkEgressParticles(policy, egressParticles)
-
-    // Add check statements to every egress particle node.
+fun translatePolicy(policy: Policy, options: PolicyOptions): PolicyConstraints {
+    // Compute the predicate that will enforce the policy at an egress.
     val egressCheckPredicate = createEgressCheckPredicate(policy)
-    val egressChecks = egressParticles.associate { particle ->
-        // Each handle connection needs its own check statement.
-        val checks = particle.spec.connections.values
-            .filter {
-                // TODO(b/157605232): Also check canQuery -- but first, need to add QUERY to the
-                // Direction enum in the manifest proto.
-                it.direction.canRead
-            }
-            .map { connectionSpec ->
-                Check.Assert(AccessPath(particle, connectionSpec), egressCheckPredicate)
-            }
-        particle.spec to checks
-    }
 
     // Add claim statements for stores.
     val storeClaims = mutableMapOf<StoreId, List<Claim>>()
@@ -63,7 +45,7 @@ fun translatePolicy(policy: Policy, recipe: Recipe, options: PolicyOptions): Pol
 
     return PolicyConstraints(
         policy,
-        egressChecks,
+        egressCheckPredicate,
         storeClaims.filterValues { it.isNotEmpty() }
     )
 }
@@ -114,25 +96,6 @@ private fun PolicyField.createStoreClaimPredicate(): Predicate? {
 }
 
 /**
- * Verifies that the given egress particle nodes match the policy. The only egress particle allowed
- * to be used with a policy named `Foo` is an egress particle named `Egress_Foo`.
- */
-private fun checkEgressParticles(policy: Policy, egressParticles: List<Recipe.Particle>) {
-    val numValidEgressParticles = egressParticles.count {
-        it.spec.name == policy.egressParticleName
-    }
-    if (numValidEgressParticles > 1) {
-        throw PolicyViolation.MultipleEgressParticles(policy)
-    }
-    val invalidEgressParticles = egressParticles
-        .map { it.spec }
-        .filter { it.name != policy.egressParticleName }
-    if (invalidEgressParticles.isNotEmpty()) {
-        throw PolicyViolation.InvalidEgressParticle(policy, invalidEgressParticles.map { it.name })
-    }
-}
-
-/**
  * Constructs the [Predicate] that is to be used for checks on egress particles in the given
  * [Policy].
  *
@@ -169,26 +132,36 @@ sealed class PolicyViolation(val policy: Policy, message: String) : Exception(
     "Policy ${policy.name} violated: $message"
 ) {
     /** Thrown when egress particles were found in the recipe that are not allowed by policy. */
-    class InvalidEgressParticle(
+    class InvalidEgressParticles(
         policy: Policy,
-        val particleNames: List<String>
+        val allowedEgresses: List<String>,
+        val invalidEgresses: List<String>
     ) : PolicyViolation(
         policy,
-        "Egress particle allowed by policy is ${policy.egressParticleName} but found: " +
-            particleNames.joinToString()
+        "Invalid egress particles found: " +
+        invalidEgresses.toSortedSet().joinToString(prefix = "{", postfix = "}, ") +
+        "allowed egress particles: " +
+        allowedEgresses.toSortedSet().joinToString(prefix = "{", postfix = "}")
     )
 
-    /** Thrown when multiple egress particles were found in the recipe. */
-    class MultipleEgressParticles(policy: Policy) : PolicyViolation(
+    /** Thrown when policy has no egress particles associated with it. */
+    class PolicyHasNoEgressParticles(policy: Policy) : PolicyViolation(
         policy,
-        "Multiple egress particles named ${policy.egressParticleName} found for policy"
+        "No egress particles specified for policy"
     )
 
+    /** Thrown when there is no store associated with schema. */
     class NoStoreForPolicyTarget(
         policy: Policy,
         target: PolicyTarget
     ) : PolicyViolation(
         policy,
-        "No store found for policy target $target mentioned in ${policy.name}"
+        "No store found for policy target `${target.schemaName}`"
     )
+
+    /** Thrown when policy checks are violated by a recipe. */
+    class ChecksViolated(
+        policy: Policy,
+        checks: List<Check>
+    ) : PolicyViolation(policy, "Recipe violates egress checks: $checks")
 }

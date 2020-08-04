@@ -56,7 +56,7 @@ export type StoreConstructorOptions<T extends CRDTTypeRecord> = {
 };
 
 export type StoreConstructor = {
-  construct<T extends CRDTTypeRecord>(options: StoreConstructorOptions<T>): Promise<AbstractActiveStore<T>>;
+  construct<T extends CRDTTypeRecord>(options: StoreConstructorOptions<T>): Promise<ActiveStore<T>>;
 };
 
 // Interface common to an ActiveStore and the PEC, used by the StorageProxy.
@@ -71,28 +71,14 @@ export interface StorageCommunicationEndpointProvider<T extends CRDTTypeRecord> 
   getStorageEndpoint(storageProxy: StorageProxy<T> | StorageProxyMuxer<T>): StorageCommunicationEndpoint<T>;
 }
 
-export interface AbstractActiveStore<T extends CRDTTypeRecord> {
-  versionToken: string;
-  baseStore: AbstractStore;
-  on(callback: ProxyCallback<T>): number;
-  off(callback: number): void;
-  onProxyMessage(message: ProxyMessage<T>): Promise<void>;
-  reportExceptionInHost(exception: PropagatedException): void;
-  cloneFrom(store: AbstractActiveStore<T>): Promise<void>;
-}
-
-export function isActiveStore(abstractActiveStore: AbstractActiveStore<CRDTTypeRecord>): abstractActiveStore is ActiveStore<CRDTTypeRecord> {
-  return (!abstractActiveStore.baseStore.type.isMux);
-}
-
-export function isActiveMuxer(abstractActiveStore: AbstractActiveStore<CRDTTypeRecord>): abstractActiveStore is ActiveMuxer<CRDTMuxEntity> {
-  return (abstractActiveStore.baseStore.type.isMux);
+export function isActiveMuxer(activeStore: ActiveStore<CRDTTypeRecord>): activeStore is ActiveMuxer<CRDTMuxEntity> {
+  return (activeStore.baseStore.type.isMux);
 }
 
 // A representation of an active store. Subclasses of this class provide specific
 // behaviour as controlled by the provided StorageMode.
 export abstract class ActiveStore<T extends CRDTTypeRecord>
-    implements StoreInterface<T>, StorageCommunicationEndpointProvider<T>, AbstractActiveStore<T> {
+    implements StoreInterface<T>, StorageCommunicationEndpointProvider<T> {
   readonly storageKey: StorageKey;
   exists: Exists;
   readonly type: CRDTTypeRecordToType<T>;
@@ -171,26 +157,14 @@ export abstract class ActiveStore<T extends CRDTTypeRecord>
     };
   }
 }
-export abstract class ActiveMuxer<T extends CRDTTypeRecord> implements StorageCommunicationEndpointProvider<T>, AbstractActiveStore<T> {
-  abstract versionToken: string;
-  readonly baseStore: AbstractStore;
+export abstract class ActiveMuxer<T extends CRDTTypeRecord> extends ActiveStore<T> {
   abstract readonly stores: Dictionary<StoreRecord<T>>;
-
-  // TODO: Lots of these params can be pulled from baseStore.
-  constructor(options: StoreConstructorOptions<T>) {
-    this.baseStore = options.baseStore;
-  }
-
-  abstract on(callback: ProxyCallback<T>): number;
-  abstract off(callback: number): void;
-  abstract async onProxyMessage(message: ProxyMessage<T>): Promise<void>;
-  abstract reportExceptionInHost(exception: PropagatedException): void;
 
   abstract getLocalModel(muxId: string, id: number): CRDTModel<T>;
 
-  async cloneFrom(store: ActiveMuxer<T>): Promise<void> {
+  async cloneFrom(store: ActiveStore<T>): Promise<void> {
     assert(store instanceof ActiveMuxer);
-    const activeMuxer : ActiveMuxer<T> = store as ActiveMuxer<T>;
+    const activeMuxer : ActiveMuxer<T> = store as unknown as ActiveMuxer<T>;
     for (const muxId of Object.keys(activeMuxer.stores)) {
       await this.onProxyMessage({
         type: ProxyMessageType.ModelUpdate,
@@ -200,33 +174,7 @@ export abstract class ActiveMuxer<T extends CRDTTypeRecord> implements StorageCo
     }
   }
 
-  getStorageEndpoint() {
-    const directStoreMuxer = this;
-    let id: number;
-    return {
-      async onProxyMessage(message: ProxyMessage<T>): Promise<void> {
-        message.id = id!;
-        noAwait(directStoreMuxer.onProxyMessage(message));
-      },
-      setCallback(callback: ProxyCallback<T>) {
-        id = directStoreMuxer.on(callback);
-      },
-      reportExceptionInHost(exception: PropagatedException): void {
-        directStoreMuxer.reportExceptionInHost(exception);
-      },
-      getChannelConstructor(): ChannelConstructor {
-        return {
-          generateID() {
-            return null;
-          },
-          idGenerator: null,
-          getStorageProxyMuxer() {
-            throw new Error('unimplemented, should not be called');
-          },
-          reportExceptionInHost(exception: PropagatedException): void {
-          }
-        };
-      }
-    };
+  async serializeContents(): Promise<T['data']> {
+    throw new Error('Active Muxer contents can not be serialized.');
   }
 }

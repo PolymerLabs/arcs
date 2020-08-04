@@ -89,7 +89,8 @@ class InformationFlowTest {
             "fail-derives-from-cycle",
             "fail-derives-from-multiple",
             "fail-join-tuple-components",
-            "fail-check-on-subpaths"
+            "fail-check-on-subpaths",
+            "fail-no-claim-is-empty-labels"
         )
         val okTests = listOf(
             "ok-directly-satisfied",
@@ -114,6 +115,7 @@ class InformationFlowTest {
             "fail-field-entity-ref-direct",
             "fail-field-collection-direct",
             "fail-field-claim-propagates",
+            "fail-field-claim-propagates-type-variables",
             "fail-field-merge-multiple-paths"
         )
         val okFieldTests = listOf(
@@ -121,6 +123,7 @@ class InformationFlowTest {
             "ok-field-entity-ref-direct",
             "ok-field-collection-direct",
             "ok-field-claim-propagates",
+            "ok-field-claim-propagates-type-variables",
             "ok-field-merge-multiple-paths"
         )
         val okCycleTests = listOf(

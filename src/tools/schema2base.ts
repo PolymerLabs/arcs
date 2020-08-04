@@ -61,8 +61,7 @@ export abstract class Schema2Base {
 
     const classes = await this.processManifest(manifest);
     if (classes.length === 0) {
-      console.warn(`Could not find any particle connections with schemas in '${src}'`);
-      return;
+      console.warn(`Could not find any particle in '${src}'`);
     }
 
     const outFile = fs.openSync(outPath, 'w');

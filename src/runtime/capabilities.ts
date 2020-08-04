@@ -55,7 +55,7 @@ export abstract class Capability {
   }
 
   /**
-   * Returns true, if the given capability is not null and stricter than this.
+   * Returns true, if the given Capability is not null and at least as strict as this.
    */
   isAllowedForIngress(other: Capability|null): boolean {
     return other && this.isSameOrLessStrict(other);
@@ -138,6 +138,13 @@ export class Persistence extends Capability {
       return CapabilityComparison.Stricter;
     }
     return CapabilityComparison.LessStrict;
+  }
+
+  /**
+   * Returns true, Persistence kinds are equivalent.
+   */
+  isAllowedForIngress(other: Capability|null): boolean {
+    return other && this.isEquivalent(other);
   }
 
   toDebugString(): string { return this.kind.toString(); }
@@ -576,18 +583,17 @@ export class Capabilities {
    * restrictive as the given handle's capabilities. The errors list will
    * contain messages on non complying ranges.
    */
-  // TODO(b/160820832): Consider introducing `unspecified` Capability for each
-  // subclass and have Capabilities always contain all ranges.
   isAllowedForIngress(handleCapabilities: Capabilities): IngressValidationResult {
     for (const range of this.ranges) {
       const handleRange = handleCapabilities.findCompatible(range.min);
       if (!range.isAllowedForIngress(handleRange)) {
-        return IngressValidationResult.failWith(range,
-            `${range.min.toDebugString()} is stricter than ` +
-            `${handleRange ? handleRange.toDebugString() : 'unspecified'}`);
+        return IngressValidationResult.failWith(this,
+            `Capabilities ${this.toDebugString()} failed to validate ingress: ` +
+            `'${range.min.toDebugString()}' is not compatible for ingress with ` +
+            `'${handleRange ? handleRange.toDebugString() : 'unspecified'}'`);
       }
     }
-    return IngressValidationResult.success();
+    return IngressValidationResult.success(this);
   }
 
   toDebugString(): string {

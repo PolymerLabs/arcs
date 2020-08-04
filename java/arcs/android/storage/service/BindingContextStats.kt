@@ -74,7 +74,12 @@ class BindingContextStatsImpl : BindingContextStatistics {
 
     override fun measure(context: CoroutineContext, block: suspend () -> Unit) {
         val startTime = System.currentTimeMillis()
-        runBlocking(context) {
+        // TODO(ianchang):
+        // Should remove all runBlocking calls at least runBlocking(someCtx)
+        // at AIDLs and their sub-functions.
+        // Already tried CoroutineScope(context).launch {...} but a few tests like
+        // StorageServiceTest, BindingContextTest, etc become flaky.
+        runBlocking {
             try {
                 block()
             } finally {

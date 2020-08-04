@@ -23,6 +23,7 @@ import arcs.core.util.JsonValue.JsonNumber
 import arcs.core.util.JsonValue.JsonObject
 import arcs.core.util.JsonValue.JsonString
 import arcs.core.util.JsonVisitor
+import java.math.BigInteger
 
 /** Traverses a tree of [Expression] objects, serializing it into a JSON format. */
 class ExpressionSerializer() :
@@ -54,6 +55,13 @@ class ExpressionSerializer() :
             )
         )
 
+    override fun <E : Expression.Scope> visit(expr: Expression.CurrentScopeExpression<E>) =
+        JsonObject(
+            mapOf(
+                "op" to JsonString("this")
+            )
+        )
+
     override fun <T> visit(expr: Expression.QueryParameterExpression<T>) =
         JsonObject(
             mapOf(
@@ -62,7 +70,7 @@ class ExpressionSerializer() :
             )
         )
 
-    override fun visit(expr: Expression.NumberLiteralExpression) = JsonNumber(expr.value.toDouble())
+    override fun visit(expr: Expression.NumberLiteralExpression) = toNumber(expr.value)
 
     override fun visit(expr: Expression.TextLiteralExpression) = JsonString(expr.value)
 
@@ -103,6 +111,8 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                     visit(value["expr"]) as Expression<Any>
                 )
             }
+            type == "number" -> Expression.NumberLiteralExpression(fromNumber(value))
+            type == "this" -> Expression.CurrentScopeExpression<Expression.Scope>()
             type == "?" -> Expression.QueryParameterExpression<Any>(value["identifier"].string()!!)
             else -> throw IllegalArgumentException("Unknown type $type during deserialization")
         }
@@ -117,3 +127,37 @@ fun <T> Expression<T>.serialize() = this.accept(ExpressionSerializer()).toString
 
 /** Given a serialized [Expression], deserialize it. */
 fun String.deserializeExpression() = ExpressionDeserializer().visit(Json.parse(this))
+
+private fun toNumberType(value: Number) = when (value) {
+    is Float -> "F"
+    is Int -> "I"
+    is Short -> "S"
+    is Double -> "D"
+    is BigInteger -> "BI"
+    is Long -> "L"
+    is Byte -> "B"
+    else -> throw IllegalArgumentException("Unknown type of number $value, ${value::class}")
+}
+
+private fun toDouble(value: JsonObject) = value["value"].string()!!.toDouble()
+
+private fun toInt(value: JsonObject) = value["value"].string()!!.toInt()
+
+private fun fromNumber(value: JsonObject): Number = when (value["type"].string()!!) {
+    "F" -> toDouble(value).toFloat()
+    "D" -> toDouble(value)
+    "I" -> toInt(value)
+    "S" -> toInt(value).toShort()
+    "B" -> toInt(value).toByte()
+    "L" -> value["value"].string()!!.toLong()
+    "BI" -> value["value"].string()!!.toBigInteger()
+    else -> throw IllegalArgumentException("Unknown numeric type ${value["type"]}")
+}
+
+private fun toNumber(value: Number) = JsonObject(
+    mutableMapOf(
+        "op" to JsonString("number"),
+        "type" to JsonString(toNumberType(value)),
+        "value" to JsonString(value.toString())
+    )
+)

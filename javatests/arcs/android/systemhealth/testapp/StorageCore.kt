@@ -15,7 +15,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Debug
 import android.os.Trace
-import androidx.lifecycle.Lifecycle
 import arcs.android.systemhealth.testapp.Dispatchers as ArcsDispatchers
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
@@ -96,7 +95,7 @@ private typealias TaskEventQueue<T> = Pair<ReadWriteLock, MutableList<T>>
 
 /** System health test core for performance, power, memory footprint and stability. */
 @ExperimentalCoroutinesApi
-class StorageCore(val context: Context, val lifecycle: Lifecycle) {
+class StorageCore(val context: Context) {
     /** Query the last record of system-health stats */
     val statsBulletin: String
         get() = _statsBulletin.value
@@ -267,6 +266,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
 
         // Task and handle manager assignments
         controllers = arrayOfNulls(numOfTasks)
+
         handles = tasks.mapIndexed { id, task ->
             // Per-task single-threaded execution context with Watchdog monitoring instabilities
             val taskCoroutineContext =
@@ -277,28 +277,29 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                         performanceExceptionHandler(id)
                     }
 
+            val stores = StoreManager(
+                activationFactory = ServiceStoreFactory(
+                    context,
+                    taskCoroutineContext,
+                    DefaultConnectionFactory(
+                        context,
+                        if (settings.function == Function.STABILITY_TEST) {
+                            StabilityStorageServiceBindingDelegate(context)
+                        } else {
+                            PerformanceStorageServiceBindingDelegate(context)
+                        },
+                        taskCoroutineContext
+                    )
+                )
+            )
             TaskHandle(
                 EntityHandleManager(
                     time = JvmTime,
-                    stores = StoreManager(
-                        activationFactory = ServiceStoreFactory(
-                            context,
-                            lifecycle,
-                            taskCoroutineContext,
-                            DefaultConnectionFactory(
-                                context,
-                                if (settings.function == Function.STABILITY_TEST) {
-                                    StabilityStorageServiceBindingDelegate(context)
-                                } else {
-                                    PerformanceStorageServiceBindingDelegate(context)
-                                },
-                                taskCoroutineContext
-                            )
-                        )
-                    ),
+                    stores = stores,
                     // Per-task single-threaded Scheduler being cascaded with Watchdog capabilities
                     scheduler = TestSchedulerProvider(taskCoroutineContext)("sysHealthStorageCore")
                 ),
+                stores,
                 taskCoroutineContext
             ).apply {
                 val taskType = when {
@@ -424,7 +425,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 }
             }
 
-            handle.onUpdate { entity ->
+            handle.onUpdate { delta ->
                 if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
                     val time = System.currentTimeMillis()
                     tasksEvents[taskId]?.writer?.withLock {
@@ -435,7 +436,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                                 else
                                     TaskEventId.HANDLE_STORE_READER_END,
                                 time,
-                                entity?.number
+                                delta.new?.number
                             )
                         )
                     }
@@ -474,7 +475,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                 }
             }
 
-            handle.onUpdate { entity ->
+            handle.onUpdate {
                 if (settings.function == Function.LATENCY_BACKPRESSURE_TEST) {
                     val time = System.currentTimeMillis()
                     tasksEvents[taskId]?.writer?.withLock {
@@ -485,7 +486,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
                                 else
                                     TaskEventId.HANDLE_STORE_READER_END,
                                 time,
-                                entity.map { it.number }.toSet()
+                                handle.fetchAll().mapTo(mutableSetOf(), TestEntity::number)
                             )
                         )
                     }
@@ -725,6 +726,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
             handles.forEach {
                 runBlocking {
                     it.handleManager.close()
+                    it.stores.reset()
                 }
             }
             handles = emptyArray()
@@ -1150,6 +1152,7 @@ class StorageCore(val context: Context, val lifecycle: Lifecycle) {
 
     private data class TaskHandle(
         val handleManager: EntityHandleManager,
+        val stores: StoreManager,
         val coroutineContext: CoroutineContext,
         var handle: Any? = null
     )

@@ -14,6 +14,7 @@ package arcs.core.storage.driver
 import arcs.core.common.ArcId
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
+import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.type.Tag
 import arcs.core.type.Type
@@ -30,15 +31,13 @@ import org.junit.runners.JUnit4
 class VolatileDriverProviderTest {
     private lateinit var arcIdFoo: ArcId
     private lateinit var arcIdBar: ArcId
-    private lateinit var fooProvider: VolatileDriverProvider
-    private lateinit var barProvider: VolatileDriverProvider
+    private lateinit var providerFactory: VolatileDriverProviderFactory
 
     @Before
     fun setup() {
         arcIdFoo = ArcId.newForTest("foo")
         arcIdBar = ArcId.newForTest("bar")
-        fooProvider = VolatileDriverProvider(arcIdFoo)
-        barProvider = VolatileDriverProvider(arcIdBar)
+        providerFactory = VolatileDriverProviderFactory()
     }
 
     @After
@@ -48,14 +47,15 @@ class VolatileDriverProviderTest {
 
     @Test
     fun constructor_registersSelfWithDriverFactory() {
+        assertThat(providerFactory.arcIds).isEmpty()
         // These also cover testing the happy-path of willSupport on VolatileDriverProvider itself.
         assertThat(DriverFactory.willSupport(VolatileStorageKey(arcIdFoo, "myfoo"))).isTrue()
         assertThat(DriverFactory.willSupport(VolatileStorageKey(arcIdBar, "mybar"))).isTrue()
+        assertThat(providerFactory.arcIds).isEqualTo(setOf(arcIdFoo, arcIdBar))
 
         // Make sure it's not returning true for just anything.
-        assertThat(
-            DriverFactory.willSupport(VolatileStorageKey(ArcId.newForTest("baz"), "myBaz"))
-        ).isFalse()
+        assertThat(DriverFactory.willSupport(RamDiskStorageKey("baz"))).isFalse()
+        assertThat(providerFactory.arcIds).isEqualTo(setOf(arcIdFoo, arcIdBar))
     }
 
     @Test
@@ -65,18 +65,13 @@ class VolatileDriverProviderTest {
             override fun childKeyWithComponent(component: String) = NonVolatileKey()
         }
 
-        assertThat(fooProvider.willSupport(NonVolatileKey())).isFalse()
-    }
-
-    @Test
-    fun willSupport_requiresArcIdMatch() {
-        assertThat(fooProvider.willSupport(VolatileStorageKey(arcIdBar, "mybar"))).isFalse()
+        assertThat(providerFactory.willSupport(NonVolatileKey())).isFalse()
     }
 
     @Test
     fun getDriver_getsDriverForStorageKey() = runBlocking {
         val driver =
-            fooProvider.getDriver(
+            providerFactory.getDriver(
                 VolatileStorageKey(arcIdFoo, "myfoo"),
                 Int::class,
                 DummyType

@@ -7,9 +7,11 @@ import arcs.core.data.Capability.Shareable
 import arcs.core.data.CreatableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
+import arcs.core.host.ArcHostContext
 import arcs.core.host.ArcState
 import arcs.core.host.DeserializedException
 import arcs.core.host.EntityHandleManager
+import arcs.core.host.HelloHelloPlan
 import arcs.core.host.HostRegistry
 import arcs.core.host.ParticleNotFoundException
 import arcs.core.host.ParticleState
@@ -24,7 +26,7 @@ import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
-import arcs.core.storage.driver.VolatileDriverProvider
+import arcs.core.storage.driver.VolatileDriverProviderFactory
 import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.fail
 import arcs.core.util.Log
@@ -43,7 +45,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -111,6 +112,7 @@ open class AllocatorTestBase {
         RamDisk.clear()
         DriverAndKeyConfigurator.configureKeyParsers()
         RamDiskDriverProvider()
+        VolatileDriverProviderFactory()
 
         readingExternalHost = readingHost()
         writingExternalHost = writingHost()
@@ -270,7 +272,6 @@ open class AllocatorTestBase {
     open fun allocator_verifyStorageKeysNotOverwritten() = runAllocatorTest {
         val idGenerator = Id.Generator.newSession()
         val testArcId = idGenerator.newArcId("Test")
-        VolatileDriverProvider(testArcId)
 
         val resolver = CapabilitiesResolver(CapabilitiesResolver.Options(testArcId))
         val inputPerson = resolver.createStorageKey(
@@ -355,6 +356,44 @@ open class AllocatorTestBase {
         }
     }
 
+    private fun particleToContext(context: ArcHostContext, particle: Plan.Particle) =
+        context.particles.first {
+            it.planParticle.particleName == particle.particleName
+        }
+
+    @Test
+    open fun allocator_canRunArcWithSameParticleTwice() = runAllocatorTest {
+        val arc = allocator.startArcForPlan(HelloHelloPlan)
+        val arcId = arc.id
+
+        arc.waitForStart()
+
+        val readingContext = requireNotNull(
+            readingExternalHost.arcHostContext(arcId.toString())
+        )
+        val writingContext = requireNotNull(
+            writingExternalHost.arcHostContext(arcId.toString())
+        )
+
+        val readPersonContext = particleToContext(readingContext, readPersonParticle)
+
+        val writePersonContext = particleToContext(writingContext, writePersonParticle)
+
+        writePersonContext.particle.let { particle ->
+            particle as WritePerson
+            particle.await()
+            assertThat(particle.firstStartCalled).isTrue()
+            assertThat(particle.wrote).isTrue()
+        }
+
+        readPersonContext.particle.let { particle ->
+            particle as ReadPerson
+            particle.await()
+            assertThat(particle.firstStartCalled).isTrue()
+            assertThat(particle.name).isEqualTo("Hello Hello John Wick")
+        }
+    }
+
     @Test
     open fun allocator_canStartArcInTwoExternalHosts() = runAllocatorTest {
         val arc = allocator.startArcForPlan(PersonPlan)
@@ -381,13 +420,9 @@ open class AllocatorTestBase {
 
         assertAllStatus(arc, ArcState.Running)
 
-        val readPersonContext = requireNotNull(
-            readingContext.particles[readPersonParticle.particleName]
-        )
+        val readPersonContext = particleToContext(readingContext, readPersonParticle)
 
-        val writePersonContext = requireNotNull(
-            writingContext.particles[writePersonParticle.particleName]
-        )
+        val writePersonContext = particleToContext(writingContext, writePersonParticle)
 
         assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Running)
         assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Running)
@@ -425,13 +460,9 @@ open class AllocatorTestBase {
 
         assertAllStatus(arc, ArcState.Stopped)
 
-        val readPersonContext = requireNotNull(
-            readingContext.particles[readPersonParticle.particleName]
-        )
+        val readPersonContext = particleToContext(readingContext, readPersonParticle)
 
-        val writePersonContext = requireNotNull(
-            writingContext.particles[writePersonParticle.particleName]
-        )
+        val writePersonContext = particleToContext(writingContext, writePersonParticle)
 
         assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Stopped)
         assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Stopped)
@@ -473,13 +504,9 @@ open class AllocatorTestBase {
 
         assertAllStatus(arc, ArcState.Running)
 
-        val readPersonContext = requireNotNull(
-            readingContextAfter.particles[readPersonParticle.particleName]
-        )
+        val readPersonContext = particleToContext(readingContextAfter, readPersonParticle)
 
-        val writePersonContext = requireNotNull(
-            writingContextAfter.particles[writePersonParticle.particleName]
-        )
+        val writePersonContext = particleToContext(writingContextAfter, writePersonParticle)
 
         assertThat(readPersonContext.particleState).isEqualTo(ParticleState.Running)
         assertThat(writePersonContext.particleState).isEqualTo(ParticleState.Running)
@@ -518,7 +545,6 @@ open class AllocatorTestBase {
     }
 
     @Test
-    @Ignore("Flaking: b/161926251")
     open fun allocator_doesntCreateArcsOnDuplicateStartArc() = runAllocatorTest {
         val arc = allocator.startArcForPlan(PersonPlan).waitForStart()
 

@@ -93,7 +93,9 @@
   }
 
   function toAstNode<T extends {location: IFileRange} & Omit<T, 'location'>>(data: Omit<T, 'location'>): T {
-    return {...data, location: location()} as T;
+    const loc = location();
+    loc['text'] = text();
+    return {...data, location: loc} as T;
   }
 
   function buildInterfaceArgument(name: string, direction: AstNode.Direction | AstNode.SlotDirection, isOptional: boolean, type: AstNode.ParticleHandleConnectionType) {
@@ -174,7 +176,6 @@ ManifestItem
   / Resource
   / AnnotationNode
   / Policy
-  / Adapter
 
 Annotation = annotationRefs:(SameIndent AnnotationRef eolWhiteSpace)*
   {
@@ -678,7 +679,7 @@ NameWithColon
   }
 
 ParticleHandleConnectionBody
-  = name:NameWithColon? direction:(Direction '?'?)? whiteSpace type:ParticleHandleConnectionType annotations:SpaceAnnotationRefList? maybeTags:SpaceTagList?
+  = name:NameWithColon? direction:(Direction '?'?)? whiteSpace type:ParticleHandleConnectionType annotations:SpaceAnnotationRefList? maybeTags:SpaceTagList? expression:('=' multiLineSpace Expression)?
   {
     return toAstNode<AstNode.ParticleHandleConnection>({
       kind: 'particle-argument',
@@ -689,6 +690,7 @@ ParticleHandleConnectionBody
       name: name || (maybeTags && maybeTags[0]) || expected(`either a name or tags to be supplied ${name} ${maybeTags}`),
       tags: maybeTags || [],
       annotations: annotations || [],
+      expression: expression && expression[2]
     });
   }
 
@@ -1323,26 +1325,24 @@ RecipeHandleFate
   / '`slot'
 
 RecipeHandle
-  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? annotations:SpaceAnnotationRefList? whiteSpace? adapter:ApplyAdapter? eolWhiteSpace
+  = name:NameWithColon? fate:RecipeHandleFate ref:(whiteSpace HandleRef)? annotations:SpaceAnnotationRefList? whiteSpace? eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeHandle>({
       kind: 'handle',
       name,
       ref: optional(ref, ref => ref[1], emptyRef()) as AstNode.HandleRef,
       fate,
-      annotations: annotations || [],
-      adapter
+      annotations: annotations || []
     });
   }
 
 RecipeSyntheticHandle
-  = name:NameWithColon? 'join' whiteSpace '(' whiteSpace? first:lowerIdent rest:(whiteSpace? ',' whiteSpace? lowerIdent)* ')' whiteSpace? adapter:ApplyAdapter? eolWhiteSpace
+  = name:NameWithColon? 'join' whiteSpace '(' whiteSpace? first:lowerIdent rest:(whiteSpace? ',' whiteSpace? lowerIdent)* ')' whiteSpace? eolWhiteSpace
   {
     return toAstNode<AstNode.RecipeSyntheticHandle>({
       kind: 'synthetic-handle',
       name,
       associations: [first].concat(rest.map(t => t[3])),
-      adapter,
     });
   }
 
@@ -1613,7 +1613,7 @@ SchemaPrimitiveType
     });
   }
 
-NestedSchemaType = 'inline' whiteSpace? schema:SchemaInline
+NestedSchemaType = 'inline' whiteSpace? schema:(SchemaInline / TypeName)
   {
     return toAstNode<AstNode.NestedSchema>({
       kind: 'schema-nested',
@@ -1621,81 +1621,40 @@ NestedSchemaType = 'inline' whiteSpace? schema:SchemaInline
     });
   }
 
-Adapter "an adapter, (e.g. adapter Foo(param: Person { name: Text }) => Friend { nickName: param.name } )"
-  = 'adapter' whiteSpace adapterName:AdapterName '(' multiLineSpace? params:AdapterParamsDeclaration multiLineSpace? ')' whiteSpace? '=>' multiLineSpace? body:AdapterBodyDefinition eolWhiteSpace
-  {
-     return toAstNode<AstNode.AdapterNode>({
-       kind: 'adapter-node',
-       name: adapterName,
-       params,
-       body
-     });
-  }
+Expression
+  = ExpressionEntity 
 
-AdapterName
-  = upperIdent
-
-AdapterParamName
-  = fieldName
-
-AdapterParamsDeclaration
-  = param:AdapterParam restParams:(whiteSpace? ',' multiLineSpace AdapterParam)* {
-     const params = [param].concat(restParams.map(rparam => rparam[3]));
-     const names = params.map(p => p.name);
-     const duplicateNames = names.filter((item, index) => names.indexOf(item) !== index);
-     if (duplicateNames.length) {
-        error(`Duplicate adapter param names ${duplicateNames.join(',')}`);
-     } else {
-        return params;
-     }
-  }
-
-AdapterParam
-  = paramName:AdapterParamName whiteSpace? ':' whiteSpace? type:ParticleHandleConnectionType {
-     return toAstNode<AstNode.AdapterParam>({
-        kind: 'adapter-param',
-        name: paramName,
-        type
-     });
-  }
-
-AdapterBodyDefinition
-  = names:((upperIdent / '*') whiteSpace?)* '{' multiLineSpace fields:AdapterFields? ','? multiLineSpace '}' {
-     return toAstNode<AstNode.AdapterBodyDefinition>({
-        kind: 'adapter-body-definition',
+ExpressionEntity "Expression instantiating a new Arcs entity, e.g. new Foo {x: bar.x}"
+  = 'new' whiteSpace names:((upperIdent / '*') whiteSpace?)* '{' multiLineSpace fields:ExpressionEntityFields? ','? multiLineSpace '}' {
+     return toAstNode<AstNode.ExpressionEntity>({
+        kind: 'expression-entity',
         names: optional(names, names => names.map(name => name[0]).filter(name => name !== '*'), ['*']),
         fields
      });
   }
 
-AdapterFields
-  = field:AdapterField rest:(',' multiLineSpace AdapterField)* {
+ExpressionEntityFields
+  = field:ExpressionEntityField rest:(',' multiLineSpace ExpressionEntityField)* {
     return [field].concat(rest.map(rfield => rfield[2]));
   }
 
-AdapterField
-  = fieldName:fieldName whiteSpace? ':' whiteSpace? expression:AdapterScopeExpression {
-    return toAstNode<AstNode.AdapterField>({
-        kind: 'adapter-field',
+ExpressionEntityField
+  = fieldName:fieldName whiteSpace? ':' whiteSpace? expression:ExpressionScopeLookup {
+    return toAstNode<AstNode.ExpressionEntityField>({
+        kind: 'expression-entity-field',
         name: fieldName,
         expression
     });
   }
 
-AdapterScopeExpression "a dotted scope chain, starting at a root param, e.g. param.schemaFieldName.schemaFieldName"
-  = paramName:AdapterParamName scopeChain:('.' fieldName)* {
-    return toAstNode<AstNode.AdapterScopeExpression>({
-      kind: 'adapter-scope-expression',
-      scopeChain: [paramName].concat(scopeChain.map(scope => scope[1]))
-    });
-  }
+ExpressionParamName
+  = fieldName
 
-ApplyAdapter "an apply expression, e.g. apply AdapterName(param1, param2) or apply AdapterName(this)"
-  = 'apply' whiteSpace? adapterName:AdapterName '(' param:fieldName restParams:(',' whiteSpace? fieldName)* whiteSpace? ')' {
-    return toAstNode<AstNode.AppliedAdapter>({
-      kind: 'adapter-apply-node',
-      name: adapterName,
-      params: [param].concat(restParams.map(p => p[2]))
+ExpressionScopeLookup "a dotted scope chain, starting at a root param, e.g. param.schemaFieldName.schemaFieldName"
+  = paramName:ExpressionParamName scopeChain:('.' fieldName)* {
+    return toAstNode<AstNode.ExpressionScopeLookup>({
+      kind: 'expression-scope-lookup',
+      scopeChain: [paramName].concat(scopeChain.map(scope => scope[1]))
     });
   }
 
@@ -1815,14 +1774,8 @@ PrimaryExpression
     const operator = op[0];
     return toAstNode<AstNode.UnaryExpressionNode>({kind: 'unary-expression-node', expr, operator});
   }
-  / num: BigIntType units:Units?
-  {
-    return toAstNode<AstNode.BigIntNode>({kind: 'bigint-node', value: num, units});
-  }
-  / num: NumberType units:Units?
-  {
-    return toAstNode<AstNode.NumberNode>({kind: 'number-node', value: num, units});
-  }
+  / DiscreteValue
+  / NumberValue
   / bool:('true'i / 'false'i)
   {
     return toAstNode<AstNode.BooleanNode>({kind: 'boolean-node', value: bool.toLowerCase() === 'true'});
@@ -1868,16 +1821,26 @@ UnitName
     return unit+'s';
   }
 
-NumberType
-  = whole:[0-9]+ fractional:('.' [0-9]+)?
+NumberValue
+  = neg:'-'? whole:[0-9]+ decimal:('.' [0-9]*)? units:Units?
   {
-    return Number(text());
+    const value = Number(`${neg || ''}${whole.join('')}.${decimal ? decimal[1].join('') : ''}`);
+    return toAstNode<AstNode.NumberNode>({kind: 'number-node', value, units});
   }
 
-BigIntType
-  = whole:[0-9]+ 'n'
+DiscreteValue
+  = neg:'-'? val:[0-9]+ typeIdentifier:('n'/'i'/'l') units:Units?
   {
-    return BigInt(whole.join(''));
+    const type = () => {
+      switch (typeIdentifier) {
+        case 'n': return AstNode.Primitive.BIGINT;
+        case 'i': return AstNode.Primitive.INT;
+        case 'l': return AstNode.Primitive.LONG;
+      }
+      throw new Error(`Unexpected type identifier ${typeIdentifier} (expected one of n, i or l)`);
+    };
+    const value = BigInt(`${neg || ''}${val.join('')}`);
+    return toAstNode<AstNode.DiscreteNode>({kind: 'discrete-node', value, units, type: type()});
   }
 
 Version "a version number (e.g. @012)"

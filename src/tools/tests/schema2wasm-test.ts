@@ -58,7 +58,7 @@ describe('schema2wasm', () => {
     const mock = await Schema2Mock.create(manifest);
     assert.deepStrictEqual(mock.res, {
       'FooInternal1': ['txt:String'],
-      'Site':         ['url:String', 'ref:Reference<FooInternal1>?'],
+      'Site':         ['url:String', 'ref:arcs.sdk.Reference<FooInternal1>?'],
       'Foo_Input2':   ['txt:String', 'num:Double'],
     });
   });
@@ -83,10 +83,10 @@ describe('schema2wasm', () => {
     `);
     const mock = await Schema2Mock.create(manifest);
     assert.deepStrictEqual(mock.res, {
-      'Foo_H1':     ['a:String', 'r:Reference<Foo_H1_R>?'],
+      'Foo_H1':     ['a:String', 'r:arcs.sdk.Reference<Foo_H1_R>?'],
       'Foo_H1_R':   ['b:String'],
-      'Foo_H2':     ['s:Reference<Foo_H2_S>?'],
-      'Foo_H2_S':   ['f:Boolean', 't:Reference<Foo_H2_S_T>?'],
+      'Foo_H2':     ['s:arcs.sdk.Reference<Foo_H2_S>?'],
+      'Foo_H2_S':   ['f:Boolean', 't:arcs.sdk.Reference<Foo_H2_S_T>?'],
       'Foo_H2_S_T': ['x:Double'],
     });
   });

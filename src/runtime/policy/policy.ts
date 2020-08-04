@@ -11,17 +11,10 @@ import * as AstNode from '../manifest-ast-nodes.js';
 import {AnnotationRef} from '../recipe/annotation.js';
 import {assert} from '../../platform/assert-web.js';
 import {ManifestStringBuilder} from '../manifest-string-builder.js';
-import {Ttl, Capabilities, Capability, Persistence, CapabilityRange, Encryption} from '../capabilities.js';
+import {Ttl, Capabilities, Capability, Persistence, Encryption} from '../capabilities.js';
 import {EntityType, InterfaceType, Type} from '../type.js';
 import {FieldPathType, resolveFieldPathType} from '../field-path.js';
-import {Handle} from '../recipe/handle.js';
-import {IngressValidationResult} from './ingress-validation.js';
 import {Schema} from '../schema.js';
-
-export enum PolicyEgressType {
-  Logging = 'Logging',
-  FederatedAggregation = 'FederatedAggregation',
-}
 
 export enum PolicyRetentionMedium {
   Ram = 'Ram',
@@ -52,7 +45,7 @@ export class Policy {
       readonly targets: PolicyTarget[],
       readonly configs: PolicyConfig[],
       readonly description: string | null,
-      readonly egressType: PolicyEgressType | null,
+      readonly egressType: string | null,
       readonly customAnnotations: AnnotationRef[],
       private readonly allAnnotations: AnnotationRef[]) {}
 
@@ -80,7 +73,7 @@ export class Policy {
     // Process annotations.
     const allAnnotations = buildAnnotationRefs(node.annotationRefs);
     let description: string | null = null;
-    let egressType: PolicyEgressType | null = null;
+    let egressType: string | null = null;
     const customAnnotations: AnnotationRef[] = [];
     for (const annotation of allAnnotations) {
       switch (annotation.name) {
@@ -104,36 +97,9 @@ export class Policy {
     return annotation.params['description'] as string;
   }
 
-  private static toEgressType(annotation: AnnotationRef): PolicyEgressType {
+  private static toEgressType(annotation: AnnotationRef): string {
     assert(annotation.name === egressTypeAnnotationName);
-    const egressType = annotation.params['type'] as string;
-    checkValueInEnum(egressType, PolicyEgressType);
-    return egressType as PolicyEgressType;
-  }
-
-  /**
-   * Returns true, if the Policy permits ingress of the data in the given
-   * handle, i.e. contains a policy target with a matching type and suitable
-   * capabilities (less or equally restrictive to ones in the handle).
-   */
-  isHandleIngressAllowed(handle: Handle): IngressValidationResult {
-    // TODO(b/160820832): examine particles @ingress annotations and propagate policy capabilities.
-    // TODO(b/160820832): target's type doesn't reflect field allowed usage information.
-    const targets = this.targets.filter(target => target.type.isAtLeastAsSpecificAs(
-        handle.type.resolvedType()));
-    if (targets.length === 0) {
-        return IngressValidationResult.failWith(this,
-            `Policy ${this.name} has no matching target types for ${handle.type.resolvedType()}`);
-    }
-    const result = new IngressValidationResult();
-    for (const target of targets) {
-      const targetResult = target.isHandleIngressAllowed(handle);
-      if (targetResult.success) {
-        return targetResult;
-      }
-      result.addResult(targetResult);
-    }
-    return result;
+    return annotation.params['type'] as string;
   }
 }
 
@@ -239,27 +205,6 @@ export class PolicyTarget {
     return this.fields.map(f => f.getRestrictedFields(this.type))
           .reduce((fields, {name, restrictedField}) => ({...fields, [name]: restrictedField}), {});
   }
-
-  // Returns an EntityType with a schema restricted to the fields covered by
-  // the policy target.
-  getRestrictedType() {
-    return EntityType.make(this.type.getEntitySchema().names,
-        this.getRestrictedFields(), this.type.getEntitySchema());
-  }
-
-  isHandleIngressAllowed(handle: Handle): IngressValidationResult {
-    const result = new IngressValidationResult();
-    for (const capabilities of this.toCapabilities()) {
-      const capabilityResult = capabilities.isAllowedForIngress(handle.capabilities);
-      if (capabilityResult.success) {
-        return capabilityResult;
-      }
-      result.addError(this, `Policy target '${this.schemaName}' with capabilities` +
-          `${capabilities.toDebugString()} is too strict for capabilities ` +
-          `${handle.capabilities.toDebugString()} (${capabilityResult.toString()})`);
-    }
-    return result;
-  }
 }
 
 export class PolicyField {
@@ -362,7 +307,8 @@ export class PolicyField {
       case 'schema-reference': {
         const restrictedFields = {};
         for (const subfield of this.subfields) {
-          restrictedFields[subfield.name] = field.schema.model.entitySchema.fields[subfield.name];
+          restrictedFields[subfield.name] =
+              subfield.restrictField(field.schema.model.entitySchema.fields[subfield.name]);
         }
         return {kind: 'schema-reference', schema: {
             ...field.schema,

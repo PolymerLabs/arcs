@@ -1,9 +1,6 @@
 package arcs.android.host
 
 import android.app.Application
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
@@ -11,6 +8,7 @@ import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
+import arcs.core.entity.CollectionDelta
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadCollectionHandle
@@ -18,6 +16,7 @@ import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteQueryCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
+import arcs.core.entity.SingletonDelta
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
 import arcs.core.entity.awaitReady
@@ -61,13 +60,11 @@ fun Person.withQuery(): PersonWithQuery {
 
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 @RunWith(AndroidJUnit4::class)
-class AndroidEntityHandleManagerTest : LifecycleOwner {
+class AndroidEntityHandleManagerTest {
     @get:Rule
     val log = LogRule()
 
     private lateinit var app: Application
-    private lateinit var lifecycle: LifecycleRegistry
-    override fun getLifecycle() = lifecycle
 
     val entity1 = Person("Jason", 21.0, false)
     val entity2 = Person("Jason", 22.0, true)
@@ -90,11 +87,6 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
         RamDisk.clear()
         DriverAndKeyConfigurator.configure(null)
         app = ApplicationProvider.getApplicationContext()
-        lifecycle = LifecycleRegistry(this@AndroidEntityHandleManagerTest).apply {
-            currentState = Lifecycle.State.CREATED
-            currentState = Lifecycle.State.STARTED
-            currentState = Lifecycle.State.RESUMED
-        }
 
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
@@ -109,7 +101,6 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             StoreManager(
                 activationFactory = ServiceStoreFactory(
                     context = app,
-                    lifecycle = lifecycle,
                     connectionFactory = TestConnectionFactory(app)
                 )
             )
@@ -215,7 +206,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
 
         assertThat(handleHolder.readWriteHandle.dispatchFetch()).isEqualTo(entity1)
 
-        val updatedEntity: Person? = suspendCoroutine { continuation ->
+        val updatedEntity: SingletonDelta<Person> = suspendCoroutine { continuation ->
             // Verify callbacks work
             launch {
                 handleHolder.readWriteHandle.onUpdate {
@@ -225,7 +216,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
             }
         }
 
-        assertThat(updatedEntity).isEqualTo(entity2)
+        assertThat(updatedEntity).isEqualTo(SingletonDelta(old = entity1, new = entity2))
     }
 
     @Test
@@ -265,7 +256,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
 
         val entity3 = entity2.copy(name = "Ray")
 
-        val updatedEntities: Set<Person> = suspendCoroutine { continuation ->
+        val updatedEntities: CollectionDelta<Person> = suspendCoroutine { continuation ->
             // Verify callbacks work
             launch {
                 handleHolder.readWriteCollectionHandle.onUpdate {
@@ -274,7 +265,7 @@ class AndroidEntityHandleManagerTest : LifecycleOwner {
                 handleHolder.writeCollectionHandle.dispatchStore(entity3)
             }
         }
-        assertThat(updatedEntities).containsExactly(entity1, entity2, entity3)
+        assertThat(updatedEntities).isEqualTo(CollectionDelta(added = setOf(entity3)))
     }
 
     @Test

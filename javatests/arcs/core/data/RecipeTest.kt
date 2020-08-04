@@ -50,6 +50,27 @@ class RecipeTest {
     }
 
     @Test
+    fun policyName() {
+        assertThat(
+            Recipe(
+                name = "Foo",
+                handles = emptyMap(),
+                particles = emptyList(),
+                annotations = emptyList()
+            ).policyName
+        ).isNull()
+
+        assertThat(
+            Recipe(
+                name = "Foo",
+                handles = emptyMap(),
+                particles = emptyList(),
+                annotations = listOf(Annotation.createPolicy("MyPolicy"))
+            ).policyName
+        ).isEqualTo("MyPolicy")
+    }
+
+    @Test
     fun handleToStorageKey_withStorageKey() {
         val storageKey = "reference-mode://{db://abcd@arcs/Person}{db://abcd@arcs//handle/people}"
 
@@ -111,7 +132,7 @@ class RecipeTest {
             name = "ParticleName",
             location = "com.Particle",
             connections = listOf(
-                HandleConnectionSpec("data", HandleMode.Read, personCollectionType)
+                HandleConnectionSpec("data", HandleMode.Read, personCollectionType, "expression")
             ).associateBy { it.name }
         )
 
@@ -136,7 +157,8 @@ class RecipeTest {
                     "data" to Plan.HandleConnection(
                         handle = handle.toPlanHandle(),
                         mode = HandleMode.Read,
-                        type = contactCollectionType
+                        type = contactCollectionType,
+                        expression = "expression"
                     )
                 )
             )

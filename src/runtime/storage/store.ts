@@ -154,6 +154,7 @@ export class StoreMuxer<T extends CRDTMuxEntity> extends AbstractStore implement
     if (constructor == null) {
       throw new Error(`No constructor registered for mode ${this.mode}`);
     }
+
     const activeStore = await constructor.construct<T>({
       storageKey: this.storageKey,
       exists: this.exists,
