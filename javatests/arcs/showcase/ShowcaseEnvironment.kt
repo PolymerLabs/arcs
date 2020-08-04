@@ -218,6 +218,7 @@ class ShowcaseHost(
     vararg particleRegistrations: ParticleRegistration
 ) : AbstractArcHost(
     coroutineContext,
+    coroutineContext,
     schedulerProvider,
     activationFactory,
     *particleRegistrations

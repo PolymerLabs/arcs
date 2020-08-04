@@ -60,6 +60,7 @@ typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
 @ExperimentalCoroutinesApi
 abstract class AbstractArcHost(
     protected val coroutineContext: CoroutineContext = Dispatchers.Default,
+    protected val updateArcHostCoroutineContext: CoroutineContext = Dispatchers.Default,
     protected val schedulerProvider: SchedulerProvider,
     open val activationFactory: ActivationFactory? = null,
     vararg initialParticles: ParticleRegistration
@@ -68,7 +69,7 @@ abstract class AbstractArcHost(
     constructor(
         schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : this(Dispatchers.Default, schedulerProvider, null, *initialParticles)
+    ) : this(Dispatchers.Default, Dispatchers.Default, schedulerProvider, null, *initialParticles)
 
     private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
@@ -363,7 +364,9 @@ abstract class AbstractArcHost(
             }
         }
 
-        updateArcHostContext(partition.arcId, context)
+        CoroutineScope(updateArcHostCoroutineContext).launch {
+            updateArcHostContext(partition.arcId, context)
+        }
     }
 
     /**
