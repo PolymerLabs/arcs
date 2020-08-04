@@ -166,12 +166,12 @@ sealed class GlobalFunction(val name: String) {
  * @param currentScope a [Scope] object for lookups in [Expression.CurrentScopeExpression]
  * @param params mappings of query-args by name for [Expression.QueryParameterExpression]
  */
-fun <T, R> evalExpression(
+fun <T> evalExpression(
     expression: Expression<T>,
     currentScope: Expression.Scope = mapOf<String, Any>().asScope(),
     vararg params: Pair<String, Any>
-): R {
+): T {
     val parameterScope = mapOf(*params)
     val evaluator = ExpressionEvaluator(currentScope, parameterScope.asScope())
-    return expression.accept(evaluator) as R
+    return expression.accept(evaluator) as T
 }

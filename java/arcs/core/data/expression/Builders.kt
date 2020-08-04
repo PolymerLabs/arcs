@@ -215,14 +215,14 @@ infix fun <E, T> Expression<Sequence<E>>.select(expr: Expression<T>) =
     Expression.SelectExpression(this, expr)
 
 /** Helper to construct [NewExpression]. */
-data class NewBuilder<E, T>(val schemaName: String) {
+data class NewBuilder<E, T>(val schemaNames: Set<String>) {
     operator fun invoke(
         block: () -> List<Pair<String, Expression<*>>>
-    ): Expression<T> = Expression.NewExpression(setOf(schemaName), block())
+    ): Expression<T> = Expression.NewExpression(schemaNames, block())
 }
 
 /** Constructs a [NewBuilder] for the given [schemaName]. */
-fun <E, T> new(schemaName: String) = NewBuilder<E, T>(schemaName)
+fun <E, T> new(vararg schemaNames: String) = NewBuilder<E, T>(schemaNames.toSet())
 
 /** Constructs a [FunctionExpression] to invoke [Max]. */
 fun max(expr: Expression<*>) = FunctionExpression<Number>(Max, listOf(expr))
