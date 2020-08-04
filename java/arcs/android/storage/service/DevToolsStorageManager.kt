@@ -22,7 +22,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  */
 @ExperimentalCoroutinesApi
 class DevToolsStorageManager(
-    /** [CoroutineContext] on which to build one specific to this [DevToolsStoragemanage]. */
+    /** [CoroutineContext] upon which to build one specific to this [DevToolsStorageManager]. */
     parentCoroutineContext: CoroutineContext,
     /** The stores managed by StorageService. */
     val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>
