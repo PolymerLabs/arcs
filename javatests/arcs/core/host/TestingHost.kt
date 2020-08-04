@@ -114,9 +114,11 @@ open class TestingHost(
             "TestHolder",
             mapOf(handleName to entitySpecs)
         )
-        val handle = createHandle(
-            arcHostContext.entityHandleManager, handleName, readWriteConnection, handleHolder
+        return createHandle(
+            arcHostContext.handleManager,
+            handleName,
+            readWriteConnection,
+            handleHolder
         )
-        return handle
     }
 }

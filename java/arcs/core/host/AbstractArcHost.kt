@@ -222,7 +222,7 @@ abstract class AbstractArcHost(
 
     private fun createArcHostContext(arcId: String) = ArcHostContext(
         arcId = arcId,
-        entityHandleManager = entityHandleManager(arcId)
+        handleManager = entityHandleManager(arcId)
     )
 
     override suspend fun addOnArcStateChange(
@@ -391,7 +391,7 @@ abstract class AbstractArcHost(
         // time by the ParticleContext state machine.
         spec.handles.forEach { (handleName, handleConnection) ->
             createHandle(
-                context.entityHandleManager,
+                context.handleManager,
                 handleName,
                 handleConnection,
                 particle.handles,
@@ -475,7 +475,7 @@ abstract class AbstractArcHost(
      * triggered according to the rules of the [Scheduler].
      */
     protected suspend fun createHandle(
-        handleManager: EntityHandleManager,
+        handleManager: HandleManager,
         handleName: String,
         connectionSpec: Plan.HandleConnection,
         holder: HandleHolder,
@@ -531,7 +531,7 @@ abstract class AbstractArcHost(
             context.arcState = ArcState.Stopped
             updateArcHostContext(arcId, context)
         } finally {
-            context.entityHandleManager.close()
+            context.handleManager.close()
         }
     }
 
@@ -549,7 +549,7 @@ abstract class AbstractArcHost(
     /**
      * Return an instance of [EntityHandleManager] to be used to create [Handle]s.
      */
-    open fun entityHandleManager(arcId: String) = EntityHandleManager(
+    open fun entityHandleManager(arcId: String): HandleManager = EntityHandleManager(
         arcId,
         hostId,
         platformTime,
