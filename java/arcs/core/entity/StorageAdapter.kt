@@ -14,6 +14,7 @@ import arcs.core.common.Id
 import arcs.core.common.Referencable
 import arcs.core.data.Capability.Ttl
 import arcs.core.data.RawEntity
+import arcs.core.data.Schema
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -63,12 +64,13 @@ class EntityStorageAdapter<T : Entity>(
     private val ttl: Ttl,
     private val time: Time,
     private val dereferencerFactory: EntityDereferencerFactory,
-    private val storageKey: StorageKey
+    private val storageKey: StorageKey,
+    private val restrictedEntitySchema: Schema? = null
 ) : StorageAdapter<T, RawEntity>() {
     override fun storableToReferencable(value: T): RawEntity {
         value.ensureEntityFields(idGenerator, handleName, time, ttl)
 
-        val rawEntity = value.serialize()
+        val rawEntity = value.serialize(restrictedEntitySchema)
         // Check storage key for all reference fields.
         rawEntity.allData.forEach { (_, value) ->
             if (value is StorageReference) { checkStorageKey(storageKey, value.storageKey) }
