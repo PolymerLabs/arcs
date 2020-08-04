@@ -68,6 +68,7 @@ class BindingContext(
     parentCoroutineContext: CoroutineContext,
     /** Sink to use for recording statistics about accessing data. */
     private val bindingContextStatisticsSink: BindingContextStatisticsSink,
+    private val devToolsProxy: IDevToolsProxy.Stub?,
     /** Callback to trigger when a proxy message has been received and sent to the store. */
     private val onProxyMessage: suspend (StorageKey, ProxyMessage<*, *, *>) -> Unit = { _, _ -> }
 ) : IStorageService.Stub() {
@@ -135,6 +136,7 @@ class BindingContext(
                 resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
 
                 val actualMessage = proxyMessage.decodeProxyMessage()
+                devToolsProxy?.onBindingContextProxyMessage(proxyMessage)
 
                 (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).let { store ->
                     if (store.onProxyMessage(actualMessage)) {

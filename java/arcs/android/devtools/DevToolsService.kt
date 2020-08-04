@@ -15,7 +15,11 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import arcs.android.devtools.storage.DevToolsConnectionFactory
+import arcs.android.storage.decodeProxyMessage
+import arcs.android.storage.service.IDevToolsProxy
 import arcs.android.storage.service.IDevToolsStorageManager
+import arcs.android.storage.service.IStorageServiceCallback
+import arcs.core.storage.ProxyMessage
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceConnection
 import kotlinx.coroutines.CoroutineName
@@ -39,6 +43,7 @@ class DevToolsService : Service() {
     private var storageService: IDevToolsStorageManager? = null
     private var serviceConnection: StorageServiceConnection? = null
     private var storageClass: Class<StorageService> = StorageService::class.java
+    private var proxy: IDevToolsProxy? = null
 
     override fun onCreate() {
         binder = DevToolsBinder(scope, devToolsServer)
@@ -60,6 +65,17 @@ class DevToolsService : Service() {
                 storageClass = extras.getSerializable("STORAGE_CLASS") as Class<StorageService>
             }
             initialize()
+
+            proxy = storageService?.getDevToolsProxy()
+            proxy?.registerBindingContextProxyMessageCallback(object : IStorageServiceCallback.Stub() {
+                override fun onProxyMessage(proxyMessage: ByteArray) {
+                    scope.launch {
+                        val actualMessage = proxyMessage.decodeProxyMessage()
+                        devToolsServer.send(actualMessage.toString())
+                    }
+                }
+            })
+
             binder.send(storageService?.getStorageKeys() ?: "")
             devToolsServer.addOnOpenWebsocketCallback {
                 devToolsServer.send(storageService?.getStorageKeys() ?: "")
