@@ -119,21 +119,17 @@ class CollectionHandle<T : Storable, R : Referencable>(
             "Entity must have an ID before it can be referenced."
         }
 
+        /**
+         * Check existence (do not use expensive [referencableToStorable]).
+         *
+         * As [CrdtSet.DataImpl.values] is in [MutableMap] type which uses [LinkedHashMap] in
+         * kotlin, [CrdtSet] model merging logic is the newest data gets inserted at the head
+         * which benefits the fifo traversal to expedites common use-cases i.e.
+         * store-then-createReference-immediately from time complexity O(N) to O(1).
+         */
         requireNotNull(
-            /**
-             * [referencableToStorable] deserialization is expensive.
-             * Traverse and match in order is much cheaper than deserialize all then look up.
-             *
-             * As [CrdtSet.DataImpl.values] is in [MutableMap] type which uses [LinkedHashMap] in
-             * kotlin, [CrdtSet] model merging logic is the newest data gets inserted at the head
-             * which benefits the traversal to expedites common use-cases i.e.
-             * store-then-createReference-immediately from time complexity O(N) to O(1).
-             */
             storageProxy.getParticleViewUnsafe().firstOrNull {
-                when (val maybeEntity = storageAdapter.referencableToStorable(it)) {
-                    is Entity -> !storageAdapter.isExpired(maybeEntity) && entityId == entityId
-                    else -> false
-                }
+                !storageAdapter.isExpired(it) && it.id == entityId
             }
         ) { "Entity is not stored in the Collection." }
 
