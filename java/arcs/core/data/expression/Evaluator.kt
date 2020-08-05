@@ -12,7 +12,7 @@
 
 package arcs.core.data.expression
 
-import arcs.core.util.PlatformTimeProvider
+import arcs.core.util.PlatformTime
 import arcs.core.util.Time
 
 /**
@@ -30,9 +30,9 @@ class ExpressionEvaluator(
     // TODO: allow this to be plumbed through via injection
     val time = object : Time() {
         override val nanoTime: Long
-            get() = PlatformTimeProvider.nanoTime
+            get() = PlatformTime.nanoTime
         override val currentTimeMillis: Long
-            get() = PlatformTimeProvider.currentTimeMillis
+            get() = PlatformTime.currentTimeMillis
     }
 
     override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>): Any {
