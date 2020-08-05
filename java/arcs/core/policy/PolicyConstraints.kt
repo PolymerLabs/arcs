@@ -5,6 +5,7 @@ import arcs.core.data.Check
 import arcs.core.data.Claim
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.InformationFlowLabel.SemanticTag
+import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe
 import arcs.core.data.StoreId
 
@@ -135,15 +136,12 @@ sealed class PolicyViolation(val policy: Policy, message: String) : Exception(
     /** Thrown when egress particles were found in the recipe that are not allowed by policy. */
     class InvalidEgressTypeForParticles(
         policy: Policy,
-        /** Maps from particle name to egress type. */
-        val invalidEgresses: Map<String, String?>
+        val invalidEgressParticles: List<ParticleSpec>
     ) : PolicyViolation(
         policy,
-        "Invalid egress types found for particles: ${invalidEgresses.toSortedMap().entries
-            .joinToString(prefix = "{", postfix = "}") { (name, egressType) ->
-                "$name ($egressType)"
-            }
-        }. Egress type allowed by policy: ${policy.egressType}."
+        "Invalid egress types found for particles: " +
+            invalidEgressParticles.namesAndEgressTypes() +
+            ". Egress type allowed by policy: ${policy.egressType}."
     )
 
     /** Thrown when there is no store associated with schema. */
@@ -172,4 +170,13 @@ sealed class PolicyViolation(val policy: Policy, message: String) : Exception(
         policy,
         "Recipe elected a policy named '$electedPolicyName'."
     )
+
+
+}
+
+/** Converts a list of particles into their names and egress types, as a string. */
+private fun List<ParticleSpec>.namesAndEgressTypes(): String {
+    return sortedBy { it.name }.joinToString(prefix = "{", postfix = "}") {
+        "${it.name} (${it.egressType})"
+    }
 }

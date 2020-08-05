@@ -90,8 +90,8 @@ class PolicyVerifier(val options: PolicyOptions) {
     }
 
     /**
-     * Verifies that the given egress particle nodes match the policy. The only egress particles
-     * allowed to be used with a policy are in [options.policyEgresses] map.
+     * Verifies that the given egress particle nodes match the policy. The egress type of the
+     * particles must match the egress type of the policy.
      */
     private fun checkEgressParticles(policy: Policy, egressParticles: List<Recipe.Particle>) {
         val invalidEgressParticles = egressParticles
@@ -100,7 +100,7 @@ class PolicyVerifier(val options: PolicyOptions) {
         if (invalidEgressParticles.isNotEmpty()) {
             throw PolicyViolation.InvalidEgressTypeForParticles(
                 policy = policy,
-                invalidEgresses = invalidEgressParticles.associate { it.name to it.egressType }
+                invalidEgressParticles = invalidEgressParticles
             )
         }
     }
