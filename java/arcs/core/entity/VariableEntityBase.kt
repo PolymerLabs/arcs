@@ -34,8 +34,8 @@ open class VariableEntityBase(
     private val rawSingletons = mutableMapOf<FieldName, Referencable?>()
     private val rawCollections = mutableMapOf<FieldName, Set<Referencable>>()
 
-    override fun serialize(restrictedSchema: Schema?): RawEntity {
-        val rawEntity = super.serialize(restrictedSchema)
+    override fun serialize(storeSchema: Schema?): RawEntity {
+        val rawEntity = super.serialize(storeSchema)
         return rawEntity.copy(
             singletons = rawSingletons + rawEntity.singletons,
             collections = rawCollections + rawEntity.collections

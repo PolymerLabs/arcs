@@ -242,8 +242,8 @@ open class EntityBase(
         schema.fields.collections.keys.forEach { collections[it] = emptySet() }
     }
 
-    override fun serialize(restrictedSchema: Schema?): RawEntity {
-        val serializationFields = restrictedSchema?.fields ?: schema.fields
+    override fun serialize(storeSchema: Schema?): RawEntity {
+        val serializationFields = storeSchema?.fields ?: schema.fields
         val serialization = RawEntity(
             id = entityId ?: NO_REFERENCE_ID,
             singletons = serializationFields.singletons.mapValues { (field, _) ->
