@@ -365,7 +365,9 @@ abstract class AbstractArcHost(
                 } catch (e: Exception) {
                     log.info { "Error serializing Arc" }
                     log.debug(e) {
-                        """Error serializing $arcId, restart will reinvoke Particle.onFirstStart()"""
+                        """
+                        Error serializing $arcId, restart will reinvoke Particle.onFirstStart()
+                        """.trimIndent()
                     }
                 }
             }
