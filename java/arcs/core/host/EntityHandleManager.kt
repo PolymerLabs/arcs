@@ -149,7 +149,8 @@ class EntityHandleManager(
                     ttl,
                     time,
                     dereferencerFactory,
-                    storageKey
+                    storageKey,
+                    spec.entitySpecs.single().SCHEMA
                 )
             }
             HandleDataType.Reference -> {
