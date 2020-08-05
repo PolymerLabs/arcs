@@ -19,7 +19,6 @@ import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.service.IDevToolsProxy
 import arcs.android.storage.service.IDevToolsStorageManager
 import arcs.android.storage.service.IStorageServiceCallback
-import arcs.core.storage.ProxyMessage
 import arcs.sdk.android.storage.service.StorageService
 import arcs.sdk.android.storage.service.StorageServiceConnection
 import kotlinx.coroutines.CoroutineName

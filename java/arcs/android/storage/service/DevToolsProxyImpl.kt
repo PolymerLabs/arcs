@@ -1,8 +1,5 @@
 package arcs.android.storage.service
 
-import arcs.android.storage.decodeProxyMessage
-import arcs.core.util.TaggedLog
-
 /**
  * Implementation of [IDevToolsProxy] to allow communication between the [StorageService] and
  * [DevToolsService]

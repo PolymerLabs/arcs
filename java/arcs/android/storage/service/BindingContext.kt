@@ -145,6 +145,7 @@ class BindingContext(
             bindingContextStatisticsSink.traceTransaction("sendProxyMessage") {
                 bindingContextStatisticsSink.measure {
                     val actualMessage = proxyMessage.decodeProxyMessage()
+                    // TODO: (sarahheimlich) remove once we dive into stores (b/162955831)
                     devToolsProxy?.onBindingContextProxyMessage(proxyMessage)
 
                     (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).let { store ->
