@@ -1357,7 +1357,7 @@ ${e.message}
 
     const policyName = recipe.policyName;
     if (policyName != null) {
-      const policy = manifest.policies.find(p => p.name === policyName);
+      const policy = manifest.allPolicies.find(p => p.name === policyName);
       if (policy == null) {
         throw new Error(`No policy named '${policyName}' was found in the manifest.`);
       }
