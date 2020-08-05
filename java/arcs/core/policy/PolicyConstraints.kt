@@ -1,6 +1,7 @@
 package arcs.core.policy
 
 import arcs.core.data.AccessPath
+import arcs.core.data.Check
 import arcs.core.data.Claim
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.InformationFlowLabel.SemanticTag
