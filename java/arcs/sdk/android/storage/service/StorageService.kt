@@ -52,6 +52,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
+import java.security.AccessController
 
 /**
  * Implementation of a [Service] which manages [Store]s and exposes the ability to access them via
@@ -72,7 +73,7 @@ open class StorageService : ResurrectorService() {
     // Can be overridden by subclasses.
     open val config = StorageServiceConfig(ttlJobEnabled = true, garbageCollectionJobEnabled = true)
     private val workManager: WorkManager by lazy { WorkManager.getInstance(this) }
-    private var devToolsProxy: IDevToolsProxy.Stub? = null
+    private var devToolsProxy: DevToolsProxyImpl? = null
 
     @ExperimentalCoroutinesApi
     override fun onCreate() {
@@ -84,7 +85,7 @@ open class StorageService : ResurrectorService() {
 
         schedulePeriodicJobs(config)
 
-        if (0 != applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) {
+        if (ApplicationInfo.FLAG_DEBUGGABLE != 0) {
             devToolsProxy = DevToolsProxyImpl()
         }
     }

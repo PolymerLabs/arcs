@@ -32,6 +32,6 @@ class DevToolsStorageManager(
     override fun getStorageKeys() = stores.keys.joinToString { it.toKeyString() }
 
     override fun getDevToolsProxy() : IDevToolsProxy.Stub {
-        return proxy ?: DevToolsProxyImpl()
+        return proxy!!
     }
 }

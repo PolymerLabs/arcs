@@ -3,11 +3,21 @@ package arcs.android.storage.service;
 import arcs.android.storage.service.IStorageServiceCallback;
 
 /**
- * Exposed API to manage storage for DevTools
+ * Exposed API to communicate between [StorageService] and [DevToolsService].
  */
 interface IDevToolsProxy {
 
-    void onBindingContextProxyMessage(in byte[] proxyMessage);
+    /**
+     * TODO: (sarahheimlich) remove once we dive into stores (b/162955831)
+     *
+     * Register a callback to be called with the [BindingContext] receives a [ProxyMessage]
+     */
+    oneway void registerBindingContextProxyMessageCallback(in IStorageServiceCallback callback);
 
-    void registerBindingContextProxyMessageCallback(IStorageServiceCallback callback);
+    /**
+     * TODO: (sarahheimlich) remove once we dive into stores (b/162955831)
+     *
+     * Remove a callback that is called with the [BindingContext] receives a [ProxyMessage]
+     */
+    oneway void deRegisterBindingContextProxyMessageCallback(in IStorageServiceCallback callback);
 }

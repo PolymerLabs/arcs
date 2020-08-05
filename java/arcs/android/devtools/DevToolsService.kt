@@ -45,6 +45,15 @@ class DevToolsService : Service() {
     private var storageClass: Class<StorageService> = StorageService::class.java
     private var proxy: IDevToolsProxy? = null
 
+    private val onBindingContextProxyMessageCallback = object : IStorageServiceCallback.Stub() {
+        override fun onProxyMessage(proxyMessage: ByteArray) {
+            scope.launch {
+                val actualMessage = proxyMessage.decodeProxyMessage()
+                devToolsServer.send(actualMessage.toString())
+            }
+        }
+    }
+
     override fun onCreate() {
         binder = DevToolsBinder(scope, devToolsServer)
         scope.launch {
@@ -67,14 +76,7 @@ class DevToolsService : Service() {
             initialize()
 
             proxy = storageService?.getDevToolsProxy()
-            proxy?.registerBindingContextProxyMessageCallback(object : IStorageServiceCallback.Stub() {
-                override fun onProxyMessage(proxyMessage: ByteArray) {
-                    scope.launch {
-                        val actualMessage = proxyMessage.decodeProxyMessage()
-                        devToolsServer.send(actualMessage.toString())
-                    }
-                }
-            })
+            proxy?.registerBindingContextProxyMessageCallback(onBindingContextProxyMessageCallback)
 
             binder.send(storageService?.getStorageKeys() ?: "")
             devToolsServer.addOnOpenWebsocketCallback {
@@ -87,6 +89,7 @@ class DevToolsService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         devToolsServer.close()
+        proxy?.deRegisterBindingContextProxyMessageCallback(onBindingContextProxyMessageCallback)
         scope.cancel()
     }
 

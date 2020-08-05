@@ -1,18 +1,21 @@
 package arcs.android.storage.service
 
 import arcs.android.storage.decodeProxyMessage
-import arcs.android.storage.toProto
-import arcs.core.storage.ProxyMessage
 import arcs.core.util.TaggedLog
 
+/**
+ * Implementation of [IDevToolsProxy] to allow communication between the [StorageService] and
+ * [DevToolsService]
+ */
 class DevToolsProxyImpl : IDevToolsProxy.Stub() {
-    private val log = TaggedLog { "DevToolsProxy" }
     private val onBindingContextProxyMessageCallbacks = mutableSetOf<IStorageServiceCallback>()
 
-    override fun onBindingContextProxyMessage(proxyMessage: ByteArray) {
-        val actualMessage = proxyMessage.decodeProxyMessage()
-        log.debug { "KOALA: [${actualMessage}]" }
-
+    /**
+     * TODO: (sarahheimlich) remove once we dive into stores (b/162955831)
+     *
+     * Execute the callbacks to be called with the [BindingContext] receives a [ProxyMessage]
+     */
+    fun onBindingContextProxyMessage(proxyMessage: ByteArray) {
         onBindingContextProxyMessageCallbacks.forEach { callback ->
             callback.onProxyMessage(proxyMessage)
         }
@@ -20,5 +23,9 @@ class DevToolsProxyImpl : IDevToolsProxy.Stub() {
 
     override fun registerBindingContextProxyMessageCallback(callback: IStorageServiceCallback) {
         onBindingContextProxyMessageCallbacks.add(callback)
+    }
+
+    override fun deRegisterBindingContextProxyMessageCallback(callback: IStorageServiceCallback) {
+        onBindingContextProxyMessageCallbacks.remove(callback)
     }
 }
