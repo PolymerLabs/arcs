@@ -131,26 +131,36 @@ sealed class PolicyViolation(val policy: Policy, message: String) : Exception(
     "Policy ${policy.name} violated: $message"
 ) {
     /** Thrown when egress particles were found in the recipe that are not allowed by policy. */
-    class InvalidEgressParticle(
+    class InvalidEgressParticles(
         policy: Policy,
-        val particleNames: List<String>
+        val allowedEgresses: List<String>,
+        val invalidEgresses: List<String>
     ) : PolicyViolation(
         policy,
-        "Egress particle allowed by policy is ${policy.egressParticleName} but found: " +
-            particleNames.joinToString()
+        "Invalid egress particles found: " +
+        invalidEgresses.toSortedSet().joinToString(prefix = "{", postfix = "}, ") +
+        "allowed egress particles: " +
+        allowedEgresses.toSortedSet().joinToString(prefix = "{", postfix = "}")
     )
 
-    /** Thrown when multiple egress particles were found in the recipe. */
-    class MultipleEgressParticles(policy: Policy) : PolicyViolation(
+    /** Thrown when policy has no egress particles associated with it. */
+    class PolicyHasNoEgressParticles(policy: Policy) : PolicyViolation(
         policy,
-        "Multiple egress particles named ${policy.egressParticleName} found for policy"
+        "No egress particles specified for policy"
     )
 
+    /** Thrown when there is no store associated with schema. */
     class NoStoreForPolicyTarget(
         policy: Policy,
         target: PolicyTarget
     ) : PolicyViolation(
         policy,
-        "No store found for policy target $target mentioned in ${policy.name}"
+        "No store found for policy target `${target.schemaName}`"
     )
+
+    /** Thrown when policy checks are violated by a recipe. */
+    class ChecksViolated(
+        policy: Policy,
+        checks: List<Check>
+    ) : PolicyViolation(policy, "Recipe violates egress checks: $checks")
 }

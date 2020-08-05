@@ -36,11 +36,35 @@ class ParcelableHandleConnectionTest {
         SchemaFields(mapOf("name" to Text), emptyMap()),
         "42"
     )
+    private val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
+    private val personType = EntityType(personSchema)
 
     @Test
     fun handleConnection_parcelableRoundTrip_works() {
-        val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
-        val personType = EntityType(personSchema)
+        val handleConnection = HandleConnection(
+            Handle(storageKey, personType, emptyList()),
+            HandleMode.ReadWrite,
+            personType,
+            emptyList(),
+            "expression literal"
+        )
+
+        val marshalled = with(Parcel.obtain()) {
+            writeTypedObject(handleConnection.toParcelable(), 0)
+            marshall()
+        }
+
+        val unmarshalled = with(Parcel.obtain()) {
+            unmarshall(marshalled, 0, marshalled.size)
+            setDataPosition(0)
+            readTypedObject(requireNotNull(ParcelableHandleConnection.CREATOR))
+        }
+
+        assertThat(unmarshalled?.actual).isEqualTo(handleConnection)
+    }
+
+    @Test
+    fun handleConnection_parcelableRoundTrip_works_nullExpression() {
         val handleConnection = HandleConnection(
             Handle(storageKey, personType, emptyList()),
             HandleMode.ReadWrite,

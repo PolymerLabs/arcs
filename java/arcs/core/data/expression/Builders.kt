@@ -10,20 +10,48 @@
  */
 @file:Suppress("UNCHECKED_CAST")
 
-/** Extension, infix, and operator overload functions for constructing Expression DSL. */
+/** Extension, infix, and operator overload functions for constructing Expression DSL. These
+ * are mostly used for testing. */
 package arcs.core.data.expression
+
+import arcs.core.data.expression.Expression.FunctionExpression
+import arcs.core.data.expression.GlobalFunction.Average
+import arcs.core.data.expression.GlobalFunction.Count
+import arcs.core.data.expression.GlobalFunction.First
+import arcs.core.data.expression.GlobalFunction.Max
+import arcs.core.data.expression.GlobalFunction.Min
+import arcs.core.data.expression.GlobalFunction.Now
+import java.math.BigInteger
 
 /** Constructs a [Expression.NumberLiteralExpression] */
 fun Double.asExpr() = Expression.NumberLiteralExpression(this)
 
 /** Constructs a [Expression.NumberLiteralExpression] */
+fun Float.asExpr() = Expression.NumberLiteralExpression(this)
+
+/** Constructs a [Expression.NumberLiteralExpression] */
 fun Int.asExpr() = Expression.NumberLiteralExpression(this)
+
+/** Constructs a [Expression.NumberLiteralExpression] */
+fun Long.asExpr() = Expression.NumberLiteralExpression(this)
+
+/** Constructs a [Expression.NumberLiteralExpression] */
+fun Short.asExpr() = Expression.NumberLiteralExpression(this)
+
+/** Constructs a [Expression.NumberLiteralExpression] */
+fun Byte.asExpr() = Expression.NumberLiteralExpression(this)
+
+/** Constructs a [Expression.NumberLiteralExpression] */
+fun BigInteger.asExpr() = Expression.NumberLiteralExpression(this)
 
 /** Constructs a [Expression.TextLiteralExpression] */
 fun String.asExpr() = Expression.TextLiteralExpression(this)
 
 /** Constructs a [Expression.BooleanLiteralExpression] */
 fun Boolean.asExpr() = Expression.BooleanLiteralExpression(this)
+
+/** Constructs a [Expression.Scope] for looking up currentScope references. */
+fun <T> CurrentScope() = CurrentScope<T>(mutableMapOf<String, T>())
 
 /** Constructs a [Expression.Scope] for looking up query parameter references. */
 fun ParameterScope() = mutableMapOf<String, Any>().asScope()
@@ -121,13 +149,100 @@ infix fun Expression<out Any>.neq(other: Expression<out Any>) = Expression.Binar
 
 /** Constructs a [Expression.FieldExpression] given a [Expression.Scope] and [field]. */
 operator fun <E : Expression.Scope, T> E.get(field: String) = Expression.FieldExpression<E, T>(
-    Expression.ObjectLiteralExpression(this), field)
+    when (this) {
+        is CurrentScope<*> -> Expression.CurrentScopeExpression()
+        is MapScope<*> -> Expression.ObjectLiteralExpression(this as E)
+        else -> this as Expression<E>
+    }, field)
+
+/** Constructs a [Expression.FieldExpression] given an [Expression] and [field]. */
+operator fun <E : Expression.Scope, T> Expression<E>.get(field: String) =
+    Expression.FieldExpression<E, T>(this, field)
+
+/** Constructs a [Expression.FieldExpression] given a [CurrentScope] and [field]. */
+operator fun <T> CurrentScope<T>.get(field: String) =
+    Expression.FieldExpression<CurrentScope<T>, T>(Expression.CurrentScopeExpression(), field)
+
+/** Cast a Field lookup expression to return a Number. */
+fun <E : Expression.Scope, T> Expression.FieldExpression<E, T>.asNumber() =
+    this as Expression.FieldExpression<E, Number>
+
+/** Cast a Field lookup expression to return another [Scope]. */
+fun <E : Expression.Scope, T> Expression.FieldExpression<E, T>.asScope() =
+    this as Expression.FieldExpression<E, Expression.Scope>
+
+/** Constructs a reference to a current scope object for test purposes */
+class CurrentScope<V>(map: MutableMap<String, V>) : MapScope<V>("<this>", map)
+
+/** A scope with a simple map backing it, mostly for test purposes. */
+open class MapScope<V>(
+    override val scopeName: String,
+    val map: MutableMap<String, V>
+) : Expression.Scope {
+    override fun <V> lookup(param: String): V = map[param] as V
+    override fun set(param: String, value: Any) {
+        map[param] = value as V
+    }
+    override fun toString() = map.toString()
+}
 
 /** Constructs a [Expression.Scope] from a [Map]. */
-fun <T> Map<String, T>.asScope(scopeName: String = "<object>") = object : Expression.Scope {
-    override val scopeName: String = scopeName
-    override fun <T> lookup(param: String): T = this@asScope[param] as T
-}
+fun <T> Map<String, T>.asScope(scopeName: String = "<object>") = MapScope<T>(
+    scopeName,
+    this.toMutableMap()
+)
 
 /** Constructs a [Expression.QueryParameterExpression] with the given [queryArgName]. */
 fun <T> query(queryArgName: String) = Expression.QueryParameterExpression<T>(queryArgName)
+
+/** Helper used to build [FromExpression]. */
+data class FromBuilder<T>(val iterName: String)
+
+/** Build a [FromExpression] whose [Sequence] iterates using a scope variable named [iterName]. */
+fun <T> from(iterName: String) = FromBuilder<T>(iterName)
+
+/** Designates the scope variable which holds the [Sequence] the from expression iterates on. */
+infix fun <T> FromBuilder<T>.on(sequence: String) = Expression.FromExpression<T, T>(
+    null,
+    sequence,
+    this.iterName)
+
+/** Constructs a [WhereExpression]. */
+infix fun <T> Expression<Sequence<T>>.where(expr: Expression<Boolean>) =
+    Expression.WhereExpression(this, expr)
+
+/** Constructs a [SelectExpression]. */
+infix fun <E, T> Expression<Sequence<E>>.select(expr: Expression<T>) =
+    Expression.SelectExpression(this, expr)
+
+/** Helper to construct [NewExpression]. */
+data class NewBuilder<E, T>(val schemaNames: Set<String>) {
+    operator fun invoke(
+        block: () -> List<Pair<String, Expression<*>>>
+    ): Expression<T> = Expression.NewExpression(schemaNames, block())
+}
+
+/** Constructs a [NewBuilder] for the given [schemaName]. */
+fun <E, T> new(vararg schemaNames: String) = NewBuilder<E, T>(schemaNames.toSet())
+
+/** Constructs a [FunctionExpression] to invoke [Max]. */
+fun max(expr: Expression<*>) = FunctionExpression<Number>(Max, listOf(expr))
+
+/** Constructs a [FunctionExpression] to invoke [Min]. */
+fun min(expr: Expression<*>) = FunctionExpression<Number>(Min, listOf(expr))
+
+/** Constructs a [FunctionExpression] to invoke [Count]. */
+fun count(expr: Expression<*>) = FunctionExpression<Number>(Count, listOf(expr))
+
+/** Constructs a [FunctionExpression] to invoke [Average]. */
+fun average(expr: Expression<*>) = FunctionExpression<Number>(Average, listOf(expr))
+
+/** Constructs a [FunctionExpression] to invoke [First]. */
+fun first(expr: Expression<*>) = FunctionExpression<Number>(First, listOf(expr))
+
+/** Constructs a [FunctionExpression] to invoke [Now]. */
+fun now() = FunctionExpression<Long>(Now, listOf())
+
+/** Constructs a [FunctionExpression] to invoke [Union]. */
+fun <T> union(expr: Expression<T>, other: Expression<T>) =
+    FunctionExpression<T>(GlobalFunction.Union, listOf(expr, other))

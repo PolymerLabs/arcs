@@ -177,7 +177,57 @@ describe('manifest2proto', () => {
         }],
         location: 'a/b/c.js',
         name: 'Abc',
-        isolated: true,
+        annotations: [{name: 'isolated'}],
+      }]
+    });
+  });
+
+  it('encodes particle spec with expressions', async () => {
+    const manifest = await Manifest.parse(`
+      particle FooBar
+        bar: reads Y {b: Text}
+        foo: writes X {a: Text} = new X {a: bar.b}
+    `);
+    assert.deepStrictEqual(await toProtoAndBack(manifest), {
+      particleSpecs: [{
+        connections: [{
+          name: 'bar',
+          direction: 'READS',
+          type: {entity: {schema: {
+            names: ['Y'],
+            fields: {b: {primitive: 'TEXT'}},
+            hash: '555c20b532deda21eb146d1909b9fb372ba583b2',
+          }}}
+        }, {
+          name: 'foo',
+          direction: 'WRITES',
+          type: {entity: {schema: {
+            names: ['X'],
+            fields: {a: {primitive: 'TEXT'}},
+            hash: 'eb8597be8b72862d5580f567ab563cefe192508d',
+          }}},
+          expression: 'expression-entity' // This is a temporary stop-gap.
+        }],
+        name: 'FooBar',
+      }]
+    });
+  });
+
+  it('encodes egress type in particle spec', async () => {
+    const manifest = await Manifest.parse(`
+      @egress('MyEgressType')
+      particle Abc
+    `);
+    assert.deepStrictEqual(await toProtoAndBack(manifest), {
+      particleSpecs: [{
+        name: 'Abc',
+        annotations: [{
+          name: 'egress',
+          params: [{
+            name: 'type',
+            strValue: 'MyEgressType',
+          }]
+        }],
       }]
     });
   });
@@ -242,6 +292,26 @@ describe('manifest2proto', () => {
     ]);
   });
 
+  it('encodes recipe annotations', async () => {
+    const manifest = await Manifest.parse(`
+      policy MyPolicy {}
+
+      @policy('MyPolicy')
+      recipe Foo
+    `);
+    const recipe = (await toProtoAndBack(manifest)).recipes[0];
+
+    assert.deepStrictEqual(recipe, {
+      name: 'Foo',
+      annotations: [{
+        name: 'policy',
+        params: [{
+          name: 'name',
+          strValue: 'MyPolicy',
+        }]
+      }]
+    });
+  });
 
   it('encodes variable particle instance types', async () => {
     const manifest = await Manifest.parse(`
@@ -846,8 +916,10 @@ describe('manifest2proto', () => {
       {
         assume: {
           accessPath: {
-            particleSpec: 'Test',
-            handleConnection: 'private'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'private'
+            }
           },
           predicate: {
             label: {
@@ -859,8 +931,10 @@ describe('manifest2proto', () => {
       {
         assume: {
           accessPath: {
-            particleSpec: 'Test',
-            handleConnection: 'public'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'public'
+            }
           },
           predicate: {
             not: {
@@ -888,12 +962,16 @@ describe('manifest2proto', () => {
       {
         derivesFrom: {
           source: {
-            particleSpec: 'Test',
-            handleConnection: 'input'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'input'
+            },
           },
           target: {
-            particleSpec: 'Test',
-            handleConnection: 'output'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'output'
+            },
           }
         }
       }
@@ -913,20 +991,26 @@ describe('manifest2proto', () => {
       {
         derivesFrom: {
           source: {
-            particleSpec: 'Test',
-            handleConnection: 'input'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'input'
+            },
           },
           target: {
-            particleSpec: 'Test',
-            handleConnection: 'output'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'output'
+            },
           }
         }
       },
       {
         assume: {
           accessPath: {
-            particleSpec: 'Test',
-            handleConnection: 'output'
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'output'
+            }
           },
           predicate: {
             label: {
@@ -952,8 +1036,10 @@ describe('manifest2proto', () => {
       {
         assume: {
           accessPath: {
-            particleSpec: 'Test',
-            handleConnection: 'private',
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'private',
+            }
           },
           predicate: {
             label: {
@@ -965,8 +1051,10 @@ describe('manifest2proto', () => {
       {
         assume: {
           accessPath: {
-            particleSpec: 'Test',
-            handleConnection: 'private',
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'private',
+            },
             selectors: [{field: 'ref'}, {field: 'foo'}],
           },
           predicate: {
@@ -983,13 +1071,17 @@ describe('manifest2proto', () => {
       {
         derivesFrom: {
           source: {
-            particleSpec: 'Test',
-            handleConnection: 'input',
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'input',
+            },
             selectors: [{field: 'bar'}],
           },
           target: {
-            particleSpec: 'Test',
-            handleConnection: 'private',
+            handle: {
+              particleSpec: 'Test',
+              handleConnection: 'private',
+            },
             selectors: [{field: 'ref'}],
           },
         },
@@ -1009,8 +1101,10 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(spec.particleSpecs[0].checks, [
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'private'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'private'
+          }
         },
         predicate: {
           label: {
@@ -1020,8 +1114,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'public'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'public'
+          }
         },
         predicate: {
           not: {
@@ -1048,8 +1144,10 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(spec.particleSpecs[0].checks, [
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'private'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'private'
+          },
         },
         predicate: {
           label: {
@@ -1059,8 +1157,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'private',
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'private',
+          },
           selectors: [{field: 'ref'}, {field: 'foo'}],
         },
         predicate: {
@@ -1075,8 +1175,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'public',
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'public',
+          },
           selectors: [{field: 'ref'}],
         },
         predicate: {
@@ -1099,8 +1201,10 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(spec.particleSpecs[0].checks, [
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'private'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'private'
+          }
         },
         predicate: {
           and: {
@@ -1119,8 +1223,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'public'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'public'
+          }
         },
         predicate: {
           or: {
@@ -1155,8 +1261,10 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(spec.particleSpecs[0].checks, [
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'private'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'private'
+          }
         },
         predicate: {
           and: {
@@ -1184,8 +1292,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'public'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'public'
+          }
         },
         predicate: {
           or: {
@@ -1227,8 +1337,10 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(spec.particleSpecs[0].checks, [
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'input1'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'input1'
+          }
         },
         predicate: {
           implies: {
@@ -1239,8 +1351,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'input2'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'input2'
+          }
         },
         predicate: {
           implies: {
@@ -1256,8 +1370,10 @@ describe('manifest2proto', () => {
       },
       {
         accessPath: {
-          particleSpec: 'Test',
-          handleConnection: 'input3'
+          handle: {
+            particleSpec: 'Test',
+            handleConnection: 'input3'
+          }
         },
         predicate: {
           implies: {
@@ -1328,6 +1444,51 @@ describe('manifest2proto', () => {
     await assertThrowsAsync(
         async () => toProtoAndBack(manifest),
         `Duplicate definition of particle named 'Dupe'.`);
+  });
+
+  it('encodes externally defined schemas', async () => {
+    const manifest = await Manifest.parse(`
+      schema Manufacturer
+        address: Text
+
+      schema Size
+        length: Number
+
+      schema Product
+        name: Text
+        manufacturer: &Manufacturer
+        size: inline Size
+
+      particle Abc in 'a/b/c.js'
+        input: reads Product
+    `);
+    const type = (await toProtoAndBack(manifest)).particleSpecs[0].connections[0].type;
+
+    assert.deepStrictEqual(type, {
+      entity: {schema: {
+        names: ['Product'],
+        fields: {
+          name: {primitive: 'TEXT'},
+          manufacturer: {reference: {referredType: {entity: {schema: {
+            names: ['Manufacturer'],
+            fields: {
+                address: {primitive: 'TEXT'}
+              },
+              hash: 'd61bcba2419ded8a1b497fc6d905b372baafce01',
+            }}}}
+          },
+          size: {entity: {
+            schema: {
+              names: ['Size'],
+              fields: {length: {primitive: 'NUMBER'}},
+              hash: '597828c0a7769319fb9a468b599da4fd3b01ee4d',
+            },
+            inline: true,
+          }}
+        },
+        hash: 'd229c2b1aa361873e50d050705e47aa33bd1891b',
+      }}
+    });
   });
 
   // On the TypeScript side we serialize .arcs file and validate it equals the .pb.bin file.

@@ -2,9 +2,6 @@ package arcs.sdk.examples.testing
 
 import arcs.core.util.TaggedLog
 
-typealias Person = ComputePeopleStats_People
-typealias Stats = ComputePeopleStats_Stats
-
 /**
  * Particle computing a median age of input people - an example for unit testing.
  */
@@ -13,8 +10,9 @@ class ComputePeopleStats : AbstractComputePeopleStats() {
 
     override fun onStart() {
         handles.people.onUpdate {
-            log.info { "onUpdate: ${it.map(Person::age)}" }
-            calculateMedian(it)
+            val people = handles.people.fetchAll()
+            log.info { "onUpdate: ${people.map(Person::age)}" }
+            calculateMedian(people)
         }
     }
 

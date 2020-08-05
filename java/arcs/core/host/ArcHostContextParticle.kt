@@ -44,7 +44,7 @@ typealias ArcHostContextParticle_PlanHandle = AbstractArcHostContextParticle.Pla
  */
 class ArcHostContextParticle(
     private val hostId: String,
-    private val handleManager: EntityHandleManager,
+    private val handleManager: HandleManager,
     private val instantiateParticle: suspend (ParticleIdentifier, Plan.Particle?) -> Particle,
     private val instantiatedParticles: MutableMap<String, Particle> = mutableMapOf()
 ) : AbstractArcHostContextParticle() {
@@ -60,19 +60,20 @@ class ArcHostContextParticle(
         try {
             handles.planHandles.clear()
             val connections = context.particles.flatMap {
-                it.value.planParticle.handles.map { handle ->
+                it.planParticle.handles.map { handle ->
                     val planHandle = ArcHostContextParticle_PlanHandle(
                         storageKey = handle.value.handle.storageKey.toString(),
                         type = handle.value.handle.type.tag.name
                     )
                     // Write Plan.Handle
-                    handles.planHandles.store(planHandle)
+                    handles.planHandles.store(planHandle).join()
                     ArcHostContextParticle_HandleConnections(
                         connectionName = handle.key,
                         planHandle = handles.planHandles.createReference(planHandle),
                         storageKey = handle.value.storageKey.toString(),
                         mode = handle.value.mode.name, type = handle.value.type.tag.name,
-                        ttl = handle.value.ttl.minutes.toDouble()
+                        ttl = handle.value.ttl.minutes.toDouble(),
+                        expression = handle.value.expression ?: ""
                     )
                 }
             }
@@ -82,10 +83,10 @@ class ArcHostContextParticle(
 
             val particles = context.particles.map {
                 ArcHostContextParticle_Particles(
-                    particleName = it.key,
-                    location = it.value.planParticle.location,
-                    particleState = it.value.particleState.toString(),
-                    consecutiveFailures = it.value.consecutiveFailureCount.toDouble(),
+                    particleName = it.planParticle.particleName,
+                    location = it.planParticle.location,
+                    particleState = it.particleState.toString(),
+                    consecutiveFailures = it.consecutiveFailureCount.toDouble(),
                     handles = connections.map { connection ->
                         handles.handleConnections.createReference(connection)
                     }.toSet()
@@ -136,17 +137,17 @@ class ArcHostContextParticle(
                     arcId, particleEntity.particleName, particle, particleEntity.handles
                 )
 
-                particleEntity.particleName to ParticleContext(
+                ParticleContext(
                     particle,
                     Plan.Particle(particleEntity.particleName, particleEntity.location, handlesMap)
                 )
-            }.toSet().associateBy({ it.first }, { it.second })
+            }
 
             return@onHandlesReady ArcHostContext(
                 arcId,
-                particles.toMutableMap(),
-                ArcState.fromString(arcStateEntity.arcState),
-                entityHandleManager = arcHostContext.entityHandleManager
+                particles.toMutableList(),
+                handleManager = arcHostContext.handleManager,
+                initialArcState = ArcState.fromString(arcStateEntity.arcState)
             )
         } catch (e: Exception) {
             throw IllegalStateException("Unable to deserialize $arcId for $hostId", e)
@@ -203,7 +204,8 @@ class ArcHostContextParticle(
                 listOf(Annotation.createTtl("$handle.ttl minutes"))
             } else {
                 emptyList()
-            }
+            },
+            handle.expression.ifEmpty { null }
         )
     }.toSet().associateBy({ it.first }, { it.second })
 

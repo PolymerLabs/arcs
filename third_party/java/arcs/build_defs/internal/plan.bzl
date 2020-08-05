@@ -3,7 +3,7 @@
 load("//third_party/java/arcs/build_defs/internal:kotlin.bzl", "arcs_kt_library")
 
 # Note: Once this is mature, it will replace arcs_kt_plan
-def arcs_plan_generation(name, package, srcs = [], deps = [], visibility = None):
+def arcs_kt_plan_2(name, package, arcs_sdk_deps, srcs = [], deps = [], visibility = None):
     """Generates Plans Jar from protos.
 
     Example:
@@ -24,6 +24,7 @@ def arcs_plan_generation(name, package, srcs = [], deps = [], visibility = None)
     Arcs:
       name: name of created target
       package: the package that all generated code will belong to (temporary, see b/161994250).
+      arcs_sdk_deps: build targets for the Arcs SDK to be included
       deps: JVM dependencies for Jar
       visibility: list of visibilities
     """
@@ -41,13 +42,13 @@ def arcs_plan_generation(name, package, srcs = [], deps = [], visibility = None)
         srcs = [":" + gen_name],
         platforms = ["jvm"],
         visibility = visibility,
-        deps = deps,
+        deps = arcs_sdk_deps + deps,
     )
 
 def _recipe2plan_impl(ctx):
     args = ctx.actions.args()
 
-    outputs = [ctx.actions.declare_file(src.basename.replace(".pb.bin", "") + ".jvm.kt") for src in ctx.files.srcs]
+    outputs = [ctx.actions.declare_file(src.basename.replace(".pb.bin", ".jvm.kt")) for src in ctx.files.srcs]
 
     args.add_all("--outdir", [outputs[0].dirname])
     args.add_all("--package-name", [ctx.attr.package])
@@ -73,6 +74,7 @@ recipe2plan = rule(
             allow_files = True,
             executable = True,
         ),
+        # TODO(b/162273478) recipe2plan should accept `policies` argument
     },
     doc = """Generates plans from recipes.
 

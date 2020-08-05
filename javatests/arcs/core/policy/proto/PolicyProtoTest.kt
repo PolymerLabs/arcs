@@ -1,13 +1,9 @@
 package arcs.core.policy.proto
 
 import arcs.core.data.Annotation
-import arcs.core.data.proto.AnnotationProto
-import arcs.core.data.proto.PolicyConfigProto
-import arcs.core.data.proto.PolicyFieldProto
 import arcs.core.data.proto.PolicyProto
 import arcs.core.data.proto.PolicyRetentionProto
 import arcs.core.data.proto.PolicyTargetProto
-import arcs.core.policy.EgressType
 import arcs.core.policy.Policy
 import arcs.core.policy.PolicyField
 import arcs.core.policy.PolicyRetention
@@ -23,70 +19,59 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class PolicyProtoTest {
     @Test
-    fun decodesPolicy() {
-        val proto = PolicyProto.newBuilder()
-            .setName("foo")
-            .setDescription("bar")
-            .setEgressType(PolicyProto.EgressType.FEDERATED_AGGREGATION)
-            .addAnnotations(ANNOTATION_PROTO)
-            .build()
-
-        val policy = proto.decode()
-
-        val expected = Policy(
+    fun roundTrip_policy() {
+        val policy = Policy(
             name = "foo",
             description = "bar",
-            egressType = EgressType.FEDERATED_AGGREGATION,
+            egressType = "baz",
             targets = emptyList(),
             configs = emptyMap(),
             annotations = listOf(ANNOTATION)
         )
-        assertThat(policy).isEqualTo(expected)
+        assertThat(policy.encode().decode()).isEqualTo(policy)
     }
 
     @Test
-    fun decodesPolicy_requiresEgressType() {
-        val e = assertFailsWith<UnsupportedOperationException> {
+    fun decode_policy_requiresName() {
+        val e = assertFailsWith<IllegalArgumentException> {
             PolicyProto.getDefaultInstance().decode()
         }
-        assertThat(e).hasMessageThat().startsWith("Unknown egress type:")
+        assertThat(e).hasMessageThat().startsWith("Policy name is missing.")
     }
 
     @Test
-    fun decodesTargets() {
-        val proto = PolicyProto.newBuilder()
-            .setEgressType(PolicyProto.EgressType.LOGGING)
-            .addTargets(
-                PolicyTargetProto.newBuilder()
-                    .setMaxAgeMs(123)
-                    .setSchemaType("schema")
-                    .addRetentions(
-                        PolicyRetentionProto.newBuilder()
-                            .setMedium(PolicyRetentionProto.Medium.DISK)
-                            .setEncryptionRequired(true)
-                    )
-                    .addAnnotations(ANNOTATION_PROTO)
+    fun decode_policy_requiresEgressType() {
+        val e = assertFailsWith<IllegalArgumentException> {
+            PolicyProto.newBuilder().setName("foo").build().decode()
+        }
+        assertThat(e).hasMessageThat().startsWith("Egress type is missing.")
+    }
+
+    @Test
+    fun roundTrip_target() {
+        val policy = Policy(
+            name = "foo",
+            egressType = "Logging",
+            targets = listOf(
+                PolicyTarget(
+                    schemaName = "schema",
+                    maxAgeMs = 123,
+                    retentions = listOf(
+                        PolicyRetention(medium = StorageMedium.DISK, encryptionRequired = true)
+                    ),
+                    fields = emptyList(),
+                    annotations = listOf(ANNOTATION)
+                )
             )
-            .build()
-
-        val policy = proto.decode()
-
-        val expected = PolicyTarget(
-            schemaName = "schema",
-            maxAgeMs = 123,
-            retentions = listOf(
-                PolicyRetention(medium = StorageMedium.DISK, encryptionRequired = true)
-            ),
-            fields = emptyList(),
-            annotations = listOf(ANNOTATION)
         )
-        assertThat(policy.targets).containsExactly(expected)
+        assertThat(policy.encode().decode()).isEqualTo(policy)
     }
 
     @Test
-    fun decodesRetentions_requiresMedium() {
+    fun decode_retention_requiresMedium() {
         val proto = PolicyProto.newBuilder()
-            .setEgressType(PolicyProto.EgressType.LOGGING)
+            .setName("foo")
+            .setEgressType("Logging")
             .addTargets(
                 PolicyTargetProto.newBuilder()
                     .addRetentions(PolicyRetentionProto.getDefaultInstance())
@@ -97,112 +82,72 @@ class PolicyProtoTest {
     }
 
     @Test
-    fun decodesFields() {
-        val proto = PolicyProto.newBuilder()
-            .setEgressType(PolicyProto.EgressType.LOGGING)
-            .addTargets(
-                PolicyTargetProto.newBuilder()
-                    .addFields(
-                        PolicyFieldProto.newBuilder()
-                            .setName("field")
-                            .addUsages(
-                                PolicyFieldProto.AllowedUsage.newBuilder()
-                                    .setUsage(PolicyFieldProto.UsageType.JOIN)
-                            )
-                            .addUsages(
-                                PolicyFieldProto.AllowedUsage.newBuilder()
-                                    .setUsage(PolicyFieldProto.UsageType.EGRESS)
-                                    .setRedactionLabel("label")
-                            )
-                            .addUsages(
-                                PolicyFieldProto.AllowedUsage.newBuilder()
-                                    .setUsage(PolicyFieldProto.UsageType.JOIN)
-                                    .setRedactionLabel("label")
-                            )
-                            .addAnnotations(ANNOTATION_PROTO)
+    fun roundTrip_fields() {
+        val policy = Policy(
+            name = "foo",
+            egressType = "Logging",
+            targets = listOf(
+                PolicyTarget(
+                    schemaName = "schema",
+                    fields = listOf(
+                        PolicyField(
+                            fieldPath = listOf("field"),
+                            rawUsages = setOf(UsageType.JOIN),
+                            redactedUsages = mapOf(
+                                "label" to setOf(UsageType.EGRESS, UsageType.JOIN)
+                            ),
+                            subfields = emptyList(),
+                            annotations = listOf(ANNOTATION)
+                        )
                     )
-            )
-            .build()
-
-        val policy = proto.decode()
-
-        val expected = PolicyField(
-            fieldPath = listOf("field"),
-            rawUsages = setOf(UsageType.JOIN),
-            redactedUsages = mapOf("label" to setOf(UsageType.EGRESS, UsageType.JOIN)),
-            subfields = emptyList(),
-            annotations = listOf(ANNOTATION)
-        )
-        val actual = policy.targets.single().fields
-        assertThat(actual).containsExactly(expected)
-    }
-
-    @Test
-    fun decodesSubfields() {
-        val proto = PolicyProto.newBuilder()
-            .setEgressType(PolicyProto.EgressType.LOGGING)
-            .addTargets(
-                PolicyTargetProto.newBuilder()
-                    .addFields(
-                        PolicyFieldProto.newBuilder()
-                            .setName("parent")
-                            .addSubfields(
-                                PolicyFieldProto.newBuilder()
-                                    .setName("child")
-                            )
-                    )
-            )
-            .build()
-
-        val policy = proto.decode()
-
-        val expected = PolicyField(
-            fieldPath = listOf("parent"),
-            rawUsages = emptySet(),
-            redactedUsages = emptyMap(),
-            subfields = listOf(
-                PolicyField(
-                    fieldPath = listOf("parent", "child"),
-                    rawUsages = emptySet(),
-                    redactedUsages = emptyMap(),
-                    subfields = emptyList(),
-                    annotations = emptyList()
                 )
-            ),
-            annotations = emptyList()
+            )
         )
-        val actual = policy.targets.single().fields
-        assertThat(actual).containsExactly(expected)
+        assertThat(policy.encode().decode()).isEqualTo(policy)
     }
 
     @Test
-    fun decodesConfigs() {
-        val proto = PolicyProto.newBuilder()
-            .setEgressType(PolicyProto.EgressType.LOGGING)
-            .addConfigs(
-                PolicyConfigProto.newBuilder()
-                    .setName("config")
-                    .putMetadata("k1", "v1")
-                    .putMetadata("k2", "v2")
+    fun roundTrip_subfields() {
+        val policy = Policy(
+            name = "foo",
+            egressType = "Logging",
+            targets = listOf(
+                PolicyTarget(
+                    schemaName = "schema",
+                    fields = listOf(
+                        PolicyField(
+                            fieldPath = listOf("parent"),
+                            rawUsages = emptySet(),
+                            redactedUsages = emptyMap(),
+                            subfields = listOf(
+                                PolicyField(
+                                    fieldPath = listOf("parent", "child"),
+                                    rawUsages = emptySet(),
+                                    redactedUsages = emptyMap(),
+                                    subfields = emptyList(),
+                                    annotations = emptyList()
+                                )
+                            ),
+                            annotations = emptyList()
+                        )
+                    )
+                )
             )
-            .build()
-
-        val policy = proto.decode()
-
-        val expected = Policy(
-            name = "",
-            description = "",
-            egressType = EgressType.LOGGING,
-            targets = emptyList(),
-            configs = mapOf("config" to mapOf("k1" to "v1", "k2" to "v2")),
-            annotations = emptyList()
         )
-        assertThat(policy).isEqualTo(expected)
+        assertThat(policy.encode().decode()).isEqualTo(policy)
+    }
+
+    @Test
+    fun roundTrip_configs() {
+        val policy = Policy(
+            name = "foo",
+            egressType = "Logging",
+            configs = mapOf("config" to mapOf("k1" to "v1", "k2" to "v2"))
+        )
+        assertThat(policy.encode().decode()).isEqualTo(policy)
     }
 
     companion object {
-        val ANNOTATION_PROTO: AnnotationProto =
-            AnnotationProto.newBuilder().setName("custom").build()
         val ANNOTATION = Annotation("custom", mapOf())
     }
 }

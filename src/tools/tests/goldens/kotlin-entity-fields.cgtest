@@ -1,16 +1,16 @@
-[header]
+-----[header]-----
 Kotlin Entity Fields Generation
 
 Expectations can be updated with:
 $ ./tools/sigh updateCodegenUnitTests
-[end_header]
+-----[end_header]-----
 
-[name]
+-----[name]-----
 generates fields for entity when available
-[input]
+-----[input]-----
 particle T
   h1: reads Thing {num: Number}
-[results]
+-----[results]-----
 
         var num: Double
             get() = super.getSingletonValue("num") as Double? ?: 0.0
@@ -20,14 +20,14 @@ particle T
             this.num = num
         }
         
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates field for a list of primitives
-[input]
+-----[input]-----
 particle T
   h1: reads Thing {num: List<Number>}
-[results]
+-----[results]-----
 
         var num: List<Double>
             get() = super.getSingletonValue("num") as List<Double>? ?: emptyList()
@@ -37,54 +37,54 @@ particle T
             this.num = num
         }
         
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates field for a reference
-[opts]
+-----[opts]-----
 {"assertedSchema":"Thing"}
-[input]
+-----[input]-----
 particle T
   h1: reads Thing {other: &Other {name: Text}}
-[results]
+-----[results]-----
 
-        var other: Reference<Other>?
-            get() = super.getSingletonValue("other") as Reference<Other>?
+        var other: arcs.sdk.Reference<Other>?
+            get() = super.getSingletonValue("other") as arcs.sdk.Reference<Other>?
             private set(_value) = super.setSingletonValue("other", _value)
         
         init {
             this.other = other
         }
         
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates field for a list of references
-[opts]
+-----[opts]-----
 {"assertedSchema":"Thing"}
-[input]
+-----[input]-----
 particle T
   h1: reads Thing {other: List<&Other {name: Text}>}
-[results]
+-----[results]-----
 
-        var other: List<Reference<Other>>
-            get() = super.getSingletonValue("other") as List<Reference<Other>>? ?: emptyList()
+        var other: List<arcs.sdk.Reference<Other>>
+            get() = super.getSingletonValue("other") as List<arcs.sdk.Reference<Other>>? ?: emptyList()
             private set(_value) = super.setSingletonValue("other", _value)
         
         init {
             this.other = other
         }
         
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates an entityId property with Wasm
-[opts]
+-----[opts]-----
 {"wasm":true}
-[input]
+-----[input]-----
 particle T
   h1: reads Thing {num: Number}
-[results]
+-----[results]-----
 
         var num = num
             get() = field
@@ -93,4 +93,4 @@ particle T
             }
         
         override var entityId = ""
-[end]
+-----[end]-----

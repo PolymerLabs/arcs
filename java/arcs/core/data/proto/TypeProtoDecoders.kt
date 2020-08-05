@@ -17,6 +17,7 @@ import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.ReferenceType
+import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
 import arcs.core.data.TupleType
 import arcs.core.data.TypeVariable
@@ -67,7 +68,7 @@ fun ListTypeProto.decodeAsFieldType(): FieldType.ListOf {
  */
 fun EntityTypeProto.decodeAsFieldType(): FieldType.InlineEntity {
     require(inline) { "Cannot decode non-inline entities to FieldType.InlineEntity" }
-    return FieldType.InlineEntity(schema.hash)
+    return FieldType.InlineEntity(schema.hash).also { SchemaRegistry.register(schema.decode()) }
 }
 
 /**
@@ -96,7 +97,7 @@ fun TypeProto.decodeAsFieldType(): FieldType = when (dataCase) {
  */
 fun EntityTypeProto.decode(): EntityType {
     require(!inline) { "Cannot decode inline entities to EntityType." }
-    return EntityType(schema.decode())
+    return EntityType(schema.decode()).also { SchemaRegistry.register(it.entitySchema) }
 }
 
 /** Converts a [SingletonTypeProto] protobuf instance into a Kotlin [SingletonType] instance. */

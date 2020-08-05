@@ -28,6 +28,7 @@ import {compareComparables} from './comparable.js';
 import {Cloneable} from './walker.js';
 import {Dictionary} from '../hot.js';
 import {AnnotationRef} from './annotation.js';
+import {Policy} from '../policy/policy.js';
 
 export type RecipeComponent = Particle | Handle | HandleConnection | Slot | SlotConnection | EndPoint;
 export type CloneMap = Map<RecipeComponent, RecipeComponent>;
@@ -45,6 +46,7 @@ export class Recipe implements Cloneable<Recipe> {
   private _name: string | undefined;
   private _localName: string | undefined = undefined;
   private _cloneMap: CloneMap;
+  private _policy: Policy | null = null;
 
   private _annotations: AnnotationRef[] = [];
 
@@ -324,6 +326,29 @@ export class Recipe implements Cloneable<Recipe> {
   }
   findAnnotations(name: string): AnnotationRef[] {
     return this.annotations.filter(a => a.name === name);
+  }
+
+  /** The name of the policy with which this recipe must comply. */
+  get policyName(): string | null {
+    const policyAnnotation = this.getAnnotation('policy');
+    if (policyAnnotation == null) {
+      return null;
+    }
+    const policyName = policyAnnotation.params['name'];
+    assert(policyName, `You must provide a policy name in the @policy annotation.`);
+    return policyName as string;
+  }
+
+  set policy(policy: Policy) {
+    const policyName = this.policyName;
+    assert(policy.name === policyName, `Expected policy with name '${policyName}' but policy was named '${policy.name}'.`);
+    this._policy = policy;
+  }
+  get policy(): Policy | null {
+    if (this.policyName != null) {
+      assert(this._policy != null, `Expected policy with name '${this.policyName}' but policy was null.`);
+    }
+    return this._policy;
   }
 
   isEmpty(): boolean {

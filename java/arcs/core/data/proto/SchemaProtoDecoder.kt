@@ -19,6 +19,10 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SchemaRegistry
+import arcs.core.data.expression.Expression
+import arcs.core.data.expression.asExpr
+import arcs.core.data.expression.deserializeExpression
+import arcs.core.data.expression.serialize
 
 /** Returns the fields in the [SchemaProto] as a Kotlin [SchemaFields] instance. */
 private fun SchemaProto.decodeFields(): SchemaFields {
@@ -39,8 +43,17 @@ fun SchemaProto.decode(): Schema {
     return Schema(
         names = namesList.map { SchemaName(it) }.toSet(),
         fields = decodeFields(),
-        hash = hash
+        hash = hash,
+        refinementExpression = refinement.decodeExpression(),
+        queryExpression = query.decodeExpression()
     )
+}
+
+/** Decode serialized [Expression] accounting for missing field as true expression. */
+@Suppress("UNCHECKED_CAST")
+fun String.decodeExpression(): Expression<Boolean> = when (this) {
+    "" -> true.asExpr()
+    else -> this.deserializeExpression() as Expression<Boolean>
 }
 
 fun Schema.encode(): SchemaProto {
@@ -48,6 +61,8 @@ fun Schema.encode(): SchemaProto {
         .addAllNames(names.map { it.name })
         .putAllFields(fields.encode())
         .setHash(hash)
+        .setRefinement(refinementExpression.serialize())
+        .setQuery(queryExpression.serialize())
         .build()
 }
 

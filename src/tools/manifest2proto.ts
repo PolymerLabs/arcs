@@ -75,7 +75,7 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
     connections,
     claims,
     checks,
-    isolated: spec.isolated,
+    annotations: spec.annotations.map(a => annotationToProtoPayload(a)),
   };
 }
 
@@ -87,7 +87,8 @@ async function handleConnectionSpecToProtoPayload(spec: HandleConnectionSpec) {
   return {
     name: spec.name,
     direction: directionOrdinal,
-    type: await typeToProtoPayload(spec.type)
+    type: await typeToProtoPayload(spec.type),
+    expression: spec.expression
   };
 }
 
@@ -217,9 +218,11 @@ function accessPathProtoPayload(
     connectionSpec: HandleConnectionSpec,
     fieldPath: string[]
 ) {
-  const accessPath: {particleSpec: string, handleConnection: string, selectors?: {field: string}[]} = {
-    particleSpec: spec.name,
-    handleConnection: connectionSpec.name
+  const accessPath: {handle: {particleSpec: string, handleConnection: string}, selectors?: {field: string}[]} = {
+    handle: {
+      particleSpec: spec.name,
+      handleConnection: connectionSpec.name
+    }
   };
   if (fieldPath.length) {
     accessPath.selectors = fieldPath.map(field => ({field}));
@@ -387,6 +390,9 @@ async function schemaFieldToProtoPayload(fieldType: SchemaField) {
           referredType: await schemaFieldToProtoPayload(fieldType.schema)
         }
       };
+    }
+    case 'type-name': {
+      return typeToProtoPayload(fieldType.model);
     }
     case 'schema-nested': {
       // Nested inlined entity. Wraps a 'schema-inline' object. Mark it as an

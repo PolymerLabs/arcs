@@ -23,7 +23,7 @@ import kotlin.reflect.KClass
  */
 data class ReferencablePrimitive<T>(
     /** Type of primitive being referencable-ified. */
-    private val klass: KClass<*>,
+    val klass: KClass<*>,
     /** The actual value. */
     val value: T,
     /**

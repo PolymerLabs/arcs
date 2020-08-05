@@ -8,25 +8,28 @@ class SingleReadHandleParticle : AbstractSingleReadHandleParticle() {
     }
 
     override fun onStart() {
-        handles.data.onReady { events.add("data.onReady:${data()}") }
-        handles.data.onUpdate { events.add("data.onUpdate:${data()}") }
+        handles.data.onReady { events.add("data.onReady:$data") }
+        handles.data.onUpdate { events.add("data.onUpdate:$data") }
         events.add("onStart")
     }
 
     override fun onReady() {
-        events.add("onReady:${data()}")
+        events.add("onReady:$data")
     }
 
     override fun onUpdate() {
-        events.add("onUpdate:${data()}")
+        events.add("onUpdate:$data")
     }
 
     override fun onShutdown() {
         events.add("onShutdown")
     }
 
-    private fun data() = handles.data.fetch()?.num.toString()
+    private val data
+        get() = handles.data.fetch()?.num
 }
+
+// -----------------------------------------------------------------------------
 
 class SingleWriteHandleParticle : AbstractSingleWriteHandleParticle() {
     val events = mutableListOf<String>()
@@ -52,6 +55,8 @@ class SingleWriteHandleParticle : AbstractSingleWriteHandleParticle() {
     }
 }
 
+// -----------------------------------------------------------------------------
+
 class MultiHandleParticle : AbstractMultiHandleParticle() {
     val events = mutableListOf<String>()
 
@@ -60,31 +65,36 @@ class MultiHandleParticle : AbstractMultiHandleParticle() {
     }
 
     override fun onStart() {
-        handles.data.onReady { events.add("data.onReady:${data()}") }
-        handles.data.onUpdate { events.add("data.onUpdate:${data()}") }
-        handles.list.onReady { events.add("list.onReady:${list()}") }
-        handles.list.onUpdate { events.add("list.onUpdate:${list()}") }
-        handles.config.onReady { events.add("config.onReady:${config()}") }
-        handles.config.onUpdate { events.add("config.onUpdate:${config()}") }
+        handles.data.onReady { events.add("data.onReady:$data") }
+        handles.data.onUpdate { events.add("data.onUpdate:$data") }
+        handles.list.onReady { events.add("list.onReady:$list") }
+        handles.list.onUpdate { events.add("list.onUpdate:$list") }
+        handles.config.onReady { events.add("config.onReady:$config") }
+        handles.config.onUpdate { events.add("config.onUpdate:$config") }
         events.add("onStart")
     }
 
     override fun onReady() {
-        events.add("onReady:${data()}:${list()}:${config()}")
+        events.add("onReady:$data:$list:$config")
     }
 
     override fun onUpdate() {
-        events.add("onUpdate:${data()}:${list()}:${config()}")
+        events.add("onUpdate:$data:$list:$config")
     }
 
     override fun onShutdown() {
         events.add("onShutdown")
     }
 
-    private fun data() = handles.data.fetch()?.num.toString()
-    private fun list() = handles.list.fetchAll().map { it.txt }.toSortedSet()
-    private fun config() = handles.config.fetch()?.flg.toString()
+    private val data
+        get() = handles.data.fetch()?.num
+    private val list
+        get() = handles.list.fetchAll().map { it.txt }.toSortedSet()
+    private val config
+        get() = handles.config.fetch()?.flg
 }
+
+// -----------------------------------------------------------------------------
 
 class PausingParticle : AbstractPausingParticle() {
     val events = mutableListOf<String>()
@@ -94,28 +104,32 @@ class PausingParticle : AbstractPausingParticle() {
     }
 
     override fun onStart() {
-        handles.data.onReady { events.add("data.onReady:${data()}") }
-        handles.data.onUpdate { events.add("data.onUpdate:${data()}") }
-        handles.list.onReady { events.add("list.onReady:${list()}") }
-        handles.list.onUpdate { events.add("list.onUpdate:${list()}") }
+        handles.data.onReady { events.add("data.onReady:$data") }
+        handles.data.onUpdate { events.add("data.onUpdate:$data") }
+        handles.list.onReady { events.add("list.onReady:$list") }
+        handles.list.onUpdate { events.add("list.onUpdate:$list") }
         events.add("onStart")
     }
 
     override fun onReady() {
-        events.add("onReady:${data()}:${list()}")
+        events.add("onReady:$data:$list")
     }
 
     override fun onUpdate() {
-        events.add("onUpdate:${data()}:${list()}")
+        events.add("onUpdate:$data:$list")
     }
 
     override fun onShutdown() {
         events.add("onShutdown")
     }
 
-    private fun data() = handles.data.fetch()?.num.toString()
-    private fun list() = handles.list.fetchAll().map { it.txt }.toSortedSet()
+    private val data
+        get() = handles.data.fetch()?.num
+    private val list
+        get() = handles.list.fetchAll().map { it.txt }.toSortedSet()
 }
+
+// -----------------------------------------------------------------------------
 
 class ReadWriteAccessParticle : AbstractReadWriteAccessParticle() {
     val errors = mutableListOf<String>()
@@ -230,6 +244,8 @@ class ReadWriteAccessParticle : AbstractReadWriteAccessParticle() {
     }
 }
 
+// -----------------------------------------------------------------------------
+
 class PipelineProducerParticle : AbstractPipelineProducerParticle() {
     override fun onFirstStart() {
         handles.sngWrite.store(Value("sng"))
@@ -253,10 +269,23 @@ class PipelineConsumerParticle : AbstractPipelineConsumerParticle() {
 
     override fun onStart() {
         handles.sngRead.onUpdate {
-            values.add("${it?.txt}")
+            values.add("${it.new?.txt}")
         }
-        handles.colRead.onUpdate { set ->
-            values.add("${set.map { it.txt }}")
+        handles.colRead.onUpdate {
+            values.add("${it.added.map(Value::txt)}")
         }
     }
+}
+
+// -----------------------------------------------------------------------------
+
+class UpdateDeltasParticle : AbstractUpdateDeltasParticle() {
+    val events = mutableListOf<String>()
+
+    override fun onStart() {
+        handles.sng.onUpdate { events.add("sng:${it.old?.num}:${it.new?.num}") }
+        handles.col.onUpdate { events.add("col:${it.added.extract()}:${it.removed.extract()}") }
+    }
+
+    private fun Set<Data>.extract() = map(Data::num).toSortedSet()
 }

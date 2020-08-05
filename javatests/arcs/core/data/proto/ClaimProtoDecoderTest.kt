@@ -8,17 +8,9 @@ import arcs.core.data.InformationFlowLabel
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
-import com.google.protobuf.TextFormat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-
-/** Parses a given proto text as [ClaimProto]. */
-fun parseClaimProto(protoText: String): ClaimProto {
-    val builder = ClaimProto.newBuilder()
-    TextFormat.getParser().merge(protoText, builder)
-    return builder.build()
-}
 
 @RunWith(JUnit4::class)
 class ClaimProtoDecoderTest {

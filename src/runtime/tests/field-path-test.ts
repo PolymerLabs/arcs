@@ -260,7 +260,7 @@ describe('field path validation', () => {
     it('supports complex nesting inside type variables', async () => {
       const type = await parseTypeFromHandle('bar', `
         particle P
-          foo1: reads ~a with {name: Text, friends: [&Person {name: Text}]}
+          foo: reads ~a with {name: Text, friends: [&Person {name: Text}]}
           bar: writes ~a
       `);
       const expectedPersonType = await parseTypeFromSchema(`
@@ -271,6 +271,28 @@ describe('field path validation', () => {
       assert.deepEqual(resolveFieldPathType(['friends'], type), expectedPersonType);
       assert.strictEqual(resolveFieldPathType(['friends', 'name'], type), 'Text');
     });
+
+    it('can refer to fields inside a resolved type', async () => {
+      const typeVariable = await parseTypeFromHandle('bar', `
+        particle P
+          foo: reads ~a with {name: Text}
+          bar: writes ~a
+      `) as TypeVariable;
+      const personType = await parseTypeFromSchema(`
+        schema Person
+          name: Text
+          age: Number
+      `);
+      typeVariable.variable.resolution = personType;
+      assert.deepEqual(typeVariable.variable.resolution, personType);
+      assert.isNull(typeVariable.canReadSubset);
+      assert.isNull(typeVariable.canWriteSuperset);
+
+      assert.strictEqual(resolveFieldPathType(['name'], typeVariable), 'Text');
+      assert.throws(
+          () => resolveFieldPathType(['missing'], typeVariable),
+          `Schema 'Person {name: Text, age: Number}' does not contain field 'missing'.`);
+        });
   });
 
   describe('tuples', () => {
@@ -314,6 +336,71 @@ describe('field path validation', () => {
       assert.throws(
           () => resolveFieldPathType(['second', 'missing'], tupleType),
           `Schema 'Foo {foo: Text}' does not contain field 'missing'.`);
+    });
+  });
+
+  describe('inline schemas', () => {
+    it('can refer to inline schemas', async () => {
+      const type = await parseTypeFromSchema(`
+        schema Bar
+          inlined: inline Foo {name: Text}
+      `);
+      resolveFieldPathType(['inlined'], type);
+    });
+
+    it('can refer to fields nested inside inline schemas', async () => {
+      const type = await parseTypeFromSchema(`
+        schema Bar
+          inlined: inline Foo {name: Text}
+        `);
+      resolveFieldPathType(['inlined', 'name'], type);
+    });
+
+    it('rejects missing fields nested inside inline schemas', async () => {
+      const type = await parseTypeFromSchema(`
+        schema Bar
+          inlined: inline Foo {name: Text}
+        `);
+      assert.throws(
+          () => resolveFieldPathType(['inlined', 'missing'], type),
+          `Schema 'Foo {name: Text}' does not contain field 'missing'.`);
+    });
+  });
+
+  describe('ordered lists', () => {
+    it('can refer to ordered lists', async () => {
+      const type = await parseTypeFromSchema(`
+        schema Bar
+          list: List<Number>
+      `);
+      resolveFieldPathType(['list'], type);
+    });
+
+    it('can refer to fields nested inside ordered lists', async () => {
+      const type = await parseTypeFromSchema(`
+        schema Bar
+          list: List<&Bar {inner: Number}>
+      `);
+      resolveFieldPathType(['list', 'inner'], type);
+    });
+
+    it('rejects missing fields nested inside ordered lists', async () => {
+      const type = await parseTypeFromSchema(`
+        schema Bar
+          list: List<&Bar {inner: Number}>
+      `);
+      assert.throws(
+          () => resolveFieldPathType(['list', 'missing'], type),
+          `Schema 'Bar {inner: Number}' does not contain field 'missing'.`);
+    });
+
+    it('works with inlined schemas inside ordered lists', async () => {
+      const type = await parseTypeFromSchema(`
+        schema Bar
+          list: List<inline Bar {inner: Number}>
+      `);
+      resolveFieldPathType(['list'], type);
+      resolveFieldPathType(['list', 'inner'], type);
     });
   });
 });

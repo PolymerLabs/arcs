@@ -1,5 +1,4 @@
-load("@rules_java//java:defs.bzl", "java_binary")
-load("//third_party/java/arcs/build_defs:native.oss.bzl", "java_test")
+load("//third_party/java/arcs/build_defs:native.oss.bzl", "java_binary", "java_test")
 load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
 
 licenses(["notice"])
@@ -30,16 +29,14 @@ kt_jvm_library(
 kt_jvm_library(
     name = "generator",
     srcs = [
-        "GenerationUtils.kt",
-        "PlanGenerator.kt",
         "Recipe2Plan.kt",
     ],
     deps = [
         "//java/arcs/core/data",
-        "//java/arcs/core/data/proto",
         "//java/arcs/core/data/proto:manifest_java_proto",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
+        "//third_party/java/arcs/deps:protobuf_java",
         "//third_party/kotlin/clikt",
         "//third_party/kotlin/kotlinpoet",
     ],

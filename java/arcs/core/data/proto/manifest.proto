@@ -77,8 +77,9 @@ message ParticleSpecProto {
   repeated ClaimProto claims = 4;
   // Conjunction of all checks.
   repeated CheckProto checks = 5;
-  // Indicates whether the particle is an isolated (non-egress) particle.
-  bool isolated = 6;
+  repeated AnnotationProto annotations = 7;
+
+  reserved 6;
 }
 
 // Defines a single connection of a particle spec.
@@ -93,6 +94,7 @@ message HandleConnectionSpecProto {
   string name = 1;
   Direction direction = 2;
   TypeProto type = 3;
+  string expression = 4;
 }
 
 // Representation of a type in Arcs.
@@ -170,6 +172,8 @@ message SchemaProto {
   repeated string names = 1;
   map<string, TypeProto> fields = 2;
   string hash = 3;
+  string refinement = 4;
+  string query = 5;
 }
 
 enum OPERATOR {
@@ -224,16 +228,25 @@ message UnaryExpressionProto {
 // a `HandleConnectionSpec`. This should be sufficient as the root of an access
 // path in a claim or check can only refer to a `HandleConnectionSpec`.
 message AccessPathProto {
+  message HandleRoot {
+    // (particle_spec, handle_connection) identifies a `HandleConnectionSpec`.
+    string particle_spec = 1;
+    string handle_connection = 2;
+  }
+  oneof root {
+    HandleRoot handle = 4;
+    string store_id = 5;
+  }
+
   message Selector {
     oneof selector {
       string field = 1;
       // TODO(bgogul): Other selectors like dereferencing, index, etc.
     }
   }
-  // (particle_spec, handle_connection) identifies a `HandleConnectionSpec`.
-  string particle_spec = 1;
-  string handle_connection = 2;
   repeated Selector selectors = 3;
+
+  reserved 1, 2;
 }
 
 message InformationFlowLabelProto {
@@ -288,4 +301,16 @@ message ClaimProto {
 message CheckProto {
   AccessPathProto access_path = 1;
   InformationFlowLabelProto.Predicate predicate = 2;
+}
+
+message PolicyConstraintsProto {
+  PolicyProto policy = 1;
+
+  InformationFlowLabelProto.Predicate egress_check = 2;
+
+  message StoreConstraints {
+    string store_id = 1;
+    repeated ClaimProto claims = 2;
+  }
+  repeated StoreConstraints store_constraints = 3;
 }

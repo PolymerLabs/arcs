@@ -13,8 +13,8 @@ Usage: recipe2plan [OPTIONS] [MANIFESTS]...
 
   Generate plans from recipes.
 
-  This script reads recipes from a serialized manifest and generates Kotlin
-  `Plan` classes.
+  This script reads serialized manifests and generates Kotlin files with
+  [Plan] classes.
 
 Options:
   --outdir DIRECTORY   output directory; defaults to '.'

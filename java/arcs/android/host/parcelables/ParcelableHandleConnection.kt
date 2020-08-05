@@ -28,6 +28,7 @@ data class ParcelableHandleConnection(
         parcel.writeHandle(actual.handle, flags)
         parcel.writeType(actual.type, flags)
         parcel.writeInt(actual.mode.ordinal)
+        parcel.writeString(actual.expression)
     }
 
     override fun describeContents(): Int = 0
@@ -50,11 +51,15 @@ data class ParcelableHandleConnection(
                 "HandleMode ordinal unknown value $handleModeOrdinal"
             }
 
+            val expression = parcel.readString()
+
             return ParcelableHandleConnection(
                 Plan.HandleConnection(
                     handle,
                     handleMode,
-                    type
+                    type,
+                    emptyList(),
+                    expression
                 )
             )
         }

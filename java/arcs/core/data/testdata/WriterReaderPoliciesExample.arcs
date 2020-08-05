@@ -1,0 +1,9 @@
+schema Thing
+  name: Text
+
+policy WriterReaderExamplePolicy {
+  @allowedRetention(medium: 'Disk', encryption: false)
+  @allowedRetention(medium: 'Ram', encryption: false)
+  @maxAge('100d')
+  from Thing access { name }
+}
