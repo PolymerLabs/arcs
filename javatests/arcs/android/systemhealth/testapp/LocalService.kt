@@ -11,11 +11,11 @@
 
 package arcs.android.systemhealth.testapp
 
+import android.app.Service
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
 import android.os.Process
-import androidx.lifecycle.LifecycleService
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
@@ -24,8 +24,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  * stability of storage service, etc.
  */
 @ExperimentalCoroutinesApi
-class LocalService : LifecycleService() {
-    private val storageCore = StorageCore(this, lifecycle)
+class LocalService : Service() {
+    private val storageCore = StorageCore(this)
     private val binder = Binder()
 
     override fun onDestroy() {

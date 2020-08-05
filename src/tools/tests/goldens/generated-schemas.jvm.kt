@@ -8,6 +8,9 @@ package arcs.golden
 //
 // Current implementation doesn't support optional field detection
 
+import arcs.core.data.expression.*
+import arcs.core.data.expression.Expression.*
+import arcs.core.data.expression.Expression.BinaryOp.*
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.toPrimitiveValue
 import java.math.BigInteger
@@ -72,8 +75,8 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
                     collections = emptyMap()
                 ),
                 "485712110d89359a3e539dac987329cd2649d889",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
@@ -206,8 +209,8 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
                     collections = emptyMap()
                 ),
                 "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
@@ -265,8 +268,8 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
                     collections = emptyMap()
                 ),
                 "9d5720cea6e06f5c3b1abff0a9af95dfe476fd3f",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
@@ -366,8 +369,8 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
                     collections = emptyMap()
                 ),
                 "c539be82943f3c24e2503cb0410b865fa3688d06",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
@@ -500,13 +503,8 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
                     collections = emptyMap()
                 ),
                 "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa",
-                refinement = { _ -> true },
-                query = { data, queryArgs ->
-                    val name = data.singletons["name"].toPrimitiveValue(String::class, "")
-                    val lastCall = data.singletons["lastCall"].toPrimitiveValue(Double::class, 0.0)
-                    val queryArgument = queryArgs as String
-                    ((name == queryArgument) && (lastCall < 259200))
-                }
+                refinementExpression = true.asExpr(),
+                queryExpression =         ((CurrentScope<String>(mutableMapOf())["name"] eq query<String>("queryArgument")) and (CurrentScope<Number>(mutableMapOf())["lastCall"] lt 259200.asExpr()))
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =

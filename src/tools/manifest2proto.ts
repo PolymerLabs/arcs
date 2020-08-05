@@ -75,7 +75,7 @@ async function particleSpecToProtoPayload(spec: ParticleSpec) {
     connections,
     claims,
     checks,
-    isolated: spec.isolated,
+    annotations: spec.annotations.map(a => annotationToProtoPayload(a)),
   };
 }
 
@@ -87,7 +87,8 @@ async function handleConnectionSpecToProtoPayload(spec: HandleConnectionSpec) {
   return {
     name: spec.name,
     direction: directionOrdinal,
-    type: await typeToProtoPayload(spec.type)
+    type: await typeToProtoPayload(spec.type),
+    expression: spec.expression
   };
 }
 

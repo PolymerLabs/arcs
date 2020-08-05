@@ -177,7 +177,57 @@ describe('manifest2proto', () => {
         }],
         location: 'a/b/c.js',
         name: 'Abc',
-        isolated: true,
+        annotations: [{name: 'isolated'}],
+      }]
+    });
+  });
+
+  it('encodes particle spec with expressions', async () => {
+    const manifest = await Manifest.parse(`
+      particle FooBar
+        bar: reads Y {b: Text}
+        foo: writes X {a: Text} = new X {a: bar.b}
+    `);
+    assert.deepStrictEqual(await toProtoAndBack(manifest), {
+      particleSpecs: [{
+        connections: [{
+          name: 'bar',
+          direction: 'READS',
+          type: {entity: {schema: {
+            names: ['Y'],
+            fields: {b: {primitive: 'TEXT'}},
+            hash: '555c20b532deda21eb146d1909b9fb372ba583b2',
+          }}}
+        }, {
+          name: 'foo',
+          direction: 'WRITES',
+          type: {entity: {schema: {
+            names: ['X'],
+            fields: {a: {primitive: 'TEXT'}},
+            hash: 'eb8597be8b72862d5580f567ab563cefe192508d',
+          }}},
+          expression: 'expression-entity' // This is a temporary stop-gap.
+        }],
+        name: 'FooBar',
+      }]
+    });
+  });
+
+  it('encodes egress type in particle spec', async () => {
+    const manifest = await Manifest.parse(`
+      @egress('MyEgressType')
+      particle Abc
+    `);
+    assert.deepStrictEqual(await toProtoAndBack(manifest), {
+      particleSpecs: [{
+        name: 'Abc',
+        annotations: [{
+          name: 'egress',
+          params: [{
+            name: 'type',
+            strValue: 'MyEgressType',
+          }]
+        }],
       }]
     });
   });
@@ -242,6 +292,26 @@ describe('manifest2proto', () => {
     ]);
   });
 
+  it('encodes recipe annotations', async () => {
+    const manifest = await Manifest.parse(`
+      policy MyPolicy {}
+
+      @policy('MyPolicy')
+      recipe Foo
+    `);
+    const recipe = (await toProtoAndBack(manifest)).recipes[0];
+
+    assert.deepStrictEqual(recipe, {
+      name: 'Foo',
+      annotations: [{
+        name: 'policy',
+        params: [{
+          name: 'name',
+          strValue: 'MyPolicy',
+        }]
+      }]
+    });
+  });
 
   it('encodes variable particle instance types', async () => {
     const manifest = await Manifest.parse(`

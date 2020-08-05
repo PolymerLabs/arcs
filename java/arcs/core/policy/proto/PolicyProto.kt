@@ -19,7 +19,6 @@ import arcs.core.data.proto.PolicyRetentionProto
 import arcs.core.data.proto.PolicyTargetProto
 import arcs.core.data.proto.decode
 import arcs.core.data.proto.encode
-import arcs.core.policy.EgressType
 import arcs.core.policy.Policy
 import arcs.core.policy.PolicyField
 import arcs.core.policy.PolicyRetention
@@ -28,10 +27,12 @@ import arcs.core.policy.StorageMedium
 import arcs.core.policy.UsageType
 
 fun PolicyProto.decode(): Policy {
+    require(name.isNotEmpty()) { "Policy name is missing." }
+    require(egressType.isNotEmpty()) { "Egress type is missing." }
     return Policy(
         name = name,
         description = description,
-        egressType = egressType.decode(),
+        egressType = egressType,
         targets = targetsList.map { it.decode() },
         configs = configsList.associateBy(
             keySelector = { it.name },
@@ -45,7 +46,7 @@ fun Policy.encode(): PolicyProto {
     return PolicyProto.newBuilder()
         .setName(name)
         .setDescription(description)
-        .setEgressType(egressType.encode())
+        .setEgressType(egressType)
         .addAllTargets(targets.map { it.encode() })
         .addAllConfigs(
             configs.map { (name, metadata) ->
@@ -131,18 +132,6 @@ private fun PolicyRetention.encode(): PolicyRetentionProto {
         .setMedium(medium.encode())
         .setEncryptionRequired(encryptionRequired)
         .build()
-}
-
-private fun PolicyProto.EgressType.decode() = when (this) {
-    PolicyProto.EgressType.LOGGING -> EgressType.LOGGING
-    PolicyProto.EgressType.FEDERATED_AGGREGATION -> EgressType.FEDERATED_AGGREGATION
-    PolicyProto.EgressType.EGRESS_TYPE_UNSPECIFIED, PolicyProto.EgressType.UNRECOGNIZED ->
-        throw UnsupportedOperationException("Unknown egress type: $this")
-}
-
-private fun EgressType.encode() = when (this) {
-    EgressType.LOGGING -> PolicyProto.EgressType.LOGGING
-    EgressType.FEDERATED_AGGREGATION -> PolicyProto.EgressType.FEDERATED_AGGREGATION
 }
 
 private fun PolicyFieldProto.UsageType.decode() = when (this) {

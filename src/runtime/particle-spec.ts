@@ -34,6 +34,7 @@ type SerializedHandleConnectionSpec = {
   dependentConnections: SerializedHandleConnectionSpec[],
   check?: string,
   annotations: AnnotationRef[];
+  expression?: string;
 };
 
 function asType(t: Type | TypeLiteral) : Type {
@@ -82,6 +83,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
   claims?: Claim[];
   checks?: Check[];
   _annotations: AnnotationRef[];
+  expression: string;
 
   constructor(rawData: SerializedHandleConnectionSpec, typeVarMap: Map<string, Type>) {
     this.discriminator = 'HCS';
@@ -94,6 +96,7 @@ export class HandleConnectionSpec implements HandleConnectionSpecInterface {
     this.tags = rawData.tags || [];
     this.dependentConnections = [];
     this.annotations = rawData.annotations || [];
+    this.expression = rawData.expression;
   }
 
   instantiateDependentConnections(particle, typeVarMap: Map<string, Type>): void {
@@ -172,6 +175,7 @@ type SerializedSlotConnectionSpec = {
   handles?: string[],
   provideSlotConnections?: SerializedSlotConnectionSpec[],
   check?: Check,
+  expression?: string,
 };
 
 export class ConsumeSlotConnectionSpec implements ConsumeSlotConnectionSpecInterface {
@@ -239,11 +243,18 @@ export interface SerializedParticleSpec extends Literal {
   trustClaims?: ClaimStatement[];
   trustChecks?: CheckStatement[];
   annotations?: AnnotationRef[];
+  manifestNamespace?: string;
 }
 
 export interface StorableSerializedParticleSpec extends SerializedParticleSpec {
   id: string;
 }
+
+type ParticleSpecOptions = {
+  // Map from handle name to type. Used when constructing a ParticleSpec to
+  // override the handle types deserialized from the model.
+  handleTypeOverrides?: Map<string, Type>,
+};
 
 export class ParticleSpec {
   private readonly model: SerializedParticleSpec;
@@ -260,7 +271,7 @@ export class ParticleSpec {
   trustChecks: Check[];
   _annotations: AnnotationRef[] = [];
 
-  constructor(model: SerializedParticleSpec) {
+  constructor(model: SerializedParticleSpec, options?: ParticleSpecOptions) {
     this.model = model;
     this.name = model.name;
     this.verbs = model.verbs;
@@ -275,6 +286,15 @@ export class ParticleSpec {
     this.handleConnectionMap.forEach((connectionSpec, name) => {
       connectionSpec.pattern = model.description[name];
     });
+
+    // Override handle types with ones provided from the override map. Type
+    // variables with resolutions don't survive the cloning process, so they can
+    // be added in here.
+    if (options && options.handleTypeOverrides) {
+      options.handleTypeOverrides.forEach((type, name) => {
+        this.handleConnectionMap.get(name).type = type;
+      });
+    }
 
     this.external = model.external;
     this.implFile = model.implFile;
@@ -320,6 +340,10 @@ export class ParticleSpec {
 
   get outputs(): HandleConnectionSpec[] {
     return this.connections.filter(a => a.isOutput);
+  }
+
+  get manifestNamespace(): string | null {
+    return this.model.manifestNamespace;
   }
 
   isInput(param: string): boolean {
@@ -384,7 +408,7 @@ export class ParticleSpec {
    * Particles are considered egress particles by default, must have an explicit
    * `@isolated` annotation to be considered isolated.
    */
-  get isolated(): boolean {
+  get isIsolated(): boolean {
     const isolated = !!this.getAnnotation('isolated');
     const egress = !!this.getAnnotation('egress');
     assert(!(isolated && egress), 'Particle cannot be tagged with both @isolated and @egress.');
@@ -396,8 +420,22 @@ export class ParticleSpec {
    *
    * Particles are considered egress particles by default.
    */
-  get egress(): boolean {
-    return !this.isolated;
+  get isEgress(): boolean {
+    return !this.isIsolated;
+  }
+
+  /**
+   * Returns the egress type of this particle, according to the `@egress`
+   * annotation on it. Returns null if no egress type was supplied, or if the
+   * particle is not an egress particle.
+   */
+  get egressType(): string | null {
+    const egressAnnotation = this.getAnnotation('egress');
+    if (!egressAnnotation) {
+      return null;
+    }
+    const egressType = egressAnnotation.params['type'];
+    return egressType == null ? null : egressType as string;
   }
 
   isCompatible(modality: Modality): boolean {
@@ -409,33 +447,33 @@ export class ParticleSpec {
   }
 
   toLiteral(): SerializedParticleSpec {
-    const {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations} = this.model;
+    const {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations, manifestNamespace} = this.model;
     const connectionToLiteral : (input: SerializedHandleConnectionSpec) => SerializedHandleConnectionSpec =
-      ({type, direction, relaxed, name, isOptional, dependentConnections, annotations}) => ({type: asTypeLiteral(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral), annotations: annotations || []});
+      ({type, direction, relaxed, name, isOptional, dependentConnections, annotations, expression}) => ({type: asTypeLiteral(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral), annotations: annotations || [], expression});
     const argsLiteral = args.map(a => connectionToLiteral(a));
-    return {args: argsLiteral, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations};
+    return {args: argsLiteral, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations, manifestNamespace};
   }
 
-  static fromLiteral(literal: SerializedParticleSpec): ParticleSpec {
-    let {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations} = literal;
-    const connectionFromLiteral = ({type, direction, relaxed, name, isOptional, dependentConnections}) =>
-      ({type: asType(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : [], annotations: /*annotations ||*/ []});
+  static fromLiteral(literal: SerializedParticleSpec, options?: ParticleSpecOptions): ParticleSpec {
+    let {args, name, verbs, description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations, manifestNamespace} = literal;
+    const connectionFromLiteral = ({type, direction, relaxed, name, isOptional, dependentConnections, expression}: SerializedHandleConnectionSpec) =>
+      ({type: asType(type), direction, relaxed, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : [], annotations: /*annotations ||*/ [], expression});
     args = args.map(connectionFromLiteral);
-    return new ParticleSpec({args, name, verbs: verbs || [], description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations});
+    return new ParticleSpec({args, name, verbs: verbs || [], description, external, implFile, implBlobUrl, modality, slotConnections, trustClaims, trustChecks, annotations, manifestNamespace}, options);
   }
 
   // Note: this method shouldn't be called directly.
-  clone(): ParticleSpec {
-    return ParticleSpec.fromLiteral(this.toLiteral());
+  clone(options?: ParticleSpecOptions): ParticleSpec {
+    return ParticleSpec.fromLiteral(this.toLiteral(), options);
   }
 
   // Note: this method shouldn't be called directly (only as part of particle copying).
   cloneWithResolutions(variableMap: Map<TypeVariableInfo|Schema, TypeVariableInfo|Schema>): ParticleSpec {
-    const spec = this.clone();
+    const handleTypeOverrides: Map<string, Type> = new Map();
     this.handleConnectionMap.forEach((conn, name) => {
-      spec.handleConnectionMap.get(name).type = conn.type._cloneWithResolutions(variableMap);
+      handleTypeOverrides.set(name, conn.type._cloneWithResolutions(variableMap));
     });
-    return spec;
+    return this.clone({handleTypeOverrides});
   }
 
   equals(other): boolean {

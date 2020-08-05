@@ -18,7 +18,7 @@ annotation intendedPurpose(description: Text)
 annotation egressType(type: Text)
   targets: [Policy]
   retention: Source
-  doc: 'Type of egress permitted by a policy. Valid values are: Logging, FederatedAggregation.'
+  doc: 'Type of egress permitted by a policy.'
 
 annotation allowedRetention(medium: Text, encryption: Boolean)
   targets: [PolicyTarget]

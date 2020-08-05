@@ -1,31 +1,31 @@
-[header]
+-----[header]-----
 Kotlin Handles Class Declarations
 
 Expectations can be updated with:
 $ ./tools/sigh updateCodegenUnitTests
-[end_header]
+-----[end_header]-----
 
-[name]
+-----[name]-----
 single read handle
-[input]
+-----[input]-----
 particle P
   h1: reads Person {name: Text}
-[results]
+-----[results]-----
 class Handles : arcs.sdk.HandleHolderBase(
         "P",
         mapOf("h1" to setOf(Person))
     ) {
         val h1: arcs.sdk.ReadSingletonHandle<Person> by handles
     }
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 conflicting schema names
-[input]
+-----[input]-----
 particle P
   h1: reads Person {name: Text}
   h2: reads Person {age: Number}
-[results]
+-----[results]-----
 class Handles : arcs.sdk.HandleHolderBase(
         "P",
         mapOf("h1" to setOf(P_H1), "h2" to setOf(P_H2))
@@ -33,16 +33,16 @@ class Handles : arcs.sdk.HandleHolderBase(
         val h1: arcs.sdk.ReadSingletonHandle<P_H1> by handles
         val h2: arcs.sdk.ReadSingletonHandle<P_H2> by handles
     }
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 read, write and query handles
-[input]
+-----[input]-----
 particle P
   h1: reads Person {name: Text}
   h2: writes Person {name: Text}
   h3: reads [Person {name: Text} [name == ?]]
-[results]
+-----[results]-----
 class Handles : arcs.sdk.HandleHolderBase(
         "P",
         mapOf("h1" to setOf(P_H1), "h2" to setOf(P_H2), "h3" to setOf(P_H3))
@@ -51,11 +51,11 @@ class Handles : arcs.sdk.HandleHolderBase(
         val h2: arcs.sdk.WriteSingletonHandle<P_H2> by handles
         val h3: arcs.sdk.ReadQueryCollectionHandle<P_H3, String> by handles
     }
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 handle with references
-[input]
+-----[input]-----
 particle P
   h1: reads Person {
     name: Text,
@@ -67,25 +67,25 @@ particle P
       }
     }
   }
-[results]
+-----[results]-----
 class Handles : arcs.sdk.HandleHolderBase(
         "P",
         mapOf("h1" to setOf(Person))
     ) {
         val h1: arcs.sdk.ReadSingletonHandle<Person> by handles
     }
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 handle with a tuple
-[input]
+-----[input]-----
 particle P
   h1: reads (
     &Person {name: Text},
     &Accommodation {squareFootage: Number},
     &Address {streetAddress: Text, postCode: Text}
   )
-[results]
+-----[results]-----
 class Handles : arcs.sdk.HandleHolderBase(
         "P",
         mapOf("h1" to setOf(Person, Accommodation, Address))
@@ -94,16 +94,16 @@ class Handles : arcs.sdk.HandleHolderBase(
     arcs.core.entity.Tuple3<arcs.sdk.Reference<Person>, arcs.sdk.Reference<Accommodation>, arcs.sdk.Reference<Address>>
 > by handles
     }
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 progressively constrained variable handles
-[input]
+-----[input]-----
 particle T
   h1: reads ~a
   h2: writes ~a with {amt: Number}
   h3: reads writes ~a with {name: Text, age: Number}
-[results]
+-----[results]-----
 class Handles : arcs.sdk.HandleHolderBase(
         "T",
         mapOf("h1" to setOf(T_H1), "h2" to setOf(T_H2), "h3" to setOf(T_H3))
@@ -112,4 +112,4 @@ class Handles : arcs.sdk.HandleHolderBase(
         val h2: arcs.sdk.WriteSingletonHandle<T_H2> by handles
         val h3: arcs.sdk.ReadWriteSingletonHandle<T_H3> by handles
     }
-[end]
+-----[end]-----

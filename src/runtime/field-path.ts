@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {Schema} from './schema.js';
-import {InterfaceInfo, Type, EntityType, TupleType} from './type.js';
+import {InterfaceInfo, Type, EntityType, TupleType, TypeVariable} from './type.js';
 import {SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue} from './manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
 
@@ -34,7 +34,8 @@ export function resolveFieldPathType(fieldPath: string[], type: FieldPathType): 
   const schema = type.getEntitySchema();
   if (!schema) {
     if (InterfaceInfo.isTypeVar(type)) {
-      if (type.canWriteSuperset == null) {
+      const innerType = type.canWriteSuperset || (type as TypeVariable).variable.resolution;
+      if (innerType == null) {
         throw new FieldPathError(`Type variable ${type} does not contain field '${fieldPath[0]}'.`);
       }
       return resolveFieldPathType(fieldPath, type.canWriteSuperset);

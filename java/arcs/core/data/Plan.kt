@@ -11,7 +11,6 @@
 package arcs.core.data
 
 import arcs.core.data.Capability.Ttl
-import arcs.core.data.expression.Expression
 import arcs.core.storage.StorageKey
 import arcs.core.type.Type
 import arcs.core.util.lens
@@ -83,34 +82,13 @@ data class Plan(
         }
     }
 
-    /** Represents the expression to be evaluated to produce a new field. */
-    data class AdapterField<T>(
-        val fieldName: String,
-        val expression: Expression<T>
-    )
-
-    /**
-     *  Represents a data adapter to be applied to a [Handle].
-     *
-     *  @property name name of the adapter specified in the manifest.
-     *  @property contextParams the names of parameters that can be bound from context
-     *  @property type the output [Type] of this adapter
-     *  @property fields a list of fields (with expressions) that map contextParams to output [type]
-     */
-    data class Adapter(
-        val name: String,
-        val contextParams: List<String>,
-        val type: Type,
-        val fields: List<AdapterField<*>>
-    )
-
     /** Represents a use of a [Handle] by a [Particle]. */
     data class HandleConnection(
         val handle: Handle,
         val mode: HandleMode,
         val type: Type,
         val annotations: List<Annotation> = emptyList(),
-        val adapter: Adapter? = null
+        val expression: String? = null
     ) {
         val storageKey: StorageKey
             get() = handle.storageKey

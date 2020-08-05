@@ -39,6 +39,7 @@ import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
@@ -692,7 +693,79 @@ class ReferenceModeStoreTest {
 
         store.off(token)
         store.idle()
-        store.awaitCleanup()
+        assertThat(store.backingStore.stores.size).isEqualTo(0)
+    }
+
+    @Test
+    fun backingStoresCleanedUpWhenLastCallbackRemovedTwice() = runBlocking {
+        DriverFactory.register(MockDriverProvider())
+        val store = createReferenceModeStore()
+
+        val preToken = store.on(ProxyCallback {})
+        store.off(preToken)
+
+        val token = store.on(ProxyCallback {})
+        val collection = CrdtSet<RawEntity>()
+        val entity = createPersonEntity("an-id", "bob", 42)
+
+        collection.applyOperation(
+            CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
+        )
+
+        store.onProxyMessage(
+            ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
+        )
+        store.idle()
+        assertThat(store.backingStore.stores.size).isEqualTo(1)
+
+        store.off(token)
+        store.idle()
+        assertThat(store.backingStore.stores.size).isEqualTo(0)
+
+        val token2 = store.on(ProxyCallback {})
+        store.onProxyMessage(
+            ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
+        )
+        store.idle()
+        assertThat(store.backingStore.stores.size).isEqualTo(1)
+
+        store.off(token2)
+        store.idle()
+        assertThat(store.backingStore.stores.size).isEqualTo(0)
+    }
+
+    @Test
+    fun backingStoresCleanedUpWhenLastCallbackRemovedRaces() = runBlocking {
+        DriverFactory.register(MockDriverProvider())
+        val store = createReferenceModeStore()
+
+        val callbackJob = launch {
+            for (i in 0..100) {
+                val preToken = store.on(ProxyCallback {})
+                delay(1)
+                store.off(preToken)
+            }
+        }
+
+        val dataJob = launch {
+            for (i in 0..100) {
+                val collection = CrdtSet<RawEntity>()
+                val entity = createPersonEntity("an-id", "bob-$i", 42)
+
+                collection.applyOperation(
+                    CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
+                )
+
+                store.onProxyMessage(
+                    ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
+                )
+            }
+        }
+
+        callbackJob.join()
+        dataJob.join()
+
+        store.idle()
         assertThat(store.backingStore.stores.size).isEqualTo(0)
     }
 

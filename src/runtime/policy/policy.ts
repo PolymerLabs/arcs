@@ -11,16 +11,10 @@ import * as AstNode from '../manifest-ast-nodes.js';
 import {AnnotationRef} from '../recipe/annotation.js';
 import {assert} from '../../platform/assert-web.js';
 import {ManifestStringBuilder} from '../manifest-string-builder.js';
-import {Ttl, Capabilities, Capability, Persistence, CapabilityRange, Encryption} from '../capabilities.js';
+import {Ttl, Capabilities, Capability, Persistence, Encryption} from '../capabilities.js';
 import {EntityType, InterfaceType, Type} from '../type.js';
 import {FieldPathType, resolveFieldPathType} from '../field-path.js';
-import {Handle} from '../recipe/handle.js';
 import {Schema} from '../schema.js';
-
-export enum PolicyEgressType {
-  Logging = 'Logging',
-  FederatedAggregation = 'FederatedAggregation',
-}
 
 export enum PolicyRetentionMedium {
   Ram = 'Ram',
@@ -51,7 +45,7 @@ export class Policy {
       readonly targets: PolicyTarget[],
       readonly configs: PolicyConfig[],
       readonly description: string | null,
-      readonly egressType: PolicyEgressType | null,
+      readonly egressType: string | null,
       readonly customAnnotations: AnnotationRef[],
       private readonly allAnnotations: AnnotationRef[]) {}
 
@@ -79,7 +73,7 @@ export class Policy {
     // Process annotations.
     const allAnnotations = buildAnnotationRefs(node.annotationRefs);
     let description: string | null = null;
-    let egressType: PolicyEgressType | null = null;
+    let egressType: string | null = null;
     const customAnnotations: AnnotationRef[] = [];
     for (const annotation of allAnnotations) {
       switch (annotation.name) {
@@ -103,11 +97,9 @@ export class Policy {
     return annotation.params['description'] as string;
   }
 
-  private static toEgressType(annotation: AnnotationRef): PolicyEgressType {
+  private static toEgressType(annotation: AnnotationRef): string {
     assert(annotation.name === egressTypeAnnotationName);
-    const egressType = annotation.params['type'] as string;
-    checkValueInEnum(egressType, PolicyEgressType);
-    return egressType as PolicyEgressType;
+    return annotation.params['type'] as string;
   }
 }
 
@@ -315,7 +307,8 @@ export class PolicyField {
       case 'schema-reference': {
         const restrictedFields = {};
         for (const subfield of this.subfields) {
-          restrictedFields[subfield.name] = field.schema.model.entitySchema.fields[subfield.name];
+          restrictedFields[subfield.name] =
+              subfield.restrictField(field.schema.model.entitySchema.fields[subfield.name]);
         }
         return {kind: 'schema-reference', schema: {
             ...field.schema,

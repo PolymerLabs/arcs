@@ -21,7 +21,7 @@ console.log('\n--- Arcs Shell ---\n');
     Runtime.init('../..');
     // create a composer
     const composer = new SlotComposer();
-    await App(composer);
+    await App(composer, `Arcs/Login.recipe`);
   } catch (x) {
     console.error(x);
   }

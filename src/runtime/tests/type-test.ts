@@ -142,7 +142,7 @@ describe('types', () => {
       const variable = TypeVariable.make('a');
       deepEqual(variable.toLiteral(), {
         tag: 'TypeVariable',
-        data: {name: 'a', canWriteSuperset: null, canReadSubset: null}
+        data: {name: 'a', canWriteSuperset: null, canReadSubset: null, resolveToMaxType: false}
       });
       deepEqual(variable, Type.fromLiteral(variable.toLiteral()));
       deepEqual(variable, variable.clone(new Map()));
@@ -407,6 +407,28 @@ describe('types', () => {
       assert.notExists(a.canWriteSuperset);
       assert.notExists(a.canReadSubset);
       assert.strictEqual(a.resolution, b);
+    });
+    it(`maybeEnsureResolved prefers canReadSubset for resolution when resolveToMaxType is true`, () => {
+      const sup = EntityType.make(['Super'], {});
+      const sub = EntityType.make(['Sub'], {});
+      const a = new TypeVariableInfo('x', sup, sub, true);
+
+      a.maybeEnsureResolved();
+
+      assert.notExists(a.canWriteSuperset);
+      assert.notExists(a.canReadSubset);
+      assert.strictEqual(a.resolution, sub);
+    });
+    it(`maybeEnsureResolved prefers canWriteSuperset for resolution when resolveToMaxType is false`, () => {
+      const sup = EntityType.make(['Super'], {});
+      const sub = EntityType.make(['Sub'], {});
+      const a = new TypeVariableInfo('x', sup, sub, false);
+
+      a.maybeEnsureResolved();
+
+      assert.notExists(a.canWriteSuperset);
+      assert.notExists(a.canReadSubset);
+      assert.strictEqual(a.resolution, sup);
     });
   });
 

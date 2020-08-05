@@ -12,38 +12,27 @@
   import {App} from './app.js';
   import {Runtime} from '../../build/runtime/runtime.js';
   import {SlotComposer} from '../../build/runtime/slot-composer.js';
-  import {attachRenderer} from '../lib/xen-renderer.js';
+  import {SlotObserver} from '../lib/xen-renderer.js';
+
+  const getUrlParam = name => {
+    return new URL(document.location.href).searchParams.get(name);
+  };
 
   // run
   (async () => {
     try {
+      // read intent
+      const manifest = getUrlParam('manifest') || getUrlParam('m') || `Arcs/Login.recipe`;
       // configure arcs environment
       Runtime.init('../..');
       // construct renderer
       const composer = new SlotComposer();
-      composer.root = document.body;
-      attachRenderer(composer).dispatch = (pid, eventlet) => {
-        console.log('ui-broker/composer dispatch for pid', pid, eventlet);
-        this.firePecEvent(composer, pid, eventlet);
-      };
+      // establish surface
+      composer.observeSlots(new SlotObserver(document.body));
       // start app
-      await App(composer);
+      await App(composer, manifest);
     } catch (x) {
       console.error(x);
     }
   })();
-  //
-  const firePecEvent = (composer, pid, eventlet) => {
-    if (composer && composer.arc) {
-      const particle = composer.arc.activeRecipe.particles.find(
-        particle => String(particle.id) === String(pid)
-      );
-      if (particle) {
-        log('firing PEC event for', particle.name);
-        // TODO(sjmiles): we need `arc` and `particle` here even though
-        // the two are bound together, figure out how to simplify
-        composer.arc.peh.sendEvent(particle, /*slotName*/'', eventlet);
-      }
-    }
-  };
 </script>

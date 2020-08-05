@@ -47,7 +47,7 @@ export abstract class Type {
   // Creates a Type with same tag as this (e.g. CollectionType, if this is a
   // collection), with entity Schema fields restricted according to the fields
   // in the given `type` parameter (used for ingress restricting).
-  abstract restrictToType(type: Type): Type|null;
+  abstract restrictToType(type: Type, skippedFields?: string[]): Type|null;
 
   static unwrapPair(type1: Type, type2: Type): [Type, Type] {
     if (type1.tag === type2.tag) {
@@ -321,7 +321,7 @@ export class CountType extends Type {
     return {tag: 'Count'};
   }
 
-  restrictToType(type: Type): Type {
+  restrictToType(type: Type, skippedFields?: string[]): Type|null {
     throw new Error(`'restrictToType' is not supported for ${this.tag}`);
   }
 
@@ -374,8 +374,8 @@ export class SingletonType<T extends Type> extends Type {
     return this.innerType.canReadSubset;
   }
 
-  restrictToType(type: Type): Type {
-    return new SingletonType(this.innerType.restrictToType(type));
+  restrictToType(type: Type, skippedFields?: string[]): Type|null {
+    return new SingletonType(this.innerType.restrictToType(type, skippedFields));
   }
 }
 
@@ -458,15 +458,12 @@ export class EntityType extends Type {
     throw new Error(`Entity handle not yet implemented - you probably want to use a SingletonType`);
   }
 
-  restrictToType(type: Type): Type {
-    const fields = {};
-    for (const [fieldName, field] of Object.entries(this.getEntitySchema().fields)) {
-      const policyField = type.getEntitySchema().fields[fieldName];
-      if (policyField) {
-        fields[fieldName] = Schema.restrictField(field, policyField);
-      }
-    }
-    return EntityType.make([type.getEntitySchema().name], fields, type.getEntitySchema());
+  restrictToType(type: Type, skippedFields?: string[]): Type|null {
+    return EntityType.make(
+      [type.getEntitySchema().name],
+      Schema.getRestrictedSchemaFields(this.getEntitySchema(), type.getEntitySchema(), {skippedFields}),
+      type.getEntitySchema()
+    );
   }
 }
 
@@ -478,8 +475,8 @@ export class TypeVariable extends Type {
     this.variable = variable;
   }
 
-  static make(name: string, canWriteSuperset: Type = null, canReadSubset: Type = null): TypeVariable {
-    return new TypeVariable(new TypeVariableInfo(name, canWriteSuperset, canReadSubset));
+  static make(name: string, canWriteSuperset: Type = null, canReadSubset: Type = null, resolvesToMaxType = false): TypeVariable {
+    return new TypeVariable(new TypeVariableInfo(name, canWriteSuperset, canReadSubset, resolvesToMaxType));
   }
 
   get isVariable(): boolean {
@@ -570,10 +567,10 @@ export class TypeVariable extends Type {
     return this.variable.isResolved() ? this.resolvedType().toPrettyString() : `[~${this.variable.name}]`;
   }
 
-  restrictToType(type: Type): Type {
+  restrictToType(type: Type, skippedFields?: string[]): Type|null {
     if (!this.variable.isResolved()) return null;
     const typeVar = new TypeVariable(new TypeVariableInfo(this.variable.name));
-    typeVar.variable.resolution = this.variable.resolution.restrictToType(type);
+    typeVar.variable.resolution = this.variable.resolution.restrictToType(type, skippedFields);
     return typeVar;
   }
 }
@@ -672,8 +669,8 @@ export class CollectionType<T extends Type> extends Type {
     return CollectionType.handleClass;
   }
 
-  restrictToType(type: Type): Type {
-    return new CollectionType(this.collectionType.restrictToType(type));
+  restrictToType(type: Type, skippedFields?: string[]): Type|null {
+    return new CollectionType(this.collectionType.restrictToType(type, skippedFields));
   }
 }
 
@@ -762,7 +759,7 @@ export class BigCollectionType<T extends Type> extends Type {
     return `Collection of ${this.bigCollectionType.toPrettyString()}`;
   }
 
-  restrictToType(type: Type): Type {
+  restrictToType(type: Type, skippedFields?: string[]): Type|null {
     throw new Error(`'restrictToType' is not supported for ${this.tag}`);
   }
 }
@@ -840,7 +837,7 @@ export class TupleType extends Type {
     return 'Tuple of ' + this.innerTypes.map(t => t.toPrettyString()).join(', ');
   }
 
-  restrictToType(type: Type): Type {
+  restrictToType(type: Type, skippedFields?: string[]): Type|null {
     // TODO(b/159143604): implement.
     throw new Error(`'restrictToType' is not supported for ${this.tag}`);
   }
@@ -932,7 +929,7 @@ export class InterfaceType extends Type {
     return this.interfaceInfo.toPrettyString();
   }
 
-  restrictToType(type: Type): Type {
+  restrictToType(type: Type, skippedFields?: string[]): Type|null {
     throw new Error(`'restrictToType' is not supported for ${this.tag}`);
   }
 }
@@ -999,7 +996,7 @@ export class SlotType extends Type {
     return `Slot${fieldsString}`;
   }
 
-  restrictToType(type: Type): Type {
+  restrictToType(type: Type, skippedFields?: string[]): Type|null {
     throw new Error(`'restrictToType' is not supported for ${this.tag}`);
   }
 }
@@ -1084,8 +1081,8 @@ export class ReferenceType<T extends Type> extends Type {
     return this.referredType.crdtInstanceConstructor();
   }
 
-  restrictToType(type: Type): Type {
-    return new ReferenceType(this.referredType.restrictToType(type));
+  restrictToType(type: Type, skippedFields?: string[]): Type|null {
+    return new ReferenceType(this.referredType.restrictToType(type, skippedFields));
   }
 }
 
@@ -1168,7 +1165,7 @@ export class MuxType<T extends Type> extends Type {
     return MuxType.handleClass;
   }
 
-  restrictToType(type: Type): Type {
+  restrictToType(type: Type, skippedFields?: string[]): Type|null {
     throw new Error(`'restrictToType' is not supported for ${this.tag}`);
   }
 }
@@ -1186,7 +1183,7 @@ export class HandleType extends Type {
     return {tag: this.tag};
   }
 
-  restrictToType(type: Type): Type {
+  restrictToType(type: Type, skippedFields?: string[]): Type|null {
     throw new Error(`'restrictToType' is not supported for ${this.tag}`);
   }
 }
@@ -1195,6 +1192,7 @@ interface TypeVariableInfoLiteral {
   name: string;
   canWriteSuperset?: TypeLiteral;
   canReadSubset?: TypeLiteral;
+  resolveToMaxType: boolean;
 }
 
 export class TypeVariableInfo {
@@ -1202,12 +1200,14 @@ export class TypeVariableInfo {
   _canWriteSuperset?: Type|null;
   _canReadSubset?: Type|null;
   _resolution?: Type|null;
+  resolveToMaxType: boolean;
 
-  constructor(name: string, canWriteSuperset?: Type, canReadSubset?: Type) {
+  constructor(name: string, canWriteSuperset?: Type, canReadSubset?: Type, resolveToMaxType: boolean = false) {
     this.name = name;
     this._canWriteSuperset = canWriteSuperset;
     this._canReadSubset = canReadSubset;
     this._resolution = null;
+    this.resolveToMaxType = resolveToMaxType;
   }
 
   /**
@@ -1227,29 +1227,13 @@ export class TypeVariableInfo {
    * This is used to accumulate read constraints when resolving a handle's type.
    */
   maybeMergeCanReadSubset(constraint: Type): boolean {
-    if (constraint == null) {
-      return true;
-    }
-
-    if (this.canReadSubset == null) {
-      this.canReadSubset = constraint;
-      return true;
-    }
-
-    if (this.canReadSubset instanceof SlotType && constraint instanceof SlotType) {
-      // TODO: formFactor compatibility, etc.
-      return true;
-    }
-    if (this.canReadSubset instanceof EntityType && constraint instanceof EntityType) {
-      const mergedSchema = Schema.intersect(this.canReadSubset.entitySchema, constraint.entitySchema);
-      if (!mergedSchema) {
-        return false;
-      }
-
-      this.canReadSubset = new EntityType(mergedSchema);
-      return true;
-    }
-    return false;
+    const {result, success} = this._maybeMerge(
+      this.canReadSubset,
+      constraint,
+      Schema.intersect
+    );
+    this.canReadSubset = result;
+    return success;
   }
 
   /**
@@ -1257,30 +1241,37 @@ export class TypeVariableInfo {
    * This is used to accumulate write constraints when resolving a handle's type.
    */
   maybeMergeCanWriteSuperset(constraint: Type): boolean {
+    const {result, success} = this._maybeMerge(this.canWriteSuperset, constraint, Schema.union);
+    this.canWriteSuperset = result;
+    return success;
+  }
+
+  // Helper to generalize canReadSubset and canWriteSuperset merging
+  private _maybeMerge(target: Type, constraint: Type,
+                      merger: (left: Schema, right: Schema) => Schema): { success: boolean; result: Type } {
     if (constraint == null) {
-      return true;
+      return {success: true, result: target};
     }
 
-    if (this.canWriteSuperset == null) {
-      this.canWriteSuperset = constraint;
-      return true;
+    if (target == null) {
+      return {success: true, result: constraint};
     }
 
-    if (this.canWriteSuperset instanceof SlotType && constraint instanceof SlotType) {
+    if (target instanceof SlotType && constraint instanceof SlotType) {
       // TODO: formFactor compatibility, etc.
-      return true;
+      return {success: true, result: target};
     }
 
-    if (this.canWriteSuperset instanceof EntityType && constraint instanceof EntityType) {
-      const mergedSchema = Schema.union(this.canWriteSuperset.entitySchema, constraint.entitySchema);
+    if (target instanceof EntityType && constraint instanceof EntityType) {
+      const mergedSchema = merger(target.entitySchema, constraint.entitySchema);
       if (!mergedSchema) {
-        return false;
+        return {success: false, result: target};
       }
 
-      this.canWriteSuperset = new EntityType(mergedSchema);
-      return true;
+      return {success: true, result: new EntityType(mergedSchema)};
     }
-    return false;
+
+    return {success: false, result: target};
   }
 
   isSatisfiedBy(type: Type): boolean {
@@ -1319,6 +1310,9 @@ export class TypeVariableInfo {
     while (probe) {
       if (!(probe instanceof TypeVariable)) {
         break;
+      }
+      if (this.resolveToMaxType) {
+        probe.variable.resolveToMaxType = true;
       }
       if (probe.variable === this) {
         return;
@@ -1381,6 +1375,10 @@ export class TypeVariableInfo {
     if (this._resolution) {
       return this._resolution.maybeEnsureResolved();
     }
+    if (this.resolveToMaxType && this._canReadSubset) {
+      this.resolution = this._canReadSubset;
+      return true;
+    }
     if (this._canWriteSuperset) {
       this.resolution = this._canWriteSuperset;
       return true;
@@ -1401,7 +1399,8 @@ export class TypeVariableInfo {
     return {
       name: this.name,
       canWriteSuperset: this._canWriteSuperset && this._canWriteSuperset.toLiteral(),
-      canReadSubset: this._canReadSubset && this._canReadSubset.toLiteral()
+      canReadSubset: this._canReadSubset && this._canReadSubset.toLiteral(),
+      resolveToMaxType: this.resolveToMaxType
     };
   }
 
@@ -1409,7 +1408,9 @@ export class TypeVariableInfo {
     return new TypeVariableInfo(
         data.name,
         data.canWriteSuperset ? Type.fromLiteral(data.canWriteSuperset) : null,
-        data.canReadSubset ? Type.fromLiteral(data.canReadSubset) : null);
+        data.canReadSubset ? Type.fromLiteral(data.canReadSubset) : null,
+        data.resolveToMaxType
+    );
   }
 
   isResolved(): boolean {

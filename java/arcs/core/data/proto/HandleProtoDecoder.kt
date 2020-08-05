@@ -39,7 +39,7 @@ fun HandleProto.decode(knownHandles: Map<String, Handle> = emptyMap()) = Handle(
     fate = fate.decode(),
     tags = tagsList,
     storageKey = storageKey,
-    type = if (hasType()) type.decode() else TypeVariable("$name"),
+    type = if (hasType()) type.decode() else TypeVariable(name),
     annotations = annotationsList.map { it.decode() },
     associatedHandles = associatedHandlesList.map { requireNotNull(knownHandles[it]) }
 )

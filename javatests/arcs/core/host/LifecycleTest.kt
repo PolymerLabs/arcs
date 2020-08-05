@@ -15,6 +15,8 @@ import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.testutil.assertVariableOrdering
+import arcs.core.testutil.handles.dispatchClear
+import arcs.core.testutil.handles.dispatchRemove
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.testutil.runTest
 import arcs.core.util.Scheduler
@@ -65,7 +67,8 @@ class LifecycleTest {
             ::ReadWriteAccessParticle.toRegistration(),
             ::PipelineProducerParticle.toRegistration(),
             ::PipelineTransportParticle.toRegistration(),
-            ::PipelineConsumerParticle.toRegistration()
+            ::PipelineConsumerParticle.toRegistration(),
+            ::UpdateDeltasParticle.toRegistration()
         )
         hostRegistry = ExplicitHostRegistry().also { it.registerHost(testHost) }
         storeManager = StoreManager()
@@ -224,5 +227,43 @@ class LifecycleTest {
         arc.stop()
         arc.waitForStop()
         assertThat(particle.values).containsExactly("sng_mod", "[col_mod]")
+    }
+
+    @Test
+    fun updateDeltas() = runTest {
+        val name = "UpdateDeltasParticle"
+        val arc = allocator.startArcForPlan(UpdateDeltasTestPlan).waitForStart()
+        val particle: UpdateDeltasParticle = testHost.getParticle(arc.id, name)
+        val sng = testHost.singletonForTest<UpdateDeltasParticle_Sng>(arc.id, name, "sng")
+        val col = testHost.collectionForTest<UpdateDeltasParticle_Col>(arc.id, name, "col")
+
+        sng.dispatchStore(UpdateDeltasParticle_Sng(1))
+        val two = UpdateDeltasParticle_Sng(2)
+        sng.dispatchStore(two)
+        sng.dispatchStore(two)
+        sng.dispatchClear()
+        sng.dispatchClear()
+
+        val four = UpdateDeltasParticle_Col(4)
+        val five = UpdateDeltasParticle_Col(5)
+        col.dispatchStore(UpdateDeltasParticle_Col(3), four, five)
+        col.dispatchRemove(four)
+        col.dispatchStore(UpdateDeltasParticle_Col(6), five)
+        col.dispatchClear()
+
+        arc.stop()
+        arc.waitForStop()
+
+        assertThat(particle.events).isEqualTo(listOf(
+            "sng:null:1",
+            "sng:1:2",
+            "sng:2:null",
+            "col:[3]:[]",
+            "col:[4]:[]",
+            "col:[5]:[]",
+            "col:[]:[4]",
+            "col:[6]:[]",
+            "col:[]:[3, 5, 6]"
+        ))
     }
 }

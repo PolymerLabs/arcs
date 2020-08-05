@@ -8,6 +8,9 @@ package arcs.golden
 //
 // Current implementation doesn't support optional field detection
 
+import arcs.core.data.expression.*
+import arcs.core.data.expression.Expression.*
+import arcs.core.data.expression.Expression.BinaryOp.*
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.toPrimitiveValue
 import java.math.BigInteger
@@ -73,8 +76,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     collections = emptyMap()
                 ),
                 "485712110d89359a3e539dac987329cd2649d889",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
@@ -132,8 +135,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     collections = emptyMap()
                 ),
                 "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
@@ -200,8 +203,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     collections = emptyMap()
                 ),
                 "e8b8d30e041174ca9104dfba453615c934af27b3",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
@@ -275,8 +278,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     collections = emptyMap()
                 ),
                 "e9ba6d9fa458ec35a966e462bb30a082e3f0d2f8",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
@@ -350,8 +353,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     collections = emptyMap()
                 ),
                 "e84265ec7993502eb817dcff9f34dec4d164db05",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
@@ -425,8 +428,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     collections = emptyMap()
                 ),
                 "efcc87f84735b2f83b285e0f2768ff577611a68c",
-                refinement = { _ -> true },
-                query = null
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
@@ -451,8 +454,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         ref: arcs.sdk.Reference<KotlinPrimitivesGolden_Data_Ref>? = null,
         bt: Byte = 0.toByte(),
         shrt: Short = 0.toShort(),
-        nt: Int = 0,
-        lng: Long = 0L,
+        integer: Int = 0,
+        long_val: Long = 0L,
         big: BigInteger = BigInteger.ZERO,
         chr: Char = '\u0000',
         flt: Float = 0.0f,
@@ -496,12 +499,12 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         var shrt: Short
             get() = super.getSingletonValue("shrt") as Short? ?: 0.toShort()
             private set(_value) = super.setSingletonValue("shrt", _value)
-        var nt: Int
-            get() = super.getSingletonValue("nt") as Int? ?: 0
-            private set(_value) = super.setSingletonValue("nt", _value)
-        var lng: Long
-            get() = super.getSingletonValue("lng") as Long? ?: 0L
-            private set(_value) = super.setSingletonValue("lng", _value)
+        var integer: Int
+            get() = super.getSingletonValue("integer") as Int? ?: 0
+            private set(_value) = super.setSingletonValue("integer", _value)
+        var long_val: Long
+            get() = super.getSingletonValue("long_val") as Long? ?: 0L
+            private set(_value) = super.setSingletonValue("long_val", _value)
         var big: BigInteger
             get() = super.getSingletonValue("big") as BigInteger? ?: BigInteger.ZERO
             private set(_value) = super.setSingletonValue("big", _value)
@@ -541,8 +544,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
             this.ref = ref
             this.bt = bt
             this.shrt = shrt
-            this.nt = nt
-            this.lng = lng
+            this.integer = integer
+            this.long_val = long_val
             this.big = big
             this.chr = chr
             this.flt = flt
@@ -567,8 +570,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
             ref: arcs.sdk.Reference<KotlinPrimitivesGolden_Data_Ref>? = this.ref,
             bt: Byte = this.bt,
             shrt: Short = this.shrt,
-            nt: Int = this.nt,
-            lng: Long = this.lng,
+            integer: Int = this.integer,
+            long_val: Long = this.long_val,
             big: BigInteger = this.big,
             chr: Char = this.chr,
             flt: Float = this.flt,
@@ -587,8 +590,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
             ref = ref,
             bt = bt,
             shrt = shrt,
-            nt = nt,
-            lng = lng,
+            integer = integer,
+            long_val = long_val,
             big = big,
             chr = chr,
             flt = flt,
@@ -613,8 +616,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
             ref: arcs.sdk.Reference<KotlinPrimitivesGolden_Data_Ref>? = this.ref,
             bt: Byte = this.bt,
             shrt: Short = this.shrt,
-            nt: Int = this.nt,
-            lng: Long = this.lng,
+            integer: Int = this.integer,
+            long_val: Long = this.long_val,
             big: BigInteger = this.big,
             chr: Char = this.chr,
             flt: Float = this.flt,
@@ -633,8 +636,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
             ref = ref,
             bt = bt,
             shrt = shrt,
-            nt = nt,
-            lng = lng,
+            integer = integer,
+            long_val = long_val,
             big = big,
             chr = chr,
             flt = flt,
@@ -663,8 +666,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                         "ref" to arcs.core.data.FieldType.EntityRef("485712110d89359a3e539dac987329cd2649d889"),
                         "bt" to arcs.core.data.FieldType.Byte,
                         "shrt" to arcs.core.data.FieldType.Short,
-                        "nt" to arcs.core.data.FieldType.Int,
-                        "lng" to arcs.core.data.FieldType.Long,
+                        "integer" to arcs.core.data.FieldType.Int,
+                        "long_val" to arcs.core.data.FieldType.Long,
                         "big" to arcs.core.data.FieldType.BigInt,
                         "chr" to arcs.core.data.FieldType.Char,
                         "flt" to arcs.core.data.FieldType.Float,
@@ -679,13 +682,9 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                         "colors" to arcs.core.data.FieldType.InlineEntity("e9ba6d9fa458ec35a966e462bb30a082e3f0d2f8")
                     )
                 ),
-                "44b8dccc1ae0cf6fa00a7dfeef0b0e6b1d565e24",
-                refinement = { data ->
-                    val big = data.singletons["big"].toPrimitiveValue(BigInteger::class, BigInteger.ZERO)
-                    val num = data.singletons["num"].toPrimitiveValue(Double::class, 0.0)
-                    ((num < 1000) && (big > BigInteger("1")))
-                },
-                query = null
+                "1b1cb0b0d53a8af5158ea9b532e73ab2f9b31add",
+                refinementExpression =         ((CurrentScope<Number>(mutableMapOf())["num"] lt 1000.asExpr()) and (((CurrentScope<Number>(mutableMapOf())["big"] gt NumberLiteralExpression(BigInteger("1"))) and (NumberLiteralExpression(BigInteger("30")) lt ((CurrentScope<Number>(mutableMapOf())["integer"] * NumberLiteralExpression(BigInteger("5"))) + (CurrentScope<Number>(mutableMapOf())["integer"] * NumberLiteralExpression(BigInteger("10")))))) and ((NumberLiteralExpression(BigInteger("1000000")) gt (CurrentScope<Number>(mutableMapOf())["long_val"] * NumberLiteralExpression(BigInteger("10")))) and ((NumberLiteralExpression(BigInteger("100000")) eq (CurrentScope<Number>(mutableMapOf())["long_val"] * NumberLiteralExpression(BigInteger("10")))) or (NumberLiteralExpression(BigInteger("100000")) lt (CurrentScope<Number>(mutableMapOf())["long_val"] * NumberLiteralExpression(BigInteger("10")))))))),
+                queryExpression = true.asExpr()
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =

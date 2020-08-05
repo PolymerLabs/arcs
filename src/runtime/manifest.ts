@@ -588,8 +588,8 @@ ${e.message}
       await processItems('interface', item => Manifest._processInterface(manifest, item));
       await processItems('particle', item => Manifest._processParticle(manifest, item, loader));
       await processItems('store', item => Manifest._processStore(manifest, item, loader, memoryProvider));
-      await processItems('recipe', item => Manifest._processRecipe(manifest, item));
       await processItems('policy', item => Manifest._processPolicy(manifest, item));
+      await processItems('recipe', item => Manifest._processRecipe(manifest, item));
     } catch (e) {
       dumpErrors(manifest);
       throw processError(e, false);
@@ -644,7 +644,7 @@ ${e.message}
                 } else {
                   // Validate that the specified or inferred type matches the schema.
                   const externalType = schema.fields[name];
-                  if (externalType && !Schema.isAtLeastAsSpecificAs(externalType, type)) {
+                  if (externalType && !Schema.fieldTypeIsAtLeastAsSpecificAs(externalType, type)) {
                     throw new ManifestError(node.location, `Type of '${name}' does not match schema (${type} vs ${externalType})`);
                   }
                 }
@@ -849,10 +849,19 @@ ${e.message}
         }
         processArgTypes(arg.dependentConnections);
         arg.annotations = Manifest._buildAnnotationRefs(manifest, arg.annotations);
+
+        // TODO: Validate that the type of the expression matches the declared type.
+        // TODO: Transform the expression AST into a cross-platform text format.
+        arg.expression = arg.expression && arg.expression.kind;
       }
     };
+    if (particleItem.implFile && particleItem.args.some(arg => !!arg.expression)) {
+      const arg = particleItem.args.find(arg => !!arg.expression);
+      throw new ManifestError(arg.expression.location, `A particle with implementation cannot use result expressions.`);
+    }
     processArgTypes(particleItem.args);
     particleItem.annotations = Manifest._buildAnnotationRefs(manifest, particleItem.annotationRefs);
+    particleItem.manifestNamespace = manifest.meta.namespace;
     manifest._particles[particleItem.name] = new ParticleSpec(particleItem);
   }
 
@@ -1315,6 +1324,15 @@ ${e.message}
         const requireSection = recipe.newRequireSection();
         Manifest._buildRecipe(manifest, requireSection, item.items);
       }
+    }
+
+    const policyName = recipe.policyName;
+    if (policyName != null) {
+      const policy = manifest.policies.find(p => p.name === policyName);
+      if (policy == null) {
+        throw new Error(`No policy named '${policyName}' was found in the manifest.`);
+      }
+      recipe.policy = policy;
     }
   }
 

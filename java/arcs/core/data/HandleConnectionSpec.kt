@@ -16,5 +16,6 @@ import arcs.core.type.Type
 data class HandleConnectionSpec(
     val name: String,
     val direction: HandleMode,
-    val type: Type
+    val type: Type,
+    val expression: String? = null
 )

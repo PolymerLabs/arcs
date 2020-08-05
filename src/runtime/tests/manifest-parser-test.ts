@@ -64,79 +64,6 @@ describe('manifest parser', () => {
         places: map #locations
         pairs: join (people, places)`);
   });
-  // Semantically, adapter params are actually a Tuple of inputs
-  // so join(a,b) apply Foo(a,b) is semantically equivalent to this=(a,b), apply Foo(this)
-  // For non-join handles, this is just Foo(this) where this=a
-  // 'this' represents current handle the adapter is attached to as a tuple of 1 or more handles.
-  // When an adapter is applied, the tuple is 'destructured' to the parameter names in the adapter declaration
-  it('parses recipes with adapted handles', () => {
-    parse(`
-      recipe
-        people: map #folks apply Foo(this)
-        places: map #locations apply Bar(this)`);
-  });
-  it('parses recipes with a synthetic join handles and applied adapter', () => {
-    parse(`
-      adapter PairPerson( 
-        person: Person { name: Text, age: Number },
-        place: ~a with { name: Text, address: Text },
-        data: (Person {name: Text, age: Number }, Company { name: Text, address: Text })
-      ) => PairedPerson { name: person.name, address: place.address, place: place.name }     
-      recipe
-        people: map #folks
-        places: map #locations
-        pairs: join (people, places) apply PairPerson(people, places)`);
-  });
-  it('parses adapter declarations with inline schema', () => {
-    parse(`
-      adapter ToFriend( 
-        person: Person { name: Text, age: Number },
-        company: ~a with { name: Text, address: Text },
-        data: (Person {name: Text, age: Number }, Company { name: Text, address: Text })
-      ) => Friend { nickName: person.name, work: company.name, newdata: data.first }     
-    `);
-  });
-  it('parses adapter declarations with inline schema with no identifier', () => {
-    parse(`
-      adapter ToFriend( 
-        person: Person { name: Text, age: Number },
-        company: ~a with { name: Text, address: Text },
-        data: (Person {name: Text, age: Number }, Company { name: Text, address: Text })
-      ) => { nickName: person.name, work: company.name, newdata: data.first }     
-    `);
-  });
-  it('parses adapter declarations with inline schema with multiple identifier', () => {
-    parse(`
-      adapter ToFriend( 
-        person: Person { name: Text, age: Number },
-        company: ~a with { name: Text, address: Text },
-        data: (Person {name: Text, age: Number }, Company { name: Text, address: Text })
-      ) => Product Thing { nickName: person.name, work: company.name, newdata: data.first }     
-    `);
-  });
-  it('parses adapter declarations with inline schema with nested addresing', () => {
-    parse(`
-      adapter Inline(person: Person { 
-        name: Text,
-        address: &Address { address: Text }
-      }) => Person {
-        name: person.name,
-        address: person.address.address
-      }`);
-  });
-  it('fails to parse adapter declarations with with duplicate param names', () => {
-    try {
-      parse(`
-      adapter ToFriend( 
-        person: Person { name: Text, age: Number },
-        person: Company { name: Text, address: Text }
-      ) => Friend { nickName: person.name, work: person.name }     
-    `);
-      assert.fail('this parse should have failed, adapter params cannot contain duplicates');
-    } catch (e) {
-      assert.include(e.message, 'Duplicate adapter param names person');
-    }
-  });
   it('parses recipe handles with capabilities', () => {
     parse(`
       recipe Thing
@@ -382,19 +309,7 @@ describe('manifest parser', () => {
         review: &Review
     `);
   });
-  it('parses a schema with a reference field (with sugar)', () => {
-    parse(`
-      schema Product
-        review: &Review
-    `);
-  });
   it('parses a schema with a referenced inline schema', () => {
-    parse(`
-      schema Product
-        review: &Review {reviewText: Text}
-    `);
-  });
-  it('parses a schema with a referenced inline schema (with sugar)', () => {
     parse(`
       schema Product
         review: &Review {reviewText: Text}
@@ -406,31 +321,13 @@ describe('manifest parser', () => {
         inReview: reads Product {review: &Review}
     `);
   });
-  it('parses an inline schema with a reference to a schema (with sugar)', () => {
-    parse(`
-      particle Foo
-        inReview: reads Product {review: &Review}
-    `);
-  });
   it('parses an inline schema with a collection of references to schemas', () => {
     parse(`
       particle Foo
         inResult: reads Product {review: [&Review]}
     `);
   });
-  it('parses an inline schema with a collection of references to schemas (with sugar)', () => {
-    parse(`
-      particle Foo
-        inResult: reads Product {review: [&Review]}
-    `);
-  });
   it('parses an inline schema with a referenced inline schema', () => {
-    parse(`
-    particle Foo
-      inReview: reads Product {review: &Review {reviewText: Text} }
-    `);
-  });
-  it('parses an inline schema with a referenced inline schema (with sugar)', () => {
     parse(`
     particle Foo
       inReview: reads Product {review: &Review {reviewText: Text} }
@@ -551,13 +448,6 @@ describe('manifest parser', () => {
     }, 'Expected an upper case identifier but "URL" found.');
   });
   it('parses reference types', () => {
-    parse(`
-      particle Foo
-        inRef: reads Reference<Foo>
-        outRef: writes Reference<Bar>
-    `);
-  });
-  it('parses reference types (with sugar)', () => {
     parse(`
       particle Foo
         inRef: reads &Foo
@@ -813,6 +703,24 @@ describe('manifest parser', () => {
       JSON.stringify(JSON.parse(manifestAst[1].data)),
       '[{"type":"artist","name":"in this moment"}]'
     );
+  });
+
+  describe('particle expressions', () => {
+    it('parses expression on a new line', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} =
+          new Bar {y: foo.x}
+      `);
+    });
+    it('parses new entity expression', () => {
+      parse(`
+      particle Converter
+        foo: reads Foo {x: Number}
+        bar: writes Bar {y: Number} = new Bar {y: foo.x}
+      `);
+    });
   });
 
   describe('inline data stores', () => {

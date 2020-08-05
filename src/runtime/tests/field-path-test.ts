@@ -260,7 +260,7 @@ describe('field path validation', () => {
     it('supports complex nesting inside type variables', async () => {
       const type = await parseTypeFromHandle('bar', `
         particle P
-          foo1: reads ~a with {name: Text, friends: [&Person {name: Text}]}
+          foo: reads ~a with {name: Text, friends: [&Person {name: Text}]}
           bar: writes ~a
       `);
       const expectedPersonType = await parseTypeFromSchema(`
@@ -271,6 +271,28 @@ describe('field path validation', () => {
       assert.deepEqual(resolveFieldPathType(['friends'], type), expectedPersonType);
       assert.strictEqual(resolveFieldPathType(['friends', 'name'], type), 'Text');
     });
+
+    it('can refer to fields inside a resolved type', async () => {
+      const typeVariable = await parseTypeFromHandle('bar', `
+        particle P
+          foo: reads ~a with {name: Text}
+          bar: writes ~a
+      `) as TypeVariable;
+      const personType = await parseTypeFromSchema(`
+        schema Person
+          name: Text
+          age: Number
+      `);
+      typeVariable.variable.resolution = personType;
+      assert.deepEqual(typeVariable.variable.resolution, personType);
+      assert.isNull(typeVariable.canReadSubset);
+      assert.isNull(typeVariable.canWriteSuperset);
+
+      assert.strictEqual(resolveFieldPathType(['name'], typeVariable), 'Text');
+      assert.throws(
+          () => resolveFieldPathType(['missing'], typeVariable),
+          `Schema 'Person {name: Text, age: Number}' does not contain field 'missing'.`);
+        });
   });
 
   describe('tuples', () => {

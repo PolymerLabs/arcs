@@ -119,23 +119,21 @@ class PolicyVerifier(val options: PolicyOptions) {
     }
 
     /**
-     * Verifies that the given egress particle nodes match the policy. The only egress particle
-     * allowed to be used with a policy named `Foo` is an egress particle named `Egress_Foo`.
+     * Verifies that the given egress particle nodes match the policy. The only egress particles
+     * allowed to be used with a policy are in [options.policyEgresses] map.
      */
     private fun checkEgressParticles(policy: Policy, egressParticles: List<Recipe.Particle>) {
-        val numValidEgressParticles = egressParticles.count {
-            it.spec.name == policy.egressParticleName
-        }
-        if (numValidEgressParticles > 1) {
-            throw PolicyViolation.MultipleEgressParticles(policy)
+        val allowedEgresses = options.policyEgresses.getOrElse(policy.name) {
+            throw PolicyViolation.PolicyHasNoEgressParticles(policy)
         }
         val invalidEgressParticles = egressParticles
             .map { it.spec }
-            .filter { it.name != policy.egressParticleName }
+            .filterNot { allowedEgresses.contains(it.name) }
         if (invalidEgressParticles.isNotEmpty()) {
-            throw PolicyViolation.InvalidEgressParticle(
-                policy,
-                invalidEgressParticles.map { it.name }
+            throw PolicyViolation.InvalidEgressParticles(
+                policy = policy,
+                allowedEgresses = allowedEgresses,
+                invalidEgresses = invalidEgressParticles.map { it.name }
             )
         }
     }

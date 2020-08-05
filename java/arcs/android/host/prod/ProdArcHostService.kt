@@ -45,7 +45,7 @@ open class ProdArcHostService : ArcHostService() {
     override val arcHost: ArcHost by lazy {
         ProdAndroidHost(
             this,
-            this.lifecycle,
+            lifecycle,
             JvmSchedulerProvider(scope.coroutineContext),
             *scanForParticles()
         )

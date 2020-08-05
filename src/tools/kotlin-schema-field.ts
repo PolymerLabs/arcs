@@ -250,19 +250,20 @@ export interface KotlinTypeInfo {
   type: string;
   decodeFn: string;
   defaultVal: string;
+  isNumber?: boolean;
 }
 
 const primitiveTypeMap: Dictionary<KotlinTypeInfo> = {
   'Text': {type: 'String', decodeFn: 'decodeText()', defaultVal: `""`},
   'URL': {type: 'String', decodeFn: 'decodeText()', defaultVal: `""`},
-  'Number': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0'},
-  'BigInt': {type: 'BigInteger', decodeFn: 'decodeBigInt()', defaultVal: 'BigInteger.ZERO'},
+  'Number': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0', isNumber: true},
+  'BigInt': {type: 'BigInteger', decodeFn: 'decodeBigInt()', defaultVal: 'BigInteger.ZERO', isNumber: true},
   'Boolean': {type: 'Boolean', decodeFn: 'decodeBool()', defaultVal: 'false'},
-  'Byte': {type: 'Byte', decodeFn: 'decodeByte()', defaultVal: '0.toByte()'},
-  'Short': {type: 'Short', decodeFn: 'decodeShort()', defaultVal: '0.toShort()'},
-  'Int': {type: 'Int', decodeFn: 'decodeInt()', defaultVal: '0'},
-  'Long': {type: 'Long', decodeFn: 'decodeLong()', defaultVal: '0L'},
+  'Byte': {type: 'Byte', decodeFn: 'decodeByte()', defaultVal: '0.toByte()', isNumber: true},
+  'Short': {type: 'Short', decodeFn: 'decodeShort()', defaultVal: '0.toShort()', isNumber: true},
+  'Int': {type: 'Int', decodeFn: 'decodeInt()', defaultVal: '0', isNumber: true},
+  'Long': {type: 'Long', decodeFn: 'decodeLong()', defaultVal: '0L', isNumber: true},
   'Char': {type: 'Char', decodeFn: 'decodeChar()', defaultVal: `'\\u0000'`},
-  'Float': {type: 'Float', decodeFn: 'decodeFloat()', defaultVal: '0.0f'},
-  'Double': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0'},
+  'Float': {type: 'Float', decodeFn: 'decodeFloat()', defaultVal: '0.0f', isNumber: true},
+  'Double': {type: 'Double', decodeFn: 'decodeNum()', defaultVal: '0.0', isNumber: true},
 };

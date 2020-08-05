@@ -42,3 +42,22 @@ recipe People
 
   WritePeople
     people: writes people
+
+recipe HelloHello
+  inputPerson: create 'inputPerson'
+  inbetween: create 'inbetween'
+  outputPerson: create 'outputPerson'
+
+  WritePerson
+    person: writes inputPerson
+
+  PurePerson
+    inputPerson: reads inputPerson
+    outputPerson: writes inbetween
+
+  PurePerson
+    inputPerson: reads inbetween
+    outputPerson: writes outputPerson
+      
+  ReadPerson
+    person: reads outputPerson  
