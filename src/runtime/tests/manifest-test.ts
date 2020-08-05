@@ -4635,6 +4635,24 @@ recipe
     `), `You must provide a policy name in the @policy annotation.`);
   });
 
+  it('supports importing policies from another file', async () => {
+    const loader = new Loader(null, {
+      '/policy.arcs': `
+        policy MyPolicy {}
+      `,
+      '/recipe.arcs': `
+        import './policy.arcs'
+
+        @policy('MyPolicy')
+        recipe
+          foo: create
+      `,
+    });
+    const manifest = await Manifest.load('/recipe.arcs', loader);
+    const recipe = manifest.recipes[0];
+    assert.strictEqual(recipe.policy.name, 'MyPolicy');
+  });
+
   describe('isolated and egress particles', () => {
     it('particles are egress by default', async () => {
       const manifest = await Manifest.parse(`
