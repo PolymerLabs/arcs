@@ -426,6 +426,46 @@ describe('TypeChecker', () => {
     assert.deepStrictEqual(egressType.getEntitySchema(), concreteType.getEntitySchema());
   });
 
+  it('can resolve a type variable to its max type through an intermediary variable via a manifest', async () => {
+    const manifest = await Manifest.parse(`
+        particle OrderIngestion in '.OrderIngestion'
+          data: writes [Product {sku: Text, name: Text, price: Number}]
+
+        particle SkuRedactor in '.SkuRedactor'
+          input: reads [~a with {sku: Text}]
+          output: writes [~a]
+
+        particle Egress in '.Egress'
+          data: reads [~x with {sku: Text, *}]
+
+        recipe Shop
+          beforeRedaction: create
+          afterRedaction: create
+          OrderIngestion
+            data: beforeRedaction
+          SkuRedactor
+            input: beforeRedaction
+            output: afterRedaction
+          Egress 
+            data: afterRedaction
+    `);
+
+    const recipe = manifest.recipes[0];
+
+    const orderParticle = recipe.particles.find(p => p.name === 'OrderIngestion').spec;
+    const egressParticle = recipe.particles.find(p => p.name === 'Egress').spec;
+
+    const concreteType = orderParticle.connections.find(c => c.name === 'data').type as CollectionType<EntityType>;
+    const egressType = egressParticle.connections.find(c => c.name === 'data').type as TypeVariable;
+
+    recipe.normalize();
+
+    assert.isTrue(egressType.maybeEnsureResolved());
+    assert.deepStrictEqual(egressType.getEntitySchema(), concreteType.getEntitySchema());
+    assert.deepStrictEqual(Object.keys(egressType.getEntitySchema().fields), ['sku', 'name', 'price']);
+  });
+
+
   it('can compare a type variable with a Collection handle', async () => {
     const leftType = TypeVariable.make('a').collectionOf();
     const rightType = TypeVariable.make('b');

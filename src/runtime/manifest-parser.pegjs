@@ -1490,6 +1490,14 @@ SchemaInlineField
       type
     });
   }
+  / '*'
+  {
+    return toAstNode<AstNode.SchemaInlineField>({
+      kind: 'schema-inline-field',
+      name: '*',
+      type: null,
+    });
+  }
 
 SchemaSpec
   = 'schema' names:(whiteSpace ('*' / upperIdent))+ parents:SchemaExtends?
