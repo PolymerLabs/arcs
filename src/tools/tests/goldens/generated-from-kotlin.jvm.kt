@@ -1,3 +1,4 @@
+// GENERATED CODE -- DO NOT EDIT
 package arcs.core.data.testdata
 
 import arcs.core.data.CollectionType
@@ -9,6 +10,26 @@ import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.storage.StorageKeyParser
+
+val IngestionOnly_handle0: Plan.Handle = Plan.Handle(
+            storageKey =
+                StorageKeyParser.parse("reference-mode://{db://9ca32bb55138c5efc3b107bcd9d60a73e2428160@arcs/Thing}{db://9ca32bb55138c5efc3b107bcd9d60a73e2428160@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"),
+            type = EntityType(Schema(
+            names = setOf(SchemaName("Thing")),
+            fields = SchemaFields(
+            singletons = mapOf("name" to FieldType.Text, "description" to FieldType.Text),
+            collections = emptyMap()
+        ),
+            hash = "9ca32bb55138c5efc3b107bcd9d60a73e2428160"
+        )),    
+            annotations = emptyList()
+        )
+
+val IngestionOnlyPlan: Plan = Plan(
+            particles = emptyList(),
+            handles = listOf(IngestionOnly_handle0),
+            annotations = emptyList()
+        )
 
 val Ingestion_handle0: Plan.Handle = Plan.Handle(
             storageKey =
@@ -55,10 +76,10 @@ val EphemeralWriting_handle0: Plan.Handle = Plan.Handle(
             type = EntityType(Schema(
             names = setOf(SchemaName("Thing")),
             fields = SchemaFields(
-            singletons = mapOf("name" to FieldType.Text),
+            singletons = mapOf("name" to FieldType.Text, "description" to FieldType.Text),
             collections = emptyMap()
         ),
-            hash = "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516"
+            hash = "9ca32bb55138c5efc3b107bcd9d60a73e2428160"
         )),    
             annotations = emptyList()
         )
