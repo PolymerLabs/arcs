@@ -11,6 +11,7 @@
 package arcs.core.data
 
 import arcs.core.data.Capability.Ttl
+import arcs.core.data.expression.Expression
 import arcs.core.storage.StorageKey
 import arcs.core.type.Type
 import arcs.core.util.lens
@@ -88,7 +89,7 @@ data class Plan(
         val mode: HandleMode,
         val type: Type,
         val annotations: List<Annotation> = emptyList(),
-        val expression: String? = null
+        val expression: Expression<*>? = null
     ) {
         val storageKey: StorageKey
             get() = handle.storageKey
