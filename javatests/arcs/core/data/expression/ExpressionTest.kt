@@ -245,7 +245,7 @@ class ExpressionTest {
 
         assertThat(
             evalExpression<Long>(nowExpr, currentScope)
-        ).isAtLeast(System.currentTimeMillis())
+        ).isAtLeast(System.currentTimeMillis() - 1000L)
     }
 
     @Test
