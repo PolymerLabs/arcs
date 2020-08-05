@@ -501,6 +501,70 @@ describe('manifest parser', () => {
         )
     `);
   });
+  it('parses type variables without constraints', () => {
+    parse(`
+      particle Foo
+        data: reads ~a
+    `);
+  });
+  it('parses type variables with a constraint', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text}
+    `);
+  });
+  it('parses type variables with multiple constraints', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text, age: Number}
+    `);
+  });
+  it('parses max type variables without constraints', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {*}
+    `);
+  });
+  it('parses max type variables with a constraint', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text, *}
+    `);
+  });
+  it('parses max type variables with multiple constraints', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text, age: Number, *}
+    `);
+  });
+  it('parses max type variables with oddly-ordered constraints', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text, *, age: Number}
+    `);
+    parse(`
+      particle Foo
+        data: reads ~a with {*, age: Number}
+    `);
+  });
+  it('parses max type variables with multiple `*`s', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text, *, *}
+    `);
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          data: reads ~a with {name: Text, * *}
+      `);
+    });
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          data: reads ~a with {* *}
+      `);
+    });
+  });
   it('parses refinement types in a schema', Flags.withFieldRefinementsAllowed(async () => {
       parse(`
         schema Foo
