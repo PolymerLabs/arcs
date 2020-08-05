@@ -115,7 +115,7 @@ interface StorageEndpointProvider {
      * [StoreOptions]. This is not necessarily an [ActiveStore] implementation, though a basic
      * implementation may provide a simple wrapper around an in-process instance of [ActiveStore].
      */
-    fun <Data : CrdtData, Op : CrdtOperationAtTime, ConsumerData> getStorageEndpoint(
+    fun <Data : CrdtData, Op : CrdtOperationAtTime, ConsumerData> createStorageEndpoint(
         storeOptions: StoreOptions,
         callback: ProxyCallback<Data, Op, ConsumerData>
     ): StorageEndpoint<Data, Op, ConsumerData>

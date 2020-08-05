@@ -70,7 +70,7 @@ class StoreManager(
  * [EntityHandleManager].
  */
 fun StoreManager.asStoreEndpointProvider() = object : StorageEndpointProvider {
-    override fun <Data : CrdtData, Op : CrdtOperationAtTime, ConsumerData> getStorageEndpoint(
+    override fun <Data : CrdtData, Op : CrdtOperationAtTime, ConsumerData> createStorageEndpoint(
         storeOptions: StoreOptions,
         callback: ProxyCallback<Data, Op, ConsumerData>
     ): StorageEndpoint<Data, Op, ConsumerData> {

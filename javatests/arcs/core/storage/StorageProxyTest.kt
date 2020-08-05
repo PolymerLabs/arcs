@@ -92,7 +92,7 @@ class StorageProxyTest {
         fakeStoreEndpoint = StoreEndpointFake()
         whenever(
             mockStorageEndpointProvider
-                .getStorageEndpoint<CrdtData, CrdtOperationAtTime, String>(any(), any())
+                .createStorageEndpoint<CrdtData, CrdtOperationAtTime, String>(any(), any())
         ).thenReturn(fakeStoreEndpoint)
         setupMockModel()
         whenever(mockCrdtOperation.clock).thenReturn(VersionMap())
