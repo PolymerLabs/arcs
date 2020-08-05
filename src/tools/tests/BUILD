@@ -1,3 +1,4 @@
+load("//third_party/java/arcs/build_defs:arcs_ts_test.bzl", "arcs_ts_test")
 load(
     "//third_party/java/arcs/build_defs:build_defs.bzl",
     "arcs_cc_schema",
@@ -5,7 +6,6 @@ load(
     "arcs_kt_jvm_test_suite",
     "arcs_kt_schema",
     "arcs_proto_plan",
-    "arcs_ts_test",
 )
 
 filegroup(
