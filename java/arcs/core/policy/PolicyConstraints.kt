@@ -170,8 +170,6 @@ sealed class PolicyViolation(val policy: Policy, message: String) : Exception(
         policy,
         "Recipe elected a policy named '$electedPolicyName'."
     )
-
-
 }
 
 /** Converts a list of particles into their names and egress types, as a string. */
