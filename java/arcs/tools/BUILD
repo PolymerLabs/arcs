@@ -30,10 +30,12 @@ kt_jvm_library(
     name = "generator",
     srcs = [
         "Recipe2Plan.kt",
+        "PlanGenerator.kt",
+        "GenerationUtils.kt",
     ],
     deps = [
         "//java/arcs/core/data",
-        "//java/arcs/core/data/proto:manifest_java_proto",
+        "//java/arcs/core/data/proto:proto",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
         "//third_party/java/arcs/deps:protobuf_java",
