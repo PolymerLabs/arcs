@@ -61,7 +61,7 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
   visitBuiltIn(expr: BuiltIn): string {
     // TODO: Double check that millis are the correct default units.
     if (expr.value === 'now()') {
-      return `System.currentTimeMillis()`;
+      return `now()`;
     }
 
     // TODO: Implement KT getter for 'creationTimeStamp'

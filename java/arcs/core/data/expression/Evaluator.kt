@@ -12,6 +12,9 @@
 
 package arcs.core.data.expression
 
+import arcs.core.util.PlatformTimeProvider
+import arcs.core.util.Time
+
 /**
  * Traverses a tree of [Expression] objects, evaluating each node, and returning a final
  * result. Note that types cannot be enforced statically, so it is possible for both
@@ -23,6 +26,15 @@ class ExpressionEvaluator(
     val parameterScope: Expression.Scope = ParameterScope(),
     val scopeCreator: (String) -> Expression.Scope = { name -> MapScope<Any>(name, mutableMapOf()) }
 ) : Expression.Visitor<Any> {
+
+    // TODO: allow this to be plumbed through via injection
+    val time = object : Time() {
+        override val nanoTime: Long
+            get() = PlatformTimeProvider.nanoTime
+        override val currentTimeMillis: Long
+            get() = PlatformTimeProvider.currentTimeMillis
+    }
+
     override fun <E, T> visit(expr: Expression.UnaryExpression<E, T>): Any {
         return expr.op(expr.expr.accept(this) as E) as Any
     }
@@ -95,7 +107,7 @@ class ExpressionEvaluator(
 
     override fun <T> visit(expr: Expression.FunctionExpression<T>): Any {
         val arguments = expr.arguments.map { it.accept(this) }.toList()
-        return expr.function.invoke(arguments)
+        return expr.function.invoke(this, arguments)
     }
 }
 
@@ -110,11 +122,16 @@ private fun <T> toSequence(value: Any?) = when (value) {
 sealed class GlobalFunction(val name: String) {
 
     /** Functions accept a varargs list of [Sequence] and return any type. */
-    abstract fun invoke(args: List<Any>): Any
+    abstract fun invoke(evaluator: ExpressionEvaluator, args: List<Any>): Any
+
+    object Now : GlobalFunction("now") {
+        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
+            evaluator.time.currentTimeMillis
+    }
 
     /** Performs [Sequence.union] of two [Sequence]s. */
     object Union : GlobalFunction("union") {
-        override fun invoke(args: List<Any>) =
+        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
             toSequence<Any>(args[0]).asIterable().union(
                 toSequence<Any>(args[1]).asIterable()
             ).asSequence()
@@ -122,27 +139,32 @@ sealed class GlobalFunction(val name: String) {
 
     /** Find the maximum of a [Sequence]. */
     object Max : GlobalFunction("max") {
-        override fun invoke(args: List<Any>) = toSequence<Int>(args[0] as List<Int>).max()!!
+        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
+            toSequence<Int>(args[0] as List<Int>).max()!!
     }
 
     /** Find the minimum of a [Sequence]. */
     object Min : GlobalFunction("min") {
-        override fun invoke(args: List<Any>) = toSequence<Int>(args[0] as List<Int>).min()!!
+        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
+            toSequence<Int>(args[0] as List<Int>).min()!!
     }
 
     /** Find the average of a [Sequence]. */
     object Average : GlobalFunction("average") {
-        override fun invoke(args: List<Any>) = toSequence<Int>(args[0] as List<Int>).average()
+        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
+            toSequence<Int>(args[0] as List<Int>).average()
     }
 
     /** Count the number of elements in a [Sequence]. */
     object Count : GlobalFunction("count") {
-        override fun invoke(args: List<Any>) = toSequence<Any>(args[0]).count()
+        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
+            toSequence<Any>(args[0]).count()
     }
 
     /** Return the first item of a [Sequence]. */
     object First : GlobalFunction("first") {
-        override fun invoke(args: List<Any>) = toSequence<Int>(args[0]).first()
+        override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
+            toSequence<Int>(args[0]).first()
     }
 
     companion object {
@@ -154,7 +176,7 @@ sealed class GlobalFunction(val name: String) {
         }
 
         private val functions by lazy {
-            listOf(Average, Union, Min, Max, Count, First).associateBy({ it.name }, { it })
+            listOf(Average, Union, Min, Max, Count, First, Now).associateBy({ it.name }, { it })
         }
     }
 }
