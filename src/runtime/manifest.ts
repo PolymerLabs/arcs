@@ -614,8 +614,25 @@ ${e.message}
         //     errors relating to failed merges can reference the manifest source.
         visitChildren();
 
+        this._checkStarFields(node);
         switch (node.kind) {
           case 'schema-inline': {
+            const starCount = node.fields.filter(f => f.name === '*').length;
+            // Warn user if there are multiple '*'s.
+            if (starCount > 1) {
+              const warning = new ManifestWarning(node.location, `Only one '*' is needed.`);
+              warning.key = 'multiStarFields';
+              manifest.errors.push(warning);
+            }
+            // Flag used to determine if type variables should resolve to max type
+            if (starCount > 0) {
+              node.allFields = true;
+              node.fields = node.fields.filter(f => f.name !== '*');
+              // Avoid creating an empty schema in response to `{*}`.
+              if (node.fields.length === 0) {
+                return;
+              }
+            }
             const schemas: Schema[] = [];
             const aliases: Schema[] = [];
             const names: string[] = [];
@@ -669,7 +686,9 @@ ${e.message}
           }
           case 'variable-type': {
             const constraint = node.constraint && node.constraint.model;
-            node.model = TypeVariable.make(node.name, constraint, null);
+            // If true, type variable should resolve to max type (i.e. `~a with {*}` syntax support)
+            const toMaxType = node.constraint && node.constraint.kind === 'schema-inline' && !!node.constraint.allFields;
+            node.model = TypeVariable.make(node.name, constraint, null, toMaxType);
             return;
           }
           case 'slot-type': {
@@ -713,12 +732,22 @@ ${e.message}
             node.model = new SingletonType(node.type.model);
             return;
           case 'tuple-type':
+            node.types.forEach(this._checkStarFields);
             node.model = new TupleType(node.types.map(t => t.model));
             return;
           default:
             return;
         }
       }
+
+      // Asserts that '*' inline fields can only appear on type variable constraints.
+      private _checkStarFields(node) {
+        if (node.kind === 'variable-type') return;
+        if (node.type && node.type.kind === 'schema-inline' && node.type.allFields) {
+          throw new ManifestError(node.type.location, `Only type variables may have '*' fields.`);
+        }
+      }
+
     }();
     visitor.traverse(items);
   }

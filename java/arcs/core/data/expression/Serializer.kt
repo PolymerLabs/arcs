@@ -18,7 +18,9 @@ import arcs.core.data.expression.Expression.UnaryExpression
 import arcs.core.data.expression.Expression.UnaryOp
 import arcs.core.util.Json
 import arcs.core.util.JsonValue
+import arcs.core.util.JsonValue.JsonArray
 import arcs.core.util.JsonValue.JsonBoolean
+import arcs.core.util.JsonValue.JsonNull
 import arcs.core.util.JsonValue.JsonNumber
 import arcs.core.util.JsonValue.JsonObject
 import arcs.core.util.JsonValue.JsonString
@@ -26,8 +28,7 @@ import arcs.core.util.JsonVisitor
 import java.math.BigInteger
 
 /** Traverses a tree of [Expression] objects, serializing it into a JSON format. */
-class ExpressionSerializer() :
-    Expression.Visitor<JsonValue<*>> {
+class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
 
     override fun <E, T> visit(expr: UnaryExpression<E, T>) =
         JsonObject(
@@ -78,6 +79,55 @@ class ExpressionSerializer() :
 
     override fun <T> visit(expr: Expression.ObjectLiteralExpression<T>) =
         throw IllegalArgumentException("Can't serialize an ObjectLiteralExpression")
+
+    override fun <T, R> visit(expr: Expression.FromExpression<T, R>) =
+        JsonObject(
+            mapOf(
+                "op" to JsonString("from"),
+                "source" to JsonString(expr.source),
+                "var" to JsonString(expr.iterationVar),
+                "qualifier" to (expr.qualifier?.accept(this) ?: JsonNull)
+            )
+        )
+
+    override fun <T> visit(expr: Expression.WhereExpression<T>) =
+        JsonObject(
+            mapOf(
+                "op" to JsonString("where"),
+                "expr" to expr.expr.accept(this),
+                "qualifier" to expr.qualifier.accept(this)
+            )
+        )
+
+    override fun <E, T> visit(expr: Expression.SelectExpression<E, T>) =
+        JsonObject(
+            mapOf(
+                "op" to JsonString("select"),
+                "expr" to expr.expr.accept(this),
+                "qualifier" to expr.qualifier.accept(this)
+            )
+        )
+
+    override fun <T> visit(expr: Expression.NewExpression<T>) =
+        JsonObject(
+            mapOf(
+                "op" to JsonString("new"),
+                "schemaName" to JsonArray(expr.schemaName.map { JsonString(it) }),
+                "fields" to JsonObject(
+                    expr.fields.associateBy({ it.first }, { it.second.accept(this) })
+                )
+            )
+        )
+
+    override fun <T> visit(expr: Expression.FunctionExpression<T>) =
+        JsonObject(
+            mapOf(
+                "op" to JsonString("function"),
+                "functionName" to JsonString(expr.function.name),
+                "arguments" to JsonArray(
+                    expr.arguments.map { it.accept(this) })
+                )
+            )
 }
 
 /** Traverses a parsed [JsonValue] representation and returns decoded [Expression] */
@@ -88,7 +138,7 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
 
     override fun visit(value: JsonNumber) = Expression.NumberLiteralExpression(value.value)
 
-    override fun visit(value: JsonValue.JsonArray) =
+    override fun visit(value: JsonArray) =
         throw IllegalArgumentException("Arrays should not appear in JSON Serialized Expressions")
 
     override fun visit(value: JsonObject): Expression<*> {
@@ -99,14 +149,14 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
                 visit(value["qualifier"]) as Expression<Expression.Scope>, value["field"].string()!!
             )
             BinaryOp.fromToken(type) != null -> {
-                BinaryExpression<Any, Any, Any>(
+                BinaryExpression(
                     BinaryOp.fromToken(type) as BinaryOp<Any, Any, Any>,
                     visit(value["left"]) as Expression<Any>,
                     visit(value["right"]) as Expression<Any>
                 )
             }
             UnaryOp.fromToken(type) != null -> {
-                UnaryExpression<Any, Any>(
+                UnaryExpression(
                     UnaryOp.fromToken(type)!! as UnaryOp<Any, Any>,
                     visit(value["expr"]) as Expression<Any>
                 )
@@ -114,11 +164,43 @@ class ExpressionDeserializer : JsonVisitor<Expression<*>> {
             type == "number" -> Expression.NumberLiteralExpression(fromNumber(value))
             type == "this" -> Expression.CurrentScopeExpression<Expression.Scope>()
             type == "?" -> Expression.QueryParameterExpression<Any>(value["identifier"].string()!!)
+            type == "from" ->
+                Expression.FromExpression<Any, Any>(
+                    if (value["qualifier"] == JsonNull) {
+                        null
+                    } else {
+                        visit(value["qualfier"].obj()!!) as Expression<Sequence<Any>>
+                    },
+                    value["source"].string()!!,
+                    value["var"].string()!!
+                )
+            type == "where" ->
+                Expression.WhereExpression(
+                    visit(value["qualfier"].obj()!!) as Expression<Sequence<Any>>,
+                    visit(value["expr"]) as Expression<Boolean>
+                )
+            type == "select" ->
+                Expression.SelectExpression(
+                    visit(value["qualfier"].obj()!!) as Expression<Sequence<Any>>,
+                    visit(value["expr"]) as Expression<Sequence<Any>>
+                )
+            type == "new" ->
+                Expression.NewExpression<Any>(
+                    value["schemaName"].array()!!.value.map { it.string()!! }.toSet(),
+                    value["expr"].obj()!!.value.map { (name, expr) ->
+                        name to visit(expr)
+                    }.toList()
+                )
+            type == "function" ->
+                Expression.FunctionExpression<Any>(
+                    GlobalFunction.of(value["functionName"].string()!!),
+                    value["arguments"].array()!!.value.map { visit(it) }.toList()
+                )
             else -> throw IllegalArgumentException("Unknown type $type during deserialization")
         }
     }
 
-    override fun visit(value: JsonValue.JsonNull) =
+    override fun visit(value: JsonNull) =
         throw IllegalArgumentException("Nulls should not appear in JSON serialized expressions")
 }
 

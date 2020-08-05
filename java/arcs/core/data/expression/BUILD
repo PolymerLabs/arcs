@@ -15,7 +15,10 @@ arcs_kt_library(
         ["*.kt"],
         exclude = SCOPES_SRC,
     ),
-    deps = ["//java/arcs/core/util"],
+    deps = [
+        "//java/arcs/core/util",
+        "//java/arcs/core/util:utils-platform-dependencies",
+    ],
 )
 
 arcs_kt_library(

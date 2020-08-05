@@ -309,19 +309,7 @@ describe('manifest parser', () => {
         review: &Review
     `);
   });
-  it('parses a schema with a reference field (with sugar)', () => {
-    parse(`
-      schema Product
-        review: &Review
-    `);
-  });
   it('parses a schema with a referenced inline schema', () => {
-    parse(`
-      schema Product
-        review: &Review {reviewText: Text}
-    `);
-  });
-  it('parses a schema with a referenced inline schema (with sugar)', () => {
     parse(`
       schema Product
         review: &Review {reviewText: Text}
@@ -333,31 +321,13 @@ describe('manifest parser', () => {
         inReview: reads Product {review: &Review}
     `);
   });
-  it('parses an inline schema with a reference to a schema (with sugar)', () => {
-    parse(`
-      particle Foo
-        inReview: reads Product {review: &Review}
-    `);
-  });
   it('parses an inline schema with a collection of references to schemas', () => {
     parse(`
       particle Foo
         inResult: reads Product {review: [&Review]}
     `);
   });
-  it('parses an inline schema with a collection of references to schemas (with sugar)', () => {
-    parse(`
-      particle Foo
-        inResult: reads Product {review: [&Review]}
-    `);
-  });
   it('parses an inline schema with a referenced inline schema', () => {
-    parse(`
-    particle Foo
-      inReview: reads Product {review: &Review {reviewText: Text} }
-    `);
-  });
-  it('parses an inline schema with a referenced inline schema (with sugar)', () => {
     parse(`
     particle Foo
       inReview: reads Product {review: &Review {reviewText: Text} }
@@ -480,13 +450,6 @@ describe('manifest parser', () => {
   it('parses reference types', () => {
     parse(`
       particle Foo
-        inRef: reads Reference<Foo>
-        outRef: writes Reference<Bar>
-    `);
-  });
-  it('parses reference types (with sugar)', () => {
-    parse(`
-      particle Foo
         inRef: reads &Foo
         outRef: writes &Bar
     `);
@@ -537,6 +500,70 @@ describe('manifest parser', () => {
           &Bar,
         )
     `);
+  });
+  it('parses type variables without constraints', () => {
+    parse(`
+      particle Foo
+        data: reads ~a
+    `);
+  });
+  it('parses type variables with a constraint', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text}
+    `);
+  });
+  it('parses type variables with multiple constraints', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text, age: Number}
+    `);
+  });
+  it('parses max type variables without constraints', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {*}
+    `);
+  });
+  it('parses max type variables with a constraint', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text, *}
+    `);
+  });
+  it('parses max type variables with multiple constraints', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text, age: Number, *}
+    `);
+  });
+  it('parses max type variables with oddly-ordered constraints', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text, *, age: Number}
+    `);
+    parse(`
+      particle Foo
+        data: reads ~a with {*, age: Number}
+    `);
+  });
+  it('parses max type variables with multiple `*`s', () => {
+    parse(`
+      particle Foo
+        data: reads ~a with {name: Text, *, *}
+    `);
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          data: reads ~a with {name: Text, * *}
+      `);
+    });
+    assert.throws(() => {
+      parse(`
+        particle Foo
+          data: reads ~a with {* *}
+      `);
+    });
   });
   it('parses refinement types in a schema', Flags.withFieldRefinementsAllowed(async () => {
       parse(`

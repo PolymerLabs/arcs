@@ -750,14 +750,7 @@ BigCollectionType
   }
 
 ReferenceType
-  = 'Reference<' type:ParticleHandleConnectionType '>'
-  {
-    return toAstNode<AstNode.ReferenceType>({
-      kind: 'reference-type',
-      type,
-    });
-  }
-  / '&' type:ParticleHandleConnectionType
+  = '&' type:ParticleHandleConnectionType
   {
     return toAstNode<AstNode.ReferenceType>({
       kind: 'reference-type',
@@ -1497,6 +1490,14 @@ SchemaInlineField
       type
     });
   }
+  / '*'
+  {
+    return toAstNode<AstNode.SchemaInlineField>({
+      kind: 'schema-inline-field',
+      name: '*',
+      type: null,
+    });
+  }
 
 SchemaSpec
   = 'schema' names:(whiteSpace ('*' / upperIdent))+ parents:SchemaExtends?
@@ -1586,19 +1587,11 @@ SchemaOrderedListType = 'List<' whiteSpace? schema:(SchemaType) whiteSpace? '>'
     });
   }
 
-SchemaReferenceType = 'Reference<' whiteSpace? schema:(SchemaInline / TypeName) whiteSpace? '>'
+SchemaReferenceType = '&' whiteSpace? schema:(SchemaInline / TypeName)
   {
     return toAstNode<AstNode.SchemaReferenceType>({
       kind: 'schema-reference',
       schema
-    });
-  }
-  / '&' whiteSpace? schema:(SchemaInline / TypeName) whiteSpace?
-  {
-    return toAstNode<AstNode.SchemaReferenceType>({
-      kind: 'schema-reference',
-      schema,
-      refinement: null
     });
   }
 

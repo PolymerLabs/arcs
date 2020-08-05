@@ -84,7 +84,7 @@ class EntityHandleManager(
     private val idGenerator: Id.Generator = Id.Generator.newSession(),
     private val coroutineContext: CoroutineContext = Dispatchers.Default,
     private val analytics: Analytics? = null
-) {
+) : HandleManager {
 
     @Deprecated(
         message = "prefer primary constructor",
@@ -128,12 +128,12 @@ class EntityHandleManager(
     }
 
     @ExperimentalCoroutinesApi
-    suspend fun createHandle(
+    override suspend fun createHandle(
         spec: HandleSpec,
         storageKey: StorageKey,
-        ttl: Ttl = Ttl.Infinite(),
-        particleId: String = "",
-        immediateSync: Boolean = true
+        ttl: Ttl,
+        particleId: String,
+        immediateSync: Boolean
     ): Handle {
         val handleName = idGenerator.newChildId(
             idGenerator.newChildId(arcId.toArcId(), hostId),
@@ -149,7 +149,8 @@ class EntityHandleManager(
                     ttl,
                     time,
                     dereferencerFactory,
-                    storageKey
+                    storageKey,
+                    spec.entitySpecs.single().SCHEMA
                 )
             }
             HandleDataType.Reference -> {
@@ -187,7 +188,7 @@ class EntityHandleManager(
     }
 
     /** Close all [StorageProxy] instances in this [EntityHandleManager]. */
-    suspend fun close() {
+    override suspend fun close() {
         proxyMutex.withLock {
             // Needed to avoid receiving ModelUpdate after Proxy closed error
             scheduler.waitForIdle()

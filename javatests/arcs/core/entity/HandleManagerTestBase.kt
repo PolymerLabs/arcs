@@ -1271,7 +1271,7 @@ open class HandleManagerTestBase {
             }
         }
 
-        override fun serialize() = RawEntity(
+        override fun serialize(storeSchema: Schema?) = RawEntity(
             entityId,
             mapOf(
                 "pairs_of_shoes_owned" to pairsOfShoesOwned.toReferencable(),
@@ -1339,7 +1339,7 @@ open class HandleManagerTestBase {
             }
         }
 
-        override fun serialize() = RawEntity(
+        override fun serialize(storeSchema: Schema?) = RawEntity(
             entityId,
             singletons = mapOf(
                 "name" to name.toReferencable(),
@@ -1359,8 +1359,12 @@ open class HandleManagerTestBase {
 
         companion object : EntitySpec<Person> {
 
-            private val queryByAge = CurrentScope<Number>(mapOf())["age"] eq query("queryArgument")
-            private val refinementAgeGtZero = CurrentScope<Number>(mapOf())["age"] gt 0.asExpr()
+            private val queryByAge = CurrentScope<Number>(
+                mutableMapOf()
+            )["age"] eq query("queryArgument")
+            private val refinementAgeGtZero = CurrentScope<Number>(
+                mutableMapOf()
+            )["age"] gt 0.asExpr()
 
             @Suppress("UNCHECKED_CAST")
             override fun deserialize(data: RawEntity) = Person(
@@ -1414,7 +1418,7 @@ open class HandleManagerTestBase {
             ttl: Ttl
         ) = Unit
 
-        override fun serialize() = RawEntity(
+        override fun serialize(storeSchema: Schema?) = RawEntity(
             entityId,
             singletons = mapOf(
                 "style" to style.toReferencable()

@@ -43,16 +43,18 @@ import arcs.core.entity.toPrimitiveValue
 
 val Ingest_Handle0 = Handle(
     StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data"),
-    arcs.core.data.EntityType(
-        arcs.core.data.Schema(
-            setOf(arcs.core.data.SchemaName("Thing")),
-            arcs.core.data.SchemaFields(
-                singletons = mapOf("num" to arcs.core.data.FieldType.Number),
-                collections = emptyMap()
-            ),
-            "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
-            refinementExpression = true.asExpr(),
-            queryExpression = true.asExpr()
+    arcs.core.data.SingletonType(
+        arcs.core.data.EntityType(
+            arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Thing")),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                    collections = emptyMap()
+                ),
+                "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
+            )
         )
     ),
     listOf(Annotation("persistent", emptyMap()))
@@ -77,16 +79,18 @@ val IngestPlan = Plan(
 )
 val Retrieve_Handle0 = Handle(
     StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data"),
-    arcs.core.data.EntityType(
-        arcs.core.data.Schema(
-            setOf(arcs.core.data.SchemaName("Thing")),
-            arcs.core.data.SchemaFields(
-                singletons = mapOf("num" to arcs.core.data.FieldType.Number),
-                collections = emptyMap()
-            ),
-            "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
-            refinementExpression = true.asExpr(),
-            queryExpression = true.asExpr()
+    arcs.core.data.SingletonType(
+        arcs.core.data.EntityType(
+            arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Thing")),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                    collections = emptyMap()
+                ),
+                "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
+            )
         )
     ),
     emptyList()
@@ -148,16 +152,18 @@ import arcs.core.entity.toPrimitiveValue
 
 val R_Handle0 = Handle(
     StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
-    arcs.core.data.EntityType(
-        arcs.core.data.Schema(
-            setOf(arcs.core.data.SchemaName("Thing")),
-            arcs.core.data.SchemaFields(
-                singletons = mapOf("num" to arcs.core.data.FieldType.Number),
-                collections = emptyMap()
-            ),
-            "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
-            refinementExpression = true.asExpr(),
-            queryExpression = true.asExpr()
+    arcs.core.data.SingletonType(
+        arcs.core.data.EntityType(
+            arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Thing")),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                    collections = emptyMap()
+                ),
+                "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
+            )
         )
     ),
     emptyList()
@@ -240,32 +246,36 @@ import arcs.core.entity.toPrimitiveValue
 
 val R_Handle0 = Handle(
     StorageKeyParser.parse("create://id-2"),
-    arcs.core.data.EntityType(
-        arcs.core.data.Schema(
-            setOf(arcs.core.data.SchemaName("Thing")),
-            arcs.core.data.SchemaFields(
-                singletons = mapOf("num" to arcs.core.data.FieldType.Number),
-                collections = emptyMap()
-            ),
-            "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
-            refinementExpression = true.asExpr(),
-            queryExpression = true.asExpr()
+    arcs.core.data.SingletonType(
+        arcs.core.data.EntityType(
+            arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Thing")),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                    collections = emptyMap()
+                ),
+                "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
+            )
         )
     ),
     listOf(Annotation("persistent", emptyMap()))
 )
 val R_Handle1 = Handle(
     StorageKeyParser.parse("create://id-1"),
-    arcs.core.data.EntityType(
-        arcs.core.data.Schema(
-            setOf(arcs.core.data.SchemaName("Thing")),
-            arcs.core.data.SchemaFields(
-                singletons = mapOf("num" to arcs.core.data.FieldType.Number),
-                collections = emptyMap()
-            ),
-            "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
-            refinementExpression = true.asExpr(),
-            queryExpression = true.asExpr()
+    arcs.core.data.SingletonType(
+        arcs.core.data.EntityType(
+            arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Thing")),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                    collections = emptyMap()
+                ),
+                "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
+            )
         )
     ),
     listOf(Annotation("persistent", emptyMap()))

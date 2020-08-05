@@ -53,7 +53,7 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
     return `(${kotlinOperator[expr.operator.op]}${this.visit(expr.expr)})`;
   }
   visitFieldNamePrimitive(expr: FieldNamePrimitive): string {
-    return `CurrentScope<${typeFor(expr.evalType)}>(mapOf())["${expr.value.toString()}"]`;
+    return `CurrentScope<${typeFor(expr.evalType)}>(mutableMapOf())["${expr.value.toString()}"]`;
   }
   visitQueryArgumentPrimitive(arg: QueryArgumentPrimitive): string {
     return `query<${typeFor(arg.evalType)}>("${KOTLIN_QUERY_ARGUMENT_NAME}")`;
@@ -61,7 +61,7 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
   visitBuiltIn(expr: BuiltIn): string {
     // TODO: Double check that millis are the correct default units.
     if (expr.value === 'now()') {
-      return `System.currentTimeMillis()`;
+      return `now()`;
     }
 
     // TODO: Implement KT getter for 'creationTimeStamp'
