@@ -1,13 +1,9 @@
 """Arcs Plan Generation Rules"""
 
-load(
-    "//third_party/java/arcs/build_defs/internal:kotlin.bzl",
-    "ARCS_SDK_DEPS",
-    "arcs_kt_library",
-)
+load("//third_party/java/arcs/build_defs/internal:kotlin.bzl", "arcs_kt_library")
 
 # Note: Once this is mature, it will replace arcs_kt_plan
-def arcs_kt_plan_2(name, package, srcs = [], deps = [], visibility = None):
+def arcs_kt_plan_2(name, package, arcs_sdk_deps, srcs = [], deps = [], visibility = None):
     """Generates Plans Jar from protos.
 
     Example:
@@ -28,6 +24,7 @@ def arcs_kt_plan_2(name, package, srcs = [], deps = [], visibility = None):
     Arcs:
       name: name of created target
       package: the package that all generated code will belong to (temporary, see b/161994250).
+      arcs_sdk_deps: build targets for the Arcs SDK to be included
       deps: JVM dependencies for Jar
       visibility: list of visibilities
     """
@@ -45,7 +42,7 @@ def arcs_kt_plan_2(name, package, srcs = [], deps = [], visibility = None):
         srcs = [":" + gen_name],
         platforms = ["jvm"],
         visibility = visibility,
-        deps = ARCS_SDK_DEPS + deps,
+        deps = arcs_sdk_deps + deps,
     )
 
 def _recipe2plan_impl(ctx):

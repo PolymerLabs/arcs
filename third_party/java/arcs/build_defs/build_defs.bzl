@@ -88,6 +88,15 @@ def arcs_kt_plan(**kwargs):
     kwargs.setdefault("arcs_sdk_deps", DEFAULT_ARCS_SDK_DEPS)
     _arcs_kt_plan(**kwargs)
 
+def arcs_kt_plan_2(**kwargs):
+    """Wrapper around _arcs_kt_plan that sets the default Arcs SDK
+
+    Args:
+      **kwargs: Set of args to forward to _arcs_kt_plan
+    """
+    kwargs.setdefault("arcs_sdk_deps", DEFAULT_ARCS_SDK_DEPS)
+    _arcs_kt_plan_2(**kwargs)
+
 def arcs_kt_schema(**kwargs):
     """Wrapper around _arcs_kt_schema that sets the default Arcs SDK
 
@@ -108,8 +117,6 @@ arcs_manifest_parse_test = _arcs_manifest_parse_test
 arcs_manifest_proto = _arcs_manifest_proto
 
 arcs_proto_plan = _arcs_proto_plan
-
-arcs_kt_plan_2 = _arcs_kt_plan_2
 
 kt_js_library = _kt_js_library
 
