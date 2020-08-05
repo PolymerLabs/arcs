@@ -453,14 +453,12 @@ describe('TypeChecker', () => {
     const recipe = manifest.recipes[0];
 
     const orderParticle = recipe.particles.find(p => p.name === 'OrderIngestion').spec;
-    const redactorParticle = recipe.particles.find(p => p.name === 'SkuRedactor').spec;
     const egressParticle = recipe.particles.find(p => p.name === 'Egress').spec;
 
     const concreteType = orderParticle.connections.find(c => c.name === 'data').type as CollectionType<EntityType>;
     const egressType = egressParticle.connections.find(c => c.name === 'data').type as TypeVariable;
 
-    TypeChecker.processTypeList(null, [...orderParticle.connections, ...redactorParticle.connections]);
-    TypeChecker.processTypeList(null, [...redactorParticle.connections, ...egressParticle.connections]);
+    recipe.normalize();
 
     assert.isTrue(egressType.maybeEnsureResolved());
     assert.deepStrictEqual(egressType.getEntitySchema(), concreteType.getEntitySchema());

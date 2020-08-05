@@ -3737,50 +3737,6 @@ Only type variables may have '*' fields.
       assert.deepStrictEqual(check.fieldPath, ['sku']);
     });
 
-    it('resolves to max type through an intermediary', async () => {
-      const manifest = await parseManifest(`
-        particle OrderIngestion in '.OrderIngestion'
-          data: writes [Product {sku: Text, name: Text, price: Number}]
-
-        particle SkuRedactor in '.SkuRedactor'
-          input: reads [~a with {sku: Text}]
-          output: writes [~a]
-          claim output.sku is redacted
-
-        particle Egress in '.Egress'
-          data: reads [~x with {sku: Text, *}]
-          check data.sku is redacted
-
-        recipe Shop
-          beforeRedaction: create
-          afterRedaction: create
-          OrderIngestion
-            data: beforeRedaction
-          SkuRedactor
-            input: beforeRedaction
-            output: afterRedaction
-          Egress 
-            data: afterRedaction
-      `);
-      const recipe = manifest.recipes[0];
-
-      // Normalize and clone the recipe. This resolves the type variables, and
-      // exercises code paths to validate the checks and claims.
-      // Should not crash.
-      recipe.normalize();
-      const clonedRecipe = recipe.clone();
-
-      const orderParticle = clonedRecipe.particles.find(p => p.name === 'OrderIngestion').spec;
-      const targetType = orderParticle.connections.find(c => c.name === 'data').type as CollectionType<EntityType>;
-
-      const egressParticle = clonedRecipe.particles.find(p => p.name === 'Egress').spec;
-      const dataType = egressParticle.connections.find(c => c.name === 'data').type as TypeVariable;
-      dataType.maybeEnsureResolved();
-      assert.isTrue(dataType.isResolved());
-      assert.deepStrictEqual(Object.keys(dataType.getEntitySchema().fields), ['sku', 'name', 'price']);
-      assert.deepStrictEqual(dataType.getEntitySchema(), targetType.getEntitySchema());
-    });
-
     it('data stores can make claims', async () => {
       const data = '{"root": {}, "locations": {}}';
 

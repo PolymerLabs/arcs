@@ -617,7 +617,7 @@ ${e.message}
         this._checkStarFields(node);
         switch (node.kind) {
           case 'schema-inline': {
-            const starCount = node.fields.reduce((acc, x) => acc + Number(x.name === '*'), 0);
+            const starCount = node.fields.filter(f => f.name === '*').length;
             // Warn user if there are multiple '*'s.
             if (starCount > 1) {
               const warning = new ManifestWarning(node.location, `Only one '*' is needed.`);
