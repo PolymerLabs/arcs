@@ -504,7 +504,7 @@ abstract class AbstractGold : arcs.sdk.BaseParticle() {
                 ),
                 "ccd14452cc01e1b00b94cdb25bfe34a5a632daaa",
                 refinementExpression = true.asExpr(),
-                queryExpression =         ((CurrentScope<String>(mapOf())["name"] eq query<String>("queryArgument")) and (CurrentScope<Number>(mapOf())["lastCall"] lt 259200.asExpr()))
+                queryExpression =         ((CurrentScope<String>(mutableMapOf())["name"] eq query<String>("queryArgument")) and (CurrentScope<Number>(mutableMapOf())["lastCall"] lt 259200.asExpr()))
             )
 
             private val nestedEntitySpecs: Map<String, arcs.sdk.EntitySpec<out arcs.sdk.Entity>> =
