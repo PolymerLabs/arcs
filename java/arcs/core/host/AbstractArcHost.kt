@@ -350,8 +350,8 @@ abstract class AbstractArcHost(
             var contextCopy: ArcHostContext? = ArcHostContext(
                 context.arcId,
                 context.particles,
-                context.arcState,
-                context.entityHandleManager
+                context.handleManager,
+                context.arcState
             )
             channel.send {
                 try {
