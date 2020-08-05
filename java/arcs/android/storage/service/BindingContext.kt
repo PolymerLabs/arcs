@@ -25,6 +25,7 @@ import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreOptions
+import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineName
@@ -32,7 +33,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
 
@@ -74,24 +74,32 @@ class BindingContext(
     @VisibleForTesting
     val id = nextId.incrementAndGet()
 
-    /** The local [CoroutineContext]. */
+    /**
+     * The local [CoroutineContext], and a [CoroutineScope] that wraps it.
+     *
+     * All of the implemented AIDL methods will be immediately dispatched using this scope.
+     * TODO(b/162954543) - Just pass in a scope at construction
+     */
     private val job = Job(parentCoroutineContext[Job])
     private val coroutineContext =
         parentCoroutineContext + job + CoroutineName("BindingContext-$id")
+    private val scope = CoroutineScope(coroutineContext)
 
     override fun idle(timeoutMillis: Long, resultCallback: IResultCallback) {
-        bindingContextStatisticsSink.traceTransaction("idle") {
-            bindingContextStatisticsSink.measure(coroutineContext) {
-                try {
-                    withTimeout(timeoutMillis) {
-                        store().idle()
+        scope.launch {
+            bindingContextStatisticsSink.traceTransaction("idle") {
+                bindingContextStatisticsSink.measure {
+                    try {
+                        withTimeout(timeoutMillis) {
+                            store().idle()
+                        }
+                        resultCallback.onResult(null)
+                    } catch (e: Throwable) {
+                        resultCallback.onResult(
+                            CrdtException("Exception occurred while awaiting idle", e).toProto()
+                                .toByteArray()
+                        )
                     }
-                    resultCallback.onResult(null)
-                } catch (e: Throwable) {
-                    resultCallback.onResult(
-                        CrdtException("Exception occurred while awaiting idle", e).toProto()
-                            .toByteArray()
-                    )
                 }
             }
         }
@@ -99,30 +107,32 @@ class BindingContext(
 
     @Suppress("UNCHECKED_CAST")
     override fun registerCallback(callback: IStorageServiceCallback): Int {
-        var callbackToken = 0
-        bindingContextStatisticsSink.traceTransaction("registerCallback") {
-            val proxyCallback = ProxyCallback<CrdtData, CrdtOperation, Any?> { message ->
-                // Asynchronously pass the message along to the callback. Use a supervisorScope here
-                // so that we catch any exceptions thrown within and re-throw on the same coroutine
-                // as the callback-caller.
-                supervisorScope {
-                    callback.onProxyMessage(message.toProto().toByteArray())
+        // TODO(b/162946893) - Make this oneway and add a result callback
+        val result = CompletableFuture<Int>()
+        scope.launch {
+            bindingContextStatisticsSink.traceTransaction("registerCallback") {
+                val proxyCallback = ProxyCallback<CrdtData, CrdtOperation, Any?> { message ->
+                    // Asynchronously pass the message along to the callback. Use a supervisorScope here
+                    // so that we catch any exceptions thrown within and re-throw on the same coroutine
+                    // as the callback-caller.
+                    supervisorScope {
+                        callback.onProxyMessage(message.toProto().toByteArray())
+                    }
                 }
-            }
 
-            callbackToken = runBlocking {
                 val token = (store() as ActiveStore<CrdtData, CrdtOperation, Any?>)
                     .on(proxyCallback)
 
                 // If the callback's binder dies, remove it from the callback collection.
-                callback.asBinder().linkToDeath({
-                    unregisterCallback(token)
-                }, 0)
+                callback.asBinder().linkToDeath(
+                    { unregisterCallback(token) },
+                    0
+                )
 
-                token
+                result.complete(token)
             }
         }
-        return callbackToken
+        return result.get()
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -130,25 +140,29 @@ class BindingContext(
         proxyMessage: ByteArray,
         resultCallback: IResultCallback
     ) {
-        bindingContextStatisticsSink.traceTransaction("sendProxyMessage") {
-            bindingContextStatisticsSink.measure(coroutineContext) {
-                resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
+        scope.launch {
+            bindingContextStatisticsSink.traceTransaction("sendProxyMessage") {
+                bindingContextStatisticsSink.measure {
+                    val actualMessage = proxyMessage.decodeProxyMessage()
 
-                val actualMessage = proxyMessage.decodeProxyMessage()
-
-                (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).let { store ->
-                    if (store.onProxyMessage(actualMessage)) {
-                        onProxyMessage(store.storageKey, actualMessage)
+                    (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).let { store ->
+                        if (store.onProxyMessage(actualMessage)) {
+                            onProxyMessage(store.storageKey, actualMessage)
+                        }
                     }
+                    resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
                 }
             }
         }
     }
 
     override fun unregisterCallback(token: Int) {
-        bindingContextStatisticsSink.traceTransaction("unregisterCallback") {
-            // TODO(b/160706751) Clean up coroutine creation approach
-            CoroutineScope(coroutineContext).launch { store().off(token) }
+        // TODO(b/162946893) Make oneway, add a result callback.
+        scope.launch {
+            bindingContextStatisticsSink.traceTransaction("unregisterCallback") {
+                // TODO(b/160706751) Clean up coroutine creation approach
+                store().off(token)
+            }
         }
     }
 
