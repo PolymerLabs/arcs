@@ -13,6 +13,7 @@ package arcs.sdk.android.storage.service
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.ParcelableCrdtType
+import arcs.android.storage.service.IRegistrationCallback
 import arcs.android.storage.service.IResultCallback
 import arcs.android.storage.service.IStorageService
 import arcs.android.storage.service.IStorageServiceCallback
@@ -52,14 +53,21 @@ class StorageServiceConnectionTest {
                 resultCallback.onResult(null)
             }
 
-            override fun registerCallback(callback: IStorageServiceCallback?): Int = 1
+            override fun registerCallback(
+                callback: IStorageServiceCallback?,
+                resultCallback: IRegistrationCallback
+            ) {
+                resultCallback.onSuccess(1)
+            }
 
             override fun sendProxyMessage(
                 message: ByteArray,
                 resultCallback: IResultCallback?
             ) = Unit
 
-            override fun unregisterCallback(token: Int) = Unit
+            override fun unregisterCallback(token: Int, callback: IResultCallback) {
+                callback.onResult(null)
+            }
         }
     }
 

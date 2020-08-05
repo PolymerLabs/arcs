@@ -108,9 +108,11 @@ class BindingContext(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun registerCallback(callback: IStorageServiceCallback): Int {
-        return runBlocking {
-            var token = 0
+    override fun registerCallback(
+        callback: IStorageServiceCallback,
+        resultCallback: IRegistrationCallback
+    ) {
+        scope.launch {
             bindingContextStatisticsSink.traceTransaction("registerCallback") {
                 val proxyCallback = ProxyCallback<CrdtData, CrdtOperation, Any?> { message ->
                     // Asynchronously pass the message along to the callback. Use a supervisorScope here
@@ -121,16 +123,27 @@ class BindingContext(
                     }
                 }
 
-                token = (store() as ActiveStore<CrdtData, CrdtOperation, Any?>)
-                    .on(proxyCallback)
+                try {
+                    val token = (store() as ActiveStore<CrdtData, CrdtOperation, Any?>)
+                        .on(proxyCallback)
 
-                // If the callback's binder dies, remove it from the callback collection.
-                callback.asBinder().linkToDeath(
-                    { unregisterCallback(token) },
-                    0
-                )
+                    // If the callback's binder dies, remove it from the callback collection.
+                    callback.asBinder().linkToDeath(
+                        {
+                            scope.launch {
+                                (store() as ActiveStore<CrdtData, CrdtOperation, Any?>).off(token)
+                            }
+                        }, 0
+                    )
+                    resultCallback.onSuccess(token)
+                } catch (e: Exception) {
+                    resultCallback.onFailure(
+                        CrdtException("Exception occurred while registering callback", e)
+                            .toProto()
+                            .toByteArray()
+                    )
+                }
             }
-            token
         }
     }
 
@@ -158,12 +171,21 @@ class BindingContext(
         }
     }
 
-    override fun unregisterCallback(token: Int) {
-        // TODO(b/162946893) Make oneway, add a result callback.
+    override fun unregisterCallback(
+        token: Int,
+        resultCallback: IResultCallback
+    ) {
         scope.launch {
             bindingContextStatisticsSink.traceTransaction("unregisterCallback") {
                 // TODO(b/160706751) Clean up coroutine creation approach
-                store().off(token)
+                try {
+                    store().off(token)
+                    resultCallback.onResult(null)
+                } catch (e: Exception) {
+                    resultCallback.onResult(
+                        CrdtException("Callback unregistration failed", e).toProto().toByteArray()
+                    )
+                }
             }
         }
     }

@@ -22,7 +22,7 @@ import arcs.android.common.resurrection.ResurrectionRequest
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
 import arcs.android.storage.service.BindingContext
-import arcs.android.storage.service.DeferredResult
+import arcs.android.storage.service.suspendForResultCallback
 import arcs.android.storage.toParcelable
 import arcs.android.storage.toProto
 import arcs.android.storage.ttl.PeriodicCleanupTask
@@ -98,13 +98,9 @@ class StorageServiceTest {
             val proxyMessage = ProxyMessage.Operations<CrdtCount.Data, CrdtCount.Operation, Int>(
                 listOf(op), id = 1
             )
-            val deferredResult = DeferredResult(this.coroutineContext)
-            context.sendProxyMessage(
-                proxyMessage.toProto().toByteArray(),
-                deferredResult
-            )
-
-            deferredResult.await()
+            suspendForResultCallback {
+                context.sendProxyMessage(proxyMessage.toProto().toByteArray(), it)
+            }
         }
         assertThat(success).isTrue()
 
