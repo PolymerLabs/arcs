@@ -1,4 +1,5 @@
 // GENERATED CODE -- DO NOT EDIT
+// TODO(b/161941018): Improve whitespace / formatting.
 package arcs.core.data.testdata
 
 import arcs.core.data.CollectionType

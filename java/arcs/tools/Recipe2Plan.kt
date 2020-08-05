@@ -41,7 +41,12 @@ class Recipe2Plan : CliktCommand(
         val manifestProto = ManifestProto.parseFrom(manifest.readBytes())
         val fileBuilder = FileSpec.builder(packageName, "")
 
-        fileBuilder.addComment("GENERATED CODE -- DO NOT EDIT")
+        fileBuilder.addComment("""
+            |GENERATED CODE -- DO NOT EDIT
+            |
+            |TODO(b/161941018): Improve whitespace / formatting.
+        """.trimMargin())
+
         manifestProto.decodeRecipes()
             .filter { it.name != null }
             .forEach { it.toGeneration(fileBuilder) }
