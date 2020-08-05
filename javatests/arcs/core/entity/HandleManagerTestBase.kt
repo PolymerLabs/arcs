@@ -1359,8 +1359,12 @@ open class HandleManagerTestBase {
 
         companion object : EntitySpec<Person> {
 
-            private val queryByAge = CurrentScope<Number>(mapOf())["age"] eq query("queryArgument")
-            private val refinementAgeGtZero = CurrentScope<Number>(mapOf())["age"] gt 0.asExpr()
+            private val queryByAge = CurrentScope<Number>(
+                mutableMapOf()
+            )["age"] eq query("queryArgument")
+            private val refinementAgeGtZero = CurrentScope<Number>(
+                mutableMapOf()
+            )["age"] gt 0.asExpr()
 
             @Suppress("UNCHECKED_CAST")
             override fun deserialize(data: RawEntity) = Person(

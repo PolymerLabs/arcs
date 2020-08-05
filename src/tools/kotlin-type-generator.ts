@@ -30,13 +30,7 @@ export async function generateConnectionType(connection: HandleConnection, conte
 }
 
 export async function generateConnectionSpecType(connection: HandleConnectionSpec, nodes: SchemaNode[], context: CodeGenContext = {}): Promise<string> {
-  let type = connection.type;
-  if (type.isEntity || type.isReference || type.isVariable) {
-    // Moving to the new style types with explicit singleton.
-    type = type.singletonOf();
-  }
-
-  return generateType(type, type => {
+  return generateType(maybeWrapInSingleton(connection.type), type => {
     if (!type.isEntity) return null;
     if (connection.type.hasVariable) return null;
     const node = nodes.find(n => n.schema.equals(type.getEntitySchema()));
@@ -46,6 +40,21 @@ export async function generateConnectionSpecType(connection: HandleConnectionSpe
     }
     return ktUtils.applyFun('arcs.core.data.EntityType', [schemaReference]);
   });
+}
+
+/**
+ * Generates a Kotlin type instance for suitable to be used as a handle type.
+ */
+export async function generateHandleType(type: Type): Promise<string> {
+  return generateType(maybeWrapInSingleton(type));
+}
+
+function maybeWrapInSingleton(type: Type): Type {
+  if (type.isEntity || type.isReference || type.isVariable) {
+    // Moving to the new style types with explicit singleton.
+    return type.singletonOf();
+  }
+  return type;
 }
 
 /**

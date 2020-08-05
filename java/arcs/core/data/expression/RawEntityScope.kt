@@ -43,6 +43,9 @@ class RawEntityScope(val rawEntity: RawEntity) : Expression.Scope {
             else -> throw IllegalArgumentException("Unknown lookup result $value")
         }
     }
+
+    override fun set(param: String, value: Any) {
+    }
 }
 
 /** Turn a [RawEntity] into a [Expression.Scope]. */
