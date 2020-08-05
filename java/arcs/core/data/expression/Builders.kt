@@ -20,6 +20,7 @@ import arcs.core.data.expression.GlobalFunction.Count
 import arcs.core.data.expression.GlobalFunction.First
 import arcs.core.data.expression.GlobalFunction.Max
 import arcs.core.data.expression.GlobalFunction.Min
+import arcs.core.data.expression.GlobalFunction.Now
 import java.math.BigInteger
 
 /** Constructs a [Expression.NumberLiteralExpression] */
@@ -238,6 +239,9 @@ fun average(expr: Expression<*>) = FunctionExpression<Number>(Average, listOf(ex
 
 /** Constructs a [FunctionExpression] to invoke [First]. */
 fun first(expr: Expression<*>) = FunctionExpression<Number>(First, listOf(expr))
+
+/** Constructs a [FunctionExpression] to invoke [Now]. */
+fun now() = FunctionExpression<Long>(Now, listOf())
 
 /** Constructs a [FunctionExpression] to invoke [Union]. */
 fun <T> union(expr: Expression<T>, other: Expression<T>) =

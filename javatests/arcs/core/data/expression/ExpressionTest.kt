@@ -240,6 +240,15 @@ class ExpressionTest {
     }
 
     @Test
+    fun evaluate_paxel_now() {
+        val nowExpr = now()
+
+        assertThat(
+            evalExpression<Long>(nowExpr, currentScope)
+        ).isAtLeast(System.currentTimeMillis() - 1000L)
+    }
+
+    @Test
     fun evaluate_paxel_union() {
         val lessThan8 = from<Number>("p") on "numbers" where
             (currentScope["p"].asNumber() lt 8.asExpr())
