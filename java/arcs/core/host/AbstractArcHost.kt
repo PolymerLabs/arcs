@@ -355,6 +355,7 @@ abstract class AbstractArcHost(
             channel.send {
                 try {
                     contextCopy?.let {
+                        /** TODO: reuse [ArcHostContextParticle] instances if possible. */
                         createArcHostContextParticle(it).run {
                             writeArcHostContext(it.arcId, it)
                         }
