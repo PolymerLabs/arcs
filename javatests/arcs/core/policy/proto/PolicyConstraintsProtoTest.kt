@@ -4,7 +4,6 @@ import arcs.core.data.AccessPath
 import arcs.core.data.Claim
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.InformationFlowLabel.SemanticTag
-import arcs.core.policy.EgressType
 import arcs.core.policy.Policy
 import arcs.core.policy.PolicyConstraints
 import com.google.common.truth.Truth.assertThat
@@ -19,7 +18,7 @@ class PolicyConstraintsProtoTest {
         val constraints = PolicyConstraints(
             policy = Policy(
                 name = "MyPolicy",
-                egressType = EgressType.LOGGING
+                egressType = "Logging"
             ),
             egressCheck = Predicate.Label(SemanticTag("public")),
             storeClaims = mapOf(

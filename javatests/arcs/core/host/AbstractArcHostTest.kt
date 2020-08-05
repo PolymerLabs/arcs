@@ -52,7 +52,9 @@ open class AbstractArcHostTest {
 
         @Suppress("UNCHECKED_CAST")
         fun getFooHandle(): ReadWriteSingletonHandle<DummyEntity> {
-            val p = getArcHostContext("arcId")!!.particles["Foobar"]!!.particle as TestParticle
+            val p = getArcHostContext("arcId")!!.particles.first {
+                it.planParticle.particleName == "Foobar"
+            }.particle as TestParticle
             return p.handles.getHandle("foo") as ReadWriteSingletonHandle<DummyEntity>
         }
     }

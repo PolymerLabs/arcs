@@ -22,13 +22,14 @@ import arcs.core.util.TaggedLog
  */
 data class ArcHostContext(
     var arcId: String,
-    var particles: MutableMap<String, ParticleContext> = mutableMapOf(),
-    var entityHandleManager: EntityHandleManager
+    var particles: MutableList<ParticleContext> = mutableListOf(),
+    var handleManager: HandleManager,
+    val initialArcState: ArcState = ArcState.NeverStarted
 ) {
     private val stateChangeCallbacks: MutableMap<ArcStateChangeRegistration,
         ArcStateChangeCallback> = mutableMapOf()
 
-    private var _arcState = ArcState.NeverStarted
+    private var _arcState = initialArcState
 
     var arcState: ArcState
         get() = _arcState
@@ -39,17 +40,8 @@ data class ArcHostContext(
             }
         }
 
-    constructor(
-        arcId: String,
-        particles: MutableMap<String, ParticleContext> = mutableMapOf(),
-        arcState: ArcState = ArcState.NeverStarted,
-        entityHandleManager: EntityHandleManager
-    ) : this(arcId, particles, entityHandleManager) {
-        _arcState = arcState
-    }
-
     override fun toString() = "ArcHostContext(arcId=$arcId, arcState=$arcState, " +
-            "particles=$particles, entityHandleManager=$entityHandleManager)"
+            "particles=$particles, entityHandleManager=$handleManager)"
 
     internal fun addOnArcStateChange(
         registration: ArcStateChangeRegistration,
@@ -79,7 +71,7 @@ data class ArcHostContext(
      * Traverse every handle and return a distinct collection of all [StorageKey]s
      * that are readable by this arc.
      */
-    fun allReadableStorageKeys() = particles.flatMap { (_, particleContext) ->
+    fun allReadableStorageKeys() = particles.flatMap { particleContext ->
         particleContext.planParticle.handles.filter {
             it.value.mode.canRead
         }.map { it.value.storageKey }

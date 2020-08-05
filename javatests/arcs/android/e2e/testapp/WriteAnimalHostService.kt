@@ -46,7 +46,9 @@ class WriteAnimalHostService : ArcHostService() {
         val arcId = intent?.getStringExtra(ARC_ID_EXTRA)
         val context = arcId?.let { arcHost.arcHostContext(it) }
         val writeAnimalParticle =
-            context?.particles?.get("WriteAnimal")?.particle as? WriteAnimal
+            context?.particles?.first {
+                it.planParticle.particleName == "WriteAnimal"
+            }?.particle as? WriteAnimal
         writeAnimalParticle?.apply {
             scope.launch(handles.dispatcher) {
                 handles.animal.store(WriteAnimal_Animal("capybara"))

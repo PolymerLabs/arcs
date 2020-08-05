@@ -117,19 +117,21 @@ HandleConnection(
 HandleConnection(
     R_Handle0,
     HandleMode.Read,
-    arcs.core.data.EntityType(
-        arcs.core.data.Schema(
-            setOf(arcs.core.data.SchemaName("Person")),
-            arcs.core.data.SchemaFields(
-                singletons = mapOf(
-                    "a" to arcs.core.data.FieldType.Text,
-                    "b" to arcs.core.data.FieldType.Text
+    arcs.core.data.SingletonType(
+        arcs.core.data.EntityType(
+            arcs.core.data.Schema(
+                setOf(arcs.core.data.SchemaName("Person")),
+                arcs.core.data.SchemaFields(
+                    singletons = mapOf(
+                        "a" to arcs.core.data.FieldType.Text,
+                        "b" to arcs.core.data.FieldType.Text
+                    ),
+                    collections = emptyMap()
                 ),
-                collections = emptyMap()
-            ),
-            "f33d42dee457673f13e166b4644b0eb42f37a156",
-            refinementExpression = true.asExpr(),
-            queryExpression = true.asExpr()
+                "f33d42dee457673f13e166b4644b0eb42f37a156",
+                refinementExpression = true.asExpr(),
+                queryExpression = true.asExpr()
+            )
         )
     ),
     emptyList()

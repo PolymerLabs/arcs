@@ -60,11 +60,18 @@ open class TestingHost(
         deferred.await()
     }
 
-    /** Retrieve a test particle by name. */
+    /**
+     * Retrieve a test particle by name.
+     *
+     * Note that this will always give you the first particle of the provided name, if
+     * there are multiple instances of the same particle in the recipe.
+     */
     fun <T : Particle> getParticle(arcId: ArcId, particleName: String): T {
         val arcHostContext = requireNotNull(getArcHostContext(arcId.toString()))
         @Suppress("UNCHECKED_CAST")
-        return arcHostContext.particles[particleName]!!.particle as T
+        return arcHostContext.particles.first {
+            it.planParticle.particleName == particleName
+        }.particle as T
     }
 
     /** Create a read/write singleton handle for tests to access an arc's stores. */
@@ -97,7 +104,9 @@ open class TestingHost(
         handleName: String
     ): Handle {
         val arcHostContext = requireNotNull(getArcHostContext(arcId.toString()))
-        val particleContext = requireNotNull(arcHostContext.particles[particleName])
+        val particleContext = arcHostContext.particles.first {
+            it.planParticle.particleName == particleName
+        }
         val handleConnection = requireNotNull(particleContext.planParticle.handles[handleName])
         val readWriteConnection = handleConnection.copy(mode = HandleMode.ReadWrite)
         val entitySpecs = particleContext.particle.handles.getEntitySpecs(handleName)
@@ -105,9 +114,11 @@ open class TestingHost(
             "TestHolder",
             mapOf(handleName to entitySpecs)
         )
-        val handle = createHandle(
-            arcHostContext.entityHandleManager, handleName, readWriteConnection, handleHolder
+        return createHandle(
+            arcHostContext.handleManager,
+            handleName,
+            readWriteConnection,
+            handleHolder
         )
-        return handle
     }
 }

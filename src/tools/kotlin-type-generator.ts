@@ -31,7 +31,7 @@ export async function generateConnectionType(connection: HandleConnection, conte
 
 export async function generateConnectionSpecType(connection: HandleConnectionSpec, nodes: SchemaNode[], context: CodeGenContext = {}): Promise<string> {
   let type = connection.type;
-  if (type.isEntity || type.isReference) {
+  if (type.isEntity || type.isReference || type.isVariable) {
     // Moving to the new style types with explicit singleton.
     type = type.singletonOf();
   }
