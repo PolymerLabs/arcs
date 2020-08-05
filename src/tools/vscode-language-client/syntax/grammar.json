@@ -38,8 +38,8 @@
       ]
     },
     "reference-type": {
-      "begin": "\\Reference<",
-      "end": "\\>",
+      "begin": "\\&",
+      "end": "\\",
       "beginCaptures": {
         "0": { "name": "type.reference-type.open" }
       },

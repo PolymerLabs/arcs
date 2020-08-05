@@ -309,19 +309,7 @@ describe('manifest parser', () => {
         review: &Review
     `);
   });
-  it('parses a schema with a reference field (with sugar)', () => {
-    parse(`
-      schema Product
-        review: &Review
-    `);
-  });
   it('parses a schema with a referenced inline schema', () => {
-    parse(`
-      schema Product
-        review: &Review {reviewText: Text}
-    `);
-  });
-  it('parses a schema with a referenced inline schema (with sugar)', () => {
     parse(`
       schema Product
         review: &Review {reviewText: Text}
@@ -333,31 +321,13 @@ describe('manifest parser', () => {
         inReview: reads Product {review: &Review}
     `);
   });
-  it('parses an inline schema with a reference to a schema (with sugar)', () => {
-    parse(`
-      particle Foo
-        inReview: reads Product {review: &Review}
-    `);
-  });
   it('parses an inline schema with a collection of references to schemas', () => {
     parse(`
       particle Foo
         inResult: reads Product {review: [&Review]}
     `);
   });
-  it('parses an inline schema with a collection of references to schemas (with sugar)', () => {
-    parse(`
-      particle Foo
-        inResult: reads Product {review: [&Review]}
-    `);
-  });
   it('parses an inline schema with a referenced inline schema', () => {
-    parse(`
-    particle Foo
-      inReview: reads Product {review: &Review {reviewText: Text} }
-    `);
-  });
-  it('parses an inline schema with a referenced inline schema (with sugar)', () => {
     parse(`
     particle Foo
       inReview: reads Product {review: &Review {reviewText: Text} }
@@ -478,13 +448,6 @@ describe('manifest parser', () => {
     }, 'Expected an upper case identifier but "URL" found.');
   });
   it('parses reference types', () => {
-    parse(`
-      particle Foo
-        inRef: reads Reference<Foo>
-        outRef: writes Reference<Bar>
-    `);
-  });
-  it('parses reference types (with sugar)', () => {
     parse(`
       particle Foo
         inRef: reads &Foo
