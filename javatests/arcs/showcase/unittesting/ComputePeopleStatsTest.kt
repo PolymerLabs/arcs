@@ -1,4 +1,4 @@
-package arcs.sdk.examples.testing
+package arcs.showcase.unittesting
 
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchRemove
