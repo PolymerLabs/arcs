@@ -694,7 +694,7 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
                     )
                 ),
                 "a76c4b72c140b1129547242869c41803720c5de9",
-                refinementExpression =         ((CurrentScope<Number>(mutableMapOf())["instant"] lt (System.currentTimeMillis().asExpr() - NumberLiteralExpression(BigInteger("259200000")))) and ((CurrentScope<Number>(mutableMapOf())["num"] lt 1000.asExpr()) and (((CurrentScope<Number>(mutableMapOf())["long_val"] lt NumberLiteralExpression(BigInteger("100000"))) and ((CurrentScope<Number>(mutableMapOf())["long_val"] gt NumberLiteralExpression(BigInteger("10000"))) or (CurrentScope<Number>(mutableMapOf())["long_val"] eq NumberLiteralExpression(BigInteger("10000"))))) and ((CurrentScope<Number>(mutableMapOf())["integer"] gt NumberLiteralExpression(BigInteger("2"))) and (CurrentScope<Number>(mutableMapOf())["big"] gt NumberLiteralExpression(BigInteger("1"))))))),
+                refinementExpression =         ((CurrentScope<Number>(mutableMapOf())["instant"] lt (now() - NumberLiteralExpression(BigInteger("259200000")))) and ((CurrentScope<Number>(mutableMapOf())["num"] lt 1000.asExpr()) and (((CurrentScope<Number>(mutableMapOf())["long_val"] lt NumberLiteralExpression(BigInteger("100000"))) and ((CurrentScope<Number>(mutableMapOf())["long_val"] gt NumberLiteralExpression(BigInteger("10000"))) or (CurrentScope<Number>(mutableMapOf())["long_val"] eq NumberLiteralExpression(BigInteger("10000"))))) and ((CurrentScope<Number>(mutableMapOf())["integer"] gt NumberLiteralExpression(BigInteger("2"))) and (CurrentScope<Number>(mutableMapOf())["big"] gt NumberLiteralExpression(BigInteger("1"))))))),
                 queryExpression = true.asExpr()
             )
 

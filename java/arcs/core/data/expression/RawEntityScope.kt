@@ -26,10 +26,10 @@ class RawEntityScope(val rawEntity: RawEntity) : Expression.Scope {
     @Suppress("UNCHECKED_CAST")
     override fun <T> lookup(param: String): T {
         if (param == "creationTime()") {
-            return rawEntity.creationTimestamp
+            return rawEntity.creationTimestamp as T
         }
         if (param == "expirationTime()") {
-            return rawEntity.expirationTimestamp
+            return rawEntity.expirationTimestamp as T
         }
         val referencable =
             rawEntity.allData.find { (name, _) -> name == param } ?: throw IllegalArgumentException(
