@@ -5,7 +5,8 @@ package arcs.android.storage.service
  * [DevToolsService]
  */
 class DevToolsProxyImpl : IDevToolsProxy.Stub() {
-    private val onBindingContextProxyMessageCallbacks = mutableSetOf<IStorageServiceCallback>()
+    private val onBindingContextProxyMessageCallbacks = mutableMapOf<Int, IStorageServiceCallback>()
+    private var bindingContextCallbackCounter = 0
 
     /**
      * TODO: (sarahheimlich) remove once we dive into stores (b/162955831)
@@ -13,16 +14,20 @@ class DevToolsProxyImpl : IDevToolsProxy.Stub() {
      * Execute the callbacks to be called with the [BindingContext] receives a [ProxyMessage]
      */
     fun onBindingContextProxyMessage(proxyMessage: ByteArray) {
-        onBindingContextProxyMessageCallbacks.forEach { callback ->
+        onBindingContextProxyMessageCallbacks.forEach { key, callback ->
             callback.onProxyMessage(proxyMessage)
         }
     }
 
-    override fun registerBindingContextProxyMessageCallback(callback: IStorageServiceCallback) {
-        onBindingContextProxyMessageCallbacks.add(callback)
+    override fun registerBindingContextProxyMessageCallback(
+        callback: IStorageServiceCallback
+    ): Int {
+        bindingContextCallbackCounter++
+        onBindingContextProxyMessageCallbacks.put(bindingContextCallbackCounter, callback)
+        return bindingContextCallbackCounter
     }
 
-    override fun deRegisterBindingContextProxyMessageCallback(callback: IStorageServiceCallback) {
-        onBindingContextProxyMessageCallbacks.remove(callback)
+    override fun deRegisterBindingContextProxyMessageCallback(callbackToken: Int) {
+        onBindingContextProxyMessageCallbacks.remove(callbackToken)
     }
 }

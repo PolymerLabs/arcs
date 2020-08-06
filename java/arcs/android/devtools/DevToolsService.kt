@@ -42,9 +42,9 @@ class DevToolsService : Service() {
     private var storageService: IDevToolsStorageManager? = null
     private var serviceConnection: StorageServiceConnection? = null
     private var storageClass: Class<StorageService> = StorageService::class.java
-    private var proxy: IDevToolsProxy? = null
+    private var devToolsProxy: IDevToolsProxy? = null
 
-    private val onBindingContextProxyMessageCallback = object : IStorageServiceCallback.Stub() {
+    private val forwardProxyMessage = object : IStorageServiceCallback.Stub() {
         override fun onProxyMessage(proxyMessage: ByteArray) {
             scope.launch {
                 val actualMessage = proxyMessage.decodeProxyMessage()
@@ -52,6 +52,7 @@ class DevToolsService : Service() {
             }
         }
     }
+    private var forwardProxyMessageToken: Int = -1
 
     override fun onCreate() {
         binder = DevToolsBinder(scope, devToolsServer)
@@ -72,15 +73,20 @@ class DevToolsService : Service() {
             if (extras != null) {
                 storageClass = extras.getSerializable("STORAGE_CLASS") as Class<StorageService>
             }
-            initialize()
+            val service = initialize()
+            val proxy = service.getDevToolsProxy()
 
-            proxy = storageService?.getDevToolsProxy()
-            proxy?.registerBindingContextProxyMessageCallback(onBindingContextProxyMessageCallback)
+            forwardProxyMessageToken = proxy.registerBindingContextProxyMessageCallback(
+                forwardProxyMessage
+            )
 
-            binder.send(storageService?.getStorageKeys() ?: "")
+            binder.send(service.getStorageKeys() ?: "")
             devToolsServer.addOnOpenWebsocketCallback {
-                devToolsServer.send(storageService?.getStorageKeys() ?: "")
+                devToolsServer.send(service?.getStorageKeys() ?: "")
             }
+
+            storageService = service
+            devToolsProxy = proxy
         }
         return binder
     }
@@ -88,11 +94,11 @@ class DevToolsService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         devToolsServer.close()
-        proxy?.deRegisterBindingContextProxyMessageCallback(onBindingContextProxyMessageCallback)
+        devToolsProxy?.deRegisterBindingContextProxyMessageCallback(forwardProxyMessageToken)
         scope.cancel()
     }
 
-    private suspend fun initialize() {
+    private suspend fun initialize(): IDevToolsStorageManager {
         check(
             serviceConnection == null ||
             storageService == null ||
@@ -106,7 +112,7 @@ class DevToolsService : Service() {
         )
         this.serviceConnection = connectionFactory()
         // Need to initiate the connection on the main thread.
-        this.storageService = IDevToolsStorageManager.Stub.asInterface(
+        return IDevToolsStorageManager.Stub.asInterface(
             serviceConnection?.connectAsync()?.await()
         )
     }

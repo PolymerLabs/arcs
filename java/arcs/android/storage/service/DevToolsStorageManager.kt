@@ -26,12 +26,12 @@ class DevToolsStorageManager(
     parentCoroutineContext: CoroutineContext,
     /** The stores managed by StorageService. */
     val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>,
-    val proxy: IDevToolsProxy?
+    val proxy: IDevToolsProxy
 ) : IDevToolsStorageManager.Stub() {
 
     override fun getStorageKeys() = stores.keys.joinToString { it.toKeyString() }
 
     override fun getDevToolsProxy(): IDevToolsProxy {
-        return proxy!!
+        return proxy
     }
 }
