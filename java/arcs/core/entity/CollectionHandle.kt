@@ -46,21 +46,18 @@ class CollectionHandle<T : Storable, R : Referencable>(
         check(spec.containerType == HandleContainerType.Collection)
     }
 
+    // Filter out expired models.
+    private fun fetchValidModels() = checkPreconditions {
+        storageProxy.getParticleViewUnsafe().filterNot {
+            storageAdapter.isExpired(it)
+        }
+    }
+
     // region implement ReadCollectionHandle<T>
 
-    // Filter out expired items.
-    override fun size() = checkPreconditions {
-        storageProxy.getParticleViewUnsafe().filterNot {
-            storageAdapter.isExpired(it)
-        }.size
-    }
+    override fun size() = fetchValidModels().size
 
-    // Filter out expired items.
-    override fun isEmpty() = checkPreconditions {
-        storageProxy.getParticleViewUnsafe().filterNot {
-            storageAdapter.isExpired(it)
-        }.isEmpty()
-    }
+    override fun isEmpty() = fetchValidModels().isEmpty()
 
     override fun fetchAll() = checkPreconditions {
         adaptValues(storageProxy.getParticleViewUnsafe())
