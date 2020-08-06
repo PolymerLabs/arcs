@@ -53,7 +53,7 @@ data class ParcelableHandleConnection(
                 "HandleMode ordinal unknown value $handleModeOrdinal"
             }
 
-            val expression = parcel.readString().ifEmpty { null }
+            val expression = parcel.readString()?.ifEmpty { null }
 
             return ParcelableHandleConnection(
                 Plan.HandleConnection(
