@@ -493,7 +493,6 @@ describe('refiner', () => {
             particle Foo
                 input: reads Something {num: Number} [ (2+11-9) > num or False ]
         `);
-        viewAst(manifestAst1);
         const typeData = {'num': 'Number'};
         const ref1 = Refinement.fromAst(manifestAst1[0].args[0].type.refinement, typeData);
         ref1.normalize();
