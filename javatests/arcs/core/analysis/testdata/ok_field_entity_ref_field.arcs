@@ -1,0 +1,37 @@
+// #Ingress: P1
+// #OK
+particle P1
+  foo: writes &Foo {
+    trusted: Text,
+    untrusted: &Bar {
+       c: &Baz {
+         deep: Number,
+         sensitive: Text
+       }
+    }
+  }
+  claim foo.trusted is trusted
+  claim foo.untrusted is untrusted
+  claim foo.untrusted.c.deep is deep
+  claim foo.untrusted.c.sensitive is sensitive
+
+particle P2
+  foo: reads &Foo {
+    trusted: Text,
+    untrusted: &Bar {
+       c: &Baz {
+         deep: Number,
+         // sensitive: Text
+       }
+    }
+  }
+  check foo is trusted or is untrusted or is deep
+  check foo.trusted is trusted
+  check foo.untrusted is untrusted or is deep
+  check foo.untrusted.c.deep is deep
+
+recipe R
+  P1
+    foo: writes h
+  P2
+    foo: reads h
