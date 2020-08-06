@@ -266,7 +266,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         }
 
         /**
-         * The [modelChange] is not empty against the first received model from the
+         * The [otherChange] is not empty against the first received model from the
          * driver turns out a redundant model update sent to the driver with the exactly
          * identical model. Such a redundant model update should be avoided during a new
          * [DirectStore.create] which registers with the [DatabaseDriver] and applies the
