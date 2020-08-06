@@ -36,9 +36,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -105,29 +102,29 @@ abstract class AbstractArcHost(
     // TODO: add lifecycle API for ArcHosts shutting down to cancel running coroutines
     private val scope = CoroutineScope(coroutineContext)
 
-    /** Supports asynchronous [ArcHostContext] serializations. */
-    private val channel: Channel<suspend () -> Unit> = Channel(Channel.UNLIMITED)
-    private val updateArcHostContextScope = CoroutineScope(updateArcHostContextCoroutineContext)
+    /**
+     * Supports asynchronous [ArcHostContext] serializations in observed order.
+     *
+     * TODO:
+     * make the channel per-Arc instead of per-Host for better serialization
+     * performance under multiple running and to-be-run Arcs.
+     */
+    private val contextSerializationChannel: Channel<suspend () -> Unit> =
+        Channel(Channel.UNLIMITED)
+    private val contextSerializationTasks =
+        CoroutineScope(updateArcHostContextCoroutineContext).launch {
+            for (task in contextSerializationChannel) task()
+        }
 
     init {
         initialParticles.toList().associateByTo(particleConstructors, { it.first }, { it.second })
-
-        /**
-         * Asynchronous [ArcHostContext] serializations in observed order in a hot [Flow].
-         * The [channel] will be cancelled when the [updateArcHostContextScope] is cancelled.
-         *
-         * TODO:
-         * make the channel per-Arc instead of per-Host for better serialization
-         * performance under multiple running and to-be-run Arcs.
-         */
-        channel.consumeAsFlow().onEach { it() }.launchIn(updateArcHostContextScope)
     }
 
     /** Wait until all observed context serializations got flushed. */
     private suspend fun drainSerializations() {
-        if (!channel.isClosedForSend) {
+        if (!contextSerializationChannel.isClosedForSend) {
             val deferred = CompletableDeferred<Boolean>()
-            channel.send { deferred.complete(true) }
+            contextSerializationChannel.send { deferred.complete(true) }
             deferred.await()
         }
     }
@@ -211,7 +208,7 @@ abstract class AbstractArcHost(
         runningMutex.withLock { runningArcs.clear() }
         clearContextCache()
         pausedArcs.clear()
-        updateArcHostContextScope.cancel()
+        contextSerializationTasks.cancel()
         scope.cancel()
         schedulerProvider.cancelAll()
     }
@@ -346,14 +343,14 @@ abstract class AbstractArcHost(
      */
     protected open suspend fun writeContextToStorage(arcId: String, context: ArcHostContext) {
         /** Serialize the [context] to storage in observed order asynchronously. */
-        if (!channel.isClosedForSend) {
+        if (!contextSerializationChannel.isClosedForSend) {
             var contextCopy: ArcHostContext? = ArcHostContext(
                 context.arcId,
                 context.particles,
                 context.handleManager,
                 context.arcState
             )
-            channel.send {
+            contextSerializationChannel.send {
                 try {
                     contextCopy?.let {
                         /** TODO: reuse [ArcHostContextParticle] instances if possible. */
