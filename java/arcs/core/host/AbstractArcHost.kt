@@ -73,6 +73,17 @@ abstract class AbstractArcHost(
         vararg initialParticles: ParticleRegistration
     ) : this(Dispatchers.Default, Dispatchers.Default, schedulerProvider, null, *initialParticles)
 
+    /**
+     * Backward-compatible for some existing [AbstractArcHost] implementations to dispatch
+     * [contextSerializationTasks] onto the [coroutineContext] instead of independent context.
+     */
+    constructor(
+        coroutineContext: CoroutineContext = Dispatchers.Default,
+        schedulerProvider: SchedulerProvider,
+        activationFactory: ActivationFactory? = null,
+        vararg initialParticles: ParticleRegistration
+    ): this(coroutineContext, coroutineContext, schedulerProvider, activationFactory, *initialParticles)
+
     private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
