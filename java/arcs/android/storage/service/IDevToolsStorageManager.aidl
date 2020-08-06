@@ -11,6 +11,8 @@
 
 package arcs.android.storage.service;
 
+import arcs.android.storage.service.IDevToolsProxy;
+
 /**
  * Exposed API to manage storage for DevTools
  */
@@ -21,5 +23,7 @@ interface IDevToolsStorageManager {
      * storage -> devtoolsService -> client cycle.
      */
     String getStorageKeys();
+
+    IDevToolsProxy getDevToolsProxy();
 
 }

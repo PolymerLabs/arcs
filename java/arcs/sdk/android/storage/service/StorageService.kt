@@ -14,6 +14,7 @@ package arcs.sdk.android.storage.service
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.os.IBinder
 import android.text.format.DateUtils
 import androidx.work.Constraints
@@ -26,6 +27,7 @@ import arcs.android.storage.database.DatabaseGarbageCollectionPeriodicTask
 import arcs.android.storage.service.BindingContext
 import arcs.android.storage.service.BindingContextStatsImpl
 import arcs.android.storage.service.DeferredStore
+import arcs.android.storage.service.DevToolsProxyImpl
 import arcs.android.storage.service.DevToolsStorageManager
 import arcs.android.storage.service.StorageServiceManager
 import arcs.android.storage.ttl.PeriodicCleanupTask
@@ -75,6 +77,7 @@ open class StorageService : ResurrectorService() {
     // Can be overridden by subclasses.
     open val config = StorageServiceConfig(ttlJobEnabled = true, garbageCollectionJobEnabled = true)
     private val workManager: WorkManager by lazy { WorkManager.getInstance(this) }
+    private var devToolsProxy: DevToolsProxyImpl? = null
 
     @ExperimentalCoroutinesApi
     override fun onCreate() {
@@ -85,6 +88,10 @@ open class StorageService : ResurrectorService() {
         StoreWriteBack.init(writeBackScope)
 
         schedulePeriodicJobs(config)
+
+        if (ApplicationInfo.FLAG_DEBUGGABLE != 0) {
+            devToolsProxy = DevToolsProxyImpl()
+        }
     }
 
     private fun scheduleTtlJob(ttlHoursInterval: Long) {
@@ -146,8 +153,8 @@ open class StorageService : ResurrectorService() {
             return StorageServiceManager(coroutineContext, stores)
         }
 
-        if (intent.action == DEVTOOLS_ACTION) {
-            return DevToolsStorageManager(coroutineContext, stores)
+        if (intent.action == DEVTOOLS_ACTION && ApplicationInfo.FLAG_DEBUGGABLE != 0) {
+            return DevToolsStorageManager(coroutineContext, stores, devToolsProxy!!)
         }
 
         val parcelableOptions = requireNotNull(
@@ -161,7 +168,8 @@ open class StorageService : ResurrectorService() {
                 DeferredStore<CrdtData, CrdtOperation, Any>(options)
             },
             coroutineContext,
-            stats
+            stats,
+            devToolsProxy
         ) { storageKey, message ->
             when (message) {
                 is ProxyMessage.ModelUpdate<*, *, *>,

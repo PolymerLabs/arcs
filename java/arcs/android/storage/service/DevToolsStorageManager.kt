@@ -22,11 +22,16 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  */
 @ExperimentalCoroutinesApi
 class DevToolsStorageManager(
-    /** [CoroutineContext] upon which to build one specific to this [DevToolsStorageManager]. */
+    /** [CoroutineContext] on which to build one specific to this [DevToolsStorageManager]. */
     parentCoroutineContext: CoroutineContext,
     /** The stores managed by StorageService. */
-    val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>
+    val stores: ConcurrentHashMap<StorageKey, DeferredStore<*, *, *>>,
+    val proxy: IDevToolsProxy
 ) : IDevToolsStorageManager.Stub() {
 
     override fun getStorageKeys() = stores.keys.joinToString { it.toKeyString() }
+
+    override fun getDevToolsProxy(): IDevToolsProxy {
+        return proxy
+    }
 }
