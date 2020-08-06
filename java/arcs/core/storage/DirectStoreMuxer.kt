@@ -21,6 +21,8 @@ import arcs.core.type.Type
 import arcs.core.util.LruCacheMap
 import arcs.core.util.TaggedLog
 import kotlin.coroutines.coroutineContext
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.update
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -41,14 +43,18 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
     private val storeMutex = Mutex()
     private val log = TaggedLog { "DirectStoreMuxer" }
 
+    // Since [DirectStore.close] is a suspending function, we can't immediately close it on
+    // eviction. So we add it to this list, and clean out the list on each access.
+    private val closeList = atomic(emptyList<StoreRecord<Data, Op, T>>())
+
     // TODO(b/158262634): Make this CacheMap Weak.
     /* internal */ val stores = LruCacheMap<String, StoreRecord<Data, Op, T>>(
         50,
         livenessPredicate = { _, sr -> !sr.store.closed }
-    ) { _, sr -> closeStore(sr) }
+    ) { _, sr -> closeList.update { it + sr } }
 
     /** Safely closes a [DirectStore] and cleans up its resources. */
-    private fun closeStore(storeRecord: StoreRecord<*, *, *>) {
+    private suspend fun closeStore(storeRecord: StoreRecord<*, *, *>) {
         if (!storeRecord.store.closed) {
             log.debug { "close the store(${storeRecord.id})" }
 
@@ -120,6 +126,9 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
     suspend fun store(id: String) = storeMutex.withLock {
         stores.getOrPut(id) {
             setupStore(id)
+        }.also {
+            val toClose = closeList.getAndSet(emptyList())
+            toClose.forEach { closeStore(it) }
         }
     }
 

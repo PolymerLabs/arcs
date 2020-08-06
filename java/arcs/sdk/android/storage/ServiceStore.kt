@@ -162,7 +162,7 @@ class ServiceStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-    override fun close() {
+    override suspend fun close() {
         serviceConnection?.disconnect()
         storageService = null
         scope.coroutineContext[Job.Key]?.cancelChildren()

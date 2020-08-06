@@ -27,12 +27,12 @@ import kotlin.coroutines.coroutineContext
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.getAndUpdate
+import kotlinx.atomicfu.update
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.runBlocking
 
 // import kotlinx.coroutines.flow.debounce
 // import kotlinx.coroutines.flow.filter
@@ -59,7 +59,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     private val log = TaggedLog { "DirectStore" }
 
     /** True if this store has been closed. */
-    var closed = false
+    var closed: Boolean = false
+        private set
 
     /**
      * [AtomicRef] of a [CompletableDeferred] which will be completed when the [DirectStore]
@@ -79,6 +80,8 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     private val stateChannel =
         ConflatedBroadcastChannel<State<Data>>(State.Idle(idleDeferred, driver))
     private val stateFlow = stateChannel.asFlow()
+
+    // If closed becomes true, we stop accepting callbacks.
     private val proxyManager = RandomProxyCallbackManager<Data, Op, T>(
         "direct",
         Random
@@ -97,35 +100,34 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     fun getLocalData(): Data = synchronized(this) { localModel.data }
 
     override fun on(callback: ProxyCallback<Data, Op, T>): Int {
-        synchronized(proxyManager) {
+        synchronized(closed) {
+            check(!closed) {
+                "Cannot add proxy callback after closing."
+            }
             return proxyManager.register(callback)
         }
     }
 
     override fun off(callbackToken: Int) {
-        synchronized(proxyManager) {
+        synchronized(closed) {
             proxyManager.unregister(callbackToken)
         }
     }
 
     /** Closes the store. Once closed, it cannot be re-opened. A new instance must be created. */
-    override fun close() {
-        synchronized(proxyManager) {
-            proxyManager.callbacks.clear()
-            closeInternal()
+    override suspend fun close() {
+        val wasClosed = synchronized(closed) {
+            closed.also {
+                closed = true
+            }
         }
-    }
-
-    private fun closeInternal() {
-        if (!closed) {
-            closed = true
+        if (!wasClosed) {
+            proxyManager.callbacks.clear()
             stateChannel.offer(State.Closed())
             stateChannel.close()
             state.value = State.Closed()
             closeWriteBack()
-            runBlocking {
-                driver.close()
-            }
+            driver.close()
         }
     }
 
