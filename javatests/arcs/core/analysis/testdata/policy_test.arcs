@@ -14,7 +14,7 @@ schema ActionAtSelection
   actionDetails: Text
 
 @intendedPurpose('Test the implementation of policy verification.')
-@egressType('FederatedAggregation')
+@egressType('TestEgressType')
 policy TestPolicy {
 
   from Action access {
@@ -56,17 +56,33 @@ particle ActionTimestampToDays
   claim output.id derives from input.id
   claim output.action derives from input.action
 
-particle Egress_TestPolicy
+@egress('TestEgressType')
+particle TestEgressParticle
   joinData: reads [~a]
 
-particle LoggingEgress_TestPolicy
+@egress('TestEgressType')
+particle AnotherTestEgressParticle
   joinData: reads [~a]
 
-particle Egress_AnotherPolicy
+@egress('SomeOtherEgress')
+particle ParticleWithWrongEgressType
   joinData: reads [~a]
 
-particle Egress_YetAnotherPolicy
+particle ParticleWithMissingEgressType
   joinData: reads [~a]
+
+//-----------------------------------------------------------
+// Complying by not having any egress particles.
+//-----------------------------------------------------------
+@isolated
+particle SomeIsolatedParticle
+  input: reads [~a]
+
+@policy('TestPolicy')
+recipe NoEgressParticles
+  input: create 'input'
+  SomeIsolatedParticle
+    input: input
 
 //-----------------------------------------------------------
 // Complying by not egressing restricted fields.
@@ -77,6 +93,7 @@ particle JoinActionSelection_EgressUnrestrictedFields
   selection: reads [Selection {id, selection}]
   joinData: writes [ActionAtSelection {id, actionDetails}]
 
+@policy('TestPolicy')
 recipe EgressUnrestrictedFields
   action: create 'action'
   selection: create 'selection'
@@ -85,10 +102,11 @@ recipe EgressUnrestrictedFields
     action: action
     selection: selection
     joinData: joinData
-  Egress_TestPolicy
+  TestEgressParticle
     joinData: joinData
 
 // Recipe that complies with policy even with multiple egresses.
+@policy('TestPolicy')
 recipe EgressAndLogUnrestrictedFields
   action: create 'action'
   selection: create 'selection'
@@ -97,9 +115,9 @@ recipe EgressAndLogUnrestrictedFields
     action: action
     selection: selection
     joinData: joinData
-  Egress_TestPolicy
+  TestEgressParticle
     joinData: joinData
-  LoggingEgress_TestPolicy
+  AnotherTestEgressParticle
     joinData: joinData
 
 //-----------------------------------------------------------
@@ -111,6 +129,7 @@ particle JoinActionSelection_EgressRedactedField
   selection: reads [Selection {id, selection}]
   joinData: writes [ActionAtSelection {id, actionDetails}]
 
+@policy('TestPolicy')
 recipe EgressRedactedField
   action: create 'action'
   selection: create 'selection'
@@ -122,7 +141,7 @@ recipe EgressRedactedField
     action: actionRedacted
     selection: selection
     joinData: joinData
-  Egress_TestPolicy
+  TestEgressParticle
     joinData: joinData
 
 //-----------------------------------------------------------------------
@@ -135,6 +154,7 @@ particle JoinActionSelection_EgressRestrictedFields
   selection: reads [Selection {id, selection, sensitiveSelection}]
   joinData: writes [ActionAtSelection {id, actionDetails}]
 
+@policy('TestPolicy')
 recipe AccessRestrictedFieldsNoEgress
   action: create 'action'
   selection: create 'selection'
@@ -156,6 +176,7 @@ particle JoinActionSelection_EgressRestrictedFields
   selection: reads [Selection {id, selection, sensitiveSelection}]
   joinData: writes [ActionAtSelection {id, actionDetails}]
 
+@policy('TestPolicy')
 recipe EgressRestrictedFields
   action: create 'action'
   selection: create 'selection'
@@ -167,7 +188,7 @@ recipe EgressRestrictedFields
     action: actionRedacted
     selection: selection
     joinData: joinData
-  Egress_TestPolicy
+  TestEgressParticle
     joinData: joinData
 
 //-----------------------------------------------------------------------
@@ -180,6 +201,7 @@ particle JoinActionSelection_EgressJoinOnlyField
   selection: reads [Selection {id, selection, sensitiveSelection}]
   joinData: writes [ActionAtSelection {id, actionDetails}]
 
+@policy('TestPolicy')
 recipe EgressJoinOnlyField
   action: create 'action'
   selection: create 'selection'
@@ -191,12 +213,13 @@ recipe EgressJoinOnlyField
     action: actionRedacted
     selection: selection
     joinData: joinData
-  Egress_TestPolicy
+  TestEgressParticle
     joinData: joinData
 
 //-----------------------------------------------------------------------
 // Policy violation by not redacting `timestampInMs` in `Action`.
 //-----------------------------------------------------------------------
+@policy('TestPolicy')
 recipe EgressUnredactedField
   action: create 'action'
   selection: create 'selection'
@@ -205,12 +228,13 @@ recipe EgressUnredactedField
     action: action
     selection: selection
     joinData: joinData
-  Egress_TestPolicy
+  TestEgressParticle
     joinData: joinData
 
 //-----------------------------------------------------------------------
 // Policy violation by having invalid egress particles.
 //-----------------------------------------------------------------------
+@policy('TestPolicy')
 recipe InvalidEgressParticles
   action: create 'action'
   selection: create 'selection'
@@ -219,11 +243,25 @@ recipe InvalidEgressParticles
     action: action
     selection: selection
     joinData: joinData
-  Egress_AnotherPolicy
+  ParticleWithWrongEgressType
     joinData: joinData
-  Egress_YetAnotherPolicy
+  ParticleWithMissingEgressType
     joinData: joinData
-  Egress_TestPolicy
+  TestEgressParticle
     joinData: joinData
-  LoggingEgress_TestPolicy
+  AnotherTestEgressParticle
     joinData: joinData
+
+//-----------------------------------------------------------------------
+// Policy violation by not having an @policy annotation.
+//-----------------------------------------------------------------------
+recipe MissingPolicyAnnotation
+
+//-----------------------------------------------------------------------
+// Policy violation by referring to a different policy.
+//-----------------------------------------------------------------------
+@egressType('Logging')
+policy SomeOtherPolicy {}
+
+@policy('SomeOtherPolicy')
+recipe DifferentPolicyName

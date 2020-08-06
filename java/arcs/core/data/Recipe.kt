@@ -23,7 +23,7 @@ data class Recipe(
 ) {
     /** The name of the policy with which this recipe must comply. */
     val policyName: String?
-        get() = annotations.find { it.name === "policy" }?.getStringParam("name")
+        get() = annotations.find { it.name == "policy" }?.getStringParam("name")
 
     /** Representation of a particle in a recipe. */
     data class Particle(

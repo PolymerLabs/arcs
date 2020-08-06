@@ -20,6 +20,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/proto",
         "//java/arcs/core/data/proto:manifest_java_proto_lite",
+        "//java/arcs/core/data/proto:policy_java_proto_lite",
         "//java/arcs/core/policy",
         "//java/arcs/core/policy/proto",
         "//java/arcs/core/testutil/protoloader",
