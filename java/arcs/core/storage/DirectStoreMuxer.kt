@@ -110,6 +110,7 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
             )
         )
 
+        println("CREATED BACKING STORE ${store.hashCode()}")
         val id = store.on(callbackFactory(referenceId))
 
         // Return a new Record and add it to our local stores, keyed by muxId.

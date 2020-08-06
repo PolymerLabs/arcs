@@ -217,6 +217,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     /* internal */ suspend fun onReceive(data: Data, version: Int) {
         log.verbose { "onReceive($data, $version)" }
 
+        println("${this.hashCode()} RECEIVED DATA WITH VERSION MAP ${data.versionMap}")
         if (state.value is State.Closed<Data> || closed) {
             log.verbose { "onReceive($data, $version) called after close(), ignoring" }
             return

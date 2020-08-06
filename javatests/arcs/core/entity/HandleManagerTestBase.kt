@@ -45,6 +45,7 @@ import arcs.core.testutil.handles.dispatchRemove
 import arcs.core.testutil.handles.dispatchSize
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.ArcsStrictMode
+import arcs.core.util.Log
 import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
@@ -54,11 +55,13 @@ import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
@@ -69,7 +72,7 @@ import org.junit.Test
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 open class HandleManagerTestBase {
     @get:Rule
-    val log = LogRule()
+    val log = LogRule(Log.Level.Error)
 
     init {
         SchemaRegistry.register(Person.SCHEMA)
@@ -105,9 +108,14 @@ open class HandleManagerTestBase {
     )
 
     private val collectionRefKey = RamDiskStorageKey("set-ent")
+    private val collectionRefKey2 = RamDiskStorageKey("set-ent-2")
     private val collectionKey = ReferenceModeStorageKey(
         backingKey = backingKey,
         storageKey = collectionRefKey
+    )
+    private val collectionKey2 = ReferenceModeStorageKey(
+        backingKey = backingKey,
+        storageKey = collectionRefKey2
     )
 
     private val hatCollectionRefKey = RamDiskStorageKey("set-hats")
@@ -1155,6 +1163,88 @@ open class HandleManagerTestBase {
                 handle.clear()
             }
         }
+    }
+
+    private fun deferredUpdateForEntity(tag: String, backingKey: StorageKey, entityId: String): suspend () -> Unit {
+        val job = Job()
+        var listener: ((StorageKey, Any?) -> Unit)? = null
+        listener = { storageKey, any ->
+            println("RamDisk listener $tag:  $storageKey ${storageKey::class}, $any");
+            if(storageKey == backingKey.childKeyWithComponent(entityId) && any !== null) {
+                println("COMPLETING JOB")
+                job.complete()
+            } else {
+                println("THAT IS NOT NON-NULL $backingKey / $entityId")
+            }
+        }
+        RamDisk.addListener(listener)
+        return { job.join() }
+    }
+    @Test
+    fun updateEntityFromDifferentCollectionHandle() = testRunner {
+        // Create handle1. This has its own ReferenceModeStore, which includes a distinct
+        // container store of references, and a distinct DirectStoreMuxer of CrdtEntity DirectStores.
+        val handle = writeHandleManager.createCollectionHandle()
+
+        // Create handle2. This has its own ReferenceModeStore, which includes a distinct
+        // container store of references, and a distinct DirectStoreMuxer of CrdtEntity DirectStores.
+        val handle2 = writeHandleManager.createCollectionHandle(collectionKey2)
+
+
+        // Write the entity to the first handle.
+        // We also wait until we hear back from RamDisk that the entity was written to storage.
+        val awaitEntity1 = deferredUpdateForEntity("FIRST", backingKey, entity1.entityId)
+        handle.store(entity1)
+        awaitEntity1() // Getting past this function means that RamDisk saw entity1
+
+        // At this point, we write to the second handle. This write will trigger the creation of
+        // A distinct backing store that points to the same Ramdisk data that was written by handle
+        // 1. Because we waited for Ramdisk propagation, this handle will know about handle1 having
+        // written to the backing store, and thus can consider its write as happens-after.
+        val awaitEntity1_2 = deferredUpdateForEntity("SECOND", backingKey, entity1.entityId)
+        handle2.store(entity1)
+        awaitEntity1_2()
+
+        // Here we check in and read from both handles, and see that they each see the entity.
+        println("\n\n\nREADING BACK...")
+        val item = handle.fetchAll().first()
+        val item2 = handle2.fetchAll().first()
+        assertThat(item).isEqualTo(entity1)
+        assertThat(item2).isEqualTo(entity1)
+
+        // AT THIS POINT: I expect that the two handles should be on the same page as far as what
+        // version the field is. However, in observing the messages going back and forth, that's not
+        // the case. I was trying to figure out whether this was because:
+        // 1. I'm doing something wrong in this test
+        // 2. I have incorrect assumptions about the CRDT behavior
+        // 3. There's a bug somewhere
+
+        val modEntity = entity1.copy(
+            entityId = entity1.entityId,
+            name = "MODIFIED"
+        )
+        println("\n\n\nSENDING MODIFICATION FOR $modEntity")
+        handle2.store(modEntity)
+
+        // Because we write changed fields to handle2 with the same entity1, we expect the
+        // changes to propagate back to the first handle.
+        // BUT CURRENTLY: This update is never hit
+        // When I inspect the proxy message received in handle1 in handleBackingStoreMessage, it
+        // looks like.
+        //
+        // val model = backingStoreModelUpdateMessage.model
+        // val nameField = model.singletons["name"]
+        // println("NAME FIELD: $nameField")
+        //
+        // NAME FIELD: CrdtSingleton(data=CrdtSet.Data(versionMap={180475293497063: 1, 2080783107405: 2},
+        // values={Primitive(MODIFIED)=Reference(Primitive<kotlin.String>(MODIFIED))@Version{2080783107405: 2},
+        // Primitive(Jason)=Reference(Primitive<kotlin.String>(Jason))@Version{180475293497063: 1, 2080783107405: 1}}))
+
+
+        val awaitChange = handle.onUpdateDeferred {  it.fetchAll().first().name == "MODIFIED" }
+        assertThat(handle2.fetchAll().first().name).isEqualTo("MODIFIED")
+        awaitChange.join()
+
     }
 
     private suspend fun EntityHandleManager.createSingletonHandle(

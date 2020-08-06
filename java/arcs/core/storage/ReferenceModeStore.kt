@@ -64,6 +64,9 @@ internal typealias ContainerProxyMessage =
 internal typealias BackingStoreProxyMessage =
     ProxyMessage<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>
 
+internal typealias BackingStoreModelUpdate =
+    ProxyMessage.ModelUpdate<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>
+
 /** This is a convenience for the parameter type of [handleProxyMessage]. */
 internal typealias RefModeProxyMessage =
     ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
@@ -97,6 +100,9 @@ class ReferenceModeStore private constructor(
     // TODO(#5551): Consider including a hash of the storage key in log prefix.
     private val log = TaggedLog { "ReferenceModeStore" }
 
+    init {
+        println("CREATE REFMODESTORE ${this.hashCode()}")
+    }
     /**
      * A queue of incoming updates from the backing store, container store, and connected proxies.
      */
@@ -338,6 +344,29 @@ class ReferenceModeStore private constructor(
         }
     }
 
+    /** Convert a model update into a RefModeStore update for listeners. */
+    private suspend fun BackingStoreModelUpdate.convertToRefModeOperations(): RefModeProxyMessage {
+        println("GOT $model TO SEND UPSTREAM")
+        val nameField = model.singletons["name"]
+        println("NAME FIELD: $nameField")
+        val operation = when (this@ReferenceModeStore.type) {
+            is CollectionType<*> -> RefModeStoreOp.SetAdd(
+                "actor",
+                this.model.versionMap,
+                model.toRawEntity()
+            )
+            is SingletonType<*> -> RefModeStoreOp.SingletonUpdate(
+                "actor",
+                this.model.versionMap,
+                model.toRawEntity()
+            )
+            else -> throw java.lang.UnsupportedOperationException("oops")
+        }
+        return ProxyMessage.Operations(
+            operations = listOf(operation),
+            id = null
+        )
+    }
     /**
      * Handles an update from the [backingStore].
      *
@@ -351,9 +380,16 @@ class ReferenceModeStore private constructor(
         proxyMessage: BackingStoreProxyMessage,
         muxId: String
     ): Boolean {
+        println("${this.hashCode()} HANDLE BACKING STORE MESSAGE $proxyMessage")
         when (proxyMessage) {
-            is ProxyMessage.ModelUpdate ->
+            is ProxyMessage.ModelUpdate -> {
                 holdQueue.processReferenceId(muxId, proxyMessage.model.versionMap)
+                val msg = proxyMessage.convertToRefModeOperations()
+                sendQueue.enqueue {
+                    println("SEND CALLBACK $msg")
+                    callbacks.send(msg)
+                }
+            }
             // TODO(b/161912425) Verify the clock checking logic here.
             is ProxyMessage.Operations -> if (proxyMessage.operations.isNotEmpty()) {
                 holdQueue.processReferenceId(muxId, proxyMessage.operations.last().clock)

@@ -74,6 +74,7 @@ class CollectionHandle<T : Storable, R : Referencable>(
 
     // region implement WriteCollectionHandle<T>
     override fun store(element: T): Job = checkPreconditions {
+        println("STORE WITH VERSION MAP ${storageProxy.getVersionMap()}")
         storageProxy.applyOp(
             CrdtSet.Operation.Add(
                 name,
