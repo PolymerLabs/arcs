@@ -225,7 +225,7 @@ abstract class AbstractArcHost(
         runningMutex.withLock { runningArcs.clear() }
         clearContextCache()
         pausedArcs.clear()
-        contextSerializationTasks.cancel()
+        contextSerializationChannel.cancel()
         scope.cancel()
         schedulerProvider.cancelAll()
     }
@@ -359,8 +359,15 @@ abstract class AbstractArcHost(
      * Subclasses may override this to store the [context] using a different implementation.
      */
     protected open suspend fun writeContextToStorage(arcId: String, context: ArcHostContext) {
-        /** Serialize the [context] to storage in observed order asynchronously. */
+        val serializationTask: suspend (ArcHostContext) -> Unit = {
+            /** TODO: reuse [ArcHostContextParticle] instances if possible. */
+            createArcHostContextParticle(it).run {
+                writeArcHostContext(it.arcId, it)
+            }
+        }
+
         if (!contextSerializationChannel.isClosedForSend) {
+            /** Serialize the [context] to storage in observed order asynchronously. */
             val contextCopy = ArcHostContext(
                 context.arcId,
                 context.particles,
@@ -369,10 +376,7 @@ abstract class AbstractArcHost(
             )
             contextSerializationChannel.send {
                 try {
-                    /** TODO: reuse [ArcHostContextParticle] instances if possible. */
-                    createArcHostContextParticle(contextCopy).run {
-                        writeArcHostContext(contextCopy.arcId, contextCopy)
-                    }
+                    serializationTask(contextCopy)
                 } catch (e: Exception) {
                     log.info { "Error serializing Arc" }
                     log.debug(e) {
@@ -382,6 +386,9 @@ abstract class AbstractArcHost(
                     }
                 }
             }
+        } else {
+            /** fall back to synchronous serialization. */
+            serializationTask(context)
         }
     }
 
