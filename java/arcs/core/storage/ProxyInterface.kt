@@ -109,14 +109,15 @@ interface StorageEndpoint<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
 }
 
 /** Provider of a [StorageCommunicationEndpoint]s. */
-interface StorageEndpointProvider {
+interface StorageEndpointProvider <Data : CrdtData, Op : CrdtOperationAtTime, ConsumerData> {
     /**
      * Returns a communications channel to an [ActiveStore] that reflects the provided
      * [StoreOptions]. This is not necessarily an [ActiveStore] implementation, though a basic
      * implementation may provide a simple wrapper around an in-process instance of [ActiveStore].
      */
-    fun <Data : CrdtData, Op : CrdtOperationAtTime, ConsumerData> createStorageEndpoint(
-        storeOptions: StoreOptions,
+    fun create(
         callback: ProxyCallback<Data, Op, ConsumerData>
     ): StorageEndpoint<Data, Op, ConsumerData>
+
+    val storageKey: StorageKey
 }

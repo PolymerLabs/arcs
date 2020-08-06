@@ -66,7 +66,9 @@ class StorageProxyTest {
     private lateinit var fakeStoreEndpoint: StoreEndpointFake<CrdtData, CrdtOperationAtTime, String>
 
     @Mock
-    private lateinit var mockStorageEndpointProvider: StorageEndpointProvider
+    private lateinit var mockStorageEndpointProvider:
+        StorageEndpointProvider<CrdtData, CrdtOperationAtTime, String>
+
     @Mock
     private lateinit var mockCrdtOperation: CrdtOperationAtTime
     @Mock
@@ -90,10 +92,7 @@ class StorageProxyTest {
         scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher() + Job())
         MockitoAnnotations.initMocks(this)
         fakeStoreEndpoint = StoreEndpointFake()
-        whenever(
-            mockStorageEndpointProvider
-                .createStorageEndpoint<CrdtData, CrdtOperationAtTime, String>(any(), any())
-        ).thenReturn(fakeStoreEndpoint)
+        whenever(mockStorageEndpointProvider.create(any())).thenReturn(fakeStoreEndpoint)
         setupMockModel()
         whenever(mockCrdtOperation.clock).thenReturn(VersionMap())
     }
@@ -112,7 +111,6 @@ class StorageProxyTest {
     }
 
     private fun mockProxy() = StorageProxy(
-        StoreOptions(mockStorageKey, mockType),
         mockStorageEndpointProvider,
         mockCrdtModel,
         scheduler,
@@ -751,11 +749,8 @@ class StorageProxyTest {
                 }
             }
 
+        whenever(mockStorageEndpointProvider.storageKey).thenReturn(volatileStorageKey)
         val proxy = StorageProxy(
-            StoreOptions(
-                volatileStorageKey,
-                mockType
-            ),
             mockStorageEndpointProvider,
             mockCrdtModel,
             scheduler,
@@ -811,12 +806,9 @@ class StorageProxyTest {
         val dbReferenceModeStorageKey =
             ReferenceModeStorageKey(dbBackingStorageKey, dbStorageKey)
 
+        whenever(mockStorageEndpointProvider.storageKey).thenReturn(dbReferenceModeStorageKey)
         val proxy =
             StorageProxy(
-                StoreOptions(
-                    dbReferenceModeStorageKey,
-                    mockType
-                ),
                 mockStorageEndpointProvider,
                 mockCrdtModel,
                 scheduler,
