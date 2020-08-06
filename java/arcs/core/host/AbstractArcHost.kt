@@ -75,14 +75,20 @@ abstract class AbstractArcHost(
 
     /**
      * Backward-compatible for some existing [AbstractArcHost] implementations to dispatch
-     * [contextSerializationTasks] onto the [coroutineContext] instead of independent context.
+     * [contextSerializationTasks] onto the [coroutineContext] instead of separate context.
      */
     constructor(
         coroutineContext: CoroutineContext = Dispatchers.Default,
         schedulerProvider: SchedulerProvider,
         activationFactory: ActivationFactory? = null,
         vararg initialParticles: ParticleRegistration
-    ): this(coroutineContext, coroutineContext, schedulerProvider, activationFactory, *initialParticles)
+    ) : this(
+        coroutineContext,
+        coroutineContext,
+        schedulerProvider,
+        activationFactory,
+        *initialParticles
+    )
 
     private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
@@ -355,7 +361,7 @@ abstract class AbstractArcHost(
     protected open suspend fun writeContextToStorage(arcId: String, context: ArcHostContext) {
         /** Serialize the [context] to storage in observed order asynchronously. */
         if (!contextSerializationChannel.isClosedForSend) {
-            var contextCopy: ArcHostContext? = ArcHostContext(
+            val contextCopy = ArcHostContext(
                 context.arcId,
                 context.particles,
                 context.handleManager,
@@ -363,13 +369,9 @@ abstract class AbstractArcHost(
             )
             contextSerializationChannel.send {
                 try {
-                    contextCopy?.let {
-                        /** TODO: reuse [ArcHostContextParticle] instances if possible. */
-                        createArcHostContextParticle(it).run {
-                            writeArcHostContext(it.arcId, it)
-                        }
-                        // Remove the reference in the flow/channel cache.
-                        contextCopy = null
+                    /** TODO: reuse [ArcHostContextParticle] instances if possible. */
+                    createArcHostContextParticle(contextCopy).run {
+                        writeArcHostContext(contextCopy.arcId, contextCopy)
                     }
                 } catch (e: Exception) {
                     log.info { "Error serializing Arc" }
