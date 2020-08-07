@@ -22,6 +22,8 @@ import arcs.core.data.Plan.HandleConnection
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.data.expression.asExpr
+import arcs.core.data.expression.serialize
 import arcs.core.storage.keys.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
@@ -46,7 +48,7 @@ class ParcelableHandleConnectionTest {
             HandleMode.ReadWrite,
             personType,
             emptyList(),
-            "expression literal"
+            true.asExpr().serialize()
         )
 
         val marshalled = with(Parcel.obtain()) {
