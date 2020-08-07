@@ -2,6 +2,7 @@
 
 Rules are re-exported in build_defs.bzl -- use those instead.
 """
+
 load("//devtools/build_cleaner/skylark:build_defs.bzl", "register_extension_info")
 load(
     "//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl",
