@@ -11,6 +11,7 @@
 
 package arcs.core.data
 
+import arcs.core.data.expression.deserializeExpression
 import arcs.core.storage.StorageKeyParser
 import arcs.core.type.Type
 
@@ -86,7 +87,7 @@ fun Recipe.Particle.HandleConnection.toPlanHandleConnection() = Plan.HandleConne
     mode = spec.direction,
     type = type,
     annotations = handle.annotations,
-    expression = spec.expression
+    expression = spec.expression?.ifEmpty { null }?.deserializeExpression()
 )
 
 /** Translates a [Recipe.Handle] into a [StorageKey] */
