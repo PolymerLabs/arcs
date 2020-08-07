@@ -39,11 +39,13 @@ def arcs_tool_recipe2plan(name, srcs, outs, deps, generate_proto = False, recipe
         sigh_cmd += " --recipe " + recipe
     sigh_cmd += " {SRC}"
 
+    plan_type = "Proto" if generate_proto else "Kotlin"
+
     sigh_command(
         name = name,
         srcs = srcs,
         outs = outs,
-        progress_message = "Generating Kotlin Plans",
+        progress_message = "Generating Arcs Plan (%s)" % plan_type,
         sigh_cmd = sigh_cmd,
         deps = deps,
     )
