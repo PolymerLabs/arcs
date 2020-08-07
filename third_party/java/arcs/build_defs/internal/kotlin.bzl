@@ -2,7 +2,6 @@
 
 Rules are re-exported in build_defs.bzl -- use those instead.
 """
-
 load("//devtools/build_cleaner/skylark:build_defs.bzl", "register_extension_info")
 load(
     "//third_party/bazel_rules/rules_kotlin/kotlin/js:js_library.bzl",
@@ -31,7 +30,13 @@ load(
 )
 load(":kotlin_serviceloader_registry.bzl", "kotlin_serviceloader_registry")
 load(":kotlin_wasm_annotations.bzl", "kotlin_wasm_annotations")
-load(":util.bzl", "manifest_only", "merge_lists", "replace_arcs_suffix")
+load(
+    ":util.bzl",
+    "create_build_test",
+    "manifest_only",
+    "merge_lists",
+    "replace_arcs_suffix",
+)
 
 _WASM_SUFFIX = "-wasm"
 
@@ -121,6 +126,7 @@ def arcs_kt_jvm_library(**kwargs):
         )
 
     kt_jvm_library(**kwargs)
+    create_build_test(kwargs["name"])
 
 def arcs_kt_android_library(**kwargs):
     """Wrapper around kt_android_library for Arcs.
@@ -135,6 +141,7 @@ def arcs_kt_android_library(**kwargs):
     kotlincopts = kwargs.pop("kotlincopts", [])
     kwargs["kotlincopts"] = merge_lists(kotlincopts, COMMON_KOTLINC_OPTS + JVM_KOTLINC_OPTS)
     kt_android_library(**kwargs)
+    create_build_test(kwargs["name"])
 
 def arcs_kt_native_library(**kwargs):
     """Wrapper around kt_native_library for Arcs.
