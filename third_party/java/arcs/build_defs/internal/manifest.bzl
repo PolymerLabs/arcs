@@ -1,11 +1,6 @@
 """Arcs manifest bundling rules."""
 
-load(
-    ":tools.oss.bzl",
-    "arcs_tool_manifest2json",
-    "arcs_tool_manifest2proto",
-    "arcs_tool_recipe2plan",
-)
+load(":tools.oss.bzl", "arcs_tool_manifest2proto", "arcs_tool_recipe2plan")
 load(":util.bzl", "replace_arcs_suffix")
 
 def arcs_manifest(name, srcs, deps = [], visibility = None):
@@ -30,27 +25,6 @@ def arcs_manifest(name, srcs, deps = [], visibility = None):
         name = name,
         srcs = all_files,
         visibility = visibility,
-    )
-
-def arcs_manifest_json(name, srcs = [], deps = [], out = None, visibility = None):
-    """Serialize a manifest file.
-
-    This converts a '.arcs' file into a JSON representation, using manifest2json.
-
-    Args:
-      name: the name of the target to create
-      srcs: an Arcs manifest files to serialize
-      deps: list of dependencies (other manifests)
-      out: the name of the output artifact (a JSON file).
-      visibility: list of visibilities
-    """
-    outs = [out] if out != None else [replace_arcs_suffix(name, ".json")]
-
-    arcs_tool_manifest2json(
-        name = name,
-        srcs = srcs,
-        outs = outs,
-        deps = deps,
     )
 
 def arcs_manifest_proto(name, src, deps = [], out = None, visibility = None):

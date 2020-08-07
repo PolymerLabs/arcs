@@ -28,17 +28,6 @@ def arcs_tool_recipe2plan(name, srcs, outs, deps, generate_proto = False, recipe
     )
 
 # buildifier: disable=function-docstring
-def arcs_tool_manifest2json(name, srcs, outs, deps):
-    sigh_command(
-        name = name,
-        srcs = srcs,
-        outs = outs,
-        progress_message = "Serializing manifest",
-        sigh_cmd = "manifest2json --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
-        deps = deps,
-    )
-
-# buildifier: disable=function-docstring
 def arcs_tool_manifest2proto(name, srcs, outs, deps):
     sigh_command(
         name = name,
