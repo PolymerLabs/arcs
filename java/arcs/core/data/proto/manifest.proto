@@ -156,6 +156,7 @@ message ReferenceTypeProto {
 message TypeVariableProto {
   string name = 1;
   ConstraintInfo constraint = 2;
+  bool maxType = 3;
 }
 
 message ListTypeProto {
