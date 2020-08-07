@@ -4,14 +4,14 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import arcs.android.sdk.host.ArcHostHelper
-import arcs.android.sdk.host.ResurrectableHost
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Shareable
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.TestingHost
 import arcs.core.storage.StoreManager
+import arcs.sdk.android.labs.host.ArcHostHelper
+import arcs.sdk.android.labs.host.ResurrectableHost
 import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.ConnectionFactory

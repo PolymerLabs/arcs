@@ -14,7 +14,7 @@ package arcs.android.demo
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import arcs.android.host.AndroidManifestHostRegistry
+import arcs.android.labs.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry

@@ -24,7 +24,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import arcs.android.devtools.DevToolsService
 import arcs.android.devtools.IDevToolsService
-import arcs.android.host.AndroidManifestHostRegistry
+import arcs.android.labs.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
 import arcs.core.common.ArcId
 import arcs.core.data.CollectionType

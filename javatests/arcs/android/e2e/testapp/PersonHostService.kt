@@ -14,8 +14,8 @@ package arcs.android.e2e.testapp
 import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.Lifecycle
-import arcs.android.sdk.host.AndroidHost
-import arcs.android.sdk.host.ArcHostService
+import arcs.sdk.android.labs.host.AndroidHost
+import arcs.sdk.android.labs.host.ArcHostService
 import arcs.core.data.Plan
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider

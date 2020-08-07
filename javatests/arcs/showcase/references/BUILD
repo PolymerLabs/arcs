@@ -25,7 +25,6 @@ arcs_kt_android_library(
     ],
     deps = [
         ":schema_arcs_gen",
-        "//java/arcs/android/sdk/host",
         "//java/arcs/android/storage/database",
         "//java/arcs/core/allocator",
         "//java/arcs/core/common",

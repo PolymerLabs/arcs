@@ -8,16 +8,16 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.android.host
+package arcs.android.labs.host
 
 import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.annotation.VisibleForTesting
-import arcs.android.sdk.host.ArcHostHelper
-import arcs.android.sdk.host.IntentRegistryAdapter
-import arcs.android.sdk.host.toRegistryHost
+import arcs.sdk.android.labs.host.ArcHostHelper
+import arcs.sdk.android.labs.host.IntentRegistryAdapter
+import arcs.sdk.android.labs.host.toRegistryHost
 import arcs.core.host.ArcHost
 import arcs.core.host.HostRegistry
 import arcs.core.host.api.Particle

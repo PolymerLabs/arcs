@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.android.sdk.host
+package arcs.sdk.android.labs.host
 
 import android.app.Service
 import android.content.ComponentName

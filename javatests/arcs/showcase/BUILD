@@ -12,7 +12,6 @@ arcs_kt_android_library(
     testonly = 1,
     srcs = ["ShowcaseEnvironment.kt"],
     deps = [
-        "//java/arcs/android/sdk/host",
         "//java/arcs/android/storage/database",
         "//java/arcs/core/allocator",
         "//java/arcs/core/common",

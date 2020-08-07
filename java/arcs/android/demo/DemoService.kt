@@ -5,8 +5,8 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import androidx.lifecycle.Lifecycle
-import arcs.android.sdk.host.AndroidHost
-import arcs.android.sdk.host.ArcHostService
+import arcs.sdk.android.labs.host.AndroidHost
+import arcs.sdk.android.labs.host.ArcHostService
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider

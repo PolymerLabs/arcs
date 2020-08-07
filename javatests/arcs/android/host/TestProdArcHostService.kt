@@ -1,7 +1,7 @@
 package arcs.android.host
 
 import android.content.Context
-import arcs.android.host.prod.ProdArcHostService
+import arcs.android.labs.host.prod.ProdArcHostService
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.TestingJvmProdHost

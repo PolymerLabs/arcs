@@ -15,8 +15,8 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.testing.WorkManagerTestInitHelper
-import arcs.android.host.prod.ProdArcHostService
-import arcs.android.sdk.host.toComponentName
+import arcs.android.labs.host.AndroidManifestHostRegistry
+import arcs.android.labs.host.prod.ProdArcHostService
 import arcs.core.allocator.AllocatorTestBase
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Shareable
@@ -25,6 +25,7 @@ import arcs.core.host.HostRegistry
 import arcs.core.host.PersonPlan
 import arcs.core.host.TestingJvmProdHost
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.sdk.android.labs.host.toComponentName
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
