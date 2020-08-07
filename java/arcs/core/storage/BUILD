@@ -11,6 +11,10 @@ PROXY_SRCS = [
     "ProxyInterface.kt",
 ]
 
+STORE_SRCS = [
+    "StoreInterface.kt",
+]
+
 STORAGE_KEY_SRCS = [
     "StorageKey.kt",
     "StorageKeyParser.kt",
@@ -29,18 +33,20 @@ arcs_kt_library(
     name = "storage",
     srcs = glob(
         ["*.kt"],
-        exclude = PROXY_SRCS + STORAGE_KEY_SRCS + REFERENCE_SRCS + WRITEBACK_SRCS,
+        exclude = PROXY_SRCS + STORAGE_KEY_SRCS + REFERENCE_SRCS + WRITEBACK_SRCS + STORE_SRCS,
     ),
     exports = [
         ":proxy",
         ":reference",
         ":storage_key",
+        ":store",
         ":writeback",
     ],
     deps = [
         ":proxy",
         ":reference",
         ":storage_key",
+        ":store",
         ":writeback",
         "//java/arcs/core/analytics",
         "//java/arcs/core/common",
@@ -83,7 +89,18 @@ arcs_kt_library(
     srcs = PROXY_SRCS,
     deps = [
         ":storage_key",
+        ":store",
         "//java/arcs/core/crdt",
+    ],
+)
+
+arcs_kt_library(
+    name = "store",
+    srcs = STORE_SRCS,
+    deps = [
+        ":storage_key",
+        "//java/arcs/core/crdt",
+        "//java/arcs/core/type",
     ],
 )
 
