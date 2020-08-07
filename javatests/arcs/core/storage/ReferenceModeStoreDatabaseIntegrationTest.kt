@@ -385,6 +385,58 @@ class ReferenceModeStoreDatabaseIntegrationTest {
     }
 
     @Test
+    fun syncShouldNotIncurWrites_fromProxy_withModel() = runBlockingTest {
+        val activeStore = createReferenceModeStore()
+        val entityCollection = CrdtSet<RawEntity>()
+        val bob = createPersonEntity("an-id", "bob", 42)
+        entityCollection.applyOperation(
+            CrdtSet.Operation.Add("me", VersionMap("me" to 1), bob)
+        )
+
+        var job = Job(coroutineContext[Job])
+        var id: Int = -1
+        id = activeStore.on(
+            ProxyCallback {
+                when (it) {
+                    is ProxyMessage.Operations ->
+                        activeStore.onProxyMessage(ProxyMessage.SyncRequest(id))
+                    is ProxyMessage.ModelUpdate ->
+                        job.complete()
+                }
+            }
+        )
+
+        activeStore.onProxyMessage(
+            ProxyMessage.Operations(
+                listOf(RefModeStoreOp.SetAdd("me", VersionMap("me" to 1), bob)),
+                // Use +1 because we don't want the activeStore to omit sending to our callback
+                // (which should have id=1)
+                id = id + 1
+            )
+        )
+        job.join()
+
+        /**
+         * Mainly exercise [ReferenceModeStore.constructPendingIdsAndModel] code path at the
+         * duplicate [ReferenceModeStore] that handles the same [StorageKey]. The store should
+         * gets its [DirectStore.onReceive] called to apply the model received from the underlying
+         * driver. The assertion validates the [DirectStore.onReceive] responding to the
+         * [ProxyMessage.SyncRequest] should never incur additional writes/updates sent to the
+         * driver.
+         */
+        val activeStoreDup = createReferenceModeStore()
+        job = Job(coroutineContext[Job])
+        val counts = databaseFactory.totalInsertUpdates()
+        activeStoreDup.on(ProxyCallback {
+            assertThat(databaseFactory.totalInsertUpdates()).isEqualTo(counts)
+            job.complete()
+        }).let {
+            activeStoreDup.onProxyMessage(ProxyMessage.SyncRequest(it))
+        }
+        job.join()
+    }
+
+    @Test
     fun onlySendsModelResponse_toRequestingProxy() = runBlockingTest {
         val activeStore = createReferenceModeStore()
 
