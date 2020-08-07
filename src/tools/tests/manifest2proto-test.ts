@@ -439,11 +439,7 @@ describe('manifest2proto', () => {
       entity: {
         schema: {
           names: ['Foo'],
-          fields: {
-            value: {
-              primitive: 'TEXT'
-            }
-          },
+          fields: {value: {primitive: 'TEXT'}},
           hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
         }
       }
@@ -459,11 +455,7 @@ describe('manifest2proto', () => {
       entity: {
         schema: {
           names: ['Something'],
-          fields: {
-            num: {
-              primitive: 'NUMBER'
-            }
-          },
+          fields: {num: {primitive: 'NUMBER'}},
           hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
         },
       },
@@ -483,11 +475,7 @@ describe('manifest2proto', () => {
       entity: {
         schema: {
           names: ['Something'],
-          fields: {
-            num: {
-              primitive: 'NUMBER'
-            }
-          },
+          fields: {num: {primitive: 'NUMBER'}},
           hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
         },
       },
@@ -495,25 +483,17 @@ describe('manifest2proto', () => {
         binary: {
           leftExpr: {
             binary: {
-              leftExpr: {
-                field: 'num',
-              },
+              leftExpr: {field: 'num'},
               operator: 'GREATER_THAN',
-              rightExpr: {
-                number: -1
-              }
+              rightExpr: {number: -1},
             }
           },
           operator: 'AND',
           rightExpr: {
             binary: {
-              leftExpr: {
-                field: 'num'
-              },
+              leftExpr: {field: 'num'},
               operator: 'LESS_THAN',
-              rightExpr: {
-                number: 12
-              }
+              rightExpr: {number: 12},
             }
           },
         }
@@ -531,23 +511,15 @@ describe('manifest2proto', () => {
       entity: {
         schema: {
           names: ['Something'],
-          fields: {
-            num: {
-              primitive: 'NUMBER'
-            }
-          },
+          fields: {num: {primitive: 'NUMBER'}},
           hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
         },
       },
       refinement: {
         binary: {
-          leftExpr: {
-            field: 'num'
-          },
+          leftExpr: {field: 'num'},
           operator: 'EQUALS',
-          rightExpr: {
-            queryArgument: '?'
-          },
+          rightExpr: {queryArgument: '?'},
         }
       }
     });
@@ -560,11 +532,7 @@ describe('manifest2proto', () => {
           entity: {
             schema: {
               names: ['Foo'],
-              fields: {
-                value: {
-                  primitive: 'TEXT'
-                }
-              },
+              fields: {value: {primitive: 'TEXT'}},
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
             }
           }
@@ -581,11 +549,7 @@ describe('manifest2proto', () => {
           entity: {
             schema: {
               names: ['Foo'],
-              fields: {
-                value: {
-                  primitive: 'TEXT'
-                }
-              },
+              fields: {value: {primitive: 'TEXT'}},
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
             }
           }
@@ -602,11 +566,7 @@ describe('manifest2proto', () => {
           entity: {
             schema: {
               names: ['Foo'],
-              fields: {
-                value: {
-                  primitive: 'TEXT'
-                }
-              },
+              fields: {value: {primitive: 'TEXT'}},
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
             }
           }
@@ -626,11 +586,7 @@ describe('manifest2proto', () => {
             entity: {
               schema: {
                 names: ['Foo'],
-                fields: {
-                  value: {
-                    primitive: 'TEXT'
-                  }
-                },
+                fields: {value: {primitive: 'TEXT'}},
                 hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
               }
             }
@@ -639,11 +595,7 @@ describe('manifest2proto', () => {
             entity: {
               schema: {
                 names: ['Bar'],
-                fields: {
-                  value: {
-                    primitive: 'NUMBER'
-                  }
-                },
+                fields: {value: {primitive: 'NUMBER'}},
                 hash: 'f0b9f39c14d12e1445ac70bbd28b65c0b9d30022'
               }
             }
@@ -677,12 +629,9 @@ describe('manifest2proto', () => {
               names: ['Foo'],
               fields: {value: {primitive: 'TEXT'}},
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
-            }
-            }
-          }
-          }
-        }
-        }
+            }}
+          }}
+        }}
       }
     });
   });
@@ -698,18 +647,11 @@ describe('manifest2proto', () => {
           singleton: {singletonType: {
             entity: {schema: {
               names: ['Foo'],
-              fields: {
-                value: {
-                  primitive: 'TEXT'
-                }
-              },
+              fields: {value: {primitive: 'TEXT'}},
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
-            }
-            }
-          }
-          }
-        }
-        }
+            }}
+          }}
+        }}
       }
     });
   });
@@ -722,17 +664,14 @@ describe('manifest2proto', () => {
         name: 'a',
         maxType: true,
         constraint: {constraintType: {
-            singleton: {singletonType: {
-                entity: {schema: {
-                    names: ['Foo'],
-                    fields: {value: {primitive: 'TEXT'}},
-                    hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
-                  }
-                }
-              }
-            }
-          }
-        }
+          singleton: {singletonType: {
+            entity: {schema: {
+              names: ['Foo'],
+              fields: {value: {primitive: 'TEXT'}},
+              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+            }}
+          }}
+        }}
       }
     });
   });
@@ -745,21 +684,14 @@ describe('manifest2proto', () => {
         name: 'a',
         maxType: true,
         constraint: {constraintType: {
-            singleton: {singletonType: {
-                entity: {schema: {
-                    names: ['Foo'],
-                    fields: {
-                      value: {
-                        primitive: 'TEXT'
-                      }
-                    },
-                    hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
-                  }
-                }
-              }
-            }
-          }
-        }
+          singleton: {singletonType: {
+            entity: {schema: {
+              names: ['Foo'],
+              fields: {value: {primitive: 'TEXT'}},
+              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+            }}
+          }}
+        }}
       }
     });
   });
@@ -772,16 +704,10 @@ describe('manifest2proto', () => {
       singleton: {singletonType: {
         entity: {schema: {
           names: ['Foo'],
-          fields: {
-            value: {
-              primitive: 'TEXT'
-            }
-          },
+          fields: {value: {primitive: 'TEXT'}},
           hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
-        }
-        }
-      }
-      }
+        }}
+      }}
     });
   });
 
@@ -939,16 +865,12 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(schema.fields, {
       a: {reference: {referredType: {entity: {schema: {
         names: ['Product'],
-        fields: {
-          name: {primitive: 'TEXT'}
-        },
+        fields: {name: {primitive: 'TEXT'}},
         hash: 'a76bdd3a638fc17a5b3e023edb542c1e891c4c89'
       }}}}},
       b: {collection: {collectionType: {reference: {referredType: {entity: {schema: {
         names: ['Review'],
-        fields: {
-          rating: {primitive: 'NUMBER'},
-        },
+        fields: {rating: {primitive: 'NUMBER'}},
         hash: '2d3317e5ef54fbdf3fbc02ed481c2472ebe9ba66'
       }}}}}}},
     });
@@ -1577,10 +1499,8 @@ describe('manifest2proto', () => {
         fields: {
           name: {primitive: 'TEXT'},
           manufacturer: {reference: {referredType: {entity: {schema: {
-            names: ['Manufacturer'],
-            fields: {
-                address: {primitive: 'TEXT'}
-              },
+              names: ['Manufacturer'],
+              fields: {address: {primitive: 'TEXT'}},
               hash: 'd61bcba2419ded8a1b497fc6d905b372baafce01',
             }}}}
           },
