@@ -1,5 +1,7 @@
 """Shared utilities for Arcs internal rules"""
 
+load("//tools/build_defs/build_test:build_test.bzl", "build_test")
+
 def replace_arcs_suffix(src, suffix = ""):
     """Cleans up the given file name, and replaces the .arcs extension with the provided suffix."""
 
@@ -28,3 +30,14 @@ def manifest_only(deps = [], inverse = False):
     if inverse:
         return [d for d in deps if not d.endswith(".arcs")]
     return [d for d in deps if d.endswith(".arcs")]
+
+def create_build_test(name):
+    """Creates a build_test for the given target.
+
+    Build tests are useful mainly for the internal presubmit, to verify that
+    everything builds without error.
+    """
+    build_test(
+        name = name + "_build_test",
+        targets = [":" + name],
+    )
