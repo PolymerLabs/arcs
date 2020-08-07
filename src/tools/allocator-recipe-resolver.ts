@@ -11,16 +11,18 @@ import {assert} from '../platform/assert-web.js';
 import {Id} from '../runtime/id.js';
 import {Runtime} from '../runtime/runtime.js';
 import {Manifest} from '../runtime/manifest.js';
+import {Type} from '../runtime/type.js';
 import {IsValidOptions, Recipe, RecipeComponent} from '../runtime/recipe/recipe.js';
 import {volatileStorageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
-import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
 import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
+import {IngressValidation} from '../runtime/policy/ingress-validation.js';
 import {CreatableStorageKey} from '../runtime/storage/creatable-storage-key.js';
 import {Store} from '../runtime/storage/store.js';
 import {Exists} from '../runtime/storage/drivers/driver.js';
 import {DatabaseStorageKey} from '../runtime/storage/database-storage-key.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {digest} from '../platform/digest-web.js';
+import {VolatileStorageKey} from '../runtime/storage/drivers/volatile.js';
 
 export class AllocatorRecipeResolverError extends Error {
   constructor(message: string) {
@@ -39,11 +41,13 @@ export class AllocatorRecipeResolver {
   private readonly runtime: Runtime;
   private readonly createHandleRegistry: Map<Handle, string> = new Map<Handle, string>();
   private createHandleIndex = 0;
+  private readonly ingressValidation: IngressValidation;
 
-
-  constructor(context: Manifest, private randomSalt: string) {
+  constructor(context: Manifest, private randomSalt: string, policiesManifest?: Manifest|null) {
     this.runtime = new Runtime({context});
     DatabaseStorageKey.register();
+    this.ingressValidation = policiesManifest
+        ? new IngressValidation(policiesManifest.policies) : null;
   }
 
   /**
@@ -52,80 +56,159 @@ export class AllocatorRecipeResolver {
    * @throws Error if recipe fails to resolve on first or second pass.
    * @returns Resolved recipes (with Storage Keys).
    */
+  // TODO: refactor this method!
   async resolve(): Promise<Recipe[]> {
     const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
 
-    // First pass: validate recipes and create stores
-    const firstPass = [];
-    for (const recipe of this.runtime.context.allRecipes) {
-      this.validateHandles(recipe);
-
-      if (!recipe.normalize(opts)) {
-        throw new AllocatorRecipeResolverError(
-          `Recipe ${recipe.name} failed to normalize:\n${[...opts.errors.values()].join('\n')}`);
-      }
-
-      let withStores = recipe;
-      if (isLongRunning(recipe)) {
-        withStores = await this.createStoresForCreateHandles(recipe);
-      }
-
-      firstPass.push(withStores);
+    const originalRecipes = [];
+    // Clone all recipes.
+    for (const originalRecipe of this.runtime.context.allRecipes) {
+      originalRecipes.push(originalRecipe.clone());
     }
 
-    // Second pass: resolve and assign creatable storage keys
     const recipes = [];
-    for (let recipe of firstPass) {
-      // Only include recipes from primary (non-imported) manifest
-      if (!this.runtime.context.recipes.map(r => r.name).includes(recipe.name)) continue;
+    // Normalize all recipes.
+    for (const recipe of originalRecipes) {
+      // Set the mappedType of `map` and `copy` handles to the corresponding
+      // `create` handle's type (this is needed to resolve generic handle
+      // connections).
+      for (const handle of recipe.handles) {
+        if (!['map', 'copy'].includes(handle.fate)) continue;
+        const matchingHandles = recipes.map(
+          r => isLongRunning(r) && r.handles.find(
+              h => h.fate === 'create' && h.id === handle.id)).filter(h => !!h);
+        if (matchingHandles.length === 1) {
+          handle.mappedType = matchingHandles[0].type;
+        }
+      }
+      if (!recipe.normalize(opts)) {
+        throw new AllocatorRecipeResolverError(
+            `Recipe ${recipe.name} failed to normalize:\n${[...opts.errors.values()].join('\n')}`);
+      }
+      recipes.push(recipe.clone());
+    }
 
-      recipe = await this.tryResolve(recipe, opts);
-      recipe = await this.assignCreatableStorageKeys(recipe);
-      recipe.normalize();
+    // Map from a handle id to its `create` handle, all handles mapping it.
+    const handleById = {};
+    // Find all `create` handles of long running recipes.
+    for (const recipe of recipes.filter(r => isLongRunning(r))) {
+      const resolver = new CapabilitiesResolver({arcId: Id.fromString(findLongRunningArcId(recipe))});
+      for (const createHandle of recipe.handles.filter(h => h.fate === 'create' && h.id)) {
+        if (handleById[createHandle.id]) {
+          throw new AllocatorRecipeResolverError(`
+              More than one handle created with id '${createHandle.id}'.`);
+        }
+        // Skip volatile handles.
+        const protocol = resolver.selectStorageKeyFactory(
+            createHandle.capabilities, createHandle.id).protocol;
+        if (protocol !== VolatileStorageKey.protocol) {
+          handleById[createHandle.id] = {createHandle, handles: []};
+        }
+      }
+    }
+    // Find all `map` and `copy` handles and add them to the map.
+    for (const recipe of recipes) {
+      for (const handle of recipe.handles) {
+        if (handle.fate === 'use') {
+          throw new AllocatorRecipeResolverError(
+              `Recipe ${recipe.name} has a handle with unsupported 'use' fate.`);
+        }
+        if (!['map', 'copy'].includes(handle.fate)) continue;
+        if (handleById[handle.id]) {
+          handleById[handle.id]['handles'].push(handle);
+        } else {
+          throw new AllocatorRecipeResolverError(
+              `No matching stores found for handle '${handle.id}' in recipe ${recipe.name}.`);
+        }
+      }
+    }
+    // Iterate over all handles in the recipe set that are shared across
+    // multiple recipes, and compute their restricted type and apply them to
+    // all relevant handles and connections.
+    for (const value of Object.values(handleById)) {
+      // tslint:disable-next-line: no-any
+      const {createHandle, handles} = value as any;
+      const restrictedType =
+          this.restrictHandleType(createHandle.id, [createHandle, ...handles]);
+      assert(restrictedType.maybeEnsureResolved({restrictMaxBoundToEmpty: true}));
+      createHandle.restrictType(restrictedType);
+      for (const connection of createHandle.connections) {
+        if (!connection.type.maybeEnsureResolved({restrictMaxBoundToEmpty: true})) {
+          throw new AllocatorRecipeResolverError(
+              `Cannot resolve type of ${connection.getQualifiedName()} in recipe ${connection.recipe.name}`);
+        }
+      }
+      for (const handle of handles) {
+        handle.restrictType(restrictedType);
+        for (const connection of handle.connections) {
+          if (!connection.type.maybeEnsureResolved({restrictMaxBoundToEmpty: true})) {
+            throw new AllocatorRecipeResolverError(
+              `Cannot resolve type of ${connection.getQualifiedName()} in recipe ${connection.recipe.name}`);
+          }
+        }
+      }
+    }
 
-      recipes.push(recipe);
+    // Assign storage keys to all handles in the recipe.
+    for (const recipe of recipes) {
+      for (const createHandle of recipe.handles.filter(h => h.fate === 'create')) {
+        await this.assignStorageKeys(createHandle);
+        if (handleById[createHandle.id]) {
+          for (const handle of handleById[createHandle.id].handles) {
+            handle.storageKey = createHandle.storageKey;
+          }
+        }
+      }
+      // Validate ingress, if applicable.
+      if (!this.ingressValidation) continue;
+      const result = this.ingressValidation.validateIngressCapabilities(recipe);
+      if (!result.success) {
+        throw new AllocatorRecipeResolverError(
+            `Failed ingress validation for plan ${recipe.name}: ${result.toString()}`);
+      }
     }
     return recipes;
   }
 
-  /**
-   * Resolves unresolved recipe or normalizes resolved recipe.
-   *
-   * @param recipe long-running or ephemeral recipe
-   */
-  async tryResolve(recipe: Recipe, opts: IsValidOptions): Promise<Recipe | null> {
-
-    if (recipe.isResolved()) return recipe;
-
-    const arcId = findLongRunningArcId(recipe);
-    const arc = this.runtime.newArc(
-      arcId, volatileStorageKeyPrefixForTest(), arcId ? {id: Id.fromString(arcId)} : undefined);
-
-    const resolvedRecipe = await (new RecipeResolver(arc).resolve(recipe, opts));
-    if (!resolvedRecipe) {
-      throw new AllocatorRecipeResolverError(
-        `Recipe ${recipe.name} failed to resolve:\n${[...opts.errors.values()].join('\n')}`);
+  restrictHandleType(handleId: string, allHandles: Handle[]): Type {
+    assert(allHandles.length > 0);
+    assert(allHandles.every(h => h.type.tag === allHandles[0].type.tag));
+    let restrictedType = null;
+    for (const handle of allHandles) {
+      if (restrictedType) {
+        restrictedType = restrictedType.restrictTypeRanges(handle.type);
+      } else {
+        restrictedType = handle.type;
+      }
     }
-    assert(resolvedRecipe.isResolved());
-    return resolvedRecipe;
+    return restrictedType;
   }
 
-  /**
-   * Instantiates CreatableStorageKeys for stores that need to be separate for each recipe instance.
-   */
-  async assignCreatableStorageKeys(recipe: Recipe): Promise<Recipe> {
-    // Recipe is normalized at this stage, we need to modify it further.
-    recipe = recipe.clone();
-
-    for (const handle of recipe.handles) {
-      if (handle.fate !== 'create' || handle.storageKey) continue;
-
-      handle.storageKey = new CreatableStorageKey(
-        await this.createCreateHandleName(handle)
-      );
+  async assignStorageKeys(handle: Handle): Promise<void> {
+    assert(handle.type.maybeEnsureResolved({restrictMaxBoundToEmpty: true}));
+    if (handle.fate === 'create') {
+      if (isLongRunning(handle.recipe) && handle.id) {
+        assert(!handle.storageKey); // store's storage key was set, but not the handle's
+        const arcId = Id.fromString(findLongRunningArcId(handle.recipe));
+        const resolver = new CapabilitiesResolver({arcId});
+        assert(handle.type.isResolved());
+        if (handle.type.getEntitySchema() === null) {
+          throw new AllocatorRecipeResolverError(`Handle '${handle.id}' was not properly resolved.`);
+        }
+        const storageKey = await resolver.createStorageKey(
+            handle.capabilities, handle.type, handle.id);
+        handle.storageKey = storageKey;
+      } else {  // ephemeral Arc
+        assert(!handle.storageKey);
+        handle.storageKey =
+            new CreatableStorageKey(await this.createCreateHandleName(handle));
+      }
+    } else {  // handle.fate !=== 'create'
+      if (handle.id) {
+        assert(handle.storageKey instanceof CreatableStorageKey);
+        handle.storageKey = this.runtime.context.findStoreById(handle.id).storageKey;
+      }
     }
-
-    return recipe;
   }
 
   /** Generates a consistent handle id. */
@@ -135,67 +218,6 @@ export class AllocatorRecipeResolver {
       this.createHandleRegistry.set(handle, await digest(this.randomSalt + this.createHandleIndex++));
     }
     return this.createHandleRegistry.get(handle);
-  }
-
-  /**
-   * Create stores with keys for all create handles with ids.
-   *
-   * @param recipe should be long running.
-   */
-  async createStoresForCreateHandles(recipe: Recipe): Promise<Recipe> {
-    const arcId = Id.fromString(findLongRunningArcId(recipe));
-    const resolver = new CapabilitiesResolver({arcId});
-    const cloneRecipe = recipe.clone();
-    for (const createHandle of cloneRecipe.handles.filter(h => h.fate === 'create' && !!h.id)) {
-      if (createHandle.type.hasVariable && !createHandle.type.isResolved()) {
-        assert(createHandle.type.maybeEnsureResolved());
-        assert(createHandle.type.isResolved());
-      }
-
-      if (createHandle.type.getEntitySchema() === null) {
-        throw new AllocatorRecipeResolverError(`Handle '${createHandle.id}' was not properly resolved.`);
-      }
-
-      const storageKey = await resolver.createStorageKey(
-          createHandle.capabilities, createHandle.type, createHandle.id);
-      const store = new Store(createHandle.type, {
-        storageKey,
-        exists: Exists.MayExist,
-        id: createHandle.id
-      });
-      this.runtime.context.registerStore(store, createHandle.tags);
-      createHandle.storageKey = storageKey;
-    }
-    assert(cloneRecipe.normalize());
-    return cloneRecipe;
-  }
-
-  /**
-   * Checks that handles are existent, disambiguous, and initiated by a long-running arc.
-   *
-   * @throws when a map or copy handle is associated with too many stores (ambiguous mapping).
-   * @throws when a map or copy handle isn't associated with any store (no matches found).
-   * @throws when a map or copy handle is associated with a handle from an ephemeral recipe.
-   * @param recipe long-running or ephemeral recipe
-   */
-  validateHandles(recipe: Recipe) {
-    for (const handle of recipe.handles.filter(handle => handle.fate === 'map' || handle.fate === 'copy')) {
-      const matches = this.runtime.context.findHandlesById(handle.id)
-        .filter(h => h.fate === 'create');
-
-      if (matches.length === 0) {
-        throw new AllocatorRecipeResolverError(`No matching handles found for ${handle.localName}.`);
-      } else if (matches.length > 1) {
-        throw new AllocatorRecipeResolverError(`More than one handle found for ${handle.localName}.`);
-      }
-
-      const match = matches[0];
-      if (!isLongRunning(match.recipe)) {
-        throw new AllocatorRecipeResolverError(
-          `Handle ${handle.localName} mapped to ephemeral handle '${match.id}'.`
-        );
-      }
-    }
   }
 }
 

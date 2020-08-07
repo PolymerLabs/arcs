@@ -213,6 +213,11 @@ export class Handle implements Comparable<Handle> {
 
     this.claims = storage.claims;
   }
+  restrictType(restrictedType: Type) {
+    assert(this.type && this.type.isAtLeastAsSpecificAs(restrictedType));
+    this._type = restrictedType;
+  }
+
   get localName() { return this._localName; }
   set localName(name: string) { this._localName = name; }
   get connections() { return this._connections; } // HandleConnection*

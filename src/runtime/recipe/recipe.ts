@@ -409,7 +409,7 @@ export class Recipe implements Cloneable<Recipe> {
       }
       return false;
     }
-    if (!this._isValid()) {
+    if (!this._isValid(options)) {
       this._findDuplicate(this._handles, options);
       this._findDuplicate(this._slots, options);
       const checkForInvalid = (list) => list.forEach(item => !item._isValid(options));

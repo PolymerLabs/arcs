@@ -23,7 +23,6 @@ import {ManifestStringBuilder} from './manifest-string-builder.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
-export type SkippedFieldsOptions = {prefix?: string, skippedFields?: string[]};
 
 export class Schema {
   readonly names: string[];
@@ -394,47 +393,5 @@ export class Schema {
       Object.keys(this.fields).sort().map(field =>
         `${field}:${this.normalizeTypeForHash(this.fields[field])}`
       ).join('');
-  }
-
-  static getRestrictedSchemaFields(schema: Schema, restrictedSchema: Schema, opts: SkippedFieldsOptions = {prefix: ''}): {} {
-    const fields = {};
-    for (const [fieldName, field] of Object.entries(schema.fields)) {
-      const restrictedField = restrictedSchema.fields[fieldName];
-      const fullFieldName = `${opts.prefix ? `${opts.prefix}.` : ''}${fieldName}`;
-      if (restrictedField) {
-        fields[fieldName] = Schema.restrictField(field, restrictedField,
-              {...opts, prefix: fullFieldName});
-      } else if (opts.skippedFields) {
-        opts.skippedFields.push(fullFieldName);
-      }
-    }
-    return fields;
-  }
-
-  private static restrictField(field, restrictedField, opts: SkippedFieldsOptions) {
-    assert(field.kind === restrictedField.kind);
-    switch (field.kind) {
-      case 'kotlin-primitive':
-      case 'schema-primitive':
-        return field;
-      case 'schema-collection':
-        return {kind: 'schema-collection', schema: this.restrictField(field.schema, restrictedField.schema, opts)};
-      case 'schema-reference': {
-        const result = {...field};
-        result.schema.model.entitySchema.fields =
-            Schema.getRestrictedSchemaFields(field.schema.model.entitySchema, restrictedField.schema.model.entitySchema, opts);
-        return result;
-      }
-      case 'schema-inline': {
-        const result = {...field};
-        result.model.entitySchema.fields = Schema.getRestrictedSchemaFields(field.model.entitySchema, restrictedField.model.entitySchema, opts);
-        return result;
-      }
-      case 'schema-nested':
-      case 'schema-ordered-list':
-        return {kind: field.kind, schema: this.restrictField(field.schema, restrictedField.schema, opts)};
-      default:
-        throw new Error(`Unsupported field kind: ${field.kind}`);
-    }
   }
 }
