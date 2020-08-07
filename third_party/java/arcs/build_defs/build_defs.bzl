@@ -20,7 +20,6 @@ load(
     "//third_party/java/arcs/build_defs/internal:manifest.bzl",
     _arcs_manifest = "arcs_manifest",
     _arcs_manifest_bundle = "arcs_manifest_bundle",
-    _arcs_manifest_json = "arcs_manifest_json",
     _arcs_manifest_proto = "arcs_manifest_proto",
     _arcs_proto_plan = "arcs_proto_plan",
 )
@@ -91,8 +90,6 @@ def arcs_kt_schema(**kwargs):
 arcs_manifest = _arcs_manifest
 
 arcs_manifest_bundle = _arcs_manifest_bundle
-
-arcs_manifest_json = _arcs_manifest_json
 
 arcs_manifest_proto = _arcs_manifest_proto
 
