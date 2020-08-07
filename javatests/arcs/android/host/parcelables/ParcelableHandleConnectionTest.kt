@@ -48,7 +48,7 @@ class ParcelableHandleConnectionTest {
             HandleMode.ReadWrite,
             personType,
             emptyList(),
-            true.asExpr().serialize()
+            true.asExpr()
         )
 
         val marshalled = with(Parcel.obtain()) {
