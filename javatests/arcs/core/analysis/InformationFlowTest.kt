@@ -113,7 +113,12 @@ class InformationFlowTest {
         val failingFieldTests = listOf(
             "fail-field-entity-direct",
             "fail-field-entity-ref-direct",
+            "fail-field-entity-ref-field",
             "fail-field-collection-direct",
+            "fail-field-inline-entity-direct",
+            "fail-field-list-direct",
+            "fail-field-tuple-direct",
+            "fail-field-inline-entity-slicing",
             "fail-field-claim-propagates",
             "fail-field-claim-propagates-type-variables",
             "fail-field-merge-multiple-paths"
@@ -121,7 +126,12 @@ class InformationFlowTest {
         val okFieldTests = listOf(
             "ok-field-entity-direct",
             "ok-field-entity-ref-direct",
+            "ok-field-entity-ref-field",
             "ok-field-collection-direct",
+            "ok-field-inline-entity-direct",
+            "ok-field-list-direct",
+            "ok-field-tuple-direct",
+            "ok-field-inline-entity-slicing",
             "ok-field-claim-propagates",
             "ok-field-claim-propagates-type-variables",
             "ok-field-merge-multiple-paths"
@@ -141,9 +151,9 @@ class InformationFlowTest {
         )
         val tests = (
             okTests + failingTests +
-                okFieldTests + failingFieldTests +
-                okCycleTests + failingCycleTests
-            )
+            okFieldTests + failingFieldTests +
+            okCycleTests + failingCycleTests
+        )
         tests.forEach { verifyChecksInTestFile(it) }
     }
 
