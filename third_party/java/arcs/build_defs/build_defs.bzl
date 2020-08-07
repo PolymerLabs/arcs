@@ -34,7 +34,6 @@ load(
     "//third_party/java/arcs/build_defs/internal:tools.oss.bzl",
     _arcs_manifest_parse_test = "arcs_manifest_parse_test",
 )
-load(":sigh.bzl", "sigh_command")
 
 # Re-export rules from various other files.
 
@@ -106,14 +105,3 @@ arcs_manifest_proto = _arcs_manifest_proto
 arcs_proto_plan = _arcs_proto_plan
 
 kt_js_library = _kt_js_library
-
-def arcs_ts_test(name, src, deps, flaky = False):
-    """Runs a TypeScript test file using `sigh test`."""
-    sigh_command(
-        name = name,
-        srcs = [src],
-        execute = False,
-        flaky = flaky,
-        sigh_cmd = "test --bazel --file {SRC}",
-        deps = deps,
-    )
