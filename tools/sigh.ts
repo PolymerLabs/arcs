@@ -114,8 +114,6 @@ const scripts: {[index: string]: string} = {
 
   schema2wasm: 'build/tools/schema2wasm.js',
 
-  manifestChecker: 'build/tools/manifest-checker.js',
-
   /** Serializes manifests to JSON. */
   manifest2json: 'build/tools/manifest2json.js',
 
