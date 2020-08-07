@@ -16,6 +16,7 @@ arcs_kt_gen(
 
 arcs_kt_android_library(
     name = "demo_lib",
+    testonly = 1,
     srcs = glob(["*.kt"]),
     manifest = ":AndroidManifest.xml",
     resource_files = glob(["res/**/*"]),
@@ -53,6 +54,7 @@ arcs_kt_android_library(
 # bazel mobile-install java/arcs/android/demo
 android_binary(
     name = "demo",
+    testonly = 1,
     dexopts = ["--force-jumbo"],
     incremental_dexing = 0,
     manifest = ":AndroidManifest.xml",
