@@ -83,6 +83,10 @@ class FakeDatabaseManager : DatabaseManager {
     override suspend fun resetAll() {
         throw UnsupportedOperationException("Fake database manager cannot resetAll.")
     }
+
+    suspend fun totalInsertUpdates() = snapshotStatistics().map {
+        it.value.insertUpdate.runtimeStatistics.measurements
+    }.sum()
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE")

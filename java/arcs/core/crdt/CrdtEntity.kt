@@ -160,9 +160,20 @@ class CrdtEntity(
             )
         } else {
             val resultData = data // call `data` only once, since it's nontrivial to copy.
+
+            // Check if there are no other changes.
+            val otherChangesEmpty =
+                singletonChanges.values.all { it.otherChange.isEmpty() } &&
+                    collectionChanges.values.all { it.otherChange.isEmpty() }
+            val otherChange: CrdtChange<Data, Operation> = if (otherChangesEmpty) {
+                CrdtChange.Operations(mutableListOf())
+            } else {
+                CrdtChange.Data(resultData)
+            }
+
             MergeChanges(
                 modelChange = CrdtChange.Data(resultData),
-                otherChange = CrdtChange.Data(resultData)
+                otherChange = otherChange
             )
         }
     }
