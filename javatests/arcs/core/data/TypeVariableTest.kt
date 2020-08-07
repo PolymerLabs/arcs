@@ -47,6 +47,18 @@ class TypeVariableTest {
     }
 
     @Test
+    fun toLiteralContainsNameTagAndMaxFlag() {
+        val typeVarA = TypeVariable("A", maxType = false)
+        val typeVarBaz = TypeVariable("Baz", maxType = true)
+        assertThat(typeVarA.toLiteral()).isEqualTo(
+            TypeVariable.Literal(Tag.TypeVariable, TypeVariable.VariableLiteral("A"))
+        )
+        assertThat(typeVarBaz.toLiteral()).isEqualTo(
+            TypeVariable.Literal(Tag.TypeVariable, TypeVariable.VariableLiteral("Baz", maxType = true))
+        )
+    }
+
+    @Test
     fun toLiteralContainsNameTagAndConstraint() {
         val constraint = EntityType(Schema(
             setOf(SchemaName("Product"), SchemaName("Thing")),
@@ -73,6 +85,25 @@ class TypeVariableTest {
             TypeVariable.Literal(
                 Tag.TypeVariable,
                 TypeVariable.VariableLiteral("A", constraint.toLiteral())
+            )
+        )
+    }
+
+    @Test
+    fun toLiteralContainsNameTagConstraintAndMaxFlag() {
+        val constraint = EntityType(Schema(
+            setOf(SchemaName("Product"), SchemaName("Thing")),
+            SchemaFields(
+                mapOf("name" to FieldType.Text),
+                mapOf("ratings" to FieldType.Number)
+            ),
+            "fake-hash"
+        ))
+        val typeVarBaz = TypeVariable("Baz", constraint, true)
+        assertThat(typeVarBaz.toLiteral()).isEqualTo(
+            TypeVariable.Literal(
+                Tag.TypeVariable,
+                TypeVariable.VariableLiteral("Baz", constraint.toLiteral(), true)
             )
         )
     }
