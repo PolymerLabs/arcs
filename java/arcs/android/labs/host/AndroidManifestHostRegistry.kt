@@ -15,12 +15,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.annotation.VisibleForTesting
-import arcs.sdk.android.labs.host.ArcHostHelper
-import arcs.sdk.android.labs.host.IntentRegistryAdapter
-import arcs.sdk.android.labs.host.toRegistryHost
 import arcs.core.host.ArcHost
 import arcs.core.host.HostRegistry
 import arcs.core.host.api.Particle
+import arcs.sdk.android.labs.host.ArcHostHelper
+import arcs.sdk.android.labs.host.IntentRegistryAdapter
+import arcs.sdk.android.labs.host.toRegistryHost
 import kotlinx.coroutines.TimeoutCancellationException
 
 /**
