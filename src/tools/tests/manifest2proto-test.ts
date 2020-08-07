@@ -670,6 +670,7 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
       variable: {
         name: 'a',
+        maxType: false,
         constraint: {constraintType: {
           singleton: {singletonType: {
             entity: {schema: {
@@ -692,6 +693,7 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
       variable: {
         name: 'a',
+        maxType: false,
         constraint: {constraintType: {
           singleton: {singletonType: {
             entity: {schema: {
@@ -736,7 +738,7 @@ describe('manifest2proto', () => {
   it('encodes variable type - unconstrained', async () => {
     const varType = TypeVariable.make('a');
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
-      variable: {name: 'a'}
+      variable: {name: 'a', maxType: false}
     });
   });
 
