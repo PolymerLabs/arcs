@@ -65,13 +65,26 @@ abstract class AbstractArcHost(
     updateArcHostContextCoroutineContext: CoroutineContext = Dispatchers.Default,
     protected val schedulerProvider: SchedulerProvider,
     open val activationFactory: ActivationFactory? = null,
+    private val resurrectionHelper: ResurrectionHelper? = null,
     vararg initialParticles: ParticleRegistration
-) : ArcHost {
+) : ArcHost, ResurrectableHost {
+
+    constructor(
+        schedulerProvider: SchedulerProvider,
+        resurrectionHelper: ResurrectionHelper?,
+        vararg initialParticles: ParticleRegistration
+    ) : this(
+        Dispatchers.Default,
+        Dispatchers.Default,
+        schedulerProvider,
+        null,
+        resurrectionHelper,
+        *initialParticles)
 
     constructor(
         schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : this(Dispatchers.Default, Dispatchers.Default, schedulerProvider, null, *initialParticles)
+    ) : this(schedulerProvider, null, *initialParticles)
 
     /**
      * Backward-compatible for some existing [AbstractArcHost] implementations to dispatch
@@ -101,6 +114,7 @@ abstract class AbstractArcHost(
         coroutineContext,
         schedulerProvider,
         activationFactory,
+        null,
         *initialParticles
     )
 
@@ -531,17 +545,22 @@ abstract class AbstractArcHost(
      * with a [ResurrectorService], so that this [ArcHost] is instructed to automatically
      * restart in the event of a crash.
      */
-    protected open fun maybeRequestResurrection(context: ArcHostContext) = Unit
+    private fun maybeRequestResurrection(context: ArcHostContext) {
+        if (context.arcState == ArcState.Running) {
+            resurrectionHelper?.requestResurrection(context.arcId, context.allReadableStorageKeys())
+        }
+    }
 
     /**
      * Inform [ResurrectorService] to cancel requests for resurrection for the [StorageKey]s in
      * this [ArcHostContext].
      */
-    protected open fun maybeCancelResurrection(context: ArcHostContext) = Unit
+    private fun maybeCancelResurrection(context: ArcHostContext) {
+        resurrectionHelper?.cancelResurrectionRequest(context.arcId)
+    }
 
-    /** Helper used by implementors of [ResurrectableHost]. */
     @Suppress("UNUSED_PARAMETER")
-    fun onResurrected(arcId: String, affectedKeys: List<StorageKey>) {
+    override fun onResurrected(arcId: String, affectedKeys: List<StorageKey>) {
         scope.launch {
             if (isRunning(arcId)) {
                 return@launch

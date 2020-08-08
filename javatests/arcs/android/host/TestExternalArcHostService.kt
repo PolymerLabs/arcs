@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import arcs.android.sdk.host.ArcHostHelper
-import arcs.android.sdk.host.ResurrectableHost
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Shareable
 import arcs.core.host.ParticleRegistration
@@ -15,6 +14,7 @@ import arcs.core.storage.StoreManager
 import arcs.sdk.android.storage.ResurrectionHelper
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.ConnectionFactory
+import arcs.sdk.android.storage.service.StorageService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -49,7 +49,11 @@ abstract class TestExternalArcHostService : Service() {
         context: Context,
         schedulerProvider: SchedulerProvider,
         vararg particles: ParticleRegistration
-    ) : TestingHost(schedulerProvider, *particles), ResurrectableHost {
+    ) : TestingHost(
+        schedulerProvider,
+        ResurrectionHelper(context, StorageService::class.java),
+        *particles
+    ) {
         @ExperimentalCoroutinesApi
         override val stores = StoreManager(
             activationFactory = ServiceStoreFactory(
@@ -58,9 +62,6 @@ abstract class TestExternalArcHostService : Service() {
                 connectionFactory = testConnectionFactory
             )
         )
-
-        override val resurrectionHelper: ResurrectionHelper =
-            ResurrectionHelper(context, ::onResurrected)
 
         override val arcHostContextCapability = testingCapability
     }

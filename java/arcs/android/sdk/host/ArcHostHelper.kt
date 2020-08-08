@@ -20,6 +20,7 @@ import android.os.Bundle
 import android.os.Parcelable
 import android.os.ResultReceiver
 import androidx.annotation.VisibleForTesting
+import arcs.android.common.resurrection.ResurrectionRequest
 import arcs.android.host.parcelables.ActualParcelable
 import arcs.android.host.parcelables.ParcelableParticleIdentifier
 import arcs.android.host.parcelables.ParcelablePlanPartition
@@ -32,6 +33,8 @@ import arcs.core.host.ArcHostException
 import arcs.core.host.ArcState
 import arcs.core.host.ArcStateChangeRegistration
 import arcs.core.host.ParticleIdentifier
+import arcs.core.host.ResurrectableHost
+import arcs.core.storage.StorageKeyParser
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -89,22 +92,37 @@ class ArcHostHelper(
         onStartCommandSuspendable(intent)
     }
 
+
+    /**
+     * Determines whether or not the given [intent] represents a resurrection, and if it does:
+     * calls [onResurrected].
+     */
+    private fun handleResurrection(intent: Intent?, arcHost: ResurrectableHost) {
+        if (intent?.action?.startsWith(ResurrectionRequest.ACTION_RESURRECT) != true) return
+
+        val targetId =
+            intent.getStringExtra(ResurrectionRequest.EXTRA_REGISTRATION_TARGET_ID) ?: return
+        val notifiers = intent.getStringArrayListExtra(
+            ResurrectionRequest.EXTRA_RESURRECT_NOTIFIER
+        ) ?: return
+
+        arcHost.onResurrected(targetId, notifiers.map(StorageKeyParser::parse))
+    }
+
     @VisibleForTesting
     suspend fun onStartCommandSuspendable(intent: Intent?) {
-        arcHostByHostId.values.forEach {
-            if (it is ResurrectableHost) {
-                it.resurrectionHelper.onStartCommand(intent)
-            }
-        }
+        arcHostByHostId.values
+            .mapNotNull { it as? ResurrectableHost}
+            .forEach { handleResurrection(intent, it) }
 
         // Ignore other actions
         val action = intent?.action ?: return
-        if (!action.startsWith(ArcHostHelper.ACTION_HOST_INTENT)) return
+        if (!action.startsWith(ACTION_HOST_INTENT)) return
 
         // Ignore Intent when it doesn't target our Service
         if (intent.component?.equals(ComponentName(service, service::class.java)) != true) return
 
-        val hostId = intent.getStringExtra(ArcHostHelper.EXTRA_ARCHOST_HOSTID)
+        val hostId = intent.getStringExtra(EXTRA_ARCHOST_HOSTID)
         val operation = intent.getIntExtra(EXTRA_OPERATION, Operation.values().size).toOperation()
         val arcHost = hostId?.let { arcHostByHostId[it] }
 

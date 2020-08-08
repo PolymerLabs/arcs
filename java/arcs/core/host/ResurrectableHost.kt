@@ -8,20 +8,15 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.android.sdk.host
+package arcs.core.host
 
-import arcs.core.host.ArcHost
 import arcs.core.storage.StorageKey
-import arcs.sdk.android.storage.ResurrectionHelper
 
 /**
  * An [ArcHost] which exposes a [ResurrectionHelper] and [onResurrected] method for [ArcHostHelper]
  * to hook into.
  */
 interface ResurrectableHost : ArcHost {
-    /** Implementing hosts must provide an instance of ResurrectionHelper */
-    val resurrectionHelper: ResurrectionHelper
-
     /** Invoked by [ArcHostHelper.onStartCommand] when [ResurrectorService] needs to wake an arc. */
     fun onResurrected(arcId: String, affectedKeys: List<StorageKey>)
 }

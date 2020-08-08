@@ -17,8 +17,14 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 @ExperimentalCoroutinesApi
 open class TestingHost(
     schedulerProvider: SchedulerProvider,
+    resurrectionHelper: ResurrectionHelper? = null,
     vararg particles: ParticleRegistration
-) : AbstractArcHost(schedulerProvider, *particles) {
+) : AbstractArcHost(schedulerProvider, resurrectionHelper, *particles) {
+
+    constructor(
+        schedulerProvider: SchedulerProvider,
+        vararg particles: ParticleRegistration
+    ) : this(schedulerProvider, null, *particles)
 
     fun arcHostContext(arcId: String) = getArcHostContext(arcId)
 

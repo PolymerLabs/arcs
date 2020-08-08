@@ -45,7 +45,10 @@ class ResurrectionHelperTest {
 
         callbackCalls.clear()
 
-        helper = ResurrectionHelper(context) { _, keys -> callbackCalls.add(keys) }
+        helper = ResurrectionHelper(
+            context,
+            ResurrectionHelperDummyService::class.java
+        ) { _, keys -> callbackCalls.add(keys) }
     }
 
     @Test
@@ -98,7 +101,7 @@ class ResurrectionHelperTest {
             RamDiskStorageKey("foo"),
             RamDiskStorageKey("bar")
         )
-        helper.requestResurrection("test", storageKeys, ResurrectionHelperDummyService::class.java)
+        helper.requestResurrection("test", storageKeys)
 
         val actualIntent = shadowOf(ApplicationProvider.getApplicationContext<Application>())
             .nextStartedService
@@ -121,7 +124,7 @@ class ResurrectionHelperTest {
 
     @Test
     fun cancelResurrectionRequest() {
-        helper.cancelResurrectionRequest("test", ResurrectionHelperDummyService::class.java)
+        helper.cancelResurrectionRequest("test")
 
         val actualIntent = shadowOf(ApplicationProvider.getApplicationContext<Application>())
             .nextStartedService
