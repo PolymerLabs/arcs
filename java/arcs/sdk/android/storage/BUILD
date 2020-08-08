@@ -25,7 +25,6 @@ arcs_kt_android_library(
         "//java/arcs/core/util",
         "//java/arcs/sdk/android/storage/service",
         "//third_party/java/androidx/annotation",
-        "//third_party/java/androidx/lifecycle",
         "//third_party/kotlin/kotlinx_atomicfu",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
