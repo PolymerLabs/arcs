@@ -45,8 +45,6 @@ import arcs.core.entity.StorageAdapter
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteQueryCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
-import arcs.core.storage.ActivationFactory
-import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.StorageEndpointProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageProxy
@@ -56,8 +54,6 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
-import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -86,33 +82,10 @@ class EntityHandleManager(
     private val scheduler: Scheduler,
     stores: StoreManager = StoreManager(),
     private val idGenerator: Id.Generator = Id.Generator.newSession(),
-    private val coroutineContext: CoroutineContext = Dispatchers.Default,
     private val analytics: Analytics? = null
 ) : HandleManager {
 
     private val storageEndpointManager = stores.asStoreEndpointManager()
-
-    @Deprecated(
-        message = "prefer primary constructor",
-        /* ktlint-disable max-line-length */
-        replaceWith = ReplaceWith("EntityHandleManager(arcId, hostId, time, scheduler, StoreManager(activationFactory), idGenerator)")
-        /* ktlint-enable max-line-length */
-    )
-    constructor(
-        arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
-        hostId: String = "nohost",
-        time: Time,
-        scheduler: Scheduler,
-        activationFactory: ActivationFactory?,
-        idGenerator: Id.Generator = Id.Generator.newSession()
-    ) : this(
-        arcId,
-        hostId,
-        time,
-        scheduler,
-        StoreManager(activationFactory ?: DefaultActivationFactory),
-        idGenerator
-    )
 
     private val proxyMutex = Mutex()
     private val singletonStorageProxies by guardedBy(
