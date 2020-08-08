@@ -58,7 +58,12 @@ class DemoService : ArcHostService() {
         lifecycle: Lifecycle,
         schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
+    ) : AndroidHost(
+        context = context,
+        lifecycle = lifecycle,
+        schedulerProvider = schedulerProvider,
+        particles = *initialParticles
+    ) {
         override val platformTime = JvmTime
     }
 
