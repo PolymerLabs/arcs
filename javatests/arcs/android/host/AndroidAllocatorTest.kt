@@ -86,6 +86,11 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
     // TODO: wire up some kind of mock persistent database?
     override val storageCapability = Capabilities(Shareable(true))
 
+    class DefaultProdArcHostServiceForTest : ProdArcHostService() {
+        override val coroutineContext = Dispatchers.Default
+        override val arcSerializationCoroutineContext = Dispatchers.Default
+    }
+
     @Before
     override fun setUp() = runBlocking {
         context = ApplicationProvider.getApplicationContext()
@@ -98,7 +103,7 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
         readingService = Robolectric.setupService(TestReadingExternalHostService::class.java)
         writingService = Robolectric.setupService(TestWritingExternalHostService::class.java)
         testProdService = Robolectric.setupService(TestProdArcHostService::class.java)
-        prodService = Robolectric.setupService(ProdArcHostService::class.java)
+        prodService = Robolectric.setupService(DefaultProdArcHostServiceForTest::class.java)
 
         super.setUp()
     }

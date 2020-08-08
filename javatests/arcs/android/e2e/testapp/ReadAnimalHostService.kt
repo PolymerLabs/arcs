@@ -51,9 +51,10 @@ class ReadAnimalHostService : ArcHostService() {
     ) : AndroidHost(
         context = context,
         lifecycle = lifecycle,
+        coroutineContext = Dispatchers.Default,
+        arcSerializationContext = Dispatchers.Default,
         schedulerProvider = schedulerProvider,
-        particles = *initialParticles
-    )
+        particles = *initialParticles)
 
     inner class ReadAnimal : AbstractReadAnimal() {
         override fun onStart() {

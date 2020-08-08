@@ -21,6 +21,7 @@ import arcs.core.host.ProdHost
 import arcs.core.host.SchedulerProvider
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.host.scanForParticles
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
@@ -30,31 +31,40 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  */
 @ExperimentalCoroutinesApi
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-open class ProdArcHostService : ArcHostService() {
+abstract class ProdArcHostService : ArcHostService() {
     @ExperimentalCoroutinesApi
     class ProdAndroidHost(
         context: Context,
         lifecycle: Lifecycle,
+        coroutineContext: CoroutineContext,
+        arcSerializationCoroutineContext: CoroutineContext,
         schedulerProvider: SchedulerProvider,
         vararg particles: ParticleRegistration
     ) : AndroidHost(
         context = context,
         lifecycle = lifecycle,
+        coroutineContext = coroutineContext,
+        arcSerializationContext = arcSerializationCoroutineContext,
         schedulerProvider = schedulerProvider,
         particles = *particles
     ), ProdHost
+
+    abstract val coroutineContext: CoroutineContext
+    abstract val arcSerializationCoroutineContext: CoroutineContext
 
     /**
      * This is open for tests to override, but normally isn't necessary.
      */
     override val arcHost: ArcHost by lazy {
         ProdAndroidHost(
-            this,
-            lifecycle,
-            JvmSchedulerProvider(scope.coroutineContext),
-            *scanForParticles()
+            context = this,
+            lifecycle = lifecycle,
+            coroutineContext = coroutineContext,
+            arcSerializationCoroutineContext = arcSerializationCoroutineContext,
+            schedulerProvider = JvmSchedulerProvider(scope.coroutineContext),
+            particles = *scanForParticles()
         )
     }
 
-    override val arcHosts = listOf(arcHost)
+    override val arcHosts by lazy { listOf(arcHost) }
 }

@@ -30,7 +30,6 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -60,46 +59,11 @@ typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
  */
 @ExperimentalCoroutinesApi
 abstract class AbstractArcHost(
-    protected val coroutineContext: CoroutineContext = Dispatchers.Default,
-    updateArcHostContextCoroutineContext: CoroutineContext = Dispatchers.Default,
+    protected val coroutineContext: CoroutineContext,
+    updateArcHostContextCoroutineContext: CoroutineContext,
     protected val schedulerProvider: SchedulerProvider,
     vararg initialParticles: ParticleRegistration
 ) : ArcHost {
-
-    constructor(
-        schedulerProvider: SchedulerProvider,
-        vararg initialParticles: ParticleRegistration
-    ) : this(Dispatchers.Default, Dispatchers.Default, schedulerProvider, *initialParticles)
-
-    /**
-     * Backward-compatible for some existing [AbstractArcHost] implementations to dispatch
-     * [contextSerializationJob] onto the [coroutineContext] instead of separate context.
-     */
-    @Deprecated(
-        message = "Should explicitly supply coroutine context for contextSerializationJob",
-        replaceWith = ReplaceWith(
-            """
-            AbstractArcHost(
-                coroutineContext,
-                updateArcHostContextCoroutineContext,
-                schedulerProvider,
-                ActivationFactory,
-                initialParticles
-            )
-            """
-        )
-    )
-    constructor(
-        coroutineContext: CoroutineContext = Dispatchers.Default,
-        schedulerProvider: SchedulerProvider,
-        vararg initialParticles: ParticleRegistration
-    ) : this(
-        coroutineContext,
-        coroutineContext,
-        schedulerProvider,
-        *initialParticles
-    )
-
     private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()

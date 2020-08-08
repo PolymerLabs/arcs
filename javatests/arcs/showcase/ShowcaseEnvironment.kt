@@ -214,10 +214,10 @@ class ShowcaseHost(
     override val stores: StoreManager,
     vararg particleRegistrations: ParticleRegistration
 ) : AbstractArcHost(
-    coroutineContext,
-    coroutineContext,
-    schedulerProvider,
-    *particleRegistrations
+    coroutineContext = coroutineContext,
+    updateArcHostContextCoroutineContext = coroutineContext,
+    schedulerProvider = schedulerProvider,
+    initialParticles = *particleRegistrations
 ) {
     override val platformTime = JvmTime
 
