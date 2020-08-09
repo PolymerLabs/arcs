@@ -14,7 +14,7 @@ class DevToolsProxyImpl : IDevToolsProxy.Stub() {
      * Execute the callbacks to be called with the [BindingContext] receives a [ProxyMessage]
      */
     fun onBindingContextProxyMessage(proxyMessage: ByteArray) {
-        onBindingContextProxyMessageCallbacks.forEach { _, callback ->
+        onBindingContextProxyMessageCallbacks.forEach { (_, callback) ->
             callback.onProxyMessage(proxyMessage)
         }
     }
