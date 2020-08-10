@@ -23,7 +23,6 @@ import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
@@ -122,7 +121,7 @@ class Scheduler(
     /** Wait for the [Scheduler] to become idle. */
     /* internal */
     suspend fun waitForIdle() {
-        idlenessFlow.debounce(50).filter { it }.first()
+        idlenessFlow.filter { it }.first()
     }
 
     /** Returns a wrapper of this [Scheduler] capable of serving as a [CoroutineDispatcher]. */
