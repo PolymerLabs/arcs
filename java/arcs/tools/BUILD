@@ -36,9 +36,9 @@ kt_jvm_library(
     deps = [
         "//java/arcs/core/analysis",
         "//java/arcs/core/data",
+        "//java/arcs/core/data/proto",
         "//java/arcs/core/data/proto:manifest_java_proto_lite",
         "//java/arcs/core/data/proto:policy_java_proto_lite",
-        "//java/arcs/core/data/proto",
         "//java/arcs/core/policy",
         "//java/arcs/core/policy/proto",
         "//third_party/kotlin/clikt",
