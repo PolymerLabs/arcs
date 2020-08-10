@@ -167,6 +167,7 @@ message ListTypeProto {
 // not those resulting from type inference.
 message ConstraintInfo {
   TypeProto constraint_type = 1;
+  bool unconstrained = 2;
 }
 
 message SchemaProto {
