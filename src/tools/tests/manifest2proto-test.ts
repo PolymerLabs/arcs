@@ -622,16 +622,16 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
       variable: {
         name: 'a',
-        maxType: false,
-        constraint: {constraintType: {
-          singleton: {singletonType: {
+        constraint: {
+          constraintType: {singleton: {singletonType: {
             entity: {schema: {
               names: ['Foo'],
               fields: {value: {primitive: 'TEXT'}},
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
             }}
-          }}
-        }}
+          }}},
+          unconstrained: false,
+        }
       }
     });
   });
@@ -642,16 +642,16 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
       variable: {
         name: 'a',
-        maxType: false,
-        constraint: {constraintType: {
-          singleton: {singletonType: {
+        constraint: {
+          constraintType: {singleton: {singletonType: {
             entity: {schema: {
               names: ['Foo'],
               fields: {value: {primitive: 'TEXT'}},
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
             }}
-          }}
-        }}
+          }}},
+          unconstrained: false,
+        }
       }
     });
   });
@@ -662,16 +662,16 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
       variable: {
         name: 'a',
-        maxType: true,
-        constraint: {constraintType: {
-          singleton: {singletonType: {
+        constraint: {
+          constraintType: {singleton: {singletonType: {
             entity: {schema: {
               names: ['Foo'],
               fields: {value: {primitive: 'TEXT'}},
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
             }}
-          }}
-        }}
+          }}},
+          unconstrained: true,
+        }
       }
     });
   });
@@ -682,16 +682,16 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
       variable: {
         name: 'a',
-        maxType: true,
-        constraint: {constraintType: {
-          singleton: {singletonType: {
+        constraint: {
+          constraintType: {singleton: {singletonType: {
             entity: {schema: {
               names: ['Foo'],
               fields: {value: {primitive: 'TEXT'}},
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
             }}
-          }}
-        }}
+          }}},
+          unconstrained: true,
+        }
       }
     });
   });
@@ -714,14 +714,14 @@ describe('manifest2proto', () => {
   it('encodes variable type - unconstrained', async () => {
     const varType = TypeVariable.make('a');
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
-      variable: {name: 'a', maxType: false}
+      variable: {name: 'a', constraint: {unconstrained: false}}
     });
   });
 
   it('encodes max variable type - unconstrained', async () => {
     const varType = TypeVariable.make('a', null, null, true);
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
-      variable: {name: 'a', maxType: true}
+      variable: {name: 'a', constraint: {unconstrained: true}}
     });
   });
 
@@ -743,12 +743,10 @@ describe('manifest2proto', () => {
         entity: {schema: {
           fields: {time: {primitive: 'NUMBER'}},
           hash: '5c7ae2de06d2111eeef1a845d57d52e23ff214da',
-        }
-      }
-    }
+        }}
+      },
+      unconstrained: false
     });
-    assert.isFalse(varInput.maxType);
-    assert.isFalse(varOutput.maxType);
   });
 
   it('encodes max variable type for particle specs', async () => {
@@ -769,12 +767,10 @@ describe('manifest2proto', () => {
         entity: {schema: {
             fields: {time: {primitive: 'NUMBER'}},
             hash: '5c7ae2de06d2111eeef1a845d57d52e23ff214da',
-          }
-        }
-      }
+        }}
+      },
+      unconstrained: true
     });
-    assert.isTrue(varInput.maxType);
-    assert.isTrue(varOutput.maxType);
   });
 
   it('encodes variable type for particle specs - unconstrained', async () => {
@@ -790,9 +786,8 @@ describe('manifest2proto', () => {
 
     assert.deepStrictEqual(varInput, varOutput);
     assert.deepStrictEqual(varInput.name, 'a');
-    assert.isUndefined(varInput.constraint);
-    assert.isFalse(varInput.maxType);
-    assert.isFalse(varOutput.maxType);
+    assert.isFalse(varInput.constraint.unconstrained);
+    assert.isFalse(varOutput.constraint.unconstrained);
   });
 
   it('encodes max variable type for particle specs - unconstrained', async () => {
@@ -808,9 +803,8 @@ describe('manifest2proto', () => {
 
     assert.deepStrictEqual(varInput, varOutput);
     assert.deepStrictEqual(varInput.name, 'a');
-    assert.isUndefined(varInput.constraint);
-    assert.isTrue(varInput.maxType);
-    assert.isTrue(varOutput.maxType);
+    assert.isTrue(varInput.constraint.unconstrained);
+    assert.isTrue(varOutput.constraint.unconstrained);
   });
 
   it('encodes schemas with primitives and collections of primitives', async () => {

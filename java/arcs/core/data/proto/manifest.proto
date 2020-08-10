@@ -156,7 +156,6 @@ message ReferenceTypeProto {
 message TypeVariableProto {
   string name = 1;
   ConstraintInfo constraint = 2;
-  bool maxType = 3;
 }
 
 message ListTypeProto {
@@ -167,6 +166,7 @@ message ListTypeProto {
 // not those resulting from type inference.
 message ConstraintInfo {
   TypeProto constraint_type = 1;
+  bool unconstrained = 2;
 }
 
 message SchemaProto {
