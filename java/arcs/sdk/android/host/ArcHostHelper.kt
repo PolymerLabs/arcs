@@ -9,7 +9,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-package arcs.android.sdk.host
+package arcs.sdk.android.host
 
 import android.app.Service
 import android.content.ComponentName
@@ -99,12 +99,12 @@ class ArcHostHelper(
 
         // Ignore other actions
         val action = intent?.action ?: return
-        if (!action.startsWith(ArcHostHelper.ACTION_HOST_INTENT)) return
+        if (!action.startsWith(ACTION_HOST_INTENT)) return
 
         // Ignore Intent when it doesn't target our Service
         if (intent.component?.equals(ComponentName(service, service::class.java)) != true) return
 
-        val hostId = intent.getStringExtra(ArcHostHelper.EXTRA_ARCHOST_HOSTID)
+        val hostId = intent.getStringExtra(EXTRA_ARCHOST_HOSTID)
         val operation = intent.getIntExtra(EXTRA_OPERATION, Operation.values().size).toOperation()
         val arcHost = hostId?.let { arcHostByHostId[it] }
 
@@ -338,7 +338,8 @@ fun KClass<out Service>.toComponentName(context: Context) = ComponentName(contex
 
 /** Create a wrapper around a [Service] to invoke it's internal [ArcHostHelper] via [Intent]s. */
 fun Service.toArcHost(context: Context, hostId: String, sender: (Intent) -> Unit) =
-    IntentArcHostAdapter(this::class.toComponentName(context), hostId, sender)
+    IntentArcHostAdapter(this::class.toComponentName(
+        context), hostId, sender)
 
 /**
  * Create a wrapper around a [ServiceInfo] to invoke the associate [Service]'s internal

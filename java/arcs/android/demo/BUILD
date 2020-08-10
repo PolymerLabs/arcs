@@ -22,7 +22,6 @@ arcs_kt_android_library(
     deps = [
         ":manifest",
         "//java/arcs/android/host",
-        "//java/arcs/android/sdk/host",
         "//java/arcs/android/storage/database",
         "//java/arcs/android/util",
         "//java/arcs/core/allocator",
@@ -39,6 +38,7 @@ arcs_kt_android_library(
         "//java/arcs/core/type",
         "//java/arcs/core/util",
         "//java/arcs/jvm/util",
+        "//java/arcs/sdk/android/host",
         "//java/arcs/sdk/android/storage",
         "//java/arcs/sdk/android/storage/service",
         "//java/arcs/sdk/storage",

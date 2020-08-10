@@ -9,10 +9,10 @@ arcs_kt_android_library(
     srcs = glob(["*.kt"]),
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     deps = [
-        "//java/arcs/android/sdk/host",
         "//java/arcs/core/host",
         "//java/arcs/core/host/api",
         "//java/arcs/jvm/host",
+        "//java/arcs/sdk/android/host",
         "//java/arcs/sdk/android/storage",
         "//third_party/java/androidx/annotation",
         "//third_party/java/androidx/lifecycle",

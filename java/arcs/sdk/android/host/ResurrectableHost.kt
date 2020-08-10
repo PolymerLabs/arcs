@@ -8,7 +8,7 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.android.sdk.host
+package arcs.sdk.android.host
 
 import arcs.core.host.ArcHost
 import arcs.core.storage.StorageKey

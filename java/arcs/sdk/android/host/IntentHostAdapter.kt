@@ -8,7 +8,7 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.android.sdk.host
+package arcs.sdk.android.host
 
 import android.content.ComponentName
 import android.content.Intent
@@ -82,7 +82,9 @@ abstract class IntentHostAdapter(
         suspendCancellableCoroutine { continuation: CancellableContinuation<T?> ->
             ArcHostHelper.setResultReceiver(
                 intent,
-                ResultReceiverContinuation(continuation, transformer)
+                ResultReceiverContinuation(
+                    continuation,
+                    transformer)
             )
             sendIntentToHostService(intent)
         }

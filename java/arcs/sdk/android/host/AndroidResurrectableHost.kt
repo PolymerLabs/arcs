@@ -8,7 +8,7 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.android.sdk.host
+package arcs.sdk.android.host
 
 import android.content.Context
 import androidx.lifecycle.Lifecycle
@@ -30,7 +30,8 @@ abstract class AndroidResurrectableHost(
     lifecycle: Lifecycle,
     schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
-) : AndroidHost(context, lifecycle, schedulerProvider, *particles), ResurrectableHost {
+) : AndroidHost(context, lifecycle, schedulerProvider, *particles),
+    ResurrectableHost {
 
     override val resurrectionHelper: ResurrectionHelper = ResurrectionHelper(
         context,

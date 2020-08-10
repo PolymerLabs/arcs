@@ -8,7 +8,7 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.android.sdk.host
+package arcs.sdk.android.host
 
 import android.content.ComponentName
 import android.content.Intent
@@ -126,7 +126,8 @@ class IntentArcHostAdapter(
             hostComponentName.createAddOnArcStateChangeIntent(
                 hostId,
                 arcId,
-                ResultReceiverStateChangeHandler(block)
+                ResultReceiverStateChangeHandler(
+                    block)
             )
         ) {
             ArcStateChangeRegistration(requireNotNull(it) {

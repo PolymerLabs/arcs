@@ -8,7 +8,7 @@
  * grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-package arcs.android.sdk.host
+package arcs.sdk.android.host
 
 import android.content.ComponentName
 import android.content.Intent
@@ -31,7 +31,11 @@ open class IntentRegistryAdapter(
             hostComponentName.createAvailableHostsIntent()
         ) {
             (it as? List<*>)?.map { hostId ->
-                IntentArcHostAdapter(hostComponentName, hostId.toString(), sender)
+                IntentArcHostAdapter(
+                    hostComponentName,
+                    hostId.toString(),
+                    sender
+                )
             }
         } ?: emptyList()
     }

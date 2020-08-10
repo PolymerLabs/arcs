@@ -14,12 +14,12 @@ package arcs.android.e2e.testapp
 import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.Lifecycle
-import arcs.android.sdk.host.AndroidHost
-import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
 import arcs.jvm.host.JvmSchedulerProvider
+import arcs.sdk.android.host.AndroidHost
+import arcs.sdk.android.host.ArcHostService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
