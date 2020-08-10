@@ -1,0 +1,47 @@
+// #Ingress: Mixed
+// #Ingress: Meh
+// #FAIL: hc:FailingCheck.input.bad is bad
+particle Mixed
+  output: writes Mixed {good: Text, bad: Text, ugly: Text}
+  claim output.good is good
+  claim output.bad is bad
+  claim output.ugly is ugly
+
+particle Meh
+  output: writes Meh {meh: Text}
+  claim output.meh is meh
+
+particle DoStuff
+  input1: reads ~a with {bad: Text}
+  input2: reads ~a with {ugly: Text}
+  input3: reads ~b with {*}
+  output: writes ~a
+
+particle PassingChecks
+  input: reads Mixed {good: Text, bad: Text, ugly: Text}
+  // This would pass, as "good" field was not accessible to DoStuff
+  // and could not have been modified.
+  check input.good is good
+  check input.bad is bad or is meh or is ugly
+  check input is good or is bad or is meh or is ugly
+
+particle FailingCheck
+  input: reads Mixed {good: Text, bad: Text, ugly: Text}
+  // This would fail, as input.bad could have been modified by DoStuff,
+  // and could have been tainted by meh stuff.
+  check input.bad is bad
+
+recipe
+  Mixed
+    output: mixed
+  Meh
+    output: meh
+  DoStuff
+    input1: mixed
+    input2: mixed
+    input3: meh
+    output: stuff
+  PassingChecks
+    input: stuff
+  FailingCheck
+    input: stuff

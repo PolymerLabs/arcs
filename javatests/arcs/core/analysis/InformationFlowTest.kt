@@ -149,10 +149,18 @@ class InformationFlowTest {
             "fail-cycle-remove-tag",
             "fail-cycle-remove-tag-in-chain"
         )
+        val typeVariableTests = listOf(
+            "fail-type-variables",
+            "fail-type-variables-collection",
+            "fail-type-variables-tuples",
+            "fail-type-variables-tuples-collection",
+            "fail-type-variables-multiple-constraints"
+        )
         val tests = (
             okTests + failingTests +
             okFieldTests + failingFieldTests +
-            okCycleTests + failingCycleTests
+            okCycleTests + failingCycleTests +
+            typeVariableTests
         )
         tests.forEach { verifyChecksInTestFile(it) }
     }

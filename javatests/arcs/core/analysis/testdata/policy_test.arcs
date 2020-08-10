@@ -75,12 +75,18 @@ particle ParticleWithMissingEgressType
 // Complying by not having any egress particles.
 //-----------------------------------------------------------
 @isolated
+particle SomeIsolatedWriter
+  input: writes [Person {name: Text}]
+
+@isolated
 particle SomeIsolatedParticle
   input: reads [~a]
 
 @policy('TestPolicy')
 recipe NoEgressParticles
   input: create 'input'
+  SomeIsolatedWriter
+    input: input
   SomeIsolatedParticle
     input: input
 
