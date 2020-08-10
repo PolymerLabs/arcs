@@ -115,7 +115,7 @@ fun TupleTypeProto.decode() = TupleType(elementsList.map { it.decode() })
 /** Converts a [TypeVariableProto] protobuf instance into a Kotlin [TypeVariable] instance. */
 fun TypeVariableProto.decode(): TypeVariable {
     require(hasConstraint()) { "TypeVariableProto must have a constraint." }
-    TypeVariable(
+    return TypeVariable(
         name,
         if (constraint.hasConstraintType()) constraint.constraintType.decode() else null,
         constraint.maxAccess
