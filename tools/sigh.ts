@@ -518,6 +518,8 @@ function lint(args: string[]): boolean {
     string: ['format']
   });
 
+  console.log(saneSpawnSyncWithOutput('pwd', [], {logCmd: true}).stdout);
+  console.log(saneSpawnSyncWithOutput('ls', ['-la'], {logCmd: true}).stdout);
   const result = saneSpawnSyncWithOutput('git', ['--no-pager', 'grep', '"\\(describe\\.only(\\|it\\.only(\\)"', '*.ts'], {logCmd: true});
   if (result.stdout !== '') {
     console.error(result.stdout);
