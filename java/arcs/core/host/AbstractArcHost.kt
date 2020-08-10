@@ -646,8 +646,7 @@ abstract class AbstractArcHost(
         hostId,
         platformTime,
         schedulerProvider(arcId),
-        stores,
-        coroutineContext = coroutineContext
+        stores
     )
 
     /**
