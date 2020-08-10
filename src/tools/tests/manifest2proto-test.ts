@@ -630,7 +630,7 @@ describe('manifest2proto', () => {
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
             }}
           }}},
-          unconstrained: false,
+          maxAccess: false,
         }
       }
     });
@@ -650,7 +650,7 @@ describe('manifest2proto', () => {
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
             }}
           }}},
-          unconstrained: false,
+          maxAccess: false,
         }
       }
     });
@@ -670,7 +670,7 @@ describe('manifest2proto', () => {
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
             }}
           }}},
-          unconstrained: true,
+          maxAccess: true,
         }
       }
     });
@@ -690,7 +690,7 @@ describe('manifest2proto', () => {
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
             }}
           }}},
-          unconstrained: true,
+          maxAccess: true,
         }
       }
     });
@@ -714,14 +714,14 @@ describe('manifest2proto', () => {
   it('encodes variable type - unconstrained', async () => {
     const varType = TypeVariable.make('a');
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
-      variable: {name: 'a', constraint: {unconstrained: false}}
+      variable: {name: 'a', constraint: {maxAccess: false}}
     });
   });
 
   it('encodes max variable type - unconstrained', async () => {
     const varType = TypeVariable.make('a', null, null, true);
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
-      variable: {name: 'a', constraint: {unconstrained: true}}
+      variable: {name: 'a', constraint: {maxAccess: true}}
     });
   });
 
@@ -745,7 +745,7 @@ describe('manifest2proto', () => {
           hash: '5c7ae2de06d2111eeef1a845d57d52e23ff214da',
         }}
       },
-      unconstrained: false
+      maxAccess: false
     });
   });
 
@@ -769,7 +769,7 @@ describe('manifest2proto', () => {
             hash: '5c7ae2de06d2111eeef1a845d57d52e23ff214da',
         }}
       },
-      unconstrained: true
+      maxAccess: true
     });
   });
 
@@ -786,8 +786,8 @@ describe('manifest2proto', () => {
 
     assert.deepStrictEqual(varInput, varOutput);
     assert.deepStrictEqual(varInput.name, 'a');
-    assert.isFalse(varInput.constraint.unconstrained);
-    assert.isFalse(varOutput.constraint.unconstrained);
+    assert.isFalse(varInput.constraint.maxAccess);
+    assert.isFalse(varOutput.constraint.maxAccess);
   });
 
   it('encodes max variable type for particle specs - unconstrained', async () => {
@@ -803,8 +803,8 @@ describe('manifest2proto', () => {
 
     assert.deepStrictEqual(varInput, varOutput);
     assert.deepStrictEqual(varInput.name, 'a');
-    assert.isTrue(varInput.constraint.unconstrained);
-    assert.isTrue(varOutput.constraint.unconstrained);
+    assert.isTrue(varInput.constraint.maxAccess);
+    assert.isTrue(varOutput.constraint.maxAccess);
   });
 
   it('encodes schemas with primitives and collections of primitives', async () => {

@@ -252,7 +252,7 @@ $ tools/update-goldens \n\n`
           direction: 'READS',
           // This type should not be resolved or constrained,
           // as this is a description of the particle spec, not an instance.
-          type: {collection: {collectionType: {variable: {name: 'a', constraint: {unconstrained: false}}}}}
+          type: {collection: {collectionType: {variable: {name: 'a', constraint: {maxAccess: false}}}}}
         }]
       }],
       recipes: [{

@@ -166,7 +166,15 @@ message ListTypeProto {
 // not those resulting from type inference.
 message ConstraintInfo {
   TypeProto constraint_type = 1;
-  bool unconstrained = 2;
+
+  // If `true`, the particle instance in a recipe has access to all the fields
+  // present in the resolved type (`with {*}`). Otherwise, the particle instance
+  // can only access the fields present in `constraint_type`. `max_access` is an
+  // orthogonal concept to the `constraint_type`. One might specify explicit
+  // fields in the constraint, for example `with {foo: Text, *}`, in order to
+  // add checks and claims to manifests or to allow handles access in particles
+  // without reflection.
+  bool max_access = 2;
 }
 
 message SchemaProto {
