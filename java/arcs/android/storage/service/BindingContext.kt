@@ -144,6 +144,10 @@ class BindingContext(
         scope.launch {
             bindingContextStatisticsSink.traceTransaction("sendProxyMessage") {
                 bindingContextStatisticsSink.measure {
+                    // For performance reasons, we respond immediately here to the caller, before
+                    // sending the proxy message.
+                    resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
+
                     val actualMessage = proxyMessage.decodeProxyMessage()
                     // TODO: (sarahheimlich) remove once we dive into stores (b/162955831)
                     devToolsProxy?.onBindingContextProxyMessage(proxyMessage)
@@ -153,7 +157,6 @@ class BindingContext(
                             onProxyMessage(store.storageKey, actualMessage)
                         }
                     }
-                    resultCallback.takeIf { it.asBinder().isBinderAlive }?.onResult(null)
                 }
             }
         }
