@@ -154,7 +154,7 @@ open class StorageService : ResurrectorService() {
         }
 
         if (intent.action == DEVTOOLS_ACTION && ApplicationInfo.FLAG_DEBUGGABLE != 0) {
-            return DevToolsStorageManager(coroutineContext, stores, devToolsProxy!!)
+            return DevToolsStorageManager(stores, devToolsProxy!!)
         }
 
         val parcelableOptions = requireNotNull(
