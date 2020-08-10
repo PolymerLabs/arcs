@@ -200,7 +200,7 @@ class TypeProtoDecodersTest {
     }
 
     @Test
-    fun roundTrip_variableType_constrained_maxType() {
+    fun roundTrip_variableType_constrained_maxAccessFlag() {
         val type = TypeVariable("a", DUMMY_ENTITY_TYPE, true)
         assertThat(type.encode().decode()).isEqualTo(type)
 
@@ -211,8 +211,8 @@ class TypeProtoDecodersTest {
     }
 
     @Test
-    fun roundTrip_variableType_unconstrained_maxType() {
-        val type = TypeVariable("a", maxType = true)
+    fun roundTrip_variableType_unconstrained_maxAccessFlag() {
+        val type = TypeVariable("a", unconstrained = true)
         assertThat(type.encode().decode()).isEqualTo(type)
 
         val e = assertFailsWith<IllegalArgumentException> { type.encode().decodeAsFieldType() }

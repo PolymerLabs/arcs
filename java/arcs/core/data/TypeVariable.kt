@@ -20,10 +20,17 @@ import arcs.core.type.TypeLiteral
  *
  * The [constraint] reflects a specification by the particle author, not by type inference.
  */
-data class TypeVariable(val name: String, val constraint: Type? = null, val maxType: Boolean = false) : Type {
+data class TypeVariable(
+    val name: String,
+    val constraint: Type? = null,
+    val unconstrained: Boolean = false
+) : Type {
     override val tag = Tag.TypeVariable
 
-    override fun toLiteral() = Literal(tag, VariableLiteral(name, constraint?.toLiteral(), maxType))
+    override fun toLiteral() = Literal(
+        tag,
+        VariableLiteral(name, constraint?.toLiteral(), unconstrained)
+    )
 
     override fun toString(options: Type.ToStringOptions) = "~$name"
 
@@ -31,7 +38,7 @@ data class TypeVariable(val name: String, val constraint: Type? = null, val maxT
     data class VariableLiteral(
         val name: String,
         val constraint: arcs.core.common.Literal? = null,
-        val maxType: Boolean = false
+        val unconstrained: Boolean = false
     ) : arcs.core.common.Literal
 
     /** [TypeLiteral] representation of a [TypeVariable]. */
