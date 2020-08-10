@@ -199,6 +199,28 @@ class TypeProtoDecodersTest {
         )
     }
 
+    @Test
+    fun roundTrip_variableType_constrained_maxAccessFlag() {
+        val type = TypeVariable("a", DUMMY_ENTITY_TYPE, true)
+        assertThat(type.encode().decode()).isEqualTo(type)
+
+        val e = assertFailsWith<IllegalArgumentException> { type.encode().decodeAsFieldType() }
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Cannot decode non-field type VARIABLE to FieldType."
+        )
+    }
+
+    @Test
+    fun roundTrip_variableType_unconstrained_maxAccessFlag() {
+        val type = TypeVariable("a", maxAccess = true)
+        assertThat(type.encode().decode()).isEqualTo(type)
+
+        val e = assertFailsWith<IllegalArgumentException> { type.encode().decodeAsFieldType() }
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Cannot decode non-field type VARIABLE to FieldType."
+        )
+    }
+
     companion object {
         private const val DUMMY_ENTITY_HASH = "DUMMY_ENTITY_HASH"
 

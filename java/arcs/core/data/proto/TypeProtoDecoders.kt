@@ -113,10 +113,14 @@ fun ReferenceTypeProto.decode() = ReferenceType(referredType.decode())
 fun TupleTypeProto.decode() = TupleType(elementsList.map { it.decode() })
 
 /** Converts a [TypeVariableProto] protobuf instance into a Kotlin [TypeVariable] instance. */
-fun TypeVariableProto.decode() = TypeVariable(
-    name,
-    if (hasConstraint()) constraint.constraintType.decode() else null
-)
+fun TypeVariableProto.decode(): TypeVariable {
+    require(hasConstraint()) { "TypeVariableProto must have a constraint." }
+    return TypeVariable(
+        name,
+        if (constraint.hasConstraintType()) constraint.constraintType.decode() else null,
+        constraint.maxAccess
+    )
+}
 
 /** Converts a [TypeProto] protobuf instance into a Kotlin [Type] instance. */
 // TODO(b/155812915): RefinementExpression.
@@ -138,9 +142,9 @@ fun TypeProto.decode(): Type = when (dataCase) {
 fun Type.encode(): TypeProto = when (this) {
     is TypeVariable -> {
         val proto = TypeVariableProto.newBuilder().setName(name)
-        constraint?.let {
-            proto.constraint = ConstraintInfo.newBuilder().setConstraintType(it.encode()).build()
-        }
+        val infoBuilder = ConstraintInfo.newBuilder().setMaxAccess(maxAccess)
+        constraint?.let { infoBuilder.setConstraintType(it.encode()) }
+        proto.constraint = infoBuilder.build()
         proto.build().asTypeProto()
     }
     is EntityType -> EntityTypeProto.newBuilder()
