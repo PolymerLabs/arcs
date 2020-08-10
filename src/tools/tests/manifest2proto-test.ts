@@ -696,34 +696,6 @@ describe('manifest2proto', () => {
     });
   });
 
-
-  it('encodes max variable type - readSubset constraint', async () => {
-    const constraint = EntityType.make(['Foo'], {value: 'Text'}).singletonOf();
-    const varType = TypeVariable.make('a', null, constraint, true);
-    assert.deepStrictEqual(await toProtoAndBackType(varType), {
-      variable: {
-        name: 'a',
-        maxType: true,
-        constraint: {constraintType: {
-            singleton: {singletonType: {
-                entity: {schema: {
-                    names: ['Foo'],
-                    fields: {
-                      value: {
-                        primitive: 'TEXT'
-                      }
-                    },
-                    hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    });
-  });
-
   it('encodes variable type - resolved constraint', async () => {
     const constraint = EntityType.make(['Foo'], {value: 'Text'}).singletonOf();
     const varType = TypeVariable.make('a', constraint, constraint);
