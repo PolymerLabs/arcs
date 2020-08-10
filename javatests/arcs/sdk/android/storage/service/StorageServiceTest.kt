@@ -41,6 +41,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.Shadows.shadowOf
+import kotlin.coroutines.coroutineContext
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
@@ -105,6 +106,11 @@ class StorageServiceTest {
             deferredResult.await()
         }
         assertThat(success).isTrue()
+
+        // Wait for the storage service to return to idle after the proxy messagee.
+        runBlocking {
+            context.awaitAllJobs()
+        }
 
         // Verify:
         // Pass the nextStartedService to the resurrectionHelper. If it was a resurrection intent,

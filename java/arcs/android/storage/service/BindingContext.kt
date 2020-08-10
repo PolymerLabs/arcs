@@ -86,6 +86,9 @@ class BindingContext(
         parentCoroutineContext + job + CoroutineName("BindingContext-$id")
     private val scope = CoroutineScope(coroutineContext)
 
+    suspend fun awaitAllJobs() {
+        scope.coroutineContext[Job.Key]!!.children.forEach { it.join() }
+    }
     override fun idle(timeoutMillis: Long, resultCallback: IResultCallback) {
         scope.launch {
             bindingContextStatisticsSink.traceTransaction("idle") {
