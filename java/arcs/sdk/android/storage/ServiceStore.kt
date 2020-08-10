@@ -13,7 +13,6 @@ package arcs.sdk.android.storage
 
 import android.content.Context
 import androidx.annotation.VisibleForTesting
-import androidx.lifecycle.Lifecycle
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.android.storage.decodeProxyMessage
 import arcs.android.storage.service.DeferredResult
@@ -61,18 +60,6 @@ class ServiceStoreFactory(
     private val coroutineContext: CoroutineContext = Dispatchers.IO,
     private val connectionFactory: ConnectionFactory? = null
 ) : ActivationFactory {
-
-    @Deprecated(
-        "Lifecycle parameter is no longer used. Switch to using primary construct, " +
-        "and ensure created stores are cleaned up by the owning host."
-    )
-    constructor(
-        context: Context,
-        @Suppress("UNUSED_PARAMETER") lifecycle: Lifecycle? = null,
-        coroutineContext: CoroutineContext = Dispatchers.IO,
-        connectionFactory: ConnectionFactory? = null
-    ) : this(context, coroutineContext, connectionFactory)
-
     override suspend operator fun <Data : CrdtData, Op : CrdtOperation, ConsumerData> invoke(
         options: StoreOptions
     ): ServiceStore<Data, Op, ConsumerData> {
