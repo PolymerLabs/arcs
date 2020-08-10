@@ -48,15 +48,15 @@ class TypeVariableTest {
 
     @Test
     fun toLiteralContainsNameTagAndMaxAccessFlag() {
-        val typeVarA = TypeVariable("A", unconstrained = false)
-        val typeVarBaz = TypeVariable("Baz", unconstrained = true)
+        val typeVarA = TypeVariable("A", maxAccess = false)
+        val typeVarBaz = TypeVariable("Baz", maxAccess = true)
         assertThat(typeVarA.toLiteral()).isEqualTo(
             TypeVariable.Literal(Tag.TypeVariable, TypeVariable.VariableLiteral("A"))
         )
         assertThat(typeVarBaz.toLiteral()).isEqualTo(
             TypeVariable.Literal(
                 Tag.TypeVariable,
-                TypeVariable.VariableLiteral("Baz", unconstrained = true)
+                TypeVariable.VariableLiteral("Baz", maxAccess = true)
             )
         )
     }

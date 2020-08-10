@@ -116,7 +116,7 @@ fun TupleTypeProto.decode() = TupleType(elementsList.map { it.decode() })
 fun TypeVariableProto.decode() = TypeVariable(
     name,
     if (constraint.hasConstraintType()) constraint.constraintType.decode() else null,
-    constraint.unconstrained
+    constraint.maxAccess
 )
 
 /** Converts a [TypeProto] protobuf instance into a Kotlin [Type] instance. */
@@ -140,7 +140,7 @@ fun Type.encode(): TypeProto = when (this) {
     is TypeVariable -> {
         val proto = TypeVariableProto.newBuilder().setName(name)
         val infoBuilder = ConstraintInfo.newBuilder()
-            .setUnconstrained(unconstrained)
+            .setMaxAccess(maxAccess)
         constraint?.let { infoBuilder.setConstraintType(it.encode()) }
         proto.constraint = infoBuilder.build()
         proto.build().asTypeProto()
