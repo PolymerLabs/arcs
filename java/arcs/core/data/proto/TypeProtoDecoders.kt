@@ -142,8 +142,7 @@ fun TypeProto.decode(): Type = when (dataCase) {
 fun Type.encode(): TypeProto = when (this) {
     is TypeVariable -> {
         val proto = TypeVariableProto.newBuilder().setName(name)
-        val infoBuilder = ConstraintInfo.newBuilder()
-            .setMaxAccess(maxAccess)
+        val infoBuilder = ConstraintInfo.newBuilder().setMaxAccess(maxAccess)
         constraint?.let { infoBuilder.setConstraintType(it.encode()) }
         proto.constraint = infoBuilder.build()
         proto.build().asTypeProto()

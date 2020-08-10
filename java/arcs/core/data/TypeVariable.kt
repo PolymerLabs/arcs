@@ -19,6 +19,8 @@ import arcs.core.type.TypeLiteral
  * [Type] representation for a type variable.
  *
  * The [constraint] reflects a specification by the particle author, not by type inference.
+ * The [maxAccess] flag indicates if the type variable should accept all resolved constraints (i.e.
+ * `with {*}`).
  */
 data class TypeVariable(
     val name: String,
