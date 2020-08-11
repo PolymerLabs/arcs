@@ -10,6 +10,7 @@ import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Shareable
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
+import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.TestingHost
 import arcs.core.storage.StoreManager
 import arcs.sdk.android.storage.ResurrectionHelper
@@ -26,6 +27,8 @@ abstract class TestExternalArcHostService : Service() {
     protected val scope: CoroutineScope = MainScope()
 
     abstract val arcHost: TestingAndroidHost
+
+    val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
 
     val arcHostHelper: ArcHostHelper by lazy {
         ArcHostHelper(this, arcHost)

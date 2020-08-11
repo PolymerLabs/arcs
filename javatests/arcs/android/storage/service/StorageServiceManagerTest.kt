@@ -26,6 +26,7 @@ import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
+import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreWriteBack
@@ -42,13 +43,12 @@ import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.After
@@ -67,7 +67,7 @@ class StorageServiceManagerTest {
     private suspend fun buildManager() =
         StorageServiceManager(coroutineContext, ConcurrentHashMap())
     private val time = FakeTime()
-    private val scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
+    private val scheduler = SimpleSchedulerProvider(Dispatchers.Default).invoke("test")
     private val ramdiskKey = ReferenceModeStorageKey(
         backingKey = RamDiskStorageKey("backing"),
         storageKey = RamDiskStorageKey("container")

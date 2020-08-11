@@ -9,6 +9,7 @@ import arcs.core.data.SingletonType
 import arcs.core.entity.HandleManagerTestBase.CoolnessIndex
 import arcs.core.entity.HandleManagerTestBase.Person
 import arcs.core.host.EntityHandleManager
+import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -17,11 +18,10 @@ import arcs.core.testutil.assertSuspendingThrows
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import java.lang.IllegalStateException
-import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
@@ -55,12 +55,12 @@ class HandleManagerCloseTest {
         storageKey = collectionRefKey
     )
 
-    private lateinit var schedulerProvider: JvmSchedulerProvider
+    private lateinit var schedulerProvider: SimpleSchedulerProvider
     private lateinit var scheduler: Scheduler
 
     @Before
     fun setUp() {
-        schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+        schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
         scheduler = schedulerProvider("test")
         DriverAndKeyConfigurator.configure(null)
         SchemaRegistry.register(Person.SCHEMA)
