@@ -186,10 +186,8 @@ export class ResolveWalker extends RecipeWalker {
 }
 
 export class ResolveRecipeAction extends Action<Recipe> {
-  localInfo: ResolutionContext;
-  constructor(localInfo: ResolutionContext, args?) {
+  constructor(private localInfo: ResolutionContext, args?) {
     super(null, args);
-    this.localInfo = localInfo;
   }
   private options: IsValidOptions;
   withOptions(options: IsValidOptions) {
