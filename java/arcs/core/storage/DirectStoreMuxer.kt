@@ -75,12 +75,12 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
 
     /** Calls [idle] on all existing contained stores and waits for their completion. */
     suspend fun idle() = storeMutex.withLock {
-        stores.values.map {
-            withContext(coroutineContext) {
-                launch { it.store.idle() }
-            }
-        }.joinAll()
-    }
+        stores.values.toList()
+    }.map {
+        withContext(coroutineContext) {
+            launch { it.store.idle() }
+        }
+    }.joinAll()
 
     /**
      * Sends the provided [ProxyMessage] to the store backing the provided [referenceId].
