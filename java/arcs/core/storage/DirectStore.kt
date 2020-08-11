@@ -100,7 +100,7 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     fun getLocalData(): Data = synchronized(this) { localModel.data }
 
     override fun on(callback: ProxyCallback<Data, Op, T>): Int {
-        synchronized(closed) {
+        synchronized(proxyManager) {
             check(!closed) {
                 "Cannot add proxy callback after closing."
             }
@@ -109,14 +109,14 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
     }
 
     override fun off(callbackToken: Int) {
-        synchronized(closed) {
+        synchronized(proxyManager) {
             proxyManager.unregister(callbackToken)
         }
     }
 
     /** Closes the store. Once closed, it cannot be re-opened. A new instance must be created. */
     override suspend fun close() {
-        val wasClosed = synchronized(closed) {
+        val wasClosed = synchronized(proxyManager) {
             closed.also {
                 closed = true
             }
