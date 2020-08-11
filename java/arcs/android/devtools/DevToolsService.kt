@@ -34,7 +34,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
  * device by exposing the [IDevToolsService] API.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class DevToolsService : Service() {
+open class DevToolsService : Service() {
 
     private val coroutineContext = Dispatchers.Default + CoroutineName("DevtoolsService")
     private val scope = CoroutineScope(coroutineContext)
@@ -46,14 +46,6 @@ class DevToolsService : Service() {
     private var storageClass: Class<StorageService> = StorageService::class.java
     private var devToolsProxy: IDevToolsProxy? = null
 
-    private val forwardProxyMessage = object : IStorageServiceCallback.Stub() {
-        override fun onProxyMessage(proxyMessage: ByteArray) {
-            scope.launch {
-                val rawMessage = RawDevToolsMessage(proxyMessage.decodeProxyMessage().toString())
-                devToolsServer.send(rawMessage.toJson())
-            }
-        }
-    }
     private var forwardProxyMessageToken: Int = -1
 
     override fun onCreate() {
@@ -80,7 +72,15 @@ class DevToolsService : Service() {
             val proxy = service.getDevToolsProxy()
 
             forwardProxyMessageToken = proxy.registerBindingContextProxyMessageCallback(
-                forwardProxyMessage
+                object : IStorageServiceCallback.Stub() {
+                    override fun onProxyMessage(proxyMessage: ByteArray) {
+                        scope.launch {
+                            val actualMessage = proxyMessage.decodeProxyMessage()
+                            val rawMessage = RawDevToolsMessage(actualMessage.toString())
+                            devToolsServer.send(rawMessage.toJson())
+                        }
+                    }
+                }
             )
 
             binder.send(service.getStorageKeys() ?: "")
