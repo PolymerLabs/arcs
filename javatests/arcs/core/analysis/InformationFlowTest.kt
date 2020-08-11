@@ -113,15 +113,27 @@ class InformationFlowTest {
         val failingFieldTests = listOf(
             "fail-field-entity-direct",
             "fail-field-entity-ref-direct",
+            "fail-field-entity-ref-field",
             "fail-field-collection-direct",
+            "fail-field-inline-entity-direct",
+            "fail-field-list-direct",
+            "fail-field-tuple-direct",
+            "fail-field-inline-entity-slicing",
             "fail-field-claim-propagates",
+            "fail-field-claim-propagates-type-variables",
             "fail-field-merge-multiple-paths"
         )
         val okFieldTests = listOf(
             "ok-field-entity-direct",
             "ok-field-entity-ref-direct",
+            "ok-field-entity-ref-field",
             "ok-field-collection-direct",
+            "ok-field-inline-entity-direct",
+            "ok-field-list-direct",
+            "ok-field-tuple-direct",
+            "ok-field-inline-entity-slicing",
             "ok-field-claim-propagates",
+            "ok-field-claim-propagates-type-variables",
             "ok-field-merge-multiple-paths"
         )
         val okCycleTests = listOf(
@@ -137,11 +149,19 @@ class InformationFlowTest {
             "fail-cycle-remove-tag",
             "fail-cycle-remove-tag-in-chain"
         )
+        val typeVariableTests = listOf(
+            "fail-type-variables",
+            "fail-type-variables-collection",
+            "fail-type-variables-tuples",
+            "fail-type-variables-tuples-collection",
+            "fail-type-variables-multiple-constraints"
+        )
         val tests = (
             okTests + failingTests +
-                okFieldTests + failingFieldTests +
-                okCycleTests + failingCycleTests
-            )
+            okFieldTests + failingFieldTests +
+            okCycleTests + failingCycleTests +
+            typeVariableTests
+        )
         tests.forEach { verifyChecksInTestFile(it) }
     }
 

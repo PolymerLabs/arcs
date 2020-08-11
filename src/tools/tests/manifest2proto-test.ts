@@ -177,7 +177,57 @@ describe('manifest2proto', () => {
         }],
         location: 'a/b/c.js',
         name: 'Abc',
-        isolated: true,
+        annotations: [{name: 'isolated'}],
+      }]
+    });
+  });
+
+  it('encodes particle spec with expressions', async () => {
+    const manifest = await Manifest.parse(`
+      particle FooBar
+        bar: reads Y {b: Text}
+        foo: writes X {a: Text} = new X {a: bar.b}
+    `);
+    assert.deepStrictEqual(await toProtoAndBack(manifest), {
+      particleSpecs: [{
+        connections: [{
+          name: 'bar',
+          direction: 'READS',
+          type: {entity: {schema: {
+            names: ['Y'],
+            fields: {b: {primitive: 'TEXT'}},
+            hash: '555c20b532deda21eb146d1909b9fb372ba583b2',
+          }}}
+        }, {
+          name: 'foo',
+          direction: 'WRITES',
+          type: {entity: {schema: {
+            names: ['X'],
+            fields: {a: {primitive: 'TEXT'}},
+            hash: 'eb8597be8b72862d5580f567ab563cefe192508d',
+          }}},
+          expression: 'expression-entity' // This is a temporary stop-gap.
+        }],
+        name: 'FooBar',
+      }]
+    });
+  });
+
+  it('encodes egress type in particle spec', async () => {
+    const manifest = await Manifest.parse(`
+      @egress('MyEgressType')
+      particle Abc
+    `);
+    assert.deepStrictEqual(await toProtoAndBack(manifest), {
+      particleSpecs: [{
+        name: 'Abc',
+        annotations: [{
+          name: 'egress',
+          params: [{
+            name: 'type',
+            strValue: 'MyEgressType',
+          }]
+        }],
       }]
     });
   });
@@ -242,6 +292,26 @@ describe('manifest2proto', () => {
     ]);
   });
 
+  it('encodes recipe annotations', async () => {
+    const manifest = await Manifest.parse(`
+      policy MyPolicy {}
+
+      @policy('MyPolicy')
+      recipe Foo
+    `);
+    const recipe = (await toProtoAndBack(manifest)).recipes[0];
+
+    assert.deepStrictEqual(recipe, {
+      name: 'Foo',
+      annotations: [{
+        name: 'policy',
+        params: [{
+          name: 'name',
+          strValue: 'MyPolicy',
+        }]
+      }]
+    });
+  });
 
   it('encodes variable particle instance types', async () => {
     const manifest = await Manifest.parse(`
@@ -369,11 +439,7 @@ describe('manifest2proto', () => {
       entity: {
         schema: {
           names: ['Foo'],
-          fields: {
-            value: {
-              primitive: 'TEXT'
-            }
-          },
+          fields: {value: {primitive: 'TEXT'}},
           hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
         }
       }
@@ -389,11 +455,7 @@ describe('manifest2proto', () => {
       entity: {
         schema: {
           names: ['Something'],
-          fields: {
-            num: {
-              primitive: 'NUMBER'
-            }
-          },
+          fields: {num: {primitive: 'NUMBER'}},
           hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
         },
       },
@@ -413,11 +475,7 @@ describe('manifest2proto', () => {
       entity: {
         schema: {
           names: ['Something'],
-          fields: {
-            num: {
-              primitive: 'NUMBER'
-            }
-          },
+          fields: {num: {primitive: 'NUMBER'}},
           hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
         },
       },
@@ -425,25 +483,17 @@ describe('manifest2proto', () => {
         binary: {
           leftExpr: {
             binary: {
-              leftExpr: {
-                field: 'num',
-              },
+              leftExpr: {field: 'num'},
               operator: 'GREATER_THAN',
-              rightExpr: {
-                number: -1
-              }
+              rightExpr: {number: -1},
             }
           },
           operator: 'AND',
           rightExpr: {
             binary: {
-              leftExpr: {
-                field: 'num'
-              },
+              leftExpr: {field: 'num'},
               operator: 'LESS_THAN',
-              rightExpr: {
-                number: 12
-              }
+              rightExpr: {number: 12},
             }
           },
         }
@@ -461,23 +511,15 @@ describe('manifest2proto', () => {
       entity: {
         schema: {
           names: ['Something'],
-          fields: {
-            num: {
-              primitive: 'NUMBER'
-            }
-          },
+          fields: {num: {primitive: 'NUMBER'}},
           hash: '6f1753a75cd024be11593acfbf34d1b92463e9ef',
         },
       },
       refinement: {
         binary: {
-          leftExpr: {
-            field: 'num'
-          },
+          leftExpr: {field: 'num'},
           operator: 'EQUALS',
-          rightExpr: {
-            queryArgument: '?'
-          },
+          rightExpr: {queryArgument: '?'},
         }
       }
     });
@@ -490,11 +532,7 @@ describe('manifest2proto', () => {
           entity: {
             schema: {
               names: ['Foo'],
-              fields: {
-                value: {
-                  primitive: 'TEXT'
-                }
-              },
+              fields: {value: {primitive: 'TEXT'}},
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
             }
           }
@@ -511,11 +549,7 @@ describe('manifest2proto', () => {
           entity: {
             schema: {
               names: ['Foo'],
-              fields: {
-                value: {
-                  primitive: 'TEXT'
-                }
-              },
+              fields: {value: {primitive: 'TEXT'}},
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
             }
           }
@@ -532,11 +566,7 @@ describe('manifest2proto', () => {
           entity: {
             schema: {
               names: ['Foo'],
-              fields: {
-                value: {
-                  primitive: 'TEXT'
-                }
-              },
+              fields: {value: {primitive: 'TEXT'}},
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0',
             }
           }
@@ -556,11 +586,7 @@ describe('manifest2proto', () => {
             entity: {
               schema: {
                 names: ['Foo'],
-                fields: {
-                  value: {
-                    primitive: 'TEXT'
-                  }
-                },
+                fields: {value: {primitive: 'TEXT'}},
                 hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
               }
             }
@@ -569,11 +595,7 @@ describe('manifest2proto', () => {
             entity: {
               schema: {
                 names: ['Bar'],
-                fields: {
-                  value: {
-                    primitive: 'NUMBER'
-                  }
-                },
+                fields: {value: {primitive: 'NUMBER'}},
                 hash: 'f0b9f39c14d12e1445ac70bbd28b65c0b9d30022'
               }
             }
@@ -600,17 +622,15 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
       variable: {
         name: 'a',
-        constraint: {constraintType: {
-          singleton: {singletonType: {
+        constraint: {
+          constraintType: {singleton: {singletonType: {
             entity: {schema: {
               names: ['Foo'],
               fields: {value: {primitive: 'TEXT'}},
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
-            }
-            }
-          }
-          }
-        }
+            }}
+          }}},
+          maxAccess: false,
         }
       }
     });
@@ -622,21 +642,55 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
       variable: {
         name: 'a',
-        constraint: {constraintType: {
-          singleton: {singletonType: {
+        constraint: {
+          constraintType: {singleton: {singletonType: {
             entity: {schema: {
               names: ['Foo'],
-              fields: {
-                value: {
-                  primitive: 'TEXT'
-                }
-              },
+              fields: {value: {primitive: 'TEXT'}},
               hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
-            }
-            }
-          }
-          }
+            }}
+          }}},
+          maxAccess: false,
         }
+      }
+    });
+  });
+
+  it('encodes max variable type - writeSuperset constraint', async () => {
+    const constraint = EntityType.make(['Foo'], {value: 'Text'}).singletonOf();
+    const varType = TypeVariable.make('a', constraint, null, true);
+    assert.deepStrictEqual(await toProtoAndBackType(varType), {
+      variable: {
+        name: 'a',
+        constraint: {
+          constraintType: {singleton: {singletonType: {
+            entity: {schema: {
+              names: ['Foo'],
+              fields: {value: {primitive: 'TEXT'}},
+              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+            }}
+          }}},
+          maxAccess: true,
+        }
+      }
+    });
+  });
+
+  it('encodes max variable type - readSubset constraint', async () => {
+    const constraint = EntityType.make(['Foo'], {value: 'Text'}).singletonOf();
+    const varType = TypeVariable.make('a', null, constraint, true);
+    assert.deepStrictEqual(await toProtoAndBackType(varType), {
+      variable: {
+        name: 'a',
+        constraint: {
+          constraintType: {singleton: {singletonType: {
+            entity: {schema: {
+              names: ['Foo'],
+              fields: {value: {primitive: 'TEXT'}},
+              hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
+            }}
+          }}},
+          maxAccess: true,
         }
       }
     });
@@ -650,23 +704,24 @@ describe('manifest2proto', () => {
       singleton: {singletonType: {
         entity: {schema: {
           names: ['Foo'],
-          fields: {
-            value: {
-              primitive: 'TEXT'
-            }
-          },
+          fields: {value: {primitive: 'TEXT'}},
           hash: '1c9b8f8d51ff6e11235ac13bf0c5ca74c88537e0'
-        }
-        }
-      }
-      }
+        }}
+      }}
     });
   });
 
   it('encodes variable type - unconstrained', async () => {
     const varType = TypeVariable.make('a');
     assert.deepStrictEqual(await toProtoAndBackType(varType), {
-      variable: {name: 'a'}
+      variable: {name: 'a', constraint: {maxAccess: false}}
+    });
+  });
+
+  it('encodes max variable type - unconstrained', async () => {
+    const varType = TypeVariable.make('a', null, null, true);
+    assert.deepStrictEqual(await toProtoAndBackType(varType), {
+      variable: {name: 'a', constraint: {maxAccess: true}}
     });
   });
 
@@ -688,9 +743,33 @@ describe('manifest2proto', () => {
         entity: {schema: {
           fields: {time: {primitive: 'NUMBER'}},
           hash: '5c7ae2de06d2111eeef1a845d57d52e23ff214da',
-        }
-      }
-    }
+        }}
+      },
+      maxAccess: false
+    });
+  });
+
+  it('encodes max variable type for particle specs', async () => {
+    const manifest = await Manifest.parse(`
+    particle TimeRedactor
+      input: reads ~a with {time: Number, *}
+      output: writes ~a
+    `);
+
+    const particleSpec = (await toProtoAndBack(manifest)).particleSpecs[0];
+    const varInput = particleSpec.connections.find(c => c.name === 'input').type.variable;
+    const varOutput = particleSpec.connections.find(c => c.name === 'output').type.variable;
+
+    assert.deepStrictEqual(varInput, varOutput);
+    assert.deepStrictEqual(varInput.name, 'a');
+    assert.deepStrictEqual(varInput.constraint, {
+      constraintType: {
+        entity: {schema: {
+            fields: {time: {primitive: 'NUMBER'}},
+            hash: '5c7ae2de06d2111eeef1a845d57d52e23ff214da',
+        }}
+      },
+      maxAccess: true
     });
   });
 
@@ -707,7 +786,25 @@ describe('manifest2proto', () => {
 
     assert.deepStrictEqual(varInput, varOutput);
     assert.deepStrictEqual(varInput.name, 'a');
-    assert.isUndefined(varInput.constraint);
+    assert.isFalse(varInput.constraint.maxAccess);
+    assert.isFalse(varOutput.constraint.maxAccess);
+  });
+
+  it('encodes max variable type for particle specs - unconstrained', async () => {
+    const manifest = await Manifest.parse(`
+    particle P
+      input: reads ~a with {*}
+      output: writes ~a
+    `);
+
+    const particleSpec = (await toProtoAndBack(manifest)).particleSpecs[0];
+    const varInput = particleSpec.connections.find(c => c.name === 'input').type.variable;
+    const varOutput = particleSpec.connections.find(c => c.name === 'output').type.variable;
+
+    assert.deepStrictEqual(varInput, varOutput);
+    assert.deepStrictEqual(varInput.name, 'a');
+    assert.isTrue(varInput.constraint.maxAccess);
+    assert.isTrue(varOutput.constraint.maxAccess);
   });
 
   it('encodes schemas with primitives and collections of primitives', async () => {
@@ -762,16 +859,12 @@ describe('manifest2proto', () => {
     assert.deepStrictEqual(schema.fields, {
       a: {reference: {referredType: {entity: {schema: {
         names: ['Product'],
-        fields: {
-          name: {primitive: 'TEXT'}
-        },
+        fields: {name: {primitive: 'TEXT'}},
         hash: 'a76bdd3a638fc17a5b3e023edb542c1e891c4c89'
       }}}}},
       b: {collection: {collectionType: {reference: {referredType: {entity: {schema: {
         names: ['Review'],
-        fields: {
-          rating: {primitive: 'NUMBER'},
-        },
+        fields: {rating: {primitive: 'NUMBER'}},
         hash: '2d3317e5ef54fbdf3fbc02ed481c2472ebe9ba66'
       }}}}}}},
     });
@@ -1400,10 +1493,8 @@ describe('manifest2proto', () => {
         fields: {
           name: {primitive: 'TEXT'},
           manufacturer: {reference: {referredType: {entity: {schema: {
-            names: ['Manufacturer'],
-            fields: {
-                address: {primitive: 'TEXT'}
-              },
+              names: ['Manufacturer'],
+              fields: {address: {primitive: 'TEXT'}},
               hash: 'd61bcba2419ded8a1b497fc6d905b372baafce01',
             }}}}
           },

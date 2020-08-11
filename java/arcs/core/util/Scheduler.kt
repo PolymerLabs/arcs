@@ -11,7 +11,6 @@
 
 package arcs.core.util
 
-import arcs.core.util.Scheduler.Companion.DEFAULT_AGENDA_PROCESSING_TIMEOUT_MS
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
@@ -31,17 +30,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
-
-@Suppress("UNUSED_PARAMETER")
-@Deprecated(
-    "Time is no longer of the essence",
-    ReplaceWith("Scheduler(context, agendaProcessingTimeoutMs)")
-)
-fun Scheduler(
-    time: Time,
-    context: CoroutineContext,
-    agendaProcessingTimeoutMs: Long = DEFAULT_AGENDA_PROCESSING_TIMEOUT_MS
-): Scheduler = Scheduler(context, agendaProcessingTimeoutMs)
 
 /**
  * The [Scheduler] is responsible for scheduling the execution of a batch of [Task]s (known as an
@@ -304,11 +292,3 @@ class Scheduler(
         const val DEFAULT_AGENDA_PROCESSING_TIMEOUT_MS = 5000L
     }
 }
-
-@Suppress("FunctionName")
-@Deprecated(
-    "Use scheduler.asCoroutineDispatcher() instead",
-    ReplaceWith("scheduler.asCoroutineDispatcher()")
-)
-fun SchedulerDispatcher(scheduler: Scheduler): CoroutineDispatcher =
-    scheduler.asCoroutineDispatcher()

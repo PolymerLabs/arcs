@@ -142,7 +142,7 @@ describe('types', () => {
       const variable = TypeVariable.make('a');
       deepEqual(variable.toLiteral(), {
         tag: 'TypeVariable',
-        data: {name: 'a', canWriteSuperset: null, canReadSubset: null}
+        data: {name: 'a', canWriteSuperset: null, canReadSubset: null, resolveToMaxType: false}
       });
       deepEqual(variable, Type.fromLiteral(variable.toLiteral()));
       deepEqual(variable, variable.clone(new Map()));
@@ -408,6 +408,28 @@ describe('types', () => {
       assert.notExists(a.canReadSubset);
       assert.strictEqual(a.resolution, b);
     });
+    it(`maybeEnsureResolved prefers canReadSubset for resolution when resolveToMaxType is true`, () => {
+      const sup = EntityType.make(['Super'], {});
+      const sub = EntityType.make(['Sub'], {});
+      const a = new TypeVariableInfo('x', sup, sub, true);
+
+      a.maybeEnsureResolved();
+
+      assert.notExists(a.canWriteSuperset);
+      assert.notExists(a.canReadSubset);
+      assert.strictEqual(a.resolution, sub);
+    });
+    it(`maybeEnsureResolved prefers canWriteSuperset for resolution when resolveToMaxType is false`, () => {
+      const sup = EntityType.make(['Super'], {});
+      const sub = EntityType.make(['Sub'], {});
+      const a = new TypeVariableInfo('x', sup, sub, false);
+
+      a.maybeEnsureResolved();
+
+      assert.notExists(a.canWriteSuperset);
+      assert.notExists(a.canReadSubset);
+      assert.strictEqual(a.resolution, sup);
+    });
   });
 
   describe('serialization', () => {
@@ -496,5 +518,27 @@ describe('types', () => {
       assert.lengthOf(recipe.handles, 1);
       assert.strictEqual((recipe.handles[0].type.getContainedType() as EntityType).entitySchema.name, 'Lego');
     });
+  });
+
+  it('merges type variables by name and preserves merging in clones', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        a: reads ~x with {a: Text}
+        b: reads [~x with {b: Text}]
+        c: reads BigCollection<~x with {c: Text}>
+        d: writes &~x with {d: Text}
+        e: writes (~x with {e: Text})
+        f: writes ![~x with {f: Text}]
+        g: reads #~x with {g: Text}
+    `);
+    const original = manifest.particles[0];
+    const clone = original.clone();
+    for (const particle of [original, clone]) {
+      const aType = particle.connections.find(hc => hc.name === 'a').type;
+      aType.maybeEnsureResolved();
+      assert.hasAllKeys(aType.resolvedType().getEntitySchema().fields, [
+        'a', 'b', 'c', 'd', 'e', 'f', 'g'
+      ]);
+    }
   });
 });

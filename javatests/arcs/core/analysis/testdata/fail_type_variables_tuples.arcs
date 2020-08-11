@@ -1,0 +1,39 @@
+// #Ingress: Tupler
+// #FAIL: hc:FailingCheck.input.bad is bad
+particle Tupler
+  output: writes (Mixed {good: Text, bad: Text},  Meh {meh: Text})
+  claim output.first.good is good
+  claim output.first.bad is bad
+  claim output.second.meh is meh
+
+particle DoStuff
+  input: reads (~a with {bad: Text}, ~b with {*})
+  output: writes ~a
+
+particle PassingChecks
+  input: reads Mixed {good: Text, bad: Text}
+  // This would pass, as "good" field was not accessible to DoStuff
+  // and could not have been modified.
+  check input.good is good
+  // This would pass, as input.bad could have been modified by DoStuff,
+  // but could only have been tainted by meh stuff, not by good stuff
+  // (which was not read).
+  check input.bad is bad or is meh
+  check input is good or is bad or is meh
+
+particle FailingCheck
+  input: reads Mixed {good: Text, bad: Text}
+  // This would fail, as input.bad could have been modified by DoStuff,
+  // and could have been tainted by meh stuff.
+  check input.bad is bad
+
+recipe
+  Tupler
+    output: tuple
+  DoStuff
+    input: tuple
+    output: stuff
+  PassingChecks
+    input: stuff
+  FailingCheck
+    input: stuff

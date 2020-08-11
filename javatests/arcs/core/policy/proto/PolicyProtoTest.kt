@@ -4,7 +4,6 @@ import arcs.core.data.Annotation
 import arcs.core.data.proto.PolicyProto
 import arcs.core.data.proto.PolicyRetentionProto
 import arcs.core.data.proto.PolicyTargetProto
-import arcs.core.policy.EgressType
 import arcs.core.policy.Policy
 import arcs.core.policy.PolicyField
 import arcs.core.policy.PolicyRetention
@@ -24,7 +23,7 @@ class PolicyProtoTest {
         val policy = Policy(
             name = "foo",
             description = "bar",
-            egressType = EgressType.FEDERATED_AGGREGATION,
+            egressType = "baz",
             targets = emptyList(),
             configs = emptyMap(),
             annotations = listOf(ANNOTATION)
@@ -33,18 +32,26 @@ class PolicyProtoTest {
     }
 
     @Test
-    fun decode_policy_requiresEgressType() {
-        val e = assertFailsWith<UnsupportedOperationException> {
+    fun decode_policy_requiresName() {
+        val e = assertFailsWith<IllegalArgumentException> {
             PolicyProto.getDefaultInstance().decode()
         }
-        assertThat(e).hasMessageThat().startsWith("Unknown egress type:")
+        assertThat(e).hasMessageThat().startsWith("Policy name is missing.")
+    }
+
+    @Test
+    fun decode_policy_requiresEgressType() {
+        val e = assertFailsWith<IllegalArgumentException> {
+            PolicyProto.newBuilder().setName("foo").build().decode()
+        }
+        assertThat(e).hasMessageThat().startsWith("Egress type is missing.")
     }
 
     @Test
     fun roundTrip_target() {
         val policy = Policy(
             name = "foo",
-            egressType = EgressType.LOGGING,
+            egressType = "Logging",
             targets = listOf(
                 PolicyTarget(
                     schemaName = "schema",
@@ -63,7 +70,8 @@ class PolicyProtoTest {
     @Test
     fun decode_retention_requiresMedium() {
         val proto = PolicyProto.newBuilder()
-            .setEgressType(PolicyProto.EgressType.LOGGING)
+            .setName("foo")
+            .setEgressType("Logging")
             .addTargets(
                 PolicyTargetProto.newBuilder()
                     .addRetentions(PolicyRetentionProto.getDefaultInstance())
@@ -77,7 +85,7 @@ class PolicyProtoTest {
     fun roundTrip_fields() {
         val policy = Policy(
             name = "foo",
-            egressType = EgressType.LOGGING,
+            egressType = "Logging",
             targets = listOf(
                 PolicyTarget(
                     schemaName = "schema",
@@ -102,7 +110,7 @@ class PolicyProtoTest {
     fun roundTrip_subfields() {
         val policy = Policy(
             name = "foo",
-            egressType = EgressType.LOGGING,
+            egressType = "Logging",
             targets = listOf(
                 PolicyTarget(
                     schemaName = "schema",
@@ -133,7 +141,7 @@ class PolicyProtoTest {
     fun roundTrip_configs() {
         val policy = Policy(
             name = "foo",
-            egressType = EgressType.LOGGING,
+            egressType = "Logging",
             configs = mapOf("config" to mapOf("k1" to "v1", "k2" to "v2"))
         )
         assertThat(policy.encode().decode()).isEqualTo(policy)

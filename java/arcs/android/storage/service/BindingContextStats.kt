@@ -12,10 +12,8 @@
 package arcs.android.storage.service
 
 import arcs.core.util.RunningStatistics
-import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -23,7 +21,7 @@ import kotlinx.coroutines.sync.withLock
  * Defines an object capable of tracking the processing time of proxy message round-trip.
  */
 interface BindingContextStatisticsSink {
-    fun measure(context: CoroutineContext, block: suspend () -> Unit)
+    suspend fun measure(block: suspend () -> Unit)
 
     /**
      * Traces a binder transaction which executes [block] and is identified by [tag].
@@ -34,7 +32,7 @@ interface BindingContextStatisticsSink {
      * not reflect the actual timing properly, e.g. timestamps are recorded after the corresponding
      * binder thread finished. Besides, the tracked level of binder concurrency will be incorrect.
      */
-    fun traceTransaction(tag: String? = null, block: () -> Unit)
+    suspend fun traceTransaction(tag: String? = null, block: suspend () -> Unit)
 }
 
 /**
@@ -72,24 +70,17 @@ class BindingContextStatsImpl : BindingContextStatistics {
     val transactions: Transactions
         get() = Transactions(_transactions.current, _transactions.peak)
 
-    override fun measure(context: CoroutineContext, block: suspend () -> Unit) {
+    override suspend fun measure(block: suspend () -> Unit) {
         val startTime = System.currentTimeMillis()
-        // TODO(ianchang):
-        // Should remove all runBlocking calls at least runBlocking(someCtx)
-        // at AIDLs and their sub-functions.
-        // Already tried CoroutineScope(context).launch {...} but a few tests like
-        // StorageServiceTest, BindingContextTest, etc become flaky.
-        runBlocking {
-            try {
-                block()
-            } finally {
-                val duration = (System.currentTimeMillis() - startTime).toDouble()
-                mutex.withLock { runningStats.logStat(duration) }
-            }
+        try {
+            block()
+        } finally {
+            val duration = (System.currentTimeMillis() - startTime).toDouble()
+            mutex.withLock { runningStats.logStat(duration) }
         }
     }
 
-    override fun traceTransaction(tag: String?, block: () -> Unit) {
+    override suspend fun traceTransaction(tag: String?, block: suspend () -> Unit) {
         // TODO(ianchang): Inject Android system traces with [tag]
         _transactions++
         try {

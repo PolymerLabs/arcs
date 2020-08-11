@@ -385,4 +385,29 @@ class CrdtEntityTest {
             entity.merge(entity2.data)
         }
     }
+
+    @Test
+    fun mergeIntoEmptyModel() {
+        val rawEntity = RawEntity(
+            id = "an-id",
+            singletons = mapOf("foo" to Reference("fooRef")),
+            collections = mapOf(
+                "bar" to setOf(Reference("barRef1"), Reference("barRef2"))
+            )
+        )
+        val emptyRawEntity = RawEntity(
+            id = "an-id",
+            singletons = mapOf("foo" to null),
+            collections = mapOf(
+                "bar" to setOf()
+            )
+        )
+        val entity = CrdtEntity(VersionMap("me" to 1), rawEntity)
+        val emptyEntity = CrdtEntity(VersionMap(), emptyRawEntity)
+
+        val changes = emptyEntity.merge(entity.data)
+        println(changes)
+        assertThat(changes.modelChange.isEmpty()).isFalse()
+        assertThat(changes.otherChange.isEmpty()).isTrue()
+    }
 }

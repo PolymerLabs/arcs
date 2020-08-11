@@ -7,8 +7,29 @@ licenses(["notice"])
 
 package(default_visibility = ["//java/arcs:allowed-packages"])
 
+SCOPES_SRC = ["RawEntityScope.kt"]
+
 arcs_kt_library(
     name = "expression",
-    srcs = glob(["*.kt"]),
-    deps = ["//java/arcs/core/util"],
+    srcs = glob(
+        ["*.kt"],
+        exclude = SCOPES_SRC,
+    ),
+    deps = [
+        "//java/arcs/core/util",
+        "//java/arcs/core/util:utils-platform-dependencies",
+    ],
+)
+
+arcs_kt_library(
+    name = "scopes",
+    srcs = SCOPES_SRC,
+    deps = [
+        ":expression",
+        "//java/arcs/core/data:rawentity",
+        "//java/arcs/core/data:reference",
+        "//java/arcs/core/data/util:data-util",
+        "//java/arcs/core/util",
+        "//third_party/kotlin/kotlinx_coroutines",
+    ],
 )

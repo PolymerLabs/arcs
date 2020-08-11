@@ -23,7 +23,7 @@ import arcs.core.type.Type
  */
 abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     options: StoreOptions
-) : IStore<Data, Op, ConsumerData>, StorageCommunicationEndpointProvider<Data, Op, ConsumerData> {
+) : IStore<Data, Op, ConsumerData> {
     override val storageKey: StorageKey = options.storageKey
     override val type: Type = options.type
     open val versionToken: String? = options.versionToken
@@ -43,21 +43,6 @@ abstract class ActiveStore<Data : CrdtData, Op : CrdtOperation, ConsumerData>(
     /** Handles a message from the storage proxy. */
     abstract suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean
 
-    /**
-     * Return a storage endpoint that will receive messages from the store via the
-     * provided callback
-     */
-    override fun getStorageEndpoint(
-        callback: ProxyCallback<Data, Op, ConsumerData>
-    ) = object : StorageCommunicationEndpoint<Data, Op, ConsumerData> {
-        val id = on(callback)
-
-        override suspend fun idle() = this@ActiveStore.idle()
-
-        override suspend fun onProxyMessage(
-            message: ProxyMessage<Data, Op, ConsumerData>
-        ) = this@ActiveStore.onProxyMessage(message.withId(id))
-
-        override fun close() = off(id)
-    }
+    /** Performs any operations that are needed to release resources held by this [ActiveStore]. */
+    open fun close() = Unit
 }

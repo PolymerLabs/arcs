@@ -12,10 +12,8 @@
 package arcs.core.storage
 
 import arcs.core.common.ReferenceId
-import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtException
-import arcs.core.crdt.CrdtOperation
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.VersionMap
 import arcs.core.data.CollectionType
@@ -39,6 +37,7 @@ import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
@@ -221,7 +220,7 @@ class ReferenceModeStoreTest {
 
         val capturedPeople = containerDriver.sentData.first()
         assertThat(capturedPeople).isEqualTo(referenceCollection.data)
-        val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
+        val storedBob = activeStore.backingStore.getLocalData("an-id")
         // Check that the stored bob's singleton data is equal to the expected bob's singleton data
         assertThat(storedBob.singletons.mapValues { it.value.data })
             .isEqualTo(bobEntity.data.singletons.mapValues { it.value.data })
@@ -245,7 +244,7 @@ class ReferenceModeStoreTest {
             activeStore.onProxyMessage(ProxyMessage.Operations(listOf(addOp), id = 1))
         ).isTrue()
         // Bob was added to the backing store.
-        val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
+        val storedBob = activeStore.backingStore.getLocalData("an-id")
         assertThat(storedBob.toRawEntity("an-id")).isEqualTo(bob)
 
         // Remove Bob from the collection.
@@ -255,7 +254,7 @@ class ReferenceModeStoreTest {
         ).isTrue()
 
         // Check the backing store Bob has been cleared.
-        val storedBob2 = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
+        val storedBob2 = activeStore.backingStore.getLocalData("an-id")
         assertThat(storedBob2.toRawEntity("an-id")).isEqualTo(createEmptyPersonEntity("an-id"))
     }
 
@@ -279,10 +278,10 @@ class ReferenceModeStoreTest {
         val storedRefs = activeStore.containerStore.getLocalData() as CrdtSet.Data<Reference>
         assertThat(storedRefs.values.keys).containsExactly("id1", "id2")
 
-        val storedAlice = activeStore.backingStore.getLocalData("id1") as CrdtEntity.Data
+        val storedAlice = activeStore.backingStore.getLocalData("id1")
         assertThat(storedAlice.toRawEntity("id1")).isEqualTo(alice)
 
-        val storedBob = activeStore.backingStore.getLocalData("id2") as CrdtEntity.Data
+        val storedBob = activeStore.backingStore.getLocalData("id2")
         assertThat(storedBob.toRawEntity("id2")).isEqualTo(bob)
 
         // Clear!
@@ -292,10 +291,10 @@ class ReferenceModeStoreTest {
         val clearedRefs = activeStore.containerStore.getLocalData() as CrdtSet.Data<Reference>
         assertThat(clearedRefs.values.keys).isEmpty()
 
-        val clearedAlice = activeStore.backingStore.getLocalData("id1") as CrdtEntity.Data
+        val clearedAlice = activeStore.backingStore.getLocalData("id1")
         assertThat(clearedAlice.toRawEntity("id1")).isEqualTo(createEmptyPersonEntity("id1"))
 
-        val clearedBob = activeStore.backingStore.getLocalData("id2") as CrdtEntity.Data
+        val clearedBob = activeStore.backingStore.getLocalData("id2")
         assertThat(clearedBob.toRawEntity("id2")).isEqualTo(createEmptyPersonEntity("id2"))
     }
 
@@ -692,13 +691,85 @@ class ReferenceModeStoreTest {
 
         store.off(token)
         store.idle()
-        store.awaitCleanup()
+        assertThat(store.backingStore.stores.size).isEqualTo(0)
+    }
+
+    @Test
+    fun backingStoresCleanedUpWhenLastCallbackRemovedTwice() = runBlocking {
+        DriverFactory.register(MockDriverProvider())
+        val store = createReferenceModeStore()
+
+        val preToken = store.on(ProxyCallback {})
+        store.off(preToken)
+
+        val token = store.on(ProxyCallback {})
+        val collection = CrdtSet<RawEntity>()
+        val entity = createPersonEntity("an-id", "bob", 42)
+
+        collection.applyOperation(
+            CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
+        )
+
+        store.onProxyMessage(
+            ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
+        )
+        store.idle()
+        assertThat(store.backingStore.stores.size).isEqualTo(1)
+
+        store.off(token)
+        store.idle()
+        assertThat(store.backingStore.stores.size).isEqualTo(0)
+
+        val token2 = store.on(ProxyCallback {})
+        store.onProxyMessage(
+            ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
+        )
+        store.idle()
+        assertThat(store.backingStore.stores.size).isEqualTo(1)
+
+        store.off(token2)
+        store.idle()
+        assertThat(store.backingStore.stores.size).isEqualTo(0)
+    }
+
+    @Test
+    fun backingStoresCleanedUpWhenLastCallbackRemovedRaces() = runBlocking {
+        DriverFactory.register(MockDriverProvider())
+        val store = createReferenceModeStore()
+
+        val callbackJob = launch {
+            for (i in 0..100) {
+                val preToken = store.on(ProxyCallback {})
+                delay(1)
+                store.off(preToken)
+            }
+        }
+
+        val dataJob = launch {
+            for (i in 0..100) {
+                val collection = CrdtSet<RawEntity>()
+                val entity = createPersonEntity("an-id", "bob-$i", 42)
+
+                collection.applyOperation(
+                    CrdtSet.Operation.Add("me", VersionMap("me" to 1), entity)
+                )
+
+                store.onProxyMessage(
+                    ProxyMessage.ModelUpdate(RefModeStoreData.Set(collection.data), 1)
+                )
+            }
+        }
+
+        callbackJob.join()
+        dataJob.join()
+
+        store.idle()
         assertThat(store.backingStore.stores.size).isEqualTo(0)
     }
 
     // region Helpers
 
-    private fun DirectStoreMuxer<CrdtData, CrdtOperation, Any?>.getEntityDriver(
+    private fun DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>.getEntityDriver(
         id: ReferenceId
     ): MockDriver<CrdtEntity.Data> =
         requireNotNull(stores[id]).store.driver as MockDriver<CrdtEntity.Data>

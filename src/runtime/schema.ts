@@ -23,6 +23,7 @@ import {ManifestStringBuilder} from './manifest-string-builder.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
+export type SkippedFieldsOptions = {prefix?: string, skippedFields?: string[]};
 
 export class Schema {
   readonly names: string[];
@@ -125,13 +126,17 @@ export class Schema {
     return Schema._typeString(fieldType1) === Schema._typeString(fieldType2);
   }
 
-  static isAtLeastAsSpecificAs(fieldType1, fieldType2): boolean {
+  // TODO(shans): output AtLeastAsSpecific here. This is necessary to support
+  // refinements on nested structures and references.
+  static fieldTypeIsAtLeastAsSpecificAs(fieldType1, fieldType2): boolean {
     assert(fieldType1.kind === fieldType2.kind);
     switch (fieldType1.kind) {
       case 'schema-reference':
+      case 'schema-nested':
         return fieldType1.schema.model.isAtLeastAsSpecificAs(fieldType2.schema.model);
       case 'schema-collection':
-        return Schema.isAtLeastAsSpecificAs(fieldType1.schema, fieldType2.schema);
+      case 'schema-ordered-list':
+        return Schema.fieldTypeIsAtLeastAsSpecificAs(fieldType1.schema, fieldType2.schema);
       // TODO(mmandlis): implement for other schema kinds.
       default:
         return Schema.typesEqual(fieldType1, fieldType2);
@@ -224,23 +229,7 @@ export class Schema {
       if (fields[name] == undefined) {
         return AtLeastAsSpecific.NO;
       }
-      if (type.kind && ['schema-nested', 'schema-reference'].includes(type.kind)) {
-        if (!(fields[name].kind && fields[name].kind === type.kind)) {
-          return AtLeastAsSpecific.NO;
-        }
-        const subResult = fields[name].schema.model.entitySchema.isEquivalentOrMoreSpecific(
-            type.schema.model.entitySchema);
-        switch (subResult) {
-          case AtLeastAsSpecific.NO:
-            return AtLeastAsSpecific.NO;
-          case AtLeastAsSpecific.UNKNOWN:
-            best = AtLeastAsSpecific.UNKNOWN;
-            break;
-          default:
-            break;
-        }
-      }
-      else if (!Schema.isAtLeastAsSpecificAs(fields[name], type)) {
+      if (!Schema.fieldTypeIsAtLeastAsSpecificAs(fields[name], type)) {
         return AtLeastAsSpecific.NO;
       }
       const fieldRes = Refinement.isAtLeastAsSpecificAs(fields[name].refinement, type.refinement);
@@ -405,5 +394,47 @@ export class Schema {
       Object.keys(this.fields).sort().map(field =>
         `${field}:${this.normalizeTypeForHash(this.fields[field])}`
       ).join('');
+  }
+
+  static getRestrictedSchemaFields(schema: Schema, restrictedSchema: Schema, opts: SkippedFieldsOptions = {prefix: ''}): {} {
+    const fields = {};
+    for (const [fieldName, field] of Object.entries(schema.fields)) {
+      const restrictedField = restrictedSchema.fields[fieldName];
+      const fullFieldName = `${opts.prefix ? `${opts.prefix}.` : ''}${fieldName}`;
+      if (restrictedField) {
+        fields[fieldName] = Schema.restrictField(field, restrictedField,
+              {...opts, prefix: fullFieldName});
+      } else if (opts.skippedFields) {
+        opts.skippedFields.push(fullFieldName);
+      }
+    }
+    return fields;
+  }
+
+  private static restrictField(field, restrictedField, opts: SkippedFieldsOptions) {
+    assert(field.kind === restrictedField.kind);
+    switch (field.kind) {
+      case 'kotlin-primitive':
+      case 'schema-primitive':
+        return field;
+      case 'schema-collection':
+        return {kind: 'schema-collection', schema: this.restrictField(field.schema, restrictedField.schema, opts)};
+      case 'schema-reference': {
+        const result = {...field};
+        result.schema.model.entitySchema.fields =
+            Schema.getRestrictedSchemaFields(field.schema.model.entitySchema, restrictedField.schema.model.entitySchema, opts);
+        return result;
+      }
+      case 'schema-inline': {
+        const result = {...field};
+        result.model.entitySchema.fields = Schema.getRestrictedSchemaFields(field.model.entitySchema, restrictedField.model.entitySchema, opts);
+        return result;
+      }
+      case 'schema-nested':
+      case 'schema-ordered-list':
+        return {kind: field.kind, schema: this.restrictField(field.schema, restrictedField.schema, opts)};
+      default:
+        throw new Error(`Unsupported field kind: ${field.kind}`);
+    }
   }
 }

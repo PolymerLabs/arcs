@@ -17,6 +17,7 @@ import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.PrimitiveType
 import arcs.core.data.ReferenceType
+import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
 import arcs.core.data.TupleType
 import arcs.core.data.TypeVariable
@@ -67,7 +68,7 @@ fun ListTypeProto.decodeAsFieldType(): FieldType.ListOf {
  */
 fun EntityTypeProto.decodeAsFieldType(): FieldType.InlineEntity {
     require(inline) { "Cannot decode non-inline entities to FieldType.InlineEntity" }
-    return FieldType.InlineEntity(schema.hash)
+    return FieldType.InlineEntity(schema.hash).also { SchemaRegistry.register(schema.decode()) }
 }
 
 /**
@@ -96,7 +97,7 @@ fun TypeProto.decodeAsFieldType(): FieldType = when (dataCase) {
  */
 fun EntityTypeProto.decode(): EntityType {
     require(!inline) { "Cannot decode inline entities to EntityType." }
-    return EntityType(schema.decode())
+    return EntityType(schema.decode()).also { SchemaRegistry.register(it.entitySchema) }
 }
 
 /** Converts a [SingletonTypeProto] protobuf instance into a Kotlin [SingletonType] instance. */
@@ -112,10 +113,14 @@ fun ReferenceTypeProto.decode() = ReferenceType(referredType.decode())
 fun TupleTypeProto.decode() = TupleType(elementsList.map { it.decode() })
 
 /** Converts a [TypeVariableProto] protobuf instance into a Kotlin [TypeVariable] instance. */
-fun TypeVariableProto.decode() = TypeVariable(
-    name,
-    if (hasConstraint()) constraint.constraintType.decode() else null
-)
+fun TypeVariableProto.decode(): TypeVariable {
+    require(hasConstraint()) { "TypeVariableProto must have a constraint." }
+    return TypeVariable(
+        name,
+        if (constraint.hasConstraintType()) constraint.constraintType.decode() else null,
+        constraint.maxAccess
+    )
+}
 
 /** Converts a [TypeProto] protobuf instance into a Kotlin [Type] instance. */
 // TODO(b/155812915): RefinementExpression.
@@ -137,9 +142,9 @@ fun TypeProto.decode(): Type = when (dataCase) {
 fun Type.encode(): TypeProto = when (this) {
     is TypeVariable -> {
         val proto = TypeVariableProto.newBuilder().setName(name)
-        constraint?.let {
-            proto.constraint = ConstraintInfo.newBuilder().setConstraintType(it.encode()).build()
-        }
+        val infoBuilder = ConstraintInfo.newBuilder().setMaxAccess(maxAccess)
+        constraint?.let { infoBuilder.setConstraintType(it.encode()) }
+        proto.constraint = infoBuilder.build()
         proto.build().asTypeProto()
     }
     is EntityType -> EntityTypeProto.newBuilder()

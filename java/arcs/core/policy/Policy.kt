@@ -19,15 +19,12 @@ import arcs.core.data.FieldName
 /** Defines a data usage policy. See [PolicyProto] for the canonical definition of a policy. */
 data class Policy(
     val name: String,
-    val egressType: EgressType,
+    val egressType: String,
     val description: String = "",
     val targets: List<PolicyTarget> = emptyList(),
     val configs: Map<String, PolicyConfig> = emptyMap(),
     val annotations: List<Annotation> = emptyList()
 ) {
-    /** The name of the egress particle that matches this policy. */
-    val egressParticleName = "Egress_$name"
-
     /** All fields mentioned the policy (includes nested fields). */
     val allFields: List<PolicyField> = collectAllFields()
 
@@ -102,12 +99,6 @@ data class PolicyRetention(
  * key-value pairs set by the policy author. They have no direct affect on the policy itself.
  */
 typealias PolicyConfig = Map<String, String>
-
-/** Egress type permitted by a policy, see [PolicyProto.EgressType]. */
-enum class EgressType {
-    LOGGING,
-    FEDERATED_AGGREGATION,
-}
 
 /** Type of usage permitted of a field, see [PolicyFieldProto.UsageType]. */
 enum class UsageType {

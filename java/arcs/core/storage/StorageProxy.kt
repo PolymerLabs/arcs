@@ -51,7 +51,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  */
 @Suppress("EXPERIMENTAL_API_USAGE")
 class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
-    storeEndpointProvider: StorageCommunicationEndpointProvider<Data, Op, T>,
+    storageEndpointProvider: StorageEndpointProvider<Data, Op, T>,
     crdt: CrdtModel<Data, Op, T>,
     private val scheduler: Scheduler,
     private val time: Time,
@@ -63,6 +63,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private val crdt: CrdtModel<Data, Op, T>
         get() = _crdt ?: throw IllegalStateException("StorageProxy closed")
 
+    val storageKey = storageEndpointProvider.storageKey
+
     /**
      * If you need to interact with the data managed by this [StorageProxy], and you're not a
      * [Store], you must either be performing your interactions within a handle callback or on this
@@ -71,14 +73,12 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     val dispatcher: CoroutineDispatcher
         get() = scheduler.asCoroutineDispatcher()
 
-    /** Identifier of the data this [StorageProxy] is managing. */
-    val storageKey: StorageKey = storeEndpointProvider.storageKey
-
     private val log = TaggedLog { "StorageProxy" }
     private val handleCallbacks = atomic(HandleCallbacks<T>())
     private val stateHolder = atomic(StateHolder<T>(ProxyState.NO_SYNC))
-    private val store: StorageCommunicationEndpoint<Data, Op, T> =
-        storeEndpointProvider.getStorageEndpoint(ProxyCallback(::onMessage))
+    private val store: StorageEndpoint<Data, Op, T> = storageEndpointProvider.create(
+        ProxyCallback(::onMessage)
+    )
 
     // Stash of operations to apply to the CRDT after we are synced with the store. These are
     // operations which have come in either before we were synced or while we were de-synced.
@@ -90,7 +90,6 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private val busySendingMessagesChannel = ConflatedBroadcastChannel(false)
 
     private var firstUpdateSent = false
-    private var lastDataUpdateHash: Int? = null
     private var lastSyncRequestTimestampMillis: Long? = null
 
     init {
@@ -219,7 +218,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     /**
      * Add a [Handle] `onUpdate` action associated with a [Handle] name.
      */
-    fun addOnUpdate(id: CallbackIdentifier, action: (value: T) -> Unit) {
+    fun addOnUpdate(id: CallbackIdentifier, action: (oldValue: T, newValue: T) -> Unit) {
         checkNotClosed()
         checkWillSync()
         handleCallbacks.update { it.addOnUpdate(id, action) }
@@ -284,10 +283,11 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         checkInDispatcher()
         log.verbose { "Applying operation: $op" }
 
+        val oldValue = crdt.consumerView
         if (!crdt.applyOperation(op)) {
             return CompletableDeferred(false)
         }
-        val value = crdt.consumerView
+        val newValue = crdt.consumerView
 
         // Let the store know about the op by piping it into our outgoing messages channel.
         val result = CompletableDeferred<Boolean>()
@@ -297,7 +297,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         // only be in onFirstStart and onStart, and as such particles aren't ready for updates yet).
         if (stateHolder.value.state in arrayOf(ProxyState.SYNC, ProxyState.DESYNC)) {
             // TODO: the returned Deferred doesn't account for this update propagation; should it?
-            notifyUpdate(value)
+            notifyUpdate(oldValue, newValue)
         }
         return result
     }
@@ -430,10 +430,10 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     }
 
     private fun processModelUpdate(model: Data) {
-        // TODO: send the returned merge changes to notifyUpdate()
+        val oldValue = crdt.consumerView
         crdt.merge(model)
 
-        val value = crdt.consumerView
+        val newValue = crdt.consumerView
         val toResolve = mutableSetOf<CompletableDeferred<T>>()
         val priorState = stateHolder.getAndUpdate {
             toResolve.addAll(it.waitingSyncs)
@@ -443,17 +443,17 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         }.state
 
         log.debug { "Completing ${toResolve.size} waiting syncs" }
-        toResolve.forEach { it.complete(value) }
+        toResolve.forEach { it.complete(newValue) }
 
         when (priorState) {
             ProxyState.AWAITING_SYNC -> {
                 notifyReady()
                 applyPostSyncModelOps()
             }
-            ProxyState.SYNC -> notifyUpdate(value)
+            ProxyState.SYNC -> notifyUpdate(oldValue, newValue)
             ProxyState.DESYNC -> {
                 notifyResync()
-                notifyUpdate(value)
+                notifyUpdate(oldValue, newValue)
                 applyPostSyncModelOps()
             }
             ProxyState.NO_SYNC,
@@ -484,6 +484,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
             return
         }
 
+        val oldValue = crdt.consumerView
         val couldApplyAllOps = operations.all { crdt.applyOperation(it) }
 
         if (!couldApplyAllOps) {
@@ -499,12 +500,12 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                 it.clearWaitingSyncs()
             }
 
-            val newConsumerView = crdt.consumerView
-            futuresToResolve.forEach { it.complete(newConsumerView) }
+            val newValue = crdt.consumerView
+            futuresToResolve.forEach { it.complete(newValue) }
 
             log.debug { "Notifying onUpdate listeners" }
 
-            notifyUpdate(newConsumerView)
+            notifyUpdate(oldValue, newValue)
         }
     }
 
@@ -526,17 +527,16 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         if (tasks.isNotEmpty()) scheduler.schedule(tasks)
     }
 
-    private fun notifyUpdate(data: T) {
+    private fun notifyUpdate(oldValue: T, newValue: T) {
         // If this isn't our first update and the data's hashCode is equivalent to the old data's
         // hashCode, no need to send an update.
-        if (firstUpdateSent && lastDataUpdateHash == data?.hashCode()) return
+        if (firstUpdateSent && oldValue.hashCode() == newValue.hashCode()) return
         firstUpdateSent = true
-        lastDataUpdateHash = data?.hashCode()
 
         log.debug { "notifying update" }
         val tasks = handleCallbacks.value.let {
             buildCallbackTasks(handleCallbacks.value.onUpdate, "onUpdate") {
-                it(data)
+                it(oldValue, newValue)
             } + buildCallbackTasks(handleCallbacks.value.notify, "notify(UPDATE)") {
                 it(StorageEvent.UPDATE)
             }
@@ -619,7 +619,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
 
     private data class HandleCallbacks<T>(
         val onReady: Map<CallbackIdentifier, List<() -> Unit>> = emptyMap(),
-        val onUpdate: Map<CallbackIdentifier, List<(T) -> Unit>> = emptyMap(),
+        val onUpdate: Map<CallbackIdentifier, List<(T, T) -> Unit>> = emptyMap(),
         val onDesync: Map<CallbackIdentifier, List<() -> Unit>> = emptyMap(),
         val onResync: Map<CallbackIdentifier, List<() -> Unit>> = emptyMap(),
         val notify: Map<CallbackIdentifier, List<(StorageEvent) -> Unit>> = emptyMap()
@@ -627,7 +627,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         fun addOnReady(id: CallbackIdentifier, block: () -> Unit) =
             copy(onReady = onReady + (id to ((onReady[id] ?: emptyList()) + block)))
 
-        fun addOnUpdate(id: CallbackIdentifier, block: (T) -> Unit) =
+        fun addOnUpdate(id: CallbackIdentifier, block: (T, T) -> Unit) =
             copy(onUpdate = onUpdate + (id to ((onUpdate[id] ?: emptyList()) + block)))
 
         fun addOnDesync(id: CallbackIdentifier, block: () -> Unit) =

@@ -3,9 +3,6 @@
 package arcs.showcase
 
 import android.app.Application
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
@@ -17,7 +14,6 @@ import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ParticleState
 import arcs.core.host.SchedulerProvider
-import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
@@ -33,7 +29,6 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -161,19 +156,12 @@ class ShowcaseEnvironment(
 
         DriverAndKeyConfigurator.configure(dbManager)
 
-        // Set up an android lifecycle for our arc host and store managers.
-        val lifecycleOwner = FakeLifecycleOwner()
-        withContext(Dispatchers.Main.immediate) {
-            lifecycleOwner.lifecycle.currentState = Lifecycle.State.RESUMED
-        }
-
         // Create a single scheduler provider for both the ArcHost as well as the Allocator.
         val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
 
         // Ensure we're using the StorageService (via the TestConnectionFactory)
         val activationFactory = ServiceStoreFactory(
             context,
-            lifecycleOwner.lifecycle,
             connectionFactory = TestConnectionFactory(context)
         )
 
@@ -184,7 +172,6 @@ class ShowcaseEnvironment(
             Dispatchers.Default,
             schedulerProvider,
             arcHostStoreManager,
-            activationFactory,
             *particleRegistrations
         )
 
@@ -196,13 +183,14 @@ class ShowcaseEnvironment(
             }
         )
 
-        return ShowcaseArcsComponents(dbManager, arcHostStoreManager, lifecycleOwner, arcHost)
+        return ShowcaseArcsComponents(dbManager, arcHostStoreManager, arcHost)
     }
 
     private suspend fun teardownArcs(components: ShowcaseArcsComponents) {
         // Stop all the arcs and shut down the arcHost.
         startedArcs.forEach { it.stop() }
         components.arcHost.shutdown()
+        components.arcHostStoreManager.reset()
 
         // Reset the Databases and close them.
         components.dbManager.resetAll()
@@ -212,14 +200,8 @@ class ShowcaseEnvironment(
     private data class ShowcaseArcsComponents(
         val dbManager: AndroidSqliteDatabaseManager,
         val arcHostStoreManager: StoreManager,
-        val arcHostLifecycle: FakeLifecycleOwner,
         val arcHost: ArcHost
     )
-
-    private class FakeLifecycleOwner : LifecycleOwner {
-        private val lifecycle = LifecycleRegistry(this)
-        override fun getLifecycle() = lifecycle
-    }
 }
 
 /**
@@ -230,12 +212,11 @@ class ShowcaseHost(
     coroutineContext: CoroutineContext,
     schedulerProvider: SchedulerProvider,
     override val stores: StoreManager,
-    override val activationFactory: ActivationFactory,
     vararg particleRegistrations: ParticleRegistration
 ) : AbstractArcHost(
     coroutineContext,
+    coroutineContext,
     schedulerProvider,
-    activationFactory,
     *particleRegistrations
 ) {
     override val platformTime = JvmTime
@@ -245,7 +226,9 @@ class ShowcaseHost(
         val arcHostContext = requireNotNull(getArcHostContext(arcId)) {
             "ArcHost: No arc host context found for $arcId"
         }
-        val particleContext = requireNotNull(arcHostContext.particles[particleName]) {
+        val particleContext = requireNotNull(arcHostContext.particles.first {
+            it.planParticle.particleName == particleName
+        }) {
             "ArcHost: No particle named $particleName found in $arcId"
         }
         val allowableStartStates = arrayOf(ParticleState.Running, ParticleState.Waiting)

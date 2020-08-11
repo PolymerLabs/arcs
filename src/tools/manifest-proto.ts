@@ -22,7 +22,6 @@ export const DirectionEnum = RootNamespace.lookupEnum('arcs.Direction');
 export const FateEnum = RootNamespace.lookupEnum('arcs.Fate');
 export const ManifestProto = RootNamespace.lookupType('arcs.ManifestProto');
 export const OperatorEnum = RootNamespace.lookupEnum('arcs.OPERATOR');
-export const PolicyEgressEnum = RootNamespace.lookupEnum('arcs.PolicyProto.EgressType');
 export const PolicyFieldUsageEnum = RootNamespace.lookupEnum('arcs.PolicyFieldProto.UsageType');
 export const PolicyProto = RootNamespace.lookupType('arcs.PolicyProto');
 export const PolicyRetentionMediumEnum = RootNamespace.lookupEnum('arcs.PolicyRetentionProto.Medium');

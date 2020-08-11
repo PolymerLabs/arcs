@@ -1,25 +1,25 @@
-[header]
+-----[header]-----
 Kotlin Schema Generation
 
 Expectations can be updated with:
 $ ./tools/sigh updateCodegenUnitTests
-[end_header]
+-----[end_header]-----
 
-[name]
+-----[name]-----
 generates empty schema
-[input]
+-----[input]-----
 particle P
   h1: reads {}
-[results]
+-----[results]-----
 arcs.core.data.Schema.EMPTY
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates a schema with multiple names
-[input]
+-----[input]-----
 particle P
   h1: reads Person Friend Parent {}
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(
     arcs.core.data.SchemaName("Person"),
@@ -31,17 +31,17 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "cd956ff7d2d4a14f434aa1427b84097d5c47037b",
-    refinement = { _ -> true },
-    query = null
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates a schema with primitive fields
-[input]
+-----[input]-----
 particle P
   h1: reads Person {name: Text, age: Number, friendNames: [Text]}
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -52,14 +52,14 @@ arcs.core.data.Schema(
         collections = mapOf("friendNames" to arcs.core.data.FieldType.Text)
     ),
     "accd28212161fc896d658e8c22c06051d1239e18",
-    refinement = { _ -> true },
-    query = null
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates a schema with Kotlin types
-[input]
+-----[input]-----
 particle P
   h1: reads Data {
     bt: Byte,
@@ -70,7 +70,7 @@ particle P
     flt: Float,
     dbl: Double,
   }
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Data")),
     arcs.core.data.SchemaFields(
@@ -86,17 +86,17 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "e444f20e280c14494a71cc6838bb97a18a14ea49",
-    refinement = { _ -> true },
-    query = null
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates a schema with lists of primitive fields
-[input]
+-----[input]-----
 particle P
   h1: reads Person {names: List<Text>, favNumbers: List<Number>}
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -107,17 +107,17 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "601707171fccbedc3f8d2506c326d6f0fddaaa04",
-    refinement = { _ -> true },
-    query = null
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates schemas for a reference
-[input]
+-----[input]-----
 particle P
   h1: reads Person {address: &Address {streetAddress: Text}}
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -127,10 +127,10 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "d44c98a544cbbdd187a7e0529046166ed6a4bcb0",
-    refinement = { _ -> true },
-    query = null
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
 )
-[next]
+-----[next]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Address")),
     arcs.core.data.SchemaFields(
@@ -138,17 +138,17 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "41a3bd27b7c53f1c5846754291653d13f49e3e8d",
-    refinement = { _ -> true },
-    query = null
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates schemas for a collection of references
-[input]
+-----[input]-----
 particle P
   h1: reads Person {address: [&Address {streetAddress: Text}]}
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -158,10 +158,10 @@ arcs.core.data.Schema(
         )
     ),
     "e386e5e1ae663a3b491008c6e931d81a5166ce20",
-    refinement = { _ -> true },
-    query = null
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
 )
-[next]
+-----[next]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Address")),
     arcs.core.data.SchemaFields(
@@ -169,17 +169,17 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "41a3bd27b7c53f1c5846754291653d13f49e3e8d",
-    refinement = { _ -> true },
-    query = null
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates schemas for a nested entity
-[input]
+-----[input]-----
 particle P
   h1: reads Person {address: inline Address {streetAddress: Text}}
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -189,10 +189,10 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "0c8f412660e502d17b310fadf8e950083965e3d5",
-    refinement = { _ -> true },
-    query = null
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
 )
-[next]
+-----[next]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Address")),
     arcs.core.data.SchemaFields(
@@ -200,14 +200,16 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "41a3bd27b7c53f1c5846754291653d13f49e3e8d",
-    refinement = { _ -> true },
-    query = null
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
 )
-[end]
+-----[require]-----
+results[0].match(/InlineEntity\("([a-f0-9]+)"\)/)[1] == results[1].match(/\n *"([a-f0-9]+)",\n/m)[1];
+-----[end]-----
 
-[name]
+-----[name]-----
 generates schemas for a nested entity referencing an external schema
-[input]
+-----[input]-----
 schema External
   name: Text
 
@@ -215,7 +217,7 @@ particle P
   h1: reads Thing {
     other: inline External
   }
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Thing")),
     arcs.core.data.SchemaFields(
@@ -225,10 +227,10 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "0e998e43c23c1ae55fe4c7d9c819669aa4ee9681",
-    refinement = { _ -> true },
-    query = null
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
 )
-[next]
+-----[next]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("External")),
     arcs.core.data.SchemaFields(
@@ -236,14 +238,16 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "dde7385227a50a4a4654027dba6feefccd1a7a39",
-    refinement = { _ -> true },
-    query = null
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
 )
-[end]
+-----[require]-----
+results[0].match(/InlineEntity\("([a-f0-9]+)"\)/)[1] == results[1].match(/\n *"([a-f0-9]+)",\n/m)[1];
+-----[end]-----
 
-[name]
+-----[name]-----
 generates schemas for a double nested entity
-[input]
+-----[input]-----
 particle P
   h1: reads Person {
     address: inline Address {
@@ -251,7 +255,7 @@ particle P
       city: inline City {name: Text}
     }
   }
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -261,10 +265,10 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "3932685180303cb50fc7493ab5ca4543ac176866",
-    refinement = { _ -> true },
-    query = null
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
 )
-[next]
+-----[next]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Address")),
     arcs.core.data.SchemaFields(
@@ -275,10 +279,10 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "357fa6d61d95ea4234984c2341bf1eb4664cc534",
-    refinement = { _ -> true },
-    query = null
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
 )
-[next]
+-----[next]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("City")),
     arcs.core.data.SchemaFields(
@@ -286,17 +290,20 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "783a4126e47d586196d9e80810b67199edcb04da",
-    refinement = { _ -> true },
-    query = null
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
 )
-[end]
+-----[require]-----
+results[0].match(/InlineEntity\("([a-f0-9]+)"\)/)[1] == results[1].match(/\n *"([a-f0-9]+)",\n/m)[1];
+results[1].match(/InlineEntity\("([a-f0-9]+)"\)/)[1] == results[2].match(/\n *"([a-f0-9]+)",\n/m)[1];
+-----[end]-----
 
-[name]
+-----[name]-----
 generates a schema with a refinement
-[input]
+-----[input]-----
 particle P
   h1: reads Person {name: Text, age: Number} [age >= 21]
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -307,20 +314,17 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "edabcee36cb653ff468fb77804911ddfa9303d67",
-    refinement = { data ->
-        val age = data.singletons["age"].toPrimitiveValue(Double::class, 0.0)
-        ((age > 21) || (age == 21))
-    },
-    query = null
+    refinementExpression =         ((CurrentScope<Number>(mutableMapOf())["age"] gt 21.asExpr()) or (CurrentScope<Number>(mutableMapOf())["age"] eq 21.asExpr())),
+    queryExpression = true.asExpr()
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates a schema with a query
-[input]
+-----[input]-----
 particle P
   h1: reads Person {name: Text, age: Number} [age >= ?]
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -331,21 +335,17 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "edabcee36cb653ff468fb77804911ddfa9303d67",
-    refinement = { _ -> true },
-    query = { data, queryArgs ->
-        val age = data.singletons["age"].toPrimitiveValue(Double::class, 0.0)
-        val queryArgument = queryArgs as Double
-        ((age > queryArgument) || (age == queryArgument))
-    }
+    refinementExpression = true.asExpr(),
+    queryExpression =         ((CurrentScope<Number>(mutableMapOf())["age"] gt query<Number>("queryArgument")) or (CurrentScope<Number>(mutableMapOf())["age"] eq query<Number>("queryArgument")))
 )
-[end]
+-----[end]-----
 
-[name]
+-----[name]-----
 generates schemas for a tuple connection
-[input]
+-----[input]-----
 particle P
   h1: reads (&Person {name: Text}, &Product {sku: Text})
-[results]
+-----[results]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Person")),
     arcs.core.data.SchemaFields(
@@ -353,10 +353,10 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "0149326a894f2d81705e1a08480330826f919cf0",
-    refinement = { _ -> true },
-    query = null
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
 )
-[next]
+-----[next]-----
 arcs.core.data.Schema(
     setOf(arcs.core.data.SchemaName("Product")),
     arcs.core.data.SchemaFields(
@@ -364,7 +364,7 @@ arcs.core.data.Schema(
         collections = emptyMap()
     ),
     "32bcfc983b9ea6145aa42fbc525abb96baafbc1f",
-    refinement = { _ -> true },
-    query = null
+    refinementExpression = true.asExpr(),
+    queryExpression = true.asExpr()
 )
-[end]
+-----[end]-----

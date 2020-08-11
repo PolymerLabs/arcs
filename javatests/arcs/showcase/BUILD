@@ -30,7 +30,6 @@ arcs_kt_android_library(
         "//java/arcs/sdk/android/storage/service",
         "//java/arcs/sdk/android/storage/service/testutil",
         "//third_party/android/androidx_test/core",
-        "//third_party/java/androidx/lifecycle",
         "//third_party/java/androidx/work:testing",
         "//third_party/java/junit:junit-android",
         "//third_party/kotlin/kotlinx_coroutines",

@@ -37,7 +37,12 @@ open class ProdArcHostService : ArcHostService() {
         lifecycle: Lifecycle,
         schedulerProvider: SchedulerProvider,
         vararg particles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, schedulerProvider, *particles), ProdHost
+    ) : AndroidHost(
+        context = context,
+        lifecycle = lifecycle,
+        schedulerProvider = schedulerProvider,
+        particles = *particles
+    ), ProdHost
 
     /**
      * This is open for tests to override, but normally isn't necessary.
@@ -45,7 +50,7 @@ open class ProdArcHostService : ArcHostService() {
     override val arcHost: ArcHost by lazy {
         ProdAndroidHost(
             this,
-            this.lifecycle,
+            lifecycle,
             JvmSchedulerProvider(scope.coroutineContext),
             *scanForParticles()
         )

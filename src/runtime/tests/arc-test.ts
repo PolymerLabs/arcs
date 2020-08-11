@@ -35,8 +35,7 @@ import {ReferenceModeStorageKey} from '../storage/reference-mode-storage-key.js'
 import {TestVolatileMemoryProvider} from '../testing/test-volatile-memory-provider.js';
 import {SingletonEntityStore, CollectionEntityStore, handleForStore} from '../storage/storage.js';
 import {Capabilities, Ttl, Queryable, Persistence} from '../capabilities.js';
-import {isActiveStore} from '../storage/store-interface.js';
-import {StorageKeyOptions} from '../storage-key-factory.js';
+import {isActiveMuxer} from '../storage/store-interface.js';
 
 async function setup(storageKeyPrefix:  (arcId: ArcId) => StorageKey) {
   const loader = new Loader();
@@ -1107,40 +1106,37 @@ describe('Arc storage migration', () => {
     };
 
     const things0Store = await getStoreByConnectionName('things0');
+    if (isActiveMuxer(things0Store)) {
+      assert.fail('things0 store can not be an active muxer');
+    }
+    const helloThing0 = await getStoreValue(await things0Store.serializeContents(), 0, 2);
+    assert.equal(helloThing0.rawData.name, 'hello');
+    const worldThing0 = await getStoreValue(await things0Store.serializeContents(), 1, 2);
+    assert.equal(worldThing0.rawData.name, 'world');
 
-    if (isActiveStore(things0Store)) {
-      const helloThing0 = await getStoreValue(await things0Store.serializeContents(), 0, 2);
-      assert.equal(helloThing0.rawData.name, 'hello');
-      const worldThing0 = await getStoreValue(await things0Store.serializeContents(), 1, 2);
-      assert.equal(worldThing0.rawData.name, 'world');
-      // `world` entity was added 1s after `hello`.
-      // This also verifies `hello` wasn't update when being re-added.
-      if (worldThing0.expirationTimestamp - helloThing0.expirationTimestamp < 1000) {
-        console.warn(`Flaky test: worldThing0.expirationTimestamp - helloThing0.expirationTimestamp` +
-            `${worldThing0.expirationTimestamp} - ${helloThing0.expirationTimestamp} < 1000`);
-      }
-      assert.isTrue(worldThing0.expirationTimestamp - helloThing0.expirationTimestamp >= 1000);
-    } else {
-      assert.fail('things0 store is not an active store');
+    // `world` entity was added 1s after `hello`.
+    // This also verifies `hello` wasn't update when being re-added.
+    if (worldThing0.expirationTimestamp - helloThing0.expirationTimestamp < 1000) {
+      console.warn(`Flaky test: worldThing0.expirationTimestamp - helloThing0.expirationTimestamp` +
+          `${worldThing0.expirationTimestamp} - ${helloThing0.expirationTimestamp} < 1000`);
     }
+    assert.isTrue(worldThing0.expirationTimestamp - helloThing0.expirationTimestamp >= 1000);
+
     const things1Store = await getStoreByConnectionName('things1');
-    if (isActiveStore(things1Store)) {
-      const fooThing1 = await getStoreValue(await things1Store.serializeContents(), 0, 1);
-      assert.equal(fooThing1.rawData.name, 'foo');
-      const things2Store = await getStoreByConnectionName('things2');
-      if (isActiveStore(things2Store)) {
-        const things2Contents = await things2Store.serializeContents();
-        const barThing2 = await getStoreValue(await things2Store.serializeContents(), 0, 1);
-        assert.equal(barThing2.rawData.name, 'bar');
-        // `foo` was added at the same time as `bar`, `bar` has a >1d longer ttl than `foo`.
-        assert.isTrue(barThing2.expirationTimestamp - fooThing1.expirationTimestamp >
-            24 * 60 * 60 * 1000);
-      } else {
-        assert.fail('things2 store is not an active store');
-      }
-    } else {
-      assert.fail('things1 store is not an active store');
+    if (isActiveMuxer(things1Store)) {
+      assert.fail('things1 store can not be an active muxer');
     }
+    const fooThing1 = await getStoreValue(await things1Store.serializeContents(), 0, 1);
+    assert.equal(fooThing1.rawData.name, 'foo');
+
+    const things2Store = await getStoreByConnectionName('things2');
+    if (isActiveMuxer(things2Store)) {
+      assert.fail('things2 store can not be an active muxer');
+    }
+    const barThing2 = await getStoreValue(await things2Store.serializeContents(), 0, 1);
+    assert.equal(barThing2.rawData.name, 'bar');
+    // `foo` was added at the same time as `bar`, `bar` has a >1d longer ttl than `foo`.
+    assert.isTrue(barThing2.expirationTimestamp - fooThing1.expirationTimestamp >
+        24 * 60 * 60 * 1000);
   });
 });
-

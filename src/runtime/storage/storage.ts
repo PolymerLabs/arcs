@@ -25,7 +25,7 @@ import {StorageKey} from './storage-key.js';
 import {Exists} from './drivers/driver.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {CRDTEntityTypeRecord, Identified} from '../crdt/crdt-entity.js';
-import {ActiveMuxer, AbstractActiveStore, isActiveMuxer, isActiveStore} from './store-interface.js';
+import {ActiveMuxer, isActiveMuxer} from './store-interface.js';
 import {EntityHandleFactory} from './entity-handle-factory.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';
 
@@ -166,7 +166,7 @@ export async function newHandle<T extends Type>(type: T, storageKey: StorageKey,
 }
 
 export function handleForActiveStore<T extends CRDTTypeRecord>(
-  store: AbstractActiveStore<T>,
+  store: ActiveStore<T>,
   arc: ArcLike,
   options: HandleOptions = {}
 ): ToHandle<T> {
@@ -182,7 +182,7 @@ export function handleForActiveStore<T extends CRDTTypeRecord>(
   if (isActiveMuxer(store)) {
     const proxyMuxer = new StorageProxyMuxer<CRDTMuxEntity>(store, type, storageKey);
     return new EntityHandleFactory(proxyMuxer) as ToHandle<T>;
-  } else if (isActiveStore(store)) {
+  } else {
     const proxy = new StorageProxy<T>(store.baseStore.id, store, type, storageKey, options.ttl);
     if (type instanceof SingletonType) {
       // tslint:disable-next-line: no-any
@@ -191,8 +191,6 @@ export function handleForActiveStore<T extends CRDTTypeRecord>(
       // tslint:disable-next-line: no-any
       return new CollectionHandle(generateID(), proxy as any, idGenerator, particle, canRead, canWrite, name) as ToHandle<T>;
     }
-  } else {
-    throw Error('Invalid active store');
   }
 }
 

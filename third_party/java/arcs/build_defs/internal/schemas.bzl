@@ -4,10 +4,10 @@ Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
 load("//devtools/build_cleaner/skylark:build_defs.bzl", "register_extension_info")
-load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
-load("//third_party/java/arcs/build_defs/internal:util.bzl", "manifest_only", "replace_arcs_suffix")
-load(":kotlin.bzl", "ARCS_SDK_DEPS", "arcs_kt_library", "arcs_kt_plan")
+load(":kotlin.bzl", "arcs_kt_library", "arcs_kt_plan")
 load(":manifest.bzl", "arcs_manifest")
+load(":tools.oss.bzl", "arcs_tool_schema2wasm")
+load(":util.bzl", "manifest_only", "replace_arcs_suffix")
 
 def _run_schema2wasm(
         name,
@@ -29,22 +29,15 @@ def _run_schema2wasm(
     if type(deps) == str:
         fail("deps must be a list")
 
-    sigh_command(
+    arcs_tool_schema2wasm(
         name = name,
         srcs = [src],
         outs = [out],
         deps = deps,
-        progress_message = "Generating {} entity schemas".format(language_name),
-
-        # TODO: generated header guard should contain whole workspace-relative
-        # path to file.
-        sigh_cmd = "schema2wasm " +
-                   language_flag + " " +
-                   ("--wasm " if wasm else "") +
-                   ("--test_harness " if test_harness else "") +
-                   "--outdir $(dirname {OUT}) " +
-                   "--outfile $(basename {OUT}) " +
-                   "{SRC}",
+        language_name = language_name,
+        language_flag = language_flag,
+        wasm = wasm,
+        test_harness = test_harness,
     )
 
 def arcs_cc_schema(name, src, deps = [], out = None):
@@ -62,6 +55,7 @@ def arcs_cc_schema(name, src, deps = [], out = None):
 def arcs_kt_schema(
         name,
         srcs,
+        arcs_sdk_deps,
         data = [],
         deps = [],
         platforms = ["jvm"],
@@ -89,6 +83,7 @@ def arcs_kt_schema(
     Args:
       name: name of the target to create
       srcs: list of Arcs manifest files to include
+      arcs_sdk_deps: build targets for the Arcs SDK to be included
       data: list of Arcs manifests needed at runtime
       deps: list of imported manifests
       platforms: list of target platforms (currently, `jvm` and `wasm` supported).
@@ -130,10 +125,10 @@ def arcs_kt_schema(
         name = name,
         srcs = outs,
         platforms = platforms,
-        deps = ARCS_SDK_DEPS,
+        deps = arcs_sdk_deps,
         visibility = visibility,
     )
-    outdeps = outdeps + ARCS_SDK_DEPS
+    outdeps = outdeps + arcs_sdk_deps
 
     if (test_harness):
         test_harness_outs = []
@@ -156,7 +151,7 @@ def arcs_kt_schema(
             name = name + "_test_harness",
             testonly = 1,
             srcs = test_harness_outs,
-            deps = ARCS_SDK_DEPS + [
+            deps = arcs_sdk_deps + [
                 ":" + name,
                 "//third_party/java/arcs:testing",
                 "//third_party/kotlin/kotlinx_coroutines",
@@ -167,6 +162,7 @@ def arcs_kt_schema(
 def arcs_kt_gen(
         name,
         srcs,
+        arcs_sdk_deps,
         data = [],
         deps = [],
         platforms = ["jvm"],
@@ -179,6 +175,7 @@ def arcs_kt_gen(
     Args:
       name: name of the target to create
       srcs: list of Arcs manifest files to include
+      arcs_sdk_deps: build targets for the Arcs SDK to be included
       data: list of Arcs manifests needed at runtime
       deps: list of dependent arcs targets, such as an arcs_kt_gen target in a different package
       platforms: list of target platforms (currently, `jvm` and `wasm` supported).
@@ -199,6 +196,7 @@ def arcs_kt_gen(
     schema = arcs_kt_schema(
         name = schema_name,
         srcs = srcs,
+        arcs_sdk_deps = arcs_sdk_deps,
         deps = deps + [":" + manifest_name],
         platforms = platforms,
         test_harness = test_harness,
@@ -207,6 +205,7 @@ def arcs_kt_gen(
     plan = arcs_kt_plan(
         name = plan_name,
         srcs = srcs,
+        arcs_sdk_deps = arcs_sdk_deps,
         data = [":" + manifest_name],
         deps = deps + [":" + schema_name],
         platforms = platforms,
@@ -218,7 +217,7 @@ def arcs_kt_gen(
         name = name,
         srcs = depset(schema["outs"] + plan["outs"]).to_list(),
         platforms = platforms,
-        deps = depset(schema["deps"] + plan["deps"]).to_list(),
+        deps = depset(schema["deps"] + plan["deps"] + manifest_only(deps, inverse = True)).to_list(),
         visibility = visibility,
     )
 

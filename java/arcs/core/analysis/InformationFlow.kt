@@ -16,17 +16,21 @@ import arcs.core.data.Check
 import arcs.core.data.Claim
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
+import arcs.core.data.FieldName
+import arcs.core.data.FieldType
 import arcs.core.data.HandleConnectionSpec
-import arcs.core.data.HandleMode
 import arcs.core.data.InformationFlowLabel
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.MuxType
+import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe
 import arcs.core.data.Recipe.Particle
 import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
+import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
 import arcs.core.data.TupleType
+import arcs.core.data.TypeVariable
 import arcs.core.type.Tag
 import arcs.core.type.Type
 import arcs.core.util.TaggedLog
@@ -37,7 +41,8 @@ import java.util.BitSet
  */
 class InformationFlow private constructor(
     private val graph: RecipeGraph,
-    private val ingresses: List<IngressInfo>
+    private val ingresses: List<IngressInfo>,
+    private val egressChecks: Map<ParticleSpec, List<Check>>
 ) : RecipeGraphFixpointIterator<AccessPathLabels>(AccessPathLabels.getBottom()) {
 
     /**
@@ -48,14 +53,26 @@ class InformationFlow private constructor(
 
     private val log = TaggedLog { "InformationFlow" }
 
+    private val typeVariableSemantics = graph.particleNodes.associateBy(
+        keySelector = { it.particle },
+        valueTransform = { it.particle.semanticsOfTypeVariables() }
+    )
+
     private val particleClaims = graph.particleNodes.associateBy(
         keySelector = { it.particle },
-        valueTransform = { it.instantiatedClaims() }
+        valueTransform = {
+            it.instantiatedClaims() + (typeVariableSemantics[it.particle]?.claims ?: emptyList())
+        }
     )
 
     private val particleChecks = graph.particleNodes.associateBy(
         keySelector = { it.particle },
-        valueTransform = { it.instantiatedChecks() }
+        valueTransform = { node ->
+            val instantiatedExtraChecks = egressChecks[node.particle.spec]?.map { check ->
+                check.instantiateFor(node.particle)
+            }
+            node.instantiatedChecks() + (instantiatedExtraChecks ?: emptyList())
+        }
     )
 
     /** Returns all the labels in the given list of [Claim] instances. */
@@ -126,17 +143,20 @@ class InformationFlow private constructor(
         // This takes care of `TOP` and `BOTTOM`.
         val inputLabelsMap = input.accessPathLabels ?: return input
 
+        val inaccessiblePaths = typeVariableSemantics[particle]?.inaccessiblePaths
         // Compute the label that is obtained by combining labels on all inputs.
-        val mixedLabels = inputLabelsMap.values
+        val mixedLabels = inputLabelsMap.asSequence()
+            .filterNot { (accessPath, _) -> inaccessiblePaths?.contains(accessPath) ?: false }
+            .map { (_, labels) -> labels }
             .fold(InformationFlowLabels(emptySet())) { acc, cur -> acc join cur }
 
         // Update all the outputs with the mixed label value.
-        // TODO(bgogul): For fields, we are only going one level deep. Do we need to go further?
         val resultAccessPathLabels = mutableMapOf<AccessPath, InformationFlowLabels>()
-        particle.handleConnections.filter { it.spec.isWrite() }
+        particle.handleConnections.filter { it.spec.direction.canWrite }
             .flatMap { handleConnection ->
                 val root = AccessPath.Root.HandleConnection(particle, handleConnection.spec)
-                handleConnection.spec.type.getAccessPaths(root).map { it to mixedLabels.copy() }
+                val resolvedType = particle.getResolvedType(handleConnection.spec)
+                resolvedType.getAccessPaths(root).map { it to mixedLabels.copy() }
             }.toMap(resultAccessPathLabels)
 
         // Apply claims if any.
@@ -159,7 +179,7 @@ class InformationFlow private constructor(
         val accessPathLabels = input.accessPathLabels ?: return input
         val handleConnection = AccessPath.Root.HandleConnection(fromParticle, spec)
         val handle = AccessPath.Root.Handle(toHandle)
-        val targetSelectors = toHandle.type.accessPathSelectors()
+        val targetSelectors = toHandle.type.accessPathSelectors(partial = true)
 
         // Filter out the information pertaining to the given handle-connection -> handle edge.
         // Also, convert the root of the access path from handle-connection to handle.
@@ -167,7 +187,7 @@ class InformationFlow private constructor(
             accessPathLabels
                 .filterKeys { accessPath ->
                     accessPath.root == handleConnection &&
-                    accessPath.selectorsMatchAnyPrefix(targetSelectors)
+                    accessPath.isCompatibleWith(targetSelectors)
                 }
                 .map { (accessPath, labels) -> AccessPath(handle, accessPath.selectors) to labels }
                 .toMap()
@@ -183,7 +203,8 @@ class InformationFlow private constructor(
         val accessPathLabels = input.accessPathLabels ?: return input
         val handleConnection = AccessPath.Root.HandleConnection(toParticle, spec)
         val handle = AccessPath.Root.Handle(fromHandle)
-        val targetSelectors = spec.type.accessPathSelectors()
+        val resolvedType = toParticle.getResolvedType(spec)
+        val targetSelectors = resolvedType.accessPathSelectors(partial = true)
 
         // Filter out the information pertaining to the given handle -> handle-connection edge.
         // Also, convert the root of the access path from handle to handle-connection.
@@ -191,7 +212,7 @@ class InformationFlow private constructor(
             accessPathLabels
                 .filterKeys { accessPath ->
                     accessPath.root == handle &&
-                    accessPath.selectorsMatchAnyPrefix(targetSelectors)
+                    accessPath.isCompatibleWith(targetSelectors)
                 }
                 .map { (accessPath, labels) ->
                     AccessPath(handleConnection, accessPath.selectors) to labels
@@ -208,7 +229,7 @@ class InformationFlow private constructor(
         val accessPathLabels = input.accessPathLabels ?: return input
         val toHandleRoot = AccessPath.Root.Handle(toHandle)
         val handle = AccessPath.Root.Handle(fromHandle)
-        val sourceSelectors = fromHandle.type.accessPathSelectors()
+        val sourceSelectors = fromHandle.type.accessPathSelectors(partial = true)
 
         // Filter out the information pertaining to the given handle -> join-handle edge.
         // Also, convert the root of the access path from handle to join-handle.
@@ -217,7 +238,7 @@ class InformationFlow private constructor(
             accessPathLabels
                 .filterKeys { accessPath ->
                     accessPath.root == handle &&
-                    accessPath.selectorsMatchAnyPrefix(sourceSelectors)
+                    accessPath.isCompatibleWith(sourceSelectors)
                 }
                 .map { (accessPath, labels) ->
                     AccessPath(toHandleRoot, component + accessPath.selectors) to labels
@@ -225,9 +246,177 @@ class InformationFlow private constructor(
         )
     }
 
+    /** Semantics of a [TypeVariable] in a particle. */
+    data class TypeVariableSemantics(
+        val claims: List<Claim>,
+        val inaccessiblePaths: List<AccessPath>
+    )
+
+    /** Information about restrictions on [AccessPath] induced by a [TypeVariable]. */
+    data class AccessPathRestrictions(
+        val typeVariable: TypeVariable,
+        val prefix: AccessPath,
+        val accessibleSelectors: Set<List<AccessPath.Selector>>,
+        val inaccessibleSelectors: Set<List<AccessPath.Selector>>
+    )
+
+    /** Returns the restrictions induced by [TypeVariable]s in the type. */
+    private fun getAccessPathRestrictions(
+        specType: Type,
+        resolvedType: Type,
+        prefix: AccessPath
+    ): List<AccessPathRestrictions> {
+        if (specType.tag == Tag.TypeVariable) {
+            specType as TypeVariable
+            val resolvedTypeSelectors = resolvedType.accessPathSelectors(partial = true)
+            val accessibleSelectors =
+                specType.constraint?.accessPathSelectors(partial = true) ?: resolvedTypeSelectors
+            val inaccessibleSelectors = resolvedTypeSelectors.minus(accessibleSelectors)
+            return listOf(
+                AccessPathRestrictions(
+                    specType,
+                    prefix,
+                    accessibleSelectors,
+                    inaccessibleSelectors
+                )
+            )
+        }
+        require(specType.tag == resolvedType.tag) {
+            "Type of a connection in particle spec is incompatible with " +
+            "the type of the corresponding connection in a particle."
+        }
+        return when (specType.tag) {
+            Tag.Collection -> getAccessPathRestrictions(
+                (specType as CollectionType<*>).collectionType,
+                (resolvedType as CollectionType<*>).collectionType,
+                prefix
+            )
+            Tag.Count,
+            Tag.Entity -> emptyList<AccessPathRestrictions>()
+            Tag.Reference -> getAccessPathRestrictions(
+                (specType as ReferenceType<*>).containedType,
+                (resolvedType as ReferenceType<*>).containedType,
+                prefix
+            )
+            Tag.Mux -> getAccessPathRestrictions(
+                (specType as MuxType<*>).containedType,
+                (resolvedType as MuxType<*>).containedType,
+                prefix
+            )
+            Tag.Tuple -> (specType as TupleType).elementTypes
+                .foldIndexed(emptyList<AccessPathRestrictions>()) { index, acc, cur ->
+                    val newPrefix = AccessPath(prefix.root, prefix.selectors + getTupleField(index))
+                    acc + getAccessPathRestrictions(
+                        cur,
+                        (resolvedType as TupleType).elementTypes[index],
+                        newPrefix
+                    )
+                }
+            Tag.Singleton -> getAccessPathRestrictions(
+                (specType as SingletonType<*>).containedType,
+                (resolvedType as SingletonType<*>).containedType,
+                prefix
+            )
+            Tag.TypeVariable -> throw IllegalArgumentException(
+                "TypeVariable should already be handled!"
+            )
+        }
+    }
+
+    private fun Type.typeVariableClaims(
+        prefix: AccessPath,
+        restrictions: Map<String, List<AccessPathRestrictions>>
+    ): List<Claim> = when (tag) {
+        Tag.Collection -> {
+            (this as CollectionType<*>).collectionType.typeVariableClaims(prefix, restrictions)
+        }
+        Tag.Count,
+        Tag.Entity -> emptyList<Claim>()
+        Tag.Reference -> {
+            (this as ReferenceType<*>).containedType.typeVariableClaims(prefix, restrictions)
+        }
+        Tag.Mux -> {
+            (this as MuxType<*>).containedType.typeVariableClaims(prefix, restrictions)
+        }
+        Tag.Tuple -> (this as TupleType).elementTypes
+            .foldIndexed(emptyList<Claim>()) { index, acc, cur ->
+                val newPrefix = AccessPath(prefix.root, prefix.selectors + getTupleField(index))
+                acc + cur.typeVariableClaims(newPrefix, restrictions)
+            }
+        Tag.Singleton -> {
+            (this as SingletonType<*>).containedType.typeVariableClaims(prefix, restrictions)
+        }
+        Tag.TypeVariable -> {
+            this as TypeVariable
+            restrictions[name]?.flatMap { restriction ->
+                restriction.inaccessibleSelectors.map { selector ->
+                    val source = AccessPath(
+                        restriction.prefix.root,
+                        restriction.prefix.selectors + selector
+                    )
+                    val target = AccessPath(prefix.root, prefix.selectors + selector)
+                    Claim.DerivesFrom(target = target, source = source)
+                }
+            } ?: emptyList()
+        }
+    }
+
+    /** Returns the claims induced by type variables in the particle spec. */
+    private fun Particle.semanticsOfTypeVariables(): TypeVariableSemantics {
+        // Collect restrictions induced by type variables for all input connections.
+        val restrictions = spec.connections.values
+            .filter {
+                it.direction.canRead || (it.direction.canQuery && !it.direction.canWrite)
+            }
+            .flatMap {
+                getAccessPathRestrictions(
+                    specType = it.type,
+                    resolvedType = getResolvedType(it),
+                    prefix = AccessPath(this, it)
+                )
+            }
+            .groupBy { it.typeVariable.name }
+
+        val claims = spec.connections.values
+            .filter { it.direction.canWrite }
+            .flatMap { connectionSpec ->
+                connectionSpec.type.typeVariableClaims(
+                    AccessPath(this, connectionSpec),
+                    restrictions
+                )
+            }
+
+        val inaccessiblePaths = restrictions.values.flatMap { restrictionList ->
+            restrictionList.flatMap { restriction ->
+                restriction.inaccessibleSelectors.map { selector ->
+                    AccessPath(restriction.prefix.root, restriction.prefix.selectors + selector)
+                }
+            }
+        }
+
+        log.debug {
+            if (restrictions.isNotEmpty()) {
+                "TypeVariable Semantics for ${spec.name}\n" +
+                claims.joinToString(prefix = "  ", separator = "\n  ", postfix = "\n") +
+                inaccessiblePaths.joinToString(prefix = "Inaccessible:\n  ", separator = "\n  ")
+            } else {
+                "No type variables in ${spec.name}"
+            }
+        }
+        return TypeVariableSemantics(claims = claims, inaccessiblePaths = inaccessiblePaths)
+    }
+
+    /** Returns the resolved type for the given handle connection spec in the particle. */
+    private fun Particle.getResolvedType(connectionSpec: HandleConnectionSpec): Type {
+        val connection = requireNotNull(handleConnections.find { it.spec == connectionSpec }) {
+            "Unable to find a handle connection for ${connectionSpec.name} in a particle."
+        }
+        return connection.type
+    }
+
     /** Returns all the [AccessPath] instances for this [Type] with the given [root]. */
     private fun Type.getAccessPaths(root: AccessPath.Root): List<AccessPath> {
-        val selectorsList = accessPathSelectors()
+        val selectorsList = accessPathSelectors(partial = false)
         if (selectorsList.isEmpty()) {
             return listOf(AccessPath(root))
         } else {
@@ -235,52 +424,93 @@ class InformationFlow private constructor(
         }
     }
 
-    /** Returns the [AccessPath.Selector] part of the [AccessPath] instances for this [Type]. */
-    private fun Type.accessPathSelectors(): Set<List<AccessPath.Selector>> = when (tag) {
-        // TODO(bgogul): For fields, we are only going one level deep. Do we need to go further?
-        Tag.Collection -> (this as CollectionType<*>).collectionType.accessPathSelectors()
+    /**
+     * Returns the [AccessPath.Selector] part of the [AccessPath] instances for this [Type].
+     *
+     * If [partial] is true, returns intermedate paths as well. e.g., `foo.a` and `foo.a.b`
+     * are both returned if [partial] is true, otherwise only `foo.a.b` is returned.
+     */
+    private fun Type.accessPathSelectors(
+        partial: Boolean
+    ): Set<List<AccessPath.Selector>> = when (tag) {
+        Tag.Collection -> (this as CollectionType<*>).collectionType.accessPathSelectors(partial)
         Tag.Count -> emptySet<List<AccessPath.Selector>>()
-        Tag.Entity -> (this as EntityType).entitySchema.accessPathSelectors()
+        Tag.Entity -> (this as EntityType).entitySchema.accessPathSelectors(emptyList(), partial)
         // TODO(b/154234733): This only supports simple use cases of references.
-        Tag.Reference -> (this as ReferenceType<*>).containedType.accessPathSelectors()
-        Tag.Mux -> (this as MuxType<*>).containedType.accessPathSelectors()
+        Tag.Reference -> (this as ReferenceType<*>).containedType.accessPathSelectors(partial)
+        Tag.Mux -> (this as MuxType<*>).containedType.accessPathSelectors(partial)
         Tag.Tuple -> (this as TupleType).elementTypes
             .foldIndexed(emptySet<List<AccessPath.Selector>>()) { index, acc, cur ->
-                acc + cur.accessPathSelectors().map { listOf(getTupleField(index)) + it }
+                acc + cur.accessPathSelectors(partial).map { listOf(getTupleField(index)) + it }
             }
-        Tag.Singleton -> (this as SingletonType<*>).containedType.accessPathSelectors()
+        Tag.Singleton -> (this as SingletonType<*>).containedType.accessPathSelectors(partial)
         Tag.TypeVariable -> throw IllegalArgumentException("TypeVariable should be resolved!")
     }
 
-    /** Returns the [AccessPath.Selector] part of [AccessPath] instances for this [Schema]. */
-    private fun Schema.accessPathSelectors(): Set<List<AccessPath.Selector>> {
-        return (
-            fields.singletons.keys.map { listOf(AccessPath.Selector.Field(it)) } +
-            fields.collections.keys.map { listOf(AccessPath.Selector.Field(it)) }
-        ).toSet()
+    /**
+     * Returns the [AccessPath.Selector] part of [AccessPath] instances for this [Schema].
+     * If [partial] is true, returns intermedate paths as well.
+     */
+    private fun Schema.accessPathSelectors(
+        prefix: List<AccessPath.Selector>,
+        partial: Boolean
+    ): Set<List<AccessPath.Selector>> {
+        return fields.singletons.accessPathSelectors(prefix, partial) +
+        fields.collections.accessPathSelectors(prefix, partial)
     }
 
-    /** Returns true if the selectors of the given [AccessPath] match any of the [prefixes]. */
-    private fun AccessPath.selectorsMatchAnyPrefix(
-        prefixes: Set<List<AccessPath.Selector>>
-    ): Boolean {
-        return (prefixes.isEmpty() && selectors.isEmpty()) || prefixes.any { prefix ->
-            prefix.size <= selectors.size && selectors.subList(0, prefix.size) == prefix
-        }
+    private fun Map<FieldName, FieldType>.accessPathSelectors(
+        prefix: List<AccessPath.Selector>,
+        partial: Boolean
+    ): Set<List<AccessPath.Selector>> {
+        return asSequence().fold(emptySet<List<AccessPath.Selector>>()) { acc, (name, type) ->
+            acc +
+            type.accessPathSelectors(prefix + listOf(AccessPath.Selector.Field(name)), partial)
+        }.toSet()
     }
 
-    /** Apply the [claims] to the given map. */
-    private fun MutableMap<AccessPath, InformationFlowLabels>.applyClaims(claims: List<Claim>) {
-        claims.forEach { claim ->
-            when (claim) {
-                is Claim.Assume -> applyAssume(claim)
-                is Claim.DerivesFrom -> {
-                    // TODO(bgogul): Deal with derivesFrom claims.
-                    TODO("DerivesFrom claims are not yet handled!")
-                }
+    private fun FieldType.accessPathSelectors(
+        prefix: List<AccessPath.Selector>,
+        partial: Boolean
+    ): Set<List<AccessPath.Selector>> {
+        return when (tag) {
+            // For primitives, we don't go down to collect access paths.
+            FieldType.Tag.Primitive -> setOf(prefix)
+            // TODO(b/154234733): For references, we should go down, but it gets a bit tricky
+            // as there can be cycles in the access paths. Right now, we don't support cyclic
+            // references. So, it is OK to go down. Eventually we should detect cycles here.
+            FieldType.Tag.EntityRef -> {
+                val schema = SchemaRegistry.getSchema((this as FieldType.EntityRef).schemaHash)
+                (if (partial) setOf(prefix) else emptySet()) +
+                schema.accessPathSelectors(prefix, partial)
+            }
+            FieldType.Tag.Tuple -> {
+                // Access path selectors of all components.
+                val componentSelectors = (this as FieldType.Tuple).types
+                    .foldIndexed(emptySet<List<AccessPath.Selector>>()) { index, result, cur ->
+                        result + cur.accessPathSelectors(prefix, partial).map {
+                            // Prepend the component selector to the component's access paths.
+                            listOf(getTupleField(index)) + it
+                        }
+                    }
+                (if (partial) setOf(prefix) else emptySet()) + componentSelectors
+            }
+            FieldType.Tag.List -> {
+                (if (partial) setOf(prefix) else emptySet()) +
+                (this as FieldType.ListOf).primitiveType.accessPathSelectors(prefix, partial)
+            }
+            FieldType.Tag.InlineEntity -> {
+                val schema = SchemaRegistry.getSchema((this as FieldType.InlineEntity).schemaHash)
+                (if (partial) setOf(prefix) else emptySet()) +
+                schema.accessPathSelectors(prefix, partial)
             }
         }
     }
+
+    /** Returns true if the selectors of the given [AccessPath] is present in [targetSelectors]. */
+    private fun AccessPath.isCompatibleWith(
+        targetSelectors: Set<List<AccessPath.Selector>>
+    ) = (targetSelectors.isEmpty() && selectors.isEmpty()) || targetSelectors.contains(selectors)
 
     /** Apply the [Claim.Assume] [claims] to the given map. */
     private fun MutableMap<AccessPath, InformationFlowLabels>.applyAssumes(claims: List<Claim>) {
@@ -357,9 +587,21 @@ class InformationFlow private constructor(
         public fun computeLabels(recipe: Recipe, ingressSpecs: List<String>): AnalysisResult {
             val graph = RecipeGraph(recipe)
             val ingresses = ingressSpecs.flatMap { getIngressInfo(graph, it) }
-            val analysis = InformationFlow(graph, ingresses)
+            return computeLabels(graph, ingresses, emptyMap())
+        }
+
+        /**
+         * Computes the labels for [recipe] using the given [ingresses] and additional
+         * checks for the particles provided in [egressChecks].
+         */
+        public fun computeLabels(
+            graph: RecipeGraph,
+            ingresses: List<IngressInfo>,
+            egressChecks: Map<ParticleSpec, List<Check>>
+        ): AnalysisResult {
+            val analysis = InformationFlow(graph, ingresses, egressChecks)
             return AnalysisResult(
-                recipe = recipe,
+                recipe = graph.recipe,
                 fixpoint = analysis.computeFixpoint(graph) { value, prefix ->
                     value.toString(prefix) { i -> "${analysis.labels[i]}" }
                 },
@@ -389,7 +631,7 @@ class InformationFlow private constructor(
             // Otherwise, extract ingress information for all the write connections.
             // (See filter below.)
             return particle.handleConnections
-                .filter { connectionName?.equals(it.spec.name) ?: it.spec.isWrite() }
+                .filter { connectionName?.equals(it.spec.name) ?: it.spec.direction.canWrite }
                 .map { handleConnection -> getIngressInfo(particleNode, handleConnection) }
         }
 
@@ -399,7 +641,7 @@ class InformationFlow private constructor(
             handleConnection: Recipe.Particle.HandleConnection
         ): IngressInfo {
             val particle = particleNode.particle
-            val neighbors = if (handleConnection.spec.isWrite()) {
+            val neighbors = if (handleConnection.spec.direction.canWrite) {
                 particleNode.successors
             } else {
                 particleNode.predecessors
@@ -444,20 +686,6 @@ private fun Predicate.labels(): List<InformationFlowLabel> = when (this) {
     is Predicate.Not -> predicate.labels()
     is Predicate.Or -> lhs.labels() + rhs.labels()
     is Predicate.And -> lhs.labels() + rhs.labels()
-}
-
-/** Returns true if the [HandleConnectionSpec] is a write. */
-private fun HandleConnectionSpec.isWrite() = when (direction) {
-    HandleMode.Write,
-    HandleMode.ReadWrite,
-    HandleMode.WriteQuery,
-    HandleMode.ReadWriteQuery -> true
-    HandleMode.Read, HandleMode.ReadQuery, HandleMode.Query -> false
-}
-
-private fun HandleConnectionSpec.isReadWrite() = when (direction) {
-    HandleMode.ReadWrite, HandleMode.ReadWriteQuery -> true
-    else -> false
 }
 
 /** Returns true if the [check] is satisfied by the labels computed for [particle]. */

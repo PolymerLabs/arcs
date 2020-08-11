@@ -16,6 +16,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/android/host/parcelables",
         "//java/arcs/core/common",
         "//java/arcs/core/data",
+        "//java/arcs/core/data/expression",
         "//java/arcs/core/host",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/keys",

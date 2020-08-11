@@ -9,9 +9,8 @@
  */
 
 import {mapToDictionary} from '../runtime/util.js';
-import {PolicyConfig, PolicyField, PolicyTarget, Policy, PolicyAllowedUsageType} from '../runtime/policy/policy.js';
-import {AnnotationRef} from '../runtime/recipe/annotation.js';
-import {PolicyRetentionMediumEnum, PolicyFieldUsageEnum, PolicyEgressEnum} from './manifest-proto.js';
+import {PolicyConfig, PolicyField, PolicyTarget, Policy} from '../runtime/policy/policy.js';
+import {PolicyRetentionMediumEnum, PolicyFieldUsageEnum} from './manifest-proto.js';
 import {annotationToProtoPayload} from './annotation2proto.js';
 
 export function policyToProtoPayload(policy: Policy) {
@@ -20,7 +19,7 @@ export function policyToProtoPayload(policy: Policy) {
     targets: policy.targets.map(policyTargetToProtoPayload),
     configs: policy.configs.map(policyConfigToProtoPayload),
     description: policy.description,
-    egressType: convertToProtoEnum(policy.egressType, PolicyEgressEnum),
+    egressType: policy.egressType,
     annotations: policy.customAnnotations.map(annotationToProtoPayload),
   };
 }

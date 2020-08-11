@@ -364,6 +364,108 @@ describe('TypeChecker', () => {
     assert.isNotNull(newType instanceof TypeVariable && newType.variable.resolution);
   });
 
+  it('resolves a type variable to its min type by default', () => {
+    const concreteType = EntityType.make(['Product'], {name: 'Text', phone: 'Number'}).collectionOf();
+    const constraint = EntityType.make([], {name: 'Text'});
+    const variableType = TypeVariable.make('a', constraint, null).collectionOf();
+    TypeChecker.processTypeList(null, [
+      {type: concreteType, direction: 'writes'},
+      {type: variableType, direction: 'reads'},
+    ]);
+    variableType.maybeEnsureResolved();
+    assert.deepStrictEqual(variableType.getEntitySchema(), constraint.getEntitySchema());
+  });
+
+  it('can resolve a type variable to its max type', () => {
+    const concreteType = EntityType.make(['Product'], {name: 'Text', phone: 'Number'}).collectionOf();
+    const constraint = EntityType.make([], {name: 'Text'});
+    const variableType = TypeVariable.make('a', constraint, null, true).collectionOf();
+    TypeChecker.processTypeList(null, [
+      {type: concreteType, direction: 'writes'},
+      {type: variableType, direction: 'reads'},
+    ]);
+    variableType.maybeEnsureResolved();
+    assert.deepStrictEqual(variableType.getEntitySchema(), concreteType.getEntitySchema());
+  });
+
+  it('resolves a type variable to its min type through an intermediary variable by default', () => {
+    const concreteType = EntityType.make(['Product'], {name: 'Text', phone: 'Number'}).collectionOf();
+    const constraint = EntityType.make([], {name: 'Text'});
+    const variable = TypeVariable.make('a', constraint, null);
+    const redactorInputType = new TypeVariable(variable.variable).collectionOf();
+    const redactorOutputType = variable.collectionOf();
+    const egressType = TypeVariable.make('x', null, null, false).collectionOf();
+    TypeChecker.processTypeList(null, [
+      {type: concreteType, direction: 'writes'},
+      {type: redactorInputType, direction: 'reads'},
+    ]);
+    TypeChecker.processTypeList(null, [
+      {type: redactorOutputType, direction: 'writes'},
+      {type: egressType, direction: 'reads'},
+    ]);
+    egressType.maybeEnsureResolved();
+    assert.deepStrictEqual(egressType.getEntitySchema(), constraint.getEntitySchema());
+  });
+
+  it('can resolve a type variable to its max type through an intermediary variable', () => {
+    const concreteType = EntityType.make(['Product'], {name: 'Text', phone: 'Number'}).collectionOf();
+    const constraint = EntityType.make([], {name: 'Text'});
+    const variable = TypeVariable.make('a', constraint, null);
+    const redactorInputType = new TypeVariable(variable.variable).collectionOf();
+    const redactorOutputType = variable.collectionOf();
+    const egressType = TypeVariable.make('x', null, null, true).collectionOf();
+    TypeChecker.processTypeList(null, [
+      {type: concreteType, direction: 'writes'},
+      {type: redactorInputType, direction: 'reads'},
+    ]);
+    TypeChecker.processTypeList(null, [
+      {type: redactorOutputType, direction: 'writes'},
+      {type: egressType, direction: 'reads'},
+    ]);
+    egressType.maybeEnsureResolved();
+    assert.deepStrictEqual(egressType.getEntitySchema(), concreteType.getEntitySchema());
+  });
+
+  it('can resolve a type variable to its max type through an intermediary variable via a manifest', async () => {
+    const manifest = await Manifest.parse(`
+        particle OrderIngestion in '.OrderIngestion'
+          data: writes [Product {sku: Text, name: Text, price: Number}]
+
+        particle SkuRedactor in '.SkuRedactor'
+          input: reads [~a with {sku: Text}]
+          output: writes [~a]
+
+        particle Egress in '.Egress'
+          data: reads [~x with {sku: Text, *}]
+
+        recipe Shop
+          beforeRedaction: create
+          afterRedaction: create
+          OrderIngestion
+            data: beforeRedaction
+          SkuRedactor
+            input: beforeRedaction
+            output: afterRedaction
+          Egress 
+            data: afterRedaction
+    `);
+
+    const recipe = manifest.recipes[0];
+
+    const orderParticle = recipe.particles.find(p => p.name === 'OrderIngestion').spec;
+    const egressParticle = recipe.particles.find(p => p.name === 'Egress').spec;
+
+    const concreteType = orderParticle.connections.find(c => c.name === 'data').type as CollectionType<EntityType>;
+    const egressType = egressParticle.connections.find(c => c.name === 'data').type as TypeVariable;
+
+    recipe.normalize();
+
+    assert.isTrue(egressType.maybeEnsureResolved());
+    assert.deepStrictEqual(egressType.getEntitySchema(), concreteType.getEntitySchema());
+    assert.deepStrictEqual(Object.keys(egressType.getEntitySchema().fields), ['sku', 'name', 'price']);
+  });
+
+
   it('can compare a type variable with a Collection handle', async () => {
     const leftType = TypeVariable.make('a').collectionOf();
     const rightType = TypeVariable.make('b');
@@ -520,6 +622,35 @@ describe('TypeChecker', () => {
 
     const innerReadSchema = new EntityType(new Schema(['Inner'], {a: 'Text', b: 'Number'}));
     const outerReadSchema = new Schema(['Outer'], {inner: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerReadSchema}}});
+    const readType = new EntityType(outerReadSchema);
+
+    const result = TypeChecker.processTypeList(null, [{type: writeType, direction: 'writes'}, {type: readType, direction: 'reads'}]);
+    assert.isNull(result);
+  });
+
+  it('resolves a list of less restrictive inline entities written against a list of more restrictive inline entities read', () => {
+    const innerWriteSchema = new EntityType(new Schema(['Inner'], {a: 'Text', b: 'Number'}));
+    const outerWriteSchema = new Schema(['Outer'], {inner: {kind: 'schema-ordered-list', schema: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerWriteSchema}}}});
+    const writeType = new EntityType(outerWriteSchema);
+
+    const innerReadSchema = new EntityType(new Schema(['Inner'], {a: 'Text'}));
+    const outerReadSchema = new Schema(['Outer'], {inner: {kind: 'schema-ordered-list', schema: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerReadSchema}}}});
+    const readType = new EntityType(outerReadSchema);
+
+    const result = TypeChecker.processTypeList(null, [{type: writeType, direction: 'writes'}, {type: readType, direction: 'reads'}]);
+    assert(result.canEnsureResolved());
+    result.maybeEnsureResolved();
+    assert(result.isResolved());
+    assert.deepEqual(result.getEntitySchema().fields['inner'], outerReadSchema.fields['inner']);
+  });
+
+  it('does not resolve a list of more restrictive inline entities written against a list of less restrictive inline entities read', () => {
+    const innerWriteSchema = new EntityType(new Schema(['Inner'], {a: 'Text'}));
+    const outerWriteSchema = new Schema(['Outer'], {inner: {kind: 'schema-ordered-list', schema: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerWriteSchema}}}});
+    const writeType = new EntityType(outerWriteSchema);
+
+    const innerReadSchema = new EntityType(new Schema(['Inner'], {a: 'Text', b: 'Number'}));
+    const outerReadSchema = new Schema(['Outer'], {inner: {kind: 'schema-ordered-list', schema: {kind: 'schema-nested', schema: {kind: 'schema-inline', model: innerReadSchema}}}});
     const readType = new EntityType(outerReadSchema);
 
     const result = TypeChecker.processTypeList(null, [{type: writeType, direction: 'writes'}, {type: readType, direction: 'reads'}]);

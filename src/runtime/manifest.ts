@@ -589,8 +589,8 @@ ${e.message}
       await processItems('interface', item => Manifest._processInterface(manifest, item));
       await processItems('particle', item => Manifest._processParticle(manifest, item, loader));
       await processItems('store', item => Manifest._processStore(manifest, item, loader, memoryProvider));
-      await processItems('recipe', item => Manifest._processRecipe(manifest, item));
       await processItems('policy', item => Manifest._processPolicy(manifest, item));
+      await processItems('recipe', item => Manifest._processRecipe(manifest, item));
     } catch (e) {
       dumpErrors(manifest);
       throw processError(e, false);
@@ -615,8 +615,25 @@ ${e.message}
         //     errors relating to failed merges can reference the manifest source.
         visitChildren();
 
+        this._checkStarFields(node);
         switch (node.kind) {
           case 'schema-inline': {
+            const starCount = node.fields.filter(f => f.name === '*').length;
+            // Warn user if there are multiple '*'s.
+            if (starCount > 1) {
+              const warning = new ManifestWarning(node.location, `Only one '*' is needed.`);
+              warning.key = 'multiStarFields';
+              manifest.errors.push(warning);
+            }
+            // Flag used to determine if type variables should resolve to max type
+            if (starCount > 0) {
+              node.allFields = true;
+              node.fields = node.fields.filter(f => f.name !== '*');
+              // Avoid creating an empty schema in response to `{*}`.
+              if (node.fields.length === 0) {
+                return;
+              }
+            }
             const schemas: Schema[] = [];
             const aliases: Schema[] = [];
             const names: string[] = [];
@@ -645,7 +662,7 @@ ${e.message}
                 } else {
                   // Validate that the specified or inferred type matches the schema.
                   const externalType = schema.fields[name];
-                  if (externalType && !Schema.isAtLeastAsSpecificAs(externalType, type)) {
+                  if (externalType && !Schema.fieldTypeIsAtLeastAsSpecificAs(externalType, type)) {
                     throw new ManifestError(node.location, `Type of '${name}' does not match schema (${type} vs ${externalType})`);
                   }
                 }
@@ -670,7 +687,9 @@ ${e.message}
           }
           case 'variable-type': {
             const constraint = node.constraint && node.constraint.model;
-            node.model = TypeVariable.make(node.name, constraint, null);
+            // If true, type variable should resolve to max type (i.e. `~a with {*}` syntax support)
+            const toMaxType = node.constraint && node.constraint.kind === 'schema-inline' && !!node.constraint.allFields;
+            node.model = TypeVariable.make(node.name, constraint, null, toMaxType);
             return;
           }
           case 'slot-type': {
@@ -714,12 +733,22 @@ ${e.message}
             node.model = new SingletonType(node.type.model);
             return;
           case 'tuple-type':
+            node.types.forEach(this._checkStarFields);
             node.model = new TupleType(node.types.map(t => t.model));
             return;
           default:
             return;
         }
       }
+
+      // Asserts that '*' inline fields can only appear on type variable constraints.
+      private _checkStarFields(node) {
+        if (node.kind === 'variable-type') return;
+        if (node.type && node.type.kind === 'schema-inline' && node.type.allFields) {
+          throw new ManifestError(node.type.location, `Only type variables may have '*' fields.`);
+        }
+      }
+
     }();
     visitor.traverse(items);
   }
@@ -850,10 +879,19 @@ ${e.message}
         }
         processArgTypes(arg.dependentConnections);
         arg.annotations = Manifest._buildAnnotationRefs(manifest, arg.annotations);
+
+        // TODO: Validate that the type of the expression matches the declared type.
+        // TODO: Transform the expression AST into a cross-platform text format.
+        arg.expression = arg.expression && arg.expression.kind;
       }
     };
+    if (particleItem.implFile && particleItem.args.some(arg => !!arg.expression)) {
+      const arg = particleItem.args.find(arg => !!arg.expression);
+      throw new ManifestError(arg.expression.location, `A particle with implementation cannot use result expressions.`);
+    }
     processArgTypes(particleItem.args);
     particleItem.annotations = Manifest._buildAnnotationRefs(manifest, particleItem.annotationRefs);
+    particleItem.manifestNamespace = manifest.meta.namespace;
     manifest._particles[particleItem.name] = new ParticleSpec(particleItem);
   }
 
@@ -1316,6 +1354,15 @@ ${e.message}
         const requireSection = recipe.newRequireSection();
         Manifest._buildRecipe(manifest, requireSection, item.items);
       }
+    }
+
+    const policyName = recipe.policyName;
+    if (policyName != null) {
+      const policy = manifest.allPolicies.find(p => p.name === policyName);
+      if (policy == null) {
+        throw new Error(`No policy named '${policyName}' was found in the manifest.`);
+      }
+      recipe.policy = policy;
     }
   }
 

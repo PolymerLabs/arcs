@@ -8,7 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {testSuite} from './kotlin-codegen-test-suite.js';
+import {schema2KotlinTestSuite} from './schema2kotlin-codegen-test-suite.js';
+import {recipe2PlanTestSuite} from './recipe2plan-codegen-test-suite.js';
 import {regenerateInputFile} from './codegen-unit-test-base.js';
 
 /**
@@ -17,17 +18,23 @@ import {regenerateInputFile} from './codegen-unit-test-base.js';
  * ./tools/sigh updateCodegenUnitTests
  */
 let totalUpdateCount = 0;
-void Promise.all(testSuite.map(async testCase => {
-  const updateCount = await regenerateInputFile(testCase);
-  if (updateCount > 0) {
-    console.info(`${testCase.inputFileName}: ${updateCount} tests updated`);
+
+async function update() {
+  // It's important that these execute in sequence rather than in parallel,
+  // otherwise they get in each other's way (flags, storage registrations, etc.)
+  for (const testCase of schema2KotlinTestSuite.concat(recipe2PlanTestSuite)) {
+    const updateCount = await regenerateInputFile(testCase);
+    if (updateCount > 0) {
+      console.info(`${testCase.inputFileName}: ${updateCount} tests updated`);
+    }
+    totalUpdateCount += updateCount;
   }
-  totalUpdateCount += updateCount;
-})).then(() => {
   if (totalUpdateCount === 0) {
     console.info(`All tests up to date!`);
   }
-}).catch(e => {
-  console.error(e.message);
+}
+
+void update().catch(e => {
+  console.error(e.stack);
   process.exit(1);
 });

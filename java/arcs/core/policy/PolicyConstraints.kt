@@ -1,9 +1,12 @@
 package arcs.core.policy
 
 import arcs.core.data.AccessPath
+import arcs.core.data.Check
 import arcs.core.data.Claim
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.InformationFlowLabel.SemanticTag
+import arcs.core.data.ParticleSpec
+import arcs.core.data.Recipe
 import arcs.core.data.StoreId
 
 /**
@@ -131,26 +134,47 @@ sealed class PolicyViolation(val policy: Policy, message: String) : Exception(
     "Policy ${policy.name} violated: $message"
 ) {
     /** Thrown when egress particles were found in the recipe that are not allowed by policy. */
-    class InvalidEgressParticle(
+    class InvalidEgressTypeForParticles(
         policy: Policy,
-        val particleNames: List<String>
+        val invalidEgressParticles: List<ParticleSpec>
     ) : PolicyViolation(
         policy,
-        "Egress particle allowed by policy is ${policy.egressParticleName} but found: " +
-            particleNames.joinToString()
+        "Invalid egress types found for particles: " +
+            invalidEgressParticles.namesAndEgressTypes() +
+            ". Egress type allowed by policy: ${policy.egressType}."
     )
 
-    /** Thrown when multiple egress particles were found in the recipe. */
-    class MultipleEgressParticles(policy: Policy) : PolicyViolation(
-        policy,
-        "Multiple egress particles named ${policy.egressParticleName} found for policy"
-    )
-
+    /** Thrown when there is no store associated with schema. */
     class NoStoreForPolicyTarget(
         policy: Policy,
         target: PolicyTarget
     ) : PolicyViolation(
         policy,
-        "No store found for policy target $target mentioned in ${policy.name}"
+        "No store found for policy target `${target.schemaName}`"
     )
+
+    /** Thrown when policy checks are violated by a recipe. */
+    class ChecksViolated(
+        policy: Policy,
+        checks: List<Check>
+    ) : PolicyViolation(policy, "Recipe violates egress checks: $checks")
+
+    /** Thrown when a recipe is missing the `@policy` annotation. */
+    class MissingPolicyAnnotation(recipe: Recipe, policy: Policy) : PolicyViolation(
+        policy,
+        "Recipe '${recipe.name}' does not have an @policy annotation."
+    )
+
+    /** Thrown when a recipe was checked against a mismatched policy. */
+    class MismatchedPolicyName(electedPolicyName: String, policy: Policy) : PolicyViolation(
+        policy,
+        "Recipe elected a policy named '$electedPolicyName'."
+    )
+}
+
+/** Converts a list of particles into their names and egress types, as a string. */
+private fun List<ParticleSpec>.namesAndEgressTypes(): String {
+    return sortedBy { it.name }.joinToString(prefix = "{", postfix = "}") {
+        "${it.name} (${it.egressType})"
+    }
 }

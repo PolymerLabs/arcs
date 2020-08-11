@@ -36,7 +36,8 @@ fun DirectionProto.decode() =
 fun HandleConnectionSpecProto.decode() = HandleConnectionSpec(
     name = name,
     direction = direction.decode(),
-    type = type.decode()
+    type = type.decode(),
+    expression = expression.ifEmpty { null }
 )
 
 /** Converts a [ParticleSpecProto] to the corresponding [ParticleSpec] instance. */
@@ -52,5 +53,6 @@ fun ParticleSpecProto.decode(): Result<ParticleSpec> = resultOf {
     val checks = checksList.map {
         Check.Assert(it.accessPath.decode(connections), it.predicate.decode())
     }
-    ParticleSpec(name, connections, location, claims, checks, isolated)
+    val annotations = annotationsList.map { it.decode() }
+    ParticleSpec(name, connections, location, claims, checks, annotations)
 }

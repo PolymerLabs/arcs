@@ -11,9 +11,9 @@
 package arcs.android.sdk.host
 
 import android.content.Context
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.LifecycleOwner
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
@@ -31,40 +31,26 @@ import kotlinx.coroutines.runBlocking
 abstract class AndroidHost(
     val context: Context,
     lifecycle: Lifecycle,
+    val activationFactory: ActivationFactory = ServiceStoreFactory(context),
     schedulerProvider: SchedulerProvider,
-    override val activationFactory: ActivationFactory,
     vararg particles: ParticleRegistration
-) : JvmHost(schedulerProvider, *particles), LifecycleObserver {
-
-    @ExperimentalCoroutinesApi
-    constructor(
-        context: Context,
-        lifecycle: Lifecycle,
-        schedulerProvider: SchedulerProvider,
-        vararg particles: ParticleRegistration
-    ) : this(
-        context,
-        lifecycle,
-        schedulerProvider,
-        ServiceStoreFactory(context, lifecycle),
-        *particles
-    )
+) : JvmHost(schedulerProvider, *particles), DefaultLifecycleObserver {
 
     init {
         lifecycle.addObserver(this)
     }
 
-    /*
-     * Android uses [StorageService] which is a persistent process, so we don't share
-     * [ActiveStore] between [EntityHandleManager]s, but use a new [StoreManager] for each
-     * new arc. Otherwise, when closing an [ActiveStore] when one Arc is shutdown leads to the
-     * handles being unusable in other arcs that are still active.
-     */
-    @ExperimentalCoroutinesApi
-    override val stores: StoreManager get() = StoreManager(activationFactory)
+    override val stores: StoreManager = StoreManager(activationFactory)
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-    fun onLifecycleDestroyed() = runBlocking {
+    override fun onDestroy(owner: LifecycleOwner) {
+        super.onDestroy(owner)
+        runBlocking {
             shutdown()
+        }
+    }
+
+    override suspend fun shutdown() {
+        super.shutdown()
+        stores.reset()
     }
 }

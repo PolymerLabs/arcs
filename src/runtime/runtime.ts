@@ -18,9 +18,6 @@ import {IdGenerator, ArcId, Id} from './id.js';
 import {PecFactory} from './particle-execution-context.js';
 import {SlotComposer} from './slot-composer.js';
 import {ArcInspectorFactory} from './arc-inspector.js';
-import {RamDiskStorageDriverProvider} from './storage/drivers/ramdisk.js';
-import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey, VolatileStorageKeyFactory} from './storage/drivers/volatile.js';
-import {StorageKey} from './storage/storage-key.js';
 import {Recipe} from './recipe/recipe.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {Loader} from '../platform/loader.js';
@@ -29,7 +26,10 @@ import {logsFactory} from '../platform/logs-factory.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
 import {Modality} from './modality.js';
+import {StorageKey} from './storage/storage-key.js';
 import {StorageKeyFactory} from './storage-key-factory.js';
+import {RamDiskStorageDriverProvider} from './storage/drivers/ramdisk.js';
+import {SimpleVolatileMemoryProvider, VolatileMemoryProvider, VolatileStorageKey, VolatileStorageKeyFactory} from './storage/drivers/volatile.js';
 
 const {warn} = logsFactory('Runtime', 'orange');
 
@@ -307,7 +307,7 @@ export class Runtime {
       id: arcid,
       fileName: './serialized.manifest',
       serialization,
-      context,
+      context: context || this.context,
       storageKey,
       slotComposer: composer,
       pecFactories: [this.pecFactory, ...(portFactories || [])],

@@ -13,6 +13,7 @@ import arcs.core.data.SingletonType
 import arcs.core.data.TupleType
 import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import com.google.protobuf.TextFormat
 import kotlin.test.assertFailsWith
 import org.junit.After
@@ -80,6 +81,9 @@ class TypeProtoDecodersTest {
             )
         )
         assertThat(type.encode().decode()).isEqualTo(type)
+        assertWithMessage("Schema should have been registered!")
+            .that(SchemaRegistry.getSchema(type.entitySchema.hash))
+            .isEqualTo(type.entitySchema)
 
         val e = assertFailsWith<IllegalArgumentException> { type.encode().decodeAsFieldType() }
         assertThat(e).hasMessageThat().isEqualTo(
@@ -91,6 +95,9 @@ class TypeProtoDecodersTest {
     fun roundTrip_inlineEntityFieldType() {
         val type = FieldType.InlineEntity(DUMMY_ENTITY_HASH)
         assertThat(type.encode().decodeAsFieldType()).isEqualTo(type)
+        assertWithMessage("Schema should have been registered!")
+            .that(SchemaRegistry.getSchema(DUMMY_ENTITY_HASH))
+            .isEqualTo(DUMMY_ENTITY_TYPE.entitySchema)
 
         val e = assertFailsWith<IllegalArgumentException> { type.encode().decode() }
         assertThat(e).hasMessageThat().isEqualTo("Cannot decode inline entities to EntityType.")
@@ -184,6 +191,28 @@ class TypeProtoDecodersTest {
     @Test
     fun roundTrip_variableType_unconstrained() {
         val type = TypeVariable("a")
+        assertThat(type.encode().decode()).isEqualTo(type)
+
+        val e = assertFailsWith<IllegalArgumentException> { type.encode().decodeAsFieldType() }
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Cannot decode non-field type VARIABLE to FieldType."
+        )
+    }
+
+    @Test
+    fun roundTrip_variableType_constrained_maxAccessFlag() {
+        val type = TypeVariable("a", DUMMY_ENTITY_TYPE, true)
+        assertThat(type.encode().decode()).isEqualTo(type)
+
+        val e = assertFailsWith<IllegalArgumentException> { type.encode().decodeAsFieldType() }
+        assertThat(e).hasMessageThat().isEqualTo(
+            "Cannot decode non-field type VARIABLE to FieldType."
+        )
+    }
+
+    @Test
+    fun roundTrip_variableType_unconstrained_maxAccessFlag() {
+        val type = TypeVariable("a", maxAccess = true)
         assertThat(type.encode().decode()).isEqualTo(type)
 
         val e = assertFailsWith<IllegalArgumentException> { type.encode().decodeAsFieldType() }

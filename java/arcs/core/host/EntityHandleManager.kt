@@ -45,24 +45,24 @@ import arcs.core.entity.StorageAdapter
 import arcs.core.entity.WriteCollectionHandle
 import arcs.core.entity.WriteQueryCollectionHandle
 import arcs.core.entity.WriteSingletonHandle
-import arcs.core.storage.ActivationFactory
-import arcs.core.storage.ActiveStore
-import arcs.core.storage.DefaultActivationFactory
+import arcs.core.storage.StorageEndpointProvider
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageProxy
 import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
-import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-typealias SingletonStore<T> = ActiveStore<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
-typealias CollectionStore<T> = ActiveStore<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
+typealias SingletonStorageEndpointProvider<T> =
+    StorageEndpointProvider<CrdtSingleton.Data<T>, CrdtSingleton.IOperation<T>, T?>
+typealias CollectionStorageEndpointProvider<T> =
+    StorageEndpointProvider<CrdtSet.Data<T>, CrdtSet.IOperation<T>, Set<T>>
+
 /**
  * Creates [Entity] handles based on [HandleMode], such as
  * [ReadSingletonHandle] for [HandleMode.Read]. To obtain a [HandleHolder], use
@@ -80,33 +80,12 @@ class EntityHandleManager(
     private val hostId: String = "nohost",
     private val time: Time,
     private val scheduler: Scheduler,
-    private val stores: StoreManager = StoreManager(),
+    stores: StoreManager = StoreManager(),
     private val idGenerator: Id.Generator = Id.Generator.newSession(),
-    private val coroutineContext: CoroutineContext = Dispatchers.Default,
     private val analytics: Analytics? = null
-) {
+) : HandleManager {
 
-    @Deprecated(
-        message = "prefer primary constructor",
-        /* ktlint-disable max-line-length */
-        replaceWith = ReplaceWith("EntityHandleManager(arcId, hostId, time, scheduler, StoreManager(activationFactory), idGenerator)")
-        /* ktlint-enable max-line-length */
-    )
-    constructor(
-        arcId: String = Id.Generator.newSession().newArcId("arc").toString(),
-        hostId: String = "nohost",
-        time: Time,
-        scheduler: Scheduler,
-        activationFactory: ActivationFactory?,
-        idGenerator: Id.Generator = Id.Generator.newSession()
-    ) : this(
-        arcId,
-        hostId,
-        time,
-        scheduler,
-        StoreManager(activationFactory ?: DefaultActivationFactory),
-        idGenerator
-    )
+    private val storageEndpointManager = stores.asStoreEndpointManager()
 
     private val proxyMutex = Mutex()
     private val singletonStorageProxies by guardedBy(
@@ -128,12 +107,12 @@ class EntityHandleManager(
     }
 
     @ExperimentalCoroutinesApi
-    suspend fun createHandle(
+    override suspend fun createHandle(
         spec: HandleSpec,
         storageKey: StorageKey,
-        ttl: Ttl = Ttl.Infinite(),
-        particleId: String = "",
-        immediateSync: Boolean = true
+        ttl: Ttl,
+        particleId: String,
+        immediateSync: Boolean
     ): Handle {
         val handleName = idGenerator.newChildId(
             idGenerator.newChildId(arcId.toArcId(), hostId),
@@ -149,7 +128,8 @@ class EntityHandleManager(
                     ttl,
                     time,
                     dereferencerFactory,
-                    storageKey
+                    storageKey,
+                    spec.entitySpecs.single().SCHEMA
                 )
             }
             HandleDataType.Reference -> {
@@ -187,7 +167,7 @@ class EntityHandleManager(
     }
 
     /** Close all [StorageProxy] instances in this [EntityHandleManager]. */
-    suspend fun close() {
+    override suspend fun close() {
         proxyMutex.withLock {
             // Needed to avoid receiving ModelUpdate after Proxy closed error
             scheduler.waitForIdle()
@@ -274,14 +254,21 @@ class EntityHandleManager(
         storageKey: StorageKey,
         schema: Schema
     ): SingletonProxy<R> = proxyMutex.withLock {
-        singletonStorageProxies.getOrPut(storageKey) {
-            val store: SingletonStore<Referencable> = stores.get(
-                StoreOptions(
+        val storageEndpointProvider: SingletonStorageEndpointProvider<Referencable> =
+            storageEndpointManager.get(
+                storeOptions = StoreOptions(
                     storageKey = storageKey,
                     type = SingletonType(EntityType(schema))
                 )
             )
-            SingletonProxy(store, CrdtSingleton(), scheduler, time, analytics)
+        singletonStorageProxies.getOrPut(storageKey) {
+            SingletonProxy(
+                storageEndpointProvider = storageEndpointProvider,
+                crdt = CrdtSingleton(),
+                scheduler = scheduler,
+                time = time,
+                analytics = analytics
+            )
         } as SingletonProxy<R>
     }
 
@@ -291,14 +278,21 @@ class EntityHandleManager(
         storageKey: StorageKey,
         schema: Schema
     ): CollectionProxy<R> = proxyMutex.withLock {
-        collectionStorageProxies.getOrPut(storageKey) {
-            val store: CollectionStore<Referencable> = stores.get(
+        val storageEndpointProvider: CollectionStorageEndpointProvider<Referencable> =
+            storageEndpointManager.get(
                 StoreOptions(
                     storageKey = storageKey,
                     type = CollectionType(EntityType(schema))
                 )
             )
-            CollectionProxy(store, CrdtSet(), scheduler, time, analytics)
+        collectionStorageProxies.getOrPut(storageKey) {
+            CollectionProxy(
+                storageEndpointProvider = storageEndpointProvider,
+                crdt = CrdtSet(),
+                scheduler = scheduler,
+                time = time,
+                analytics = analytics
+            )
         } as CollectionProxy<R>
     }
 }

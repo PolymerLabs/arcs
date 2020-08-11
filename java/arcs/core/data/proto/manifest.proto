@@ -77,8 +77,9 @@ message ParticleSpecProto {
   repeated ClaimProto claims = 4;
   // Conjunction of all checks.
   repeated CheckProto checks = 5;
-  // Indicates whether the particle is an isolated (non-egress) particle.
-  bool isolated = 6;
+  repeated AnnotationProto annotations = 7;
+
+  reserved 6;
 }
 
 // Defines a single connection of a particle spec.
@@ -93,6 +94,7 @@ message HandleConnectionSpecProto {
   string name = 1;
   Direction direction = 2;
   TypeProto type = 3;
+  string expression = 4;
 }
 
 // Representation of a type in Arcs.
@@ -164,12 +166,23 @@ message ListTypeProto {
 // not those resulting from type inference.
 message ConstraintInfo {
   TypeProto constraint_type = 1;
+
+  // If `true`, the particle instance in a recipe has access to all the fields
+  // present in the resolved type (`with {*}`). Otherwise, the particle instance
+  // can only access the fields present in `constraint_type`. `max_access` is an
+  // orthogonal concept to the `constraint_type`. One might specify explicit
+  // fields in the constraint, for example `with {foo: Text, *}`, in order to
+  // add checks and claims to manifests or to allow handles access in particles
+  // without reflection.
+  bool max_access = 2;
 }
 
 message SchemaProto {
   repeated string names = 1;
   map<string, TypeProto> fields = 2;
   string hash = 3;
+  string refinement = 4;
+  string query = 5;
 }
 
 enum OPERATOR {

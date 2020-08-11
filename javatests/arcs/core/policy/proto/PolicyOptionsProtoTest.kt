@@ -10,9 +10,7 @@ import org.junit.runners.JUnit4
 class PolicyOptionsProtoTest {
     @Test
     fun roundTrip() {
-        val options = PolicyOptions(
-            storeMap = mapOf("a" to "One", "b" to "Two")
-        )
+        val options = PolicyOptions(storeMap = mapOf("id1" to "Type1", "id2" to "Type2"))
         assertThat(options.encode().decode()).isEqualTo(options)
     }
 }

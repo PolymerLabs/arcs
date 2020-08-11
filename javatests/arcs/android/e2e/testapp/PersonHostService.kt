@@ -50,7 +50,12 @@ class PersonHostService : ArcHostService() {
         lifecycle: Lifecycle,
         schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
+    ) : AndroidHost(
+        context = context,
+        lifecycle = lifecycle,
+        schedulerProvider = schedulerProvider,
+        particles = *initialParticles
+    ) {
         override val platformTime = JvmTime
 
         override suspend fun stopArc(partition: Plan.Partition) {
@@ -63,8 +68,8 @@ class PersonHostService : ArcHostService() {
 
     inner class ReadPerson : AbstractReadPerson() {
         override fun onStart() {
-            handles.person.onUpdate { person ->
-                person?.name?.let { sendResult(it) }
+            handles.person.onUpdate { delta ->
+                delta.new?.name?.let { sendResult(it) }
             }
         }
 

@@ -1,6 +1,6 @@
 """Arcs manifest bundling rules."""
 
-load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
+load(":tools.oss.bzl", "arcs_tool_manifest2proto", "arcs_tool_recipe2plan")
 load(":util.bzl", "replace_arcs_suffix")
 
 def arcs_manifest(name, srcs, deps = [], visibility = None):
@@ -27,29 +27,6 @@ def arcs_manifest(name, srcs, deps = [], visibility = None):
         visibility = visibility,
     )
 
-def arcs_manifest_json(name, srcs = [], deps = [], out = None, visibility = None):
-    """Serialize a manifest file.
-
-    This converts a '.arcs' file into a JSON representation, using manifest2json.
-
-    Args:
-      name: the name of the target to create
-      srcs: an Arcs manifest files to serialize
-      deps: list of dependencies (other manifests)
-      out: the name of the output artifact (a JSON file).
-      visibility: list of visibilities
-    """
-    outs = [out] if out != None else [replace_arcs_suffix(name, ".json")]
-
-    sigh_command(
-        name = name,
-        srcs = srcs,
-        outs = outs,
-        deps = deps,
-        progress_message = "Serializing manifest",
-        sigh_cmd = "manifest2json --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
-    )
-
 def arcs_manifest_proto(name, src, deps = [], out = None, visibility = None):
     """Serialize a manifest file.
 
@@ -64,13 +41,11 @@ def arcs_manifest_proto(name, src, deps = [], out = None, visibility = None):
     """
     outs = [out] if out != None else [replace_arcs_suffix(name, ".pb.bin")]
 
-    sigh_command(
+    arcs_tool_manifest2proto(
         name = name,
         srcs = [src],
         outs = outs,
         deps = deps,
-        progress_message = "Serializing manifest",
-        sigh_cmd = "manifest2proto --quiet --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
     )
 
 def arcs_proto_plan(name, src, recipe = None, deps = []):
@@ -97,17 +72,12 @@ def arcs_proto_plan(name, src, recipe = None, deps = []):
       recipe: an optional name of the recipe to filter output plans by name
       deps: list of dependencies - other manifests that are imported by src manifest
     """
-
-    sigh_cmd = "recipe2plan --quiet --outdir $(dirname {OUT}) --outfile $(basename {OUT}) --format proto {SRC}"
-    if recipe:
-        sigh_cmd += " --recipe %s" % (recipe)
-
-    sigh_command(
+    arcs_tool_recipe2plan(
         name = name,
         srcs = [src],
         outs = [name + ".pb.bin"],
-        progress_message = "Generating Plan Proto",
-        sigh_cmd = sigh_cmd,
+        recipe = recipe,
+        generate_proto = True,
         deps = deps,
     )
 

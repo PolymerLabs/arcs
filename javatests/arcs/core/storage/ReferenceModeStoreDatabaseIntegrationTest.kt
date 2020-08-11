@@ -170,9 +170,9 @@ class ReferenceModeStoreDatabaseIntegrationTest {
                 "e2" to e2Ref
             )
         ))
-        assertThat((activeStore2.backingStore.getLocalData("e1") as CrdtEntity.Data).toRawEntity())
+        assertThat(activeStore2.backingStore.getLocalData("e1").toRawEntity())
             .isEqualTo(e1)
-        assertThat((activeStore2.backingStore.getLocalData("e2") as CrdtEntity.Data).toRawEntity())
+        assertThat(activeStore2.backingStore.getLocalData("e2").toRawEntity())
             .isEqualTo(e2)
     }
 
@@ -249,7 +249,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
                     VersionMap("me" to 1)
                 )
             )
-        val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
+        val storedBob = activeStore.backingStore.getLocalData("an-id")
         // Check that the stored bob's singleton data is equal to the expected bob's singleton data
         assertThat(storedBob.singletons).isEqualTo(bobEntity.data.singletons)
         // Check that the stored bob's collection data is equal to the expected bob's collection
@@ -269,7 +269,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
             activeStore.onProxyMessage(ProxyMessage.Operations(listOf(addOp), id = 1))
         ).isTrue()
         // Bob was added to the backing store.
-        val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
+        val storedBob = activeStore.backingStore.getLocalData("an-id")
         assertThat(storedBob.toRawEntity("an-id")).isEqualTo(bob)
 
         // Remove Bob from the collection.
@@ -279,7 +279,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
         ).isTrue()
 
         // Check the backing store Bob has been cleared.
-        val storedBob2 = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
+        val storedBob2 = activeStore.backingStore.getLocalData("an-id")
         assertThat(storedBob2.toRawEntity("an-id")).isEqualTo(createEmptyPersonEntity("an-id"))
 
         // Check the DB.
@@ -381,6 +381,59 @@ class ReferenceModeStoreDatabaseIntegrationTest {
                 id = id + 1
             )
         )
+        job.join()
+    }
+
+    @Test
+    fun syncShouldNotIncurWrites_fromProxy_withModel() = runBlockingTest {
+        val activeStore = createReferenceModeStore()
+        val entityCollection = CrdtSet<RawEntity>()
+        val bob = createPersonEntity("an-id", "bob", 42)
+        entityCollection.applyOperation(
+            CrdtSet.Operation.Add("me", VersionMap("me" to 1), bob)
+        )
+
+        var job = Job(coroutineContext[Job])
+        var id: Int = -1
+        id = activeStore.on(
+            ProxyCallback {
+                when (it) {
+                    is ProxyMessage.Operations ->
+                        activeStore.onProxyMessage(ProxyMessage.SyncRequest(id))
+                    is ProxyMessage.ModelUpdate ->
+                        job.complete()
+                    else -> Unit
+                }
+            }
+        )
+
+        activeStore.onProxyMessage(
+            ProxyMessage.Operations(
+                listOf(RefModeStoreOp.SetAdd("me", VersionMap("me" to 1), bob)),
+                // Use +1 because we don't want the activeStore to omit sending to our callback
+                // (which should have id=1)
+                id = id + 1
+            )
+        )
+        job.join()
+
+        /**
+         * Mainly exercise [ReferenceModeStore.constructPendingIdsAndModel] code path at the
+         * duplicate [ReferenceModeStore] that handles the same [StorageKey]. The store should
+         * gets its [DirectStore.onReceive] called to apply the model received from the underlying
+         * driver. The assertion validates the [DirectStore.onReceive] responding to the
+         * [ProxyMessage.SyncRequest] should never incur additional writes/updates sent to the
+         * driver.
+         */
+        val activeStoreDup = createReferenceModeStore()
+        job = Job(coroutineContext[Job])
+        val counts = databaseFactory.totalInsertUpdates()
+        activeStoreDup.on(ProxyCallback {
+            assertThat(databaseFactory.totalInsertUpdates()).isEqualTo(counts)
+            job.complete()
+        }).let {
+            activeStoreDup.onProxyMessage(ProxyMessage.SyncRequest(it))
+        }
         job.join()
     }
 

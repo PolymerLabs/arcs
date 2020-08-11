@@ -1,4 +1,4 @@
-package arcs.sdk.examples.testing
+package arcs.showcase.unittesting
 
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchRemove
@@ -15,6 +15,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+
+typealias Person = AbstractComputePeopleStats.Person
 
 /**
  * Example of particle Unit Testing.
@@ -57,7 +59,7 @@ class ComputePeopleStatsTest {
         assertThat(harness.stats.dispatchFetch()).isNull()
 
         var statsUpdateAge = CompletableDeferred<Double?>()
-        harness.stats.onUpdate { statsUpdateAge.complete(it?.medianAge) }
+        harness.stats.onUpdate { statsUpdateAge.complete(it.new?.medianAge) }
 
         val person20 = Person(20.0)
         statsUpdateAge = CompletableDeferred()

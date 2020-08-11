@@ -44,6 +44,9 @@ export class Schema2Kotlin extends Schema2Base {
     } else {
       // Imports for jvm.
       imports.push(
+        'import arcs.core.data.expression.*',
+        'import arcs.core.data.expression.Expression.*',
+        'import arcs.core.data.expression.Expression.BinaryOp.*',
         'import arcs.core.data.util.toReferencable',
         'import arcs.core.entity.toPrimitiveValue',
         'import java.math.BigInteger',
@@ -92,7 +95,7 @@ ${imports.join('\n')}
       if (type.isEntity || type.isVariable) {
           const node = type.isEntity
             ? nodes.find(n => n.variableName === null && n.schema.equals(type.getEntitySchema()))
-            : nodes.find(n => n.variableName && n.variableName.includes((type as TypeVariable).variable.name));
+            : nodes.find(n => n.variableName === (type as TypeVariable).variable.name);
           return particleScope ? node.humanName(connection) : node.fullName(connection);
       } else if (type.isReference) {
         return `arcs.sdk.Reference<${generateInnerType(type.getContainedType())}>`;
@@ -158,7 +161,7 @@ ${imports.join('\n')}
 
   private async handleSpec(handleName: string, connection: HandleConnectionSpec, nodes: SchemaNode[]): Promise<string> {
     const mode = this.handleMode(connection);
-    const type = await generateConnectionSpecType(connection, nodes);
+    const type = await generateConnectionSpecType(connection, nodes, {namespace: this.namespace});
     // Using full names of entities, as these are aliases available outside the particle scope.
     const entityNames = SchemaNode.topLevelNodes(connection, nodes).map(node => node.fullName(connection));
     return ktUtils.applyFun(
