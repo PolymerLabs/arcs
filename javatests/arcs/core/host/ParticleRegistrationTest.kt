@@ -1,9 +1,10 @@
 package arcs.core.host
 
 import arcs.jvm.host.ExplicitHostRegistry
-import arcs.jvm.host.JvmHost
 import arcs.jvm.host.JvmSchedulerProvider
+import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
@@ -16,7 +17,14 @@ class ParticleRegistrationTest {
     class JvmProdHost(
         schedulerProvider: SchedulerProvider,
         vararg particles: ParticleRegistration
-    ) : JvmHost(schedulerProvider, *particles), ProdHost
+    ) : AbstractArcHost(
+        coroutineContext = Dispatchers.Default,
+        updateArcHostContextCoroutineContext = Dispatchers.Default,
+        schedulerProvider = schedulerProvider,
+        initialParticles = *particles
+    ), ProdHost {
+        override val platformTime = JvmTime
+    }
 
     @Test
     fun explicit_allParticlesAreRegistered() = runBlockingTest {

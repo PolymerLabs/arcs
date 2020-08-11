@@ -18,6 +18,7 @@ import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.BaseParticle
 import arcs.sdk.HandleHolderBase
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -47,7 +48,12 @@ open class AbstractArcHostTest {
     class MyTestHost(
         schedulerProvider: SchedulerProvider,
         vararg particles: ParticleRegistration
-    ) : AbstractArcHost(schedulerProvider, *particles) {
+    ) : AbstractArcHost(
+        coroutineContext = Dispatchers.Default,
+        updateArcHostContextCoroutineContext = Dispatchers.Default,
+        schedulerProvider = schedulerProvider,
+        initialParticles = *particles
+    ) {
         override val platformTime = FakeTime()
 
         @Suppress("UNCHECKED_CAST")

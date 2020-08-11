@@ -30,7 +30,6 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -60,46 +59,20 @@ typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
  */
 @ExperimentalCoroutinesApi
 abstract class AbstractArcHost(
-    protected val coroutineContext: CoroutineContext = Dispatchers.Default,
-    updateArcHostContextCoroutineContext: CoroutineContext = Dispatchers.Default,
+    /**
+     * This coroutineContext is used to create a [CoroutineScope] that will be used to launch
+     * Arc resurrection jobs.
+     */
+    coroutineContext: CoroutineContext,
+    /**
+     * When arc states change, the state changes are serialized to handles. This serialization will
+     * happen asynchronously from the state change operation, on the [CoroutineContext] provided
+     * here.
+     */
+    updateArcHostContextCoroutineContext: CoroutineContext,
     protected val schedulerProvider: SchedulerProvider,
     vararg initialParticles: ParticleRegistration
 ) : ArcHost {
-
-    constructor(
-        schedulerProvider: SchedulerProvider,
-        vararg initialParticles: ParticleRegistration
-    ) : this(Dispatchers.Default, Dispatchers.Default, schedulerProvider, *initialParticles)
-
-    /**
-     * Backward-compatible for some existing [AbstractArcHost] implementations to dispatch
-     * [contextSerializationJob] onto the [coroutineContext] instead of separate context.
-     */
-    @Deprecated(
-        message = "Should explicitly supply coroutine context for contextSerializationJob",
-        replaceWith = ReplaceWith(
-            """
-            AbstractArcHost(
-                coroutineContext,
-                updateArcHostContextCoroutineContext,
-                schedulerProvider,
-                ActivationFactory,
-                initialParticles
-            )
-            """
-        )
-    )
-    constructor(
-        coroutineContext: CoroutineContext = Dispatchers.Default,
-        schedulerProvider: SchedulerProvider,
-        vararg initialParticles: ParticleRegistration
-    ) : this(
-        coroutineContext,
-        coroutineContext,
-        schedulerProvider,
-        *initialParticles
-    )
-
     private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
@@ -127,7 +100,7 @@ abstract class AbstractArcHost(
     override val hostId = "${this::class.className()}@${this.hashCode()}"
 
     // TODO: add lifecycle API for ArcHosts shutting down to cancel running coroutines
-    private val scope = CoroutineScope(coroutineContext)
+    private val resurrectionScope = CoroutineScope(coroutineContext)
 
     /**
      * Supports asynchronous [ArcHostContext] serializations in observed order.
@@ -236,7 +209,7 @@ abstract class AbstractArcHost(
         clearContextCache()
         pausedArcs.clear()
         contextSerializationChannel.cancel()
-        scope.cancel()
+        resurrectionScope.cancel()
         schedulerProvider.cancelAll()
     }
 
@@ -538,7 +511,7 @@ abstract class AbstractArcHost(
     /** Helper used by implementors of [ResurrectableHost]. */
     @Suppress("UNUSED_PARAMETER")
     fun onResurrected(arcId: String, affectedKeys: List<StorageKey>) {
-        scope.launch {
+        resurrectionScope.launch {
             if (isRunning(arcId)) {
                 return@launch
             }
