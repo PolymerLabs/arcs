@@ -20,13 +20,8 @@ import arcs.core.storage.ProxyMessage.SyncRequest
 import arcs.core.type.Type
 import arcs.core.util.LruCacheMap
 import arcs.core.util.TaggedLog
-import kotlinx.coroutines.CoroutineScope
-import kotlin.coroutines.coroutineContext
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 
 /**
  * An collection of [DirectStore]s that allows multiple CRDT models to be stored as sub-keys
