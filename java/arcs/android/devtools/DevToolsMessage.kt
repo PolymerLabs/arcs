@@ -14,7 +14,7 @@ interface DevToolsMessage {
 
     /** Track message types */
     companion object {
-        /** a RAW_MESSAGE should be used to send raw [ProxyMessage]s to the client. */
+        /** A [RAW_MESSAGE] should be used to send raw [ProxyMessage]s to the client. */
         val RAW_MESSAGE: String = "RawStoreMessage"
     }
 }
