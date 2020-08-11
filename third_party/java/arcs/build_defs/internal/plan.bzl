@@ -70,7 +70,7 @@ recipe2plan = rule(
         "package": attr.string(),
         "_compiler": attr.label(
             cfg = "host",
-            default = Label("//third_party/java/arcs:recipe2plan"),
+            default = Label("//third_party/java/arcs:recipe2plan_binary"),
             allow_files = True,
             executable = True,
         ),

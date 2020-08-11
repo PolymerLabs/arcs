@@ -22,6 +22,6 @@ alias(
 
 # Arcs Tools
 alias(
-    name = "recipe2plan",
-    actual = "//java/arcs/tools:recipe2plan",
+    name = "recipe2plan_binary",
+    actual = "//java/arcs/tools:recipe2plan_binary",
 )
