@@ -59,7 +59,16 @@ typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
  */
 @ExperimentalCoroutinesApi
 abstract class AbstractArcHost(
-    protected val coroutineContext: CoroutineContext,
+    /**
+     * This coroutineContext is used to create a [CoroutineScope] that will be used to launch
+     * Arc resurrection jobs.
+     */
+    coroutineContext: CoroutineContext,
+    /**
+     * When arc states change, the state changes are serialized to handles. This serialization will
+     * happen asynchronously from the state change operation, on the [CoroutineContext] provided
+     * here.
+     */
     updateArcHostContextCoroutineContext: CoroutineContext,
     protected val schedulerProvider: SchedulerProvider,
     vararg initialParticles: ParticleRegistration
@@ -91,7 +100,7 @@ abstract class AbstractArcHost(
     override val hostId = "${this::class.className()}@${this.hashCode()}"
 
     // TODO: add lifecycle API for ArcHosts shutting down to cancel running coroutines
-    private val scope = CoroutineScope(coroutineContext)
+    private val resurrectionScope = CoroutineScope(coroutineContext)
 
     /**
      * Supports asynchronous [ArcHostContext] serializations in observed order.
@@ -200,7 +209,7 @@ abstract class AbstractArcHost(
         clearContextCache()
         pausedArcs.clear()
         contextSerializationChannel.cancel()
-        scope.cancel()
+        resurrectionScope.cancel()
         schedulerProvider.cancelAll()
     }
 
@@ -502,7 +511,7 @@ abstract class AbstractArcHost(
     /** Helper used by implementors of [ResurrectableHost]. */
     @Suppress("UNUSED_PARAMETER")
     fun onResurrected(arcId: String, affectedKeys: List<StorageKey>) {
-        scope.launch {
+        resurrectionScope.launch {
             if (isRunning(arcId)) {
                 return@launch
             }

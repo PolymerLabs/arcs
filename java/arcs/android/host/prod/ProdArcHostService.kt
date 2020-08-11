@@ -49,7 +49,10 @@ abstract class ProdArcHostService : ArcHostService() {
         particles = *particles
     ), ProdHost
 
+    /** This is the [CoroutineContext] used for resurrection jobs on the [AbstractArcHost]s. */
     abstract val coroutineContext: CoroutineContext
+
+    /** This is the [CoroutineContext] used for arc state storage on the [AbstractArcHost]s. */
     abstract val arcSerializationCoroutineContext: CoroutineContext
 
     /**

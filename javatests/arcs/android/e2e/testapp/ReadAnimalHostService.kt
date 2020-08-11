@@ -54,7 +54,8 @@ class ReadAnimalHostService : ArcHostService() {
         coroutineContext = Dispatchers.Default,
         arcSerializationContext = Dispatchers.Default,
         schedulerProvider = schedulerProvider,
-        particles = *initialParticles)
+        particles = *initialParticles
+    )
 
     inner class ReadAnimal : AbstractReadAnimal() {
         override fun onStart() {
