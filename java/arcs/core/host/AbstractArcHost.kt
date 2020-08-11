@@ -19,7 +19,6 @@ import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
-import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.util.LruCacheMap
@@ -64,14 +63,13 @@ abstract class AbstractArcHost(
     protected val coroutineContext: CoroutineContext = Dispatchers.Default,
     updateArcHostContextCoroutineContext: CoroutineContext = Dispatchers.Default,
     protected val schedulerProvider: SchedulerProvider,
-    open val activationFactory: ActivationFactory? = null,
     vararg initialParticles: ParticleRegistration
 ) : ArcHost {
 
     constructor(
         schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : this(Dispatchers.Default, Dispatchers.Default, schedulerProvider, null, *initialParticles)
+    ) : this(Dispatchers.Default, Dispatchers.Default, schedulerProvider, *initialParticles)
 
     /**
      * Backward-compatible for some existing [AbstractArcHost] implementations to dispatch
@@ -94,13 +92,11 @@ abstract class AbstractArcHost(
     constructor(
         coroutineContext: CoroutineContext = Dispatchers.Default,
         schedulerProvider: SchedulerProvider,
-        activationFactory: ActivationFactory? = null,
         vararg initialParticles: ParticleRegistration
     ) : this(
         coroutineContext,
         coroutineContext,
         schedulerProvider,
-        activationFactory,
         *initialParticles
     )
 

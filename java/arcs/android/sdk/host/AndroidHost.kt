@@ -31,30 +31,15 @@ import kotlinx.coroutines.runBlocking
 abstract class AndroidHost(
     val context: Context,
     lifecycle: Lifecycle,
+    val activationFactory: ActivationFactory = ServiceStoreFactory(context),
     schedulerProvider: SchedulerProvider,
-    override val activationFactory: ActivationFactory,
     vararg particles: ParticleRegistration
 ) : JvmHost(schedulerProvider, *particles), DefaultLifecycleObserver {
-
-    @ExperimentalCoroutinesApi
-    constructor(
-        context: Context,
-        lifecycle: Lifecycle,
-        schedulerProvider: SchedulerProvider,
-        vararg particles: ParticleRegistration
-    ) : this(
-        context,
-        lifecycle,
-        schedulerProvider,
-        ServiceStoreFactory(context),
-        *particles
-    )
 
     init {
         lifecycle.addObserver(this)
     }
 
-    @ExperimentalCoroutinesApi
     override val stores: StoreManager = StoreManager(activationFactory)
 
     override fun onDestroy(owner: LifecycleOwner) {
