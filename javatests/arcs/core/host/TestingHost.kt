@@ -12,13 +12,19 @@ import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
 import java.lang.IllegalArgumentException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi
 open class TestingHost(
     schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
-) : AbstractArcHost(schedulerProvider, *particles) {
+) : AbstractArcHost(
+    coroutineContext = Dispatchers.Default,
+    updateArcHostContextCoroutineContext = Dispatchers.Default,
+    schedulerProvider = schedulerProvider,
+    initialParticles = *particles
+) {
 
     fun arcHostContext(arcId: String) = getArcHostContext(arcId)
 

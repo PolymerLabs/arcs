@@ -32,6 +32,9 @@ sealed class StorageAdapter<T : Storable, R : Referencable> {
     /** Checks if the [Storable] is expired (its expiration time is in the past). */
     abstract fun isExpired(value: T): Boolean
 
+    /** Checks if the [Referencable] is expired (its expiration time is in the past). */
+    abstract fun isExpired(value: R): Boolean
+
     fun checkStorageKey(handleKey: StorageKey, referencedKey: StorageKey) {
         // References always point to backing stores (this is also enforced at reference creation).
         check(referencedKey !is ReferenceModeStorageKey) {
@@ -91,6 +94,11 @@ class EntityStorageAdapter<T : Entity>(
         return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
             value.expirationTimestamp < time.currentTimeMillis
     }
+
+    override fun isExpired(value: RawEntity): Boolean {
+        return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
+            value.expirationTimestamp < time.currentTimeMillis
+    }
 }
 
 /** [StorageAdapter] for converting [Reference] to/from [StorageReference]. */
@@ -114,6 +122,11 @@ class ReferenceStorageAdapter<E : Entity>(
     }
 
     override fun isExpired(value: Reference<E>): Boolean {
+        return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
+            value.expirationTimestamp < time.currentTimeMillis
+    }
+
+    override fun isExpired(value: StorageReference): Boolean {
         return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
             value.expirationTimestamp < time.currentTimeMillis
     }

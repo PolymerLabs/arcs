@@ -146,7 +146,7 @@ export abstract class Type {
     return !this.hasUnresolvedVariable;
   }
 
-  mergeTypeVariablesByName(variableMap: Map<string, Type>) : Type {
+  mergeTypeVariablesByName(variableMap: Map<string, Type>): Type {
     return this;
   }
 
@@ -376,6 +376,12 @@ export class SingletonType<T extends Type> extends Type {
 
   restrictToType(type: Type, skippedFields?: string[]): Type|null {
     return new SingletonType(this.innerType.restrictToType(type, skippedFields));
+  }
+
+  mergeTypeVariablesByName(variableMap: Map<string, Type>) {
+    const innerType = this.innerType;
+    const result = innerType.mergeTypeVariablesByName(variableMap);
+    return (result === innerType) ? this : result.singletonOf();
   }
 }
 
@@ -841,6 +847,27 @@ export class TupleType extends Type {
     // TODO(b/159143604): implement.
     throw new Error(`'restrictToType' is not supported for ${this.tag}`);
   }
+
+  _clone(variableMap: Map<string, Type>): TupleType {
+    return new TupleType(this.innerTypes.map(t => t.clone(variableMap)));
+  }
+
+  _cloneWithResolutions(variableMap: Map<string, Type>): TupleType {
+    return new TupleType(this.innerTypes.map(t => t._cloneWithResolutions(variableMap)));
+  }
+
+  mergeTypeVariablesByName(variableMap: Map<string, Type>): TupleType {
+    let mergeSuccess = false;
+    const results = [];
+    for (const type of this.innerTypes) {
+      const result = type.mergeTypeVariablesByName(variableMap);
+      if (result !== type) {
+        mergeSuccess = true;
+      }
+      results.push(result);
+    }
+    return mergeSuccess ? new TupleType(results) : this;
+  }
 }
 
 export interface HandleConnection {
@@ -1084,6 +1111,12 @@ export class ReferenceType<T extends Type> extends Type {
   restrictToType(type: Type, skippedFields?: string[]): Type|null {
     return new ReferenceType(this.referredType.restrictToType(type, skippedFields));
   }
+
+  mergeTypeVariablesByName(variableMap: Map<string, Type>) {
+    const referredType = this.referredType;
+    const result = referredType.mergeTypeVariablesByName(variableMap);
+    return (result === referredType) ? this : result.referenceTo();
+  }
 }
 
 export class MuxType<T extends Type> extends Type {
@@ -1167,6 +1200,12 @@ export class MuxType<T extends Type> extends Type {
 
   restrictToType(type: Type, skippedFields?: string[]): Type|null {
     throw new Error(`'restrictToType' is not supported for ${this.tag}`);
+  }
+
+  mergeTypeVariablesByName(variableMap: Map<string, Type>) {
+    const innerType = this.innerType;
+    const result = innerType.mergeTypeVariablesByName(variableMap);
+    return (result === innerType) ? this : result.muxTypeOf();
   }
 }
 

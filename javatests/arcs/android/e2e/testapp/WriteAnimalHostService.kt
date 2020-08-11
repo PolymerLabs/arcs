@@ -64,7 +64,14 @@ class WriteAnimalHostService : ArcHostService() {
         lifecycle: Lifecycle,
         schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
+    ) : AndroidHost(
+        context = context,
+        lifecycle = lifecycle,
+        coroutineContext = Dispatchers.Default,
+        arcSerializationContext = Dispatchers.Default,
+        schedulerProvider = schedulerProvider,
+        particles = *initialParticles
+    ) {
         fun arcHostContext(arcId: String) = getArcHostContext(arcId)
     }
 

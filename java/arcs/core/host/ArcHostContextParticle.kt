@@ -18,6 +18,8 @@ import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.data.SingletonType
+import arcs.core.data.expression.deserializeExpression
+import arcs.core.data.expression.serialize
 import arcs.core.entity.Reference
 import arcs.core.host.api.Particle
 import arcs.core.host.generated.AbstractArcHostContextParticle
@@ -73,7 +75,7 @@ class ArcHostContextParticle(
                         storageKey = handle.value.storageKey.toString(),
                         mode = handle.value.mode.name, type = handle.value.type.tag.name,
                         ttl = handle.value.ttl.minutes.toDouble(),
-                        expression = handle.value.expression ?: ""
+                        expression = handle.value.expression?.serialize() ?: ""
                     )
                 }
             }
@@ -205,7 +207,7 @@ class ArcHostContextParticle(
             } else {
                 emptyList()
             },
-            handle.expression.ifEmpty { null }
+            handle.expression.ifEmpty { null }?.let { it.deserializeExpression() }
         )
     }.toSet().associateBy({ it.first }, { it.second })
 

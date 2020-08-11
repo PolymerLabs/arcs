@@ -1,4 +1,8 @@
-load("//third_party/java/arcs/build_defs:native.oss.bzl", "java_binary", "java_test")
+load(
+    "//third_party/java/arcs/build_defs:native.oss.bzl",
+    "java_binary",
+    "java_test",
+)
 load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
 
 licenses(["notice"])
@@ -24,6 +28,27 @@ kt_jvm_library(
         "//java/arcs/core/data/proto:proto_for_test",
         "//third_party/java/arcs/deps:protobuf_java",
     ],
+)
+
+kt_jvm_library(
+    name = "verify_policy_lib",
+    srcs = ["VerifyPolicy.kt"],
+    deps = [
+        "//java/arcs/core/analysis",
+        "//java/arcs/core/data",
+        "//java/arcs/core/data/proto",
+        "//java/arcs/core/data/proto:manifest_java_proto_lite",
+        "//java/arcs/core/data/proto:policy_java_proto_lite",
+        "//java/arcs/core/policy",
+        "//java/arcs/core/policy/proto",
+        "//third_party/kotlin/clikt",
+    ],
+)
+
+java_binary(
+    name = "verify_policy",
+    main_class = "arcs.tools.VerifyPolicyKt",
+    runtime_deps = [":verify_policy_lib"],
 )
 
 kt_jvm_library(

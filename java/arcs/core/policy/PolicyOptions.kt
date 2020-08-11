@@ -10,12 +10,5 @@ data class PolicyOptions(
      *
      * Temporary measure until we have a proper way to designate these stores.
      */
-    val storeMap: Map<StoreId, String>,
-
-    /**
-     * Maps policy with the allowed egress particles.
-     *
-     * Temporary measure until we have a proper way to designate egress particles.
-     */
-    val policyEgresses: Map<String, List<String>>
+    val storeMap: Map<StoreId, String>
 )

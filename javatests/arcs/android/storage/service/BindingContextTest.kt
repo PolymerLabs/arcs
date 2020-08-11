@@ -80,6 +80,7 @@ class BindingContextTest {
         store,
         bindingContextScope.coroutineContext,
         BindingContextStatsImpl(),
+        null,
         callback
     )
 

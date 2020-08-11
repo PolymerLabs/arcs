@@ -1,0 +1,32 @@
+// #Ingress: P1
+// #OK
+schema FooList
+  elements: List<inline Foo {
+    c: Text,
+    d: inline Baz {e: Number}
+  }>
+
+schema Bar
+  b: inline Baz {e: Number}
+
+particle P1
+  foo: writes (FooList, Bar)
+  claim foo.first.elements.c is trusted
+  claim foo.first.elements.d is trusted
+  claim foo.first.elements.d.e is untrusted
+  claim foo.second.b.e is public
+
+particle P2
+  foo: reads (FooList, Bar)
+  check foo.first.elements.c is trusted
+  // Label on foo.first.elements.d is the combination of labels for
+  // foo.first.elements.d.e and foo.first.elements.d
+  check foo.first.elements.d is trusted or is untrusted
+  check foo.first.elements.d.e is untrusted
+  check foo.second.b.e is public
+
+recipe R
+  P1
+    foo: writes h
+  P2
+    foo: reads h

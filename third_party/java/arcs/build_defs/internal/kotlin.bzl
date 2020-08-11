@@ -22,7 +22,6 @@ load(
     "java_library",
     "java_test",
 )
-load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
 load("//tools/build_defs/android:rules.bzl", "android_local_test")
 load(
     "//tools/build_defs/kotlin:rules.bzl",
@@ -31,7 +30,14 @@ load(
 )
 load(":kotlin_serviceloader_registry.bzl", "kotlin_serviceloader_registry")
 load(":kotlin_wasm_annotations.bzl", "kotlin_wasm_annotations")
-load(":util.bzl", "manifest_only", "merge_lists", "replace_arcs_suffix")
+load(":tools.oss.bzl", "arcs_tool_recipe2plan")
+load(
+    ":util.bzl",
+    "create_build_test",
+    "manifest_only",
+    "merge_lists",
+    "replace_arcs_suffix",
+)
 
 _WASM_SUFFIX = "-wasm"
 
@@ -121,6 +127,7 @@ def arcs_kt_jvm_library(**kwargs):
         )
 
     kt_jvm_library(**kwargs)
+    create_build_test(kwargs["name"])
 
 def arcs_kt_android_library(**kwargs):
     """Wrapper around kt_android_library for Arcs.
@@ -135,6 +142,7 @@ def arcs_kt_android_library(**kwargs):
     kotlincopts = kwargs.pop("kotlincopts", [])
     kwargs["kotlincopts"] = merge_lists(kotlincopts, COMMON_KOTLINC_OPTS + JVM_KOTLINC_OPTS)
     kt_android_library(**kwargs)
+    create_build_test(kwargs["name"])
 
 def arcs_kt_native_library(**kwargs):
     """Wrapper around kt_native_library for Arcs.
@@ -467,12 +475,10 @@ def arcs_kt_plan(
         out = replace_arcs_suffix(src, "_GeneratedPlan.kt")
         outs.append(out)
         rest = [s for s in srcs if s != src]
-        sigh_command(
+        arcs_tool_recipe2plan(
             name = genrule_name,
             srcs = [src],
             outs = [out],
-            progress_message = "Generating Kotlin Plans",
-            sigh_cmd = "recipe2plan --quiet --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
             deps = deps + data + rest,
         )
 

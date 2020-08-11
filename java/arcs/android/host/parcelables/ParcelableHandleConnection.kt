@@ -17,6 +17,8 @@ import arcs.android.type.readType
 import arcs.android.type.writeType
 import arcs.core.data.HandleMode
 import arcs.core.data.Plan
+import arcs.core.data.expression.deserializeExpression
+import arcs.core.data.expression.serialize
 
 /** [Parcelable] variant of [Plan.HandleConnection]. */
 data class ParcelableHandleConnection(
@@ -28,7 +30,7 @@ data class ParcelableHandleConnection(
         parcel.writeHandle(actual.handle, flags)
         parcel.writeType(actual.type, flags)
         parcel.writeInt(actual.mode.ordinal)
-        parcel.writeString(actual.expression)
+        parcel.writeString(actual.expression?.serialize() ?: "")
     }
 
     override fun describeContents(): Int = 0
@@ -51,7 +53,7 @@ data class ParcelableHandleConnection(
                 "HandleMode ordinal unknown value $handleModeOrdinal"
             }
 
-            val expression = parcel.readString()
+            val expression = parcel.readString()?.ifEmpty { null }
 
             return ParcelableHandleConnection(
                 Plan.HandleConnection(
@@ -59,7 +61,7 @@ data class ParcelableHandleConnection(
                     handleMode,
                     type,
                     emptyList(),
-                    expression
+                    expression?.deserializeExpression()
                 )
             )
         }

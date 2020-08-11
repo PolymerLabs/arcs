@@ -60,6 +60,10 @@ import kotlinx.coroutines.withTimeout
 internal typealias ContainerProxyMessage =
     ProxyMessage<CrdtData, CrdtOperationAtTime, Referencable>
 
+/** This is a convenience for the parameter type of [handleBackingStoreMessage]. */
+internal typealias BackingStoreProxyMessage =
+    ProxyMessage<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>
+
 /** This is a convenience for the parameter type of [handleProxyMessage]. */
 internal typealias RefModeProxyMessage =
     ProxyMessage<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
@@ -146,13 +150,13 @@ class ReferenceModeStore private constructor(
     private val versions = mutableMapOf<ReferenceId, MutableMap<FieldName, Int>>()
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    val backingStore = DirectStoreMuxer<CrdtData, CrdtOperation, Any?>(
+    val backingStore = DirectStoreMuxer<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>(
         storageKey = backingKey,
         backingType = backingType,
         callbackFactory = { muxId ->
             ProxyCallback { message ->
                 receiveQueue.enqueue {
-                    handleBackingStoreMessage(message.toReferenceModeMessage(), muxId)
+                    handleBackingStoreMessage(message, muxId)
                 }
             }
         }
@@ -344,7 +348,7 @@ class ReferenceModeStore private constructor(
      * by this [ReferenceModeStore] object and hence should never be out-of-order.
      */
     private suspend fun handleBackingStoreMessage(
-        proxyMessage: ContainerProxyMessage,
+        proxyMessage: BackingStoreProxyMessage,
         muxId: String
     ): Boolean {
         when (proxyMessage) {
@@ -524,7 +528,7 @@ class ReferenceModeStore private constructor(
                 val entity = if (version.isEmpty()) {
                     newBackingInstance().data as CrdtEntity.Data
                 } else {
-                    backingStore.getLocalData(refId) as CrdtEntity.Data
+                    backingStore.getLocalData(refId)
                 }
                 outgoing[refId] = CrdtSet.DataValue(version.copy(), entity.toRawEntity(refId))
             }

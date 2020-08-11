@@ -84,7 +84,6 @@ const steps: {[index: string]: ((args?: string[]) => boolean|Promise<boolean>)[]
   health: [health],
   bundle: runNodeScriptSteps('bundle'),
   schema2wasm: runNodeScriptSteps('schema2wasm'),
-  manifest2json: runNodeScriptSteps('manifest2json'),
   manifest2proto: runNodeScriptSteps('manifest2proto'),
   recipe2plan: runNodeScriptSteps('recipe2plan'),
   flowcheck: runNodeScriptSteps('flowcheck'),
@@ -113,11 +112,6 @@ const scripts: {[index: string]: string} = {
   flowcheck: 'build/dataflow/cli/flowcheck.js',
 
   schema2wasm: 'build/tools/schema2wasm.js',
-
-  manifestChecker: 'build/tools/manifest-checker.js',
-
-  /** Serializes manifests to JSON. */
-  manifest2json: 'build/tools/manifest2json.js',
 
   /** Serializes a manifest to protobufs. */
   manifest2proto: 'build/tools/manifest2proto-cli.js',

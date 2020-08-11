@@ -1,8 +1,4 @@
-load(
-    "//third_party/java/arcs/build_defs:build_defs.bzl",
-    "arcs_manifest_json",
-    "arcs_ts_test",
-)
+load("//third_party/java/arcs/build_defs:arcs_ts_test.bzl", "arcs_ts_test")
 
 exports_files(["manifest.arcs"])
 
@@ -21,9 +17,4 @@ arcs_ts_test(
         "//javatests/arcs/sdk/wasm:test-module",
         "//src/wasm/cpp/tests:test-module",
     ],
-)
-
-arcs_manifest_json(
-    name = "manifest_data",
-    srcs = ["manifest.arcs"],
 )
