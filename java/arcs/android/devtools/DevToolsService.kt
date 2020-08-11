@@ -49,8 +49,8 @@ class DevToolsService : Service() {
     private val forwardProxyMessage = object : IStorageServiceCallback.Stub() {
         override fun onProxyMessage(proxyMessage: ByteArray) {
             scope.launch {
-                val actualMessage = proxyMessage.decodeProxyMessage()
-                devToolsServer.send(actualMessage.toString())
+                val rawMessage = RawDevToolsMessage(proxyMessage.decodeProxyMessage().toString())
+                devToolsServer.send(rawMessage.toJson())
             }
         }
     }
