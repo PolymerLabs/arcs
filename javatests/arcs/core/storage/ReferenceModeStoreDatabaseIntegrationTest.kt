@@ -402,6 +402,7 @@ class ReferenceModeStoreDatabaseIntegrationTest {
                         activeStore.onProxyMessage(ProxyMessage.SyncRequest(id))
                     is ProxyMessage.ModelUpdate ->
                         job.complete()
+                    else -> Unit
                 }
             }
         )

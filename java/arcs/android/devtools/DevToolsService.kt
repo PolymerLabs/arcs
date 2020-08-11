@@ -74,18 +74,19 @@ class DevToolsService : Service() {
         scope.launch {
             val extras = intent.extras
             if (extras != null) {
+                @Suppress("UNCHECKED_CAST")
                 storageClass = extras.getSerializable("STORAGE_CLASS") as Class<StorageService>
             }
             val service = initialize()
-            val proxy = service.getDevToolsProxy()
+            val proxy = service.devToolsProxy
 
             forwardProxyMessageToken = proxy.registerBindingContextProxyMessageCallback(
                 forwardProxyMessage
             )
 
-            binder.send(service.getStorageKeys() ?: "")
+            binder.send(service.storageKeys ?: "")
             devToolsServer.addOnOpenWebsocketCallback {
-                devToolsServer.send(service.getStorageKeys() ?: "")
+                devToolsServer.send(service.storageKeys ?: "")
             }
 
             storageService = service
