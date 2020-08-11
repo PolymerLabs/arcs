@@ -32,21 +32,24 @@ kt_jvm_library(
 
 kt_jvm_library(
     name = "verify_policy_lib",
+    testonly = True,
     srcs = ["VerifyPolicy.kt"],
     deps = [
         "//java/arcs/core/analysis",
         "//java/arcs/core/data",
-        "//java/arcs/core/data/proto",
-        "//java/arcs/core/data/proto:manifest_java_proto_lite",
-        "//java/arcs/core/data/proto:policy_java_proto_lite",
+        "//java/arcs/core/data/proto:manifest_java_proto",
+        "//java/arcs/core/data/proto:policy_java_proto",
+        "//java/arcs/core/data/proto:proto_for_test",
         "//java/arcs/core/policy",
         "//java/arcs/core/policy/proto",
+        "//third_party/java/arcs/deps:protobuf_java",
         "//third_party/kotlin/clikt",
     ],
 )
 
 java_binary(
     name = "verify_policy",
+    testonly = True,
     main_class = "arcs.tools.VerifyPolicyKt",
     runtime_deps = [":verify_policy_lib"],
 )
