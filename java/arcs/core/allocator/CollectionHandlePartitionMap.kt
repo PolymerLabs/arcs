@@ -17,6 +17,7 @@ import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
+import arcs.core.host.HandleManager
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.TaggedLog
@@ -31,7 +32,7 @@ import kotlinx.coroutines.withContext
  */
 @ExperimentalCoroutinesApi
 class CollectionHandlePartitionMap(
-    private val handleManager: EntityHandleManager
+    private val handleManager: HandleManager
 ) : Allocator.PartitionSerialization {
 
     private val log = TaggedLog { "CollectionHandlePartitionMap" }

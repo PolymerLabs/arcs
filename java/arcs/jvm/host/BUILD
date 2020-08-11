@@ -9,9 +9,12 @@ arcs_kt_jvm_library(
     srcs = glob(["*.kt"]),
     disable_lint_checks = ["NewApi"],
     deps = [
+        "//java/arcs/core/analytics",
+        "//java/arcs/core/common",
         "//java/arcs/core/data",
         "//java/arcs/core/host",
         "//java/arcs/core/host/api",
+        "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
         "//java/arcs/core/util",
         "//java/arcs/jvm/util",

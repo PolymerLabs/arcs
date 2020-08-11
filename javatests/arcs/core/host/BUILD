@@ -130,6 +130,7 @@ arcs_kt_jvm_library(
         ":schemas",
         "//java/arcs/core/host",
         "//java/arcs/core/util",
+        "//java/arcs/jvm/host",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk",
         "//third_party/kotlin/kotlinx_coroutines",

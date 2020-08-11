@@ -4,6 +4,7 @@ import arcs.core.data.Capability
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.storage.StorageKey
+import kotlinx.coroutines.CoroutineDispatcher
 
 /**
  * This interface defines the functionality of a component that manages all of the active
@@ -25,4 +26,6 @@ interface HandleManager {
 
     /** Close all handles created by this handle manager. */
     suspend fun close()
+
+    val dispatcher: CoroutineDispatcher
 }

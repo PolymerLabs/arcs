@@ -23,6 +23,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/android/sdk/host",
         "//java/arcs/android/storage/database",
         "//java/arcs/core/allocator",
+        "//java/arcs/core/analytics",
         "//java/arcs/core/common",
         "//java/arcs/core/data",
         "//java/arcs/core/data:schema_fields",

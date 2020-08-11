@@ -5,14 +5,13 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import androidx.lifecycle.Lifecycle
+import arcs.android.host.AndroidHandleManagerProvider
 import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.ArcHost
+import arcs.core.host.HandleManagerProvider
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
-import arcs.jvm.host.JvmSchedulerProvider
-import arcs.jvm.util.JvmTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -28,10 +27,16 @@ class DemoService : ArcHostService() {
 
     private lateinit var notificationManager: NotificationManager
 
+    val handleManagerProvider = AndroidHandleManagerProvider(
+        context = this,
+        schedulerCoroutineContext = Dispatchers.Default,
+        serviceCoroutineContext = Dispatchers.Default
+    )
+
     override val arcHost = MyArcHost(
         this,
         this.lifecycle,
-        JvmSchedulerProvider(coroutineContext),
+        handleManagerProvider,
         ::ReadPerson.toRegistration(),
         ::WritePerson.toRegistration()
     )
@@ -56,18 +61,16 @@ class DemoService : ArcHostService() {
     inner class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,
-        schedulerProvider: SchedulerProvider,
+        handleManagerProvider: HandleManagerProvider,
         vararg initialParticles: ParticleRegistration
     ) : AndroidHost(
         context = context,
         lifecycle = lifecycle,
         coroutineContext = Dispatchers.Default,
         arcSerializationContext = Dispatchers.Default,
-        schedulerProvider = schedulerProvider,
+        handleManagerProvider = handleManagerProvider,
         particles = *initialParticles
-    ) {
-        override val platformTime = JvmTime
-    }
+    )
 
     inner class ReadPerson : AbstractReadPerson() {
         override fun onReady() {

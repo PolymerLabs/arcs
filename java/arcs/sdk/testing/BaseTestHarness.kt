@@ -152,7 +152,7 @@ open class BaseTestHarness<P : Particle>(
             .that(::particle.isInitialized).isFalse()
         particle = factory(scope)
         val plan = Plan.Particle("TestParticle", "", mapOf())
-        val context = ParticleContext(particle, plan, scheduler)
+        val context = ParticleContext(particle, plan, scheduler.asCoroutineDispatcher())
 
         particleHandles.forEach { (name, handle) ->
             particle.handles.setHandle(name, handle)

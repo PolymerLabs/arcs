@@ -16,10 +16,9 @@ import androidx.lifecycle.Lifecycle
 import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.ArcHost
+import arcs.core.host.HandleManagerProvider
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
-import arcs.core.host.SchedulerProvider
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.host.scanForParticles
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,20 +31,21 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 @ExperimentalCoroutinesApi
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 abstract class ProdArcHostService : ArcHostService() {
+
     @ExperimentalCoroutinesApi
     class ProdAndroidHost(
         context: Context,
         lifecycle: Lifecycle,
         coroutineContext: CoroutineContext,
         arcSerializationCoroutineContext: CoroutineContext,
-        schedulerProvider: SchedulerProvider,
+        handleManagerProvider: HandleManagerProvider,
         vararg particles: ParticleRegistration
     ) : AndroidHost(
         context = context,
         lifecycle = lifecycle,
         coroutineContext = coroutineContext,
         arcSerializationContext = arcSerializationCoroutineContext,
-        schedulerProvider = schedulerProvider,
+        handleManagerProvider = handleManagerProvider,
         particles = *particles
     ), ProdHost
 
@@ -54,7 +54,7 @@ abstract class ProdArcHostService : ArcHostService() {
 
     /** This is the [CoroutineContext] used for arc state storage on the [AbstractArcHost]s. */
     abstract val arcSerializationCoroutineContext: CoroutineContext
-
+    abstract val handleManagerProvider: HandleManagerProvider
     /**
      * This is open for tests to override, but normally isn't necessary.
      */
@@ -64,7 +64,7 @@ abstract class ProdArcHostService : ArcHostService() {
             lifecycle = lifecycle,
             coroutineContext = coroutineContext,
             arcSerializationCoroutineContext = arcSerializationCoroutineContext,
-            schedulerProvider = JvmSchedulerProvider(scope.coroutineContext),
+            handleManagerProvider = handleManagerProvider,
             particles = *scanForParticles()
         )
     }

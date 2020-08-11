@@ -25,6 +25,8 @@ import arcs.core.host.HostRegistry
 import arcs.core.host.PersonPlan
 import arcs.core.host.TestingJvmProdHost
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.jvm.host.DirectHandleManagerProvider
+import arcs.jvm.host.JvmSchedulerProvider
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -89,6 +91,8 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
     class DefaultProdArcHostServiceForTest : ProdArcHostService() {
         override val coroutineContext = Dispatchers.Default
         override val arcSerializationCoroutineContext = Dispatchers.Default
+        override val handleManagerProvider =
+            DirectHandleManagerProvider(JvmSchedulerProvider(Dispatchers.Default))
     }
 
     @Before

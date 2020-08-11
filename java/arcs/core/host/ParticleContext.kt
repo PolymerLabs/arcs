@@ -14,8 +14,8 @@ import arcs.core.data.Plan
 import arcs.core.entity.Handle
 import arcs.core.host.api.Particle
 import arcs.core.storage.StorageProxy.StorageEvent
-import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
 /** Maximum number of times a particle may fail to be started before giving up. */
@@ -34,7 +34,7 @@ const val MAX_CONSECUTIVE_FAILURES = 5
 class ParticleContext(
     val particle: Particle,
     val planParticle: Plan.Particle,
-    val scheduler: Scheduler? = null,
+    val dispatcher: CoroutineDispatcher,
     var particleState: ParticleState = ParticleState.Instantiated,
     var consecutiveFailureCount: Int = 0
 ) {
@@ -54,8 +54,6 @@ class ParticleContext(
     // One-shot callback used to notify the arc host that the particle is in the Running state.
     private var notifyReady: ((Particle) -> Unit)? = null
 
-    private val dispatcher = scheduler?.asCoroutineDispatcher()
-
     override fun toString() = "ParticleContext(particle=$particle, particleState=$particleState, " +
             "consecutiveFailureCount=$consecutiveFailureCount, isWriteOnly=$isWriteOnly, " +
             "awaitingReady=$awaitingReady, desyncedHandles=$desyncedHandles)"
@@ -64,7 +62,7 @@ class ParticleContext(
     fun copyWith(newParticle: Particle) = ParticleContext(
         newParticle,
         planParticle,
-        scheduler,
+        dispatcher,
         particleState,
         consecutiveFailureCount
     )

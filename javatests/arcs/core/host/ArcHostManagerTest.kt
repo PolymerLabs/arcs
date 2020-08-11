@@ -28,7 +28,7 @@ open class ArcHostManagerTest {
     @Test
     fun pauseAllHostsFor() = runBlocking {
         val schedulerProvider = JvmSchedulerProvider(coroutineContext)
-        val host = TestHost(schedulerProvider("arcId"))
+        val host = TestHost()
         val hostRegistry = ExplicitHostRegistry()
         hostRegistry.registerHost(host)
 

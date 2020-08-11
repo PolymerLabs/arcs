@@ -9,9 +9,9 @@ import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.driver.VolatileDriverProviderFactory
 import arcs.core.util.TaggedLog
 import arcs.core.util.testutil.LogRule
+import arcs.jvm.host.DirectHandleManagerProvider
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmSchedulerProvider
-import arcs.jvm.util.JvmTime
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
@@ -32,16 +32,15 @@ class ReflectiveParticleConstructionTest {
     val log = LogRule()
 
     class JvmProdHost(
-        schedulerProvider: SchedulerProvider,
         vararg particles: ParticleRegistration
     ) : AbstractArcHost(
         coroutineContext = Dispatchers.Default,
         updateArcHostContextCoroutineContext = Dispatchers.Default,
-        schedulerProvider = schedulerProvider,
+        handleManagerProvider = DirectHandleManagerProvider(
+            JvmSchedulerProvider(Dispatchers.Default)
+        ),
         initialParticles = *particles
-    ), ProdHost {
-        override val platformTime = JvmTime
-    }
+    ), ProdHost
 
     class AssertingReflectiveParticle(spec: Plan.Particle?) : TestReflectiveParticle(spec) {
         private val log = TaggedLog { "AssertingReflectiveParticle" }
@@ -75,7 +74,7 @@ class ReflectiveParticleConstructionTest {
             ::AssertingReflectiveParticle.toRegistration().second
         )
 
-        hostRegistry.registerHost(JvmProdHost(schedulerProvider, fakeRegistration))
+        hostRegistry.registerHost(JvmProdHost(fakeRegistration))
 
         val allocator = Allocator.create(
             hostRegistry,

@@ -59,7 +59,6 @@ class LifecycleTest {
         schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
         scheduler = schedulerProvider("test")
         testHost = TestingHost(
-            schedulerProvider,
             ::SingleReadHandleParticle.toRegistration(),
             ::SingleWriteHandleParticle.toRegistration(),
             ::MultiHandleParticle.toRegistration(),

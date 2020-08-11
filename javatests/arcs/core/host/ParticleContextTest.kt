@@ -56,7 +56,7 @@ class ParticleContextTest {
         context = ParticleContext(
             particle,
             Plan.Particle("name", "location", mapOf()),
-            Scheduler(EmptyCoroutineContext)
+            Scheduler(EmptyCoroutineContext).asCoroutineDispatcher()
         )
     }
 

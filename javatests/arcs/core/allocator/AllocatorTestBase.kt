@@ -73,12 +73,10 @@ open class AllocatorTestBase {
     private lateinit var pureHost: TestingJvmProdHost
 
     private class WritingHost : TestingHost(
-        JvmSchedulerProvider(EmptyCoroutineContext),
         ::WritePerson.toRegistration()
     )
 
     private class ReadingHost : TestingHost(
-        JvmSchedulerProvider(EmptyCoroutineContext),
         ::ReadPerson.toRegistration()
     )
 
@@ -89,7 +87,7 @@ open class AllocatorTestBase {
     open fun writingHost(): TestingHost = WritingHost()
 
     /** Return the [ArcHost] that contains all isolatable [Particle]s. */
-    open fun pureHost() = TestingJvmProdHost(schedulerProvider)
+    open fun pureHost() = TestingJvmProdHost()
 
     open val storageCapability = Capabilities(Shareable(true))
 

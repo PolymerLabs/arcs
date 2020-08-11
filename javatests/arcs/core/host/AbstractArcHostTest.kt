@@ -13,6 +13,7 @@ import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.handles.dispatchStore
+import arcs.jvm.host.DirectHandleManagerProvider
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.BaseParticle
@@ -45,17 +46,20 @@ open class AbstractArcHostTest {
         }
     }
 
+    private val handleManagerProvider = DirectHandleManagerProvider(
+        schedulerProvider = JvmSchedulerProvider(Dispatchers.Default),
+        time = FakeTime()
+    )
+
     class MyTestHost(
-        schedulerProvider: SchedulerProvider,
+        handleManagerProvider: HandleManagerProvider,
         vararg particles: ParticleRegistration
     ) : AbstractArcHost(
         coroutineContext = Dispatchers.Default,
         updateArcHostContextCoroutineContext = Dispatchers.Default,
-        schedulerProvider = schedulerProvider,
+        handleManagerProvider = handleManagerProvider,
         initialParticles = *particles
     ) {
-        override val platformTime = FakeTime()
-
         @Suppress("UNCHECKED_CAST")
         fun getFooHandle(): ReadWriteSingletonHandle<DummyEntity> {
             val p = getArcHostContext("arcId")!!.particles.first {
@@ -75,8 +79,7 @@ open class AbstractArcHostTest {
 
     @Test
     fun pause_Unpause() = runBlocking {
-        val schedulerProvider = JvmSchedulerProvider(coroutineContext)
-        val host = MyTestHost(schedulerProvider)
+        val host = MyTestHost(handleManagerProvider)
         val partition = Plan.Partition("arcId", "arcHost", listOf())
         val partition2 = Plan.Partition("arcId2", "arcHost", listOf())
         val partition3 = Plan.Partition("arcId3", "arcHost", listOf())
@@ -98,15 +101,12 @@ open class AbstractArcHostTest {
         assertThat(host.lookupArcHostStatus(partition)).isEqualTo(ArcState.Running)
         assertThat(host.lookupArcHostStatus(partition2)).isEqualTo(ArcState.Running)
         assertThat(host.lookupArcHostStatus(partition3)).isEqualTo(ArcState.Running)
-
-        schedulerProvider.cancelAll()
     }
 
     // Regression test for b/152713120.
     @Test
     fun ttlUsed() = runBlocking {
-        val schedulerProvider = JvmSchedulerProvider(coroutineContext)
-        val host = MyTestHost(schedulerProvider, ::TestParticle.toRegistration())
+        val host = MyTestHost(handleManagerProvider, ::TestParticle.toRegistration())
         val handleStorageKey = ReferenceModeStorageKey(
             backingKey = RamDiskStorageKey("backing"),
             storageKey = RamDiskStorageKey("container")
@@ -136,8 +136,6 @@ open class AbstractArcHostTest {
         // Should expire in 2 minutes.
         val expectedExpiry = 2 * 60 * 1000 + FakeTime().currentTimeMillis
         assertThat(entity.expirationTimestamp).isEqualTo(expectedExpiry)
-
-        schedulerProvider.cancelAll()
     }
 
     @Test
@@ -145,7 +143,7 @@ open class AbstractArcHostTest {
         TestParticle.failAtStart = true
 
         val schedulerProvider = JvmSchedulerProvider(coroutineContext)
-        val host = MyTestHost(schedulerProvider, ::TestParticle.toRegistration())
+        val host = MyTestHost(handleManagerProvider, ::TestParticle.toRegistration())
         val particle = Plan.Particle(
             "Test",
             "arcs.core.host.AbstractArcHostTest.TestParticle",

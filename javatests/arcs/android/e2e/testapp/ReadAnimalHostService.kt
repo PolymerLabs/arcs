@@ -17,9 +17,10 @@ import androidx.lifecycle.Lifecycle
 import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.ArcHost
+import arcs.core.host.HandleManagerProvider
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
+import arcs.jvm.host.DirectHandleManagerProvider
 import arcs.jvm.host.JvmSchedulerProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,10 +34,13 @@ class ReadAnimalHostService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
 
+    val handleManagerProvider =
+        DirectHandleManagerProvider(JvmSchedulerProvider(coroutineContext))
+
     override val arcHost: ArcHost = MyArcHost(
         this,
         this.lifecycle,
-        JvmSchedulerProvider(coroutineContext),
+        handleManagerProvider,
         ::ReadAnimal.toRegistration()
     )
 
@@ -46,16 +50,15 @@ class ReadAnimalHostService : ArcHostService() {
     class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,
-        schedulerProvider: SchedulerProvider,
+        handleManagerProvider: HandleManagerProvider,
         vararg initialParticles: ParticleRegistration
     ) : AndroidHost(
         context = context,
         lifecycle = lifecycle,
         coroutineContext = Dispatchers.Default,
         arcSerializationContext = Dispatchers.Default,
-        schedulerProvider = schedulerProvider,
-        particles = *initialParticles
-    )
+        handleManagerProvider = handleManagerProvider,
+        particles = *initialParticles)
 
     inner class ReadAnimal : AbstractReadAnimal() {
         override fun onStart() {

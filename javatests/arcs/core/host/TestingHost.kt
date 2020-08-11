@@ -4,8 +4,8 @@ import arcs.core.common.ArcId
 import arcs.core.data.Plan
 import arcs.core.entity.Storable
 import arcs.core.host.api.Particle
-import arcs.core.util.Time
-import arcs.jvm.util.testutil.FakeTime
+import arcs.jvm.host.DirectHandleManagerProvider
+import arcs.jvm.host.JvmSchedulerProvider
 import arcs.sdk.Handle
 import arcs.sdk.HandleHolderBase
 import arcs.sdk.ReadWriteCollectionHandle
@@ -17,12 +17,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi
 open class TestingHost(
-    schedulerProvider: SchedulerProvider,
     vararg particles: ParticleRegistration
 ) : AbstractArcHost(
     coroutineContext = Dispatchers.Default,
     updateArcHostContextCoroutineContext = Dispatchers.Default,
-    schedulerProvider = schedulerProvider,
+    handleManagerProvider = DirectHandleManagerProvider(JvmSchedulerProvider(Dispatchers.Default)),
     initialParticles = *particles
 ) {
 
@@ -46,8 +45,6 @@ open class TestingHost(
     }
 
     val isIdle = isArcHostIdle
-
-    override val platformTime: Time = FakeTime()
 
     fun setup() {
         started.clear()

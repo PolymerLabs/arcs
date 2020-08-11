@@ -16,9 +16,10 @@ import android.content.Intent
 import androidx.lifecycle.Lifecycle
 import arcs.android.sdk.host.AndroidHost
 import arcs.android.sdk.host.ArcHostService
+import arcs.core.host.HandleManagerProvider
 import arcs.core.host.ParticleRegistration
-import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
+import arcs.jvm.host.DirectHandleManagerProvider
 import arcs.jvm.host.JvmSchedulerProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,10 +34,13 @@ class WriteAnimalHostService : ArcHostService() {
 
     private val coroutineContext = Job() + Dispatchers.Main
 
+    val handleManagerProvider =
+        DirectHandleManagerProvider(JvmSchedulerProvider(coroutineContext))
+
     override val arcHost: MyArcHost = MyArcHost(
         this,
         this.lifecycle,
-        JvmSchedulerProvider(coroutineContext),
+        handleManagerProvider,
         ::WriteAnimal.toRegistration()
     )
 
@@ -62,14 +66,14 @@ class WriteAnimalHostService : ArcHostService() {
     class MyArcHost(
         context: Context,
         lifecycle: Lifecycle,
-        schedulerProvider: SchedulerProvider,
+        handleManagerProvider: HandleManagerProvider,
         vararg initialParticles: ParticleRegistration
     ) : AndroidHost(
         context = context,
         lifecycle = lifecycle,
         coroutineContext = Dispatchers.Default,
         arcSerializationContext = Dispatchers.Default,
-        schedulerProvider = schedulerProvider,
+        handleManagerProvider = handleManagerProvider,
         particles = *initialParticles
     ) {
         fun arcHostContext(arcId: String) = getArcHostContext(arcId)

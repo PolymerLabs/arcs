@@ -141,7 +141,8 @@ class ArcHostContextParticle(
 
                 ParticleContext(
                     particle,
-                    Plan.Particle(particleEntity.particleName, particleEntity.location, handlesMap)
+                    Plan.Particle(particleEntity.particleName, particleEntity.location, handlesMap),
+                    arcHostContext.handleManager.dispatcher
                 )
             }
 

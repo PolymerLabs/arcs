@@ -54,6 +54,7 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
 import arcs.core.util.Time
 import arcs.core.util.guardedBy
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -85,6 +86,7 @@ class EntityHandleManager(
     private val analytics: Analytics? = null
 ) : HandleManager {
 
+    override val dispatcher: CoroutineDispatcher = scheduler.asCoroutineDispatcher()
     private val storageEndpointManager = stores.asStoreEndpointManager()
 
     private val proxyMutex = Mutex()
