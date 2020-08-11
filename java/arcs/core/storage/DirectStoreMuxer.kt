@@ -20,6 +20,7 @@ import arcs.core.storage.ProxyMessage.SyncRequest
 import arcs.core.type.Type
 import arcs.core.util.LruCacheMap
 import arcs.core.util.TaggedLog
+import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -77,10 +78,13 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
     suspend fun idle() = storeMutex.withLock {
         stores.values.toList()
     }.map {
-        withContext(coroutineContext) {
-            launch { it.store.idle() }
-        }
-    }.joinAll()
+        /**
+         * If the overhead/wall-time of [DirectStore.idle] is longer than an
+         * [CoroutineScope.launch] i.e. more than 5ms debounce time, launching
+         * [DirectStore.idle]s in parallel can further help performance,
+         */
+        it.store.idle()
+    }
 
     /**
      * Sends the provided [ProxyMessage] to the store backing the provided [referenceId].
