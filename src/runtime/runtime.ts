@@ -11,7 +11,7 @@
 import {assert} from '../platform/assert-web.js';
 import {Description} from './description.js';
 import {Manifest} from './manifest.js';
-import {Arc} from './arc.js';
+import {Arc, ArcResolutionAdapter} from './arc.js';
 import {CapabilitiesResolver} from './capabilities-resolver.js';
 import {RuntimeCacheService} from './runtime-cache.js';
 import {IdGenerator, ArcId, Id} from './id.js';
@@ -272,7 +272,7 @@ export class Runtime {
       if (recipe.isResolved()) {
         return recipe;
       }
-      const resolver = new RecipeResolver(arc);
+      const resolver = new RecipeResolver(new ArcResolutionAdapter(arc));
       const plan = await resolver.resolve(recipe);
       if (plan && plan.isResolved()) {
         return plan;

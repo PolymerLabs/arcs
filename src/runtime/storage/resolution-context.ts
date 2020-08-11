@@ -11,7 +11,8 @@ import {Type} from '../type.js';
 import {AbstractStore} from './abstract-store.js';
 
 export interface ResolutionContext {
-  context?: ResolutionContext;
+  globalInfo?: ResolutionContext;
   findStoresByType<T extends Type>(type: T, options?: { tags: string[], subtype?: boolean }): AbstractStore[];
   findStoreById(id: string): AbstractStore | null;
 }
+

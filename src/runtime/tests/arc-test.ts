@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Arc} from '../arc.js';
+import {Arc, ArcResolutionAdapter} from '../arc.js';
 import {Flags} from '../flags.js';
 import {Id, ArcId, IdGenerator} from '../id.js';
 import {Loader} from '../../platform/loader.js';
@@ -343,7 +343,7 @@ describe('Arc', () => {
     const arc = await runtime.newArc('test2');
     const thingClass = Entity.createEntityClass(manifest.findSchemaByName('Thing'), null);
     await arc.createStore(new SingletonType(thingClass.type), 'name', 'storeInArc');
-    const resolver = new RecipeResolver(arc);
+    const resolver = new RecipeResolver(new ArcResolutionAdapter(arc));
 
     // Fails resolving a recipe with 'copy' handle for store in the arc (not in context).
     assert.isNull(await resolver.resolve(manifest.recipes[2]));

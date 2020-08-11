@@ -143,7 +143,7 @@ interface ManifestLoadOptions {
   memoryProvider?: VolatileMemoryProvider;
 }
 
-export class Manifest implements ResolutionContext {
+export class Manifest {
   private _recipes: Recipe[] = [];
   private _imports: Manifest[] = [];
   private _canonicalImports: Manifest[] = [];

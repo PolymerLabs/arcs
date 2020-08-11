@@ -39,7 +39,8 @@ export class ResolveWalker extends RecipeWalker {
     if (handle.type.slandleType()) {
       return [];
     }
-    const resolutionContext = this.resolutionContext;
+    const localInfo = this.resolutionContext;
+    const globalInfo = this.resolutionContext.globalInfo;
     if ((handle.connections.length === 0 && !handle.isJoined) ||
         (handle.id && handle.storageKey) || (!handle.type) ||
         (!handle.fate)) {
@@ -52,11 +53,11 @@ export class ResolveWalker extends RecipeWalker {
       const counts = RecipeUtil.directionCounts(handle);
       switch (handle.fate) {
         case 'use':
-          mappable = resolutionContext.findStoresByType(handle.type, {tags: handle.tags});
+          mappable = localInfo.findStoresByType(handle.type, {tags: handle.tags});
           break;
         case 'map':
         case 'copy':
-          mappable = resolutionContext.context.findStoresByType(handle.type, {tags: handle.tags, subtype: true});
+          mappable = globalInfo.findStoresByType(handle.type, {tags: handle.tags, subtype: true});
           break;
         case 'create':
         case '?':
@@ -70,11 +71,11 @@ export class ResolveWalker extends RecipeWalker {
       let storeById;
       switch (handle.fate) {
         case 'use':
-          storeById = resolutionContext.findStoreById(handle.id);
+          storeById = localInfo.findStoreById(handle.id);
           break;
         case 'map':
         case 'copy':
-          storeById = resolutionContext.context.findStoreById(handle.id);
+          storeById = globalInfo.findStoreById(handle.id);
           break;
         case 'create':
         case '?':
@@ -120,14 +121,14 @@ export class ResolveWalker extends RecipeWalker {
       }
       return [];
     };
-    const resolutionContext = this.resolutionContext;
+    const localInfo = this.resolutionContext;
     if (slotConnection.isConnected()) {
       return error('Slot connection is already connected');
     }
 
     const slotSpec = slotConnection.getSlotSpec();
     const particle = slotConnection.particle;
-    const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, resolutionContext);
+    const {local, remote} = SlotUtils.findAllSlotCandidates(particle, slotSpec, localInfo);
 
     const allSlots = [...local, ...remote];
 
@@ -185,10 +186,10 @@ export class ResolveWalker extends RecipeWalker {
 }
 
 export class ResolveRecipeAction extends Action<Recipe> {
-  resolutionContext: ResolutionContext;
-  constructor(searchableStore: ResolutionContext, args?) {
+  localInfo: ResolutionContext;
+  constructor(localInfo: ResolutionContext, args?) {
     super(null, args);
-    this.resolutionContext = searchableStore;
+    this.localInfo = localInfo;
   }
   private options: IsValidOptions;
   withOptions(options: IsValidOptions) {
@@ -196,7 +197,7 @@ export class ResolveRecipeAction extends Action<Recipe> {
   }
   async generate(inputParams: GenerateParams<Recipe>) {
     return ResolveWalker.walk(this.getResults(inputParams),
-      new ResolveWalker(ResolveWalker.Permuted, this.resolutionContext, this.options), this);
+      new ResolveWalker(ResolveWalker.Permuted, this.localInfo, this.options), this);
   }
 }
 

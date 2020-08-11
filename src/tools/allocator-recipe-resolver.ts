@@ -37,13 +37,13 @@ export class AllocatorRecipeResolverError extends Error {
  * distributed to the proper ArcHost) and  lifecycle management (for arcs within ArcHosts).
  */
 export class AllocatorRecipeResolver {
-  private readonly resolutionContext: ManifestResolutionContext;
+  private readonly resolutionContext: ManifestResolutionAdapter;
   private readonly createHandleRegistry: Map<Handle, string> = new Map<Handle, string>();
   private createHandleIndex = 0;
 
 
   constructor(context: Manifest, private randomSalt: string) {
-    this.resolutionContext = new ManifestResolutionContext(context);
+    this.resolutionContext = new ManifestResolutionAdapter(context);
     DatabaseStorageKey.register();
   }
 
@@ -58,7 +58,7 @@ export class AllocatorRecipeResolver {
 
     // First pass: validate recipes and create stores
     const firstPass = [];
-    for (const recipe of this.resolutionContext.context.allRecipes) {
+    for (const recipe of this.resolutionContext.globalInfo.allRecipes) {
       this.validateHandles(recipe);
 
       if (!recipe.normalize(opts)) {
@@ -78,7 +78,7 @@ export class AllocatorRecipeResolver {
     const recipes = [];
     for (let recipe of firstPass) {
       // Only include recipes from primary (non-imported) manifest
-      if (!this.resolutionContext.context.recipes.map(r => r.name).includes(recipe.name)) continue;
+      if (!this.resolutionContext.globalInfo.recipes.map(r => r.name).includes(recipe.name)) continue;
 
       recipe = await this.tryResolve(recipe, opts);
       recipe = await this.assignCreatableStorageKeys(recipe);
@@ -161,7 +161,7 @@ export class AllocatorRecipeResolver {
         exists: Exists.MayExist,
         id: createHandle.id
       });
-      this.resolutionContext.context.registerStore(store, createHandle.tags);
+      this.resolutionContext.globalInfo.registerStore(store, createHandle.tags);
       createHandle.storageKey = storageKey;
     }
     assert(cloneRecipe.normalize());
@@ -178,7 +178,7 @@ export class AllocatorRecipeResolver {
    */
   validateHandles(recipe: Recipe) {
     for (const handle of recipe.handles.filter(handle => handle.fate === 'map' || handle.fate === 'copy')) {
-      const matches = this.resolutionContext.context.findHandlesById(handle.id)
+      const matches = this.resolutionContext.globalInfo.findHandlesById(handle.id)
         .filter(h => h.fate === 'create');
 
       if (matches.length === 0) {
@@ -209,8 +209,9 @@ export function findLongRunningArcId(recipe: Recipe): string | null {
 }
 
 /** Intermediary in the recipe resolution process that holds stores. */
-class ManifestResolutionContext implements ResolutionContext {
-  constructor(readonly context: Manifest) {}
+class ManifestResolutionAdapter implements ResolutionContext {
+
+  constructor(public readonly globalInfo: Manifest) {}
 
   findStoreById(id: string): AbstractStore | null {
     return null;
@@ -218,5 +219,13 @@ class ManifestResolutionContext implements ResolutionContext {
 
   findStoresByType<T extends Type>(type: T, options?: { tags: string[], subtype?: boolean }): AbstractStore[] {
     return [];
+  }
+
+  get allRecipes(): Recipe[] {
+    return this.globalInfo.allRecipes;
+  }
+
+  get recipes(): Recipe[] {
+    return this.globalInfo.recipes;
   }
 }

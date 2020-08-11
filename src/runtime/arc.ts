@@ -44,6 +44,7 @@ import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {SingletonInterfaceHandle, handleForStore, ToStore, newStore} from './storage/storage.js';
+import {ResolutionContext} from './storage/resolution-context.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -767,3 +768,25 @@ export class Arc implements ArcInterface {
     return this.id.toString();
   }
 }
+
+export class ArcResolutionAdapter implements ResolutionContext {
+
+  constructor(private arc: Arc) {}
+
+  get globalInfo(): ResolutionContext {
+    return this.arc.context;
+  }
+
+  get peh(): ParticleExecutionHost {
+    return this.arc.peh;
+  }
+
+  findStoresByType<T extends Type>(type: T, options?: { tags: string[], subtype?: boolean }): AbstractStore[] {
+    return this.arc.findStoresByType(type, options);
+  }
+
+  findStoreById(id: string): AbstractStore | null {
+    return this.arc.findStoreById(id);
+  }
+}
+
