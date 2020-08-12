@@ -412,6 +412,8 @@ sealed class Expression<T> {
 
     /**
      * Represents an expression that invokes a builtin function by name.
+     *
+     * @param T the type of the result of the [FunctionExpression]
      */
     data class FunctionExpression<T>(
         val function: GlobalFunction,
@@ -423,7 +425,7 @@ sealed class Expression<T> {
 }
 
 /**
- * Although this function looks weird, it exists to overcoem a shortcoming in Kotlin's numeric
+ * Although this function looks weird, it exists to overcome a shortcoming in Kotlin's numeric
  * type hierarchy, namely that operator overloads don't exist on [Number], and [BigInteger]
  * doesn't have them either. This function also widens types to the nearest compatible type
  * for the operation (e.g. Double, Long, Int, or BigInteger) and then narrows the type afterwards.

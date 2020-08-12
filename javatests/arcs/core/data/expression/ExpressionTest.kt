@@ -244,7 +244,7 @@ class ExpressionTest {
         val nowExpr = now()
 
         assertThat(
-            evalExpression<Long>(nowExpr, currentScope)
+            evalExpression<Number>(nowExpr, currentScope) as Long
         ).isAtLeast(System.currentTimeMillis() - 1000L)
     }
 
