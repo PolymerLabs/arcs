@@ -83,7 +83,7 @@ appropriately handles refinement built in function: creationTime()
 particle Foo
   input: reads Something {start: Long} [start < creationTime()]
 -----[results]-----
-(CurrentScope<Number>(mutableMapOf())["start"] lt CurrentScope<Long>(mapOf())["creationTime()"])
+(CurrentScope<Number>(mutableMapOf())["start"] lt CurrentScope<Number>(mutableMapOf())["creationTime()"])
 -----[end]-----
 
 -----[name]-----
@@ -92,5 +92,5 @@ appropriately handles refinement built in function: expirationTime()
 particle Foo
   input: reads Something {start: Long} [start < expirationTime()]
 -----[results]-----
-(CurrentScope<Number>(mutableMapOf())["start"] lt CurrentScope<Long>(mapOf())["expirationTime()"])
+(CurrentScope<Number>(mutableMapOf())["start"] lt CurrentScope<Number>(mutableMapOf())["expirationTime()"])
 -----[end]-----

@@ -62,8 +62,8 @@ class KotlinRefinementGenerator extends RefinementExpressionVisitor<string> {
     // TODO: Double check that millis are the correct default units.
     switch (expr.value) {
       case 'now': return `now()`;
-      case 'creationTime': return `CurrentScope<Long>(mapOf())["creationTime()"]`;
-      case 'expirationTime': return `CurrentScope<Long>(mapOf())["expirationTime()"]`;
+      case 'creationTime': return `CurrentScope<Number>(mutableMapOf())["creationTime()"]`;
+      case 'expirationTime': return `CurrentScope<Number>(mutableMapOf())["expirationTime()"]`;
       default: throw new Error(
         `Unhandled BuiltInNode '${expr.value}' in KotlinRefinementGenerator`
       );
