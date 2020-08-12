@@ -592,6 +592,50 @@ particle ReaderAD
   thing: reads [&Thing {a: Text, d: Text}]
 particle ReaderB
   thing: reads [&Thing {b: Text}]`;
+  const particleSpecWithLists = `
+particle Writer
+  thing: writes Thing {a: List<Text>, b: List<Text>, c: List<Text>, d: List<Text>, e: List<Text>}
+particle ReaderA
+  thing: reads Thing {a: List<Text>}
+particle ReaderAC
+  thing: reads Thing {a: List<Text>, c: List<Text>}
+particle ReaderAD
+  thing: reads Thing {a: List<Text>, d: List<Text>}
+particle ReaderB
+  thing: reads Thing {b: List<Text>}`;
+  const particleSpecWithInlines = `
+particle Writer
+  thing: writes Thing {foo: inline Foo {a: Text, b: Text, c: Text, d: Text, e: Text}, bar: Text}
+particle ReaderA
+  thing: reads Thing {foo: inline Foo {a: Text}}
+particle ReaderAC
+  thing: reads Thing {foo: inline Foo {a: Text, c: Text}}
+particle ReaderAD
+  thing: reads Thing {foo: inline Foo {a: Text, d: Text}, bar: Text}
+particle ReaderB
+  thing: reads Thing {foo: inline Foo {b: Text}}`;
+  const particleSpecWithListOfInlines = `
+particle Writer
+  thing: writes Thing {foo: List<inline Foo {a: Text, b: Text, c: Text, d: Text, e: Text}>}
+particle ReaderA
+  thing: reads Thing {foo: List<inline Foo {a: Text}>}
+particle ReaderAC
+  thing: reads Thing {foo: List<inline Foo {a: Text, c: Text}>}
+particle ReaderAD
+  thing: reads Thing {foo: List<inline Foo {a: Text, d: Text}>}
+particle ReaderB
+  thing: reads Thing {foo: List<inline Foo {b: Text}>}`;
+  const particleSpecWithTuples = `
+particle Writer
+  thing: writes Thing {a: (Text, Number), b: [(Text, Number)], c: List<(Text, Number)>, d: (Text, Number), e: (Text, Number)}
+particle ReaderA
+  thing: reads Thing {a: (Text, Number)}
+particle ReaderAC
+  thing: reads Thing {a: (Text, Number), c: List<(Text, Number)>}
+particle ReaderAD
+  thing: reads Thing {a: (Text, Number), d: (Text, Number)}
+particle ReaderB
+  thing: reads Thing {b: [(Text, Number)]}`;
 
   const verifyWritingRecipe = async (manifestStr: string, expectedSchema: string) => {
     const manifest = await Manifest.parse(manifestStr);
@@ -630,6 +674,22 @@ recipe WritingRecipe
       ${particleSpecWithReferencesCollections}
       ${recipe}
     `, '[&Thing {a: Text, b: Text}]');
+    await verifyWritingRecipe(`
+      ${particleSpecWithInlines}
+      ${recipe}
+    `, 'Thing {foo: inline Foo {a: Text, b: Text}}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithLists}
+      ${recipe}
+    `, 'Thing {a: List<Text>, b: List<Text>}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithListOfInlines}
+      ${recipe}
+    `, 'Thing {foo: List<inline Foo {a: Text, b: Text}>}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithTuples}
+      ${recipe}
+    `, 'Thing {a: (Text, Number), b: [(Text, Number)]}');
   });
 
   it('restricts writer fields by reader recipe with one particle one field', async () => {
@@ -661,6 +721,22 @@ recipe ReadingRecipeB
       ${particleSpecWithReferencesCollections}
       ${recipe}
     `, '[&Thing {a: Text}]');
+    await verifyWritingRecipe(`
+      ${particleSpecWithInlines}
+      ${recipe}
+    `, 'Thing {foo: inline Foo {a: Text}}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithLists}
+      ${recipe}
+    `, 'Thing {a: List<Text>}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithListOfInlines}
+      ${recipe}
+    `, 'Thing {foo: List<inline Foo {a: Text}>}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithTuples}
+      ${recipe}
+    `, 'Thing {a: (Text, Number)}');
   });
 
   it('restricts writer fields by reader recipe with two particles', async () => {
@@ -694,6 +770,23 @@ recipe ReadingRecipeB
       ${particleSpecWithReferencesCollections}
       ${recipe}
     `, '[&Thing {a: Text, b: Text}]');
+    await verifyWritingRecipe(`
+      ${particleSpecWithInlines}
+      ${recipe}
+    `, 'Thing {foo: inline Foo {a: Text, b: Text}}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithLists}
+      ${recipe}
+    `, 'Thing {a: List<Text>, b: List<Text>}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithListOfInlines}
+      ${recipe}
+    `, 'Thing {foo: List<inline Foo {a: Text, b: Text}>}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithTuples}
+      ${recipe}
+    `, 'Thing {a: (Text, Number), b: [(Text, Number)]}');
+
   });
 
   it('restricts writer fields by long-running reader recipe with two particles', async () => {
@@ -728,6 +821,22 @@ recipe ReadingRecipeB
       ${particleSpecWithReferencesCollections}
       ${recipe}
     `, '[&Thing {a: Text, b: Text}]');
+    await verifyWritingRecipe(`
+      ${particleSpecWithInlines}
+      ${recipe}
+    `, 'Thing {foo: inline Foo {a: Text, b: Text}}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithLists}
+      ${recipe}
+    `, 'Thing {a: List<Text>, b: List<Text>}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithListOfInlines}
+      ${recipe}
+    `, 'Thing {foo: List<inline Foo {a: Text, b: Text}>}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithTuples}
+      ${recipe}
+    `, 'Thing {a: (Text, Number), b: [(Text, Number)]}');
   });
 
   it('restricts writer fields by same single field reader particles', async () => {
@@ -765,6 +874,22 @@ recipe ReadingRecipeB2
       ${particleSpecWithReferencesCollections}
       ${recipe}
     `, '[&Thing {b: Text}]');
+    await verifyWritingRecipe(`
+      ${particleSpecWithInlines}
+      ${recipe}
+    `, 'Thing {foo: inline Foo {b: Text}}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithLists}
+      ${recipe}
+    `, 'Thing {b: List<Text>}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithListOfInlines}
+      ${recipe}
+    `, 'Thing {foo: List<inline Foo {b: Text}>}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithTuples}
+      ${recipe}
+    `, 'Thing {b: [(Text, Number)]}');
   });
 
   it('restricts writer fields by reader particles in both - writer recipe and separate recipe', async () => {
@@ -798,6 +923,22 @@ recipe ReadingRecipeB
       ${particleSpecWithReferencesCollections}
       ${recipe}
     `, '[&Thing {a: Text, c: Text, b: Text}]');
+    await verifyWritingRecipe(`
+      ${particleSpecWithInlines}
+      ${recipe}
+    `, 'Thing {foo: inline Foo {a: Text, c: Text, b: Text}}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithLists}
+      ${recipe}
+    `, 'Thing {a: List<Text>, c: List<Text>, b: List<Text>}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithListOfInlines}
+      ${recipe}
+    `, 'Thing {foo: List<inline Foo {a: Text, c: Text, b: Text}>}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithTuples}
+      ${recipe}
+    `, 'Thing {a: (Text, Number), c: List<(Text, Number)>, b: [(Text, Number)]}');
   });
 
   it('restricts writer fields by reader particles in both - long running and ephemeral recipes', async () => {
@@ -835,6 +976,22 @@ recipe ReadingRecipeB
       ${particleSpecWithReferencesCollections}
       ${recipe}
     `, '[&Thing {a: Text, b: Text}]');
+    await verifyWritingRecipe(`
+      ${particleSpecWithInlines}
+      ${recipe}
+    `, 'Thing {foo: inline Foo {a: Text, b: Text}}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithLists}
+      ${recipe}
+    `, 'Thing {a: List<Text>, b: List<Text>}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithListOfInlines}
+      ${recipe}
+    `, 'Thing {foo: List<inline Foo {a: Text, b: Text}>}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithTuples}
+      ${recipe}
+    `, 'Thing {a: (Text, Number), b: [(Text, Number)]}');
   });
 
   it('restricts writer fields by multi-field reader particles', async () => {
@@ -877,6 +1034,22 @@ recipe ReadingRecipeAD
       ${particleSpecWithReferencesCollections}
       ${recipe}
     `, '[&Thing {a: Text, c: Text, b: Text, d: Text}]');
+    await verifyWritingRecipe(`
+      ${particleSpecWithInlines}
+      ${recipe}
+    `, 'Thing {foo: inline Foo {a: Text, c: Text, b: Text, d: Text}, bar: Text}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithLists}
+      ${recipe}
+    `, 'Thing {a: List<Text>, c: List<Text>, b: List<Text>, d: List<Text>}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithListOfInlines}
+      ${recipe}
+    `, 'Thing {foo: List<inline Foo {a: Text, c: Text, b: Text, d: Text}>}');
+    await verifyWritingRecipe(`
+      ${particleSpecWithTuples}
+      ${recipe}
+    `, 'Thing {a: (Text, Number), c: List<(Text, Number)>, b: [(Text, Number)], d: (Text, Number)}');
   });
   it('restricts handle types according to policies', async () => {
     const schemaString = `

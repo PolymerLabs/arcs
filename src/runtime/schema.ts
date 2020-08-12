@@ -167,14 +167,45 @@ export class Schema {
     }
   }
 
+  private static fieldTypeUnion(field1, field2): {}|null {
+    if (field1.kind !== field2.kind) return null;
+    switch (field1.kind) {
+      case 'schema-nested': {
+        const unionSchema = Schema.union(
+            field1.schema.model.entitySchema, field2.schema.model.entitySchema);
+        if (!unionSchema) {
+          return null;
+        }
+        const unionField = {...field1};
+        unionField.schema.model.entitySchema = unionSchema;
+        return unionField;
+      }
+      case 'schema-ordered-list': {
+        const unionSchema = Schema.fieldTypeUnion(field1.schema, field2.schema);
+        if (!unionSchema) {
+          return null;
+        }
+        const unionField = {...field1};
+        unionField.schema = unionSchema;
+        return unionField;
+      }
+      default:
+        return Schema.typesEqual(field1, field2) ? field1 : null;
+    }
+  }
+
   static union(schema1: Schema, schema2: Schema): Schema|null {
     const names = [...new Set([...schema1.names, ...schema2.names])];
     const fields = {};
 
     for (const [field, type] of [...Object.entries(schema1.fields), ...Object.entries(schema2.fields)]) {
       if (fields[field]) {
-        if (!Schema.typesEqual(fields[field], type)) {
+        const fieldUnionSchema = Schema.fieldTypeUnion(fields[field], type);
+        if (!fieldUnionSchema) {
           return null;
+        }
+        if (!Schema.typesEqual(fields[field], fieldUnionSchema)) {
+          fields[field] = {...fields[field], ...fieldUnionSchema};
         }
         fields[field].refinement = Refinement.intersectionOf(fields[field].refinement, type.refinement);
         fields[field].annotations = [...(fields[field].annotations || []), ...(type.annotations || [])];

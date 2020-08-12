@@ -605,6 +605,32 @@ describe('schema', () => {
     assert.deepEqual(intersection.fields, schema3.fields);
     assert.deepEqual(intersection.refinement, schema3.refinement);
   }));
+  it('tests schema union for inlines', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {y: inline Y {a: Text, b: Text}, z: Number}
+        schema2: reads X {y: inline Y {a: Text, c: Text}, w: Number, z: Number}
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].schema.model.entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
+  it('tests schema union for ordered lists of inlines', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {y: List<inline Y {a: Text, b: Text}>, z: Number}
+        schema2: reads X {y: List<inline Y {a: Text, c: Text}>, w: Number, z: Number}
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].schema.schema.model.entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
   it('tests schema.isAtLeastAsSpecificAs, case 1', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
