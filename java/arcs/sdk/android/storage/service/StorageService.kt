@@ -165,7 +165,9 @@ open class StorageService : ResurrectorService() {
         return BindingContext(
             stores.computeIfAbsent(options.storageKey) {
                 @Suppress("UNCHECKED_CAST")
-                DeferredStore<CrdtData, CrdtOperation, Any>(options)
+                DeferredStore<CrdtData, CrdtOperation, Any>(
+                    options.copy(coroutineScope = CoroutineScope(coroutineContext))
+                )
             },
             coroutineContext,
             stats,

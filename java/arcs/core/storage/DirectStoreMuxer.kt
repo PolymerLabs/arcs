@@ -36,7 +36,8 @@ import kotlinx.coroutines.withContext
 class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
     val storageKey: StorageKey,
     val backingType: Type,
-    val callbackFactory: (String) -> ProxyCallback<Data, Op, T>
+    val callbackFactory: (String) -> ProxyCallback<Data, Op, T>,
+    private val options: StoreOptions? = null
 ) {
     private val storeMutex = Mutex()
     private val log = TaggedLog { "DirectStoreMuxer" }
@@ -106,7 +107,8 @@ class DirectStoreMuxer<Data : CrdtData, Op : CrdtOperation, T>(
         val store = DirectStore.create<Data, Op, T>(
             StoreOptions(
                 storageKey = storageKey.childKeyWithComponent(referenceId),
-                type = backingType
+                type = backingType,
+                coroutineScope = options?.coroutineScope
             )
         )
 

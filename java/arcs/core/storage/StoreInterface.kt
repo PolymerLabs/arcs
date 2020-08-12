@@ -14,6 +14,7 @@ package arcs.core.storage
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
 import arcs.core.type.Type
+import kotlinx.coroutines.CoroutineScope
 
 /** Base interface which all store implementations must extend from. */
 interface IStore<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
@@ -25,5 +26,6 @@ interface IStore<Data : CrdtData, Op : CrdtOperation, ConsumerData> {
 data class StoreOptions(
     val storageKey: StorageKey,
     val type: Type,
-    val versionToken: String? = null
+    val versionToken: String? = null,
+    val coroutineScope: CoroutineScope? = null
 )

@@ -159,7 +159,8 @@ class ReferenceModeStore private constructor(
                     handleBackingStoreMessage(message, muxId)
                 }
             }
-        }
+        },
+        options = options
     )
 
     init {
@@ -723,7 +724,8 @@ class ReferenceModeStore private constructor(
                 StoreOptions(
                     storageKey = storageKey.storageKey,
                     type = refType,
-                    versionToken = options.versionToken
+                    versionToken = options.versionToken,
+                    coroutineScope = options.coroutineScope
                 )
             )
 
