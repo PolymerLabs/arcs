@@ -126,6 +126,7 @@ arcs_kt_jvm_library(
     ],
     deps = [
         ":plans",
+        ":pure-particles-jvm",  # buildcleaner: keep
         ":schemas",
         "//java/arcs/core/host",
         "//java/arcs/core/util",
