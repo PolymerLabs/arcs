@@ -681,12 +681,9 @@ class DatabaseImpl(
         counters: Counters? = null
     ): StorageKeyId? = db.transaction {
         val childKey = InlineStorageKey(parentStorageKey, fieldName)
-        require(entity.id == "") {
-            "Inline Entities should never have non-empty ids"
-        }
         val childKeyId = createEntityStorageKeyId(
             childKey,
-            "",
+            entity.id,
             entity.creationTimestamp,
             entity.expirationTimestamp,
             typeId,
