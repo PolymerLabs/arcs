@@ -74,7 +74,7 @@ appropriately handles refinement built in function: now()
 particle Foo
   input: reads Something {start: Instant} [start < now()]
 -----[results]-----
-(CurrentScope<Number>(mutableMapOf())["start"] lt System.currentTimeMillis().asExpr())
+(CurrentScope<Number>(mutableMapOf())["start"] lt now())
 -----[end]-----
 
 -----[name]-----
@@ -83,7 +83,7 @@ appropriately handles refinement built in function: creationTime()
 particle Foo
   input: reads Something {start: Long} [start < creationTime()]
 -----[results]-----
-(CurrentScope<Number>(mutableMapOf())["start"] lt CurrentScope<Long>(mapOf())["creationTimestamp"])
+(CurrentScope<Number>(mutableMapOf())["start"] lt CurrentScope<Number>(mutableMapOf())["creationTime()"])
 -----[end]-----
 
 -----[name]-----
@@ -92,5 +92,5 @@ appropriately handles refinement built in function: expirationTime()
 particle Foo
   input: reads Something {start: Long} [start < expirationTime()]
 -----[results]-----
-(CurrentScope<Number>(mutableMapOf())["start"] lt CurrentScope<Long>(mapOf())["expirationTimestamp"])
+(CurrentScope<Number>(mutableMapOf())["start"] lt CurrentScope<Number>(mutableMapOf())["expirationTime()"])
 -----[end]-----
