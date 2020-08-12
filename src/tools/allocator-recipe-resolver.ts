@@ -9,10 +9,8 @@
  */
 import {assert} from '../platform/assert-web.js';
 import {Id} from '../runtime/id.js';
-import {Runtime} from '../runtime/runtime.js';
 import {Manifest} from '../runtime/manifest.js';
 import {IsValidOptions, Recipe, RecipeComponent} from '../runtime/recipe/recipe.js';
-import {volatileStorageKeyPrefixForTest} from '../runtime/testing/handle-for-test.js';
 import {RecipeResolver} from '../runtime/recipe/recipe-resolver.js';
 import {CapabilitiesResolver} from '../runtime/capabilities-resolver.js';
 import {CreatableStorageKey} from '../runtime/storage/creatable-storage-key.js';
@@ -21,6 +19,9 @@ import {Exists} from '../runtime/storage/drivers/driver.js';
 import {DatabaseStorageKey} from '../runtime/storage/database-storage-key.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {digest} from '../platform/digest-web.js';
+import {ResolutionContext} from '../runtime/storage/resolution-context.js';
+import {AbstractStore} from '../runtime/storage/abstract-store.js';
+import {Type} from '../runtime/type.js';
 
 export class AllocatorRecipeResolverError extends Error {
   constructor(message: string) {
@@ -36,13 +37,13 @@ export class AllocatorRecipeResolverError extends Error {
  * distributed to the proper ArcHost) and  lifecycle management (for arcs within ArcHosts).
  */
 export class AllocatorRecipeResolver {
-  private readonly runtime: Runtime;
+  private readonly resolutionContext: ManifestResolutionAdapter;
   private readonly createHandleRegistry: Map<Handle, string> = new Map<Handle, string>();
   private createHandleIndex = 0;
 
 
   constructor(context: Manifest, private randomSalt: string) {
-    this.runtime = new Runtime({context});
+    this.resolutionContext = new ManifestResolutionAdapter(context);
     DatabaseStorageKey.register();
   }
 
@@ -57,7 +58,7 @@ export class AllocatorRecipeResolver {
 
     // First pass: validate recipes and create stores
     const firstPass = [];
-    for (const recipe of this.runtime.context.allRecipes) {
+    for (const recipe of this.resolutionContext.globalInfo.allRecipes) {
       this.validateHandles(recipe);
 
       if (!recipe.normalize(opts)) {
@@ -77,7 +78,7 @@ export class AllocatorRecipeResolver {
     const recipes = [];
     for (let recipe of firstPass) {
       // Only include recipes from primary (non-imported) manifest
-      if (!this.runtime.context.recipes.map(r => r.name).includes(recipe.name)) continue;
+      if (!this.resolutionContext.globalInfo.recipes.map(r => r.name).includes(recipe.name)) continue;
 
       recipe = await this.tryResolve(recipe, opts);
       recipe = await this.assignCreatableStorageKeys(recipe);
@@ -92,16 +93,13 @@ export class AllocatorRecipeResolver {
    * Resolves unresolved recipe or normalizes resolved recipe.
    *
    * @param recipe long-running or ephemeral recipe
+   * @param opts holds errors during resolution process.
    */
   async tryResolve(recipe: Recipe, opts: IsValidOptions): Promise<Recipe | null> {
 
     if (recipe.isResolved()) return recipe;
 
-    const arcId = findLongRunningArcId(recipe);
-    const arc = this.runtime.newArc(
-      arcId, volatileStorageKeyPrefixForTest(), arcId ? {id: Id.fromString(arcId)} : undefined);
-
-    const resolvedRecipe = await (new RecipeResolver(arc).resolve(recipe, opts));
+    const resolvedRecipe = await (new RecipeResolver(this.resolutionContext).resolve(recipe, opts));
     if (!resolvedRecipe) {
       throw new AllocatorRecipeResolverError(
         `Recipe ${recipe.name} failed to resolve:\n${[...opts.errors.values()].join('\n')}`);
@@ -163,7 +161,7 @@ export class AllocatorRecipeResolver {
         exists: Exists.MayExist,
         id: createHandle.id
       });
-      this.runtime.context.registerStore(store, createHandle.tags);
+      this.resolutionContext.globalInfo.registerStore(store, createHandle.tags);
       createHandle.storageKey = storageKey;
     }
     assert(cloneRecipe.normalize());
@@ -180,7 +178,7 @@ export class AllocatorRecipeResolver {
    */
   validateHandles(recipe: Recipe) {
     for (const handle of recipe.handles.filter(handle => handle.fate === 'map' || handle.fate === 'copy')) {
-      const matches = this.runtime.context.findHandlesById(handle.id)
+      const matches = this.resolutionContext.globalInfo.findHandlesById(handle.id)
         .filter(h => h.fate === 'create');
 
       if (matches.length === 0) {
@@ -208,4 +206,26 @@ export function isLongRunning(recipe: Recipe): boolean {
 export function findLongRunningArcId(recipe: Recipe): string | null {
   const arcIdAnnotation = recipe.getAnnotation('arcId');
   return arcIdAnnotation ? Object.values(arcIdAnnotation.params)[0].toString() : null;
+}
+
+/** Intermediary in the recipe resolution process that holds stores. */
+class ManifestResolutionAdapter implements ResolutionContext {
+
+  constructor(public readonly globalInfo: Manifest) {}
+
+  findStoreById(id: string): AbstractStore | null {
+    return null;
+  }
+
+  findStoresByType<T extends Type>(type: T, options?: { tags: string[], subtype?: boolean }): AbstractStore[] {
+    return [];
+  }
+
+  get allRecipes(): Recipe[] {
+    return this.globalInfo.allRecipes;
+  }
+
+  get recipes(): Recipe[] {
+    return this.globalInfo.recipes;
+  }
 }

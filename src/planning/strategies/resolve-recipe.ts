@@ -10,11 +10,12 @@
 
 import {ResolveWalker} from '../../runtime/recipe/recipe-resolver.js';
 import {StrategizerWalker, Strategy, StrategyParams} from '../strategizer.js';
+import {ArcResolutionAdapter} from '../../runtime/arc.js';
 
 export class ResolveRecipe extends Strategy {
 
   async generate(inputParams: StrategyParams) {
     return StrategizerWalker.over(this.getResults(inputParams),
-      new ResolveWalker(ResolveWalker.Permuted, this.arc), this);
+      new ResolveWalker(ResolveWalker.Permuted, new ArcResolutionAdapter(this.arc)), this);
   }
 }

@@ -44,7 +44,7 @@ import {ReferenceModeStorageKey} from './storage/reference-mode-storage-key.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {StorageKeyParser} from './storage/storage-key-parser.js';
 import {SingletonInterfaceHandle, handleForStore, ToStore, newStore} from './storage/storage.js';
-import {AnnotationRef} from './recipe/annotation.js';
+import {ResolutionContext} from './storage/resolution-context.js';
 
 export type ArcOptions = Readonly<{
   id: Id;
@@ -653,7 +653,7 @@ export class Arc implements ArcInterface {
   // Convert a type to a normalized key that we can use for
   // equality testing.
   //
-  // TODO: we should be testing the schemas for compatiblity instead of using just the name.
+  // TODO: we should be testing the schemas for compatibility instead of using just the name.
   // TODO: now that this is only used to implement findStoresByType we can probably replace
   // the check there with a type system equality check or similar.
   static _typeToKey(type: Type): string | InterfaceInfo | null {
@@ -768,3 +768,25 @@ export class Arc implements ArcInterface {
     return this.id.toString();
   }
 }
+
+export class ArcResolutionAdapter implements ResolutionContext {
+
+  constructor(private arc: Arc) {}
+
+  get globalInfo(): ResolutionContext {
+    return this.arc.context;
+  }
+
+  get peh(): ParticleExecutionHost {
+    return this.arc.peh;
+  }
+
+  findStoresByType<T extends Type>(type: T, options?: { tags: string[], subtype?: boolean }): AbstractStore[] {
+    return this.arc.findStoresByType(type, options);
+  }
+
+  findStoreById(id: string): AbstractStore | null {
+    return this.arc.findStoreById(id);
+  }
+}
+

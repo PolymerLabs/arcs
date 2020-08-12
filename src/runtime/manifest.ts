@@ -51,6 +51,7 @@ import {SchemaPrimitiveTypeValue} from './manifest-ast-nodes.js';
 import {canonicalManifest} from './canonical-manifest.js';
 import {Policy} from './policy/policy.js';
 import {resolveFieldPathType} from './field-path.js';
+import {ResolutionContext} from './storage/resolution-context.js';
 
 export enum ErrorSeverity {
   Error = 'error',
