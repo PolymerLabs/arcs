@@ -86,6 +86,6 @@ export interface Dictionary<T> {
  *   }
  *
  */
-export function when(...conditions: boolean[]): number {
-  return conditions.reduce((acc: number, x: boolean, idx: number) => Number(x) << idx | acc, 0) + conditions.length;
+export function when(...conditions: boolean[]): string {
+  return conditions.reduce((acc: string, x: boolean) => acc + (x ? '1' : '0'), '');
 }
