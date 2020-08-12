@@ -167,7 +167,7 @@ export class AllocatorRecipeResolver {
             `Failed ingress validation for plan ${recipe.name}: ${result.toString()}`);
       }
     }
-    return recipes;
+    return recipes.filter(recipe => this.runtime.context.recipes.map(r => r.name).includes(recipe.name));
   }
 
   restrictHandleType(handleId: string, allHandles: Handle[]): Type {
