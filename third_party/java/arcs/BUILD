@@ -19,9 +19,3 @@ alias(
     name = "arcs-wasm",
     actual = "//java/arcs/sdk:sdk-wasm",
 )
-
-# Arcs Tools
-alias(
-    name = "recipe2plan_binary",
-    actual = "//java/arcs/tools:recipe2plan_binary",
-)
