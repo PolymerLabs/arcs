@@ -13,7 +13,7 @@ import {Handle} from '../runtime/recipe/handle.js';
 import {Particle} from '../runtime/recipe/particle.js';
 import {CollectionType, ReferenceType, SingletonType, TupleType, Type, TypeVariable} from '../runtime/type.js';
 import {Schema} from '../runtime/schema.js';
-import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
+import {HandleConnectionSpec, ParticleSpec} from '../runtime/manifest-types/particle-spec.js';
 import {Manifest} from '../runtime/manifest.js';
 import {DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
 import {Refinement, RefinementExpressionLiteral} from '../runtime/refiner.js';

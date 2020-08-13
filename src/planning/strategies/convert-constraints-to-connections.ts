@@ -12,7 +12,7 @@ import {HandleEndPoint, InstanceEndPoint, ParticleEndPoint, TagEndPoint, EndPoin
 import {RecipeUtil, HandleRepr} from '../../runtime/recipe/recipe-util.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {StrategizerWalker, Strategy, StrategyParams} from '../strategizer.js';
-import {ParticleSpec} from '../../runtime/particle-spec.js';
+import {ParticleSpec} from '../../runtime/manifest-types/particle-spec.js';
 import {reverseDirection} from '../../runtime/recipe/recipe-util.js';
 import {Direction} from '../../runtime/manifest-ast-nodes.js';
 import {Descendant} from '../../runtime/recipe/walker.js';

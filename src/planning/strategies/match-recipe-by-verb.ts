@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {HandleConnectionSpec, ConsumeSlotConnectionSpec} from '../../runtime/particle-spec.js';
+import {HandleConnectionSpec, ConsumeSlotConnectionSpec} from '../../runtime/manifest-types/particle-spec.js';
 import {Handle} from '../../runtime/recipe/handle.js';
 import {Slot} from '../../runtime/recipe/slot.js';
 import {Particle} from '../../runtime/recipe/particle.js';

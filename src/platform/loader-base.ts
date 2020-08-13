@@ -12,7 +12,7 @@ import {fetch} from './fetch-web.js';
 import {JsonldToManifest} from '../runtime/converters/jsonldToManifest.js';
 import {ParticleExecutionContext} from '../runtime/particle-execution-context.js';
 import {ClientReference} from '../runtime/reference.js';
-import {ParticleSpec} from '../runtime/particle-spec.js';
+import {ParticleSpec} from '../runtime/manifest-types/particle-spec.js';
 import {Particle} from '../runtime/particle.js';
 import {UiParticle} from '../runtime/ui-particle.js';
 import {UiTransformationParticle} from '../runtime/ui-transformation-particle.js';

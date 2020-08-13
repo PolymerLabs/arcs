@@ -13,8 +13,7 @@ import {TypeChecker} from './recipe/type-checker.js';
 import {Type, TypeVariable, TypeLiteral, HandleConnection, Slot, InterfaceInfo,
         TypeVarReference, HandleConnectionLiteral, SlotLiteral,
         InterfaceInfoLiteral, MatchResult} from './type.js';
-import * as AstNode from './manifest-ast-nodes.js';
-import {ParticleSpec} from './particle-spec.js';
+import {ParticleSpec} from './manifest-types/particle-spec.js';
 import {ManifestStringBuilder} from './manifest-string-builder.js';
 
 const handleConnectionFields = ['type', 'name', 'direction'];

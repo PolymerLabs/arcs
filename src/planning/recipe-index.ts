@@ -14,7 +14,7 @@ import {assert} from '../platform/assert-web.js';
 import {Arc} from '../runtime/arc.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Modality} from '../runtime/modality.js';
-import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../runtime/particle-spec.js';
+import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../runtime/manifest-types/particle-spec.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {Particle} from '../runtime/recipe/particle.js';

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ParticleSpec} from './particle-spec.js';
+import {ParticleSpec} from './manifest-types/particle-spec.js';
 import {UiTransformationParticle} from './ui-transformation-particle.js';
 import {Handle} from './storage/handle.js';
 import {InnerArcHandle} from './particle-execution-context.js';
