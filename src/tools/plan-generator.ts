@@ -53,8 +53,8 @@ export class PlanGenerator {
           ktUtils.listOf(await Promise.all(recipe.particles.map(p => this.createParticle(p)))),
           ktUtils.listOf(recipe.handles.map(h => this.handleVariableName(h))),
           PlanGenerator.createAnnotations(recipe.annotations)
-        ], {startIndent: startIndent});
-      });
+        ], {startIndent});
+      }, {delegate: 'lazy'});
 
       const handles = await Promise.all(recipe.handles.map(h => this.createHandleVariable(h)));
 
@@ -85,8 +85,8 @@ export class PlanGenerator {
         await this.createStorageKey(handle),
         await generateHandleType(handle.type.resolvedType()),
         PlanGenerator.createAnnotations(handle.annotations)
-      ], {startIndent: startIndent});
-    });
+      ], {startIndent});
+    }, {delegate: 'lazy'});
   }
 
   /** Generates a Kotlin `Plan.Particle` instantiation from a Particle. */
