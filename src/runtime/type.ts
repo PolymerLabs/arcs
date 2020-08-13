@@ -1469,17 +1469,16 @@ export class TypeVariableInfo {
       this.resolution = this._canWriteSuperset;
       return true;
     }
+    if (options && options.restrictToMinBound) {
+      const entitySchema = this._canReadSubset
+          ? this._canReadSubset.getEntitySchema() : null;
+      this.resolution = new EntityType(new Schema(
+          entitySchema ? entitySchema.names : [], {}, entitySchema || {}));
+      return true;
+    }
     if (this._canReadSubset) {
-      if (options && options.restrictMaxBoundToEmpty) {
-        const entitySchema = this._canReadSubset.getEntitySchema();
-        if (entitySchema) {
-          this.resolution = new EntityType(new Schema(entitySchema.names, {}, entitySchema));
-          return true;
-        }
-      } else {
-        this._resolution = this._canReadSubset;
-        return true;
-      }
+      this._resolution = this._canReadSubset;
+      return true;
     }
     return false;
   }

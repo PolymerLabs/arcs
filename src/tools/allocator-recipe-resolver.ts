@@ -56,7 +56,6 @@ export class AllocatorRecipeResolver {
    * @throws Error if recipe fails to resolve on first or second pass.
    * @returns Resolved recipes (with Storage Keys).
    */
-  // TODO: refactor this method!
   async resolve(): Promise<Recipe[]> {
     const opts = {errors: new Map<Recipe | RecipeComponent, string>()};
 
@@ -69,18 +68,6 @@ export class AllocatorRecipeResolver {
     const recipes = [];
     // Normalize all recipes.
     for (const recipe of originalRecipes) {
-      // Set the mappedType of `map` and `copy` handles to the corresponding
-      // `create` handle's type (this is needed to resolve generic handle
-      // connections).
-      for (const handle of recipe.handles) {
-        if (!['map', 'copy'].includes(handle.fate)) continue;
-        const matchingHandles = recipes.map(
-          r => isLongRunning(r) && r.handles.find(
-              h => h.fate === 'create' && h.id === handle.id)).filter(h => !!h);
-        if (matchingHandles.length === 1) {
-          handle.mappedType = matchingHandles[0].type;
-        }
-      }
       if (!recipe.normalize(opts)) {
         throw new AllocatorRecipeResolverError(
             `Recipe ${recipe.name} failed to normalize:\n${[...opts.errors.values()].join('\n')}`);
@@ -130,10 +117,10 @@ export class AllocatorRecipeResolver {
       const {createHandle, handles} = value as any;
       const restrictedType =
           this.restrictHandleType(createHandle.id, [createHandle, ...handles]);
-      assert(restrictedType.maybeEnsureResolved({restrictMaxBoundToEmpty: true}));
+      assert(restrictedType.maybeEnsureResolved({restrictToMinBound: true}));
       createHandle.restrictType(restrictedType);
       for (const connection of createHandle.connections) {
-        if (!connection.type.maybeEnsureResolved({restrictMaxBoundToEmpty: true})) {
+        if (!connection.type.maybeEnsureResolved({restrictToMinBound: true})) {
           throw new AllocatorRecipeResolverError(
               `Cannot resolve type of ${connection.getQualifiedName()} in recipe ${connection.recipe.name}`);
         }
@@ -141,7 +128,7 @@ export class AllocatorRecipeResolver {
       for (const handle of handles) {
         handle.restrictType(restrictedType);
         for (const connection of handle.connections) {
-          if (!connection.type.maybeEnsureResolved({restrictMaxBoundToEmpty: true})) {
+          if (!connection.type.maybeEnsureResolved({restrictToMinBound: true})) {
             throw new AllocatorRecipeResolverError(
               `Cannot resolve type of ${connection.getQualifiedName()} in recipe ${connection.recipe.name}`);
           }
@@ -185,7 +172,7 @@ export class AllocatorRecipeResolver {
   }
 
   async assignStorageKeys(handle: Handle): Promise<void> {
-    assert(handle.type.maybeEnsureResolved({restrictMaxBoundToEmpty: true}));
+    assert(handle.type.maybeEnsureResolved({restrictToMinBound: true}));
     if (handle.fate === 'create') {
       if (isLongRunning(handle.recipe) && handle.id) {
         assert(!handle.storageKey); // store's storage key was set, but not the handle's

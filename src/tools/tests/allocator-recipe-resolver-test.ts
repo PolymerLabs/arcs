@@ -517,7 +517,14 @@ describe('allocator recipe resolver', () => {
     const readingRecipe = recipes.find(r => r.name === 'ReadingRecipe');
     const readingConnection = readingRecipe.particles[0].connections['data'];
     assert.isTrue(readingConnection.type.isResolved());
-    assert.equal(readingConnection.type.resolvedType().toString(), '[Thing {}]');
+    assert.equal(readingConnection.type.resolvedType().toString(), '[* {}]');
+    assert.equal(readingConnection.handle.type.resolvedType().toString(), '[Thing {}]');
+
+    const writingRecipe = recipes.find(r => r.name === 'WritingRecipe');
+    const writingConnection = writingRecipe.particles[0].connections['data'];
+    assert.isTrue(writingConnection.type.isResolved());
+    assert.equal(writingConnection.type.resolvedType().toString(), '[Thing {name: Text}]');
+    assert.equal(writingConnection.handle.type.resolvedType().toString(), '[Thing {}]');
   });
   it('resolves the type for a generic with star read from a mapped store', async () => {
     const manifest = await Manifest.parse(`
