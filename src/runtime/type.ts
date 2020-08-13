@@ -21,7 +21,7 @@ import {ParticleSpec} from './manifest-types/particle-spec.js';
 import {Refinement} from './refiner.js';
 import {AnnotationRef} from './recipe/annotation.js';
 import {ManifestStringBuilder} from './manifest-string-builder.js';
-import { Direction } from './manifest-types/enums.js';
+import {Direction} from './manifest-types/enums.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
