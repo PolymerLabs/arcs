@@ -18,3 +18,16 @@ arcs_kt_jvm_library(
         "//java/arcs/core/policy",
     ],
 )
+
+# Equivalent to the above, but uses java_proto instead of java_lite_proto deps.
+arcs_kt_jvm_library(
+    name = "java_proto",
+    srcs = glob(["*.kt"]),
+    deps = [
+        "//java/arcs/core/data",
+        "//java/arcs/core/data/proto",
+        "//java/arcs/core/data/proto:manifest_java_proto",
+        "//java/arcs/core/data/proto:policy_java_proto",
+        "//java/arcs/core/policy",
+    ],
+)

@@ -24,8 +24,8 @@ kt_jvm_library(
     deps = [
         "//java/arcs/core/analysis",
         "//java/arcs/core/data",
+        "//java/arcs/core/data/proto:java_proto",
         "//java/arcs/core/data/proto:manifest_java_proto",
-        "//java/arcs/core/data/proto:proto_for_test",
         "//third_party/java/arcs/deps:protobuf_java",
     ],
 )
@@ -37,11 +37,11 @@ kt_jvm_library(
     deps = [
         "//java/arcs/core/analysis",
         "//java/arcs/core/data",
+        "//java/arcs/core/data/proto:java_proto",
         "//java/arcs/core/data/proto:manifest_java_proto",
         "//java/arcs/core/data/proto:policy_java_proto",
-        "//java/arcs/core/data/proto:proto_for_test",
         "//java/arcs/core/policy",
-        "//java/arcs/core/policy/proto",
+        "//java/arcs/core/policy/proto:java_proto",
         "//third_party/java/arcs/deps:protobuf_java",
         "//third_party/kotlin/clikt",
     ],
