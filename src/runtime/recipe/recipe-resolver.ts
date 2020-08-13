@@ -218,6 +218,7 @@ export class RecipeResolver {
               [...options.errors.values()].join('\n')}.\n${recipe.toString()}`);
       return null;
     }
+
     this.resolver.withOptions(options); // Smuggle error data around
     const result = await this.resolver.generateFrom([{result: recipe, score: 1}]);
     if (result.length === 0) {

@@ -33,13 +33,13 @@ recipe EphemeralWriting
     data: writes thing
 
 recipe EphemeralReading
-  data: map 'my-handle-id-writing'
+  data: map 'my-handle-id'
   Reader
     data: reads data
 
 particle ReadWriteReferences
   inThingRefs: reads [&Thing {name: Text}]
-  outThingRef: reads writes &Thing {name: Text}
+  outThingRef: writes &Thing {name: Text}
 
 @arcId('referencesArcId')
 recipe ReferencesRecipe

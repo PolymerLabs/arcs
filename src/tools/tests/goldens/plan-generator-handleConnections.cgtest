@@ -32,7 +32,7 @@ particle A
 particle B
   data: writes [Employer Person {a: Text, b: Text, d: Text}]
 particle C
-  data: reads [~a with {a: Text, b: Text}]
+  data: reads [~a]
 
 recipe R
   h: create
@@ -63,7 +63,7 @@ HandleConnection(
     arcs.core.data.CollectionType(
         arcs.core.data.EntityType(
             arcs.core.data.Schema(
-                setOf(),
+                setOf(arcs.core.data.SchemaName("Person")),
                 arcs.core.data.SchemaFields(
                     singletons = mapOf(
                         "a" to arcs.core.data.FieldType.Text,
@@ -71,7 +71,7 @@ HandleConnection(
                     ),
                     collections = emptyMap()
                 ),
-                "cfbca77d362ae67e578acf1f8fdaad3066855d41",
+                "f33d42dee457673f13e166b4644b0eb42f37a156",
                 refinementExpression = true.asExpr(),
                 queryExpression = true.asExpr()
             )
@@ -89,7 +89,7 @@ particle A
 particle B
   data: writes Employer Person {a: Text, b: Text, d: Text}
 particle C
-  data: reads ~a with {a: Text, b: Text}
+  data: reads ~a
 
 recipe R
   h: create
@@ -120,7 +120,7 @@ HandleConnection(
     arcs.core.data.SingletonType(
         arcs.core.data.EntityType(
             arcs.core.data.Schema(
-                setOf(),
+                setOf(arcs.core.data.SchemaName("Person")),
                 arcs.core.data.SchemaFields(
                     singletons = mapOf(
                         "a" to arcs.core.data.FieldType.Text,
@@ -128,7 +128,7 @@ HandleConnection(
                     ),
                     collections = emptyMap()
                 ),
-                "cfbca77d362ae67e578acf1f8fdaad3066855d41",
+                "f33d42dee457673f13e166b4644b0eb42f37a156",
                 refinementExpression = true.asExpr(),
                 queryExpression = true.asExpr()
             )

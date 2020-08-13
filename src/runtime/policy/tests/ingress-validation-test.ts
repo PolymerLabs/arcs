@@ -29,8 +29,70 @@ schema Person
 `;
 
 describe('ingress validation', () => {
+  it('restricts type according to a policy', async () => {
+    const ingressValidation = new IngressValidation((await Manifest.parse(`
+${personSchema}
+policy MyPolicy {
+  from Person access {
+    name,
+    address {
+      number
+      street,
+      city
+    },
+    otherAddresses {city, country}
+  }
+}
+    `)).policies);
+    const schema = ingressValidation.getRestrictedType('Person').getEntitySchema();
+    assert.equal(schema.name, 'Person');
+    assert.deepEqual(Object.keys(schema.fields), ['name', 'address', 'otherAddresses']);
+    assert.deepEqual(Object.keys(schema.fields['address'].schema.model.entitySchema.fields),
+        ['number', 'street', 'city']);
+    assert.deepEqual(Object.keys(schema.fields['otherAddresses'].schema.schema.model.entitySchema.fields),
+        ['city', 'country']);
+  });
+
+  it('restricts types according to multiple policies', async () => {
+    const policies = (await Manifest.parse(`
+${personSchema}
+policy PolicyOne {
+  from Person access {
+    name,
+    address {number, street}
+  }
+}
+policy PolicyTwo {
+  from Person access {
+    address {street, city},
+    otherAddresses {city}
+  }
+}
+policy PolicyThree {
+  from Person access { name, otherAddresses {country} }
+}
+    `)).policies;
+    const [ingressValidation0, ingressValidation1, ingressValidation2] =
+        policies.map(policy => new IngressValidation([policy]));
+    assert.deepEqual(Object.keys(ingressValidation0.getRestrictedType('Person').getEntitySchema().fields),
+        ['name', 'address']);
+    assert.deepEqual(Object.keys(ingressValidation1.getRestrictedType('Person').getEntitySchema().fields),
+        ['address', 'otherAddresses']);
+    assert.deepEqual(Object.keys(ingressValidation2.getRestrictedType('Person').getEntitySchema().fields),
+        ['name', 'otherAddresses']);
+
+    const restrictedType = new IngressValidation(policies).getRestrictedType('Person');
+    const restrictedSchema = restrictedType.getEntitySchema();
+    assert.equal(restrictedSchema.name, 'Person');
+    assert.deepEqual(Object.keys(restrictedSchema.fields), ['name', 'address', 'otherAddresses']);
+    assert.deepEqual(Object.keys(restrictedSchema.fields['address'].schema.model.entitySchema.fields),
+        ['number', 'street', 'city']);
+    assert.deepEqual(Object.keys(restrictedSchema.fields['otherAddresses'].schema.schema.model.entitySchema.fields),
+        ['city', 'country']);
+  });
+
   it('fails validating handle with no policy target', async () => {
-    const assertFailsWithNoPolicy = async (recipeHandleStr, expectedError) => {
+    const assertFailsWithNoPolicy = async (recipeHandleStr) => {
       const ingressValidation = new IngressValidation((await Manifest.parse(`
 ${personSchema}
 policy MyPolicy {
@@ -50,13 +112,12 @@ recipe
       assert.isTrue(recipe.normalize() && recipe.isResolved());
       const result = ingressValidation.validateIngressCapabilities(recipe);
       assert.isFalse(result.success);
-      assert.isTrue(result.toString().includes(expectedError),
+      assert.isTrue(result.toString().includes(
+          `Handle 'my-id' has no matching target type Foo {value: Text} in policies`),
           `Unexpected error: ${result.toString()}`);
     };
-    await assertFailsWithNoPolicy(`foo: reads writes Foo {value: Text}`,
-        `Handle 'my-id' has no matching target type Foo {value: Text} in policies`);
-    await assertFailsWithNoPolicy(`foo: writes Foo {value: Text}`,
-        `Handle 'my-id' has no matching target type Foo {} in policies`);
+    await assertFailsWithNoPolicy(`foo: reads writes Foo {value: Text}`);
+    await assertFailsWithNoPolicy(`foo: writes Foo {value: Text}`);
   });
 
   const manifestString = (annotations = '') => {
@@ -260,25 +321,53 @@ policy PolicyTwo {
     assert.deepEqual(ingressValidation0And2.getFieldCapabilities('Person.address.country'), policy0Capabilities);
   });
 
-  const parseAndResolveRecipe = async (writerSchema: string, annotations: string = '', policySchema: string = '') => {
+  const parseAndResolveRecipe = async (inlineSchema: string, annotations: string = '') => {
     const recipe = (await Manifest.parse(`
 ${personSchema}
 particle WritePerson
-  person: writes Person {${writerSchema}}
-particle ReadPerson
-  person: reads Person {${policySchema || writerSchema}}
+  person: writes Person {${inlineSchema}}
 recipe
   person: create ${annotations}
   WritePerson
     person: person
-  ReadPerson
-    person: person
       `)).recipes[0];
-      const errors = new Map();
-      assert.isTrue(recipe.normalize({errors}), [...errors.values()].join('; '));
+      assert.isTrue(recipe.normalize());
       assert.isTrue(recipe.isResolved());
       return recipe;
   };
+
+  it('validates skipped fields in restricted type', async () => {
+    const ingressValidation = new IngressValidation((await Manifest.parse(`
+${personSchema}
+  friends: [&Friend {name: Text, hobby: &Hobby {name: Text, description: Text}}]
+policy Policy0 {
+  @allowedRetention(medium: 'Disk', encryption: true)
+  @allowedRetention(medium: 'Ram', encryption: false)
+  @maxAge('10d')
+  from Person access { name, birthday, address {city}, friends { hobby {name} } }
+}
+    `)).policies);
+    const schema = [
+        'name: Text',
+        'address: &Address {city: Text, country: Text}',
+        'phone: Text',
+        'friends: [&Friend {name: Text, email: Text, hobby: &Hobby {name: Text, description: Text}}]',
+        'favoriteFoods: [&Food {name: Text, recipe: Text}]'
+    ].join(', ');
+    const recipe = await parseAndResolveRecipe(schema);
+    assert.isTrue(recipe.handles[0].type.maybeEnsureResolved());
+    const skippedFields = [];
+    assert.equal(ingressValidation.restrictType(recipe.handles[0].type.resolvedType(), skippedFields).toString(),
+        `Person {name: Text, address: &Address {city: Text}, friends: [&Friend {hobby: &Hobby {name: Text}}]}`);
+    assert.deepEqual(skippedFields, [
+        'address.country',
+        'phone',
+        'friends.name',
+        'friends.email',
+        'friends.hobby.description',
+        'favoriteFoods'
+    ]);
+  });
 
   it('validates recipe handle capabilities', async () => {
     const ingressValidation = new IngressValidation((await Manifest.parse(`
@@ -294,6 +383,8 @@ policy Policy0 {
     const schema = `name: Text`;
     const recipe = await parseAndResolveRecipe(schema);
     assert.isTrue(recipe.handles[0].type.maybeEnsureResolved());
+    assert.equal(ingressValidation.restrictType(recipe.handles[0].type.resolvedType()).toString(),
+        `Person {name: Text}`);
     assert.isFalse(ingressValidation.validateIngressCapabilities(recipe).success);
     assert.isFalse(ingressValidation.validateIngressCapabilities(
         await parseAndResolveRecipe(schema, `@persistent`)).success);
@@ -334,28 +425,25 @@ address: &Address {street: Text, city},
 otherAddresses: [&Address {city: Text, country}],
 anotherField: Text    
     `;
-    const policySchema = `
-name: Text,
-address: &Address {city: Text},
-otherAddresses: [&Address {country}]
-    `;
     // Verify handle's restricted type.
-    const recipe = await parseAndResolveRecipe(inlineSchema, /* capabilities */ '', policySchema);
+    const recipe = await parseAndResolveRecipe(inlineSchema);
     const handle = recipe.handles[0];
     assert.isTrue(handle.type.maybeEnsureResolved());
+    assert.equal(ingressValidation.restrictType(handle.type.resolvedType()).toString(),
+        `Person {name: Text, address: &Address {city: Text}, otherAddresses: [&Address {country: Text}]}`);
 
     // Verify ingress capabilities validation.
     assert.isFalse(ingressValidation.validateIngressCapabilities(recipe).success);
     assert.isFalse(ingressValidation.validateIngressCapabilities(
-        await parseAndResolveRecipe(inlineSchema, `@persistent @ttl('1days')`, policySchema)).success);
+        await parseAndResolveRecipe(inlineSchema, `@persistent @ttl('1days')`)).success);
     assert.isFalse(ingressValidation.validateIngressCapabilities(
-        await parseAndResolveRecipe(inlineSchema, `@persistent @encrypted @ttl('1days')`, policySchema)).success);
+        await parseAndResolveRecipe(inlineSchema, `@persistent @encrypted @ttl('1days')`)).success);
     assert.isFalse(ingressValidation.validateIngressCapabilities(
-        await parseAndResolveRecipe(inlineSchema, `@inMemory @ttl('10days')`, policySchema)).success);
+        await parseAndResolveRecipe(inlineSchema, `@inMemory @ttl('10days')`)).success);
     assert.isTrue(ingressValidation.validateIngressCapabilities(
-        await parseAndResolveRecipe(inlineSchema, `@inMemory @ttl('2days')`, policySchema)).success);
+        await parseAndResolveRecipe(inlineSchema, `@inMemory @ttl('2days')`)).success);
     assert.isTrue(ingressValidation.validateIngressCapabilities(
-        await parseAndResolveRecipe(inlineSchema, `@inMemory @encrypted @ttl('2hours')`, policySchema)).success);
+        await parseAndResolveRecipe(inlineSchema, `@inMemory @encrypted @ttl('2hours')`)).success);
   });
   // Validate ingress capabilities for derived data
   // WriteFoo --> (Foo) --> ReadFooWriteBar --> (Bar)
@@ -364,7 +452,7 @@ particle ReadFooWriteBar
   foo: reads Foo {f1: Text}
   bar: reads writes Bar {br1: Text}
 particle WriteFoo
-  foo: writes Foo {f1: Text}
+  foo: writes Foo {f1: Text, f2: Text}
   `;
   const recipeStr = (opts: {fooCapabilities: string, barCapabilities: string} = {fooCapabilities: '', barCapabilities: ''}) =>
   `
