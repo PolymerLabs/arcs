@@ -1,6 +1,7 @@
 package arcs.core.host
 
 import arcs.core.data.Capability
+import arcs.core.data.Schema
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.storage.StorageKey
@@ -20,7 +21,8 @@ interface HandleManager {
         storageKey: StorageKey,
         ttl: Capability.Ttl = Capability.Ttl.Infinite(),
         particleId: String = "",
-        immediateSync: Boolean = true
+        immediateSync: Boolean = true,
+        storeSchema: Schema? = null
     ): Handle
 
     /** Close all handles created by this handle manager. */
