@@ -31,7 +31,7 @@ def arcs_kt_plan_2(name, package, arcs_sdk_deps, srcs = [], deps = [], visibilit
 
     gen_name = name + "_GeneratedPlan"
 
-    recipe2plan(
+    _recipe2plan(
         name = gen_name,
         srcs = srcs,
         package = package,
@@ -50,27 +50,26 @@ def _recipe2plan_impl(ctx):
 
     outputs = [ctx.actions.declare_file(src.basename.replace(".pb.bin", ".jvm.kt")) for src in ctx.files.srcs]
 
-    args.add_all("--outdir", [outputs[0].dirname])
-    args.add_all("--package-name", [ctx.attr.package])
+    args.add_all(outputs[0].dirname, ctx.attr.package])
     args.add_all([src.path for src in ctx.files.srcs])
 
     ctx.actions.run(
         inputs = ctx.files.srcs,
         outputs = outputs,
         arguments = [args],
-        executable = ctx.executable._compiler,
+        executable = ctx.executable.compiler,
     )
 
     return [DefaultInfo(files = depset(outputs))]
 
-recipe2plan = rule(
+_recipe2plan = rule(
     implementation = _recipe2plan_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = [".pb.bin"]),
         "package": attr.string(),
-        "_compiler": attr.label(
+        "compiler": attr.label(
             cfg = "host",
-            default = Label("//java/arcs/tools:recipe2plan_binary"),
+            default = Label("//java/arcs/tools:recipe2plan"),
             allow_files = True,
             executable = True,
         ),

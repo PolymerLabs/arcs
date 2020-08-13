@@ -18,10 +18,10 @@ class Recipe2Plan : CliktCommand(
     This script reads serialized manifests and generates Kotlin files with [Plan] classes.""",
     printHelpOnEmptyArgs = true
 ) {
-    private val outdir by option(help = "output directory; defaults to '.'").file(fileOkay = false)
+    private val outputFile by argument(help = "output Kotlin filepath, e.g. path/to/File.kt")
+        .file(exists = true)
     // TODO(b/161994250): Package should be derived from proto
-    private val packageName by option(help = "scope to specified package; default: 'arcs'")
-        .default("arcs")
+    private val packageName by argument(help = "scope to specified package; default: 'arcs'")
     private val manifests by argument(help = "paths to protobuf-serialized manifests")
         .file(exists = true).multiple()
     private val verbose by option("--verbose", "-v", help = "Print logs").flag(default = false)
@@ -31,7 +31,6 @@ class Recipe2Plan : CliktCommand(
     override fun run() = manifests.forEach { manifest ->
         DriverAndKeyConfigurator.configure(null)
 
-        val outputFile = outputFile(manifest)
         if (verbose) {
             echo("$manifest --> $outputFile")
         }
@@ -44,13 +43,6 @@ class Recipe2Plan : CliktCommand(
         // val manifestProto = ManifestProto.parseFrom(manifest.readBytes())
 
         outputFile.writeText(fileBuilder.build().toString())
-    }
-
-    /** Produces a File object per user specification, or with default values. */
-    private fun outputFile(manifest: File): File {
-        val outputName = manifest.name.replace(".pb.bin", ".jvm.kt")
-        val outputPath = outdir ?: System.getProperty("user.dir")
-        return File("$outputPath/$outputName")
     }
 }
 
