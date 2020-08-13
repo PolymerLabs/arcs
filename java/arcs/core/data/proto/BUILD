@@ -37,7 +37,7 @@ arcs_kt_library(
 
 # Equivalent to the above, but uses java_proto instead of java_lite_proto deps.
 arcs_kt_library(
-    name = "java_proto",
+    name = "proto_for_test",
     srcs = glob(["*.kt"]),
     add_android_constraints = False,
     deps = [
