@@ -26,7 +26,7 @@ import {policyToProtoPayload} from './policy2proto.js';
 import {annotationToProtoPayload} from './annotation2proto.js';
 
 export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
-  const manifest = await Runtime.parseFile(path);
+  const manifest = await Runtime.parseFile(path, {throwImportErrors: true});
   return encodePayload(await manifestToProtoPayload(manifest));
 }
 
