@@ -70,7 +70,7 @@ export class KotlinGenerationUtils {
     return this.applyFun('setOf', args, {startIndent, emptyName: 'emptySet'});
   }
 
-  async property(name: string, block: ({startIndent: number}) => Promise<string>, {
+  async property(name: string, block: ({startIndent}) => Promise<string>, {
     startIndent = 0,
     mutable = false,
     type = '',
@@ -82,7 +82,7 @@ export class KotlinGenerationUtils {
     if (delegate !== '') {
       rhs += `by ${delegate} {\n`;
       rhs += this.indent(await block({startIndent: startIndent + 4})) + '\n';
-      rhs += `}`
+      rhs += `}`;
     } else {
       rhs += `= `;
       rhs += await block({startIndent: lhs.length + rhs.length + startIndent});
