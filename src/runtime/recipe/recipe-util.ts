@@ -14,7 +14,7 @@ import {InterfaceType} from '../type.js';
 
 import {connectionMatchesHandleDirection} from './direction-util.js';
 import {HandleConnection} from './handle-connection.js';
-import {Direction} from '../manifest-ast-nodes.js';
+import {Direction} from '../manifest-types/enums.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {Recipe, RecipeComponent} from './recipe.js';

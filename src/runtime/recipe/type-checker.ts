@@ -9,7 +9,7 @@
  */
 
 import {BigCollectionType, CollectionType, EntityType, InterfaceType, ReferenceType, SlotType, Type, TypeVariable, TupleType, MuxType} from '../type.js';
-import {Direction} from '../manifest-ast-nodes.js';
+import {Direction} from '../manifest-types/enums.js';
 import {when} from '../hot.js';
 
 export interface TypeListInfo {

@@ -9,7 +9,7 @@
  */
 
 import * as AstNode from './manifest-ast-nodes.js';
-import {Direction} from './manifest-ast-nodes.js';
+import {Direction} from './manifest-types/enums.js';
 import {Claim} from './claim.js';
 import {Type} from './type.js';
 import {assert} from '../platform/assert-web.js';

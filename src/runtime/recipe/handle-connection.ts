@@ -21,7 +21,7 @@ import {CloneMap, IsValidOptions, Recipe, RecipeComponent, ToStringOptions, Vari
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, compareBools, Comparable} from './comparable.js';
 
-import {Direction} from '../manifest-ast-nodes.js';
+import {Direction} from '../manifest-types/enums.js';
 
 export class HandleConnection implements Comparable<HandleConnection> {
   private readonly _recipe: Recipe;

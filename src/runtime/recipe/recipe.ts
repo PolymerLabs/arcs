@@ -16,7 +16,7 @@ import {Schema} from '../schema.js';
 import {InterfaceType, Type, TypeVariableInfo} from '../type.js';
 
 import {ConnectionConstraint, EndPoint} from './connection-constraint.js';
-import {Direction} from '../manifest-ast-nodes.js';
+import {Direction} from '../manifest-types/enums.js';
 import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
