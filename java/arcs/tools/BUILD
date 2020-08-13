@@ -52,7 +52,7 @@ java_binary(
 )
 
 kt_jvm_library(
-    name = "generator",
+    name = "recipe2plan_lib",
     srcs = [
         "Recipe2Plan.kt",
     ],
@@ -68,7 +68,7 @@ kt_jvm_library(
 )
 
 java_binary(
-    name = "recipe2plan_binary",
+    name = "recipe2plan",
     main_class = "arcs.tools.Recipe2PlanKt",
-    runtime_deps = [":generator"],
+    runtime_deps = [":recipe2plan_lib"],
 )
