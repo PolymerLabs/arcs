@@ -70,6 +70,26 @@ export class KotlinGenerationUtils {
     return this.applyFun('setOf', args, {startIndent, emptyName: 'emptySet'});
   }
 
+  async property(name: string, block: ({startIndent: number}) => Promise<string>, {
+    startIndent = 0,
+    mutable = false,
+    type = '',
+    delegate = ''} = {}): Promise<string> {
+    const decl = mutable ? 'var' : 'val';
+    const typeStmt = type === '' ? '' : `: ${type}`;
+    const lhs = `${decl} ${name}${typeStmt} `;
+    let rhs = '';
+    if (delegate !== '') {
+      rhs += `by ${delegate} {\n`;
+      rhs += this.indent(await block({startIndent: startIndent + 4})) + '\n';
+      rhs += `}`
+    } else {
+      rhs += `= `;
+      rhs += await block({startIndent: lhs.length + rhs.length + startIndent});
+    }
+    return `${lhs}${rhs}`;
+  }
+
   /**
    * Joins a list of items, taking line length and indentation into account.
    *

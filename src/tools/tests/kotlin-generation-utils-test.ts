@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-node.js';
-import {KotlinGenerationUtils} from '../kotlin-generation-utils.js';
+import {KotlinGenerationUtils, quote} from '../kotlin-generation-utils.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -162,6 +162,64 @@ mapOf(
             def
         yay
       `);
+    });
+  });
+  describe('property', () => {
+    it('can create a literal property', async () => {
+      assert.deepStrictEqual(
+        await ktUtils.property('foo', async () => quote('bar')),
+        `val foo = "bar"`
+      );
+    });
+    it('can create a mutable property', async () => {
+      assert.deepStrictEqual(
+        await ktUtils.property('foo', async () => quote('bar'), {mutable: true}),
+        `var foo = "bar"`
+      );
+    });
+    it('can create a property with a type annotation', async () => {
+      assert.deepStrictEqual(
+        await ktUtils.property('foo', async () => quote('bar'), {type: 'String'}),
+        `val foo: String = "bar"`
+      );
+    });
+    it('can create a property by a delegate', async () => {
+      assert.deepStrictEqual(
+        await ktUtils.property('foo', async () => quote('bar'), {delegate: 'lazy'}),
+`val foo by lazy {
+    "bar"
+}`
+      );
+    });
+    it('can create a multiline property with a starting indent', async () => {
+      assert.deepStrictEqual(
+        await ktUtils.property(
+          'foo',
+          async ({startIndent}) => ktUtils.applyFun('Bar', ['1', '2', '3', '4', quote('bazbazbaz')], {startIndent}),
+          {startIndent: 80}),
+`val foo = Bar(
+    1,
+    2,
+    3,
+    4,
+    "bazbazbaz"
+)`);
+    });
+    it('can create a multiline property with a delegate', async () => {
+      assert.deepStrictEqual(
+        await ktUtils.property(
+          'foo',
+          async ({startIndent}) => ktUtils.applyFun('Bar', ['1', '2', '3', '4', quote('bazbazbaz')], {startIndent}),
+          {delegate: 'lazy', startIndent: 80}),
+`val foo by lazy {
+    Bar(
+        1,
+        2,
+        3,
+        4,
+        "bazbazbaz"
+    )
+}`);
     });
   });
 });
