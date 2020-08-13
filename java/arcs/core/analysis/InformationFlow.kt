@@ -269,8 +269,11 @@ class InformationFlow private constructor(
         if (specType.tag == Tag.TypeVariable) {
             specType as TypeVariable
             val resolvedTypeSelectors = resolvedType.accessPathSelectors(partial = true)
-            val accessibleSelectors =
-                specType.constraint?.accessPathSelectors(partial = true) ?: resolvedTypeSelectors
+            val accessibleSelectors = if (specType.maxAccess) {
+                resolvedTypeSelectors
+            } else {
+                specType.constraint?.accessPathSelectors(partial = true) ?: emptySet()
+            }
             val inaccessibleSelectors = resolvedTypeSelectors.minus(accessibleSelectors)
             return listOf(
                 AccessPathRestrictions(

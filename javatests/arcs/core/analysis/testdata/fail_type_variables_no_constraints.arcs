@@ -1,0 +1,69 @@
+// Tests that type variables with no constraints treats fields as inaccessible.
+// #Ingress: Mixed
+// #Ingress: Meh
+// #Ingress: Independent
+// #FAIL: hc:FailingCheck.input.bad is bad
+particle Mixed
+  output: writes Mixed {good: Text, bad: Text}
+  claim output.good is good
+  claim output.bad is bad
+
+particle Meh
+  output: writes Meh {meh: Text}
+  claim output.meh is meh
+
+particle Independent
+  output: writes Independent { data: Text }
+  claim output.data is independent
+
+particle DoStuff
+  input1: reads ~a with {bad: Text}
+  input2: reads ~b with {*}
+  input3: reads ~c
+  output: writes ~a
+
+particle PassThrough
+  input: reads ~a
+  output: writes ~a
+  check input is independent
+
+particle PassingChecks
+  input: reads Mixed {good: Text, bad: Text}
+  // This would pass, as "good" field and "indepenent" field  was not
+  // accessible to DoStuff and could not have been modified or read.
+  check input.good is good and is not independent
+  // This would pass, as input.bad could have been modified by DoStuff,
+  // but could only have been tainted by meh stuff, not by good stuff and
+  // independent stuff (which was not read).
+  check input.bad (is bad or is meh) and (is not independent)
+  check input (is good or is bad or is meh) and (is not independent)
+
+particle IndependentReader
+  input: reads Independent { data: Text }
+  check input is independent
+
+particle FailingCheck
+  input: reads Mixed {good: Text, bad: Text}
+  // This would fail, as input.bad could have been modified by DoStuff,
+  // and could have been tainted by meh and independent stuff.
+  check input.bad is bad
+  check input is not independent
+
+recipe
+  Mixed
+    output: mixed
+  Meh
+    output: meh
+  Independent
+    output: independent
+  DoStuff
+    input1: mixed
+    input2: meh
+    input3: independent
+    output: stuff
+  PassingChecks
+    input: stuff
+  FailingCheck
+    input: stuff
+  IndependentReader
+    input: independent
