@@ -136,9 +136,12 @@ class Scheduler(
                 DEFAULT_DEBOUNCING_TIME_MS -
                     abs(timer.currentTimeMillis - lastIdleTimestamp.value)
 
-            if (debounceTimeWhenAlreadyIdle <= 0 ||
+            if (
+                debounceTimeWhenAlreadyIdle <= 0 ||
                 waitForIdle(debounceTimeWhenAlreadyIdle, checkOnly = true)
-            ) return true
+            ) {
+                return true
+            }
         }
 
         // already-busy or idle-to-busy-within-default-debounce-window
