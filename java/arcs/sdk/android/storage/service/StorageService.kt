@@ -89,7 +89,8 @@ open class StorageService : ResurrectorService() {
 
         schedulePeriodicJobs(config)
 
-        if (ApplicationInfo.FLAG_DEBUGGABLE != 0) {
+        val appFlags = application?.applicationInfo?.flags ?: 0
+        if (0 != appFlags and ApplicationInfo.FLAG_DEBUGGABLE) {
             devToolsProxy = DevToolsProxyImpl()
         }
     }
@@ -153,7 +154,8 @@ open class StorageService : ResurrectorService() {
             return StorageServiceManager(coroutineContext, stores)
         }
 
-        if (intent.action == DEVTOOLS_ACTION && ApplicationInfo.FLAG_DEBUGGABLE != 0) {
+        val flags = application?.applicationInfo?.flags ?: 0
+        if (intent.action == DEVTOOLS_ACTION && 0 != flags and ApplicationInfo.FLAG_DEBUGGABLE) {
             return DevToolsStorageManager(stores, devToolsProxy!!)
         }
 
