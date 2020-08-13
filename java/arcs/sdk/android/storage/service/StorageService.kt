@@ -162,13 +162,11 @@ open class StorageService : ResurrectorService() {
             intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
         ) { "No StoreOptions found in Intent" }
 
-        val options = parcelableOptions.actual.copy()
+        val options = parcelableOptions.actual.copy(coroutineScope = storesScope)
         return BindingContext(
             stores.computeIfAbsent(options.storageKey) {
                 @Suppress("UNCHECKED_CAST")
-                DeferredStore<CrdtData, CrdtOperation, Any>(
-                    options.copy(coroutineScope = storesScope)
-                )
+                DeferredStore<CrdtData, CrdtOperation, Any>(options)
             },
             coroutineContext,
             stats,
