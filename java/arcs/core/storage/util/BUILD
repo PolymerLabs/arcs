@@ -11,7 +11,7 @@ arcs_kt_library(
     name = "util",
     srcs = glob(["*.kt"]),
     deps = [
-        "//java/arcs/core/common",
+        "//java/arcs/core/common",  # buildcleaner: keep
         "//java/arcs/core/crdt",
         "//java/arcs/core/storage:proxy",
         "//java/arcs/core/storage:reference",
