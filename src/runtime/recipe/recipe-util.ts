@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {ParticleSpec, HandleConnectionSpec} from '../particle-spec.js';
+import {ParticleSpec, HandleConnectionSpec} from '../manifest-types/particle-spec.js';
 import {InterfaceType} from '../type.js';
 
 import {connectionMatchesHandleDirection} from './direction-util.js';

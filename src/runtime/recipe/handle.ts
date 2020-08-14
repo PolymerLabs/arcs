@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {ParticleSpec} from '../particle-spec.js';
+import {ParticleSpec} from '../manifest-types/particle-spec.js';
 import {Schema} from '../schema.js';
 import {Type, TypeVariable, TypeVariableInfo, TupleType, CollectionType} from '../type.js';
 import {Slot} from './slot.js';

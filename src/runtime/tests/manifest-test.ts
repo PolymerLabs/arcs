@@ -19,7 +19,7 @@ import {Dictionary} from '../hot.js';
 import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../claim.js';
 import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore, CheckImplication} from '../check.js';
-import {ProvideSlotConnectionSpec} from '../particle-spec.js';
+import {ProvideSlotConnectionSpec} from '../manifest-types/particle-spec.js';
 import {Schema} from '../schema.js';
 import {Store} from '../storage/store.js';
 import {Entity} from '../entity.js';

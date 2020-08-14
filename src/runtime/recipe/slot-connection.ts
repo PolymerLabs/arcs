@@ -15,7 +15,7 @@ import {CloneMap, IsValidOptions, Recipe, RecipeComponent, ToStringOptions} from
 import {Slot} from './slot.js';
 import {compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Dictionary} from '../hot.js';
-import {ConsumeSlotConnectionSpec} from '../particle-spec.js';
+import {ConsumeSlotConnectionSpec} from '../manifest-types/particle-spec.js';
 
 import {Flags} from '../flags.js';
 import {isRequireSection} from './util.js';

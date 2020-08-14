@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {HandleConnectionSpec} from '../particle-spec.js';
+import {HandleConnectionSpec} from '../manifest-types/particle-spec.js';
 import {Type} from '../type.js';
 import {RELAXATION_KEYWORD} from '../manifest-ast-nodes.js';
 

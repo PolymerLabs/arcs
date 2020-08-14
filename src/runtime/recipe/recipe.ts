@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {digest} from '../../platform/digest-web.js';
 import {Modality} from '../modality.js';
-import {HandleConnectionSpec} from '../particle-spec.js';
+import {HandleConnectionSpec} from '../manifest-types/particle-spec.js';
 import {Schema} from '../schema.js';
 import {InterfaceType, Type, TypeVariableInfo} from '../type.js';
 

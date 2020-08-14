@@ -12,7 +12,7 @@ import {Node, Edge, FlowModifier, FlowCheck} from './graph-internals.js';
 import {ClaimType, ClaimExpression} from '../../runtime/claim.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {assert} from '../../platform/assert-web.js';
-import {HandleConnectionSpec} from '../../runtime/particle-spec.js';
+import {HandleConnectionSpec} from '../../runtime/manifest-types/particle-spec.js';
 import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
 import {Type, ReferenceType} from '../../runtime/type.js';
 import {TypeChecker} from '../../runtime/recipe/type-checker.js';

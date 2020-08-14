@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {ParticleSpec} from '../particle-spec.js';
+import {ParticleSpec} from '../manifest-types/particle-spec.js';
 
 import {Direction, RELAXATION_KEYWORD} from '../manifest-ast-nodes.js';
 import {Handle} from './handle.js';
