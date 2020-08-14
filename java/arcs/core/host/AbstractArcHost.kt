@@ -462,8 +462,9 @@ abstract class AbstractArcHost(
                 particle.handles,
                 particle.toString(),
                 immediateSync = false,
-                storeSchema = (handleConnection.handle.type as? EntitySchemaProviderType)?.entitySchema
-                
+                storeSchema = (
+                    handleConnection.handle.type as? EntitySchemaProviderType
+                )?.entitySchema
             ).also {
                 particleContext.registerHandle(it)
             }
