@@ -90,7 +90,11 @@ class DirectStore<Data : CrdtData, Op : CrdtOperation, T> /* internal */ constru
         }
 
     override suspend fun idle() {
-        // TODO: tune the debounce window
+        /**
+         * TODO: tune the debounce window
+         * Once this is enabled, change [DirectStoreMuxer.idle] accordingly to use
+         * simultaneous launches.
+         */
         // storeIdlenessFlow.debounce(50).filter { it }.first()
     }
 
