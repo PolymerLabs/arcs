@@ -3,12 +3,7 @@ package arcs.core.entity
 import arcs.core.common.Id
 import arcs.core.crdt.VersionMap
 import arcs.core.data.Capability.Ttl
-import arcs.core.data.FieldType
-import arcs.core.data.RawEntity
 import arcs.core.data.RawEntity.Companion.NO_REFERENCE_ID
-import arcs.core.data.Schema
-import arcs.core.data.SchemaFields
-import arcs.core.data.SchemaName
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.DefaultActivationFactory
@@ -64,33 +59,6 @@ class StorageAdapterTest {
 
         // Convert back from storage format again.
         assertThat(adapter.referencableToStorable(rawEntity)).isEqualTo(entity)
-    }
-
-    // A restricted version of DummyEntity with less fields.	
-    class RestrictedDummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
-        var text: String? by SingletonProperty()
-
-        companion object : EntitySpec<RestrictedDummyEntity> {
-            override fun deserialize(data: RawEntity) =
-                RestrictedDummyEntity().apply {
-                    deserialize(data, mapOf(SCHEMA_HASH to RestrictedDummyEntity))
-                }
-
-            const val ENTITY_CLASS_NAME = "RestrictedDummyEntity"
-
-            const val SCHEMA_HASH = "klmnop"
-
-            override val SCHEMA = Schema(
-                names = setOf(SchemaName(ENTITY_CLASS_NAME)),
-                fields = SchemaFields(
-                    singletons = mapOf(
-                        "text" to FieldType.Text
-                    ),
-                    collections = emptyMap()
-                ),
-                hash = SCHEMA_HASH
-            )
-        }
     }
 
     @Test
