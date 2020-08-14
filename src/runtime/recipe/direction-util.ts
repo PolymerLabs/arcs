@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Direction} from '../manifest-ast-nodes.js';
+import {Direction} from '../manifest-types/enums.js';
 
 export function connectionMatchesHandleDirection(connectionDirection: Direction, handleDirection: Direction): boolean {
   return acceptedDirections(connectionDirection).includes(handleDirection);
