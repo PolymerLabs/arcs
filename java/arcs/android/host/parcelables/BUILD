@@ -15,5 +15,6 @@ arcs_kt_android_library(
         "//java/arcs/core/data/expression",
         "//java/arcs/core/host",
         "//java/arcs/core/storage:storage_key",
+        "//java/arcs/core/storage/referencemode",
     ],
 )

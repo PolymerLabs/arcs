@@ -12,11 +12,9 @@
 package arcs.core.storage.referencemode
 
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeySpec
 import arcs.core.storage.StorageKeyUtils
 import arcs.core.storage.embed
-
-const val REFERENCE_MODE_PROTOCOL = "reference-mode"
 
 /**
  * Special subclass of [StorageKey] used to identify data managed by a
@@ -25,7 +23,7 @@ const val REFERENCE_MODE_PROTOCOL = "reference-mode"
 data class ReferenceModeStorageKey(
     val backingKey: StorageKey,
     val storageKey: StorageKey
-) : StorageKey(REFERENCE_MODE_PROTOCOL) {
+) : StorageKey(protocol) {
 
     init {
         // This is a overly strict check as some combinations of different protocols are fine, so it
@@ -44,19 +42,12 @@ data class ReferenceModeStorageKey(
 
     override fun toString(): String = super.toString()
 
-    companion object {
-        init {
-            StorageKeyParser.addParser(REFERENCE_MODE_PROTOCOL, ::fromString)
-        }
-
-        fun registerParser() {
-            StorageKeyParser.addParser(REFERENCE_MODE_PROTOCOL, ::fromString)
-        }
-
-        private fun fromString(rawValue: String): ReferenceModeStorageKey {
+    companion object : StorageKeySpec<ReferenceModeStorageKey> {
+        override val protocol = "reference-mode"
+        override fun parse(rawKeyString: String): ReferenceModeStorageKey {
             val invalidFormatMessage: () -> String =
-                { "Invalid format for ReferenceModeStorageKey: $rawValue" }
-            val storageKeys = StorageKeyUtils.extractKeysFromString(rawValue)
+                { "Invalid format for ReferenceModeStorageKey: $rawKeyString" }
+            val storageKeys = StorageKeyUtils.extractKeysFromString(rawKeyString)
             require(storageKeys.size == 2, invalidFormatMessage)
 
             return ReferenceModeStorageKey(

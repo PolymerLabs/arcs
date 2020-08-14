@@ -11,14 +11,14 @@
 package arcs.core.data
 
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeySpec
 
 /**
  * This class represents a storage key in a compiled [Plan] with 'create' fate.
  */
 data class CreatableStorageKey(
     val nameFromManifest: String
-) : StorageKey(CREATABLE_KEY_PROTOCOL) {
+) : StorageKey(protocol) {
 
     override fun toKeyString() = nameFromManifest
 
@@ -28,17 +28,13 @@ data class CreatableStorageKey(
 
     override fun toString(): String = super.toString()
 
-    companion object {
-        const val CREATABLE_KEY_PROTOCOL = "create"
+    companion object : StorageKeySpec<CreatableStorageKey> {
+        override val protocol = "create"
 
         private val CREATABLE_STORAGE_KEY_PATTERN =
             ("^([^:^?]*)\$").toRegex()
 
-        fun registerParser() {
-            StorageKeyParser.addParser(CREATABLE_KEY_PROTOCOL, ::parse)
-        }
-
-        private fun parse(rawKeyString: String): CreatableStorageKey {
+        override fun parse(rawKeyString: String): CreatableStorageKey {
             val match =
                 requireNotNull(CREATABLE_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
                     "Not a valid CreatableStorageKey: $rawKeyString"

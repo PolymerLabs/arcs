@@ -21,13 +21,8 @@ class DummyStorageKey(val key: String) : StorageKey(protocol) {
     override fun childKeyWithComponent(component: String): StorageKey =
         DummyStorageKey("$key/$component")
 
-    companion object {
-        const val protocol = "dummy"
-
-        fun parse(rawKeyString: String): DummyStorageKey = DummyStorageKey(rawKeyString)
-
-        fun registerParser() {
-            StorageKeyParser.addParser(protocol, ::parse)
-        }
+    companion object : StorageKeyParser<DummyStorageKey> {
+        override val protocol = "dummy"
+        override fun parse(rawKeyString: String) = DummyStorageKey(rawKeyString)
     }
 }

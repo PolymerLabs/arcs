@@ -65,7 +65,7 @@ class DatabaseImplTest {
     fun setUp() {
         database = DatabaseImpl(ApplicationProvider.getApplicationContext(), "test.sqlite3")
         db = database.writableDatabase
-        DummyStorageKey.registerParser()
+        StorageKeyParser.addParser(DummyStorageKey)
     }
 
     @After

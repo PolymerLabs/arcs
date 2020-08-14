@@ -15,16 +15,26 @@ import android.os.Parcel
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.crdt.ParcelableCrdtType
 import arcs.core.data.CountType
+import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import com.google.common.truth.Truth.assertThat
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /** Tests for [ParcelableStoreOptions]. */
 @RunWith(AndroidJUnit4::class)
 class ParcelableStoreOptionsTest {
+    @Before
+    fun setup() {
+        StorageKeyParser.reset(
+            ReferenceModeStorageKey,
+            RamDiskStorageKey
+        )
+    }
+
     @Test
     fun parcelableRoundtrip_works() {
         val storeOptions = StoreOptions(

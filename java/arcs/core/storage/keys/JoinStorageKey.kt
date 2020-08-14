@@ -12,17 +12,14 @@
 package arcs.core.storage.keys
 
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.StorageKeySpec
 import arcs.core.storage.StorageKeyUtils
 import arcs.core.storage.embed
-
-/** Protocol to be used when the StorageKey is composed of multiple StorageKeys. */
-const val COMPOSITE_PROTOCOL = "join"
 
 /** Implementation for a composite [StorageKey] for joining entities. */
 class JoinStorageKey(
     val components: List<StorageKey>
-) : StorageKey(COMPOSITE_PROTOCOL) {
+) : StorageKey(protocol) {
     override fun toKeyString(): String {
         val builder = StringBuilder()
         builder.append("${components.size}/")
@@ -35,26 +32,19 @@ class JoinStorageKey(
         TODO("Not yet implemented for JoinStorageKey")
     }
 
-    companion object {
-        init {
-            StorageKeyParser.addParser(COMPOSITE_PROTOCOL, ::fromString)
-        }
-
-        /** Register [JoinStorageKey] with the [StorageKeyParser]. */
-        fun registerParser() {
-            StorageKeyParser.addParser(COMPOSITE_PROTOCOL, ::fromString)
-        }
-
-        private fun fromString(rawValue: String): JoinStorageKey {
+    companion object : StorageKeySpec<JoinStorageKey> {
+        /** Protocol to be used when the StorageKey is composed of multiple StorageKeys. */
+        override val protocol = "join"
+        override fun parse(rawKeyString: String): JoinStorageKey {
             val invalidFormatMessage: () -> String =
-                { "Invalid format for JoinStorageKey: $rawValue" }
+                { "Invalid format for JoinStorageKey: $rawKeyString" }
 
             // We will support < 10 joins.
-            val numberOfJoins: Int = rawValue[0] - '0'
+            val numberOfJoins: Int = rawKeyString[0] - '0'
             require(numberOfJoins in 1..9, invalidFormatMessage)
-            require(rawValue[1] == '/', invalidFormatMessage)
+            require(rawKeyString[1] == '/', invalidFormatMessage)
 
-            val storageKeys = StorageKeyUtils.extractKeysFromString(rawValue.substring(2))
+            val storageKeys = StorageKeyUtils.extractKeysFromString(rawKeyString.substring(2))
             require(storageKeys.size == numberOfJoins, invalidFormatMessage)
             return JoinStorageKey(storageKeys)
         }
