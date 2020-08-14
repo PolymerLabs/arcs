@@ -70,6 +70,16 @@ export class KotlinGenerationUtils {
     return this.applyFun('setOf', args, {startIndent, emptyName: 'emptySet'});
   }
 
+  /**
+   * Formats properties in Kotlin, including supporting delegates.
+   *
+   * @param name property name
+   * @param block value assigned to property
+   * @param startIndent starting whitespace
+   * @param mutable determines 'val' vs 'var', default to 'val'
+   * @param type (optional) type annotation associated with property
+   * @param delegate (optional) name or object instance of delegate function
+   */
   async property(name: string, block: ({startIndent}) => Promise<string>, {
     startIndent = 0,
     mutable = false,
