@@ -93,7 +93,7 @@ class StorageServiceEndToEndTest {
     }
 
     @Test
-    fun testWriteThenReadOfInlineSingletonInCollectionOnDatabase() = runBlocking {
+    fun writeThenReadOfInlineSingletonInCollectionOnDatabase() = runBlocking {
         val handle = createCollectionHandle(databaseKey)
         val entity = entityForTest()
 
@@ -106,7 +106,7 @@ class StorageServiceEndToEndTest {
     }
 
     @Test
-    fun testWriteThenReadOfInlineSingletonInCollectionOnRamdisk() = runBlocking {
+    fun writeThenReadOfInlineSingletonInCollectionOnRamdisk() = runBlocking {
         val handle = createCollectionHandle(ramdiskKey)
         val entity = entityForTest()
 
@@ -119,7 +119,7 @@ class StorageServiceEndToEndTest {
     }
 
     @Test
-    fun testWriteThenReadOfInlineSingletonInCollectionOnVolatile() = runBlocking {
+    fun writeThenReadOfInlineSingletonInCollectionOnVolatile() = runBlocking {
         val handle = createCollectionHandle(volatileKey)
         val entity = entityForTest()
 
