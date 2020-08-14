@@ -14,14 +14,14 @@ def arcs_kt_plan_2(name, package, arcs_sdk_deps, srcs = [], deps = [], visibilit
         src = "Example.arcs"
       )
 
-      arcs_plan_generation(
+      arcs_kt_plan_2(
         name = "example_plan",
         srcs = [":serialized_example"],
         package = "com.my.example",
       )
       ```
 
-    Arcs:
+    Args:
       name: name of created target
       package: the package that all generated code will belong to (temporary, see b/161994250).
       arcs_sdk_deps: build targets for the Arcs SDK to be included
@@ -48,9 +48,9 @@ def arcs_kt_plan_2(name, package, arcs_sdk_deps, srcs = [], deps = [], visibilit
 def _recipe2plan_impl(ctx):
     args = ctx.actions.args()
 
-    outputs = [ctx.actions.declare_file(src.basename.replace(".pb.bin", ".jvm.kt")) for src in ctx.files.srcs]
+    outputs = [ctx.actions.declare_file(ctx.label.name + ".jvm.kt")]
 
-    args.add_all(outputs[0].dirname, ctx.attr.package])
+    args.add_all([outputs[0].path, ctx.attr.package])
     args.add_all([src.path for src in ctx.files.srcs])
 
     ctx.actions.run(
