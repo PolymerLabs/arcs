@@ -38,6 +38,7 @@ class EntityBaseTest {
     @Before
     fun setUp() {
         SchemaRegistry.register(DummyEntity.SCHEMA)
+        SchemaRegistry.register(InlineDummyEntity.SCHEMA)
         entity = DummyEntity()
     }
 
@@ -430,7 +431,8 @@ class EntityBaseTest {
             bools = setOf(true, false)
         }
         assertThat(entity.toString()).isEqualTo(
-            "DummyEntity(bool = true, bools = [true, false], num = 12.0, nums = [1.0, 2.0], " +
+            "DummyEntity(bool = true, bools = [true, false], inlineEntity = null, " +
+                "inlineList = null, inlines = [], num = 12.0, nums = [1.0, 2.0], " +
                 "primList = [1.0, 1.0], ref = null, refList = null, refs = [], text = abc, " +
                 "texts = [aa, bb])"
         )
