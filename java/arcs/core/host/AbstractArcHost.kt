@@ -225,7 +225,10 @@ abstract class AbstractArcHost(
 
     // VisibleForTesting
     fun clearCache() {
+        // TODO: remove the runBlocking at arcs.core packages.
         runBlocking {
+            // Ensure all contexts are flushed onto storage prior to clear context cache.
+            drainSerializations()
             clearContextCache()
             runningMutex.withLock {
                 runningArcs.clear()
