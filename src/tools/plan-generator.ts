@@ -16,7 +16,6 @@ import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Direction} from '../runtime/manifest-ast-nodes.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {AnnotationRef} from '../runtime/recipe/annotation.js';
-import {IngressValidation} from '../runtime/policy/ingress-validation.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -31,9 +30,7 @@ export class PlanGeneratorError extends Error {
 export class PlanGenerator {
 
   constructor(private resolvedRecipes: Recipe[],
-              private namespace: string,
-              // TODO(b/159142859): Ingress validation shouldn't be optional.
-              private readonly ingressValidation: IngressValidation = null) {}
+              private namespace: string) {}
 
   /** Generates a Kotlin file with plan classes derived from resolved recipes. */
   async generate(): Promise<string> {
@@ -83,21 +80,9 @@ export class PlanGenerator {
   async createHandleVariable(handle: Handle): Promise<string> {
     handle.type.maybeEnsureResolved();
     const valInit = `val ${this.handleVariableName(handle)} = `;
-    let handleRestrictedType: Type = null;
-    if (this.ingressValidation) {
-      const skippedFields = [];
-      handleRestrictedType = this.ingressValidation.restrictType(handle.type, skippedFields);
-      if (skippedFields.length > 0) {
-        console.warn(`Handle '${handle.id}' of Type ${handle.type.resolvedType().toString()} ` +
-            `is skipping fields: [${skippedFields.join(', ')}] that are not covered by Policies.`);
-      }
-    }
-    if (!handleRestrictedType) {
-      handleRestrictedType = handle.type.resolvedType();
-    }
     return valInit + ktUtils.applyFun(`Handle`, [
       await this.createStorageKey(handle),
-      await generateHandleType(handleRestrictedType),
+      await generateHandleType(handle.type.resolvedType()),
       PlanGenerator.createAnnotations(handle.annotations)
     ], {startIndent: valInit.length});
   }
