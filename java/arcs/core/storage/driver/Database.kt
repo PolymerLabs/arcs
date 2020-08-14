@@ -16,6 +16,7 @@ import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.extension.toCrdtEntityData
+import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.util.ReferencableList
 import arcs.core.storage.Driver
@@ -236,8 +237,11 @@ class DatabaseDriver<Data : Any>(
             is DatabaseData.Singleton -> data.value.toCrdtSingletonData(data.versionMap)
             is DatabaseData.Collection -> data.values.toCrdtSetData(data.versionMap)
             is DatabaseData.Entity -> data.rawEntity.toCrdtEntityData(data.versionMap) {
+                // See comment below in getDatabaseData for a description of
+                // what's happening here.
                 when (it) {
                     is Reference -> it
+                    is RawEntity -> CrdtEntity.Reference.wrapReferencable(it)
                     is ReferencableList<*> -> CrdtEntity.Reference.wrapReferencable(it)
                     else -> CrdtEntity.Reference.buildReference(it)
                 }
@@ -293,8 +297,26 @@ class DatabaseDriver<Data : Any>(
             dataAndVersion = when (it) {
                 is DatabaseData.Entity ->
                     it.rawEntity.toCrdtEntityData(it.versionMap) { refable ->
+                        // We represent field data differently at different levels:
+                        // * Users see Entities with language-specific types for fields
+                        // * These get converted to RawEntities with Referencable fields
+                        // * CRDTEntities all have CrdtEntity.Reference typed fields
+                        // * The Database takes a fourth representation
+                        //
+                        // For CrdtEntity structures, Most Referencables are converted to
+                        // strings wrapped in References, and the raw string is the DB Data
+                        // layer. Inline entities and lists, however, wrap the Referencable
+                        // structure in the Reference directly, and then unwrap it again for
+                        // the DB layer (which understands these structures and deals with them).
+                        // We did it this way because we didn't want to try and encode list o
+                        // entity data in a string.
+                        //
+                        // This function deals with going in the opposite direction - that is,
+                        // taking DB Data and converting it into a Reference with the right upstream
+                        // behaviour.
                         when (refable) {
                             is Reference -> refable
+                            is RawEntity -> CrdtEntity.Reference.wrapReferencable(refable)
                             is ReferencableList<*> -> CrdtEntity.Reference.wrapReferencable(refable)
                             else -> CrdtEntity.Reference.buildReference(refable)
                         }

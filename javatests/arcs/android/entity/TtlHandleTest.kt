@@ -11,6 +11,7 @@ import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
 import arcs.core.entity.DummyEntity
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
@@ -75,6 +76,7 @@ class TtlHandleTest {
         scheduler = schedulerProvider("myArc")
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         SchemaRegistry.register(DummyEntity.SCHEMA)
+        SchemaRegistry.register(InlineDummyEntity.SCHEMA)
     }
 
     @After
