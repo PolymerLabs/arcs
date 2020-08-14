@@ -70,11 +70,11 @@ export class IngressValidation {
   // - Otherwise the capabilities will be determined by capabilities of all the
   // Handles its data is derived from.
   private findHandleCapabilities(handle: Handle, capabilitiesByField: Map<string, Capabilities[]>, seenHandles = new Set<Handle>()): IngressValidationResult {
-    assert(handle.type.maybeEnsureResolved());
+    assert(handle.type.maybeEnsureResolved({restrictToMinBound: true}));
     seenHandles.add(handle);
-    const restrictedType = this.restrictType(handle.type.resolvedType());
-    if (restrictedType) {
-      const fieldPaths = this.collectSchemaFieldPaths(restrictedType.getEntitySchema());
+    if (this.policiesContainType(handle.type.resolvedType())) {
+      const fieldPaths = this.collectSchemaFieldPaths(
+        handle.type.resolvedType().getEntitySchema());
       for (const fieldPath of fieldPaths) {
         const fieldCapabilities = this.getFieldCapabilities(fieldPath);
         assert(fieldCapabilities, `Missing capabilities for ${fieldPath}`);
@@ -170,58 +170,11 @@ export class IngressValidation {
     return fieldPaths;
   }
 
-  // Returns an EntityType containing fields from the given `type` stripped
-  // down to a subset of fields covered by the set of policies.
-  restrictType(type: Type, skippedFields?: string[]): Type|null {
-    const fields = {};
-    const restrictedType = this.getRestrictedType(type.getEntitySchema().name);
-    if (!restrictedType) return null;
-    return type.restrictToType(restrictedType, skippedFields);
-  }
-
   // Returns a type by the given name, combined from all corresponding type
   // restrictions provided by the given list of policies.
-  getRestrictedType(typeName: string): EntityType|null {
-    const fields = {};
-    let type: Type|null = null;
-    for (const policy of this.policies) {
-      for (const target of policy.targets) {
-        if (typeName === target.schemaName) {
-          type = target.type;
-          this.mergeFields(fields, target.getRestrictedFields());
-          break;
-        }
-      }
-    }
-    return type ? EntityType.make([typeName], fields, type.getEntitySchema()) : null;
-  }
-
-  private mergeFields(fields: {}, newFields: {}) {
-    for (const newFieldName of Object.keys(newFields)) {
-      if (fields[newFieldName]) {
-        this.mergeField(fields[newFieldName], newFields[newFieldName]);
-      } else {
-        fields[newFieldName] = newFields[newFieldName];
-      }
-    }
-  }
-
-  private mergeField(field, newField) {
-    assert(field.kind === newField.kind);
-    switch (field.kind) {
-      case 'schema-collection': {
-        this.mergeFields(field.schema.schema.model.entitySchema.fields,
-            newField.schema.schema.model.entitySchema.fields);
-        break;
-      }
-      case 'schema-reference': {
-        this.mergeFields(field.schema.model.entitySchema.fields,
-            newField.schema.model.entitySchema.fields);
-        break;
-      }
-      default:
-        return;
-    }
+  private policiesContainType(type: Type): boolean {
+    return this.policies.some(policy => policy.targets.some(
+      target => target.schemaName === type.getEntitySchema().name));
   }
 }
 
