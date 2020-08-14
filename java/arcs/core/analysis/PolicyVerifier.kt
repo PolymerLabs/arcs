@@ -87,6 +87,32 @@ class PolicyVerifier(val options: PolicyOptions) {
                 )
             }
             ?.let { claims -> InformationFlow.IngressInfo(handleNode, claims) }
+            // If there is information in `storeClaims`, use the safest information.
+            ?: getDefaultIngressInfo(handleNode)
+    }
+
+    /**
+     * Returns an [IngressInfo] with empty claims if [handleNode] has (1) only read connections, or
+     * (2) is written to by a particle that only has write connections. Otherwise, returns null.
+     *
+     * When the above conditions are true for a handle, the store corresponding to the handle is a
+     * possibly protected store and this handle should be treated as an ingress. If we don't treat
+     * this handle as an ingress, dataflow analysis would not track data flows from this handle and
+     * a recipe might be verified as being compliant with a policy even if it isn't.
+     *
+     * Returning empty claims makes sure that we can't do anything with the data, and therefore,
+     * the recipe will be rejected if it egresses any data from this store.
+     */
+    private fun getDefaultIngressInfo(
+        handleNode: RecipeGraph.Node.Handle
+    ) = InformationFlow.IngressInfo(handleNode, emptyList()).takeIf {
+        handleNode.predecessors.isEmpty() ||
+        handleNode.predecessors.any { predecessor ->
+            predecessor.node is RecipeGraph.Node.Particle &&
+            predecessor.node.particle.spec.connections.all { (_, spec) ->
+                spec.direction.canWrite && !spec.direction.canRead
+            }
+        }
     }
 
     /**

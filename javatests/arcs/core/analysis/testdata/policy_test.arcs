@@ -238,6 +238,47 @@ recipe EgressUnredactedField
     joinData: joinData
 
 //-----------------------------------------------------------------------
+// Policy violation by not marking an ingress store appropriately.
+//-----------------------------------------------------------------------
+@policy('TestPolicy')
+recipe UnmarkedProtectedStore
+  // This should have been marked as 'action' for it to be matched with
+  // the allowed usages in `TestPolicy`. Given that this is not marked at
+  // all, we assume that nothing can be done with the data on `action` handle.
+  action: create
+  selection: create 'selection'
+  joinData: create @ttl('30m')
+  JoinActionSelection_EgressUnrestrictedFields
+    action: action
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+
+@isolated
+particle IngestAction
+  action: writes [Action]
+
+@policy('TestPolicy')
+recipe UnmarkedIngress
+  // `IngestAction` should have been for `action` to be matched with allowed usages
+  // in `TestPolicy`. As `IngestAction` is not marked as ingress, we assume that
+  // nothing can be done with the data on `action` handle.
+  // TODO(b/164153178): we simulate the absence of `@ingress` by not naming the
+  // store id as 'action`. When we have proper `@ingress` annotation, we should fix it.
+  action: create
+  selection: create 'selection'
+  joinData: create @ttl('30m')
+  IngestAction
+    action: action
+  JoinActionSelection_EgressUnrestrictedFields
+    action: action
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+
+//-----------------------------------------------------------------------
 // Policy violation by having invalid egress particles.
 //-----------------------------------------------------------------------
 @policy('TestPolicy')
