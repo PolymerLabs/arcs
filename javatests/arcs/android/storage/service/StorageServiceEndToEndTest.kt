@@ -20,8 +20,8 @@ import arcs.core.data.HandleMode
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
 import arcs.core.entity.DummyEntity
-import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
@@ -29,17 +29,12 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreWriteBack
-import arcs.core.storage.database.DatabaseData
-import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.core.storage.driver.RamDisk
-import arcs.core.storage.keys.DATABASE_NAME_DEFAULT
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.WriteBackForTesting
-import arcs.core.testutil.handles.dispatchFetch
-import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
@@ -50,7 +45,6 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -138,19 +132,19 @@ class StorageServiceEndToEndTest {
     }
 
     private fun entityForTest() = DummyEntity().apply {
-      inlineEntity = InlineDummyEntity().apply {
-        text = "inline"
-      }
-      inlineList = listOf(
-        InlineDummyEntity().apply { text = "1" },
-        InlineDummyEntity().apply { text = "2" },
-        InlineDummyEntity().apply { text = "3" }
-      )
-      inlines = setOf(
-        InlineDummyEntity().apply { text = "C1" },
-        InlineDummyEntity().apply { text = "C2" },
-        InlineDummyEntity().apply { text = "C3" }
-      )
+        inlineEntity = InlineDummyEntity().apply {
+            text = "inline"
+        }
+        inlineList = listOf(
+            InlineDummyEntity().apply { text = "1" },
+            InlineDummyEntity().apply { text = "2" },
+            InlineDummyEntity().apply { text = "3" }
+        )
+        inlines = setOf(
+            InlineDummyEntity().apply { text = "C1" },
+            InlineDummyEntity().apply { text = "C2" },
+            InlineDummyEntity().apply { text = "C3" }
+        )
     }
 
     private suspend fun createSingletonHandle(storageKey: StorageKey) =

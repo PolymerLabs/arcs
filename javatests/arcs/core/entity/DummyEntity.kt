@@ -26,7 +26,10 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
     var refs: Set<Reference<DummyEntity>> by CollectionProperty()
     var inlines: Set<InlineDummyEntity> by CollectionProperty()
 
-    private val nestedEntitySpecs = mapOf(SCHEMA_HASH to DummyEntity, InlineDummyEntity.SCHEMA_HASH to InlineDummyEntity)
+    private val nestedEntitySpecs = mapOf(
+        SCHEMA_HASH to DummyEntity,
+        InlineDummyEntity.SCHEMA_HASH to InlineDummyEntity
+    )
 
     fun getSingletonValueForTest(field: String) = super.getSingletonValue(field)
 
@@ -42,7 +45,12 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
 
     companion object : EntitySpec<DummyEntity> {
         override fun deserialize(data: RawEntity): DummyEntity {
-            return DummyEntity().apply { deserialize(data, mapOf(SCHEMA_HASH to DummyEntity, InlineDummyEntity.SCHEMA_HASH to InlineDummyEntity)) }
+            return DummyEntity().apply {
+                deserialize(data, mapOf(
+                    SCHEMA_HASH to DummyEntity,
+                    InlineDummyEntity.SCHEMA_HASH to InlineDummyEntity
+                ))
+            }
         }
 
         const val ENTITY_CLASS_NAME = "DummyEntity"
@@ -60,7 +68,8 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
                     "primList" to FieldType.ListOf(FieldType.Number),
                     "refList" to FieldType.ListOf(FieldType.EntityRef(SCHEMA_HASH)),
                     "inlineEntity" to FieldType.InlineEntity(InlineDummyEntity.SCHEMA_HASH),
-                    "inlineList" to FieldType.ListOf(FieldType.InlineEntity(InlineDummyEntity.SCHEMA_HASH))
+                    "inlineList" to
+                        FieldType.ListOf(FieldType.InlineEntity(InlineDummyEntity.SCHEMA_HASH))
                 ),
                 collections = mapOf(
                     "texts" to FieldType.Text,
@@ -75,14 +84,14 @@ class DummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA), Storable {
     }
 }
 
-class InlineDummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA, isInlineEntity=true), Storable {
+class InlineDummyEntity : EntityBase(ENTITY_CLASS_NAME, SCHEMA, isInlineEntity = true), Storable {
     var text: String? by SingletonProperty()
 
     private val nestedEntitySpecs = mapOf(SCHEMA_HASH to InlineDummyEntity)
 
     companion object : EntitySpec<InlineDummyEntity> {
         override fun deserialize(data: RawEntity) =
-            InlineDummyEntity().apply { deserialize(data, mapOf(SCHEMA_HASH to InlineDummyEntity))}
+            InlineDummyEntity().apply { deserialize(data, mapOf(SCHEMA_HASH to InlineDummyEntity)) }
 
         const val ENTITY_CLASS_NAME = "InlineDummyEntity"
 
