@@ -16,6 +16,7 @@ import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.extension.toCrdtEntityData
+import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.util.ReferencableList
 import arcs.core.storage.Driver
@@ -238,6 +239,7 @@ class DatabaseDriver<Data : Any>(
             is DatabaseData.Entity -> data.rawEntity.toCrdtEntityData(data.versionMap) {
                 when (it) {
                     is Reference -> it
+                    is RawEntity -> CrdtEntity.Reference.wrapReferencable(it)
                     is ReferencableList<*> -> CrdtEntity.Reference.wrapReferencable(it)
                     else -> CrdtEntity.Reference.buildReference(it)
                 }
@@ -295,6 +297,7 @@ class DatabaseDriver<Data : Any>(
                     it.rawEntity.toCrdtEntityData(it.versionMap) { refable ->
                         when (refable) {
                             is Reference -> refable
+                            is RawEntity -> CrdtEntity.Reference.wrapReferencable(refable)
                             is ReferencableList<*> -> CrdtEntity.Reference.wrapReferencable(refable)
                             else -> CrdtEntity.Reference.buildReference(refable)
                         }

@@ -60,7 +60,7 @@ import org.junit.runner.RunWith
 /** Tests for [StorageServiceManager]. */
 @Suppress("UNCHECKED_CAST", "EXPERIMENTAL_API_USAGE")
 @RunWith(AndroidJUnit4::class)
-class StorageServiceManagerTest {
+class StorageServiceEndToEndTest {
     @get:Rule
     val log = LogRule()
 
@@ -99,128 +99,58 @@ class StorageServiceManagerTest {
     }
 
     @Test
-    fun databaseClearAll() = runBlocking {
-        testClearAllForKey(databaseKey)
-    }
-
-    @Test
-    fun ramdiskClearAll() = runBlocking {
-        testClearAllForKey(ramdiskKey)
-    }
-
-    @Test
-    fun volatileClearAll() = runBlocking {
-        testClearAllForKey(volatileKey)
-    }
-
-    @Test
-    fun databaseClearDataBetween() = runBlocking {
-        testClearDataBetweenForKey(databaseKey, allRemoved = false)
-    }
-
-    @Test
-    fun ramdiskClearDataBetween() = runBlocking {
-        testClearDataBetweenForKey(ramdiskKey, allRemoved = true)
-    }
-
-    @Test
-    fun volatileClearDataBetween() = runBlocking {
-        testClearDataBetweenForKey(volatileKey, allRemoved = true)
-    }
-
-    @Test
-    fun resetDatabases() = runBlocking {
+    fun testWriteThenReadOfInlineSingletonInCollectionOnDatabase() = runBlocking {
         val handle = createCollectionHandle(databaseKey)
-        val entity = DummyEntity().apply {
-            num = 1.0
-            texts = setOf("1", "one")
-        }
+        val entity = entityForTest()
+
         handle.dispatchStore(entity)
-        log("Wrote entity")
 
-        val manager = buildManager()
-        val deferredResult = DeferredResult(coroutineContext)
-        log("Resetting databases")
-        manager.resetDatabases(deferredResult)
-
-        withTimeout(2000) {
-            assertThat(deferredResult.await()).isTrue()
-        }
-
-        val newHandle = createCollectionHandle(databaseKey)
-        assertThat(newHandle.dispatchFetchAll()).isEmpty()
-
-        // Double check that no tombstones are left.
-        val database = DatabaseDriverProvider.manager.getDatabase(DATABASE_NAME_DEFAULT, true)
-        val entityKey = databaseKey.backingKey.childKeyWithComponent(entity.entityId!!)
-        // Entity is gone, no tombstone left.
-        assertThat(database.get(entityKey, DatabaseData.Entity::class, DummyEntity.SCHEMA)).isNull()
-        // Collection is gone too.
-        assertThat(
-            database.get(databaseKey.storageKey, DatabaseData.Collection::class, DummyEntity.SCHEMA)
-        ).isNull()
+        val handle2 = createCollectionHandle(databaseKey)
+        val data = handle2.fetchAll()
+        assertThat(data.size).isEqualTo(1)
+        assertThat(data.toList()[0]).isEqualTo(entity)
     }
 
-    private suspend fun testClearAllForKey(storageKey: StorageKey) {
-        val handle = createSingletonHandle(storageKey)
-        val entity = DummyEntity().apply {
-            num = 1.0
-            texts = setOf("1", "one")
-        }
+    @Test
+    fun testWriteThenReadOfInlineSingletonInCollectionOnRamdisk() = runBlocking {
+        val handle = createCollectionHandle(ramdiskKey)
+        val entity = entityForTest()
+
         handle.dispatchStore(entity)
-        log("Wrote entity")
 
-        val manager = buildManager()
-        val deferredResult = DeferredResult(coroutineContext)
-        log("Clearing databases")
-        manager.clearAll(deferredResult)
-
-        withTimeout(2000) {
-            assertThat(deferredResult.await()).isTrue()
-        }
-
-        // Create a new handle (with new Entity manager) to confirm data is gone from storage.
-        val newHandle = createSingletonHandle(storageKey)
-        assertThat(newHandle.dispatchFetch()).isNull()
+        val handle2 = createCollectionHandle(ramdiskKey)
+        val data = handle2.fetchAll()
+        assertThat(data.size).isEqualTo(1)
+        assertThat(data.toList()[0]).isEqualTo(entity)
     }
 
-    private suspend fun testClearDataBetweenForKey(storageKey: StorageKey, allRemoved: Boolean) {
-        val entity1 = DummyEntity().apply { num = 1.0 }
-        val entity2 = DummyEntity().apply { num = 2.0 }
-        val entity3 = DummyEntity().apply { num = 3.0 }
+    @Test
+    fun testWriteThenReadOfInlineSingletonInCollectionOnVolatile() = runBlocking {
+        val handle = createCollectionHandle(volatileKey)
+        val entity = entityForTest()
 
-        val handle = createCollectionHandle(storageKey)
-        withTimeout(5000) {
-            time.millis = 1L
-            handle.dispatchStore(entity1)
+        handle.dispatchStore(entity)
 
-            time.millis = 2L
-            handle.dispatchStore(entity2)
+        val handle2 = createCollectionHandle(volatileKey)
+        val data = handle2.fetchAll()
+        assertThat(data.size).isEqualTo(1)
+        assertThat(data.toList()[0]).isEqualTo(entity)
+    }
 
-            time.millis = 3L
-            handle.dispatchStore(entity3)
-        }
-        log("Wrote entities")
-
-        val manager = buildManager()
-        val deferredResult = DeferredResult(coroutineContext)
-
-        log("Clearing data created at t=2")
-        manager.clearDataBetween(2, 2, deferredResult)
-
-        withTimeout(2000) { assertThat(deferredResult.await()).isTrue() }
-        log("Clear complete, asserting")
-
-        // Create a new handle (with new Entity manager) to confirm data is gone from storage.
-        val newHandle = createCollectionHandle(storageKey)
-        if (allRemoved) {
-            assertThat(newHandle.dispatchFetchAll()).isEmpty()
-        } else {
-            // In case there are remaining entities, the changes should be propagated to the
-            // original handle as well.
-            assertThat(handle.dispatchFetchAll()).containsExactly(entity1, entity3)
-            assertThat(newHandle.dispatchFetchAll()).containsExactly(entity1, entity3)
-        }
+    private fun entityForTest() = DummyEntity().apply {
+      inlineEntity = InlineDummyEntity().apply {
+        text = "inline"
+      }
+      inlineList = listOf(
+        InlineDummyEntity().apply { text = "1" },
+        InlineDummyEntity().apply { text = "2" },
+        InlineDummyEntity().apply { text = "3" }
+      )
+      inlines = setOf(
+        InlineDummyEntity().apply { text = "C1" },
+        InlineDummyEntity().apply { text = "C2" },
+        InlineDummyEntity().apply { text = "C3" }
+      )
     }
 
     private suspend fun createSingletonHandle(storageKey: StorageKey) =
