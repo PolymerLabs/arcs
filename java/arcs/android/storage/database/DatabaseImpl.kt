@@ -414,7 +414,11 @@ class DatabaseImpl(
                         (fieldName, value) -> rawCollections[fieldName] = value
                     }
                     RawEntity(
-                        id = entityId!!,
+                        id = requireNotNull(entityId) {
+                            "DB in an inconsistent state: entity data exists against " +
+                            "storage_key_id $inlineStorageKeyId without matching ID from " +
+                            "entities table"
+                        },
                         singletons = rawSingletons,
                         collections = rawCollections
                     )
