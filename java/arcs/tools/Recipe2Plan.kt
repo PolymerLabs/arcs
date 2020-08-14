@@ -21,8 +21,9 @@ class Recipe2Plan : CliktCommand(
         .file()
     // TODO(b/161994250): Package should be derived from proto
     private val packageName by argument(help = "scope to specified package").default("")
-    private val manifests by argument(help = "paths to protobuf-serialized manifests, i.e. '*.bin.pb'")
-        .file(exists = true, readable = true).multiple()
+    private val manifests by argument(
+        help = "paths to protobuf-serialized manifests, i.e. '*.bin.pb'"
+    ).file(exists = true, readable = true).multiple()
     private val verbose by option("--verbose", "-v", help = "Print logs").flag(default = false)
     // TODO(b/162273478) CLI should accept `policies` argument
 
