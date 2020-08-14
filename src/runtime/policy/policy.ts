@@ -198,6 +198,13 @@ export class PolicyTarget {
       return Capabilities.create(ranges);
     });
   }
+
+  // Returns a map of schema fields by name limited only to fields covered by
+  // the policy target.
+  getRestrictedFields() {
+    return this.fields.map(f => f.getRestrictedFields(this.type))
+          .reduce((fields, {name, restrictedField}) => ({...fields, [name]: restrictedField}), {});
+  }
 }
 
 export class PolicyField {
@@ -279,6 +286,12 @@ export class PolicyField {
       usage: usageType as PolicyAllowedUsageType,
       label: label === 'raw' ? '' : label,
     };
+  }
+
+  // Returns a name and field restricted to the policy field.
+  getRestrictedFields(parentType: Type) {
+    const field = parentType.getEntitySchema().fields[this.name];
+    return {name: this.name, restrictedField: this.restrictField(field)};
   }
 
   private restrictField(field) {

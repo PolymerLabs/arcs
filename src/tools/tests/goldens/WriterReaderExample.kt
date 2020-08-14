@@ -17,7 +17,7 @@ import arcs.core.entity.toPrimitiveValue
 
 val IngestionOnly_Handle0 = Handle(
     StorageKeyParser.parse(
-        "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"
+        "reference-mode://{db://9ca32bb55138c5efc3b107bcd9d60a73e2428160@arcs/Thing}{db://9ca32bb55138c5efc3b107bcd9d60a73e2428160@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"
     ),
     arcs.core.data.SingletonType(
         arcs.core.data.EntityType(
@@ -163,10 +163,10 @@ val EphemeralWriting_Handle0 = Handle(
             arcs.core.data.Schema(
                 setOf(arcs.core.data.SchemaName("Thing")),
                 arcs.core.data.SchemaFields(
-                    singletons = emptyMap(),
+                    singletons = mapOf("name" to arcs.core.data.FieldType.Text),
                     collections = emptyMap()
                 ),
-                "e3b6bdc54b7f2f258488126be9777a753e619b45",
+                "25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516",
                 refinementExpression = true.asExpr(),
                 queryExpression = true.asExpr()
             )
@@ -200,7 +200,7 @@ val EphemeralWritingPlan = Plan(
 )
 val EphemeralReading_Handle0 = Handle(
     StorageKeyParser.parse(
-        "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"
+        "reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"
     ),
     arcs.core.data.SingletonType(
         arcs.core.data.EntityType(
@@ -305,7 +305,7 @@ val ReferencesRecipePlan = Plan(
                 ),
                 "outThingRef" to HandleConnection(
                     ReferencesRecipe_Handle1,
-                    HandleMode.ReadWrite,
+                    HandleMode.Write,
                     arcs.core.data.SingletonType(
                         arcs.core.data.ReferenceType(arcs.core.data.EntityType(ReadWriteReferences_OutThingRef.SCHEMA))
                     ),

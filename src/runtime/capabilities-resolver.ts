@@ -44,18 +44,14 @@ export class CapabilitiesResolver {
   get selector() { return this.options.selector || CapabilitiesResolver.defaultSelector; }
 
   async createStorageKey(capabilities: Capabilities, type: Type, handleId: string): Promise<StorageKey> {
-    const factory = this.selectStorageKeyFactory(capabilities, handleId);
-    return this.createStorageKeyWithFactory(factory, type, handleId);
-  }
-
-  selectStorageKeyFactory(capabilities: Capabilities, handleId: string): StorageKeyFactory {
     const selectedFactories = Object.values(this.factories).filter(factory => {
-      return factory.supports(capabilities);
+        return factory.supports(capabilities);
     });
     if (selectedFactories.length === 0) {
       throw new Error(`Cannot create a suitable storage key for handle '${handleId}' with capabilities ${capabilities.toDebugString()}`);
     }
-    return this.selector.select(selectedFactories);
+    const factory = this.selector.select(selectedFactories);
+    return this.createStorageKeyWithFactory(factory, type, handleId);
   }
 
   private async createStorageKeyWithFactory(factory: StorageKeyFactory, type: Type, handleId: string): Promise<StorageKey> {
