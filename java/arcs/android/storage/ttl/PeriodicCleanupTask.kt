@@ -33,7 +33,7 @@ class PeriodicCleanupTask(
         // Use the DatabaseDriverProvider instance of the databaseManager to make sure changes by
         // TTL expiry are propagated to listening Stores.
         val databaseManager = DatabaseDriverProvider.manager
-        databaseManager.removeExpiredEntities().join()
+        databaseManager.removeExpiredEntities()
         log.debug { "Success." }
         // Indicate whether the task finished successfully with the Result
         Result.success()
