@@ -24,7 +24,7 @@ export const recipe2PlanTestSuite: CodegenUnitTest[] = [
     }
     async computeFromManifest(manifest: Manifest) {
       const recipes = await new AllocatorRecipeResolver(manifest, 'random_salt').resolve();
-      const generator = new PlanGenerator(recipes, manifest.meta.namespace || 'test.namespace');
+      const generator = new PlanGenerator(recipes, manifest.meta.namespace || 'test.namespace', null);
       const plan = generator.generate();
       return plan;
     }
@@ -38,7 +38,7 @@ export const recipe2PlanTestSuite: CodegenUnitTest[] = [
     }
     async computeFromManifest(manifest: Manifest) {
       const recipes = await new AllocatorRecipeResolver(manifest, 'random_salt').resolve();
-      const generator = new PlanGenerator(recipes, manifest.meta.namespace || 'test.namespace');
+      const generator = new PlanGenerator(recipes, manifest.meta.namespace || 'test.namespace', null);
       const particles = recipes.map(recipe => recipe.particles).reduce((a, b) => a.concat(b));
       return Promise.all(particles.map(particle => generator.createParticle(particle)));
     }
@@ -52,7 +52,7 @@ export const recipe2PlanTestSuite: CodegenUnitTest[] = [
     }
     async computeFromManifest(manifest: Manifest) {
       const recipes = await new AllocatorRecipeResolver(manifest, 'random_salt').resolve();
-      const generator = new PlanGenerator(recipes, manifest.meta.namespace || 'test.namespace');
+      const generator = new PlanGenerator(recipes, manifest.meta.namespace || 'test.namespace', null);
       const particles = recipes.map(recipe => recipe.particles).reduce((a, b) => a.concat(b));
       const handleConnections = particles.map(particles => Object.values(particles.connections)).reduce((a, b) => a.concat(b));
       return Promise.all(handleConnections.map(hc => generator.createHandleConnection(hc)));
@@ -67,7 +67,7 @@ export const recipe2PlanTestSuite: CodegenUnitTest[] = [
     }
     async computeFromManifest(manifest: Manifest) {
       const recipes = await new AllocatorRecipeResolver(manifest, 'random_salt').resolve();
-      const generator = new PlanGenerator(recipes, manifest.meta.namespace || 'test.namespace');
+      const generator = new PlanGenerator(recipes, manifest.meta.namespace || 'test.namespace', null);
       const handles = recipes.map(recipe => recipe.handles).reduce((a, b) => a.concat(b));
       return Promise.all(handles.map(handle => generator.createHandleVariable(handle)));
     }
