@@ -15,6 +15,7 @@ import arcs.android.systemhealth.testapp.Executors as ArcsExecutors
 import arcs.core.host.SchedulerProvider
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
+import arcs.jvm.util.JvmTime
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -82,7 +83,7 @@ class TestSchedulerProvider(
             CoroutineName("ArcId::$arcId") +
             dispatcher
 
-        return Scheduler(schedulerContext).also { schedulersByArcId[arcId] = it }
+        return Scheduler(schedulerContext, timer = JvmTime).also { schedulersByArcId[arcId] = it }
     }
 
     @Synchronized

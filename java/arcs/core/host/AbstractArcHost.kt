@@ -13,7 +13,9 @@ package arcs.core.host
 import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Shareable
+import arcs.core.data.EntitySchemaProviderType
 import arcs.core.data.Plan
+import arcs.core.data.Schema
 import arcs.core.entity.Entity
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
@@ -223,7 +225,10 @@ abstract class AbstractArcHost(
 
     // VisibleForTesting
     fun clearCache() {
+        // TODO: remove the runBlocking at arcs.core packages.
         runBlocking {
+            // Ensure all contexts are flushed onto storage prior to clear context cache.
+            drainSerializations()
             clearContextCache()
             runningMutex.withLock {
                 runningArcs.clear()
@@ -314,7 +319,9 @@ abstract class AbstractArcHost(
                     handleSpec.key,
                     handleSpec.value,
                     handles,
-                    this.toString()
+                    this.toString(),
+                    true,
+                    (handleSpec.value.handle.type as? EntitySchemaProviderType)?.entitySchema
                 )
             }
         }
@@ -457,7 +464,10 @@ abstract class AbstractArcHost(
                 handleConnection,
                 particle.handles,
                 particle.toString(),
-                immediateSync = false
+                immediateSync = false,
+                storeSchema = (
+                    handleConnection.handle.type as? EntitySchemaProviderType
+                )?.entitySchema
             ).also {
                 particleContext.registerHandle(it)
             }
@@ -541,7 +551,8 @@ abstract class AbstractArcHost(
         connectionSpec: Plan.HandleConnection,
         holder: HandleHolder,
         particleId: String = "",
-        immediateSync: Boolean = true
+        immediateSync: Boolean = true,
+        storeSchema: Schema? = null
     ): Handle {
         val handleSpec = HandleSpec(
             handleName,
@@ -554,7 +565,8 @@ abstract class AbstractArcHost(
             connectionSpec.storageKey,
             connectionSpec.ttl,
             particleId,
-            immediateSync
+            immediateSync,
+            storeSchema
         ).also { holder.setHandle(handleName, it) }
     }
 

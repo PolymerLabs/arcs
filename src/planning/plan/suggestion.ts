@@ -22,7 +22,7 @@ import {Recipe} from '../../runtime/recipe/recipe.js';
 import {Search} from '../../runtime/recipe/search.js';
 import {Relevance} from '../../runtime/relevance.js';
 import {SuggestFilter} from './suggest-filter.js';
-import {isRoot} from '../../runtime/particle-spec.js';
+import {isRoot} from '../../runtime/manifest-types/particle-spec.js';
 
 
 export type DescriptionProperties = {

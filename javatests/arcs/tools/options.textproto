@@ -1,0 +1,4 @@
+# PolicyOptionsProto .textproto file, for use with policy_testcase.arcs
+store_id_to_type: [
+  { key: "secret_sauce", value: "SecretSauce" }
+]

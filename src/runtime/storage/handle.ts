@@ -19,7 +19,7 @@ import {IdGenerator, Id} from '../id.js';
 import {EntityType, Type, ReferenceType} from '../type.js';
 import {StorageProxy, NoOpStorageProxy} from './storage-proxy.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
-import {ParticleSpec} from '../particle-spec.js';
+import {ParticleSpec} from '../manifest-types/particle-spec.js';
 import {ChannelConstructor} from '../channel-constructor.js';
 import {Producer} from '../hot.js';
 import {EntityOperation, RawEntity, Identified} from '../crdt/crdt-entity.js';

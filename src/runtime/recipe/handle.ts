@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {ParticleSpec} from '../particle-spec.js';
+import {ParticleSpec} from '../manifest-types/particle-spec.js';
 import {Schema} from '../schema.js';
 import {Type, TypeVariable, TypeVariableInfo, TupleType, CollectionType} from '../type.js';
 import {Slot} from './slot.js';
@@ -18,7 +18,8 @@ import {SlotConnection} from './slot-connection.js';
 import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, ToStringOptions, VariableMap} from './recipe.js';
 import {TypeChecker, TypeListInfo} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
-import {Fate, Direction} from '../manifest-ast-nodes.js';
+import {Fate} from '../manifest-ast-nodes.js';
+import {Direction} from '../manifest-types/enums.js';
 import {StorageKey} from '../storage/storage-key.js';
 import {Capabilities, Ttl, Queryable} from '../capabilities.js';
 import {AnnotationRef} from './annotation.js';

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {HandleConnectionSpec} from './particle-spec.js';
+import {HandleConnectionSpec} from './manifest-types/particle-spec.js';
 import * as AstNode from './manifest-ast-nodes.js';
 import {resolveFieldPathType} from './field-path.js';
 

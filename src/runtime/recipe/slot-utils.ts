@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../particle-spec.js';
+import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../manifest-types/particle-spec.js';
 
 import {Particle} from './particle.js';
 import {Recipe, RequireSection} from './recipe.js';

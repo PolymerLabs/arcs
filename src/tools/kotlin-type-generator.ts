@@ -10,7 +10,7 @@
 
 import {KotlinGenerationUtils} from './kotlin-generation-utils.js';
 import {SchemaGraph, SchemaNode} from './schema2graph.js';
-import {HandleConnectionSpec} from '../runtime/particle-spec.js';
+import {HandleConnectionSpec} from '../runtime/manifest-types/particle-spec.js';
 import {Type} from '../runtime/type.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {assert} from '../platform/assert-web.js';

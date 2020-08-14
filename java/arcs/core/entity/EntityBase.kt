@@ -246,13 +246,19 @@ open class EntityBase(
         val serializationFields = storeSchema?.fields ?: schema.fields
         val serialization = RawEntity(
             id = entityId ?: NO_REFERENCE_ID,
-            singletons = serializationFields.singletons.mapValues { (field, _) ->
-                getSingletonValue(field)?.let { toReferencable(it, getSingletonType(field)) }
-            },
-            collections = serializationFields.collections.mapValues { (field, _) ->
+            singletons = serializationFields.singletons.keys.intersect(
+                schema.fields.singletons.keys
+            ).map { field ->
+                field to getSingletonValue(field)?.let {
+                    toReferencable(it, getSingletonType(field))
+                }
+            }.toMap(),
+            collections = serializationFields.collections.keys.intersect(
+                schema.fields.collections.keys
+            ).map { field ->
                 val type = getCollectionType(field)
-                getCollectionValue(field).map { toReferencable(it, type) }.toSet()
-            },
+                field to getCollectionValue(field).map { toReferencable(it, type) }.toSet()
+            }.toMap(),
             creationTimestamp = creationTimestamp,
             expirationTimestamp = expirationTimestamp
         )

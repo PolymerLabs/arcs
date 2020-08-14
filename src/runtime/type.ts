@@ -17,10 +17,11 @@ import {CRDTCollection} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Schema} from './schema.js';
 import * as AstNode from './manifest-ast-nodes.js';
-import {ParticleSpec} from './particle-spec.js';
+import {ParticleSpec} from './manifest-types/particle-spec.js';
 import {Refinement} from './refiner.js';
 import {AnnotationRef} from './recipe/annotation.js';
 import {ManifestStringBuilder} from './manifest-string-builder.js';
+import {Direction} from './manifest-types/enums.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -893,7 +894,7 @@ export class TupleType extends Type {
 export interface HandleConnection {
   type: Type;
   name?: string|TypeVariable;
-  direction?: AstNode.Direction; // TODO make required
+  direction?: Direction; // TODO make required
 }
 
 // TODO(lindner) only tests use optional props

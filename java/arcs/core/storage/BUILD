@@ -100,6 +100,7 @@ arcs_kt_library(
         ":storage_key",
         "//java/arcs/core/crdt",
         "//java/arcs/core/type",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
 

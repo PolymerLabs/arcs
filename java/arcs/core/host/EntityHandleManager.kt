@@ -112,7 +112,8 @@ class EntityHandleManager(
         storageKey: StorageKey,
         ttl: Ttl,
         particleId: String,
-        immediateSync: Boolean
+        immediateSync: Boolean,
+        storeSchema: Schema?
     ): Handle {
         val handleName = idGenerator.newChildId(
             idGenerator.newChildId(arcId.toArcId(), hostId),
@@ -129,7 +130,7 @@ class EntityHandleManager(
                     time,
                     dereferencerFactory,
                     storageKey,
-                    spec.entitySpecs.single().SCHEMA
+                    storeSchema
                 )
             }
             HandleDataType.Reference -> {

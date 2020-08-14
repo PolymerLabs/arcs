@@ -55,6 +55,7 @@ class ReferenceTest {
         RamDisk.clear()
         DriverAndKeyConfigurator.configure(null)
         SchemaRegistry.register(DummyEntity.SCHEMA)
+        SchemaRegistry.register(InlineDummyEntity.SCHEMA)
 
         scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher())
         stores = StoreManager()

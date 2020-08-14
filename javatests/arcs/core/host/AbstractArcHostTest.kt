@@ -5,8 +5,10 @@ import arcs.core.data.EntityType
 import arcs.core.data.Plan
 import arcs.core.data.SingletonType
 import arcs.core.entity.DummyEntity
+import arcs.core.entity.EntityBase
 import arcs.core.entity.EntityBaseSpec
 import arcs.core.entity.ReadWriteSingletonHandle
+import arcs.core.entity.RestrictedDummyEntity
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -137,6 +139,48 @@ open class AbstractArcHostTest {
         val expectedExpiry = 2 * 60 * 1000 + FakeTime().currentTimeMillis
         assertThat(entity.expirationTimestamp).isEqualTo(expectedExpiry)
 
+        schedulerProvider.cancelAll()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Test
+    fun storeRestrictedHandleSchema() = runBlocking {
+        val schedulerProvider = JvmSchedulerProvider(coroutineContext)
+        val host = MyTestHost(schedulerProvider, ::TestParticle.toRegistration())
+        val handleStorageKey = ReferenceModeStorageKey(
+            backingKey = RamDiskStorageKey("backing"),
+            storageKey = RamDiskStorageKey("container")
+        )
+
+        val handleConnection = Plan.HandleConnection(
+            Plan.Handle(
+                handleStorageKey,
+                SingletonType(EntityType(RestrictedDummyEntity.SCHEMA)),
+                emptyList()
+            ),
+            HandleMode.ReadWrite,
+            SingletonType(EntityType(DummyEntity.SCHEMA)),
+            listOf(Annotation.createTtl("2minutes"))
+        )
+        val particle = Plan.Particle(
+            "Foobar",
+            "arcs.core.host.AbstractArcHostTest.TestParticle",
+            mapOf("foo" to handleConnection)
+        )
+        val partition = Plan.Partition("arcId", "arcHost", listOf(particle))
+        host.startArc(partition)
+
+        val entity = DummyEntity().apply {
+            text = "Watson"
+            num = 42.0
+            bool = true
+        }
+        host.getFooHandle().dispatchStore(entity)
+        var storedEntity = EntityBase("EntityBase", DummyEntity.SCHEMA)
+        storedEntity.setSingletonValue("text", "Watson")
+        assertThat((host.getFooHandle() as ReadWriteSingletonHandle<EntityBase>).fetch()?.equals(
+            storedEntity
+        ))
         schedulerProvider.cancelAll()
     }
 

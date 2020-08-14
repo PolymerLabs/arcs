@@ -60,6 +60,7 @@ arcs_manifest(
 arcs_manifest(
     name = "harness_manifest",
     srcs = ["Harness.arcs"],
+    manifest_proto = False,
     deps = [":test_particle"],
 )
 

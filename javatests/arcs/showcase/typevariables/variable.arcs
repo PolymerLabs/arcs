@@ -7,7 +7,7 @@ meta
 
 // This is an ingress particle. It brings order data into the system.
 particle OrderIngestion in '.OrderIngestion'
-  data: writes [Product {sku: Text, name: Text, price: Number}]
+  data: writes [Product {sku: Text, name: Text, price: Number, reviews: [Text]}]
 
 // Type variables are used here to ensure that only need-to-know data is passed to
 // the particle. `SkuRedactor` only has knowledge of the input handle's `sku` field

@@ -151,6 +151,7 @@ class InformationFlowTest {
         )
         val typeVariableTests = listOf(
             "fail-type-variables",
+            "fail-type-variables-no-constraints",
             "fail-type-variables-collection",
             "fail-type-variables-tuples",
             "fail-type-variables-tuples-collection",

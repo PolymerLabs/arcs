@@ -11,7 +11,7 @@
 import {Handle} from './storage/handle.js';
 import {Runnable, Consumer} from './hot.js';
 import {InnerArcHandle} from './particle-execution-context.js';
-import {HandleConnectionSpec, ParticleSpec} from './particle-spec.js';
+import {HandleConnectionSpec, ParticleSpec} from './manifest-types/particle-spec.js';
 import {Relevance} from './relevance.js';
 import {Entity, EntityRawData, MutableEntityData} from './entity.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';

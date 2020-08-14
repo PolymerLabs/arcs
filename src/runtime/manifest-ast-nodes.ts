@@ -9,6 +9,7 @@
  */
 import {ClaimType} from './claim.js';
 import {CheckType} from './check.js';
+import {Direction as DirectionEnum} from './manifest-types/enums.js';
 
 /**
  * Complete set of tokens used by `manifest-parser.pegjs`. To use this you
@@ -942,10 +943,6 @@ export type whiteSpace = string;
 export type eolWhiteSpace = string;
 export type eol = string;
 
-// String-based enums.
-// TODO: convert to actual enums so that they can be iterated over.
-export type Direction = 'reads' | 'writes' | 'reads writes' | 'hosts' | '`consumes' | '`provides' | 'any';
-
 export function preSlandlesDirectionToDirection(direction: Direction, isOptional: boolean = false): string {
   // TODO(jopra): Remove after syntax unification.
   // Use switch for totality checking.
@@ -971,6 +968,7 @@ export function preSlandlesDirectionToDirection(direction: Direction, isOptional
   }
 }
 
+export type Direction = DirectionEnum;
 export type SlotDirection = 'provides' | 'consumes';
 export type Fate = 'use' | 'create' | 'map' | 'copy' | 'join' | '?' | '`slot';
 
