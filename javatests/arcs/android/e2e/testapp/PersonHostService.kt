@@ -20,6 +20,8 @@ import arcs.core.data.Plan
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
+import arcs.core.storage.DirectStorageEndpointManager
+import arcs.core.storage.StoreManager
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import kotlinx.coroutines.Dispatchers
@@ -56,6 +58,7 @@ class PersonHostService : ArcHostService() {
         coroutineContext = Dispatchers.Default,
         arcSerializationContext = Dispatchers.Default,
         schedulerProvider = schedulerProvider,
+        storageEndpointManager = DirectStorageEndpointManager(StoreManager()),
         particles = *initialParticles
     ) {
         override val platformTime = JvmTime

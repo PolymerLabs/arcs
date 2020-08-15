@@ -34,11 +34,13 @@ import arcs.core.data.SingletonType
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StoreManager
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.ReadWriteSingletonHandle
+import arcs.sdk.android.storage.AndroidStorageEndpointManager
 import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -179,7 +181,7 @@ class TestActivity : AppCompatActivity() {
             EntityHandleManager(
                 time = JvmTime,
                 scheduler = schedulerProvider("readWriteArc"),
-                stores = stores
+                storageEndpointManager = DirectStorageEndpointManager(stores)
 
             )
         )
@@ -194,8 +196,10 @@ class TestActivity : AppCompatActivity() {
             EntityHandleManager(
                 time = JvmTime,
                 scheduler = schedulerProvider("resurrectionArc"),
-                stores = StoreManager(
-                    activationFactory = ServiceStoreFactory(context = this@TestActivity)
+                storageEndpointManager = AndroidStorageEndpointManager(
+                    this@TestActivity,
+                    coroutineContext,
+                    null
                 )
             )
         )
@@ -230,8 +234,10 @@ class TestActivity : AppCompatActivity() {
             EntityHandleManager(
                 time = JvmTime,
                 scheduler = schedulerProvider("allocator"),
-                stores = StoreManager(
-                    activationFactory = ServiceStoreFactory(context = this@TestActivity)
+                storageEndpointManager = AndroidStorageEndpointManager(
+                    this@TestActivity,
+                    coroutineContext,
+                    null
                 )
             )
         )
@@ -265,8 +271,10 @@ class TestActivity : AppCompatActivity() {
         val handleManager = EntityHandleManager(
             time = JvmTime,
             scheduler = schedulerProvider("handle"),
-            stores = StoreManager(
-                activationFactory = ServiceStoreFactory(this)
+            storageEndpointManager = AndroidStorageEndpointManager(
+                this@TestActivity,
+                coroutineContext,
+                null
             )
         )
         if (isCollection) {

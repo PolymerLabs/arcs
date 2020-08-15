@@ -23,6 +23,8 @@ import arcs.core.host.TestingJvmProdHost
 import arcs.core.host.WritePerson
 import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
+import arcs.core.storage.DirectStorageEndpointManager
+import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -72,24 +74,35 @@ open class AllocatorTestBase {
     private lateinit var writingExternalHost: TestingHost
     private lateinit var pureHost: TestingJvmProdHost
 
-    private class WritingHost : TestingHost(
+    val stores = StoreManager()
+
+    private class WritingHost(
+        storageEndpointManager: DirectStorageEndpointManager
+    ) : TestingHost(
         JvmSchedulerProvider(EmptyCoroutineContext),
+        storageEndpointManager,
         ::WritePerson.toRegistration()
     )
 
-    private class ReadingHost : TestingHost(
+    private class ReadingHost(
+        storageEndpointManager: DirectStorageEndpointManager
+    ) : TestingHost(
         JvmSchedulerProvider(EmptyCoroutineContext),
+        storageEndpointManager,
         ::ReadPerson.toRegistration()
     )
 
     /** Return the [ArcHost] that contains [ReadPerson]. */
-    open fun readingHost(): TestingHost = ReadingHost()
+    open fun readingHost(): TestingHost = ReadingHost(DirectStorageEndpointManager(stores))
 
     /** Return the [ArcHost] that contains [WritePerson]. */
-    open fun writingHost(): TestingHost = WritingHost()
+    open fun writingHost(): TestingHost = WritingHost(DirectStorageEndpointManager(stores))
 
     /** Return the [ArcHost] that contains all isolatable [Particle]s. */
-    open fun pureHost() = TestingJvmProdHost(schedulerProvider)
+    open fun pureHost() = TestingJvmProdHost(
+        schedulerProvider,
+        DirectStorageEndpointManager(stores)
+    )
 
     open val storageCapability = Capabilities(Shareable(true))
 
@@ -123,7 +136,8 @@ open class AllocatorTestBase {
             hostRegistry,
             EntityHandleManager(
                 time = FakeTime(),
-                scheduler = schedulerProvider("allocator")
+                scheduler = schedulerProvider("allocator"),
+                storageEndpointManager = DirectStorageEndpointManager(StoreManager())
             )
         )
 
@@ -533,7 +547,8 @@ open class AllocatorTestBase {
             hostRegistry,
             EntityHandleManager(
                 time = FakeTime(),
-                scheduler = schedulerProvider("allocator2")
+                scheduler = schedulerProvider("allocator2"),
+                storageEndpointManager = DirectStorageEndpointManager(StoreManager())
             )
         )
 

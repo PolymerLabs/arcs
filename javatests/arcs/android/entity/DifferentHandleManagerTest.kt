@@ -10,7 +10,7 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.jvm.host.JvmSchedulerProvider
-import arcs.sdk.android.storage.ServiceStoreFactory
+import arcs.sdk.android.storage.AndroidStorageEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.runBlocking
@@ -33,25 +33,25 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
         val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
         DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
         app = ApplicationProvider.getApplicationContext()
-        activationFactory = ServiceStoreFactory(
+        val storageEndpointManager = AndroidStorageEndpointManager(
             app,
+            EmptyCoroutineContext,
             connectionFactory = TestConnectionFactory(app)
         )
-        stores = StoreManager(activationFactory)
         schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
         readHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("reader"),
-            stores = stores
+            storageEndpointManager = storageEndpointManager
         )
         writeHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("writer"),
-            stores = stores
+            storageEndpointManager = storageEndpointManager
         )
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)

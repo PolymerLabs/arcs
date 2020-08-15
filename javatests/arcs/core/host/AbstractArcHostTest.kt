@@ -9,6 +9,8 @@ import arcs.core.entity.EntityBase
 import arcs.core.entity.EntityBaseSpec
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.RestrictedDummyEntity
+import arcs.core.storage.DirectStorageEndpointManager
+import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -54,6 +56,7 @@ open class AbstractArcHostTest {
         coroutineContext = Dispatchers.Default,
         updateArcHostContextCoroutineContext = Dispatchers.Default,
         schedulerProvider = schedulerProvider,
+        storageEndpointManager = DirectStorageEndpointManager(StoreManager()),
         initialParticles = *particles
     ) {
         override val platformTime = FakeTime()
@@ -176,7 +179,7 @@ open class AbstractArcHostTest {
             bool = true
         }
         host.getFooHandle().dispatchStore(entity)
-        var storedEntity = EntityBase("EntityBase", DummyEntity.SCHEMA)
+        val storedEntity = EntityBase("EntityBase", DummyEntity.SCHEMA)
         storedEntity.setSingletonValue("text", "Watson")
         assertThat((host.getFooHandle() as ReadWriteSingletonHandle<EntityBase>).fetch()?.equals(
             storedEntity

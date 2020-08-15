@@ -26,6 +26,8 @@ import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.DefaultActivationFactory
+import arcs.core.storage.DirectStorageEndpointManager
+import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.Reference as StorageReference
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
@@ -116,7 +118,6 @@ open class HandleManagerTestBase {
         storageKey = hatCollectionRefKey
     )
 
-    var activationFactory: ActivationFactory = DefaultActivationFactory
     lateinit var schedulerProvider: JvmSchedulerProvider
     lateinit var readHandleManager: EntityHandleManager
     lateinit var writeHandleManager: EntityHandleManager
@@ -129,7 +130,7 @@ open class HandleManagerTestBase {
             hostId = "monitorHost",
             time = fakeTime,
             scheduler = schedulerProvider("monitor"),
-            stores = StoreManager(activationFactory)
+            storageEndpointManager = DirectStorageEndpointManager(StoreManager())
         )
         runBlocking {
             withTimeout(testTimeout) { block() }

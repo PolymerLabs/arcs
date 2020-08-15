@@ -1,6 +1,7 @@
 package arcs.core.entity
 
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.testutil.WriteBackForTesting
@@ -24,7 +25,7 @@ class SameHandleManagerTest : HandleManagerTestBase() {
             hostId = "testHost",
             time = fakeTime,
             scheduler = schedulerProvider("test"),
-            stores = StoreManager()
+            storageEndpointManager = DirectStorageEndpointManager(StoreManager())
         )
         writeHandleManager = readHandleManager
     }

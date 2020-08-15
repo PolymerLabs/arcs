@@ -14,7 +14,7 @@ import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ParticleState
 import arcs.core.host.SchedulerProvider
-import arcs.core.storage.StoreManager
+import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.util.TaggedLog
@@ -22,7 +22,7 @@ import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Particle
-import arcs.sdk.android.storage.ServiceStoreFactory
+import arcs.sdk.android.storage.AndroidStorageEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -159,19 +159,18 @@ class ShowcaseEnvironment(
         // Create a single scheduler provider for both the ArcHost as well as the Allocator.
         val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
 
-        // Ensure we're using the StorageService (via the TestConnectionFactory)
-        val activationFactory = ServiceStoreFactory(
-            context,
-            connectionFactory = TestConnectionFactory(context)
-        )
-
+        val storageEndpointManager =
+            AndroidStorageEndpointManager(
+                context,
+                EmptyCoroutineContext,
+                TestConnectionFactory(context)
+            )
         // Create our ArcHost, capturing the StoreManager so we can manually wait for idle
         // on it once the test is done.
-        val arcHostStoreManager = StoreManager(activationFactory)
         arcHost = ShowcaseHost(
             Dispatchers.Default,
             schedulerProvider,
-            arcHostStoreManager,
+            storageEndpointManager,
             *particleRegistrations
         )
 
@@ -183,14 +182,14 @@ class ShowcaseEnvironment(
             }
         )
 
-        return ShowcaseArcsComponents(dbManager, arcHostStoreManager, arcHost)
+        return ShowcaseArcsComponents(dbManager, storageEndpointManager, arcHost)
     }
 
     private suspend fun teardownArcs(components: ShowcaseArcsComponents) {
         // Stop all the arcs and shut down the arcHost.
         startedArcs.forEach { it.stop() }
         components.arcHost.shutdown()
-        components.arcHostStoreManager.reset()
+        components.storageEndpointManager.close()
 
         // Reset the Databases and close them.
         components.dbManager.resetAll()
@@ -199,7 +198,7 @@ class ShowcaseEnvironment(
 
     private data class ShowcaseArcsComponents(
         val dbManager: AndroidSqliteDatabaseManager,
-        val arcHostStoreManager: StoreManager,
+        val storageEndpointManager: StorageEndpointManager,
         val arcHost: ArcHost
     )
 }
@@ -211,12 +210,13 @@ class ShowcaseEnvironment(
 class ShowcaseHost(
     coroutineContext: CoroutineContext,
     schedulerProvider: SchedulerProvider,
-    override val stores: StoreManager,
+    storageEndpointManager: StorageEndpointManager,
     vararg particleRegistrations: ParticleRegistration
 ) : AbstractArcHost(
     coroutineContext = coroutineContext,
     updateArcHostContextCoroutineContext = coroutineContext,
     schedulerProvider = schedulerProvider,
+    storageEndpointManager = storageEndpointManager,
     initialParticles = *particleRegistrations
 ) {
     override val platformTime = JvmTime
