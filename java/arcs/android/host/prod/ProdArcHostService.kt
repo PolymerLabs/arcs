@@ -19,6 +19,7 @@ import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ProdHost
 import arcs.core.host.SchedulerProvider
+import arcs.core.storage.StorageEndpointManager
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.host.scanForParticles
 import kotlin.coroutines.CoroutineContext
@@ -39,6 +40,7 @@ abstract class ProdArcHostService : ArcHostService() {
         coroutineContext: CoroutineContext,
         arcSerializationCoroutineContext: CoroutineContext,
         schedulerProvider: SchedulerProvider,
+        storageEndpointManager: StorageEndpointManager,
         vararg particles: ParticleRegistration
     ) : AndroidHost(
         context = context,
@@ -46,6 +48,7 @@ abstract class ProdArcHostService : ArcHostService() {
         coroutineContext = coroutineContext,
         arcSerializationContext = arcSerializationCoroutineContext,
         schedulerProvider = schedulerProvider,
+        storageEndpointManager = storageEndpointManager,
         particles = *particles
     ), ProdHost
 
@@ -54,6 +57,8 @@ abstract class ProdArcHostService : ArcHostService() {
 
     /** This is the [CoroutineContext] used for arc state storage on the [AbstractArcHost]s. */
     abstract val arcSerializationCoroutineContext: CoroutineContext
+
+    abstract val storageEndpointManager: StorageEndpointManager
 
     /**
      * This is open for tests to override, but normally isn't necessary.
@@ -65,6 +70,7 @@ abstract class ProdArcHostService : ArcHostService() {
             coroutineContext = coroutineContext,
             arcSerializationCoroutineContext = arcSerializationCoroutineContext,
             schedulerProvider = JvmSchedulerProvider(scope.coroutineContext),
+            storageEndpointManager = storageEndpointManager,
             particles = *scanForParticles()
         )
     }

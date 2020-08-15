@@ -1,5 +1,7 @@
 package arcs.core.host
 
+import arcs.core.storage.DirectStorageEndpointManager
+import arcs.core.storage.StoreManager
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
@@ -21,6 +23,7 @@ class ParticleRegistrationTest {
         coroutineContext = Dispatchers.Default,
         updateArcHostContextCoroutineContext = Dispatchers.Default,
         schedulerProvider = schedulerProvider,
+        storageEndpointManager = DirectStorageEndpointManager(StoreManager()),
         initialParticles = *particles
     ), ProdHost {
         override val platformTime = JvmTime

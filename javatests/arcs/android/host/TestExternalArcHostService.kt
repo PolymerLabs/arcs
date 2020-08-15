@@ -11,9 +11,8 @@ import arcs.core.data.Capability.Shareable
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.TestingHost
-import arcs.core.storage.StoreManager
+import arcs.sdk.android.storage.AndroidStorageEndpointManager
 import arcs.sdk.android.storage.ResurrectionHelper
-import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.ConnectionFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,16 +48,15 @@ abstract class TestExternalArcHostService : Service() {
         context: Context,
         schedulerProvider: SchedulerProvider,
         vararg particles: ParticleRegistration
-    ) : TestingHost(schedulerProvider, *particles), ResurrectableHost {
-        @ExperimentalCoroutinesApi
-        override val stores = StoreManager(
-            activationFactory = ServiceStoreFactory(
-                context,
-                coroutineContext = Dispatchers.Default,
-                connectionFactory = testConnectionFactory
-            )
-        )
-
+    ) : TestingHost(
+        schedulerProvider,
+        AndroidStorageEndpointManager(
+            context,
+            Dispatchers.Default,
+            testConnectionFactory
+        ),
+        *particles
+    ), ResurrectableHost {
         override val resurrectionHelper: ResurrectionHelper =
             ResurrectionHelper(context, ::onResurrected)
 

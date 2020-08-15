@@ -11,6 +11,7 @@
 package arcs.core.host
 
 import arcs.core.allocator.Allocator
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
@@ -60,6 +61,7 @@ class LifecycleTest {
         scheduler = schedulerProvider("test")
         testHost = TestingHost(
             schedulerProvider,
+            DirectStorageEndpointManager(StoreManager()),
             ::SingleReadHandleParticle.toRegistration(),
             ::SingleWriteHandleParticle.toRegistration(),
             ::MultiHandleParticle.toRegistration(),
@@ -72,10 +74,11 @@ class LifecycleTest {
         )
         hostRegistry = ExplicitHostRegistry().also { it.registerHost(testHost) }
         storeManager = StoreManager()
+        val storageEndpointManager = DirectStorageEndpointManager(storeManager)
         entityHandleManager = EntityHandleManager(
             time = FakeTime(),
             scheduler = scheduler,
-            stores = storeManager
+            storageEndpointManager = storageEndpointManager
         )
         allocator = Allocator.create(hostRegistry, entityHandleManager)
         testHost.setup()

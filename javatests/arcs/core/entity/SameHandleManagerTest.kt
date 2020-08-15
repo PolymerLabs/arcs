@@ -1,6 +1,7 @@
 package arcs.core.entity
 
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.testutil.WriteBackForTesting
@@ -19,12 +20,13 @@ class SameHandleManagerTest : HandleManagerTestBase() {
         super.setUp()
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+        storageEndpointManager = DirectStorageEndpointManager(StoreManager())
         readHandleManager = EntityHandleManager(
             arcId = "testArc",
             hostId = "testHost",
             time = fakeTime,
             scheduler = schedulerProvider("test"),
-            stores = StoreManager()
+            storageEndpointManager = storageEndpointManager
         )
         writeHandleManager = readHandleManager
     }

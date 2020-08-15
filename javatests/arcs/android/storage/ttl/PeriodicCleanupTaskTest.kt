@@ -17,6 +17,8 @@ import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.DirectStorageEndpointManager
+import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -99,7 +101,8 @@ class PeriodicCleanupTaskTest {
     private suspend fun createCollectionHandle() =
         EntityHandleManager(
             time = fakeTime,
-            scheduler = JvmSchedulerProvider(EmptyCoroutineContext)("test")
+            scheduler = JvmSchedulerProvider(EmptyCoroutineContext)("test"),
+            storageEndpointManager = DirectStorageEndpointManager(StoreManager())
         ).createHandle(
             HandleSpec(
                 "name",

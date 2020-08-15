@@ -7,10 +7,10 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.entity.HandleManagerTestBase
 import arcs.core.host.EntityHandleManager
-import arcs.core.storage.StoreManager
+import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.jvm.host.JvmSchedulerProvider
-import arcs.sdk.android.storage.ServiceStoreFactory
+import arcs.sdk.android.storage.AndroidStorageEndpointManager
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.runBlocking
@@ -23,8 +23,8 @@ import org.junit.runner.RunWith
 class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase() {
     lateinit var app: Application
 
-    lateinit var readStores: StoreManager
-    lateinit var writeStores: StoreManager
+    lateinit var readStores: StorageEndpointManager
+    lateinit var writeStores: StorageEndpointManager
 
     @Before
     override fun setUp() {
@@ -33,26 +33,33 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
         val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
         DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
         app = ApplicationProvider.getApplicationContext()
-        activationFactory = ServiceStoreFactory(
-            app,
-            connectionFactory = TestConnectionFactory(app)
-        )
+        val connectionFactory = TestConnectionFactory(app)
         schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
-        readStores = StoreManager(activationFactory)
+        readStores = AndroidStorageEndpointManager(
+            app,
+            EmptyCoroutineContext,
+            connectionFactory
+        )
+        storageEndpointManager = readStores
+
         readHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("reader"),
-            stores = readStores
+            storageEndpointManager = readStores
         )
-        writeStores = StoreManager(activationFactory)
+        writeStores = AndroidStorageEndpointManager(
+            app,
+            EmptyCoroutineContext,
+            connectionFactory
+        )
         writeHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("writer"),
-            stores = writeStores
+            storageEndpointManager = writeStores
         )
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
@@ -62,8 +69,8 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
     override fun tearDown() {
         super.tearDown()
         runBlocking {
-            readStores.reset()
-            writeStores.reset()
+            readStores.close()
+            writeStores.close()
         }
     }
 }

@@ -11,6 +11,8 @@
 package arcs.core.host
 
 import arcs.core.common.ArcId
+import arcs.core.crdt.CrdtData
+import arcs.core.crdt.CrdtOperationAtTime
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Shareable
 import arcs.core.data.EntitySchemaProviderType
@@ -21,8 +23,13 @@ import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
+import arcs.core.storage.DirectStorageEndpointManager
+import arcs.core.storage.StorageEndpoint
+import arcs.core.storage.StorageEndpointManager
+import arcs.core.storage.StorageEndpointProvider
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
+import arcs.core.storage.StoreOptions
 import arcs.core.util.LruCacheMap
 import arcs.core.util.Scheduler
 import arcs.core.util.TaggedLog
@@ -73,8 +80,20 @@ abstract class AbstractArcHost(
      */
     updateArcHostContextCoroutineContext: CoroutineContext,
     protected val schedulerProvider: SchedulerProvider,
+    private val storageEndpointManager: StorageEndpointManager? = null,
     vararg initialParticles: ParticleRegistration
 ) : ArcHost {
+    @Deprecated(
+        message = "Use the primary constructor, and instead of overridindg stores, provide a" +
+                  "storageEndpointManager",
+        replaceWith = ReplaceWith("AbstractArcHost(" +
+                                  "  coroutineContext," +
+                                  "  updateArcHostContextCoroutineContext," +
+                                  "  schedulerProvider," +
+                                  "  storageEndpointManager" +
+                                  ")")
+    )
+
     private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
@@ -627,9 +646,13 @@ abstract class AbstractArcHost(
         hostId,
         platformTime,
         schedulerProvider(arcId),
-        stores
+        storageEndpointManager ?: legacyStorageEndpointManager
     )
 
+    // Temporary API transition helper.
+    private val legacyStorageEndpointManager by lazy {
+        DirectStorageEndpointManager(stores)
+    }
     /**
      * The map of [Store] objects that this [ArcHost] will use. By default, it uses a shared
      * singleton defined statically by this package.

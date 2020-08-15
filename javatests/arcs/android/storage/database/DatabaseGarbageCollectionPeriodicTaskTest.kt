@@ -14,6 +14,8 @@ import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.DirectStorageEndpointManager
+import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -89,7 +91,8 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
     private suspend fun createCollectionHandle() =
         EntityHandleManager(
             time = fakeTime,
-            scheduler = schedulerProvider("test")
+            scheduler = schedulerProvider("test"),
+            storageEndpointManager = DirectStorageEndpointManager(StoreManager())
         ).createHandle(
             HandleSpec(
                 "name",

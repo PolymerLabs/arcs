@@ -24,11 +24,9 @@ import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
-import arcs.core.storage.ActivationFactory
-import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.Reference as StorageReference
+import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.testutil.waitUntilSet
@@ -45,6 +43,7 @@ import arcs.core.testutil.handles.dispatchRemove
 import arcs.core.testutil.handles.dispatchSize
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.ArcsStrictMode
+import arcs.core.util.Log
 import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
@@ -69,7 +68,7 @@ import org.junit.Test
 @Suppress("EXPERIMENTAL_API_USAGE", "UNCHECKED_CAST")
 open class HandleManagerTestBase {
     @get:Rule
-    val log = LogRule()
+    val log = LogRule(Log.Level.Info)
 
     init {
         SchemaRegistry.register(Person.SCHEMA)
@@ -116,12 +115,13 @@ open class HandleManagerTestBase {
         storageKey = hatCollectionRefKey
     )
 
-    var activationFactory: ActivationFactory = DefaultActivationFactory
     lateinit var schedulerProvider: JvmSchedulerProvider
     lateinit var readHandleManager: EntityHandleManager
     lateinit var writeHandleManager: EntityHandleManager
     lateinit var monitorHandleManager: EntityHandleManager
     var testTimeout: Long = 10000
+
+    lateinit var storageEndpointManager: StorageEndpointManager
 
     open var testRunner = { block: suspend CoroutineScope.() -> Unit ->
         monitorHandleManager = EntityHandleManager(
@@ -129,7 +129,7 @@ open class HandleManagerTestBase {
             hostId = "monitorHost",
             time = fakeTime,
             scheduler = schedulerProvider("monitor"),
-            stores = StoreManager(activationFactory)
+            storageEndpointManager = storageEndpointManager
         )
         runBlocking {
             withTimeout(testTimeout) { block() }

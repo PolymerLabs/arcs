@@ -35,6 +35,7 @@ import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StoreManager
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
@@ -120,8 +121,7 @@ class TestActivity : AppCompatActivity() {
         handleManager = EntityHandleManager(
             time = JvmTime,
             scheduler = schedulerProvider("sysHealthTestActivity"),
-            stores = stores
-
+            storageEndpointManager = DirectStorageEndpointManager(stores)
         )
 
         resultTextView = findViewById(R.id.result)

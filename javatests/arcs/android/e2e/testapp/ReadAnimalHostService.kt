@@ -20,6 +20,8 @@ import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.toRegistration
+import arcs.core.storage.DirectStorageEndpointManager
+import arcs.core.storage.StoreManager
 import arcs.jvm.host.JvmSchedulerProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -54,6 +56,7 @@ class ReadAnimalHostService : ArcHostService() {
         coroutineContext = Dispatchers.Default,
         arcSerializationContext = Dispatchers.Default,
         schedulerProvider = schedulerProvider,
+        storageEndpointManager = DirectStorageEndpointManager(StoreManager()),
         particles = *initialParticles
     )
 
