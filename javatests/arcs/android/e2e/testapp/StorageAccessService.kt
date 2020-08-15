@@ -8,6 +8,7 @@ import arcs.core.data.HandleMode
 import arcs.core.data.SingletonType
 import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StoreManager
 import arcs.core.util.Scheduler
 import arcs.jvm.util.JvmTime
@@ -48,7 +49,7 @@ class StorageAccessService : LifecycleService() {
             val handleManager = EntityHandleManager(
                 time = JvmTime,
                 scheduler = Scheduler(coroutineContext),
-                stores = stores
+                storageEndpointManager = DirectStorageEndpointManager(stores)
             )
 
             @Suppress("UNCHECKED_CAST")
