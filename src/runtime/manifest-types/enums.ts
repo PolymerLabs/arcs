@@ -12,3 +12,4 @@
 // TODO: convert to actual enums so that they can be iterated over.
 
 export type Direction = 'reads' | 'writes' | 'reads writes' | 'hosts' | '`consumes' | '`provides' | 'any';
+export type SlotDirection = 'provides' | 'consumes';

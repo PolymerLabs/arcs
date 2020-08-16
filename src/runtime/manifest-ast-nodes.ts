@@ -9,7 +9,7 @@
  */
 import {ClaimType} from './claim.js';
 import {CheckType} from './check.js';
-import {Direction as DirectionEnum} from './manifest-types/enums.js';
+import {Direction as DirectionEnum, SlotDirection as SlotDirectionEnum} from './manifest-types/enums.js';
 
 /**
  * Complete set of tokens used by `manifest-parser.pegjs`. To use this you
@@ -969,7 +969,7 @@ export function preSlandlesDirectionToDirection(direction: Direction, isOptional
 }
 
 export type Direction = DirectionEnum;
-export type SlotDirection = 'provides' | 'consumes';
+export type SlotDirection = SlotDirectionEnum;
 export type Fate = 'use' | 'create' | 'map' | 'copy' | 'join' | '?' | '`slot';
 
 export type ParticleHandleConnectionType = TypeVariable|CollectionType|

@@ -11,7 +11,7 @@
 import {assert} from '../../platform/chai-web.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../manifest.js';
-import {Modality} from '../modality.js';
+import {Modality} from '../manifest-types/modality.js';
 import {Capabilities, Ttl, Persistence, Queryable} from '../capabilities.js';
 import {Entity} from '../entity.js';
 import {Recipe} from '../recipe/recipe.js';

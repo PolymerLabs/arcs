@@ -13,7 +13,7 @@ import {Strategizer, Strategy, StrategyParams} from '../planning/strategizer.js'
 import {assert} from '../platform/assert-web.js';
 import {Arc} from '../runtime/arc.js';
 import {Manifest} from '../runtime/manifest.js';
-import {Modality} from '../runtime/modality.js';
+import {Modality} from '../runtime/manifest-types/modality.js';
 import {ProvideSlotConnectionSpec, ConsumeSlotConnectionSpec} from '../runtime/manifest-types/particle-spec.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
 import {Handle} from '../runtime/recipe/handle.js';

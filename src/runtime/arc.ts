@@ -19,7 +19,7 @@ import {CapabilitiesResolver} from './capabilities-resolver.js';
 import {Runnable} from './hot.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
-import {Modality} from './modality.js';
+import {Modality} from './manifest-types/modality.js';
 import {ParticleExecutionHost} from './particle-execution-host.js';
 import {ParticleSpec} from './manifest-types/particle-spec.js';
 import {Handle} from './recipe/handle.js';
