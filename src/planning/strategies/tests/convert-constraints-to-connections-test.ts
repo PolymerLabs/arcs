@@ -11,7 +11,7 @@ import {assert} from '../../../platform/chai-web.js';
 import {Arc} from '../../../runtime/arc.js';
 import {Loader} from '../../../platform/loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {Modality} from '../../../runtime/modality.js';
+import {Modality} from '../../../runtime/manifest-types/modality.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
 import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
 import {InstanceEndPoint} from '../../../runtime/recipe/connection-constraint.js';

@@ -16,12 +16,11 @@ import {CRDTCount} from './crdt/crdt-count.js';
 import {CRDTCollection} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Schema} from './schema.js';
-import * as AstNode from './manifest-ast-nodes.js';
 import {ParticleSpec} from './manifest-types/particle-spec.js';
 import {Refinement} from './refiner.js';
 import {AnnotationRef} from './recipe/annotation.js';
 import {ManifestStringBuilder} from './manifest-string-builder.js';
-import {Direction} from './manifest-types/enums.js';
+import {Direction, SlotDirection} from './manifest-types/enums.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -900,7 +899,7 @@ export interface HandleConnection {
 // TODO(lindner) only tests use optional props
 export interface Slot {
   name?: string|TypeVariable;
-  direction?: AstNode.SlotDirection;
+  direction?: SlotDirection;
   isRequired?: boolean;
   isSet?: boolean;
 }
@@ -1539,12 +1538,12 @@ export class TypeVariableInfo {
 export interface HandleConnectionLiteral {
   type?: TypeLiteral;
   name?: string|TypeLiteral;
-  direction?: AstNode.Direction;
+  direction?: Direction;
 }
 
 export interface SlotLiteral {
   name?: string|TypeLiteral;
-  direction?: AstNode.SlotDirection;
+  direction?: SlotDirection;
   isRequired?: boolean;
   isSet?: boolean;
 }
@@ -1560,7 +1559,7 @@ export interface InterfaceInfoLiteral {
   slots: SlotLiteral[];
 }
 
-export type MatchResult = {var: TypeVariable, value: Type, direction: AstNode.Direction};
+export type MatchResult = {var: TypeVariable, value: Type, direction: Direction};
 
 type Maker = (name: string, handleConnections: HandleConnection[], slots: Slot[]) => InterfaceInfo;
 type HandleConnectionMatcher = (interfaceHandleConnection: HandleConnection, particleHandleConnection: HandleConnection) => boolean|MatchResult[];

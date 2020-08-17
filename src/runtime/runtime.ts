@@ -25,7 +25,7 @@ import {pecIndustry} from '../platform/pec-industry.js';
 import {logsFactory} from '../platform/logs-factory.js';
 import {SystemTrace} from '../tracelib/systrace.js';
 import {workerPool} from './worker-pool.js';
-import {Modality} from './modality.js';
+import {Modality} from './manifest-types/modality.js';
 import {StorageKey} from './storage/storage-key.js';
 import {StorageKeyFactory} from './storage-key-factory.js';
 import {RamDiskStorageDriverProvider} from './storage/drivers/ramdisk.js';
