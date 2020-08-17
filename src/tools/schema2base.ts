@@ -13,7 +13,7 @@ import minimist from 'minimist';
 import {Manifest} from '../runtime/manifest.js';
 import {Runtime} from '../runtime/runtime.js';
 import {SchemaGraph, SchemaNode} from './schema2graph.js';
-import {ParticleSpec} from '../runtime/manifest-types/particle-spec.js';
+import {ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 
 Runtime.init('../..');
 

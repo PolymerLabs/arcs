@@ -9,12 +9,12 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {ParticleSpec, HandleConnectionSpec} from '../manifest-types/particle-spec.js';
+import {ParticleSpec, HandleConnectionSpec} from '../arcs-types/particle-spec.js';
 import {InterfaceType} from '../type.js';
 
 import {connectionMatchesHandleDirection} from './direction-util.js';
 import {HandleConnection} from './handle-connection.js';
-import {Direction} from '../manifest-types/enums.js';
+import {Direction} from '../manifest-ast-types/enums.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {Recipe, RecipeComponent} from './recipe.js';

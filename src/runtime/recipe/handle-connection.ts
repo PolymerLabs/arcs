@@ -9,9 +9,9 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {HandleConnectionSpec} from '../manifest-types/particle-spec.js';
+import {HandleConnectionSpec} from '../arcs-types/particle-spec.js';
 import {Type} from '../type.js';
-import {RELAXATION_KEYWORD} from '../manifest-ast-nodes.js';
+import {RELAXATION_KEYWORD} from '../manifest-ast-types/manifest-ast-nodes.js';
 
 import {acceptedDirections} from './direction-util.js';
 import {Handle} from './handle.js';
@@ -21,7 +21,7 @@ import {CloneMap, IsValidOptions, Recipe, RecipeComponent, ToStringOptions, Vari
 import {TypeChecker} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, compareBools, Comparable} from './comparable.js';
 
-import {Direction} from '../manifest-types/enums.js';
+import {Direction} from '../manifest-ast-types/enums.js';
 
 export class HandleConnection implements Comparable<HandleConnection> {
   private readonly _recipe: Recipe;

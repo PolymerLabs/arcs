@@ -11,7 +11,7 @@
 
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {Modality} from '../../../runtime/manifest-types/modality.js';
+import {Modality} from '../../../runtime/arcs-types/modality.js';
 import {Planner} from '../../planner.js';
 import {MatchParticleByVerb} from '../../strategies/match-particle-by-verb.js';
 

@@ -10,8 +10,8 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Modality} from './modality.js';
-import {ClaimStatement, CheckStatement} from '../manifest-ast-nodes.js';
-import {Direction, SlotDirection} from './enums.js';
+import {ClaimStatement, CheckStatement} from '../manifest-ast-types/manifest-ast-nodes.js';
+import {Direction, SlotDirection} from '../manifest-ast-types/enums.js';
 import {TypeChecker} from '../recipe/type-checker.js';
 import {Schema} from '../schema.js';
 import {InterfaceType, SlotType, Type, TypeLiteral, TypeVariableInfo} from '../type.js';
@@ -19,7 +19,7 @@ import {Literal} from '../hot.js';
 import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './check.js';
 import {Claim, createClaim} from './claim.js';
 import {ManifestStringBuilder} from '../manifest-string-builder.js';
-import * as AstNode from '../manifest-ast-nodes.js';
+import * as AstNode from '../manifest-ast-types/manifest-ast-nodes.js';
 import {AnnotationRef} from '../recipe/annotation.js';
 import {resolveFieldPathType} from '../field-path.js';
 

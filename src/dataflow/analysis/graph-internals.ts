@@ -18,12 +18,12 @@
  * of Node/Edge like ParticleNode, etc.
  */
 
-import {ClaimExpression} from '../../runtime/manifest-types/claim.js';
-import {Check} from '../../runtime/manifest-types/check.js';
+import {ClaimExpression} from '../../runtime/arcs-types/claim.js';
+import {Check} from '../../runtime/arcs-types/check.js';
 import {DeepSet} from './deep-set.js';
 import {OrderedSet} from './ordered-set.js';
 import {assert} from '../../platform/assert-web.js';
-import {ClaimType} from '../../runtime/manifest-types/enums.js';
+import {ClaimType} from '../../runtime/manifest-ast-types/enums.js';
 
 /**
  * Represents the set of implicit and explicit claims that flow along a path in

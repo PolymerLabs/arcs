@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Op, Primitive} from './manifest-ast-nodes.js';
+import {Op, Primitive} from './manifest-ast-types/manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
 import {Schema} from './schema.js';
 import {RefinementExpressionVisitor, BinaryExpression, UnaryExpression, FieldNamePrimitive, QueryArgumentPrimitive, BuiltIn, NumberPrimitive, DiscretePrimitive, TextPrimitive} from './refiner.js';

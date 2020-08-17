@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Direction, SlotDirection, ClaimType, CheckType} from './manifest-types/enums.js';
+import {Direction, SlotDirection, ClaimType, CheckType} from './enums.js';
 export {Direction, SlotDirection, ClaimType, CheckType};
 /**
  * Complete set of tokens used by `manifest-parser.pegjs`. To use this you

@@ -9,7 +9,7 @@
  */
 
 import {NumberRange, NumberSegment, Refinement, BinaryExpression, NumberMultinomial, NumberFraction, NumberTerm, BigIntTerm, BigIntRange, BigIntFraction, BigIntMultinomial, BigIntSegment, Normalizer} from '../refiner.js';
-import {Primitive, viewAst} from '../manifest-ast-nodes.js';
+import {Primitive, viewAst} from '../manifest-ast-types/manifest-ast-nodes.js';
 import {parse} from '../../gen/runtime/manifest-parser.js';
 import {assert} from '../../platform/chai-web.js';
 import {Manifest} from '../manifest.js';

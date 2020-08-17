@@ -14,7 +14,7 @@ import {PECInnerPort} from './api-channel.js';
 import {Id, IdGenerator} from './id.js';
 import {Runnable} from './hot.js';
 import {Loader} from '../platform/loader.js';
-import {ParticleSpec} from './manifest-types/particle-spec.js';
+import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {Particle, Capabilities} from './particle.js';
 import {StorageProxy} from './storage/storage-proxy.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';

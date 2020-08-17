@@ -9,7 +9,7 @@
  */
 import {Schema} from './schema.js';
 import {InterfaceInfo, Type, EntityType, TupleType, TypeVariable} from './type.js';
-import {SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue} from './manifest-ast-nodes.js';
+import {SchemaPrimitiveTypeValue, KotlinPrimitiveTypeValue} from './manifest-ast-types/manifest-ast-nodes.js';
 import {Dictionary} from './hot.js';
 
 export type FieldPathType = Type | SchemaPrimitiveTypeValue | KotlinPrimitiveTypeValue;
