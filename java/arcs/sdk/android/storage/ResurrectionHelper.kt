@@ -71,7 +71,7 @@ class ResurrectionHelper(
             ResurrectionRequest.EXTRA_RESURRECT_NOTIFIER
         ) ?: return
 
-        onResurrected(targetId, notifiers.map(StorageKeyParser::parse))
+        onResurrected(targetId, notifiers.map(StorageKeyParser.Companion::parse))
     }
 
     /**

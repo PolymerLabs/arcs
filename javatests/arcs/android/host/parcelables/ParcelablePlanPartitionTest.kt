@@ -21,8 +21,10 @@ import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.keys.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -35,6 +37,11 @@ class ParcelablePlanPartitionTest {
         SchemaFields(mapOf("name" to FieldType.Text), emptyMap()),
         "42"
     )
+
+    @Before
+    fun setup() {
+        StorageKeyParser.reset(VolatileStorageKey)
+    }
 
     @Test
     fun PlanPartition_parcelableRoundTrip_works() {

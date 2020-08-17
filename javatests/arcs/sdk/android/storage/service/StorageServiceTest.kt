@@ -30,6 +30,7 @@ import arcs.core.crdt.CrdtCount
 import arcs.core.data.CountType
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.sdk.android.storage.ResurrectionHelper
@@ -54,6 +55,7 @@ class StorageServiceTest {
 
     @Before
     fun setUp() {
+        StorageKeyParser.reset(RamDiskStorageKey)
         app = ApplicationProvider.getApplicationContext()
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
         workManager = WorkManager.getInstance(app)

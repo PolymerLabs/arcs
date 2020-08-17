@@ -12,10 +12,6 @@
 package arcs.sdk.storage
 
 import arcs.core.storage.StorageKeyParser
-import arcs.core.storage.keys.DatabaseStorageKey
-import arcs.core.storage.keys.RamDiskStorageKey
-import arcs.core.storage.keys.VolatileStorageKey
-import arcs.core.storage.referencemode.ReferenceModeStorageKey
 
 /**
  * Represents a location in Arcs' storage system where an [Entity], [Collection], [Singleton], or a
@@ -26,13 +22,4 @@ inline class StorageKey(val raw: String) {
     /** Converts this SDK [StorageKey] into a core [arcs.core.storage.StorageKey]. */
     /* internal */
     fun toCoreStorageKey(): arcs.core.storage.StorageKey = StorageKeyParser.parse(raw)
-
-    companion object {
-        init {
-            VolatileStorageKey.registerParser()
-            RamDiskStorageKey.registerParser()
-            DatabaseStorageKey.registerParser()
-            ReferenceModeStorageKey.registerParser()
-        }
-    }
 }
