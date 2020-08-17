@@ -1,0 +1,22 @@
+meta
+  namespace: arcs.showcase.imports.schemas
+
+import 'common.arcs'
+
+// Containers group `Tea` headed to the same destination
+schema Container
+  id: Text
+  contents: [inline Tea]
+  destination: inline Place
+
+schema Boat
+  id: Text
+  name: Text
+  currentLocation: inline Place
+  nextLocations: [inline Place]
+  containers: [inline Container]
+  status: Text
+
+
+
+
