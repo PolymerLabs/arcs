@@ -41,78 +41,86 @@ import arcs.core.data.Plan.*
 import arcs.core.storage.StorageKeyParser
 import arcs.core.entity.toPrimitiveValue
 
-val Ingest_Handle0 = Handle(
-    StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data"),
-    arcs.core.data.SingletonType(
-        arcs.core.data.EntityType(
-            arcs.core.data.Schema(
-                setOf(arcs.core.data.SchemaName("Thing")),
-                arcs.core.data.SchemaFields(
-                    singletons = mapOf("num" to arcs.core.data.FieldType.Number),
-                    collections = emptyMap()
-                ),
-                "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
-                refinementExpression = true.asExpr(),
-                queryExpression = true.asExpr()
-            )
-        )
-    ),
-    listOf(Annotation("persistent", emptyMap()))
-)
-val IngestPlan = Plan(
-    listOf(
-        Particle(
-            "A",
-            "",
-            mapOf(
-                "data" to HandleConnection(
-                    Ingest_Handle0,
-                    HandleMode.Write,
-                    arcs.core.data.SingletonType(arcs.core.data.EntityType(A_Data.SCHEMA)),
-                    listOf(Annotation("persistent", emptyMap()))
+val Ingest_Handle0 by lazy {
+    Handle(
+        StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data"),
+        arcs.core.data.SingletonType(
+            arcs.core.data.EntityType(
+                arcs.core.data.Schema(
+                    setOf(arcs.core.data.SchemaName("Thing")),
+                    arcs.core.data.SchemaFields(
+                        singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                        collections = emptyMap()
+                    ),
+                    "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+                    refinementExpression = true.asExpr(),
+                    queryExpression = true.asExpr()
                 )
             )
-        )
-    ),
-    listOf(Ingest_Handle0),
-    listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str("ingestion"))))
-)
-val Retrieve_Handle0 = Handle(
-    StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data"),
-    arcs.core.data.SingletonType(
-        arcs.core.data.EntityType(
-            arcs.core.data.Schema(
-                setOf(arcs.core.data.SchemaName("Thing")),
-                arcs.core.data.SchemaFields(
-                    singletons = mapOf("num" to arcs.core.data.FieldType.Number),
-                    collections = emptyMap()
-                ),
-                "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
-                refinementExpression = true.asExpr(),
-                queryExpression = true.asExpr()
-            )
-        )
-    ),
-    emptyList()
-)
-val RetrievePlan = Plan(
-    listOf(
-        Particle(
-            "B",
-            "",
-            mapOf(
-                "data" to HandleConnection(
-                    Retrieve_Handle0,
-                    HandleMode.Read,
-                    arcs.core.data.SingletonType(arcs.core.data.EntityType(B_Data.SCHEMA)),
-                    emptyList()
+        ),
+        listOf(Annotation("persistent", emptyMap()))
+    )
+}
+val IngestPlan by lazy {
+    Plan(
+        listOf(
+            Particle(
+                "A",
+                "",
+                mapOf(
+                    "data" to HandleConnection(
+                        Ingest_Handle0,
+                        HandleMode.Write,
+                        arcs.core.data.SingletonType(arcs.core.data.EntityType(A_Data.SCHEMA)),
+                        listOf(Annotation("persistent", emptyMap()))
+                    )
                 )
             )
-        )
-    ),
-    listOf(Retrieve_Handle0),
-    emptyList()
-)
+        ),
+        listOf(Ingest_Handle0),
+        listOf(Annotation("arcId", mapOf("id" to AnnotationParam.Str("ingestion"))))
+    )
+}
+val Retrieve_Handle0 by lazy {
+    Handle(
+        StorageKeyParser.parse("db://66ab3cd8dbc1462e9bcfba539dfa5c852558ad64@arcs/!:ingestion/handle/data"),
+        arcs.core.data.SingletonType(
+            arcs.core.data.EntityType(
+                arcs.core.data.Schema(
+                    setOf(arcs.core.data.SchemaName("Thing")),
+                    arcs.core.data.SchemaFields(
+                        singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                        collections = emptyMap()
+                    ),
+                    "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+                    refinementExpression = true.asExpr(),
+                    queryExpression = true.asExpr()
+                )
+            )
+        ),
+        emptyList()
+    )
+}
+val RetrievePlan by lazy {
+    Plan(
+        listOf(
+            Particle(
+                "B",
+                "",
+                mapOf(
+                    "data" to HandleConnection(
+                        Retrieve_Handle0,
+                        HandleMode.Read,
+                        arcs.core.data.SingletonType(arcs.core.data.EntityType(B_Data.SCHEMA)),
+                        emptyList()
+                    )
+                )
+            )
+        ),
+        listOf(Retrieve_Handle0),
+        emptyList()
+    )
+}
 
 -----[require]-----
 storageKeys.Ingest.Handle0 == storageKeys.Retrieve.Handle0
@@ -150,54 +158,58 @@ import arcs.core.data.Plan.*
 import arcs.core.storage.StorageKeyParser
 import arcs.core.entity.toPrimitiveValue
 
-val R_Handle0 = Handle(
-    StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
-    arcs.core.data.SingletonType(
-        arcs.core.data.EntityType(
-            arcs.core.data.Schema(
-                setOf(arcs.core.data.SchemaName("Thing")),
-                arcs.core.data.SchemaFields(
-                    singletons = mapOf("num" to arcs.core.data.FieldType.Number),
-                    collections = emptyMap()
-                ),
-                "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
-                refinementExpression = true.asExpr(),
-                queryExpression = true.asExpr()
-            )
-        )
-    ),
-    emptyList()
-)
-val RPlan = Plan(
-    listOf(
-        Particle(
-            "A",
-            "",
-            mapOf(
-                "data" to HandleConnection(
-                    R_Handle0,
-                    HandleMode.Write,
-                    arcs.core.data.SingletonType(arcs.core.data.EntityType(A_Data.SCHEMA)),
-                    emptyList()
+val R_Handle0 by lazy {
+    Handle(
+        StorageKeyParser.parse("create://67835270998a62139f8b366f1cb545fb9b72a90b"),
+        arcs.core.data.SingletonType(
+            arcs.core.data.EntityType(
+                arcs.core.data.Schema(
+                    setOf(arcs.core.data.SchemaName("Thing")),
+                    arcs.core.data.SchemaFields(
+                        singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                        collections = emptyMap()
+                    ),
+                    "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+                    refinementExpression = true.asExpr(),
+                    queryExpression = true.asExpr()
                 )
             )
         ),
-        Particle(
-            "B",
-            "",
-            mapOf(
-                "data" to HandleConnection(
-                    R_Handle0,
-                    HandleMode.Read,
-                    arcs.core.data.SingletonType(arcs.core.data.EntityType(B_Data.SCHEMA)),
-                    emptyList()
+        emptyList()
+    )
+}
+val RPlan by lazy {
+    Plan(
+        listOf(
+            Particle(
+                "A",
+                "",
+                mapOf(
+                    "data" to HandleConnection(
+                        R_Handle0,
+                        HandleMode.Write,
+                        arcs.core.data.SingletonType(arcs.core.data.EntityType(A_Data.SCHEMA)),
+                        emptyList()
+                    )
+                )
+            ),
+            Particle(
+                "B",
+                "",
+                mapOf(
+                    "data" to HandleConnection(
+                        R_Handle0,
+                        HandleMode.Read,
+                        arcs.core.data.SingletonType(arcs.core.data.EntityType(B_Data.SCHEMA)),
+                        emptyList()
+                    )
                 )
             )
-        )
-    ),
-    listOf(R_Handle0),
-    emptyList()
-)
+        ),
+        listOf(R_Handle0),
+        emptyList()
+    )
+}
 
 -----[require]-----
 handleForParticle.A.data == handleForParticle.B.data
@@ -244,96 +256,102 @@ import arcs.core.data.Plan.*
 import arcs.core.storage.StorageKeyParser
 import arcs.core.entity.toPrimitiveValue
 
-val R_Handle0 = Handle(
-    StorageKeyParser.parse("create://id-2"),
-    arcs.core.data.SingletonType(
-        arcs.core.data.EntityType(
-            arcs.core.data.Schema(
-                setOf(arcs.core.data.SchemaName("Thing")),
-                arcs.core.data.SchemaFields(
-                    singletons = mapOf("num" to arcs.core.data.FieldType.Number),
-                    collections = emptyMap()
-                ),
-                "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
-                refinementExpression = true.asExpr(),
-                queryExpression = true.asExpr()
-            )
-        )
-    ),
-    listOf(Annotation("persistent", emptyMap()))
-)
-val R_Handle1 = Handle(
-    StorageKeyParser.parse("create://id-1"),
-    arcs.core.data.SingletonType(
-        arcs.core.data.EntityType(
-            arcs.core.data.Schema(
-                setOf(arcs.core.data.SchemaName("Thing")),
-                arcs.core.data.SchemaFields(
-                    singletons = mapOf("num" to arcs.core.data.FieldType.Number),
-                    collections = emptyMap()
-                ),
-                "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
-                refinementExpression = true.asExpr(),
-                queryExpression = true.asExpr()
-            )
-        )
-    ),
-    listOf(Annotation("persistent", emptyMap()))
-)
-val RPlan = Plan(
-    listOf(
-        Particle(
-            "A",
-            "particle.A",
-            mapOf(
-                "data" to HandleConnection(
-                    R_Handle0,
-                    HandleMode.Write,
-                    arcs.core.data.SingletonType(arcs.core.data.EntityType(A_Data.SCHEMA)),
-                    listOf(Annotation("persistent", emptyMap()))
+val R_Handle0 by lazy {
+    Handle(
+        StorageKeyParser.parse("create://id-2"),
+        arcs.core.data.SingletonType(
+            arcs.core.data.EntityType(
+                arcs.core.data.Schema(
+                    setOf(arcs.core.data.SchemaName("Thing")),
+                    arcs.core.data.SchemaFields(
+                        singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                        collections = emptyMap()
+                    ),
+                    "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+                    refinementExpression = true.asExpr(),
+                    queryExpression = true.asExpr()
                 )
             )
         ),
-        Particle(
-            "B",
-            "particle.B",
-            mapOf(
-                "data" to HandleConnection(
-                    R_Handle0,
-                    HandleMode.Read,
-                    arcs.core.data.SingletonType(arcs.core.data.EntityType(B_Data.SCHEMA)),
-                    listOf(Annotation("persistent", emptyMap()))
+        listOf(Annotation("persistent", emptyMap()))
+    )
+}
+val R_Handle1 by lazy {
+    Handle(
+        StorageKeyParser.parse("create://id-1"),
+        arcs.core.data.SingletonType(
+            arcs.core.data.EntityType(
+                arcs.core.data.Schema(
+                    setOf(arcs.core.data.SchemaName("Thing")),
+                    arcs.core.data.SchemaFields(
+                        singletons = mapOf("num" to arcs.core.data.FieldType.Number),
+                        collections = emptyMap()
+                    ),
+                    "66ab3cd8dbc1462e9bcfba539dfa5c852558ad64",
+                    refinementExpression = true.asExpr(),
+                    queryExpression = true.asExpr()
                 )
             )
         ),
-        Particle(
-            "C",
-            "particle.C",
-            mapOf(
-                "data" to HandleConnection(
-                    R_Handle1,
-                    HandleMode.Write,
-                    arcs.core.data.SingletonType(arcs.core.data.EntityType(C_Data.SCHEMA)),
-                    listOf(Annotation("persistent", emptyMap()))
+        listOf(Annotation("persistent", emptyMap()))
+    )
+}
+val RPlan by lazy {
+    Plan(
+        listOf(
+            Particle(
+                "A",
+                "particle.A",
+                mapOf(
+                    "data" to HandleConnection(
+                        R_Handle0,
+                        HandleMode.Write,
+                        arcs.core.data.SingletonType(arcs.core.data.EntityType(A_Data.SCHEMA)),
+                        listOf(Annotation("persistent", emptyMap()))
+                    )
+                )
+            ),
+            Particle(
+                "B",
+                "particle.B",
+                mapOf(
+                    "data" to HandleConnection(
+                        R_Handle0,
+                        HandleMode.Read,
+                        arcs.core.data.SingletonType(arcs.core.data.EntityType(B_Data.SCHEMA)),
+                        listOf(Annotation("persistent", emptyMap()))
+                    )
+                )
+            ),
+            Particle(
+                "C",
+                "particle.C",
+                mapOf(
+                    "data" to HandleConnection(
+                        R_Handle1,
+                        HandleMode.Write,
+                        arcs.core.data.SingletonType(arcs.core.data.EntityType(C_Data.SCHEMA)),
+                        listOf(Annotation("persistent", emptyMap()))
+                    )
+                )
+            ),
+            Particle(
+                "D",
+                "particle.D",
+                mapOf(
+                    "data" to HandleConnection(
+                        R_Handle1,
+                        HandleMode.Read,
+                        arcs.core.data.SingletonType(arcs.core.data.EntityType(D_Data.SCHEMA)),
+                        listOf(Annotation("persistent", emptyMap()))
+                    )
                 )
             )
         ),
-        Particle(
-            "D",
-            "particle.D",
-            mapOf(
-                "data" to HandleConnection(
-                    R_Handle1,
-                    HandleMode.Read,
-                    arcs.core.data.SingletonType(arcs.core.data.EntityType(D_Data.SCHEMA)),
-                    listOf(Annotation("persistent", emptyMap()))
-                )
-            )
-        )
-    ),
-    listOf(R_Handle0, R_Handle1),
-    emptyList()
-)
+        listOf(R_Handle0, R_Handle1),
+        emptyList()
+    )
+}
 
 -----[require]-----
 results[0].includes('particle.A')

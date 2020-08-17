@@ -468,7 +468,7 @@ ${recipeStr}
     const policiesManifest = await Manifest.parse(policiesManifestStr);
     if (expectedSuccess) {
       const result = await recipe2plan(recipesManifest, OutputFormat.Kotlin, policiesManifest);
-      assert.isTrue(result.toString().includes(`val MyRecipePlan = Plan(`));
+      assert.isTrue(result.toString().includes(`val MyRecipePlan by lazy {\n    Plan(`));
     } else {
       await assertThrowsAsync(
           async () => await recipe2plan(recipesManifest, OutputFormat.Kotlin, policiesManifest),

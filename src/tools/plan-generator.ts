@@ -48,12 +48,13 @@ export class PlanGenerator {
   async createPlans(): Promise<string[]> {
     const declarations: string[] = [];
     for (const recipe of this.resolvedRecipes) {
-      const planValInit = `val ${recipe.name}Plan = `;
-      const plan = planValInit + ktUtils.applyFun(`Plan`, [
-        ktUtils.listOf(await Promise.all(recipe.particles.map(p => this.createParticle(p)))),
-        ktUtils.listOf(recipe.handles.map(h => this.handleVariableName(h))),
-        PlanGenerator.createAnnotations(recipe.annotations)
-      ], {startIndent: planValInit.length});
+      const plan = await ktUtils.property(`${recipe.name}Plan`, async ({startIndent}) => {
+        return ktUtils.applyFun(`Plan`, [
+          ktUtils.listOf(await Promise.all(recipe.particles.map(p => this.createParticle(p)))),
+          ktUtils.listOf(recipe.handles.map(h => this.handleVariableName(h))),
+          PlanGenerator.createAnnotations(recipe.annotations)
+        ], {startIndent});
+      }, {delegate: 'lazy'});
 
       const handles = await Promise.all(recipe.handles.map(h => this.createHandleVariable(h)));
 
@@ -79,12 +80,13 @@ export class PlanGenerator {
    */
   async createHandleVariable(handle: Handle): Promise<string> {
     handle.type.maybeEnsureResolved();
-    const valInit = `val ${this.handleVariableName(handle)} = `;
-    return valInit + ktUtils.applyFun(`Handle`, [
-      await this.createStorageKey(handle),
-      await generateHandleType(handle.type.resolvedType()),
-      PlanGenerator.createAnnotations(handle.annotations)
-    ], {startIndent: valInit.length});
+    return await ktUtils.property(this.handleVariableName(handle), async ({startIndent}) => {
+      return ktUtils.applyFun(`Handle`, [
+        await this.createStorageKey(handle),
+        await generateHandleType(handle.type.resolvedType()),
+        PlanGenerator.createAnnotations(handle.annotations)
+      ], {startIndent});
+    }, {delegate: 'lazy'});
   }
 
   /** Generates a Kotlin `Plan.Particle` instantiation from a Particle. */

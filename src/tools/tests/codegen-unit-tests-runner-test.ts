@@ -40,7 +40,7 @@ function extractTo2LayerDict(regexp: RegExp, results: string[]): Dictionary<Dict
   return dict;
 }
 
-const handleStorageKeyRE = /([^_ ]+)_([^ ]+) = Handle\(\n *StorageKeyParser.parse\("([^"]*")\)/;
+const handleStorageKeyRE = /([^_ ]+)_([^ ]+) by lazy {\n *Handle\(\n *StorageKeyParser.parse\("([^"]*")\)/;
 const handleForParticleRE = /"([^\n"]+)".*\n.*\n.*\n *"([^"]+)" to HandleConnection\(\n *([^,]+),/;
 
 /**
