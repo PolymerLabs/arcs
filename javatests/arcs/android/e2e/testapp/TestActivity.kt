@@ -11,19 +11,14 @@
 
 package arcs.android.e2e.testapp
 
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.os.Bundle
-import android.os.IBinder
 import android.view.View
 import android.widget.Button
 import android.widget.RadioButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import arcs.android.devtools.DevToolsService
-import arcs.android.devtools.IDevToolsService
 import arcs.android.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
 import arcs.core.common.ArcId
@@ -73,21 +68,9 @@ class TestActivity : AppCompatActivity() {
     private var allocator: Allocator? = null
     private var resurrectionArcId: ArcId? = null
 
-    private var devToolsService: IDevToolsService? = null
-
     private val stores = StoreManager(
         activationFactory = ServiceStoreFactory(context = this@TestActivity)
     )
-
-    private val connection = object : ServiceConnection {
-        override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            devToolsService = IDevToolsService.Stub.asInterface(service)
-        }
-
-        override fun onServiceDisconnected(arg0: ComponentName) {
-            devToolsService = null
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -145,7 +128,7 @@ class TestActivity : AppCompatActivity() {
         }
 
         val devToolsIntent = Intent(this, DevToolsService::class.java)
-        bindService(devToolsIntent, connection, Context.BIND_AUTO_CREATE)
+        startForegroundService(devToolsIntent)
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -458,7 +441,6 @@ class TestActivity : AppCompatActivity() {
         result2 = result
         resultView1.text = "1: $result1"
         resultView2.text = "2: $result2"
-        devToolsService?.send(result)
     }
 
     companion object {

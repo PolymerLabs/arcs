@@ -11,6 +11,9 @@
 
 package arcs.android.devtools
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
@@ -36,6 +39,8 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 @OptIn(ExperimentalCoroutinesApi::class)
 open class DevToolsService : Service() {
 
+    val CHANNEL_ID = "DevToolsChannel"
+
     private val coroutineContext = Dispatchers.Default + CoroutineName("DevtoolsService")
     private val scope = CoroutineScope(coroutineContext)
     private lateinit var binder: DevToolsBinder
@@ -48,23 +53,10 @@ open class DevToolsService : Service() {
 
     private var forwardProxyMessageToken: Int = -1
 
-    override fun onCreate() {
-        binder = DevToolsBinder(scope, devToolsServer)
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Connect to the storage service and obtain the devToolsProxy.
         scope.launch {
-            suspendCancellableCoroutine { cont ->
-                cont.invokeOnCancellation {
-                    devToolsServer.close()
-                }
-                devToolsServer.start()
-                cont.resume(Unit) {}
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    override fun onBind(intent: Intent): IBinder? {
-        scope.launch {
-            val extras = intent.extras
+            val extras = intent?.extras
             if (extras != null) {
                 @Suppress("UNCHECKED_CAST")
                 storageClass = extras.getSerializable("STORAGE_CLASS") as Class<StorageService>
@@ -92,6 +84,40 @@ open class DevToolsService : Service() {
             storageService = service
             devToolsProxy = proxy
         }
+
+        // Create the notification and start this service in the foreground.
+        val serviceChannel = NotificationChannel(
+            CHANNEL_ID,
+            "Foreground Service Channel",
+            NotificationManager.IMPORTANCE_LOW
+        )
+        val manager: NotificationManager = getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(serviceChannel)
+        val notification: Notification = Notification.Builder(this, CHANNEL_ID)
+            .setContentTitle("Arcs DevTools")
+            .setContentText("Connect a client to view Arcs developer tooling")
+            .setSmallIcon(R.drawable.notification_icon_background)
+            .build()
+
+        startForeground(2, notification)
+        return START_NOT_STICKY
+    }
+
+    override fun onCreate() {
+        binder = DevToolsBinder(scope, devToolsServer)
+        scope.launch {
+            suspendCancellableCoroutine { cont ->
+                cont.invokeOnCancellation {
+                    devToolsServer.close()
+                }
+                devToolsServer.start()
+                cont.resume(Unit) {}
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun onBind(intent: Intent): IBinder? {
         return binder
     }
 
