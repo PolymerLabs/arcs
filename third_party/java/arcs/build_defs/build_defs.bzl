@@ -80,10 +80,10 @@ def arcs_kt_plan(**kwargs):
     _arcs_kt_plan(**kwargs)
 
 def arcs_kt_plan_2(**kwargs):
-    """Wrapper around _arcs_kt_plan that sets the default Arcs SDK
+    """Wrapper around _arcs_kt_plan_2 that sets the default Arcs SDK
 
     Args:
-      **kwargs: Set of args to forward to _arcs_kt_plan
+      **kwargs: Set of args to forward to _arcs_kt_plan_2
     """
     kwargs.setdefault("arcs_sdk_deps", DEFAULT_ARCS_SDK_DEPS)
     _arcs_kt_plan_2(**kwargs)

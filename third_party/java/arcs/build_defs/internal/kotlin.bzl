@@ -500,7 +500,7 @@ def arcs_kt_plan(
 
 # Note: Once this is mature, it will replace arcs_kt_plan
 def arcs_kt_plan_2(name, package, arcs_sdk_deps, srcs = [], deps = [], visibility = None):
-    """Generates Plan Jars via Kotlin.
+    """Converts recipes from manifests into Kotlin plans, via Kotlin.
 
     Example:
 
@@ -508,7 +508,7 @@ def arcs_kt_plan_2(name, package, arcs_sdk_deps, srcs = [], deps = [], visibilit
       arcs_kt_plan_2(
         name = "example_plan",
         srcs = ["Example.arcs"],
-        package = "com.my.example",
+        package = "com.my.example", // Temporary (b/161994250)
       )
       ```
 

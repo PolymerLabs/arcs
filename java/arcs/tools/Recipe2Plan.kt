@@ -17,9 +17,9 @@ class Recipe2Plan : CliktCommand(
     printHelpOnEmptyArgs = true
 ) {
     private val manifest by argument(
-        help = "paths to protobuf-serialized manifest, i.e. '*.bin.pb'"
+        help = "path to protobuf-serialized manifest, i.e. '*.bin.pb'"
     ).file(exists = true, readable = true)
-    private val outputFile by argument(help = "output Kotlin filepath, e.g. path/to/File.kt")
+    private val outputFile by argument(help = "output Kotlin filepath, e.g. 'path/to/File.kt'")
         .file()
     // TODO(b/161994250): Package should be derived from proto
     private val packageName by option(help = "scope to specified package").required()

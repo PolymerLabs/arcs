@@ -30,8 +30,8 @@ recipe2plan = rule(
         ),
         # TODO(b/162273478) recipe2plan should accept `policies` argument
     },
-    doc = """Generates plans from recipes.
+    doc = """Generates a Kotlin Plan from a manifest.
 
-    This rule reads serialized manifests and generates Kotlin files with `Plan` classes.
+    This rule reads a serialized manifest and generates Kotlin a file with `Plan` classes.
     """,
 )
