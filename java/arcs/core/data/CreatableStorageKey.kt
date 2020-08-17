@@ -37,7 +37,7 @@ data class CreatableStorageKey(
         override fun parse(rawKeyString: String): CreatableStorageKey {
             val match =
                 requireNotNull(CREATABLE_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
-                    "Not a valid CreatableStorageKey: $rawKeyString"
+                    "Not a valid CreatableStorageKey"
                 }
             return CreatableStorageKey(match.groupValues[1])
         }

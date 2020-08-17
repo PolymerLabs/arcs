@@ -46,7 +46,7 @@ data class ReferenceModeStorageKey(
         override val protocol = "reference-mode"
         override fun parse(rawKeyString: String): ReferenceModeStorageKey {
             val invalidFormatMessage: () -> String =
-                { "Invalid format for ReferenceModeStorageKey: $rawKeyString" }
+                { "Invalid format for ReferenceModeStorageKey" }
             val storageKeys = StorageKeyUtils.extractKeysFromString(rawKeyString)
             require(storageKeys.size == 2, invalidFormatMessage)
 
