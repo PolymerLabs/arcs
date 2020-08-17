@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {Modality} from './modality.js';
 import {ClaimStatement, CheckStatement} from '../manifest-ast-types/manifest-ast-nodes.js';
-import {Direction, SlotDirection} from '../manifest-ast-types/enums.js';
+import {Direction, SlotDirection} from './enums.js';
 import {TypeChecker} from '../recipe/type-checker.js';
 import {Schema} from '../schema.js';
 import {InterfaceType, SlotType, Type, TypeLiteral, TypeVariableInfo} from '../type.js';

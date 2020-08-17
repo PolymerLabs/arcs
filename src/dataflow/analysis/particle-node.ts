@@ -10,7 +10,7 @@
 
 import {Node, Edge, FlowModifier, FlowCheck} from './graph-internals.js';
 import {ClaimExpression} from '../../runtime/arcs-types/claim.js';
-import {ClaimType} from '../../runtime/manifest-ast-types/enums.js';
+import {ClaimType} from '../../runtime/arcs-types/enums.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {assert} from '../../platform/assert-web.js';
 import {HandleConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';

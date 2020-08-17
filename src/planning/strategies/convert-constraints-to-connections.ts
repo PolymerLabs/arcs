@@ -14,7 +14,7 @@ import {Recipe} from '../../runtime/recipe/recipe.js';
 import {StrategizerWalker, Strategy, StrategyParams} from '../strategizer.js';
 import {ParticleSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {reverseDirection} from '../../runtime/recipe/recipe-util.js';
-import {Direction} from '../../runtime/manifest-ast-types/enums.js';
+import {Direction} from '../../runtime/arcs-types/enums.js';
 import {Descendant} from '../../runtime/recipe/walker.js';
 import {Handle} from '../../runtime/recipe/handle.js';
 import {Dictionary} from '../../runtime/hot.js';

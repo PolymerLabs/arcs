@@ -23,7 +23,7 @@ import {Check} from '../../runtime/arcs-types/check.js';
 import {DeepSet} from './deep-set.js';
 import {OrderedSet} from './ordered-set.js';
 import {assert} from '../../platform/assert-web.js';
-import {ClaimType} from '../../runtime/manifest-ast-types/enums.js';
+import {ClaimType} from '../../runtime/arcs-types/enums.js';
 
 /**
  * Represents the set of implicit and explicit claims that flow along a path in

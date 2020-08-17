@@ -19,7 +19,7 @@ import {Recipe, CloneMap, RecipeComponent, IsResolvedOptions, IsValidOptions, To
 import {TypeChecker, TypeListInfo} from './type-checker.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Fate} from '../manifest-ast-types/manifest-ast-nodes.js';
-import {Direction} from '../manifest-ast-types/enums.js';
+import {Direction} from '../arcs-types/enums.js';
 import {StorageKey} from '../storage/storage-key.js';
 import {Capabilities, Ttl, Queryable} from '../capabilities.js';
 import {AnnotationRef} from './annotation.js';

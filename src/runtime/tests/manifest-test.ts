@@ -18,7 +18,7 @@ import {Loader} from '../../platform/loader.js';
 import {Dictionary} from '../hot.js';
 import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {ClaimIsTag, ClaimDerivesFrom} from '../arcs-types/claim.js';
-import {ClaimType} from '../manifest-ast-types/enums.js';
+import {ClaimType} from '../arcs-types/enums.js';
 import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore, CheckImplication} from '../arcs-types/check.js';
 import {ProvideSlotConnectionSpec} from '../arcs-types/particle-spec.js';
 import {Schema} from '../schema.js';

@@ -9,11 +9,11 @@
  */
 
 import * as AstNode from '../manifest-ast-types/manifest-ast-nodes.js';
-import {Direction} from '../manifest-ast-types/enums.js';
+import {Direction} from './enums.js';
 import {Claim} from './claim.js';
 import {Type} from '../type.js';
 import {assert} from '../../platform/assert-web.js';
-import {CheckType} from '../manifest-ast-types/enums.js';
+import {CheckType} from './enums.js';
 
 export type CheckTarget = HandleConnectionSpecInterface | ProvideSlotConnectionSpecInterface;
 

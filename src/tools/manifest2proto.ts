@@ -18,7 +18,7 @@ import {Manifest} from '../runtime/manifest.js';
 import {DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
 import {Refinement, RefinementExpressionLiteral} from '../runtime/refiner.js';
 import {Op} from '../runtime/manifest-ast-types/manifest-ast-nodes.js';
-import {ClaimType, CheckType} from '../runtime/manifest-ast-types/enums.js';
+import {ClaimType, CheckType} from '../runtime/arcs-types/enums.js';
 import {CheckCondition, CheckExpression} from '../runtime/arcs-types/check.js';
 import {flatMap} from '../runtime/util.js';
 import {Policy} from '../runtime/policy/policy.js';
