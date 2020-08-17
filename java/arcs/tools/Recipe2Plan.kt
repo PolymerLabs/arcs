@@ -3,10 +3,9 @@ package arcs.tools
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
-import com.github.ajalt.clikt.parameters.arguments.default
-import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.file
 import com.squareup.kotlinpoet.FileSpec
 
@@ -17,32 +16,29 @@ class Recipe2Plan : CliktCommand(
     This script reads serialized manifests and generates Kotlin files with [Plan] classes.""",
     printHelpOnEmptyArgs = true
 ) {
+    private val manifest by argument(
+        help = "paths to protobuf-serialized manifest, i.e. '*.bin.pb'"
+    ).file(exists = true, readable = true)
     private val outputFile by argument(help = "output Kotlin filepath, e.g. path/to/File.kt")
         .file()
     // TODO(b/161994250): Package should be derived from proto
-    private val packageName by argument(help = "scope to specified package").default("")
-    private val manifests by argument(
-        help = "paths to protobuf-serialized manifests, i.e. '*.bin.pb'"
-    ).file(exists = true, readable = true).multiple()
+    private val packageName by option(help = "scope to specified package").required()
     private val verbose by option("--verbose", "-v", help = "Print logs").flag(default = false)
     // TODO(b/162273478) CLI should accept `policies` argument
 
-    private val fileBuilder by lazy {
-        FileSpec.builder(packageName, "")
-            .addComment("GENERATED CODE -- DO NOT EDIT")
-    }
-
     /** Execute: Generate a plan per input manifest proto */
-    override fun run() = manifests
-        .also { DriverAndKeyConfigurator.configure(null) }
-        .forEach { manifest ->
-            if (verbose) {
-                echo("$manifest --> $outputFile")
-            }
+    override fun run() {
+        if (verbose) {
+            echo("$manifest --> $outputFile")
+        }
+        DriverAndKeyConfigurator.configure(null)
+        val fileBuilder = FileSpec.builder(packageName, "")
+            .addComment("GENERATED CODE -- DO NOT EDIT")
 
-            // TODO: Generate Plans
-            // val manifestProto = ManifestProto.parseFrom(manifest.readBytes())
-        }.also { outputFile.writeText(fileBuilder.build().toString()) }
+        // TODO: Generate Plans
+        // val manifestProto = ManifestProto.parseFrom(manifest.readBytes())
+        outputFile.writeText(fileBuilder.build().toString())
+    }
 }
 
 fun main(args: Array<String>) = Recipe2Plan().main(args)

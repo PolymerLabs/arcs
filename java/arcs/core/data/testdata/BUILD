@@ -49,13 +49,8 @@ arcs_kt_gen(
     data = [":shared_schemas"],
 )
 
-arcs_proto_plan(
-    name = "example-proto",
-    src = "WriterReaderExample.arcs",
-)
-
 arcs_kt_plan_2(
     name = "plan_from_proto",
-    srcs = [":example-proto"],
+    srcs = ["WriterReaderExample.arcs"],
     package = "arcs.core.data.testdata",
 )

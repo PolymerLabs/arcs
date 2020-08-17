@@ -15,6 +15,7 @@ load(
     _arcs_kt_native_library = "arcs_kt_native_library",
     _arcs_kt_particles = "arcs_kt_particles",
     _arcs_kt_plan = "arcs_kt_plan",
+    _arcs_kt_plan_2 = "arcs_kt_plan_2",
 )
 load(
     "//third_party/java/arcs/build_defs/internal:manifest.bzl",
@@ -22,10 +23,6 @@ load(
     _arcs_manifest_bundle = "arcs_manifest_bundle",
     _arcs_manifest_proto = "arcs_manifest_proto",
     _arcs_proto_plan = "arcs_proto_plan",
-)
-load(
-    "//third_party/java/arcs/build_defs/internal:plan.bzl",
-    _arcs_kt_plan_2 = "arcs_kt_plan_2",
 )
 load(
     "//third_party/java/arcs/build_defs/internal:schemas.bzl",
