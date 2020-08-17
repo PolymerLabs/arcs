@@ -3,7 +3,6 @@ load(
     "arcs_kt_gen",
     "arcs_kt_plan_2",
     "arcs_manifest",
-    "arcs_proto_plan",
 )
 
 package(default_visibility = ["//java/arcs:allowed-packages"])

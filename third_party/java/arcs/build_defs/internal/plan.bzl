@@ -1,6 +1,5 @@
 """Arcs Plan Generation Rules"""
 
-
 def _recipe2plan_impl(ctx):
     args = ctx.actions.args()
 

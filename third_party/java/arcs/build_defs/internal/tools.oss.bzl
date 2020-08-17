@@ -34,7 +34,7 @@ def arcs_tool_recipe2plan_2(name, src, package):
         name = name,
         src = src,
         package = package,
-        compiler = "//java/arcs/tools:recipe2plan"
+        compiler = "//java/arcs/tools:recipe2plan",
     )
 
 # buildifier: disable=function-docstring

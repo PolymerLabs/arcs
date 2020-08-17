@@ -32,9 +32,9 @@ load(":kotlin_serviceloader_registry.bzl", "kotlin_serviceloader_registry")
 load(":kotlin_wasm_annotations.bzl", "kotlin_wasm_annotations")
 load(":manifest.bzl", "arcs_proto_plan")
 load(
-  ":tools.oss.bzl",
-  "arcs_tool_recipe2plan",
-  "arcs_tool_recipe2plan_2"
+    ":tools.oss.bzl",
+    "arcs_tool_recipe2plan",
+    "arcs_tool_recipe2plan_2",
 )
 load(
     ":util.bzl",
@@ -500,7 +500,7 @@ def arcs_kt_plan(
 
 # Note: Once this is mature, it will replace arcs_kt_plan
 def arcs_kt_plan_2(name, package, arcs_sdk_deps, srcs = [], deps = [], visibility = None):
-    """Generates Plans Jar from protos.
+    """Generates Plan Jars via Kotlin.
 
     Example:
 
@@ -516,26 +516,27 @@ def arcs_kt_plan_2(name, package, arcs_sdk_deps, srcs = [], deps = [], visibilit
       name: name of created target
       package: the package that all generated code will belong to (temporary, see b/161994250).
       arcs_sdk_deps: build targets for the Arcs SDK to be included
+      srcs: list of Arcs manifest files
       deps: JVM dependencies for Jar
       visibility: list of visibilities
     """
     plans = []
     for src in srcs:
-      proto_name = replace_arcs_suffix(src, "_proto")
-      plan_name = replace_arcs_suffix(src, "_GeneratedPlan2")
+        proto_name = replace_arcs_suffix(src, "_proto")
+        plan_name = replace_arcs_suffix(src, "_GeneratedPlan2")
 
-      arcs_proto_plan(
-        name = proto_name,
-        src = src
-      )
+        arcs_proto_plan(
+            name = proto_name,
+            src = src,
+        )
 
-      arcs_tool_recipe2plan_2(
-          name = plan_name,
-          src = ":" + proto_name,
-          package = package,
-      )
+        arcs_tool_recipe2plan_2(
+            name = plan_name,
+            src = ":" + proto_name,
+            package = package,
+        )
 
-      plans.append(":" + plan_name)
+        plans.append(":" + plan_name)
 
     arcs_kt_library(
         name = name,
