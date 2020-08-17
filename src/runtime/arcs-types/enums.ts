@@ -11,5 +11,5 @@
 // String-based enums.
 // TODO: convert to actual enums so that they can be iterated over.
 
-import {Direction, SlotDirection, ClaimType, CheckType} from '../manifest-ast-types/enums.js'
-export {Direction, SlotDirection, ClaimType, CheckType}
+import {Direction, SlotDirection, ClaimType, CheckType} from '../manifest-ast-types/enums.js';
+export {Direction, SlotDirection, ClaimType, CheckType};
