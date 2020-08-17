@@ -1,0 +1,4 @@
+
+
+store QualityRequirement of [Quality {rating: Number}] in 'quality.json'
+  description `Minimum packaging quality`

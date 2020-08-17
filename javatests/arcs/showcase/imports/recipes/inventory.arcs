@@ -3,11 +3,13 @@ meta
 
 import '../particles/inventory.arcs'
 import '../recipes/imports.arcs'
+import '../stores/quality.arcs'
 
 @arcId('prepInventory')
 recipe PrepareInventoryForShop
   containers: map 'largeStock'
   labeled: create @inMemory
+  quality: copy QualityRequirement
   inventory: create 'inventory' @persistent @queryable
 
   LabelInventory
@@ -15,7 +17,7 @@ recipe PrepareInventoryForShop
     categorized: writes labeled
 
   ProduceInventory
-    minimum: reads {rating: 7.8} // TODO, hook up store
+    minimum: reads quality
     categorized: reads labeled
     tea: writes inventory
 
