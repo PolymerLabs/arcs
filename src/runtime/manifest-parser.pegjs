@@ -528,7 +528,7 @@ ClaimIsTag
   {
     return toAstNode<AstNode.ClaimIsTag>({
       kind: 'claim-is-tag',
-      claimType: ClaimType.IsTag,
+      claimType: AstNode.ClaimType.IsTag,
       isNot: not != null,
       tag,
     });
@@ -542,7 +542,7 @@ ClaimDerivesFrom
     const fieldPath = targetParts.slice(1);
     return toAstNode<AstNode.ClaimDerivesFrom>({
       kind: 'claim-derives-from',
-      claimType: ClaimType.DerivesFrom,
+      claimType: AstNode.ClaimType.DerivesFrom,
       parentHandle: handle,
       fieldPath,
     });
@@ -611,7 +611,7 @@ CheckImplication
   {
     return toAstNode<AstNode.CheckImplication>({
       kind: 'check-implication',
-      checkType: CheckType.Implication,
+      checkType: AstNode.CheckType.Implication,
       antecedent,
       consequent,
     });
@@ -622,7 +622,7 @@ CheckHasTag
   {
     return toAstNode<AstNode.CheckHasTag>({
       kind: 'check-has-tag',
-      checkType: CheckType.HasTag,
+      checkType: AstNode.CheckType.HasTag,
       isNot: !!isNot,
       tag,
     });
@@ -633,7 +633,7 @@ CheckIsFromHandle
   {
     return toAstNode<AstNode.CheckIsFromHandle>({
       kind: 'check-is-from-handle',
-      checkType: CheckType.IsFromHandle,
+      checkType: AstNode.CheckType.IsFromHandle,
       isNot: !!isNot,
       parentHandle,
     });
@@ -644,7 +644,7 @@ CheckIsFromOutput
   {
     return toAstNode<AstNode.CheckIsFromOutput>({
       kind: 'check-is-from-output',
-      checkType: CheckType.IsFromOutput,
+      checkType: AstNode.CheckType.IsFromOutput,
       isNot: !!isNot,
       output,
     });
@@ -655,7 +655,7 @@ CheckIsFromStore
   {
     return toAstNode<AstNode.CheckIsFromStore>({
       kind: 'check-is-from-store',
-      checkType: CheckType.IsFromStore,
+      checkType: AstNode.CheckType.IsFromStore,
       isNot: !!isNot,
       storeRef,
     });

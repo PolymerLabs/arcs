@@ -13,3 +13,19 @@
 
 export type Direction = 'reads' | 'writes' | 'reads writes' | 'hosts' | '`consumes' | '`provides' | 'any';
 export type SlotDirection = 'provides' | 'consumes';
+
+/** The different types of trust claims that particles can make. */
+export enum ClaimType {
+  IsTag = 'is-tag',
+  DerivesFrom = 'derives-from',
+}
+
+/** The different types of trust checks that particles can make. */
+export enum CheckType {
+  HasTag = 'has-tag',
+  IsFromHandle = 'is-from-handle',
+  IsFromOutput = 'is-from-output',
+  IsFromStore = 'is-from-store',
+  Implication = 'implication',
+}
+

@@ -15,7 +15,8 @@ import {SlotNode, createSlotNodes, addSlotConnection} from './slot-node.js';
 import {Node, Edge, FlowCondition, FlowCheck} from './graph-internals.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {assert} from '../../platform/assert-web.js';
-import {HandleConnectionSpecInterface, StoreReference, CheckIsFromHandle, CheckIsFromOutput, CheckIsFromStore, CheckType, CheckCondition, CheckExpression, Check} from '../../runtime/check.js';
+import {HandleConnectionSpecInterface, StoreReference, CheckIsFromHandle, CheckIsFromOutput, CheckIsFromStore, CheckCondition, CheckExpression, Check} from '../../runtime/manifest-types/check.js';
+import {CheckType} from '../../runtime/manifest-types/enums.js';
 
 /**
  * Data structure for representing the connectivity graph of a recipe. Used to perform static analysis on a resolved recipe.
