@@ -1,0 +1,24 @@
+meta
+  namespace: arcs.showcase.imports.recipes
+
+import '../particles/inventory.arcs'
+import '../recipes/imports.arcs'
+
+@arcId('prepInventory')
+recipe PrepareInventoryForShop
+  containers: map 'largeStock'
+  labeled: create @inMemory
+  inventory: create 'inventory' @persistent @queryable
+
+  LabelInventory
+    containers: reads contianers
+    categorized: writes labeled
+
+  ProduceInventory
+    minimum: reads {rating: 7.8} // TODO, hook up store
+    categorized: reads labeled
+    tea: writes inventory
+
+
+
+

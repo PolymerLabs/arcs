@@ -3,21 +3,17 @@ meta
 
 import '../schemas/common.arcs'
 
-// Sells tea with a matching name
-particle SellByName in '.SellTeaByName'
-  order: reads Order {name: Text, amt: Number}
-  inventory: reads writes [Tea]
-  customer: writes [Tea]
+particle IngestOrder in '.IngestOrder'
+  order: writes Order {name: Text, variety: Text, origin: inline Place, amt: Number}
 
-// Sells tea with a matching variety
-particle SellByVariety in '.SellTeaByVarety'
-  order: reads Order {variety: Text, amt: Number}
+// Sells tea with that matches the order
+// If sale is successful, the inventory will be updated.
+particle PlaceOrder in '.PlaceOrder'
+  order: reads Order {name: Text, variety: Text, origin: inline Place, amt: Number}
   inventory: reads writes [Tea]
-  customer: writes [Tea]
+  toCustomer: writes [Tea]
 
-// Sells tea with a matching origin and variety
-particle SellByOriginAndVariety in '.SellTeaByOriginAndVarety'
-  order: reads Order {variety: Text, origin: inline Place, amt: Number}
-  inventory: reads writes [Tea]
-  customer: writes [Tea]
+particle PackageEgress in '.PackageEgress'
+  toCustomer: reads [Tea]
+
 

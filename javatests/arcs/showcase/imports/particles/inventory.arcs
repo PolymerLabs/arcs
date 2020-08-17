@@ -4,14 +4,14 @@ meta
 import '../schemas/common.arcs'
 import '../schemas/shipping.arcs'
 
-// Given the container, determines which Store the Tea should belong to
-particle SortInventory in '.SortInventory'
+// Associate a quality rating for each item unloaded from container.
+particle LabelInventory in '.LabelInventory'
   containers: reads [Container]
-  categorized: writes [(Store {id: Text}, Tea)]
+  categorized: writes [(Quality {rating: Number}, Tea)]
 
 
-// Produces all the tea that belongs to the store, given the processed inventory
+// Produce set of tea, given current qulity standards
 particle ProduceInventory in '.ProduceInventory'
-  type: reads Store {id: Text}
-  categorized: reads [(Store {id: Text}, Tea)]
+  minimum: reads Quality {rating: Number}
+  categorized: reads [(Quality {rating: Number}, Tea)]
   tea: writes [Tea]
