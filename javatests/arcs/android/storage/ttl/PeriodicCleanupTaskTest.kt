@@ -13,6 +13,7 @@ import arcs.core.data.HandleMode
 import arcs.core.data.SchemaRegistry
 import arcs.core.entity.DummyEntity
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
@@ -47,6 +48,7 @@ class PeriodicCleanupTaskTest {
     @Before
     fun setUp() {
         SchemaRegistry.register(DummyEntity.SCHEMA)
+        SchemaRegistry.register(InlineDummyEntity.SCHEMA)
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         worker = TestWorkerBuilder.from(context, PeriodicCleanupTask::class.java).build()
     }

@@ -10,6 +10,7 @@ import arcs.core.data.HandleMode
 import arcs.core.data.SchemaRegistry
 import arcs.core.entity.DummyEntity
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
@@ -50,6 +51,7 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
         databaseManager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
         DriverAndKeyConfigurator.configure(databaseManager)
         SchemaRegistry.register(DummyEntity.SCHEMA)
+        SchemaRegistry.register(InlineDummyEntity.SCHEMA)
         worker = TestWorkerBuilder.from(
             ApplicationProvider.getApplicationContext(),
             DatabaseGarbageCollectionPeriodicTask::class.java

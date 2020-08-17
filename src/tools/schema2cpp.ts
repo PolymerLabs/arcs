@@ -9,7 +9,7 @@
  */
 import {Schema2Base, EntityGenerator} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
-import {ParticleSpec} from '../runtime/particle-spec.js';
+import {ParticleSpec} from '../runtime/manifest-types/particle-spec.js';
 import {Type} from '../runtime/type.js';
 import {Dictionary} from '../runtime/hot.js';
 

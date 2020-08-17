@@ -190,6 +190,7 @@ def arcs_kt_gen(
     arcs_manifest(
         name = manifest_name,
         srcs = srcs,
+        manifest_proto = False,
         deps = manifest_only(deps) + data,
     )
 

@@ -16,11 +16,11 @@ import {CRDTCount} from './crdt/crdt-count.js';
 import {CRDTCollection} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Schema} from './schema.js';
-import * as AstNode from './manifest-ast-nodes.js';
-import {ParticleSpec} from './particle-spec.js';
+import {ParticleSpec} from './manifest-types/particle-spec.js';
 import {Refinement} from './refiner.js';
 import {AnnotationRef} from './recipe/annotation.js';
 import {ManifestStringBuilder} from './manifest-string-builder.js';
+import {Direction, SlotDirection} from './manifest-types/enums.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;
@@ -44,10 +44,9 @@ export abstract class Type {
 
   abstract toLiteral(): TypeLiteral;
 
-  // Creates a Type with same tag as this (e.g. CollectionType, if this is a
-  // collection), with entity Schema fields restricted according to the fields
-  // in the given `type` parameter (used for ingress restricting).
-  abstract restrictToType(type: Type, skippedFields?: string[]): Type|null;
+  // Combines type ranges of this and the given type, and returns the smallest
+  // contained range.
+  abstract restrictTypeRanges(type: Type): Type;
 
   static unwrapPair(type1: Type, type2: Type): [Type, Type] {
     if (type1.tag === type2.tag) {
@@ -238,7 +237,7 @@ export abstract class Type {
     return true;
   }
 
-  maybeEnsureResolved(): boolean {
+  maybeEnsureResolved(options = undefined): boolean {
     return true;
   }
 
@@ -321,8 +320,9 @@ export class CountType extends Type {
     return {tag: 'Count'};
   }
 
-  restrictToType(type: Type, skippedFields?: string[]): Type|null {
-    throw new Error(`'restrictToType' is not supported for ${this.tag}`);
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    throw new Error(`'restrictTypeRanges' is not supported for ${this.tag}`);
   }
 
   crdtInstanceConstructor() {
@@ -374,8 +374,9 @@ export class SingletonType<T extends Type> extends Type {
     return this.innerType.canReadSubset;
   }
 
-  restrictToType(type: Type, skippedFields?: string[]): Type|null {
-    return new SingletonType(this.innerType.restrictToType(type, skippedFields));
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    return new SingletonType(this.innerType.restrictTypeRanges(type));
   }
 
   mergeTypeVariablesByName(variableMap: Map<string, Type>) {
@@ -464,12 +465,11 @@ export class EntityType extends Type {
     throw new Error(`Entity handle not yet implemented - you probably want to use a SingletonType`);
   }
 
-  restrictToType(type: Type, skippedFields?: string[]): Type|null {
-    return EntityType.make(
-      [type.getEntitySchema().name],
-      Schema.getRestrictedSchemaFields(this.getEntitySchema(), type.getEntitySchema(), {skippedFields}),
-      type.getEntitySchema()
-    );
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    assert(this.getEntitySchema().name === type.getEntitySchema().name);
+    return new EntityType(
+        Schema.intersect(this.getEntitySchema(), type.getEntitySchema()));
   }
 }
 
@@ -487,6 +487,11 @@ export class TypeVariable extends Type {
 
   get isVariable(): boolean {
     return true;
+  }
+
+  protected _isAtLeastAsSpecificAs(type: Type): boolean {
+    return this.variable.isAtLeastAsSpecificAs(
+        type.isVariable ? (type as TypeVariable).variable : new TypeVariableInfo('', type, type, this.variable.resolveToMaxType));
   }
 
   mergeTypeVariablesByName(variableMap: Map<string, Type>) {
@@ -514,8 +519,8 @@ export class TypeVariable extends Type {
     return this.variable.canEnsureResolved();
   }
 
-  maybeEnsureResolved(): boolean {
-    return this.variable.maybeEnsureResolved();
+  maybeEnsureResolved(options = undefined): boolean {
+    return this.variable.maybeEnsureResolved(options);
   }
 
   get canWriteSuperset() {
@@ -551,6 +556,12 @@ export class TypeVariable extends Type {
       if (this.variable._canWriteSuperset) {
         newTypeVariable.canWriteSuperset = this.variable.canWriteSuperset._cloneWithResolutions(variableMap);
       }
+      if (this.variable._originalCanReadSubset) {
+        newTypeVariable._originalCanReadSubset = this.variable._originalCanReadSubset._cloneWithResolutions(variableMap);
+      }
+      if (this.variable._originalCanWriteSuperset) {
+        newTypeVariable._originalCanWriteSuperset = this.variable._originalCanWriteSuperset._cloneWithResolutions(variableMap);
+      }
       variableMap.set(this.variable, newTypeVariable);
       return new TypeVariable(newTypeVariable);
     }
@@ -573,11 +584,13 @@ export class TypeVariable extends Type {
     return this.variable.isResolved() ? this.resolvedType().toPrettyString() : `[~${this.variable.name}]`;
   }
 
-  restrictToType(type: Type, skippedFields?: string[]): Type|null {
-    if (!this.variable.isResolved()) return null;
-    const typeVar = new TypeVariable(new TypeVariableInfo(this.variable.name));
-    typeVar.variable.resolution = this.variable.resolution.restrictToType(type, skippedFields);
-    return typeVar;
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    const typeVar = this.variable.restrictTypeRanges((type as TypeVariable).variable);
+    if (!typeVar) {
+      throw new Error(`Cannot restrict type ranges of ${this.toPrettyString()} and ${type.toPrettyString()}`);
+    }
+    return new TypeVariable(typeVar);
   }
 }
 
@@ -592,6 +605,10 @@ export class CollectionType<T extends Type> extends Type {
 
   get isCollection(): boolean {
     return true;
+  }
+
+  _isAtLeastAsSpecificAs(type: CollectionType<T>): boolean {
+    return this.getContainedType().isAtLeastAsSpecificAs(type.getContainedType());
   }
 
   mergeTypeVariablesByName(variableMap: Map<string, Type>): CollectionType<Type> {
@@ -622,8 +639,8 @@ export class CollectionType<T extends Type> extends Type {
     return this.collectionType.canEnsureResolved();
   }
 
-  maybeEnsureResolved(): boolean {
-    return this.collectionType.maybeEnsureResolved();
+  maybeEnsureResolved(options = undefined): boolean {
+    return this.collectionType.maybeEnsureResolved(options);
   }
 
   get canWriteSuperset(): InterfaceType {
@@ -675,8 +692,9 @@ export class CollectionType<T extends Type> extends Type {
     return CollectionType.handleClass;
   }
 
-  restrictToType(type: Type, skippedFields?: string[]): Type|null {
-    return new CollectionType(this.collectionType.restrictToType(type, skippedFields));
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    return new CollectionType(this.getContainedType().restrictTypeRanges(type.getContainedType()));
   }
 }
 
@@ -720,8 +738,8 @@ export class BigCollectionType<T extends Type> extends Type {
     return this.bigCollectionType.canEnsureResolved();
   }
 
-  maybeEnsureResolved(): boolean {
-    return this.bigCollectionType.maybeEnsureResolved();
+  maybeEnsureResolved(options = undefined): boolean {
+    return this.bigCollectionType.maybeEnsureResolved(options);
   }
 
   get canWriteSuperset(): InterfaceType {
@@ -765,17 +783,18 @@ export class BigCollectionType<T extends Type> extends Type {
     return `Collection of ${this.bigCollectionType.toPrettyString()}`;
   }
 
-  restrictToType(type: Type, skippedFields?: string[]): Type|null {
-    throw new Error(`'restrictToType' is not supported for ${this.tag}`);
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    throw new Error(`'restrictTypeRanges' is not supported for ${this.tag}`);
   }
 }
 
 export class TupleType extends Type {
   readonly innerTypes: Type[];
 
-  constructor(tuple: Type[]) {
+  constructor(innerTypes: Type[]) {
     super('Tuple');
-    this.innerTypes = tuple;
+    this.innerTypes = innerTypes;
   }
 
   get isTuple(): boolean {
@@ -814,8 +833,8 @@ export class TupleType extends Type {
     return this.innerTypesSatisfy((type) => type.canEnsureResolved());
   }
 
-  maybeEnsureResolved(): boolean {
-    return this.innerTypesSatisfy((type) => type.maybeEnsureResolved());
+  maybeEnsureResolved(options = undefined): boolean {
+    return this.innerTypesSatisfy((type) => type.maybeEnsureResolved(options));
   }
 
   _isAtLeastAsSpecificAs(other: TupleType): boolean {
@@ -843,9 +862,10 @@ export class TupleType extends Type {
     return 'Tuple of ' + this.innerTypes.map(t => t.toPrettyString()).join(', ');
   }
 
-  restrictToType(type: Type, skippedFields?: string[]): Type|null {
-    // TODO(b/159143604): implement.
-    throw new Error(`'restrictToType' is not supported for ${this.tag}`);
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    return new TupleType(this.getContainedTypes().map((innerType, idx) =>
+        innerType.restrictTypeRanges(type.getContainedTypes()[idx])));
   }
 
   _clone(variableMap: Map<string, Type>): TupleType {
@@ -873,13 +893,13 @@ export class TupleType extends Type {
 export interface HandleConnection {
   type: Type;
   name?: string|TypeVariable;
-  direction?: AstNode.Direction; // TODO make required
+  direction?: Direction; // TODO make required
 }
 
 // TODO(lindner) only tests use optional props
 export interface Slot {
   name?: string|TypeVariable;
-  direction?: AstNode.SlotDirection;
+  direction?: SlotDirection;
   isRequired?: boolean;
   isSet?: boolean;
 }
@@ -919,7 +939,7 @@ export class InterfaceType extends Type {
     return this.interfaceInfo.canEnsureResolved();
   }
 
-  maybeEnsureResolved(): boolean {
+  maybeEnsureResolved(options = undefined): boolean {
     return this.interfaceInfo.maybeEnsureResolved();
   }
 
@@ -956,8 +976,9 @@ export class InterfaceType extends Type {
     return this.interfaceInfo.toPrettyString();
   }
 
-  restrictToType(type: Type, skippedFields?: string[]): Type|null {
-    throw new Error(`'restrictToType' is not supported for ${this.tag}`);
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    throw new Error(`'restrictTypeRanges' is not supported for ${this.tag}`);
   }
 }
 
@@ -1023,8 +1044,9 @@ export class SlotType extends Type {
     return `Slot${fieldsString}`;
   }
 
-  restrictToType(type: Type, skippedFields?: string[]): Type|null {
-    throw new Error(`'restrictToType' is not supported for ${this.tag}`);
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    throw new Error(`'restrictTypeRanges' is not supported for ${this.tag}`);
   }
 }
 
@@ -1058,12 +1080,16 @@ export class ReferenceType<T extends Type> extends Type {
     return (referredType !== resolvedReferredType) ? new ReferenceType(resolvedReferredType) : this;
   }
 
+  _isAtLeastAsSpecificAs(type: ReferenceType<T>): boolean {
+    return this.getContainedType().isAtLeastAsSpecificAs(type.getContainedType());
+  }
+
   _canEnsureResolved(): boolean {
     return this.referredType.canEnsureResolved();
   }
 
-  maybeEnsureResolved(): boolean {
-    return this.referredType.maybeEnsureResolved();
+  maybeEnsureResolved(options = undefined): boolean {
+    return this.referredType.maybeEnsureResolved(options);
   }
 
   get canWriteSuperset() {
@@ -1108,8 +1134,9 @@ export class ReferenceType<T extends Type> extends Type {
     return this.referredType.crdtInstanceConstructor();
   }
 
-  restrictToType(type: Type, skippedFields?: string[]): Type|null {
-    return new ReferenceType(this.referredType.restrictToType(type, skippedFields));
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    return new ReferenceType(this.getContainedType().restrictTypeRanges(type.getContainedType()));
   }
 
   mergeTypeVariablesByName(variableMap: Map<string, Type>) {
@@ -1153,8 +1180,8 @@ export class MuxType<T extends Type> extends Type {
     return this.innerType.canEnsureResolved();
   }
 
-  maybeEnsureResolved(): boolean {
-    return this.innerType.maybeEnsureResolved();
+  maybeEnsureResolved(options = undefined): boolean {
+    return this.innerType.maybeEnsureResolved(options);
   }
 
   get canWriteSuperset() {
@@ -1198,8 +1225,9 @@ export class MuxType<T extends Type> extends Type {
     return MuxType.handleClass;
   }
 
-  restrictToType(type: Type, skippedFields?: string[]): Type|null {
-    throw new Error(`'restrictToType' is not supported for ${this.tag}`);
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    throw new MuxType(this.getContainedType().restrictTypeRanges(type.getContainedType()));
   }
 
   mergeTypeVariablesByName(variableMap: Map<string, Type>) {
@@ -1222,8 +1250,9 @@ export class HandleType extends Type {
     return {tag: this.tag};
   }
 
-  restrictToType(type: Type, skippedFields?: string[]): Type|null {
-    throw new Error(`'restrictToType' is not supported for ${this.tag}`);
+  restrictTypeRanges(type: Type): Type {
+    assert(this.tag === type.tag);
+    throw new Error(`'restrictTypeRanges' is not supported for ${this.tag}`);
   }
 }
 
@@ -1239,6 +1268,10 @@ export class TypeVariableInfo {
   _canWriteSuperset?: Type|null;
   _canReadSubset?: Type|null;
   _resolution?: Type|null;
+  // Note: original types are needed, because type variable resolution destroys
+  // the range values, and this shouldn't be happening.
+  _originalCanWriteSuperset?: Type|null;
+  _originalCanReadSubset?: Type|null;
   resolveToMaxType: boolean;
 
   constructor(name: string, canWriteSuperset?: Type, canReadSubset?: Type, resolveToMaxType: boolean = false) {
@@ -1247,6 +1280,18 @@ export class TypeVariableInfo {
     this._canReadSubset = canReadSubset;
     this._resolution = null;
     this.resolveToMaxType = resolveToMaxType;
+  }
+
+  isAtLeastAsSpecificAs(other: TypeVariableInfo): boolean {
+    // TODO(mmandlis): add tests for this method!!!
+    const thisCanReadSubset = this._canReadSubset || this._originalCanReadSubset;
+    const thisCanWriteSuperset = this._canWriteSuperset || this._originalCanWriteSuperset;
+    const otherCanReadSubset = other._canReadSubset || other._originalCanReadSubset;
+    const otherCanWriteSuperset = other._canWriteSuperset || other._originalCanWriteSuperset;
+    return ((!otherCanWriteSuperset && !thisCanWriteSuperset) ||
+            (otherCanWriteSuperset && (!thisCanWriteSuperset || otherCanWriteSuperset.isAtLeastAsSpecificAs(thisCanWriteSuperset)))) &&
+          ((!thisCanReadSubset && !otherCanReadSubset) ||
+            !thisCanReadSubset || thisCanReadSubset.isAtLeastAsSpecificAs(otherCanReadSubset));
   }
 
   /**
@@ -1360,7 +1405,9 @@ export class TypeVariableInfo {
     }
 
     this._resolution = value;
+    this._originalCanWriteSuperset = this._canWriteSuperset;
     this._canWriteSuperset = null;
+    this._originalCanReadSubset = this._canReadSubset;
     this._canReadSubset = null;
   }
 
@@ -1410,9 +1457,9 @@ export class TypeVariableInfo {
     return false;
   }
 
-  maybeEnsureResolved() {
+  maybeEnsureResolved(options = undefined) {
     if (this._resolution) {
-      return this._resolution.maybeEnsureResolved();
+      return this._resolution.maybeEnsureResolved(options);
     }
     if (this.resolveToMaxType && this._canReadSubset) {
       this.resolution = this._canReadSubset;
@@ -1422,8 +1469,15 @@ export class TypeVariableInfo {
       this.resolution = this._canWriteSuperset;
       return true;
     }
+    if (options && options.restrictToMinBound) {
+      const entitySchema = this._canReadSubset
+          ? this._canReadSubset.getEntitySchema() : null;
+      this.resolution = new EntityType(new Schema(
+          entitySchema ? entitySchema.names : [], {}, entitySchema || {}));
+      return true;
+    }
     if (this._canReadSubset) {
-      this.resolution = this._canReadSubset;
+      this._resolution = this._canReadSubset;
       return true;
     }
     return false;
@@ -1455,18 +1509,41 @@ export class TypeVariableInfo {
   isResolved(): boolean {
     return this._resolution && this._resolution.isResolved();
   }
+
+  // TODO(mmandlis): add tests before submitting.
+  restrictTypeRanges(other: TypeVariableInfo): TypeVariableInfo {
+    const thisCanWriteSuperset = this.canWriteSuperset || this._originalCanWriteSuperset;
+    const otherCanWriteSuperset = other.canWriteSuperset || other._originalCanWriteSuperset;
+    let newCanWriteSuperset = thisCanWriteSuperset || otherCanWriteSuperset;
+    if (thisCanWriteSuperset && otherCanWriteSuperset) {
+      const unionSchema = Schema.union(
+          thisCanWriteSuperset.getEntitySchema(), otherCanWriteSuperset.getEntitySchema());
+      if (!unionSchema) {
+        throw new Error(`Cannot union schema: ${thisCanWriteSuperset.getEntitySchema()} and ${otherCanWriteSuperset.getEntitySchema()}`);
+      }
+      newCanWriteSuperset = new EntityType(unionSchema);
+    }
+    const thisCanReadSubset = this.canReadSubset || this._originalCanReadSubset;
+    const otherCanReadSubset = other.canReadSubset || other._originalCanReadSubset;
+    let newCanReadSubset = thisCanReadSubset || otherCanReadSubset;
+    if (thisCanReadSubset && otherCanReadSubset) {
+      newCanReadSubset = new EntityType(Schema.intersect(
+          thisCanReadSubset.getEntitySchema(), otherCanReadSubset.getEntitySchema()));
+    }
+    return new TypeVariableInfo(this.name, newCanWriteSuperset, newCanReadSubset, this.resolveToMaxType);
+  }
 }
 
 // The interface for InterfaceInfo must live here to avoid circular dependencies.
 export interface HandleConnectionLiteral {
   type?: TypeLiteral;
   name?: string|TypeLiteral;
-  direction?: AstNode.Direction;
+  direction?: Direction;
 }
 
 export interface SlotLiteral {
   name?: string|TypeLiteral;
-  direction?: AstNode.SlotDirection;
+  direction?: SlotDirection;
   isRequired?: boolean;
   isSet?: boolean;
 }
@@ -1482,7 +1559,7 @@ export interface InterfaceInfoLiteral {
   slots: SlotLiteral[];
 }
 
-export type MatchResult = {var: TypeVariable, value: Type, direction: AstNode.Direction};
+export type MatchResult = {var: TypeVariable, value: Type, direction: Direction};
 
 type Maker = (name: string, handleConnections: HandleConnection[], slots: Slot[]) => InterfaceInfo;
 type HandleConnectionMatcher = (interfaceHandleConnection: HandleConnection, particleHandleConnection: HandleConnection) => boolean|MatchResult[];

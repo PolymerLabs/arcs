@@ -22,6 +22,7 @@ class VariableEntityBaseTest {
     fun setUp() {
         SchemaRegistry.register(DummyEntity.SCHEMA)
         SchemaRegistry.register(DummyVariableEntity.SCHEMA)
+        SchemaRegistry.register(InlineDummyEntity.SCHEMA)
         entity = DummyVariableEntity()
         biggerEntity = DummyEntity()
             .apply {

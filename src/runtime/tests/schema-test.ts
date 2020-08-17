@@ -605,6 +605,32 @@ describe('schema', () => {
     assert.deepEqual(intersection.fields, schema3.fields);
     assert.deepEqual(intersection.refinement, schema3.refinement);
   }));
+  it('tests schema union for inlines', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {y: inline Y {a: Text, b: Text}, z: Number}
+        schema2: reads X {y: inline Y {a: Text, c: Text}, w: Number, z: Number}
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].schema.model.entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
+  it('tests schema union for ordered lists of inlines', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        schema1: reads X {y: List<inline Y {a: Text, b: Text}>, z: Number}
+        schema2: reads X {y: List<inline Y {a: Text, c: Text}>, w: Number, z: Number}
+    `);
+    const schema1 = getSchemaFromManifest(manifest, 'schema1');
+    const schema2 = getSchemaFromManifest(manifest, 'schema2');
+    const union = Schema.union(schema1, schema2);
+    assert.deepEqual(Object.keys(union.fields), ['y', 'z', 'w']);
+    assert.deepEqual(Object.keys(union.fields['y'].schema.schema.model.entitySchema.fields),
+        ['a', 'b', 'c']);
+  });
   it('tests schema.isAtLeastAsSpecificAs, case 1', Flags.withFieldRefinementsAllowed(async () => {
     const manifest = await Manifest.parse(`
       particle Foo
@@ -724,111 +750,5 @@ describe('schema', () => {
     assert.isTrue(barSchema.isAtLeastAsSpecificAs(barConnSchema));
     const barzzConnSchema = manifest.particles[0].getConnectionByName('barzz').type.getEntitySchema();
     assert.isTrue(barSchema.isAtLeastAsSpecificAs(barzzConnSchema));
-  });
-
-  it('restricts primitive schema fields', async () => {
-    const [foo, restrictedFoo] = (await Manifest.parse(`
-    schema Foo
-      foo: Text
-      otherFoo: Text
-      foos: [Text]
-      otherFoos: [Text]
-    schema RestrictedFoo
-      foo: Text
-      moreFoo: Text
-      foos: [Text]
-      moreFoos: Text
-  `)).allSchemas;
-    const skippedFields = [];
-    const result = Schema.getRestrictedSchemaFields(foo, restrictedFoo, {skippedFields});
-    assert.lengthOf(Object.keys(result), 2);
-    assert.equal(result['foo'].kind, 'schema-primitive');
-    assert.equal(result['foos'].kind, 'schema-collection');
-    assert.equal(result['foos'].schema.kind, 'schema-primitive');
-    assert.deepEqual(skippedFields, ['otherFoo', 'otherFoos']);
-  });
-
-  it('restricts reference schema fields', async () => {
-    const [foo, restrictedFoo] = (await Manifest.parse(`
-      schema Foo
-        bar: &Bar {b1: Text, b2: Text}
-        bars: [&Bar {b1: Text, b2: Text, b3: Text}]
-        otherBar: &Bar {b1: Text, b2: Text}
-        otherBars: [&Bar {b1: Text, b2: Text}]
-      schema RestrictedFoo
-        bar: &Bar {b1: Text}
-        bars: [&Bar {b2: Text, b3: Text}]
-        moreBar: &Bar {b1: Text, b2: Text}
-        moreBars: [&Bar {b1: Text, b2: Text}]
-    `)).allSchemas;
-    const skippedFields = [];
-    const result = Schema.getRestrictedSchemaFields(foo, restrictedFoo, {skippedFields});
-    assert.lengthOf(Object.keys(result), 2);
-    assert.equal(result['bar'].kind, 'schema-reference');
-    assert.deepEqual(Object.keys(result['bar'].schema.model.entitySchema.fields), ['b1']);
-    assert.equal(result['bars'].kind, 'schema-collection');
-    assert.equal(result['bars'].schema.kind, 'schema-reference');
-    assert.deepEqual(Object.keys(result['bars'].schema.schema.model.entitySchema.fields), ['b2', 'b3']);
-    assert.deepEqual(skippedFields, ['bar.b2', 'bars.b1', 'otherBar', 'otherBars']);
-  });
-
-  it('restricts list schema fields', async () => {
-    const [foo, restrictedFoo] = (await Manifest.parse(`
-    schema Foo
-      bars: List<&Bar {b1: Text, b2: Text, b3: Text}>
-      otherBars: List<&Bar {b1: Text, b2: Text}>
-    schema RestrictedFoo
-      bars: List<&Bar {b2: Text, b3: Text}>
-      moreBars: List<&Bar {b1: Text, b2: Text}>
-    `)).allSchemas;
-    const skippedFields = [];
-    const result = Schema.getRestrictedSchemaFields(foo, restrictedFoo, {skippedFields});
-    assert.lengthOf(Object.keys(result), 1);
-    assert.equal(result['bars'].kind, 'schema-ordered-list');
-    assert.equal(result['bars'].schema.kind, 'schema-reference');
-    assert.deepEqual(Object.keys(result['bars'].schema.schema.model.entitySchema.fields), ['b2', 'b3']);
-    assert.deepEqual(skippedFields, ['bars.b1', 'otherBars']);
-  });
-
-  it('restricts inline schema fields', async () => {
-    const [foo, restrictedFoo] = (await Manifest.parse(`
-      schema Foo
-        bar: inline Bar {b1: Text, b2: Text}
-        bars: [inline Bar {b1: Text, b2: Text, b3: Text}]
-        barList: List<inline Bar {b1: Text, b2: Text, b3: Text}>
-        otherBar: inline Bar {b1: Text, b2: Text}
-        otherBars: [inline Bar {b1: Text, b2: Text}]
-        otherBarList: List<inline Bar {b1: Text, b2: Text, b3: Text}>
-      schema RestrictedFoo
-        bar: inline Bar {b1: Text}
-        bars: [inline Bar {b2: Text, b3: Text}]
-        barList: List<inline Bar {b1: Text, b3: Text}>
-        moreBar: inline Bar {b1: Text, b2: Text}
-        moreBars: [inline Bar {b1: Text, b2: Text}]
-        moreBarList: List<inline Bar {b1: Text, b2: Text, b3: Text}>
-    `)).allSchemas;
-    const skippedFields = [];
-    const result = Schema.getRestrictedSchemaFields(foo, restrictedFoo, {skippedFields});
-    assert.lengthOf(Object.keys(result), 3);
-    assert.equal(result['bar'].kind, 'schema-nested');
-    assert.equal(result['bar'].schema.kind, 'schema-inline');
-    assert.deepEqual(Object.keys(result['bar'].schema.model.entitySchema.fields), ['b1']);
-    assert.equal(result['bars'].kind, 'schema-collection');
-    assert.equal(result['bars'].schema.kind, 'schema-nested');
-    assert.deepEqual(Object.keys(result['bars'].schema.schema.model.entitySchema.fields), ['b2', 'b3']);
-    assert.equal(result['barList'].kind, 'schema-ordered-list');
-    assert.equal(result['barList'].schema.kind, 'schema-nested');
-    assert.deepEqual(Object.keys(result['barList'].schema.schema.model.entitySchema.fields), ['b1', 'b3']);
-    assert.deepEqual(skippedFields, ['bar.b2', 'bars.b1', 'barList.b2', 'otherBar', 'otherBars', 'otherBarList']);
-  });
-
-  it('fails restricting schema fields with different kinds', async () => {
-    const [foo, restrictedFoo] = (await Manifest.parse(`
-      schema Foo
-        foo: Text
-      schema RestrictedFoo
-        foo: &Bar {foo: Text}
-    `)).allSchemas;
-    assert.throws(() => { Schema.getRestrictedSchemaFields(foo, restrictedFoo); });
   });
 });

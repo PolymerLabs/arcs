@@ -9,7 +9,7 @@
  */
 import {assert} from '../../../platform/chai-web.js';
 import {Manifest} from '../../../runtime/manifest.js';
-import {Modality} from '../../../runtime/modality.js';
+import {Modality} from '../../../runtime/manifest-types/modality.js';
 import {Relevance} from '../../../runtime/relevance.js';
 import {Runtime} from '../../../runtime/runtime.js';
 import {storageKeyPrefixForTest} from '../../../runtime/testing/handle-for-test.js';

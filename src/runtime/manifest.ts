@@ -19,7 +19,7 @@ import {Runnable} from './hot.js';
 import {Loader} from '../platform/loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-nodes.js';
-import {ParticleSpec} from './particle-spec.js';
+import {ParticleSpec} from './manifest-types/particle-spec.js';
 import {compareComparables} from './recipe/comparable.js';
 import {HandleEndPoint, ParticleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 import {Handle} from './recipe/handle.js';
@@ -35,7 +35,7 @@ import {Schema} from './schema.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
         ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType} from './type.js';
 import {Dictionary} from './hot.js';
-import {ClaimIsTag} from './claim.js';
+import {ClaimIsTag} from './manifest-types/claim.js';
 import {AbstractStore, StoreClaims} from './storage/abstract-store.js';
 import {Store} from './storage/store.js';
 import {StorageKey} from './storage/storage-key.js';
@@ -190,10 +190,6 @@ export class Manifest {
   }
   get allRecipes() {
     return [...new Set(this._findAll(manifest => manifest._recipes))];
-  }
-  get allHandles() {
-    // TODO(#4820) Update `reduce` to use flatMap
-    return this.allRecipes.reduce((acc, x) => acc.concat(x.handles), []);
   }
   get activeRecipe() {
     return this._recipes.find(recipe => recipe.getAnnotation('active'));
@@ -375,9 +371,6 @@ export class Manifest {
     return [...this.allRecipes
       .reduce((acc, r) => acc.concat(r.handles), [])
       .filter(h => this.typesMatch(h, type, subtype) && hasAllTags(h) && matchesFate(h))];
-  }
-  findHandlesById(id: string): Handle[] {
-    return this.allHandles.filter(h => h.id === id);
   }
   findInterfaceByName(name: string) {
     return this._find(manifest => manifest._interfaces.find(iface => iface.name === name));

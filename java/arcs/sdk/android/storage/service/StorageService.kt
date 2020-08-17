@@ -78,6 +78,7 @@ open class StorageService : ResurrectorService() {
     open val config = StorageServiceConfig(ttlJobEnabled = true, garbageCollectionJobEnabled = true)
     private val workManager: WorkManager by lazy { WorkManager.getInstance(this) }
     private var devToolsProxy: DevToolsProxyImpl? = null
+    private val storesScope by lazy { CoroutineScope(coroutineContext) }
 
     @ExperimentalCoroutinesApi
     override fun onCreate() {
@@ -163,7 +164,7 @@ open class StorageService : ResurrectorService() {
             intent.getParcelableExtra<ParcelableStoreOptions?>(EXTRA_OPTIONS)
         ) { "No StoreOptions found in Intent" }
 
-        val options = parcelableOptions.actual.copy()
+        val options = parcelableOptions.actual.copy(coroutineScope = storesScope)
         return BindingContext(
             stores.computeIfAbsent(options.storageKey) {
                 @Suppress("UNCHECKED_CAST")
@@ -183,6 +184,7 @@ open class StorageService : ResurrectorService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        storesScope.cancel()
         writeBackScope.cancel()
     }
 

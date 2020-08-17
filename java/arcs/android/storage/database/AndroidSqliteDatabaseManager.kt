@@ -23,7 +23,6 @@ import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.database.DatabasePerformanceStatistics.Snapshot
 import arcs.core.util.Log
 import arcs.core.util.guardedBy
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -58,8 +57,11 @@ class AndroidSqliteDatabaseManager(
      */
     private fun getLifecycle(): Lifecycle? {
         var lifecycleOwner = context
-        while (lifecycleOwner != null && lifecycleOwner !is LifecycleOwner &&
-            lifecycleOwner is ContextWrapper) {
+        while (
+            lifecycleOwner != null &&
+            lifecycleOwner !is LifecycleOwner &&
+            lifecycleOwner is ContextWrapper
+        ) {
             lifecycleOwner = lifecycleOwner.baseContext
         }
 
@@ -82,13 +84,13 @@ class AndroidSqliteDatabaseManager(
         val entry = registry.register(name, persistent)
         return mutex.withLock {
             dbCache[entry.name to entry.isPersistent]
-                ?: DatabaseImpl(context, name, persistent) {
-                    mutex.withLock {
-                        dbCache.remove(entry.name to entry.isPersistent)
-                    }
-                }.also {
-                    dbCache[entry.name to entry.isPersistent] = it
+            ?: DatabaseImpl(context, name, persistent) {
+                mutex.withLock {
+                    dbCache.remove(entry.name to entry.isPersistent)
                 }
+            }.also {
+                dbCache[entry.name to entry.isPersistent] = it
+            }
         }
     }
 
@@ -96,44 +98,45 @@ class AndroidSqliteDatabaseManager(
         dbCache.mapValues { it.value.snapshotStatistics() }
     }
 
-    override suspend fun resetAll() {
-        registry.fetchAll()
-            .map { getDatabase(it.name, it.isPersistent) as DatabaseImpl }
-            .forEach { it.reset() }
+    override suspend fun resetAll() = runOnAllDatabases { _, db ->
+        db.reset()
     }
 
-    override suspend fun removeExpiredEntities(): Job = coroutineScope {
-        launch {
+    override suspend fun removeExpiredEntities() = runOnAllDatabases { name, db ->
+        if (databaseSizeTooLarge(name)) {
+            // If the database size is too large, we clear it entirely.
+            db.removeAllEntities()
+        } else {
+            db.removeExpiredEntities()
+        }
+    }
+
+    override suspend fun removeAllEntities() = runOnAllDatabases { _, db ->
+        db.removeAllEntities()
+    }
+
+    override suspend fun removeEntitiesCreatedBetween(
+        startTimeMillis: Long,
+        endTimeMillis: Long
+    ) = runOnAllDatabases { _, db ->
+        db.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
+    }
+
+    override suspend fun runGarbageCollection() = runOnAllDatabases { _, db ->
+        db.runGarbageCollection()
+    }
+
+    /** Execute the provided block on each of the registered databases. */
+    private suspend fun runOnAllDatabases(block: suspend (name: String, db: Database) -> Unit) =
+        coroutineScope {
             registry.fetchAll()
                 .map { it.name to getDatabase(it.name, it.isPersistent) }
-                .forEach { (name, db) ->
-                    if (databaseSizeTooLarge(name)) {
-                        // If the database size is too large, we clear it entirely.
-                        db.removeAllEntities()
-                    } else {
-                        db.removeExpiredEntities()
+                .forEach {
+                    launch {
+                        block(it.first, it.second)
                     }
                 }
         }
-    }
-
-    override suspend fun removeAllEntities() =
-        registry.fetchAll()
-            .map { getDatabase(it.name, it.isPersistent) }
-            .forEach { it.removeAllEntities() }
-
-    override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
-        registry.fetchAll()
-            .map { getDatabase(it.name, it.isPersistent) }
-            .forEach { it.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis) }
-
-    override suspend fun runGarbageCollection(): Job = coroutineScope {
-        launch {
-            registry.fetchAll()
-                .map { getDatabase(it.name, it.isPersistent) }
-                .forEach { it.runGarbageCollection() }
-        }
-    }
 
     private fun databaseSizeTooLarge(dbName: String): Boolean {
         return context.getDatabasePath(dbName).length() > maxDbSizeBytes

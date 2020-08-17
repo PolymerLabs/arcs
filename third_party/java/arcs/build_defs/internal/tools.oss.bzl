@@ -6,6 +6,7 @@ the actual sigh_command invocations.
 """
 
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
+load(":run_test.bzl", "run_test")
 load("//third_party/java/arcs/build_defs/internal:plan.bzl", "recipe2plan")
 
 # buildifier: disable=function-docstring
@@ -66,4 +67,21 @@ def arcs_tool_schema2wasm(name, srcs, outs, deps, language_name, language_flag, 
         deps = deps,
         progress_message = "Generating %s entity schemas" % language_name,
         sigh_cmd = sigh_cmd,
+    )
+
+def arcs_tool_verify_policy(name, manifest_proto, policy_options_proto):
+    """Creates a test to check that a recipe is compliant with policy."""
+    run_test(
+        name = name,
+        test_binary = "//java/arcs/tools:verify_policy",
+        test_args = [
+            "--manifest",
+            "$(rootpath %s)" % manifest_proto,
+            "--options",
+            "$(rootpath %s)" % policy_options_proto,
+        ],
+        data = [
+            manifest_proto,
+            policy_options_proto,
+        ],
     )

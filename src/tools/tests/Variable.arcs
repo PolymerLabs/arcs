@@ -11,7 +11,7 @@ particle Ingest
   action: writes [Action {sessionId: Text, action: Text, timestampInMs: Number}]
 
 particle Process in '.Process'
-  data: reads [~a]
+  data: reads [~a with {sessionId: Text, action: Text, timestampInMs: Number}]
 
 @arcId('overviewArc')
 recipe VariableIngestion

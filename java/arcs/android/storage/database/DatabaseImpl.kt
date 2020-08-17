@@ -395,14 +395,30 @@ class DatabaseImpl(
                 ) {
                     val rawSingletons = mutableMapOf<FieldName, Referencable?>()
                     val rawCollections = mutableMapOf<FieldName, Set<Referencable>>()
+                    val inlineStorageKeyId = it.getLong(3)
+                    val entityId = db.rawQuery(
+                        """
+                            SELECT
+                                entity_id
+                            FROM entities
+                            WHERE storage_key_id = ?
+                        """.trimIndent(),
+                        arrayOf(inlineStorageKeyId.toString())
+                    ).forSingleResult {
+                        it.getString(0)
+                    }
                     val (dbSingletons, dbCollections) =
-                        getEntityFields(it.getLong(3), counters, db)
+                        getEntityFields(inlineStorageKeyId, counters, db)
                     dbSingletons.forEach { (fieldName, value) -> rawSingletons[fieldName] = value }
                     dbCollections.forEach {
                         (fieldName, value) -> rawCollections[fieldName] = value
                     }
                     RawEntity(
-                        id = "",
+                        id = requireNotNull(entityId) {
+                            "DB in an inconsistent state: entity data exists against " +
+                            "storage_key_id $inlineStorageKeyId without matching ID from " +
+                            "entities table"
+                        },
                         singletons = rawSingletons,
                         collections = rawCollections
                     )

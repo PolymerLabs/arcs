@@ -9,7 +9,7 @@
  */
 
 import {StorageProxy} from './storage-proxy.js';
-import {Type, CollectionType, EntityType, ReferenceType, SingletonType, InterfaceType, MuxType, CountType} from '../type.js';
+import {Type, CollectionType, EntityType, ReferenceType, SingletonType, InterfaceType, MuxType} from '../type.js';
 import {Ttl} from '../capabilities.js';
 import {SingletonHandle, CollectionHandle, Handle} from './handle.js';
 import {Particle} from '../particle.js';
@@ -17,7 +17,7 @@ import {CRDTSingletonTypeRecord} from '../crdt/crdt-singleton.js';
 import {ActiveStore, Store, StoreMuxer} from './store.js';
 import {Entity, SerializedEntity} from '../entity.js';
 import {Id, IdGenerator} from '../id.js';
-import {ParticleSpec, StorableSerializedParticleSpec} from '../particle-spec.js';
+import {ParticleSpec, StorableSerializedParticleSpec} from '../manifest-types/particle-spec.js';
 import {CRDTCollectionTypeRecord} from '../crdt/crdt-collection.js';
 import {SerializedReference, Reference} from '../reference.js';
 import {StoreInfo, AbstractStore, isMuxEntityStore} from './abstract-store.js';

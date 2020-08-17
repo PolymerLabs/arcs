@@ -11,8 +11,6 @@
 
 package arcs.core.storage.database
 
-import kotlinx.coroutines.Job
-
 /**
  * Defines an abstract factory capable of instantiating (or re-using, when necessary) a [Database].
  */
@@ -41,7 +39,7 @@ interface DatabaseManager {
         Map<DatabaseIdentifier, DatabasePerformanceStatistics.Snapshot>
 
     /** Clears all expired entities, in all known databases.  */
-    suspend fun removeExpiredEntities(): Job
+    suspend fun removeExpiredEntities()
 
     /** Clears all entities, in all known databases.  */
     suspend fun removeAllEntities()
@@ -57,7 +55,7 @@ interface DatabaseManager {
     suspend fun resetAll()
 
     /** Garbage collection run: removes unused entities. */
-    suspend fun runGarbageCollection(): Job
+    suspend fun runGarbageCollection()
 }
 
 /** Identifier for an individual [Database] instance. */

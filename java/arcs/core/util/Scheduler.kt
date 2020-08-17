@@ -12,7 +12,9 @@
 package arcs.core.util
 
 import kotlin.coroutines.CoroutineContext
+import kotlin.math.abs
 import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Runnable
@@ -40,7 +42,8 @@ import kotlinx.coroutines.withTimeout
 @Suppress("EXPERIMENTAL_API_USAGE", "MemberVisibilityCanBePrivate")
 class Scheduler(
     context: CoroutineContext,
-    private val agendaProcessingTimeoutMs: Long = DEFAULT_AGENDA_PROCESSING_TIMEOUT_MS
+    private val agendaProcessingTimeoutMs: Long = DEFAULT_AGENDA_PROCESSING_TIMEOUT_MS,
+    private val timer: Time? = null
 ) {
     private val log = TaggedLog { "Scheduler" }
     /* internal */
@@ -55,6 +58,8 @@ class Scheduler(
     private val dispatcher: CoroutineDispatcher by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         Dispatcher(this)
     }
+
+    private var lastIdleTimestamp = atomic(timer?.currentTimeMillis ?: 0L)
 
     /**
      * Flow of booleans indicating when the Scheduler has entered (`true`) or exited (`false`) and
@@ -84,6 +89,7 @@ class Scheduler(
                     agenda.listenersByNamespace.clear()
                     val agendasLeft = agendasInFlight.getAndDecrement()
                     if (agendasLeft == 1) {
+                        timer?.currentTimeMillis.let { lastIdleTimestamp.update { it } }
                         idlenessChannel.send(true)
                     }
                 }
@@ -119,11 +125,28 @@ class Scheduler(
         pausedChannel.offer(false)
     }
 
+    private suspend inline fun waitForIdle(debounceTime: Long, checkOnly: Boolean = false) =
+        idlenessFlow.debounce(debounceTime).filter { it || checkOnly }.first()
+
     /** Wait for the [Scheduler] to become idle. */
     /* internal */
-    suspend fun waitForIdle() {
-        idlenessFlow.debounce(50).filter { it }.first()
-    }
+    suspend fun waitForIdle() = timer?.let {
+        if (idlenessFlow.first()) {
+            val debounceTimeWhenAlreadyIdle =
+                DEFAULT_DEBOUNCING_TIME_MS -
+                    abs(timer.currentTimeMillis - lastIdleTimestamp.value)
+
+            if (
+                debounceTimeWhenAlreadyIdle <= 0 ||
+                waitForIdle(debounceTimeWhenAlreadyIdle, checkOnly = true)
+            ) {
+                return true
+            }
+        }
+
+        // already-busy or idle-to-busy-within-default-debounce-window
+        waitForIdle(DEFAULT_DEBOUNCING_TIME_MS)
+    } ?: waitForIdle(DEFAULT_DEBOUNCING_TIME_MS)
 
     /** Returns a wrapper of this [Scheduler] capable of serving as a [CoroutineDispatcher]. */
     fun asCoroutineDispatcher(): CoroutineDispatcher = dispatcher
@@ -290,5 +313,8 @@ class Scheduler(
          * execution is allowed to take.
          */
         const val DEFAULT_AGENDA_PROCESSING_TIMEOUT_MS = 5000L
+
+        /** Sub-frame time at 90 fps. */
+        private const val DEFAULT_DEBOUNCING_TIME_MS = 6L
     }
 }
