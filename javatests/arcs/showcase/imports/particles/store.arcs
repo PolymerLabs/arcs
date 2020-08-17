@@ -1,0 +1,23 @@
+meta
+  namespace: arcs.showcase.imports.particles
+
+import '../schemas/common.arcs'
+
+// Sells tea with a matching name
+particle SellByName in '.SellTeaByName'
+  order: reads Order {name: Text, amt: Number}
+  inventory: reads writes [Tea]
+  customer: writes [Tea]
+
+// Sells tea with a matching variety
+particle SellByVariety in '.SellTeaByVarety'
+  order: reads Order {variety: Text, amt: Number}
+  inventory: reads writes [Tea]
+  customer: writes [Tea]
+
+// Sells tea with a matching origin and variety
+particle SellByOriginAndVariety in '.SellTeaByOriginAndVarety'
+  order: reads Order {variety: Text, origin: inline Place, amt: Number}
+  inventory: reads writes [Tea]
+  customer: writes [Tea]
+

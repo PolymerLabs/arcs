@@ -8,10 +8,10 @@ schema Place
   lng: Number
 
 schema Tea
+  name: Text
   origin: inline Place
   variety: Text
   weight: Number
   unitPrice: Number
   expirationDate: Long
-
 

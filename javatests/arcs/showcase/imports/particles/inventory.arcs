@@ -1,0 +1,17 @@
+meta
+  namespace: arcs.showcase.imports.particles
+
+import '../schemas/common.arcs'
+import '../schemas/shipping.arcs'
+
+// Given the container, determines which Store the Tea should belong to
+particle SortInventory in '.SortInventory'
+  containers: reads [Container]
+  categorized: writes [(Store {id: Text}, Tea)]
+
+
+// Produces all the tea that belongs to the store, given the processed inventory
+particle ProduceInventory in '.ProduceInventory'
+  type: reads Store {id: Text}
+  categorized: reads [(Store {id: Text}, Tea)]
+  tea: writes [Tea]
