@@ -1028,7 +1028,6 @@ class DatabaseImpl(
                     HAVING entities.creation_timestamp < $twoDaysAgo
                     AND storage_keys.storage_key NOT LIKE 'inline%'
                     AND (orphan OR noRef)
-                    AND storage_keys.storage_key NOT LIKE 'inline%'
                 """.trimIndent(),
                 arrayOf()
             ).forEach {
