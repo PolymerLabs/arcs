@@ -1,6 +1,7 @@
 package arcs.tools
 
 import arcs.core.data.CountType
+import arcs.core.data.CreatableStorageKey
 import arcs.core.data.EntityType
 import arcs.core.data.FieldName
 import arcs.core.data.FieldType
@@ -51,13 +52,17 @@ fun Recipe.Handle.toGeneration(planName: String) = PropertySpec
             "handle" to Plan.Handle::class,
             // TODO(161941222) verify join handles work
             "storageParser" to StorageKeyParser::class,
-            "key" to storageKey.orEmpty(),
+            "key" to storageKey,
             "type" to type.toGeneration(),
-            "annotations" to emptyList<Annotation>().toGeneration()
+            "annotations" to emptyList<Annotation>().toGeneration(),
+            "creatable" to CreatableStorageKey::class,
+            "name" to name
         )
+        val storageKeyTemplate = if (storageKey != null) "storageKey = %storageParser:T.parse(%key:S),"
+                                 else "storageKey = %creatable:T(%name:S),"
         addNamed("""
             %handle:T(
-                storageKey = %storageParser:T.parse(%key:S),
+                ${storageKeyTemplate}
                 type = %type:L,    
                 annotations = %annotations:L
             )

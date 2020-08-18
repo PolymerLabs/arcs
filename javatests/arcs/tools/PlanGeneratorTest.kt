@@ -1,6 +1,8 @@
 package arcs.tools
 
+import arcs.core.data.EntityType
 import arcs.core.data.FieldType
+import arcs.core.data.Recipe
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
@@ -9,18 +11,65 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
+fun String.normalize() = this.replace("\\s".toRegex(), "")
+
 @RunWith(JUnit4::class)
 class PlanGeneratorTest {
 
+    private val schema = Schema(
+        setOf(SchemaName("Foo")),
+        SchemaFields(singletons = mapOf("sku" to FieldType.Int), collections = emptyMap()),
+        "fooHash"
+    )
+
+    private val entity = EntityType(schema)
+
     @Test
-    fun handle_storageKey() {
-        // TODO(161940706) Write tests
+    fun handle() {
+        assertThat(
+            Recipe.Handle(
+                name = "foo",
+                fate = Recipe.Handle.Fate.CREATE,
+                type = entity,
+                storageKey = "AKey"
+            ).toGeneration("FooPlan").toString().normalize()
+        ).isEqualTo(
+           """
+            val FooPlan_foo: arcs.core.data.Plan.Handle = arcs.core.data.Plan.Handle(
+                storageKey = arcs.core.storage.StorageKeyParser.parse("AKey"),
+                type = arcs.core.data.EntityType(arcs.core.data.Schema(
+                    names = setOf(arcs.core.data.SchemaName("Foo")),
+                    fields = arcs.core.data.SchemaFields(
+                        singletons = mapOf("sku" to arcs.core.data.FieldType.Int),
+                        collections = emptyMap()
+                    ),
+                    hash = "fooHash"
+                )),
+                annotations = emptyList()
+            )
+           """.normalize()
+        )
     }
 
     @Test
-    fun handle_joinStorageKeys() {
-        // TODO(161940706) Write tests
-        // TODO(161941222) verify join handles work
+    fun handle_storageKey() {
+        assertThat(
+            Recipe.Handle(
+                name = "foo",
+                fate = Recipe.Handle.Fate.CREATE,
+                type = entity,
+                storageKey = "AKey"
+            ).toGeneration("FooPlan").toString()
+        ).contains("""storageKey = arcs.core.storage.StorageKeyParser.parse("AKey")""")
+
+        assertThat(
+            Recipe.Handle(
+                name = "foo",
+                fate = Recipe.Handle.Fate.CREATE,
+                type = entity,
+                storageKey = null
+            ).toGeneration("FooPlan").toString()
+        ).contains("""storageKey = arcs.core.data.CreatableStorageKey("foo")""")
     }
 
     @Test
