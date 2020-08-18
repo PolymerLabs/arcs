@@ -1,6 +1,7 @@
 package arcs.tools
 
 import arcs.core.data.CollectionType
+import arcs.core.data.CountType
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.Recipe
@@ -265,7 +266,51 @@ class PlanGeneratorTest {
 
     @Test
     fun type_complex() {
-        // TODO(161940706) Write tests
+        assertThat(
+            TupleType(listOf(
+                CollectionType(ReferenceType(entity)),
+                TypeVariable("a", SingletonType(entity), true),
+                CountType()
+            )).toGeneration().toString().normalize()
+        ).isEqualTo(
+            """
+            arcs.core.data.TupleType(
+                listOf(
+                    arcs.core.data.CollectionType(
+                        arcs.core.data.ReferenceType(
+                            arcs.core.data.EntityType(
+                                arcs.core.data.Schema(
+                                    names = setOf(arcs.core.data.SchemaName("Foo")), 
+                                    fields = arcs.core.data.SchemaFields(
+                                        singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                                        collections = emptyMap()
+                                    ), 
+                                    hash = "fooHash"
+                                )
+                            )
+                        )
+                    ),
+                    arcs.core.data.TypeVariable(
+                        "a",
+                        arcs.core.data.SingletonType(
+                            arcs.core.data.EntityType(
+                                arcs.core.data.Schema(
+                                    names = setOf(arcs.core.data.SchemaName("Foo")), 
+                                    fields = arcs.core.data.SchemaFields(
+                                        singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                                        collections = emptyMap()
+                                    ), 
+                                    hash = "fooHash"
+                                )
+                            )
+                        ),
+                        true
+                    ),
+                    arcs.core.data.CountType()
+                )
+            )
+            """.normalize()
+        )
     }
 
     @Test
