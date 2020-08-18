@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 
-import {isRoot} from './manifest-types/particle-spec.js';
+import {isRoot} from './arcs-types/particle-spec.js';
 import {HandleConnection} from './recipe/handle-connection.js';
 import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';

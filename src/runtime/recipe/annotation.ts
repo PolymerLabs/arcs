@@ -11,7 +11,7 @@
 import {assert} from '../../platform/assert-web.js';
 import {Comparable, compareStrings, compareArrays, compareBools} from './comparable.js';
 import {Dictionary} from '../hot.js';
-import {AnnotationTargetValue, AnnotationRetentionValue, SchemaPrimitiveTypeValue} from '../manifest-ast-nodes.js';
+import {AnnotationTargetValue, AnnotationRetentionValue, SchemaPrimitiveTypeValue} from '../manifest-ast-types/manifest-ast-nodes.js';
 import {ManifestStringBuilder} from '../manifest-string-builder.js';
 
 export class Annotation implements Comparable<Annotation> {

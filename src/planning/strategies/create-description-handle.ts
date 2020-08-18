@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {HandleConnectionSpec} from '../../runtime/manifest-types/particle-spec.js';
+import {HandleConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';

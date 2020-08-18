@@ -9,7 +9,7 @@
  */
 
 import {HandleConnectionSpec} from './particle-spec.js';
-import * as AstNode from '../manifest-ast-nodes.js';
+import * as AstNode from '../manifest-ast-types/manifest-ast-nodes.js';
 import {resolveFieldPathType} from '../field-path.js';
 import {ClaimType} from './enums.js';
 

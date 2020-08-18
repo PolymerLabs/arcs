@@ -15,13 +15,13 @@ import {Description} from '../../runtime/description.js';
 import {Dictionary} from '../../runtime/hot.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {Modality} from '../../runtime/manifest-types/modality.js';
+import {Modality} from '../../runtime/arcs-types/modality.js';
 import {RecipeResolver} from '../../runtime/recipe/recipe-resolver.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {Search} from '../../runtime/recipe/search.js';
 import {Relevance} from '../../runtime/relevance.js';
 import {SuggestFilter} from './suggest-filter.js';
-import {isRoot} from '../../runtime/manifest-types/particle-spec.js';
+import {isRoot} from '../../runtime/arcs-types/particle-spec.js';
 
 
 export type DescriptionProperties = {

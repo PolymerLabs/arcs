@@ -15,7 +15,6 @@ import arcs.core.data.ParticleSpec
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
-import arcs.core.util.Result
 import com.google.common.truth.Truth.assertThat
 import com.google.protobuf.TextFormat
 import kotlin.test.assertFailsWith
@@ -38,11 +37,7 @@ fun decodeHandleConnectionSpecProto(protoText: String): HandleConnectionSpec {
 fun decodeParticleSpecProto(protoText: String): ParticleSpec {
     val builder = ParticleSpecProto.newBuilder()
     TextFormat.getParser().merge(protoText, builder)
-    val result = builder.build().decode()
-    return when (result) {
-        is Result.Ok -> result.value
-        is Result.Err -> throw result.thrown
-    }
+    return builder.build().decode()
 }
 
 @RunWith(JUnit4::class)

@@ -14,7 +14,7 @@ import {BigCollectionType, CollectionType, EntityType, HandleType, InterfaceType
         ReferenceType, TupleType, SlotType, Type, TypeVariable, TypeVariableInfo, MuxType} from '../type.js';
 import {Entity} from '../entity.js';
 import {Refinement} from '../refiner.js';
-import {UnaryExpressionNode, FieldNode, Op} from '../manifest-ast-nodes.js';
+import {UnaryExpressionNode, FieldNode, Op} from '../manifest-ast-types/manifest-ast-nodes.js';
 
 // For reference, this is a list of all the types and their contained data:
 //   EntityType        : Schema
