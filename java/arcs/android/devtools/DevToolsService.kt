@@ -61,28 +61,30 @@ open class DevToolsService : Service() {
                 @Suppress("UNCHECKED_CAST")
                 storageClass = extras.getSerializable("STORAGE_CLASS") as Class<StorageService>
             }
-            val service = initialize()
-            val proxy = service.devToolsProxy
+            if (storageService == null) {
+                val service = initialize()
+                val proxy = service.devToolsProxy
 
-            forwardProxyMessageToken = proxy.registerBindingContextProxyMessageCallback(
-                object : IStorageServiceCallback.Stub() {
-                    override fun onProxyMessage(proxyMessage: ByteArray) {
-                        scope.launch {
-                            val actualMessage = proxyMessage.decodeProxyMessage()
-                            val rawMessage = RawDevToolsMessage(actualMessage.toString())
-                            devToolsServer.send(rawMessage.toJson())
+                forwardProxyMessageToken = proxy.registerBindingContextProxyMessageCallback(
+                    object : IStorageServiceCallback.Stub() {
+                        override fun onProxyMessage(proxyMessage: ByteArray) {
+                            scope.launch {
+                                val actualMessage = proxyMessage.decodeProxyMessage()
+                                val rawMessage = RawDevToolsMessage(actualMessage.toString())
+                                devToolsServer.send(rawMessage.toJson())
+                            }
                         }
                     }
+                )
+
+                binder.send(service.storageKeys ?: "")
+                devToolsServer.addOnOpenWebsocketCallback {
+                    devToolsServer.send(service.storageKeys ?: "")
                 }
-            )
 
-            binder.send(service.storageKeys ?: "")
-            devToolsServer.addOnOpenWebsocketCallback {
-                devToolsServer.send(service.storageKeys ?: "")
+                storageService = service
+                devToolsProxy = proxy
             }
-
-            storageService = service
-            devToolsProxy = proxy
         }
 
         // Create the notification and start this service in the foreground.
@@ -96,7 +98,7 @@ open class DevToolsService : Service() {
         val notification: Notification = Notification.Builder(this, CHANNEL_ID)
             .setContentTitle("Arcs DevTools")
             .setContentText("Connect a client to view Arcs developer tooling")
-            .setSmallIcon(R.drawable.notification_icon_background)
+            .setSmallIcon(R.drawable.devtools_icon)
             .build()
 
         startForeground(2, notification)
