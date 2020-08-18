@@ -1241,11 +1241,13 @@ class DatabaseImpl(
                     )
                 ).map { it.getString(0) }.toSet()
 
-                // Remove from collection_entries all references to the expired entities.
+                // Remove from collection_entries (for top level collections) all references to the
+                // expired entities.
                 delete(
                     TABLE_COLLECTION_ENTRIES,
                     """
-                        collection_id IN (SELECT id FROM collections WHERE type_id > ?)
+                        collection_id IN (SELECT id FROM collections 
+                                          WHERE type_id > ? AND version_map IS NOT NULL)
                         AND value_id NOT IN (SELECT id FROM entity_refs)
                     """.trimIndent(),
                     arrayOf(LARGEST_PRIMITIVE_TYPE_ID.toString()) // only entity collections.
@@ -1997,7 +1999,9 @@ class DatabaseImpl(
                 CREATE TABLE collection_entries (
                     collection_id INTEGER NOT NULL,
                     -- For collections of primitives: value_id for primitive in collection.
-                    -- For collections/singletons of entities: id of reference in entity_refs table.
+                    -- For collections of inline entities: storage_key_id of entity.
+                    -- For collections/singletons of (references to) entities: id of reference in
+                    --   entity_refs table.
                     value_id INTEGER NOT NULL,
                     -- Serialized VersionMapProto for the entry in this collection/singleton
                     -- (version at which the entry was added to the collection).
