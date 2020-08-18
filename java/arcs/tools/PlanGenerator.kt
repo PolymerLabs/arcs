@@ -83,10 +83,11 @@ fun Type.toGeneration(): CodeBlock = buildCodeBlock {
             type.elementTypes.toGeneration { builder, item -> builder.add(item.toGeneration()) }
         )
         is TypeVariable -> add(
-            "%T(%S, %L)",
+            "%T(%S, %L, %L)",
             TypeVariable::class,
             type.name,
-            type.constraint?.toGeneration()
+            type.constraint?.toGeneration(),
+            type.maxAccess
         )
         else -> throw IllegalArgumentException("[Type] $type is not supported.")
     }

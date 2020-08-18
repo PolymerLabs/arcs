@@ -10,6 +10,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
 import arcs.core.data.SingletonType
 import arcs.core.data.TupleType
+import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -204,7 +205,62 @@ class PlanGeneratorTest {
 
     @Test
     fun type_variable() {
-        // TODO(161940706) Write tests
+        assertThat(
+            TypeVariable("a", SingletonType(entity)).toGeneration().toString().normalize()
+        ).isEqualTo(
+            """
+            arcs.core.data.TypeVariable(
+                "a",
+                arcs.core.data.SingletonType(
+                    arcs.core.data.EntityType(
+                        arcs.core.data.Schema(
+                            names = setOf(arcs.core.data.SchemaName("Foo")), 
+                            fields = arcs.core.data.SchemaFields(
+                                singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                                collections = emptyMap()
+                            ), 
+                            hash = "fooHash"
+                        )
+                    )
+                ),
+                false
+            )    
+            """.normalize()
+        )
+    }
+
+
+    @Test
+    fun type_variable_unconstrained() {
+        assertThat(
+            TypeVariable("a").toGeneration().toString().normalize()
+        ).isEqualTo("""arcs.core.data.TypeVariable("a", null, false)""".normalize())
+    }
+
+    @Test
+    fun type_variable_maxAccess() {
+        assertThat(
+            TypeVariable("a", SingletonType(entity), true).toGeneration().toString().normalize()
+        ).isEqualTo(
+            """
+            arcs.core.data.TypeVariable(
+                "a",
+                arcs.core.data.SingletonType(
+                    arcs.core.data.EntityType(
+                        arcs.core.data.Schema(
+                            names = setOf(arcs.core.data.SchemaName("Foo")), 
+                            fields = arcs.core.data.SchemaFields(
+                                singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                                collections = emptyMap()
+                            ), 
+                            hash = "fooHash"
+                        )
+                    )
+                ),
+                true
+            )    
+            """.normalize()
+        )
     }
 
     @Test
