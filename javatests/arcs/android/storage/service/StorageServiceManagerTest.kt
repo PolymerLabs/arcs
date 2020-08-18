@@ -129,38 +129,14 @@ class StorageServiceManagerTest {
     }
 
     @Test
-    fun repro() = runBlocking {
-        val handle = createSingletonHandle(databaseKey)
+    fun resetDatabases() = runBlocking {
+        val handle = createCollectionHandle(databaseKey)
         val entity = DummyEntity().apply {
             num = 1.0
             texts = setOf("1", "one")
             inlineEntity = InlineDummyEntity().apply {
                 text = "inline"
             }
-        }
-        handle.dispatchStore(entity)
-        log("Wrote entity")
-
-        val manager = buildManager()
-        val deferredResult = DeferredResult(kotlin.coroutines.coroutineContext)
-        log("Clearing databases")
-        manager.clearAll(deferredResult)
-
-        withTimeout(2000) {
-            assertThat(deferredResult.await()).isTrue()
-        }
-
-        // Create a new handle (with new Entity manager) to confirm data is gone from storage.
-        val newHandle = createSingletonHandle(databaseKey)
-        assertThat(newHandle.dispatchFetch()).isNull()
-    }
-
-    @Test
-    fun resetDatabases() = runBlocking {
-        val handle = createCollectionHandle(databaseKey)
-        val entity = DummyEntity().apply {
-            num = 1.0
-            texts = setOf("1", "one")
         }
         handle.dispatchStore(entity)
         log("Wrote entity")
@@ -193,6 +169,9 @@ class StorageServiceManagerTest {
         val entity = DummyEntity().apply {
             num = 1.0
             texts = setOf("1", "one")
+            inlineEntity = InlineDummyEntity().apply {
+                text = "inline"
+            }
         }
         handle.dispatchStore(entity)
         log("Wrote entity")

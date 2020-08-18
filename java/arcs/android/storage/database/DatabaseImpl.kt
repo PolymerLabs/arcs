@@ -1071,16 +1071,19 @@ class DatabaseImpl(
     }
 
     override suspend fun removeAllEntities() {
-        return clearEntities("""
+        // Filter by creation_timestamp to exclude inline entities (those are handled inside
+        // clearEntities).
+        clearEntities("""
             SELECT storage_key_id, storage_key 
             FROM entities 
             LEFT JOIN storage_keys
-                ON entities.storage_key_id = storage_keys.id        
+                ON entities.storage_key_id = storage_keys.id
+            WHERE creation_timestamp > -1        
             """)
     }
 
     override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
-        return clearEntities("""
+        clearEntities("""
             SELECT storage_key_id, storage_key 
             FROM entities 
             LEFT JOIN storage_keys
@@ -1122,7 +1125,7 @@ class DatabaseImpl(
     private suspend fun clearEntities(query: String, entitiesAreTopLevel: Boolean = true) {
         writableDatabase.transaction {
             val db = this
-            // Find all expired entities.
+            // Query the storage_keys table with the given query.
             val storageKeyIdsPairs = rawQuery(query.trimIndent(), arrayOf())
                 .map { it.getLong(0) to it.getString(1) }.toSet()
             val storageKeyIds = storageKeyIdsPairs.map { it.first.toString() }.toTypedArray()
@@ -1256,8 +1259,6 @@ class DatabaseImpl(
                         it.onDatabaseDelete(null)
                     }
                 }
-            } else {
-                emptyList()
             }
         }
     }
