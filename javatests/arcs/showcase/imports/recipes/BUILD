@@ -19,6 +19,7 @@ arcs_kt_gen(
     deps = [
         ":imports_recipe",
         "//javatests/arcs/showcase/imports/particles:inventory_particles",
+        "//javatests/arcs/showcase/imports/stores:quality_store",
     ],
 )
 
