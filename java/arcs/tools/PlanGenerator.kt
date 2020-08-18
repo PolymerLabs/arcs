@@ -58,11 +58,13 @@ fun Recipe.Handle.toGeneration(planName: String) = PropertySpec
             "creatable" to CreatableStorageKey::class,
             "name" to name
         )
-        val storageKeyTemplate = if (storageKey != null) "storageKey = %storageParser:T.parse(%key:S),"
-                                 else "storageKey = %creatable:T(%name:S),"
+        val storageKeyTemplate = storageKey
+            ?.let { "storageKey = %storageParser:T.parse(%key:S)," }
+            ?: "storageKey = %creatable:T(%name:S),"
+
         addNamed("""
             %handle:T(
-                ${storageKeyTemplate}
+                $storageKeyTemplate
                 type = %type:L,    
                 annotations = %annotations:L
             )
@@ -75,7 +77,11 @@ fun Type.toGeneration(): CodeBlock = buildCodeBlock {
         is EntityType -> add("%T(%L)", EntityType::class, type.entitySchema.toGeneration())
         is Type.TypeContainer<*> -> add("%T(%L)", type::class, type.containedType.toGeneration())
         is CountType -> add("%T()", CountType::class)
-        is TupleType -> add("%T(%L)", TupleType::class, type.elementTypes.toGeneration("%L"))
+        is TupleType -> add(
+            "%T(%L)",
+            TupleType::class,
+            type.elementTypes.toGeneration { builder, item -> builder.add(item.toGeneration()) }
+        )
         is TypeVariable -> add(
             "%T(%S, %L)",
             TypeVariable::class,

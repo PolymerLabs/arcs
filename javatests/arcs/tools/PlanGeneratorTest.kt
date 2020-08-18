@@ -1,11 +1,15 @@
 package arcs.tools
 
+import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
 import arcs.core.data.Recipe
+import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.data.SingletonType
+import arcs.core.data.TupleType
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,7 +38,7 @@ class PlanGeneratorTest {
                 storageKey = "AKey"
             ).toGeneration("FooPlan").toString().normalize()
         ).isEqualTo(
-           """
+            """
             val FooPlan_foo: arcs.core.data.Plan.Handle = arcs.core.data.Plan.Handle(
                 storageKey = arcs.core.storage.StorageKeyParser.parse("AKey"),
                 type = arcs.core.data.EntityType(arcs.core.data.Schema(
@@ -47,7 +51,7 @@ class PlanGeneratorTest {
                 )),
                 annotations = emptyList()
             )
-           """.normalize()
+            """.normalize()
         )
     }
 
@@ -74,27 +78,128 @@ class PlanGeneratorTest {
 
     @Test
     fun type_entity() {
-        // TODO(161940706) Write tests
+        assertThat(
+            entity.toGeneration().toString().normalize()
+        ).isEqualTo(
+            """
+            arcs.core.data.EntityType(
+                arcs.core.data.Schema(
+                    names = setOf(arcs.core.data.SchemaName("Foo")), 
+                    fields = arcs.core.data.SchemaFields(
+                        singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                        collections = emptyMap()
+                    ), 
+                    hash = "fooHash"
+                )
+            )
+            """.normalize()
+        )
     }
 
     @Test
     fun type_singleton() {
-        // TODO(161940706) Write tests
+        assertThat(
+            SingletonType(entity).toGeneration().toString().normalize()
+        ).isEqualTo(
+            """
+            arcs.core.data.SingletonType(
+                arcs.core.data.EntityType(
+                    arcs.core.data.Schema(
+                        names = setOf(arcs.core.data.SchemaName("Foo")), 
+                        fields = arcs.core.data.SchemaFields(
+                            singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                            collections = emptyMap()
+                        ), 
+                        hash = "fooHash"
+                    )
+                )
+            )
+            """.normalize()
+        )
     }
 
     @Test
     fun type_collection() {
-        // TODO(161940706) Write tests
+        assertThat(
+            CollectionType(entity).toGeneration().toString().normalize()
+        ).isEqualTo(
+            """
+            arcs.core.data.CollectionType(
+                arcs.core.data.EntityType(
+                    arcs.core.data.Schema(
+                        names = setOf(arcs.core.data.SchemaName("Foo")), 
+                        fields = arcs.core.data.SchemaFields(
+                            singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                            collections = emptyMap()
+                        ), 
+                        hash = "fooHash"
+                    )
+                )
+            )
+            """.normalize()
+        )
     }
 
     @Test
     fun type_reference() {
-        // TODO(161940706) Write tests
+        assertThat(
+            ReferenceType(entity).toGeneration().toString().normalize()
+        ).isEqualTo(
+            """
+            arcs.core.data.ReferenceType(
+                arcs.core.data.EntityType(
+                    arcs.core.data.Schema(
+                        names = setOf(arcs.core.data.SchemaName("Foo")), 
+                        fields = arcs.core.data.SchemaFields(
+                            singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                            collections = emptyMap()
+                        ), 
+                        hash = "fooHash"
+                    )
+                )
+            )
+            """.normalize()
+        )
     }
 
     @Test
     fun type_tuple() {
-        // TODO(161940706) Write tests
+        assertThat(
+            TupleType(listOf(
+                SingletonType(entity), SingletonType(entity)
+            )).toGeneration().toString().normalize()
+        ).isEqualTo(
+            """
+            arcs.core.data.TupleType(
+                listOf(
+                    arcs.core.data.SingletonType(
+                        arcs.core.data.EntityType(
+                            arcs.core.data.Schema(
+                                names = setOf(arcs.core.data.SchemaName("Foo")), 
+                                fields = arcs.core.data.SchemaFields(
+                                    singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                                    collections = emptyMap()
+                                ), 
+                                hash = "fooHash"
+                            )
+                        )
+                    ),
+                    arcs.core.data.SingletonType(
+                        arcs.core.data.EntityType(
+                            arcs.core.data.Schema(
+                                names = setOf(arcs.core.data.SchemaName("Foo")), 
+                                fields = arcs.core.data.SchemaFields(
+                                    singletons = mapOf("sku" to arcs.core.data.FieldType.Int), 
+                                    collections = emptyMap()
+                                ), 
+                                hash = "fooHash"
+                            )
+                        )
+                    )
+                )
+            )
+            """.normalize()
+        )
     }
 
     @Test
