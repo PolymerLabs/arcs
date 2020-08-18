@@ -15,6 +15,7 @@ load(
     _arcs_kt_native_library = "arcs_kt_native_library",
     _arcs_kt_particles = "arcs_kt_particles",
     _arcs_kt_plan = "arcs_kt_plan",
+    _arcs_kt_plan_2 = "arcs_kt_plan_2",
 )
 load(
     "//third_party/java/arcs/build_defs/internal:manifest.bzl",
@@ -77,6 +78,15 @@ def arcs_kt_plan(**kwargs):
     """
     kwargs.setdefault("arcs_sdk_deps", DEFAULT_ARCS_SDK_DEPS)
     _arcs_kt_plan(**kwargs)
+
+def arcs_kt_plan_2(**kwargs):
+    """Wrapper around _arcs_kt_plan_2 that sets the default Arcs SDK
+
+    Args:
+      **kwargs: Set of args to forward to _arcs_kt_plan_2
+    """
+    kwargs.setdefault("arcs_sdk_deps", DEFAULT_ARCS_SDK_DEPS)
+    _arcs_kt_plan_2(**kwargs)
 
 def arcs_kt_schema(**kwargs):
     """Wrapper around _arcs_kt_schema that sets the default Arcs SDK
