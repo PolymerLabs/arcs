@@ -21,5 +21,5 @@ tools/sigh schema2wasm --quiet --kotlin src/tools/tests/golden_kt.arcs --outdir 
 
 status "[ 5 / 5 ] Recipe2Plan Golden"
 tools/sigh recipe2plan --quiet --format kotlin java/arcs/core/data/testdata/WriterReaderExample.arcs --policies=java/arcs/core/data/testdata/WriterReaderPoliciesExample.arcs  --outdir src/tools/tests/goldens/ --outfile WriterReaderExample.kt
-tools/bazelisk build //java/arcs/core/data/testdata:plan_from_proto_GeneratedPlan > /dev/null 2>&1
-cp bazel-bin/java/arcs/core/data/testdata/example-proto.jvm.kt src/tools/tests/goldens/generated-from-kotlin.jvm.kt
+tools/bazelisk build //java/arcs/core/data/testdata:WriterReaderExample_GeneratedPlan2 > /dev/null 2>&1
+cp bazel-bin/java/arcs/core/data/testdata/WriterReaderExample_GeneratedPlan2.jvm.kt src/tools/tests/goldens/generated-from-kotlin.jvm.kt

@@ -39,7 +39,7 @@ const testData = [
   },
   {
     label: 'Kotlin via Kotlin',
-    generated: 'java/arcs/core/data/testdata/example-proto.jvm.kt',
+    generated: 'java/arcs/core/data/testdata/WriterReaderExample_GeneratedPlan2.jvm.kt',
     golden: 'src/tools/tests/goldens/generated-from-kotlin.jvm.kt',
   }
 ];

@@ -1,4 +1,5 @@
 // GENERATED CODE -- DO NOT EDIT
+//
 // TODO(b/161941018): Improve whitespace / formatting.
 package arcs.core.data.testdata
 
@@ -14,7 +15,7 @@ import arcs.core.storage.StorageKeyParser
 
 val IngestionOnly_handle0: Plan.Handle = Plan.Handle(
             storageKey =
-                StorageKeyParser.parse("reference-mode://{db://9ca32bb55138c5efc3b107bcd9d60a73e2428160@arcs/Thing}{db://9ca32bb55138c5efc3b107bcd9d60a73e2428160@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"),
+                StorageKeyParser.parse("reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"),
             type = EntityType(Schema(
             names = setOf(SchemaName("Thing")),
             fields = SchemaFields(
@@ -93,7 +94,7 @@ val EphemeralWritingPlan: Plan = Plan(
 
 val EphemeralReading_handle0: Plan.Handle = Plan.Handle(
             storageKey =
-                StorageKeyParser.parse("reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingArcId/handle/my-handle-id}"),
+                StorageKeyParser.parse("reference-mode://{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/Thing}{db://25e71af4e9fc8b6958fc46a8f4b7cdf6b5f31516@arcs/!:writingOnlyArcId/handle/my-handle-id-writing}"),
             type = EntityType(Schema(
             names = setOf(SchemaName("Thing")),
             fields = SchemaFields(
