@@ -53,7 +53,8 @@ open class TestBase<T : WasmEntity>(
         fail(message, null)
     }
 
-    @Suppress("VIRTUAL_MEMBER_HIDDEN") // Override for Kotlin/Native 1.4
+    // Override for Kotlin/Native 1.4
+    @Suppress("VIRTUAL_MEMBER_HIDDEN")
     fun fail(message: String?, cause: Throwable?): Nothing {
         val err = if (message == null) ctor("Failure") else ctor(message)
         errors.store(err)
