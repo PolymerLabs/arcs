@@ -22,9 +22,7 @@ filegroup(
 
 arcs_kt_library(
     name = "proto",
-    srcs = glob(
-        ["*.kt"],
-    ),
+    srcs = glob(["*.kt"]),
     deps = [
         ":annotation_java_proto_lite",
         ":manifest_java_proto_lite",
@@ -37,14 +35,10 @@ arcs_kt_library(
     ],
 )
 
-# This target pulls in the java protobuf library, as opposed to the *java_lite*
-# protobuf library. The regular protobuf library is needed for tests.
+# Equivalent to the above, but uses java_proto instead of java_lite_proto deps.
 arcs_kt_library(
     name = "proto_for_test",
-    testonly = 1,
-    srcs = glob(
-        ["*.kt"],
-    ),
+    srcs = glob(["*.kt"]),
     add_android_constraints = False,
     deps = [
         ":annotation_java_proto",

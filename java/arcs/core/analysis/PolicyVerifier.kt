@@ -14,8 +14,6 @@ package arcs.core.analysis
 import arcs.core.data.AccessPath
 import arcs.core.data.Check
 import arcs.core.data.Claim
-import arcs.core.data.InformationFlowLabel.Predicate
-import arcs.core.data.ParticleSpec
 import arcs.core.data.Recipe
 import arcs.core.policy.Policy
 import arcs.core.policy.PolicyConstraints
@@ -30,7 +28,9 @@ class PolicyVerifier(val options: PolicyOptions) {
      *
      * @throws [PolicyViolation] if policy is violated by the recipe.
      */
-    public fun verifyPolicy(recipe: Recipe, policy: Policy): Boolean {
+    fun verifyPolicy(recipe: Recipe, policy: Policy): Boolean {
+        checkPolicyName(recipe, policy)
+
         // TODO(b/162083814): This should be moved to the compilation step.
         val policyConstraints = translatePolicy(policy, options)
         val graph = RecipeGraph(recipe)
@@ -87,54 +87,57 @@ class PolicyVerifier(val options: PolicyOptions) {
                 )
             }
             ?.let { claims -> InformationFlow.IngressInfo(handleNode, claims) }
+            // If there is information in `storeClaims`, use the safest information.
+            ?: getDefaultIngressInfo(handleNode)
     }
 
     /**
-     * Returns the egress checks.
+     * Returns an [IngressInfo] with empty claims if [handleNode] has (1) only read connections, or
+     * (2) is written to by a particle that only has write connections. Otherwise, returns null.
      *
-     * @throws [PolicyViolation] if recipe violates egress requirements.
+     * When the above conditions are true for a handle, the store corresponding to the handle is a
+     * possibly protected store and this handle should be treated as an ingress. If we don't treat
+     * this handle as an ingress, dataflow analysis would not track data flows from this handle and
+     * a recipe might be verified as being compliant with a policy even if it isn't.
+     *
+     * Returning empty claims makes sure that we can't do anything with the data, and therefore,
+     * the recipe will be rejected if it egresses any data from this store.
      */
-    private fun getEgressChecks(
-        policy: Policy,
-        recipe: Recipe,
-        egressCheck: Predicate
-    ): Map<ParticleSpec, List<Check>> {
-        // Check that egress particles are compliant with policy.
-        val egressParticles = recipe.particles.filterNot { it.spec.isolated }
-        checkEgressParticles(policy, egressParticles)
-
-        // Create a check for each handle connection needs in the egress particles.
-        return egressParticles.associate { particle ->
-            val checks = particle.spec.connections.values
-                .filter {
-                    // TODO(b/157605232): Also check canQuery -- but first, need to add QUERY to
-                    // the Direction enum in the manifest proto.
-                    it.direction.canRead
-                }
-                .map { connectionSpec ->
-                    Check.Assert(AccessPath(particle, connectionSpec), egressCheck)
-                }
-            particle.spec to checks
+    private fun getDefaultIngressInfo(
+        handleNode: RecipeGraph.Node.Handle
+    ) = InformationFlow.IngressInfo(handleNode, emptyList()).takeIf {
+        handleNode.predecessors.isEmpty() ||
+        handleNode.predecessors.any { predecessor ->
+            predecessor.node is RecipeGraph.Node.Particle &&
+            predecessor.node.particle.spec.connections.all { (_, spec) ->
+                spec.direction.canWrite && !spec.direction.canRead
+            }
         }
     }
 
     /**
-     * Verifies that the given egress particle nodes match the policy. The only egress particles
-     * allowed to be used with a policy are in [options.policyEgresses] map.
+     * Verifies that the given egress particle nodes match the policy. The egress type of the
+     * particles must match the egress type of the policy.
      */
     private fun checkEgressParticles(policy: Policy, egressParticles: List<Recipe.Particle>) {
-        val allowedEgresses = options.policyEgresses.getOrElse(policy.name) {
-            throw PolicyViolation.PolicyHasNoEgressParticles(policy)
-        }
         val invalidEgressParticles = egressParticles
             .map { it.spec }
-            .filterNot { allowedEgresses.contains(it.name) }
+            .filter { it.egress && it.egressType != policy.egressType }
         if (invalidEgressParticles.isNotEmpty()) {
-            throw PolicyViolation.InvalidEgressParticles(
+            throw PolicyViolation.InvalidEgressTypeForParticles(
                 policy = policy,
-                allowedEgresses = allowedEgresses,
-                invalidEgresses = invalidEgressParticles.map { it.name }
+                invalidEgressParticles = invalidEgressParticles
             )
+        }
+    }
+
+    /** Checks that the given [policy] matches the recipe's `@policy` annotation. */
+    private fun checkPolicyName(recipe: Recipe, policy: Policy) {
+        val policyName = recipe.policyName
+        if (policyName == null) {
+            throw PolicyViolation.MissingPolicyAnnotation(recipe, policy)
+        } else if (policyName != policy.name) {
+            throw PolicyViolation.MismatchedPolicyName(policyName, policy)
         }
     }
 }

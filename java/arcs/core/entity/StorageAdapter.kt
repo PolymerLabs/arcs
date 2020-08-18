@@ -32,6 +32,9 @@ sealed class StorageAdapter<T : Storable, R : Referencable> {
     /** Checks if the [Storable] is expired (its expiration time is in the past). */
     abstract fun isExpired(value: T): Boolean
 
+    /** Checks if the [Referencable] is expired (its expiration time is in the past). */
+    abstract fun isExpired(value: R): Boolean
+
     fun checkStorageKey(handleKey: StorageKey, referencedKey: StorageKey) {
         // References always point to backing stores (this is also enforced at reference creation).
         check(referencedKey !is ReferenceModeStorageKey) {
@@ -65,12 +68,12 @@ class EntityStorageAdapter<T : Entity>(
     private val time: Time,
     private val dereferencerFactory: EntityDereferencerFactory,
     private val storageKey: StorageKey,
-    private val restrictedEntitySchema: Schema? = null
+    private val storeSchema: Schema? = null
 ) : StorageAdapter<T, RawEntity>() {
     override fun storableToReferencable(value: T): RawEntity {
         value.ensureEntityFields(idGenerator, handleName, time, ttl)
 
-        val rawEntity = value.serialize(restrictedEntitySchema)
+        val rawEntity = value.serialize(storeSchema)
         // Check storage key for all reference fields.
         rawEntity.allData.forEach { (_, value) ->
             if (value is StorageReference) { checkStorageKey(storageKey, value.storageKey) }
@@ -88,6 +91,11 @@ class EntityStorageAdapter<T : Entity>(
     }
 
     override fun isExpired(value: T): Boolean {
+        return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
+            value.expirationTimestamp < time.currentTimeMillis
+    }
+
+    override fun isExpired(value: RawEntity): Boolean {
         return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
             value.expirationTimestamp < time.currentTimeMillis
     }
@@ -114,6 +122,11 @@ class ReferenceStorageAdapter<E : Entity>(
     }
 
     override fun isExpired(value: Reference<E>): Boolean {
+        return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
+            value.expirationTimestamp < time.currentTimeMillis
+    }
+
+    override fun isExpired(value: StorageReference): Boolean {
         return value.expirationTimestamp != RawEntity.UNINITIALIZED_TIMESTAMP &&
             value.expirationTimestamp < time.currentTimeMillis
     }

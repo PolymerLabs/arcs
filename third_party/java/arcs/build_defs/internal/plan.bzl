@@ -1,74 +1,28 @@
 """Arcs Plan Generation Rules"""
 
-load("//third_party/java/arcs/build_defs/internal:kotlin.bzl", "arcs_kt_library")
-
-# Note: Once this is mature, it will replace arcs_kt_plan
-def arcs_kt_plan_2(name, package, arcs_sdk_deps, srcs = [], deps = [], visibility = None):
-    """Generates Plans Jar from protos.
-
-    Example:
-
-      ```
-      arcs_proto_plan(
-        name = "serialized_example",
-        src = "Example.arcs"
-      )
-
-      arcs_plan_generation(
-        name = "example_plan",
-        srcs = [":serialized_example"],
-        package = "com.my.example",
-      )
-      ```
-
-    Arcs:
-      name: name of created target
-      package: the package that all generated code will belong to (temporary, see b/161994250).
-      arcs_sdk_deps: build targets for the Arcs SDK to be included
-      deps: JVM dependencies for Jar
-      visibility: list of visibilities
-    """
-
-    gen_name = name + "_GeneratedPlan"
-
-    recipe2plan(
-        name = gen_name,
-        srcs = srcs,
-        package = package,
-    )
-
-    arcs_kt_library(
-        name = name,
-        srcs = [":" + gen_name],
-        platforms = ["jvm"],
-        visibility = visibility,
-        deps = arcs_sdk_deps + deps,
-    )
-
 def _recipe2plan_impl(ctx):
     args = ctx.actions.args()
 
-    outputs = [ctx.actions.declare_file(src.basename.replace(".pb.bin", ".jvm.kt")) for src in ctx.files.srcs]
+    output = ctx.actions.declare_file(ctx.label.name + ".jvm.kt")
 
-    args.add_all("--outdir", [outputs[0].dirname])
     args.add_all("--package-name", [ctx.attr.package])
-    args.add_all([src.path for src in ctx.files.srcs])
+    args.add_all([ctx.file.src, output.path])
 
     ctx.actions.run(
-        inputs = ctx.files.srcs,
-        outputs = outputs,
+        inputs = [ctx.file.src],
+        outputs = [output],
         arguments = [args],
-        executable = ctx.executable._compiler,
+        executable = ctx.executable.compiler,
     )
 
-    return [DefaultInfo(files = depset(outputs))]
+    return [DefaultInfo(files = depset([output]))]
 
 recipe2plan = rule(
     implementation = _recipe2plan_impl,
     attrs = {
-        "srcs": attr.label_list(allow_files = [".pb.bin"]),
+        "src": attr.label(allow_single_file = [".pb.bin"]),
         "package": attr.string(),
-        "_compiler": attr.label(
+        "compiler": attr.label(
             cfg = "host",
             default = Label("//java/arcs/tools:recipe2plan"),
             allow_files = True,
@@ -76,8 +30,8 @@ recipe2plan = rule(
         ),
         # TODO(b/162273478) recipe2plan should accept `policies` argument
     },
-    doc = """Generates plans from recipes.
+    doc = """Generates a Kotlin Plan from a manifest.
 
-    This rule reads serialized manifests and generates Kotlin files with `Plan` classes.
+    This rule reads a serialized manifest and generates Kotlin a file with `Plan` classes.
     """,
 )

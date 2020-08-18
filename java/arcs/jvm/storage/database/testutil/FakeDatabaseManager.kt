@@ -64,7 +64,7 @@ class FakeDatabaseManager : DatabaseManager {
         Map<DatabaseIdentifier, DatabasePerformanceStatistics.Snapshot> =
         mutex.withLock { cache.mapValues { it.value.snapshotStatistics() } }
 
-    override suspend fun removeExpiredEntities(): Job {
+    override suspend fun removeExpiredEntities() {
         throw UnsupportedOperationException("Fake database manager cannot remove entities.")
     }
 
@@ -76,13 +76,17 @@ class FakeDatabaseManager : DatabaseManager {
         throw UnsupportedOperationException("Fake database manager cannot remove entities.")
     }
 
-    override suspend fun runGarbageCollection(): Job {
+    override suspend fun runGarbageCollection() {
         throw UnsupportedOperationException("Fake database does not gargbage collect.")
     }
 
     override suspend fun resetAll() {
         throw UnsupportedOperationException("Fake database manager cannot resetAll.")
     }
+
+    suspend fun totalInsertUpdates() = snapshotStatistics().map {
+        it.value.insertUpdate.runtimeStatistics.measurements
+    }.sum()
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE")

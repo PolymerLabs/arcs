@@ -9,7 +9,7 @@
  */
 import {Schema} from '../runtime/schema.js';
 import {Type, TypeVariable} from '../runtime/type.js';
-import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
+import {HandleConnectionSpec, ParticleSpec} from '../runtime/manifest-types/particle-spec.js';
 import {upperFirst} from './kotlin-generation-utils.js';
 import {AtLeastAsSpecific} from '../runtime/refiner.js';
 import {flatMap} from '../runtime/util.js';

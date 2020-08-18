@@ -1,9 +1,21 @@
 """Arcs manifest bundling rules."""
 
-load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
+load(
+    ":tools.oss.bzl",
+    "arcs_tool_manifest2proto",
+    "arcs_tool_recipe2plan",
+    "arcs_tool_verify_policy",
+)
 load(":util.bzl", "replace_arcs_suffix")
 
-def arcs_manifest(name, srcs, deps = [], visibility = None):
+def arcs_manifest(
+        name,
+        srcs,
+        manifest_proto = True,
+        policy_test = False,
+        policy_options = None,
+        deps = [],
+        visibility = None):
     """Bundles .arcs manifest files with their particle implementations.
 
     Generates a filegroup that can be included in e.g. an Android assets folder.
@@ -11,6 +23,13 @@ def arcs_manifest(name, srcs, deps = [], visibility = None):
     Args:
       name: the name of the target to create
       srcs: list of Arcs manifest files to include
+      manifest_proto: if True, generates a binary proto representation of the
+          manifest
+      policy_test: If True, generates a test to check that all recipes in the
+          manifest satisfy policy rules. Requires policy_options and
+          manifest_proto.
+      policy_options: Path to a PolicyOptions text or binary proto file to use
+          for policy checking. Only relevant if policy_test is True.
       deps: list of dependencies (other arcs_manifest targets)
       visibility: list of visibilities
     """
@@ -27,28 +46,26 @@ def arcs_manifest(name, srcs, deps = [], visibility = None):
         visibility = visibility,
     )
 
-def arcs_manifest_json(name, srcs = [], deps = [], out = None, visibility = None):
-    """Serialize a manifest file.
+    if manifest_proto:
+        if len(srcs) != 1:
+            # TODO(csilvestrini): This rule should only accept one src.
+            fail("You must only supply one src file to generate a manifest proto.")
+        arcs_manifest_proto(
+            name = name + "_manifest_proto",
+            src = srcs[0],
+            deps = deps,
+        )
 
-    This converts a '.arcs' file into a JSON representation, using manifest2json.
-
-    Args:
-      name: the name of the target to create
-      srcs: an Arcs manifest files to serialize
-      deps: list of dependencies (other manifests)
-      out: the name of the output artifact (a JSON file).
-      visibility: list of visibilities
-    """
-    outs = [out] if out != None else [replace_arcs_suffix(name, ".json")]
-
-    sigh_command(
-        name = name,
-        srcs = srcs,
-        outs = outs,
-        deps = deps,
-        progress_message = "Serializing manifest",
-        sigh_cmd = "manifest2json --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
-    )
+    if policy_test:
+        if policy_options == None:
+            fail("policy_options is required to generate a policy_test.")
+        if not manifest_proto:
+            fail("manifest_proto is required to generate a policy_test.")
+        arcs_tool_verify_policy(
+            name = name + "_policy_test",
+            manifest_proto = name + "_manifest_proto",
+            policy_options_proto = policy_options,
+        )
 
 def arcs_manifest_proto(name, src, deps = [], out = None, visibility = None):
     """Serialize a manifest file.
@@ -64,13 +81,11 @@ def arcs_manifest_proto(name, src, deps = [], out = None, visibility = None):
     """
     outs = [out] if out != None else [replace_arcs_suffix(name, ".pb.bin")]
 
-    sigh_command(
+    arcs_tool_manifest2proto(
         name = name,
         srcs = [src],
         outs = outs,
         deps = deps,
-        progress_message = "Serializing manifest",
-        sigh_cmd = "manifest2proto --quiet --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
     )
 
 def arcs_proto_plan(name, src, recipe = None, deps = []):
@@ -97,17 +112,12 @@ def arcs_proto_plan(name, src, recipe = None, deps = []):
       recipe: an optional name of the recipe to filter output plans by name
       deps: list of dependencies - other manifests that are imported by src manifest
     """
-
-    sigh_cmd = "recipe2plan --quiet --outdir $(dirname {OUT}) --outfile $(basename {OUT}) --format proto {SRC}"
-    if recipe:
-        sigh_cmd += " --recipe %s" % (recipe)
-
-    sigh_command(
+    arcs_tool_recipe2plan(
         name = name,
         srcs = [src],
         outs = [name + ".pb.bin"],
-        progress_message = "Generating Plan Proto",
-        sigh_cmd = sigh_cmd,
+        recipe = recipe,
+        generate_proto = True,
         deps = deps,
     )
 

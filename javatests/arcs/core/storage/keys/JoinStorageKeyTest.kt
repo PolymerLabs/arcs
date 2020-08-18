@@ -13,6 +13,7 @@ package arcs.core.storage.keys
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.embed
 import com.google.common.truth.Truth.assertThat
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -20,6 +21,14 @@ import org.junit.runners.JUnit4
 /** Tests for [JoinStorageKey]. */
 @RunWith(JUnit4::class)
 class JoinStorageKeyTest {
+    @Before
+    fun setup() {
+        StorageKeyParser.reset(
+            JoinStorageKey,
+            RamDiskStorageKey
+        )
+    }
+
     @Test
     fun toString_rendersCorrectly() {
         val key1 = RamDiskStorageKey("key1")

@@ -1,0 +1,28 @@
+// #Ingress: P1
+// #FAIL: hc:P2.foo.a.c is untrusted
+// #FAIL: hc:P2.foo is trusted
+// #FAIL: hc:P2.foo.a.d is trusted
+particle P1
+  foo: writes Foo {
+    a: inline Bar {c: Text, d: inline Baz {e: Number} }
+  }
+  claim foo.a.c is trusted
+  claim foo.a.d is trusted
+  claim foo.a.d.e is untrusted
+
+particle P2
+  foo: reads Foo {
+    a: inline Bar {c: Text, d: inline Baz {e: Number} }
+  }
+  check foo.a.c is untrusted
+  // Labels on foo and foo.a.d is a combination of labels
+  // for foo.a.d.e and foo.a.d
+  check foo is trusted
+  check foo.a.d is trusted 
+  check foo.a.d.e is untrusted
+
+recipe R
+  P1
+    foo: writes h
+  P2
+    foo: reads h

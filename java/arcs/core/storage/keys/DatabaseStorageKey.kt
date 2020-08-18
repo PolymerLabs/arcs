@@ -16,13 +16,7 @@ import arcs.core.data.Capability
 import arcs.core.storage.CapabilitiesResolver
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyFactory
-import arcs.core.storage.StorageKeyParser
-
-/** Protocol to be used with the database driver for persistent databases. */
-const val DATABASE_DRIVER_PROTOCOL = Protocols.DATABASE_DRIVER
-
-/** Protocol to be used with the database driver for in-memory databases. */
-const val MEMORY_DATABASE_DRIVER_PROTOCOL = Protocols.MEMORY_DATABASE_DRIVER
+import arcs.core.storage.StorageKeySpec
 
 /**
  * Default database name for DatabaseDriver usage, and referencing using [DatabaseStorageKey]s.
@@ -58,13 +52,13 @@ sealed class DatabaseStorageKey(
         override val unique: String,
         override val entitySchemaHash: String,
         override val dbName: String = DATABASE_NAME_DEFAULT
-    ) : DatabaseStorageKey(unique, entitySchemaHash, dbName, DATABASE_DRIVER_PROTOCOL) {
+    ) : DatabaseStorageKey(unique, entitySchemaHash, dbName, protocol) {
         init { checkValidity() }
 
         override fun toString() = super.toString()
 
         class Factory : StorageKeyFactory(
-            DATABASE_DRIVER_PROTOCOL,
+            protocol,
             Capabilities(
                 listOf(
                     Capability.Persistence.ON_DISK,
@@ -74,9 +68,16 @@ sealed class DatabaseStorageKey(
                 )
             )
         ) {
-            override fun create(options: StorageKeyFactory.StorageKeyOptions): StorageKey {
+            override fun create(options: StorageKeyOptions): StorageKey {
                 return Persistent(options.location, options.entitySchema.hash)
             }
+        }
+
+        companion object : StorageKeySpec<Persistent> {
+            /** Protocol to be used with the database driver for persistent databases. */
+            override val protocol = Protocols.DATABASE_DRIVER
+
+            override fun parse(rawKeyString: String) = fromString<Persistent>(rawKeyString)
         }
     }
 
@@ -85,13 +86,13 @@ sealed class DatabaseStorageKey(
         override val unique: String,
         override val entitySchemaHash: String,
         override val dbName: String = DATABASE_NAME_DEFAULT
-    ) : DatabaseStorageKey(unique, entitySchemaHash, dbName, MEMORY_DATABASE_DRIVER_PROTOCOL) {
+    ) : DatabaseStorageKey(unique, entitySchemaHash, dbName, protocol) {
         init { checkValidity() }
 
         override fun toString() = super.toString()
 
         class Factory : StorageKeyFactory(
-            MEMORY_DATABASE_DRIVER_PROTOCOL,
+            protocol,
             Capabilities(
                 listOf(
                     Capability.Persistence.IN_MEMORY,
@@ -101,9 +102,16 @@ sealed class DatabaseStorageKey(
                 )
             )
         ) {
-            override fun create(options: StorageKeyFactory.StorageKeyOptions): StorageKey {
+            override fun create(options: StorageKeyOptions): StorageKey {
                 return Memory(options.location, options.entitySchema.hash)
             }
+        }
+
+        companion object : StorageKeySpec<Memory> {
+            /** Protocol to be used with the database driver for in-memory databases. */
+            override val protocol = Protocols.MEMORY_DATABASE_DRIVER
+
+            override fun parse(rawKeyString: String) = fromString<Memory>(rawKeyString)
         }
     }
 
@@ -113,28 +121,10 @@ sealed class DatabaseStorageKey(
         private val DB_STORAGE_KEY_PATTERN =
             "^($ENTITY_SCHEMA_HASH_PATTERN)@($DATABASE_NAME_PATTERN)/(.+)\$".toRegex()
 
-        init {
-            // When DatabaseStorageKey is imported, this will register its parser with the storage
-            // key parsers.
-            registerParser()
-        }
-
-        /** Registers the [DatabaseStorageKey] for parsing with the [StorageKeyParser]. */
-        /* internal */
-        fun registerParser() {
-            StorageKeyParser.addParser(DATABASE_DRIVER_PROTOCOL, ::persistentFromString)
-            StorageKeyParser.addParser(MEMORY_DATABASE_DRIVER_PROTOCOL, ::memoryFromString)
-        }
-
         fun registerKeyCreator() {
             CapabilitiesResolver.registerStorageKeyFactory(Persistent.Factory())
             CapabilitiesResolver.registerStorageKeyFactory(Memory.Factory())
         }
-        /* internal */
-        fun persistentFromString(rawKeyString: String): Persistent = fromString(rawKeyString)
-
-        /* internal */
-        fun memoryFromString(rawKeyString: String): Memory = fromString(rawKeyString)
 
         private inline fun <reified T : DatabaseStorageKey> fromString(rawKeyString: String): T {
             val match = requireNotNull(DB_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {

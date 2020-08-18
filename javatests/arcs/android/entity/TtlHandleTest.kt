@@ -11,6 +11,7 @@ import arcs.core.data.SchemaRegistry
 import arcs.core.data.SingletonType
 import arcs.core.entity.DummyEntity
 import arcs.core.entity.HandleSpec
+import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
@@ -75,6 +76,7 @@ class TtlHandleTest {
         scheduler = schedulerProvider("myArc")
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         SchemaRegistry.register(DummyEntity.SCHEMA)
+        SchemaRegistry.register(InlineDummyEntity.SCHEMA)
     }
 
     @After
@@ -124,7 +126,7 @@ class TtlHandleTest {
 
         // Simulate periodic job triggering.
         log("Removing Expired Entities")
-        databaseManager.removeExpiredEntities().join()
+        databaseManager.removeExpiredEntities()
         updateJob.join()
         assertThat(handle.dispatchFetch()).isEqualTo(null)
 
@@ -227,7 +229,7 @@ class TtlHandleTest {
 
         // Simulate periodic job triggering.
         log("removing expired entities")
-        databaseManager.removeExpiredEntities().join()
+        databaseManager.removeExpiredEntities()
         deferred.await()
         activeWrites.joinAll()
         activeWrites.clear()
@@ -301,7 +303,7 @@ class TtlHandleTest {
         }
 
         // Simulate periodic job triggering.
-        databaseManager.removeExpiredEntities().join()
+        databaseManager.removeExpiredEntities()
 
         deferred1.await()
         deferred2.await()
@@ -361,7 +363,7 @@ class TtlHandleTest {
 
         // Simulate periodic job triggering.
         log("Removing Expired Entities")
-        databaseManager.removeExpiredEntities().join()
+        databaseManager.removeExpiredEntities()
         updateJob.join()
 
         assertThat(handle.dispatchFetchAll()).isEmpty()

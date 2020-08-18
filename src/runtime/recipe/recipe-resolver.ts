@@ -10,7 +10,7 @@
 
 import {Arc} from '../arc.js';
 import {Action, GenerateParams} from './walker.js';
-import {ConsumeSlotConnectionSpec} from '../particle-spec.js';
+import {ConsumeSlotConnectionSpec} from '../manifest-types/particle-spec.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {RecipeUtil} from './recipe-util.js';
@@ -218,7 +218,6 @@ export class RecipeResolver {
               [...options.errors.values()].join('\n')}.\n${recipe.toString()}`);
       return null;
     }
-
     this.resolver.withOptions(options); // Smuggle error data around
     const result = await this.resolver.generateFrom([{result: recipe, score: 1}]);
     if (result.length === 0) {

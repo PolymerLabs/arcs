@@ -9,16 +9,15 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {HandleConnectionSpec, ConsumeSlotConnectionSpec} from '../../runtime/particle-spec.js';
+import {HandleConnectionSpec, ConsumeSlotConnectionSpec} from '../../runtime/manifest-types/particle-spec.js';
 import {Handle} from '../../runtime/recipe/handle.js';
 import {Slot} from '../../runtime/recipe/slot.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {StrategizerWalker, Strategy} from '../strategizer.js';
 import {GenerateParams, Descendant} from '../../runtime/recipe/walker.js';
-import {Direction} from '../../runtime/manifest-ast-nodes.js';
+import {Direction} from '../../runtime/manifest-types/enums.js';
 import {Type} from '../../runtime/type.js';
-import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
 import {Dictionary} from '../../runtime/hot.js';
 
 // This strategy substitutes '&verb' declarations with recipes,

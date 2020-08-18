@@ -17,9 +17,10 @@ import {checkDefined, checkNotNull} from '../testing/preconditions.js';
 import {Loader} from '../../platform/loader.js';
 import {Dictionary} from '../hot.js';
 import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
-import {ClaimType, ClaimIsTag, ClaimDerivesFrom} from '../claim.js';
-import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore, CheckImplication} from '../check.js';
-import {ProvideSlotConnectionSpec} from '../particle-spec.js';
+import {ClaimIsTag, ClaimDerivesFrom} from '../manifest-types/claim.js';
+import {ClaimType} from '../manifest-types/enums.js';
+import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore, CheckImplication} from '../manifest-types/check.js';
+import {ProvideSlotConnectionSpec} from '../manifest-types/particle-spec.js';
 import {Schema} from '../schema.js';
 import {Store} from '../storage/store.js';
 import {Entity} from '../entity.js';
@@ -4711,6 +4712,24 @@ recipe
       recipe
         foo: create
     `), `You must provide a policy name in the @policy annotation.`);
+  });
+
+  it('supports importing policies from another file', async () => {
+    const loader = new Loader(null, {
+      '/policy.arcs': `
+        policy MyPolicy {}
+      `,
+      '/recipe.arcs': `
+        import './policy.arcs'
+
+        @policy('MyPolicy')
+        recipe
+          foo: create
+      `,
+    });
+    const manifest = await Manifest.load('/recipe.arcs', loader);
+    const recipe = manifest.recipes[0];
+    assert.strictEqual(recipe.policy.name, 'MyPolicy');
   });
 
   describe('isolated and egress particles', () => {

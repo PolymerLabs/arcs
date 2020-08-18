@@ -9,9 +9,9 @@
  */
 
 import {Arc} from './arc.js';
-import {Modality} from './modality.js';
+import {Modality} from './manifest-types/modality.js';
 import {Particle} from './recipe/particle.js';
-import {ProvideSlotConnectionSpec} from './particle-spec.js';
+import {ProvideSlotConnectionSpec} from './manifest-types/particle-spec.js';
 import {logsFactory} from '../platform/logs-factory.js';
 
 const {log, warn} = logsFactory('SlotComposer', 'brown');

@@ -38,6 +38,7 @@ arcs_kt_jvm_test_suite(
         "//java/arcs/core/util",
         "//java/arcs/core/util/testutil",
         "//java/arcs/jvm/host",
+        "//java/arcs/jvm/util",
         "//java/arcs/jvm/util/testutil",
         "//java/arcs/sdk",
         "//javatests/arcs/core/entity:lib",
@@ -125,7 +126,7 @@ arcs_kt_jvm_library(
     ],
     deps = [
         ":plans",
-        ":pure-particles-jvm",
+        ":pure-particles-jvm",  # buildcleaner: keep
         ":schemas",
         "//java/arcs/core/host",
         "//java/arcs/core/util",

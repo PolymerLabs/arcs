@@ -11,7 +11,6 @@ class Consumer : AbstractConsumer() {
             .also { assertThat(it).hasSize(3) }
             .forEach {
                 assertThat(it.sku).endsWith("*****")
-                assertThat(it.name).isNotEmpty()
                 // Ensure that we have the best prices while making *some* profit.
                 assertThat(it.price).isAtLeast(0.25)
                 assertThat(it.price).isAtMost(12.99)

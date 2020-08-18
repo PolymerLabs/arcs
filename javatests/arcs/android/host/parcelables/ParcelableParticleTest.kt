@@ -21,14 +21,26 @@ import arcs.core.data.Plan
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.storage.StorageKeyParser
+import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
+import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import com.google.common.truth.Truth.assertThat
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /** Tests for [ParcelableParticle]'s classes. */
 @RunWith(AndroidJUnit4::class)
 class ParcelableParticleTest {
+    @Before
+    fun setup() {
+        StorageKeyParser.reset(
+            ReferenceModeStorageKey,
+            RamDiskStorageKey,
+            VolatileStorageKey
+        )
+    }
 
     @Test
     fun particle_parcelableRoundTrip_works() {

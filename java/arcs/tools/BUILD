@@ -1,4 +1,8 @@
-load("//third_party/java/arcs/build_defs:native.oss.bzl", "java_binary", "java_test")
+load(
+    "//third_party/java/arcs/build_defs:native.oss.bzl",
+    "java_binary",
+    "java_test",
+)
 load("//tools/build_defs/kotlin:rules.bzl", "kt_jvm_library")
 
 licenses(["notice"])
@@ -27,7 +31,31 @@ kt_jvm_library(
 )
 
 kt_jvm_library(
-    name = "generator",
+    name = "verify_policy_lib",
+    testonly = True,
+    srcs = ["VerifyPolicy.kt"],
+    deps = [
+        "//java/arcs/core/analysis",
+        "//java/arcs/core/data",
+        "//java/arcs/core/data/proto:manifest_java_proto",
+        "//java/arcs/core/data/proto:policy_java_proto",
+        "//java/arcs/core/data/proto:proto_for_test",
+        "//java/arcs/core/policy",
+        "//java/arcs/core/policy/proto:java_proto",
+        "//third_party/java/arcs/deps:protobuf_java",
+        "//third_party/kotlin/clikt",
+    ],
+)
+
+java_binary(
+    name = "verify_policy",
+    testonly = True,
+    main_class = "arcs.tools.VerifyPolicyKt",
+    runtime_deps = [":verify_policy_lib"],
+)
+
+kt_jvm_library(
+    name = "recipe2plan_lib",
     srcs = [
         "Recipe2Plan.kt",
         "PlanGenerator.kt",
@@ -47,5 +75,5 @@ kt_jvm_library(
 java_binary(
     name = "recipe2plan",
     main_class = "arcs.tools.Recipe2PlanKt",
-    runtime_deps = [":generator"],
+    runtime_deps = [":recipe2plan_lib"],
 )

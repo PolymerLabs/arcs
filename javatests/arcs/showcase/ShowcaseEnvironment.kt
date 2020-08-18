@@ -14,7 +14,6 @@ import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.ParticleState
 import arcs.core.host.SchedulerProvider
-import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
@@ -173,7 +172,6 @@ class ShowcaseEnvironment(
             Dispatchers.Default,
             schedulerProvider,
             arcHostStoreManager,
-            activationFactory,
             *particleRegistrations
         )
 
@@ -214,13 +212,12 @@ class ShowcaseHost(
     coroutineContext: CoroutineContext,
     schedulerProvider: SchedulerProvider,
     override val stores: StoreManager,
-    override val activationFactory: ActivationFactory,
     vararg particleRegistrations: ParticleRegistration
 ) : AbstractArcHost(
-    coroutineContext,
-    schedulerProvider,
-    activationFactory,
-    *particleRegistrations
+    coroutineContext = coroutineContext,
+    updateArcHostContextCoroutineContext = coroutineContext,
+    schedulerProvider = schedulerProvider,
+    initialParticles = *particleRegistrations
 ) {
     override val platformTime = JvmTime
 

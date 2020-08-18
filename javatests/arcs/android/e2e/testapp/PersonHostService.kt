@@ -50,7 +50,14 @@ class PersonHostService : ArcHostService() {
         lifecycle: Lifecycle,
         schedulerProvider: SchedulerProvider,
         vararg initialParticles: ParticleRegistration
-    ) : AndroidHost(context, lifecycle, schedulerProvider, *initialParticles) {
+    ) : AndroidHost(
+        context = context,
+        lifecycle = lifecycle,
+        coroutineContext = Dispatchers.Default,
+        arcSerializationContext = Dispatchers.Default,
+        schedulerProvider = schedulerProvider,
+        particles = *initialParticles
+    ) {
         override val platformTime = JvmTime
 
         override suspend fun stopArc(partition: Plan.Partition) {

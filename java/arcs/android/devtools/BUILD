@@ -22,7 +22,10 @@ arcs_kt_android_library(
     deps = [
         ":aidl",
         "//java/arcs/android/devtools/storage:devtools",
+        "//java/arcs/android/storage",
         "//java/arcs/android/storage/service",
+        "//java/arcs/android/storage/service:aidl",
+        "//java/arcs/core/storage:proxy",
         "//java/arcs/core/util",
         "//java/arcs/sdk/android/storage/service",
         "//third_party/java/nanohttpd",

@@ -13,20 +13,20 @@ import {Handle} from '../runtime/recipe/handle.js';
 import {Particle} from '../runtime/recipe/particle.js';
 import {CollectionType, ReferenceType, SingletonType, TupleType, Type, TypeVariable} from '../runtime/type.js';
 import {Schema} from '../runtime/schema.js';
-import {HandleConnectionSpec, ParticleSpec} from '../runtime/particle-spec.js';
+import {HandleConnectionSpec, ParticleSpec} from '../runtime/manifest-types/particle-spec.js';
 import {Manifest} from '../runtime/manifest.js';
 import {DirectionEnum, FateEnum, ManifestProto, PrimitiveTypeEnum} from './manifest-proto.js';
 import {Refinement, RefinementExpressionLiteral} from '../runtime/refiner.js';
 import {Op} from '../runtime/manifest-ast-nodes.js';
-import {ClaimType} from '../runtime/claim.js';
-import {CheckCondition, CheckExpression, CheckType} from '../runtime/check.js';
+import {ClaimType, CheckType} from '../runtime/manifest-types/enums.js';
+import {CheckCondition, CheckExpression} from '../runtime/manifest-types/check.js';
 import {flatMap} from '../runtime/util.js';
 import {Policy} from '../runtime/policy/policy.js';
 import {policyToProtoPayload} from './policy2proto.js';
 import {annotationToProtoPayload} from './annotation2proto.js';
 
 export async function encodeManifestToProto(path: string): Promise<Uint8Array> {
-  const manifest = await Runtime.parseFile(path);
+  const manifest = await Runtime.parseFile(path, {throwImportErrors: true});
   return encodePayload(await manifestToProtoPayload(manifest));
 }
 
@@ -336,7 +336,10 @@ export async function typeToProtoPayload(type: Type) {
     case 'TypeVariable': {
       const constraintType = type.canReadSubset || type.canWriteSuperset;
       const name = {name: (type as TypeVariable).variable.name};
-      const constraint = constraintType ? {constraint: {constraintType: await typeToProtoPayload(constraintType)}} : {};
+      const constraint = {constraint: {maxAccess: (type as TypeVariable).variable.resolveToMaxType || false}};
+      if (constraintType) {
+        constraint.constraint['constraintType'] = await typeToProtoPayload(constraintType);
+      }
       return {variable: {...name, ...constraint}};
     }
     default: throw new Error(`Type '${type.tag}' is not supported.`);

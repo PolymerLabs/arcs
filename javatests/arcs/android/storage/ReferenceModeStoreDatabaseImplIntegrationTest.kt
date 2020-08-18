@@ -33,6 +33,7 @@ import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Reference
 import arcs.core.storage.ReferenceModeStore
+import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.database.DatabaseData
@@ -100,6 +101,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         SchemaRegistry.register(inlineSchema)
         databaseFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
+        StorageKeyParser.reset(DatabaseStorageKey.Persistent)
         DatabaseDriverProvider.configure(databaseFactory) {
             when (it) {
                 hash -> schema
@@ -268,7 +270,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
                     VersionMap("me" to 1)
                 )
             )
-        val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
+        val storedBob = activeStore.backingStore.getLocalData("an-id")
         // Check that the stored bob's singleton data is equal to the expected bob's singleton data
         assertThat(storedBob.singletons).isEqualTo(bobEntity.data.singletons)
         // Check that the stored bob's collection data is equal to the expected bob's collection
@@ -288,7 +290,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
             activeStore.onProxyMessage(ProxyMessage.Operations(listOf(addOp), id = 1))
         ).isTrue()
         // Bob was added to the backing store.
-        val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
+        val storedBob = activeStore.backingStore.getLocalData("an-id")
         assertThat(storedBob.toRawEntity("an-id")).isEqualTo(bob)
 
         // Remove Bob from the collection.
@@ -298,7 +300,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         ).isTrue()
 
         // Check the backing store Bob has been cleared.
-        val storedBob2 = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
+        val storedBob2 = activeStore.backingStore.getLocalData("an-id")
         assertThat(storedBob2.toRawEntity("an-id")).isEqualTo(createEmptyPersonEntity("an-id"))
 
         // Check the DB.
@@ -400,7 +402,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         activeStore.idle()
 
         // Check Bob from backing store.
-        val storedBob = activeStore.backingStore.getLocalData("an-id") as CrdtEntity.Data
+        val storedBob = activeStore.backingStore.getLocalData("an-id")
         assertThat(storedBob.toRawEntity()).isEqualTo(bob)
         assertThat(storedBob.toRawEntity().creationTimestamp).isEqualTo(10)
         assertThat(storedBob.toRawEntity().expirationTimestamp).isEqualTo(20)

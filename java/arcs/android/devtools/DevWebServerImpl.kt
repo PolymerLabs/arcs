@@ -25,7 +25,7 @@ object DevWebServerImpl : DevWebServer, NanoWSD("localhost", 33317) {
 
     private val wsdSockets = mutableSetOf<WsdSocket>()
     private val log = TaggedLog { "DevWebSocket" }
-    private val onOpenSocketCallbacks = mutableListOf<() -> Unit>()
+    private val onOpenSocketCallbacks = mutableSetOf<() -> Unit>()
 
     /**
      * Send a string to the client.

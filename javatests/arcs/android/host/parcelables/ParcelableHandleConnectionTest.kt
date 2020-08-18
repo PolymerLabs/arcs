@@ -22,8 +22,11 @@ import arcs.core.data.Plan.HandleConnection
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.data.expression.asExpr
+import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.keys.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -39,6 +42,10 @@ class ParcelableHandleConnectionTest {
     private val storageKey = VolatileStorageKey(ArcId.newForTest("foo"), "bar")
     private val personType = EntityType(personSchema)
 
+    @Before
+    fun setup() {
+        StorageKeyParser.reset(VolatileStorageKey)
+    }
     @Test
     fun handleConnection_parcelableRoundTrip_works() {
         val handleConnection = HandleConnection(
@@ -46,7 +53,7 @@ class ParcelableHandleConnectionTest {
             HandleMode.ReadWrite,
             personType,
             emptyList(),
-            "expression literal"
+            true.asExpr()
         )
 
         val marshalled = with(Parcel.obtain()) {

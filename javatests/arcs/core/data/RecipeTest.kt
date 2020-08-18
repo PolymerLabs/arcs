@@ -11,6 +11,8 @@
 package arcs.core.data
 
 import arcs.core.data.Recipe.Handle.Fate
+import arcs.core.data.expression.asExpr
+import arcs.core.data.expression.serialize
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import com.google.common.truth.Truth.assertThat
@@ -132,7 +134,12 @@ class RecipeTest {
             name = "ParticleName",
             location = "com.Particle",
             connections = listOf(
-                HandleConnectionSpec("data", HandleMode.Read, personCollectionType, "expression")
+                HandleConnectionSpec(
+                    "data",
+                    HandleMode.Read,
+                    personCollectionType,
+                    true.asExpr().serialize()
+                )
             ).associateBy { it.name }
         )
 
@@ -158,7 +165,7 @@ class RecipeTest {
                         handle = handle.toPlanHandle(),
                         mode = HandleMode.Read,
                         type = contactCollectionType,
-                        expression = "expression"
+                        expression = true.asExpr()
                     )
                 )
             )

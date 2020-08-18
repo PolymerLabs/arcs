@@ -138,16 +138,48 @@ class DatabaseImpl(
             clients.values.toList()
         }.forEach { emit(it) }
     }
+    private var initialized = false
 
-    override fun onCreate(db: SQLiteDatabase) = db.transaction { initializeDatabase(this) }
+    override fun onConfigure(db: SQLiteDatabase?) {
+        super.onConfigure(db)
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = db.transaction {
-        ((oldVersion + 1)..newVersion).forEach {
-            nextVersion -> MIGRATION_STEPS[nextVersion]?.forEach(db::execSQL)
-        }
+        /**
+         * After enabling WAL, multiple sqlite connections are established at db open,
+         * onCreate/onUpgrade/onDowngrade may be called concurrently per connections,
+         * either using "IF EXISTS"/"IF NOT EXISTS" option to create/drop table/index
+         * or protecting onCreate/onUpgrade/onDowngrade with a lock, otherwise a
+         * [SQLiteException] might be thrown during executing SQL statements complaining
+         * tables/indice already (not) existed.
+         */
+        db?.enableWriteAheadLogging()
     }
 
-    override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) =
+    override fun onCreate(db: SQLiteDatabase) = synchronized(db) {
+        if (initialized) return
+        db.transaction { initializeDatabase(this) }
+        initialized = true
+    }
+
+    override fun onUpgrade(
+        db: SQLiteDatabase,
+        oldVersion: Int,
+        newVersion: Int
+    ) = synchronized(db) {
+        if (initialized) return
+        db.transaction {
+            ((oldVersion + 1)..newVersion).forEach {
+                nextVersion -> MIGRATION_STEPS[nextVersion]?.forEach(db::execSQL)
+            }
+        }
+        initialized = true
+    }
+
+    override fun onDowngrade(
+        db: SQLiteDatabase,
+        oldVersion: Int,
+        newVersion: Int
+    ) = synchronized(db) {
+        if (initialized) return
         db.transaction {
             // Select all of the tables from the database, not just the ones we know about given
             // our version, then generate DROP TABLE statements and execute them.
@@ -159,6 +191,8 @@ class DatabaseImpl(
             initializeDatabase(this)
             Unit
         }
+        initialized = true
+    }
 
     /**
      * Creates the tables for the database and initializes the [PrimitiveType] values.
@@ -231,7 +265,7 @@ class DatabaseImpl(
         storageKey: StorageKey,
         schema: Schema,
         counters: Counters? = null
-    ): DatabaseData.Entity? = readableDatabase.transaction {
+    ): DatabaseData.Entity? = with(readableDatabase) {
         val db = this
         // Fetch the entity's type by storage key.
         counters?.increment(DatabaseCounters.GET_ENTITY_TYPE_BY_STORAGEKEY)
@@ -361,14 +395,30 @@ class DatabaseImpl(
                 ) {
                     val rawSingletons = mutableMapOf<FieldName, Referencable?>()
                     val rawCollections = mutableMapOf<FieldName, Set<Referencable>>()
+                    val inlineStorageKeyId = it.getLong(3)
+                    val entityId = db.rawQuery(
+                        """
+                            SELECT
+                                entity_id
+                            FROM entities
+                            WHERE storage_key_id = ?
+                        """.trimIndent(),
+                        arrayOf(inlineStorageKeyId.toString())
+                    ).forSingleResult {
+                        it.getString(0)
+                    }
                     val (dbSingletons, dbCollections) =
-                        getEntityFields(it.getLong(3), counters, db)
+                        getEntityFields(inlineStorageKeyId, counters, db)
                     dbSingletons.forEach { (fieldName, value) -> rawSingletons[fieldName] = value }
                     dbCollections.forEach {
                         (fieldName, value) -> rawCollections[fieldName] = value
                     }
                     RawEntity(
-                        id = "",
+                        id = requireNotNull(entityId) {
+                            "DB in an inconsistent state: entity data exists against " +
+                            "storage_key_id $inlineStorageKeyId without matching ID from " +
+                            "entities table"
+                        },
                         singletons = rawSingletons,
                         collections = rawCollections
                     )
@@ -647,12 +697,9 @@ class DatabaseImpl(
         counters: Counters? = null
     ): StorageKeyId? = db.transaction {
         val childKey = InlineStorageKey(parentStorageKey, fieldName)
-        require(entity.id == "") {
-            "Inline Entities should never have non-empty ids"
-        }
         val childKeyId = createEntityStorageKeyId(
             childKey,
-            "",
+            entity.id,
             entity.creationTimestamp,
             entity.expirationTimestamp,
             typeId,
@@ -1141,7 +1188,7 @@ class DatabaseImpl(
             }
 
             // Clean up unused values as they can contain sensitive data.
-            // This query will return all field value ids being referenced by collection or 
+            // This query will return all field value ids being referenced by collection or
             // singleton fields.
             fun usedFieldIdsQuery(typeIds: List<Int>) =
                 """

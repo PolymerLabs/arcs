@@ -20,8 +20,10 @@ import arcs.core.data.Plan.Handle
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaName
+import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.keys.VolatileStorageKey
 import com.google.common.truth.Truth.assertThat
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -34,6 +36,11 @@ class ParcelableHandleTest {
         SchemaFields(mapOf("name" to Text), emptyMap()),
         "42"
     )
+
+    @Before
+    fun setup() {
+        StorageKeyParser.reset(VolatileStorageKey)
+    }
 
     @Test
     fun handle_parcelableRoundTrip_works() {

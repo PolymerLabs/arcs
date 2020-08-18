@@ -23,7 +23,6 @@ import {ManifestStringBuilder} from './manifest-string-builder.js';
 
 // tslint:disable-next-line: no-any
 type SchemaMethod  = (data?: { fields: {}; names: any[]; description: {}; refinement: {}}) => Schema;
-export type SkippedFieldsOptions = {prefix?: string, skippedFields?: string[]};
 
 export class Schema {
   readonly names: string[];
@@ -168,14 +167,45 @@ export class Schema {
     }
   }
 
+  private static fieldTypeUnion(field1, field2): {}|null {
+    if (field1.kind !== field2.kind) return null;
+    switch (field1.kind) {
+      case 'schema-nested': {
+        const unionSchema = Schema.union(
+            field1.schema.model.entitySchema, field2.schema.model.entitySchema);
+        if (!unionSchema) {
+          return null;
+        }
+        const unionField = {...field1};
+        unionField.schema.model.entitySchema = unionSchema;
+        return unionField;
+      }
+      case 'schema-ordered-list': {
+        const unionSchema = Schema.fieldTypeUnion(field1.schema, field2.schema);
+        if (!unionSchema) {
+          return null;
+        }
+        const unionField = {...field1};
+        unionField.schema = unionSchema;
+        return unionField;
+      }
+      default:
+        return Schema.typesEqual(field1, field2) ? field1 : null;
+    }
+  }
+
   static union(schema1: Schema, schema2: Schema): Schema|null {
     const names = [...new Set([...schema1.names, ...schema2.names])];
     const fields = {};
 
     for (const [field, type] of [...Object.entries(schema1.fields), ...Object.entries(schema2.fields)]) {
       if (fields[field]) {
-        if (!Schema.typesEqual(fields[field], type)) {
+        const fieldUnionSchema = Schema.fieldTypeUnion(fields[field], type);
+        if (!fieldUnionSchema) {
           return null;
+        }
+        if (!Schema.typesEqual(fields[field], fieldUnionSchema)) {
+          fields[field] = {...fields[field], ...fieldUnionSchema};
         }
         fields[field].refinement = Refinement.intersectionOf(fields[field].refinement, type.refinement);
         fields[field].annotations = [...(fields[field].annotations || []), ...(type.annotations || [])];
@@ -394,47 +424,5 @@ export class Schema {
       Object.keys(this.fields).sort().map(field =>
         `${field}:${this.normalizeTypeForHash(this.fields[field])}`
       ).join('');
-  }
-
-  static getRestrictedSchemaFields(schema: Schema, restrictedSchema: Schema, opts: SkippedFieldsOptions = {prefix: ''}): {} {
-    const fields = {};
-    for (const [fieldName, field] of Object.entries(schema.fields)) {
-      const restrictedField = restrictedSchema.fields[fieldName];
-      const fullFieldName = `${opts.prefix ? `${opts.prefix}.` : ''}${fieldName}`;
-      if (restrictedField) {
-        fields[fieldName] = Schema.restrictField(field, restrictedField,
-              {...opts, prefix: fullFieldName});
-      } else if (opts.skippedFields) {
-        opts.skippedFields.push(fullFieldName);
-      }
-    }
-    return fields;
-  }
-
-  private static restrictField(field, restrictedField, opts: SkippedFieldsOptions) {
-    assert(field.kind === restrictedField.kind);
-    switch (field.kind) {
-      case 'kotlin-primitive':
-      case 'schema-primitive':
-        return field;
-      case 'schema-collection':
-        return {kind: 'schema-collection', schema: this.restrictField(field.schema, restrictedField.schema, opts)};
-      case 'schema-reference': {
-        const result = {...field};
-        result.schema.model.entitySchema.fields =
-            Schema.getRestrictedSchemaFields(field.schema.model.entitySchema, restrictedField.schema.model.entitySchema, opts);
-        return result;
-      }
-      case 'schema-inline': {
-        const result = {...field};
-        result.model.entitySchema.fields = Schema.getRestrictedSchemaFields(field.model.entitySchema, restrictedField.model.entitySchema, opts);
-        return result;
-      }
-      case 'schema-nested':
-      case 'schema-ordered-list':
-        return {kind: field.kind, schema: this.restrictField(field.schema, restrictedField.schema, opts)};
-      default:
-        throw new Error(`Unsupported field kind: ${field.kind}`);
-    }
   }
 }

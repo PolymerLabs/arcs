@@ -16,6 +16,7 @@ import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -23,6 +24,14 @@ import org.junit.runners.JUnit4
 /** Tests for [ReferenceModeStorageKey]. */
 @RunWith(JUnit4::class)
 class ReferenceModeStorageKeyTest {
+
+    @Before
+    fun setup() {
+        StorageKeyParser.reset(
+            ReferenceModeStorageKey,
+            RamDiskStorageKey
+        )
+    }
     @Test
     fun differentProtocolsThrows() {
         val backing = DatabaseStorageKey.Persistent("db", "abcdef")
@@ -42,7 +51,7 @@ class ReferenceModeStorageKeyTest {
         val key = ReferenceModeStorageKey(backing, direct)
 
         assertThat(key.toString())
-            .isEqualTo("$REFERENCE_MODE_PROTOCOL://{$backing}{$direct}")
+            .isEqualTo("${ReferenceModeStorageKey.protocol}://{$backing}{$direct}")
     }
 
     @Test
@@ -57,7 +66,7 @@ class ReferenceModeStorageKeyTest {
         val embeddedDirect = directReference.embed()
 
         assertThat(parent.toString())
-            .isEqualTo("$REFERENCE_MODE_PROTOCOL://{$embeddedBacking}{$embeddedDirect}")
+            .isEqualTo("${ReferenceModeStorageKey.protocol}://{$embeddedBacking}{$embeddedDirect}")
     }
 
     @Test

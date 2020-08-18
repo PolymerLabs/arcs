@@ -59,19 +59,19 @@ object DriverAndKeyConfigurator {
     // TODO: make the set of keyparsers configurable.
     fun configureKeyParsers() {
         // Start fresh.
-        StorageKeyParser.reset()
-        CapabilitiesResolver.reset()
+        StorageKeyParser.reset(
+            VolatileStorageKey,
+            RamDiskStorageKey,
+            DatabaseStorageKey.Persistent,
+            DatabaseStorageKey.Memory,
+            CreatableStorageKey,
+            ReferenceModeStorageKey,
+            JoinStorageKey
+        )
 
-        VolatileStorageKey.registerParser()
+        CapabilitiesResolver.reset()
         VolatileStorageKey.registerKeyCreator()
-        RamDiskStorageKey.registerParser()
         RamDiskStorageKey.registerKeyCreator()
-        DatabaseStorageKey.registerParser()
         DatabaseStorageKey.registerKeyCreator()
-        // Below storage keys don't have respective drivers,
-        // and therefore they don't have key creators.
-        CreatableStorageKey.registerParser()
-        ReferenceModeStorageKey.registerParser()
-        JoinStorageKey.registerParser()
     }
 }

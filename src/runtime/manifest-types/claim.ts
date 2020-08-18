@@ -9,14 +9,9 @@
  */
 
 import {HandleConnectionSpec} from './particle-spec.js';
-import * as AstNode from './manifest-ast-nodes.js';
-import {resolveFieldPathType} from './field-path.js';
-
-/** The different types of trust claims that particles can make. */
-export enum ClaimType {
-  IsTag = 'is-tag',
-  DerivesFrom = 'derives-from',
-}
+import * as AstNode from '../manifest-ast-nodes.js';
+import {resolveFieldPathType} from '../field-path.js';
+import {ClaimType} from './enums.js';
 
 /**
  * A list of claims made by a particle on a specific handle (or on a field

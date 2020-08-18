@@ -13,13 +13,14 @@ package arcs.core.host
 import arcs.core.common.ArcId
 import arcs.core.data.Capabilities
 import arcs.core.data.Capability.Shareable
+import arcs.core.data.EntitySchemaProviderType
 import arcs.core.data.Plan
+import arcs.core.data.Schema
 import arcs.core.entity.Entity
 import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
-import arcs.core.storage.ActivationFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.util.LruCacheMap
@@ -29,11 +30,12 @@ import arcs.core.util.Time
 import arcs.core.util.guardedBy
 import kotlin.coroutines.CoroutineContext
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -59,17 +61,20 @@ typealias ParticleRegistration = Pair<ParticleIdentifier, ParticleConstructor>
  */
 @ExperimentalCoroutinesApi
 abstract class AbstractArcHost(
-    protected val coroutineContext: CoroutineContext = Dispatchers.Default,
+    /**
+     * This coroutineContext is used to create a [CoroutineScope] that will be used to launch
+     * Arc resurrection jobs.
+     */
+    coroutineContext: CoroutineContext,
+    /**
+     * When arc states change, the state changes are serialized to handles. This serialization will
+     * happen asynchronously from the state change operation, on the [CoroutineContext] provided
+     * here.
+     */
+    updateArcHostContextCoroutineContext: CoroutineContext,
     protected val schedulerProvider: SchedulerProvider,
-    open val activationFactory: ActivationFactory? = null,
     vararg initialParticles: ParticleRegistration
 ) : ArcHost {
-
-    constructor(
-        schedulerProvider: SchedulerProvider,
-        vararg initialParticles: ParticleRegistration
-    ) : this(Dispatchers.Default, schedulerProvider, null, *initialParticles)
-
     private val log = TaggedLog { "AbstractArcHost" }
     private val particleConstructors: MutableMap<ParticleIdentifier, ParticleConstructor> =
         mutableMapOf()
@@ -97,10 +102,33 @@ abstract class AbstractArcHost(
     override val hostId = "${this::class.className()}@${this.hashCode()}"
 
     // TODO: add lifecycle API for ArcHosts shutting down to cancel running coroutines
-    private val scope = CoroutineScope(coroutineContext)
+    private val resurrectionScope = CoroutineScope(coroutineContext)
+
+    /**
+     * Supports asynchronous [ArcHostContext] serializations in observed order.
+     *
+     * TODO:
+     * make the channel per-Arc instead of per-Host for better serialization
+     * performance under multiple running and to-be-run Arcs.
+     */
+    private val contextSerializationChannel: Channel<suspend () -> Unit> =
+        Channel(Channel.UNLIMITED)
+    private val contextSerializationJob =
+        CoroutineScope(updateArcHostContextCoroutineContext).launch {
+            for (task in contextSerializationChannel) task()
+        }
 
     init {
         initialParticles.toList().associateByTo(particleConstructors, { it.first }, { it.second })
+    }
+
+    /** Wait until all observed context serializations got flushed. */
+    private suspend fun drainSerializations() {
+        if (!contextSerializationChannel.isClosedForSend) {
+            val deferred = CompletableDeferred<Boolean>()
+            contextSerializationChannel.send { deferred.complete(true) }
+            deferred.await()
+        }
     }
 
     private suspend fun putContextCache(id: String, context: ArcHostContext) = cacheMutex.withLock {
@@ -147,6 +175,9 @@ abstract class AbstractArcHost(
                 log.info { "Failure stopping arc." }
             }
         }
+
+        /** Wait until all [runningArcs] are stopped and their [ArcHostContext]s are serialized. */
+        drainSerializations()
     }
 
     override suspend fun unpause() {
@@ -166,6 +197,12 @@ abstract class AbstractArcHost(
             }
         }
         pausedArcs.clear()
+
+        /**
+         * Wait until all [pausedArcs]s are started or resurrected and
+         * their [ArcHostContext]s are serialized.
+         */
+        drainSerializations()
     }
 
     override suspend fun shutdown() {
@@ -173,7 +210,8 @@ abstract class AbstractArcHost(
         runningMutex.withLock { runningArcs.clear() }
         clearContextCache()
         pausedArcs.clear()
-        scope.cancel()
+        contextSerializationChannel.cancel()
+        resurrectionScope.cancel()
         schedulerProvider.cancelAll()
     }
 
@@ -187,7 +225,10 @@ abstract class AbstractArcHost(
 
     // VisibleForTesting
     fun clearCache() {
+        // TODO: remove the runBlocking at arcs.core packages.
         runBlocking {
+            // Ensure all contexts are flushed onto storage prior to clear context cache.
+            drainSerializations()
             clearContextCache()
             runningMutex.withLock {
                 runningArcs.clear()
@@ -248,15 +289,8 @@ abstract class AbstractArcHost(
      */
     protected suspend fun updateArcHostContext(arcId: String, context: ArcHostContext) {
         putContextCache(arcId, context)
+        writeContextToStorage(arcId, context)
         runningMutex.withLock {
-            try {
-                writeContextToStorage(arcId, context)
-            } catch (e: Exception) {
-                log.info { "Error serializing Arc" }
-                log.debug(e) {
-                    """Error serializing $arcId, restart will reinvoke Particle.onFirstStart()"""
-                }
-            }
             if (context.arcState == ArcState.Running) {
                 runningArcs[arcId] = context
             } else {
@@ -285,7 +319,9 @@ abstract class AbstractArcHost(
                     handleSpec.key,
                     handleSpec.value,
                     handles,
-                    this.toString()
+                    this.toString(),
+                    true,
+                    (handleSpec.value.handle.type as? EntitySchemaProviderType)?.entitySchema
                 )
             }
         }
@@ -312,10 +348,42 @@ abstract class AbstractArcHost(
      *
      * Subclasses may override this to store the [context] using a different implementation.
      */
-    protected open suspend fun writeContextToStorage(arcId: String, context: ArcHostContext) =
-        createArcHostContextParticle(context).run {
-            writeArcHostContext(context.arcId, context)
+    private suspend fun writeContextToStorageInternal(arcId: String, context: ArcHostContext) {
+        try {
+            /** TODO: reuse [ArcHostContextParticle] instances if possible. */
+            createArcHostContextParticle(context).run {
+                writeArcHostContext(context.arcId, context)
+            }
+        } catch (e: Exception) {
+            log.info { "Error serializing Arc" }
+            log.debug(e) {
+                """
+                Error serializing $arcId, restart will reinvoke Particle.onFirstStart()
+                """.trimIndent()
+            }
         }
+    }
+
+    /** Serializes [ArcHostContext] onto storage asynchronously or synchronously as fall-back. */
+    protected open suspend fun writeContextToStorage(arcId: String, context: ArcHostContext) {
+        if (!contextSerializationChannel.isClosedForSend) {
+            /** Serialize the [context] to storage in observed order asynchronously. */
+            contextSerializationChannel.send {
+                writeContextToStorageInternal(
+                    arcId,
+                    ArcHostContext(
+                        context.arcId,
+                        context.particles,
+                        context.handleManager,
+                        context.arcState
+                    )
+                )
+            }
+        } else {
+            /** fall back to synchronous serialization. */
+            writeContextToStorageInternal(arcId, context)
+        }
+    }
 
     override suspend fun startArc(partition: Plan.Partition) {
         val context = lookupOrCreateArcHostContext(partition.arcId)
@@ -396,7 +464,10 @@ abstract class AbstractArcHost(
                 handleConnection,
                 particle.handles,
                 particle.toString(),
-                immediateSync = false
+                immediateSync = false,
+                storeSchema = (
+                    handleConnection.handle.type as? EntitySchemaProviderType
+                )?.entitySchema
             ).also {
                 particleContext.registerHandle(it)
             }
@@ -450,7 +521,7 @@ abstract class AbstractArcHost(
     /** Helper used by implementors of [ResurrectableHost]. */
     @Suppress("UNUSED_PARAMETER")
     fun onResurrected(arcId: String, affectedKeys: List<StorageKey>) {
-        scope.launch {
+        resurrectionScope.launch {
             if (isRunning(arcId)) {
                 return@launch
             }
@@ -480,7 +551,8 @@ abstract class AbstractArcHost(
         connectionSpec: Plan.HandleConnection,
         holder: HandleHolder,
         particleId: String = "",
-        immediateSync: Boolean = true
+        immediateSync: Boolean = true,
+        storeSchema: Schema? = null
     ): Handle {
         val handleSpec = HandleSpec(
             handleName,
@@ -493,7 +565,8 @@ abstract class AbstractArcHost(
             connectionSpec.storageKey,
             connectionSpec.ttl,
             particleId,
-            immediateSync
+            immediateSync,
+            storeSchema
         ).also { holder.setHandle(handleName, it) }
     }
 
@@ -554,8 +627,7 @@ abstract class AbstractArcHost(
         hostId,
         platformTime,
         schedulerProvider(arcId),
-        stores,
-        coroutineContext = coroutineContext
+        stores
     )
 
     /**

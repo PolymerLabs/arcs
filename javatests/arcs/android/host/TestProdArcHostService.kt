@@ -9,6 +9,7 @@ import arcs.core.storage.StoreManager
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 
@@ -18,6 +19,9 @@ class TestProdArcHostService : ProdArcHostService() {
         this,
         JvmSchedulerProvider(scope.coroutineContext)
     )
+
+    override val coroutineContext = Dispatchers.Default
+    override val arcSerializationCoroutineContext = Dispatchers.Default
 
     override val arcHosts = listOf(arcHost)
 

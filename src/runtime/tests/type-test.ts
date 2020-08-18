@@ -519,4 +519,26 @@ describe('types', () => {
       assert.strictEqual((recipe.handles[0].type.getContainedType() as EntityType).entitySchema.name, 'Lego');
     });
   });
+
+  it('merges type variables by name and preserves merging in clones', async () => {
+    const manifest = await Manifest.parse(`
+      particle Foo
+        a: reads ~x with {a: Text}
+        b: reads [~x with {b: Text}]
+        c: reads BigCollection<~x with {c: Text}>
+        d: writes &~x with {d: Text}
+        e: writes (~x with {e: Text})
+        f: writes ![~x with {f: Text}]
+        g: reads #~x with {g: Text}
+    `);
+    const original = manifest.particles[0];
+    const clone = original.clone();
+    for (const particle of [original, clone]) {
+      const aType = particle.connections.find(hc => hc.name === 'a').type;
+      aType.maybeEnsureResolved();
+      assert.hasAllKeys(aType.resolvedType().getEntitySchema().fields, [
+        'a', 'b', 'c', 'd', 'e', 'f', 'g'
+      ]);
+    }
+  });
 });

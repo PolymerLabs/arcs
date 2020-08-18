@@ -7,9 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {ClaimType} from './claim.js';
-import {CheckType} from './check.js';
-
+import {Direction, SlotDirection, ClaimType, CheckType} from './manifest-types/enums.js';
+export {Direction, SlotDirection, ClaimType, CheckType};
 /**
  * Complete set of tokens used by `manifest-parser.pegjs`. To use this you
  * need to follow some simple guidelines:
@@ -942,10 +941,6 @@ export type whiteSpace = string;
 export type eolWhiteSpace = string;
 export type eol = string;
 
-// String-based enums.
-// TODO: convert to actual enums so that they can be iterated over.
-export type Direction = 'reads' | 'writes' | 'reads writes' | 'hosts' | '`consumes' | '`provides' | 'any';
-
 export function preSlandlesDirectionToDirection(direction: Direction, isOptional: boolean = false): string {
   // TODO(jopra): Remove after syntax unification.
   // Use switch for totality checking.
@@ -971,7 +966,6 @@ export function preSlandlesDirectionToDirection(direction: Direction, isOptional
   }
 }
 
-export type SlotDirection = 'provides' | 'consumes';
 export type Fate = 'use' | 'create' | 'map' | 'copy' | 'join' | '?' | '`slot';
 
 export type ParticleHandleConnectionType = TypeVariable|CollectionType|

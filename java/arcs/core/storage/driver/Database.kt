@@ -12,10 +12,12 @@
 package arcs.core.storage.driver
 
 import androidx.annotation.VisibleForTesting
+import arcs.core.common.Referencable
 import arcs.core.crdt.CrdtEntity
 import arcs.core.crdt.CrdtSet
 import arcs.core.crdt.CrdtSingleton
 import arcs.core.crdt.extension.toCrdtEntityData
+import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.util.ReferencableList
 import arcs.core.storage.Driver
@@ -105,7 +107,6 @@ object DatabaseDriverProvider : DriverProvider {
     fun configure(databaseManager: DatabaseManager, schemaLookup: (String) -> Schema?) = apply {
         this._manager = databaseManager
         this.schemaLookup = schemaLookup
-        DatabaseStorageKey.registerParser()
         DriverFactory.register(this)
     }
 
@@ -142,7 +143,6 @@ class DatabaseDriver<Data : Any>(
         log.debug { "Registered with clientId = $clientId" }
     }
 
-    @Suppress("UNCHECKED_CAST")
     override suspend fun registerReceiver(
         token: String?,
         receiver: suspend (data: Data, version: Int) -> Unit
@@ -223,7 +223,6 @@ class DatabaseDriver<Data : Any>(
         return database.insertOrUpdate(storageKey, databaseData, clientId)
     }
 
-    @Suppress("UNCHECKED_CAST")
     override suspend fun onDatabaseUpdate(
         data: DatabaseData,
         version: Int,
@@ -232,17 +231,7 @@ class DatabaseDriver<Data : Any>(
         if (originatingClientId == clientId) return
 
         // Convert the raw DatabaseData into the appropriate CRDT data model
-        val actualData = when (data) {
-            is DatabaseData.Singleton -> data.value.toCrdtSingletonData(data.versionMap)
-            is DatabaseData.Collection -> data.values.toCrdtSetData(data.versionMap)
-            is DatabaseData.Entity -> data.rawEntity.toCrdtEntityData(data.versionMap) {
-                when (it) {
-                    is Reference -> it
-                    is ReferencableList<*> -> CrdtEntity.Reference.wrapReferencable(it)
-                    else -> CrdtEntity.Reference.buildReference(it)
-                }
-            }
-        } as Data
+        val actualData = data.toCrdtData<Data>()
 
         log.verbose {
             """
@@ -275,7 +264,6 @@ class DatabaseDriver<Data : Any>(
         token = Random.nextInt().toString()
     }
 
-    @Suppress("UNCHECKED_CAST")
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     suspend fun getDatabaseData(): Pair<Data?, Int?> {
         var dataAndVersion: Pair<Data?, Int?> = null to null
@@ -289,22 +277,41 @@ class DatabaseDriver<Data : Any>(
             },
             schema
         )?.also {
-            @Suppress("UNCHECKED_CAST")
-            dataAndVersion = when (it) {
-                is DatabaseData.Entity ->
-                    it.rawEntity.toCrdtEntityData(it.versionMap) { refable ->
-                        when (refable) {
-                            is Reference -> refable
-                            is ReferencableList<*> -> CrdtEntity.Reference.wrapReferencable(refable)
-                            else -> CrdtEntity.Reference.buildReference(refable)
-                        }
-                    }
-                is DatabaseData.Singleton ->
-                    it.value.toCrdtSingletonData(it.versionMap)
-                is DatabaseData.Collection ->
-                    it.values.toCrdtSetData(it.versionMap)
-            } as Data to it.databaseVersion
+            dataAndVersion = it.toCrdtData<Data>() to it.databaseVersion
         }
         return dataAndVersion
+    }
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun <Data> DatabaseData.toCrdtData() = when (this) {
+    is DatabaseData.Singleton -> value.toCrdtSingletonData(versionMap)
+    is DatabaseData.Collection -> values.toCrdtSetData(versionMap)
+    is DatabaseData.Entity -> rawEntity.toCrdtEntityData(versionMap) { it.toCrdtEntityReference() }
+} as Data
+
+// We represent field data differently at different levels:
+// * Users see Entities with language-specific types for fields
+// * These get converted to RawEntities with Referencable fields
+// * CRDTEntities all have CrdtEntity.Reference typed fields
+// * The Database takes a fourth representation
+//
+// For CrdtEntity structures, Most Referencables are converted to
+// strings wrapped in References, and the raw string is the DB Data
+// layer. Inline entities and lists, however, wrap the Referencable
+// structure in the Reference directly, and then unwrap it again for
+// the DB layer (which understands these structures and deals with them).
+// We did it this way because we didn't want to try and encode list o
+// entity data in a string.
+//
+// This function deals with going in the opposite direction - that is,
+// taking DB Data and converting it into a Reference with the right upstream
+// behaviour.
+private fun Referencable.toCrdtEntityReference(): CrdtEntity.Reference {
+    return when (this) {
+        is Reference -> this
+        is RawEntity -> CrdtEntity.Reference.wrapReferencable(this)
+        is ReferencableList<*> -> CrdtEntity.Reference.wrapReferencable(this)
+        else -> CrdtEntity.Reference.buildReference(this)
     }
 }

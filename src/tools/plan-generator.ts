@@ -13,10 +13,9 @@ import {Particle} from '../runtime/recipe/particle.js';
 import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils.js';
 import {generateConnectionType, generateHandleType} from './kotlin-type-generator.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
-import {Direction} from '../runtime/manifest-ast-nodes.js';
+import {Direction} from '../runtime/manifest-types/enums.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {AnnotationRef} from '../runtime/recipe/annotation.js';
-import {IngressValidation} from '../runtime/policy/ingress-validation.js';
 
 const ktUtils = new KotlinGenerationUtils();
 
@@ -31,9 +30,7 @@ export class PlanGeneratorError extends Error {
 export class PlanGenerator {
 
   constructor(private resolvedRecipes: Recipe[],
-              private namespace: string,
-              // TODO(b/159142859): Ingress validation shouldn't be optional.
-              private readonly ingressValidation: IngressValidation = null) {}
+              private namespace: string) {}
 
   /** Generates a Kotlin file with plan classes derived from resolved recipes. */
   async generate(): Promise<string> {
@@ -51,12 +48,13 @@ export class PlanGenerator {
   async createPlans(): Promise<string[]> {
     const declarations: string[] = [];
     for (const recipe of this.resolvedRecipes) {
-      const planValInit = `val ${recipe.name}Plan = `;
-      const plan = planValInit + ktUtils.applyFun(`Plan`, [
-        ktUtils.listOf(await Promise.all(recipe.particles.map(p => this.createParticle(p)))),
-        ktUtils.listOf(recipe.handles.map(h => this.handleVariableName(h))),
-        PlanGenerator.createAnnotations(recipe.annotations)
-      ], {startIndent: planValInit.length});
+      const plan = await ktUtils.property(`${recipe.name}Plan`, async ({startIndent}) => {
+        return ktUtils.applyFun(`Plan`, [
+          ktUtils.listOf(await Promise.all(recipe.particles.map(p => this.createParticle(p)))),
+          ktUtils.listOf(recipe.handles.map(h => this.handleVariableName(h))),
+          PlanGenerator.createAnnotations(recipe.annotations)
+        ], {startIndent});
+      }, {delegate: 'lazy'});
 
       const handles = await Promise.all(recipe.handles.map(h => this.createHandleVariable(h)));
 
@@ -82,24 +80,13 @@ export class PlanGenerator {
    */
   async createHandleVariable(handle: Handle): Promise<string> {
     handle.type.maybeEnsureResolved();
-    const valInit = `val ${this.handleVariableName(handle)} = `;
-    let handleRestrictedType: Type = null;
-    if (this.ingressValidation) {
-      const skippedFields = [];
-      handleRestrictedType = this.ingressValidation.restrictType(handle.type, skippedFields);
-      if (skippedFields.length > 0) {
-        console.warn(`Handle '${handle.id}' of Type ${handle.type.resolvedType().toString()} ` +
-            `is skipping fields: [${skippedFields.join(', ')}] that are not covered by Policies.`);
-      }
-    }
-    if (!handleRestrictedType) {
-      handleRestrictedType = handle.type.resolvedType();
-    }
-    return valInit + ktUtils.applyFun(`Handle`, [
-      await this.createStorageKey(handle),
-      await generateHandleType(handleRestrictedType),
-      PlanGenerator.createAnnotations(handle.annotations)
-    ], {startIndent: valInit.length});
+    return await ktUtils.property(this.handleVariableName(handle), async ({startIndent}) => {
+      return ktUtils.applyFun(`Handle`, [
+        await this.createStorageKey(handle),
+        await generateHandleType(handle.type.resolvedType()),
+        PlanGenerator.createAnnotations(handle.annotations)
+      ], {startIndent});
+    }, {delegate: 'lazy'});
   }
 
   /** Generates a Kotlin `Plan.Particle` instantiation from a Particle. */

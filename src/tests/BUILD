@@ -1,4 +1,4 @@
-load("//third_party/java/arcs/build_defs:build_defs.bzl", "arcs_ts_test")
+load("//third_party/java/arcs/build_defs:arcs_ts_test.bzl", "arcs_ts_test")
 
 arcs_ts_test(
     name = "hotreload-integration-test",

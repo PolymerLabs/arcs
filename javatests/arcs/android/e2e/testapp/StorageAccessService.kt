@@ -22,6 +22,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class StorageAccessService : LifecycleService() {
 
     private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
@@ -33,7 +34,6 @@ class StorageAccessService : LifecycleService() {
         )
     )
 
-    @ExperimentalCoroutinesApi
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 

@@ -4,10 +4,10 @@ Rules are re-exported in build_defs.bzl -- use those instead.
 """
 
 load("//devtools/build_cleaner/skylark:build_defs.bzl", "register_extension_info")
-load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
-load("//third_party/java/arcs/build_defs/internal:util.bzl", "manifest_only", "replace_arcs_suffix")
 load(":kotlin.bzl", "arcs_kt_library", "arcs_kt_plan")
 load(":manifest.bzl", "arcs_manifest")
+load(":tools.oss.bzl", "arcs_tool_schema2wasm")
+load(":util.bzl", "manifest_only", "replace_arcs_suffix")
 
 def _run_schema2wasm(
         name,
@@ -29,22 +29,15 @@ def _run_schema2wasm(
     if type(deps) == str:
         fail("deps must be a list")
 
-    sigh_command(
+    arcs_tool_schema2wasm(
         name = name,
         srcs = [src],
         outs = [out],
         deps = deps,
-        progress_message = "Generating {} entity schemas".format(language_name),
-
-        # TODO: generated header guard should contain whole workspace-relative
-        # path to file.
-        sigh_cmd = "schema2wasm " +
-                   language_flag + " " +
-                   ("--wasm " if wasm else "") +
-                   ("--test_harness " if test_harness else "") +
-                   "--outdir $(dirname {OUT}) " +
-                   "--outfile $(basename {OUT}) " +
-                   "{SRC}",
+        language_name = language_name,
+        language_flag = language_flag,
+        wasm = wasm,
+        test_harness = test_harness,
     )
 
 def arcs_cc_schema(name, src, deps = [], out = None):
@@ -197,6 +190,7 @@ def arcs_kt_gen(
     arcs_manifest(
         name = manifest_name,
         srcs = srcs,
+        manifest_proto = False,
         deps = manifest_only(deps) + data,
     )
 

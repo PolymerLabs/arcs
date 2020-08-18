@@ -22,7 +22,6 @@ load(
     "java_library",
     "java_test",
 )
-load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
 load("//tools/build_defs/android:rules.bzl", "android_local_test")
 load(
     "//tools/build_defs/kotlin:rules.bzl",
@@ -31,7 +30,19 @@ load(
 )
 load(":kotlin_serviceloader_registry.bzl", "kotlin_serviceloader_registry")
 load(":kotlin_wasm_annotations.bzl", "kotlin_wasm_annotations")
-load(":util.bzl", "manifest_only", "merge_lists", "replace_arcs_suffix")
+load(":manifest.bzl", "arcs_proto_plan")
+load(
+    ":tools.oss.bzl",
+    "arcs_tool_recipe2plan",
+    "arcs_tool_recipe2plan_2",
+)
+load(
+    ":util.bzl",
+    "create_build_test",
+    "manifest_only",
+    "merge_lists",
+    "replace_arcs_suffix",
+)
 
 _WASM_SUFFIX = "-wasm"
 
@@ -121,6 +132,7 @@ def arcs_kt_jvm_library(**kwargs):
         )
 
     kt_jvm_library(**kwargs)
+    create_build_test(kwargs["name"])
 
 def arcs_kt_android_library(**kwargs):
     """Wrapper around kt_android_library for Arcs.
@@ -135,6 +147,7 @@ def arcs_kt_android_library(**kwargs):
     kotlincopts = kwargs.pop("kotlincopts", [])
     kwargs["kotlincopts"] = merge_lists(kotlincopts, COMMON_KOTLINC_OPTS + JVM_KOTLINC_OPTS)
     kt_android_library(**kwargs)
+    create_build_test(kwargs["name"])
 
 def arcs_kt_native_library(**kwargs):
     """Wrapper around kt_native_library for Arcs.
@@ -467,12 +480,10 @@ def arcs_kt_plan(
         out = replace_arcs_suffix(src, "_GeneratedPlan.kt")
         outs.append(out)
         rest = [s for s in srcs if s != src]
-        sigh_command(
+        arcs_tool_recipe2plan(
             name = genrule_name,
             srcs = [src],
             outs = [out],
-            progress_message = "Generating Kotlin Plans",
-            sigh_cmd = "recipe2plan --quiet --outdir $(dirname {OUT}) --outfile $(basename {OUT}) {SRC}",
             deps = deps + data + rest,
         )
 
@@ -486,6 +497,54 @@ def arcs_kt_plan(
         deps = arcs_sdk_deps + deps,
     )
     return {"outs": outs, "deps": arcs_sdk_deps}
+
+# Note: Once this is mature, it will replace arcs_kt_plan
+def arcs_kt_plan_2(name, package, arcs_sdk_deps, srcs = [], deps = [], visibility = None):
+    """Converts recipes from manifests into Kotlin plans, via Kotlin.
+
+    Example:
+
+      ```
+      arcs_kt_plan_2(
+        name = "example_plan",
+        srcs = ["Example.arcs"],
+        package = "com.my.example", // Temporary (b/161994250)
+      )
+      ```
+
+    Args:
+      name: name of created target
+      package: the package that all generated code will belong to (temporary, see b/161994250).
+      arcs_sdk_deps: build targets for the Arcs SDK to be included
+      srcs: list of Arcs manifest files
+      deps: JVM dependencies for Jar
+      visibility: list of visibilities
+    """
+    plans = []
+    for src in srcs:
+        proto_name = replace_arcs_suffix(src, "_proto")
+        plan_name = replace_arcs_suffix(src, "_GeneratedPlan2")
+
+        arcs_proto_plan(
+            name = proto_name,
+            src = src,
+        )
+
+        arcs_tool_recipe2plan_2(
+            name = plan_name,
+            src = ":" + proto_name,
+            package = package,
+        )
+
+        plans.append(":" + plan_name)
+
+    arcs_kt_library(
+        name = name,
+        srcs = plans,
+        platforms = ["jvm"],
+        visibility = visibility,
+        deps = arcs_sdk_deps + deps,
+    )
 
 def arcs_kt_jvm_test_suite(
         name,
