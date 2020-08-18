@@ -15,7 +15,7 @@ import {CRDTEntity, SingletonEntityModel, CollectionEntityModel} from './crdt/cr
 import {Referenceable, CRDTCollection} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Flags} from './flags.js';
-import {SchemaType} from './manifest-ast-nodes.js';
+import {SchemaType} from './manifest-ast-types/manifest-ast-nodes.js';
 import {Refinement, AtLeastAsSpecific} from './refiner.js';
 import {Reference} from './reference.js';
 import {AnnotationRef} from './recipe/annotation.js';

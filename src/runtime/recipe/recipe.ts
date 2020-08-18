@@ -10,13 +10,13 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {digest} from '../../platform/digest-web.js';
-import {Modality} from '../manifest-types/modality.js';
-import {HandleConnectionSpec} from '../manifest-types/particle-spec.js';
+import {Modality} from '../arcs-types/modality.js';
+import {HandleConnectionSpec} from '../arcs-types/particle-spec.js';
 import {Schema} from '../schema.js';
 import {InterfaceType, Type, TypeVariableInfo} from '../type.js';
 
 import {ConnectionConstraint, EndPoint} from './connection-constraint.js';
-import {Direction} from '../manifest-types/enums.js';
+import {Direction} from '../arcs-types/enums.js';
 import {HandleConnection} from './handle-connection.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';

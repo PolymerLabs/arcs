@@ -16,11 +16,11 @@ import {CRDTCount} from './crdt/crdt-count.js';
 import {CRDTCollection} from './crdt/crdt-collection.js';
 import {CRDTSingleton} from './crdt/crdt-singleton.js';
 import {Schema} from './schema.js';
-import {ParticleSpec} from './manifest-types/particle-spec.js';
+import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {Refinement} from './refiner.js';
 import {AnnotationRef} from './recipe/annotation.js';
 import {ManifestStringBuilder} from './manifest-string-builder.js';
-import {Direction, SlotDirection} from './manifest-types/enums.js';
+import {Direction, SlotDirection} from './arcs-types/enums.js';
 
 export interface TypeLiteral extends Literal {
   tag: string;

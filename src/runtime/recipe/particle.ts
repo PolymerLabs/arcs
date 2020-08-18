@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {ParticleSpec, ConsumeSlotConnectionSpec} from '../manifest-types/particle-spec.js';
+import {ParticleSpec, ConsumeSlotConnectionSpec} from '../arcs-types/particle-spec.js';
 import {Type} from '../type.js';
 
 import {HandleConnection} from './handle-connection.js';

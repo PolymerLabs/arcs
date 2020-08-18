@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {HandleConnectionSpec, ConsumeSlotConnectionSpec} from '../manifest-types/particle-spec.js';
+import {HandleConnectionSpec, ConsumeSlotConnectionSpec} from '../arcs-types/particle-spec.js';
 
 import {ConnectionConstraint} from './connection-constraint.js';
 import {HandleConnection} from './handle-connection.js';

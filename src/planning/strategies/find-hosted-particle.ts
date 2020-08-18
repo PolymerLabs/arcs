@@ -10,7 +10,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
-import {HandleConnectionSpec, ParticleSpec} from '../../runtime/manifest-types/particle-spec.js';
+import {HandleConnectionSpec, ParticleSpec} from '../../runtime/arcs-types/particle-spec.js';
 import {Particle} from '../../runtime/recipe/particle.js';
 import {RecipeUtil} from '../../runtime/recipe/recipe-util.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';

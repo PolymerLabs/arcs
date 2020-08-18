@@ -14,7 +14,7 @@ import {Arc} from '../arc.js';
 import {Loader} from '../../platform/loader.js';
 import {Recipe} from '../recipe/recipe.js';
 import {EntityType, InterfaceType, SingletonType} from '../type.js';
-import {ParticleSpec} from '../manifest-types/particle-spec.js';
+import {ParticleSpec} from '../arcs-types/particle-spec.js';
 import {ArcId} from '../id.js';
 import {VolatileStorageKey} from '../storage/drivers/volatile.js';
 import {Entity} from '../entity.js';

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Op} from '../runtime/manifest-ast-nodes.js';
+import {Op} from '../runtime/manifest-ast-types/manifest-ast-nodes.js';
 import {Dictionary} from '../runtime/hot.js';
 import {Schema} from '../runtime/schema.js';
 import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
