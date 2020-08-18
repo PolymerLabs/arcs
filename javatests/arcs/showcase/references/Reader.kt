@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
  * TODO(b/162781220) - Remove this helper in favor of the [dereference] method on the entity.
  */
 fun <T : Entity> Reference<T>.dereferenceViaHandle(handle: ReadCollectionHandle<T>): T? {
-    return handle.fetchAll().firstOrNull { it.entityId == entityId }
+    return handle.fetchById(entityId)
 }
 
 @ExperimentalCoroutinesApi
