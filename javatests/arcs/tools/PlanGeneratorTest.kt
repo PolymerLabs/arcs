@@ -72,17 +72,7 @@ class PlanGeneratorTest {
             "fooHash"
         ).toGeneration().toString()
 
-//        // TODO(161941018): Figure out how to get indentation right so the test can be written like so
-//        assertThat(schemaGen).isEqualTo("""
-//            arcs.core.data.Schema(
-//                names = setOf(arcs.core.data.SchemaName("Foo")),
-//                fields = arcs.core.data.SchemaFields(
-//                    singletons = emptyMap(),
-//                    collections = emptyMap()
-//                ),
-//                hash = "fooHash"
-//            )
-//        """.trimIndent())
+        // TODO(161941018): Figure out how to get indentation right so we can test whitespace
         assertThat(schemaGen).contains("SchemaName(\"Foo\")")
         assertThat(schemaGen).contains("hash = \"fooHash\"")
     }
