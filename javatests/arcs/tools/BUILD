@@ -24,7 +24,7 @@ arcs_kt_jvm_test_suite(
     deps = [
         "//java/arcs/core/data",
         "//java/arcs/core/testutil",
-        "//java/arcs/tools:generator",
+        "//java/arcs/tools:recipe2plan_lib",
         "//third_party/java/junit:junit-android",
         "//third_party/java/truth:truth-android",
         "//third_party/kotlin/kotlinpoet",
