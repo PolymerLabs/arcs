@@ -13,7 +13,9 @@ package arcs.android.storage.service
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.common.ArcId
+import arcs.core.data.Capability.Ttl
 import arcs.core.data.CollectionType
 import arcs.core.data.EntityType
 import arcs.core.data.HandleMode
@@ -31,6 +33,7 @@ import arcs.core.storage.DriverFactory
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreWriteBack
+import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.keys.DatabaseStorageKey
 import arcs.core.storage.keys.RamDiskStorageKey
@@ -41,7 +44,6 @@ import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
-import arcs.sdk.android.storage.AndroidDriverAndKeyConfigurator
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.EmptyCoroutineContext
@@ -62,7 +64,7 @@ class StorageServiceEndToEndTest {
 
     private suspend fun buildManager() =
         StorageServiceManager(coroutineContext, ConcurrentHashMap())
-    private val time = FakeTime()
+
     private val scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
     private val ramdiskKey = ReferenceModeStorageKey(
         backingKey = RamDiskStorageKey("backing"),
@@ -78,10 +80,20 @@ class StorageServiceEndToEndTest {
         storageKey = DatabaseStorageKey.Persistent("container", DummyEntity.SCHEMA_HASH)
     )
 
+    private lateinit var databaseManager: AndroidSqliteDatabaseManager
+    private lateinit var time: FakeTime
+
     @Before
     fun setUp() {
+        time = FakeTime()
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
-        AndroidDriverAndKeyConfigurator.configure(ApplicationProvider.getApplicationContext())
+        databaseManager = AndroidSqliteDatabaseManager(
+            ApplicationProvider.getApplicationContext(),
+            null
+        )
+        DriverAndKeyConfigurator.configure(databaseManager)
+
+        //AndroidDriverAndKeyConfigurator.configure(ApplicationProvider.getApplicationContext())
         SchemaRegistry.register(DummyEntity.SCHEMA)
         SchemaRegistry.register(InlineDummyEntity.SCHEMA)
     }
@@ -95,11 +107,59 @@ class StorageServiceEndToEndTest {
     }
 
     @Test
+    fun writeThenRead_nullInlines_inCollection_onDatabase() = runBlocking {
+        val handle = createCollectionHandle(databaseKey)
+        val entity = emptyEntityForTest()
+
+        handle.dispatchStore(entity)
+
+        val handle2 = createCollectionHandle(databaseKey)
+        val data = handle2.fetchAll()
+        assertThat(data.size).isEqualTo(1)
+        assertThat(data.toList()[0]).isEqualTo(entity)
+    }
+
+    @Test
     fun writeThenRead_inlineData_inCollection_onDatabase() = runBlocking {
         val handle = createCollectionHandle(databaseKey)
         val entity = entityForTest()
 
         handle.dispatchStore(entity)
+
+        databaseManager.runGarbageCollection()
+
+        val handle2 = createCollectionHandle(databaseKey)
+        val data = handle2.fetchAll()
+        assertThat(data.size).isEqualTo(1)
+        assertThat(data.toList()[0]).isEqualTo(entity)
+    }
+
+    @Test
+    fun writeThenRead_inlineData_inCollection_onDatabase_withExpiry() = runBlocking {
+        val handle = createCollectionHandle(databaseKey)
+        val entity = entityForTest()
+        val entity2 = entityForTest()
+
+        time.millis = System.currentTimeMillis()
+        handle.dispatchStore(entity)
+        time.millis = 1L
+        handle.dispatchStore(entity2)
+
+        val handle2 = createCollectionHandle(databaseKey)
+        time.millis = System.currentTimeMillis()
+        val data = handle2.fetchAll()
+        assertThat(data.size).isEqualTo(1)
+        assertThat(data.toList()[0]).isEqualTo(entity)
+    }
+
+    @Test
+    fun writeThenRead_inlineData_inCollection_onDatabase_withGC() = runBlocking {
+        val handle = createCollectionHandle(databaseKey)
+        val entity = entityForTest()
+
+        handle.dispatchStore(entity)
+
+        databaseManager.runGarbageCollection()
 
         val handle2 = createCollectionHandle(databaseKey)
         val data = handle2.fetchAll()
@@ -132,6 +192,8 @@ class StorageServiceEndToEndTest {
         assertThat(data.size).isEqualTo(1)
         assertThat(data.toList()[0]).isEqualTo(entity)
     }
+
+    private fun emptyEntityForTest() = DummyEntity()
 
     private fun entityForTest() = DummyEntity().apply {
         inlineEntity = InlineDummyEntity().apply {
@@ -177,6 +239,7 @@ class StorageServiceEndToEndTest {
                 CollectionType(EntityType(DummyEntity.SCHEMA)),
                 DummyEntity
             ),
-            storageKey
+            storageKey,
+            Ttl.Hours(1)
         ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
 }
