@@ -1022,6 +1022,7 @@ class DatabaseImpl(
                     LEFT JOIN entity_refs ON entity_storage_key = storage_keys.storage_key
                     GROUP BY storage_key_id, storage_key, orphan
                     HAVING entities.creation_timestamp < $twoDaysAgo
+                    AND storage_keys.storage_key NOT LIKE 'inline%'
                     AND (orphan OR noRef)
                 """.trimIndent(),
                 arrayOf()
@@ -1071,22 +1072,26 @@ class DatabaseImpl(
     }
 
     override suspend fun removeAllEntities() {
-        return clearEntities("""
+        // Filter by creation_timestamp to exclude inline entities (those are handled inside
+        // clearEntities).
+        clearEntities("""
             SELECT storage_key_id, storage_key 
             FROM entities 
             LEFT JOIN storage_keys
-                ON entities.storage_key_id = storage_keys.id        
+                ON entities.storage_key_id = storage_keys.id
+            WHERE storage_keys.storage_key NOT LIKE 'inline%'
             """)
     }
 
     override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
-        return clearEntities("""
+        clearEntities("""
             SELECT storage_key_id, storage_key 
             FROM entities 
             LEFT JOIN storage_keys
                 ON entities.storage_key_id = storage_keys.id
             WHERE creation_timestamp >= $startTimeMillis
             AND creation_timestamp <= $endTimeMillis
+            AND storage_keys.storage_key NOT LIKE 'inline%'
             """)
     }
 
@@ -1109,6 +1114,7 @@ class DatabaseImpl(
             LEFT JOIN storage_keys
                 ON entities.storage_key_id = storage_keys.id
             WHERE expiration_timestamp > -1 AND expiration_timestamp < $nowMillis
+            AND storage_keys.storage_key NOT LIKE 'inline%'
         """
         clearEntities(query)
     }
@@ -1122,7 +1128,7 @@ class DatabaseImpl(
     private suspend fun clearEntities(query: String, entitiesAreTopLevel: Boolean = true) {
         writableDatabase.transaction {
             val db = this
-            // Find all expired entities.
+            // Query the storage_keys table with the given query.
             val storageKeyIdsPairs = rawQuery(query.trimIndent(), arrayOf())
                 .map { it.getLong(0) to it.getString(1) }.toSet()
             val storageKeyIds = storageKeyIdsPairs.map { it.first.toString() }.toTypedArray()
@@ -1256,8 +1262,6 @@ class DatabaseImpl(
                         it.onDatabaseDelete(null)
                     }
                 }
-            } else {
-                emptyList()
             }
         }
     }
