@@ -230,7 +230,6 @@ class PlanGeneratorTest {
         )
     }
 
-
     @Test
     fun type_variable_unconstrained() {
         assertThat(
