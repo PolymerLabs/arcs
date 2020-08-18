@@ -1022,6 +1022,7 @@ class DatabaseImpl(
                     LEFT JOIN entity_refs ON entity_storage_key = storage_keys.storage_key
                     GROUP BY storage_key_id, storage_key, orphan
                     HAVING entities.creation_timestamp < $twoDaysAgo
+                    AND storage_keys.storage_key NOT LIKE 'inline%'
                     AND (orphan OR noRef)
                 """.trimIndent(),
                 arrayOf()
@@ -1078,7 +1079,7 @@ class DatabaseImpl(
             FROM entities 
             LEFT JOIN storage_keys
                 ON entities.storage_key_id = storage_keys.id
-            WHERE creation_timestamp > -1        
+            WHERE storage_keys.storage_key NOT LIKE 'inline%'
             """)
     }
 
@@ -1090,6 +1091,7 @@ class DatabaseImpl(
                 ON entities.storage_key_id = storage_keys.id
             WHERE creation_timestamp >= $startTimeMillis
             AND creation_timestamp <= $endTimeMillis
+            AND storage_keys.storage_key NOT LIKE 'inline%'
             """)
     }
 
@@ -1112,6 +1114,7 @@ class DatabaseImpl(
             LEFT JOIN storage_keys
                 ON entities.storage_key_id = storage_keys.id
             WHERE expiration_timestamp > -1 AND expiration_timestamp < $nowMillis
+            AND storage_keys.storage_key NOT LIKE 'inline%'
         """
         clearEntities(query)
     }

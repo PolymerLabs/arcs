@@ -67,6 +67,9 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
         val entity = DummyEntity().apply {
             num = 1.0
             texts = setOf("1", "one")
+            inlineEntity = InlineDummyEntity().apply {
+                text = "inline"
+            }
         }
         handle.dispatchStore(entity)
 
@@ -74,10 +77,17 @@ class DatabaseGarbageCollectionPeriodicTaskTest {
         // reference or the entity won't be garbage collected)
         val ref1 = handle.dispatchCreateReference(entity)
 
+        // Trigger gc worker twice (entity are removed only after being orphan for two runs).
+        assertThat(worker.doWork()).isEqualTo(Result.success())
+        assertThat(worker.doWork()).isEqualTo(Result.success())
+        // Check that the entity is still there as it is still in the collection.
+        assertThat(ref1.dereference()).isEqualTo(entity)
+
+        // Now remove from the collection.
         handle.dispatchRemove(entity)
         assertThat(handle.dispatchFetchAll()).isEmpty()
 
-        // Trigger gc worker twice (entity are removed only after being orphan for two runs).
+        // Trigger gc worker twice again.
         assertThat(worker.doWork()).isEqualTo(Result.success())
         assertThat(worker.doWork()).isEqualTo(Result.success())
 

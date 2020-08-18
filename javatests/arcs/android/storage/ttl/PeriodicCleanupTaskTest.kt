@@ -60,7 +60,12 @@ class PeriodicCleanupTaskTest {
         fakeTime.millis = 1L
 
         val handle = createCollectionHandle()
-        val entity = DummyEntity().apply { num = 1.0 }
+        val entity = DummyEntity().apply {
+            num = 1.0
+            inlineEntity = InlineDummyEntity().apply {
+                text = "inline"
+            }
+        }
         handle.dispatchStore(entity)
 
         // Make sure the write has reached storage.
