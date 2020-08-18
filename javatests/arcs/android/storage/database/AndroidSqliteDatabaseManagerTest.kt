@@ -46,7 +46,7 @@ class AndroidSqliteDatabaseManagerTest {
         "hash"
     )
     val entity = DatabaseData.Entity(
-        RawEntity("entity", mapOf("text" to "abc".toReferencable()), mapOf()),
+        RawEntity("entity", mapOf("text" to "abc".toReferencable()), mapOf(), 123),
         schema,
         1,
         VersionMap("me" to 1)
