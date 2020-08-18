@@ -36,10 +36,10 @@ class Recipe2Plan : CliktCommand(
         DriverAndKeyConfigurator.configure(null)
         val fileBuilder = FileSpec.builder(packageName, "")
             .addComment("""
-            |GENERATED CODE -- DO NOT EDIT
-            |
-            |TODO(b/161941018): Improve whitespace / formatting.
-        """.trimMargin())
+                |GENERATED CODE -- DO NOT EDIT
+                |
+                |TODO(b/161941018): Improve whitespace / formatting.
+            """.trimMargin())
 
         val manifestProto = ManifestProto.parseFrom(manifest.readBytes())
         manifestProto.decodeRecipes()
