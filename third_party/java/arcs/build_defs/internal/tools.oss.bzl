@@ -6,6 +6,7 @@ the actual sigh_command invocations.
 """
 
 load("//third_party/java/arcs/build_defs:sigh.bzl", "sigh_command")
+load("//third_party/java/arcs/build_defs/internal:plan.bzl", "recipe2plan")
 load(":run_test.bzl", "run_test")
 
 # buildifier: disable=function-docstring
@@ -26,6 +27,15 @@ def arcs_tool_recipe2plan(name, srcs, outs, deps, generate_proto = False, recipe
         progress_message = "Generating Arcs Plan (%s)" % plan_type,
         sigh_cmd = sigh_cmd,
         deps = deps,
+    )
+
+# buildifier: disable=function-docstring
+def arcs_tool_recipe2plan_2(name, src, package):
+    recipe2plan(
+        name = name,
+        src = src,
+        package = package,
+        compiler = "//java/arcs/tools:recipe2plan",
     )
 
 # buildifier: disable=function-docstring

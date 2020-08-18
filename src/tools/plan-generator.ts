@@ -13,7 +13,7 @@ import {Particle} from '../runtime/recipe/particle.js';
 import {KotlinGenerationUtils, quote, tryImport} from './kotlin-generation-utils.js';
 import {generateConnectionType, generateHandleType} from './kotlin-type-generator.js';
 import {HandleConnection} from '../runtime/recipe/handle-connection.js';
-import {Direction} from '../runtime/manifest-types/enums.js';
+import {Direction} from '../runtime/arcs-types/enums.js';
 import {Handle} from '../runtime/recipe/handle.js';
 import {AnnotationRef} from '../runtime/recipe/annotation.js';
 

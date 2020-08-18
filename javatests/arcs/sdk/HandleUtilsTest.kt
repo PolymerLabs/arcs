@@ -20,6 +20,7 @@ import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HandleMode
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.StoreManager
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -61,7 +62,7 @@ class HandleUtilsTest {
     fun setUp() = runBlocking {
         RamDisk.clear()
         RamDiskDriverProvider()
-        ReferenceModeStorageKey.registerParser()
+        StorageKeyParser.reset(ReferenceModeStorageKey)
         stores = StoreManager()
         scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher() + Job())
         manager = EntityHandleManager(

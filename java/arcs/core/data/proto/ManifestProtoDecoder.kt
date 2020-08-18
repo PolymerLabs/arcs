@@ -12,7 +12,6 @@
 package arcs.core.data.proto
 
 import arcs.core.data.Recipe
-import arcs.core.util.Result
 
 /** Extracts [Recipe]s from the [ManifestProto]. */
 fun ManifestProto.decodeRecipes(): List<Recipe> {
@@ -21,9 +20,4 @@ fun ManifestProto.decodeRecipes(): List<Recipe> {
 }
 
 /** Extracts [ParticleSpec]s from the [ManifestProto]. */
-fun ManifestProto.decodeParticleSpecs() = particleSpecsList.map {
-    when (val result = it.decode()) {
-        is Result.Ok -> result.value
-        is Result.Err -> throw result.thrown
-    }
-}
+fun ManifestProto.decodeParticleSpecs() = particleSpecsList.map { it.decode() }

@@ -10,7 +10,7 @@
 
 import {Arc} from '../arc.js';
 import {Action, GenerateParams} from './walker.js';
-import {ConsumeSlotConnectionSpec} from '../manifest-types/particle-spec.js';
+import {ConsumeSlotConnectionSpec} from '../arcs-types/particle-spec.js';
 import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {RecipeUtil} from './recipe-util.js';

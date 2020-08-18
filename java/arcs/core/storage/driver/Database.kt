@@ -107,7 +107,6 @@ object DatabaseDriverProvider : DriverProvider {
     fun configure(databaseManager: DatabaseManager, schemaLookup: (String) -> Schema?) = apply {
         this._manager = databaseManager
         this.schemaLookup = schemaLookup
-        DatabaseStorageKey.registerParser()
         DriverFactory.register(this)
     }
 

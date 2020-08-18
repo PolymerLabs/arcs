@@ -9,10 +9,10 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {ParticleSpec} from '../manifest-types/particle-spec.js';
+import {ParticleSpec} from '../arcs-types/particle-spec.js';
 
-import {RELAXATION_KEYWORD} from '../manifest-ast-nodes.js';
-import {Direction} from '../manifest-types/enums.js';
+import {RELAXATION_KEYWORD} from '../manifest-ast-types/manifest-ast-nodes.js';
+import {Direction} from '../arcs-types/enums.js';
 import {Handle} from './handle.js';
 import {Comparable, compareArrays, compareComparables, compareStrings, compareBools} from './comparable.js';
 import {Recipe, RecipeComponent, CloneMap, ToStringOptions} from './recipe.js';

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import * as AstNode from '../manifest-ast-nodes.js';
+import * as AstNode from '../manifest-ast-types/manifest-ast-nodes.js';
 import {Direction} from './enums.js';
 import {Claim} from './claim.js';
 import {Type} from '../type.js';

@@ -134,6 +134,9 @@ class StorageServiceManagerTest {
         val entity = DummyEntity().apply {
             num = 1.0
             texts = setOf("1", "one")
+            inlineEntity = InlineDummyEntity().apply {
+                text = "inline"
+            }
         }
         handle.dispatchStore(entity)
         log("Wrote entity")
@@ -166,6 +169,9 @@ class StorageServiceManagerTest {
         val entity = DummyEntity().apply {
             num = 1.0
             texts = setOf("1", "one")
+            inlineEntity = InlineDummyEntity().apply {
+                text = "inline"
+            }
         }
         handle.dispatchStore(entity)
         log("Wrote entity")

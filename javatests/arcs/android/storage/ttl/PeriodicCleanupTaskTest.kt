@@ -60,7 +60,12 @@ class PeriodicCleanupTaskTest {
         fakeTime.millis = 1L
 
         val handle = createCollectionHandle()
-        val entity = DummyEntity().apply { num = 1.0 }
+        val entity = DummyEntity().apply {
+            num = 1.0
+            inlineEntity = InlineDummyEntity().apply {
+                text = "inline"
+            }
+        }
         handle.dispatchStore(entity)
 
         // Make sure the write has reached storage.
@@ -73,6 +78,35 @@ class PeriodicCleanupTaskTest {
 
         // Verify entity is gone.
         assertThat(handle.dispatchFetchAll()).isEmpty()
+    }
+
+    @Test
+    fun ttlWorker_doestNotRemoveNonExpiredInlineEntity() = runBlocking {
+        DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(context))
+        // Set time to now, so entity is NOT expired.
+        fakeTime.millis = JvmTime.currentTimeMillis
+
+        val handle = createCollectionHandle()
+        val entity = DummyEntity().apply {
+            num = 1.0
+            inlineEntity = InlineDummyEntity().apply { text = "inline" }
+            inlines = setOf(
+                InlineDummyEntity().apply { text = "C1" },
+                InlineDummyEntity().apply { text = "C2" }
+            )
+        }
+        handle.dispatchStore(entity)
+
+        // Make sure the write has reached storage.
+        WriteBackForTesting.awaitAllIdle()
+
+        // Trigger worker.
+        assertThat(worker.doWork()).isEqualTo(Result.success())
+
+        // Verify entity is still there. Recreate the handle to make sure the entity is read
+        // from the database rather than an in-memory copy.
+        assertThat(createCollectionHandle().dispatchFetchAll()).containsExactly(entity)
+        Unit
     }
 
     @Test

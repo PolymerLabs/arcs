@@ -33,3 +33,9 @@ abstract class StorageKey(val protocol: String) {
 
     override fun hashCode() = toString().hashCode()
 }
+
+/**
+ * This describes the metadata related to a [StorageKey] type. The [companion] object of a
+ * [StorageKey] implementation should implement this interface.
+ */
+interface StorageKeySpec<T : StorageKey> : StorageKeyParser<T>

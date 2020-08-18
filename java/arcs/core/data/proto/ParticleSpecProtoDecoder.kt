@@ -15,8 +15,6 @@ import arcs.core.data.Check
 import arcs.core.data.HandleConnectionSpec
 import arcs.core.data.HandleMode
 import arcs.core.data.ParticleSpec
-import arcs.core.util.Result
-import arcs.core.util.resultOf
 
 typealias DirectionProto = HandleConnectionSpecProto.Direction
 
@@ -41,7 +39,7 @@ fun HandleConnectionSpecProto.decode() = HandleConnectionSpec(
 )
 
 /** Converts a [ParticleSpecProto] to the corresponding [ParticleSpec] instance. */
-fun ParticleSpecProto.decode(): Result<ParticleSpec> = resultOf {
+fun ParticleSpecProto.decode(): ParticleSpec {
     val connections = mutableMapOf<String, HandleConnectionSpec>()
     connectionsList.forEach {
         val oldValue = connections.put(it.name, it.decode())
@@ -54,5 +52,5 @@ fun ParticleSpecProto.decode(): Result<ParticleSpec> = resultOf {
         Check.Assert(it.accessPath.decode(connections), it.predicate.decode())
     }
     val annotations = annotationsList.map { it.decode() }
-    ParticleSpec(name, connections, location, claims, checks, annotations)
+    return ParticleSpec(name, connections, location, claims, checks, annotations)
 }

@@ -53,3 +53,25 @@ java_binary(
     main_class = "arcs.tools.VerifyPolicyKt",
     runtime_deps = [":verify_policy_lib"],
 )
+
+kt_jvm_library(
+    name = "recipe2plan_lib",
+    srcs = [
+        "Recipe2Plan.kt",
+    ],
+    deps = [
+        "//java/arcs/core/data",
+        "//java/arcs/core/data/proto:manifest_java_proto",
+        "//java/arcs/core/storage",
+        "//java/arcs/core/storage/api",
+        "//third_party/java/arcs/deps:protobuf_java",
+        "//third_party/kotlin/clikt",
+        "//third_party/kotlin/kotlinpoet",
+    ],
+)
+
+java_binary(
+    name = "recipe2plan",
+    main_class = "arcs.tools.Recipe2PlanKt",
+    runtime_deps = [":recipe2plan_lib"],
+)

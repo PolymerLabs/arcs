@@ -33,6 +33,7 @@ import arcs.core.storage.ProxyCallback
 import arcs.core.storage.ProxyMessage
 import arcs.core.storage.Reference
 import arcs.core.storage.ReferenceModeStore
+import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.StoreOptions
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.database.DatabaseData
@@ -100,6 +101,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         SchemaRegistry.register(inlineSchema)
         databaseFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
+        StorageKeyParser.reset(DatabaseStorageKey.Persistent)
         DatabaseDriverProvider.configure(databaseFactory) {
             when (it) {
                 hash -> schema

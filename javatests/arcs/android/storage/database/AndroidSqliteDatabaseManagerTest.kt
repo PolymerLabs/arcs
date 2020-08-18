@@ -19,6 +19,7 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.util.toReferencable
+import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabaseManager
 import arcs.core.storage.testutil.DummyStorageKey
@@ -45,7 +46,7 @@ class AndroidSqliteDatabaseManagerTest {
         "hash"
     )
     val entity = DatabaseData.Entity(
-        RawEntity("entity", mapOf("text" to "abc".toReferencable()), mapOf()),
+        RawEntity("entity", mapOf("text" to "abc".toReferencable()), mapOf(), 123),
         schema,
         1,
         VersionMap("me" to 1)
@@ -55,7 +56,7 @@ class AndroidSqliteDatabaseManagerTest {
     fun setUp() {
         manager = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
         random = Random(System.currentTimeMillis())
-        DummyStorageKey.registerParser()
+        StorageKeyParser.addParser(DummyStorageKey)
     }
 
     @Test
@@ -117,7 +118,7 @@ class AndroidSqliteDatabaseManagerTest {
 
         // The database has been reset and the entity has been tombstoned.
         val nulledEntity = DatabaseData.Entity(
-            RawEntity("entity", mapOf("text" to null), mapOf()),
+            RawEntity("entity", mapOf("text" to null), mapOf(), 123),
             schema,
             1,
             VersionMap("me" to 1)
