@@ -50,7 +50,7 @@ open class TestBase<T : WasmEntity>(
     }
 
     override fun fail(message: String?): Nothing {
-      fail(message, null)
+        fail(message, null)
     }
 
     @Suppress("VIRTUAL_MEMBER_HIDDEN") // Override for Kotlin/Native 1.4
