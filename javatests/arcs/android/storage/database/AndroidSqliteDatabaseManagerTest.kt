@@ -118,7 +118,7 @@ class AndroidSqliteDatabaseManagerTest {
 
         // The database has been reset and the entity has been tombstoned.
         val nulledEntity = DatabaseData.Entity(
-            RawEntity("entity", mapOf("text" to null), mapOf()),
+            RawEntity("entity", mapOf("text" to null), mapOf(), 123),
             schema,
             1,
             VersionMap("me" to 1)
