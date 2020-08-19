@@ -6,7 +6,7 @@ import '../particles/port.arcs'
 @arcId('gatherImports')
 recipe GatherImports
   harbor: create 'harbor' @inMemory @ttl('1d')
-  largeStock: create 'largeStock' @persistent @ttl('1w')
+  largeStock: create 'largeStock' @persistent @ttl('1m')
 
   IngestDock
     harbor: writes harbor
