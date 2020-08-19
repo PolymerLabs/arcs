@@ -670,11 +670,21 @@ class DatabaseImplTest {
         val childSchema = newSchema("child")
         database.getSchemaTypeId(childSchema, db)
         newSchema(
+            "inlineInlineHash",
+            SchemaFields(
+                singletons = mapOf(
+                    "text" to FieldType.Text
+                ),
+                collections = emptyMap()
+            )
+        )
+        newSchema(
             "inlineHash",
             SchemaFields(
                 singletons = mapOf(
                     "text" to FieldType.Text,
-                    "num" to FieldType.Number
+                    "num" to FieldType.Number,
+                    "inline" to FieldType.InlineEntity("inlineInlineHash")
                 ),
                 collections = emptyMap()
             )
@@ -700,11 +710,17 @@ class DatabaseImplTest {
             )
         )
 
+        val inlineInlineEntity = RawEntity(
+            "",
+            singletons = mapOf("text" to "iinnlliinnee".toReferencable())
+        )
+
         fun toInlineEntity(text: String, num: Double) = RawEntity(
             "",
             singletons = mapOf(
                 "text" to text.toReferencable(),
-                "num" to num.toReferencable()
+                "num" to num.toReferencable(),
+                "inline" to inlineInlineEntity
             )
         )
 
@@ -1556,7 +1572,7 @@ class DatabaseImplTest {
 
     @Test
     fun garbageCollection_cleans_inlineEntities() = runBlockingTest {
-        val inlineSchema = newSchema(
+        newSchema(
             "inlineHash",
             SchemaFields(
                 singletons = mapOf("text" to FieldType.Text),

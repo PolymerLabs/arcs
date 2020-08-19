@@ -939,7 +939,7 @@ class DatabaseImpl(
                     FROM storage_keys 
                     WHERE storage_key = ? OR storage_key LIKE ?
                 """.trimIndent(),
-                arrayOf(storageKey.toString(), "inline://{%$storageKey%")
+                arrayOf(storageKey.toString(), "inline://{%$storageKey%}%")
             ).forEach {
                 val dataType = DataType.values()[it.getInt(1)]
                 var collectionId: Long? = null
