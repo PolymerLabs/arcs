@@ -191,7 +191,7 @@ def arcs_kt_gen(
         name = manifest_name,
         srcs = srcs,
         manifest_proto = False,
-        deps = manifest_only(deps) + data,
+        deps = deps,
     )
 
     schema = arcs_kt_schema(
@@ -203,6 +203,7 @@ def arcs_kt_gen(
         test_harness = test_harness,
         visibility = visibility,
     )
+
     plan = arcs_kt_plan(
         name = plan_name,
         srcs = srcs,
