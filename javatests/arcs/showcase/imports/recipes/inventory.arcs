@@ -9,7 +9,7 @@ import '../stores/quality.arcs'
 recipe PrepareInventoryForShop
   containers: map 'largeStock'
   labeled: create @inMemory
-  quality: copy QualityRequirement
+  quality: copy 'quality-req'
   inventory: create 'inventory' @persistent @queryable
 
   LabelInventory
