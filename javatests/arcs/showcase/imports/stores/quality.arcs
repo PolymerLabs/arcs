@@ -1,4 +1,5 @@
+meta
+  namespace: arcs.showcase.imports.stores
 
-
-store QualityRequirement of [Quality {rating: Number}] in 'quality.json'
+store QualityRequirement of Quality {rating: Number} in 'quality.json'
   description `Minimum packaging quality`
