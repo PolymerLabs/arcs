@@ -28,18 +28,21 @@ class TestEntity(
     text: String = "",
     number: Double = 0.0,
     boolean: Boolean = false,
-    val reference: Reference? = null,
+    inlineText: String = "",
+    var reference: Reference? = null,
     val id: String? = null
 ) : EntityBase("TestEntity", SCHEMA, id) {
 
     var text: String by SingletonProperty()
     var number: Double by SingletonProperty()
     var boolean: Boolean by SingletonProperty()
+    var inlineEntity: InlineTestEntity by SingletonProperty()
 
     init {
         this.text = text
         this.number = number
         this.boolean = boolean
+        this.inlineEntity = InlineTestEntity(inlineText)
     }
 
     companion object : EntitySpec<TestEntity> {
@@ -53,6 +56,7 @@ class TestEntity(
                     "text" to FieldType.Text,
                     "number" to FieldType.Number,
                     "boolean" to FieldType.Boolean,
+                    "inlineEntity" to FieldType.InlineEntity(InlineTestEntity.SCHEMA_HASH),
                     "reference" to FieldType.EntityRef(schemaHash)
                 ),
                 collections = emptyMap()
@@ -64,7 +68,15 @@ class TestEntity(
             SchemaRegistry.register(SCHEMA)
         }
 
-        override fun deserialize(data: RawEntity) = TestEntity().apply { deserialize(data) }
+        override fun deserialize(data: RawEntity) = TestEntity().apply {
+            deserialize(
+                data,
+                mapOf(
+                    schemaHash to TestEntity,
+                    InlineTestEntity.SCHEMA_HASH to InlineTestEntity
+                )
+            )
+        }
 
         val singletonInMemoryStorageKey = ReferenceModeStorageKey(
             backingKey = RamDiskStorageKey("singleton_reference"),
@@ -114,5 +126,37 @@ class TestEntity(
 
     enum class StorageMode {
         IN_MEMORY, PERSISTENT
+    }
+}
+
+class InlineTestEntity(
+    text: String = ""
+) : EntityBase(ENTITY_CLASS_NAME, SCHEMA, isInlineEntity = true) {
+    var text: String? by SingletonProperty()
+
+    init {
+        this.text = text
+    }
+
+    companion object : EntitySpec<InlineTestEntity> {
+        const val ENTITY_CLASS_NAME = "InlineTestEntity"
+        const val SCHEMA_HASH = "inline_abcdef"
+
+        override val SCHEMA = Schema(
+            names = setOf(SchemaName(ENTITY_CLASS_NAME)),
+            fields = SchemaFields(
+                singletons = mapOf(
+                    "text" to FieldType.Text
+                ),
+                collections = emptyMap()
+            ),
+            hash = SCHEMA_HASH
+        )
+
+        init {
+            SchemaRegistry.register(SCHEMA)
+        }
+
+        override fun deserialize(data: RawEntity) = InlineTestEntity().apply { deserialize(data) }
     }
 }
