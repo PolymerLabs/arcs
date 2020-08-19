@@ -102,7 +102,7 @@ open class FakeDatabase : Database {
     open val clients = mutableMapOf<Int, Pair<StorageKey, DatabaseClient>>()
 
     private val clientFlow: Flow<DatabaseClient> =
-        flow { clientMutex.withLock { clients.values }.forEach { emit(it.second) } }
+        flow { clientMutex.withLock { clients.values.toList() }.forEach { emit(it.second) } }
 
     private val dataMutex = Mutex()
     open val data = mutableMapOf<StorageKey, DatabaseData>()
