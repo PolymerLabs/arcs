@@ -271,7 +271,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
             store.close()
             stateHolder.update { it.setState(ProxyState.CLOSED) }
             _crdt = null
-        }
+        }.join()
     }
 
     /**
