@@ -22,8 +22,9 @@
   <string name="singleton" translatable="false">Singleton</string>
   <string name="collection" translatable="false">Collection</string>
   <string name="storage_type" translatable="false">Storage Type</string>
-  <string name="in_memory" translatable="false">In Memory</string>
-  <string name="persistent" translatable="false">Persistent</string>
+  <string name="in_memory" translatable="false">Ramdisk</string>
+  <string name="memdb" translatable="false">MemDB</string>
+  <string name="persistent" translatable="false">DB</string>
   <string name="service_type" translatable="false">Service Type</string>
   <string name="syshealth_service_local" translatable="false">Local</string>
   <string name="syshealth_service_remote" translatable="false">Remote</string>

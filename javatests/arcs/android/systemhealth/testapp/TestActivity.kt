@@ -410,6 +410,7 @@ class TestActivity : AppCompatActivity() {
                 R.id.collection -> handleType = SystemHealthEnums.HandleType.COLLECTION
                 R.id.in_memory -> storageMode = TestEntity.StorageMode.IN_MEMORY
                 R.id.persistent -> storageMode = TestEntity.StorageMode.PERSISTENT
+                R.id.memdb -> storageMode = TestEntity.StorageMode.MEMORY_DATABASE
                 R.id.syshealth_service_local -> serviceType = SystemHealthEnums.ServiceType.LOCAL
                 R.id.syshealth_service_remote -> serviceType = SystemHealthEnums.ServiceType.REMOTE
             }
@@ -432,6 +433,8 @@ class TestActivity : AppCompatActivity() {
                             when (storageMode) {
                                 TestEntity.StorageMode.PERSISTENT ->
                                     TestEntity.singletonPersistentStorageKey
+                                TestEntity.StorageMode.MEMORY_DATABASE ->
+                                    TestEntity.singletonMemoryDatabaseStorageKey
                                 else -> TestEntity.singletonInMemoryStorageKey
                             }
                         ).awaitReady() as ReadWriteSingletonHandle<TestEntity>
@@ -468,6 +471,8 @@ class TestActivity : AppCompatActivity() {
                             when (storageMode) {
                                 TestEntity.StorageMode.PERSISTENT ->
                                     TestEntity.collectionPersistentStorageKey
+                                TestEntity.StorageMode.MEMORY_DATABASE ->
+                                    TestEntity.collectionMemoryDatabaseStorageKey
                                 else -> TestEntity.collectionInMemoryStorageKey
                             }
                         ).awaitReady() as ReadWriteCollectionHandle<TestEntity>

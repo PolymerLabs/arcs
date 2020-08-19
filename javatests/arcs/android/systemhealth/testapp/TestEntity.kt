@@ -71,6 +71,15 @@ class TestEntity(
             storageKey = RamDiskStorageKey("singleton")
         )
 
+        val singletonMemoryDatabaseStorageKey = ReferenceModeStorageKey(
+            backingKey = DatabaseStorageKey.Memory(
+                "singleton_reference",
+                schemaHash,
+                "arcs_test"
+            ),
+            storageKey = DatabaseStorageKey.Memory("singleton", schemaHash, "arcs_test")
+        )
+
         val singletonPersistentStorageKey = ReferenceModeStorageKey(
             backingKey = DatabaseStorageKey.Persistent(
                 "singleton_reference",
@@ -85,6 +94,15 @@ class TestEntity(
             storageKey = RamDiskStorageKey("collection")
         )
 
+        val collectionMemoryDatabaseStorageKey = ReferenceModeStorageKey(
+            backingKey = DatabaseStorageKey.Memory(
+                "collection_reference",
+                schemaHash,
+                "arcs_test"
+            ),
+            storageKey = DatabaseStorageKey.Memory("collection", schemaHash, "arcs_test")
+        )
+
         val collectionPersistentStorageKey = ReferenceModeStorageKey(
             backingKey = DatabaseStorageKey.Persistent(
                 "collection_reference",
@@ -94,7 +112,20 @@ class TestEntity(
             storageKey = DatabaseStorageKey.Persistent("collection", schemaHash, "arcs_test")
         )
 
-        val clearEntitiesTestStorageKey = ReferenceModeStorageKey(
+        val clearEntitiesMemoryDatabaseStorageKey = ReferenceModeStorageKey(
+            backingKey = DatabaseStorageKey.Memory(
+                "cleared_entities_backing",
+                schemaHash,
+                "arcs_test"
+            ),
+            storageKey = DatabaseStorageKey.Memory(
+                "cleared_entities_container",
+                schemaHash,
+                "arcs_test"
+            )
+        )
+
+        val clearEntitiesPersistentStorageKey = ReferenceModeStorageKey(
             backingKey = DatabaseStorageKey.Persistent(
                 "cleared_entities_backing",
                 schemaHash,
@@ -113,6 +144,6 @@ class TestEntity(
     }
 
     enum class StorageMode {
-        IN_MEMORY, PERSISTENT
+        IN_MEMORY, PERSISTENT, MEMORY_DATABASE
     }
 }
