@@ -1,0 +1,141 @@
+<style>
+  body, pre {
+    margin: 0;
+    box-sizing: border-box;
+    height: 100vh;
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+  [columns] {
+    display: flex;
+    align-items: stretch;
+    height: 80vh;
+  }
+  [column] {
+    flex: 1;
+    border: 1px dotted silver;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+  }
+  [flex] {
+    flex: 1;
+  }
+  #logElt {
+    padding: 12px;
+  }
+  textarea {
+    flex: 1;
+    padding: 4px;
+    border: none;
+    outline: none;
+  }
+</style>
+
+<div columns>
+  <div column>
+    <textarea id="inputElt" spellcheck="false"></textarea>
+  </div>
+  <div column id="treeElt">
+    <object-explorer id="oeElt"></object-explorer>
+    <!-- <pre id="outputElt"></pre> -->
+  </div>
+</div>
+<pre flex id="logElt"></pre>
+
+<script type="module">
+  import {ManifestParser} from '../dist/manifest-parser.js';
+  import '../../devtools/elements/object-explorer.js';
+
+  const dom = (tag, props, parent) => parent.appendChild(Object.assign(document.createElement(tag), props));
+  //const entry = object => dom('object-explorer', {object}, logElt);
+
+  const {inputElt, oeElt, logElt/*, outputElt*/} = window;
+
+  inputElt.oninput = async () => {
+    try {
+      logElt.innerText = '';
+      const content = inputElt.value;
+      const opts = {filename: `http://localhost/projects/arcs/arcs/particles/Bespoke/Bespoke.arcs`};
+      const ast = await ManifestParser.parse(content, opts);
+      oeElt.object = ast;
+    } catch(x) {
+      logElt.innerText = x.toString();
+      //console.error(x);
+    }
+  };
+
+  inputElt.value = `// Overview Action Example.
+// From: https://docs.google.com/presentation/d/1i-mTjlyWFSHYxvcJj98fIkUkHSu7ya3COa2wZeiqyi8/edit#slide=id.g5907ddee85_0_75
+
+import '../Dataflow/Datastores.arcs'
+
+particle LongPressListener in 'empty.js'
+  screen: reads * {}
+  coords: writes Coords {}
+
+particle OCR in 'empty.js'
+  image: reads * {}
+  coords: reads Coords {}
+  result: writes ScreenText {}
+
+particle TextClassifier in 'empty.js'
+  text: reads ScreenText {}
+  model: reads Model {}
+  selectedRange: writes Range {}
+
+particle SelectionUI in 'empty.js'
+  text: reads ScreenText {}
+  selectedRange: reads writes Range {}
+  selectedText: writes ScreenText {}
+
+  // The text to be selected must have come from the screen.
+  check text is from store 'screen'
+
+  // The output of this particle is a substring of its input text only. This
+  // chops out the selectedRange input from the dataflow analysis.
+  claim selectedText derives from text
+
+particle MatchMaker in 'empty.js'
+  selectedText: reads ScreenText {}
+  action: writes Action {}
+
+particle ActionUX in 'empty.js'
+  action: reads Action {}
+
+  // The action we're about to perform must be derived entirely from the screen
+  // data.
+  check action is from store 'screen'
+
+recipe OverviewActionRecipe
+  screen: use Screen
+  model: use PrivateModel
+  coords: create *
+  ocrText: create *
+  selectedRange: create *
+  selectedText: create *
+  action: create *
+
+  LongPressListener
+    screen: reads screen
+    coords: writes coords
+  OCR
+    image: reads screen
+    coords: reads coords
+    result: writes ocrText
+  TextClassifier
+    text: reads ocrText
+    model: reads model
+    selectedRange: writes selectedRange
+  SelectionUI
+    text: reads ocrText
+    selectedRange: reads writes selectedRange
+    selectedText: writes selectedText
+  MatchMaker
+    selectedText: reads selectedText
+    action: writes action
+  ActionUX
+    action: reads action`;
+  inputElt.oninput();
+</script>
