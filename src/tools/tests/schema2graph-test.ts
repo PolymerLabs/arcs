@@ -747,4 +747,22 @@ describe('schema2graph', () => {
       'T_Baz': ['T_Baz']
     });
   });
+
+  it.only('nested inline entities', async () => {
+    const manifest = await Manifest.parse(`
+      schema Tea
+        name: Text
+        variety: Text
+      
+      schema Container
+        id: Text
+        favTea: inline Tea
+        contents: [inline Tea]
+      
+      particle Foo
+        data: reads [Container]
+    `);
+
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+  });
 });
