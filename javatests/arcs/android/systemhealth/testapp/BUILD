@@ -60,8 +60,8 @@ android_binary(
     testonly = 1,
     dexopts = ["--force-jumbo"],
     incremental_dexing = 0,
-    manifest = ":AndroidManifest.xml",
     main_dex_proguard_specs = ["mainDexClasses.rules"],
+    manifest = ":AndroidManifest.xml",
     multidex = "legacy",
     deps = [":test_app_lib"],
 )
