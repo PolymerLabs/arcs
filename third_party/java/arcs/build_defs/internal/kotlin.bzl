@@ -50,7 +50,7 @@ _JS_SUFFIX = "-js"
 
 _KT_SUFFIX = "-kt"
 
-IS_BAZEL = not (hasattr(native, "genmpm"))
+IS_BAZEL = not hasattr(native, "genmpm")
 
 # Kotlin Compiler Options
 COMMON_KOTLINC_OPTS = [
