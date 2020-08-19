@@ -19,6 +19,7 @@ arcs_kt_android_library(
         "*.kt",
     ]),
     manifest = "AndroidManifest.xml",
+    resource_files = glob(["res/**/*"]),
     deps = [
         ":aidl",
         "//java/arcs/android/devtools/storage:devtools",
