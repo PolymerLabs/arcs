@@ -51,7 +51,7 @@ def arcs_manifest(
             # TODO(csilvestrini): This rule should only accept one src.
             fail("You must only supply one src file to generate a manifest proto.")
         arcs_manifest_proto(
-            name = name + "_manifest_proto",
+            name = name + "_proto",
             src = srcs[0],
             deps = deps,
         )
@@ -63,7 +63,7 @@ def arcs_manifest(
             fail("manifest_proto is required to generate a policy_test.")
         arcs_tool_verify_policy(
             name = name + "_policy_test",
-            manifest_proto = name + "_manifest_proto",
+            manifest_proto = name + "_proto",
             policy_options_proto = policy_options,
         )
 
