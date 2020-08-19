@@ -204,7 +204,7 @@ export class SchemaGraph {
 
       // Aggregate nodes with the same schema together.
       if (!candidate.variableName) {
-        return schema.equals(candidate.schema) && candidate.isNested === isNested;
+        return schema.equals(candidate.schema);
       }
 
       return false;
@@ -225,7 +225,7 @@ export class SchemaGraph {
           } else if (!a.variableName && !b.variableName &&
             b.schema.isEquivalentOrMoreSpecific(a.schema) === AtLeastAsSpecific.YES) {
             if (b.descendants.has(a)) {
-              throw new Error(`Cannot add ${b} to ${a}.descendants as it would create a cycle.`);
+              throw new Error(`Cannot add ${b.schema.name} to ${a.schema.name}.descendants as it would create a cycle.`);
             }
             a.descendants.add(b);  // b can be sliced to a
             b.parents = [];        // non-null to indicate this has parents; will be filled later
