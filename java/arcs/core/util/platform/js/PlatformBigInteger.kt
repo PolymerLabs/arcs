@@ -11,6 +11,16 @@
 
 package arcs.core.util
 
+/** Provides a platform-dependent version of [BigInteger]. */
+private typealias ArcsBI = arcs.core.util.BigInteger
+
+// Placeholder for platform implementation.
+class PlatformBigInteger {
+}
+
+fun ArcsBI.toNative(): PlatformBigInteger = TODO("Add support for BigInteger in Kotlin JS")
+fun PlatformBigInteger.toArcs(): ArcsBI = TODO("Add support for BigInteger in Kotlin JS")
+
 object PlatformBigIntegerProvider {
     fun add(left: ArcsBI, right: ArcsBI): ArcsBI =
         TODO("Add support for BigInteger in Kotlin JS")
@@ -29,11 +39,11 @@ object PlatformBigIntegerProvider {
     val ONE: ArcsBI
         get() = TODO("Add support for BigInteger in Kotlin JS")
 
-    fun toByte(value: ArcsBI): Byte = TODO("Add support for BigInteger in Kotlin JS")
-    fun toChar(value: ArcsBI): Char = TODO("Add support for BigInteger in Kotlin JS")
-    fun toDouble(value: ArcsBI): Double = TODO("Add support for BigInteger in Kotlin JS")
-    fun toFloat(value: ArcsBI): Float = TODO("Add support for BigInteger in Kotlin JS")
-    fun toInt(value: ArcsBI): Int = TODO("Add support for BigInteger in Kotlin JS")
-    fun toLong(value: ArcsBI): Long = TODO("Add support for BigInteger in Kotlin JS")
-    fun toShort(value: ArcsBI): Short = TODO("Add support for BigInteger in Kotlin JS")
+    inline fun toByte(value: ArcsBI): Byte = TODO("Add support for BigInteger in Kotlin JS")
+    inline fun toChar(value: ArcsBI): Char = TODO("Add support for BigInteger in Kotlin JS")
+    inline fun toDouble(value: ArcsBI): Double = TODO("Add support for BigInteger in Kotlin JS")
+    inline fun toFloat(value: ArcsBI): Float = TODO("Add support for BigInteger in Kotlin JS")
+    inline fun toInt(value: ArcsBI): Int = TODO("Add support for BigInteger in Kotlin JS")
+    inline fun toLong(value: ArcsBI): Long = TODO("Add support for BigInteger in Kotlin JS")
+    inline fun toShort(value: ArcsBI): Short = TODO("Add support for BigInteger in Kotlin JS")
 }

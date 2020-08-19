@@ -16,6 +16,8 @@ package arcs.core.util
  * based on java.math.BigInteger.
  */
 class BigInteger(val value: ByteArray): Number() {
+    constructor(value: String): this(PlatformBigInteger.fromString(value).value)
+
     fun add(other: BigInteger): BigInteger = PlatformBigIntegerProvider.add(this, other)
     fun multiply(other: BigInteger): BigInteger = PlatformBigIntegerProvider.multiply(this, other)
     fun subtract(other: BigInteger): BigInteger = PlatformBigIntegerProvider.subtract(this, other)

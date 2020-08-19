@@ -16,11 +16,10 @@ package arcs.core.util
  * from java.time.Instant.
  */
 class Instant(val millis: Long) {
-    // fun compareTo(other: BigInteger): Int = PlatformBigIntegerProvider.compareTo(this, other)
-    fun toEpochMillis(): Long = millis
-        // PlatformInstantProvider.toEpochMillis(millis)
+    fun toEpochMilli(): Long = millis
 
     companion object PlatformInstant {
-        fun ofEpochMillis(millis: Long): Instant = PlatformInstantProvider.ofEpochMillis(millis)
+        fun ofEpochMilli(millis: Long): Instant = PlatformInstantProvider.ofEpochMilli(millis)
+        fun now(): Instant = PlatformInstantProvider.now()
     }
 }

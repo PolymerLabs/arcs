@@ -11,21 +11,25 @@
 
 package arcs.core.util
 
-import java.time.Duration as PlatformDuration
-
 /** Provides a platform-dependent version of [Duration]. */
 private typealias ArcsD = arcs.core.util.Duration
+
+// Placeholder for platform implementation.
+class PlatformDuration {
+
+    companion object {
+        fun ofMillis(value: Long): PlatformDuration =
+            TODO("Add support for Duration in Kotlin Native")
+    }
+}
 
 fun ArcsD.toNative(): PlatformDuration {
     val seconds = this.millis / 1000.0
     val nanos = 0
-    ArcsD(this.toEpochMilli())
+    ArcsD(this.toMillis())
 }
-fun PlatformDuration.toArcs(): ArcsD {
-    val seconds = this.getSeconds()
-    val nanos = this.getNano()
-    return seconds*1000.0 + nanos/1000.0
-}
+fun PlatformDuration.toArcs(): ArcsD =
+    TODO("Add support for Duration in Kotlin Native")
 
 object PlatformDurationProvider {
     // fun compareTo(left: ArcsD, right: ArcsD): Int =

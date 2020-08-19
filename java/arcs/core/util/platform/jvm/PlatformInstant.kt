@@ -20,9 +20,10 @@ fun ArcsI.toNative(): PlatformInstant = PlatformInstant.ofEpochMilli(this.millis
 fun PlatformInstant.toArcs(): ArcsI = ArcsI(this.toEpochMilli())
 
 object PlatformInstantProvider {
-
-    fun ofEpochMillis(millis: Long): ArcsI =
+    fun ofEpochMilli(millis: Long): ArcsI =
         PlatformInstant.ofEpochMilli(millis).toArcs()
-    fun toEpochMillis(value: ArcsI): Long =
+    fun toEpochMilli(value: ArcsI): Long =
         value.toNative().toEpochMilli()
+
+    fun now(): Instant = PlatformInstant.now().toArcs()
 }
