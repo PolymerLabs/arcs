@@ -748,7 +748,7 @@ describe('schema2graph', () => {
     });
   });
 
-  it.only('nested inline entities', async () => {
+  it('duplicate nested inline entities', async () => {
     const manifest = await Manifest.parse(`
       schema Tea
         name: Text
@@ -764,5 +764,13 @@ describe('schema2graph', () => {
     `);
 
     const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'Foo_Data_FavTea', parents: '', children: ''},
+      {name: 'Foo_Data', parents: '', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'Foo_Data_FavTea': ['Foo_Data_Contents', 'Foo_Data_FavTea'],
+      'Foo_Data': ['Foo_Data'],
+    });
   });
 });
