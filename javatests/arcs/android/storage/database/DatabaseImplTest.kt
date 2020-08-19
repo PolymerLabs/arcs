@@ -670,11 +670,21 @@ class DatabaseImplTest {
         val childSchema = newSchema("child")
         database.getSchemaTypeId(childSchema, db)
         newSchema(
+            "inlineInlineHash",
+            SchemaFields(
+                singletons = mapOf(
+                    "text" to FieldType.Text
+                ),
+                collections = emptyMap()
+            )
+        )
+        newSchema(
             "inlineHash",
             SchemaFields(
                 singletons = mapOf(
                     "text" to FieldType.Text,
-                    "num" to FieldType.Number
+                    "num" to FieldType.Number,
+                    "inline" to FieldType.InlineEntity("inlineInlineHash")
                 ),
                 collections = emptyMap()
             )
@@ -700,11 +710,17 @@ class DatabaseImplTest {
             )
         )
 
+        val inlineInlineEntity = RawEntity(
+            "",
+            singletons = mapOf("text" to "iinnlliinnee".toReferencable())
+        )
+
         fun toInlineEntity(text: String, num: Double) = RawEntity(
             "",
             singletons = mapOf(
                 "text" to text.toReferencable(),
-                "num" to num.toReferencable()
+                "num" to num.toReferencable(),
+                "inline" to inlineInlineEntity
             )
         )
 
@@ -804,11 +820,43 @@ class DatabaseImplTest {
             VersionMap("actor" to 2)
         )
 
+        val clearedEntity = DatabaseData.Entity(
+            RawEntity(
+                entityId,
+                mapOf(
+                    "text" to null,
+                    "bool" to null,
+                    "num" to null,
+                    "ref" to null,
+                    "inline" to null,
+                    "inlinelist" to null
+                ),
+                mapOf(
+                    "texts" to emptySet(),
+                    "bools" to emptySet(),
+                    "nums" to emptySet(),
+                    "refs" to emptySet(),
+                    "inlines" to emptySet()
+                )
+            ),
+            schema,
+            3,
+            VersionMap("actor" to 3)
+        )
+
         database.insertOrUpdateEntity(key, entity1)
         database.insertOrUpdateEntity(key, entity2)
         val entityOut = database.getEntity(key, schema)
 
         assertThat(entityOut).isEqualTo(entity2)
+        database.insertOrUpdateEntity(key, clearedEntity)
+
+        assertTableIsEmpty("field_values")
+
+        // the toplevel entity should remain in the entities and storage_keys 
+        // tables, but all record of child inline entities should be removed.
+        assertTableIsSize("entities", 1)
+        assertTableIsSize("storage_keys", 1)
     }
 
     @Test
@@ -1520,6 +1568,56 @@ class DatabaseImplTest {
         )
         assertThat(database.getCollection(collectionKey, schema))
             .isEqualTo(collection.copy(values = newValues))
+    }
+
+    @Test
+    fun garbageCollection_cleans_inlineEntities() = runBlockingTest {
+        newSchema(
+            "inlineHash",
+            SchemaFields(
+                singletons = mapOf("text" to FieldType.Text),
+                collections = emptyMap()
+            )
+        )
+        val schema = newSchema(
+            "hash",
+            SchemaFields(
+                singletons = mapOf("inline" to FieldType.InlineEntity("inlineHash")),
+                collections = mapOf("inlines" to FieldType.InlineEntity("inlineHash"))
+            )
+        )
+
+        val inlineEntity1 = RawEntity(
+            "ie1",
+            singletons = mapOf("text" to "ie1".toReferencable())
+        )
+
+        val inlineEntity2 = RawEntity(
+            "ie2",
+            singletons = mapOf("text" to "ie2".toReferencable())
+        )
+
+        val entity = DatabaseData.Entity(
+            RawEntity(
+                "entity",
+                singletons = mapOf("inline" to inlineEntity1),
+                collections = mapOf("inlines" to setOf(inlineEntity2)),
+                creationTimestamp = 100
+            ),
+            schema,
+            FIRST_VERSION_NUMBER,
+            VERSION_MAP
+        )
+
+        val entityKey = DummyStorageKey("backing/entity")
+        database.insertOrUpdate(entityKey, entity)
+
+        database.runGarbageCollection()
+        database.runGarbageCollection()
+
+        assertTableIsEmpty("entities")
+        assertTableIsEmpty("storage_keys")
+        assertTableIsEmpty("field_values")
     }
 
     @Test
