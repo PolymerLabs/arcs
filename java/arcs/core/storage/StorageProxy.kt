@@ -267,8 +267,8 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     suspend fun close() {
         if (stateHolder.value.state == ProxyState.CLOSED) return
         waitForIdle()
-        store.close()
         scheduler.scope.launch {
+            store.close()
             stateHolder.update { it.setState(ProxyState.CLOSED) }
             _crdt = null
         }
