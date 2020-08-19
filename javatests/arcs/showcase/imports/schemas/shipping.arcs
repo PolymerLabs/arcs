@@ -6,15 +6,15 @@ import 'common.arcs'
 // Containers group `Tea` headed to the same destination
 schema Container
   id: Text
-  contents: [inline Tea {name, variety}]
-  destination: inline Place {lat, lng}
+  contents: [inline Tea]
+  destination: inline Place
 
 schema Boat
   id: Text
   name: Text
-  currentLocation: inline Place {lat, lng}
-  nextLocations: [inline Place {lat, lng, nation}]
-  containers: [&Container]
+  currentLocation: inline Place
+  nextLocations: [inline Place]
+  containers: [inline Container]
   status: Text
 
 

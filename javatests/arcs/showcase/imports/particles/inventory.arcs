@@ -7,11 +7,11 @@ import '../schemas/shipping.arcs'
 // Associate a quality rating for each item unloaded from container.
 particle LabelInventory in '.LabelInventory'
   containers: reads [Container]
-  categorized: writes [(Quality {rating: Number}, Tea {name, origin, variety})]
+  categorized: writes [(Quality {rating: Number}, Tea)]
 
 
 // Produce set of tea, given current qulity standards
 particle ProduceInventory in '.ProduceInventory'
   minimum: reads Quality {rating: Number}
-  categorized: reads [(Quality {rating: Number}, Tea {name, origin, variety})]
+  categorized: reads [(Quality {rating: Number}, Tea)]
   tea: writes [Tea]
