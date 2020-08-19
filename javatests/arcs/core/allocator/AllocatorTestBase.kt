@@ -18,6 +18,7 @@ import arcs.core.host.ParticleState
 import arcs.core.host.PersonPlan
 import arcs.core.host.ReadPerson
 import arcs.core.host.ReadPerson_Person
+import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.TestingHost
 import arcs.core.host.TestingJvmProdHost
 import arcs.core.host.WritePerson
@@ -34,7 +35,6 @@ import arcs.core.util.plus
 import arcs.core.util.testutil.LogRule
 import arcs.core.util.traverse
 import arcs.jvm.host.ExplicitHostRegistry
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
 import java.lang.IllegalArgumentException
@@ -42,6 +42,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -56,7 +57,7 @@ open class AllocatorTestBase {
     @get:Rule
     val log = LogRule(Log.Level.Warning)
 
-    private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+    private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
 
     /**
      * Recipe hand translated from 'person.arcs'
@@ -73,12 +74,12 @@ open class AllocatorTestBase {
     private lateinit var pureHost: TestingJvmProdHost
 
     private class WritingHost : TestingHost(
-        JvmSchedulerProvider(EmptyCoroutineContext),
+        SimpleSchedulerProvider(EmptyCoroutineContext),
         ::WritePerson.toRegistration()
     )
 
     private class ReadingHost : TestingHost(
-        JvmSchedulerProvider(EmptyCoroutineContext),
+        SimpleSchedulerProvider(EmptyCoroutineContext),
         ::ReadPerson.toRegistration()
     )
 

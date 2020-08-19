@@ -17,6 +17,7 @@ import arcs.core.entity.InlineDummyEntity
 import arcs.core.entity.ReadWriteCollectionHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
+import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -24,11 +25,10 @@ import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.WriteBackForTesting
 import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
-import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
@@ -133,7 +133,7 @@ class PeriodicCleanupTaskTest {
     private suspend fun createCollectionHandle() =
         EntityHandleManager(
             time = fakeTime,
-            scheduler = JvmSchedulerProvider(EmptyCoroutineContext)("test")
+            scheduler = SimpleSchedulerProvider(Dispatchers.Default)("test")
         ).createHandle(
             HandleSpec(
                 "name",

@@ -18,12 +18,11 @@ import arcs.android.host.AndroidManifestHostRegistry
 import arcs.core.allocator.Allocator
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HostRegistry
+import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StoreManager
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.android.storage.ServiceStoreFactory
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -38,7 +37,7 @@ class DemoActivity : AppCompatActivity() {
 
     private val coroutineContext: CoroutineContext = Job() + Dispatchers.Main
     private val scope: CoroutineScope = CoroutineScope(coroutineContext)
-    private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+    private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
 
     /**
      * Recipe hand translated from 'person.arcs'

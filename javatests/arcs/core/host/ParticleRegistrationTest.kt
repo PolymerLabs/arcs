@@ -1,7 +1,6 @@
 package arcs.core.host
 
 import arcs.jvm.host.ExplicitHostRegistry
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +31,7 @@ class ParticleRegistrationTest {
         var foundTestHost = false
 
         val hostRegistry = ExplicitHostRegistry()
-        val schedulerProvider = JvmSchedulerProvider(coroutineContext)
+        val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
 
         hostRegistry.registerHost(
             JvmProdHost(

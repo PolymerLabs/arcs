@@ -35,8 +35,8 @@ import arcs.core.entity.HandleSpec
 import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
+import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.StoreManager
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadCollectionHandle
 import arcs.sdk.ReadWriteCollectionHandle
@@ -44,7 +44,6 @@ import arcs.sdk.ReadWriteSingletonHandle
 import arcs.sdk.android.storage.ServiceStoreFactory
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.update
 import kotlinx.coroutines.CoroutineScope
@@ -64,7 +63,7 @@ class TestActivity : AppCompatActivity() {
     private val coroutineContext: CoroutineContext =
         Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val scope: CoroutineScope = CoroutineScope(coroutineContext)
-    private val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+    private val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
     private lateinit var handleManager: EntityHandleManager
 
     private var handleType = SystemHealthEnums.HandleType.SINGLETON

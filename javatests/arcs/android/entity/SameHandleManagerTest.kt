@@ -9,10 +9,8 @@ import arcs.core.entity.HandleManagerTestBase
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
 import arcs.core.storage.driver.DatabaseDriverProvider
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -32,7 +30,6 @@ class SameHandleManagerTest : HandleManagerTestBase() {
         app = ApplicationProvider.getApplicationContext()
         val dbFactory = AndroidSqliteDatabaseManager(ApplicationProvider.getApplicationContext())
         DatabaseDriverProvider.configure(dbFactory) { throw UnsupportedOperationException() }
-        schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
         activationFactory = ServiceStoreFactory(
             app,
             connectionFactory = TestConnectionFactory(app)

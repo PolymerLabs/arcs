@@ -4,8 +4,6 @@ import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.testutil.WriteBackForTesting
-import arcs.jvm.host.JvmSchedulerProvider
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -25,7 +23,6 @@ class DifferentHandleManagerDifferentStoresTest : HandleManagerTestBase() {
         super.setUp()
         i++
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
-        schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
         readStores = StoreManager()
         readHandleManager = EntityHandleManager(
             arcId = "testArcId",

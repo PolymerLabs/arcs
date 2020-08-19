@@ -26,13 +26,13 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class JvmSchedulerProviderTest {
+class JvmRoundRobinSchedulerProviderTest {
     @get:Rule
     val log = LogRule()
 
     @Test
     fun one_thread_multipleSchedulers() = runTest {
-        val schedulerProvider = JvmSchedulerProvider(coroutineContext, 1)
+        val schedulerProvider = JvmRoundRobinSchedulerProvider(coroutineContext, 1)
 
         val schedulerA = schedulerProvider("a")
         val schedulerB = schedulerProvider("b")
@@ -70,7 +70,7 @@ class JvmSchedulerProviderTest {
 
     @Test
     fun two_threads_threeSchedulers_roundRobin() = runTest {
-        val schedulerProvider = JvmSchedulerProvider(coroutineContext, 2)
+        val schedulerProvider = JvmRoundRobinSchedulerProvider(coroutineContext, 2)
 
         val schedulerA = schedulerProvider("a")
         val schedulerB = schedulerProvider("b")
@@ -101,7 +101,7 @@ class JvmSchedulerProviderTest {
     fun throwing_from_a_task_failsTheParentContext() = runTest {
         val e = assertSuspendingThrows(IllegalStateException::class) {
             withContext(coroutineContext) {
-                val schedulerProvider = JvmSchedulerProvider(coroutineContext, 1)
+                val schedulerProvider = JvmRoundRobinSchedulerProvider(coroutineContext, 1)
 
                 val scheduler = schedulerProvider("a")
 
@@ -120,7 +120,7 @@ class JvmSchedulerProviderTest {
 
     @Test
     fun canceling_thenReInvoking_givesNewScheduler() = runTest {
-        val schedulerProvider = JvmSchedulerProvider(coroutineContext, 1)
+        val schedulerProvider = JvmRoundRobinSchedulerProvider(coroutineContext, 1)
 
         val scheduler = schedulerProvider("a")
         val schedulerJob = scheduler.scope.coroutineContext[Job.Key]

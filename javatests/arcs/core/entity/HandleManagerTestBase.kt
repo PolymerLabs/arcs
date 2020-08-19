@@ -24,6 +24,8 @@ import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
+import arcs.core.host.SchedulerProvider
+import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.Reference as StorageReference
@@ -48,12 +50,13 @@ import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.ArcsStrictMode
 import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import java.util.concurrent.Executors
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.debounce
@@ -118,7 +121,10 @@ open class HandleManagerTestBase {
     )
 
     var activationFactory: ActivationFactory = DefaultActivationFactory
-    lateinit var schedulerProvider: JvmSchedulerProvider
+
+    val schedulerCoroutineContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    val schedulerProvider: SchedulerProvider = SimpleSchedulerProvider(schedulerCoroutineContext)
+
     lateinit var readHandleManager: EntityHandleManager
     lateinit var writeHandleManager: EntityHandleManager
     lateinit var monitorHandleManager: EntityHandleManager
