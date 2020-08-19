@@ -130,7 +130,7 @@ def arcs_kt_schema(
     )
     outdeps = outdeps + arcs_sdk_deps
 
-    if (test_harness):
+    if test_harness:
         test_harness_outs = []
         for src in srcs:
             out = replace_arcs_suffix(src, "_TestHarness.kt")
