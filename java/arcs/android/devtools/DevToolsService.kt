@@ -39,8 +39,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 @OptIn(ExperimentalCoroutinesApi::class)
 open class DevToolsService : Service() {
 
-    val CHANNEL_ID = "DevToolsChannel"
-
     private val coroutineContext = Dispatchers.Default + CoroutineName("DevtoolsService")
     private val scope = CoroutineScope(coroutineContext)
     private lateinit var binder: DevToolsBinder
@@ -61,30 +59,29 @@ open class DevToolsService : Service() {
                 @Suppress("UNCHECKED_CAST")
                 storageClass = extras.getSerializable("STORAGE_CLASS") as Class<StorageService>
             }
-            if (storageService == null) {
-                val service = initialize()
-                val proxy = service.devToolsProxy
+            if (storageService != null) return@launch
+            val service = initialize()
+            val proxy = service.devToolsProxy
 
-                forwardProxyMessageToken = proxy.registerBindingContextProxyMessageCallback(
-                    object : IStorageServiceCallback.Stub() {
-                        override fun onProxyMessage(proxyMessage: ByteArray) {
-                            scope.launch {
-                                val actualMessage = proxyMessage.decodeProxyMessage()
-                                val rawMessage = RawDevToolsMessage(actualMessage.toString())
-                                devToolsServer.send(rawMessage.toJson())
-                            }
+            forwardProxyMessageToken = proxy.registerBindingContextProxyMessageCallback(
+                object : IStorageServiceCallback.Stub() {
+                    override fun onProxyMessage(proxyMessage: ByteArray) {
+                        scope.launch {
+                            val actualMessage = proxyMessage.decodeProxyMessage()
+                            val rawMessage = RawDevToolsMessage(actualMessage.toString())
+                            devToolsServer.send(rawMessage.toJson())
                         }
                     }
-                )
-
-                binder.send(service.storageKeys ?: "")
-                devToolsServer.addOnOpenWebsocketCallback {
-                    devToolsServer.send(service.storageKeys ?: "")
                 }
+            )
 
-                storageService = service
-                devToolsProxy = proxy
+            binder.send(service.storageKeys ?: "")
+            devToolsServer.addOnOpenWebsocketCallback {
+                devToolsServer.send(service.storageKeys ?: "")
             }
+
+            storageService = service
+            devToolsProxy = proxy
         }
 
         // Create the notification and start this service in the foreground.
@@ -147,5 +144,9 @@ open class DevToolsService : Service() {
         return IDevToolsStorageManager.Stub.asInterface(
             serviceConnection?.connectAsync()?.await()
         )
+    }
+
+    companion object {
+        private const val CHANNEL_ID = "DevToolsChannel"
     }
 }
