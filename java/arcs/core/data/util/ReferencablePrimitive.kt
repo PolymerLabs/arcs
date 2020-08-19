@@ -13,10 +13,10 @@ package arcs.core.data.util
 
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
+import arcs.core.util.BigInteger
+import arcs.core.util.Instant
 import arcs.core.util.Base64
 import arcs.core.util.toBase64Bytes
-import java.math.BigInteger
-import java.time.Instant
 import kotlin.reflect.KClass
 
 /**
@@ -58,8 +58,8 @@ data class ReferencablePrimitive<T>(
         private const val primitiveKotlinString = "kotlin.String"
         private const val primitiveKotlinBoolean = "kotlin.Boolean"
         private const val primitiveKotlinByteArray = "kotlin.ByteArray"
-        private const val primitiveJavaBigInteger = "java.math.BigInteger"
-        private const val primitiveJavaInstant = "java.time.Instant"
+        private const val primitiveJavaBigInteger = "arcs.core.util.BigInteger"
+        private const val primitiveJavaInstant = "arcs.core.util.Instant"
         private val primitiveKClassMap = mapOf<KClass<*>, String>(
             Byte::class to primitiveKotlinByte,
             Short::class to primitiveKotlinShort,

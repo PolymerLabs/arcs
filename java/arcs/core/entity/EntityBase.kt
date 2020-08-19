@@ -26,9 +26,9 @@ import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference as StorageReference
+import arcs.core.util.BigInteger
+import arcs.core.util.Instant
 import arcs.core.util.Time
-import java.math.BigInteger
-import java.time.Instant
 import kotlin.reflect.KProperty
 
 open class EntityBase(

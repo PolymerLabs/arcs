@@ -12,6 +12,7 @@
 package arcs.jvm.storage.database.testutil
 
 import arcs.core.data.Schema
+import arcs.core.util.Instant
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
@@ -26,7 +27,6 @@ import arcs.core.util.guardedBy
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
 import arcs.jvm.util.JvmTime
-import java.time.Instant
 import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KClass
 import kotlinx.coroutines.CoroutineScope

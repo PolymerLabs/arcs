@@ -11,7 +11,7 @@
 
 package arcs.core.data.expression
 
-import java.math.BigInteger
+import arcs.core.util.BigInteger
 
 /**
  * A DSL for expressions used by queries, refinements, and adapters. Instances can be constructed

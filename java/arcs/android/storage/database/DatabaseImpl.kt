@@ -44,6 +44,9 @@ import arcs.core.data.PrimitiveType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaRegistry
+import arcs.core.util.BigInteger
+import arcs.core.util.Duration
+import arcs.core.util.Instant
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
@@ -63,9 +66,6 @@ import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
 import arcs.jvm.util.JvmTime
 import com.google.protobuf.InvalidProtocolBufferException
-import java.math.BigInteger
-import java.time.Duration
-import java.time.Instant
 import kotlin.coroutines.coroutineContext
 import kotlin.math.roundToLong
 import kotlin.reflect.KClass

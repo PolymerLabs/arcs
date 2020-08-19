@@ -30,6 +30,7 @@ arcs_kt_library(
         "//java/arcs/core/data:reference",
         "//java/arcs/core/data/util:data-util",
         "//java/arcs/core/util",
+        "//java/arcs/core/util:utils-platform-dependencies",
         "//third_party/kotlin/kotlinx_coroutines",
     ],
 )

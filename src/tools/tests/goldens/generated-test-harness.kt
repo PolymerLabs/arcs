@@ -9,8 +9,8 @@ package arcs.golden
 // Current implementation doesn't support optional field detection
 
 import arcs.sdk.testing.*
-import java.math.BigInteger
-import java.time.Instant
+import arcs.core.data.util.BigInteger
+import arcs.core.data.util.Instant
 import kotlinx.coroutines.CoroutineScope
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)

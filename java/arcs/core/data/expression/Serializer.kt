@@ -16,6 +16,7 @@ import arcs.core.data.expression.Expression.BinaryExpression
 import arcs.core.data.expression.Expression.BinaryOp
 import arcs.core.data.expression.Expression.UnaryExpression
 import arcs.core.data.expression.Expression.UnaryOp
+import arcs.core.util.BigInteger
 import arcs.core.util.Json
 import arcs.core.util.JsonValue
 import arcs.core.util.JsonValue.JsonArray
@@ -25,7 +26,6 @@ import arcs.core.util.JsonValue.JsonNumber
 import arcs.core.util.JsonValue.JsonObject
 import arcs.core.util.JsonValue.JsonString
 import arcs.core.util.JsonVisitor
-import java.math.BigInteger
 
 /** Traverses a tree of [Expression] objects, serializing it into a JSON format. */
 class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
