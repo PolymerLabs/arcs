@@ -3,16 +3,16 @@
 package arcs.showcase.inline
 
 import arcs.jvm.host.TargetHost
+import arcs.sdk.withParticleContext
 import arcs.showcase.ShowcaseHost
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.withContext
 
 @ExperimentalCoroutinesApi
 @TargetHost(ShowcaseHost::class)
 class Reader0 : AbstractReader0() {
     private fun Level0.fromArcs() = MyLevel0(name)
 
-    suspend fun read(): List<MyLevel0> = withContext(handles.level0.dispatcher) {
+    suspend fun read(): List<MyLevel0> = withParticleContext {
         handles.awaitReady()
         handles.level0.fetchAll().map { it.fromArcs() }
     }
@@ -23,12 +23,12 @@ class Reader0 : AbstractReader0() {
 class Reader1 : AbstractReader1() {
     private fun Level0.fromArcs() = MyLevel0(name)
 
-    private suspend fun Level1.fromArcs() = MyLevel1(
+    private fun Level1.fromArcs() = MyLevel1(
         name = name,
         children = children.map { it.fromArcs() }.toSet()
     )
 
-    suspend fun read(): List<MyLevel1> = withContext(handles.level1.dispatcher) {
+    suspend fun read(): List<MyLevel1> = withParticleContext {
         handles.awaitReady()
         handles.level1.fetchAll().map { it.fromArcs() }
     }
@@ -49,7 +49,7 @@ class Reader2 : AbstractReader2() {
         children = children.map { it.fromArcs() }.toSet()
     )
 
-    suspend fun read(): List<MyLevel2> = withContext(handles.level2.dispatcher) {
+    suspend fun read(): List<MyLevel2> = withParticleContext {
         handles.awaitReady()
         handles.level2.fetchAll().map { it.fromArcs() }
     }

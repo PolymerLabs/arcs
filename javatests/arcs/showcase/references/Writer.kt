@@ -2,14 +2,13 @@
 
 package arcs.showcase.references
 
-import arcs.core.entity.awaitReady
 import arcs.jvm.host.TargetHost
 import arcs.sdk.Entity
 import arcs.sdk.ReadWriteCollectionHandle
 import arcs.sdk.Reference
+import arcs.sdk.withParticleContext
 import arcs.showcase.ShowcaseHost
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.withContext
 
 suspend fun <T : Entity> T.toReference(handle: ReadWriteCollectionHandle<T>): Reference<T> {
     if (this@toReference.entityId == null) {
@@ -23,7 +22,7 @@ suspend fun <T : Entity> T.toReference(handle: ReadWriteCollectionHandle<T>): Re
 class Writer0 : AbstractWriter0() {
     private fun MyLevel0.toArcs() = Level0(name)
 
-    suspend fun write(item: MyLevel0) = withContext(handles.level0.dispatcher) {
+    suspend fun write(item: MyLevel0) = withParticleContext {
         handles.awaitReady()
         handles.level0.store(item.toArcs())
     }
@@ -39,7 +38,7 @@ class Writer1 : AbstractWriter1() {
         children = children.map { it.toArcs().toReference(handles.level0) }.toSet()
     )
 
-    suspend fun write(item: MyLevel1) = withContext(handles.level1.dispatcher) {
+    suspend fun write(item: MyLevel1) = withParticleContext {
         handles.awaitReady()
         handles.level1.store(item.toArcs())
     }
@@ -60,7 +59,7 @@ class Writer2 : AbstractWriter2() {
         children = children.map { it.toArcs().toReference(handles.level1) }.toSet()
     )
 
-    suspend fun write(item: MyLevel2) = withContext(handles.level2.dispatcher) {
+    suspend fun write(item: MyLevel2) = withParticleContext {
         handles.awaitReady()
         handles.level2.store(item.toArcs())
     }

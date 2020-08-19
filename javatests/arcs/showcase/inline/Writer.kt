@@ -3,16 +3,16 @@
 package arcs.showcase.inline
 
 import arcs.jvm.host.TargetHost
+import arcs.sdk.withParticleContext
 import arcs.showcase.ShowcaseHost
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.withContext
 
 @ExperimentalCoroutinesApi
 @TargetHost(ShowcaseHost::class)
 class Writer0 : AbstractWriter0() {
     private fun MyLevel0.toArcs() = Level0(name)
 
-    suspend fun write(item: MyLevel0) = withContext(handles.level0.dispatcher) {
+    suspend fun write(item: MyLevel0) = withParticleContext {
         handles.awaitReady()
         handles.level0.store(item.toArcs())
     }
@@ -28,7 +28,7 @@ class Writer1 : AbstractWriter1() {
         children = children.map { it.toArcs() }.toSet()
     )
 
-    suspend fun write(item: MyLevel1) = withContext(handles.level1.dispatcher) {
+    suspend fun write(item: MyLevel1) = withParticleContext {
         handles.awaitReady()
         handles.level1.store(item.toArcs())
     }
@@ -49,7 +49,7 @@ class Writer2 : AbstractWriter2() {
         children = children.map { it.toArcs() }.toSet()
     )
 
-    suspend fun write(item: MyLevel2) = withContext(handles.level2.dispatcher) {
+    suspend fun write(item: MyLevel2) = withParticleContext {
         handles.awaitReady()
         handles.level2.store(item.toArcs())
     }

@@ -15,6 +15,7 @@ import arcs.core.entity.awaitReady
 import arcs.core.host.api.Particle
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 /**
  * Interface used by [ArcHost]s to interact dynamically with code-generated [Handle] fields
@@ -24,6 +25,11 @@ typealias HandleHolder = arcs.core.host.api.HandleHolder
 
 /** Base interface for all particles. */
 typealias Particle = Particle
+
+/** A convenience method for moving onto the dispatcher associated with a particle. */
+suspend inline fun <T : Particle, U> T.withParticleContext(
+    crossinline block: suspend () -> U
+): U = withContext(handles.dispatcher) { block() }
 
 /**
  * Base class used by `schema2kotlin` code-generator tool to generate a class containing all
