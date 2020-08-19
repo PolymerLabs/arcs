@@ -16,8 +16,8 @@ arcs_kt_schema(
 
 arcs_kt_jvm_test_suite(
     name = "entity",
-    srcs = TEST_SRCS,
     size = "medium",
+    srcs = TEST_SRCS,
     package = "arcs.core.entity",
     deps = [
         ":lib",
