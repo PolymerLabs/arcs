@@ -62,6 +62,14 @@ class CollectionHandle<T : Storable, R : Referencable>(
     override fun fetchAll() = checkPreconditions {
         adaptValues(storageProxy.getParticleViewUnsafe())
     }
+
+    override fun fetchById(entityId: String): T? = checkPreconditions {
+        storageProxy
+            .getParticleViewUnsafe()
+            .firstOrNull { it.id == entityId }
+            ?.takeIf { !storageAdapter.isExpired(it) }
+            ?.let { storageAdapter.referencableToStorable(it) }
+    }
     // endregion
 
     // region implement QueryCollectionHandle<T, Any>

@@ -187,6 +187,9 @@ interface ReadCollectionHandle<T : Storable> : ReadableHandle<Set<T>, Collection
 
     /** Returns a set with all the entities in the collection. */
     fun fetchAll(): Set<T>
+
+    /** Return the entity with the provided [entityId]. */
+    fun fetchById(entityId: String): T?
 }
 
 /** A collection handle with write access. */

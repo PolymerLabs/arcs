@@ -66,6 +66,10 @@ suspend fun <H : ReadCollectionHandle<T>, T> H.dispatchIsEmpty(): Boolean =
 suspend fun <H : ReadCollectionHandle<T>, T> H.dispatchFetchAll(): Set<T> =
     withContext(dispatcher) { fetchAll() }
 
+/** Calls [ReadCollectionHandle.fetchById] with the handle's dispatcher context. */
+suspend fun <H : ReadCollectionHandle<T>, T> H.dispatchFetchById(id: String): T? =
+    withContext(dispatcher) { fetchById(id) }
+
 /**
  * Calls [WriteCollectionHandle.store] with the handle's dispatcher context and waits for it to
  * complete (including notifications being sent to other handles reading from the same store).
