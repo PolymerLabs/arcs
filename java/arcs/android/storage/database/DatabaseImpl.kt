@@ -933,36 +933,40 @@ class DatabaseImpl(
     ): Unit = stats.delete.timeSuspending { counters ->
         db.transaction {
             counters.increment(DatabaseCounters.GET_STORAGE_KEY_ID)
-            val (storageKeyId, collectionId) = rawQuery(
-                "SELECT id, data_type, value_id FROM storage_keys WHERE storage_key = ?",
-                arrayOf(storageKey.toString())
-            ).forSingleResult {
+            rawQuery(
+                """
+                    SELECT id, data_type, value_id 
+                    FROM storage_keys 
+                    WHERE storage_key = ? OR storage_key LIKE ?
+                """.trimIndent(),
+                arrayOf(storageKey.toString(), "inline://{%$storageKey%")
+            ).forEach {
                 val dataType = DataType.values()[it.getInt(1)]
                 var collectionId: Long? = null
                 if (dataType == DataType.Singleton || dataType == DataType.Collection) {
                     collectionId = it.getLong(2)
                 }
-                it.getLong(0) to collectionId
-            } ?: return@transaction
+                val storageKeyId = it.getLong(0)
 
-            counters.increment(DatabaseCounters.DELETE_STORAGE_KEY)
-            execSQL("DELETE FROM storage_keys WHERE id = ?", arrayOf(storageKeyId))
-            counters.increment(DatabaseCounters.DELETE_ENTITY)
-            execSQL("DELETE FROM entities WHERE storage_key_id = ?", arrayOf(storageKeyId))
-            counters.increment(DatabaseCounters.DELETE_ENTITY_FIELDS)
+                counters.increment(DatabaseCounters.DELETE_STORAGE_KEY)
+                execSQL("DELETE FROM storage_keys WHERE id = ?", arrayOf(storageKeyId))
+                counters.increment(DatabaseCounters.DELETE_ENTITY)
+                execSQL("DELETE FROM entities WHERE storage_key_id = ?", arrayOf(storageKeyId))
+                counters.increment(DatabaseCounters.DELETE_ENTITY_FIELDS)
 
-            // entity_refs and types don't get deleted.
+                // entity_refs and types don't get deleted.
 
-            if (collectionId != null) {
-                counters.increment(DatabaseCounters.DELETE_COLLECTION)
-                execSQL("DELETE FROM collections WHERE id = ?", arrayOf(collectionId))
-                counters.increment(DatabaseCounters.DELETE_COLLECTION_ENTRIES)
-                execSQL(
-                    "DELETE FROM collection_entries WHERE collection_id = ?",
-                    arrayOf(collectionId)
-                )
-            } else {
-                deleteFields(arrayOf(storageKeyId.toString()), db)
+                if (collectionId != null) {
+                    counters.increment(DatabaseCounters.DELETE_COLLECTION)
+                    execSQL("DELETE FROM collections WHERE id = ?", arrayOf(collectionId))
+                    counters.increment(DatabaseCounters.DELETE_COLLECTION_ENTRIES)
+                    execSQL(
+                        "DELETE FROM collection_entries WHERE collection_id = ?",
+                        arrayOf(collectionId)
+                    )
+                } else {
+                    deleteFields(arrayOf(storageKeyId.toString()), db)
+                }
             }
         }
     }
