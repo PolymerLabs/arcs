@@ -747,4 +747,30 @@ describe('schema2graph', () => {
       'T_Baz': ['T_Baz']
     });
   });
+
+  it('duplicate nested inline entities', async () => {
+    const manifest = await Manifest.parse(`
+      schema Tea
+        name: Text
+        variety: Text
+      
+      schema Container
+        id: Text
+        favTea: inline Tea
+        contents: [inline Tea]
+      
+      particle Foo
+        data: reads [Container]
+    `);
+
+    const res = convert(new SchemaGraph(manifest.particles[0]));
+    assert.deepStrictEqual(res.nodes, [
+      {name: 'Foo_Data_FavTea', parents: '', children: ''},
+      {name: 'Foo_Data', parents: '', children: ''},
+    ]);
+    assert.deepStrictEqual(res.aliases, {
+      'Foo_Data_FavTea': ['Foo_Data_Contents', 'Foo_Data_FavTea'],
+      'Foo_Data': ['Foo_Data'],
+    });
+  });
 });

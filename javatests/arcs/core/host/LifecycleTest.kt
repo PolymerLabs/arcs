@@ -44,7 +44,7 @@ class LifecycleTest {
     @get:Rule
     val log = LogRule()
 
-    private lateinit var schedulerProvider: JvmSchedulerProvider
+    private lateinit var schedulerProvider: SchedulerProvider
     private lateinit var scheduler: Scheduler
     private lateinit var testHost: TestingHost
     private lateinit var hostRegistry: HostRegistry

@@ -24,6 +24,8 @@ import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.host.EntityHandleManager
+import arcs.core.host.SchedulerProvider
+import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.Reference as StorageReference
@@ -39,6 +41,7 @@ import arcs.core.testutil.handles.dispatchClear
 import arcs.core.testutil.handles.dispatchCreateReference
 import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchFetchAll
+import arcs.core.testutil.handles.dispatchFetchById
 import arcs.core.testutil.handles.dispatchIsEmpty
 import arcs.core.testutil.handles.dispatchQuery
 import arcs.core.testutil.handles.dispatchRemove
@@ -47,12 +50,13 @@ import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.ArcsStrictMode
 import arcs.core.util.Time
 import arcs.core.util.testutil.LogRule
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import com.google.common.truth.Truth.assertThat
+import java.util.concurrent.Executors
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.debounce
@@ -117,7 +121,10 @@ open class HandleManagerTestBase {
     )
 
     var activationFactory: ActivationFactory = DefaultActivationFactory
-    lateinit var schedulerProvider: JvmSchedulerProvider
+
+    val schedulerCoroutineContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    val schedulerProvider: SchedulerProvider = SimpleSchedulerProvider(schedulerCoroutineContext)
+
     lateinit var readHandleManager: EntityHandleManager
     lateinit var writeHandleManager: EntityHandleManager
     lateinit var monitorHandleManager: EntityHandleManager
@@ -540,16 +547,22 @@ open class HandleManagerTestBase {
             assertThat(handle.size()).isEqualTo(2)
             assertThat(handle.isEmpty()).isEqualTo(false)
             assertThat(handle.fetchAll()).containsExactly(entity1, entity2)
+            assertThat(handle.fetchById(entity1.entityId)).isEqualTo(entity1)
+            assertThat(handle.fetchById(entity2.entityId)).isEqualTo(entity2)
 
             jobs.add(handle.remove(entity1))
             assertThat(handle.size()).isEqualTo(1)
             assertThat(handle.isEmpty()).isEqualTo(false)
             assertThat(handle.fetchAll()).containsExactly(entity2)
+            assertThat(handle.fetchById(entity1.entityId)).isNull()
+            assertThat(handle.fetchById(entity2.entityId)).isEqualTo(entity2)
 
             jobs.add(handle.clear())
             assertThat(handle.size()).isEqualTo(0)
             assertThat(handle.isEmpty()).isEqualTo(true)
             assertThat(handle.fetchAll()).isEmpty()
+            assertThat(handle.fetchById(entity1.entityId)).isNull()
+            assertThat(handle.fetchById(entity2.entityId)).isNull()
 
             // The joins should still work.
             jobs.joinAll()
@@ -591,6 +604,9 @@ open class HandleManagerTestBase {
         assertThat(readHandle.dispatchSize()).isEqualTo(3)
         assertThat(readHandle.dispatchIsEmpty()).isEqualTo(false)
         assertThat(readHandle.dispatchFetchAll()).containsExactly(entity1, entity2, entity3)
+        assertThat(readHandle.fetchById(entity1.entityId)).isEqualTo(entity1)
+        assertThat(readHandle.fetchById(entity2.entityId)).isEqualTo(entity2)
+        assertThat(readHandle.fetchById(entity3.entityId)).isEqualTo(entity3)
 
         // Verify remove.
         received = Job()
@@ -600,6 +616,9 @@ open class HandleManagerTestBase {
         assertThat(readHandle.dispatchSize()).isEqualTo(2)
         assertThat(readHandle.dispatchIsEmpty()).isEqualTo(false)
         assertThat(readHandle.dispatchFetchAll()).containsExactly(entity1, entity3)
+        assertThat(readHandle.fetchById(entity1.entityId)).isEqualTo(entity1)
+        assertThat(readHandle.fetchById(entity2.entityId)).isNull()
+        assertThat(readHandle.fetchById(entity3.entityId)).isEqualTo(entity3)
 
         // Verify clear.
         received = Job()
@@ -609,6 +628,9 @@ open class HandleManagerTestBase {
         assertThat(readHandle.dispatchSize()).isEqualTo(0)
         assertThat(readHandle.dispatchIsEmpty()).isEqualTo(true)
         assertThat(readHandle.dispatchFetchAll()).isEmpty()
+        assertThat(readHandle.fetchById(entity1.entityId)).isNull()
+        assertThat(readHandle.fetchById(entity2.entityId)).isNull()
+        assertThat(readHandle.fetchById(entity3.entityId)).isNull()
     }
 
     @Test
@@ -651,6 +673,9 @@ open class HandleManagerTestBase {
         assertThat(handle2.dispatchSize()).isEqualTo(3)
         assertThat(handle2.dispatchIsEmpty()).isEqualTo(false)
         assertThat(handle2.dispatchFetchAll()).containsExactly(entity1, entity2, entity3)
+        assertThat(handle2.dispatchFetchById(entity1.entityId)).isEqualTo(entity1)
+        assertThat(handle2.dispatchFetchById(entity2.entityId)).isEqualTo(entity2)
+        assertThat(handle2.dispatchFetchById(entity3.entityId)).isEqualTo(entity3)
 
         // handle2 -> handle1
         var received2to1 = Job()
@@ -663,6 +688,9 @@ open class HandleManagerTestBase {
         assertThat(handle1.dispatchSize()).isEqualTo(2)
         assertThat(handle1.dispatchIsEmpty()).isEqualTo(false)
         assertThat(handle1.dispatchFetchAll()).containsExactly(entity1, entity3)
+        assertThat(handle2.dispatchFetchById(entity1.entityId)).isEqualTo(entity1)
+        assertThat(handle2.dispatchFetchById(entity2.entityId)).isNull()
+        assertThat(handle2.dispatchFetchById(entity3.entityId)).isEqualTo(entity3)
 
         // Verify that handle1 sees an empty collection after a clear op from handle2.
         received2to1 = Job()
@@ -672,6 +700,9 @@ open class HandleManagerTestBase {
         assertThat(handle1.dispatchSize()).isEqualTo(0)
         assertThat(handle1.dispatchIsEmpty()).isEqualTo(true)
         assertThat(handle1.dispatchFetchAll()).isEmpty()
+        assertThat(handle2.dispatchFetchById(entity1.entityId)).isNull()
+        assertThat(handle2.dispatchFetchById(entity2.entityId)).isNull()
+        assertThat(handle2.dispatchFetchById(entity3.entityId)).isNull()
     }
 
     @Test
@@ -691,6 +722,7 @@ open class HandleManagerTestBase {
 
         handle.dispatchStore(modified)
         assertThat(handle.dispatchFetchAll()).containsExactly(modified)
+        assertThat(handle.dispatchFetchById(entity.entityId!!)).isEqualTo(modified)
     }
 
     @Test

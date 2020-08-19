@@ -204,7 +204,7 @@ export class SchemaGraph {
 
       // Aggregate nodes with the same schema together.
       if (!candidate.variableName) {
-        return schema.equals(candidate.schema) && candidate.isNested === isNested;
+        return schema.equals(candidate.schema);
       }
 
       return false;

@@ -42,7 +42,6 @@ import arcs.core.testutil.handles.dispatchStore
 import arcs.core.testutil.runTest
 import arcs.core.util.Scheduler
 import arcs.core.util.testutil.LogRule
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.ReadWriteCollectionHandle
 import com.google.common.truth.Truth.assertThat
@@ -70,14 +69,14 @@ class HandleAdapterTest {
     private lateinit var manager: EntityHandleManager
     private lateinit var monitorManager: EntityHandleManager
     private val idGenerator = Id.Generator.newForTest("session")
-    private lateinit var schedulerProvider: JvmSchedulerProvider
+    private lateinit var schedulerProvider: SimpleSchedulerProvider
     private lateinit var scheduler: Scheduler
 
     @Before
     fun setUp() = runBlocking {
         RamDisk.clear()
         DriverAndKeyConfigurator.configure(null)
-        schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+        schedulerProvider = SimpleSchedulerProvider(EmptyCoroutineContext)
         scheduler = schedulerProvider("tests")
         manager = EntityHandleManager(
             "testArc",

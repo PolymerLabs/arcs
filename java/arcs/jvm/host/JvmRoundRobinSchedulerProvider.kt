@@ -26,6 +26,8 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 
+typealias JvmSchedulerProvider = JvmRoundRobinSchedulerProvider
+
 /**
  * Implementation of a [SchedulerProvider] for the Java Virtual Machine (including Android).
  *
@@ -34,9 +36,9 @@ import kotlinx.coroutines.asCoroutineDispatcher
  * allocated to schedulers from a finite pool of dispatchers in a round-robin fashion - the size
  * of that pool is defined by [maxThreadCount].
  *
- * Each [ArcHost] should generally use a separate [JvmSchedulerProvider].
+ * Each [ArcHost] should generally use a separate [JvmRoundRobinSchedulerProvider].
  */
-class JvmSchedulerProvider(
+class JvmRoundRobinSchedulerProvider(
     private val baseCoroutineContext: CoroutineContext,
     private val maxThreadCount: Int =
         maxOf(1, Runtime.getRuntime().availableProcessors() / 2),

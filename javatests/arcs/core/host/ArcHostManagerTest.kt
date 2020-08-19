@@ -5,7 +5,6 @@ import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.jvm.host.ExplicitHostRegistry
-import arcs.jvm.host.JvmSchedulerProvider
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -27,7 +26,7 @@ open class ArcHostManagerTest {
 
     @Test
     fun pauseAllHostsFor() = runBlocking {
-        val schedulerProvider = JvmSchedulerProvider(coroutineContext)
+        val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
         val host = TestHost(schedulerProvider("arcId"))
         val hostRegistry = ExplicitHostRegistry()
         hostRegistry.registerHost(host)

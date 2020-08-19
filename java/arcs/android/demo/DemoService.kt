@@ -10,8 +10,8 @@ import arcs.android.sdk.host.ArcHostService
 import arcs.core.host.ArcHost
 import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
+import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,7 +31,7 @@ class DemoService : ArcHostService() {
     override val arcHost = MyArcHost(
         this,
         this.lifecycle,
-        JvmSchedulerProvider(coroutineContext),
+        SimpleSchedulerProvider(coroutineContext),
         ::ReadPerson.toRegistration(),
         ::WritePerson.toRegistration()
     )

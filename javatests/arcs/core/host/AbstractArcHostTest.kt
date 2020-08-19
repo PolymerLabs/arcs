@@ -15,7 +15,6 @@ import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.testutil.handles.dispatchStore
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.BaseParticle
 import arcs.sdk.HandleHolderBase
@@ -77,7 +76,7 @@ open class AbstractArcHostTest {
 
     @Test
     fun pause_Unpause() = runBlocking {
-        val schedulerProvider = JvmSchedulerProvider(coroutineContext)
+        val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
         val host = MyTestHost(schedulerProvider)
         val partition = Plan.Partition("arcId", "arcHost", listOf())
         val partition2 = Plan.Partition("arcId2", "arcHost", listOf())
@@ -107,7 +106,7 @@ open class AbstractArcHostTest {
     // Regression test for b/152713120.
     @Test
     fun ttlUsed() = runBlocking {
-        val schedulerProvider = JvmSchedulerProvider(coroutineContext)
+        val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
         val host = MyTestHost(schedulerProvider, ::TestParticle.toRegistration())
         val handleStorageKey = ReferenceModeStorageKey(
             backingKey = RamDiskStorageKey("backing"),
@@ -145,7 +144,7 @@ open class AbstractArcHostTest {
     @Suppress("UNCHECKED_CAST")
     @Test
     fun storeRestrictedHandleSchema() = runBlocking {
-        val schedulerProvider = JvmSchedulerProvider(coroutineContext)
+        val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
         val host = MyTestHost(schedulerProvider, ::TestParticle.toRegistration())
         val handleStorageKey = ReferenceModeStorageKey(
             backingKey = RamDiskStorageKey("backing"),
@@ -188,7 +187,7 @@ open class AbstractArcHostTest {
     fun errorStateHoldsExceptionsFromParticles() = runBlocking {
         TestParticle.failAtStart = true
 
-        val schedulerProvider = JvmSchedulerProvider(coroutineContext)
+        val schedulerProvider = SimpleSchedulerProvider(coroutineContext)
         val host = MyTestHost(schedulerProvider, ::TestParticle.toRegistration())
         val particle = Plan.Particle(
             "Test",

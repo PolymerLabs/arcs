@@ -156,7 +156,6 @@ class ShowcaseEnvironment(
 
         DriverAndKeyConfigurator.configure(dbManager)
 
-        // Create a single scheduler provider for both the ArcHost as well as the Allocator.
         val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
 
         // Ensure we're using the StorageService (via the TestConnectionFactory)

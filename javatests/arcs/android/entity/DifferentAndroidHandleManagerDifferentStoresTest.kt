@@ -9,10 +9,8 @@ import arcs.core.entity.HandleManagerTestBase
 import arcs.core.host.EntityHandleManager
 import arcs.core.storage.StoreManager
 import arcs.core.storage.driver.DatabaseDriverProvider
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.sdk.android.storage.ServiceStoreFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -37,7 +35,6 @@ class DifferentAndroidHandleManagerDifferentStoresTest : HandleManagerTestBase()
             app,
             connectionFactory = TestConnectionFactory(app)
         )
-        schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
         readStores = StoreManager(activationFactory)
         readHandleManager = EntityHandleManager(
             arcId = "arcId",

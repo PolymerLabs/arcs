@@ -6,19 +6,19 @@ import arcs.core.entity.HandleDataType
 import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleContext
+import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.util.Scheduler
-import arcs.jvm.host.JvmSchedulerProvider
 import arcs.jvm.util.JvmTime
 import arcs.sdk.Handle
 import arcs.sdk.Particle
 import com.google.common.truth.Truth.assertWithMessage
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -93,7 +93,7 @@ open class BaseTestHarness<P : Particle>(
                 RamDiskDriverProvider()
                 DriverAndKeyConfigurator.configureKeyParsers()
 
-                val schedulerProvider = JvmSchedulerProvider(EmptyCoroutineContext)
+                val schedulerProvider = SimpleSchedulerProvider(Dispatchers.Default)
                 scheduler = schedulerProvider(description.methodName)
                 val handleManager = EntityHandleManager(
                     arcId = "testHarness",
