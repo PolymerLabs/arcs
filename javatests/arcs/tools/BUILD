@@ -23,6 +23,7 @@ arcs_kt_jvm_test_suite(
     package = "arcs.tools",
     deps = [
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/testutil",
         "//java/arcs/tools:recipe2plan_lib",
         "//third_party/java/junit:junit-android",
