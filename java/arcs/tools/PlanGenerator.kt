@@ -24,7 +24,7 @@ import com.squareup.kotlinpoet.buildCodeBlock
  *
  * Will also add code-generated [Plan.Handle] properties to the file.
  *
- * @param recipe source for [Plan] conversion.
+ * @param recipe [Recipe] source for [Plan] conversion.
  * @return self, with code-generated [Plan] and [Plan.Handle]s.
  */
 fun FileSpec.Builder.addRecipe(recipe: Recipe): FileSpec.Builder {
@@ -51,7 +51,7 @@ fun FileSpec.Builder.addRecipe(recipe: Recipe): FileSpec.Builder {
                     handles = %handles:L,
                     annotations = %annotations:L
                 )
-                """.trimIndent(), 
+                """.trimIndent(),
                 ctx
             )
         })
@@ -65,56 +65,59 @@ fun FileSpec.Builder.addRecipe(recipe: Recipe): FileSpec.Builder {
 /**
  * Adds a code-generated [Plan.Handle] to a [CodeBlock.Builder].
  *
- * @param handle a source [Recipe.Handle] for conversion
+ * @param handle a source [Recipe.Handle] for conversion.
  * @return self, with a code-generated [Plan.Handle] instance.
  */
 fun CodeBlock.Builder.addHandle(handle: Recipe.Handle): CodeBlock.Builder = with(handle) {
-   val ctx = mapOf(
-       "handle" to Plan.Handle::class,
-       // TODO(161941222) verify join handles work
-       "storageParser" to StorageKeyParser::class,
-       "key" to storageKey,
-       "type" to type.toGeneration(),
-       "annotations" to emptyList<Annotation>().toGeneration(),
-       "creatable" to CreatableStorageKey::class,
-       "name" to name
-   )
-   val storageKeyTemplate = storageKey
-       ?.let { "storageKey = %storageParser:T.parse(%key:S)," }
-       ?: "storageKey = %creatable:T(%name:S),"
+    val ctx = mapOf(
+        "handle" to Plan.Handle::class,
+        // TODO(161941222) verify join handles work
+        "storageParser" to StorageKeyParser::class,
+        "key" to storageKey,
+        "type" to buildCodeBlock { addType(type) },
+        "annotations" to emptyList<Annotation>().toGeneration(),
+        "creatable" to CreatableStorageKey::class,
+        "name" to name
+    )
+    val storageKeyTemplate = storageKey
+        ?.let { "storageKey = %storageParser:T.parse(%key:S)," }
+        ?: "storageKey = %creatable:T(%name:S),"
 
-   this@addHandle.addNamed(
-       """
-       %handle:T(
-           $storageKeyTemplate
-           type = %type:L,    
-           annotations = %annotations:L
-       )
-       """.trimIndent(),
-       ctx
-   )
+    this@addHandle.addNamed(
+        """
+        %handle:T(
+            $storageKeyTemplate
+            type = %type:L,    
+            annotations = %annotations:L
+        )
+        """.trimIndent(),
+        ctx
+    )
 }
 
-/** Converts [Type] dataclass to a code-generated instance. */
-fun Type.toGeneration(): CodeBlock = buildCodeBlock {
-    when (val type = this@toGeneration) {
-        is EntityType -> add("%T(%L)", EntityType::class, type.entitySchema.toGeneration())
-        is Type.TypeContainer<*> -> add("%T(%L)", type::class, type.containedType.toGeneration())
-        is CountType -> add("%T()", CountType::class)
-        is TupleType -> add(
-            "%T(%L)",
-            TupleType::class,
-            type.elementTypes.toGeneration { builder, item -> builder.add(item.toGeneration()) }
-        )
-        is TypeVariable -> add(
-            "%T(%S, %L, %L)",
-            TypeVariable::class,
-            type.name,
-            type.constraint?.toGeneration(),
-            type.maxAccess
-        )
-        else -> throw IllegalArgumentException("[Type] $type is not supported.")
-    }
+/** Code-generates [Type] within [CodeBlock]. */
+fun CodeBlock.Builder.addType(type: Type): CodeBlock.Builder = when (type) {
+    is EntityType -> add("%T(%L)", EntityType::class, type.entitySchema.toGeneration())
+    is Type.TypeContainer<*> -> add(
+        "%T(%L)",
+        type::class,
+        buildCodeBlock { addType(type.containedType) })
+    is CountType -> add("%T()", CountType::class)
+    is TupleType -> add(
+        "%T(%L)",
+        TupleType::class,
+        type.elementTypes.toGeneration { builder, item ->
+            builder.add(buildCodeBlock { addType(item) })
+        }
+    )
+    is TypeVariable -> add(
+        "%T(%S, %L, %L)",
+        TypeVariable::class,
+        type.name,
+        type.constraint?.let { buildCodeBlock { addType(it) } },
+        type.maxAccess
+    )
+    else -> throw IllegalArgumentException("[Type] $type is not supported.")
 }
 
 /** Converts a [Schema] into a code-generated [Schema] instance. */
@@ -139,7 +142,7 @@ fun Schema.toGeneration() = buildCodeBlock {
             fields = %fields:L,
             hash = %hash:S
         )
-        """.trimIndent(), 
+        """.trimIndent(),
         ctx
     )
 }
@@ -162,7 +165,7 @@ fun SchemaFields.toGeneration() = buildCodeBlock {
             singletons = %singletons:L,
             collections = %collections:L
         )
-        """.trimIndent(), 
+        """.trimIndent(),
         ctx
     )
 }

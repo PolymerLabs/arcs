@@ -4,7 +4,6 @@ import arcs.core.data.CollectionType
 import arcs.core.data.CountType
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
-import arcs.core.data.Plan
 import arcs.core.data.Recipe
 import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
@@ -14,8 +13,7 @@ import arcs.core.data.SingletonType
 import arcs.core.data.TupleType
 import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
-import com.squareup.kotlinpoet.CodeBlock
-import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.buildCodeBlock
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -36,8 +34,8 @@ class PlanGeneratorTest {
     @Test
     fun handle() {
         assertThat(
-            CodeBlock.builder()
-                .addHandle(
+            buildCodeBlock {
+                addHandle(
                     Recipe.Handle(
                         name = "foo",
                         fate = Recipe.Handle.Fate.CREATE,
@@ -45,7 +43,7 @@ class PlanGeneratorTest {
                         storageKey = "AKey"
                     )
                 )
-            .build().toString().normalize()
+            }.toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.Plan.Handle(
@@ -67,8 +65,8 @@ class PlanGeneratorTest {
     @Test
     fun handle_storageKey() {
         assertThat(
-            CodeBlock.builder()
-                .addHandle(
+            buildCodeBlock {
+                addHandle(
                     Recipe.Handle(
                         name = "foo",
                         fate = Recipe.Handle.Fate.CREATE,
@@ -76,12 +74,12 @@ class PlanGeneratorTest {
                         storageKey = "AKey"
                     )
                 )
-                .build().toString().normalize()
+            }.toString().normalize()
         ).contains("""storageKey=arcs.core.storage.StorageKeyParser.parse("AKey")""")
 
         assertThat(
-            CodeBlock.builder()
-                .addHandle(
+            buildCodeBlock {
+                addHandle(
                     Recipe.Handle(
                         name = "foo",
                         fate = Recipe.Handle.Fate.CREATE,
@@ -89,14 +87,14 @@ class PlanGeneratorTest {
                         storageKey = null
                     )
                 )
-                .build().toString().normalize()
+            }.toString().normalize()
         ).contains("""storageKey=arcs.core.data.CreatableStorageKey("foo")""")
     }
 
     @Test
     fun type_entity() {
         assertThat(
-            entity.toGeneration().toString().normalize()
+            buildCodeBlock { addType(entity) }.toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.EntityType(
@@ -116,7 +114,7 @@ class PlanGeneratorTest {
     @Test
     fun type_singleton() {
         assertThat(
-            SingletonType(entity).toGeneration().toString().normalize()
+            buildCodeBlock { addType(SingletonType(entity)) }.toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.SingletonType(
@@ -138,7 +136,7 @@ class PlanGeneratorTest {
     @Test
     fun type_collection() {
         assertThat(
-            CollectionType(entity).toGeneration().toString().normalize()
+            buildCodeBlock { addType(CollectionType(entity)) }.toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.CollectionType(
@@ -160,7 +158,7 @@ class PlanGeneratorTest {
     @Test
     fun type_reference() {
         assertThat(
-            ReferenceType(entity).toGeneration().toString().normalize()
+            buildCodeBlock { addType(ReferenceType(entity)) }.toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.ReferenceType(
@@ -182,9 +180,9 @@ class PlanGeneratorTest {
     @Test
     fun type_tuple() {
         assertThat(
-            TupleType(listOf(
-                SingletonType(entity), SingletonType(entity)
-            )).toGeneration().toString().normalize()
+            buildCodeBlock {
+                addType(TupleType(listOf(SingletonType(entity), SingletonType(entity))))
+            }.toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.TupleType(
@@ -222,7 +220,9 @@ class PlanGeneratorTest {
     @Test
     fun type_variable() {
         assertThat(
-            TypeVariable("a", SingletonType(entity)).toGeneration().toString().normalize()
+            buildCodeBlock {
+                addType(TypeVariable("a", SingletonType(entity)))
+            }.toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.TypeVariable(
@@ -248,14 +248,16 @@ class PlanGeneratorTest {
     @Test
     fun type_variable_unconstrained() {
         assertThat(
-            TypeVariable("a").toGeneration().toString().normalize()
+            buildCodeBlock { addType(TypeVariable("a")) }.toString().normalize()
         ).isEqualTo("""arcs.core.data.TypeVariable("a", null, false)""".normalize())
     }
 
     @Test
     fun type_variable_maxAccess() {
         assertThat(
-            TypeVariable("a", SingletonType(entity), true).toGeneration().toString().normalize()
+            buildCodeBlock {
+                addType(TypeVariable("a", SingletonType(entity), true))
+            }.toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.TypeVariable(
@@ -281,11 +283,17 @@ class PlanGeneratorTest {
     @Test
     fun type_complex() {
         assertThat(
-            TupleType(listOf(
-                CollectionType(ReferenceType(entity)),
-                TypeVariable("a", SingletonType(entity), true),
-                CountType()
-            )).toGeneration().toString().normalize()
+            buildCodeBlock {
+                addType(
+                    TupleType(
+                        listOf(
+                            CollectionType(ReferenceType(entity)),
+                            TypeVariable("a", SingletonType(entity), true),
+                            CountType()
+                        )
+                    )
+                )
+            }.toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.TupleType(
