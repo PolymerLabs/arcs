@@ -14,7 +14,7 @@ particle P
 -----[results]-----
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-class PTestHarness<P : AbstractP>(
+class PTestHarness<P : Particle>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
     arcs.core.entity.HandleSpec(
@@ -48,7 +48,7 @@ particle P
 -----[results]-----
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-class PTestHarness<P : AbstractP>(
+class PTestHarness<P : Particle>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
     arcs.core.entity.HandleSpec(
