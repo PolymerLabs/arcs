@@ -243,7 +243,8 @@ class TestActivity : AppCompatActivity() {
             SystemHealthTextWatch {
                 dataSizeInBytes = it.toIntOrNull()?.takeIf {
                     it >= SystemHealthTestEntity.BASE_BOOLEAN.toString().length +
-                        SystemHealthTestEntity.BASE_SEQNO.toString().length
+                        SystemHealthTestEntity.BASE_SEQNO.toString().length +
+                        SystemHealthTestEntity.BASE_TEXT.length
                 } ?: dataSizeInBytes
             }
         )
@@ -508,7 +509,7 @@ class TestActivity : AppCompatActivity() {
     ) {
         val result = handle?.let {
             withContext(handle.dispatcher) { handle.fetch() }?.let {
-                "${it.text},${it.number},${it.boolean}"
+                "${it.text},${it.number},${it.boolean},{${it.inlineEntity.text}}"
             }
         } ?: "null"
 
@@ -527,7 +528,7 @@ class TestActivity : AppCompatActivity() {
             withContext(handle.dispatcher) { handle.fetchAll() }.takeIf {
                 it.isNotEmpty()
             }?.joinToString(separator = System.getProperty("line.separator") ?: "\r\n") {
-                "${it.text},${it.number},${it.boolean}"
+                "${it.text},${it.number},${it.boolean},{${it.inlineEntity.text}}"
             }
         } ?: "empty"
 

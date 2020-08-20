@@ -1210,6 +1210,7 @@ class StorageCore(val context: Context) {
 object SystemHealthTestEntity {
     const val BASE_SEQNO = 1.00000001E8
     const val BASE_BOOLEAN = true
+    const val BASE_TEXT = "test"
 
     private val seqNo = atomic(0)
     private val allChars: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
@@ -1219,13 +1220,15 @@ object SystemHealthTestEntity {
         text = "__unused__",
         number = 0.0,
         boolean = false,
+        inlineText = "__unused__",
         id = "foo"
     )
     var entityReference: Reference? = null
 
     operator fun invoke(size: Int = 64) = TestEntity(
-        // 16 = 4 ('true') + 12 ('1.xxxxxxx1E8')
-        text = allChars[seqNo.value % allChars.size].toString().repeat(size - 16),
+        text = BASE_TEXT,
+        // 20 = 4 ('test') + 4 ('true') + 12 ('1.xxxxxxx1E8')
+        inlineText = allChars[seqNo.value % allChars.size].toString().repeat(size - 20),
         // The atomic number is also treated as unique data id to pair round-trips.
         number = BASE_SEQNO + seqNo.getAndIncrement().toDouble() * 10,
         boolean = BASE_BOOLEAN,
