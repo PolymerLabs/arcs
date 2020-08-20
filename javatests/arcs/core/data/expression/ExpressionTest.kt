@@ -30,7 +30,7 @@ class ExpressionTest {
         expression = expression, currentScope = currentScope
     )
 
-    val numbers = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+    val numbers = (1..10).toList()
 
     val currentScope = CurrentScope<Any>(
         mutableMapOf(
@@ -237,6 +237,17 @@ class ExpressionTest {
         assertThat(
             evalExpression<Sequence<Number>>(selectAvgExpr, currentScope).toList()
         ).isEqualTo(numbers.map { 5.5 })
+    }
+
+    @Test
+    fun evaluate_paxel_average_onComplexExpression() {
+        val selectAvgExpr = average(
+            from<Number>("p") on "numbers"
+            select currentScope["p"].asNumber() + 10.asExpr()
+        )
+        assertThat(
+            evalExpression<Number>(selectAvgExpr, currentScope)
+        ).isEqualTo(numbers.map { it + 10 }.average())
     }
 
     @Test
