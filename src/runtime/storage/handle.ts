@@ -21,7 +21,7 @@ import {StorageProxy, NoOpStorageProxy} from './storage-proxy.js';
 import {SYMBOL_INTERNALS} from '../symbols.js';
 import {ParticleSpec} from '../arcs-types/particle-spec.js';
 import {ChannelConstructor} from '../channel-constructor.js';
-import {Producer} from '../hot.js';
+import {Producer} from '../../utils/hot.js';
 import {EntityOperation, RawEntity, Identified} from '../crdt/crdt-entity.js';
 import {CRDTMuxEntity} from './storage.js';
 

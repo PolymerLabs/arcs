@@ -26,7 +26,7 @@ import {SlotConnection} from './slot-connection.js';
 import {Slot} from './slot.js';
 import {compareComparables} from './comparable.js';
 import {Cloneable} from './walker.js';
-import {Dictionary} from '../hot.js';
+import {Dictionary} from '../../utils/hot.js';
 import {AnnotationRef} from './annotation.js';
 import {Policy} from '../policy/policy.js';
 

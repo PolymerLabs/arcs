@@ -10,7 +10,7 @@
 
 import WebSocket from 'ws';
 import {Server} from 'http';
-import {Consumer} from '../../runtime/hot.js';
+import {Consumer} from '../../utils/hot.js';
 
 const reset = `\x1b[0m`;
 export const green = (text: string) => `\x1b[32m${text}${reset}`;

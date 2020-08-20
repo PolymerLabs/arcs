@@ -11,7 +11,7 @@ import {Schema2Base, EntityGenerator} from './schema2base.js';
 import {SchemaNode} from './schema2graph.js';
 import {ParticleSpec} from '../runtime/arcs-types/particle-spec.js';
 import {Type} from '../runtime/type.js';
-import {Dictionary} from '../runtime/hot.js';
+import {Dictionary} from '../utils/hot.js';
 
 // TODO(cypher1): Generate refinements and predicates for cpp
 // https://github.com/PolymerLabs/arcs/issues/4884

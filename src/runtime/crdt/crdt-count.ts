@@ -9,7 +9,7 @@
  */
 
 import {VersionMap, CRDTChange, CRDTModel, CRDTError, ChangeType, CRDTTypeRecord} from './crdt.js';
-import {Dictionary} from '../hot.js';
+import {Dictionary} from '../../utils/hot.js';
 
 type RawCount = number;
 

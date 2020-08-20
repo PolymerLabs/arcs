@@ -14,7 +14,7 @@ import {StorageKey} from '../storage-key.js';
 import {Arc} from '../../arc.js';
 import {ArcId} from '../../id.js';
 import {RamDiskStorageKey} from './ramdisk.js';
-import {Dictionary} from '../../hot.js';
+import {Dictionary} from '../../../utils/hot.js';
 import {assert} from '../../../platform/assert-web.js';
 import {StorageKeyParser} from '../storage-key-parser.js';
 import {Capabilities, Persistence, Encryption, Ttl, Queryable, Shareable} from '../../capabilities.js';

@@ -12,7 +12,7 @@ import {assert} from '../../platform/assert-web.js';
 import {Arc} from '../../runtime/arc.js';
 import {DescriptionFormatter} from '../../runtime/description-formatter.js';
 import {Description} from '../../runtime/description.js';
-import {Dictionary} from '../../runtime/hot.js';
+import {Dictionary} from '../../utils/hot.js';
 import {Loader} from '../../platform/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {Modality} from '../../runtime/arcs-types/modality.js';

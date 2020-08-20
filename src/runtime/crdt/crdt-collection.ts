@@ -9,7 +9,7 @@
  */
 
 import {ChangeType, CRDTChange, CRDTError, CRDTModel, CRDTTypeRecord, VersionMap, createEmptyChange} from './crdt.js';
-import {Dictionary} from '../hot.js';
+import {Dictionary} from '../../utils/hot.js';
 import {assert} from '../../platform/assert-web.js';
 
 type RawCollection<T> = Set<T>;

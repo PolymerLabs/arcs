@@ -13,7 +13,7 @@ import {assert} from '../platform/assert-web.js';
 import {PECOuterPort} from './api-channel.js';
 import {reportSystemException, PropagatedException, SystemException} from './arc-exceptions.js';
 import {AbstractStore} from './storage/abstract-store.js';
-import {Runnable} from './hot.js';
+import {Runnable} from '../utils/hot.js';
 import {Manifest} from './manifest.js';
 import {MessagePort} from './message-channel.js';
 import {Handle} from './recipe/handle.js';

@@ -12,7 +12,7 @@ import {CRDTTypeRecord, CRDTModel} from '../crdt/crdt.js';
 import {ProxyMessage, ProxyCallback} from './store.js';
 import {StorageKey} from './storage-key.js';
 import {DirectStore} from './direct-store.js';
-import {Dictionary} from '../hot.js';
+import {Dictionary} from '../../utils/hot.js';
 import {StoreConstructorOptions, StorageCommunicationEndpointProvider, ActiveMuxer, StorageMode} from './store-interface.js';
 import {assert} from '../../platform/assert-web.js';
 import {noAwait} from '../util.js';

@@ -12,7 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {Schema} from './schema.js';
 import {Type, EntityType} from './type.js';
 import {Id, IdGenerator} from './id.js';
-import {Dictionary, Consumer} from './hot.js';
+import {Dictionary, Consumer} from '../utils/hot.js';
 import {SYMBOL_INTERNALS} from './symbols.js';
 import {Refinement} from './refiner.js';
 import {Flags} from './flags.js';

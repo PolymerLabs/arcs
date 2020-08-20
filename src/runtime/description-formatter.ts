@@ -15,7 +15,7 @@ import {HandleConnection} from './recipe/handle-connection.js';
 import {Handle} from './recipe/handle.js';
 import {Particle} from './recipe/particle.js';
 import {BigCollectionType, CollectionType, InterfaceType} from './type.js';
-import {Dictionary} from './hot.js';
+import {Dictionary} from '../utils/hot.js';
 import {Entity} from './entity.js';
 
 export type ParticleDescription = {

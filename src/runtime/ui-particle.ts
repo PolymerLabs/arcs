@@ -11,7 +11,7 @@
 import {XenStateMixin} from '../../modalities/dom/components/xen/xen-state.js';
 import {UiParticleBase} from './ui-particle-base.js';
 import {Handle} from './storage/handle.js';
-import {Runnable} from './hot.js';
+import {Runnable} from '../utils/hot.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';
 
 export interface UiStatefulParticle extends UiParticleBase {

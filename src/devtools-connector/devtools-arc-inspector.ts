@@ -10,7 +10,7 @@
 
 import {DevtoolsChannel} from '../platform/devtools-channel-web.js';
 import {Arc} from '../runtime/arc.js';
-import {Runnable} from '../runtime/hot.js';
+import {Runnable} from '../utils/hot.js';
 import {Manifest} from '../runtime/manifest.js';
 import {Particle} from '../runtime/recipe/particle.js';
 import {ArcInspector, ArcInspectorFactory} from '../runtime/arc-inspector.js';
