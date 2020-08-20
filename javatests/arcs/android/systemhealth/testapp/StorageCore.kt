@@ -382,7 +382,10 @@ class StorageCore(val context: Context) {
                 CollectionType(EntityType(TestEntity.SCHEMA)),
                 TestEntity
             ),
-            TestEntity.clearEntitiesTestStorageKey
+            when (settings.storageMode) {
+                StorageMode.PERSISTENT -> TestEntity.clearEntitiesPersistentStorageKey
+                else -> TestEntity.clearEntitiesMemoryDatabaseStorageKey
+            }
         ) as WriteCollectionHandle<TestEntity>
 
         val elapsedTime = measureTimeMillis { handle.awaitReady() }
@@ -412,7 +415,8 @@ class StorageCore(val context: Context) {
                     TestEntity
                 ),
                 when (settings.storageMode) {
-                    TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
+                    StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
+                    StorageMode.MEMORY_DATABASE -> TestEntity.singletonMemoryDatabaseStorageKey
                     else -> TestEntity.singletonInMemoryStorageKey
                 }
             ) as ReadWriteSingletonHandle<TestEntity>
@@ -463,6 +467,7 @@ class StorageCore(val context: Context) {
                 ),
                 when (settings.storageMode) {
                     StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
+                    StorageMode.MEMORY_DATABASE -> TestEntity.collectionMemoryDatabaseStorageKey
                     else -> TestEntity.collectionInMemoryStorageKey
                 }
             ) as ReadWriteCollectionHandle<TestEntity>
