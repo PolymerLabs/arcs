@@ -19,6 +19,11 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.buildCodeBlock
 
+/**
+ * Translates a [Recipe] into code-generated [Plan] and [Plan.Handle] instances.
+ *
+ * @param builder A builder for output file
+ */
 fun Recipe.toGeneration(builder: FileSpec.Builder) {
     val handles = this.handles.values.map { it.toGeneration(name.orEmpty()) }
     val ctx = mapOf(
@@ -45,6 +50,12 @@ fun Recipe.toGeneration(builder: FileSpec.Builder) {
     builder.addProperty(plan)
 }
 
+/**
+ * Converts a [Recipe.Handle] to a code-generated [Plan.Handle] property.
+ *
+ * @param planName plan name associated with handle
+ * @return A code-generated [Plan.Handle] property.
+ */
 fun Recipe.Handle.toGeneration(planName: String) = PropertySpec
     .builder("${planName}_$name", Plan.Handle::class)
     .initializer(buildCodeBlock {
@@ -72,6 +83,7 @@ fun Recipe.Handle.toGeneration(planName: String) = PropertySpec
     })
     .build()
 
+/** Converts [Type] dataclass to a code-generated instance. */
 fun Type.toGeneration(): CodeBlock = buildCodeBlock {
     when (val type = this@toGeneration) {
         is EntityType -> add("%T(%L)", EntityType::class, type.entitySchema.toGeneration())
@@ -93,6 +105,7 @@ fun Type.toGeneration(): CodeBlock = buildCodeBlock {
     }
 }
 
+/** Converts a [Schema] into a code-generated [Schema] instance. */
 fun Schema.toGeneration() = buildCodeBlock {
     val schema = this@toGeneration
     if (schema.equals(Schema.EMPTY)) {
@@ -116,6 +129,7 @@ fun Schema.toGeneration() = buildCodeBlock {
     """.trimIndent(), ctx)
 }
 
+/** Converts [SchemaFields] object into code-generated instances. */
 fun SchemaFields.toGeneration() = buildCodeBlock {
     val fields = this@toGeneration
     val toSchemaField = { builder: CodeBlock.Builder, entry: Map.Entry<FieldName, FieldType> ->
@@ -135,6 +149,7 @@ fun SchemaFields.toGeneration() = buildCodeBlock {
     """.trimIndent(), ctx)
 }
 
+/** Converts [FieldType] into a code-generated instance. */
 fun FieldType.toGeneration(): CodeBlock = buildCodeBlock {
     when (val field = this@toGeneration) {
         is FieldType.Primitive -> add(
