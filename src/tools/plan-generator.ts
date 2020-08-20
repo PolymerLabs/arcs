@@ -114,8 +114,8 @@ export class PlanGenerator {
     const annotations = PlanGenerator.createAnnotations(connection.handle.annotations);
     const args = [handle, mode, type, annotations];
     if (connection.spec.expression) {
-      // TODO: Add a test for an expression once recipe2plan tests move to .cgtest
-      args.push(quote(connection.spec.expression));
+      // This is a temporary stop gap, until we develop Expression AST in TypeScript.
+      args.push('42.asExpr()');
     }
 
     return ktUtils.applyFun('HandleConnection', args, {startIndent: 24});
