@@ -34,16 +34,14 @@ class PlanGeneratorTest {
     @Test
     fun handle() {
         assertThat(
-            buildCodeBlock {
-                addHandle(
-                    Recipe.Handle(
-                        name = "foo",
-                        fate = Recipe.Handle.Fate.CREATE,
-                        type = entity,
-                        storageKey = "AKey"
-                    )
+            buildHandleBlock(
+                Recipe.Handle(
+                    name = "foo",
+                    fate = Recipe.Handle.Fate.CREATE,
+                    type = entity,
+                    storageKey = "AKey"
                 )
-            }.toString().normalize()
+            ).toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.Plan.Handle(
@@ -65,36 +63,32 @@ class PlanGeneratorTest {
     @Test
     fun handle_storageKey() {
         assertThat(
-            buildCodeBlock {
-                addHandle(
-                    Recipe.Handle(
-                        name = "foo",
-                        fate = Recipe.Handle.Fate.CREATE,
-                        type = entity,
-                        storageKey = "AKey"
-                    )
-                )
-            }.toString().normalize()
+            buildHandleBlock(
+               Recipe.Handle(
+                   name = "foo",
+                   fate = Recipe.Handle.Fate.CREATE,
+                   type = entity,
+                   storageKey = "AKey"
+               )
+            ).toString().normalize()
         ).contains("""storageKey=arcs.core.storage.StorageKeyParser.parse("AKey")""")
 
         assertThat(
-            buildCodeBlock {
-                addHandle(
-                    Recipe.Handle(
-                        name = "foo",
-                        fate = Recipe.Handle.Fate.CREATE,
-                        type = entity,
-                        storageKey = null
-                    )
+            buildHandleBlock(
+                Recipe.Handle(
+                    name = "foo",
+                    fate = Recipe.Handle.Fate.CREATE,
+                    type = entity,
+                    storageKey = null
                 )
-            }.toString().normalize()
+            ).toString().normalize()
         ).contains("""storageKey=arcs.core.data.CreatableStorageKey("foo")""")
     }
 
     @Test
     fun type_entity() {
         assertThat(
-            buildCodeBlock { addType(entity) }.toString().normalize()
+            buildTypeBlock(entity).toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.EntityType(
@@ -114,7 +108,7 @@ class PlanGeneratorTest {
     @Test
     fun type_singleton() {
         assertThat(
-            buildCodeBlock { addType(SingletonType(entity)) }.toString().normalize()
+            buildTypeBlock(SingletonType(entity)).toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.SingletonType(
@@ -136,7 +130,7 @@ class PlanGeneratorTest {
     @Test
     fun type_collection() {
         assertThat(
-            buildCodeBlock { addType(CollectionType(entity)) }.toString().normalize()
+            buildTypeBlock(CollectionType(entity)).toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.CollectionType(
@@ -158,7 +152,7 @@ class PlanGeneratorTest {
     @Test
     fun type_reference() {
         assertThat(
-            buildCodeBlock { addType(ReferenceType(entity)) }.toString().normalize()
+            buildTypeBlock(ReferenceType(entity)).toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.ReferenceType(
@@ -180,9 +174,9 @@ class PlanGeneratorTest {
     @Test
     fun type_tuple() {
         assertThat(
-            buildCodeBlock {
-                addType(TupleType(listOf(SingletonType(entity), SingletonType(entity))))
-            }.toString().normalize()
+            buildTypeBlock(
+                TupleType(listOf(SingletonType(entity), SingletonType(entity)))
+            ).toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.TupleType(
@@ -220,9 +214,9 @@ class PlanGeneratorTest {
     @Test
     fun type_variable() {
         assertThat(
-            buildCodeBlock {
-                addType(TypeVariable("a", SingletonType(entity)))
-            }.toString().normalize()
+            buildTypeBlock(
+                TypeVariable("a", SingletonType(entity))
+            ).toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.TypeVariable(
@@ -248,16 +242,16 @@ class PlanGeneratorTest {
     @Test
     fun type_variable_unconstrained() {
         assertThat(
-            buildCodeBlock { addType(TypeVariable("a")) }.toString().normalize()
+            buildTypeBlock(TypeVariable("a")).toString().normalize()
         ).isEqualTo("""arcs.core.data.TypeVariable("a", null, false)""".normalize())
     }
 
     @Test
     fun type_variable_maxAccess() {
         assertThat(
-            buildCodeBlock {
-                addType(TypeVariable("a", SingletonType(entity), true))
-            }.toString().normalize()
+            buildTypeBlock(
+                TypeVariable("a", SingletonType(entity), true)
+            ).toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.TypeVariable(
@@ -283,17 +277,15 @@ class PlanGeneratorTest {
     @Test
     fun type_complex() {
         assertThat(
-            buildCodeBlock {
-                addType(
-                    TupleType(
-                        listOf(
-                            CollectionType(ReferenceType(entity)),
-                            TypeVariable("a", SingletonType(entity), true),
-                            CountType()
-                        )
+            buildTypeBlock(
+                TupleType(
+                    listOf(
+                        CollectionType(ReferenceType(entity)),
+                        TypeVariable("a", SingletonType(entity), true),
+                        CountType()
                     )
                 )
-            }.toString().normalize()
+            ).toString().normalize()
         ).isEqualTo(
             """
             arcs.core.data.TupleType(
@@ -337,13 +329,13 @@ class PlanGeneratorTest {
 
     @Test
     fun schema_empty() {
-        assertThat(buildCodeBlock { addSchema(Schema.EMPTY) }.toString())
+        assertThat(buildSchemaBlock(Schema.EMPTY).toString())
             .isEqualTo("""arcs.core.data.Schema.EMPTY""")
     }
 
     @Test
     fun schema_nameOnly() {
-        val schemaGen = buildCodeBlock { addSchema(schema) }.toString()
+        val schemaGen = buildSchemaBlock(schema).toString()
         assertThat(schemaGen).contains("SchemaName(\"Foo\")")
         assertThat(schemaGen).contains("hash = \"fooHash\"")
 }
@@ -351,8 +343,7 @@ class PlanGeneratorTest {
     @Test
     fun schemaFields_empty() {
         assertThat(
-            buildCodeBlock { addSchemaFields(SchemaFields(emptyMap(), emptyMap())) }
-            .toString()
+            buildSchemaFieldsBlock(SchemaFields(emptyMap(), emptyMap())).toString()
         )
             .isEqualTo("""
                 arcs.core.data.SchemaFields(
@@ -365,9 +356,9 @@ class PlanGeneratorTest {
     @Test
     fun schemaFields_singletons() {
         assertThat(
-            buildCodeBlock { addSchemaFields(
+            buildSchemaFieldsBlock(
                 SchemaFields(singletons = mapOf("sku" to FieldType.Int), collections = emptyMap())
-            ) }.toString()
+            ).toString()
         )
             .isEqualTo("""
                 arcs.core.data.SchemaFields(
@@ -380,9 +371,9 @@ class PlanGeneratorTest {
     @Test
     fun schemaFields_collections() {
         assertThat(
-            buildCodeBlock { addSchemaFields(
+            buildSchemaFieldsBlock(
                 SchemaFields(emptyMap(), collections = mapOf("bananas" to FieldType.Text))
-            ) }.toString()
+            ).toString()
         )
             .isEqualTo("""
                 arcs.core.data.SchemaFields(
@@ -394,57 +385,57 @@ class PlanGeneratorTest {
 
     @Test
     fun fieldType_primitives() {
-        assertThat(FieldType.Boolean.toGeneration().toString())
+        assertThat(buildFieldTypeBlock(FieldType.Boolean).toString())
             .isEqualTo("arcs.core.data.FieldType.Boolean")
-        assertThat(FieldType.Number.toGeneration().toString())
+        assertThat(buildFieldTypeBlock(FieldType.Number).toString())
             .isEqualTo("arcs.core.data.FieldType.Number")
-        assertThat(FieldType.Text.toGeneration().toString())
+        assertThat(buildFieldTypeBlock(FieldType.Text).toString())
             .isEqualTo("arcs.core.data.FieldType.Text")
-        assertThat(FieldType.Byte.toGeneration().toString())
+        assertThat(buildFieldTypeBlock(FieldType.Byte).toString())
             .isEqualTo("arcs.core.data.FieldType.Byte")
-        assertThat(FieldType.Short.toGeneration().toString())
+        assertThat(buildFieldTypeBlock(FieldType.Short).toString())
             .isEqualTo("arcs.core.data.FieldType.Short")
-        assertThat(FieldType.Int.toGeneration().toString())
+        assertThat(buildFieldTypeBlock(FieldType.Int).toString())
             .isEqualTo("arcs.core.data.FieldType.Int")
-        assertThat(FieldType.Long.toGeneration().toString())
+        assertThat(buildFieldTypeBlock(FieldType.Long).toString())
             .isEqualTo("arcs.core.data.FieldType.Long")
-        assertThat(FieldType.Char.toGeneration().toString())
+        assertThat(buildFieldTypeBlock(FieldType.Char).toString())
             .isEqualTo("arcs.core.data.FieldType.Char")
-        assertThat(FieldType.Float.toGeneration().toString())
+        assertThat(buildFieldTypeBlock(FieldType.Float).toString())
             .isEqualTo("arcs.core.data.FieldType.Float")
-        assertThat(FieldType.Double.toGeneration().toString())
+        assertThat(buildFieldTypeBlock(FieldType.Double).toString())
             .isEqualTo("arcs.core.data.FieldType.Double")
-        assertThat(FieldType.BigInt.toGeneration().toString())
+        assertThat(buildFieldTypeBlock(FieldType.BigInt).toString())
             .isEqualTo("arcs.core.data.FieldType.BigInt")
     }
 
     @Test
     fun fieldType_inlineEntity() {
-        assertThat(FieldType.InlineEntity("someHash").toGeneration().toString())
+        assertThat(buildFieldTypeBlock(FieldType.InlineEntity("someHash")).toString())
             .isEqualTo("""arcs.core.data.FieldType.InlineEntity("someHash")""")
     }
 
     @Test
     fun fieldType_entityRef() {
-        assertThat(FieldType.EntityRef("someHash").toGeneration().toString())
+        assertThat(buildFieldTypeBlock(FieldType.EntityRef("someHash")).toString())
             .isEqualTo("""arcs.core.data.FieldType.EntityRef("someHash")""")
     }
 
     @Test
     fun fieldType_tuple() {
         assertThat(
-            FieldType.Tuple(listOf(FieldType.Number, FieldType.BigInt))
-                .toGeneration()
-                .toString()
+            buildFieldTypeBlock(
+                FieldType.Tuple(listOf(FieldType.Number, FieldType.BigInt))
+            ).toString()
         )
             .isEqualTo(
                 "arcs.core.data.FieldType.Tuple(" +
                     "listOf(arcs.core.data.FieldType.Number, arcs.core.data.FieldType.BigInt))"
             )
         assertThat(
-            FieldType.Tuple(listOf(FieldType.Char, FieldType.EntityRef("anotherHash")))
-                .toGeneration()
-                .toString()
+            buildFieldTypeBlock(
+                FieldType.Tuple(listOf(FieldType.Char, FieldType.EntityRef("anotherHash")))
+            ).toString()
         )
             .isEqualTo(
                 "arcs.core.data.FieldType.Tuple(" +
@@ -452,12 +443,14 @@ class PlanGeneratorTest {
                     "arcs.core.data.FieldType.EntityRef(\"anotherHash\")))"
             )
         assertThat(
-            FieldType.Tuple(
-                listOf(
-                    FieldType.Tuple(listOf(FieldType.Boolean, FieldType.Byte)),
-                    FieldType.EntityRef("anotherHash")
+            buildFieldTypeBlock(
+                FieldType.Tuple(
+                    listOf(
+                        FieldType.Tuple(listOf(FieldType.Boolean, FieldType.Byte)),
+                        FieldType.EntityRef("anotherHash")
+                    )
                 )
-            ).toGeneration().toString()
+            ).toString()
         )
             .isEqualTo(
                 "arcs.core.data.FieldType.Tuple(" +
@@ -469,11 +462,10 @@ class PlanGeneratorTest {
 
     @Test
     fun fieldType_listOf() {
-        assertThat(FieldType.ListOf(FieldType.Boolean).toGeneration().toString())
+        assertThat(buildFieldTypeBlock(FieldType.ListOf(FieldType.Boolean)).toString())
             .isEqualTo("arcs.core.data.FieldType.ListOf(arcs.core.data.FieldType.Boolean)")
         assertThat(
-            FieldType.ListOf(FieldType.EntityRef("yetAnotherHash"))
-                .toGeneration()
+            buildFieldTypeBlock(FieldType.ListOf(FieldType.EntityRef("yetAnotherHash")))
                 .toString())
             .isEqualTo(
                 "arcs.core.data.FieldType.ListOf(" +

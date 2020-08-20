@@ -20,7 +20,7 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.buildCodeBlock
 
 /**
- * Adds a code-generated [Plan] to a [FileSpec.Builder].
+ * Adds a code-generated [Plan] to a [FileSpec].
  *
  * Will also add code-generated [Plan.Handle] properties to the file.
  *
@@ -30,7 +30,7 @@ import com.squareup.kotlinpoet.buildCodeBlock
 fun FileSpec.Builder.addRecipe(recipe: Recipe): FileSpec.Builder {
     val handles = recipe.handles.values.map {
         PropertySpec.builder("${recipe.name}_${it.name}", Plan.Handle::class)
-            .initializer(CodeBlock.builder().addHandle(it).build())
+            .initializer(buildHandleBlock(it))
             .build()
     }
 
@@ -63,7 +63,7 @@ fun FileSpec.Builder.addRecipe(recipe: Recipe): FileSpec.Builder {
 }
 
 /**
- * Adds a code-generated [Plan.Handle] to a [CodeBlock.Builder].
+ * Adds a code-generated [Plan.Handle] to a [CodeBlock].
  *
  * @param handle a source [Recipe.Handle] for conversion.
  * @return self, with a code-generated [Plan.Handle] instance.
@@ -74,7 +74,7 @@ fun CodeBlock.Builder.addHandle(handle: Recipe.Handle): CodeBlock.Builder = with
         // TODO(161941222) verify join handles work
         "storageParser" to StorageKeyParser::class,
         "key" to storageKey,
-        "type" to buildCodeBlock { addType(type) },
+        "type" to buildTypeBlock(type),
         "annotations" to emptyList<Annotation>().toGeneration(),
         "creatable" to CreatableStorageKey::class,
         "name" to name
@@ -95,34 +95,31 @@ fun CodeBlock.Builder.addHandle(handle: Recipe.Handle): CodeBlock.Builder = with
     )
 }
 
+/** Shorthand for building a [CodeBlock] with a code-generated [Plan.Handle]. */
+fun buildHandleBlock(handle: Recipe.Handle): CodeBlock = buildCodeBlock { addHandle(handle) }
+
 /** Code-generates a [Type] within a [CodeBlock]. */
 fun CodeBlock.Builder.addType(type: Type): CodeBlock.Builder = when (type) {
-    is EntityType -> add(
-        "%T(%L)",
-        EntityType::class,
-        buildCodeBlock { addSchema(type.entitySchema) }
-    )
-    is Type.TypeContainer<*> -> add(
-        "%T(%L)",
-        type::class,
-        buildCodeBlock { addType(type.containedType) })
+    is EntityType -> add("%T(%L)", EntityType::class, buildSchemaBlock(type.entitySchema))
+    is Type.TypeContainer<*> -> add("%T(%L)", type::class, buildTypeBlock(type.containedType))
     is CountType -> add("%T()", CountType::class)
     is TupleType -> add(
         "%T(%L)",
         TupleType::class,
-        type.elementTypes.toGeneration { builder, item ->
-            builder.add(buildCodeBlock { addType(item) })
-        }
+        type.elementTypes.toGeneration { builder, item -> builder.add(buildTypeBlock(item)) }
     )
     is TypeVariable -> add(
         "%T(%S, %L, %L)",
         TypeVariable::class,
         type.name,
-        type.constraint?.let { buildCodeBlock { addType(it) } },
+        type.constraint?.let { buildTypeBlock(it) },
         type.maxAccess
     )
     else -> throw IllegalArgumentException("[Type] $type is not supported.")
 }
+
+/** Shorthand for building a [CodeBlock] with a code-generated [Type]. */
+fun buildTypeBlock(type: Type): CodeBlock = buildCodeBlock { addType(type) }
 
 /** Code-generates a [Schema] within a [CodeBlock]. */
 fun CodeBlock.Builder.addSchema(schema: Schema): CodeBlock.Builder {
@@ -135,7 +132,7 @@ fun CodeBlock.Builder.addSchema(schema: Schema): CodeBlock.Builder {
         "names" to schema.names.toGeneration { builder, item ->
             builder.add("%T(%S)", SchemaName::class, item.name)
         },
-        "fields" to buildCodeBlock { addSchemaFields(schema.fields) },
+        "fields" to buildSchemaFieldsBlock(schema.fields),
         "hash" to schema.hash
     )
     addNamed(
@@ -151,10 +148,13 @@ fun CodeBlock.Builder.addSchema(schema: Schema): CodeBlock.Builder {
     return this
 }
 
+/** Shorthand for building a [CodeBlock] with a code-generated [Schema]. */
+fun buildSchemaBlock(schema: Schema): CodeBlock = buildCodeBlock { addSchema(schema) }
+
 /** Code-generates [SchemaFields] within a [CodeBlock]. */
 fun CodeBlock.Builder.addSchemaFields(fields: SchemaFields): CodeBlock.Builder {
     val toSchemaField = { builder: CodeBlock.Builder, entry: Map.Entry<FieldName, FieldType> ->
-        builder.add("%S to %L", entry.key, entry.value.toGeneration())
+        builder.add("%S to %L", entry.key, buildFieldTypeBlock(entry.value))
         Unit
     }
     val ctx = mapOf(
@@ -174,35 +174,28 @@ fun CodeBlock.Builder.addSchemaFields(fields: SchemaFields): CodeBlock.Builder {
     return this
 }
 
-/** Converts [FieldType] into a code-generated instance. */
-fun FieldType.toGeneration(): CodeBlock = buildCodeBlock {
-    when (val field = this@toGeneration) {
-        is FieldType.Primitive -> add(
-            "%T.%L",
-            FieldType::class,
-            field.primitiveType
-        )
-        is FieldType.EntityRef -> add(
-            "%T(%S)",
-            field::class,
-            field.schemaHash
-        )
-        is FieldType.InlineEntity -> add(
-            "%T(%S)",
-            field::class,
-            field.schemaHash
-        )
-        is FieldType.Tuple -> add(
-            "%T(%L)",
-            FieldType.Tuple::class,
-            field.types.toGeneration { builder, item ->
-                builder.add(item.toGeneration())
-            }
-        )
-        is FieldType.ListOf -> add(
-            "%T(%L)",
-            FieldType.ListOf::class,
-            field.primitiveType.toGeneration()
-        )
-    }
+/** Shorthand for building a [CodeBlock] with code-generated [SchemaFields]. */
+fun buildSchemaFieldsBlock(schemaFields: SchemaFields): CodeBlock = buildCodeBlock {
+    addSchemaFields(schemaFields)
 }
+
+/** Code-generates [FieldType] within a [CodeBlock]. */
+fun CodeBlock.Builder.addFieldType(field: FieldType): CodeBlock.Builder = when (field ) {
+    is FieldType.Primitive -> add("%T.%L", FieldType::class, field.primitiveType)
+    is FieldType.EntityRef -> add("%T(%S)", field::class, field.schemaHash)
+    is FieldType.InlineEntity -> add("%T(%S)", field::class, field.schemaHash)
+    is FieldType.Tuple -> add(
+        "%T(%L)",
+        FieldType.Tuple::class,
+        field.types.toGeneration { builder, item -> builder.addFieldType(item) }
+    )
+    is FieldType.ListOf -> add(
+        "%T(%L)",
+        FieldType.ListOf::class,
+        buildFieldTypeBlock(field.primitiveType)
+    )
+}
+
+/** Shorthand for building a [CodeBlock] with a code-generated [FieldType]. */
+fun buildFieldTypeBlock(field: FieldType): CodeBlock = buildCodeBlock { addFieldType(field) }
+
