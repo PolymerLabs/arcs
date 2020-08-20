@@ -350,7 +350,10 @@ class PlanGeneratorTest {
 
     @Test
     fun schemaFields_empty() {
-        assertThat(SchemaFields(emptyMap(), emptyMap()).toGeneration().toString())
+        assertThat(
+            buildCodeBlock { addSchemaFields(SchemaFields(emptyMap(), emptyMap())) }
+            .toString()
+        )
             .isEqualTo("""
                 arcs.core.data.SchemaFields(
                     singletons = emptyMap(),
@@ -362,8 +365,9 @@ class PlanGeneratorTest {
     @Test
     fun schemaFields_singletons() {
         assertThat(
-            SchemaFields(singletons = mapOf("sku" to FieldType.Int), collections = emptyMap())
-                .toGeneration().toString()
+            buildCodeBlock { addSchemaFields(
+                SchemaFields(singletons = mapOf("sku" to FieldType.Int), collections = emptyMap())
+            ) }.toString()
         )
             .isEqualTo("""
                 arcs.core.data.SchemaFields(
@@ -376,8 +380,9 @@ class PlanGeneratorTest {
     @Test
     fun schemaFields_collections() {
         assertThat(
-            SchemaFields(emptyMap(), collections = mapOf("bananas" to FieldType.Text))
-                .toGeneration().toString()
+            buildCodeBlock { addSchemaFields(
+                SchemaFields(emptyMap(), collections = mapOf("bananas" to FieldType.Text))
+            ) }.toString()
         )
             .isEqualTo("""
                 arcs.core.data.SchemaFields(

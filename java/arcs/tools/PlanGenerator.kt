@@ -95,7 +95,7 @@ fun CodeBlock.Builder.addHandle(handle: Recipe.Handle): CodeBlock.Builder = with
     )
 }
 
-/** Code-generates [Type] within [CodeBlock]. */
+/** Code-generates a [Type] within a [CodeBlock]. */
 fun CodeBlock.Builder.addType(type: Type): CodeBlock.Builder = when (type) {
     is EntityType -> add(
         "%T(%L)",
@@ -124,7 +124,7 @@ fun CodeBlock.Builder.addType(type: Type): CodeBlock.Builder = when (type) {
     else -> throw IllegalArgumentException("[Type] $type is not supported.")
 }
 
-/** Code-generates [Schema] within a [CodeBlock]. */
+/** Code-generates a [Schema] within a [CodeBlock]. */
 fun CodeBlock.Builder.addSchema(schema: Schema): CodeBlock.Builder {
     if (Schema.EMPTY == schema) {
         add("%T.EMPTY", Schema::class)
@@ -135,7 +135,7 @@ fun CodeBlock.Builder.addSchema(schema: Schema): CodeBlock.Builder {
         "names" to schema.names.toGeneration { builder, item ->
             builder.add("%T(%S)", SchemaName::class, item.name)
         },
-        "fields" to schema.fields.toGeneration(),
+        "fields" to buildCodeBlock { addSchemaFields(schema.fields) },
         "hash" to schema.hash
     )
     addNamed(
@@ -151,9 +151,8 @@ fun CodeBlock.Builder.addSchema(schema: Schema): CodeBlock.Builder {
     return this
 }
 
-/** Converts [SchemaFields] object into code-generated instances. */
-fun SchemaFields.toGeneration() = buildCodeBlock {
-    val fields = this@toGeneration
+/** Code-generates [SchemaFields] within a [CodeBlock]. */
+fun CodeBlock.Builder.addSchemaFields(fields: SchemaFields): CodeBlock.Builder {
     val toSchemaField = { builder: CodeBlock.Builder, entry: Map.Entry<FieldName, FieldType> ->
         builder.add("%S to %L", entry.key, entry.value.toGeneration())
         Unit
@@ -172,6 +171,7 @@ fun SchemaFields.toGeneration() = buildCodeBlock {
         """.trimIndent(),
         ctx
     )
+    return this
 }
 
 /** Converts [FieldType] into a code-generated instance. */
