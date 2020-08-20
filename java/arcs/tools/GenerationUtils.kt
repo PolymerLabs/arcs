@@ -27,7 +27,7 @@ fun <T> List<T>.toGeneration(
 ) = buildCodeBlock {
     if (this@toGeneration.isEmpty()) {
         add("emptyList()")
-        return build()
+        return@buildCodeBlock
     }
 
     add("listOf(")
@@ -62,7 +62,7 @@ fun <T> Set<T>.toGeneration(
 ) = buildCodeBlock {
     if (this@toGeneration.isEmpty()) {
         add("emptySet()")
-        return build()
+        return@buildCodeBlock
     }
 
     add("setOf(")
@@ -97,7 +97,7 @@ fun <K, V> Map<K, V>.toGeneration(
 ) = buildCodeBlock {
     if (this@toGeneration.isEmpty()) {
         add("emptyMap()")
-        return build()
+        return@buildCodeBlock
     }
 
     add("mapOf(")
