@@ -49,3 +49,10 @@ class ArcsBigInteger(val value: ByteArray): Number() {
     override fun toLong(): Long = PlatformBigIntegerProvider.toLong(this)
     override fun toShort(): Short = PlatformBigIntegerProvider.toShort(this)
 }
+
+fun String.toArcsBigInteger(): ArcsBigInteger = ArcsBigInteger.fromString(this)
+
+fun Number.toArcsBigInteger(): ArcsBigInteger = when (this) {
+    is ArcsBigInteger -> this
+    else -> ArcsBigInteger.valueOf(this.toLong())
+}

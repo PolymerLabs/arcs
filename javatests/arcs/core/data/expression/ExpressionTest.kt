@@ -17,6 +17,8 @@ import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import arcs.core.util.ArcsBigInteger
+import arcs.core.util.toArcsBigInteger
 
 /** Tests for [Expression]. */
 @RunWith(JUnit4::class)
@@ -61,10 +63,10 @@ class ExpressionTest {
         assertThat(evalNum(6L.asExpr() / 3.asExpr())).isEqualTo(2)
 
         // big ints
-        assertThat(evalNum(2.toBigInteger().asExpr() + 1.asExpr())).isEqualTo(3.toBigInteger())
-        assertThat(evalNum(2.toBigInteger().asExpr() - 1.asExpr())).isEqualTo(1.toBigInteger())
-        assertThat(evalNum(2.toBigInteger().asExpr() * 2.asExpr())).isEqualTo(4.toBigInteger())
-        assertThat(evalNum(6.toBigInteger().asExpr() / 3.asExpr())).isEqualTo(2.toBigInteger())
+        assertThat(evalNum(2.toArcsBigInteger().asExpr() + 1.asExpr())).isEqualTo(3.toArcsBigInteger())
+        assertThat(evalNum(2.toArcsBigInteger().asExpr() - 1.asExpr())).isEqualTo(1.toArcsBigInteger())
+        assertThat(evalNum(2.toArcsBigInteger().asExpr() * 2.asExpr())).isEqualTo(4.toArcsBigInteger())
+        assertThat(evalNum(6.toArcsBigInteger().asExpr() / 3.asExpr())).isEqualTo(2.toArcsBigInteger())
     }
     @Test
     fun evaluate_fieldOps() {
@@ -113,22 +115,22 @@ class ExpressionTest {
         assertThat(evalBool((1L.asExpr() lt 2.asExpr()) or (2L.asExpr() lt 1.asExpr()))).isTrue()
         assertThat(evalBool((1L.asExpr() gt 2.asExpr()) or (2L.asExpr() lt 1.asExpr()))).isFalse()
 
-        // Sanity check BigInteger
-        assertThat(evalBool(1.toBigInteger().asExpr() lt 2.asExpr())).isTrue()
-        assertThat(evalBool(2.toBigInteger().asExpr() lt 1.asExpr())).isFalse()
-        assertThat(evalBool(2.toBigInteger().asExpr() lte 2.asExpr())).isTrue()
-        assertThat(evalBool(3.toBigInteger().asExpr() lte 2.asExpr())).isFalse()
-        assertThat(evalBool(2.toBigInteger().asExpr() gt 1.asExpr())).isTrue()
-        assertThat(evalBool(1.toBigInteger().asExpr() gt 2.asExpr())).isFalse()
-        assertThat(evalBool(1.toBigInteger().asExpr() gte 2.asExpr())).isFalse()
-        assertThat(evalBool((1.toBigInteger().asExpr() lt 2.asExpr()) and
-            (2.toBigInteger().asExpr() gt 1.toBigInteger().asExpr()))).isTrue()
-        assertThat(evalBool((2.toBigInteger().asExpr() lt 1.asExpr()) and
-            (2.toBigInteger().asExpr() gt 1.toBigInteger().asExpr()))).isFalse()
-        assertThat(evalBool((1.toBigInteger().asExpr() lt 2.asExpr()) or
-            (2.toBigInteger().asExpr() lt 1.toBigInteger().asExpr()))).isTrue()
-        assertThat(evalBool((1.toBigInteger().asExpr() gt 2.asExpr()) or
-            (2.toBigInteger().asExpr() lt 1.toBigInteger().asExpr()))).isFalse()
+        // Sanity check ArcsBigInteger
+        assertThat(evalBool(1.toArcsBigInteger().asExpr() lt 2.asExpr())).isTrue()
+        assertThat(evalBool(2.toArcsBigInteger().asExpr() lt 1.asExpr())).isFalse()
+        assertThat(evalBool(2.toArcsBigInteger().asExpr() lte 2.asExpr())).isTrue()
+        assertThat(evalBool(3.toArcsBigInteger().asExpr() lte 2.asExpr())).isFalse()
+        assertThat(evalBool(2.toArcsBigInteger().asExpr() gt 1.asExpr())).isTrue()
+        assertThat(evalBool(1.toArcsBigInteger().asExpr() gt 2.asExpr())).isFalse()
+        assertThat(evalBool(1.toArcsBigInteger().asExpr() gte 2.asExpr())).isFalse()
+        assertThat(evalBool((1.toArcsBigInteger().asExpr() lt 2.asExpr()) and
+            (2.toArcsBigInteger().asExpr() gt 1.toArcsBigInteger().asExpr()))).isTrue()
+        assertThat(evalBool((2.toArcsBigInteger().asExpr() lt 1.asExpr()) and
+            (2.toArcsBigInteger().asExpr() gt 1.toArcsBigInteger().asExpr()))).isFalse()
+        assertThat(evalBool((1.toArcsBigInteger().asExpr() lt 2.asExpr()) or
+            (2.toArcsBigInteger().asExpr() lt 1.toArcsBigInteger().asExpr()))).isTrue()
+        assertThat(evalBool((1.toArcsBigInteger().asExpr() gt 2.asExpr()) or
+            (2.toArcsBigInteger().asExpr() lt 1.toArcsBigInteger().asExpr()))).isFalse()
     }
 
     @Test
@@ -142,9 +144,9 @@ class ExpressionTest {
         assertThat(evalBool(!(2L.asExpr() lt 1.asExpr()))).isTrue()
         assertThat(evalBool(!(2L.asExpr() gt 1.asExpr()))).isFalse()
 
-        assertThat(evalNum(-2.toBigInteger().asExpr())).isEqualTo(-2.toBigInteger())
-        assertThat(evalBool(!(2.toBigInteger().asExpr() lt 1.asExpr()))).isTrue()
-        assertThat(evalBool(!(2.toBigInteger().asExpr() gt 1.asExpr()))).isFalse()
+        assertThat(evalNum(-2.toArcsBigInteger().asExpr())).isEqualTo(-2.toArcsBigInteger())
+        assertThat(evalBool(!(2.toArcsBigInteger().asExpr() lt 1.asExpr()))).isTrue()
+        assertThat(evalBool(!(2.toArcsBigInteger().asExpr() gt 1.asExpr()))).isFalse()
     }
 
     @Test
@@ -330,7 +332,7 @@ class ExpressionTest {
         ) as Expression.FieldExpression<CurrentScope<Any>, Scope>
         val x: Expression<Number> = baz["x"]
         val expr = (x + 2.0.asExpr() + (3f.asExpr() * 4L.asExpr()) + field - 1.toByte().asExpr()) /
-            2.toBigInteger().asExpr()
+            2.toArcsBigInteger().asExpr()
         val json = expr.serialize()
         val parsed = json.deserializeExpression() as Expression<Number>
         assertThat(evalExpression<Number>(

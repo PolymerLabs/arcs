@@ -12,6 +12,7 @@
 package arcs.core.data.expression
 
 import arcs.core.util.ArcsBigInteger
+import arcs.core.util.toArcsBigInteger
 
 /**
  * A DSL for expressions used by queries, refinements, and adapters. Instances can be constructed
@@ -450,11 +451,6 @@ private fun widenAndApply(
     if (l is Short || r is Short) return intBlock(l.toInt(), r.toInt()).toShort()
     if (l is Byte || r is Byte) return intBlock(l.toInt(), r.toInt()).toByte()
     throw IllegalArgumentException("Unable to widenType for ${l::class}, ${r::class}")
-}
-
-fun Number.toArcsBigInteger(): ArcsBigInteger = when (this) {
-    is ArcsBigInteger -> this
-    else -> ArcsBigInteger.valueOf(this.toLong())
 }
 
 @Suppress("UNCHECKED_CAST")

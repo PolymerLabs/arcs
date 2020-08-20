@@ -15,6 +15,7 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteProgram
 import arcs.core.util.ArcsBigInteger
+import arcs.core.util.toArcsBigInteger
 import arcs.core.util.ArcsInstant
 
 inline fun <T : Any?> SQLiteDatabase.transaction(block: SQLiteDatabase.() -> T): T {

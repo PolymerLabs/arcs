@@ -23,11 +23,8 @@ class PlatformDuration {
     }
 }
 
-fun ArcsD.toNative(): PlatformDuration {
-    val seconds = this.millis / 1000.0
-    val nanos = 0
-    ArcsD(this.toMillis())
-}
+fun ArcsD.toNative(): PlatformDuration =
+    PlatformDuration.ofMillis(this.millis)
 fun PlatformDuration.toArcs(): ArcsD =
     TODO("Add support for ArcsDuration in Kotlin Native")
 

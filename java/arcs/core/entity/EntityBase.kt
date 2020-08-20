@@ -188,7 +188,7 @@ open class EntityBase(
                 PrimitiveType.Long -> require(value is Long) {
                     "Expected Long for $context$entityClassName.$field, but received $value."
                 }
-                PrimitiveType.Instant -> require(value is Instant) {
+                PrimitiveType.Instant -> require(value is ArcsInstant) {
                     "Expected Instant for $context$entityClassName.$field, but received $value."
                 }
                 PrimitiveType.Char -> require(value is Char) {
@@ -200,7 +200,7 @@ open class EntityBase(
                 PrimitiveType.Double -> require(value is Double) {
                     "Expected Double for $context$entityClassName.$field, but received $value."
                 }
-                PrimitiveType.BigInt -> require(value is BigInteger) {
+                PrimitiveType.BigInt -> require(value is ArcsBigInteger) {
                     "Expected BigInt for $context$entityClassName.$field, but received $value."
                 }
             }
@@ -387,11 +387,11 @@ private fun toReferencable(value: Any, type: FieldType): Referencable = when (ty
         PrimitiveType.Short -> (value as Short).toReferencable()
         PrimitiveType.Int -> (value as Int).toReferencable()
         PrimitiveType.Long -> (value as Long).toReferencable()
-        PrimitiveType.Instant -> (value as Instant).toReferencable()
+        PrimitiveType.Instant -> (value as ArcsInstant).toReferencable()
         PrimitiveType.Char -> (value as Char).toReferencable()
         PrimitiveType.Float -> (value as Float).toReferencable()
         PrimitiveType.Double -> (value as Double).toReferencable()
-        PrimitiveType.BigInt -> (value as BigInteger).toReferencable()
+        PrimitiveType.BigInt -> (value as ArcsBigInteger).toReferencable()
     }
     is FieldType.EntityRef -> (value as Reference<*>).toReferencable()
     // TODO(b/155025255)

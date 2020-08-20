@@ -17,6 +17,7 @@ import arcs.core.data.expression.Expression.BinaryOp
 import arcs.core.data.expression.Expression.UnaryExpression
 import arcs.core.data.expression.Expression.UnaryOp
 import arcs.core.util.ArcsBigInteger
+import arcs.core.util.toArcsBigInteger
 import arcs.core.util.Json
 import arcs.core.util.JsonValue
 import arcs.core.util.JsonValue.JsonArray

@@ -16,6 +16,9 @@ private typealias ArcsI = arcs.core.util.ArcsInstant
 
 // Placeholder for platform implementation.
 class PlatformInstant {
+    fun toEpochMilli(): Long =
+        TODO("Add support for ArcsInstant in Kotlin JS")
+
     companion object {
         fun ofEpochMilli(value: Long): PlatformInstant =
             TODO("Add support for ArcsInstant in Kotlin JS")
@@ -30,7 +33,7 @@ fun PlatformInstant.toArcs(): ArcsI = ArcsI(this.toEpochMilli())
 object PlatformInstantProvider {
     fun ofEpochMilli(millis: Long): ArcsInstant =
         PlatformInstant.ofEpochMilli(millis).toArcs()
-    fun toEpochMilli(value: ArcsI): ArcsInstant =
+    fun toEpochMilli(value: ArcsI): Long =
         value.toNative().toEpochMilli()
 
     fun now(): ArcsInstant = PlatformInstant.now().toArcs()
