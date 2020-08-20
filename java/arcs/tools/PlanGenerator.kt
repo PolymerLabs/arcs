@@ -123,13 +123,16 @@ fun Schema.toGeneration() = buildCodeBlock {
         "fields" to schema.fields.toGeneration(),
         "hash" to schema.hash
     )
-    addNamed("""
+    addNamed(
+        """
         %schema:T(
             names = %names:L,
             fields = %fields:L,
             hash = %hash:S
         )
-    """.trimIndent(), ctx)
+        """.trimIndent(), 
+        ctx
+    )
 }
 
 /** Converts [SchemaFields] object into code-generated instances. */
