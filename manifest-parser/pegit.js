@@ -9,22 +9,12 @@
  */
 
 import fs from 'fs';
-//const fs = require('fs');
-//const os = require('os');
 import path from 'path';
-//const path = require('path');
-//const minimist = require('minimist');
-//const semver = require('semver');
 import ts from 'typescript';
 import peg from 'pegjs';
 import tspegjs from 'ts-pegjs';
-//const ts = require('typescript');
-//const peg = require('pegjs');
-//const tspegjs = require('ts-pegjs');
 
-//import {ChildProcess} from 'child_process';
-
-const projectRoot = './'; //path.resolve(__dirname, '.');
+const projectRoot = './';
 
 const pegsrc = {
   grammar: 'src/peg-parser.pegjs',
@@ -62,10 +52,6 @@ function readProjectFile(relativePath) {
 }
 
 function pegit() {
-  // const ts = require('typescript');
-  // const peg = require('pegjs');
-  // const tspegjs = require('ts-pegjs');
-
   const options = {
     format: 'bare',
     output: 'source',
