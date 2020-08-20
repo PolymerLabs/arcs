@@ -2,6 +2,7 @@ package arcs.core.host
 
 import arcs.core.data.Plan
 import arcs.core.data.Schema
+import arcs.core.data.toSchema
 import arcs.core.entity.EntityBaseSpec
 import arcs.sdk.BaseParticle
 import arcs.sdk.EntityBase

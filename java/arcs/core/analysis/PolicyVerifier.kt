@@ -14,7 +14,7 @@ package arcs.core.analysis
 import arcs.core.data.AccessPath
 import arcs.core.data.Check
 import arcs.core.data.Recipe
-import arcs.core.host.toSchema
+import arcs.core.data.toSchema
 import arcs.core.policy.Policy
 import arcs.core.policy.PolicyConstraints
 import arcs.core.policy.PolicyOptions
