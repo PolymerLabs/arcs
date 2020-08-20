@@ -79,7 +79,7 @@ def arcs_manifest_proto(name, src, deps = [], out = None, visibility = None):
       out: the name of the output artifact (a proto file).
       visibility: list of visibilities
     """
-    outs = [out] if out != None else [replace_arcs_suffix(name, ".pb.bin")]
+    outs = [out] if out != None else [replace_arcs_suffix(name, ".binarypb")]
 
     arcs_tool_manifest2proto(
         name = name,
@@ -115,7 +115,7 @@ def arcs_proto_plan(name, src, recipe = None, deps = []):
     arcs_tool_recipe2plan(
         name = name,
         srcs = [src],
-        outs = [name + ".pb.bin"],
+        outs = [name + ".binarypb"],
         recipe = recipe,
         generate_proto = True,
         deps = deps,

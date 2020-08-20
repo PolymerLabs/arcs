@@ -72,7 +72,7 @@ arcs_proto_plan(
 arcs_kt_jvm_test_suite(
     name = "behavior-tests",
     srcs = glob(["*Test.kt"]),
-    data = [":variable_proto.pb.bin"],
+    data = [":variable_proto.binarypb"],
     package = "src.tools.tests",
     deps = [
         ":variable_generation",

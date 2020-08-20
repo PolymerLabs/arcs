@@ -14,7 +14,7 @@ class RecipeGraphToDotGraphTest {
     /** Decode the recipe in the given .arcs test. */
     private fun parseManifestWithSingleRecipe(test: String): Recipe {
         val manifestProto = loadManifestBinaryProto(
-            "javatests/arcs/core/analysis/testdata/$test.pb.bin"
+            "javatests/arcs/core/analysis/testdata/$test.binarypb"
         )
         val recipes = manifestProto.decodeRecipes()
         return recipes.single()

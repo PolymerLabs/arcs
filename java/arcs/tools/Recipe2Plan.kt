@@ -12,12 +12,12 @@ import com.squareup.kotlinpoet.FileSpec
 /** Generates plans from recipes. */
 class Recipe2Plan : CliktCommand(
     help = """Generate plans from recipes.
-    
+
     This script reads serialized manifests and generates Kotlin files with [Plan] classes.""",
     printHelpOnEmptyArgs = true
 ) {
     private val manifest by argument(
-        help = "path to protobuf-serialized manifest, i.e. '*.bin.pb'"
+        help = "path to protobuf-serialized manifest, i.e. '*.binarypb'"
     ).file(exists = true, readable = true)
     private val outputFile by argument(help = "output Kotlin filepath, e.g. 'path/to/File.kt'")
         .file()

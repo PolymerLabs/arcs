@@ -22,7 +22,7 @@ class InformationFlowTest {
 
     /** Returns the path for the manifest proto binary file for the test. */
     private fun getManifestProtoBinPath(test: String): String {
-        return "javatests/arcs/core/analysis/testdata/$test.pb.bin"
+        return "javatests/arcs/core/analysis/testdata/$test.binarypb"
     }
 
     /** A helper function to decode a RecipeProto in a [file] in the testdata directory. */

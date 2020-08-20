@@ -20,7 +20,7 @@ def _recipe2plan_impl(ctx):
 recipe2plan = rule(
     implementation = _recipe2plan_impl,
     attrs = {
-        "src": attr.label(allow_single_file = [".pb.bin"]),
+        "src": attr.label(allow_single_file = [".binarypb"]),
         "package": attr.string(),
         "compiler": attr.label(
             cfg = "host",
