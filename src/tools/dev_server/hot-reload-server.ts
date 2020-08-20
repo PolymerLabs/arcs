@@ -9,7 +9,7 @@
  */
 
 import WebSocket from 'ws';
-import * as fs from 'fs';
+import fs from 'fs';
 
 /**
  * Hot Reload Server is opening a WebSocket connection for Arcs Explorer to support hot code reload feature.
