@@ -150,12 +150,15 @@ fun SchemaFields.toGeneration() = buildCodeBlock {
         "singletons" to fields.singletons.toGeneration(toSchemaField),
         "collections" to fields.collections.toGeneration(toSchemaField)
     )
-    addNamed("""
+    addNamed(
+        """
         %fields:T(
             singletons = %singletons:L,
             collections = %collections:L
         )
-    """.trimIndent(), ctx)
+        """.trimIndent(), 
+        ctx
+    )
 }
 
 /** Converts [FieldType] into a code-generated instance. */
