@@ -22,7 +22,7 @@ class RecipeGraphToDotGraphTest {
 
     @Test
     fun dotGraph_DefaultNodeLabels() {
-        val recipe = parseManifestWithSingleRecipe("ok-directly-satisfied")
+        val recipe = parseManifestWithSingleRecipe("ok_directly_satisfied")
         val graph = RecipeGraph(recipe)
         val dotGraphLines = graph.toDotGraph().lines()
 
@@ -44,7 +44,7 @@ class RecipeGraphToDotGraphTest {
 
     @Test
     fun dotGraph_CustomNodeLabels() {
-        val recipe = parseManifestWithSingleRecipe("ok-directly-satisfied")
+        val recipe = parseManifestWithSingleRecipe("ok_directly_satisfied")
         val graph = RecipeGraph(recipe)
         val dotGraphLines = graph.toDotGraph { node -> "~~${node.debugName}~~" }.lines()
 
