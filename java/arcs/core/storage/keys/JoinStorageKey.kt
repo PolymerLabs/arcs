@@ -37,7 +37,7 @@ class JoinStorageKey(
         override val protocol = "join"
         override fun parse(rawKeyString: String): JoinStorageKey {
             val invalidFormatMessage: () -> String =
-                { "Invalid format for JoinStorageKey: $rawKeyString" }
+                { "Invalid format for JoinStorageKey." }
 
             // We will support < 10 joins.
             val numberOfJoins: Int = rawKeyString[0] - '0'

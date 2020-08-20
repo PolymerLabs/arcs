@@ -50,7 +50,7 @@ data class RamDiskStorageKey(private val unique: String) : StorageKey(protocol) 
         override fun parse(rawKeyString: String): RamDiskStorageKey {
             val match =
                 requireNotNull(RAMDISK_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
-                    "Not a valid VolatileStorageKey: $rawKeyString"
+                    "Not a valid RamdiskStorageKey"
                 }
 
             return RamDiskStorageKey(match.groupValues[1])
