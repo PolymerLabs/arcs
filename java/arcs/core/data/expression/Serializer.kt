@@ -16,7 +16,7 @@ import arcs.core.data.expression.Expression.BinaryExpression
 import arcs.core.data.expression.Expression.BinaryOp
 import arcs.core.data.expression.Expression.UnaryExpression
 import arcs.core.data.expression.Expression.UnaryOp
-import arcs.core.util.BigInteger
+import arcs.core.util.ArcsBigInteger
 import arcs.core.util.Json
 import arcs.core.util.JsonValue
 import arcs.core.util.JsonValue.JsonArray
@@ -215,7 +215,7 @@ private fun toNumberType(value: Number) = when (value) {
     is Int -> "I"
     is Short -> "S"
     is Double -> "D"
-    is BigInteger -> "BI"
+    is ArcsBigInteger -> "BI"
     is Long -> "L"
     is Byte -> "B"
     else -> throw IllegalArgumentException("Unknown type of number $value, ${value::class}")
@@ -232,7 +232,7 @@ private fun fromNumber(value: JsonObject): Number = when (value["type"].string()
     "S" -> toInt(value).toShort()
     "B" -> toInt(value).toByte()
     "L" -> value["value"].string()!!.toLong()
-    "BI" -> value["value"].string()!!.toBigInteger()
+    "BI" -> value["value"].string()!!.toArcsBigInteger()
     else -> throw IllegalArgumentException("Unknown numeric type ${value["type"]}")
 }
 

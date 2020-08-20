@@ -13,8 +13,8 @@ package arcs.core.data.util
 
 import arcs.core.common.Referencable
 import arcs.core.common.ReferenceId
-import arcs.core.util.BigInteger
-import arcs.core.util.Instant
+import arcs.core.util.ArcsBigInteger
+import arcs.core.util.ArcsInstant
 import arcs.core.util.Base64
 import arcs.core.util.toBase64Bytes
 import kotlin.reflect.KClass
@@ -58,8 +58,8 @@ data class ReferencablePrimitive<T>(
         private const val primitiveKotlinString = "kotlin.String"
         private const val primitiveKotlinBoolean = "kotlin.Boolean"
         private const val primitiveKotlinByteArray = "kotlin.ByteArray"
-        private const val primitiveJavaBigInteger = "arcs.core.util.BigInteger"
-        private const val primitiveJavaInstant = "arcs.core.util.Instant"
+        private const val primitiveArcsBigInteger = "arcs.core.util.ArcsBigInteger"
+        private const val primitiveArcsInstant = "arcs.core.util.ArcsInstant"
         private val primitiveKClassMap = mapOf<KClass<*>, String>(
             Byte::class to primitiveKotlinByte,
             Short::class to primitiveKotlinShort,
@@ -71,8 +71,8 @@ data class ReferencablePrimitive<T>(
             String::class to primitiveKotlinString,
             Boolean::class to primitiveKotlinBoolean,
             ByteArray::class to primitiveKotlinByteArray,
-            BigInteger::class to primitiveJavaBigInteger,
-            Instant::class to primitiveJavaInstant
+            ArcsBigInteger::class to primitiveArcsBigInteger,
+            ArcsInstant::class to primitiveArcsInstant
         )
         private val pattern = "Primitive<([^>]+)>\\((.*)\\)$".toRegex()
 
@@ -88,8 +88,8 @@ data class ReferencablePrimitive<T>(
                 klass == String::class ||
                 klass == Boolean::class ||
                 klass == ByteArray::class ||
-                klass == BigInteger::class ||
-                klass == Instant::class
+                klass == ArcsBigInteger::class ||
+                klass == ArcsInstant::class
 
         /**
          * If the given [ReferenceId] matches the type of `serialized` reference id created by
@@ -129,10 +129,10 @@ data class ReferencablePrimitive<T>(
                     ReferencablePrimitive(Boolean::class, value.toBoolean())
                 className == primitiveKotlinByteArray ->
                     ReferencablePrimitive(ByteArray::class, value.toBase64Bytes(), value)
-                className == primitiveJavaBigInteger ->
-                    ReferencablePrimitive(BigInteger::class, BigInteger(value))
-                className == primitiveJavaInstant ->
-                    ReferencablePrimitive(Instant::class, Instant.ofEpochMilli(value.toLong()))
+                className == primitiveArcsBigInteger ->
+                    ReferencablePrimitive(ArcsBigInteger::class, ArcsBigInteger(value))
+                className == primitiveArcsInstant ->
+                    ReferencablePrimitive(ArcsInstant::class, ArcsInstant.ofEpochMilli(value.toLong()))
                 else -> null
             }
         }
@@ -184,10 +184,10 @@ fun Boolean.toReferencable(): ReferencablePrimitive<Boolean> =
 fun ByteArray.toReferencable(): ReferencablePrimitive<ByteArray> =
     ReferencablePrimitive(ByteArray::class, this, Base64.encode(this))
 
-/** Makes a [BigInteger]-based [ReferencablePrimitive] from the receiving [BigInteger]. */
-fun BigInteger.toReferencable(): ReferencablePrimitive<BigInteger> =
-    ReferencablePrimitive(BigInteger::class, this)
+/** Makes a [ArcsBigInteger]-based [ReferencablePrimitive] from the receiving [ArcsBigInteger]. */
+fun ArcsBigInteger.toReferencable(): ReferencablePrimitive<ArcsBigInteger> =
+    ReferencablePrimitive(ArcsBigInteger::class, this)
 
-/** Makes a [Instant]-based [ReferencablePrimitive] from the receiving [Instant]. */
-fun Instant.toReferencable(): ReferencablePrimitive<Instant> =
-    ReferencablePrimitive(Instant::class, this)
+/** Makes a [ArcsInstant]-based [ReferencablePrimitive] from the receiving [ArcsInstant]. */
+fun ArcsInstant.toReferencable(): ReferencablePrimitive<ArcsInstant> =
+    ReferencablePrimitive(ArcsInstant::class, this)

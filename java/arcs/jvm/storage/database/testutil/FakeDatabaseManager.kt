@@ -12,7 +12,7 @@
 package arcs.jvm.storage.database.testutil
 
 import arcs.core.data.Schema
-import arcs.core.util.Instant
+import arcs.core.util.ArcsInstant
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
@@ -188,7 +188,7 @@ class FakeDatabaseRegistry : MutableDatabaseRegistry {
 
     @Synchronized
     override fun register(databaseName: String, isPersistent: Boolean): DatabaseRegistration {
-        val now = Instant.now().toEpochMilli()
+        val now = ArcsInstant.now().toEpochMilli()
         entries.find { it.name == databaseName && it.isPersistent == isPersistent }?.let {
             entries.remove(it)
             return it.copy(lastAccessed = now).also { entry -> entries.add(entry) }

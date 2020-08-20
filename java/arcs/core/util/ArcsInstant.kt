@@ -12,14 +12,14 @@
 package arcs.core.util
 
 /**
- * Provides a platform-independent version of [Instant]
+ * Provides a platform-independent version of [ArcsInstant]
  * from java.time.Instant.
  */
-class Instant(val millis: Long) {
+class ArcsInstant(val millis: Long) {
     fun toEpochMilli(): Long = millis
 
     companion object PlatformInstant {
-        fun ofEpochMilli(millis: Long): Instant = PlatformInstantProvider.ofEpochMilli(millis)
-        fun now(): Instant = PlatformInstantProvider.now()
+        fun ofEpochMilli(millis: Long): ArcsInstant = PlatformInstantProvider.ofEpochMilli(millis)
+        fun now(): ArcsInstant = PlatformInstantProvider.now()
     }
 }

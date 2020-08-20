@@ -11,16 +11,16 @@
 
 package arcs.core.util
 
-/** Provides a platform-dependent version of [Instant]. */
-private typealias ArcsI = arcs.core.util.Instant
+/** Provides a platform-dependent version of [ArcsInstant]. */
+private typealias ArcsI = arcs.core.util.ArcsInstant
 
 // Placeholder for platform implementation.
 class PlatformInstant {
     companion object {
         fun ofEpochMilli(value: Long): PlatformInstant =
-            TODO("Add support for Instant in Kotlin Native")
+            TODO("Add support for ArcsInstant in Kotlin Native")
         fun now(): PlatformInstant =
-            TODO("Add support for Instant in Kotlin JS")
+            TODO("Add support for ArcsInstant in Kotlin JS")
     }
 }
 
@@ -29,10 +29,10 @@ fun PlatformInstant.toArcs(): ArcsI = ArcsI(this.toEpochMilli())
 
 object PlatformInstantProvider {
 
-    fun ofEpochMilli(millis: Long): Instant =
+    fun ofEpochMilli(millis: Long): ArcsI =
         PlatformInstant.ofEpochMilli(millis).toArcs()
-    fun toEpochMilli(value: ArcsI): Instant =
+    fun toEpochMilli(value: ArcsI): ArcsI =
         value.toNative().toEpochMilli()
 
-    fun now(): Instant = PlatformInstant.now().toArcs()
+    fun now(): ArcsI = PlatformInstant.now().toArcs()
 }

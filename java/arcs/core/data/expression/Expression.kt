@@ -11,7 +11,7 @@
 
 package arcs.core.data.expression
 
-import arcs.core.util.BigInteger
+import arcs.core.util.ArcsBigInteger
 
 /**
  * A DSL for expressions used by queries, refinements, and adapters. Instances can be constructed
@@ -426,12 +426,12 @@ sealed class Expression<T> {
 
 /**
  * Although this function looks weird, it exists to overcome a shortcoming in Kotlin's numeric
- * type hierarchy, namely that operator overloads don't exist on [Number], and [BigInteger]
+ * type hierarchy, namely that operator overloads don't exist on [Number], and [ArcsBigInteger]
  * doesn't have them either. This function also widens types to the nearest compatible type
- * for the operation (e.g. Double, Long, Int, or BigInteger) and then narrows the type afterwards.
- * Currently, Double + BigInteger and Float + BigInteger will not return the right answer, unless
- * we either round the Double, or truncate the BigInteger, at least until we perhaps support
- * [BigDecimal].
+ * for the operation (e.g. Double, Long, Int, or ArcsBigInteger) and then narrows the type afterwards.
+ * Currently, Double + ArcsBigInteger and Float + ArcsBigInteger will not return the right answer,
+ * unless * we either round the Double, or truncate the ArcsBigInteger, at least until we perhaps
+ * support [BigDecimal].
  * TODO: Write out own BigInt facade that is multiplatform and works on JS/JVM/WASM.
  */
 private fun widenAndApply(
@@ -440,11 +440,11 @@ private fun widenAndApply(
     floatBlock: (Double, Double) -> Number,
     longBlock: (Long, Long) -> Number,
     intBlock: (Int, Int) -> Number,
-    bigBlock: (BigInteger, BigInteger) -> Number
+    bigBlock: (ArcsBigInteger, ArcsBigInteger) -> Number
 ): Number {
     if (l is Double || r is Double) return floatBlock(l.toDouble(), r.toDouble())
     if (l is Float || r is Float) return floatBlock(l.toDouble(), r.toDouble()).toFloat()
-    if (l is BigInteger || r is BigInteger) return bigBlock(l.toBigInteger(), r.toBigInteger())
+    if (l is ArcsBigInteger || r is ArcsBigInteger) return bigBlock(l.toArcsBigInteger(), r.toArcsBigInteger())
     if (l is Long || r is Long) return longBlock(l.toLong(), r.toLong())
     if (l is Int || r is Int) return intBlock(l.toInt(), r.toInt())
     if (l is Short || r is Short) return intBlock(l.toInt(), r.toInt()).toShort()
@@ -452,9 +452,9 @@ private fun widenAndApply(
     throw IllegalArgumentException("Unable to widenType for ${l::class}, ${r::class}")
 }
 
-private fun Number.toBigInteger(): BigInteger = when (this) {
-    is BigInteger -> this
-    else -> BigInteger.valueOf(this.toLong())
+fun Number.toArcsBigInteger(): ArcsBigInteger = when (this) {
+    is ArcsBigInteger -> this
+    else -> ArcsBigInteger.valueOf(this.toLong())
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -503,4 +503,4 @@ private operator fun Number.div(other: Number): Number {
     )
 }
 
-private operator fun Number.unaryMinus() = this * -1
+operator fun Number.unaryMinus() = this * -1

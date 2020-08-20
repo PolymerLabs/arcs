@@ -25,7 +25,7 @@ import arcs.android.common.getNullableBoolean
 import arcs.android.common.getNullableByte
 import arcs.android.common.getNullableDouble
 import arcs.android.common.getNullableFloat
-import arcs.android.common.getNullableInstant
+import arcs.android.common.getNullableArcsInstant
 import arcs.android.common.getNullableInt
 import arcs.android.common.getNullableLong
 import arcs.android.common.getNullableShort
@@ -44,9 +44,9 @@ import arcs.core.data.PrimitiveType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaRegistry
-import arcs.core.util.BigInteger
-import arcs.core.util.Duration
-import arcs.core.util.Instant
+import arcs.core.util.ArcsBigInteger
+import arcs.core.util.ArcsDuration
+import arcs.core.util.ArcsInstant
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
@@ -388,9 +388,9 @@ class DatabaseImpl(
                 PrimitiveType.BigInt.id -> if (it.isNull(4)) {
                     null
                 } else {
-                    BigInteger(it.getString(4)).toReferencable()
+                    ArcsBigInteger(it.getString(4)).toReferencable()
                 }
-                PrimitiveType.Instant.id -> it.getNullableInstant(4)?.toReferencable()
+                PrimitiveType.Instant.id -> it.getNullableArcsInstant(4)?.toReferencable()
                 else -> if (
                     isCollection == FieldClass.InlineEntity ||
                     isCollection == FieldClass.InlineEntityCollection ||
@@ -996,7 +996,7 @@ class DatabaseImpl(
     }
 
     override suspend fun runGarbageCollection() {
-        val twoDaysAgo = JvmTime.currentTimeMillis - Duration.ofDays(2).toMillis()
+        val twoDaysAgo = JvmTime.currentTimeMillis - ArcsDuration.ofDays(2).toMillis()
         writableDatabase.transaction {
             val db = this
             // First, remove unused refs (leftovers from removed entities/fields).
@@ -1684,17 +1684,17 @@ class DatabaseImpl(
                 }
                 PrimitiveType.BigInt.id -> {
                     // TODO(https://github.com/PolymerLabs/arcs/issues/5867): To avoid
-                    // lexicographic ordering, Instant and BigInt should be compared as numeric
+                    // lexicographic ordering, ArcsInstant and ArcsBigInteger should be compared as numeric
                     // values rather than strings.
-                    require(value is BigInteger) { "Expected value to be a BigInteger" }
+                    require(value is ArcsBigInteger) { "Expected value to be a ArcsBigInteger" }
                     counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
                     TABLE_TEXT_PRIMITIVES to value.toString()
                 }
                 PrimitiveType.Instant.id -> {
                     // TODO(https://github.com/PolymerLabs/arcs/issues/5867): To avoid
-                    // lexicographic ordering, Instant and BigInt should be compared as numeric
+                    // lexicographic ordering, ArcsInstant and ArcsBigInteger should be compared as numeric
                     // values rather than strings.
-                    require(value is Instant) { "Expected value to be a Instant, got $value" }
+                    require(value is ArcsInstant) { "Expected value to be a ArcsInstant, got $value" }
                     counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
                     TABLE_TEXT_PRIMITIVES to value.toEpochMilli().toString()
                 }
@@ -2087,10 +2087,10 @@ class DatabaseImpl(
         private val VERSION_4_MIGRATION =
             listOf(DROP_VERSION_3, CREATE_VERSION_4).flatten().toTypedArray()
         private val VERSION_5_MIGRATION = arrayOf(
-            "INSERT INTO types (id, name, is_primitive) VALUES (10, \"BigInt\", 1)"
+            "INSERT INTO types (id, name, is_primitive) VALUES (10, \"ArcsBigInt\", 1)"
         )
         private val VERSION_6_MIGRATION = arrayOf(
-            "INSERT INTO types (id, name, is_primitive) VALUES (11, \"Instant\", 1)"
+            "INSERT INTO types (id, name, is_primitive) VALUES (11, \"ArcsInstant\", 1)"
         )
 
         private val MIGRATION_STEPS = mapOf(

@@ -12,16 +12,14 @@
 package arcs.core.util
 
 /**
- * Provides a platform-independent version of [Duration]
+ * Provides a platform-independent version of [ArcsDuration]
  * from java.time.Duration.
  */
-class Duration(val millis: Long) {
-    // fun compareTo(other: BigInteger): Int = PlatformBigIntegerProvider.compareTo(this, other)
+class ArcsDuration(val millis: Long) {
     fun toMillis(): Long = millis
 
     companion object PlatformDuration {
-        fun ofDays(days: Long): Duration =
+        fun ofDays(days: Long): ArcsDuration =
             PlatformDuration.ofDays(days)
     }
-    // override fun toShort(): Short = PlatformBigIntegerProvider.toShort(this)
 }

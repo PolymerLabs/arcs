@@ -26,8 +26,8 @@ import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference as StorageReference
-import arcs.core.util.BigInteger
-import arcs.core.util.Instant
+import arcs.core.util.ArcsBigInteger
+import arcs.core.util.ArcsInstant
 import arcs.core.util.Time
 import kotlin.reflect.KProperty
 

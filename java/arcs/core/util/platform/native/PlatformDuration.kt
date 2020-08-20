@@ -11,15 +11,15 @@
 
 package arcs.core.util
 
-/** Provides a platform-dependent version of [Duration]. */
-private typealias ArcsD = arcs.core.util.Duration
+/** Provides a platform-dependent version of [ArcsDuration]. */
+private typealias ArcsD = arcs.core.util.ArcsDuration
 
 // Placeholder for platform implementation.
 class PlatformDuration {
 
     companion object {
         fun ofMillis(value: Long): PlatformDuration =
-            TODO("Add support for Duration in Kotlin Native")
+            TODO("Add support for ArcsDuration in Kotlin Native")
     }
 }
 
@@ -29,7 +29,7 @@ fun ArcsD.toNative(): PlatformDuration {
     ArcsD(this.toMillis())
 }
 fun PlatformDuration.toArcs(): ArcsD =
-    TODO("Add support for Duration in Kotlin Native")
+    TODO("Add support for ArcsDuration in Kotlin Native")
 
 object PlatformDurationProvider {
     // fun compareTo(left: ArcsD, right: ArcsD): Int =

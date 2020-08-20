@@ -17,9 +17,9 @@ COMMON_PLATFORM_SRCS = [
 ]
 
 COMMON_PLATFORM_SRCS_CORE = [
-    "Instant.kt",
-    "Duration.kt",
-    "BigInteger.kt",
+    "ArcsInstant.kt",
+    "ArcsDuration.kt",
+    "ArcsBigInteger.kt",
 ]
 
 JS_PLATFORM_SRCS = glob(["platform/js/*.kt"])

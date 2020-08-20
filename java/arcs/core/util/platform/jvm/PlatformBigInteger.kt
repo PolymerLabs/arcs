@@ -13,7 +13,7 @@ package arcs.core.util
 
 import java.math.BigInteger as PlatformBigInteger
 
-private typealias ArcsBI = arcs.core.util.BigInteger
+private typealias ArcsBI = arcs.core.util.ArcsBigInteger
 
 fun ArcsBI.toNative(): PlatformBigInteger = PlatformBigInteger(this.value)
 fun PlatformBigInteger.toArcs(): ArcsBI = ArcsBI(this.toByteArray())

@@ -13,8 +13,8 @@ package arcs.core.util
 
 import java.time.Instant as PlatformInstant
 
-/** Provides a platform-dependent version of [Instant]. */
-private typealias ArcsI = arcs.core.util.Instant
+/** Provides a platform-dependent version of [ArcsInstant]. */
+private typealias ArcsI = arcs.core.util.ArcsInstant
 
 fun ArcsI.toNative(): PlatformInstant = PlatformInstant.ofEpochMilli(this.millis)
 fun PlatformInstant.toArcs(): ArcsI = ArcsI(this.toEpochMilli())
@@ -25,5 +25,5 @@ object PlatformInstantProvider {
     fun toEpochMilli(value: ArcsI): Long =
         value.toNative().toEpochMilli()
 
-    fun now(): Instant = PlatformInstant.now().toArcs()
+    fun now(): ArcsI = PlatformInstant.now().toArcs()
 }

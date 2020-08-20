@@ -12,47 +12,47 @@
 package arcs.core.util
 
 /** Provides a platform-dependent version of [BigInteger]. */
-private typealias ArcsBI = arcs.core.util.BigInteger
+private typealias ArcsBI = arcs.core.util.ArcsBigInteger
 
 // Placeholder for platform implementation.
 class PlatformBigInteger {
 }
 
-fun ArcsBI.toNative(): PlatformBigInteger = TODO("Add support for BigInteger in Kotlin Native")
-fun PlatformBigInteger.toArcs(): ArcsBI = TODO("Add support for BigInteger in Kotlin Native")
+fun ArcsBI.toNative(): PlatformBigInteger = TODO("Add support for ArcsBigInteger in Kotlin Native")
+fun PlatformBigInteger.toArcs(): ArcsBI = TODO("Add support for ArcsBigInteger in Kotlin Native")
 
 object PlatformBigIntegerProvider {
     fun add(left: ArcsBI, right: ArcsBI): ArcsBI =
-        TODO("Add support for BigInteger in Kotlin Native")
+        TODO("Add support for ArcsBigInteger in Kotlin Native")
     fun multiply(left: ArcsBI, right: ArcsBI): ArcsBI =
-        TODO("Add support for BigInteger in Kotlin Native")
+        TODO("Add support for ArcsBigInteger in Kotlin Native")
     fun subtract(left: ArcsBI, right: ArcsBI): ArcsBI =
-        TODO("Add support for BigInteger in Kotlin Native")
+        TODO("Add support for ArcsBigInteger in Kotlin Native")
     fun divide(left: ArcsBI, right: ArcsBI): ArcsBI =
-        TODO("Add support for BigInteger in Kotlin Native")
+        TODO("Add support for ArcsBigInteger in Kotlin Native")
     fun compareTo(left: ArcsBI, right: ArcsBI): Int =
-        TODO("Add support for BigInteger in Kotlin Native")
+        TODO("Add support for ArcsBigInteger in Kotlin Native")
     fun valueOf(value: Long): ArcsBI =
-        TODO("Add support for BigInteger in Kotlin Native")
+        TODO("Add support for ArcsBigInteger in Kotlin Native")
     fun fromString(value: String): ArcsBI =
-        TODO("Add support for BigInteger in Kotlin Native")
+        TODO("Add support for ArcsBigInteger in Kotlin Native")
     val ZERO: ArcsBI
-        get() = TODO("Add support for BigInteger in Kotlin Native")
+        get() = TODO("Add support for ArcsBigInteger in Kotlin Native")
     val ONE: ArcsBI
-        get() = TODO("Add support for BigInteger in Kotlin Native")
+        get() = TODO("Add support for ArcsBigInteger in Kotlin Native")
 
     inline fun toByte(value: ArcsBI): Byte =
-        TODO("Add support for BigInteger in Kotlin Native")
+        TODO("Add support for ArcsBigInteger in Kotlin Native")
     inline fun toChar(value: ArcsBI): Char =
-        TODO("Add support for BigInteger in Kotlin Native")
+        TODO("Add support for ArcsBigInteger in Kotlin Native")
     inline fun toDouble(value: ArcsBI): Double =
-        TODO("Add support for BigInteger in Kotlin Native")
+        TODO("Add support for ArcsBigInteger in Kotlin Native")
     inline fun toFloat(value: ArcsBI): Float =
-        TODO("Add support for BigInteger in Kotlin Native")
+        TODO("Add support for ArcsBigInteger in Kotlin Native")
     inline fun toInt(value: ArcsBI): Int =
-        TODO("Add support for BigInteger in Kotlin Native")
+        TODO("Add support for ArcsBigInteger in Kotlin Native")
     inline fun toLong(value: ArcsBI): Long =
-        TODO("Add support for BigInteger in Kotlin Native")
+        TODO("Add support for ArcsBigInteger in Kotlin Native")
     inline fun toShort(value: ArcsBI): Short =
-        TODO("Add support for BigInteger in Kotlin Native")
+        TODO("Add support for ArcsBigInteger in Kotlin Native")
 }

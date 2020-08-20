@@ -13,8 +13,8 @@ package arcs.core.util
 
 import java.time.Duration as PlatformDuration
 
-/** Provides a platform-dependent version of [Duration]. */
-private typealias ArcsD = arcs.core.util.Duration
+/** Provides a platform-dependent version of [ArcsDuration]. */
+private typealias ArcsD = arcs.core.util.ArcsDuration
 
 fun ArcsD.toNative(): PlatformDuration =
     PlatformDuration.ofMillis(this.millis)

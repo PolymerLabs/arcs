@@ -12,27 +12,32 @@
 package arcs.core.util
 
 /**
- * Provides a platform-independent version of [BigInteger]
+ * Provides a platform-independent version of [ArcsBigInteger]
  * based on java.math.BigInteger.
  */
-class BigInteger(val value: ByteArray): Number() {
-    constructor(value: String): this(PlatformBigInteger.fromString(value).value)
+class ArcsBigInteger(val value: ByteArray): Number() {
+    constructor(value: String): this(PlatformBigIntegerProvider.fromString(value).value)
 
-    fun add(other: BigInteger): BigInteger = PlatformBigIntegerProvider.add(this, other)
-    fun multiply(other: BigInteger): BigInteger = PlatformBigIntegerProvider.multiply(this, other)
-    fun subtract(other: BigInteger): BigInteger = PlatformBigIntegerProvider.subtract(this, other)
-    fun divide(other: BigInteger): BigInteger = PlatformBigIntegerProvider.divide(this, other)
-    fun compareTo(other: BigInteger): Int = PlatformBigIntegerProvider.compareTo(this, other)
+    fun add(other: ArcsBigInteger): ArcsBigInteger =
+        PlatformBigIntegerProvider.add(this, other)
+    fun multiply(other: ArcsBigInteger): ArcsBigInteger =
+        PlatformBigIntegerProvider.multiply(this, other)
+    fun subtract(other: ArcsBigInteger): ArcsBigInteger =
+        PlatformBigIntegerProvider.subtract(this, other)
+    fun divide(other: ArcsBigInteger): ArcsBigInteger =
+        PlatformBigIntegerProvider.divide(this, other)
+    fun compareTo(other: ArcsBigInteger): Int =
+        PlatformBigIntegerProvider.compareTo(this, other)
 
-    companion object PlatformBigInteger {
-        fun valueOf(value: Long): BigInteger =
+    companion object {
+        fun valueOf(value: Long): ArcsBigInteger =
             PlatformBigIntegerProvider.valueOf(value)
-        fun fromString(value: String): BigInteger =
+        fun fromString(value: String): ArcsBigInteger =
             PlatformBigIntegerProvider.fromString(value)
 
-        val ZERO: BigInteger
+        val ZERO: ArcsBigInteger
             get() = PlatformBigIntegerProvider.ZERO
-        val ONE: BigInteger
+        val ONE: ArcsBigInteger
             get() = PlatformBigIntegerProvider.ONE
     }
 
