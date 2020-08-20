@@ -36,13 +36,16 @@ fun Recipe.toGeneration(builder: FileSpec.Builder) {
     )
     val plan = PropertySpec.builder("${name}Plan", Plan::class)
         .initializer(buildCodeBlock {
-            addNamed("""
+            addNamed(
+                """
                 %plan:T(
                     particles = %particles:L,
                     handles = %handles:L,
                     annotations = %annotations:L
                 )
-                """.trimIndent(), ctx)
+                """.trimIndent(), 
+                ctx
+            )
         })
         .build()
 
