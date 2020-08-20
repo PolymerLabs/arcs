@@ -6,6 +6,8 @@ import com.squareup.kotlinpoet.buildCodeBlock
 /**
  * Utility to translate [List]s into a code-generated [List] collection.
  *
+ * Will generate an empty collection when appropriate.
+ *
  * @param template KotlinPoet template string to apply to each item in the collection.
  * @return generated [CodeBlock] of a [List].
  */
@@ -14,6 +16,8 @@ fun List<*>.toGeneration(template: String = "%L") =
 
 /**
  * Utility to translate [List]s into a code-generated [List] collection.
+ *
+ * Will generate an empty collection when appropriate.
  *
  * @param template callback that combines a [CodeBlock.Builder] with an item in the collection.
  * @return generated [CodeBlock] of a [List].
@@ -37,6 +41,8 @@ fun <T> List<T>.toGeneration(
 /**
  * Utility to translate [Set]s into a code-generated [Set] collection.
  *
+ * Will generate an empty collection when appropriate.
+ *
  * @param template KotlinPoet template string to apply to each item in the collection.
  * @return generated [CodeBlock] of a [Set].
  */
@@ -45,6 +51,8 @@ fun Set<*>.toGeneration(template: String = "%L") =
 
 /**
  * Utility to translate [Set]s into a code-generated [Set] collection.
+ *
+ * Will generate an empty collection when appropriate.
  *
  * @param template callback that combines a [CodeBlock.Builder] with an item in the collection.
  * @return generated [CodeBlock] of a [List].
@@ -68,7 +76,9 @@ fun <T> Set<T>.toGeneration(
 /**
  * Utility to translate [Map]s into a code-generated [Map] collection.
  *
- * @param template KotlinPoet template string to apply to each item in the collection.
+ * Will generate an empty collection when appropriate.
+ *
+ * @param template KotlinPoet template string to apply to each pair in the collection.
  * @return generated [CodeBlock] of a [Map].
  */
 fun Map<*, *>.toGeneration(template: String = "%S to %L") =
@@ -77,7 +87,9 @@ fun Map<*, *>.toGeneration(template: String = "%S to %L") =
 /**
  * Utility to translate [Map]s into a code-generated [Map] collection.
  *
- * @param template callback that combines a [CodeBlock.Builder] with an item in the collection.
+ * Will generate an empty collection when appropriate.
+ *
+ * @param template callback that combines a [CodeBlock.Builder] with pairs in the collection.
  * @return generated [CodeBlock] of a [Map].
  */
 fun <K, V> Map<K, V>.toGeneration(
