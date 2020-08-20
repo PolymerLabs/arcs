@@ -4,6 +4,7 @@ import arcs.core.data.CollectionType
 import arcs.core.data.CountType
 import arcs.core.data.EntityType
 import arcs.core.data.FieldType
+import arcs.core.data.Plan
 import arcs.core.data.Recipe
 import arcs.core.data.ReferenceType
 import arcs.core.data.Schema
@@ -13,6 +14,8 @@ import arcs.core.data.SingletonType
 import arcs.core.data.TupleType
 import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
+import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.PropertySpec
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -33,15 +36,19 @@ class PlanGeneratorTest {
     @Test
     fun handle() {
         assertThat(
-            Recipe.Handle(
-                name = "foo",
-                fate = Recipe.Handle.Fate.CREATE,
-                type = entity,
-                storageKey = "AKey"
-            ).toGeneration("FooPlan").toString().normalize()
+            CodeBlock.builder()
+                .addHandle(
+                    Recipe.Handle(
+                        name = "foo",
+                        fate = Recipe.Handle.Fate.CREATE,
+                        type = entity,
+                        storageKey = "AKey"
+                    )
+                )
+            .build().toString().normalize()
         ).isEqualTo(
             """
-            val FooPlan_foo: arcs.core.data.Plan.Handle = arcs.core.data.Plan.Handle(
+            arcs.core.data.Plan.Handle(
                 storageKey = arcs.core.storage.StorageKeyParser.parse("AKey"),
                 type = arcs.core.data.EntityType(arcs.core.data.Schema(
                     names = setOf(arcs.core.data.SchemaName("Foo")),
@@ -60,22 +67,30 @@ class PlanGeneratorTest {
     @Test
     fun handle_storageKey() {
         assertThat(
-            Recipe.Handle(
-                name = "foo",
-                fate = Recipe.Handle.Fate.CREATE,
-                type = entity,
-                storageKey = "AKey"
-            ).toGeneration("FooPlan").toString()
-        ).contains("""storageKey = arcs.core.storage.StorageKeyParser.parse("AKey")""")
+            CodeBlock.builder()
+                .addHandle(
+                    Recipe.Handle(
+                        name = "foo",
+                        fate = Recipe.Handle.Fate.CREATE,
+                        type = entity,
+                        storageKey = "AKey"
+                    )
+                )
+                .build().toString().normalize()
+        ).contains("""storageKey=arcs.core.storage.StorageKeyParser.parse("AKey")""")
 
         assertThat(
-            Recipe.Handle(
-                name = "foo",
-                fate = Recipe.Handle.Fate.CREATE,
-                type = entity,
-                storageKey = null
-            ).toGeneration("FooPlan").toString()
-        ).contains("""storageKey = arcs.core.data.CreatableStorageKey("foo")""")
+            CodeBlock.builder()
+                .addHandle(
+                    Recipe.Handle(
+                        name = "foo",
+                        fate = Recipe.Handle.Fate.CREATE,
+                        type = entity,
+                        storageKey = null
+                    )
+                )
+                .build().toString().normalize()
+        ).contains("""storageKey=arcs.core.data.CreatableStorageKey("foo")""")
     }
 
     @Test

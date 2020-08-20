@@ -44,7 +44,7 @@ class Recipe2Plan : CliktCommand(
         val manifestProto = ManifestProto.parseFrom(manifest.readBytes())
         manifestProto.decodeRecipes()
             .filter { it.name != null }
-            .forEach { it.toGeneration(fileBuilder) }
+            .fold(fileBuilder) { builder, recipe -> builder.addRecipe(recipe) }
 
         outputFile.writeText(fileBuilder.build().toString())
     }

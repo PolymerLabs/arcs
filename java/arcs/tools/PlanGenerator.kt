@@ -20,12 +20,20 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.buildCodeBlock
 
 /**
- * Translates a [Recipe] into code-generated [Plan] and [Plan.Handle] instances.
+ * Adds a code-generated [Plan] to a [FileSpec.Builder].
  *
- * @param builder A builder for output file
+ * Will also add code-generated [Plan.Handle] properties to the file.
+ *
+ * @param recipe source for [Plan] conversion.
+ * @return self, with code-generated [Plan] and [Plan.Handle]s.
  */
-fun Recipe.toGeneration(builder: FileSpec.Builder) {
-    val handles = this.handles.values.map { it.toGeneration(name.orEmpty()) }
+fun FileSpec.Builder.addRecipe(recipe: Recipe): FileSpec.Builder {
+    val handles = recipe.handles.values.map {
+        PropertySpec.builder("${recipe.name}_${it.name}", Plan.Handle::class)
+            .initializer(CodeBlock.builder().addHandle(it).build())
+            .build()
+    }
+
     val ctx = mapOf(
         "plan" to Plan::class,
         "handles" to handles.toGeneration("%N"),
@@ -49,45 +57,43 @@ fun Recipe.toGeneration(builder: FileSpec.Builder) {
         })
         .build()
 
-    handles.forEach { builder.addProperty(it) }
-    builder.addProperty(plan)
+    handles.forEach { this.addProperty(it) }
+    this.addProperty(plan)
+    return this
 }
 
 /**
- * Converts a [Recipe.Handle] to a code-generated [Plan.Handle] property.
+ * Adds a code-generated [Plan.Handle] to a [CodeBlock.Builder].
  *
- * @param planName plan name associated with handle
- * @return A code-generated [Plan.Handle] property.
+ * @param handle a source [Recipe.Handle] for conversion
+ * @return self, with a code-generated [Plan.Handle] instance.
  */
-fun Recipe.Handle.toGeneration(planName: String) = PropertySpec
-    .builder("${planName}_$name", Plan.Handle::class)
-    .initializer(buildCodeBlock {
-        val ctx = mapOf(
-            "handle" to Plan.Handle::class,
-            // TODO(161941222) verify join handles work
-            "storageParser" to StorageKeyParser::class,
-            "key" to storageKey,
-            "type" to type.toGeneration(),
-            "annotations" to emptyList<Annotation>().toGeneration(),
-            "creatable" to CreatableStorageKey::class,
-            "name" to name
-        )
-        val storageKeyTemplate = storageKey
-            ?.let { "storageKey = %storageParser:T.parse(%key:S)," }
-            ?: "storageKey = %creatable:T(%name:S),"
+fun CodeBlock.Builder.addHandle(handle: Recipe.Handle): CodeBlock.Builder = with(handle) {
+   val ctx = mapOf(
+       "handle" to Plan.Handle::class,
+       // TODO(161941222) verify join handles work
+       "storageParser" to StorageKeyParser::class,
+       "key" to storageKey,
+       "type" to type.toGeneration(),
+       "annotations" to emptyList<Annotation>().toGeneration(),
+       "creatable" to CreatableStorageKey::class,
+       "name" to name
+   )
+   val storageKeyTemplate = storageKey
+       ?.let { "storageKey = %storageParser:T.parse(%key:S)," }
+       ?: "storageKey = %creatable:T(%name:S),"
 
-        addNamed(
-            """
-            %handle:T(
-                $storageKeyTemplate
-                type = %type:L,    
-                annotations = %annotations:L
-            )
-            """.trimIndent(), 
-            ctx
-        )
-    })
-    .build()
+   this@addHandle.addNamed(
+       """
+       %handle:T(
+           $storageKeyTemplate
+           type = %type:L,    
+           annotations = %annotations:L
+       )
+       """.trimIndent(),
+       ctx
+   )
+}
 
 /** Converts [Type] dataclass to a code-generated instance. */
 fun Type.toGeneration(): CodeBlock = buildCodeBlock {
