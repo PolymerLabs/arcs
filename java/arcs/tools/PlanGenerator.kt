@@ -97,7 +97,11 @@ fun CodeBlock.Builder.addHandle(handle: Recipe.Handle): CodeBlock.Builder = with
 
 /** Code-generates [Type] within [CodeBlock]. */
 fun CodeBlock.Builder.addType(type: Type): CodeBlock.Builder = when (type) {
-    is EntityType -> add("%T(%L)", EntityType::class, type.entitySchema.toGeneration())
+    is EntityType -> add(
+        "%T(%L)",
+        EntityType::class,
+        buildCodeBlock { addSchema(type.entitySchema) }
+    )
     is Type.TypeContainer<*> -> add(
         "%T(%L)",
         type::class,
@@ -120,12 +124,11 @@ fun CodeBlock.Builder.addType(type: Type): CodeBlock.Builder = when (type) {
     else -> throw IllegalArgumentException("[Type] $type is not supported.")
 }
 
-/** Converts a [Schema] into a code-generated [Schema] instance. */
-fun Schema.toGeneration() = buildCodeBlock {
-    val schema = this@toGeneration
-    if (schema.equals(Schema.EMPTY)) {
+/** Code-generates [Schema] within a [CodeBlock]. */
+fun CodeBlock.Builder.addSchema(schema: Schema): CodeBlock.Builder {
+    if (Schema.EMPTY == schema) {
         add("%T.EMPTY", Schema::class)
-        return build()
+        return this
     }
     val ctx = mapOf(
         "schema" to Schema::class,
@@ -145,6 +148,7 @@ fun Schema.toGeneration() = buildCodeBlock {
         """.trimIndent(),
         ctx
     )
+    return this
 }
 
 /** Converts [SchemaFields] object into code-generated instances. */

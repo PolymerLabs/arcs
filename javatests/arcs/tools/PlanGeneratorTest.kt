@@ -337,22 +337,16 @@ class PlanGeneratorTest {
 
     @Test
     fun schema_empty() {
-        assertThat(Schema.EMPTY.toGeneration().toString())
+        assertThat(buildCodeBlock { addSchema(Schema.EMPTY) }.toString())
             .isEqualTo("""arcs.core.data.Schema.EMPTY""")
     }
 
     @Test
     fun schema_nameOnly() {
-        val schemaGen = Schema(
-            setOf(SchemaName("Foo")),
-            SchemaFields(emptyMap(), emptyMap()),
-            "fooHash"
-        ).toGeneration().toString()
-
-        // TODO(161941018): Figure out how to get indentation right so we can test whitespace
+        val schemaGen = buildCodeBlock { addSchema(schema) }.toString()
         assertThat(schemaGen).contains("SchemaName(\"Foo\")")
         assertThat(schemaGen).contains("hash = \"fooHash\"")
-    }
+}
 
     @Test
     fun schemaFields_empty() {
