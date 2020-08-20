@@ -6,7 +6,6 @@ package arcs.golden
 //
 // GENERATED CODE -- DO NOT EDIT
 //
-// Current implementation doesn't support optional field detection
 
 import arcs.sdk.testing.*
 import java.math.BigInteger
