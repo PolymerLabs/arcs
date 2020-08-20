@@ -63,7 +63,6 @@ package ${this.namespace}
 //
 // GENERATED CODE -- DO NOT EDIT
 //
-// Current implementation doesn't support optional field detection
 
 ${imports.join('\n')}
 `;
