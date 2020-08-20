@@ -31,34 +31,31 @@ class BaseTestHarnessTest {
             harness.start()
 
             // Singleton handles
-            val particleData = harness.particle.handles.data
-
             harness.data.dispatchStore(arcs.core.host.MultiHandleParticle_Data(7.0))
-            assertThat(particleData.dispatchFetch()?.num).isEqualTo(7.0)
+            assertThat(harness.data.dispatchFetch()?.num).isEqualTo(7.0)
 
             harness.data.dispatchClear()
-            assertThat(particleData.dispatchFetch()).isNull()
+            assertThat(harness.data.dispatchFetch()).isNull()
 
             // Collection handles
-            val particleList = harness.particle.handles.list
             val e1 = arcs.core.host.MultiHandleParticle_List("element1")
             val e2 = arcs.core.host.MultiHandleParticle_List("element2")
             val e3 = arcs.core.host.MultiHandleParticle_List("element3")
 
             harness.list.dispatchStore(e1, e2, e3)
-            assertThat(particleList.dispatchSize()).isEqualTo(3)
-            assertThat(particleList.dispatchIsEmpty()).isEqualTo(false)
-            assertThat(particleList.dispatchFetchAll()).isEqualTo(setOf(e1, e2, e3))
+            assertThat(harness.list.dispatchSize()).isEqualTo(3)
+            assertThat(harness.list.dispatchIsEmpty()).isEqualTo(false)
+            assertThat(harness.list.dispatchFetchAll()).isEqualTo(setOf(e1, e2, e3))
 
             harness.list.dispatchRemove(e2)
-            assertThat(particleList.dispatchSize()).isEqualTo(2)
-            assertThat(particleList.dispatchIsEmpty()).isEqualTo(false)
-            assertThat(particleList.dispatchFetchAll()).isEqualTo(setOf(e1, e3))
+            assertThat(harness.list.dispatchSize()).isEqualTo(2)
+            assertThat(harness.list.dispatchIsEmpty()).isEqualTo(false)
+            assertThat(harness.list.dispatchFetchAll()).isEqualTo(setOf(e1, e3))
 
             harness.list.dispatchClear()
-            assertThat(particleList.dispatchSize()).isEqualTo(0)
-            assertThat(particleList.dispatchIsEmpty()).isEqualTo(true)
-            assertThat(particleList.dispatchFetchAll()).isEmpty()
+            assertThat(harness.list.dispatchSize()).isEqualTo(0)
+            assertThat(harness.list.dispatchIsEmpty()).isEqualTo(true)
+            assertThat(harness.list.dispatchFetchAll()).isEmpty()
         }
     }
 
