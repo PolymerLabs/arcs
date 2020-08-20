@@ -73,13 +73,16 @@ fun Recipe.Handle.toGeneration(planName: String) = PropertySpec
             ?.let { "storageKey = %storageParser:T.parse(%key:S)," }
             ?: "storageKey = %creatable:T(%name:S),"
 
-        addNamed("""
+        addNamed(
+            """
             %handle:T(
                 $storageKeyTemplate
                 type = %type:L,    
                 annotations = %annotations:L
             )
-        """.trimIndent(), ctx)
+            """.trimIndent(), 
+            ctx
+        )
     })
     .build()
 
