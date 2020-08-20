@@ -471,7 +471,7 @@ class ReferenceModeStoreTest {
         )
 
         activeStore.backingStore
-            .onProxyMessage(ProxyMessage.ModelUpdate(bobCrdt.data, id = 1, muxId = "an-id"))
+            .onProxyMessage(ProxyMessage.ModelUpdate(bobCrdt.data, id = activeStore.backingStoreId, muxId = "an-id"))
 
         val job = Job(coroutineContext[Job.Key])
         activeStore.on(ProxyCallback {
@@ -529,7 +529,7 @@ class ReferenceModeStoreTest {
 
         // Ensure remote entity is stored in backing store.
         activeStore.backingStore.onProxyMessage(
-            ProxyMessage.ModelUpdate(createPersonEntityCrdt().data, id = 2, muxId = "another-id")
+            ProxyMessage.ModelUpdate(createPersonEntityCrdt().data, id = activeStore.backingStoreId, muxId = "another-id")
         )
 
         val driver = activeStore.containerStore.driver as MockDriver<CrdtSet.Data<Reference>>

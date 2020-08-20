@@ -36,6 +36,8 @@ import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.lang.IllegalStateException
+import kotlin.test.assertFailsWith
 
 @RunWith(JUnit4::class)
 @ExperimentalCoroutinesApi
@@ -151,6 +153,81 @@ class DirectStoreMuxerTest {
             )
         }
         assertThat(callbacks).isEqualTo(1)
+    }
+
+    @Test
+    fun directStoreMuxer_maintains_consistent_state() = runBlocking<Unit>(Dispatchers.IO) {
+        val driverProvider = MockDriverProvider()
+        DriverFactory.register(driverProvider)
+
+
+        val directStoreMuxer = createDirectStoreMuxer()
+
+        val entityCrdtA = createPersonEntityCrdt("bob", 42)
+        val entityCrdtB = createPersonEntityCrdt("alice", 10)
+
+        val callbackId1 = directStoreMuxer.on(ProxyCallback {})
+        val callbackId2 = directStoreMuxer.on(ProxyCallback {})
+        val storeA = directStoreMuxer.getStore("a").store
+        val storeB = directStoreMuxer.getStore("b").store
+
+        coroutineScope {
+            launch {
+                directStoreMuxer.getLocalData("a", callbackId1)
+                directStoreMuxer.off(callbackId1)
+            }
+            launch {
+                directStoreMuxer.getLocalData("a", callbackId2)
+                directStoreMuxer.onProxyMessage(
+                    ProxyMessage.ModelUpdate(entityCrdtA.data, id = callbackId2, muxId = "a")
+                )
+                directStoreMuxer.off(callbackId2)
+            }
+            launch {
+                val callbackId3 = directStoreMuxer.on(ProxyCallback {})
+                directStoreMuxer.getLocalData("a", callbackId3)
+                directStoreMuxer.onProxyMessage(ProxyMessage.SyncRequest(id = callbackId3, muxId = "a"))
+                directStoreMuxer.onProxyMessage(ProxyMessage.SyncRequest(id = callbackId3, muxId = "b"))
+                directStoreMuxer.onProxyMessage(ProxyMessage.SyncRequest(id = callbackId3, muxId = "a"))
+            }
+            launch {
+                val callbackId4 = directStoreMuxer.on(ProxyCallback {})
+                directStoreMuxer.getLocalData("b", callbackId4)
+                directStoreMuxer.onProxyMessage(ProxyMessage.SyncRequest(id = callbackId4, muxId = "a"))
+                directStoreMuxer.onProxyMessage(
+                    ProxyMessage.ModelUpdate(entityCrdtB.data, id = callbackId4, muxId = "b")
+                )
+                directStoreMuxer.onProxyMessage(ProxyMessage.SyncRequest(id = callbackId4, muxId = "b"))
+            }
+            launch {
+                val callbackId5 = directStoreMuxer.on(ProxyCallback {})
+                directStoreMuxer.getLocalData("a", callbackId5)
+                directStoreMuxer.getLocalData("b", callbackId5)
+                directStoreMuxer.onProxyMessage(ProxyMessage.SyncRequest(id = callbackId5, muxId = "b"))
+                directStoreMuxer.onProxyMessage(
+                    ProxyMessage.ModelUpdate(entityCrdtB.data, id = callbackId5, muxId = "a")
+                )
+                directStoreMuxer.onProxyMessage(
+                    ProxyMessage.ModelUpdate(entityCrdtA.data, id = callbackId5, muxId = "b")
+                )
+            }
+            launch {
+                val callbackId6 = directStoreMuxer.on(ProxyCallback {})
+                directStoreMuxer.onProxyMessage(
+                    ProxyMessage.ModelUpdate(entityCrdtA.data, id = callbackId6, muxId = "a")
+                )
+                directStoreMuxer.clearStoresCache()
+            }
+        }
+
+        assertThat(storeA.closed).isTrue()
+        assertThat(storeB.closed).isTrue()
+
+        assertThat(directStoreMuxer.consistentState()).isTrue()
+
+        // check that deregistered callbacks are no longer registered with DSM
+        assertFailsWith<IllegalStateException>("Callback token is not registered to the Direct Store Muxer.", { directStoreMuxer.getLocalData("a", callbackId1) })
+        assertFailsWith<IllegalStateException>("Callback token is not registered to the Direct Store Muxer.", { directStoreMuxer.getLocalData("a", callbackId2) })
     }
 
     @Test
