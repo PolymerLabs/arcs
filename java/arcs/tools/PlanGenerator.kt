@@ -36,11 +36,11 @@ fun FileSpec.Builder.addRecipe(recipe: Recipe): FileSpec.Builder {
 
     val ctx = mapOf(
         "plan" to Plan::class,
-        "handles" to handles.toGeneration("%N"),
+        "handles" to buildCollectionBlock(handles, "%N"),
         // TODO(161940699) Generate particles
-        "particles" to listOf<Recipe.Particle>().toGeneration(),
+        "particles" to buildCollectionBlock(listOf<Recipe.Particle>()),
         // TODO(161940729) Generate Annotations
-        "annotations" to listOf<Annotation>().toGeneration()
+        "annotations" to buildCollectionBlock(listOf<Annotation>())
     )
     val plan = PropertySpec.builder("${name}Plan", Plan::class)
         .initializer(buildCodeBlock {
@@ -75,7 +75,7 @@ fun CodeBlock.Builder.addHandle(handle: Recipe.Handle): CodeBlock.Builder = with
         "storageParser" to StorageKeyParser::class,
         "key" to storageKey,
         "type" to buildTypeBlock(type),
-        "annotations" to emptyList<Annotation>().toGeneration(),
+        "annotations" to buildCollectionBlock(emptyList<Annotation>()),
         "creatable" to CreatableStorageKey::class,
         "name" to name
     )
@@ -106,7 +106,9 @@ fun CodeBlock.Builder.addType(type: Type): CodeBlock.Builder = when (type) {
     is TupleType -> add(
         "%T(%L)",
         TupleType::class,
-        type.elementTypes.toGeneration { builder, item -> builder.add(buildTypeBlock(item)) }
+        buildCollectionBlock(type.elementTypes) { builder, item ->
+            builder.add(buildTypeBlock(item))
+        }
     )
     is TypeVariable -> add(
         "%T(%S, %L, %L)",
@@ -129,7 +131,7 @@ fun CodeBlock.Builder.addSchema(schema: Schema): CodeBlock.Builder {
     }
     val ctx = mapOf(
         "schema" to Schema::class,
-        "names" to schema.names.toGeneration { builder, item ->
+        "names" to buildCollectionBlock(schema.names) { builder, item ->
             builder.add("%T(%S)", SchemaName::class, item.name)
         },
         "fields" to buildSchemaFieldsBlock(schema.fields),
@@ -159,8 +161,8 @@ fun CodeBlock.Builder.addSchemaFields(fields: SchemaFields): CodeBlock.Builder {
     }
     val ctx = mapOf(
         "fields" to SchemaFields::class,
-        "singletons" to fields.singletons.toGeneration(toSchemaField),
-        "collections" to fields.collections.toGeneration(toSchemaField)
+        "singletons" to buildCollectionBlock(fields.singletons, toSchemaField),
+        "collections" to buildCollectionBlock(fields.collections, toSchemaField)
     )
     addNamed(
         """
@@ -180,14 +182,14 @@ fun buildSchemaFieldsBlock(schemaFields: SchemaFields): CodeBlock = buildCodeBlo
 }
 
 /** Code-generates [FieldType] within a [CodeBlock]. */
-fun CodeBlock.Builder.addFieldType(field: FieldType): CodeBlock.Builder = when (field ) {
+fun CodeBlock.Builder.addFieldType(field: FieldType): CodeBlock.Builder = when (field) {
     is FieldType.Primitive -> add("%T.%L", FieldType::class, field.primitiveType)
     is FieldType.EntityRef -> add("%T(%S)", field::class, field.schemaHash)
     is FieldType.InlineEntity -> add("%T(%S)", field::class, field.schemaHash)
     is FieldType.Tuple -> add(
         "%T(%L)",
         FieldType.Tuple::class,
-        field.types.toGeneration { builder, item -> builder.addFieldType(item) }
+        buildCollectionBlock(field.types) { builder, item -> builder.addFieldType(item) }
     )
     is FieldType.ListOf -> add(
         "%T(%L)",
@@ -198,4 +200,3 @@ fun CodeBlock.Builder.addFieldType(field: FieldType): CodeBlock.Builder = when (
 
 /** Shorthand for building a [CodeBlock] with a code-generated [FieldType]. */
 fun buildFieldTypeBlock(field: FieldType): CodeBlock = buildCodeBlock { addFieldType(field) }
-

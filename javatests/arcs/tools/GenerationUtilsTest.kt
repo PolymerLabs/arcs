@@ -9,108 +9,106 @@ import org.junit.runners.JUnit4
 class GenerationUtilsTest {
     @Test
     fun list_empty() {
-        assertThat(emptyList<Any>().toGeneration().toString())
+        assertThat(buildCollectionBlock(emptyList<Any>()).toString())
             .isEqualTo("emptyList()")
     }
 
     @Test
     fun list_single() {
-        assertThat(listOf(1).toGeneration().toString())
+        assertThat(buildCollectionBlock(listOf(1)).toString())
             .isEqualTo("listOf(1)")
     }
 
     @Test
     fun list_multiple() {
-        assertThat(listOf(1, 2).toGeneration().toString())
+        assertThat(buildCollectionBlock(listOf(1, 2)).toString())
             .isEqualTo("listOf(1, 2)")
     }
 
     @Test
     fun list_multiple_template() {
-        assertThat(listOf(1, 2).toGeneration("%S").toString())
+        assertThat(buildCollectionBlock(listOf(1, 2), "%S").toString())
             .isEqualTo("""listOf("1", "2")""")
     }
 
     @Test
     fun list_multiple_builder() {
         assertThat(
-            listOf(1, 2)
-                .toGeneration { builder, item -> builder.add("%S", item) }
+            buildCollectionBlock(listOf(1, 2)) { builder, item -> builder.add("%S", item) }
                 .toString()
         ).isEqualTo("""listOf("1", "2")""")
     }
 
     @Test
     fun set_empty() {
-        assertThat(emptySet<Any>().toGeneration().toString())
+        assertThat(buildCollectionBlock(emptySet<Any>()).toString())
             .isEqualTo("emptySet()")
     }
 
     @Test
     fun set_single() {
-        assertThat(setOf(1).toGeneration().toString())
+        assertThat(buildCollectionBlock(setOf(1)).toString())
             .isEqualTo("setOf(1)")
-        assertThat(setOf(1, 1).toGeneration().toString())
+        assertThat(buildCollectionBlock(setOf(1, 1)).toString())
             .isEqualTo("setOf(1)")
     }
 
     @Test
     fun set_multiple() {
-        assertThat(setOf(1, 2).toGeneration().toString())
+        assertThat(buildCollectionBlock(setOf(1, 2)).toString())
             .isEqualTo("setOf(1, 2)")
-        assertThat(setOf(1, 2, 1).toGeneration().toString())
+        assertThat(buildCollectionBlock(setOf(1, 2, 1)).toString())
             .isEqualTo("setOf(1, 2)")
     }
 
     @Test
     fun set_multiple_template() {
-        assertThat(setOf(1, 2).toGeneration("%S").toString())
+        assertThat(buildCollectionBlock(setOf(1, 2), "%S").toString())
             .isEqualTo("""setOf("1", "2")""")
     }
 
     @Test
     fun set_multiple_builder() {
         assertThat(
-            setOf(1, 2)
-                .toGeneration { builder, item -> builder.add("%S", item) }
+            buildCollectionBlock(setOf(1, 2)) { builder, item -> builder.add("%S", item) }
                 .toString()
         ).isEqualTo("""setOf("1", "2")""")
     }
 
     @Test
     fun map_empty() {
-        assertThat(emptyMap<String, Any>().toGeneration().toString())
+        assertThat(buildCollectionBlock(emptyMap<String, Any>()).toString())
             .isEqualTo("emptyMap()")
     }
 
     @Test
     fun map_single() {
-        assertThat(mapOf("a" to 1).toGeneration().toString())
+        assertThat(buildCollectionBlock(mapOf("a" to 1)).toString())
             .isEqualTo("""mapOf("a" to 1)""")
-        assertThat(mapOf("a" to 1, "a" to 2).toGeneration().toString())
+        assertThat(buildCollectionBlock(mapOf("a" to 1, "a" to 2)).toString())
             .isEqualTo("""mapOf("a" to 2)""")
     }
 
     @Test
     fun map_multiple() {
-        assertThat(mapOf("a" to 1, "a" to 2, "b" to 3).toGeneration().toString())
+        assertThat(buildCollectionBlock(mapOf("a" to 1, "a" to 2, "b" to 3)).toString())
             .isEqualTo("""mapOf("a" to 2, "b" to 3)""")
-        assertThat(mapOf("a" to 1, "b" to 2).toGeneration().toString())
+        assertThat(buildCollectionBlock(mapOf("a" to 1, "b" to 2)).toString())
             .isEqualTo("""mapOf("a" to 1, "b" to 2)""")
     }
 
     @Test
     fun map_multiple_template() {
-        assertThat(mapOf("a" to 1, "b" to 2).toGeneration("%S to %S").toString())
+        assertThat(buildCollectionBlock(mapOf("a" to 1, "b" to 2), "%S to %S").toString())
             .isEqualTo("""mapOf("a" to "1", "b" to "2")""")
     }
 
     @Test
     fun map_multiple_builder() {
         assertThat(
-            mapOf("a" to 1, "b" to 2)
-                .toGeneration { builder, entry -> builder.add("%S to %S", entry.key, entry.value) }
-                .toString()
+            buildCollectionBlock(mapOf("a" to 1, "b" to 2)) { builder, entry ->
+                builder.add("%S to %S", entry.key, entry.value)
+            }.toString()
         ).isEqualTo("""mapOf("a" to "1", "b" to "2")""")
     }
 }

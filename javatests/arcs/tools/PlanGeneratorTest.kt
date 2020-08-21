@@ -13,7 +13,6 @@ import arcs.core.data.SingletonType
 import arcs.core.data.TupleType
 import arcs.core.data.TypeVariable
 import com.google.common.truth.Truth.assertThat
-import com.squareup.kotlinpoet.buildCodeBlock
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -64,12 +63,12 @@ class PlanGeneratorTest {
     fun handle_storageKey() {
         assertThat(
             buildHandleBlock(
-               Recipe.Handle(
-                   name = "foo",
-                   fate = Recipe.Handle.Fate.CREATE,
-                   type = entity,
-                   storageKey = "AKey"
-               )
+                Recipe.Handle(
+                    name = "foo",
+                    fate = Recipe.Handle.Fate.CREATE,
+                    type = entity,
+                    storageKey = "AKey"
+                )
             ).toString().normalize()
         ).contains("""storageKey=arcs.core.storage.StorageKeyParser.parse("AKey")""")
 

@@ -2,75 +2,86 @@ package arcs.tools
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.buildCodeBlock
+import java.lang.IllegalArgumentException
 
 /**
- * Utility to translate [List]s into a code-generated [List] collection.
+ * Utility to translate [Collection]s into generated code.
  *
- * Will generate an empty collection when appropriate.
- *
- * @param template KotlinPoet template string to apply to each item in the collection.
- * @return generated [CodeBlock] of a [List].
- */
-fun List<*>.toGeneration(template: String = "%L") =
-    toGeneration { builder, item -> builder.add(template, item) }
-
-/**
- * Utility to translate [List]s into a code-generated [List] collection.
- *
- * Will generate an empty collection when appropriate.
+ * Only [List] and [Set] are supported. Will generate an empty collection when appropriate.
  *
  * @param template callback that combines a [CodeBlock.Builder] with an item in the collection.
- * @return generated [CodeBlock] of a [List].
+ * @return generated [CodeBlock] of a [Collection].
  */
-fun <T> List<T>.toGeneration(
+fun <C : Collection<T>, T> CodeBlock.Builder.addCollection(
+    collection: C,
     template: (builder: CodeBlock.Builder, item: T) -> Unit
-) = buildCodeBlock {
-    if (this@toGeneration.isEmpty()) {
-        add("emptyList()")
-        return@buildCodeBlock
+): CodeBlock.Builder {
+    val simpleName = collection::class.simpleName.orEmpty()
+    val lowered = simpleName.toLowerCase()
+    val type = when {
+        lowered.toLowerCase().contains("list") -> "List"
+        lowered.contains("set") -> "Set"
+        else -> throw IllegalArgumentException("Collection type [$simpleName] not supported.")
+    }
+    if (collection.isEmpty()) {
+        add("empty$type()")
+        return this
     }
 
-    add("listOf(")
-    this@toGeneration.forEachIndexed { idx, it ->
+    add("${type.toLowerCase()}Of(")
+    collection.forEachIndexed { idx, it ->
         template(this, it)
-        if (idx != size - 1) { add(", ") }
+        if (idx != collection.size - 1) { add(", ") }
     }
     add(")")
+    return this
 }
 
-/**
- * Utility to translate [Set]s into a code-generated [Set] collection.
- *
- * Will generate an empty collection when appropriate.
- *
- * @param template KotlinPoet template string to apply to each item in the collection.
- * @return generated [CodeBlock] of a [Set].
- */
-fun Set<*>.toGeneration(template: String = "%L") =
-    toGeneration { builder, item -> builder.add(template, item) }
+/** Shorthand for building a [CodeBlock] with a code-generated [Collection]. */
+fun <C : Collection<T>, T> buildCollectionBlock(
+    collection: C,
+    template: (builder: CodeBlock.Builder, item: T) -> Unit
+): CodeBlock = buildCodeBlock { addCollection(collection, template) }
+
+/** Shorthand for building a [CodeBlock] with a code-generated [Collection]. */
+fun <C : Collection<T>, T> buildCollectionBlock(collection: C, template: String = "%L") =
+    buildCodeBlock { addCollection(collection, template) }
 
 /**
- * Utility to translate [Set]s into a code-generated [Set] collection.
+ * Utility to translate [Collection]s into generated code.
  *
- * Will generate an empty collection when appropriate.
+ * Only [List] and [Set] are supported. Will generate an empty collection when appropriate.
  *
  * @param template callback that combines a [CodeBlock.Builder] with an item in the collection.
- * @return generated [CodeBlock] of a [List].
+ * @return generated [CodeBlock] of a [Collection].
  */
-fun <T> Set<T>.toGeneration(
-    template: (builder: CodeBlock.Builder, item: T) -> Unit
-) = buildCodeBlock {
-    if (this@toGeneration.isEmpty()) {
-        add("emptySet()")
-        return@buildCodeBlock
+fun <C : Collection<T>, T> CodeBlock.Builder.addCollection(collection: C, template: String = "%L") =
+    addCollection(collection) { builder, item -> builder.add(template, item) }
+
+/**
+ * Utility to translate [Map]s into a code-generated [Map] collection.
+ *
+ * Will generate an empty collection when appropriate.
+ *
+ * @param template callback that combines a [CodeBlock.Builder] with pairs in the collection.
+ * @return generated [CodeBlock] of a [Map].
+ */
+fun <K, V> CodeBlock.Builder.addCollection(
+    collection: Map<K, V>,
+    template: (builder: CodeBlock.Builder, item: Map.Entry<K, V>) -> Unit
+): CodeBlock.Builder {
+    if (collection.isEmpty()) {
+        add("emptyMap()")
+        return this
     }
 
-    add("setOf(")
-    this@toGeneration.forEachIndexed { idx, it ->
+    add("mapOf(")
+    collection.entries.forEachIndexed { idx, it ->
         template(this, it)
-        if (idx != size - 1) { add(", ") }
+        if (idx != collection.size - 1) { add(", ") }
     }
     add(")")
+    return this
 }
 
 /**
@@ -81,29 +92,15 @@ fun <T> Set<T>.toGeneration(
  * @param template KotlinPoet template string to apply to each pair in the collection.
  * @return generated [CodeBlock] of a [Map].
  */
-fun Map<*, *>.toGeneration(template: String = "%S to %L") =
-    toGeneration { builder, entry -> builder.add(template, entry.key, entry.value) }
+fun <K, V> CodeBlock.Builder.addCollection(collection: Map<K, V>, template: String = "%S to %L") =
+    addCollection(collection) { builder, entry -> builder.add(template, entry.key, entry.value) }
 
-/**
- * Utility to translate [Map]s into a code-generated [Map] collection.
- *
- * Will generate an empty collection when appropriate.
- *
- * @param template callback that combines a [CodeBlock.Builder] with pairs in the collection.
- * @return generated [CodeBlock] of a [Map].
- */
-fun <K, V> Map<K, V>.toGeneration(
-    template: (builder: CodeBlock.Builder, entry: Map.Entry<K, V>) -> Unit
-) = buildCodeBlock {
-    if (this@toGeneration.isEmpty()) {
-        add("emptyMap()")
-        return@buildCodeBlock
-    }
+/** Shorthand for building a [CodeBlock] with a code-generated [Map]. */
+fun <K, V> buildCollectionBlock(
+    collection: Map<K, V>,
+    template: (builder: CodeBlock.Builder, item: Map.Entry<K, V>) -> Unit
+): CodeBlock = buildCodeBlock { addCollection(collection, template) }
 
-    add("mapOf(")
-    this@toGeneration.entries.forEachIndexed { idx, entry ->
-        template(this, entry)
-        if (idx != size - 1) { add(", ") }
-    }
-    add(")")
-}
+/** Shorthand for building a [CodeBlock] with a code-generated [Map]. */
+fun <K, V> buildCollectionBlock(collection: Map<K, V>, template: String = "%S to %L") =
+    buildCodeBlock { addCollection(collection, template) }
