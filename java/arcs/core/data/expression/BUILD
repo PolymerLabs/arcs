@@ -7,17 +7,33 @@ licenses(["notice"])
 
 package(default_visibility = ["//java/arcs:allowed-packages"])
 
+PARTICLES_SRC = ["EvaluatorParticle.kt"]
+
 SCOPES_SRC = ["RawEntityScope.kt"]
 
 arcs_kt_library(
     name = "expression",
     srcs = glob(
         ["*.kt"],
-        exclude = SCOPES_SRC,
+        exclude = SCOPES_SRC + PARTICLES_SRC,
     ),
     deps = [
         "//java/arcs/core/util",
         "//java/arcs/core/util:utils-platform-dependencies",
+        "//third_party/kotlin/kotlinx_coroutines",
+    ],
+)
+
+arcs_kt_library(
+    name = "particle",
+    srcs = PARTICLES_SRC,
+    deps = [
+        ":expression",
+        "//java/arcs/core/data",
+        "//java/arcs/core/host",
+        "//java/arcs/core/util",
+        "//java/arcs/sdk",
+        "//third_party/kotlin/kotlinx_coroutines",
     ],
 )
 
