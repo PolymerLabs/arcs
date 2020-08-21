@@ -57,13 +57,18 @@ java_binary(
 kt_jvm_library(
     name = "recipe2plan_lib",
     srcs = [
+        "GenerationUtils.kt",
+        "PlanGenerator.kt",
         "Recipe2Plan.kt",
     ],
     deps = [
         "//java/arcs/core/data",
+        "//java/arcs/core/data:schema_fields",
         "//java/arcs/core/data/proto:manifest_java_proto",
+        "//java/arcs/core/data/proto:proto_for_test",
         "//java/arcs/core/storage",
         "//java/arcs/core/storage/api",
+        "//java/arcs/core/type",
         "//third_party/java/arcs/deps:protobuf_java",
         "//third_party/kotlin/clikt",
         "//third_party/kotlin/kotlinpoet",
