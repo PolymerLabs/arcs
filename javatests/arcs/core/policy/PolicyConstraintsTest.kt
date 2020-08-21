@@ -1,14 +1,11 @@
 package arcs.core.policy
 
 import arcs.core.data.AccessPath
-import arcs.core.data.Claim
 import arcs.core.data.InformationFlowLabel
 import arcs.core.data.InformationFlowLabel.Predicate
-import arcs.core.data.StoreId
 import arcs.core.policy.proto.decode
 import arcs.core.testutil.protoloader.loadManifestBinaryProto
 import com.google.common.truth.Truth.assertThat
-import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -28,10 +25,7 @@ class PolicyConstraintsTest {
     fun applyPolicy_egressCheck_withRedactionLabels() {
         val policy = policies.getValue("FooRedactions")
 
-        val result = translatePolicy(
-            policy,
-            makePolicyOptions(mapOf("my_store_id" to "Foo"))
-        )
+        val result = translatePolicy(policy)
 
         assertThat(result.egressCheck).isEqualTo(
             Predicate.or(
@@ -53,98 +47,67 @@ class PolicyConstraintsTest {
     }
 
     @Test
-    fun applyPolicy_storeClaims_fieldClaim() {
+    fun applyPolicy_claims_fieldClaim() {
         val policy = policies.getValue("FooRedactions")
-        val storeMap = mapOf("my_store_id" to "Foo")
 
-        val result = translatePolicy(policy, makePolicyOptions(storeMap))
+        val result = translatePolicy(policy)
 
-        val store = AccessPath.Root.Store("my_store_id")
-        assertThat(result.storeClaims).containsExactly(
-            "my_store_id",
+        assertThat(result.claims).containsExactly(
+            "Foo",
             listOf(
-                Claim.Assume(
-                    AccessPath(store, selectors("a")),
-                    labelPredicate("allowedForEgress_redaction1")
-                ),
-                Claim.Assume(
-                    AccessPath(store, selectors("b")),
-                    labelPredicate("allowedForEgress_redaction2")
-                ),
-                Claim.Assume(
-                    AccessPath(store, selectors("c")),
-                    labelPredicate("allowedForEgress_redaction3")
-                )
+                PartialClaim(selectors("a"), labelPredicate("allowedForEgress_redaction1")),
+                PartialClaim(selectors("b"), labelPredicate("allowedForEgress_redaction2")),
+                PartialClaim(selectors("c"), labelPredicate("allowedForEgress_redaction3"))
             )
         )
     }
 
     @Test
-    fun applyPolicy_storeClaims_fieldsNotInPolicyDoNotHaveClaims() {
+    fun applyPolicy_claims_fieldsNotInPolicyDoNotHaveClaims() {
         val policy = policies.getValue("SingleFooRedaction")
-        val storeMap = mapOf("my_store_id" to "Foo")
 
-        val result = translatePolicy(policy, makePolicyOptions(storeMap))
+        val result = translatePolicy(policy)
 
-        val store = AccessPath.Root.Store("my_store_id")
-        assertThat(result.storeClaims).containsExactly(
-            "my_store_id",
+        assertThat(result.claims).containsExactly(
+            "Foo",
             listOf(
-                Claim.Assume(
-                    AccessPath(store, selectors("a")),
-                    labelPredicate("allowedForEgress_redaction1")
-                )
+                PartialClaim(selectors("a"), labelPredicate("allowedForEgress_redaction1"))
             )
         )
     }
 
     @Test
-    fun applyPolicy_storeClaims_missingFromStoresMap() {
-        val policy = policies.getValue("FooRedactions")
-        val storeMap = mapOf("some_other_store" to "Bar")
+    fun applyPolicy_claims_emptyPolicy() {
+        val result = translatePolicy(BLANK_POLICY)
 
-        assertFailsWith<PolicyViolation.NoStoreForPolicyTarget> {
-            translatePolicy(policy, makePolicyOptions(storeMap))
-        }
+        assertThat(result.claims).isEmpty()
     }
 
     @Test
-    fun applyPolicy_storeClaims_emptyPolicy() {
-        val storeMap = mapOf("my_store_id" to "Foo")
-
-        val result = translatePolicy(BLANK_POLICY, makePolicyOptions(storeMap))
-
-        assertThat(result.storeClaims).isEmpty()
-    }
-
-    @Test
-    fun applyPolicy_storeClaims_joinUsageType() {
+    fun applyPolicy_claims_joinUsageType() {
         val policy = policies.getValue("FooJoinPolicy")
-        val storeMap = mapOf("my_store_id" to "Foo")
 
-        val result = translatePolicy(policy, makePolicyOptions(storeMap))
+        val result = translatePolicy(policy)
 
-        assertThat(result.storeClaims).isEmpty()
+        assertThat(result.claims).containsExactly("Foo", emptyList<PartialClaim>())
     }
 
     @Test
-    fun applyPolicy_storeClaims_nestedSubfields() {
+    fun applyPolicy_claims_nestedSubfields() {
         val policy = policies.getValue("NestedFooBarPolicy")
-        val storeMap = mapOf("my_store_id" to "NestedFooBar")
 
-        val result = translatePolicy(policy, makePolicyOptions(storeMap))
+        val result = translatePolicy(policy)
 
-        val store = AccessPath.Root.Store("my_store_id")
         val predicate = labelPredicate("allowedForEgress")
-        assertThat(result.storeClaims).containsExactly(
-            "my_store_id",
+        assertThat(result.claims).containsExactly(
+            "NestedFooBar",
             listOf(
-                Claim.Assume(AccessPath(store, selectors("foo")), predicate),
-                Claim.Assume(AccessPath(store, selectors("foo", "a")), predicate),
-                Claim.Assume(AccessPath(store, selectors("foo", "b")), predicate),
-                Claim.Assume(AccessPath(store, selectors("foo", "c")), predicate),
-                Claim.Assume(AccessPath(store, selectors("bar")), predicate),
-                Claim.Assume(AccessPath(store, selectors("bar", "a")), predicate)
+                PartialClaim(selectors("foo"), predicate),
+                PartialClaim(selectors("foo", "a"), predicate),
+                PartialClaim(selectors("foo", "b"), predicate),
+                PartialClaim(selectors("foo", "c"), predicate),
+                PartialClaim(selectors("bar"), predicate),
+                PartialClaim(selectors("bar", "a"), predicate)
             )
         )
     }
@@ -170,9 +133,5 @@ class PolicyConstraintsTest {
         ).policiesList
             .map { it.decode() }
             .associateBy { it.name }
-
-        private fun makePolicyOptions(storeMap: Map<StoreId, String>): PolicyOptions {
-            return PolicyOptions(storeMap = storeMap)
-        }
     }
 }
