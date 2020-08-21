@@ -11,18 +11,21 @@ class ParticleSpecTest {
     @Test
     fun dataflowType_ingress() {
         val spec = createSpec(annotations = listOf(Annotation.ingress))
+
         assertThat(spec.dataflowType).isEqualTo(ParticleDataflowType.Ingress)
     }
 
     @Test
     fun dataflowType_egress() {
         val spec = createSpec(annotations = listOf(Annotation.createEgress()))
+
         assertThat(spec.dataflowType).isEqualTo(ParticleDataflowType.Egress)
     }
 
     @Test
     fun dataflowType_isolated() {
         val spec = createSpec(annotations = listOf(Annotation.isolated))
+
         assertThat(spec.dataflowType).isEqualTo(ParticleDataflowType.Isolated)
     }
 
@@ -34,12 +37,14 @@ class ParticleSpecTest {
     @Test
     fun dataflowType_cannotBeIsolatedAndIngress() {
         val spec = createSpec(annotations = listOf(Annotation.isolated, Annotation.ingress))
+
         assertFailsWith<IllegalArgumentException> { spec.dataflowType }
     }
 
     @Test
     fun dataflowType_cannotBeIsolatedAndEgress() {
         val spec = createSpec(annotations = listOf(Annotation.isolated, Annotation.createEgress()))
+
         assertFailsWith<IllegalArgumentException> { spec.dataflowType }
     }
 
