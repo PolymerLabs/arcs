@@ -42,7 +42,7 @@ fun FileSpec.Builder.addRecipe(recipe: Recipe): FileSpec.Builder {
         // TODO(161940729) Generate Annotations
         "annotations" to buildCollectionBlock(listOf<Annotation>())
     )
-    val plan = PropertySpec.builder("${name}Plan", Plan::class)
+    val plan = PropertySpec.builder("${recipe.name}Plan", Plan::class)
         .initializer(buildCodeBlock {
             addNamed(
                 """
