@@ -71,7 +71,7 @@ class VariablePlanTest {
         DriverAndKeyConfigurator.configure(null)
 
         val manifestProto = ManifestProto.parseFrom(
-            File(runfilesDir() + "src/tools/tests/variable_proto.pb.bin").readBytes()
+            File(runfilesDir() + "src/tools/tests/variable_proto.binarypb").readBytes()
         )
         val recipes = manifestProto.decodeRecipes()
 

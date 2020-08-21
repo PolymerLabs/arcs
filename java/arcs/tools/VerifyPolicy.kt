@@ -18,11 +18,11 @@ class VerifyPolicy : CliktCommand(
     help = "Verifies that all recipes in an Arcs manifest file comply with their policies."
 ) {
     val manifest by option(
-        help = "Arcs manifest to check, encoded as a binary proto file (.bin.pb)"
+        help = "Arcs manifest to check, encoded as a binary proto file (.binarypb)"
     ).file().required()
 
     val options by option(
-        help = "Policy options, encoded as a text proto (.textproto) or binary proto (.bin.pb)"
+        help = "Policy options, encoded as a text proto (.textproto) or binary proto (.binarypb)"
     ).file().required()
 
     override fun run() {

@@ -1512,16 +1512,16 @@ describe('manifest2proto', () => {
     });
   });
 
-  // On the TypeScript side we serialize .arcs file and validate it equals the .pb.bin file.
-  // On the Kotlin side we deserialize .pb.bin and validate it equals deserialized .textproto file.
+  // On the TypeScript side we serialize .arcs file and validate it equals the .binarypb file.
+  // On the Kotlin side we deserialize .binarypb and validate it equals deserialized .textproto file.
   // This ensures that at least all the constructs used in the .arcs file can be serialized in TS
   // and deserialized in Kotlin to the extent that they are present in the .textproto file.
   it('encodes the Manifest2ProtoTest manifest', async () => {
     assert.deepStrictEqual(
       await encodeManifestToProto('java/arcs/core/data/testdata/Manifest2ProtoTest.arcs'),
-      fs.readFileSync('java/arcs/core/data/testdata/Manifest2ProtoTest.pb.bin'),
+      fs.readFileSync('java/arcs/core/data/testdata/Manifest2ProtoTest.binarypb'),
       `The output of manifest2proto for Manifest2ProtoTest.arcs does not match the expectation.\n
 If you want to update the expected output please run:\n
-$ tools/sigh manifest2proto --outfile java/arcs/core/data/testdata/Manifest2ProtoTest.pb.bin java/arcs/core/data/testdata/Manifest2ProtoTest.arcs\n\n`);
+$ tools/sigh manifest2proto --outfile java/arcs/core/data/testdata/Manifest2ProtoTest.binarypb java/arcs/core/data/testdata/Manifest2ProtoTest.arcs\n\n`);
   });
 });

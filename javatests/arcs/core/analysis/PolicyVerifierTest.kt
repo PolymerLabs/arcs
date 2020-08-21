@@ -159,6 +159,6 @@ class PolicyVerifierTest {
 
     /** Returns the path for the manifest proto binary file for the test. */
     private fun getManifestProtoBinPath(test: String): String {
-        return "javatests/arcs/core/analysis/testdata/$test.pb.bin"
+        return "javatests/arcs/core/analysis/testdata/$test.binarypb"
     }
 }
