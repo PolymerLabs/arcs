@@ -14,6 +14,7 @@ package arcs.android.storage.database
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
+import android.database.DatabaseUtils
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Base64
@@ -1097,6 +1098,10 @@ class DatabaseImpl(
             AND creation_timestamp <= $endTimeMillis
             AND storage_keys.storage_key NOT LIKE 'inline%'
             """)
+    }
+
+    override suspend fun getEntitiesCount(): Long {
+        return DatabaseUtils.queryNumEntries(readableDatabase, "entities")
     }
 
     override suspend fun removeExpiredEntities() {

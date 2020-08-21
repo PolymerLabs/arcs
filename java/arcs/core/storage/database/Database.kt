@@ -57,6 +57,9 @@ interface Database {
      */
     suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long)
 
+    /** Returns count of entities. */
+    suspend fun getEntitiesCount(): Long
+
     /** Garbage collection run: will remove unused entities. */
     suspend fun runGarbageCollection()
 
