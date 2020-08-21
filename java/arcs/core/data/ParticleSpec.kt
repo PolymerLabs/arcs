@@ -23,29 +23,41 @@ data class ParticleSpec(
     val checks: List<Check> = emptyList(),
     val annotations: List<Annotation> = emptyList()
 ) {
-    /** Indicates whether the particle is an isolated (non-egress) particle. */
-    val isolated: Boolean
+    val dataflowType: ParticleDataflowType
         get() {
             val isolated = annotations.any { it.name == "isolated" }
+            val ingress = annotations.any { it.name == "ingress" }
             val egress = annotations.any { it.name == "egress" }
+            require(!(isolated && ingress)) {
+                "Particle cannot be tagged with both @isolated and @ingress."
+            }
             require(!(isolated && egress)) {
                 "Particle cannot be tagged with both @isolated and @egress."
             }
-            return isolated
+            return when {
+                ingress && egress -> ParticleDataflowType.IngressAndEgress
+                ingress -> ParticleDataflowType.Ingress
+                egress -> ParticleDataflowType.Egress
+                isolated -> ParticleDataflowType.Isolated
+                else -> {
+                    // Particles with no annotations are considered ingress and egress by default.
+                    ParticleDataflowType.IngressAndEgress
+                }
+            }
         }
 
-    /**
-     * Indicates whether the particle is an egress (non-isolated) particle.
-     *
-     * Particles are considered egress particles by default.
-     */
-    val egress: Boolean
-        get() = !isolated
-
-    /** Optional egress type of the particle. Always null for isolated particles. */
+    /** Optional egress type of the particle. Always null for non-egress particles. */
     val egressType: String?
         get() {
             val egress = annotations.find { it.name == "egress" } ?: return null
             return egress.getOptionalStringParam("type")
         }
+}
+
+/** Indicates the flow of data into/out of a particle. */
+enum class ParticleDataflowType(val isolated: Boolean, val ingress: Boolean, val egress: Boolean) {
+    Isolated(isolated = true, ingress = false, egress = false),
+    Ingress(isolated = false, ingress = true, egress = false),
+    Egress(isolated = false, ingress = false, egress = true),
+    IngressAndEgress(isolated = false, ingress = true, egress = true)
 }

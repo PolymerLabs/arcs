@@ -72,6 +72,11 @@ annotation egress(type: Text)
   retention: Source
   doc: 'Indicates that the given particle can egress data out of the system (i.e. is not isolated). Optionally supply an egress type.'
 
+annotation ingress
+  targets: [Particle]
+  retention: Source
+  doc: 'Indicates that the given particle can ingress data into of the system (i.e. is not isolated).'
+
 annotation policy(name: Text)
   targets: [Recipe]
   retention: Source

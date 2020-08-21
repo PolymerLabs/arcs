@@ -20,7 +20,7 @@ import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {ClaimIsTag, ClaimDerivesFrom} from '../arcs-types/claim.js';
 import {ClaimType} from '../arcs-types/enums.js';
 import {CheckHasTag, CheckBooleanExpression, CheckCondition, CheckIsFromStore, CheckImplication} from '../arcs-types/check.js';
-import {ProvideSlotConnectionSpec} from '../arcs-types/particle-spec.js';
+import {ProvideSlotConnectionSpec, ParticleDataflowType} from '../arcs-types/particle-spec.js';
 import {Schema} from '../schema.js';
 import {Store} from '../storage/store.js';
 import {Entity} from '../entity.js';
@@ -3593,7 +3593,7 @@ resource SomeName
       const manifest = await parseManifest(`
         particle Foo
           data: reads ~a with {age: Number, *}
-          
+
         particle Bar
           data: reads ~b with {*}
       `);
@@ -4732,13 +4732,13 @@ recipe
     assert.strictEqual(recipe.policy.name, 'MyPolicy');
   });
 
-  describe('isolated and egress particles', () => {
-    it('particles are egress by default', async () => {
+  describe('isolated, ingress and egress particles', () => {
+    it('particles are ingress and egress by default', async () => {
       const manifest = await Manifest.parse(`
         particle P
       `);
-      assert.isTrue(manifest.particles[0].isEgress);
-      assert.isFalse(manifest.particles[0].isIsolated);
+      assert.deepEqual(manifest.particles[0].dataflowType, ParticleDataflowType.INGRESS_AND_EGRESS);
+      assert.isNull(manifest.particles[0].egressType);
     });
 
     it('egress annotation works', async () => {
@@ -4746,8 +4746,17 @@ recipe
         @egress
         particle P
       `);
-      assert.isTrue(manifest.particles[0].isEgress);
-      assert.isFalse(manifest.particles[0].isIsolated);
+      assert.deepEqual(manifest.particles[0].dataflowType, ParticleDataflowType.EGRESS);
+      assert.isNull(manifest.particles[0].egressType);
+    });
+
+    it('combination of egress and ingress annotations works', async () => {
+      const manifest = await Manifest.parse(`
+        @egress
+        @ingress
+        particle P
+      `);
+      assert.deepEqual(manifest.particles[0].dataflowType, ParticleDataflowType.INGRESS_AND_EGRESS);
       assert.isNull(manifest.particles[0].egressType);
     });
 
@@ -4756,8 +4765,7 @@ recipe
         @egress('MyEgressType')
         particle P
       `);
-      assert.isTrue(manifest.particles[0].isEgress);
-      assert.isFalse(manifest.particles[0].isIsolated);
+      assert.deepEqual(manifest.particles[0].dataflowType, ParticleDataflowType.EGRESS);
       assert.strictEqual(manifest.particles[0].egressType, 'MyEgressType');
     });
 
@@ -4766,8 +4774,8 @@ recipe
         @isolated
         particle P
       `);
-      assert.isFalse(manifest.particles[0].isEgress);
-      assert.isTrue(manifest.particles[0].isIsolated);
+      assert.deepEqual(manifest.particles[0].dataflowType, ParticleDataflowType.ISOLATED);
+      assert.isNull(manifest.particles[0].egressType);
     });
 
     it('throws if both isolated and egress annotations are applied', async () => {
@@ -4777,8 +4785,19 @@ recipe
         particle P
       `);
       assert.throws(
-        () => manifest.particles[0].isIsolated,
+        () => manifest.particles[0].dataflowType,
         `Particle cannot be tagged with both @isolated and @egress.`);
+    });
+
+    it('throws if both isolated and ingress annotations are applied', async () => {
+      const manifest = await Manifest.parse(`
+        @ingress
+        @isolated
+        particle P
+      `);
+      assert.throws(
+        () => manifest.particles[0].dataflowType,
+        `Particle cannot be tagged with both @isolated and @ingress.`);
     });
 
     it('parses schema field annotations', async () => {

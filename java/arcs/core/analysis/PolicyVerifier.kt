@@ -40,7 +40,7 @@ class PolicyVerifier(val options: PolicyOptions) {
 
         // Compute the egress check map.
         val egressCheckPredicate = policyConstraints.egressCheck
-        val egressParticles = recipe.particles.filterNot { it.spec.isolated }
+        val egressParticles = recipe.particles.filterNot { it.spec.dataflowType.isolated }
         checkEgressParticles(policy, egressParticles)
         val egressChecks = egressParticles.associate { particle ->
             // Each handle connection needs its own check statement.
@@ -122,7 +122,7 @@ class PolicyVerifier(val options: PolicyOptions) {
     private fun checkEgressParticles(policy: Policy, egressParticles: List<Recipe.Particle>) {
         val invalidEgressParticles = egressParticles
             .map { it.spec }
-            .filter { it.egress && it.egressType != policy.egressType }
+            .filter { it.dataflowType.egress && it.egressType != policy.egressType }
         if (invalidEgressParticles.isNotEmpty()) {
             throw PolicyViolation.InvalidEgressTypeForParticles(
                 policy = policy,
