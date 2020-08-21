@@ -16,8 +16,7 @@ class InformationFlowTest {
 
     /** Returns the path for the manifest proto binary file for the test. */
     private fun getManifestProtoTextPath(test: String): String {
-        val testText = test.replace("-", "_")
-        return runfilesDir() + "javatests/arcs/core/analysis/testdata/$testText.arcs"
+        return runfilesDir() + "javatests/arcs/core/analysis/testdata/$test.arcs"
     }
 
     /** Returns the path for the manifest proto binary file for the test. */
@@ -75,87 +74,87 @@ class InformationFlowTest {
     @Test
     fun checksAreVerifiedInDFA() {
         val failingTests = listOf(
-            "fail-different-tag",
-            "fail-no-tags",
-            "fail-not-tag-claim",
-            "fail-not-tag-cancels",
-            "fail-negated-tag-present",
-            "fail-read-write-mismatch-claim-check",
-            "fail-multiple-inputs-one-untagged",
-            "fail-check-multiple-or-tags",
-            "fail-multiple-checks",
-            "fail-no-inputs",
-            "fail-mixer",
-            "fail-derives-from-cycle",
-            "fail-derives-from-multiple",
-            "fail-join-tuple-components",
-            "fail-check-on-subpaths",
-            "fail-no-claim-is-empty-labels"
+            "fail_different_tag",
+            "fail_no_tags",
+            "fail_not_tag_claim",
+            "fail_not_tag_cancels",
+            "fail_negated_tag_present",
+            "fail_read_write_mismatch_claim_check",
+            "fail_multiple_inputs_one_untagged",
+            "fail_check_multiple_or_tags",
+            "fail_multiple_checks",
+            "fail_no_inputs",
+            "fail_mixer",
+            "fail_derives_from_cycle",
+            "fail_derives_from_multiple",
+            "fail_join_tuple_components",
+            "fail_check_on_subpaths",
+            "fail_no_claim_is_empty_labels"
         )
         val okTests = listOf(
-            "ok-directly-satisfied",
-            "ok-not-tag-claim-no-checks",
-            "ok-not-tag-claim-reclaimed",
-            "ok-negated-missing-tag",
-            "ok-read-write-match-claim-check",
-            "ok-multiple-inputs-correct-tags",
-            "ok-claim-propagates",
-            "ok-claim-not-overriden-later",
-            "ok-check-multiple-or-tags",
-            "ok-check-multiple-and-single-claim",
-            "ok-check-multiple-or-single-claim",
-            "ok-derives-from-cycle",
-            "ok-derives-from-multiple",
-            "ok-join-simple",
-            "ok-join-tuple-components",
-            "ok-check-on-subpaths"
+            "ok_directly_satisfied",
+            "ok_not_tag_claim_no_checks",
+            "ok_not_tag_claim_reclaimed",
+            "ok_negated_missing_tag",
+            "ok_read_write_match_claim_check",
+            "ok_multiple_inputs_correct_tags",
+            "ok_claim_propagates",
+            "ok_claim_not_overriden_later",
+            "ok_check_multiple_or_tags",
+            "ok_check_multiple_and_single_claim",
+            "ok_check_multiple_or_single_claim",
+            "ok_derives_from_cycle",
+            "ok_derives_from_multiple",
+            "ok_join_simple",
+            "ok_join_tuple_components",
+            "ok_check_on_subpaths"
         )
         val failingFieldTests = listOf(
-            "fail-field-entity-direct",
-            "fail-field-entity-ref-direct",
-            "fail-field-entity-ref-field",
-            "fail-field-collection-direct",
-            "fail-field-inline-entity-direct",
-            "fail-field-list-direct",
-            "fail-field-tuple-direct",
-            "fail-field-inline-entity-slicing",
-            "fail-field-claim-propagates",
-            "fail-field-claim-propagates-type-variables",
-            "fail-field-merge-multiple-paths"
+            "fail_field_entity_direct",
+            "fail_field_entity_ref_direct",
+            "fail_field_entity_ref_field",
+            "fail_field_collection_direct",
+            "fail_field_inline_entity_direct",
+            "fail_field_list_direct",
+            "fail_field_tuple_direct",
+            "fail_field_inline_entity_slicing",
+            "fail_field_claim_propagates",
+            "fail_field_claim_propagates_type_variables",
+            "fail_field_merge_multiple_paths"
         )
         val okFieldTests = listOf(
-            "ok-field-entity-direct",
-            "ok-field-entity-ref-direct",
-            "ok-field-entity-ref-field",
-            "ok-field-collection-direct",
-            "ok-field-inline-entity-direct",
-            "ok-field-list-direct",
-            "ok-field-tuple-direct",
-            "ok-field-inline-entity-slicing",
-            "ok-field-claim-propagates",
-            "ok-field-claim-propagates-type-variables",
-            "ok-field-merge-multiple-paths"
+            "ok_field_entity_direct",
+            "ok_field_entity_ref_direct",
+            "ok_field_entity_ref_field",
+            "ok_field_collection_direct",
+            "ok_field_inline_entity_direct",
+            "ok_field_list_direct",
+            "ok_field_tuple_direct",
+            "ok_field_inline_entity_slicing",
+            "ok_field_claim_propagates",
+            "ok_field_claim_propagates_type_variables",
+            "ok_field_merge_multiple_paths"
         )
         val okCycleTests = listOf(
-            "ok-cycle-overlapping",
-            "ok-cycle-single-particle",
-            "ok-cycle-two-particles",
-            "ok-cycle-claim-propagates",
-            "ok-cycle-two-origin"
+            "ok_cycle_overlapping",
+            "ok_cycle_single_particle",
+            "ok_cycle_two_particles",
+            "ok_cycle_claim_propagates",
+            "ok_cycle_two_origin"
         )
         val failingCycleTests = listOf(
-            "fail-cycle-overlapping-a",
-            "fail-cycle-overlapping-b",
-            "fail-cycle-remove-tag",
-            "fail-cycle-remove-tag-in-chain"
+            "fail_cycle_overlapping_a",
+            "fail_cycle_overlapping_b",
+            "fail_cycle_remove_tag",
+            "fail_cycle_remove_tag_in_chain"
         )
         val typeVariableTests = listOf(
-            "fail-type-variables",
-            "fail-type-variables-no-constraints",
-            "fail-type-variables-collection",
-            "fail-type-variables-tuples",
-            "fail-type-variables-tuples-collection",
-            "fail-type-variables-multiple-constraints"
+            "fail_type_variables",
+            "fail_type_variables_no_constraints",
+            "fail_type_variables_collection",
+            "fail_type_variables_tuples",
+            "fail_type_variables_tuples_collection",
+            "fail_type_variables_multiple_constraints"
         )
         val tests = (
             okTests + failingTests +
