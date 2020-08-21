@@ -38,13 +38,13 @@ import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.util.ArcsBigInteger
+import arcs.core.util.ArcsDuration
+import arcs.core.util.ArcsInstant
 import arcs.core.util.guardedBy
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
-import java.math.BigInteger
-import java.time.Duration
-import java.time.Instant
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
@@ -527,8 +527,8 @@ class DatabaseImplTest {
                     "int" to 1000000000.toReferencable(),
                     // This number is not representable as a double
                     "long" to 1000000000000000001L.toReferencable(),
-                    "bigint" to BigInteger("10000000000000000000000000000001").toReferencable(),
-                    "instant" to Instant.ofEpochMilli(1000000000000000001L).toReferencable(),
+                    "bigint" to ArcsBigInteger("10000000000000000000000000000001").toReferencable(),
+                    "instant" to ArcsInstant.ofEpochMilli(1000000000000000001L).toReferencable(),
                     "char" to 'A'.toReferencable(),
                     "float" to 34.567f.toReferencable(),
                     "double" to 4e100.toReferencable(),
@@ -538,7 +538,7 @@ class DatabaseImplTest {
                     "lnglst" to listOf(1L, 2L, 4L, 4L, 3L).map {
                         it.toReferencable()
                     }.toReferencable(FieldType.ListOf(FieldType.Long)),
-                    "bigint" to BigInteger.valueOf(123).toReferencable(),
+                    "bigint" to ArcsBigInteger.valueOf(123).toReferencable(),
                     "inlined" to inlineEntity,
                     "inlinelist" to listOf(
                         toInlineEntity("inlist", 3.0, setOf("A", "Z")),
@@ -560,19 +560,19 @@ class DatabaseImplTest {
                         1000000000000000003L.toReferencable()
                     ),
                     "bigints" to setOf(
-                        BigInteger("10000000000000000000000000000002").toReferencable(),
-                        BigInteger("10000000000000000000000000000003").toReferencable()
+                        ArcsBigInteger("10000000000000000000000000000002").toReferencable(),
+                        ArcsBigInteger("10000000000000000000000000000003").toReferencable()
                     ),
                     "instants" to listOf(
-                        Instant.ofEpochMilli(1000000000000000002L),
-                        Instant.ofEpochMilli(1000000000000000003L)
+                        ArcsInstant.ofEpochMilli(1000000000000000002L),
+                        ArcsInstant.ofEpochMilli(1000000000000000003L)
                     ).map { it.toReferencable() }.toSet(),
                     "chars" to listOf('a', 'r', 'c', 's').map { it.toReferencable() }.toSet(),
                     "floats" to setOf(1.1f.toReferencable(), 100.101f.toReferencable()),
                     "doubles" to setOf(1.0.toReferencable(), 2e80.toReferencable()),
                     "bigints" to setOf(
-                        BigInteger.valueOf(123).toReferencable(),
-                        BigInteger.valueOf(678).toReferencable()
+                        ArcsBigInteger.valueOf(123).toReferencable(),
+                        ArcsBigInteger.valueOf(678).toReferencable()
                     ),
                     "inlines" to setOf(
                         toInlineEntity("inline1", 1.0, setOf("Q", "E", "D")),
@@ -1681,7 +1681,7 @@ class DatabaseImplTest {
                 singletons = mapOf(),
                 collections = mapOf(),
                 creationTimestamp = JvmTime.currentTimeMillis -
-                    Duration.ofDays(creationDaysAgo).toMillis()
+                    ArcsDuration.ofDays(creationDaysAgo).toMillis()
             ),
             schema,
             FIRST_VERSION_NUMBER,
@@ -1764,7 +1764,7 @@ class DatabaseImplTest {
                 "nested",
                 singletons = mapOf("text" to "abc".toReferencable()),
                 collections = mapOf("refs" to setOf()),
-                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(10).toMillis()
+                creationTimestamp = JvmTime.currentTimeMillis - ArcsDuration.ofDays(10).toMillis()
             ),
             schema,
             FIRST_VERSION_NUMBER,
@@ -1775,7 +1775,7 @@ class DatabaseImplTest {
                 "entity",
                 singletons = mapOf("text" to "def".toReferencable()),
                 collections = mapOf("refs" to setOf(Reference("nested", backingKey, VERSION_MAP))),
-                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(10).toMillis()
+                creationTimestamp = JvmTime.currentTimeMillis - ArcsDuration.ofDays(10).toMillis()
             ),
             schema,
             FIRST_VERSION_NUMBER,
@@ -1842,7 +1842,7 @@ class DatabaseImplTest {
                 "nested",
                 singletons = mapOf("ref" to null),
                 collections = mapOf("texts" to setOf("abc".toReferencable())),
-                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(10).toMillis()
+                creationTimestamp = JvmTime.currentTimeMillis - ArcsDuration.ofDays(10).toMillis()
             ),
             schema,
             FIRST_VERSION_NUMBER,
@@ -1853,7 +1853,7 @@ class DatabaseImplTest {
                 "entity",
                 singletons = mapOf("ref" to Reference("nested", backingKey, VERSION_MAP)),
                 collections = mapOf("texts" to setOf("def".toReferencable())),
-                creationTimestamp = JvmTime.currentTimeMillis - Duration.ofDays(10).toMillis()
+                creationTimestamp = JvmTime.currentTimeMillis - ArcsDuration.ofDays(10).toMillis()
             ),
             schema,
             FIRST_VERSION_NUMBER,
@@ -1939,14 +1939,14 @@ class DatabaseImplTest {
                     "textlist" to listOf("abc", "abcd", "def", "ghi").map {
                         it.toReferencable()
                     }.toReferencable(FieldType.ListOf(FieldType.Text)),
-                    "bigint" to BigInteger.valueOf(1000).toReferencable()
+                    "bigint" to ArcsBigInteger.valueOf(1000).toReferencable()
                 ),
                 mapOf(
                     "nums" to setOf(123.0.toReferencable(), 456.0.toReferencable()),
                     "chars" to listOf('A', 'R', 'C', 'S', '!').map { it.toReferencable() }.toSet(),
                     "bigints" to setOf(
-                        BigInteger("12345678901234567890").toReferencable(),
-                        BigInteger.valueOf(3).toReferencable()
+                        ArcsBigInteger("12345678901234567890").toReferencable(),
+                        ArcsBigInteger.valueOf(3).toReferencable()
                     )
                 ),
                 11L,
@@ -1967,14 +1967,14 @@ class DatabaseImplTest {
                     "textlist" to listOf("abcd", "abcd").map {
                         it.toReferencable()
                     }.toReferencable(FieldType.ListOf(FieldType.Text)),
-                    "bigint" to BigInteger.valueOf(2000).toReferencable()
+                    "bigint" to ArcsBigInteger.valueOf(2000).toReferencable()
                 ),
                 mapOf(
                     "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
                     "chars" to listOf('R', 'O', 'C', 'K', 'S').map { it.toReferencable() }.toSet(),
                     "bigints" to setOf(
-                        BigInteger("44412345678901234567890").toReferencable(),
-                        BigInteger.valueOf(5).toReferencable()
+                        ArcsBigInteger("44412345678901234567890").toReferencable(),
+                        ArcsBigInteger.valueOf(5).toReferencable()
                     )
                 ),
                 11L,
@@ -1995,14 +1995,14 @@ class DatabaseImplTest {
                     "textlist" to listOf("def", "def").map {
                         it.toReferencable()
                     }.toReferencable(FieldType.ListOf(FieldType.Text)),
-                    "bigint" to BigInteger.valueOf(3000).toReferencable()
+                    "bigint" to ArcsBigInteger.valueOf(3000).toReferencable()
                 ),
                 mapOf(
                     "nums" to setOf(123.0.toReferencable(), 789.0.toReferencable()),
                     "chars" to listOf('H', 'e', 'l', 'L', 'o').map { it.toReferencable() }.toSet(),
                     "bigints" to setOf(
-                        BigInteger("33344412345678901234567890").toReferencable(),
-                        BigInteger.valueOf(7).toReferencable()
+                        ArcsBigInteger("33344412345678901234567890").toReferencable(),
+                        ArcsBigInteger.valueOf(7).toReferencable()
                     )
                 ),
                 11L,

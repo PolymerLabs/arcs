@@ -13,8 +13,8 @@ import arcs.core.data.expression.Expression.*
 import arcs.core.data.expression.Expression.BinaryOp.*
 import arcs.core.data.util.toReferencable
 import arcs.core.entity.toPrimitiveValue
-import java.math.BigInteger
-import java.time.Instant
+import arcs.core.util.ArcsBigInteger
+import arcs.core.util.ArcsInstant
 
 typealias KotlinPrimitivesGolden_Data_Ref = AbstractKotlinPrimitivesGolden.KotlinPrimitivesGolden_Data_Ref
 typealias KotlinPrimitivesGolden_Data_Thinglst = AbstractKotlinPrimitivesGolden.Thing
@@ -457,8 +457,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         shrt: Short = 0.toShort(),
         integer: Int = 0,
         long_val: Long = 0L,
-        big: BigInteger = BigInteger.ZERO,
-        instant: Instant = Instant.ofEpochMilli(-1L),
+        big: ArcsBigInteger = ArcsBigInteger.ZERO,
+        instant: ArcsInstant = ArcsInstant.ofEpochMilli(-1L),
         chr: Char = '\u0000',
         flt: Float = 0.0f,
         dbl: Double = 0.0,
@@ -507,11 +507,11 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
         var long_val: Long
             get() = super.getSingletonValue("long_val") as Long? ?: 0L
             private set(_value) = super.setSingletonValue("long_val", _value)
-        var big: BigInteger
-            get() = super.getSingletonValue("big") as BigInteger? ?: BigInteger.ZERO
+        var big: ArcsBigInteger
+            get() = super.getSingletonValue("big") as ArcsBigInteger? ?: ArcsBigInteger.ZERO
             private set(_value) = super.setSingletonValue("big", _value)
-        var instant: Instant
-            get() = super.getSingletonValue("instant") as Instant? ?: Instant.ofEpochMilli(-1L)
+        var instant: ArcsInstant
+            get() = super.getSingletonValue("instant") as ArcsInstant? ?: ArcsInstant.ofEpochMilli(-1L)
             private set(_value) = super.setSingletonValue("instant", _value)
         var chr: Char
             get() = super.getSingletonValue("chr") as Char? ?: '\u0000'
@@ -578,8 +578,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
             shrt: Short = this.shrt,
             integer: Int = this.integer,
             long_val: Long = this.long_val,
-            big: BigInteger = this.big,
-            instant: Instant = this.instant,
+            big: ArcsBigInteger = this.big,
+            instant: ArcsInstant = this.instant,
             chr: Char = this.chr,
             flt: Float = this.flt,
             dbl: Double = this.dbl,
@@ -626,8 +626,8 @@ abstract class AbstractKotlinPrimitivesGolden : arcs.sdk.BaseParticle() {
             shrt: Short = this.shrt,
             integer: Int = this.integer,
             long_val: Long = this.long_val,
-            big: BigInteger = this.big,
-            instant: Instant = this.instant,
+            big: ArcsBigInteger = this.big,
+            instant: ArcsInstant = this.instant,
             chr: Char = this.chr,
             flt: Float = this.flt,
             dbl: Double = this.dbl,
