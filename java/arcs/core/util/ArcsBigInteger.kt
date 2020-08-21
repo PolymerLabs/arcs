@@ -15,8 +15,8 @@ package arcs.core.util
  * Provides a platform-independent version of [ArcsBigInteger]
  * based on java.math.BigInteger.
  */
-class ArcsBigInteger(val value: ByteArray): Number() {
-    constructor(value: String): this(PlatformBigIntegerProvider.fromString(value).value)
+class ArcsBigInteger(public val value: ByteArray) : Number() {
+    constructor(value: String) : this(PlatformBigIntegerProvider.fromString(value).value)
 
     fun add(other: ArcsBigInteger): ArcsBigInteger =
         PlatformBigIntegerProvider.add(this, other)
@@ -28,6 +28,9 @@ class ArcsBigInteger(val value: ByteArray): Number() {
         PlatformBigIntegerProvider.divide(this, other)
     fun compareTo(other: ArcsBigInteger): Int =
         PlatformBigIntegerProvider.compareTo(this, other)
+
+    override fun toString(): String = PlatformBigIntegerProvider.toString(this)
+    override fun equals(other: Any?): Boolean = PlatformBigIntegerProvider.equals(this, other)
 
     companion object {
         fun valueOf(value: Long): ArcsBigInteger =

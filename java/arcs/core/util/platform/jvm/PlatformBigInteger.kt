@@ -31,6 +31,11 @@ object PlatformBigIntegerProvider {
         left.toNative().compareTo(right.toNative())
     fun valueOf(value: Long): ArcsBI = PlatformBigInteger.valueOf(value).toArcs()
     fun fromString(value: String): ArcsBI = PlatformBigInteger(value).toArcs()
+    fun toString(value: ArcsBI): String = value.toNative().toString()
+    fun equals(left: ArcsBI, right: Any?): Boolean {
+        if (right == null || right !is ArcsBI) return false
+        return left.toNative().equals(right.toNative())
+    }
     val ZERO: ArcsBI
         get() = PlatformBigInteger.ZERO.toArcs()
     val ONE: ArcsBI

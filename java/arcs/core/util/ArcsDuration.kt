@@ -18,8 +18,13 @@ package arcs.core.util
 class ArcsDuration(val millis: Long) {
     fun toMillis(): Long = millis
 
-    companion object PlatformDuration {
-        fun ofDays(days: Long): ArcsDuration =
-            PlatformDuration.ofDays(days)
+    override fun toString(): String = millis.toString()
+    override fun equals(other: Any?): Boolean {
+        if (other == null || other !is ArcsDuration) return false
+        return millis == other.millis
+    }
+
+    companion object {
+        fun ofDays(days: Long): ArcsDuration = PlatformDurationProvider.ofDays(days)
     }
 }

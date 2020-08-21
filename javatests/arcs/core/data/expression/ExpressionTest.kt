@@ -12,13 +12,14 @@
 package arcs.core.data.expression
 
 import arcs.core.data.expression.Expression.Scope
+import arcs.core.util.toArcsBigInteger
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+
 import arcs.core.util.ArcsBigInteger
-import arcs.core.util.toArcsBigInteger
 
 /** Tests for [Expression]. */
 @RunWith(JUnit4::class)
@@ -147,6 +148,10 @@ class ExpressionTest {
         assertThat(evalNum(-2.toArcsBigInteger().asExpr())).isEqualTo(-2.toArcsBigInteger())
         assertThat(evalBool(!(2.toArcsBigInteger().asExpr() lt 1.asExpr()))).isTrue()
         assertThat(evalBool(!(2.toArcsBigInteger().asExpr() gt 1.asExpr()))).isFalse()
+
+        // Extra checks to ensure that negation propagates as expected.
+        assertThat(evalNum((-2).toArcsBigInteger().asExpr())).isEqualTo(-2.toArcsBigInteger())
+        assertThat(evalNum(-2.toArcsBigInteger().asExpr())).isEqualTo((-2).toArcsBigInteger())
     }
 
     @Test

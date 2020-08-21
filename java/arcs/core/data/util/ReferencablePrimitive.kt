@@ -132,7 +132,10 @@ data class ReferencablePrimitive<T>(
                 className == primitiveArcsBigInteger ->
                     ReferencablePrimitive(ArcsBigInteger::class, ArcsBigInteger(value))
                 className == primitiveArcsInstant ->
-                    ReferencablePrimitive(ArcsInstant::class, ArcsInstant.ofEpochMilli(value.toLong()))
+                    ReferencablePrimitive(
+                        ArcsInstant::class,
+                        ArcsInstant.ofEpochMilli(value.toLong())
+                    )
                 else -> null
             }
         }

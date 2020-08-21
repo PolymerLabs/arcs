@@ -21,11 +21,11 @@ import androidx.annotation.VisibleForTesting
 import arcs.android.common.forEach
 import arcs.android.common.forSingleResult
 import arcs.android.common.getBoolean
+import arcs.android.common.getNullableArcsInstant
 import arcs.android.common.getNullableBoolean
 import arcs.android.common.getNullableByte
 import arcs.android.common.getNullableDouble
 import arcs.android.common.getNullableFloat
-import arcs.android.common.getNullableArcsInstant
 import arcs.android.common.getNullableInt
 import arcs.android.common.getNullableLong
 import arcs.android.common.getNullableShort
@@ -44,9 +44,6 @@ import arcs.core.data.PrimitiveType
 import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaRegistry
-import arcs.core.util.ArcsBigInteger
-import arcs.core.util.ArcsDuration
-import arcs.core.util.ArcsInstant
 import arcs.core.data.util.ReferencableList
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
@@ -59,6 +56,9 @@ import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.DatabasePerformanceStatistics
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.embed
+import arcs.core.util.ArcsBigInteger
+import arcs.core.util.ArcsDuration
+import arcs.core.util.ArcsInstant
 import arcs.core.util.TaggedLog
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.Counters
@@ -1694,7 +1694,9 @@ class DatabaseImpl(
                     // TODO(https://github.com/PolymerLabs/arcs/issues/5867): To avoid
                     // lexicographic ordering, ArcsInstant and ArcsBigInteger should be compared as numeric
                     // values rather than strings.
-                    require(value is ArcsInstant) { "Expected value to be a ArcsInstant, got $value" }
+                    require(value is ArcsInstant) {
+                        "Expected value to be a ArcsInstant, got $value"
+                    }
                     counters?.increment(DatabaseCounters.GET_TEXT_VALUE_ID)
                     TABLE_TEXT_PRIMITIVES to value.toEpochMilli().toString()
                 }

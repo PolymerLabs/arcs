@@ -18,6 +18,12 @@ package arcs.core.util
 class ArcsInstant(val millis: Long) {
     fun toEpochMilli(): Long = millis
 
+    override fun toString(): String = millis.toString()
+    override fun equals(other: Any?): Boolean {
+        if (other == null || other !is ArcsInstant) return false
+        return millis == other.millis
+    }
+
     companion object PlatformInstant {
         fun ofEpochMilli(millis: Long): ArcsInstant = PlatformInstantProvider.ofEpochMilli(millis)
         fun now(): ArcsInstant = PlatformInstantProvider.now()

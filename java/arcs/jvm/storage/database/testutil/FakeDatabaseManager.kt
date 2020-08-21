@@ -12,7 +12,6 @@
 package arcs.jvm.storage.database.testutil
 
 import arcs.core.data.Schema
-import arcs.core.util.ArcsInstant
 import arcs.core.storage.StorageKey
 import arcs.core.storage.database.Database
 import arcs.core.storage.database.DatabaseClient
@@ -23,6 +22,7 @@ import arcs.core.storage.database.DatabasePerformanceStatistics
 import arcs.core.storage.database.DatabaseRegistration
 import arcs.core.storage.database.DatabaseRegistry
 import arcs.core.storage.database.MutableDatabaseRegistry
+import arcs.core.util.ArcsInstant
 import arcs.core.util.guardedBy
 import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer

@@ -445,7 +445,8 @@ private fun widenAndApply(
 ): Number {
     if (l is Double || r is Double) return floatBlock(l.toDouble(), r.toDouble())
     if (l is Float || r is Float) return floatBlock(l.toDouble(), r.toDouble()).toFloat()
-    if (l is ArcsBigInteger || r is ArcsBigInteger) return bigBlock(l.toArcsBigInteger(), r.toArcsBigInteger())
+    if (l is ArcsBigInteger || r is ArcsBigInteger)
+        return bigBlock(l.toArcsBigInteger(), r.toArcsBigInteger())
     if (l is Long || r is Long) return longBlock(l.toLong(), r.toLong())
     if (l is Int || r is Int) return intBlock(l.toInt(), r.toInt())
     if (l is Short || r is Short) return intBlock(l.toInt(), r.toInt()).toShort()

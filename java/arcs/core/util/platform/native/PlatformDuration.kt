@@ -29,7 +29,5 @@ fun PlatformDuration.toArcs(): ArcsD =
     TODO("Add support for ArcsDuration in Kotlin Native")
 
 object PlatformDurationProvider {
-    // fun compareTo(left: ArcsD, right: ArcsD): Int =
-        // left.toNative().compareTo(right.toNative())
-    // inline fun toShort(millis: ArcsD): Short = millis.toNative().toShort()
+    fun ofDays(days: Long): ArcsDuration = TODO("Add support for ArcsDuration in Kotlin Native")
 }

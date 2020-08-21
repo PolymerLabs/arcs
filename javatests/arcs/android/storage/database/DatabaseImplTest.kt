@@ -28,9 +28,6 @@ import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.Schema
 import arcs.core.data.SchemaFields
 import arcs.core.data.SchemaRegistry
-import arcs.core.util.ArcsBigInteger
-import arcs.core.util.ArcsDuration
-import arcs.core.util.ArcsInstant
 import arcs.core.data.util.ReferencablePrimitive
 import arcs.core.data.util.toReferencable
 import arcs.core.storage.Reference
@@ -41,6 +38,9 @@ import arcs.core.storage.database.DatabaseData
 import arcs.core.storage.database.ReferenceWithVersion
 import arcs.core.storage.testutil.DummyStorageKey
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.core.util.ArcsBigInteger
+import arcs.core.util.ArcsDuration
+import arcs.core.util.ArcsInstant
 import arcs.core.util.guardedBy
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat

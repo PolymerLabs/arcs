@@ -16,6 +16,7 @@ private typealias ArcsBI = arcs.core.util.ArcsBigInteger
 
 // Placeholder for platform implementation.
 class PlatformBigInteger {
+    override fun toString(): String = TODO("Add support for ArcsBigInteger in Kotlin Native")
 }
 
 fun ArcsBI.toNative(): PlatformBigInteger = TODO("Add support for ArcsBigInteger in Kotlin Native")
@@ -36,23 +37,28 @@ object PlatformBigIntegerProvider {
         TODO("Add support for ArcsBigInteger in Kotlin Native")
     fun fromString(value: String): ArcsBI =
         TODO("Add support for ArcsBigInteger in Kotlin Native")
+    fun toString(value: ArcsBI): String = value.toNative().toString()
+    fun equals(left: ArcsBI, right: Any?): Boolean {
+        if (right == null || right !is ArcsBI) return false
+        return left.toNative().equals(right.toNative())
+    }
     val ZERO: ArcsBI
         get() = TODO("Add support for ArcsBigInteger in Kotlin Native")
     val ONE: ArcsBI
         get() = TODO("Add support for ArcsBigInteger in Kotlin Native")
 
-    inline fun toByte(value: ArcsBI): Byte =
+    fun toByte(value: ArcsBI): Byte =
         TODO("Add support for ArcsBigInteger in Kotlin Native")
-    inline fun toChar(value: ArcsBI): Char =
+    fun toChar(value: ArcsBI): Char =
         TODO("Add support for ArcsBigInteger in Kotlin Native")
-    inline fun toDouble(value: ArcsBI): Double =
+    fun toDouble(value: ArcsBI): Double =
         TODO("Add support for ArcsBigInteger in Kotlin Native")
-    inline fun toFloat(value: ArcsBI): Float =
+    fun toFloat(value: ArcsBI): Float =
         TODO("Add support for ArcsBigInteger in Kotlin Native")
-    inline fun toInt(value: ArcsBI): Int =
+    fun toInt(value: ArcsBI): Int =
         TODO("Add support for ArcsBigInteger in Kotlin Native")
-    inline fun toLong(value: ArcsBI): Long =
+    fun toLong(value: ArcsBI): Long =
         TODO("Add support for ArcsBigInteger in Kotlin Native")
-    inline fun toShort(value: ArcsBI): Short =
+    fun toShort(value: ArcsBI): Short =
         TODO("Add support for ArcsBigInteger in Kotlin Native")
 }

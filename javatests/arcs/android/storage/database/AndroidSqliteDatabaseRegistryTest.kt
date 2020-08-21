@@ -14,8 +14,8 @@ package arcs.android.storage.database
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import arcs.android.common.forSingleResult
-import arcs.core.util.ArcsInstant
 import arcs.core.storage.database.DatabaseRegistration
+import arcs.core.util.ArcsInstant
 import arcs.core.util.Time
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before

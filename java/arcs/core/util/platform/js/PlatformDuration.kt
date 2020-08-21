@@ -28,4 +28,5 @@ fun PlatformDuration.toArcs(): ArcsD =
     TODO("Add support for ArcsDuration in Kotlin JS")
 
 object PlatformDurationProvider {
+    fun ofDays(days: Long): ArcsDuration = TODO("Add support for ArcsDuration in Kotlin JS")
 }

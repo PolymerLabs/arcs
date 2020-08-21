@@ -21,8 +21,9 @@ fun ArcsD.toNative(): PlatformDuration =
 fun PlatformDuration.toArcs(): ArcsD {
     val seconds = this.getSeconds()
     val nanos = this.getNano()
-    return ArcsD(seconds*1000 + nanos/1000)
+    return ArcsD(seconds * 1000 + nanos / 1000)
 }
 
 object PlatformDurationProvider {
+    fun ofDays(days: Long): ArcsDuration = PlatformDuration.ofDays(days).toArcs()
 }

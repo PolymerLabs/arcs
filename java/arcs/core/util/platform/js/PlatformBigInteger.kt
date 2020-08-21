@@ -16,6 +16,7 @@ private typealias ArcsBI = arcs.core.util.ArcsBigInteger
 
 // Placeholder for platform implementation.
 class PlatformBigInteger {
+    override fun toString(): String = TODO("Add support for ArcsBigInteger in Kotlin Native")
 }
 
 fun ArcsBI.toNative(): PlatformBigInteger = TODO("Add support for ArcsBigInteger in Kotlin JS")
@@ -34,16 +35,21 @@ object PlatformBigIntegerProvider {
         TODO("Add support for ArcsBigInteger in Kotlin JS")
     fun valueOf(value: Long): ArcsBI = TODO("Add support for ArcsBigInteger in Kotlin JS")
     fun fromString(value: String): ArcsBI = TODO("Add support for ArcsBigInteger in Kotlin JS")
+    fun toString(value: ArcsBI): String = value.toNative().toString()
+    fun equals(left: ArcsBI, right: Any?): Boolean {
+        if (right == null || right !is ArcsBI) return false
+        return left.toNative().equals(right.toNative())
+    }
     val ZERO: ArcsBI
         get() = TODO("Add support for ArcsBigInteger in Kotlin JS")
     val ONE: ArcsBI
         get() = TODO("Add support for ArcsBigInteger in Kotlin JS")
 
-    inline fun toByte(value: ArcsBI): Byte = TODO("Add support for ArcsBigInteger in Kotlin JS")
-    inline fun toChar(value: ArcsBI): Char = TODO("Add support for ArcsBigInteger in Kotlin JS")
-    inline fun toDouble(value: ArcsBI): Double = TODO("Add support for ArcsBigInteger in Kotlin JS")
-    inline fun toFloat(value: ArcsBI): Float = TODO("Add support for ArcsBigInteger in Kotlin JS")
-    inline fun toInt(value: ArcsBI): Int = TODO("Add support for ArcsBigInteger in Kotlin JS")
-    inline fun toLong(value: ArcsBI): Long = TODO("Add support for ArcsBigInteger in Kotlin JS")
-    inline fun toShort(value: ArcsBI): Short = TODO("Add support for ArcsBigInteger in Kotlin JS")
+    fun toByte(value: ArcsBI): Byte = TODO("Add support for ArcsBigInteger in Kotlin JS")
+    fun toChar(value: ArcsBI): Char = TODO("Add support for ArcsBigInteger in Kotlin JS")
+    fun toDouble(value: ArcsBI): Double = TODO("Add support for ArcsBigInteger in Kotlin JS")
+    fun toFloat(value: ArcsBI): Float = TODO("Add support for ArcsBigInteger in Kotlin JS")
+    fun toInt(value: ArcsBI): Int = TODO("Add support for ArcsBigInteger in Kotlin JS")
+    fun toLong(value: ArcsBI): Long = TODO("Add support for ArcsBigInteger in Kotlin JS")
+    fun toShort(value: ArcsBI): Short = TODO("Add support for ArcsBigInteger in Kotlin JS")
 }
