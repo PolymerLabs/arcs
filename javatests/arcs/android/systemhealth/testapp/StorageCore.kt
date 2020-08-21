@@ -24,6 +24,7 @@ import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.Reference
 import arcs.core.storage.StoreManager
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -295,9 +296,9 @@ class StorageCore(val context: Context) {
             TaskHandle(
                 EntityHandleManager(
                     time = JvmTime,
-                    stores = stores,
                     // Per-task single-threaded Scheduler being cascaded with Watchdog capabilities
-                    scheduler = TestSchedulerProvider(taskCoroutineContext)("sysHealthStorageCore")
+                    scheduler = TestSchedulerProvider(taskCoroutineContext)("sysHealthStorageCore"),
+                    storageEndpointManager = DirectStorageEndpointManager(stores)
                 ),
                 stores,
                 taskCoroutineContext

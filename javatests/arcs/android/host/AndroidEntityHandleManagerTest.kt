@@ -22,6 +22,7 @@ import arcs.core.entity.WriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
@@ -98,10 +99,12 @@ class AndroidEntityHandleManagerTest {
             "testHost",
             FakeTime(),
             schedulerProvider("testArc"),
-            StoreManager(
-                activationFactory = ServiceStoreFactory(
-                    context = app,
-                    connectionFactory = TestConnectionFactory(app)
+            DirectStorageEndpointManager(
+                StoreManager(
+                    activationFactory = ServiceStoreFactory(
+                        context = app,
+                        connectionFactory = TestConnectionFactory(app)
+                    )
                 )
             )
         )

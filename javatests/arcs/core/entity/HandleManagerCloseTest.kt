@@ -10,7 +10,9 @@ import arcs.core.entity.HandleManagerTestBase.CoolnessIndex
 import arcs.core.entity.HandleManagerTestBase.Person
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
@@ -73,7 +75,13 @@ class HandleManagerCloseTest {
         schedulerProvider.cancelAll()
     }
 
-    fun createHandleManager() = EntityHandleManager("testArc", "", FakeTime(), scheduler)
+    fun createHandleManager() = EntityHandleManager(
+        "testArc",
+        "",
+        FakeTime(),
+        scheduler,
+        DirectStorageEndpointManager(StoreManager())
+    )
 
     @Test
     fun closehandleManagerStopUpdates() = runBlocking {
