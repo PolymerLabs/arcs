@@ -57,7 +57,7 @@ open class DevToolsService : Service() {
             val extras = intent?.extras
             if (extras != null) {
                 @Suppress("UNCHECKED_CAST")
-                storageClass = extras.getSerializable("STORAGE_CLASS") as Class<StorageService>
+                storageClass = extras.getSerializable(STORAGE_CLASS) as Class<StorageService>
             }
             if (storageService != null) return@launch
             val service = initialize()
@@ -148,5 +148,11 @@ open class DevToolsService : Service() {
 
     companion object {
         private const val CHANNEL_ID = "DevToolsChannel"
+
+        /**
+         * [STORAGE_CLASS] should be used the key in a bundle to tell DevToolsService to bind to
+         * a subclass of [StorageService].
+         */
+        const val STORAGE_CLASS = "STORAGE_CLASS"
     }
 }
