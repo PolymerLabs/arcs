@@ -22,6 +22,19 @@ import arcs.core.util.TaggedLog
 /** Entry for logging analytics. */
 interface Analytics {
 
+    /** Categories of storage. */
+    enum class StorageCategory {
+        IN_MEMORY,
+        ON_DISK,
+        OTHER
+    }
+
+    /** Log snapshot of entity count based on [StorageCategory]. */
+    fun logEntityCountSnapshot(count: Int, category: StorageCategory)
+
+    /** Log snapshot of total size of data stored based on [StorageCategory]. */
+    fun logStorageSizeSnapshot(sizeKib: Long, category: StorageCategory)
+
     /** Log storage latency based on [StorageType], [HandleType] and [Event]. */
     fun logStorageLatency(
         latencyMillis: Long,
@@ -90,6 +103,17 @@ interface Analytics {
         /** Default implementation of [Analytics] which outputs to [TaggedLog]. */
         val defaultAnalytics = object : Analytics {
             private val log = TaggedLog { "Analytics" }
+            override fun logEntityCountSnapshot(count: Int, category: StorageCategory) {
+                log.debug {
+                    "Analytics: logEntityCountSnapshot: $category: $count."
+                }
+            }
+
+            override fun logStorageSizeSnapshot(sizeKiB: Long, category: StorageCategory) {
+                log.debug {
+                    "Analytics: logStorageSizeSnapshot: $category: $sizeKiB (KiB)."
+                }
+            }
 
             override fun logStorageLatency(
                 latencyMillis: Long,

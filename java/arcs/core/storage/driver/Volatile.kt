@@ -47,6 +47,14 @@ data class VolatileDriverProvider(private val arcId: ArcId) : DriverProvider {
     override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) =
         // Volatile storage is opaque, so remove all entities.
         removeAllEntities()
+
+    override suspend fun getStoredEntitiesCount(inMemory: Boolean): Int {
+        if (inMemory) {
+            return arcMemory.size()
+        }
+
+        return 0
+    }
 }
 
 /** [DriverProvider] that creates an instance of [VolatileDriverProvider] per arc on demand. */
@@ -92,6 +100,12 @@ class VolatileDriverProviderFactory : DriverProvider {
     override suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) {
         driverProvidersByArcId.values.forEach {
             it.removeEntitiesCreatedBetween(startTimeMillis, endTimeMillis)
+        }
+    }
+
+    override suspend fun getStoredEntitiesCount(inMemory: Boolean): Int {
+        return driverProvidersByArcId.values.fold(0) {
+            sum, provider-> sum + provider.getStoredEntitiesCount(inMemory)
         }
     }
 }
@@ -255,6 +269,9 @@ class VolatileDriverProviderFactory : DriverProvider {
 
     /** Clears everything from storage. */
     fun clear() = synchronized(lock) { entries.clear() }
+
+    /** Clears everything from storage. */
+    fun size() = synchronized(lock) { entries.size }
 
     /* internal */ fun addListener(listener: (StorageKey, Any?) -> Unit) = synchronized(lock) {
         listeners.add(listener)

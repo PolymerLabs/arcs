@@ -31,6 +31,13 @@ object DriverFactory {
         providers.value.any { it.willSupport(storageKey) }
 
     /**
+     * Get a snapshot of all the [DriverProvider]s.
+     */
+    fun getProviders(): Set<DriverProvider> {
+        return providers.value
+    }
+
+    /**
      * Fetches a [Driver] of type [Data] given its [storageKey].
      */
     suspend inline fun <reified Data : Any> getDriver(
@@ -102,4 +109,15 @@ interface DriverProvider {
     suspend fun removeAllEntities() = Unit
 
     suspend fun removeEntitiesCreatedBetween(startTimeMillis: Long, endTimeMillis: Long) = Unit
+
+    /**
+     * @param inMemory if true, return count of entities stored in-memory, otherwise return count
+     * of entities stored on-disk.
+     */
+    suspend fun getStoredEntitiesCount(inMemory: Boolean): Int = 0
+
+    /**
+     * @param inMemory if true, return size stored in-memory, otherwise return size stored on-disk.
+     */
+    suspend fun getStoredSizeKiB(inMemory: Boolean): Long = 0
 }
