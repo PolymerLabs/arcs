@@ -15,6 +15,7 @@ import arcs.core.data.AccessPath
 // A change to test piper import.
 // Yet another change to test piper import.
 // A change in google3 to test export to a branch.
+// A change in google3 after registering migrations to a branch.
 
 /**
  * An [AbstractValue] that keeps track of [InformationFlowLabels] for different [AccessPath] values.
