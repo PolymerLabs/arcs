@@ -10,7 +10,7 @@
 import * as AstNode from '../manifest-ast-types/manifest-ast-nodes.js';
 import {AnnotationRef} from '../recipe/annotation.js';
 import {assert} from '../../platform/assert-web.js';
-import {ManifestStringBuilder} from '../manifest-string-builder.js';
+import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
 import {Ttl, Capabilities, Capability, Persistence, Encryption} from '../capabilities.js';
 import {EntityType, InterfaceType, Type} from '../type.js';
 import {FieldPathType, resolveFieldPathType} from '../field-path.js';
@@ -49,7 +49,7 @@ export class Policy {
       readonly customAnnotations: AnnotationRef[],
       private readonly allAnnotations: AnnotationRef[]) {}
 
-  toManifestString(builder = new ManifestStringBuilder()): string {
+  toManifestString(builder = new IndentingStringBuilder()): string {
     builder.push(...this.allAnnotations.map(annotation => annotation.toString()));
     builder.push(`policy ${this.name} {`);
     builder.withIndent(builder => {
@@ -113,7 +113,7 @@ export class PolicyTarget {
       readonly customAnnotations: AnnotationRef[],
       private readonly allAnnotations: AnnotationRef[]) {}
 
-  toManifestString(builder = new ManifestStringBuilder()): string {
+  toManifestString(builder = new IndentingStringBuilder()): string {
     builder.push(...this.allAnnotations.map(annotation => annotation.toString()));
     builder.push(`from ${this.schemaName} access {`);
     this.fields.forEach(field => field.toManifestString(builder.withIndent()));
@@ -214,7 +214,7 @@ export class PolicyField {
       readonly customAnnotations: AnnotationRef[],
       private readonly allAnnotations: AnnotationRef[]) {}
 
-  toManifestString(builder = new ManifestStringBuilder()): string {
+  toManifestString(builder = new IndentingStringBuilder()): string {
     builder.push(...this.allAnnotations.map(annotation => annotation.toString()));
     if (this.subfields.length) {
       builder.push(`${this.name} {`);
@@ -314,7 +314,7 @@ export class PolicyField {
 export class PolicyConfig {
   constructor(readonly name: string, readonly metadata: Map<string, string>) {}
 
-  toManifestString(builder = new ManifestStringBuilder()): string {
+  toManifestString(builder = new IndentingStringBuilder()): string {
     builder.push(`config ${this.name} {`);
     builder.withIndent(builder => {
       for (const [k, v] of this.metadata) {

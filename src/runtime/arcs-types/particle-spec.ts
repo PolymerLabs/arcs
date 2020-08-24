@@ -18,7 +18,7 @@ import {InterfaceType, SlotType, Type, TypeLiteral, TypeVariableInfo} from '../t
 import {Literal} from '../../utils/hot.js';
 import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './check.js';
 import {Claim, createClaim} from './claim.js';
-import {ManifestStringBuilder} from '../manifest-string-builder.js';
+import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
 import * as AstNode from '../manifest-ast-types/manifest-ast-nodes.js';
 import {AnnotationRef} from '../recipe/annotation.js';
 import {resolveFieldPathType} from '../field-path.js';
@@ -495,7 +495,7 @@ export class ParticleSpec {
     return InterfaceType.make(this.name, handles, slots);
   }
 
-  toManifestString(builder = new ManifestStringBuilder()): string {
+  toManifestString(builder = new IndentingStringBuilder()): string {
     for (const annotation of this.annotations) {
       builder.push(annotation.toString());
     }
@@ -515,7 +515,7 @@ export class ParticleSpec {
 
     const indentedBuilder = builder.withIndent();
 
-    const writeConnection = (connection: HandleConnectionSpec, builder: ManifestStringBuilder) => {
+    const writeConnection = (connection: HandleConnectionSpec, builder: IndentingStringBuilder) => {
       const dir = connection.direction === 'any' ? '' : `${AstNode.preSlandlesDirectionToDirection(connection.direction, connection.isOptional)}`;
 
       const subresults = [
@@ -545,7 +545,7 @@ export class ParticleSpec {
         ...this.trustChecks.map(check => check.toManifestString()));
 
     this.modality.names.forEach(a => indentedBuilder.push(`modality ${a}`));
-    const slotToString = (s: SerializedSlotConnectionSpec | ProvideSlotConnectionSpec, direction: SlotDirection, builder: ManifestStringBuilder):void => {
+    const slotToString = (s: SerializedSlotConnectionSpec | ProvideSlotConnectionSpec, direction: SlotDirection, builder: IndentingStringBuilder):void => {
       const tokens: string[] = [];
       tokens.push(`${s.name}:`);
       tokens.push(`${direction}${s.isRequired ? '' : '?'}`);

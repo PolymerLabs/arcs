@@ -16,7 +16,7 @@ import {Recipe} from './recipe/recipe.js';
 import {Manifest} from './manifest.js';
 import {Id} from './id.js';
 import {VolatileMemory, VolatileStorageKey} from './storage/drivers/volatile.js';
-import {ManifestStringBuilder} from './manifest-string-builder.js';
+import {IndentingStringBuilder} from '../utils/indenting-string-builder.js';
 
 /**
  * @license
@@ -68,7 +68,7 @@ ${this.arc.activeRecipe.toString()}`;
 
   private async serializeVolatileMemory(): Promise<string> {
     let resourceNum = 0;
-    const builder = new ManifestStringBuilder();
+    const builder = new IndentingStringBuilder();
 
     for (const [key, value] of this.arc.volatileMemory.entries.entries()) {
       this.memoryResourceNames.set(key, `VolatileMemoryResource${resourceNum}`);
