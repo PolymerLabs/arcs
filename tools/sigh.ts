@@ -37,7 +37,7 @@ let globalOptions = {
 const sources = {
   peg: [{
     grammar: 'src/runtime/manifest-parser.pegjs',
-    astNodes: 'src/runtime/manifest-ast-nodes.ts',
+    astNodes: 'src/runtime/manifest-ast-types/manifest-ast-nodes.ts',
     output: 'src/gen/runtime/manifest-parser.ts',
     railroad: 'manifest-railroad.html',
     tspegjs: {
