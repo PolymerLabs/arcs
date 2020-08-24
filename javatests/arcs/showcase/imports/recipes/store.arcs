@@ -7,7 +7,7 @@ import '../recipes/inventory.arcs'
 
 @arcId('orderIngestion')
 recipe IngestOrders
-  order: create 'order' @inMemory
+  order: create 'order' @persistent @ttl('1d')
 
   IngestOrder
     order: writes order
@@ -15,7 +15,7 @@ recipe IngestOrders
 
 recipe ProcessOrderByName
   order: map 'order'
-  inventory: map 'inventory'
+  inventory: copy 'inventory'
   toCutomer: create @inMemory
 
   PlaceOrder
