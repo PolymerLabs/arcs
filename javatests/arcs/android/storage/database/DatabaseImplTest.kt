@@ -2907,7 +2907,9 @@ class DatabaseImplTest {
         assertThat(database.getEntitiesCount()).isEqualTo(2)
 
         database.removeAllEntities()
-        assertThat(database.getEntitiesCount()).isEqualTo(0)
+        database.runGarbageCollection()
+        // remove and GC will leave tombstone entities which should also be counted.
+        assertThat(database.getEntitiesCount()).isEqualTo(2)
     }
 
     /** Returns a list of all the rows in the 'fields' table. */
