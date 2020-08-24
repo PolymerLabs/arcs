@@ -29,3 +29,4 @@ export enum CheckType {
   Implication = 'implication',
 }
 
+export type Fate = 'use' | 'create' | 'map' | 'copy' | 'join' | '?' | '`slot';

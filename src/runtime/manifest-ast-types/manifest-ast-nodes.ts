@@ -7,8 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {Direction, SlotDirection, ClaimType, CheckType} from '../arcs-types/enums.js';
-export {Direction, SlotDirection, ClaimType, CheckType};
+import {Direction, SlotDirection, ClaimType, CheckType, Fate} from '../manifest-ast-types/enums.js';
+export {Direction, SlotDirection, ClaimType, CheckType, Fate};
 /**
  * Complete set of tokens used by `manifest-parser.pegjs`. To use this you
  * need to follow some simple guidelines:
@@ -965,8 +965,6 @@ export function preSlandlesDirectionToDirection(direction: Direction, isOptional
       throw new Error(`Bad pre slandles direction ${direction}`);
   }
 }
-
-export type Fate = 'use' | 'create' | 'map' | 'copy' | 'join' | '?' | '`slot';
 
 export type ParticleHandleConnectionType = TypeVariable|CollectionType|
     BigCollectionType|ReferenceType|MuxType|SlotType|SchemaInline|TypeName;

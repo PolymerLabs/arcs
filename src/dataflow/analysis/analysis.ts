@@ -11,7 +11,7 @@
 import {FlowGraph} from './flow-graph.js';
 import {assert} from '../../platform/assert-web.js';
 import {Edge, FlowModifier, FlowSet, FlowModifierSet, Flow} from './graph-internals.js';
-import {Recipe} from '../../runtime/recipe/recipe.js';
+import {Recipe} from '../../runtime/recipe/lib-recipe.js';
 import {Manifest} from '../../runtime/manifest.js';
 import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
 

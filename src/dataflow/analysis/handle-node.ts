@@ -10,9 +10,8 @@
 
 import {Node, Edge} from './graph-internals.js';
 import {ParticleOutput, ParticleInput, ParticleNode} from './particle-node.js';
-import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
 import {assert} from '../../platform/assert-web.js';
-import {Handle} from '../../runtime/recipe/handle.js';
+import {Handle, HandleConnection} from '../../runtime/recipe/lib-recipe.js';
 
 export class HandleNode extends Node {
   readonly nodeId: string;
