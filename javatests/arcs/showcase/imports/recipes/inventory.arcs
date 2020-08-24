@@ -24,7 +24,7 @@ schema Container
 
 
 particle AcceptImports in '.AcceptImports'
-  containers: writes [Container]
+  containers: writes [Container {id, contents}]
 
 
 @arcId('gatherImports')
@@ -36,7 +36,7 @@ recipe GatherImports
 
 // Associate a quality rating for each item unloaded from container.
 particle LabelInventory in '.LabelInventory'
-  containers: reads [Container]
+  containers: reads [Container {id, contents}]
   categorized: writes [(Quality {rating: Number}, Tea)]
 
 
@@ -44,7 +44,7 @@ particle LabelInventory in '.LabelInventory'
 particle ProduceInventory in '.ProduceInventory'
   minimum: reads Quality {rating: Number}
   categorized: reads [(Quality {rating: Number}, Tea)]
-  tea: writes [Tea]
+  tea: writes [Tea {name, variety, weight, unitPrice, expirationDate}]
 
 
 @arcId('prepInventory')
