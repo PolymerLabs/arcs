@@ -8,10 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Fate, Direction} from "../arcs-types/enums.js";
-import {HandleConnectionSpec, ConsumeSlotConnectionSpec} from "../arcs-types/particle-spec.js";
-import {Dictionary} from "../../utils/hot.js";
-import {ClaimIsTag} from "../arcs-types/claim.js";
+import {Fate, Direction} from '../arcs-types/enums.js';
+import {HandleConnectionSpec, ConsumeSlotConnectionSpec} from '../arcs-types/particle-spec.js';
+import {Dictionary} from '../../utils/hot.js';
+import {ClaimIsTag} from '../arcs-types/claim.js';
 
 export interface Particle {
   name: string;
@@ -20,7 +20,7 @@ export interface Particle {
 export interface Handle {
   id: string;
   fate: Fate;
-  claims: Dictionary<ClaimIsTag[]>;
+  claims: Map<string, ClaimIsTag[]>;
 }
 
 export interface Slot {
