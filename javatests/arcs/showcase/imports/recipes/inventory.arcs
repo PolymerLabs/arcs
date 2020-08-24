@@ -1,0 +1,62 @@
+meta
+  namespace: arcs.showcase.imports.recipes
+
+
+schema Place
+  name: Text
+  nation: Text
+  lat: Number
+  lng: Number
+
+schema Tea
+  name: Text
+  origin: inline Place
+  variety: Text
+  weight: Number
+  unitPrice: Number
+  expirationDate: Long
+
+// Containers group `Tea` headed to the same destination
+schema Container
+  id: Text
+  contents: [inline Tea]
+  destination: inline Place
+
+
+particle AcceptImports in '.AcceptImports'
+  containers: writes [Container]
+
+
+@arcId('gatherImports')
+recipe GatherImports
+  largeStock: create 'largeStock' @persistent @ttl('1m')
+
+  AcceptImports
+    containers: writes largeStock
+
+// Associate a quality rating for each item unloaded from container.
+particle LabelInventory in '.LabelInventory'
+  containers: reads [Container]
+  categorized: writes [(Quality {rating: Number}, Tea)]
+
+
+// Produce set of tea, given current qulity standards
+particle ProduceInventory in '.ProduceInventory'
+  minimum: reads Quality {rating: Number}
+  categorized: reads [(Quality {rating: Number}, Tea)]
+  tea: writes [Tea]
+
+
+@arcId('prepInventory')
+recipe PrepareInventoryForShop
+  containers: map 'largeStock'
+  labeled: create @inMemory
+//  inventory: create 'inventory' @persistent @queryable
+
+  LabelInventory
+    containers: reads contianers
+    categorized: writes labeled
+
+
+
+
