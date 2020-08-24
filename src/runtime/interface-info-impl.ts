@@ -14,7 +14,7 @@ import {Type, TypeVariable, TypeLiteral, HandleConnection, Slot, InterfaceInfo,
         TypeVarReference, HandleConnectionLiteral, SlotLiteral,
         InterfaceInfoLiteral, MatchResult} from './type.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
-import {ManifestStringBuilder} from './manifest-string-builder.js';
+import {IndentingStringBuilder} from '../utils/indenting-string-builder.js';
 
 const handleConnectionFields = ['type', 'name', 'direction'];
 const slotFields = ['name', 'direction', 'isRequired', 'isSet'];
@@ -139,7 +139,7 @@ class InterfaceInfoImpl extends InterfaceInfo {
     return false;
   }
 
-  _handleConnectionsToManifestString(builder: ManifestStringBuilder) {
+  _handleConnectionsToManifestString(builder: IndentingStringBuilder) {
     builder.push(...this.handleConnections.map(h => {
       const parts = [];
       if (h.name) {
@@ -153,7 +153,7 @@ class InterfaceInfoImpl extends InterfaceInfo {
     }));
   }
 
-  _slotsToManifestString(builder: ManifestStringBuilder) {
+  _slotsToManifestString(builder: IndentingStringBuilder) {
     // TODO deal with isRequired
     builder.push(...this.slots.map(slot => {
       const nameStr = slot.name ? `${slot.name}: ` : '';
@@ -161,7 +161,7 @@ class InterfaceInfoImpl extends InterfaceInfo {
     }));
   }
   // TODO: Include name as a property of the interface and normalize this to just toString()
-  toManifestString(builder = new ManifestStringBuilder()) : string {
+  toManifestString(builder = new IndentingStringBuilder()) : string {
     builder.push(`interface ${this.name}`);
     builder.withIndent(builder => {
       this._handleConnectionsToManifestString(builder);

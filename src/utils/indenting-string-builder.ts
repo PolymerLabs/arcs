@@ -10,12 +10,12 @@
 
 const spacesPerIndent = 2;
 
-export class ManifestStringBuilder {
+export class IndentingStringBuilder {
   private readonly lines: string[];
   private readonly indent: number;
   private readonly startIndex: number;
 
-  constructor(parentBuilder?: ManifestStringBuilder) {
+  constructor(parentBuilder?: IndentingStringBuilder) {
     if (parentBuilder) {
       this.lines = parentBuilder.lines;
       this.indent = parentBuilder.indent + 1;
@@ -53,8 +53,8 @@ export class ManifestStringBuilder {
    * });
    * ```
    */
-  withIndent(fn?: (builder: ManifestStringBuilder) => void): ManifestStringBuilder {
-    const indentedBuilder = new ManifestStringBuilder(this);
+  withIndent(fn?: (builder: IndentingStringBuilder) => void): IndentingStringBuilder {
+    const indentedBuilder = new IndentingStringBuilder(this);
     if (fn) {
       fn(indentedBuilder);
     }

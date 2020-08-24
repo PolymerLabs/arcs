@@ -19,7 +19,7 @@ import {Schema} from './schema.js';
 import {ParticleSpec} from './arcs-types/particle-spec.js';
 import {Refinement} from './refiner.js';
 import {AnnotationRef} from './recipe/annotation.js';
-import {ManifestStringBuilder} from './manifest-string-builder.js';
+import {IndentingStringBuilder} from '../utils/indenting-string-builder.js';
 import {Direction, SlotDirection} from './arcs-types/enums.js';
 
 export interface TypeLiteral extends Literal {
@@ -1600,7 +1600,7 @@ export abstract class InterfaceInfo {
 
   abstract _applyExistenceTypeTest(test: Predicate<TypeVarReference>) : boolean;
 
-  abstract toManifestString(builder?: ManifestStringBuilder) : string;
+  abstract toManifestString(builder?: IndentingStringBuilder) : string;
 
   static make : Maker = null;
 
