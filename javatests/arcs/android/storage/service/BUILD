@@ -12,6 +12,7 @@ arcs_kt_android_test_suite(
     manifest = "//java/arcs/android/common:AndroidManifest.xml",
     package = "arcs.android.storage.service",
     deps = [
+        "j//ava/arcs/android/storage/database",
         "//java/arcs/android/crdt",
         "//java/arcs/android/crdt:crdt_exception_android_proto",
         "//java/arcs/android/storage",
@@ -23,6 +24,7 @@ arcs_kt_android_test_suite(
         "//java/arcs/core/entity",
         "//java/arcs/core/host",
         "//java/arcs/core/storage",
+        "//java/arcs/core/storage/api",
         "//java/arcs/core/storage/database",
         "//java/arcs/core/storage/driver",
         "//java/arcs/core/storage/keys",
