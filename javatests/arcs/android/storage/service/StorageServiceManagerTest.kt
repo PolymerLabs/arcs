@@ -70,6 +70,7 @@ class StorageServiceManagerTest {
         StorageServiceManager(coroutineContext, ConcurrentHashMap())
     private val time = FakeTime()
     private val scheduler = SimpleSchedulerProvider(Dispatchers.Default).invoke("test")
+    private val timeout = 10_000L
     private val ramdiskKey = ReferenceModeStorageKey(
         backingKey = RamDiskStorageKey("backing"),
         storageKey = RamDiskStorageKey("container")
@@ -148,7 +149,7 @@ class StorageServiceManagerTest {
         log("Resetting databases")
         manager.resetDatabases(deferredResult)
 
-        withTimeout(2000) {
+        withTimeout(timeout) {
             assertThat(deferredResult.await()).isTrue()
         }
 
@@ -183,7 +184,7 @@ class StorageServiceManagerTest {
         log("Clearing databases")
         manager.clearAll(deferredResult)
 
-        withTimeout(2000) {
+        withTimeout(timeout) {
             assertThat(deferredResult.await()).isTrue()
         }
 
@@ -198,7 +199,7 @@ class StorageServiceManagerTest {
         val entity3 = DummyEntity().apply { num = 3.0 }
 
         val handle = createCollectionHandle(storageKey)
-        withTimeout(5000) {
+        withTimeout(timeout) {
             time.millis = 1L
             handle.dispatchStore(entity1)
 
@@ -216,7 +217,7 @@ class StorageServiceManagerTest {
         log("Clearing data created at t=2")
         manager.clearDataBetween(2, 2, deferredResult)
 
-        withTimeout(2000) { assertThat(deferredResult.await()).isTrue() }
+        withTimeout(timeout) { assertThat(deferredResult.await()).isTrue() }
         log("Clear complete, asserting")
 
         // Create a new handle (with new Entity manager) to confirm data is gone from storage.
