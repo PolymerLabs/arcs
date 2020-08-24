@@ -16,7 +16,7 @@ import {ClaimIsTag} from '../arcs-types/claim.js';
 import {SingletonInterfaceStore, SingletonEntityStore, SingletonReferenceStore, CollectionEntityStore, CollectionReferenceStore, MuxEntityStore} from './storage.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
 import {AnnotationRef} from '../recipe/annotation.js';
-import {ManifestStringBuilder} from '../manifest-string-builder.js';
+import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
 import {ActiveStore} from './store.js';
 
 export function isSingletonInterfaceStore(store: AbstractStore): store is SingletonInterfaceStore {
@@ -112,7 +112,7 @@ export abstract class AbstractStore implements Comparable<AbstractStore> {
   toManifestString(opts?: {handleTags?: string[], overrides?: Partial<StoreInfo>}): string {
     opts = opts || {};
     const info = {...this.storeInfo, ...opts.overrides};
-    const builder = new ManifestStringBuilder();
+    const builder = new IndentingStringBuilder();
     if ((this.storeInfo.annotations || []).length > 0) {
       builder.push(...this.storeInfo.annotations.map(a => a.toString()));
     }

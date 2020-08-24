@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Consumer} from '../hot.js';
+import {Consumer} from '../../utils/hot.js';
 import {checkDefined} from './preconditions.js';
 
 // tslint:disable: no-any

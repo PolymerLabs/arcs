@@ -13,7 +13,7 @@ import {assert} from '../../platform/assert-web.js';
 import {Edge, FlowModifier, FlowSet, FlowModifierSet, Flow} from './graph-internals.js';
 import {Recipe} from '../../runtime/recipe/recipe.js';
 import {Manifest} from '../../runtime/manifest.js';
-import {ManifestStringBuilder} from '../../runtime/manifest-string-builder.js';
+import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
 
 /** Runs the dataflow analyser on the given recipe. */
 export function analyseDataflow(recipe: Recipe, manifest: Manifest): [FlowGraph, ValidationResult] {
@@ -191,7 +191,7 @@ export class EdgeExpression {
   }
 
   toString() {
-    const builder = new ManifestStringBuilder();
+    const builder = new IndentingStringBuilder();
     builder.push(`EdgeExpression(${this.edge.edgeId}) {`);
     builder.withIndent(builder => {
       for (const flow of this.resolvedFlows) {

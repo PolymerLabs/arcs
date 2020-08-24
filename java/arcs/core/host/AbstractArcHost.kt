@@ -21,6 +21,7 @@ import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.util.LruCacheMap
@@ -212,6 +213,7 @@ abstract class AbstractArcHost(
         pausedArcs.clear()
         contextSerializationChannel.cancel()
         resurrectionScope.cancel()
+        stores.reset()
         schedulerProvider.cancelAll()
     }
 
@@ -627,7 +629,7 @@ abstract class AbstractArcHost(
         hostId,
         platformTime,
         schedulerProvider(arcId),
-        stores
+        DirectStorageEndpointManager(stores)
     )
 
     /**

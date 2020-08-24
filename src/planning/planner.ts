@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Consumer} from '../runtime/hot.js';
+import {Consumer} from '../utils/hot.js';
 import {assert} from '../platform/assert-web.js';
 import {now} from '../platform/date-web.js';
 import {DeviceInfo} from '../platform/deviceinfo-web.js';

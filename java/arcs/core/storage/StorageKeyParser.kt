@@ -80,14 +80,14 @@ object DefaultStorageKeyManager : StorageKeyManager {
     override fun parse(rawKeyString: String): StorageKey {
         val match =
             requireNotNull(VALID_KEY_PATTERN.matchEntire(rawKeyString)) {
-                "Illegal key: \"$rawKeyString\""
+                "Invalid key pattern"
             }
 
         val protocol = match.groupValues[1]
         val contents = match.groupValues[2]
         val parser = synchronized(this) {
             requireNotNull(parsers[protocol]) {
-                "Unknown protocol \"$protocol\" in \"$rawKeyString\""
+                "No registered parsers for protocol \"$protocol\""
             }
         }
 

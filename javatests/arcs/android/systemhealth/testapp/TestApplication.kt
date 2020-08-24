@@ -49,6 +49,7 @@ open class TestApplication : Application(), Configuration.Provider {
 
         RamDisk.clear()
         SchemaRegistry.register(TestEntity.SCHEMA)
+        SchemaRegistry.register(InlineTestEntity.SCHEMA)
         DriverAndKeyConfigurator.configure(AndroidSqliteDatabaseManager(this))
 
         initLogForAndroid()

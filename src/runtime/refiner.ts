@@ -9,7 +9,7 @@
  */
 
 import {RefinementNode, Op, RefinementExpressionNode, BinaryExpressionNode, UnaryExpressionNode, FieldNode, QueryNode, BuiltInNode, DiscreteNode, NumberNode, BooleanNode, TextNode, Primitive, DiscreteType, discreteTypes} from './manifest-ast-types/manifest-ast-nodes.js';
-import {Dictionary} from './hot.js';
+import {Dictionary} from '../utils/hot.js';
 import {Schema} from './schema.js';
 import {Entity} from './entity.js';
 import {AuditException} from './arc-exceptions.js';

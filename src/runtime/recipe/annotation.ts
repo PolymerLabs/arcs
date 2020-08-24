@@ -10,9 +10,9 @@
 
 import {assert} from '../../platform/assert-web.js';
 import {Comparable, compareStrings, compareArrays, compareBools} from './comparable.js';
-import {Dictionary} from '../hot.js';
+import {Dictionary} from '../../utils/hot.js';
 import {AnnotationTargetValue, AnnotationRetentionValue, SchemaPrimitiveTypeValue} from '../manifest-ast-types/manifest-ast-nodes.js';
-import {ManifestStringBuilder} from '../manifest-string-builder.js';
+import {IndentingStringBuilder} from '../../utils/indenting-string-builder.js';
 
 export class Annotation implements Comparable<Annotation> {
   constructor(public readonly name: string,
@@ -32,7 +32,7 @@ export class Annotation implements Comparable<Annotation> {
     return 0;
   }
 
-  toManifestString(builder = new ManifestStringBuilder()): string {
+  toManifestString(builder = new IndentingStringBuilder()): string {
     let paramStr = '';
     if (Object.keys(this.params).length > 0) {
       paramStr = `(${Object.keys(this.params).map(name => `${name}: ${this.params[name]}`).join(', ')})`;

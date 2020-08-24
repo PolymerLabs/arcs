@@ -14,7 +14,7 @@ class RecipeGraphToDotGraphTest {
     /** Decode the recipe in the given .arcs test. */
     private fun parseManifestWithSingleRecipe(test: String): Recipe {
         val manifestProto = loadManifestBinaryProto(
-            "javatests/arcs/core/analysis/testdata/$test.pb.bin"
+            "javatests/arcs/core/analysis/testdata/$test.binarypb"
         )
         val recipes = manifestProto.decodeRecipes()
         return recipes.single()
@@ -22,7 +22,7 @@ class RecipeGraphToDotGraphTest {
 
     @Test
     fun dotGraph_DefaultNodeLabels() {
-        val recipe = parseManifestWithSingleRecipe("ok-directly-satisfied")
+        val recipe = parseManifestWithSingleRecipe("ok_directly_satisfied")
         val graph = RecipeGraph(recipe)
         val dotGraphLines = graph.toDotGraph().lines()
 
@@ -44,7 +44,7 @@ class RecipeGraphToDotGraphTest {
 
     @Test
     fun dotGraph_CustomNodeLabels() {
-        val recipe = parseManifestWithSingleRecipe("ok-directly-satisfied")
+        val recipe = parseManifestWithSingleRecipe("ok_directly_satisfied")
         val graph = RecipeGraph(recipe)
         val dotGraphLines = graph.toDotGraph { node -> "~~${node.debugName}~~" }.lines()
 

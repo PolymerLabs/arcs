@@ -7,6 +7,7 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import arcs.android.storage.database.AndroidSqliteDatabaseManager
 import arcs.core.entity.HandleManagerTestBase
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StoreManager
 import arcs.core.storage.driver.DatabaseDriverProvider
 import arcs.sdk.android.storage.ServiceStoreFactory
@@ -36,19 +37,21 @@ class DifferentHandleManagerTest : HandleManagerTestBase() {
             connectionFactory = TestConnectionFactory(app)
         )
         stores = StoreManager(activationFactory)
+        val storageEndpointManager = DirectStorageEndpointManager(stores)
+        monitorStorageEndpointManager = storageEndpointManager
         readHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("reader"),
-            stores = stores
+            storageEndpointManager = storageEndpointManager
         )
         writeHandleManager = EntityHandleManager(
             arcId = "arcId",
             hostId = "hostId",
             time = fakeTime,
             scheduler = schedulerProvider("writer"),
-            stores = stores
+            storageEndpointManager = storageEndpointManager
         )
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(app)

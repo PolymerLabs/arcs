@@ -24,6 +24,7 @@ import arcs.core.entity.Handle
 import arcs.core.entity.HandleSpec
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.Reference
 import arcs.core.storage.StoreManager
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -295,9 +296,9 @@ class StorageCore(val context: Context) {
             TaskHandle(
                 EntityHandleManager(
                     time = JvmTime,
-                    stores = stores,
                     // Per-task single-threaded Scheduler being cascaded with Watchdog capabilities
-                    scheduler = TestSchedulerProvider(taskCoroutineContext)("sysHealthStorageCore")
+                    scheduler = TestSchedulerProvider(taskCoroutineContext)("sysHealthStorageCore"),
+                    storageEndpointManager = DirectStorageEndpointManager(stores)
                 ),
                 stores,
                 taskCoroutineContext
@@ -382,7 +383,10 @@ class StorageCore(val context: Context) {
                 CollectionType(EntityType(TestEntity.SCHEMA)),
                 TestEntity
             ),
-            TestEntity.clearEntitiesTestStorageKey
+            when (settings.storageMode) {
+                StorageMode.PERSISTENT -> TestEntity.clearEntitiesPersistentStorageKey
+                else -> TestEntity.clearEntitiesMemoryDatabaseStorageKey
+            }
         ) as WriteCollectionHandle<TestEntity>
 
         val elapsedTime = measureTimeMillis { handle.awaitReady() }
@@ -412,7 +416,8 @@ class StorageCore(val context: Context) {
                     TestEntity
                 ),
                 when (settings.storageMode) {
-                    TestEntity.StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
+                    StorageMode.PERSISTENT -> TestEntity.singletonPersistentStorageKey
+                    StorageMode.MEMORY_DATABASE -> TestEntity.singletonMemoryDatabaseStorageKey
                     else -> TestEntity.singletonInMemoryStorageKey
                 }
             ) as ReadWriteSingletonHandle<TestEntity>
@@ -463,6 +468,7 @@ class StorageCore(val context: Context) {
                 ),
                 when (settings.storageMode) {
                     StorageMode.PERSISTENT -> TestEntity.collectionPersistentStorageKey
+                    StorageMode.MEMORY_DATABASE -> TestEntity.collectionMemoryDatabaseStorageKey
                     else -> TestEntity.collectionInMemoryStorageKey
                 }
             ) as ReadWriteCollectionHandle<TestEntity>
@@ -1205,6 +1211,7 @@ class StorageCore(val context: Context) {
 object SystemHealthTestEntity {
     const val BASE_SEQNO = 1.00000001E8
     const val BASE_BOOLEAN = true
+    const val BASE_TEXT = "test"
 
     private val seqNo = atomic(0)
     private val allChars: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
@@ -1214,13 +1221,15 @@ object SystemHealthTestEntity {
         text = "__unused__",
         number = 0.0,
         boolean = false,
+        inlineText = "__unused__",
         id = "foo"
     )
     var entityReference: Reference? = null
 
     operator fun invoke(size: Int = 64) = TestEntity(
-        // 16 = 4 ('true') + 12 ('1.xxxxxxx1E8')
-        text = allChars[seqNo.value % allChars.size].toString().repeat(size - 16),
+        text = BASE_TEXT,
+        // 20 = 4 ('test') + 4 ('true') + 12 ('1.xxxxxxx1E8')
+        inlineText = allChars[seqNo.value % allChars.size].toString().repeat(size - 20),
         // The atomic number is also treated as unique data id to pair round-trips.
         number = BASE_SEQNO + seqNo.getAndIncrement().toDouble() * 10,
         boolean = BASE_BOOLEAN,

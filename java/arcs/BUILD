@@ -10,3 +10,13 @@ package_group(
         "//...",
     ],
 )
+
+# Wider list of packages that can invoke Arcs CLI tools (via BUILD rules).
+# Public visibility for now.
+package_group(
+    name = "allowed-packages-tools",
+    includes = [":allowed-packages"],
+    packages = [
+        "//...",
+    ],
+)

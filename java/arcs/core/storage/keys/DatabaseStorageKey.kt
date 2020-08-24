@@ -128,7 +128,7 @@ sealed class DatabaseStorageKey(
 
         private inline fun <reified T : DatabaseStorageKey> fromString(rawKeyString: String): T {
             val match = requireNotNull(DB_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
-                "Not a valid DatabaseStorageKey: $rawKeyString"
+                "Not a valid DatabaseStorageKey"
             }
 
             val entitySchemaHash = match.groupValues[1]

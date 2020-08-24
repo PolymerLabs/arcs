@@ -6,6 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'Harness.arcs'
-import 'Services.arcs'
-import 'example.arcs'
+import 'Kotlin/Harness.arcs'
+import 'Kotlin/Services.arcs'
+import 'cpp/example.arcs'

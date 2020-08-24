@@ -12,7 +12,7 @@
 // on classes to give every instance a unique id, optionally filter on that id,
 // then use logWithIdentity to opt into filtering and display of the id.
 
-import {Dictionary} from '../hot.js';
+import {Dictionary} from '../../utils/hot.js';
 import {ProxyMessage, ProxyMessageType} from '../storage/store.js';
 import {CRDTTypeRecord} from '../crdt/crdt.js';
 

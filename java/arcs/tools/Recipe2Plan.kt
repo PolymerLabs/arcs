@@ -1,5 +1,7 @@
 package arcs.tools
 
+import arcs.core.data.proto.ManifestProto
+import arcs.core.data.proto.decodeRecipes
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
@@ -12,12 +14,12 @@ import com.squareup.kotlinpoet.FileSpec
 /** Generates plans from recipes. */
 class Recipe2Plan : CliktCommand(
     help = """Generate plans from recipes.
-    
+
     This script reads serialized manifests and generates Kotlin files with [Plan] classes.""",
     printHelpOnEmptyArgs = true
 ) {
     private val manifest by argument(
-        help = "path to protobuf-serialized manifest, i.e. '*.bin.pb'"
+        help = "path to protobuf-serialized manifest, i.e. '*.binarypb'"
     ).file(exists = true, readable = true)
     private val outputFile by argument(help = "output Kotlin filepath, e.g. 'path/to/File.kt'")
         .file()
@@ -33,10 +35,17 @@ class Recipe2Plan : CliktCommand(
         }
         DriverAndKeyConfigurator.configure(null)
         val fileBuilder = FileSpec.builder(packageName, "")
-            .addComment("GENERATED CODE -- DO NOT EDIT")
+            .addComment("""
+                |GENERATED CODE -- DO NOT EDIT
+                |
+                |TODO(b/161941018): Improve whitespace / formatting.
+            """.trimMargin())
 
-        // TODO: Generate Plans
-        // val manifestProto = ManifestProto.parseFrom(manifest.readBytes())
+        val manifestProto = ManifestProto.parseFrom(manifest.readBytes())
+        manifestProto.decodeRecipes()
+            .filter { it.name != null }
+            .fold(fileBuilder) { builder, recipe -> builder.addRecipe(recipe) }
+
         outputFile.writeText(fileBuilder.build().toString())
     }
 }

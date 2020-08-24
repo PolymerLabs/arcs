@@ -33,6 +33,7 @@ export class Schema2Kotlin extends Schema2Base {
 
     if (this.opts.test_harness) {
       imports.push(
+        'import arcs.sdk.Particle',
         'import arcs.sdk.testing.*',
         'import java.math.BigInteger',
         'import kotlinx.coroutines.CoroutineScope',
@@ -63,7 +64,6 @@ package ${this.namespace}
 //
 // GENERATED CODE -- DO NOT EDIT
 //
-// Current implementation doesn't support optional field detection
 
 ${imports.join('\n')}
 `;
@@ -252,7 +252,7 @@ abstract class Abstract${particle.name} : ${this.opts.wasm ? 'WasmParticleImpl' 
 
     return `
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-class ${particleName}TestHarness<P : Abstract${particleName}>(
+class ${particleName}TestHarness<P : Particle>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
     ${handleSpecs.join(',\n    ')}

@@ -166,7 +166,7 @@ class PolicyConstraintsTest {
 
         // Loaded from binary proto, maps all keyed by name.
         private val policies: Map<String, Policy> = loadManifestBinaryProto(
-            "javatests/arcs/core/policy/PolicyTranslationTestData.pb.bin"
+            "javatests/arcs/core/policy/PolicyTranslationTestData.binarypb"
         ).policiesList
             .map { it.decode() }
             .associateBy { it.name }

@@ -9,7 +9,7 @@
  */
 
 import {SchemaNode} from './schema2graph.js';
-import {Dictionary} from '../runtime/hot.js';
+import {Dictionary} from '../utils/hot.js';
 
 /** Generates KotlinSchemaFields for a given SchemaNode */
 export function generateFields(node: SchemaNode): KotlinSchemaField[] {

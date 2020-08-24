@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
-import {Dictionary} from './hot.js';
+import {Dictionary} from '../utils/hot.js';
 import {StorageKey} from './storage/storage-key.js';
 import {Type} from './type.js';
 import {Capabilities} from './capabilities.js';

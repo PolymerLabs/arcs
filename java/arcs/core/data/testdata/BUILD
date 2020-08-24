@@ -52,4 +52,5 @@ arcs_kt_plan_2(
     name = "plan_from_proto",
     srcs = ["WriterReaderExample.arcs"],
     package = "arcs.core.data.testdata",
+    visibility = ["//visibility:public"],
 )

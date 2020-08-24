@@ -6,14 +6,14 @@ package arcs.golden
 //
 // GENERATED CODE -- DO NOT EDIT
 //
-// Current implementation doesn't support optional field detection
 
+import arcs.sdk.Particle
 import arcs.sdk.testing.*
 import java.math.BigInteger
 import kotlinx.coroutines.CoroutineScope
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-class GoldTestHarness<P : AbstractGold>(
+class GoldTestHarness<P : Particle>(
     factory : (CoroutineScope) -> P
 ) : BaseTestHarness<P>(factory, listOf(
     arcs.core.entity.HandleSpec(

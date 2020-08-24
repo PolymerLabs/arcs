@@ -55,7 +55,7 @@ data class VolatileStorageKey(
         override fun parse(rawKeyString: String): VolatileStorageKey {
             val match =
                 requireNotNull(VOLATILE_STORAGE_KEY_PATTERN.matchEntire(rawKeyString)) {
-                    "Not a valid VolatileStorageKey: $rawKeyString"
+                    "Not a valid VolatileStorageKey"
                 }
 
             return VolatileStorageKey(match.groupValues[1].toArcId(), match.groupValues[2])

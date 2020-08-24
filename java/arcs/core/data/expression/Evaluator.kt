@@ -140,19 +140,19 @@ sealed class GlobalFunction(val name: String) {
     /** Find the maximum of a [Sequence]. */
     object Max : GlobalFunction("max") {
         override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
-            toSequence<Int>(args[0] as List<Int>).max()!!
+            toSequence<Int>(args[0]).max()!!
     }
 
     /** Find the minimum of a [Sequence]. */
     object Min : GlobalFunction("min") {
         override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
-            toSequence<Int>(args[0] as List<Int>).min()!!
+            toSequence<Int>(args[0]).min()!!
     }
 
     /** Find the average of a [Sequence]. */
     object Average : GlobalFunction("average") {
         override fun invoke(evaluator: ExpressionEvaluator, args: List<Any>) =
-            toSequence<Int>(args[0] as List<Int>).average()
+            toSequence<Int>(args[0]).average()
     }
 
     /** Count the number of elements in a [Sequence]. */

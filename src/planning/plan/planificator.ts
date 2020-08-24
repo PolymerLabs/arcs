@@ -9,7 +9,7 @@
  */
 
 import {Arc} from '../../runtime/arc.js';
-import {Runnable} from '../../runtime/hot.js';
+import {Runnable} from '../../utils/hot.js';
 import {Exists} from '../../runtime/storage/drivers/driver.js';
 import {StorageKey} from '../../runtime/storage/storage-key.js';
 import {Store} from '../../runtime/storage/store.js';

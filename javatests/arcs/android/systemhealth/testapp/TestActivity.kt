@@ -36,6 +36,7 @@ import arcs.core.entity.ReadSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
+import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StoreManager
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadCollectionHandle
@@ -119,7 +120,7 @@ class TestActivity : AppCompatActivity() {
         handleManager = EntityHandleManager(
             time = JvmTime,
             scheduler = schedulerProvider("sysHealthTestActivity"),
-            stores = stores
+            storageEndpointManager = DirectStorageEndpointManager(stores)
 
         )
 
@@ -243,7 +244,8 @@ class TestActivity : AppCompatActivity() {
             SystemHealthTextWatch {
                 dataSizeInBytes = it.toIntOrNull()?.takeIf {
                     it >= SystemHealthTestEntity.BASE_BOOLEAN.toString().length +
-                        SystemHealthTestEntity.BASE_SEQNO.toString().length
+                        SystemHealthTestEntity.BASE_SEQNO.toString().length +
+                        SystemHealthTestEntity.BASE_TEXT.length
                 } ?: dataSizeInBytes
             }
         )
@@ -410,6 +412,7 @@ class TestActivity : AppCompatActivity() {
                 R.id.collection -> handleType = SystemHealthEnums.HandleType.COLLECTION
                 R.id.in_memory -> storageMode = TestEntity.StorageMode.IN_MEMORY
                 R.id.persistent -> storageMode = TestEntity.StorageMode.PERSISTENT
+                R.id.memdb -> storageMode = TestEntity.StorageMode.MEMORY_DATABASE
                 R.id.syshealth_service_local -> serviceType = SystemHealthEnums.ServiceType.LOCAL
                 R.id.syshealth_service_remote -> serviceType = SystemHealthEnums.ServiceType.REMOTE
             }
@@ -432,6 +435,8 @@ class TestActivity : AppCompatActivity() {
                             when (storageMode) {
                                 TestEntity.StorageMode.PERSISTENT ->
                                     TestEntity.singletonPersistentStorageKey
+                                TestEntity.StorageMode.MEMORY_DATABASE ->
+                                    TestEntity.singletonMemoryDatabaseStorageKey
                                 else -> TestEntity.singletonInMemoryStorageKey
                             }
                         ).awaitReady() as ReadWriteSingletonHandle<TestEntity>
@@ -468,6 +473,8 @@ class TestActivity : AppCompatActivity() {
                             when (storageMode) {
                                 TestEntity.StorageMode.PERSISTENT ->
                                     TestEntity.collectionPersistentStorageKey
+                                TestEntity.StorageMode.MEMORY_DATABASE ->
+                                    TestEntity.collectionMemoryDatabaseStorageKey
                                 else -> TestEntity.collectionInMemoryStorageKey
                             }
                         ).awaitReady() as ReadWriteCollectionHandle<TestEntity>
@@ -503,7 +510,7 @@ class TestActivity : AppCompatActivity() {
     ) {
         val result = handle?.let {
             withContext(handle.dispatcher) { handle.fetch() }?.let {
-                "${it.text},${it.number},${it.boolean}"
+                "${it.text},${it.number},${it.boolean},{${it.inlineEntity.text}}"
             }
         } ?: "null"
 
@@ -522,7 +529,7 @@ class TestActivity : AppCompatActivity() {
             withContext(handle.dispatcher) { handle.fetchAll() }.takeIf {
                 it.isNotEmpty()
             }?.joinToString(separator = System.getProperty("line.separator") ?: "\r\n") {
-                "${it.text},${it.number},${it.boolean}"
+                "${it.text},${it.number},${it.boolean},{${it.inlineEntity.text}}"
             }
         } ?: "empty"
 

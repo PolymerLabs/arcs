@@ -42,7 +42,7 @@ _JS_SUFFIX = "-js"
 
 _KT_SUFFIX = "-kt"
 
-IS_BAZEL = not (hasattr(native, "genmpm"))
+IS_BAZEL = not hasattr(native, "genmpm")
 
 # Kotlin Compiler Options
 COMMON_KOTLINC_OPTS = [
@@ -464,7 +464,7 @@ def arcs_kt_jvm_test_suite(
         class_name = src[:-3]
         java_test(
             name = class_name,
-            size = "small",
+            size = size,
             flaky = flaky,
             data = data,
             tags = tags,

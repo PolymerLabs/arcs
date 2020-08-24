@@ -8,14 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {ManifestStringBuilder} from '../manifest-string-builder.js';
+import {IndentingStringBuilder} from '../indenting-string-builder.js';
 import {assert} from '../../platform/chai-web.js';
 
-describe('ManifestStringBuilder', () => {
-  let builder: ManifestStringBuilder;
+describe('IndentingStringBuilder', () => {
+  let builder: IndentingStringBuilder;
 
   beforeEach(() => {
-    builder = new ManifestStringBuilder();
+    builder = new IndentingStringBuilder();
   });
 
   it('starts empty', () => {

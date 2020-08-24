@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/chai-web.js';
-import {Dictionary} from '../hot.js';
+import {Dictionary} from '../../utils/hot.js';
 import {AbstractStore} from '../storage/abstract-store.js';
 
 /**

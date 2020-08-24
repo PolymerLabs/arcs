@@ -52,7 +52,7 @@ class DFARunner(val sighCmd: String) {
         }
         val tmpDir = System.getProperty("java.io.tmpdir")
         val tmpFile = File
-            .createTempFile("tmp", ".pb.bin", File(tmpDir))
+            .createTempFile("tmp", ".binarypb", File(tmpDir))
             .apply { deleteOnExit() }
         val tmpFilePath = tmpFile.getAbsolutePath()
         val sighCommandArgs = listOf(

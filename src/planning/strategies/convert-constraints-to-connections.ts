@@ -17,7 +17,7 @@ import {reverseDirection} from '../../runtime/recipe/recipe-util.js';
 import {Direction} from '../../runtime/arcs-types/enums.js';
 import {Descendant} from '../../runtime/recipe/walker.js';
 import {Handle} from '../../runtime/recipe/handle.js';
-import {Dictionary} from '../../runtime/hot.js';
+import {Dictionary} from '../../utils/hot.js';
 
 type Obligation = {from: EndPoint, to: EndPoint, direction: Direction, relaxed: boolean};
 

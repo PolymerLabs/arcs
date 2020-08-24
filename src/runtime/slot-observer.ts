@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Dictionary} from './hot.js';
+import {Dictionary} from '../utils/hot.js';
 
 export type RenderPacket = {
   content?

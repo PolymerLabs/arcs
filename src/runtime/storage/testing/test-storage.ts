@@ -10,7 +10,7 @@
 
 import {PropagatedException} from '../../arc-exceptions.js';
 import {CRDTData, CRDTOperation, CRDTTypeRecord, VersionMap} from '../../crdt/crdt.js';
-import {Consumer, Dictionary} from '../../hot.js';
+import {Consumer, Dictionary} from '../../../utils/hot.js';
 import {IdGenerator} from '../../id.js';
 import {Particle} from '../../particle.js';
 import {StorageDriverProvider} from '../drivers/driver-factory.js';

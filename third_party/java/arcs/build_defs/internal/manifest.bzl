@@ -6,12 +6,12 @@ load(
     "arcs_tool_recipe2plan",
     "arcs_tool_verify_policy",
 )
-load(":util.bzl", "replace_arcs_suffix")
 
 def arcs_manifest(
         name,
         srcs,
         manifest_proto = True,
+        manifest_proto_out = None,
         policy_test = False,
         policy_options = None,
         deps = [],
@@ -25,6 +25,8 @@ def arcs_manifest(
       srcs: list of Arcs manifest files to include
       manifest_proto: if True, generates a binary proto representation of the
           manifest
+      manifest_proto_out: Optional output file name for the generated manifest
+          proto. Only relevant if manifest_proto is true.
       policy_test: If True, generates a test to check that all recipes in the
           manifest satisfy policy rules. Requires policy_options and
           manifest_proto.
@@ -46,6 +48,9 @@ def arcs_manifest(
         visibility = visibility,
     )
 
+    if manifest_proto_out == None:
+        manifest_proto_out = name + ".binarypb"
+
     if manifest_proto:
         if len(srcs) != 1:
             # TODO(csilvestrini): This rule should only accept one src.
@@ -53,6 +58,7 @@ def arcs_manifest(
         arcs_manifest_proto(
             name = name + "_proto",
             src = srcs[0],
+            out = manifest_proto_out,
             deps = deps,
         )
 
@@ -70,7 +76,8 @@ def arcs_manifest(
 def arcs_manifest_proto(name, src, deps = [], out = None, visibility = None):
     """Serialize a manifest file.
 
-    This converts a '.arcs' file into a protobuf representation, using manifest2proto.
+    This converts a '.arcs' file into a protobuf representation, using
+    manifest2proto.
 
     Args:
       name: the name of the target to create
@@ -79,7 +86,7 @@ def arcs_manifest_proto(name, src, deps = [], out = None, visibility = None):
       out: the name of the output artifact (a proto file).
       visibility: list of visibilities
     """
-    outs = [out] if out != None else [replace_arcs_suffix(name, ".pb.bin")]
+    outs = [out] if out != None else [name + ".binarypb"]
 
     arcs_tool_manifest2proto(
         name = name,
@@ -110,12 +117,13 @@ def arcs_proto_plan(name, src, recipe = None, deps = []):
       name: the name of the target to create
       src: an Arcs manifest file to source recipes from
       recipe: an optional name of the recipe to filter output plans by name
-      deps: list of dependencies - other manifests that are imported by src manifest
+      deps: list of dependencies - other manifests that are imported by src
+          manifest
     """
     arcs_tool_recipe2plan(
         name = name,
         srcs = [src],
-        outs = [name + ".pb.bin"],
+        outs = [name + ".binarypb"],
         recipe = recipe,
         generate_proto = True,
         deps = deps,

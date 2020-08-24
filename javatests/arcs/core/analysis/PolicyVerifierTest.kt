@@ -15,7 +15,7 @@ import org.junit.runners.JUnit4
 class PolicyVerifierTest {
     // Test context.
     private val storeMap = mapOf("action" to "Action", "selection" to "Selection")
-    private val manifestProto = loadManifestBinaryProto(getManifestProtoBinPath("policy-test"))
+    private val manifestProto = loadManifestBinaryProto(getManifestProtoBinPath("policy_test"))
     private val recipes = manifestProto.decodeRecipes().associateBy { it.name!! }
     private val policy = manifestProto.policiesList.single { it.name == "TestPolicy" }.decode()
     private val verifier = PolicyVerifier(PolicyOptions(storeMap))
@@ -159,6 +159,6 @@ class PolicyVerifierTest {
 
     /** Returns the path for the manifest proto binary file for the test. */
     private fun getManifestProtoBinPath(test: String): String {
-        return "javatests/arcs/core/analysis/testdata/$test.pb.bin"
+        return "javatests/arcs/core/analysis/testdata/$test.binarypb"
     }
 }
