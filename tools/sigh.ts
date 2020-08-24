@@ -758,25 +758,25 @@ function runTests(args: string[]): boolean {
     let tests: Iterable<string>;
     if (options.file) {
       // Switch from "src/abc/foo-test.ts" to "../build/abc/foo-test.js"
-      let filename = options.file.replace(/^src\//, '../build/').replace(/\.ts$/, '.js');
-      filename = fixPathForWindows(path.resolve(__dirname, filename));
-      tests = [filename];
+      const filename = options.file.replace(/^src\//, '../build/').replace(/\.ts$/, '.js');
+      tests = [path.resolve(__dirname, filename)];
     } else {
       tests = testsInDir(process.cwd());
     }
 
     for (const test of tests) {
+      const fixed = fixPathForWindows(test);
       chain.push(`
         import {mocha} from '${mochaInstanceFile}';
-        mocha.suite.emit('pre-require', global, '${test}', mocha);
+        mocha.suite.emit('pre-require', global, '${fixed}', mocha);
       `);
       chain.push(`
-        import '${fixPathForWindows(test)}';
+        import '${fixed}';
       `);
       chain.push(`
         import {mocha} from '${mochaInstanceFile}';
-        mocha.suite.emit('require', null, '${test}', mocha);
-        mocha.suite.emit('post-require', global, '${test}', mocha);
+        mocha.suite.emit('require', null, '${fixed}', mocha);
+        mocha.suite.emit('post-require', global, '${fixed}', mocha);
       `);
     }
     const chainImports = chain.map((entry, i) => {
