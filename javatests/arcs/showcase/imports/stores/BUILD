@@ -8,5 +8,5 @@ package(default_visibility = ["//visibility:public"])
 arcs_kt_gen(
     name = "quality_store",
     srcs = ["quality.arcs"],
-    data = ["quality.json"],
+#    data = ["quality.json"],  # TODO: Get stores working
 )
