@@ -54,7 +54,7 @@ recipe PrepareInventoryForShop
 //  inventory: create 'inventory' @persistent @queryable
 
   LabelInventory
-    containers: reads contianers
+    containers: reads containers
     categorized: writes labeled
 
 
