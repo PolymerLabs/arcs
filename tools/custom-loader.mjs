@@ -1,4 +1,5 @@
 import url from 'url';
+import path from 'path';
 
 export function resolve(specifier, parent, resolve) {
   if (!/^[./]/.test(specifier)) {
@@ -10,6 +11,13 @@ export function resolve(specifier, parent, resolve) {
       } else {
         throw e;
       }
+    }
+  }
+  if (parent && parent.startsWith('file:///') && specifier.includes('/internal/')) {
+    const parentDir = path.dirname(parent.substr(7));  // 7 == len('file://')
+    const target = path.resolve(parentDir, specifier);
+    if (!target.startsWith(parentDir)) {
+      throw new Error(`cannot access internal file '${specifier}' from external location ${parent}`);
     }
   }
   if (!/\.(js|mjs)$/.test(specifier)) {
