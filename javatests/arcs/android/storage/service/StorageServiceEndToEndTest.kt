@@ -141,6 +141,8 @@ class StorageServiceEndToEndTest {
         time.millis = 1L
         handle.dispatchStore(entity2)
 
+        databaseManager.removeExpiredEntities()
+
         val handle2 = createCollectionHandle(databaseKey)
         time.millis = System.currentTimeMillis()
         assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
