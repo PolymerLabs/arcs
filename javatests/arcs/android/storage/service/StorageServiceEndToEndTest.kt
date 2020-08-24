@@ -40,6 +40,7 @@ import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.keys.VolatileStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
 import arcs.core.storage.testutil.WriteBackForTesting
+import arcs.core.testutil.handles.dispatchFetchAll
 import arcs.core.testutil.handles.dispatchStore
 import arcs.core.util.testutil.LogRule
 import arcs.jvm.host.JvmSchedulerProvider
@@ -64,7 +65,7 @@ class StorageServiceEndToEndTest {
 
     private suspend fun buildManager() =
         StorageServiceManager(coroutineContext, ConcurrentHashMap())
-
+    private val time = FakeTime()
     private val scheduler = JvmSchedulerProvider(EmptyCoroutineContext).invoke("test")
     private val ramdiskKey = ReferenceModeStorageKey(
         backingKey = RamDiskStorageKey("backing"),
@@ -81,19 +82,15 @@ class StorageServiceEndToEndTest {
     )
 
     private lateinit var databaseManager: AndroidSqliteDatabaseManager
-    private lateinit var time: FakeTime
 
     @Before
     fun setUp() {
-        time = FakeTime()
         StoreWriteBack.writeBackFactoryOverride = WriteBackForTesting
         databaseManager = AndroidSqliteDatabaseManager(
-            ApplicationProvider.getApplicationContext(),
-            null
+            ApplicationProvider.getApplicationContext()
         )
         DriverAndKeyConfigurator.configure(databaseManager)
 
-        //AndroidDriverAndKeyConfigurator.configure(ApplicationProvider.getApplicationContext())
         SchemaRegistry.register(DummyEntity.SCHEMA)
         SchemaRegistry.register(InlineDummyEntity.SCHEMA)
     }
@@ -114,9 +111,8 @@ class StorageServiceEndToEndTest {
         handle.dispatchStore(entity)
 
         val handle2 = createCollectionHandle(databaseKey)
-        val data = handle2.fetchAll()
-        assertThat(data.size).isEqualTo(1)
-        assertThat(data.toList()[0]).isEqualTo(entity)
+        assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
+        Unit
     }
 
     @Test
@@ -127,16 +123,16 @@ class StorageServiceEndToEndTest {
         handle.dispatchStore(entity)
 
         databaseManager.runGarbageCollection()
+        databaseManager.runGarbageCollection()
 
         val handle2 = createCollectionHandle(databaseKey)
-        val data = handle2.fetchAll()
-        assertThat(data.size).isEqualTo(1)
-        assertThat(data.toList()[0]).isEqualTo(entity)
+        assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
+        Unit
     }
 
     @Test
     fun writeThenRead_inlineData_inCollection_onDatabase_withExpiry() = runBlocking {
-        val handle = createCollectionHandle(databaseKey)
+        val handle = createCollectionHandle(databaseKey, Ttl.Hours(1))
         val entity = entityForTest()
         val entity2 = entityForTest()
 
@@ -147,9 +143,8 @@ class StorageServiceEndToEndTest {
 
         val handle2 = createCollectionHandle(databaseKey)
         time.millis = System.currentTimeMillis()
-        val data = handle2.fetchAll()
-        assertThat(data.size).isEqualTo(1)
-        assertThat(data.toList()[0]).isEqualTo(entity)
+        assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
+        Unit
     }
 
     @Test
@@ -160,11 +155,11 @@ class StorageServiceEndToEndTest {
         handle.dispatchStore(entity)
 
         databaseManager.runGarbageCollection()
+        databaseManager.runGarbageCollection()
 
         val handle2 = createCollectionHandle(databaseKey)
-        val data = handle2.fetchAll()
-        assertThat(data.size).isEqualTo(1)
-        assertThat(data.toList()[0]).isEqualTo(entity)
+        assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
+        Unit
     }
 
     @Test
@@ -175,9 +170,8 @@ class StorageServiceEndToEndTest {
         handle.dispatchStore(entity)
 
         val handle2 = createCollectionHandle(ramdiskKey)
-        val data = handle2.fetchAll()
-        assertThat(data.size).isEqualTo(1)
-        assertThat(data.toList()[0]).isEqualTo(entity)
+        assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
+        Unit
     }
 
     @Test
@@ -188,9 +182,8 @@ class StorageServiceEndToEndTest {
         handle.dispatchStore(entity)
 
         val handle2 = createCollectionHandle(volatileKey)
-        val data = handle2.fetchAll()
-        assertThat(data.size).isEqualTo(1)
-        assertThat(data.toList()[0]).isEqualTo(entity)
+        assertThat(handle2.dispatchFetchAll()).containsExactly(entity)
+        Unit
     }
 
     private fun emptyEntityForTest() = DummyEntity()
@@ -227,8 +220,10 @@ class StorageServiceEndToEndTest {
             storageKey
         ).awaitReady() as ReadWriteSingletonHandle<DummyEntity>
 
-    private suspend fun createCollectionHandle(storageKey: StorageKey) =
-        EntityHandleManager(
+    private suspend fun createCollectionHandle(
+        storageKey: StorageKey,
+        expiry: Ttl = Ttl.Infinite()
+    ) = EntityHandleManager(
             time = time,
             scheduler = scheduler,
             storageEndpointManager = DirectStorageEndpointManager(StoreManager())
@@ -240,6 +235,6 @@ class StorageServiceEndToEndTest {
                 DummyEntity
             ),
             storageKey,
-            Ttl.Hours(1)
+            expiry
         ).awaitReady() as ReadWriteCollectionHandle<DummyEntity>
 }
