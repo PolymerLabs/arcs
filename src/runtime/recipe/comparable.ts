@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../platform/assert-web.js';
-import {Dictionary} from '../hot.js';
+import {Dictionary} from '../../utils/hot.js';
 
 export function compareNulls<T>(o1: T | null, o2: T | null) {
   if (o1 === o2) return 0;

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Predicate} from '../runtime/hot.js';
+import {Predicate} from '../utils/hot.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Type, TypeVariable, TypeLiteral, HandleConnection, Slot, InterfaceInfo,
         TypeVarReference, HandleConnectionLiteral, SlotLiteral,

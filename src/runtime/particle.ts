@@ -9,7 +9,7 @@
  */
 
 import {Handle} from './storage/handle.js';
-import {Runnable, Consumer} from './hot.js';
+import {Runnable, Consumer} from '../utils/hot.js';
 import {InnerArcHandle} from './particle-execution-context.js';
 import {HandleConnectionSpec, ParticleSpec} from './arcs-types/particle-spec.js';
 import {Relevance} from './relevance.js';

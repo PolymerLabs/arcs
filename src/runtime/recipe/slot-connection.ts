@@ -14,7 +14,7 @@ import {Particle} from './particle.js';
 import {CloneMap, IsValidOptions, Recipe, RecipeComponent, ToStringOptions} from './recipe.js';
 import {Slot} from './slot.js';
 import {compareComparables, compareStrings, Comparable} from './comparable.js';
-import {Dictionary} from '../hot.js';
+import {Dictionary} from '../../utils/hot.js';
 import {ConsumeSlotConnectionSpec} from '../arcs-types/particle-spec.js';
 
 import {Flags} from '../flags.js';

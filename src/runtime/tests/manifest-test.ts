@@ -15,7 +15,7 @@ import {path} from '../../platform/path-web.js';
 import {Manifest, ManifestParseOptions, ErrorSeverity} from '../manifest.js';
 import {checkDefined, checkNotNull} from '../testing/preconditions.js';
 import {Loader} from '../../platform/loader.js';
-import {Dictionary} from '../hot.js';
+import {Dictionary} from '../../utils/hot.js';
 import {assertThrowsAsync, ConCap} from '../../testing/test-util.js';
 import {ClaimIsTag, ClaimDerivesFrom} from '../arcs-types/claim.js';
 import {ClaimType} from '../arcs-types/enums.js';

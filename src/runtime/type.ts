@@ -10,7 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {SlotInfo} from './slot-info.js';
-import {Predicate, Literal} from './hot.js';
+import {Predicate, Literal} from '../utils/hot.js';
 import {CRDTTypeRecord, CRDTModel} from './crdt/crdt.js';
 import {CRDTCount} from './crdt/crdt-count.js';
 import {CRDTCollection} from './crdt/crdt-collection.js';

@@ -15,7 +15,7 @@ import {digest} from '../platform/digest-web.js';
 import {Id, IdGenerator} from './id.js';
 import {HandleConnection as InterfaceInfoHandleConnection, MuxType} from './type.js';
 import {Slot as InterfaceInfoSlot} from './type.js';
-import {Runnable} from './hot.js';
+import {Runnable} from '../utils/hot.js';
 import {Loader} from '../platform/loader.js';
 import {ManifestMeta} from './manifest-meta.js';
 import * as AstNode from './manifest-ast-types/manifest-ast-nodes.js';
@@ -34,7 +34,7 @@ import {TypeChecker} from './recipe/type-checker.js';
 import {Schema} from './schema.js';
 import {BigCollectionType, CollectionType, EntityType, InterfaceInfo, InterfaceType,
         ReferenceType, SlotType, Type, TypeVariable, SingletonType, TupleType} from './type.js';
-import {Dictionary} from './hot.js';
+import {Dictionary} from '../utils/hot.js';
 import {ClaimIsTag} from './arcs-types/claim.js';
 import {AbstractStore, StoreClaims} from './storage/abstract-store.js';
 import {Store} from './storage/store.js';

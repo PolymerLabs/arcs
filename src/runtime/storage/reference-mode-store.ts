@@ -17,7 +17,7 @@ import {DirectStore} from './direct-store.js';
 import {StorageKey} from './storage-key.js';
 import {VersionMap, CRDTTypeRecord} from '../crdt/crdt.js';
 import {Type, CollectionType, ReferenceType, SingletonType, MuxType, EntityType} from '../type.js';
-import {Producer, Consumer, Runnable, Dictionary} from '../hot.js';
+import {Producer, Consumer, Runnable, Dictionary} from '../../utils/hot.js';
 import {PropagatedException} from '../arc-exceptions.js';
 import {Store} from './store.js';
 import {noAwait} from '../util.js';

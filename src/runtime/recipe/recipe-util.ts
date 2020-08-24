@@ -19,7 +19,7 @@ import {Handle} from './handle.js';
 import {Particle} from './particle.js';
 import {Recipe, RecipeComponent} from './recipe.js';
 import {Id} from '../id.js';
-import {Dictionary} from '../hot.js';
+import {Dictionary} from '../../utils/hot.js';
 
 export function reverseDirection(direction: Direction): Direction {
   switch (direction) {

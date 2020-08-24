@@ -20,7 +20,7 @@ import {Slot} from './slot.js';
 import {isRequireSection} from './util.js';
 import {compareArrays, compareComparables, compareStrings, Comparable} from './comparable.js';
 import {Id} from '../id.js';
-import {Dictionary} from '../hot.js';
+import {Dictionary} from '../../utils/hot.js';
 
 export class Particle implements Comparable<Particle> {
   private readonly _recipe: Recipe;

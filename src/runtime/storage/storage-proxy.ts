@@ -11,7 +11,7 @@
 import {mapStackTrace} from '../../platform/sourcemapped-stacktrace-web.js';
 import {PropagatedException, SystemException} from '../arc-exceptions.js';
 import {CRDTError, CRDTModel, CRDTOperation, CRDTTypeRecord, VersionMap, ChangeType} from '../crdt/crdt.js';
-import {Runnable, Predicate} from '../hot.js';
+import {Runnable, Predicate} from '../../utils/hot.js';
 import {Particle} from '../particle.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {ChannelConstructor} from '../channel-constructor.js';

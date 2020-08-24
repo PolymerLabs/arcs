@@ -9,7 +9,7 @@
  */
 
 import {Op} from '../runtime/manifest-ast-types/manifest-ast-nodes.js';
-import {Dictionary} from '../runtime/hot.js';
+import {Dictionary} from '../utils/hot.js';
 import {Schema} from '../runtime/schema.js';
 import {getPrimitiveTypeInfo} from './kotlin-schema-field.js';
 import {

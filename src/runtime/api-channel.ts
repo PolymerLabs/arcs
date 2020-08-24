@@ -19,7 +19,7 @@ import * as recipeParticle from './recipe/particle.js';
 import {StorageProxy as StorageProxyNG} from './storage/storage-proxy.js';
 import {Type} from './type.js';
 import {PropagatedException, reportGlobalException} from './arc-exceptions.js';
-import {Consumer, Literal, Literalizable} from './hot.js';
+import {Consumer, Literal, Literalizable} from '../utils/hot.js';
 import {floatingPromiseToAudit} from './util.js';
 import {MessagePort} from './message-channel.js';
 import {CRDTTypeRecord} from './crdt/crdt.js';

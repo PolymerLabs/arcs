@@ -15,7 +15,7 @@ import {Direction, SlotDirection} from './enums.js';
 import {TypeChecker} from '../recipe/type-checker.js';
 import {Schema} from '../schema.js';
 import {InterfaceType, SlotType, Type, TypeLiteral, TypeVariableInfo} from '../type.js';
-import {Literal} from '../hot.js';
+import {Literal} from '../../utils/hot.js';
 import {Check, HandleConnectionSpecInterface, ConsumeSlotConnectionSpecInterface, ProvideSlotConnectionSpecInterface, createCheck} from './check.js';
 import {Claim, createClaim} from './claim.js';
 import {ManifestStringBuilder} from '../manifest-string-builder.js';
