@@ -403,26 +403,11 @@ export class ParticleSpec {
     return this.annotations.filter(a => a.name === name);
   }
 
-  /**
-   * Indicates whether the particle is an isolated (non-egress) particle.
-   *
-   * Particles are considered egress particles by default, must have an explicit
-   * `@isolated` annotation to be considered isolated.
-   */
-  get isIsolated(): boolean {
+  get dataflowType(): ParticleDataflowType {
     const isolated = !!this.getAnnotation('isolated');
+    const ingress = !!this.getAnnotation('ingress');
     const egress = !!this.getAnnotation('egress');
-    assert(!(isolated && egress), 'Particle cannot be tagged with both @isolated and @egress.');
-    return isolated;
-  }
-
-  /**
-   * Indicates whether the particle is an egress (non-isolated) particle.
-   *
-   * Particles are considered egress particles by default.
-   */
-  get isEgress(): boolean {
-    return !this.isIsolated;
+    return new ParticleDataflowType({isolated, ingress, egress});
   }
 
   /**
@@ -686,4 +671,43 @@ export class ParticleSpec {
     }
     return result;
   }
+}
+
+export class ParticleDataflowType {
+  /**
+   * Indicates whether the particle is an isolated particle (i.e. neither
+   * ingress nor egress).
+   */
+  readonly isolated: boolean;
+
+  /**
+   * Indicates whether the particle is an ingress (non-isolated) particle,
+   * capable of retrieving data from outside the Arcs system.
+   */
+  readonly ingress: boolean;
+
+  /**
+   * Indicates whether the particle is an egress (non-isolated) particle,
+   * capable of sending data outside the Arcs system.
+   */
+  readonly egress: boolean;
+
+  constructor({isolated, ingress, egress}: {isolated: boolean, ingress: boolean, egress: boolean}) {
+    assert(!(isolated && ingress), 'Particle cannot be tagged with both @isolated and @ingress.');
+    assert(!(isolated && egress), 'Particle cannot be tagged with both @isolated and @egress.');
+    if (!isolated && !ingress && !egress) {
+      // Particles without any annotations are considered ingress and egress by
+      // default.
+      ingress = true;
+      egress = true;
+    }
+    this.isolated = isolated;
+    this.ingress = ingress;
+    this.egress = egress;
+  }
+
+  static ISOLATED = new ParticleDataflowType({isolated: true, ingress: false, egress: false});
+  static INGRESS = new ParticleDataflowType({isolated: false, ingress: true, egress: false});
+  static EGRESS = new ParticleDataflowType({isolated: false, ingress: false, egress: true});
+  static INGRESS_AND_EGRESS = new ParticleDataflowType({isolated: false, ingress: true, egress: true});
 }

@@ -65,5 +65,8 @@ data class Annotation(val name: String, val params: Map<String, AnnotationParam>
 
         /** Annotation indicating that a particle is isolated. */
         val isolated = Annotation("isolated")
+
+        /** Annotation indicating that a particle has ingress. */
+        val ingress = Annotation("ingress")
     }
 }
