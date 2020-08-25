@@ -196,16 +196,17 @@ fun <T> Map<String, T>.asScope(scopeName: String = "<object>") = MapScope<T>(
 fun <T> query(queryArgName: String) = Expression.QueryParameterExpression<T>(queryArgName)
 
 /** Helper used to build [FromExpression]. */
-data class FromBuilder<T>(val iterName: String)
+data class FromBuilder<T, Q>(val iterName: String, val qualifier: Expression<Sequence<Q>>?)
 
 /** Build a [FromExpression] whose [Sequence] iterates using a scope variable named [iterName]. */
-fun <T> from(iterName: String) = FromBuilder<T>(iterName)
+fun <T> from(iterName: String) = FromBuilder<T, T>(iterName, null)
 
-/** Designates the scope variable which holds the [Sequence] the from expression iterates on. */
-infix fun <T> FromBuilder<T>.on(sequence: String) = Expression.FromExpression<T, T>(
-    null,
-    sequence,
-    this.iterName)
+/** Build a nested [FromExpression] whose [Sequence] iterates a scope variable named [iterName]. */
+fun <Q, T> Expression<Sequence<Q>>.from(iterName: String) = FromBuilder<T, Q>(iterName, this)
+
+/** Designates the expression which holds the [Sequence] the from expression iterates on. */
+infix fun <T, Q> FromBuilder<T, Q>.on(sequence: String) =
+    Expression.FromExpression<Q, T>(this.qualifier, sequence, this.iterName)
 
 /** Constructs a [WhereExpression]. */
 infix fun <T> Expression<Sequence<T>>.where(expr: Expression<Boolean>) =
