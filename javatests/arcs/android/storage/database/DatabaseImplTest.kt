@@ -2907,9 +2907,10 @@ class DatabaseImplTest {
         assertThat(database.getEntitiesCount()).isEqualTo(2)
 
         database.removeAllEntities()
+        // GC twice as entities are marked as orphan the first time, removed the second time.
         database.runGarbageCollection()
-        // remove and GC will leave tombstone entities which should also be counted.
-        assertThat(database.getEntitiesCount()).isEqualTo(2)
+        database.runGarbageCollection()
+        assertThat(database.getEntitiesCount()).isEqualTo(0)
     }
 
     /** Returns a list of all the rows in the 'fields' table. */

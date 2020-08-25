@@ -1101,7 +1101,7 @@ class DatabaseImpl(
     }
 
     override suspend fun getEntitiesCount(): Long {
-        return DatabaseUtils.queryNumEntries(readableDatabase, "entities")
+        return DatabaseUtils.queryNumEntries(readableDatabase, TABLE_ENTITIES)
     }
 
     override suspend fun removeExpiredEntities() {
