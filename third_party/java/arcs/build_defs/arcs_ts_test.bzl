@@ -1,5 +1,7 @@
 """Macro for running TypeScript tests with bazel."""
 
+# A change that should not be imported
+# (to be tested with an effectful change)
 load(":sigh.bzl", "sigh_command")
 
 # A change that should not affect copybara.
