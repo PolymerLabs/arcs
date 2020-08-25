@@ -36,6 +36,11 @@ class ExpressionTest {
         mutableMapOf(
             "blah" to 10,
             "baz" to mapOf("x" to 24).asScope(),
+            "foos" to listOf(
+                mapOf("val" to 0).asScope(),
+                mapOf("val" to 10).asScope(),
+                mapOf("val" to 20).asScope()
+            ),
             "numbers" to numbers
         )
     )
@@ -182,6 +187,17 @@ class ExpressionTest {
         assertThat(
             evalExpression<Sequence<Number>>(fromExpr, currentScope).toList()
         ).isEqualTo(numbers)
+    }
+
+    @Test
+    fun evaluate_paxel_from_nested() {
+        // from p in numbers
+        // from foo in foos
+        // select p + foo.val
+        val fromExpr = (from<Number>("p") on "numbers")
+            .from<Number, Scope>("foo") on "foos" select
+            currentScope["p"].asNumber() + currentScope["foo"].asScope().get<Scope, Number>("val")
+        assertThat(evalExpression(fromExpr, currentScope).toList()).containsExactlyElementsIn(1..30)
     }
 
     @Test
