@@ -42,7 +42,7 @@ class EvaluatorParticleTest {
         //   from x in inputNumbers select new Value {
         //     value: x.value * scalar.magnitude
         //   }
-        val scaledNumbersExpression = from<Number>("x") on "inputNumbers" select
+        val scaledNumbersExpression = from<Number>("x") on currentScope["inputNumbers"].asSequence() select
             new<Number, Expression.Scope>("Value")() {
                 listOf(
                     "value" to currentScope["x"].asScope()
@@ -57,7 +57,7 @@ class EvaluatorParticleTest {
         val averageExpression = new<Number, Expression.Scope>("Average")() {
             listOf(
                 "average" to average(
-                    from<Number>("x") on "inputNumbers"
+                    from<Number>("x") on currentScope["inputNumbers"].asSequence()
                         select (currentScope["x"].asScope()
                         .get<Expression.Scope, Expression<*>>("value").asNumber())
                 )

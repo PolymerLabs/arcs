@@ -362,7 +362,7 @@ sealed class Expression<T> {
      */
     data class FromExpression<E, T>(
         override val qualifier: Expression<Sequence<E>>?,
-        val source: String,
+        val expr: Expression<Sequence<T>>,
         val iterationVar: String
     ) : QualifiedExpression<E>, Expression<Sequence<T>>() {
         override fun <Result> accept(visitor: Visitor<Result>) = visitor.visit(this)

@@ -67,17 +67,16 @@ class ExpressionEvaluator(
     override fun <T> visit(expr: Expression.ObjectLiteralExpression<T>): Any = expr.value as Any
 
     override fun <E, T> visit(expr: Expression.FromExpression<E, T>): Any {
-        var sequence = requireNotNull(currentScope.lookup<Any>(expr.source)) {
-            "${expr.source} is null in current scope."
-        }
+        var sequence = expr.expr.accept(this)
 
         if (sequence is List<*>) {
             sequence = sequence.asSequence()
         }
 
         require(sequence is Sequence<*>) {
-            "${expr.source} of type ${sequence::class} cannot be converted to a Sequence"
+            "From source expression of type ${sequence::class} cannot be converted to a Sequence"
         }
+
 
         val fromSequence = sequence.map { value ->
             currentScope.set(expr.iterationVar, value as Any)
@@ -85,7 +84,9 @@ class ExpressionEvaluator(
         }
 
         return if (expr.qualifier != null) {
-            (expr.qualifier.accept(this) as Sequence<T>).flatMap { fromSequence }
+            (expr.qualifier.accept(this) as Sequence<T>).flatMap {
+                fromSequence
+            }
         } else {
             fromSequence
         }
