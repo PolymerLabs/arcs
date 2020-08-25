@@ -33,10 +33,6 @@
 
     const websocket = new WebSocket('ws://localhost:12345');
 
-    websocket.onopen = e => {
-      websocket.send('WebSocket Open');  
-    };
-
     websocket.onmessage = msg => {
       appendEntry(msg.data)
     }
@@ -66,12 +62,5 @@
       }
     });
 
-    // This is just to show what's possible.
-    // Sarah, please play with it and then remove in your next PR :)
-    appendEntry({here: "I just"})
-    appendEntry(["want", "to", {show: ['that many', 'different']}])
-    appendEntry({types: {of: true, objects: false}})
-    appendEntry("can\nbe\ndisplayed")
-    appendEntry(42)
   </script>
 </body>
