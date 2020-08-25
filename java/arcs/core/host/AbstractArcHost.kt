@@ -22,6 +22,7 @@ import arcs.core.entity.HandleSpec
 import arcs.core.host.api.HandleHolder
 import arcs.core.host.api.Particle
 import arcs.core.storage.DirectStorageEndpointManager
+import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StoreManager
 import arcs.core.util.LruCacheMap
@@ -74,6 +75,7 @@ abstract class AbstractArcHost(
      */
     updateArcHostContextCoroutineContext: CoroutineContext,
     protected val schedulerProvider: SchedulerProvider,
+    protected val storageEndpointManager: StorageEndpointManager,
     vararg initialParticles: ParticleRegistration
 ) : ArcHost {
     private val log = TaggedLog { "AbstractArcHost" }
@@ -186,7 +188,7 @@ abstract class AbstractArcHost(
             return
         }
 
-        stores.reset()
+        storageEndpointManager.reset()
 
         pausedArcs.forEach {
             try {
@@ -213,7 +215,7 @@ abstract class AbstractArcHost(
         pausedArcs.clear()
         contextSerializationChannel.cancel()
         resurrectionScope.cancel()
-        stores.reset()
+        storageEndpointManager.reset()
         schedulerProvider.cancelAll()
     }
 
@@ -629,14 +631,8 @@ abstract class AbstractArcHost(
         hostId,
         platformTime,
         schedulerProvider(arcId),
-        DirectStorageEndpointManager(stores)
+        storageEndpointManager
     )
-
-    /**
-     * The map of [Store] objects that this [ArcHost] will use. By default, it uses a shared
-     * singleton defined statically by this package.
-     */
-    open val stores = singletonStores
 
     /**
      * Instantiate a [Particle] implementation for a given [ParticleIdentifier].
@@ -649,17 +645,5 @@ abstract class AbstractArcHost(
     ): Particle {
         return particleConstructors[identifier]?.invoke(spec)
             ?: throw IllegalArgumentException("Particle $identifier not found.")
-    }
-
-    companion object {
-        /**
-         * Shared [StoreManager] instance. This is used to share [Store]s among multiple [ArcHost]s or
-         * even across different arcs. On Android, [StorageService] runs as a single process so all
-         * [ArcHost]s share the same Storage layer and this singleton is not needed, but on other
-         * platforms the [StoreManager] object provides Android-like functionality. If your platform
-         * supports its own [Service]-level analogue like Android, override this method to return
-         * a new instance each time.
-         */
-        val singletonStores = StoreManager()
     }
 }

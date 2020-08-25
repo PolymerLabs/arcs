@@ -20,6 +20,8 @@ import arcs.core.host.ParticleRegistration
 import arcs.core.host.SchedulerProvider
 import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.host.toRegistration
+import arcs.core.storage.StorageEndpointManager
+import arcs.sdk.android.storage.androidStorageServiceEndpointManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -37,6 +39,7 @@ class WriteAnimalHostService : ArcHostService() {
         this,
         this.lifecycle,
         SimpleSchedulerProvider(coroutineContext),
+        androidStorageServiceEndpointManager(this, Dispatchers.Default),
         ::WriteAnimal.toRegistration()
     )
 
@@ -63,6 +66,7 @@ class WriteAnimalHostService : ArcHostService() {
         context: Context,
         lifecycle: Lifecycle,
         schedulerProvider: SchedulerProvider,
+        storageEndpointManager: StorageEndpointManager,
         vararg initialParticles: ParticleRegistration
     ) : AndroidHost(
         context = context,
@@ -70,6 +74,7 @@ class WriteAnimalHostService : ArcHostService() {
         coroutineContext = Dispatchers.Default,
         arcSerializationContext = Dispatchers.Default,
         schedulerProvider = schedulerProvider,
+        storageEndpointManager = storageEndpointManager,
         particles = *initialParticles
     ) {
         fun arcHostContext(arcId: String) = getArcHostContext(arcId)

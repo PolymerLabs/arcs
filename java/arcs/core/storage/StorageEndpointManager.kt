@@ -18,4 +18,9 @@ interface StorageEndpointManager {
     suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> get(
         storeOptions: StoreOptions
     ): StorageEndpointProvider<Data, Op, T>
+
+    /**
+     * Resets any internal state for this storage endpoint manager.
+     */
+    suspend fun reset()
 }

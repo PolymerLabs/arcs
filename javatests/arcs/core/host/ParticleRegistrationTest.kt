@@ -1,5 +1,6 @@
 package arcs.core.host
 
+import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.jvm.host.ExplicitHostRegistry
 import arcs.jvm.util.JvmTime
 import com.google.common.truth.Truth.assertThat
@@ -20,6 +21,7 @@ class ParticleRegistrationTest {
         coroutineContext = Dispatchers.Default,
         updateArcHostContextCoroutineContext = Dispatchers.Default,
         schedulerProvider = schedulerProvider,
+        storageEndpointManager = testStorageEndpointManager(),
         initialParticles = *particles
     ), ProdHost {
         override val platformTime = JvmTime

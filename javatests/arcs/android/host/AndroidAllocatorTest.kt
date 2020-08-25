@@ -24,7 +24,10 @@ import arcs.core.host.ArcHostException
 import arcs.core.host.HostRegistry
 import arcs.core.host.PersonPlan
 import arcs.core.host.TestingJvmProdHost
+import arcs.core.storage.StorageEndpointManager
 import arcs.core.testutil.assertSuspendingThrows
+import arcs.sdk.android.storage.androidStorageServiceEndpointManager
+import arcs.sdk.android.storage.service.ConnectionFactory
 import arcs.sdk.android.storage.service.testutil.TestConnectionFactory
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -54,6 +57,7 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
     private lateinit var readingService: TestReadingExternalHostService
     private lateinit var testProdService: ProdArcHostService
     private lateinit var prodService: ProdArcHostService
+    private lateinit var testConnectionFactory: ConnectionFactory
 
     private lateinit var writingService: TestWritingExternalHostService
 
@@ -89,6 +93,10 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
     class DefaultProdArcHostServiceForTest : ProdArcHostService() {
         override val coroutineContext = Dispatchers.Default
         override val arcSerializationCoroutineContext = Dispatchers.Default
+        override val storageEndpointManager = androidStorageServiceEndpointManager(
+            this,
+            Dispatchers.Default
+        )
     }
 
     @Before
@@ -99,7 +107,8 @@ open class AndroidAllocatorTest : AllocatorTestBase() {
         // Initialize WorkManager for instrumentation tests.
         WorkManagerTestInitHelper.initializeTestWorkManager(context)
 
-        TestExternalArcHostService.testConnectionFactory = TestConnectionFactory(context)
+        testConnectionFactory = TestConnectionFactory(context)
+        TestExternalArcHostService.testConnectionFactory = testConnectionFactory
         readingService = Robolectric.setupService(TestReadingExternalHostService::class.java)
         writingService = Robolectric.setupService(TestWritingExternalHostService::class.java)
         testProdService = Robolectric.setupService(TestProdArcHostService::class.java)

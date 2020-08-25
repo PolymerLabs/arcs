@@ -1,5 +1,6 @@
 package arcs.core.host
 
+import arcs.core.storage.testutil.testStorageEndpointManager
 import arcs.core.util.Scheduler
 import arcs.jvm.util.testutil.FakeTime
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +17,7 @@ class TestHost(
         override fun invoke(arcId: String) = scheduler
         override fun cancelAll() = scheduler.cancel()
     },
+    storageEndpointManager = testStorageEndpointManager(),
     initialParticles = *particles
 ) {
     override val platformTime = FakeTime()
