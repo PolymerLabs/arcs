@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Recipe} from '../../runtime/recipe/recipe.js';
+import {Recipe} from '../../runtime/recipe/lib-recipe.js';
 import {ParticleNode, createParticleNodes, ParticleOutput, ParticleInput} from './particle-node.js';
 import {HandleNode, createHandleNodes, addHandleConnection} from './handle-node.js';
 import {SlotNode, createSlotNodes, addSlotConnection} from './slot-node.js';

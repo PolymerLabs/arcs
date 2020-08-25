@@ -11,13 +11,11 @@
 import {Node, Edge, FlowModifier, FlowCheck} from './graph-internals.js';
 import {ClaimExpression} from '../../runtime/arcs-types/claim.js';
 import {ClaimType} from '../../runtime/arcs-types/enums.js';
-import {Particle} from '../../runtime/recipe/particle.js';
+import {Particle, HandleConnection, Handle} from '../../runtime/recipe/lib-recipe.js';
 import {assert} from '../../platform/assert-web.js';
 import {HandleConnectionSpec} from '../../runtime/arcs-types/particle-spec.js';
-import {HandleConnection} from '../../runtime/recipe/handle-connection.js';
 import {Type, ReferenceType} from '../../runtime/type.js';
 import {TypeChecker} from '../../runtime/recipe/type-checker.js';
-import {Handle} from '../../runtime/recipe/handle.js';
 
 export class ParticleNode extends Node {
   readonly inEdgesByName: Map<string, ParticleInput> = new Map();
