@@ -93,14 +93,22 @@ export class AllocatorRecipeResolver {
         }
       }
     }
+    for (const store of this.runtime.context.allStores) {
+      if (handleById[store.id]) {
+        throw new AllocatorRecipeResolverError(
+            `Handle with ${store.id} already exists`);
+      }
+      handleById[store.id] = {store, handles: []};
+    }
+
     // Find all `map` and `copy` handles and add them to the map.
     for (const recipe of recipes) {
       for (const handle of recipe.handles) {
-        if (handle.fate === 'use') {
+        if (handle.fate === 'use' || handle.fate === 'copy') {
           throw new AllocatorRecipeResolverError(
-              `Recipe ${recipe.name} has a handle with unsupported 'use' fate.`);
+              `Recipe ${recipe.name} has a handle with unsupported '${handle.fate}' fate.`);
         }
-        if (!['map', 'copy'].includes(handle.fate)) continue;
+        if (handle.fate !== 'map') continue;
         if (handleById[handle.id]) {
           handleById[handle.id]['handles'].push(handle);
         } else {
@@ -112,17 +120,19 @@ export class AllocatorRecipeResolver {
     // Iterate over all handles in the recipe set that are shared across
     // multiple recipes, and compute their restricted type and apply them to
     // all relevant handles and connections.
-    for (const value of Object.values(handleById)) {
+    for (const handleId of Object.keys(handleById)) {
       // tslint:disable-next-line: no-any
-      const {createHandle, handles} = value as any;
+      const {createHandle, store, handles} = handleById[handleId] as any;
       const restrictedType =
-          this.restrictHandleType(createHandle.id, [createHandle, ...handles]);
+          this.restrictHandleType(handleId, [createHandle, store, ...handles].filter(h => !!h));
       assert(restrictedType.maybeEnsureResolved({restrictToMinBound: true}));
-      createHandle.restrictType(restrictedType);
-      for (const connection of createHandle.connections) {
-        if (!connection.type.maybeEnsureResolved({restrictToMinBound: true})) {
-          throw new AllocatorRecipeResolverError(
-              `Cannot resolve type of ${connection.getQualifiedName()} in recipe ${connection.recipe.name}`);
+      if (createHandle) {
+        createHandle.restrictType(restrictedType);
+        for (const connection of createHandle.connections) {
+          if (!connection.type.maybeEnsureResolved({restrictToMinBound: true})) {
+            throw new AllocatorRecipeResolverError(
+                `Cannot resolve type of ${connection.getQualifiedName()} in recipe ${connection.recipe.name}`);
+          }
         }
       }
       for (const handle of handles) {
