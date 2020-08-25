@@ -29,8 +29,8 @@ import arcs.core.host.SimpleSchedulerProvider
 import arcs.core.storage.ActivationFactory
 import arcs.core.storage.DefaultActivationFactory
 import arcs.core.storage.Reference as StorageReference
-import arcs.core.storage.StorageEndpointManager
 import arcs.core.storage.StorageKey
+import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.testutil.waitUntilSet
@@ -130,15 +130,13 @@ open class HandleManagerTestBase {
     lateinit var monitorHandleManager: EntityHandleManager
     var testTimeout: Long = 10000
 
-    lateinit var monitorStorageEndpointManager: StorageEndpointManager
-
     open var testRunner = { block: suspend CoroutineScope.() -> Unit ->
         monitorHandleManager = EntityHandleManager(
             arcId = "testArc",
             hostId = "monitorHost",
             time = fakeTime,
             scheduler = schedulerProvider("monitor"),
-            storageEndpointManager = monitorStorageEndpointManager
+            stores = StoreManager(activationFactory)
         )
         runBlocking {
             withTimeout(testTimeout) { block() }

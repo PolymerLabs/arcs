@@ -52,10 +52,7 @@ class RawEntityDereferencerTest {
     private lateinit var bobDriver: Driver<CrdtEntity.Data>
 
     // TODO: Test with an activation factory in android-specific tests.
-    private val dereferencer = RawEntityDereferencer(
-        schema,
-        DirectStorageEndpointManager(StoreManager())
-    )
+    private val dereferencer = RawEntityDereferencer(schema)
     private val referenceBuilder = { refable: Referencable ->
         if (refable is Reference) refable
         else buildReference(refable)

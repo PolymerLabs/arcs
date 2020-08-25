@@ -7,7 +7,6 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaRegistry
 import arcs.core.host.EntityHandleManager
-import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.DriverFactory
 import arcs.core.storage.RawEntityDereferencer
 import arcs.core.storage.Reference as StorageReference
@@ -60,14 +59,13 @@ class ReferenceTest {
 
         scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher())
         stores = StoreManager()
-        val storageEndpointManager = DirectStorageEndpointManager(stores)
-        dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA, storageEndpointManager)
+        dereferencer = RawEntityDereferencer(DummyEntity.SCHEMA)
         entityHandleManager = EntityHandleManager(
             "testArc",
             "",
             FakeTime(),
             scheduler = scheduler,
-            storageEndpointManager = storageEndpointManager
+            stores = stores
         )
 
         handle = entityHandleManager.createHandle(

@@ -11,7 +11,6 @@
 package arcs.core.host
 
 import arcs.core.allocator.Allocator
-import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
@@ -76,7 +75,7 @@ class LifecycleTest {
         entityHandleManager = EntityHandleManager(
             time = FakeTime(),
             scheduler = scheduler,
-            storageEndpointManager = DirectStorageEndpointManager(storeManager)
+            stores = storeManager
         )
         allocator = Allocator.create(hostRegistry, entityHandleManager)
         testHost.setup()

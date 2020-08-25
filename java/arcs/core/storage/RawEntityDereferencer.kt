@@ -20,8 +20,7 @@ import arcs.core.util.TaggedLog
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-typealias EntityStorageEndpointProvider =
-    StorageEndpointProvider<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>
+typealias EntityStore = ActiveStore<CrdtEntity.Data, CrdtEntity.Operation, CrdtEntity>
 
 /**
  * [Dereferencer] to use when de-referencing a [Reference] to an [Entity].
@@ -32,7 +31,7 @@ typealias EntityStorageEndpointProvider =
  */
 class RawEntityDereferencer(
     private val schema: Schema,
-    private val storageEndpointManager: StorageEndpointManager,
+    private val entityActivationFactory: ActivationFactory = DefaultActivationFactory,
     private val referenceCheckFun: ((Schema, RawEntity?) -> Unit)? = null
 ) : Dereferencer<RawEntity> {
     // TODO(#5551): Consider including a hash of schema.names for easier tracking.
@@ -49,10 +48,10 @@ class RawEntityDereferencer(
             EntityType(schema)
         )
 
-        val store: EntityStorageEndpointProvider = storageEndpointManager.get(options)
+        val store: EntityStore = entityActivationFactory.invoke(options)
 
         val deferred = CompletableDeferred<RawEntity?>()
-        return store.create(
+        val token = store.on(
             ProxyCallback { message ->
                 when (message) {
                     is ProxyMessage.ModelUpdate<*, *, *> -> {
@@ -65,14 +64,18 @@ class RawEntityDereferencer(
                     is ProxyMessage.Operations -> Unit
                 }
             }
-        ).use {
-            it.onProxyMessage(ProxyMessage.SyncRequest(null))
+        )
+
+        return try {
+            store.onProxyMessage(ProxyMessage.SyncRequest(token))
 
             // Only return the item if we've actually managed to pull it out of storage, and
             // that it matches the schema we wanted.
             val entity = deferred.await()?.takeIf { it matches schema }?.copy(id = reference.id)
             referenceCheckFun?.invoke(schema, entity)
             entity
+        } finally {
+            store.off(token)
         }
     }
 }

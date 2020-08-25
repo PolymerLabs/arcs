@@ -7,8 +7,6 @@ import arcs.core.entity.HandleSpec
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.ParticleContext
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -101,8 +99,7 @@ open class BaseTestHarness<P : Particle>(
                     arcId = "testHarness",
                     hostId = "testHarnessHost",
                     time = JvmTime,
-                    scheduler = scheduler,
-                    storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+                    scheduler = scheduler
                 )
                 try {
                     runBlocking {

@@ -17,9 +17,7 @@ import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StorageKey
-import arcs.core.storage.StoreManager
 import arcs.core.storage.StoreWriteBack
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.keys.DatabaseStorageKey
@@ -69,8 +67,7 @@ class TtlHandleTest {
         // Create a new handle manager on each call, to check different storage proxies.
         get() = EntityHandleManager(
             time = fakeTime,
-            scheduler = scheduler,
-            storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+            scheduler = scheduler
         )
 
     @Before

@@ -5,21 +5,21 @@ import arcs.core.data.RawEntity
 import arcs.core.data.Schema
 import arcs.core.data.SchemaRegistry
 import arcs.core.data.util.ReferencableList
+import arcs.core.storage.ActivationFactory
 import arcs.core.storage.Dereferencer
 import arcs.core.storage.RawEntityDereferencer
 import arcs.core.storage.Reference
-import arcs.core.storage.StorageEndpointManager
 
 /** A [Dereferencer.Factory] for [Reference] and [RawEntity] classes. */
 class EntityDereferencerFactory(
-    private val storageEndpointManager: StorageEndpointManager
+    private val activationFactory: ActivationFactory
 ) : Dereferencer.Factory<RawEntity> {
     private val dereferencers = mutableMapOf<Schema, RawEntityDereferencer>()
 
     override fun create(schema: Schema) = dereferencers.getOrPut(schema) {
         RawEntityDereferencer(
             schema,
-            storageEndpointManager,
+            activationFactory,
             ::injectDereferencers
         )
     }

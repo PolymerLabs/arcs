@@ -30,7 +30,6 @@ import arcs.core.entity.HandleSpec
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.SimpleSchedulerProvider
-import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StoreManager
 import arcs.jvm.util.JvmTime
 import arcs.sdk.ReadWriteCollectionHandle
@@ -162,7 +161,7 @@ class TestActivity : AppCompatActivity() {
             EntityHandleManager(
                 time = JvmTime,
                 scheduler = schedulerProvider("readWriteArc"),
-                storageEndpointManager = DirectStorageEndpointManager(stores)
+                stores = stores
 
             )
         )
@@ -177,7 +176,9 @@ class TestActivity : AppCompatActivity() {
             EntityHandleManager(
                 time = JvmTime,
                 scheduler = schedulerProvider("resurrectionArc"),
-                storageEndpointManager = DirectStorageEndpointManager(stores)
+                stores = StoreManager(
+                    activationFactory = ServiceStoreFactory(context = this@TestActivity)
+                )
             )
         )
         resurrectionArcId = allocator?.startArcForPlan(AnimalRecipePlan)?.id
@@ -211,10 +212,8 @@ class TestActivity : AppCompatActivity() {
             EntityHandleManager(
                 time = JvmTime,
                 scheduler = schedulerProvider("allocator"),
-                storageEndpointManager = DirectStorageEndpointManager(
-                    StoreManager(
-                        activationFactory = ServiceStoreFactory(context = this@TestActivity)
-                    )
+                stores = StoreManager(
+                    activationFactory = ServiceStoreFactory(context = this@TestActivity)
                 )
             )
         )
@@ -248,10 +247,8 @@ class TestActivity : AppCompatActivity() {
         val handleManager = EntityHandleManager(
             time = JvmTime,
             scheduler = schedulerProvider("handle"),
-            storageEndpointManager = DirectStorageEndpointManager(
-                stores = StoreManager(
-                    activationFactory = ServiceStoreFactory(this)
-                )
+            stores = StoreManager(
+                activationFactory = ServiceStoreFactory(this)
             )
         )
         if (isCollection) {

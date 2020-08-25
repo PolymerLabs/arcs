@@ -46,10 +46,7 @@ class ReferenceTest {
     val log = LogRule()
     private val collectionKey = RamDiskStorageKey("friends")
     private val backingKey = RamDiskStorageKey("people")
-    private val dereferencer = RawEntityDereferencer(
-        Person.SCHEMA,
-        DirectStorageEndpointManager(StoreManager())
-    )
+    private val dereferencer = RawEntityDereferencer(Person.SCHEMA)
 
     @Test
     fun dereference() = runBlocking {

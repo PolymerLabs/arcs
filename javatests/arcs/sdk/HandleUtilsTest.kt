@@ -19,7 +19,6 @@ import arcs.core.entity.ReadWriteSingletonHandle
 import arcs.core.entity.awaitReady
 import arcs.core.host.EntityHandleManager
 import arcs.core.host.HandleMode
-import arcs.core.storage.DirectStorageEndpointManager
 import arcs.core.storage.StorageKey
 import arcs.core.storage.StorageKeyParser
 import arcs.core.storage.StoreManager
@@ -71,7 +70,7 @@ class HandleUtilsTest {
             "testHost",
             FakeTime(),
             scheduler,
-            DirectStorageEndpointManager(stores)
+            stores = stores
         )
     }
 

@@ -24,8 +24,6 @@ import arcs.core.host.TestingJvmProdHost
 import arcs.core.host.WritePerson
 import arcs.core.host.toRegistration
 import arcs.core.storage.CapabilitiesResolver
-import arcs.core.storage.DirectStorageEndpointManager
-import arcs.core.storage.StoreManager
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
@@ -126,8 +124,7 @@ open class AllocatorTestBase {
             hostRegistry,
             EntityHandleManager(
                 time = FakeTime(),
-                scheduler = schedulerProvider("allocator"),
-                storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+                scheduler = schedulerProvider("allocator")
             )
         )
 
@@ -537,8 +534,7 @@ open class AllocatorTestBase {
             hostRegistry,
             EntityHandleManager(
                 time = FakeTime(),
-                scheduler = schedulerProvider("allocator2"),
-                storageEndpointManager = DirectStorageEndpointManager(StoreManager())
+                scheduler = schedulerProvider("allocator2")
             )
         )
 
