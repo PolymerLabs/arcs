@@ -63,11 +63,6 @@ import arcs.core.util.performance.PerformanceStatistics
 import arcs.core.util.performance.Timer
 import arcs.jvm.util.JvmTime
 import com.google.protobuf.InvalidProtocolBufferException
-import java.math.BigInteger
-import java.time.Duration
-import kotlin.coroutines.coroutineContext
-import kotlin.math.roundToLong
-import kotlin.reflect.KClass
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.updateAndGet
 import kotlinx.coroutines.CoroutineScope
@@ -79,6 +74,11 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.math.BigInteger
+import java.time.Duration
+import kotlin.coroutines.coroutineContext
+import kotlin.math.roundToLong
+import kotlin.reflect.KClass
 
 /** The Type ID that gets stored in the database. */
 typealias TypeId = Long
@@ -1067,6 +1067,13 @@ class DatabaseImpl(
                 }
             }
         }
+    }
+
+    override suspend fun getSize(): Long {
+        val pageCount = DatabaseUtils.longForQuery(
+            readableDatabase, "PRAGMA page_count;", null
+        )
+        return pageCount * readableDatabase.pageSize
     }
 
     override suspend fun snapshotStatistics() = stats.snapshot()
