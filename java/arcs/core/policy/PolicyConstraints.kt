@@ -16,12 +16,12 @@ data class PolicyConstraints(
     val policy: Policy,
     val egressCheck: Predicate,
     /** Maps from schema name to a list of claims to apply to stores of that type. */
-    val claims: Map<String, List<PartialClaim>>
+    val claims: Map<String, List<SelectorClaim>>
 )
 
 /** Equivalent to a [Claim.Assume] object, but without an [AccessPath.Root]. */
-data class PartialClaim(val selectors: List<AccessPath.Selector>, val predicate: Predicate) {
-    /** Converts the [PartialClaim] to a [Claim] rooted at the given [handle]. */
+data class SelectorClaim(val selectors: List<AccessPath.Selector>, val predicate: Predicate) {
+    /** Converts the [SelectorClaim] to a [Claim] rooted at the given [handle]. */
     fun inflate(handle: Recipe.Handle): Claim {
         return Claim.Assume(AccessPath(handle, selectors), predicate)
     }
@@ -46,7 +46,7 @@ fun translatePolicy(policy: Policy, options: PolicyOptions? = null): PolicyConst
 }
 
 /** Returns a list of store [Claim]s for the given [handle] and corresponding [target]. */
-private fun PolicyTarget.createClaims(): List<PartialClaim> {
+private fun PolicyTarget.createClaims(): List<SelectorClaim> {
     return fields.flatMap { field -> field.createClaims() }
 }
 
@@ -54,13 +54,13 @@ private fun PolicyTarget.createClaims(): List<PartialClaim> {
  * Returns a list of claims for the given [field] (and all subfields), using the given [handle]
  * as the root for the claims.
  */
-private fun PolicyField.createClaims(): List<PartialClaim> {
-    val claims = mutableListOf<PartialClaim>()
+private fun PolicyField.createClaims(): List<SelectorClaim> {
+    val claims = mutableListOf<SelectorClaim>()
 
     // Create claim for this field.
     createStoreClaimPredicate()?.let { predicate ->
         val selectors = fieldPath.map { AccessPath.Selector.Field(it) }
-        claims.add(PartialClaim(selectors, predicate))
+        claims.add(SelectorClaim(selectors, predicate))
     }
 
     // Add claims for subfields.

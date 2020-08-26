@@ -55,9 +55,9 @@ class PolicyConstraintsTest {
         assertThat(result.claims).containsExactly(
             "Foo",
             listOf(
-                PartialClaim(selectors("a"), labelPredicate("allowedForEgress_redaction1")),
-                PartialClaim(selectors("b"), labelPredicate("allowedForEgress_redaction2")),
-                PartialClaim(selectors("c"), labelPredicate("allowedForEgress_redaction3"))
+                SelectorClaim(selectors("a"), labelPredicate("allowedForEgress_redaction1")),
+                SelectorClaim(selectors("b"), labelPredicate("allowedForEgress_redaction2")),
+                SelectorClaim(selectors("c"), labelPredicate("allowedForEgress_redaction3"))
             )
         )
     }
@@ -71,7 +71,7 @@ class PolicyConstraintsTest {
         assertThat(result.claims).containsExactly(
             "Foo",
             listOf(
-                PartialClaim(selectors("a"), labelPredicate("allowedForEgress_redaction1"))
+                SelectorClaim(selectors("a"), labelPredicate("allowedForEgress_redaction1"))
             )
         )
     }
@@ -89,7 +89,7 @@ class PolicyConstraintsTest {
 
         val result = translatePolicy(policy)
 
-        assertThat(result.claims).containsExactly("Foo", emptyList<PartialClaim>())
+        assertThat(result.claims).containsExactly("Foo", emptyList<SelectorClaim>())
     }
 
     @Test
@@ -102,12 +102,12 @@ class PolicyConstraintsTest {
         assertThat(result.claims).containsExactly(
             "NestedFooBar",
             listOf(
-                PartialClaim(selectors("foo"), predicate),
-                PartialClaim(selectors("foo", "a"), predicate),
-                PartialClaim(selectors("foo", "b"), predicate),
-                PartialClaim(selectors("foo", "c"), predicate),
-                PartialClaim(selectors("bar"), predicate),
-                PartialClaim(selectors("bar", "a"), predicate)
+                SelectorClaim(selectors("foo"), predicate),
+                SelectorClaim(selectors("foo", "a"), predicate),
+                SelectorClaim(selectors("foo", "b"), predicate),
+                SelectorClaim(selectors("foo", "c"), predicate),
+                SelectorClaim(selectors("bar"), predicate),
+                SelectorClaim(selectors("bar", "a"), predicate)
             )
         )
     }

@@ -3,7 +3,7 @@ package arcs.core.policy.proto
 import arcs.core.data.AccessPath
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.InformationFlowLabel.SemanticTag
-import arcs.core.policy.PartialClaim
+import arcs.core.policy.SelectorClaim
 import arcs.core.policy.Policy
 import arcs.core.policy.PolicyConstraints
 import com.google.common.truth.Truth.assertThat
@@ -23,13 +23,13 @@ class PolicyConstraintsProtoTest {
             egressCheck = Predicate.Label(SemanticTag("public")),
             claims = mapOf(
                 "schema_name_1" to listOf(
-                    PartialClaim(
+                    SelectorClaim(
                         selectors = listOf(AccessPath.Selector.Field("a")),
                         predicate = Predicate.Label(SemanticTag("public"))
                     )
                 ),
                 "schema_name_2" to listOf(
-                    PartialClaim(
+                    SelectorClaim(
                         selectors = listOf(AccessPath.Selector.Field("b")),
                         predicate = Predicate.Label(SemanticTag("private"))
                     )

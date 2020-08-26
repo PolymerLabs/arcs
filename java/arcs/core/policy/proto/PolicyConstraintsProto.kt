@@ -3,16 +3,16 @@ package arcs.core.policy.proto
 import arcs.core.data.proto.PolicyConstraintsProto
 import arcs.core.data.proto.decode
 import arcs.core.data.proto.encode
-import arcs.core.policy.PartialClaim
+import arcs.core.policy.SelectorClaim
 import arcs.core.policy.PolicyConstraints
 
 fun PolicyConstraintsProto.decode(): PolicyConstraints {
     return PolicyConstraints(
         policy = policy.decode(),
         egressCheck = egressCheck.decode(),
-        claims = typeClaimsList.associate { typeClaim ->
-            typeClaim.schemaName to typeClaim.partialClaimsList.map { claim ->
-                PartialClaim(
+        claims = schemaClaimsList.associate { schemaClaim ->
+            schemaClaim.schemaName to schemaClaim.selectorClaimsList.map { claim ->
+                SelectorClaim(
                     selectors = claim.selectorsList.map { it.decode() },
                     predicate = claim.predicate.decode()
                 )
@@ -25,19 +25,19 @@ fun PolicyConstraints.encode(): PolicyConstraintsProto {
     return PolicyConstraintsProto.newBuilder()
         .setPolicy(policy.encode())
         .setEgressCheck(egressCheck.encode())
-        .addAllTypeClaims(
-            claims.map { (schemaName, partialClaims) ->
-                PolicyConstraintsProto.TypeClaims.newBuilder()
+        .addAllSchemaClaims(
+            claims.map { (schemaName, selectorClaims) ->
+                PolicyConstraintsProto.SchemaClaims.newBuilder()
                     .setSchemaName(schemaName)
-                    .addAllPartialClaims(partialClaims.map { it.encode() })
+                    .addAllSelectorClaims(selectorClaims.map { it.encode() })
                     .build()
             }
         )
         .build()
 }
 
-private fun PartialClaim.encode(): PolicyConstraintsProto.PartialClaim {
-    return PolicyConstraintsProto.PartialClaim.newBuilder()
+private fun SelectorClaim.encode(): PolicyConstraintsProto.SelectorClaim {
+    return PolicyConstraintsProto.SelectorClaim.newBuilder()
         .addAllSelectors(selectors.map { it.encode() })
         .setPredicate(predicate.encode())
         .build()

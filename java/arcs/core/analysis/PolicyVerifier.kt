@@ -81,10 +81,10 @@ class PolicyVerifier(val options: PolicyOptions? = null) {
         policyConstraints: PolicyConstraints
     ): List<InformationFlow.IngressInfo> {
         return getIngressHandles(graph).map { handleNode ->
-            val partialClaims = handleNode.handle.type.toSchema().name?.name?.let { schemaName ->
+            val selectorClaims = handleNode.handle.type.toSchema().name?.name?.let { schemaName ->
                 policyConstraints.claims[schemaName]
             }
-            val claims = partialClaims.orEmpty().map { it.inflate(handleNode.handle) }
+            val claims = selectorClaims.orEmpty().map { it.inflate(handleNode.handle) }
             InformationFlow.IngressInfo(handleNode, claims)
         }
     }
