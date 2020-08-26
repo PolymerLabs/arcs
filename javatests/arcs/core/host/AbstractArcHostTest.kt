@@ -180,7 +180,7 @@ open class AbstractArcHostTest {
         storedEntity.setSingletonValue("text", "Watson")
         assertThat(
             (host.getFooHandle() as ReadWriteSingletonHandle<EntityBase>).dispatchFetch()
-        ).equals(storedEntity)
+        ).isEqualTo(storedEntity)
         schedulerProvider.cancelAll()
     }
 
