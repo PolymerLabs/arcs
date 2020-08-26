@@ -240,21 +240,6 @@ recipe EgressUnredactedField
 //-----------------------------------------------------------------------
 // Policy violation by not marking an ingress store appropriately.
 //-----------------------------------------------------------------------
-@policy('TestPolicy')
-recipe UnmarkedProtectedStore
-  // This should have been marked as 'action' for it to be matched with
-  // the allowed usages in `TestPolicy`. Given that this is not marked at
-  // all, we assume that nothing can be done with the data on `action` handle.
-  action: create
-  selection: create 'selection'
-  joinData: create @ttl('30m')
-  JoinActionSelection_EgressUnrestrictedFields
-    action: action
-    selection: selection
-    joinData: joinData
-  TestEgressParticle
-    joinData: joinData
-
 @isolated
 particle IngestAction
   action: writes [Action]

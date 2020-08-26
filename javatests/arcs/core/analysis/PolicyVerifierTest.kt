@@ -79,16 +79,6 @@ class PolicyVerifierTest {
     }
 
     @Test
-    fun unmarkedProtectedStoresRestrictUsage() {
-        assertFailsWith<PolicyViolation.ChecksViolated> {
-            verifier.verifyPolicy(
-                recipes.getValue("UnmarkedProtectedStore"),
-                policy
-            )
-        }
-    }
-
-    @Test
     fun unmarkedIngressParticlesRestrictUsage() {
         assertFailsWith<PolicyViolation.ChecksViolated> {
             verifier.verifyPolicy(
