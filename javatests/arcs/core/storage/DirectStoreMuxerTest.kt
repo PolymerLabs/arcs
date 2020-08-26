@@ -160,7 +160,6 @@ class DirectStoreMuxerTest {
         val driverProvider = MockDriverProvider()
         DriverFactory.register(driverProvider)
 
-
         val directStoreMuxer = createDirectStoreMuxer()
 
         val entityCrdtA = createPersonEntityCrdt("bob", 42)

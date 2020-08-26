@@ -273,7 +273,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         val storedBob = activeStore.backingStore.getLocalData(
             "an-id",
             activeStore.backingStoreId
-        ) as CrdtEntity.Data
+        )
         // Check that the stored bob's singleton data is equal to the expected bob's singleton data
         assertThat(storedBob.singletons).isEqualTo(bobEntity.data.singletons)
         // Check that the stored bob's collection data is equal to the expected bob's collection
@@ -296,7 +296,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         val storedBob = activeStore.backingStore.getLocalData(
             "an-id",
             activeStore.backingStoreId
-        ) as CrdtEntity.Data
+        )
         assertThat(storedBob.toRawEntity("an-id")).isEqualTo(bob)
 
         // Remove Bob from the collection.
@@ -309,7 +309,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         val storedBob2 = activeStore.backingStore.getLocalData(
             "an-id",
             activeStore.backingStoreId
-        ) as CrdtEntity.Data
+        )
         assertThat(storedBob2.toRawEntity("an-id")).isEqualTo(createEmptyPersonEntity("an-id"))
 
         // Check the DB.
@@ -414,7 +414,7 @@ class ReferenceModeStoreDatabaseImplIntegrationTest {
         val storedBob = activeStore.backingStore.getLocalData(
             "an-id",
             activeStore.backingStoreId
-        ) as CrdtEntity.Data
+        )
         assertThat(storedBob.toRawEntity()).isEqualTo(bob)
         assertThat(storedBob.toRawEntity().creationTimestamp).isEqualTo(10)
         assertThat(storedBob.toRawEntity().expirationTimestamp).isEqualTo(20)
