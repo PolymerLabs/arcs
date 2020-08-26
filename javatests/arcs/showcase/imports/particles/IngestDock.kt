@@ -1,12 +1,7 @@
 package arcs.showcase.imports.particles
 
 class IngestDock : AbstractIngestDock() {
-    private val oakland = Place(
-        "Port of Oakland",
-        "USA",
-        37.7956584,
-        -122.2791769
-    )
+
 
     override fun onFirstStart() {
         val shipment = setOf(
@@ -15,12 +10,7 @@ class IngestDock : AbstractIngestDock() {
                 setOf(
                     Tea(
                         "Green Tea",
-                        Place(
-                            "Naha Port",
-                            "Japan",
-                            26.2107805,
-                            127.6679846
-                        ),
+                        OKINAWA,
                         "Jasmine",
                         20000000.0,
                         1.5,
@@ -28,19 +18,14 @@ class IngestDock : AbstractIngestDock() {
                     ),
                     Tea(
                         "Green Tea",
-                        Place(
-                            "Naha Port",
-                            "Japan",
-                            26.2107805,
-                            127.6679846
-                        ),
+                        OKINAWA,
                         "Matcha",
                         30000000.0,
                         1.75,
                         1669881600000
                     )
                 ),
-                oakland
+                OAKLAND
             )
 
         )
@@ -54,7 +39,7 @@ class IngestDock : AbstractIngestDock() {
                     -117.1771502
                 ),
                 setOf(
-                    oakland,
+                    OAKLAND,
                     Place(
                         "Port of Seattle",
                         "USA",
@@ -76,6 +61,22 @@ class IngestDock : AbstractIngestDock() {
         for (boat in boats) {
             handles.harbor.store(boat)
         }
+    }
+
+    companion object {
+        val OAKLAND = Place(
+            "Port of Oakland",
+            "USA",
+            37.7956584,
+            -122.2791769
+        )
+
+        val OKINAWA = Place(
+            "Naha Port",
+            "Japan",
+            26.2107805,
+            127.6679846
+        )
     }
 }
 

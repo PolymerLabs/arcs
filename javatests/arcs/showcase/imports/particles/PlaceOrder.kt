@@ -1,6 +1,6 @@
 package arcs.showcase.imports.particles
 
-import arcs.sdk.combineUpdates
+import kotlinx.coroutines.Job
 
 class PlaceOrder : AbstractPlaceOrder() {
     override fun onReady() {
@@ -10,20 +10,27 @@ class PlaceOrder : AbstractPlaceOrder() {
             val inStock = inventory
                 .filter { order?.name == it.name }
                 .filter { order?.variety == it.variety }
-                .filter { order?.origin == it.origin }
+                .filter { order?.origin?.nation == it.origin.nation }
 
-            repeat(order?.amt?.toInt() ?: 1) {
-                val item = try {
-                    val item = inStock[it]
-                    handles.inventory.remove(item)
-                    item
-                } catch (ex: IndexOutOfBoundsException) {
-                    Tea()
-                }
-
-                handles.toCustomer.store(item)
+            val item = try {
+                val item = inStock.first()
+                handles.inventory.remove(item)
+                val update = item.copy(weight = item.weight - order!!.amt)
+                handles.inventory.store(update)
+                orderPlaced.complete()
+                item.copy(weight = order.amt)
+            } catch (ex: IndexOutOfBoundsException) {
+                Tea()
+            } catch (ex: AssertionError) {
+                Tea()
             }
+
+            handles.toCustomer.store(item)
         }
+    }
+
+    companion object {
+        val orderPlaced = Job()
     }
 }
 

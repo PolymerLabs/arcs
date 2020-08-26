@@ -14,8 +14,8 @@ import arcs.showcase.imports.recipes.GatherImportsPlan
 import arcs.showcase.imports.recipes.IngestOrdersPlan
 import arcs.showcase.imports.recipes.PrepareInventoryForShopPlan
 import arcs.showcase.imports.recipes.ProcessOrderByNamePlan
-import arcs.showcase.imports.stores.EmitQualityPlan
 import arcs.showcase.imports.stores.EmitQuality
+import arcs.showcase.imports.stores.EmitQualityPlan
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -50,9 +50,10 @@ class ImportsTest {
         ).map { env.startArc(it) }
 
 
-//        withTimeout(30000) {
-//            PackageEgress.customerGotOrder.join()
-//        }
+        withTimeout(30000) {
+            PlaceOrder.orderPlaced.join()
+            PackageEgress.customerGotOrder.join()
+        }
 
         for (arc in arcs) {
             env.stopArc(arc)
