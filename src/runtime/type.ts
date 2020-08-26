@@ -1477,7 +1477,7 @@ export class TypeVariableInfo {
       return true;
     }
     if (this._canReadSubset) {
-      this._resolution = this._canReadSubset;
+      this.resolution = this._canReadSubset;
       return true;
     }
     return false;

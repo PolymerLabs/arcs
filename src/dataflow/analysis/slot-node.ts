@@ -9,9 +9,8 @@
  */
 
 import {Node, Edge, FlowCheck, FlowModifier} from './graph-internals.js';
-import {Slot} from '../../runtime/type.js';
+import {Slot, SlotConnection} from '../../runtime/recipe/lib-recipe.js';
 import {ParticleNode} from './particle-node.js';
-import {SlotConnection} from '../../runtime/recipe/slot-connection.js';
 
 export class SlotNode extends Node {
   // For now, slots can only have in-edges (from the particles that consume them).

@@ -79,9 +79,15 @@ class ExpressionEvaluator(
             "${expr.source} of type ${sequence::class} cannot be converted to a Sequence"
         }
 
-        return sequence.map { value ->
+        val fromSequence = sequence.map { value ->
             currentScope.set(expr.iterationVar, value as Any)
             value
+        }
+
+        return if (expr.qualifier != null) {
+            (expr.qualifier.accept(this) as Sequence<T>).flatMap { fromSequence }
+        } else {
+            fromSequence
         }
     }
 

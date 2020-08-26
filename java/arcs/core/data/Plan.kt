@@ -67,6 +67,7 @@ data class Plan(
         val handles: Map<String, HandleConnection>
     ) {
         companion object {
+            val locationLens = lens(Particle::location) { t, f -> t.copy(location = f) }
             val handlesLens = lens(Particle::handles) { t, f -> t.copy(handles = f) }
         }
     }

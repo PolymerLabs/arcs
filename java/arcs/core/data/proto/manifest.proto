@@ -317,9 +317,19 @@ message PolicyConstraintsProto {
 
   InformationFlowLabelProto.Predicate egress_check = 2;
 
-  message StoreConstraints {
-    string store_id = 1;
-    repeated ClaimProto claims = 2;
+  message SelectorClaim {
+    repeated AccessPathProto.Selector selectors = 1;
+    InformationFlowLabelProto.Predicate predicate = 2;
   }
-  repeated StoreConstraints store_constraints = 3;
+
+  message SchemaClaims {
+    // The name of the schema the claims apply to.
+    string schema_name = 1;
+
+    // Selector claims (Assume claims without an AccessPath root).
+    repeated SelectorClaim selector_claims = 2;
+  }
+  repeated SchemaClaims schema_claims = 4;
+
+  reserved 3;
 }
