@@ -101,7 +101,7 @@ export class AllocatorRecipeResolver {
       handleById[store.id] = {store, handles: []};
     }
 
-    // Find all `map` and `copy` handles and add them to the map.
+    // Find all `map` handles and add them to the map.
     for (const recipe of recipes) {
       for (const handle of recipe.handles) {
         if (handle.fate === 'use' || handle.fate === 'copy') {
