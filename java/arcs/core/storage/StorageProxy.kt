@@ -12,6 +12,7 @@
 package arcs.core.storage
 
 import arcs.core.analytics.Analytics
+import arcs.core.common.SuspendableLazy
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtModel
 import arcs.core.crdt.CrdtOperationAtTime
@@ -51,7 +52,8 @@ import kotlinx.coroutines.withTimeoutOrNull
  */
 @Suppress("EXPERIMENTAL_API_USAGE")
 class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
-    storageEndpointProvider: StorageEndpointProvider<Data, Op, T>,
+    storeOptions: StoreOptions,
+    storageEndpointManager: StorageEndpointManager,
     crdt: CrdtModel<Data, Op, T>,
     private val scheduler: Scheduler,
     private val time: Time,
@@ -63,7 +65,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private val crdt: CrdtModel<Data, Op, T>
         get() = _crdt ?: throw IllegalStateException("StorageProxy closed")
 
-    val storageKey = storageEndpointProvider.storageKey
+    val storageKey = storeOptions.storageKey
 
     /**
      * If you need to interact with the data managed by this [StorageProxy], and you're not a
@@ -76,9 +78,9 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
     private val log = TaggedLog { "StorageProxy" }
     private val handleCallbacks = atomic(HandleCallbacks<T>())
     private val stateHolder = atomic(StateHolder<T>(ProxyState.NO_SYNC))
-    private val store: StorageEndpoint<Data, Op, T> = storageEndpointProvider.create(
-        ProxyCallback(::onMessage)
-    )
+    private val store = SuspendableLazy {
+        storageEndpointManager.get(storeOptions, ProxyCallback(::onMessage))
+    }
 
     // Stash of operations to apply to the CRDT after we are synced with the store. These are
     // operations which have come in either before we were synced or while we were de-synced.
@@ -103,7 +105,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         outgoingMessagesChannel.consumeAsFlow()
             .map { (message, deferredToComplete) ->
                 log.verbose { "Sending operations to store" }
-                store.onProxyMessage(message)
+                store().onProxyMessage(message)
                 log.verbose { "Operations sent to store" }
                 deferredToComplete
             }
@@ -112,7 +114,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
                 // TODO(jasonwyatt): Make the deferred lazy, so that we only idle when the client
                 //  requests it, we could probably just use the busySendingMessagesChannel thinger.
 
-                val success = withTimeoutOrNull(5000) { store.idle() }
+                val success = withTimeoutOrNull(5000) { store().idle() }
                 if (success == null) {
                     log.info {
                         "Timeout exceeded (5 seconds) while waiting for store to become idle."
@@ -268,7 +270,7 @@ class StorageProxy<Data : CrdtData, Op : CrdtOperationAtTime, T>(
         if (stateHolder.value.state == ProxyState.CLOSED) return
         waitForIdle()
         scheduler.scope.launch {
-            store.close()
+            store().close()
             stateHolder.update { it.setState(ProxyState.CLOSED) }
             _crdt = null
         }.join()

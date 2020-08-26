@@ -168,12 +168,6 @@ class ReferenceModeStore private constructor(
         crdtType = requireNotNull(
             type as? Type.TypeContainer<CrdtModelType<CrdtData, CrdtOperationAtTime, Referencable>>
         ) { "Provided type must contain CrdtModelType" }.containedType
-
-        containerStore.on(ProxyCallback {
-            receiveQueue.enqueue {
-                handleContainerMessage(it.toReferenceModeMessage())
-            }
-        })
     }
 
     override suspend fun idle() {
@@ -181,7 +175,7 @@ class ReferenceModeStore private constructor(
         containerStore.idle()
     }
 
-    override fun on(
+    override suspend fun on(
         callback: ProxyCallback<RefModeStoreData, RefModeStoreOp, RefModeStoreOutput>
     ): Int = callbacks.register(callback)
 
@@ -734,7 +728,13 @@ class ReferenceModeStore private constructor(
                 containerStore,
                 storageKey.backingKey,
                 type.containedType
-            )
+            ).also { refModeStore ->
+                containerStore.on(ProxyCallback {
+                    refModeStore.receiveQueue.enqueue {
+                        refModeStore.handleContainerMessage(it.toReferenceModeMessage())
+                    }
+                })
+            }
         }
     }
 }

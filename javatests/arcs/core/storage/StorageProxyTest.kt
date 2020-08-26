@@ -63,11 +63,8 @@ class StorageProxyTest {
     @get:Rule
     val log = LogRule()
 
-    private lateinit var fakeStoreEndpoint: StoreEndpointFake<CrdtData, CrdtOperationAtTime, String>
-
-    @Mock
-    private lateinit var mockStorageEndpointProvider:
-        StorageEndpointProvider<CrdtData, CrdtOperationAtTime, String>
+    private val fakeStoreEndpoint = StoreEndpointFake<CrdtData, CrdtOperationAtTime, String>()
+    private val fakeStorageEndpointManager = FakeStorageEndpointManager(fakeStoreEndpoint)
 
     @Mock
     private lateinit var mockCrdtOperation: CrdtOperationAtTime
@@ -91,8 +88,6 @@ class StorageProxyTest {
     fun setup() {
         scheduler = Scheduler(Executors.newSingleThreadExecutor().asCoroutineDispatcher() + Job())
         MockitoAnnotations.initMocks(this)
-        fakeStoreEndpoint = StoreEndpointFake()
-        whenever(mockStorageEndpointProvider.create(any())).thenReturn(fakeStoreEndpoint)
         setupMockModel()
         whenever(mockCrdtOperation.clock).thenReturn(VersionMap())
     }
@@ -111,7 +106,11 @@ class StorageProxyTest {
     }
 
     private fun mockProxy() = StorageProxy(
-        mockStorageEndpointProvider,
+        StoreOptions(
+            storageKey = mockStorageKey,
+            type = mockType
+        ),
+        fakeStorageEndpointManager,
         mockCrdtModel,
         scheduler,
         mockTime
@@ -749,9 +748,12 @@ class StorageProxyTest {
                 }
             }
 
-        whenever(mockStorageEndpointProvider.storageKey).thenReturn(volatileStorageKey)
         val proxy = StorageProxy(
-            mockStorageEndpointProvider,
+            StoreOptions(
+                storageKey = volatileStorageKey,
+                type = mockType
+            ),
+            fakeStorageEndpointManager,
             mockCrdtModel,
             scheduler,
             mockTime,
@@ -806,10 +808,13 @@ class StorageProxyTest {
         val dbReferenceModeStorageKey =
             ReferenceModeStorageKey(dbBackingStorageKey, dbStorageKey)
 
-        whenever(mockStorageEndpointProvider.storageKey).thenReturn(dbReferenceModeStorageKey)
         val proxy =
             StorageProxy(
-                mockStorageEndpointProvider,
+                StoreOptions(
+                    storageKey = dbReferenceModeStorageKey,
+                    type = mockType
+                ),
+                fakeStorageEndpointManager,
                 mockCrdtModel,
                 scheduler,
                 mockTime,
