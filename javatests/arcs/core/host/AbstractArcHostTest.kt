@@ -3,6 +3,7 @@ package arcs.core.host
 import arcs.core.data.Annotation
 import arcs.core.data.EntityType
 import arcs.core.data.Plan
+import arcs.core.data.RawEntity.Companion.UNINITIALIZED_TIMESTAMP
 import arcs.core.data.SingletonType
 import arcs.core.entity.DummyEntity
 import arcs.core.entity.EntityBase
@@ -176,11 +177,20 @@ open class AbstractArcHostTest {
             bool = true
         }
         host.getFooHandle().dispatchStore(entity)
-        var storedEntity = EntityBase("EntityBase", DummyEntity.SCHEMA)
+
+        val thing = (host.getFooHandle() as ReadWriteSingletonHandle<EntityBase>).dispatchFetch()
+
+        // Monkey patch the entityId
+        var storedEntity = EntityBase(
+            "EntityBase",
+            DummyEntity.SCHEMA,
+            thing?.entityId,
+            thing?.creationTimestamp ?: UNINITIALIZED_TIMESTAMP,
+            thing?.expirationTimestamp ?: UNINITIALIZED_TIMESTAMP
+        )
         storedEntity.setSingletonValue("text", "Watson")
-        assertThat(
-            (host.getFooHandle() as ReadWriteSingletonHandle<EntityBase>).dispatchFetch()
-        ).isEqualTo(storedEntity)
+
+        assertThat(thing).isEqualTo(storedEntity)
         schedulerProvider.cancelAll()
     }
 
