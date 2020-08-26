@@ -3,9 +3,9 @@ package arcs.core.policy.proto
 import arcs.core.data.AccessPath
 import arcs.core.data.InformationFlowLabel.Predicate
 import arcs.core.data.InformationFlowLabel.SemanticTag
-import arcs.core.policy.SelectorClaim
 import arcs.core.policy.Policy
 import arcs.core.policy.PolicyConstraints
+import arcs.core.policy.SelectorClaim
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith

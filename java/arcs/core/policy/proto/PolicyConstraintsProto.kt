@@ -3,8 +3,8 @@ package arcs.core.policy.proto
 import arcs.core.data.proto.PolicyConstraintsProto
 import arcs.core.data.proto.decode
 import arcs.core.data.proto.encode
-import arcs.core.policy.SelectorClaim
 import arcs.core.policy.PolicyConstraints
+import arcs.core.policy.SelectorClaim
 
 fun PolicyConstraintsProto.decode(): PolicyConstraints {
     return PolicyConstraints(
