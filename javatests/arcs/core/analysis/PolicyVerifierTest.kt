@@ -80,12 +80,13 @@ class PolicyVerifierTest {
 
     @Test
     fun unmarkedIngressParticlesRestrictUsage() {
-        assertFailsWith<PolicyViolation.ChecksViolated> {
+        val e = assertFailsWith<PolicyViolation.UnannotatedIngressParticles> {
             verifier.verifyPolicy(
                 recipes.getValue("UnmarkedIngress"),
                 policy
             )
         }
+        assertThat(e.particleSpecs.map { it.name }).containsExactly("IngestAction")
     }
 
     @Test

@@ -30,11 +30,12 @@ class PolicyVerifier(val options: PolicyOptions? = null) {
      * @throws [PolicyViolation] if policy is violated by the recipe.
      */
     fun verifyPolicy(recipe: Recipe, policy: Policy): Boolean {
+        val graph = RecipeGraph(recipe)
         checkPolicyName(recipe, policy)
+        checkIngressParticles(graph, policy)
 
         // TODO(b/162083814): This should be moved to the compilation step.
         val policyConstraints = translatePolicy(policy)
-        val graph = RecipeGraph(recipe)
 
         // Map the claims from the PolicyConstraints to the corresponding handles.
         val ingresses = getGraphIngresses(graph, policyConstraints)
@@ -93,32 +94,42 @@ class PolicyVerifier(val options: PolicyOptions? = null) {
      * Returns the set of all ingress handles in the [graph].
      *
      * Ingress handles are identified as being the outputs of particles marked with the `@ingress`
-     * annotation. We also find handles that look like they might be ingress handles, based on the
-     * shape of the particles that write to them.
+     * annotation, and any handle with the `map` fate.
      */
     private fun getIngressHandles(graph: RecipeGraph): Set<RecipeGraph.Node.Handle> {
         // Compute set of handles explicitly marked as ingress (via @ingress annotations on the
         // particles that write to them).
-        val ingressParticleNodes = graph.particleNodes.filter {
-            it.particle.spec.dataflowType.ingress
+        val ingressParticleNodes = graph.particleNodes.filter { particleNode ->
+            particleNode.particle.spec.dataflowType.ingress
         }
         val explicitIngressHandles = ingressParticleNodes.flatMap { it.successors }
             .filterIsInstance<RecipeGraph.Node.Handle>()
             .toSet()
 
-        // Compute set of handles automatically identified as ingress. These are handles which
-        // "look" like ingress handles, based on the particles that write to them.
-        val defaultIngressHandles = graph.handleNodes.filter { handleNode ->
-            handleNode.predecessors.isEmpty() ||
-            handleNode.predecessors.any { predecessor ->
-                predecessor.node is RecipeGraph.Node.Particle &&
-                predecessor.node.particle.spec.connections.all { (_, spec) ->
+        // Compute set of mapped handles (these will be treated as ingress points too).
+        val mappedHandles = graph.handleNodes.filter { handleNode ->
+            handleNode.handle.fate == Recipe.Handle.Fate.MAP
+        }
+
+        return explicitIngressHandles + mappedHandles
+    }
+
+    /**
+     * Checks that all particles that "look like" ingress particles have the `@ingress`
+     * annotation.
+     */
+    private fun checkIngressParticles(graph: RecipeGraph, policy: Policy) {
+        val unannotatedIngressParticles = graph.particleNodes
+            .map { it.particle.spec }
+            .filterNot { it.dataflowType.ingress }
+            .filter { particleSpec ->
+                particleSpec.connections.values.all { spec ->
                     spec.direction.canWrite && !spec.direction.canRead
                 }
             }
-        }.toSet()
-
-        return explicitIngressHandles + defaultIngressHandles
+        if (unannotatedIngressParticles.isNotEmpty()) {
+            throw PolicyViolation.UnannotatedIngressParticles(policy, unannotatedIngressParticles)
+        }
     }
 
     /**

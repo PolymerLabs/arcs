@@ -153,6 +153,16 @@ sealed class PolicyViolation(val policy: Policy, message: String) : Exception(
         policy,
         "Recipe elected a policy named '$electedPolicyName'."
     )
+
+    /** Thrown when unannotated ingress particles are found. */
+    class UnannotatedIngressParticles(
+        policy: Policy,
+        val particleSpecs: List<ParticleSpec>
+    ) : PolicyViolation(
+        policy,
+        "These particles look like ingress particles, but are missing the @ingress annotation: " +
+            particleSpecs.joinToString { it.name }
+    )
 }
 
 /** Converts a list of particles into their names and egress types, as a string. */

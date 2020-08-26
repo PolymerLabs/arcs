@@ -74,8 +74,8 @@ particle ParticleWithMissingEgressType
 //-----------------------------------------------------------
 // Complying by not having any egress particles.
 //-----------------------------------------------------------
-@isolated
-particle SomeIsolatedWriter
+@ingress
+particle SomeIngressParticle
   input: writes [Person {name: Text}]
 
 @isolated
@@ -85,7 +85,7 @@ particle SomeIsolatedParticle
 @policy('TestPolicy')
 recipe NoEgressParticles
   input: create 'input'
-  SomeIsolatedWriter
+  SomeIngressParticle
     input: input
   SomeIsolatedParticle
     input: input
@@ -101,8 +101,8 @@ particle JoinActionSelection_EgressUnrestrictedFields
 
 @policy('TestPolicy')
 recipe EgressUnrestrictedFields
-  action: create 'action'
-  selection: create 'selection'
+  action: map 'action'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   JoinActionSelection_EgressUnrestrictedFields
     action: action
@@ -114,8 +114,8 @@ recipe EgressUnrestrictedFields
 // Recipe that complies with policy even with multiple egresses.
 @policy('TestPolicy')
 recipe EgressAndLogUnrestrictedFields
-  action: create 'action'
-  selection: create 'selection'
+  action: map 'action'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   JoinActionSelection_EgressUnrestrictedFields
     action: action
@@ -137,8 +137,8 @@ particle JoinActionSelection_EgressRedactedField
 
 @policy('TestPolicy')
 recipe EgressRedactedField
-  action: create 'action'
-  selection: create 'selection'
+  action: map 'action'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   ActionTimestampToDays
     input: action
@@ -162,8 +162,8 @@ particle JoinActionSelection_EgressRestrictedFields
 
 @policy('TestPolicy')
 recipe AccessRestrictedFieldsNoEgress
-  action: create 'action'
-  selection: create 'selection'
+  action: map 'action'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   ActionTimestampToDays
     input: action
@@ -184,8 +184,8 @@ particle JoinActionSelection_EgressRestrictedFields
 
 @policy('TestPolicy')
 recipe EgressRestrictedFields
-  action: create 'action'
-  selection: create 'selection'
+  action: map 'action'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   ActionTimestampToDays
     input: action
@@ -209,8 +209,8 @@ particle JoinActionSelection_EgressJoinOnlyField
 
 @policy('TestPolicy')
 recipe EgressJoinOnlyField
-  action: create 'action'
-  selection: create 'selection'
+  action: map 'action'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   ActionTimestampToDays
     input: action
@@ -227,8 +227,8 @@ recipe EgressJoinOnlyField
 //-----------------------------------------------------------------------
 @policy('TestPolicy')
 recipe EgressUnredactedField
-  action: create 'action'
-  selection: create 'selection'
+  action: map 'action'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   JoinActionSelection_EgressRedactedField
     action: action
@@ -238,7 +238,7 @@ recipe EgressUnredactedField
     joinData: joinData
 
 //-----------------------------------------------------------------------
-// Policy violation by not marking an ingress store appropriately.
+// Policy violation by not annotating an ingress particle appropriately.
 //-----------------------------------------------------------------------
 @isolated
 particle IngestAction
@@ -252,7 +252,7 @@ recipe UnmarkedIngress
   // TODO(b/164153178): we simulate the absence of `@ingress` by not naming the
   // store id as 'action`. When we have proper `@ingress` annotation, we should fix it.
   action: create
-  selection: create 'selection'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   IngestAction
     action: action
@@ -268,8 +268,8 @@ recipe UnmarkedIngress
 //-----------------------------------------------------------------------
 @policy('TestPolicy')
 recipe InvalidEgressParticles
-  action: create 'action'
-  selection: create 'selection'
+  action: map 'action'
+  selection: map 'selection'
   joinData: create @ttl('30m')
   JoinActionSelection_EgressRedactedField
     action: action
