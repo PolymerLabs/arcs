@@ -30,11 +30,10 @@ class PolicyVerifier(val options: PolicyOptions? = null) {
      * @throws [PolicyViolation] if policy is violated by the recipe.
      */
     fun verifyPolicy(recipe: Recipe, policy: Policy): Boolean {
-        val graph = RecipeGraph(recipe)
         checkPolicyName(recipe, policy)
-        checkIngressParticles(graph, policy)
 
         // TODO(b/162083814): This should be moved to the compilation step.
+        val graph = RecipeGraph(recipe)
         val policyConstraints = translatePolicy(policy)
 
         // Map the claims from the PolicyConstraints to the corresponding handles.
@@ -102,7 +101,9 @@ class PolicyVerifier(val options: PolicyOptions? = null) {
         val ingressParticleNodes = graph.particleNodes.filter { particleNode ->
             particleNode.particle.spec.dataflowType.ingress
         }
-        val explicitIngressHandles = ingressParticleNodes.flatMap { it.successors }
+        val explicitIngressHandles = ingressParticleNodes
+            .flatMap { particleNode -> particleNode.successors }
+            .map { neighbor -> neighbor.node }
             .filterIsInstance<RecipeGraph.Node.Handle>()
             .toSet()
 
@@ -112,24 +113,6 @@ class PolicyVerifier(val options: PolicyOptions? = null) {
         }
 
         return explicitIngressHandles + mappedHandles
-    }
-
-    /**
-     * Checks that all particles that "look like" ingress particles have the `@ingress`
-     * annotation.
-     */
-    private fun checkIngressParticles(graph: RecipeGraph, policy: Policy) {
-        val unannotatedIngressParticles = graph.particleNodes
-            .map { it.particle.spec }
-            .filterNot { it.dataflowType.ingress }
-            .filter { particleSpec ->
-                particleSpec.connections.values.all { spec ->
-                    spec.direction.canWrite && !spec.direction.canRead
-                }
-            }
-        if (unannotatedIngressParticles.isNotEmpty()) {
-            throw PolicyViolation.UnannotatedIngressParticles(policy, unannotatedIngressParticles)
-        }
     }
 
     /**

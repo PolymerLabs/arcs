@@ -174,6 +174,81 @@ recipe AccessRestrictedFieldsNoEgress
     joinData: joinData
 
 //-----------------------------------------------------------------------
+// Policy violation by using data from mapped handle of different type.
+//-----------------------------------------------------------------------
+schema CustomAction
+  data: Text
+
+@isolated
+particle CustomActionConverter
+  customAction: reads [CustomAction {data}]
+  action: writes [Action {id, action}]
+
+@policy('TestPolicy')
+recipe MappedHandleOfDifferentType
+  customAction: map 'customAction' // Has type CustomAction, which is not covered by policy.
+  selection: map 'selection'
+  action: create
+  joinData: create @ttl('30m')
+  CustomActionConverter
+    customAction: customAction
+    action: action
+  JoinActionSelection_EgressUnrestrictedFields
+    action: action
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+
+//-----------------------------------------------------------------------
+// Policy violation by using data from ingress particle of different type.
+//-----------------------------------------------------------------------
+@ingress
+particle CustomActionProducer
+  customAction: writes [CustomAction {data}]
+
+@policy('TestPolicy')
+recipe IngressParticleOfDifferentType
+  customAction: create
+  selection: map 'selection'
+  action: create
+  joinData: create @ttl('30m')
+  CustomActionProducer
+    customAction: customAction
+  CustomActionConverter
+    customAction: customAction
+    action: action
+  JoinActionSelection_EgressUnrestrictedFields
+    action: action
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+
+//-----------------------------------------------------------------------
+// No policy violation if ingress points of different types are unused.
+//-----------------------------------------------------------------------
+@policy('TestPolicy')
+recipe UnusedIngressPointsOfDifferentType
+  customAction: map 'customAction' // Ingress point, but ultimately unused
+  unused1: create
+  unused2: create
+  selection: map 'selection'
+  action: map 'action'
+  joinData: create @ttl('30m')
+  CustomActionProducer // Ingress point, but ultimately unused
+    customAction: unused1
+  CustomActionConverter
+    customAction: customAction
+    action: unused2
+  JoinActionSelection_EgressUnrestrictedFields
+    action: action
+    selection: selection
+    joinData: joinData
+  TestEgressParticle
+    joinData: joinData
+
+//-----------------------------------------------------------------------
 // Policy violation by egressing `sensitiveSelection` in `Selection`.
 //-----------------------------------------------------------------------
 @isolated

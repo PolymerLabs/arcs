@@ -79,14 +79,33 @@ class PolicyVerifierTest {
     }
 
     @Test
-    fun unmarkedIngressParticlesRestrictUsage() {
-        val e = assertFailsWith<PolicyViolation.UnannotatedIngressParticles> {
+    fun mappedHandleOfDifferentTypeIsDisallowed() {
+        assertFailsWith<PolicyViolation.ChecksViolated> {
             verifier.verifyPolicy(
-                recipes.getValue("UnmarkedIngress"),
+                recipes.getValue("MappedHandleOfDifferentType"),
                 policy
             )
         }
-        assertThat(e.particleSpecs.map { it.name }).containsExactly("IngestAction")
+    }
+
+    @Test
+    fun ingressParticleOfDifferentTypeIsDisallowed() {
+        assertFailsWith<PolicyViolation.ChecksViolated> {
+            verifier.verifyPolicy(
+                recipes.getValue("IngressParticleOfDifferentType"),
+                policy
+            )
+        }
+    }
+
+    @Test
+    fun unusedIngressPointsOfDifferentTypesAreAllowed() {
+        assertThat(
+            verifier.verifyPolicy(
+                recipes.getValue("UnusedIngressPointsOfDifferentType"),
+                policy
+            )
+        ).isTrue()
     }
 
     @Test
