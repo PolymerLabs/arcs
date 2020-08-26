@@ -16,6 +16,7 @@ interface StorageEndpointManager {
      * implementation.
      */
     suspend fun <Data : CrdtData, Op : CrdtOperationAtTime, T> get(
-        storeOptions: StoreOptions
-    ): StorageEndpointProvider<Data, Op, T>
+        storeOptions: StoreOptions,
+        callback: ProxyCallback<Data, Op, T>
+    ): StorageEndpoint<Data, Op, T>
 }

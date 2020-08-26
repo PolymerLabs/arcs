@@ -13,7 +13,6 @@ package arcs.core.storage
 
 import arcs.core.crdt.CrdtData
 import arcs.core.crdt.CrdtOperation
-import arcs.core.crdt.CrdtOperationAtTime
 import java.io.Closeable
 
 /** A message coming from the storage proxy into one of the [IStore] implementations. */
@@ -104,18 +103,4 @@ interface StorageEndpoint<Data : CrdtData, Op : CrdtOperation, ConsumerData> : C
      * Sends the storage layer a message from a [StorageProxy].
      */
     suspend fun onProxyMessage(message: ProxyMessage<Data, Op, ConsumerData>): Boolean
-}
-
-/** Provider of a [StorageCommunicationEndpoint]s. */
-interface StorageEndpointProvider <Data : CrdtData, Op : CrdtOperationAtTime, ConsumerData> {
-    /**
-     * Returns a communications channel to an [ActiveStore] that reflects the provided
-     * [StoreOptions]. This is not necessarily an [ActiveStore] implementation, though a basic
-     * implementation may provide a simple wrapper around an in-process instance of [ActiveStore].
-     */
-    fun create(
-        callback: ProxyCallback<Data, Op, ConsumerData>
-    ): StorageEndpoint<Data, Op, ConsumerData>
-
-    val storageKey: StorageKey
 }
