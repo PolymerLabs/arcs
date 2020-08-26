@@ -84,7 +84,7 @@ class ExpressionSerializer() : Expression.Visitor<JsonValue<*>> {
         JsonObject(
             mapOf(
                 "op" to JsonString("from"),
-                "source" to expr.accept(this),
+                "source" to expr.expr.accept(this),
                 "var" to JsonString(expr.iterationVar),
                 "qualifier" to (expr.qualifier?.accept(this) ?: JsonNull)
             )
