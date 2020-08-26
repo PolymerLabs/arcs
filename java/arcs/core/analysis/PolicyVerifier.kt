@@ -17,13 +17,11 @@ import arcs.core.data.Recipe
 import arcs.core.data.toSchema
 import arcs.core.policy.Policy
 import arcs.core.policy.PolicyConstraints
-import arcs.core.policy.PolicyOptions
 import arcs.core.policy.PolicyViolation
 import arcs.core.policy.translatePolicy
 
 /** A class to verify that recipes are compliant with a policy. */
-@Suppress("UNUSED_PARAMETER") // TODO(b/164153178): Delete PolicyOptions.
-class PolicyVerifier(val options: PolicyOptions? = null) {
+class PolicyVerifier {
     /**
      * Returns true if the recipe is compliant with the given policy.
      *
