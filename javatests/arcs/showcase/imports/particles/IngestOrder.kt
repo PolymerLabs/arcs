@@ -1,8 +1,6 @@
 package arcs.showcase.imports.particles
 
 class IngestOrder : AbstractIngestOrder() {
-
-
     override fun onFirstStart() {
         handles.order.store(
             Order(
@@ -12,8 +10,6 @@ class IngestOrder : AbstractIngestOrder() {
                 amt = 50.0
             )
         )
-
     }
-
 }
 

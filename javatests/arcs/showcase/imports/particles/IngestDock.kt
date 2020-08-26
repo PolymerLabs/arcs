@@ -1,5 +1,7 @@
 package arcs.showcase.imports.particles
 
+import kotlinx.coroutines.Job
+
 class IngestDock : AbstractIngestDock() {
 
 
@@ -61,6 +63,7 @@ class IngestDock : AbstractIngestDock() {
         for (boat in boats) {
             handles.harbor.store(boat)
         }
+        dockUnloaded.complete()
     }
 
     companion object {
@@ -77,6 +80,8 @@ class IngestDock : AbstractIngestDock() {
             26.2107805,
             127.6679846
         )
+
+        val dockUnloaded = Job()
     }
 }
 

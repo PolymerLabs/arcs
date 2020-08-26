@@ -42,15 +42,17 @@ class ImportsTest {
     @Test
     fun teaShop_SupplyChain() = runBlocking {
         val arcs = listOf(
+            EmitQualityPlan,
             GatherImportsPlan,
             IngestOrdersPlan,
-            EmitQualityPlan,
             ProcessOrderByNamePlan,
             PrepareInventoryForShopPlan
         ).map { env.startArc(it) }
 
 
         withTimeout(30000) {
+            EmitQuality.qualityStandardSet.join()
+            IngestDock.dockUnloaded.join()
             PlaceOrder.orderPlaced.join()
             PackageEgress.customerGotOrder.join()
         }
