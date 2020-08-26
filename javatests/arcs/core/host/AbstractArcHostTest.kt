@@ -14,6 +14,7 @@ import arcs.core.storage.driver.RamDisk
 import arcs.core.storage.driver.RamDiskDriverProvider
 import arcs.core.storage.keys.RamDiskStorageKey
 import arcs.core.storage.referencemode.ReferenceModeStorageKey
+import arcs.core.testutil.handles.dispatchFetch
 import arcs.core.testutil.handles.dispatchStore
 import arcs.jvm.util.testutil.FakeTime
 import arcs.sdk.BaseParticle
@@ -177,9 +178,9 @@ open class AbstractArcHostTest {
         host.getFooHandle().dispatchStore(entity)
         var storedEntity = EntityBase("EntityBase", DummyEntity.SCHEMA)
         storedEntity.setSingletonValue("text", "Watson")
-        assertThat((host.getFooHandle() as ReadWriteSingletonHandle<EntityBase>).fetch()?.equals(
-            storedEntity
-        ))
+        assertThat(
+            (host.getFooHandle() as ReadWriteSingletonHandle<EntityBase>).dispatchFetch()
+        ).equals(storedEntity)
         schedulerProvider.cancelAll()
     }
 
