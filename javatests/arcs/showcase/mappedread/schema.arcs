@@ -1,0 +1,17 @@
+meta
+  namespace: arcs.showcase.mappedread
+
+schema Item
+  txt: Text
+  num: Number
+
+particle Writer in '.Writer'
+  item: writes [Item]
+
+@arcId('writeArc')
+recipe WriteRecipe
+  item: create 'item' @persistent
+
+  Writer
+    item: item
+

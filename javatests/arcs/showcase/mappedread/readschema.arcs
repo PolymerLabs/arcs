@@ -1,0 +1,14 @@
+import './schema.arcs'
+
+meta
+  namespace: arcs.showcase.mappedread
+
+particle Reader in '.Reader'
+  item: reads [Item]
+
+@arcId('readArc')
+recipe ExternalReader
+  item: map 'item'
+
+  Reader
+    item: item
