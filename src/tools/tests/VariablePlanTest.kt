@@ -6,7 +6,7 @@ import arcs.core.data.SchemaFields
 import arcs.core.data.proto.ManifestProto
 import arcs.core.data.proto.decodeRecipes
 import arcs.core.data.toPlan
-import arcs.core.host.toSchema
+import arcs.core.data.toSchema
 import arcs.core.storage.api.DriverAndKeyConfigurator
 import arcs.repoutils.runfilesDir
 import com.google.common.truth.Truth.assertThat

@@ -30,7 +30,6 @@ arcs_kt_library(
     deps = [
         ":expression",
         "//java/arcs/core/data",
-        "//java/arcs/core/host",
         "//java/arcs/core/util",
         "//java/arcs/sdk",
         "//third_party/kotlin/kotlinx_coroutines",
