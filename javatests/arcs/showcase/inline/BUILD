@@ -9,9 +9,15 @@ licenses(["notice"])
 
 package(default_visibility = ["//java/arcs:allowed-packages"])
 
+#arcs_kt_gen(
+#    name = "schema_arcs_gen",
+#    srcs = ["schema.arcs"],
+#)
+
 arcs_kt_gen(
-    name = "schema_arcs_gen",
-    srcs = ["schema.arcs"],
+    name = "readschema_arcs_gen",
+    srcs = ["readschema.arcs", "schema.arcs"],
+#    data = ["schema.arcs"]
 )
 
 arcs_kt_android_library(
@@ -24,7 +30,8 @@ arcs_kt_android_library(
         "Writer.kt",
     ],
     deps = [
-        ":schema_arcs_gen",
+#        ":schema_arcs_gen",
+        ":readschema_arcs_gen",
         "//java/arcs/android/sdk/host",
         "//java/arcs/android/storage/database",
         "//java/arcs/core/allocator",

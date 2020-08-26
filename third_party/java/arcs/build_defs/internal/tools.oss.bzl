@@ -16,7 +16,7 @@ def arcs_tool_recipe2plan(name, srcs, outs, deps, generate_proto = False, recipe
         sigh_cmd += " --format proto"
     if recipe:
         sigh_cmd += " --recipe " + recipe
-    sigh_cmd += " {SRC}"
+    sigh_cmd += " {SRCS}"
 
     plan_type = "Proto" if generate_proto else "Kotlin"
 

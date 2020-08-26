@@ -61,9 +61,12 @@ export class AllocatorRecipeResolver {
 
     const originalRecipes = [];
     // Clone all recipes.
-    for (const originalRecipe of this.runtime.context.allRecipes) {
+    for (const originalRecipe of this.runtime.context.allRecipes
+      .filter((r, idx, self) => idx === self.findIndex((x) => x.name === r.name))) {
       originalRecipes.push(originalRecipe.clone());
     }
+
+    console.log(originalRecipes.map(r => r.name));
 
     const recipes = [];
     // Normalize all recipes.
