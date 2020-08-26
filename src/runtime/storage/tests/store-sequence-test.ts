@@ -11,7 +11,7 @@
 import {assert} from '../../../platform/chai-web.js';
 import {Store, ActiveStore, ProxyMessageType, ProxyMessage} from '../store.js';
 import {SequenceTest, ExpectedResponse, SequenceOutput} from '../../testing/sequence.js';
-import {CRDTCountTypeRecord, CRDTCount, CountOpTypes, CountData} from '../../crdt/crdt-count.js';
+import {CRDTCountTypeRecord, CRDTCount, CountOpTypes, CountData} from '../../../crdt/lib-crdt.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
 import {StorageKey} from '../storage-key.js';

@@ -12,12 +12,11 @@ import {assert} from '../../../platform/chai-web.js';
 import {Store, ProxyMessageType} from '../store.js';
 import {DriverFactory} from '../drivers/driver-factory.js';
 import {Exists} from '../drivers/driver.js';
-import {CRDTCount, CountOpTypes, CountData, CountOperation} from '../../crdt/crdt-count.js';
+import {CRDTTypeRecord, CRDTCount, CountOpTypes, CountData, CountOperation} from '../../../crdt/lib-crdt.js';
 import {StorageKey} from '../storage-key.js';
 import {DirectStore} from '../direct-store.js';
 import {MockStorageKey, MockStorageDriverProvider, MockDriver} from '../testing/test-storage.js';
 import {CountType} from '../../type.js';
-import {CRDTTypeRecord} from '../../crdt/crdt.js';
 import {noAwait} from '../../util.js';
 
 let testKey: StorageKey;

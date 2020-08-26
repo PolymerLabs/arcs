@@ -10,21 +10,18 @@
 
 import {StorageProxy} from './storage-proxy.js';
 import {Type, CollectionType, EntityType, ReferenceType, SingletonType, InterfaceType, MuxType} from '../type.js';
+import {CRDTTypeRecord, CRDTSingletonTypeRecord, CRDTCollectionTypeRecord, CRDTEntityTypeRecord, Identified} from '../../crdt/lib-crdt.js';
 import {Ttl} from '../capabilities.js';
 import {SingletonHandle, CollectionHandle, Handle} from './handle.js';
 import {Particle} from '../particle.js';
-import {CRDTSingletonTypeRecord} from '../crdt/crdt-singleton.js';
 import {ActiveStore, Store, StoreMuxer} from './store.js';
 import {Entity, SerializedEntity} from '../entity.js';
 import {Id, IdGenerator} from '../id.js';
 import {ParticleSpec, StorableSerializedParticleSpec} from '../arcs-types/particle-spec.js';
-import {CRDTCollectionTypeRecord} from '../crdt/crdt-collection.js';
 import {SerializedReference, Reference} from '../reference.js';
 import {StoreInfo, AbstractStore, isMuxEntityStore} from './abstract-store.js';
 import {StorageKey} from './storage-key.js';
 import {Exists} from './drivers/driver.js';
-import {CRDTTypeRecord} from '../crdt/crdt.js';
-import {CRDTEntityTypeRecord, Identified} from '../crdt/crdt-entity.js';
 import {ActiveMuxer, isActiveMuxer} from './store-interface.js';
 import {EntityHandleFactory} from './entity-handle-factory.js';
 import {StorageProxyMuxer} from './storage-proxy-muxer.js';

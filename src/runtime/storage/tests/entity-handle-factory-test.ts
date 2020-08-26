@@ -11,13 +11,12 @@
 import {Manifest} from '../../manifest.js';
 import {EntityType, MuxType, SingletonType} from '../../type.js';
 import {MockDirectStoreMuxer} from '../testing/test-storage.js';
-import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes} from '../../crdt/crdt-entity.js';
+import {CRDTEntityTypeRecord, Identified, CRDTEntity, EntityOpTypes, CRDTSingleton} from '../../../crdt/lib-crdt.js';
 import {StorageProxyMuxer} from '../storage-proxy-muxer.js';
 import {DirectStoreMuxer} from '../direct-store-muxer.js';
 import {EntityHandleFactory} from '../entity-handle-factory.js';
 import {ProxyMessageType, Store} from '../store.js';
 import {assert} from '../../../platform/chai-web.js';
-import {CRDTSingleton} from '../../crdt/crdt-singleton.js';
 import {Entity} from '../../entity.js';
 import {ArcId} from '../../id.js';
 import {ReferenceModeStorageKey} from '../reference-mode-storage-key.js';
@@ -79,11 +78,11 @@ describe('entity handle factory', () => {
     const manifest = await Manifest.parse(`
       schema Result
         value: Text
-      
+
       particle Dereferencer in 'dereferencer.js'
         inResult: reads &Result
         inResultData: reads #Result
-      
+
       recipe
         handle0: create 'input:1'
         handle1: create 'input:2'

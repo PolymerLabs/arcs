@@ -26,7 +26,7 @@ import {StorageKey} from '../storage/storage-key.js';
 import {Store, ActiveStore} from '../storage/store.js';
 import {ReferenceModeStore} from '../storage/reference-mode-store.js';
 import {DirectStoreMuxer} from '../storage/direct-store-muxer.js';
-import {CRDTTypeRecord} from '../crdt/crdt.js';
+import {CRDTTypeRecord} from '../../crdt/lib-crdt.js';
 import {DirectStore} from '../storage/direct-store.js';
 import {ramDiskStorageKeyPrefixForTest, volatileStorageKeyPrefixForTest} from '../testing/handle-for-test.js';
 import {Entity} from '../entity.js';
